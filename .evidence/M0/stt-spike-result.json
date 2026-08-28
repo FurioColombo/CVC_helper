@@ -1,0 +1,10 @@
+{
+  "engine": "@huggingface/transformers",
+  "model": "onnx-community/whisper-tiny",
+  "dtype": "q8",
+  "language": "italian",
+  "expected": "Mario ha buona sensibilità al timone ma deve anticipare le manovre.",
+  "transcript": "Mario è buona sensibilità ultimo e mai dai vantici pare le manove.",
+  "loadedAfterMs": 437,
+  "inferenceMs": 389
+}

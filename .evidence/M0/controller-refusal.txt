@@ -1,0 +1,3 @@
+PASS: completion refused for intentionally incomplete synthetic evidence
+Completion refused; missing evidence:
+- .evidence/__synthetic__/intentionally-missing.txt

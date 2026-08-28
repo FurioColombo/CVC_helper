@@ -1,0 +1,39 @@
+{
+  "milestone": "M0",
+  "status": "PASS",
+  "recordedAt": "2026-08-28T23:33:15.804Z",
+  "checks": [
+    {
+      "command": "npm run verify:quick",
+      "status": "PASS",
+      "startedAt": "2026-08-28T23:33:00.657Z",
+      "durationMs": 7438,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.0.0 test\n> vitest run\n\n\n RUN  v4.1.11 /Users/marcofuriocolombo/Documents/ChatGPT/CVC_helper\n\n\n Test Files  3 passed (3)\n      Tests  7 passed (7)\n   Start at  01:33:06\n   Duration  1.39s (transform 115ms, setup 589ms, import 195ms, tests 94ms, environment 2.57s)"
+    },
+    {
+      "command": "npm run verify:domain",
+      "status": "PASS",
+      "startedAt": "2026-08-28T23:33:08.097Z",
+      "durationMs": 573,
+      "exitCode": 0,
+      "outputTail": "> npm run check:repository && npm run check:domain\n\n\n> cvc-helper@0.0.0 check:repository\n> node scripts/check-repository.mjs\n\nPASS: repository structure and command surface\n\n> cvc-helper@0.0.0 check:domain\n> node --import tsx scripts/check-domain.ts\n\nPASS: canonical domain tables and runtime foundation scenario"
+    },
+    {
+      "command": "npm run build",
+      "status": "PASS",
+      "startedAt": "2026-08-28T23:33:08.670Z",
+      "durationMs": 4540,
+      "exitCode": 0,
+      "outputTail": "dist/assets/mc-wa-sqlite-async-OK58TZB1.js          63.94 kB │ gzip:  20.82 kB\ndist/assets/websockets-BrH1W1hC.js                 107.86 kB │ gzip:  23.50 kB\ndist/assets/index-C4U-G1eu.js                      342.76 kB │ gzip: 107.19 kB\n\n✓ built in 538ms\n\nPWA v1.3.0\nmode      generateSW\nprecache  21 entries (8285.28 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js"
+    },
+    {
+      "command": "npm run verify:e2e",
+      "status": "PASS",
+      "startedAt": "2026-08-28T23:33:13.210Z",
+      "durationMs": 2594,
+      "exitCode": 0,
+      "outputTail": "\n\nRunning 2 tests using 2 workers\n\n  ✓  2 [chromium-mobile] › tests/e2e/smoke.spec.ts:3:1 › loads the mobile-first CVC foundation shell (1.0s)\n  ✓  1 [chromium-mobile] › tests/e2e/persistence.spec.ts:3:1 › persists a representative local write across reload (1.5s)\n\n  2 passed (2.1s)\n(node:15005) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:15006) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)"
+    }
+  ]
+}

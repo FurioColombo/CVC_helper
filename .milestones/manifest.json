@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "milestones": [
+    {
+      "id": "M0",
+      "category": "FOUNDATION",
+      "status": "COMPLETE",
+      "requiredEvidence": [
+        ".evidence/M0/verification.json",
+        ".evidence/M0/controller-refusal.txt",
+        ".evidence/M0/persistence-spike.md",
+        ".evidence/M0/ocr-spike.md",
+        ".evidence/M0/stt-spike.md"
+      ]
+    },
+    {
+      "id": "M1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M1/verification.json",
+        ".evidence/M1/self-review.md"
+      ]
+    },
+    {
+      "id": "M2",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M2/verification.json",
+        ".evidence/M2/self-review.md"
+      ]
+    },
+    {
+      "id": "M3",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M3/verification.json",
+        ".evidence/M3/self-review.md"
+      ]
+    },
+    {
+      "id": "M4",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M4/verification.json",
+        ".evidence/M4/self-review.md"
+      ]
+    },
+    {
+      "id": "G1",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/G1/verification.json",
+        ".evidence/G1/functional-review.md",
+        ".evidence/G1/field-ux-review.md"
+      ]
+    },
+    {
+      "id": "M5",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M5/verification.json",
+        ".evidence/M5/self-review.md"
+      ]
+    },
+    {
+      "id": "M6",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M6/verification.json",
+        ".evidence/M6/domain-review.md"
+      ]
+    },
+    {
+      "id": "G2",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/G2/verification.json",
+        ".evidence/G2/functional-review.md",
+        ".evidence/G2/field-ux-review.md"
+      ]
+    },
+    {
+      "id": "M7",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M7/verification.json",
+        ".evidence/M7/domain-review.md"
+      ]
+    },
+    {
+      "id": "G3",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/G3/verification.json",
+        ".evidence/G3/functional-review.md",
+        ".evidence/G3/field-ux-review.md"
+      ]
+    },
+    {
+      "id": "M8",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M8/verification.json",
+        ".evidence/M8/domain-review.md"
+      ]
+    },
+    {
+      "id": "M9",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M9/verification.json",
+        ".evidence/M9/domain-review.md"
+      ]
+    },
+    {
+      "id": "M10",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M10/verification.json",
+        ".evidence/M10/domain-review.md"
+      ]
+    },
+    {
+      "id": "M11",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M11/verification.json",
+        ".evidence/M11/self-review.md"
+      ]
+    },
+    {
+      "id": "G4",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/G4/verification.json",
+        ".evidence/G4/functional-review.md",
+        ".evidence/G4/domain-review.md",
+        ".evidence/G4/field-ux-review.md",
+        ".evidence/G4/regression-review.md"
+      ]
+    },
+    {
+      "id": "M12",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M12/verification.json",
+        ".evidence/M12/domain-review.md"
+      ]
+    },
+    {
+      "id": "M13",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M13/verification.json",
+        ".evidence/M13/self-review.md"
+      ]
+    },
+    {
+      "id": "G5",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/G5/verification.json",
+        ".evidence/G5/functional-review.md",
+        ".evidence/G5/ux-review.md"
+      ]
+    },
+    {
+      "id": "M14",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M14/verification.json",
+        ".evidence/M14/mobile-accessibility-review.md",
+        ".evidence/M14/code-quality-review.md",
+        ".evidence/M14/regression-review.md"
+      ]
+    },
+    {
+      "id": "M15",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "requiredEvidence": [
+        ".evidence/M15/verification.json",
+        ".evidence/M15/domain-prosecutor.md",
+        ".evidence/M15/field-ux-review.md",
+        ".evidence/M15/data-integrity-review.md",
+        ".evidence/M15/regression-review.md",
+        ".evidence/M15/product-scope-review.md",
+        ".evidence/M15/code-quality-review.md",
+        ".evidence/M15/accessibility-mobile-review.md",
+        ".evidence/M15/chaos-user-review.md"
+      ]
+    }
+  ]
+}

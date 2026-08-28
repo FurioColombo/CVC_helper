@@ -1,0 +1,13 @@
+{
+  "engine": "tesseract.js",
+  "language": "ita",
+  "nativeTextDetectorAvailable": false,
+  "clear": {
+    "confidence": 94,
+    "text": "Corso D2 — Elenco allievi\n\nSettimana 35 - 2026\nNOME COGNOME DATA DI NASCITA TELEFONO\nMario Rossi 12/03/2008 333 123 4567\nGiulia Bianchi 24/11/1998 347 765 4321\nLuca De Angelis 05/07/2004 320 555 0142"
+  },
+  "blurred": {
+    "confidence": 53,
+    "text": "Corso D2 — Elenco allievi\n\n‘emme n 20\n\n-- o Data 0 nasca uu sromo\nMaro “ee 12032008 333 123 4567\nmae Baron Mii MI res anzi\nLuca De Angeta 050! 2004 320 368 0142"
+  }
+}

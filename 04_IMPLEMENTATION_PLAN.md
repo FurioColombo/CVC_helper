@@ -19,7 +19,7 @@ Do not duplicate detailed business rules here. Reference `01_PRODUCT_SPEC.md` an
 ## M0 — Harness Foundation
 
 **Category:** FOUNDATION  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -102,10 +102,17 @@ No substantive product feature implementation starts before this milestone is CO
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M0/verification.json`; controller refusal proof; PowerSync,
+  OCR and STT spike reports/results; self-review; 7 unit/component/domain tests;
+  2 Playwright mobile browser journeys including reload persistence; CI workflow.
+- Decisions: retain PowerSync 2.2 local-only after successful browser spike;
+  granular independent tables; Tesseract.js Italian OCR for M4 integration;
+  quantized multilingual Whisper-tiny for later voice contexts; Base UI-backed
+  shadcn component foundation with Tailwind and CVC-specific tokens.
+- Known limitations: multi-tab PowerSync and WebKit persistence require later
+  gate coverage; OCR/STT need real phone/adverse-input validation when integrated;
+  final PWA icon/brand assets belong to the user-visible app-shell milestone.
+- Git checkpoint: `feat: establish autonomous verification harness`
 
 ---
 

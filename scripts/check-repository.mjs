@@ -1,0 +1,60 @@
+import assert from "node:assert/strict"
+import { existsSync, readFileSync } from "node:fs"
+import { resolve } from "node:path"
+
+const root = resolve(import.meta.dirname, "..")
+const requiredFiles = [
+  "AGENTS.md",
+  ".github/workflows/ci.yml",
+  ".milestones/manifest.json",
+  "playwright.config.ts",
+  "vite.config.ts",
+  "vitest.config.ts",
+  "src/domain/config.ts",
+  "src/domain/invariants.ts",
+  "src/domain/scenarios.ts",
+  "src/persistence/db.ts",
+]
+
+for (const file of requiredFiles) {
+  assert.ok(
+    existsSync(resolve(root, file)),
+    `Missing required repository file: ${file}`,
+  )
+}
+
+const packageJson = JSON.parse(
+  readFileSync(resolve(root, "package.json"), "utf8"),
+)
+for (const script of [
+  "verify:quick",
+  "verify:domain",
+  "verify:e2e",
+  "verify",
+  "verify:all",
+  "milestone:start",
+  "milestone:check",
+  "milestone:complete",
+]) {
+  assert.ok(packageJson.scripts[script], `Missing package script: ${script}`)
+}
+
+assert.ok(
+  packageJson.dependencies?.["@powersync/web"],
+  "PowerSync must remain after the successful local-only browser spike",
+)
+
+for (const forbidden of [
+  "dexie",
+  "@supabase/supabase-js",
+  "redux",
+  "zustand",
+]) {
+  assert.ok(
+    !packageJson.dependencies?.[forbidden] &&
+      !packageJson.devDependencies?.[forbidden],
+    `Out-of-scope or rejected dependency retained: ${forbidden}`,
+  )
+}
+
+console.log("PASS: repository structure and command surface")

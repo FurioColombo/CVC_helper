@@ -1,0 +1,13 @@
+archive/
+node_modules/
+dist/
+playwright-report/
+test-results/
+coverage/
+.evidence/
+AGENTS.md
+01_PRODUCT_SPEC.md
+02_MVP_SCOPE.md
+03_TECHNICAL_DECISIONS.md
+04_IMPLEMENTATION_PLAN.md
+package-lock.json

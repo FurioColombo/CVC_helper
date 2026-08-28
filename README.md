@@ -7,6 +7,7 @@ This repository pack is intentionally designed so Codex can be started with a ve
 Codex entrypoint: `AGENTS.md`
 
 Authoritative documents:
+
 1. `AGENTS.md` — autonomous execution protocol and verification contract.
 2. `01_PRODUCT_SPEC.md` — user-visible behavior and business/domain rules.
 3. `02_MVP_SCOPE.md` — MVP boundaries.

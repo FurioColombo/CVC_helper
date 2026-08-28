@@ -1,0 +1,10 @@
+{
+  "engine": "@huggingface/transformers",
+  "model": "onnx-community/whisper-base",
+  "dtype": "q8",
+  "language": "italian",
+  "expected": "Mario ha buona sensibilità al timone ma deve anticipare le manovre.",
+  "transcript": "Mario ha buona sensibilità altimonia ma da eventi ci pare le manovre.",
+  "loadedAfterMs": 3318,
+  "inferenceMs": 514
+}
