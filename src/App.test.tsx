@@ -12,6 +12,7 @@ vi.mock("@/persistence/students", () => ({
   listStudents: vi.fn().mockResolvedValue([]),
   setStudentActive: vi.fn(),
   updateStudent: vi.fn(),
+  updateStudentKnowledge: vi.fn(),
 }))
 
 import { App } from "@/App"

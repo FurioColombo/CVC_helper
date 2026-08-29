@@ -60,12 +60,14 @@ describe("course-state invariants", () => {
       ...state.students[0]!,
       active: 2,
       sex: "invalid",
+      size: "XXL",
     }
 
     expect(validateCourseState(state)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: "invalid-student-active" }),
         expect.objectContaining({ code: "invalid-student-sex" }),
+        expect.objectContaining({ code: "invalid-student-size" }),
       ]),
     )
   })

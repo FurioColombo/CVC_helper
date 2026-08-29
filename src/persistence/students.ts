@@ -1,4 +1,4 @@
-import type { StudentSex } from "@/domain/config"
+import type { StudentSex, StudentSize } from "@/domain/config"
 import { db } from "@/persistence/db"
 
 export interface StudentRecord {
@@ -10,6 +10,8 @@ export interface StudentRecord {
   dateOfBirth: string
   sex: StudentSex | null
   phone: string | null
+  size: StudentSize | null
+  initialNote: string | null
   active: 0 | 1
 }
 
@@ -22,8 +24,13 @@ export interface StudentInput {
   phone: string | null
 }
 
+export interface StudentKnowledgeInput {
+  size: StudentSize | null
+  initialNote: string | null
+}
+
 const STUDENT_COLUMNS =
-  "id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, active"
+  "id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, size, initialNote, active"
 
 export async function listStudents(courseId: string) {
   await db.init()
@@ -45,12 +52,14 @@ export async function createStudent(
     id: crypto.randomUUID(),
     courseId,
     ...input,
+    size: null,
+    initialNote: null,
     active: 1,
   }
   await db.execute(
     `INSERT INTO students(
-      id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, size, initialNote, active
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       student.id,
       student.courseId,
@@ -60,6 +69,8 @@ export async function createStudent(
       student.dateOfBirth,
       student.sex,
       student.phone,
+      student.size,
+      student.initialNote,
       student.active,
     ],
   )
@@ -98,5 +109,19 @@ export async function setStudentActive(
   await db.execute(
     "UPDATE students SET active = ? WHERE id = ? AND courseId = ?",
     [active ? 1 : 0, studentId, courseId],
+  )
+}
+
+export async function updateStudentKnowledge(
+  studentId: string,
+  courseId: string,
+  input: StudentKnowledgeInput,
+) {
+  await db.init()
+  await db.execute(
+    `UPDATE students
+     SET size = ?, initialNote = ?
+     WHERE id = ? AND courseId = ?`,
+    [input.size, input.initialNote, studentId, courseId],
   )
 }

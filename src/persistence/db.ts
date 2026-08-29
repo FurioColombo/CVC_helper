@@ -19,6 +19,8 @@ const students = Table.createLocalOnly({
   dateOfBirth: column.text,
   sex: column.text,
   phone: column.text,
+  size: column.text,
+  initialNote: column.text,
   active: column.integer,
 })
 

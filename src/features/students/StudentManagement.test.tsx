@@ -7,6 +7,7 @@ vi.mock("@/persistence/students", () => ({
   listStudents: vi.fn(),
   setStudentActive: vi.fn(),
   updateStudent: vi.fn(),
+  updateStudentKnowledge: vi.fn(),
 }))
 
 import { StudentManagement } from "@/features/students/StudentManagement"
@@ -39,6 +40,8 @@ const MARIO: StudentRecord = {
   dateOfBirth: "2010-01-01",
   sex: "male",
   phone: null,
+  size: null,
+  initialNote: null,
   active: 1,
 }
 
@@ -59,6 +62,11 @@ describe("StudentManagement", () => {
     render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
 
     await screen.findByRole("heading", { name: "Allievi" })
+    await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+    expect(
+      screen.getByRole("button", { name: "Conoscenza allievi" }),
+    ).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "Menu allievi" }))
     await user.click(screen.getByRole("button", { name: "Aggiungi allievo" }))
     await user.type(screen.getByLabelText("Nome"), "Mario")
     await user.type(screen.getByLabelText("Cognome"), "Rossi")

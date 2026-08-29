@@ -22,7 +22,22 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,wasm,woff2}"],
+        globIgnores: ["**/ort-wasm-*.wasm"],
         maximumFileSizeToCacheInBytes: 3_000_000,
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/ort-wasm-.*\.wasm$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "cvc-speech-runtime",
+              cacheableResponse: { statuses: [0, 200] },
+              expiration: {
+                maxEntries: 2,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
+          },
+        ],
       },
     }),
   ],

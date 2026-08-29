@@ -207,7 +207,7 @@ Self-review.
 ## M3 — Conoscenza allievi
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -225,10 +225,22 @@ Self-review.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M3/verification.json` records 33 unit/component tests,
+  domain/repository checks, the production PWA build, and 8 Playwright journeys
+  across Pixel 7 and iPhone 13. `.evidence/M3/self-review.md` records PASS with
+  no blockers. Browser inspection at 390 × 844 confirmed compact cards, 44 px
+  controls, visible dictation actions, and no horizontal overflow.
+- Decisions: size uses the canonical `XS`–`XL` table; size saves immediately and
+  notes use a short autosave debounce. Italian speech-to-text is implemented
+  behind `transcribeAudio(audio)` with quantized local Whisper. A transcript is
+  an editable draft until explicit confirmation, and recorded audio is
+  discarded. The large ONNX runtime is cached on first use instead of being
+  included in the PWA install precache.
+- Known limitations: the first dictation needs the local speech assets to be
+  downloaded and cached and can therefore be slow. Real-device microphone
+  permission, Italian outdoor recordings, and native WebKit remain M14 device
+  validation work; deterministic media-boundary coverage is in place now.
+- Git checkpoint: `feat: complete M3 student knowledge workflow`.
 
 ---
 

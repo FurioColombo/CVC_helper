@@ -13,6 +13,7 @@ import {
   listStudents,
   setStudentActive,
   updateStudent,
+  updateStudentKnowledge,
   type StudentInput,
 } from "@/persistence/students"
 
@@ -46,7 +47,13 @@ describe("student persistence", () => {
     const student = await createStudent("course-1", INPUT)
 
     expect(student).toEqual(
-      expect.objectContaining({ courseId: "course-1", active: 1, ...INPUT }),
+      expect.objectContaining({
+        courseId: "course-1",
+        active: 1,
+        size: null,
+        initialNote: null,
+        ...INPUT,
+      }),
     )
     expect(database.execute).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO students"),
@@ -70,6 +77,18 @@ describe("student persistence", () => {
       2,
       expect.stringContaining("UPDATE students SET active = ?"),
       [0, "student-1", "course-1"],
+    )
+  })
+
+  it("autosaves size and initial note without replacing identity fields", async () => {
+    await updateStudentKnowledge("student-1", "course-1", {
+      size: "L",
+      initialNote: "Esperienza Optimist",
+    })
+
+    expect(database.execute).toHaveBeenCalledWith(
+      expect.stringContaining("SET size = ?, initialNote = ?"),
+      ["L", "Esperienza Optimist", "student-1", "course-1"],
     )
   })
 })

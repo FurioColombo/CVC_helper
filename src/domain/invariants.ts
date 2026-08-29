@@ -5,6 +5,7 @@ import {
   FAULT_STATES,
   SESSION_SEQUENCE,
   STUDENT_SEXES,
+  STUDENT_SIZES,
   VOLUNTEER_ROLES,
 } from "./config"
 
@@ -13,6 +14,7 @@ export interface CourseStateSnapshot {
     id: string
     active?: number
     sex?: string | null
+    size?: string | null
   }>
   volunteers: Array<{ id: string; role: string }>
   boats: Array<{ id: string; availability: string }>
@@ -109,6 +111,17 @@ export function validateCourseState(
         code: "invalid-student-sex",
         path: `students[${index}].sex`,
         message: `Invalid student sex: ${student.sex}`,
+      })
+    }
+    if (
+      student.size !== undefined &&
+      student.size !== null &&
+      !hasValue(STUDENT_SIZES, student.size)
+    ) {
+      issues.push({
+        code: "invalid-student-size",
+        path: `students[${index}].size`,
+        message: `Invalid student size: ${student.size}`,
       })
     }
   })

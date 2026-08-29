@@ -1,6 +1,8 @@
 import {
   CalendarDays,
   ChevronLeft,
+  MoreVertical,
+  NotebookPen,
   Pencil,
   Phone,
   Plus,
@@ -13,12 +15,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
 import { calculateAge, getStudentDisplayName, isMinor } from "@/domain/student"
+import { StudentKnowledge } from "@/features/students/StudentKnowledge"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   createStudent,
   listStudents,
   setStudentActive,
   updateStudent,
+  type StudentKnowledgeInput,
   type StudentInput,
   type StudentRecord,
 } from "@/persistence/students"
@@ -26,6 +30,7 @@ import {
 type StudentScreen =
   | { kind: "list" }
   | { kind: "create" }
+  | { kind: "knowledge" }
   | { kind: "detail"; studentId: string }
   | { kind: "edit"; studentId: string }
 
@@ -412,6 +417,12 @@ function StudentDetail({
             </dd>
           </div>
           <div className="flex justify-between gap-4 py-3.5">
+            <dt className="text-sm text-muted-foreground">Taglia</dt>
+            <dd className="text-right text-sm font-bold">
+              {student.size || "—"}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4 py-3.5">
             <dt className="flex items-center gap-2 text-sm text-muted-foreground">
               <Phone aria-hidden="true" className="size-4" /> Telefono
             </dt>
@@ -424,6 +435,13 @@ function StudentDetail({
             <dd className="text-right text-sm font-bold">{displayName}</dd>
           </div>
         </dl>
+
+        <div className="mt-4 rounded-2xl bg-muted p-4">
+          <h3 className="text-sm font-bold">Nota iniziale</h3>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+            {student.initialNote || "Nessuna nota speciale."}
+          </p>
+        </div>
 
         {error && (
           <p className="mt-4 text-sm font-semibold text-[#a2381b]" role="alert">
@@ -458,6 +476,7 @@ export function StudentManagement({
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
   const [screen, setScreen] = useState<StudentScreen>({ kind: "list" })
+  const [menuOpen, setMenuOpen] = useState(false)
 
   async function refreshStudents() {
     try {
@@ -530,6 +549,23 @@ export function StudentManagement({
     )
   }
 
+  if (screen.kind === "knowledge") {
+    return (
+      <StudentKnowledge
+        courseId={course.id}
+        onBack={() => setScreen({ kind: "list" })}
+        onSaved={(studentId: string, input: StudentKnowledgeInput) => {
+          setStudents((current) =>
+            current.map((student) =>
+              student.id === studentId ? { ...student, ...input } : student,
+            ),
+          )
+        }}
+        students={students}
+      />
+    )
+  }
+
   if (screen.kind === "edit" && selectedStudent) {
     return (
       <>
@@ -574,19 +610,66 @@ export function StudentManagement({
     <>
       <StudentPageHeader
         action={
-          students.length > 0 ? (
+          <div className="flex items-center gap-1">
+            {students.length > 0 && (
+              <Button
+                aria-label="Aggiungi allievo"
+                className="size-11 px-0"
+                onClick={() => setScreen({ kind: "create" })}
+              >
+                <Plus aria-hidden="true" className="size-5" />
+              </Button>
+            )}
             <Button
-              aria-label="Aggiungi allievo"
+              aria-controls="student-actions"
+              aria-expanded={menuOpen}
+              aria-label="Menu allievi"
               className="size-11 px-0"
-              onClick={() => setScreen({ kind: "create" })}
+              onClick={() => setMenuOpen((open) => !open)}
+              variant="secondary"
             >
-              <Plus aria-hidden="true" className="size-5" />
+              <MoreVertical aria-hidden="true" className="size-5" />
             </Button>
-          ) : undefined
+          </div>
         }
         onBack={onHome}
         title="Allievi"
       />
+      {menuOpen && (
+        <section
+          aria-label="Azioni allievi"
+          className="mb-4 grid gap-2 rounded-2xl border bg-card p-2 shadow-[0_8px_24px_rgb(6_59_82/0.08)]"
+          id="student-actions"
+        >
+          <Button
+            className="justify-start"
+            onClick={() => {
+              setMenuOpen(false)
+              setScreen({ kind: "create" })
+            }}
+            variant="secondary"
+          >
+            <Plus aria-hidden="true" className="size-5" />
+            Aggiungi allievo
+          </Button>
+          <Button className="justify-start" disabled variant="secondary">
+            <ScanLine aria-hidden="true" className="size-5" />
+            Scan allievi · prossimamente
+          </Button>
+          <Button
+            className="justify-start"
+            disabled={students.length === 0}
+            onClick={() => {
+              setMenuOpen(false)
+              setScreen({ kind: "knowledge" })
+            }}
+            variant="secondary"
+          >
+            <NotebookPen aria-hidden="true" className="size-5" />
+            Conoscenza allievi
+          </Button>
+        </section>
+      )}
       {students.length === 0 ? (
         <EmptyStudents onAdd={() => setScreen({ kind: "create" })} />
       ) : (
