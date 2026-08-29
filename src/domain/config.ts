@@ -5,8 +5,9 @@ export const COURSE_LEVELS = [1, 2, 3, 4, 5] as const
 export type CourseLevel = (typeof COURSE_LEVELS)[number]
 
 export const STUDENT_SEXES = [
-  { id: "female", label: "F" },
-  { id: "male", label: "M" },
+  { id: "male", label: "M", detailLabel: "Uomo" },
+  { id: "female", label: "F", detailLabel: "Donna" },
+  { id: "other", label: "Altro", detailLabel: "Altro" },
 ] as const
 export type StudentSex = (typeof STUDENT_SEXES)[number]["id"]
 

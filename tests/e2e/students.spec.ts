@@ -16,7 +16,7 @@ async function addStudent(
   await page.getByLabel("Nome", { exact: true }).fill(input.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(input.surname)
   await page.getByLabel(/^Data di nascita/).fill(input.dateOfBirth)
-  await page.getByLabel(/^Sesso/).selectOption("male")
+  await page.getByText("M", { exact: true }).click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
   await expect(page.getByRole("heading", { name: "Allievi" })).toBeVisible()
 }

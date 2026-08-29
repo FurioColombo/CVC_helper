@@ -13,6 +13,7 @@ None.
 - Disabling is a reversible persisted state change rather than deletion. Disabled students stay visible and greyed in the student list, while the record remains available for later history-bearing features.
 - Student reads and mutations are scoped to the active course. The PowerSync local-only schema now stores the M2 identity fields, and browser reload verifies persistence.
 - The student list intentionally shows only display name, age, sex indicator, and the required minor/disabled status markers. Full identity and contact fields are confined to the detail/edit flow.
+- Follow-up usability review replaced the sex dropdown with three adjacent one-tap choices: `M`, `F`, and `Altro`. The values are canonical persisted domain options, with direct component coverage for `Altro` and browser coverage for the visible `M` control.
 
 ## Quality-of-life findings
 
@@ -22,10 +23,10 @@ None.
 
 ## Evidence inspected
 
-- `npm run verify:quick`: 8 test files and 29 tests passed, including lint, formatting, typecheck, domain rules, persistence calls, and student components.
+- `npm run verify:quick`: 8 test files and 30 tests passed, including lint, formatting, typecheck, canonical `M`/`F`/`Altro` choices, domain rules, persistence calls, and student components.
 - `npm run verify:domain`: repository structure, canonical student-sex values, and persisted-state enum checks passed.
 - `npm run verify:e2e`: 6 journeys passed across Pixel 7 (412 × 915) and iPhone 13 (390 × 844) profiles. The M2 journey creates two same-first-name students, verifies minor marking and disambiguated names, edits nickname and phone, disables, reloads, and re-enables.
-- In-app browser inspection at 390 × 844 verified the revised `D3 · 35 | 2026` Home title, no Home overflow, a compact student empty state, and a usable student form with save controls above the fixed navigation. The explicit iPhone viewport remains active for user preview.
+- In-app browser inspection at 390 × 844 verified the revised `D3 · 35 | 2026` Home title, no Home overflow, a compact student empty state, and a usable student form with the `M`/`F`/`Altro` controls and save actions above the fixed navigation. The explicit iPhone viewport remains active for user preview.
 - `git diff --check` passed, and the full M2 diff was reviewed for scope, persistence integrity, reversible state, error handling, accessibility, and mobile density.
 
 ## Scope review

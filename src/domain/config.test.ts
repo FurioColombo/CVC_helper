@@ -6,6 +6,7 @@ import {
   DUTY_DAYS,
   SESSION_SEQUENCE,
   SIZE_WARNING_MATRIX,
+  STUDENT_SEXES,
   STUDENT_SIZES,
 } from "@/domain/config"
 
@@ -46,6 +47,14 @@ describe("canonical domain configuration", () => {
       "wednesday",
       "thursday",
       "friday",
+    ])
+  })
+
+  it("defines the directly editable student sex choices", () => {
+    expect(STUDENT_SEXES.map(({ id, label }) => ({ id, label }))).toEqual([
+      { id: "male", label: "M" },
+      { id: "female", label: "F" },
+      { id: "other", label: "Altro" },
     ])
   })
 

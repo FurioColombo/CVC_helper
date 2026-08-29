@@ -32,9 +32,9 @@ type StudentScreen =
 type LoadState = "loading" | "ready" | "error"
 
 function sexLabel(sex: StudentSex | null, compact = false) {
-  if (sex === "female") return compact ? "F" : "Donna"
-  if (sex === "male") return compact ? "M" : "Uomo"
-  return compact ? "—" : "Non indicato"
+  const option = STUDENT_SEXES.find(({ id }) => id === sex)
+  if (!option) return compact ? "—" : "Non indicato"
+  return compact ? option.label : option.detailLabel
 }
 
 function formatDate(date: string) {
@@ -252,21 +252,27 @@ function StudentForm({
         />
       </Field>
 
-      <Field label="Sesso">
-        <select
-          aria-label="Sesso"
-          className="h-12 w-full rounded-xl border bg-card px-3 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
-          onChange={(event) => setSex(event.target.value as StudentSex | "")}
-          value={sex}
-        >
-          <option value="">Non indicato</option>
+      <fieldset className="grid gap-2 text-sm font-bold">
+        <legend>Sesso</legend>
+        <div className="grid grid-cols-3 gap-2">
           {STUDENT_SEXES.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.id === "female" ? "Donna" : "Uomo"}
-            </option>
+            <label className="cursor-pointer" key={option.id}>
+              <input
+                checked={sex === option.id}
+                className="peer sr-only"
+                name="sex"
+                onChange={() => setSex(option.id)}
+                required
+                type="radio"
+                value={option.id}
+              />
+              <span className="grid h-12 place-items-center rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+                {option.label}
+              </span>
+            </label>
           ))}
-        </select>
-      </Field>
+        </div>
+      </fieldset>
 
       <Field label="Telefono">
         <Input

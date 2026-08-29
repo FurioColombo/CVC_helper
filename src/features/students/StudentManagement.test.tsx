@@ -63,7 +63,10 @@ describe("StudentManagement", () => {
     await user.type(screen.getByLabelText("Nome"), "Mario")
     await user.type(screen.getByLabelText("Cognome"), "Rossi")
     await user.type(screen.getByLabelText(/^Data di nascita/), "2010-01-01")
-    await user.selectOptions(screen.getByLabelText("Sesso"), "male")
+    expect(screen.getByRole("group", { name: "Sesso" })).toBeVisible()
+    expect(screen.getByRole("radio", { name: "F" })).toBeVisible()
+    expect(screen.getByRole("radio", { name: "Altro" })).toBeVisible()
+    await user.click(screen.getByRole("radio", { name: "Altro" }))
     await user.click(screen.getByRole("button", { name: "Salva allievo" }))
 
     await waitFor(() =>
@@ -73,7 +76,7 @@ describe("StudentManagement", () => {
           firstName: "Mario",
           surname: "Rossi",
           dateOfBirth: "2010-01-01",
-          sex: "male",
+          sex: "other",
         }),
       ),
     )
