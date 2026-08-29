@@ -119,7 +119,7 @@ No substantive product feature implementation starts before this milestone is CO
 ## M1 — Course setup and app shell
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -139,10 +139,19 @@ Self-review.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M1/verification.json`; `.evidence/M1/self-review.md`;
+  16 unit/component/domain tests; 2 Playwright Pixel 7 journeys covering
+  first launch, creation, reload persistence, Home cards, Settings and the exact
+  primary navigation; in-app browser visual and console inspection.
+- Decisions: derive ISO week/year from the device's local calendar date; persist
+  the course's Saturday-to-Saturday date range as date-only values; replace the
+  active course inside one PowerSync/SQLite write transaction; keep later
+  feature areas as navigable shell placeholders without implementing their
+  post-M1 behavior.
+- Known limitations: course replacement/lifecycle controls are intentionally
+  absent; Allievi, Barche, Comandate, Equipaggi, Valutazioni, Volontari and
+  Avarie contain only shell-level placeholders until their approved milestones.
+- Git checkpoint: `feat: complete M1 course setup and app shell`
 
 ---
 

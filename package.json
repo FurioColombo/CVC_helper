@@ -24,7 +24,8 @@
     "milestone:check": "node scripts/milestone.mjs check",
     "milestone:complete": "node scripts/milestone.mjs complete",
     "milestone:self-test": "node scripts/milestone.mjs self-test",
-    "evidence:m0": "node scripts/record-verification.mjs M0"
+    "evidence:m0": "node scripts/record-verification.mjs M0",
+    "evidence:m1": "node scripts/record-verification.mjs M1"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
