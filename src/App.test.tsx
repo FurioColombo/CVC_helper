@@ -61,6 +61,9 @@ describe("course setup and application shell", () => {
     expect(
       await screen.findByRole("heading", { name: "D2 35 2026" }),
     ).toBeVisible()
+    expect(
+      screen.getByRole("heading", { name: "D2 35 2026" }),
+    ).toHaveTextContent("D2·35|2026")
   })
 
   it("restores the active course and exposes the exact primary navigation", async () => {

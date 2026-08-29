@@ -285,8 +285,22 @@ function Home({
       <section className="overflow-hidden rounded-2xl bg-primary px-4 py-4 text-primary-foreground shadow-[0_12px_32px_rgb(6_59_82/0.18)]">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black tracking-tight">
-              {course.label}
+            <h1
+              aria-label={course.label}
+              className="flex items-baseline gap-1.5 text-2xl font-black tracking-tight"
+            >
+              <span>
+                {course.family === "Deriva" ? "D" : "C"}
+                {course.level}
+              </span>
+              <span aria-hidden="true" className="text-white/45">
+                ·
+              </span>
+              <span>{course.isoWeek}</span>
+              <span aria-hidden="true" className="text-sm text-[#f6b63f]">
+                |
+              </span>
+              <span>{course.year}</span>
             </h1>
             <p className="mt-1 text-xs text-white/75">
               {formatDate(course.startDate)} — {formatDate(course.endDate)} ·

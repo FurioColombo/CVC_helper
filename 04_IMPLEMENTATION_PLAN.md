@@ -140,10 +140,11 @@ Self-review.
 ### Completion log
 
 - Evidence: `.evidence/M1/verification.json`; `.evidence/M1/self-review.md`;
-  16 unit/component/domain tests; 2 Playwright Pixel 7 journeys covering
-  first launch, creation, reload persistence, Home cards, Settings and the exact
-  primary navigation; in-app browser visual and console inspection, including
-  a 412 × 915 density check with no document overflow or navigation overlap.
+  16 unit/component/domain tests; 4 Playwright journeys across Pixel 7 and
+  iPhone 13 mobile profiles covering first launch, creation, reload persistence,
+  Home cards, Settings and the exact primary navigation; in-app browser visual
+  and console inspection at both 412 × 915 and 390 × 844 with no document
+  overflow or navigation overlap.
 - Decisions: derive ISO week/year from the device's local calendar date; persist
   the course's Saturday-to-Saturday date range as date-only values; replace the
   active course inside one PowerSync/SQLite write transaction; keep later
@@ -151,9 +152,12 @@ Self-review.
   post-M1 behavior.
 - Known limitations: course replacement/lifecycle controls are intentionally
   absent; Allievi, Barche, Comandate, Equipaggi, Valutazioni, Volontari and
-  Avarie contain only shell-level placeholders until their approved milestones.
+  Avarie contain only shell-level placeholders until their approved milestones;
+  native WebKit is deferred to cross-browser hardening because the frozen
+  macOS 14 Playwright runtime cannot launch with the current protocol.
 - Git checkpoints: `feat: complete M1 course setup and app shell`;
-  `fix: compact M1 Home for phone viewport`.
+  `fix: compact M1 Home for phone viewport`;
+  `fix: refine course title and dual mobile coverage`.
 
 ---
 

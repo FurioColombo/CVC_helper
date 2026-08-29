@@ -13,8 +13,12 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium-mobile",
+      name: "pixel-7-chrome",
       use: { ...devices["Pixel 7"] },
+    },
+    {
+      name: "iphone-13-viewport",
+      use: { ...devices["iPhone 13"], browserName: "chromium" },
     },
   ],
   webServer: {
