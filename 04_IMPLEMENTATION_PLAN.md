@@ -164,7 +164,7 @@ Self-review.
 ## M2 — Student management core
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -184,10 +184,20 @@ Self-review.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M2/verification.json` records PASS for lint,
+  formatting, typecheck, 29 deterministic tests, domain/repository checks,
+  production build, and 6 Playwright journeys across Pixel 7 and iPhone 13
+  profiles. `.evidence/M2/self-review.md` records PASS with no blockers and
+  includes the 390 × 844 in-app mobile inspection.
+- Decisions: calculate age and minor state at the course start date; derive a
+  unique short name from first name plus surname initial when needed; allow an
+  explicit nickname to override that result; keep sex nullable; implement
+  disable/re-enable as a persisted reversible state with records still visible.
+- Known limitations: size and initial note belong to M3, while camera scanning
+  belongs to M4. Future operational selection pools must exclude disabled
+  students when those pools are implemented. Native WebKit remains deferred to
+  M14 because the frozen build cannot launch on this macOS 14 host.
+- Git checkpoint: `feat: complete M2 student management core`.
 
 ---
 

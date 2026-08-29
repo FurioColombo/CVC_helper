@@ -25,7 +25,7 @@
     {
       "id": "M2",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/M2/verification.json",
         ".evidence/M2/self-review.md"

@@ -22,6 +22,7 @@ import {
   type CourseLevel,
 } from "@/domain/config"
 import { buildCourseDetails } from "@/domain/course"
+import { StudentManagement } from "@/features/students/StudentManagement"
 import {
   getActiveCourse,
   saveActiveCourse,
@@ -55,12 +56,11 @@ const HOME_CARDS = [
 ] as const
 
 const PLACEHOLDER_COPY: Record<
-  Exclude<ShellView, "home" | "settings">,
+  Exclude<ShellView, "home" | "settings" | "students">,
   string
 > = {
   faults: "Le avarie saranno disponibili dopo la configurazione delle barche.",
   crews: "La gestione degli equipaggi sarà attivata nei prossimi traguardi.",
-  students: "La gestione degli allievi sarà attivata nel prossimo traguardo.",
   boats: "La gestione delle barche sarà attivata nei prossimi traguardi.",
   sessions: "Le comandate saranno attivate nei prossimi traguardi.",
   evaluations: "Le valutazioni saranno attivate nei prossimi traguardi.",
@@ -341,7 +341,7 @@ function Placeholder({
   view,
   onHome,
 }: {
-  view: Exclude<ShellView, "home" | "settings">
+  view: Exclude<ShellView, "home" | "settings" | "students">
   onHome: () => void
 }) {
   const card = HOME_CARDS.find(({ id }) => id === view)
@@ -427,7 +427,10 @@ function AppShell({ course }: { course: CourseRecord }) {
         {view === "settings" && (
           <SettingsView course={course} onHome={() => setView("home")} />
         )}
-        {view !== "home" && view !== "settings" && (
+        {view === "students" && (
+          <StudentManagement course={course} onHome={() => setView("home")} />
+        )}
+        {view !== "home" && view !== "settings" && view !== "students" && (
           <Placeholder onHome={() => setView("home")} view={view} />
         )}
       </main>

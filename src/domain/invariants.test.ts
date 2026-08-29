@@ -53,4 +53,20 @@ describe("course-state invariants", () => {
       ]),
     )
   })
+
+  it("detects invalid persisted student enums", () => {
+    const state = buildD2FoundationScenario()
+    state.students[0] = {
+      ...state.students[0]!,
+      active: 2,
+      sex: "invalid",
+    }
+
+    expect(validateCourseState(state)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "invalid-student-active" }),
+        expect.objectContaining({ code: "invalid-student-sex" }),
+      ]),
+    )
+  })
 })

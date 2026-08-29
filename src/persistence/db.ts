@@ -15,6 +15,10 @@ const students = Table.createLocalOnly({
   courseId: column.text,
   firstName: column.text,
   surname: column.text,
+  nickname: column.text,
+  dateOfBirth: column.text,
+  sex: column.text,
+  phone: column.text,
   active: column.integer,
 })
 

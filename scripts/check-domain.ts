@@ -9,6 +9,7 @@ import {
   FAULT_STATES,
   SESSION_SEQUENCE,
   SIZE_WARNING_MATRIX,
+  STUDENT_SEXES,
   STUDENT_SIZES,
   VOLUNTEER_ROLES,
 } from "../src/domain/config.ts"
@@ -46,6 +47,7 @@ for (const values of [
   EVALUATION_VALUES.map(({ symbol }) => symbol),
   FAULT_STATES,
   VOLUNTEER_ROLES,
+  STUDENT_SEXES.map(({ id }) => id),
 ]) {
   assert.equal(
     values.length,

@@ -4,11 +4,16 @@ import {
   EVALUATION_VALUES,
   FAULT_STATES,
   SESSION_SEQUENCE,
+  STUDENT_SEXES,
   VOLUNTEER_ROLES,
 } from "./config"
 
 export interface CourseStateSnapshot {
-  students: Array<{ id: string }>
+  students: Array<{
+    id: string
+    active?: number
+    sex?: string | null
+  }>
   volunteers: Array<{ id: string; role: string }>
   boats: Array<{ id: string; availability: string }>
   faults: Array<{ id: string; boatId: string; state: string }>
@@ -85,6 +90,28 @@ export function validateCourseState(
   const boatIds = new Set(state.boats.map(({ id }) => id))
   const sessionIds = new Set(SESSION_SEQUENCE.map(({ id }) => id))
   const evaluationValues = EVALUATION_VALUES.map(({ symbol }) => symbol)
+  const studentSexes = STUDENT_SEXES.map(({ id }) => id)
+
+  state.students.forEach((student, index) => {
+    if (student.active !== undefined && ![0, 1].includes(student.active)) {
+      issues.push({
+        code: "invalid-student-active",
+        path: `students[${index}].active`,
+        message: `Invalid student active state: ${student.active}`,
+      })
+    }
+    if (
+      student.sex !== undefined &&
+      student.sex !== null &&
+      !studentSexes.includes(student.sex as never)
+    ) {
+      issues.push({
+        code: "invalid-student-sex",
+        path: `students[${index}].sex`,
+        message: `Invalid student sex: ${student.sex}`,
+      })
+    }
+  })
 
   state.volunteers.forEach((volunteer, index) => {
     if (!hasValue(VOLUNTEER_ROLES, volunteer.role)) {

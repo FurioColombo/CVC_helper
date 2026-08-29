@@ -4,6 +4,12 @@ export type CourseFamily = (typeof COURSE_FAMILIES)[number]
 export const COURSE_LEVELS = [1, 2, 3, 4, 5] as const
 export type CourseLevel = (typeof COURSE_LEVELS)[number]
 
+export const STUDENT_SEXES = [
+  { id: "female", label: "F" },
+  { id: "male", label: "M" },
+] as const
+export type StudentSex = (typeof STUDENT_SEXES)[number]["id"]
+
 export const BOAT_TYPES = [
   "RS Toura",
   "RS Quest",
