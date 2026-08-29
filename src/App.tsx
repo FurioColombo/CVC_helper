@@ -282,56 +282,39 @@ function Home({
 }) {
   return (
     <>
-      <section className="overflow-hidden rounded-3xl bg-primary px-5 py-6 text-primary-foreground shadow-[0_18px_50px_rgb(6_59_82/0.2)]">
-        <div className="flex items-start justify-between gap-4">
+      <section className="overflow-hidden rounded-2xl bg-primary px-4 py-4 text-primary-foreground shadow-[0_12px_32px_rgb(6_59_82/0.18)]">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold tracking-[0.16em] text-white/70 uppercase">
-              Corso attivo
-            </p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight">
+            <h1 className="text-2xl font-black tracking-tight">
               {course.label}
             </h1>
-            <p className="mt-2 text-sm text-white/80">
-              Settimana {course.isoWeek} · {course.year}
+            <p className="mt-1 text-xs text-white/75">
+              {formatDate(course.startDate)} — {formatDate(course.endDate)} ·
+              Caprera
             </p>
           </div>
           <Sailboat
             aria-hidden="true"
-            className="mt-1 size-10 text-[#f6b63f]"
+            className="size-8 shrink-0 text-[#f6b63f]"
           />
         </div>
-        <div className="mt-6 h-1 w-16 rounded-full bg-[#f6b63f]" />
-        <p className="mt-4 text-xs text-white/70">
-          {formatDate(course.startDate)} — {formatDate(course.endDate)} ·
-          Caprera
-        </p>
       </section>
 
-      <section className="mt-7" aria-labelledby="course-areas-title">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold tracking-[0.15em] text-[#b04423] uppercase">
-              Operatività
-            </p>
-            <h2 className="mt-1 text-xl font-black" id="course-areas-title">
-              Aree del corso
-            </h2>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Solo su questo dispositivo
-          </p>
-        </div>
+      <section className="mt-5" aria-labelledby="course-areas-title">
+        <h2 className="text-lg font-black" id="course-areas-title">
+          Aree del corso
+        </h2>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-2.5">
           {HOME_CARDS.map(({ id, label, icon: Icon }) => (
             <button
-              className="group flex min-h-28 flex-col justify-between rounded-2xl border bg-card p-4 text-left shadow-[0_8px_24px_rgb(6_59_82/0.06)] transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none"
+              className="group flex min-h-24 flex-col justify-between rounded-2xl border bg-card p-3.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none"
               key={id}
               onClick={() => onNavigate(id)}
               type="button"
             >
-              <Icon aria-hidden="true" className="size-6 text-primary" />
-              <span className="text-base font-bold">{label}</span>
+              <Icon aria-hidden="true" className="size-5 text-primary" />
+              <span className="text-sm font-bold">{label}</span>
             </button>
           ))}
         </div>

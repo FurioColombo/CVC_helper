@@ -71,6 +71,8 @@ describe("course setup and application shell", () => {
     expect(
       await screen.findByRole("heading", { name: "D2 35 2026" }),
     ).toBeVisible()
+    expect(screen.queryByText("Corso attivo")).not.toBeInTheDocument()
+    expect(screen.queryByText("Operatività")).not.toBeInTheDocument()
     const navigation = screen.getByRole("navigation", {
       name: "Navigazione principale",
     })

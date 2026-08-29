@@ -1,39 +1,39 @@
 {
   "milestone": "M1",
   "status": "PASS",
-  "recordedAt": "2026-08-29T08:23:11.862Z",
+  "recordedAt": "2026-08-29T08:30:13.690Z",
   "checks": [
     {
       "command": "npm run verify:quick",
       "status": "PASS",
-      "startedAt": "2026-08-29T08:22:54.362Z",
-      "durationMs": 8747,
+      "startedAt": "2026-08-29T08:29:58.161Z",
+      "durationMs": 7300,
       "exitCode": 0,
-      "outputTail": "\n> cvc-helper@0.0.0 test\n> vitest run\n\n\n RUN  v4.1.11 /Users/marcofuriocolombo/Documents/ChatGPT/CVC_helper\n\n\n Test Files  5 passed (5)\n      Tests  16 passed (16)\n   Start at  10:23:01\n   Duration  1.81s (transform 217ms, setup 1.24s, import 342ms, tests 204ms, environment 5.21s)"
+      "outputTail": "\n> cvc-helper@0.0.0 test\n> vitest run\n\n\n RUN  v4.1.11 /Users/marcofuriocolombo/Documents/ChatGPT/CVC_helper\n\n\n Test Files  5 passed (5)\n      Tests  16 passed (16)\n   Start at  10:30:03\n   Duration  1.96s (transform 249ms, setup 1.32s, import 401ms, tests 208ms, environment 5.58s)"
     },
     {
       "command": "npm run verify:domain",
       "status": "PASS",
-      "startedAt": "2026-08-29T08:23:03.111Z",
-      "durationMs": 651,
+      "startedAt": "2026-08-29T08:30:05.462Z",
+      "durationMs": 626,
       "exitCode": 0,
       "outputTail": "> npm run check:repository && npm run check:domain\n\n\n> cvc-helper@0.0.0 check:repository\n> node scripts/check-repository.mjs\n\nPASS: repository structure and command surface\n\n> cvc-helper@0.0.0 check:domain\n> node --import tsx scripts/check-domain.ts\n\nPASS: canonical domain tables and runtime foundation scenario"
     },
     {
       "command": "npm run build",
       "status": "PASS",
-      "startedAt": "2026-08-29T08:23:03.762Z",
-      "durationMs": 4809,
+      "startedAt": "2026-08-29T08:30:06.088Z",
+      "durationMs": 4688,
       "exitCode": 0,
-      "outputTail": "dist/assets/mc-wa-sqlite-async-OK58TZB1.js          63.94 kB │ gzip:  20.82 kB\ndist/assets/websockets-BrH1W1hC.js                 107.86 kB │ gzip:  23.50 kB\ndist/assets/index-CidV8K0x.js                      356.54 kB │ gzip: 110.95 kB\n\n✓ built in 568ms\n\nPWA v1.3.0\nmode      generateSW\nprecache  21 entries (8305.06 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js"
+      "outputTail": "dist/assets/mc-wa-sqlite-async-OK58TZB1.js          63.94 kB │ gzip:  20.82 kB\ndist/assets/websockets-BrH1W1hC.js                 107.86 kB │ gzip:  23.50 kB\ndist/assets/index-DoIx0Vk2.js                      355.93 kB │ gzip: 110.88 kB\n\n✓ built in 526ms\n\nPWA v1.3.0\nmode      generateSW\nprecache  21 entries (8303.88 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-9c191d2f.js"
     },
     {
       "command": "npm run verify:e2e",
       "status": "PASS",
-      "startedAt": "2026-08-29T08:23:08.570Z",
-      "durationMs": 3292,
+      "startedAt": "2026-08-29T08:30:10.776Z",
+      "durationMs": 2914,
       "exitCode": 0,
-      "outputTail": "\n\nRunning 2 tests using 2 workers\n\n  ✓  1 [chromium-mobile] › tests/e2e/smoke.spec.ts:3:1 › directs a fresh device to mobile course creation (992ms)\n  ✓  2 [chromium-mobile] › tests/e2e/persistence.spec.ts:3:1 › creates and restores the active course with the required shell (2.1s)\n\n  2 passed (2.7s)\n(node:49236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:49237) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)"
+      "outputTail": "\n\nRunning 2 tests using 2 workers\n\n  ✓  1 [chromium-mobile] › tests/e2e/smoke.spec.ts:3:1 › directs a fresh device to mobile course creation (1.0s)\n  ✓  2 [chromium-mobile] › tests/e2e/persistence.spec.ts:3:1 › creates and restores the active course with the required shell (1.8s)\n\n  2 passed (2.4s)\n(node:50457) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:50458) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)"
     }
   ]
 }

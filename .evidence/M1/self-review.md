@@ -27,3 +27,7 @@ None requiring M1 changes. Controls meet the mobile touch-size baseline, loading
 ## Scope review
 
 No post-MVP backend, synchronization, authentication, course archive, content system, or feature implementation was added. Non-M1 destinations are navigable shell placeholders only.
+
+## Follow-up mobile density review
+
+User review identified that the shortened decorative stripe still resembled unsupported course progress and that `Corso attivo` and `Operatività` consumed unnecessary phone space. All three elements were removed. At the Playwright project's Pixel 7 viewport (412 × 915), the revised hero is 84 px high, the final Home card ends at 544 px, the fixed navigation begins at approximately 840 px, and the document height equals the viewport height. The full Home surface therefore fits without vertical overflow or bottom-navigation overlap.
