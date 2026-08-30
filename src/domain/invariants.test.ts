@@ -150,4 +150,62 @@ describe("course-state invariants", () => {
       ]),
     )
   })
+
+  it("accepts an unavailable boat with simultaneous open and resolved faults", () => {
+    expect(
+      validateBoatRecords(
+        [
+          {
+            id: "boat-quest-2",
+            type: "RS Quest",
+            number: "2",
+            availability: "unavailable",
+          },
+        ],
+        [
+          {
+            id: "fault-open",
+            boatId: "boat-quest-2",
+            description: "Timone duro",
+            state: "open",
+            createdAt: "2026-08-29T10:00:00.000Z",
+            updatedAt: "2026-08-29T10:00:00.000Z",
+          },
+          {
+            id: "fault-resolved",
+            boatId: "boat-quest-2",
+            description: "Scotta sostituita",
+            state: "resolved",
+            createdAt: "2026-08-29T09:00:00.000Z",
+            updatedAt: "2026-08-29T11:00:00.000Z",
+          },
+        ],
+      ),
+    ).toEqual([])
+  })
+
+  it("rejects parseable but non-ISO fault timestamps", () => {
+    expect(
+      validateBoatRecords(
+        [
+          {
+            id: "boat-1",
+            type: "RS Quest",
+            number: "2",
+            availability: "available",
+          },
+        ],
+        [
+          {
+            id: "fault-1",
+            boatId: "boat-1",
+            description: "Timone duro",
+            state: "open",
+            createdAt: "August 29, 2026 10:00:00 UTC",
+            updatedAt: "August 29, 2026 11:00:00 UTC",
+          },
+        ],
+      ),
+    ).toEqual([expect.objectContaining({ code: "invalid-fault-timestamp" })])
+  })
 })

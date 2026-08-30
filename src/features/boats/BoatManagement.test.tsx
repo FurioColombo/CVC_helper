@@ -140,11 +140,8 @@ describe("BoatManagement", () => {
     const row = await screen.findByRole("button", {
       name: "RS Quest 7, Non disponibile",
     })
-    expect(row).toHaveClass(
-      "bg-muted/70",
-      "text-muted-foreground",
-      "opacity-65",
-    )
+    expect(row).toHaveClass("bg-muted/70", "text-muted-foreground")
+    expect(row).not.toHaveClass("opacity-65")
     await user.click(row)
     expect(screen.getByText("Non disponibile", { exact: true })).toBeVisible()
   })

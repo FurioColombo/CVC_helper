@@ -153,6 +153,11 @@ export async function setBoatAvailability(
 
 export async function deleteBoat(boatId: string, courseId: string) {
   await db.init()
+  const ownedBoat = await db.getOptional<{ id: string }>(
+    "SELECT id FROM boats WHERE id = ? AND courseId = ? LIMIT 1",
+    [boatId, courseId],
+  )
+  if (!ownedBoat) throw new Error("Boat does not belong to course")
   const crewReference = await db.getOptional<{ id: string }>(
     "SELECT id FROM crews WHERE boatId = ? LIMIT 1",
     [boatId],

@@ -51,7 +51,7 @@ test("manages boats and simultaneous faults through detail and global entry", as
     name: /RS Quest 2, Non disponibile, 1 non risolta/,
   })
   await expect(unavailableBoat).toBeVisible()
-  await expect(unavailableBoat).toHaveClass(/opacity-65/)
+  await expect(unavailableBoat).toHaveClass(/bg-muted\/70/)
 
   await page
     .getByRole("button", { name: /Laser Vago 9, Nessuna avaria/ })
@@ -81,5 +81,24 @@ test("manages boats and simultaneous faults through detail and global entry", as
       fullPage: true,
       path: path.resolve(".evidence/M6/boats-iphone13.png"),
     })
+    await page.screenshot({
+      path: path.resolve(".evidence/G2/boats-gate-iphone13.png"),
+    })
   }
+
+  await page.getByRole("button", { name: "Home", exact: true }).click()
+  await page.getByRole("button", { name: "Barche", exact: true }).click()
+  const persistedUnavailableBoat = page.getByRole("button", {
+    name: /RS Quest 2, Non disponibile, 1 non risolta/,
+  })
+  await expect(persistedUnavailableBoat).toBeVisible()
+  await expect(page.getByText("Laser Vago 9")).not.toBeVisible()
+  await persistedUnavailableBoat.click()
+  await page.getByRole("button", { name: "Rendi disponibile" }).click()
+  await page.getByRole("button", { name: "Indietro da RS Quest 2" }).click()
+  await expect(
+    page.getByRole("button", {
+      name: /RS Quest 2, Avaria aperta, 1 non risolta/,
+    }),
+  ).toBeVisible()
 })

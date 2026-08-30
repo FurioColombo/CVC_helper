@@ -63,6 +63,19 @@ function hasValue<T extends readonly string[]>(values: T, value: string) {
   return values.includes(value as T[number])
 }
 
+function parseIsoTimestamp(value: string | null | undefined) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
+  ) {
+    return Number.NaN
+  }
+  const parsed = Date.parse(value)
+  return Number.isFinite(parsed) && new Date(parsed).toISOString() === value
+    ? parsed
+    : Number.NaN
+}
+
 function duplicateIds(
   collection: string,
   records: Array<{ id: string }>,
@@ -214,8 +227,8 @@ export function validateCourseState(
         message: "Fault description cannot be empty",
       })
     }
-    const createdAt = Date.parse(fault.createdAt ?? "")
-    const updatedAt = Date.parse(fault.updatedAt ?? "")
+    const createdAt = parseIsoTimestamp(fault.createdAt)
+    const updatedAt = parseIsoTimestamp(fault.updatedAt)
     if (!Number.isFinite(createdAt) || !Number.isFinite(updatedAt)) {
       issues.push({
         code: "invalid-fault-timestamp",

@@ -58,7 +58,7 @@ export function FaultCard({
 
   return (
     <article
-      className={`rounded-2xl border bg-card p-4 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${fault.state === "resolved" ? "opacity-65" : ""}`}
+      className={`rounded-2xl border p-4 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${fault.state === "resolved" ? "bg-muted/50" : "bg-card"}`}
     >
       <div className="flex items-start gap-3">
         <span
@@ -75,7 +75,7 @@ export function FaultCard({
           {editing ? (
             <textarea
               aria-label={`Modifica descrizione ${fault.description}`}
-              className="mt-1 min-h-20 w-full resize-y rounded-xl border bg-card px-3 py-2 text-sm leading-6 outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
+              className="mt-1 min-h-20 w-full resize-y rounded-xl border bg-card px-3 py-2 text-base leading-6 outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
               onChange={(event) => setDescription(event.target.value)}
               value={description}
             />

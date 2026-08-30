@@ -171,6 +171,9 @@ describe("boat and fault persistence", () => {
   })
 
   it("deletes mistaken boats and their faults atomically", async () => {
+    database.getOptional
+      .mockResolvedValueOnce({ id: "boat-1" })
+      .mockResolvedValueOnce(null)
     await deleteBoat("boat-1", "course-1")
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
@@ -187,11 +190,25 @@ describe("boat and fault persistence", () => {
   })
 
   it("refuses deletion when a historical crew references the boat", async () => {
-    database.getOptional.mockResolvedValue({ id: "crew-1" })
+    database.getOptional
+      .mockResolvedValueOnce({ id: "boat-1" })
+      .mockResolvedValueOnce({ id: "crew-1" })
 
     await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
       "historical crew references",
     )
     expect(database.writeTransaction).not.toHaveBeenCalled()
+  })
+
+  it("does not touch faults when the boat belongs to another course", async () => {
+    await expect(deleteBoat("boat-1", "wrong-course")).rejects.toThrow(
+      "Boat does not belong to course",
+    )
+    expect(database.getOptional).toHaveBeenCalledWith(
+      expect.stringContaining("id = ? AND courseId = ?"),
+      ["boat-1", "wrong-course"],
+    )
+    expect(database.writeTransaction).not.toHaveBeenCalled()
+    expect(database.execute).not.toHaveBeenCalled()
   })
 })

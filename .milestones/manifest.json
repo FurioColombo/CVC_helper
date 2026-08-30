@@ -80,7 +80,7 @@
     {
       "id": "G2",
       "category": "INTEGRATION_GATE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/G2/verification.json",
         ".evidence/G2/functional-review.md",

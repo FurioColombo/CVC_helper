@@ -243,7 +243,7 @@ function BoatList({
         return (
           <button
             aria-label={`${boat.type} ${boat.number}, ${copy.label}${openCount ? `, ${openCount} ${openCount === 1 ? "non risolta" : "non risolte"}` : ""}`}
-            className={`flex min-h-18 items-center gap-3 rounded-2xl border p-3.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${state === "unavailable" ? "bg-muted/70 text-muted-foreground opacity-65" : "bg-card"}`}
+            className={`flex min-h-18 items-center gap-3 rounded-2xl border p-3.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"

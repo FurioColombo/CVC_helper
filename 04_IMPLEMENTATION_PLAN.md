@@ -428,7 +428,7 @@ Implement course boat setup, availability, faults, fault history and Avarie entr
 ## G2 — Boat Management Gate
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -455,10 +455,17 @@ At minimum:
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: official verification PASS (18 test files / 84 tests, domain and
+  repository checks, production build, 16 E2E journeys); integrated boat gate
+  passed on Pixel 7 and iPhone 13; functional and field/mobile reviews PASS;
+  iPhone viewport screenshot inspected.
+- Decisions: the gate asserts persisted unavailability and deletion after
+  reload, then re-enables the boat and confirms unresolved faults still derive
+  its warning state; deletion verifies course ownership before touching history.
+- Known limitations: iPhone automation uses Chromium with the iPhone device
+  profile; native WebKit behavior is reserved for the dedicated M14 mobile and
+  accessibility gate.
+- Git checkpoint: `test: complete G2 boat management gate`.
 
 ---
 
