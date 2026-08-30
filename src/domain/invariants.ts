@@ -16,7 +16,7 @@ export interface CourseStateSnapshot {
     sex?: string | null
     size?: string | null
   }>
-  volunteers: Array<{ id: string; role: string }>
+  volunteers: Array<{ id: string; name?: string | null; role: string }>
   boats: Array<{ id: string; availability: string }>
   faults: Array<{ id: string; boatId: string; state: string }>
   crews: Array<{
@@ -127,6 +127,13 @@ export function validateCourseState(
   })
 
   state.volunteers.forEach((volunteer, index) => {
+    if (typeof volunteer.name !== "string" || !volunteer.name.trim()) {
+      issues.push({
+        code: "invalid-volunteer-name",
+        path: `volunteers[${index}].name`,
+        message: "Volunteer name cannot be empty",
+      })
+    }
     if (!hasValue(VOLUNTEER_ROLES, volunteer.role)) {
       issues.push({
         code: "invalid-volunteer-role",
@@ -306,6 +313,20 @@ export function validateStudentRecords(
   return validateCourseState({
     students,
     volunteers: [],
+    boats: [],
+    faults: [],
+    crews: [],
+    landAssignments: [],
+    evaluations: [],
+  })
+}
+
+export function validateVolunteerRecords(
+  volunteers: CourseStateSnapshot["volunteers"],
+) {
+  return validateCourseState({
+    students: [],
+    volunteers,
     boats: [],
     faults: [],
     crews: [],

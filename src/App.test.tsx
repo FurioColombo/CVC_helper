@@ -16,6 +16,12 @@ vi.mock("@/persistence/students", () => ({
   updateStudentKnowledge: vi.fn(),
 }))
 
+vi.mock("@/persistence/volunteers", () => ({
+  createVolunteer: vi.fn(),
+  listVolunteers: vi.fn().mockResolvedValue([]),
+  updateVolunteer: vi.fn(),
+}))
+
 import { App } from "@/App"
 import {
   getActiveCourse,
@@ -96,5 +102,19 @@ describe("course setup and application shell", () => {
 
     await user.click(within(navigation).getByRole("button", { name: "Avarie" }))
     expect(screen.getByRole("heading", { name: "Avarie" })).toBeVisible()
+  })
+
+  it("opens a dedicated volunteer area from Home", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await user.click(screen.getByRole("button", { name: "Volontari" }))
+
+    expect(
+      await screen.findByRole("heading", { name: "Volontari" }),
+    ).toBeVisible()
+    expect(screen.getByText(/distinti dagli allievi/)).toBeVisible()
   })
 })

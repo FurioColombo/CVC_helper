@@ -29,7 +29,8 @@
     "evidence:m2": "node scripts/record-verification.mjs M2",
     "evidence:m3": "node scripts/record-verification.mjs M3",
     "evidence:m4": "node scripts/record-verification.mjs M4",
-    "evidence:g1": "node scripts/record-verification.mjs G1"
+    "evidence:g1": "node scripts/record-verification.mjs G1",
+    "evidence:m5": "node scripts/record-verification.mjs M5"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

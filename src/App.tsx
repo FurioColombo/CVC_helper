@@ -23,6 +23,7 @@ import {
 } from "@/domain/config"
 import { buildCourseDetails } from "@/domain/course"
 import { StudentManagement } from "@/features/students/StudentManagement"
+import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
   getActiveCourse,
   saveActiveCourse,
@@ -56,7 +57,7 @@ const HOME_CARDS = [
 ] as const
 
 const PLACEHOLDER_COPY: Record<
-  Exclude<ShellView, "home" | "settings" | "students">,
+  Exclude<ShellView, "home" | "settings" | "students" | "volunteers">,
   string
 > = {
   faults: "Le avarie saranno disponibili dopo la configurazione delle barche.",
@@ -64,7 +65,6 @@ const PLACEHOLDER_COPY: Record<
   boats: "La gestione delle barche sarà attivata nei prossimi traguardi.",
   sessions: "Le comandate saranno attivate nei prossimi traguardi.",
   evaluations: "Le valutazioni saranno attivate nei prossimi traguardi.",
-  volunteers: "La gestione dei volontari sarà attivata nei prossimi traguardi.",
 }
 
 function formatDate(date: string) {
@@ -341,7 +341,7 @@ function Placeholder({
   view,
   onHome,
 }: {
-  view: Exclude<ShellView, "home" | "settings" | "students">
+  view: Exclude<ShellView, "home" | "settings" | "students" | "volunteers">
   onHome: () => void
 }) {
   const card = HOME_CARDS.find(({ id }) => id === view)
@@ -430,9 +430,18 @@ function AppShell({ course }: { course: CourseRecord }) {
         {view === "students" && (
           <StudentManagement course={course} onHome={() => setView("home")} />
         )}
-        {view !== "home" && view !== "settings" && view !== "students" && (
-          <Placeholder onHome={() => setView("home")} view={view} />
+        {view === "volunteers" && (
+          <VolunteerManagement
+            courseId={course.id}
+            onHome={() => setView("home")}
+          />
         )}
+        {view !== "home" &&
+          view !== "settings" &&
+          view !== "students" &&
+          view !== "volunteers" && (
+            <Placeholder onHome={() => setView("home")} view={view} />
+          )}
       </main>
 
       <nav

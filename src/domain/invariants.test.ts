@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   validateCourseState,
   validateStudentRecords,
+  validateVolunteerRecords,
 } from "@/domain/invariants"
 import { buildD2FoundationScenario } from "@/domain/scenarios"
 
@@ -86,6 +87,19 @@ describe("course-state invariants", () => {
       "invalid-student-active",
       "invalid-student-sex",
       "invalid-student-size",
+    ])
+  })
+
+  it("validates volunteer identity and role without applying student rules", () => {
+    expect(
+      validateVolunteerRecords([
+        { id: "volunteer-1", name: "Anna Bianchi", role: "ADV" },
+        { id: "volunteer-1", name: null, role: "student" },
+      ]).map(({ code }) => code),
+    ).toEqual([
+      "duplicate-id",
+      "invalid-volunteer-name",
+      "invalid-volunteer-role",
     ])
   })
 })

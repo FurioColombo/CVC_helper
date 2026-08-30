@@ -3,7 +3,9 @@ import type { CourseStateSnapshot } from "./invariants"
 export function buildD2FoundationScenario(): CourseStateSnapshot {
   return {
     students: [{ id: "student-mario-rossi" }, { id: "student-luca-bianchi" }],
-    volunteers: [{ id: "volunteer-adv-anna", role: "ADV" }],
+    volunteers: [
+      { id: "volunteer-adv-anna", name: "Anna Bianchi", role: "ADV" },
+    ],
     boats: [{ id: "boat-quest-7", availability: "available" }],
     faults: [
       { id: "fault-quest-7-sheet", boatId: "boat-quest-7", state: "reported" },

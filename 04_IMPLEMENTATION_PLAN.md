@@ -350,7 +350,7 @@ At minimum:
 ## M5 — Volunteers / ADV / IS
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -369,10 +369,22 @@ Self-review.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M5/verification.json` records quick, domain,
+  production-build, and 14-test browser verification as PASS;
+  `.evidence/M5/self-review.md` records the scope, code, accessibility, and
+  mobile review; `.evidence/M5/volunteers-iphone13.png` captures the compact
+  persisted staff list.
+- Decisions: keep Volontari as a deliberately lightweight, current-course-only
+  subsystem with one trimmed name and one canonical ADV/IS role. Use direct
+  role buttons, compact amber staff cards, a separate persistence module, and a
+  dedicated invariant guard so staff cannot be confused with students. Support
+  add and edit only: deletion was not added because it is not required here and
+  could create dangling historical crew references in later milestones.
+- Known limitations: removal/disable semantics remain intentionally undefined;
+  decide them together with historical crew-reference behavior if the product
+  later requires them. Actual placement of ADV/IS into crews belongs to the
+  later crew milestones.
+- Git checkpoint: `feat: complete M5 volunteer management`.
 
 ---
 
