@@ -2,6 +2,7 @@ import {
   BOAT_AVAILABILITY,
   BOAT_TYPES,
   CREW_DESTINATIONS,
+  DUTY_DAYS,
   EVALUATION_VALUES,
   FAULT_STATES,
   SESSION_SEQUENCE,
@@ -32,6 +33,11 @@ export interface CourseStateSnapshot {
     createdAt?: string | null
     updatedAt?: string | null
   }>
+  dutyAssignments?: Array<{
+    dayId: string
+    studentId: string
+  }>
+  completedDutyDayIds?: string[]
   crews: Array<{
     id: string
     sessionId: string
@@ -244,6 +250,61 @@ export function validateCourseState(
     }
   })
 
+  const dutyAssignmentKeys = new Set<string>()
+  ;(state.dutyAssignments ?? []).forEach((assignment, index) => {
+    if (
+      !hasValue(
+        DUTY_DAYS.map(({ id }) => id),
+        assignment.dayId,
+      )
+    ) {
+      issues.push({
+        code: "invalid-duty-day",
+        path: `dutyAssignments[${index}].dayId`,
+        message: `Invalid duty day: ${assignment.dayId}`,
+      })
+    }
+    if (!studentIds.has(assignment.studentId)) {
+      issues.push({
+        code: "dangling-duty-student",
+        path: `dutyAssignments[${index}].studentId`,
+        message: `Duty references missing student: ${assignment.studentId}`,
+      })
+    }
+    const key = `${assignment.dayId}:${assignment.studentId}`
+    if (dutyAssignmentKeys.has(key)) {
+      issues.push({
+        code: "duplicate-duty-assignment",
+        path: `dutyAssignments[${index}]`,
+        message: `Duplicate duty assignment: ${key}`,
+      })
+    }
+    dutyAssignmentKeys.add(key)
+  })
+  const completedDutyDays = new Set<string>()
+  ;(state.completedDutyDayIds ?? []).forEach((dayId, index) => {
+    if (
+      !hasValue(
+        DUTY_DAYS.map(({ id }) => id),
+        dayId,
+      )
+    ) {
+      issues.push({
+        code: "invalid-completed-duty-day",
+        path: `completedDutyDayIds[${index}]`,
+        message: `Invalid completed duty day: ${dayId}`,
+      })
+    }
+    if (completedDutyDays.has(dayId)) {
+      issues.push({
+        code: "duplicate-completed-duty-day",
+        path: `completedDutyDayIds[${index}]`,
+        message: `Duplicate completed duty day: ${dayId}`,
+      })
+    }
+    completedDutyDays.add(dayId)
+  })
+
   const assignedStudents = new Set<string>()
   const assignedBoats = new Set<string>()
   state.crews.forEach((crew, index) => {
@@ -418,6 +479,24 @@ export function validateBoatRecords(
     volunteers: [],
     boats,
     faults,
+    crews: [],
+    landAssignments: [],
+    evaluations: [],
+  })
+}
+
+export function validateDutyRecords(
+  students: CourseStateSnapshot["students"],
+  dutyAssignments: NonNullable<CourseStateSnapshot["dutyAssignments"]>,
+  completedDutyDayIds: NonNullable<CourseStateSnapshot["completedDutyDayIds"]>,
+) {
+  return validateCourseState({
+    students,
+    volunteers: [],
+    boats: [],
+    faults: [],
+    dutyAssignments,
+    completedDutyDayIds,
     crews: [],
     landAssignments: [],
     evaluations: [],

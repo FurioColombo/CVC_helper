@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   validateBoatRecords,
   validateCourseState,
+  validateDutyRecords,
   validateStudentRecords,
   validateVolunteerRecords,
 } from "@/domain/invariants"
@@ -207,5 +208,27 @@ describe("course-state invariants", () => {
         ],
       ),
     ).toEqual([expect.objectContaining({ code: "invalid-fault-timestamp" })])
+  })
+
+  it("detects invalid, duplicate and dangling duty state", () => {
+    expect(
+      validateDutyRecords(
+        [{ id: "student-1", active: 1, sex: "male", size: "M" }],
+        [
+          { dayId: "saturday", studentId: "student-1" },
+          { dayId: "saturday", studentId: "student-1" },
+          { dayId: "noday", studentId: "missing" },
+        ],
+        ["saturday", "saturday", "noday"],
+      ).map(({ code }) => code),
+    ).toEqual(
+      expect.arrayContaining([
+        "duplicate-duty-assignment",
+        "invalid-duty-day",
+        "dangling-duty-student",
+        "duplicate-completed-duty-day",
+        "invalid-completed-duty-day",
+      ]),
+    )
   })
 })

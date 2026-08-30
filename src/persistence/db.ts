@@ -45,6 +45,24 @@ const faults = Table.createLocalOnly({
   updatedAt: column.text,
 })
 
+const dutyAssignments = Table.createLocalOnly({
+  courseId: column.text,
+  dayId: column.text,
+  studentId: column.text,
+})
+
+const dutySettings = Table.createLocalOnly({
+  courseId: column.text,
+  desiredPerDay: column.integer,
+  fewerDayIds: column.text,
+  balanceMinors: column.integer,
+  balanceSex: column.integer,
+  tieBreaker: column.text,
+  stayOverStudentIds: column.text,
+  completedDayIds: column.text,
+  acknowledgedWarningKeys: column.text,
+})
+
 const crews = Table.createLocalOnly({
   courseId: column.text,
   sessionId: column.text,
@@ -81,6 +99,8 @@ export const AppSchema = new Schema({
   volunteers,
   boats,
   faults,
+  dutyAssignments,
+  dutySettings,
   crews,
   crewMembers,
   landAssignments,

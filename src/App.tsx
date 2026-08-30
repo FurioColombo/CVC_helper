@@ -24,6 +24,7 @@ import {
 import { buildCourseDetails } from "@/domain/course"
 import { BoatManagement } from "@/features/boats/BoatManagement"
 import { FaultManagement } from "@/features/boats/FaultManagement"
+import { DutyManagement } from "@/features/duties/DutyManagement"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
@@ -61,12 +62,17 @@ const HOME_CARDS = [
 const PLACEHOLDER_COPY: Record<
   Exclude<
     ShellView,
-    "home" | "settings" | "students" | "volunteers" | "boats" | "faults"
+    | "home"
+    | "settings"
+    | "students"
+    | "volunteers"
+    | "boats"
+    | "faults"
+    | "sessions"
   >,
   string
 > = {
   crews: "La gestione degli equipaggi sarà attivata nei prossimi traguardi.",
-  sessions: "Le comandate saranno attivate nei prossimi traguardi.",
   evaluations: "Le valutazioni saranno attivate nei prossimi traguardi.",
 }
 
@@ -346,7 +352,13 @@ function Placeholder({
 }: {
   view: Exclude<
     ShellView,
-    "home" | "settings" | "students" | "volunteers" | "boats" | "faults"
+    | "home"
+    | "settings"
+    | "students"
+    | "volunteers"
+    | "boats"
+    | "faults"
+    | "sessions"
   >
   onHome: () => void
 }) {
@@ -452,12 +464,20 @@ function AppShell({ course }: { course: CourseRecord }) {
             onOpenBoats={() => setView("boats")}
           />
         )}
+        {view === "sessions" && (
+          <DutyManagement
+            courseId={course.id}
+            onHome={() => setView("home")}
+            referenceDate={course.startDate}
+          />
+        )}
         {view !== "home" &&
           view !== "settings" &&
           view !== "students" &&
           view !== "volunteers" &&
           view !== "boats" &&
-          view !== "faults" && (
+          view !== "faults" &&
+          view !== "sessions" && (
             <Placeholder onHome={() => setView("home")} view={view} />
           )}
       </main>

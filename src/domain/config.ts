@@ -90,6 +90,9 @@ export const DUTY_DAYS = [
 ] as const
 export type DutyDayId = (typeof DUTY_DAYS)[number]["id"]
 
+export const DUTY_TIE_BREAKERS = ["alphabetical", "similar-age"] as const
+export type DutyTieBreaker = (typeof DUTY_TIE_BREAKERS)[number]
+
 export const STUDENT_SIZES = ["XS", "S", "M", "L", "XL"] as const
 export type StudentSize = (typeof STUDENT_SIZES)[number]
 

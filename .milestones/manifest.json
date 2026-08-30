@@ -90,7 +90,7 @@
     {
       "id": "M7",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/M7/verification.json",
         ".evidence/M7/domain-review.md"

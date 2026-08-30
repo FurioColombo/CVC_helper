@@ -34,6 +34,11 @@ vi.mock("@/persistence/boats", () => ({
   updateFaultState: vi.fn(),
 }))
 
+vi.mock("@/persistence/duties", () => ({
+  readDutyPlan: vi.fn().mockResolvedValue({ assignments: [], settings: null }),
+  saveDutyPlan: vi.fn(),
+}))
+
 import { App } from "@/App"
 import {
   getActiveCourse,
@@ -131,5 +136,19 @@ describe("course setup and application shell", () => {
       await screen.findByRole("heading", { name: "Volontari" }),
     ).toBeVisible()
     expect(screen.getByText(/distinti dagli allievi/)).toBeVisible()
+  })
+
+  it("opens the dedicated Comandate area from Home", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await user.click(screen.getByRole("button", { name: "Comandate" }))
+
+    expect(
+      await screen.findByRole("heading", { name: "Comandate" }),
+    ).toBeVisible()
+    expect(screen.getByText("Prima aggiungi gli allievi")).toBeVisible()
   })
 })

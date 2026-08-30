@@ -5,6 +5,7 @@ import {
   COURSE_CONFIG,
   CREW_DESTINATIONS,
   DUTY_DAYS,
+  DUTY_TIE_BREAKERS,
   EVALUATION_VALUES,
   FAULT_STATES,
   SESSION_SEQUENCE,
@@ -46,6 +47,7 @@ for (const values of [
   CREW_DESTINATIONS,
   EVALUATION_VALUES.map(({ symbol }) => symbol),
   FAULT_STATES,
+  DUTY_TIE_BREAKERS,
   VOLUNTEER_ROLES,
   STUDENT_SEXES.map(({ id }) => id),
 ]) {

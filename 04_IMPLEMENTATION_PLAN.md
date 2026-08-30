@@ -472,7 +472,7 @@ At minimum:
 ## M7 — Comandate
 
 **Category:** RULE_HEAVY  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -491,10 +491,20 @@ Implement manual and automatic duty planning, warnings and remaining-week recalc
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: official verification PASS (21 test files / 119 tests, domain and
+  repository checks, production build, 18 E2E journeys); adversarial domain
+  review PASS; deterministic 845-case balance matrix; Pixel 7 and iPhone 13
+  weekly browser journey; iPhone viewport screenshot.
+- Decisions: automatic proposals preserve the canonical Saturday-to-Friday
+  order and even capacities, pin Friday stay-over coverage, then optimize minor
+  and optional M/F spread lexicographically before deterministic tie-breaking;
+  manual edits always remain available. Completed rotations, including empty
+  ones, are immutable on recalculation. Advisory acknowledgements survive only
+  while the exact warning situation remains active.
+- Known limitations: iPhone automation uses Chromium with the iPhone device
+  profile; native WebKit behavior remains reserved for M14. Presentation/image
+  export is intentionally post-MVP.
+- Git checkpoint: `feat: complete M7 duty management`.
 
 ---
 
