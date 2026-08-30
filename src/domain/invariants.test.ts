@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { validateCourseState } from "@/domain/invariants"
+import {
+  validateCourseState,
+  validateStudentRecords,
+} from "@/domain/invariants"
 import { buildD2FoundationScenario } from "@/domain/scenarios"
 
 describe("course-state invariants", () => {
@@ -70,5 +73,19 @@ describe("course-state invariants", () => {
         expect.objectContaining({ code: "invalid-student-size" }),
       ]),
     )
+  })
+
+  it("validates persisted student records independently at subsystem reads", () => {
+    expect(
+      validateStudentRecords([
+        { id: "student-1", active: 1, sex: "male", size: "M" },
+        { id: "student-1", active: 3, sex: "invalid", size: "XXL" },
+      ]).map(({ code }) => code),
+    ).toEqual([
+      "duplicate-id",
+      "invalid-student-active",
+      "invalid-student-sex",
+      "invalid-student-size",
+    ])
   })
 })

@@ -52,7 +52,7 @@
     {
       "id": "G1",
       "category": "INTEGRATION_GATE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/G1/verification.json",
         ".evidence/G1/functional-review.md",

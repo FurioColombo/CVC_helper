@@ -299,3 +299,17 @@ export function validateCourseState(
 
   return issues
 }
+
+export function validateStudentRecords(
+  students: CourseStateSnapshot["students"],
+) {
+  return validateCourseState({
+    students,
+    volunteers: [],
+    boats: [],
+    faults: [],
+    crews: [],
+    landAssignments: [],
+    evaluations: [],
+  })
+}

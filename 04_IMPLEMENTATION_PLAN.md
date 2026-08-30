@@ -294,7 +294,7 @@ Self-review.
 ## G1 — Student Management Gate
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -324,10 +324,26 @@ At minimum:
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/G1/verification.json` records quick, domain,
+  production-build, and 12-test browser verification as PASS;
+  `.evidence/G1/functional-review.md` records the remediated independent
+  functional PASS; `.evidence/G1/field-ux-review.md` records the independent
+  mobile PASS_WITH_FINDINGS with no blockers; and
+  `.evidence/G1/final-list-iphone13.png` captures the final compact list.
+- Decisions: the gate adds one deterministic end-to-end journey that starts
+  from course creation and exercises OCR review/correction, manual creation,
+  duplicate first-name disambiguation, a minor, Conoscenza, reversible
+  disabling, reload persistence, and list/detail consistency on both device
+  profiles. Student records are now checked against domain invariants whenever
+  the subsystem reads them from persistence; invalid state fails safely instead
+  of being rendered. The browser clock is fixed in the gate journey so age and
+  minor assertions cannot drift with calendar time.
+- Known limitations: persisted corruption and an ordinary archive-read failure
+  share the same safe user-facing error. Playwright's iPhone 13 profile uses a
+  390 x 844 screen with a stricter 390 x 664 browser viewport; the separate
+  in-app preview is inspected at 390 x 844. Actual phone-camera, memory/thermal,
+  and native WebKit validation remains scheduled for M14.
+- Git checkpoint: `test: complete G1 student management gate`.
 
 ---
 

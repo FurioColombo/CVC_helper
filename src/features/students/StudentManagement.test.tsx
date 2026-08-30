@@ -116,4 +116,16 @@ describe("StudentManagement", () => {
       await screen.findByRole("button", { name: "Riattiva allievo" }),
     ).toBeVisible()
   })
+
+  it("refuses structurally invalid persisted student records", async () => {
+    getStudents.mockResolvedValue([{ ...MARIO, active: 4 as never }])
+
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Allievi non disponibili",
+      }),
+    ).toBeVisible()
+  })
 })

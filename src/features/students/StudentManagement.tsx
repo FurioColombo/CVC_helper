@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
+import { validateStudentRecords } from "@/domain/invariants"
 import { calculateAge, getStudentDisplayName, isMinor } from "@/domain/student"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
 import { StudentScan } from "@/features/students/StudentScan"
@@ -37,6 +38,14 @@ type StudentScreen =
   | { kind: "edit"; studentId: string }
 
 type LoadState = "loading" | "ready" | "error"
+
+async function readValidStudents(courseId: string) {
+  const records = await listStudents(courseId)
+  if (validateStudentRecords(records).length > 0) {
+    throw new Error("Persisted student state violates invariants")
+  }
+  return records
+}
 
 function sexLabel(sex: StudentSex | null, compact = false) {
   const option = STUDENT_SEXES.find(({ id }) => id === sex)
@@ -488,7 +497,7 @@ export function StudentManagement({
 
   async function refreshStudents() {
     try {
-      setStudents(await listStudents(course.id))
+      setStudents(await readValidStudents(course.id))
       setLoadState("ready")
     } catch {
       setLoadState("error")
@@ -497,7 +506,7 @@ export function StudentManagement({
 
   useEffect(() => {
     let active = true
-    listStudents(course.id)
+    readValidStudents(course.id)
       .then((records) => {
         if (!active) return
         setStudents(records)
