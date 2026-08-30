@@ -1,5 +1,6 @@
 import {
   BOAT_AVAILABILITY,
+  BOAT_TYPES,
   CREW_DESTINATIONS,
   EVALUATION_VALUES,
   FAULT_STATES,
@@ -17,8 +18,20 @@ export interface CourseStateSnapshot {
     size?: string | null
   }>
   volunteers: Array<{ id: string; name?: string | null; role: string }>
-  boats: Array<{ id: string; availability: string }>
-  faults: Array<{ id: string; boatId: string; state: string }>
+  boats: Array<{
+    id: string
+    type?: string | null
+    number?: string | null
+    availability: string
+  }>
+  faults: Array<{
+    id: string
+    boatId: string
+    description?: string | null
+    state: string
+    createdAt?: string | null
+    updatedAt?: string | null
+  }>
   crews: Array<{
     id: string
     sessionId: string
@@ -143,7 +156,33 @@ export function validateCourseState(
     }
   })
 
+  const boatIdentities = new Set<string>()
   state.boats.forEach((boat, index) => {
+    if (typeof boat.type !== "string" || !hasValue(BOAT_TYPES, boat.type)) {
+      issues.push({
+        code: "invalid-boat-type",
+        path: `boats[${index}].type`,
+        message: `Invalid boat type: ${boat.type ?? "none"}`,
+      })
+    }
+    if (typeof boat.number !== "string" || !boat.number.trim()) {
+      issues.push({
+        code: "invalid-boat-number",
+        path: `boats[${index}].number`,
+        message: "Boat number cannot be empty",
+      })
+    }
+    if (typeof boat.type === "string" && typeof boat.number === "string") {
+      const identity = `${boat.type}:${boat.number.trim().toLocaleLowerCase("it-IT")}`
+      if (boatIdentities.has(identity)) {
+        issues.push({
+          code: "duplicate-boat-identity",
+          path: `boats[${index}]`,
+          message: `Duplicate boat identity: ${boat.type} ${boat.number}`,
+        })
+      }
+      boatIdentities.add(identity)
+    }
     if (!hasValue(BOAT_AVAILABILITY, boat.availability)) {
       issues.push({
         code: "invalid-boat-availability",
@@ -166,6 +205,28 @@ export function validateCourseState(
         code: "invalid-fault-state",
         path: `faults[${index}].state`,
         message: `Invalid fault state: ${fault.state}`,
+      })
+    }
+    if (typeof fault.description !== "string" || !fault.description.trim()) {
+      issues.push({
+        code: "invalid-fault-description",
+        path: `faults[${index}].description`,
+        message: "Fault description cannot be empty",
+      })
+    }
+    const createdAt = Date.parse(fault.createdAt ?? "")
+    const updatedAt = Date.parse(fault.updatedAt ?? "")
+    if (!Number.isFinite(createdAt) || !Number.isFinite(updatedAt)) {
+      issues.push({
+        code: "invalid-fault-timestamp",
+        path: `faults[${index}]`,
+        message: "Fault timestamps must be valid ISO dates",
+      })
+    } else if (updatedAt < createdAt) {
+      issues.push({
+        code: "invalid-fault-chronology",
+        path: `faults[${index}].updatedAt`,
+        message: "Fault update cannot precede creation",
       })
     }
   })
@@ -329,6 +390,21 @@ export function validateVolunteerRecords(
     volunteers,
     boats: [],
     faults: [],
+    crews: [],
+    landAssignments: [],
+    evaluations: [],
+  })
+}
+
+export function validateBoatRecords(
+  boats: CourseStateSnapshot["boats"],
+  faults: CourseStateSnapshot["faults"],
+) {
+  return validateCourseState({
+    students: [],
+    volunteers: [],
+    boats,
+    faults,
     crews: [],
     landAssignments: [],
     evaluations: [],

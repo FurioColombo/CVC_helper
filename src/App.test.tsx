@@ -22,6 +22,18 @@ vi.mock("@/persistence/volunteers", () => ({
   updateVolunteer: vi.fn(),
 }))
 
+vi.mock("@/persistence/boats", () => ({
+  createBoat: vi.fn(),
+  createBoats: vi.fn(),
+  createFault: vi.fn(),
+  deleteBoat: vi.fn(),
+  listBoats: vi.fn().mockResolvedValue([]),
+  listFaults: vi.fn().mockResolvedValue([]),
+  setBoatAvailability: vi.fn(),
+  updateFaultDescription: vi.fn(),
+  updateFaultState: vi.fn(),
+}))
+
 import { App } from "@/App"
 import {
   getActiveCourse,
@@ -102,6 +114,9 @@ describe("course setup and application shell", () => {
 
     await user.click(within(navigation).getByRole("button", { name: "Avarie" }))
     expect(screen.getByRole("heading", { name: "Avarie" })).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: "Configura barche" }),
+    ).toBeVisible()
   })
 
   it("opens a dedicated volunteer area from Home", async () => {

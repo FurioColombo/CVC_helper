@@ -118,6 +118,12 @@ export type EvaluationSymbol = (typeof EVALUATION_VALUES)[number]["symbol"]
 export const FAULT_STATES = ["open", "reported", "resolved"] as const
 export type FaultState = (typeof FAULT_STATES)[number]
 
+export const FAULT_STATE_LABELS = {
+  open: "Aperta",
+  reported: "Comunicata",
+  resolved: "Risolta",
+} as const satisfies Record<FaultState, string>
+
 export const BOAT_AVAILABILITY = ["available", "unavailable"] as const
 export type BoatAvailability = (typeof BOAT_AVAILABILITY)[number]
 

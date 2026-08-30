@@ -71,7 +71,7 @@
     {
       "id": "M6",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/M6/verification.json",
         ".evidence/M6/domain-review.md"

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  validateBoatRecords,
   validateCourseState,
   validateStudentRecords,
   validateVolunteerRecords,
@@ -101,5 +102,52 @@ describe("course-state invariants", () => {
       "invalid-volunteer-name",
       "invalid-volunteer-role",
     ])
+  })
+
+  it("detects corrupt boat and fault records at subsystem reads", () => {
+    expect(
+      validateBoatRecords(
+        [
+          {
+            id: "boat-1",
+            type: "RS Quest",
+            number: "7",
+            availability: "available",
+          },
+          {
+            id: "boat-2",
+            type: "RS Quest",
+            number: "7",
+            availability: "retired",
+          },
+          {
+            id: "boat-3",
+            type: "Unknown",
+            number: " ",
+            availability: "available",
+          },
+        ],
+        [
+          {
+            id: "fault-1",
+            boatId: "boat-1",
+            description: " ",
+            state: "waiting",
+            createdAt: "2026-08-30T12:00:00.000Z",
+            updatedAt: "2026-08-29T12:00:00.000Z",
+          },
+        ],
+      ).map(({ code }) => code),
+    ).toEqual(
+      expect.arrayContaining([
+        "duplicate-boat-identity",
+        "invalid-boat-availability",
+        "invalid-boat-type",
+        "invalid-boat-number",
+        "invalid-fault-state",
+        "invalid-fault-description",
+        "invalid-fault-chronology",
+      ]),
+    )
   })
 })

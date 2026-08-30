@@ -391,7 +391,7 @@ Self-review.
 ## M6 — Boats and faults
 
 **Category:** RULE_HEAVY  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -411,10 +411,17 @@ Implement course boat setup, availability, faults, fault history and Avarie entr
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: official verification PASS (18 test files / 81 tests, domain and
+  repository checks, production build, 16 E2E journeys); adversarial domain
+  review PASS; Pixel 7 and iPhone 13 boat/fault journey; iPhone screenshot.
+- Decisions: boat status is derived from unresolved faults, with availability
+  as an independent override; fault audio is discarded after local Italian
+  transcription; C4/C5 require an explicit type because no canonical default
+  exists; mistaken deletion is blocked once a crew references the boat.
+- Known limitations: automated voice coverage uses a deterministic recorder and
+  transcription double; the real local model/capability remains covered by the
+  M0 spike because CI has no microphone input.
+- Git checkpoint: `feat: complete M6 boat and fault management`.
 
 ---
 

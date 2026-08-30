@@ -6,9 +6,23 @@ export function buildD2FoundationScenario(): CourseStateSnapshot {
     volunteers: [
       { id: "volunteer-adv-anna", name: "Anna Bianchi", role: "ADV" },
     ],
-    boats: [{ id: "boat-quest-7", availability: "available" }],
+    boats: [
+      {
+        id: "boat-quest-7",
+        type: "RS Quest",
+        number: "7",
+        availability: "available",
+      },
+    ],
     faults: [
-      { id: "fault-quest-7-sheet", boatId: "boat-quest-7", state: "reported" },
+      {
+        id: "fault-quest-7-sheet",
+        boatId: "boat-quest-7",
+        description: "Scotta randa usurata",
+        state: "reported",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:05:00.000Z",
+      },
     ],
     crews: [
       {

@@ -22,6 +22,8 @@ import {
   type CourseLevel,
 } from "@/domain/config"
 import { buildCourseDetails } from "@/domain/course"
+import { BoatManagement } from "@/features/boats/BoatManagement"
+import { FaultManagement } from "@/features/boats/FaultManagement"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
@@ -57,12 +59,13 @@ const HOME_CARDS = [
 ] as const
 
 const PLACEHOLDER_COPY: Record<
-  Exclude<ShellView, "home" | "settings" | "students" | "volunteers">,
+  Exclude<
+    ShellView,
+    "home" | "settings" | "students" | "volunteers" | "boats" | "faults"
+  >,
   string
 > = {
-  faults: "Le avarie saranno disponibili dopo la configurazione delle barche.",
   crews: "La gestione degli equipaggi sarà attivata nei prossimi traguardi.",
-  boats: "La gestione delle barche sarà attivata nei prossimi traguardi.",
   sessions: "Le comandate saranno attivate nei prossimi traguardi.",
   evaluations: "Le valutazioni saranno attivate nei prossimi traguardi.",
 }
@@ -341,12 +344,15 @@ function Placeholder({
   view,
   onHome,
 }: {
-  view: Exclude<ShellView, "home" | "settings" | "students" | "volunteers">
+  view: Exclude<
+    ShellView,
+    "home" | "settings" | "students" | "volunteers" | "boats" | "faults"
+  >
   onHome: () => void
 }) {
   const card = HOME_CARDS.find(({ id }) => id === view)
-  const title = view === "faults" ? "Avarie" : (card?.label ?? "Equipaggi")
-  const Icon = view === "faults" ? Wrench : (card?.icon ?? UsersRound)
+  const title = card?.label ?? "Equipaggi"
+  const Icon = card?.icon ?? UsersRound
 
   return (
     <section className="rounded-3xl border bg-card p-6 shadow-[0_18px_50px_rgb(6_59_82/0.08)]">
@@ -436,10 +442,22 @@ function AppShell({ course }: { course: CourseRecord }) {
             onHome={() => setView("home")}
           />
         )}
+        {view === "boats" && (
+          <BoatManagement course={course} onHome={() => setView("home")} />
+        )}
+        {view === "faults" && (
+          <FaultManagement
+            courseId={course.id}
+            onHome={() => setView("home")}
+            onOpenBoats={() => setView("boats")}
+          />
+        )}
         {view !== "home" &&
           view !== "settings" &&
           view !== "students" &&
-          view !== "volunteers" && (
+          view !== "volunteers" &&
+          view !== "boats" &&
+          view !== "faults" && (
             <Placeholder onHome={() => setView("home")} view={view} />
           )}
       </main>
