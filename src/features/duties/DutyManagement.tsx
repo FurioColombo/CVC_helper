@@ -304,6 +304,9 @@ function DayEditor({
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(false)
+  const visibleStudents = completed
+    ? students.filter(({ id }) => selected.has(id))
+    : students
 
   async function toggle(studentId: string) {
     if (completed || saving) return
@@ -324,6 +327,18 @@ function DayEditor({
     }
   }
 
+  async function complete() {
+    if (saving) return
+    setSaving(true)
+    setError(false)
+    try {
+      await onComplete()
+    } catch {
+      setError(true)
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <DutyHeader
@@ -335,16 +350,27 @@ function DayEditor({
           Completata · storico non modificabile dal ricalcolo
         </p>
       )}
+      {!completed && (
+        <Button
+          className="mb-4 w-full"
+          disabled={saving}
+          onClick={() => void complete()}
+          variant="secondary"
+        >
+          <Check aria-hidden="true" className="size-4" />
+          {saving ? "Salvataggio…" : "Segna completata"}
+        </Button>
+      )}
       <section
         aria-label={`Allievi comandata ${day.label}`}
         className="grid gap-2"
       >
-        {students.map((student) => {
+        {visibleStudents.map((student) => {
           const checked = selected.has(student.id)
           return (
             <button
               aria-pressed={checked}
-              className="flex min-h-14 items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-70"
+              className="flex min-h-14 items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-100"
               disabled={completed || saving}
               key={student.id}
               onClick={() => void toggle(student.id)}
@@ -362,17 +388,12 @@ function DayEditor({
             </button>
           )
         })}
+        {visibleStudents.length === 0 && (
+          <p className="rounded-2xl border bg-card px-4 py-4 text-sm text-muted-foreground">
+            Nessun allievo assegnato.
+          </p>
+        )}
       </section>
-      {!completed && (
-        <Button
-          className="mt-5 w-full"
-          onClick={() => void onComplete()}
-          variant="secondary"
-        >
-          <Check aria-hidden="true" className="size-4" />
-          Segna completata
-        </Button>
-      )}
       {error && (
         <p className="mt-3 text-sm font-semibold text-[#a2381b]" role="alert">
           Modifica non salvata. Riprova.
@@ -393,9 +414,25 @@ function WarningList({
   onBack: () => void
   onAcknowledge: (key: string) => Promise<void>
 }) {
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [error, setError] = useState(false)
   const visible = warnings.filter(
     ({ key, severity }) => severity === "major" || !acknowledged.includes(key),
   )
+
+  async function acknowledge(key: string) {
+    if (savingKey) return
+    setSavingKey(key)
+    setError(false)
+    try {
+      await onAcknowledge(key)
+      setSavingKey(null)
+    } catch {
+      setSavingKey(null)
+      setError(true)
+    }
+  }
+
   return (
     <>
       <DutyHeader onBack={onBack} title="Avvisi comandate" />
@@ -417,15 +454,23 @@ function WarningList({
               {warning.severity === "advisory" && (
                 <Button
                   className="mt-3"
-                  onClick={() => void onAcknowledge(warning.key)}
+                  disabled={savingKey !== null}
+                  onClick={() => void acknowledge(warning.key)}
                   variant="secondary"
                 >
-                  Accetta eccezione
+                  {savingKey === warning.key
+                    ? "Salvataggio…"
+                    : "Accetta eccezione"}
                 </Button>
               )}
             </article>
           ))}
         </div>
+      )}
+      {error && (
+        <p className="mt-3 text-sm font-semibold text-[#a2381b]" role="alert">
+          Eccezione non salvata. Riprova.
+        </p>
       )}
     </>
   )

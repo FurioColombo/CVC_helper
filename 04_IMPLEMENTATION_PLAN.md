@@ -511,7 +511,7 @@ Implement manual and automatic duty planning, warnings and remaining-week recalc
 ## G3 — Duty Management Gate
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -539,10 +539,20 @@ At minimum:
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: official verification PASS (21 test files / 122 tests, domain and
+  repository checks, production build, 18 E2E journeys); 21-student integrated
+  weekly journey passed on Pixel 7 and iPhone 13; functional and field/mobile
+  reviews PASS; iPhone viewport screenshot inspected.
+- Decisions: the gate configures five stay-overs to prove Friday's three-place
+  capacity, creates a real manual anomaly, accepts its advisory, completes
+  Saturday, disables a dynamically selected future student, and proves after
+  recalculation and reload that history is unchanged, future assignments are
+  healthy, the disabled student is absent and Friday is saturated correctly.
+  Field review moved completion above the roster, reduced completed history to
+  assigned people, and added persistence feedback for completion/acceptance.
+- Known limitations: recalculation confirmation remains below the configurable
+  stay-over list; native WebKit remains reserved for M14.
+- Git checkpoint: `test: complete G3 duty management gate`.
 
 ---
 

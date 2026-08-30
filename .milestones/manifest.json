@@ -99,7 +99,7 @@
     {
       "id": "G3",
       "category": "INTEGRATION_GATE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/G3/verification.json",
         ".evidence/G3/functional-review.md",

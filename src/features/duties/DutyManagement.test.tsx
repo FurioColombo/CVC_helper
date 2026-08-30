@@ -175,6 +175,65 @@ describe("DutyManagement", () => {
     expect(savePlan.mock.calls[0]![2].completedDayIds).toEqual(["saturday"])
   })
 
+  it("shows only assigned students when inspecting completed history", async () => {
+    getPlan.mockResolvedValue({
+      assignments: [{ dayId: "saturday", studentId: "student-1" }],
+      settings: { ...SETTINGS, completedDayIds: ["saturday"] },
+    })
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        referenceDate="2026-08-29"
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Sabato, 1 assegnati, completata",
+      }),
+    )
+    const history = screen.getByRole("region", {
+      name: "Allievi comandata Sabato",
+    })
+    expect(within(history).getByRole("button", { name: "Nome1" })).toBeVisible()
+    expect(
+      within(history).queryByRole("button", { name: "Nome2" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Segna completata" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("reports a completion persistence failure and remains editable", async () => {
+    getPlan.mockResolvedValue({
+      assignments: [{ dayId: "saturday", studentId: "student-1" }],
+      settings: SETTINGS,
+    })
+    savePlan.mockRejectedValueOnce(new Error("storage unavailable"))
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        referenceDate="2026-08-29"
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Sabato, 1 assegnati" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Segna completata" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Modifica non salvata. Riprova.",
+    )
+    expect(
+      screen.getByRole("button", { name: "Segna completata" }),
+    ).toBeEnabled()
+  })
+
   it("allows a manual duplicate assignment and surfaces its major warning", async () => {
     getPlan.mockResolvedValue({
       assignments: [
@@ -349,5 +408,38 @@ describe("DutyManagement", () => {
     expect(
       screen.queryByText("Minori non distribuiti uniformemente"),
     ).not.toBeInTheDocument()
+  })
+
+  it("reports an acknowledgement persistence failure", async () => {
+    getPlan.mockResolvedValue({
+      assignments: [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "sunday", studentId: "student-2" },
+        { dayId: "monday", studentId: "student-3" },
+        { dayId: "tuesday", studentId: "student-4" },
+        { dayId: "wednesday", studentId: "student-5" },
+        { dayId: "thursday", studentId: "student-6" },
+        { dayId: "friday", studentId: "student-7" },
+        { dayId: "friday", studentId: "student-8" },
+      ],
+      settings: { ...SETTINGS, stayOverStudentIds: ["student-1"] },
+    })
+    savePlan.mockRejectedValueOnce(new Error("storage unavailable"))
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        referenceDate="2026-08-29"
+      />,
+    )
+
+    await user.click(await screen.findByRole("button", { name: /Avvisi/ }))
+    await user.click(screen.getByRole("button", { name: "Accetta eccezione" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Eccezione non salvata. Riprova.",
+    )
+    expect(screen.getByText("Preferenza venerdì non soddisfatta")).toBeVisible()
   })
 })
