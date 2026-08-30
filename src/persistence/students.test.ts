@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
+  executeBatch: vi.fn(),
   getAll: vi.fn(),
   init: vi.fn(),
 }))
@@ -10,6 +11,7 @@ vi.mock("@/persistence/db", () => ({ db: database }))
 
 import {
   createStudent,
+  createStudents,
   listStudents,
   setStudentActive,
   updateStudent,
@@ -31,6 +33,7 @@ describe("student persistence", () => {
     vi.clearAllMocks()
     database.init.mockResolvedValue(undefined)
     database.execute.mockResolvedValue(undefined)
+    database.executeBatch.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
   })
 
@@ -58,6 +61,27 @@ describe("student persistence", () => {
     expect(database.execute).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO students"),
       expect.arrayContaining([student.id, "course-1", "Mario", "Rossi", 1]),
+    )
+  })
+
+  it("creates reviewed scan rows in one batch", async () => {
+    const students = await createStudents("course-1", [
+      INPUT,
+      {
+        ...INPUT,
+        firstName: "Giulia",
+        surname: "Bianchi",
+        sex: "female",
+      },
+    ])
+
+    expect(students).toHaveLength(2)
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO students"),
+      expect.arrayContaining([
+        expect.arrayContaining(["course-1", "Mario", "Rossi", "male", 1]),
+        expect.arrayContaining(["course-1", "Giulia", "Bianchi", "female", 1]),
+      ]),
     )
   })
 

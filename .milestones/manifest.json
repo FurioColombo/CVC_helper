@@ -43,7 +43,7 @@
     {
       "id": "M4",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/M4/verification.json",
         ".evidence/M4/self-review.md"

@@ -1,0 +1,39 @@
+{
+  "milestone": "M4",
+  "status": "PASS",
+  "recordedAt": "2026-08-30T00:13:36.070Z",
+  "checks": [
+    {
+      "command": "npm run verify:quick",
+      "status": "PASS",
+      "startedAt": "2026-08-30T00:13:04.780Z",
+      "durationMs": 12152,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.0.0 test\n> vitest run\n\n\n RUN  v4.1.11 /Users/marcofuriocolombo/Documents/ChatGPT/CVC_helper\n\n\n Test Files  11 passed (11)\n      Tests  39 passed (39)\n   Start at  02:13:12\n   Duration  3.92s (transform 677ms, setup 3.26s, import 1.81s, tests 2.24s, environment 14.76s)"
+    },
+    {
+      "command": "npm run verify:domain",
+      "status": "PASS",
+      "startedAt": "2026-08-30T00:13:16.934Z",
+      "durationMs": 558,
+      "exitCode": 0,
+      "outputTail": "> npm run check:repository && npm run check:domain\n\n\n> cvc-helper@0.0.0 check:repository\n> node scripts/check-repository.mjs\n\nPASS: repository structure and command surface\n\n> cvc-helper@0.0.0 check:domain\n> node --import tsx scripts/check-domain.ts\n\nPASS: canonical domain tables and runtime foundation scenario"
+    },
+    {
+      "command": "npm run build",
+      "status": "PASS",
+      "startedAt": "2026-08-30T00:13:17.492Z",
+      "durationMs": 5868,
+      "exitCode": 0,
+      "outputTail": "\nPWA v1.3.0\nmode      generateSW\nprecache  23 entries (8869.93 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-398fc23b.js\n[plugin builtin:vite-reporter] \n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit."
+    },
+    {
+      "command": "npm run verify:e2e",
+      "status": "PASS",
+      "startedAt": "2026-08-30T00:13:23.360Z",
+      "durationMs": 12710,
+      "exitCode": 0,
+      "outputTail": "(node:68382) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:68381) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:68409) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:68418) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:68417) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:68421) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)"
+    }
+  ]
+}

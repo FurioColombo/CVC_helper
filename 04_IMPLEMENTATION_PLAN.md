@@ -247,7 +247,7 @@ Self-review.
 ## M4 — Student scan integration
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -268,10 +268,26 @@ Self-review.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M4/verification.json` records 39 unit/component tests,
+  domain/repository checks, the production PWA build, and 10 Playwright
+  journeys across Pixel 7 and iPhone 13. The real OCR journey reuses the
+  retained clear and blurred/cropped roster fixtures, verifies rejection,
+  extracts three candidates, corrects and removes rows, commits two, and
+  verifies reload persistence. `.evidence/M4/self-review.md` records PASS with
+  no blockers; `.evidence/M4/review-iphone13.png` records the compact review UI.
+- Decisions: Tesseract.js 7 with bundled Italian data implements the
+  provider-independent `scanStudents(image)` boundary. Aggregate confidence
+  below 60 rejects the image; accepted pages apply a field threshold of 70 and
+  blank each uncertain value independently. Images/candidates remain transient
+  until explicit review confirmation, and confirmed rows use one transactional
+  batch insert. A conservative common-name set provides editable sex
+  suggestions without guessing unknown names.
+- Known limitations: the fixtures do not cover handwriting, every layout,
+  glare, or all camera angles. First use loads about 5.5 MB of same-origin OCR
+  assets and may be slower; those assets are runtime-cached afterward. Actual
+  phone camera, memory/thermal behavior, and native WebKit remain M14 device
+  validation work.
+- Git checkpoint: `feat: complete M4 local student scan workflow`.
 
 ---
 

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/students", () => ({
   createStudent: vi.fn(),
+  createStudents: vi.fn(),
   listStudents: vi.fn(),
   setStudentActive: vi.fn(),
   updateStudent: vi.fn(),
@@ -66,6 +67,9 @@ describe("StudentManagement", () => {
     expect(
       screen.getByRole("button", { name: "Conoscenza allievi" }),
     ).toBeDisabled()
+    expect(
+      screen.getAllByRole("button", { name: "Scan allievi" }),
+    ).toHaveLength(2)
     await user.click(screen.getByRole("button", { name: "Menu allievi" }))
     await user.click(screen.getByRole("button", { name: "Aggiungi allievo" }))
     await user.type(screen.getByLabelText("Nome"), "Mario")

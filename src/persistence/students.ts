@@ -77,6 +77,42 @@ export async function createStudent(
   return student
 }
 
+export async function createStudents(
+  courseId: string,
+  inputs: StudentInput[],
+): Promise<StudentRecord[]> {
+  await db.init()
+  const students = inputs.map<StudentRecord>((input) => ({
+    id: crypto.randomUUID(),
+    courseId,
+    ...input,
+    size: null,
+    initialNote: null,
+    active: 1,
+  }))
+  if (students.length === 0) return []
+
+  await db.executeBatch(
+    `INSERT INTO students(
+      id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, size, initialNote, active
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    students.map((student) => [
+      student.id,
+      student.courseId,
+      student.firstName,
+      student.surname,
+      student.nickname,
+      student.dateOfBirth,
+      student.sex,
+      student.phone,
+      student.size,
+      student.initialNote,
+      student.active,
+    ]),
+  )
+  return students
+}
+
 export async function updateStudent(
   studentId: string,
   courseId: string,

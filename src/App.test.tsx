@@ -9,6 +9,7 @@ vi.mock("@/persistence/courses", () => ({
 
 vi.mock("@/persistence/students", () => ({
   createStudent: vi.fn(),
+  createStudents: vi.fn(),
   listStudents: vi.fn().mockResolvedValue([]),
   setStudentActive: vi.fn(),
   updateStudent: vi.fn(),

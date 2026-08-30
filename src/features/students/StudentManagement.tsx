@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
 import { calculateAge, getStudentDisplayName, isMinor } from "@/domain/student"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
+import { StudentScan } from "@/features/students/StudentScan"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   createStudent,
@@ -30,6 +31,7 @@ import {
 type StudentScreen =
   | { kind: "list" }
   | { kind: "create" }
+  | { kind: "scan" }
   | { kind: "knowledge" }
   | { kind: "detail"; studentId: string }
   | { kind: "edit"; studentId: string }
@@ -74,7 +76,13 @@ function StudentPageHeader({
   )
 }
 
-function EmptyStudents({ onAdd }: { onAdd: () => void }) {
+function EmptyStudents({
+  onAdd,
+  onScan,
+}: {
+  onAdd: () => void
+  onScan: () => void
+}) {
   return (
     <section className="rounded-3xl border bg-card p-5 text-center shadow-[0_12px_32px_rgb(6_59_82/0.07)]">
       <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted text-primary">
@@ -89,9 +97,9 @@ function EmptyStudents({ onAdd }: { onAdd: () => void }) {
           <Plus aria-hidden="true" className="size-5" />
           Aggiungi allievo
         </Button>
-        <Button disabled size="lg" variant="secondary">
+        <Button onClick={onScan} size="lg" variant="secondary">
           <ScanLine aria-hidden="true" className="size-5" />
-          Scan allievi · prossimamente
+          Scan allievi
         </Button>
       </div>
     </section>
@@ -566,6 +574,20 @@ export function StudentManagement({
     )
   }
 
+  if (screen.kind === "scan") {
+    return (
+      <StudentScan
+        courseId={course.id}
+        courseStartDate={course.startDate}
+        onBack={() => setScreen({ kind: "list" })}
+        onCommitted={() => {
+          void refreshStudents()
+          setScreen({ kind: "list" })
+        }}
+      />
+    )
+  }
+
   if (screen.kind === "edit" && selectedStudent) {
     return (
       <>
@@ -652,9 +674,16 @@ export function StudentManagement({
             <Plus aria-hidden="true" className="size-5" />
             Aggiungi allievo
           </Button>
-          <Button className="justify-start" disabled variant="secondary">
+          <Button
+            className="justify-start"
+            onClick={() => {
+              setMenuOpen(false)
+              setScreen({ kind: "scan" })
+            }}
+            variant="secondary"
+          >
             <ScanLine aria-hidden="true" className="size-5" />
-            Scan allievi · prossimamente
+            Scan allievi
           </Button>
           <Button
             className="justify-start"
@@ -671,7 +700,10 @@ export function StudentManagement({
         </section>
       )}
       {students.length === 0 ? (
-        <EmptyStudents onAdd={() => setScreen({ kind: "create" })} />
+        <EmptyStudents
+          onAdd={() => setScreen({ kind: "create" })}
+          onScan={() => setScreen({ kind: "scan" })}
+        />
       ) : (
         <StudentList
           course={course}
