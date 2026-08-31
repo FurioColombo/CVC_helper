@@ -46,6 +46,7 @@ vi.mock("@/persistence/duties", () => ({
 }))
 
 vi.mock("@/persistence/crews", () => ({
+  readCrewHistory: vi.fn().mockResolvedValue([]),
   readCrewPlan: vi.fn().mockResolvedValue({
     crews: [],
     landStudentIds: [],

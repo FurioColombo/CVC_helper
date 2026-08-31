@@ -10,6 +10,7 @@ import type {
   CrewPersonType,
   CrewPlan,
 } from "@/domain/crews"
+import type { CrewHistoryEntry } from "@/domain/crewWarnings"
 import { db } from "@/persistence/db"
 
 interface PersistedCrew {
@@ -210,4 +211,64 @@ export async function saveCrewPlan(
       )
     }
   })
+}
+
+export async function readCrewHistory(
+  courseId: string,
+): Promise<CrewHistoryEntry[]> {
+  await db.init()
+  const [crewRows, memberRows] = await Promise.all([
+    db.getAll<PersistedCrew>(
+      `SELECT id, sessionId, destination, boatId, position
+       FROM crews
+       WHERE courseId = ?
+       ORDER BY sessionId, position`,
+      [courseId],
+    ),
+    db.getAll<PersistedMember>(
+      `SELECT cm.crewId, cm.personId, cm.personType, cm.position
+       FROM crewMembers cm
+       JOIN crews c ON c.id = cm.crewId
+       WHERE c.courseId = ?
+       ORDER BY cm.crewId, cm.position`,
+      [courseId],
+    ),
+  ])
+  const nextCrewPosition = new Map<string, number>()
+  if (
+    crewRows.some(({ sessionId, destination, position }) => {
+      const expected = nextCrewPosition.get(sessionId) ?? 0
+      nextCrewPosition.set(sessionId, expected + 1)
+      return (
+        !SESSION_IDS.includes(sessionId as SessionId) ||
+        !CREW_DESTINATIONS.includes(destination as CrewDestination) ||
+        position !== expected
+      )
+    })
+  ) {
+    throw new Error("Invalid persisted crew history")
+  }
+  const nextMemberPosition = new Map<string, number>()
+  if (
+    memberRows.some(({ crewId, personType, position }) => {
+      const expected = nextMemberPosition.get(crewId) ?? 0
+      nextMemberPosition.set(crewId, expected + 1)
+      return !isPersonType(personType) || position !== expected
+    })
+  ) {
+    throw new Error("Invalid persisted crew history members")
+  }
+  const studentsByCrew = new Map<string, string[]>()
+  memberRows.forEach(({ crewId, personId, personType }) => {
+    if (personType !== "student") return
+    studentsByCrew.set(crewId, [
+      ...(studentsByCrew.get(crewId) ?? []),
+      personId,
+    ])
+  })
+  return crewRows.map(({ id, sessionId }) => ({
+    crewId: id,
+    sessionId: sessionId as SessionId,
+    studentIds: studentsByCrew.get(id) ?? [],
+  }))
 }

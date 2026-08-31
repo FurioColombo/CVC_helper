@@ -601,7 +601,7 @@ Implement session-specific crew composition, pools, selection/move/swap/remove i
 ## M9 — Crew warnings and history
 
 **Category:** RULE_HEAVY  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -621,10 +621,21 @@ Implement size warning matrix, pair/crew repetition logic and per-crew worst-sev
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: official verification PASS (25 test files / 180 tests, domain and
+  repository checks, production build, 22 Pixel 7/iPhone 13 E2E journeys);
+  exhaustive size matrix and repetition boundary tests; iPhone warning-detail
+  screenshot; independent adversarial/domain review PASS.
+- Decisions: warnings use only canonical session order and exact identities.
+  A pair in the previous three sessions is red and an older pair yellow; an
+  identical 3+ student group is red and all internal pairs are also evaluated.
+  History contains students in real crews only, so A terra and staff are
+  excluded while any real destination (including future Mezzi data) counts.
+  Each crew shows one worst-severity triangle and expands every underlying
+  reason with count and latest session.
+- Known limitations: boat availability warnings and crew destinations remain
+  M10; evaluation-derived crew hints remain outside this milestone and no fuzzy
+  similarity is implemented by design.
+- Git checkpoint: `feat: complete M9 crew warnings and history`.
 
 ---
 

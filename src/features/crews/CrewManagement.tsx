@@ -4,6 +4,7 @@ import {
   CircleMinus,
   HandHeart,
   ShipWheel,
+  TriangleAlert,
   UsersRound,
 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -22,10 +23,20 @@ import {
   type CrewPersonRef,
   type CrewPlan,
 } from "@/domain/crews"
+import {
+  getCrewWarnings,
+  getWorstCrewWarningSeverity,
+  type CrewHistoryEntry,
+  type CrewWarning,
+} from "@/domain/crewWarnings"
 import { validateCrewRecords } from "@/domain/invariants"
 import { getStudentDisplayName } from "@/domain/student"
 import type { CourseRecord } from "@/persistence/courses"
-import { readCrewPlan, saveCrewPlan } from "@/persistence/crews"
+import {
+  readCrewHistory,
+  readCrewPlan,
+  saveCrewPlan,
+} from "@/persistence/crews"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import { listVolunteers, type VolunteerRecord } from "@/persistence/volunteers"
 
@@ -48,6 +59,72 @@ function CrewHeader({ onBack }: { onBack: () => void }) {
 function samePerson(left: CrewPersonRef | null, right: CrewPersonRef) {
   return (
     left?.personId === right.personId && left.personType === right.personType
+  )
+}
+
+function sessionLabel(sessionId: SessionId) {
+  const session = SESSION_SEQUENCE.find(({ id }) => id === sessionId)
+  return session ? `${session.day} ${session.period}` : sessionId
+}
+
+function hasCrewHistoryIssues(
+  students: StudentRecord[],
+  volunteers: VolunteerRecord[],
+  history: CrewHistoryEntry[],
+) {
+  return (
+    validateCrewRecords(
+      students,
+      volunteers,
+      history.map((crew) => ({
+        id: crew.crewId,
+        sessionId: crew.sessionId,
+        studentIds: crew.studentIds,
+        volunteerIds: [],
+        destination: "unassigned",
+      })),
+      [],
+    ).length > 0
+  )
+}
+
+function CrewWarningDetail({
+  warning,
+  personLabel,
+}: {
+  warning: CrewWarning
+  personLabel: (person: CrewPersonRef) => string
+}) {
+  const names = warning.studentIds
+    .map((personId) => personLabel({ personId, personType: "student" }))
+    .join(" · ")
+  const title =
+    warning.kind === "size"
+      ? `Taglie ${warning.sizes[0]} + ${warning.sizes[1]}`
+      : warning.kind === "pair-recent"
+        ? "Coppia nelle ultime 3 sessioni"
+        : warning.kind === "pair-older"
+          ? "Coppia già vista nel corso"
+          : "Equipaggio identico già visto"
+  const history =
+    warning.kind === "size"
+      ? null
+      : `${warning.previousCount} ${warning.previousCount === 1 ? "precedente" : "precedenti"} · ultima ${sessionLabel(warning.lastSessionId)}`
+
+  return (
+    <article className="flex gap-2 text-sm">
+      <span
+        aria-hidden="true"
+        className={`mt-1 size-2.5 shrink-0 rounded-full ${warning.severity === "red" ? "bg-[#b42318]" : "bg-[#d28a00]"}`}
+      />
+      <div className="min-w-0">
+        <h3 className="font-black">{title}</h3>
+        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+          {names}
+          {history ? ` · ${history}` : ""}
+        </p>
+      </div>
+    </article>
   )
 }
 
@@ -173,6 +250,8 @@ export function CrewManagement({
     crews: [],
     landStudentIds: [],
   })
+  const [history, setHistory] = useState<CrewHistoryEntry[]>([])
+  const [warningCrewId, setWarningCrewId] = useState<string | null>(null)
   const [selected, setSelected] = useState<CrewPersonRef | null>(null)
   const [crewCount, setCrewCount] = useState(1)
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
@@ -185,11 +264,13 @@ export function CrewManagement({
   async function load(nextSessionId = sessionId) {
     setLoadState("loading")
     try {
-      const [studentRecords, volunteerRecords, stored] = await Promise.all([
-        listStudents(course.id),
-        listVolunteers(course.id),
-        readCrewPlan(course.id, nextSessionId),
-      ])
+      const [studentRecords, volunteerRecords, stored, storedHistory] =
+        await Promise.all([
+          listStudents(course.id),
+          listVolunteers(course.id),
+          readCrewPlan(course.id, nextSessionId),
+          readCrewHistory(course.id),
+        ])
       const invariantCrews = stored.crews.map((crew) => ({
         id: crew.id,
         sessionId: crew.sessionId,
@@ -207,15 +288,18 @@ export function CrewManagement({
           volunteerRecords,
           invariantCrews,
           stored.landAssignments,
-        ).length > 0
+        ).length > 0 ||
+        hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory)
       ) {
         throw new Error("Persisted crew state violates invariants")
       }
       setStudents(studentRecords)
       setVolunteers(volunteerRecords)
       setPlan({ crews: stored.crews, landStudentIds: stored.landStudentIds })
+      setHistory(storedHistory)
       setCrewCount(Math.max(1, stored.crews.length))
       setSelected(null)
+      setWarningCrewId(null)
       setLoadState("ready")
     } catch {
       setLoadState("error")
@@ -228,8 +312,9 @@ export function CrewManagement({
       listStudents(course.id),
       listVolunteers(course.id),
       readCrewPlan(course.id, sessionId),
+      readCrewHistory(course.id),
     ])
-      .then(([studentRecords, volunteerRecords, stored]) => {
+      .then(([studentRecords, volunteerRecords, stored, storedHistory]) => {
         if (!active) return
         const invariantCrews = stored.crews.map((crew) => ({
           id: crew.id,
@@ -248,15 +333,18 @@ export function CrewManagement({
             volunteerRecords,
             invariantCrews,
             stored.landAssignments,
-          ).length > 0
+          ).length > 0 ||
+          hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory)
         ) {
           throw new Error("Persisted crew state violates invariants")
         }
         setStudents(studentRecords)
         setVolunteers(volunteerRecords)
         setPlan({ crews: stored.crews, landStudentIds: stored.landStudentIds })
+        setHistory(storedHistory)
         setCrewCount(Math.max(1, stored.crews.length))
         setSelected(null)
+        setWarningCrewId(null)
         setLoadState("ready")
       })
       .catch(() => {
@@ -286,6 +374,25 @@ export function CrewManagement({
     () => new Map(volunteers.map((volunteer) => [volunteer.id, volunteer])),
     [volunteers],
   )
+  const warningsByCrew = useMemo(() => {
+    const sizes = new Map(students.map(({ id, size }) => [id, size] as const))
+    return new Map(
+      plan.crews.map((crew) => [
+        crew.id,
+        getCrewWarnings(
+          {
+            crewId: crew.id,
+            sessionId,
+            studentIds: crew.members
+              .filter(({ personType }) => personType === "student")
+              .map(({ personId }) => personId),
+          },
+          history,
+          sizes,
+        ),
+      ]),
+    )
+  }, [history, plan.crews, sessionId, students])
 
   function personLabel(person: CrewPersonRef) {
     if (person.personType === "volunteer") {
@@ -314,7 +421,18 @@ export function CrewManagement({
     try {
       await saveCrewPlan(course.id, sessionId, next)
       setPlan(next)
+      setHistory((current) => [
+        ...current.filter((entry) => entry.sessionId !== sessionId),
+        ...next.crews.map((crew) => ({
+          crewId: crew.id,
+          sessionId,
+          studentIds: crew.members
+            .filter(({ personType }) => personType === "student")
+            .map(({ personId }) => personId),
+        })),
+      ])
       setSelected(null)
+      setWarningCrewId(null)
     } catch {
       setSaveError(true)
     } finally {
@@ -420,6 +538,7 @@ export function CrewManagement({
           setSessionId(next)
           onSessionChange?.(next)
           setSelected(null)
+          setWarningCrewId(null)
         }}
         sessionId={sessionId}
       />
@@ -548,12 +667,53 @@ export function CrewManagement({
               <article className="rounded-3xl border bg-card p-4" key={crew.id}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h2 className="font-black">Equipaggio {crewIndex + 1}</h2>
-                  <span className="text-xs font-bold text-muted-foreground">
-                    {standardCrewSize
-                      ? `${crew.members.length}/${standardCrewSize}`
-                      : `${crew.members.length} · suggerite ${flexibleCrewTargets[crewIndex]}`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const warnings = warningsByCrew.get(crew.id) ?? []
+                      const severity = getWorstCrewWarningSeverity(warnings)
+                      if (!severity) return null
+                      return (
+                        <button
+                          aria-controls={`crew-warning-detail-${crew.id}`}
+                          aria-expanded={warningCrewId === crew.id}
+                          aria-label={`Avvisi equipaggio ${crewIndex + 1}: ${severity === "red" ? "rosso" : "giallo"}, ${warnings.length}`}
+                          className={`grid size-10 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
+                          onClick={() =>
+                            setWarningCrewId((current) =>
+                              current === crew.id ? null : crew.id,
+                            )
+                          }
+                          type="button"
+                        >
+                          <TriangleAlert
+                            aria-hidden="true"
+                            className="size-5"
+                          />
+                        </button>
+                      )
+                    })()}
+                    <span className="text-xs font-bold text-muted-foreground">
+                      {standardCrewSize
+                        ? `${crew.members.length}/${standardCrewSize}`
+                        : `${crew.members.length} · suggerite ${flexibleCrewTargets[crewIndex]}`}
+                    </span>
+                  </div>
                 </div>
+                {warningCrewId === crew.id && (
+                  <section
+                    aria-label={`Dettaglio avvisi equipaggio ${crewIndex + 1}`}
+                    className="mb-3 grid gap-2 rounded-2xl bg-muted p-3"
+                    id={`crew-warning-detail-${crew.id}`}
+                  >
+                    {(warningsByCrew.get(crew.id) ?? []).map((warning) => (
+                      <CrewWarningDetail
+                        key={warning.key}
+                        personLabel={personLabel}
+                        warning={warning}
+                      />
+                    ))}
+                  </section>
+                )}
                 <div className="grid gap-2">
                   {crew.members.map((person) => (
                     <PersonButton

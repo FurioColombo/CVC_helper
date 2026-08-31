@@ -10,7 +10,11 @@ const database = vi.hoisted(() => ({
 
 vi.mock("@/persistence/db", () => ({ db: database }))
 
-import { readCrewPlan, saveCrewPlan } from "@/persistence/crews"
+import {
+  readCrewHistory,
+  readCrewPlan,
+  saveCrewPlan,
+} from "@/persistence/crews"
 
 describe("crew persistence", () => {
   beforeEach(() => {
@@ -135,5 +139,50 @@ describe("crew persistence", () => {
     await expect(readCrewPlan("course-1", "sat-pm")).rejects.toThrow(
       "Invalid persisted crew plan",
     )
+  })
+
+  it("reads only real crews into student pair history, including Mezzi", async () => {
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          destination: "mezzi",
+          boatId: null,
+          position: 0,
+        },
+        {
+          id: "crew-2",
+          sessionId: "sun-am",
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-1",
+          personId: "student-1",
+          personType: "student",
+          position: 0,
+        },
+        {
+          crewId: "crew-1",
+          personId: "volunteer-1",
+          personType: "volunteer",
+          position: 1,
+        },
+      ])
+
+    await expect(readCrewHistory("course-1")).resolves.toEqual([
+      {
+        crewId: "crew-1",
+        sessionId: "sat-pm",
+        studentIds: ["student-1"],
+      },
+      { crewId: "crew-2", sessionId: "sun-am", studentIds: [] },
+    ])
+    expect(database.getAll.mock.calls[0]![0]).toContain("FROM crews")
+    expect(database.getAll.mock.calls[0]![0]).not.toContain("landAssignments")
   })
 })

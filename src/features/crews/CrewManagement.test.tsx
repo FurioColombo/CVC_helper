@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/crews", () => ({
+  readCrewHistory: vi.fn(),
   readCrewPlan: vi.fn(),
   saveCrewPlan: vi.fn(),
 }))
@@ -24,7 +25,11 @@ vi.mock("@/persistence/volunteers", () => ({
 import { CrewManagement } from "@/features/crews/CrewManagement"
 import type { CrewPlan } from "@/domain/crews"
 import type { CourseRecord } from "@/persistence/courses"
-import { readCrewPlan, saveCrewPlan } from "@/persistence/crews"
+import {
+  readCrewHistory,
+  readCrewPlan,
+  saveCrewPlan,
+} from "@/persistence/crews"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import { listVolunteers, type VolunteerRecord } from "@/persistence/volunteers"
 
@@ -64,6 +69,7 @@ const VOLUNTEERS: VolunteerRecord[] = [
 ]
 
 const getPlan = vi.mocked(readCrewPlan)
+const getHistory = vi.mocked(readCrewHistory)
 const savePlan = vi.mocked(saveCrewPlan)
 const getStudents = vi.mocked(listStudents)
 const getVolunteers = vi.mocked(listVolunteers)
@@ -85,6 +91,7 @@ describe("CrewManagement", () => {
     getStudents.mockResolvedValue(STUDENTS)
     getVolunteers.mockResolvedValue(VOLUNTEERS)
     getPlan.mockResolvedValue(stored({ crews: [], landStudentIds: [] }))
+    getHistory.mockResolvedValue([])
     savePlan.mockResolvedValue(undefined)
   })
 
@@ -241,5 +248,84 @@ describe("CrewManagement", () => {
 
     finishSave?.()
     await waitFor(() => expect(session).toBeEnabled())
+  })
+
+  it("shows one worst-severity triangle and expands every crew warning", async () => {
+    getStudents.mockResolvedValue([
+      { ...STUDENTS[0]!, size: "XS" },
+      { ...STUDENTS[1]!, size: "S" },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-current",
+            sessionId: "wed-pm",
+            members: [
+              { personId: "student-1", personType: "student" },
+              { personId: "student-2", personType: "student" },
+            ],
+          },
+        ],
+        landStudentIds: [],
+      }),
+    )
+    getHistory.mockResolvedValue([
+      {
+        crewId: "crew-previous",
+        sessionId: "tue-am",
+        studentIds: ["student-2", "student-1"],
+      },
+    ])
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="wed-pm"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    const warning = await screen.findByRole("button", {
+      name: "Avvisi equipaggio 1: rosso, 2",
+    })
+    expect(
+      screen.getAllByRole("button", { name: /Avvisi equipaggio/ }),
+    ).toHaveLength(1)
+    await user.click(warning)
+
+    const detail = screen.getByRole("region", {
+      name: "Dettaglio avvisi equipaggio 1",
+    })
+    expect(within(detail).getByText("Taglie XS + S")).toBeVisible()
+    expect(
+      within(detail).getByText("Coppia nelle ultime 3 sessioni"),
+    ).toBeVisible()
+    expect(within(detail).getByText(/ultima Martedì AM/)).toBeVisible()
+  })
+
+  it("refuses dangling people in persisted crew history", async () => {
+    getHistory.mockResolvedValue([
+      {
+        crewId: "crew-old",
+        sessionId: "sat-pm",
+        studentIds: ["missing-student"],
+      },
+    ])
+
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Equipaggi non disponibili",
+      }),
+    ).toBeVisible()
   })
 })
