@@ -13,6 +13,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     exclude: ["tests/e2e/**", "node_modules/**", "dist/**"],
+    maxWorkers: 1,
+    testTimeout: 10_000,
     css: true,
     coverage: {
       reporter: ["text", "json-summary"],
