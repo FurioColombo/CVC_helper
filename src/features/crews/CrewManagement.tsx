@@ -1,22 +1,33 @@
 import {
+  BookOpenText,
   Check,
   ChevronLeft,
   CircleMinus,
+  Copy,
   HandHeart,
   ShipWheel,
   TriangleAlert,
+  X,
   UsersRound,
 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SESSION_SEQUENCE, type SessionId } from "@/domain/config"
+import {
+  SESSION_DUTY_DAY,
+  SESSION_SEQUENCE,
+  type SessionId,
+} from "@/domain/config"
 import {
   assignCrewDestination,
+  copyPreviousBoatSelection,
+  copyPreviousCrewPlan,
   findPersonLocation,
+  formatCrewAnnouncement,
   getCrewCompleteness,
   getEvenCrewTargets,
+  getPreviousSessionId,
   getStandardCrewSize,
   movePerson,
   removePerson,
@@ -24,6 +35,7 @@ import {
   swapPeople,
   type CrewPersonRef,
   type CrewPlan,
+  type CrewCopyRemoval,
 } from "@/domain/crews"
 import {
   getCrewWarnings,
@@ -31,7 +43,11 @@ import {
   type CrewHistoryEntry,
   type CrewWarning,
 } from "@/domain/crewWarnings"
-import { validateBoatRecords, validateCrewRecords } from "@/domain/invariants"
+import {
+  validateBoatRecords,
+  validateCrewRecords,
+  validateDutyRecords,
+} from "@/domain/invariants"
 import { getStudentDisplayName } from "@/domain/student"
 import {
   listBoats,
@@ -45,10 +61,20 @@ import {
   readCrewPlan,
   saveCrewPlan,
 } from "@/persistence/crews"
+import { readDutyPlan } from "@/persistence/duties"
+import type { DutyAssignment } from "@/domain/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import { listVolunteers, type VolunteerRecord } from "@/persistence/volunteers"
 
-function CrewHeader({ onBack }: { onBack: () => void }) {
+function CrewHeader({
+  onBack,
+  onRead,
+  readDisabled,
+}: {
+  onBack: () => void
+  onRead: () => void
+  readDisabled: boolean
+}) {
   return (
     <div className="mb-5 flex items-center gap-1">
       <button
@@ -59,7 +85,18 @@ function CrewHeader({ onBack }: { onBack: () => void }) {
       >
         <ChevronLeft aria-hidden="true" className="size-5" />
       </button>
-      <h1 className="truncate text-2xl font-black tracking-tight">Equipaggi</h1>
+      <h1 className="min-w-0 flex-1 truncate text-2xl font-black tracking-tight">
+        Equipaggi
+      </h1>
+      <button
+        aria-label="Apri vista lettura"
+        className="grid size-11 shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40"
+        disabled={readDisabled}
+        onClick={onRead}
+        type="button"
+      >
+        <BookOpenText aria-hidden="true" className="size-5" />
+      </button>
     </div>
   )
 }
@@ -255,6 +292,106 @@ function SessionChoice({
   )
 }
 
+function CopyReportDialog({
+  removals,
+  personLabel,
+  onClose,
+}: {
+  removals: CrewCopyRemoval[]
+  personLabel: (person: CrewPersonRef) => string
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-60 grid place-items-center bg-foreground/35 p-5">
+      <section
+        aria-labelledby="crew-copy-report-title"
+        aria-modal="true"
+        className="w-full max-w-sm rounded-3xl border bg-card p-5 shadow-2xl"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-black" id="crew-copy-report-title">
+              Equipaggi copiati
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">Rimossi:</p>
+          </div>
+          <button
+            aria-label="Chiudi riepilogo copia"
+            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" className="size-5" />
+          </button>
+        </div>
+        <ul className="mt-4 grid gap-2 text-sm">
+          {removals.map(({ person, reason }) => (
+            <li
+              className="rounded-2xl bg-muted px-3 py-2.5"
+              key={`${person.personType}:${person.personId}`}
+            >
+              <span className="font-black">{personLabel(person)}</span>
+              <span className="text-muted-foreground"> — {reason}</span>
+            </li>
+          ))}
+        </ul>
+        <Button className="mt-5 w-full" onClick={onClose}>
+          Ho capito
+        </Button>
+      </section>
+    </div>
+  )
+}
+
+function AnnouncementView({
+  sessionId,
+  lines,
+  onClose,
+}: {
+  sessionId: SessionId
+  lines: string[]
+  onClose: () => void
+}) {
+  return (
+    <section
+      aria-label="Vista lettura equipaggi"
+      className="fixed inset-0 z-60 overflow-y-auto bg-[#fffdf8] text-[#102f3b]"
+    >
+      <div className="mx-auto min-h-full w-full max-w-2xl px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+        <header className="flex items-center justify-between gap-4 border-b border-[#c8d7db] pb-4">
+          <div>
+            <p className="text-xs font-black tracking-[0.16em] uppercase">
+              Equipaggi
+            </p>
+            <h1 className="mt-1 text-2xl font-black">
+              {sessionLabel(sessionId)}
+            </h1>
+          </div>
+          <button
+            aria-label="Chiudi vista lettura"
+            className="grid size-12 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" className="size-6" />
+          </button>
+        </header>
+        <ol className="mt-3 divide-y divide-[#dbe4e6]">
+          {lines.map((line, index) => (
+            <li
+              className="py-5 text-[1.35rem] leading-8 font-black tracking-tight"
+              key={index}
+            >
+              {line}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  )
+}
+
 export function CrewManagement({
   course,
   initialSessionId = "sat-pm",
@@ -279,6 +416,12 @@ export function CrewManagement({
     selectedBoatIds: [],
   })
   const [history, setHistory] = useState<CrewHistoryEntry[]>([])
+  const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>([])
+  const [copyReport, setCopyReport] = useState<CrewCopyRemoval[] | null>(null)
+  const [boatCopySelection, setBoatCopySelection] = useState<string[] | null>(
+    null,
+  )
+  const [readMode, setReadMode] = useState(false)
   const [warningCrewId, setWarningCrewId] = useState<string | null>(null)
   const [destinationCrewId, setDestinationCrewId] = useState<string | null>(
     null,
@@ -289,6 +432,7 @@ export function CrewManagement({
     "loading",
   )
   const [saving, setSaving] = useState(false)
+  const [copying, setCopying] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const saveInFlight = useRef(false)
 
@@ -302,6 +446,7 @@ export function CrewManagement({
         faultRecords,
         stored,
         storedHistory,
+        dutyPlan,
       ] = await Promise.all([
         listStudents(course.id),
         listVolunteers(course.id),
@@ -309,6 +454,7 @@ export function CrewManagement({
         listFaults(course.id),
         readCrewPlan(course.id, nextSessionId),
         readCrewHistory(course.id),
+        readDutyPlan(course.id),
       ])
       const invariantCrews = stored.crews.map((crew) => ({
         id: crew.id,
@@ -336,7 +482,12 @@ export function CrewManagement({
             boatId,
           })),
         ).length > 0 ||
-        hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory)
+        hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory) ||
+        validateDutyRecords(
+          studentRecords,
+          dutyPlan.assignments,
+          dutyPlan.settings?.completedDayIds ?? [],
+        ).length > 0
       ) {
         throw new Error("Persisted crew state violates invariants")
       }
@@ -350,10 +501,14 @@ export function CrewManagement({
         selectedBoatIds: stored.selectedBoatIds,
       })
       setHistory(storedHistory)
+      setDutyAssignments(dutyPlan.assignments)
       setCrewCount(Math.max(1, stored.crews.length))
       setSelected(null)
       setWarningCrewId(null)
       setDestinationCrewId(null)
+      setCopyReport(null)
+      setBoatCopySelection(null)
+      setReadMode(false)
       setLoadState("ready")
     } catch (error) {
       console.error("Crew load failed", error)
@@ -370,6 +525,7 @@ export function CrewManagement({
       listFaults(course.id),
       readCrewPlan(course.id, sessionId),
       readCrewHistory(course.id),
+      readDutyPlan(course.id),
     ])
       .then(
         ([
@@ -379,6 +535,7 @@ export function CrewManagement({
           faultRecords,
           stored,
           storedHistory,
+          dutyPlan,
         ]) => {
           if (!active) return
           const invariantCrews = stored.crews.map((crew) => ({
@@ -411,7 +568,12 @@ export function CrewManagement({
               studentRecords,
               volunteerRecords,
               storedHistory,
-            )
+            ) ||
+            validateDutyRecords(
+              studentRecords,
+              dutyPlan.assignments,
+              dutyPlan.settings?.completedDayIds ?? [],
+            ).length > 0
           ) {
             throw new Error("Persisted crew state violates invariants")
           }
@@ -425,10 +587,14 @@ export function CrewManagement({
             selectedBoatIds: stored.selectedBoatIds,
           })
           setHistory(storedHistory)
+          setDutyAssignments(dutyPlan.assignments)
           setCrewCount(Math.max(1, stored.crews.length))
           setSelected(null)
           setWarningCrewId(null)
           setDestinationCrewId(null)
+          setCopyReport(null)
+          setBoatCopySelection(null)
+          setReadMode(false)
           setLoadState("ready")
         },
       )
@@ -442,6 +608,8 @@ export function CrewManagement({
   }, [course.id, sessionId])
 
   const activeStudents = students.filter(({ active }) => active === 1)
+  const previousSessionId = getPreviousSessionId(sessionId)
+  const busy = saving || copying
   const maxCrewCount = Math.max(1, activeStudents.length + volunteers.length)
   const standardCrewSize = getStandardCrewSize(course.family, course.level)
   const flexibleCrewTargets = getEvenCrewTargets(
@@ -537,8 +705,25 @@ export function CrewManagement({
     return `${student?.active === 0 ? "Disabilitato" : "Allievo"}${size}`
   }
 
+  const selectedBoatTypes = Array.from(
+    new Set(
+      plan.selectedBoatIds
+        .map((boatId) => boatById.get(boatId)?.type)
+        .filter((type): type is BoatRecord["type"] => Boolean(type)),
+    ),
+  )
+  const announcementLines = plan.crews.map((crew) => {
+    return formatCrewAnnouncement({
+      destination: crew.destination,
+      exactBoatLabel: crew.boatId ? boatLabel(crew.boatId) : null,
+      inferredBoatType:
+        selectedBoatTypes.length === 1 ? selectedBoatTypes[0] : null,
+      memberLabels: crew.members.map(personLabel),
+    })
+  })
+
   async function commit(next: CrewPlan) {
-    if (saveInFlight.current) return
+    if (saveInFlight.current) return false
     saveInFlight.current = true
     setSaving(true)
     setSaveError(false)
@@ -557,8 +742,10 @@ export function CrewManagement({
       ])
       setSelected(null)
       setWarningCrewId(null)
+      return true
     } catch {
       setSaveError(true)
+      return false
     } finally {
       saveInFlight.current = false
       setSaving(false)
@@ -566,7 +753,7 @@ export function CrewManagement({
   }
 
   async function createCrews() {
-    if (saveInFlight.current) return
+    if (saveInFlight.current || copying) return
     const next: CrewPlan = {
       crews: Array.from({ length: crewCount }, () => ({
         id: crypto.randomUUID(),
@@ -581,8 +768,83 @@ export function CrewManagement({
     await commit(next)
   }
 
+  async function copyPreviousCrews() {
+    if (!previousSessionId || saveInFlight.current || copying) return
+    setCopying(true)
+    setSaveError(false)
+    try {
+      const previousPlan = await readCrewPlan(course.id, previousSessionId)
+      const dutyDayId = SESSION_DUTY_DAY[sessionId]
+      const { plan: copiedPlan, removals } = copyPreviousCrewPlan({
+        previousPlan,
+        sessionId,
+        activeStudentIds: activeStudents.map(({ id }) => id),
+        currentVolunteerIds: volunteers.map(({ id }) => id),
+        currentLandStudentIds: plan.landStudentIds,
+        dutyStudentIds: dutyAssignments
+          .filter(({ dayId }) => dayId === dutyDayId)
+          .map(({ studentId }) => studentId),
+        selectedBoatIds: plan.selectedBoatIds,
+      })
+      if (await commit(copiedPlan)) {
+        setCrewCount(Math.max(1, copiedPlan.crews.length))
+        setCopyReport(removals.length > 0 ? removals : null)
+      }
+    } catch {
+      setSaveError(true)
+    } finally {
+      setCopying(false)
+    }
+  }
+
+  async function preparePreviousBoats() {
+    if (!previousSessionId || saveInFlight.current || copying) return
+    setCopying(true)
+    setSaveError(false)
+    try {
+      const previousPlan = await readCrewPlan(course.id, previousSessionId)
+      setBoatCopySelection(
+        copyPreviousBoatSelection(
+          previousPlan.selectedBoatIds,
+          boats
+            .filter(({ availability }) => availability === "available")
+            .map(({ id }) => id),
+          plan.crews
+            .filter(
+              ({ destination, boatId }) => destination === "boat" && boatId,
+            )
+            .map(({ boatId }) => boatId!),
+        ),
+      )
+    } catch {
+      setSaveError(true)
+    } finally {
+      setCopying(false)
+    }
+  }
+
+  function toggleCopiedBoat(boat: BoatRecord) {
+    if (!boatCopySelection || busy) return
+    const selectedBoat = boatCopySelection.includes(boat.id)
+    const assigned = plan.crews.some(({ boatId }) => boatId === boat.id)
+    if ((!selectedBoat && boat.availability === "unavailable") || assigned)
+      return
+    setBoatCopySelection(
+      selectedBoat
+        ? boatCopySelection.filter((id) => id !== boat.id)
+        : [...boatCopySelection, boat.id],
+    )
+  }
+
+  async function confirmCopiedBoats() {
+    if (!boatCopySelection || busy) return
+    if (await commit({ ...plan, selectedBoatIds: boatCopySelection })) {
+      setBoatCopySelection(null)
+    }
+  }
+
   function tapPerson(person: CrewPersonRef) {
-    if (saveInFlight.current) return
+    if (saveInFlight.current || copying) return
     if (!selected || samePerson(selected, person)) {
       setSelected(samePerson(selected, person) ? null : person)
       setDestinationCrewId(null)
@@ -601,7 +863,7 @@ export function CrewManagement({
   }
 
   function placeInCrew(crewId: string) {
-    if (!selected || saving) return
+    if (!selected || busy) return
     try {
       void commit(
         movePerson(
@@ -617,13 +879,13 @@ export function CrewManagement({
   }
 
   function placeOnLand() {
-    if (!selected || selected.personType !== "student" || saving) return
+    if (!selected || selected.personType !== "student" || busy) return
     void commit(movePerson(plan, selected, { kind: "land" }, 1))
   }
 
   function toggleBoatGoingOut(boat: BoatRecord) {
     if (
-      saving ||
+      busy ||
       (boat.availability === "unavailable" &&
         !plan.selectedBoatIds.includes(boat.id))
     ) {
@@ -644,7 +906,7 @@ export function CrewManagement({
       | { kind: "mezzi" }
       | { kind: "boat"; boatId: string },
   ) {
-    if (!destinationCrewId || saving) return
+    if (!destinationCrewId || busy) return
     try {
       void commit(assignCrewDestination(plan, destinationCrewId, destination))
     } catch {
@@ -692,11 +954,92 @@ export function CrewManagement({
 
   return (
     <>
-      <CrewHeader onBack={onHome} />
+      {readMode && (
+        <AnnouncementView
+          lines={announcementLines}
+          onClose={() => setReadMode(false)}
+          sessionId={sessionId}
+        />
+      )}
+      {copyReport && (
+        <CopyReportDialog
+          onClose={() => setCopyReport(null)}
+          personLabel={personLabel}
+          removals={copyReport}
+        />
+      )}
+      {boatCopySelection && (
+        <div className="fixed inset-0 z-60 grid place-items-center bg-foreground/35 p-5">
+          <section
+            aria-labelledby="boat-copy-title"
+            aria-modal="true"
+            className="w-full max-w-sm rounded-3xl border bg-card p-5 shadow-2xl"
+            role="dialog"
+          >
+            <h2 className="text-xl font-black" id="boat-copy-title">
+              Barche copiate
+            </h2>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
+              Controlla la selezione della sessione precedente, modificala se
+              serve e conferma.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {boats.map((boat) => {
+                const selectedBoat = boatCopySelection.includes(boat.id)
+                const assigned = plan.crews.some(
+                  ({ boatId }) => boatId === boat.id,
+                )
+                const unavailable = boat.availability === "unavailable"
+                return (
+                  <button
+                    aria-label={`${boat.type} ${boat.number} nella copia${assigned ? ", già assegnata" : unavailable ? ", non disponibile" : ""}`}
+                    aria-pressed={selectedBoat}
+                    className={`min-h-14 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${selectedBoat ? "border-primary bg-primary text-primary-foreground" : unavailable ? "bg-muted text-muted-foreground" : "bg-card"}`}
+                    disabled={
+                      busy || assigned || (unavailable && !selectedBoat)
+                    }
+                    key={boat.id}
+                    onClick={() => toggleCopiedBoat(boat)}
+                    type="button"
+                  >
+                    <span className="block text-sm font-black">
+                      {boat.number}
+                    </span>
+                    <span className="block truncate text-[0.68rem] opacity-75">
+                      {assigned
+                        ? "Già assegnata"
+                        : unavailable
+                          ? "Non disponibile"
+                          : boat.type}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <Button
+                disabled={busy}
+                onClick={() => setBoatCopySelection(null)}
+                variant="secondary"
+              >
+                Annulla
+              </Button>
+              <Button disabled={busy} onClick={() => void confirmCopiedBoats()}>
+                {saving ? "Salvataggio…" : "Conferma barche"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
+      <CrewHeader
+        onBack={onHome}
+        onRead={() => setReadMode(true)}
+        readDisabled={busy || plan.crews.length === 0}
+      />
       <SessionChoice
-        disabled={saving}
+        disabled={busy || boatCopySelection !== null}
         onChange={(next) => {
-          if (saveInFlight.current) return
+          if (saveInFlight.current || copying || boatCopySelection) return
           setSessionId(next)
           onSessionChange?.(next)
           setSelected(null)
@@ -705,6 +1048,37 @@ export function CrewManagement({
         }}
         sessionId={sessionId}
       />
+
+      {previousSessionId && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button
+            aria-label={`Copia equipaggi da ${sessionLabel(previousSessionId)}`}
+            className="h-auto min-h-11 px-2 text-xs"
+            disabled={busy || boatCopySelection !== null}
+            onClick={() => void copyPreviousCrews()}
+            variant="secondary"
+          >
+            <Copy aria-hidden="true" className="size-4" />
+            Copia equipaggi
+          </Button>
+          <Button
+            aria-label={`Copia barche da ${sessionLabel(previousSessionId)}`}
+            className="h-auto min-h-11 px-2 text-xs"
+            disabled={busy || boatCopySelection !== null}
+            onClick={() => void preparePreviousBoats()}
+            variant="secondary"
+          >
+            <ShipWheel aria-hidden="true" className="size-4" />
+            Copia barche
+          </Button>
+        </div>
+      )}
+
+      {saveError && (
+        <p className="mt-3 text-sm font-semibold text-[#a2381b]" role="alert">
+          Modifica non valida o non salvata. Riprova.
+        </p>
+      )}
 
       {plan.crews.length === 0 ? (
         <section className="mt-5 rounded-3xl border bg-card p-5">
@@ -737,7 +1111,7 @@ export function CrewManagement({
           </label>
           <Button
             className="mt-5 w-full"
-            disabled={saving}
+            disabled={busy}
             onClick={() => void createCrews()}
           >
             {saving ? "Creazione…" : "Crea equipaggi"}
@@ -763,12 +1137,6 @@ export function CrewManagement({
             )}
           </section>
 
-          {saveError && (
-            <p className="text-sm font-semibold text-[#a2381b]" role="alert">
-              Modifica non valida o non salvata. Riprova.
-            </p>
-          )}
-
           <section
             aria-label="Barche in uscita"
             className="rounded-3xl border bg-card p-4"
@@ -792,7 +1160,7 @@ export function CrewManagement({
                     aria-label={`${boat.type} ${boat.number}${unavailable ? ", non disponibile" : hasFault ? ", avaria aperta" : ""}`}
                     aria-pressed={selectedBoat}
                     className={`min-h-14 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${unavailable && selectedBoat ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : unavailable ? "bg-muted text-muted-foreground" : selectedBoat ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}
-                    disabled={saving || (unavailable && !selectedBoat)}
+                    disabled={busy || (unavailable && !selectedBoat)}
                     key={boat.id}
                     onClick={() => toggleBoatGoingOut(boat)}
                     type="button"
@@ -840,7 +1208,7 @@ export function CrewManagement({
               <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5">
                 <Button
                   className="h-10 shrink-0 px-3"
-                  disabled={saving}
+                  disabled={busy}
                   onClick={() => chooseDestination({ kind: "unassigned" })}
                   variant="secondary"
                 >
@@ -855,7 +1223,7 @@ export function CrewManagement({
                     <Button
                       aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${boatLabel(boatId)}`}
                       className="h-10 shrink-0 px-3"
-                      disabled={saving || usedByAnotherCrew}
+                      disabled={busy || usedByAnotherCrew}
                       key={boatId}
                       onClick={() =>
                         chooseDestination({ kind: "boat", boatId })
@@ -868,7 +1236,7 @@ export function CrewManagement({
                 })}
                 <Button
                   className="h-10 shrink-0 px-3"
-                  disabled={saving}
+                  disabled={busy}
                   onClick={() => chooseDestination({ kind: "mezzi" })}
                   variant="secondary"
                 >
@@ -891,7 +1259,7 @@ export function CrewManagement({
                   <Button
                     aria-label={`Rimuovi ${personLabel(selected)} dall’assegnazione`}
                     className="h-10 shrink-0 px-3"
-                    disabled={saving}
+                    disabled={busy}
                     onClick={() => void commit(removePerson(plan, selected))}
                     variant="secondary"
                   >
@@ -912,7 +1280,7 @@ export function CrewManagement({
                     <Button
                       aria-label={`Sposta ${personLabel(selected)} in equipaggio ${crewIndex + 1}`}
                       className="h-10 shrink-0 px-3"
-                      disabled={saving || currentCrew || full}
+                      disabled={busy || currentCrew || full}
                       key={crew.id}
                       onClick={() => placeInCrew(crew.id)}
                       variant="secondary"
@@ -925,7 +1293,7 @@ export function CrewManagement({
                   <Button
                     aria-label={`Sposta ${personLabel(selected)} A terra`}
                     className="h-10 shrink-0 px-3"
-                    disabled={saving || selectedLocation.kind === "land"}
+                    disabled={busy || selectedLocation.kind === "land"}
                     onClick={placeOnLand}
                     variant="secondary"
                   >
@@ -991,7 +1359,7 @@ export function CrewManagement({
                 <button
                   aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
                   className={`mb-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
-                  disabled={saving}
+                  disabled={busy}
                   onClick={() => {
                     setSelected(null)
                     setDestinationCrewId((current) =>
@@ -1015,7 +1383,7 @@ export function CrewManagement({
                     <PersonButton
                       ariaLabel={`${personLabel(person)}, equipaggio ${crewIndex + 1}`}
                       detail={personDetail(person)}
-                      disabled={saving}
+                      disabled={busy}
                       key={`${person.personType}:${person.personId}`}
                       label={personLabel(person)}
                       onLongPress={
@@ -1038,7 +1406,7 @@ export function CrewManagement({
                       <button
                         aria-label={`Posto libero ${index + 1} equipaggio ${crewIndex + 1}`}
                         className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
-                        disabled={!selected || saving}
+                        disabled={!selected || busy}
                         key={index}
                         onClick={() => placeInCrew(crew.id)}
                         type="button"
@@ -1071,7 +1439,7 @@ export function CrewManagement({
                   <PersonButton
                     ariaLabel={`${personLabel(person)}, A terra`}
                     detail="A terra · conta nella completezza"
-                    disabled={saving}
+                    disabled={busy}
                     key={studentId}
                     label={personLabel(person)}
                     onLongPress={() => onOpenStudent(studentId)}
@@ -1085,7 +1453,7 @@ export function CrewManagement({
                 aria-label="Sposta selezionato A terra"
                 className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
                 disabled={
-                  !selected || selected.personType !== "student" || saving
+                  !selected || selected.personType !== "student" || busy
                 }
                 onClick={placeOnLand}
                 type="button"
@@ -1114,7 +1482,7 @@ export function CrewManagement({
                 return (
                   <PersonButton
                     detail={personDetail(person)}
-                    disabled={saving}
+                    disabled={busy}
                     key={student.id}
                     label={personLabel(person)}
                     onLongPress={() => onOpenStudent(student.id)}
@@ -1144,7 +1512,7 @@ export function CrewManagement({
                 return (
                   <PersonButton
                     detail={personDetail(person)}
-                    disabled={saving}
+                    disabled={busy}
                     key={volunteer.id}
                     label={personLabel(person)}
                     onTap={() => tapPerson(person)}

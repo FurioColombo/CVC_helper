@@ -14,6 +14,10 @@ vi.mock("@/persistence/crews", () => ({
   saveCrewPlan: vi.fn(),
 }))
 
+vi.mock("@/persistence/duties", () => ({
+  readDutyPlan: vi.fn(),
+}))
+
 vi.mock("@/persistence/boats", () => ({
   listBoats: vi.fn(),
   listFaults: vi.fn(),
@@ -41,6 +45,7 @@ import {
   readCrewPlan,
   saveCrewPlan,
 } from "@/persistence/crews"
+import { readDutyPlan } from "@/persistence/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import { listVolunteers, type VolunteerRecord } from "@/persistence/volunteers"
 
@@ -104,15 +109,19 @@ const getStudents = vi.mocked(listStudents)
 const getVolunteers = vi.mocked(listVolunteers)
 const getBoats = vi.mocked(listBoats)
 const getFaults = vi.mocked(listFaults)
+const getDutyPlan = vi.mocked(readDutyPlan)
 
 type CrewInput = Omit<CrewDraft, "destination" | "boatId"> &
   Partial<Pick<CrewDraft, "destination" | "boatId">>
 
-function stored(plan: {
-  crews: CrewInput[]
-  landStudentIds: string[]
-  selectedBoatIds?: string[]
-}) {
+function stored(
+  plan: {
+    crews: CrewInput[]
+    landStudentIds: string[]
+    selectedBoatIds?: string[]
+  },
+  landSessionId = plan.crews[0]?.sessionId ?? "sat-pm",
+) {
   const normalized: CrewPlan = {
     crews: plan.crews.map((crew) => ({
       ...crew,
@@ -126,7 +135,7 @@ function stored(plan: {
     ...normalized,
     landAssignments: normalized.landStudentIds.map((studentId, index) => ({
       id: `land-${index}`,
-      sessionId: "sat-pm" as const,
+      sessionId: landSessionId,
       studentId,
     })),
   }
@@ -141,6 +150,7 @@ describe("CrewManagement", () => {
     getFaults.mockResolvedValue(FAULTS)
     getPlan.mockResolvedValue(stored({ crews: [], landStudentIds: [] }))
     getHistory.mockResolvedValue([])
+    getDutyPlan.mockResolvedValue({ assignments: [], settings: null })
     savePlan.mockResolvedValue(undefined)
   })
 
@@ -505,5 +515,274 @@ describe("CrewManagement", () => {
     await user.click(warning)
     expect(screen.getByText("Barca non disponibile")).toBeVisible()
     expect(screen.getByText(/RS Quest 2 resta assegnata/)).toBeVisible()
+  })
+
+  it("does not offer previous-session copy in the first canonical session", async () => {
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole("heading", { name: "Prepara la sessione" })
+    expect(
+      screen.queryByRole("button", { name: /Copia equipaggi da/ }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /Copia barche da/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("adapts previous crews to duty, A terra and inactive people, then reports only removals", async () => {
+    const current = stored(
+      {
+        crews: [],
+        landStudentIds: ["student-2"],
+        selectedBoatIds: ["boat-7"],
+      },
+      "sun-pm",
+    )
+    const previous = stored({
+      crews: [
+        {
+          id: "previous-1",
+          sessionId: "sun-am",
+          members: [
+            { personId: "student-1", personType: "student" },
+            { personId: "student-3", personType: "student" },
+          ],
+          destination: "boat",
+          boatId: "boat-2",
+        },
+        {
+          id: "previous-2",
+          sessionId: "sun-am",
+          members: [
+            { personId: "student-2", personType: "student" },
+            { personId: "student-4", personType: "student" },
+            { personId: "volunteer-1", personType: "volunteer" },
+          ],
+          destination: "mezzi",
+          boatId: null,
+        },
+      ],
+      landStudentIds: [],
+      selectedBoatIds: ["boat-2"],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sun-am" ? previous : current,
+    )
+    getDutyPlan.mockResolvedValue({
+      assignments: [{ dayId: "sunday", studentId: "student-1" }],
+      settings: null,
+    })
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-pm"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Domenica AM",
+      }),
+    )
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    const copied = savePlan.mock.calls[0]![2]
+    expect(copied.selectedBoatIds).toEqual(["boat-7"])
+    expect(copied.landStudentIds).toEqual(["student-2"])
+    expect(copied.crews).toHaveLength(2)
+    expect(copied.crews[0]).toEqual(
+      expect.objectContaining({
+        sessionId: "sun-pm",
+        members: [{ personId: "student-3", personType: "student" }],
+        destination: "unassigned",
+        boatId: null,
+      }),
+    )
+    expect(copied.crews[1]!.members).toEqual([
+      { personId: "volunteer-1", personType: "volunteer" },
+    ])
+
+    const report = await screen.findByRole("dialog", {
+      name: "Equipaggi copiati",
+    })
+    expect(within(report).getByText("Aldo").closest("li")).toHaveTextContent(
+      "Aldo — comandata",
+    )
+    expect(within(report).getByText("Bea").closest("li")).toHaveTextContent(
+      "Bea — A terra",
+    )
+    expect(within(report).getByText("Dina").closest("li")).toHaveTextContent(
+      "Dina — non disponibile",
+    )
+    expect(within(report).queryByText(/Carlo/)).not.toBeInTheDocument()
+  })
+
+  it("copies a valid crew silently when no automatic removal occurs", async () => {
+    const current = stored({ crews: [], landStudentIds: [] }, "sun-am")
+    const previous = stored({
+      crews: [
+        {
+          id: "previous-1",
+          sessionId: "sat-pm",
+          members: [
+            { personId: "student-1", personType: "student" },
+            { personId: "student-2", personType: "student" },
+          ],
+        },
+      ],
+      landStudentIds: [],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Sabato PM",
+      }),
+    )
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    expect(
+      screen.queryByRole("dialog", { name: "Equipaggi copiati" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Aldo, equipaggio 1" }),
+    ).toBeVisible()
+  })
+
+  it("previews copied boats, permits edits, and saves only after confirmation", async () => {
+    const current = stored(
+      {
+        crews: [
+          {
+            id: "current-1",
+            sessionId: "sun-am",
+            members: [],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2"],
+      },
+      "sun-am",
+    )
+    const previous = stored({
+      crews: [],
+      landStudentIds: [],
+      selectedBoatIds: ["boat-7"],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Copia barche da Sabato PM" }),
+    )
+    const dialog = await screen.findByRole("dialog", {
+      name: "Barche copiate",
+    })
+    expect(savePlan).not.toHaveBeenCalled()
+    expect(
+      within(dialog).getByRole("button", {
+        name: "RS Quest 2 nella copia, già assegnata",
+      }),
+    ).toHaveAttribute("aria-pressed", "true")
+    const copiedBoat = within(dialog).getByRole("button", {
+      name: "RS Quest 7 nella copia",
+    })
+    expect(copiedBoat).toHaveAttribute("aria-pressed", "true")
+    await user.click(copiedBoat)
+    await user.click(
+      within(dialog).getByRole("button", { name: "Conferma barche" }),
+    )
+
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    expect(savePlan).toHaveBeenCalledWith(
+      COURSE.id,
+      "sun-am",
+      expect.objectContaining({ selectedBoatIds: ["boat-2"] }),
+    )
+  })
+
+  it("opens a dedicated read view with exact and inferred clean formats only", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [
+              { personId: "student-1", personType: "student" },
+              { personId: "student-2", personType: "student" },
+            ],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+          {
+            id: "crew-2",
+            sessionId: "sat-pm",
+            members: [
+              { personId: "student-3", personType: "student" },
+              { personId: "volunteer-1", personType: "volunteer" },
+            ],
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2", "boat-7"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    const view = screen.getByRole("region", {
+      name: "Vista lettura equipaggi",
+    })
+    expect(within(view).getByText("RS Quest 2 — Aldo / Bea")).toBeVisible()
+    expect(within(view).getByText("RS Quest — Carlo / Vera ADV")).toBeVisible()
+    expect(
+      within(view).queryByText(/Allievi sistemati|Barche in uscita|Avvisi/),
+    ).not.toBeInTheDocument()
+    await user.click(
+      within(view).getByRole("button", { name: "Chiudi vista lettura" }),
+    )
+    expect(
+      screen.queryByRole("region", { name: "Vista lettura equipaggi" }),
+    ).not.toBeInTheDocument()
   })
 })

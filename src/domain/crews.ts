@@ -1,10 +1,11 @@
 import {
   COURSE_CONFIG,
+  SESSION_SEQUENCE,
   type CrewDestination,
   type CourseFamily,
   type CourseLevel,
   type SessionId,
-} from "@/domain/config"
+} from "./config"
 
 export type CrewPersonType = "student" | "volunteer"
 
@@ -33,6 +34,24 @@ export type CrewDestinationTarget =
 export type CrewOperationalDestination =
   { kind: "unassigned" } | { kind: "mezzi" } | { kind: "boat"; boatId: string }
 
+export type CrewCopyRemovalReason = "comandata" | "A terra" | "non disponibile"
+
+export interface CrewCopyRemoval {
+  person: CrewPersonRef
+  reason: CrewCopyRemovalReason
+}
+
+export interface CopyPreviousCrewPlanInput {
+  previousPlan: CrewPlan
+  sessionId: SessionId
+  activeStudentIds: readonly string[]
+  currentVolunteerIds: readonly string[]
+  currentLandStudentIds: readonly string[]
+  dutyStudentIds: readonly string[]
+  selectedBoatIds: readonly string[]
+  createId?: () => string
+}
+
 export type CrewPersonLocation =
   | { kind: "pool" }
   | { kind: "crew"; crewId: string; memberIndex: number }
@@ -42,6 +61,93 @@ function samePerson(left: CrewPersonRef, right: CrewPersonRef) {
   return (
     left.personId === right.personId && left.personType === right.personType
   )
+}
+
+export function getPreviousSessionId(sessionId: SessionId): SessionId | null {
+  const index = SESSION_SEQUENCE.findIndex(({ id }) => id === sessionId)
+  return index > 0 ? SESSION_SEQUENCE[index - 1]!.id : null
+}
+
+export function copyPreviousCrewPlan({
+  previousPlan,
+  sessionId,
+  activeStudentIds,
+  currentVolunteerIds,
+  currentLandStudentIds,
+  dutyStudentIds,
+  selectedBoatIds,
+  createId = () => crypto.randomUUID(),
+}: CopyPreviousCrewPlanInput): {
+  plan: CrewPlan
+  removals: CrewCopyRemoval[]
+} {
+  const activeStudents = new Set(activeStudentIds)
+  const currentVolunteers = new Set(currentVolunteerIds)
+  const currentLand = new Set(currentLandStudentIds)
+  const onDuty = new Set(dutyStudentIds)
+  const removals: CrewCopyRemoval[] = []
+
+  function keepMember(person: CrewPersonRef) {
+    let reason: CrewCopyRemovalReason | null = null
+    if (person.personType === "student") {
+      if (!activeStudents.has(person.personId)) reason = "non disponibile"
+      else if (currentLand.has(person.personId)) reason = "A terra"
+      else if (onDuty.has(person.personId)) reason = "comandata"
+    } else if (!currentVolunteers.has(person.personId)) {
+      reason = "non disponibile"
+    }
+    if (reason) removals.push({ person, reason })
+    return reason === null
+  }
+
+  return {
+    plan: {
+      crews: previousPlan.crews.map((crew) => ({
+        id: createId(),
+        sessionId,
+        members: crew.members.filter(keepMember),
+        destination: "unassigned",
+        boatId: null,
+      })),
+      landStudentIds: [...currentLandStudentIds],
+      selectedBoatIds: [...selectedBoatIds],
+    },
+    removals,
+  }
+}
+
+export function copyPreviousBoatSelection(
+  previousBoatIds: readonly string[],
+  availableBoatIds: readonly string[],
+  requiredBoatIds: readonly string[] = [],
+) {
+  const available = new Set(availableBoatIds)
+  return [...previousBoatIds, ...requiredBoatIds].filter(
+    (boatId, index, values) =>
+      (available.has(boatId) || requiredBoatIds.includes(boatId)) &&
+      values.indexOf(boatId) === index,
+  )
+}
+
+export function formatCrewAnnouncement({
+  destination,
+  exactBoatLabel,
+  inferredBoatType,
+  memberLabels,
+}: {
+  destination: CrewDestination
+  exactBoatLabel?: string | null
+  inferredBoatType?: string | null
+  memberLabels: readonly string[]
+}) {
+  const names = memberLabels.join(" / ") || "Equipaggio vuoto"
+  const prefix =
+    destination === "boat"
+      ? exactBoatLabel
+      : destination === "mezzi"
+        ? "Mezzi"
+        : inferredBoatType
+  return prefix ? `${prefix} — ${names}` : names
 }
 
 export function getStandardCrewSize(family: CourseFamily, level: CourseLevel) {

@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest"
 
 import {
   assignCrewDestination,
+  copyPreviousBoatSelection,
+  copyPreviousCrewPlan,
+  formatCrewAnnouncement,
   getCrewCompleteness,
   getEvenCrewTargets,
+  getPreviousSessionId,
   getStandardCrewSize,
   movePerson,
   removePerson,
@@ -164,5 +168,120 @@ describe("crew composition rules", () => {
     expect(
       assignCrewDestination(assigned, "crew-1", { kind: "mezzi" }).crews[0],
     ).toEqual(expect.objectContaining({ destination: "mezzi", boatId: null }))
+  })
+
+  it("derives the immediately previous session from the canonical sequence", () => {
+    expect(getPreviousSessionId("sat-pm")).toBeNull()
+    expect(getPreviousSessionId("sun-am")).toBe("sat-pm")
+    expect(getPreviousSessionId("sun-pm")).toBe("sun-am")
+    expect(getPreviousSessionId("mon-am")).toBe("sun-pm")
+  })
+
+  it("copies only the still-valid previous crew structure and reports removals", () => {
+    let id = 0
+    const copied = copyPreviousCrewPlan({
+      previousPlan: {
+        crews: [
+          {
+            id: "old-1",
+            sessionId: "sun-am",
+            members: [STUDENT_1, STUDENT_2, VOLUNTEER],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+          {
+            id: "old-2",
+            sessionId: "sun-am",
+            members: [
+              { personId: "student-disabled", personType: "student" },
+              { personId: "volunteer-missing", personType: "volunteer" },
+            ],
+            destination: "mezzi",
+            boatId: null,
+          },
+        ],
+        landStudentIds: ["student-old-land"],
+        selectedBoatIds: ["boat-2"],
+      },
+      sessionId: "sun-pm",
+      activeStudentIds: ["student-1", "student-2"],
+      currentVolunteerIds: ["volunteer-1"],
+      currentLandStudentIds: ["student-2"],
+      dutyStudentIds: ["student-1"],
+      selectedBoatIds: ["boat-7"],
+      createId: () => `new-${++id}`,
+    })
+
+    expect(copied.plan).toEqual({
+      crews: [
+        {
+          id: "new-1",
+          sessionId: "sun-pm",
+          members: [VOLUNTEER],
+          destination: "unassigned",
+          boatId: null,
+        },
+        {
+          id: "new-2",
+          sessionId: "sun-pm",
+          members: [],
+          destination: "unassigned",
+          boatId: null,
+        },
+      ],
+      landStudentIds: ["student-2"],
+      selectedBoatIds: ["boat-7"],
+    })
+    expect(copied.removals).toEqual([
+      { person: STUDENT_1, reason: "comandata" },
+      { person: STUDENT_2, reason: "A terra" },
+      {
+        person: { personId: "student-disabled", personType: "student" },
+        reason: "non disponibile",
+      },
+      {
+        person: { personId: "volunteer-missing", personType: "volunteer" },
+        reason: "non disponibile",
+      },
+    ])
+  })
+
+  it("copies only currently available boats while retaining exact assignments", () => {
+    expect(
+      copyPreviousBoatSelection(
+        ["boat-2", "boat-7", "missing"],
+        ["boat-2", "boat-9"],
+        ["boat-7", "boat-7"],
+      ),
+    ).toEqual(["boat-2", "boat-7"])
+  })
+
+  it("formats every clean announcement state exactly", () => {
+    expect(
+      formatCrewAnnouncement({
+        destination: "boat",
+        exactBoatLabel: "Quest 7",
+        memberLabels: ["Mario", "Luca"],
+      }),
+    ).toBe("Quest 7 — Mario / Luca")
+    expect(
+      formatCrewAnnouncement({
+        destination: "unassigned",
+        inferredBoatType: "Quest",
+        memberLabels: ["Mario", "Luca"],
+      }),
+    ).toBe("Quest — Mario / Luca")
+    expect(
+      formatCrewAnnouncement({
+        destination: "unassigned",
+        memberLabels: ["Mario", "Luca"],
+      }),
+    ).toBe("Mario / Luca")
+    expect(
+      formatCrewAnnouncement({
+        destination: "mezzi",
+        memberLabels: ["Mario", "Luca"],
+      }),
+    ).toBe("Mezzi — Mario / Luca")
   })
 })

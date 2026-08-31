@@ -4,6 +4,7 @@ import {
   BOAT_TYPES,
   COURSE_CONFIG,
   DUTY_DAYS,
+  SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
   SIZE_WARNING_MATRIX,
   STUDENT_SEXES,
@@ -46,6 +47,21 @@ describe("canonical domain configuration", () => {
       "tuesday",
       "wednesday",
       "thursday",
+      "friday",
+    ])
+    expect(SESSION_SEQUENCE.map(({ id }) => SESSION_DUTY_DAY[id])).toEqual([
+      "saturday",
+      "sunday",
+      "sunday",
+      "monday",
+      "monday",
+      "tuesday",
+      "tuesday",
+      "wednesday",
+      "wednesday",
+      "thursday",
+      "thursday",
+      "friday",
       "friday",
     ])
   })

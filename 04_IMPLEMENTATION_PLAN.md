@@ -685,7 +685,7 @@ Implement crew destinations: unassigned, specific sailing boat, or Mezzi; plus b
 ## M11 — Copy previous session and announcement/read view
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -706,10 +706,24 @@ Self-review plus UX review at G4.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `npm run evidence:m11` passes 25 test files / 197 tests,
+  canonical domain and repository checks, the production build, and 26
+  Playwright journeys across Pixel 7 and iPhone 13. The browser journey copies
+  and adapts prior crews, reports only automatic removals, previews and
+  confirms prior boats, verifies clean announcement formats, reloads the saved
+  session, and records representative iPhone screenshots. Self-review is PASS.
+- Decisions: the previous session is derived only from `SESSION_SEQUENCE`.
+  Crew copy preserves crew order and current A-terra/boat-set state, creates
+  independent crew IDs, removes current duty/inactive/missing people, and
+  deliberately resets exact destinations instead of rebuilding crews. Boat
+  copy is a separate preview/edit/confirm operation and retains any exact boat
+  already required by the target session. Read mode infers a boat type only
+  when the selected session boats have one unambiguous type; otherwise it reads
+  names without a boat prefix.
+- Known limitations: the optional Screen Wake Lock control remains omitted as
+  best-effort browser behavior. No automatic crew optimization or post-MVP
+  synchronization behavior was introduced.
+- Git checkpoint: `feat: complete M11 crew copy and read view`.
 
 ---
 

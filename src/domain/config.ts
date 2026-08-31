@@ -90,6 +90,22 @@ export const DUTY_DAYS = [
 ] as const
 export type DutyDayId = (typeof DUTY_DAYS)[number]["id"]
 
+export const SESSION_DUTY_DAY = {
+  "sat-pm": "saturday",
+  "sun-am": "sunday",
+  "sun-pm": "sunday",
+  "mon-am": "monday",
+  "mon-pm": "monday",
+  "tue-am": "tuesday",
+  "tue-pm": "tuesday",
+  "wed-am": "wednesday",
+  "wed-pm": "wednesday",
+  "thu-am": "thursday",
+  "thu-pm": "thursday",
+  "fri-am": "friday",
+  "fri-pm": "friday",
+} as const satisfies Record<SessionId, DutyDayId>
+
 export const DUTY_TIE_BREAKERS = ["alphabetical", "similar-age"] as const
 export type DutyTieBreaker = (typeof DUTY_TIE_BREAKERS)[number]
 

@@ -8,12 +8,14 @@ import {
   DUTY_TIE_BREAKERS,
   EVALUATION_VALUES,
   FAULT_STATES,
+  SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
   SIZE_WARNING_MATRIX,
   STUDENT_SEXES,
   STUDENT_SIZES,
   VOLUNTEER_ROLES,
 } from "../src/domain/config.ts"
+import { getPreviousSessionId } from "../src/domain/crews.ts"
 import { validateCourseState } from "../src/domain/invariants.ts"
 import { buildD2FoundationScenario } from "../src/domain/scenarios.ts"
 
@@ -22,6 +24,17 @@ assert.equal(DUTY_DAYS.length, 7, "Expected 7 duty rotations")
 assert.deepEqual(CREW_DESTINATIONS, ["unassigned", "boat", "mezzi"])
 assert.equal(new Set(SESSION_SEQUENCE.map(({ id }) => id)).size, 13)
 assert.equal(new Set(DUTY_DAYS.map(({ id }) => id)).size, 7)
+SESSION_SEQUENCE.forEach(({ id }, index) => {
+  assert.equal(
+    getPreviousSessionId(id),
+    index === 0 ? null : SESSION_SEQUENCE[index - 1]!.id,
+    `Unexpected previous session for ${id}`,
+  )
+  assert.ok(
+    DUTY_DAYS.some(({ id: dutyDayId }) => dutyDayId === SESSION_DUTY_DAY[id]),
+    `Session ${id} references an unknown duty day`,
+  )
+})
 
 for (const [code, config] of Object.entries(COURSE_CONFIG)) {
   assert.ok(
