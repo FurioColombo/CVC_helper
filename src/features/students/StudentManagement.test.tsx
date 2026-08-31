@@ -128,4 +128,28 @@ describe("StudentManagement", () => {
       }),
     ).toBeVisible()
   })
+
+  it("returns direct-detail navigation to its originating workflow", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const onInitialStudentBack = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <StudentManagement
+        course={COURSE}
+        initialStudentId="student-1"
+        onHome={vi.fn()}
+        onInitialStudentBack={onInitialStudentBack}
+      />,
+    )
+
+    await screen.findByRole("heading", { name: "Mario" })
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Dettaglio" }),
+    )
+
+    expect(onInitialStudentBack).toHaveBeenCalledOnce()
+    expect(
+      screen.queryByRole("heading", { name: "Allievi" }),
+    ).not.toBeInTheDocument()
+  })
 })

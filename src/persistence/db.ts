@@ -68,12 +68,14 @@ const crews = Table.createLocalOnly({
   sessionId: column.text,
   destination: column.text,
   boatId: column.text,
+  position: column.integer,
 })
 
 const crewMembers = Table.createLocalOnly({
   crewId: column.text,
   personId: column.text,
   personType: column.text,
+  position: column.integer,
 })
 
 const landAssignments = Table.createLocalOnly({

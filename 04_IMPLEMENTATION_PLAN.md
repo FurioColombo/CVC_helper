@@ -551,7 +551,10 @@ At minimum:
   Field review moved completion above the roster, reduced completed history to
   assigned people, and added persistence feedback for completion/acceptance.
 - Known limitations: recalculation confirmation remains below the configurable
-  stay-over list; native WebKit remains reserved for M14.
+  stay-over list; native WebKit remains reserved for M14. Follow-up TODO from
+  field use: show day-scoped duty warnings directly on each affected day card,
+  visually distinguish the students causing them by severity, and add a compact
+  red `M` marker beside minors so the detailed Avvisi view becomes secondary.
 - Git checkpoint: `test: complete G3 duty management gate`.
 
 ---
@@ -559,7 +562,7 @@ At minimum:
 ## M8 — Crew composition core
 
 **Category:** RULE_HEAVY  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -579,10 +582,19 @@ Implement session-specific crew composition, pools, selection/move/swap/remove i
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: official verification PASS (24 test files / 145 tests, domain and
+  repository checks, production build, 20 Pixel 7/iPhone 13 E2E journeys);
+  session-specific composition journey and iPhone screenshots; independent
+  adversarial/domain review PASS after all findings were fixed.
+- Decisions: D2–D5 use canonical fixed pairs; flexible courses show a
+  deterministic even numeric target while assignment stays manual. Crew and
+  member order are explicit persisted positions. A fixed selected-person tray
+  provides one-handed crew/A-terra shortcuts. App-owned session state preserves
+  non-default sessions through long-press student detail. An immediate save
+  lock prevents stale concurrent mutations and session changes.
+- Known limitations: crew warnings/history, destinations/boats, copy previous,
+  and announcement mode intentionally remain M9–M11 scope.
+- Git checkpoint: `feat: complete M8 crew composition core`.
 
 ---
 

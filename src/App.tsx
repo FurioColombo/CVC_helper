@@ -20,10 +20,12 @@ import {
   COURSE_LEVELS,
   type CourseFamily,
   type CourseLevel,
+  type SessionId,
 } from "@/domain/config"
 import { buildCourseDetails } from "@/domain/course"
 import { BoatManagement } from "@/features/boats/BoatManagement"
 import { FaultManagement } from "@/features/boats/FaultManagement"
+import { CrewManagement } from "@/features/crews/CrewManagement"
 import { DutyManagement } from "@/features/duties/DutyManagement"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
@@ -69,10 +71,10 @@ const PLACEHOLDER_COPY: Record<
     | "boats"
     | "faults"
     | "sessions"
+    | "crews"
   >,
   string
 > = {
-  crews: "La gestione degli equipaggi sarà attivata nei prossimi traguardi.",
   evaluations: "Le valutazioni saranno attivate nei prossimi traguardi.",
 }
 
@@ -359,6 +361,7 @@ function Placeholder({
     | "boats"
     | "faults"
     | "sessions"
+    | "crews"
   >
   onHome: () => void
 }) {
@@ -424,7 +427,14 @@ function SettingsView({
 
 function AppShell({ course }: { course: CourseRecord }) {
   const [view, setView] = useState<ShellView>("home")
+  const [studentToOpen, setStudentToOpen] = useState<string | null>(null)
+  const [crewSessionId, setCrewSessionId] = useState<SessionId>("sat-pm")
   const primaryView = view === "faults" || view === "crews" ? view : "home"
+
+  function navigate(next: ShellView) {
+    if (next !== "students") setStudentToOpen(null)
+    setView(next)
+  }
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-md pb-28">
@@ -433,7 +443,7 @@ function AppShell({ course }: { course: CourseRecord }) {
         <Button
           aria-label="Impostazioni"
           className="size-11 shrink-0 px-0"
-          onClick={() => setView("settings")}
+          onClick={() => navigate("settings")}
           variant="secondary"
         >
           <Settings aria-hidden="true" className="size-5" />
@@ -441,12 +451,18 @@ function AppShell({ course }: { course: CourseRecord }) {
       </header>
 
       <main className="px-5 py-3">
-        {view === "home" && <Home course={course} onNavigate={setView} />}
+        {view === "home" && <Home course={course} onNavigate={navigate} />}
         {view === "settings" && (
           <SettingsView course={course} onHome={() => setView("home")} />
         )}
         {view === "students" && (
-          <StudentManagement course={course} onHome={() => setView("home")} />
+          <StudentManagement
+            course={course}
+            initialStudentId={studentToOpen}
+            key={studentToOpen ?? "student-list"}
+            onHome={() => navigate("home")}
+            onInitialStudentBack={() => navigate("crews")}
+          />
         )}
         {view === "volunteers" && (
           <VolunteerManagement
@@ -471,13 +487,26 @@ function AppShell({ course }: { course: CourseRecord }) {
             referenceDate={course.startDate}
           />
         )}
+        {view === "crews" && (
+          <CrewManagement
+            course={course}
+            initialSessionId={crewSessionId}
+            onHome={() => navigate("home")}
+            onOpenStudent={(studentId) => {
+              setStudentToOpen(studentId)
+              setView("students")
+            }}
+            onSessionChange={setCrewSessionId}
+          />
+        )}
         {view !== "home" &&
           view !== "settings" &&
           view !== "students" &&
           view !== "volunteers" &&
           view !== "boats" &&
           view !== "faults" &&
-          view !== "sessions" && (
+          view !== "sessions" &&
+          view !== "crews" && (
             <Placeholder onHome={() => setView("home")} view={view} />
           )}
       </main>
@@ -490,7 +519,7 @@ function AppShell({ course }: { course: CourseRecord }) {
           <button
             aria-current={primaryView === "faults" ? "page" : undefined}
             className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:text-primary"
-            onClick={() => setView("faults")}
+            onClick={() => navigate("faults")}
             type="button"
           >
             <Wrench aria-hidden="true" className="size-5" />
@@ -499,7 +528,7 @@ function AppShell({ course }: { course: CourseRecord }) {
           <button
             aria-current={primaryView === "home" ? "page" : undefined}
             className="-mt-5 flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl bg-primary text-xs font-bold text-primary-foreground shadow-[0_8px_24px_rgb(6_59_82/0.24)] outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-            onClick={() => setView("home")}
+            onClick={() => navigate("home")}
             type="button"
           >
             <House aria-hidden="true" className="size-6" />
@@ -508,7 +537,7 @@ function AppShell({ course }: { course: CourseRecord }) {
           <button
             aria-current={primaryView === "crews" ? "page" : undefined}
             className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:text-primary"
-            onClick={() => setView("crews")}
+            onClick={() => navigate("crews")}
             type="button"
           >
             <UsersRound aria-hidden="true" className="size-5" />

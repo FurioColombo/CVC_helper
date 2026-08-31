@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -39,15 +45,28 @@ vi.mock("@/persistence/duties", () => ({
   saveDutyPlan: vi.fn(),
 }))
 
+vi.mock("@/persistence/crews", () => ({
+  readCrewPlan: vi.fn().mockResolvedValue({
+    crews: [],
+    landStudentIds: [],
+    landAssignments: [],
+  }),
+  saveCrewPlan: vi.fn(),
+}))
+
 import { App } from "@/App"
 import {
   getActiveCourse,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
+import { readCrewPlan } from "@/persistence/crews"
+import { listStudents } from "@/persistence/students"
 
 const readCourse = vi.mocked(getActiveCourse)
 const saveCourse = vi.mocked(saveActiveCourse)
+const getCrewPlan = vi.mocked(readCrewPlan)
+const getStudents = vi.mocked(listStudents)
 
 const ACTIVE_COURSE: CourseRecord = {
   id: "course-1",
@@ -65,6 +84,12 @@ describe("course setup and application shell", () => {
   beforeEach(() => {
     readCourse.mockReset().mockResolvedValue(null)
     saveCourse.mockReset().mockResolvedValue(ACTIVE_COURSE)
+    getStudents.mockReset().mockResolvedValue([])
+    getCrewPlan.mockReset().mockResolvedValue({
+      crews: [],
+      landStudentIds: [],
+      landAssignments: [],
+    })
   })
 
   it("directs first launch to course creation", async () => {
@@ -150,5 +175,88 @@ describe("course setup and application shell", () => {
       await screen.findByRole("heading", { name: "Comandate" }),
     ).toBeVisible()
     expect(screen.getByText("Prima aggiungi gli allievi")).toBeVisible()
+  })
+
+  it("opens session crew composition from primary navigation", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await user.click(
+      within(
+        screen.getByRole("navigation", { name: "Navigazione principale" }),
+      ).getByRole("button", { name: "Equipaggi" }),
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Equipaggi" }),
+    ).toBeVisible()
+    expect(screen.getByLabelText("Sessione")).toHaveValue("sat-pm")
+    expect(
+      screen.getByRole("heading", { name: "Prepara la sessione" }),
+    ).toBeVisible()
+  })
+
+  it("returns from direct student detail to the originating crew session", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    getStudents.mockResolvedValue([
+      {
+        id: "student-1",
+        courseId: "course-1",
+        firstName: "Mario",
+        surname: "Rossi",
+        nickname: null,
+        dateOfBirth: "2000-01-01",
+        sex: "male",
+        phone: null,
+        size: "M",
+        initialNote: null,
+        active: 1,
+      },
+    ])
+    getCrewPlan.mockImplementation(async (_courseId, sessionId) => ({
+      crews:
+        sessionId === "wed-pm"
+          ? [
+              {
+                id: "crew-1",
+                sessionId,
+                members: [
+                  { personId: "student-1", personType: "student" as const },
+                ],
+              },
+            ]
+          : [],
+      landStudentIds: [],
+      landAssignments: [],
+    }))
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await user.click(
+      within(
+        screen.getByRole("navigation", { name: "Navigazione principale" }),
+      ).getByRole("button", { name: "Equipaggi" }),
+    )
+    await user.selectOptions(
+      await screen.findByRole("combobox", { name: "Sessione" }),
+      "wed-pm",
+    )
+    fireEvent.contextMenu(
+      await screen.findByRole("button", { name: "Mario, equipaggio 1" }),
+    )
+
+    await screen.findByRole("heading", { name: "Mario" })
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Dettaglio" }),
+    )
+    expect(
+      await screen.findByRole("heading", { name: "Equipaggi" }),
+    ).toBeVisible()
+    expect(screen.getByRole("combobox", { name: "Sessione" })).toHaveValue(
+      "wed-pm",
+    )
   })
 })

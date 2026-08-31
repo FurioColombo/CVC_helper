@@ -306,6 +306,7 @@ export function validateCourseState(
   })
 
   const assignedStudents = new Set<string>()
+  const assignedVolunteers = new Set<string>()
   const assignedBoats = new Set<string>()
   state.crews.forEach((crew, index) => {
     if (!sessionIds.has(crew.sessionId as never)) {
@@ -348,6 +349,15 @@ export function validateCourseState(
           message: `Crew references missing volunteer: ${volunteerId}`,
         })
       }
+      const assignmentKey = `${crew.sessionId}:${volunteerId}`
+      if (assignedVolunteers.has(assignmentKey)) {
+        issues.push({
+          code: "duplicate-session-volunteer",
+          path: `crews[${index}].volunteerIds[${volunteerIndex}]`,
+          message: `Volunteer ${volunteerId} is assigned more than once in ${crew.sessionId}`,
+        })
+      }
+      assignedVolunteers.add(assignmentKey)
     })
     if (crew.destination === "boat") {
       if (!crew.boatId || !boatIds.has(crew.boatId)) {
@@ -499,6 +509,23 @@ export function validateDutyRecords(
     completedDutyDayIds,
     crews: [],
     landAssignments: [],
+    evaluations: [],
+  })
+}
+
+export function validateCrewRecords(
+  students: CourseStateSnapshot["students"],
+  volunteers: CourseStateSnapshot["volunteers"],
+  crews: CourseStateSnapshot["crews"],
+  landAssignments: CourseStateSnapshot["landAssignments"],
+) {
+  return validateCourseState({
+    students,
+    volunteers,
+    boats: [],
+    faults: [],
+    crews,
+    landAssignments,
     evaluations: [],
   })
 }

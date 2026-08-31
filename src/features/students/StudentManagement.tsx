@@ -486,13 +486,21 @@ function StudentDetail({
 export function StudentManagement({
   course,
   onHome,
+  initialStudentId,
+  onInitialStudentBack,
 }: {
   course: CourseRecord
   onHome: () => void
+  initialStudentId?: string | null
+  onInitialStudentBack?: () => void
 }) {
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
-  const [screen, setScreen] = useState<StudentScreen>({ kind: "list" })
+  const [screen, setScreen] = useState<StudentScreen>(
+    initialStudentId
+      ? { kind: "detail", studentId: initialStudentId }
+      : { kind: "list" },
+  )
   const [menuOpen, setMenuOpen] = useState(false)
 
   async function refreshStudents() {
@@ -626,7 +634,13 @@ export function StudentManagement({
     return (
       <StudentDetail
         course={course}
-        onBack={() => setScreen({ kind: "list" })}
+        onBack={() => {
+          if (initialStudentId && onInitialStudentBack) {
+            onInitialStudentBack()
+            return
+          }
+          setScreen({ kind: "list" })
+        }}
         onChanged={refreshStudents}
         onEdit={() =>
           setScreen({ kind: "edit", studentId: selectedStudent.id })

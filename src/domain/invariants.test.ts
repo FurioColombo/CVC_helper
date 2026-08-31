@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   validateBoatRecords,
   validateCourseState,
+  validateCrewRecords,
   validateDutyRecords,
   validateStudentRecords,
   validateVolunteerRecords,
@@ -228,6 +229,43 @@ describe("course-state invariants", () => {
         "dangling-duty-student",
         "duplicate-completed-duty-day",
         "invalid-completed-duty-day",
+      ]),
+    )
+  })
+
+  it("prevents simultaneous duplicate crew and A terra assignment", () => {
+    const issues = validateCrewRecords(
+      [{ id: "student-1", active: 1, sex: "male", size: "M" }],
+      [{ id: "volunteer-1", name: "Anna", role: "ADV" }],
+      [
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          studentIds: ["student-1"],
+          volunteerIds: ["volunteer-1"],
+          destination: "unassigned",
+        },
+        {
+          id: "crew-2",
+          sessionId: "sat-pm",
+          studentIds: ["student-1"],
+          volunteerIds: ["volunteer-1"],
+          destination: "unassigned",
+        },
+      ],
+      [
+        {
+          id: "land-1",
+          sessionId: "sat-pm",
+          studentId: "student-1",
+        },
+      ],
+    ).map(({ code }) => code)
+
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        "duplicate-session-student",
+        "duplicate-session-volunteer",
       ]),
     )
   })
