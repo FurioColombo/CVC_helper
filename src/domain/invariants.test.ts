@@ -61,6 +61,33 @@ describe("course-state invariants", () => {
     )
   })
 
+  it("enforces canonical session boat selection before exact assignment", () => {
+    const state = buildD2FoundationScenario()
+    state.sessionBoats = [
+      ...state.sessionBoats,
+      { ...state.sessionBoats[0]!, id: "duplicate-selection" },
+      {
+        id: "missing-selection",
+        sessionId: "invalid-session",
+        boatId: "missing-boat",
+      },
+    ]
+    expect(validateCourseState(state).map(({ code }) => code)).toEqual(
+      expect.arrayContaining([
+        "duplicate-session-boat-selection",
+        "invalid-session",
+        "dangling-session-boat",
+      ]),
+    )
+
+    state.sessionBoats = []
+    expect(validateCourseState(state)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "crew-boat-not-selected" }),
+      ]),
+    )
+  })
+
   it("detects invalid persisted student enums", () => {
     const state = buildD2FoundationScenario()
     state.students[0] = {

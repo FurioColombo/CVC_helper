@@ -51,6 +51,11 @@ export interface CourseStateSnapshot {
     sessionId: string
     studentId: string
   }>
+  sessionBoats: Array<{
+    id: string
+    sessionId: string
+    boatId: string
+  }>
   evaluations: Array<{
     id: string
     sessionId: string
@@ -113,6 +118,7 @@ export function validateCourseState(
     ["faults", state.faults],
     ["crews", state.crews],
     ["landAssignments", state.landAssignments],
+    ["sessionBoats", state.sessionBoats],
     ["evaluations", state.evaluations],
   ] as const
   for (const [name, records] of collections) {
@@ -308,6 +314,32 @@ export function validateCourseState(
   const assignedStudents = new Set<string>()
   const assignedVolunteers = new Set<string>()
   const assignedBoats = new Set<string>()
+  const selectedBoats = new Set<string>()
+  state.sessionBoats.forEach((selection, index) => {
+    if (!sessionIds.has(selection.sessionId as never)) {
+      issues.push({
+        code: "invalid-session",
+        path: `sessionBoats[${index}].sessionId`,
+        message: `Session boat has invalid session: ${selection.sessionId}`,
+      })
+    }
+    if (!boatIds.has(selection.boatId)) {
+      issues.push({
+        code: "dangling-session-boat",
+        path: `sessionBoats[${index}].boatId`,
+        message: `Session selection references missing boat: ${selection.boatId}`,
+      })
+    }
+    const key = `${selection.sessionId}:${selection.boatId}`
+    if (selectedBoats.has(key)) {
+      issues.push({
+        code: "duplicate-session-boat-selection",
+        path: `sessionBoats[${index}]`,
+        message: `Boat ${selection.boatId} is selected twice in ${selection.sessionId}`,
+      })
+    }
+    selectedBoats.add(key)
+  })
   state.crews.forEach((crew, index) => {
     if (!sessionIds.has(crew.sessionId as never)) {
       issues.push({
@@ -368,6 +400,13 @@ export function validateCourseState(
         })
       } else {
         const boatKey = `${crew.sessionId}:${crew.boatId}`
+        if (!selectedBoats.has(boatKey)) {
+          issues.push({
+            code: "crew-boat-not-selected",
+            path: `crews[${index}].boatId`,
+            message: `Boat ${crew.boatId} is not selected for ${crew.sessionId}`,
+          })
+        }
         if (assignedBoats.has(boatKey)) {
           issues.push({
             code: "duplicate-session-boat",
@@ -462,6 +501,7 @@ export function validateStudentRecords(
     faults: [],
     crews: [],
     landAssignments: [],
+    sessionBoats: [],
     evaluations: [],
   })
 }
@@ -476,6 +516,7 @@ export function validateVolunteerRecords(
     faults: [],
     crews: [],
     landAssignments: [],
+    sessionBoats: [],
     evaluations: [],
   })
 }
@@ -491,6 +532,7 @@ export function validateBoatRecords(
     faults,
     crews: [],
     landAssignments: [],
+    sessionBoats: [],
     evaluations: [],
   })
 }
@@ -509,6 +551,7 @@ export function validateDutyRecords(
     completedDutyDayIds,
     crews: [],
     landAssignments: [],
+    sessionBoats: [],
     evaluations: [],
   })
 }
@@ -518,14 +561,17 @@ export function validateCrewRecords(
   volunteers: CourseStateSnapshot["volunteers"],
   crews: CourseStateSnapshot["crews"],
   landAssignments: CourseStateSnapshot["landAssignments"],
+  boats: CourseStateSnapshot["boats"] = [],
+  sessionBoats: CourseStateSnapshot["sessionBoats"] = [],
 ) {
   return validateCourseState({
     students,
     volunteers,
-    boats: [],
+    boats,
     faults: [],
     crews,
     landAssignments,
+    sessionBoats,
     evaluations: [],
   })
 }

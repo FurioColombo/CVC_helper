@@ -189,13 +189,17 @@ describe("boat and fault persistence", () => {
     )
   })
 
-  it("refuses deletion when a historical crew references the boat", async () => {
+  it("refuses deletion when operational history references the boat", async () => {
     database.getOptional
       .mockResolvedValueOnce({ id: "boat-1" })
       .mockResolvedValueOnce({ id: "crew-1" })
 
     await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
-      "historical crew references",
+      "historical operational references",
+    )
+    expect(database.getOptional).toHaveBeenLastCalledWith(
+      expect.stringContaining("sessionBoats"),
+      ["boat-1", "boat-1"],
     )
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })

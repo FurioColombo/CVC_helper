@@ -642,7 +642,7 @@ Implement size warning matrix, pair/crew repetition logic and per-crew worst-sev
 ## M10 — Crew destinations and boats
 
 **Category:** RULE_HEAVY  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -660,10 +660,25 @@ Implement crew destinations: unassigned, specific sailing boat, or Mezzi; plus b
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `npm run evidence:m10` passes 25 test files / 188 tests,
+  domain and repository checks, the production build, and 24 Playwright
+  journeys on Pixel 7 and iPhone 13. The full-page iPhone evidence shows the
+  boats-going-out selector, exact sailing-boat and Mezzi destinations,
+  duplicate prevention, open-fault handling, and an unavailable assigned boat
+  retained with a red warning. The independent adversarial domain review is
+  PASS with no blockers or findings.
+- Decisions: boats going out are stored as granular session records separate
+  from exact crew destinations. An exact sailing boat must be selected for the
+  session and can belong to at most one crew in that session. Mezzi is a real
+  destination with no `boatId` and counts in crew history. An open fault is
+  visible but does not make a boat unselectable; a newly unavailable boat is
+  excluded, while an existing selection or assignment is preserved and shown
+  with a red warning. Legacy records with null positions remain readable and
+  are normalized on the next save.
+- Known limitations: copying the previous session and the announcement/read
+  view intentionally remain M11. Generic motor-craft identities and automatic
+  crew generation remain outside MVP scope.
+- Git checkpoint: `feat: complete M10 crew destinations and boats`.
 
 ---
 

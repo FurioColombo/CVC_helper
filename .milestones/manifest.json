@@ -127,7 +127,7 @@
     {
       "id": "M10",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "requiredEvidence": [
         ".evidence/M10/verification.json",
         ".evidence/M10/domain-review.md"

@@ -158,11 +158,16 @@ export async function deleteBoat(boatId: string, courseId: string) {
     [boatId, courseId],
   )
   if (!ownedBoat) throw new Error("Boat does not belong to course")
-  const crewReference = await db.getOptional<{ id: string }>(
-    "SELECT id FROM crews WHERE boatId = ? LIMIT 1",
-    [boatId],
+  const operationalReference = await db.getOptional<{ id: string }>(
+    `SELECT id FROM crews WHERE boatId = ?
+     UNION ALL
+     SELECT id FROM sessionBoats WHERE boatId = ?
+     LIMIT 1`,
+    [boatId, boatId],
   )
-  if (crewReference) throw new Error("Boat has historical crew references")
+  if (operationalReference) {
+    throw new Error("Boat has historical operational references")
+  }
   await db.writeTransaction(async (transaction) => {
     await transaction.execute("DELETE FROM faults WHERE boatId = ?", [boatId])
     await transaction.execute(

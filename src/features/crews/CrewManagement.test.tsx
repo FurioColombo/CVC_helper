@@ -14,6 +14,11 @@ vi.mock("@/persistence/crews", () => ({
   saveCrewPlan: vi.fn(),
 }))
 
+vi.mock("@/persistence/boats", () => ({
+  listBoats: vi.fn(),
+  listFaults: vi.fn(),
+}))
+
 vi.mock("@/persistence/students", () => ({
   listStudents: vi.fn(),
 }))
@@ -23,7 +28,13 @@ vi.mock("@/persistence/volunteers", () => ({
 }))
 
 import { CrewManagement } from "@/features/crews/CrewManagement"
-import type { CrewPlan } from "@/domain/crews"
+import type { CrewDraft, CrewPlan } from "@/domain/crews"
+import {
+  listBoats,
+  listFaults,
+  type BoatRecord,
+  type CourseFaultRecord,
+} from "@/persistence/boats"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   readCrewHistory,
@@ -68,16 +79,52 @@ const VOLUNTEERS: VolunteerRecord[] = [
   { id: "volunteer-1", courseId: COURSE.id, name: "Vera ADV", role: "ADV" },
 ]
 
+const BOATS: BoatRecord[] = [
+  {
+    id: "boat-2",
+    courseId: COURSE.id,
+    type: "RS Quest",
+    number: "2",
+    availability: "available",
+  },
+  {
+    id: "boat-7",
+    courseId: COURSE.id,
+    type: "RS Quest",
+    number: "7",
+    availability: "available",
+  },
+]
+const FAULTS: CourseFaultRecord[] = []
+
 const getPlan = vi.mocked(readCrewPlan)
 const getHistory = vi.mocked(readCrewHistory)
 const savePlan = vi.mocked(saveCrewPlan)
 const getStudents = vi.mocked(listStudents)
 const getVolunteers = vi.mocked(listVolunteers)
+const getBoats = vi.mocked(listBoats)
+const getFaults = vi.mocked(listFaults)
 
-function stored(plan: CrewPlan) {
+type CrewInput = Omit<CrewDraft, "destination" | "boatId"> &
+  Partial<Pick<CrewDraft, "destination" | "boatId">>
+
+function stored(plan: {
+  crews: CrewInput[]
+  landStudentIds: string[]
+  selectedBoatIds?: string[]
+}) {
+  const normalized: CrewPlan = {
+    crews: plan.crews.map((crew) => ({
+      ...crew,
+      destination: crew.destination ?? "unassigned",
+      boatId: crew.boatId ?? null,
+    })),
+    landStudentIds: plan.landStudentIds,
+    selectedBoatIds: plan.selectedBoatIds ?? [],
+  }
   return {
-    ...plan,
-    landAssignments: plan.landStudentIds.map((studentId, index) => ({
+    ...normalized,
+    landAssignments: normalized.landStudentIds.map((studentId, index) => ({
       id: `land-${index}`,
       sessionId: "sat-pm" as const,
       studentId,
@@ -90,6 +137,8 @@ describe("CrewManagement", () => {
     vi.clearAllMocks()
     getStudents.mockResolvedValue(STUDENTS)
     getVolunteers.mockResolvedValue(VOLUNTEERS)
+    getBoats.mockResolvedValue(BOATS)
+    getFaults.mockResolvedValue(FAULTS)
     getPlan.mockResolvedValue(stored({ crews: [], landStudentIds: [] }))
     getHistory.mockResolvedValue([])
     savePlan.mockResolvedValue(undefined)
@@ -327,5 +376,134 @@ describe("CrewManagement", () => {
         name: "Equipaggi non disponibili",
       }),
     ).toBeVisible()
+  })
+
+  it("selects outgoing boats separately and prevents duplicate exact assignment", async () => {
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Timone duro",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          { id: "crew-1", sessionId: "sat-pm", members: [] },
+          { id: "crew-2", sessionId: "sat-pm", members: [] },
+        ],
+        landStudentIds: [],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    const boat = await screen.findByRole("button", {
+      name: "RS Quest 2, avaria aperta",
+    })
+    expect(boat).toBeEnabled()
+    await user.click(boat)
+    await waitFor(() => expect(boat).toHaveAttribute("aria-pressed", "true"))
+    expect(savePlan).toHaveBeenLastCalledWith(
+      COURSE.id,
+      "sat-pm",
+      expect.objectContaining({ selectedBoatIds: ["boat-2"] }),
+    )
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Destinazione equipaggio 1: Non assegnato",
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: "Assegna equipaggio 1 a RS Quest 2",
+      }),
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", {
+          name: "Destinazione equipaggio 1: RS Quest 2",
+        }),
+      ).toBeVisible(),
+    )
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Destinazione equipaggio 2: Non assegnato",
+      }),
+    )
+    expect(
+      screen.getByRole("button", {
+        name: "Assegna equipaggio 2 a RS Quest 2",
+      }),
+    ).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "Mezzi" }))
+    expect(savePlan).toHaveBeenLastCalledWith(
+      COURSE.id,
+      "sat-pm",
+      expect.objectContaining({
+        crews: expect.arrayContaining([
+          expect.objectContaining({
+            id: "crew-2",
+            destination: "mezzi",
+            boatId: null,
+          }),
+        ]),
+      }),
+    )
+  })
+
+  it("keeps an unavailable assigned boat and raises one red crew warning", async () => {
+    getBoats.mockResolvedValue([
+      { ...BOATS[0]!, availability: "unavailable" },
+      BOATS[1]!,
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    const warning = await screen.findByRole("button", {
+      name: "Avvisi equipaggio 1: rosso, 1",
+    })
+    expect(
+      screen.getByRole("button", {
+        name: "Destinazione equipaggio 1: RS Quest 2",
+      }),
+    ).toHaveClass("border-[#b42318]")
+    await user.click(warning)
+    expect(screen.getByText("Barca non disponibile")).toBeVisible()
+    expect(screen.getByText(/RS Quest 2 resta assegnata/)).toBeVisible()
   })
 })

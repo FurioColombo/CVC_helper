@@ -13,12 +13,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SESSION_SEQUENCE, type SessionId } from "@/domain/config"
 import {
+  assignCrewDestination,
   findPersonLocation,
   getCrewCompleteness,
   getEvenCrewTargets,
   getStandardCrewSize,
   movePerson,
   removePerson,
+  setBoatGoingOut,
   swapPeople,
   type CrewPersonRef,
   type CrewPlan,
@@ -29,8 +31,14 @@ import {
   type CrewHistoryEntry,
   type CrewWarning,
 } from "@/domain/crewWarnings"
-import { validateCrewRecords } from "@/domain/invariants"
+import { validateBoatRecords, validateCrewRecords } from "@/domain/invariants"
 import { getStudentDisplayName } from "@/domain/student"
+import {
+  listBoats,
+  listFaults,
+  type BoatRecord,
+  type CourseFaultRecord,
+} from "@/persistence/boats"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   readCrewHistory,
@@ -95,6 +103,23 @@ function CrewWarningDetail({
   warning: CrewWarning
   personLabel: (person: CrewPersonRef) => string
 }) {
+  if (warning.kind === "boat-unavailable") {
+    return (
+      <article className="flex gap-2 text-sm">
+        <span
+          aria-hidden="true"
+          className="mt-1 size-2.5 shrink-0 rounded-full bg-[#b42318]"
+        />
+        <div className="min-w-0">
+          <h3 className="font-black">Barca non disponibile</h3>
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+            {warning.boatLabel} resta assegnata: scegli se mantenerla o
+            cambiarla.
+          </p>
+        </div>
+      </article>
+    )
+  }
   const names = warning.studentIds
     .map((personId) => personLabel({ personId, personType: "student" }))
     .join(" · ")
@@ -246,12 +271,18 @@ export function CrewManagement({
   const [sessionId, setSessionId] = useState<SessionId>(initialSessionId)
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [volunteers, setVolunteers] = useState<VolunteerRecord[]>([])
+  const [boats, setBoats] = useState<BoatRecord[]>([])
+  const [faults, setFaults] = useState<CourseFaultRecord[]>([])
   const [plan, setPlan] = useState<CrewPlan>({
     crews: [],
     landStudentIds: [],
+    selectedBoatIds: [],
   })
   const [history, setHistory] = useState<CrewHistoryEntry[]>([])
   const [warningCrewId, setWarningCrewId] = useState<string | null>(null)
+  const [destinationCrewId, setDestinationCrewId] = useState<string | null>(
+    null,
+  )
   const [selected, setSelected] = useState<CrewPersonRef | null>(null)
   const [crewCount, setCrewCount] = useState(1)
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
@@ -264,13 +295,21 @@ export function CrewManagement({
   async function load(nextSessionId = sessionId) {
     setLoadState("loading")
     try {
-      const [studentRecords, volunteerRecords, stored, storedHistory] =
-        await Promise.all([
-          listStudents(course.id),
-          listVolunteers(course.id),
-          readCrewPlan(course.id, nextSessionId),
-          readCrewHistory(course.id),
-        ])
+      const [
+        studentRecords,
+        volunteerRecords,
+        boatRecords,
+        faultRecords,
+        stored,
+        storedHistory,
+      ] = await Promise.all([
+        listStudents(course.id),
+        listVolunteers(course.id),
+        listBoats(course.id),
+        listFaults(course.id),
+        readCrewPlan(course.id, nextSessionId),
+        readCrewHistory(course.id),
+      ])
       const invariantCrews = stored.crews.map((crew) => ({
         id: crew.id,
         sessionId: crew.sessionId,
@@ -280,14 +319,22 @@ export function CrewManagement({
         volunteerIds: crew.members
           .filter(({ personType }) => personType === "volunteer")
           .map(({ personId }) => personId),
-        destination: "unassigned",
+        destination: crew.destination,
+        boatId: crew.boatId ?? undefined,
       }))
       if (
+        validateBoatRecords(boatRecords, faultRecords).length > 0 ||
         validateCrewRecords(
           studentRecords,
           volunteerRecords,
           invariantCrews,
           stored.landAssignments,
+          boatRecords,
+          stored.selectedBoatIds.map((boatId, index) => ({
+            id: `session-boat-${index}`,
+            sessionId: nextSessionId,
+            boatId,
+          })),
         ).length > 0 ||
         hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory)
       ) {
@@ -295,13 +342,21 @@ export function CrewManagement({
       }
       setStudents(studentRecords)
       setVolunteers(volunteerRecords)
-      setPlan({ crews: stored.crews, landStudentIds: stored.landStudentIds })
+      setBoats(boatRecords)
+      setFaults(faultRecords)
+      setPlan({
+        crews: stored.crews,
+        landStudentIds: stored.landStudentIds,
+        selectedBoatIds: stored.selectedBoatIds,
+      })
       setHistory(storedHistory)
       setCrewCount(Math.max(1, stored.crews.length))
       setSelected(null)
       setWarningCrewId(null)
+      setDestinationCrewId(null)
       setLoadState("ready")
-    } catch {
+    } catch (error) {
+      console.error("Crew load failed", error)
       setLoadState("error")
     }
   }
@@ -311,43 +366,74 @@ export function CrewManagement({
     Promise.all([
       listStudents(course.id),
       listVolunteers(course.id),
+      listBoats(course.id),
+      listFaults(course.id),
       readCrewPlan(course.id, sessionId),
       readCrewHistory(course.id),
     ])
-      .then(([studentRecords, volunteerRecords, stored, storedHistory]) => {
-        if (!active) return
-        const invariantCrews = stored.crews.map((crew) => ({
-          id: crew.id,
-          sessionId: crew.sessionId,
-          studentIds: crew.members
-            .filter(({ personType }) => personType === "student")
-            .map(({ personId }) => personId),
-          volunteerIds: crew.members
-            .filter(({ personType }) => personType === "volunteer")
-            .map(({ personId }) => personId),
-          destination: "unassigned",
-        }))
-        if (
-          validateCrewRecords(
-            studentRecords,
-            volunteerRecords,
-            invariantCrews,
-            stored.landAssignments,
-          ).length > 0 ||
-          hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory)
-        ) {
-          throw new Error("Persisted crew state violates invariants")
-        }
-        setStudents(studentRecords)
-        setVolunteers(volunteerRecords)
-        setPlan({ crews: stored.crews, landStudentIds: stored.landStudentIds })
-        setHistory(storedHistory)
-        setCrewCount(Math.max(1, stored.crews.length))
-        setSelected(null)
-        setWarningCrewId(null)
-        setLoadState("ready")
-      })
-      .catch(() => {
+      .then(
+        ([
+          studentRecords,
+          volunteerRecords,
+          boatRecords,
+          faultRecords,
+          stored,
+          storedHistory,
+        ]) => {
+          if (!active) return
+          const invariantCrews = stored.crews.map((crew) => ({
+            id: crew.id,
+            sessionId: crew.sessionId,
+            studentIds: crew.members
+              .filter(({ personType }) => personType === "student")
+              .map(({ personId }) => personId),
+            volunteerIds: crew.members
+              .filter(({ personType }) => personType === "volunteer")
+              .map(({ personId }) => personId),
+            destination: crew.destination,
+            boatId: crew.boatId ?? undefined,
+          }))
+          if (
+            validateBoatRecords(boatRecords, faultRecords).length > 0 ||
+            validateCrewRecords(
+              studentRecords,
+              volunteerRecords,
+              invariantCrews,
+              stored.landAssignments,
+              boatRecords,
+              stored.selectedBoatIds.map((boatId, index) => ({
+                id: `session-boat-${index}`,
+                sessionId,
+                boatId,
+              })),
+            ).length > 0 ||
+            hasCrewHistoryIssues(
+              studentRecords,
+              volunteerRecords,
+              storedHistory,
+            )
+          ) {
+            throw new Error("Persisted crew state violates invariants")
+          }
+          setStudents(studentRecords)
+          setVolunteers(volunteerRecords)
+          setBoats(boatRecords)
+          setFaults(faultRecords)
+          setPlan({
+            crews: stored.crews,
+            landStudentIds: stored.landStudentIds,
+            selectedBoatIds: stored.selectedBoatIds,
+          })
+          setHistory(storedHistory)
+          setCrewCount(Math.max(1, stored.crews.length))
+          setSelected(null)
+          setWarningCrewId(null)
+          setDestinationCrewId(null)
+          setLoadState("ready")
+        },
+      )
+      .catch((error) => {
+        console.error("Crew load failed", error)
         if (active) setLoadState("error")
       })
     return () => {
@@ -374,12 +460,24 @@ export function CrewManagement({
     () => new Map(volunteers.map((volunteer) => [volunteer.id, volunteer])),
     [volunteers],
   )
+  const boatById = useMemo(
+    () => new Map(boats.map((boat) => [boat.id, boat])),
+    [boats],
+  )
+  const unresolvedFaultBoatIds = useMemo(
+    () =>
+      new Set(
+        faults
+          .filter(({ state }) => state !== "resolved")
+          .map(({ boatId }) => boatId),
+      ),
+    [faults],
+  )
   const warningsByCrew = useMemo(() => {
     const sizes = new Map(students.map(({ id, size }) => [id, size] as const))
     return new Map(
-      plan.crews.map((crew) => [
-        crew.id,
-        getCrewWarnings(
+      plan.crews.map((crew) => {
+        const warnings = getCrewWarnings(
           {
             crewId: crew.id,
             sessionId,
@@ -389,10 +487,36 @@ export function CrewManagement({
           },
           history,
           sizes,
-        ),
-      ]),
+        )
+        const boat = crew.boatId ? boatById.get(crew.boatId) : undefined
+        if (
+          crew.destination === "boat" &&
+          boat?.availability === "unavailable"
+        ) {
+          warnings.push({
+            key: `boat-unavailable:${boat.id}`,
+            kind: "boat-unavailable",
+            severity: "red",
+            boatId: boat.id,
+            boatLabel: `${boat.type} ${boat.number}`,
+          })
+        }
+        return [crew.id, warnings]
+      }),
     )
-  }, [history, plan.crews, sessionId, students])
+  }, [boatById, history, plan.crews, sessionId, students])
+
+  function boatLabel(boatId: string) {
+    const boat = boatById.get(boatId)
+    return boat ? `${boat.type} ${boat.number}` : "Barca mancante"
+  }
+
+  function destinationLabel(crewId: string) {
+    const crew = plan.crews.find(({ id }) => id === crewId)
+    if (!crew || crew.destination === "unassigned") return "Non assegnato"
+    if (crew.destination === "mezzi") return "Mezzi"
+    return crew.boatId ? boatLabel(crew.boatId) : "Barca mancante"
+  }
 
   function personLabel(person: CrewPersonRef) {
     if (person.personType === "volunteer") {
@@ -448,8 +572,11 @@ export function CrewManagement({
         id: crypto.randomUUID(),
         sessionId,
         members: [],
+        destination: "unassigned",
+        boatId: null,
       })),
       landStudentIds: [],
+      selectedBoatIds: plan.selectedBoatIds,
     }
     await commit(next)
   }
@@ -458,6 +585,7 @@ export function CrewManagement({
     if (saveInFlight.current) return
     if (!selected || samePerson(selected, person)) {
       setSelected(samePerson(selected, person) ? null : person)
+      setDestinationCrewId(null)
       return
     }
     const targetLocation = findPersonLocation(plan, person)
@@ -493,6 +621,37 @@ export function CrewManagement({
     void commit(movePerson(plan, selected, { kind: "land" }, 1))
   }
 
+  function toggleBoatGoingOut(boat: BoatRecord) {
+    if (
+      saving ||
+      (boat.availability === "unavailable" &&
+        !plan.selectedBoatIds.includes(boat.id))
+    ) {
+      return
+    }
+    try {
+      void commit(
+        setBoatGoingOut(plan, boat.id, !plan.selectedBoatIds.includes(boat.id)),
+      )
+    } catch {
+      setSaveError(true)
+    }
+  }
+
+  function chooseDestination(
+    destination:
+      | { kind: "unassigned" }
+      | { kind: "mezzi" }
+      | { kind: "boat"; boatId: string },
+  ) {
+    if (!destinationCrewId || saving) return
+    try {
+      void commit(assignCrewDestination(plan, destinationCrewId, destination))
+    } catch {
+      setSaveError(true)
+    }
+  }
+
   const studentPool = activeStudents.filter(
     ({ id }) =>
       findPersonLocation(plan, { personId: id, personType: "student" }).kind ===
@@ -506,6 +665,9 @@ export function CrewManagement({
   const selectedLocation = selected
     ? findPersonLocation(plan, selected)
     : { kind: "pool" as const }
+  const destinationCrewIndex = plan.crews.findIndex(
+    ({ id }) => id === destinationCrewId,
+  )
 
   if (loadState === "loading") {
     return (
@@ -539,6 +701,7 @@ export function CrewManagement({
           onSessionChange?.(next)
           setSelected(null)
           setWarningCrewId(null)
+          setDestinationCrewId(null)
         }}
         sessionId={sessionId}
       />
@@ -581,7 +744,9 @@ export function CrewManagement({
           </Button>
         </section>
       ) : (
-        <div className={`mt-5 grid gap-5 ${selected ? "pb-36" : ""}`}>
+        <div
+          className={`mt-5 grid gap-5 ${selected || destinationCrewId ? "pb-36" : ""}`}
+        >
           <section
             className={`rounded-2xl px-4 py-3 text-sm font-bold ${completeness.complete ? "bg-[#e9f5eb] text-[#176b2c]" : "bg-[#fff1ed] text-[#9d2f18]"}`}
           >
@@ -602,6 +767,115 @@ export function CrewManagement({
             <p className="text-sm font-semibold text-[#a2381b]" role="alert">
               Modifica non valida o non salvata. Riprova.
             </p>
+          )}
+
+          <section
+            aria-label="Barche in uscita"
+            className="rounded-3xl border bg-card p-4"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-black">Barche in uscita</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Selezionate {plan.selectedBoatIds.length}/{boats.length}
+                </p>
+              </div>
+              <ShipWheel aria-hidden="true" className="size-5 text-primary" />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {boats.map((boat) => {
+                const selectedBoat = plan.selectedBoatIds.includes(boat.id)
+                const unavailable = boat.availability === "unavailable"
+                const hasFault = unresolvedFaultBoatIds.has(boat.id)
+                return (
+                  <button
+                    aria-label={`${boat.type} ${boat.number}${unavailable ? ", non disponibile" : hasFault ? ", avaria aperta" : ""}`}
+                    aria-pressed={selectedBoat}
+                    className={`min-h-14 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${unavailable && selectedBoat ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : unavailable ? "bg-muted text-muted-foreground" : selectedBoat ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}
+                    disabled={saving || (unavailable && !selectedBoat)}
+                    key={boat.id}
+                    onClick={() => toggleBoatGoingOut(boat)}
+                    type="button"
+                  >
+                    <span className="block truncate text-sm font-black">
+                      {boat.number}
+                    </span>
+                    <span className="block truncate text-[0.68rem] opacity-75">
+                      {unavailable
+                        ? "Non disponibile"
+                        : hasFault
+                          ? "Avaria aperta"
+                          : boat.type}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            {boats.length === 0 && (
+              <p className="mt-3 rounded-2xl bg-muted px-3 py-3 text-sm text-muted-foreground">
+                Nessuna barca configurata. Gli equipaggi possono comunque
+                restare non assegnati o andare sui Mezzi.
+              </p>
+            )}
+          </section>
+
+          {destinationCrewId && destinationCrewIndex >= 0 && (
+            <section
+              aria-label={`Destinazione equipaggio ${destinationCrewIndex + 1}`}
+              className="fixed bottom-24 left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold">
+                  Equipaggio {destinationCrewIndex + 1}
+                </span>
+                <button
+                  aria-label="Chiudi destinazioni"
+                  className="min-h-10 px-2 text-xs font-bold text-muted-foreground"
+                  onClick={() => setDestinationCrewId(null)}
+                  type="button"
+                >
+                  Chiudi
+                </button>
+              </div>
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5">
+                <Button
+                  className="h-10 shrink-0 px-3"
+                  disabled={saving}
+                  onClick={() => chooseDestination({ kind: "unassigned" })}
+                  variant="secondary"
+                >
+                  Non assegnato
+                </Button>
+                {plan.selectedBoatIds.map((boatId) => {
+                  const usedByAnotherCrew = plan.crews.some(
+                    (crew) =>
+                      crew.id !== destinationCrewId && crew.boatId === boatId,
+                  )
+                  return (
+                    <Button
+                      aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${boatLabel(boatId)}`}
+                      className="h-10 shrink-0 px-3"
+                      disabled={saving || usedByAnotherCrew}
+                      key={boatId}
+                      onClick={() =>
+                        chooseDestination({ kind: "boat", boatId })
+                      }
+                      variant="secondary"
+                    >
+                      {boatLabel(boatId)}
+                    </Button>
+                  )
+                })}
+                <Button
+                  className="h-10 shrink-0 px-3"
+                  disabled={saving}
+                  onClick={() => chooseDestination({ kind: "mezzi" })}
+                  variant="secondary"
+                >
+                  Mezzi
+                </Button>
+              </div>
+            </section>
           )}
 
           {selected && (
@@ -714,6 +988,28 @@ export function CrewManagement({
                     ))}
                   </section>
                 )}
+                <button
+                  aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
+                  className={`mb-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
+                  disabled={saving}
+                  onClick={() => {
+                    setSelected(null)
+                    setDestinationCrewId((current) =>
+                      current === crew.id ? null : crew.id,
+                    )
+                  }}
+                  type="button"
+                >
+                  <span>
+                    <span className="block text-[0.65rem] font-bold tracking-wide text-muted-foreground uppercase">
+                      Destinazione
+                    </span>
+                    <span className="block text-sm font-black">
+                      {destinationLabel(crew.id)}
+                    </span>
+                  </span>
+                  <ShipWheel aria-hidden="true" className="size-5 shrink-0" />
+                </button>
                 <div className="grid gap-2">
                   {crew.members.map((person) => (
                     <PersonButton
@@ -867,7 +1163,7 @@ export function CrewManagement({
 
           <p className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
             <ShipWheel aria-hidden="true" className="size-4 shrink-0" />
-            Le barche verranno assegnate separatamente.
+            Barche in uscita e destinazioni vengono salvate automaticamente.
           </p>
         </div>
       )}

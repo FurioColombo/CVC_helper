@@ -36,6 +36,13 @@ export type CrewWarning =
       previousCount: number
       lastSessionId: SessionId
     }
+  | {
+      key: string
+      kind: "boat-unavailable"
+      severity: "red"
+      boatId: string
+      boatLabel: string
+    }
 
 const sessionIndex = new Map(
   SESSION_SEQUENCE.map(({ id }, index) => [id, index]),

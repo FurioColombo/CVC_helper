@@ -84,6 +84,13 @@ const landAssignments = Table.createLocalOnly({
   studentId: column.text,
 })
 
+const sessionBoats = Table.createLocalOnly({
+  courseId: column.text,
+  sessionId: column.text,
+  boatId: column.text,
+  position: column.integer,
+})
+
 const evaluations = Table.createLocalOnly({
   studentId: column.text,
   sessionId: column.text,
@@ -106,6 +113,7 @@ export const AppSchema = new Schema({
   crews,
   crewMembers,
   landAssignments,
+  sessionBoats,
   evaluations,
   meta,
 })

@@ -50,6 +50,7 @@ vi.mock("@/persistence/crews", () => ({
   readCrewPlan: vi.fn().mockResolvedValue({
     crews: [],
     landStudentIds: [],
+    selectedBoatIds: [],
     landAssignments: [],
   }),
   saveCrewPlan: vi.fn(),
@@ -89,6 +90,7 @@ describe("course setup and application shell", () => {
     getCrewPlan.mockReset().mockResolvedValue({
       crews: [],
       landStudentIds: [],
+      selectedBoatIds: [],
       landAssignments: [],
     })
   })
@@ -226,10 +228,13 @@ describe("course setup and application shell", () => {
                 members: [
                   { personId: "student-1", personType: "student" as const },
                 ],
+                destination: "unassigned" as const,
+                boatId: null,
               },
             ]
           : [],
       landStudentIds: [],
+      selectedBoatIds: [],
       landAssignments: [],
     }))
     const user = userEvent.setup()

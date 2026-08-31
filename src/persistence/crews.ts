@@ -18,20 +18,27 @@ interface PersistedCrew {
   sessionId: string
   destination: string
   boatId: string | null
-  position: number
+  position: number | null
 }
 
 interface PersistedMember {
   crewId: string
   personId: string
   personType: string
-  position: number
+  position: number | null
 }
 
 interface PersistedLandAssignment {
   id: string
   sessionId: string
   studentId: string
+}
+
+interface PersistedSessionBoat {
+  id: string
+  sessionId: string
+  boatId: string
+  position: number | null
 }
 
 export interface CrewPlanRecord extends CrewPlan {
@@ -49,54 +56,81 @@ export async function readCrewPlan(
   sessionId: SessionId,
 ): Promise<CrewPlanRecord> {
   await db.init()
-  const [crewRows, memberRows, landAssignments] = await Promise.all([
-    db.getAll<PersistedCrew>(
-      `SELECT id, sessionId, destination, boatId, position
+  const [crewRows, memberRows, landAssignments, sessionBoats] =
+    await Promise.all([
+      db.getAll<PersistedCrew>(
+        `SELECT id, sessionId, destination, boatId, position
        FROM crews
        WHERE courseId = ? AND sessionId = ?
        ORDER BY position`,
-      [courseId, sessionId],
-    ),
-    db.getAll<PersistedMember>(
-      `SELECT cm.crewId, cm.personId, cm.personType, cm.position
+        [courseId, sessionId],
+      ),
+      db.getAll<PersistedMember>(
+        `SELECT cm.crewId, cm.personId, cm.personType, cm.position
        FROM crewMembers cm
        JOIN crews c ON c.id = cm.crewId
        WHERE c.courseId = ? AND c.sessionId = ?
        ORDER BY cm.crewId, cm.position`,
-      [courseId, sessionId],
-    ),
-    db.getAll<PersistedLandAssignment>(
-      `SELECT id, sessionId, studentId
+        [courseId, sessionId],
+      ),
+      db.getAll<PersistedLandAssignment>(
+        `SELECT id, sessionId, studentId
        FROM landAssignments
        WHERE courseId = ? AND sessionId = ?
        ORDER BY id`,
-      [courseId, sessionId],
-    ),
-  ])
+        [courseId, sessionId],
+      ),
+      db.getAll<PersistedSessionBoat>(
+        `SELECT id, sessionId, boatId, position
+       FROM sessionBoats
+       WHERE courseId = ? AND sessionId = ?
+       ORDER BY position`,
+        [courseId, sessionId],
+      ),
+    ])
+  const selectedBoatIds = new Set(sessionBoats.map(({ boatId }) => boatId))
+  const assignedBoatIds = new Set<string>()
   if (
-    crewRows.some(
-      ({ sessionId: value, destination, boatId, position }, index) =>
-        !SESSION_IDS.includes(value as SessionId) ||
-        !CREW_DESTINATIONS.includes(destination as CrewDestination) ||
-        destination !== "unassigned" ||
-        boatId !== null ||
-        position !== index,
+    sessionBoats.some(
+      ({ sessionId: value, boatId, position }, index) =>
+        value !== sessionId ||
+        !boatId ||
+        selectedBoatIds.size !== sessionBoats.length ||
+        (position !== null && position !== index),
     ) ||
     memberRows.some(
       ({ personType, position }) =>
         !isPersonType(personType) ||
-        !Number.isInteger(position) ||
-        position < 0,
+        (position !== null && (!Number.isInteger(position) || position < 0)),
     )
   ) {
     throw new Error("Invalid persisted crew plan")
   }
+  crewRows.forEach(
+    ({ sessionId: value, destination, boatId, position }, index) => {
+      if (
+        !SESSION_IDS.includes(value as SessionId) ||
+        !CREW_DESTINATIONS.includes(destination as CrewDestination) ||
+        (position !== null && position !== index) ||
+        (destination === "boat"
+          ? !boatId ||
+            !selectedBoatIds.has(boatId) ||
+            assignedBoatIds.has(boatId)
+          : boatId !== null)
+      ) {
+        throw new Error(
+          `Invalid persisted crew plan: ${value}/${destination}/${boatId ?? "none"}/${position}/${index}`,
+        )
+      }
+      if (destination === "boat" && boatId) assignedBoatIds.add(boatId)
+    },
+  )
   const nextMemberPosition = new Map<string, number>()
   if (
     memberRows.some(({ crewId, position }) => {
       const expected = nextMemberPosition.get(crewId) ?? 0
       nextMemberPosition.set(crewId, expected + 1)
-      return position !== expected
+      return position !== null && position !== expected
     })
   ) {
     throw new Error("Invalid persisted crew member order")
@@ -109,12 +143,17 @@ export async function readCrewPlan(
     ])
   })
   return {
-    crews: crewRows.map<CrewDraft>(({ id, sessionId }) => ({
-      id,
-      sessionId: sessionId as SessionId,
-      members: membersByCrew.get(id) ?? [],
-    })),
+    crews: crewRows.map<CrewDraft>(
+      ({ id, sessionId, destination, boatId }) => ({
+        id,
+        sessionId: sessionId as SessionId,
+        members: membersByCrew.get(id) ?? [],
+        destination: destination as CrewDestination,
+        boatId,
+      }),
+    ),
     landStudentIds: landAssignments.map(({ studentId }) => studentId),
+    selectedBoatIds: sessionBoats.map(({ boatId }) => boatId),
     landAssignments,
   }
 }
@@ -128,11 +167,30 @@ export async function saveCrewPlan(
   if (!SESSION_IDS.includes(sessionId)) throw new Error("Invalid crew session")
   const crewIds = new Set<string>()
   const personKeys = new Set<string>()
+  const assignedBoatIds = new Set<string>()
+  const selectedBoatIds = new Set(plan.selectedBoatIds)
+  if (selectedBoatIds.size !== plan.selectedBoatIds.length) {
+    throw new Error("Duplicate session boat")
+  }
   for (const crew of plan.crews) {
     if (crewIds.has(crew.id) || crew.sessionId !== sessionId) {
       throw new Error("Invalid crew identity")
     }
     crewIds.add(crew.id)
+    if (!CREW_DESTINATIONS.includes(crew.destination)) {
+      throw new Error("Invalid crew destination")
+    }
+    if (crew.destination === "boat") {
+      if (!crew.boatId || !selectedBoatIds.has(crew.boatId)) {
+        throw new Error("Crew boat is not selected for the session")
+      }
+      if (assignedBoatIds.has(crew.boatId)) {
+        throw new Error("Boat is assigned twice in the session")
+      }
+      assignedBoatIds.add(crew.boatId)
+    } else if (crew.boatId !== null) {
+      throw new Error("Non-boat destination cannot retain a boat")
+    }
     for (const member of crew.members) {
       const key = `${member.personType}:${member.personId}`
       if (personKeys.has(key)) throw new Error("Duplicate crew person")
@@ -145,6 +203,16 @@ export async function saveCrewPlan(
       throw new Error("Duplicate session student")
     }
     landIds.add(studentId)
+  }
+  if (plan.selectedBoatIds.length > 0) {
+    const courseBoats = await db.getAll<{ id: string }>(
+      "SELECT id FROM boats WHERE courseId = ?",
+      [courseId],
+    )
+    const courseBoatIds = new Set(courseBoats.map(({ id }) => id))
+    if (plan.selectedBoatIds.some((boatId) => !courseBoatIds.has(boatId))) {
+      throw new Error("Session boat does not belong to course")
+    }
   }
 
   await db.writeTransaction(async (transaction) => {
@@ -163,16 +231,33 @@ export async function saveCrewPlan(
       "DELETE FROM landAssignments WHERE courseId = ? AND sessionId = ?",
       [courseId, sessionId],
     )
+    await transaction.execute(
+      "DELETE FROM sessionBoats WHERE courseId = ? AND sessionId = ?",
+      [courseId, sessionId],
+    )
     if (plan.crews.length > 0) {
       await transaction.executeBatch(
         `INSERT INTO crews(id, courseId, sessionId, destination, boatId, position)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        plan.crews.map(({ id }, position) => [
+        plan.crews.map(({ id, destination, boatId }, position) => [
           id,
           courseId,
           sessionId,
-          "unassigned",
-          null,
+          destination,
+          boatId,
+          position,
+        ]),
+      )
+    }
+    if (plan.selectedBoatIds.length > 0) {
+      await transaction.executeBatch(
+        `INSERT INTO sessionBoats(id, courseId, sessionId, boatId, position)
+         VALUES (?, ?, ?, ?, ?)`,
+        plan.selectedBoatIds.map((boatId, position) => [
+          crypto.randomUUID(),
+          courseId,
+          sessionId,
+          boatId,
           position,
         ]),
       )
@@ -242,7 +327,7 @@ export async function readCrewHistory(
       return (
         !SESSION_IDS.includes(sessionId as SessionId) ||
         !CREW_DESTINATIONS.includes(destination as CrewDestination) ||
-        position !== expected
+        (position !== null && position !== expected)
       )
     })
   ) {
@@ -253,7 +338,10 @@ export async function readCrewHistory(
     memberRows.some(({ crewId, personType, position }) => {
       const expected = nextMemberPosition.get(crewId) ?? 0
       nextMemberPosition.set(crewId, expected + 1)
-      return !isPersonType(personType) || position !== expected
+      return (
+        !isPersonType(personType) ||
+        (position !== null && position !== expected)
+      )
     })
   ) {
     throw new Error("Invalid persisted crew history members")

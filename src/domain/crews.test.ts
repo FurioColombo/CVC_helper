@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  assignCrewDestination,
   getCrewCompleteness,
   getEvenCrewTargets,
   getStandardCrewSize,
   movePerson,
   removePerson,
+  setBoatGoingOut,
   swapPeople,
   type CrewPlan,
   type CrewPersonRef,
@@ -25,10 +27,23 @@ const VOLUNTEER: CrewPersonRef = {
 }
 const EMPTY_PLAN: CrewPlan = {
   crews: [
-    { id: "crew-1", sessionId: "sat-pm", members: [] },
-    { id: "crew-2", sessionId: "sat-pm", members: [] },
+    {
+      id: "crew-1",
+      sessionId: "sat-pm",
+      members: [],
+      destination: "unassigned",
+      boatId: null,
+    },
+    {
+      id: "crew-2",
+      sessionId: "sat-pm",
+      members: [],
+      destination: "unassigned",
+      boatId: null,
+    },
   ],
   landStudentIds: [],
+  selectedBoatIds: [],
 }
 
 describe("crew composition rules", () => {
@@ -113,5 +128,41 @@ describe("crew composition rules", () => {
       expect.objectContaining({ accounted: 2, total: 2, complete: true }),
     )
     expect(removePerson(plan, STUDENT_1).crews[0]!.members).toEqual([VOLUNTEER])
+  })
+
+  it("keeps session boat selection separate from exact crew assignment", () => {
+    const selected = setBoatGoingOut(EMPTY_PLAN, "boat-2", true)
+    expect(selected.selectedBoatIds).toEqual(["boat-2"])
+    expect(
+      selected.crews.every(({ destination }) => destination === "unassigned"),
+    ).toBe(true)
+
+    const assigned = assignCrewDestination(selected, "crew-1", {
+      kind: "boat",
+      boatId: "boat-2",
+    })
+    expect(assigned.crews[0]).toEqual(
+      expect.objectContaining({ destination: "boat", boatId: "boat-2" }),
+    )
+    expect(() =>
+      assignCrewDestination(assigned, "crew-2", {
+        kind: "boat",
+        boatId: "boat-2",
+      }),
+    ).toThrow("already assigned")
+    expect(() => setBoatGoingOut(assigned, "boat-2", false)).toThrow(
+      "assigned to a crew",
+    )
+  })
+
+  it("treats Mezzi as a crew destination without retaining a boat", () => {
+    const assigned = assignCrewDestination(
+      setBoatGoingOut(EMPTY_PLAN, "boat-2", true),
+      "crew-1",
+      { kind: "boat", boatId: "boat-2" },
+    )
+    expect(
+      assignCrewDestination(assigned, "crew-1", { kind: "mezzi" }).crews[0],
+    ).toEqual(expect.objectContaining({ destination: "mezzi", boatId: null }))
   })
 })

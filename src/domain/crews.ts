@@ -1,5 +1,6 @@
 import {
   COURSE_CONFIG,
+  type CrewDestination,
   type CourseFamily,
   type CourseLevel,
   type SessionId,
@@ -16,15 +17,21 @@ export interface CrewDraft {
   id: string
   sessionId: SessionId
   members: CrewPersonRef[]
+  destination: CrewDestination
+  boatId: string | null
 }
 
 export interface CrewPlan {
   crews: CrewDraft[]
   landStudentIds: string[]
+  selectedBoatIds: string[]
 }
 
 export type CrewDestinationTarget =
   { kind: "crew"; crewId: string } | { kind: "land" }
+
+export type CrewOperationalDestination =
+  { kind: "unassigned" } | { kind: "mezzi" } | { kind: "boat"; boatId: string }
 
 export type CrewPersonLocation =
   | { kind: "pool" }
@@ -59,6 +66,65 @@ export function getEvenCrewTargets(peopleCount: number, crewCount: number) {
   )
 }
 
+export function setBoatGoingOut(
+  plan: CrewPlan,
+  boatId: string,
+  goingOut: boolean,
+): CrewPlan {
+  const selected = plan.selectedBoatIds.includes(boatId)
+  if (selected === goingOut) return plan
+  if (
+    !goingOut &&
+    plan.crews.some(
+      (crew) => crew.destination === "boat" && crew.boatId === boatId,
+    )
+  ) {
+    throw new Error("Cannot remove a boat assigned to a crew")
+  }
+  return {
+    ...plan,
+    selectedBoatIds: goingOut
+      ? [...plan.selectedBoatIds, boatId]
+      : plan.selectedBoatIds.filter((id) => id !== boatId),
+  }
+}
+
+export function assignCrewDestination(
+  plan: CrewPlan,
+  crewId: string,
+  destination: CrewOperationalDestination,
+): CrewPlan {
+  const crew = plan.crews.find(({ id }) => id === crewId)
+  if (!crew) throw new Error("Missing crew")
+  if (destination.kind === "boat") {
+    if (!plan.selectedBoatIds.includes(destination.boatId)) {
+      throw new Error("Boat is not selected for the session")
+    }
+    if (
+      plan.crews.some(
+        (candidate) =>
+          candidate.id !== crewId &&
+          candidate.destination === "boat" &&
+          candidate.boatId === destination.boatId,
+      )
+    ) {
+      throw new Error("Boat is already assigned in this session")
+    }
+  }
+  return {
+    ...plan,
+    crews: plan.crews.map((candidate) =>
+      candidate.id === crewId
+        ? {
+            ...candidate,
+            destination: destination.kind,
+            boatId: destination.kind === "boat" ? destination.boatId : null,
+          }
+        : candidate,
+    ),
+  }
+}
+
 export function findPersonLocation(
   plan: CrewPlan,
   person: CrewPersonRef,
@@ -78,6 +144,7 @@ export function findPersonLocation(
 
 function withoutPerson(plan: CrewPlan, person: CrewPersonRef): CrewPlan {
   return {
+    ...plan,
     crews: plan.crews.map((crew) => ({
       ...crew,
       members: crew.members.filter((member) => !samePerson(member, person)),

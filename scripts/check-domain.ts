@@ -19,6 +19,7 @@ import { buildD2FoundationScenario } from "../src/domain/scenarios.ts"
 
 assert.equal(SESSION_SEQUENCE.length, 13, "Expected 13 sailing sessions")
 assert.equal(DUTY_DAYS.length, 7, "Expected 7 duty rotations")
+assert.deepEqual(CREW_DESTINATIONS, ["unassigned", "boat", "mezzi"])
 assert.equal(new Set(SESSION_SEQUENCE.map(({ id }) => id)).size, 13)
 assert.equal(new Set(DUTY_DAYS.map(({ id }) => id)).size, 7)
 

@@ -35,6 +35,13 @@ export function buildD2FoundationScenario(): CourseStateSnapshot {
       },
     ],
     landAssignments: [],
+    sessionBoats: [
+      {
+        id: "session-boat-sat-pm-quest-7",
+        sessionId: "sat-pm",
+        boatId: "boat-quest-7",
+      },
+    ],
     evaluations: [
       {
         id: "evaluation-mario-sat-pm",
