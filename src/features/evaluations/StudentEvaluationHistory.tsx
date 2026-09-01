@@ -1,8 +1,13 @@
 import { FileText, LoaderCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 
-import { formatEvaluationSession } from "@/domain/evaluations"
+import type { SessionId } from "@/domain/config"
 import {
+  formatEvaluationSession,
+  getAccumulatedEvaluationSessions,
+} from "@/domain/evaluations"
+import {
+  listCourseEvaluations,
   listStudentEvaluations,
   type EvaluationRecord,
 } from "@/persistence/evaluations"
@@ -15,16 +20,21 @@ export function StudentEvaluationHistory({
   studentId: string
 }) {
   const [records, setRecords] = useState<EvaluationRecord[]>([])
+  const [sessions, setSessions] = useState<SessionId[]>([])
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
 
   useEffect(() => {
     let active = true
-    listStudentEvaluations(courseId, studentId)
-      .then((evaluations) => {
+    Promise.all([
+      listStudentEvaluations(courseId, studentId),
+      listCourseEvaluations(courseId),
+    ])
+      .then(([evaluations, courseEvaluations]) => {
         if (!active) return
         setRecords(evaluations)
+        setSessions(getAccumulatedEvaluationSessions(courseEvaluations))
         setLoadState("ready")
       })
       .catch(() => {
@@ -34,6 +44,10 @@ export function StudentEvaluationHistory({
       active = false
     }
   }, [courseId, studentId])
+
+  const recordsBySession = new Map(
+    records.map((record) => [record.sessionId, record]),
+  )
 
   return (
     <section
@@ -57,37 +71,40 @@ export function StudentEvaluationHistory({
           Storico non disponibile.
         </p>
       )}
-      {loadState === "ready" && records.length === 0 && (
+      {loadState === "ready" && sessions.length === 0 && (
         <p className="mt-2 text-sm text-muted-foreground">
           Nessuna valutazione inserita.
         </p>
       )}
-      {loadState === "ready" && records.length > 0 && (
+      {loadState === "ready" && sessions.length > 0 && (
         <div className="mt-3 divide-y rounded-xl bg-muted px-3">
-          {records.map((record) => (
-            <article className="py-3" key={record.id}>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-bold">
-                  {formatEvaluationSession(record.sessionId)}
-                </p>
-                <span
-                  aria-label={`Valutazione ${record.value ?? "mancante"}`}
-                  className="min-w-10 rounded-lg bg-card px-2 py-1 text-center text-sm font-black"
-                >
-                  {record.value ?? "—"}
-                </span>
-              </div>
-              {record.note && (
-                <p className="mt-2 flex items-start gap-2 whitespace-pre-wrap text-sm leading-6">
-                  <FileText
-                    aria-hidden="true"
-                    className="mt-1 size-4 shrink-0 text-[#a34a18]"
-                  />
-                  {record.note}
-                </p>
-              )}
-            </article>
-          ))}
+          {sessions.map((sessionId) => {
+            const record = recordsBySession.get(sessionId)
+            return (
+              <article className="py-3" key={sessionId}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold">
+                    {formatEvaluationSession(sessionId)}
+                  </p>
+                  <span
+                    aria-label={`Valutazione ${record?.value ?? "mancante"}`}
+                    className="min-w-10 rounded-lg bg-card px-2 py-1 text-center text-sm font-black"
+                  >
+                    {record?.value ?? "—"}
+                  </span>
+                </div>
+                {record?.note && (
+                  <p className="mt-2 flex items-start gap-2 whitespace-pre-wrap text-sm leading-6">
+                    <FileText
+                      aria-hidden="true"
+                      className="mt-1 size-4 shrink-0 text-[#a34a18]"
+                    />
+                    {record.note}
+                  </p>
+                )}
+              </article>
+            )
+          })}
         </div>
       )}
     </section>

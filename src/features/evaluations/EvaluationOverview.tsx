@@ -164,7 +164,12 @@ export function EvaluationOverview({
                       aria-hidden="true"
                       className="size-5 shrink-0 text-primary"
                     />
-                    <h3 className="truncate text-base font-black">{name}</h3>
+                    <span className="min-w-0">
+                      <h3 className="truncate text-base font-black">{name}</h3>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {student.surname}
+                      </span>
+                    </span>
                   </button>
                   <span className="shrink-0 text-xs font-bold text-muted-foreground">
                     {countLabel(summary.count)}

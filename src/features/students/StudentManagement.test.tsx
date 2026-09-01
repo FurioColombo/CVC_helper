@@ -12,6 +12,7 @@ vi.mock("@/persistence/students", () => ({
 }))
 
 vi.mock("@/persistence/evaluations", () => ({
+  listCourseEvaluations: vi.fn().mockResolvedValue([]),
   listStudentEvaluations: vi.fn().mockResolvedValue([]),
 }))
 

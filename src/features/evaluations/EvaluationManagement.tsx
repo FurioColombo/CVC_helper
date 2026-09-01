@@ -537,6 +537,7 @@ export function EvaluationManagement({
   )
 
   function changeView(nextView: EvaluationView) {
+    if (savingIds.size > 0) return
     setView(nextView)
     onViewChange?.(nextView)
   }
@@ -563,7 +564,7 @@ export function EvaluationManagement({
       </div>
 
       {view !== "overview" && (
-        <label className="grid gap-2 text-sm font-black">
+        <label className="sticky top-2 z-20 -mx-1 grid gap-2 rounded-2xl bg-background/95 px-1 pb-2 text-sm font-black backdrop-blur-sm">
           Sessione
           <select
             aria-label="Sessione valutazioni"
@@ -596,7 +597,8 @@ export function EvaluationManagement({
       >
         <button
           aria-pressed={view === "students"}
-          className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          disabled={savingIds.size > 0}
           onClick={() => changeView("students")}
           type="button"
         >
@@ -604,7 +606,8 @@ export function EvaluationManagement({
         </button>
         <button
           aria-pressed={view === "crews"}
-          className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          disabled={savingIds.size > 0}
           onClick={() => changeView("crews")}
           type="button"
         >
@@ -612,7 +615,8 @@ export function EvaluationManagement({
         </button>
         <button
           aria-pressed={view === "overview"}
-          className="min-h-11 rounded-xl px-2 text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          className="min-h-11 rounded-xl px-2 text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          disabled={savingIds.size > 0}
           onClick={() => changeView("overview")}
           type="button"
         >

@@ -212,6 +212,44 @@ describe("evaluation management", () => {
     )
   })
 
+  it("waits for a pending save before opening the overview", async () => {
+    let finishSave: (
+      value: Awaited<ReturnType<typeof saveEvaluation>>,
+    ) => void = () => {
+      throw new Error("Pending save was not initialized")
+    }
+    save.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishSave = resolve
+      }),
+    )
+    const user = userEvent.setup()
+    renderScreen()
+
+    await screen.findByRole("heading", { name: "Aldo" })
+    await user.click(
+      screen.getByRole("button", { name: "Valutazione di Aldo: +" }),
+    )
+    const overviewButton = screen.getByRole("button", { name: "Riepilogo" })
+    expect(overviewButton).toBeDisabled()
+    expect(
+      screen.queryByRole("heading", { name: "Riepilogo del corso" }),
+    ).not.toBeInTheDocument()
+
+    finishSave({
+      id: "evaluation-student-1-sat-pm",
+      studentId: "student-1",
+      sessionId: "sat-pm",
+      value: "+",
+      note: null,
+    })
+    await waitFor(() => expect(overviewButton).toBeEnabled())
+    await user.click(overviewButton)
+    expect(
+      await screen.findByRole("heading", { name: "Riepilogo del corso" }),
+    ).toBeVisible()
+  })
+
   it("keeps dictated text editable and stores no audio", async () => {
     const stopTrack = vi.fn()
     class FakeMediaRecorder {

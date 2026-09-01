@@ -875,7 +875,7 @@ Self-review.
 ## G5 — Evaluation Gate
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -901,10 +901,25 @@ Evaluate several sessions containing:
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/G5/verification.json` records PASS for 30 test files
+  and 231 tests, domain/repository checks, production build, and all 34 browser
+  journeys on Pixel 7 and iPhone 13. The focused evolving-week journey and
+  `.evidence/G5/evaluation-gate-iphone13.png` cover normal crews, two distinct
+  `A terra` outcomes, missing marks, a persisted past edit, a note, unequal
+  mark counts, and mean-based ordering that cannot be mistaken for sum-based
+  ordering. Functional review is PASS; field UX review is PASS_WITH_FINDINGS,
+  with no blockers or remaining important findings.
+- Decisions: evaluation view changes wait for active saves so Riepilogo cannot
+  mount from stale persisted rows. The selected session remains visible while
+  scrolling. Overview cards expose the surname used for alphabetical ordering.
+  Student detail shows every canonical session through the course's latest
+  recorded session, including explicit `—` gaps.
+- Known limitations: independent overview timelines still scroll horizontally;
+  student detail opens at its top rather than focused on history; abandoning an
+  unconfirmed note draft can discard it; a missing-mark legend and cleaner
+  viewport-only screenshot remain M14 hardening candidates. The M12 orphan-row
+  course-join limitation remains.
+- Git checkpoint: `test: complete G5 evaluation gate`.
 
 ---
 
