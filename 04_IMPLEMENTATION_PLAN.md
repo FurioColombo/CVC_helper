@@ -834,7 +834,7 @@ Implement per-session individual evaluations, notes, Allievi/Equipaggi views and
 ## M13 — Evaluation overview and student history
 
 **Category:** FEATURE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -854,10 +854,21 @@ Self-review.
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M13/verification.json` records PASS for 30 test files
+  and 230 tests, domain/repository checks, production build, and all 32 browser
+  journeys on Pixel 7 and iPhone 13. The focused journey and
+  `.evidence/M13/evaluation-overview-iphone13.png` cover ordering, counts, note
+  access, exact student history and return navigation. Self-review is recorded
+  in `.evidence/M13/self-review.md` with PASS and no blockers.
+- Decisions: Riepilogo retains every canonical session slot through the latest
+  recorded session and labels slots visibly with compact day/period text.
+  Strongest ordering uses the mean of actual marks internally, with missing
+  marks excluded and alphabetical ordering as the deterministic tie-breaker.
+  Numeric means are never rendered. Notes open inline from their exact mark;
+  student detail shows chronological session-labelled history.
+- Known limitations: long accumulated sequences scroll horizontally on narrow
+  phones. Orphan evaluation rows retain the M12 course-join limitation.
+- Git checkpoint: `feat: add evaluation overview and student history`.
 
 ---
 

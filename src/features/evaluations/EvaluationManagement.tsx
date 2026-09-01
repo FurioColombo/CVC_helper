@@ -20,6 +20,7 @@ import {
 } from "@/domain/config"
 import { getDefaultEvaluationSession } from "@/domain/evaluations"
 import { getStudentDisplayName } from "@/domain/student"
+import { EvaluationOverview } from "@/features/evaluations/EvaluationOverview"
 import type { CourseRecord } from "@/persistence/courses"
 import { readCrewPlan, type CrewPlanRecord } from "@/persistence/crews"
 import {
@@ -29,7 +30,7 @@ import {
 } from "@/persistence/evaluations"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 
-type EvaluationView = "students" | "crews"
+export type EvaluationView = "students" | "crews" | "overview"
 type VoiceStatus = "idle" | "recording" | "transcribing" | "review" | "error"
 
 interface EvaluationDraft {
@@ -366,18 +367,30 @@ function EvaluationCard({
 export function EvaluationManagement({
   course,
   onHome,
+  onOpenStudent,
+  initialSessionId,
+  onSessionChange,
+  initialView = "students",
+  onViewChange,
   referenceDate = new Date(),
   transcribe = transcribeAudio,
 }: {
   course: CourseRecord
   onHome: () => void
+  onOpenStudent?: (studentId: string) => void
+  initialSessionId?: SessionId
+  onSessionChange?: (sessionId: SessionId) => void
+  initialView?: EvaluationView
+  onViewChange?: (view: EvaluationView) => void
   referenceDate?: Date
   transcribe?: (audio: Blob) => Promise<string>
 }) {
-  const [sessionId, setSessionId] = useState<SessionId>(() =>
-    getDefaultEvaluationSession(course.startDate, referenceDate),
+  const [sessionId, setSessionId] = useState<SessionId>(
+    () =>
+      initialSessionId ??
+      getDefaultEvaluationSession(course.startDate, referenceDate),
   )
-  const [view, setView] = useState<EvaluationView>("students")
+  const [view, setView] = useState<EvaluationView>(initialView)
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [crewPlan, setCrewPlan] = useState<CrewPlanRecord | null>(null)
   const [records, setRecords] = useState<Map<string, EvaluationRecord>>(
@@ -523,6 +536,11 @@ export function EvaluationManagement({
     ({ id }) => !assignedIds.has(id) && !landIds.has(id),
   )
 
+  function changeView(nextView: EvaluationView) {
+    setView(nextView)
+    onViewChange?.(nextView)
+  }
+
   return (
     <>
       <div className="mb-5 flex items-center gap-1">
@@ -544,39 +562,42 @@ export function EvaluationManagement({
         </div>
       </div>
 
-      <label className="grid gap-2 text-sm font-black">
-        Sessione
-        <select
-          aria-label="Sessione valutazioni"
-          className="h-14 rounded-2xl border bg-card px-4 text-base font-bold outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
-          disabled={loading || savingIds.size > 0}
-          onChange={(event) => {
-            const nextSessionId = event.target.value as SessionId
-            if (nextSessionId === sessionId) return
-            setLoading(true)
-            setLoadError(false)
-            setNoteStudentId(null)
-            setSessionId(nextSessionId)
-          }}
-          value={sessionId}
-        >
-          {SESSION_SEQUENCE.map(({ id, day, period }) => (
-            <option key={id} value={id}>
-              {day} · {period}
-            </option>
-          ))}
-        </select>
-      </label>
+      {view !== "overview" && (
+        <label className="grid gap-2 text-sm font-black">
+          Sessione
+          <select
+            aria-label="Sessione valutazioni"
+            className="h-14 rounded-2xl border bg-card px-4 text-base font-bold outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
+            disabled={loading || savingIds.size > 0}
+            onChange={(event) => {
+              const nextSessionId = event.target.value as SessionId
+              if (nextSessionId === sessionId) return
+              setLoading(true)
+              setLoadError(false)
+              setNoteStudentId(null)
+              setSessionId(nextSessionId)
+              onSessionChange?.(nextSessionId)
+            }}
+            value={sessionId}
+          >
+            {SESSION_SEQUENCE.map(({ id, day, period }) => (
+              <option key={id} value={id}>
+                {day} · {period}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div
-        className="mt-4 grid grid-cols-2 rounded-2xl bg-muted p-1"
+        className="mt-4 grid grid-cols-3 rounded-2xl bg-muted p-1"
         role="group"
         aria-label="Vista valutazioni"
       >
         <button
           aria-pressed={view === "students"}
           className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
-          onClick={() => setView("students")}
+          onClick={() => changeView("students")}
           type="button"
         >
           Allievi
@@ -584,10 +605,18 @@ export function EvaluationManagement({
         <button
           aria-pressed={view === "crews"}
           className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
-          onClick={() => setView("crews")}
+          onClick={() => changeView("crews")}
           type="button"
         >
           Equipaggi
+        </button>
+        <button
+          aria-pressed={view === "overview"}
+          className="min-h-11 rounded-xl px-2 text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          onClick={() => changeView("overview")}
+          type="button"
+        >
+          Riepilogo
         </button>
       </div>
 
@@ -639,7 +668,14 @@ export function EvaluationManagement({
           </p>
         </section>
       )}
-      {!loading && !loadError && students.length > 0 && (
+      {!loading && !loadError && students.length > 0 && view === "overview" && (
+        <EvaluationOverview
+          courseId={course.id}
+          onOpenStudent={onOpenStudent ?? (() => undefined)}
+          students={students}
+        />
+      )}
+      {!loading && !loadError && students.length > 0 && view !== "overview" && (
         <div className="mt-4 grid gap-3">
           {view === "students" && students.map(renderCard)}
           {view === "crews" && (

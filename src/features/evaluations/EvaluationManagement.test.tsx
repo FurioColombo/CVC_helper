@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("@/persistence/students", () => ({ listStudents: vi.fn() }))
 vi.mock("@/persistence/crews", () => ({ readCrewPlan: vi.fn() }))
 vi.mock("@/persistence/evaluations", () => ({
+  listCourseEvaluations: vi.fn().mockResolvedValue([]),
   listEvaluations: vi.fn(),
   saveEvaluation: vi.fn(),
 }))

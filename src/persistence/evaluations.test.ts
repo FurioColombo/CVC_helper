@@ -8,7 +8,12 @@ const database = vi.hoisted(() => ({
 
 vi.mock("@/persistence/db", () => ({ db: database }))
 
-import { listEvaluations, saveEvaluation } from "@/persistence/evaluations"
+import {
+  listCourseEvaluations,
+  listEvaluations,
+  listStudentEvaluations,
+  saveEvaluation,
+} from "@/persistence/evaluations"
 
 describe("evaluation persistence", () => {
   beforeEach(() => {
@@ -141,6 +146,43 @@ describe("evaluation persistence", () => {
     database.getAll.mockResolvedValueOnce(rows)
     await expect(listEvaluations("course-1", "sat-pm")).rejects.toThrow(
       "Invalid persisted evaluation",
+    )
+  })
+
+  it("loads the whole course and exact chronological student history", async () => {
+    const rows = [
+      {
+        id: "late",
+        studentId: "student-1",
+        sessionId: "sun-am",
+        value: "++",
+        note: "Preciso",
+      },
+      {
+        id: "early",
+        studentId: "student-1",
+        sessionId: "sat-pm",
+        value: "+",
+        note: null,
+      },
+    ]
+    database.getAll.mockResolvedValueOnce(rows)
+    await expect(listCourseEvaluations("course-1")).resolves.toHaveLength(2)
+    expect(database.getAll).toHaveBeenLastCalledWith(
+      expect.stringContaining("WHERE s.courseId = ?"),
+      ["course-1"],
+    )
+
+    database.getAll.mockResolvedValueOnce(rows)
+    await expect(
+      listStudentEvaluations("course-1", "student-1"),
+    ).resolves.toEqual([
+      expect.objectContaining({ id: "early" }),
+      expect.objectContaining({ id: "late" }),
+    ])
+    expect(database.getAll).toHaveBeenLastCalledWith(
+      expect.stringContaining("AND s.id = ?"),
+      ["course-1", "student-1"],
     )
   })
 })

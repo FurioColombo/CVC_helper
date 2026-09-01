@@ -20,6 +20,20 @@ export interface EvaluationSummary {
   mean: number | null
 }
 
+export type EvaluationOrdering = "alphabetical" | "strongest"
+
+export interface EvaluationValueRef {
+  studentId: string
+  sessionId: SessionId
+  value: EvaluationSymbol | null
+}
+
+export interface EvaluationStudentRef {
+  id: string
+  firstName: string
+  surname: string
+}
+
 export function isEvaluationSymbol(
   value: string | null,
 ): value is EvaluationSymbol {
@@ -39,6 +53,65 @@ export function summarizeEvaluations(
         ? null
         : scores.reduce((total, score) => total + score, 0) / scores.length,
   }
+}
+
+function compareStudents(
+  left: EvaluationStudentRef,
+  right: EvaluationStudentRef,
+) {
+  return new Intl.Collator("it-IT", { sensitivity: "base" }).compare(
+    `${left.surname} ${left.firstName}`,
+    `${right.surname} ${right.firstName}`,
+  )
+}
+
+export function sortStudentsByEvaluations<T extends EvaluationStudentRef>(
+  students: readonly T[],
+  evaluations: readonly EvaluationValueRef[],
+  ordering: EvaluationOrdering,
+): T[] {
+  const valuesByStudent = new Map<string, Array<EvaluationSymbol | null>>()
+  evaluations.forEach(({ studentId, value }) => {
+    valuesByStudent.set(studentId, [
+      ...(valuesByStudent.get(studentId) ?? []),
+      value,
+    ])
+  })
+  return [...students].sort((left, right) => {
+    if (ordering === "strongest") {
+      const leftMean = summarizeEvaluations(
+        valuesByStudent.get(left.id) ?? [],
+      ).mean
+      const rightMean = summarizeEvaluations(
+        valuesByStudent.get(right.id) ?? [],
+      ).mean
+      if (leftMean !== rightMean) {
+        if (leftMean === null) return 1
+        if (rightMean === null) return -1
+        return rightMean - leftMean
+      }
+    }
+    return compareStudents(left, right)
+  })
+}
+
+export function getAccumulatedEvaluationSessions(
+  evaluations: readonly EvaluationValueRef[],
+): SessionId[] {
+  const lastIndex = evaluations.reduce(
+    (latest, { sessionId }) =>
+      Math.max(
+        latest,
+        SESSION_SEQUENCE.findIndex(({ id }) => id === sessionId),
+      ),
+    -1,
+  )
+  return SESSION_SEQUENCE.slice(0, lastIndex + 1).map(({ id }) => id)
+}
+
+export function formatEvaluationSession(sessionId: SessionId) {
+  const session = SESSION_SEQUENCE.find(({ id }) => id === sessionId)!
+  return `${session.day} ${session.period}`
 }
 
 export function getDefaultEvaluationSession(

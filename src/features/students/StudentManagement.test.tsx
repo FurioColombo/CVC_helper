@@ -11,6 +11,10 @@ vi.mock("@/persistence/students", () => ({
   updateStudentKnowledge: vi.fn(),
 }))
 
+vi.mock("@/persistence/evaluations", () => ({
+  listStudentEvaluations: vi.fn().mockResolvedValue([]),
+}))
+
 import { StudentManagement } from "@/features/students/StudentManagement"
 import type { CourseRecord } from "@/persistence/courses"
 import {

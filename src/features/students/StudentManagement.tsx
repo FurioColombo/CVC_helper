@@ -18,6 +18,7 @@ import { validateStudentRecords } from "@/domain/invariants"
 import { calculateAge, getStudentDisplayName, isMinor } from "@/domain/student"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
 import { StudentScan } from "@/features/students/StudentScan"
+import { StudentEvaluationHistory } from "@/features/evaluations/StudentEvaluationHistory"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   createStudent,
@@ -459,6 +460,8 @@ function StudentDetail({
             {student.initialNote || "Nessuna nota speciale."}
           </p>
         </div>
+
+        <StudentEvaluationHistory courseId={course.id} studentId={student.id} />
 
         {error && (
           <p className="mt-4 text-sm font-semibold text-[#a2381b]" role="alert">

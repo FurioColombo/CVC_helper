@@ -1,0 +1,39 @@
+{
+  "milestone": "M13",
+  "status": "PASS",
+  "recordedAt": "2026-09-01T18:15:49.917Z",
+  "checks": [
+    {
+      "command": "npm run verify:quick",
+      "status": "PASS",
+      "startedAt": "2026-09-01T18:07:35.671Z",
+      "durationMs": 100260,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.0.0 test\n> vitest run\n\n\n RUN  v4.1.11 C:/Users/Marco Furio Colombo/Desktop/CVC_helper\n\n\n Test Files  30 passed (30)\n      Tests  230 passed (230)\n   Start at  20:07:56\n   Duration  78.94s (transform 1.18s, setup 8.03s, import 5.95s, tests 18.47s, environment 38.58s)"
+    },
+    {
+      "command": "npm run verify:domain",
+      "status": "PASS",
+      "startedAt": "2026-09-01T18:09:15.933Z",
+      "durationMs": 2549,
+      "exitCode": 0,
+      "outputTail": "> npm run check:repository && npm run check:domain\n\n\n> cvc-helper@0.0.0 check:repository\n> node scripts/check-repository.mjs\n\nPASS: repository structure and command surface\n\n> cvc-helper@0.0.0 check:domain\n> node --import tsx scripts/check-domain.ts\n\nPASS: canonical domain tables and runtime foundation scenario"
+    },
+    {
+      "command": "npm run build",
+      "status": "PASS",
+      "startedAt": "2026-09-01T18:09:18.482Z",
+      "durationMs": 16061,
+      "exitCode": 0,
+      "outputTail": "\nPWA v1.3.0\nmode      generateSW\nprecache  23 entries (9005.19 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-398fc23b.js\n[plugin builtin:vite-reporter] \n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit."
+    },
+    {
+      "command": "npm run verify:e2e",
+      "status": "PASS",
+      "startedAt": "2026-09-01T18:09:34.544Z",
+      "durationMs": 375373,
+      "exitCode": 0,
+      "outputTail": "  ok 32 [iphone-13-viewport] › tests\\e2e\\volunteers.spec.ts:5:1 › keeps ADV and IS persisted and separate from students (15.7s)\n  ok 31 [iphone-13-viewport] › tests\\e2e\\students.spec.ts:24:1 › adds, disambiguates, edits, disables and restores students (18.4s)\n\n  32 passed (6.2m)\n(node:25400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:21804) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:9872) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:13632) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)"
+    }
+  ]
+}

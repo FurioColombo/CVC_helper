@@ -27,7 +27,10 @@ import { BoatManagement } from "@/features/boats/BoatManagement"
 import { FaultManagement } from "@/features/boats/FaultManagement"
 import { CrewManagement } from "@/features/crews/CrewManagement"
 import { DutyManagement } from "@/features/duties/DutyManagement"
-import { EvaluationManagement } from "@/features/evaluations/EvaluationManagement"
+import {
+  EvaluationManagement,
+  type EvaluationView,
+} from "@/features/evaluations/EvaluationManagement"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
@@ -373,7 +376,12 @@ function SettingsView({
 function AppShell({ course }: { course: CourseRecord }) {
   const [view, setView] = useState<ShellView>("home")
   const [studentToOpen, setStudentToOpen] = useState<string | null>(null)
+  const [studentReturnView, setStudentReturnView] =
+    useState<ShellView>("students")
   const [crewSessionId, setCrewSessionId] = useState<SessionId>("sat-pm")
+  const [evaluationSessionId, setEvaluationSessionId] = useState<SessionId>()
+  const [evaluationView, setEvaluationView] =
+    useState<EvaluationView>("students")
   const primaryView = view === "faults" || view === "crews" ? view : "home"
 
   function navigate(next: ShellView) {
@@ -406,7 +414,7 @@ function AppShell({ course }: { course: CourseRecord }) {
             initialStudentId={studentToOpen}
             key={studentToOpen ?? "student-list"}
             onHome={() => navigate("home")}
-            onInitialStudentBack={() => navigate("crews")}
+            onInitialStudentBack={() => navigate(studentReturnView)}
           />
         )}
         {view === "volunteers" && (
@@ -439,6 +447,7 @@ function AppShell({ course }: { course: CourseRecord }) {
             onHome={() => navigate("home")}
             onOpenStudent={(studentId) => {
               setStudentToOpen(studentId)
+              setStudentReturnView("crews")
               setView("students")
             }}
             onSessionChange={setCrewSessionId}
@@ -447,7 +456,16 @@ function AppShell({ course }: { course: CourseRecord }) {
         {view === "evaluations" && (
           <EvaluationManagement
             course={course}
+            initialSessionId={evaluationSessionId}
+            initialView={evaluationView}
             onHome={() => setView("home")}
+            onOpenStudent={(studentId) => {
+              setStudentToOpen(studentId)
+              setStudentReturnView("evaluations")
+              setView("students")
+            }}
+            onSessionChange={setEvaluationSessionId}
+            onViewChange={setEvaluationView}
           />
         )}
       </main>
