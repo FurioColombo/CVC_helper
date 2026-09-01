@@ -1,0 +1,39 @@
+{
+  "milestone": "G4",
+  "status": "PASS",
+  "recordedAt": "2026-09-01T07:02:55.818Z",
+  "checks": [
+    {
+      "command": "npm run verify:quick",
+      "status": "PASS",
+      "startedAt": "2026-09-01T06:54:42.004Z",
+      "durationMs": 94938,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.0.0 test\n> vitest run\n\n\n RUN  v4.1.11 C:/Users/Marco Furio Colombo/Desktop/CVC_helper\n\n\n Test Files  25 passed (25)\n      Tests  201 passed (201)\n   Start at  08:55:07\n   Duration  69.34s (transform 1.10s, setup 6.97s, import 5.33s, tests 16.73s, environment 33.67s)"
+    },
+    {
+      "command": "npm run verify:domain",
+      "status": "PASS",
+      "startedAt": "2026-09-01T06:56:16.945Z",
+      "durationMs": 2408,
+      "exitCode": 0,
+      "outputTail": "> npm run check:repository && npm run check:domain\n\n\n> cvc-helper@0.0.0 check:repository\n> node scripts/check-repository.mjs\n\nPASS: repository structure and command surface\n\n> cvc-helper@0.0.0 check:domain\n> node --import tsx scripts/check-domain.ts\n\nPASS: canonical domain tables and runtime foundation scenario"
+    },
+    {
+      "command": "npm run build",
+      "status": "PASS",
+      "startedAt": "2026-09-01T06:56:19.353Z",
+      "durationMs": 18876,
+      "exitCode": 0,
+      "outputTail": "[plugin builtin:vite-reporter] \n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 3.1s inside plugin hooks (6.7s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 5.3s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 1 hook whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details."
+    },
+    {
+      "command": "npm run verify:e2e",
+      "status": "PASS",
+      "startedAt": "2026-09-01T06:56:38.229Z",
+      "durationMs": 377588,
+      "exitCode": 0,
+      "outputTail": "  ok 27 [iphone-13-viewport] › tests\\e2e\\students.spec.ts:24:1 › adds, disambiguates, edits, disables and restores students (16.9s)\n  ok 28 [iphone-13-viewport] › tests\\e2e\\volunteers.spec.ts:5:1 › keeps ADV and IS persisted and separate from students (14.7s)\n\n  28 passed (6.3m)\n(node:19228) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:13992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:2204) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:6376) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)"
+    }
+  ]
+}

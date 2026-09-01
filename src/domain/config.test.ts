@@ -5,6 +5,7 @@ import {
   COURSE_CONFIG,
   DUTY_DAYS,
   SESSION_DUTY_DAY,
+  SESSION_SMONTANTE_DUTY_DAY,
   SESSION_SEQUENCE,
   SIZE_WARNING_MATRIX,
   STUDENT_SEXES,
@@ -51,6 +52,7 @@ describe("canonical domain configuration", () => {
     ])
     expect(SESSION_SEQUENCE.map(({ id }) => SESSION_DUTY_DAY[id])).toEqual([
       "saturday",
+      "saturday",
       "sunday",
       "sunday",
       "monday",
@@ -61,9 +63,16 @@ describe("canonical domain configuration", () => {
       "wednesday",
       "thursday",
       "thursday",
-      "friday",
       "friday",
     ])
+    expect(SESSION_SMONTANTE_DUTY_DAY).toEqual({
+      "sun-pm": "saturday",
+      "mon-pm": "sunday",
+      "tue-pm": "monday",
+      "wed-pm": "tuesday",
+      "thu-pm": "wednesday",
+      "fri-pm": "thursday",
+    })
   })
 
   it("defines the directly editable student sex choices", () => {

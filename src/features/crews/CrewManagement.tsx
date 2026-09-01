@@ -5,18 +5,26 @@ import {
   CircleMinus,
   Copy,
   HandHeart,
+  Info,
   ShipWheel,
   TriangleAlert,
   X,
   UsersRound,
 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
+  SESSION_SMONTANTE_DUTY_DAY,
   type SessionId,
 } from "@/domain/config"
 import {
@@ -110,6 +118,47 @@ function samePerson(left: CrewPersonRef | null, right: CrewPersonRef) {
 function sessionLabel(sessionId: SessionId) {
   const session = SESSION_SEQUENCE.find(({ id }) => id === sessionId)
   return session ? `${session.day} ${session.period}` : sessionId
+}
+
+function handleDialogKeyDown(
+  event: ReactKeyboardEvent<HTMLElement>,
+  dialog: HTMLElement | null,
+  onClose: () => void,
+) {
+  if (event.key === "Escape") {
+    event.preventDefault()
+    onClose()
+    return
+  }
+  if (event.key !== "Tab" || !dialog) return
+  const controls = Array.from(
+    dialog.querySelectorAll<HTMLElement>("button:not(:disabled)"),
+  )
+  if (controls.length === 0) return
+  const first = controls[0]!
+  const last = controls.at(-1)!
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+function useDialogFocus<T extends HTMLElement>(active = true) {
+  const dialogRef = useRef<T>(null)
+  useEffect(() => {
+    if (!active) return
+    const previouslyFocused = document.activeElement
+    dialogRef.current
+      ?.querySelector<HTMLElement>("button:not(:disabled)")
+      ?.focus()
+    return () => {
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+    }
+  }, [active])
+  return dialogRef
 }
 
 function hasCrewHistoryIssues(
@@ -301,12 +350,17 @@ function CopyReportDialog({
   personLabel: (person: CrewPersonRef) => string
   onClose: () => void
 }) {
+  const dialogRef = useDialogFocus<HTMLElement>()
   return (
     <div className="fixed inset-0 z-60 grid place-items-center bg-foreground/35 p-5">
       <section
         aria-labelledby="crew-copy-report-title"
         aria-modal="true"
         className="w-full max-w-sm rounded-3xl border bg-card p-5 shadow-2xl"
+        onKeyDown={(event) =>
+          handleDialogKeyDown(event, dialogRef.current, onClose)
+        }
+        ref={dialogRef}
         role="dialog"
       >
         <div className="flex items-start justify-between gap-3">
@@ -353,10 +407,18 @@ function AnnouncementView({
   lines: string[]
   onClose: () => void
 }) {
+  const dialogRef = useDialogFocus<HTMLElement>()
+
   return (
     <section
       aria-label="Vista lettura equipaggi"
+      aria-modal="true"
       className="fixed inset-0 z-60 overflow-y-auto bg-[#fffdf8] text-[#102f3b]"
+      onKeyDown={(event) =>
+        handleDialogKeyDown(event, dialogRef.current, onClose)
+      }
+      ref={dialogRef}
+      role="dialog"
     >
       <div className="mx-auto min-h-full w-full max-w-2xl px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
         <header className="flex items-center justify-between gap-4 border-b border-[#c8d7db] pb-4">
@@ -364,7 +426,10 @@ function AnnouncementView({
             <p className="text-xs font-black tracking-[0.16em] uppercase">
               Equipaggi
             </p>
-            <h1 className="mt-1 text-2xl font-black">
+            <h1
+              className="mt-1 text-2xl font-black"
+              id="crew-announcement-title"
+            >
               {sessionLabel(sessionId)}
             </h1>
           </div>
@@ -435,6 +500,9 @@ export function CrewManagement({
   const [copying, setCopying] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const saveInFlight = useRef(false)
+  const boatCopyDialogRef = useDialogFocus<HTMLElement>(
+    boatCopySelection !== null,
+  )
 
   async function load(nextSessionId = sessionId) {
     setLoadState("loading")
@@ -610,7 +678,8 @@ export function CrewManagement({
   const activeStudents = students.filter(({ active }) => active === 1)
   const previousSessionId = getPreviousSessionId(sessionId)
   const busy = saving || copying
-  const maxCrewCount = Math.max(1, activeStudents.length + volunteers.length)
+  const availablePeopleCount = activeStudents.length + volunteers.length
+  const maxCrewCount = Math.max(1, availablePeopleCount)
   const standardCrewSize = getStandardCrewSize(course.family, course.level)
   const flexibleCrewTargets = getEvenCrewTargets(
     activeStudents.length + volunteers.length,
@@ -620,6 +689,34 @@ export function CrewManagement({
     activeStudents.map(({ id }) => id),
     plan,
   )
+  const currentDutyStudentIds = useMemo(
+    () =>
+      new Set(
+        dutyAssignments
+          .filter(({ dayId }) => dayId === SESSION_DUTY_DAY[sessionId])
+          .map(({ studentId }) => studentId),
+      ),
+    [dutyAssignments, sessionId],
+  )
+  const smontanteDutyStudentIds = useMemo(() => {
+    const dutyDay = SESSION_SMONTANTE_DUTY_DAY[sessionId]
+    return new Set(
+      dutyDay
+        ? dutyAssignments
+            .filter(({ dayId }) => dayId === dutyDay)
+            .map(({ studentId }) => studentId)
+        : [],
+    )
+  }, [dutyAssignments, sessionId])
+  const d1MorningDutyNotLand =
+    course.family === "Deriva" &&
+    course.level === 1 &&
+    sessionId.endsWith("-am")
+      ? activeStudents.filter(
+          ({ id }) =>
+            currentDutyStudentIds.has(id) && !plan.landStudentIds.includes(id),
+        )
+      : []
   const studentById = useMemo(
     () => new Map(students.map((student) => [student.id, student])),
     [students],
@@ -702,7 +799,12 @@ export function CrewManagement({
     }
     const student = studentById.get(person.personId)
     const size = student?.size ? ` · ${student.size}` : ""
-    return `${student?.active === 0 ? "Disabilitato" : "Allievo"}${size}`
+    const dutyMarker = currentDutyStudentIds.has(person.personId)
+      ? " · C"
+      : smontanteDutyStudentIds.has(person.personId)
+        ? " · SM"
+        : ""
+    return `${student?.active === 0 ? "Disabilitato" : "Allievo"}${size}${dutyMarker}`
   }
 
   const selectedBoatTypes = Array.from(
@@ -974,6 +1076,12 @@ export function CrewManagement({
             aria-labelledby="boat-copy-title"
             aria-modal="true"
             className="w-full max-w-sm rounded-3xl border bg-card p-5 shadow-2xl"
+            onKeyDown={(event) =>
+              handleDialogKeyDown(event, boatCopyDialogRef.current, () => {
+                if (!busy) setBoatCopySelection(null)
+              })
+            }
+            ref={boatCopyDialogRef}
             role="dialog"
           >
             <h2 className="text-xl font-black" id="boat-copy-title">
@@ -1086,10 +1194,6 @@ export function CrewManagement({
             <UsersRound aria-hidden="true" className="size-6" />
           </span>
           <h2 className="mt-4 text-xl font-black">Prepara la sessione</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Scegli quanti equipaggi creare. Persone e barche restano concetti
-            separati.
-          </p>
           <label className="mt-5 grid gap-2 text-sm font-bold">
             <span>Numero di equipaggi</span>
             <Input
@@ -1109,6 +1213,17 @@ export function CrewManagement({
               value={crewCount}
             />
           </label>
+          <div
+            className="mt-3 flex gap-2 rounded-2xl bg-[#e8f3f6] px-3 py-3 text-sm text-[#164e63]"
+            role="note"
+          >
+            <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+            <p className="font-semibold leading-5">
+              {availablePeopleCount === 0
+                ? "Nessuna persona disponibile: per ora puoi preparare 1 equipaggio vuoto."
+                : `Limite attuale: fino a ${maxCrewCount} equipaggi con ${availablePeopleCount} ${availablePeopleCount === 1 ? "persona disponibile" : "persone disponibili"}.`}
+            </p>
+          </div>
           <Button
             className="mt-5 w-full"
             disabled={busy}
@@ -1136,6 +1251,21 @@ export function CrewManagement({
               </span>
             )}
           </section>
+
+          {d1MorningDutyNotLand.length > 0 && (
+            <section
+              className="rounded-2xl bg-[#fee4e2] px-4 py-3 text-sm text-[#8f1d15]"
+              role="alert"
+            >
+              <h2 className="font-black">Comandata D1 da portare A terra</h2>
+              <p className="mt-1 text-xs font-semibold leading-5">
+                {d1MorningDutyNotLand
+                  .map((student) => getStudentDisplayName(student, students))
+                  .join(" · ")}{" "}
+                è in comandata questa mattina e non è A terra.
+              </p>
+            </section>
+          )}
 
           <section
             aria-label="Barche in uscita"

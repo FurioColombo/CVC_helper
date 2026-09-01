@@ -154,6 +154,43 @@ describe("CrewManagement", () => {
     savePlan.mockResolvedValue(undefined)
   })
 
+  it("explains the one-empty-crew limit when nobody is available", async () => {
+    getStudents.mockResolvedValue([])
+    getVolunteers.mockResolvedValue([])
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "Nessuna persona disponibile: per ora puoi preparare 1 equipaggio vuoto.",
+    )
+    expect(screen.getByRole("spinbutton")).toHaveAttribute("max", "1")
+    expect(
+      screen.queryByText(/Persone e barche restano concetti separati/),
+    ).not.toBeInTheDocument()
+  })
+
+  it("explains the crew limit derived from available people", async () => {
+    getStudents.mockResolvedValue(STUDENTS.slice(0, 2))
+    getVolunteers.mockResolvedValue([])
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "Limite attuale: fino a 2 equipaggi con 2 persone disponibili.",
+    )
+    expect(screen.getByRole("spinbutton")).toHaveAttribute("max", "2")
+  })
+
   it("keeps student and staff pools separate and accounts for A terra", async () => {
     const user = userEvent.setup()
     render(
@@ -203,6 +240,91 @@ describe("CrewManagement", () => {
       screen.getByRole("button", { name: "Sposta selezionato A terra" }),
     ).toBeDisabled()
     expect(screen.getByText("Allievi sistemati 2/3")).toBeVisible()
+  })
+
+  it("shows session-aware current and smontante duty cues", async () => {
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      stored(
+        {
+          crews: [
+            {
+              id: `crew-${requestedSessionId}`,
+              sessionId: requestedSessionId,
+              members: [],
+            },
+          ],
+          landStudentIds: [],
+        },
+        requestedSessionId,
+      ),
+    )
+    getDutyPlan.mockResolvedValue({
+      assignments: [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "sunday", studentId: "student-2" },
+      ],
+      settings: null,
+    })
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    const aldoMorning = await screen.findByRole("button", { name: "Aldo" })
+    expect(within(aldoMorning).getByText("Allievo · M · C")).toBeVisible()
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Sessione" }),
+      "sun-pm",
+    )
+    const aldo = await screen.findByRole("button", { name: "Aldo" })
+    expect(within(aldo).getByText("Allievo · M · SM")).toBeVisible()
+    const bea = screen.getByRole("button", { name: "Bea" })
+    expect(within(bea).getByText("Allievo · M · C")).toBeVisible()
+  })
+
+  it("warns when a D1 morning-duty student is not A terra", async () => {
+    getDutyPlan.mockResolvedValue({
+      assignments: [{ dayId: "saturday", studentId: "student-1" }],
+      settings: null,
+    })
+    getPlan.mockResolvedValue(
+      stored(
+        {
+          crews: [{ id: "crew-1", sessionId: "sun-am", members: [] }],
+          landStudentIds: [],
+        },
+        "sun-am",
+      ),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={{ ...COURSE, level: 1, label: "D1 35 2026" }}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    const warning = await screen.findByRole("alert")
+    expect(warning).toHaveTextContent("Comandata D1 da portare A terra")
+    expect(warning).toHaveTextContent("Aldo")
+
+    await user.click(screen.getByRole("button", { name: "Aldo" }))
+    await user.click(
+      screen.getByRole("button", { name: "Sposta Aldo A terra" }),
+    )
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Comandata D1 da portare A terra"),
+      ).not.toBeInTheDocument(),
+    )
   })
 
   it("directly swaps people between two crews", async () => {
@@ -623,6 +745,17 @@ describe("CrewManagement", () => {
       "Dina — non disponibile",
     )
     expect(within(report).queryByText(/Carlo/)).not.toBeInTheDocument()
+    expect(
+      within(report).getByRole("button", { name: "Chiudi riepilogo copia" }),
+    ).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(
+      within(report).getByRole("button", { name: "Ho capito" }),
+    ).toHaveFocus()
+    await user.keyboard("{Escape}")
+    expect(
+      screen.queryByRole("dialog", { name: "Equipaggi copiati" }),
+    ).not.toBeInTheDocument()
   })
 
   it("copies a valid crew silently when no automatic removal occurs", async () => {
@@ -718,6 +851,7 @@ describe("CrewManagement", () => {
       name: "RS Quest 7 nella copia",
     })
     expect(copiedBoat).toHaveAttribute("aria-pressed", "true")
+    expect(copiedBoat).toHaveFocus()
     await user.click(copiedBoat)
     await user.click(
       within(dialog).getByRole("button", { name: "Conferma barche" }),
@@ -770,7 +904,7 @@ describe("CrewManagement", () => {
     await user.click(
       await screen.findByRole("button", { name: "Apri vista lettura" }),
     )
-    const view = screen.getByRole("region", {
+    const view = screen.getByRole("dialog", {
       name: "Vista lettura equipaggi",
     })
     expect(within(view).getByText("RS Quest 2 — Aldo / Bea")).toBeVisible()
@@ -778,11 +912,12 @@ describe("CrewManagement", () => {
     expect(
       within(view).queryByText(/Allievi sistemati|Barche in uscita|Avvisi/),
     ).not.toBeInTheDocument()
-    await user.click(
-      within(view).getByRole("button", { name: "Chiudi vista lettura" }),
-    )
     expect(
-      screen.queryByRole("region", { name: "Vista lettura equipaggi" }),
+      within(view).getByRole("button", { name: "Chiudi vista lettura" }),
+    ).toHaveFocus()
+    await user.keyboard("{Escape}")
+    expect(
+      screen.queryByRole("dialog", { name: "Vista lettura equipaggi" }),
     ).not.toBeInTheDocument()
   })
 })

@@ -84,7 +84,7 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   await report.getByRole("button", { name: "Ho capito" }).click()
 
   await page.getByRole("button", { name: "Apri vista lettura" }).click()
-  const firstReadView = page.getByRole("region", {
+  const firstReadView = page.getByRole("dialog", {
     name: "Vista lettura equipaggi",
   })
   await expect(firstReadView.getByText("Aldo", { exact: true })).toBeVisible()
@@ -112,7 +112,7 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
     .getByRole("button", { name: "Assegna equipaggio 1 a RS Quest 2" })
     .click()
   await page.getByRole("button", { name: "Apri vista lettura" }).click()
-  const readView = page.getByRole("region", {
+  const readView = page.getByRole("dialog", {
     name: "Vista lettura equipaggi",
   })
   await expect(readView.getByText("RS Quest 2 — Aldo")).toBeVisible()

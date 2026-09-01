@@ -730,7 +730,7 @@ Self-review plus UX review at G4.
 ## G4 — Crew Management Gate
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -765,10 +765,27 @@ At minimum:
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/G4/verification.json` records PASS for 201 unit/domain/
+  component tests, repository/domain checks, production build and all 28
+  Playwright journeys across Pixel 7 and iPhone 13 profiles. The holistic gate
+  persists students, sizes, a volunteer, Saturday duty, three boats and an open
+  fault; composes Saturday crews with `A terra`, exact boats and `Mezzi`; copies
+  to Sunday AM; removes the current-duty student; verifies `C`, size/recent-pair/
+  unavailable-boat warnings; swaps two members; reassigns a boat; enters the
+  clean read view; and reloads the final state. Reviewer reports and the
+  viewport-only screenshot are stored in `.evidence/G4/`.
+- Decisions: named duty rotations now map from their afternoon through the
+  following morning, with explicit PM smontante mappings. Crew cards expose
+  session-aware `C`/`SM`; D1 morning duty outside `A terra` produces a persistent
+  red warning. Crew dialogs share focus placement/restoration, Escape and Tab
+  containment. The setup screen explains its people-derived crew limit and no
+  longer shows the redundant people/boats sentence.
+- Known limitations: reload fully validates the opened crew session, while
+  older-session history does not yet include historical volunteer, `A terra`,
+  and boat relationships in one course-wide snapshot. Some contextual controls
+  remain 40 px and destination choices have no horizontal-scroll affordance.
+  The optional Screen Wake Lock control remains omitted.
+- Git checkpoint: `test: complete G4 crew management gate`.
 
 ---
 

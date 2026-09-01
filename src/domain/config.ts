@@ -92,19 +92,30 @@ export type DutyDayId = (typeof DUTY_DAYS)[number]["id"]
 
 export const SESSION_DUTY_DAY = {
   "sat-pm": "saturday",
-  "sun-am": "sunday",
+  "sun-am": "saturday",
   "sun-pm": "sunday",
-  "mon-am": "monday",
+  "mon-am": "sunday",
   "mon-pm": "monday",
-  "tue-am": "tuesday",
+  "tue-am": "monday",
   "tue-pm": "tuesday",
-  "wed-am": "wednesday",
+  "wed-am": "tuesday",
   "wed-pm": "wednesday",
-  "thu-am": "thursday",
+  "thu-am": "wednesday",
   "thu-pm": "thursday",
-  "fri-am": "friday",
+  "fri-am": "thursday",
   "fri-pm": "friday",
 } as const satisfies Record<SessionId, DutyDayId>
+
+export const SESSION_SMONTANTE_DUTY_DAY: Readonly<
+  Partial<Record<SessionId, DutyDayId>>
+> = {
+  "sun-pm": "saturday",
+  "mon-pm": "sunday",
+  "tue-pm": "monday",
+  "wed-pm": "tuesday",
+  "thu-pm": "wednesday",
+  "fri-pm": "thursday",
+}
 
 export const DUTY_TIE_BREAKERS = ["alphabetical", "similar-age"] as const
 export type DutyTieBreaker = (typeof DUTY_TIE_BREAKERS)[number]

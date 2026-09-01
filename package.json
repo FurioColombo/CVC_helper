@@ -38,7 +38,8 @@
     "evidence:m8": "node scripts/record-verification.mjs M8",
     "evidence:m9": "node scripts/record-verification.mjs M9",
     "evidence:m10": "node scripts/record-verification.mjs M10",
-    "evidence:m11": "node scripts/record-verification.mjs M11"
+    "evidence:m11": "node scripts/record-verification.mjs M11",
+    "evidence:g4": "node scripts/record-verification.mjs G4"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
