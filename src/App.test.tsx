@@ -56,6 +56,11 @@ vi.mock("@/persistence/crews", () => ({
   saveCrewPlan: vi.fn(),
 }))
 
+vi.mock("@/persistence/evaluations", () => ({
+  listEvaluations: vi.fn().mockResolvedValue([]),
+  saveEvaluation: vi.fn(),
+}))
+
 import { App } from "@/App"
 import {
   getActiveCourse,
@@ -178,6 +183,20 @@ describe("course setup and application shell", () => {
       await screen.findByRole("heading", { name: "Comandate" }),
     ).toBeVisible()
     expect(screen.getByText("Prima aggiungi gli allievi")).toBeVisible()
+  })
+
+  it("opens the dedicated evaluation area from Home", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await user.click(screen.getByRole("button", { name: "Valutazioni" }))
+
+    expect(
+      await screen.findByRole("heading", { name: "Valutazioni" }),
+    ).toBeVisible()
+    expect(screen.getByLabelText("Sessione valutazioni")).toBeVisible()
   })
 
   it("opens session crew composition from primary navigation", async () => {

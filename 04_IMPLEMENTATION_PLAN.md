@@ -792,7 +792,7 @@ At minimum:
 ## M12 — Evaluations
 
 **Category:** RULE_HEAVY  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -811,10 +811,23 @@ Implement per-session individual evaluations, notes, Allievi/Equipaggi views and
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M12/verification.json` records PASS for 28 test files
+  and 225 tests, domain/repository checks, production build, and all 30 browser
+  journeys on Pixel 7 and iPhone 13. The focused journey and
+  `.evidence/M12/evaluations-iphone13.png` cover Allievi/Equipaggi parity,
+  `A terra`, typed notes, distinct cross-session values, reload and past edits.
+  `.evidence/M12/domain-review.md` records the adversarial PASS_WITH_FINDINGS
+  with no blockers.
+- Decisions: canonical symbols and scores remain in `EVALUATION_VALUES`;
+  missing marks are stored as `null` and excluded from aggregates; one record
+  is keyed by the exact student/session pair; the initial session is the latest
+  nominally completed one. Direct mark changes and confirmed text notes show a
+  per-student persisted-save state. Dictated audio remains transient.
+- Known limitations: orphan evaluation rows whose student no longer exists are
+  hidden by the course-scoped join and await future full-course integrity/schema
+  hardening. Real microphone/local-model behavior remains part of M14 device
+  validation; M12 verifies the deterministic local transcription boundary.
+- Git checkpoint: `feat: implement session evaluations`.
 
 ---
 

@@ -27,6 +27,7 @@ import { BoatManagement } from "@/features/boats/BoatManagement"
 import { FaultManagement } from "@/features/boats/FaultManagement"
 import { CrewManagement } from "@/features/crews/CrewManagement"
 import { DutyManagement } from "@/features/duties/DutyManagement"
+import { EvaluationManagement } from "@/features/evaluations/EvaluationManagement"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
@@ -60,23 +61,6 @@ const HOME_CARDS = [
   { id: "evaluations", label: "Valutazioni", icon: ListChecks },
   { id: "volunteers", label: "Volontari", icon: HandHeart },
 ] as const
-
-const PLACEHOLDER_COPY: Record<
-  Exclude<
-    ShellView,
-    | "home"
-    | "settings"
-    | "students"
-    | "volunteers"
-    | "boats"
-    | "faults"
-    | "sessions"
-    | "crews"
-  >,
-  string
-> = {
-  evaluations: "Le valutazioni saranno attivate nei prossimi traguardi.",
-}
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("it-IT", {
@@ -348,45 +332,6 @@ function Home({
   )
 }
 
-function Placeholder({
-  view,
-  onHome,
-}: {
-  view: Exclude<
-    ShellView,
-    | "home"
-    | "settings"
-    | "students"
-    | "volunteers"
-    | "boats"
-    | "faults"
-    | "sessions"
-    | "crews"
-  >
-  onHome: () => void
-}) {
-  const card = HOME_CARDS.find(({ id }) => id === view)
-  const title = card?.label ?? "Equipaggi"
-  const Icon = card?.icon ?? UsersRound
-
-  return (
-    <section className="rounded-3xl border bg-card p-6 shadow-[0_18px_50px_rgb(6_59_82/0.08)]">
-      <Icon aria-hidden="true" className="size-8 text-primary" />
-      <p className="mt-5 text-xs font-bold tracking-[0.16em] text-[#b04423] uppercase">
-        Area del corso
-      </p>
-      <h1 className="mt-1 text-3xl font-black tracking-tight">{title}</h1>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-        {PLACEHOLDER_COPY[view]}
-      </p>
-      <Button className="mt-7" onClick={onHome} variant="secondary">
-        <ChevronLeft aria-hidden="true" className="size-4" />
-        Torna alla Home
-      </Button>
-    </section>
-  )
-}
-
 function SettingsView({
   course,
   onHome,
@@ -499,16 +444,12 @@ function AppShell({ course }: { course: CourseRecord }) {
             onSessionChange={setCrewSessionId}
           />
         )}
-        {view !== "home" &&
-          view !== "settings" &&
-          view !== "students" &&
-          view !== "volunteers" &&
-          view !== "boats" &&
-          view !== "faults" &&
-          view !== "sessions" &&
-          view !== "crews" && (
-            <Placeholder onHome={() => setView("home")} view={view} />
-          )}
+        {view === "evaluations" && (
+          <EvaluationManagement
+            course={course}
+            onHome={() => setView("home")}
+          />
+        )}
       </main>
 
       <nav
