@@ -21,7 +21,7 @@ export function FaultForm({
   boats: BoatRecord[]
   fixedBoatId?: string
   onCancel: () => void
-  onSaved: (fault: FaultRecord) => void
+  onSaved: (fault: FaultRecord) => void | Promise<void>
   transcribe?: (audio: Blob) => Promise<string>
 }) {
   const [boatId, setBoatId] = useState(fixedBoatId ?? boats[0]?.id ?? "")
@@ -108,7 +108,7 @@ export function FaultForm({
     setSaving(true)
     setError(false)
     try {
-      onSaved(await createFault(boatId, value))
+      await onSaved(await createFault(boatId, value))
     } catch {
       setSaving(false)
       setError(true)

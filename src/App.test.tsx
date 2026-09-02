@@ -154,6 +154,7 @@ describe("course setup and application shell", () => {
 
     await user.click(within(navigation).getByRole("button", { name: "Avarie" }))
     expect(screen.getByRole("heading", { name: "Avarie" })).toBeVisible()
+    expect(screen.getByRole("main")).toHaveFocus()
     expect(
       screen.getByRole("button", { name: "Configura barche" }),
     ).toBeVisible()

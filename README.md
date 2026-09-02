@@ -23,3 +23,12 @@ A prompt can be as short as:
 > Read `AGENTS.md` and all authoritative documents it references. Start from the first incomplete milestone in `04_IMPLEMENTATION_PLAN.md` and execute autonomously. Follow all verification, evidence, review and Git requirements. Do not implement post-MVP scope.
 
 The first real milestone is Harness Foundation: Codex must prepare the environment, verification tooling, milestone controller, browser automation, domain checks, CI and Git workflow before substantive feature implementation begins.
+
+## Local environment
+
+Use Node.js 24 and install the locked dependencies with `npm ci`. The required
+major version is recorded in `.node-version` and `package.json`; older Node
+releases are not supported by the current Vite and test toolchain.
+
+Run `npm run verify:quick` for the fast checks or `npm run verify:all` for the
+complete build and browser suite.

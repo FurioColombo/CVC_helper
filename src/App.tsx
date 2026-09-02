@@ -12,7 +12,7 @@ import {
   UsersRound,
   Wrench,
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -382,7 +382,12 @@ function AppShell({ course }: { course: CourseRecord }) {
   const [evaluationSessionId, setEvaluationSessionId] = useState<SessionId>()
   const [evaluationView, setEvaluationView] =
     useState<EvaluationView>("students")
+  const mainRef = useRef<HTMLElement>(null)
   const primaryView = view === "faults" || view === "crews" ? view : "home"
+
+  useEffect(() => {
+    mainRef.current?.focus()
+  }, [view])
 
   function navigate(next: ShellView) {
     if (next !== "students") setStudentToOpen(null)
@@ -403,7 +408,7 @@ function AppShell({ course }: { course: CourseRecord }) {
         </Button>
       </header>
 
-      <main className="px-5 py-3">
+      <main className="px-5 py-3 outline-none" ref={mainRef} tabIndex={-1}>
         {view === "home" && <Home course={course} onNavigate={navigate} />}
         {view === "settings" && (
           <SettingsView course={course} onHome={() => setView("home")} />
@@ -411,6 +416,9 @@ function AppShell({ course }: { course: CourseRecord }) {
         {view === "students" && (
           <StudentManagement
             course={course}
+            focusEvaluationHistory={
+              studentToOpen !== null && studentReturnView === "evaluations"
+            }
             initialStudentId={studentToOpen}
             key={studentToOpen ?? "student-list"}
             onHome={() => navigate("home")}

@@ -199,7 +199,9 @@ test("verifies the evaluation workflow across an evolving week", async ({
   await expect(note.getByText("Sabato PM")).toBeVisible()
   await expect(note.getByText("Conduzione sicura")).toBeVisible()
 
-  await page.getByRole("button", { name: "Apri dettaglio di Bea" }).click()
+  await page
+    .getByRole("button", { name: "Apri dettaglio di Bea, cognome Verdi" })
+    .click()
   const history = page.getByRole("region", { name: "Storico valutazioni" })
   await expect(history.getByText("Sabato PM")).toBeVisible()
   await expect(history.getByText("Lunedì AM")).toBeVisible()

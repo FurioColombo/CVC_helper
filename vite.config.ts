@@ -73,6 +73,19 @@ export default defineConfig({
         display: "standalone",
         start_url: "/",
         lang: "it",
+        icons: [
+          {
+            src: "/icons/cvc-helper-192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icons/cvc-helper-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,wasm,woff2}"],

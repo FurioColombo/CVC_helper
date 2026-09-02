@@ -1,5 +1,5 @@
 import { FileText, LoaderCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import type { SessionId } from "@/domain/config"
 import {
@@ -15,15 +15,18 @@ import {
 export function StudentEvaluationHistory({
   courseId,
   studentId,
+  focusOnMount = false,
 }: {
   courseId: string
   studentId: string
+  focusOnMount?: boolean
 }) {
   const [records, setRecords] = useState<EvaluationRecord[]>([])
   const [sessions, setSessions] = useState<SessionId[]>([])
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
+  const sectionRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     let active = true
@@ -45,6 +48,10 @@ export function StudentEvaluationHistory({
     }
   }, [courseId, studentId])
 
+  useEffect(() => {
+    if (focusOnMount && loadState === "ready") sectionRef.current?.focus()
+  }, [focusOnMount, loadState])
+
   const recordsBySession = new Map(
     records.map((record) => [record.sessionId, record]),
   )
@@ -53,6 +60,8 @@ export function StudentEvaluationHistory({
     <section
       className="mt-4 rounded-2xl border bg-card p-4"
       aria-labelledby="student-evaluation-history-title"
+      ref={sectionRef}
+      tabIndex={focusOnMount ? -1 : undefined}
     >
       <h3 className="text-sm font-black" id="student-evaluation-history-title">
         Storico valutazioni

@@ -624,6 +624,10 @@ export function EvaluationManagement({
         </button>
       </div>
 
+      {view !== "overview" && (
+        <p className="mt-2 text-xs text-muted-foreground">— = non valutato</p>
+      )}
+
       {loadError && (
         <section
           className="mt-5 rounded-2xl border bg-card p-5 text-center"

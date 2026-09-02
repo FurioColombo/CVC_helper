@@ -1,5 +1,5 @@
 import { Check, Pencil, Wrench } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,33 +26,39 @@ export function FaultCard({
   const [description, setDescription] = useState(fault.description)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(false)
+  const saveInFlight = useRef(false)
 
   async function changeState(state: FaultState) {
+    if (saveInFlight.current) return
+    saveInFlight.current = true
     setSaving(true)
     setError(false)
     try {
       await updateFaultState(fault.id, state)
       await onChanged()
-      setSaving(false)
     } catch {
-      setSaving(false)
       setError(true)
+    } finally {
+      saveInFlight.current = false
+      setSaving(false)
     }
   }
 
   async function saveDescription() {
     const value = description.trim()
-    if (!value) return
+    if (!value || saveInFlight.current) return
+    saveInFlight.current = true
     setSaving(true)
     setError(false)
     try {
       await updateFaultDescription(fault.id, value)
       await onChanged()
       setEditing(false)
-      setSaving(false)
     } catch {
-      setSaving(false)
       setError(true)
+    } finally {
+      saveInFlight.current = false
+      setSaving(false)
     }
   }
 

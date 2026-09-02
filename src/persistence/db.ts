@@ -98,6 +98,8 @@ const evaluations = Table.createLocalOnly({
   note: column.text,
 })
 
+// Retained for schema compatibility with local databases created by the M0
+// persistence probe. Product code no longer reads or writes this table.
 const meta = Table.createLocalOnly({
   value: column.integer,
 })
@@ -117,8 +119,6 @@ export const AppSchema = new Schema({
   evaluations,
   meta,
 })
-
-export type DatabaseRecords = (typeof AppSchema)["types"]
 
 export function createDatabase(dbFilename = "cvc-helper.db") {
   return new PowerSyncDatabase({

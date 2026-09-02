@@ -382,11 +382,7 @@ describe("CrewManagement", () => {
     )
     const student = await screen.findByRole("button", { name: "Aldo" })
 
-    vi.useFakeTimers()
-    fireEvent.pointerDown(student)
-    vi.advanceTimersByTime(600)
-    fireEvent.pointerUp(student)
-    vi.useRealTimers()
+    fireEvent.contextMenu(student)
 
     expect(onOpenStudent).toHaveBeenCalledWith("student-1")
   })

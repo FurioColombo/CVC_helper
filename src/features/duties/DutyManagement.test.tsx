@@ -64,6 +64,34 @@ describe("DutyManagement", () => {
     savePlan.mockResolvedValue(undefined)
   })
 
+  it("keeps retrying safely after a read failure and can recover", async () => {
+    getStudents
+      .mockRejectedValueOnce(new Error("storage unavailable"))
+      .mockRejectedValueOnce(new Error("still unavailable"))
+      .mockResolvedValue(STUDENTS)
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        referenceDate="2026-08-29"
+      />,
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Comandate non disponibili" }),
+    ).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Riprova" }))
+    expect(
+      await screen.findByRole("heading", { name: "Comandate non disponibili" }),
+    ).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Riprova" }))
+    expect(
+      await screen.findByRole("button", { name: "Proponi comandate" }),
+    ).toBeVisible()
+    expect(getStudents).toHaveBeenCalledTimes(3)
+  })
+
   it("creates a deterministic proposal with the configured Friday preference", async () => {
     const user = userEvent.setup()
     render(

@@ -5,6 +5,7 @@ import { resolve } from "node:path"
 const root = resolve(import.meta.dirname, "..")
 const requiredFiles = [
   "AGENTS.md",
+  ".node-version",
   ".github/workflows/ci.yml",
   ".milestones/manifest.json",
   "playwright.config.ts",
@@ -14,6 +15,9 @@ const requiredFiles = [
   "src/domain/invariants.ts",
   "src/domain/scenarios.ts",
   "src/persistence/db.ts",
+  "public/icons/cvc-helper-180.png",
+  "public/icons/cvc-helper-192.png",
+  "public/icons/cvc-helper-512.png",
 ]
 
 for (const file of requiredFiles) {
@@ -25,6 +29,16 @@ for (const file of requiredFiles) {
 
 const packageJson = JSON.parse(
   readFileSync(resolve(root, "package.json"), "utf8"),
+)
+assert.equal(
+  packageJson.engines?.node,
+  ">=24 <25",
+  "package.json must declare the supported Node 24 runtime",
+)
+assert.equal(
+  readFileSync(resolve(root, ".node-version"), "utf8").trim(),
+  "24",
+  ".node-version must match the supported Node major",
 )
 for (const script of [
   "verify:quick",

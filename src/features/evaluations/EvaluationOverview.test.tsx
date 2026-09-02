@@ -104,7 +104,9 @@ describe("EvaluationOverview", () => {
       ).toEqual(["Bea", "Aldo", "Carlo"]),
     )
     await user.click(
-      screen.getByRole("button", { name: "Apri dettaglio di Aldo" }),
+      screen.getByRole("button", {
+        name: "Apri dettaglio di Aldo, cognome Rossi",
+      }),
     )
     expect(onOpenStudent).toHaveBeenCalledWith("aldo")
   })

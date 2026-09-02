@@ -926,7 +926,7 @@ Evaluate several sessions containing:
 ## M14 — UX, persistence and dependency hardening
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -950,10 +950,26 @@ Resolve cross-cutting MVP usability, mobile, persistence and regression issues b
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M14/verification.json` records 31 test files / 233 tests,
+  domain and repository checks, a production PWA build with manifest/icon/service-worker
+  assertions, and 44 passing mobile browser journeys. The browser matrix covers Pixel 7
+  Chromium, iPhone 13 Chromium viewport and eight core journeys on real WebKit, including
+  page close/reopen persistence. Independent reports are stored in
+  `.evidence/M14/mobile-accessibility-review.md`, `code-quality-review.md` and
+  `regression-review.md`; all have zero blockers.
+- Decisions: pin and verify Node 24; serialize fault writes and share invariant-validated
+  retry loaders; distinguish a normal crew tap from long press at release; require 44 px
+  contextual controls; focus the main region after shell navigation and focus evaluation
+  history only for an active evaluation deep link; add explicit crew-count capacity guidance;
+  remove the obsolete persistence probe and unused domain helpers, and retain the `meta` table only for compatibility
+  with databases created by the M0 schema. PWA installation assets are verified after every
+  production build, and CI installs both Chromium and WebKit.
+- Known limitations: first-use OCR and local speech model assets need connectivity or a
+  prior cache, while manual student entry and typed notes remain offline. Further internal
+  list-to-detail focus announcements, visible horizontal-overflow cues, unsaved note-draft
+  protection, MediaRecorder deduplication and measured bundle optimization are non-blocking
+  post-MVP improvements.
+- Git checkpoint: `test: complete M14 UX and persistence hardening`.
 
 ---
 

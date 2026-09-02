@@ -95,7 +95,9 @@ test("summarizes actual marks and links exact evaluation history", async ({
     await page.getByRole("heading", { level: 3 }).allTextContents(),
   ).toEqual(["Bea", "Aldo", "Carlo"])
 
-  await page.getByRole("button", { name: "Apri dettaglio di Aldo" }).click()
+  await page
+    .getByRole("button", { name: "Apri dettaglio di Aldo, cognome Rossi" })
+    .click()
   await expect(page.getByRole("heading", { name: "Aldo" })).toBeVisible()
   const history = page.getByRole("region", { name: "Storico valutazioni" })
   await expect(history.getByText("Sabato PM")).toBeVisible()
@@ -111,6 +113,13 @@ test("summarizes actual marks and links exact evaluation history", async ({
       .getByRole("group", { name: "Vista valutazioni" })
       .getByRole("button", { name: "Riepilogo" }),
   ).toHaveAttribute("aria-pressed", "true")
+
+  await page.getByRole("button", { name: "Indietro da Valutazioni" }).click()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await page.getByRole("button", { name: /^Aldo, 26 anni/ }).click()
+  await expect(
+    page.getByRole("region", { name: "Storico valutazioni" }),
+  ).not.toBeFocused()
 
   if (testInfo.project.name === "iphone-13-viewport") {
     const evidenceDirectory = path.join(process.cwd(), ".evidence", "M13")

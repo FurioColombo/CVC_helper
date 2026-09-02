@@ -6,7 +6,7 @@ import {
   RefreshCw,
   Settings2,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +46,21 @@ function defaultSettings(students: StudentRecord[]): DutySettingsRecord {
     completedDayIds: [],
     acknowledgedWarningKeys: [],
   }
+}
+
+async function readValidDutyData(courseId: string) {
+  const [students, plan] = await Promise.all([
+    listStudents(courseId),
+    readDutyPlan(courseId),
+  ])
+  const settings = plan.settings ?? defaultSettings(students)
+  if (
+    validateDutyRecords(students, plan.assignments, settings.completedDayIds)
+      .length > 0
+  ) {
+    throw new Error("Persisted duty state violates invariants")
+  }
+  return { students, assignments: plan.assignments, settings }
 }
 
 function asDutyStudents(students: StudentRecord[]): DutyStudent[] {
@@ -494,46 +509,30 @@ export function DutyManagement({
     "loading",
   )
 
+  const applyLoaded = useCallback(
+    (data: Awaited<ReturnType<typeof readValidDutyData>>) => {
+      setStudents(data.students)
+      setAssignments(data.assignments)
+      setSettings(data.settings)
+      setLoadState("ready")
+    },
+    [],
+  )
+
   async function load() {
-    const [studentRecords, plan] = await Promise.all([
-      listStudents(courseId),
-      readDutyPlan(courseId),
-    ])
-    const currentSettings = plan.settings ?? defaultSettings(studentRecords)
-    if (
-      validateDutyRecords(
-        studentRecords,
-        plan.assignments,
-        currentSettings.completedDayIds,
-      ).length > 0
-    ) {
-      throw new Error("Persisted duty state violates invariants")
+    setLoadState("loading")
+    try {
+      applyLoaded(await readValidDutyData(courseId))
+    } catch {
+      setLoadState("error")
     }
-    setStudents(studentRecords)
-    setAssignments(plan.assignments)
-    setSettings(currentSettings)
-    setLoadState("ready")
   }
 
   useEffect(() => {
     let active = true
-    Promise.all([listStudents(courseId), readDutyPlan(courseId)])
-      .then(([studentRecords, plan]) => {
-        if (!active) return
-        const currentSettings = plan.settings ?? defaultSettings(studentRecords)
-        if (
-          validateDutyRecords(
-            studentRecords,
-            plan.assignments,
-            currentSettings.completedDayIds,
-          ).length > 0
-        ) {
-          throw new Error("Persisted duty state violates invariants")
-        }
-        setStudents(studentRecords)
-        setAssignments(plan.assignments)
-        setSettings(currentSettings)
-        setLoadState("ready")
+    readValidDutyData(courseId)
+      .then((data) => {
+        if (active) applyLoaded(data)
       })
       .catch(() => {
         if (active) setLoadState("error")
@@ -541,7 +540,7 @@ export function DutyManagement({
     return () => {
       active = false
     }
-  }, [courseId])
+  }, [applyLoaded, courseId])
 
   const config: DutyConfig | null = settings
     ? { ...settings, referenceDate }

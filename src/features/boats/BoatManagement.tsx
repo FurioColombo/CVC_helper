@@ -563,8 +563,8 @@ export function BoatManagement({
           onCancel={() =>
             setScreen({ kind: "detail", boatId: selectedBoat.id })
           }
-          onSaved={() => {
-            void refresh()
+          onSaved={async () => {
+            await refresh()
             setScreen({ kind: "detail", boatId: selectedBoat.id })
           }}
         />

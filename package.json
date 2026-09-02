@@ -3,9 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/check-built-pwa.mjs",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
@@ -15,6 +18,7 @@
     "test:watch": "vitest",
     "check:domain": "node --import tsx scripts/check-domain.ts",
     "check:repository": "node scripts/check-repository.mjs",
+    "check:pwa": "node scripts/check-built-pwa.mjs",
     "verify:quick": "npm run lint && npm run format:check && npm run typecheck && npm run test",
     "verify:domain": "npm run check:repository && npm run check:domain",
     "verify:e2e": "playwright test",
@@ -42,7 +46,8 @@
     "evidence:g4": "node scripts/record-verification.mjs G4",
     "evidence:m12": "node scripts/record-verification.mjs M12",
     "evidence:m13": "node scripts/record-verification.mjs M13",
-    "evidence:g5": "node scripts/record-verification.mjs G5"
+    "evidence:g5": "node scripts/record-verification.mjs G5",
+    "evidence:m14": "node scripts/record-verification.mjs M14"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

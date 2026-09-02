@@ -1,5 +1,4 @@
 import {
-  BOAT_TYPES,
   COURSE_CONFIG,
   type BoatAvailability,
   type BoatType,
@@ -31,10 +30,6 @@ export function parseBoatNumbers(value: string) {
       seen.add(key)
       return true
     })
-}
-
-export function isAllowedBoatType(value: string): value is BoatType {
-  return BOAT_TYPES.includes(value as BoatType)
 }
 
 export function hasUnresolvedFaults(

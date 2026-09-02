@@ -141,6 +141,7 @@ describe("StudentManagement", () => {
     render(
       <StudentManagement
         course={COURSE}
+        focusEvaluationHistory
         initialStudentId="student-1"
         onHome={vi.fn()}
         onInitialStudentBack={onInitialStudentBack}
@@ -148,6 +149,11 @@ describe("StudentManagement", () => {
     )
 
     await screen.findByRole("heading", { name: "Mario" })
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: "Storico valutazioni" }),
+      ).toHaveFocus(),
+    )
     await user.click(
       screen.getByRole("button", { name: "Indietro da Dettaglio" }),
     )

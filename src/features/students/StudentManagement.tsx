@@ -263,7 +263,7 @@ function StudentForm({
 
       <Field
         label="Data di nascita"
-        hint="Età e stato Minorenne sono calcolati all’inizio del corso."
+        hint="Formato GG/MM/AAAA. Età e stato Minorenne sono calcolati all’inizio del corso."
       >
         <Input
           aria-label="Data di nascita"
@@ -343,6 +343,7 @@ function StudentDetail({
   onBack,
   onEdit,
   onChanged,
+  focusEvaluationHistory,
 }: {
   course: CourseRecord
   student: StudentRecord
@@ -350,6 +351,7 @@ function StudentDetail({
   onBack: () => void
   onEdit: () => void
   onChanged: () => Promise<void>
+  focusEvaluationHistory: boolean
 }) {
   const [changing, setChanging] = useState(false)
   const [error, setError] = useState(false)
@@ -461,7 +463,11 @@ function StudentDetail({
           </p>
         </div>
 
-        <StudentEvaluationHistory courseId={course.id} studentId={student.id} />
+        <StudentEvaluationHistory
+          courseId={course.id}
+          focusOnMount={focusEvaluationHistory}
+          studentId={student.id}
+        />
 
         {error && (
           <p className="mt-4 text-sm font-semibold text-[#a2381b]" role="alert">
@@ -491,11 +497,13 @@ export function StudentManagement({
   onHome,
   initialStudentId,
   onInitialStudentBack,
+  focusEvaluationHistory = false,
 }: {
   course: CourseRecord
   onHome: () => void
   initialStudentId?: string | null
   onInitialStudentBack?: () => void
+  focusEvaluationHistory?: boolean
 }) {
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
@@ -637,6 +645,7 @@ export function StudentManagement({
     return (
       <StudentDetail
         course={course}
+        focusEvaluationHistory={focusEvaluationHistory}
         onBack={() => {
           if (initialStudentId && onInitialStudentBack) {
             onInitialStudentBack()

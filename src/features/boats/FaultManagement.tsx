@@ -105,8 +105,8 @@ export function FaultManagement({
         <FaultForm
           boats={boats}
           onCancel={() => setScreen("list")}
-          onSaved={() => {
-            void refresh()
+          onSaved={async () => {
+            await refresh()
             setScreen("list")
           }}
         />

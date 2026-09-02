@@ -155,7 +155,7 @@ export function EvaluationOverview({
               >
                 <div className="flex items-center justify-between gap-3">
                   <button
-                    aria-label={`Apri dettaglio di ${name}`}
+                    aria-label={`Apri dettaglio di ${name}, cognome ${student.surname}`}
                     className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
                     onClick={() => onOpenStudent(student.id)}
                     type="button"

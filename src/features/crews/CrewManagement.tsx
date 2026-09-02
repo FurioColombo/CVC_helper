@@ -12,6 +12,7 @@ import {
   UsersRound,
 } from "lucide-react"
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -258,12 +259,15 @@ function PersonButton({
   onLongPress?: () => void
   ariaLabel?: string
 }) {
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pointerDownAt = useRef<number | null>(null)
+  const pointerOrigin = useRef<{ x: number; y: number } | null>(null)
+  const pointerMoved = useRef(false)
   const longPressed = useRef(false)
 
-  function cancelTimer() {
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = null
+  function cancelPress() {
+    pointerDownAt.current = null
+    pointerOrigin.current = null
+    pointerMoved.current = false
   }
 
   return (
@@ -282,19 +286,42 @@ function PersonButton({
       onContextMenu={(event) => {
         if (!onLongPress) return
         event.preventDefault()
+        longPressed.current = true
+        cancelPress()
         onLongPress()
       }}
-      onPointerCancel={cancelTimer}
-      onPointerDown={() => {
+      onPointerCancel={cancelPress}
+      onPointerDown={(event) => {
         if (!onLongPress) return
         longPressed.current = false
-        timer.current = setTimeout(() => {
+        pointerDownAt.current = event.timeStamp
+        pointerOrigin.current = { x: event.clientX, y: event.clientY }
+        pointerMoved.current = false
+      }}
+      onPointerLeave={cancelPress}
+      onPointerMove={(event) => {
+        const origin = pointerOrigin.current
+        if (!origin) return
+        if (
+          Math.abs(event.clientX - origin.x) > 10 ||
+          Math.abs(event.clientY - origin.y) > 10
+        ) {
+          pointerMoved.current = true
+        }
+      }}
+      onPointerUp={(event) => {
+        const startedAt = pointerDownAt.current
+        if (
+          onLongPress &&
+          startedAt !== null &&
+          !pointerMoved.current &&
+          event.timeStamp - startedAt >= 600
+        ) {
           longPressed.current = true
           onLongPress()
-        }, 600)
+        }
+        cancelPress()
       }}
-      onPointerLeave={cancelTimer}
-      onPointerUp={cancelTimer}
       type="button"
     >
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-xs font-black text-foreground">
@@ -457,6 +484,55 @@ function AnnouncementView({
   )
 }
 
+async function readValidCrewState(courseId: string, sessionId: SessionId) {
+  const [students, volunteers, boats, faults, stored, history, dutyPlan] =
+    await Promise.all([
+      listStudents(courseId),
+      listVolunteers(courseId),
+      listBoats(courseId),
+      listFaults(courseId),
+      readCrewPlan(courseId, sessionId),
+      readCrewHistory(courseId),
+      readDutyPlan(courseId),
+    ])
+  const invariantCrews = stored.crews.map((crew) => ({
+    id: crew.id,
+    sessionId: crew.sessionId,
+    studentIds: crew.members
+      .filter(({ personType }) => personType === "student")
+      .map(({ personId }) => personId),
+    volunteerIds: crew.members
+      .filter(({ personType }) => personType === "volunteer")
+      .map(({ personId }) => personId),
+    destination: crew.destination,
+    boatId: crew.boatId ?? undefined,
+  }))
+  if (
+    validateBoatRecords(boats, faults).length > 0 ||
+    validateCrewRecords(
+      students,
+      volunteers,
+      invariantCrews,
+      stored.landAssignments,
+      boats,
+      stored.selectedBoatIds.map((boatId, index) => ({
+        id: `session-boat-${index}`,
+        sessionId,
+        boatId,
+      })),
+    ).length > 0 ||
+    hasCrewHistoryIssues(students, volunteers, history) ||
+    validateDutyRecords(
+      students,
+      dutyPlan.assignments,
+      dutyPlan.settings?.completedDayIds ?? [],
+    ).length > 0
+  ) {
+    throw new Error("Persisted crew state violates invariants")
+  }
+  return { students, volunteers, boats, faults, stored, history, dutyPlan }
+}
+
 export function CrewManagement({
   course,
   initialSessionId = "sat-pm",
@@ -504,73 +580,20 @@ export function CrewManagement({
     boatCopySelection !== null,
   )
 
-  async function load(nextSessionId = sessionId) {
-    setLoadState("loading")
-    try {
-      const [
-        studentRecords,
-        volunteerRecords,
-        boatRecords,
-        faultRecords,
-        stored,
-        storedHistory,
-        dutyPlan,
-      ] = await Promise.all([
-        listStudents(course.id),
-        listVolunteers(course.id),
-        listBoats(course.id),
-        listFaults(course.id),
-        readCrewPlan(course.id, nextSessionId),
-        readCrewHistory(course.id),
-        readDutyPlan(course.id),
-      ])
-      const invariantCrews = stored.crews.map((crew) => ({
-        id: crew.id,
-        sessionId: crew.sessionId,
-        studentIds: crew.members
-          .filter(({ personType }) => personType === "student")
-          .map(({ personId }) => personId),
-        volunteerIds: crew.members
-          .filter(({ personType }) => personType === "volunteer")
-          .map(({ personId }) => personId),
-        destination: crew.destination,
-        boatId: crew.boatId ?? undefined,
-      }))
-      if (
-        validateBoatRecords(boatRecords, faultRecords).length > 0 ||
-        validateCrewRecords(
-          studentRecords,
-          volunteerRecords,
-          invariantCrews,
-          stored.landAssignments,
-          boatRecords,
-          stored.selectedBoatIds.map((boatId, index) => ({
-            id: `session-boat-${index}`,
-            sessionId: nextSessionId,
-            boatId,
-          })),
-        ).length > 0 ||
-        hasCrewHistoryIssues(studentRecords, volunteerRecords, storedHistory) ||
-        validateDutyRecords(
-          studentRecords,
-          dutyPlan.assignments,
-          dutyPlan.settings?.completedDayIds ?? [],
-        ).length > 0
-      ) {
-        throw new Error("Persisted crew state violates invariants")
-      }
-      setStudents(studentRecords)
-      setVolunteers(volunteerRecords)
-      setBoats(boatRecords)
-      setFaults(faultRecords)
+  const applyLoaded = useCallback(
+    (data: Awaited<ReturnType<typeof readValidCrewState>>) => {
+      setStudents(data.students)
+      setVolunteers(data.volunteers)
+      setBoats(data.boats)
+      setFaults(data.faults)
       setPlan({
-        crews: stored.crews,
-        landStudentIds: stored.landStudentIds,
-        selectedBoatIds: stored.selectedBoatIds,
+        crews: data.stored.crews,
+        landStudentIds: data.stored.landStudentIds,
+        selectedBoatIds: data.stored.selectedBoatIds,
       })
-      setHistory(storedHistory)
-      setDutyAssignments(dutyPlan.assignments)
-      setCrewCount(Math.max(1, stored.crews.length))
+      setHistory(data.history)
+      setDutyAssignments(data.dutyPlan.assignments)
+      setCrewCount(Math.max(1, data.stored.crews.length))
       setSelected(null)
       setWarningCrewId(null)
       setDestinationCrewId(null)
@@ -578,6 +601,14 @@ export function CrewManagement({
       setBoatCopySelection(null)
       setReadMode(false)
       setLoadState("ready")
+    },
+    [],
+  )
+
+  async function load(nextSessionId = sessionId) {
+    setLoadState("loading")
+    try {
+      applyLoaded(await readValidCrewState(course.id, nextSessionId))
     } catch (error) {
       console.error("Crew load failed", error)
       setLoadState("error")
@@ -586,86 +617,10 @@ export function CrewManagement({
 
   useEffect(() => {
     let active = true
-    Promise.all([
-      listStudents(course.id),
-      listVolunteers(course.id),
-      listBoats(course.id),
-      listFaults(course.id),
-      readCrewPlan(course.id, sessionId),
-      readCrewHistory(course.id),
-      readDutyPlan(course.id),
-    ])
-      .then(
-        ([
-          studentRecords,
-          volunteerRecords,
-          boatRecords,
-          faultRecords,
-          stored,
-          storedHistory,
-          dutyPlan,
-        ]) => {
-          if (!active) return
-          const invariantCrews = stored.crews.map((crew) => ({
-            id: crew.id,
-            sessionId: crew.sessionId,
-            studentIds: crew.members
-              .filter(({ personType }) => personType === "student")
-              .map(({ personId }) => personId),
-            volunteerIds: crew.members
-              .filter(({ personType }) => personType === "volunteer")
-              .map(({ personId }) => personId),
-            destination: crew.destination,
-            boatId: crew.boatId ?? undefined,
-          }))
-          if (
-            validateBoatRecords(boatRecords, faultRecords).length > 0 ||
-            validateCrewRecords(
-              studentRecords,
-              volunteerRecords,
-              invariantCrews,
-              stored.landAssignments,
-              boatRecords,
-              stored.selectedBoatIds.map((boatId, index) => ({
-                id: `session-boat-${index}`,
-                sessionId,
-                boatId,
-              })),
-            ).length > 0 ||
-            hasCrewHistoryIssues(
-              studentRecords,
-              volunteerRecords,
-              storedHistory,
-            ) ||
-            validateDutyRecords(
-              studentRecords,
-              dutyPlan.assignments,
-              dutyPlan.settings?.completedDayIds ?? [],
-            ).length > 0
-          ) {
-            throw new Error("Persisted crew state violates invariants")
-          }
-          setStudents(studentRecords)
-          setVolunteers(volunteerRecords)
-          setBoats(boatRecords)
-          setFaults(faultRecords)
-          setPlan({
-            crews: stored.crews,
-            landStudentIds: stored.landStudentIds,
-            selectedBoatIds: stored.selectedBoatIds,
-          })
-          setHistory(storedHistory)
-          setDutyAssignments(dutyPlan.assignments)
-          setCrewCount(Math.max(1, stored.crews.length))
-          setSelected(null)
-          setWarningCrewId(null)
-          setDestinationCrewId(null)
-          setCopyReport(null)
-          setBoatCopySelection(null)
-          setReadMode(false)
-          setLoadState("ready")
-        },
-      )
+    readValidCrewState(course.id, sessionId)
+      .then((data) => {
+        if (active) applyLoaded(data)
+      })
       .catch((error) => {
         console.error("Crew load failed", error)
         if (active) setLoadState("error")
@@ -673,7 +628,7 @@ export function CrewManagement({
     return () => {
       active = false
     }
-  }, [course.id, sessionId])
+  }, [applyLoaded, course.id, sessionId])
 
   const activeStudents = students.filter(({ active }) => active === 1)
   const previousSessionId = getPreviousSessionId(sessionId)
@@ -1328,7 +1283,7 @@ export function CrewManagement({
                 </span>
                 <button
                   aria-label="Chiudi destinazioni"
-                  className="min-h-10 px-2 text-xs font-bold text-muted-foreground"
+                  className="min-h-11 px-2 text-xs font-bold text-muted-foreground"
                   onClick={() => setDestinationCrewId(null)}
                   type="button"
                 >
@@ -1337,7 +1292,7 @@ export function CrewManagement({
               </div>
               <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5">
                 <Button
-                  className="h-10 shrink-0 px-3"
+                  className="h-11 shrink-0 px-3"
                   disabled={busy}
                   onClick={() => chooseDestination({ kind: "unassigned" })}
                   variant="secondary"
@@ -1352,7 +1307,7 @@ export function CrewManagement({
                   return (
                     <Button
                       aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${boatLabel(boatId)}`}
-                      className="h-10 shrink-0 px-3"
+                      className="h-11 shrink-0 px-3"
                       disabled={busy || usedByAnotherCrew}
                       key={boatId}
                       onClick={() =>
@@ -1365,7 +1320,7 @@ export function CrewManagement({
                   )
                 })}
                 <Button
-                  className="h-10 shrink-0 px-3"
+                  className="h-11 shrink-0 px-3"
                   disabled={busy}
                   onClick={() => chooseDestination({ kind: "mezzi" })}
                   variant="secondary"
@@ -1388,7 +1343,7 @@ export function CrewManagement({
                 {selectedLocation.kind !== "pool" && (
                   <Button
                     aria-label={`Rimuovi ${personLabel(selected)} dall’assegnazione`}
-                    className="h-10 shrink-0 px-3"
+                    className="h-11 shrink-0 px-3"
                     disabled={busy}
                     onClick={() => void commit(removePerson(plan, selected))}
                     variant="secondary"
@@ -1409,7 +1364,7 @@ export function CrewManagement({
                   return (
                     <Button
                       aria-label={`Sposta ${personLabel(selected)} in equipaggio ${crewIndex + 1}`}
-                      className="h-10 shrink-0 px-3"
+                      className="h-11 shrink-0 px-3"
                       disabled={busy || currentCrew || full}
                       key={crew.id}
                       onClick={() => placeInCrew(crew.id)}
@@ -1422,7 +1377,7 @@ export function CrewManagement({
                 {selected.personType === "student" && (
                   <Button
                     aria-label={`Sposta ${personLabel(selected)} A terra`}
-                    className="h-10 shrink-0 px-3"
+                    className="h-11 shrink-0 px-3"
                     disabled={busy || selectedLocation.kind === "land"}
                     onClick={placeOnLand}
                     variant="secondary"
@@ -1449,7 +1404,7 @@ export function CrewManagement({
                           aria-controls={`crew-warning-detail-${crew.id}`}
                           aria-expanded={warningCrewId === crew.id}
                           aria-label={`Avvisi equipaggio ${crewIndex + 1}: ${severity === "red" ? "rosso" : "giallo"}, ${warnings.length}`}
-                          className={`grid size-10 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
+                          className={`grid size-11 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
                           onClick={() =>
                             setWarningCrewId((current) =>
                               current === crew.id ? null : crew.id,

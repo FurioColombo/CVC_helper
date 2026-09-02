@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
   timeout: 120_000,
-  workers: 2,
+  workers: 1,
   expect: {
     timeout: 30_000,
   },
@@ -28,6 +28,12 @@ export default defineConfig({
         browserName: "chromium",
         locale: "it-IT",
       },
+    },
+    {
+      name: "iphone-13-webkit-core",
+      testMatch:
+        /(?:boats|crew-management-gate|duties|evaluation-gate|persistence|reopen-persistence|smoke|student-management-gate)\.spec\.ts/,
+      use: { ...devices["iPhone 13"], locale: "it-IT" },
     },
   ],
   webServer: {
