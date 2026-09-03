@@ -1,0 +1,90 @@
+# 06 — Regole di design per il ciclo post-MVP
+
+**Stato:** proposta, 3 settembre 2026. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md) e [07](07_PAGE_CHANGELOG.md). I valori di progetto sotto non sono già un mock approvato.
+
+## 1. Ordine delle decisioni
+
+Prima correttezza dei dati, riconoscibilità delle persone e precisione dei tocchi; poi informazioni simultanee; poi riduzione dello scroll; infine rifinitura estetica. Se gli obiettivi confliggono, mostrare il compromesso nel mock e registrarlo. Non ottenere “zero scroll” nascondendo nomi essenziali o riducendo indiscriminatamente i controlli.
+
+Ogni pagina dichiara la decisione che aiuta a prendere. Composizione/verifica possono essere dense; annuncio/lettura devono rimanere molto puliti. Nessuna nuova dashboard o area funzionale deriva dal solo restyling.
+
+## 2. Regole operative
+
+| ID  | Regola                                                                                                                                                                                              | Come verificare                                                                                                                      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| R01 | Informazioni da confrontare insieme nello stesso campo visivo. Dettagli secondari a un tap, senza cambiare area.                                                                                    | Indicare nel mock quali informazioni sono simultanee; percorrere il compito con 21/23 allievi.                                       |
+| R02 | Ridurre prima padding, header ripetuti, testi permanenti e icone vuote.                                                                                                                             | Confronto prima/dopo sullo stesso viewport e sugli stessi dati; niente conteggi di densità con fixture diverse.                      |
+| R03 | Due colonne come prima ipotesi per persone; terza solo con beneficio misurato. Disposizione stabile fra dispositivi.                                                                                | Nomi lunghi, omonimi, minorenni, persona selezionata e disabilitata; stessa sequenza di lettura.                                     |
+| R04 | Bersagli di tocco almeno 44 × 44 CSS px per controlli operativi; preferire 48 px per azioni frequenti se lo spazio consente. Icona visibile anche più piccola, area attiva non sovrapposta.         | Misura del rettangolo effettivamente cliccabile, non soltanto dell'SVG. Prova su telefono.                                           |
+| R05 | Tipografia leggibile, nomi prima dei dettagli. Proposta: testo principale/input 16 px, secondario 14 px, titoli 20–24 px. Badge brevi 12–13 px solo se non portano da soli informazione essenziale. | Niente perdita di identità; testo al 200%, nomi su due righe quando necessario. Non trattare questi numeri come standard universale. |
+| R06 | Contrasto sufficiente e significato mai affidato al solo colore.                                                                                                                                    | Testo ordinario almeno 4,5:1; testo grande secondo definizione WCAG almeno 3:1. Simbolo/etichetta per ogni stato.                    |
+| R07 | Poche scelte frequenti: selezione diretta, senza menu aggiuntivo.                                                                                                                                   | Taglia e voto con un tap dal contesto di modifica; preview/save state visibili.                                                      |
+| R08 | Stato nel punto interessato, dettagli su richiesta.                                                                                                                                                 | Giorno e persona coinvolti riconoscibili senza aprire Avvisi; più problemi accessibili dal segnale sintetico.                        |
+| R09 | Gesti avanzati solo come scorciatoie. Percorso esplicito con tastiera e touch sempre disponibile.                                                                                                   | Profilo editabile senza conoscere il long press; nessun gesto nascosto come unico accesso.                                           |
+| R10 | Modifiche ordinarie rapide e autosalvate quando previsto; stato di salvataggio e recupero errore chiari.                                                                                            | Modifica → navigazione/reload; nessun “salvato” prima della persistenza. Non perdere l'ultimo carattere.                             |
+| R11 | Conferma per eliminazione definitiva; nessuna conferma per ogni normale spostamento/scambio.                                                                                                        | Cancellazione con identità e conseguenza; spostamento correggibile con la stessa interazione. Nessun Undo generico.                  |
+| R12 | Sticky e flottanti non coprono elementi o focus. Un solo livello di azioni persistenti oltre alla navigazione, salvo prova di necessità.                                                            | Ultima riga, tastiera aperta, safe area, dialog aperto e ritorno del focus.                                                          |
+| R13 | Un lessico e uno stile coerenti per stessi concetti.                                                                                                                                                | Stessi componenti per persona, stato, barca, sessione; microcopy italiana.                                                           |
+| R14 | Stati vuoto, caricamento, errore e indisponibilità sono parte del design.                                                                                                                           | Mock degli stati pertinenti; azioni di recupero reali senza tecnicismi inutili.                                                      |
+| R15 | Una pagina per volta: target discusso → implementazione → verifica → checkpoint.                                                                                                                    | Nessuna chiusura basata solo su codice o screenshot statico.                                                                         |
+
+### Fonti e limiti delle raccomandazioni
+
+Il riferimento web per R04 è [W3C Target Size Enhanced](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced): 44 × 44 CSS px, criterio AAA con eccezioni. Il criterio [Target Size Minimum](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) è AA e usa 24 × 24 CSS px o specifiche eccezioni/spaziature. Qui proponiamo deliberatamente 44 per l'uso sul campo, senza sostenere che WCAG AA imponga 44.
+
+[Apple Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons) raccomanda area attiva almeno 44 × 44 **punti** e spazio sufficiente: è un riferimento nativo coerente nella direzione, non una conversione tra punti, dp e CSS px. Il valore 48 px qui è una preferenza progettuale, non una soglia attribuita a quella fonte.
+
+R05/R06 si appoggiano a [W3C Resize Text](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html) e [Contrast Minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html). La scala 16/14/12–13 è una proposta dell'app da verificare, non un minimo tipografico WCAG. [W3C Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html) guida la prova a larghezza equivalente 320 CSS px e l'assenza di perdita di contenuto: la densità deve degradare in modo leggibile.
+
+Non esiste in queste fonti una prova che basso-destra sia universalmente il punto migliore per il contatore. La preferenza dell'autore va confrontata con un header sticky, provando mano destra/sinistra e coperture. Non attribuire alla letteratura un risultato di ergonomia non misurato.
+
+## 3. Dizionario visivo proposto
+
+| Concetto                     | Resa                                                | Vincolo                                                                                             |
+| ---------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Minore                       | M bianca su rosso, quadrato arrotondato             | Nome accessibile “Minorenne”; non confondere con sesso M o taglia M. Nel dettaglio parola completa. |
+| Comandata corrente           | C bianca su blu                                     | Etichetta accessibile; mapping alla sessione invariato.                                             |
+| Smontante                    | SM distinto da C                                    | Mostrare quando pertinente alla sessione; non inventare nuovi significati.                          |
+| Avviso                       | Triangolo giallo/rosso e dettaglio testuale         | Severità derivata dalle regole; nessuna declassificazione per motivi estetici.                      |
+| Selezione                    | Bordo/fondo e stato selezionato esplicito           | Distinta da warning e indisponibilità; contrasto preservato.                                        |
+| Disabilitato/non disponibile | Resa attenuata più testo/stato                      | Storico leggibile; non sola opacità indistinguibile.                                                |
+| Volontario                   | Ruolo ADV/IS/CT e trattamento distinto              | Non allievo; non parte dei conteggi allievi.                                                        |
+| Anteprima                    | Etichetta Anteprima, bordo tratteggiato/fondo tenue | Proposta: evitare rosso per il solo fatto che non è confermata.                                     |
+| Valutazione                  | ++/+ verdi; -/-- rossi; = neutro; — assente         | Segni sempre leggibili, selezione distinta; nessuna media numerica esposta.                         |
+| Barca                        | Numero prominente, tipo più piccolo                 | Disponibilità e avarie separati, anche se compresenti.                                              |
+
+Badge informativi piccoli non devono diventare pulsanti minuscoli: il dettaglio può essere aperto dall'intera riga/card o da un controllo di 44 px. Evitare pulsanti annidati dentro una card già cliccabile.
+
+## 4. Poche opzioni: dove applicare UX-G02
+
+| Contesto                         | Proposta                                | Limite                                                                               |
+| -------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------ |
+| Conoscenza e profilo in modifica | Cinque scelte XS/S/M/L/XL               | Riutilizzare lo stesso componente; taglia mancante resta rappresentabile.            |
+| Volontari                        | Tre ruoli ADV/IS/CT                     | Scelta singola, compatta.                                                            |
+| Avaria                           | Segmento Aperta/Comunicata/Risolta      | Non ridurre target; scritte complete ove possibile.                                  |
+| Giorni leggeri                   | S D L Ma Me G V                         | Multi-selezione; preview distinta dalle assegnazioni reali.                          |
+| Disponibilità barca/allievo      | Controllo esplicito binario             | Il suo effetto è comportamento, da specificare; CREW-06 resta aperto.                |
+| Valutazioni                      | Sei valori direttamente selezionabili   | Una riga va dimostrata; niente menu che aumenti tap senza accordo.                   |
+| Sessione                         | Titolo compatto + selettore contestuale | Tredici opzioni: non forzare tredici pulsanti permanenti nell'header.                |
+| Tipo barca                       | Selettore esistente                     | Scelta rara con più opzioni: non sostituirla automaticamente con una griglia enorme. |
+
+## 5. Contratto di viewport e densità da approvare
+
+Misurare in CSS px del **viewport disponibile**, distinguendo finestra browser, schermo del dispositivo e modalità PWA. Non dichiarare successo usando solo screenshot full-page che nascondono lo scroll.
+
+| Profilo proposto                     | Uso                                                                                                         |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| 430 × 820 portrait                   | Primo target di design “telefono grande”; non attribuito a un modello specifico finché Q04 è aperta.        |
+| 390 × 664 portrait                   | Viewport browser stretto già citato nelle prove MVP.                                                        |
+| 412 × 760 portrait                   | Controllo intermedio Android proposto; le dimensioni reali del progetto Playwright vanno registrate al run. |
+| 320 CSS px di larghezza e testo 200% | Stress di accessibilità, con scroll ammesso e contenuto conservato.                                         |
+
+Fixture condivisa: settimana D2 con 21 e 23 allievi, omonimi, nomi lunghi, minori, taglie, tre volontari, avarie e una barca indisponibile. Scenari aggiuntivi: zero allievi e gruppo sovradimensionato a 30 per misurare il degrado, senza promettere zero scroll per qualunque numerosità.
+
+Metriche per pagina: dati visibili alla prima apertura; altezza totale e porzione da scorrere; tocchi per compito; dimensione dei controlli; contenuti coperti. In Comandate distinguere “sette titoli visibili” da “sette gruppi con nomi leggibili”: il primo da solo non soddisfa CMD-04.
+
+## 6. Design da approvare per ogni pagina
+
+La [changelist](07_PAGE_CHANGELOG.md) definisce gli stati. Per ognuno registrare: ID pagina, revisione del mock, ID richieste, viewport, fixture, interazioni, cosa resta secondario, eccezioni e decisione umana. Preferire mock HTML/CSS isolati con dati fittizi per griglie e interazioni; bitmap utili per sola esplorazione del marchio, non per provare touch target o persistenza.
+
+Una bella immagine non dimostra il funzionamento. Un target approvato richiede leggibilità dei nomi realistica, stati problematici e un modo chiaro di compiere l'azione. Poi l'implementazione dovrà produrre prova browser e persistenza secondo `09`.

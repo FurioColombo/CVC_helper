@@ -1,0 +1,116 @@
+# 08 — Decisioni residue prima dei mock
+
+**Stato:** aperto, 3 settembre 2026. Le risposte già presenti nell'originale sono integrate in [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md): non occorre rispondervi di nuovo. Questo foglio raccoglie soltanto ciò che cambia il comportamento, il target o la verifica.
+
+Per la prossima discussione partire da Q01–Q05 e Q08. Q06/Q07 riguardano l'affidabilità e non devono bloccare tutto il lavoro grafico. Q09 è una proposta attuativa da correggere solo se non rispecchia l'intento. Le proposte sotto **non sono risposte già approvate**.
+
+## Q01 — “Disabilitare una barca” in quale ambito?
+
+**Origine:** CREW-06, annotazione dentro CREW-01. **Influenza:** P08/P14/P15, aggiornamento `01`, test storici.
+
+Quando chiedi di togliere una barca che ha già equipaggio, intendi deselezionarla dall'uscita della sessione aperta, oppure renderla indisponibile per tutto il corso? Nel secondo caso, quali assegnazioni devono essere scollegate: solo sessione aperta, tutte quelle future o altro?
+
+**Proposta:** separare due azioni con nomi chiari. “Non esce in questa sessione” toglie la barca dall'uscita e lascia l'equipaggio senza barca nella sola sessione selezionata. “Non disponibile nel corso” gestisce disponibilità generale; finché non decidiamo diversamente, conserva le assegnazioni esistenti con warning rosso come oggi. Nessuna azione riscrive silenziosamente le sessioni passate.
+
+Il risultato persone conservate/equipaggio senza barca è già richiesto. Serve precisarne l'ambito; non stiamo chiedendo se implementare quel risultato.
+
+**Risposta:** _da compilare_.
+
+## Q02 — Colore del duplicato nelle Comandate
+
+**Origine:** CMD-07 contro specifica MVP major/rosso. **Influenza:** P11/P13 e regole di accettazione warning.
+
+La persona assegnata a due giorni deve diventare davvero un warning giallo, oppure il giallo dell'esempio era indicativo e manteniamo il rosso attuale?
+
+**Proposta:** mantenere rosso per duplicati, visibile su persona e giorni interessati; giallo per raccomandazioni. Se desideri giallo, decidere anche se il duplicato intenzionale diventa nascondibile, perché oggi solo i gialli possono essere accettati e nascosti. La possibilità di assegnare più turni resta comunque libera.
+
+**Risposta:** _da compilare_.
+
+## Q03 — Giorni leggeri nei casi limite
+
+**Origine:** CMD-03, A13/A14. **Influenza:** P12 e generatore/preview.
+
+Quando i giorni leggeri sono molti o tutti, va bene distribuire gli extra prima sui non leggeri, poi sui leggeri solo se necessario, sempre in ordine cronologico?
+
+**Proposta precisa:** per N persone e D giorni rimanenti, quota base `floor(N/D)`, un extra a N mod D giorni; ordine per assegnare gli extra = non leggeri cronologici, poi leggeri cronologici. Con 23/7 e sabato leggero: `3,4,4,3,3,3,3`. Tutti leggeri equivale a nessuna preferenza. Se N < D, alcuni giorni restano a zero: indicarlo e consentire modifica manuale. Giorni completati esclusi dal calcolo; priorità venerdì e altre regole restano applicate all'assegnazione nominale.
+
+Questa formalizzazione chiarisce “meno persone”; non trasforma i giorni leggeri in un limite rigido e non introduce un nuovo solver.
+
+**Risposta:** _da compilare_.
+
+## Q04 — Target realistico di “tutto visibile insieme”
+
+**Origine:** UX-G01/03, CMD-04, CREW-01, A1–A5. **Influenza:** quasi tutti i mock densi.
+
+Quale telefono/browser usi soprattutto, e con quanti allievi dobbiamo dimostrare la vista d'insieme?
+
+**Proposta per iniziare senza attendere misure perfette:** design portrait 430 × 820 CSS px, fixture 21 e 23 allievi; compatibilità 390 × 664, un intermedio Android e stress a larghezza 320. Sono viewport di prova proposti, non promesse su un particolare modello. Per Comandate, sette gruppi e nomi leggibili al primo sguardo sul target grande; sui piccoli accettare breve scroll documentato. Con font ingranditi o gruppi più grandi, conservare contenuto e tocco anche se aumenta lo scroll.
+
+Non occorre scegliere ora una percentuale astratta di telefoni esclusi: prima misuriamo i mock, poi concordiamo le eventuali deroghe. La priorità portrait è già acquisita.
+
+**Risposta:** _telefono/modalità browser o PWA/numerosità; oppure usare la proposta iniziale_.
+
+## Q05 — Valutazioni: una riga o meno tocchi?
+
+**Origine:** EVAL-01. **Influenza:** P17.
+
+Se sullo schermo stretto nome, sei voti e nota non entrano con controlli comodi, preferisci conservare la scelta diretta dei voti in due righe basse?
+
+**Proposta:** una riga dove verificata; due righe compatte sui viewport insufficienti, senza nascondere voti dietro un dialog. Sei bersagli da 44 px occupano 264 px prima di nome, nota e margini. Non ridurre i bersagli soltanto per dichiarare rispettata “una riga”. L'alternativa di aprire i voti al tap sulla riga cambia costo d'interazione e richiede una scelta esplicita.
+
+**Risposta:** _da compilare; possiamo confrontare entrambe le geometrie nel mock_.
+
+## Q06 — OCR: definizione di utile e confini del ciclo
+
+**Origine:** domande originali 26–31, OCR-001. **Influenza:** P06, spike e accettazione; non blocca P03/P11/P14.
+
+La proposta seguente copre i punti rimasti senza risposta. Quali parti vuoi cambiare?
+
+| Punto                       | Proposta da approvare                                                                                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| “Oltre 50%, idealmente 90%” | Misurare campi corretti associati alla persona giusta / campi realmente leggibili nel corpus. Riportare separatamente righe complete, campi mancanti, associazioni errate e falsi allievi. Il 90% resta aspirazione finché il corpus non lo giustifica. |
+| Utilità pratica             | Confrontare tempo revisione + correzione con inserimento manuale dello stesso foglio. La sola percentuale OCR non basta.                                                                                                                                |
+| Riga parziale               | Mostrare nomi affidabili e campi recuperabili nella revisione; campi obbligatori mancanti da completare prima del commit secondo le regole vigenti. Non rendere opzionale la data di nascita senza una decisione distinta.                              |
+| Personale ADV/IS/AT/CT      | Escludere dagli allievi o segnalare come non-allievo; niente creazione automatica volontari in questo ciclo.                                                                                                                                            |
+| Fixture                     | Preferire ricostruzione sintetica del layout difficile. Per conservare una versione della foto umana serve una versione completamente anonimizzata concordata.                                                                                          |
+| Locale/online               | Conservare il confine locale del prodotto corrente per questa release; confronto motori locali a tempo limitato. Online-first con fallback è progetto successivo, salvo decisione esplicita diversa.                                                    |
+
+**Risposta:** _metriche/righe/personale/fixture/online da confermare o correggere_.
+
+## Q07 — Voce: dispositivo, attesa e fallimento
+
+**Origine:** domande originali 32–34, STT-001. **Influenza:** P20 e contesti note/avarie.
+
+Su quale telefono dobbiamo validare il percorso reale e quanto tempo è accettabile dopo una nota breve, con modello già caricato?
+
+**Proposta:** primo uso con connettività per asset, peso/stato spiegati, offline dopo cache. Per una nota italiana di circa 15 secondi, usare inizialmente 10 secondi come obiettivo provvisorio a caldo, da misurare sul telefono: non una promessa del motore né un requisito già accettato. Registrare separatamente tempo download, preparazione e trascrizione. Mostrare il testo dubbio come bozza correggibile; testo vuoto → riprova, errore recuperabile → azione pertinente. Non simulare una confidence se il motore non la fornisce.
+
+Permessi/microfono reali richiedono un dispositivo; un test automatico con audio fixture non sostituisce questa prova.
+
+**Risposta:** _telefono, soglia desiderata, eventuali modifiche al primo uso/testo dubbio_.
+
+## Q08 — Materiali e nome del marchio
+
+**Origine:** BRAND-01/02, domande originali 35–38. **Influenza:** identità definitiva P01, PWA e tutti i token.
+
+Quali file o riferimenti ufficiali di logo/palette/font vuoi usare, e quale nome preferisci per la variante applicativa?
+
+**Proposta:** iniziare con “CVC Helper”, logo stabile e codice corso nell'header separato, senza inserire il corso nell'icona PWA. Sono proposte, non scelte già espresse. Fino agli asset, mock strutturali con identità provvisoria dichiarata; nessun valore chiamato “blu CVC ufficiale” senza riferimento. ICON-01 resta un piccolo set successivo, non un prerequisito per tutte le pagine.
+
+**Risposta:** _file/link, nome; eventuale variante con EXE/HELPER/VOLONTARI_.
+
+## Q09 — Salvataggio immediato del profilo: proposta attuativa
+
+**Origine:** STUD-03, A6–A8. **Influenza:** P04/P05. **Non bloccante per i mock strutturali.**
+
+L'intento “modifica immediatamente” è già acquisito. Proposta: record esistente, taglia/selezioni salvate subito; testo valido autosalvato dopo breve pausa, svuotamento di un campo obbligatorio lasciato come bozza con errore senza corrompere il dato salvato; prima di cambiare pagina gestire il salvataggio pendente. “Fine” esce dal form, non richiede di approvare ogni modifica. Nuovo allievo e cancellazione restano con conferma esplicita.
+
+Per la scorciatoia partire dal form focalizzato, ammesso dalla tua risposta, e introdurre inline solo se porta beneficio concreto senza duplicare il form. Se questa interpretazione non corrisponde a ciò che intendevi, correggila qui.
+
+**Risposta:** _eventuale correzione; altrimenti proposta da verificare nel design_.
+
+## Scelte grafiche che possiamo valutare direttamente nei mock
+
+Preview avarie: tre righe come prima prova. Numero barca più grande del tipo, entrambi presenti. Stati guasto sempre direttamente selezionabili in segmento compatto. Pool volontari separato, breve scroll ammesso. Contatore Equipaggi basso-destra senza dialog mancanti. Anteprima Comandate con etichetta/tratteggio. Ordinamento avanzato, icone parti guaste e set custom restano opzionali.
+
+Queste proposte risolvono provvisoriamente le vecchie domande 39–42 e alcuni dettagli di layout senza farli diventare blocchi amministrativi.

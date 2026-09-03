@@ -1,0 +1,926 @@
+# UX/UI Change Requests e difetti emersi dall'ispezione umana
+
+## Scopo e stato del documento
+
+Questo documento raccoglie il feedback umano emerso durante l'ispezione dell'app effettuatadurante lo sviluppo dell'MVP.
+Il feedback è volutamente più ampio dell'MVP corrente e comprende:
+
+- difetti funzionali che possono compromettere l'MVP;
+- miglioramenti di qualità della vita e interaction design da affrontare dopo
+  l'MVP e prima di ulteriore sviluppo funzionale;
+- idee ancora da precisare;
+- domande necessarie per trasformare le idee in change request implementabili e
+  verificabili.
+
+Il documento è un backlog di lavoro, non modifica automaticamente il Product
+Specification, l'MVP Scope o le Technical Decisions. 
+
+Prima di implementare una richiesta:
+1. deve essere verificato che non sia stata implementata.
+2. occorre riconciliarla con i documenti autorevoli del repository,
+individuare criteri di accettazione definitivi.
+3. Deve essere insrita nel nuovo piano di sviluppo per soddisfare la lista di change request.
+
+Le fotografie e gli screenshot originali forniti durante l'ispezione possono
+contenere dati personali. Non devono essere copiati nel repository senza una
+decisione esplicita su anonimizzazione e conservazione.
+
+## Legenda
+
+### Classificazione
+
+- `MVP_DEFECT`: comportamento previsto dall'MVP ma non sufficientemente
+  funzionante o verificato.
+- `POST_MVP_QOL`: miglioramento da affrontare dopo la chiusura dell'MVP e prima
+  di nuove aree funzionali.
+- `NICE_TO_HAVE`: idea utile ma non necessaria per il ciclo QoL principale.
+- `OPEN`: richiesta ancora da precisare.
+
+### Priorità provvisoria
+
+- `P0`: rende inutilizzabile o non credibile una funzione centrale.
+- `P1`: alto impatto su operazioni frequenti, velocità o integrità dei dati.
+- `P2`: miglioramento importante ma non bloccante.
+- `P3`: rifinitura o sperimentazione.
+
+Le priorità sono provvisorie e saranno confermate al termine dell'ispezione.
+
+
+
+---
+
+# 1. Principi trasversali di interaction design
+
+Questa sezione è trasversale e servirà per raffinare le verifiche, le richieste implementative e l'harness del modello
+
+## UX-G01 — Informazioni operative nello stesso schermo
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Quando le informazioni appartengono alla stessa decisione operativa, il design deve aver fatto tutto il possibile per renderle consultabili nello stesso schermo o con una sola interazione di
+approfondimento. Lo scrolling prolungato e il passaggio a schermate descrittive
+separate rallentano l'uso sul campo.
+
+Applicazioni iniziali:
+
+- panoramica completa delle Comandate fino a venerdì;
+- scelta delle persone per una Comandata;
+- composizione degli Equipaggi (se possibile);
+- visione sintetica di avvisi, minori e persone ancora da assegnare;
+- riepiloghi di Barche e Avarie.
+
+**Direzione di design:** usare densità informativa controllata, griglie a due o
+tre colonne, indicatori compatti, progressive disclosure e dialog brevi per i
+dettagli non indispensabili.
+
+**Criteri candidati:**
+
+- le informazioni necessarie alla decisione corrente sono visibili senza
+  cambiare area dell'app;
+- su un telefono target lo scrolling è sensibilmente inferiore alla versione
+  attuale;
+- la maggiore densità non riduce leggibilità, accessibilità o precisione dei
+  tocchi.
+
+
+
+!!!! 
+UX-G01 deve essere usato per avere diversi elementi nel piano implementativo: nel piano implementativo il cambiamento dell'interfaccia di allievi/comandate/barche/avarie/etc. sono item differenti e devono essere implementati  verificati secondo simile procedura riutilizzando l'harness, ma in modo sequenziale, non parallelo   
+l'implementazione sarà subordinata a una fase di design che dobbiamo definire insieme, in cui definiamo la grafica e l'interazione più nel dettaglio, magari anche trmite immagini generate/veloci mock a seconda di cosa sia più veloce/facile/meglio per te
+!!!!
+
+
+## UX-G02 — Ridurre click e passaggi superflui
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Quando una scelta contiene poche opzioni, preferire bottoni, chip o controlli
+segmentati ai menu a tendina. Una scelta frequente dovrebbe richiedere un solo
+tap quando possibile.
+
+Caso già individuato: taglia `XS`, `S`, `M`, `L`, `XL` in Conoscenza allievi.
+Il controllo deve restare compatto e non occupare inutilmente tutta la card.
+
+!!!!
+Se individui altri casi in cui questa regola potrebbe essere applicata proponili
+!!!!
+
+
+## UX-G03 — Design complessivamente più compatto
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Ridurre spazi vuoti, intestazioni e card sovradimensionate. La compattezza deve
+servire la visione d'insieme e non diventare semplice riduzione indiscriminata
+di font e touch target.
+
+Elementi candidati alla riduzione:
+
+- titoli di pagina e di sessione;
+- contatori e testi esplicativi persistenti;
+- icone decorative non informative;
+- padding verticale delle card;
+- selettori che possono diventare segmenti compatti;
+- controlli di stato molto larghi.
+
+!!!!
+UX-G03 in diversi casi potrebbe essere concorrente / facilitatore per le richieste di UX-G01.
+quando valutiamo le modifiche alla singola pagina nel documento di sviluppo change request, probabilmente andranno considerate insieme e il loop di design sarà codipendente
+!!!!
+
+## UX-G04 — Informazione visibile nel punto in cui serve
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Avvisi e stato delle persone devono apparire direttamente sulle card, sui nomi
+o sui giorni coinvolti. Non bisogna costringere l'utente ad aprire un menu
+`Avvisi` lungo e verboso per scoprire quale elemento ha un problema.
+Spesso questo si traduce in SFRUTTARE MEGLIO L'ASPETTO DELLE CARD per veicolare informazione intuitivamente
+
+Questo principio include:
+
+- avviso sulla card del giorno interessato;
+- evidenza della persona che causa l'avviso: se un allievo è causa di un warning deve avere un triangolino del colore corretto nella caard che lo rappresenta.
+- indicatore immediato dei minori: tipo quadrato rosso a bordi stondati con dentro M in bianco;
+- indicatore immediato comandata corrente: tipo quadrato blue a bordi stondati con dentro C in bianco;
+- indicazione delle persone già usate o ancora disponibili;
+- stato di barca o avaria leggibile senza aprire il dettaglio.
+
+## UX-G05 — Icone informative, non decorative
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Le icone dovrebbero comunicare un attributo utile oppure lasciare spazio al
+contenuto. Esempi:
+
+- icona persona che comunica `M`, `F` o `Altro` senza ripetere il sesso nel
+  testo;
+- simbolo di barca che integra tipo/nome e numero;
+- icona dell'avaria collegata alla parte della barca interessata, quando
+  riconoscibile;
+- fallback neutro e chiaro quando la categoria non è determinabile.
+
+prio P3: Potremmo creare noi le icone stesse -> ICON-01
+
+## UX-G06 — Direct manipulation e modalità alternative di modifica
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Mantenere controlli espliciti e accessibili, ma aggiungere scorciatoie intuitive:
+
+- doppio click su desktop per modificare un campo;
+- pressione prolungata su touch;
+- pulsante `Modifica` sempre disponibile come percorso evidente.
+
+Elementi candidati alla riduzione:
+
+- doppio tap sui campi dell'allievo per poterli modificare
+
+## UX-G07 — Formalizzazione futura delle linee guida
+
+**Classificazione:** OPEN  
+**Priorità:** P2
+
+Al termine dell'ispezione, trasformare i principi emersi in linee guida di
+design riutilizzabili e verificabili. Le linee guida dovrebbero integrare
+principi formali pertinenti, fra cui:
+
+- visibility of system status;
+- recognition rather than recall;
+- progressive disclosure;
+- direct manipulation;
+- information scent e glanceability;
+- minimizzazione del costo di interazione;
+- prevenzione e recupero dagli errori;
+- accessibilità, leggibilità e touch target;
+- responsive information density.
+
+L'obiettivo non è aggiungere teoria al prodotto, ma produrre change request più
+precise e risultati coerenti fra schermate diverse, che saranno usate per stilare il documento usato per il piano implementativo delle change request.
+
+---
+
+# 2. Identità visiva CVC e iconografia
+
+## BRAND-01 — Identità Caprera più riconoscibile
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Rafforzare il legame visivo con il Centro Velico Caprera attraverso:
+
+- palette coerente con le grafiche della scuola;
+- blu CVC corretto;
+- font o trattamento tipografico coerente;
+- uso dei loghi e CVC e font (se possibile quello originale, altrimenti un font simile);
+- componenti che richiamino l'identità senza trasformare l'app in materiale
+  promozionale.
+
+Il contesto d'uso dichiarato è personale, ristretto a poche persone e
+volontari del Centro Velico, quindi uso di loghi e stile è apprezzato, ma non darà luogo a problemi di copiright o altro.
+
+## BRAND-02 — Variante del logo per l'app
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Esplorare un marchio applicativo derivato dal logo della scuola, per esempio:
+
+- logo CVC o della scuola;
+- denominazione del contesto/corso, come `EXE` quando pertinente;
+- sottotitolo `HELPER` o `VOLONTARI`
+- font e blu delle grafiche ufficiali.
+
+La variante deve essere leggibile anche come icona PWA e avere una versione
+compatta per header e favicon.
+
+## ICON-01 — Co-design del sistema di icone
+
+**Classificazione:** NICE_TO_HAVE  
+**Priorità:** P3
+
+Progettare insieme un piccolo sistema di icone specifiche per l'app, incluse
+almeno:
+
+- barca/barche;
+- equipaggio;
+- Comandate;
+- avaria;
+- persone e ruoli;
+- parti principali della barca.
+
+Le icone devono restare coerenti fra loro, riconoscibili a dimensioni ridotte e
+utili, non semplicemente decorative.
+
+---
+
+# 3. Trascrizione vocale
+
+## STT-001 — Trascrizione reale non affidabile
+
+**Classificazione:** MVP_DEFECT  
+**Priorità:** P0
+
+La UI di registrazione è presente, ma durante l'uso reale la nota non viene
+trascritta affatto, quando testato tramite browser da computer.
+
+Diagnosi già raccolta:
+
+- il motore Whisper scelto funziona in isolamento;
+- i test M3 simulano il risultato della trascrizione;
+- l'E2E verifica la presenza del pulsante ma non il percorso reale
+  microfono → audio → testo;
+- il primo utilizzo può richiedere il download di circa 40–45 MB senza un
+  avanzamento sufficientemente esplicito;
+- un caricamento fallito può lasciare il tentativo bloccato fino al reload;
+- l'errore mostrato all'utente non distingue permesso microfono, decodifica,
+  download, memoria, modello o trascrizione vuota.
+
+**Comportamento atteso:**
+
+- registrazione e trascrizione funzionano realmente sul telefono target;
+- il primo caricamento comunica peso/stato e non appare bloccato;
+- `Riprova` esegue un nuovo tentativo reale;
+- errori utili e recuperabili;
+- testo sempre modificabile prima del salvataggio;
+- audio eliminato dopo la trascrizione;
+- test end-to-end con audio reale o fixture media equivalente.
+
+---
+
+# 4. OCR e importazione allievi
+
+## OCR-001 — OCR non utile su una fotografia realistica medio/difficile
+
+**Classificazione:** MVP_DEFECT  
+**Priorità:** P1
+
+La fotografia fornita rappresenta un caso realistico vicino al worst case. Le
+foto medie potrebbero essere più pulite, ma questa non deve essere considerata
+un'anomalia irrilevante.
+
+Risultato osservato con l'OCR reale dell'app:
+
+- 20 allievi presenti;
+- 24 candidati prodotti, includendo personale/volontari;
+- 0 candidati immediatamente completi e salvabili;
+- 16 date riconosciute;
+- 0 telefoni associati correttamente;
+- 0 sessi inferiti;
+- confidenza OCR globale 65/100;
+- immagine accettata erroneamente invece di essere rifiutata o trattata con
+  maggiore cautela.
+
+Ruotare correttamente la foto migliora leggermente la lettura, ma il risultato
+resta inutilizzabile. Il riconoscimento testuale grezzo legge una parte
+significativa della tabella; il collo di bottiglia principale è la ricostruzione
+delle righe e delle colonne.
+
+**Obiettivo dichiarato:**
+
+- non serve ottenere tutto perfettamente;
+- estrarre tutti i campi ragionevolmente recuperabili;
+- associare a ogni campo una confidenza utile alla revisione;
+- evitare di presentare molte righe quasi vuote;
+- ottenere sicuramente più del 50% dei dati utili e idealmente più del 90%;
+- se la correzione richiede più lavoro dell'inserimento manuale, l'OCR non è
+  utile.
+
+**Direzioni candidate:**
+
+- correzione esplicita dell'orientamento e tentativo controllato delle quattro
+  rotazioni;
+- crop e rettifica prospettica del foglio;
+- rilevamento della struttura tabellare;
+- ricostruzione per coordinate anziché per sola riga testuale;
+- riconoscimento delle colonne nome, telefono ed età/data;
+- esclusione o classificazione separata delle righe ADV/IS/AT/CT;
+- idoneità basata su completezza e coerenza dei record, non sulla sola
+  confidenza globale di Tesseract;
+- confronto fra costo di correzione e inserimento manuale;
+- fixture realistica anonimizzata per regressione.
+- crop e rotazione immagine chiesta all'utente per includere solo le info riguardanti gli allievi
+- altri modelli/opzioni per OCR?
+
+---
+
+# 5. Allievi
+
+## STUD-01 — Taglia modificabile dal profilo
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P0
+
+Entrando in `Modifica` dal profilo di un allievo deve essere possibile cambiare
+anche la taglia `XS–XL`.
+
+## STUD-02 — Nota modificabile dal profilo
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P0
+
+Entrando in `Modifica` dal profilo di un allievo deve essere possibile inserire
+o cambiare la nota iniziale/conoscenza.
+
+## STUD-03 — Modifica rapida dal campo
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Nel profilo allievo:
+
+- doppio click su un campo per renderlo editabile;
+- pressione prolungata equivalente su touch;
+- mantenimento del pulsante `Modifica`.
+
+## STUD-04 — Eliminazione definitiva di inserimenti errati
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P0
+
+Consentire l'eliminazione definitiva di un allievo creato per errore o duplicato
+solo se non è mai stato usato in dati operativi o storici.
+
+Dipendenze già indicate:
+
+- Comandate;
+- Equipaggi;
+- altre entità storiche collegate, da definire esplicitamente.
+
+Se esistono dipendenze, l'eliminazione deve essere impedita e deve restare
+disponibile la disattivazione. Il messaggio deve spiegare perché la cancellazione
+non è ammessa.
+
+## STUD-05 — Ordinamento predefinito per cognome
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P3
+
+L'elenco allievi deve essere ordinato alfabeticamente per cognome per default.
+!!!!
+questa da pensare meglio, sarebbe bello anche poter switchare tra ordinamento per nome, per cognome, per età o sesso e dall'alto o dal basso, ma è molto low priority 
+!!!!
+
+## STUD-06 — Lista allievi più compatta
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Ridisegnare la lista per diminuire nettamente lo scrolling:
+
+- card su due colonne sul telefono target;
+- valutare tre colonne solo se nomi, stato e touch target restano leggibili;
+- padding e icone più piccoli;
+- nessuna informazione essenziale nascosta;
+- layout resistente a nomi lunghi e duplicati.
+
+molto legata alle regole di design
+
+## STUD-07 — Icona persona informativa
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Ridurre di dimensione l'icona persona generica e contemporaneamente renderla informativa. Una possibile direzione è usare una variante grafica che rappresenti maschile, femminile o altro, evitando di
+ripetere il sesso nella stringa principale.
+
+La rappresentazione deve restare rispettosa, comprensibile e accessibile anche
+senza colore.
+
+## STUD-08 — Azione Aggiungi sempre raggiungibile
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Il pulsante per aggiungere un allievo non deve essere disponibile soltanto
+all'inizio della pagina. Valutare un pulsante flottante o sticky che rimanga
+raggiungibile durante lo scroll senza coprire troppo contenuto.
+
+---
+
+# 6. Configurazione barche
+
+## BOAT-01 — Separazione flessibile dei numeri
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+In `Configura barche`, l'inserimento multiplo dei numeri deve accettare:
+
+- virgola;
+- uno o più spazi;
+- ritorno a capo;
+- punto e virgola.
+
+Separatori ripetuti o spazi iniziali/finali non devono creare barche vuote.
+
+---
+
+# 7. Volontari
+
+## VOL-01 — Nuovo ruolo CT
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Aggiungere il ruolo `CT`, inteso come `Capoturno` e, nel contesto operativo,
+capo del corso.
+
+## VOL-02 — Rimuovere testo esplicativo persistente
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Rimuovere dalla pagina Volontari le scritte permanenti che spiegano che ADV e
+IS possono entrare negli Equipaggi ma restano separati da Comandate e
+Valutazioni degli allievi. Le regole devono continuare a essere applicate dal
+sistema, ma il testo occupa spazio senza aiutare l'operazione corrente.
+
+## VOL-03 — Terminologia negli Equipaggi
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Nella creazione Equipaggi, cambiare `ADV / IS disponibili` in
+`Volontari disponibili`, includendo coerentemente tutti i ruoli ammessi.
+
+---
+
+# 8. Comandate
+
+## CMD-01 — Conteggio degli allievi disponibili
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+La Proposta Comandate deve mostrare quanti allievi sono disponibili per la
+generazione.
+
+## CMD-02 — Giorni compatti
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Nel controllo `Giorni da tenere più leggeri`, usare abbreviazioni compatte al
+posto dei nomi completi. Indicazione iniziale:
+
+`S · D · L · M · M · G · V`
+
+con lo scopo di occupare meno spazio in linea con il principio UX-G01/G03
+
+## CMD-03 — Anteprima live della distribuzione
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Mostrare sotto ogni giorno una preview aggiornata del numero di persone che
+verrebbero assegnate con le preferenze correnti.
+
+La preview deve essere:
+
+- visibile prima della conferma;
+- piccola e compatta;
+- graficamente temporanea, per esempio in rosso;
+- aggiornata immediatamente quando cambia un giorno da alleggerire.
+
+Esempio con 23 allievi:
+
+- senza preferenze: `S 4 · D 4 · L 3 · M 3 · M 3 · G 3 · V 3`;
+- sabato da tenere più leggero:
+  `S 3 · D 4 · L 4 · M 3 · M 3 · G 3 · V 3`.
+- oppure 
+`S · D · L · M · M · G · V`
+`4 · 4 · 3 · 3 · 3 · 3 · 3`
+
+## CMD-04 — Tutti i giorni visibili fino a venerdì
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+La panoramica delle Comandate deve mostrare nello stesso schermo l'intera
+settimana operativa fino a venerdì. La situazione osservata correntemente su schermo medio mostra soltanto i giorni fino a mercoledì prima di essere costretti a scorrere. Dobbiamo stare su una pagina su tutti gli schermi. Se non possibile definiremo un certo ratio di schermi per il quale non sarà possibile e derogheremo per quello.
+
+La soluzione deve privilegiare una visione complessiva immediata, ma pulita e veloce da vedere.
+
+## CMD-05 — Selezione persone a due colonne
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Nella pagina per aggiungere persone a una Comandata:
+
+- usare card più compatte;
+- adottare due colonne sul telefono target;
+- valutare tre colonne solo se realmente leggibili;
+- ridurre l'icona persona o renderla informativa;
+- preservare nomi chiaramente distinguibili e touch target adeguati.
+
+La soluzione deve privilegiare una visione complessiva immediata, ma pulita e veloce da vedere.
+
+
+## CMD-06 — Indicatore di utilizzo precedente
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Ogni allievo selezionabile deve indicare graficamente se è già stato assegnato
+a una Comandata.
+
+L'indicatore deve aiutare a scegliere chi non è ancora stato usato, ma non deve
+bloccare la selezione: deve restare possibile sostituire, scambiare o
+riassegnare manualmente una persona.
+
+## CMD-07 — Avvisi direttamente sul giorno
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Quando un avviso coinvolge uno specifico giorno, mostrare un warning sulla card
+del giorno stesso. L'utente deve capire il problema senza aprire la schermata
+generale `Avvisi`.
+
+Esempio osservato: una persona presente sia sabato sia mercoledì deve essere
+evidenziata (icona warning gialla) su entrambi i giorni interessati.
+
+Possibili segnali:
+
+- card del giorno gialla o rossa in base alla severità;
+- icona warning compatta;
+- persona responsabile evidenziata con colore o sottolineatura;
+- dettaglio breve disponibile al tap;
+- schermata Avvisi completa mantenuta come approfondimento, non come unico
+  punto di scoperta.
+
+## CMD-08 — Indicatore dei minori nella composizione
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+I minori devono essere riconoscibili direttamente nella lista e nelle card
+delle Comandate. Direzioni possibili:
+
+- Propongo:
+ `M` bianca in qudrato rosso a bordi stondati dopo il nome nella card
+Alternative: 
+- badge compatto `Minore`;
+- colore o sottolineatura dedicati.
+
+Il significato non deve dipendere soltanto dal colore.
+
+---
+
+# 9. Equipaggi
+
+## CREW-01 — Quasi tutto nello stesso schermo
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Durante la composizione degli Equipaggi, avvicinarci a rendere disponibile nello stesso
+schermo, minimizzando la necessità di cercare informazioni al difuori di quello che già vediamo. Vogliamo subito disponibile tutto ciò che serve per decidere:
+
+- persone disponibili;
+- persone già inserite;
+- persone mancanti;
+- equipaggi creati;
+- destinazioni;
+- warning;
+- volontari disponibili;
+- sessione corrente.
+
+La complessità informativa richiede una UI intenzionale, non semplicemente
+l'aggiunta di altri pannelli verticali.
+
+l'icona barca non deve necessareiamente occupare una riga untera nel menu, potrebe ssere molto pù compatta. L'elenco delle barche potrebbe essere accessibile tramite pop-up oppure in una schermata alternativa, ma legata a quella degli equipaggi.
+
+ulteriore change rquest: voglio poter disabilitare una barca che ha equipaggio. in quel caso l'equipaggio torna senza barca.
+
+## CREW-02 — Layout a due/tre colonne
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Esplorare una griglia a due o tre colonne per persone ed equipaggi, ottimizzando
+lo spazio senza perdere leggibilità, selezione e distinzione degli stati.
+
+## CREW-03 — Header della sessione più compatto
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Il titolo della sessione, il conteggio delle persone in uso e il testo sulle
+persone mancanti occupano troppo spazio verticale.
+
+Ridisegnare l'header affinché:
+
+- il pulsante per cambiare sessione sia accanto al titolo `Equipaggi`;
+- il nome della sessione sia compatto;
+- le informazioni secondarie non occupino mezza pagina.
+
+## CREW-04 — Contatore flottante inseriti/totale
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Rappresentare `inseriti / totale` con un piccolo display flottante o sticky,
+posizionato per esempio in alto o in basso a destra senza coprire i controlli.
+
+Al tap, il contatore può aprire un dialog/pop-up con:
+
+- numero inseriti;
+- numero mancanti;
+- elenco delle persone non ancora collocate;
+- eventuali problemi sintetici.
+
+## CREW-05 — Mancanti rappresentati dalla lista disponibile
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Evitare un wall of test separato per spiegare chi manca. L'informazione che rappresenta la lista delle persone ancora disponibili deve essere essa stessa l'informazione operativa principale - embeddata nella schermata tramite design delle card / colori autoesplicativi.
+
+---
+
+# 10. Avarie e Barche
+
+## FAULT-01 — Riepilogo Avarie più compatto
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P1
+
+Ridurre l'altezza delle card nella lista Avarie mantenendo spazio sufficiente
+per una preview significativa e relativamente lunga del commento.
+
+La lista deve consentire una visione complessiva migliore senza nascondere il
+contenuto operativo dell'avaria.
+
+## FAULT-02 — Icona che identifica la barca
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Sostituire l'icona generica con un elemento più informativo. Una possibile
+soluzione è una composizione compatta che mostri:
+
+- tipo o nome della barca in piccolo;
+- numero della barca più evidente;
+- stato cromatico quando utile.
+
+La stessa logica può essere riutilizzata nella pagina Barche.
+
+## FAULT-03 — Icona semantica della parte danneggiata
+
+**Classificazione:** NICE_TO_HAVE  
+**Priorità:** P3
+
+Quando la descrizione contiene una parte riconoscibile, valutare un'icona
+specifica, per esempio:
+
+- randa;
+- scotta;
+- timone;
+- deriva;
+- fiocco/rollafiocco;
+- altra attrezzatura rilevante.
+
+Il riconoscimento automatico non deve nascondere o alterare il testo e deve
+avere un fallback neutro affidabile.
+
+## FAULT-04 — Controlli di stato più compatti
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+I controlli `Aperta`, `Comunicata`, `Risolta` sono chiari e facili da usare, ma
+occupano molto spazio. Mantenerne chiarezza e selezione diretta riducendo
+l'ingombro, per esempio con un controllo segmentato compatto che conservi touch
+target adeguati.
+
+## BOAT-02 — Coerenza visiva Barche/Avarie
+
+**Classificazione:** POST_MVP_QOL  
+**Priorità:** P2
+
+Applicare a Barche e Avarie lo stesso linguaggio compatto per:
+
+- identificazione della barca;
+- numero;
+- disponibilità;
+- stato delle avarie;
+- accesso al commento o alla sua preview;
+- icone e colori.
+
+---
+
+# 11. Domande aperte da risolvere prima della formalizzazione
+
+## A. Densità, viewport e accessibilità
+
+1. **[UX-G01, UX-G03]** La richiesta “tutto in una pagina” deve valere in
+   portrait su quale telefono minimo? È ammesso un breve scroll oppure
+   l'obiettivo è zero scroll per l'intera settimana?
+A1. Da definire su che telefono minimo in base a quello che riusciamo a ottenere. Idealmente zero scroll su tutti, realisticamente samo felici se abbiamo quasi no scroll su iphon max per ora. è ammesso breve scroll teoricamente, la cosa veramente importante è che le informazioni che servono insieme stiano sulla stessa pagina. se devo collegare più informazioni insieme devo poterle vedere contemporaneamente per farlo intuitivamente.
+2. **[UX-G01]** È accettabile offrire una vista landscape particolarmente densa
+   oppure l'esperienza principale deve restare completamente portrait?
+A2. solo visualizzazione verticale. Visual verticale solo se ha beneficio enorme e immediatamente apprezzabile. non voglio dover girare il telefono in mano mentre laoro o peggio ancora camminando o in mare.
+3. **[STUD-06, CMD-05, CREW-02]** Preferisci due colonne fisse oppure due colonne
+   su telefoni piccoli e tre su schermi più larghi?
+A3. potrebbe essere una buona idea. Un po' di responsività ci può aiutare probabilmente, su alcuni telefoni. Però ho paura che aggiunga complessità alla verifica e disomogeneità all'uso su diversi device. Lo adotterei solo se veramente necessario, da controllare severamente prima di implementare.
+4. Qual è il compromesso accettabile fra densità e touch target? Come baseline
+   tecnica si propone di non scendere sotto 44 × 44 px per le azioni principali.
+A4. consulta papers, best practices for mobile development e regole di buon design per questo. 
+5. I font possono ridursi per informazioni secondarie o vuoi mantenere la
+   dimensione attuale ovunque?
+A5. Per me possono leggermente ridursi, ma non troppo. consulta papers, best practices for mobile development e regole di buon design per questo. 
+
+## B. Modifica ed eliminazione allievi
+
+6. **[STUD-01, STUD-02]** Taglia e nota devono apparire nello stesso form degli
+   altri dati oppure in una sezione separata ma sempre modificabile?
+A6. Stesso form. Possono essere anche loro non modificabili e diventarlo quando venga pigiato modifica o per doppio click. 
+7. **[STUD-03]** Doppio click/pressione prolungata devono modificare un solo
+   campo inline oppure aprire l'intero form di modifica?
+A7. immaginavo modificare un solo campo, ma se tecnicamente dispendioso va bene anche aprire la modifica per ora. cosa dicono le bst practivce di mobile design?
+8. La modifica inline deve salvare automaticamente, al blur, oppure richiedere
+   conferma/annullamento?
+A8. modifia immediatamnte
+9. **[STUD-04]** Oltre a Comandate ed Equipaggi, confermi che anche Valutazioni,
+   note di sessione e qualsiasi altra referenza storica debbano bloccare la
+   cancellazione?
+A9. Si, ma dicendo cosa effettivamente sta bloccando.
+10. La cancellazione definitiva deve avere una conferma esplicita? È utile una
+    breve possibilità di annullamento?
+A10. deve avere conferma esplicita. non deve essere cliccabile persbaglio. una volta fatto non serve anullamento.
+11. **[STUD-05]** A parità di cognome, ordinare per nome anagrafico o nome
+    visualizzato?
+A11. visualizzato
+
+## C. Comandate
+
+12. **[CMD-02]** Per evitare due `M`, preferisci `Ma` e `Me`, oppure il contesto
+    rende sufficientemente chiara la sequenza `S D L M M G V`?
+A12. 'Ma' / 'Me'
+13. **[CMD-03]** Come scegliere i giorni che ricevono la persona extra quando
+    non ci sono preferenze? Ordine cronologico, rotazione storica o altro?
+A13. più persone i primi giorni 
+14. Cosa significa esattamente “tenere più leggero” con più giorni selezionati?
+    Ogni giorno deve ricevere il minimo possibile, senza mai arrivare a zero?
+A14. tenere più leggero intendevo avere meno persone di comandata 
+15. **[CMD-06]** L'indicatore deve distinguere fra “già usato una volta” e
+    “usato più volte”? Deve mostrare anche in quali giorni?
+A15. L'indicatore deve distinguere tra usato una volta (CORRETTO) e usato pià volte (WARNING) - non deve specificare in quali perchè la stssa persona visibile nei giorni in cui è stata inserita nella comandata avrà nuovamente un warning anche lì se ripetuta più volte
+16. Una persona già usata deve restare visivamente disponibile con warning,
+    oppure essere spostata in fondo alla lista?
+Q16.    In fondo alla lista. 
+17. **[CMD-07]** Quali severità vuoi distinguere sulla card: informazione,
+    warning giallo e problema rosso?
+Q17. si
+18. **[CMD-08]** Preferisci un badge `M`, la parola `Minore` o un altro simbolo?
+Q18. badge con 'M' penso possa essere più compatto e ugualmente leggibile una volta capito M = Minore
+
+## D. Equipaggi
+
+19. **[CREW-01]** Quali informazioni devono essere sempre visibili e quali
+    possono stare in un pop-up al tap?
+    Q19. Lo decidiamo meglio rifacendo il design della pagina. Penso che la overview delle barhe possa essere una buona candidata per un pop up
+20. **[CREW-04]** Dove interferisce meno il contatore flottante: alto a destra,
+    basso a destra sopra la bottom navigation o nell'header sticky?
+    A20. penso in basso a dx che è anche la posizione più comoda per un click. cosa dice la letteratura?
+21. Il dialog dei mancanti deve essere solo informativo o consentire anche la
+    selezione/movimento immediato?
+    A21. il dialog dei mancanti non ci deve essere perchè l'informazione deve essere veicolata dalla lista stessa di allievi nella mia cconcezione. i quali sono ovviamente immediatamente selezionabili/movimentabili
+22. Nella griglia a due/tre colonne, vuoi separare fisicamente allievi e
+    volontari o distinguerli soltanto tramite badge/colore?
+    A22. se fattibile separarli. mi viene in mente che essendo molti meno e più raramente selezionabili sono un caso in cui dover scorrere leggermente per raggiungerli sarebbe accettabile perchè non sccede troppo spesso. addirittura potrebbero essere anche loro selezionabili da dialog al massimo. anche colorat diversametne potrebbe andare altrettanto bene. quello che funziona meglio come design
+
+## E. Volontari
+
+23. **[VOL-01]** Il CT può essere inserito negli Equipaggi come ADV/IS?
+A23. Si
+24. Il CT è sempre escluso da Comandate e Valutazioni degli allievi?
+24A si
+25. Esistono altri ruoli da prevedere ora oppure l'elenco deve restare
+    `ADV`, `IS`, `CT`?
+25. Per ora no
+
+## F. OCR
+
+26. **[OCR-001]** La soglia “oltre 50%, idealmente oltre 90%” va misurata per
+    record completi, per singolo campo o come riduzione del tempo rispetto
+    all'inserimento manuale?
+27. Quali campi definiscono una riga utile: nome+cognome+data, oppure è utile
+    importare anche una riga con solo nome e cognome?
+28. Se l'immagine è leggibile ma la struttura non è riconosciuta, preferisci
+    mostrare soltanto i record completi o anche record parziali ad alta
+    confidenza?
+29. L'OCR deve riconoscere e proporre separatamente anche ADV/IS/AT/CT presenti
+    in fondo al foglio?
+30. Possiamo creare una versione completamente anonimizzata della fotografia
+    come fixture permanente di regressione?
+31. In futuro è accettabile una strategia online-first con fallback locale,
+    oppure il requisito principale resta elaborazione interamente sul
+    dispositivo?
+
+## G. Voce
+
+32. **[STT-001]** Il primo uso può richiedere connettività per scaricare il
+    modello, purché sia spiegato e poi funzioni offline?
+33. Qual è il tempo massimo accettabile fra fine registrazione e comparsa del
+    testo su un telefono target?
+34. Quando la confidenza è bassa, preferisci mostrare comunque il testo oppure
+    chiedere subito di ripetere?
+
+## H. Branding e icone
+
+35. **[BRAND-01, BRAND-02]** Quali file ufficiali di logo, palette e font sono
+    disponibili?
+36. Quale denominazione deve avere la prima variante: `HELPER`, `VOLONTARI`,
+    `CORSI` o un'altra?
+37. Il logo deve includere il codice/famiglia del corso oppure restare uguale
+    per ogni corso?
+38. **[ICON-01]** Vuoi progettare prima un set minimo di icone prioritarie e poi
+    estenderlo, oppure fare una revisione completa dell'iconografia in un'unica
+    fase?
+
+## I. Avarie e Barche
+
+39. **[FAULT-01]** Quante righe di preview del commento devono essere visibili
+    nella lista: due, tre o adattive?
+40. **[FAULT-02]** È più importante mostrare nell'elemento grafico il tipo di
+    barca, il numero o entrambi?
+41. **[FAULT-03]** Le icone delle parti devono essere inferite dal testo oppure
+    vuoi una categoria opzionale selezionabile durante l'inserimento?
+42. **[FAULT-04]** I tre stati possono diventare un segmento compatto sempre
+    visibile oppure preferisci mostrare soltanto lo stato corrente e aprire le
+    alternative al tap?
+
+---
+
+# 12. Passo successivo previsto
+
+Al termine dell'ispezione umana:
+
+1. rispondere alle domande rilevanti;
+2. eliminare duplicazioni e risolvere contraddizioni;
+3. confermare priorità e dipendenze;
+4. trasformare i principi trasversali in linee guida UI verificabili;
+5. aggiornare, dove necessario, Product Specification e MVP/Post-MVP Scope;
+6. dividere il lavoro in change request implementabili;
+7. assegnare a ogni richiesta criteri di accettazione, test e browser evidence;
+8. pianificare prima il ciclo `MVP defects`, poi `QoL/interaction design`, quindi
+   l'eventuale sviluppo di nuove funzionalità.
+
+# Valutazioni
+applicare lo stesso stile per cercare di ridurre lo spazio utilizzato.
+prova a tenere "su una riga" ogni allievo. inoltre sarebbe bello avere i più in verde e - in rosso, oltre ad averre simboli un po' più carini nei bottoni di selezione
+anche la selezione della sessione può essere a dx del titolo invece che sotto per risparmiare spazio
+
+la selezione della vista potrebbe essere tranquillamente più bassa occupando meno spazio verticalmente
+
+elimina la scritta "Una valutazione per allievo e sessione"
