@@ -1,0 +1,119 @@
+{
+  "date": "2026-09-04",
+  "artifact": "Standalone UX mock gallery r1",
+  "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
+  "scope": "Only docs/post-mvp/mockups; no application verification or release gate run.",
+  "environment": {
+    "browser": "Codex in-app browser",
+    "layoutUnits": "CSS px",
+    "runtimeForLintAndFormatting": "Node 24.19.0"
+  },
+  "checks": {
+    "layoutCases": 100,
+    "description": "20 primary views × 4 sizes with 23 students in normal state; P03/P05/P11/P14/P17 × 4 sizes with warnings/long names.",
+    "horizontalOverflowCases": 0,
+    "buttonsBelow44CSSPxCases": 0,
+    "tolerancePx": 0.5,
+    "formatting": "PASS",
+    "eslint": "PASS",
+    "interactions": [
+      {
+        "action": "P12 capacity preview, 23 students; select Saturday",
+        "observed": "4,4,3,3,3,3,3 changes to 3,4,4,3,3,3,3"
+      },
+      {
+        "action": "P14 move available Francesca to free crew 9 slot",
+        "observed": "19/23 placed; available pool decreases from 5 to 4; person shown in crew 9"
+      },
+      {
+        "action": "P15 deselect Quest 2 from outing",
+        "observed": "Crew 1 has no boat; Giulia and Luca B. remain"
+      },
+      {
+        "action": "P17 select ++ for Giulia, switch Allievi to Equipaggi",
+        "observed": "Selected vote remains visible"
+      },
+      {
+        "action": "P05 change Giulia initial note, open P04",
+        "observed": "Same initial note appears in profile"
+      },
+      {
+        "action": "P20 permission denial, retry, consent, stop",
+        "observed": "Error/retry, recording, editable transcription review states reached; no real microphone accessed"
+      }
+    ]
+  },
+  "observedScroll": {
+    "normal23": [
+      {
+        "viewport": "430x820",
+        "P11": 0,
+        "P14": 265,
+        "P17": 634,
+        "visibleDutyGroups": 7
+      },
+      {
+        "viewport": "412x760",
+        "P11": 0,
+        "P14": 325,
+        "P17": 1752,
+        "visibleDutyGroups": 7
+      },
+      {
+        "viewport": "390x664",
+        "P11": 49,
+        "P14": 421,
+        "P17": 1848,
+        "visibleDutyGroups": 6
+      },
+      {
+        "viewport": "320x664",
+        "P11": 49,
+        "P14": 922,
+        "P17": 1848,
+        "visibleDutyGroups": 6
+      }
+    ],
+    "warnings23": [
+      {
+        "viewport": "430x820",
+        "P11": 0,
+        "P14": 265,
+        "P17": 645
+      },
+      {
+        "viewport": "412x760",
+        "P11": 0,
+        "P14": 342,
+        "P17": 1752
+      },
+      {
+        "viewport": "390x664",
+        "P11": 107,
+        "P14": 438,
+        "P17": 1848
+      },
+      {
+        "viewport": "320x664",
+        "P11": 125,
+        "P14": 936,
+        "P17": 1848
+      }
+    ],
+    "extra": {
+      "students": 21,
+      "state": "warnings",
+      "viewport": "390x664",
+      "page": "P11",
+      "scrollY": 82,
+      "overflowX": 0
+    }
+  },
+  "limitations": [
+    "Measurements describe initial synthetic layouts, not every interactive state.",
+    "No physical-device, 200% text, contrast certification or production accessibility claim.",
+    "Secondary forms, save messages, course creation and session change are demonstrations, not working application behavior.",
+    "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
+    "Human approval and remaining state mockups are still required."
+  ]
+}

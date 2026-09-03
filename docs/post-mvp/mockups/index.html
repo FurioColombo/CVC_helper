@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CVC Helper — studio UX r1</title>
+    <link rel="stylesheet" href="mock.css" />
+    <script src="mock.js" defer></script>
+  </head>
+  <body>
+    <header class="studio-top">
+      <div>
+        <span class="eyebrow">CAPRERA · STUDIO UX</span>
+        <h1>Più spazio alle decisioni.</h1>
+      </div>
+      <span class="draft">r1 · Da discutere</span>
+    </header>
+    <div class="studio-layout">
+      <aside class="studio-controls">
+        <label for="page-picker">Pagina / vista</label
+        ><select id="page-picker"></select>
+        <label for="viewport-picker">Schermo verticale</label
+        ><select id="viewport-picker">
+          <option value="430,820">Grande · 430 × 820</option>
+          <option value="412,760">Medio · 412 × 760</option>
+          <option value="390,664">Piccolo · 390 × 664</option>
+          <option value="320,664">Stress · 320 × 664</option>
+        </select>
+        <label for="roster-picker">Allievi fittizi</label
+        ><select id="roster-picker">
+          <option value="21">21 allievi</option>
+          <option value="23">23 allievi</option>
+        </select>
+        <label for="state-picker">Stato da osservare</label
+        ><select id="state-picker">
+          <option value="normal">Normale</option>
+          <option value="warnings">Con avvisi / nomi lunghi</option>
+          <option value="empty">Vuoto</option>
+          <option value="error">Errore di salvataggio</option>
+        </select>
+        <p class="studio-note">
+          Bozze navigabili con dati inventati. Nessun accesso all'app, al suo
+          archivio, alla fotocamera o al microfono. Le azioni mostrano solo
+          l'interazione proposta.
+        </p>
+        <a href="README.md">Guida alla revisione</a>
+      </aside>
+      <main class="canvas">
+        <div class="phone" id="phone" aria-label="Mock del telefono">
+          <header class="app-header" id="app-header"></header>
+          <div class="app-content" id="app-content"></div>
+          <div class="crew-status" id="crew-status" hidden></div>
+          <nav
+            class="app-nav"
+            id="app-nav"
+            aria-label="Navigazione principale"
+          ></nav>
+          <div class="toast" id="toast" role="status" hidden></div>
+          <div class="sheet-backdrop" id="sheet" hidden></div>
+        </div>
+      </main>
+      <aside class="studio-review">
+        <span class="eyebrow" id="page-id"></span>
+        <h2 id="review-title"></h2>
+        <p id="review-goal"></p>
+        <h3>Da valutare qui</h3>
+        <p id="review-question"></p>
+        <div class="studio-divider"></div>
+        <p>
+          Stessa bozza, due estremi e un caso medio. Lo scroll resta reale: lo
+          schermo non viene rimpicciolito per far entrare più contenuto.
+        </p>
+        <p class="studio-note">
+          Nome “CVC Helper” provvisorio. Logo originale dal sito CVC; colori
+          dell'interfaccia proposti, non un manuale ufficiale del marchio.
+        </p>
+      </aside>
+    </div>
+  </body>
+</html>

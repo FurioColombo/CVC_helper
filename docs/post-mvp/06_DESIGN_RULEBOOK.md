@@ -1,6 +1,6 @@
 # 06 — Regole di design per il ciclo post-MVP
 
-**Stato:** proposta, 3 settembre 2026. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md) e [07](07_PAGE_CHANGELOG.md). I valori di progetto sotto non sono già un mock approvato.
+**Stato:** aggiornato alle risposte del 4 settembre 2026; geometria da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md) e [07](07_PAGE_CHANGELOG.md). I valori di progetto sotto non sono già un mock approvato.
 
 ## 1. Ordine delle decisioni
 
@@ -62,29 +62,37 @@ Badge informativi piccoli non devono diventare pulsanti minuscoli: il dettaglio 
 | Conoscenza e profilo in modifica | Cinque scelte XS/S/M/L/XL               | Riutilizzare lo stesso componente; taglia mancante resta rappresentabile.            |
 | Volontari                        | Tre ruoli ADV/IS/CT                     | Scelta singola, compatta.                                                            |
 | Avaria                           | Segmento Aperta/Comunicata/Risolta      | Non ridurre target; scritte complete ove possibile.                                  |
-| Giorni leggeri                   | S D L Ma Me G V                         | Multi-selezione; preview distinta dalle assegnazioni reali.                          |
+| Giorni con meno persone          | S D L Ma Me G V                         | Multi-selezione; preview distinta dalle assegnazioni reali.                          |
 | Disponibilità barca/allievo      | Controllo esplicito binario             | Il suo effetto è comportamento, da specificare; CREW-06 resta aperto.                |
 | Valutazioni                      | Sei valori direttamente selezionabili   | Una riga va dimostrata; niente menu che aumenti tap senza accordo.                   |
 | Sessione                         | Titolo compatto + selettore contestuale | Tredici opzioni: non forzare tredici pulsanti permanenti nell'header.                |
 | Tipo barca                       | Selettore esistente                     | Scelta rara con più opzioni: non sostituirla automaticamente con una griglia enorme. |
 
-## 5. Contratto di viewport e densità da approvare
+## 5. Contratto di viewport accettato per i mock
 
 Misurare in CSS px del **viewport disponibile**, distinguendo finestra browser, schermo del dispositivo e modalità PWA. Non dichiarare successo usando solo screenshot full-page che nascondono lo scroll.
 
-| Profilo proposto                     | Uso                                                                                                         |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| 430 × 820 portrait                   | Primo target di design “telefono grande”; non attribuito a un modello specifico finché Q04 è aperta.        |
-| 390 × 664 portrait                   | Viewport browser stretto già citato nelle prove MVP.                                                        |
-| 412 × 760 portrait                   | Controllo intermedio Android proposto; le dimensioni reali del progetto Playwright vanno registrate al run. |
-| 320 CSS px di larghezza e testo 200% | Stress di accessibilità, con scroll ammesso e contenuto conservato.                                         |
+| Profilo proposto                     | Uso                                                                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| 430 × 820 portrait                   | Primo target di design “telefono grande”; non attribuito a un modello specifico come concordato per la prova Q04. |
+| 390 × 664 portrait                   | Viewport browser stretto già citato nelle prove MVP.                                                              |
+| 412 × 760 portrait                   | Controllo intermedio Android proposto; le dimensioni reali del progetto Playwright vanno registrate al run.       |
+| 320 CSS px di larghezza e testo 200% | Stress di accessibilità, con scroll ammesso e contenuto conservato.                                               |
 
 Fixture condivisa: settimana D2 con 21 e 23 allievi, omonimi, nomi lunghi, minori, taglie, tre volontari, avarie e una barca indisponibile. Scenari aggiuntivi: zero allievi e gruppo sovradimensionato a 30 per misurare il degrado, senza promettere zero scroll per qualunque numerosità.
 
 Metriche per pagina: dati visibili alla prima apertura; altezza totale e porzione da scorrere; tocchi per compito; dimensione dei controlli; contenuti coperti. In Comandate distinguere “sette titoli visibili” da “sette gruppi con nomi leggibili”: il primo da solo non soddisfa CMD-04.
+
+I tre profili principali sono la prova accettata in Q04: estremo piccolo, intermedio, estremo grande. Non introdurre resizing aggressivo in base a pixel/proporzioni prima di averli confrontati. Q05 ammette due righe compatte per i voti quando una non entra. Q01 fissa avaria gialla e indisponibilità corso rossa vicino alla barca; Q02 mantiene i duplicati Comandate rossi.
 
 ## 6. Design da approvare per ogni pagina
 
 La [changelist](07_PAGE_CHANGELOG.md) definisce gli stati. Per ognuno registrare: ID pagina, revisione del mock, ID richieste, viewport, fixture, interazioni, cosa resta secondario, eccezioni e decisione umana. Preferire mock HTML/CSS isolati con dati fittizi per griglie e interazioni; bitmap utili per sola esplorazione del marchio, non per provare touch target o persistenza.
 
 Una bella immagine non dimostra il funzionamento. Un target approvato richiede leggibilità dei nomi realistica, stati problematici e un modo chiaro di compiere l'azione. Poi l'implementazione dovrà produrre prova browser e persistenza secondo `09`.
+
+## 7. Riferimenti CVC e prima applicazione
+
+La revisione Q08 indica i siti CVC/Fondazione e i canali social. Nella [home CVC](https://www.centrovelicocaprera.it/) osservata il 4 settembre 2026 il testo usa Roboto, alcune intestazioni arancione `#db7637`, e il logo rosso/blu è disponibile come asset della pagina. Sono osservazioni della pagina, non una palette normativa del marchio.
+
+La [galleria r1](mockups/index.html) usa quel logo senza ridisegnarlo e propone un blu funzionale con superfici chiare. Il nome CVC Helper e la scelta finale del font restano da discutere. Le sigle delle card Home sono un segnaposto grafico da confrontare con icone informative nel prossimo giro.

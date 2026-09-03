@@ -4,27 +4,27 @@
 
 ## 1. Gerarchia per il prossimo ciclo
 
-Proposta: istruzione umana corrente → `01` comportamento/dominio → `02` perimetro approvato → `03` architettura → `09` ordine/prove. `06` e i target approvati di `07` guidano design e accettazione visuale senza contraddire le regole di prodotto. `05` conserva motivazioni e tracciabilità; `08` le decisioni residue.
+Proposta: istruzione umana corrente → `01` comportamento/dominio → `02` perimetro approvato → `03` architettura → `09` ordine/prove. `06` e i target approvati di `07` guidano design e accettazione visuale senza contraddire le regole di prodotto. `05` conserva motivazioni e tracciabilità; `08` le risposte recepite il 4 settembre e i pochi punti visuali residui.
 
 Non obbligare un futuro agente a scegliere fra paragrafi incompatibili: consolidare i punti toccati nei documenti autorevoli, rimuovendo le formulazioni obsolete invece di aggiungere un'altra appendice contraddittoria. Git conserva la storia. Non leggere o promuovere `archive/` come fonte normativa.
 
 ## 2. Modifiche pianificate a 01_PRODUCT_SPEC.md
 
-| Area attuale                          | Aggiornamento futuro                                                                                                                                      | Fonte / condizione           |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| §2 UX e Field-use UX                  | Informazioni simultanee, compattezza, portrait, feedback locale; rimando al rulebook per misure e accettazione visuale.                                   | UX-G01–07; target concordati |
-| §4 Home e Primary navigation          | Consolidare sei card e nav Avarie/Home/Equipaggi; identità secondo asset/target, senza dashboard.                                                         | BRAND-01/02; Q08             |
-| §5.1 elenco Allievi                   | Consentire griglia compatta, stessi dati essenziali, nomi distinguibili, M minore, Aggiungi raggiungibile; cognome e tie-break nome visualizzato.         | STUD-05–08                   |
-| §5.6/5.7 conoscenza e profilo         | Taglia/nota iniziale nello stesso form, stessa informazione persistita; scorciatoia e contratto salvataggio.                                              | STUD-01/02/03; Q09           |
-| Lifecycle allievo / invarianti        | Eliminazione solo per mai-usati; elenco completo referenze operative/storiche, conferma, ragioni del blocco, disattivazione; nessuna cascata.             | STUD-04                      |
-| §6 configurazione barche              | Separatori multipli inclusi spazi, vuoti ignorati e deduplicazione.                                                                                       | BOAT-01                      |
-| Boat lifecycle / §8.7 barche sessione | Separare disponibilità corso, set uscita e assegnazione esatta; definire scollegamento e ambito temporale. Aggiornare anche la regola warning, se cambia. | CREW-06; **dopo Q01**        |
-| §6/avarie                             | Identità barca comune, preview utile, stato diretto compatto; disponibilità e fault restano distinti.                                                     | BOAT-02, FAULT-01/02/04      |
-| §7 Comandate                          | Conteggio eleggibili, Ma/Me, preview non mutante, extra iniziali/giorni leggeri; warning su giorni/persone, già usati in fondo, M.                        | CMD-01–08; Q02/Q03           |
-| §8.4 staff e enum                     | ADV/IS/CT, CT imbarcabile ed escluso da regole allievi; nome “Volontari disponibili”.                                                                     | VOL-01/03                    |
-| §8.6/8.10/8.11 Equipaggi              | Header compatto, pool = mancanti, nessun dialog mancanti; contatore allievi collocati include A terra/esclude staff; pannello barche; annuncio pulito.    | CREW-01–05                   |
-| §9 Valutazioni                        | Layout compatto, sessione affiancata, segni cromatici, sei valori e nota preservati; togliere testo ridondante.                                           | EVAL-01–05; Q05              |
-| §5.4 scan / §11 voce                  | Criteri osservabili, progress/errori/retry e review; non sostituire obiettivi vaghi con soglie non approvate.                                             | OCR-001/STT-001; Q06/Q07     |
+| Area attuale                          | Aggiornamento futuro                                                                                                                                                | Fonte / condizione           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| §2 UX e Field-use UX                  | Informazioni simultanee, compattezza, portrait, feedback locale; rimando al rulebook per misure e accettazione visuale.                                             | UX-G01–07; target concordati |
+| §4 Home e Primary navigation          | Consolidare sei card e nav Avarie/Home/Equipaggi; identità secondo asset/target, senza dashboard.                                                                   | BRAND-01/02; Q08             |
+| §5.1 elenco Allievi                   | Consentire griglia compatta, stessi dati essenziali, nomi distinguibili, M minore, Aggiungi raggiungibile; cognome e tie-break nome visualizzato.                   | STUD-05–08                   |
+| §5.6/5.7 conoscenza e profilo         | Taglia/nota iniziale nello stesso form, stessa informazione persistita; scorciatoia e contratto salvataggio.                                                        | STUD-01/02/03; Q09           |
+| Lifecycle allievo / invarianti        | Eliminazione solo per mai-usati; elenco completo referenze operative/storiche, conferma, ragioni del blocco, disattivazione; nessuna cascata.                       | STUD-04                      |
+| §6 configurazione barche              | Separatori multipli inclusi spazi, vuoti ignorati e deduplicazione.                                                                                                 | BOAT-01                      |
+| Boat lifecycle / §8.7 barche sessione | Deselezione nella sola sessione aperta: equipaggio senza barca, persone conservate. Indisponibilità corso: assegnazioni conservate, rosso; avarie irrisolte gialle. | CREW-06; Q01 risolta         |
+| §6/avarie                             | Identità barca comune, preview utile, stato diretto compatto; disponibilità e fault restano distinti.                                                               | BOAT-02, FAULT-01/02/04      |
+| §7 Comandate                          | Conteggio eleggibili, Ma/Me, preview non mutante, extra cronologici/“Giorni con meno persone”; warning su giorni/persone, già usati in fondo, M.                    | CMD-01–08; Q02/Q03           |
+| §8.4 staff e enum                     | ADV/IS/CT, CT imbarcabile ed escluso da regole allievi; nome “Volontari disponibili”.                                                                               | VOL-01/03                    |
+| §8.6/8.10/8.11 Equipaggi              | Header compatto, pool = mancanti, nessun dialog mancanti; contatore allievi collocati include A terra/esclude staff; pannello barche; annuncio pulito.              | CREW-01–05                   |
+| §9 Valutazioni                        | Layout compatto, sessione affiancata, segni cromatici, sei valori e nota preservati; togliere testo ridondante.                                                     | EVAL-01–05; Q05              |
+| §5.4 scan / §11 voce                  | OCR: campi/persona, vicino al 90% tipico, framing/crop, niente cronometro manuale. Voce PC/Android/iPhone, permesso al tap Registra e collaudo autore.              | OCR-001/STT-001; Q06/Q07     |
 
 Nel consolidamento preservare: maggiorenne/minore calcolato alla data di riferimento, nomi univoci, valori mancanti distinti da neutri, media interna su voti presenti, A terra individuale, Mezzi vero equipaggio, nessuna doppia barca simultanea, completati Comandate immutabili nel ricalcolo, manual override e audio transitorio.
 
@@ -38,7 +38,7 @@ Conservare il confine dell'MVP 0.1.0 come baseline conclusa, poi aggiungere un p
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Affidabilità da riconfermare/correggere | STT reale e OCR utile con review, fixture e prova sul target.                                                                                                                                      |
 | Nucleo UX                               | Compattezza e informazioni simultanee per tutte le pagine elencate; modifica taglia/nota, eliminazione sicura allievi, CT, parser barche, Comandate preview/stato locale, Equipaggi e Valutazioni. |
-| Condizionato                            | Scollegamento barca dopo Q01; severità duplicati dopo Q02; ambizione viewport e singola riga dopo Q04/Q05; logo finale dopo asset.                                                                 |
+| Condizionato                            | Regole Q01–Q06/Q09 recepite. Restano verifica dei mock sui tre viewport, trattamento grafico/nome finale e tempi voce misurati.                                                                    |
 | Facoltativo                             | Ordinamenti avanzati, editing inline oltre al form focalizzato, set custom icone, icone parti guaste.                                                                                              |
 | Fuori da questo ciclo                   | Sync, backend/Auth, nuovi documenti/archivi/dashboard, auto-equipaggi, bande valutazione, brightness nativa, export immagini salvo nuovo scope esplicito.                                          |
 
@@ -49,7 +49,7 @@ Rendere ogni rinvio visibile in `09`; non rinviare tacitamente una richiesta con
 - Registrare come decisione già presa PowerSync locale dopo spike riuscito; non riaprire automaticamente lo spike o attivare Dexie senza nuovo motivo. Stack attuale React/TypeScript/Vite, Base UI/shadcn/Tailwind preservato.
 - Aggiungere la piccola convenzione per token e componenti condivisi: persona/badge, identificativo barca, sessione e selezione compatta; nessun grande design system.
 - Formalizzare autosave/errore e scritture coerenti dove necessario, controllo referenze al delete, CT additivo e compatibilità dati 0.1.0; eventuale transazione per CREW-06 secondo Q01.
-- OCR/STT restano dietro confini provider indipendenti. Aggiornare solo dopo spike limitato e criteri Q06/Q07; nessuna selezione di motore o backend nella fase di design.
+- OCR/STT restano dietro confini provider indipendenti. Applicare Q06/Q07 e uno spike limitato; nessuna selezione di motore o backend nella fase di design. Non cambiare schema anagrafico per facilitare le percentuali OCR.
 - Estendere l'harness secondo `09`: piano milestone esplicito, prove collegate a revisione/target, dati sintetici, misure visuali, browser matrix e test fisici separati.
 - Confermare Node 24 e prerequisiti ambiente. La versione nel PATH di questa sessione non giustifica l'abbassamento del requisito.
 - Specificare dove vivono i mock: file isolati di progettazione, nessun import nella build e nessun accesso al database dell'app.

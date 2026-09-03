@@ -8,7 +8,7 @@
 
 Prerequisiti prima del codice:
 
-1. Chiudere le domande che influenzano la milestone, mantenendo espliciti i rinvii. Q06/Q07 non impediscono il design delle altre pagine.
+1. Applicare le decisioni umane del 4 settembre in `08`. Q01–Q06/Q09 sono risolte per il design; restano scelte visuali, nome/logo finale e tempi voce da misurare, senza riaprire le domande già risposte.
 2. Approvare regole comuni e perimetro del ciclo; completare i target interessati in `07`, con file e revisione precisi.
 3. Applicare gli aggiornamenti autorevoli pianificati in `10` e il raccordo `AGENTS`/`04`. Le decisioni nuove non devono restare in contraddizione con `01`.
 4. Registrare baseline verificata e dati di prova compatibili con 0.1.0. Se un difetto segnalato è già risolto, documentarlo con prova ripetibile e non riscrivere la funzione.
@@ -31,7 +31,7 @@ La base già comprende lint, Prettier, TypeScript, Vitest/RTL, Playwright, build
 | `scripts/check-repository.mjs` codifica vincoli MVP                   | Riesaminare solo i vincoli toccati dal ciclo approvato; backend/sync restano esclusi, quindi non allentare controlli senza bisogno.                              |
 | Playwright ha Pixel 7, iPhone viewport Chromium e WebKit core         | Conservare la matrice; aggiungere soltanto viewport/stati concordati per densità, senza moltiplicare ogni test per ogni misura.                                  |
 
-Ambiente rilevato in questa sessione: `node` nel PATH è 18.13.0, mentre repository e CI richiedono Node 24. Prima di attivare il piano usare/verificare Node 24 e dipendenze installate, senza abbassare il vincolo. La revisione documentale non ha tentato di eseguire il gate MVP con runtime incompatibile.
+Ambiente rilevato in questa sessione: `node` nel PATH è 18.13.0, mentre repository e CI richiedono Node 24. Prima di attivare il piano usare/verificare Node 24 e dipendenze installate, senza abbassare il vincolo. La revisione documentale non ha eseguito il gate MVP. Per i soli mock separati è stato individuato e usato il runtime Node 24.19.0 fornito dall’ambiente; il PATH del progetto non è stato modificato.
 
 ## 3. Superficie di verifica
 
@@ -55,10 +55,10 @@ Riutilizzare il D2 deterministico di M15, con varianti leggibili: 21/23 persone,
 
 - **Persistenza da 0.1.0:** aprire una fixture anonima precedente dopo gli aggiornamenti; conservare persone, storico, sessioni, voti, note e barche. CT è additivo; eventuali cambi di schema devono avere migrazione verificata.
 - **Eliminazione allievi:** test separati per ogni tipo di referenza, inclusi A terra, valutazione senza voto ma con nota, sessioni passate e turni completati. Controllo al momento della scrittura, non solo pulsante nascosto. Nessuna cancellazione parziale.
-- **Barca scollegata:** test della decisione Q01, con passato/presente/futuro e ricaricamento. Nessuna persona persa, nessun doppio uso della barca.
+- **Barca scollegata:** deselezione solo nell'uscita della sessione aperta, persone conservate e altre sessioni intatte; indisponibilità corso conserva assegnazioni con rosso, avaria irrisolta gialla. Test passato/presente/futuro e reload.
 - **Comandate:** preview non mutante; capacità/somma e priorità rispettate; warning localizzati derivati dalla stessa fonte delle spiegazioni; ricalcolo preserva completati.
-- **Voce:** fixture audio sul percorso reale di decodifica/inferenza e prova fisica separata. Test doppi deterministici utili agli errori UI, insufficienti per chiudere STT-001.
-- **OCR:** corpus con verità attesa, punteggio per campo/persona, falsi candidati e costo di correzione. Soglie solo dopo Q06; niente successo basato sulla sola confidence globale.
+- **Voce:** browser PC, Android e iPhone; permesso al primo tentativo di registrazione, non al lancio. Fixture audio sul percorso reale e collaudo fisico finale dell'autore, con checklist breve e browser/versioni annotati. Tempi misurati: 10 secondi non è una soglia approvata. Nessun PASS simulato sostituisce il collaudo.
+- **OCR:** corpus sintetico/anonimizzato con verità attesa, campi corretti associati alla persona giusta / campi leggibili, falsi candidati e obiettivo vicino al 90% sui casi tipici. Inquadratura guidata nome/cognome/nascita, crop/rotazione. Niente confronto cronometrato con il manuale; nessuna conservazione di foto umane originali.
 - **Rapidità e errori:** tap ripetuti, selezione/sessione cambiata durante salvataggio, nota con tastiera aperta, errore e retry; nessuna UI bloccata indefinitamente.
 
 Non confondere il conteggio storico noto 20/21 dopo riattivazione con una regressione introdotta dal restyling: M15 lo documenta. Correggerne la semantica richiede un item approvato separato; la nuova UI non deve farlo apparire risolto senza prova.
@@ -70,8 +70,8 @@ Tutte **DRAFT / NON AVVIATE**. All'attivazione convertire in sezioni individuali
 | ID  | Categoria        | Pagine / ambito                                                                    | Evidenza per chiusura                                                                                                            |
 | --- | ---------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | U00 | FOUNDATION       | Baseline, piano attivo, raccordo specifiche, manifest/controller, target e fixture | Baseline verificata; controller rifiuta evidenza mancante/FAIL; vecchie milestone integre; self-review.                          |
-| U01 | FEATURE          | P20, STT-001 nei tre contesti                                                      | Audio reale/fixture e dispositivo, primo uso/cache, errori/retry, audio non conservato; self-review con limiti misurati.         |
-| U02 | FEATURE          | P06, OCR-001                                                                       | Corpus e metriche Q06, review/commit, confronto manuale, telefono; self-review.                                                  |
+| U01 | FEATURE          | P20, STT-001 nei tre contesti                                                      | Audio reale/fixture, browser PC/Android/iPhone, permesso contestuale, collaudo autore, cache/retry; limiti misurati.             |
+| U02 | FEATURE          | P06, OCR-001                                                                       | Corpus e metriche Q06, acquisizione guidata, review/commit, telefono; self-review.                                               |
 | U03 | FEATURE          | P01 poi P02, token e shell minima                                                  | Mock approvati, navigazione/creazione/reload, dimensioni/focus; nessun restyling massivo non verificato.                         |
 | U04 | FEATURE          | P03, lista Allievi                                                                 | Densità, nomi/stati, Aggiungi, ordinamento/tie-break e navigazione; self-review.                                                 |
 | U05 | RULE_HEAVY       | P04, modifica ed eliminazione                                                      | Profilo/Conoscenza coerenti, autosave, matrice referenze, invarianti, reviewer integrità/dominio.                                |

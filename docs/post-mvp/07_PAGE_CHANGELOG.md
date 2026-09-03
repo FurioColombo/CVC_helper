@@ -1,6 +1,6 @@
 # 07 — Changelist per pagina e brief dei mock
 
-**Stato:** bozza per affinare il punto B; punto C non ancora eseguito. Tutti i target sotto sono **DA DISEGNARE**, nessuno è approvato o implementato. Leggere [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [regole](06_DESIGN_RULEBOOK.md) e [domande](08_QUESTIONS.md).
+**Stato:** risposte del 4 settembre recepite; prima galleria C disponibile con 20 viste principali. I mock r1 sono DA RIVEDERE, nessuno è approvato o implementato nell'app. Leggere [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [regole](06_DESIGN_RULEBOOK.md) e [decisioni riviste](08_QUESTIONS.md).
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 
@@ -44,7 +44,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P04 — Profilo, aggiunta e modifica allievo
 
-**Richieste:** STUD-01/02/03/04, UX-G06. **Natura:** funzionale e integrità dati. **Dipendenza:** Q09 per dettagli autosave.
+**Richieste:** STUD-01/02/03/04, UX-G06. **Natura:** funzionale e integrità dati. **Decisione:** Q09 accettata; autosave e form focalizzato.
 
 - Stesso form con anagrafica, nickname, sesso, telefono, taglia e nota iniziale. Sezioni compatte; campo in sola lettura prima di Modifica ammesso.
 - Percorso esplicito Modifica; scorciatoia desktop/long press nel profilo sul campo. Prima proposta: apre il form e focalizza il campo; inline soltanto se semplice e coerente.
@@ -66,14 +66,14 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P06 — Scan allievi: acquisizione e revisione
 
-**Richieste:** OCR-001, UX-G02/04. **Natura:** affidabilità, non solo restyling. **Dipendenza:** Q06 prima di criteri definitivi.
+**Richieste:** OCR-001, UX-G02/04. **Natura:** affidabilità, non solo restyling. **Decisione:** metrica per campo/persona Q06, obiettivo vicino al 90% su casi tipici; nessun confronto cronometrato col manuale.
 
-- Flusso candidato: immagine → crop/rotazione se necessari → elaborazione → revisione campi → conferma inserimento.
+- Flusso candidato: inquadratura guidata di nome/cognome/nascita → crop/rotazione se necessari → elaborazione → revisione campi → conferma inserimento.
 - Indicare difficoltà recuperabile, proporre altra foto quando utile; non simulare un risultato affidabile se quasi tutte le righe sono inutili.
 - Revisione compatta con campi incerti distinguibili, correzione/rimozione riga, conteggio di ciò che sarà aggiunto. Nessun auto-commit.
 - Personale non deve diventare allievo. Creazione separata volontari non è inclusa senza scelta esplicita.
 
-**Mock:** acquisizione, orientamento/crop, elaborazione, rifiuto, parziali, revisione, conferma. **Accettazione:** corpus anonimo con verità attesa, recupero campi e associazione alla persona misurati, confronto tempo revisione/manuale, no righe false salvate. **Baseline:** `StudentScan.tsx`, `src/capabilities/studentScan.ts` e fixture M4.
+**Mock:** acquisizione, orientamento/crop, elaborazione, rifiuto, parziali, revisione, conferma. **Accettazione:** corpus anonimo con verità attesa, recupero campi e associazione alla persona misurati, nessuna metrica di tempo rispetto al manuale, no righe false salvate. **Baseline:** `StudentScan.tsx`, `src/capabilities/studentScan.ts` e fixture M4.
 
 ## P07 — Configura/Aggiungi barche
 
@@ -87,7 +87,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P08 — Elenco e dettaglio Barca
 
-**Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica + eventuale nuova semantica Q01.
+**Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; Q01 distingue indisponibilità corso e deselezione sessione.
 
 - Identificativo condiviso: numero più evidente, tipo sempre leggibile; disponibilità e guasti distinti.
 - Elenco compatto; dettaglio con guasti aperti in evidenza, risolti secondari.
@@ -118,25 +118,25 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P11 — Comandate: settimana e avvisi
 
-**Richieste:** CMD-04/07/08, UX-G01/03/04. **Natura:** layout e visibilità warning. **Dipendenze:** Q02/Q04.
+**Richieste:** CMD-04/07/08, UX-G01/03/04. **Natura:** layout e visibilità warning. **Decisioni:** Q02/Q04 recepite; duplicati rossi e tre viewport iniziali.
 
 - Mostrare i sette gruppi con nomi, non solo titoli. Prima ipotesi: griglia a due colonne, sette card compatte; confronto possibile con righe compatte senza preapprovare la soluzione.
 - M accanto ai minori. Warning su giorno e persona, secondo severità canonica concordata; eventuali warning globali restano distinguibili dai problemi localizzati.
-- Tap sul segnale apre le ragioni, Avvisi resta secondario. Segnale rosso persistente e accettazione gialli secondo `01`, salvo modifica esplicita Q02.
+- Tap sul segnale apre le ragioni, Avvisi resta secondario. Segnale rosso persistente e accettazione gialli secondo `01` e Q02 accettata.
 - Rotazioni completate riconoscibili; ricalcolo non modifica lo storico.
 
 **Mock:** 21 e 23 allievi, sette giorni, duplicato sabato/mercoledì, disabilitato futuro, warning globale, giorno completato, giorno volutamente sovraffollato/vuoto. **Accettazione:** target viewport concordato; ogni occorrenza del duplicato evidenziata; nessuna nuova rigida limitazione agli override; warning storico non introdotto per sola disattivazione successiva. **Baseline:** `DutyManagement.tsx`, `src/domain/duties.ts`.
 
 ## P12 — Proposta/Ricalcola Comandate
 
-**Richieste:** CMD-01/02/03. **Natura:** anteprima + regole deterministiche. **Dipendenza:** Q03.
+**Richieste:** CMD-01/02/03. **Natura:** anteprima + regole deterministiche. **Decisione:** Q03 accettata; “Giorni con meno persone”.
 
 - Conteggio disponibili pertinente alla porzione di settimana da pianificare.
-- S D L Ma Me G V, conteggio live sotto ciascun giorno, selezione giorni leggeri diretta.
+- S D L Ma Me G V, conteggio live sotto ciascun giorno, selezione diretta “Giorni con meno persone”.
 - Anteprima graficamente provvisoria, proposta senza rosso semantico. Preferenze ed effetto nello stesso campo visivo; conferma raggiungibile senza attraversare un lungo roster.
-- Nessuna modifica delle assegnazioni persistite finché non si conferma. Gli extra vanno prima ai giorni non leggeri, cronologicamente, secondo Q03.
+- Nessuna modifica delle assegnazioni persistite finché non si conferma. Gli extra vanno prima ai giorni non selezionati, poi ai selezionati, cronologicamente; tutti selezionati equivale a nessuna preferenza. Se N < D mostrare gli zero e consentire correzione manuale.
 
-**Mock:** 23 allievi e sabato leggero, più/tutti giorni leggeri, metà settimana con completati, nessuno da assegnare. **Accettazione:** esempi `05` riprodotti; preview e risultato concordano; somma e capacità coerenti; storico e priorità venerdì/minori/sesso preservati. **Baseline:** `DutyManagement.tsx`, funzioni capacità/generazione.
+**Mock:** 23 allievi e sabato con meno persone, più/tutti giorni selezionati, metà settimana con completati, nessuno da assegnare. **Accettazione:** esempi `05` riprodotti; preview e risultato concordano; somma e capacità coerenti; storico e priorità venerdì/minori/sesso preservati. **Baseline:** `DutyManagement.tsx`, funzioni capacità/generazione.
 
 ## P13 — Selezione persone Comandata
 
@@ -150,7 +150,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P14 — Equipaggi: setup, composizione e verifica
 
-**Richieste:** CREW-01/02/03/04/05, VOL-03, UX-G01/03/04/05. **Natura:** interazione e layout. **Dipendenza:** Q04; Q01 solo per azioni barca.
+**Richieste:** CREW-01/02/03/04/05, VOL-03, UX-G01/03/04/05. **Natura:** interazione e layout. **Decisioni:** Q04 viewport e Q01 barche recepite.
 
 - Header con titolo e sessione affiancati. Setup conserva numero equipaggi distinto da persone/barche; non introduce creazione automatica.
 - Workspace con pool allievi e card equipaggi consultabili insieme; prima ipotesi di due colonne, evitando di impilare altri pannelli lunghi.
@@ -163,11 +163,11 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P15 — Barche della sessione e destinazione equipaggio
 
-**Richieste:** CREW-01/06, BOAT-02. **Natura:** pannello grafico + eventuale cambiamento dominio. **Dipendenza:** Q01.
+**Richieste:** CREW-01/06, BOAT-02. **Natura:** pannello grafico e deselezione sessione secondo Q01 accettata.
 
 - Selettore barche in pannello breve contestuale alla sessione, con numero/tipo/stato.
 - Rendere distinti barche che escono, associazione esatta all'equipaggio, Mezzi, Non assegnato.
-- Definire chiaramente l'azione su barca già assegnata secondo Q01: mantenere persone; storico non alterato implicitamente.
+- Deselezionare una barca dall'uscita scollega l'equipaggio nella sola sessione aperta; mantiene persone e altre sessioni. Indisponibilità corso conserva invece l'assegnazione e mostra rosso vicino alla barca; avaria aperta gialla, senza blocco automatico.
 - Copia barche precedente resta preview → modifica → conferma, separata dalla copia equipaggi.
 
 **Mock:** barca libera/assegnata/indisponibile/con avaria, cambio destinazione, Mezzi, copia e rimozione assegnazione. **Accettazione:** una barca al massimo per equipaggio simultaneo; persone e storico integri; ritorno al workspace senza perdere selezione/sessione. **Baseline:** `CrewManagement.tsx`, `src/domain/crews.ts`.
@@ -184,7 +184,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P17 — Valutazioni: inserimento per Allievi/Equipaggi
 
-**Richieste:** EVAL-01/02/03/04/05. **Natura:** layout e controlli. **Dipendenza:** Q05.
+**Richieste:** EVAL-01/02/03/04/05. **Natura:** layout e controlli. **Decisione:** Q05 accettata; una riga dove entra, due righe compatte negli altri casi.
 
 - Titolo e sessione affiancati; selettore Allievi/Equipaggi/Riepilogo più basso in altezza; eliminare la frase indicata in EVAL-05.
 - Prima esplorazione: riga compatta con nome, valori e nota. Sei valori × 44 px = 264 px; a questi si aggiungono nome, nota e margini. Su viewport stretti non promettere una riga senza prova.
@@ -215,13 +215,13 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P20 — Dettatura condivisa
 
-**Richieste:** STT-001, UX-G04. **Natura:** affidabilità e feedback. **Dipendenza:** Q07.
+**Richieste:** STT-001, UX-G04. **Natura:** affidabilità e feedback. **Decisione:** Q07 richiede browser PC/Android/iPhone e permesso solo al primo tentativo di registrazione.
 
-- Stati distinti: richiesta permesso, asset in caricamento, pronto/registrazione, elaborazione, testo da rivedere, errore recuperabile.
+- Stati distinti: richiesta permesso al primo tap Registra (non all'apertura app), asset in caricamento, pronto/registrazione, elaborazione, testo da rivedere, errore recuperabile.
 - Comunicare primo download e avanzamento reale disponibile; niente percentuale inventata. Riprova e annullamento con effetto reale.
 - Conservare testo già digitato se fallisce la dettatura; trascritto editabile e confermabile; audio scartato.
 
-**Mock:** tutti gli stati sopra nelle tre superfici ospitanti. **Accettazione:** percorso reale completato con fixture audio e microfono fisico; errori non lasciano la UI bloccata; assenza di audio persistito. **Baseline:** `src/capabilities/speech.ts` e chiamanti.
+**Mock:** tutti gli stati sopra nelle tre superfici ospitanti. **Accettazione:** percorso reale su browser PC, Android e iPhone, fixture audio automatizzate e collaudo fisico finale dell'autore; errori non lasciano la UI bloccata; assenza di audio persistito. **Baseline:** `src/capabilities/speech.ts` e chiamanti.
 
 ## 2. Copertura e ordine del design
 
@@ -229,12 +229,31 @@ Tutti gli ID di `05` hanno un posto: UX-G01–07 nelle regole comuni; BRAND-01/0
 
 Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03; poi P11/P12/P13 e P14/P15 come pagine più dense; P17 per sciogliere il vincolo della riga; quindi completare tutte le altre viste. Questa è una sequenza di **design**, non autorizzazione a implementare pagine in parallelo.
 
-## 3. Registro dei target
+## 3. Registro dei mock e dei target
 
-Creare i mock solo nella fase C, sotto `docs/post-mvp/mockups/`, senza importare file nell'app. Nome suggerito `P14-r1.html` e immagini selezionate quando utili. Al momento la cartella e i mock non sono necessari: i brief sopra non vanno spacciati per disegni.
+Prima galleria r1: [apri i mock](mockups/index.html). Revisione umana in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
 
-| Pagine  | Revisione approvata | Stato        |
-| ------- | ------------------- | ------------ |
-| P01–P20 | Nessuna             | DA DISEGNARE |
+| Pagine | File / revisione                   | Approvazione |
+| ------ | ---------------------------------- | ------------ |
+| P01    | [P01 · r1](mockups/index.html#P01) | DA RIVEDERE  |
+| P02    | [P02 · r1](mockups/index.html#P02) | DA RIVEDERE  |
+| P03    | [P03 · r1](mockups/index.html#P03) | DA RIVEDERE  |
+| P04    | [P04 · r1](mockups/index.html#P04) | DA RIVEDERE  |
+| P05    | [P05 · r1](mockups/index.html#P05) | DA RIVEDERE  |
+| P06    | [P06 · r1](mockups/index.html#P06) | DA RIVEDERE  |
+| P07    | [P07 · r1](mockups/index.html#P07) | DA RIVEDERE  |
+| P08    | [P08 · r1](mockups/index.html#P08) | DA RIVEDERE  |
+| P09    | [P09 · r1](mockups/index.html#P09) | DA RIVEDERE  |
+| P10    | [P10 · r1](mockups/index.html#P10) | DA RIVEDERE  |
+| P11    | [P11 · r1](mockups/index.html#P11) | DA RIVEDERE  |
+| P12    | [P12 · r1](mockups/index.html#P12) | DA RIVEDERE  |
+| P13    | [P13 · r1](mockups/index.html#P13) | DA RIVEDERE  |
+| P14    | [P14 · r1](mockups/index.html#P14) | DA RIVEDERE  |
+| P15    | [P15 · r1](mockups/index.html#P15) | DA RIVEDERE  |
+| P16    | [P16 · r1](mockups/index.html#P16) | DA RIVEDERE  |
+| P17    | [P17 · r1](mockups/index.html#P17) | DA RIVEDERE  |
+| P18    | [P18 · r1](mockups/index.html#P18) | DA RIVEDERE  |
+| P19    | [P19 · r1](mockups/index.html#P19) | DA RIVEDERE  |
+| P20    | [P20 · r1](mockups/index.html#P20) | DA RIVEDERE  |
 
-Quando una revisione è accettata, registrare qui file, viewport, fixture, data e decisione. Un target non può essere dichiarato approvato automaticamente dall'agente che lo ha creato.
+Questa prima passata copre la vista principale di ogni brief. Stati secondari, dialog e varianti sono parzialmente esplorabili; non dichiarare completati tutti gli stati richiesti dall'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.
