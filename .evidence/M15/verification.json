@@ -1,0 +1,15 @@
+{
+  "milestone": "M15",
+  "status": "PASS",
+  "recordedAt": "2026-09-03T07:16:45.748Z",
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-09-03T07:02:00.267Z",
+      "durationMs": 885478,
+      "exitCode": 0,
+      "outputTail": "(Use `node --trace-warnings ...` to show where the warning was created)\n  ok 39 [iphone-13-webkit-core] › tests\\e2e\\boats.spec.ts:5:1 › manages boats and simultaneous faults through detail and global entry (27.8s)\n  ok 40 [iphone-13-webkit-core] › tests\\e2e\\crew-management-gate.spec.ts:60:1 › verifies the complete crew workflow across students, duties and boats (1.1m)\n  ok 41 [iphone-13-webkit-core] › tests\\e2e\\duties.spec.ts:20:1 › plans, overrides and recalculates remaining duties without rewriting history (57.3s)\n  ok 42 [iphone-13-webkit-core] › tests\\e2e\\evaluation-gate.spec.ts:50:1 › verifies the evaluation workflow across an evolving week (46.4s)\n  ok 43 [iphone-13-webkit-core] › tests\\e2e\\persistence.spec.ts:3:1 › creates and restores the active course with the required shell (13.6s)\n  ok 44 [iphone-13-webkit-core] › tests\\e2e\\reopen-persistence.spec.ts:3:1 › restores confirmed local data after closing and reopening the page (15.0s)\n  ok 45 [iphone-13-webkit-core] › tests\\e2e\\smoke.spec.ts:3:1 › directs a fresh device to mobile course creation (5.1s)\n  ok 46 [iphone-13-webkit-core] › tests\\e2e\\student-management-gate.spec.ts:7:1 › keeps the complete student workflow consistent across reload (28.0s)\n\n  1 skipped\n  45 passed (12.6m)"
+    }
+  ]
+}

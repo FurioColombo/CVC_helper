@@ -139,7 +139,7 @@ export function EvaluationOverview({
           </p>
         </div>
       ) : (
-        <div className="mt-4 grid gap-3">
+        <div className="mt-4 grid min-w-0 gap-3">
           {orderedStudents.map((student) => {
             const name = getStudentDisplayName(student, students)
             const studentRecords = records.filter(
@@ -150,7 +150,7 @@ export function EvaluationOverview({
             )
             return (
               <article
-                className="rounded-2xl border bg-card p-4"
+                className="min-w-0 max-w-full rounded-2xl border bg-card p-4"
                 key={student.id}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -177,7 +177,7 @@ export function EvaluationOverview({
                 </div>
                 <div
                   aria-label={`Sequenza valutazioni di ${name}`}
-                  className="mt-3 flex gap-1.5 overflow-x-auto pb-1"
+                  className="mt-3 flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto pb-1"
                 >
                   {sessions.map((sessionId) => {
                     const key = `${student.id}:${sessionId}`

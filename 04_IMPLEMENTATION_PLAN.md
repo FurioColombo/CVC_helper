@@ -976,7 +976,7 @@ Resolve cross-cutting MVP usability, mobile, persistence and regression issues b
 ## M15 — Full-Week MVP Validation
 
 **Category:** INTEGRATION_GATE  
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -1062,10 +1062,30 @@ M15 is COMPLETE only when:
 
 ### Completion log
 
-- Evidence:
-- Decisions:
-- Known limitations:
-- Git checkpoint:
+- Evidence: `.evidence/M15/verification.json` records PASS for the single
+  `npm run verify:all` gate: 32 test files / 235 tests, repository and domain
+  checks, production PWA build, deterministic full-week invariants, and 45
+  passing browser journeys with one intentional duplicate-week skip across
+  Pixel 7 Chromium, iPhone 13 Chromium viewport and eight real WebKit core
+  journeys. `.evidence/M15/full-week-final.png` captures the contained mobile
+  13-session evaluation overview. Eight specialized reviewer reports record
+  zero blockers and no remaining IMPORTANT findings.
+- Decisions: adopt one typed deterministic D2 scenario with 21 students, seven
+  duty rotations, 13 sessions and explicit timeline events; assert exact
+  per-session accounting before and after reload; edit a past evaluation after
+  later sessions; hide stale crew controls while a selected session loads; and
+  contain evaluation timelines as row-level scrollers. Verification now streams
+  output and runs Playwright against a programmatically managed Vite server so
+  Windows teardown is deterministic while an already-open local app is reused.
+- Known limitations: after an unavailable student is reactivated, the two
+  historical Wednesday plans display `20/21` because completeness uses the
+  current active roster rather than historical availability. Further internal
+  focus restoration, note-draft protection, faster lookup in the 21-student
+  overview, synchronized timeline scrolling, whole-database snapshot validation
+  and physical-device assistive-technology checks remain non-blocking post-MVP
+  work. First-use OCR and speech assets still require connectivity or prior
+  cache; manual entry and typed notes remain offline.
+- Git checkpoint: `test: complete M15 full-week MVP validation`.
 
 ---
 

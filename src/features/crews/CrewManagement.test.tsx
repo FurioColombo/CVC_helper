@@ -288,6 +288,49 @@ describe("CrewManagement", () => {
     expect(within(bea).getByText("Allievo · M · C")).toBeVisible()
   })
 
+  it("hides the previous plan while a newly selected session loads", async () => {
+    let finishNextLoad: (() => void) | undefined
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) => {
+      if (requestedSessionId === "sun-am") {
+        await new Promise<void>((resolve) => {
+          finishNextLoad = resolve
+        })
+      }
+      return stored(
+        {
+          crews: [
+            {
+              id: `crew-${requestedSessionId}`,
+              sessionId: requestedSessionId,
+              members: [],
+            },
+          ],
+          landStudentIds: [],
+        },
+        requestedSessionId,
+      )
+    })
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await screen.findByText("Allievi sistemati 0/3")
+    const session = screen.getByRole("combobox", { name: "Sessione" })
+    await user.selectOptions(session, "sat-pm")
+    expect(screen.getByText("Allievi sistemati 0/3")).toBeVisible()
+    await user.selectOptions(session, "sun-am")
+
+    expect(screen.getByRole("status")).toHaveTextContent("Apertura equipaggi")
+    expect(screen.queryByText("Allievi sistemati 0/3")).not.toBeInTheDocument()
+    finishNextLoad?.()
+    expect(await screen.findByText("Allievi sistemati 0/3")).toBeVisible()
+  })
+
   it("warns when a D1 morning-duty student is not A terra", async () => {
     getDutyPlan.mockResolvedValue({
       assignments: [{ dayId: "saturday", studentId: "student-1" }],

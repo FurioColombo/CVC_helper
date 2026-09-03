@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { spawnSync } from "node:child_process"
+import { spawn } from "node:child_process"
 
 const milestone = process.argv[2]
 if (!milestone) {
@@ -9,7 +9,10 @@ if (!milestone) {
 }
 
 const root = resolve(import.meta.dirname, "..")
-const scripts = ["verify:quick", "verify:domain", "build", "verify:e2e"]
+const scripts =
+  milestone === "M15"
+    ? ["verify:all"]
+    : ["verify:quick", "verify:domain", "build", "verify:e2e"]
 const checks = []
 const npmCli = process.env.npm_execpath
 
@@ -20,13 +23,26 @@ if (!npmCli) {
 for (const script of scripts) {
   const startedAt = new Date().toISOString()
   const started = performance.now()
-  const result = spawnSync(process.execPath, [npmCli, "run", script], {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
+  let output = ""
+  const appendOutput = (chunk) => {
+    const text = chunk.toString()
+    process.stdout.write(text)
+    output = `${output}${text}`.slice(-100_000)
+  }
+  const result = await new Promise((resolveResult) => {
+    let error = null
+    const child = spawn(process.execPath, [npmCli, "run", script], {
+      cwd: root,
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+    child.stdout.on("data", appendOutput)
+    child.stderr.on("data", appendOutput)
+    child.on("error", (spawnError) => {
+      error = spawnError
+    })
+    child.on("close", (status) => resolveResult({ error, status }))
   })
-  const output = `${result.stdout ?? ""}${result.stderr ?? ""}${result.error ? `${result.error.message}\n` : ""}`
-  process.stdout.write(output)
+  if (result.error) appendOutput(`${result.error.message}\n`)
   checks.push({
     command: `npm run ${script}`,
     status: result.status === 0 ? "PASS" : "FAIL",

@@ -14,6 +14,9 @@ import {
 export interface CourseStateSnapshot {
   students: Array<{
     id: string
+    firstName?: string
+    surname?: string
+    dateOfBirth?: string
     active?: number
     sex?: string | null
     size?: string | null
@@ -61,6 +64,7 @@ export interface CourseStateSnapshot {
     sessionId: string
     studentId: string
     value: string | null
+    note?: string | null
   }>
 }
 

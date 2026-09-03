@@ -36,10 +36,13 @@ export default defineConfig({
       use: { ...devices["iPhone 13"], locale: "it-IT" },
     },
   ],
-  webServer: {
-    command: "node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173",
-    url: "http://127.0.0.1:4173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.CVC_E2E_SERVER_READY
+    ? undefined
+    : {
+        command:
+          "node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173",
+        url: "http://127.0.0.1:4173",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 })

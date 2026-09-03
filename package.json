@@ -17,13 +17,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check:domain": "node --import tsx scripts/check-domain.ts",
+    "check:full-week": "node --import tsx scripts/check-full-week.ts",
     "check:repository": "node scripts/check-repository.mjs",
     "check:pwa": "node scripts/check-built-pwa.mjs",
     "verify:quick": "npm run lint && npm run format:check && npm run typecheck && npm run test",
     "verify:domain": "npm run check:repository && npm run check:domain",
-    "verify:e2e": "playwright test",
+    "verify:e2e": "node scripts/run-e2e.mjs",
     "verify": "npm run verify:quick && npm run verify:domain && npm run build",
-    "verify:all": "npm run verify && npm run verify:e2e",
+    "verify:all": "npm run verify && npm run check:full-week && npm run verify:e2e",
     "milestone:start": "node scripts/milestone.mjs start",
     "milestone:check": "node scripts/milestone.mjs check",
     "milestone:complete": "node scripts/milestone.mjs complete",
@@ -47,7 +48,8 @@
     "evidence:m12": "node scripts/record-verification.mjs M12",
     "evidence:m13": "node scripts/record-verification.mjs M13",
     "evidence:g5": "node scripts/record-verification.mjs G5",
-    "evidence:m14": "node scripts/record-verification.mjs M14"
+    "evidence:m14": "node scripts/record-verification.mjs M14",
+    "evidence:m15": "node scripts/record-verification.mjs M15"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

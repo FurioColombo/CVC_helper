@@ -990,7 +990,7 @@ export function CrewManagement({
 
   if (loadState === "loading") {
     return (
-      <p className="py-12 text-center text-sm font-semibold">
+      <p className="py-12 text-center text-sm font-semibold" role="status">
         Apertura equipaggi…
       </p>
     )
@@ -1102,7 +1102,14 @@ export function CrewManagement({
       <SessionChoice
         disabled={busy || boatCopySelection !== null}
         onChange={(next) => {
-          if (saveInFlight.current || copying || boatCopySelection) return
+          if (
+            next === sessionId ||
+            saveInFlight.current ||
+            copying ||
+            boatCopySelection
+          )
+            return
+          setLoadState("loading")
           setSessionId(next)
           onSessionChange?.(next)
           setSelected(null)
