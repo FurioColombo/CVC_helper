@@ -1,118 +1,101 @@
 {
   "date": "2026-09-04",
-  "artifact": "Standalone UX mock gallery r1",
+  "artifact": "Standalone UX mock gallery r2",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
-  "scope": "Only docs/post-mvp/mockups; no application verification or release gate run.",
+  "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
     "browser": "Codex in-app browser",
     "layoutUnits": "CSS px",
     "runtimeForLintAndFormatting": "Node 24.19.0"
   },
   "checks": {
-    "layoutCases": 100,
-    "description": "20 primary views × 4 sizes with 23 students in normal state; P03/P05/P11/P14/P17 × 4 sizes with warnings/long names.",
+    "layoutCases": 152,
+    "description": "19 primary views × 4 sizes × normal and warnings states, with 23 synthetic students.",
     "horizontalOverflowCases": 0,
-    "buttonsBelow44CSSPxCases": 0,
+    "controlsBelow40CSSPxCases": 0,
+    "standardViewportCases": 114,
+    "standardViewportDescription": "19 views × 3 standard sizes × normal and warnings states.",
+    "controlsBelow44CSSPxOnStandardViewportsCases": 0,
     "tolerancePx": 0.5,
     "formatting": "PASS",
     "eslint": "PASS",
     "interactions": [
       {
-        "action": "P12 capacity preview, 23 students; select Saturday",
-        "observed": "4,4,3,3,3,3,3 changes to 3,4,4,3,3,3,3"
+        "action": "P02 course creation",
+        "observed": "D2 - 35 | 2026 is visible and the bottom navigation has zero layout size."
       },
       {
-        "action": "P14 move available Francesca to free crew 9 slot",
-        "observed": "19/23 placed; available pool decreases from 5 to 4; person shown in crew 9"
+        "action": "P05 inline dictation",
+        "observed": "Permission, recording and editable transcription remain in the note dialog; no P20 option exists."
       },
       {
-        "action": "P15 deselect Quest 2 from outing",
-        "observed": "Crew 1 has no boat; Giulia and Luca B. remain"
+        "action": "P06 take photo",
+        "observed": "Full-screen camera, capture, free -180/+180 rotation control and crop-ready state reached."
       },
       {
-        "action": "P17 select ++ for Giulia, switch Allievi to Equipaggi",
-        "observed": "Selected vote remains visible"
+        "action": "P12 distribution with 23 students",
+        "observed": "Base 3; choosing two more-person days yields 4,4,3,3,3,3,3 and enables generation. All 23 people appear in stay-over selection."
       },
       {
-        "action": "P05 change Giulia initial note, open P04",
-        "observed": "Same initial note appears in profile"
+        "action": "P13 add then remove a person",
+        "observed": "The same inline control changes from + S to S × and back."
       },
       {
-        "action": "P20 permission denial, retry, consent, stop",
-        "observed": "Error/retry, recording, editable transcription review states reached; no real microphone accessed"
+        "action": "P14 destination and warning",
+        "observed": "Boat tap opens destination choices; warning tap opens its reasons; A terra and Volontari remain in the bottom action rail."
+      },
+      {
+        "action": "P15 deselect Quest 2",
+        "observed": "Crew 1 becomes Senza barca while Giulia and Luca B. remain assigned."
+      },
+      {
+        "action": "P17/P18 evaluation",
+        "observed": "Icon selection updates aria-pressed; P18 has no horizontal scroller or page overflow."
       }
     ]
   },
-  "observedScroll": {
-    "normal23": [
-      {
-        "viewport": "430x820",
-        "P11": 0,
-        "P14": 265,
-        "P17": 634,
-        "visibleDutyGroups": 7
-      },
-      {
-        "viewport": "412x760",
-        "P11": 0,
-        "P14": 325,
-        "P17": 1752,
-        "visibleDutyGroups": 7
-      },
-      {
-        "viewport": "390x664",
-        "P11": 49,
-        "P14": 421,
-        "P17": 1848,
-        "visibleDutyGroups": 6
-      },
-      {
-        "viewport": "320x664",
-        "P11": 49,
-        "P14": 922,
-        "P17": 1848,
-        "visibleDutyGroups": 6
-      }
-    ],
-    "warnings23": [
-      {
-        "viewport": "430x820",
-        "P11": 0,
-        "P14": 265,
-        "P17": 645
-      },
-      {
-        "viewport": "412x760",
-        "P11": 0,
-        "P14": 342,
-        "P17": 1752
-      },
-      {
-        "viewport": "390x664",
-        "P11": 107,
-        "P14": 438,
-        "P17": 1848
-      },
-      {
-        "viewport": "320x664",
-        "P11": 125,
-        "P14": 936,
-        "P17": 1848
-      }
-    ],
-    "extra": {
-      "students": 21,
-      "state": "warnings",
-      "viewport": "390x664",
-      "page": "P11",
-      "scrollY": 82,
-      "overflowX": 0
+  "observedScrollNormal23": {
+    "P04": {
+      "430x820": 0,
+      "412x760": 0,
+      "390x664": 0,
+      "320x664": 76
+    },
+    "P11": {
+      "430x820": 0,
+      "412x760": 0,
+      "390x664": 65,
+      "320x664": 65
+    },
+    "P12": {
+      "430x820": 0,
+      "412x760": 0,
+      "390x664": 84,
+      "320x664": 166
+    },
+    "P14": {
+      "430x820": 1218,
+      "412x760": 1278,
+      "390x664": 1374,
+      "320x664": 1374
+    },
+    "P17": {
+      "430x820": 558,
+      "412x760": 618,
+      "390x664": 714,
+      "320x664": 714
+    },
+    "P18": {
+      "430x820": 2827,
+      "412x760": 2887,
+      "390x664": 2983,
+      "320x664": 2983
     }
   },
   "limitations": [
-    "Measurements describe initial synthetic layouts, not every interactive state.",
+    "Measurements describe synthetic layouts, not every interactive state.",
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
-    "Secondary forms, save messages, course creation and session change are demonstrations, not working application behavior.",
+    "P14 and P18 intentionally scroll vertically to preserve crew names and the full 23-person overview.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
     "Human approval and remaining state mockups are still required."
   ]

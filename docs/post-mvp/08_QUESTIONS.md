@@ -1,6 +1,6 @@
 # 08 — Decisioni dopo la revisione umana
 
-**Stato:** risposte recepite il 4 settembre 2026. I punti necessari ai primi mock sono risolti. Il codice resta fuori da questa fase; i mock richiedono ancora revisione, non sono automaticamente target approvati.
+**Stato:** risposte e revisione pagina per pagina r1 recepite il 4 settembre 2026. Il codice resta fuori da questa fase; i mock r2 richiedono ancora revisione e non sono automaticamente target approvati.
 
 La [revisione originale dell'autore](sources/08_reviewed_2026-09-04.txt) conserva le risposte verbatim, prima della pulizia editoriale. SHA-256: `BE269A535301A8D7F8BF533CA36ABA0F922F725D69044C3B4004AEA43756278F`. Le domande/proposte precedenti sono anche nel checkpoint `9e6b6b5`.
 
@@ -16,13 +16,13 @@ Se invece la barca diventa indisponibile per il corso, mantenere le assegnazioni
 
 **DECISO · CMD-07 · P11/P13.** Proposta accettata: duplicati **rossi**, su persona e giorni coinvolti; giallo per raccomandazioni. Il rosso resta visibile anche se intenzionale. Assegnare più turni rimane consentito. Resa grafica da verificare nel mock.
 
-## Q03 — Giorni con meno persone
+## Q03 — Giorni con più persone
 
-**DECISO · CMD-03 · P12.** Etichetta da usare: **Giorni con meno persone**, al posto di “giorni leggeri”.
+**SUPERATO DALLA REVISIONE r1 · CMD-03 · P12.** Etichetta da usare: **Giorni con più persone**.
 
-Per N persone e D giorni rimanenti: quota base `floor(N/D)`, un extra a N mod D giorni. Extra prima ai giorni non selezionati in ordine cronologico, poi ai selezionati se necessario. Tutti selezionati equivale a nessuna preferenza. Con 23/7 e sabato selezionato: `3,4,4,3,3,3,3`.
+Per N persone e D giorni rimanenti: assegnare a ogni giorno la quota base `floor(N/D)`. L'utente seleziona i `N mod D` giorni che ricevono una persona in più. Con 23/7 e sabato/domenica selezionati: `4,4,3,3,3,3,3`.
 
-Se N < D, alcuni giorni sono a zero: segnalare l'eccezione e lasciare la correzione manuale. Nessun limite rigido e nessun nuovo solver. Completati fuori dal ricalcolo; priorità venerdì/minori/sesso e tie-break restano applicate.
+Il mock r2 richiede esattamente il numero di giorni necessario e disabilita “Genera proposta” finché la selezione non è completa. È la sola inferenza d'interazione ancora da confermare guardando P12. Se N < D, la quota base è zero e l'utente sceglie N giorni con una persona. Nessun nuovo solver. Completati fuori dal ricalcolo; priorità venerdì/minori/sesso e tie-break restano applicate.
 
 ## Q04 — Viewport e densità
 
@@ -30,9 +30,9 @@ Se N < D, alcuni giorni sono a zero: segnalare l'eccezione e lasciare la correzi
 
 Esaminare i due estremi e il caso medio prima di valutare adattamenti più aggressivi basati su pixel/proporzioni. Per ora niente sistema complesso di resizing. Portrait, tocco e nomi leggibili precedono il traguardo zero scroll; eventuali deroghe si decidono sui risultati visivi.
 
-## Q05 — Valutazioni in una o due righe
+## Q05 — Valutazioni su una riga
 
-**ACCETTATO PER ORA · EVAL-01 · P17.** Una riga dove entra davvero; due righe basse sugli schermi insufficienti. Voti sempre selezionabili direttamente, senza dialog aggiuntivo e senza ridurre i touch target per rispettare artificialmente la singola riga.
+**SUPERATO DALLA REVISIONE r1 · EVAL-01 · P17.** Nome, nota e sei valori sulla stessa riga per risparmiare spazio verticale. Voti sempre selezionabili direttamente, senza dialog; usare icone chiare con area di tocco adeguata e `~` per nessuna valutazione. Se un futuro viewport non consente questa geometria, documentare il degrado invece di ridurre arbitrariamente leggibilità e precisione del tocco.
 
 ## Q06 — OCR: metrica e acquisizione guidata
 
@@ -47,7 +47,7 @@ Esaminare i due estremi e il caso medio prima di valutare adattamenti più aggre
 
 ## Q07 — Voce: piattaforme e permessi
 
-**REQUISITI DECISI · STT-001 · P20/P05/P09/P17.** Deve funzionare da browser PC, Android e iPhone. Richiedere il permesso microfono al **primo tentativo di registrazione**, non all'apertura dell'app; gestire poi lo stato di permesso già concesso/negato dal browser.
+**REQUISITI DECISI · STT-001 · P05/P09/P17.** Deve funzionare da browser PC, Android e iPhone. Richiedere il permesso microfono al **primo tentativo di registrazione**, non all'apertura dell'app; gestire poi lo stato di permesso già concesso/negato dal browser. La revisione r1 elimina P20: dettatura, permesso, registrazione, retry e testo correggibile restano nello stesso pannello in cui la nota o l'avaria viene scritta.
 
 L'autore svolgerà il collaudo finale fisico. Preparare un percorso breve e ripetibile con piattaforma/browser, esito microfono, caricamento, testo, retry e tempi osservati. Le prove automatiche con fixture e gli errori simulati restano responsabilità dell'implementazione e non sostituiscono quel collaudo.
 
@@ -62,7 +62,7 @@ La soglia “10 secondi per una nota di 15 secondi” era una proposta: **non è
 - [YouTube CVC](https://www.youtube.com/user/CentroVelicoCaprera)
 - [Fondazione CVC](https://www.fondazionecvc.org/)
 
-Usarli per palette, tipografia e marchio. Il nome definitivo dell'app, un logo derivato e l'inserimento del codice corso nel logo **non sono ancora scelte approvate**. Per r1 si usa un titolo di lavoro “CVC Helper” dichiarato provvisorio; il logo originale resta riconoscibile e non viene ridisegnato come se fosse un marchio approvato.
+Usarli per palette, tipografia e marchio. Il nome definitivo dell'app e un eventuale logo derivato **non sono ancora scelte approvate**. La revisione r1 chiede sulla Home il solo simbolo CVC, senza la scritta “Fondazione Centro Velico Caprera ETS”, e fornisce il logo ufficiale RS Quest per le barche Quest. Il codice corso è contenuto: `D2 - 35` grande/blu e `| 2026` piccolo/grigio sulla stessa riga. Le immagini Instagram come sfondo o immagine delle card restano un upgrade futuro.
 
 ## Q09 — Modifica immediata del profilo
 
@@ -72,4 +72,4 @@ Scorciatoia iniziale: form aperto e focalizzato sul campo; inline successivo sol
 
 ## Cosa resta da decidere guardando i mock
 
-La resa dei warning, la densità effettiva sui tre viewport, il posizionamento del contatore, la geometria delle valutazioni e la variante di branding. Nessuno di questi punti richiede di riproporre Q01–Q06/Q09 da zero. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
+Confermare P12: selezione obbligatoria di esattamente `N mod D` giorni prima di generare. Per il resto la prossima revisione riguarda la qualità grafica r2, la densità reale dei casi lunghi e le eccezioni visive. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.

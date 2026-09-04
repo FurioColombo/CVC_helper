@@ -1,6 +1,6 @@
-# Mock UX r1 — guida alla revisione
+# Mock UX r2 — guida alla revisione
 
-Questa cartella contiene una galleria separata dall'app. Non importa codice o dati applicativi e non simula persistenza, OCR, fotocamera o microfono reali. Le interazioni servono a discutere geometria, gerarchia e feedback.
+Questa galleria è separata dall'app. Non importa codice o dati applicativi e non simula persistenza, OCR, fotocamera o microfono reali. Le interazioni servono a discutere geometria, gerarchia e feedback.
 
 ## Aprire la galleria
 
@@ -10,47 +10,48 @@ Dalla cartella del repository:
 python -m http.server 8785 --bind 127.0.0.1 --directory docs/post-mvp/mockups
 ```
 
-Poi aprire `http://127.0.0.1:8785/`. Il server espone soltanto questa cartella. Le pagine sono raggiungibili anche come `/#P11`, `/#P14`, ecc.
+Poi aprire `http://127.0.0.1:8785/#P01`. Il server espone soltanto questa cartella.
 
-## Cosa confrontare
+## Percorso consigliato
 
-1. Scegliere una pagina P01–P20.
-2. Confrontare 430 × 820, 412 × 760 e 390 × 664; usare 320 × 664 come stress, non come promessa zero-scroll.
-3. Provare 21/23 allievi e gli stati normale, avvisi/nomi lunghi, vuoto ed errore quando pertinenti.
-4. Controllare informazioni contemporaneamente visibili, identità dei nomi, scroll, coperture, azione primaria e severità.
-5. Annotare decisioni in [11_MOCK_REVIEW.md](../11_MOCK_REVIEW.md). Una revisione diventa target solo dopo approvazione esplicita.
+1. P01 per direzione visiva e marchio.
+2. P04 per il profilo su una schermata.
+3. P06: `Fai una foto` → scatto → rotazione libera/crop.
+4. P11 con stato `Con avvisi / nomi lunghi`.
+5. P12 per “Giorni con più persone” e selezione stay-over fra tutti.
+6. P14: toccare destinazione e triangolo; osservare A terra/Volontari in basso.
+7. P17, P18 e P19 per inserimento, riepilogo e storia delle valutazioni.
 
-Interazioni principali: scelta giorni e metà settimana in P12; warning/giorni P11–P13; selezione persona, slot, A terra e destinazione in P14; rimozione di una barca dall'uscita in P15; voti/note in P17–P19; stati permesso/registrazione in P20.
+Sono disponibili P01–P19. P20 è stata eliminata: `Detta` gestisce permesso, registrazione, retry e trascrizione nello stesso pannello di testo di P05/P09/P17.
 
-## Identità provvisoria
+## Identità r2
 
-Il logo è una copia dell'asset pubblicato nella [home CVC](https://www.centrovelicocaprera.it/), acquisita il 4 settembre 2026 dall'URL `https://www.centrovelicocaprera.it/wp-content/uploads/logo-fcvc.avif`. Il sito osservato usa Roboto e un accento arancione vicino a `#db7637`; queste sono osservazioni della pagina, non un manuale ufficiale.
+L'header usa soltanto il simbolo dell'asset pubblicato nella [home CVC](https://www.centrovelicocaprera.it/), acquisito il 4 settembre 2026. Il file non è stato ridisegnato; la resa è ottenuta ritagliando visivamente la copia locale `assets/logo-fcvc.avif`.
 
-Il nome “CVC Helper”, il blu funzionale dell'interfaccia e le sigle delle card sono proposte r1. Il logo non è stato ridisegnato. Instagram, YouTube e Fondazione restano riferimenti visivi indicati dall'autore, senza contenuti copiati nella galleria.
+Il logo RS Quest in `assets/rs-quest.png` è la copia non modificata fornita dall'autore nella revisione r1. SHA-256: `F7B5DC1A95C233A3805AC5AE361ECA4D5BF9508D206AD9B5B62CA11CF5D181AB`.
 
-## Limiti noti di r1
+Il nome “CVC Helper” e il blu funzionale restano proposte. Le immagini Instagram come sfondo o card sono un upgrade futuro e non sono state copiate nella galleria.
 
-- Ogni pagina mostra il target principale, non tutti gli stati descritti nella changelist.
-- Dati e risultati sono fittizi; i pulsanti aggiornano solo memoria temporanea.
-- Font e colori vanno valutati insieme all'autore; nessun font CVC ufficiale è stato identificato.
-- La percentuale OCR e i tempi voce non sono rappresentati come risultati raggiunti.
-- Su 320 px gli Equipaggi passano a una colonna per preservare i nomi; la decisione definitiva verrà presa dopo il confronto.
+## Decisione da confermare
 
-## Controlli del primo mock
+P12 applica `floor(N/D)` a ogni giorno e chiede di selezionare esattamente `N mod D` “Giorni con più persone”. “Genera proposta” resta disabilitato finché la selezione non è completa. Questa è un'inferenza d'interazione da confermare guardando il mock.
 
-Formattazione e lint superati sui soli file della galleria. Nel browser sono stati controllati 100 layout: 20 viste × quattro misure in stato normale con 23 allievi, più cinque viste dense × quattro misure con avvisi/nomi lunghi. Nessun overflow orizzontale della pagina e nessun pulsante misurato sotto 44 × 44 CSS px. Non equivale a verifica completa di accessibilità.
+## Controlli r2
 
-Misure utili al confronto, con 23 allievi:
+Nel browser sono stati controllati 152 layout: 19 viste × quattro misure × stati normale e avvisi, con 23 allievi. Non sono emersi overflow orizzontali o controlli sotto 40 × 40 CSS px; sui tre profili principali, nessun controllo è sotto 44 × 44 CSS px. Il profilo P04 entra senza scroll a 430 × 820, 412 × 760 e 390 × 664.
 
-| Schermo   | Comandate normale | Comandate con avvisi | Equipaggi con avvisi |
-| --------- | ----------------: | -------------------: | -------------------: |
-| 430 × 820 |       0 px scroll |                 0 px |               265 px |
-| 412 × 760 |       0 px scroll |                 0 px |               342 px |
-| 390 × 664 |      49 px scroll |               107 px |               438 px |
-| 320 × 664 |      49 px scroll |               125 px |               936 px |
+Sono stati esercitati nel mock:
 
-In Equipaggi il pool resta visibile durante lo scroll e il contatore occupa una fascia separata in basso, per non coprire gli slot. È una proposta da confrontare con il requisito di densità, non una deroga già approvata. P17 usa una riga a 430 e due alle altre misure; lo storico mantiene lo scroll orizzontale interno.
+- barra inferiore nascosta in P02 e FAB P03;
+- dettatura dentro il pannello nota e flusso fotocamera/rotazione/crop;
+- P12 con 23 persone, base tre e due giorni da quattro; selettore stay-over con tutte le 23 persone;
+- aggiunta e rimozione esplicita in P13;
+- dettaglio destinazione e ragioni warning in P14;
+- deselezione Quest 2 in P15 con persone conservate;
+- selezione icona in P17 e settimana P18 senza scorrimento orizzontale.
 
-Sono stati provati nel mock: anteprima 23/7 con sabato selezionato, spostamento allievo, deselezione barca con persone conservate, voto condiviso fra viste, nota iniziale condivisa P05/P04 e stati simulati della voce. Dettagli: [review-checks.json](review-checks.json).
+Queste misure non equivalgono a verifica completa di accessibilità o dell'app. P14 e P18 scorrono verticalmente per mostrare rispettivamente equipaggi su tre righe e 23 persone; il requisito r2 è preservare nomi/allineamento, non comprimere l'intero elenco in una schermata.
 
-Restano da disegnare/verificare stati secondari, testo al 200%, tastiera mobile, corsi con equipaggi flessibili e dispositivi fisici. Creazione, autosave anagrafico, applicazione proposta e cambio sessione mostrano soltanto controlli/feedback dimostrativi: non costituiscono prove di quei comportamenti. La galleria non replica il database o le regole complete dell'app.
+Formattazione e lint riguardano soltanto i file della galleria. Restano da disegnare/verificare tutti gli stati secondari, testo al 200%, tastiera mobile, equipaggi flessibili e dispositivi fisici. Creazione, autosave, OCR, voce e salvataggi sono dimostrazioni: non costituiscono prove del comportamento applicativo.
+
+Dettagli macchina: [review-checks.json](review-checks.json). Registro umano: [11_MOCK_REVIEW.md](../11_MOCK_REVIEW.md).

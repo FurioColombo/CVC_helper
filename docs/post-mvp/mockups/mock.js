@@ -23,13 +23,13 @@ const pages = [
     "P04",
     "Profilo allievo",
     "Dati e conoscenza nello stesso percorso di modifica.",
-    "Modifica è evidente? Il motivo che impedisce la cancellazione è concreto?",
+    "Anagrafica, sesso, taglia, nota e valutazioni stanno insieme senza scroll inutile?",
   ],
   [
     "P05",
     "Conoscenza",
     "Taglia con un tap, nota vicino al nome.",
-    "L'altezza guadagnata giustifica la disposizione dei cinque valori?",
+    "I nomi restano su una riga e la nota si detta nello stesso pannello?",
   ],
   [
     "P06",
@@ -71,7 +71,7 @@ const pages = [
     "P12",
     "Proposta Comandate",
     "Preferenze e conteggi live nello stesso riquadro.",
-    "Prova sabato, tutti i giorni e metà settimana: la preview è chiara?",
+    "Base uguale e giorni con una persona in più sono chiari prima di generare?",
   ],
   [
     "P13",
@@ -101,25 +101,19 @@ const pages = [
     "P17",
     "Valutazioni",
     "Voti immediati, sessione vicina al titolo.",
-    "Confronta 430 e 390: una riga dove entra, due righe comode altrove.",
+    "Nome, nota e sei icone restano sulla stessa riga senza perdere precisione del tocco?",
   ],
   [
     "P18",
     "Riepilogo",
     "Sequenza, note e numero di voti; niente media numerica.",
-    "Lo scorrimento della storia è riconoscibile senza allargare la pagina?",
+    "Le sette colonne AM/PM restano allineate e leggibili senza scroll orizzontale?",
   ],
   [
     "P19",
     "Storia allievo",
     "Cronologia esatta con le note della sessione.",
     "È facile ricostruire quando è stato dato un voto e perché?",
-  ],
-  [
-    "P20",
-    "Dettatura",
-    "Permesso contestuale, feedback e testo da rivedere.",
-    "Registra mostra un esempio di permesso; nessun microfono reale viene usato.",
   ],
 ]
 const people = [
@@ -169,7 +163,7 @@ const days = [
   "Venerdì",
 ]
 const shortDays = ["S", "D", "L", "Ma", "Me", "G", "V"]
-const marks = ["++", "+", "=", "-", "--", "—"]
+const marks = ["++", "+", "=", "-", "--", "~"]
 const sessions = [
   "Sab PM",
   "Dom AM",
@@ -219,14 +213,16 @@ let selected = null,
   crewBoats = [],
   sessionBoats = new Set(boatNumbers),
   terra = [16, 17],
-  fewer = new Set(),
+  more = new Set(),
+  staying = new Set(),
+  dutyRemovals = new Set(),
+  dutyAdds = new Set(),
   midweek = false
 let evaluation = {},
   notes = {},
   sizes = {},
   profileEditing = false,
   scanStep = 0,
-  voiceStep = 0,
   unavailable = new Set(),
   selectedDay = 0
 let pendingCrew = null,
@@ -313,17 +309,17 @@ function empty(title, button, target) {
   return `<div class="empty"><h3>${title}</h3><p class="muted">Puoi iniziare da qui.</p>${act(button, "goto", target, "primary full")}</div>`
 }
 function capacities() {
-  let start = midweek ? 2 : 0
-  let n = count - (midweek ? (count === 23 ? 8 : 6) : 0)
+  const start = midweek ? 2 : 0
+  const n = count - (midweek ? (count === 23 ? 8 : 6) : 0)
   const d = 7 - start
-  const base = Math.floor(n / d),
-    rem = n % d
-  let result = Array(7).fill(null)
+  const base = Math.floor(n / d)
+  const rem = n % d
+  const result = Array(7).fill(null)
   for (let i = start; i < 7; i++) result[i] = base
-  const order = [...Array(d)]
-    .map((_, i) => i + start)
-    .sort((a, b) => Number(fewer.has(a)) - Number(fewer.has(b)) || a - b)
-  order.slice(0, rem).forEach((i) => result[i]++)
+  ;[...more]
+    .filter((i) => i >= start)
+    .slice(0, rem)
+    .forEach((i) => result[i]++)
   return result
 }
 function duties() {
@@ -339,18 +335,26 @@ function duties() {
     offset += n
   }
   if (isWarning()) result[4][0] = result[0][0]
+  for (const key of dutyRemovals) {
+    const [day, id] = key.split(":").map(Number)
+    result[day] = result[day].filter((personId) => personId !== id)
+  }
+  for (const key of dutyAdds) {
+    const [day, id] = key.split(":").map(Number)
+    if (!result[day].includes(id)) result[day].push(id)
+  }
   return result
 }
 function boatsMarkup(action = "boatDetail") {
-  return `<div class="grid-two">${boatNumbers
+  return `<div class="grid-two boat-list-r2">${boatNumbers
     .map((n) => {
-      const red = unavailable.has(n) || (isWarning() && n === 11),
-        yellow = faults.some((f) => f.boat === n && f.state !== 2)
+      const red = unavailable.has(n) || (isWarning() && n === 11)
+      const openFaults = faults.filter((f) => f.boat === n && f.state !== 2)
       return act(
-        `<span class="boat-id"><span>Quest</span><strong>${n}</strong></span><div class="boat-state">${red ? `${warn(true)} Non disponibile` : yellow ? `${warn()} Avaria aperta` : "Disponibile"}</div>`,
+        `<img class="boat-brand" src="assets/rs-quest.png" alt="" /><span class="boat-id"><span>Quest</span><strong>${n}</strong></span><div class="row"><span class="boat-fault-count">${openFaults.length} ${openFaults.length === 1 ? "avaria" : "avarie"}</span><span class="boat-state">${red ? "Non disponibile" : openFaults.length ? "Da controllare" : "Disponibile"}</span></div>`,
         action,
         n,
-        `boat-card${red ? " unavailable" : ""}${action === "boatToggle" && sessionBoats.has(n) ? " selected" : ""}`,
+        `boat-card boat-card-r2${red ? " unavailable" : ""}${action === "boatToggle" && sessionBoats.has(n) ? " selected" : ""}`,
         action === "boatToggle" ? `aria-pressed="${sessionBoats.has(n)}"` : "",
       )
     })
@@ -369,51 +373,111 @@ function rosterMarkup() {
 function profileMarkup() {
   const p = person(currentProfile)
   const dob = currentProfile === 0 ? "2009-03-18" : `${2026 - p.age}-03-18`
+  const sexButtons = `<div class="segments sex-buttons" role="group" aria-label="Sesso">${[
+    "F",
+    "M",
+    "Altro",
+  ]
+    .map((sex) => act(sex, "sex", sex, "", `aria-pressed="${p.sex === sex}"`))
+    .join("")}</div>`
   if (profileEditing)
-    return `<div class="notice">${isWarning() ? "Modifiche salvate solo quando i campi obbligatori sono validi." : "Modifiche salvate automaticamente"}</div>${field("Nome", p.name.split(" ")[0], "firstName")}${field("Cognome", p.surname, "surname")}${field("Nome visualizzato", p.name, "nickname")}${field("Data di nascita", dob, "dob", "date")}<label class="field">Sesso<select data-field="sex">${["F", "M", "Altro"].map((s) => `<option ${p.sex === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>${field("Telefono", "", "phone", "tel")}<h3>Taglia</h3>${sizeChoice(currentProfile)}<label class="field" style="margin-top:14px">Nota iniziale<textarea data-field="initialNote">${esc(initialNotes[currentProfile] || "")}</textarea></label><p class="small muted" id="save-state">Salvato</p>${act("Fine", "editProfile", "off", "primary full")}`
-  return `<section class="panel"><div class="row"><h3 style="margin:0">${esc(p.name)} ${esc(p.surname)} ${minor(currentProfile)}</h3>${act("Modifica", "editProfile", "on", "compact")}</div><dl class="detail-grid"><div><dt>Età</dt><dd>${p.age} anni</dd></div><div><dt>Nascita</dt><dd>${dob.split("-").reverse().join("/")}</dd></div><div><dt>Sesso</dt><dd>${p.sex}</dd></div><div><dt>Taglia</dt><dd>${sizes[currentProfile] || p.size}</dd></div><div><dt>Telefono</dt><dd>—</dd></div><div><dt>Nome visualizzato</dt><dd>${esc(p.name)}</dd></div></dl></section><h3>Nota iniziale</h3><div class="panel"><p>${esc(initialNotes[currentProfile] || "Nessuna nota iniziale")}</p></div><h3>Valutazioni</h3>${act("Apri storia delle sessioni →", "goto", "P19", "full")}<h3>Disponibilità</h3>${act("Disattiva allieva", "disablePerson", "", "full")}<p class="muted small">Le informazioni storiche restano disponibili.</p><div style="margin-top:25px">${act("Elimina inserimento errato", "deletePerson", "", "danger full")}</div>`
+    return `<div class="notice">Modifiche salvate automaticamente quando i dati sono validi.</div><div class="form-grid">${field("Nome", p.name.split(" ")[0], "firstName")}${field("Cognome", p.surname, "surname")}${field("Nome visualizzato", p.name, "nickname")}${field("Data di nascita", dob, "dob", "date")}</div><h3>Sesso</h3>${sexButtons}${field("Telefono", "", "phone", "tel")}<h3>Taglia</h3>${sizeChoice(currentProfile)}<div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div><p class="small muted" id="save-state">Salvato</p>${act("Fine", "editProfile", "off", "primary full")}`
+  return `<div class="profile-hero"><div><h3>${esc(p.name)} ${esc(p.surname)} ${minor(currentProfile)}</h3><p class="muted">${p.age} anni · ${p.sex}</p></div>${act("Modifica dati", "editProfile", "on", "compact")}</div><div class="profile-facts"><div class="profile-fact"><small>Data di nascita</small><strong>${dob.split("-").reverse().join("/")}</strong></div><div class="profile-fact"><small>Telefono</small><strong>—</strong></div></div><div class="profile-block"><div class="row"><h3>Sesso</h3><span class="small muted">salvataggio immediato</span></div>${sexButtons}</div><div class="profile-block"><h3>Taglia</h3>${sizeChoice(currentProfile)}</div><div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div><div class="profile-block">${act(`<span><strong>Valutazioni</strong><small class="muted" style="display:block">6 voti · ultima valutazione +</small></span><span>Apri</span>`, "historyProfile", currentProfile, "profile-evals")}</div><div style="margin-top:10px">${act("Disponibilità ed eliminazione", "profileMore", "", "plain full")}</div>`
 }
 function scanMarkup() {
   if (scanStep >= 2)
-    return `<div class="notice">3 righe da controllare · 1 campo da completare</div><div class="stack">${[0, 1, 2].map((id, i) => `<section class="panel"><div class="row"><strong>${esc(people[id].name)} ${people[id].surname}</strong>${act("×", "removeCandidate", id, "", 'aria-label="Rimuovi riga"')}</div>${field("Nome", people[id].name, `candidate${id}`)}${field("Data di nascita", i === 1 ? "" : "2000-04-12", `candidateDate${id}`, "date")}${i === 1 ? '<span class="warning">Completa la data di nascita</span>' : ""}</section>`).join("")}</div><div style="margin-top:12px">${act("Conferma righe complete", "scanConfirm", "", "primary full")}</div>`
-  return `<p class="muted">Inquadra nome, cognome e data di nascita.</p><div class="camera-frame"><div class="camera-label">Nome · Cognome · Data di nascita</div><div class="camera-sheet" id="camera-sheet"><div class="table-row"><strong>Nome</strong><strong>Cognome</strong><strong>Nascita</strong></div><div class="table-row"><span>Giulia</span><span>Moretti</span><span>18/03/2009</span></div><div class="table-row"><span>Luca</span><span>Bianchi</span><span>07/06/2002</span></div><div class="table-row"><span>Anna</span><span>Riva</span><span>12/04/2000</span></div></div><div class="camera-guide"></div></div><div class="toolbar">${act("Ruota ↻", "rotate")}${act("Ritaglia", "crop")}</div>${act(scanStep === 0 ? "Scatta foto" : "Leggi allievi", "scanNext", "", "primary full")}<div style="margin-top:8px">${act("Scegli foto o screenshot", "scanFile", "", "full")}</div><p class="small muted">Escludi le altre sezioni del foglio quando possibile.</p>`
+    return `<div class="notice">3 righe da controllare · 1 campo da completare</div><div class="stack">${[
+      0, 1, 2,
+    ]
+      .map(
+        (id, i) =>
+          `<section class="panel"><div class="row"><strong>${esc(people[id].name)} ${people[id].surname}</strong>${act("×", "removeCandidate", id, "", 'aria-label="Rimuovi riga"')}</div>${field("Nome", people[id].name, `candidate${id}`)}${field("Data di nascita", i === 1 ? "" : "2000-04-12", `candidateDate${id}`, "date")}${i === 1 ? '<span class="warning">Completa la data di nascita</span>' : ""}</section>`,
+      )
+      .join(
+        "",
+      )}</div><div style="margin-top:12px">${act("Conferma righe complete", "scanConfirm", "", "primary full")}</div>`
+  if (scanStep === 1)
+    return `<div class="camera-frame"><div class="camera-label">Foto ritagliata · nome, cognome, nascita</div><div class="camera-sheet"><div class="table-row"><strong>Nome</strong><strong>Cognome</strong><strong>Nascita</strong></div><div class="table-row"><span>Giulia</span><span>Moretti</span><span>18/03/2009</span></div><div class="table-row"><span>Luca</span><span>Bianchi</span><span>07/06/2002</span></div></div></div><div class="scan-actions">${act("Regola di nuovo", "cameraOpen", "", "full")}${act("Leggi gli allievi", "scanNext", "", "primary full")}</div>`
+  return `<div class="scan-start"><div class="scan-glyph" aria-hidden="true">▣</div><h3>Importa il foglio allievi</h3><p class="muted">Fotografa il foglio intero. Dopo lo scatto puoi raddrizzarlo e ritagliare solo nome, cognome e nascita.</p><div class="scan-actions">${act("Fai una foto", "cameraOpen", "", "primary full")}${act("Scegli dalla galleria", "scanFile", "", "full")}</div></div>`
 }
 function dutyMarkup() {
   const groups = duties()
-  return `<div class="toolbar">${act("Proposta", "goto", "P12")}${act("Avvisi" + (isWarning() ? " · 2" : ""), "dutyWarnings")}</div>${isWarning() ? '<div class="notice error">1 allievo non assegnato · 1 assegnato due volte</div>' : ""}<div class="duty-grid">${groups.map((ids, i) => act(`<span class="duty-title"><strong>${days[i]}</strong><span>${ids.length}${isWarning() && (i === 0 || i === 4) ? " " + warn(true) : ""}</span></span>${ids.map((id) => `<span class="duty-person">${esc(name(id))} ${minor(id)} ${isWarning() && id === 0 ? warn(true) : ""}</span>`).join("")}`, "dutyDay", i, `duty-card${isWarning() && (i === 0 || i === 4) ? " has-warning" : ""}`)).join("")}</div>`
+  return `<div class="toolbar">${act("Nuova proposta", "goto", "P12")}${act("Avvisi" + (isWarning() ? " · 2" : ""), "dutyWarnings", "", isWarning() ? "danger" : "")}</div>${isWarning() ? '<div class="notice error"><strong>Controlla le assegnazioni.</strong><br />Giulia compare sabato e mercoledì; una persona è senza giorno.</div>' : ""}<div class="duty-grid">${groups
+    .map((ids, i) =>
+      act(
+        `<span class="duty-title"><strong>${days[i]}</strong><span>${ids.length}${isWarning() && (i === 0 || i === 4) ? " " + warn(true) : ""}</span></span>${ids.map((id) => `<span class="duty-person">${esc(name(id))} ${minor(id)} ${isWarning() && id === 0 ? warn(true) : ""}</span>`).join("")}`,
+        "dutyDay",
+        i,
+        `duty-card${isWarning() && (i === 0 || i === 4) ? " has-warning" : ""}`,
+      ),
+    )
+    .join("")}</div>`
 }
 function proposalMarkup() {
   const caps = capacities()
-  return `<div class="row"><strong>${midweek ? count - (count === 23 ? 8 : 6) : count} allievi disponibili</strong>${act(midweek ? "Inizio settimana" : "Metà settimana", "midweek", "", "compact")}</div><h3>Giorni con meno persone</h3><div class="preview-panel"><div class="day-options">${shortDays.map((d, i) => act(d, "fewer", i, "day-button", `aria-label="${days[i]} con meno persone" aria-pressed="${fewer.has(i)}" ${midweek && i < 2 ? "disabled" : ""}`)).join("")}</div><div class="day-preview">${caps.map((c) => `<span>${c ?? "✓"}</span>`).join("")}</div><p class="small muted" style="text-align:center">Anteprima · ${midweek ? "i turni completati restano invariati" : "nessuna modifica ancora applicata"}</p></div><h3>Preferenze</h3><label class="row panel"><span>Distribuisci i minori</span><input type="checkbox" checked style="width:44px" /></label><label class="row panel" style="margin-top:7px"><span>Bilancia il sesso</span><input type="checkbox" checked style="width:44px" /></label><h3>Restano la prossima settimana</h3><div class="grid-two">${[0, 2, 4, 7].map((id) => act(esc(name(id)), "stay", id, "", 'aria-pressed="false"')).join("")}</div><p class="muted small">Preferiti per venerdì, fino ai posti necessari.</p>${act("Genera proposta", "proposalConfirm", "", "primary full")}`
+  const start = midweek ? 2 : 0
+  const available = count - (midweek ? (count === 23 ? 8 : 6) : 0)
+  const remainingDays = 7 - start
+  const base = Math.floor(available / remainingDays)
+  const extra = available % remainingDays
+  const chosen = [...more].filter((day) => day >= start).length
+  return `<div class="distribution-summary"><strong>${base}</strong><span>persone per ogni giorno${extra ? `<br /><b>${extra}</b> da assegnare ai giorni scelti` : ""}</span>${act(midweek ? "Inizio" : "Metà settimana", "midweek", "", "compact")}</div><h3>Giorni con più persone</h3><div class="preview-panel"><div class="day-options more-days">${shortDays.map((day, i) => act(day, "more", i, "day-button", `aria-label="${days[i]} con più persone" aria-pressed="${more.has(i)}" ${midweek && i < 2 ? "disabled" : ""}`)).join("")}</div><div class="day-preview">${caps.map((value) => `<span>${value ?? "✓"}</span>`).join("")}</div><p class="small muted" style="text-align:center">${extra ? `Scegli ${extra} ${extra === 1 ? "giorno" : "giorni"} · ${chosen}/${extra} selezionati` : "Divisione esatta"}</p></div><h3>Preferenze</h3><label class="row panel switch-row"><span>Distribuisci i minori</span><span class="switch"><input type="checkbox" checked /><span></span></span></label><label class="row panel switch-row" style="margin-top:7px"><span>Bilancia il sesso</span><span class="switch"><input type="checkbox" checked /><span></span></span></label><h3>Restano la prossima settimana</h3>${act(`Scegli tra tutti gli allievi <span class="muted">· ${staying.size}</span>`, "stayPicker", "", "full")}${staying.size ? `<div class="stay-summary">${[...staying].map((id) => `<span class="person-chip">${esc(name(id))}</span>`).join("")}</div>` : '<p class="small muted">Nessun allievo selezionato.</p>'}<p class="muted small">Saranno preferiti per venerdì, fino ai posti necessari.</p>${act(extra === chosen ? "Genera proposta" : `Scegli ancora ${extra - chosen}`, "proposalConfirm", "", "primary full", extra === chosen ? "" : "disabled")}`
 }
 function dutyPeopleMarkup() {
-  const groups = duties(),
-    uses = new Map()
-  groups.flat().forEach((id) => uses.set(id, (uses.get(id) || 0) + 1))
-  const available = all().filter((p) => (uses.get(p.id) || 0) === 0),
-    used = all().filter((p) => (uses.get(p.id) || 0) > 0)
-  return `<div class="notice">${days[selectedDay]} · ${groups[selectedDay].map((id) => name(id)).join(", ")}</div><h3>Mai assegnati · ${available.length}</h3>${available.length ? `<div class="grid-two">${available.map((p) => personButton(p.id, "dutyAssign")).join("")}</div>` : '<p class="muted">Tutti hanno già una comandata.</p>'}<h3>Già assegnati</h3><div class="grid-two">${used.map((p) => act(`<span class="person-name">${esc(name(p.id))} ${minor(p.id)}</span><span class="person-meta">${uses.get(p.id) > 1 ? warn(true) + " Più volte" : "✓ Una volta"}</span>`, "dutyAssign", p.id, "person")).join("")}</div>`
+  const groups = duties()
+  const uses = new Map()
+  groups.forEach((ids, day) =>
+    ids.forEach((id) => uses.set(id, [...(uses.get(id) || []), day])),
+  )
+  const makeRow = (p) => {
+    const assignedDays = uses.get(p.id) || []
+    const current = assignedDays.includes(selectedDay)
+    const tags = assignedDays
+      .map((day) =>
+        act(
+          `${shortDays[day]}${day === selectedDay ? " ×" : ""}`,
+          "dutyToggle",
+          `${day}:${p.id}`,
+          "day-chip",
+          `aria-label="Rimuovi ${esc(name(p.id))} da ${days[day]}"`,
+        ),
+      )
+      .join("")
+    return `<div class="panel assignment-row"><span class="person-name">${assignedDays.length ? '<span class="ok">✓</span> ' : ""}${esc(name(p.id))} ${minor(p.id)}</span><span class="day-tags">${tags}${current ? "" : act(`+ ${shortDays[selectedDay]}`, "dutyToggle", `${selectedDay}:${p.id}`, "day-chip", `aria-label="Aggiungi ${esc(name(p.id))} a ${days[selectedDay]}"`)}</span></div>`
+  }
+  const never = all().filter((p) => !(uses.get(p.id) || []).length)
+  const used = all().filter((p) => (uses.get(p.id) || []).length)
+  return `<div class="notice">${days[selectedDay]} · tocca <b>+ ${shortDays[selectedDay]}</b> per aggiungere; <b>${shortDays[selectedDay]} ×</b> per rimuovere.</div><h3>Mai assegnati · ${never.length}</h3><div class="stack">${never.map(makeRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Già assegnati</h3><div class="stack">${used.map(makeRow).join("")}</div>`
 }
 function crewMarkup() {
-  const assigned = assignments.flat().filter((x) => x !== null),
-    pool = all().filter(
-      (p) => !assigned.includes(p.id) && !terra.includes(p.id),
-    )
-  return `<div class="toolbar crew-toolbar">${act("Barche", "goto", "P15")}${act("Leggi", "goto", "P16")}${act("Altro", "crewMore")}</div><div class="crew-pool"><div class="row"><h3 style="margin:0 0 7px">Disponibili · ${pool.length}</h3>${selected !== null ? act("Annulla selezione", "cancelSelect", "", "compact") : ""}</div><div class="grid-two">${pool.map((p) => personButton(p.id, "selectPerson", p.id)).join("")}</div>${!pool.length ? '<p class="small muted">Tutti gli allievi sono collocati.</p>' : ""}</div><div class="crew-grid">${assignments.map((ids, i) => `<section class="crew-card">${act(`<span>${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : `Quest <strong>${crewBoats[i]}</strong>`) : `Equipaggio ${i + 1}`}</span>${unavailable.has(crewBoats[i]) || (crewBoats[i] === 11 && isWarning()) ? warn(true) : faults.some((f) => f.boat === crewBoats[i] && f.state !== 2) ? warn() : "<span>⌄</span>"}`, "crewDestination", i, "crew-destination", `aria-label="Destinazione equipaggio ${i + 1}"`)}<div class="crew-members">${ids.map((id, j) => (id === null ? act("＋", "slot", `${i}:${j}`, "crew-member", `aria-label="Posto libero equipaggio ${i + 1}"`) : personButton(id, "selectPerson", id, true))).join("")}</div></section>`).join("")}</div><div class="crew-footer">${act(`A terra · ${terra.length}`, "terra")}${act("Volontari · 3", "staff", "", "compact")}</div>`
+  const assigned = assignments.flat().filter((id) => id !== null)
+  const pool = all().filter(
+    (p) => !assigned.includes(p.id) && !terra.includes(p.id),
+  )
+  return `<div class="toolbar crew-toolbar">${act("Barche", "goto", "P15")}${act("Vista lettura", "goto", "P16")}${act("Altro", "crewMore")}</div><div class="crew-pool"><div class="row"><h3 style="margin:0">Disponibili · ${pool.length}</h3>${selected !== null ? act("Annulla", "cancelSelect", "", "compact") : ""}</div><div class="grid-two">${pool.map((p) => personButton(p.id, "selectPerson", p.id)).join("")}</div>${!pool.length ? '<p class="small muted">Tutti gli allievi sono collocati.</p>' : ""}</div><div class="crew-grid">${assignments
+    .map((ids, i) => {
+      const boat = crewBoats[i]
+      const red = unavailable.has(boat) || (boat === 11 && isWarning())
+      const yellow = faults.some(
+        (fault) => fault.boat === boat && fault.state !== 2,
+      )
+      return `<section class="crew-card"><div class="crew-head">${act(`<span>${boat ? (boat === "Mezzi" ? "Mezzi" : `Quest <strong>${boat}</strong>`) : `Equipaggio ${i + 1}`}</span><span class="muted small">Destinazione</span>`, "crewDestination", i, "crew-destination", `aria-label="Destinazione equipaggio ${i + 1}"`)}${red || yellow ? act(warn(red), "crewWarning", i, "crew-warning", `aria-label="Motivo avviso equipaggio ${i + 1}"`) : '<span aria-hidden="true"></span>'}</div><div class="crew-members">${ids.map((id, j) => (id === null ? act("Posto libero +", "slot", `${i}:${j}`, "crew-member", `aria-label="Posto libero equipaggio ${i + 1}"`) : personButton(id, "selectPerson", id, true))).join("")}</div></section>`
+    })
+    .join("")}</div>`
 }
 function boatsSessionMarkup() {
-  return `<div class="notice">Tocca una barca per includerla o escluderla dall'uscita.</div>${boatsMarkup("boatToggle")}<h3>Assegnazioni attuali</h3><div class="stack">${assignments
-    .slice(0, 5)
+  return `<div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Tocca per togliere</span></div><div class="boat-strip">${boatNumbers.map((n) => act(`<img src="assets/rs-quest.png" alt="" /><strong>${n}</strong>`, "boatToggle", n, "boat-toggle-r2", `aria-label="Quest ${n}" aria-pressed="${sessionBoats.has(n)}"`)).join("")}</div><h3>Equipaggi</h3><div class="stack">${assignments
+    .slice(0, 6)
     .map(
       (ids, i) =>
-        `<div class="panel"><div class="row"><strong>Equipaggio ${i + 1}</strong><span>${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : "Quest " + crewBoats[i]) : "Senza barca"} ${isWarning() && crewBoats[i] === 11 ? warn(true) : ""}</span></div><p class="muted">${ids
+        `<div class="panel" style="padding:9px"><div class="row"><strong>Equipaggio ${i + 1}</strong><span>${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : "Quest " + crewBoats[i]) : "Senza barca"} ${isWarning() && crewBoats[i] === 11 ? warn(true) : ""}</span></div><p class="muted">${ids
           .filter((id) => id !== null)
           .map((id) => esc(name(id)))
           .join(" / ")}</p></div>`,
     )
     .join(
       "",
-    )}</div><div style="margin-top:10px">${act("Torna agli equipaggi", "goto", "P14", "primary full")}</div>`
+    )}</div>${act("Torna agli equipaggi", "goto", "P14", "primary full")}`
 }
 function evaluationMarkup() {
   return `<div class="toolbar">${act("Allievi", "evalView", "all", "selected")}${act("Equipaggi", "evalView", "crew")}${act("Riepilogo", "goto", "P18")}</div><div id="evaluation-list">${evaluationRows(all().map((p) => p.id))}</div>`
@@ -422,7 +486,7 @@ function evaluationRows(ids) {
   return ids
     .map(
       (id) =>
-        `<div class="evalrow"><div class="eval-name">${esc(name(id))}${terra.includes(id) ? '<span class="muted small"> · A terra</span>' : ""}</div>${marks.map((m) => act(m, "mark", `${id}:${m}`, `mark ${m.includes("+") ? "pos" : m === "-" || m === "--" ? "neg" : ""}`, `aria-label="${esc(name(id))}: ${m === "—" ? "nessuna valutazione" : m}" aria-pressed="${(evaluation[id] || "—") === m}"`)).join("")}${act(notes[id] ? "●" : "✎", "note", id, "note-button", `aria-label="Nota di ${esc(name(id))}"`)}</div>`,
+        `<div class="evalrow">${act(`<span>${esc(name(id))}${terra.includes(id) ? '<small class="muted"> · terra</small>' : ""}</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20l4.5-1 10-10-3.5-3.5-10 10L4 20zM13.5 7l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`, "note", id, "eval-name", `aria-label="Nota di ${esc(name(id))}"`)}${marks.map((mark) => act(markIcon(mark), "mark", `${id}:${mark}`, `mark ${mark.includes("+") ? "pos" : mark === "-" || mark === "--" ? "neg" : ""}`, `aria-label="${esc(name(id))}: ${mark === "~" ? "nessuna valutazione" : mark}" aria-pressed="${(evaluation[id] || "~") === mark}"`)).join("")}</div>`,
     )
     .join("")
 }
@@ -430,24 +494,145 @@ function overviewMarkup() {
   return `<div class="toolbar">${act("Alfabetico", "sortOverview", "alpha", "selected")}${act("Valutazione", "sortOverview", "score")}</div><div class="stack" id="overview-list">${overviewRows(all())}</div>`
 }
 function overviewRows(list) {
+  const values = [
+    "=",
+    "+",
+    "+",
+    "++",
+    "~",
+    "+",
+    "=",
+    "~",
+    "~",
+    "~",
+    "~",
+    "~",
+    "~",
+  ]
+  const sessionPairs = [
+    [null, 0],
+    [1, 2],
+    [3, 4],
+    [5, 6],
+    [7, 8],
+    [9, 10],
+    [11, 12],
+  ]
+  const cell = (index) => {
+    if (index === null)
+      return '<span class="eval-cell" aria-label="Nessuna sessione">·</span>'
+    const value = values[index]
+    const kind = value.includes("+")
+      ? "pos"
+      : value.includes("-")
+        ? "neg"
+        : value === "="
+          ? "neutral"
+          : ""
+    return `<span class="eval-cell ${kind}" aria-label="${sessions[index]}: ${value}">${value}</span>`
+  }
   return list
     .map(
       (p) =>
-        `<section class="panel" style="min-width:0;padding:8px"><div class="row">${act(esc(name(p.id)), "historyProfile", p.id, "plain compact")}<span class="small muted">6 voti</span></div><div class="history-strip" aria-label="Storia di ${esc(name(p.id))}">${sessions.map((s, i) => act(`${i < 7 ? ["=", "+", "+*", "++", "—", "+", "="][i] : "—"}<small>${s}</small>`, "historyNote", `${p.id}:${i}`)).join("")}</div></section>`,
+        `<section class="panel overview-card"><div class="overview-head">${act(esc(name(p.id)), "historyProfile", p.id, "plain compact")}<span class="small muted">6 voti</span></div><div class="week-grid" aria-label="Settimana di ${esc(name(p.id))}">${sessionPairs.map((pair, day) => `<span class="week-day"><small>${shortDays[day]}</small>${cell(pair[0])}${cell(pair[1])}</span>`).join("")}</div></section>`,
     )
     .join("")
 }
-function voiceMarkup() {
-  if (voiceStep === 0)
-    return `<div class="panel"><h3>Nota iniziale · Giulia</h3><p class="muted">Puoi dettare una nota e rivedere il testo.</p>${act("Registra", "voiceStart", "", "primary full")}</div>`
-  if (voiceStep === 1)
-    return `<div class="panel"><h3>Esempio di richiesta del browser</h3><p>Consenti l'accesso al microfono per registrare questa nota?</p><div class="toolbar">${act("Non consentire", "voiceDeny")}${act("Consenti", "voiceAllow", "", "primary")}</div></div>`
-  if (voiceStep === 2)
-    return `<div class="panel"><div class="row"><strong>Registrazione in corso</strong><span class="small">00:12</span></div><div class="recording" aria-hidden="true">${"<span></span>".repeat(13)}</div>${act("Termina registrazione", "voiceStop", "", "primary full")}${act("Annulla", "voiceCancel", "", "plain full")}</div>`
-  if (voiceStep === 4)
-    return `<div class="notice error">Microfono non disponibile. Consenti il microfono nelle impostazioni del browser e riprova.</div>${act("Riprova", "voiceStart", "", "primary full")}`
-  return `<div class="panel"><h3>Rivedi il testo</h3><textarea aria-label="Testo trascritto">${esc(initialNotes[currentProfile] || "")}</textarea><div style="margin-top:12px">${act("Usa questo testo", "voiceUse", "", "primary full")}</div>${act("Registra di nuovo", "voiceStart", "", "plain full")}</div>`
+function historyMarkup() {
+  const values = [
+    "=",
+    "+",
+    "+",
+    "++",
+    "~",
+    "+",
+    "=",
+    "~",
+    "~",
+    "~",
+    "~",
+    "~",
+    "~",
+  ]
+  const pairs = [
+    [null, 0],
+    [1, 2],
+    [3, 4],
+    [5, 6],
+    [7, 8],
+    [9, 10],
+    [11, 12],
+  ]
+  return `<div class="notice">${esc(name(currentProfile))} · storia del corso</div><div class="stack">${pairs
+    .map(
+      (pair, day) =>
+        `<section class="panel history-day"><div class="row"><strong>${days[day]}</strong><span class="small muted">${pair.filter((i) => i !== null).length} ${pair[0] === null ? "sessione" : "sessioni"}</span></div><div class="session-cards">${pair.map((index, slot) => (index === null ? '<div class="session-card muted"><strong>AM</strong>Nessuna sessione</div>' : `<div class="session-card"><strong>${slot === 0 ? "AM" : "PM"} · ${values[index]}</strong>${index === 2 ? "Più sicura nella virata; ricordare lo sguardo." : "Nessuna nota."}</div>`)).join("")}</div></section>`,
+    )
+    .join("")}</div>`
 }
+
+function markIcon(mark) {
+  const stroke =
+    'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+  const plus = (x) => `<path d="M${x} 7v10M${x - 5} 12h10" ${stroke}/>`
+  const minus = (x) => `<path d="M${x - 5} 12h10" ${stroke}/>`
+  const paths =
+    mark === "++"
+      ? plus(7) + plus(17)
+      : mark === "+"
+        ? plus(12)
+        : mark === "="
+          ? '<path d="M6 9h12M6 15h12" ' + stroke + "/>"
+          : mark === "--"
+            ? '<path d="M3 9h8M13 15h8" ' + stroke + "/>"
+            : mark === "-"
+              ? minus(12)
+              : '<path d="M4 13c3-6 6 6 10 0s5 0 6 0" ' + stroke + "/>"
+  return `<svg aria-hidden="true" viewBox="0 0 24 24">${paths}</svg>`
+}
+
+function homeIcon(kind) {
+  const paths = {
+    Allievi:
+      '<circle cx="9" cy="8" r="3"/><path d="M3.5 20c.4-4 2.2-6 5.5-6s5.1 2 5.5 6M16 11a3 3 0 1 0 0-6M16.5 14c2.5.2 3.8 2.2 4 5"/>',
+    Barche: '<path d="M3 17h18l-3 3H7l-4-3ZM11 4v13M12 5l6 9h-6M10 7l-5 7h5"/>',
+    Comandate:
+      '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h3M14 14h3M7 18h3"/>',
+    Equipaggi:
+      '<circle cx="7" cy="8" r="2.5"/><circle cx="17" cy="8" r="2.5"/><path d="M2.5 19c.3-3.5 1.8-5.2 4.5-5.2s4.2 1.7 4.5 5.2M12.5 19c.3-3.5 1.8-5.2 4.5-5.2s4.2 1.7 4.5 5.2"/>',
+    Valutazioni:
+      '<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/>',
+    Volontari:
+      '<circle cx="12" cy="8" r="3"/><path d="M5.5 20c.4-4.2 2.6-6.2 6.5-6.2s6.1 2 6.5 6.2M18 5l1 1 2-2"/>',
+  }
+  return `<svg class="home-mark" aria-hidden="true" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[kind]}</g></svg>`
+}
+
+function openCamera(adjust = false) {
+  lastFocus = document.activeElement
+  const sheet = $("#sheet")
+  sheet.innerHTML = `<section class="camera-full ${adjust ? "camera-adjust" : ""}" role="dialog" aria-modal="true" aria-label="${adjust ? "Regola foto" : "Fotocamera"}"><div class="row">${act("×", "close", "", "", 'aria-label="Chiudi fotocamera"')}<strong>${adjust ? "Raddrizza e ritaglia" : "Foglio allievi"}</strong><span style="width:44px"></span></div><div class="camera-live"><div class="camera-paper"><strong>Nome&nbsp;&nbsp; Cognome&nbsp;&nbsp; Nascita</strong><hr />Giulia&nbsp;&nbsp; Moretti&nbsp;&nbsp; 18/03/2009<br />Luca&nbsp;&nbsp; Bianchi&nbsp;&nbsp; 07/06/2002</div><div class="camera-guide-r2"></div></div>${adjust ? `<label class="field" style="color:white">Rotazione libera<input type="range" min="-180" max="180" value="-7" aria-label="Rotazione da meno 180 a 180 gradi" /></label><p class="small" style="text-align:center">Trascina il riquadro per ritagliare nome, cognome e nascita.</p>${act("Usa questa area", "cameraDone", "", "primary full")}` : act("", "cameraCapture", "", "camera-shutter", 'aria-label="Scatta foto"')}</section>`
+  sheet.hidden = false
+}
+function openStayPicker() {
+  showSheet(
+    `Restano la prossima settimana · ${staying.size}`,
+    `<div class="grid-two stay-picker">${all()
+      .map((p) =>
+        act(
+          esc(name(p.id)),
+          "stay",
+          p.id,
+          "",
+          `aria-pressed="${staying.has(p.id)}"`,
+        ),
+      )
+      .join(
+        "",
+      )}</div><p class="small muted">Tutti gli allievi del corso sono disponibili.</p>`,
+  )
+}
+
 function content() {
   if (
     mode === "empty" &&
@@ -474,48 +659,49 @@ function content() {
   }
   switch (page) {
     case "P01":
-      return `<div class="home-course"><div class="course-code">D2</div><p>Settimana 35 <span class="muted">/ 2026</span></p></div><div class="grid-two">${[
-        ["Allievi", "P03", "AL"],
-        ["Barche", "P08", "BA"],
-        ["Comandate", "P11", "CO"],
-        ["Equipaggi", "P14", "EQ"],
-        ["Valutazioni", "P17", "VA"],
-        ["Volontari", "P10", "VO"],
+      return `<div class="home-course"><div class="course-line"><strong>D2 - 35</strong><span class="year">| 2026</span></div></div><div class="grid-two">${[
+        ["Allievi", "P03"],
+        ["Barche", "P08"],
+        ["Comandate", "P11"],
+        ["Equipaggi", "P14"],
+        ["Valutazioni", "P17"],
+        ["Volontari", "P10"],
       ]
-        .map(([title, id, abbr]) =>
+        .map(([label, id]) =>
           act(
-            `<span class="home-mark">${abbr}</span><span>${title} <span style="float:right">→</span></span>`,
+            `${homeIcon(label)}<span>${label}</span>`,
             "goto",
             id,
             "home-card",
           ),
         )
-        .join(
-          "",
-        )}</div><p class="small muted" style="margin-top:20px">Corso Deriva · Livello 2</p>`
+        .join("")}</div>`
     case "P02":
-      return `<h3>Famiglia</h3><div class="segments">${act("Deriva", "choice", "", "selected")}${act("Cabinato", "choice")}</div><h3>Livello</h3><div class="segments">${[1, 2, 3, 4, 5].map((n) => act(n, "choice", "", n === 2 ? "selected" : "")).join("")}</div><h3>Il tuo corso</h3><div class="panel"><strong style="font-size:24px">D2 35 2026</strong><p class="muted">Settimana e anno dal calendario.</p></div><div style="margin-top:18px">${act("Crea corso", "goto", "P01", "primary full")}</div>`
+      return `<h3>Famiglia</h3><div class="segments">${act("Deriva", "choice", "", "selected")}${act("Cabinato", "choice")}</div><h3>Livello</h3><div class="segments">${[1, 2, 3, 4, 5].map((n) => act(n, "choice", "", n === 2 ? "selected" : "")).join("")}</div><h3>Il tuo corso</h3><div class="panel course-generated"><strong style="font-size:26px;color:var(--navy)">D2 - 35 <span class="muted" style="font-size:16px">| 2026</span></strong><p class="muted">Settimana e anno dal calendario.</p></div><div style="margin-top:18px">${act("Crea corso", "goto", "P01", "primary full")}</div>`
     case "P03":
-      return rosterMarkup()
+      return (
+        rosterMarkup() +
+        act("+", "newStudent", "", "fab", 'aria-label="Aggiungi allievo"')
+      )
     case "P04":
       return profileMarkup()
     case "P05":
       return `<div class="stack">${all()
         .map(
           (p) =>
-            `<section class="panel knowledge-row"><strong class="knowledge-name">${esc(name(p.id))} ${minor(p.id)}</strong>${sizeChoice(p.id)}${act(initialNotes[p.id] ? "●" : "✎", "note", p.id, "note-button", `aria-label="Nota di ${esc(name(p.id))}"`)}${initialNotes[p.id] ? `<p class="knowledge-preview">${esc(initialNotes[p.id])}</p>` : ""}</section>`,
+            `<section class="panel knowledge-row">${act(`<span class="knowledge-name">${esc(name(p.id))} ${minor(p.id)}</span><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M4 20l4.5-1 10-10-3.5-3.5-10 10L4 20z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`, "note", p.id, "knowledge-person", `aria-label="Nota di ${esc(name(p.id))}"`)}${sizeChoice(p.id)}${initialNotes[p.id] ? `<p class="knowledge-preview">${esc(initialNotes[p.id])}</p>` : ""}</section>`,
         )
         .join("")}</div>`
     case "P06":
       return scanMarkup()
     case "P07":
-      return `<label class="field">Tipo di barca<select><option>RS Quest</option><option>RS Toura</option><option>Laser Vago</option></select></label><label class="field">Numeri delle barche<textarea id="boat-input" placeholder="2 3 7, 8; 11">2 3 7, 8; 11</textarea></label><p class="small muted">Separa con spazi, virgole, punti e virgola o vai a capo.</p><div class="panel" id="boat-preview">Quest 2 · 3 · 7 · 8 · 11</div><div style="margin-top:15px">${act("Aggiungi barche", "boatsAdd", "", "primary full")}</div>`
+      return `<div class="notice"><strong>Prima configurazione.</strong><br />Questo inserimento multiplo compare quando il corso non ha ancora barche.</div><label class="field">Tipo di barca<select><option>RS Quest</option><option>RS Toura</option><option>Laser Vago</option></select></label><label class="field">Numeri delle barche<textarea id="boat-input" placeholder="2 3 7, 8; 11">2 3 7, 8; 11</textarea></label><p class="small muted">Separa con spazi, virgole, punti e virgola o vai a capo.</p><div class="panel" id="boat-preview">Quest 2 · 3 · 7 · 8 · 11</div><div style="margin-top:15px">${act("Aggiungi barche", "boatsAdd", "", "primary full")}</div>`
     case "P08":
       return boatsMarkup()
     case "P09":
-      return `<div class="stack">${faults.map((f, i) => `<section class="panel fault">${act(`<span class="boat-id"><span>Quest</span><strong>${f.boat}</strong></span><span class="preview">${esc(f.text)}</span>`, "faultDetail", i, "fault-open")}<div class="segments">${["Aperta", "Comunicata", "Risolta"].map((s, j) => act(s, "faultState", `${i}:${j}`, "", `aria-pressed="${f.state === j}"`)).join("")}</div></section>`).join("")}</div>`
+      return `<div class="stack">${faults.map((fault, i) => `<section class="panel fault fault-r2 ${fault.state === 2 ? "resolved" : ""}"><div class="fault-top"><img class="boat-brand" src="assets/rs-quest.png" alt="" /><span class="boat-id"><span>Quest</span><strong>${fault.boat}</strong></span></div>${act(`<span class="preview">${esc(fault.text)}</span>`, "faultDetail", i, "fault-open")}<div class="segments">${["Aperta", "Comunicata", "Risolta"].map((state, j) => act(state, "faultState", `${i}:${j}`, "", `aria-pressed="${fault.state === j}"`)).join("")}</div></section>`).join("")}</div>`
     case "P10":
-      return `<div class="stack">${staff.map((p) => `<section class="panel row"><strong>${p.name}</strong>${act(p.role, "editStaff", p.id, "compact")}</section>`).join("")}</div><div style="margin-top:16px">${act("Aggiungi volontario", "editStaff", 100, "primary full")}</div>`
+      return `<div class="stack">${staff.map((member) => `<section class="panel staff-card"><span class="staff-avatar">${member.name.slice(0, 1)}</span><span><strong>${member.name}</strong><small class="muted" style="display:block">${member.role === "CT" ? "Capo turno" : member.role === "IS" ? "Istruttore" : "Allievo docente volontario"}</small></span>${act(member.role, "editStaff", member.id, "role-pill")}</section>`).join("")}</div><div style="margin-top:14px">${act("Aggiungi volontario", "editStaff", 100, "primary full")}</div>`
     case "P11":
       return dutyMarkup()
     case "P12":
@@ -527,32 +713,30 @@ function content() {
     case "P15":
       return boatsSessionMarkup()
     case "P16":
-      return assignments
+      return `<div class="stack">${assignments
         .map(
           (ids, i) =>
-            `<div class="read-row">${crewBoats[i] ? `<small>${crewBoats[i] === "Mezzi" ? "Mezzi" : "Quest " + crewBoats[i]}</small>` : ""}${
+            `<section class="panel read-crew"><div class="read-destination">${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "<strong>Mezzi</strong>" : `Quest <strong>${crewBoats[i]}</strong>`) : `<strong>${i + 1}</strong>Senza barca`}</div><div class="read-names">${
               ids
                 .filter((id) => id !== null)
-                .map((id) => esc(name(id)))
-                .join(" / ") || '<span class="muted">Posti da completare</span>'
-            }</div>`,
+                .map((id) => `<span>${esc(name(id))}</span>`)
+                .join("") || '<span class="muted">Posti da completare</span>'
+            }</div></section>`,
         )
-        .join("")
+        .join("")}</div>`
     case "P17":
       return evaluationMarkup()
     case "P18":
       return overviewMarkup()
     case "P19":
-      return `<div class="notice">${esc(name(currentProfile))} · storia del corso</div><div class="stack">${sessions.map((s, i) => `<section class="panel"><div class="row"><strong>${s}</strong><strong>${["=", "+", "+", "++", "—", "+", "="][i] || "—"}</strong></div>${i === 2 ? "<p>Più sicura nella virata; ricordare lo sguardo fuori dalla barca.</p>" : ""}</section>`).join("")}</div>`
-    case "P20":
-      return voiceMarkup()
+      return historyMarkup()
     default:
       return ""
   }
 }
 function render() {
   const p = pages.find((p) => p[0] === page)
-  $("#page-id").textContent = `${p[0]} · REVISIONE 1`
+  $("#page-id").textContent = `${p[0]} · REVISIONE 2`
   $("#review-title").textContent = p[1]
   $("#review-goal").textContent = p[2]
   $("#review-question").textContent = p[3]
@@ -564,29 +748,29 @@ function render() {
       P15: "Barche in uscita",
       P16: "Equipaggi",
       P19: "Storia",
-      P20: "Dettatura",
     }[page] || p[1]
   const hasSession = ["P14", "P15", "P16", "P17"].includes(page)
   let right = hasSession
     ? act("Lun PM ⌄", "session", "", "session")
-    : page === "P03"
-      ? act("＋", "newStudent", "", "", 'aria-label="Aggiungi allievo"')
-      : page === "P08"
-        ? act("＋", "goto", "P07", "", 'aria-label="Aggiungi barca"')
-        : page === "P09"
-          ? act("＋", "newFault", "", "", 'aria-label="Aggiungi avaria"')
-          : page === "P01"
-            ? act("⚙", "settings", "", "", 'aria-label="Impostazioni"')
-            : ""
+    : page === "P08"
+      ? act("+", "newBoat", "", "", 'aria-label="Aggiungi barca"')
+      : page === "P09"
+        ? act("＋", "newFault", "", "", 'aria-label="Aggiungi avaria"')
+        : page === "P01"
+          ? act("⚙", "settings", "", "", 'aria-label="Impostazioni"')
+          : ""
   $("#app-header").innerHTML =
-    `<div class="head-row">${page === "P01" ? '<img class="logo" src="assets/logo-fcvc.avif" alt="Centro Velico Caprera" />' : `<div class="head-title">${act("‹", "back", "", "back", 'aria-label="Indietro"')}<h2>${title}</h2></div>`}${right}</div>`
+    `<div class="head-row">${page === "P01" ? '<span class="cvc-mark"><img src="assets/logo-fcvc.avif" alt="Centro Velico Caprera" /></span>' : `<div class="head-title">${act("‹", "back", "", "back", 'aria-label="Indietro"')}<h2>${title}</h2></div>`}${right}</div>`
   $("#app-content").innerHTML =
     (mode === "error"
       ? `<div class="notice error">Modifica non salvata. ${act("Riprova", "retry", "", "compact")}</div>`
       : "") + content()
   $("#crew-status").hidden = page !== "P14" || mode === "empty"
   $("#crew-status").innerHTML =
-    `<span class="crew-counter">Collocati ${assignments.flat().filter((id) => id !== null && id < 100).length + terra.filter((id) => id < 100).length}/${count}</span>`
+    `${act(`A terra · ${terra.length}`, "terra", "", "compact")}
+    <span class="crew-counter">${assignments.flat().filter((id) => id !== null && id < 100).length + terra.filter((id) => id < 100).length}/${count}</span>
+    ${act("Volontari", "staff", "", "compact")}`
+  $("#app-nav").hidden = page === "P02"
   $("#app-nav").innerHTML = [
     ["Avarie", "P09"],
     ["Home", "P01"],
@@ -637,6 +821,7 @@ function handle(action, arg, button) {
       break
     case "close":
       closeSheet()
+      render()
       break
     case "profile":
       currentProfile = Number(arg)
@@ -657,6 +842,17 @@ function handle(action, arg, button) {
       profileEditing = arg === "on"
       render()
       break
+    case "sex":
+      person(currentProfile).sex = arg
+      render()
+      toast("Sesso aggiornato")
+      break
+    case "profileMore":
+      showSheet(
+        "Disponibilità ed eliminazione",
+        `${act("Disattiva allieva", "disablePerson", "", "full")}<p class="small muted">Lo storico viene conservato.</p>${act("Elimina inserimento errato", "deletePerson", "", "danger full")}`,
+      )
+      break
     case "size": {
       const [id, s] = arg.split(":")
       sizes[id] = s
@@ -668,7 +864,7 @@ function handle(action, arg, button) {
       noteContext = page === "P17" ? "evaluation" : "initial"
       showSheet(
         "Nota · " + name(Number(arg)),
-        `<label class="field">Testo<textarea id="note-draft">${esc((noteContext === "initial" ? initialNotes : notes)[arg] || "")}</textarea></label><div class="toolbar">${act("Detta", "voiceFromNote")}${act("Fine", "noteSave", arg, "primary")}</div>`,
+        `<label class="field">Testo<textarea id="note-draft">${esc((noteContext === "initial" ? initialNotes : notes)[arg] || "")}</textarea></label><div class="voice-inline"></div><div class="toolbar">${act("Detta", "voiceInline")}${act("Fine", "noteSave", arg, "primary")}</div>`,
       )
       break
     case "noteSave":
@@ -678,9 +874,27 @@ function handle(action, arg, button) {
       render()
       toast("Nota aggiornata")
       break
-    case "voiceFromNote":
-      setPage("P20")
+    case "voiceInline": {
+      const area = button.closest(".sheet-body").querySelector(".voice-inline")
+      area.innerHTML = `<div class="notice">Consenti il microfono al primo tentativo di registrazione?</div><div class="toolbar">${act("Non consentire", "voiceInlineDeny")}${act("Consenti", "voiceInlineAllow", "", "primary")}</div>`
       break
+    }
+    case "voiceInlineAllow":
+      button.closest(".sheet-body").querySelector(".voice-inline").innerHTML =
+        `<div class="voice-bars" aria-label="Registrazione in corso">${"<span></span>".repeat(11)}</div>${act("Termina registrazione", "voiceInlineStop", "", "primary full")}`
+      break
+    case "voiceInlineDeny":
+      button.closest(".sheet-body").querySelector(".voice-inline").innerHTML =
+        `<div class="notice error">Microfono non disponibile. Controlla il permesso del browser.</div>${act("Riprova", "voiceInline", "", "full")}`
+      break
+    case "voiceInlineStop": {
+      const body = button.closest(".sheet-body")
+      const textarea = body.querySelector("textarea")
+      textarea.value = `${textarea.value ? textarea.value + " " : ""}Buona autonomia nelle manovre.`
+      body.querySelector(".voice-inline").innerHTML =
+        `<div class="notice">Trascrizione inserita. Rivedi il testo prima di chiudere.</div>`
+      break
+    }
     case "deletePerson":
       showSheet(
         "Eliminazione non disponibile",
@@ -702,6 +916,18 @@ function handle(action, arg, button) {
         "Impostazioni",
         `<div class="panel"><strong>D2 · Settimana 35 · 2026</strong><p>Corso attivo</p></div><p class="muted small">Versione di riferimento 0.1.0</p>`,
       )
+      break
+    case "cameraOpen":
+      openCamera(false)
+      break
+    case "cameraCapture":
+      openCamera(true)
+      break
+    case "cameraDone":
+      scanStep = 1
+      closeSheet()
+      render()
+      toast("Foto raddrizzata e ritagliata")
       break
     case "scanNext":
       scanStep++
@@ -756,10 +982,16 @@ function handle(action, arg, button) {
       toast("Stato aggiornato")
       break
     }
+    case "newBoat":
+      showSheet(
+        "Aggiungi una barca",
+        `<label class="field">Tipo<select><option>RS Quest</option><option>RS Toura</option><option>Laser Vago</option></select></label>${field("Numero", "", "newBoatNumber", "number")}${act("Aggiungi", "demoSaved", "", "primary full")}`,
+      )
+      break
     case "newFault":
       showSheet(
         "Nuova avaria",
-        `<label class="field">Barca<select><option>Quest 3</option><option>Quest 7</option></select></label><label class="field">Descrizione<textarea></textarea></label><div class="toolbar">${act("Detta", "voiceFromNote")}${act("Salva", "demoSaved", "", "primary")}</div>`,
+        `<label class="field">Barca<select><option>Quest 3</option><option>Quest 7</option></select></label><label class="field">Descrizione<textarea id="fault-draft"></textarea></label><div class="voice-inline"></div><div class="toolbar">${act("Detta", "voiceInline")}${act("Salva", "demoSaved", "", "primary")}</div>`,
       )
       break
     case "editStaff":
@@ -794,21 +1026,49 @@ function handle(action, arg, button) {
       break
     case "midweek":
       midweek = !midweek
+      more = new Set()
       render()
       break
-    case "fewer": {
-      const d = Number(arg)
-      if (fewer.has(d)) fewer.delete(d)
-      else fewer.add(d)
+    case "more": {
+      const day = Number(arg)
+      const start = midweek ? 2 : 0
+      const available = count - (midweek ? (count === 23 ? 8 : 6) : 0)
+      const extra = available % (7 - start)
+      if (more.has(day)) more.delete(day)
+      else if ([...more].filter((value) => value >= start).length < extra)
+        more.add(day)
+      else
+        toast(
+          `Sono necessari ${extra} ${extra === 1 ? "giorno" : "giorni"} con una persona in più`,
+        )
       render()
       break
     }
-    case "stay":
-      button.setAttribute(
-        "aria-pressed",
-        button.getAttribute("aria-pressed") !== "true",
-      )
+    case "stayPicker":
+      openStayPicker()
       break
+    case "stay": {
+      const id = Number(arg)
+      if (staying.has(id)) staying.delete(id)
+      else staying.add(id)
+      render()
+      openStayPicker()
+      break
+    }
+    case "dutyToggle": {
+      const [day, id] = arg.split(":").map(Number)
+      const key = `${day}:${id}`
+      const active = duties()[day].includes(id)
+      if (active) {
+        dutyAdds.delete(key)
+        dutyRemovals.add(key)
+      } else {
+        dutyRemovals.delete(key)
+        dutyAdds.add(key)
+      }
+      render()
+      break
+    }
     case "proposalConfirm":
       toast("Anteprima confermata in questa dimostrazione")
       break
@@ -864,6 +1124,17 @@ function handle(action, arg, button) {
           .join("")}</div>`,
       )
       break
+    case "crewWarning": {
+      const boat = crewBoats[Number(arg)]
+      const reasons = faults.filter(
+        (fault) => fault.boat === boat && fault.state !== 2,
+      )
+      showSheet(
+        `Avvisi · ${boat === "Mezzi" ? "Mezzi" : "Quest " + boat}`,
+        `${unavailable.has(boat) || (boat === 11 && isWarning()) ? '<div class="notice error">Barca non disponibile per il corso; assegnazione conservata.</div>' : ""}${reasons.map((fault) => `<div class="notice warn">${esc(fault.text)}</div>`).join("") || "<p>Nessun dettaglio disponibile.</p>"}`,
+      )
+      break
+    }
     case "crewDestination":
       pendingCrew = Number(arg)
       showSheet(
@@ -973,32 +1244,6 @@ function handle(action, arg, button) {
       closeSheet()
       $(".session").textContent = arg + " ⌄"
       toast("Sessione selezionata nella bozza")
-      break
-    case "voiceStart":
-      voiceStep = 1
-      render()
-      break
-    case "voiceAllow":
-      voiceStep = 2
-      render()
-      break
-    case "voiceDeny":
-      voiceStep = 4
-      render()
-      break
-    case "voiceStop":
-      voiceStep = 3
-      render()
-      break
-    case "voiceCancel":
-      voiceStep = 0
-      render()
-      break
-    case "voiceUse":
-      initialNotes[0] = "Ha già frequentato D1. Buona autonomia nelle manovre."
-      voiceStep = 0
-      setPage("P05")
-      toast("Testo di esempio inserito")
       break
     case "retry":
       mode = "normal"
