@@ -4,7 +4,7 @@
 
 **Baseline prodotto:** 0.1.0, checkpoint MVP `c907b19`.
 
-**Revisione editoriale:** 5 settembre 2026; risposte di `08` e revisione pagina per pagina dei mock r2 recepite.
+**Revisione editoriale:** 5 settembre 2026; risposte di `08` e revisioni pagina per pagina fino alla r3 recepite nella galleria r4.
 
 ## 1. Come usare questo pacchetto
 
@@ -16,11 +16,11 @@ Questo documento integra annotazioni manuali, risposte già date e richieste ori
 | [06 — Regole di design](docs/post-mvp/06_DESIGN_RULEBOOK.md)                | Principi da applicare a ogni pagina                        | Proposta verificabile            |
 | [07 — Changelist per pagina](docs/post-mvp/07_PAGE_CHANGELOG.md)            | Cambiamenti, stati da disegnare e accettazione             | Bozza avanzata                   |
 | [08 — Decisioni della revisione](docs/post-mvp/08_QUESTIONS.md)             | Risposte Q01–Q09 consolidate                                | Recepito fino al 5 settembre     |
-| [12 — Domande residue r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md)          | Q10–Q13 da chiudere sui mock r3                             | Aperto                           |
+| [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md)          | Q10–Q13 risolte e tradotte nei mock r4                      | Consolidato                      |
 | [09 — Guida implementativa](docs/post-mvp/09_IMPLEMENTATION_GUIDE.md)       | Futuro equivalente di `04`, milestone e prove              | Non attiva                       |
 | [10 — Specifiche e versioni](docs/post-mvp/10_SPEC_UPDATES_AND_RELEASES.md) | Piano per `01`–`03`, raccordo `AGENTS`/`04`, versionamento | Non applicato                    |
 
-Le risposte in `08` chiariscono Barche, Comandate, densità, Valutazioni, OCR e autosave. La revisione r2 ha prodotto la galleria r3 con 19 viste: la dettatura non è più una pagina autonoma e vive nei pannelli nota/avaria. P03 e P12 sono approvati nel principio; Q10–Q13 restano aperte. `09` resta non attivo finché i target e l'avvio implementativo non sono concordati.
+Le risposte in `08` chiariscono Barche, Comandate, densità, Valutazioni, OCR e autosave. Le revisioni successive hanno prodotto la galleria r4 con 19 viste: la dettatura non è più una pagina autonoma e vive nei pannelli nota/avaria; Q10–Q13 sono risolte in `12`. `09` resta non attivo finché i target complessivi e l'avvio implementativo non sono concordati.
 
 `01`–`04`, codice, test, configurazione e dati applicativi restano invariati. `04` conserva il registro dell'MVP concluso; `05` non sovrascrive implicitamente le specifiche vigenti.
 
@@ -33,7 +33,7 @@ Fotografie e screenshot originali non fanno parte della copia. Le future fixture
 ### Legenda
 
 - **DECISO:** indicazione esplicita nelle annotazioni/risposte; intento post-MVP, non autorizzazione a scrivere codice.
-- **MOCK DA RIVEDERE:** obiettivo chiaro, forma/interazione r3 da verificare.
+- **MOCK DA RIVEDERE:** obiettivo chiaro, forma/interazione corrente da verificare.
 - **APERTO:** decisione di prodotto necessaria.
 - **OPZIONALE:** fuori dal nucleo del ciclo salvo inclusione successiva.
 - **SEGNALATO:** osservazione umana da riprodurre sulla baseline.
@@ -130,7 +130,7 @@ AT nel foglio OCR è personale da riconoscere/escludere, non un nuovo ruolo rich
 | CMD-03 | POST_MVP_QOL / P1 | Quota base `floor(N/D)` uguale per ogni giorno; selezione esplicita dei “Giorni con più persone” per distribuire il resto.                 | DECISO, revisione r2     |
 | CMD-04 | POST_MVP_QOL / P1 | Settimana fino a venerdì visibile insieme. Quasi zero scroll sul telefono grande; deroghe misurate sugli altri viewport.                  | MOCK DA RIVEDERE, Q04   |
 | CMD-05 | POST_MVP_QOL / P1 | Selettore persone compatto, due colonne come base; tre solo se realmente leggibili.                                                       | MOCK DA RIVEDERE        |
-| CMD-06 | POST_MVP_QOL / P1 | Mai usato, una volta = corretto, più volte = warning. Già usati restano selezionabili. Il modello P13 centrato su giorno o persona è Q10. | APERTO Q10              |
+| CMD-06 | POST_MVP_QOL / P1 | P13 centrata sul giorno: assegnati correnti, mai assegnati, assegnati altrove; nome aggiunge al giorno corrente, X rossa rimuove dal giorno scritto per esteso. Più turni restano ammessi con warning. | DECISO, Q10             |
 | CMD-07 | POST_MVP_QOL / P1 | Warning sul giorno e persona; dettaglio breve al tap; Avvisi generale secondario. Distinguere informazione/giallo/rosso.                  | DECISO; duplicati rossi |
 | CMD-08 | POST_MVP_QOL / P1 | M bianca in quadrato rosso arrotondato accanto al nome, in lista e card; significato accessibile oltre al colore.                         | DECISO                  |
 
@@ -203,14 +203,14 @@ Le decisioni Q01–Q06/Q09 sono recepite; Q07 fissa piattaforme, permessi e coll
 
 ## 14. Galleria di design
 
-[Mock r3 — 19 viste principali](docs/post-mvp/mockups/index.html), separati dall'app. La revisione r2 è registrata in [11 — Revisione mock](docs/post-mvp/11_MOCK_REVIEW.md); le sole scelte residue sono in [12 — Domande r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md). I disegni non sono ancora target approvati e non attivano 09. La futura possibilità di usare immagini del canale Instagram come sfondo o immagine delle card resta un upgrade grafico separato, soggetto a scelta e diritti sugli asset.
+[Mock r4 — 19 viste principali](docs/post-mvp/mockups/index.html), separati dall'app. Le revisioni umane sono registrate in [11 — Revisione mock](docs/post-mvp/11_MOCK_REVIEW.md); Q10–Q13 sono consolidate in [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md). I disegni non sono ancora target complessivamente approvati e non attivano 09. La futura possibilità di usare immagini del canale Instagram come sfondo o immagine delle card resta un upgrade grafico separato, soggetto a scelta e diritti sugli asset.
 
-## 15. Consolidamento della revisione r2
+## 15. Consolidamento delle revisioni r2–r3
 
 - Home: simbolo CVC completo; Allievi, Equipaggi e Valutazioni con accento arancione; Barche, Comandate e Volontari con accento blu proposto. Il codice corso è dinamico: D/C e livello dalla scelta, settimana ISO e anno dal calendario.
-- Profilo/Conoscenza: note in peso regolare, altre note solo quando esistono; cinque taglie senza sbordo. Il limite delle note mostrate direttamente è Q13.
+- Profilo/Conoscenza: note in peso regolare, altre note solo quando esistono; due note recenti e poi “Altre note” su richiesta; cinque taglie senza sbordo.
 - Scan: review compatta con indicatori sticky e live per righe, campi mancanti e allievi inseriti.
 - Barche: per il ciclo corrente P07 offre RS Quest, RS 500, J/80, First 25.7 e First 27; il logo Quest completo e il numero formano un solo identificativo.
-- Comandate: feedback sticky assegnati/totale, neutro se completo e giallo se incompleto; P13 resta Q10.
-- Equipaggi: warning taglia/equipaggio distinto dal warning barca; fascia barche sticky proposta in Q11; lettura divisa in numero equipaggio, barca e persone.
-- Valutazioni: cinque scelte, nessuna selezione di default, secondo tap per annullare; riepiloghi senza simbolo di assenza e senza scroll orizzontale. Il riepilogo finale di P19 è Q12.
+- Comandate: feedback sticky assegnati/totale, neutro se completo e giallo se incompleto; P11 apre direttamente P13 sul giorno scelto, con giorni scritti per esteso e X rossa di rimozione.
+- Equipaggi: warning taglia/equipaggio distinto dal warning barca; fascia barche sticky su due righe e senza scroll orizzontale; lettura divisa in numero equipaggio, barca e persone.
+- Valutazioni: cinque scelte, nessuna selezione di default, secondo tap per annullare; riepiloghi senza simbolo di assenza e senza scroll orizzontale. In P19 la griglia settimanale precede la cronologia e il nome dell'allievo resta sticky.

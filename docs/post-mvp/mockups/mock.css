@@ -2131,3 +2131,215 @@ textarea:focus-visible {
     min-width: 40px;
   }
 }
+
+/* r4 — decisioni della revisione del 5 settembre 2026 */
+.secondary-note {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: #fff;
+}
+.other-notes > button {
+  min-height: 40px;
+}
+.all-notes {
+  gap: 7px;
+}
+.all-notes article {
+  padding: 9px;
+}
+.all-notes p {
+  margin: 4px 0 0;
+  font-weight: 400;
+  line-height: 1.35;
+}
+.duty-people-intro {
+  margin-bottom: 10px;
+}
+.duty-people-list {
+  gap: 6px;
+}
+.duty-person-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 4px 5px 4px 9px;
+}
+.duty-person-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.duty-person-main strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.duty-person-main small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.phone .duty-person-action {
+  width: 100%;
+  min-height: 40px;
+  justify-content: flex-start;
+  border: 0;
+  padding: 3px 2px;
+  text-align: left;
+  background: transparent;
+}
+.duty-day-assignments {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+}
+.duty-day-assignment {
+  display: grid;
+  grid-template-columns: minmax(58px, auto) 40px;
+  align-items: center;
+  gap: 3px;
+}
+.duty-day-label {
+  color: #5f7085;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: right;
+}
+.phone .remove-duty {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-color: #e3aeb2;
+  padding: 0;
+  color: var(--red);
+  background: #fff7f7;
+  font-size: 21px;
+  line-height: 1;
+}
+.duplicate-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--red) !important;
+}
+.duplicate-note .warning {
+  font-size: 12px;
+}
+.boat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  overflow: visible;
+}
+.phone .boat-toggle-r2 {
+  width: auto;
+  min-width: 0;
+  height: 50px;
+  min-height: 50px;
+  display: grid;
+  grid-template-rows: 20px 18px;
+  gap: 0;
+  place-items: center;
+  padding: 3px;
+}
+.boat-toggle-r2 .boat-brand {
+  width: min(58px, 100%);
+  height: 19px;
+}
+.boat-toggle-r2 strong {
+  font-size: 16px;
+  line-height: 18px;
+}
+.crew-session-summary {
+  padding: 6px 8px;
+}
+.crew-session-summary p {
+  margin: 2px 0 0;
+  line-height: 1.25;
+}
+.boat-summary-wrap,
+.boat-summary-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.boat-summary-id .boat-brand {
+  width: 58px;
+  max-width: none;
+  height: 20px;
+}
+.boat-summary-id strong {
+  color: var(--navy);
+  font-size: 18px;
+}
+.boat-summary-id.text-only {
+  font-size: 13px;
+  font-weight: 650;
+}
+.history-subject {
+  position: sticky;
+  top: -12px;
+  z-index: 4;
+  margin: -12px -13px 8px;
+  padding: 9px 13px 8px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f9fcf5;
+  box-shadow: 0 4px 12px #17385910;
+  backdrop-filter: blur(8px);
+}
+.history-subject h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.15;
+}
+.history-subject span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.history-summary {
+  position: static;
+  margin: 0 0 7px;
+  padding: 8px;
+}
+.history-days {
+  gap: 6px;
+}
+.history-day {
+  padding: 7px 8px;
+}
+.history-day > .row {
+  padding-bottom: 5px;
+}
+.session-cards {
+  gap: 5px;
+  margin-top: 5px;
+}
+.session-card {
+  min-height: 44px;
+  padding: 6px 7px;
+}
+.session-card.compact-empty {
+  min-height: 38px;
+}
+.session-card strong {
+  margin-bottom: 2px;
+}
+
+@container phone (max-width:350px) {
+  .duty-person-row {
+    grid-template-columns: minmax(96px, 1fr) auto;
+  }
+  .duty-day-assignment {
+    grid-template-columns: minmax(54px, auto) 40px;
+  }
+  .duty-day-label {
+    font-size: 11px;
+  }
+  .boat-summary-id .boat-brand {
+    width: 50px;
+  }
+}

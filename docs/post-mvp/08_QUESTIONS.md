@@ -1,6 +1,6 @@
 # 08 — Decisioni dopo la revisione umana
 
-**Stato:** risposte r1 consolidate e revisione pagina per pagina r2 recepita il 5 settembre 2026. Il codice resta fuori da questa fase; i mock r3 non sono automaticamente target approvati. Le nuove domande visuali sono isolate in [12](12_R2_REVIEW_QUESTIONS.md).
+**Stato:** risposte r1 consolidate e revisioni pagina per pagina fino al 5 settembre 2026 recepite. Il codice resta fuori da questa fase; i mock r4 non sono automaticamente target approvati. Q10–Q13 sono risolte in [12](12_R2_REVIEW_QUESTIONS.md).
 
 La [revisione originale dell'autore](sources/08_reviewed_2026-09-04.txt) conserva le risposte verbatim, prima della pulizia editoriale. SHA-256: `BE269A535301A8D7F8BF533CA36ABA0F922F725D69044C3B4004AEA43756278F`. Le domande/proposte precedenti sono anche nel checkpoint `9e6b6b5`.
 
@@ -62,7 +62,7 @@ La soglia “10 secondi per una nota di 15 secondi” era una proposta: **non è
 - [YouTube CVC](https://www.youtube.com/user/CentroVelicoCaprera)
 - [Fondazione CVC](https://www.fondazionecvc.org/)
 
-Usarli per palette, tipografia e marchio. Il nome definitivo dell'app e un eventuale logo derivato **non sono ancora scelte approvate**. La revisione r2 chiede sulla Home il simbolo CVC intero, tagliando soltanto la dicitura Fondazione. L'immagine RS Quest fornita era già tagliata a destra: la r3 conserva l'originale e usa una ricostruzione grafica completa come proposta, da non confondere con un nuovo asset ufficiale. Il codice corso è dinamico nel formato `D2 - 35 | 2026`. Le immagini Instagram restano un upgrade futuro.
+Usarli per palette, tipografia e marchio. Il nome definitivo dell'app e un eventuale logo derivato **non sono ancora scelte approvate**. La revisione r2 chiede sulla Home il simbolo CVC intero, tagliando soltanto la dicitura Fondazione. L'immagine RS Quest fornita era già tagliata a destra: dalla r3 la galleria conserva l'originale e usa una ricostruzione grafica completa come proposta, da non confondere con un nuovo asset ufficiale. Il codice corso è dinamico nel formato `D2 - 35 | 2026`. Le immagini Instagram restano un upgrade futuro.
 
 ## Q09 — Modifica immediata del profilo
 
@@ -72,4 +72,4 @@ Scorciatoia iniziale: form aperto e focalizzato sul campo; inline successivo sol
 
 ## Cosa resta da decidere guardando i mock
 
-P12 e la nuova geometria P17 sono confermate. Restano Q10 P13, Q11 P15, Q12 P19 e Q13 P04 nel documento `12`. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
+P12 e la nuova geometria P17 sono confermate. Q10–Q13 fissano ora P13 centrata sul giorno, P15 su due righe senza scroll orizzontale, P19 con riepilogo in alto e P04 con due note recenti. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.

@@ -1,6 +1,6 @@
 # 07 — Changelist per pagina e brief dei mock
 
-**Stato:** revisione umana r2 del 5 settembre recepita; galleria r3 disponibile con 19 viste principali. P03 e P10/P12 hanno approvazioni o conferme parziali registrate in `11`; P13/P15/P19 e il limite note P04 restano aperti in [12](12_R2_REVIEW_QUESTIONS.md). Nessuna pagina è implementata nell'app.
+**Stato:** revisioni umane fino al 5 settembre recepite; galleria r4 disponibile con 19 viste principali. Q10–Q13 sono risolte in [12](12_R2_REVIEW_QUESTIONS.md); P04/P13/P15/P19 mostrano ora tali decisioni e restano da rivedere visivamente. Nessuna pagina è implementata nell'app.
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 
@@ -52,7 +52,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 - Percorso esplicito Modifica; scorciatoia desktop/long press nel profilo sul campo. Prima proposta: apre il form e focalizza il campo; inline soltanto se semplice e coerente.
 - Mostrare Salvataggio/Salvato/errore senza popup per ogni edit. Creazione resta confermata esplicitamente; i record esistenti possono usare il contratto autosave Q09.
 - Eliminazione in zona secondaria distinta dalla disattivazione. Mostrare nome dell'allievo, conseguenza e conferma. Se usato, spiegare i legami effettivi con giorni/sessioni; niente cancellazioni a cascata.
-- Nota iniziale distinta dalla nota di settimana e dalle note valutazione. “Altre note” compare solo quando esistono, in peso tipografico regolare; Q13 decide quante recenti mostrare prima del link alla storia.
+- Nota iniziale distinta dalla nota di settimana e dalle note valutazione. “Note recenti” compare solo quando esistono, in peso tipografico regolare; mostra le ultime due, poi “Altre note” apre il resto su richiesta.
 
 **Mock:** lettura, form, campo focalizzato, errore salvataggio, eliminazione permessa/conferma, eliminazione bloccata con ragioni. **Accettazione:** modifica taglia/nota visibile anche in Conoscenza dopo reload; tutti i tipi di referenza impediscono delete, disattivazione disponibile; note proprie senza referenze non vengono arbitrariamente trattate come uso operativo. **Baseline:** gestione e persistenza studenti; checker invarianti.
 
@@ -152,11 +152,12 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 **Richieste:** CMD-05/06/08, UX-G02/04/05. **Natura:** layout e ordine.
 
-- **Aperto Q10:** scegliere fra vista centrata sul giorno (raccomandata: assegnati poi disponibili, tap aggiunge/rimuove) e vista centrata sulla persona con storia settimanale.
-- In entrambi i casi, già usati restano selezionabili; una volta è corretto, più volte produce warning e dettaglio. Rimozione e aggiunta devono essere reversibili senza gesto nascosto.
-- Giorno modificato e persone attualmente assegnate riconoscibili durante la scelta.
+- Il tap sulla card di un giorno in P11 apre direttamente P13, senza popup intermedio. Il giorno scelto rimane titolo e contesto della modifica.
+- Ordine fisso: persone nel giorno corrente, “Mai assegnati”, “Assegnati ad altri giorni”. Toccando il nome nelle ultime due sezioni si assegna la persona anche al giorno corrente.
+- I giorni esistenti sono scritti per esteso come testo informativo. Una X rossa rimuove la persona dal giorno indicato; se non restano giorni, la riga passa fra i mai assegnati.
+- Già usati restano selezionabili; una volta è corretto, più volte produce warning e dettaglio. Aggiunta e rimozione restano reversibili senza gesto nascosto.
 
-**Mock:** mai usato/una volta/più volte, minorenne, omonimi, nessuno libero. **Accettazione:** assegnazione ripetuta permessa e warning coerente in P11/P13; ordine non salta in modo da causare un tap involontario durante salvataggio. **Baseline:** sottovista di `DutyManagement.tsx`.
+**Mock:** giorno aperto direttamente da P11, mai usato/una volta/più volte, rimozione verso mai assegnati, minorenne, omonimi, nessuno libero. **Accettazione:** assegnazione ripetuta permessa e warning coerente in P11/P13; tap sul testo del giorno non modifica dati; ordine non salta in modo da causare un tap involontario durante salvataggio. **Baseline:** sottovista di `DutyManagement.tsx`.
 
 ## P14 — Equipaggi: setup, composizione e verifica
 
@@ -176,7 +177,8 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 **Richieste:** CREW-01/06, BOAT-02. **Natura:** pannello grafico e deselezione sessione secondo Q01 accettata.
 
-- Selettore barche sticky in una fascia breve contestuale alla sessione; ogni barca usa logo modello, numero e stato. La r3 propone una riga scorribile con sette elementi; Q11 decide se mantenerla o usare due righe.
+- Selettore barche sticky in una fascia breve contestuale alla sessione, su due righe e senza scroll orizzontale. Ogni controllo mostra logo/modello sopra e numero sotto, inclusi i numeri a due cifre.
+- Le card riepilogo equipaggio riducono lo spazio sotto i nomi e usano lo stesso logo della barca invece di ripetere “Quest” in testo.
 - Rendere distinti barche che escono, associazione esatta all'equipaggio, Mezzi, Non assegnato.
 - Deselezionare una barca dall'uscita scollega l'equipaggio nella sola sessione aperta; mantiene persone e altre sessioni. Indisponibilità corso conserva invece l'assegnazione e mostra rosso vicino alla barca; avaria aperta gialla, senza blocco automatico.
 - Copia barche precedente resta preview → modifica → conferma, separata dalla copia equipaggi.
@@ -219,11 +221,13 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 **Richieste:** UX-G03; presidio STUD-02/EVAL-02. **Natura:** coerenza e regressione.
 
 - Raggruppare gerarchicamente per giorno; dentro ogni giorno mostrare sottocard AM e PM con voto e nota.
-- Ridurre le sottocard senza nota/valutazione. La r3 aggiunge una griglia settimanale completa in fondo, mai tagliata e senza scroll orizzontale; Q12 conferma se è il riepilogo desiderato.
+- Il nome completo dell'allievo è il titolo principale, con “Storia del corso” secondario; questo contesto resta sticky durante lo scroll.
+- La griglia settimanale completa di P18 è in alto, non sticky, mai tagliata e senza scroll orizzontale.
+- Ridurre leggermente le card giorno/sessione e in particolare quelle senza nota o valutazione.
 - Ingresso dal Riepilogo focalizzato sulla storia secondo comportamento MVP; ritorno prevedibile.
 - Storia in sola lettura; modifica nella vista Valutazioni. Non confondere note iniziali e note sessione.
 
-**Mock:** storia vuota/completa, nota lunga, valore assente vuoto, ingresso da riepilogo. **Accettazione:** note e sessioni esatte, griglia finale completa, focus/ritorno conservati. **Baseline:** `StudentEvaluationHistory.tsx` e profilo.
+**Mock:** storia vuota/completa, nota lunga, valore assente vuoto, ingresso da riepilogo. **Accettazione:** note e sessioni esatte, griglia iniziale completa, soggetto sticky e focus/ritorno conservati. **Baseline:** `StudentEvaluationHistory.tsx` e profilo.
 
 ## P20 — Dettatura condivisa integrata, nessuna pagina
 
@@ -243,29 +247,29 @@ Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03
 
 ## 3. Registro dei mock e dei target
 
-Galleria r3: [apri i mock](mockups/index.html). Revisione umana r2 e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); scelte residue in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
+Galleria r4: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
 
-| Pagine | File / revisione                   | Approvazione          |
-| ------ | ---------------------------------- | --------------------- |
-| P01    | [P01 · r3](mockups/index.html#P01) | DA RIVEDERE           |
-| P02    | [P02 · r3](mockups/index.html#P02) | DA RIVEDERE           |
-| P03    | [P03 · r3](mockups/index.html#P03) | APPROVATO R2          |
-| P04    | [P04 · r3](mockups/index.html#P04) | APERTO Q13            |
-| P05    | [P05 · r3](mockups/index.html#P05) | DA RIVEDERE           |
-| P06    | [P06 · r3](mockups/index.html#P06) | DA RIVEDERE           |
-| P07    | [P07 · r3](mockups/index.html#P07) | DA RIVEDERE           |
-| P08    | [P08 · r3](mockups/index.html#P08) | DA RIVEDERE           |
-| P09    | [P09 · r3](mockups/index.html#P09) | DA RIVEDERE           |
-| P10    | [P10 · r3](mockups/index.html#P10) | APPROVATO R2 + FIX R3 |
-| P11    | [P11 · r3](mockups/index.html#P11) | DA RIVEDERE           |
-| P12    | [P12 · r3](mockups/index.html#P12) | APPROVATO R2          |
-| P13    | [P13 · r3](mockups/index.html#P13) | APERTO Q10            |
-| P14    | [P14 · r3](mockups/index.html#P14) | DA RIVEDERE           |
-| P15    | [P15 · r3](mockups/index.html#P15) | APERTO Q11            |
-| P16    | [P16 · r3](mockups/index.html#P16) | DA RIVEDERE           |
-| P17    | [P17 · r3](mockups/index.html#P17) | DA RIVEDERE           |
-| P18    | [P18 · r3](mockups/index.html#P18) | DA RIVEDERE           |
-| P19    | [P19 · r3](mockups/index.html#P19) | APERTO Q12            |
-| P20    | Integrata in P05/P09/P17           | NESSUNA PAGINA        |
+| Pagine | File / revisione                   | Approvazione             |
+| ------ | ---------------------------------- | ------------------------ |
+| P01    | [P01 · r3](mockups/index.html#P01) | DA RIVEDERE              |
+| P02    | [P02 · r3](mockups/index.html#P02) | DA RIVEDERE              |
+| P03    | [P03 · r3](mockups/index.html#P03) | APPROVATO R2             |
+| P04    | [P04 · r4](mockups/index.html#P04) | R4 DA RIVEDERE           |
+| P05    | [P05 · r3](mockups/index.html#P05) | DA RIVEDERE              |
+| P06    | [P06 · r3](mockups/index.html#P06) | DA RIVEDERE              |
+| P07    | [P07 · r3](mockups/index.html#P07) | DA RIVEDERE              |
+| P08    | [P08 · r3](mockups/index.html#P08) | DA RIVEDERE              |
+| P09    | [P09 · r3](mockups/index.html#P09) | DA RIVEDERE              |
+| P10    | [P10 · r3](mockups/index.html#P10) | APPROVATO R2 + FIX R3    |
+| P11    | [P11 · r3](mockups/index.html#P11) | APPROVATO R3             |
+| P12    | [P12 · r3](mockups/index.html#P12) | APPROVATO R2             |
+| P13    | [P13 · r4](mockups/index.html#P13) | R4 DA RIVEDERE           |
+| P14    | [P14 · r3](mockups/index.html#P14) | DA RIVEDERE              |
+| P15    | [P15 · r4](mockups/index.html#P15) | R4 DA RIVEDERE           |
+| P16    | [P16 · r3](mockups/index.html#P16) | DA RIVEDERE              |
+| P17    | [P17 · r3](mockups/index.html#P17) | DA RIVEDERE              |
+| P18    | [P18 · r3](mockups/index.html#P18) | DA RIVEDERE              |
+| P19    | [P19 · r4](mockups/index.html#P19) | STRUTTURA APPROVATA · R4 |
+| P20    | Integrata in P05/P09/P17           | NESSUNA PAGINA           |
 
-La r3 copre la vista principale di ogni brief e le interazioni richieste dalla revisione r2. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.
+La r4 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino a Q13. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.

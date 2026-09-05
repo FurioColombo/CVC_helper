@@ -1,46 +1,42 @@
-# 12 — Domande residue dopo la revisione r2
+# 12 — Decisioni dopo la revisione r2
 
-**Stato:** quattro scelte visuali/interattive aperte. Tutto il resto del feedback del 5 settembre 2026 è recepito nella [galleria r3](mockups/index.html). Le risposte aggiornano il target di design; non autorizzano ancora modifiche all'app.
+**Stato:** Q10–Q13 risolte il 5 settembre 2026 e tradotte nella [galleria r4](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
 
-## Q10 — P13: che cosa deve dominare quando modifico una Comandata?
+## Q10 — P13: che cosa domina quando modifico una Comandata?
 
-**Raccomandazione: vista centrata sul giorno.** Se sto modificando Sabato, mostrare prima “In Sabato” con le persone già assegnate e sotto “Disponibili”; un tap aggiunge o rimuove. Accanto al nome basta un avviso se la persona è già assegnata anche altrove, con dettaglio al tap.
+**DECISO — vista centrata sul giorno, con accesso diretto da P11.** Il tap sulla card di un giorno in P11 apre P13 senza popup intermedio. P13 mostra nell'ordine:
 
-Alternativa: conservare la vista r2 centrata sulla persona, con tutti i chip dei giorni della settimana accanto a ogni nome. Questa aiuta a ricostruire l'intera storia, ma rende meno immediato il compito “chi c'è sabato?” e ha prodotto l'ambiguità rilevata.
+1. persone assegnate al giorno corrente;
+2. persone mai assegnate;
+3. persone assegnate ad altri giorni.
 
-**Domanda:** per P13 preferisci la vista del giorno proposta, oppure vuoi mantenere la storia settimanale per persona?
+Nelle ultime due sezioni, toccare il nome assegna la persona anche al giorno corrente. I giorni già assegnati sono scritti per esteso come testo informativo, senza abbreviazioni e senza azione sul testo. Una X rossa rimuove la persona dal giorno indicato; se non restano assegnazioni, la persona passa fra i “Mai assegnati”. I duplicati restano consentiti e segnalati in rosso secondo CMD-07.
 
-## Q11 — P15: come deve scalare la fascia delle barche oltre cinque elementi?
+## Q11 — P15: come scala la fascia delle barche oltre cinque elementi?
 
-**Raccomandazione: una sola riga sticky, corta e scorribile orizzontalmente.** La r3 mostra sette barche; la fascia resta disponibile mentre si scorre l'elenco equipaggi e non consuma due righe. Lo scroll orizzontale sarebbe limitato a questo selettore di oggetti, con elementi grandi e discreti; il divieto resta assoluto per tabelle e riepiloghi come P18.
+**DECISO — due righe sticky, nessuno scroll orizzontale.** Tutte le barche della sessione devono essere visibili nello stesso momento. Ogni controllo mostra il logo/modello sopra e il numero sotto, così anche i numeri a due cifre rimangono interi. La fascia e le card equipaggio vengono compattate verticalmente; il riepilogo equipaggi usa lo stesso logo della barca.
 
-Alternativa: due righe che vanno a capo. Tutte le barche sono subito visibili, ma la fascia occupa molta più altezza ed è meno stabile quando il numero cambia.
+Il divieto di scroll orizzontale vale per l'intera interfaccia, compresi selettori e riepiloghi.
 
-**Domanda:** approvi la riga sticky scorribile, oppure preferisci due righe senza scroll orizzontale?
+## Q12 — P19: quale riepilogo serve nella storia?
 
-## Q12 — P19: quale riepilogo intendevi in fondo alla storia?
+**DECISO — griglia settimanale di P18, in alto e non sticky.** Il riepilogo S–V, AM/PM, entra nella larghezza disponibile e precede la cronologia dettagliata. Il nome completo dell'allievo diventa il titolo principale con “Storia del corso” secondario e rimane sticky durante lo scroll. Le card di giorno e sessione diventano leggermente più basse; assenza di valutazione resta una cella vuota.
 
-**Raccomandazione: la stessa griglia settimanale di P18.** La r3 aggiunge in fondo una griglia completa S–V, AM/PM, larga quanto la pagina e senza scroll orizzontale. È coerente con il Riepilogo generale e permette di confrontare rapidamente la cronologia dettagliata appena letta.
+## Q13 — P04: quante altre note mostrare direttamente nel profilo?
 
-Alternativa: una tabella di totali, per esempio numero di `++`, `+`, `=`, `-`, `--`. Questa risponde a una domanda diversa e perde la sequenza temporale.
-
-**Domanda:** il riepilogo r3 è quello che intendevi, oppure volevi una tabella di totali?
-
-## Q13 — P04: quante “altre note” mostrare direttamente nel profilo?
-
-**Raccomandazione: le due più recenti, poi “Apri storia”.** La sezione compare solo quando esistono note; nota iniziale, nota generale del corso e note valutazione restano etichettate e non si confondono. Mostrare tutta la cronologia nel profilo renderebbe inevitabile uno scroll lungo e duplicherebbe P19.
-
-La r3 mostra una nota recente come esempio e conserva l'accesso a Valutazioni/Storia.
-
-**Domanda:** va bene il limite di due note recenti, oppure vuoi tutte le note direttamente nel profilo?
+**DECISO — due note recenti, poi “Altre note”.** La sezione compare solo se esistono note. Mostra le due più recenti con tipo e sessione chiaramente etichettati; il comando “Altre note” apre il resto su richiesta. Nota iniziale, note generali del corso e note di valutazione restano concetti distinti.
 
 ## Chiarimento già risolto — tipi di barca
 
-Non serve una risposta salvo correzione del dato. La fonte normativa `01_PRODUCT_SPEC.md` usa:
+La fonte normativa `01_PRODUCT_SPEC.md` usa:
 
 - D5 → RS 500;
 - C1 → J/80;
 - C2 → First 25.7;
 - C3 → First 27.
 
-La r3 usa quindi **First 25.7**, non 27.5. P07 mostra per questo ciclo RS Quest, RS 500, J/80, First 25.7 e First 27.
+La r4 usa quindi **First 25.7**, non 27.5. P07 mostra per questo ciclo RS Quest, RS 500, J/80, First 25.7 e First 27.
+
+## Questioni ancora non bloccanti
+
+Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. Non cambiano la struttura r4 di P04, P13, P15 o P19.

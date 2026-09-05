@@ -22,8 +22,8 @@ const pages = [
   [
     "P04",
     "Profilo allievo",
-    "Dati e conoscenza nello stesso percorso di modifica.",
-    "Anagrafica, sesso, taglia, nota e valutazioni stanno insieme senza scroll inutile?",
+    "Dati e conoscenza nello stesso percorso, con le note recenti in evidenza.",
+    "Due note recenti bastano nel profilo e le altre restano facili da raggiungere?",
   ],
   [
     "P05",
@@ -76,8 +76,8 @@ const pages = [
   [
     "P13",
     "Persone Comandata",
-    "Mai usati prima, già usati riconoscibili e selezionabili.",
-    "Il rosso segnala la ripetizione senza suggerire un blocco?",
+    "Il giorno corrente guida aggiunte, rimozioni e controlli.",
+    "Assegnati, mai assegnati e altri giorni sono distinguibili senza abbreviazioni?",
   ],
   [
     "P14",
@@ -88,8 +88,8 @@ const pages = [
   [
     "P15",
     "Barche della sessione",
-    "Set dell'uscita distinto dalle persone in equipaggio.",
-    "Togli una barca selezionata: l'equipaggio conserva le persone e perde solo la barca.",
+    "Tutte le barche dell'uscita visibili in due righe, anche con numeri a due cifre.",
+    "Il selettore resta compatto e sticky senza alcuno scroll orizzontale?",
   ],
   [
     "P16",
@@ -112,8 +112,8 @@ const pages = [
   [
     "P19",
     "Storia allievo",
-    "Cronologia esatta con le note della sessione.",
-    "Giorni, sessioni e riepilogo finale sono completi e leggibili?",
+    "Soggetto persistente, riepilogo immediato e cronologia per giorno.",
+    "Il riepilogo in alto e le card più basse rendono la storia più rapida da leggere?",
   ],
 ]
 const people = [
@@ -416,7 +416,7 @@ function profileMarkup() {
     .join("")}</div>`
   const otherNotes =
     currentProfile === 0
-      ? `<div class="profile-block other-notes"><div class="row"><h3>Altre note</h3><span class="small muted">solo se presenti</span></div><button type="button" class="profile-note secondary-note" data-action="note" data-arg="${currentProfile}"><small>Domenica PM · valutazione</small><span>Più sicura nella virata; ricordare lo sguardo fuori dalla barca.</span></button></div>`
+      ? `<div class="profile-block other-notes"><div class="row"><h3>Note recenti</h3><span class="small muted">solo se presenti</span></div><article class="profile-note secondary-note"><small>Domenica PM · valutazione</small><span>Più sicura nella virata; ricordare lo sguardo fuori dalla barca.</span></article><article class="profile-note secondary-note"><small>Lunedì AM · corso</small><span>Lavora bene in coppia; riprendere la regolazione del fiocco.</span></article>${act("Altre note", "profileNotes", currentProfile, "plain full compact")}</div>`
       : ""
   if (profileEditing)
     return `<div class="notice">Modifiche salvate automaticamente quando i dati sono validi.</div><div class="form-grid">${field("Nome", p.name.split(" ")[0], "firstName")}${field("Cognome", p.surname, "surname")}${field("Nome visualizzato", p.name, "nickname")}${field("Data di nascita", dob, "dob", "date")}</div><h3>Sesso</h3>${sexButtons}${field("Telefono", "", "phone", "tel")}<h3>Taglia</h3>${sizeChoice(currentProfile)}<div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<p class="small muted" id="save-state">Salvato</p>${act("Fine", "editProfile", "off", "primary full")}`
@@ -476,25 +476,27 @@ function dutyPeopleMarkup() {
   groups.forEach((ids, day) =>
     ids.forEach((id) => uses.set(id, [...(uses.get(id) || []), day])),
   )
-  const makeRow = (p) => {
-    const assignedDays = uses.get(p.id) || []
-    const current = assignedDays.includes(selectedDay)
-    const tags = assignedDays
-      .map((day) =>
-        act(
-          `${shortDays[day]}${day === selectedDay ? " ×" : ""}`,
-          "dutyToggle",
-          `${day}:${p.id}`,
-          "day-chip",
-          `aria-label="Rimuovi ${esc(name(p.id))} da ${days[day]}"`,
-        ),
-      )
-      .join("")
-    return `<div class="panel assignment-row"><span class="person-name">${assignedDays.length ? '<span class="ok">✓</span> ' : ""}${esc(name(p.id))} ${minor(p.id)}</span><span class="day-tags">${tags}${current ? "" : act(`+ ${shortDays[selectedDay]}`, "dutyToggle", `${selectedDay}:${p.id}`, "day-chip", `aria-label="Aggiungi ${esc(name(p.id))} a ${days[selectedDay]}"`)}</span></div>`
-  }
+  const removeDay = (p, day) =>
+    `<span class="duty-day-assignment"><span class="duty-day-label">${days[day]}</span>${act("×", "dutyRemove", `${day}:${p.id}`, "remove-duty", `aria-label="Rimuovi ${esc(name(p.id))} da ${days[day]}"`)}</span>`
+  const current = all().filter((p) =>
+    (uses.get(p.id) || []).includes(selectedDay),
+  )
   const never = all().filter((p) => !(uses.get(p.id) || []).length)
-  const used = all().filter((p) => (uses.get(p.id) || []).length)
-  return `<div class="notice">${days[selectedDay]} · tocca <b>+ ${shortDays[selectedDay]}</b> per aggiungere; <b>${shortDays[selectedDay]} ×</b> per rimuovere.</div><h3>Mai assegnati · ${never.length}</h3><div class="stack">${never.map(makeRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Già assegnati</h3><div class="stack">${used.map(makeRow).join("")}</div>`
+  const elsewhere = all().filter((p) => {
+    const assignedDays = uses.get(p.id) || []
+    return assignedDays.length && !assignedDays.includes(selectedDay)
+  })
+  const currentRow = (p) => {
+    const otherDays = (uses.get(p.id) || []).filter(
+      (day) => day !== selectedDay,
+    )
+    return `<div class="panel duty-person-row"><span class="duty-person-main"><strong>${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} anche ${otherDays.map((day) => days[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
+  }
+  const neverRow = (p) =>
+    `<div class="panel duty-person-row">${act(`<span><strong>${esc(name(p.id))} ${minor(p.id)}</strong><small>Assegna a ${days[selectedDay]}</small></span>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
+  const elsewhereRow = (p) =>
+    `<div class="panel duty-person-row">${act(`<span><strong>${esc(name(p.id))} ${minor(p.id)}</strong><small>Assegna anche a ${days[selectedDay]}</small></span>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${(uses.get(p.id) || []).map((day) => removeDay(p, day)).join("")}</span></div>`
+  return `<div class="notice duty-people-intro"><strong>${days[selectedDay]}</strong><br />Tocca un nome per assegnarlo a questo giorno. La X rimuove dal giorno indicato.</div><h3>In ${days[selectedDay]} · ${current.length}</h3><div class="stack duty-people-list">${current.map(currentRow).join("") || '<p class="muted">Nessuna persona assegnata.</p>'}</div><h3>Mai assegnati · ${never.length}</h3><div class="stack duty-people-list">${never.map(neverRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Assegnati ad altri giorni · ${elsewhere.length}</h3><div class="stack duty-people-list">${elsewhere.map(elsewhereRow).join("") || '<p class="muted">Nessuna assegnazione in altri giorni.</p>'}</div>`
 }
 function crewMarkup() {
   const assigned = assignments.flat().filter((id) => id !== null)
@@ -514,11 +516,17 @@ function crewMarkup() {
     .join("")}</div>`
 }
 function boatsSessionMarkup() {
-  return `<div class="boat-strip-wrap"><div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Scorri e tocca</span></div><div class="boat-strip">${boatNumbers.map((n) => act(`${questLogo}<strong>${n}</strong>`, "boatToggle", n, "boat-toggle-r2", `aria-label="Quest ${n}" aria-pressed="${sessionBoats.has(n)}"`)).join("")}</div></div><h3>Equipaggi</h3><div class="stack compact-crew-list">${assignments
+  const boatDestination = (boat) =>
+    boat
+      ? boat === "Mezzi"
+        ? '<span class="boat-summary-id text-only">Mezzi</span>'
+        : `<span class="boat-summary-id">${questLogo}<strong>${boat}</strong></span>`
+      : '<span class="boat-summary-id text-only muted">Senza barca</span>'
+  return `<div class="boat-strip-wrap"><div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Includi / escludi</span></div><div class="boat-strip">${boatNumbers.map((n) => act(`${questLogo}<strong>${n}</strong>`, "boatToggle", n, "boat-toggle-r2", `aria-label="Quest ${n}" aria-pressed="${sessionBoats.has(n)}"`)).join("")}</div></div><h3>Equipaggi</h3><div class="stack compact-crew-list">${assignments
     .slice(0, 6)
     .map(
       (ids, i) =>
-        `<div class="panel" style="padding:9px"><div class="row"><strong>Equipaggio ${i + 1}</strong><span>${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : "Quest " + crewBoats[i]) : "Senza barca"} ${isWarning() && crewBoats[i] === 11 ? warn(true) : ""}</span></div><p class="muted">${ids
+        `<div class="panel crew-session-summary"><div class="row"><strong>Equipaggio ${i + 1}</strong><span class="boat-summary-wrap">${boatDestination(crewBoats[i])}${isWarning() && crewBoats[i] === 11 ? warn(true) : ""}</span></div><p class="muted">${ids
           .filter((id) => id !== null)
           .map((id) => esc(name(id)))
           .join(" / ")}</p></div>`,
@@ -621,14 +629,13 @@ function historyMarkup() {
       : values[index] === null
         ? `<span class="eval-cell empty-eval" aria-label="${sessions[index]}: nessuna valutazione"></span>`
         : `<span class="eval-cell ${markClass(values[index])}">${values[index]}</span>`
-  return `<div class="notice">${esc(fullName(currentProfile))} · storia del corso</div><div class="stack">${pairs
+  const summary = `<section class="panel history-summary"><div class="row"><strong>Riepilogo settimana</strong><span class="small muted">AM / PM</span></div><div class="week-grid" aria-label="Riepilogo settimanale">${pairs.map((pair, day) => `<span class="week-day"><small>${shortDays[day]}</small>${summaryCell(pair[0])}${summaryCell(pair[1])}</span>`).join("")}</div></section>`
+  return `<div class="history-subject"><h3>${esc(fullName(currentProfile))}</h3><span>Storia del corso</span></div>${summary}<div class="stack history-days">${pairs
     .map(
       (pair, day) =>
         `<section class="panel history-day"><div class="row"><strong>${days[day]}</strong><span class="small muted">${pair.filter((i) => i !== null).length} ${pair[0] === null ? "sessione" : "sessioni"}</span></div><div class="session-cards">${pair.map((index, slot) => (index === null ? '<div class="session-card compact-empty muted"><strong>AM</strong><span>Nessuna sessione</span></div>' : `<div class="session-card ${index === 2 ? "has-note" : "compact-empty"}"><strong>${slot === 0 ? "AM" : "PM"}<span class="history-mark ${values[index] === null ? "" : markClass(values[index])}" aria-label="${values[index] === null ? "Nessuna valutazione" : "Valutazione " + values[index]}">${values[index] || ""}</span></strong><span>${index === 2 ? "Più sicura nella virata; ricordare lo sguardo." : "Nessuna nota."}</span></div>`)).join("")}</div></section>`,
     )
-    .join(
-      "",
-    )}</div><section class="panel history-summary"><div class="row"><strong>Riepilogo settimana</strong><span class="small muted">AM / PM</span></div><div class="week-grid" aria-label="Riepilogo settimanale">${pairs.map((pair, day) => `<span class="week-day"><small>${shortDays[day]}</small>${summaryCell(pair[0])}${summaryCell(pair[1])}</span>`).join("")}</div></section>`
+    .join("")}</div>`
 }
 
 function markIcon(mark) {
@@ -794,7 +801,7 @@ function content() {
 }
 function render() {
   const p = pages.find((p) => p[0] === page)
-  $("#page-id").textContent = `${p[0]} · REVISIONE 3`
+  $("#page-id").textContent = `${p[0]} · REVISIONE 4`
   $("#review-title").textContent = p[1]
   $("#review-goal").textContent = p[2]
   $("#review-question").textContent = p[3]
@@ -894,6 +901,12 @@ function handle(action, arg, button) {
     case "historyProfile":
       currentProfile = Number(arg)
       setPage("P19")
+      break
+    case "profileNotes":
+      showSheet(
+        `Altre note · ${name(Number(arg))}`,
+        '<div class="stack all-notes"><article class="panel"><small class="muted">Martedì PM · corso</small><p>Regolazioni più autonome con vento stabile.</p></article><article class="panel"><small class="muted">Domenica AM · corso</small><p>Ripassare la sequenza di partenza dal pontile.</p></article><article class="panel"><small class="muted">Sabato PM · valutazione</small><p>Buona comunicazione con il compagno di equipaggio.</p></article></div>',
+      )
       break
     case "newStudent":
       profileEditing = true
@@ -1090,15 +1103,7 @@ function handle(action, arg, button) {
       break
     case "dutyDay":
       selectedDay = Number(arg)
-      showSheet(
-        days[selectedDay],
-        `<p>${duties()
-          .at(selectedDay)
-          .map((id) => esc(name(id)))
-          .join(
-            " · ",
-          )}</p>${isWarning() ? '<div class="notice error">Giulia compare anche in un altro turno. Puoi mantenere questa scelta.</div>' : ""}${act("Modifica persone", "goto", "P13", "primary full")}`,
-      )
+      setPage("P13")
       break
     case "dutyWarnings":
       showSheet(
@@ -1151,6 +1156,26 @@ function handle(action, arg, button) {
         dutyAdds.add(key)
       }
       render()
+      break
+    }
+    case "dutyAddCurrent": {
+      const id = Number(arg)
+      const key = `${selectedDay}:${id}`
+      if (!duties()[selectedDay].includes(id)) {
+        dutyRemovals.delete(key)
+        dutyAdds.add(key)
+      }
+      render()
+      toast(`${name(id)} assegnato a ${days[selectedDay]}`)
+      break
+    }
+    case "dutyRemove": {
+      const [day, id] = arg.split(":").map(Number)
+      const key = `${day}:${id}`
+      dutyAdds.delete(key)
+      dutyRemovals.add(key)
+      render()
+      toast(`${name(id)} rimosso da ${days[day]}`)
       break
     }
     case "proposalConfirm":

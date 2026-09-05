@@ -1,6 +1,6 @@
 # 06 — Regole di design per il ciclo post-MVP
 
-**Stato:** aggiornato alla revisione umana r2 del 5 settembre 2026; geometria r3 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock approvato.
+**Stato:** aggiornato alle revisioni umane fino al 5 settembre 2026; geometria r4 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock complessivamente approvato.
 
 ## 1. Ordine delle decisioni
 
@@ -29,6 +29,7 @@ Ogni pagina dichiara la decisione che aiuta a prendere. Composizione/verifica po
 | R15 | Una pagina per volta: target discusso → implementazione → verifica → checkpoint.                                                                                                                                    | Nessuna chiusura basata solo su codice o screenshot statico.                                                                               |
 | R16 | Costruire la gerarchia con spaziatura, raggruppamento, allineamento e tipografia; aggiungere bordi, fondi e ombre soltanto quando chiariscono davvero una relazione o uno stato.                                    | Togliere un trattamento decorativo alla volta: la struttura deve restare leggibile. Niente card annidate come impaginazione predefinita.   |
 | R17 | Evitare l'aspetto da template generico: niente collezioni arbitrarie di pill, gradienti, eyebrow, frecce decorative o card identiche. Il linguaggio visivo deve derivare da barche, persone, turni e avvisi reali.  | Ogni componente decorativo deve corrispondere a contenuto, azione o stato del dominio; audit su screenshot aggiornati dopo ogni revisione. |
+| R18 | Nessuno scroll orizzontale nell'interfaccia operativa, compresi selettori di oggetti e riepiloghi. Usare griglie che vanno a capo, gerarchie verticali e contenuti compatti.                                        | Misurare pagina e contenitori interni nei viewport 430/412/390/320 px; `scrollWidth` non deve superare `clientWidth`.                      |
 
 ### Fonti e limiti delle raccomandazioni
 
@@ -97,15 +98,18 @@ Una bella immagine non dimostra il funzionamento. Un target approvato richiede l
 
 La revisione Q08 indica i siti CVC/Fondazione e i canali social. Nella [home CVC](https://www.centrovelicocaprera.it/) osservata il 4 settembre 2026 il testo usa Roboto, alcune intestazioni arancione `#db7637`, e il logo rosso/blu è disponibile come asset della pagina. Sono osservazioni della pagina, non una palette normativa del marchio.
 
-La [galleria r3](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r3.
+La [galleria r4](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r4.
 
-### Regole aggiunte dalla revisione r2
+### Regole aggiunte dalle revisioni r2–r3
 
-- Un indicatore sticky deve rispondere a una domanda operativa che resta valida durante lo scroll: avanzamento OCR, copertura Comandate o barche della sessione. Non rendere sticky un titolo puramente decorativo.
-- Logo/modello e numero barca formano un solo identificativo orizzontale; non ripetere il nome in testo se è già leggibile nel logo. Numero equipaggio e numero barca restano campi distinti.
+- Un elemento sticky deve conservare un contesto operativo necessario durante lo scroll: avanzamento OCR, copertura Comandate, barche della sessione o identità dell'allievo nella sua storia. Non rendere sticky un titolo puramente decorativo.
+- Logo/modello e numero barca formano un solo identificativo; non ripetere il nome in testo se è già leggibile nel logo. Possono stare affiancati nelle righe larghe o sovrapposti nei selettori stretti. Numero equipaggio e numero barca restano campi distinti.
 - Un warning dell'equipaggio può esistere senza warning della barca. Il dettaglio elenca separatamente composizione/taglie, indisponibilità e avarie.
 - L'assenza di valutazione è spazio vuoto con etichetta accessibile, non un sesto valore visibile.
-- Le sezioni condizionali, come “Altre note”, non occupano spazio quando sono vuote e non devono duplicare una cronologia completa già disponibile altrove.
+- Le sezioni condizionali, come “Note recenti”, non occupano spazio quando sono vuote. Nel profilo mostrare al massimo due note recenti e aprire le altre su richiesta, mantenendo distinti tipo e provenienza.
+- La modifica di una Comandata è centrata sul giorno scelto in P11 e si apre senza popup intermedio. Ordine: assegnati correnti, mai assegnati, assegnati altrove; giorni per esteso e X rossa per rimuovere.
+- I selettori di barche vanno a capo in due righe e non scorrono lateralmente; logo sopra e numero sotto quando la larghezza è stretta.
+- Nella storia allievo il riepilogo settimanale precede la cronologia senza restare sticky; nome e contesto dell'allievo restano visibili durante lo scroll.
 
 ## 8. Metodo di progettazione adottato
 

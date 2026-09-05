@@ -1,6 +1,6 @@
 {
   "date": "2026-09-05",
-  "artifact": "Standalone UX mock gallery r3",
+  "artifact": "Standalone UX mock gallery r4",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
   "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
@@ -12,116 +12,72 @@
     "layoutCases": 152,
     "description": "19 primary views × 4 sizes × normal and warnings states, with 23 synthetic students.",
     "pageHorizontalOverflowCases": 0,
+    "internalHorizontalOverflowCases": 0,
     "controlsBelow40CSSPxCases": 0,
-    "p15InternalBoatStrip": {
-      "viewport": "430x820",
-      "clientWidth": 389,
-      "scrollWidth": 548,
-      "status": "INTENTIONAL_PROPOSAL_AWAITING_Q11"
+    "minimumVisibleControlWidth": 40,
+    "minimumVisibleControlHeight": 40,
+    "p15InternalBoatStripAt320": {
+      "clientWidth": 279,
+      "scrollWidth": 279,
+      "visualRows": 2,
+      "twoDigitBoatNumbersContained": true,
+      "status": "PASS"
     },
     "formatting": "PASS",
     "javascriptSyntax": "PASS",
+    "lint": "PASS",
     "interactions": [
       {
-        "action": "P01/P02 course identity",
-        "observed": "The complete CVC symbol is visible. Selecting Cabinato then level 4 updates the preview to C4 - 35 | 2026; bottom navigation remains hidden."
+        "action": "P04 recent and additional notes",
+        "observed": "Two recent notes are visible only for the populated profile; Altre note opens the remaining labelled notes on demand."
       },
       {
-        "action": "P05 size controls",
-        "observed": "Five 40px controls remain inside each card at 430/412/390; at 320 they move below the name."
+        "action": "P11 to P13 direct entry",
+        "observed": "Selecting Mercoledì opens P13 directly with no intermediate dialog and preserves the selected day as page context."
       },
       {
-        "action": "P06 scan review",
-        "observed": "Filling the missing birth date changes missing fields 1 to 0 and inserted students 2 to 3 in the sticky summary."
+        "action": "P13 remove and assign",
+        "observed": "Removing Luca B. from Sabato moves the row to Mai assegnati; tapping the name assigns Luca B. to Mercoledì. Full day names remain informational and the X is the explicit remove action."
       },
       {
-        "action": "P10 new volunteer",
-        "observed": "Add volunteer opens with an empty name and ADV selected by default."
+        "action": "P15 boats and crews",
+        "observed": "Seven boats form two sticky rows at 320px, numbers 11/14/15 remain within their controls, and crew summaries use the Quest logo. Toggling a boat preserves the people."
       },
       {
-        "action": "P11 duty coverage",
-        "observed": "Warning scenario shows 20/21 unique students in a yellow sticky status; normal scenario is neutral when complete."
+        "action": "P19 hierarchy and sticky context",
+        "observed": "The weekly summary precedes the day cards and is static. After scrolling to the end, the student subject remains at the top while the summary has left the viewport."
       },
       {
-        "action": "P14 crew warning",
-        "observed": "Crew 1 displays two XL students and its warning detail states the crew-size reason independently from boat faults."
-      },
-      {
-        "action": "P15/P16 boats and reading",
-        "observed": "Seven session boats fit in a sticky internal scroller; reading cards separate crew number, boat logo/number, and names."
-      },
-      {
-        "action": "P17 evaluation toggle",
-        "observed": "First tap selects one of five values; tapping the selected value again changes aria-pressed back to false."
-      },
-      {
-        "action": "P18/P19 absence and summary",
-        "observed": "Missing evaluations render as blank cells; positive/negative colors are reserved; P19 final seven-day AM/PM grid is fully visible without page overflow."
+        "action": "Regression interactions",
+        "observed": "Course identity, scan counters, duty coverage, crew warnings, evaluation toggle and blank evaluation cells remain operational in the isolated mock."
       }
     ]
   },
   "observedScrollNormal23": {
     "P04": {
-      "430x820": 0,
-      "412x760": 6,
-      "390x664": 102,
-      "320x664": 197
-    },
-    "P11": {
-      "430x820": 0,
-      "412x760": 36,
-      "390x664": 132,
-      "320x664": 132
-    },
-    "P12": {
-      "430x820": 0,
-      "412x760": 0,
-      "390x664": 77,
-      "320x664": 160
-    },
-    "P14": {
-      "430x820": 1218,
-      "412x760": 1278,
-      "390x664": 1374,
-      "320x664": 1398
+      "430x820": 73,
+      "412x760": 133,
+      "390x664": 229,
+      "320x664": 324
     },
     "P15": {
-      "430x820": 8,
-      "412x760": 68,
-      "390x664": 164,
-      "320x664": 164
-    },
-    "P16": {
-      "430x820": 115,
-      "412x760": 175,
-      "390x664": 271,
-      "320x664": 271
-    },
-    "P17": {
-      "430x820": 1823,
-      "412x760": 1883,
-      "390x664": 1979,
-      "320x664": 1979
-    },
-    "P18": {
-      "430x820": 2827,
-      "412x760": 2887,
-      "390x664": 2983,
-      "320x664": 2983
+      "430x820": 0,
+      "412x760": 0,
+      "390x664": 93,
+      "320x664": 93
     },
     "P19": {
-      "430x820": 343,
-      "412x760": 403,
-      "390x664": 499,
-      "320x664": 514
+      "430x820": 222,
+      "412x760": 282,
+      "390x664": 378,
+      "320x664": 394
     }
   },
   "limitations": [
     "Measurements describe synthetic layouts and primary interactive states, not every production state.",
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
     "P17 deliberately uses more vertical space to keep full names and five direct evaluation controls visible.",
-    "P15 internal horizontal strip and P04/P19 content choices await Q11-Q13.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "Human approval is still required before any design becomes an implementation target."
+    "Human review of r4 is still required before its changed pages become implementation targets."
   ]
 }
