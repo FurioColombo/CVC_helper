@@ -1,6 +1,6 @@
 {
   "date": "2026-09-05",
-  "artifact": "Standalone UX mock gallery r4",
+  "artifact": "Standalone UX mock gallery r6",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
   "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
@@ -16,11 +16,32 @@
     "controlsBelow40CSSPxCases": 0,
     "minimumVisibleControlWidth": 40,
     "minimumVisibleControlHeight": 40,
+    "p11TopAlignment": {
+      "viewport": "320x664",
+      "firstRowCardContentTopEqual": true,
+      "status": "PASS"
+    },
+    "p13TwoColumnGrid": {
+      "430x820": "191.571px 191.571px",
+      "412x760": "182.571px 182.571px",
+      "390x664": "171.571px 171.571px",
+      "320x664": "136.571px 136.571px",
+      "horizontalOverflowCases": 0,
+      "removeHitArea": "40x40",
+      "warningIcon": "inline SVG",
+      "duplicateExample": "Sabato, Mercoledì",
+      "status": "PASS"
+    },
     "p15InternalBoatStripAt320": {
       "clientWidth": 279,
       "scrollWidth": 279,
       "visualRows": 2,
       "twoDigitBoatNumbersContained": true,
+      "status": "PASS"
+    },
+    "p18SortingControls": {
+      "label": "Ordinamento",
+      "buttonHeight": 40,
       "status": "PASS"
     },
     "formatting": "PASS",
@@ -29,27 +50,31 @@
     "interactions": [
       {
         "action": "P04 recent and additional notes",
-        "observed": "Two recent notes are visible only for the populated profile; Altre note opens the remaining labelled notes on demand."
+        "observed": "Two recent notes are visible only for the populated profile; Altre note opens the remaining labelled notes on demand; the header action is labelled Modifica."
       },
       {
         "action": "P11 to P13 direct entry",
-        "observed": "Selecting Mercoledì opens P13 directly with no intermediate dialog and preserves the selected day as page context."
+        "observed": "Selecting a day opens P13 directly with no intermediate dialog; cards with different content remain aligned at the top."
       },
       {
-        "action": "P13 remove and assign",
-        "observed": "Removing Luca B. from Sabato moves the row to Mai assegnati; tapping the name assigns Luca B. to Mercoledì. Full day names remain informational and the X is the explicit remove action."
+        "action": "P13 duplicate, remove and assign",
+        "observed": "Names stay in two columns from 430px through 320px. The duplicate uses an SVG warning and reads Sabato, Mercoledì. Full day names remain informational, name-only buttons assign to the current day, and the X is the explicit remove action."
       },
       {
-        "action": "P15 boats and crews",
-        "observed": "Seven boats form two sticky rows at 320px, numbers 11/14/15 remain within their controls, and crew summaries use the Quest logo. Toggling a boat preserves the people."
+        "action": "P14 return to available",
+        "observed": "Double-clicking Giulia increases Disponibili from 3 to 4 and leaves the original crew slot free. Crew headers show the real destination and separate crew number without the redundant word Destinazione."
       },
       {
-        "action": "P19 hierarchy and sticky context",
-        "observed": "The weekly summary precedes the day cards and is static. After scrolling to the end, the student subject remains at the top while the summary has left the viewport."
+        "action": "P15 boat assignment",
+        "observed": "Grey, green and blue boat states are simultaneously visible with a legend. Selecting Equipaggio 5 without a boat and then blue Quest 14 makes Quest 14 green and updates the crew summary. This mock mutation is in memory only."
+      },
+      {
+        "action": "P18 ordering",
+        "observed": "Ordinamento appears above Alfabetico and Valutazione; both controls are 40 CSS px high and the overview has no horizontal overflow."
       },
       {
         "action": "Regression interactions",
-        "observed": "Course identity, scan counters, duty coverage, crew warnings, evaluation toggle and blank evaluation cells remain operational in the isolated mock."
+        "observed": "Course identity, scan counters, duty coverage, crew warnings, evaluation toggle, blank evaluation cells and P19 hierarchy remain operational in the isolated mock."
       }
     ]
   },
@@ -58,13 +83,13 @@
       "430x820": 73,
       "412x760": 133,
       "390x664": 229,
-      "320x664": 324
+      "320x664": 294
     },
     "P15": {
-      "430x820": 0,
-      "412x760": 0,
-      "390x664": 93,
-      "320x664": 93
+      "430x820": 111,
+      "412x760": 171,
+      "390x664": 267,
+      "320x664": 267
     },
     "P19": {
       "430x820": 222,
@@ -78,6 +103,6 @@
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
     "P17 deliberately uses more vertical space to keep full names and five direct evaluation controls visible.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "Human review of r4 is still required before its changed pages become implementation targets."
+    "P04 and P19 are approved and the visual structure of P15 is approved. Human review of the r6 refinements and interactions on P08, P13, P14, P15 and P18 is still required."
   ]
 }

@@ -47,7 +47,7 @@ const pages = [
     "P08",
     "Barche",
     "Numero, tipo, guasto e disponibilità leggibili insieme.",
-    "Giallo per avaria e rosso per indisponibilità sono distinti?",
+    "Da controllare è giallo; Disponibile resta neutro e leggibile?",
   ],
   [
     "P09",
@@ -65,7 +65,7 @@ const pages = [
     "P11",
     "Comandate",
     "Sette gruppi da confrontare nello stesso sguardo.",
-    "Venerdì e tutti i nomi sono visibili sul target grande? Prova gli avvisi.",
+    "Le card con pochi nomi partono dall'alto come le altre? Prova gli avvisi.",
   ],
   [
     "P12",
@@ -76,20 +76,20 @@ const pages = [
   [
     "P13",
     "Persone Comandata",
-    "Il giorno corrente guida aggiunte, rimozioni e controlli.",
-    "Assegnati, mai assegnati e altri giorni sono distinguibili senza abbreviazioni?",
+    "Due colonne di nomi, con assegnazioni e rimozioni separate.",
+    "I nomi sembrano cliccabili senza ripetere l'azione dentro ogni bottone?",
   ],
   [
     "P14",
     "Equipaggi",
     "Persone disponibili e destinazioni vicine.",
-    "Seleziona una persona, poi uno slot o un'altra persona. Il contesto resta leggibile?",
+    "Il doppio tap su un allievo lo riporta fra i disponibili senza ambiguità?",
   ],
   [
     "P15",
     "Barche della sessione",
     "Tutte le barche dell'uscita visibili in due righe, anche con numeri a due cifre.",
-    "Il selettore resta compatto e sticky senza alcuno scroll orizzontale?",
+    "Grigio non disponibile, verde assegnata e blu libera guidano l'assegnazione?",
   ],
   [
     "P16",
@@ -107,7 +107,7 @@ const pages = [
     "P18",
     "Riepilogo",
     "Sequenza, note e numero di voti; niente media numerica.",
-    "Le sette colonne AM/PM restano allineate e leggibili senza scroll orizzontale?",
+    "L'etichetta Ordinamento e i controlli più bassi restano chiari?",
   ],
   [
     "P19",
@@ -247,6 +247,9 @@ let evaluation = {},
   unavailable = new Set(),
   selectedDay = 0
 let pendingCrew = null,
+  selectedCrewForBoat = null,
+  lastCrewTapId = null,
+  lastCrewTapAt = 0,
   toastTimer,
   lastFocus
 let scanCandidates = [
@@ -286,17 +289,18 @@ const minor = (id) =>
     ? '<span class="badge minor" aria-label="Minorenne">M</span>'
     : ""
 const warn = (major = false) =>
-  `<span class="warning ${major ? "major" : ""}" aria-label="${major ? "Avviso rosso" : "Avviso giallo"}">⚠</span>`
+  `<span class="warning ${major ? "major" : ""}" aria-label="${major ? "Avviso rosso" : "Avviso giallo"}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 22 21H2L12 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5M12 17.5v.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`
 function initCrews() {
   assignments = Array.from({ length: Math.ceil((count - 2) / 2) }, (_, i) => [
     i * 2 < 16 ? i * 2 : null,
     i * 2 + 1 < 16 ? i * 2 + 1 : null,
   ])
   crewBoats = assignments.map((_, i) =>
-    i === 5 ? "Mezzi" : (boatNumbers[i] ?? null),
+    i === 4 ? null : i === 5 ? "Mezzi" : (boatNumbers[i] ?? null),
   )
   selected = null
-  sessionBoats = new Set(boatNumbers)
+  selectedCrewForBoat = null
+  sessionBoats = new Set(boatNumbers.filter((number) => number !== 11))
 }
 initCrews()
 function personButton(id, action = "profile", arg = id, crew = false) {
@@ -306,7 +310,7 @@ function personButton(id, action = "profile", arg = id, crew = false) {
     action,
     arg,
     `${crew ? "crew-member" : "person"}${selected === id ? " selected" : ""}${isWarning() && id === 22 ? " disabled-person" : ""}`,
-    `aria-pressed="${selected === id}"`,
+    `aria-pressed="${selected === id}"${crew && id < 100 ? ` data-double-action="crewReturn" aria-label="${esc(name(id))}. Doppio tap per rendere disponibile"` : ""}`,
   )
 }
 function toast(message) {
@@ -384,8 +388,13 @@ function boatsMarkup(action = "boatDetail") {
     .map((n) => {
       const red = unavailable.has(n) || (isWarning() && n === 11)
       const openFaults = faults.filter((f) => f.boat === n && f.state !== 2)
+      const stateClass = red
+        ? "not-available"
+        : openFaults.length
+          ? "needs-check"
+          : "ready"
       return act(
-        `<span class="boat-identity">${questLogo}<strong>${n}</strong></span><div class="row"><span class="boat-fault-count">${openFaults.length} ${openFaults.length === 1 ? "avaria" : "avarie"}</span><span class="boat-state">${red ? "Non disponibile" : openFaults.length ? "Da controllare" : "Disponibile"}</span></div>`,
+        `<span class="boat-identity">${questLogo}<strong>${n}</strong></span><div class="row"><span class="boat-fault-count">${openFaults.length} ${openFaults.length === 1 ? "avaria" : "avarie"}</span><span class="boat-state ${stateClass}">${red ? "Non disponibile" : openFaults.length ? "Da controllare" : "Disponibile"}</span></div>`,
         action,
         n,
         `boat-card boat-card-r2${red ? " unavailable" : ""}${action === "boatToggle" && sessionBoats.has(n) ? " selected" : ""}`,
@@ -420,7 +429,7 @@ function profileMarkup() {
       : ""
   if (profileEditing)
     return `<div class="notice">Modifiche salvate automaticamente quando i dati sono validi.</div><div class="form-grid">${field("Nome", p.name.split(" ")[0], "firstName")}${field("Cognome", p.surname, "surname")}${field("Nome visualizzato", p.name, "nickname")}${field("Data di nascita", dob, "dob", "date")}</div><h3>Sesso</h3>${sexButtons}${field("Telefono", "", "phone", "tel")}<h3>Taglia</h3>${sizeChoice(currentProfile)}<div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<p class="small muted" id="save-state">Salvato</p>${act("Fine", "editProfile", "off", "primary full")}`
-  return `<div class="profile-hero"><div><h3>${esc(p.name)} ${esc(p.surname)} ${minor(currentProfile)}</h3><p class="muted">${p.age} anni · ${p.sex}</p></div>${act("Modifica dati", "editProfile", "on", "compact")}</div><div class="profile-facts"><div class="profile-fact"><small>Data di nascita</small><strong>${dob.split("-").reverse().join("/")}</strong></div><div class="profile-fact"><small>Telefono</small><strong>—</strong></div></div><div class="profile-block"><div class="row"><h3>Sesso</h3><span class="small muted">salvataggio immediato</span></div>${sexButtons}</div><div class="profile-block"><h3>Taglia</h3>${sizeChoice(currentProfile)}</div><div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<div class="profile-block">${act(`<span><strong>Valutazioni</strong><small class="muted" style="display:block">6 voti · ultima valutazione +</small></span><span>Apri</span>`, "historyProfile", currentProfile, "profile-evals")}</div><div style="margin-top:10px">${act("Disponibilità ed eliminazione", "profileMore", "", "plain full")}</div>`
+  return `<div class="profile-hero"><div><h3>${esc(p.name)} ${esc(p.surname)} ${minor(currentProfile)}</h3><p class="muted">${p.age} anni · ${p.sex}</p></div>${act("Modifica", "editProfile", "on", "compact")}</div><div class="profile-facts"><div class="profile-fact"><small>Data di nascita</small><strong>${dob.split("-").reverse().join("/")}</strong></div><div class="profile-fact"><small>Telefono</small><strong>—</strong></div></div><div class="profile-block"><div class="row"><h3>Sesso</h3><span class="small muted">salvataggio immediato</span></div>${sexButtons}</div><div class="profile-block"><h3>Taglia</h3>${sizeChoice(currentProfile)}</div><div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<div class="profile-block">${act(`<span><strong>Valutazioni</strong><small class="muted" style="display:block">6 voti · ultima valutazione +</small></span><span>Apri</span>`, "historyProfile", currentProfile, "profile-evals")}</div><div style="margin-top:10px">${act("Disponibilità ed eliminazione", "profileMore", "", "plain full")}</div>`
 }
 function scanMarkup() {
   if (scanStep >= 2) {
@@ -490,13 +499,13 @@ function dutyPeopleMarkup() {
     const otherDays = (uses.get(p.id) || []).filter(
       (day) => day !== selectedDay,
     )
-    return `<div class="panel duty-person-row"><span class="duty-person-main"><strong>${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} anche ${otherDays.map((day) => days[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
+    return `<div class="panel duty-person-row"><span class="duty-person-main"><strong>${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} ${[selectedDay, ...otherDays].map((day) => days[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
   }
   const neverRow = (p) =>
-    `<div class="panel duty-person-row">${act(`<span><strong>${esc(name(p.id))} ${minor(p.id)}</strong><small>Assegna a ${days[selectedDay]}</small></span>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
+    `<div class="panel duty-person-row">${act(`<strong>${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
   const elsewhereRow = (p) =>
-    `<div class="panel duty-person-row">${act(`<span><strong>${esc(name(p.id))} ${minor(p.id)}</strong><small>Assegna anche a ${days[selectedDay]}</small></span>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${(uses.get(p.id) || []).map((day) => removeDay(p, day)).join("")}</span></div>`
-  return `<div class="notice duty-people-intro"><strong>${days[selectedDay]}</strong><br />Tocca un nome per assegnarlo a questo giorno. La X rimuove dal giorno indicato.</div><h3>In ${days[selectedDay]} · ${current.length}</h3><div class="stack duty-people-list">${current.map(currentRow).join("") || '<p class="muted">Nessuna persona assegnata.</p>'}</div><h3>Mai assegnati · ${never.length}</h3><div class="stack duty-people-list">${never.map(neverRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Assegnati ad altri giorni · ${elsewhere.length}</h3><div class="stack duty-people-list">${elsewhere.map(elsewhereRow).join("") || '<p class="muted">Nessuna assegnazione in altri giorni.</p>'}</div>`
+    `<div class="panel duty-person-row">${act(`<strong>${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${(uses.get(p.id) || []).map((day) => removeDay(p, day)).join("")}</span></div>`
+  return `<div class="notice duty-people-intro">Tocca un nome per assegnarlo al giorno aperto. La X rimuove dal giorno indicato.</div><h3>In ${days[selectedDay]} · ${current.length}</h3><div class="stack duty-people-list">${current.map(currentRow).join("") || '<p class="muted">Nessuna persona assegnata.</p>'}</div><h3>Mai assegnati · ${never.length}</h3><div class="stack duty-people-list">${never.map(neverRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Assegnati ad altri giorni · ${elsewhere.length}</h3><div class="stack duty-people-list">${elsewhere.map(elsewhereRow).join("") || '<p class="muted">Nessuna assegnazione in altri giorni.</p>'}</div>`
 }
 function crewMarkup() {
   const assigned = assignments.flat().filter((id) => id !== null)
@@ -511,7 +520,7 @@ function crewMarkup() {
         (fault) => fault.boat === boat && fault.state !== 2,
       )
       const crewSizeWarning = isWarning() && i === 0
-      return `<section class="crew-card"><div class="crew-head">${act(`<span>${boat ? (boat === "Mezzi" ? "Mezzi" : `Quest <strong>${boat}</strong>`) : `Equipaggio ${i + 1}`}</span><span class="muted small">Destinazione · equipaggio ${i + 1}</span>`, "crewDestination", i, "crew-destination", `aria-label="Destinazione equipaggio ${i + 1}"`)}${red || yellow || crewSizeWarning ? act(warn(red || crewSizeWarning), "crewWarning", i, "crew-warning", `aria-label="Motivo avviso equipaggio ${i + 1}"`) : '<span aria-hidden="true"></span>'}</div><div class="crew-members">${ids.map((id, j) => (id === null ? act("Posto libero +", "slot", `${i}:${j}`, "crew-member", `aria-label="Posto libero equipaggio ${i + 1}"`) : personButton(id, "selectPerson", id, true))).join("")}</div></section>`
+      return `<section class="crew-card"><div class="crew-head">${act(`<span>${boat ? (boat === "Mezzi" ? "Mezzi" : `Quest <strong>${boat}</strong>`) : "Senza barca"}</span><span class="muted small">Equipaggio ${i + 1}</span>`, "crewDestination", i, "crew-destination", `aria-label="Destinazione equipaggio ${i + 1}"`)}${red || yellow || crewSizeWarning ? act(warn(red || crewSizeWarning), "crewWarning", i, "crew-warning", `aria-label="Motivo avviso equipaggio ${i + 1}"`) : '<span aria-hidden="true"></span>'}</div><div class="crew-members">${ids.map((id, j) => (id === null ? act("Posto libero +", "slot", `${i}:${j}`, "crew-member", `aria-label="Posto libero equipaggio ${i + 1}"`) : personButton(id, "selectPerson", id, true))).join("")}</div></section>`
     })
     .join("")}</div>`
 }
@@ -522,14 +531,41 @@ function boatsSessionMarkup() {
         ? '<span class="boat-summary-id text-only">Mezzi</span>'
         : `<span class="boat-summary-id">${questLogo}<strong>${boat}</strong></span>`
       : '<span class="boat-summary-id text-only muted">Senza barca</span>'
-  return `<div class="boat-strip-wrap"><div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Includi / escludi</span></div><div class="boat-strip">${boatNumbers.map((n) => act(`${questLogo}<strong>${n}</strong>`, "boatToggle", n, "boat-toggle-r2", `aria-label="Quest ${n}" aria-pressed="${sessionBoats.has(n)}"`)).join("")}</div></div><h3>Equipaggi</h3><div class="stack compact-crew-list">${assignments
-    .slice(0, 6)
-    .map(
-      (ids, i) =>
-        `<div class="panel crew-session-summary"><div class="row"><strong>Equipaggio ${i + 1}</strong><span class="boat-summary-wrap">${boatDestination(crewBoats[i])}${isWarning() && crewBoats[i] === 11 ? warn(true) : ""}</span></div><p class="muted">${ids
+  const boatControl = (n) => {
+    const assignedCrew = crewBoats.findIndex((boat) => boat === n)
+    const unavailableBoat =
+      !sessionBoats.has(n) || unavailable.has(n) || (isWarning() && n === 11)
+    const state = unavailableBoat
+      ? "boat-unavailable"
+      : assignedCrew >= 0
+        ? "boat-assigned"
+        : "boat-available"
+    const stateLabel = unavailableBoat
+      ? "Non disponibile"
+      : assignedCrew >= 0
+        ? `Assegnata all'equipaggio ${assignedCrew + 1}`
+        : "Disponibile non assegnata"
+    return act(
+      `${questLogo}<strong>${n}</strong>`,
+      "boatToggle",
+      n,
+      `boat-toggle-r2 ${state}`,
+      `aria-label="Quest ${n} · ${stateLabel}" aria-pressed="${sessionBoats.has(n)}"`,
+    )
+  }
+  return `<div class="boat-strip-wrap"><div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Includi / escludi</span></div><div class="boat-state-legend"><span class="legend-assigned">Assegnata</span><span class="legend-available">Libera</span><span class="legend-unavailable">Non disponibile</span></div><div class="boat-strip">${boatNumbers.map(boatControl).join("")}</div></div><h3>Equipaggi</h3><p class="small muted boat-assignment-help">Per assegnare: equipaggio, poi barca blu.</p>${selectedCrewForBoat !== null ? `<div class="notice boat-pending">Equipaggio ${selectedCrewForBoat + 1} selezionato · scegli una barca blu.</div>` : ""}<div class="stack compact-crew-list">${assignments
+    .slice(0, 8)
+    .map((ids, i) =>
+      act(
+        `<span class="row"><strong>Equipaggio ${i + 1}</strong><span class="boat-summary-wrap">${boatDestination(crewBoats[i])}${isWarning() && crewBoats[i] === 11 ? warn(true) : ""}</span></span><span class="crew-summary-names muted">${ids
           .filter((id) => id !== null)
           .map((id) => esc(name(id)))
-          .join(" / ")}</p></div>`,
+          .join(" / ")}</span>`,
+        "selectCrewForBoat",
+        i,
+        "panel crew-session-summary",
+        `aria-label="Equipaggio ${i + 1}, ${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : `Quest ${crewBoats[i]}`) : "senza barca"}" aria-pressed="${selectedCrewForBoat === i}"`,
+      ),
     )
     .join(
       "",
@@ -547,7 +583,7 @@ function evaluationRows(ids) {
     .join("")
 }
 function overviewMarkup() {
-  return `<div class="toolbar">${act("Alfabetico", "sortOverview", "alpha", "selected")}${act("Valutazione", "sortOverview", "score")}</div><div class="stack" id="overview-list">${overviewRows(all())}</div>`
+  return `<small class="overview-sort-label">Ordinamento</small><div class="toolbar overview-sort-buttons">${act("Alfabetico", "sortOverview", "alpha", "selected")}${act("Valutazione", "sortOverview", "score")}</div><div class="stack" id="overview-list">${overviewRows(all())}</div>`
 }
 function overviewRows(list) {
   const values = [
@@ -801,7 +837,7 @@ function content() {
 }
 function render() {
   const p = pages.find((p) => p[0] === page)
-  $("#page-id").textContent = `${p[0]} · REVISIONE 4`
+  $("#page-id").textContent = `${p[0]} · REVISIONE 6`
   $("#review-title").textContent = p[1]
   $("#review-goal").textContent = p[2]
   $("#review-question").textContent = p[3]
@@ -1198,8 +1234,26 @@ function handle(action, arg, button) {
       else if (selected !== null && loc) {
         placeSelected(...loc)
         return
-      } else selected = id
+      } else {
+        selected = id
+        if (loc && button?.dataset.doubleAction === "crewReturn") {
+          button.classList.add("selected")
+          button.setAttribute("aria-pressed", "true")
+          break
+        }
+      }
       render()
+      break
+    }
+    case "crewReturn": {
+      const id = Number(arg)
+      const loc = locationOf(id)
+      if (id < 100 && loc) {
+        assignments[loc[0]][loc[1]] = null
+        selected = null
+        render()
+        toast(`${name(id)} di nuovo disponibile`)
+      }
       break
     }
     case "slot":
@@ -1270,9 +1324,40 @@ function handle(action, arg, button) {
       render()
       break
     }
+    case "selectCrewForBoat": {
+      const crewIndex = Number(arg)
+      selectedCrewForBoat = selectedCrewForBoat === crewIndex ? null : crewIndex
+      render()
+      if (selectedCrewForBoat !== null)
+        toast(`Equipaggio ${selectedCrewForBoat + 1} selezionato`)
+      break
+    }
     case "boatToggle": {
-      const n = Number(arg),
-        affected = crewBoats.flatMap((b, i) => (b === n ? [i + 1] : []))
+      const n = Number(arg)
+      const assignedCrew = crewBoats.findIndex((boat) => boat === n)
+      const blocked =
+        !sessionBoats.has(n) || unavailable.has(n) || (isWarning() && n === 11)
+      if (selectedCrewForBoat !== null) {
+        if (blocked) {
+          toast("Scegli una barca blu disponibile")
+          return
+        }
+        if (assignedCrew >= 0 && assignedCrew !== selectedCrewForBoat) {
+          toast(`Barca già assegnata all'equipaggio ${assignedCrew + 1}`)
+          return
+        }
+        crewBoats[selectedCrewForBoat] = n
+        const crewNumber = selectedCrewForBoat + 1
+        selectedCrewForBoat = null
+        render()
+        toast(`Quest ${n} assegnata all'equipaggio ${crewNumber}`)
+        return
+      }
+      if (unavailable.has(n) || (isWarning() && n === 11)) {
+        toast("Barca non disponibile")
+        return
+      }
+      const affected = crewBoats.flatMap((b, i) => (b === n ? [i + 1] : []))
       if (sessionBoats.has(n)) {
         sessionBoats.delete(n)
         crewBoats = crewBoats.map((b) => (b === n ? null : b))
@@ -1377,8 +1462,30 @@ function handle(action, arg, button) {
 }
 document.addEventListener("click", (event) => {
   const b = event.target.closest("[data-action]")
-  if (b) handle(b.dataset.action, b.dataset.arg, b)
-  else if (event.target === $("#sheet")) closeSheet()
+  if (b) {
+    if (b.dataset.doubleAction === "crewReturn") {
+      const now = Date.now()
+      const id = b.dataset.arg
+      if (lastCrewTapId === id && now - lastCrewTapAt < 650) {
+        lastCrewTapId = null
+        lastCrewTapAt = 0
+        handle(b.dataset.doubleAction, id, b)
+        return
+      }
+      lastCrewTapId = id
+      lastCrewTapAt = now
+    } else {
+      lastCrewTapId = null
+      lastCrewTapAt = 0
+    }
+    handle(b.dataset.action, b.dataset.arg, b)
+  } else if (event.target === $("#sheet")) closeSheet()
+})
+document.addEventListener("dblclick", (event) => {
+  const target = event.target.closest("[data-double-action]")
+  if (!target) return
+  event.preventDefault()
+  handle(target.dataset.doubleAction, target.dataset.arg, target)
 })
 document.addEventListener("keydown", (event) => {
   if ($("#sheet").hidden) return

@@ -4,7 +4,7 @@
 
 **Baseline prodotto:** 0.1.0, checkpoint MVP `c907b19`.
 
-**Revisione editoriale:** 5 settembre 2026; risposte di `08` e revisioni pagina per pagina fino alla r3 recepite nella galleria r4.
+**Revisione editoriale:** 5 settembre 2026; risposte di `08` e revisioni pagina per pagina fino all'ultimo feedback r5 recepite nella galleria r6.
 
 ## 1. Come usare questo pacchetto
 
@@ -16,11 +16,11 @@ Questo documento integra annotazioni manuali, risposte già date e richieste ori
 | [06 — Regole di design](docs/post-mvp/06_DESIGN_RULEBOOK.md)                | Principi da applicare a ogni pagina                        | Proposta verificabile            |
 | [07 — Changelist per pagina](docs/post-mvp/07_PAGE_CHANGELOG.md)            | Cambiamenti, stati da disegnare e accettazione             | Bozza avanzata                   |
 | [08 — Decisioni della revisione](docs/post-mvp/08_QUESTIONS.md)             | Risposte Q01–Q09 consolidate                                | Recepito fino al 5 settembre     |
-| [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md)          | Q10–Q13 risolte e tradotte nei mock r4                      | Consolidato                      |
+| [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md)          | Q10–Q13 risolte e rifinite nei mock r6                      | Consolidato                      |
 | [09 — Guida implementativa](docs/post-mvp/09_IMPLEMENTATION_GUIDE.md)       | Futuro equivalente di `04`, milestone e prove              | Non attiva                       |
 | [10 — Specifiche e versioni](docs/post-mvp/10_SPEC_UPDATES_AND_RELEASES.md) | Piano per `01`–`03`, raccordo `AGENTS`/`04`, versionamento | Non applicato                    |
 
-Le risposte in `08` chiariscono Barche, Comandate, densità, Valutazioni, OCR e autosave. Le revisioni successive hanno prodotto la galleria r4 con 19 viste: la dettatura non è più una pagina autonoma e vive nei pannelli nota/avaria; Q10–Q13 sono risolte in `12`. `09` resta non attivo finché i target complessivi e l'avvio implementativo non sono concordati.
+Le risposte in `08` chiariscono Barche, Comandate, densità, Valutazioni, OCR e autosave. Le revisioni successive hanno prodotto la galleria r6 con 19 viste: la dettatura non è più una pagina autonoma e vive nei pannelli nota/avaria; Q10–Q13 sono risolte in `12`. `09` resta non attivo finché i target complessivi e l'avvio implementativo non sono concordati.
 
 `01`–`04`, codice, test, configurazione e dati applicativi restano invariati. `04` conserva il registro dell'MVP concluso; `05` non sovrascrive implicitamente le specifiche vigenti.
 
@@ -47,7 +47,7 @@ Classi originali: `MVP_DEFECT`, `POST_MVP_QOL`, `NICE_TO_HAVE`, `OPEN`. Priorit�
 | UX-G01 | POST_MVP_QOL / P1            | Informazioni della stessa decisione visibili insieme. Ridurre scroll e passaggi; dettaglio secondario raggiungibile con un tap.                            | DECISO                  |
 | UX-G02 | POST_MVP_QOL / P1            | Poche opzioni: selezioni dirette, prima di tutto taglia XS–XL compatta. Proporre altri casi utili.                                                         | DECISO                  |
 | UX-G03 | POST_MVP_QOL / P1            | Ridurre header, padding, testo ridondante, card e icone sproporzionate. Considerarlo insieme a UX-G01 per ogni pagina.                                     | DECISO                  |
-| UX-G04 | POST_MVP_QOL / P1            | Stato e avvisi su giorno/persona/barca coinvolti. Triangolo della severità corretta; M bianca su rosso per minore; C bianca su blu per comandata corrente. | DECISO; duplicati rossi |
+| UX-G04 | POST_MVP_QOL / P1            | Stato e avvisi su giorno/persona/barca coinvolti. Icona triangolo vettoriale della severità corretta, non carattere testuale; M bianca su rosso per minore; C bianca su blu per comandata corrente. | DECISO; duplicati rossi |
 | UX-G05 | POST_MVP_QOL / P2            | Icone piccole e informative: sesso/ruolo, barca, eventuale parte guasta; fallback chiaro. Icone personalizzate in ICON-01.                                 | MOCK DA RIVEDERE        |
 | UX-G06 | POST_MVP_QOL / P2            | Modifica esplicita sempre disponibile; doppio click/pressione prolungata come scorciatoie, specialmente sul campo del profilo.                             | DECISO nell'intento     |
 | UX-G07 | OPEN / P2                    | Regole riutilizzabili e verificabili, senza teoria fine a sé stessa.                                                                                       | Prima proposta in `06`  |
@@ -104,7 +104,7 @@ Superfici: nota iniziale, nota valutazione e avaria. Q07 richiede browser PC, An
 | ID      | Classe / priorità                            | Requisito consolidato                                                                                               | Stato            |
 | ------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | BOAT-01 | POST_MVP_QOL / P2                            | Numeri multipli separati da virgola, spazi, newline o punto e virgola; separatori ripetuti non creano barche vuote. | DECISO           |
-| BOAT-02 | POST_MVP_QOL / P2                            | Linguaggio comune Barche/Avarie: tipo, numero, disponibilità, avarie, preview/dettaglio, icone e colori.            | MOCK DA RIVEDERE |
+| BOAT-02 | POST_MVP_QOL / P2                            | Linguaggio comune Barche/Avarie: tipo, numero, disponibilità, avarie, preview/dettaglio, icone e colori. In P08 “Da controllare” è giallo; “Disponibile” resta neutro. | MOCK DA RIVEDERE |
 | CREW-06 | Nuovo ID da commento in CREW-01; P1 proposto | Deselezionare dall'uscita della sessione aperta: equipaggio senza barca, persone conservate.                        | DECISO, Q01      |
 
 BOAT-01 è parzialmente presente: parser con virgola, punto e virgola e newline, filtro vuoti/duplicati; mancano spazi interni come separatori. Preservare deduplicazione.
@@ -130,7 +130,7 @@ AT nel foglio OCR è personale da riconoscere/escludere, non un nuovo ruolo rich
 | CMD-03 | POST_MVP_QOL / P1 | Quota base `floor(N/D)` uguale per ogni giorno; selezione esplicita dei “Giorni con più persone” per distribuire il resto.                 | DECISO, revisione r2     |
 | CMD-04 | POST_MVP_QOL / P1 | Settimana fino a venerdì visibile insieme. Quasi zero scroll sul telefono grande; deroghe misurate sugli altri viewport.                  | MOCK DA RIVEDERE, Q04   |
 | CMD-05 | POST_MVP_QOL / P1 | Selettore persone compatto, due colonne come base; tre solo se realmente leggibili.                                                       | MOCK DA RIVEDERE        |
-| CMD-06 | POST_MVP_QOL / P1 | P13 centrata sul giorno: assegnati correnti, mai assegnati, assegnati altrove; nome aggiunge al giorno corrente, X rossa rimuove dal giorno scritto per esteso. Più turni restano ammessi con warning. | DECISO, Q10             |
+| CMD-06 | POST_MVP_QOL / P1 | P13 centrata sul giorno e su due colonne: assegnati correnti, mai assegnati, assegnati altrove; il nome è un bottone senza testo d'azione ripetuto, la X rossa rimuove dal giorno scritto per esteso. Più turni restano ammessi con warning. | DECISO, Q10 + revisione r4 |
 | CMD-07 | POST_MVP_QOL / P1 | Warning sul giorno e persona; dettaglio breve al tap; Avvisi generale secondario. Distinguere informazione/giallo/rosso.                  | DECISO; duplicati rossi |
 | CMD-08 | POST_MVP_QOL / P1 | M bianca in quadrato rosso arrotondato accanto al nome, in lista e card; significato accessibile oltre al colore.                         | DECISO                  |
 
@@ -148,10 +148,12 @@ AT nel foglio OCR è personale da riconoscere/escludere, non un nuovo ruolo rich
 | CREW-04 | POST_MVP_QOL / P1 | Contatore inseriti/totale piccolo, sticky/flottante; preferenza basso-destra da verificare.                                                                                     | MOCK DA RIVEDERE |
 | CREW-05 | POST_MVP_QOL / P1 | La lista disponibile rappresenta i mancanti ed è subito azionabile. Niente wall of text e **nessun dialog separato dei mancanti**.                                              | DECISO           |
 | CREW-06 | Vedi §6           | Scollegamento barca mantenendo equipaggio.                                                                                                                                      | DECISO, Q01      |
+| CREW-07 | POST_MVP_QOL / P1 | Doppio click desktop o doppio tap touch su un allievo già nell'equipaggio lo riporta fra i Disponibili e libera quello slot.                                                    | DECISO           |
+| CREW-08 | POST_MVP_QOL / P1 | In P15: grigio = barca non disponibile, verde = assegnata, blu = disponibile non assegnata. Selezionare un equipaggio senza barca e poi una barca blu crea l'associazione nella sessione e la persiste. | DECISO           |
 
 A21 sostituisce il vecchio suggerimento del dialog al tap sul contatore. Proposta: contatore informativo oppure accesso al pool già presente. Volontari preferibilmente separati; breve scroll accettabile perché usati raramente, dialog solo con beneficio dimostrato.
 
-Preservare tap persona → destinazione, tap persona → scambio, long press → profilo, selezione visibile, A terra individuale, Mezzi come destinazione di un vero equipaggio e annunci senza obbligo di barca. STUD-03 riguarda il profilo: non cambia il long press negli Equipaggi.
+Preservare tap persona → destinazione, tap persona → scambio, long press → profilo, doppio tap → ritorno fra i Disponibili, selezione visibile, A terra individuale, Mezzi come destinazione di un vero equipaggio e annunci senza obbligo di barca. STUD-03 riguarda il profilo: non cambia il long press negli Equipaggi. Il doppio tap è una scorciatoia: l'implementazione deve offrire la stessa azione anche con un comando esplicito e accessibile.
 
 ## 10. Avarie
 
@@ -166,7 +168,7 @@ Preview, gerarchia tipo/numero e controllo stato hanno proposte reversibili in `
 
 ## 11. Valutazioni — annotazione finale integrata
 
-Richieste originariamente senza ID/priorità. Classe proposta POST_MVP_QOL; P1 proposto per EVAL-01/03, P2 per EVAL-02/04/05.
+Richieste originariamente senza ID/priorità. Classe proposta POST_MVP_QOL; P1 proposto per EVAL-01/03, P2 per EVAL-02/04/05/06.
 
 | Nuovo ID | Requisito                                                                                                      | Stato                |
 | -------- | -------------------------------------------------------------------------------------------------------------- | -------------------- |
@@ -175,6 +177,7 @@ Richieste originariamente senza ID/priorità. Classe proposta POST_MVP_QOL; P1 p
 | EVAL-03  | Selettore sessione a destra del titolo.                                                                        | DECISO               |
 | EVAL-04  | Selettore vista meno alto; non implica spostarlo in fondo alla pagina.                                         | DECISO nell'intento  |
 | EVAL-05  | Eliminare “Una valutazione per allievo e sessione”.                                                            | DECISO               |
+| EVAL-06  | In P18 introdurre la piccola etichetta “Ordinamento” sopra Alfabetico/Valutazione e ridurre leggermente l'altezza dei due controlli, conservando un target di 40 px. | DECISO, revisione r6 |
 
 Colore = segno della valutazione, non nuova severità o etichetta della persona. Una cella vuota resta distinta da `=`; medie numeriche invisibili, conteggi reali e note di sessione conservati.
 
@@ -203,14 +206,14 @@ Le decisioni Q01–Q06/Q09 sono recepite; Q07 fissa piattaforme, permessi e coll
 
 ## 14. Galleria di design
 
-[Mock r4 — 19 viste principali](docs/post-mvp/mockups/index.html), separati dall'app. Le revisioni umane sono registrate in [11 — Revisione mock](docs/post-mvp/11_MOCK_REVIEW.md); Q10–Q13 sono consolidate in [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md). I disegni non sono ancora target complessivamente approvati e non attivano 09. La futura possibilità di usare immagini del canale Instagram come sfondo o immagine delle card resta un upgrade grafico separato, soggetto a scelta e diritti sugli asset.
+[Mock r6 — 19 viste principali](docs/post-mvp/mockups/index.html), separati dall'app. Le revisioni umane sono registrate in [11 — Revisione mock](docs/post-mvp/11_MOCK_REVIEW.md); Q10–Q13 sono consolidate in [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md). I disegni non sono ancora target complessivamente approvati e non attivano 09. La futura possibilità di usare immagini del canale Instagram come sfondo o immagine delle card resta un upgrade grafico separato, soggetto a scelta e diritti sugli asset.
 
-## 15. Consolidamento delle revisioni r2–r3
+## 15. Consolidamento delle revisioni r2–r6
 
 - Home: simbolo CVC completo; Allievi, Equipaggi e Valutazioni con accento arancione; Barche, Comandate e Volontari con accento blu proposto. Il codice corso è dinamico: D/C e livello dalla scelta, settimana ISO e anno dal calendario.
-- Profilo/Conoscenza: note in peso regolare, altre note solo quando esistono; due note recenti e poi “Altre note” su richiesta; cinque taglie senza sbordo.
+- Profilo/Conoscenza: note in peso regolare, altre note solo quando esistono; due note recenti e poi “Altre note” su richiesta; cinque taglie senza sbordo; azione “Modifica” breve nel profilo.
 - Scan: review compatta con indicatori sticky e live per righe, campi mancanti e allievi inseriti.
-- Barche: per il ciclo corrente P07 offre RS Quest, RS 500, J/80, First 25.7 e First 27; il logo Quest completo e il numero formano un solo identificativo.
-- Comandate: feedback sticky assegnati/totale, neutro se completo e giallo se incompleto; P11 apre direttamente P13 sul giorno scelto, con giorni scritti per esteso e X rossa di rimozione.
-- Equipaggi: warning taglia/equipaggio distinto dal warning barca; fascia barche sticky su due righe e senza scroll orizzontale; lettura divisa in numero equipaggio, barca e persone.
-- Valutazioni: cinque scelte, nessuna selezione di default, secondo tap per annullare; riepiloghi senza simbolo di assenza e senza scroll orizzontale. In P19 la griglia settimanale precede la cronologia e il nome dell'allievo resta sticky.
+- Barche: per il ciclo corrente P07 offre RS Quest, RS 500, J/80, First 25.7 e First 27; il logo Quest completo e il numero formano un solo identificativo. In P08 lo stato da controllare usa il giallo, distinto dal disponibile neutro.
+- Comandate: feedback sticky assegnati/totale, neutro se completo e giallo se incompleto; le card P11 si allineano in alto. P11 apre direttamente P13 sul giorno scelto, con nomi su due colonne, icona warning vettoriale, tutti i giorni coinvolti scritti per esteso, nessuna microcopy ripetuta nei bottoni nome e X rossa compatta.
+- Equipaggi: warning taglia/equipaggio distinto dal warning barca; il doppio tap riporta l'allievo fra i Disponibili. La fascia barche P15 è sticky, su due righe e senza scroll orizzontale; grigio indica indisponibile, verde assegnata, blu disponibile non assegnata. Selezione equipaggio → barca blu crea l'associazione da persistere. Lettura divisa in numero equipaggio, barca e persone.
+- Valutazioni: cinque scelte, nessuna selezione di default, secondo tap per annullare; riepiloghi senza simbolo di assenza e senza scroll orizzontale. P18 esplicita “Ordinamento” sopra controlli da 40 px; in P19 la griglia settimanale precede la cronologia e il nome dell'allievo resta sticky.

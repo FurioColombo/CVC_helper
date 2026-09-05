@@ -1,4 +1,4 @@
-# Mock UX r4 — guida alla revisione
+# Mock UX r6 — guida alla revisione
 
 Questa galleria è separata dall'app. Non importa codice o dati applicativi e non simula persistenza, OCR, fotocamera o microfono reali. Le interazioni servono a discutere geometria, gerarchia e feedback.
 
@@ -19,26 +19,26 @@ Poi aprire `http://127.0.0.1:8785/#P01`. Il server espone soltanto questa cartel
 3. P06: `Fai una foto` → scatto → rotazione libera/crop.
 4. P11 con stato `Con avvisi / nomi lunghi`, poi tap su un giorno per entrare direttamente in P13.
 5. P12 per “Giorni con più persone” e selezione stay-over fra tutti.
-6. P14: toccare destinazione e triangolo; osservare A terra/Volontari in basso; in P15 controllare la fascia su due righe.
-7. P17, P18 e P19 per inserimento, riepilogo e storia delle valutazioni; in P19 il riepilogo è in alto e il soggetto resta sticky.
+6. P14: toccare destinazione e triangolo, poi fare doppio tap su un membro; osservare A terra/Volontari in basso. In P15 controllare fascia, legenda e tre stati, poi selezionare un equipaggio senza barca e una barca blu.
+7. P17, P18 e P19 per inserimento, riepilogo e storia delle valutazioni; P18 esplicita “Ordinamento”, in P19 il riepilogo è in alto e il soggetto resta sticky.
 
 Sono disponibili P01–P19. P20 è stata eliminata: `Detta` gestisce permesso, registrazione, retry e trascrizione nello stesso pannello di testo di P05/P09/P17.
 
-## Identità r4
+## Identità r6
 
 L'header usa il simbolo intero dell'asset pubblicato nella [home CVC](https://www.centrovelicocaprera.it/), acquisito il 4 settembre 2026. Il file non è stato ridisegnato; la resa ritaglia visivamente soltanto la scritta della copia locale `assets/logo-fcvc.avif`.
 
-Il logo RS Quest in `assets/rs-quest.png` è la copia non modificata fornita dall'autore nella revisione r1. SHA-256: `F7B5DC1A95C233A3805AC5AE361ECA4D5BF9508D206AD9B5B62CA11CF5D181AB`. Poiché l'originale è già tagliato sul lato destro, la r4 usa `assets/rs-quest-complete.png`, una ricostruzione grafica generata per completare la lettera finale (701 × 240, SHA-256 `5C1BF936707E3B4E7F70476B9A830A5EADA086EE06FC9FA3B3AE057E887B1B52`). È una proposta del mock, non un nuovo asset ufficiale; l'originale resta conservato.
+Il logo RS Quest in `assets/rs-quest.png` è la copia non modificata fornita dall'autore nella revisione r1. SHA-256: `F7B5DC1A95C233A3805AC5AE361ECA4D5BF9508D206AD9B5B62CA11CF5D181AB`. Poiché l'originale è già tagliato sul lato destro, la r6 usa `assets/rs-quest-complete.png`, una ricostruzione grafica generata per completare la lettera finale (701 × 240, SHA-256 `5C1BF936707E3B4E7F70476B9A830A5EADA086EE06FC9FA3B3AE057E887B1B52`). È una proposta del mock, non un nuovo asset ufficiale; l'originale resta conservato.
 
 Il nome “CVC Helper” e il blu funzionale restano proposte. Le immagini Instagram come sfondo o card sono un upgrade futuro e non sono state copiate nella galleria.
 
-## Decisioni consolidate in r4
+## Decisioni consolidate in r6
 
-P12 applica `floor(N/D)` a ogni giorno e richiede esattamente `N mod D` “Giorni con più persone”. [Q10–Q13](../12_R2_REVIEW_QUESTIONS.md) fissano inoltre: P13 centrata sul giorno e aperta direttamente da P11; P15 su due righe senza scroll orizzontale; P19 con riepilogo in alto e soggetto sticky; P04 con due note recenti e le altre su richiesta.
+P12 applica `floor(N/D)` a ogni giorno e richiede esattamente `N mod D` “Giorni con più persone”. [Q10–Q13](../12_R2_REVIEW_QUESTIONS.md) fissano inoltre: P13 centrata sul giorno, aperta direttamente da P11 e con nomi su due colonne; P15 su due righe senza scroll orizzontale; P19 con riepilogo in alto e soggetto sticky; P04 con due note recenti e le altre su richiesta. La r6 aggiunge warning SVG e giorni completi in P13, doppio tap verso Disponibili in P14, tre stati e assegnazione equipaggio–barca in P15 e “Ordinamento” in P18. P04 e P19 sono approvate; la struttura P15 è approvata; le rifiniture/interazioni r6 restano da rivedere.
 
-## Controlli r4
+## Controlli r6
 
-Nel browser vengono controllati 152 layout: 19 viste × quattro misure × stati normale e avvisi, con 23 allievi. Il criterio r4 richiede zero overflow orizzontali sia della pagina sia della fascia P15. I controlli compattati non devono scendere sotto 40 × 40 CSS px; la verifica finale sui dispositivi resta obbligatoria.
+Nel browser vengono controllati 152 layout: 19 viste × quattro misure × stati normale e avvisi, con 23 allievi. Il criterio r6 richiede zero overflow orizzontali sia della pagina sia della fascia P15. I controlli compattati non devono scendere sotto 40 × 40 CSS px; la X di P13 è più piccola solo visivamente. La verifica finale sui dispositivi resta obbligatoria.
 
 Sono stati esercitati nel mock:
 
@@ -47,12 +47,12 @@ Sono stati esercitati nel mock:
 - P12 con 23 persone, base tre e due giorni da quattro; selettore stay-over con tutte le 23 persone;
 - contatori OCR live dopo completamento/rimozione di una riga;
 - copertura Comandate 20/21 nello scenario warning e apertura diretta P11 → P13;
-- dettaglio destinazione e warning XL/XL in P14;
-- P13: rimozione con X verso “Mai assegnati” e riassegnazione al giorno corrente toccando il nome;
-- P15: due righe, nessuno scroll laterale e deselezione Quest 2 con persone conservate;
-- selezione e secondo tap di annullamento in P17; P18 senza `~` né scorrimento orizzontale; riepilogo P19 in alto e soggetto sticky.
+- P11 allineata in alto anche con quantità diverse; P13 su due colonne a 320 px, SVG warning con “Sabato, Mercoledì”, rimozione con X e riassegnazione dal solo nome;
+- dettaglio destinazione e warning XL/XL in P14; doppio tap su Giulia con aumento dei Disponibili e slot liberato;
+- P15: due righe, nessuno scroll laterale, stati grigio/verde/blu e assegnazione Equipaggio 5 → Quest 14 con aggiornamento dei due riepiloghi;
+- selezione e secondo tap di annullamento in P17; P18 con “Ordinamento”, controlli da 40 px, nessun `~` né scorrimento orizzontale; riepilogo P19 in alto e soggetto sticky.
 
-Queste misure non equivalgono a verifica completa di accessibilità o dell'app. P13, P14, P17 e P18 scorrono verticalmente per preservare nomi, composizione e allineamento; il requisito r4 non è comprimere un intero roster in una schermata.
+Queste misure non equivalgono a verifica completa di accessibilità o dell'app. P13, P14, P15, P17 e P18 possono scorrere verticalmente per preservare nomi, composizione e allineamento; il requisito r6 non è comprimere un intero roster in una schermata. Il mock P15 aggiorna solo memoria locale della pagina: la persistenza nel database è un requisito futuro.
 
 Formattazione e lint riguardano soltanto i file della galleria. Restano da disegnare/verificare tutti gli stati secondari, testo al 200%, tastiera mobile, equipaggi flessibili e dispositivi fisici. Creazione, autosave, OCR, voce e salvataggi sono dimostrazioni: non costituiscono prove del comportamento applicativo.
 

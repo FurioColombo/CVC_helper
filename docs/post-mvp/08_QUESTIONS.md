@@ -1,6 +1,6 @@
 # 08 — Decisioni dopo la revisione umana
 
-**Stato:** risposte r1 consolidate e revisioni pagina per pagina fino al 5 settembre 2026 recepite. Il codice resta fuori da questa fase; i mock r4 non sono automaticamente target approvati. Q10–Q13 sono risolte in [12](12_R2_REVIEW_QUESTIONS.md).
+**Stato:** risposte r1 consolidate e revisioni pagina per pagina fino al 5 settembre 2026 recepite. Il codice resta fuori da questa fase; i mock r6 non sono automaticamente target approvati. Q10–Q13 sono risolte in [12](12_R2_REVIEW_QUESTIONS.md).
 
 La [revisione originale dell'autore](sources/08_reviewed_2026-09-04.txt) conserva le risposte verbatim, prima della pulizia editoriale. SHA-256: `BE269A535301A8D7F8BF533CA36ABA0F922F725D69044C3B4004AEA43756278F`. Le domande/proposte precedenti sono anche nel checkpoint `9e6b6b5`.
 
@@ -72,4 +72,14 @@ Scorciatoia iniziale: form aperto e focalizzato sul campo; inline successivo sol
 
 ## Cosa resta da decidere guardando i mock
 
-P12 e la nuova geometria P17 sono confermate. Q10–Q13 fissano ora P13 centrata sul giorno, P15 su due righe senza scroll orizzontale, P19 con riepilogo in alto e P04 con due note recenti. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
+P12 e la nuova geometria P17 sono confermate. Q10–Q13 fissano ora P13 centrata sul giorno con nomi su due colonne, P15 su due righe senza scroll orizzontale, P19 con riepilogo in alto e P04 con due note recenti. P04 e P19 sono approvate; la struttura visiva P15 è approvata. Restano da rivedere le rifiniture/interazioni r6 di P08, P13, P14, P15 e P18. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
+
+## Decisioni operative aggiunte nella r6
+
+- P08: “Da controllare” usa il giallo; “Disponibile” resta neutro.
+- P11: card di altezze diverse allineano il contenuto in alto.
+- P13: il warning è una vera icona vettoriale; il testo elenca tutti i giorni coinvolti, per esempio “Sabato, Mercoledì”. Il pannello introduttivo non ripete il giorno; i bottoni nome non mostrano “Assegna”; la X resta compatta con area attiva 40 × 40 px.
+- P04: l'azione nell'header è “Modifica”.
+- P14: destinazione reale e numero equipaggio sono campi separati, senza etichetta ridondante “Destinazione”. Il doppio click/tap su un allievo inserito lo riporta fra i Disponibili; serve anche un comando esplicito accessibile nell'app.
+- P15: grigio = non disponibile, verde = assegnata, blu = disponibile non assegnata. Selezionare un equipaggio senza barca e poi una barca blu crea e persiste l'associazione della sessione.
+- P18: “Ordinamento” compare sopra Alfabetico/Valutazione; i bottoni sono più bassi ma restano da 40 px.

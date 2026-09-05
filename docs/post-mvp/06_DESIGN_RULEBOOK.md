@@ -1,6 +1,6 @@
 # 06 — Regole di design per il ciclo post-MVP
 
-**Stato:** aggiornato alle revisioni umane fino al 5 settembre 2026; geometria r4 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock complessivamente approvato.
+**Stato:** aggiornato alle revisioni umane fino al 5 settembre 2026; geometria r6 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock complessivamente approvato.
 
 ## 1. Ordine delle decisioni
 
@@ -30,6 +30,9 @@ Ogni pagina dichiara la decisione che aiuta a prendere. Composizione/verifica po
 | R16 | Costruire la gerarchia con spaziatura, raggruppamento, allineamento e tipografia; aggiungere bordi, fondi e ombre soltanto quando chiariscono davvero una relazione o uno stato.                                    | Togliere un trattamento decorativo alla volta: la struttura deve restare leggibile. Niente card annidate come impaginazione predefinita.   |
 | R17 | Evitare l'aspetto da template generico: niente collezioni arbitrarie di pill, gradienti, eyebrow, frecce decorative o card identiche. Il linguaggio visivo deve derivare da barche, persone, turni e avvisi reali.  | Ogni componente decorativo deve corrispondere a contenuto, azione o stato del dominio; audit su screenshot aggiornati dopo ogni revisione. |
 | R18 | Nessuno scroll orizzontale nell'interfaccia operativa, compresi selettori di oggetti e riepiloghi. Usare griglie che vanno a capo, gerarchie verticali e contenuti compatti.                                        | Misurare pagina e contenitori interni nei viewport 430/412/390/320 px; `scrollWidth` non deve superare `clientWidth`.                      |
+| R19 | In una griglia, card con quantità diverse di contenuto partono dalla stessa quota in alto; non centrare verticalmente il contenuto della card più corta.                                                            | Confrontare righe con due e cinque nomi, soprattutto in P11; titolo e divisore devono risultare allineati.                                 |
+| R20 | Le icone di stato sono asset vettoriali coerenti, non caratteri Unicode usati come sostituti grafici. La loro etichetta accessibile esprime il significato.                                                         | Ispezionare SVG/asset e nome accessibile; provare ingrandimento e font fallback senza cambiare il simbolo.                                 |
+| R21 | I colori operativi sono stabili per contesto. In P15: grigio non disponibile, verde assegnata, blu disponibile non assegnata; testo o legenda accompagna sempre il colore.                                          | Verificare i tre stati simultanei, selezione equipaggio → barca blu e aggiornamento persistito dopo reload.                                |
 
 ### Fonti e limiti delle raccomandazioni
 
@@ -43,33 +46,34 @@ Non esiste in queste fonti una prova che basso-destra sia universalmente il punt
 
 ## 3. Dizionario visivo proposto
 
-| Concetto                     | Resa                                                | Vincolo                                                                                                        |
-| ---------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Minore                       | M bianca su rosso, quadrato arrotondato             | Nome accessibile “Minorenne”; non confondere con sesso M o taglia M. Nel dettaglio parola completa.            |
-| Comandata corrente           | C bianca su blu                                     | Etichetta accessibile; mapping alla sessione invariato.                                                        |
-| Smontante                    | SM distinto da C                                    | Mostrare quando pertinente alla sessione; non inventare nuovi significati.                                     |
-| Avviso                       | Triangolo giallo/rosso e dettaglio testuale         | Severità derivata dalle regole; nessuna declassificazione per motivi estetici.                                 |
-| Selezione                    | Bordo/fondo e stato selezionato esplicito           | Distinta da warning e indisponibilità; contrasto preservato.                                                   |
-| Disabilitato/non disponibile | Resa attenuata più testo/stato                      | Storico leggibile; non sola opacità indistinguibile.                                                           |
-| Volontario                   | Ruolo ADV/IS/CT e trattamento distinto              | Non allievo; non parte dei conteggi allievi.                                                                   |
-| Anteprima                    | Etichetta Anteprima, bordo tratteggiato/fondo tenue | Proposta: evitare rosso per il solo fatto che non è confermata.                                                |
-| Valutazione                  | ++/+ verdi; -/-- rossi; = neutro; assenza vuota     | Cinque icone dirette; nessuna selezione è il default e un secondo tap annulla; nessuna media numerica esposta. |
-| Barca                        | Numero prominente, tipo più piccolo                 | Disponibilità e avarie separati, anche se compresenti.                                                         |
+| Concetto                     | Resa                                                  | Vincolo                                                                                                        |
+| ---------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Minore                       | M bianca su rosso, quadrato arrotondato               | Nome accessibile “Minorenne”; non confondere con sesso M o taglia M. Nel dettaglio parola completa.            |
+| Comandata corrente           | C bianca su blu                                       | Etichetta accessibile; mapping alla sessione invariato.                                                        |
+| Smontante                    | SM distinto da C                                      | Mostrare quando pertinente alla sessione; non inventare nuovi significati.                                     |
+| Avviso                       | Icona triangolo SVG gialla/rossa e dettaglio testuale | Severità derivata dalle regole; nessuna declassificazione per motivi estetici.                                 |
+| Selezione                    | Bordo/fondo e stato selezionato esplicito             | Distinta da warning e indisponibilità; contrasto preservato.                                                   |
+| Disabilitato/non disponibile | Resa attenuata più testo/stato                        | Storico leggibile; non sola opacità indistinguibile.                                                           |
+| Volontario                   | Ruolo ADV/IS/CT e trattamento distinto                | Non allievo; non parte dei conteggi allievi.                                                                   |
+| Anteprima                    | Etichetta Anteprima, bordo tratteggiato/fondo tenue   | Proposta: evitare rosso per il solo fatto che non è confermata.                                                |
+| Valutazione                  | ++/+ verdi; -/-- rossi; = neutro; assenza vuota       | Cinque icone dirette; nessuna selezione è il default e un secondo tap annulla; nessuna media numerica esposta. |
+| Barca                        | Numero prominente, tipo più piccolo                   | Disponibilità e avarie separati, anche se compresenti.                                                         |
+| Barca nella sessione         | Grigia non disponibile; verde assegnata; blu libera   | Legenda/testo obbligatori; la selezione di una barca blu segue quella dell'equipaggio e crea un'associazione.  |
 
 Badge informativi piccoli non devono diventare pulsanti minuscoli: il dettaglio può essere aperto dall'intera riga/card o da un controllo di 44 px. Evitare pulsanti annidati dentro una card già cliccabile.
 
 ## 4. Poche opzioni: dove applicare UX-G02
 
-| Contesto                         | Proposta                                 | Limite                                                                               |
-| -------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| Conoscenza e profilo in modifica | Cinque scelte XS/S/M/L/XL                | Riutilizzare lo stesso componente; taglia mancante resta rappresentabile.            |
-| Volontari                        | Tre ruoli ADV/IS/CT                      | Scelta singola, compatta.                                                            |
-| Avaria                           | Segmento Aperta/Comunicata/Risolta       | Non ridurre target; scritte complete ove possibile.                                  |
-| Giorni con più persone           | S D L Ma Me G V                          | Scegliere esattamente il resto `N mod D`; preview distinta dalle assegnazioni reali. |
-| Disponibilità barca/allievo      | Controllo esplicito binario              | Il suo effetto è comportamento, da specificare; CREW-06 resta aperto.                |
-| Valutazioni                      | Cinque valori direttamente selezionabili | Nome completo sopra, valori sotto; nessun controllo separato per “assenza”.          |
-| Sessione                         | Titolo compatto + selettore contestuale  | Tredici opzioni: non forzare tredici pulsanti permanenti nell'header.                |
-| Tipo barca                       | Selettore esistente                      | Scelta rara con più opzioni: non sostituirla automaticamente con una griglia enorme. |
+| Contesto                         | Proposta                                 | Limite                                                                                |
+| -------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| Conoscenza e profilo in modifica | Cinque scelte XS/S/M/L/XL                | Riutilizzare lo stesso componente; taglia mancante resta rappresentabile.             |
+| Volontari                        | Tre ruoli ADV/IS/CT                      | Scelta singola, compatta.                                                             |
+| Avaria                           | Segmento Aperta/Comunicata/Risolta       | Non ridurre target; scritte complete ove possibile.                                   |
+| Giorni con più persone           | S D L Ma Me G V                          | Scegliere esattamente il resto `N mod D`; preview distinta dalle assegnazioni reali.  |
+| Barca nella sessione             | Tre stati espliciti con legenda          | Grigio non disponibile, verde assegnata, blu disponibile non assegnata; vedi CREW-08. |
+| Valutazioni                      | Cinque valori direttamente selezionabili | Nome completo sopra, valori sotto; nessun controllo separato per “assenza”.           |
+| Sessione                         | Titolo compatto + selettore contestuale  | Tredici opzioni: non forzare tredici pulsanti permanenti nell'header.                 |
+| Tipo barca                       | Selettore esistente                      | Scelta rara con più opzioni: non sostituirla automaticamente con una griglia enorme.  |
 
 ## 5. Contratto di viewport accettato per i mock
 
@@ -98,17 +102,20 @@ Una bella immagine non dimostra il funzionamento. Un target approvato richiede l
 
 La revisione Q08 indica i siti CVC/Fondazione e i canali social. Nella [home CVC](https://www.centrovelicocaprera.it/) osservata il 4 settembre 2026 il testo usa Roboto, alcune intestazioni arancione `#db7637`, e il logo rosso/blu è disponibile come asset della pagina. Sono osservazioni della pagina, non una palette normativa del marchio.
 
-La [galleria r4](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r4.
+La [galleria r6](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r6.
 
-### Regole aggiunte dalle revisioni r2–r3
+### Regole aggiunte dalle revisioni r2–r6
 
 - Un elemento sticky deve conservare un contesto operativo necessario durante lo scroll: avanzamento OCR, copertura Comandate, barche della sessione o identità dell'allievo nella sua storia. Non rendere sticky un titolo puramente decorativo.
 - Logo/modello e numero barca formano un solo identificativo; non ripetere il nome in testo se è già leggibile nel logo. Possono stare affiancati nelle righe larghe o sovrapposti nei selettori stretti. Numero equipaggio e numero barca restano campi distinti.
-- Un warning dell'equipaggio può esistere senza warning della barca. Il dettaglio elenca separatamente composizione/taglie, indisponibilità e avarie.
+- Un warning dell'equipaggio può esistere senza warning della barca. Il dettaglio elenca separatamente composizione/taglie, indisponibilità e avarie. Il triangolo è una vera icona vettoriale, non un carattere del font.
 - L'assenza di valutazione è spazio vuoto con etichetta accessibile, non un sesto valore visibile.
 - Le sezioni condizionali, come “Note recenti”, non occupano spazio quando sono vuote. Nel profilo mostrare al massimo due note recenti e aprire le altre su richiesta, mantenendo distinti tipo e provenienza.
-- La modifica di una Comandata è centrata sul giorno scelto in P11 e si apre senza popup intermedio. Ordine: assegnati correnti, mai assegnati, assegnati altrove; giorni per esteso e X rossa per rimuovere.
-- I selettori di barche vanno a capo in due righe e non scorrono lateralmente; logo sopra e numero sotto quando la larghezza è stretta.
+- Le card di una stessa riga restano allineate in alto anche se hanno numeri diversi di persone: nessun contenuto va centrato verticalmente per riempire il vuoto.
+- La modifica di una Comandata è centrata sul giorno scelto in P11 e si apre senza popup intermedio. Ordine: assegnati correnti, mai assegnati, assegnati altrove. I nomi stanno in due colonne e il bottone si riconosce dalla superficie, senza ripetere “Assegna a…”; tutti i giorni coinvolti sono scritti per esteso e una X rossa compatta rimuove dal giorno indicato.
+- I selettori di barche vanno a capo in due righe e non scorrono lateralmente; logo sopra e numero sotto quando la larghezza è stretta. In P15 i tre stati hanno colori e legenda fissi; si seleziona prima l'equipaggio senza barca e poi una barca blu libera.
+- Il doppio tap su una persona nell'equipaggio la riporta fra i Disponibili; come ogni gesto avanzato, deve esistere anche un comando esplicito raggiungibile con tastiera e tecnologie assistive.
+- In P18 una piccola etichetta nomina l'ordinamento; la riduzione visiva dei bottoni conserva il target minimo del progetto.
 - Nella storia allievo il riepilogo settimanale precede la cronologia senza restare sticky; nome e contesto dell'allievo restano visibili durante lo scroll.
 
 ## 8. Metodo di progettazione adottato
