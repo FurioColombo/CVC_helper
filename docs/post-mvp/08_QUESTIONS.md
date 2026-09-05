@@ -1,6 +1,6 @@
 # 08 — Decisioni dopo la revisione umana
 
-**Stato:** risposte e revisione pagina per pagina r1 recepite il 4 settembre 2026. Il codice resta fuori da questa fase; i mock r2 richiedono ancora revisione e non sono automaticamente target approvati.
+**Stato:** risposte r1 consolidate e revisione pagina per pagina r2 recepita il 5 settembre 2026. Il codice resta fuori da questa fase; i mock r3 non sono automaticamente target approvati. Le nuove domande visuali sono isolate in [12](12_R2_REVIEW_QUESTIONS.md).
 
 La [revisione originale dell'autore](sources/08_reviewed_2026-09-04.txt) conserva le risposte verbatim, prima della pulizia editoriale. SHA-256: `BE269A535301A8D7F8BF533CA36ABA0F922F725D69044C3B4004AEA43756278F`. Le domande/proposte precedenti sono anche nel checkpoint `9e6b6b5`.
 
@@ -22,7 +22,7 @@ Se invece la barca diventa indisponibile per il corso, mantenere le assegnazioni
 
 Per N persone e D giorni rimanenti: assegnare a ogni giorno la quota base `floor(N/D)`. L'utente seleziona i `N mod D` giorni che ricevono una persona in più. Con 23/7 e sabato/domenica selezionati: `4,4,3,3,3,3,3`.
 
-Il mock r2 richiede esattamente il numero di giorni necessario e disabilita “Genera proposta” finché la selezione non è completa. È la sola inferenza d'interazione ancora da confermare guardando P12. Se N < D, la quota base è zero e l'utente sceglie N giorni con una persona. Nessun nuovo solver. Completati fuori dal ricalcolo; priorità venerdì/minori/sesso e tie-break restano applicate.
+La revisione r2 conferma che il mock richiede esattamente il numero di giorni necessario e disabilita “Genera proposta” finché la selezione non è completa. Se N < D, la quota base è zero e l'utente sceglie N giorni con una persona. Nessun nuovo solver. “Da metà settimana” usa persone ancora eleggibili e giorni rimanenti; completati fuori dal ricalcolo. Priorità venerdì/minori/sesso e tie-break restano applicate.
 
 ## Q04 — Viewport e densità
 
@@ -30,9 +30,9 @@ Il mock r2 richiede esattamente il numero di giorni necessario e disabilita “G
 
 Esaminare i due estremi e il caso medio prima di valutare adattamenti più aggressivi basati su pixel/proporzioni. Per ora niente sistema complesso di resizing. Portrait, tocco e nomi leggibili precedono il traguardo zero scroll; eventuali deroghe si decidono sui risultati visivi.
 
-## Q05 — Valutazioni su una riga
+## Q05 — Geometria Valutazioni
 
-**SUPERATO DALLA REVISIONE r1 · EVAL-01 · P17.** Nome, nota e sei valori sulla stessa riga per risparmiare spazio verticale. Voti sempre selezionabili direttamente, senza dialog; usare icone chiare con area di tocco adeguata e `~` per nessuna valutazione. Se un futuro viewport non consente questa geometria, documentare il degrado invece di ridurre arbitrariamente leggibilità e precisione del tocco.
+**SUPERATO DALLA REVISIONE r2 · EVAL-01 · P17.** Nome completo e nota sulla prima riga corta; cinque valori `++`, `+`, `=`, `-`, `--` sulla seconda. Nessun controllo `~`: nessuna selezione è lo stato iniziale e il secondo tap sul voto attivo lo annulla. Voti sempre diretti, senza dialog, con icone e area di tocco adeguata.
 
 ## Q06 — OCR: metrica e acquisizione guidata
 
@@ -62,7 +62,7 @@ La soglia “10 secondi per una nota di 15 secondi” era una proposta: **non è
 - [YouTube CVC](https://www.youtube.com/user/CentroVelicoCaprera)
 - [Fondazione CVC](https://www.fondazionecvc.org/)
 
-Usarli per palette, tipografia e marchio. Il nome definitivo dell'app e un eventuale logo derivato **non sono ancora scelte approvate**. La revisione r1 chiede sulla Home il solo simbolo CVC, senza la scritta “Fondazione Centro Velico Caprera ETS”, e fornisce il logo ufficiale RS Quest per le barche Quest. Il codice corso è contenuto: `D2 - 35` grande/blu e `| 2026` piccolo/grigio sulla stessa riga. Le immagini Instagram come sfondo o immagine delle card restano un upgrade futuro.
+Usarli per palette, tipografia e marchio. Il nome definitivo dell'app e un eventuale logo derivato **non sono ancora scelte approvate**. La revisione r2 chiede sulla Home il simbolo CVC intero, tagliando soltanto la dicitura Fondazione. L'immagine RS Quest fornita era già tagliata a destra: la r3 conserva l'originale e usa una ricostruzione grafica completa come proposta, da non confondere con un nuovo asset ufficiale. Il codice corso è dinamico nel formato `D2 - 35 | 2026`. Le immagini Instagram restano un upgrade futuro.
 
 ## Q09 — Modifica immediata del profilo
 
@@ -72,4 +72,4 @@ Scorciatoia iniziale: form aperto e focalizzato sul campo; inline successivo sol
 
 ## Cosa resta da decidere guardando i mock
 
-Confermare P12: selezione obbligatoria di esattamente `N mod D` giorni prima di generare. Per il resto la prossima revisione riguarda la qualità grafica r2, la densità reale dei casi lunghi e le eccezioni visive. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
+P12 e la nuova geometria P17 sono confermate. Restano Q10 P13, Q11 P15, Q12 P19 e Q13 P04 nel documento `12`. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.

@@ -1,102 +1,127 @@
 {
-  "date": "2026-09-04",
-  "artifact": "Standalone UX mock gallery r2",
+  "date": "2026-09-05",
+  "artifact": "Standalone UX mock gallery r3",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
   "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
     "browser": "Codex in-app browser",
     "layoutUnits": "CSS px",
-    "runtimeForLintAndFormatting": "Node 24.19.0"
+    "runtimeForFormatting": "Bundled Node 24.19.0"
   },
   "checks": {
     "layoutCases": 152,
     "description": "19 primary views × 4 sizes × normal and warnings states, with 23 synthetic students.",
-    "horizontalOverflowCases": 0,
+    "pageHorizontalOverflowCases": 0,
     "controlsBelow40CSSPxCases": 0,
-    "standardViewportCases": 114,
-    "standardViewportDescription": "19 views × 3 standard sizes × normal and warnings states.",
-    "controlsBelow44CSSPxOnStandardViewportsCases": 0,
-    "tolerancePx": 0.5,
+    "p15InternalBoatStrip": {
+      "viewport": "430x820",
+      "clientWidth": 389,
+      "scrollWidth": 548,
+      "status": "INTENTIONAL_PROPOSAL_AWAITING_Q11"
+    },
     "formatting": "PASS",
-    "eslint": "PASS",
+    "javascriptSyntax": "PASS",
     "interactions": [
       {
-        "action": "P02 course creation",
-        "observed": "D2 - 35 | 2026 is visible and the bottom navigation has zero layout size."
+        "action": "P01/P02 course identity",
+        "observed": "The complete CVC symbol is visible. Selecting Cabinato then level 4 updates the preview to C4 - 35 | 2026; bottom navigation remains hidden."
       },
       {
-        "action": "P05 inline dictation",
-        "observed": "Permission, recording and editable transcription remain in the note dialog; no P20 option exists."
+        "action": "P05 size controls",
+        "observed": "Five 40px controls remain inside each card at 430/412/390; at 320 they move below the name."
       },
       {
-        "action": "P06 take photo",
-        "observed": "Full-screen camera, capture, free -180/+180 rotation control and crop-ready state reached."
+        "action": "P06 scan review",
+        "observed": "Filling the missing birth date changes missing fields 1 to 0 and inserted students 2 to 3 in the sticky summary."
       },
       {
-        "action": "P12 distribution with 23 students",
-        "observed": "Base 3; choosing two more-person days yields 4,4,3,3,3,3,3 and enables generation. All 23 people appear in stay-over selection."
+        "action": "P10 new volunteer",
+        "observed": "Add volunteer opens with an empty name and ADV selected by default."
       },
       {
-        "action": "P13 add then remove a person",
-        "observed": "The same inline control changes from + S to S × and back."
+        "action": "P11 duty coverage",
+        "observed": "Warning scenario shows 20/21 unique students in a yellow sticky status; normal scenario is neutral when complete."
       },
       {
-        "action": "P14 destination and warning",
-        "observed": "Boat tap opens destination choices; warning tap opens its reasons; A terra and Volontari remain in the bottom action rail."
+        "action": "P14 crew warning",
+        "observed": "Crew 1 displays two XL students and its warning detail states the crew-size reason independently from boat faults."
       },
       {
-        "action": "P15 deselect Quest 2",
-        "observed": "Crew 1 becomes Senza barca while Giulia and Luca B. remain assigned."
+        "action": "P15/P16 boats and reading",
+        "observed": "Seven session boats fit in a sticky internal scroller; reading cards separate crew number, boat logo/number, and names."
       },
       {
-        "action": "P17/P18 evaluation",
-        "observed": "Icon selection updates aria-pressed; P18 has no horizontal scroller or page overflow."
+        "action": "P17 evaluation toggle",
+        "observed": "First tap selects one of five values; tapping the selected value again changes aria-pressed back to false."
+      },
+      {
+        "action": "P18/P19 absence and summary",
+        "observed": "Missing evaluations render as blank cells; positive/negative colors are reserved; P19 final seven-day AM/PM grid is fully visible without page overflow."
       }
     ]
   },
   "observedScrollNormal23": {
     "P04": {
       "430x820": 0,
-      "412x760": 0,
-      "390x664": 0,
-      "320x664": 76
+      "412x760": 6,
+      "390x664": 102,
+      "320x664": 197
     },
     "P11": {
       "430x820": 0,
-      "412x760": 0,
-      "390x664": 65,
-      "320x664": 65
+      "412x760": 36,
+      "390x664": 132,
+      "320x664": 132
     },
     "P12": {
       "430x820": 0,
       "412x760": 0,
-      "390x664": 84,
-      "320x664": 166
+      "390x664": 77,
+      "320x664": 160
     },
     "P14": {
       "430x820": 1218,
       "412x760": 1278,
       "390x664": 1374,
-      "320x664": 1374
+      "320x664": 1398
+    },
+    "P15": {
+      "430x820": 8,
+      "412x760": 68,
+      "390x664": 164,
+      "320x664": 164
+    },
+    "P16": {
+      "430x820": 115,
+      "412x760": 175,
+      "390x664": 271,
+      "320x664": 271
     },
     "P17": {
-      "430x820": 558,
-      "412x760": 618,
-      "390x664": 714,
-      "320x664": 714
+      "430x820": 1823,
+      "412x760": 1883,
+      "390x664": 1979,
+      "320x664": 1979
     },
     "P18": {
       "430x820": 2827,
       "412x760": 2887,
       "390x664": 2983,
       "320x664": 2983
+    },
+    "P19": {
+      "430x820": 343,
+      "412x760": 403,
+      "390x664": 499,
+      "320x664": 514
     }
   },
   "limitations": [
-    "Measurements describe synthetic layouts, not every interactive state.",
+    "Measurements describe synthetic layouts and primary interactive states, not every production state.",
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
-    "P14 and P18 intentionally scroll vertically to preserve crew names and the full 23-person overview.",
+    "P17 deliberately uses more vertical space to keep full names and five direct evaluation controls visible.",
+    "P15 internal horizontal strip and P04/P19 content choices await Q11-Q13.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "Human approval and remaining state mockups are still required."
+    "Human approval is still required before any design becomes an implementation target."
   ]
 }

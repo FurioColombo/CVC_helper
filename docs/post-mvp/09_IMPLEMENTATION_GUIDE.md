@@ -8,11 +8,12 @@
 
 Prerequisiti prima del codice:
 
-1. Applicare le decisioni umane del 4 settembre in `08`. Q01–Q06/Q09 sono risolte per il design; restano scelte visuali, nome/logo finale e tempi voce da misurare, senza riaprire le domande già risposte.
+1. Applicare le decisioni umane consolidate fino al 5 settembre in `08`. Q01–Q09 sono risolte o superate per il design; restano le sole Q10–Q13, nome/logo finale e tempi voce da misurare.
 2. Approvare regole comuni e perimetro del ciclo; completare i target interessati in `07`, con file e revisione precisi.
-3. Applicare gli aggiornamenti autorevoli pianificati in `10` e il raccordo `AGENTS`/`04`. Le decisioni nuove non devono restare in contraddizione con `01`.
-4. Registrare baseline verificata e dati di prova compatibili con 0.1.0. Se un difetto segnalato è già risolto, documentarlo con prova ripetibile e non riscrivere la funzione.
-5. Abilitare il nuovo registro milestone nell'harness esistente, senza riaprire o riscrivere i completamenti MVP.
+3. Chiudere Q10–Q13 in `12`; aggiornare r3 o produrre r4 solo per le pagine cambiate, poi registrare l'approvazione in `11`.
+4. Applicare gli aggiornamenti autorevoli pianificati in `10` e il raccordo `AGENTS`/`04`. Le decisioni nuove non devono restare in contraddizione con `01`.
+5. Registrare baseline verificata e dati di prova compatibili con 0.1.0. Se un difetto segnalato è già risolto, documentarlo con prova ripetibile e non riscrivere la funzione.
+6. Abilitare il nuovo registro milestone nell'harness esistente, senza riaprire o riscrivere i completamenti MVP.
 
 La fase di design precede l'implementazione. Dopo l'avvio, ogni pagina segue target → implementazione → prove → review → checkpoint, **in sequenza**, come richiesto nelle annotazioni UX-G01. Non implementare contemporaneamente più aree.
 
@@ -71,17 +72,17 @@ Tutte **DRAFT / NON AVVIATE**. All'attivazione convertire in sezioni individuali
 | --- | ---------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | U00 | FOUNDATION       | Baseline, piano attivo, raccordo specifiche, manifest/controller, target e fixture | Baseline verificata; controller rifiuta evidenza mancante/FAIL; vecchie milestone integre; self-review.                                                 |
 | U01 | FEATURE          | STT-001 integrata nei pannelli P05/P09/P17                                         | Audio reale/fixture, browser PC/Android/iPhone, permesso contestuale, collaudo autore, cache/retry; testo resta nello stesso pannello; limiti misurati. |
-| U02 | FEATURE          | P06, OCR-001                                                                       | Corpus e metriche Q06, acquisizione guidata, review/commit, telefono; self-review.                                                                      |
-| U03 | FEATURE          | P01 poi P02, token e shell minima                                                  | Mock approvati, navigazione/creazione/reload, dimensioni/focus; nessun restyling massivo non verificato.                                                |
+| U02 | FEATURE          | P06, OCR-001                                                                       | Corpus e metriche Q06, acquisizione guidata, review/commit, indicatori live righe/campi/inseriti, telefono; self-review.                                |
+| U03 | FEATURE          | P01 poi P02, token e shell minima                                                  | Mock approvati; simbolo integro; codice D/C-livello-settimana-anno dinamico; navigazione/creazione/reload, dimensioni/focus.                            |
 | U04 | FEATURE          | P03, lista Allievi                                                                 | Densità, nomi/stati, Aggiungi, ordinamento/tie-break e navigazione; self-review.                                                                        |
-| U05 | RULE_HEAVY       | P04, modifica ed eliminazione                                                      | Profilo/Conoscenza coerenti, autosave, matrice referenze, invarianti, reviewer integrità/dominio.                                                       |
+| U05 | RULE_HEAVY       | P04, modifica ed eliminazione                                                      | Profilo/Conoscenza coerenti, note condizionali secondo Q13, autosave, matrice referenze, invarianti, reviewer integrità/dominio.                        |
 | U06 | FEATURE          | P05, Conoscenza                                                                    | Taglia diretta, note condivise, persistenza e dettatura integrata; self-review.                                                                         |
-| U07 | RULE_HEAVY       | P07 poi P08, Barche                                                                | Parser e duplicati, disponibilità distinta, Q01 se pertinente, storico; reviewer dominio.                                                               |
+| U07 | RULE_HEAVY       | P07 poi P08, Barche                                                                | Parser e duplicati, mapping tipi da `01`, identificativo logo/numero, disponibilità distinta, Q01, storico; reviewer dominio.                           |
 | U08 | FEATURE          | P09, Avarie                                                                        | Preview utile, stati diretti, rapidità/errori, persistenza e voce; self-review.                                                                         |
 | U09 | RULE_HEAVY       | P10, CT e Volontari                                                                | Compatibilità dati precedenti, ruolo e esclusioni verificati, integrazione pool; reviewer dominio.                                                      |
-| U10 | RULE_HEAVY       | P11 → P12 → P13, Comandate                                                         | Tutti i target approvati; capacità/preview, regole, warning locali, completati, manual override; reviewer avversariale.                                 |
-| U11 | RULE_HEAVY       | P14 → P15 → P16, Equipaggi                                                         | Move/swap/copia, A terra/Mezzi/CT, Q01, invarianti, layout denso e annuncio; reviewer dominio, poi ispezione UX.                                        |
-| U12 | FEATURE          | P17 → P18 → P19, Valutazioni                                                       | Target Q05, scelta diretta, note/assenza/conteggi, storia e reload; self-review.                                                                        |
+| U10 | RULE_HEAVY       | P11 → P12 → P13, Comandate                                                         | Copertura assegnati/totale, `floor`+resto confermato, target Q10, warning locali, completati e manual override; reviewer avversariale.                  |
+| U11 | RULE_HEAVY       | P14 → P15 → P16, Equipaggi                                                         | Warning equipaggio/barca separati, fascia Q11, tre campi in lettura, move/swap/copia, A terra/Mezzi/CT, invarianti; review dominio e UX.                |
+| U12 | FEATURE          | P17 → P18 → P19, Valutazioni                                                       | Cinque valori deselezionabili, assenza vuota, colori, griglie senza overflow, riepilogo Q12, note/storia/reload; self-review.                           |
 | UG1 | INTEGRATION_GATE | Settimana completa e rilascio                                                      | `verify:all`, confronto visuale, compatibilità 0.1.0, funzionale/UX/integrità, nessun blocker, release note e checkpoint pulito.                        |
 
 Queste milestone sono separate per area. Anche dentro U10/U11/U12 si termina e verifica una sottovista prima di procedere alla successiva. Le review indipendenti si svolgono al livello richiesto da `AGENTS`, senza moltiplicare revisori per piccoli aggiustamenti grafici.
