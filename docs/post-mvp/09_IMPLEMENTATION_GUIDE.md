@@ -17,6 +17,24 @@ Prerequisiti prima del codice:
 
 La fase di design precede l'implementazione. Dopo l'avvio, ogni pagina segue target → implementazione → prove → review → checkpoint, **in sequenza**, come richiesto nelle annotazioni UX-G01. Non implementare contemporaneamente più aree.
 
+### Gate di prontezza prima delle feature
+
+| Voce                   | Stato attuale         | Condizione di chiusura                                                                                                                                                                                                                       |
+| ---------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Perimetro 0.2.0        | DA CHIUDERE           | Elenco unico di requisiti inclusi e rinviati. BRAND-02, ICON-01, ordinamenti avanzati, icone parti guaste e fotografie Instagram entrano solo con decisione esplicita; altrimenti sono `DEFERRED`.                                           |
+| Target UI/UX           | IN REVISIONE          | Un ultimo passaggio sulle pagine ancora `DA RIVEDERE` nel registro `11`, registrando per ciascuna l'ultima revisione approvata. Non serve riaprire le pagine già approvate se non cambiano dipendenze condivise.                             |
+| Asset visivi           | PARZIALE              | Confermare nome/logo provvisori o finali e la provenienza utilizzabile degli asset. Per RS 500, J/80, First 25.7 e First 27 approvare un asset o un fallback neutro; la ricostruzione RS Quest del mock non va trattata come logo ufficiale. |
+| Specifiche autorevoli  | PIANIFICATO           | Applicare la tabella di `10` a `01`–`03`, eliminando formulazioni superate. Ogni regola di prodotto deve vivere in `01`; scope in `02`; scelte tecniche e fallback in `03`.                                                                  |
+| Contratto operativo    | PIANIFICATO           | Rendere `09` attivo, collegarlo da `AGENTS.md` e `04`, senza riaprire M0–M15. Aggiornare ordine di lettura e gerarchia delle fonti.                                                                                                          |
+| Obiettivi verificabili | BOZZA                 | Espandere U00–U12 e UG1 in milestone individuali con requisiti/ID coperti, dipendenze, casi, comandi, evidenze, reviewer e criterio PASS. Nessuna milestone chiude sulla sola somiglianza visiva.                                            |
+| Baseline e migrazione  | DA ESEGUIRE IN U00    | Con Node 24 eseguire `verify:all`, salvare il risultato, creare una fixture anonima 0.1.0 e provarne apertura/migrazione senza perdita. Working tree e checkpoint iniziale puliti.                                                           |
+| Voce e OCR             | DEFINITI, NON PROVATI | Preparare fixture/corpus, dispositivi e metrica; fissare timebox e fallback autorizzato. STT richiede percorso reale e collaudo fisico; OCR richiede verità attesa e qualità per persona/campo.                                              |
+| Versione e rilascio    | DIREZIONE DECISA      | Allineare package/lock alla baseline 0.1.0 in U00, usare 0.2.0 per il rilascio post-MVP e creare un solo `CHANGELOG.md` al rilascio.                                                                                                         |
+
+Il mock approvato è un **target di comportamento e composizione**, non codice da copiare nell'app. Per ogni pagina la milestone registra: URL/revisione del mock, viewport e stato osservato, requisiti di `05`, regole di `06`, accettazione di `07` e differenze intenzionali. `01` continua a prevalere sulle regole di dominio; il mock guida disposizione, gerarchia, feedback e interazione. Persistenza, migrazioni, accessibilità e integrità richiedono prove proprie e non sono dimostrate dal prototipo.
+
+Si può iniziare U00 quando il perimetro e i target necessari sono approvati e ogni elemento opzionale è incluso oppure rinviato esplicitamente. Il codice delle feature inizia soltanto dopo che U00 ha reso verificabili piano, baseline e migrazione.
+
 ## 2. Adeguamento minimo dell'harness esistente
 
 La base già comprende lint, Prettier, TypeScript, Vitest/RTL, Playwright, build PWA, invarianti, scenario settimanale, CI, manifest ed evidenze. Riutilizzarla, evitando un secondo framework.
