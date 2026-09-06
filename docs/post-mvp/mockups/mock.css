@@ -2826,3 +2826,17 @@ textarea:focus-visible {
 .read-destination .boat-brand {
   object-position: center;
 }
+
+@container phone (max-width: 350px) {
+  /* P08: leave enough horizontal room for two-digit boat numbers. */
+  .phone .boat-list-r2 .boat-identity {
+    gap: 4px;
+  }
+  .phone .boat-list-r2 .boat-identity .boat-brand {
+    width: 70px;
+    height: 24px;
+  }
+  .phone .boat-list-r2 .boat-identity > strong {
+    font-size: 28px;
+  }
+}

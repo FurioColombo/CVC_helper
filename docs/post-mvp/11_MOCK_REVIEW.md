@@ -95,10 +95,11 @@
 
 ## Revisione umana r9/r10 — 6 settembre 2026
 
-| Pagina | Indicazione ricevuta | Risposta r10 |
-| ------ | -------------------- | ------------ |
-| P13 | I bottoni blu pieni nelle card sono brutti; mantenere lo stile CVC con un'interazione più calma e leggibile. Rimuovere il bannerino azzurro introduttivo. | Card trasformate in righe neutre da lista raggruppata, con divisori leggeri e nessun fondo blu pieno. L'assegnazione resta un tap sul nome con un `+` blu discreto; a 320 px il `+` scompare per lasciare spazio al nome, che conserva testo e sottile inset blu. Il bannerino è rimosso: il contesto resta nei titoli dei tre gruppi. |
-| P07–P16 | Preparare loghi coerenti per RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27. | Sei PNG trasparenti normalizzati a 256 × 72 px sono aggiunti nella cartella asset del mock; il mapping mostra RS Quest come primo tipo esistente, poi i sei loghi nell'ordine fornito. |
+| Pagina  | Indicazione ricevuta                                                                                                                                      | Risposta r10                                                                                                                                                                                                                                                                                                                           |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P13     | I bottoni blu pieni nelle card sono brutti; mantenere lo stile CVC con un'interazione più calma e leggibile. Rimuovere il bannerino azzurro introduttivo. | Card trasformate in righe neutre da lista raggruppata, con divisori leggeri e nessun fondo blu pieno. L'assegnazione resta un tap sul nome con un `+` blu discreto; a 320 px il `+` scompare per lasciare spazio al nome, che conserva testo e sottile inset blu. Il bannerino è rimosso: il contesto resta nei titoli dei tre gruppi. |
+| P07–P16 | Preparare loghi coerenti per RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27.                                                                    | Sei PNG trasparenti normalizzati a 256 × 72 px sono aggiunti nella cartella asset del mock; il mapping mostra RS Quest come primo tipo esistente, poi i sei loghi nell'ordine fornito.                                                                                                                                                 |
+| P08     | In Stress il numero della barca a due cifre usciva dalla card.                                                                                            | A 320 px il logo si compatta e il numero resta interamente visibile; la correzione è limitata alla variante stretta.                                                                                                                                                                                                                   |
 
 ## Percorso breve per rivedere r10
 
@@ -108,34 +109,34 @@
 4. **P08:** confrontare “Da controllare” giallo e “Disponibile” neutro. **P11** nello stato con avvisi: osservare il feedback sticky `20/21`, l'allineamento in alto delle card, poi toccare un giorno; deve aprirsi direttamente **P13**.
 5. **P13:** controllare a 430/390/320 px le due card per riga; il duplicato “Sab, Mer” deve estendersi sulle due colonne, con triangolo e X leggibili; non deve comparire il bannerino azzurro; rimuovere e riassegnare dal solo nome, riconoscendo il `+` discreto sopra 350 px e il testo/inset blu nel layout stretto.
 6. **P14:** nello stato con avvisi, aprire il triangolo del primo equipaggio XL/XL; aprire Destinazione e controllare ordine numerico e stati barca; in stato normale fare doppio tap su un membro e verificare che torni fra i Disponibili.
-7. **P15 → P16:** controllare le due righe senza scroll laterale, i tre stati barca e la legenda; selezionare Equipaggio 5 senza barca e poi Quest 14 blu; in P16 verificare il logo ingrandito.
+7. **P15 → P16:** controllare le due righe senza scroll laterale, i tre stati barca e la legenda; selezionare Equipaggio 5 senza barca e poi First 25.7 14 blu; in P16 verificare il logo ingrandito.
 8. **P17:** controllare nome e cinque icone sulla stessa riga anche a 320 px, assegnare un voto e toccarlo di nuovo; **P18** deve mostrare “Ordinamento”, riga nome e controlli da 40 px, nessun `~` e nessuno scroll orizzontale.
 9. **P19:** verificare il riepilogo in alto; scorrendo, il nome resta visibile e le card giorno/sessione sono più compatte.
 
 ## Registro r10
 
-| Pagina                    | Stato                                              | Motivo                                                  |
-| ------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
-| P01 Home                  | R3 DA RIVEDERE                                     | Logo e schema 3 arancioni/3 blu corretti.               |
-| P02 Crea corso            | R3 DA RIVEDERE                                     | Dinamica D/C e livello aggiunta.                        |
-| P03 Allievi               | APPROVATO R2                                       | Nessun nuovo cambiamento richiesto.                     |
-| P04 Profilo allievo       | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          | Griglia Valutazioni condivisa aggiunta.                 |
-| P05 Conoscenza            | R3 DA RIVEDERE                                     | Geometria corretta su quattro larghezze.                |
-| P06 Scan allievi          | R3 DA RIVEDERE                                     | Indicatori sticky e live aggiunti.                      |
-| P07 Configura barche      | R3 DA RIVEDERE                                     | Tipi barca aggiornati.                                  |
-| P08 Barche                | R6 DA RIVEDERE                                     | “Da controllare” giallo, disponibile neutro.            |
-| P09 Avarie                | R3 DA RIVEDERE                                     | Logo/testo/pulsanti corretti.                           |
-| P10 Volontari             | APPROVATO R2 + FIX R3                              | Nuovo nome vuoto.                                       |
-| P11 Comandate             | APPROVATO R3 + FIX R6                              | Copertura sticky; card allineate in alto.               |
-| P12 Proposta Comandate    | APPROVATO R2                                       | Ritocco card eseguito; logica confermata.               |
+| Pagina                    | Stato                                              | Motivo                                                                                              |
+| ------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| P01 Home                  | R3 DA RIVEDERE                                     | Logo e schema 3 arancioni/3 blu corretti.                                                           |
+| P02 Crea corso            | R3 DA RIVEDERE                                     | Dinamica D/C e livello aggiunta.                                                                    |
+| P03 Allievi               | APPROVATO R2                                       | Nessun nuovo cambiamento richiesto.                                                                 |
+| P04 Profilo allievo       | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          | Griglia Valutazioni condivisa aggiunta.                                                             |
+| P05 Conoscenza            | R3 DA RIVEDERE                                     | Geometria corretta su quattro larghezze.                                                            |
+| P06 Scan allievi          | R3 DA RIVEDERE                                     | Indicatori sticky e live aggiunti.                                                                  |
+| P07 Configura barche      | R3 DA RIVEDERE                                     | Tipi barca aggiornati.                                                                              |
+| P08 Barche                | R6 DA RIVEDERE                                     | “Da controllare” giallo, disponibile neutro.                                                        |
+| P09 Avarie                | R3 DA RIVEDERE                                     | Logo/testo/pulsanti corretti.                                                                       |
+| P10 Volontari             | APPROVATO R2 + FIX R3                              | Nuovo nome vuoto.                                                                                   |
+| P11 Comandate             | APPROVATO R3 + FIX R6                              | Copertura sticky; card allineate in alto.                                                           |
+| P12 Proposta Comandate    | APPROVATO R2                                       | Ritocco card eseguito; logica confermata.                                                           |
 | P13 Persone Comandata     | R10 DA RIVEDERE                                    | Due allievi per riga; card neutre, `+` blu discreto, nessun banner; multi-giorno a tutta larghezza. |
-| P14 Equipaggi             | R7 DA RIVEDERE                                     | Popup barche coerente con P15 e ordinato numericamente. |
-| P15 Barche della sessione | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE | Tre stati e assegnazione equipaggio → barca.            |
-| P16 Leggi equipaggi       | R7 DA RIVEDERE                                     | Tre aree esplicite e logo più leggibile.                |
-| P17 Valutazioni           | R8 DA RIVEDERE                                     | Nome e cinque icone sulla stessa riga.                  |
-| P18 Riepilogo             | APPROVATO R6 + FIX R7                              | Riga nome e controlli da 40 px.                         |
-| P19 Storia allievo        | APPROVATO R4                                       | Gerarchia, riepilogo e compattezza confermati.          |
-| P20 Dettatura             | RIMOSSA                                            | Integrata nei pannelli testo.                           |
+| P14 Equipaggi             | R7 DA RIVEDERE                                     | Popup barche coerente con P15 e ordinato numericamente.                                             |
+| P15 Barche della sessione | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE | Tre stati e assegnazione equipaggio → barca.                                                        |
+| P16 Leggi equipaggi       | R7 DA RIVEDERE                                     | Tre aree esplicite e logo più leggibile.                                                            |
+| P17 Valutazioni           | R8 DA RIVEDERE                                     | Nome e cinque icone sulla stessa riga.                                                              |
+| P18 Riepilogo             | APPROVATO R6 + FIX R7                              | Riga nome e controlli da 40 px.                                                                     |
+| P19 Storia allievo        | APPROVATO R4                                       | Gerarchia, riepilogo e compattezza confermati.                                                      |
+| P20 Dettatura             | RIMOSSA                                            | Integrata nei pannelli testo.                                                                       |
 
 ## Esito tecnico del mock r10
 

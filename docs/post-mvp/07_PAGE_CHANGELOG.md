@@ -97,6 +97,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 **Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; Q01 distingue indisponibilità corso e deselezione sessione.
 
 - Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti. I sei nuovi loghi del mock sono tavole trasparenti uniformate a 256 × 72 px.
+- A 320 px il trattamento dell'identità si compatta per lasciare interamente visibili anche i numeri a due cifre (11, 14, 15).
 - Rendere “Da controllare” giallo; mantenere “Disponibile” neutro e leggibile, senza confonderlo con l'assegnazione verde usata in P15.
 - Elenco compatto; dettaglio con guasti aperti in evidenza, risolti secondari.
 - Separare Elimina inserimento errato, disponibilità corso e selezione uscita della sessione. La nuova azione di scollegamento usa la decisione Q01, non una cascata implicita.
@@ -266,27 +267,27 @@ Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03
 
 Galleria r10: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
 
-| Pagine | File / revisione                   | Approvazione                                       |
-| ------ | ---------------------------------- | -------------------------------------------------- |
-| P01    | [P01 · r3](mockups/index.html#P01) | DA RIVEDERE                                        |
-| P02    | [P02 · r3](mockups/index.html#P02) | DA RIVEDERE                                        |
-| P03    | [P03 · r3](mockups/index.html#P03) | APPROVATO R2                                       |
-| P04    | [P04 · r7](mockups/index.html#P04) | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          |
-| P05    | [P05 · r3](mockups/index.html#P05) | DA RIVEDERE                                        |
-| P06    | [P06 · r3](mockups/index.html#P06) | DA RIVEDERE                                        |
-| P07    | [P07 · r3](mockups/index.html#P07) | DA RIVEDERE                                        |
-| P08    | [P08 · r6](mockups/index.html#P08) | R6 DA RIVEDERE                                     |
-| P09    | [P09 · r3](mockups/index.html#P09) | DA RIVEDERE                                        |
-| P10    | [P10 · r3](mockups/index.html#P10) | APPROVATO R2 + FIX R3                              |
-| P11    | [P11 · r6](mockups/index.html#P11) | APPROVATO R3 + FIX R6                              |
-| P12    | [P12 · r3](mockups/index.html#P12) | APPROVATO R2                                       |
-| P13    | [P13 · r10](mockups/index.html#P13) | R10 DA RIVEDERE                                  |
-| P14    | [P14 · r7](mockups/index.html#P14) | R7 DA RIVEDERE                                     |
-| P15    | [P15 · r6](mockups/index.html#P15) | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE |
-| P16    | [P16 · r7](mockups/index.html#P16) | R7 DA RIVEDERE                                     |
-| P17    | [P17 · r8](mockups/index.html#P17) | R8 DA RIVEDERE                                     |
-| P18    | [P18 · r7](mockups/index.html#P18) | APPROVATO R6 + FIX R7                              |
-| P19    | [P19 · r4](mockups/index.html#P19) | APPROVATO R4                                       |
-| P20    | Integrata in P05/P09/P17           | NESSUNA PAGINA                                     |
+| Pagine | File / revisione                    | Approvazione                                       |
+| ------ | ----------------------------------- | -------------------------------------------------- |
+| P01    | [P01 · r3](mockups/index.html#P01)  | DA RIVEDERE                                        |
+| P02    | [P02 · r3](mockups/index.html#P02)  | DA RIVEDERE                                        |
+| P03    | [P03 · r3](mockups/index.html#P03)  | APPROVATO R2                                       |
+| P04    | [P04 · r7](mockups/index.html#P04)  | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          |
+| P05    | [P05 · r3](mockups/index.html#P05)  | DA RIVEDERE                                        |
+| P06    | [P06 · r3](mockups/index.html#P06)  | DA RIVEDERE                                        |
+| P07    | [P07 · r3](mockups/index.html#P07)  | DA RIVEDERE                                        |
+| P08    | [P08 · r6](mockups/index.html#P08)  | R6 DA RIVEDERE                                     |
+| P09    | [P09 · r3](mockups/index.html#P09)  | DA RIVEDERE                                        |
+| P10    | [P10 · r3](mockups/index.html#P10)  | APPROVATO R2 + FIX R3                              |
+| P11    | [P11 · r6](mockups/index.html#P11)  | APPROVATO R3 + FIX R6                              |
+| P12    | [P12 · r3](mockups/index.html#P12)  | APPROVATO R2                                       |
+| P13    | [P13 · r10](mockups/index.html#P13) | R10 DA RIVEDERE                                    |
+| P14    | [P14 · r7](mockups/index.html#P14)  | R7 DA RIVEDERE                                     |
+| P15    | [P15 · r6](mockups/index.html#P15)  | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE |
+| P16    | [P16 · r7](mockups/index.html#P16)  | R7 DA RIVEDERE                                     |
+| P17    | [P17 · r8](mockups/index.html#P17)  | R8 DA RIVEDERE                                     |
+| P18    | [P18 · r7](mockups/index.html#P18)  | APPROVATO R6 + FIX R7                              |
+| P19    | [P19 · r4](mockups/index.html#P19)  | APPROVATO R4                                       |
+| P20    | Integrata in P05/P09/P17            | NESSUNA PAGINA                                     |
 
 La r10 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.

@@ -49,6 +49,14 @@
       "loadedImages": 6,
       "status": "PASS"
     },
+    "p08StressTwoDigitNumbers": {
+      "viewport": "320x664",
+      "identityLogoWidth": "70px",
+      "identityNumberFontSize": "28px",
+      "numbersChecked": [11, 14, 15],
+      "horizontalOverflowCases": 0,
+      "status": "PASS"
+    },
     "p14DestinationPopup": {
       "numericOrder": [2, 3, 7, 8, 11, 14, 15],
       "430x820Columns": "196px 196px",

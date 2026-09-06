@@ -51,7 +51,7 @@ Sono stati esercitati nel mock:
 - copertura Comandate 20/21 nello scenario warning e apertura diretta P11 → P13;
 - P11 allineata in alto anche con quantità diverse; P13 con due card per riga a 320 px, caso multi-giorno a tutta larghezza, SVG warning con “Sab, Mer”, rimozione con X e riassegnazione dal solo nome; le card azionabili restano neutre, con `+` blu sopra 350 px e testo/inset blu nel layout più stretto;
 - dettaglio destinazione e warning XL/XL in P14; popup con ordine numerico e stati condivisi con P15; doppio tap su Giulia con aumento dei Disponibili e slot liberato;
-- P15: due righe, nessuno scroll laterale, stati grigio/verde/blu e assegnazione Equipaggio 5 → Quest 14 con aggiornamento dei due riepiloghi;
+- P15: due righe, nessuno scroll laterale, stati grigio/verde/blu e assegnazione Equipaggio 5 → First 25.7 14 con aggiornamento dei due riepiloghi;
 - P04 con griglia settimanale condivisa; P16 con logo da 68 px; P17 con nome e cinque SVG sulla stessa riga, `--` allineato e secondo tap di annullamento; P18 con riga nome e controlli da 40 px, nessun `~` né scorrimento orizzontale; riepilogo P19 in alto e soggetto sticky.
 
 Queste misure non equivalgono a verifica completa di accessibilità o dell'app. P13, P14, P15, P17 e P18 possono scorrere verticalmente per preservare nomi, composizione e allineamento; il requisito r10 non è comprimere un intero roster in una schermata. Il mock P15 aggiorna solo memoria locale della pagina: la persistenza nel database è un requisito futuro.
