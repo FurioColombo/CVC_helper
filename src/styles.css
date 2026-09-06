@@ -15,15 +15,17 @@
 
 :root {
   color-scheme: light;
-  --background: #f4f1e8;
-  --foreground: #102a36;
-  --card: #fffdf7;
-  --muted: #e8e5dc;
-  --muted-foreground: #52666e;
-  --primary: #063b52;
-  --primary-foreground: #fffdf7;
-  --border: #c7d2d3;
-  --ring: #e15b2f;
+  --background: #f2f6fb;
+  --foreground: #172b47;
+  --card: #ffffff;
+  --muted: #e8eef6;
+  --muted-foreground: #53667d;
+  --primary: #204c8c;
+  --primary-foreground: #ffffff;
+  --border: #cfdae7;
+  --ring: #326fc6;
+  --accent-orange: #e08042;
+  --accent-blue: #204c8c;
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -42,14 +44,145 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    linear-gradient(180deg, rgb(6 59 82 / 10%) 0, transparent 220px),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+}
+
+.cvc-symbol {
+  display: block;
+  width: 112px;
+  height: 44px;
+}
+
+.cvc-symbol--compact {
+  width: 104px;
+  height: 42px;
+}
+
+.cvc-symbol img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.course-identity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  max-width: 100%;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.course-identity strong {
+  font-size: min(3rem, 14vw);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.course-identity > span {
+  color: #8591a0;
+  font-size: min(1rem, 5vw);
+  font-weight: 650;
+}
+
+.course-identity--compact {
+  gap: 0.4rem;
+}
+
+.course-identity--compact strong {
+  font-size: min(1.7rem, 8vw);
+}
+
+.course-identity--compact > span {
+  font-size: min(0.95rem, 4.5vw);
+}
+
+.home-course {
+  padding: 0.65rem 0.1rem 0.9rem;
+}
+
+.home-course h1 {
+  margin: 0;
+}
+
+.home-card {
+  display: flex;
+  min-height: 100px;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 0;
+  border-top: 3px solid var(--accent-blue);
+  border-radius: 14px;
+  background: var(--card);
+  padding: min(0.875rem, 4vw);
+  color: var(--foreground);
+  text-align: left;
+  box-shadow: 0 4px 14px rgb(23 56 89 / 7%);
+  transition:
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.home-card--orange {
+  border-top-color: var(--accent-orange);
+}
+
+.home-card:hover {
+  background: #f8fafc;
+}
+
+.home-card:active {
+  transform: translateY(1px);
+}
+
+.home-card:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.home-card svg {
+  color: #71849b;
+}
+
+.home-card span {
+  font-size: min(1.05rem, 5.25vw);
+  font-weight: 750;
+}
+
+.settings-button {
+  width: 44px;
+  height: 44px;
+}
+
+.app-nav-button {
+  font-size: min(0.75rem, 3.75vw);
+}
+
+.app-nav-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.course-preview {
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 14px;
+  background: var(--muted);
+  padding: 0.875rem;
+}
+
+@media (max-width: 350px) {
+  .home-card {
+    min-height: 92px;
+    padding: 0.75rem;
+  }
 }
 
 #root {

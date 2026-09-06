@@ -15,6 +15,11 @@ export type CourseDetails = IsoWeekInfo & {
   label: string
 }
 
+type CourseIdentityDetails = Pick<
+  CourseDetails,
+  "family" | "level" | "isoWeek" | "year"
+>
+
 function toUtcCalendarDate(date: Date) {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
 }
@@ -72,4 +77,13 @@ export function buildCourseDetails(
     ...dates,
     label: `${familyCode}${level} ${week.isoWeek} ${week.year}`,
   }
+}
+
+export function formatCourseIdentity({
+  family,
+  level,
+  isoWeek,
+  year,
+}: CourseIdentityDetails) {
+  return `${family === "Deriva" ? "D" : "C"}${level} - ${isoWeek} | ${year}`
 }

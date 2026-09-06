@@ -21,7 +21,7 @@ test("restores confirmed local data after closing and reopening the page", async
   const reopened = await context.newPage()
   await reopened.goto("/")
   await expect(
-    reopened.getByRole("heading", { name: /D2 \d+ \d{4}/ }),
+    reopened.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
   ).toBeVisible()
   await reopened.getByRole("button", { name: "Allievi" }).click()
   await expect(reopened.getByRole("button", { name: /^Mario,/ })).toBeVisible()

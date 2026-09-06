@@ -109,6 +109,21 @@ describe("course setup and application shell", () => {
       await screen.findByRole("heading", { name: "Crea il corso" }),
     ).toBeVisible()
     expect(screen.getByRole("button", { name: "Crea corso" })).toBeDisabled()
+    expect(
+      screen.queryByRole("navigation", { name: "Navigazione principale" }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole("img", { name: "CVC" })).toBeVisible()
+  })
+
+  it("updates the complete visible identity with family and level", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "Crea il corso" })
+    await user.click(screen.getByRole("button", { name: "Cabinato" }))
+    await user.click(screen.getByRole("button", { name: "Livello 4" }))
+
+    expect(screen.getByLabelText(/^C4 - \d{1,2} \| \d{4}$/)).toBeVisible()
   })
 
   it("creates a course from the two required selections", async () => {
@@ -126,11 +141,11 @@ describe("course setup and application shell", () => {
       ),
     )
     expect(
-      await screen.findByRole("heading", { name: "D2 35 2026" }),
+      await screen.findByRole("heading", { name: "D2 - 35 | 2026" }),
     ).toBeVisible()
     expect(
-      screen.getByRole("heading", { name: "D2 35 2026" }),
-    ).toHaveTextContent("D2·35|2026")
+      screen.getByRole("heading", { name: "D2 - 35 | 2026" }),
+    ).toHaveTextContent("D2 - 35| 2026")
   })
 
   it("restores the active course and exposes the exact primary navigation", async () => {
@@ -139,7 +154,7 @@ describe("course setup and application shell", () => {
     render(<App />)
 
     expect(
-      await screen.findByRole("heading", { name: "D2 35 2026" }),
+      await screen.findByRole("heading", { name: "D2 - 35 | 2026" }),
     ).toBeVisible()
     expect(screen.queryByText("Corso attivo")).not.toBeInTheDocument()
     expect(screen.queryByText("Operatività")).not.toBeInTheDocument()
@@ -165,7 +180,7 @@ describe("course setup and application shell", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
     await user.click(screen.getByRole("button", { name: "Volontari" }))
 
     expect(
@@ -179,7 +194,7 @@ describe("course setup and application shell", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
     await user.click(screen.getByRole("button", { name: "Comandate" }))
 
     expect(
@@ -193,7 +208,7 @@ describe("course setup and application shell", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
     await user.click(screen.getByRole("button", { name: "Valutazioni" }))
 
     expect(
@@ -207,7 +222,7 @@ describe("course setup and application shell", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
     await user.click(
       within(
         screen.getByRole("navigation", { name: "Navigazione principale" }),
@@ -262,7 +277,7 @@ describe("course setup and application shell", () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await screen.findByRole("heading", { name: "D2 35 2026" })
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
     await user.click(
       within(
         screen.getByRole("navigation", { name: "Navigazione principale" }),

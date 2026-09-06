@@ -1,5 +1,4 @@
 import {
-  Anchor,
   ChevronLeft,
   ClipboardCheck,
   GraduationCap,
@@ -15,6 +14,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { CourseIdentity } from "@/components/CourseIdentity"
+import { CvcMark } from "@/components/CvcMark"
 import {
   COURSE_FAMILIES,
   COURSE_LEVELS,
@@ -57,12 +58,22 @@ type ShellView =
   | "settings"
 
 const HOME_CARDS = [
-  { id: "students", label: "Allievi", icon: GraduationCap },
-  { id: "boats", label: "Barche", icon: Sailboat },
-  { id: "sessions", label: "Comandate", icon: ClipboardCheck },
-  { id: "crews", label: "Equipaggi", icon: UsersRound },
-  { id: "evaluations", label: "Valutazioni", icon: ListChecks },
-  { id: "volunteers", label: "Volontari", icon: HandHeart },
+  { id: "students", label: "Allievi", icon: GraduationCap, tone: "orange" },
+  { id: "boats", label: "Barche", icon: Sailboat, tone: "blue" },
+  {
+    id: "sessions",
+    label: "Comandate",
+    icon: ClipboardCheck,
+    tone: "blue",
+  },
+  { id: "crews", label: "Equipaggi", icon: UsersRound, tone: "orange" },
+  {
+    id: "evaluations",
+    label: "Valutazioni",
+    icon: ListChecks,
+    tone: "orange",
+  },
+  { id: "volunteers", label: "Volontari", icon: HandHeart, tone: "blue" },
 ] as const
 
 function formatDate(date: string) {
@@ -75,25 +86,8 @@ function formatDate(date: string) {
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-3 text-primary">
-      <span
-        className={`${compact ? "size-10 rounded-xl" : "size-12 rounded-2xl"} grid shrink-0 place-items-center bg-primary text-primary-foreground shadow-sm`}
-      >
-        <Sailboat
-          aria-hidden="true"
-          className={compact ? "size-5" : "size-6"}
-        />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[0.65rem] font-bold tracking-[0.17em] uppercase">
-          Caprera · modalità locale
-        </p>
-        <p
-          className={`${compact ? "text-lg" : "text-2xl"} font-black tracking-tight`}
-        >
-          CVC Helper
-        </p>
-      </div>
+    <div aria-label="CVC Helper" className="flex items-center">
+      <CvcMark compact={compact} />
     </div>
   )
 }
@@ -167,9 +161,6 @@ function CourseCreation({
       <Brand />
 
       <section className="mt-8 rounded-3xl border bg-card p-5 shadow-[0_18px_50px_rgb(6_59_82/0.08)] sm:p-6">
-        <p className="text-xs font-bold tracking-[0.16em] text-[#b04423] uppercase">
-          Primo avvio
-        </p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">
           Crea il corso
         </h1>
@@ -215,28 +206,16 @@ function CourseCreation({
           </div>
         </fieldset>
 
-        <div
-          aria-live="polite"
-          className="mt-7 min-h-24 rounded-2xl bg-muted px-4 py-4"
-        >
+        <div aria-live="polite" className="course-preview mt-7 min-h-24">
           {details ? (
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                  Corso proposto
-                </p>
-                <p className="mt-1 text-2xl font-black tracking-tight">
-                  {details.label}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDate(details.startDate)} —{" "}
-                  {formatDate(details.endDate)}
-                </p>
-              </div>
-              <Anchor
-                aria-hidden="true"
-                className="size-7 shrink-0 text-primary"
-              />
+            <div>
+              <p className="text-sm font-semibold text-muted-foreground">
+                Il tuo corso
+              </p>
+              <CourseIdentity {...details} size="compact" />
+              <p className="mt-2 text-sm text-muted-foreground">
+                {formatDate(details.startDate)} — {formatDate(details.endDate)}
+              </p>
             </div>
           ) : (
             <p className="text-sm leading-6 text-muted-foreground">
@@ -280,53 +259,23 @@ function Home({
 }) {
   return (
     <>
-      <section className="overflow-hidden rounded-2xl bg-primary px-4 py-4 text-primary-foreground shadow-[0_12px_32px_rgb(6_59_82/0.18)]">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1
-              aria-label={course.label}
-              className="flex items-baseline gap-1.5 text-2xl font-black tracking-tight"
-            >
-              <span>
-                {course.family === "Deriva" ? "D" : "C"}
-                {course.level}
-              </span>
-              <span aria-hidden="true" className="text-white/45">
-                ·
-              </span>
-              <span>{course.isoWeek}</span>
-              <span aria-hidden="true" className="text-sm text-[#f6b63f]">
-                |
-              </span>
-              <span>{course.year}</span>
-            </h1>
-            <p className="mt-1 text-xs text-white/75">
-              {formatDate(course.startDate)} — {formatDate(course.endDate)} ·
-              Caprera
-            </p>
-          </div>
-          <Sailboat
-            aria-hidden="true"
-            className="size-8 shrink-0 text-[#f6b63f]"
-          />
-        </div>
+      <section className="home-course" aria-label="Corso attivo">
+        <h1>
+          <CourseIdentity {...course} />
+        </h1>
       </section>
 
-      <section className="mt-5" aria-labelledby="course-areas-title">
-        <h2 className="text-lg font-black" id="course-areas-title">
-          Aree del corso
-        </h2>
-
-        <div className="mt-3 grid grid-cols-2 gap-2.5">
-          {HOME_CARDS.map(({ id, label, icon: Icon }) => (
+      <section aria-label="Aree del corso">
+        <div className="grid grid-cols-2 gap-2.5">
+          {HOME_CARDS.map(({ id, label, icon: Icon, tone }) => (
             <button
-              className="group flex min-h-24 flex-col justify-between rounded-2xl border bg-card p-3.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none"
+              className={`home-card home-card--${tone}`}
               key={id}
               onClick={() => onNavigate(id)}
               type="button"
             >
-              <Icon aria-hidden="true" className="size-5 text-primary" />
-              <span className="text-sm font-bold">{label}</span>
+              <Icon aria-hidden="true" className="size-6" />
+              <span>{label}</span>
             </button>
           ))}
         </div>
@@ -352,7 +301,9 @@ function SettingsView({
       <dl className="mt-6 divide-y rounded-2xl bg-muted px-4">
         <div className="flex justify-between gap-4 py-4">
           <dt className="text-sm text-muted-foreground">Corso</dt>
-          <dd className="text-sm font-bold">{course.label}</dd>
+          <dd className="text-sm font-bold">
+            <CourseIdentity {...course} size="compact" />
+          </dd>
         </div>
         <div className="flex justify-between gap-4 py-4">
           <dt className="text-sm text-muted-foreground">Tipo</dt>
@@ -383,7 +334,8 @@ function AppShell({ course }: { course: CourseRecord }) {
   const [evaluationView, setEvaluationView] =
     useState<EvaluationView>("students")
   const mainRef = useRef<HTMLElement>(null)
-  const primaryView = view === "faults" || view === "crews" ? view : "home"
+  const primaryView =
+    view === "faults" || view === "home" || view === "crews" ? view : null
 
   useEffect(() => {
     mainRef.current?.focus()
@@ -396,17 +348,19 @@ function AppShell({ course }: { course: CourseRecord }) {
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-md pb-28">
-      <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
-        <Brand compact />
-        <Button
-          aria-label="Impostazioni"
-          className="size-11 shrink-0 px-0"
-          onClick={() => navigate("settings")}
-          variant="secondary"
-        >
-          <Settings aria-hidden="true" className="size-5" />
-        </Button>
-      </header>
+      {view === "home" && (
+        <header className="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
+          <Brand compact />
+          <Button
+            aria-label="Impostazioni"
+            className="settings-button shrink-0 px-0"
+            onClick={() => navigate("settings")}
+            variant="secondary"
+          >
+            <Settings aria-hidden="true" className="size-5" />
+          </Button>
+        </header>
+      )}
 
       <main className="px-5 py-3 outline-none" ref={mainRef} tabIndex={-1}>
         {view === "home" && <Home course={course} onNavigate={navigate} />}
@@ -482,10 +436,10 @@ function AppShell({ course }: { course: CourseRecord }) {
         aria-label="Navigazione principale"
         className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md border-t bg-card/95 px-4 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_35px_rgb(6_59_82/0.1)] backdrop-blur"
       >
-        <div className="grid grid-cols-3 items-end gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             aria-current={primaryView === "faults" ? "page" : undefined}
-            className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:text-primary"
+            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:bg-muted aria-[current=page]:text-primary"
             onClick={() => navigate("faults")}
             type="button"
           >
@@ -494,7 +448,7 @@ function AppShell({ course }: { course: CourseRecord }) {
           </button>
           <button
             aria-current={primaryView === "home" ? "page" : undefined}
-            className="-mt-5 flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl bg-primary text-xs font-bold text-primary-foreground shadow-[0_8px_24px_rgb(6_59_82/0.24)] outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:bg-muted aria-[current=page]:text-primary"
             onClick={() => navigate("home")}
             type="button"
           >
@@ -503,7 +457,7 @@ function AppShell({ course }: { course: CourseRecord }) {
           </button>
           <button
             aria-current={primaryView === "crews" ? "page" : undefined}
-            className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:text-primary"
+            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:bg-muted aria-[current=page]:text-primary"
             onClick={() => navigate("crews")}
             type="button"
           >

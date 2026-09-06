@@ -4,6 +4,7 @@ import path from "node:path"
 import { expect, type BrowserContext, type Page, test } from "@playwright/test"
 
 import { SESSION_SEQUENCE } from "../../src/domain/config"
+import { formatCourseIdentity, getIsoWeekInfo } from "../../src/domain/course"
 import { buildD2FullWeekScenario } from "../../src/domain/scenarios"
 
 const scenario = buildD2FullWeekScenario()
@@ -142,8 +143,12 @@ async function reopenPage(context: BrowserContext, page: Page) {
   await page.close()
   const reopened = await context.newPage()
   await reopened.goto("/")
+  const visibleCourseIdentity = formatCourseIdentity({
+    ...scenario.course,
+    ...getIsoWeekInfo(new Date(`${scenario.course.startDate}T12:00:00Z`)),
+  })
   await expect(
-    reopened.getByRole("heading", { name: scenario.course.label }),
+    reopened.getByRole("heading", { name: visibleCourseIdentity }),
   ).toBeVisible()
   return reopened
 }

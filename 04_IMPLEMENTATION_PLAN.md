@@ -143,7 +143,7 @@ the verified workflow uses the bundled Node 24 instead of lowering requirements.
 ## U01 — Visual foundation, Home and course shell
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 

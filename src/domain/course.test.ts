@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   buildCourseDetails,
+  formatCourseIdentity,
   getCourseDateRange,
   getIsoWeekInfo,
 } from "@/domain/course"
@@ -48,5 +49,24 @@ describe("course setup domain rules", () => {
         level: 5,
       }),
     )
+  })
+
+  it("formats every visible course identity from its persisted fields", () => {
+    expect(
+      formatCourseIdentity({
+        family: "Deriva",
+        level: 2,
+        isoWeek: 35,
+        year: 2026,
+      }),
+    ).toBe("D2 - 35 | 2026")
+    expect(
+      formatCourseIdentity({
+        family: "Cabinato",
+        level: 4,
+        isoWeek: 1,
+        year: 2027,
+      }),
+    ).toBe("C4 - 1 | 2027")
   })
 })

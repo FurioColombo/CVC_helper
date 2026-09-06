@@ -7,9 +7,9 @@ test("creates and restores the active course with the required shell", async ({
 
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
-  const proposedLabel = page.getByText(/^D2 \d{1,2} \d{4}$/)
+  const proposedLabel = page.locator('[data-course-identity^="D2 - "]')
   await expect(proposedLabel).toBeVisible()
-  const label = await proposedLabel.textContent()
+  const label = await proposedLabel.getAttribute("data-course-identity")
 
   await page.getByRole("button", { name: "Crea corso" }).click()
   await expect(page.getByRole("heading", { name: label ?? "" })).toBeVisible()
