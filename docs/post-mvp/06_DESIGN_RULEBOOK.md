@@ -1,6 +1,8 @@
 # 06 — Regole di design per il ciclo post-MVP
 
-**Stato:** aggiornato alle revisioni umane fino al 6 settembre 2026; geometria r10 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock complessivamente approvato.
+**Stato:** FROZEN per il ciclo 0.2.0. Da usare con il
+[target pagina per pagina](07_PAGE_CHANGELOG.md) e la galleria r10 al commit
+`450b0f9`. Le regole di prodotto in `01_PRODUCT_SPEC.md` restano prevalenti.
 
 ## 1. Ordine delle decisioni
 
@@ -96,13 +98,13 @@ I tre profili principali sono la prova accettata in Q04: estremo piccolo, interm
 
 La [changelist](07_PAGE_CHANGELOG.md) definisce gli stati. Per ognuno registrare: ID pagina, revisione del mock, ID richieste, viewport, fixture, interazioni, cosa resta secondario, eccezioni e decisione umana. Preferire mock HTML/CSS isolati con dati fittizi per griglie e interazioni; bitmap utili per sola esplorazione del marchio, non per provare touch target o persistenza.
 
-Una bella immagine non dimostra il funzionamento. Un target approvato richiede leggibilità dei nomi realistica, stati problematici e un modo chiaro di compiere l'azione. Poi l'implementazione dovrà produrre prova browser e persistenza secondo `09`.
+Una bella immagine non dimostra il funzionamento. Un target approvato richiede leggibilità dei nomi realistica, stati problematici e un modo chiaro di compiere l'azione. L'implementazione deve produrre prova browser e persistenza secondo `04_IMPLEMENTATION_PLAN.md`.
 
 ## 7. Riferimenti CVC e prima applicazione
 
-La revisione Q08 indica i siti CVC/Fondazione e i canali social. Nella [home CVC](https://www.centrovelicocaprera.it/) osservata il 4 settembre 2026 il testo usa Roboto, alcune intestazioni arancione `#db7637`, e il logo rosso/blu è disponibile come asset della pagina. Sono osservazioni della pagina, non una palette normativa del marchio.
+Nella [home CVC](https://www.centrovelicocaprera.it/) osservata il 4 settembre 2026 il testo usa Roboto, alcune intestazioni arancione `#db7637`, e il logo rosso/blu è disponibile come asset della pagina. Sono osservazioni della pagina, non una palette normativa del marchio.
 
-La [galleria r10](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. I loghi RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27 sono tavole PNG trasparenti uniformate a 256 × 72 px nel mock. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r10.
+La [galleria r10](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. I loghi RS 500, Laser Vago, RS Toura, J/80, First 25.7 e First 27 sono tavole PNG trasparenti uniformate a 256 × 72 px nel mock. Sono riferimenti ottici, non automaticamente asset ufficiali: l'app usa un fallback testuale della stessa misura quando la provenienza non ne consente l'uso. `CVC Helper` è il nome provvisorio utilizzabile; immagini Instagram e marchio derivato finale sono rinviati.
 
 ### Regole aggiunte dalle revisioni r2–r10
 

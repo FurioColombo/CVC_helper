@@ -32,11 +32,11 @@ Il logo RS Quest in `assets/rs-quest.png` è la copia non modificata fornita dal
 
 Il nome “CVC Helper” e il blu funzionale restano proposte. Le immagini Instagram come sfondo o card sono un upgrade futuro e non sono state copiate nella galleria.
 
-I loghi barca aggiunti in r10 sono documentati in [assets/README.md](assets/README.md): le sei tavole PNG trasparenti sono tutte `256 × 72` px e seguono l'ordine RS 500, Laser Vago, RS Tera, J/80, First 25.7, First 27 dopo l'asset RS Quest già presente.
+I loghi barca aggiunti in r10 sono documentati in [assets/README.md](assets/README.md): le sei tavole PNG trasparenti sono tutte `256 × 72` px e seguono l'ordine RS 500, Laser Vago, RS Toura, J/80, First 25.7, First 27 dopo l'asset RS Quest già presente.
 
 ## Decisioni consolidate in r10
 
-P12 applica `floor(N/D)` a ogni giorno e richiede esattamente `N mod D` “Giorni con più persone”. [Q10–Q13](../12_R2_REVIEW_QUESTIONS.md) fissano inoltre: P13 centrata sul giorno e aperta direttamente da P11; P15 su due righe senza scroll orizzontale; P19 con riepilogo in alto e soggetto sticky; P04 con due note recenti e le altre su richiesta. La r10 conserva due allievi per riga in P13, trasforma l'azione del nome in una riga neutra con `+` blu discreto, rimuove il bannerino azzurro e mantiene il fallback testo/inset blu a 320 px per preservare spazio al nome. P17 conserva nome e cinque valutazioni sulla stessa riga e le altre decisioni r8.
+P12 applica `floor(N/D)` a ogni giorno e richiede esattamente `N mod D` “Giorni con più persone”. Il [target pagina per pagina](../07_PAGE_CHANGELOG.md) fissa inoltre: P13 centrata sul giorno e aperta direttamente da P11; P15 su due righe senza scroll orizzontale; P19 con riepilogo in alto e soggetto sticky; P04 con due note recenti e le altre su richiesta. La r10 conserva due allievi per riga in P13, trasforma l'azione del nome in una riga neutra con `+` blu discreto, rimuove il bannerino azzurro e mantiene il fallback testo/inset blu a 320 px per preservare spazio al nome. P17 conserva nome e cinque valutazioni sulla stessa riga.
 
 ## Controlli r10
 
@@ -58,4 +58,6 @@ Queste misure non equivalgono a verifica completa di accessibilità o dell'app. 
 
 Formattazione e lint riguardano soltanto i file della galleria. Restano da disegnare/verificare tutti gli stati secondari, testo al 200%, tastiera mobile, equipaggi flessibili e dispositivi fisici. Creazione, autosave, OCR, voce e salvataggi sono dimostrazioni: non costituiscono prove del comportamento applicativo.
 
-Dettagli macchina: [review-checks.json](review-checks.json). Registro umano: [11_MOCK_REVIEW.md](../11_MOCK_REVIEW.md).
+Dettagli macchina: [review-checks.json](review-checks.json). Il target autorevole è
+[07_PAGE_CHANGELOG.md](../07_PAGE_CHANGELOG.md); la storia delle revisioni è in
+`archive/v0.2.0-design-history/` e non fa parte del percorso operativo.

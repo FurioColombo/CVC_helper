@@ -1,0 +1,11 @@
+PASS: controller refused missing, failed and blocked evidence
+
+PASS: missing evidence refused
+Completion refused; missing evidence:
+- .evidence/__synthetic__/intentionally-missing.txt
+
+PASS: failed verification refused
+Completion refused; verification.json does not report all PASS
+
+PASS: review blocker refused
+Completion refused; a required review is invalid, FAIL, or has blockers

@@ -1,185 +1,191 @@
-# Technical Decisions
+# Technical Decisions — 0.2.0 cycle
 
-Authoritative implementation choices. Keep the MVP simple; do not implement post-MVP infrastructure merely because the architecture anticipates it.
+This document is authoritative for architecture, technology, persistence and
+verification. Product behavior belongs in `01_PRODUCT_SPEC.md` and scope in
+`02_MVP_SCOPE.md`.
 
-## Stack
-- TypeScript, React, Vite.
+## 1. Runtime and stack
+
+- TypeScript, React and Vite.
+- Node 24, declared by `.node-version` and `package.json`; do not lower it because
+  a host PATH exposes an older Node. In Codex Desktop, use the bundled workspace
+  Node 24 when needed.
 - Mobile-first installable PWA.
-- Primary development/testing target: recent Chrome/Chromium on Android.
-- Core flows must remain compatible with iPhone/WebKit, without disproportionate Safari-specific engineering.
-- No native app required. Capacitor remains a future packaging/migration path if useful.
+- Primary target: recent Chrome/Chromium on Android.
+- Core flows also run on iPhone/WebKit without disproportionate platform-specific
+  engineering.
+- No native app, backend or sync in this cycle. Capacitor and Supabase/PostgreSQL
+  remain possible later paths.
 
-## UI
-- shadcn/ui + Base UI primitives + Tailwind CSS.
-- Small CVC/Caprera design-token layer for visual identity, readability and consistent field use.
-- Use mature primitives for standard controls instead of rebuilding accessibility/focus/keyboard behavior.
-- Build custom components only for domain-specific UI such as students, crews, boats, faults and evaluations.
-- No Redux/Zustand or equivalent unless React state/hooks become demonstrably insufficient.
-- The component library is infrastructure, not the app's visual identity.
+## 2. UI architecture
 
-## Local-first data architecture
-All operational reads/writes target the local database. MVP must work without network and persist across browser/app closure.
+Use React, Tailwind CSS and mature Base UI/shadcn-style primitives for standard
+control behavior. Build small domain components for students, boat identity,
+warnings, sessions, crews and evaluations.
 
-Future server authority: Supabase/PostgreSQL.
+Keep a small shared token layer for:
 
-Expected evolution:
-1. V1/MVP: one local editing device.
-2. Possible V2: synchronized server state with one editor and other read-only clients.
-3. Later V3: multiple editors with robust conflict handling.
+- CVC blue/orange and semantic red/yellow/green/grey;
+- type scale and normal/light body weight;
+- spacing, radius, borders and shadows;
+- 40/44/48 px interactive target rules;
+- safe-area, sticky and floating offsets;
+- selected, disabled, loading, saving and error states.
 
-Multi-device synchronization is not part of MVP.
+This is a component vocabulary, not a large design-system project. Reuse the same
+person badge, boat identity, session control, warning icon and weekly evaluation
+grid where the product presents the same concept.
 
-### Replication-friendly model
-Use granular independent records, not a monolithic nested course document.
+The design source is mock r10 in `docs/post-mvp/mockups/` at commit `450b0f9`.
+Mock files stay isolated from the application build and never access production
+data. Implement components from the behavior/geometry target; do not import mock
+HTML/CSS/JavaScript into the app.
 
-Examples:
-- each fault is an independent record linked to a boat;
-- each evaluation is an independent record linked to student and session;
-- boat availability is separate from faults;
-- two different faults added to the same boat are independent;
-- evaluations of different students are independent.
+Use vector icons from the established icon dependency for controls and warnings.
+Do not use text characters as warning or evaluation icons when alignment matters.
+Boat image assets are optional presentation inputs: use only assets with acceptable
+provenance and always provide a same-size text/model fallback. Do not synthesize
+or redraw a trademark and call it official.
 
-Use stable collision-resistant client-generated IDs for independently created entities.
+No Redux, Zustand or equivalent is added unless local React state/hooks become
+demonstrably insufficient.
 
-The purpose is to minimize artificial future conflicts. Do not implement a conflict engine now. Future unresolved conflicts may treat server state as authoritative.
+## 3. Local-first persistence
 
-## Local database
-First choice: PowerSync used local-only during MVP because Supabase synchronization is expected soon after MVP validation.
+All operational reads and writes target the local PowerSync database. The M0
+browser spike succeeded, so PowerSync local-only is the decided implementation;
+Dexie is no longer an automatic fallback. The app does not call `connect()` in
+0.2.0 and contains no sync connector, upload queue, Auth or conflict UI.
 
-Before committing to it, run a bounded spike:
-1. minimal representative schema;
-2. local CRUD;
-3. reload/close/reopen;
-4. verify persistence on target browser;
-5. assess setup/runtime complexity.
+Use granular records with stable collision-resistant client IDs rather than a
+monolithic nested course document. Faults, evaluations, assignments, session boat
+selections and availability remain separate records so future replication is not
+made artificially difficult.
 
-If straightforward, use PowerSync.
+### 3.1 Compatibility and migrations
 
-If local-only PowerSync introduces disproportionate complexity, fall back immediately to Dexie/IndexedDB. Do not spend substantial MVP engineering effort forcing PowerSync. This fallback is intentional.
+Application version and database compatibility are separate. The anonymous
+0.1.0 compatibility fixture is the regression contract for every schema change.
 
-## Future backend
-Supabase + PostgreSQL is selected for future shared data.
+Before a schema-changing implementation:
 
-Supabase integration, Auth, sharing and multi-device sync remain post-MVP. Do not build speculative backend adapters, fake sync, conflict UI or authentication now.
+1. extend the fixture only to represent real 0.1.0 data, never future columns;
+2. add the migration/default behavior;
+3. open/normalize the old fixture through the production boundary;
+4. assert record/reference counts and all existing values/notes/history;
+5. run domain invariants and persistence reload tests;
+6. record migration evidence in the active milestone.
 
-## Scan and transcription boundaries
-UI/domain must not depend on a concrete OCR/vision or speech provider.
+Additive optional fields receive explicit defaults. New CT role support is an enum
+extension and must leave ADV/IS rows untouched. Destructive/cascading migrations
+need explicit human approval because they change product semantics.
 
-Keep small capability interfaces conceptually equivalent to:
-- `scanStudents(image) -> structured candidate students`
-- `transcribeAudio(audio) -> text`
+### 3.2 Coherent writes
 
-Provider selection is invisible to the user.
+Use a single database transaction when an operation must remain consistent:
 
-### MVP
-Both have a local implementation:
-- scan: local image/OCR/extraction -> structured candidates -> human review -> explicit commit;
-- speech: local Italian STT -> editable text -> discard audio.
+- deleting a never-used student after checking every reference;
+- unlinking a boat from the open session and its crew mapping;
+- assigning one selected boat to one crew in the open session;
+- multi-record confirmation of an automatic duty proposal.
 
-Run bounded feasibility spikes before committing to concrete engines. Prefer the simplest sufficiently accurate/responsive option on the target phone/browser. Do not let these spikes become open-ended research or destabilize unrelated app work.
+The UI shows saving only while work is pending, success only after commit, and an
+in-context retry after failure. Do not let a stale selected session/person apply a
+late write to the wrong record.
 
-### Future
-Online implementation becomes preferred when connectivity is good, with automatic local fallback when offline, unreliable or remote processing fails. The user does not manually select Whisper/provider/etc.; at most the UI may indicate local processing.
+## 4. Canonical domain implementation
 
-## Testing
-- Vitest for unit/domain tests.
-- React Testing Library for component tests.
-- Playwright for useful end-to-end validation.
+Approved finite mappings and enums live in readable typed configuration and are
+derived by UI, domain logic and tests:
 
-## Dependency policy
-Prefer few, mature, well-supported dependencies, but do not reinvent standard functionality merely to reduce dependency count. Add a library when it materially reduces implementation/maintenance complexity or correctly solves difficult standard behavior.
-
-## Explicit MVP non-goals
-Unless a demonstrated current need appears, do not add:
-- custom Node backend;
-- GraphQL;
-- global state framework;
-- generalized repository/factory/provider architecture;
-- custom synchronization engine;
-- multi-user conflict resolution;
-- Supabase Auth;
-- native application code;
-- large custom design system.
-
-
-## Verification and harness architecture
-
-Verification is a first-class architectural requirement.
-
-The repository should make correct agent behavior easy and incomplete work visible.
-
-### Tooling baseline
-
-Set up before substantive feature work:
-- ESLint;
-- formatting check (Prettier or an equivalently standard formatter);
-- TypeScript strict-enough type checking appropriate to the project;
-- Vitest;
-- React Testing Library;
-- Playwright;
-- production build check;
-- Git-based checkpoints;
-- simple CI.
-
-### Executable domain truth
-
-Finite approved mappings and enumerations should be represented as typed canonical domain data where practical.
-
-Representative canonical tables:
-- course configuration and default boat type;
+- course → default boat and standard crew size where defined;
 - allowed boat types;
-- standard crew size by course where defined;
-- session ordering;
-- duty-day ordering;
-- size-warning matrix;
-- evaluation values;
-- fault states;
+- session and duty-day order;
+- student sex and size values;
+- volunteer roles;
+- fault states and boat availability;
 - crew destinations;
-- volunteer roles.
+- evaluation values;
+- size-warning matrix.
 
-Do not duplicate these mappings independently through UI, logic and tests when they can derive from one inspectable source.
+Algorithmic rules use deterministic UI-independent functions with table-driven and
+boundary tests. This includes duty proposal capacities/priorities, compact display
+names, age/minor status, repetition warnings, evaluation aggregation and
+reference-safe deletion.
 
-Algorithmic domain behavior should be implemented as deterministic UI-independent functions with table-driven tests.
+Maintain `validateCourseState(...)` as structural integrity protection. It is not
+a replacement for advisory user warnings.
 
-### Structural verification
+## 5. OCR and speech boundaries
 
-Add a small custom domain/repository check rather than a large custom framework.
+UI/domain depend on provider-independent capabilities equivalent to:
 
-It should validate cheap deterministic properties such as:
-- expected counts/order for session and duty sequences;
-- symmetry/completeness of the size-warning matrix;
-- validity of canonical enum/configuration references;
-- other obvious static invariants.
+- `scanStudents(image) -> structured candidate students`;
+- `transcribeAudio(audio) -> text`.
 
-### Runtime state invariants
+The current local Italian implementations remain the starting point. A bounded
+milestone may change an engine only with evidence that the existing path cannot
+meet the approved workflow and the replacement does not add backend/sync scope.
 
-Provide a simple `validateCourseState(...)`-style capability that reports impossible/corrupt persisted states. It is for structural integrity, not ordinary user warnings.
+Speech requests microphone permission only after the user's first recording tap.
+Loading, recording, processing, review, denial and recoverable error are explicit.
+Audio is transient. Tests use deterministic audio fixtures, but milestone closure
+also requires labelled physical PC/Android/iPhone evidence. Record latency rather
+than inventing a fixed threshold.
 
-### Browser observability
+OCR tests use an anonymous/synthetic corpus with field/person truth, poor-image and
+false-row cases. Measure correct readable fields associated with the correct
+person. Full-screen camera, free rotation/crop and mandatory review are UI
+requirements; images are not retained as app data.
 
-Codex must be able to launch and exercise the PWA through Playwright.
+## 6. Verification harness
 
-For user-visible milestone completion, browser evidence is preferred over internal-only assertions.
+Keep the existing harness and command surface:
 
-### Scenario builders
+- `npm run verify:quick`: lint, formatting, typecheck and fast tests;
+- `npm run verify:domain`: repository, canonical-table and invariant checks;
+- `npm run verify`: quick + domain + production PWA build;
+- `npm run verify:e2e`: complete Playwright browser suite;
+- `npm run verify:all`: verify + deterministic full week + E2E;
+- `npm run milestone:start|check|complete -- <ID>`;
+- `npm run evidence -- <ID>`.
 
-Use readable deterministic builders/fixtures for realistic validation scenarios. Avoid opaque giant JSON fixtures when small builder functions make intent clearer.
+The milestone manifest declares verification scripts, evidence and structured
+review files. Completion is refused when evidence is missing, verification is not
+all PASS, a review verdict is FAIL or any blocker exists. Old 0.1.0 milestone
+statuses remain immutable history.
 
-At minimum, the final validation should support a realistic D2 week and targeted scenarios for important edge cases.
+Evidence under `.evidence/<ID>/` is small and reproducible: machine verification,
+structured reviews, browser/device metadata and selected screenshots. Browser
+evidence identifies the frozen target revision, tested commit, viewport, scenario
+and assertions. A screenshot cannot substitute for persistence, accessibility or
+domain checks.
 
-### Milestone controller
+For visible milestones, use focused real UI journeys plus the full deterministic
+suite at integration gates. Preserve Pixel 7 Chromium, iPhone viewport Chromium
+and core iPhone WebKit coverage. Test 320 × 664, 390 × 844 and 412 × 915 where
+density/overflow is material; avoid multiplying every test across every viewport.
 
-Build a small transparent milestone-control script during Harness Foundation.
+CI uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
+failure artifacts where useful. Local checks remain required.
 
-It should support operations equivalent to:
-- start milestone;
-- inspect required checks/evidence;
-- refuse completion when mandatory evidence is missing.
+## 7. Versioning and release
 
-The controller may use a small machine-readable milestone manifest. Avoid complex orchestration infrastructure.
+Use low-effort semantic versions:
 
-### CI
+- current baseline: 0.1.0;
+- active UX cycle: 0.2.0, assigned only at the final release gate;
+- patch numbers for separately released fixes;
+- later minor numbers for recognizable feature/change packages;
+- 1.0.0 only after an explicit stability decision.
 
-CI should independently rerun deterministic checks such as lint, formatting, typecheck, unit/domain tests, build and selected E2E checks.
+Do not version every card or milestone. Create one concise `CHANGELOG.md` at the
+0.2.0 release with date, three to six user-visible changes and material migration
+or limitation notes. Create a Git tag only when the release is actually declared.
 
-CI is verification redundancy, not a substitute for local checks.
+## 8. Explicit non-goals
+
+Do not add a custom backend, GraphQL, global state framework, generalized
+repository/provider architecture, custom sync/conflict engine, Supabase/Auth,
+native code, release-management service, large design system, generic content
+system or speculative abstraction during 0.2.0.

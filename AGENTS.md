@@ -13,8 +13,12 @@ Before writing application code:
 3. Read `02_MVP_SCOPE.md` completely.
 4. Read `03_TECHNICAL_DECISIONS.md` completely.
 5. Read `04_IMPLEMENTATION_PLAN.md` completely.
-6. Inspect the repository and Git state.
-7. Start from the first incomplete milestone in `04_IMPLEMENTATION_PLAN.md`.
+6. For the active milestone only, read the relevant sections of
+   `docs/post-mvp/06_DESIGN_RULEBOOK.md` and
+   `docs/post-mvp/07_PAGE_CHANGELOG.md`, then inspect the frozen mock target linked
+   there.
+7. Inspect the repository, runtime and Git state.
+8. Start from the first incomplete milestone in `04_IMPLEMENTATION_PLAN.md`.
 
 Do not read `archive/` unless a human explicitly asks for historical rationale. Archived files are not authoritative.
 
@@ -27,7 +31,9 @@ When information conflicts, use this order:
 3. `02_MVP_SCOPE.md` for scope boundaries;
 4. `03_TECHNICAL_DECISIONS.md` for architecture and technology;
 5. `04_IMPLEMENTATION_PLAN.md` for execution order and milestone-specific acceptance;
-6. code/tests/configuration.
+6. `docs/post-mvp/06_DESIGN_RULEBOOK.md` and the frozen target in
+   `docs/post-mvp/07_PAGE_CHANGELOG.md` for visual/interaction implementation;
+7. code/tests/configuration.
 
 Do not silently resolve a real contradiction by changing product semantics.
 
@@ -52,7 +58,10 @@ then implement that verification instead of relying only on memory or narrative 
 
 ## 4. Harness-first rule
 
-Before substantive product implementation, complete the Harness Foundation milestone defined in `04_IMPLEMENTATION_PLAN.md`.
+The original 0.1.0 Harness Foundation and the 0.2.0 activation milestone are
+complete. Do not replace the harness or reopen old milestones. Before substantive
+work, confirm the first incomplete milestone and its baseline in
+`04_IMPLEMENTATION_PLAN.md`.
 
 The harness must be in place first so all later work is continuously verifiable.
 
@@ -75,7 +84,7 @@ The Harness Foundation includes, at minimum:
 - browser smoke testing;
 - CI that re-runs deterministic checks.
 
-Do not begin feature implementation until the Harness Foundation acceptance criteria pass.
+Do not begin a feature milestone when a previous milestone is incomplete.
 
 ## 5. Required verification commands
 
@@ -105,6 +114,7 @@ Create and maintain a simple command surface. Exact internal implementation may 
 - `npm run milestone:start -- <ID>`
 - `npm run milestone:check -- <ID>`
 - `npm run milestone:complete -- <ID>`
+- `npm run evidence -- <ID>`
 
 Keep these commands boring, transparent, and easy for an agent to inspect.
 
@@ -197,7 +207,8 @@ Possible roles:
 - accessibility/mobile reviewer: touch targets, focus, viewport, input behavior;
 - chaos user: use the app in unusual order and try to break assumptions.
 
-Reviewer output must be recorded as evidence with:
+For active 0.2.0 milestones, reviewer output is structured JSON recorded as
+evidence with:
 - verdict: PASS / PASS_WITH_FINDINGS / FAIL;
 - blockers;
 - important findings;
@@ -309,7 +320,9 @@ After a repeated failure, classify the cause:
 
 A repeated attempt must produce new information or use a changed approach.
 
-Use authorized fallbacks defined in Technical Decisions. Example: if the bounded PowerSync local-only spike proves disproportionately complex, switch to Dexie instead of forcing it.
+Use only fallbacks currently authorized in Technical Decisions. The completed
+PowerSync spike is a settled decision; do not reopen it or switch storage merely
+because a later implementation is difficult.
 
 Escalate only if:
 - authoritative documents genuinely contradict;
@@ -323,7 +336,9 @@ Do not stop for ordinary implementation choices, naming, local refactors, CSS de
 
 ## 15. Scope discipline
 
-Do not implement post-MVP features unless they are strictly required to support the MVP architecture already approved.
+Implement only the included 0.2.0 scope in `02_MVP_SCOPE.md` and the active
+milestone. A deferred item requires an explicit human scope change plus updated
+plan and evidence before implementation.
 
 In particular, do not prematurely add:
 - multi-device synchronization;
@@ -335,11 +350,18 @@ In particular, do not prematurely add:
 - automatic crew generation beyond approved scope;
 - speculative abstractions.
 
-## 16. Completion standard
+## 16. Runtime preflight
 
-The final MVP is complete only when:
+The repository requires Node 24. If the host PATH exposes an older Node, do not
+lower `engines` or change the toolchain. In Codex Desktop, load the bundled
+workspace dependencies and invoke the provided Node 24 executable. Record the
+runtime used in verification evidence.
 
-- all MVP milestones and integration gates are COMPLETE;
+## 17. Completion standard
+
+Version 0.2.0 is complete only when:
+
+- all U-series milestones and the final integration gate are COMPLETE;
 - `npm run verify:all` passes;
 - the deterministic full-week scenario passes;
 - final specialized reviews contain no blockers;
@@ -347,4 +369,5 @@ The final MVP is complete only when:
 - the working tree is clean;
 - the final Git checkpoint exists.
 
-If deterministic verification fails, the MVP is not complete.
+If deterministic or required physical-device verification fails, 0.2.0 is not
+complete.

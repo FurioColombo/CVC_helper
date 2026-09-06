@@ -1,0 +1,208 @@
+{
+  "appVersion": "0.1.0",
+  "schemaContract": "PowerSync local-only tables at c907b19",
+  "tables": {
+    "courses": [
+      {
+        "id": "course-v010-d2",
+        "active": 1,
+        "family": "Deriva",
+        "level": 2,
+        "isoWeek": 35,
+        "year": 2026,
+        "startDate": "2026-08-29",
+        "endDate": "2026-09-05",
+        "label": "D2 35 2026"
+      }
+    ],
+    "students": [
+      {
+        "id": "student-v010-mario",
+        "courseId": "course-v010-d2",
+        "firstName": "Mario",
+        "surname": "Rossi",
+        "nickname": null,
+        "dateOfBirth": "2000-03-12",
+        "sex": "male",
+        "phone": "+390000000001",
+        "size": "M",
+        "initialNote": "Buona esperienza precedente",
+        "active": 1
+      },
+      {
+        "id": "student-v010-giulia",
+        "courseId": "course-v010-d2",
+        "firstName": "Giulia",
+        "surname": "Bianchi",
+        "nickname": "Giu",
+        "dateOfBirth": "2009-07-21",
+        "sex": "female",
+        "phone": null,
+        "size": "S",
+        "initialNote": null,
+        "active": 1
+      },
+      {
+        "id": "student-v010-luca",
+        "courseId": "course-v010-d2",
+        "firstName": "Luca",
+        "surname": "Verdi",
+        "nickname": null,
+        "dateOfBirth": "1998-01-09",
+        "sex": "male",
+        "phone": null,
+        "size": "L",
+        "initialNote": "Da osservare nelle manovre",
+        "active": 0
+      }
+    ],
+    "volunteers": [
+      {
+        "id": "volunteer-v010-adv",
+        "courseId": "course-v010-d2",
+        "name": "Anna ADV",
+        "role": "ADV"
+      },
+      {
+        "id": "volunteer-v010-is",
+        "courseId": "course-v010-d2",
+        "name": "Ivo IS",
+        "role": "IS"
+      }
+    ],
+    "boats": [
+      {
+        "id": "boat-v010-quest-7",
+        "courseId": "course-v010-d2",
+        "type": "RS Quest",
+        "number": "7",
+        "availability": "available"
+      },
+      {
+        "id": "boat-v010-quest-12",
+        "courseId": "course-v010-d2",
+        "type": "RS Quest",
+        "number": "12",
+        "availability": "unavailable"
+      }
+    ],
+    "faults": [
+      {
+        "id": "fault-v010-quest-7",
+        "boatId": "boat-v010-quest-7",
+        "description": "Scotta randa da controllare",
+        "state": "reported",
+        "createdAt": "2026-08-29T08:00:00.000Z",
+        "updatedAt": "2026-08-29T09:00:00.000Z"
+      }
+    ],
+    "dutyAssignments": [
+      {
+        "id": "duty-v010-saturday-mario",
+        "courseId": "course-v010-d2",
+        "dayId": "saturday",
+        "studentId": "student-v010-mario"
+      },
+      {
+        "id": "duty-v010-sunday-giulia",
+        "courseId": "course-v010-d2",
+        "dayId": "sunday",
+        "studentId": "student-v010-giulia"
+      }
+    ],
+    "dutySettings": [
+      {
+        "id": "course-v010-d2",
+        "courseId": "course-v010-d2",
+        "desiredPerDay": 3,
+        "fewerDayIds": "[]",
+        "balanceMinors": 1,
+        "balanceSex": 1,
+        "tieBreaker": "alphabetical",
+        "stayOverStudentIds": "[\"student-v010-giulia\"]",
+        "completedDayIds": "[\"saturday\"]",
+        "acknowledgedWarningKeys": "[]"
+      }
+    ],
+    "crews": [
+      {
+        "id": "crew-v010-sat-pm-1",
+        "courseId": "course-v010-d2",
+        "sessionId": "sat-pm",
+        "destination": "boat",
+        "boatId": "boat-v010-quest-7",
+        "position": 0
+      },
+      {
+        "id": "crew-v010-sat-pm-2",
+        "courseId": "course-v010-d2",
+        "sessionId": "sat-pm",
+        "destination": "mezzi",
+        "boatId": null,
+        "position": 1
+      }
+    ],
+    "crewMembers": [
+      {
+        "id": "member-v010-crew-1-mario",
+        "crewId": "crew-v010-sat-pm-1",
+        "personId": "student-v010-mario",
+        "personType": "student",
+        "position": 0
+      },
+      {
+        "id": "member-v010-crew-1-adv",
+        "crewId": "crew-v010-sat-pm-1",
+        "personId": "volunteer-v010-adv",
+        "personType": "volunteer",
+        "position": 1
+      },
+      {
+        "id": "member-v010-crew-2-giulia",
+        "crewId": "crew-v010-sat-pm-2",
+        "personId": "student-v010-giulia",
+        "personType": "student",
+        "position": 0
+      }
+    ],
+    "landAssignments": [
+      {
+        "id": "land-v010-sun-am-giulia",
+        "courseId": "course-v010-d2",
+        "sessionId": "sun-am",
+        "studentId": "student-v010-giulia"
+      }
+    ],
+    "sessionBoats": [
+      {
+        "id": "session-boat-v010-sat-pm-7",
+        "courseId": "course-v010-d2",
+        "sessionId": "sat-pm",
+        "boatId": "boat-v010-quest-7",
+        "position": 0
+      }
+    ],
+    "evaluations": [
+      {
+        "id": "evaluation-v010-mario-sat-pm",
+        "studentId": "student-v010-mario",
+        "sessionId": "sat-pm",
+        "value": "+",
+        "note": "Manovre ordinate"
+      },
+      {
+        "id": "evaluation-v010-giulia-sat-pm",
+        "studentId": "student-v010-giulia",
+        "sessionId": "sat-pm",
+        "value": null,
+        "note": "A terra per indisposizione"
+      }
+    ],
+    "meta": [
+      {
+        "id": "schema",
+        "value": 1
+      }
+    ]
+  }
+}

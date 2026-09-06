@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "appVersion": "0.1.0",
+  "schemaContract": "PowerSync local-only tables at c907b19",
+  "fixtureSha256": "bda3d00ce1dafc936acec7909fd79b1b671675613f86c9f204a13eb7f8375c35",
+  "tableCounts": {
+    "courses": 1,
+    "students": 3,
+    "volunteers": 2,
+    "boats": 2,
+    "faults": 1,
+    "dutyAssignments": 2,
+    "dutySettings": 1,
+    "crews": 2,
+    "crewMembers": 3,
+    "landAssignments": 1,
+    "sessionBoats": 1,
+    "evaluations": 2,
+    "meta": 1
+  },
+  "checks": [
+    "baseline table set present",
+    "JSON storage round-trip is lossless",
+    "course and crew fixture references resolve",
+    "current domain invariants accept the 0.1.0 records"
+  ],
+  "recordedAt": "2026-09-06T12:52:09.071Z"
+}

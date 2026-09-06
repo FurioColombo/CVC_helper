@@ -1,8 +1,8 @@
 {
   "date": "2026-09-06",
   "artifact": "Standalone UX mock gallery r10",
-  "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
-  "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
+  "status": "FROZEN_0.2.0_DESIGN_TARGET",
+  "scope": "Approved r10 design target only; application behavior, persistence and release still require milestone evidence.",
   "environment": {
     "browser": "Codex in-app browser",
     "layoutUnits": "CSS px",
@@ -40,7 +40,7 @@
       "order": [
         "RS 500",
         "Laser Vago",
-        "RS Tera",
+        "RS Toura",
         "J/80",
         "First 25.7",
         "First 27"
@@ -164,7 +164,6 @@
     "Measurements describe synthetic layouts and primary interactive states, not every production state.",
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
     "At 320px P17 gives the name column 78px so long names may be visually truncated; the full name remains in the title and accessible label.",
-    "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "P19 is approved and the visual structure of P15 is approved. P04 keeps its r5 approval but the added weekly grid needs review. Human review of the r10 target on P13, the r8 target on P17 and the r7 targets on P14/P16 remains required; P18 is an approved r6 treatment with a compact r7 fix."
+    "No persistence, OCR accuracy, voice latency or cross-session integrity verification."
   ]
 }

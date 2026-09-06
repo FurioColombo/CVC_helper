@@ -1,18 +1,25 @@
-# 07 — Changelist per pagina e brief dei mock
+# 07 — Target 0.2.0 e changelist per pagina
 
-**Stato:** revisioni umane fino al 6 settembre recepite; galleria r10 disponibile con 19 viste principali. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md); P19 è approvata, P04 conserva l'approvazione r5 ma la nuova integrazione r7 va rivista, la struttura visiva P15 è approvata. Nessuna pagina è implementata nell'app.
+**Stato:** FROZEN per l'implementazione 0.2.0. La galleria r10 al commit
+`450b0f9` è il target approvato per P01–P19; P20 è integrata nei pannelli testo.
+Nessuna pagina di questo ciclo è ancora implementata nell'app.
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 
 ## 1. Regole comuni del confronto
 
-Applicare R01–R15 a tutte le pagine. Ogni target avrà: revisione, richieste coperte, viewport/dati, stato iniziale, azione principale, risultato visibile, eccezioni, approvazione. Le prove useranno la stessa fixture prima/dopo; i numeri di densità vanno misurati, non inventati.
+Applicare R01–R15 a tutte le pagine. Ogni prova registra richieste coperte,
+viewport/dati, stato iniziale, azione principale, risultato visibile ed eccezioni.
+Usare la stessa fixture prima/dopo; i numeri di densità vanno misurati, non
+inventati.
 
 Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione quando prevista, salvataggio/errore quando previsto. Per viste dense aggiungere minori, omonimi, warning e disabilitati. Nessun test nuovo solo per verificare che una classe CSS sia stata rinominata.
 
 ## P01 — Home e navigazione comune
 
-**Richieste:** BRAND-01/02, UX-G03/05; R02/R12/R13. **Natura:** grafica. **Dipendenza:** Q08 per branding definitivo.
+**Richieste:** BRAND-01, UX-G03/05; R02/R12/R13. **Natura:** grafica. Il nome
+`CVC Helper` e il simbolo corrente sono provvisori utilizzabili; il marchio
+derivato finale è rinviato.
 
 - Home senza riga inferiore “Corso Deriva/Cabinato · Livello #”. Identità dinamica su una riga: per esempio `D2 - 35` grande/blu e `| 2026` piccolo/grigio.
 - Usare il simbolo CVC intero nell'header, ritagliando soltanto la dicitura Fondazione. Allievi/Equipaggi/Valutazioni hanno accento arancione; Barche/Comandate/Volontari blu proposto. Immagini Instagram restano upgrade futuro.
@@ -46,7 +53,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P04 — Profilo, aggiunta e modifica allievo
 
-**Richieste:** STUD-01/02/03/04/09, UX-G06. **Natura:** funzionale e integrità dati. **Decisione:** Q09 accettata; autosave e form focalizzato.
+**Richieste:** STUD-01/02/03/04/09, UX-G06. **Natura:** funzionale e integrità dati. **Decisione:** autosave e form focalizzato.
 
 - La card Valutazioni contiene la griglia settimanale completa già usata in P18/P19, senza cambiare semantica, colori o ordine delle sessioni.
 
@@ -72,7 +79,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P06 — Scan allievi: acquisizione e revisione
 
-**Richieste:** OCR-001, UX-G02/04. **Natura:** affidabilità, non solo restyling. **Decisione:** metrica per campo/persona Q06, obiettivo vicino al 90% su casi tipici; nessun confronto cronometrato col manuale.
+**Richieste:** OCR-001, UX-G02/04. **Natura:** affidabilità, non solo restyling. **Decisione:** metrica per campo/persona, obiettivo vicino al 90% su casi tipici; nessun confronto cronometrato col manuale.
 
 - Flusso r3: Scan allievi → Scegli dalla galleria oppure Fai una foto → fotocamera a schermo intero → rotazione libera e ritaglio → elaborazione → revisione campi → conferma inserimento.
 - Indicare difficoltà recuperabile, proporre altra foto quando utile; non simulare un risultato affidabile se quasi tutte le righe sono inutili.
@@ -86,7 +93,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 **Richieste:** BOAT-01, UX-G02/03. **Natura:** parser + form.
 
 - Campo numeri con hint breve “2 3 7, 8; 11”; accetta virgola/spazi/newline/punto e virgola anche ripetuti.
-- Default tipo corso invariato e modificabile. Per il ciclo corrente il selettore include RS Quest, RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27, coerenti con `01` da confermare prima dell'implementazione. Tastiera adeguata senza impedire i formati già supportati.
+- Default tipo corso invariato e modificabile. Per il ciclo corrente il selettore include RS Quest, RS 500, Laser Vago, RS Toura, J/80, First 25.7 e First 27, coerenti con `01`. Tastiera adeguata senza impedire i formati già supportati.
 - Preservare filtro vuoti/deduplicazione già presenti; riepilogo delle barche effettivamente create.
 - Mostrare questa configurazione soprattutto al primo inserimento. Gli inserimenti successivi partono dalla lista P08 e aggiungono una barca senza ripresentare la procedura iniziale; se P07 è comunque raggiungibile, mostrare le barche esistenti.
 
@@ -94,15 +101,15 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P08 — Elenco e dettaglio Barca
 
-**Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; Q01 distingue indisponibilità corso e deselezione sessione.
+**Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; indisponibilità corso e deselezione sessione sono azioni distinte.
 
 - Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti. I sei nuovi loghi del mock sono tavole trasparenti uniformate a 256 × 72 px.
 - A 320 px il trattamento dell'identità si compatta per lasciare interamente visibili anche i numeri a due cifre (11, 14, 15).
 - Rendere “Da controllare” giallo; mantenere “Disponibile” neutro e leggibile, senza confonderlo con l'assegnazione verde usata in P15.
 - Elenco compatto; dettaglio con guasti aperti in evidenza, risolti secondari.
-- Separare Elimina inserimento errato, disponibilità corso e selezione uscita della sessione. La nuova azione di scollegamento usa la decisione Q01, non una cascata implicita.
+- Separare Elimina inserimento errato, disponibilità corso e selezione uscita della sessione. Lo scollegamento è limitato alla sessione aperta e non produce una cascata implicita.
 
-**Mock:** barca sana, più avarie, indisponibile con assegnazione esistente, riattivazione, storico guasti. **Accettazione:** risolvere una sola avaria non dà verde se ne resta un'altra; storico preservato; effetto di indisponibilità conforme a Q01. **Baseline:** `BoatManagement.tsx`.
+**Mock:** barca sana, più avarie, indisponibile con assegnazione esistente, riattivazione, storico guasti. **Accettazione:** risolvere una sola avaria non dà verde se ne resta un'altra; storico preservato; effetto di indisponibilità conforme a `01`. **Baseline:** `BoatManagement.tsx`.
 
 ## P09 — Avarie: elenco, inserimento e stato
 
@@ -112,7 +119,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 - Segmento Aperta/Comunicata/Risolta diretto, una riga dedicata se necessaria ai target. Non comprimere tre etichette fino a renderle illeggibili.
 - Modifica stato rapida, salvata; ordine/errori coerenti durante tap ripetuti.
 - Icona parte guasta opzionale; default neutro e nessuna classificazione automatica che alteri il testo.
-- Riutilizzare logo barca, numero e accento di stato di P08 per dare una gerarchia riconoscibile anche all'elenco avarie; il mapping del mock copre RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27 oltre a RS Quest.
+- Riutilizzare logo barca, numero e accento di stato di P08 per dare una gerarchia riconoscibile anche all'elenco avarie; il mapping del mock copre RS 500, Laser Vago, RS Toura, J/80, First 25.7 e First 27 oltre a RS Quest.
 
 **Mock:** nessuna avaria, descrizione lunga, più guasti sulla stessa barca, tutti e tre gli stati, errore/retry, form/dettatura. **Accettazione:** più contenuto utile a parità viewport, testo completo raggiungibile in un tap, cambi stato e disponibilità indipendenti dopo reload. **Baseline:** `FaultManagement.tsx`, `FaultCard.tsx`, `FaultForm.tsx`.
 
@@ -129,11 +136,11 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P11 — Comandate: settimana e avvisi
 
-**Richieste:** CMD-04/07/08, UX-G01/03/04. **Natura:** layout e visibilità warning. **Decisioni:** Q02/Q04 recepite; duplicati rossi e tre viewport iniziali.
+**Richieste:** CMD-04/07/08, UX-G01/03/04. **Natura:** layout e visibilità warning. **Decisioni:** duplicati rossi e tre viewport di contratto.
 
 - Mostrare i sette gruppi con nomi, non solo titoli. Prima ipotesi: griglia a due colonne, sette card compatte; confronto possibile con righe compatte senza preapprovare la soluzione.
 - M accanto ai minori. Warning su giorno e persona, secondo severità canonica concordata; eventuali warning globali restano distinguibili dai problemi localizzati.
-- Tap sul segnale apre le ragioni, Avvisi resta secondario. Segnale rosso persistente e accettazione gialli secondo `01` e Q02 accettata.
+- Tap sul segnale apre le ragioni, Avvisi resta secondario. Segnale rosso persistente e accettazione gialli secondo `01`.
 - Rotazioni completate riconoscibili; ricalcolo non modifica lo storico.
 - Un feedback sticky mostra persone uniche assegnate/totale: neutro quando uguali, giallo quando manca qualcuno. Una riga separa il nome del giorno dai nomi.
 - Le card sulla stessa riga allineano titolo e contenuto in alto anche con quantità diverse di nomi; la card più corta non centra verticalmente il proprio contenuto.
@@ -168,7 +175,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## P14 — Equipaggi: setup, composizione e verifica
 
-**Richieste:** CREW-01/02/03/04/05/07/09, VOL-03, UX-G01/03/04/05/06. **Natura:** interazione e layout. **Decisioni:** Q04 viewport e Q01 barche recepite.
+**Richieste:** CREW-01/02/03/04/05/07/09, VOL-03, UX-G01/03/04/05/06. **Natura:** interazione e layout. **Decisioni:** viewport e semantica barche definite in `01`.
 
 - Il popup semplificato di destinazione elenca le barche per numero crescente e usa la stessa legenda di P15: grigio non disponibile, verde assegnata, blu disponibile non assegnata.
 
@@ -185,7 +192,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## P15 — Barche della sessione e destinazione equipaggio
 
-**Richieste:** CREW-01/06/08, BOAT-02. **Natura:** pannello grafico, associazione equipaggio–barca e deselezione sessione secondo Q01 accettata.
+**Richieste:** CREW-01/06/08, BOAT-02. **Natura:** pannello grafico, associazione equipaggio–barca e deselezione della sola sessione aperta.
 
 - Selettore barche sticky in una fascia breve contestuale alla sessione, su due righe e senza scroll orizzontale. Ogni controllo mostra logo/modello sopra e numero sotto, inclusi i numeri a due cifre.
 - Le card riepilogo equipaggio riducono lo spazio sotto i nomi e usano lo stesso logo della barca invece di ripetere “Quest” in testo.
@@ -265,29 +272,36 @@ Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03
 
 ## 3. Registro dei mock e dei target
 
-Galleria r10: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
+Galleria r10 congelata: [apri i mock](mockups/index.html). Ogni link seleziona una
+pagina; misure e dati si cambiano dai controlli esterni alla schermata. L'evidenza
+di implementazione deve registrare target commit `450b0f9`, viewport e differenze
+intenzionali.
 
-| Pagine | File / revisione                    | Approvazione                                       |
-| ------ | ----------------------------------- | -------------------------------------------------- |
-| P01    | [P01 · r3](mockups/index.html#P01)  | DA RIVEDERE                                        |
-| P02    | [P02 · r3](mockups/index.html#P02)  | DA RIVEDERE                                        |
-| P03    | [P03 · r3](mockups/index.html#P03)  | APPROVATO R2                                       |
-| P04    | [P04 · r7](mockups/index.html#P04)  | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          |
-| P05    | [P05 · r3](mockups/index.html#P05)  | DA RIVEDERE                                        |
-| P06    | [P06 · r3](mockups/index.html#P06)  | DA RIVEDERE                                        |
-| P07    | [P07 · r3](mockups/index.html#P07)  | DA RIVEDERE                                        |
-| P08    | [P08 · r6](mockups/index.html#P08)  | R6 DA RIVEDERE                                     |
-| P09    | [P09 · r3](mockups/index.html#P09)  | DA RIVEDERE                                        |
-| P10    | [P10 · r3](mockups/index.html#P10)  | APPROVATO R2 + FIX R3                              |
-| P11    | [P11 · r6](mockups/index.html#P11)  | APPROVATO R3 + FIX R6                              |
-| P12    | [P12 · r3](mockups/index.html#P12)  | APPROVATO R2                                       |
-| P13    | [P13 · r10](mockups/index.html#P13) | R10 DA RIVEDERE                                    |
-| P14    | [P14 · r7](mockups/index.html#P14)  | R7 DA RIVEDERE                                     |
-| P15    | [P15 · r6](mockups/index.html#P15)  | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE |
-| P16    | [P16 · r7](mockups/index.html#P16)  | R7 DA RIVEDERE                                     |
-| P17    | [P17 · r8](mockups/index.html#P17)  | R8 DA RIVEDERE                                     |
-| P18    | [P18 · r7](mockups/index.html#P18)  | APPROVATO R6 + FIX R7                              |
-| P19    | [P19 · r4](mockups/index.html#P19)  | APPROVATO R4                                       |
-| P20    | Integrata in P05/P09/P17            | NESSUNA PAGINA                                     |
+| Pagine | Target                                   | Stato 0.2.0                 |
+| ------ | ---------------------------------------- | --------------------------- |
+| P01    | [P01 · r10](mockups/index.html?r=10#P01) | FROZEN                      |
+| P02    | [P02 · r10](mockups/index.html?r=10#P02) | FROZEN                      |
+| P03    | [P03 · r10](mockups/index.html?r=10#P03) | FROZEN                      |
+| P04    | [P04 · r10](mockups/index.html?r=10#P04) | FROZEN                      |
+| P05    | [P05 · r10](mockups/index.html?r=10#P05) | FROZEN                      |
+| P06    | [P06 · r10](mockups/index.html?r=10#P06) | FROZEN                      |
+| P07    | [P07 · r10](mockups/index.html?r=10#P07) | FROZEN                      |
+| P08    | [P08 · r10](mockups/index.html?r=10#P08) | FROZEN; stress fix included |
+| P09    | [P09 · r10](mockups/index.html?r=10#P09) | FROZEN                      |
+| P10    | [P10 · r10](mockups/index.html?r=10#P10) | FROZEN                      |
+| P11    | [P11 · r10](mockups/index.html?r=10#P11) | FROZEN                      |
+| P12    | [P12 · r10](mockups/index.html?r=10#P12) | FROZEN                      |
+| P13    | [P13 · r10](mockups/index.html?r=10#P13) | FROZEN                      |
+| P14    | [P14 · r10](mockups/index.html?r=10#P14) | FROZEN                      |
+| P15    | [P15 · r10](mockups/index.html?r=10#P15) | FROZEN                      |
+| P16    | [P16 · r10](mockups/index.html?r=10#P16) | FROZEN                      |
+| P17    | [P17 · r10](mockups/index.html?r=10#P17) | FROZEN                      |
+| P18    | [P18 · r10](mockups/index.html?r=10#P18) | FROZEN                      |
+| P19    | [P19 · r10](mockups/index.html?r=10#P19) | FROZEN                      |
+| P20    | Integrated in P05/P09/P17                | NO SEPARATE PAGE            |
 
-La r10 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.
+La r10 copre la vista principale e le interazioni decise per ogni brief. Stati
+secondari e varianti sono specificati nei paragrafi `Mock`/`Accettazione` e vanno
+realizzati e provati nell'app. Le interazioni del prototipo sono dimostrative,
+senza dati reali, microfono, fotocamera o persistenza; il target congelato non
+costituisce prova di implementazione.

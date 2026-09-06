@@ -1,785 +1,407 @@
-# Product Specification
+# Product Specification — 0.2.0 cycle
+
+This is the authoritative source for user-visible behavior and business rules. It
+contains the complete 0.1.0 baseline plus the approved 0.2.0 changes. Historical
+documents and mock behavior never override it.
+
+## 1. Product and operating context
 
-Authoritative source for user-visible behavior and business rules. Historical material never overrides this document.
+CVC Helper supports instructors and assistant instructors during one CVC Caprera
+sailing-course week. A running instance manages one active course. It is a
+mobile-first installable web app for recent Android/Chromium and iPhone/WebKit and
+must remain usable offline on one editing device.
 
-## 1. Product context
+The instructor often works hurriedly, tired, outdoors or aboard a support craft.
+The interface therefore follows these product rules:
+
+- show the information needed for the current decision together;
+- keep input, feedback and warnings near the affected person, day, boat or crew;
+- reduce repeated headers, copy, padding and transitions before hiding data;
+- keep announcement/reading screens cleaner than composition screens;
+- prefer direct choices over menus and typing when the values are known;
+- autosave routine valid edits and show honest save, error and retry state;
+- let automatic behavior propose while the instructor retains manual control;
+- warn about operational anomalies instead of blocking representable states;
+- confirm destructive deletion, while routine moves and swaps remain immediate;
+- preserve history and avoid workflow locks;
+- use colour as reinforcement, always with text, icon or another non-colour cue;
+- treat advanced gestures as shortcuts with an explicit accessible equivalent;
+- keep voice as an input method and discard audio after transcription.
+
+Detailed density, touch, typography, viewport and component rules live in
+`docs/post-mvp/06_DESIGN_RULEBOOK.md`. Page composition targets live in
+`docs/post-mvp/07_PAGE_CHANGELOG.md` and mock r10 at commit `450b0f9`. They guide
+presentation and interaction without changing this document's semantics.
+
+## 2. Course, shell and navigation
 
-The app supports instructors and assistant instructors during one CVC Caprera sailing course week.
+If no active course exists, opening the app goes directly to `Crea corso`. Bottom
+navigation is hidden during this flow.
+
+The user chooses:
+
+- family: `Deriva` or `Cabinato`;
+- level: 1 through 5 where supported.
 
-A running instance manages **one active course**, not several simultaneous courses.
+The app derives and stores real start/end dates, ISO week and year. The visible
+identity uses family abbreviation, level, week and year on one line, for example
+`D2 - 35 | 2026`. Deriva uses `D`, Cabinato uses `C`; every value changes with the
+selected course and date and is never hard-coded in UI copy.
+
+Home shows the intact CVC symbol without the organization wording and exactly six
+functional cards:
+
+- Allievi;
+- Barche;
+- Comandate;
+- Equipaggi;
+- Valutazioni;
+- Volontari.
 
-The interface is mobile-first and should work well as an installable web app on Android and iPhone.
+The persistent bottom navigation has exactly `Avarie`, `Home`, `Equipaggi`, with
+Home central. Settings is secondary. Home is not an operational dashboard in
+0.2.0.
 
-## 2. UX principles
+Course locking, read-only closure and rich historical-course browsing are not
+required. Existing course data remains editable.
+
+## 3. Students
 
-- Show only information useful for the current task.
-- Decision screens may be information-dense.
-- Reading/announcement screens must be extremely clean.
-- Automatic behavior proposes; the instructor decides.
-- Manual override is always possible.
-- Avoid irreversible deletion where historical information matters.
-- Last-minute operational changes must require very few interactions.
-- Voice input is a shortcut for entering text; audio does not need to be retained.
-- Minimize typing. Whenever plausible values are known, prefer direct selection, buttons, chips, toggles, lists, or other clickable controls over free-text entry.
-- Free-text input should primarily be used for genuinely open-ended information such as names, notes, and fault descriptions; where practical, scanning or voice input should provide an alternative.
-- Do not introduce workflow locks merely because a conceptual phase is complete.
+### 3.1 Student data and derived identity
+
+A student has:
 
----
+- first name and surname;
+- optional nickname/display-name override;
+- date of birth and derived age/minor status;
+- sex: `F`, `M` or `Altro`;
+- optional phone;
+- operational size: XS, S, M, L or XL;
+- optional initial knowledge note;
+- optional course/week note;
+- active/disabled state.
 
-# 3. First launch and course creation
+Age and minor status are calculated at the course reference date, not from a
+cached age. A minor has an explicit red `M`/`Minorenne` marker whose meaning is
+available without colour.
+
+The compact generated name is the unique first name. If first names collide, add
+the surname initial, for example `Mario R.`. A manual nickname overrides this.
+
+### 3.2 Student list
+
+The main list is a compact two-column grid; use one column for a state that needs
+it, and a third only if names and controls stay unambiguous at the contract
+viewport. Each active student shows display name, age, a small sex cue and minor
+state. Phone, size, notes and detailed history do not appear in the normal list.
+
+Sort active students by surname and then displayed name. Disabled students remain
+visible after active students, greyed out. Advanced sort controls are deferred.
+
+If the course has no students, show `Scan allievi` and `Aggiungi allievo`
+prominently. `Aggiungi` remains reachable after scrolling as a floating action and
+must not cover the last row or bottom navigation. Secondary actions include Add,
+Scan and `Conoscenza allievi`; Conoscenza is disabled until a student exists.
 
-If no active course exists, opening the app goes directly to **Create course**.
+### 3.3 Add, edit, knowledge and notes
 
-The user selects:
+Manual creation always remains available. The add/edit form contains personal
+data, nickname, phone, direct three-button sex selection, XS–XL size and initial
+note. The profile's edit action is labelled `Modifica`.
 
-- course family: `Deriva` or `Cabinato`;
-- level: `1` through `5`.
+`Conoscenza allievi` is a compact, editable, once-per-course-ish workflow. For
+each student it offers one-tap XS–XL selection and an optional initial note by
+typing or voice. Names and actions must remain inside their cards at the stress
+viewport.
 
-The UI generates a course label from:
+These note types remain distinct:
 
-- course family abbreviation;
-- level;
-- current ISO week number;
-- current year.
+1. initial knowledge/experience note;
+2. optional general course/week note;
+3. evaluation note attached to one student and one session.
 
-Example:
+The profile edit flow can add/update the course/week note independently from the
+initial note. Routine valid changes autosave. The UI must not claim success before persistence,
+must preserve the latest typed text on failure and must offer retry. Double click
+on desktop or long press on touch may focus a field, but `Modifica` remains the
+explicit path.
 
-`D2 35 2026`
+### 3.4 Profile and history
 
-Week and year are derived automatically rather than typed manually.
+The profile shows all personal fields, size and initial note. When other notes
+exist, show up to two recent notes and an `Altre` action for the rest; omit the
+section when none exist. Body copy uses normal/light weight rather than heavy
+display type.
 
-After confirmation, the user reaches the course home.
+The Valutazioni card contains the same complete weekly grid used in P18/P19. It
+fits without horizontal scrolling. The read-only history starts with that grid,
+then groups sessions by day with AM/PM subcards and their notes. The student's
+name is the main sticky subject while the list scrolls. Editing remains in the
+Valutazioni workflow.
 
----
+### 3.5 Disable and delete
 
-# 4. Course home
+Disabling preserves all history, removes the student from future operational
+pools/proposals and does not invalidate past duties, crews or evaluations.
+Re-enabling restores future availability without changing history.
 
-Primary entries:
+Permanent deletion is allowed only when the student has never been referenced.
+Any duty assignment, crew membership, A-terra placement, evaluation, evaluation
+note or other persisted operational/history reference blocks it. The UI lists the
+blocking reasons and offers disable instead. Deletion is confirmed, atomic,
+non-cascading and has no generic Undo.
 
-- Allievi
-- Barche
-- Comandate
-- Equipaggi
-- Valutazioni
+### 3.6 Scan students
 
-A separate settings control opens secondary configuration.
+Scan accepts a screenshot or photograph of a variable-layout printed sheet. The
+entry offers `Scegli dalla galleria` or `Fai una foto`; camera acquisition uses the
+available full-screen surface, then free rotation and crop.
 
-A secondary area, provisionally named `Gestione volontari`, manages ADV/IS people who may embark and therefore need to be available in Equipaggi.
+Extraction attempts first name, surname, date of birth and phone when present.
+Age is derived. Sex inference is only a convenience and is always editable.
 
-Do not turn the home into a dashboard unless later requirements justify it.
+Confidence is field-level. Keep a field only when reasonably reliable; otherwise
+leave it empty. A reliable name may survive with a missing date and vice versa.
+Blurred, cropped or unreliable images prompt retake/re-upload rather than false
+certainty.
 
----
+Human review is mandatory before commit. Rows and fields are editable; false rows
+can be removed. Sticky live counters show rows to check, fields to complete and
+students ready/inserted, updating after every change. Source photos are not
+retained as application data.
 
-# 5. Allievi
+## 4. Boats and faults
 
-## 5.1 Main list
+### 4.1 Canonical models and setup
 
-The normal view is a single-column list or compact cards.
+Operational course defaults are:
 
-Each active student shows only:
+| Course | Default boat |
+| --- | --- |
+| D1 | RS Toura |
+| D2 | RS Quest |
+| D3 | RS Quest |
+| D4 | Laser Vago |
+| D5 | RS 500 |
+| C1 | J/80 |
+| C2 | First 25.7 |
+| C3 | First 27 |
 
-- display name / name;
-- age;
-- sex indicator.
+C4/C5 have no current operational mapping. The user may change the default from
+the canonical allowed-model list.
 
-No phone number, physical information, notes, or detailed history appears in the normal list.
+Initial setup primarily asks for numbers. It accepts commas, whitespace, newlines
+and semicolons; repeated separators create no empty records and identical
+model+number entries are deduplicated. If setup is reached after boats already
+exist, show them so the user can avoid adding duplicates.
 
-Minors must be visually unmistakable. A red visual marker is required.
+A model mark may be used only when the asset is permitted and recognizable at the
+rendered size. A same-size neutral model-name fallback is always valid. Model and
+number form one compact identity; two-digit numbers must not be clipped.
 
-Disabled students remain visible but are greyed out.
+### 4.2 Availability and lifecycle
 
-## 5.2 Empty state
+Availability is independent from fault state:
 
-If there are no students, replace the normal list with prominent actions:
+- `available`: eligible for new session selection;
+- `unavailable`: retained and greyed, normally excluded from new selection.
 
-- `Scan allievi`
-- `Aggiungi allievo`
+Deletion removes only a mistaken/undesired boat entry and must respect history.
+Disabling never deletes history. If an assigned boat later becomes unavailable,
+keep the assignment and show a red warning; do not silently clear it.
 
-The user should understand how to start without opening another menu.
+In list language:
 
-## 5.3 Secondary student menu
+- `Disponibile`: neutral, no unresolved fault;
+- `Da controllare`: yellow, at least one unresolved fault;
+- `Non disponibile`: grey, regardless of fault history.
 
-A collapsible side/secondary menu provides:
+Every state has a label/icon as well as colour.
 
-- Aggiungi allievo
-- Scan allievi
-- Conoscenza allievi
+### 4.3 Faults
 
-`Conoscenza allievi` is disabled until at least one student exists.
+A fault belongs to one boat and has free text, timestamps and one state:
 
-Naming is still provisional, especially `Conoscenza allievi`.
+1. `Aperta`;
+2. `Comunicata` (reported to maintenance/repair people);
+3. `Risolta`.
 
-## 5.4 Scan allievi
+Fault cards use the boat identity, a useful multi-line text preview and direct
+compact state controls. Full text is one tap away. Text is typed or dictated in
+the same panel; there is no separate dictation page. Audio is discarded. State
+changes are fast and persisted; a resolved fault remains in history. Changing a
+fault never changes course availability.
 
-Input may be:
+## 5. Volunteers
 
-- a photo of a printed sheet;
-- a screenshot.
+Volunteers are separate people with a non-empty name and exactly one role: ADV,
+IS or CT. The add/edit form starts empty and uses direct role selection.
 
-The source layout is not guaranteed to be stable.
+All three roles may embark and appear under `Volontari disponibili` in Equipaggi.
+They are excluded from student duty logic, evaluations and student-completeness
+counts. Permanent explanatory copy need not occupy the operational screen.
 
-The extraction flow should attempt to obtain at least:
+## 6. Comandate
 
-- first name;
-- surname;
-- date of birth;
-- phone number when present.
+### 6.1 Time and main view
 
-Age is calculated from date of birth.
+There are seven rotations: Saturday, Sunday, Monday, Tuesday, Wednesday, Thursday
+and Friday. A named rotation begins that afternoon/evening and ends after lunch
+the next day; Friday is particularly suitable for students staying the following
+week.
 
-Sex is inferred from the name as a convenience, but is always directly editable. Corrections should not produce unnecessary warnings.
+The main view shows all seven groups with their names in top-aligned compact
+cards. It includes unique assigned/total feedback: neutral when equal, yellow
+when people are missing. Completed rotations are visually recognizable.
 
-The scan flow must estimate whether extraction worked with sufficient confidence.
+Warnings are localized on the affected day and person using vector icons. Tap
+reveals reasons; a general Avvisi view stays secondary. A red major warning stays
+visible after acceptance. A yellow advisory warning may be acknowledged while
+the underlying condition remains unchanged.
 
-If the source image is unsuitable (blurred, cropped, unreadable, or otherwise too uncertain), explicitly suggest retaking/re-uploading it instead of presenting unreliable extracted data as trustworthy.
+### 6.2 Automatic proposal
 
-After extraction, always show a human review step before committing students. The user can inspect extracted rows, quickly correct fields, remove false rows, and confirm only students that should actually be added.
+The configuration uses currently eligible people and remaining days, asks which
+students stay next week, and offers compact minor/sex balancing switches.
 
-Where useful, low-confidence fields or rows should be visually identified. Exact confidence thresholds are a technical decision.
+Let `N` be eligible people and `D` selected remaining days. Assign
+`floor(N / D)` to every day and require exactly `N mod D` selected
+`Giorni con più persone`, each receiving one extra. If `N < D`, base is zero and
+exactly `N` extra days are selected. Every student can be selected as stay-over.
 
-All extracted fields must be easy to correct.
+Within those capacities, priority is:
 
-Nice-to-have, not mandatory for the first MVP: add names/students through a spoken command, followed by review and confirmation before saving.
+1. fill Friday with stay-over students only to its capacity;
+2. distribute minors as evenly as possible;
+3. when enabled, distribute sex as evenly as possible;
+4. apply deterministic surname ordering, with similar-age grouping only as an
+   optional alternative tie-break.
 
-## 5.5 Manual student creation
+The preview does not mutate persisted assignments. Only confirmation commits it.
+Afterward every day is freely editable, including zero, repeated or deliberately
+unbalanced assignments.
 
-Manual creation must remain available even when scanning exists.
+### 6.3 Midweek recalculation and validation
 
-## 5.6 Conoscenza allievi
+`Ricalcola comandate rimanenti` is the only automatic corrective operation. It
+keeps completed rotations immutable, considers current active/relevant students
+who still need a normal duty and recomputes only remaining days. It uses the same
+formula and priorities. Manual exceptions remain possible.
 
-This is a once-per-course-ish workflow performed after instructors have met the students. It remains editable later.
+Past completed duties are facts and do not warn because a student's later state
+changed. Current/future warnings cover missing, repeated or disabled students,
+configured headcount, incomplete assignments, Friday stay-over preference and
+minor/sex imbalance. Do not warn merely because more stay-over students exist
+after Friday's configured capacity is filled.
 
-Show all students compactly.
+Normal expectation is one duty per student over the week, but intentional repeats
+are valid and never blocked.
 
-For each student provide:
+### 6.4 Direct day editing
 
-### Physical size
+Tapping a P11 day opens P13 directly. There is no intermediate popup or duplicate
+instruction banner. P13 orders people as:
 
-Dropdown:
+1. assigned to the current day;
+2. never assigned;
+3. assigned to other days.
 
-- XS
-- S
-- M
-- L
-- XL
+Show two students per row. Day labels in cards use Lun, Mar, Mer, Gio, Ven, Sab,
+Dom; accessible names remain complete. Tapping the neutral name surface adds the
+person to the current day; a discreet plus signals that action without a solid
+blue button. A compact red X removes only the labelled day. Multiple assignments
+remain allowed; a red warning lists all affected days.
 
-This deliberately compresses height/build/weight into one rough operational descriptor.
+## 7. Equipaggi
 
-### Initial note
+### 7.1 Sessions and setup
 
-Optional.
+Sessions run in this fixed order: Saturday PM, then Sunday AM/PM through Friday
+AM/PM, for thirteen sessions. Identity is day plus AM/PM; no operational timestamp
+is required.
 
-The expected/default state is no special note beyond the expected previous-course level.
-
-The note can be entered:
-
-- by typing;
-- by voice transcription.
-
-Voice audio is discarded after transcription. The resulting text is editable.
-
-Example information may include prior sailing experience, previous recommendations, special mentions, or unusually strong/weak starting level.
-
-## 5.7 Student detail
-
-Show at least:
-
-- first name;
-- surname;
-- age;
-- date of birth;
-- sex;
-- phone number;
-- display name / nickname;
-- XS–XL size;
-- initial knowledge/experience note.
-
-If the student is a minor, show an explicit red `Minorenne` marker.
-
-The student can be disabled/re-enabled here.
-
-Disabling does not erase historical data.
-
-## 5.8 Student evaluation history
-
-Student detail contains a read-only history of evaluations.
-
-Conceptually this is a two-row weekly grid:
-
-- morning;
-- afternoon.
-
-Columns correspond to course days/sessions.
-
-Possible values:
-
-- `++`
-- `+`
-- `=`
-- `-`
-- `--`
-- no evaluation
-
-`=` means a real neutral/in-line evaluation.
-
-No evaluation is distinct and must not contribute to aggregates.
-
-Evaluation editing happens in the Valutazioni workflow, not here.
-
----
-
-# 6. Barche
-
-## 6.1 Main list
-
-Show all boats assigned to the course.
-
-Each item should show only what is operationally useful, principally:
-
-- boat type;
-- boat number;
-- status indicator.
-
-Status:
-
-- green: no unresolved faults;
-- yellow: at least one unresolved fault;
-- greyed: boat disabled for the course.
-
-Do not require a manually maintained green/yellow status if it can be derived from faults.
-
-## 6.2 Empty state / configuration
-
-If no boats exist, show a prominent `Configura barche` action.
-
-The course type provides the default boat model.
-
-The user primarily enters the numbers of the boats assigned to the course.
-
-The default type is editable.
-
-## 6.3 Add boat
-
-A `+` action adds another boat.
-
-The boat type defaults to the course's expected type but can be changed through a dropdown containing available boat types.
-
-## 6.4 Boat detail
-
-Show current unresolved faults prominently and resolved fault history secondarily.
-
-The boat can be disabled/re-enabled without deleting history.
-
-## 6.5 Fault entry
-
-A fault is primarily free text.
-
-Examples:
-
-- `strozzascotte D sinistra rotto`
-- `scotta randa senza anima`
-- `rollafiocco da controllare`
-
-Input:
-
-- typed text;
-- voice transcription.
-
-Do not retain the audio.
-
-Fault state:
-
-1. Aperta
-2. Comunicata
-3. Risolta
-
-`Comunicata` means the issue has been reported to the relevant maintenance/repair people.
-
-State changes must be fast.
-
-A resolved fault remains in history.
-
----
-
-# 7. Comandate
-
-## 7.1 Time model
-
-The course week starts Saturday afternoon and ends Saturday morning.
-
-There are seven duty rotations:
-
-- Saturday
-- Sunday
-- Monday
-- Tuesday
-- Wednesday
-- Thursday
-- Friday
-
-A named day's duty begins that afternoon/evening and finishes after lunch the following day.
-
-Example:
-
-`Comandata sabato` starts Saturday around 18:00 and ends after Sunday lunch.
-
-The Friday duty ends after Saturday lunch and is particularly suitable for students staying for the following week.
-
-## 7.2 Main view
-
-Show the seven duty groups clearly, with assigned students.
-
-Support:
-
-- manual assignment;
-- automatic proposal.
-
-## 7.3 Automatic proposal configuration
-
-The generator should ask/configure at least:
-
-- which students stay the following week;
-- desired number of students per duty/day;
-- which days should contain fewer students when the total is not evenly divisible;
-- whether to balance minors;
-- whether to balance sex.
-
-## 7.4 Automatic assignment priorities
-
-Priority order:
-
-1. Prefer students staying the following week for Friday, only to the extent needed to fill Friday's configured capacity.
-2. Distribute minors as evenly as possible.
-3. If enabled, distribute male/female students as evenly as possible.
-4. Apply the configured deterministic tie-breaker.
-
-Default tie-breaker: surname alphabetical order.
-
-Optional alternative tie-breaker: prefer grouping students of similar age.
-
-The age-based rule is applied only after the higher-priority rules above. Alphabetical order is not a pedagogical rule; it is a deterministic fallback.
-
-## 7.5 Re-running automatic assignment during the week
-
-Automatic assignment must also work after the week has started.
-
-Completed duty rotations are immutable historical state. If three students completed Saturday duty, re-running the generator on Sunday must not assign those students another normal duty.
-
-The generator recomputes only the current/future portion that still needs planning, using completed assignments, current active/disabled student state, current configuration, and the same assignment priorities. Manual exceptions remain possible.
-
-The Friday preference is capacity-aware. Example: with 21 students, 3 duty slots per day, and many students staying the following week, if Friday's three slots are already occupied by three stay-over students, the Friday preference is fully satisfied. Do not warn merely because other stay-over students are assigned to other days.
-
-## 7.6 Validation philosophy
-
-Validation applies differently to history and the future.
-
-Past completed duties are historical facts and must not generate warnings merely because the student's current state changed.
-
-Example: a student disabled on Tuesday may legitimately have completed Sunday duty.
-
-Across the whole week, the normal expectation is that each student performs one duty.
-
-Important anomalies include:
-
-- a student never assigned during the whole week;
-- a student assigned multiple times;
-- a disabled student assigned to a future duty;
-- configured headcount not respected;
-- incomplete assignments.
-
-These are strong warnings, not unbreakable locks.
-
-Manual override is always allowed.
-
-A student may intentionally perform two or three duties, for example as a disciplinary decision.
-
-Once a specific anomaly is explicitly accepted by the user, avoid repeatedly nagging about the unchanged intentional exception.
-
-## 7.7 Advisory warnings
-
-For current/future duties, advisory checks include:
-
-- students staying next week not favored for Friday;
-- uneven distribution of minors;
-- uneven sex distribution when that option is enabled.
-
-## 7.8 Fixing validation issues
-
-Validation should:
-
-1. explain the issue;
-2. offer manual correction;
-3. where reasonable, offer an automatic minimal fix.
-
-Automatic fixing should preserve as much of the user's existing assignment as possible rather than regenerating the entire week.
-
-Also consider `Ricalcola comandate rimanenti`: recompute the remaining current/future plan while preserving completed turns as immutable history and taking the current state into account.
-
-This full remaining-plan recomputation is desirable but may be deferred beyond the first MVP if it materially increases complexity.
-
----
-
-# 8. Equipaggi
-
-## 8.1 Session model
-
-Equipaggi belong to a specific sailing session.
-
-Course sessions run from Saturday afternoon through Friday afternoon, with morning/afternoon sessions as applicable.
-
-For every session except Saturday afternoon, offer `Copia equipaggi sessione precedente`.
-
-This copies the immediately preceding session as the starting point, whether the transition is morning → afternoon or afternoon → next morning.
-
-A copied session becomes independently editable.
-
-## 8.2 Session setup
-
-Before composing crews, select the number of crews to create.
-
-The following are separate concepts and must not be conflated:
+Before composing, choose the number of crews. Keep separate:
 
 - number of crews;
-- number of people per crew;
-- number of boats assigned to the course;
-- number of boats actually going out in the session.
+- people per crew;
+- boats assigned to the course;
+- boats selected for this outing;
+- exact crew-to-boat assignment.
 
-The number of crews multiplied by the number of people per crew does not imply the number of available boats or the number of boats that will go out.
+D2–D5 crews contain exactly two people. D1 and cabin courses may use larger,
+non-fixed crews: propose an even initial distribution across the chosen crews and
+allow unrestricted manual adjustment. Fixed formulas for those courses are
+outside 0.2.0.
 
-For `D2`, `D3`, `D4`, and `D5`, standard crews contain exactly 2 people.
+### 7.2 People, A terra and composition
 
-Other course types, including `D1` and cabin courses, may have larger and non-fixed crew sizes. For these, propose an initial even distribution based on available people and the selected number of crews, then allow manual adjustment.
+The student pool shows available/unassigned students and may include compact size,
+current duty (`C`), just-finished duty (`SM`) and relevant history cues. It does
+not include assigned people. A separate lower-priority pool shows volunteers.
 
-Further exact rules by non-D2–D5 course type remain TBD.
+Every active relevant student should normally be in a real crew or `A terra`.
+`A terra` is an individual placement, counts as accounted for and never counts as
+a crew or pair-history event. Volunteers are excluded from this completeness.
 
-## 8.3 Available people
+The workspace shows several crews at once. Primary interaction is tap person then
+free slot/crew; tap another assigned person to swap. Selection is visible. Double
+click/tap on an assigned student returns only that person to Disponibili and frees
+the slot; an explicit accessible command does the same. Long press may open the
+profile but is never the sole path.
 
-During composition, student entries may show compact decision-support information:
+`A terra` and `Volontari` remain reachable at the lower left/right without covering
+content, with the compact placed/total count between them. Missing people remain
+immediately visible; there is no separate missing-person dialog and no generic
+Undo.
 
-- display name;
-- XS–XL size;
-- duty status;
-- recent evaluation indicator.
+### 7.3 Crew destinations and session boats
 
-Duty indicators are session-aware.
+A crew destination is exactly one of:
 
-In the afternoon it can be useful to distinguish:
+- `Non assegnato`;
+- one selected sailing boat;
+- `Mezzi` (generic active support/motor craft).
 
-- currently on duty (`C`);
-- just finished duty / smontante (`SM`).
+`A terra` is never a crew destination. Mezzi is a real crew and counts in pair and
+group history.
 
-For the morning, current duty status is the important information.
+The session boat strip is sticky, wraps to two rows and never scrolls horizontally.
+Sort numbers numerically. Each boat is:
 
-POST-MVP — do not implement initially: a compact `+` or `-` indicator may identify students in roughly the upper/lower evaluation band accumulated so far.
+- grey: unavailable;
+- blue: available and not assigned;
+- green: assigned to a crew.
 
-The exact aggregation/tie rule should be documented before implementing this future feature.
+The compact destination popup uses the same states and order. To assign, select a
+crew without a boat and tap a blue boat. Persist one mapping for the open session;
+the boat becomes green and both summaries update. A sailing boat cannot belong to
+two crews in one session.
 
-## 8.4 ADV / IS / volunteers
+Removing a boat from the current outing clears only that session's crew-to-boat
+link and preserves people and every other session. Marking a course boat
+unavailable instead preserves existing links and shows red. An unresolved fault
+shows yellow and does not automatically block use.
 
-ADV and IS who may embark must be registered separately from students, provisionally through `Gestione volontari`.
+For every session after Saturday PM, offer secondary copy actions for previous
+crews and previous boat set. Each copied session becomes independently editable.
+Crew copy removes/relocates people invalid for the new session, leaves visible
+gaps and shows an informational post-copy list only when changes occurred. Boat
+copy is preview → edit → confirm.
 
-They are additional people, not students, and must be visually distinguishable in the available-person pool.
+### 7.4 Crew warnings
 
-They:
-- can be placed in crews;
-- do not satisfy student-completeness checks;
-- are not part of student evaluations;
-- are not part of student duty logic.
+Warnings advise and never modify crews. Show at most one triangle per crew using
+the highest severity; tap reveals every reason, keeping crew and boat reasons
+distinct.
 
-The exact fields and final naming/location of `Gestione volontari` remain TBD.
+For two-person size combinations use exactly:
 
-## 8.5 `A terra`
-
-Each session has a special non-crew group: `A terra`.
-
-Examples:
-
-- D1 students who cannot sail because of duty;
-- injured student;
-- another session-specific exception.
-
-A student in `A terra` counts as accounted for during session completeness validation.
-
-`A terra` is not a crew and must not contribute to:
-
-- crew-pair history;
-- repeated-pair statistics;
-- crew balance warnings.
-
-## 8.6 Composition workspace
-
-The UI must allow several crews to be built simultaneously.
-
-Do not force the user to finish Crew 1 before placing someone in Crew 2.
-
-The user must be able to place people provisionally and rearrange them quickly.
-
-Show a compact completion counter.
-
-## 8.7 Boats versus crews
-
-Crew composition and boat assignment are separate concepts.
-
-A session can have completed crews without exact boat numbers assigned.
-
-After crews are made, the user may define which boats actually go out in the session.
-
-For every session after the first, offer `Copia barche sessione precedente`.
-
-Flow:
-
-**copy previous set → show current selection → optionally edit → confirm**
-
-Do not require typing boat numbers when the app already knows the boats assigned to the course. Show available course boats as directly selectable options and let the user tap the boats that will go out.
-
-Example: if course boats are `Quest 2, 3, 7, 8, 11`, the session selection should behave conceptually like:
-
-`✓ 2   ✓ 3   ✓ 7   ○ 8   ✓ 11`
-
-Then crews can optionally be associated with exact selected boats.
-
-Crew composition, session boat-set selection, and exact crew-to-boat assignment remain separate concepts.
-
-## 8.8 `Mezzi`
-
-`Mezzi` is not the same as `A terra`.
-
-A crew assigned to `Mezzi` is an active crew for the session but initially has no sailing boat assigned.
-
-It remains a real crew and contributes normally to crew history and checks.
-
-## 8.9 Crew verification
-
-Verification is advisory: it does not automatically change crews.
-
-The user should be able to inspect warnings and decide.
-
-In the compact all-crews view, show at most one warning triangle per crew, using the severity of the most important issue.
-
-Tap the triangle to see all underlying issues.
-
-Possible severity examples:
-
-### Red
-
-- exact same pair as the immediately previous session;
-- extremely light crew such as two XS;
-- extremely heavy crew such as two XL.
-
-### Yellow
-
-- moderately light/heavy crew;
-- two students both in the negative evaluation group.
-
-Exact size thresholds remain TBD.
-
-Historical pairing information should also be available, such as:
-
-- number of previous sessions together;
-- when they were last together.
-
-Not every historical repetition needs to generate a warning.
-
-## 8.10 Different usage moments
-
-The same session/crew data supports four distinct UX contexts.
-
-### Compose
-
-Show decision-support information: sizes, duty status, evaluation hints, pair history.
-
-### Verify
-
-Emphasize warning triangles and explanations.
-
-### Read / announce
-
-Show an extremely clean list, primarily names and optional boat assignment.
-
-This view is intended for quickly reading crews aloud and for checking them while on the water.
-
-### Quick edit
-
-After crews have been made, allow immediate swaps/replacements and later boat assignment without reopening a long creation wizard.
-
-Do not impose a rigid Draft → Final lock.
-
-Last-minute changes overwrite the current session state. MVP does not need version history.
-
-## 8.11 Session completeness
-
-Every active student relevant to the session should normally be either:
-
-- in a real crew; or
-- in `A terra`.
-
-Missing students should be clearly flagged.
-
-Staff are excluded from this completeness requirement.
-
----
-
-# 9. Valutazioni
-
-## 9.1 Home entry
-
-`Valutazioni` is a primary home entry because evaluation happens at a distinct moment after a sailing session.
-
-## 9.2 Default session
-
-Opening Valutazioni should default to the most relevant recently completed session based on date/time.
-
-The user can navigate to any other course session.
-
-The expected course evaluation window runs from Saturday afternoon through Friday afternoon.
-
-## 9.3 Two views for entering evaluations
-
-### Allievi
-
-Alphabetical/normal student list for quickly finding a person.
-
-### Equipaggi
-
-Show students grouped according to the final crew composition of that session.
-
-The evaluation remains individual. Crew grouping exists only as a memory aid.
-
-Both views edit the same underlying student-session evaluation.
-
-## 9.4 Evaluation input
-
-Possible values:
-
-- `++`
-- `+`
-- `=`
-- `-`
-- `--`
-- no evaluation
-
-No evaluation is the default.
-
-A value should be selectable directly from the list without opening student detail.
-
-An optional note can be added by:
-
-- typing;
-- voice transcription.
-
-The audio is discarded.
-
-Past session evaluations remain editable.
-
-## 9.5 Overview / Riepilogo
-
-Provide an `Overview` / `Riepilogo` view across the whole course.
-
-Each student appears with the compact sequence of evaluations accumulated so far.
-
-Do not require opening sessions one by one.
-
-Support at least:
-
-- alphabetical ordering;
-- ordering from strongest to weakest aggregate evaluation.
-
-For internal aggregation:
-
-- `++` = +2
-- `+` = +1
-- `=` = 0
-- `-` = -1
-- `--` = -2
-- no evaluation = excluded
-
-Use the mean of actual evaluations rather than the sum so students are not rewarded merely for having more observations.
-
-The numeric score does not need to be displayed.
-
-Show the number of actual evaluations for each student. This is useful operational information and does not need to be hidden; students are not expected to access this interface.
-
----
-
-# 10. Sharing and persistence direction
-
-Sharing is core to the product vision but not necessarily required for the first useful build.
-
-Preferred progression:
-
-1. useful single-device/local version;
-2. read-only sharing;
-3. multi-user editing if justified.
-
-The code should not unnecessarily make later sharing impossible, but the MVP must not absorb authentication/synchronization complexity merely for hypothetical future use.
-
-All app users are expected to be instructors/assistant instructors who are already authorized to access course information. Still, context-sensitive UI should avoid displaying irrelevant personal data everywhere.
-
-Example: phone number belongs in student detail, not in crew announcement views.
-
----
-
-# 11. Voice behavior
-
-Voice is an input method, not a content type.
-
-Initial voice-enabled contexts:
-
-- initial student note;
-- boat fault;
-- evaluation note.
-
-Expected flow:
-
-record → transcribe → show editable text → save text → discard audio.
-
-Expected spoken language is **Italian**. Voice transcription should therefore use Italian as the default/expected language rather than relying on unconstrained language detection.
-
-Provider/implementation is a technical decision and is not specified here.
-
-
-## v0.4 — Resolved implementation rules
-
-### Course and sessions
-- Store the real course dates and also ISO week number + year.
-- Sessions are identified only by day + `AM`/`PM`; no operational timestamps are needed for MVP.
-- Session sequence is Saturday PM through Friday PM.
-
-### Default boats
-Use these operational defaults, even if public/older CVC material differs:
-- D1 → RS Toura
-- D2 → RS Quest
-- D3 → RS Quest
-- D4 → Laser Vago
-- D5 → RS 500
-
-Cabin courses are secondary for now. Working mapping:
-- C1 → J/80
-- C2 → First 25.7
-- C3 → First 27
-C4/C5 are outside the current practical scope.
-
-### ADV / IS
-For MVP store only:
-- one name;
-- role (`ADV` or `IS`).
-No separate display-name field. Treat these people as belonging to the current course for now; cross-course reuse must not complicate MVP.
-
-### Scan confidence
-Confidence is per extracted field, not all-or-nothing per row. Keep a field only when extraction confidence is reasonably good; otherwise leave it empty for manual completion. A reliable name can therefore be kept even if DOB is missing, and vice versa. Human review before commit remains mandatory.
-
-### Student compact display name
-- unique first name → `Mario`;
-- collision → first name + surname initial, e.g. `Mario R.`;
-- manually entered nickname/display name overrides the generated form.
-
-### Size warnings — 2-person crews
-| Combination | Warning |
-|---|---|
+| Combination | Severity |
+| --- | --- |
 | XS + XS | Red |
 | XS + S | Red |
-| S + S | Red |
 | XS + M | Yellow |
+| S + S | Red |
 | S + M | None |
 | M + M | None |
 | M + L | None |
@@ -788,481 +410,137 @@ Confidence is per extracted field, not all-or-nothing per row. Keep a field only
 | L + XL | Red |
 | XL + XL | Red |
 
-Order is irrelevant. Do not infer additional size warnings beyond this table for MVP.
+Order is irrelevant. Do not infer unlisted size warnings.
 
-### Crew repetition
-For 2-person crews:
-- same pair in any of previous 3 sessions → Red;
-- same pair earlier in course, but not previous 3 sessions → Yellow;
-- never together → no repetition warning.
+For two-person repetition: same pair in any previous three sessions is red; an
+older repeat is yellow; never together has no repetition warning. For crews of
+three or more, an identical previous whole crew is red and each internal pair is
+also checked using the same recent/older rule. Do not implement fuzzy similarity.
 
-For crews of 3+:
-- entire crew identical to any previous crew → Red;
-- also evaluate every internal pair;
-- internal pair repeated in previous 3 sessions → Red;
-- older internal-pair repetition → Yellow.
+Other strong warnings include an active student missing from crew/A terra and a
+D1 morning-duty student who is not A terra. A duty assignment alone does not
+automatically move a student A terra.
 
-Do not implement fuzzy crew similarity.
+### 7.5 Read/announcement view
 
-### MVP architecture
-Future extensibility must not materially increase MVP complexity. Prefer less code when solutions satisfy the same current requirement: shallow purposeful folders, short files, explicit functions, few dependencies, minimal abstractions, and comments only where they add useful intent.
+Announcement mode removes editing and decision-support detail. Each compact row
+separates crew number, recognizable model/logo plus number or no boat, and people.
+It supports exact boat, model without number, no boat and Mezzi. A permitted model
+asset is optional; the same-size text fallback is required. Screen wake lock is
+allowed when straightforward; native brightness control is deferred.
 
+## 8. Evaluations
 
-## v0.5 — Lifecycle, Comandate, Valutazioni and read mode decisions
+Evaluations belong to one student and one session. Values are `++`, `+`, `=`, `-`,
+`--` or missing. Missing is the default and is distinct from the real neutral `=`.
 
-### Course lifecycle
-`Concludi corso` is potentially useful but is not required for the first MVP.
+Opening Valutazioni selects the most relevant recently completed session. The
+user can choose any course session. Two entry views edit the same records:
 
-Do not implement locking/read-only/reopen mechanics initially. Previous courses may remain editable. Historical-course browsing is low priority.
+- `Allievi`: normal/alphabetical student list;
+- `Equipaggi`: students grouped by that session's final crews as a memory aid.
 
-### Export
-A simple technical export/import path may be useful relatively early for testing, creating fictitious runs, and exercising business rules.
+Students in A terra remain visible with a small contextual cue and missing value
+by default, but may be evaluated.
 
-Presentation exports are post-MVP features to remember:
-- export/share an image of Equipaggi;
-- export/share an image of Comandate.
-
-These should not complicate the initial implementation.
-
-### Automatic Comandate distribution
-The automatic generator proposes the most even possible distribution.
-
-At the start of the week:
-- distribute all relevant students across the 7 duty rotations.
-
-When recalculating later:
-- consider active/relevant students who still need a normal duty;
-- divide them across the remaining duty days only;
-- completed duty rotations remain immutable history.
-
-If division has a remainder, distribute the extra students as evenly as possible. Example: 23 students over 7 days results in days of 3 and days of 4.
-
-This is a proposal, never a constraint. After generation, every day remains freely editable. The instructor may intentionally create highly unbalanced or unusual distributions, including days with zero students or many students. The app may warn but must not block the edit.
-
-All existing higher-priority assignment rules (Friday stay-over preference, minor balancing, optional sex balancing, tie-breaker) apply while producing the even proposal.
-
-### Comandate warning acknowledgement
-- Red/major warnings remain visible even if the instructor intentionally accepts the situation.
-- Yellow/minor warnings may be acknowledged/accepted and then hidden for that unchanged situation.
-
-### Automatic correction
-Do not implement per-problem automatic fixes such as `Sistema questo problema`.
-
-The only automatic corrective operation is:
-
-`Ricalcola comandate rimanenti`
-
-It preserves completed rotations and regenerates only the remaining plan using current students/state/rules. Manual editing remains unrestricted afterward.
-
-### A terra in Valutazioni
-Students marked `A terra` for a session still appear in that session's evaluation screen.
-
-Default:
-- evaluation remains `—` / missing;
-- show a small visual reminder that the student was `A terra`.
-
-The instructor may still assign an evaluation manually if appropriate.
-
-### Evaluation notes in Riepilogo
-A mark that has an associated note should have a discreet visual indicator (for example an asterisk or note icon).
-
-Tapping the relevant mark/student should make the associated note easy to read without navigating through multiple screens.
-
-### Mobile crew assignment interaction
-Primary composition interaction is:
-
-**tap person → tap destination crew**
-
-Do not make drag-and-drop the primary interaction. Optimize for fast, reliable one-handed phone use and minimal implementation complexity.
-
-### Equipaggi read / announcement mode
-Provide a dedicated, extremely clean view for reading crews aloud.
-
-It must support all of these states:
-- exact boat assigned: `Quest 7 — Mario / Luca`;
-- boat type known but no number: `Quest — Mario / Luca`;
-- no boat assigned yet: `Mario / Luca`.
-
-Boat assignment is therefore never required to use announcement mode.
-
-The read view should avoid editing controls and nonessential decision-support information.
-
-### Outdoor readability
-If straightforward in the target PWA/browser, offer a control that keeps the screen awake while announcement/read mode is open.
-
-Increasing screen brightness would also be useful outdoors, but treat it as best-effort/post-MVP if browser/platform restrictions make it non-trivial. Do not add native complexity merely to control brightness.
-
-## Navigation, boats, crew interaction and student detail
-
-### Primary navigation
-Use a hybrid navigation model.
-
-Persistent bottom navigation has exactly three primary destinations:
-
-`Avarie` · `Home` · `Equipaggi`
-
-`Home` is central and visually primary.
-
-The Home page contains the functional cards:
-- Allievi
-- Barche
-- Comandate
-- Equipaggi
-- Valutazioni
-- Volontari
-
-`Volontari` is intentionally lightweight: current-course people with name and role (`ADV` or `IS`) only.
-
-Future cards/areas such as course notes, documents, teaching PDFs/images, base schedules and other reference material are post-MVP. The Home card layout should make adding another card trivial, but do not build generalized content infrastructure in the MVP.
-
-### Home visual identity
-The Home page should have some visual identity, for example:
-- course label such as `D2`;
-- current week such as `Settimana 35`;
-- year where useful;
-- CVC/Caprera logo/branding if available;
-- visual inspiration from the current CVC website, especially colors and general graphic language.
-
-Do not turn Home into an operational dashboard in the MVP. Counts, alerts, duty reminders and similar dashboard widgets are optional future polish.
-
-### Boat number entry
-Typing boat numbers during initial course setup is acceptable because it is a rare operation. Do not build a complex boat-number picker solely to avoid this one-time typing step.
-
-### Boat lifecycle and availability
-Distinguish clearly between:
-- **Delete**: remove an incorrectly entered boat entirely.
-- **Available**: normal active boat.
-- **Unavailable**: keep boat/history but grey it out and do not normally propose it for new sailing assignments.
-
-Fault status and availability are separate concepts. A boat may have an open fault and still be usable.
-
-If a boat already assigned to a crew/session later becomes unavailable, show a **red warning**. Do not automatically change or clear the assignment.
-
-### Crew composition interaction
-In `Equipaggi`, optimize tap for composition rather than detail navigation.
-
-Primary interaction:
-1. tap a student/person to select them;
-2. selected cell/card changes appearance slightly so the current selection is unmistakable;
-3. tap a free slot/crew to move the selected person there;
-4. tap another assigned person to swap the two people directly.
-
-No confirmation popup for move/swap. If the instructor makes a mistake, they can immediately correct it.
-
-A **long press** on a student in Equipaggi opens that student's detail.
-
-In `Gestione Allievi`, normal tap on a student opens their detail directly.
-
-### Copy previous crews
-`Copia equipaggi sessione precedente` should intelligently adapt the copied structure to the current session.
-
-Remove or relocate people whose current state makes the previous assignment invalid, for example:
-- current duty/comandata;
-- `A terra`;
-- disabled/inactive;
-- other explicit current-session unavailability.
-
-Do not try to automatically rebuild a complete optimal crew composition. Preserve the useful previous structure, create visible gaps where needed, and let the instructor finish manually.
-
-If one or more people were removed/relocated automatically, show a small informational popup **after** the copy has already happened:
-
-`Equipaggi copiati`
-
-`Rimossi:`
-- `Mario Rossi — comandata`
-- `Luca Bianchi — A terra`
-- `Anna Verdi — non disponibile`
-
-This is not a confirmation dialog. If no automatic removals/changes occurred, do not show the popup.
-
-### Student notes
-Keep these concepts distinct:
-1. **Initial note** created during `Conoscenza allievi`.
-2. **Course/week note**: optional general note updated during the week from student management; useful but lower priority.
-3. **Evaluation note**: attached to one specific student evaluation in one specific session.
-
-All of these must be visible from the student's profile/detail.
-
-### Student detail as complete history
-The student detail is the canonical place to reconstruct the useful history of that student.
-
-It should expose:
-- personal/course fields;
-- size;
-- initial note;
-- optional course/week note;
-- chronological evaluation history;
-- notes attached to individual evaluations.
-
-From the evaluations Overview/Riepilogo, tapping a student's name opens this detailed view, preferably focused on the evaluation-history area.
-
-### Evaluation-history layout
-Do not hard-code a specific table geometry.
-
-Requirement:
-**Show the complete chronological evaluation history, preserving session identity and associated notes, using the most readable mobile layout.**
-
-The UI may use:
-- a compact AM/PM grid if it fits well; or
-- a vertical chronological list if that is clearer on mobile.
-
-The Overview itself should prioritize trend and compactness. No visible numeric score/mean. A chronological symbol sequence is sufficient even if exact day/session headers are omitted there. Detailed session identity belongs in the student detail.
-
-### Evaluation summary
-A compact row may resemble:
-
-`Mario R.   =  +  +*  ++  —  +  =  -    7 voti`
-
-where:
-- `*` or a note icon indicates an associated note;
-- `—` means missing/not evaluated;
-- the visible evaluation count remains useful;
-- no numeric score is shown to the user.
-
-Internal numeric mapping may still be used for ordering if needed, but must remain implementation detail.
-
-## Final MVP interaction clarifications
-
-### Equipaggi: pool and slots
-The composition screen separates a pool of currently available students, a separate Staff/Volontari pool, and the crew cards/slots. When a person is assigned, remove them from the available pool and show them in the crew slot. Removing them returns them to the appropriate pool. This keeps unassigned people immediately visible and avoids duplicates.
-
-### Person placement vs crew destination
-These are different concepts.
-
-Individual people may be:
-- available/unassigned;
-- assigned to a crew;
-- `A terra`.
-
-A crew destination may be:
-- `Non assegnato` (default);
-- one specific sailing boat;
-- `Mezzi`.
-
-`Mezzi` means generic motor/support craft (e.g. gommone/lancione/gozzo); individual motor craft do not need to be modeled in MVP.
-
-**`A terra` is never a crew destination.**
-
-### Destination interaction
-Use tap crew → tap sailing boat/`Mezzi`. Reassignment uses the same interaction. A sailing boat can belong to only one crew in a session; prevent duplicate simultaneous assignment.
-
-### Copy previous crews
-`Copia equipaggi sessione precedente` is a secondary, non-dominant option. It is useful but expected to be used rarely.
-
-### Disabled students
-Disabled students disappear from operational pools and cannot receive new assignments, but remain in historical crews/evaluations and in Gestione Allievi/detail. Re-enabling restores future availability without changing history.
-
-### No generic Undo
-Do not add an Undo system. Normal edits are directly reversible using the same interactions; avoid UI and state-management clutter.
-
-### Field-use UX is a functional requirement
-The app is used while hurried, tired, outdoors, near/on the water and sometimes aboard support craft. Therefore minimize typing, use reliable touch targets, show only contextual information, avoid unnecessary confirmations, autosave routine edits, preserve manual control, and use warnings rather than rigid workflows.
-
-### Local persistence
-MVP data must survive app/browser closure and reopening. Future multi-device synchronization is expected, but do not introduce speculative backend/sync architecture into MVP.
-
----
-
-## Domain and business rules
-
-This document extracts rules from the UX discussion. It is not yet a complete technical data model.
-
-## Core entities
-
-### Course
-One active course/week.
-
-Known attributes:
-- family: Deriva | Cabinato
-- level: 1..5
-- ISO week
-- year
-- generated label
-
-### Student
-Known attributes:
-- first name
-- surname
-- display name / nickname
-- date of birth
-- derived age
-- inferred/editable sex
-- phone number
-- XS–XL size
-- initial note
-- active/disabled state
-
-Derived:
-- minor status from date of birth and relevant date
-
-### Staff member
-Instructor or assistant instructor who may embark.
-
-### Boat
-- type
-- number
-- active/disabled
-- fault history
-
-### Fault
-- boat
-- free-text description
-- state: Aperta | Comunicata | Risolta
-- chronology metadata
-
-### Duty assignment / Comandata
-Seven rotations, Saturday through Friday.
-
-### Sailing session
-Morning/afternoon operational session.
-
-### Crew
-Group of people for one session.
-
-Possible operational destination:
-- exact boat
-- Mezzi
-- boat not yet assigned
-
-`A terra` is not a crew.
-
-### Evaluation
-Exactly one optional evaluation per student per session, plus optional note.
-
-Values:
-`++`, `+`, `=`, `-`, `--`, none.
-
-## Important invariants / expectations
-
-### Student disabling
-Disabling a student:
-- preserves history;
-- excludes the student from future automatic proposals;
-- does not invalidate historical duties or crews.
-
-### Boat disabling
-Disabling a boat preserves history and removes it from normal future operational selection.
-
-### Fault status
-Boat green/yellow state should be derived from unresolved faults.
-
-### Duty expectations
-Normal expectation: every student performs one duty across the course week.
-
-This is deliberately overrideable.
-
-Past duties are facts and should not be revalidated against later student state changes.
-
-### Crew completeness
-For a session, each relevant active student should normally appear either:
-- in a crew; or
-- in `A terra`.
-
-Staff do not count toward this condition.
-
-### Pair history
-Only real crews count toward student pair history.
-`A terra` does not.
-`Mezzi` does.
-
-### Evaluation aggregation
-No-evaluation is missing data, not neutral.
-`=` is neutral and does count.
-
-Aggregate ranking uses mean evaluated score, not sum.
-
-## Rule categories
-
-When implementing validation, distinguish:
-
-### Blocking technical invalidity
-Only use true blocking behavior when data cannot be represented or saved safely.
-
-### Strong warning
-An important operational anomaly. User may override.
-
-### Advisory warning
-A recommendation that may legitimately be ignored.
-
-The product philosophy is to inform rather than prevent instructor decisions.
-
-
-## Resolved domain decisions — v0.4
-
-- Course persists real dates plus ISO week/year.
-- Session identity is day + AM/PM.
-- Boat defaults: D1 RS Toura; D2 RS Quest; D3 RS Quest; D4 Laser Vago; D5 RS 500.
-- Cabin working scope: C1 J/80; C2 First 25.7; C3 First 27. C4/C5 out of current practical scope.
-- ADV/IS record: one name + role.
-- Scan confidence is field-level; uncertain fields remain empty for manual completion.
-- Compact student name: unique first name; collision adds surname initial; manual nickname overrides.
-- D2–D5 standard crew size = 2.
-- Two-person size warnings and crew-repetition rules are normative as specified in `01_UX_SPEC.md`.
-
-
-## Resolved domain decisions — v0.5
-
-### Comandate generation
-- Initial generation distributes relevant students as evenly as possible over 7 duty rotations.
-- Midweek recalculation distributes only active/relevant students still needing a normal duty over remaining days.
-- Completed rotations are immutable during recalculation.
-- Remainders are distributed evenly.
-- Generated distribution is only a proposal; manual edits may violate it.
-- Red warnings remain visible even when intentional.
-- Yellow warnings can be acknowledged/hidden while the underlying situation remains unchanged.
-- Only automatic corrective action: `Ricalcola comandate rimanenti`.
-
-### Evaluations
-- `A terra` students remain present in the session evaluation list with missing evaluation by default and a contextual indicator.
-- They may still be evaluated manually.
-- Evaluation notes must be discoverable from the weekly summary via a discreet note indicator.
-
-### Crew UI state
-- Primary mobile assignment is tap person → tap crew.
-- Announcement mode must work independently of boat assignment.
-
-## Resolved domain decisions — v0.6
-
-### Navigation/domain surfaces
-- Bottom nav destinations: Avarie, Home, Equipaggi.
-- Home cards: Allievi, Barche, Comandate, Equipaggi, Valutazioni, Volontari.
-- Future reference/document/course-note areas are not MVP domain requirements.
-
-### Boats
-A boat has an availability state independent from fault state.
-- `available`
-- `unavailable`
-
-Deletion is reserved for mistaken/undesired entries and is distinct from marking unavailable.
-
-An unavailable boat remains in course/history but is normally excluded from new boat-selection proposals. Existing assignments are not automatically changed; they produce a red warning.
-
-### Crew editing
-Within Equipaggi:
-- tap selects a person;
-- tap destination moves;
-- tap another person swaps;
-- long press opens student detail.
-
-Selection must be visible in UI state.
-
-### Copying previous crews
-Copying previous crews may automatically remove/relocate people invalid for the new session. These changes are reported after the copy, not confirmed beforehand.
-
-### Student notes
-Represent at least three distinct note categories:
-- initial-course/student-knowledge note;
-- optional general course/week note;
-- session-specific evaluation note.
-
-### Evaluation history
-Student detail must preserve chronological session identity for each evaluation and expose its note. Overview may omit exact session labels if needed for mobile readability, but retains chronological order.
-
-## Finalized semantics
-
-- `A terra` is an individual-person placement/status, never a crew destination.
-- Crew destinations are `Non assegnato`, a specific sailing boat, or `Mezzi`.
-- `Mezzi` is generic motor/support craft; crews assigned there remain real crews and their pair/group history counts normally.
-- A sailing boat cannot be assigned to multiple crews in the same session.
-- D1 duty does not automatically place a student A terra. Show `C`; D1 morning duty student not A terra produces a red warning.
-- Active students neither assigned to a crew nor A terra remain in the available pool and constitute a major completeness issue.
+The full name and five value controls share one row. Values use aligned vector
+icons; positives are green, negatives red and neutral distinct. A second tap on
+the selected value clears it. There is no sixth absence control. Tapping the name
+opens the note editor in the same panel. Notes accept typing or voice and remain
+attached to the exact session. Past records remain editable.
+
+`Riepilogo` shows one compact student card with a complete seven-day × AM/PM grid,
+a 40 px name row, actual evaluation count and an `Ordinamento` label above compact
+alphabetical/evaluation controls. Missing cells are blank, never dash or tilde.
+The complete aligned grid fits without horizontal scrolling. A note icon opens
+the exact note; tapping the name opens the profile history.
+
+The profile history shows the same grid at the top, then a sticky student title
+and compact day cards containing AM/PM values and notes. It is read-only.
+
+For internal ordering only, map `++` to 2, `+` to 1, `=` to 0, `-` to -1 and `--`
+to -2. Use the mean of present evaluations, never the sum. Missing values are
+excluded. No numeric score is shown.
+
+## 9. Speech and OCR capability behavior
+
+UI/domain code depends on small provider-independent capabilities equivalent to
+`scanStudents(image)` and `transcribeAudio(audio)`. Provider selection is not a
+user choice.
+
+Speech-enabled contexts are initial knowledge notes, boat faults and evaluation
+notes. All use the same in-panel flow:
+
+request permission after the user taps Detta → load real assets with honest
+progress → record → process → show editable Italian text → save text → discard
+audio.
+
+The UI preserves typed text on denial/failure, supports real cancel/retry and never
+shows invented progress. Reliability is verified on PC, Android and iPhone with
+automated fixtures plus physical checks. Latency is measured and reported; no
+fixed threshold is invented before evidence exists.
+
+OCR uses the acquisition/review contract in section 3.6. Quality is measured
+against anonymous/synthetic field/person truth. Aim near 90% of readable fields on
+typical fixtures while preferring empty/manual correction over a confident wrong
+association. Human review, not the percentage alone, controls commit.
+
+## 10. Persistence, privacy and future sharing
+
+All operational reads and writes use the local database and survive page/app
+closure. Data created by 0.1.0 must remain readable without losing people, duties,
+crews, A-terra placements, boats, faults, evaluations or notes. Schema changes
+require a tested migration and must preserve stable IDs/references.
+
+Only true technical invalidity blocks storage. Routine recoverable errors stay in
+context with retry. Operations that unlink a session boat or assign it to a crew
+must be coherent and session-local; student deletion must be atomic.
+
+Phone and other personal data appear only where operationally relevant, never in
+announcement rows. All app users are assumed to be authorized instructors or
+assistant instructors; that assumption does not justify showing irrelevant data.
+
+Expected future progression is local single device, then read-only sharing, then
+multi-editor sync if justified. Backend, authentication, synchronization and
+conflict UI are outside 0.2.0.
+
+## 11. Canonical domain truth and invariants
+
+Finite values and mappings are represented once in typed domain configuration and
+used by UI, logic and tests.
+
+Canonical sequences and enums:
+
+- sessions: `sat-pm`, then `sun-am`, `sun-pm` through `fri-am`, `fri-pm`;
+- duty days: Saturday through Friday;
+- sizes: XS, S, M, L, XL;
+- sex: F, M, Altro (internal identifiers may differ if mapping is explicit);
+- volunteer roles: ADV, IS, CT;
+- fault states: open, reported, resolved;
+- boat availability: available, unavailable;
+- crew destinations: unassigned, boat, mezzi;
+- evaluation values: `++`, `+`, `=`, `-`, `--`, missing.
+
+The persisted course state must reject or report, at minimum:
+
+- duplicate entity IDs or duplicate model+boat-number identity;
+- dangling student, volunteer, boat, fault, session or evaluation references;
+- invalid canonical enum/session/day values;
+- one student both in a crew and A terra, or assigned more than once in a session;
+- one volunteer assigned more than once in a session;
+- one sailing boat assigned to multiple crews in the same session;
+- crew boat assignment without that boat selected for the session;
+- duplicate student/session evaluations;
+- invalid or reversed fault timestamps.
+
+User-facing warnings are separate from integrity failures. They explain unusual
+but representable operational choices and preserve manual override.
+
+## 12. Scope boundary
+
+The included and deferred 0.2.0 boundary is authoritative in
+`02_MVP_SCOPE.md`; implementation order and evidence live in
+`04_IMPLEMENTATION_PLAN.md`. In particular, 0.2.0 does not add backend/sync,
+automatic crew optimization, dashboards, Instagram imagery, a broad custom icon
+programme, native brightness control, presentation exports, evaluation-band crew
+hints or fixed special-course crew formulas.

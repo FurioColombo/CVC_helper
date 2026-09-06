@@ -1,162 +1,148 @@
-# MVP Scope
+# Scope — baseline 0.1.0 and cycle 0.2.0
 
-## Objective
+This document defines what the active cycle must and must not deliver. Product
+semantics live in `01_PRODUCT_SPEC.md`; milestone order and evidence live in
+`04_IMPLEMENTATION_PLAN.md`.
 
-Produce a small, genuinely usable proof of concept rapidly.
+## 1. Completed 0.1.0 baseline
 
-The first useful build should favor:
-- simple code;
-- few dependencies;
-- direct workflows;
-- local usability;
-- easy replacement/refactoring later.
+Version 0.1.0 is the completed local-first MVP represented by baseline commit
+`c907b19`. Its completion is historical fact and is not redefined by this cycle.
 
-## MVP-0 candidate
+The baseline supports one persistent course, students and knowledge data, local
+scan/review, volunteers ADV/IS, boats and faults, Comandate, manual crew
+composition with A terra/Mezzi, crew warnings/read mode, evaluations/history,
+local Italian transcription and an installable mobile-first PWA.
 
-### Include
+The 0.1.0 completion ledger is archived at
+`archive/v0.1.0/04_IMPLEMENTATION_PLAN.md`. Its known non-blocking limitations do
+not silently become 0.2.0 requirements.
 
-1. Create one course.
-2. Add students manually.
-3. Scan/import students with human review if feasible without destabilizing the first build.
-4. Student list/detail and disable/re-enable.
-5. `Conoscenza allievi`: size + optional note.
-6. Configure boats.
-7. Boat list/detail.
-8. Add/update/resolve faults.
-9. Configure duties manually.
-10. Automatic duty proposal with simple deterministic rules.
-11. Duty validation and manual override.
-12. Manual crew composition.
-13. `A terra` and `Mezzi`.
-14. Basic crew warning system.
-15. Fast crew read/announcement view.
-16. Evaluations by session.
-17. Evaluation Overview/Riepilogo.
-18. Local persistence.
-19. Mobile-first PWA behavior.
+## 2. Objective of 0.2.0
 
-### Prefer to include shortly after core flow works
+Make the existing end-to-end workflow faster, clearer and more reliable during
+real field use, while preserving local data and the current architecture.
 
-- voice transcription;
-- robust image extraction from variable sheet layouts;
-- richer crew history information;
-- read-only sharing.
+The cycle prioritizes:
 
-### Explicitly defer unless implementation proves trivial
+1. information needed for one decision visible together;
+2. compact portrait layouts without horizontal scrolling;
+3. direct, reversible interactions with local feedback;
+4. reliable OCR/STT with honest review and fallback;
+5. compatibility with data created by 0.1.0;
+6. verifiable behavior rather than visual resemblance alone.
 
-- collaborative multi-user editing;
-- complex authentication/permissions;
-- automatic crew optimization;
-- sophisticated constraint solvers;
-- detailed analytics;
-- audit/version history;
-- generalized workflow engine;
-- cabinato-specific complexity not needed to validate the product.
+## 3. Included in 0.2.0
 
-## Development philosophy
+### Shared UI and shell
 
-A partially complete application that supports a real end-to-end workflow is preferred over many half-built subsystems.
+- the approved CVC visual language, compact tokens/components and responsive
+  behavior in P01–P19;
+- dynamic D/C-level-week-year course identity;
+- intact CVC symbol, six Home cards and correct bottom-navigation visibility;
+- consistent touch targets, focus, safe area, autosave/error and accessible state
+  cues;
+- normalized boat-identity treatment with a neutral fallback when an asset cannot
+  be used.
 
-Recommended vertical order:
+### Students
 
-course → students → boats/faults → duties → manual crews → evaluations → assisted input → sharing.
+- compact two-column list, deterministic base ordering and persistent Add action;
+- profile/edit integration of XS–XL, initial note and distinct course/week note;
+- up to two recent notes plus `Altre` and the shared weekly evaluation grid;
+- safe permanent deletion only for never-used students, with complete reference
+  check and disable fallback;
+- camera/gallery acquisition, free rotation/crop, useful OCR, mandatory review and
+  live scan counters;
+- shared real Italian speech input in the initial-note panel.
 
-This ordering is provisional and must be reconciled with the detailed implementation plan before coding.
+### Boats, faults and volunteers
 
+- multi-number boat parser with comma/whitespace/newline/semicolon handling,
+  ignored empty tokens and deduplication;
+- compact common boat/fault identity and clear availability/fault states;
+- direct fault-state controls and shared in-panel speech input;
+- CT role in addition to ADV/IS, embarks like staff and remains excluded from all
+  student-only rules and counts.
 
-## Explicit post-MVP items added during UX review
+### Comandate
 
-- evaluation-band `+/-` indicators in Equipaggi;
-- voice-based student-name entry (nice-to-have);
-- full remaining-duty recomputation may be deferred if it materially increases MVP complexity.
+- seven-day compact overview, localized warnings and assigned/total feedback;
+- non-mutating proposal with `floor(N/D)` base and explicit
+  `Giorni con più persone` for the remainder;
+- direct P11-to-P13 day editing, two people per row, short day labels and complete
+  add/remove/multiple-day feedback;
+- existing midweek recalculation, completed-history preservation, priorities and
+  manual override.
 
+### Equipaggi
 
-## v0.4 MVP constraints
+- compact composition with missing-person pool, separate volunteers, localized
+  warning details and placed/total feedback;
+- explicit and double-tap/click return to Disponibili;
+- P14/P15 shared boat-state language, numeric ordering and persistent
+  crew-to-boat assignment;
+- session-local unlink that preserves crew members and other sessions;
+- clean three-field announcement rows with readable model/logo treatment;
+- existing A terra, Mezzi, copy, move/swap, warning and completeness semantics.
 
-- Local-first remains acceptable for the first useful build.
-- Do not add backend/auth/sync machinery only for hypothetical future sharing.
-- Keep code intentionally small and inspectable.
-- D2–D5 crews are fixed at 2 people.
-- Cabin-course complexity is secondary; C4/C5 are outside current practical scope.
-- Size and repetition warnings defined in UX spec are deterministic MVP rules.
+### Valutazioni
 
+- five aligned vector controls on the same row as the student name, with second
+  tap to clear and in-panel note/STT;
+- complete non-scrolling weekly grids shared by profile, Riepilogo and history;
+- compact labelled ordering, correct missing/neutral/color semantics, session
+  notes and grouped AM/PM history.
 
-## v0.5 scope clarifications
+## 4. Explicitly deferred
 
-### Keep in / useful early
-- Even automatic Comandate proposal.
-- Midweek `Ricalcola comandate rimanenti`.
-- Manual override after every automatic proposal.
-- A-terra indicators in Valutazioni.
-- Evaluation-note indicator/access from Riepilogo.
-- Tap-person → tap-crew composition.
-- Clean Equipaggi announcement/read mode.
-- Screen wake lock in read mode if straightforward.
-- Simple technical data export/import may be added early when useful for testing.
+The following do not enter 0.2.0 unless a later human instruction changes scope
+and the plan/evidence are updated first:
 
-### Defer / low priority
-- Course locking/read-only/reopen lifecycle.
-- Rich historical-course management.
-- Image export of Equipaggi.
-- Image export of Comandate.
-- Screen-brightness control if it requires platform-specific/native complexity.
-- Per-warning automatic repair.
+- final product name, derived CVC/EXE/Helper brand mark and a broad custom icon
+  programme;
+- Instagram/background/menu-card photography;
+- optional fault-part icon classification;
+- advanced student sorting by age/sex/direction;
+- voice-created student-name commands;
+- evaluation-band hints in crew cards;
+- fixed special crew-size formulas for D1/cabin courses beyond even proposal and
+  manual adjustment;
+- automatic crew generation/optimization;
+- dashboard widgets, course documents/PDFs/reference-material systems;
+- image exports for crews or Comandate;
+- rich course archive/locking, audit/version history and generalized Undo;
+- synchronized horizontal timelines/search;
+- read-only sharing, backend, Auth, synchronization, conflicts or multiple editors;
+- native packaging and platform-specific brightness control.
 
-## v0.6 scope clarifications
+## 5. Conditional evidence, not optional scope
 
-### MVP navigation
-Include:
-- persistent bottom nav: Avarie / Home / Equipaggi;
-- Home cards: Allievi, Barche, Comandate, Equipaggi, Valutazioni, Volontari.
+OCR and STT are included. Their acceptance needs physical-device evidence during
+their milestones. Missing access to a device may hold that milestone open, but it
+does not justify a simulated PASS or silently remove the feature.
 
-Keep future Home cards easy to add, but do not create generic document/content systems.
+Boat logos supplied during design are references, not assumed licensed production
+assets. Lack of proven provenance uses the approved neutral text/model fallback
+and does not block implementation.
 
-### MVP boat management
-Include:
-- typed boat number entry during setup;
-- delete mistaken boat;
-- available/unavailable state;
-- visual greying of unavailable boats;
-- red warning if an already assigned boat becomes unavailable.
+`CVC Helper` is the provisional usable name for 0.2.0. A final name/derived mark is
+deferred and does not block the cycle.
 
-### MVP crew editing
-Include:
-- tap to select;
-- visual selected state;
-- tap destination to move;
-- tap person to swap;
-- long press student for detail;
-- adapted copy from previous session;
-- post-copy informational popup only when people were automatically removed/relocated.
+Speech timing is measured and reported; no fixed threshold is part of scope.
 
-### MVP evaluations/student detail
-Include:
-- initial note;
-- session evaluation notes;
-- complete evaluation history in student detail;
-- note indicators from summary;
-- compact chronological Overview without visible numeric score.
+## 6. Completion boundary
 
-### Lower priority / can defer
-- editable general course/week student note if schedule is tight;
-- visual Home dashboard widgets;
-- document/PDF/reference-material section;
-- course/base schedule section.
+Version 0.2.0 is complete only when:
 
-## Final MVP boundary
-
-MVP is complete when an instructor can, with persistent local data:
-1. create/configure a course;
-2. add/import/scan students and add ADV/IS volunteers;
-3. perform Conoscenza allievi;
-4. configure/manage boats and faults;
-5. generate/edit/recalculate Comandate;
-6. manually compose and verify crews;
-7. place individual people A terra;
-8. assign crews to a sailing boat, Mezzi, or leave destination unassigned;
-9. use the clean announcement/read view;
-10. record session evaluations/notes and inspect student trends/history;
-11. close/reopen the app without losing course state;
-12. use voice transcription in the specified note/fault contexts.
-
-Post-MVP: multi-device sync/sharing, image exports, documents/reference materials, Home dashboard, automatic crew generation, rich course archive/locking, and native/platform brightness complexity.
+- every included traceability row in `04_IMPLEMENTATION_PLAN.md` has a completed
+  milestone and required evidence;
+- every deferred item remains absent or explicitly isolated;
+- the 0.1.0 compatibility fixture opens under the final schema without record,
+  reference, value, note or history loss;
+- `npm run verify:all`, the deterministic full-week scenario and required browser
+  and physical-device checks pass;
+- final functional, field-UX/accessibility, data-integrity, regression, scope and
+  code-quality reviews have zero blockers;
+- package/lock and `CHANGELOG.md` describe 0.2.0 and the working tree is clean after
+  the release checkpoint.

@@ -46,6 +46,24 @@ function verificationPassed(milestone) {
   )
 }
 
+function reviewPassed(path) {
+  const review = JSON.parse(readFileSync(resolve(root, path), "utf8"))
+  const verdicts = new Set(["PASS", "PASS_WITH_FINDINGS"])
+  return (
+    verdicts.has(review.verdict) &&
+    Array.isArray(review.blockers) &&
+    review.blockers.length === 0 &&
+    Array.isArray(review.importantFindings) &&
+    Array.isArray(review.qolFindings) &&
+    Array.isArray(review.evidenceInspected) &&
+    review.evidenceInspected.length > 0
+  )
+}
+
+function reviewsPassed(milestone) {
+  return (milestone.requiredReviews ?? []).every(reviewPassed)
+}
+
 function assertEvidenceComplete(milestone) {
   const missing = missingEvidence(milestone)
   if (missing.length > 0) {
@@ -56,6 +74,11 @@ function assertEvidenceComplete(milestone) {
   if (!verificationPassed(milestone)) {
     throw new Error(
       "Completion refused; verification.json does not report all PASS",
+    )
+  }
+  if (!reviewsPassed(milestone)) {
+    throw new Error(
+      "Completion refused; a required review is invalid, FAIL, or has blockers",
     )
   }
 }
@@ -113,7 +136,12 @@ function check(id) {
       ? "Required evidence: present"
       : `Required evidence missing:\n- ${missing.join("\n- ")}`,
   )
-  if (missing.length > 0 || !verificationPassed(milestone)) process.exitCode = 1
+  if (
+    missing.length > 0 ||
+    !verificationPassed(milestone) ||
+    !reviewsPassed(milestone)
+  )
+    process.exitCode = 1
 }
 
 function complete(id) {
@@ -131,22 +159,71 @@ function complete(id) {
 }
 
 function selfTest() {
-  const path = ".evidence/__synthetic__/intentionally-missing.txt"
-  let refusal = ""
-  try {
-    assertEvidenceComplete({ requiredEvidence: [path] })
-  } catch (error) {
-    refusal = error instanceof Error ? error.message : String(error)
-  }
-  if (!refusal.startsWith("Completion refused; missing evidence:"))
-    throw new Error("Synthetic incomplete milestone was not refused")
+  const evidenceDirectory = resolve(root, ".evidence/__synthetic__")
+  mkdirSync(evidenceDirectory, { recursive: true })
+  const failedVerificationPath = resolve(evidenceDirectory, "verification.json")
+  const blockedReviewPath = resolve(evidenceDirectory, "review.json")
+  writeFileSync(
+    failedVerificationPath,
+    `${JSON.stringify({ status: "FAIL", checks: [{ status: "FAIL" }] })}\n`,
+  )
+  writeFileSync(
+    blockedReviewPath,
+    `${JSON.stringify({
+      verdict: "PASS_WITH_FINDINGS",
+      blockers: ["synthetic blocker"],
+      importantFindings: [],
+      qolFindings: [],
+      evidenceInspected: ["synthetic evidence"],
+    })}\n`,
+  )
+
+  const cases = [
+    {
+      name: "missing evidence",
+      milestone: {
+        requiredEvidence: [".evidence/__synthetic__/intentionally-missing.txt"],
+      },
+      expected: "Completion refused; missing evidence:",
+    },
+    {
+      name: "failed verification",
+      milestone: {
+        requiredEvidence: [".evidence/__synthetic__/verification.json"],
+      },
+      expected: "Completion refused; verification.json",
+    },
+    {
+      name: "review blocker",
+      milestone: {
+        requiredEvidence: [".evidence/__synthetic__/review.json"],
+        requiredReviews: [".evidence/__synthetic__/review.json"],
+      },
+      expected: "Completion refused; a required review",
+    },
+  ]
+
+  const results = cases.map(({ name, milestone, expected }) => {
+    let refusal = ""
+    try {
+      assertEvidenceComplete(milestone)
+    } catch (error) {
+      refusal = error instanceof Error ? error.message : String(error)
+    }
+    if (!refusal.startsWith(expected)) {
+      throw new Error(`Synthetic ${name} case was not refused`)
+    }
+    return `PASS: ${name} refused\n${refusal}`
+  })
+
   const message =
-    "PASS: completion refused for intentionally incomplete synthetic evidence"
-  const evidenceDirectory = resolve(root, ".evidence/M0")
+    "PASS: controller refused missing, failed and blocked evidence"
+  const u00EvidenceDirectory = resolve(root, ".evidence/U00")
+  mkdirSync(u00EvidenceDirectory, { recursive: true })
   mkdirSync(evidenceDirectory, { recursive: true })
   writeFileSync(
-    resolve(evidenceDirectory, "controller-refusal.txt"),
-    `${message}\n${refusal}\n`,
+    resolve(u00EvidenceDirectory, "controller-refusal.txt"),
+    `${message}\n\n${results.join("\n\n")}\n`,
   )
   console.log(message)
 }

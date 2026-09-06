@@ -1,6 +1,6 @@
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 
 const milestone = process.argv[2]
 if (!milestone) {
@@ -9,16 +9,30 @@ if (!milestone) {
 }
 
 const root = resolve(import.meta.dirname, "..")
+const manifest = JSON.parse(
+  readFileSync(resolve(root, ".milestones/manifest.json"), "utf8"),
+)
+const definition = manifest.milestones.find(({ id }) => id === milestone)
+if (!definition) throw new Error(`Unknown milestone: ${milestone}`)
 const scripts =
-  milestone === "M15"
+  definition.verificationScripts ??
+  (milestone === "M15"
     ? ["verify:all"]
-    : ["verify:quick", "verify:domain", "build", "verify:e2e"]
+    : ["verify:quick", "verify:domain", "build", "verify:e2e"])
+if (!Array.isArray(scripts) || scripts.length === 0) {
+  throw new Error(`No verification scripts configured for ${milestone}`)
+}
 const checks = []
 const npmCli = process.env.npm_execpath
 
 if (!npmCli) {
   throw new Error("Run this recorder through an npm evidence script")
 }
+
+const gitCommit = spawnSync("git", ["rev-parse", "HEAD"], {
+  cwd: root,
+  encoding: "utf8",
+}).stdout.trim()
 
 for (const script of scripts) {
   const startedAt = new Date().toISOString()
@@ -68,6 +82,11 @@ writeFileSync(
       milestone,
       status,
       recordedAt: new Date().toISOString(),
+      nodeVersion: process.version,
+      appVersion: JSON.parse(
+        readFileSync(resolve(root, "package.json"), "utf8"),
+      ).version,
+      gitCommit,
       checks,
     },
     null,
