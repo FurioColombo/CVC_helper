@@ -1,6 +1,6 @@
 # 12 — Decisioni dopo la revisione r2
 
-**Stato:** Q10–Q13 risolte e rifinite fino al 6 settembre 2026 nella [galleria r8](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
+**Stato:** Q10–Q13 risolte e rifinite fino al 6 settembre 2026 nella [galleria r10](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
 
 ## Q10 — P13: che cosa domina quando modifico una Comandata?
 
@@ -10,7 +10,7 @@
 2. persone mai assegnate;
 3. persone assegnate ad altri giorni.
 
-La revisione r8 mostra due allievi per riga. Nelle ultime due sezioni, il nome è un bottone visivamente riconoscibile e il tap assegna la persona anche al giorno corrente; dentro il bottone non si ripete “Assegna a/anche a [giorno]”. Nella card i giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. Una X rossa, visivamente compatta ma con area attiva da 40 px, rimuove la persona dal giorno indicato. I duplicati restano consentiti e segnalati in rosso secondo CMD-07: una persona con più giorni può occupare entrambe le colonne per mantenere leggibili warning, giorni e rimozioni. Il commento iniziale non ripete il giorno, già visibile nel titolo.
+La revisione r10 mostra due allievi per riga. Nelle ultime due sezioni, il nome è un bottone visivamente riconoscibile e il tap assegna la persona anche al giorno corrente; dentro il bottone non si ripete “Assegna a/anche a [giorno]”. La card è una riga neutra da lista raggruppata, con divisori leggeri: l'azione usa soltanto un `+` blu discreto, senza superficie blu piena. A 320 px il `+` lascia posto a testo e sottile inset blu così un nome resta priorità visiva. Il bannerino azzurro introduttivo è rimosso: il contesto resta nei titoli dei tre gruppi. Nella card i giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. Una X rossa, visivamente compatta ma con area attiva da 40 px, rimuove la persona dal giorno indicato. I duplicati restano consentiti e segnalati in rosso secondo CMD-07: una persona con più giorni può occupare entrambe le colonne per mantenere leggibili warning, giorni e rimozioni. Il commento iniziale non ripete il giorno, già visibile nel titolo.
 
 ## Q11 — P15: come scala la fascia delle barche oltre cinque elementi?
 
@@ -41,8 +41,8 @@ La fonte normativa `01_PRODUCT_SPEC.md` usa:
 - C2 → First 25.7;
 - C3 → First 27.
 
-La r7 usa quindi **First 25.7**, non 27.5. P07 mostra per questo ciclo RS Quest, RS 500, J/80, First 25.7 e First 27.
+La r7 usa quindi **First 25.7**, non 27.5. Il mock r10 mostra RS Quest, RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27; la mappatura normativa del prodotto resta quella di `01` e va aggiornata solo con decisione esplicita.
 
 ## Questioni ancora non bloccanti
 
-Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. P19 resta approvata; P04 conserva la struttura approvata e richiede revisione della nuova griglia; la struttura P15 resta approvata. I target r8 di P13/P17, i target r7 di P14/P16 e il fix P18 richiedono una lettura finale.
+Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. P19 resta approvata; P04 conserva la struttura approvata e richiede revisione della nuova griglia; la struttura P15 resta approvata. Il target r10 di P13, il target r8 di P17, i target r7 di P14/P16 e il fix P18 richiedono una lettura finale.

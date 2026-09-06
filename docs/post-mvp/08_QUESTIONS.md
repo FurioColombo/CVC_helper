@@ -1,6 +1,6 @@
 # 08 — Decisioni dopo la revisione umana
 
-**Stato:** risposte r1 consolidate e revisioni pagina per pagina fino al 6 settembre 2026 recepite. Il codice resta fuori da questa fase; i mock r8 non sono automaticamente target approvati. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md).
+**Stato:** risposte r1 consolidate e revisioni pagina per pagina fino al 6 settembre 2026 recepite. Il codice resta fuori da questa fase; i mock r10 non sono automaticamente target approvati. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md).
 
 La [revisione originale dell'autore](sources/08_reviewed_2026-09-04.txt) conserva le risposte verbatim, prima della pulizia editoriale. SHA-256: `BE269A535301A8D7F8BF533CA36ABA0F922F725D69044C3B4004AEA43756278F`. Le domande/proposte precedenti sono anche nel checkpoint `9e6b6b5`.
 
@@ -72,13 +72,13 @@ Scorciatoia iniziale: form aperto e focalizzato sul campo; inline successivo sol
 
 ## Cosa resta da decidere guardando i mock
 
-P12 è confermata. Q10–Q13 fissano P13 centrata sul giorno, P15 su due righe senza scroll orizzontale, P19 con riepilogo in alto e P04 con due note recenti. La revisione r8 porta P13 a due allievi per riga e P17 a nome + cinque valutazioni sulla stessa riga. P19 resta approvata; P04 conserva l'approvazione r5 ma la nuova integrazione va rivista; la struttura visiva P15 resta approvata. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
+P12 è confermata. Q10–Q13 fissano P13 centrata sul giorno, P15 su due righe senza scroll orizzontale, P19 con riepilogo in alto e P04 con due note recenti. La revisione r8 porta P13 a due allievi per riga e P17 a nome + cinque valutazioni sulla stessa riga; la r9 rende le azioni di P13 più discrete, senza pulsanti blu pieni; la r10 rimuove anche il bannerino azzurro e introduce i loghi barca uniformati nel mock. P19 resta approvata; P04 conserva l'approvazione r5 ma la nuova integrazione va rivista; la struttura visiva P15 resta approvata. I tempi voce si stabiliscono con misure; nome/marchio definitivo si concordano nella revisione grafica.
 
 ## Decisioni operative aggiunte nella r6
 
 - P08: “Da controllare” usa il giallo; “Disponibile” resta neutro.
 - P11: card di altezze diverse allineano il contenuto in alto.
-- P13: il warning è una vera icona vettoriale; il testo elenca tutti i giorni coinvolti, per esempio “Sabato, Mercoledì”. Il pannello introduttivo non ripete il giorno; i bottoni nome non mostrano “Assegna”; la X resta compatta con area attiva 40 × 40 px.
+- P13: il warning è una vera icona vettoriale; il testo elenca tutti i giorni coinvolti, per esempio “Sabato, Mercoledì”. Il bannerino introduttivo è rimosso; i bottoni nome non mostrano “Assegna”; la X resta compatta con area attiva 40 × 40 px.
 - P04: l'azione nell'header è “Modifica”.
 - P14: destinazione reale e numero equipaggio sono campi separati, senza etichetta ridondante “Destinazione”. Il doppio click/tap su un allievo inserito lo riporta fra i Disponibili; serve anche un comando esplicito accessibile nell'app.
 - P15: grigio = non disponibile, verde = assegnata, blu = disponibile non assegnata. Selezionare un equipaggio senza barca e poi una barca blu crea e persiste l'associazione della sessione.
@@ -97,3 +97,12 @@ P12 è confermata. Q10–Q13 fissano P13 centrata sul giorno, P15 su due righe s
 
 - P13: due allievi per riga. Le card con una sola assegnazione restano affiancate; un duplicato con più giorni può occupare entrambe le colonne per non separare giorni e azioni.
 - P17: nome e cinque valutazioni sulla stessa riga. Il nome apre la nota; le cinque aree di voto restano da 40 px anche a 320 px.
+
+## Decisioni operative aggiunte nella r9
+
+- P13: eliminati i pulsanti blu pieni dalle card. Le righe sono superfici neutre di lista raggruppata, con divisori tenui; l'assegnazione usa un `+` blu discreto. A 320 px il `+` lascia posto a testo blu e sottile inset blu, per lasciare più spazio ai nomi mantenendo l'azione riconoscibile.
+
+## Decisioni operative aggiunte nella r10
+
+- P13: rimosso il bannerino azzurro “Tocca un nome…”; il contesto resta nei titoli dei tre gruppi e nell'azione sul nome.
+- P07–P16: il mock usa tavole PNG trasparenti uniformate a 256 × 72 px per RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27; RS Quest conserva l'asset già presente.

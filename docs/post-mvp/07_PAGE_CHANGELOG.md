@@ -1,6 +1,6 @@
 # 07 — Changelist per pagina e brief dei mock
 
-**Stato:** revisioni umane fino al 6 settembre recepite; galleria r8 disponibile con 19 viste principali. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md); P19 è approvata, P04 conserva l'approvazione r5 ma la nuova integrazione r7 va rivista, la struttura visiva P15 è approvata. Nessuna pagina è implementata nell'app.
+**Stato:** revisioni umane fino al 6 settembre recepite; galleria r10 disponibile con 19 viste principali. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md); P19 è approvata, P04 conserva l'approvazione r5 ma la nuova integrazione r7 va rivista, la struttura visiva P15 è approvata. Nessuna pagina è implementata nell'app.
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 
@@ -86,7 +86,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 **Richieste:** BOAT-01, UX-G02/03. **Natura:** parser + form.
 
 - Campo numeri con hint breve “2 3 7, 8; 11”; accetta virgola/spazi/newline/punto e virgola anche ripetuti.
-- Default tipo corso invariato e modificabile. Per il ciclo corrente il selettore include RS Quest, RS 500, J/80, First 25.7 e First 27, coerenti con `01`. Tastiera adeguata senza impedire i formati già supportati.
+- Default tipo corso invariato e modificabile. Per il ciclo corrente il selettore include RS Quest, RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27, coerenti con `01` da confermare prima dell'implementazione. Tastiera adeguata senza impedire i formati già supportati.
 - Preservare filtro vuoti/deduplicazione già presenti; riepilogo delle barche effettivamente create.
 - Mostrare questa configurazione soprattutto al primo inserimento. Gli inserimenti successivi partono dalla lista P08 e aggiungono una barca senza ripresentare la procedura iniziale; se P07 è comunque raggiungibile, mostrare le barche esistenti.
 
@@ -96,7 +96,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 **Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; Q01 distingue indisponibilità corso e deselezione sessione.
 
-- Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti.
+- Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti. I sei nuovi loghi del mock sono tavole trasparenti uniformate a 256 × 72 px.
 - Rendere “Da controllare” giallo; mantenere “Disponibile” neutro e leggibile, senza confonderlo con l'assegnazione verde usata in P15.
 - Elenco compatto; dettaglio con guasti aperti in evidenza, risolti secondari.
 - Separare Elimina inserimento errato, disponibilità corso e selezione uscita della sessione. La nuova azione di scollegamento usa la decisione Q01, non una cascata implicita.
@@ -111,7 +111,7 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 - Segmento Aperta/Comunicata/Risolta diretto, una riga dedicata se necessaria ai target. Non comprimere tre etichette fino a renderle illeggibili.
 - Modifica stato rapida, salvata; ordine/errori coerenti durante tap ripetuti.
 - Icona parte guasta opzionale; default neutro e nessuna classificazione automatica che alteri il testo.
-- Riutilizzare logo barca, numero e accento di stato di P08 per dare una gerarchia riconoscibile anche all'elenco avarie.
+- Riutilizzare logo barca, numero e accento di stato di P08 per dare una gerarchia riconoscibile anche all'elenco avarie; il mapping del mock copre RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27 oltre a RS Quest.
 
 **Mock:** nessuna avaria, descrizione lunga, più guasti sulla stessa barca, tutti e tre gli stati, errore/retry, form/dettatura. **Accettazione:** più contenuto utile a parità viewport, testo completo raggiungibile in un tap, cambi stato e disponibilità indipendenti dopo reload. **Baseline:** `FaultManagement.tsx`, `FaultCard.tsx`, `FaultForm.tsx`.
 
@@ -157,9 +157,9 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 **Richieste:** CMD-05/06/08, UX-G02/04/05. **Natura:** layout e ordine.
 
-- Il tap sulla card di un giorno in P11 apre direttamente P13, senza popup intermedio. Il giorno scelto rimane titolo e contesto della modifica.
+- Il tap sulla card di un giorno in P11 apre direttamente P13, senza popup intermedio. Il giorno scelto rimane titolo e contesto della modifica; non aggiungere un bannerino informativo sopra la lista.
 - Ordine fisso: persone nel giorno corrente, “Mai assegnati”, “Assegnati ad altri giorni”. La griglia mostra due allievi per riga; ogni card mantiene nome, giorni e rimozioni associati. Toccando il nome nelle ultime due sezioni si assegna la persona anche al giorno corrente.
-- Il bottone nome deve essere evidente dalla superficie cliccabile e mostrare soltanto il nome, senza ripetere “Assegna a/anche a [giorno]”. Il giorno corrente resta già nel titolo della pagina e delle sezioni, non nel commento introduttivo.
+- Il bottone nome deve essere evidente dalla superficie cliccabile e mostrare soltanto il nome, senza ripetere “Assegna a/anche a [giorno]”. La card resta una superficie neutra di lista raggruppata con divisori tenui: un `+` blu discreto rende l'assegnazione riconoscibile, senza pulsante blu pieno. A 320 px il `+` passa a testo blu con sottile inset blu per preservare lo spazio del nome. Il giorno corrente resta già nel titolo della pagina e delle sezioni; non compare un bannerino introduttivo.
 - Nelle card i giorni sono abbreviati in Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. In caso di doppia assegnazione la card può occupare entrambe le colonne, il warning usa un'icona vettoriale e mostra tutti i giorni coinvolti in forma breve, per esempio “Sab, Mer”. Una X rossa compatta rimuove la persona dal giorno indicato.
 - Già usati restano selezionabili; una volta è corretto, più volte produce warning e dettaglio. Aggiunta e rimozione restano reversibili senza gesto nascosto.
 
@@ -199,7 +199,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 **Richieste:** UX-G01/03, BRAND-01, CREW-10; presidio regressione CREW-01. **Natura:** coerenza visiva.
 
-- Il logo/modello della barca è leggermente più grande e riconoscibile, mantenendo invariate altezza compatta e separazione fra numero equipaggio, barca e persone.
+- Il logo/modello della barca è leggermente più grande e riconoscibile, mantenendo invariate altezza compatta e separazione fra numero equipaggio, barca e persone; usare le tavole normalizzate del mock come riferimento ottico.
 
 - Ogni card ha tre campi distinti: numero equipaggio, logo modello + numero barca o “Senza barca”, persone. Nomi grandi e puliti; card basse.
 - Nessun pannello decisionale, taglia, telefono o controlli di composizione. Mezzi conserva il suo significato operativo.
@@ -264,7 +264,7 @@ Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03
 
 ## 3. Registro dei mock e dei target
 
-Galleria r8: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
+Galleria r10: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
 
 | Pagine | File / revisione                   | Approvazione                                       |
 | ------ | ---------------------------------- | -------------------------------------------------- |
@@ -280,7 +280,7 @@ Galleria r8: [apri i mock](mockups/index.html). Revisioni umane e registro in [1
 | P10    | [P10 · r3](mockups/index.html#P10) | APPROVATO R2 + FIX R3                              |
 | P11    | [P11 · r6](mockups/index.html#P11) | APPROVATO R3 + FIX R6                              |
 | P12    | [P12 · r3](mockups/index.html#P12) | APPROVATO R2                                       |
-| P13    | [P13 · r8](mockups/index.html#P13) | R8 DA RIVEDERE                                     |
+| P13    | [P13 · r10](mockups/index.html#P13) | R10 DA RIVEDERE                                  |
 | P14    | [P14 · r7](mockups/index.html#P14) | R7 DA RIVEDERE                                     |
 | P15    | [P15 · r6](mockups/index.html#P15) | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE |
 | P16    | [P16 · r7](mockups/index.html#P16) | R7 DA RIVEDERE                                     |
@@ -289,4 +289,4 @@ Galleria r8: [apri i mock](mockups/index.html). Revisioni umane e registro in [1
 | P19    | [P19 · r4](mockups/index.html#P19) | APPROVATO R4                                       |
 | P20    | Integrata in P05/P09/P17           | NESSUNA PAGINA                                     |
 
-La r8 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.
+La r10 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.

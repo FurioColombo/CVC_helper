@@ -4,7 +4,7 @@
 
 **Baseline prodotto:** 0.1.0, checkpoint MVP `c907b19`.
 
-**Revisione editoriale:** 6 settembre 2026; risposte di `08` e revisioni pagina per pagina fino all'ultimo feedback r8 recepite nella galleria r8.
+**Revisione editoriale:** 6 settembre 2026; risposte di `08` e revisioni pagina per pagina fino all'ultimo feedback r10 recepite nella galleria r10.
 
 ## 1. Come usare questo pacchetto
 
@@ -16,11 +16,11 @@ Questo documento integra annotazioni manuali, risposte già date e richieste ori
 | [06 — Regole di design](docs/post-mvp/06_DESIGN_RULEBOOK.md)                | Principi da applicare a ogni pagina                        | Proposta verificabile            |
 | [07 — Changelist per pagina](docs/post-mvp/07_PAGE_CHANGELOG.md)            | Cambiamenti, stati da disegnare e accettazione             | Bozza avanzata                   |
 | [08 — Decisioni della revisione](docs/post-mvp/08_QUESTIONS.md)             | Risposte Q01–Q09 consolidate                                | Recepito fino al 5 settembre     |
-| [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md)          | Q10–Q13 risolte e rifinite nei mock r8                      | Consolidato                      |
+| [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md)          | Q10–Q13 risolte e rifinite nei mock r10                     | Consolidato                      |
 | [09 — Guida implementativa](docs/post-mvp/09_IMPLEMENTATION_GUIDE.md)       | Futuro equivalente di `04`, milestone e prove              | Non attiva                       |
 | [10 — Specifiche e versioni](docs/post-mvp/10_SPEC_UPDATES_AND_RELEASES.md) | Piano per `01`–`03`, raccordo `AGENTS`/`04`, versionamento | Non applicato                    |
 
-Le risposte in `08` chiariscono Barche, Comandate, densità, Valutazioni, OCR e autosave. Le revisioni successive hanno prodotto la galleria r8 con 19 viste: la dettatura non è più una pagina autonoma e vive nei pannelli nota/avaria; Q10–Q13 sono risolte e aggiornate in `12`. `09` resta non attivo finché i target complessivi e l'avvio implementativo non sono concordati.
+Le risposte in `08` chiariscono Barche, Comandate, densità, Valutazioni, OCR e autosave. Le revisioni successive hanno prodotto la galleria r10 con 19 viste: la dettatura non è più una pagina autonoma e vive nei pannelli nota/avaria; Q10–Q13 sono risolte e aggiornate in `12`. `09` resta non attivo finché i target complessivi e l'avvio implementativo non sono concordati.
 
 `01`–`04`, codice, test, configurazione e dati applicativi restano invariati. `04` conserva il registro dell'MVP concluso; `05` non sovrascrive implicitamente le specifiche vigenti.
 
@@ -131,7 +131,7 @@ AT nel foglio OCR è personale da riconoscere/escludere, non un nuovo ruolo rich
 | CMD-03 | POST_MVP_QOL / P1 | Quota base `floor(N/D)` uguale per ogni giorno; selezione esplicita dei “Giorni con più persone” per distribuire il resto.                 | DECISO, revisione r2     |
 | CMD-04 | POST_MVP_QOL / P1 | Settimana fino a venerdì visibile insieme. Quasi zero scroll sul telefono grande; deroghe misurate sugli altri viewport.                  | MOCK DA RIVEDERE, Q04   |
 | CMD-05 | POST_MVP_QOL / P1 | Selettore persone compatto, due colonne come base; tre solo se realmente leggibili.                                                       | MOCK DA RIVEDERE        |
-| CMD-06 | POST_MVP_QOL / P1 | P13 centrata sul giorno: assegnati correnti, mai assegnati, assegnati altrove; mostra due allievi per riga, con nome e controlli affiancati dentro ogni card. I giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome resta il bottone di assegnazione e la X rimuove dal giorno indicato. Una doppia assegnazione può occupare entrambe le colonne per mantenere visibili giorni e azioni. | DECISO, Q10 + revisione r8 |
+| CMD-06 | POST_MVP_QOL / P1 | P13 centrata sul giorno: assegnati correnti, mai assegnati, assegnati altrove; mostra due allievi per riga, con nome e controlli affiancati dentro ogni card. I giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome resta il bottone di assegnazione e la X rimuove dal giorno indicato. Le card sono superfici neutre di lista raggruppata, con divisori tenui: l'assegnazione usa un `+` blu discreto, non un bottone blu pieno. A 320 px il segno cede a testo blu con sottile inset blu per preservare lo spazio del nome. Il bannerino istruttivo azzurro non compare: il contesto resta nei titoli dei tre gruppi. Una doppia assegnazione può occupare entrambe le colonne per mantenere visibili giorni e azioni. | DECISO, Q10 + revisioni r8–r10 |
 | CMD-07 | POST_MVP_QOL / P1 | Warning sul giorno e persona; dettaglio breve al tap; Avvisi generale secondario. Distinguere informazione/giallo/rosso.                  | DECISO; duplicati rossi |
 | CMD-08 | POST_MVP_QOL / P1 | M bianca in quadrato rosso arrotondato accanto al nome, in lista e card; significato accessibile oltre al colore.                         | DECISO                  |
 
@@ -211,14 +211,14 @@ Le decisioni Q01–Q06/Q09 sono recepite; Q07 fissa piattaforme, permessi e coll
 
 ## 14. Galleria di design
 
-[Mock r8 — 19 viste principali](docs/post-mvp/mockups/index.html), separati dall'app. Le revisioni umane sono registrate in [11 — Revisione mock](docs/post-mvp/11_MOCK_REVIEW.md); Q10–Q13 sono consolidate e aggiornate in [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md). I disegni non sono ancora target complessivamente approvati e non attivano 09. La futura possibilità di usare immagini del canale Instagram come sfondo o immagine delle card resta un upgrade grafico separato, soggetto a scelta e diritti sugli asset.
+[Mock r10 — 19 viste principali](docs/post-mvp/mockups/index.html), separati dall'app. Le revisioni umane sono registrate in [11 — Revisione mock](docs/post-mvp/11_MOCK_REVIEW.md); Q10–Q13 sono consolidate e aggiornate in [12 — Decisioni dopo r2](docs/post-mvp/12_R2_REVIEW_QUESTIONS.md). I disegni non sono ancora target complessivamente approvati e non attivano 09. La futura possibilità di usare immagini del canale Instagram come sfondo o immagine delle card resta un upgrade grafico separato, soggetto a scelta e diritti sugli asset.
 
-## 15. Consolidamento delle revisioni r2–r8
+## 15. Consolidamento delle revisioni r2–r10
 
 - Home: simbolo CVC completo; Allievi, Equipaggi e Valutazioni con accento arancione; Barche, Comandate e Volontari con accento blu proposto. Il codice corso è dinamico: D/C e livello dalla scelta, settimana ISO e anno dal calendario.
 - Profilo/Conoscenza: note in peso regolare, altre note solo quando esistono; due note recenti e poi “Altre note” su richiesta; cinque taglie senza sbordo; azione “Modifica” breve nel profilo. La card Valutazioni integra la griglia settimanale condivisa con P18/P19.
 - Scan: review compatta con indicatori sticky e live per righe, campi mancanti e allievi inseriti.
-- Barche: per il ciclo corrente P07 offre RS Quest, RS 500, J/80, First 25.7 e First 27; il logo Quest completo e il numero formano un solo identificativo. In P08 lo stato da controllare usa il giallo, distinto dal disponibile neutro.
-- Comandate: feedback sticky assegnati/totale, neutro se completo e giallo se incompleto; le card P11 si allineano in alto. P11 apre direttamente P13 sul giorno scelto; la griglia mostra due allievi per riga, con nome, giorni abbreviati e X compatta dentro ogni card. I casi con più giorni possono estendersi su entrambe le colonne.
+- Barche: per il ciclo corrente P07 offre RS Quest, RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27; ogni tipo usa un logo su tavola trasparente comune e il numero forma un solo identificativo. In P08 lo stato da controllare usa il giallo, distinto dal disponibile neutro.
+- Comandate: feedback sticky assegnati/totale, neutro se completo e giallo se incompleto; le card P11 si allineano in alto. P11 apre direttamente P13 sul giorno scelto; la griglia mostra due allievi per riga, con nome, giorni abbreviati e X compatta dentro ogni card. In P13 il bannerino introduttivo è rimosso; la card è neutra e raggruppata con divisori: il `+` blu discreto segnala l'assegnazione senza riempire la superficie; a 320 px testo e inset blu mantengono più spazio per i nomi. I casi con più giorni possono estendersi su entrambe le colonne.
 - Equipaggi: warning taglia/equipaggio distinto dal warning barca; il doppio tap riporta l'allievo fra i Disponibili. Il popup P14 ordina le barche numericamente e riusa gli stati grigio/verde/blu di P15. La fascia P15 è sticky, su due righe e senza scroll orizzontale; selezione equipaggio → barca blu crea l'associazione da persistere. Lettura divisa in numero equipaggio, barca e persone, con logo più leggibile.
 - Valutazioni: nome e cinque scelte con icone vettoriali allineate condividono una sola riga; nessuna selezione di default e secondo tap per annullare. Il nome apre la nota. P18 esplicita “Ordinamento” sopra controlli da 40 px e compatta la riga nome; in P19 la griglia settimanale precede la cronologia e il nome dell'allievo resta sticky.

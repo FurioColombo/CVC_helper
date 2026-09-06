@@ -181,9 +181,41 @@ const sessions = [
   "Ven PM",
 ]
 const boatNumbers = [2, 3, 7, 8, 11, 14, 15]
-const boatTypes = ["RS Quest", "RS 500", "J/80", "First 25.7", "First 27"]
-const questLogo =
-  '<img class="boat-brand" src="assets/rs-quest-complete.png" alt="RS Quest" />'
+const boatTypes = [
+  "RS Quest",
+  "RS 500",
+  "Laser Vago",
+  "RS Tera",
+  "J/80",
+  "First 25.7",
+  "First 27",
+]
+const boatTypeByNumber = {
+  2: "RS Quest",
+  3: "RS 500",
+  7: "Laser Vago",
+  8: "RS Tera",
+  11: "J/80",
+  14: "First 25.7",
+  15: "First 27",
+}
+const boatLogoFiles = {
+  "RS Quest": "assets/rs-quest-complete.png",
+  "RS 500": "assets/boat-rs-500.png",
+  "Laser Vago": "assets/boat-laser-vago.png",
+  "RS Tera": "assets/boat-rs-tera.png",
+  "J/80": "assets/boat-j80.png",
+  "First 25.7": "assets/boat-first-25-7.png",
+  "First 27": "assets/boat-first-27.png",
+}
+const boatType = (number) => boatTypeByNumber[number] || "RS Quest"
+const boatLogo = (type) =>
+  `<img class="boat-brand" src="${boatLogoFiles[type] || boatLogoFiles["RS Quest"]}" alt="${type}" />`
+const boatLogoFor = (number) => boatLogo(boatType(number))
+const boatLabel = (number) =>
+  number === null || number === undefined
+    ? "Senza barca"
+    : `${boatType(number)} ${number}`
 const faults = [
   {
     boat: 3,
@@ -395,7 +427,7 @@ function boatsMarkup(action = "boatDetail") {
           ? "needs-check"
           : "ready"
       return act(
-        `<span class="boat-identity">${questLogo}<strong>${n}</strong></span><div class="row"><span class="boat-fault-count">${openFaults.length} ${openFaults.length === 1 ? "avaria" : "avarie"}</span><span class="boat-state ${stateClass}">${red ? "Non disponibile" : openFaults.length ? "Da controllare" : "Disponibile"}</span></div>`,
+        `<span class="boat-identity">${boatLogoFor(n)}<strong>${n}</strong></span><div class="row"><span class="boat-fault-count">${openFaults.length} ${openFaults.length === 1 ? "avaria" : "avarie"}</span><span class="boat-state ${stateClass}">${red ? "Non disponibile" : openFaults.length ? "Da controllare" : "Disponibile"}</span></div>`,
         action,
         n,
         `boat-card boat-card-r2${red ? " unavailable" : ""}${action === "boatToggle" && sessionBoats.has(n) ? " selected" : ""}`,
@@ -488,6 +520,8 @@ function dutyPeopleMarkup() {
   )
   const removeDay = (p, day) =>
     `<span class="duty-day-assignment"><span class="duty-day-label" title="${days[day]}">${dutyDayShort[day]}</span>${act("×", "dutyRemove", `${day}:${p.id}`, "remove-duty", `aria-label="Rimuovi ${esc(name(p.id))} da ${days[day]}"`)}</span>`
+  const addGlyph =
+    '<span class="duty-add-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>'
   const current = all().filter((p) =>
     (uses.get(p.id) || []).includes(selectedDay),
   )
@@ -503,12 +537,12 @@ function dutyPeopleMarkup() {
     return `<div class="panel duty-person-row${otherDays.length ? " duty-person-wide" : ""}"><span class="duty-person-main"><strong title="${esc(fullName(p.id))}">${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} ${[selectedDay, ...otherDays].map((day) => dutyDayShort[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
   }
   const neverRow = (p) =>
-    `<div class="panel duty-person-row">${act(`<strong>${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
+    `<div class="panel duty-person-row">${act(`<strong title="${esc(fullName(p.id))}">${esc(name(p.id))} ${minor(p.id)}</strong>${addGlyph}`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
   const elsewhereRow = (p) => {
     const assignedDays = uses.get(p.id) || []
-    return `<div class="panel duty-person-row${assignedDays.length > 1 ? " duty-person-wide" : ""}">${act(`<strong title="${esc(fullName(p.id))}">${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${assignedDays.map((day) => removeDay(p, day)).join("")}</span></div>`
+    return `<div class="panel duty-person-row${assignedDays.length > 1 ? " duty-person-wide" : ""}">${act(`<strong title="${esc(fullName(p.id))}">${esc(name(p.id))} ${minor(p.id)}</strong>${addGlyph}`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${assignedDays.map((day) => removeDay(p, day)).join("")}</span></div>`
   }
-  return `<div class="notice duty-people-intro">Tocca un nome per assegnarlo al giorno aperto. La X rimuove dal giorno indicato.</div><h3>In ${days[selectedDay]} · ${current.length}</h3><div class="stack duty-people-list">${current.map(currentRow).join("") || '<p class="muted">Nessuna persona assegnata.</p>'}</div><h3>Mai assegnati · ${never.length}</h3><div class="stack duty-people-list">${never.map(neverRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Assegnati ad altri giorni · ${elsewhere.length}</h3><div class="stack duty-people-list">${elsewhere.map(elsewhereRow).join("") || '<p class="muted">Nessuna assegnazione in altri giorni.</p>'}</div>`
+  return `<h3>In ${days[selectedDay]} · ${current.length}</h3><div class="stack duty-people-list">${current.map(currentRow).join("") || '<p class="muted">Nessuna persona assegnata.</p>'}</div><h3>Mai assegnati · ${never.length}</h3><div class="stack duty-people-list">${never.map(neverRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Assegnati ad altri giorni · ${elsewhere.length}</h3><div class="stack duty-people-list">${elsewhere.map(elsewhereRow).join("") || '<p class="muted">Nessuna assegnazione in altri giorni.</p>'}</div>`
 }
 function crewMarkup() {
   const assigned = assignments.flat().filter((id) => id !== null)
@@ -523,7 +557,12 @@ function crewMarkup() {
         (fault) => fault.boat === boat && fault.state !== 2,
       )
       const crewSizeWarning = isWarning() && i === 0
-      return `<section class="crew-card"><div class="crew-head">${act(`<span>${boat ? (boat === "Mezzi" ? "Mezzi" : `Quest <strong>${boat}</strong>`) : "Senza barca"}</span><span class="muted small">Equipaggio ${i + 1}</span>`, "crewDestination", i, "crew-destination", `aria-label="Destinazione equipaggio ${i + 1}"`)}${red || yellow || crewSizeWarning ? act(warn(red || crewSizeWarning), "crewWarning", i, "crew-warning", `aria-label="Motivo avviso equipaggio ${i + 1}"`) : '<span aria-hidden="true"></span>'}</div><div class="crew-members">${ids.map((id, j) => (id === null ? act("Posto libero +", "slot", `${i}:${j}`, "crew-member", `aria-label="Posto libero equipaggio ${i + 1}"`) : personButton(id, "selectPerson", id, true))).join("")}</div></section>`
+      const boatIdentity = boat
+        ? boat === "Mezzi"
+          ? '<span class="boat-summary-id text-only">Mezzi</span>'
+          : `<span class="boat-summary-id" title="${boatLabel(boat)}">${boatLogoFor(boat)}<strong>${boat}</strong></span>`
+        : '<span class="boat-summary-id text-only muted">Senza barca</span>'
+      return `<section class="crew-card"><div class="crew-head">${act(`<span>${boatIdentity}</span><span class="muted small">Equipaggio ${i + 1}</span>`, "crewDestination", i, "crew-destination", `aria-label="Destinazione equipaggio ${i + 1}"`)}${red || yellow || crewSizeWarning ? act(warn(red || crewSizeWarning), "crewWarning", i, "crew-warning", `aria-label="Motivo avviso equipaggio ${i + 1}"`) : '<span aria-hidden="true"></span>'}</div><div class="crew-members">${ids.map((id, j) => (id === null ? act("Posto libero +", "slot", `${i}:${j}`, "crew-member", `aria-label="Posto libero equipaggio ${i + 1}"`) : personButton(id, "selectPerson", id, true))).join("")}</div></section>`
     })
     .join("")}</div>`
 }
@@ -555,16 +594,16 @@ function boatsSessionMarkup() {
     boat
       ? boat === "Mezzi"
         ? '<span class="boat-summary-id text-only">Mezzi</span>'
-        : `<span class="boat-summary-id">${questLogo}<strong>${boat}</strong></span>`
+        : `<span class="boat-summary-id" title="${boatLabel(boat)}">${boatLogoFor(boat)}<strong>${boat}</strong></span>`
       : '<span class="boat-summary-id text-only muted">Senza barca</span>'
   const boatControl = (n) => {
     const { state, label } = sessionBoatMeta(n)
     return act(
-      `${questLogo}<strong>${n}</strong>`,
+      `${boatLogoFor(n)}<strong>${n}</strong>`,
       "boatToggle",
       n,
       `boat-toggle-r2 ${state}`,
-      `aria-label="Quest ${n} · ${label}" aria-pressed="${sessionBoats.has(n)}"`,
+      `aria-label="${boatLabel(n)} · ${label}" aria-pressed="${sessionBoats.has(n)}"`,
     )
   }
   return `<div class="boat-strip-wrap"><div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Includi / escludi</span></div><div class="boat-state-legend"><span class="legend-assigned">Assegnata</span><span class="legend-available">Libera</span><span class="legend-unavailable">Non disponibile</span></div><div class="boat-strip">${boatNumbers.map(boatControl).join("")}</div></div><h3>Equipaggi</h3><p class="small muted boat-assignment-help">Per assegnare: equipaggio, poi barca blu.</p>${selectedCrewForBoat !== null ? `<div class="notice boat-pending">Equipaggio ${selectedCrewForBoat + 1} selezionato · scegli una barca blu.</div>` : ""}<div class="stack compact-crew-list">${assignments
@@ -578,7 +617,7 @@ function boatsSessionMarkup() {
         "selectCrewForBoat",
         i,
         "panel crew-session-summary",
-        `aria-label="Equipaggio ${i + 1}, ${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : `Quest ${crewBoats[i]}`) : "senza barca"}" aria-pressed="${selectedCrewForBoat === i}"`,
+        `aria-label="Equipaggio ${i + 1}, ${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "Mezzi" : boatLabel(crewBoats[i])) : "senza barca"}" aria-pressed="${selectedCrewForBoat === i}"`,
       ),
     )
     .join(
@@ -780,7 +819,7 @@ function content() {
     case "P08":
       return boatsMarkup()
     case "P09":
-      return `<div class="stack">${faults.map((fault, i) => `<section class="panel fault fault-r2 ${fault.state === 2 ? "resolved" : ""}"><div class="fault-top"><span class="boat-identity">${questLogo}<strong>${fault.boat}</strong></span></div>${act(`<span class="preview">${esc(fault.text)}</span>`, "faultDetail", i, "fault-open")}<div class="segments fault-state-buttons">${["Aperta", "Comunicata", "Risolta"].map((state, j) => act(state, "faultState", `${i}:${j}`, "", `aria-pressed="${fault.state === j}"`)).join("")}</div></section>`).join("")}</div>`
+      return `<div class="stack">${faults.map((fault, i) => `<section class="panel fault fault-r2 ${fault.state === 2 ? "resolved" : ""}"><div class="fault-top"><span class="boat-identity" title="${boatLabel(fault.boat)}">${boatLogoFor(fault.boat)}<strong>${fault.boat}</strong></span></div>${act(`<span class="preview">${esc(fault.text)}</span>`, "faultDetail", i, "fault-open")}<div class="segments fault-state-buttons">${["Aperta", "Comunicata", "Risolta"].map((state, j) => act(state, "faultState", `${i}:${j}`, "", `aria-pressed="${fault.state === j}"`)).join("")}</div></section>`).join("")}</div>`
     case "P10":
       return `<div class="stack">${staff.map((member) => `<section class="panel staff-card"><span class="staff-avatar">${member.name.slice(0, 1)}</span><span><strong>${member.name}</strong><small class="muted" style="display:block">${member.role === "CT" ? "Capo turno" : member.role === "IS" ? "Istruttore" : "Allievo docente volontario"}</small></span>${act(member.role, "editStaff", member.id, "role-pill")}</section>`).join("")}</div><div style="margin-top:14px">${act("Aggiungi volontario", "editStaff", "new", "primary full")}</div>`
     case "P11":
@@ -797,7 +836,7 @@ function content() {
       return `<div class="stack">${assignments
         .map(
           (ids, i) =>
-            `<section class="panel read-crew"><div class="read-number"><small>Eq.</small><strong>${i + 1}</strong></div><div class="read-destination">${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "<strong>Mezzi</strong>" : `${questLogo}<strong>${crewBoats[i]}</strong>`) : "<strong>—</strong><small>Senza barca</small>"}</div><div class="read-names">${
+            `<section class="panel read-crew"><div class="read-number"><small>Eq.</small><strong>${i + 1}</strong></div><div class="read-destination">${crewBoats[i] ? (crewBoats[i] === "Mezzi" ? "<strong>Mezzi</strong>" : `${boatLogoFor(crewBoats[i])}<strong>${crewBoats[i]}</strong>`) : "<strong>—</strong><small>Senza barca</small>"}</div><div class="read-names">${
               ids
                 .filter((id) => id !== null)
                 .map((id) => `<span>${esc(name(id))}</span>`)
@@ -817,7 +856,7 @@ function content() {
 }
 function render() {
   const p = pages.find((p) => p[0] === page)
-  $("#page-id").textContent = `${p[0]} · REVISIONE 8`
+  $("#page-id").textContent = `${p[0]} · REVISIONE 10`
   $("#review-title").textContent = p[1]
   $("#review-goal").textContent = p[2]
   $("#review-question").textContent = p[3]
@@ -1101,7 +1140,7 @@ function handle(action, arg, button) {
     case "newFault":
       showSheet(
         "Nuova avaria",
-        `<label class="field">Barca<select><option>Quest 3</option><option>Quest 7</option></select></label><label class="field">Descrizione<textarea id="fault-draft"></textarea></label><div class="voice-inline"></div><div class="toolbar">${act("Detta", "voiceInline")}${act("Salva", "demoSaved", "", "primary")}</div>`,
+        `<label class="field">Barca<select><option>${boatLabel(3)}</option><option>${boatLabel(7)}</option></select></label><label class="field">Descrizione<textarea id="fault-draft"></textarea></label><div class="voice-inline"></div><div class="toolbar">${act("Detta", "voiceInline")}${act("Salva", "demoSaved", "", "primary")}</div>`,
       )
       break
     case "editStaff": {
@@ -1278,7 +1317,7 @@ function handle(action, arg, button) {
           ? '<div class="notice error">Due allievi XL nello stesso equipaggio: distribuzione delle taglie da controllare.</div>'
           : ""
       showSheet(
-        `Avvisi · ${boat === "Mezzi" ? "Mezzi" : "Quest " + boat}`,
+        `Avvisi · ${boat === "Mezzi" ? "Mezzi" : boatLabel(boat)}`,
         `${sizeReason}${unavailable.has(boat) || (boat === 11 && isWarning()) ? '<div class="notice error">Barca non disponibile per il corso; assegnazione conservata.</div>' : ""}${reasons.map((fault) => `<div class="notice warn">${esc(fault.text)}</div>`).join("")}${!sizeReason && !reasons.length && !(unavailable.has(boat) || (boat === 11 && isWarning())) ? "<p>Nessun dettaglio disponibile.</p>" : ""}`,
       )
       break
@@ -1294,11 +1333,11 @@ function handle(action, arg, button) {
           .map((n) => {
             const meta = sessionBoatMeta(n)
             return act(
-              `${questLogo}<strong>${n}</strong><small>${meta.shortLabel}</small>`,
+              `${boatLogoFor(n)}<strong>${n}</strong><small>${meta.shortLabel}</small>`,
               "assignBoat",
               n,
               `destination-boat ${meta.state}`,
-              `aria-label="Quest ${n} · ${meta.label}" aria-pressed="${crewBoats[pendingCrew] === n}"`,
+              `aria-label="${boatLabel(n)} · ${meta.label}" aria-pressed="${crewBoats[pendingCrew] === n}"`,
             )
           })
           .join(
@@ -1355,7 +1394,7 @@ function handle(action, arg, button) {
         const crewNumber = selectedCrewForBoat + 1
         selectedCrewForBoat = null
         render()
-        toast(`Quest ${n} assegnata all'equipaggio ${crewNumber}`)
+        toast(`${boatLabel(n)} assegnata all'equipaggio ${crewNumber}`)
         return
       }
       if (unavailable.has(n) || (isWarning() && n === 11)) {

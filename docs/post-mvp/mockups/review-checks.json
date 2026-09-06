@@ -1,6 +1,6 @@
 {
   "date": "2026-09-06",
-  "artifact": "Standalone UX mock gallery r8",
+  "artifact": "Standalone UX mock gallery r10",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
   "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
@@ -24,11 +24,29 @@
     "p13TwoStudentGrid": {
       "320x664Columns": "136.571px 136.571px",
       "multiDayCardWidth": "279.143px",
-      "rowHeight": 45.143,
+      "rowHeight": 44,
       "horizontalOverflowCases": 0,
-      "removeHitArea": "40x40",
+      "removeHitArea": "40x44",
+      "assignHitArea": "44px high",
+      "actionSurface": "neutral grouped card; no filled blue action buttons",
+      "assignAffordance": "blue plus ring above 350px; blue text plus leading inset at 320px",
+      "banner": "removed",
       "warningIcon": "inline SVG",
       "duplicateExample": "Sab, Mer",
+      "status": "PASS"
+    },
+    "boatLogoAssets": {
+      "plate": "256x72 transparent PNG",
+      "order": [
+        "RS 500",
+        "Laser Vago",
+        "RS Tera",
+        "J/80",
+        "First 25.7",
+        "First 27"
+      ],
+      "mappedAfter": "RS Quest",
+      "loadedImages": 6,
       "status": "PASS"
     },
     "p14DestinationPopup": {
@@ -90,7 +108,7 @@
       },
       {
         "action": "P13 duplicate, remove and assign",
-        "observed": "Ordinary student cards stay two per row from 430px through 320px. A student assigned to multiple days spans both columns so Sab, Mer and both removal controls remain visible."
+        "observed": "Ordinary student cards stay two per row from 430px through 320px. A student assigned to multiple days spans both columns so Sab, Mer and both removal controls remain visible. The blue filled action surface and the introductory banner are absent; assignment remains a 44px name action with a discreet plus affordance."
       },
       {
         "action": "P17 same-row evaluation",
@@ -102,7 +120,7 @@
       },
       {
         "action": "P15 boat assignment",
-        "observed": "Grey, green and blue boat states are simultaneously visible with a legend. Selecting Equipaggio 5 without a boat and then blue Quest 14 makes Quest 14 green and updates the crew summary. This mock mutation is in memory only."
+        "observed": "Grey, green and blue boat states are simultaneously visible with a legend and six normalized model logos. Selecting Equipaggio 5 without a boat and then blue First 25.7 14 makes First 25.7 14 green and updates the crew summary. This mock mutation is in memory only."
       },
       {
         "action": "P18 ordering",
@@ -139,6 +157,6 @@
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
     "At 320px P17 gives the name column 78px so long names may be visually truncated; the full name remains in the title and accessible label.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "P19 is approved and the visual structure of P15 is approved. P04 keeps its r5 approval but the added weekly grid needs review. Human review of the r8 targets on P13/P17 and the r7 targets on P14/P16 remains required; P18 is an approved r6 treatment with a compact r7 fix."
+    "P19 is approved and the visual structure of P15 is approved. P04 keeps its r5 approval but the added weekly grid needs review. Human review of the r10 target on P13, the r8 target on P17 and the r7 targets on P14/P16 remains required; P18 is an approved r6 treatment with a compact r7 fix."
   ]
 }

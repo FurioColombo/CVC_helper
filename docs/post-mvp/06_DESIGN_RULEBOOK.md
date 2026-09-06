@@ -1,6 +1,6 @@
 # 06 — Regole di design per il ciclo post-MVP
 
-**Stato:** aggiornato alle revisioni umane fino al 6 settembre 2026; geometria r8 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock complessivamente approvato.
+**Stato:** aggiornato alle revisioni umane fino al 6 settembre 2026; geometria r10 da valutare nei mock. Da usare con [05](../../05_POST_MVP_UX_CHANGE_REQUESTS.md), [07](07_PAGE_CHANGELOG.md) e [12](12_R2_REVIEW_QUESTIONS.md). I valori di progetto sotto non sono già un mock complessivamente approvato.
 
 ## 1. Ordine delle decisioni
 
@@ -90,7 +90,7 @@ Fixture condivisa: settimana D2 con 21 e 23 allievi, omonimi, nomi lunghi, minor
 
 Metriche per pagina: dati visibili alla prima apertura; altezza totale e porzione da scorrere; tocchi per compito; dimensione dei controlli; contenuti coperti. In Comandate distinguere “sette titoli visibili” da “sette gruppi con nomi leggibili”: il primo da solo non soddisfa CMD-04.
 
-I tre profili principali sono la prova accettata in Q04: estremo piccolo, intermedio, estremo grande. Non introdurre resizing aggressivo in base a pixel/proporzioni prima di averli confrontati. La revisione r8 fissa per P17 nome e cinque voti sulla stessa riga; i controlli restano almeno 40 × 40 CSS px nel mock e vanno riesaminati sul dispositivo. Q01 fissa avaria gialla e indisponibilità corso rossa vicino alla barca; Q02 mantiene i duplicati Comandate rossi.
+I tre profili principali sono la prova accettata in Q04: estremo piccolo, intermedio, estremo grande. Non introdurre resizing aggressivo in base a pixel/proporzioni prima di averli confrontati. La revisione r8 fissa per P17 nome e cinque voti sulla stessa riga; la r10 elimina i pulsanti blu pieni in P13 a favore di un affordance `+` blu discreto, rimuovendo anche il bannerino introduttivo. I controlli restano almeno 40 × 40 CSS px nel mock e vanno riesaminati sul dispositivo. Q01 fissa avaria gialla e indisponibilità corso rossa vicino alla barca; Q02 mantiene i duplicati Comandate rossi.
 
 ## 6. Design da approvare per ogni pagina
 
@@ -102,9 +102,9 @@ Una bella immagine non dimostra il funzionamento. Un target approvato richiede l
 
 La revisione Q08 indica i siti CVC/Fondazione e i canali social. Nella [home CVC](https://www.centrovelicocaprera.it/) osservata il 4 settembre 2026 il testo usa Roboto, alcune intestazioni arancione `#db7637`, e il logo rosso/blu è disponibile come asset della pagina. Sono osservazioni della pagina, non una palette normativa del marchio.
 
-La [galleria r8](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r8.
+La [galleria r10](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC e conserva il simbolo intero. Usa una ricostruzione grafica del logo RS Quest fornito dall'autore perché l'immagine originale era già tagliata sul lato destro; l'asset originale resta conservato. Propone tre accenti arancioni e tre blu sulla Home, un blu funzionale con superfici chiare e indicatori sticky soltanto quando devono restare visibili durante lo scroll. I loghi RS 500, Laser Vago, RS Tera, J/80, First 25.7 e First 27 sono tavole PNG trasparenti uniformate a 256 × 72 px nel mock. Il nome CVC Helper e la scelta finale del font restano da discutere. Immagini Instagram come sfondi o card sono un possibile upgrade futuro, non parte del target r10.
 
-### Regole aggiunte dalle revisioni r2–r8
+### Regole aggiunte dalle revisioni r2–r10
 
 - Un elemento sticky deve conservare un contesto operativo necessario durante lo scroll: avanzamento OCR, copertura Comandate, barche della sessione o identità dell'allievo nella sua storia. Non rendere sticky un titolo puramente decorativo.
 - Logo/modello e numero barca formano un solo identificativo; non ripetere il nome in testo se è già leggibile nel logo. Possono stare affiancati nelle righe larghe o sovrapposti nei selettori stretti. Numero equipaggio e numero barca restano campi distinti.
@@ -112,7 +112,7 @@ La [galleria r8](mockups/index.html) ritaglia soltanto la scritta dell'asset CVC
 - L'assenza di valutazione è spazio vuoto con etichetta accessibile, non un sesto valore visibile.
 - Le sezioni condizionali, come “Note recenti”, non occupano spazio quando sono vuote. Nel profilo mostrare al massimo due note recenti e aprire le altre su richiesta, mantenendo distinti tipo e provenienza.
 - Le card di una stessa riga restano allineate in alto anche se hanno numeri diversi di persone: nessun contenuto va centrato verticalmente per riempire il vuoto.
-- La modifica di una Comandata è centrata sul giorno scelto in P11 e si apre senza popup intermedio. Ordine: assegnati correnti, mai assegnati, assegnati altrove. La griglia mostra due allievi per riga; ogni card usa giorni abbreviati Lun–Dom. Una persona con più giorni può occupare entrambe le colonne per mantenere azioni e warning leggibili. Il bottone nome si riconosce dalla superficie, senza ripetere “Assegna a…”.
+- La modifica di una Comandata è centrata sul giorno scelto in P11 e si apre senza popup intermedio. Ordine: assegnati correnti, mai assegnati, assegnati altrove. La griglia mostra due allievi per riga; ogni card usa giorni abbreviati Lun–Dom. Una persona con più giorni può occupare entrambe le colonne per mantenere azioni e warning leggibili. La card è una superficie neutra di lista raggruppata, con divisori tenui; l'azione di assegnazione è un `+` blu discreto, mai un riempimento blu esteso. A 320 px il `+` lascia il posto a testo blu e sottile inset blu, così il nome mantiene più spazio. Il bottone nome si riconosce dalla superficie, senza ripetere “Assegna a…”.
 - I selettori di barche vanno a capo in due righe e non scorrono lateralmente; logo sopra e numero sotto quando la larghezza è stretta. In P15 i tre stati hanno colori e legenda fissi; si seleziona prima l'equipaggio senza barca e poi una barca blu libera.
 - Qualunque selettore barche collegato allo stesso compito riusa la stessa grammatica: grigio non disponibile, verde assegnata, blu disponibile; nel popup P14 l'ordine è sempre numerico crescente.
 - Il doppio tap su una persona nell'equipaggio la riporta fra i Disponibili; come ogni gesto avanzato, deve esistere anche un comando esplicito raggiungibile con tastiera e tecnologie assistive.
