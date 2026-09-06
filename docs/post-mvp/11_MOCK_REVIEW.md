@@ -1,6 +1,6 @@
 # 11 — Revisione dei mock UX
 
-**Stato:** feedback umano fino alla revisione r7 del 6 settembre 2026 recepito; [galleria r7](mockups/index.html) pronta. P19 è approvata; P04 conserva l'approvazione r5 ma la nuova griglia va rivista; la struttura visiva P15 è approvata. Nessun mock autorizza ancora l'implementazione.
+**Stato:** feedback umano fino alla revisione r8 del 6 settembre 2026 recepito; [galleria r8](mockups/index.html) pronta. P19 è approvata; P04 conserva l'approvazione r5 ma la nuova griglia va rivista; la struttura visiva P15 è approvata. Nessun mock autorizza ancora l'implementazione.
 
 ## Revisione umana r1 — 4 settembre 2026
 
@@ -86,19 +86,26 @@
 | P18    | Ridurre leggermente l'altezza della riga nome.                                          | Intestazione e area attiva portate a 40 px; nessun overflow laterale.                                          |
 | P19    | Confermata.                                                                             | Nessun cambiamento.                                                                                            |
 
-## Percorso breve per rivedere r7
+## Revisione umana r8 — 6 settembre 2026
+
+| Pagina | Indicazione ricevuta                                                    | Risposta r8                                                                                                                                               |
+| ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P13    | Due allievi per riga.                                                   | Ripristinate due colonne. Le card ordinarie restano affiancate; un duplicato con più giorni usa entrambe le colonne per non tagliare warning e rimozioni. |
+| P17    | Valutazioni sulla stessa riga del nome, come nella versione precedente. | Nome e cinque icone condividono una riga; il nome è il bottone per la nota. Tutti i voti mantengono area 40 × 40 px.                                      |
+
+## Percorso breve per rivedere r8
 
 1. **P01 → P02:** verificare logo/colori, poi scegliere Cabinato e livello 4; deve comparire `C4 - 35 | 2026` e la barra inferiore deve restare nascosta.
 2. **P04:** controllare le due note recenti, aprire “Altre note” e verificare la griglia settimanale nella card Valutazioni; poi **P05** per le cinque taglie a 430/390/320 px.
 3. **P06:** arrivare alla review, completare la data mancante e osservare `1 → 0` campi e `2 → 3` allievi inseriti.
 4. **P08:** confrontare “Da controllare” giallo e “Disponibile” neutro. **P11** nello stato con avvisi: osservare il feedback sticky `20/21`, l'allineamento in alto delle card, poi toccare un giorno; deve aprirsi direttamente **P13**.
-5. **P13:** controllare a 430/390/320 px la singola riga per allievo, l'icona triangolo, “Sab, Mer”, il pannello senza giorno e la X compatta; rimuovere e riassegnare dal solo nome.
+5. **P13:** controllare a 430/390/320 px le due card per riga; il duplicato “Sab, Mer” deve estendersi sulle due colonne, con triangolo e X leggibili; rimuovere e riassegnare dal solo nome.
 6. **P14:** nello stato con avvisi, aprire il triangolo del primo equipaggio XL/XL; aprire Destinazione e controllare ordine numerico e stati barca; in stato normale fare doppio tap su un membro e verificare che torni fra i Disponibili.
 7. **P15 → P16:** controllare le due righe senza scroll laterale, i tre stati barca e la legenda; selezionare Equipaggio 5 senza barca e poi Quest 14 blu; in P16 verificare il logo ingrandito.
-8. **P17:** controllare le cinque icone e l'allineamento di `--`, assegnare un voto e toccarlo di nuovo; **P18** deve mostrare “Ordinamento”, riga nome e controlli da 40 px, nessun `~` e nessuno scroll orizzontale.
+8. **P17:** controllare nome e cinque icone sulla stessa riga anche a 320 px, assegnare un voto e toccarlo di nuovo; **P18** deve mostrare “Ordinamento”, riga nome e controlli da 40 px, nessun `~` e nessuno scroll orizzontale.
 9. **P19:** verificare il riepilogo in alto; scorrendo, il nome resta visibile e le card giorno/sessione sono più compatte.
 
-## Registro r7
+## Registro r8
 
 | Pagina                    | Stato                                              | Motivo                                                  |
 | ------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
@@ -114,15 +121,15 @@
 | P10 Volontari             | APPROVATO R2 + FIX R3                              | Nuovo nome vuoto.                                       |
 | P11 Comandate             | APPROVATO R3 + FIX R6                              | Copertura sticky; card allineate in alto.               |
 | P12 Proposta Comandate    | APPROVATO R2                                       | Ritocco card eseguito; logica confermata.               |
-| P13 Persone Comandata     | R7 DA RIVEDERE                                     | Una riga per persona, giorni brevi e X associata.       |
+| P13 Persone Comandata     | R8 DA RIVEDERE                                     | Due allievi per riga; multi-giorno a tutta larghezza.   |
 | P14 Equipaggi             | R7 DA RIVEDERE                                     | Popup barche coerente con P15 e ordinato numericamente. |
 | P15 Barche della sessione | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE | Tre stati e assegnazione equipaggio → barca.            |
 | P16 Leggi equipaggi       | R7 DA RIVEDERE                                     | Tre aree esplicite e logo più leggibile.                |
-| P17 Valutazioni           | R7 DA RIVEDERE                                     | Cinque icone SVG; doppi segni allineati.                |
+| P17 Valutazioni           | R8 DA RIVEDERE                                     | Nome e cinque icone sulla stessa riga.                  |
 | P18 Riepilogo             | APPROVATO R6 + FIX R7                              | Riga nome e controlli da 40 px.                         |
 | P19 Storia allievo        | APPROVATO R4                                       | Gerarchia, riepilogo e compattezza confermati.          |
 | P20 Dettatura             | RIMOSSA                                            | Integrata nei pannelli testo.                           |
 
 ## Esito tecnico del mock
 
-La scansione r7 copre 152 combinazioni: 19 viste × quattro larghezze × stato normale/avvisi, con 23 persone. Nessuna pagina o contenitore P15 produce overflow orizzontale e nessun controllo visibile scende sotto 40 × 40 CSS px. P13 mantiene ogni persona su una riga anche a 320 px; la X appare più piccola ma conserva un'area attiva 40 × 40. Sono stati esercitati inoltre: griglia P04; popup P14; logo P16; SVG P17; riga nome P18. Le verifiche riguardano il prototipo isolato: la persistenza P15 e il comando accessibile equivalente al doppio tap sono requisiti futuri, non prove già ottenute nell'app.
+La scansione r8 copre 152 combinazioni: 19 viste × quattro larghezze × stato normale/avvisi, con 23 persone. Nessuna pagina o contenitore P15 produce overflow orizzontale e nessun controllo visibile scende sotto 40 × 40 CSS px. A 320 px P13 usa due colonne da circa 137 px; il caso multi-giorno occupa entrambe. P17 mantiene nome e cinque voti sullo stesso asse, con cinque controlli da 40 px. Le verifiche riguardano il prototipo isolato: la persistenza P15 e il comando accessibile equivalente al doppio tap sono requisiti futuri, non prove già ottenute nell'app.

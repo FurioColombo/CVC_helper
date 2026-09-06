@@ -1,6 +1,6 @@
 # 12 — Decisioni dopo la revisione r2
 
-**Stato:** Q10–Q13 risolte e rifinite fino al 6 settembre 2026 nella [galleria r7](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
+**Stato:** Q10–Q13 risolte e rifinite fino al 6 settembre 2026 nella [galleria r8](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
 
 ## Q10 — P13: che cosa domina quando modifico una Comandata?
 
@@ -10,7 +10,7 @@
 2. persone mai assegnate;
 3. persone assegnate ad altri giorni.
 
-La revisione r7 sostituisce la precedente proposta a due colonne: ogni allievo occupa una riga a tutta larghezza, così nome e controlli restano chiaramente associati. Nelle ultime due sezioni, il nome è un bottone visivamente riconoscibile e il tap assegna la persona anche al giorno corrente; dentro il bottone non si ripete “Assegna a/anche a [giorno]”. Nella riga i giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. Una X rossa, visivamente compatta ma con area attiva da 40 px, rimuove la persona dal giorno indicato; se non restano assegnazioni, la persona passa fra i “Mai assegnati”. I duplicati restano consentiti e segnalati in rosso secondo CMD-07, con una vera icona vettoriale e tutti i giorni coinvolti, per esempio “Sab, Mer”. Il commento iniziale non ripete il giorno, già visibile nel titolo.
+La revisione r8 mostra due allievi per riga. Nelle ultime due sezioni, il nome è un bottone visivamente riconoscibile e il tap assegna la persona anche al giorno corrente; dentro il bottone non si ripete “Assegna a/anche a [giorno]”. Nella card i giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. Una X rossa, visivamente compatta ma con area attiva da 40 px, rimuove la persona dal giorno indicato. I duplicati restano consentiti e segnalati in rosso secondo CMD-07: una persona con più giorni può occupare entrambe le colonne per mantenere leggibili warning, giorni e rimozioni. Il commento iniziale non ripete il giorno, già visibile nel titolo.
 
 ## Q11 — P15: come scala la fascia delle barche oltre cinque elementi?
 
@@ -45,4 +45,4 @@ La r7 usa quindi **First 25.7**, non 27.5. P07 mostra per questo ciclo RS Quest,
 
 ## Questioni ancora non bloccanti
 
-Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. P19 resta approvata; P04 conserva la struttura approvata e richiede revisione della nuova griglia; la struttura P15 resta approvata. I target r7 di P13/P14/P16/P17 e il fix P18 richiedono una lettura finale.
+Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. P19 resta approvata; P04 conserva la struttura approvata e richiede revisione della nuova griglia; la struttura P15 resta approvata. I target r8 di P13/P17, i target r7 di P14/P16 e il fix P18 richiedono una lettura finale.

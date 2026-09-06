@@ -2614,3 +2614,92 @@ textarea:focus-visible {
     font-size: 10px;
   }
 }
+
+/* r8 — due persone per riga in P13; valutazioni affiancate al nome in P17 */
+.duty-people-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.duty-person-row {
+  min-width: 0;
+}
+.duty-person-row.duty-person-wide {
+  grid-column: 1 / -1;
+}
+.duty-person-row:not(.duty-person-wide) .duty-day-assignments {
+  min-width: 0;
+}
+.duty-person-row:not(.duty-person-wide) .duty-day-label {
+  min-width: 21px;
+  font-size: 10px;
+}
+.evalrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+.phone .eval-name {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 4px 6px;
+  text-align: left;
+  background: white;
+}
+.eval-name span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 700;
+}
+.eval-name svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
+.eval-marks {
+  display: grid;
+  grid-template-columns: repeat(5, 40px);
+  gap: 0;
+}
+.phone .eval-marks .mark {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+}
+.phone .eval-marks .mark[aria-pressed="true"] {
+  border-radius: 0;
+}
+
+@container phone (max-width: 350px) {
+  .duty-person-row {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  .phone .duty-person-action {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .eval-name span {
+    font-size: 12px;
+  }
+  .phone .eval-name {
+    padding-left: 5px;
+    padding-right: 4px;
+  }
+  .eval-name svg {
+    display: none;
+  }
+}

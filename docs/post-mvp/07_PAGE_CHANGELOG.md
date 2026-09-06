@@ -1,6 +1,6 @@
 # 07 — Changelist per pagina e brief dei mock
 
-**Stato:** revisioni umane fino al 6 settembre recepite; galleria r7 disponibile con 19 viste principali. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md); P19 è approvata, P04 conserva l'approvazione r5 ma la nuova integrazione r7 va rivista, la struttura visiva P15 è approvata. Nessuna pagina è implementata nell'app.
+**Stato:** revisioni umane fino al 6 settembre recepite; galleria r8 disponibile con 19 viste principali. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md); P19 è approvata, P04 conserva l'approvazione r5 ma la nuova integrazione r7 va rivista, la struttura visiva P15 è approvata. Nessuna pagina è implementata nell'app.
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 
@@ -158,9 +158,9 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 **Richieste:** CMD-05/06/08, UX-G02/04/05. **Natura:** layout e ordine.
 
 - Il tap sulla card di un giorno in P11 apre direttamente P13, senza popup intermedio. Il giorno scelto rimane titolo e contesto della modifica.
-- Ordine fisso: persone nel giorno corrente, “Mai assegnati”, “Assegnati ad altri giorni”. Ogni card occupa una riga a tutta larghezza e mantiene nome, giorni e rimozioni sullo stesso asse; toccando il nome nelle ultime due sezioni si assegna la persona anche al giorno corrente.
+- Ordine fisso: persone nel giorno corrente, “Mai assegnati”, “Assegnati ad altri giorni”. La griglia mostra due allievi per riga; ogni card mantiene nome, giorni e rimozioni associati. Toccando il nome nelle ultime due sezioni si assegna la persona anche al giorno corrente.
 - Il bottone nome deve essere evidente dalla superficie cliccabile e mostrare soltanto il nome, senza ripetere “Assegna a/anche a [giorno]”. Il giorno corrente resta già nel titolo della pagina e delle sezioni, non nel commento introduttivo.
-- Nelle righe i giorni sono abbreviati in Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. In caso di doppia assegnazione il warning usa un'icona vettoriale e mostra tutti i giorni coinvolti in forma breve, per esempio “Sab, Mer”, senza “anche”. Una X rossa compatta rimuove la persona dal giorno indicato; se non restano giorni, la riga passa fra i mai assegnati.
+- Nelle card i giorni sono abbreviati in Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. In caso di doppia assegnazione la card può occupare entrambe le colonne, il warning usa un'icona vettoriale e mostra tutti i giorni coinvolti in forma breve, per esempio “Sab, Mer”. Una X rossa compatta rimuove la persona dal giorno indicato.
 - Già usati restano selezionabili; una volta è corretto, più volte produce warning e dettaglio. Aggiunta e rimozione restano reversibili senza gesto nascosto.
 
 **Mock:** giorno aperto direttamente da P11, mai usato/una volta/più volte, rimozione verso mai assegnati, minorenne, omonimi, nessuno libero. **Accettazione:** assegnazione ripetuta permessa e warning coerente in P11/P13; tap sul testo del giorno non modifica dati; ordine non salta in modo da causare un tap involontario durante salvataggio. **Baseline:** sottovista di `DutyManagement.tsx`.
@@ -209,12 +209,12 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## P17 — Valutazioni: inserimento per Allievi/Equipaggi
 
-**Richieste:** EVAL-01/02/03/04/05/07. **Natura:** layout e controlli. **Decisione r2:** nome completo sopra, nota vicina e cinque icone sotto; nessun sesto valore per l'assenza.
+**Richieste:** EVAL-01/02/03/04/05/07. **Natura:** layout e controlli. **Decisione r8:** nome e cinque icone sulla stessa riga; nessun sesto valore per l'assenza.
 
 - Tutti i valori usano icone SVG dedicate; anche i doppi segni condividono la stessa linea di base e non dipendono dai caratteri tipografici `+`, `-`, `=`.
 
 - Titolo e sessione affiancati; selettore Allievi/Equipaggi/Riepilogo più basso in altezza; eliminare la frase indicata in EVAL-05.
-- Nome completo e nota occupano la prima riga corta; ++, +, =, -, -- la seconda. Icone con area di tocco chiara al posto dei caratteri grezzi.
+- Nome e ++, +, =, -, -- condividono una sola riga. Il nome è un bottone che apre la nota; sullo schermo stress può essere abbreviato visivamente, mantenendo nome completo nell'etichetta accessibile. Icone con area di tocco da 40 px al posto dei caratteri grezzi.
 - Nessuna selezione è il default; toccare di nuovo il valore selezionato annulla il voto. Nessun pulsante `~`.
 - Positivi verdi, negativi rossi, neutro distinto e assenza vuota nei riepiloghi. A terra resta presente e valutabile; nota legata alla sessione esatta.
 
@@ -264,7 +264,7 @@ Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03
 
 ## 3. Registro dei mock e dei target
 
-Galleria r7: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
+Galleria r8: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
 
 | Pagine | File / revisione                   | Approvazione                                       |
 | ------ | ---------------------------------- | -------------------------------------------------- |
@@ -280,13 +280,13 @@ Galleria r7: [apri i mock](mockups/index.html). Revisioni umane e registro in [1
 | P10    | [P10 · r3](mockups/index.html#P10) | APPROVATO R2 + FIX R3                              |
 | P11    | [P11 · r6](mockups/index.html#P11) | APPROVATO R3 + FIX R6                              |
 | P12    | [P12 · r3](mockups/index.html#P12) | APPROVATO R2                                       |
-| P13    | [P13 · r7](mockups/index.html#P13) | R7 DA RIVEDERE                                     |
+| P13    | [P13 · r8](mockups/index.html#P13) | R8 DA RIVEDERE                                     |
 | P14    | [P14 · r7](mockups/index.html#P14) | R7 DA RIVEDERE                                     |
 | P15    | [P15 · r6](mockups/index.html#P15) | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE |
 | P16    | [P16 · r7](mockups/index.html#P16) | R7 DA RIVEDERE                                     |
-| P17    | [P17 · r7](mockups/index.html#P17) | R7 DA RIVEDERE                                     |
+| P17    | [P17 · r8](mockups/index.html#P17) | R8 DA RIVEDERE                                     |
 | P18    | [P18 · r7](mockups/index.html#P18) | APPROVATO R6 + FIX R7                              |
 | P19    | [P19 · r4](mockups/index.html#P19) | APPROVATO R4                                       |
 | P20    | Integrata in P05/P09/P17           | NESSUNA PAGINA                                     |
 
-La r7 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback r7. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.
+La r8 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.

@@ -1,6 +1,6 @@
 {
   "date": "2026-09-06",
-  "artifact": "Standalone UX mock gallery r7",
+  "artifact": "Standalone UX mock gallery r8",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
   "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
@@ -21,9 +21,9 @@
       "firstRowCardContentTopEqual": true,
       "status": "PASS"
     },
-    "p13SingleRowLayout": {
-      "430x820": "389.143px",
-      "320x664": "279.143px",
+    "p13TwoStudentGrid": {
+      "320x664Columns": "136.571px 136.571px",
+      "multiDayCardWidth": "279.143px",
       "rowHeight": 45.143,
       "horizontalOverflowCases": 0,
       "removeHitArea": "40x40",
@@ -63,6 +63,15 @@
     "p17EvaluationIcons": {
       "count": 5,
       "doubleMinusPath": "M2 12h9M13 12h9",
+      "sameRowAsStudentName": true,
+      "nameWidths": {
+        "430x820": 188,
+        "412x760": 170,
+        "390x664": 148,
+        "320x664": 78
+      },
+      "evaluationStripWidth": 200,
+      "minimumControlWidth": 40,
       "minimumControlHeight": 40,
       "horizontalOverflowCases": 0,
       "status": "PASS"
@@ -81,7 +90,11 @@
       },
       {
         "action": "P13 duplicate, remove and assign",
-        "observed": "Each student stays on one full-width row from 430px through 320px. The duplicate uses an SVG warning and reads Sab, Mer. Day abbreviations remain informational, name-only buttons assign to the current day, and the adjacent X is the explicit remove action."
+        "observed": "Ordinary student cards stay two per row from 430px through 320px. A student assigned to multiple days spans both columns so Sab, Mer and both removal controls remain visible."
+      },
+      {
+        "action": "P17 same-row evaluation",
+        "observed": "Student name and five 40px evaluation controls share one row at all four widths with no horizontal overflow. The name button opens the note and retains the full accessible name when visually truncated."
       },
       {
         "action": "P14 return to available",
@@ -124,8 +137,8 @@
   "limitations": [
     "Measurements describe synthetic layouts and primary interactive states, not every production state.",
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
-    "P17 deliberately uses more vertical space to keep full names and five direct evaluation controls visible.",
+    "At 320px P17 gives the name column 78px so long names may be visually truncated; the full name remains in the title and accessible label.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "P19 is approved and the visual structure of P15 is approved. P04 keeps its r5 approval but the added weekly grid needs review. Human review of the r7 targets on P13, P14, P16 and P17 remains required; P18 is an approved r6 treatment with a compact r7 fix."
+    "P19 is approved and the visual structure of P15 is approved. P04 keeps its r5 approval but the added weekly grid needs review. Human review of the r8 targets on P13/P17 and the r7 targets on P14/P16 remains required; P18 is an approved r6 treatment with a compact r7 fix."
   ]
 }

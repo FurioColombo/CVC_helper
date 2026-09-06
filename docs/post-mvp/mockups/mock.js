@@ -76,8 +76,8 @@ const pages = [
   [
     "P13",
     "Persone Comandata",
-    "Una riga compatta per persona, con giorno abbreviato e rimozione.",
-    "Nome, giorni e azioni restano leggibili insieme anche con nomi lunghi?",
+    "Due allievi per riga, con giorni abbreviati dentro card compatte.",
+    "Le due card per riga restano leggibili e associano chiaramente ogni X al suo giorno?",
   ],
   [
     "P14",
@@ -100,8 +100,8 @@ const pages = [
   [
     "P17",
     "Valutazioni",
-    "Nome completo sopra, cinque valutazioni dirette sotto.",
-    "Le icone ++, +, =, − e −− sono allineate e riconoscibili?",
+    "Nome e cinque valutazioni dirette sulla stessa riga.",
+    "La riga resta rapida da leggere e le cinque icone sono distinguibili anche sullo schermo stretto?",
   ],
   [
     "P18",
@@ -500,12 +500,14 @@ function dutyPeopleMarkup() {
     const otherDays = (uses.get(p.id) || []).filter(
       (day) => day !== selectedDay,
     )
-    return `<div class="panel duty-person-row"><span class="duty-person-main"><strong>${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} ${[selectedDay, ...otherDays].map((day) => dutyDayShort[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
+    return `<div class="panel duty-person-row${otherDays.length ? " duty-person-wide" : ""}"><span class="duty-person-main"><strong title="${esc(fullName(p.id))}">${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} ${[selectedDay, ...otherDays].map((day) => dutyDayShort[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
   }
   const neverRow = (p) =>
     `<div class="panel duty-person-row">${act(`<strong>${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
-  const elsewhereRow = (p) =>
-    `<div class="panel duty-person-row">${act(`<strong>${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${(uses.get(p.id) || []).map((day) => removeDay(p, day)).join("")}</span></div>`
+  const elsewhereRow = (p) => {
+    const assignedDays = uses.get(p.id) || []
+    return `<div class="panel duty-person-row${assignedDays.length > 1 ? " duty-person-wide" : ""}">${act(`<strong title="${esc(fullName(p.id))}">${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} anche a ${days[selectedDay]}"`)}<span class="duty-day-assignments">${assignedDays.map((day) => removeDay(p, day)).join("")}</span></div>`
+  }
   return `<div class="notice duty-people-intro">Tocca un nome per assegnarlo al giorno aperto. La X rimuove dal giorno indicato.</div><h3>In ${days[selectedDay]} · ${current.length}</h3><div class="stack duty-people-list">${current.map(currentRow).join("") || '<p class="muted">Nessuna persona assegnata.</p>'}</div><h3>Mai assegnati · ${never.length}</h3><div class="stack duty-people-list">${never.map(neverRow).join("") || '<p class="muted">Tutti hanno almeno un giorno.</p>'}</div><h3>Assegnati ad altri giorni · ${elsewhere.length}</h3><div class="stack duty-people-list">${elsewhere.map(elsewhereRow).join("") || '<p class="muted">Nessuna assegnazione in altri giorni.</p>'}</div>`
 }
 function crewMarkup() {
@@ -590,7 +592,7 @@ function evaluationRows(ids) {
   return ids
     .map(
       (id) =>
-        `<div class="evalrow"><div class="eval-person"><span>${esc(fullName(id))}${terra.includes(id) ? '<small class="muted"> · terra</small>' : ""}</span>${act('<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20l4.5-1 10-10-3.5-3.5-10 10L4 20zM13.5 7l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>', "note", id, "eval-name", `aria-label="Nota di ${esc(fullName(id))}"`)}</div><div class="eval-marks">${marks.map((mark) => act(markIcon(mark), "mark", `${id}:${mark}`, `mark ${mark.includes("+") ? "pos" : mark === "-" || mark === "--" ? "neg" : ""}`, `aria-label="${esc(fullName(id))}: ${mark}" aria-pressed="${evaluation[id] === mark}"`)).join("")}</div></div>`,
+        `<div class="evalrow">${act(`<span title="${esc(fullName(id))}">${esc(fullName(id))}${terra.includes(id) ? '<small class="muted"> · terra</small>' : ""}</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20l4.5-1 10-10-3.5-3.5-10 10L4 20zM13.5 7l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`, "note", id, "eval-name", `aria-label="Nota di ${esc(fullName(id))}"`)}<div class="eval-marks">${marks.map((mark) => act(markIcon(mark), "mark", `${id}:${mark}`, `mark ${mark.includes("+") ? "pos" : mark === "-" || mark === "--" ? "neg" : ""}`, `aria-label="${esc(fullName(id))}: ${mark}" aria-pressed="${evaluation[id] === mark}"`)).join("")}</div></div>`,
     )
     .join("")
 }
@@ -815,7 +817,7 @@ function content() {
 }
 function render() {
   const p = pages.find((p) => p[0] === page)
-  $("#page-id").textContent = `${p[0]} · REVISIONE 7`
+  $("#page-id").textContent = `${p[0]} · REVISIONE 8`
   $("#review-title").textContent = p[1]
   $("#review-goal").textContent = p[2]
   $("#review-question").textContent = p[3]
