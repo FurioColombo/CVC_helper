@@ -1,6 +1,6 @@
 # 12 — Decisioni dopo la revisione r2
 
-**Stato:** Q10–Q13 risolte il 5 settembre 2026 e rifinite nella [galleria r6](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
+**Stato:** Q10–Q13 risolte e rifinite fino al 6 settembre 2026 nella [galleria r7](mockups/index.html). Non restano domande bloccanti per questa revisione. Le decisioni aggiornano il target di design; non autorizzano ancora modifiche all'app.
 
 ## Q10 — P13: che cosa domina quando modifico una Comandata?
 
@@ -10,7 +10,7 @@
 2. persone mai assegnate;
 3. persone assegnate ad altri giorni.
 
-I nomi sono disposti su due colonne. Nelle ultime due sezioni, il nome è un bottone visivamente riconoscibile e il tap assegna la persona anche al giorno corrente; dentro il bottone non si ripete “Assegna a/anche a [giorno]”. I giorni già assegnati sono scritti per esteso come testo informativo, senza abbreviazioni e senza azione sul testo. Una X rossa, visivamente compatta ma con area attiva da 40 px, rimuove la persona dal giorno indicato; se non restano assegnazioni, la persona passa fra i “Mai assegnati”. I duplicati restano consentiti e segnalati in rosso secondo CMD-07, con una vera icona vettoriale e tutti i giorni coinvolti, per esempio “Sabato, Mercoledì”. Il commento iniziale non ripete il giorno, già visibile nel titolo.
+La revisione r7 sostituisce la precedente proposta a due colonne: ogni allievo occupa una riga a tutta larghezza, così nome e controlli restano chiaramente associati. Nelle ultime due sezioni, il nome è un bottone visivamente riconoscibile e il tap assegna la persona anche al giorno corrente; dentro il bottone non si ripete “Assegna a/anche a [giorno]”. Nella riga i giorni usano Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. Una X rossa, visivamente compatta ma con area attiva da 40 px, rimuove la persona dal giorno indicato; se non restano assegnazioni, la persona passa fra i “Mai assegnati”. I duplicati restano consentiti e segnalati in rosso secondo CMD-07, con una vera icona vettoriale e tutti i giorni coinvolti, per esempio “Sab, Mer”. Il commento iniziale non ripete il giorno, già visibile nel titolo.
 
 ## Q11 — P15: come scala la fascia delle barche oltre cinque elementi?
 
@@ -18,7 +18,7 @@ I nomi sono disposti su due colonne. Nelle ultime due sezioni, il nome è un bot
 
 Il divieto di scroll orizzontale vale per l'intera interfaccia, compresi selettori e riepiloghi.
 
-**Mock approvato:** struttura P15 r4. La r6 aggiunge tre stati operativi con legenda: grigio non disponibile, verde assegnata, blu disponibile non assegnata. La sequenza equipaggio senza barca → barca blu crea l'associazione della sessione; la resa e l'interazione r6 restano da rivedere, mentre la futura implementazione deve persisterle.
+**Mock approvato:** struttura P15 r4. La r6 aggiunge tre stati operativi con legenda: grigio non disponibile, verde assegnata, blu disponibile non assegnata. La sequenza equipaggio senza barca → barca blu crea l'associazione della sessione; la resa e l'interazione r6 restano da rivedere, mentre la futura implementazione deve persisterle. La r7 riusa la stessa grammatica nel popup destinazione P14 e ordina sempre le barche per numero crescente.
 
 ## Q12 — P19: quale riepilogo serve nella storia?
 
@@ -30,7 +30,7 @@ Il divieto di scroll orizzontale vale per l'intera interfaccia, compresi seletto
 
 **DECISO — due note recenti, poi “Altre note”.** La sezione compare solo se esistono note. Mostra le due più recenti con tipo e sessione chiaramente etichettati; il comando “Altre note” apre il resto su richiesta. Nota iniziale, note generali del corso e note di valutazione restano concetti distinti.
 
-**Mock approvato:** P04 r5, con azione breve “Modifica” nell'header.
+**Mock approvato:** struttura P04 r5, con azione breve “Modifica” nell'header. La r7 aggiunge alla card Valutazioni la stessa griglia settimanale usata in P18/P19; questa integrazione puntuale resta da rivedere.
 
 ## Chiarimento già risolto — tipi di barca
 
@@ -41,8 +41,8 @@ La fonte normativa `01_PRODUCT_SPEC.md` usa:
 - C2 → First 25.7;
 - C3 → First 27.
 
-La r6 usa quindi **First 25.7**, non 27.5. P07 mostra per questo ciclo RS Quest, RS 500, J/80, First 25.7 e First 27.
+La r7 usa quindi **First 25.7**, non 27.5. P07 mostra per questo ciclo RS Quest, RS 500, J/80, First 25.7 e First 27.
 
 ## Questioni ancora non bloccanti
 
-Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. P04 e P19 restano approvate; la struttura P15 resta approvata. P08/P13/P14/P15/P18 r6 richiedono ancora revisione visiva/interattiva.
+Restano da concordare in una fase successiva il nome finale dell'app, l'eventuale marchio derivato, l'uso di fotografie Instagram e i risultati delle prove fisiche su OCR/voce. P19 resta approvata; P04 conserva la struttura approvata e richiede revisione della nuova griglia; la struttura P15 resta approvata. I target r7 di P13/P14/P16/P17 e il fix P18 richiedono una lettura finale.

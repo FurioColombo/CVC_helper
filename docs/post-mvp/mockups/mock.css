@@ -2461,3 +2461,156 @@ textarea:focus-visible {
   padding-top: 4px;
   padding-bottom: 4px;
 }
+
+/* r7 — riepilogo profilo, righe Comandate e stati barca coerenti */
+.profile-evals {
+  display: block;
+  padding: 8px 9px;
+}
+.profile-evals-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.profile-evals-head > span:first-child {
+  min-width: 0;
+}
+.profile-evals-head small {
+  display: block;
+  margin-top: 1px;
+}
+.profile-week-grid {
+  margin-top: 6px;
+}
+.duty-people-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+.duty-person-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 44px;
+  padding: 2px 4px;
+}
+.duty-person-main {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  overflow: hidden;
+}
+.duty-person-main strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.duty-person-main .duplicate-note {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.phone .duty-person-action {
+  min-height: 40px;
+  padding: 4px 6px;
+}
+.duty-day-assignments {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.duty-day-assignment {
+  grid-template-columns: auto 40px;
+  gap: 0;
+}
+.duty-day-label {
+  min-width: 24px;
+  font-size: 11px;
+}
+.destination-legend {
+  margin: 0 0 7px;
+}
+.destination-boat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.phone .destination-boat {
+  min-width: 0;
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 24px 16px;
+  align-items: center;
+  gap: 0 5px;
+  padding: 5px 7px;
+  text-align: left;
+}
+.destination-boat .boat-brand {
+  width: min(72px, 100%);
+  height: 23px;
+  max-width: none;
+}
+.destination-boat strong {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 18px;
+}
+.destination-boat small {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 10px;
+}
+.phone .destination-boat.boat-assigned {
+  border-color: #4f9675;
+  color: #155f43;
+  background: #e0f1e8;
+  box-shadow: inset 0 0 0 1px #4f9675;
+}
+.phone .destination-boat.boat-available {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #e4efff;
+  box-shadow: inset 0 0 0 1px var(--navy);
+}
+.phone .destination-boat.boat-unavailable {
+  border-color: #cbd2da;
+  color: #697787;
+  background: #edf0f3;
+  box-shadow: none;
+}
+.destination-specials {
+  margin-top: 7px;
+}
+.read-destination .boat-brand {
+  width: 68px;
+  height: 24px;
+  max-width: none;
+}
+.overview-card {
+  padding: 7px 9px 9px;
+}
+.overview-head {
+  min-height: 40px;
+}
+.phone .overview-head button {
+  min-height: 40px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.overview-card .week-grid {
+  margin-top: 5px;
+}
+
+@container phone (max-width: 350px) {
+  .read-destination .boat-brand {
+    width: 58px;
+  }
+  .duty-person-main strong {
+    font-size: 12px;
+  }
+  .duplicate-note {
+    font-size: 10px;
+  }
+}

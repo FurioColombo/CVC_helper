@@ -1,6 +1,6 @@
 # 11 — Revisione dei mock UX
 
-**Stato:** feedback umano fino all'ultima revisione r5 del 5 settembre 2026 recepito; [galleria r6](mockups/index.html) pronta. P04 e P19 sono approvate; la struttura visiva P15 è approvata. Le rifiniture/interazioni r6 di P08/P13/P14/P15/P18 restano da rivedere. Nessun mock autorizza ancora l'implementazione.
+**Stato:** feedback umano fino alla revisione r7 del 6 settembre 2026 recepito; [galleria r7](mockups/index.html) pronta. P19 è approvata; P04 conserva l'approvazione r5 ma la nuova griglia va rivista; la struttura visiva P15 è approvata. Nessun mock autorizza ancora l'implementazione.
 
 ## Revisione umana r1 — 4 settembre 2026
 
@@ -74,26 +74,38 @@
 | P15    | Tre accenti: grigio non disponibile, verde assegnata, blu disponibile non assegnata; equipaggio senza barca → barca blu assegna e salva.          | Tre stati simultanei con legenda; selezione equipaggio → barca blu aggiorna entrambi i riepiloghi nel mock. La persistenza resta requisito dell'implementazione.      |
 | P18    | Piccola etichetta “Ordinamento” e bottoni un po' più bassi.                                                                                       | Etichetta aggiunta; entrambi i controlli sono alti 40 px.                                                                                                             |
 
-## Percorso breve per rivedere r6
+## Revisione umana r6/r7 — 6 settembre 2026
+
+| Pagina | Indicazione ricevuta                                                                    | Risposta r7                                                                                                    |
+| ------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| P04    | Integrare nella card Valutazioni la tabella settimanale già presente nel riepilogo P19. | Inserita la stessa griglia condivisa usata da P18/P19, dentro la card Valutazioni.                             |
+| P13    | Una sola riga per allievo; abbreviare i giorni per lasciare spazio ai nomi lunghi.      | Card a tutta larghezza con nome, giorni Lun–Dom e X sullo stesso asse; etichette complete restano accessibili. |
+| P14    | Nel popup destinazione usare gli stessi stati di P15 e ordine numerico.                 | Barche ordinate 2, 3, 7, 8, 11, 14, 15; grigio/verde/blu e legenda condivisa.                                  |
+| P16    | Logo barca un po' più grande.                                                           | Logo portato a 68 px nel viewport grande e 58 px nel più stretto, senza alzare le card.                        |
+| P17    | I doppi meno sono sfalsati; usare icone anche per i segni.                              | Tutti i cinque valori restano SVG dedicati; `--` ora usa due tratti sullo stesso asse.                         |
+| P18    | Ridurre leggermente l'altezza della riga nome.                                          | Intestazione e area attiva portate a 40 px; nessun overflow laterale.                                          |
+| P19    | Confermata.                                                                             | Nessun cambiamento.                                                                                            |
+
+## Percorso breve per rivedere r7
 
 1. **P01 → P02:** verificare logo/colori, poi scegliere Cabinato e livello 4; deve comparire `C4 - 35 | 2026` e la barra inferiore deve restare nascosta.
-2. **P04:** controllare le due note recenti e aprire “Altre note”; poi **P05** per le cinque taglie a 430/390/320 px.
+2. **P04:** controllare le due note recenti, aprire “Altre note” e verificare la griglia settimanale nella card Valutazioni; poi **P05** per le cinque taglie a 430/390/320 px.
 3. **P06:** arrivare alla review, completare la data mancante e osservare `1 → 0` campi e `2 → 3` allievi inseriti.
 4. **P08:** confrontare “Da controllare” giallo e “Disponibile” neutro. **P11** nello stato con avvisi: osservare il feedback sticky `20/21`, l'allineamento in alto delle card, poi toccare un giorno; deve aprirsi direttamente **P13**.
-5. **P13:** controllare a 430/390/320 px le due colonne, l'icona triangolo, “Sabato, Mercoledì”, il pannello senza giorno e la X compatta; rimuovere e riassegnare dal solo nome.
-6. **P14:** nello stato con avvisi, aprire il triangolo del primo equipaggio XL/XL; in stato normale fare doppio tap su un membro e verificare che torni fra i Disponibili.
-7. **P15 → P16:** controllare le due righe senza scroll laterale, i tre stati barca e la legenda; selezionare Equipaggio 5 senza barca e poi Quest 14 blu: entrambi devono diventare assegnati.
-8. **P17:** assegnare un voto e toccarlo di nuovo; **P18** deve mostrare “Ordinamento”, controlli da 40 px, nessun `~` e nessuno scroll orizzontale.
+5. **P13:** controllare a 430/390/320 px la singola riga per allievo, l'icona triangolo, “Sab, Mer”, il pannello senza giorno e la X compatta; rimuovere e riassegnare dal solo nome.
+6. **P14:** nello stato con avvisi, aprire il triangolo del primo equipaggio XL/XL; aprire Destinazione e controllare ordine numerico e stati barca; in stato normale fare doppio tap su un membro e verificare che torni fra i Disponibili.
+7. **P15 → P16:** controllare le due righe senza scroll laterale, i tre stati barca e la legenda; selezionare Equipaggio 5 senza barca e poi Quest 14 blu; in P16 verificare il logo ingrandito.
+8. **P17:** controllare le cinque icone e l'allineamento di `--`, assegnare un voto e toccarlo di nuovo; **P18** deve mostrare “Ordinamento”, riga nome e controlli da 40 px, nessun `~` e nessuno scroll orizzontale.
 9. **P19:** verificare il riepilogo in alto; scorrendo, il nome resta visibile e le card giorno/sessione sono più compatte.
 
-## Registro r6
+## Registro r7
 
 | Pagina                    | Stato                                              | Motivo                                                  |
 | ------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
 | P01 Home                  | R3 DA RIVEDERE                                     | Logo e schema 3 arancioni/3 blu corretti.               |
 | P02 Crea corso            | R3 DA RIVEDERE                                     | Dinamica D/C e livello aggiunta.                        |
 | P03 Allievi               | APPROVATO R2                                       | Nessun nuovo cambiamento richiesto.                     |
-| P04 Profilo allievo       | APPROVATO R5                                       | Due note recenti, altre su richiesta e “Modifica”.      |
+| P04 Profilo allievo       | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          | Griglia Valutazioni condivisa aggiunta.                 |
 | P05 Conoscenza            | R3 DA RIVEDERE                                     | Geometria corretta su quattro larghezze.                |
 | P06 Scan allievi          | R3 DA RIVEDERE                                     | Indicatori sticky e live aggiunti.                      |
 | P07 Configura barche      | R3 DA RIVEDERE                                     | Tipi barca aggiornati.                                  |
@@ -102,15 +114,15 @@
 | P10 Volontari             | APPROVATO R2 + FIX R3                              | Nuovo nome vuoto.                                       |
 | P11 Comandate             | APPROVATO R3 + FIX R6                              | Copertura sticky; card allineate in alto.               |
 | P12 Proposta Comandate    | APPROVATO R2                                       | Ritocco card eseguito; logica confermata.               |
-| P13 Persone Comandata     | R6 DA RIVEDERE                                     | Due colonne, SVG warning, giorni completi e X compatta. |
-| P14 Equipaggi             | R6 DA RIVEDERE                                     | Ritorno ai Disponibili e header senza testo ridondante. |
+| P13 Persone Comandata     | R7 DA RIVEDERE                                     | Una riga per persona, giorni brevi e X associata.       |
+| P14 Equipaggi             | R7 DA RIVEDERE                                     | Popup barche coerente con P15 e ordinato numericamente. |
 | P15 Barche della sessione | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE | Tre stati e assegnazione equipaggio → barca.            |
-| P16 Leggi equipaggi       | R3 DA RIVEDERE                                     | Tre aree esplicite.                                     |
-| P17 Valutazioni           | R3 DA RIVEDERE                                     | Nuovo modello a cinque pulsanti deselezionabili.        |
-| P18 Riepilogo             | R6 DA RIVEDERE                                     | Etichetta Ordinamento e controlli da 40 px.             |
+| P16 Leggi equipaggi       | R7 DA RIVEDERE                                     | Tre aree esplicite e logo più leggibile.                |
+| P17 Valutazioni           | R7 DA RIVEDERE                                     | Cinque icone SVG; doppi segni allineati.                |
+| P18 Riepilogo             | APPROVATO R6 + FIX R7                              | Riga nome e controlli da 40 px.                         |
 | P19 Storia allievo        | APPROVATO R4                                       | Gerarchia, riepilogo e compattezza confermati.          |
 | P20 Dettatura             | RIMOSSA                                            | Integrata nei pannelli testo.                           |
 
 ## Esito tecnico del mock
 
-La scansione r6 copre 152 combinazioni: 19 viste × quattro larghezze × stato normale/avvisi, con 23 persone. Nessuna pagina o contenitore P15 produce overflow orizzontale e nessun controllo visibile scende sotto 40 × 40 CSS px. P13 conserva due colonne anche a 320 px; la X appare più piccola ma mantiene un'area attiva 40 × 40. Sono stati esercitati inoltre: allineamento P11; SVG e giorni P13; doppio tap P14; tre stati e assegnazione Equipaggio 5 → Quest 14 in P15; label/altezza P18. Le verifiche riguardano il prototipo isolato: la persistenza P15 e il comando accessibile equivalente al doppio tap sono requisiti futuri, non prove già ottenute nell'app.
+La scansione r7 copre 152 combinazioni: 19 viste × quattro larghezze × stato normale/avvisi, con 23 persone. Nessuna pagina o contenitore P15 produce overflow orizzontale e nessun controllo visibile scende sotto 40 × 40 CSS px. P13 mantiene ogni persona su una riga anche a 320 px; la X appare più piccola ma conserva un'area attiva 40 × 40. Sono stati esercitati inoltre: griglia P04; popup P14; logo P16; SVG P17; riga nome P18. Le verifiche riguardano il prototipo isolato: la persistenza P15 e il comando accessibile equivalente al doppio tap sono requisiti futuri, non prove già ottenute nell'app.

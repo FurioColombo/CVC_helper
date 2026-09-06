@@ -1,6 +1,6 @@
 # 07 — Changelist per pagina e brief dei mock
 
-**Stato:** revisioni umane fino al 5 settembre recepite; galleria r6 disponibile con 19 viste principali. Q10–Q13 sono risolte in [12](12_R2_REVIEW_QUESTIONS.md); P04 e P19 sono approvate, la struttura visiva P15 è approvata, mentre le interazioni r6 di P08/P13/P14/P15/P18 restano da rivedere. Nessuna pagina è implementata nell'app.
+**Stato:** revisioni umane fino al 6 settembre recepite; galleria r7 disponibile con 19 viste principali. Q10–Q13 sono risolte e aggiornate in [12](12_R2_REVIEW_QUESTIONS.md); P19 è approvata, P04 conserva l'approvazione r5 ma la nuova integrazione r7 va rivista, la struttura visiva P15 è approvata. Nessuna pagina è implementata nell'app.
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 
@@ -46,7 +46,9 @@ Il set minimo di stati è: vuoto, normale, contenuto lungo/affollato, selezione 
 
 ## P04 — Profilo, aggiunta e modifica allievo
 
-**Richieste:** STUD-01/02/03/04, UX-G06. **Natura:** funzionale e integrità dati. **Decisione:** Q09 accettata; autosave e form focalizzato.
+**Richieste:** STUD-01/02/03/04/09, UX-G06. **Natura:** funzionale e integrità dati. **Decisione:** Q09 accettata; autosave e form focalizzato.
+
+- La card Valutazioni contiene la griglia settimanale completa già usata in P18/P19, senza cambiare semantica, colori o ordine delle sessioni.
 
 - Stesso form con anagrafica, nickname, telefono, taglia, nota iniziale e accesso alle valutazioni. Sesso come tre pulsanti diretti. La vista principale deve entrare sul 430/412/390 senza scroll inutile.
 - Percorso esplicito Modifica; scorciatoia desktop/long press nel profilo sul campo. Prima proposta: apre il form e focalizza il campo; inline soltanto se semplice e coerente.
@@ -156,16 +158,18 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 **Richieste:** CMD-05/06/08, UX-G02/04/05. **Natura:** layout e ordine.
 
 - Il tap sulla card di un giorno in P11 apre direttamente P13, senza popup intermedio. Il giorno scelto rimane titolo e contesto della modifica.
-- Ordine fisso: persone nel giorno corrente, “Mai assegnati”, “Assegnati ad altri giorni”. Le card nome sono in due colonne; toccando il nome nelle ultime due sezioni si assegna la persona anche al giorno corrente.
+- Ordine fisso: persone nel giorno corrente, “Mai assegnati”, “Assegnati ad altri giorni”. Ogni card occupa una riga a tutta larghezza e mantiene nome, giorni e rimozioni sullo stesso asse; toccando il nome nelle ultime due sezioni si assegna la persona anche al giorno corrente.
 - Il bottone nome deve essere evidente dalla superficie cliccabile e mostrare soltanto il nome, senza ripetere “Assegna a/anche a [giorno]”. Il giorno corrente resta già nel titolo della pagina e delle sezioni, non nel commento introduttivo.
-- I giorni esistenti sono scritti per esteso come testo informativo. In caso di doppia assegnazione il warning usa un'icona vettoriale e mostra tutti i giorni coinvolti, per esempio “Sabato, Mercoledì”, senza “anche”. Una X rossa compatta rimuove la persona dal giorno indicato; se non restano giorni, la riga passa fra i mai assegnati.
+- Nelle righe i giorni sono abbreviati in Lun/Mar/Mer/Gio/Ven/Sab/Dom; il nome completo resta nel titolo e nelle etichette accessibili. In caso di doppia assegnazione il warning usa un'icona vettoriale e mostra tutti i giorni coinvolti in forma breve, per esempio “Sab, Mer”, senza “anche”. Una X rossa compatta rimuove la persona dal giorno indicato; se non restano giorni, la riga passa fra i mai assegnati.
 - Già usati restano selezionabili; una volta è corretto, più volte produce warning e dettaglio. Aggiunta e rimozione restano reversibili senza gesto nascosto.
 
 **Mock:** giorno aperto direttamente da P11, mai usato/una volta/più volte, rimozione verso mai assegnati, minorenne, omonimi, nessuno libero. **Accettazione:** assegnazione ripetuta permessa e warning coerente in P11/P13; tap sul testo del giorno non modifica dati; ordine non salta in modo da causare un tap involontario durante salvataggio. **Baseline:** sottovista di `DutyManagement.tsx`.
 
 ## P14 — Equipaggi: setup, composizione e verifica
 
-**Richieste:** CREW-01/02/03/04/05/07, VOL-03, UX-G01/03/04/05/06. **Natura:** interazione e layout. **Decisioni:** Q04 viewport e Q01 barche recepite.
+**Richieste:** CREW-01/02/03/04/05/07/09, VOL-03, UX-G01/03/04/05/06. **Natura:** interazione e layout. **Decisioni:** Q04 viewport e Q01 barche recepite.
+
+- Il popup semplificato di destinazione elenca le barche per numero crescente e usa la stessa legenda di P15: grigio non disponibile, verde assegnata, blu disponibile non assegnata.
 
 - Header con titolo e sessione affiancati. Setup conserva numero equipaggi distinto da persone/barche; non introduce creazione automatica.
 - Workspace con pool allievi e card equipaggi consultabili insieme. Ogni equipaggio è una card larga su tre righe: destinazione reale o “Senza barca”, numero equipaggio separato, primo e secondo membro; così nomi lunghi, numero barca e numero equipaggio non competono fra loro. Non ripetere l'etichetta generica “Destinazione”.
@@ -193,7 +197,9 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## P16 — Lettura/annuncio Equipaggi
 
-**Richieste:** UX-G01/03, BRAND-01; presidio regressione CREW-01. **Natura:** coerenza visiva.
+**Richieste:** UX-G01/03, BRAND-01, CREW-10; presidio regressione CREW-01. **Natura:** coerenza visiva.
+
+- Il logo/modello della barca è leggermente più grande e riconoscibile, mantenendo invariate altezza compatta e separazione fra numero equipaggio, barca e persone.
 
 - Ogni card ha tre campi distinti: numero equipaggio, logo modello + numero barca o “Senza barca”, persone. Nomi grandi e puliti; card basse.
 - Nessun pannello decisionale, taglia, telefono o controlli di composizione. Mezzi conserva il suo significato operativo.
@@ -203,7 +209,9 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## P17 — Valutazioni: inserimento per Allievi/Equipaggi
 
-**Richieste:** EVAL-01/02/03/04/05. **Natura:** layout e controlli. **Decisione r2:** nome completo sopra, nota vicina e cinque icone sotto; nessun sesto valore per l'assenza.
+**Richieste:** EVAL-01/02/03/04/05/07. **Natura:** layout e controlli. **Decisione r2:** nome completo sopra, nota vicina e cinque icone sotto; nessun sesto valore per l'assenza.
+
+- Tutti i valori usano icone SVG dedicate; anche i doppi segni condividono la stessa linea di base e non dipendono dai caratteri tipografici `+`, `-`, `=`.
 
 - Titolo e sessione affiancati; selettore Allievi/Equipaggi/Riepilogo più basso in altezza; eliminare la frase indicata in EVAL-05.
 - Nome completo e nota occupano la prima riga corta; ++, +, =, -, -- la seconda. Icone con area di tocco chiara al posto dei caratteri grezzi.
@@ -214,7 +222,9 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## P18 — Riepilogo Valutazioni
 
-**Richieste:** UX-G01/03; coerenza EVAL-02/06. **Natura:** compattezza, senza nuovi analytics.
+**Richieste:** UX-G01/03; coerenza EVAL-02/06/08. **Natura:** compattezza, senza nuovi analytics.
+
+- Ridurre la riga intestazione/nome di ogni allievo fino a 40 px, mantenendo intero il nome e l'area attiva.
 
 - Una card per persona con griglia settimanale allineata: sette colonne giorno e due celle AM/PM, colori coerenti e simboli leggibili. Valori mancanti sono celle vuote, non `~`. Conteggio voti reali e ordine alfabetico/valutazione restano previsti.
 - Mostrare la piccola etichetta “Ordinamento” sopra Alfabetico/Valutazione. Ridurre l'altezza visiva dei due bottoni mantenendo 40 px di area attiva.
@@ -248,20 +258,20 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 ## 2. Copertura e ordine del design
 
-Tutti gli ID di `05` hanno un posto: UX-G01–07 nelle regole comuni; BRAND-01/02 e ICON-01 in P01; STT-001 in P05/P09/P17 (P20 integrata); OCR-001 in P06; STUD-01–08 in P03/P04/P05; BOAT-01/02 in P07/P08/P09/P15; VOL-01–03 in P10/P14; CMD-01–08 in P11/P12/P13; CREW-01–08 in P14/P15/P16; FAULT-01–04 in P09; EVAL-01–06 in P17/P18 con coerenza P19.
+Tutti gli ID di `05` hanno un posto: UX-G01–07 nelle regole comuni; BRAND-01/02 e ICON-01 in P01; STT-001 in P05/P09/P17 (P20 integrata); OCR-001 in P06; STUD-01–09 in P03/P04/P05; BOAT-01/02 in P07/P08/P09/P15; VOL-01–03 in P10/P14; CMD-01–08 in P11/P12/P13; CREW-01–10 in P14/P15/P16; FAULT-01–04 in P09; EVAL-01–08 in P17/P18 con coerenza P04/P19.
 
 Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03; poi P11/P12/P13 e P14/P15 come pagine più dense; P17 per sciogliere il vincolo della riga; quindi completare tutte le altre viste. Questa è una sequenza di **design**, non autorizzazione a implementare pagine in parallelo.
 
 ## 3. Registro dei mock e dei target
 
-Galleria r6: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
+Galleria r7: [apri i mock](mockups/index.html). Revisioni umane e registro in [11_MOCK_REVIEW.md](11_MOCK_REVIEW.md); decisioni Q10–Q13 in [12](12_R2_REVIEW_QUESTIONS.md). Ogni link seleziona una pagina; misure e dati si cambiano dai controlli esterni alla schermata.
 
 | Pagine | File / revisione                   | Approvazione                                       |
 | ------ | ---------------------------------- | -------------------------------------------------- |
 | P01    | [P01 · r3](mockups/index.html#P01) | DA RIVEDERE                                        |
 | P02    | [P02 · r3](mockups/index.html#P02) | DA RIVEDERE                                        |
 | P03    | [P03 · r3](mockups/index.html#P03) | APPROVATO R2                                       |
-| P04    | [P04 · r5](mockups/index.html#P04) | APPROVATO R5                                       |
+| P04    | [P04 · r7](mockups/index.html#P04) | APPROVATO R5; INTEGRAZIONE R7 DA RIVEDERE          |
 | P05    | [P05 · r3](mockups/index.html#P05) | DA RIVEDERE                                        |
 | P06    | [P06 · r3](mockups/index.html#P06) | DA RIVEDERE                                        |
 | P07    | [P07 · r3](mockups/index.html#P07) | DA RIVEDERE                                        |
@@ -270,13 +280,13 @@ Galleria r6: [apri i mock](mockups/index.html). Revisioni umane e registro in [1
 | P10    | [P10 · r3](mockups/index.html#P10) | APPROVATO R2 + FIX R3                              |
 | P11    | [P11 · r6](mockups/index.html#P11) | APPROVATO R3 + FIX R6                              |
 | P12    | [P12 · r3](mockups/index.html#P12) | APPROVATO R2                                       |
-| P13    | [P13 · r6](mockups/index.html#P13) | R6 DA RIVEDERE                                     |
-| P14    | [P14 · r6](mockups/index.html#P14) | R6 DA RIVEDERE                                     |
+| P13    | [P13 · r7](mockups/index.html#P13) | R7 DA RIVEDERE                                     |
+| P14    | [P14 · r7](mockups/index.html#P14) | R7 DA RIVEDERE                                     |
 | P15    | [P15 · r6](mockups/index.html#P15) | STRUTTURA APPROVATA R4; INTERAZIONE R6 DA RIVEDERE |
-| P16    | [P16 · r3](mockups/index.html#P16) | DA RIVEDERE                                        |
-| P17    | [P17 · r3](mockups/index.html#P17) | DA RIVEDERE                                        |
-| P18    | [P18 · r6](mockups/index.html#P18) | R6 DA RIVEDERE                                     |
+| P16    | [P16 · r7](mockups/index.html#P16) | R7 DA RIVEDERE                                     |
+| P17    | [P17 · r7](mockups/index.html#P17) | R7 DA RIVEDERE                                     |
+| P18    | [P18 · r7](mockups/index.html#P18) | APPROVATO R6 + FIX R7                              |
 | P19    | [P19 · r4](mockups/index.html#P19) | APPROVATO R4                                       |
 | P20    | Integrata in P05/P09/P17           | NESSUNA PAGINA                                     |
 
-La r6 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback r5. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.
+La r7 copre la vista principale di ogni brief e le interazioni richieste dalle revisioni fino all'ultimo feedback r7. Stati secondari e varianti sono ancora parziali; non dichiarare completata l'intera matrice dell'harness. Le interazioni sono dimostrative, senza dati dell'app, microfono, fotocamera o persistenza. Approvare file/revisione/viewport e deroghe prima di promuovere una pagina a target.

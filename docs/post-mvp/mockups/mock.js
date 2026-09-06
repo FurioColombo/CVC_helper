@@ -23,7 +23,7 @@ const pages = [
     "P04",
     "Profilo allievo",
     "Dati e conoscenza nello stesso percorso, con le note recenti in evidenza.",
-    "Due note recenti bastano nel profilo e le altre restano facili da raggiungere?",
+    "Il riepilogo settimanale dentro Valutazioni è utile già dal profilo?",
   ],
   [
     "P05",
@@ -76,14 +76,14 @@ const pages = [
   [
     "P13",
     "Persone Comandata",
-    "Due colonne di nomi, con assegnazioni e rimozioni separate.",
-    "I nomi sembrano cliccabili senza ripetere l'azione dentro ogni bottone?",
+    "Una riga compatta per persona, con giorno abbreviato e rimozione.",
+    "Nome, giorni e azioni restano leggibili insieme anche con nomi lunghi?",
   ],
   [
     "P14",
     "Equipaggi",
     "Persone disponibili e destinazioni vicine.",
-    "Il doppio tap su un allievo lo riporta fra i disponibili senza ambiguità?",
+    "Il popup barche conserva ordine numerico e stati grigio, verde e blu?",
   ],
   [
     "P15",
@@ -95,19 +95,19 @@ const pages = [
     "P16",
     "Leggi equipaggi",
     "Solo ciò che serve per leggere ad alta voce.",
-    "Nomi e destinazione bastano? La lettura funziona anche senza numero barca?",
+    "Il logo più grande resta distinto da numero equipaggio e persone?",
   ],
   [
     "P17",
     "Valutazioni",
     "Nome completo sopra, cinque valutazioni dirette sotto.",
-    "Le card basse restano leggibili e il secondo tap annulla la valutazione?",
+    "Le icone ++, +, =, − e −− sono allineate e riconoscibili?",
   ],
   [
     "P18",
     "Riepilogo",
     "Sequenza, note e numero di voti; niente media numerica.",
-    "L'etichetta Ordinamento e i controlli più bassi restano chiari?",
+    "L'intestazione più bassa lascia più spazio alla settimana senza perdere il nome?",
   ],
   [
     "P19",
@@ -163,6 +163,7 @@ const days = [
   "Venerdì",
 ]
 const shortDays = ["S", "D", "L", "Ma", "Me", "G", "V"]
+const dutyDayShort = ["Sab", "Dom", "Lun", "Mar", "Mer", "Gio", "Ven"]
 const marks = ["++", "+", "=", "-", "--"]
 const sessions = [
   "Sab PM",
@@ -429,7 +430,7 @@ function profileMarkup() {
       : ""
   if (profileEditing)
     return `<div class="notice">Modifiche salvate automaticamente quando i dati sono validi.</div><div class="form-grid">${field("Nome", p.name.split(" ")[0], "firstName")}${field("Cognome", p.surname, "surname")}${field("Nome visualizzato", p.name, "nickname")}${field("Data di nascita", dob, "dob", "date")}</div><h3>Sesso</h3>${sexButtons}${field("Telefono", "", "phone", "tel")}<h3>Taglia</h3>${sizeChoice(currentProfile)}<div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<p class="small muted" id="save-state">Salvato</p>${act("Fine", "editProfile", "off", "primary full")}`
-  return `<div class="profile-hero"><div><h3>${esc(p.name)} ${esc(p.surname)} ${minor(currentProfile)}</h3><p class="muted">${p.age} anni · ${p.sex}</p></div>${act("Modifica", "editProfile", "on", "compact")}</div><div class="profile-facts"><div class="profile-fact"><small>Data di nascita</small><strong>${dob.split("-").reverse().join("/")}</strong></div><div class="profile-fact"><small>Telefono</small><strong>—</strong></div></div><div class="profile-block"><div class="row"><h3>Sesso</h3><span class="small muted">salvataggio immediato</span></div>${sexButtons}</div><div class="profile-block"><h3>Taglia</h3>${sizeChoice(currentProfile)}</div><div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<div class="profile-block">${act(`<span><strong>Valutazioni</strong><small class="muted" style="display:block">6 voti · ultima valutazione +</small></span><span>Apri</span>`, "historyProfile", currentProfile, "profile-evals")}</div><div style="margin-top:10px">${act("Disponibilità ed eliminazione", "profileMore", "", "plain full")}</div>`
+  return `<div class="profile-hero"><div><h3>${esc(p.name)} ${esc(p.surname)} ${minor(currentProfile)}</h3><p class="muted">${p.age} anni · ${p.sex}</p></div>${act("Modifica", "editProfile", "on", "compact")}</div><div class="profile-facts"><div class="profile-fact"><small>Data di nascita</small><strong>${dob.split("-").reverse().join("/")}</strong></div><div class="profile-fact"><small>Telefono</small><strong>—</strong></div></div><div class="profile-block"><div class="row"><h3>Sesso</h3><span class="small muted">salvataggio immediato</span></div>${sexButtons}</div><div class="profile-block"><h3>Taglia</h3>${sizeChoice(currentProfile)}</div><div class="profile-block"><div class="row"><h3>Nota iniziale</h3><span class="small muted">testo o voce</span></div>${act(initialNotes[currentProfile] || "Aggiungi nota", "note", currentProfile, "profile-note")}</div>${otherNotes}<div class="profile-block">${act(`<span class="profile-evals-head"><span><strong>Valutazioni</strong><small class="muted">6 voti · ultima valutazione +</small></span><span>Apri</span></span>${weekGridMarkup(`Riepilogo settimanale di ${name(currentProfile)}`, "profile-week-grid")}`, "historyProfile", currentProfile, "profile-evals")}</div><div style="margin-top:10px">${act("Disponibilità ed eliminazione", "profileMore", "", "plain full")}</div>`
 }
 function scanMarkup() {
   if (scanStep >= 2) {
@@ -486,7 +487,7 @@ function dutyPeopleMarkup() {
     ids.forEach((id) => uses.set(id, [...(uses.get(id) || []), day])),
   )
   const removeDay = (p, day) =>
-    `<span class="duty-day-assignment"><span class="duty-day-label">${days[day]}</span>${act("×", "dutyRemove", `${day}:${p.id}`, "remove-duty", `aria-label="Rimuovi ${esc(name(p.id))} da ${days[day]}"`)}</span>`
+    `<span class="duty-day-assignment"><span class="duty-day-label" title="${days[day]}">${dutyDayShort[day]}</span>${act("×", "dutyRemove", `${day}:${p.id}`, "remove-duty", `aria-label="Rimuovi ${esc(name(p.id))} da ${days[day]}"`)}</span>`
   const current = all().filter((p) =>
     (uses.get(p.id) || []).includes(selectedDay),
   )
@@ -499,7 +500,7 @@ function dutyPeopleMarkup() {
     const otherDays = (uses.get(p.id) || []).filter(
       (day) => day !== selectedDay,
     )
-    return `<div class="panel duty-person-row"><span class="duty-person-main"><strong>${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} ${[selectedDay, ...otherDays].map((day) => days[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
+    return `<div class="panel duty-person-row"><span class="duty-person-main"><strong>${esc(name(p.id))} ${minor(p.id)}</strong>${otherDays.length ? `<small class="duplicate-note">${warn(true)} ${[selectedDay, ...otherDays].map((day) => dutyDayShort[day]).join(", ")}</small>` : ""}</span><span class="duty-day-assignments">${removeDay(p, selectedDay)}${otherDays.map((day) => removeDay(p, day)).join("")}</span></div>`
   }
   const neverRow = (p) =>
     `<div class="panel duty-person-row">${act(`<strong>${esc(name(p.id))} ${minor(p.id)}</strong>`, "dutyAddCurrent", p.id, "duty-person-main duty-person-action", `aria-label="Assegna ${esc(name(p.id))} a ${days[selectedDay]}"`)}</div>`
@@ -524,6 +525,29 @@ function crewMarkup() {
     })
     .join("")}</div>`
 }
+function sessionBoatMeta(n) {
+  const assignedCrew = crewBoats.findIndex((boat) => boat === n)
+  const unavailableBoat =
+    !sessionBoats.has(n) || unavailable.has(n) || (isWarning() && n === 11)
+  return {
+    assignedCrew,
+    state: unavailableBoat
+      ? "boat-unavailable"
+      : assignedCrew >= 0
+        ? "boat-assigned"
+        : "boat-available",
+    label: unavailableBoat
+      ? "Non disponibile"
+      : assignedCrew >= 0
+        ? `Assegnata all'equipaggio ${assignedCrew + 1}`
+        : "Disponibile non assegnata",
+    shortLabel: unavailableBoat
+      ? "Non disponibile"
+      : assignedCrew >= 0
+        ? `Equipaggio ${assignedCrew + 1}`
+        : "Disponibile",
+  }
+}
 function boatsSessionMarkup() {
   const boatDestination = (boat) =>
     boat
@@ -532,25 +556,13 @@ function boatsSessionMarkup() {
         : `<span class="boat-summary-id">${questLogo}<strong>${boat}</strong></span>`
       : '<span class="boat-summary-id text-only muted">Senza barca</span>'
   const boatControl = (n) => {
-    const assignedCrew = crewBoats.findIndex((boat) => boat === n)
-    const unavailableBoat =
-      !sessionBoats.has(n) || unavailable.has(n) || (isWarning() && n === 11)
-    const state = unavailableBoat
-      ? "boat-unavailable"
-      : assignedCrew >= 0
-        ? "boat-assigned"
-        : "boat-available"
-    const stateLabel = unavailableBoat
-      ? "Non disponibile"
-      : assignedCrew >= 0
-        ? `Assegnata all'equipaggio ${assignedCrew + 1}`
-        : "Disponibile non assegnata"
+    const { state, label } = sessionBoatMeta(n)
     return act(
       `${questLogo}<strong>${n}</strong>`,
       "boatToggle",
       n,
       `boat-toggle-r2 ${state}`,
-      `aria-label="Quest ${n} · ${stateLabel}" aria-pressed="${sessionBoats.has(n)}"`,
+      `aria-label="Quest ${n} · ${label}" aria-pressed="${sessionBoats.has(n)}"`,
     )
   }
   return `<div class="boat-strip-wrap"><div class="row"><p class="small muted">Barche nell'uscita</p><span class="small">Includi / escludi</span></div><div class="boat-state-legend"><span class="legend-assigned">Assegnata</span><span class="legend-available">Libera</span><span class="legend-unavailable">Non disponibile</span></div><div class="boat-strip">${boatNumbers.map(boatControl).join("")}</div></div><h3>Equipaggi</h3><p class="small muted boat-assignment-help">Per assegnare: equipaggio, poi barca blu.</p>${selectedCrewForBoat !== null ? `<div class="notice boat-pending">Equipaggio ${selectedCrewForBoat + 1} selezionato · scegli una barca blu.</div>` : ""}<div class="stack compact-crew-list">${assignments
@@ -585,91 +597,57 @@ function evaluationRows(ids) {
 function overviewMarkup() {
   return `<small class="overview-sort-label">Ordinamento</small><div class="toolbar overview-sort-buttons">${act("Alfabetico", "sortOverview", "alpha", "selected")}${act("Valutazione", "sortOverview", "score")}</div><div class="stack" id="overview-list">${overviewRows(all())}</div>`
 }
+const sampleWeekValues = [
+  "=",
+  "+",
+  "+",
+  "++",
+  null,
+  "+",
+  "=",
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+]
+const sampleWeekPairs = [
+  [null, 0],
+  [1, 2],
+  [3, 4],
+  [5, 6],
+  [7, 8],
+  [9, 10],
+  [11, 12],
+]
+const markClass = (value) =>
+  value?.includes("+") ? "pos" : value?.includes("-") ? "neg" : "neutral"
+function weekSummaryCell(index) {
+  if (index === null)
+    return '<span class="eval-cell empty-eval" aria-label="Nessuna sessione"></span>'
+  const value = sampleWeekValues[index]
+  if (value === null)
+    return `<span class="eval-cell empty-eval" aria-label="${sessions[index]}: nessuna valutazione"></span>`
+  return `<span class="eval-cell ${markClass(value)}" aria-label="${sessions[index]}: ${value}">${value}</span>`
+}
+function weekGridMarkup(label, className = "") {
+  return `<span class="week-grid ${className}" aria-label="${esc(label)}">${sampleWeekPairs.map((pair, day) => `<span class="week-day"><small>${shortDays[day]}</small>${weekSummaryCell(pair[0])}${weekSummaryCell(pair[1])}</span>`).join("")}</span>`
+}
 function overviewRows(list) {
-  const values = [
-    "=",
-    "+",
-    "+",
-    "++",
-    null,
-    "+",
-    "=",
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ]
-  const sessionPairs = [
-    [null, 0],
-    [1, 2],
-    [3, 4],
-    [5, 6],
-    [7, 8],
-    [9, 10],
-    [11, 12],
-  ]
-  const cell = (index) => {
-    if (index === null)
-      return '<span class="eval-cell empty-eval" aria-label="Nessuna sessione"></span>'
-    const value = values[index]
-    if (value === null)
-      return `<span class="eval-cell empty-eval" aria-label="${sessions[index]}: nessuna valutazione"></span>`
-    const kind = value.includes("+")
-      ? "pos"
-      : value.includes("-")
-        ? "neg"
-        : value === "="
-          ? "neutral"
-          : ""
-    return `<span class="eval-cell ${kind}" aria-label="${sessions[index]}: ${value}">${value}</span>`
-  }
   return list
     .map(
       (p) =>
-        `<section class="panel overview-card"><div class="overview-head">${act(esc(name(p.id)), "historyProfile", p.id, "plain compact")}<span class="small muted">6 voti</span></div><div class="week-grid" aria-label="Settimana di ${esc(name(p.id))}">${sessionPairs.map((pair, day) => `<span class="week-day"><small>${shortDays[day]}</small>${cell(pair[0])}${cell(pair[1])}</span>`).join("")}</div></section>`,
+        `<section class="panel overview-card"><div class="overview-head">${act(esc(name(p.id)), "historyProfile", p.id, "plain compact")}<span class="small muted">6 voti</span></div>${weekGridMarkup(`Settimana di ${name(p.id)}`)}</section>`,
     )
     .join("")
 }
 function historyMarkup() {
-  const values = [
-    "=",
-    "+",
-    "+",
-    "++",
-    null,
-    "+",
-    "=",
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ]
-  const pairs = [
-    [null, 0],
-    [1, 2],
-    [3, 4],
-    [5, 6],
-    [7, 8],
-    [9, 10],
-    [11, 12],
-  ]
-  const markClass = (value) =>
-    value?.includes("+") ? "pos" : value?.includes("-") ? "neg" : "neutral"
-  const summaryCell = (index) =>
-    index === null
-      ? '<span class="eval-cell empty-eval" aria-label="Nessuna sessione"></span>'
-      : values[index] === null
-        ? `<span class="eval-cell empty-eval" aria-label="${sessions[index]}: nessuna valutazione"></span>`
-        : `<span class="eval-cell ${markClass(values[index])}">${values[index]}</span>`
-  const summary = `<section class="panel history-summary"><div class="row"><strong>Riepilogo settimana</strong><span class="small muted">AM / PM</span></div><div class="week-grid" aria-label="Riepilogo settimanale">${pairs.map((pair, day) => `<span class="week-day"><small>${shortDays[day]}</small>${summaryCell(pair[0])}${summaryCell(pair[1])}</span>`).join("")}</div></section>`
-  return `<div class="history-subject"><h3>${esc(fullName(currentProfile))}</h3><span>Storia del corso</span></div>${summary}<div class="stack history-days">${pairs
+  const summary = `<section class="panel history-summary"><div class="row"><strong>Riepilogo settimana</strong><span class="small muted">AM / PM</span></div>${weekGridMarkup("Riepilogo settimanale")}</section>`
+  return `<div class="history-subject"><h3>${esc(fullName(currentProfile))}</h3><span>Storia del corso</span></div>${summary}<div class="stack history-days">${sampleWeekPairs
     .map(
       (pair, day) =>
-        `<section class="panel history-day"><div class="row"><strong>${days[day]}</strong><span class="small muted">${pair.filter((i) => i !== null).length} ${pair[0] === null ? "sessione" : "sessioni"}</span></div><div class="session-cards">${pair.map((index, slot) => (index === null ? '<div class="session-card compact-empty muted"><strong>AM</strong><span>Nessuna sessione</span></div>' : `<div class="session-card ${index === 2 ? "has-note" : "compact-empty"}"><strong>${slot === 0 ? "AM" : "PM"}<span class="history-mark ${values[index] === null ? "" : markClass(values[index])}" aria-label="${values[index] === null ? "Nessuna valutazione" : "Valutazione " + values[index]}">${values[index] || ""}</span></strong><span>${index === 2 ? "Più sicura nella virata; ricordare lo sguardo." : "Nessuna nota."}</span></div>`)).join("")}</div></section>`,
+        `<section class="panel history-day"><div class="row"><strong>${days[day]}</strong><span class="small muted">${pair.filter((i) => i !== null).length} ${pair[0] === null ? "sessione" : "sessioni"}</span></div><div class="session-cards">${pair.map((index, slot) => (index === null ? '<div class="session-card compact-empty muted"><strong>AM</strong><span>Nessuna sessione</span></div>' : `<div class="session-card ${index === 2 ? "has-note" : "compact-empty"}"><strong>${slot === 0 ? "AM" : "PM"}<span class="history-mark ${sampleWeekValues[index] === null ? "" : markClass(sampleWeekValues[index])}" aria-label="${sampleWeekValues[index] === null ? "Nessuna valutazione" : "Valutazione " + sampleWeekValues[index]}">${sampleWeekValues[index] || ""}</span></strong><span>${index === 2 ? "Più sicura nella virata; ricordare lo sguardo." : "Nessuna nota."}</span></div>`)).join("")}</div></section>`,
     )
     .join("")}</div>`
 }
@@ -687,7 +665,7 @@ function markIcon(mark) {
         : mark === "="
           ? '<path d="M6 9h12M6 15h12" ' + stroke + "/>"
           : mark === "--"
-            ? '<path d="M3 9h8M13 15h8" ' + stroke + "/>"
+            ? '<path d="M2 12h9M13 12h9" ' + stroke + "/>"
             : minus(12)
   return `<svg aria-hidden="true" viewBox="0 0 24 24">${paths}</svg>`
 }
@@ -837,7 +815,7 @@ function content() {
 }
 function render() {
   const p = pages.find((p) => p[0] === page)
-  $("#page-id").textContent = `${p[0]} · REVISIONE 6`
+  $("#page-id").textContent = `${p[0]} · REVISIONE 7`
   $("#review-title").textContent = p[1]
   $("#review-goal").textContent = p[2]
   $("#review-question").textContent = p[3]
@@ -1307,11 +1285,36 @@ function handle(action, arg, button) {
       pendingCrew = Number(arg)
       showSheet(
         `Destinazione · equipaggio ${pendingCrew + 1}`,
-        `<div class="grid-two">${[...sessionBoats].map((n) => act(`Quest ${n}${unavailable.has(n) || (isWarning() && n === 11) ? " " + warn(true) : n === 3 ? " " + warn() : ""}`, "assignBoat", n)).join("")}${act("Non assegnato", "assignBoat", "none")}${act("Mezzi", "assignBoat", "mezzi")}</div>`,
+        `<div class="boat-state-legend destination-legend"><span class="legend-assigned">Assegnata</span><span class="legend-available">Disponibile</span><span class="legend-unavailable">Non disponibile</span></div><div class="destination-boat-grid">${[
+          ...boatNumbers,
+        ]
+          .sort((a, b) => a - b)
+          .map((n) => {
+            const meta = sessionBoatMeta(n)
+            return act(
+              `${questLogo}<strong>${n}</strong><small>${meta.shortLabel}</small>`,
+              "assignBoat",
+              n,
+              `destination-boat ${meta.state}`,
+              `aria-label="Quest ${n} · ${meta.label}" aria-pressed="${crewBoats[pendingCrew] === n}"`,
+            )
+          })
+          .join(
+            "",
+          )}</div><div class="grid-two destination-specials">${act("Non assegnato", "assignBoat", "none")}${act("Mezzi", "assignBoat", "mezzi")}</div>`,
       )
       break
     case "assignBoat": {
       const n = arg === "none" ? null : arg === "mezzi" ? "Mezzi" : Number(arg)
+      if (
+        typeof n === "number" &&
+        (!sessionBoats.has(n) ||
+          unavailable.has(n) ||
+          (isWarning() && n === 11))
+      ) {
+        toast("Barca non disponibile")
+        return
+      }
       if (
         typeof n === "number" &&
         crewBoats.some((x, i) => x === n && i !== pendingCrew)

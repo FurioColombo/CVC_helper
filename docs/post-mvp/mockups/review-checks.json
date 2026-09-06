@@ -1,6 +1,6 @@
 {
-  "date": "2026-09-05",
-  "artifact": "Standalone UX mock gallery r6",
+  "date": "2026-09-06",
+  "artifact": "Standalone UX mock gallery r7",
   "status": "READY_FOR_DESIGN_REVIEW_NOT_IMPLEMENTATION_APPROVAL",
   "scope": "Only planning documents and docs/post-mvp/mockups; no application verification or release gate run.",
   "environment": {
@@ -21,15 +21,25 @@
       "firstRowCardContentTopEqual": true,
       "status": "PASS"
     },
-    "p13TwoColumnGrid": {
-      "430x820": "191.571px 191.571px",
-      "412x760": "182.571px 182.571px",
-      "390x664": "171.571px 171.571px",
-      "320x664": "136.571px 136.571px",
+    "p13SingleRowLayout": {
+      "430x820": "389.143px",
+      "320x664": "279.143px",
+      "rowHeight": 45.143,
       "horizontalOverflowCases": 0,
       "removeHitArea": "40x40",
       "warningIcon": "inline SVG",
-      "duplicateExample": "Sabato, Mercoledì",
+      "duplicateExample": "Sab, Mer",
+      "status": "PASS"
+    },
+    "p14DestinationPopup": {
+      "numericOrder": [2, 3, 7, 8, 11, 14, 15],
+      "430x820Columns": "196px 196px",
+      "412x760Columns": "187px 187px",
+      "390x664Columns": "176px 176px",
+      "320x664Columns": "141px 141px",
+      "minimumCardHeight": 60,
+      "horizontalOverflowCases": 0,
+      "states": "green assigned, blue available, grey unavailable",
       "status": "PASS"
     },
     "p15InternalBoatStripAt320": {
@@ -42,6 +52,19 @@
     "p18SortingControls": {
       "label": "Ordinamento",
       "buttonHeight": 40,
+      "studentHeaderHeight": 40,
+      "status": "PASS"
+    },
+    "p16BoatLogo": {
+      "largeViewport": "68x24",
+      "stressViewportWidth": 58,
+      "status": "PASS"
+    },
+    "p17EvaluationIcons": {
+      "count": 5,
+      "doubleMinusPath": "M2 12h9M13 12h9",
+      "minimumControlHeight": 40,
+      "horizontalOverflowCases": 0,
       "status": "PASS"
     },
     "formatting": "PASS",
@@ -50,7 +73,7 @@
     "interactions": [
       {
         "action": "P04 recent and additional notes",
-        "observed": "Two recent notes are visible only for the populated profile; Altre note opens the remaining labelled notes on demand; the header action is labelled Modifica."
+        "observed": "Two recent notes are visible only for the populated profile; Altre note opens the remaining labelled notes on demand; the header action is labelled Modifica; the Valutazioni card reuses the complete weekly grid from P18/P19."
       },
       {
         "action": "P11 to P13 direct entry",
@@ -58,11 +81,11 @@
       },
       {
         "action": "P13 duplicate, remove and assign",
-        "observed": "Names stay in two columns from 430px through 320px. The duplicate uses an SVG warning and reads Sabato, Mercoledì. Full day names remain informational, name-only buttons assign to the current day, and the X is the explicit remove action."
+        "observed": "Each student stays on one full-width row from 430px through 320px. The duplicate uses an SVG warning and reads Sab, Mer. Day abbreviations remain informational, name-only buttons assign to the current day, and the adjacent X is the explicit remove action."
       },
       {
         "action": "P14 return to available",
-        "observed": "Double-clicking Giulia increases Disponibili from 3 to 4 and leaves the original crew slot free. Crew headers show the real destination and separate crew number without the redundant word Destinazione."
+        "observed": "The destination popup lists boats in numeric order and reuses P15's three state colors without horizontal overflow at all four widths. Double-clicking Giulia increases Disponibili from 3 to 4 and leaves the original crew slot free."
       },
       {
         "action": "P15 boat assignment",
@@ -70,7 +93,7 @@
       },
       {
         "action": "P18 ordering",
-        "observed": "Ordinamento appears above Alfabetico and Valutazione; both controls are 40 CSS px high and the overview has no horizontal overflow."
+        "observed": "Ordinamento appears above Alfabetico and Valutazione; sorting controls and student name headers are 40 CSS px high and the overview has no horizontal overflow."
       },
       {
         "action": "Regression interactions",
@@ -80,10 +103,10 @@
   },
   "observedScrollNormal23": {
     "P04": {
-      "430x820": 73,
-      "412x760": 133,
-      "390x664": 229,
-      "320x664": 294
+      "430x820": 149,
+      "412x760": 209,
+      "390x664": 305,
+      "320x664": 370
     },
     "P15": {
       "430x820": 111,
@@ -103,6 +126,6 @@
     "No physical-device, 200% text, contrast certification or production accessibility claim.",
     "P17 deliberately uses more vertical space to keep full names and five direct evaluation controls visible.",
     "No persistence, OCR accuracy, voice latency or cross-session integrity verification.",
-    "P04 and P19 are approved and the visual structure of P15 is approved. Human review of the r6 refinements and interactions on P08, P13, P14, P15 and P18 is still required."
+    "P19 is approved and the visual structure of P15 is approved. P04 keeps its r5 approval but the added weekly grid needs review. Human review of the r7 targets on P13, P14, P16 and P17 remains required; P18 is an approved r6 treatment with a compact r7 fix."
   ]
 }
