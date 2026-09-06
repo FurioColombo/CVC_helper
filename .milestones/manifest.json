@@ -212,7 +212,7 @@
     {
       "id": "U00",
       "category": "FOUNDATION",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/U00/verification.json",

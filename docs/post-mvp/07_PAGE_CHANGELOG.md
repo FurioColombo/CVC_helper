@@ -1,7 +1,7 @@
 # 07 — Target 0.2.0 e changelist per pagina
 
 **Stato:** FROZEN per l'implementazione 0.2.0. La galleria r10 al commit
-`450b0f9` è il target approvato per P01–P19; P20 è integrata nei pannelli testo.
+`ee8d4c8` è il target approvato per P01–P19; P20 è integrata nei pannelli testo.
 Nessuna pagina di questo ciclo è ancora implementata nell'app.
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
@@ -274,7 +274,7 @@ Proposta per la discussione dei mock: prima lingua visiva P01 e card persona P03
 
 Galleria r10 congelata: [apri i mock](mockups/index.html). Ogni link seleziona una
 pagina; misure e dati si cambiano dai controlli esterni alla schermata. L'evidenza
-di implementazione deve registrare target commit `450b0f9`, viewport e differenze
+di implementazione deve registrare target commit `ee8d4c8`, viewport e differenze
 intenzionali.
 
 | Pagine | Target                                   | Stato 0.2.0                 |

@@ -6,7 +6,7 @@ remain complete and must not be reopened.
 
 **Baseline:** app 0.1.0 at commit `c907b19`.
 
-**Frozen design target:** `docs/post-mvp/mockups/` at commit `450b0f9` (mock r10).
+**Frozen design target:** `docs/post-mvp/mockups/` at commit `ee8d4c8` (mock r10).
 The target defines composition, hierarchy, states and interaction. It is not
 production code and does not prove persistence, accessibility or domain rules.
 
@@ -76,7 +76,7 @@ measured and reported rather than judged against an invented fixed threshold.
 ## U00 — 0.2.0 activation and compatibility foundation
 
 **Category:** FOUNDATION
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -116,7 +116,29 @@ existing harness for this cycle and prove the 0.1.0 baseline remains readable.
 
 ### Completion log
 
-Pending.
+Completed 2026-09-06.
+
+- Consolidated the authoritative read path and reduced `01_PRODUCT_SPEC.md` from
+  1,268 lines of layered revisions to one 545-line product contract.
+- Froze included/deferred scope and P01–P19 mock r10 at checkpoint `ee8d4c8`,
+  including the RS Toura naming correction. Archived the completed 0.1.0 ledger,
+  questions, review history and original annotated sources.
+- Registered U00–U10/UG1, manifest-driven verification and structured review
+  refusal. The controller self-test rejected missing evidence, failed verification
+  and a review with a blocker.
+- Aligned package/lock to baseline 0.1.0. Added the anonymous 22-row compatibility
+  fixture across all 13 baseline tables; JSON round-trip, references and domain
+  invariants pass.
+- `npm run verify:all` passed on Node 24.19.0: 236 tests, repository/domain/
+  compatibility checks, production PWA build, deterministic full week and 45
+  Playwright journeys with one intentional duplicate-week skip.
+- CI now runs the same `verify:all` surface after installing Chromium/WebKit.
+
+Known non-blocking baseline noise: Vite's local OCR asset plugin warns that
+`emitFile` is unsupported in serve mode; PowerSync warns that multiple-tab support
+is disabled; production build reports two chunks over 500 kB. OCR behavior still
+passes and multi-tab/sync remain outside 0.2.0. The host PATH exposes Node 18, so
+the verified workflow uses the bundled Node 24 instead of lowering requirements.
 
 ## U01 — Visual foundation, Home and course shell
 
@@ -130,7 +152,7 @@ Implement shared visual tokens and P01 then P02 without changing domain behavior
 ### Scope and target
 
 P01–P02, BRAND-01 and the common UX rules. Use mock r10 at frozen commit
-`450b0f9`; no Instagram imagery or final derived brand mark.
+`ee8d4c8`; no Instagram imagery or final derived brand mark.
 
 ### Required behavior and evidence
 

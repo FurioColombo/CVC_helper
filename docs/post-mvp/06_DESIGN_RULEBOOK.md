@@ -2,7 +2,7 @@
 
 **Stato:** FROZEN per il ciclo 0.2.0. Da usare con il
 [target pagina per pagina](07_PAGE_CHANGELOG.md) e la galleria r10 al commit
-`450b0f9`. Le regole di prodotto in `01_PRODUCT_SPEC.md` restano prevalenti.
+`ee8d4c8`. Le regole di prodotto in `01_PRODUCT_SPEC.md` restano prevalenti.
 
 ## 1. Ordine delle decisioni
 

@@ -30,7 +30,7 @@ The interface therefore follows these product rules:
 
 Detailed density, touch, typography, viewport and component rules live in
 `docs/post-mvp/06_DESIGN_RULEBOOK.md`. Page composition targets live in
-`docs/post-mvp/07_PAGE_CHANGELOG.md` and mock r10 at commit `450b0f9`. They guide
+`docs/post-mvp/07_PAGE_CHANGELOG.md` and mock r10 at commit `ee8d4c8`. They guide
 presentation and interaction without changing this document's semantics.
 
 ## 2. Course, shell and navigation

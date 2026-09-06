@@ -1,0 +1,18 @@
+{
+  "milestone": "U00",
+  "status": "PASS",
+  "recordedAt": "2026-09-06T13:13:17.980Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.1.0",
+  "gitCommit": "ee8d4c8ce4269172fbe4adf2668884f34e307fb9",
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-09-06T12:58:39.777Z",
+      "durationMs": 878199,
+      "exitCode": 0,
+      "outputTail": "  ok 44 [iphone-13-webkit-core] › tests\\e2e\\reopen-persistence.spec.ts:3:1 › restores confirmed local data after closing and reopening the page (13.3s)\n3:12:47 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n3:12:47 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 45 [iphone-13-webkit-core] › tests\\e2e\\smoke.spec.ts:3:1 › directs a fresh device to mobile course creation (5.4s)\n3:12:52 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n3:12:52 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n3:13:09 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n3:13:09 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 46 [iphone-13-webkit-core] › tests\\e2e\\student-management-gate.spec.ts:7:1 › keeps the complete student workflow consistent across reload (27.0s)\n\n  1 skipped\n  45 passed (12.0m)"
+    }
+  ]
+}

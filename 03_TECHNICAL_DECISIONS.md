@@ -36,7 +36,7 @@ This is a component vocabulary, not a large design-system project. Reuse the sam
 person badge, boat identity, session control, warning icon and weekly evaluation
 grid where the product presents the same concept.
 
-The design source is mock r10 in `docs/post-mvp/mockups/` at commit `450b0f9`.
+The design source is mock r10 in `docs/post-mvp/mockups/` at commit `ee8d4c8`.
 Mock files stay isolated from the application build and never access production
 data. Implement components from the behavior/geometry target; do not import mock
 HTML/CSS/JavaScript into the app.
