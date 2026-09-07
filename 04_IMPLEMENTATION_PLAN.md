@@ -199,7 +199,7 @@ Completed 2026-09-07.
 ## U02 — Student list, profile and lifecycle
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -228,7 +228,32 @@ the profile remains compact and complete without horizontal scrolling.
 
 ### Completion log
 
-Pending.
+Completed 2026-09-07.
+
+- Reworked P03 into a compact two-column list with deterministic display-name
+  ordering, explicit minor/inactive states and a fixed Add action that remains
+  clear of content and navigation at the 320 px stress width.
+- Reworked P04 into a compact profile and one complete edit surface for personal
+  data, XS–XL, initial note and a distinct course note. Serialized autosave keeps
+  the latest draft, reports failure in place, supports retry and refuses to leave
+  the form until the latest valid draft is persisted.
+- Added the reusable seven-day AM/PM evaluation grid with canonical ordering,
+  colored values, blank missing values, recent notes and no horizontal scroll.
+- Added atomic permanent deletion for never-used students. Duty assignments,
+  stay-over settings, crew membership including orphan rows, land assignments and
+  value- or note-bearing evaluations block deletion globally and produce visible
+  reasons; disabling remains available.
+- Added a nullable `courseNote` field with a production normalization boundary.
+  A real 0.1.0 PowerSync fixture retained all 22 rows and all legacy fields after
+  upgrade and a second reopen; the new note also persisted across that reopen.
+- `npm run verify` passed on Node 24.19.0 with 34 test files and 256 tests,
+  repository/domain/0.1 compatibility checks and the production PWA build. Eight
+  focused browser journeys passed on Pixel 7 Chrome and the iPhone 13 Chromium
+  viewport, including the 320×664 stress layout.
+- Independent data-integrity review returned `PASS_WITH_FINDINGS` with no
+  blockers. The recorded non-blocking gap is that the real SQLite deletion gate
+  and the visible confirmation/reason UI are exercised in separate test layers;
+  both layers pass and no correctness or preservation defect was found.
 
 ## U03 — Student knowledge and shared speech capability
 
