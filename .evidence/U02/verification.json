@@ -1,0 +1,25 @@
+{
+  "milestone": "U02",
+  "status": "PASS",
+  "recordedAt": "2026-09-07T17:15:58+02:00",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.1.0",
+  "baselineCommit": "a6fe6377438d683449d4ab05314c03dede041063",
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "result": "34 test files and 256 tests passed; repository, domain, 0.1 compatibility, TypeScript, lint, formatting and production PWA build passed"
+    },
+    {
+      "command": "playwright test tests/e2e/students.spec.ts tests/e2e/u02-students.spec.ts tests/e2e/u02-migration.spec.ts tests/e2e/u02-deletion-integrity.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+      "status": "PASS",
+      "result": "8 browser journeys passed"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "result": "No whitespace errors"
+    }
+  ]
+}

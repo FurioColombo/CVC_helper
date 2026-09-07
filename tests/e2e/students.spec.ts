@@ -16,7 +16,10 @@ async function addStudent(
   await page.getByLabel("Nome", { exact: true }).fill(input.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(input.surname)
   await page.getByLabel(/^Data di nascita/).fill(input.dateOfBirth)
-  await page.getByText("M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
   await expect(page.getByRole("heading", { name: "Allievi" })).toBeVisible()
 }
@@ -55,15 +58,19 @@ test("adds, disambiguates, edits, disables and restores students", async ({
   await page.getByRole("button", { name: "Modifica allievo" }).click()
   await page.getByLabel(/^Nome visualizzato \/ soprannome/).fill("Marty")
   await page.getByLabel("Telefono", { exact: true }).fill("333 1234567")
-  await page.getByRole("button", { name: "Salva allievo" }).click()
+  await expect(page.getByText("Salvato", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Fine" }).click()
   await expect(page.getByRole("heading", { name: "Marty" })).toBeVisible()
   await expect(page.getByText("333 1234567", { exact: true })).toBeVisible()
 
+  await page
+    .getByRole("button", { name: "Disponibilità ed eliminazione" })
+    .click()
   await page.getByRole("button", { name: "Disabilita allievo" }).click()
   await expect(
     page.getByRole("button", { name: "Riattiva allievo" }),
   ).toBeVisible()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await expect(
     page.getByRole("button", {
       name: /Marty, \d+ anni, M, Minorenne, Non disponibile/,
@@ -76,6 +83,9 @@ test("adds, disambiguates, edits, disables and restores students", async ({
     .getByRole("button", {
       name: /Marty, \d+ anni, M, Minorenne, Non disponibile/,
     })
+    .click()
+  await page
+    .getByRole("button", { name: "Disponibilità ed eliminazione" })
     .click()
   await page.getByRole("button", { name: "Riattiva allievo" }).click()
   await expect(

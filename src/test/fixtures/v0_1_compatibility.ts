@@ -4,6 +4,7 @@ import {
   validateCourseState,
   type CourseStateSnapshot,
 } from "../../domain/invariants"
+import { normalizeStudentCourseNote } from "../../domain/studentMigration"
 
 import fixture from "./v0.1.0-course.json"
 
@@ -123,7 +124,16 @@ export function verifyV010Compatibility(): CompatibilityResult {
   }
 
   assertFixtureReferences(cloned.tables)
-  const issues = validateCourseState(toSnapshot(cloned.tables))
+  const normalizedStudents = cloned.tables.students.map((student) =>
+    normalizeStudentCourseNote({ ...student }),
+  )
+  if (normalizedStudents.some(({ courseNote }) => courseNote !== null)) {
+    throw new Error("0.1.0 student course-note default was not applied")
+  }
+  const issues = validateCourseState({
+    ...toSnapshot(cloned.tables),
+    students: normalizedStudents,
+  })
   if (issues.length > 0) {
     throw new Error(
       `0.1.0 fixture violates domain invariants:\n${issues
@@ -148,6 +158,7 @@ export function verifyV010Compatibility(): CompatibilityResult {
       "JSON storage round-trip is lossless",
       "course and crew fixture references resolve",
       "current domain invariants accept the 0.1.0 records",
+      "new optional course/week note defaults to null at the production read boundary",
     ],
   }
 }

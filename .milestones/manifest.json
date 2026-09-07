@@ -237,7 +237,7 @@
     {
       "id": "U02",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/U02/verification.json",

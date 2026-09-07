@@ -3,8 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/students", () => ({
+  assessStudentDeletion: vi.fn(),
   createStudent: vi.fn(),
   createStudents: vi.fn(),
+  deleteUnusedStudent: vi.fn(),
   listStudents: vi.fn(),
   setStudentActive: vi.fn(),
   updateStudent: vi.fn(),
@@ -19,9 +21,12 @@ vi.mock("@/persistence/evaluations", () => ({
 import { StudentManagement } from "@/features/students/StudentManagement"
 import type { CourseRecord } from "@/persistence/courses"
 import {
+  assessStudentDeletion,
   createStudent,
+  deleteUnusedStudent,
   listStudents,
   setStudentActive,
+  updateStudent,
   type StudentRecord,
 } from "@/persistence/students"
 
@@ -48,19 +53,29 @@ const MARIO: StudentRecord = {
   phone: null,
   size: null,
   initialNote: null,
+  courseNote: null,
   active: 1,
 }
 
 const getStudents = vi.mocked(listStudents)
 const addStudent = vi.mocked(createStudent)
 const changeActive = vi.mocked(setStudentActive)
+const assessDeletion = vi.mocked(assessStudentDeletion)
+const removeStudent = vi.mocked(deleteUnusedStudent)
+const editStudent = vi.mocked(updateStudent)
 
 describe("StudentManagement", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getStudents.mockReset()
+    editStudent.mockReset()
+    removeStudent.mockReset()
     getStudents.mockResolvedValue([])
     addStudent.mockResolvedValue(MARIO)
     changeActive.mockResolvedValue(undefined)
+    assessDeletion.mockResolvedValue({ canDelete: true, references: [] })
+    editStudent.mockResolvedValue(undefined)
+    removeStudent.mockResolvedValue(undefined)
   })
 
   it("creates a student through the manual form", async () => {
@@ -112,6 +127,9 @@ describe("StudentManagement", () => {
       }),
     )
     expect(screen.getByText("Minorenne")).toBeVisible()
+    await user.click(
+      screen.getByRole("button", { name: "Disponibilità ed eliminazione" }),
+    )
     await user.click(screen.getByRole("button", { name: "Disabilita allievo" }))
 
     await waitFor(() =>
@@ -155,12 +173,194 @@ describe("StudentManagement", () => {
       ).toHaveFocus(),
     )
     await user.click(
-      screen.getByRole("button", { name: "Indietro da Dettaglio" }),
+      screen.getByRole("button", { name: "Indietro da Profilo" }),
     )
 
     expect(onInitialStudentBack).toHaveBeenCalledOnce()
     expect(
       screen.queryByRole("heading", { name: "Allievi" }),
     ).not.toBeInTheDocument()
+  })
+
+  it("autosaves a complete edit and preserves distinct notes", async () => {
+    getStudents.mockResolvedValue([
+      {
+        ...MARIO,
+        size: "M",
+        initialNote: "Esperienza Optimist",
+        courseNote: "Osservare le virate",
+      },
+    ])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    const courseNote = screen.getByLabelText("Nota del corso")
+    await user.clear(courseNote)
+    await user.type(courseNote, "Migliora rapidamente")
+
+    await waitFor(
+      () =>
+        expect(editStudent).toHaveBeenLastCalledWith(
+          "student-1",
+          "course-1",
+          expect.objectContaining({
+            size: "M",
+            initialNote: "Esperienza Optimist",
+            courseNote: "Migliora rapidamente",
+          }),
+        ),
+      { timeout: 2_000 },
+    )
+    expect(await screen.findByText("Salvato")).toBeVisible()
+  })
+
+  it("keeps typed text and offers retry after autosave fails", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    editStudent.mockRejectedValueOnce(new Error("offline"))
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.type(screen.getByLabelText("Nota del corso"), "Testo da tenere")
+
+    expect(
+      await screen.findByText("Modifiche non salvate. Il testo resta qui."),
+    ).toBeVisible()
+    expect(screen.getByLabelText("Nota del corso")).toHaveValue(
+      "Testo da tenere",
+    )
+    editStudent.mockResolvedValue(undefined)
+    await user.click(screen.getByRole("button", { name: "Riprova" }))
+    expect(await screen.findByText("Salvato")).toBeVisible()
+  })
+
+  it("flushes the latest edit when leaving the focused form", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.type(screen.getByLabelText("Nota del corso"), "Ultimo testo")
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+    )
+
+    await waitFor(() =>
+      expect(editStudent).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({ courseNote: "Ultimo testo" }),
+      ),
+    )
+  })
+
+  it("keeps the edit form open when leaving cannot save the latest draft", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    editStudent.mockRejectedValueOnce(new Error("offline"))
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.type(screen.getByLabelText("Nota del corso"), "Bozza protetta")
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    expect(
+      screen.getByText("Modifiche non salvate. Il testo resta qui."),
+    ).toBeVisible()
+    expect(screen.getByLabelText("Nota del corso")).toHaveValue(
+      "Bozza protetta",
+    )
+    expect(screen.getByRole("button", { name: "Riprova" })).toBeVisible()
+  })
+
+  it("never reports a newer draft saved when an older write finishes", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    let resolveFirst: (() => void) | undefined
+    let resolveSecond: (() => void) | undefined
+    editStudent
+      .mockImplementationOnce(
+        () => new Promise<void>((resolve) => (resolveFirst = resolve)),
+      )
+      .mockImplementationOnce(
+        () => new Promise<void>((resolve) => (resolveSecond = resolve)),
+      )
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.type(screen.getByLabelText("Telefono"), "1")
+    await waitFor(() => expect(editStudent).toHaveBeenCalledTimes(1), {
+      timeout: 2_000,
+    })
+    await user.type(screen.getByLabelText("Nota del corso"), "Bozza nuova")
+    resolveFirst?.()
+    expect(screen.queryByText("Salvato")).not.toBeInTheDocument()
+    await waitFor(() => expect(editStudent).toHaveBeenCalledTimes(2), {
+      timeout: 2_000,
+    })
+    expect(screen.queryByText("Salvato")).not.toBeInTheDocument()
+    resolveSecond?.()
+    expect(await screen.findByText("Salvato")).toBeVisible()
+  })
+
+  it("confirms and atomically deletes only an unused student", async () => {
+    getStudents.mockResolvedValueOnce([MARIO]).mockResolvedValueOnce([])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(
+      screen.getByRole("button", { name: "Disponibilità ed eliminazione" }),
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Elimina definitivamente" }),
+    )
+    expect(screen.getByText("Eliminare definitivamente Mario?")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Conferma" }))
+
+    await waitFor(() =>
+      expect(removeStudent).toHaveBeenCalledWith("student-1", "course-1"),
+    )
+    expect(await screen.findByText("Nessun allievo")).toBeVisible()
+  })
+
+  it("lists actual blocking history and offers disable instead", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    assessDeletion.mockResolvedValue({
+      canDelete: false,
+      references: [
+        { kind: "duty", referenceId: "saturday" },
+        { kind: "evaluation", referenceId: "wed-am" },
+        { kind: "land", referenceId: "corrupt-session" },
+      ],
+    })
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(
+      screen.getByRole("button", { name: "Disponibilità ed eliminazione" }),
+    )
+
+    expect(await screen.findByText("Comandata: Sabato")).toBeVisible()
+    expect(screen.getByText("Valutazione o nota: Mercoledì AM")).toBeVisible()
+    expect(screen.getByText("A terra: sessione non valida")).toBeVisible()
+    expect(
+      screen.queryByRole("button", { name: "Elimina definitivamente" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Disabilita allievo" }),
+    ).toBeVisible()
   })
 })

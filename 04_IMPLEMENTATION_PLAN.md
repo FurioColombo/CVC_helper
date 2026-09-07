@@ -199,7 +199,7 @@ Completed 2026-09-07.
 ## U02 — Student list, profile and lifecycle
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 
@@ -210,7 +210,7 @@ weekly evaluation grid.
 
 - Two-column compact list, surname/display-name ordering, long-name/duplicate,
   minor, inactive and empty states; floating Add action never covers content.
-- Profile uses lighter note typography, `Modifica`, XS–XL, initial note and a
+- Profile uses lighter note typography, `Modifica`, XfS–XL, initial note and a
   distinct course/week note in the same form, two recent notes plus `Altre`, and
   the P18/P19 weekly grid.
 - Deletion succeeds only for never-used students. Any persisted operational or

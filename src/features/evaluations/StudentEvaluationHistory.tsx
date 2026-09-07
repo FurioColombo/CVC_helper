@@ -1,13 +1,8 @@
-import { FileText, LoaderCircle } from "lucide-react"
+import { LoaderCircle } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
-import type { SessionId } from "@/domain/config"
+import { WeeklyEvaluationGrid } from "@/features/evaluations/WeeklyEvaluationGrid"
 import {
-  formatEvaluationSession,
-  getAccumulatedEvaluationSessions,
-} from "@/domain/evaluations"
-import {
-  listCourseEvaluations,
   listStudentEvaluations,
   type EvaluationRecord,
 } from "@/persistence/evaluations"
@@ -15,14 +10,15 @@ import {
 export function StudentEvaluationHistory({
   courseId,
   studentId,
+  studentName,
   focusOnMount = false,
 }: {
   courseId: string
   studentId: string
+  studentName?: string
   focusOnMount?: boolean
 }) {
   const [records, setRecords] = useState<EvaluationRecord[]>([])
-  const [sessions, setSessions] = useState<SessionId[]>([])
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
@@ -30,14 +26,10 @@ export function StudentEvaluationHistory({
 
   useEffect(() => {
     let active = true
-    Promise.all([
-      listStudentEvaluations(courseId, studentId),
-      listCourseEvaluations(courseId),
-    ])
-      .then(([evaluations, courseEvaluations]) => {
+    listStudentEvaluations(courseId, studentId)
+      .then((evaluations) => {
         if (!active) return
         setRecords(evaluations)
-        setSessions(getAccumulatedEvaluationSessions(courseEvaluations))
         setLoadState("ready")
       })
       .catch(() => {
@@ -52,69 +44,36 @@ export function StudentEvaluationHistory({
     if (focusOnMount && loadState === "ready") sectionRef.current?.focus()
   }, [focusOnMount, loadState])
 
-  const recordsBySession = new Map(
-    records.map((record) => [record.sessionId, record]),
-  )
-
   return (
     <section
-      className="mt-4 rounded-2xl border bg-card p-4"
-      aria-labelledby="student-evaluation-history-title"
+      aria-label="Storico valutazioni"
+      className="outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
       ref={sectionRef}
       tabIndex={focusOnMount ? -1 : undefined}
     >
-      <h3 className="text-sm font-black" id="student-evaluation-history-title">
-        Storico valutazioni
-      </h3>
       {loadState === "loading" && (
         <p
-          className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"
+          className="mt-4 flex items-center gap-2 rounded-2xl border bg-card p-4 text-sm text-muted-foreground"
           role="status"
         >
           <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-          Apertura storico…
+          Apertura valutazioni…
         </p>
       )}
       {loadState === "error" && (
-        <p className="mt-3 text-sm font-semibold text-[#b42318]" role="alert">
-          Storico non disponibile.
+        <p
+          className="mt-4 rounded-2xl border bg-card p-4 text-sm font-semibold text-[#b42318]"
+          role="alert"
+        >
+          Valutazioni non disponibili.
         </p>
       )}
-      {loadState === "ready" && sessions.length === 0 && (
-        <p className="mt-2 text-sm text-muted-foreground">
-          Nessuna valutazione inserita.
-        </p>
-      )}
-      {loadState === "ready" && sessions.length > 0 && (
-        <div className="mt-3 divide-y rounded-xl bg-muted px-3">
-          {sessions.map((sessionId) => {
-            const record = recordsBySession.get(sessionId)
-            return (
-              <article className="py-3" key={sessionId}>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold">
-                    {formatEvaluationSession(sessionId)}
-                  </p>
-                  <span
-                    aria-label={`Valutazione ${record?.value ?? "mancante"}`}
-                    className="min-w-10 rounded-lg bg-card px-2 py-1 text-center text-sm font-black"
-                  >
-                    {record?.value ?? "—"}
-                  </span>
-                </div>
-                {record?.note && (
-                  <p className="mt-2 flex items-start gap-2 whitespace-pre-wrap text-sm leading-6">
-                    <FileText
-                      aria-hidden="true"
-                      className="mt-1 size-4 shrink-0 text-[#a34a18]"
-                    />
-                    {record.note}
-                  </p>
-                )}
-              </article>
-            )
-          })}
-        </div>
+      {loadState === "ready" && (
+        <WeeklyEvaluationGrid
+          records={records}
+          studentName={studentName}
+          title="Valutazioni"
+        />
       )}
     </section>
   )

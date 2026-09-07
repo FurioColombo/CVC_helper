@@ -4,7 +4,15 @@ const database = vi.hoisted(() => ({
   execute: vi.fn(),
   executeBatch: vi.fn(),
   getAll: vi.fn(),
+  getOptional: vi.fn(),
   init: vi.fn(),
+  writeTransaction: vi.fn(),
+}))
+
+const transaction = vi.hoisted(() => ({
+  execute: vi.fn(),
+  getAll: vi.fn(),
+  getOptional: vi.fn(),
 }))
 
 vi.mock("@/persistence/db", () => ({ db: database }))
@@ -12,8 +20,10 @@ vi.mock("@/persistence/db", () => ({ db: database }))
 import {
   createStudent,
   createStudents,
+  deleteUnusedStudent,
   listStudents,
   setStudentActive,
+  StudentDeletionBlockedError,
   updateStudent,
   updateStudentKnowledge,
   type StudentInput,
@@ -35,13 +45,21 @@ describe("student persistence", () => {
     database.execute.mockResolvedValue(undefined)
     database.executeBatch.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
+    database.getOptional.mockResolvedValue({ id: "student-1" })
+    transaction.execute.mockResolvedValue([{ id: "student-1" }])
+    transaction.getAll.mockResolvedValue([])
+    transaction.getOptional.mockResolvedValue({ id: "student-1" })
+    database.writeTransaction.mockImplementation(
+      async (callback: (context: typeof transaction) => Promise<unknown>) =>
+        callback(transaction),
+    )
   })
 
   it("lists current-course students with active students first", async () => {
     await listStudents("course-1")
 
     expect(database.getAll).toHaveBeenCalledWith(
-      expect.stringContaining("ORDER BY active DESC"),
+      expect.stringContaining("COALESCE(NULLIF(nickname, ''), firstName)"),
       ["course-1"],
     )
   })
@@ -55,6 +73,7 @@ describe("student persistence", () => {
         active: 1,
         size: null,
         initialNote: null,
+        courseNote: null,
         ...INPUT,
       }),
     )
@@ -89,6 +108,9 @@ describe("student persistence", () => {
     await updateStudent("student-1", "course-1", {
       ...INPUT,
       nickname: "Marty",
+      size: null,
+      initialNote: null,
+      courseNote: null,
     })
     await setStudentActive("student-1", "course-1", false)
 
@@ -113,6 +135,63 @@ describe("student persistence", () => {
     expect(database.execute).toHaveBeenCalledWith(
       expect.stringContaining("SET size = ?, initialNote = ?"),
       ["L", "Esperienza Optimist", "student-1", "course-1"],
+    )
+  })
+
+  it("deletes a never-used student in one transaction without cascades", async () => {
+    await deleteUnusedStudent("student-1", "course-1")
+
+    expect(database.writeTransaction).toHaveBeenCalledOnce()
+    expect(transaction.getAll).toHaveBeenCalledTimes(5)
+    expect(transaction.execute).toHaveBeenCalledOnce()
+    expect(transaction.execute).toHaveBeenCalledWith(
+      "DELETE FROM students WHERE id = ? AND courseId = ? RETURNING id",
+      ["student-1", "course-1"],
+    )
+  })
+
+  it.each([
+    ["duty", 0, "saturday"],
+    ["stay-over", 1, "stay-over"],
+    ["crew", 2, "mon-am"],
+    ["land", 3, "tue-pm"],
+    ["evaluation", 4, "wed-am"],
+  ] as const)(
+    "blocks deletion for a %s reference found during the transaction",
+    async (kind, queryIndex, referenceId) => {
+      transaction.getAll.mockImplementation(async () => {
+        const callIndex = transaction.getAll.mock.calls.length - 1
+        return callIndex === queryIndex ? [{ referenceId }] : []
+      })
+
+      const error = await deleteUnusedStudent("student-1", "course-1").catch(
+        (reason: unknown) => reason,
+      )
+
+      expect(error).toBeInstanceOf(StudentDeletionBlockedError)
+      expect((error as StudentDeletionBlockedError).assessment).toEqual({
+        canDelete: false,
+        references: [{ kind, referenceId }],
+      })
+      expect(transaction.execute).not.toHaveBeenCalled()
+    },
+  )
+
+  it("rejects a student outside the course before reading references", async () => {
+    transaction.getOptional.mockResolvedValue(null)
+
+    await expect(deleteUnusedStudent("student-1", "course-2")).rejects.toThrow(
+      "Student does not belong to course",
+    )
+    expect(transaction.getAll).not.toHaveBeenCalled()
+    expect(transaction.execute).not.toHaveBeenCalled()
+  })
+
+  it("rolls back when the owned row is not returned by deletion", async () => {
+    transaction.execute.mockResolvedValue([])
+
+    await expect(deleteUnusedStudent("student-1", "course-1")).rejects.toThrow(
+      "did not remove exactly one row",
     )
   })
 })

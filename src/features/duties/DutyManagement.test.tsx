@@ -38,6 +38,7 @@ const STUDENTS: StudentRecord[] = Array.from({ length: 8 }, (_, index) => ({
   phone: null,
   size: null,
   initialNote: null,
+  courseNote: null,
   active: 1,
 }))
 
@@ -389,6 +390,7 @@ describe("DutyManagement", () => {
       phone: null,
       size: null,
       initialNote: null,
+      courseNote: null,
       active: 1,
     }))
     const assignments = [

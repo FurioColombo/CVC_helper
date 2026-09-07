@@ -21,6 +21,7 @@ const students = Table.createLocalOnly({
   phone: column.text,
   size: column.text,
   initialNote: column.text,
+  courseNote: column.text,
   active: column.integer,
 })
 

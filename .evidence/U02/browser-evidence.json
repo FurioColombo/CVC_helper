@@ -1,0 +1,63 @@
+{
+  "milestone": "U02",
+  "status": "PASS",
+  "recordedAt": "2026-09-07T17:15:58+02:00",
+  "targetRevision": "frozen P03/P04 mock r10",
+  "runtime": {
+    "playwright": "1.62.1",
+    "projects": ["pixel-7-chrome", "iphone-13-viewport"]
+  },
+  "journeys": [
+    {
+      "name": "student list and profile",
+      "status": "PASS",
+      "coverage": [
+        "manual creation and empty state",
+        "two-column list at 320x664 with long and duplicate names",
+        "surname ordering, explicit minor cue and disabled state",
+        "keyboard focus on the floating Add action",
+        "floating Add clearance from the last row and fixed navigation",
+        "no horizontal document overflow",
+        "XS-XL, initial note and distinct course/week note edit",
+        "ordered autosave, committed success and reload persistence",
+        "compact profile and shared weekly AM/PM evaluation grid",
+        "two recent evaluation notes with on-demand remainder"
+      ]
+    },
+    {
+      "name": "0.1 database migration and reopen",
+      "status": "PASS",
+      "coverage": [
+        "real legacy PowerSync schema opened through the current AppSchema",
+        "all 13 baseline tables preserve every row, ID, reference, value, note and history field",
+        "courseNote defaults to null",
+        "all legacy rows and fields are compared again after a second database reopen",
+        "new courseNote writes and survives that second database reopen"
+      ]
+    },
+    {
+      "name": "safe deletion integrity",
+      "status": "PASS",
+      "coverage": [
+        "cross-course duty reference",
+        "stay-over JSON reference through SQLite JSON1",
+        "orphan student crew membership",
+        "cross-course A-terra reference",
+        "note-only evaluation reference",
+        "transactional deletion of exactly one unused student"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U02/p03-stress-pixel-7-chrome.png",
+    ".evidence/U02/p03-stress-iphone-13-viewport.png",
+    ".evidence/U02/p04-profile-pixel-7-chrome.png",
+    ".evidence/U02/p04-profile-iphone-13-viewport.png"
+  ],
+  "visualFindings": [
+    "P03 stays readable in two columns at the 320px stress width; the long surname is represented by an unambiguous generated display name and the floating Add action clears content.",
+    "P04 replaces the long fact list with a compact two-column fact grid while preserving every field.",
+    "Initial and course notes use regular body weight and remain visually distinct.",
+    "The complete seven-day weekly grid uses canonical day/session order, colored values, blank missing cells and no horizontal scrolling."
+  ]
+}

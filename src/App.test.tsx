@@ -252,6 +252,7 @@ describe("course setup and application shell", () => {
         phone: null,
         size: "M",
         initialNote: null,
+        courseNote: null,
         active: 1,
       },
     ])
@@ -293,7 +294,7 @@ describe("course setup and application shell", () => {
 
     await screen.findByRole("heading", { name: "Mario" })
     await user.click(
-      screen.getByRole("button", { name: "Indietro da Dettaglio" }),
+      screen.getByRole("button", { name: "Indietro da Profilo" }),
     )
     expect(
       await screen.findByRole("heading", { name: "Equipaggi" }),

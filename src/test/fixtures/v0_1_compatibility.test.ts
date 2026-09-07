@@ -8,7 +8,7 @@ describe("0.1.0 data compatibility fixture", () => {
 
     expect(result.status).toBe("PASS")
     expect(result.appVersion).toBe("0.1.0")
-    expect(result.checks).toHaveLength(4)
+    expect(result.checks).toHaveLength(5)
     expect(result.tableCounts).toMatchObject({
       courses: 1,
       students: 3,

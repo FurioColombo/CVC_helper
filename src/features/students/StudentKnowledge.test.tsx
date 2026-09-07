@@ -23,6 +23,7 @@ const MARIO: StudentRecord = {
   phone: null,
   size: null,
   initialNote: null,
+  courseNote: null,
   active: 1,
 }
 

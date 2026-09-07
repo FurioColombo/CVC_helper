@@ -77,6 +77,7 @@ const STUDENTS: StudentRecord[] = [
   phone: null,
   size: "M",
   initialNote: null,
+  courseNote: null,
   active: active as 0 | 1,
 }))
 

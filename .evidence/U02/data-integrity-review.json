@@ -1,0 +1,106 @@
+{
+  "milestone": "U02",
+  "reviewType": "independent-adversarial-data-integrity",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "title": "The visible deletion flow and the real SQLite gate are verified in separate layers",
+      "severity": "non-blocking evidence gap",
+      "detail": "The browser integrity journey invokes the production deletion harness through page.evaluate rather than opening the profile, listing a real blocking reason, confirming deletion, and observing the resulting UI. The harness gives strong real-engine coverage for all five valid reference classes, cross-course rows, an orphan crew membership, note-only evaluation data, and successful deletion; component tests separately cover confirmation, blocking labels, corrupt-session fallback, and disable fallback. No implementation defect was found, but one integrated visible browser journey would close the remaining wiring and interaction gap required by the RULE_HEAVY browser policy.",
+      "references": [
+        "tests/e2e/u02-deletion-integrity.spec.ts:3",
+        "tests/e2e/u02-deletion-integrity.spec.ts:7",
+        "src/test/u02DeletionHarness.ts:37",
+        "src/test/u02DeletionHarness.ts:51",
+        "src/test/u02DeletionHarness.ts:109",
+        "src/features/students/StudentManagement.test.tsx:317",
+        "src/features/students/StudentManagement.test.tsx:338",
+        "AGENTS.md:browser-verification"
+      ]
+    }
+  ],
+  "qolFindings": [
+    {
+      "title": "Invalid edits make the Back action appear inert",
+      "detail": "If a required edit field is empty, persistEdit returns false before setting an explanatory error. The Back action correctly keeps the form open and therefore protects persisted data, but it does not explain why navigation was refused until the user infers the required-field problem.",
+      "references": [
+        "src/features/students/StudentManagement.tsx:265",
+        "src/features/students/StudentManagement.tsx:331",
+        "src/features/students/StudentManagement.tsx:341"
+      ]
+    },
+    {
+      "title": "Pending status can disappear while a newer draft is debouncing",
+      "detail": "A new keystroke explicitly clears saving while an older queued write may still be pending. Versioning prevents stale success and the latest draft is subsequently saved in order, so this is not a data-loss risk, but the status can briefly under-report pending work.",
+      "references": [
+        "src/features/students/StudentManagement.tsx:275",
+        "src/features/students/StudentManagement.tsx:280",
+        "src/features/students/StudentManagement.tsx:306",
+        "src/features/students/StudentManagement.test.tsx:286"
+      ]
+    }
+  ],
+  "evidenceInspected": [
+    "01_PRODUCT_SPEC.md:81",
+    "01_PRODUCT_SPEC.md:93",
+    "01_PRODUCT_SPEC.md:116",
+    "01_PRODUCT_SPEC.md:136",
+    "01_PRODUCT_SPEC.md:142",
+    "01_PRODUCT_SPEC.md:452",
+    "03_TECHNICAL_DECISIONS.md:53",
+    "03_TECHNICAL_DECISIONS.md:65",
+    "03_TECHNICAL_DECISIONS.md:83",
+    "04_IMPLEMENTATION_PLAN.md:201",
+    "src/persistence/db.ts:14",
+    "src/persistence/db.ts:49",
+    "src/persistence/db.ts:55",
+    "src/persistence/db.ts:67",
+    "src/persistence/db.ts:75",
+    "src/persistence/db.ts:82",
+    "src/persistence/db.ts:95",
+    "src/persistence/students.ts:43",
+    "src/persistence/students.ts:68",
+    "src/persistence/students.ts:121",
+    "src/persistence/students.ts:209",
+    "src/persistence/students.ts:262",
+    "src/persistence/students.ts:276",
+    "src/domain/studentMigration.ts:1",
+    "src/domain/student.ts:21",
+    "src/domain/student.ts:37",
+    "src/test/u02DeletionHarness.ts:37",
+    "src/test/u02MigrationHarness.ts:122",
+    "src/features/students/StudentManagement.tsx:133",
+    "src/features/students/StudentManagement.tsx:240",
+    "src/features/students/StudentManagement.tsx:265",
+    "src/features/students/StudentManagement.tsx:300",
+    "src/features/students/StudentManagement.tsx:331",
+    "src/features/students/StudentManagement.tsx:564",
+    "src/features/students/StudentManagement.tsx:595",
+    "src/features/evaluations/WeeklyEvaluationGrid.tsx:31",
+    "src/features/evaluations/WeeklyEvaluationGrid.tsx:60",
+    "src/features/evaluations/WeeklyEvaluationGrid.tsx:114",
+    "src/features/evaluations/StudentEvaluationHistory.tsx:27",
+    "src/persistence/students.test.ts:141",
+    "src/persistence/students.test.ts:153",
+    "src/features/students/StudentManagement.test.tsx:185",
+    "src/features/students/StudentManagement.test.tsx:219",
+    "src/features/students/StudentManagement.test.tsx:240",
+    "src/features/students/StudentManagement.test.tsx:261",
+    "src/features/students/StudentManagement.test.tsx:286",
+    "src/features/students/StudentManagement.test.tsx:317",
+    "src/features/students/StudentManagement.test.tsx:338",
+    "src/features/evaluations/WeeklyEvaluationGrid.test.tsx:46",
+    "tests/e2e/u02-students.spec.ts:33",
+    "tests/e2e/u02-deletion-integrity.spec.ts:3",
+    "tests/e2e/u02-migration.spec.ts:3",
+    ".evidence/U02/verification.json",
+    ".evidence/U02/browser-evidence.json",
+    ".evidence/U02/p03-stress-pixel-7-chrome.png",
+    ".evidence/U02/p03-stress-iphone-13-viewport.png",
+    ".evidence/U02/p04-profile-pixel-7-chrome.png",
+    ".evidence/U02/p04-profile-iphone-13-viewport.png",
+    "git diff --check"
+  ],
+  "summary": "No blocker was found. Deletion checks every valid student-reference class globally, repeats ownership and reference checks inside one write transaction, deletes exactly one owned row without cascades, and fails conservatively on query or commit errors. The UI confirms permanent deletion, lists real reasons, survives corrupt session identifiers, and offers disable. Autosave serializes complete snapshots, suppresses stale success, preserves the latest draft on failure, retries in context, and waits before leaving the edit form. The additive courseNote schema change defaults old data to null at the production boundary; the real 0.1 PowerSync database retains every legacy row, field, reference, note, and history value after upgrade and a second reopen. P04 renders the full canonical seven-day grid with blank missing values, ordered recent notes, and no horizontal overflow. The remaining findings concern integrated browser coverage and minor feedback precision, not correctness or preservation."
+}
