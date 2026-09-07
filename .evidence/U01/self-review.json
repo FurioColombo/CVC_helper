@@ -1,0 +1,33 @@
+{
+  "milestone": "U01",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    "P02 uses the CVC mark above the first-launch form rather than a back header because no prior route exists.",
+    "The shared palette intentionally affects later pages; P03 received a visual smoke check and each later page remains scheduled for its own milestone.",
+    "The existing production-build warning for two JavaScript chunks over 500 kB remains unchanged."
+  ],
+  "resolvedReviewFindings": [
+    "Compact course identity no longer inherits the large 320 px rule; viewport-capped sizes also preserve the one-line identity at 200% text.",
+    "The CVC symbol asset now has a transparent background and retains every colored bar and the central symbol.",
+    "The browser journey now checks the three contract viewports, 200% text, focus, target size, fixed-navigation clearance and horizontal overflow."
+  ],
+  "evidenceInspected": [
+    ".evidence/U01/verification.json",
+    ".evidence/U01/browser-evidence.json",
+    ".evidence/U01/p01-home-320x664.png",
+    ".evidence/U01/p01-home-390x844.png",
+    ".evidence/U01/p01-home-412x915.png",
+    ".evidence/U01/p02-create-320.png",
+    ".evidence/U01/p03-token-smoke-390x844.png",
+    "src/App.tsx",
+    "src/styles.css",
+    "src/components/CourseIdentity.tsx",
+    "src/components/CvcMark.tsx",
+    "src/domain/course.ts",
+    "tests/e2e/u01-shell.spec.ts",
+    "git diff --check"
+  ],
+  "summary": "P01 and P02 match the frozen interaction and hierarchy target, derive visible identity from persisted fields, preserve the 0.1.0 label/schema, and pass responsive, persistence, focus and build verification."
+}

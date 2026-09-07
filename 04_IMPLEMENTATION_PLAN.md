@@ -143,7 +143,7 @@ the verified workflow uses the bundled Node 24 instead of lowering requirements.
 ## U01 — Visual foundation, Home and course shell
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -174,7 +174,27 @@ correct; dynamic course values survive reload; design differences are recorded.
 
 ### Completion log
 
-Pending.
+Completed 2026-09-07.
+
+- Added the shared CVC blue/orange, paper, surface, line and focus tokens used by
+  the frozen target. The Home shell now uses six compact cards with the approved
+  orange/blue grouping and a flat three-item safe-area navigation.
+- Replaced the generic mark with a transparent production asset containing the
+  complete CVC symbol and no organization wording. Launcher/PWA icons remain
+  unchanged because the final derived application mark is deferred.
+- Added one canonical presentation formatter and reusable course identity. Home,
+  first-launch preview and Settings derive D/C, level, ISO week and year from the
+  persisted fields while retaining the 0.1.0 `label` and schema unchanged.
+- Course creation keeps bottom navigation absent. Its mark-above-form treatment
+  is an intentional first-launch adaptation because no valid back destination
+  exists.
+- `npm run verify` passed on Node 24.19.0 with 238 tests, domain/0.1.0
+  compatibility, production PWA build and repository checks. Focused Playwright
+  journeys passed on Chromium Android, Chromium iPhone viewport and WebKit.
+- Browser evidence covers 320×664, 390×844 and 412×915, plus 320 px at 200% text:
+  no horizontal overflow, complete mark, at least 44 px targets, focus transfer,
+  reload persistence and fixed-navigation clearance. P03 received a visual token
+  smoke check.
 
 ## U02 — Student list, profile and lifecycle
 

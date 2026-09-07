@@ -1,0 +1,72 @@
+{
+  "milestone": "U01",
+  "status": "PASS",
+  "targetRevision": "mock r10 at ee8d4c8",
+  "implementationCommit": "6f11c5fdc0562e8e81c51f577828f5168447388f",
+  "runtime": {
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "webkit": "26.5"
+  },
+  "journeys": [
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/u01-shell.spec.ts --project=pixel-7-chrome",
+      "status": "PASS",
+      "coverage": [
+        "course creation has no bottom navigation",
+        "C4 identity updates from the selected family and level",
+        "active-course identity survives reload",
+        "320x664, 390x844 and 412x915 have no horizontal overflow",
+        "320x664 with document text at 200% has no horizontal overflow",
+        "the last Home card clears the fixed navigation at maximum scroll",
+        "Home cards, Settings and navigation expose at least 44x44 CSS px targets",
+        "main content receives focus after navigation"
+      ]
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/u01-shell.spec.ts tests/e2e/persistence.spec.ts",
+      "status": "PASS",
+      "result": "4 passed, 1 intentional duplicate viewport-matrix skip",
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-viewport",
+        "iphone-13-webkit-core"
+      ]
+    }
+  ],
+  "viewports": [
+    {
+      "width": 320,
+      "height": 664,
+      "role": "stress"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "intermediate"
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "role": "large"
+    }
+  ],
+  "screenshots": [
+    ".evidence/U01/p02-create-320.png",
+    ".evidence/U01/p01-home-320x664.png",
+    ".evidence/U01/p01-home-390x844.png",
+    ".evidence/U01/p01-home-412x915.png",
+    ".evidence/U01/p03-token-smoke-390x844.png"
+  ],
+  "visualFindings": [
+    "The complete CVC symbol is visible on a transparent canvas with no organization wording or cropped bar.",
+    "Allievi, Equipaggi and Valutazioni use orange accents; Barche, Comandate and Volontari use blue accents.",
+    "The course identity stays on one line with a large blue course/week group and a smaller grey year.",
+    "The P03 empty-state smoke remains readable after the shared palette change."
+  ],
+  "intentionalDifferences": [
+    "First-launch P02 keeps the CVC mark above the form instead of showing a back control because there is no valid predecessor.",
+    "The active implementation plan's 320x664, 390x844 and 412x915 matrix is used for closure; the mock studio's earlier viewport examples remain design discussion context.",
+    "The PWA launcher icons are unchanged because the final derived application mark is deferred."
+  ]
+}
