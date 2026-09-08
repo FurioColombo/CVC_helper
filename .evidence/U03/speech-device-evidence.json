@@ -1,6 +1,6 @@
 {
   "milestone": "U03",
-  "status": "PENDING_PHYSICAL",
+  "status": "DEFERRED_TO_UG1",
   "recordedAt": "2026-09-08",
   "scope": "Shared local Italian speech-to-text used by P05 and reusable by later pages",
   "privacyContract": {
@@ -106,5 +106,5 @@
       "adb"
     ]
   },
-  "closureRule": "U03 remains incomplete until all three physical targets contain real observations and the user-facing flow is reviewable and recoverable on each target. Mock or injected transcription evidence cannot replace these results."
+  "closureRule": "By explicit human instruction on 2026-09-08, these physical checks are deferred to the final UG1 release gate so implementation can continue. UG1 cannot close until all three targets contain real observations and the user-facing flow is reviewable and recoverable on each target. Mock or injected transcription evidence cannot replace these results."
 }

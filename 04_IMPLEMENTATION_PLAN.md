@@ -258,7 +258,7 @@ Completed 2026-09-07.
 ## U03 — Student knowledge and shared speech capability
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -275,22 +275,27 @@ capability for later P09/P17 use.
 - Automated audio fixtures plus physical PC, Android and iPhone checklist. Record
   latency and accuracy observations without a fixed pass threshold; a required
   physical result cannot be replaced by a mock provider.
+- By explicit human instruction on 2026-09-08, the three physical observations
+  may be recorded later at UG1 so implementation can continue. They remain a
+  release blocker and cannot be replaced by automated evidence.
 - Required files: `verification.json`, `browser-evidence.json`,
   `speech-device-evidence.json`, `self-review.json` under `.evidence/U03/`.
 
 ### Acceptance criteria
 
-Real transcription is reviewable and recoverable on all targets; persistence and
-shared-note behavior pass; no card action overflows at stress width.
+The automated transcription boundary is reviewable and recoverable; persistence
+and shared-note behavior pass; no card action overflows at stress width. The real
+PC, Android and iPhone result must pass before UG1 closes.
 
 ### Completion log
 
-Automated implementation and evidence are ready. `npm run verify` passes with
+Completed 2026-09-08 with the physical validation explicitly deferred to UG1.
+`npm run verify` passes with
 35 test files and 270 tests. The complete regression matrix passed with 59
 journeys plus two intentional project-matrix skips before the final responsive
 addendum; the updated U03 matrix passes 12 journeys. Physical microphone and
-Italian transcription observations on PC, Android and iPhone remain required;
-the milestone stays `IN_PROGRESS` until those results are recorded.
+Italian transcription observations on PC, Android and iPhone remain required at
+the final release gate.
 
 ## U04 — Student scan and review
 
@@ -543,6 +548,9 @@ Validate a realistic complete week upgraded from 0.1.0 and prepare release 0.2.0
 - Compare the three contract viewports to mock r10; record intentional differences.
 - Complete functional, field-UX/accessibility, data-integrity, regression, scope
   and code-quality reviews; zero blockers.
+- Complete the deferred U03 physical microphone checklist on PC, Android and
+  iPhone. Record a dedicated physical-device review; automated fixtures do not
+  satisfy this release check.
 - Set package/lock to 0.2.0, create concise `CHANGELOG.md`, update this log and make
   a clean release checkpoint. A Git tag is created only when the release is
   actually declared.
@@ -550,6 +558,8 @@ Validate a realistic complete week upgraded from 0.1.0 and prepare release 0.2.0
   `browser-evidence.json`, `migration-evidence.json`, `functional-review.json`,
   `field-ux-review.json`, `data-integrity-review.json`,
   `regression-review.json`, `scope-review.json`, `code-quality-review.json`.
+  Also require `physical-device-review.json`, which inspects the deferred U03
+  device evidence in `.evidence/U03/speech-device-evidence.json`.
 
 ### Acceptance criteria
 

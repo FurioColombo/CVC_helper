@@ -1,10 +1,10 @@
 {
   "milestone": "U03",
-  "verdict": "FAIL",
-  "blockers": [
-    "Required real microphone and Italian transcription observations are still NOT_RUN on Windows PC, Android Chrome and iPhone Safari. The U03 contract explicitly says that mocks cannot replace a required physical result."
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    "Real microphone and Italian transcription observations remain NOT_RUN on Windows PC, Android Chrome and iPhone Safari. The human explicitly deferred them on 2026-09-08; they remain a mandatory UG1 release blocker and mocks cannot replace them."
   ],
-  "importantFindings": [],
   "qolFindings": [
     "The production build retains the existing warning for JavaScript chunks over 500 kB."
   ],
@@ -38,5 +38,5 @@
     "npm run evidence -- U03",
     "git diff --check"
   ],
-  "summary": "The final code, deterministic checks and responsive browser evidence are ready. Closure is intentionally refused until the mandatory physical microphone checks are recorded on PC, Android and iPhone."
+  "summary": "The U03 implementation, deterministic checks and responsive browser evidence pass. The human explicitly deferred physical microphone checks to UG1 so the next milestone can start; the final release remains blocked until they are recorded on PC, Android and iPhone."
 }
