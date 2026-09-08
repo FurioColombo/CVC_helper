@@ -78,7 +78,7 @@ function ReviewField({
       </span>
       <Input
         aria-label={`${label} riga ${candidate.id}`}
-        className={uncertain ? "border-[#f79009]" : ""}
+        className={`scroll-mt-[180px] ${uncertain ? "border-[#f79009]" : ""}`}
         onChange={(event) => onChange(event.target.value)}
         value={candidate[field]}
         {...inputProps}
@@ -120,7 +120,7 @@ function CandidateCard({
         <h2 className="text-base font-black">Allievo {index + 1}</h2>
         <Button
           aria-label={`Rimuovi allievo ${index + 1}`}
-          className="size-10 px-0 text-[#b42318]"
+          className="scroll-mt-[180px] size-10 px-0 text-[#b42318]"
           disabled={disabled}
           onClick={onRemove}
           type="button"
@@ -177,7 +177,7 @@ function CandidateCard({
             <label className="cursor-pointer" key={option.id}>
               <input
                 checked={candidate.sex === option.id}
-                className="peer sr-only"
+                className="peer scroll-mt-[180px] sr-only"
                 disabled={disabled}
                 name={`scan-sex-${candidate.id}`}
                 onChange={() => onChange({ ...candidate, sex: option.id })}

@@ -70,10 +70,8 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   const enlargedText = await page.addStyleTag({
     content: "html { font-size: 200% !important; }",
   })
-  await page
-    .getByLabel(/^Telefono riga/)
-    .last()
-    .scrollIntoViewIfNeeded()
+  const focusedReviewField = page.getByLabel(/^Nome riga/).nth(1)
+  await focusedReviewField.focus()
   const reviewOverflow = await page.evaluate(() => ({
     document:
       document.documentElement.scrollWidth -
@@ -86,6 +84,19 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   }))
   expect(reviewOverflow.document).toBeLessThanOrEqual(0)
   expect(reviewOverflow.cards).toBeLessThanOrEqual(3)
+  const focusClearance = await page.evaluate(() => {
+    const focused = document.activeElement?.getBoundingClientRect()
+    const counters = document
+      .querySelector('[aria-label="Stato revisione scansione"]')
+      ?.getBoundingClientRect()
+    return {
+      counterBottom: counters?.bottom ?? Number.POSITIVE_INFINITY,
+      focusedTop: focused?.top ?? Number.NEGATIVE_INFINITY,
+    }
+  })
+  expect(focusClearance.focusedTop).toBeGreaterThanOrEqual(
+    focusClearance.counterBottom,
+  )
   await enlargedText.evaluate((element) => (element as HTMLElement).remove())
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({

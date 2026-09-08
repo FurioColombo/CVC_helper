@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { StrictMode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const createPreview = vi.fn()
@@ -58,12 +59,14 @@ describe("StudentScanImageEditor", () => {
     const onUse = vi.fn()
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     render(
-      <StudentScanImageEditor
-        file={new File(["photo"], "roster.jpg", { type: "image/jpeg" })}
-        onCancel={vi.fn()}
-        onUse={onUse}
-        source="camera"
-      />,
+      <StrictMode>
+        <StudentScanImageEditor
+          file={new File(["photo"], "roster.jpg", { type: "image/jpeg" })}
+          onCancel={vi.fn()}
+          onUse={onUse}
+          source="camera"
+        />
+      </StrictMode>,
     )
 
     expect(

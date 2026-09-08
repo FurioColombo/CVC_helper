@@ -98,13 +98,13 @@ async function loadImage(blob: Blob): Promise<LoadedImage> {
   const url = URL.createObjectURL(blob)
   const image = new Image()
   image.decoding = "async"
-  image.src = url
   await new Promise<void>((resolve, reject) => {
     image.onload = () => resolve()
     image.onerror = () => {
       URL.revokeObjectURL(url)
       reject(new Error("Immagine non leggibile"))
     }
+    image.src = url
   })
   return {
     source: image,

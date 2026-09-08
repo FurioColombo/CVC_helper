@@ -83,12 +83,12 @@ export function StudentScanImageEditor({
   const previewSequenceRef = useRef(0)
   const activeRef = useRef(true)
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    activeRef.current = true
+    return () => {
       activeRef.current = false
-    },
-    [],
-  )
+    }
+  }, [])
 
   useEffect(() => {
     const sequence = ++previewSequenceRef.current
