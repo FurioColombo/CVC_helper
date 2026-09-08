@@ -8,7 +8,10 @@ async function addStudent(page: Page, firstName: string, surname: string) {
   await page.getByLabel("Nome", { exact: true }).fill(firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(surname)
   await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
-  await page.getByText("M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
@@ -37,9 +40,15 @@ test("shows one worst-severity crew warning with all size and pair details", asy
 
   await page.getByRole("button", { name: "Menu allievi" }).click()
   await page.getByRole("button", { name: "Conoscenza allievi" }).click()
-  await page.getByLabel("Taglia di Aldo").selectOption("XS")
+  await page
+    .getByRole("group", { name: "Taglia di Aldo" })
+    .getByRole("button", { name: "XS", exact: true })
+    .click()
   await expect(page.getByLabel("Stato salvataggio Aldo")).toHaveText("Salvato")
-  await page.getByLabel("Taglia di Bea").selectOption("S")
+  await page
+    .getByRole("group", { name: "Taglia di Bea" })
+    .getByRole("button", { name: "S", exact: true })
+    .click()
   await expect(page.getByLabel("Stato salvataggio Bea")).toHaveText("Salvato")
   await page
     .getByRole("button", { name: "Indietro da Conoscenza allievi" })

@@ -1,17 +1,26 @@
 import {
   Check,
   ChevronLeft,
+  LoaderCircle,
   Mic,
   NotebookPen,
+  Pencil,
   Square,
   Trash2,
+  X,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 
 import { transcribeAudio } from "@/capabilities/speech"
+import { StudentSizeSelector } from "@/components/StudentSizeSelector"
 import { Button } from "@/components/ui/button"
-import { STUDENT_SIZES, type StudentSize } from "@/domain/config"
+import type { StudentSize } from "@/domain/config"
 import { getStudentDisplayName } from "@/domain/student"
+import {
+  useDictation,
+  type SpeechPrepare,
+  type SpeechTranscribe,
+} from "@/features/speech/useDictation"
 import {
   updateStudentKnowledge,
   type StudentKnowledgeInput,
@@ -19,7 +28,6 @@ import {
 } from "@/persistence/students"
 
 type SaveStatus = "saved" | "saving" | "error"
-type VoiceStatus = "idle" | "recording" | "transcribing" | "review" | "error"
 
 function normalizeKnowledge(
   size: StudentSize | "",
@@ -44,25 +52,28 @@ function KnowledgeCard({
   students,
   onSaved,
   transcribe,
+  prepareSpeech,
 }: {
   courseId: string
   student: StudentRecord
   students: StudentRecord[]
   onSaved: (studentId: string, input: StudentKnowledgeInput) => void
-  transcribe: (audio: Blob) => Promise<string>
+  transcribe: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
 }) {
   const displayName = getStudentDisplayName(student, students)
   const [size, setSize] = useState<StudentSize | "">(student.size ?? "")
   const [initialNote, setInitialNote] = useState(student.initialNote ?? "")
   const [status, setStatus] = useState<SaveStatus>("saved")
-  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle")
+  const [noteOpen, setNoteOpen] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
-  const noteBeforeVoiceRef = useRef("")
+  const noteButtonRef = useRef<HTMLButtonElement | null>(null)
+  const noteDialogRef = useRef<HTMLElement | null>(null)
   const revisionRef = useRef(0)
-  const committedRef = useRef<StudentKnowledgeInput>({
+  const mountedRef = useRef(true)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const onSavedRef = useRef(onSaved)
+  const lastQueuedRef = useRef<StudentKnowledgeInput>({
     size: student.size,
     initialNote: student.initialNote,
   })
@@ -74,14 +85,20 @@ function KnowledgeCard({
   function persist(input: StudentKnowledgeInput, revision: number) {
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = undefined
-    void updateStudentKnowledge(student.id, courseId, input)
+    lastQueuedRef.current = input
+    const operation = saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => updateStudentKnowledge(student.id, courseId, input))
+    saveQueueRef.current = operation
+    void operation
       .then(() => {
-        committedRef.current = input
-        onSaved(student.id, input)
-        if (revision === revisionRef.current) setStatus("saved")
+        onSavedRef.current(student.id, input)
+        if (mountedRef.current && revision === revisionRef.current)
+          setStatus("saved")
       })
       .catch(() => {
-        if (revision === revisionRef.current) setStatus("error")
+        if (mountedRef.current && revision === revisionRef.current)
+          setStatus("error")
       })
   }
 
@@ -94,225 +111,358 @@ function KnowledgeCard({
     timerRef.current = setTimeout(() => persist(input, revision), delay)
   }
 
-  function stopMediaStream() {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
+  function retrySave() {
+    schedule(latestRef.current, 0)
   }
 
-  async function finishTranscription(recorder: MediaRecorder) {
-    const audio = new Blob(audioChunksRef.current, {
-      type: recorder.mimeType || "audio/webm",
-    })
-    audioChunksRef.current = []
-    stopMediaStream()
-    try {
-      const transcript = await transcribe(audio)
-      if (!transcript) throw new Error("Empty transcript")
-      const prefix = noteBeforeVoiceRef.current.trim()
-      setInitialNote(prefix ? `${prefix} ${transcript}` : transcript)
-      setVoiceStatus("review")
-    } catch {
-      setVoiceStatus("error")
-    } finally {
-      recorderRef.current = null
-    }
-  }
-
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
-      streamRef.current = stream
-      recorderRef.current = recorder
-      audioChunksRef.current = []
-      noteBeforeVoiceRef.current = initialNote
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data)
-      }
-      recorder.onstop = () => {
-        void finishTranscription(recorder)
-      }
-      recorder.start()
-      setVoiceStatus("recording")
-    } catch {
-      stopMediaStream()
-      setVoiceStatus("error")
-    }
-  }
-
-  function stopRecording() {
-    const recorder = recorderRef.current
-    if (!recorder || recorder.state === "inactive") return
-    setVoiceStatus("transcribing")
-    recorder.stop()
-  }
+  const dictation = useDictation({
+    value: initialNote,
+    onDraft: setInitialNote,
+    onAccept: (acceptedNote) =>
+      schedule(normalizeKnowledge(size, acceptedNote), 0),
+    transcribe,
+    prepare: prepareSpeech,
+  })
 
   useEffect(() => {
+    onSavedRef.current = onSaved
+  }, [onSaved])
+
+  useEffect(() => {
+    mountedRef.current = true
     return () => {
+      mountedRef.current = false
       if (timerRef.current) clearTimeout(timerRef.current)
-      const recorder = recorderRef.current
-      if (recorder && recorder.state !== "inactive") {
-        recorder.ondataavailable = null
-        recorder.onstop = null
-        recorder.stop()
-      }
-      stopMediaStream()
       const latest = latestRef.current
-      if (!isSameKnowledge(latest, committedRef.current)) {
-        void updateStudentKnowledge(student.id, courseId, latest)
+      if (!isSameKnowledge(latest, lastQueuedRef.current)) {
+        saveQueueRef.current = saveQueueRef.current
+          .catch(() => undefined)
+          .then(() => updateStudentKnowledge(student.id, courseId, latest))
+          .then(() => onSavedRef.current(student.id, latest))
       }
     }
   }, [courseId, student.id])
 
-  const voiceSupported =
-    typeof MediaRecorder !== "undefined" &&
-    typeof navigator.mediaDevices?.getUserMedia === "function"
+  const dictationBusy = new Set(["permission", "loading", "processing"]).has(
+    dictation.status,
+  )
+  const dictationProgress =
+    dictation.status === "loading" && dictation.loadPercent !== undefined
+      ? ` ${dictation.loadPercent}%`
+      : ""
+
+  function closeNoteEditor() {
+    if (dictation.status === "review") {
+      // Closing is not consent to persist a generated transcript. The explicit
+      // Usa testo action is the only acceptance path.
+      dictation.cancel()
+    } else {
+      if (dictation.status !== "idle") dictation.cancel()
+      schedule(normalizeKnowledge(size, initialNote), 0)
+    }
+    setNoteOpen(false)
+    window.requestAnimationFrame(() => noteButtonRef.current?.focus())
+  }
+
+  function handleDialogKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "Escape") {
+      closeNoteEditor()
+      return
+    }
+    if (event.key !== "Tab") return
+
+    const focusable = Array.from(
+      noteDialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    )
+    const first = focusable.at(0)
+    const last = focusable.at(-1)
+    if (!first || !last) return
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 
   return (
-    <article
-      className={`rounded-2xl border bg-card p-4 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${student.active ? "" : "opacity-60"}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="truncate text-base font-black">{displayName}</h2>
-          {!student.active && (
-            <p className="text-xs font-bold text-muted-foreground">
-              Non disponibile
-            </p>
-          )}
-        </div>
-        <span
-          aria-label={`Stato salvataggio ${displayName}`}
-          aria-live="polite"
-          className={`shrink-0 text-xs font-semibold ${status === "error" ? "text-[#b42318]" : "text-muted-foreground"}`}
-        >
-          {status === "saving"
-            ? "Salvataggio…"
-            : status === "error"
-              ? "Non salvato"
-              : "Salvato"}
-        </span>
-      </div>
-
-      <div className="mt-3 grid gap-3">
-        <label className="grid grid-cols-[auto_1fr] items-center gap-3 text-sm font-bold">
-          <span>Taglia</span>
-          <select
-            aria-label={`Taglia di ${displayName}`}
-            className="h-11 min-w-0 rounded-xl border bg-card px-3 text-base outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
-            onChange={(event) => {
-              const nextSize = event.target.value as StudentSize | ""
-              setSize(nextSize)
-              schedule(normalizeKnowledge(nextSize, initialNote), 0)
-            }}
-            value={size}
+    <>
+      <article
+        className={`grid grid-cols-1 gap-2 rounded-2xl border bg-card p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] min-[360px]:grid-cols-[minmax(0,1fr)_13.25rem] min-[360px]:items-center ${student.active ? "" : "opacity-60"}`}
+      >
+        <div className="flex min-w-0 items-center gap-1">
+          <button
+            aria-label={`Nota di ${displayName}`}
+            className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            onClick={() => setNoteOpen(true)}
+            ref={noteButtonRef}
+            type="button"
           >
-            <option value="">—</option>
-            {STUDENT_SIZES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+            <h2 className="truncate text-base font-black">{displayName}</h2>
+            <Pencil
+              aria-hidden="true"
+              className="size-4 shrink-0 text-primary"
+            />
+          </button>
+          <span
+            aria-label={`Stato salvataggio ${displayName}`}
+            aria-live="polite"
+            className={`flex shrink-0 items-center gap-1 text-xs font-semibold ${status === "error" ? "text-[#b42318]" : "text-muted-foreground"}`}
+          >
+            {status === "saving" ? (
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-3 animate-spin"
+              />
+            ) : status === "error" ? (
+              "!"
+            ) : (
+              <Check aria-hidden="true" className="size-4 text-[#18794e]" />
+            )}
+            <span className="sr-only">
+              {status === "saving"
+                ? "Salvataggio…"
+                : status === "error"
+                  ? "Non salvato"
+                  : "Salvato"}
+            </span>
+          </span>
+        </div>
 
-        <div className="grid gap-2 text-sm font-bold">
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor={`knowledge-note-${student.id}`}>
-              Nota iniziale
-            </label>
+        <StudentSizeSelector
+          ariaLabel={`Taglia di ${displayName}`}
+          hideLabel
+          onChange={(nextSize) => {
+            setSize(nextSize)
+            schedule(normalizeKnowledge(nextSize, initialNote), 0)
+          }}
+          value={size}
+        />
+
+        {!student.active && (
+          <p className="col-span-full text-xs font-bold text-muted-foreground">
+            Non disponibile
+          </p>
+        )}
+        {initialNote && (
+          <p className="col-span-full truncate text-xs font-normal text-muted-foreground">
+            {initialNote}
+          </p>
+        )}
+        {status === "error" && (
+          <div
+            className="col-span-full flex items-center justify-between gap-3"
+            role="alert"
+          >
+            <p className="text-xs font-semibold text-[#b42318]">
+              Modifica non salvata. Il testo resta qui.
+            </p>
             <Button
-              aria-label={
-                voiceStatus === "recording"
-                  ? `Termina dettatura di ${displayName}`
-                  : `Detta nota di ${displayName}`
-              }
-              className={`h-11 px-3 text-xs ${voiceStatus === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
-              disabled={
-                !voiceSupported ||
-                voiceStatus === "transcribing" ||
-                voiceStatus === "review"
-              }
-              onClick={(event) => {
-                event.preventDefault()
-                if (voiceStatus === "recording") stopRecording()
-                else void startRecording()
-              }}
+              aria-label={`Riprova salvataggio di ${displayName}`}
+              className="h-10 shrink-0 px-3 text-xs"
+              onClick={retrySave}
               type="button"
               variant="secondary"
             >
-              {voiceStatus === "recording" ? (
-                <Square aria-hidden="true" className="size-3.5 fill-current" />
-              ) : (
-                <Mic aria-hidden="true" className="size-4" />
-              )}
-              {voiceStatus === "recording"
-                ? "Termina"
-                : voiceStatus === "transcribing"
-                  ? "Trascrizione…"
-                  : "Detta"}
+              Riprova
             </Button>
           </div>
-          <textarea
-            aria-label={`Nota iniziale di ${displayName}`}
-            className="min-h-20 resize-y rounded-xl border bg-card px-3 py-2.5 text-base font-normal leading-6 outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
-            onBlur={() => {
-              if (voiceStatus !== "review") schedule(latestRef.current, 0)
-            }}
-            onChange={(event) => {
-              const nextNote = event.target.value
-              setInitialNote(nextNote)
-              if (voiceStatus !== "review") {
-                schedule(normalizeKnowledge(size, nextNote), 500)
-              }
-            }}
-            placeholder="Nessuna nota speciale"
-            value={initialNote}
-            id={`knowledge-note-${student.id}`}
-          />
-        </div>
+        )}
+      </article>
 
-        {voiceStatus === "review" && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
-            <p className="text-xs leading-5 text-muted-foreground">
-              Rileggi la trascrizione: il testo non viene salvato finché non lo
-              confermi.
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+      {noteOpen && (
+        <div className="fixed inset-0 z-60 flex items-end justify-center bg-foreground/35 p-0 min-[520px]:items-center min-[520px]:p-5">
+          <section
+            aria-labelledby={`knowledge-note-title-${student.id}`}
+            aria-modal="true"
+            className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-background p-4 shadow-2xl min-[520px]:rounded-3xl"
+            onKeyDown={handleDialogKeyDown}
+            ref={noteDialogRef}
+            role="dialog"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h2
+                className="min-w-0 truncate text-xl font-black"
+                id={`knowledge-note-title-${student.id}`}
+              >
+                Nota · {displayName}
+              </h2>
               <Button
-                aria-label={`Scarta trascrizione di ${displayName}`}
-                onClick={() => {
-                  setInitialNote(noteBeforeVoiceRef.current)
-                  setVoiceStatus("idle")
-                }}
+                aria-label={`Chiudi nota di ${displayName}`}
+                className="size-11 shrink-0 p-0"
+                onClick={closeNoteEditor}
                 type="button"
                 variant="secondary"
               >
-                <Trash2 aria-hidden="true" className="size-4" />
-                Scarta
-              </Button>
-              <Button
-                aria-label={`Usa trascrizione di ${displayName}`}
-                onClick={() => {
-                  schedule(normalizeKnowledge(size, initialNote), 0)
-                  setVoiceStatus("idle")
-                }}
-                type="button"
-              >
-                <Check aria-hidden="true" className="size-4" />
-                Usa testo
+                <X aria-hidden="true" className="size-5" />
               </Button>
             </div>
-          </div>
-        )}
 
-        {voiceStatus === "error" && (
-          <p className="text-xs font-semibold text-[#b42318]" role="alert">
-            Dettatura non riuscita. Puoi riprovare o scrivere la nota.
-          </p>
-        )}
-      </div>
-    </article>
+            <label
+              className="mt-4 grid gap-2 text-sm font-bold"
+              htmlFor={`knowledge-note-${student.id}`}
+            >
+              Testo
+            </label>
+            <textarea
+              aria-label={`Nota iniziale di ${displayName}`}
+              autoFocus
+              className="mt-2 min-h-36 w-full resize-y rounded-xl border bg-card px-3 py-2.5 text-base font-normal leading-6 outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
+              id={`knowledge-note-${student.id}`}
+              onChange={(event) => {
+                const nextNote = event.target.value
+                dictation.syncValue(nextNote)
+                setInitialNote(nextNote)
+                if (dictation.status !== "review")
+                  schedule(normalizeKnowledge(size, nextNote), 500)
+              }}
+              placeholder="Nessuna nota speciale"
+              value={initialNote}
+            />
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <Button
+                aria-label={
+                  dictation.status === "recording"
+                    ? `Termina dettatura di ${displayName}`
+                    : `Detta nota di ${displayName}`
+                }
+                className={`h-11 px-3 text-xs ${dictation.status === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
+                disabled={
+                  !dictation.supported ||
+                  dictationBusy ||
+                  dictation.status === "review"
+                }
+                onClick={() =>
+                  dictation.status === "recording"
+                    ? dictation.stop()
+                    : void dictation.start()
+                }
+                type="button"
+                variant="secondary"
+              >
+                {dictationBusy ? (
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-4 animate-spin"
+                  />
+                ) : dictation.status === "recording" ? (
+                  <Square
+                    aria-hidden="true"
+                    className="size-3.5 fill-current"
+                  />
+                ) : (
+                  <Mic aria-hidden="true" className="size-4" />
+                )}
+                {dictation.status === "recording"
+                  ? "Termina"
+                  : dictation.status === "permission"
+                    ? "Permesso…"
+                    : dictation.status === "loading"
+                      ? `Caricamento${dictationProgress}`
+                      : dictation.status === "processing"
+                        ? "Elaborazione…"
+                        : "Detta"}
+              </Button>
+              <Button onClick={closeNoteEditor} type="button">
+                Fine
+              </Button>
+            </div>
+
+            {!dictation.supported && dictation.status === "idle" && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Dettatura non disponibile in questo browser. Puoi scrivere la
+                nota.
+              </p>
+            )}
+
+            {(dictation.status === "permission" ||
+              dictation.status === "recording" ||
+              dictation.status === "loading" ||
+              dictation.status === "processing") && (
+              <div
+                aria-live="polite"
+                className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2"
+                role="status"
+              >
+                <p className="text-xs font-semibold text-muted-foreground">
+                  {dictation.status === "permission"
+                    ? "Attendo il permesso del microfono…"
+                    : dictation.status === "recording"
+                      ? "Registrazione in corso"
+                      : dictation.status === "loading"
+                        ? `Caricamento del modello vocale${dictationProgress}…`
+                        : "Elaborazione locale dell’audio…"}
+                </p>
+                <Button
+                  aria-label={`Annulla dettatura di ${displayName}`}
+                  className="size-10 shrink-0 p-0"
+                  onClick={dictation.cancel}
+                  type="button"
+                  variant="secondary"
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </Button>
+              </div>
+            )}
+
+            {dictation.status === "review" && (
+              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Rileggi la trascrizione: il testo non viene salvato finché non
+                  lo confermi.
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <Button
+                    aria-label={`Scarta trascrizione di ${displayName}`}
+                    onClick={dictation.cancel}
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Trash2 aria-hidden="true" className="size-4" />
+                    Scarta
+                  </Button>
+                  <Button
+                    aria-label={`Usa trascrizione di ${displayName}`}
+                    onClick={dictation.accept}
+                    type="button"
+                  >
+                    <Check aria-hidden="true" className="size-4" />
+                    Usa testo
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {dictation.status === "error" && (
+              <div
+                className="mt-3 flex items-start justify-between gap-3"
+                role="alert"
+              >
+                <p className="text-xs font-semibold text-[#b42318]">
+                  {dictation.error === "permission"
+                    ? "Permesso microfono non concesso. Il testo è rimasto invariato."
+                    : "Dettatura non riuscita. Il testo è rimasto invariato."}
+                </p>
+                <Button
+                  aria-label={`Riprovare dettatura di ${displayName}`}
+                  className="h-10 shrink-0 px-3 text-xs"
+                  onClick={() => void dictation.start()}
+                  type="button"
+                  variant="secondary"
+                >
+                  Riprova
+                </Button>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -322,12 +472,14 @@ export function StudentKnowledge({
   onBack,
   onSaved,
   transcribe = transcribeAudio,
+  prepareSpeech,
 }: {
   courseId: string
   students: StudentRecord[]
   onBack: () => void
   onSaved: (studentId: string, input: StudentKnowledgeInput) => void
-  transcribe?: (audio: Blob) => Promise<string>
+  transcribe?: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
 }) {
   return (
     <>
@@ -359,6 +511,7 @@ export function StudentKnowledge({
             student={student}
             students={students}
             transcribe={transcribe}
+            prepareSpeech={prepareSpeech}
           />
         ))}
       </section>

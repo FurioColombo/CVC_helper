@@ -8,7 +8,10 @@ async function addStudent(page: Page, firstName: string, surname: string) {
   await page.getByLabel("Nome", { exact: true }).fill(firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(surname)
   await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
-  await page.getByText("M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
@@ -64,8 +67,21 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   await primaryNav.getByRole("button", { name: "Home", exact: true }).click()
   await page.getByRole("button", { name: "Allievi" }).click()
   await page.getByRole("button", { name: /^Carlo,/ }).click()
-  await page.getByRole("button", { name: "Disabilita allievo" }).click()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  const lifecycle = page.getByRole("button", {
+    name: "Disponibilità ed eliminazione",
+  })
+  await lifecycle.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await lifecycle.click()
+  const disableStudent = page.getByRole("button", {
+    name: "Disabilita allievo",
+  })
+  await disableStudent.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await disableStudent.click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()
   await primaryNav.getByRole("button", { name: "Equipaggi" }).click()
 

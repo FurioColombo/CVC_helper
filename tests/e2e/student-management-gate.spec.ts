@@ -31,7 +31,10 @@ test("keeps the complete student workflow consistent across reload", async ({
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Verdi")
   await page.getByLabel(/^Data di nascita/).fill("2010-01-01")
-  await page.getByText("M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
 
   await expect(
@@ -45,15 +48,25 @@ test("keeps the complete student workflow consistent across reload", async ({
 
   await page.getByRole("button", { name: "Menu allievi" }).click()
   await page.getByRole("button", { name: "Conoscenza allievi" }).click()
-  await page.getByLabel("Taglia di Mario R.").selectOption("L")
+  await page
+    .getByRole("group", { name: "Taglia di Mario R." })
+    .getByRole("button", { name: "L", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Nota di Mario R." }).click()
   await page.getByLabel("Nota iniziale di Mario R.").fill("Esperienza Optimist")
+  await page.getByRole("button", { name: "Fine" }).click()
   await expect(page.getByLabel("Stato salvataggio Mario R.")).toHaveText(
     "Salvato",
   )
-  await page.getByLabel("Taglia di Mario V.").selectOption("XS")
+  await page
+    .getByRole("group", { name: "Taglia di Mario V." })
+    .getByRole("button", { name: "XS", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Nota di Mario V." }).click()
   await page
     .getByLabel("Nota iniziale di Mario V.")
     .fill("Minorenne, prima esperienza")
+  await page.getByRole("button", { name: "Fine" }).click()
   await expect(page.getByLabel("Stato salvataggio Mario V.")).toHaveText(
     "Salvato",
   )
@@ -68,11 +81,24 @@ test("keeps the complete student workflow consistent across reload", async ({
     .click()
   await expect(page.getByText("Minorenne, prima esperienza")).toBeVisible()
   await expect(page.getByText("XS", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "Disabilita allievo" }).click()
+  const lifecycle = page.getByRole("button", {
+    name: "Disponibilità ed eliminazione",
+  })
+  await lifecycle.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await lifecycle.click()
+  const disableStudent = page.getByRole("button", {
+    name: "Disabilita allievo",
+  })
+  await disableStudent.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await disableStudent.click()
   await expect(
     page.getByRole("button", { name: "Riattiva allievo" }),
   ).toBeVisible()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await expect(
     page.getByRole("button", {
       name: /Mario V\., 16 anni, M, Minorenne, Non disponibile/,
@@ -95,22 +121,35 @@ test("keeps the complete student workflow consistent across reload", async ({
       name: /Mario V\., 16 anni, M, Minorenne, Non disponibile/,
     })
     .click()
-  await page.getByRole("button", { name: "Riattiva allievo" }).click()
+  const reopenedLifecycle = page.getByRole("button", {
+    name: "Disponibilità ed eliminazione",
+  })
+  await reopenedLifecycle.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await reopenedLifecycle.click()
+  const reactivateStudent = page.getByRole("button", {
+    name: "Riattiva allievo",
+  })
+  await reactivateStudent.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await reactivateStudent.click()
   await expect(
     page.getByRole("button", { name: "Disabilita allievo" }),
   ).toBeVisible()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
 
   await page.getByRole("button", { name: /Giulia, 27 anni, F/ }).click()
   await expect(page.getByText("Giulia Bianchini")).toBeVisible()
   await expect(page.getByText("24/11/1998")).toBeVisible()
   await expect(page.getByText("347 765 4321")).toBeVisible()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
 
   await page.getByRole("button", { name: /Mario R\., 18 anni, M/ }).click()
   await expect(page.getByText("Esperienza Optimist")).toBeVisible()
   await expect(page.getByText("L", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
 
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({

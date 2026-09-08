@@ -1,0 +1,68 @@
+{
+  "milestone": "U03",
+  "status": "PASS",
+  "recordedAt": "2026-09-08",
+  "targetRevision": "approved P05 mock and 0.2.0 UX contract",
+  "implementationState": "working tree based on 995c206322ba3a93b7253435e9bbacb5da3abad1",
+  "runtime": {
+    "playwright": "1.62.1",
+    "projects": [
+      "pixel-7-chrome",
+      "iphone-13-viewport",
+      "iphone-13-webkit-core"
+    ]
+  },
+  "journeys": [
+    {
+      "command": "npm run verify:e2e",
+      "status": "PASS",
+      "result": "59 passed, 2 intentional project-matrix skips, 0 failed",
+      "duration": "17.3 minutes",
+      "coverage": [
+        "complete application browser regression",
+        "P05 knowledge flow across Chromium and WebKit projects",
+        "deterministic full-week Pixel 7 Chrome scenario"
+      ]
+    },
+    {
+      "command": "Playwright U03 matrix: knowledge, u03-knowledge and u03-speech-fixture",
+      "status": "PASS",
+      "result": "12 passed, 0 failed",
+      "coverage": [
+        "320x664 stress layout with long and duplicate student names",
+        "card actions remain inside their cards without horizontal overflow",
+        "direct XS-S-M-L-XL selection and persistence after reload",
+        "same-page note panel and note persistence after reload",
+        "keyboard focus containment and opener-focus restoration",
+        "200% text without horizontal overflow",
+        "320x420 reduced-height note-panel operability as a virtual-keyboard stress proxy",
+        "production WAV decode and resampling boundary",
+        "speech model reuse, aggregate progress and preservation of typed text"
+      ]
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/u03-knowledge.spec.ts",
+      "status": "PASS",
+      "result": "6 passed, 0 failed",
+      "coverage": [
+        "Pixel 7 Chrome",
+        "iPhone 13 Chromium viewport",
+        "iPhone 13 WebKit core",
+        "compact 320x664 cards",
+        "200% text",
+        "320x420 reduced-height note dialog"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U03/p05-note-panel-pixel-7-chrome.png",
+    ".evidence/U03/p05-note-panel-iphone-13-viewport.png",
+    ".evidence/U03/p05-note-panel-iphone-13-webkit-core.png",
+    ".evidence/U03/p05-stress-pixel-7-chrome.png",
+    ".evidence/U03/p05-stress-iphone-13-viewport.png",
+    ".evidence/U03/p05-stress-iphone-13-webkit-core.png"
+  ],
+  "limitations": [
+    "Browser automation uses deterministic media and transcription boundaries. Real microphone permission, capture, latency and Italian recognition quality are recorded separately in speech-device-evidence.json."
+  ]
+}

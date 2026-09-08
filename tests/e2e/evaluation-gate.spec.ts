@@ -15,7 +15,10 @@ async function addStudent(page: Page, student: (typeof STUDENTS)[number]) {
   await page.getByLabel("Nome", { exact: true }).fill(student.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(student.surname)
   await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
-  await page.getByText(student.female ? "F" : "M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText(student.female ? "F" : "M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
@@ -203,14 +206,11 @@ test("verifies the evaluation workflow across an evolving week", async ({
     .getByRole("button", { name: "Apri dettaglio di Bea, cognome Verdi" })
     .click()
   const history = page.getByRole("region", { name: "Storico valutazioni" })
-  await expect(history.getByText("Sabato PM")).toBeVisible()
-  await expect(history.getByText("Lunedì AM")).toBeVisible()
-  await expect(
-    history.getByLabel("Valutazione +", { exact: true }),
-  ).toBeVisible()
-  await expect(
-    history.getByLabel("Valutazione ++", { exact: true }),
-  ).toBeVisible()
+  const weeklyGrid = history.getByRole("table", {
+    name: "Valutazioni settimanali di Bea",
+  })
+  await expect(weeklyGrid.getByLabel("Sabato PM: +")).toBeVisible()
+  await expect(weeklyGrid.getByLabel("Lunedì AM: ++")).toBeVisible()
 
   if (testInfo.project.name === "iphone-13-viewport") {
     const screenshotPath = path.resolve(

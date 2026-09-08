@@ -1,0 +1,110 @@
+{
+  "milestone": "U03",
+  "status": "PENDING_PHYSICAL",
+  "recordedAt": "2026-09-08",
+  "scope": "Shared local Italian speech-to-text used by P05 and reusable by later pages",
+  "privacyContract": {
+    "networkTranscription": false,
+    "audioPersisted": false,
+    "audioLifetime": "MediaRecorder chunks and the assembled Blob remain transient in memory and references are released after completion, cancellation or error.",
+    "textPersistence": "Only user-confirmed text is sent to the existing student-note persistence API."
+  },
+  "automatedEvidence": [
+    {
+      "kind": "unit and component",
+      "status": "PASS",
+      "result": "16 focused speech and P05 tests passed",
+      "coverage": [
+        "permission is requested only after the Dettatura control is tapped",
+        "asset loading finishes before recording begins",
+        "recording is followed by processing and editable review",
+        "aggregate model progress is used and the loaded model is reused",
+        "typing during loading or recording is preserved when transcription arrives",
+        "Scarta restores the latest manual text and Usa testo persists confirmed text",
+        "cancellation during permission, loading or processing ignores late results and stops acquired streams",
+        "transient loading failure preserves text and supports retry",
+        "empty audio is rejected"
+      ]
+    },
+    {
+      "kind": "browser fixture",
+      "status": "PASS",
+      "result": "3 projects passed the deterministic production audio-boundary fixture",
+      "coverage": [
+        "Pixel 7 Chrome",
+        "iPhone 13 Chromium viewport",
+        "iPhone 13 WebKit core",
+        "PCM WAV decode, downmix/resample boundary, progress, transcript insertion and model reuse"
+      ]
+    }
+  ],
+  "physicalProcedure": [
+    "Open an active course, then Allievi, the page menu and Conoscenza; open one student's note with the pencil control.",
+    "Type a short prefix into the note before starting dictation.",
+    "Tap Dettatura and confirm that microphone permission is requested only now.",
+    "On a cold first use, confirm that a real asset-loading state and measured progress appear before recording begins.",
+    "Speak one short Italian sentence, tap Termina and confirm that processing is followed by an editable transcript appended after the typed prefix.",
+    "Edit the result, tap Usa testo, close the panel, reload the app and confirm that the final text persists.",
+    "Repeat dictation and tap Scarta; confirm that the text that existed immediately before the new transcript is restored.",
+    "Deny permission once, then retry; cancel once during an active phase. Confirm that the typed text survives, retry remains available and the operating-system microphone indicator turns off.",
+    "Record the cold-load, warm-load and recording-to-review times, the expected phrase, the observed transcript, any recognition errors, and the browser and operating-system versions. There is no fixed latency or accuracy threshold, but the result must be reviewable and recoverable."
+  ],
+  "targets": [
+    {
+      "target": "Windows PC with Chrome or Edge",
+      "status": "NOT_RUN",
+      "access": "http://127.0.0.1:4173/ is a secure-context exception for localhost",
+      "browserVersion": null,
+      "osVersion": null,
+      "expectedPhrase": null,
+      "observedTranscript": null,
+      "coldLoadMs": null,
+      "warmLoadMs": null,
+      "recordingToReviewMs": null,
+      "accuracyNotes": null,
+      "recoveryNotes": null
+    },
+    {
+      "target": "Android phone with Chrome",
+      "status": "NOT_RUN",
+      "access": "Use a trusted HTTPS URL serving this exact working tree. Plain LAN HTTP does not provide a microphone-capable secure context.",
+      "browserVersion": null,
+      "osVersion": null,
+      "expectedPhrase": null,
+      "observedTranscript": null,
+      "coldLoadMs": null,
+      "warmLoadMs": null,
+      "recordingToReviewMs": null,
+      "accuracyNotes": null,
+      "recoveryNotes": null
+    },
+    {
+      "target": "iPhone with Safari",
+      "status": "NOT_RUN",
+      "access": "Use a trusted HTTPS URL serving this exact working tree. Plain LAN HTTP does not provide a microphone-capable secure context.",
+      "browserVersion": null,
+      "osVersion": null,
+      "expectedPhrase": null,
+      "observedTranscript": null,
+      "coldLoadMs": null,
+      "warmLoadMs": null,
+      "recordingToReviewMs": null,
+      "accuracyNotes": null,
+      "recoveryNotes": null
+    }
+  ],
+  "environmentReadiness": {
+    "localhostPreview": "available for the PC check",
+    "trustedPhoneHttps": "not configured",
+    "availableLocalTools": [
+      "OpenSSL"
+    ],
+    "missingConvenienceTools": [
+      "mkcert",
+      "cloudflared",
+      "ngrok",
+      "adb"
+    ]
+  },
+  "closureRule": "U03 remains incomplete until all three physical targets contain real observations and the user-facing flow is reviewable and recoverable on each target. Mock or injected transcription evidence cannot replace these results."
+}

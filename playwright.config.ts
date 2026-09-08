@@ -32,7 +32,7 @@ export default defineConfig({
     {
       name: "iphone-13-webkit-core",
       testMatch:
-        /(?:boats|crew-management-gate|duties|evaluation-gate|persistence|reopen-persistence|smoke|student-management-gate)\.spec\.ts/,
+        /(?:boats|crew-management-gate|duties|evaluation-gate|knowledge|persistence|reopen-persistence|smoke|student-management-gate|u03-knowledge|u03-speech-fixture)\.spec\.ts/,
       use: { ...devices["iPhone 13"], locale: "it-IT" },
     },
   ],

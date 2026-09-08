@@ -16,11 +16,11 @@ import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { StudentSizeSelector } from "@/components/StudentSizeSelector"
 import {
   DUTY_DAYS,
   SESSION_SEQUENCE,
   STUDENT_SEXES,
-  STUDENT_SIZES,
   type SessionId,
   type StudentSex,
   type StudentSize,
@@ -421,26 +421,7 @@ function StudentForm({
           />
         </Field>
 
-        <fieldset className="grid gap-2 text-sm font-bold">
-          <legend>Taglia</legend>
-          <div className="grid grid-cols-5 gap-1.5">
-            {STUDENT_SIZES.map((option) => (
-              <label className="cursor-pointer" key={option}>
-                <input
-                  checked={size === option}
-                  className="peer sr-only"
-                  name="size"
-                  onChange={() => setSize(option)}
-                  type="radio"
-                  value={option}
-                />
-                <span className="grid h-11 place-items-center rounded-xl border bg-card text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
-                  {option}
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <StudentSizeSelector onChange={setSize} value={size} />
 
         <Field
           label="Nota iniziale"

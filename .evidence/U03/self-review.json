@@ -1,0 +1,42 @@
+{
+  "milestone": "U03",
+  "verdict": "FAIL",
+  "blockers": [
+    "Required real microphone and Italian transcription observations are still NOT_RUN on Windows PC, Android Chrome and iPhone Safari. The U03 contract explicitly says that mocks cannot replace a required physical result."
+  ],
+  "importantFindings": [],
+  "qolFindings": [
+    "The production build retains the existing warning for JavaScript chunks over 500 kB."
+  ],
+  "resolvedReviewFindings": [
+    "Text typed while assets load or recording is active is appended safely instead of being overwritten by the transcript.",
+    "The visible state order is now permission, asset loading, recording, processing and editable review.",
+    "Loading progress now uses aggregate model progress instead of per-file events that could jump to an incorrect percentage.",
+    "Automated coverage now includes Scarta, cancellation during loading and processing, late-result suppression, exact permission timing and transient-load retry.",
+    "Closing the note sheet during review now discards the unconfirmed generated text; only the explicit Usa testo action accepts it.",
+    "The note dialog now traps forward and reverse keyboard focus, supports Escape and restores focus to its opener.",
+    "Browser coverage now includes 200% text and a 320x420 reduced-height editing surface as a virtual-keyboard stress proxy.",
+    "The installed Transformers runtime source defines and emits aggregate progress_total events, including a final 100% update after caching.",
+    "A deterministic PCM WAV fallback lets the production audio boundary run in the Playwright WebKit environment where Web Audio is unavailable."
+  ],
+  "evidenceInspected": [
+    ".evidence/U03/verification.json",
+    ".evidence/U03/browser-evidence.json",
+    ".evidence/U03/speech-device-evidence.json",
+    ".evidence/U03/p05-stress-pixel-7-chrome.png",
+    ".evidence/U03/p05-note-panel-iphone-13-webkit-core.png",
+    "src/capabilities/speech.ts",
+    "src/capabilities/speech.test.ts",
+    "src/features/speech/useDictation.ts",
+    "src/features/students/StudentKnowledge.tsx",
+    "src/features/students/StudentKnowledge.test.tsx",
+    "src/components/StudentSizeSelector.tsx",
+    "src/test/u03SpeechHarness.ts",
+    "tests/e2e/u03-knowledge.spec.ts",
+    "tests/e2e/u03-speech-fixture.spec.ts",
+    "npm run verify:e2e",
+    "npm run evidence -- U03",
+    "git diff --check"
+  ],
+  "summary": "The final code, deterministic checks and responsive browser evidence are ready. Closure is intentionally refused until the mandatory physical microphone checks are recorded on PC, Android and iPhone."
+}

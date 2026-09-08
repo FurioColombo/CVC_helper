@@ -17,7 +17,10 @@ async function addStudent(page: Page, student: (typeof STUDENTS)[number]) {
   await page.getByLabel("Nome", { exact: true }).fill(student.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(student.surname)
   await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
-  await page.getByText(student.female ? "F" : "M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText(student.female ? "F" : "M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
@@ -83,8 +86,9 @@ test("verifies the complete crew workflow across students, duties and boats", as
   await page.getByRole("button", { name: "Conoscenza allievi" }).click()
   for (const student of STUDENTS) {
     await page
-      .getByLabel(`Taglia di ${student.firstName}`)
-      .selectOption(student.size)
+      .getByRole("group", { name: `Taglia di ${student.firstName}` })
+      .getByRole("button", { name: student.size, exact: true })
+      .click()
     await expect(
       page.getByLabel(`Stato salvataggio ${student.firstName}`),
     ).toHaveText("Salvato")

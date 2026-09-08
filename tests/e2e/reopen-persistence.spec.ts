@@ -13,7 +13,10 @@ test("restores confirmed local data after closing and reopening the page", async
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
   await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
-  await page.getByText("M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
   await expect(page.getByRole("button", { name: /^Mario,/ })).toBeVisible()
 

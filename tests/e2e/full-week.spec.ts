@@ -32,6 +32,7 @@ async function addStudent(
   await page.getByLabel("Cognome", { exact: true }).fill(student.surname)
   await page.getByLabel(/^Data di nascita/).fill(student.dateOfBirth)
   await page
+    .getByRole("group", { name: "Sesso" })
     .getByText(student.sex === "female" ? "F" : "M", { exact: true })
     .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
@@ -124,17 +125,26 @@ async function setStudentAvailability(
   await page
     .getByRole("button", { name: new RegExp(`^${name.replace(".", "\\.")},`) })
     .click()
-  await page
-    .getByRole("button", {
-      name: available ? "Riattiva allievo" : "Disabilita allievo",
-    })
-    .click()
+  const lifecycle = page.getByRole("button", {
+    name: "Disponibilità ed eliminazione",
+  })
+  await lifecycle.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await lifecycle.click()
+  const availabilityButton = page.getByRole("button", {
+    name: available ? "Riattiva allievo" : "Disabilita allievo",
+  })
+  await availabilityButton.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await availabilityButton.click()
   await expect(
     page.getByRole("button", {
       name: available ? "Disabilita allievo" : "Riattiva allievo",
     }),
   ).toBeVisible()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()
   await primaryNav.getByRole("button", { name: "Equipaggi" }).click()
 }
@@ -185,7 +195,10 @@ test("runs one deterministic D2 course through a complete sailing week", async (
   await app.getByRole("button", { name: "Conoscenza allievi" }).click()
   for (const student of scenario.students) {
     const name = displayName(student)
-    await app.getByLabel(`Taglia di ${name}`).selectOption(student.size)
+    await app
+      .getByRole("group", { name: `Taglia di ${name}` })
+      .getByRole("button", { name: student.size, exact: true })
+      .click()
     await expect(app.getByLabel(`Stato salvataggio ${name}`)).toHaveText(
       "Salvato",
     )

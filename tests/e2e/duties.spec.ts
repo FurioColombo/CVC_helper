@@ -13,7 +13,10 @@ async function addStudent(
   await page
     .getByLabel(/^Data di nascita/)
     .fill(options.minor ? "2010-01-01" : "2000-01-01")
-  await page.getByText(options.female ? "F" : "M", { exact: true }).click()
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText(options.female ? "F" : "M", { exact: true })
+    .click()
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
@@ -113,8 +116,21 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
       name: new RegExp(`^${disabledMidweekName},`),
     })
     .click()
-  await page.getByRole("button", { name: "Disabilita allievo" }).click()
-  await page.getByRole("button", { name: "Indietro da Dettaglio" }).click()
+  const lifecycle = page.getByRole("button", {
+    name: "Disponibilità ed eliminazione",
+  })
+  await lifecycle.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await lifecycle.click()
+  const disableStudent = page.getByRole("button", {
+    name: "Disabilita allievo",
+  })
+  await disableStudent.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  )
+  await disableStudent.click()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()
   await page.getByRole("button", { name: "Comandate" }).click()
 

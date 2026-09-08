@@ -258,7 +258,7 @@ Completed 2026-09-07.
 ## U03 — Student knowledge and shared speech capability
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 
@@ -285,7 +285,12 @@ shared-note behavior pass; no card action overflows at stress width.
 
 ### Completion log
 
-Pending.
+Automated implementation and evidence are ready. `npm run verify` passes with
+35 test files and 270 tests. The complete regression matrix passed with 59
+journeys plus two intentional project-matrix skips before the final responsive
+addendum; the updated U03 matrix passes 12 journeys. Physical microphone and
+Italian transcription observations on PC, Android and iPhone remain required;
+the milestone stays `IN_PROGRESS` until those results are recorded.
 
 ## U04 — Student scan and review
 
