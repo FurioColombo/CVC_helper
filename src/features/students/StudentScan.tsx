@@ -5,6 +5,7 @@ import {
   ImagePlus,
   RotateCcw,
   Trash2,
+  UserPlus,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
@@ -19,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
+import { StudentScanImageEditor } from "@/features/students/StudentScanImageEditor"
 import { createStudents, type StudentInput } from "@/persistence/students"
 
 type ScanState =
@@ -28,9 +30,27 @@ interface ReviewCandidate extends StudentScanCandidate {
   id: string
 }
 
+interface Acquisition {
+  file: File
+  source: "camera" | "gallery"
+}
+
 function needsReview(candidate: ReviewCandidate, field: StudentScanField) {
-  if (field === "phone" && candidate.confidence.phone === 0) return false
+  if (field === "phone" && !candidate.phone.trim()) return false
   return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
+}
+
+function candidateIsReady(candidate: ReviewCandidate, courseStartDate: string) {
+  return Boolean(
+    candidate.firstName.trim() &&
+    candidate.surname.trim() &&
+    candidate.dateOfBirth &&
+    candidate.dateOfBirth <= courseStartDate &&
+    candidate.sex &&
+    !(["firstName", "surname", "dateOfBirth", "phone"] as const).some((field) =>
+      needsReview(candidate, field),
+    ),
+  )
 }
 
 function ReviewField({
@@ -72,6 +92,7 @@ function CandidateCard({
   courseStartDate,
   index,
   invalid,
+  disabled,
   onChange,
   onRemove,
 }: {
@@ -79,6 +100,7 @@ function CandidateCard({
   courseStartDate: string
   index: number
   invalid: boolean
+  disabled: boolean
   onChange: (candidate: ReviewCandidate) => void
   onRemove: () => void
 }) {
@@ -92,13 +114,14 @@ function CandidateCard({
 
   return (
     <article
-      className={`rounded-2xl border bg-card p-4 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${invalid ? "border-[#d92d20]" : ""}`}
+      className={`rounded-2xl border bg-card p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${invalid ? "border-[#d92d20]" : ""}`}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
         <h2 className="text-base font-black">Allievo {index + 1}</h2>
         <Button
           aria-label={`Rimuovi allievo ${index + 1}`}
-          className="size-11 px-0 text-[#b42318]"
+          className="size-10 px-0 text-[#b42318]"
+          disabled={disabled}
           onClick={onRemove}
           type="button"
           variant="secondary"
@@ -107,12 +130,13 @@ function CandidateCard({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <ReviewField
           autoComplete="given-name"
           candidate={candidate}
           field="firstName"
           label="Nome"
+          disabled={disabled}
           onChange={(value) => updateField("firstName", value)}
         />
         <ReviewField
@@ -120,15 +144,17 @@ function CandidateCard({
           candidate={candidate}
           field="surname"
           label="Cognome"
+          disabled={disabled}
           onChange={(value) => updateField("surname", value)}
         />
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-2 grid grid-cols-2 gap-2">
         <ReviewField
           candidate={candidate}
           field="dateOfBirth"
           label="Data di nascita"
+          disabled={disabled}
           max={courseStartDate}
           onChange={(value) => updateField("dateOfBirth", value)}
           type="date"
@@ -138,12 +164,13 @@ function CandidateCard({
           field="phone"
           inputMode="tel"
           label="Telefono"
+          disabled={disabled}
           onChange={(value) => updateField("phone", value)}
           type="tel"
         />
       </div>
 
-      <fieldset className="mt-3 grid gap-2 text-sm font-bold">
+      <fieldset className="mt-2 grid gap-1.5 text-sm font-bold">
         <legend>Sesso</legend>
         <div className="grid grid-cols-3 gap-2">
           {STUDENT_SEXES.map((option) => (
@@ -151,12 +178,13 @@ function CandidateCard({
               <input
                 checked={candidate.sex === option.id}
                 className="peer sr-only"
+                disabled={disabled}
                 name={`scan-sex-${candidate.id}`}
                 onChange={() => onChange({ ...candidate, sex: option.id })}
                 type="radio"
                 value={option.id}
               />
-              <span className="grid h-12 place-items-center rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+              <span className="grid h-10 place-items-center rounded-xl border bg-card text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
                 {option.label}
               </span>
             </label>
@@ -178,18 +206,25 @@ export function StudentScan({
   courseStartDate,
   onBack,
   onCommitted,
+  onManualAdd = onBack,
   scan = scanStudents,
 }: {
   courseId: string
   courseStartDate: string
   onBack: () => void
   onCommitted: () => void
+  onManualAdd?: () => void
   scan?: (
     image: Blob,
     onProgress?: (progress: StudentScanProgress) => void,
   ) => Promise<StudentScanResult>
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryButtonRef = useRef<HTMLButtonElement>(null)
+  const cameraButtonRef = useRef<HTMLButtonElement>(null)
+  const scanGenerationRef = useRef(0)
+  const saveInFlightRef = useRef(false)
   const [state, setState] = useState<ScanState>("idle")
   const [progress, setProgress] = useState<StudentScanProgress>({
     phase: "loading",
@@ -199,6 +234,7 @@ export function StudentScan({
   const [candidates, setCandidates] = useState<ReviewCandidate[]>([])
   const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set())
   const [saveError, setSaveError] = useState(false)
+  const [acquisition, setAcquisition] = useState<Acquisition>()
 
   useEffect(() => {
     return () => {
@@ -206,11 +242,29 @@ export function StudentScan({
     }
   }, [previewUrl])
 
-  function chooseAnother() {
-    inputRef.current?.click()
+  useEffect(
+    () => () => {
+      scanGenerationRef.current += 1
+    },
+    [],
+  )
+
+  function chooseAnother(source: "camera" | "gallery") {
+    if (source === "camera") cameraInputRef.current?.click()
+    else galleryInputRef.current?.click()
   }
 
-  async function handleImage(file: File) {
+  function closeAcquisition() {
+    const source = acquisition?.source
+    setAcquisition(undefined)
+    window.requestAnimationFrame(() => {
+      if (source === "camera") cameraButtonRef.current?.focus()
+      else galleryButtonRef.current?.focus()
+    })
+  }
+
+  async function handleImage(file: Blob) {
+    const generation = ++scanGenerationRef.current
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl(URL.createObjectURL(file))
     setState("scanning")
@@ -219,7 +273,12 @@ export function StudentScan({
     setInvalidIds(new Set())
     setSaveError(false)
     try {
-      const result = await scan(file, setProgress)
+      const result = await scan(file, (nextProgress) => {
+        if (scanGenerationRef.current === generation) {
+          setProgress(nextProgress)
+        }
+      })
+      if (scanGenerationRef.current !== generation) return
       if (result.unsuitable) {
         setState("unsuitable")
         return
@@ -232,28 +291,26 @@ export function StudentScan({
       )
       setState("review")
     } catch {
+      if (scanGenerationRef.current !== generation) return
       setState("error")
     } finally {
-      setPreviewUrl(undefined)
+      if (scanGenerationRef.current === generation) {
+        setPreviewUrl(undefined)
+      }
     }
   }
 
   async function commitCandidates() {
+    if (saveInFlightRef.current) return
     const invalid = new Set(
       candidates
-        .filter(
-          ({ firstName, surname, dateOfBirth, sex }) =>
-            !firstName.trim() ||
-            !surname.trim() ||
-            !dateOfBirth ||
-            dateOfBirth > courseStartDate ||
-            !sex,
-        )
+        .filter((candidate) => !candidateIsReady(candidate, courseStartDate))
         .map(({ id }) => id),
     )
     setInvalidIds(invalid)
     if (invalid.size > 0 || candidates.length === 0) return
 
+    saveInFlightRef.current = true
     setState("saving")
     setSaveError(false)
     const inputs: StudentInput[] = candidates.map((candidate) => ({
@@ -266,49 +323,90 @@ export function StudentScan({
     }))
     try {
       await createStudents(courseId, inputs)
-      onCommitted()
     } catch {
+      saveInFlightRef.current = false
       setState("review")
       setSaveError(true)
+      return
     }
+    onCommitted()
   }
 
   const progressPercent = Math.round(progress.value * 100)
+  const missingFields = candidates.reduce(
+    (total, candidate) =>
+      total +
+      Number(!candidate.firstName.trim()) +
+      Number(!candidate.surname.trim()) +
+      Number(!candidate.dateOfBirth) +
+      Number(!candidate.sex),
+    0,
+  )
+  const rowsToReview = candidates.filter(
+    (candidate) =>
+      !candidate.firstName.trim() ||
+      !candidate.surname.trim() ||
+      !candidate.dateOfBirth ||
+      !candidate.sex ||
+      (["firstName", "surname", "dateOfBirth", "phone"] as const).some(
+        (field) => needsReview(candidate, field),
+      ),
+  ).length
+  const readyStudents = candidates.filter((candidate) =>
+    candidateIsReady(candidate, courseStartDate),
+  ).length
+
+  function acquisitionInput(
+    ref: React.RefObject<HTMLInputElement | null>,
+    source: "camera" | "gallery",
+  ) {
+    return (
+      <input
+        accept="image/*"
+        aria-label={
+          source === "camera"
+            ? "Scatta foto dell’elenco allievi"
+            : "Scegli foto dell’elenco allievi dalla galleria"
+        }
+        capture={source === "camera" ? "environment" : undefined}
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ""
+          if (file) setAcquisition({ file, source })
+        }}
+        ref={ref}
+        type="file"
+      />
+    )
+  }
 
   return (
     <>
-      <div className="mb-4 flex items-center gap-1">
+      <div className="mb-4 flex min-w-0 items-center gap-[4px]">
         <button
           aria-label="Indietro da Scan allievi"
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
           onClick={onBack}
           type="button"
         >
           <ChevronLeft aria-hidden="true" className="size-5" />
         </button>
-        <div>
-          <h1 className="text-2xl font-black tracking-tight">Scan allievi</h1>
-          <p className="text-xs text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-black tracking-tight">
+            Scan allievi
+          </h1>
+          <p className="[overflow-wrap:anywhere] text-xs text-muted-foreground">
             Foto o screenshot · revisione obbligatoria
           </p>
         </div>
       </div>
 
-      <input
-        accept="image/*"
-        aria-label="Foto o screenshot degli allievi"
-        className="sr-only"
-        onChange={(event) => {
-          const file = event.target.files?.[0]
-          event.target.value = ""
-          if (file) void handleImage(file)
-        }}
-        ref={inputRef}
-        type="file"
-      />
+      {acquisitionInput(galleryInputRef, "gallery")}
+      {acquisitionInput(cameraInputRef, "camera")}
 
       {(state === "idle" || state === "error") && (
-        <section className="rounded-3xl border bg-card p-5 text-center shadow-[0_12px_32px_rgb(6_59_82/0.07)]">
+        <section className="rounded-3xl border bg-card [padding:clamp(8px,4vw,20px)] text-center shadow-[0_12px_32px_rgb(6_59_82/0.07)]">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted text-primary">
             <Camera aria-hidden="true" className="size-7" />
           </span>
@@ -325,14 +423,35 @@ export function StudentScan({
               Non sono riuscito ad analizzare l’immagine. Riprova.
             </p>
           )}
-          <Button
-            className="mt-5 w-full"
-            onClick={() => inputRef.current?.click()}
-            size="lg"
-          >
-            <ImagePlus aria-hidden="true" className="size-5" />
-            Scatta o scegli immagine
-          </Button>
+          <div className="mt-5 grid gap-2">
+            <Button
+              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+              onClick={() => chooseAnother("camera")}
+              ref={cameraButtonRef}
+              size="lg"
+            >
+              <Camera aria-hidden="true" className="size-5" />
+              Fai una foto
+            </Button>
+            <Button
+              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+              onClick={() => chooseAnother("gallery")}
+              ref={galleryButtonRef}
+              size="lg"
+              variant="secondary"
+            >
+              <ImagePlus aria-hidden="true" className="size-5" />
+              Scegli dalla galleria
+            </Button>
+            <Button
+              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+              onClick={onManualAdd}
+              variant="secondary"
+            >
+              <UserPlus aria-hidden="true" className="size-5" />
+              Inserisci manualmente
+            </Button>
+          </div>
         </section>
       )}
 
@@ -377,7 +496,7 @@ export function StudentScan({
 
       {state === "unsuitable" && (
         <section
-          className="rounded-3xl border border-[#f79009] bg-card p-5 shadow-[0_12px_32px_rgb(6_59_82/0.07)]"
+          className="rounded-3xl border border-[#f79009] bg-card [padding:clamp(8px,4vw,20px)] shadow-[0_12px_32px_rgb(6_59_82/0.07)]"
           role="alert"
         >
           <span className="grid size-12 place-items-center rounded-2xl bg-[#fff4e5] text-[#a2381b]">
@@ -388,21 +507,80 @@ export function StudentScan({
             Riprova con il foglio intero, a fuoco, dritto e senza riflessi. Non
             ho preparato dati incerti da salvare.
           </p>
-          <Button className="mt-5 w-full" onClick={chooseAnother} size="lg">
-            <ImagePlus aria-hidden="true" className="size-5" />
-            Scegli un’altra immagine
-          </Button>
+          <div className="mt-5 grid gap-2">
+            <Button
+              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+              onClick={() => chooseAnother("camera")}
+              ref={cameraButtonRef}
+              size="lg"
+            >
+              <Camera aria-hidden="true" className="size-5" />
+              Rifai la foto
+            </Button>
+            <Button
+              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+              onClick={() => chooseAnother("gallery")}
+              ref={galleryButtonRef}
+              size="lg"
+              variant="secondary"
+            >
+              <ImagePlus aria-hidden="true" className="size-5" />
+              Scegli dalla galleria
+            </Button>
+            <Button
+              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+              onClick={onManualAdd}
+              variant="secondary"
+            >
+              <UserPlus aria-hidden="true" className="size-5" />
+              Inserisci manualmente
+            </Button>
+          </div>
         </section>
       )}
 
       {(state === "review" || state === "saving") && (
         <form
+          aria-busy={state === "saving"}
           onSubmit={(event) => {
             event.preventDefault()
             void commitCandidates()
           }}
         >
-          <section className="mb-3 rounded-2xl border bg-primary/5 p-4">
+          <section
+            aria-label="Stato revisione scansione"
+            aria-live="polite"
+            className="sticky top-0 z-30 mb-3 grid grid-cols-3 gap-1.5 rounded-2xl border bg-background/95 p-2 shadow-[0_8px_24px_rgb(6_59_82/0.1)] backdrop-blur"
+          >
+            <div className="rounded-xl bg-muted px-1.5 py-2 text-center">
+              <strong className="block text-lg leading-none">
+                {rowsToReview}
+              </strong>
+              <span className="mt-1 block text-[0.62rem] leading-3 text-muted-foreground">
+                righe da controllare
+              </span>
+            </div>
+            <div
+              className={`rounded-xl px-1.5 py-2 text-center ${missingFields ? "bg-[#fff4e5]" : "bg-[#e9f7ef]"}`}
+            >
+              <strong className="block text-lg leading-none">
+                {missingFields}
+              </strong>
+              <span className="mt-1 block text-[0.62rem] leading-3 text-muted-foreground">
+                campi da completare
+              </span>
+            </div>
+            <div className="rounded-xl bg-primary/10 px-1.5 py-2 text-center">
+              <strong className="block text-lg leading-none">
+                {readyStudents}
+              </strong>
+              <span className="mt-1 block text-[0.62rem] leading-3 text-muted-foreground">
+                allievi pronti
+              </span>
+            </div>
+          </section>
+
+          <section className="mb-3 rounded-2xl border bg-primary/5 p-3">
             <div className="flex items-start gap-3">
               <FileCheck2
                 aria-hidden="true"
@@ -423,6 +601,7 @@ export function StudentScan({
               <CandidateCard
                 candidate={candidate}
                 courseStartDate={courseStartDate}
+                disabled={state === "saving"}
                 index={index}
                 invalid={invalidIds.has(candidate.id)}
                 key={candidate.id}
@@ -458,27 +637,43 @@ export function StudentScan({
             </p>
           )}
 
-          <div className="mt-4 grid grid-cols-[auto_1fr] gap-2">
+          <div className="mt-4 grid grid-cols-[48px_minmax(0,1fr)] gap-[8px] pb-2">
             <Button
               aria-label="Scegli un’altra immagine"
-              className="size-12 px-0"
-              onClick={chooseAnother}
+              className="size-[48px] px-0"
+              disabled={state === "saving"}
+              onClick={() => chooseAnother("gallery")}
               type="button"
               variant="secondary"
             >
               <ImagePlus aria-hidden="true" className="size-5" />
             </Button>
             <Button
+              className="h-auto min-h-[48px] min-w-0 [overflow-wrap:anywhere] px-[8px] py-[8px]"
               disabled={state === "saving" || candidates.length === 0}
               size="lg"
               type="submit"
             >
               {state === "saving"
                 ? "Aggiunta…"
-                : `Aggiungi ${candidates.length} ${candidates.length === 1 ? "allievo" : "allievi"}`}
+                : saveError
+                  ? "Riprova inserimento"
+                  : `Aggiungi ${candidates.length} ${candidates.length === 1 ? "allievo" : "allievi"}`}
             </Button>
           </div>
         </form>
+      )}
+
+      {acquisition && (
+        <StudentScanImageEditor
+          file={acquisition.file}
+          onCancel={closeAcquisition}
+          onUse={(image) => {
+            setAcquisition(undefined)
+            void handleImage(image)
+          }}
+          source={acquisition.source}
+        />
       )}
     </>
   )

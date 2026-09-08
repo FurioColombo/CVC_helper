@@ -1,6 +1,5 @@
 import type { StudentSex } from "@/domain/config"
 
-export const MIN_SCAN_CONFIDENCE = 60
 export const MIN_FIELD_CONFIDENCE = 70
 
 export type StudentScanField = "firstName" | "surname" | "dateOfBirth" | "phone"
@@ -87,9 +86,32 @@ const MALE_NAMES = new Set([
   "stefano",
 ])
 
-const DATE_PATTERN = /\b(\d{2})[./-](\d{2})[./-](\d{4})\b/
+const DATE_PATTERN = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/
 const PHONE_PATTERN = /(?:\+?39[ .-]*)?(?:\d[ .-]*){9,10}/
 const NON_NAME_CHARACTERS = /[^\p{L}'’ -]/gu
+const STUDENT_SECTION_PATTERN =
+  /\b(?:alliev[ioea]|student(?:e|i|essa|esse)|partecipanti)\b/u
+const PERSONNEL_SECTION_PATTERN =
+  /\b(?:personale|staff|istruttr(?:ore|ori|ice|ici)|assistent[ei]|volontari[eo]?|segreteria)\b/u
+const NON_STUDENT_LINE_PATTERN =
+  /\b(?:centro\s+velico|cvc|caprera|corso|settimana|elenco|foglio|pagina|pag\.?|stampa|stampat[oa]|generat[oa]|contatti?|informazioni|telefono|cellulare|nascita|cognome|nome|firma|note|totale)\b/u
+const PERSONNEL_ROW_PREFIX_PATTERN =
+  /^(?:adv|is|ct|istruttore|istruttrice|assistente|responsabile|coordinatore|coordinatrice|capocorso|direttore|direttrice|segreteria|staff)\b/u
+const NON_NAME_TOKENS = new Set([
+  "attivo",
+  "attiva",
+  "confermato",
+  "confermata",
+  "iscritto",
+  "iscritta",
+  "presente",
+  "ok",
+  "m",
+  "f",
+  "altro",
+  "si",
+  "sì",
+])
 
 function inferSex(firstName: string): StudentSex | null {
   const normalized = firstName.trim().toLocaleLowerCase("it")
@@ -101,7 +123,10 @@ function inferSex(firstName: string): StudentSex | null {
 function normalizeDate(match: RegExpMatchArray | null) {
   if (!match) return ""
   const [, day, month, year] = match
-  const iso = `${year}-${month}-${day}`
+  if (!day || !month || !year) return ""
+  const paddedDay = day.padStart(2, "0")
+  const paddedMonth = month.padStart(2, "0")
+  const iso = `${year}-${paddedMonth}-${paddedDay}`
   const parsed = new Date(`${iso}T00:00:00Z`)
   if (
     Number.isNaN(parsed.getTime()) ||
@@ -128,14 +153,27 @@ function confidenceForRange(line: RecognizedLine, start: number, end: number) {
   )
 }
 
-function parseTsv(tsv: string | null, fallbackText: string) {
+function normalizeLineText(value: string) {
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase("it")
+    .replace(/[’']/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function parseTsv(
+  tsv: string | null,
+  fallbackText: string,
+  fallbackConfidence: number,
+) {
   if (!tsv) {
     return fallbackText
       .split(/\r?\n/)
       .map((text, index) => ({
         id: String(index),
         text: text.trim(),
-        confidence: 0,
+        confidence: fallbackConfidence,
         words: [],
       }))
       .filter(({ text }) => text.length > 0)
@@ -178,39 +216,87 @@ function parseTsv(tsv: string | null, fallbackText: string) {
   })
 }
 
+interface TextRange {
+  start: number
+  end: number
+}
+
+function overlapsRange(word: RecognizedWord, range: TextRange) {
+  return word.end > range.start && word.start < range.end
+}
+
+function namePartsOutsideRanges(line: RecognizedLine, ranges: TextRange[]) {
+  if (line.words.length > 0) {
+    return line.words.flatMap((word) => {
+      if (ranges.some((range) => overlapsRange(word, range))) return []
+      return word.text
+        .replace(NON_NAME_CHARACTERS, " ")
+        .split(/\s+/)
+        .map((text) => text.trim())
+        .filter(
+          (text) =>
+            text.length > 0 &&
+            !NON_NAME_TOKENS.has(text.toLocaleLowerCase("it")),
+        )
+        .map((text) => ({ text, confidence: word.confidence }))
+    })
+  }
+
+  let unstructuredText = line.text
+  for (const range of [...ranges].sort(
+    (left, right) => right.start - left.start,
+  )) {
+    unstructuredText = `${unstructuredText.slice(0, range.start)} ${unstructuredText.slice(range.end)}`
+  }
+  return unstructuredText
+    .replace(NON_NAME_CHARACTERS, " ")
+    .split(/\s+/)
+    .map((text) => text.trim())
+    .filter(
+      (text) =>
+        text.length > 0 && !NON_NAME_TOKENS.has(text.toLocaleLowerCase("it")),
+    )
+    .map((text) => ({ text, confidence: line.confidence }))
+}
+
+function isObviousNonStudentLine(line: RecognizedLine) {
+  const normalized = normalizeLineText(line.text)
+  return (
+    normalized.length === 0 ||
+    NON_STUDENT_LINE_PATTERN.test(normalized) ||
+    PERSONNEL_ROW_PREFIX_PATTERN.test(normalized)
+  )
+}
+
 function candidateFromLine(line: RecognizedLine) {
   const dateMatch = line.text.match(DATE_PATTERN)
-  const phoneSearchText = dateMatch
-    ? `${line.text.slice(0, dateMatch.index)} ${line.text.slice(
-        (dateMatch.index ?? 0) + dateMatch[0].length,
-      )}`
-    : line.text
+  const dateStart = dateMatch?.index ?? -1
+  const phoneSearchText =
+    dateMatch && dateStart >= 0
+      ? `${line.text.slice(0, dateStart)}${"#".repeat(dateMatch[0].length)}${line.text.slice(dateStart + dateMatch[0].length)}`
+      : line.text
   const phoneMatch = phoneSearchText.match(PHONE_PATTERN)
-  const phoneInOriginal = phoneMatch
-    ? line.text.indexOf(phoneMatch[0], (dateMatch?.index ?? -1) + 1)
-    : -1
-
-  if (!dateMatch && !phoneMatch) return null
-
-  const fieldStart = Math.min(
-    dateMatch?.index ?? Number.POSITIVE_INFINITY,
-    phoneInOriginal >= 0 ? phoneInOriginal : Number.POSITIVE_INFINITY,
-  )
-  const rawName = line.text
-    .slice(0, Number.isFinite(fieldStart) ? fieldStart : undefined)
-    .replace(NON_NAME_CHARACTERS, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-  const nameParts = rawName.split(" ").filter(Boolean)
-  const firstName = nameParts[0] ?? ""
-  const surname = nameParts.slice(1).join(" ")
-  const firstNameEnd = firstName.length
-  const firstNameConfidence = firstName
-    ? confidenceForRange(line, 0, firstNameEnd)
-    : 0
-  const surnameStart = rawName.indexOf(surname)
+  const phoneStart = phoneMatch?.index ?? -1
+  const structuredRanges = [
+    dateMatch && dateStart >= 0
+      ? { start: dateStart, end: dateStart + dateMatch[0].length }
+      : null,
+    phoneMatch && phoneStart >= 0
+      ? { start: phoneStart, end: phoneStart + phoneMatch[0].length }
+      : null,
+  ].filter((range): range is TextRange => Boolean(range))
+  const nameParts = namePartsOutsideRanges(line, structuredRanges)
+  const firstName = nameParts[0]?.text ?? ""
+  const surname = nameParts
+    .slice(1)
+    .map(({ text }) => text)
+    .join(" ")
+  const firstNameConfidence = nameParts[0]?.confidence ?? 0
   const surnameConfidence = surname
-    ? confidenceForRange(line, surnameStart, surnameStart + surname.length)
+    ? average(
+        nameParts.slice(1).map(({ confidence }) => confidence),
+        line.confidence,
+      )
     : 0
   const dateConfidence = dateMatch
     ? confidenceForRange(
@@ -220,12 +306,8 @@ function candidateFromLine(line: RecognizedLine) {
       )
     : 0
   const phoneConfidence =
-    phoneMatch && phoneInOriginal >= 0
-      ? confidenceForRange(
-          line,
-          phoneInOriginal,
-          phoneInOriginal + phoneMatch[0].length,
-        )
+    phoneMatch && phoneStart >= 0
+      ? confidenceForRange(line, phoneStart, phoneStart + phoneMatch[0].length)
       : 0
   const normalizedDate = normalizeDate(dateMatch)
 
@@ -236,7 +318,7 @@ function candidateFromLine(line: RecognizedLine) {
     phone: phoneConfidence,
   }
 
-  return {
+  const candidate = {
     sourceId: line.id,
     firstName: confidence.firstName >= MIN_FIELD_CONFIDENCE ? firstName : "",
     surname: confidence.surname >= MIN_FIELD_CONFIDENCE ? surname : "",
@@ -250,22 +332,31 @@ function candidateFromLine(line: RecognizedLine) {
       confidence.firstName >= MIN_FIELD_CONFIDENCE ? inferSex(firstName) : null,
     confidence,
   } satisfies StudentScanCandidate
+
+  const hasReliableName = Boolean(candidate.firstName || candidate.surname)
+  const hasReliableDate = Boolean(candidate.dateOfBirth)
+  if (!hasReliableName && !hasReliableDate) return null
+  if (!dateMatch && !phoneMatch && nameParts.length < 2) return null
+  return candidate
 }
 
 export function extractStudentCandidates(page: OcrPage): StudentScanResult {
-  if (page.confidence < MIN_SCAN_CONFIDENCE) {
-    return {
-      aggregateConfidence: page.confidence,
-      candidates: [],
-      unsuitable: true,
+  const candidates: StudentScanCandidate[] = []
+  let inPersonnelSection = false
+  for (const line of parseTsv(page.tsv, page.text, page.confidence)) {
+    const normalized = normalizeLineText(line.text)
+    if (STUDENT_SECTION_PATTERN.test(normalized)) {
+      inPersonnelSection = false
+      continue
     }
+    if (PERSONNEL_SECTION_PATTERN.test(normalized)) {
+      inPersonnelSection = true
+      continue
+    }
+    if (inPersonnelSection || isObviousNonStudentLine(line)) continue
+    const candidate = candidateFromLine(line)
+    if (candidate) candidates.push(candidate)
   }
-
-  const candidates = parseTsv(page.tsv, page.text)
-    .map(candidateFromLine)
-    .filter((candidate): candidate is StudentScanCandidate =>
-      Boolean(candidate),
-    )
 
   return {
     aggregateConfidence: page.confidence,

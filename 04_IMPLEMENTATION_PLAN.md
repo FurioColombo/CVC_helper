@@ -300,7 +300,7 @@ the final release gate.
 ## U04 — Student scan and review
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 

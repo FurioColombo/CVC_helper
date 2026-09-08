@@ -930,6 +930,7 @@ export function StudentManagement({
           void refreshStudents()
           setScreen({ kind: "list" })
         }}
+        onManualAdd={() => setScreen({ kind: "create" })}
       />
     )
   }

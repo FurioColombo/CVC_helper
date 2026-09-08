@@ -1,0 +1,87 @@
+import path from "node:path"
+
+import { expect, test } from "@playwright/test"
+
+const CLEAR_ROSTER = path.resolve(".evidence/M0/ocr-sheet-clear.png")
+
+async function openScan(page: import("@playwright/test").Page) {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await page.getByRole("button", { name: "Scan allievi" }).click()
+}
+
+test("keeps acquisition and adjustment usable on compact screens", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 664 })
+  await openScan(page)
+
+  await expect(page.getByRole("button", { name: "Fai una foto" })).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Scegli dalla galleria" }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Inserisci manualmente" }),
+  ).toBeVisible()
+  await expect(page.locator("html")).toHaveJSProperty("scrollLeft", 0)
+
+  await page
+    .getByLabel("Scegli foto dell’elenco allievi dalla galleria")
+    .setInputFiles(CLEAR_ROSTER)
+  const dialog = page.getByRole("dialog", { name: "Raddrizza e ritaglia foto" })
+  await expect(dialog).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Usa questa area" }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", {
+      name: "Ridimensiona ritaglio dall’angolo in basso a destra",
+    }),
+  ).toBeVisible()
+  await page.getByLabel("Rotazione foto da meno 180 a 180 gradi").fill("-23")
+  await expect(page.getByText("-23°")).toBeVisible()
+  await page.getByRole("group", { name: /Area di ritaglio/ }).press("ArrowDown")
+  await page.screenshot({
+    fullPage: true,
+    path: path.resolve(`.evidence/U04/editor-${testInfo.project.name}.png`),
+  })
+
+  const overflow = await page.evaluate(() => ({
+    document:
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
+    dialog:
+      (document.querySelector('[role="dialog"]')?.scrollWidth ?? 0) -
+      (document.querySelector('[role="dialog"]')?.clientWidth ?? 0),
+  }))
+  expect(overflow.document).toBeLessThanOrEqual(0)
+  expect(overflow.dialog).toBeLessThanOrEqual(0)
+
+  await page.getByRole("button", { name: "Chiudi regolazione foto" }).click()
+  await expect(
+    page.getByRole("button", { name: "Scegli dalla galleria" }),
+  ).toBeFocused()
+})
+
+test("keeps scan entry readable at 200 percent text", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 664 })
+  await openScan(page)
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" })
+
+  for (const name of [
+    "Fai una foto",
+    "Scegli dalla galleria",
+    "Inserisci manualmente",
+  ]) {
+    await expect(page.getByRole("button", { name })).toBeVisible()
+  }
+  const overflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
+  )
+  expect(overflow).toBeLessThanOrEqual(0)
+})

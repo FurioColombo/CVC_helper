@@ -88,9 +88,14 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,wasm,woff2}"],
-        globIgnores: ["**/ort-wasm-*.wasm", "ocr/**"],
-        maximumFileSizeToCacheInBytes: 3_000_000,
+        // OCR is a first-use capability. Keep every local worker, language
+        // model and core variant in the install precache so a newly installed
+        // app can scan its first roster without a network round trip.
+        globPatterns: ["**/*.{js,css,html,wasm,woff2,gz}"],
+        globIgnores: ["**/ort-wasm-*.wasm"],
+        // The largest local OCR core is ~3.9 MB. Keep a small margin while
+        // still making unexpectedly large assets visible in the build.
+        maximumFileSizeToCacheInBytes: 4_500_000,
         runtimeCaching: [
           {
             urlPattern: /\/ocr\//,
