@@ -1,0 +1,68 @@
+{
+  "milestone": "U04",
+  "status": "PASS_WITH_DEFERRED_DEVICE_OBSERVATIONS",
+  "recordedAt": "2026-09-08",
+  "gitCommit": "e5b2bdf8ebf25d80519c1a5dd47d38b64d5d4ccb",
+  "engine": {
+    "name": "Tesseract.js",
+    "version": "7.0.0",
+    "language": "ita",
+    "execution": "local-only",
+    "fieldConfidenceThreshold": 70
+  },
+  "corpus": {
+    "privacy": "anonymous synthetic names and data only",
+    "rasterFixtures": [
+      ".evidence/M0/ocr-sheet-clear.png",
+      ".evidence/M0/ocr-sheet-blurred.png"
+    ],
+    "structuredCases": 8,
+    "coveredLayoutsAndRisks": [
+      "ordinary four-column roster and multiword surname",
+      "phone and date before the name",
+      "short-form date and status columns",
+      "missing and low-confidence fields",
+      "name-only and date-only adjacent lines kept separate",
+      "headers, contacts, footers and personnel sections",
+      "poor low-confidence source"
+    ]
+  },
+  "metrics": {
+    "typicalReadableFields": 34,
+    "typicalCorrectFieldsAttachedToCorrectPerson": 34,
+    "typicalMissingReadableFields": 0,
+    "typicalWrongNonEmptyFields": 0,
+    "typicalFieldPersonAccuracyPercent": 100,
+    "clearRasterPeopleExpected": 3,
+    "clearRasterPeopleMatched": 3,
+    "clearRasterFieldsExpected": 12,
+    "clearRasterFieldsCorrect": 12,
+    "falseCandidatesInPersonnelFooterCase": 0,
+    "poorRasterCorrectlyRejected": true
+  },
+  "safetyBehavior": [
+    "Low-confidence fields are blanked independently while reliable partial fields survive.",
+    "Adjacent partial rows are never merged by guesswork.",
+    "A phone-only row is not treated as a person anchor.",
+    "Any uncertain non-empty required value must be explicitly edited before commit.",
+    "False rows remain removable in mandatory review and removed rows are not persisted.",
+    "Source images and adjusted blobs are transient and never enter persisted course state."
+  ],
+  "automatedEvidence": [
+    "src/capabilities/studentScan.test.ts: 8 parser and confidence cases",
+    "tests/e2e/student-scan.spec.ts: real clear/poor raster, correction, removal, commit and reload",
+    "scripts/check-ocr-offline.mjs: production first scan while offline",
+    "src/features/students/StudentScan.test.tsx: save failure/retry, one in-flight commit and review locking"
+  ],
+  "physicalDeviceChecks": {
+    "status": "DEFERRED_TO_UG1",
+    "authorizedBy": "human instruction on 2026-09-08 to continue and validate later",
+    "requiredBeforeRelease": [
+      "Android Chrome native rear-camera permission and full-screen capture",
+      "iPhone Safari native camera/gallery choice and EXIF orientation",
+      "free rotation/crop, review, correction, commit and reload on each phone",
+      "confirmation that no source photo remains in application data after reload"
+    ]
+  },
+  "interpretation": "The measured 100% applies only to the fixed anonymous corpus and is not a claim of universal photo accuracy. Variable lighting, glare, handwritten marks and physical-camera behavior remain for UG1 observation; poor sources must continue to use retake or manual entry."
+}

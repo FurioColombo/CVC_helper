@@ -1,0 +1,65 @@
+{
+  "milestone": "U04",
+  "status": "PASS_WITH_FINDINGS",
+  "recordedAt": "2026-09-08",
+  "targetRevision": "approved P06 mock and 0.2.0 scan contract",
+  "gitCommit": "e5b2bdf8ebf25d80519c1a5dd47d38b64d5d4ccb",
+  "runtime": {
+    "playwright": "1.62.1",
+    "projects": ["pixel-7-chrome", "iphone-13-viewport", "iphone-13-webkit-core"]
+  },
+  "journeys": [
+    {
+      "command": "Playwright u04-scan-ui.spec.ts",
+      "status": "PASS",
+      "result": "Current HEAD: 4 Chromium tests passed; WebKit core: 2 tests passed at U04 implementation checkpoint 327c59e",
+      "coverage": [
+        "separate camera, gallery and manual-entry actions",
+        "rear-camera capture intent and full-screen labelled adjustment dialog",
+        "free -180 to 180 degree rotation and pointer/keyboard crop movement",
+        "Escape/cancel and opener-focus restoration",
+        "320x664 layout and 200% text without horizontal overflow",
+        "Android-like Chromium and iPhone-like Chromium at current HEAD",
+        "WebKit core at implementation checkpoint 327c59e; current rerun was killed by the host for memory before interaction"
+      ]
+    },
+    {
+      "command": "Playwright student-scan.spec.ts focused project runs",
+      "status": "PASS",
+      "result": "Pixel 7 Chrome passed; iPhone 13 Chromium viewport passed",
+      "coverage": [
+        "real adjusted canvas blob reaches local Tesseract",
+        "poor image is rejected without fabricated candidates",
+        "clear image extracts 3 people and 12 correctly associated fields",
+        "sticky counters update after correction and row removal",
+        "uncertain fields require explicit review before commit",
+        "review cards and submit row reflow at 320px with 200% text",
+        "keyboard focus remains below the sticky counters at stress width and 200% text",
+        "image confirmation remains active under React Strict Mode",
+        "explicit commit persists only corrected retained rows and survives reload"
+      ]
+    },
+    {
+      "command": "npm run check:ocr-offline",
+      "status": "PASS",
+      "result": "installed production PWA completed its first scan with network access blocked",
+      "coverage": [
+        "service worker controls the page before offline transition",
+        "uncached network probe fails",
+        "app shell, worker, Italian model and OCR core load locally",
+        "3 of 3 people remain correctly associated"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U04/editor-pixel-7-chrome.png",
+    ".evidence/U04/editor-iphone-13-viewport.png",
+    ".evidence/U04/editor-iphone-13-webkit-core.png",
+    ".evidence/U04/review-iphone13.png"
+  ],
+  "limitations": [
+    "Native camera permission and capture behavior require physical Android Chrome and iPhone Safari observations. The human deferred these checks to UG1; they remain a release blocker.",
+    "The current-host WebKit rerun could not start the interaction because its runner/browser process was terminated for memory. The same UI matrix passed at checkpoint 327c59e, and the corrective HEAD changes are covered by StrictMode unit tests plus Pixel and iPhone Chromium E2E.",
+    "At 200% text the sticky counters can cover nearby non-focused card content while scrolling; focus scroll margins keep the active control clear."
+  ]
+}

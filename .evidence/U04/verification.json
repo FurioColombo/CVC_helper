@@ -1,0 +1,26 @@
+{
+  "milestone": "U04",
+  "status": "PASS",
+  "recordedAt": "2026-09-08T19:16:12.936Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.1.0",
+  "gitCommit": "e5b2bdf8ebf25d80519c1a5dd47d38b64d5d4ccb",
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-09-08T19:13:09.907Z",
+      "durationMs": 174015,
+      "exitCode": 0,
+      "outputTail": "(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\nPWA v1.3.0\nmode      generateSW\nprecache  30 entries (22206.28 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-398fc23b.js\nPASS: built PWA manifest, icons, service worker and 5 precached OCR assets"
+    },
+    {
+      "command": "npm run check:ocr-offline",
+      "status": "PASS",
+      "startedAt": "2026-09-08T19:16:03.923Z",
+      "durationMs": 9012,
+      "exitCode": 0,
+      "outputTail": "> cvc-helper@0.1.0 check:ocr-offline\n> node scripts/check-ocr-offline.mjs\n\nPASS: installed PWA completed its first local OCR scan while offline (3/3 people correctly associated)"
+    }
+  ]
+}

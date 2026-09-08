@@ -300,7 +300,7 @@ the final release gate.
 ## U04 — Student scan and review
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -327,7 +327,18 @@ removal, commit, reload and poor-image recovery pass on the target phone.
 
 ### Completion log
 
-Pending.
+Implemented separate native camera/gallery acquisition, full-screen arbitrary
+rotation and crop, compact mandatory review with live counters, conservative
+partial-field extraction, false-row filtering/removal, guarded retryable commit
+and transient image handling. The bounded anonymous corpus reports 34/34
+readable fields attached to the correct person; the real poor raster is rejected.
+The installed production PWA completes its first OCR scan offline. Android-like
+and iPhone-like Chromium pass at the corrective HEAD at 320 px and 200% text,
+including focus clearance below the sticky counters. WebKit passed the same U04
+matrix at implementation checkpoint `327c59e`; the current-host rerun was killed
+for memory before interaction. Image confirmation is also covered under React
+Strict Mode. By explicit human instruction on 2026-09-08, physical Android Chrome
+and iPhone Safari observations move to UG1 and remain a hard release blocker.
 
 ## U05 — Boats and course availability
 
@@ -549,8 +560,9 @@ Validate a realistic complete week upgraded from 0.1.0 and prepare release 0.2.0
 - Complete functional, field-UX/accessibility, data-integrity, regression, scope
   and code-quality reviews; zero blockers.
 - Complete the deferred U03 physical microphone checklist on PC, Android and
-  iPhone. Record a dedicated physical-device review; automated fixtures do not
-  satisfy this release check.
+  iPhone, plus native camera/gallery, orientation, crop, OCR review and source
+  photo disposal checks on Android Chrome and iPhone Safari. Record a dedicated
+  physical-device review; automated fixtures do not satisfy this release check.
 - Set package/lock to 0.2.0, create concise `CHANGELOG.md`, update this log and make
   a clean release checkpoint. A Git tag is created only when the release is
   actually declared.
@@ -559,7 +571,8 @@ Validate a realistic complete week upgraded from 0.1.0 and prepare release 0.2.0
   `field-ux-review.json`, `data-integrity-review.json`,
   `regression-review.json`, `scope-review.json`, `code-quality-review.json`.
   Also require `physical-device-review.json`, which inspects the deferred U03
-  device evidence in `.evidence/U03/speech-device-evidence.json`.
+  device evidence in `.evidence/U03/speech-device-evidence.json` and the deferred
+  U04 checks in `.evidence/U04/ocr-quality-evidence.json`.
 
 ### Acceptance criteria
 

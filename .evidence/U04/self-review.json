@@ -1,0 +1,46 @@
+{
+  "milestone": "U04",
+  "verdict": "PASS_WITH_FINDINGS",
+  "gitCommit": "e5b2bdf8ebf25d80519c1a5dd47d38b64d5d4ccb",
+  "blockers": [],
+  "importantFindings": [
+    "Physical Android Chrome and iPhone Safari camera observations are deferred by explicit human instruction to UG1. They remain mandatory release evidence and automated fixtures do not replace them."
+  ],
+  "qolFindings": [
+    "The production build retains the existing warning for JavaScript chunks over 500 kB.",
+    "The raster corpus has one representative clear layout and one poor-source layout; broader physical variability remains part of UG1 device validation.",
+    "The WebKit matrix passed at checkpoint 327c59e; a current-HEAD rerun was terminated by the host for memory before interaction, while current Pixel and iPhone Chromium journeys pass.",
+    "At 200% text the sticky band can cover nearby non-focused content; focus clearance is verified for active controls."
+  ],
+  "resolvedReviewFindings": [
+    "Uncertain required values no longer count as ready and cannot be committed until explicitly reviewed.",
+    "Review inputs, row removal and image replacement are disabled during persistence.",
+    "An in-flight guard prevents rapid duplicate submission; save failure preserves the edited draft and enables explicit retry.",
+    "Image conversion can be cancelled safely without a late adjusted blob starting OCR.",
+    "Source object URLs are revoked and image blobs never enter persisted student input.",
+    "Reliable partial fields survive independently, while adjacent rows are never joined by guesswork.",
+    "Header, footer, contact and personnel rows are conservatively excluded.",
+    "Entry, editor, review cards and submit controls reflow at 320px and 200% text.",
+    "Focused review controls remain clear of the sticky counter panel at stress width and 200% text.",
+    "The adjusted image result survives React Strict Mode's development effect cycle, covered by component and browser regression tests.",
+    "The production service worker precaches local OCR assets and a first scan succeeds offline."
+  ],
+  "evidenceInspected": [
+    ".evidence/U04/verification.json",
+    ".evidence/U04/browser-evidence.json",
+    ".evidence/U04/ocr-quality-evidence.json",
+    ".evidence/U04/editor-pixel-7-chrome.png",
+    ".evidence/U04/review-iphone13.png",
+    "src/capabilities/studentScan.ts",
+    "src/features/students/StudentScan.tsx",
+    "src/features/students/StudentScanImageEditor.tsx",
+    "tests/e2e/student-scan.spec.ts",
+    "tests/e2e/u04-scan-ui.spec.ts",
+    "scripts/check-built-pwa.mjs",
+    "scripts/check-ocr-offline.mjs",
+    "npm run verify",
+    "npm run check:ocr-offline",
+    "git diff --check"
+  ],
+  "summary": "Independent final review: PASS_WITH_FINDINGS with zero U04 implementation blockers. Physical phone observations remain a hard UG1 release requirement."
+}
