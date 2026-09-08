@@ -226,7 +226,7 @@
       "id": "U01",
       "category": "FEATURE",
       "status": "COMPLETE",
-      "verificationScripts": ["verify", "check:ocr-offline"],
+      "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/U01/verification.json",
         ".evidence/U01/browser-evidence.json",
@@ -263,7 +263,7 @@
       "id": "U04",
       "category": "FEATURE",
       "status": "IN_PROGRESS",
-      "verificationScripts": ["verify"],
+      "verificationScripts": ["verify", "check:ocr-offline"],
       "requiredEvidence": [
         ".evidence/U04/verification.json",
         ".evidence/U04/browser-evidence.json",
