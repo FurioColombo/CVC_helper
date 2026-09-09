@@ -1,7 +1,13 @@
 import { mkdir } from "node:fs/promises"
 import path from "node:path"
 
-import { expect, type Page, test, type TestInfo } from "@playwright/test"
+import {
+  expect,
+  type Locator,
+  type Page,
+  test,
+  type TestInfo,
+} from "@playwright/test"
 
 const LONG_FAULT =
   "Scotta randa sfibrata vicino al bozzello di poppa; controllare il grillo prima dell’uscita e sostituire se necessario."
@@ -36,11 +42,35 @@ function faultCard(page: Page, description: string) {
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
+  const viewport = page.viewportSize()
+  expect(viewport).not.toBeNull()
   expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true)
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(viewport!.width)
+}
+
+async function expectInsideViewportWidth(page: Page, locator: Locator) {
+  await expect(locator).toBeVisible()
+  const box = await locator.boundingBox()
+  const viewport = page.viewportSize()
+  expect(box).not.toBeNull()
+  expect(viewport).not.toBeNull()
+  expect(box!.x).toBeGreaterThanOrEqual(0)
+  expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width)
+}
+
+async function executeSql(page: Page, query: string) {
+  await page.evaluate(async (sql) => {
+    const modulePath = "/src/persistence/db.ts"
+    const { db } = (await import(modulePath)) as {
+      db: {
+        init(): Promise<void>
+        execute(statement: string): Promise<unknown>
+      }
+    }
+    await db.init()
+    await db.execute(sql)
+  }, query)
 }
 
 async function addFault(page: Page, description: string, boatLabel?: string) {
@@ -115,7 +145,19 @@ test("keeps long and simultaneous faults usable across states, reload and speech
   await expect(speechAlert).toContainText(/microfono|dettatura/i)
   await expect(description).toHaveValue(LONG_FAULT)
 
+  await executeSql(
+    page,
+    "CREATE TRIGGER u06_fail_fault_insert BEFORE INSERT ON ps_data_local__faults BEGIN SELECT RAISE(ABORT, 'u06 simulated save failure'); END",
+  )
   await form.getByRole("button", { name: "Salva avaria" }).click()
+  await expect(
+    form.getByText(
+      "L’avaria non è stata salvata. Il testo resta qui; riprova.",
+    ),
+  ).toBeVisible()
+  await expect(description).toHaveValue(LONG_FAULT)
+  await executeSql(page, "DROP TRIGGER u06_fail_fault_insert")
+  await form.getByRole("button", { name: "Riprova salvataggio" }).click()
   const longCard = faultCard(page, LONG_FAULT)
   await expect(longCard).toBeVisible()
   await expect(longCard.getByLabel("RS Quest 2")).toBeVisible()
@@ -199,6 +241,10 @@ test("keeps long and simultaneous faults usable across states, reload and speech
   await expect(
     faultCard(page, LONG_FAULT).getByRole("button", { name: "Risolta" }),
   ).toHaveAttribute("aria-pressed", "true")
+  const reloadedCards = page.getByRole("article")
+  await expect(reloadedCards.nth(0)).toContainText(SECOND_FAULT)
+  await expect(reloadedCards.nth(1)).toContainText(OTHER_BOAT_FAULT)
+  await expect(reloadedCards.nth(2)).toContainText(LONG_FAULT)
 
   const persistedFaults = await page.evaluate(async () => {
     const modulePath = "/src/persistence/db.ts"
@@ -275,7 +321,7 @@ test("keeps fault warning and course availability independent after reload", asy
 
 test("keeps fault identity, preview and direct states usable at 320px and 200% text", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 320, height: 664 })
   await createCourse(page)
   await configureBoats(page)
@@ -288,7 +334,19 @@ test("keeps fault identity, preview and direct states usable at 320px and 200% t
 
   const card = faultCard(page, LONG_FAULT)
   await expect(card).toBeVisible()
-  await expect(card.getByLabel("RS Quest 2")).toBeVisible()
+  await expectInsideViewportWidth(
+    page,
+    page.getByRole("heading", { name: "Avarie" }),
+  )
+  await expectInsideViewportWidth(
+    page,
+    page.getByRole("button", { name: "Segnala avaria" }),
+  )
+  await expectInsideViewportWidth(page, card.getByLabel("RS Quest 2"))
+  await expectInsideViewportWidth(
+    page,
+    card.getByRole("button", { name: `Modifica avaria ${LONG_FAULT}` }),
+  )
   await expect(
     card.getByRole("button", { name: `Apri descrizione: ${LONG_FAULT}` }),
   ).toBeVisible()
@@ -297,7 +355,11 @@ test("keeps fault identity, preview and direct states usable at 320px and 200% t
     name: `Stato avaria ${LONG_FAULT}`,
   })
   for (const state of ["Aperta", "Comunicata", "Risolta"]) {
-    await expect(stateGroup.getByRole("button", { name: state })).toBeVisible()
+    await expectInsideViewportWidth(
+      page,
+      stateGroup.getByRole("button", { name: state }),
+    )
   }
   await expectNoHorizontalOverflow(page)
+  await capturePixelScreenshot(page, testInfo, "faults-stress")
 })

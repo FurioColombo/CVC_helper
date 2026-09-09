@@ -1,0 +1,47 @@
+{
+  "milestone": "U06",
+  "status": "PASS",
+  "recordedAt": "2026-09-09",
+  "gitCommit": "3702977d24f218893b4326ac9683abbc76c4000a",
+  "runtime": {
+    "playwright": "1.62.1",
+    "projects": ["pixel-7-chrome"]
+  },
+  "journeys": [
+    {
+      "command": "Playwright u06-fault-ui.spec.ts and boats.spec.ts --project=pixel-7-chrome",
+      "status": "PASS",
+      "result": "4 of 4 journeys passed after the final code change",
+      "coverage": [
+        "P09 typed description and real shared dictation control in one panel",
+        "microphone denial and retry while preserving typed text",
+        "long preview expansion and three simultaneous faults across two boats",
+        "direct open, reported and resolved states with rapid repeated taps",
+        "resolved history, fault chronology, identity and state after reload",
+        "fault state and course availability remain independent after reload",
+        "exactly three textual fault records and no audio, recording or blob field persisted",
+        "320x664 viewport at 200% text with identity, preview and all state controls visible and no horizontal overflow",
+        "existing end-to-end boats and global fault workflow regression"
+      ]
+    },
+    {
+      "evidence": ".evidence/U03/speech-device-evidence.json",
+      "status": "REUSED_WITH_RELEASE_DEFERRAL",
+      "coverage": [
+        "shared local STT privacy and transient-audio contract",
+        "deterministic production audio-boundary fixture across Pixel Chromium, iPhone Chromium viewport and iPhone WebKit core",
+        "physical PC, Android and iPhone observations explicitly deferred to UG1 by the existing closure rule"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U06/faults-states-pixel-7-chrome.png",
+    ".evidence/U06/faults-reloaded-pixel-7-chrome.png",
+    ".evidence/U06/faults-availability-pixel-7-chrome.png",
+    ".evidence/U06/faults-stress-pixel-7-chrome.png"
+  ],
+  "limitations": [
+    "The dedicated U06 visual journey ran in Android-like Chromium. Cross-engine and physical-device release observations remain part of UG1.",
+    "Real microphone capture and Italian recognition quality are not simulated as physical PASS evidence; their outstanding targets remain recorded in U03 speech-device-evidence.json."
+  ]
+}

@@ -42,13 +42,16 @@ export function FaultCard({
   const [descriptionSaving, setDescriptionSaving] = useState(false)
   const [confirmedState, setConfirmedState] = useState(fault.state)
   const [pendingState, setPendingState] = useState<FaultState | null>(null)
+  const [refreshingState, setRefreshingState] = useState(false)
   const [failure, setFailure] = useState<SaveFailure | null>(null)
   const stateInFlightRef = useRef(false)
+  const refreshingStateRef = useRef(false)
   const queuedStateRef = useRef<FaultState | null>(null)
   const requestedStateRef = useRef(fault.state)
 
   async function persistState(firstState: FaultState) {
     if (stateInFlightRef.current) {
+      if (refreshingStateRef.current) return
       if (requestedStateRef.current !== firstState) {
         requestedStateRef.current = firstState
         queuedStateRef.current = firstState
@@ -68,7 +71,6 @@ export function FaultCard({
         try {
           await updateFaultState(fault.id, nextState)
           setConfirmedState(nextState)
-          await onChanged()
         } catch {
           const retryState = queuedStateRef.current ?? nextState
           requestedStateRef.current = retryState
@@ -79,8 +81,17 @@ export function FaultCard({
         nextState = queuedStateRef.current
         queuedStateRef.current = null
       }
+      refreshingStateRef.current = true
+      setRefreshingState(true)
+      try {
+        await onChanged()
+      } catch {
+        setFailure({ kind: "state", state: requestedStateRef.current })
+      }
     } finally {
+      refreshingStateRef.current = false
       stateInFlightRef.current = false
+      setRefreshingState(false)
       setPendingState(null)
     }
   }
@@ -106,11 +117,15 @@ export function FaultCard({
 
   return (
     <article
-      className={`rounded-2xl border border-l-4 p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${unresolved ? "border-l-[#e0a31a] bg-card" : "border-l-[#7b858a] bg-muted/40"}`}
+      className={`rounded-2xl border border-l-4 p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] max-[380px]:p-2 ${unresolved ? "border-l-[#e0a31a] bg-card" : "border-l-[#7b858a] bg-muted/40"}`}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         {boatType && boatNumber ? (
-          <BoatIdentity number={boatNumber} type={boatType} />
+          <BoatIdentity
+            className="max-[380px]:basis-full"
+            number={boatNumber}
+            type={boatType}
+          />
         ) : (
           <span className="grid size-11 place-items-center rounded-xl bg-muted text-muted-foreground">
             <Wrench aria-hidden="true" className="size-5" />
@@ -174,14 +189,14 @@ export function FaultCard({
       <div
         aria-busy={pendingState !== null}
         aria-label={`Stato avaria ${fault.description}`}
-        className="mt-2 grid grid-cols-3 gap-1"
+        className="mt-2 grid grid-cols-3 gap-1 max-[380px]:grid-cols-1"
         role="group"
       >
         {FAULT_STATES.map((state) => (
           <Button
             aria-pressed={confirmedState === state}
             className={`h-10 min-w-0 px-1 text-xs aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground ${pendingState === state ? "ring-2 ring-primary/35" : ""}`}
-            disabled={descriptionSaving}
+            disabled={descriptionSaving || editing || refreshingState}
             key={state}
             onClick={() => void persistState(state)}
             variant="secondary"

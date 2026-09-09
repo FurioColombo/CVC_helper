@@ -82,9 +82,30 @@ describe("FaultCard", () => {
     finishFirstSave?.()
     await waitFor(() => expect(updateFaultState).toHaveBeenCalledTimes(2))
     expect(updateFaultState).toHaveBeenLastCalledWith("fault-1", "resolved")
+    expect(onChanged).toHaveBeenCalledOnce()
     await waitFor(() =>
       expect(resolved).toHaveAttribute("aria-pressed", "true"),
     )
+  })
+
+  it("does not change sections while a description draft is open", async () => {
+    const user = userEvent.setup()
+    render(
+      <FaultCard
+        fault={FAULT}
+        onChanged={vi.fn().mockResolvedValue(undefined)}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole("button", {
+        name: `Modifica avaria ${FAULT.description}`,
+      }),
+    )
+
+    expect(screen.getByRole("button", { name: "Aperta" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Comunicata" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Risolta" })).toBeDisabled()
   })
 
   it("collapses repeated taps on the same pending state", async () => {

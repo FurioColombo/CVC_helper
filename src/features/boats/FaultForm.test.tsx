@@ -196,4 +196,42 @@ describe("FaultForm voice input", () => {
       screen.getByRole("button", { name: "Termina dettatura avaria" }),
     ).toBeVisible()
   })
+
+  it("keeps the description after a save failure and retries it", async () => {
+    vi.mocked(createFault)
+      .mockRejectedValueOnce(new Error("disk busy"))
+      .mockResolvedValueOnce({
+        id: "fault-2",
+        boatId: BOAT.id,
+        description: "Drizza da sostituire",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+      })
+    const onSaved = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <FaultForm
+        boats={[BOAT]}
+        fixedBoatId={BOAT.id}
+        onCancel={vi.fn()}
+        onSaved={onSaved}
+      />,
+    )
+
+    const description = screen.getByLabelText("Descrizione")
+    await user.type(description, "Drizza da sostituire")
+    await user.click(screen.getByRole("button", { name: "Salva avaria" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Il testo resta qui",
+    )
+    expect(description).toHaveValue("Drizza da sostituire")
+    await user.click(
+      screen.getByRole("button", { name: "Riprova salvataggio" }),
+    )
+
+    await waitFor(() => expect(createFault).toHaveBeenCalledTimes(2))
+    expect(onSaved).toHaveBeenCalledOnce()
+  })
 })

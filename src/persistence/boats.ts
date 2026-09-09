@@ -65,7 +65,9 @@ export async function listFaultsForBoat(boatId: string) {
      FROM faults
      WHERE boatId = ?
      ORDER BY CASE state WHEN 'resolved' THEN 1 ELSE 0 END,
-              updatedAt DESC`,
+              updatedAt DESC,
+              createdAt DESC,
+              id DESC`,
     [boatId],
   )
 }
@@ -87,7 +89,9 @@ export async function listFaults(courseId: string) {
      JOIN boats b ON b.id = f.boatId
      WHERE b.courseId = ?
      ORDER BY CASE f.state WHEN 'resolved' THEN 1 ELSE 0 END,
-              f.updatedAt DESC`,
+              f.updatedAt DESC,
+              f.createdAt DESC,
+              f.id DESC`,
     [courseId],
   )
 }
