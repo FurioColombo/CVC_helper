@@ -10,6 +10,7 @@ import {
   SIZE_WARNING_MATRIX,
   STUDENT_SEXES,
   STUDENT_SIZES,
+  VOLUNTEER_ROLES,
 } from "@/domain/config"
 
 describe("canonical domain configuration", () => {
@@ -81,6 +82,10 @@ describe("canonical domain configuration", () => {
       { id: "female", label: "F" },
       { id: "other", label: "Altro" },
     ])
+  })
+
+  it("defines every canonical volunteer role without widening student enums", () => {
+    expect(VOLUNTEER_ROLES).toEqual(["ADV", "IS", "CT"])
   })
 
   it("defines a complete symmetric size warning matrix", () => {

@@ -116,14 +116,18 @@ describe("crew composition rules", () => {
     )
   })
 
-  it("counts active students in crews or A terra but excludes staff", () => {
+  it("counts active students in crews or A terra but excludes embarked CT staff", () => {
+    const ct: CrewPersonRef = {
+      personId: "volunteer-ct-1",
+      personType: "volunteer",
+    }
     let plan = movePerson(
       EMPTY_PLAN,
       STUDENT_1,
       { kind: "crew", crewId: "crew-1" },
       2,
     )
-    plan = movePerson(plan, VOLUNTEER, { kind: "crew", crewId: "crew-1" }, 2)
+    plan = movePerson(plan, ct, { kind: "crew", crewId: "crew-1" }, 2)
     expect(getCrewCompleteness(["student-1", "student-2"], plan)).toEqual(
       expect.objectContaining({ accounted: 1, total: 2, complete: false }),
     )
@@ -131,7 +135,7 @@ describe("crew composition rules", () => {
     expect(getCrewCompleteness(["student-1", "student-2"], plan)).toEqual(
       expect.objectContaining({ accounted: 2, total: 2, complete: true }),
     )
-    expect(removePerson(plan, STUDENT_1).crews[0]!.members).toEqual([VOLUNTEER])
+    expect(removePerson(plan, STUDENT_1).crews[0]!.members).toEqual([ct])
   })
 
   it("keeps session boat selection separate from exact crew assignment", () => {

@@ -750,7 +750,7 @@ export function CrewManagement({
 
   function personDetail(person: CrewPersonRef) {
     if (person.personType === "volunteer") {
-      return volunteerById.get(person.personId)?.role ?? "ADV/IS"
+      return volunteerById.get(person.personId)?.role ?? "Volontario"
     }
     const student = studentById.get(person.personId)
     const size = student?.size ? ` · ${student.size}` : ""
@@ -1589,10 +1589,10 @@ export function CrewManagement({
 
           <section>
             <h2 className="text-sm font-black tracking-wide uppercase">
-              ADV / IS disponibili · {volunteerPool.length}
+              Volontari disponibili · {volunteerPool.length}
             </h2>
             <div
-              aria-label="ADV e IS disponibili"
+              aria-label="Volontari disponibili"
               className="mt-2 grid gap-2"
               role="region"
             >
@@ -1615,7 +1615,7 @@ export function CrewManagement({
               })}
               {volunteerPool.length === 0 && (
                 <p className="rounded-2xl border bg-card px-4 py-3 text-sm text-muted-foreground">
-                  Nessun ADV o IS disponibile.
+                  Nessun volontario disponibile.
                 </p>
               )}
             </div>

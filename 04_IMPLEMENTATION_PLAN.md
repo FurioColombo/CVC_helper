@@ -425,7 +425,7 @@ blockers; physical speech and cross-engine release observations remain in UG1.
 ## U07 — Volunteers and CT
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 

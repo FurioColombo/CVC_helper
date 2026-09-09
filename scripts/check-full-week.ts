@@ -42,6 +42,7 @@ assert.deepEqual(
 )
 assert.ok(scenario.volunteers.some(({ role }) => role === "ADV"))
 assert.ok(scenario.volunteers.some(({ role }) => role === "IS"))
+assert.ok(scenario.volunteers.some(({ role }) => role === "CT"))
 assert.ok(scenario.faults.length >= 2)
 assert.ok(
   scenario.boats.some(({ availability }) => availability === "unavailable"),

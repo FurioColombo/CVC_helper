@@ -22,6 +22,7 @@ import { buildD2FoundationScenario } from "../src/domain/scenarios.ts"
 assert.equal(SESSION_SEQUENCE.length, 13, "Expected 13 sailing sessions")
 assert.equal(DUTY_DAYS.length, 7, "Expected 7 duty rotations")
 assert.deepEqual(CREW_DESTINATIONS, ["unassigned", "boat", "mezzi"])
+assert.deepEqual(VOLUNTEER_ROLES, ["ADV", "IS", "CT"])
 assert.deepEqual(EVALUATION_VALUES, [
   { symbol: "++", score: 2 },
   { symbol: "+", score: 1 },

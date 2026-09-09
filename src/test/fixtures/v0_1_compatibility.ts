@@ -24,6 +24,21 @@ const TABLE_NAMES = [
   "meta",
 ] as const
 
+const BASELINE_VOLUNTEER_ROWS = [
+  {
+    id: "volunteer-v010-adv",
+    courseId: "course-v010-d2",
+    name: "Anna ADV",
+    role: "ADV",
+  },
+  {
+    id: "volunteer-v010-is",
+    courseId: "course-v010-d2",
+    name: "Ivo IS",
+    role: "IS",
+  },
+] as const
+
 type Fixture = typeof fixture
 type Tables = Fixture["tables"]
 
@@ -124,6 +139,12 @@ export function verifyV010Compatibility(): CompatibilityResult {
   }
 
   assertFixtureReferences(cloned.tables)
+  if (
+    JSON.stringify(cloned.tables.volunteers) !==
+    JSON.stringify(BASELINE_VOLUNTEER_ROWS)
+  ) {
+    throw new Error("0.1.0 ADV/IS volunteer rows changed during migration")
+  }
   const normalizedStudents = cloned.tables.students.map((student) =>
     normalizeStudentCourseNote({ ...student }),
   )
@@ -158,6 +179,7 @@ export function verifyV010Compatibility(): CompatibilityResult {
       "JSON storage round-trip is lossless",
       "course and crew fixture references resolve",
       "current domain invariants accept the 0.1.0 records",
+      "baseline ADV/IS volunteer rows remain byte-equivalent under the CT enum extension",
       "new optional course/week note defaults to null at the production read boundary",
     ],
   }

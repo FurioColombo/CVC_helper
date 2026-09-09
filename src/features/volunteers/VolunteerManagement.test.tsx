@@ -35,7 +35,7 @@ describe("VolunteerManagement", () => {
     editVolunteer.mockResolvedValue(undefined)
   })
 
-  it("creates a current-course staff record with a direct ADV/IS choice", async () => {
+  it("creates a current-course staff record with direct ADV/IS/CT choices", async () => {
     const user = userEvent.setup()
     render(<VolunteerManagement courseId="course-1" onHome={vi.fn()} />)
 
@@ -45,15 +45,19 @@ describe("VolunteerManagement", () => {
     await user.click(
       screen.getByRole("button", { name: "Aggiungi volontario" }),
     )
+    expect(screen.getByLabelText("Nome completo")).toHaveValue("")
+    expect(screen.getByRole("radio", { name: "ADV" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "IS" })).toBeVisible()
+    expect(screen.getByRole("radio", { name: "CT" })).toBeVisible()
     await user.type(screen.getByLabelText("Nome completo"), "Luca Verdi")
     expect(screen.getByRole("group", { name: "Ruolo" })).toBeVisible()
-    await user.click(screen.getByRole("radio", { name: "IS" }))
+    await user.click(screen.getByRole("radio", { name: "CT" }))
     await user.click(screen.getByRole("button", { name: "Salva volontario" }))
 
     await waitFor(() =>
       expect(addVolunteer).toHaveBeenCalledWith("course-1", {
         name: "Luca Verdi",
-        role: "IS",
+        role: "CT",
       }),
     )
   })

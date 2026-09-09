@@ -167,7 +167,7 @@ export function buildD2FullWeekScenario(): D2FullWeekScenario {
       id: `crew-${sessionId}-10`,
       sessionId,
       studentIds: [students[18]!.id],
-      volunteerIds: ["volunteer-adv-anna"],
+      volunteerIds: ["volunteer-ct-bruno"],
       destination: "unassigned",
     },
   ])
@@ -185,7 +185,7 @@ export function buildD2FullWeekScenario(): D2FullWeekScenario {
     students,
     volunteers: [
       { id: "volunteer-adv-anna", name: "Anna Bianchi", role: "ADV" },
-      { id: "volunteer-adv-bruno", name: "Bruno Costa", role: "ADV" },
+      { id: "volunteer-ct-bruno", name: "Bruno Costa", role: "CT" },
       { id: "volunteer-is-clara", name: "Clara Riva", role: "IS" },
     ],
     boats: [

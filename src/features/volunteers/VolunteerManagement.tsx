@@ -36,8 +36,8 @@ function VolunteerPageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-1">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-1 max-[380px]:basis-full max-[380px]:flex-wrap">
         <button
           aria-label={`Indietro da ${title}`}
           className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
@@ -46,7 +46,9 @@ function VolunteerPageHeader({
         >
           <ChevronLeft aria-hidden="true" className="size-5" />
         </button>
-        <h1 className="truncate text-2xl font-black tracking-tight">{title}</h1>
+        <h1 className="truncate text-2xl font-black tracking-tight max-[380px]:basis-full max-[380px]:whitespace-normal">
+          {title}
+        </h1>
       </div>
       {action}
     </div>
@@ -63,7 +65,7 @@ function VolunteerRoleChoice({
   return (
     <fieldset className="grid gap-2 text-sm font-bold">
       <legend>Ruolo</legend>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {VOLUNTEER_ROLES.map((option) => (
           <label className="cursor-pointer" key={option}>
             <input
@@ -134,22 +136,26 @@ function VolunteerForm({
 
       <VolunteerRoleChoice onChange={setRole} role={role} />
 
-      <p className="rounded-2xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
-        ADV e IS possono entrare negli equipaggi, ma restano separati da
-        valutazioni e comandate degli allievi.
-      </p>
-
       {error && (
         <p className="text-sm font-semibold text-[#a2381b]" role="alert">
           La modifica non è stata salvata. Riprova.
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button onClick={onCancel} type="button" variant="secondary">
+      <div className="grid grid-cols-2 gap-3 max-[380px]:grid-cols-1">
+        <Button
+          className="max-[380px]:h-auto max-[380px]:py-3"
+          onClick={onCancel}
+          type="button"
+          variant="secondary"
+        >
           Annulla
         </Button>
-        <Button disabled={!name.trim() || saving} type="submit">
+        <Button
+          className="max-[380px]:h-auto max-[380px]:py-3"
+          disabled={!name.trim() || saving}
+          type="submit"
+        >
           {saving ? "Salvataggio…" : "Salva volontario"}
         </Button>
       </div>
@@ -165,7 +171,7 @@ function EmptyVolunteers({ onAdd }: { onAdd: () => void }) {
       </span>
       <h2 className="mt-4 text-xl font-black">Nessun volontario</h2>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-        Aggiungi gli ADV o IS che possono salire negli equipaggi del corso.
+        Aggiungi chi può salire negli equipaggi del corso.
       </p>
       <Button className="mt-6 w-full" onClick={onAdd} size="lg">
         <Plus aria-hidden="true" className="size-5" />
@@ -330,9 +336,6 @@ export function VolunteerManagement({
         onBack={onHome}
         title="Volontari"
       />
-      <p className="mb-4 rounded-2xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
-        Staff imbarcabile del corso. ADV e IS restano distinti dagli allievi.
-      </p>
       {volunteers.length === 0 ? (
         <EmptyVolunteers onAdd={() => setScreen({ kind: "create" })} />
       ) : (

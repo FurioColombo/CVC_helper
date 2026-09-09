@@ -8,6 +8,7 @@ import {
   validateStudentRecords,
   validateVolunteerRecords,
 } from "@/domain/invariants"
+import { VOLUNTEER_ROLES } from "@/domain/config"
 import { buildD2FoundationScenario } from "@/domain/scenarios"
 
 describe("course-state invariants", () => {
@@ -131,6 +132,58 @@ describe("course-state invariants", () => {
       "invalid-volunteer-name",
       "invalid-volunteer-role",
     ])
+  })
+
+  it.each(VOLUNTEER_ROLES)("accepts %s as embarked volunteer staff", (role) => {
+    const state = buildD2FoundationScenario()
+    const volunteerId = `volunteer-${role.toLowerCase()}`
+    state.volunteers.push({
+      id: volunteerId,
+      name: `${role} volontario`,
+      role,
+    })
+    state.crews[0]!.volunteerIds.push(volunteerId)
+
+    expect(validateCourseState(state)).toEqual([])
+  })
+
+  it("keeps CT invalid in every student-only persisted reference", () => {
+    const state = buildD2FoundationScenario()
+    const volunteerId = "volunteer-ct"
+    state.volunteers.push({
+      id: volunteerId,
+      name: "Carla Timoniere",
+      role: "CT",
+    })
+    state.crews[0]!.volunteerIds.push(volunteerId)
+    state.crews[0]!.studentIds.push(volunteerId)
+    state.dutyAssignments = [{ dayId: "saturday", studentId: volunteerId }]
+    state.landAssignments.push({
+      id: "land-ct",
+      sessionId: "sun-am",
+      studentId: volunteerId,
+    })
+    state.evaluations.push({
+      id: "evaluation-ct",
+      sessionId: "sun-am",
+      studentId: volunteerId,
+      value: "+",
+    })
+
+    const issues = validateCourseState(state)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "dangling-duty-student" }),
+        expect.objectContaining({ code: "dangling-crew-student" }),
+        expect.objectContaining({ code: "dangling-land-student" }),
+        expect.objectContaining({ code: "dangling-evaluation-student" }),
+      ]),
+    )
+    expect(issues).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "dangling-crew-volunteer" }),
+      ]),
+    )
   })
 
   it("detects corrupt boat and fault records at subsystem reads", () => {

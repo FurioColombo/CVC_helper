@@ -160,5 +160,5 @@ export type BoatAvailability = (typeof BOAT_AVAILABILITY)[number]
 export const CREW_DESTINATIONS = ["unassigned", "boat", "mezzi"] as const
 export type CrewDestination = (typeof CREW_DESTINATIONS)[number]
 
-export const VOLUNTEER_ROLES = ["ADV", "IS"] as const
+export const VOLUNTEER_ROLES = ["ADV", "IS", "CT"] as const
 export type VolunteerRole = (typeof VOLUNTEER_ROLES)[number]

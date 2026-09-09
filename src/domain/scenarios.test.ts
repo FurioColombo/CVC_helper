@@ -13,6 +13,26 @@ describe("deterministic full-week scenario", () => {
     expect(first).not.toBe(second)
     expect(first.students).not.toBe(second.students)
     expect(first.students).toHaveLength(21)
+    expect(first.volunteers.map(({ role }) => role)).toEqual([
+      "ADV",
+      "CT",
+      "IS",
+    ])
+    expect(
+      first.crews.some(({ volunteerIds }) =>
+        volunteerIds.includes("volunteer-ct-bruno"),
+      ),
+    ).toBe(true)
+    expect(
+      first.dutyAssignments?.some(
+        ({ studentId }) => studentId === "volunteer-ct-bruno",
+      ),
+    ).toBe(false)
+    expect(
+      first.evaluations.some(
+        ({ studentId }) => studentId === "volunteer-ct-bruno",
+      ),
+    ).toBe(false)
     expect(new Set(first.crews.map(({ sessionId }) => sessionId))).toEqual(
       new Set(SESSION_SEQUENCE.map(({ id }) => id)),
     )

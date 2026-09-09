@@ -140,7 +140,7 @@ test("verifies the complete crew workflow across students, duties and boats", as
   await placeStudent(page, "Carlo", 2)
   await placeStudent(page, "Dina", 2)
   await placeStudent(page, "Enzo", 3)
-  const staffPool = page.getByRole("region", { name: "ADV e IS disponibili" })
+  const staffPool = page.getByRole("region", { name: "Volontari disponibili" })
   await staffPool.getByRole("button", { name: "Vera ADV" }).click()
   await page
     .getByRole("button", { name: "Sposta Vera ADV in equipaggio 3" })

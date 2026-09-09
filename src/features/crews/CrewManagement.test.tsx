@@ -210,7 +210,7 @@ describe("CrewManagement", () => {
       name: "Allievi disponibili",
     })
     const staffPool = screen.getByRole("region", {
-      name: "ADV e IS disponibili",
+      name: "Volontari disponibili",
     })
     expect(
       within(studentPool).getByRole("button", { name: "Aldo" }),

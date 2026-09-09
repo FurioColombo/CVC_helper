@@ -46,7 +46,7 @@ test("composes, swaps and persists session-specific crews and A terra", async ({
     name: "Allievi disponibili",
   })
   const staffPool = page.getByRole("region", {
-    name: "ADV e IS disponibili",
+    name: "Volontari disponibili",
   })
   await studentPool.getByRole("button", { name: "Aldo" }).click()
   if (testInfo.project.name === "iphone-13-viewport") {

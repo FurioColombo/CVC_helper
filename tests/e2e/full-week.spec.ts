@@ -293,7 +293,7 @@ test("runs one deterministic D2 course through a complete sailing week", async (
   await placeStudent(app, displayName(seaStudents[16]!), 9)
   await placeStudent(app, displayName(scenario.students[0]!), 10)
   await placeStudent(app, displayName(scenario.students[1]!), 10)
-  const staffPool = app.getByRole("region", { name: "ADV e IS disponibili" })
+  const staffPool = app.getByRole("region", { name: "Volontari disponibili" })
   await staffPool.getByRole("button", { name: "Anna Bianchi" }).click()
   await app
     .getByRole("button", { name: "Sposta Anna Bianchi in equipaggio 9" })
