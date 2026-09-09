@@ -1,0 +1,48 @@
+{
+  "milestone": "U05",
+  "status": "PASS",
+  "recordedAt": "2026-09-09",
+  "gitCommit": "fc8881f496ee6e3a4608e45f645387d1aa38b571",
+  "runtime": {
+    "playwright": "1.62.1",
+    "projects": ["pixel-7-chrome"]
+  },
+  "journeys": [
+    {
+      "command": "Playwright u05-boats-ui.spec.ts --project=pixel-7-chrome",
+      "status": "PASS",
+      "result": "12 of 12 journeys passed",
+      "coverage": [
+        "all eight canonical course-to-model defaults and rendered model marks",
+        "comma, whitespace, newline and semicolon parsing with repeated separators",
+        "normalized duplicate collapse and existing-boat re-entry",
+        "single-add rejection of multiple identifiers",
+        "320x664 viewport at 200% text with no horizontal overflow",
+        "heading, back control, actions, two-digit identity and explicit status inside the stress viewport",
+        "neutral available, yellow unresolved-fault and grey unavailable states with icons and labels",
+        "fault and availability independence",
+        "fault-history deletion refusal",
+        "unreferenced mistaken-entry deletion and unavailable-state persistence after reload"
+      ]
+    },
+    {
+      "command": "Playwright boats.spec.ts --project=pixel-7-chrome",
+      "status": "PASS",
+      "result": "1 of 1 regression journey passed",
+      "coverage": [
+        "initial and single-boat entry",
+        "simultaneous faults and state changes",
+        "availability persistence",
+        "unreferenced deletion",
+        "global fault entry and reload"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U05/boats-stress-pixel-7-chrome.png",
+    ".evidence/U05/boats-status-pixel-7-chrome.png"
+  ],
+  "limitations": [
+    "The dedicated U05 matrix ran in Android-like Chromium. Cross-engine and physical-device release observations remain part of UG1."
+  ]
+}

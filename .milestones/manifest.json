@@ -275,7 +275,7 @@
     {
       "id": "U05",
       "category": "RULE_HEAVY",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/U05/verification.json",

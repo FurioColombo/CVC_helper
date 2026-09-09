@@ -1,0 +1,32 @@
+{
+  "milestone": "U05",
+  "reviewer": "independent adversarial domain reviewer",
+  "status": "PASS_WITH_FINDINGS",
+  "recordedAt": "2026-09-09",
+  "gitCommit": "fc8881f496ee6e3a4608e45f645387d1aa38b571",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "resolvedFindings": [
+    "The 320px/200% header and status layout now wraps and has explicit in-viewport assertions.",
+    "Deletion now refuses boats with faults or operational references and never deletes history.",
+    "Single-boat entry rejects separator-containing multiple identifiers.",
+    "Boat creation verifies course ownership and availability updates verify exactly one owned row.",
+    "Availability exposes a disabled, aria-busy pending state until persistence and refresh complete.",
+    "Browser coverage now renders every allowed model and exercises fault-history deletion refusal."
+  ],
+  "qolFindings": [
+    "Deletion is transaction-safe under repeated taps but does not yet replace its label with an explicit Eliminazione pending state.",
+    "The dedicated U05 suite is not included in the WebKit-core project; the final cross-engine sweep remains in UG1."
+  ],
+  "evidenceInspected": [
+    "AGENTS.md and authoritative U05 product, scope, technical and implementation sections",
+    "commits e154eec and fc8881f",
+    "boat domain, invariant, persistence, component and E2E tests",
+    ".evidence/U05/boats-stress-pixel-7-chrome.png",
+    ".evidence/U05/boats-status-pixel-7-chrome.png",
+    "Node 24 verification with 37 test files and 303 tests passing",
+    "Pixel U05 browser matrix with 12 journeys passing"
+  ],
+  "scopeBoundary": "P09 fault authoring polish, speech and complete fault workflow remain U06 work."
+}

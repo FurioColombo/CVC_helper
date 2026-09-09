@@ -343,7 +343,7 @@ and iPhone Safari observations move to UG1 and remain a hard release blocker.
 ## U05 — Boats and course availability
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -371,7 +371,18 @@ identifier/status is cropped or conveyed by colour alone.
 
 ### Completion log
 
-Pending.
+Completed at implementation checkpoints `e154eec` and `fc8881f`. Canonical
+defaults, normalized parsing/deduplication, course ownership, numeric ordering,
+history-safe deletion and availability/fault separation are enforced in domain
+and persistence tests. The compact list uses equal-size text model marks,
+two-digit identifiers and labelled/icon state cues. At 320 × 664 with 200% text,
+the heading, return path, actions, identity and status remain inside the viewport.
+The Pixel browser matrix passes 12/12 journeys and the existing boat regression
+passes. Full Node 24 verification passes 37 files/303 tests, domain checks,
+0.1.0 compatibility and the production PWA build. Independent adversarial
+review is `PASS_WITH_FINDINGS` with no blockers or important findings; the
+remaining deletion-pending polish is non-blocking and the cross-engine/physical
+release sweep remains in UG1.
 
 ## U06 — Fault workflow
 

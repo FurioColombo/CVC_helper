@@ -1,0 +1,18 @@
+{
+  "milestone": "U05",
+  "status": "PASS",
+  "recordedAt": "2026-09-09T07:25:44.510Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.1.0",
+  "gitCommit": "fc8881f496ee6e3a4608e45f645387d1aa38b571",
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-09-09T07:20:33.638Z",
+      "durationMs": 310865,
+      "exitCode": 0,
+      "outputTail": "Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 26.5s, 1 call)\n  - vite:worker-import-meta-url transform (74%, 14.8s, 1 call)\n  - vite:css-post renderChunk (8%, 1.7s, 15 calls)\n  - vite-plugin-pwa load (7%, 1.4s, 1 call)\n  - @tailwindcss/vite:generate:build transform (5%, 1.1s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 1 hook whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker and 5 precached OCR assets"
+    }
+  ]
+}
