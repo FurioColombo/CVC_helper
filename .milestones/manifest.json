@@ -287,7 +287,7 @@
     {
       "id": "U06",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/U06/verification.json",

@@ -186,7 +186,8 @@ export function FaultManagement({
               <div className="mt-3 grid gap-2.5">
                 {unresolved.map((fault) => (
                   <FaultCard
-                    boatLabel={`${fault.boatType} ${fault.boatNumber}`}
+                    boatNumber={fault.boatNumber}
+                    boatType={fault.boatType}
                     fault={fault}
                     key={fault.id}
                     onChanged={refresh}
@@ -201,7 +202,8 @@ export function FaultManagement({
               <div className="mt-3 grid gap-2.5">
                 {resolved.map((fault) => (
                   <FaultCard
-                    boatLabel={`${fault.boatType} ${fault.boatNumber}`}
+                    boatNumber={fault.boatNumber}
+                    boatType={fault.boatType}
                     fault={fault}
                     key={fault.id}
                     onChanged={refresh}

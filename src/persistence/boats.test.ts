@@ -227,6 +227,21 @@ describe("boat and fault persistence", () => {
     )
   })
 
+  it("rejects stale fault updates and runtime-invalid states", async () => {
+    database.execute.mockResolvedValueOnce([])
+    await expect(
+      updateFaultDescription("missing", "Timone duro"),
+    ).rejects.toThrow("Fault does not exist")
+
+    database.execute.mockResolvedValueOnce([])
+    await expect(updateFaultState("missing", "reported")).rejects.toThrow(
+      "Fault does not exist",
+    )
+    await expect(
+      updateFaultState("fault-1", "archived" as never),
+    ).rejects.toThrow("Invalid fault state")
+  })
+
   it("refuses to create a fault for a missing boat", async () => {
     await expect(createFault("missing-boat", "Timone duro")).rejects.toThrow(
       "Fault boat does not exist",

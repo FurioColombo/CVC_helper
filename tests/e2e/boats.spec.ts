@@ -66,7 +66,8 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await page.getByLabel("Descrizione").fill("Drizza usurata")
   await page.getByRole("button", { name: "Salva avaria" }).click()
   await expect(page.getByText("Drizza usurata")).toBeVisible()
-  await expect(page.getByText("RS QUEST 7")).toBeVisible()
+  await expect(page.getByLabel("Modello RS Quest").last()).toBeVisible()
+  await expect(page.getByLabel("RS Quest 7")).toBeVisible()
 
   await page.reload()
   await page.getByRole("button", { name: "Avarie", exact: true }).click()

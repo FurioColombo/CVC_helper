@@ -1,6 +1,7 @@
 import { getBoatIdentityKey, normalizeBoatNumber } from "@/domain/boat"
 import {
   BOAT_TYPES,
+  FAULT_STATES,
   type BoatAvailability,
   type BoatType,
   type FaultState,
@@ -233,11 +234,12 @@ export async function createFault(boatId: string, description: string) {
 
 export async function updateFaultState(faultId: string, state: FaultState) {
   await db.init()
-  await db.execute("UPDATE faults SET state = ?, updatedAt = ? WHERE id = ?", [
-    state,
-    new Date().toISOString(),
-    faultId,
-  ])
+  if (!FAULT_STATES.includes(state)) throw new Error("Invalid fault state")
+  const result = await db.execute<{ id: string }>(
+    "UPDATE faults SET state = ?, updatedAt = ? WHERE id = ? RETURNING id",
+    [state, new Date().toISOString(), faultId],
+  )
+  if (Array.from(result).length !== 1) throw new Error("Fault does not exist")
 }
 
 export async function updateFaultDescription(
@@ -247,8 +249,9 @@ export async function updateFaultDescription(
   await db.init()
   const normalizedDescription = description.trim()
   if (!normalizedDescription) throw new Error("Fault description is required")
-  await db.execute(
-    "UPDATE faults SET description = ?, updatedAt = ? WHERE id = ?",
+  const result = await db.execute<{ id: string }>(
+    "UPDATE faults SET description = ?, updatedAt = ? WHERE id = ? RETURNING id",
     [normalizedDescription, new Date().toISOString(), faultId],
   )
+  if (Array.from(result).length !== 1) throw new Error("Fault does not exist")
 }

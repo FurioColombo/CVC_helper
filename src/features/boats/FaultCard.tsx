@@ -1,114 +1,152 @@
-import { Check, Pencil, Wrench } from "lucide-react"
-import { useRef, useState } from "react"
+import {
+  Check,
+  ChevronDown,
+  LoaderCircle,
+  Pencil,
+  RotateCcw,
+  Wrench,
+} from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
   FAULT_STATES,
   FAULT_STATE_LABELS,
+  type BoatType,
   type FaultState,
 } from "@/domain/config"
+import { BoatIdentity } from "@/features/boats/BoatIdentity"
 import {
   updateFaultDescription,
   updateFaultState,
   type FaultRecord,
 } from "@/persistence/boats"
 
+type SaveFailure =
+  { kind: "description" } | { kind: "state"; state: FaultState }
+
 export function FaultCard({
   fault,
-  boatLabel,
+  boatType,
+  boatNumber,
   onChanged,
 }: {
   fault: FaultRecord
-  boatLabel?: string
+  boatType?: BoatType
+  boatNumber?: string
   onChanged: () => Promise<void>
 }) {
+  const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [description, setDescription] = useState(fault.description)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(false)
-  const saveInFlight = useRef(false)
+  const [descriptionSaving, setDescriptionSaving] = useState(false)
+  const [confirmedState, setConfirmedState] = useState(fault.state)
+  const [pendingState, setPendingState] = useState<FaultState | null>(null)
+  const [failure, setFailure] = useState<SaveFailure | null>(null)
+  const stateInFlightRef = useRef(false)
+  const queuedStateRef = useRef<FaultState | null>(null)
+  const requestedStateRef = useRef(fault.state)
 
-  async function changeState(state: FaultState) {
-    if (saveInFlight.current) return
-    saveInFlight.current = true
-    setSaving(true)
-    setError(false)
+  useEffect(() => {
+    if (!editing && !descriptionSaving) setDescription(fault.description)
+  }, [descriptionSaving, editing, fault.description])
+
+  useEffect(() => {
+    if (!stateInFlightRef.current && failure?.kind !== "state") {
+      setConfirmedState(fault.state)
+      requestedStateRef.current = fault.state
+    }
+  }, [failure, fault.state])
+
+  async function persistState(firstState: FaultState) {
+    if (stateInFlightRef.current) {
+      if (requestedStateRef.current !== firstState) {
+        requestedStateRef.current = firstState
+        queuedStateRef.current = firstState
+        setPendingState(firstState)
+      }
+      return
+    }
+
+    requestedStateRef.current = firstState
+    stateInFlightRef.current = true
+    setFailure(null)
+    let nextState: FaultState | null = firstState
+
     try {
-      await updateFaultState(fault.id, state)
-      await onChanged()
-    } catch {
-      setError(true)
+      while (nextState) {
+        setPendingState(nextState)
+        try {
+          await updateFaultState(fault.id, nextState)
+          setConfirmedState(nextState)
+          await onChanged()
+        } catch {
+          const retryState = queuedStateRef.current ?? nextState
+          requestedStateRef.current = retryState
+          queuedStateRef.current = null
+          setFailure({ kind: "state", state: retryState })
+          return
+        }
+        nextState = queuedStateRef.current
+        queuedStateRef.current = null
+      }
     } finally {
-      saveInFlight.current = false
-      setSaving(false)
+      stateInFlightRef.current = false
+      setPendingState(null)
     }
   }
 
   async function saveDescription() {
     const value = description.trim()
-    if (!value || saveInFlight.current) return
-    saveInFlight.current = true
-    setSaving(true)
-    setError(false)
+    if (!value || descriptionSaving) return
+    setDescriptionSaving(true)
+    setFailure(null)
     try {
       await updateFaultDescription(fault.id, value)
       await onChanged()
       setEditing(false)
     } catch {
-      setError(true)
+      setFailure({ kind: "description" })
     } finally {
-      saveInFlight.current = false
-      setSaving(false)
+      setDescriptionSaving(false)
     }
   }
 
+  const unresolved = confirmedState !== "resolved"
+
   return (
     <article
-      className={`rounded-2xl border p-4 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${fault.state === "resolved" ? "bg-muted/50" : "bg-card"}`}
+      className={`rounded-2xl border border-l-4 p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${unresolved ? "border-l-[#e0a31a] bg-card" : "border-l-[#7b858a] bg-muted/40"}`}
     >
-      <div className="flex items-start gap-3">
-        <span
-          className={`mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl ${fault.state === "resolved" ? "bg-muted text-muted-foreground" : "bg-[#fff1d6] text-[#9a5b00]"}`}
-        >
-          <Wrench aria-hidden="true" className="size-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          {boatLabel && (
-            <p className="text-xs font-black tracking-wide text-primary uppercase">
-              {boatLabel}
-            </p>
-          )}
-          {editing ? (
-            <textarea
-              aria-label={`Modifica descrizione ${fault.description}`}
-              className="mt-1 min-h-20 w-full resize-y rounded-xl border bg-card px-3 py-2 text-base leading-6 outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
-              onChange={(event) => setDescription(event.target.value)}
-              value={description}
-            />
-          ) : (
-            <p className="whitespace-pre-wrap text-sm font-semibold leading-6">
-              {fault.description}
-            </p>
-          )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {FAULT_STATE_LABELS[fault.state]}
-          </p>
-        </div>
+      <div className="flex items-start justify-between gap-2">
+        {boatType && boatNumber ? (
+          <BoatIdentity number={boatNumber} type={boatType} />
+        ) : (
+          <span className="grid size-11 place-items-center rounded-xl bg-muted text-muted-foreground">
+            <Wrench aria-hidden="true" className="size-5" />
+          </span>
+        )}
         <Button
           aria-label={
             editing
               ? `Salva descrizione ${fault.description}`
               : `Modifica avaria ${fault.description}`
           }
-          className="size-11 shrink-0 px-0"
-          disabled={saving || (editing && !description.trim())}
+          className="size-10 shrink-0 px-0"
+          disabled={
+            descriptionSaving ||
+            pendingState !== null ||
+            (editing && !description.trim())
+          }
           onClick={() => {
             if (editing) void saveDescription()
             else setEditing(true)
           }}
           variant="secondary"
         >
-          {editing ? (
+          {descriptionSaving ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          ) : editing ? (
             <Check aria-hidden="true" className="size-4" />
           ) : (
             <Pencil aria-hidden="true" className="size-4" />
@@ -116,29 +154,90 @@ export function FaultCard({
         </Button>
       </div>
 
+      {editing ? (
+        <textarea
+          aria-label={`Modifica descrizione ${fault.description}`}
+          className="mt-2 min-h-24 w-full resize-y rounded-xl border bg-card px-3 py-2 text-base font-normal leading-6 outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
+          onChange={(event) => setDescription(event.target.value)}
+          value={description}
+        />
+      ) : (
+        <button
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "Riduci" : "Apri"} descrizione: ${fault.description}`}
+          className="mt-2 flex min-h-11 w-full items-start gap-1 rounded-lg text-left text-sm font-normal leading-5 outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          onClick={() => setExpanded((current) => !current)}
+          type="button"
+        >
+          <span
+            className={`min-w-0 flex-1 whitespace-pre-wrap ${expanded ? "" : "line-clamp-3"}`}
+          >
+            {fault.description}
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className={`mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+          />
+        </button>
+      )}
+
       <div
-        className="mt-3 grid grid-cols-3 gap-1.5"
-        role="group"
+        aria-busy={pendingState !== null}
         aria-label={`Stato avaria ${fault.description}`}
+        className="mt-2 grid grid-cols-3 gap-1"
+        role="group"
       >
         {FAULT_STATES.map((state) => (
           <Button
-            aria-pressed={fault.state === state}
-            className="min-w-0 px-1 text-xs aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-            disabled={saving}
+            aria-pressed={confirmedState === state}
+            className={`h-10 min-w-0 px-1 text-xs aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground ${pendingState === state ? "ring-2 ring-primary/35" : ""}`}
+            disabled={descriptionSaving}
             key={state}
-            onClick={() => void changeState(state)}
+            onClick={() => void persistState(state)}
             variant="secondary"
           >
+            {pendingState === state && (
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-3.5 animate-spin"
+              />
+            )}
             {FAULT_STATE_LABELS[state]}
           </Button>
         ))}
       </div>
 
-      {error && (
-        <p className="mt-3 text-sm font-semibold text-[#a2381b]" role="alert">
-          Modifica non salvata. Riprova.
+      {pendingState && (
+        <p
+          aria-live="polite"
+          className="mt-2 text-xs text-muted-foreground"
+          role="status"
+        >
+          Salvataggio stato…
         </p>
+      )}
+
+      {failure && (
+        <div
+          className="mt-2 flex items-center justify-between gap-3"
+          role="alert"
+        >
+          <p className="text-xs font-semibold text-[#a2381b]">
+            Modifica non salvata. Il testo e la scelta restano qui.
+          </p>
+          <Button
+            className="h-10 shrink-0 px-3 text-xs"
+            onClick={() => {
+              if (failure.kind === "state") void persistState(failure.state)
+              else void saveDescription()
+            }}
+            type="button"
+            variant="secondary"
+          >
+            <RotateCcw aria-hidden="true" className="size-3.5" />
+            Riprova
+          </Button>
+        </div>
       )}
     </article>
   )

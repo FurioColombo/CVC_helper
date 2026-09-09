@@ -25,6 +25,7 @@ import {
   parseBoatNumbers,
 } from "@/domain/boat"
 import { validateBoatRecords } from "@/domain/invariants"
+import { BoatIdentity } from "@/features/boats/BoatIdentity"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
 import type { CourseRecord } from "@/persistence/courses"
@@ -328,12 +329,11 @@ function BoatList({
             onClick={() => onOpen(boat.id)}
             type="button"
           >
-            <span className="flex min-w-0 flex-1 items-center gap-2 max-[380px]:basis-full">
-              <BoatModelMark type={boat.type} />
-              <span className="shrink-0 text-xl font-black tabular-nums tracking-tight">
-                {boat.number}
-              </span>
-            </span>
+            <BoatIdentity
+              className="flex-1 max-[380px]:basis-full"
+              number={boat.number}
+              type={boat.type}
+            />
             <span
               className={`flex min-w-0 shrink-0 items-center gap-1.5 text-right text-xs font-bold max-[380px]:flex-1 max-[380px]:text-left ${copy.text}`}
             >
@@ -355,29 +355,6 @@ function BoatList({
         )
       })}
     </section>
-  )
-}
-
-const BOAT_MARKS: Record<BoatType, string> = {
-  "RS Toura": "RS\nTOURA",
-  "RS Quest": "RS\nQUEST",
-  "Laser Vago": "LASER\nVAGO",
-  "RS 500": "RS\n500",
-  "J/80": "J/80",
-  "First 25.7": "FIRST\n25.7",
-  "First 27": "FIRST\n27",
-}
-
-function BoatModelMark({ type }: { type: BoatType }) {
-  return (
-    <span
-      aria-label={`Modello ${type}`}
-      className="grid h-11 w-[4.25rem] shrink-0 place-items-center rounded-xl border border-border/80 bg-muted/60 px-1 text-center text-[0.65rem] font-black leading-[1.05] tracking-wide text-foreground uppercase"
-    >
-      {BOAT_MARKS[type].split("\n").map((line) => (
-        <span key={line}>{line}</span>
-      ))}
-    </span>
   )
 }
 
@@ -501,7 +478,13 @@ function BoatDetail({
         ) : (
           <div className="mt-3 grid gap-2.5">
             {unresolved.map((fault) => (
-              <FaultCard fault={fault} key={fault.id} onChanged={onRefresh} />
+              <FaultCard
+                boatNumber={boat.number}
+                boatType={boat.type}
+                fault={fault}
+                key={fault.id}
+                onChanged={onRefresh}
+              />
             ))}
           </div>
         )}
@@ -512,7 +495,13 @@ function BoatDetail({
           <h2 className="text-base font-black">Storico risolte</h2>
           <div className="mt-3 grid gap-2.5">
             {resolved.map((fault) => (
-              <FaultCard fault={fault} key={fault.id} onChanged={onRefresh} />
+              <FaultCard
+                boatNumber={boat.number}
+                boatType={boat.type}
+                fault={fault}
+                key={fault.id}
+                onChanged={onRefresh}
+              />
             ))}
           </div>
         </section>
@@ -667,9 +656,6 @@ export function BoatManagement({
           onBack={() => setScreen({ kind: "detail", boatId: selectedBoat.id })}
           title="Nuova avaria"
         />
-        <p className="mb-4 text-sm font-bold text-primary">
-          {selectedBoat.type} {selectedBoat.number}
-        </p>
         <FaultForm
           boats={[selectedBoat]}
           fixedBoatId={selectedBoat.id}

@@ -387,7 +387,7 @@ release sweep remains in UG1.
 ## U06 — Fault workflow
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 

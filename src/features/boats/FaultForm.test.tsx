@@ -78,7 +78,7 @@ describe("FaultForm voice input", () => {
     })
   })
 
-  it("transcribes locally into editable text and saves only after confirmation", async () => {
+  it("combines typed and dictated text, then persists text without audio", async () => {
     const transcribe = vi.fn().mockResolvedValue("Timone duro")
     const user = userEvent.setup()
     render(
@@ -91,20 +91,38 @@ describe("FaultForm voice input", () => {
       />,
     )
 
+    await user.type(screen.getByLabelText("Descrizione"), "In navigazione")
     await user.click(screen.getByRole("button", { name: "Detta avaria" }))
     await user.click(
       screen.getByRole("button", { name: "Termina dettatura avaria" }),
     )
 
     await waitFor(() =>
-      expect(screen.getByLabelText("Descrizione")).toHaveValue("Timone duro"),
+      expect(screen.getByLabelText("Descrizione")).toHaveValue(
+        "In navigazione Timone duro",
+      ),
     )
     expect(createFault).not.toHaveBeenCalled()
     expect(stopTrack).toHaveBeenCalledOnce()
     await user.type(screen.getByLabelText("Descrizione"), " molto")
+    expect(screen.getByRole("button", { name: "Salva avaria" })).toBeDisabled()
+    await user.click(
+      screen.getByRole("button", { name: "Usa trascrizione avaria" }),
+    )
     await user.click(screen.getByRole("button", { name: "Salva avaria" }))
 
-    expect(createFault).toHaveBeenCalledWith(BOAT.id, "Timone duro molto")
+    expect(transcribe).toHaveBeenCalledWith(
+      expect.any(Blob),
+      expect.any(Object),
+    )
+    expect(createFault).toHaveBeenCalledWith(
+      BOAT.id,
+      "In navigazione Timone duro molto",
+    )
+    expect(createFault).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(Blob),
+    )
   })
 
   it("stops the microphone stream when recorder construction fails", async () => {
@@ -124,6 +142,8 @@ describe("FaultForm voice input", () => {
         fixedBoatId={BOAT.id}
         onCancel={vi.fn()}
         onSaved={vi.fn()}
+        prepareSpeech={vi.fn().mockResolvedValue(undefined)}
+        transcribe={vi.fn()}
       />,
     )
 
@@ -131,7 +151,49 @@ describe("FaultForm voice input", () => {
 
     await waitFor(() => expect(stopTrack).toHaveBeenCalledOnce())
     expect(
-      screen.getByText("Dettatura non disponibile. Puoi continuare scrivendo."),
+      screen.getByText("Dettatura non riuscita. Il testo è rimasto invariato."),
+    ).toBeVisible()
+  })
+
+  it("keeps typed text after denied permission and offers a real retry", async () => {
+    const getUserMedia = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("denied"))
+      .mockResolvedValueOnce({
+        getTracks: () => [{ stop: stopTrack }],
+      })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia },
+    })
+    const user = userEvent.setup()
+    render(
+      <FaultForm
+        boats={[BOAT]}
+        fixedBoatId={BOAT.id}
+        onCancel={vi.fn()}
+        onSaved={vi.fn()}
+        prepareSpeech={vi.fn().mockResolvedValue(undefined)}
+        transcribe={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("Descrizione"), "Testo già scritto")
+    await user.click(screen.getByRole("button", { name: "Detta avaria" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Permesso microfono non concesso",
+    )
+    expect(screen.getByLabelText("Descrizione")).toHaveValue(
+      "Testo già scritto",
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "Riprovare dettatura avaria" }),
+    )
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2))
+    expect(
+      screen.getByRole("button", { name: "Termina dettatura avaria" }),
     ).toBeVisible()
   })
 })
