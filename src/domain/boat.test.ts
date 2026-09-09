@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  getBoatIdentityKey,
   getBoatOperationalState,
   getDefaultBoatType,
   hasUnresolvedFaults,
+  normalizeBoatNumber,
   parseBoatNumbers,
 } from "@/domain/boat"
 
@@ -26,22 +28,34 @@ describe("boat domain rules", () => {
     expect(getDefaultBoatType("Cabinato", 5)).toBeNull()
   })
 
-  it("parses one-time typed boat numbers without duplicates", () => {
-    expect(parseBoatNumbers("2, 7\n11; 7 ; Quest A")).toEqual([
-      "2",
-      "7",
-      "11",
-      "Quest A",
-    ])
+  it.each([
+    ["2, 7\n11; 7", ["2", "7", "11"]],
+    ["2  7\t11\r\n14", ["2", "7", "11", "14"]],
+    [",, 2;;;\n\t  7 , ; 11 ;;", ["2", "7", "11"]],
+    ["07 7 ００７ A1 a1", ["7", "A1"]],
+  ])("parses and collapses boat-number input %j", (input, expected) => {
+    expect(parseBoatNumbers(input)).toEqual(expected)
   })
 
-  it("derives warning state from unresolved faults independently of availability", () => {
-    const faults = [{ state: "resolved" as const }, { state: "open" as const }]
-    expect(hasUnresolvedFaults(faults)).toBe(true)
-    expect(getBoatOperationalState("available", faults)).toBe("fault")
-    expect(getBoatOperationalState("unavailable", faults)).toBe("unavailable")
-    expect(getBoatOperationalState("available", [{ state: "resolved" }])).toBe(
-      "clear",
-    )
+  it("normalizes numeric and textual boat identities deterministically", () => {
+    expect(normalizeBoatNumber(" ００７ ")).toBe("7")
+    expect(normalizeBoatNumber(" A1 ")).toBe("A1")
+    expect(getBoatIdentityKey("RS Quest", "07")).toBe("RS Quest:7")
+    expect(getBoatIdentityKey("RS Quest", " A1 ")).toBe("RS Quest:a1")
   })
+
+  it.each([
+    ["available", [], false, "clear"],
+    ["available", [{ state: "resolved" }], false, "clear"],
+    ["available", [{ state: "open" }], true, "fault"],
+    ["available", [{ state: "reported" }], true, "fault"],
+    ["unavailable", [], false, "unavailable"],
+    ["unavailable", [{ state: "open" }], true, "unavailable"],
+  ] as const)(
+    "keeps %s availability independent with faults %j",
+    (availability, faults, unresolved, expected) => {
+      expect(hasUnresolvedFaults(faults)).toBe(unresolved)
+      expect(getBoatOperationalState(availability, faults)).toBe(expected)
+    },
+  )
 })

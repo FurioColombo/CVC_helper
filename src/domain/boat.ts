@@ -5,9 +5,20 @@ import {
   type CourseFamily,
   type CourseLevel,
   type FaultState,
-} from "@/domain/config"
+} from "./config"
 
 export type BoatOperationalState = "clear" | "fault" | "unavailable"
+
+export function normalizeBoatNumber(value: string) {
+  const normalized = value.normalize("NFKC").trim()
+  return /^\d+$/.test(normalized)
+    ? normalized.replace(/^0+(?=\d)/, "")
+    : normalized
+}
+
+export function getBoatIdentityKey(type: string, number: string) {
+  return `${type}:${normalizeBoatNumber(number).toLocaleLowerCase("it-IT")}`
+}
 
 export function getDefaultBoatType(
   family: CourseFamily,
@@ -22,8 +33,8 @@ export function getDefaultBoatType(
 export function parseBoatNumbers(value: string) {
   const seen = new Set<string>()
   return value
-    .split(/[,;\n]/)
-    .map((number) => number.trim())
+    .split(/[,;\s]+/u)
+    .map(normalizeBoatNumber)
     .filter((number) => {
       const key = number.toLocaleLowerCase("it-IT")
       if (!number || seen.has(key)) return false

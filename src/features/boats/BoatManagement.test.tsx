@@ -90,6 +90,31 @@ describe("BoatManagement", () => {
     )
   })
 
+  it("shows existing boats when configuration is reopened and ignores duplicates", async () => {
+    getBoats.mockResolvedValue([BOAT])
+    const user = userEvent.setup()
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Configura numeri barche" }),
+    )
+    expect(
+      screen.getByRole("region", { name: "Barche già configurate" }),
+    ).toHaveTextContent("RS Quest 7")
+    await user.type(screen.getByLabelText("Numeri barca"), "2 7; 11\n11")
+    expect(screen.getByText(/Ignorati i numeri già presenti: 7/)).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: /^Configura$/ }),
+    ).not.toBeDisabled()
+    await user.click(screen.getByRole("button", { name: /^Configura$/ }))
+    await waitFor(() =>
+      expect(createBoats).toHaveBeenCalledWith(COURSE.id, [
+        { type: "RS Quest", number: "2" },
+        { type: "RS Quest", number: "11" },
+      ]),
+    )
+  })
+
   it("does not invent a default for out-of-practical-scope C4/C5 courses", async () => {
     const user = userEvent.setup()
     render(
@@ -114,7 +139,7 @@ describe("BoatManagement", () => {
 
     await user.click(
       await screen.findByRole("button", {
-        name: "RS Quest 7, Avaria aperta, 1 non risolta",
+        name: "RS Quest 7, Da controllare, 1 avaria",
       }),
     )
     expect(screen.getByText("Scotta usurata")).toBeVisible()
@@ -146,6 +171,33 @@ describe("BoatManagement", () => {
     expect(screen.getByText("Non disponibile", { exact: true })).toBeVisible()
   })
 
+  it("keeps model marks neutral while exposing the three operational states", async () => {
+    const secondBoat: BoatRecord = {
+      ...BOAT,
+      id: "boat-2",
+      type: "Laser Vago",
+      number: "14",
+      availability: "unavailable",
+    }
+    const thirdBoat: BoatRecord = {
+      ...BOAT,
+      id: "boat-3",
+      type: "First 27",
+      number: "15",
+    }
+    getBoats.mockResolvedValue([BOAT, secondBoat, thirdBoat])
+    getFaults.mockResolvedValue([FAULT])
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(await screen.findByText("Da controllare")).toBeVisible()
+    expect(screen.getByText("1 avaria")).toBeVisible()
+    expect(screen.getByText("Non disponibile", { exact: true })).toBeVisible()
+    expect(screen.getByText("Disponibile", { exact: true })).toBeVisible()
+    expect(screen.getByText("FIRST", { exact: true })).toBeVisible()
+    expect(screen.getByText("27", { exact: true })).toBeVisible()
+    expect(screen.getByText("15", { exact: true })).toBeVisible()
+  })
+
   it("deletes a mistaken boat only after explicit confirmation", async () => {
     getBoats.mockResolvedValue([BOAT])
     const user = userEvent.setup()
@@ -153,7 +205,7 @@ describe("BoatManagement", () => {
 
     await user.click(
       await screen.findByRole("button", {
-        name: "RS Quest 7, Nessuna avaria",
+        name: "RS Quest 7, Disponibile",
       }),
     )
     await user.click(

@@ -343,7 +343,7 @@ and iPhone Safari observations move to UG1 and remain a hard release blocker.
 ## U05 — Boats and course availability
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 

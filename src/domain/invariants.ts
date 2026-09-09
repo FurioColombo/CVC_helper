@@ -10,6 +10,7 @@ import {
   STUDENT_SIZES,
   VOLUNTEER_ROLES,
 } from "./config"
+import { getBoatIdentityKey, normalizeBoatNumber } from "./boat"
 
 export interface CourseStateSnapshot {
   students: Array<{
@@ -194,7 +195,7 @@ export function validateCourseState(
         message: `Invalid boat type: ${boat.type ?? "none"}`,
       })
     }
-    if (typeof boat.number !== "string" || !boat.number.trim()) {
+    if (typeof boat.number !== "string" || !normalizeBoatNumber(boat.number)) {
       issues.push({
         code: "invalid-boat-number",
         path: `boats[${index}].number`,
@@ -202,7 +203,7 @@ export function validateCourseState(
       })
     }
     if (typeof boat.type === "string" && typeof boat.number === "string") {
-      const identity = `${boat.type}:${boat.number.trim().toLocaleLowerCase("it-IT")}`
+      const identity = getBoatIdentityKey(boat.type, boat.number)
       if (boatIdentities.has(identity)) {
         issues.push({
           code: "duplicate-boat-identity",

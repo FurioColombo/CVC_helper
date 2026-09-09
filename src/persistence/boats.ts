@@ -1,4 +1,10 @@
-import type { BoatAvailability, BoatType, FaultState } from "@/domain/config"
+import { getBoatIdentityKey, normalizeBoatNumber } from "@/domain/boat"
+import {
+  BOAT_TYPES,
+  type BoatAvailability,
+  type BoatType,
+  type FaultState,
+} from "@/domain/config"
 import { db } from "@/persistence/db"
 
 export interface BoatRecord {
@@ -46,8 +52,8 @@ export async function listBoats(courseId: string) {
   })
   return boats.sort(
     (left, right) =>
-      collator.compare(left.type, right.type) ||
-      collator.compare(left.number, right.number),
+      collator.compare(left.number, right.number) ||
+      collator.compare(left.type, right.type),
   )
 }
 
@@ -85,52 +91,55 @@ export async function listFaults(courseId: string) {
   )
 }
 
-async function assertNoDuplicateBoat(courseId: string, inputs: BoatInput[]) {
-  const existing = await db.getAll<Pick<BoatRecord, "type" | "number">>(
-    "SELECT type, number FROM boats WHERE courseId = ?",
-    [courseId],
-  )
-  const identities = new Set(
-    existing.map(
-      ({ type, number }) =>
-        `${type}:${number.trim().toLocaleLowerCase("it-IT")}`,
-    ),
-  )
-  for (const input of inputs) {
-    const identity = `${input.type}:${input.number.trim().toLocaleLowerCase("it-IT")}`
-    if (identities.has(identity)) throw new Error("Boat already exists")
-    identities.add(identity)
-  }
-}
-
 export async function createBoats(courseId: string, inputs: BoatInput[]) {
   await db.init()
   if (inputs.length === 0) return []
-  const normalizedInputs = inputs.map((input) => ({
-    ...input,
-    number: input.number.trim(),
-  }))
-  if (normalizedInputs.some(({ number }) => !number)) {
-    throw new Error("Boat number is required")
+
+  const uniqueInputs = new Map<string, BoatInput>()
+  for (const input of inputs) {
+    if (!BOAT_TYPES.includes(input.type)) throw new Error("Invalid boat type")
+    const normalizedInput = {
+      ...input,
+      number: normalizeBoatNumber(input.number),
+    }
+    if (!normalizedInput.number) throw new Error("Boat number is required")
+    const identity = getBoatIdentityKey(
+      normalizedInput.type,
+      normalizedInput.number,
+    )
+    if (!uniqueInputs.has(identity)) uniqueInputs.set(identity, normalizedInput)
   }
-  await assertNoDuplicateBoat(courseId, normalizedInputs)
-  const boats = normalizedInputs.map<BoatRecord>((input) => ({
-    id: crypto.randomUUID(),
-    courseId,
-    ...input,
-    availability: "available",
-  }))
-  await db.executeBatch(
-    "INSERT INTO boats(id, courseId, type, number, availability) VALUES (?, ?, ?, ?, ?)",
-    boats.map((boat) => [
-      boat.id,
-      boat.courseId,
-      boat.type,
-      boat.number,
-      boat.availability,
-    ]),
-  )
-  return boats
+
+  return db.writeTransaction(async (transaction) => {
+    const existing = await transaction.getAll<
+      Pick<BoatRecord, "type" | "number">
+    >("SELECT type, number FROM boats WHERE courseId = ?", [courseId])
+    const existingIdentities = new Set(
+      existing.map(({ type, number }) => getBoatIdentityKey(type, number)),
+    )
+    const newInputs = [...uniqueInputs.entries()]
+      .filter(([identity]) => !existingIdentities.has(identity))
+      .map(([, input]) => input)
+    const boats = newInputs.map<BoatRecord>((input) => ({
+      id: crypto.randomUUID(),
+      courseId,
+      ...input,
+      availability: "available",
+    }))
+    if (boats.length > 0) {
+      await transaction.executeBatch(
+        "INSERT INTO boats(id, courseId, type, number, availability) VALUES (?, ?, ?, ?, ?)",
+        boats.map((boat) => [
+          boat.id,
+          boat.courseId,
+          boat.type,
+          boat.number,
+          boat.availability,
+        ]),
+      )
+    }
+    return boats
+  })
 }
 
 export async function createBoat(courseId: string, input: BoatInput) {
@@ -153,27 +162,30 @@ export async function setBoatAvailability(
 
 export async function deleteBoat(boatId: string, courseId: string) {
   await db.init()
-  const ownedBoat = await db.getOptional<{ id: string }>(
-    "SELECT id FROM boats WHERE id = ? AND courseId = ? LIMIT 1",
-    [boatId, courseId],
-  )
-  if (!ownedBoat) throw new Error("Boat does not belong to course")
-  const operationalReference = await db.getOptional<{ id: string }>(
-    `SELECT id FROM crews WHERE boatId = ?
-     UNION ALL
-     SELECT id FROM sessionBoats WHERE boatId = ?
-     LIMIT 1`,
-    [boatId, boatId],
-  )
-  if (operationalReference) {
-    throw new Error("Boat has historical operational references")
-  }
   await db.writeTransaction(async (transaction) => {
-    await transaction.execute("DELETE FROM faults WHERE boatId = ?", [boatId])
-    await transaction.execute(
-      "DELETE FROM boats WHERE id = ? AND courseId = ?",
+    const ownedBoat = await transaction.getOptional<{ id: string }>(
+      "SELECT id FROM boats WHERE id = ? AND courseId = ? LIMIT 1",
       [boatId, courseId],
     )
+    if (!ownedBoat) throw new Error("Boat does not belong to course")
+    const historicalReference = await transaction.getOptional<{ id: string }>(
+      `SELECT id FROM crews WHERE boatId = ?
+       UNION ALL
+       SELECT id FROM sessionBoats WHERE boatId = ?
+       LIMIT 1`,
+      [boatId, boatId],
+    )
+    if (historicalReference) {
+      throw new Error("Boat has historical operational references")
+    }
+    await transaction.execute("DELETE FROM faults WHERE boatId = ?", [boatId])
+    const result = await transaction.execute<{ id: string }>(
+      "DELETE FROM boats WHERE id = ? AND courseId = ? RETURNING id",
+      [boatId, courseId],
+    )
+    if (Array.from(result).length !== 1) {
+      throw new Error("Boat deletion did not remove exactly one row")
+    }
   })
 }
 

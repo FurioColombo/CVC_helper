@@ -1,8 +1,11 @@
 import {
+  Ban,
+  CheckCircle2,
   ChevronLeft,
   CircleAlert,
   Plus,
   Sailboat,
+  TriangleAlert,
   Trash2,
   Wrench,
 } from "lucide-react"
@@ -16,6 +19,7 @@ import {
   type BoatType,
 } from "@/domain/config"
 import {
+  getBoatIdentityKey,
   getBoatOperationalState,
   getDefaultBoatType,
   parseBoatNumbers,
@@ -112,11 +116,13 @@ function BoatTypeField({
 function BoatEntryForm({
   course,
   multiple,
+  existingBoats,
   onCancel,
   onSaved,
 }: {
   course: CourseRecord
   multiple?: boolean
+  existingBoats?: BoatRecord[]
   onCancel: () => void
   onSaved: () => void
 }) {
@@ -134,17 +140,46 @@ function BoatEntryForm({
           : [],
     [multiple, number],
   )
+  const duplicateNumbers = useMemo(() => {
+    if (!multiple || !type) return []
+    return (existingBoats ?? [])
+      .filter((boat) => {
+        const key = getBoatIdentityKey(type, boat.number)
+        return numbers.some(
+          (number) => getBoatIdentityKey(type, number) === key,
+        )
+      })
+      .map((boat) => boat.number)
+  }, [existingBoats, multiple, numbers, type])
+  const numbersToCreate = useMemo(
+    () =>
+      numbers.filter(
+        (number) =>
+          !duplicateNumbers.some(
+            (duplicate) =>
+              getBoatIdentityKey(type ?? "", number) ===
+              getBoatIdentityKey(type ?? "", duplicate),
+          ),
+      ),
+    [duplicateNumbers, numbers, type],
+  )
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!type || numbers.length === 0) return
+    if (numbersToCreate.length === 0) {
+      setError(
+        `Sono già presenti: ${duplicateNumbers.join(", ")}. Inserisci almeno un numero nuovo.`,
+      )
+      return
+    }
     setSaving(true)
     setError("")
     try {
       if (multiple) {
         await createBoats(
           course.id,
-          numbers.map((boatNumber) => ({ type, number: boatNumber })),
+          numbersToCreate.map((boatNumber) => ({ type, number: boatNumber })),
         )
       } else {
         await createBoat(course.id, { type, number: numbers[0]! })
@@ -158,30 +193,63 @@ function BoatEntryForm({
 
   return (
     <form className="grid gap-5" onSubmit={save}>
+      {existingBoats && existingBoats.length > 0 && (
+        <section
+          aria-label="Barche già configurate"
+          className="rounded-2xl border bg-muted/40 px-4 py-3"
+        >
+          <p className="text-xs font-black tracking-wide text-muted-foreground uppercase">
+            Barche già configurate
+          </p>
+          <p className="mt-1 text-sm leading-5 text-foreground">
+            {existingBoats
+              .map((boat) => `${boat.type} ${boat.number}`)
+              .join(" · ")}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            Inserisci solo numeri nuovi per aggiungere altre barche.
+          </p>
+        </section>
+      )}
       <BoatTypeField onChange={setType} value={type} />
       <label className="grid gap-2 text-sm font-bold">
         <span>{multiple ? "Numeri barca" : "Numero barca"}</span>
         {multiple ? (
           <textarea
+            aria-label="Numeri barca"
             autoFocus
             className="min-h-28 resize-y rounded-xl border bg-card px-3 py-2.5 text-base font-normal leading-6 outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
             onChange={(event) => setNumber(event.target.value)}
-            placeholder="Es. 2, 7, 11"
+            placeholder="Es. 2 3 7, 8; 11"
             required
             value={number}
           />
         ) : (
           <Input
+            aria-label="Numero barca"
             autoFocus
             onChange={(event) => setNumber(event.target.value)}
             required
             value={number}
           />
         )}
+        {multiple && (
+          <span className="text-xs font-normal leading-5 text-muted-foreground">
+            Separa con spazi, virgole, punti e virgola o vai a capo.
+          </span>
+        )}
       </label>
       {multiple && numbers.length > 0 && (
-        <p className="rounded-2xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
-          Verranno create {numbers.length} barche {type}.
+        <p
+          aria-live="polite"
+          className="rounded-2xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground"
+        >
+          {numbersToCreate.length > 0
+            ? `Verranno create ${numbersToCreate.length} barche ${type}.`
+            : "Nessuna nuova barca da aggiungere."}
+          {duplicateNumbers.length > 0 && (
+            <> Ignorati i numeri già presenti: {duplicateNumbers.join(", ")}.</>
+          )}
         </p>
       )}
       {error && (
@@ -194,7 +262,7 @@ function BoatEntryForm({
           Annulla
         </Button>
         <Button
-          disabled={!type || numbers.length === 0 || saving}
+          disabled={!type || numbersToCreate.length === 0 || saving}
           type="submit"
         >
           {saving ? "Salvataggio…" : multiple ? "Configura" : "Aggiungi"}
@@ -206,18 +274,18 @@ function BoatEntryForm({
 
 const STATE_COPY = {
   clear: {
-    label: "Nessuna avaria",
-    dot: "bg-[#238636]",
-    text: "text-[#176b2c]",
+    label: "Disponibile",
+    Icon: CheckCircle2,
+    text: "text-muted-foreground",
   },
   fault: {
-    label: "Avaria aperta",
-    dot: "bg-[#e0a31a]",
+    label: "Da controllare",
+    Icon: TriangleAlert,
     text: "text-[#835900]",
   },
   unavailable: {
     label: "Non disponibile",
-    dot: "bg-[#7b858a]",
+    Icon: Ban,
     text: "text-muted-foreground",
   },
 } as const
@@ -240,32 +308,32 @@ function BoatList({
         ).length
         const state = getBoatOperationalState(boat.availability, boatFaults)
         const copy = STATE_COPY[state]
+        const StateIcon = copy.Icon
         return (
           <button
-            aria-label={`${boat.type} ${boat.number}, ${copy.label}${openCount ? `, ${openCount} ${openCount === 1 ? "non risolta" : "non risolte"}` : ""}`}
-            className={`flex min-h-18 items-center gap-3 rounded-2xl border p-3.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
+            aria-label={`${boat.type} ${boat.number}, ${copy.label}${openCount ? `, ${openCount} ${openCount === 1 ? "avaria" : "avarie"}` : ""}`}
+            className={`flex min-h-18 items-center gap-3 rounded-2xl border border-l-4 p-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${state === "fault" ? "border-l-[#e0a31a]" : state === "unavailable" ? "border-l-[#7b858a] bg-muted/70 text-muted-foreground" : "border-l-transparent bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"
           >
-            <span
-              className={`grid size-11 shrink-0 place-items-center rounded-xl bg-muted ${state === "unavailable" ? "text-muted-foreground" : "text-primary"}`}
-            >
-              <Sailboat aria-hidden="true" className="size-5" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-base font-black">
-                {boat.type} {boat.number}
+            <span className="flex min-w-0 flex-1 items-center gap-2">
+              <BoatModelMark type={boat.type} />
+              <span className="shrink-0 text-xl font-black tabular-nums tracking-tight">
+                {boat.number}
               </span>
-              <span
-                className={`mt-1 flex items-center gap-2 text-xs font-bold ${copy.text}`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`size-2 rounded-full ${copy.dot}`}
-                />
+            </span>
+            <span
+              className={`flex min-w-0 shrink-0 items-center gap-1.5 text-right text-xs font-bold ${copy.text}`}
+            >
+              <StateIcon aria-hidden="true" className="size-4 shrink-0" />
+              <span className="max-w-[8.5rem] leading-4">
                 {copy.label}
-                {openCount > 0 && ` · ${openCount}`}
+                {openCount > 0 && (
+                  <span className="block font-medium">
+                    {openCount} {openCount === 1 ? "avaria" : "avarie"}
+                  </span>
+                )}
               </span>
             </span>
             <ChevronLeft
@@ -276,6 +344,29 @@ function BoatList({
         )
       })}
     </section>
+  )
+}
+
+const BOAT_MARKS: Record<BoatType, string> = {
+  "RS Toura": "RS\nTOURA",
+  "RS Quest": "RS\nQUEST",
+  "Laser Vago": "LASER\nVAGO",
+  "RS 500": "RS\n500",
+  "J/80": "J/80",
+  "First 25.7": "FIRST\n25.7",
+  "First 27": "FIRST\n27",
+}
+
+function BoatModelMark({ type }: { type: BoatType }) {
+  return (
+    <span
+      aria-label={`Modello ${type}`}
+      className="grid h-11 w-[4.25rem] shrink-0 place-items-center rounded-xl border border-border/80 bg-muted/60 px-1 text-center text-[0.65rem] font-black leading-[1.05] tracking-wide text-foreground uppercase"
+    >
+      {BOAT_MARKS[type].split("\n").map((line) => (
+        <span key={line}>{line}</span>
+      ))}
+    </span>
   )
 }
 
@@ -536,6 +627,7 @@ export function BoatManagement({
         />
         <BoatEntryForm
           course={course}
+          existingBoats={boats}
           multiple={screen.kind === "configure"}
           onCancel={() => setScreen({ kind: "list" })}
           onSaved={() => {
@@ -594,13 +686,23 @@ export function BoatManagement({
       <BoatPageHeader
         action={
           boats.length > 0 ? (
-            <Button
-              aria-label="Aggiungi barca"
-              className="size-11 px-0"
-              onClick={() => setScreen({ kind: "create" })}
-            >
-              <Plus aria-hidden="true" className="size-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                aria-label="Configura numeri barche"
+                className="h-11 px-3"
+                onClick={() => setScreen({ kind: "configure" })}
+                variant="secondary"
+              >
+                Configura
+              </Button>
+              <Button
+                aria-label="Aggiungi barca"
+                className="size-11 px-0"
+                onClick={() => setScreen({ kind: "create" })}
+              >
+                <Plus aria-hidden="true" className="size-5" />
+              </Button>
+            </div>
           ) : undefined
         }
         onBack={onHome}

@@ -16,7 +16,7 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await page.getByLabel("Numeri barca").fill("2, 7")
   await page.getByRole("button", { name: "Configura", exact: true }).click()
   await expect(
-    page.getByRole("button", { name: /RS Quest 2, Nessuna avaria/ }),
+    page.getByRole("button", { name: /RS Quest 2, Disponibile/ }),
   ).toBeVisible()
 
   await page.getByRole("button", { name: "Aggiungi barca" }).click()
@@ -24,10 +24,10 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await page.getByLabel("Numero barca").fill("9")
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click()
   await expect(
-    page.getByRole("button", { name: /Laser Vago 9, Nessuna avaria/ }),
+    page.getByRole("button", { name: /Laser Vago 9, Disponibile/ }),
   ).toBeVisible()
 
-  await page.getByRole("button", { name: /RS Quest 2, Nessuna avaria/ }).click()
+  await page.getByRole("button", { name: /RS Quest 2, Disponibile/ }).click()
   await page.getByRole("button", { name: "Segnala", exact: true }).click()
   await page.getByLabel("Descrizione").fill("Scotta randa usurata")
   await page.getByRole("button", { name: "Salva avaria" }).click()
@@ -48,14 +48,12 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await expect(page.getByText("Timone duro")).toBeVisible()
   await page.getByRole("button", { name: "Indietro da RS Quest 2" }).click()
   const unavailableBoat = page.getByRole("button", {
-    name: /RS Quest 2, Non disponibile, 1 non risolta/,
+    name: /RS Quest 2, Non disponibile, 1 avaria/,
   })
   await expect(unavailableBoat).toBeVisible()
   await expect(unavailableBoat).toHaveClass(/bg-muted\/70/)
 
-  await page
-    .getByRole("button", { name: /Laser Vago 9, Nessuna avaria/ })
-    .click()
+  await page.getByRole("button", { name: /Laser Vago 9, Disponibile/ }).click()
   await page
     .getByRole("button", { name: "Elimina barca inserita per errore" })
     .click()
@@ -89,7 +87,7 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await page.getByRole("button", { name: "Home", exact: true }).click()
   await page.getByRole("button", { name: "Barche", exact: true }).click()
   const persistedUnavailableBoat = page.getByRole("button", {
-    name: /RS Quest 2, Non disponibile, 1 non risolta/,
+    name: /RS Quest 2, Non disponibile, 1 avaria/,
   })
   await expect(persistedUnavailableBoat).toBeVisible()
   await expect(page.getByText("Laser Vago 9")).not.toBeVisible()
@@ -98,7 +96,7 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await page.getByRole("button", { name: "Indietro da RS Quest 2" }).click()
   await expect(
     page.getByRole("button", {
-      name: /RS Quest 2, Avaria aperta, 1 non risolta/,
+      name: /RS Quest 2, Da controllare, 1 avaria/,
     }),
   ).toBeVisible()
 })

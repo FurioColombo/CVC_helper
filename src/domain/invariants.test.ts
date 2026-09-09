@@ -146,7 +146,7 @@ describe("course-state invariants", () => {
           {
             id: "boat-2",
             type: "RS Quest",
-            number: "7",
+            number: "07",
             availability: "retired",
           },
           {

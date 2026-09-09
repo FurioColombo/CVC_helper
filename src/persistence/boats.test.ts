@@ -9,6 +9,13 @@ const database = vi.hoisted(() => ({
   writeTransaction: vi.fn(),
 }))
 
+const transaction = vi.hoisted(() => ({
+  execute: vi.fn(),
+  executeBatch: vi.fn(),
+  getAll: vi.fn(),
+  getOptional: vi.fn(),
+}))
+
 vi.mock("@/persistence/db", () => ({ db: database }))
 
 import {
@@ -30,12 +37,13 @@ describe("boat and fault persistence", () => {
     database.executeBatch.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
     database.getOptional.mockResolvedValue(null)
+    transaction.execute.mockResolvedValue([{ id: "boat-1" }])
+    transaction.executeBatch.mockResolvedValue(undefined)
+    transaction.getAll.mockResolvedValue([])
+    transaction.getOptional.mockResolvedValue(null)
     database.writeTransaction.mockImplementation(
-      async (
-        callback: (transaction: {
-          execute: typeof database.execute
-        }) => Promise<unknown>,
-      ) => callback({ execute: database.execute }),
+      async (callback: (context: typeof transaction) => Promise<unknown>) =>
+        callback(transaction),
     )
   })
 
@@ -55,7 +63,7 @@ describe("boat and fault persistence", () => {
     )
   })
 
-  it("sorts numeric boat identifiers naturally", async () => {
+  it("sorts boat identifiers numerically before using model as a tie-breaker", async () => {
     database.getAll.mockResolvedValue([
       {
         id: "boat-11",
@@ -71,10 +79,18 @@ describe("boat and fault persistence", () => {
         number: "2",
         availability: "available",
       },
+      {
+        id: "boat-vago-7",
+        courseId: "course-1",
+        type: "Laser Vago",
+        number: "7",
+        availability: "available",
+      },
     ])
 
     await expect(listBoats("course-1")).resolves.toEqual([
       expect.objectContaining({ number: "2" }),
+      expect.objectContaining({ number: "7", type: "Laser Vago" }),
       expect.objectContaining({ number: "11" }),
     ])
   })
@@ -88,17 +104,19 @@ describe("boat and fault persistence", () => {
     expect(database.getAll).not.toHaveBeenCalled()
   })
 
-  it("creates multiple available boats after rejecting duplicate identities", async () => {
+  it("creates only unique normalized identities from a batch", async () => {
     const boats = await createBoats("course-1", [
       { type: "RS Quest", number: " 2 " },
+      { type: "RS Quest", number: "02" },
       { type: "RS Quest", number: "7" },
+      { type: "RS Quest", number: "７" },
     ])
 
     expect(boats).toEqual([
       expect.objectContaining({ number: "2", availability: "available" }),
       expect.objectContaining({ number: "7", availability: "available" }),
     ])
-    expect(database.executeBatch).toHaveBeenCalledWith(
+    expect(transaction.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO boats"),
       expect.arrayContaining([
         expect.arrayContaining(["course-1", "RS Quest", "2", "available"]),
@@ -106,13 +124,42 @@ describe("boat and fault persistence", () => {
       ]),
     )
 
-    database.getAll.mockResolvedValueOnce([{ type: "RS Quest", number: "7" }])
-    await expect(
-      createBoats("course-1", [{ type: "RS Quest", number: "7" }]),
-    ).rejects.toThrow("Boat already exists")
     await expect(
       createBoats("course-1", [{ type: "RS Quest", number: "   " }]),
     ).rejects.toThrow("Boat number is required")
+  })
+
+  it("collapses persisted duplicates while retaining new and cross-model identities", async () => {
+    transaction.getAll.mockResolvedValueOnce([
+      { type: "RS Quest", number: "07" },
+    ])
+
+    const boats = await createBoats("course-1", [
+      { type: "RS Quest", number: "7" },
+      { type: "RS Quest", number: "11" },
+      { type: "RS 500", number: "7" },
+    ])
+
+    expect(boats.map(({ type, number }) => ({ type, number }))).toEqual([
+      { type: "RS Quest", number: "11" },
+      { type: "RS 500", number: "7" },
+    ])
+    expect(transaction.executeBatch).toHaveBeenCalledOnce()
+
+    transaction.getAll.mockResolvedValueOnce([
+      { type: "RS Quest", number: "7" },
+    ])
+    await expect(
+      createBoats("course-1", [{ type: "RS Quest", number: "07" }]),
+    ).resolves.toEqual([])
+    expect(transaction.executeBatch).toHaveBeenCalledOnce()
+  })
+
+  it("rejects runtime values outside the canonical model list", async () => {
+    await expect(
+      createBoats("course-1", [{ type: "Optimist" as never, number: "2" }]),
+    ).rejects.toThrow("Invalid boat type")
+    expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
   it("updates availability without mutating faults", async () => {
@@ -170,49 +217,64 @@ describe("boat and fault persistence", () => {
     expect(database.execute).not.toHaveBeenCalled()
   })
 
-  it("deletes mistaken boats and their faults atomically", async () => {
-    database.getOptional
+  it("deletes a never-used mistaken boat and its faults atomically", async () => {
+    transaction.getOptional
       .mockResolvedValueOnce({ id: "boat-1" })
       .mockResolvedValueOnce(null)
     await deleteBoat("boat-1", "course-1")
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
-    expect(database.execute).toHaveBeenNthCalledWith(
+    expect(transaction.execute).toHaveBeenNthCalledWith(
       1,
       "DELETE FROM faults WHERE boatId = ?",
       ["boat-1"],
     )
-    expect(database.execute).toHaveBeenNthCalledWith(
+    expect(transaction.execute).toHaveBeenNthCalledWith(
       2,
-      "DELETE FROM boats WHERE id = ? AND courseId = ?",
+      "DELETE FROM boats WHERE id = ? AND courseId = ? RETURNING id",
       ["boat-1", "course-1"],
     )
   })
 
-  it("refuses deletion when operational history references the boat", async () => {
-    database.getOptional
-      .mockResolvedValueOnce({ id: "boat-1" })
-      .mockResolvedValueOnce({ id: "crew-1" })
+  it.each(["crew-1", "session-boat-1"])(
+    "refuses deletion when history contains %s",
+    async (referenceId) => {
+      transaction.getOptional
+        .mockResolvedValueOnce({ id: "boat-1" })
+        .mockResolvedValueOnce({ id: referenceId })
 
-    await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
-      "historical operational references",
-    )
-    expect(database.getOptional).toHaveBeenLastCalledWith(
-      expect.stringContaining("sessionBoats"),
-      ["boat-1", "boat-1"],
-    )
-    expect(database.writeTransaction).not.toHaveBeenCalled()
-  })
+      await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
+        "historical operational references",
+      )
+      expect(transaction.getOptional).toHaveBeenLastCalledWith(
+        expect.stringMatching(/crews[\s\S]*sessionBoats/),
+        ["boat-1", "boat-1"],
+      )
+      expect(transaction.execute).not.toHaveBeenCalled()
+    },
+  )
 
-  it("does not touch faults when the boat belongs to another course", async () => {
+  it("does not inspect or change history when the boat belongs to another course", async () => {
+    transaction.getOptional.mockResolvedValueOnce(null)
     await expect(deleteBoat("boat-1", "wrong-course")).rejects.toThrow(
       "Boat does not belong to course",
     )
-    expect(database.getOptional).toHaveBeenCalledWith(
+    expect(transaction.getOptional).toHaveBeenCalledWith(
       expect.stringContaining("id = ? AND courseId = ?"),
       ["boat-1", "wrong-course"],
     )
-    expect(database.writeTransaction).not.toHaveBeenCalled()
-    expect(database.execute).not.toHaveBeenCalled()
+    expect(transaction.getOptional).toHaveBeenCalledOnce()
+    expect(transaction.execute).not.toHaveBeenCalled()
+  })
+
+  it("rolls back when deletion does not return exactly one owned row", async () => {
+    transaction.getOptional
+      .mockResolvedValueOnce({ id: "boat-1" })
+      .mockResolvedValueOnce(null)
+    transaction.execute.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+
+    await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
+      "did not remove exactly one row",
+    )
   })
 })
