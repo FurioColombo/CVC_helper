@@ -387,7 +387,7 @@ release sweep remains in UG1.
 ## U06 — Fault workflow
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -412,7 +412,15 @@ the UI stays recoverable under repeated taps and save failure.
 
 ### Completion log
 
-Pending.
+Completed 2026-09-09. P09 now uses compact shared boat identities, expandable
+three-line fault previews, direct state controls and the shared in-panel local
+dictation flow. State writes drain rapid choices before one refresh; edits and
+failed saves remain recoverable. The Pixel browser journey covers long and
+multiple faults, all states, a real SQLite save failure/retry, reload ordering,
+availability independence, no-audio persistence and 320 px/200% reflow. Full
+Node 24 verification passes 37 files/310 tests, domain and 0.1.0 compatibility
+checks, and the production PWA build. Independent follow-up review has no
+blockers; physical speech and cross-engine release observations remain in UG1.
 
 ## U07 — Volunteers and CT
 
