@@ -6,7 +6,7 @@ import {
   RotateCcw,
   Wrench,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -46,17 +46,6 @@ export function FaultCard({
   const stateInFlightRef = useRef(false)
   const queuedStateRef = useRef<FaultState | null>(null)
   const requestedStateRef = useRef(fault.state)
-
-  useEffect(() => {
-    if (!editing && !descriptionSaving) setDescription(fault.description)
-  }, [descriptionSaving, editing, fault.description])
-
-  useEffect(() => {
-    if (!stateInFlightRef.current && failure?.kind !== "state") {
-      setConfirmedState(fault.state)
-      requestedStateRef.current = fault.state
-    }
-  }, [failure, fault.state])
 
   async function persistState(firstState: FaultState) {
     if (stateInFlightRef.current) {
@@ -103,6 +92,7 @@ export function FaultCard({
     setFailure(null)
     try {
       await updateFaultDescription(fault.id, value)
+      setDescription(value)
       await onChanged()
       setEditing(false)
     } catch {
