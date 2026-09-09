@@ -111,6 +111,11 @@ export async function createBoats(courseId: string, inputs: BoatInput[]) {
   }
 
   return db.writeTransaction(async (transaction) => {
+    const ownedCourse = await transaction.getOptional<{ id: string }>(
+      "SELECT id FROM courses WHERE id = ? LIMIT 1",
+      [courseId],
+    )
+    if (!ownedCourse) throw new Error("Boat course does not exist")
     const existing = await transaction.getAll<
       Pick<BoatRecord, "type" | "number">
     >("SELECT type, number FROM boats WHERE courseId = ?", [courseId])
@@ -154,10 +159,13 @@ export async function setBoatAvailability(
   availability: BoatAvailability,
 ) {
   await db.init()
-  await db.execute(
-    "UPDATE boats SET availability = ? WHERE id = ? AND courseId = ?",
+  const result = await db.execute<{ id: string }>(
+    "UPDATE boats SET availability = ? WHERE id = ? AND courseId = ? RETURNING id",
     [availability, boatId, courseId],
   )
+  if (Array.from(result).length !== 1) {
+    throw new Error("Boat does not belong to course")
+  }
 }
 
 export async function deleteBoat(boatId: string, courseId: string) {
@@ -172,13 +180,14 @@ export async function deleteBoat(boatId: string, courseId: string) {
       `SELECT id FROM crews WHERE boatId = ?
        UNION ALL
        SELECT id FROM sessionBoats WHERE boatId = ?
+       UNION ALL
+       SELECT id FROM faults WHERE boatId = ?
        LIMIT 1`,
-      [boatId, boatId],
+      [boatId, boatId, boatId],
     )
     if (historicalReference) {
       throw new Error("Boat has historical operational references")
     }
-    await transaction.execute("DELETE FROM faults WHERE boatId = ?", [boatId])
     const result = await transaction.execute<{ id: string }>(
       "DELETE FROM boats WHERE id = ? AND courseId = ? RETURNING id",
       [boatId, courseId],

@@ -33,14 +33,14 @@ describe("boat and fault persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     database.init.mockResolvedValue(undefined)
-    database.execute.mockResolvedValue(undefined)
+    database.execute.mockResolvedValue([{ id: "boat-1" }])
     database.executeBatch.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
     database.getOptional.mockResolvedValue(null)
     transaction.execute.mockResolvedValue([{ id: "boat-1" }])
     transaction.executeBatch.mockResolvedValue(undefined)
     transaction.getAll.mockResolvedValue([])
-    transaction.getOptional.mockResolvedValue(null)
+    transaction.getOptional.mockResolvedValue({ id: "course-1" })
     database.writeTransaction.mockImplementation(
       async (callback: (context: typeof transaction) => Promise<unknown>) =>
         callback(transaction),
@@ -162,6 +162,15 @@ describe("boat and fault persistence", () => {
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
+  it("refuses to create boats for a missing course", async () => {
+    transaction.getOptional.mockResolvedValueOnce(null)
+
+    await expect(
+      createBoats("missing-course", [{ type: "RS Quest", number: "2" }]),
+    ).rejects.toThrow("Boat course does not exist")
+    expect(transaction.executeBatch).not.toHaveBeenCalled()
+  })
+
   it("updates availability without mutating faults", async () => {
     await setBoatAvailability("boat-1", "course-1", "unavailable")
 
@@ -169,6 +178,14 @@ describe("boat and fault persistence", () => {
       expect.stringContaining("UPDATE boats SET availability"),
       ["unavailable", "boat-1", "course-1"],
     )
+  })
+
+  it("reports a stale or wrong-course availability write", async () => {
+    database.execute.mockResolvedValueOnce([])
+
+    await expect(
+      setBoatAvailability("boat-1", "wrong-course", "unavailable"),
+    ).rejects.toThrow("Boat does not belong to course")
   })
 
   it("creates independent faults and updates description and state", async () => {
@@ -217,26 +234,21 @@ describe("boat and fault persistence", () => {
     expect(database.execute).not.toHaveBeenCalled()
   })
 
-  it("deletes a never-used mistaken boat and its faults atomically", async () => {
+  it("deletes only a never-used mistaken boat", async () => {
     transaction.getOptional
       .mockResolvedValueOnce({ id: "boat-1" })
       .mockResolvedValueOnce(null)
     await deleteBoat("boat-1", "course-1")
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
-    expect(transaction.execute).toHaveBeenNthCalledWith(
-      1,
-      "DELETE FROM faults WHERE boatId = ?",
-      ["boat-1"],
-    )
-    expect(transaction.execute).toHaveBeenNthCalledWith(
-      2,
+    expect(transaction.execute).toHaveBeenCalledOnce()
+    expect(transaction.execute).toHaveBeenCalledWith(
       "DELETE FROM boats WHERE id = ? AND courseId = ? RETURNING id",
       ["boat-1", "course-1"],
     )
   })
 
-  it.each(["crew-1", "session-boat-1"])(
+  it.each(["crew-1", "session-boat-1", "fault-1"])(
     "refuses deletion when history contains %s",
     async (referenceId) => {
       transaction.getOptional
@@ -247,8 +259,8 @@ describe("boat and fault persistence", () => {
         "historical operational references",
       )
       expect(transaction.getOptional).toHaveBeenLastCalledWith(
-        expect.stringMatching(/crews[\s\S]*sessionBoats/),
-        ["boat-1", "boat-1"],
+        expect.stringMatching(/crews[\s\S]*sessionBoats[\s\S]*faults/),
+        ["boat-1", "boat-1", "boat-1"],
       )
       expect(transaction.execute).not.toHaveBeenCalled()
     },
@@ -271,7 +283,7 @@ describe("boat and fault persistence", () => {
     transaction.getOptional
       .mockResolvedValueOnce({ id: "boat-1" })
       .mockResolvedValueOnce(null)
-    transaction.execute.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+    transaction.execute.mockResolvedValueOnce([])
 
     await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
       "did not remove exactly one row",

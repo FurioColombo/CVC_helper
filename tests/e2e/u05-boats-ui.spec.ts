@@ -1,6 +1,6 @@
 import path from "node:path"
 
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 
 const CANONICAL_DEFAULTS = [
   ["Deriva", 1, "RS Toura"],
@@ -77,6 +77,18 @@ async function expectNoHorizontalOverflow(page: Page) {
   ).toBe(true)
 }
 
+async function expectInsideViewport(page: Page, locator: Locator) {
+  await expect(locator).toBeVisible()
+  const box = await locator.boundingBox()
+  const viewport = page.viewportSize()
+  expect(box).not.toBeNull()
+  expect(viewport).not.toBeNull()
+  expect(box!.x).toBeGreaterThanOrEqual(0)
+  expect(box!.y).toBeGreaterThanOrEqual(0)
+  expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width)
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height)
+}
+
 for (const [family, level, defaultType] of CANONICAL_DEFAULTS) {
   test(`keeps the canonical default for ${family} ${level}`, async ({
     page,
@@ -87,6 +99,10 @@ for (const [family, level, defaultType] of CANONICAL_DEFAULTS) {
       .first()
       .click()
     await expect(page.getByLabel("Tipo")).toHaveValue(defaultType)
+    await page.getByLabel("Numeri barca").fill("12")
+    await page.getByRole("button", { name: "Configura", exact: true }).click()
+    await expect(page.getByLabel(`Modello ${defaultType}`)).toBeVisible()
+    await expect(boatCard(page, defaultType, 12)).toBeVisible()
   })
 }
 
@@ -121,6 +137,15 @@ test("normalizes repeated separators, deduplicates, and shows existing boats whe
   await expect(boatList(page).getByRole("button")).toHaveCount(6)
   await expect(boatCard(page, "RS Quest", 17)).toBeVisible()
   await expect(boatCard(page, "RS Quest", 2)).toHaveCount(1)
+
+  await page.getByRole("button", { name: "Aggiungi barca" }).click()
+  await page.getByLabel("Numero barca").fill("20 21")
+  await expect(page.getByRole("alert")).toContainText(
+    "Inserisci un solo numero",
+  )
+  await expect(
+    page.getByRole("button", { name: "Aggiungi", exact: true }),
+  ).toBeDisabled()
 })
 
 test("keeps two-digit boat identities readable at the stress viewport", async ({
@@ -134,6 +159,22 @@ test("keeps two-digit boat identities readable at the stress viewport", async ({
     document.documentElement.style.fontSize = "200%"
   })
   await expectNoHorizontalOverflow(page)
+  await expectInsideViewport(
+    page,
+    page.getByRole("button", { name: "Indietro da Barche" }),
+  )
+  await expectInsideViewport(
+    page,
+    page.getByRole("heading", { name: "Barche" }),
+  )
+  await expectInsideViewport(
+    page,
+    page.getByRole("button", { name: "Configura numeri barche" }),
+  )
+  await expectInsideViewport(
+    page,
+    page.getByRole("button", { name: "Aggiungi barca" }),
+  )
   await expect(boatCard(page, "RS Quest", 11)).toBeVisible()
   await expect(boatCard(page, "RS Quest", 14)).toBeVisible()
   await expect(
@@ -142,8 +183,11 @@ test("keeps two-digit boat identities readable at the stress viewport", async ({
   await expect(
     boatCard(page, "RS Quest", 14).getByText("14", { exact: true }),
   ).toBeVisible()
+  await expectInsideViewport(
+    page,
+    boatCard(page, "RS Quest", 11).getByText("Disponibile", { exact: true }),
+  )
   await page.screenshot({
-    fullPage: true,
     path: path.resolve(
       `.evidence/U05/boats-stress-${testInfo.project.name}.png`,
     ),
@@ -163,6 +207,13 @@ test("separates fault state from availability and keeps explicit state cues", as
   await page.getByRole("button", { name: "Salva avaria" }).click()
   await expect(page.getByText("Timone da controllare")).toBeVisible()
   await expect(page.getByText("Disponibile", { exact: true })).toBeVisible()
+
+  await page
+    .getByRole("button", { name: "Elimina barca inserita per errore" })
+    .click()
+  await page.getByRole("button", { name: "Elimina", exact: true }).click()
+  await expect(page.getByRole("alert")).toContainText("ha avarie")
+  await expect(page.getByText("Timone da controllare")).toBeVisible()
 
   await page.getByRole("button", { name: /Indietro da RS Quest 7/ }).click()
   const faultBoat = boatCard(page, "RS Quest", 7)

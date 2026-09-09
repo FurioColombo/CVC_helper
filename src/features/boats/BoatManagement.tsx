@@ -69,19 +69,25 @@ function BoatPageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-1">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-1 max-[380px]:basis-full">
         <button
           aria-label={`Indietro da ${title}`}
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:size-10"
           onClick={onBack}
           type="button"
         >
           <ChevronLeft aria-hidden="true" className="size-5" />
         </button>
-        <h1 className="truncate text-2xl font-black tracking-tight">{title}</h1>
+        <h1 className="min-w-0 text-2xl leading-tight font-black tracking-tight max-[380px]:text-xl">
+          {title}
+        </h1>
       </div>
-      {action}
+      {action && (
+        <div className="ml-auto flex min-w-0 max-[380px]:w-full max-[380px]:justify-end">
+          {action}
+        </div>
+      )}
     </div>
   )
 }
@@ -135,8 +141,8 @@ function BoatEntryForm({
     () =>
       multiple
         ? parseBoatNumbers(number)
-        : number.trim()
-          ? [number.trim()]
+        : number.trim() && !/[,;\s]/u.test(number.trim())
+          ? parseBoatNumbers(number)
           : [],
     [multiple, number],
   )
@@ -252,6 +258,11 @@ function BoatEntryForm({
           )}
         </p>
       )}
+      {!multiple && number.trim() && numbers.length === 0 && (
+        <p className="text-sm font-semibold text-[#a2381b]" role="alert">
+          Inserisci un solo numero di barca, senza separatori.
+        </p>
+      )}
       {error && (
         <p className="text-sm font-semibold text-[#a2381b]" role="alert">
           {error}
@@ -312,19 +323,19 @@ function BoatList({
         return (
           <button
             aria-label={`${boat.type} ${boat.number}, ${copy.label}${openCount ? `, ${openCount} ${openCount === 1 ? "avaria" : "avarie"}` : ""}`}
-            className={`flex min-h-18 items-center gap-3 rounded-2xl border border-l-4 p-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${state === "fault" ? "border-l-[#e0a31a]" : state === "unavailable" ? "border-l-[#7b858a] bg-muted/70 text-muted-foreground" : "border-l-transparent bg-card"}`}
+            className={`flex min-h-18 items-center gap-3 rounded-2xl border border-l-4 p-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-2 ${state === "fault" ? "border-l-[#e0a31a]" : state === "unavailable" ? "border-l-[#7b858a] bg-muted/70 text-muted-foreground" : "border-l-transparent bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"
           >
-            <span className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="flex min-w-0 flex-1 items-center gap-2 max-[380px]:basis-full">
               <BoatModelMark type={boat.type} />
               <span className="shrink-0 text-xl font-black tabular-nums tracking-tight">
                 {boat.number}
               </span>
             </span>
             <span
-              className={`flex min-w-0 shrink-0 items-center gap-1.5 text-right text-xs font-bold ${copy.text}`}
+              className={`flex min-w-0 shrink-0 items-center gap-1.5 text-right text-xs font-bold max-[380px]:flex-1 max-[380px]:text-left ${copy.text}`}
             >
               <StateIcon aria-hidden="true" className="size-4 shrink-0" />
               <span className="max-w-[8.5rem] leading-4">
@@ -406,16 +417,21 @@ function BoatDetail({
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState("")
+  const [availabilitySaving, setAvailabilitySaving] = useState(false)
   const unresolved = faults.filter(({ state }) => state !== "resolved")
   const resolved = faults.filter(({ state }) => state === "resolved")
 
   async function changeAvailability(availability: BoatAvailability) {
+    if (availabilitySaving) return
     setError("")
+    setAvailabilitySaving(true)
     try {
       await setBoatAvailability(boat.id, courseId, availability)
       await onRefresh()
     } catch {
       setError("Disponibilità non salvata. Riprova.")
+    } finally {
+      setAvailabilitySaving(false)
     }
   }
 
@@ -427,7 +443,7 @@ function BoatDetail({
     } catch {
       setConfirmDelete(false)
       setError(
-        "La barca è già usata in uno storico e non può essere eliminata.",
+        "La barca ha avarie o è già usata in uno storico e non può essere eliminata.",
       )
     }
   }
@@ -448,6 +464,8 @@ function BoatDetail({
             </p>
           </div>
           <Button
+            aria-busy={availabilitySaving}
+            disabled={availabilitySaving}
             onClick={() =>
               void changeAvailability(
                 boat.availability === "available" ? "unavailable" : "available",
@@ -455,9 +473,11 @@ function BoatDetail({
             }
             variant="secondary"
           >
-            {boat.availability === "available"
-              ? "Rendi indisponibile"
-              : "Rendi disponibile"}
+            {availabilitySaving
+              ? "Salvataggio…"
+              : boat.availability === "available"
+                ? "Rendi indisponibile"
+                : "Rendi disponibile"}
           </Button>
         </div>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
@@ -505,8 +525,9 @@ function BoatDetail({
               Eliminare questa barca inserita per errore?
             </p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Verranno eliminate anche le sue avarie. Non usare questa azione
-              per una barca temporaneamente indisponibile.
+              È possibile solo se la barca non è mai stata usata e non ha
+              avarie. Non usare questa azione per una barca temporaneamente
+              indisponibile.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <Button
@@ -689,7 +710,7 @@ export function BoatManagement({
             <div className="flex items-center gap-2">
               <Button
                 aria-label="Configura numeri barche"
-                className="h-11 px-3"
+                className="h-11 px-3 max-[380px]:h-10 max-[380px]:px-2 max-[380px]:text-xs"
                 onClick={() => setScreen({ kind: "configure" })}
                 variant="secondary"
               >
@@ -697,7 +718,7 @@ export function BoatManagement({
               </Button>
               <Button
                 aria-label="Aggiungi barca"
-                className="size-11 px-0"
+                className="size-11 px-0 max-[380px]:size-10"
                 onClick={() => setScreen({ kind: "create" })}
               >
                 <Plus aria-hidden="true" className="size-5" />

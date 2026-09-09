@@ -16,6 +16,7 @@ vi.mock("@/persistence/boats", () => ({
 
 import { BoatManagement } from "@/features/boats/BoatManagement"
 import {
+  createBoat,
   createBoats,
   deleteBoat,
   listBoats,
@@ -131,6 +132,23 @@ describe("BoatManagement", () => {
     expect(screen.getByRole("button", { name: "Configura" })).toBeDisabled()
   })
 
+  it("rejects multiple identifiers in the single-boat add flow", async () => {
+    getBoats.mockResolvedValue([BOAT])
+    const user = userEvent.setup()
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Aggiungi barca" }),
+    )
+    await user.type(screen.getByLabelText("Numero barca"), "2 3")
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Inserisci un solo numero di barca, senza separatori.",
+    )
+    expect(screen.getByRole("button", { name: "Aggiungi" })).toBeDisabled()
+    expect(createBoat).not.toHaveBeenCalled()
+  })
+
   it("derives the fault status while availability remains independently editable", async () => {
     getBoats.mockResolvedValue([BOAT])
     getFaults.mockResolvedValue([FAULT])
@@ -169,6 +187,38 @@ describe("BoatManagement", () => {
     expect(row).not.toHaveClass("opacity-65")
     await user.click(row)
     expect(screen.getByText("Non disponibile", { exact: true })).toBeVisible()
+  })
+
+  it("shows an honest pending state while availability is persisted", async () => {
+    getBoats.mockResolvedValue([BOAT])
+    let resolveAvailability!: () => void
+    vi.mocked(setBoatAvailability).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveAvailability = resolve
+        }),
+    )
+    const user = userEvent.setup()
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "RS Quest 7, Disponibile",
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Rendi indisponibile" }),
+    )
+
+    const pending = screen.getByRole("button", { name: "Salvataggio…" })
+    expect(pending).toBeDisabled()
+    expect(pending).toHaveAttribute("aria-busy", "true")
+    resolveAvailability()
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Rendi indisponibile" }),
+      ).toHaveAttribute("aria-busy", "false"),
+    )
   })
 
   it("keeps model marks neutral while exposing the three operational states", async () => {
