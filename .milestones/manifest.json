@@ -299,7 +299,7 @@
     {
       "id": "U07",
       "category": "RULE_HEAVY",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/U07/verification.json",

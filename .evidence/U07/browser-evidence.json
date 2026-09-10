@@ -1,0 +1,52 @@
+{
+  "milestone": "U07",
+  "status": "PASS",
+  "recordedAt": "2026-09-10",
+  "gitCommit": "d008d1ade88c8ac29359bfebf8dcbc98cd3091ea",
+  "runtime": {
+    "playwright": "1.62.1",
+    "projects": ["pixel-7-chrome", "iphone-13-viewport"]
+  },
+  "journeys": [
+    {
+      "command": "Playwright u07-volunteers.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+      "status": "PASS",
+      "result": "4 of 4 journeys passed",
+      "coverage": [
+        "new volunteer form starts with an empty name and direct ADV, IS and CT choices",
+        "ADV, IS and CT creation plus CT edit and reload persistence",
+        "exact Volontari disponibili crew pool and CT embarkation persistence",
+        "CT excluded from student completeness, Comandate and Valutazioni",
+        "320x664 viewport at 200% text with all role choices and save action usable without horizontal overflow"
+      ]
+    },
+    {
+      "command": "Playwright crews.spec.ts and volunteers.spec.ts --project=pixel-7-chrome",
+      "status": "PASS",
+      "result": "2 of 2 regression journeys passed",
+      "coverage": [
+        "existing volunteer management flow",
+        "existing crew placement and persistence flow"
+      ]
+    },
+    {
+      "command": "Playwright full-week.spec.ts --project=pixel-7-chrome",
+      "status": "PASS",
+      "result": "1 of 1 deterministic full-week journey passed in approximately 2.1 minutes at the recorded commit",
+      "coverage": [
+        "full-week helper accepts only validated ADV, IS and CT scenario roles",
+        "visible CT role selection and saved-role assertion prevent silent fallback to ADV",
+        "current boat availability labels, fault setup and the remaining sailing-week workflow"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U07/u07-volunteer-list-pixel-7.png",
+    ".evidence/U07/u07-crew-ct-pixel-7.png",
+    ".evidence/U07/u07-staff-surfaces-pixel-7.png",
+    ".evidence/U07/u07-volunteer-stress-pixel-7.png"
+  ],
+  "limitations": [
+    "The dedicated U07 suite uses Android-like Chromium and an iPhone Chromium viewport. The final WebKit and physical-device release sweep remains part of UG1."
+  ]
+}

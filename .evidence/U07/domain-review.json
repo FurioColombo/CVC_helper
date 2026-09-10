@@ -1,0 +1,31 @@
+{
+  "milestone": "U07",
+  "reviewer": "independent adversarial domain reviewer",
+  "status": "PASS",
+  "recordedAt": "2026-09-10",
+  "gitCommit": "d008d1ade88c8ac29359bfebf8dcbc98cd3091ea",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "resolvedFindings": [
+    "The full-week browser helper formerly accepted only ADV and IS, which made its attempted CT use the default ADV role. It now accepts all three canonical roles, selects the visible role control, asserts the persisted role row and rejects unknown scenario roles.",
+    "The full-week boat-management selectors now use the current Disponibile labels introduced by the compact boat cards.",
+    "Passing deterministic verification and browser evidence are bound to the final reviewed checkpoint."
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "authoritative U07 behavior in 01_PRODUCT_SPEC.md through 04_IMPLEMENTATION_PLAN.md and the P10/P14 design targets",
+    "canonical volunteer role table, persistence, crew calculations, invariants, duties and evaluations",
+    "volunteer, crew, compatibility, invariant and deterministic full-week tests",
+    "Node 24.19.0 verification with 37 test files and 321 tests passing",
+    "0.1.0 compatibility fixture with 22 persisted rows passing",
+    "Pixel full-week browser journey passing with explicit CT creation and saved-role assertion",
+    ".evidence/U07/u07-volunteer-list-pixel-7.png",
+    ".evidence/U07/u07-crew-ct-pixel-7.png",
+    ".evidence/U07/u07-staff-surfaces-pixel-7.png",
+    ".evidence/U07/u07-volunteer-stress-pixel-7.png"
+  ],
+  "limitations": [
+    "Cross-engine and physical-device release observations remain explicitly deferred to UG1."
+  ]
+}

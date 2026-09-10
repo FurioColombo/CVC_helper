@@ -425,7 +425,7 @@ blockers; physical speech and cross-engine release observations remain in UG1.
 ## U07 — Volunteers and CT
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -449,7 +449,15 @@ contexts; no existing student/business calculation includes staff.
 
 ### Completion log
 
-Pending.
+Completed 2026-09-10. P10 now supports empty-name creation and direct ADV, IS
+and CT selection, with course-scoped edit/reload persistence. The crew pool uses
+the exact `Volontari disponibili` label; CT can embark and persist while every
+student-only count, Comandata, land assignment and evaluation excludes staff.
+The 0.1.0 compatibility fixture preserves existing ADV/IS rows byte-for-byte.
+Node 24 verification passes 37 files/321 tests, domain checks, 22 compatibility
+rows and the production PWA build. Dedicated Pixel/iPhone viewport journeys,
+the Pixel full-week flow and independent adversarial review pass; cross-engine
+and physical-device release observations remain in UG1.
 
 ## U08 — Comandate week, proposal and direct editing
 
