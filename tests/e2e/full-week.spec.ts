@@ -57,6 +57,10 @@ async function addVolunteer(
   ).toBeVisible()
 }
 
+function isVolunteerRole(role: string): role is "ADV" | "IS" | "CT" {
+  return role === "ADV" || role === "IS" || role === "CT"
+}
+
 async function placeStudent(page: Page, name: string, crewNumber: number) {
   const pool = page.getByRole("region", { name: "Allievi disponibili" })
   await pool.getByRole("button", { name, exact: true }).click()
@@ -222,6 +226,9 @@ test("runs one deterministic D2 course through a complete sailing week", async (
 
   await app.getByRole("button", { name: "Volontari" }).click()
   for (const volunteer of scenario.volunteers) {
+    if (!isVolunteerRole(volunteer.role)) {
+      throw new Error(`Ruolo volontario non valido: ${volunteer.role}`)
+    }
     await addVolunteer(app, volunteer.name!, volunteer.role)
   }
   await app.getByRole("button", { name: "Indietro da Volontari" }).click()
