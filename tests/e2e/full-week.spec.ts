@@ -38,11 +38,23 @@ async function addStudent(
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
-async function addVolunteer(page: Page, name: string, role: "ADV" | "IS") {
+async function addVolunteer(
+  page: Page,
+  name: string,
+  role: "ADV" | "IS" | "CT",
+) {
   await page.getByRole("button", { name: "Aggiungi volontario" }).click()
   await page.getByLabel("Nome completo").fill(name)
-  if (role === "IS") await page.getByText("IS", { exact: true }).click()
+  if (role !== "ADV") {
+    await page
+      .getByRole("group", { name: "Ruolo" })
+      .getByText(role, { exact: true })
+      .click()
+  }
   await page.getByRole("button", { name: "Salva volontario" }).click()
+  await expect(
+    page.getByRole("button", { name: `${name}, ruolo ${role}` }),
+  ).toBeVisible()
 }
 
 async function placeStudent(page: Page, name: string, crewNumber: number) {
@@ -210,7 +222,7 @@ test("runs one deterministic D2 course through a complete sailing week", async (
 
   await app.getByRole("button", { name: "Volontari" }).click()
   for (const volunteer of scenario.volunteers) {
-    await addVolunteer(app, volunteer.name!, volunteer.role as "ADV" | "IS")
+    await addVolunteer(app, volunteer.name!, volunteer.role)
   }
   await app.getByRole("button", { name: "Indietro da Volontari" }).click()
 
@@ -224,7 +236,7 @@ test("runs one deterministic D2 course through a complete sailing week", async (
   ] as const) {
     await app
       .getByRole("button", {
-        name: new RegExp(`RS Quest ${boatNumber}, Nessuna avaria`),
+        name: new RegExp(`RS Quest ${boatNumber}, Disponibile`),
       })
       .click()
     await app.getByRole("button", { name: "Segnala", exact: true }).click()
@@ -234,7 +246,7 @@ test("runs one deterministic D2 course through a complete sailing week", async (
       .getByRole("button", { name: `Indietro da RS Quest ${boatNumber}` })
       .click()
   }
-  await app.getByRole("button", { name: /RS Quest 12, Nessuna avaria/ }).click()
+  await app.getByRole("button", { name: /RS Quest 12, Disponibile/ }).click()
   await app.getByRole("button", { name: "Rendi indisponibile" }).click()
   await app.getByRole("button", { name: "Home", exact: true }).click()
 
