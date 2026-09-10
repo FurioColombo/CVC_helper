@@ -186,7 +186,12 @@ describe("course setup and application shell", () => {
     expect(
       await screen.findByRole("heading", { name: "Volontari" }),
     ).toBeVisible()
-    expect(screen.getByText(/distinti dagli allievi/)).toBeVisible()
+    await user.click(
+      screen.getByRole("button", { name: "Aggiungi volontario" }),
+    )
+    expect(screen.getByRole("radio", { name: "ADV" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "IS" })).toBeVisible()
+    expect(screen.getByRole("radio", { name: "CT" })).toBeVisible()
   })
 
   it("opens the dedicated Comandate area from Home", async () => {
