@@ -1,0 +1,18 @@
+{
+  "milestone": "U08",
+  "status": "PASS",
+  "recordedAt": "2026-09-11T00:55:15.901Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.1.0",
+  "gitCommit": "05793868f17797c42e6d2166e96746dc461b1ea0",
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-09-11T00:52:18.366Z",
+      "durationMs": 177529,
+      "exitCode": 0,
+      "outputTail": "files generated\n  dist/sw.js\n  dist/workbox-398fc23b.js\n\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 4.3s inside plugin hooks (11.9s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 10.4s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 1 hook whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker and 5 precached OCR assets"
+    }
+  ]
+}

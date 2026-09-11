@@ -1,0 +1,62 @@
+{
+  "milestone": "U08",
+  "status": "PASS",
+  "recordedAt": "2026-09-11T02:51:29.2526391+02:00",
+  "gitCommit": "05793868f17797c42e6d2166e96746dc461b1ea0",
+  "journeys": [
+    {
+      "command": "tests/e2e/u08-duties.spec.ts --project=pixel-7-chrome",
+      "result": "PASS (3/3)",
+      "coverage": [
+        "P12 pure preview and exact remainder gate",
+        "P11 seven-card overview and persisted unique coverage",
+        "P13 direct add, repeated assignment warning, labelled-day removal and reload",
+        "P13 long names at 320 px and 200% text with measured reflow and touch targets",
+        "P12 320 px and 200% text stress"
+      ]
+    },
+    {
+      "command": "tests/e2e/u08-duties.spec.ts --project=iphone-13-viewport",
+      "result": "PASS (3/3)",
+      "coverage": [
+        "Same U08 journeys on the second contract phone viewport"
+      ]
+    },
+    {
+      "command": "tests/e2e/duties.spec.ts --project=pixel-7-chrome and --project=iphone-13-viewport",
+      "result": "PASS (1/1 on each viewport)",
+      "coverage": [
+        "21-student plan, Friday preference, manual override, acknowledgement, completed history, recalculation and reopen"
+      ]
+    },
+    {
+      "command": "tests/e2e/full-week.spec.ts --project=pixel-7-chrome",
+      "result": "PASS (1/1)",
+      "coverage": [
+        "Deterministic whole-course regression through students, volunteers, boats, duties, crews and evaluations"
+      ]
+    },
+    {
+      "command": "tests/e2e/u02-migration.spec.ts --project=pixel-7-chrome",
+      "result": "PASS (1/1)",
+      "coverage": [
+        "Real 0.1.0 database upgrade and reopen without data loss"
+      ]
+    },
+    {
+      "command": "tests/e2e/u07-volunteers.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+      "result": "PASS (4/4)",
+      "coverage": [
+        "Regression for staff-only surfaces that depend on Comandate"
+      ]
+    }
+  ],
+  "screenshots": [
+    ".evidence/U08/u08-p11-p13-pixel-7.png",
+    ".evidence/U08/u08-p12-preview-pixel-7.png",
+    ".evidence/U08/u08-p12-stress-pixel-7.png",
+    ".evidence/U08/u08-p13-direct-edit-pixel-7.png",
+    ".evidence/U08/u08-p13-stress-pixel-7.png"
+  ],
+  "knownLimitations": []
+}

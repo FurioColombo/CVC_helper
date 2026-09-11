@@ -462,7 +462,7 @@ and physical-device release observations remain in UG1.
 ## U08 — Comandate week, proposal and direct editing
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -491,7 +491,13 @@ unchanged; warnings name the affected day/person and never block valid overrides
 
 ### Completion log
 
-Pending.
+Implemented in checkpoints `c25ac48` and `0579386`. The proposal now derives
+`floor(N/D)` and requires the exact explicit remainder days, with a pure preview
+and transactional protection for completed history. P11/P13 use the approved
+compact layouts, localized severity-aware warnings, unique coverage and direct
+reversible editing. Verification passed with 341 tests, domain/0.1.0
+compatibility checks, production PWA build, Pixel/iPhone journeys, a full-week
+scenario and an independent adversarial review. Evidence: `.evidence/U08/`.
 
 ## U09 — Crew composition, boats and read mode
 

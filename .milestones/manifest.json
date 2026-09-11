@@ -311,7 +311,7 @@
     {
       "id": "U08",
       "category": "RULE_HEAVY",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/U08/verification.json",
