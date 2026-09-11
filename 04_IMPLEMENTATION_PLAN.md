@@ -462,7 +462,7 @@ and physical-device release observations remain in UG1.
 ## U08 — Comandate week, proposal and direct editing
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 

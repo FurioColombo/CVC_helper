@@ -11,7 +11,10 @@ describe("0.1.0 data compatibility fixture", () => {
     expect(result.checks).toContain(
       "baseline ADV/IS volunteer rows remain byte-equivalent under the CT enum extension",
     )
-    expect(result.checks).toHaveLength(6)
+    expect(result.checks).toContain(
+      "baseline duty settings omit the additive explicit extra-day column",
+    )
+    expect(result.checks).toHaveLength(7)
     expect(result.tableCounts).toMatchObject({
       courses: 1,
       students: 3,

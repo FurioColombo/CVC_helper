@@ -140,6 +140,13 @@ export function verifyV010Compatibility(): CompatibilityResult {
 
   assertFixtureReferences(cloned.tables)
   if (
+    cloned.tables.dutySettings.some((settings) =>
+      Object.hasOwn(settings, "extraDayIds"),
+    )
+  ) {
+    throw new Error("0.1.0 fixture contains the future extra-day column")
+  }
+  if (
     JSON.stringify(cloned.tables.volunteers) !==
     JSON.stringify(BASELINE_VOLUNTEER_ROWS)
   ) {
@@ -180,6 +187,7 @@ export function verifyV010Compatibility(): CompatibilityResult {
       "course and crew fixture references resolve",
       "current domain invariants accept the 0.1.0 records",
       "baseline ADV/IS volunteer rows remain byte-equivalent under the CT enum extension",
+      "baseline duty settings omit the additive explicit extra-day column",
       "new optional course/week note defaults to null at the production read boundary",
     ],
   }

@@ -362,7 +362,11 @@ function AppShell({ course }: { course: CourseRecord }) {
         </header>
       )}
 
-      <main className="px-5 py-3 outline-none" ref={mainRef} tabIndex={-1}>
+      <main
+        className="px-5 py-3 outline-none max-[350px]:px-[12px]"
+        ref={mainRef}
+        tabIndex={-1}
+      >
         {view === "home" && <Home course={course} onNavigate={navigate} />}
         {view === "settings" && (
           <SettingsView course={course} onHome={() => setView("home")} />
@@ -434,7 +438,7 @@ function AppShell({ course }: { course: CourseRecord }) {
 
       <nav
         aria-label="Navigazione principale"
-        className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md border-t bg-card/95 px-4 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_35px_rgb(6_59_82/0.1)] backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md border-t bg-card/95 px-4 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_35px_rgb(6_59_82/0.1)] backdrop-blur max-[350px]:px-[8px]"
       >
         <div className="grid grid-cols-3 gap-2">
           <button

@@ -1,10 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -106,8 +100,13 @@ describe("DutyManagement", () => {
     await user.click(
       await screen.findByRole("button", { name: "Proponi comandate" }),
     )
+    await user.click(screen.getByText("Scegli tra tutti gli allievi"))
     await user.click(screen.getByText("Nome1", { exact: true }))
-    await user.click(screen.getByRole("button", { name: "Genera" }))
+    expect(savePlan).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole("region", { name: "Anteprima proposta" }),
+    ).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     const [, assignments, settings] = savePlan.mock.calls[0]!
@@ -117,9 +116,14 @@ describe("DutyManagement", () => {
       studentId: "student-1",
     })
     expect(settings.stayOverStudentIds).toEqual(["student-1"])
+    const minorDayCard = screen
+      .getByText("Nome1", { exact: true })
+      .closest("button")
+    expect(minorDayCard).not.toBeNull()
+    expect(within(minorDayCard!).getByText("M", { exact: true })).toBeVisible()
   })
 
-  it("normalizes a decimal desired count before saving", async () => {
+  it("keeps preview generation non-mutating and gates the exact remainder", async () => {
     const user = userEvent.setup()
     render(
       <DutyManagement
@@ -132,13 +136,49 @@ describe("DutyManagement", () => {
     await user.click(
       await screen.findByRole("button", { name: "Proponi comandate" }),
     )
-    fireEvent.change(screen.getByRole("spinbutton"), {
-      target: { value: "2.5" },
+    const saturday = screen.getByRole("button", {
+      name: "Sabato con più persone",
     })
-    await user.click(screen.getByRole("button", { name: "Genera" }))
+    expect(saturday).toHaveAttribute("aria-pressed", "true")
+    expect(savePlan).not.toHaveBeenCalled()
+
+    await user.click(saturday)
+    expect(
+      screen.getByRole("button", { name: "Conferma proposta" }),
+    ).toBeDisabled()
+    expect(savePlan).not.toHaveBeenCalled()
+
+    await user.click(
+      screen.getByRole("button", { name: "Venerdì con più persone" }),
+    )
+    expect(
+      screen.getByRole("button", { name: "Conferma proposta" }),
+    ).toBeEnabled()
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    expect(savePlan.mock.calls[0]![2].extraDayIds).toEqual(["friday"])
+  })
+
+  it("derives the base count from students and days without a manual override", async () => {
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        referenceDate="2026-08-29"
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Proponi comandate" }),
+    )
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument()
+    expect(screen.getByText("1", { exact: true })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
-    expect(savePlan.mock.calls[0]![2].desiredPerDay).toBe(2)
+    expect(savePlan.mock.calls[0]![2].desiredPerDay).toBe(1)
+    expect(savePlan.mock.calls[0]![2].extraDayIds).toHaveLength(1)
   })
 
   it("allows assignment from an empty plan without generating a proposal", async () => {
@@ -160,14 +200,18 @@ describe("DutyManagement", () => {
     await user.click(
       within(
         screen.getByRole("region", { name: "Allievi comandata Sabato" }),
-      ).getByRole("button", { name: /Nome1/ }),
+      ).getByRole("button", { name: /^Nome1$/ }),
     )
 
     await waitFor(() =>
       expect(savePlan).toHaveBeenCalledWith(
         "course-1",
         [{ dayId: "saturday", studentId: "student-1" }],
-        SETTINGS,
+        expect.objectContaining({
+          ...SETTINGS,
+          fewerDayIds: expect.any(Array),
+          extraDayIds: expect.any(Array),
+        }),
       ),
     )
   })
@@ -195,7 +239,7 @@ describe("DutyManagement", () => {
       screen.queryByRole("button", { name: "Proponi comandate" }),
     ).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Ricalcola" }))
-    await user.click(screen.getByRole("button", { name: "Ricalcola" }))
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(savePlan.mock.calls[0]![1]).not.toEqual(
@@ -226,9 +270,9 @@ describe("DutyManagement", () => {
     const history = screen.getByRole("region", {
       name: "Allievi comandata Sabato",
     })
-    expect(within(history).getByRole("button", { name: "Nome1" })).toBeVisible()
+    expect(within(history).getByText("Nome1", { exact: true })).toBeVisible()
     expect(
-      within(history).queryByRole("button", { name: "Nome2" }),
+      within(history).queryByText("Nome2", { exact: true }),
     ).not.toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: "Segna completata" }),
@@ -291,7 +335,7 @@ describe("DutyManagement", () => {
     )
     const studentButton = within(
       screen.getByRole("region", { name: "Allievi comandata Domenica" }),
-    ).getByRole("button", { name: /Nome1/ })
+    ).getByRole("button", { name: /^Nome1$/ })
     await user.click(studentButton)
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(savePlan.mock.calls[0]![1]).toEqual(
@@ -348,7 +392,7 @@ describe("DutyManagement", () => {
     await user.click(
       within(
         screen.getByRole("region", { name: "Allievi comandata Sabato" }),
-      ).getByRole("button", { name: /Nome2/ }),
+      ).getByRole("button", { name: /^Nome2$/ }),
     )
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledTimes(2))
@@ -364,12 +408,14 @@ describe("DutyManagement", () => {
     )
     const fridayStudent = within(
       screen.getByRole("region", { name: "Allievi comandata Venerdì" }),
-    ).getByRole("button", { name: /Nome1/ })
+    ).getByRole("button", { name: /^Nome1$/ })
     await user.click(fridayStudent)
     await waitFor(() => expect(savePlan).toHaveBeenCalledTimes(3))
     expect(savePlan.mock.calls[2]![2].acknowledgedWarningKeys).toEqual([])
 
-    await user.click(fridayStudent)
+    await user.click(
+      screen.getByRole("button", { name: "Rimuovi Nome1 da Venerdì" }),
+    )
     await waitFor(() => expect(savePlan).toHaveBeenCalledTimes(4))
     await user.click(
       screen.getByRole("button", { name: "Indietro da Comandata venerdì" }),
@@ -428,7 +474,7 @@ describe("DutyManagement", () => {
       screen.getByRole("button", { name: "Indietro da Avvisi comandate" }),
     )
     await user.click(screen.getByRole("button", { name: "Ricalcola" }))
-    await user.click(screen.getByRole("button", { name: "Ricalcola" }))
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledTimes(2))
     expect(savePlan.mock.calls[1]![2].acknowledgedWarningKeys).toEqual([

@@ -137,10 +137,21 @@ export async function runU02MigrationHarness() {
     "SELECT courseNote FROM students WHERE id = ?",
     ["student-v010-mario"],
   )
+  const dutySettings = await upgraded.get<{ extraDayIds: string | null }>(
+    "SELECT extraDayIds FROM dutySettings WHERE id = ?",
+    ["course-v010-d2"],
+  )
+  if (dutySettings.extraDayIds !== null) {
+    throw new Error("Legacy duty extra-day selection did not default to null")
+  }
   await upgraded.execute("UPDATE students SET courseNote = ? WHERE id = ?", [
     "Nuova nota 0.2",
     "student-v010-mario",
   ])
+  await upgraded.execute(
+    "UPDATE dutySettings SET extraDayIds = ? WHERE id = ?",
+    ['["sunday"]', "course-v010-d2"],
+  )
   await upgraded.close()
 
   const reopened = createDatabase(filename)
@@ -150,6 +161,12 @@ export async function runU02MigrationHarness() {
     "SELECT courseNote FROM students WHERE id = ?",
     ["student-v010-mario"],
   )
+  const reloadedDutySettings = await reopened.get<{
+    extraDayIds: string | null
+  }>("SELECT extraDayIds FROM dutySettings WHERE id = ?", ["course-v010-d2"])
+  if (reloadedDutySettings.extraDayIds !== '["sunday"]') {
+    throw new Error("Explicit duty extra-day selection did not survive reload")
+  }
   await reopened.disconnectAndClear()
   await reopened.close()
 

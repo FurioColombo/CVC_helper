@@ -5,7 +5,13 @@ import {
   calculateDutyCapacities,
   calculateConfiguredDutyCapacities,
   generateDutyProposal,
+  getDutyCoverage,
+  getDutyDistributionRequirement,
   getDutyWarnings,
+  getVisibleDutyWarnings,
+  groupDutyStudentsForDay,
+  pruneDutyWarningAcknowledgements,
+  setStudentDutyForDay,
   type DutyConfig,
   type DutyStudent,
 } from "@/domain/duties"
@@ -13,6 +19,7 @@ import {
 const CONFIG: DutyConfig = {
   desiredPerDay: 3,
   fewerDayIds: ["saturday", "sunday", "monday", "tuesday", "wednesday"],
+  extraDayIds: [],
   balanceMinors: true,
   balanceSex: true,
   tieBreaker: "alphabetical",
@@ -36,31 +43,105 @@ function students(count: number): DutyStudent[] {
 
 describe("duty proposal rules", () => {
   it.each([
-    [21, [3, 3, 3, 3, 3, 3, 3]],
-    [23, [3, 3, 3, 3, 3, 4, 4]],
-    [5, [0, 0, 0, 0, 0, 0, 0]],
-  ] as const)("distributes %s students evenly", (count, expected) => {
-    const capacities = calculateDutyCapacities(
-      count,
-      [
-        "saturday",
-        "sunday",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-      ],
-      CONFIG.fewerDayIds,
-    )
-    const values = Object.values(capacities)
-    if (count === 5) {
-      expect(values.filter((value) => value === 1)).toHaveLength(5)
-      expect(values.filter((value) => value === 0)).toHaveLength(2)
-    } else {
-      expect(values).toEqual(expected)
+    [21, [], [3, 3, 3, 3, 3, 3, 3]],
+    [23, ["thursday", "friday"], [3, 3, 3, 3, 3, 4, 4]],
+    [5, ["saturday", "sunday", "monday", "tuesday", "wednesday"], null],
+  ] as const)(
+    "distributes %s students evenly",
+    (count, extraDayIds, expected) => {
+      const capacities = calculateDutyCapacities(
+        count,
+        [
+          "saturday",
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+        ],
+        extraDayIds,
+      )
+      const values = Object.values(capacities)
+      if (expected === null) {
+        expect(values.filter((value) => value === 1)).toHaveLength(5)
+        expect(values.filter((value) => value === 0)).toHaveLength(2)
+      } else {
+        expect(values).toEqual(expected)
+      }
+      expect(values.reduce((total, value) => total + value, 0)).toBe(count)
+    },
+  )
+
+  it("requires an explicit extra-day choice before proposal generation", () => {
+    expect(() =>
+      generateDutyProposal(students(8), {
+        ...CONFIG,
+        extraDayIds: undefined as never,
+      }),
+    ).toThrow("Invalid duty day selection")
+  })
+
+  it("exhaustively reconciles base and remainder across all week boundaries", () => {
+    for (let dayCount = 1; dayCount <= DUTY_DAYS.length; dayCount += 1) {
+      const dayIds = DUTY_DAYS.slice(0, dayCount).map(({ id }) => id)
+      for (let count = 0; count <= 70; count += 1) {
+        const requirement = getDutyDistributionRequirement(count, dayIds)
+        const extraDayIds = dayIds.slice(0, requirement.extraDayCount)
+        const capacities = calculateDutyCapacities(count, dayIds, extraDayIds)
+        const selected = new Set(extraDayIds)
+
+        expect(requirement.base).toBe(Math.floor(count / dayCount))
+        expect(requirement.extraDayCount).toBe(count % dayCount)
+        expect(dayIds.map((dayId) => capacities[dayId])).toEqual(
+          dayIds.map(
+            (dayId) => requirement.base + (selected.has(dayId) ? 1 : 0),
+          ),
+        )
+        expect(
+          Object.values(capacities).reduce((sum, value) => sum + value, 0),
+        ).toBe(count)
+      }
     }
-    expect(values.reduce((total, value) => total + value, 0)).toBe(count)
+  })
+
+  it.each([
+    { count: 8, days: DUTY_DAYS.map(({ id }) => id), extra: [] },
+    {
+      count: 8,
+      days: DUTY_DAYS.map(({ id }) => id),
+      extra: ["saturday", "sunday"],
+    },
+    { count: 1, days: ["saturday"], extra: ["sunday"] },
+    { count: 1, days: [], extra: [] },
+  ] as const)(
+    "rejects an invalid explicit extra-day selection %#",
+    ({ count, days, extra }) => {
+      expect(() => calculateDutyCapacities(count, days, extra)).toThrow()
+    },
+  )
+
+  it("handles N below D with base zero and exactly N selected extra days", () => {
+    const records = students(3)
+    const proposal = generateDutyProposal(records, {
+      ...CONFIG,
+      desiredPerDay: 0,
+      extraDayIds: ["sunday", "wednesday", "friday"],
+    })
+
+    expect(proposal.capacities).toMatchObject({
+      saturday: 0,
+      sunday: 1,
+      monday: 0,
+      tuesday: 0,
+      wednesday: 1,
+      thursday: 0,
+      friday: 1,
+    })
+    expect(proposal.assignments).toHaveLength(3)
+    expect(new Set(proposal.assignments.map(({ dayId }) => dayId))).toEqual(
+      new Set(["sunday", "wednesday", "friday"]),
+    )
   })
 
   it("fills Friday capacity with stay-over students but no more", () => {
@@ -86,7 +167,11 @@ describe("duty proposal rules", () => {
     const capacities = calculateConfiguredDutyCapacities(
       5,
       ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday"],
-      { desiredPerDay: 1, fewerDayIds: [] },
+      {
+        desiredPerDay: 1,
+        fewerDayIds: [],
+        extraDayIds: ["sunday", "monday", "tuesday", "wednesday", "friday"],
+      },
     )
 
     expect(capacities.friday).toBe(1)
@@ -196,6 +281,7 @@ describe("duty proposal rules", () => {
       ...CONFIG,
       desiredPerDay: 1,
       fewerDayIds: [],
+      extraDayIds: ["saturday"],
       stayOverStudentIds: [],
     })
     const maleCounts = DUTY_DAYS.map(
@@ -228,6 +314,7 @@ describe("duty proposal rules", () => {
       ...CONFIG,
       desiredPerDay: 1,
       fewerDayIds: [],
+      extraDayIds: ["saturday"],
       stayOverStudentIds: [],
     })
     const spreadFor = (predicate: (student: DutyStudent) => boolean) => {
@@ -365,6 +452,7 @@ describe("duty proposal rules", () => {
               ...CONFIG,
               desiredPerDay: Math.max(1, Math.floor(count / 7)),
               fewerDayIds: [],
+              extraDayIds: count === 8 ? ["saturday"] : [],
               stayOverStudentIds: [],
             })
             const spread = (predicate: (student: DutyStudent) => boolean) => {
@@ -410,7 +498,7 @@ describe("duty proposal rules", () => {
     ]
     const proposal = generateDutyProposal(
       records,
-      CONFIG,
+      { ...CONFIG, extraDayIds: ["sunday", "monday"] },
       [...completed, { dayId: "friday", studentId: records[1]!.id }],
       ["saturday"],
     )
@@ -435,10 +523,17 @@ describe("duty proposal rules", () => {
   it("reports major overrides and capacity-aware advisory warnings", () => {
     const records = students(21)
     records[20]!.active = 0
-    const assignments = generateDutyProposal(
-      records.slice(0, 20),
-      CONFIG,
-    ).assignments
+    const assignments = generateDutyProposal(records.slice(0, 20), {
+      ...CONFIG,
+      extraDayIds: [
+        "saturday",
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+      ],
+    }).assignments
     assignments.push({ dayId: "friday", studentId: records[20]!.id })
     assignments.push({ dayId: "friday", studentId: records[0]!.id })
     const warnings = getDutyWarnings(
@@ -577,5 +672,163 @@ describe("duty proposal rules", () => {
     expect(warnings.some(({ key }) => key.startsWith("disabled-future"))).toBe(
       false,
     )
+  })
+
+  it("builds a midweek preview without mutating assignments or configuration", () => {
+    const records = students(6)
+    const existing = [
+      { dayId: "saturday" as const, studentId: records[0]!.id },
+      { dayId: "friday" as const, studentId: records[1]!.id },
+    ]
+    const config: DutyConfig = {
+      ...CONFIG,
+      extraDayIds: ["sunday", "monday", "tuesday", "wednesday", "friday"],
+      stayOverStudentIds: [records[5]!.id],
+    }
+    const originalAssignments = structuredClone(existing)
+    const originalConfig = structuredClone(config)
+
+    const preview = generateDutyProposal(records, config, existing, [
+      "saturday",
+    ])
+
+    expect(existing).toEqual(originalAssignments)
+    expect(config).toEqual(originalConfig)
+    expect(preview.assignments).not.toBe(existing)
+    expect(preview.assignments).toContainEqual(existing[0])
+    expect(preview.assignments).not.toContainEqual(existing[1])
+    expect(preview.assignments).toHaveLength(6)
+    expect(
+      preview.assignments.filter(({ dayId }) => dayId === "friday"),
+    ).toEqual([{ dayId: "friday", studentId: records[5]!.id }])
+  })
+
+  it("groups direct editing as current, never assigned, then elsewhere", () => {
+    const records = students(4)
+    records[0]!.surname = "Zulu"
+    records[1]!.surname = "Alfa"
+    records[2]!.surname = "Beta"
+    records[3]!.surname = "Gamma"
+    const groups = groupDutyStudentsForDay(
+      records,
+      [
+        { dayId: "saturday", studentId: records[0]!.id },
+        { dayId: "wednesday", studentId: records[0]!.id },
+        { dayId: "monday", studentId: records[2]!.id },
+      ],
+      "saturday",
+    )
+
+    expect(groups.current).toEqual([
+      { student: records[0], dayIds: ["saturday", "wednesday"] },
+    ])
+    expect(groups.never.map(({ student }) => student.id)).toEqual([
+      records[1]!.id,
+      records[3]!.id,
+    ])
+    expect(groups.elsewhere).toEqual([
+      { student: records[2], dayIds: ["monday"] },
+    ])
+  })
+
+  it("adds repeated days, removes only the labelled day and protects completed days", () => {
+    const initial = [{ dayId: "saturday" as const, studentId: "student-1" }]
+    const repeated = setStudentDutyForDay(
+      initial,
+      [],
+      "wednesday",
+      "student-1",
+      true,
+    )
+    const removed = setStudentDutyForDay(
+      repeated,
+      [],
+      "saturday",
+      "student-1",
+      false,
+    )
+
+    expect(initial).toEqual([{ dayId: "saturday", studentId: "student-1" }])
+    expect(repeated).toEqual([
+      { dayId: "saturday", studentId: "student-1" },
+      { dayId: "wednesday", studentId: "student-1" },
+    ])
+    expect(removed).toEqual([{ dayId: "wednesday", studentId: "student-1" }])
+    expect(() =>
+      setStudentDutyForDay(
+        repeated,
+        ["saturday"],
+        "saturday",
+        "student-1",
+        false,
+      ),
+    ).toThrow("Completed duty history is immutable")
+  })
+
+  it("counts unique active students without inflating duplicate duties", () => {
+    const records = students(4)
+    records[3]!.active = 0
+    expect(
+      getDutyCoverage(records, [
+        { dayId: "saturday", studentId: records[0]!.id },
+        { dayId: "sunday", studentId: records[0]!.id },
+        { dayId: "monday", studentId: records[1]!.id },
+        { dayId: "tuesday", studentId: records[3]!.id },
+      ]),
+    ).toEqual({
+      assigned: 2,
+      total: 3,
+      missingStudentIds: [records[2]!.id],
+      complete: false,
+    })
+  })
+
+  it("localizes warnings and keeps major warnings visible after acknowledgement", () => {
+    const records = students(3)
+    records[1]!.active = 0
+    const warnings = getDutyWarnings(
+      records,
+      [
+        { dayId: "saturday", studentId: records[0]!.id },
+        { dayId: "wednesday", studentId: records[0]!.id },
+        { dayId: "friday", studentId: records[1]!.id },
+      ],
+      {
+        ...CONFIG,
+        extraDayIds: ["friday"],
+        stayOverStudentIds: [records[2]!.id],
+      },
+      ["saturday"],
+    )
+    const repeated = warnings.find(({ key }) => key.startsWith("multiple"))!
+    const disabled = warnings.find(({ key }) =>
+      key.startsWith("disabled-future"),
+    )!
+    const friday = warnings.find(({ key }) =>
+      key.startsWith("friday-stayover"),
+    )!
+
+    expect(repeated).toMatchObject({
+      severity: "major",
+      studentId: records[0]!.id,
+      dayIds: ["saturday", "wednesday"],
+    })
+    expect(disabled).toMatchObject({
+      severity: "major",
+      studentId: records[1]!.id,
+      dayId: "friday",
+    })
+    expect(friday).toMatchObject({ severity: "advisory", dayId: "friday" })
+    expect(
+      getVisibleDutyWarnings(warnings, [repeated.key, friday.key]),
+    ).toContain(repeated)
+    expect(getVisibleDutyWarnings(warnings, [friday.key])).not.toContain(friday)
+    expect(
+      pruneDutyWarningAcknowledgements(warnings, [
+        friday.key,
+        friday.key,
+        "stale-warning",
+      ]),
+    ).toEqual([friday.key])
   })
 })

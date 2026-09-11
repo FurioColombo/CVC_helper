@@ -135,7 +135,7 @@ test("adds, edits and reloads every volunteer role across staff-only surfaces", 
   await page.getByRole("button", { name: "Indietro da Equipaggi" }).click()
   await page.getByRole("button", { name: "Comandate" }).click()
   await page.getByRole("button", { name: "Proponi comandate" }).click()
-  await page.getByRole("button", { name: "Genera" }).click()
+  await page.getByRole("button", { name: "Conferma proposta" }).click()
   await expect(page.getByText("Sofia", { exact: true }).first()).toBeVisible()
   await expect(page.getByText("Carlo Capo Turno", { exact: true })).toHaveCount(
     0,

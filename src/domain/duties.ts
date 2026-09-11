@@ -23,6 +23,8 @@ export interface DutyAssignment {
 export interface DutyConfig {
   desiredPerDay: number
   fewerDayIds: DutyDayId[]
+  /** Explicit days receiving the N mod D extra places in a 0.2 proposal. */
+  extraDayIds: DutyDayId[]
   balanceMinors: boolean
   balanceSex: boolean
   tieBreaker: DutyTieBreaker
@@ -40,6 +42,9 @@ export interface DutyWarning {
   severity: "major" | "advisory"
   title: string
   detail: string
+  dayId?: DutyDayId
+  dayIds?: DutyDayId[]
+  studentId?: string
 }
 
 const DAY_IDS = DUTY_DAYS.map(({ id }) => id)
@@ -51,65 +56,87 @@ function emptyCapacities() {
   >
 }
 
+export interface DutyDistributionRequirement {
+  base: number
+  extraDayCount: number
+}
+
+function assertCanonicalDaySelection(dayIds: readonly DutyDayId[]) {
+  if (
+    !Array.isArray(dayIds) ||
+    new Set(dayIds).size !== dayIds.length ||
+    dayIds.some((dayId) => !DAY_IDS.includes(dayId))
+  ) {
+    throw new Error("Invalid duty day selection")
+  }
+}
+
+export function getDutyDistributionRequirement(
+  studentCount: number,
+  dayIds: readonly DutyDayId[],
+): DutyDistributionRequirement {
+  if (!Number.isInteger(studentCount) || studentCount < 0) {
+    throw new Error("Invalid eligible student count")
+  }
+  assertCanonicalDaySelection(dayIds)
+  if (dayIds.length === 0) {
+    if (studentCount > 0) throw new Error("No remaining duty days")
+    return { base: 0, extraDayCount: 0 }
+  }
+  return {
+    base: Math.floor(studentCount / dayIds.length),
+    extraDayCount: studentCount % dayIds.length,
+  }
+}
+
 export function calculateDutyCapacities(
   studentCount: number,
   dayIds: readonly DutyDayId[],
-  fewerDayIds: readonly DutyDayId[],
+  extraDayIds: readonly DutyDayId[],
 ) {
   const capacities = emptyCapacities()
-  if (dayIds.length === 0) return capacities
-  const base = Math.floor(studentCount / dayIds.length)
-  const extraCount = studentCount % dayIds.length
-  const fewer = new Set(fewerDayIds)
-  const extraPriority = [
-    ...dayIds.filter((dayId) => !fewer.has(dayId)),
-    ...dayIds.filter((dayId) => fewer.has(dayId)),
-  ]
+  const { base, extraDayCount } = getDutyDistributionRequirement(
+    studentCount,
+    dayIds,
+  )
+  assertCanonicalDaySelection(extraDayIds)
+  const selectedDays = new Set(dayIds)
+  if (
+    extraDayIds.length !== extraDayCount ||
+    extraDayIds.some((dayId) => !selectedDays.has(dayId))
+  ) {
+    throw new Error(
+      `Select exactly ${extraDayCount} days with one extra student`,
+    )
+  }
   dayIds.forEach((dayId) => {
     capacities[dayId] = base
   })
-  extraPriority.slice(0, extraCount).forEach((dayId) => {
+  extraDayIds.forEach((dayId) => {
     capacities[dayId] += 1
   })
   return capacities
 }
 
+function getLegacyExtraDayIds(
+  studentCount: number,
+  dayIds: readonly DutyDayId[],
+  fewerDayIds: readonly DutyDayId[],
+) {
+  const { extraDayCount } = getDutyDistributionRequirement(studentCount, dayIds)
+  const fewer = new Set(fewerDayIds)
+  return [
+    ...dayIds.filter((dayId) => !fewer.has(dayId)),
+    ...dayIds.filter((dayId) => fewer.has(dayId)),
+  ].slice(0, extraDayCount)
+}
+
 export function calculateConfiguredDutyCapacities(
   studentCount: number,
   dayIds: readonly DutyDayId[],
-  config: Pick<DutyConfig, "desiredPerDay" | "fewerDayIds">,
+  config: Pick<DutyConfig, "desiredPerDay" | "fewerDayIds" | "extraDayIds">,
 ) {
-  const capacities = calculateDutyCapacities(
-    studentCount,
-    dayIds,
-    config.fewerDayIds,
-  )
-  if (!dayIds.includes("friday") || dayIds.length === 0) return capacities
-
-  const floor = Math.floor(studentCount / dayIds.length)
-  const ceiling = Math.ceil(studentCount / dayIds.length)
-  const fridayTarget = Math.min(ceiling, Math.max(floor, config.desiredPerDay))
-  const fewer = new Set(config.fewerDayIds)
-  if (capacities.friday < fridayTarget) {
-    const donor = [
-      ...dayIds.filter((dayId) => dayId !== "friday" && fewer.has(dayId)),
-      ...dayIds.filter((dayId) => dayId !== "friday" && !fewer.has(dayId)),
-    ].find((dayId) => capacities[dayId] > floor)
-    if (donor) {
-      capacities[donor] -= 1
-      capacities.friday += 1
-    }
-  } else if (capacities.friday > fridayTarget) {
-    const recipient = [
-      ...dayIds.filter((dayId) => dayId !== "friday" && !fewer.has(dayId)),
-      ...dayIds.filter((dayId) => dayId !== "friday" && fewer.has(dayId)),
-    ].find((dayId) => capacities[dayId] < ceiling)
-    if (recipient) {
-      capacities.friday -= 1
-      capacities[recipient] += 1
-    }
-  }
-  return capacities
+  return calculateDutyCapacities(studentCount, dayIds, config.extraDayIds)
 }
 
 function compareAlphabetically(left: DutyStudent, right: DutyStudent) {
@@ -136,6 +163,102 @@ function compareStudents(
     )
   }
   return compareAlphabetically(left, right)
+}
+
+export interface DutyStudentDayGroupEntry {
+  student: DutyStudent
+  dayIds: DutyDayId[]
+}
+
+export interface DutyStudentDayGroups {
+  current: DutyStudentDayGroupEntry[]
+  never: DutyStudentDayGroupEntry[]
+  elsewhere: DutyStudentDayGroupEntry[]
+}
+
+function sortDutyDayIds(dayIds: Iterable<DutyDayId>) {
+  return [...new Set(dayIds)].sort(
+    (left, right) => DAY_IDS.indexOf(left) - DAY_IDS.indexOf(right),
+  )
+}
+
+export function groupDutyStudentsForDay(
+  students: DutyStudent[],
+  assignments: DutyAssignment[],
+  currentDayId: DutyDayId,
+): DutyStudentDayGroups {
+  const daysByStudent = new Map<string, DutyDayId[]>()
+  assignments.forEach(({ dayId, studentId }) => {
+    daysByStudent.set(studentId, [
+      ...(daysByStudent.get(studentId) ?? []),
+      dayId,
+    ])
+  })
+  const groups: DutyStudentDayGroups = {
+    current: [],
+    never: [],
+    elsewhere: [],
+  }
+  ;[...students].sort(compareAlphabetically).forEach((student) => {
+    const dayIds = sortDutyDayIds(daysByStudent.get(student.id) ?? [])
+    const entry = { student, dayIds }
+    if (dayIds.includes(currentDayId)) groups.current.push(entry)
+    else if (dayIds.length === 0) groups.never.push(entry)
+    else groups.elsewhere.push(entry)
+  })
+  return groups
+}
+
+export function setStudentDutyForDay(
+  assignments: DutyAssignment[],
+  completedDayIds: readonly DutyDayId[],
+  dayId: DutyDayId,
+  studentId: string,
+  assigned: boolean,
+) {
+  if (!DAY_IDS.includes(dayId) || !studentId) {
+    throw new Error("Invalid duty assignment")
+  }
+  if (completedDayIds.includes(dayId)) {
+    throw new Error("Completed duty history is immutable")
+  }
+  const exactMatch = ({
+    dayId: candidateDayId,
+    studentId: candidateStudentId,
+  }: DutyAssignment) =>
+    candidateDayId === dayId && candidateStudentId === studentId
+  if (assigned) {
+    return assignments.some(exactMatch)
+      ? assignments.map((assignment) => ({ ...assignment }))
+      : [
+          ...assignments.map((assignment) => ({ ...assignment })),
+          { dayId, studentId },
+        ]
+  }
+  return assignments.filter((assignment) => !exactMatch(assignment))
+}
+
+export function getDutyCoverage(
+  students: DutyStudent[],
+  assignments: DutyAssignment[],
+) {
+  const activeStudentIds = new Set(
+    students.filter(({ active }) => active === 1).map(({ id }) => id),
+  )
+  const assignedStudentIds = new Set(
+    assignments
+      .map(({ studentId }) => studentId)
+      .filter((studentId) => activeStudentIds.has(studentId)),
+  )
+  const missingStudentIds = [...activeStudentIds].filter(
+    (studentId) => !assignedStudentIds.has(studentId),
+  )
+  return {
+    assigned: assignedStudentIds.size,
+    total: activeStudentIds.size,
+    missingStudentIds,
+    complete: missingStudentIds.length === 0,
+  }
 }
 
 function selectFridayStudents(
@@ -479,6 +602,30 @@ function dutyDayLabel(dayId: DutyDayId) {
   return DUTY_DAYS.find(({ id }) => id === dayId)?.label ?? dayId
 }
 
+export function getVisibleDutyWarnings(
+  warnings: DutyWarning[],
+  acknowledgedWarningKeys: readonly string[],
+) {
+  const acknowledged = new Set(acknowledgedWarningKeys)
+  return warnings.filter(
+    ({ key, severity }) => severity === "major" || !acknowledged.has(key),
+  )
+}
+
+export function pruneDutyWarningAcknowledgements(
+  warnings: DutyWarning[],
+  acknowledgedWarningKeys: readonly string[],
+) {
+  const activeAdvisories = new Set(
+    warnings
+      .filter(({ severity }) => severity === "advisory")
+      .map(({ key }) => key),
+  )
+  return [...new Set(acknowledgedWarningKeys)].filter((key) =>
+    activeAdvisories.has(key),
+  )
+}
+
 export function getDutyWarnings(
   students: DutyStudent[],
   assignments: DutyAssignment[],
@@ -505,14 +652,18 @@ export function getDutyWarnings(
         severity: "major",
         title: `${name} non assegnato`,
         detail: "L’allievo non compare in nessuna comandata della settimana.",
+        studentId: student.id,
       })
     }
     if (days.length > 1) {
+      const orderedDays = sortDutyDayIds(days)
       warnings.push({
-        key: `multiple:${student.id}:${sortedIds(days)}`,
+        key: `multiple:${student.id}:${sortedIds(orderedDays)}`,
         severity: "major",
         title: `${name} assegnato più volte`,
-        detail: `Comandate: ${days.map(dutyDayLabel).join(", ")}. La scelta resta consentita.`,
+        detail: `Comandate: ${orderedDays.map(dutyDayLabel).join(", ")}. La scelta resta consentita.`,
+        dayIds: orderedDays,
+        studentId: student.id,
       })
     }
   })
@@ -525,6 +676,8 @@ export function getDutyWarnings(
         severity: "major",
         title: `${student.firstName} ${student.surname} è disabilitato`,
         detail: `L’assegnazione futura a ${dutyDayLabel(dayId)} resta consentita ma va verificata.`,
+        dayId,
+        studentId,
       })
     }
   })
@@ -538,11 +691,24 @@ export function getDutyWarnings(
   const futureEligible = students.filter(
     ({ id, active }) => active === 1 && !completedStudents.has(id),
   )
-  const expected = calculateConfiguredDutyCapacities(
-    futureEligible.length,
-    futureDays,
-    config,
-  )
+  let expected: Record<DutyDayId, number>
+  try {
+    expected = calculateConfiguredDutyCapacities(
+      futureEligible.length,
+      futureDays,
+      config,
+    )
+  } catch {
+    expected = calculateDutyCapacities(
+      futureEligible.length,
+      futureDays,
+      getLegacyExtraDayIds(
+        futureEligible.length,
+        futureDays,
+        config.fewerDayIds,
+      ),
+    )
+  }
   futureDays.forEach((dayId) => {
     const actual = assignments.filter(
       (assignment) => assignment.dayId === dayId,
@@ -553,6 +719,7 @@ export function getDutyWarnings(
         severity: "major",
         title: `Numero non previsto per ${dutyDayLabel(dayId)}`,
         detail: `${actual} assegnati; proposta equilibrata ${expected[dayId]}.`,
+        dayId,
       })
     }
   })
@@ -577,17 +744,23 @@ export function getDutyWarnings(
         severity: "advisory",
         title: "Preferenza venerdì non soddisfatta",
         detail: `${actualStayOver} permanenti su ${target} posti utili del venerdì.`,
+        dayId: "friday",
       })
     }
   }
 
   const advisoryBalance = (label: string, key: string, counts: number[]) => {
     if (counts.length > 1 && Math.max(...counts) - Math.min(...counts) > 1) {
+      const minimum = Math.min(...counts)
+      const maximum = Math.max(...counts)
       warnings.push({
         key: `${key}:${counts.join(",")}`,
         severity: "advisory",
         title: `${label} non distribuiti uniformemente`,
         detail: "La modifica resta consentita e può essere accettata.",
+        dayIds: futureDays.filter(
+          (_, index) => counts[index] === minimum || counts[index] === maximum,
+        ),
       })
     }
   }

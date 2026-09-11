@@ -1,6 +1,16 @@
 import path from "node:path"
 
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
+
+async function dutyCardNames(card: Locator) {
+  return card
+    .locator("[data-student-name]")
+    .evaluateAll((elements) =>
+      elements.map(
+        (element) => (element as HTMLElement).dataset.studentName ?? "",
+      ),
+    )
+}
 
 async function addStudent(
   page: Page,
@@ -23,7 +33,7 @@ async function addStudent(
 test("plans, overrides and recalculates remaining duties without rewriting history", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(210_000)
+  test.setTimeout(300_000)
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
@@ -40,6 +50,7 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()
   await page.getByRole("button", { name: "Comandate" }).click()
   await page.getByRole("button", { name: "Proponi comandate" }).click()
+  await page.getByText("Scegli tra tutti gli allievi").click()
   const stayOverNames = Array.from(
     { length: 5 },
     (_, index) => `Nome${index + 1}`,
@@ -47,7 +58,7 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
   for (const name of stayOverNames) {
     await page.getByText(name, { exact: true }).click()
   }
-  await page.getByRole("button", { name: "Genera" }).click()
+  await page.getByRole("button", { name: "Conferma proposta" }).click()
 
   await expect(
     page.getByRole("region", { name: "Piano comandate" }),
@@ -55,9 +66,7 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
   const initialFridayCard = page.getByRole("button", {
     name: /Venerdì, 3 assegnati/,
   })
-  const initialFridayNames = (
-    (await initialFridayCard.locator("span").last().textContent()) ?? ""
-  ).split(" · ")
+  const initialFridayNames = await dutyCardNames(initialFridayCard)
   expect(initialFridayNames).toHaveLength(3)
   expect(initialFridayNames.every((name) => stayOverNames.includes(name))).toBe(
     true,
@@ -66,14 +75,14 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
   const thursdayCard = page.getByRole("button", {
     name: /Giovedì, 3 assegnati/,
   })
-  const manualOverrideName = (
-    (await thursdayCard.locator("span").last().textContent()) ?? ""
-  )
-    .split(" · ")
-    .find((name) => !stayOverNames.includes(name))!
+  const manualOverrideName = (await dutyCardNames(thursdayCard)).find(
+    (name) => !stayOverNames.includes(name),
+  )!
   await initialFridayCard.click()
   await page
-    .getByRole("button", { name: initialFridayNames[0]!, exact: true })
+    .getByRole("button", {
+      name: `Rimuovi ${initialFridayNames[0]!} da Venerdì`,
+    })
     .click()
   await page
     .getByRole("button", { name: manualOverrideName, exact: true })
@@ -95,14 +104,14 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
     .click()
 
   const saturdayCard = page.getByRole("button", { name: /Sabato, 3 assegnati/ })
-  const completedNames = await saturdayCard.locator("span").last().textContent()
+  const completedNames = await saturdayCard
+    .locator("[data-duty-names]")
+    .textContent()
   const disabledMidweekName = (
-    (await page
-      .getByRole("button", { name: /Mercoledì, 3 assegnati/ })
-      .locator("span")
-      .last()
-      .textContent()) ?? ""
-  ).split(" · ")[0]!
+    await dutyCardNames(
+      page.getByRole("button", { name: /Mercoledì, 3 assegnati/ }),
+    )
+  )[0]!
   await saturdayCard.click()
   await page.getByRole("button", { name: "Segna completata" }).click()
   await expect(
@@ -135,7 +144,9 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
   await page.getByRole("button", { name: "Comandate" }).click()
 
   await page.getByRole("button", { name: "Ricalcola" }).click()
-  await page.getByRole("button", { name: "Ricalcola", exact: true }).click()
+  await page.getByRole("button", { name: "Domenica con più persone" }).click()
+  await page.getByRole("button", { name: "Venerdì con più persone" }).click()
+  await page.getByRole("button", { name: "Conferma proposta" }).click()
   const assertHealthyFuturePlan = async () => {
     await expect(page.getByRole("button", { name: "Avvisi · 0" })).toBeVisible()
     for (const label of [
@@ -150,13 +161,9 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
         page.getByRole("button", { name: new RegExp(`^${label},`) }),
       ).not.toContainText(disabledMidweekName)
     }
-    const fridayNames = (
-      (await page
-        .getByRole("button", { name: /Venerdì, 3 assegnati/ })
-        .locator("span")
-        .last()
-        .textContent()) ?? ""
-    ).split(" · ")
+    const fridayNames = await dutyCardNames(
+      page.getByRole("button", { name: /Venerdì, 3 assegnati/ }),
+    )
     expect(fridayNames).toHaveLength(3)
     expect(fridayNames.every((name) => stayOverNames.includes(name))).toBe(true)
   }

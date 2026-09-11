@@ -56,6 +56,7 @@ const dutySettings = Table.createLocalOnly({
   courseId: column.text,
   desiredPerDay: column.integer,
   fewerDayIds: column.text,
+  extraDayIds: column.text,
   balanceMinors: column.integer,
   balanceSex: column.integer,
   tieBreaker: column.text,

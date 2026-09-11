@@ -1,7 +1,13 @@
 import { mkdirSync } from "node:fs"
 import path from "node:path"
 
-import { expect, type BrowserContext, type Page, test } from "@playwright/test"
+import {
+  expect,
+  type BrowserContext,
+  type Locator,
+  type Page,
+  test,
+} from "@playwright/test"
 
 import { SESSION_SEQUENCE } from "../../src/domain/config"
 import { formatCourseIdentity, getIsoWeekInfo } from "../../src/domain/course"
@@ -21,6 +27,16 @@ function displayName(student: (typeof scenario.students)[number]) {
   return duplicateNames.has(student.firstName)
     ? `${student.firstName} ${student.surname[0]}.`
     : student.firstName
+}
+
+async function dutyCardNames(card: Locator) {
+  return card
+    .locator("[data-student-name]")
+    .evaluateAll((elements) =>
+      elements.map(
+        (element) => (element as HTMLElement).dataset.studentName ?? "",
+      ),
+    )
 }
 
 async function addStudent(
@@ -259,10 +275,11 @@ test("runs one deterministic D2 course through a complete sailing week", async (
 
   await app.getByRole("button", { name: "Comandate" }).click()
   await app.getByRole("button", { name: "Proponi comandate" }).click()
+  await app.getByText("Scegli tra tutti gli allievi").click()
   for (const student of scenario.students.slice(0, 5)) {
     await app.getByText(displayName(student), { exact: true }).click()
   }
-  await app.getByRole("button", { name: "Genera" }).click()
+  await app.getByRole("button", { name: "Conferma proposta" }).click()
   for (const day of [
     "Sabato",
     "Domenica",
@@ -279,15 +296,15 @@ test("runs one deterministic D2 course through a complete sailing week", async (
   const wednesday = app.getByRole("button", {
     name: /^Mercoledì, 3 assegnati/,
   })
-  const assignedWednesday = (
-    (await wednesday.locator("span").last().textContent()) ?? ""
-  ).split(" · ")
+  const assignedWednesday = await dutyCardNames(wednesday)
   const replacement = scenario.students
     .map(displayName)
     .find((name) => !assignedWednesday.includes(name))!
   await wednesday.click()
   await app
-    .getByRole("button", { name: assignedWednesday[0]!, exact: true })
+    .getByRole("button", {
+      name: `Rimuovi ${assignedWednesday[0]!} da Mercoledì`,
+    })
     .click()
   await app.getByRole("button", { name: replacement, exact: true }).click()
   await app
