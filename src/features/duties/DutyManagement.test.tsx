@@ -121,6 +121,9 @@ describe("DutyManagement", () => {
       .closest("button")
     expect(minorDayCard).not.toBeNull()
     expect(within(minorDayCard!).getByText("M", { exact: true })).toBeVisible()
+    expect(
+      screen.getByRole("status", { name: "Copertura comandate 8/8" }),
+    ).toHaveClass("bg-card")
   })
 
   it("keeps preview generation non-mutating and gates the exact remainder", async () => {
@@ -336,6 +339,11 @@ describe("DutyManagement", () => {
     const studentButton = within(
       screen.getByRole("region", { name: "Allievi comandata Domenica" }),
     ).getByRole("button", { name: /^Nome1$/ })
+    expect(
+      within(
+        screen.getByRole("region", { name: "Allievi comandata Domenica" }),
+      ).getByLabelText("Nome1, minorenne"),
+    ).toBeVisible()
     await user.click(studentButton)
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(savePlan.mock.calls[0]![1]).toEqual(
@@ -358,7 +366,14 @@ describe("DutyManagement", () => {
         { dayId: "friday", studentId: "student-7" },
         { dayId: "friday", studentId: "student-8" },
       ],
-      settings: { ...SETTINGS, stayOverStudentIds: ["student-1"] },
+      settings: {
+        ...SETTINGS,
+        extraDayIds: ["friday"],
+        fewerDayIds: DUTY_DAYS.map(({ id }) => id).filter(
+          (id) => id !== "friday",
+        ),
+        stayOverStudentIds: ["student-1"],
+      },
     })
     const user = userEvent.setup()
     render(
@@ -368,6 +383,15 @@ describe("DutyManagement", () => {
         referenceDate="2026-08-29"
       />,
     )
+
+    const fridayCard = await screen.findByRole("button", {
+      name: /Venerdì, 2 assegnati/,
+    })
+    const advisorySummary = within(fridayCard.closest("article")!).getByText(
+      "1 avviso",
+    ).parentElement
+    expect(advisorySummary).toHaveClass("text-[#996515]")
+    expect(advisorySummary).not.toHaveClass("text-[#b42318]")
 
     await user.click(await screen.findByRole("button", { name: /Avvisi/ }))
     expect(screen.getByText("Preferenza venerdì non soddisfatta")).toBeVisible()
@@ -386,6 +410,9 @@ describe("DutyManagement", () => {
     await user.click(
       screen.getByRole("button", { name: "Indietro da Avvisi comandate" }),
     )
+    expect(
+      screen.queryByText("Preferenza venerdì non soddisfatta"),
+    ).not.toBeInTheDocument()
     await user.click(
       screen.getByRole("button", { name: /Sabato, 1 assegnati/ }),
     )

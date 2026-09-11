@@ -10,11 +10,13 @@ async function createCourse(page: Page) {
   await page.getByRole("button", { name: "Crea corso" }).click()
 }
 
-async function addStudents(page: Page, count: number) {
+async function addStudents(page: Page, count: number, longNames = false) {
   await page.getByRole("button", { name: "Allievi" }).click()
   for (let index = 1; index <= count; index += 1) {
     await page.getByRole("button", { name: "Aggiungi allievo" }).click()
-    await page.getByLabel("Nome", { exact: true }).fill(`Nome${index}`)
+    await page
+      .getByLabel("Nome", { exact: true })
+      .fill(longNames ? `NomeLunghissimo${index}` : `Nome${index}`)
     await page.getByLabel("Cognome", { exact: true }).fill(`Cognome${index}`)
     await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
     await page
@@ -159,6 +161,61 @@ test("previews, confirms and edits duties directly from the seven day cards", as
     await mkdir(evidenceDirectory, { recursive: true })
     await page.screenshot({
       path: path.join(evidenceDirectory, "u08-p11-p13-pixel-7.png"),
+      fullPage: true,
+    })
+  }
+})
+
+test("keeps long-name P13 cards readable and tappable at 320px and 200% text", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(180_000)
+  await page.setViewportSize({ width: 320, height: 664 })
+  await createCourse(page)
+  await addStudents(page, 8, true)
+  await page.getByRole("button", { name: "Comandate" }).click()
+  await page.getByRole("button", { name: "Proponi comandate" }).click()
+  await page.getByRole("button", { name: "Conferma proposta" }).click()
+  await page.getByRole("button", { name: /^Sabato, \d+ assegnati/ }).click()
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(320)
+  const cards = page
+    .getByRole("region", { name: "Allievi comandata Sabato" })
+    .locator("article")
+  await expect(cards).toHaveCount(8)
+  const overflows = await cards.evaluateAll(
+    (elements) =>
+      elements.filter(
+        (element) => element.scrollWidth > element.clientWidth + 1,
+      ).length,
+  )
+  expect(overflows).toBe(0)
+  const addButtons = page
+    .getByRole("region", { name: "Allievi comandata Sabato" })
+    .getByRole("button", { name: /^NomeLunghissimo/ })
+  for (const button of await addButtons.all()) {
+    const box = await button.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeGreaterThanOrEqual(40)
+    expect(box!.height).toBeGreaterThanOrEqual(40)
+  }
+  const removeButton = page
+    .getByRole("button", {
+      name: /Rimuovi NomeLunghissimo.* da Sabato/,
+    })
+    .first()
+  const removeBox = await removeButton.boundingBox()
+  expect(removeBox).not.toBeNull()
+  expect(removeBox!.width).toBeGreaterThanOrEqual(40)
+  expect(removeBox!.height).toBeGreaterThanOrEqual(40)
+  if (testInfo.project.name === "pixel-7-chrome") {
+    await page.screenshot({
+      path: path.resolve(".evidence/U08/u08-p13-stress-pixel-7.png"),
       fullPage: true,
     })
   }

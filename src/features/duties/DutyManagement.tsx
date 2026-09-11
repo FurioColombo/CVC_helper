@@ -17,6 +17,7 @@ import {
   getDutyCoverage,
   getDutyDistributionRequirement,
   getDutyWarnings,
+  getVisibleDutyWarnings,
   groupDutyStudentsForDay,
   setStudentDutyForDay,
   type DutyAssignment,
@@ -577,6 +578,7 @@ function StudentAssignmentCard({
   entry,
   allStudents,
   completedDayIds,
+  referenceDate,
   current,
   completed,
   saving,
@@ -586,6 +588,7 @@ function StudentAssignmentCard({
   entry: DutyStudentDayGroupEntry
   allStudents: StudentRecord[]
   completedDayIds: readonly DutyDayId[]
+  referenceDate: string
   current: boolean
   completed: boolean
   saving: boolean
@@ -597,11 +600,11 @@ function StudentAssignmentCard({
   const hasMultipleDays = dayIds.length > 1
   return (
     <article
-      className={`flex min-w-0 items-center gap-1 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] ${hasMultipleDays ? "col-span-2" : ""}`}
+      className={`flex min-w-0 items-center gap-1 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2 max-[350px]:col-span-1" : ""}`}
     >
       {current ? (
         <span
-          className="flex min-h-10 min-w-0 flex-1 items-center truncate px-1 text-left text-sm font-bold"
+          className="flex min-h-10 min-w-0 flex-1 items-center truncate px-1 text-left text-sm font-bold max-[350px]:min-h-[40px] max-[350px]:break-all max-[350px]:px-[2px] max-[350px]:whitespace-normal"
           title={name}
         >
           {name}
@@ -609,18 +612,28 @@ function StudentAssignmentCard({
       ) : (
         <button
           aria-label={name}
-          className="flex min-h-10 min-w-0 flex-1 items-center gap-1 rounded-xl px-1 text-left text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:rounded-none max-[350px]:text-primary max-[350px]:shadow-[inset_2px_0_0_#b9d4ec]"
+          className="flex min-h-10 min-w-0 flex-1 items-center gap-1 rounded-xl px-1 text-left text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:min-h-[40px] max-[350px]:min-w-[40px] max-[350px]:gap-[2px] max-[350px]:rounded-none max-[350px]:px-[2px] max-[350px]:text-primary max-[350px]:shadow-[inset_2px_0_0_#b9d4ec]"
           disabled={completed || saving}
           onClick={onAdd}
           title={name}
           type="button"
         >
-          <span className="min-w-0 flex-1 truncate">{name}</span>
+          <span className="min-w-0 flex-1 truncate max-[350px]:break-all max-[350px]:whitespace-normal">
+            {name}
+          </span>
           <Plus
             aria-hidden="true"
             className="size-4 shrink-0 text-primary max-[350px]:hidden"
           />
         </button>
+      )}
+      {isMinor(student.dateOfBirth, referenceDate) && (
+        <span
+          aria-label={`${name}, minorenne`}
+          className="grid size-4 shrink-0 place-items-center rounded-full bg-[#d33a4a] text-[9px] font-black text-white max-[350px]:size-[16px]"
+        >
+          M
+        </span>
       )}
       {student.active === 0 && (
         <span className="hidden shrink-0 text-[10px] font-bold text-muted-foreground min-[520px]:inline">
@@ -634,12 +647,12 @@ function StudentAssignmentCard({
           role="img"
         />
       )}
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div className="flex shrink-0 items-center gap-0.5 max-[350px]:gap-[2px]">
         {dayIds.map((assignedDayId) => (
           <span className="flex items-center gap-0.5" key={assignedDayId}>
             <span
               aria-label={`${getDayLabel(assignedDayId)} assegnato`}
-              className="rounded-md bg-muted px-1.5 py-1 text-[10px] font-black text-muted-foreground"
+              className="rounded-md bg-muted px-1.5 py-1 text-[10px] font-black text-muted-foreground max-[350px]:px-[4px] max-[350px]:py-[2px]"
               title={getDayLabel(assignedDayId)}
             >
               {SHORT_DAY_LABELS[assignedDayId]}
@@ -647,7 +660,7 @@ function StudentAssignmentCard({
             {!completedDayIds.includes(assignedDayId) ? (
               <button
                 aria-label={`Rimuovi ${name} da ${getDayLabel(assignedDayId)}`}
-                className="grid size-10 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40"
+                className="grid size-10 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40 max-[350px]:size-[40px]"
                 disabled={completed || saving}
                 onClick={() => onRemove(assignedDayId)}
                 type="button"
@@ -668,6 +681,7 @@ function DayEditor({
   assignments,
   completedDayIds,
   completed,
+  referenceDate,
   onBack,
   onSave,
   onComplete,
@@ -677,6 +691,7 @@ function DayEditor({
   assignments: DutyAssignment[]
   completedDayIds: readonly DutyDayId[]
   completed: boolean
+  referenceDate: string
   onBack: () => void
   onSave: (assignments: DutyAssignment[]) => Promise<void>
   onComplete: () => Promise<void>
@@ -729,7 +744,7 @@ function DayEditor({
 
   function renderCards(entries: DutyStudentDayGroupEntry[], current: boolean) {
     return entries.length > 0 ? (
-      <div className="grid grid-cols-2 items-start gap-2">
+      <div className="grid grid-cols-2 items-start gap-2 max-[350px]:grid-cols-1 max-[350px]:gap-[4px]">
         {entries.map((entry) => (
           <StudentAssignmentCard
             allStudents={students}
@@ -745,6 +760,7 @@ function DayEditor({
               void updateAssignment(targetDayId, entry.student.id, false)
             }
             saving={saving}
+            referenceDate={referenceDate}
           />
         ))}
       </div>
@@ -971,10 +987,11 @@ export function DutyManagement({
         settings?.completedDayIds,
       )
     : []
-  const visibleWarningCount = warnings.filter(
-    ({ key, severity }) =>
-      severity === "major" || !settings?.acknowledgedWarningKeys.includes(key),
-  ).length
+  const visibleWarnings = getVisibleDutyWarnings(
+    warnings,
+    settings?.acknowledgedWarningKeys ?? [],
+  )
+  const visibleWarningCount = visibleWarnings.length
 
   async function persist(
     nextAssignments: DutyAssignment[],
@@ -1060,6 +1077,7 @@ export function DutyManagement({
           setScreen({ kind: "list" })
         }}
         onSave={(next) => persist(next, settings)}
+        referenceDate={referenceDate}
         students={students}
       />
     )
@@ -1160,16 +1178,13 @@ export function DutyManagement({
               return (
                 <div
                   aria-label={`Copertura comandate ${coverage.assigned}/${coverage.total}`}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-black shadow-sm ${coverage.complete ? "border-[#b8dfbf] bg-[#e9f5eb] text-[#176b2c]" : "border-[#e9d37c] bg-[#fff7df] text-[#78550d]"}`}
+                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-black shadow-sm ${coverage.complete ? "bg-card text-foreground" : "border-[#e9d37c] bg-[#fff7df] text-[#78550d]"}`}
                   role="status"
                 >
                   <span>
                     {coverage.assigned}/{coverage.total}
                   </span>
                   <span>allievi nelle Comandate</span>
-                  {coverage.complete && (
-                    <Check aria-hidden="true" className="size-4" />
-                  )}
                 </div>
               )
             })()}
@@ -1202,8 +1217,11 @@ export function DutyManagement({
                 )
               const names = dayEntries.map(({ name }) => name)
               const completed = settings.completedDayIds.includes(id)
-              const dayWarnings = warnings.filter((warning) =>
+              const dayWarnings = visibleWarnings.filter((warning) =>
                 warningDayIds(warning).includes(id),
+              )
+              const dayHasMajorWarning = dayWarnings.some(
+                ({ severity }) => severity === "major",
               )
               return (
                 <article
@@ -1275,7 +1293,9 @@ export function DutyManagement({
                   {dayWarnings.length > 0 && (
                     <div className="mt-2 border-t pt-2">
                       <details>
-                        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-end gap-1 text-xs font-bold text-[#b42318] outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+                        <summary
+                          className={`flex min-h-10 cursor-pointer list-none items-center justify-end gap-1 text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${dayHasMajorWarning ? "text-[#b42318]" : "text-[#996515]"}`}
+                        >
                           <AlertTriangle
                             aria-hidden="true"
                             className="size-4"
@@ -1288,7 +1308,7 @@ export function DutyManagement({
                         <div className="mt-2 grid gap-2">
                           {dayWarnings.map((warning) => (
                             <div
-                              className="rounded-xl bg-[#fff1ed] p-2 text-xs"
+                              className={`rounded-xl p-2 text-xs ${warning.severity === "major" ? "bg-[#fff1ed]" : "bg-[#fff7df]"}`}
                               key={warning.key}
                             >
                               <p className="font-black">{warning.title}</p>
