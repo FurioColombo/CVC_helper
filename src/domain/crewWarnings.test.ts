@@ -6,6 +6,8 @@ import {
   type StudentSize,
 } from "@/domain/config"
 import {
+  getBoatCrewWarnings,
+  getCrewWarningSummary,
   getCrewWarnings,
   getTwoPersonSizeWarning,
   getWorstCrewWarningSeverity,
@@ -159,5 +161,66 @@ describe("crew warnings", () => {
 
   it("does not treat A terra as history because only real crews are inputs", () => {
     expect(getCrewWarnings(CURRENT, [], new Map())).toEqual([])
+  })
+
+  it.each([
+    ["available", ["resolved"], [], null],
+    ["available", ["open"], ["boat-fault"], "yellow"],
+    ["available", ["reported"], ["boat-fault"], "yellow"],
+    ["unavailable", ["resolved"], ["boat-unavailable"], "red"],
+    [
+      "unavailable",
+      ["open", "reported", "resolved"],
+      ["boat-unavailable", "boat-fault"],
+      "red",
+    ],
+  ] as const)(
+    "keeps %s boat and %s fault reasons separate",
+    (availability, faultStates, kinds, severity) => {
+      const boatWarnings = getBoatCrewWarnings({
+        boatId: "boat-7",
+        boatLabel: "RS Quest 7",
+        availability,
+        faultStates,
+      })
+      const summary = getCrewWarningSummary(boatWarnings)
+      expect(summary.boatReasons.map(({ kind }) => kind)).toEqual(kinds)
+      expect(summary.crewReasons).toEqual([])
+      expect(summary.severity).toBe(severity)
+      if (faultStates.some((state) => state === "open")) {
+        expect(boatWarnings).toContainEqual(
+          expect.objectContaining({
+            kind: "boat-fault",
+            unresolvedFaultCount: faultStates.filter(
+              (state) => state !== "resolved",
+            ).length,
+          }),
+        )
+      }
+    },
+  )
+
+  it("returns one highest-severity summary while retaining crew and boat reasons", () => {
+    const crewWarnings = getCrewWarnings(
+      CURRENT,
+      [],
+      new Map([
+        ["student-1", "L"],
+        ["student-2", "L"],
+      ]),
+    )
+    const summary = getCrewWarningSummary([
+      ...crewWarnings,
+      ...getBoatCrewWarnings({
+        boatId: "boat-7",
+        boatLabel: "RS Quest 7",
+        availability: "unavailable",
+        faultStates: ["open"],
+      }),
+    ])
+
+    expect(summary.severity).toBe("red")
+    expect(summary.crewReasons).toHaveLength(1)
+    expect(summary.boatReasons).toHaveLength(2)
   })
 })

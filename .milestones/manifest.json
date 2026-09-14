@@ -213,118 +213,157 @@
       "id": "U00",
       "category": "FOUNDATION",
       "status": "COMPLETE",
-      "verificationScripts": ["verify:all"],
+      "verificationScripts": [
+        "verify:all"
+      ],
       "requiredEvidence": [
         ".evidence/U00/verification.json",
         ".evidence/U00/controller-refusal.txt",
         ".evidence/U00/compatibility-v0.1.0.json",
         ".evidence/U00/self-review.json"
       ],
-      "requiredReviews": [".evidence/U00/self-review.json"]
+      "requiredReviews": [
+        ".evidence/U00/self-review.json"
+      ]
     },
     {
       "id": "U01",
       "category": "FEATURE",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U01/verification.json",
         ".evidence/U01/browser-evidence.json",
         ".evidence/U01/self-review.json"
       ],
-      "requiredReviews": [".evidence/U01/self-review.json"]
+      "requiredReviews": [
+        ".evidence/U01/self-review.json"
+      ]
     },
     {
       "id": "U02",
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U02/verification.json",
         ".evidence/U02/browser-evidence.json",
         ".evidence/U02/data-integrity-review.json"
       ],
-      "requiredReviews": [".evidence/U02/data-integrity-review.json"]
+      "requiredReviews": [
+        ".evidence/U02/data-integrity-review.json"
+      ]
     },
     {
       "id": "U03",
       "category": "FEATURE",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U03/verification.json",
         ".evidence/U03/browser-evidence.json",
         ".evidence/U03/speech-device-evidence.json",
         ".evidence/U03/self-review.json"
       ],
-      "requiredReviews": [".evidence/U03/self-review.json"]
+      "requiredReviews": [
+        ".evidence/U03/self-review.json"
+      ]
     },
     {
       "id": "U04",
       "category": "FEATURE",
       "status": "COMPLETE",
-      "verificationScripts": ["verify", "check:ocr-offline"],
+      "verificationScripts": [
+        "verify",
+        "check:ocr-offline"
+      ],
       "requiredEvidence": [
         ".evidence/U04/verification.json",
         ".evidence/U04/browser-evidence.json",
         ".evidence/U04/ocr-quality-evidence.json",
         ".evidence/U04/self-review.json"
       ],
-      "requiredReviews": [".evidence/U04/self-review.json"]
+      "requiredReviews": [
+        ".evidence/U04/self-review.json"
+      ]
     },
     {
       "id": "U05",
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U05/verification.json",
         ".evidence/U05/browser-evidence.json",
         ".evidence/U05/domain-review.json"
       ],
-      "requiredReviews": [".evidence/U05/domain-review.json"]
+      "requiredReviews": [
+        ".evidence/U05/domain-review.json"
+      ]
     },
     {
       "id": "U06",
       "category": "FEATURE",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U06/verification.json",
         ".evidence/U06/browser-evidence.json",
         ".evidence/U06/self-review.json"
       ],
-      "requiredReviews": [".evidence/U06/self-review.json"]
+      "requiredReviews": [
+        ".evidence/U06/self-review.json"
+      ]
     },
     {
       "id": "U07",
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U07/verification.json",
         ".evidence/U07/browser-evidence.json",
         ".evidence/U07/domain-review.json"
       ],
-      "requiredReviews": [".evidence/U07/domain-review.json"]
+      "requiredReviews": [
+        ".evidence/U07/domain-review.json"
+      ]
     },
     {
       "id": "U08",
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U08/verification.json",
         ".evidence/U08/browser-evidence.json",
         ".evidence/U08/domain-review.json"
       ],
-      "requiredReviews": [".evidence/U08/domain-review.json"]
+      "requiredReviews": [
+        ".evidence/U08/domain-review.json"
+      ]
     },
     {
       "id": "U09",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "status": "COMPLETE",
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U09/verification.json",
         ".evidence/U09/browser-evidence.json",
@@ -340,19 +379,25 @@
       "id": "U10",
       "category": "FEATURE",
       "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "verificationScripts": [
+        "verify"
+      ],
       "requiredEvidence": [
         ".evidence/U10/verification.json",
         ".evidence/U10/browser-evidence.json",
         ".evidence/U10/self-review.json"
       ],
-      "requiredReviews": [".evidence/U10/self-review.json"]
+      "requiredReviews": [
+        ".evidence/U10/self-review.json"
+      ]
     },
     {
       "id": "UG1",
       "category": "INTEGRATION_GATE",
       "status": "PENDING",
-      "verificationScripts": ["verify:all"],
+      "verificationScripts": [
+        "verify:all"
+      ],
       "requiredEvidence": [
         ".evidence/UG1/verification.json",
         ".evidence/UG1/browser-evidence.json",

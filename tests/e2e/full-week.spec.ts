@@ -90,10 +90,7 @@ async function placeStudent(page: Page, name: string, crewNumber: number) {
 
 async function moveAvailableStudentsToLand(page: Page) {
   const pool = page.getByRole("region", { name: "Allievi disponibili" })
-  const poolHeading = page.getByRole("heading", {
-    name: /^Allievi disponibili · \d+$/,
-  })
-  const poolCount = Number((await poolHeading.textContent())?.split("·")[1])
+  const poolCount = await pool.getByRole("button").count()
   for (let remaining = poolCount; remaining > 0; remaining -= 1) {
     const person = pool.locator("button:not([disabled])").first()
     await expect(person).toBeVisible()
@@ -105,9 +102,7 @@ async function moveAvailableStudentsToLand(page: Page) {
     })
     await expect(moveToLand).toBeEnabled()
     await moveToLand.click()
-    await expect(poolHeading).toHaveText(
-      `Allievi disponibili · ${remaining - 1}`,
-    )
+    await expect(pool.getByRole("button")).toHaveCount(remaining - 1)
   }
 }
 
@@ -342,8 +337,14 @@ test("runs one deterministic D2 course through a complete sailing week", async (
       .getByRole("button", { name: `Sposta ${landStudent} A terra` })
       .click()
   }
-  await app.getByRole("button", { name: "RS Quest 2" }).click()
-  await app.getByRole("button", { name: "RS Quest 7, avaria aperta" }).click()
+  await app.getByRole("button", { name: "Apri barche della sessione" }).click()
+  await app.getByRole("button", { name: /^RS Quest 2 · Disponibile/ }).click()
+  await app
+    .getByRole("button", {
+      name: /^RS Quest 7 · Disponibile.*avaria da controllare/,
+    })
+    .click()
+  await app.getByRole("button", { name: "Torna agli equipaggi" }).click()
   await assignDestination(app, 1, "RS Quest 2")
   await assignDestination(app, 2, "Mezzi")
   await expect(app.getByText("Allievi sistemati 21/21")).toBeVisible()

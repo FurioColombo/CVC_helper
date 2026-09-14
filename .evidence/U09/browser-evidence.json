@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "nodeVersion": "v24.19.0",
+  "journeys": [
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/u09-crews.spec.ts --project=pixel-7-chrome --max-failures=1",
+      "result": "2 passed",
+      "covers": "P14–P16 at 320px and 200% text, two-row numeric boat strip with ten boats, session-local assign/unlink and reload, double-click removal, volunteer CT removal, no-boat read mode"
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/u09-crews.spec.ts --project=iphone-13-viewport --max-failures=1",
+      "result": "2 passed",
+      "covers": "Same U09 journeys on iPhone viewport"
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/full-week.spec.ts --project=pixel-7-chrome --max-failures=1",
+      "result": "1 passed",
+      "covers": "Deterministic D2 course across a complete sailing week"
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/crew-copy-read.spec.ts tests/e2e/crew-destinations.spec.ts tests/e2e/crew-management-gate.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport --max-failures=1",
+      "result": "6 passed",
+      "covers": "Copy previous crews, destinations, unavailable boat warnings, complete crew workflow on both contract viewports"
+    }
+  ],
+  "screenshots": [
+    ".evidence/U09/p14-320.png",
+    ".evidence/U09/p15-320.png",
+    ".evidence/U09/p16-320.png"
+  ]
+}

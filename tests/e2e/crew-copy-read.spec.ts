@@ -55,8 +55,10 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   await page
     .getByRole("button", { name: "Sposta Carlo in equipaggio 2" })
     .click()
-  await page.getByRole("button", { name: "RS Quest 2" }).click()
-  await page.getByRole("button", { name: "RS Quest 7" }).click()
+  await page.getByRole("button", { name: "Apri barche della sessione" }).click()
+  await page.getByRole("button", { name: /^RS Quest 2 · Disponibile/ }).click()
+  await page.getByRole("button", { name: /^RS Quest 7 · Disponibile/ }).click()
+  await page.getByRole("button", { name: "Torna agli equipaggi" }).click()
 
   await page.getByRole("combobox", { name: "Sessione" }).selectOption("sun-am")
   await page.getByRole("spinbutton").fill("1")
@@ -131,8 +133,14 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   const readView = page.getByRole("dialog", {
     name: "Vista lettura equipaggi",
   })
-  await expect(readView.getByText("RS Quest 2 — Aldo")).toBeVisible()
-  await expect(readView.getByText("RS Quest — Equipaggio vuoto")).toBeVisible()
+  const assignedRow = readView.getByRole("listitem", {
+    name: "Equipaggio 1, RS Quest 2",
+  })
+  await expect(assignedRow.getByText("Aldo")).toBeVisible()
+  const emptyRow = readView.getByRole("listitem", {
+    name: "Equipaggio 2, senza barca",
+  })
+  await expect(emptyRow.getByText("Equipaggio vuoto")).toBeVisible()
   await expect(readView).not.toContainText(
     /Allievi sistemati|Barche in uscita|Avvisi/,
   )

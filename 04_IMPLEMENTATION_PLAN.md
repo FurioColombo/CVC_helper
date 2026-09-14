@@ -502,7 +502,7 @@ scenario and an independent adversarial review. Evidence: `.evidence/U08/`.
 ## U09 — Crew composition, boats and read mode
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -536,7 +536,15 @@ directly reversible and persisted, and the announcement view stays clean.
 
 ### Completion log
 
-Pending.
+P14–P16 now use direct reversible person and boat actions, session-local boat
+links, distinct crew/boat warnings, and a compact read view. The persistence
+boundary validates course-scoped references and rejects stale writes before
+replacing crew rows. Verification passed on Node 24.19.0: 359 tests, domain and
+0.1.0 compatibility checks, production PWA build, Pixel/iPhone journeys, legacy
+crew regressions and a deterministic full-week scenario. Independent domain
+review passed; independent field-UX review found no blocker. The two-row boat
+strip remains relatively tall at 320 px with a large fleet and should be
+monitored in the final integration gate. Evidence: `.evidence/U09/`.
 
 ## U10 — Evaluation entry, overview and student history
 

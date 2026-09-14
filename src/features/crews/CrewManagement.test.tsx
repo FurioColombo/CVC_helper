@@ -581,8 +581,11 @@ describe("CrewManagement", () => {
       />,
     )
 
-    const boat = await screen.findByRole("button", {
-      name: "RS Quest 2, avaria aperta",
+    await user.click(
+      await screen.findByRole("button", { name: "Apri barche della sessione" }),
+    )
+    const boat = screen.getByRole("button", {
+      name: /RS Quest 2 · Disponibile non assegnata/,
     })
     expect(boat).toBeEnabled()
     await user.click(boat)
@@ -591,6 +594,9 @@ describe("CrewManagement", () => {
       COURSE.id,
       "sat-pm",
       expect.objectContaining({ selectedBoatIds: ["boat-2"] }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Torna agli equipaggi" }),
     )
 
     await user.click(
@@ -947,8 +953,18 @@ describe("CrewManagement", () => {
     const view = screen.getByRole("dialog", {
       name: "Vista lettura equipaggi",
     })
-    expect(within(view).getByText("RS Quest 2 — Aldo / Bea")).toBeVisible()
-    expect(within(view).getByText("RS Quest — Carlo / Vera ADV")).toBeVisible()
+    const exactBoatCrew = within(view).getByRole("listitem", {
+      name: "Equipaggio 1, RS Quest 2",
+    })
+    expect(within(exactBoatCrew).getByText("Aldo")).toBeVisible()
+    expect(within(exactBoatCrew).getByText("Bea")).toBeVisible()
+    expect(within(exactBoatCrew).getByText("2")).toBeVisible()
+    const noExactBoatCrew = within(view).getByRole("listitem", {
+      name: "Equipaggio 2, senza barca",
+    })
+    expect(within(noExactBoatCrew).getByText("Carlo")).toBeVisible()
+    expect(within(noExactBoatCrew).getByText("Vera ADV")).toBeVisible()
+    expect(within(noExactBoatCrew).getByText("Senza barca")).toBeVisible()
     expect(
       within(view).queryByText(/Allievi sistemati|Barche in uscita|Avvisi/),
     ).not.toBeInTheDocument()

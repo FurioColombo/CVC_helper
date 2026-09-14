@@ -74,7 +74,7 @@ test("verifies the complete crew workflow across students, duties and boats", as
   await page.getByRole("button", { name: "Configura barche" }).click()
   await page.getByLabel("Numeri barca").fill("2, 7, 9")
   await page.getByRole("button", { name: "Configura", exact: true }).click()
-  await page.getByRole("button", { name: /RS Quest 7, Nessuna avaria/ }).click()
+  await page.getByRole("button", { name: "RS Quest 7, Disponibile" }).click()
   await page.getByRole("button", { name: "Segnala", exact: true }).click()
   await page.getByLabel("Descrizione").fill("Timone da controllare")
   await page.getByRole("button", { name: "Salva avaria" }).click()
@@ -106,20 +106,38 @@ test("verifies the complete crew workflow across students, duties and boats", as
 
   await page.getByRole("button", { name: "Comandate" }).click()
   await page.getByRole("button", { name: "Proponi comandate" }).click()
-  await page.getByRole("button", { name: "Genera" }).click()
+  const confirmProposal = page.getByRole("button", {
+    name: "Conferma proposta",
+  })
+  for (const day of [
+    "Sabato",
+    "Domenica",
+    "Lunedì",
+    "Martedì",
+    "Mercoledì",
+    "Giovedì",
+    "Venerdì",
+  ]) {
+    if (await confirmProposal.isEnabled()) break
+    const extraDay = page.getByRole("button", {
+      name: `${day} con più persone`,
+    })
+    if ((await extraDay.getAttribute("aria-pressed")) !== "true")
+      await extraDay.click()
+  }
+  await confirmProposal.click()
   const saturday = page.getByRole("button", { name: /^Sabato,/ })
   await saturday.click()
-  for (const student of STUDENTS) {
-    const studentButton = page.getByRole("button", {
-      name: student.firstName,
-      exact: true,
+  for (const student of STUDENTS.filter(
+    ({ firstName }) => firstName !== "Carlo",
+  )) {
+    const remove = page.getByRole("button", {
+      name: `Rimuovi ${student.firstName} da Sabato`,
     })
-    const isAssigned =
-      (await studentButton.getAttribute("aria-pressed")) === "true"
-    if (isAssigned !== (student.firstName === "Carlo")) {
-      await studentButton.click()
-    }
+    if (await remove.count()) await remove.click()
   }
+  const addCarlo = page.getByRole("button", { name: "Carlo", exact: true })
+  if (await addCarlo.count()) await addCarlo.click()
   await page
     .getByRole("button", { name: "Indietro da Comandata sabato" })
     .click()
@@ -152,10 +170,18 @@ test("verifies the complete crew workflow across students, duties and boats", as
   await page.getByRole("button", { name: "Sposta Fina A terra" }).click()
   await expect(page.getByText("Allievi sistemati 6/6")).toBeVisible()
 
+  await page.getByRole("button", { name: "Apri barche della sessione" }).click()
   for (const boatName of ["RS Quest 2", "RS Quest 9"]) {
-    await page.getByRole("button", { name: boatName }).click()
+    await page
+      .getByRole("button", { name: new RegExp(`^${boatName} · Disponibile`) })
+      .click()
   }
-  await page.getByRole("button", { name: "RS Quest 7, avaria aperta" }).click()
+  await page
+    .getByRole("button", {
+      name: /^RS Quest 7 · Disponibile.*avaria da controllare/,
+    })
+    .click()
+  await page.getByRole("button", { name: "Torna agli equipaggi" }).click()
   await assignDestination(page, 1, "RS Quest 2")
   await assignDestination(page, 2, "Mezzi")
   await assignDestination(page, 3, "RS Quest 7")
@@ -165,8 +191,8 @@ test("verifies the complete crew workflow across students, duties and boats", as
     }),
   ).toBeVisible()
   await expect(
-    page.getByRole("button", { name: /Avvisi equipaggio 3:/ }),
-  ).toHaveCount(0)
+    page.getByRole("button", { name: /Avvisi equipaggio 3: giallo/ }),
+  ).toBeVisible()
 
   const sourceWarning = page.getByRole("button", {
     name: /Avvisi equipaggio 1: rosso/,
@@ -244,7 +270,7 @@ test("verifies the complete crew workflow across students, duties and boats", as
 
   await primaryNav.getByRole("button", { name: "Home", exact: true }).click()
   await page.getByRole("button", { name: "Barche" }).click()
-  await page.getByRole("button", { name: /RS Quest 2, Nessuna avaria/ }).click()
+  await page.getByRole("button", { name: "RS Quest 2, Disponibile" }).click()
   await page.getByRole("button", { name: "Rendi indisponibile" }).click()
   await primaryNav.getByRole("button", { name: "Equipaggi" }).click()
   await page.getByRole("combobox", { name: "Sessione" }).selectOption("sun-am")
@@ -270,11 +296,20 @@ test("verifies the complete crew workflow across students, duties and boats", as
   const readView = page.getByRole("dialog", {
     name: "Vista lettura equipaggi",
   })
-  await expect(readView.getByText("RS Quest 2 — Aldo / Bea")).toBeVisible()
-  await expect(readView.getByText("Mezzi — Enzo")).toBeVisible()
-  await expect(
-    readView.getByText(/RS Quest 9 — Dina \/ Vera ADV/),
-  ).toBeVisible()
+  const firstRow = readView.getByRole("listitem", {
+    name: "Equipaggio 1, RS Quest 2",
+  })
+  await expect(firstRow.getByText("Aldo")).toBeVisible()
+  await expect(firstRow.getByText("Bea")).toBeVisible()
+  const secondRow = readView.getByRole("listitem", {
+    name: "Equipaggio 2, Mezzi",
+  })
+  await expect(secondRow.getByText("Enzo")).toBeVisible()
+  const thirdRow = readView.getByRole("listitem", {
+    name: "Equipaggio 3, RS Quest 9",
+  })
+  await expect(thirdRow.getByText("Dina")).toBeVisible()
+  await expect(thirdRow.getByText("Vera ADV")).toBeVisible()
   await expect(readView).not.toContainText(
     /Allievi sistemati|Barche in uscita|Avvisi|Taglie/,
   )

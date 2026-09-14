@@ -1,0 +1,13 @@
+{
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "01_PRODUCT_SPEC.md §7.1–7.5 and 04_IMPLEMENTATION_PLAN.md U09",
+    "src/domain/crews.ts:253–327, 386–465; src/domain/crewWarnings.ts:156–237",
+    "src/persistence/crews.ts:209–312: uniqueness and course-scoped reference checks before transactional writes",
+    "src/features/crews/CrewManagement.tsx:816–820, 1142–1223, 2053–2081, 2134–2160: A terra, boat availability, and member removal paths",
+    "src/persistence/crews.test.ts:433–467 and tests/e2e/u09-crews.spec.ts:187–206: stale references and CT removal"
+  ]
+}

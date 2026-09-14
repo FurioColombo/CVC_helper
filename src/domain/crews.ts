@@ -1,6 +1,8 @@
 import {
   COURSE_CONFIG,
   SESSION_SEQUENCE,
+  type BoatAvailability,
+  type BoatType,
   type CrewDestination,
   type CourseFamily,
   type CourseLevel,
@@ -26,6 +28,19 @@ export interface CrewPlan {
   crews: CrewDraft[]
   landStudentIds: string[]
   selectedBoatIds: string[]
+}
+
+export type SessionBoatDisplayState = "unavailable" | "assigned" | "available"
+
+export interface SessionBoatState {
+  boatId: string
+  type: BoatType
+  number: string
+  availability: BoatAvailability
+  selected: boolean
+  assignedCrewId: string | null
+  displayState: SessionBoatDisplayState
+  hasUnresolvedFault: boolean
 }
 
 export type CrewDestinationTarget =
@@ -172,6 +187,72 @@ export function getEvenCrewTargets(peopleCount: number, crewCount: number) {
   )
 }
 
+export function getCrewSizeStatus(
+  memberCount: number,
+  family: CourseFamily,
+  level: CourseLevel,
+) {
+  if (!Number.isInteger(memberCount) || memberCount < 0) {
+    throw new Error("Crew member count must be a non-negative integer")
+  }
+  const requiredSize = getStandardCrewSize(family, level)
+  return {
+    requiredSize,
+    flexible: requiredSize === null,
+    complete: requiredSize === null || memberCount === requiredSize,
+    canAdd: requiredSize === null || memberCount < requiredSize,
+    overCapacity: requiredSize !== null && memberCount > requiredSize,
+  }
+}
+
+export function getSessionBoatStates(
+  boats: ReadonlyArray<{
+    id: string
+    type: BoatType
+    number: string
+    availability: BoatAvailability
+  }>,
+  plan: CrewPlan,
+  unresolvedFaultBoatIds: ReadonlySet<string> = new Set(),
+): SessionBoatState[] {
+  const selectedBoatIds = new Set(plan.selectedBoatIds)
+  const assignedCrewByBoatId = new Map<string, string>()
+  for (const crew of plan.crews) {
+    if (crew.destination === "boat" && crew.boatId) {
+      assignedCrewByBoatId.set(crew.boatId, crew.id)
+    }
+  }
+  const collator = new Intl.Collator("it-IT", {
+    numeric: true,
+    sensitivity: "base",
+  })
+  return boats
+    .map((boat): SessionBoatState => {
+      const assignedCrewId = assignedCrewByBoatId.get(boat.id) ?? null
+      return {
+        boatId: boat.id,
+        type: boat.type,
+        number: boat.number,
+        availability: boat.availability,
+        selected: selectedBoatIds.has(boat.id),
+        assignedCrewId,
+        displayState:
+          boat.availability === "unavailable"
+            ? "unavailable"
+            : assignedCrewId
+              ? "assigned"
+              : "available",
+        hasUnresolvedFault: unresolvedFaultBoatIds.has(boat.id),
+      }
+    })
+    .sort(
+      (left, right) =>
+        collator.compare(left.number, right.number) ||
+        collator.compare(left.type, right.type) ||
+        collator.compare(left.boatId, right.boatId),
+    )
+}
+
 export function setBoatGoingOut(
   plan: CrewPlan,
   boatId: string,
@@ -179,20 +260,35 @@ export function setBoatGoingOut(
 ): CrewPlan {
   const selected = plan.selectedBoatIds.includes(boatId)
   if (selected === goingOut) return plan
-  if (
-    !goingOut &&
-    plan.crews.some(
-      (crew) => crew.destination === "boat" && crew.boatId === boatId,
-    )
-  ) {
-    throw new Error("Cannot remove a boat assigned to a crew")
-  }
   return {
     ...plan,
+    crews: goingOut
+      ? plan.crews
+      : plan.crews.map((crew) =>
+          crew.destination === "boat" && crew.boatId === boatId
+            ? { ...crew, destination: "unassigned", boatId: null }
+            : crew,
+        ),
     selectedBoatIds: goingOut
       ? [...plan.selectedBoatIds, boatId]
       : plan.selectedBoatIds.filter((id) => id !== boatId),
   }
+}
+
+export function assignAvailableSessionBoat(
+  plan: CrewPlan,
+  crewId: string,
+  boatId: string,
+  availableBoatIds: ReadonlySet<string>,
+) {
+  const crew = plan.crews.find(({ id }) => id === crewId)
+  if (!crew) throw new Error("Missing crew")
+  if (crew.boatId) throw new Error("Crew already has a boat")
+  if (!availableBoatIds.has(boatId)) {
+    throw new Error("Boat is not available")
+  }
+  const outingPlan = setBoatGoingOut(plan, boatId, true)
+  return assignCrewDestination(outingPlan, crewId, { kind: "boat", boatId })
 }
 
 export function assignCrewDestination(

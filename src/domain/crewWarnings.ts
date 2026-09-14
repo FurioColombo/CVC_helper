@@ -1,7 +1,9 @@
 import {
   SESSION_SEQUENCE,
   SIZE_WARNING_MATRIX,
+  type BoatAvailability,
   type CrewWarningSeverity,
+  type FaultState,
   type SessionId,
   type StudentSize,
 } from "@/domain/config"
@@ -43,6 +45,72 @@ export type CrewWarning =
       boatId: string
       boatLabel: string
     }
+
+export type BoatCrewWarning =
+  | Extract<CrewWarning, { kind: "boat-unavailable" }>
+  | {
+      key: string
+      kind: "boat-fault"
+      severity: "yellow"
+      boatId: string
+      boatLabel: string
+      unresolvedFaultCount: number
+    }
+
+export type CrewWarningReason = CrewWarning | BoatCrewWarning
+
+export function getBoatCrewWarnings({
+  boatId,
+  boatLabel,
+  availability,
+  faultStates,
+}: {
+  boatId: string
+  boatLabel: string
+  availability: BoatAvailability
+  faultStates: readonly FaultState[]
+}): BoatCrewWarning[] {
+  const warnings: BoatCrewWarning[] = []
+  if (availability === "unavailable") {
+    warnings.push({
+      key: `boat-unavailable:${boatId}`,
+      kind: "boat-unavailable",
+      severity: "red",
+      boatId,
+      boatLabel,
+    })
+  }
+  const unresolvedFaultCount = faultStates.filter(
+    (state) => state !== "resolved",
+  ).length
+  if (unresolvedFaultCount > 0) {
+    warnings.push({
+      key: `boat-fault:${boatId}`,
+      kind: "boat-fault",
+      severity: "yellow",
+      boatId,
+      boatLabel,
+      unresolvedFaultCount,
+    })
+  }
+  return warnings
+}
+
+export function getCrewWarningSummary(warnings: readonly CrewWarningReason[]) {
+  const crewReasons = warnings.filter(
+    (warning): warning is Exclude<CrewWarning, { kind: "boat-unavailable" }> =>
+      warning.kind !== "boat-unavailable" && warning.kind !== "boat-fault",
+  )
+  const boatReasons = warnings.filter(
+    (warning): warning is BoatCrewWarning =>
+      warning.kind === "boat-unavailable" || warning.kind === "boat-fault",
+  )
+  return {
+    severity: getWorstCrewWarningSeverity(warnings),
+    crewReasons,
+    boatReasons,
+  }
+}
 
 const sessionIndex = new Map(
   SESSION_SEQUENCE.map(({ id }, index) => [id, index]),
@@ -162,7 +230,9 @@ export function getCrewWarnings(
   return warnings
 }
 
-export function getWorstCrewWarningSeverity(warnings: CrewWarning[]) {
+export function getWorstCrewWarningSeverity(
+  warnings: ReadonlyArray<{ severity: Exclude<CrewWarningSeverity, "none"> }>,
+) {
   if (warnings.some(({ severity }) => severity === "red")) return "red"
   if (warnings.some(({ severity }) => severity === "yellow")) return "yellow"
   return null

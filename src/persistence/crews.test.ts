@@ -4,7 +4,9 @@ const database = vi.hoisted(() => ({
   execute: vi.fn(),
   executeBatch: vi.fn(),
   getAll: vi.fn(),
+  getOptional: vi.fn(),
   init: vi.fn(),
+  transactionGetAll: vi.fn(),
   writeTransaction: vi.fn(),
 }))
 
@@ -16,21 +18,38 @@ import {
   saveCrewPlan,
 } from "@/persistence/crews"
 
+function existingCourseEntities(sql: string) {
+  if (sql.includes("FROM students")) {
+    return ["student-1", "student-2", "student-3"].map((id) => ({ id }))
+  }
+  if (sql.includes("FROM volunteers")) {
+    return ["volunteer-1", "volunteer-ct"].map((id) => ({ id }))
+  }
+  if (sql.includes("FROM boats")) {
+    return ["boat-1", "boat-2", "boat-10"].map((id) => ({ id }))
+  }
+  return []
+}
+
 describe("crew persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     database.init.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
+    database.getOptional.mockResolvedValue({ family: "Deriva", level: 2 })
+    database.transactionGetAll.mockImplementation(existingCourseEntities)
     database.writeTransaction.mockImplementation(
       async (
         callback: (transaction: {
           execute: typeof database.execute
           executeBatch: typeof database.executeBatch
+          getAll: typeof database.transactionGetAll
         }) => Promise<unknown>,
       ) =>
         callback({
           execute: database.execute,
           executeBatch: database.executeBatch,
+          getAll: database.transactionGetAll,
         }),
     )
   })
@@ -114,6 +133,52 @@ describe("crew persistence", () => {
       expect.stringContaining("INSERT INTO landAssignments"),
       [expect.arrayContaining(["course-1", "sat-pm", "student-2"])],
     )
+    const sessionScopedDeletes = database.execute.mock.calls.filter(([sql]) =>
+      String(sql).includes("DELETE FROM"),
+    )
+    expect(sessionScopedDeletes).toHaveLength(4)
+    expect(
+      sessionScopedDeletes.every(([, params]) =>
+        JSON.stringify(params).includes('"sat-pm"'),
+      ),
+    ).toBe(true)
+  })
+
+  it("allows flexible D1 and cabin crews but rejects more than two people for D2-D5", async () => {
+    const threeMembers = ["student-1", "student-2", "student-3"].map(
+      (personId) => ({ personId, personType: "student" as const }),
+    )
+    const plan = {
+      crews: [
+        {
+          id: "crew-1",
+          sessionId: "sat-pm" as const,
+          members: threeMembers,
+          destination: "mezzi" as const,
+          boatId: null,
+        },
+      ],
+      landStudentIds: [],
+      selectedBoatIds: [],
+    }
+
+    await expect(saveCrewPlan("course-1", "sat-pm", plan)).rejects.toThrow(
+      "over capacity",
+    )
+    database.getOptional.mockResolvedValueOnce({
+      family: "Deriva",
+      level: 1,
+    })
+    await expect(saveCrewPlan("course-1", "sat-pm", plan)).resolves.toBe(
+      undefined,
+    )
+    database.getOptional.mockResolvedValueOnce({
+      family: "Cabinato",
+      level: 3,
+    })
+    await expect(saveCrewPlan("course-1", "sat-pm", plan)).resolves.toBe(
+      undefined,
+    )
   })
 
   it("refuses duplicate simultaneous assignment before writing", async () => {
@@ -132,6 +197,46 @@ describe("crew persistence", () => {
         selectedBoatIds: [],
       }),
     ).rejects.toThrow("Duplicate session student")
+    expect(database.writeTransaction).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [
+      "invalid person type",
+      {
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "person-1", personType: "land" }],
+            destination: "unassigned",
+            boatId: null,
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+    ],
+    [
+      "A terra as a destination",
+      {
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [],
+            destination: "land",
+            boatId: null,
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+    ],
+  ])("rejects %s before any session mutation", async (_label, malformed) => {
+    await expect(
+      saveCrewPlan("course-1", "sat-pm", malformed as never),
+    ).rejects.toThrow()
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
@@ -224,6 +329,80 @@ describe("crew persistence", () => {
     )
   })
 
+  it("reloads the exact session plan while every mutation stays scoped to that session", async () => {
+    database.getAll.mockResolvedValueOnce([{ id: "boat-10" }])
+    const savedPlan = {
+      crews: [
+        {
+          id: "crew-sun-am-1",
+          sessionId: "sun-am" as const,
+          members: [
+            { personId: "student-1", personType: "student" as const },
+            { personId: "volunteer-ct", personType: "volunteer" as const },
+          ],
+          destination: "boat" as const,
+          boatId: "boat-10",
+        },
+      ],
+      landStudentIds: ["student-2"],
+      selectedBoatIds: ["boat-10"],
+    }
+
+    await saveCrewPlan("course-1", "sun-am", savedPlan)
+    for (const [sql, params] of database.execute.mock.calls.filter(([sql]) =>
+      String(sql).includes("DELETE FROM"),
+    )) {
+      expect(sql).toContain("sessionId = ?")
+      expect(params).toEqual(expect.arrayContaining(["course-1", "sun-am"]))
+      expect(params).not.toContain("sat-pm")
+    }
+
+    database.getAll.mockReset()
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-sun-am-1",
+          sessionId: "sun-am",
+          destination: "boat",
+          boatId: "boat-10",
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-sun-am-1",
+          personId: "student-1",
+          personType: "student",
+          position: 0,
+        },
+        {
+          crewId: "crew-sun-am-1",
+          personId: "volunteer-ct",
+          personType: "volunteer",
+          position: 1,
+        },
+      ])
+      .mockResolvedValueOnce([
+        { id: "land-sun-am-1", sessionId: "sun-am", studentId: "student-2" },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "session-boat-sun-am-1",
+          sessionId: "sun-am",
+          boatId: "boat-10",
+          position: 0,
+        },
+      ])
+
+    await expect(readCrewPlan("course-1", "sun-am")).resolves.toEqual(
+      expect.objectContaining({
+        crews: savedPlan.crews,
+        landStudentIds: ["student-2"],
+        selectedBoatIds: ["boat-10"],
+      }),
+    )
+  })
+
   it("rejects duplicate boat assignment and boats outside the course", async () => {
     const duplicatePlan = {
       crews: ["crew-1", "crew-2"].map((id) => ({
@@ -240,13 +419,51 @@ describe("crew persistence", () => {
       saveCrewPlan("course-1", "sat-pm", duplicatePlan),
     ).rejects.toThrow("assigned twice")
 
-    database.getAll.mockResolvedValueOnce([])
+    database.transactionGetAll.mockImplementation((sql: string) =>
+      sql.includes("FROM boats") ? [] : existingCourseEntities(sql),
+    )
     await expect(
       saveCrewPlan("course-1", "sat-pm", {
         ...duplicatePlan,
         crews: [duplicatePlan.crews[0]!],
       }),
     ).rejects.toThrow("does not belong to course")
+  })
+
+  it("refuses stale or foreign people inside the save transaction before deleting a session", async () => {
+    const plan = {
+      crews: [
+        {
+          id: "crew-1",
+          sessionId: "sat-pm" as const,
+          members: [
+            { personId: "student-1", personType: "student" as const },
+            { personId: "volunteer-ct", personType: "volunteer" as const },
+          ],
+          destination: "unassigned" as const,
+          boatId: null,
+        },
+      ],
+      landStudentIds: ["student-2"],
+      selectedBoatIds: [],
+    }
+    database.transactionGetAll.mockImplementation((sql: string) =>
+      sql.includes("FROM students")
+        ? [{ id: "student-1" }]
+        : existingCourseEntities(sql),
+    )
+    await expect(saveCrewPlan("course-1", "sat-pm", plan)).rejects.toThrow(
+      "Crew student does not belong to course",
+    )
+    expect(database.execute).not.toHaveBeenCalled()
+
+    database.transactionGetAll.mockImplementation((sql: string) =>
+      sql.includes("FROM volunteers") ? [] : existingCourseEntities(sql),
+    )
+    await expect(saveCrewPlan("course-1", "sat-pm", plan)).rejects.toThrow(
+      "Crew volunteer does not belong to course",
+    )
+    expect(database.execute).not.toHaveBeenCalled()
   })
 
   it("reads only real crews into student pair history, including Mezzi", async () => {

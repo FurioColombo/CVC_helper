@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  assignAvailableSessionBoat,
   assignCrewDestination,
   copyPreviousBoatSelection,
   copyPreviousCrewPlan,
   formatCrewAnnouncement,
   getCrewCompleteness,
+  getCrewSizeStatus,
   getEvenCrewTargets,
   getPreviousSessionId,
+  getSessionBoatStates,
   getStandardCrewSize,
   movePerson,
   removePerson,
@@ -62,6 +65,21 @@ describe("crew composition rules", () => {
     "returns the canonical %s level %s crew size",
     (family, level, expected) => {
       expect(getStandardCrewSize(family, level)).toBe(expected)
+    },
+  )
+
+  it.each([
+    ["Deriva", 2, 1, false, true],
+    ["Deriva", 2, 2, true, false],
+    ["Deriva", 2, 3, false, false],
+    ["Deriva", 1, 5, true, true],
+    ["Cabinato", 3, 7, true, true],
+  ] as const)(
+    "assesses %s level %s with %s people using the canonical size rule",
+    (family, level, memberCount, complete, canAdd) => {
+      expect(getCrewSizeStatus(memberCount, family, level)).toEqual(
+        expect.objectContaining({ complete, canAdd }),
+      )
     },
   )
 
@@ -138,7 +156,7 @@ describe("crew composition rules", () => {
     expect(removePerson(plan, STUDENT_1).crews[0]!.members).toEqual([ct])
   })
 
-  it("keeps session boat selection separate from exact crew assignment", () => {
+  it("keeps session boat selection separate and unlinks only the removed boat", () => {
     const selected = setBoatGoingOut(EMPTY_PLAN, "boat-2", true)
     expect(selected.selectedBoatIds).toEqual(["boat-2"])
     expect(
@@ -158,9 +176,101 @@ describe("crew composition rules", () => {
         boatId: "boat-2",
       }),
     ).toThrow("already assigned")
-    expect(() => setBoatGoingOut(assigned, "boat-2", false)).toThrow(
-      "assigned to a crew",
+    const removed = setBoatGoingOut(assigned, "boat-2", false)
+    expect(removed.selectedBoatIds).toEqual([])
+    expect(removed.crews[0]).toEqual(
+      expect.objectContaining({
+        members: EMPTY_PLAN.crews[0]!.members,
+        destination: "unassigned",
+        boatId: null,
+      }),
     )
+    expect(removed.crews[1]).toBe(assigned.crews[1])
+  })
+
+  it("assigns an available boat to a boatless crew and includes it in the outing", () => {
+    const selected = setBoatGoingOut(EMPTY_PLAN, "boat-2", true)
+    expect(
+      assignAvailableSessionBoat(
+        selected,
+        "crew-1",
+        "boat-2",
+        new Set(["boat-2"]),
+      ).crews[0],
+    ).toEqual(
+      expect.objectContaining({ destination: "boat", boatId: "boat-2" }),
+    )
+    expect(() =>
+      assignAvailableSessionBoat(selected, "crew-1", "boat-2", new Set()),
+    ).toThrow("not available")
+    const directlyAssigned = assignAvailableSessionBoat(
+      EMPTY_PLAN,
+      "crew-1",
+      "boat-2",
+      new Set(["boat-2"]),
+    )
+    expect(directlyAssigned.selectedBoatIds).toEqual(["boat-2"])
+    expect(directlyAssigned.crews[0]).toEqual(
+      expect.objectContaining({ destination: "boat", boatId: "boat-2" }),
+    )
+  })
+
+  it("sorts numeric boat states and keeps selection, assignment, availability and faults distinct", () => {
+    const plan = assignCrewDestination(
+      {
+        ...EMPTY_PLAN,
+        selectedBoatIds: ["boat-10", "boat-2"],
+      },
+      "crew-1",
+      { kind: "boat", boatId: "boat-10" },
+    )
+    const states = getSessionBoatStates(
+      [
+        {
+          id: "boat-10",
+          type: "RS Quest",
+          number: "10",
+          availability: "unavailable",
+        },
+        {
+          id: "boat-2",
+          type: "RS Quest",
+          number: "2",
+          availability: "available",
+        },
+        {
+          id: "boat-7",
+          type: "RS Quest",
+          number: "7",
+          availability: "available",
+        },
+      ],
+      plan,
+      new Set(["boat-10", "boat-7"]),
+    )
+
+    expect(states.map(({ number }) => number)).toEqual(["2", "7", "10"])
+    expect(states).toEqual([
+      expect.objectContaining({
+        boatId: "boat-2",
+        selected: true,
+        displayState: "available",
+        hasUnresolvedFault: false,
+      }),
+      expect.objectContaining({
+        boatId: "boat-7",
+        selected: false,
+        displayState: "available",
+        hasUnresolvedFault: true,
+      }),
+      expect.objectContaining({
+        boatId: "boat-10",
+        selected: true,
+        assignedCrewId: "crew-1",
+        displayState: "unavailable",
+        hasUnresolvedFault: true,
+      }),
+    ])
   })
 
   it("treats Mezzi as a crew destination without retaining a boat", () => {
