@@ -36,7 +36,9 @@ test("summarizes actual marks and links exact evaluation history", async ({
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()
 
   await page.getByRole("button", { name: "Valutazioni" }).click()
-  await page.getByRole("heading", { name: "Aldo" }).waitFor()
+  await page
+    .getByRole("button", { name: /Aggiungi nota valutazione di Aldo/ })
+    .waitFor()
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   await page
     .getByRole("button", { name: "Valutazione di Aldo: +", exact: true })
@@ -89,11 +91,10 @@ test("summarizes actual marks and links exact evaluation history", async ({
   await expect(note.getByText("Sabato PM")).toBeVisible()
   await expect(note.getByText("Virata molto precisa")).toBeVisible()
 
-  await page.getByRole("button", { name: "Più forti" }).click()
-  await expect(page.getByRole("button", { name: "Più forti" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  )
+  await page.getByRole("button", { name: "Valutazione" }).click()
+  await expect(
+    page.getByRole("button", { name: "Valutazione" }),
+  ).toHaveAttribute("aria-pressed", "true")
   expect(
     await page.getByRole("heading", { level: 3 }).allTextContents(),
   ).toEqual(["Bea", "Aldo", "Carlo"])
@@ -101,7 +102,7 @@ test("summarizes actual marks and links exact evaluation history", async ({
   await page
     .getByRole("button", { name: "Apri dettaglio di Aldo, cognome Rossi" })
     .click()
-  await expect(page.getByRole("heading", { name: "Aldo" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /Aldo/ })).toBeVisible()
   const history = page.getByRole("region", { name: "Storico valutazioni" })
   const weeklyGrid = history.getByRole("table", {
     name: "Valutazioni settimanali di Aldo",

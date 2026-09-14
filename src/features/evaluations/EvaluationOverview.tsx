@@ -1,15 +1,14 @@
-import { FileText, LoaderCircle, UserRound } from "lucide-react"
+import { LoaderCircle, UserRound } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
-import { Button } from "@/components/ui/button"
 import type { EvaluationOrdering } from "@/domain/evaluations"
 import {
   formatEvaluationSession,
-  getAccumulatedEvaluationSessions,
   sortStudentsByEvaluations,
   summarizeEvaluations,
 } from "@/domain/evaluations"
 import { getStudentDisplayName } from "@/domain/student"
+import { WeeklyEvaluationGrid } from "@/features/evaluations/WeeklyEvaluationGrid"
 import {
   listCourseEvaluations,
   type EvaluationRecord,
@@ -18,11 +17,6 @@ import type { StudentRecord } from "@/persistence/students"
 
 function countLabel(count: number) {
   return count === 1 ? "1 valutazione" : `${count} valutazioni`
-}
-
-function compactSessionLabel(sessionId: EvaluationRecord["sessionId"]) {
-  const [day, period] = formatEvaluationSession(sessionId).split(" ")
-  return `${day!.slice(0, 3)} ${period![0]}`
 }
 
 export function EvaluationOverview({
@@ -61,7 +55,6 @@ export function EvaluationOverview({
     () => sortStudentsByEvaluations(students, records, ordering),
     [ordering, records, students],
   )
-  const sessions = getAccumulatedEvaluationSessions(records)
   const recordsByKey = new Map(
     records.map((record) => [
       `${record.studentId}:${record.sessionId}`,
@@ -96,39 +89,41 @@ export function EvaluationOverview({
 
   return (
     <section className="mt-4" aria-labelledby="evaluation-overview-title">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-black" id="evaluation-overview-title">
-            Riepilogo del corso
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Le caselle vuote non contano nella valutazione complessiva.
-          </p>
-        </div>
+      <div>
+        <h2 className="text-lg font-black" id="evaluation-overview-title">
+          Riepilogo del corso
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Le caselle vuote non contano nella valutazione complessiva.
+        </p>
       </div>
-      <div
-        className="mt-3 grid grid-cols-2 gap-2"
-        role="group"
-        aria-label="Ordine riepilogo"
-      >
-        <Button
-          aria-pressed={ordering === "alphabetical"}
-          className="aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-          onClick={() => setOrdering("alphabetical")}
-          type="button"
-          variant="secondary"
+      <div className="mt-3">
+        <span className="block px-1 text-xs font-bold text-muted-foreground">
+          Ordinamento
+        </span>
+        <div
+          className="mt-1 grid grid-cols-2 gap-2"
+          role="group"
+          aria-label="Ordine riepilogo"
         >
-          Alfabetico
-        </Button>
-        <Button
-          aria-pressed={ordering === "strongest"}
-          className="aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-          onClick={() => setOrdering("strongest")}
-          type="button"
-          variant="secondary"
-        >
-          Più forti
-        </Button>
+          <button
+            aria-pressed={ordering === "alphabetical"}
+            className="min-h-10 rounded-xl border bg-card px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            onClick={() => setOrdering("alphabetical")}
+            type="button"
+          >
+            Alfabetico
+          </button>
+          <button
+            aria-pressed={ordering === "strongest"}
+            className="min-h-10 rounded-xl border bg-card px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            onClick={() => setOrdering("strongest")}
+            title="Ordina per valutazione"
+            type="button"
+          >
+            Valutazione
+          </button>
+        </div>
       </div>
 
       {records.length === 0 ? (
@@ -150,23 +145,23 @@ export function EvaluationOverview({
             )
             return (
               <article
-                className="min-w-0 max-w-full rounded-2xl border bg-card p-4"
+                className="min-w-0 max-w-full rounded-2xl border bg-card p-3"
                 key={student.id}
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <button
                     aria-label={`Apri dettaglio di ${name}, cognome ${student.surname}`}
-                    className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                    className="flex min-h-10 min-w-[160px] flex-1 items-center gap-2 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
                     onClick={() => onOpenStudent(student.id)}
                     type="button"
                   >
                     <UserRound
                       aria-hidden="true"
-                      className="size-5 shrink-0 text-primary"
+                      className="size-4 shrink-0 text-primary"
                     />
-                    <span className="min-w-0">
-                      <h3 className="truncate text-base font-black">{name}</h3>
-                      <span className="block truncate text-xs text-muted-foreground">
+                    <span className="min-w-0 break-words">
+                      <h3 className="break-words text-sm font-black">{name}</h3>
+                      <span className="block break-words text-[0.68rem] text-muted-foreground">
                         {student.surname}
                       </span>
                     </span>
@@ -175,57 +170,25 @@ export function EvaluationOverview({
                     {countLabel(summary.count)}
                   </span>
                 </div>
-                <div
-                  aria-label={`Sequenza valutazioni di ${name}`}
-                  className="mt-3 flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto pb-1"
-                >
-                  {sessions.map((sessionId) => {
-                    const key = `${student.id}:${sessionId}`
-                    const record = recordsByKey.get(key)
-                    const label = formatEvaluationSession(sessionId)
-                    const content = (
-                      <>
-                        <span className="text-[0.58rem] font-bold text-muted-foreground uppercase">
-                          {compactSessionLabel(sessionId)}
-                        </span>
-                        <span className="text-xs font-black">
-                          {record?.value ?? "—"}
-                        </span>
-                        {record?.note && (
-                          <FileText
-                            aria-hidden="true"
-                            className="absolute -top-1 -right-1 size-3 rounded-full bg-card text-[#a34a18]"
-                          />
-                        )}
-                      </>
-                    )
-                    return record?.note ? (
-                      <button
-                        aria-label={`${name}, ${label}: ${record.value ?? "mancante"}, nota presente`}
-                        aria-pressed={openNoteKey === key}
-                        className="relative flex size-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border bg-muted outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-primary/10"
-                        key={sessionId}
-                        onClick={() =>
-                          setOpenNoteKey((current) =>
-                            current === key ? null : key,
-                          )
-                        }
-                        type="button"
-                      >
-                        {content}
-                      </button>
-                    ) : (
-                      <span
-                        aria-label={`${name}, ${label}: ${record?.value ?? "mancante"}`}
-                        className="relative flex size-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border bg-muted"
-                        key={sessionId}
-                        role="img"
-                      >
-                        {content}
-                      </span>
-                    )
-                  })}
-                </div>
+                <WeeklyEvaluationGrid
+                  ariaLabel={`Sequenza valutazioni di ${name}`}
+                  className="mt-2 border-0 bg-transparent p-0"
+                  noteOpenSessionId={
+                    openNoteKey?.startsWith(`${student.id}:`)
+                      ? (openNoteKey.split(
+                          ":",
+                        )[1] as EvaluationRecord["sessionId"])
+                      : null
+                  }
+                  onOpenNote={(record) => {
+                    const key = `${student.id}:${record.sessionId}`
+                    setOpenNoteKey((current) => (current === key ? null : key))
+                  }}
+                  records={studentRecords}
+                  showHeader={false}
+                  showRecentNotes={false}
+                  studentName={name}
+                />
                 {openNoteKey?.startsWith(`${student.id}:`) && (
                   <div
                     className="mt-3 rounded-xl bg-muted p-3"

@@ -87,7 +87,9 @@ test("verifies the evaluation workflow across an evolving week", async ({
 
   await primaryNav.getByRole("button", { name: "Home", exact: true }).click()
   await page.getByRole("button", { name: "Valutazioni" }).click()
-  await page.getByRole("heading", { name: "Aldo" }).waitFor()
+  await page
+    .getByRole("button", { name: /Aggiungi nota valutazione di Aldo/ })
+    .waitFor()
 
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   await setEvaluation(page, "Aldo", "+")
@@ -152,7 +154,11 @@ test("verifies the evaluation workflow across an evolving week", async ({
 
   await page.reload()
   await page.getByRole("button", { name: "Valutazioni" }).click()
-  await page.getByRole("heading", { name: "Aldo" }).waitFor()
+  await page
+    .getByRole("button", {
+      name: /(?:Aggiungi|Modifica) nota valutazione di Aldo/,
+    })
+    .waitFor()
   await page
     .getByRole("group", { name: "Vista valutazioni" })
     .getByRole("button", { name: "Riepilogo" })
@@ -189,7 +195,7 @@ test("verifies the evaluation workflow across an evolving week", async ({
       .getByText("1 valutazione"),
   ).toBeVisible()
 
-  await page.getByRole("button", { name: "Più forti" }).click()
+  await page.getByRole("button", { name: "Valutazione" }).click()
   expect(
     await page.getByRole("heading", { level: 3 }).allTextContents(),
   ).toEqual(["Bea", "Aldo", "Carlo", "Dina"])

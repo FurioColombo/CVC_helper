@@ -10,6 +10,7 @@ type EvaluationPeriod = "AM" | "PM"
 
 interface EvaluationDayRow {
   day: string
+  shortDay: string
   am: SessionId | null
   pm: SessionId | null
 }
@@ -18,8 +19,8 @@ const EVALUATION_CELL_STYLES = {
   "++": "border-[#5b9b6a] bg-[#e4f3e7] text-[#23613a]",
   "+": "border-[#8abd93] bg-[#f0f8f1] text-[#327144]",
   "=": "border-[#a9b7c7] bg-[#f0f3f7] text-[#53667d]",
-  "-": "border-[#d6a853] bg-[#fff6df] text-[#8a5a00]",
-  "--": "border-[#dc8b8b] bg-[#fff0f0] text-[#a22c2c]",
+  "-": "border-[#dc8b8b] bg-[#fff0f0] text-[#a22c2c]",
+  "--": "border-[#b95656] bg-[#ffe5e5] text-[#8a1c1c]",
   missing: "border-border bg-muted text-muted-foreground",
 } as const
 
@@ -39,6 +40,7 @@ function buildEvaluationDayRows(): EvaluationDayRow[] {
     }
     rows.push({
       day: session.day,
+      shortDay: session.day.slice(0, 3),
       am: session.period === "AM" ? session.id : null,
       pm: session.period === "PM" ? session.id : null,
     })
@@ -62,11 +64,17 @@ function EvaluationCell({
   period,
   sessionId,
   record,
+  studentName,
+  noteOpen,
+  onOpenNote,
 }: {
   day: string
   period: EvaluationPeriod
   sessionId: SessionId | null
   record: EvaluationRecord | undefined
+  studentName?: string
+  noteOpen?: boolean
+  onOpenNote?: (record: EvaluationRecord) => void
 }) {
   if (!sessionId) {
     return <span aria-hidden="true" className="block h-8" />
@@ -75,25 +83,56 @@ function EvaluationCell({
   const value = record?.value ?? null
   const marker = value ?? "missing"
   const sessionLabel = formatEvaluationSession(sessionId)
+  const notePresent = Boolean(record?.note?.trim())
+  const label = `${day} ${period}: ${value ?? "nessuna valutazione"}${notePresent && onOpenNote ? ", nota presente" : ""}`
+  const accessibleLabel =
+    studentName && notePresent ? `${studentName}, ${label}` : label
+  const content = (
+    <>
+      {value ?? ""}
+      {notePresent && (
+        <FileText
+          aria-hidden="true"
+          className="absolute -right-[3px] -top-[3px] size-[12px] rounded-full bg-card text-[#a34a18]"
+        />
+      )}
+    </>
+  )
+
+  if (notePresent && record && onOpenNote) {
+    return (
+      <button
+        aria-label={accessibleLabel}
+        aria-pressed={noteOpen}
+        className={cn(
+          "relative mx-auto flex h-7 min-h-7 w-full min-w-0 max-w-none items-center justify-center rounded-md border px-0 text-[14px] font-black leading-none outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+          EVALUATION_CELL_STYLES[marker],
+          noteOpen && "ring-2 ring-primary/50",
+        )}
+        data-evaluation={marker}
+        data-session-id={sessionId}
+        onClick={() => onOpenNote(record)}
+        title={`${sessionLabel}: nota presente`}
+        type="button"
+      >
+        {content}
+      </button>
+    )
+  }
 
   return (
     <span
-      aria-label={`${day} ${period}: ${value ?? "nessuna valutazione"}`}
+      aria-label={label}
       className={cn(
-        "relative mx-auto flex h-8 min-w-10 max-w-14 items-center justify-center rounded-lg border px-2 text-sm font-black leading-none",
+        "relative mx-auto flex h-7 min-h-7 w-full min-w-0 max-w-none items-center justify-center rounded-md border px-0 text-[14px] font-black leading-none",
         EVALUATION_CELL_STYLES[marker],
       )}
       data-evaluation={marker}
+      data-session-id={sessionId}
       role="img"
       title={sessionLabel}
     >
-      {value ?? ""}
-      {record?.note && (
-        <FileText
-          aria-hidden="true"
-          className="absolute -right-1 -top-1 size-3 rounded-full bg-card text-[#a34a18]"
-        />
-      )}
+      {content}
     </span>
   )
 }
@@ -104,18 +143,32 @@ export interface WeeklyEvaluationGridProps {
   studentName?: string
   title?: string
   className?: string
+  /** Hide the heading when the surrounding card already names the student. */
+  showHeader?: boolean
+  /** Hide the recent-notes list when the caller renders its own note detail. */
+  showRecentNotes?: boolean
+  /** Override the surrounding region label while retaining the table label. */
+  ariaLabel?: string
+  /** Make note cells open the exact session in the parent surface. */
+  onOpenNote?: (record: EvaluationRecord) => void
+  noteOpenSessionId?: SessionId | null
 }
 
 /**
- * A phone-safe weekly evaluation summary shared by the profile and overview
- * surfaces. It intentionally uses a fixed three-column table, so the week is
- * readable without horizontal scrolling at the smallest supported viewport.
+ * A phone-safe weekly evaluation summary shared by the profile, overview and
+ * history surfaces. Seven day columns are rendered with AM/PM stacked in each
+ * day; the semantic table keeps the same day/session labels for assistive tech.
  */
 export function WeeklyEvaluationGrid({
   records,
   studentName,
   title = "Storico valutazioni",
   className,
+  showHeader = true,
+  showRecentNotes = true,
+  ariaLabel,
+  onOpenNote,
+  noteOpenSessionId = null,
 }: WeeklyEvaluationGridProps) {
   const titleId = useId()
   const [showAllNotes, setShowAllNotes] = useState(false)
@@ -130,61 +183,92 @@ export function WeeklyEvaluationGrid({
 
   return (
     <section
-      aria-labelledby={titleId}
+      aria-label={
+        !showHeader
+          ? (ariaLabel ?? `Valutazioni settimanali${subject}`)
+          : undefined
+      }
+      aria-labelledby={showHeader ? titleId : undefined}
       className={cn("mt-4 rounded-2xl border bg-card p-3 sm:p-4", className)}
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-sm font-black" id={titleId}>
-          {title}
-        </h3>
-        {rows.length > 0 && (
-          <span className="text-[0.68rem] font-semibold text-muted-foreground">
-            {rows.length} {rows.length === 1 ? "giorno" : "giorni"}
-          </span>
-        )}
-      </div>
+      {showHeader && (
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-sm font-black" id={titleId}>
+            {title}
+          </h3>
+          {rows.length > 0 && (
+            <span className="text-[0.68rem] font-semibold text-muted-foreground">
+              {rows.length} {rows.length === 1 ? "giorno" : "giorni"}
+            </span>
+          )}
+        </div>
+      )}
 
-      <div className="mt-3 min-w-0 overflow-hidden rounded-xl border">
+      <div
+        className={cn(
+          "min-w-0 overflow-hidden rounded-xl border",
+          showHeader && "mt-3",
+        )}
+      >
         <table
           aria-label={`Valutazioni settimanali${subject}`}
           className="w-full table-fixed border-collapse text-sm"
         >
-          <thead className="bg-muted/70 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+          <thead className="sr-only">
             <tr>
-              <th className="w-[43%] px-3 py-2 text-left" scope="col">
-                Giorno
-              </th>
-              <th className="w-[28.5%] px-2 py-2 text-center" scope="col">
-                AM
-              </th>
-              <th className="w-[28.5%] px-2 py-2 text-center" scope="col">
-                PM
-              </th>
+              <th scope="col">Giorno</th>
+              <th scope="col">AM</th>
+              <th scope="col">PM</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="grid grid-cols-7 gap-[2px] p-[2px]">
             {rows.map((row) => (
-              <tr className="border-t odd:bg-muted/20" key={row.day}>
+              <tr
+                className="grid min-w-0 grid-rows-[auto_auto_auto] gap-[1px] rounded-md border border-border/70 bg-muted/20 p-[2px]"
+                key={row.day}
+              >
                 <th
-                  className="truncate px-3 py-2.5 text-left text-sm font-bold"
+                  aria-label={row.day}
+                  className="min-w-0 truncate px-[1px] text-center text-[10px] font-bold leading-4"
                   scope="row"
                 >
-                  {row.day}
+                  <span className="max-[350px]:hidden">{row.day}</span>
+                  <span className="hidden max-[350px]:inline">
+                    {row.shortDay}
+                  </span>
                 </th>
-                <td className="px-2 py-1.5 text-center">
+                <td className="min-w-0 px-0 text-center">
+                  <span
+                    aria-hidden="true"
+                    className="block text-[8px] font-bold leading-3 text-muted-foreground"
+                  >
+                    AM
+                  </span>
                   <EvaluationCell
                     day={row.day}
                     period="AM"
                     record={row.am ? recordsBySession.get(row.am) : undefined}
                     sessionId={row.am}
+                    studentName={studentName}
+                    noteOpen={row.am === noteOpenSessionId}
+                    onOpenNote={onOpenNote}
                   />
                 </td>
-                <td className="px-2 py-1.5 text-center">
+                <td className="min-w-0 px-0 text-center">
+                  <span
+                    aria-hidden="true"
+                    className="block text-[8px] font-bold leading-3 text-muted-foreground"
+                  >
+                    PM
+                  </span>
                   <EvaluationCell
                     day={row.day}
                     period="PM"
                     record={row.pm ? recordsBySession.get(row.pm) : undefined}
                     sessionId={row.pm}
+                    studentName={studentName}
+                    noteOpen={row.pm === noteOpenSessionId}
+                    onOpenNote={onOpenNote}
                   />
                 </td>
               </tr>
@@ -193,7 +277,7 @@ export function WeeklyEvaluationGrid({
         </table>
       </div>
 
-      {notes.length > 0 && (
+      {showRecentNotes && notes.length > 0 && (
         <div
           aria-label={`Note recenti${subject}`}
           className="mt-3 border-t pt-3"

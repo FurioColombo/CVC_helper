@@ -549,7 +549,7 @@ monitored in the final integration gate. Evidence: `.evidence/U09/`.
 ## U10 — Evaluation entry, overview and student history
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 ### Goal
 
@@ -579,7 +579,17 @@ or card clips or scrolls horizontally at any contract viewport.
 
 ### Completion log
 
-Pending.
+P17 now uses one full-name row with five aligned SVG marks, second-tap clearing,
+session-specific notes, shared dictation states and retryable save feedback. P18
+and P19 share the seven-day AM/PM grid already used by the profile; missing marks
+remain blank, notes keep exact sessions and the chronology groups compact AM/PM
+cards under a sticky full-name subject. Node 24.19.0 verification passed with
+365 tests, domain and 0.1.0 compatibility checks and the production PWA build.
+Pixel/iPhone browser journeys covered all thirteen sessions, 320 px and 200% text,
+reload, denied-microphone recovery and the prior evaluation flows. Self-review
+found no blocker; an unsaved evaluation after a storage error remains visible and
+retryable, but leaving its session before retry can discard that attempted change.
+Evidence: `.evidence/U10/`.
 
 ## UG1 — Full 0.2.0 integration and release gate
 

@@ -698,6 +698,7 @@ function StudentDetail({
           focusOnMount={focusEvaluationHistory}
           studentId={student.id}
           studentName={displayName}
+          studentFullName={`${student.firstName} ${student.surname}`}
         />
 
         {error && (

@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -11,6 +12,15 @@ function readManifest() {
 
 function writeManifest(manifest) {
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
+  execFileSync(
+    process.execPath,
+    [
+      resolve(root, "node_modules/prettier/bin/prettier.cjs"),
+      "--write",
+      manifestPath,
+    ],
+    { stdio: "pipe" },
+  )
 }
 
 function findMilestone(manifest, id) {

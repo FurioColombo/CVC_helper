@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "nodeVersion": "v24.19.0",
+  "journeys": [
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/u10-evaluations.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport --max-failures=1",
+      "result": "4 passed",
+      "covers": "Thirteen canonical sessions, five 40px SVG controls on one row, second-tap clear, missing versus neutral, exact note after reload, seven-day grid and history, 320px and 200% text overflow/label checks, denied-microphone recovery with typed note persisted"
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/evaluations.spec.ts tests/e2e/evaluation-overview.spec.ts tests/e2e/evaluation-gate.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport --max-failures=1",
+      "result": "6 passed",
+      "covers": "Existing student/crew entry, A-terra, past edits, mean-based order, exact note, profile history and reload on both viewports"
+    }
+  ],
+  "selectedScreenshots": [
+    ".evidence/U10/p17-stress-iphone-13-viewport.png",
+    ".evidence/U10/p18-iphone-13-viewport.png",
+    ".evidence/U10/p18-stress-pixel-7-chrome.png",
+    ".evidence/U10/p19-iphone-13-viewport.png"
+  ]
+}

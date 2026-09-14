@@ -77,6 +77,8 @@ describe("EvaluationOverview", () => {
     )
 
     await screen.findByRole("heading", { name: "Riepilogo del corso" })
+    expect(screen.getByText("Ordinamento")).toBeVisible()
+    expect(screen.getByText("Valutazione")).toBeVisible()
     expect(
       screen
         .getAllByRole("heading", { level: 3 })
@@ -86,6 +88,8 @@ describe("EvaluationOverview", () => {
     expect(screen.getAllByText("1 valutazione")).toHaveLength(1)
     expect(screen.getByText("0 valutazioni")).toBeVisible()
     expect(screen.queryByText("1.5")).not.toBeInTheDocument()
+    expect(screen.queryByText("—")).not.toBeInTheDocument()
+    expect(screen.getAllByRole("table")).toHaveLength(3)
 
     await user.click(
       screen.getByRole("button", {
@@ -96,7 +100,7 @@ describe("EvaluationOverview", () => {
     expect(within(note).getByText("Sabato PM")).toBeVisible()
     expect(within(note).getByText("Precisa")).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: "Più forti" }))
+    await user.click(screen.getByRole("button", { name: "Valutazione" }))
     await waitFor(() =>
       expect(
         screen

@@ -56,7 +56,9 @@ test("evaluates one session by student and crew, including A terra and past edit
     .getByRole("button", { name: "Home", exact: true })
     .click()
   await page.getByRole("button", { name: "Valutazioni" }).click()
-  await page.getByRole("heading", { name: "Aldo" }).waitFor()
+  await page
+    .getByRole("button", { name: /Aggiungi nota valutazione di Aldo/ })
+    .waitFor()
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
 
   await page.getByRole("button", { name: "Valutazione di Aldo: ++" }).click()
@@ -122,7 +124,11 @@ test("evaluates one session by student and crew, including A terra and past edit
 
   await page.reload()
   await page.getByRole("button", { name: "Valutazioni" }).click()
-  await page.getByRole("heading", { name: "Aldo" }).waitFor()
+  await page
+    .getByRole("button", {
+      name: /(?:Aggiungi|Modifica) nota valutazione di Aldo/,
+    })
+    .waitFor()
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   await expect(
     page.getByRole("button", { name: "Valutazione di Aldo: ++" }),

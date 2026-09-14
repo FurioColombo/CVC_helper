@@ -4,9 +4,11 @@ import {
   FilePenLine,
   LoaderCircle,
   Mic,
+  RotateCcw,
   Square,
   Trash2,
   UsersRound,
+  X,
 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
@@ -21,6 +23,11 @@ import {
 import { getDefaultEvaluationSession } from "@/domain/evaluations"
 import { getStudentDisplayName } from "@/domain/student"
 import { EvaluationOverview } from "@/features/evaluations/EvaluationOverview"
+import {
+  useDictation,
+  type SpeechPrepare,
+  type SpeechTranscribe,
+} from "@/features/speech/useDictation"
 import type { CourseRecord } from "@/persistence/courses"
 import { readCrewPlan, type CrewPlanRecord } from "@/persistence/crews"
 import {
@@ -31,8 +38,6 @@ import {
 import { listStudents, type StudentRecord } from "@/persistence/students"
 
 export type EvaluationView = "students" | "crews" | "overview"
-type VoiceStatus = "idle" | "recording" | "transcribing" | "review" | "error"
-
 interface EvaluationDraft {
   value: EvaluationSymbol | null
   note: string | null
@@ -46,145 +51,142 @@ function EvaluationNoteEditor({
   student,
   students,
   initialNote,
+  sessionId,
   saving,
   onCancel,
   onSave,
   transcribe,
+  prepareSpeech,
 }: {
   student: StudentRecord
   students: StudentRecord[]
   initialNote: string | null
+  sessionId: SessionId
   saving: boolean
   onCancel: () => void
   onSave: (note: string | null) => Promise<void>
-  transcribe: (audio: Blob) => Promise<string>
+  transcribe: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
 }) {
   const name = displayName(student, students)
+  const fullName = `${student.firstName} ${student.surname}`.trim()
+  const session = SESSION_SEQUENCE.find(({ id }) => id === sessionId)
   const [note, setNote] = useState(initialNote ?? "")
-  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle")
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const beforeVoiceRef = useRef("")
+  const dictation = useDictation({
+    value: note,
+    onDraft: setNote,
+    onAccept: () => undefined,
+    transcribe,
+    prepare: prepareSpeech,
+  })
+  const dictationBusy = ["permission", "loading", "processing"].includes(
+    dictation.status,
+  )
+  const dictationProgress =
+    dictation.status === "loading" && dictation.loadPercent !== undefined
+      ? ` ${dictation.loadPercent}%`
+      : ""
 
-  function stopStream() {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
+  function cancelNote() {
+    if (dictation.status !== "idle") dictation.cancel()
+    onCancel()
   }
-
-  async function finishTranscription(recorder: MediaRecorder) {
-    const audio = new Blob(chunksRef.current, {
-      type: recorder.mimeType || "audio/webm",
-    })
-    chunksRef.current = []
-    stopStream()
-    try {
-      const transcript = await transcribe(audio)
-      if (!transcript.trim()) throw new Error("Empty transcript")
-      const prefix = beforeVoiceRef.current.trim()
-      setNote(prefix ? `${prefix} ${transcript.trim()}` : transcript.trim())
-      setVoiceStatus("review")
-    } catch {
-      setVoiceStatus("error")
-    } finally {
-      recorderRef.current = null
-    }
-  }
-
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
-      streamRef.current = stream
-      recorderRef.current = recorder
-      chunksRef.current = []
-      beforeVoiceRef.current = note
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data)
-      }
-      recorder.onstop = () => void finishTranscription(recorder)
-      recorder.start()
-      setVoiceStatus("recording")
-    } catch {
-      stopStream()
-      setVoiceStatus("error")
-    }
-  }
-
-  function stopRecording() {
-    const recorder = recorderRef.current
-    if (!recorder || recorder.state === "inactive") return
-    setVoiceStatus("transcribing")
-    recorder.stop()
-  }
-
-  useEffect(() => {
-    return () => {
-      const recorder = recorderRef.current
-      if (recorder && recorder.state !== "inactive") {
-        recorder.ondataavailable = null
-        recorder.onstop = null
-        recorder.stop()
-      }
-      stopStream()
-    }
-  }, [])
-
-  const voiceSupported =
-    typeof MediaRecorder !== "undefined" &&
-    typeof navigator.mediaDevices?.getUserMedia === "function"
 
   return (
     <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-3">
       <div className="flex items-center justify-between gap-3">
         <label
-          className="text-sm font-black"
+          className="min-w-0 text-sm font-black"
           htmlFor={`evaluation-note-${student.id}`}
         >
-          Nota di {name}
+          Nota di {fullName} · {session?.day} {session?.period}
         </label>
         <Button
           aria-label={
-            voiceStatus === "recording"
+            dictation.status === "recording"
               ? `Termina dettatura valutazione di ${name}`
               : `Detta nota valutazione di ${name}`
           }
-          className={`h-11 px-3 text-xs ${voiceStatus === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
+          className={`h-11 px-3 text-xs ${dictation.status === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
           disabled={
-            !voiceSupported ||
+            !dictation.supported ||
             saving ||
-            voiceStatus === "transcribing" ||
-            voiceStatus === "review"
+            dictationBusy ||
+            dictation.status === "review"
           }
           onClick={() =>
-            voiceStatus === "recording"
-              ? stopRecording()
-              : void startRecording()
+            dictation.status === "recording"
+              ? dictation.stop()
+              : void dictation.start()
           }
           type="button"
           variant="secondary"
         >
-          {voiceStatus === "recording" ? (
+          {dictationBusy ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          ) : dictation.status === "recording" ? (
             <Square aria-hidden="true" className="size-3.5 fill-current" />
           ) : (
             <Mic aria-hidden="true" className="size-4" />
           )}
-          {voiceStatus === "recording"
+          {dictation.status === "recording"
             ? "Termina"
-            : voiceStatus === "transcribing"
-              ? "Trascrizione…"
-              : "Detta"}
+            : dictation.status === "permission"
+              ? "Permesso…"
+              : dictation.status === "loading"
+                ? `Caricamento${dictationProgress}`
+                : dictation.status === "processing"
+                  ? "Elaborazione…"
+                  : "Detta"}
         </Button>
       </div>
       <textarea
         aria-label={`Nota valutazione di ${name}`}
+        autoFocus
         className="mt-2 min-h-24 w-full resize-y rounded-xl border bg-card px-3 py-2.5 text-base leading-6 outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
         id={`evaluation-note-${student.id}`}
-        onChange={(event) => setNote(event.target.value)}
+        onChange={(event) => {
+          dictation.syncValue(event.target.value)
+          setNote(event.target.value)
+        }}
         placeholder="Nota facoltativa per questa sessione"
         value={note}
       />
-      {voiceStatus === "review" && (
+      {!dictation.supported && dictation.status === "idle" && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Dettatura non disponibile in questo browser. Puoi scrivere la nota.
+        </p>
+      )}
+      {(dictation.status === "permission" ||
+        dictation.status === "recording" ||
+        dictation.status === "loading" ||
+        dictation.status === "processing") && (
+        <div
+          className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-xs font-semibold text-muted-foreground">
+            {dictation.status === "permission"
+              ? "Attendo il permesso del microfono…"
+              : dictation.status === "recording"
+                ? "Registrazione in corso"
+                : dictation.status === "loading"
+                  ? `Caricamento del modello vocale${dictationProgress}…`
+                  : "Elaborazione locale dell’audio…"}
+          </p>
+          <Button
+            aria-label={`Annulla dettatura valutazione di ${name}`}
+            className="size-10 shrink-0 p-0"
+            onClick={dictation.cancel}
+            type="button"
+            variant="secondary"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
+      )}
+      {dictation.status === "review" && (
         <div className="mt-2 rounded-xl border border-primary/30 bg-card p-3">
           <p className="text-xs leading-5 text-muted-foreground">
             Rileggi la trascrizione. Il testo sarà salvato solo con la nota.
@@ -192,8 +194,7 @@ function EvaluationNoteEditor({
           <div className="mt-2 grid grid-cols-2 gap-2">
             <Button
               onClick={() => {
-                setNote(beforeVoiceRef.current)
-                setVoiceStatus("idle")
+                dictation.cancel()
               }}
               type="button"
               variant="secondary"
@@ -202,7 +203,7 @@ function EvaluationNoteEditor({
               Scarta
             </Button>
             <Button
-              onClick={() => setVoiceStatus("idle")}
+              onClick={dictation.accept}
               type="button"
               variant="secondary"
             >
@@ -212,15 +213,34 @@ function EvaluationNoteEditor({
           </div>
         </div>
       )}
-      {voiceStatus === "error" && (
-        <p className="mt-2 text-xs font-semibold text-[#b42318]" role="alert">
-          Dettatura non riuscita. Puoi riprovare o scrivere la nota.
-        </p>
+      {dictation.status === "error" && (
+        <div
+          className="mt-2 flex items-center justify-between gap-3"
+          role="alert"
+        >
+          <p className="text-xs font-semibold text-[#b42318]">
+            {dictation.error === "permission"
+              ? "Permesso microfono non concesso. Il testo è rimasto invariato."
+              : "Dettatura non riuscita. Il testo è rimasto invariato."}
+          </p>
+          {dictation.supported && (
+            <Button
+              aria-label={`Riprovare dettatura valutazione di ${name}`}
+              className="h-10 shrink-0 px-3 text-xs"
+              onClick={() => void dictation.start()}
+              type="button"
+              variant="secondary"
+            >
+              <RotateCcw aria-hidden="true" className="size-3.5" />
+              Riprova
+            </Button>
+          )}
+        </div>
       )}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button
           disabled={saving}
-          onClick={onCancel}
+          onClick={cancelNote}
           type="button"
           variant="secondary"
         >
@@ -229,9 +249,11 @@ function EvaluationNoteEditor({
         <Button
           disabled={
             saving ||
-            voiceStatus === "recording" ||
-            voiceStatus === "transcribing" ||
-            voiceStatus === "review"
+            dictation.status === "permission" ||
+            dictation.status === "recording" ||
+            dictation.status === "loading" ||
+            dictation.status === "processing" ||
+            dictation.status === "review"
           }
           onClick={() => void onSave(note.trim() || null)}
           type="button"
@@ -250,6 +272,7 @@ function EvaluationCard({
   student,
   students,
   evaluation,
+  sessionId,
   isLand,
   saving,
   saved,
@@ -260,10 +283,13 @@ function EvaluationCard({
   onCloseNote,
   onSaveNote,
   transcribe,
+  prepareSpeech,
+  onRetry,
 }: {
   student: StudentRecord
   students: StudentRecord[]
   evaluation: EvaluationDraft
+  sessionId: SessionId
   isLand: boolean
   saving: boolean
   saved: boolean
@@ -273,71 +299,85 @@ function EvaluationCard({
   onOpenNote: () => void
   onCloseNote: () => void
   onSaveNote: (note: string | null) => Promise<void>
-  transcribe: (audio: Blob) => Promise<string>
+  transcribe: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
+  onRetry: () => void
 }) {
   const name = displayName(student, students)
-  const choices: Array<{ symbol: EvaluationSymbol | null; label: string }> = [
-    { symbol: null, label: "—" },
-    ...EVALUATION_VALUES.map(({ symbol }) => ({ symbol, label: symbol })),
-  ]
+  const fullName = `${student.firstName} ${student.surname}`.trim()
+  const noteButtonRef = useRef<HTMLButtonElement>(null)
+  const wasNoteOpen = useRef(noteOpen)
+
+  useEffect(() => {
+    if (wasNoteOpen.current && !noteOpen) {
+      window.requestAnimationFrame(() => noteButtonRef.current?.focus())
+    }
+    wasNoteOpen.current = noteOpen
+  }, [noteOpen])
+
+  function closeNote() {
+    onCloseNote()
+  }
   return (
-    <article className="rounded-2xl border bg-card p-4 shadow-[0_6px_18px_rgb(6_59_82/0.05)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-black">{name}</h3>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {isLand && (
-              <span className="rounded-full bg-[#fbe7c6] px-2 py-0.5 text-xs font-bold text-[#8a4b08]">
-                A terra
-              </span>
-            )}
-            {!student.active && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">
-                Non disponibile
-              </span>
-            )}
-          </div>
-        </div>
-        <Button
+    <article className="min-w-0">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_200px] overflow-hidden rounded-xl border bg-card">
+        <button
+          aria-description={`Nome completo: ${fullName}${isLand ? ", A terra" : ""}${!student.active ? ", non disponibile" : ""}${evaluation.note ? ", nota presente" : ""}`}
+          aria-expanded={noteOpen}
           aria-label={`${evaluation.note ? "Modifica" : "Aggiungi"} nota valutazione di ${name}`}
-          className="size-11 shrink-0 px-0"
+          className="flex min-h-[40px] min-w-0 items-center justify-between gap-1 border-r px-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/40"
           disabled={saving}
           onClick={onOpenNote}
+          ref={noteButtonRef}
+          title={fullName}
           type="button"
-          variant="secondary"
         >
-          <FilePenLine aria-hidden="true" className="size-4" />
-          {evaluation.note && <span className="sr-only">Nota presente</span>}
-        </Button>
+          <span className="min-w-0 truncate text-[0.8125rem] font-bold max-[350px]:text-[0.75rem]">
+            {fullName}
+            {isLand && <small className="text-[#8a4b08]"> · terra</small>}
+            {!student.active && (
+              <small className="text-muted-foreground">
+                {" "}
+                · non disponibile
+              </small>
+            )}
+          </span>
+          <FilePenLine
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary max-[350px]:hidden"
+          />
+        </button>
+        <div
+          className="grid grid-cols-5"
+          role="group"
+          aria-label={`Valutazione di ${name}`}
+        >
+          {EVALUATION_VALUES.map(({ symbol }) => (
+            <button
+              aria-label={`Valutazione di ${name}: ${symbol}`}
+              aria-pressed={evaluation.value === symbol}
+              className={`grid h-[40px] w-[40px] place-items-center border-l outline-none transition-colors focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/40 disabled:opacity-50 ${symbol.includes("+") ? "text-[#18794e] aria-pressed:bg-[#e4f4e9] aria-pressed:shadow-[inset_0_0_0_2px_#18794e]" : symbol.includes("-") ? "text-[#b42318] aria-pressed:bg-[#fbe8e7] aria-pressed:shadow-[inset_0_0_0_2px_#b42318]" : "text-[#244462] aria-pressed:bg-[#e5effb] aria-pressed:shadow-[inset_0_0_0_2px_#244462]"}`}
+              disabled={saving}
+              key={symbol}
+              onClick={() =>
+                onValue(evaluation.value === symbol ? null : symbol)
+              }
+              type="button"
+            >
+              <EvaluationMark symbol={symbol} />
+            </button>
+          ))}
+        </div>
       </div>
       {isLand && evaluation.value === null && (
-        <p className="mt-2 text-xs font-bold text-[#9a4b12]" role="status">
+        <p className="mt-1 text-xs font-bold text-[#9a4b12]" role="status">
           Valutazione mancante: resta comunque valutabile.
         </p>
       )}
       <div
-        className="mt-3 grid grid-cols-6 gap-1.5"
-        role="group"
-        aria-label={`Valutazione di ${name}`}
-      >
-        {choices.map(({ symbol, label }) => (
-          <button
-            aria-label={`Valutazione di ${name}: ${symbol ?? "mancante"}`}
-            aria-pressed={evaluation.value === symbol}
-            className="grid min-h-11 min-w-0 place-items-center rounded-xl border bg-card px-0 text-sm font-black outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground disabled:opacity-50"
-            disabled={saving}
-            key={symbol ?? "missing"}
-            onClick={() => onValue(symbol)}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div
         aria-label={`Stato salvataggio valutazione di ${name}`}
         aria-live="polite"
-        className={`mt-2 min-h-4 text-right text-xs font-semibold ${saveError ? "text-[#b42318]" : "text-muted-foreground"}`}
+        className={`mt-1 text-right text-xs font-semibold ${saveError ? "text-[#b42318]" : "text-muted-foreground"}`}
       >
         {saving
           ? "Salvataggio…"
@@ -349,18 +389,54 @@ function EvaluationCard({
                 ? "Nota presente"
                 : ""}
       </div>
+      {saveError && (
+        <button
+          aria-label={`Riprova salvataggio valutazione di ${name}`}
+          className="ml-auto flex min-h-10 items-center gap-1 text-xs font-bold text-[#b42318] underline underline-offset-2"
+          onClick={onRetry}
+          type="button"
+        >
+          <RotateCcw aria-hidden="true" className="size-3.5" /> Riprova
+          salvataggio
+        </button>
+      )}
       {noteOpen && (
         <EvaluationNoteEditor
           initialNote={evaluation.note}
-          onCancel={onCloseNote}
+          sessionId={sessionId}
+          onCancel={closeNote}
           onSave={onSaveNote}
           saving={saving}
           student={student}
           students={students}
           transcribe={transcribe}
+          prepareSpeech={prepareSpeech}
         />
       )}
     </article>
+  )
+}
+
+function EvaluationMark({ symbol }: { symbol: EvaluationSymbol }) {
+  const stroke = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+  }
+  return (
+    <svg aria-hidden="true" className="h-[24px] w-[24px]" viewBox="0 0 24 24">
+      {symbol === "++" && (
+        <>
+          <path d="M7 7v10M2 12h10" {...stroke} />
+          <path d="M17 7v10M12 12h10" {...stroke} />
+        </>
+      )}
+      {symbol === "+" && <path d="M12 7v10M7 12h10" {...stroke} />}
+      {symbol === "=" && <path d="M6 9h12M6 15h12" {...stroke} />}
+      {symbol === "-" && <path d="M7 12h10" {...stroke} />}
+      {symbol === "--" && <path d="M2 12h9M13 12h9" {...stroke} />}
+    </svg>
   )
 }
 
@@ -374,6 +450,7 @@ export function EvaluationManagement({
   onViewChange,
   referenceDate = new Date(),
   transcribe = transcribeAudio,
+  prepareSpeech,
 }: {
   course: CourseRecord
   onHome: () => void
@@ -383,7 +460,8 @@ export function EvaluationManagement({
   initialView?: EvaluationView
   onViewChange?: (view: EvaluationView) => void
   referenceDate?: Date
-  transcribe?: (audio: Blob) => Promise<string>
+  transcribe?: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
 }) {
   const [sessionId, setSessionId] = useState<SessionId>(
     () =>
@@ -478,12 +556,7 @@ export function EvaluationManagement({
       setSavedIds((current) => new Set(current).add(studentId))
       return true
     } catch {
-      setRecords((current) => {
-        const copy = new Map(current)
-        if (previous) copy.set(studentId, previous)
-        else copy.delete(studentId)
-        return copy
-      })
+      // Keep the attempted value on screen so the user can retry or correct it.
       setSaveErrors((current) => new Set(current).add(studentId))
       return false
     } finally {
@@ -500,6 +573,7 @@ export function EvaluationManagement({
     return (
       <EvaluationCard
         evaluation={evaluation}
+        sessionId={sessionId}
         isLand={landIds.has(student.id)}
         key={student.id}
         noteOpen={noteStudentId === student.id}
@@ -515,12 +589,19 @@ export function EvaluationManagement({
         onValue={(value) =>
           void persistStudent(student.id, { value, note: evaluation.note })
         }
+        onRetry={() =>
+          void persistStudent(student.id, {
+            value: evaluation.value,
+            note: evaluation.note,
+          })
+        }
         saved={savedIds.has(student.id)}
         saveError={saveErrors.has(student.id)}
         saving={savingIds.has(student.id)}
         student={student}
         students={students}
         transcribe={transcribe}
+        prepareSpeech={prepareSpeech}
       />
     )
   }
@@ -537,39 +618,31 @@ export function EvaluationManagement({
   )
 
   function changeView(nextView: EvaluationView) {
-    if (savingIds.size > 0) return
+    if (savingIds.size > 0 || noteStudentId !== null) return
     setView(nextView)
     onViewChange?.(nextView)
   }
 
   return (
     <>
-      <div className="mb-5 flex items-center gap-1">
+      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-1">
         <button
           aria-label="Indietro da Valutazioni"
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={onHome}
           type="button"
         >
-          <ChevronLeft aria-hidden="true" className="size-5" />
+          <ChevronLeft aria-hidden="true" className="h-[20px] w-[20px]" />
         </button>
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-black tracking-tight">
-            Valutazioni
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Una valutazione per allievo e sessione
-          </p>
+        <div className="min-w-0 flex-none">
+          <h1 className="text-2xl font-black tracking-tight">Valutazioni</h1>
         </div>
-      </div>
-
-      {view !== "overview" && (
-        <label className="sticky top-2 z-20 -mx-1 grid gap-2 rounded-2xl bg-background/95 px-1 pb-2 text-sm font-black backdrop-blur-sm">
-          Sessione
+        {view !== "overview" && (
           <select
             aria-label="Sessione valutazioni"
-            className="h-14 rounded-2xl border bg-card px-4 text-base font-bold outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
-            disabled={loading || savingIds.size > 0}
+            className="h-[44px] min-w-[160px] max-w-full flex-1 rounded-xl border bg-card px-[8px] text-sm font-bold outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
+            disabled={loading || savingIds.size > 0 || noteStudentId !== null}
             onChange={(event) => {
               const nextSessionId = event.target.value as SessionId
               if (nextSessionId === sessionId) return
@@ -587,18 +660,18 @@ export function EvaluationManagement({
               </option>
             ))}
           </select>
-        </label>
-      )}
+        )}
+      </div>
 
       <div
-        className="mt-4 grid grid-cols-3 rounded-2xl bg-muted p-1"
+        className="flex min-w-0 flex-wrap gap-[4px] rounded-xl bg-muted p-[4px]"
         role="group"
         aria-label="Vista valutazioni"
       >
         <button
           aria-pressed={view === "students"}
-          className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
-          disabled={savingIds.size > 0}
+          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={() => changeView("students")}
           type="button"
         >
@@ -606,8 +679,8 @@ export function EvaluationManagement({
         </button>
         <button
           aria-pressed={view === "crews"}
-          className="min-h-11 rounded-xl px-3 text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
-          disabled={savingIds.size > 0}
+          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={() => changeView("crews")}
           type="button"
         >
@@ -615,18 +688,14 @@ export function EvaluationManagement({
         </button>
         <button
           aria-pressed={view === "overview"}
-          className="min-h-11 rounded-xl px-2 text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
-          disabled={savingIds.size > 0}
+          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={() => changeView("overview")}
           type="button"
         >
           Riepilogo
         </button>
       </div>
-
-      {view !== "overview" && (
-        <p className="mt-2 text-xs text-muted-foreground">— = non valutato</p>
-      )}
 
       {loadError && (
         <section
@@ -684,7 +753,7 @@ export function EvaluationManagement({
         />
       )}
       {!loading && !loadError && students.length > 0 && view !== "overview" && (
-        <div className="mt-4 grid gap-3">
+        <div className="mt-3 grid gap-1.5">
           {view === "students" && students.map(renderCard)}
           {view === "crews" && (
             <>

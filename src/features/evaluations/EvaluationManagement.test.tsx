@@ -110,7 +110,9 @@ describe("evaluation management", () => {
     const user = userEvent.setup()
     renderScreen()
 
-    await screen.findByRole("heading", { name: "Aldo" })
+    await screen.findByRole("button", {
+      name: "Aggiungi nota valutazione di Aldo",
+    })
     await user.click(
       screen.getByRole("button", { name: "Valutazione di Aldo: ++" }),
     )
@@ -121,9 +123,7 @@ describe("evaluation management", () => {
       }),
     )
     await user.click(
-      screen.getByRole("button", {
-        name: "Aggiungi nota valutazione di Aldo",
-      }),
+      screen.getByRole("button", { name: "Aggiungi nota valutazione di Aldo" }),
     )
     await user.type(
       screen.getByRole("textbox", { name: "Nota valutazione di Aldo" }),
@@ -143,7 +143,9 @@ describe("evaluation management", () => {
     const user = userEvent.setup()
     renderScreen()
 
-    await screen.findByRole("heading", { name: "Aldo" })
+    await screen.findByRole("button", {
+      name: "Aggiungi nota valutazione di Aldo",
+    })
     await user.click(
       screen.getByRole("button", { name: "Valutazione di Aldo: +" }),
     )
@@ -227,7 +229,9 @@ describe("evaluation management", () => {
     const user = userEvent.setup()
     renderScreen()
 
-    await screen.findByRole("heading", { name: "Aldo" })
+    await screen.findByRole("button", {
+      name: "Aggiungi nota valutazione di Aldo",
+    })
     await user.click(
       screen.getByRole("button", { name: "Valutazione di Aldo: +" }),
     )
@@ -280,7 +284,9 @@ describe("evaluation management", () => {
     const user = userEvent.setup()
     renderScreen({ transcribe })
 
-    await screen.findByRole("heading", { name: "Aldo" })
+    await screen.findByRole("button", {
+      name: "Aggiungi nota valutazione di Aldo",
+    })
     await user.click(
       screen.getByRole("button", {
         name: "Aggiungi nota valutazione di Aldo",
@@ -316,5 +322,140 @@ describe("evaluation management", () => {
         note: "Virata precisa e pulita",
       }),
     )
+  })
+
+  it("shows full names with exactly five vector marks and clears a selected mark by keyboard", async () => {
+    const longName = {
+      ...STUDENTS[0]!,
+      firstName: "Alessandro Maria",
+      surname: "Della Valle Lunghissima",
+    }
+    getStudents.mockResolvedValue([longName])
+    const user = userEvent.setup()
+    renderScreen()
+
+    const nameButton = await screen.findByRole("button", {
+      name: "Aggiungi nota valutazione di Alessandro Maria",
+    })
+    expect(nameButton).toHaveTextContent(
+      "Alessandro Maria Della Valle Lunghissima",
+    )
+    expect(nameButton).toHaveAttribute(
+      "aria-description",
+      "Nome completo: Alessandro Maria Della Valle Lunghissima",
+    )
+    const marks = screen.getByRole("group", {
+      name: "Valutazione di Alessandro Maria",
+    })
+    const buttons = within(marks).getAllByRole("button")
+    expect(buttons).toHaveLength(5)
+    expect(buttons.every((button) => button.querySelector("svg"))).toBe(true)
+    expect(
+      buttons.map((button) => button.getAttribute("aria-pressed")),
+    ).toEqual(["false", "false", "false", "false", "false"])
+    expect(
+      screen.queryByRole("button", { name: /mancante/ }),
+    ).not.toBeInTheDocument()
+
+    const neutral = within(marks).getByRole("button", {
+      name: "Valutazione di Alessandro Maria: =",
+    })
+    neutral.focus()
+    await user.keyboard("{Enter}")
+    await waitFor(() => expect(neutral).toHaveAttribute("aria-pressed", "true"))
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith("course-1", "student-1", "sat-pm", {
+        value: "=",
+        note: null,
+      }),
+    )
+    await user.keyboard("{Enter}")
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith("course-1", "student-1", "sat-pm", {
+        value: null,
+        note: null,
+      }),
+    )
+    expect(neutral).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("retains an unsaved mark for retry and restores the saved value after reopening", async () => {
+    save.mockRejectedValueOnce(new Error("offline write failed"))
+    const user = userEvent.setup()
+    const first = renderScreen()
+    const mark = await screen.findByRole("button", {
+      name: "Valutazione di Aldo: --",
+    })
+    await user.click(mark)
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Stato salvataggio valutazione di Aldo"),
+      ).toHaveTextContent("Non salvato"),
+    )
+    expect(mark).toHaveAttribute("aria-pressed", "true")
+    await user.click(
+      screen.getByRole("button", {
+        name: "Riprova salvataggio valutazione di Aldo",
+      }),
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Stato salvataggio valutazione di Aldo"),
+      ).toHaveTextContent("Salvato"),
+    )
+    expect(save).toHaveBeenLastCalledWith("course-1", "student-1", "sat-pm", {
+      value: "--",
+      note: null,
+    })
+
+    first.unmount()
+    getEvaluations.mockResolvedValue([
+      {
+        id: "evaluation-student-1-sat-pm",
+        studentId: "student-1",
+        sessionId: "sat-pm",
+        value: "--",
+        note: null,
+      },
+    ])
+    renderScreen()
+    expect(
+      await screen.findByRole("button", { name: "Valutazione di Aldo: --" }),
+    ).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("keeps the latest note and exact session visible when saving fails, then retries", async () => {
+    save.mockRejectedValueOnce(new Error("write failed"))
+    const user = userEvent.setup()
+    renderScreen()
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Aggiungi nota valutazione di Bea",
+      }),
+    )
+    expect(screen.getByText("Nota di Bea Verdi · Sabato PM")).toBeVisible()
+    const textarea = screen.getByRole("textbox", {
+      name: "Nota valutazione di Bea",
+    })
+    expect(textarea).toHaveFocus()
+    await user.type(textarea, "Osservazione della sessione esatta")
+    expect(screen.getByLabelText("Sessione valutazioni")).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "Salva nota" }))
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Stato salvataggio valutazione di Bea"),
+      ).toHaveTextContent("Non salvato"),
+    )
+    expect(textarea).toHaveValue("Osservazione della sessione esatta")
+    await user.click(screen.getByRole("button", { name: "Salva nota" }))
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Stato salvataggio valutazione di Bea"),
+      ).toHaveTextContent("Salvato"),
+    )
+    expect(save).toHaveBeenLastCalledWith("course-1", "student-2", "sat-pm", {
+      value: null,
+      note: "Osservazione della sessione esatta",
+    })
   })
 })

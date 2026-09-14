@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { WeeklyEvaluationGrid } from "@/features/evaluations/WeeklyEvaluationGrid"
 import type { EvaluationRecord } from "@/persistence/evaluations"
@@ -91,6 +91,36 @@ describe("WeeklyEvaluationGrid", () => {
     expect(
       within(notes).getByRole("button", { name: "Mostra meno note" }),
     ).toHaveAttribute("aria-expanded", "true")
+  })
+
+  it("renders seven day columns with stacked periods and opens an exact note", async () => {
+    const user = userEvent.setup()
+    const onOpenNote = vi.fn()
+    render(
+      <WeeklyEvaluationGrid
+        ariaLabel="Sequenza valutazioni di Bea"
+        onOpenNote={onOpenNote}
+        records={RECORDS}
+        showHeader={false}
+        showRecentNotes={false}
+        studentName="Bea"
+      />,
+    )
+
+    const table = screen.getByRole("table", {
+      name: "Valutazioni settimanali di Bea",
+    })
+    expect(table.querySelector("tbody")).toHaveClass("grid-cols-7")
+    expect(within(table).getByText("Sabato")).toBeVisible()
+    expect(within(table).getByText("Domenica")).toBeVisible()
+    expect(within(table).getByText("Venerdì")).toBeVisible()
+
+    const noteCell = within(table).getByRole("button", {
+      name: "Bea, Domenica PM: ++, nota presente",
+    })
+    await user.click(noteCell)
+    expect(onOpenNote).toHaveBeenCalledWith(RECORDS[2])
+    expect(noteCell).toHaveAttribute("aria-pressed", "false")
   })
 
   it("keeps an empty course summary compact", () => {
