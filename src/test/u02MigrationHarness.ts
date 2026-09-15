@@ -1,6 +1,8 @@
 import { column, PowerSyncDatabase, Schema, Table } from "@powersync/web"
 
 import { createDatabase } from "@/persistence/db"
+import { saveCrewPlan } from "@/persistence/crews"
+import { saveDutyPlan, type DutySettingsRecord } from "@/persistence/duties"
 import fixture from "@/test/fixtures/v0.1.0-course.json"
 
 const oldSchema = new Schema({
@@ -119,9 +121,8 @@ async function readSnapshot(database: PowerSyncDatabase) {
   return snapshot
 }
 
-/** Browser-only proof that a real 0.1 database is upgraded and reopened intact. */
-export async function runU02MigrationHarness() {
-  const filename = `u02-migration-${crypto.randomUUID()}.db`
+/** Seed an isolated database using the exact 0.1.0 table schema and fixture. */
+export async function seedLegacyFixture(filename: string) {
   const legacy = new PowerSyncDatabase({
     schema: oldSchema,
     database: { dbFilename: filename },
@@ -129,6 +130,12 @@ export async function runU02MigrationHarness() {
   await legacy.init()
   await seedFixture(legacy)
   await legacy.close()
+}
+
+/** Browser-only proof that a real 0.1 database is upgraded and reopened intact. */
+export async function runU02MigrationHarness() {
+  const filename = `u02-migration-${crypto.randomUUID()}.db`
+  await seedLegacyFixture(filename)
 
   const upgraded = createDatabase(filename)
   await upgraded.init()
@@ -177,4 +184,87 @@ export async function runU02MigrationHarness() {
     defaultCourseNote: student.courseNote,
     reloadedCourseNote: saved.courseNote,
   }
+}
+
+/** Real SQLite regression for stable legacy row IDs after ordinary app saves. */
+export async function runStableIdMigrationHarness() {
+  const filename = `stable-id-migration-${crypto.randomUUID()}.db`
+  await seedLegacyFixture(filename)
+  const upgraded = createDatabase(filename)
+  await upgraded.init()
+  const courseId = "course-v010-d2"
+  const assignments = [
+    { dayId: "saturday" as const, studentId: "student-v010-mario" },
+    { dayId: "sunday" as const, studentId: "student-v010-giulia" },
+  ]
+  const settings: DutySettingsRecord = {
+    desiredPerDay: 3,
+    fewerDayIds: [],
+    balanceMinors: true,
+    balanceSex: true,
+    tieBreaker: "alphabetical",
+    stayOverStudentIds: ["student-v010-giulia"],
+    completedDayIds: ["saturday"],
+    acknowledgedWarningKeys: [],
+  }
+  const crewPlan = {
+    crews: [
+      {
+        id: "crew-v010-sat-pm-1",
+        sessionId: "sat-pm" as const,
+        destination: "boat" as const,
+        boatId: "boat-v010-quest-7",
+        members: [
+          { personId: "student-v010-mario", personType: "student" as const },
+          { personId: "volunteer-v010-adv", personType: "volunteer" as const },
+        ],
+      },
+      {
+        id: "crew-v010-sat-pm-2",
+        sessionId: "sat-pm" as const,
+        destination: "mezzi" as const,
+        boatId: null,
+        members: [
+          { personId: "student-v010-giulia", personType: "student" as const },
+        ],
+      },
+    ],
+    landStudentIds: [],
+    selectedBoatIds: ["boat-v010-quest-7"],
+  }
+  const before = await readSnapshot(upgraded)
+  await saveDutyPlan(courseId, assignments, settings, upgraded)
+  await saveCrewPlan(courseId, "sat-pm", crewPlan, upgraded)
+  await saveCrewPlan(
+    courseId,
+    "sun-am",
+    { crews: [], landStudentIds: ["student-v010-giulia"], selectedBoatIds: [] },
+    upgraded,
+  )
+  const afterNoOp = await readSnapshot(upgraded)
+  await saveDutyPlan(
+    courseId,
+    [...assignments, { dayId: "friday", studentId: "student-v010-giulia" }],
+    settings,
+    upgraded,
+  )
+  await saveCrewPlan(
+    courseId,
+    "sat-pm",
+    {
+      ...crewPlan,
+      crews: [
+        crewPlan.crews[0]!,
+        { ...crewPlan.crews[1]!, destination: "unassigned" },
+      ],
+    },
+    upgraded,
+  )
+  await upgraded.close()
+  const reopened = createDatabase(filename)
+  await reopened.init()
+  const afterEditAndReopen = await readSnapshot(reopened)
+  await reopened.disconnectAndClear()
+  await reopened.close()
+  return { before, afterNoOp, afterEditAndReopen }
 }

@@ -1,0 +1,413 @@
+{
+  "milestone": "UG1",
+  "status": "PASS_WITH_PHYSICAL_PENDING",
+  "recordedAt": "2026-09-15",
+  "target": {
+    "mockRevision": "r10",
+    "mockCommit": "ee8d4c8",
+    "source": "docs/post-mvp/mockups/index.html",
+    "pageChangelog": "docs/post-mvp/07_PAGE_CHANGELOG.md",
+    "designRulebook": "docs/post-mvp/06_DESIGN_RULEBOOK.md"
+  },
+  "implementation": {
+    "baseCommit": "5dcb98b1a37d1e374cc654f348df2deab64362be",
+    "state": "UG1 release-candidate working tree based on the U10 checkpoint",
+    "node": "v24.19.0",
+    "playwright": "1.62.1"
+  },
+  "contractViewports": [
+    {
+      "name": "stress",
+      "width": 320,
+      "height": 664,
+      "textScale": "200%"
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "textScale": "100%"
+    },
+    {
+      "name": "largePhone",
+      "width": 412,
+      "height": 915,
+      "textScale": "100%"
+    }
+  ],
+  "browsers": [
+    "pixel-7-chrome",
+    "iphone-13-viewport",
+    "iphone-13-webkit-core"
+  ],
+  "method": "This matrix records claims exercised by existing user-visible Playwright journeys and selected screenshots. It does not claim pixel equality with the mock or physical-device behavior. A page is listed as automated PASS only for the behavior actually covered by the cited evidence.",
+  "finalRun": {
+    "command": "npm run verify:all",
+    "result": "PASS: 372 unit/component tests, deterministic domain and full-week checks, production PWA build, 123 browser journeys passed and 4 intentional project-matrix skips",
+    "projects": [
+      "pixel-7-chrome",
+      "iphone-13-viewport",
+      "iphone-13-webkit-core"
+    ],
+    "evidence": ".evidence/UG1/verification.json"
+  },
+  "pageTraceability": [
+    {
+      "page": "P01",
+      "target": "Home and common navigation",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Dynamic course identity and selected family/level survive reload",
+        "Home cards, Settings and navigation expose usable targets",
+        "320x664, 390x844 and 412x915 have no horizontal overflow",
+        "320x664 at 200% text clears fixed navigation at maximum scroll"
+      ],
+      "evidence": [
+        ".evidence/U01/browser-evidence.json",
+        ".evidence/U01/p01-home-320x664.png",
+        ".evidence/U01/p01-home-390x844.png",
+        ".evidence/U01/p01-home-412x915.png"
+      ]
+    },
+    {
+      "page": "P02",
+      "target": "Course creation and Settings",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Course creation hides bottom navigation",
+        "D/C identity changes with family and level and persists after reload",
+        "The creation form remains usable at contract widths and 200% text"
+      ],
+      "evidence": [
+        ".evidence/U01/browser-evidence.json",
+        ".evidence/U01/p02-create-320.png"
+      ]
+    },
+    {
+      "page": "P03",
+      "target": "Student list",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Two-column list handles long and duplicate names at 320x664",
+        "Surname ordering, minor cue and disabled state are visible",
+        "Floating Add action remains reachable above fixed navigation",
+        "No document horizontal overflow at stress size"
+      ],
+      "evidence": [
+        ".evidence/U02/browser-evidence.json",
+        ".evidence/U02/p03-stress-pixel-7-chrome.png",
+        ".evidence/U02/p03-stress-iphone-13-viewport.png"
+      ]
+    },
+    {
+      "page": "P04",
+      "target": "Student profile, add and edit",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Compact profile fits the phone viewport without unnecessary scrolling",
+        "Three sex choices, student facts, initial/course notes and edit flow are usable",
+        "The weekly evaluation grid is visible from the profile and shares the evaluation data",
+        "Recent notes and additional notes remain available on demand"
+      ],
+      "evidence": [
+        ".evidence/U02/browser-evidence.json",
+        ".evidence/U02/p04-profile-pixel-7-chrome.png",
+        ".evidence/U02/p04-profile-iphone-13-viewport.png"
+      ]
+    },
+    {
+      "page": "P05",
+      "target": "Student knowledge and shared note panel",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Student cards keep actions inside the card at 320x664",
+        "XS-S-M-L-XL selection and note persistence survive reload",
+        "The note panel stays on the same page and restores focus",
+        "200% text and reduced-height note-panel stress remain operable"
+      ],
+      "evidence": [
+        ".evidence/U03/browser-evidence.json",
+        ".evidence/U03/p05-note-panel-pixel-7-chrome.png",
+        ".evidence/U03/p05-stress-pixel-7-chrome.png",
+        ".evidence/U03/p05-note-panel-iphone-13-webkit-core.png"
+      ]
+    },
+    {
+      "page": "P06",
+      "target": "Student scan acquisition and review",
+      "automatedStatus": "PASS_WITH_FINDINGS",
+      "testedClaims": [
+        "Gallery, camera intent and manual entry are distinct actions",
+        "Full-screen adjustment exposes free rotation and crop controls",
+        "Review counters are sticky and update after correction or row removal",
+        "Uncertain fields require review and only retained corrected rows are committed",
+        "Review layout reflows at 320x664 with 200% text"
+      ],
+      "evidence": [
+        ".evidence/U04/browser-evidence.json",
+        ".evidence/U04/editor-pixel-7-chrome.png",
+        ".evidence/U04/review-iphone13.png"
+      ],
+      "limitations": [
+        "Native camera/gallery, orientation, crop and physical OCR checks remain pending in UG1 physical-device evidence",
+        "The current-host WebKit rerun was terminated for memory; the cited WebKit checkpoint passed the interaction matrix"
+      ]
+    },
+    {
+      "page": "P07",
+      "target": "Boat setup and add flow",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Canonical boat model defaults and the seven current model options are covered",
+        "Comma, whitespace, newline and semicolon input normalize duplicates",
+        "Existing-boat re-entry and single-add validation behave correctly",
+        "Initial setup and persistence remain usable at stress size"
+      ],
+      "evidence": [
+        ".evidence/U05/browser-evidence.json"
+      ]
+    },
+    {
+      "page": "P08",
+      "target": "Boat list and detail",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Two-digit boat identities remain visible at 320x664 with 200% text",
+        "Available, unresolved-fault and unavailable states are distinct",
+        "Boat identity, fault count and status remain readable in the stress viewport",
+        "Fault state and course availability remain independent after reload"
+      ],
+      "evidence": [
+        ".evidence/U05/browser-evidence.json",
+        ".evidence/U05/boats-stress-pixel-7-chrome.png",
+        ".evidence/U05/boats-status-pixel-7-chrome.png"
+      ]
+    },
+    {
+      "page": "P09",
+      "target": "Fault list, form and state",
+      "automatedStatus": "PASS_WITH_FINDINGS",
+      "testedClaims": [
+        "Fault description, shared dictation and state changes live in one panel",
+        "Long previews, three fault states and multiple faults remain reachable",
+        "Fault history and boat identity persist after reload",
+        "Typed text survives microphone denial/retry and no audio is persisted",
+        "Identity, preview and state controls fit at 320x664 with 200% text"
+      ],
+      "evidence": [
+        ".evidence/U06/browser-evidence.json",
+        ".evidence/U06/faults-states-pixel-7-chrome.png",
+        ".evidence/U06/faults-stress-pixel-7-chrome.png"
+      ],
+      "limitations": [
+        "Physical microphone and Italian recognition checks remain pending; deterministic speech fixtures do not replace them"
+      ]
+    },
+    {
+      "page": "P10",
+      "target": "Volunteer list and form",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "ADV, IS and CT roles are directly selectable",
+        "New volunteer form starts with an empty name",
+        "CT edits and reload persistence work",
+        "CT enters the crew staff pool but stays out of student counts, Comandate and Valutazioni",
+        "Role choices and save remain usable at 320x664 with 200% text"
+      ],
+      "evidence": [
+        ".evidence/U07/browser-evidence.json",
+        ".evidence/U07/u07-volunteer-list-pixel-7.png",
+        ".evidence/U07/u07-volunteer-stress-pixel-7.png"
+      ]
+    },
+    {
+      "page": "P11",
+      "target": "Comandate week and warnings",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Seven day groups expose names and unique coverage",
+        "Duplicate-day warnings and minor indicators remain visible",
+        "Sticky assigned/total feedback and day/person warning details are exercised",
+        "The week grid reflows without heading clipping at 320x664 with 200% text"
+      ],
+      "evidence": [
+        ".evidence/U08/browser-evidence.json",
+        ".evidence/U08/u08-p11-p13-pixel-7.png",
+        "tests/e2e/ug1-duty-reflow.spec.ts"
+      ]
+    },
+    {
+      "page": "P12",
+      "target": "Comandate proposal and recalculation",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Preview remains pure until confirmation",
+        "floor quota and exact remainder-day selection are enforced",
+        "Live day counts, preferences and recalculation remain usable",
+        "Proposal headings and details reflow at 320x664 with 200% text"
+      ],
+      "evidence": [
+        ".evidence/U08/browser-evidence.json",
+        ".evidence/U08/u08-p12-preview-pixel-7.png",
+        ".evidence/U08/u08-p12-stress-pixel-7.png",
+        "tests/e2e/ug1-duty-reflow.spec.ts"
+      ]
+    },
+    {
+      "page": "P13",
+      "target": "Comandate person selection",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "A day opens directly without an intermediate edit-person popup",
+        "Direct add, repeated assignment warnings and labelled-day removal are reversible",
+        "Two-column compact person cards and abbreviated day labels support long names",
+        "Touch targets and 320x664 at 200% text reflow are measured"
+      ],
+      "evidence": [
+        ".evidence/U08/browser-evidence.json",
+        ".evidence/U08/u08-p13-direct-edit-pixel-7.png",
+        ".evidence/U08/u08-p13-stress-pixel-7.png"
+      ]
+    },
+    {
+      "page": "P14",
+      "target": "Crew setup, composition and verification",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Crew cards support placement, A terra, staff and destination inspection",
+        "Destination warnings and member-size warnings are reachable",
+        "Double-click removal returns a student to the available pool",
+        "Crew workspace remains usable at 320x664 with 200% text and on the iPhone viewport"
+      ],
+      "evidence": [
+        ".evidence/U09/browser-evidence.json",
+        ".evidence/U09/p14-320.png"
+      ]
+    },
+    {
+      "page": "P15",
+      "target": "Session boats and crew destination",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Boat selector uses two rows with ten boats and no horizontal scrolling",
+        "Boat and crew cards show compact model identity and two-digit numbers",
+        "Blue available, green assigned and grey unavailable states are exercised",
+        "Selecting a crew then a blue boat persists the session-local association",
+        "Session-local unlink and reload preserve people and other sessions"
+      ],
+      "evidence": [
+        ".evidence/U09/browser-evidence.json",
+        ".evidence/U09/p15-320.png"
+      ]
+    },
+    {
+      "page": "P16",
+      "target": "Crew read/announcement view",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Read mode separates crew number, boat logo/number and people",
+        "No-boat and assigned-boat states remain readable",
+        "Boat marks and long names remain visible in the compact 320px layout",
+        "Read mode works on both contract phone projects"
+      ],
+      "evidence": [
+        ".evidence/U09/browser-evidence.json",
+        ".evidence/U09/p16-320.png"
+      ]
+    },
+    {
+      "page": "P17",
+      "target": "Evaluation entry for students and crews",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Thirteen canonical sessions and five dedicated SVG evaluation controls are covered",
+        "Name and evaluation controls share one row at normal and stress widths",
+        "Second tap clears a value and missing is distinct from neutral",
+        "Exact notes persist after reload and microphone denial preserves typed text",
+        "320x664 and 200% text overflow/label checks pass"
+      ],
+      "evidence": [
+        ".evidence/U10/browser-evidence.json",
+        ".evidence/U10/p17-stress-iphone-13-viewport.png"
+      ]
+    },
+    {
+      "page": "P18",
+      "target": "Evaluation weekly summary",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "Seven day AM/PM grid is aligned and complete without horizontal scrolling",
+        "Missing values are blank and real values keep their semantic colors",
+        "Alphabetical and evaluation ordering remain available",
+        "Student header rows and the stress layout remain readable at 320px"
+      ],
+      "evidence": [
+        ".evidence/U10/browser-evidence.json",
+        ".evidence/U10/p18-iphone-13-viewport.png",
+        ".evidence/U10/p18-stress-pixel-7-chrome.png"
+      ]
+    },
+    {
+      "page": "P19",
+      "target": "Student evaluation history",
+      "automatedStatus": "PASS",
+      "testedClaims": [
+        "History groups sessions hierarchically by day",
+        "Student identity remains the primary context and the weekly summary is complete",
+        "Notes and exact session values remain available after navigation and reload",
+        "Empty/no-evaluation states remain compact and missing values stay blank"
+      ],
+      "evidence": [
+        ".evidence/U10/browser-evidence.json",
+        ".evidence/U10/p19-iphone-13-viewport.png"
+      ]
+    }
+  ],
+  "integratedSurfaceTraceability": [
+    {
+      "surface": "P20 shared dictation behavior",
+      "status": "AUTOMATED_PASS_WITH_PHYSICAL_PENDING",
+      "pages": ["P05", "P09", "P17"],
+      "evidence": [
+        ".evidence/U03/browser-evidence.json",
+        ".evidence/U06/browser-evidence.json"
+      ],
+      "claim": "Permission, loading, ready, recording, processing, review and recoverable-error behavior is integrated into text panels; physical PC/Android/iPhone speech remains a release check."
+    },
+    {
+      "surface": "Upgraded visible week",
+      "status": "PASS",
+      "pages": ["P01", "P03", "P07", "P08", "P09", "P10", "P11", "P14", "P17", "P18", "P19"],
+      "evidence": [
+        "tests/e2e/ug1-upgraded-week.spec.ts",
+        ".evidence/UG1/upgraded-week-overview.png",
+        ".evidence/UG1/migration-evidence.json"
+      ],
+      "claim": "The visible journey seeds the 0.1.0 fixture, edits the week, adds CT, exercises all 13 sessions, closes/reopens and checks the original rows and note; the final full E2E gate must still be recorded."
+    }
+  ],
+  "intentionalDifferencesFromMock": [
+    "The mock is a frozen composition target. Live data, names, counts and warning states are deterministic fixture content rather than pixel-identical mock copy.",
+    "On first-launch P02, the live app omits a back control because there is no valid predecessor.",
+    "Where supplied boat-image provenance does not permit production use, the live app uses a same-size model mark. The boat identity and number remain visible."
+  ],
+  "physicalChecksPending": [
+    "PC microphone permission, capture, Italian recognition and latency",
+    "Android Chrome microphone and native camera/gallery, orientation, crop, OCR review and source-photo disposal",
+    "iPhone Safari microphone and native camera/gallery, orientation, crop, OCR review and source-photo disposal"
+  ],
+  "selectedEvidence": [
+    ".evidence/UG1/upgraded-week-overview.png",
+    ".evidence/U01/p01-home-320x664.png",
+    ".evidence/UG1/p04-profile-final.png",
+    ".evidence/UG1/p05-stress-final.png",
+    ".evidence/UG1/p06-editor-final.png",
+    ".evidence/U05/boats-status-pixel-7-chrome.png",
+    ".evidence/UG1/p13-stress-final.png",
+    ".evidence/U09/p15-320.png",
+    ".evidence/UG1/p17-stress-final.png",
+    ".evidence/UG1/p18-final.png",
+    ".evidence/UG1/p19-final.png"
+  ],
+  "nextEvidence": "Complete the human-operated physical-device checklist and repeat the dedicated physical review before declaring 0.2.0."
+}

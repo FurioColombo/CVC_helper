@@ -19,6 +19,10 @@ export interface DutySettingsRecord {
   acknowledgedWarningKeys: string[]
 }
 
+interface PersistedDutyAssignment extends DutyAssignment {
+  id: string
+}
+
 interface PersistedDutySettings {
   desiredPerDay: number
   fewerDayIds: string
@@ -123,8 +127,9 @@ export async function saveDutyPlan(
   courseId: string,
   assignments: DutyAssignment[],
   settings: DutySettingsRecord,
+  database = db,
 ) {
-  await db.init()
+  await database.init()
   if (!Number.isInteger(settings.desiredPerDay) || settings.desiredPerDay < 0) {
     throw new Error("Invalid duty settings")
   }
@@ -150,7 +155,7 @@ export async function saveDutyPlan(
     if (uniqueKeys.has(key)) throw new Error("Duplicate duty assignment")
     uniqueKeys.add(key)
   }
-  await db.writeTransaction(async (transaction) => {
+  await database.writeTransaction(async (transaction) => {
     const persistedSettings = await transaction.getOptional<{
       completedDayIds: string
     }>(
@@ -173,13 +178,12 @@ export async function saveDutyPlan(
     ) {
       throw new Error("Completed duty history is immutable")
     }
-    if (persistedCompletedDayIds.length > 0) {
-      const persistedAssignments = await transaction.getAll<DutyAssignment>(
-        `SELECT dayId, studentId
-         FROM dutyAssignments
-         WHERE courseId = ?`,
+    const persistedAssignments =
+      await transaction.getAll<PersistedDutyAssignment>(
+        `SELECT id, dayId, studentId FROM dutyAssignments WHERE courseId = ?`,
         [courseId],
       )
+    if (persistedCompletedDayIds.length > 0) {
       const completed = new Set(persistedCompletedDayIds)
       const canonical = (rows: DutyAssignment[]) =>
         rows
@@ -193,14 +197,36 @@ export async function saveDutyPlan(
         throw new Error("Completed duty history is immutable")
       }
     }
-    await transaction.execute(
-      "DELETE FROM dutyAssignments WHERE courseId = ?",
-      [courseId],
+    const keyOf = ({ dayId, studentId }: DutyAssignment) =>
+      `${dayId}:${studentId}`
+    const existingByKey = new Map(
+      persistedAssignments.map((assignment) => [keyOf(assignment), assignment]),
     )
-    if (assignments.length > 0) {
+    const persistedIds = persistedAssignments.map(({ id }) => id)
+    if (
+      persistedIds.some((id) => typeof id !== "string" || !id.trim()) ||
+      new Set(persistedIds).size !== persistedIds.length ||
+      existingByKey.size !== persistedAssignments.length
+    ) {
+      throw new Error("Duplicate persisted duty assignment")
+    }
+    const nextKeys = new Set(assignments.map(keyOf))
+    const removed = persistedAssignments.filter(
+      (assignment) => !nextKeys.has(keyOf(assignment)),
+    )
+    if (removed.length > 0) {
+      await transaction.executeBatch(
+        "DELETE FROM dutyAssignments WHERE id = ? AND courseId = ?",
+        removed.map(({ id }) => [id, courseId]),
+      )
+    }
+    const added = assignments.filter(
+      (assignment) => !existingByKey.has(keyOf(assignment)),
+    )
+    if (added.length > 0) {
       await transaction.executeBatch(
         "INSERT INTO dutyAssignments(id, courseId, dayId, studentId) VALUES (?, ?, ?, ?)",
-        assignments.map((assignment) => [
+        added.map((assignment) => [
           crypto.randomUUID(),
           courseId,
           assignment.dayId,

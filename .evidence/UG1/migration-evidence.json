@@ -1,0 +1,32 @@
+{
+  "milestone": "UG1",
+  "status": "PASS",
+  "sourceVersion": "0.1.0",
+  "fixture": "src/test/fixtures/v0.1.0-course.json",
+  "originalTableCount": 13,
+  "originalRowCount": 22,
+  "checks": [
+    {
+      "name": "schema upgrade and reopen",
+      "status": "PASS",
+      "evidence": "tests/e2e/u02-migration.spec.ts compares every original table, row ID and value after opening the old PowerSync database with the current schema and reopening it"
+    },
+    {
+      "name": "stable operational identities",
+      "status": "PASS",
+      "evidence": "tests/e2e/u02-migration.spec.ts saves unchanged duties and crews, edits an unrelated future day and crew, reopens, and checks original duty, crew, member, land and session-boat IDs"
+    },
+    {
+      "name": "visible upgraded week",
+      "status": "PASS",
+      "evidence": "tests/e2e/ug1-upgraded-week.spec.ts seeds the old schema, opens the actual app, edits a duty, retains the legacy A terra assignment while creating crews, uses all 13 sessions, adds CT and 12 new evaluations, closes and reopens, opens the original note, and compares all 22 original rows/IDs"
+    }
+  ],
+  "intentionalNewData": [
+    "One CT volunteer",
+    "One future-day duty assignment",
+    "New crews for previously empty sessions",
+    "Twelve new Mario evaluations"
+  ],
+  "notes": "The old duty-settings row keeps its ID; new 0.2.0 settings fields may be populated during later edits. No original entity is removed."
+}

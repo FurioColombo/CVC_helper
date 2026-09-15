@@ -292,28 +292,32 @@ function SettingsView({
   onHome: () => void
 }) {
   return (
-    <section className="rounded-3xl border bg-card p-6 shadow-[0_18px_50px_rgb(6_59_82/0.08)]">
+    <section className="rounded-3xl border bg-card p-6 shadow-[0_18px_50px_rgb(6_59_82/0.08)] max-[350px]:p-[12px]">
       <Settings aria-hidden="true" className="size-8 text-primary" />
-      <p className="mt-5 text-xs font-bold tracking-[0.16em] text-[#b04423] uppercase">
+      <p className="mt-5 break-words text-xs font-bold tracking-[0.16em] text-[#b04423] uppercase [overflow-wrap:anywhere]">
         Configurazione
       </p>
-      <h1 className="mt-1 text-3xl font-black tracking-tight">Impostazioni</h1>
-      <dl className="mt-6 divide-y rounded-2xl bg-muted px-4">
-        <div className="flex justify-between gap-4 py-4">
-          <dt className="text-sm text-muted-foreground">Corso</dt>
-          <dd className="text-sm font-bold">
+      <h1 className="mt-1 break-words text-3xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-2xl">
+        Impostazioni
+      </h1>
+      <dl className="mt-6 min-w-0 divide-y rounded-2xl bg-muted px-4 max-[350px]:px-[12px]">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-1 py-4">
+          <dt className="shrink-0 text-sm text-muted-foreground">Corso</dt>
+          <dd className="min-w-0 max-w-full text-right text-sm font-bold [&_.course-identity]:flex-wrap [&_.course-identity]:whitespace-normal">
             <CourseIdentity {...course} size="compact" />
           </dd>
         </div>
-        <div className="flex justify-between gap-4 py-4">
-          <dt className="text-sm text-muted-foreground">Tipo</dt>
-          <dd className="text-sm font-bold">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-1 py-4">
+          <dt className="shrink-0 text-sm text-muted-foreground">Tipo</dt>
+          <dd className="min-w-0 max-w-full break-words text-right text-sm font-bold [overflow-wrap:anywhere]">
             {course.family} · livello {course.level}
           </dd>
         </div>
-        <div className="flex justify-between gap-4 py-4">
-          <dt className="text-sm text-muted-foreground">Archivio</dt>
-          <dd className="text-sm font-bold">Locale</dd>
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-1 py-4">
+          <dt className="shrink-0 text-sm text-muted-foreground">Archivio</dt>
+          <dd className="min-w-0 max-w-full break-words text-right text-sm font-bold [overflow-wrap:anywhere]">
+            Locale
+          </dd>
         </div>
       </dl>
       <Button className="mt-7" onClick={onHome} variant="secondary">

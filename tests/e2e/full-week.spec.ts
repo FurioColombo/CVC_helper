@@ -505,7 +505,7 @@ test("runs one deterministic D2 course through a complete sailing week", async (
     await notedSequence.evaluate(
       (element) => element.scrollWidth > element.clientWidth,
     ),
-  ).toBe(true)
+  ).toBe(false)
   expect(
     await app.evaluate(
       () => document.documentElement.scrollWidth === window.innerWidth,

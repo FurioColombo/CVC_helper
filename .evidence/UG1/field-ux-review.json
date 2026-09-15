@@ -1,0 +1,19 @@
+{
+  "milestone": "UG1",
+  "reviewerRole": "independent field-UX and accessibility reviewer",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "UG1-UX-Q01",
+      "finding": "At 320 px with 200% text, an exceptionally long name without spaces must wrap by character or truncate within its two-column P13 card. Its complete accessible label and title remain available."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/post-mvp/06_DESIGN_RULEBOOK.md and frozen mock r10",
+    ".evidence/UG1/browser-evidence.json and selected U01-U10 screenshots",
+    "P13 two-column and multi-day-span computed-layout assertions at 320 px and 200% text",
+    "No-overflow and minimum-hit-area checks across dense P11-P19 workflows"
+  ]
+}

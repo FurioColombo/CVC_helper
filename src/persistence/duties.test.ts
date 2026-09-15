@@ -99,7 +99,7 @@ describe("duty persistence", () => {
     })
   })
 
-  it("replaces assignments and settings atomically", async () => {
+  it("inserts new assignments and settings atomically without replacing other rows", async () => {
     await saveDutyPlan(
       "course-1",
       [{ dayId: "saturday", studentId: "student-1" }],
@@ -107,17 +107,16 @@ describe("duty persistence", () => {
     )
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
-    expect(database.execute).toHaveBeenNthCalledWith(
-      1,
-      "DELETE FROM dutyAssignments WHERE courseId = ?",
-      ["course-1"],
+    expect(database.executeBatch).not.toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM dutyAssignments"),
+      expect.anything(),
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO dutyAssignments"),
       [expect.arrayContaining(["course-1", "saturday", "student-1"])],
     )
     expect(database.execute).toHaveBeenNthCalledWith(
-      2,
+      1,
       expect.stringContaining("INSERT OR REPLACE INTO dutySettings"),
       expect.arrayContaining(["course-1"]),
     )
@@ -199,8 +198,8 @@ describe("duty persistence", () => {
       completedDayIds: '["saturday"]',
     })
     database.getAll.mockResolvedValue([
-      { dayId: "saturday", studentId: "student-1" },
-      { dayId: "sunday", studentId: "student-2" },
+      { id: "completed-saturday", dayId: "saturday", studentId: "student-1" },
+      { id: "future-sunday", dayId: "sunday", studentId: "student-2" },
     ])
 
     await expect(
@@ -214,11 +213,64 @@ describe("duty persistence", () => {
         SETTINGS,
       ),
     ).resolves.toBeUndefined()
-    expect(database.execute).toHaveBeenCalledWith(
-      "DELETE FROM dutyAssignments WHERE courseId = ?",
-      ["course-1"],
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO dutyAssignments"),
+      expect.arrayContaining([expect.arrayContaining(["friday", "student-3"])]),
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      "DELETE FROM dutyAssignments WHERE id = ? AND courseId = ?",
+      [["future-sunday", "course-1"]],
     )
   })
+
+  it("retains unchanged assignment IDs while adding and removing other duties", async () => {
+    database.getAll.mockResolvedValue([
+      { id: "retained", dayId: "saturday", studentId: "student-1" },
+      { id: "removed", dayId: "sunday", studentId: "student-2" },
+    ])
+
+    await saveDutyPlan(
+      "course-1",
+      [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "monday", studentId: "student-3" },
+      ],
+      SETTINGS,
+    )
+
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      "DELETE FROM dutyAssignments WHERE id = ? AND courseId = ?",
+      [["removed", "course-1"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO dutyAssignments"),
+      [expect.arrayContaining(["course-1", "monday", "student-3"])],
+    )
+    expect(JSON.stringify(database.executeBatch.mock.calls)).not.toContain(
+      '"retained"',
+    )
+  })
+
+  it.each([
+    ["blank ID", [{ id: " ", dayId: "saturday", studentId: "student-1" }]],
+    [
+      "duplicate ID",
+      [
+        { id: "same", dayId: "saturday", studentId: "student-1" },
+        { id: "same", dayId: "sunday", studentId: "student-2" },
+      ],
+    ],
+  ])(
+    "rejects persisted duty rows with a %s before mutation",
+    async (_case, rows) => {
+      database.getAll.mockResolvedValue(rows)
+      await expect(saveDutyPlan("course-1", [], SETTINGS)).rejects.toThrow(
+        "Duplicate persisted duty assignment",
+      )
+      expect(database.executeBatch).not.toHaveBeenCalled()
+      expect(database.execute).not.toHaveBeenCalled()
+    },
+  )
 
   it("rejects a persisted fractional desired daily count on reload", async () => {
     database.getOptional.mockResolvedValue({

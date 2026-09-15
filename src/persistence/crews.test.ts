@@ -99,7 +99,7 @@ describe("crew persistence", () => {
     )
   })
 
-  it("replaces one session atomically including empty crews", async () => {
+  it("inserts one session atomically including empty crews", async () => {
     await saveCrewPlan("course-1", "sat-pm", {
       crews: [
         {
@@ -133,15 +133,11 @@ describe("crew persistence", () => {
       expect.stringContaining("INSERT INTO landAssignments"),
       [expect.arrayContaining(["course-1", "sat-pm", "student-2"])],
     )
-    const sessionScopedDeletes = database.execute.mock.calls.filter(([sql]) =>
-      String(sql).includes("DELETE FROM"),
-    )
-    expect(sessionScopedDeletes).toHaveLength(4)
     expect(
-      sessionScopedDeletes.every(([, params]) =>
-        JSON.stringify(params).includes('"sat-pm"'),
+      database.executeBatch.mock.calls.some(([sql]) =>
+        String(sql).includes("DELETE FROM"),
       ),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it("allows flexible D1 and cabin crews but rejects more than two people for D2-D5", async () => {
@@ -329,7 +325,7 @@ describe("crew persistence", () => {
     )
   })
 
-  it("reloads the exact session plan while every mutation stays scoped to that session", async () => {
+  it("reloads the exact session plan", async () => {
     database.getAll.mockResolvedValueOnce([{ id: "boat-10" }])
     const savedPlan = {
       crews: [
@@ -349,14 +345,6 @@ describe("crew persistence", () => {
     }
 
     await saveCrewPlan("course-1", "sun-am", savedPlan)
-    for (const [sql, params] of database.execute.mock.calls.filter(([sql]) =>
-      String(sql).includes("DELETE FROM"),
-    )) {
-      expect(sql).toContain("sessionId = ?")
-      expect(params).toEqual(expect.arrayContaining(["course-1", "sun-am"]))
-      expect(params).not.toContain("sat-pm")
-    }
-
     database.getAll.mockReset()
     database.getAll
       .mockResolvedValueOnce([
@@ -402,6 +390,215 @@ describe("crew persistence", () => {
       }),
     )
   })
+
+  it("keeps every unchanged crew, member, boat and land row ID", async () => {
+    database.transactionGetAll.mockImplementation((sql: string) => {
+      if (sql.includes("FROM crewMembers cm"))
+        return [
+          {
+            id: "member-1",
+            crewId: "crew-1",
+            personId: "student-1",
+            personType: "student",
+            position: 0,
+          },
+        ]
+      if (sql.includes("FROM crews WHERE"))
+        return [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            destination: "boat",
+            boatId: "boat-1",
+            position: 0,
+          },
+        ]
+      if (sql.includes("FROM landAssignments"))
+        return [{ id: "land-1", sessionId: "sat-pm", studentId: "student-2" }]
+      if (sql.includes("FROM sessionBoats"))
+        return [
+          {
+            id: "selection-1",
+            sessionId: "sat-pm",
+            boatId: "boat-1",
+            position: 0,
+          },
+        ]
+      return existingCourseEntities(sql)
+    })
+
+    await saveCrewPlan("course-1", "sat-pm", {
+      crews: [
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-1", personType: "student" }],
+          destination: "boat",
+          boatId: "boat-1",
+        },
+      ],
+      landStudentIds: ["student-2"],
+      selectedBoatIds: ["boat-1"],
+    })
+
+    expect(database.executeBatch).not.toHaveBeenCalled()
+    expect(database.execute).not.toHaveBeenCalled()
+  })
+
+  it("deletes removed rows and reorders retained rows within one session", async () => {
+    database.transactionGetAll.mockImplementation((sql: string) => {
+      if (sql.includes("FROM crewMembers cm"))
+        return [
+          {
+            id: "member-1",
+            crewId: "crew-1",
+            personId: "student-1",
+            personType: "student",
+            position: 1,
+          },
+          {
+            id: "member-old",
+            crewId: "crew-old",
+            personId: "student-2",
+            personType: "student",
+            position: 0,
+          },
+        ]
+      if (sql.includes("FROM crews WHERE"))
+        return [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            destination: "unassigned",
+            boatId: null,
+            position: 1,
+          },
+          {
+            id: "crew-old",
+            sessionId: "sat-pm",
+            destination: "unassigned",
+            boatId: null,
+            position: 0,
+          },
+        ]
+      if (sql.includes("FROM landAssignments"))
+        return [{ id: "land-old", sessionId: "sat-pm", studentId: "student-3" }]
+      if (sql.includes("FROM sessionBoats"))
+        return [
+          {
+            id: "selection-old",
+            sessionId: "sat-pm",
+            boatId: "boat-1",
+            position: 0,
+          },
+          {
+            id: "selection-2",
+            sessionId: "sat-pm",
+            boatId: "boat-2",
+            position: 1,
+          },
+        ]
+      return existingCourseEntities(sql)
+    })
+
+    await saveCrewPlan("course-1", "sat-pm", {
+      crews: [
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-1", personType: "student" }],
+          destination: "boat",
+          boatId: "boat-2",
+        },
+      ],
+      landStudentIds: [],
+      selectedBoatIds: ["boat-2"],
+    })
+
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM crewMembers"),
+      [["member-old", "course-1", "sat-pm"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM crews"),
+      [["crew-old", "course-1", "sat-pm"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM landAssignments"),
+      [["land-old", "course-1", "sat-pm"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM sessionBoats"),
+      [["selection-old", "course-1", "sat-pm"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE crews"),
+      [["boat", "boat-2", 0, "crew-1", "course-1", "sat-pm"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE sessionBoats"),
+      [[0, "selection-2", "course-1", "sat-pm"]],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE crewMembers"),
+      [[0, "member-1", "course-1", "sat-pm"]],
+    )
+    for (const [sql, rows] of database.executeBatch.mock.calls) {
+      expect(sql).toContain("sessionId = ?")
+      for (const params of rows) {
+        expect(params).toEqual(expect.arrayContaining(["course-1", "sat-pm"]))
+      }
+    }
+  })
+
+  it.each([
+    [
+      "blank ID",
+      [
+        {
+          id: " ",
+          sessionId: "sat-pm",
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ],
+    ],
+    [
+      "duplicate ID",
+      [
+        {
+          id: "same",
+          sessionId: "sat-pm",
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+        {
+          id: "same",
+          sessionId: "sat-pm",
+          destination: "unassigned",
+          boatId: null,
+          position: 1,
+        },
+      ],
+    ],
+  ])(
+    "rejects persisted crews with a %s before mutation",
+    async (_case, rows) => {
+      database.transactionGetAll.mockImplementation((sql: string) =>
+        sql.includes("FROM crews WHERE") ? rows : existingCourseEntities(sql),
+      )
+      await expect(
+        saveCrewPlan("course-1", "sat-pm", {
+          crews: [],
+          landStudentIds: [],
+          selectedBoatIds: [],
+        }),
+      ).rejects.toThrow("Duplicate persisted crew record")
+      expect(database.executeBatch).not.toHaveBeenCalled()
+    },
+  )
 
   it("rejects duplicate boat assignment and boats outside the course", async () => {
     const duplicatePlan = {

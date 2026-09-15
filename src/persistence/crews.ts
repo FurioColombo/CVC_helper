@@ -31,6 +31,10 @@ interface PersistedMember {
   position: number | null
 }
 
+interface PersistedMemberWithId extends PersistedMember {
+  id: string
+}
+
 interface PersistedLandAssignment {
   id: string
   sessionId: string
@@ -210,10 +214,11 @@ export async function saveCrewPlan(
   courseId: string,
   sessionId: SessionId,
   plan: CrewPlan,
+  database = db,
 ) {
-  await db.init()
+  await database.init()
   if (!SESSION_IDS.includes(sessionId)) throw new Error("Invalid crew session")
-  const course = await db.getOptional<PersistedCourseCrewConfig>(
+  const course = await database.getOptional<PersistedCourseCrewConfig>(
     "SELECT family, level FROM courses WHERE id = ? LIMIT 1",
     [courseId],
   )
@@ -279,7 +284,7 @@ export async function saveCrewPlan(
       else volunteerIds.add(personId)
     }
   }
-  await db.writeTransaction(async (transaction) => {
+  await database.writeTransaction(async (transaction) => {
     if (studentIds.size > 0) {
       const courseStudents = await transaction.getAll<{ id: string }>(
         "SELECT id FROM students WHERE courseId = ?",
@@ -310,44 +315,162 @@ export async function saveCrewPlan(
         throw new Error("Session boat does not belong to course")
       }
     }
-    await transaction.execute(
-      `DELETE FROM crewMembers
-       WHERE crewId IN (
-         SELECT id FROM crews WHERE courseId = ? AND sessionId = ?
-       )`,
+    const existingCrews = await transaction.getAll<PersistedCrew>(
+      `SELECT id, sessionId, destination, boatId, position
+       FROM crews WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
-    await transaction.execute(
-      "DELETE FROM crews WHERE courseId = ? AND sessionId = ?",
+    const existingMembers = await transaction.getAll<PersistedMemberWithId>(
+      `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position
+       FROM crewMembers cm JOIN crews c ON c.id = cm.crewId
+       WHERE c.courseId = ? AND c.sessionId = ?`,
       [courseId, sessionId],
     )
-    await transaction.execute(
-      "DELETE FROM landAssignments WHERE courseId = ? AND sessionId = ?",
+    const existingLand = await transaction.getAll<PersistedLandAssignment>(
+      `SELECT id, sessionId, studentId FROM landAssignments
+       WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
-    await transaction.execute(
-      "DELETE FROM sessionBoats WHERE courseId = ? AND sessionId = ?",
+    const existingSessionBoats = await transaction.getAll<PersistedSessionBoat>(
+      `SELECT id, sessionId, boatId, position FROM sessionBoats
+       WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
-    if (plan.crews.length > 0) {
+    const memberKey = ({ crewId, personType, personId }: PersistedMember) =>
+      JSON.stringify([crewId, personType, personId])
+    const nextMembers = plan.crews.flatMap((crew) =>
+      crew.members.map((member, position) => ({
+        crewId: crew.id,
+        ...member,
+        position,
+      })),
+    )
+    const existingCrewById = new Map(
+      existingCrews.map((crew) => [crew.id, crew]),
+    )
+    const existingMemberByKey = new Map(
+      existingMembers.map((member) => [memberKey(member), member]),
+    )
+    const existingLandByStudent = new Map(
+      existingLand.map((land) => [land.studentId, land]),
+    )
+    const existingSessionBoatByBoat = new Map(
+      existingSessionBoats.map((selection) => [selection.boatId, selection]),
+    )
+    const persistedIds = [
+      ...existingCrews.map(({ id }) => id),
+      ...existingMembers.map(({ id }) => id),
+      ...existingLand.map(({ id }) => id),
+      ...existingSessionBoats.map(({ id }) => id),
+    ]
+    if (
+      persistedIds.some((id) => typeof id !== "string" || !id.trim()) ||
+      new Set(persistedIds).size !== persistedIds.length ||
+      existingCrewById.size !== existingCrews.length ||
+      existingMemberByKey.size !== existingMembers.length ||
+      existingLandByStudent.size !== existingLand.length ||
+      existingSessionBoatByBoat.size !== existingSessionBoats.length
+    ) {
+      throw new Error("Duplicate persisted crew record")
+    }
+    const nextCrewIds = new Set(plan.crews.map(({ id }) => id))
+    const nextMemberKeys = new Set(nextMembers.map(memberKey))
+    const removedMembers = existingMembers.filter(
+      (member) => !nextMemberKeys.has(memberKey(member)),
+    )
+    if (removedMembers.length > 0) {
+      await transaction.executeBatch(
+        `DELETE FROM crewMembers WHERE id = ? AND crewId IN
+         (SELECT id FROM crews WHERE courseId = ? AND sessionId = ?)`,
+        removedMembers.map(({ id }) => [id, courseId, sessionId]),
+      )
+    }
+    const removedCrews = existingCrews.filter(({ id }) => !nextCrewIds.has(id))
+    if (removedCrews.length > 0) {
+      await transaction.executeBatch(
+        "DELETE FROM crews WHERE id = ? AND courseId = ? AND sessionId = ?",
+        removedCrews.map(({ id }) => [id, courseId, sessionId]),
+      )
+    }
+    const updatedCrews = plan.crews.flatMap((crew, position) => {
+      const old = existingCrewById.get(crew.id)
+      return old &&
+        (old.destination !== crew.destination ||
+          old.boatId !== crew.boatId ||
+          old.position !== position)
+        ? [{ crew, position }]
+        : []
+    })
+    if (updatedCrews.length > 0) {
+      await transaction.executeBatch(
+        `UPDATE crews SET destination = ?, boatId = ?, position = ?
+         WHERE id = ? AND courseId = ? AND sessionId = ?`,
+        updatedCrews.map(({ crew, position }) => [
+          crew.destination,
+          crew.boatId,
+          position,
+          crew.id,
+          courseId,
+          sessionId,
+        ]),
+      )
+    }
+    const addedCrews = plan.crews.flatMap((crew, position) =>
+      existingCrewById.has(crew.id) ? [] : [{ crew, position }],
+    )
+    if (addedCrews.length > 0) {
       await transaction.executeBatch(
         `INSERT INTO crews(id, courseId, sessionId, destination, boatId, position)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        plan.crews.map(({ id, destination, boatId }, position) => [
-          id,
+        addedCrews.map(({ crew, position }) => [
+          crew.id,
           courseId,
           sessionId,
-          destination,
-          boatId,
+          crew.destination,
+          crew.boatId,
           position,
         ]),
       )
     }
-    if (plan.selectedBoatIds.length > 0) {
+    const nextBoatIds = new Set(plan.selectedBoatIds)
+    const removedSessionBoats = existingSessionBoats.filter(
+      ({ boatId }) => !nextBoatIds.has(boatId),
+    )
+    if (removedSessionBoats.length > 0) {
+      await transaction.executeBatch(
+        "DELETE FROM sessionBoats WHERE id = ? AND courseId = ? AND sessionId = ?",
+        removedSessionBoats.map(({ id }) => [id, courseId, sessionId]),
+      )
+    }
+    const updatedSessionBoats = plan.selectedBoatIds.flatMap(
+      (boatId, position) => {
+        const old = existingSessionBoatByBoat.get(boatId)
+        return old && old.position !== position
+          ? [{ id: old.id, position }]
+          : []
+      },
+    )
+    if (updatedSessionBoats.length > 0) {
+      await transaction.executeBatch(
+        `UPDATE sessionBoats SET position = ?
+         WHERE id = ? AND courseId = ? AND sessionId = ?`,
+        updatedSessionBoats.map(({ id, position }) => [
+          position,
+          id,
+          courseId,
+          sessionId,
+        ]),
+      )
+    }
+    const addedSessionBoats = plan.selectedBoatIds.flatMap(
+      (boatId, position) =>
+        existingSessionBoatByBoat.has(boatId) ? [] : [{ boatId, position }],
+    )
+    if (addedSessionBoats.length > 0) {
       await transaction.executeBatch(
         `INSERT INTO sessionBoats(id, courseId, sessionId, boatId, position)
          VALUES (?, ?, ?, ?, ?)`,
-        plan.selectedBoatIds.map((boatId, position) => [
+        addedSessionBoats.map(({ boatId, position }) => [
           crypto.randomUUID(),
           courseId,
           sessionId,
@@ -356,20 +479,33 @@ export async function saveCrewPlan(
         ]),
       )
     }
-    const members = plan.crews.flatMap((crew) =>
-      crew.members.map((member, position) => ({
-        id: crypto.randomUUID(),
-        crewId: crew.id,
-        ...member,
-        position,
-      })),
+    const updatedMembers = nextMembers.flatMap((member) => {
+      const old = existingMemberByKey.get(memberKey(member))
+      return old && old.position !== member.position
+        ? [{ id: old.id, position: member.position }]
+        : []
+    })
+    if (updatedMembers.length > 0) {
+      await transaction.executeBatch(
+        `UPDATE crewMembers SET position = ? WHERE id = ? AND crewId IN
+         (SELECT id FROM crews WHERE courseId = ? AND sessionId = ?)`,
+        updatedMembers.map(({ id, position }) => [
+          position,
+          id,
+          courseId,
+          sessionId,
+        ]),
+      )
+    }
+    const addedMembers = nextMembers.filter(
+      (member) => !existingMemberByKey.has(memberKey(member)),
     )
-    if (members.length > 0) {
+    if (addedMembers.length > 0) {
       await transaction.executeBatch(
         `INSERT INTO crewMembers(id, crewId, personId, personType, position)
          VALUES (?, ?, ?, ?, ?)`,
-        members.map(({ id, crewId, personId, personType, position }) => [
-          id,
+        addedMembers.map(({ crewId, personId, personType, position }) => [
+          crypto.randomUUID(),
           crewId,
           personId,
           personType,
@@ -377,11 +513,24 @@ export async function saveCrewPlan(
         ]),
       )
     }
-    if (plan.landStudentIds.length > 0) {
+    const nextLandIds = new Set(plan.landStudentIds)
+    const removedLand = existingLand.filter(
+      ({ studentId }) => !nextLandIds.has(studentId),
+    )
+    if (removedLand.length > 0) {
+      await transaction.executeBatch(
+        "DELETE FROM landAssignments WHERE id = ? AND courseId = ? AND sessionId = ?",
+        removedLand.map(({ id }) => [id, courseId, sessionId]),
+      )
+    }
+    const addedLand = plan.landStudentIds.filter(
+      (studentId) => !existingLandByStudent.has(studentId),
+    )
+    if (addedLand.length > 0) {
       await transaction.executeBatch(
         `INSERT INTO landAssignments(id, courseId, sessionId, studentId)
          VALUES (?, ?, ?, ?)`,
-        plan.landStudentIds.map((studentId) => [
+        addedLand.map((studentId) => [
           crypto.randomUUID(),
           courseId,
           sessionId,

@@ -54,3 +54,46 @@ test("upgrades and reopens the complete 0.1 database without data loss", async (
     )?.courseNote,
   ).toBe("Nuova nota 0.2")
 })
+
+test("keeps legacy operational IDs through no-op and unrelated saves", async ({
+  page,
+}) => {
+  await page.goto("/")
+  const result = await page.evaluate(async () => {
+    const modulePath = "/src/test/u02MigrationHarness.ts"
+    const harness = (await import(/* @vite-ignore */ modulePath)) as {
+      runStableIdMigrationHarness: () => Promise<{
+        before: Record<string, Array<Record<string, unknown>>>
+        afterNoOp: Record<string, Array<Record<string, unknown>>>
+        afterEditAndReopen: Record<string, Array<Record<string, unknown>>>
+      }>
+    }
+    return harness.runStableIdMigrationHarness()
+  })
+
+  for (const table of [
+    "dutyAssignments",
+    "crews",
+    "crewMembers",
+    "landAssignments",
+    "sessionBoats",
+  ]) {
+    const originalIds = result.before[table]!.map(({ id }) => id).sort()
+    expect(result.afterNoOp[table]).toEqual(result.before[table])
+    expect(result.afterNoOp[table]!.map(({ id }) => id).sort()).toEqual(
+      originalIds,
+    )
+    for (const original of result.before[table]!) {
+      expect(result.afterEditAndReopen[table]).toContainEqual(
+        expect.objectContaining({ id: original.id }),
+      )
+    }
+  }
+  expect(result.afterEditAndReopen.dutyAssignments).toHaveLength(3)
+  expect(result.afterEditAndReopen.crews).toContainEqual(
+    expect.objectContaining({
+      id: "crew-v010-sat-pm-2",
+      destination: "unassigned",
+    }),
+  )
+})

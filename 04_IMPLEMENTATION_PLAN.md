@@ -594,7 +594,7 @@ Evidence: `.evidence/U10/`.
 ## UG1 — Full 0.2.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 
@@ -634,4 +634,19 @@ clean after the release checkpoint.
 
 ### Completion log
 
-Pending.
+Pending the required physical-device observations.
+
+Deterministic release-candidate work completed 2026-09-15. `npm run verify:all`
+passes on Node 24.19.0 with 372 unit/component tests, compatibility and domain
+checks, the production PWA build, the deterministic full week, and 123 Playwright
+journeys across Pixel Chromium, iPhone Chromium and iPhone WebKit (four intended
+project-matrix skips). A visible course upgraded from the 0.1.0 fixture completes
+all 13 sessions, adds CT, changes future duties and evaluations, closes/reopens,
+and preserves every original row, reference, note and stable operational ID.
+P01–P19 traceability, final screenshots and six independent reviews are recorded
+under `.evidence/UG1/`.
+
+The physical review remains `FAIL` because PC/Android/iPhone microphone checks and
+Android/iPhone native camera, gallery, orientation, crop, OCR and photo-disposal
+checks are still `NOT_RUN`. The package and lockfile therefore remain at 0.1.0;
+the 0.2.0 version bump, release checkpoint and tag wait for those observations.

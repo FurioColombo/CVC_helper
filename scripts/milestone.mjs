@@ -11,16 +11,16 @@ function readManifest() {
 }
 
 function writeManifest(manifest) {
-  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
-  execFileSync(
+  const formatted = execFileSync(
     process.execPath,
     [
       resolve(root, "node_modules/prettier/bin/prettier.cjs"),
-      "--write",
+      "--stdin-filepath",
       manifestPath,
     ],
-    { stdio: "pipe" },
+    { input: `${JSON.stringify(manifest, null, 2)}\n`, encoding: "utf8" },
   )
+  writeFileSync(manifestPath, formatted)
 }
 
 function findMilestone(manifest, id) {
@@ -106,6 +106,7 @@ function setPlanStatus(id, status) {
     `**Status:** ${status}`,
   )
   if (updated === section) {
+    if (section.includes(`**Status:** ${status}`)) return
     throw new Error(`Milestone ${id} has no editable status in the plan`)
   }
   writeFileSync(planPath, `${plan.slice(0, start)}${updated}${plan.slice(end)}`)

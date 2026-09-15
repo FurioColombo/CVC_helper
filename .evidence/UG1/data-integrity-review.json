@@ -1,0 +1,19 @@
+{
+  "milestone": "UG1",
+  "reviewerRole": "independent data-integrity reviewer",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "UG1-DATA-Q01",
+      "finding": "The upgraded-week comparison intentionally allows new 0.2.0 duty-settings values after a visible edit; the before-edit U02 migration test separately proves the original duty-settings values survive schema upgrade and reopen."
+    }
+  ],
+  "evidenceInspected": [
+    "src/test/fixtures/v0.1.0-course.json: 22 original rows in 13 tables",
+    "src/test/u02MigrationHarness.ts and tests/e2e/u02-migration.spec.ts",
+    "src/persistence/duties.ts, src/persistence/crews.ts and 33 focused passing tests",
+    "tests/e2e/ug1-upgraded-week.spec.ts and .evidence/UG1/migration-evidence.json"
+  ]
+}

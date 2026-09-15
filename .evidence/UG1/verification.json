@@ -1,0 +1,18 @@
+{
+  "milestone": "UG1",
+  "status": "PASS",
+  "recordedAt": "2026-09-15T07:03:55.569Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.1.0",
+  "gitCommit": "5dcb98b1a37d1e374cc654f348df2deab64362be",
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-09-15T06:30:33.405Z",
+      "durationMs": 2002159,
+      "exitCode": 0,
+      "outputTail": "  ok 119 [iphone-13-webkit-core] › tests\\e2e\\student-management-gate.spec.ts:7:1 › keeps the complete student workflow consistent across reload (47.0s)\n  ok 120 [iphone-13-webkit-core] › tests\\e2e\\u03-knowledge.spec.ts:29:1 › keeps P05 compact and preserves a rapid note edit at stress width (24.1s)\n  ok 121 [iphone-13-webkit-core] › tests\\e2e\\u03-knowledge.spec.ts:113:1 › keeps enlarged text and a reduced-height note dialog operable (13.2s)\n  ok 122 [iphone-13-webkit-core] › tests\\e2e\\u03-speech-fixture.spec.ts:3:1 › decodes a deterministic audio fixture through the local speech boundary (4.2s)\n  ok 123 [iphone-13-webkit-core] › tests\\e2e\\u04-scan-ui.spec.ts:16:1 › keeps acquisition and adjustment usable on compact screens (12.8s)\n  ok 124 [iphone-13-webkit-core] › tests\\e2e\\u04-scan-ui.spec.ts:69:1 › keeps scan entry readable at 200 percent text (9.8s)\n  ok 125 [iphone-13-webkit-core] › tests\\e2e\\u08-duties.spec.ts:31:1 › previews, confirms and edits duties directly from the seven day cards (44.7s)\n  ok 126 [iphone-13-webkit-core] › tests\\e2e\\u08-duties.spec.ts:178:1 › keeps long-name P13 cards readable and tappable at 320px and 200% text (27.4s)\n  ok 127 [iphone-13-webkit-core] › tests\\e2e\\u08-duties.spec.ts:240:1 › keeps the P12 controls usable at 320px and 200% text (13.5s)\n\n  4 skipped\n  123 passed (29.5m)"
+    }
+  ]
+}

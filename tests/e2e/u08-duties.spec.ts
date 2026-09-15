@@ -117,6 +117,15 @@ test("previews, confirms and edits duties directly from the seven day cards", as
   await expect(
     page.getByRole("img", { name: "Nome3 assegnato in più giorni" }),
   ).toBeVisible()
+  const originalViewport = page.viewportSize()!
+  await page.setViewportSize({ width: 320, height: 664 })
+  expect(
+    await page
+      .getByRole("img", { name: "Nome3 assegnato in più giorni" })
+      .locator("xpath=ancestor::article")
+      .evaluate((element) => getComputedStyle(element).gridColumnEnd),
+  ).toBe("span 2")
+  await page.setViewportSize(originalViewport)
   await expect(
     page.getByRole("button", { name: "Nome3", exact: true }),
   ).toHaveCount(0)
@@ -188,6 +197,13 @@ test("keeps long-name P13 cards readable and tappable at 320px and 200% text", a
     .getByRole("region", { name: "Allievi comandata Sabato" })
     .locator("article")
   await expect(cards).toHaveCount(8)
+  const ordinaryGrid = cards.first().locator("..")
+  expect(
+    await ordinaryGrid.evaluate(
+      (element) =>
+        getComputedStyle(element).gridTemplateColumns.split(" ").length,
+    ),
+  ).toBe(2)
   const overflows = await cards.evaluateAll(
     (elements) =>
       elements.filter(

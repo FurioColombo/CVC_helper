@@ -351,7 +351,7 @@
     {
       "id": "UG1",
       "category": "INTEGRATION_GATE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/UG1/verification.json",

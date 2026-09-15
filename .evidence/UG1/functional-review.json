@@ -1,0 +1,19 @@
+{
+  "milestone": "UG1",
+  "reviewerRole": "independent functional reviewer",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "UG1-FUNCTIONAL-Q01",
+      "finding": "After an evaluation write error, leaving the session before retry can discard the unsaved attempted value. Persisted data is not changed and the current-session retry remains explicit."
+    }
+  ],
+  "evidenceInspected": [
+    "01_PRODUCT_SPEC.md and 04_IMPLEMENTATION_PLAN.md UG1 acceptance",
+    "Stable-ID duty and crew persistence diff plus 33 focused passing tests",
+    "Actual-browser 0.1.0 schema migration and upgraded-week journeys",
+    "P01-P19 traceability in .evidence/UG1/browser-evidence.json"
+  ]
+}

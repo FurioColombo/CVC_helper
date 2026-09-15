@@ -85,17 +85,19 @@ function StudentPageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-1">
+    <div className="mb-5 flex min-w-0 items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-1">
         <button
           aria-label={`Indietro da ${title}`}
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
           onClick={onBack}
           type="button"
         >
           <ChevronLeft aria-hidden="true" className="size-5" />
         </button>
-        <h1 className="truncate text-2xl font-black tracking-tight">{title}</h1>
+        <h1 className="min-w-0 break-words text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl">
+          {title}
+        </h1>
       </div>
       {action}
     </div>
@@ -601,6 +603,7 @@ function StudentDetail({
         action={
           <Button
             aria-label="Modifica allievo"
+            className="h-[44px] min-h-[44px] shrink-0 gap-[8px] px-[12px] text-[14px] [&>svg]:size-[16px]"
             onClick={onEdit}
             variant="secondary"
           >
@@ -988,7 +991,7 @@ export function StudentManagement({
               aria-controls="student-actions"
               aria-expanded={menuOpen}
               aria-label="Menu allievi"
-              className="size-11 px-0"
+              className="h-[44px] min-h-[44px] w-[44px] px-0"
               onClick={() => setMenuOpen((open) => !open)}
               variant="secondary"
             >

@@ -1036,7 +1036,7 @@ export function CrewManagement({
         destination: "unassigned",
         boatId: null,
       })),
-      landStudentIds: [],
+      landStudentIds: plan.landStudentIds,
       selectedBoatIds: plan.selectedBoatIds,
     }
     await commit(next)

@@ -1,0 +1,19 @@
+{
+  "milestone": "UG1",
+  "reviewerRole": "independent regression reviewer",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "UG1-REGRESSION-Q01",
+      "finding": "Physical browser and sensor behavior remains outside automated regression and is assessed by the dedicated physical-device review."
+    }
+  ],
+  "evidenceInspected": [
+    "Full migrated-week journey across all 13 sessions, CT, duties, crews and evaluations",
+    "0.1.0 migration, no-op stable-ID and unrelated future-edit regressions",
+    "Deterministic full-week invariant scenario",
+    "Existing U01-U10 browser evidence and selected final screenshots"
+  ]
+}

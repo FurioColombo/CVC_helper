@@ -1,0 +1,5 @@
+Command: npm run milestone:complete -- UG1
+Result: REFUSED (expected)
+Message: Completion refused; a required review is invalid, FAIL, or has blockers
+Reason: .evidence/UG1/physical-device-review.json remains FAIL until the real PC,
+Android and iPhone speech checks and Android/iPhone camera/OCR checks are recorded.

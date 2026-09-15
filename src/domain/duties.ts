@@ -10,6 +10,7 @@ export interface DutyStudent {
   id: string
   firstName: string
   surname: string
+  nickname?: string | null
   dateOfBirth: string
   sex: StudentSex | null
   active: 0 | 1

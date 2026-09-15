@@ -232,10 +232,10 @@ export function WeeklyEvaluationGrid({
                   className="min-w-0 truncate px-[1px] text-center text-[10px] font-bold leading-4"
                   scope="row"
                 >
-                  <span className="max-[350px]:hidden">{row.day}</span>
-                  <span className="hidden max-[350px]:inline">
+                  <span className="inline min-[521px]:hidden">
                     {row.shortDay}
                   </span>
+                  <span className="hidden min-[521px]:inline">{row.day}</span>
                 </th>
                 <td className="min-w-0 px-0 text-center">
                   <span

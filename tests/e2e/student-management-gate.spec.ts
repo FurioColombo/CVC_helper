@@ -17,8 +17,9 @@ test("keeps the complete student workflow consistent across reload", async ({
 
   await page.getByRole("button", { name: "Scan allievi" }).click()
   await page
-    .getByLabel("Foto o screenshot degli allievi")
+    .getByLabel("Scegli foto dell’elenco allievi dalla galleria")
     .setInputFiles(CLEAR_ROSTER)
+  await page.getByRole("button", { name: "Usa questa area" }).click()
   await expect(
     page.getByRole("heading", { name: "Controlla prima di salvare" }),
   ).toBeVisible({ timeout: 30_000 })
@@ -141,7 +142,9 @@ test("keeps the complete student workflow consistent across reload", async ({
   await page.getByRole("button", { name: "Indietro da Profilo" }).click()
 
   await page.getByRole("button", { name: /Giulia, 27 anni, F/ }).click()
-  await expect(page.getByText("Giulia Bianchini")).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "Giulia Bianchini", exact: true }),
+  ).toBeVisible()
   await expect(page.getByText("24/11/1998")).toBeVisible()
   await expect(page.getByText("347 765 4321")).toBeVisible()
   await page.getByRole("button", { name: "Indietro da Profilo" }).click()

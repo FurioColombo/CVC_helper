@@ -66,10 +66,11 @@ function getDayLabel(dayId: DutyDayId) {
 
 function asDutyStudents(students: StudentRecord[]): DutyStudent[] {
   return students.map(
-    ({ id, firstName, surname, dateOfBirth, sex, active }) => ({
+    ({ id, firstName, surname, nickname, dateOfBirth, sex, active }) => ({
       id,
       firstName,
       surname,
+      nickname,
       dateOfBirth,
       sex,
       active,
@@ -192,22 +193,19 @@ async function readValidDutyData(courseId: string) {
 
 function DutyHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
-    <div className="mb-5 flex items-center gap-1 max-[350px]:items-start">
+    <div className="mb-5 flex min-w-0 items-center gap-1 max-[350px]:items-start">
       <button
         aria-label={`Indietro da ${title}`}
-        className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:size-[44px]"
+        className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
         onClick={onBack}
         type="button"
       >
         <ChevronLeft aria-hidden="true" className="size-5" />
       </button>
-      <h1 className="min-w-0 flex-1 truncate text-center text-2xl font-black tracking-tight max-[350px]:overflow-visible max-[350px]:whitespace-normal max-[350px]:text-clip max-[350px]:text-xl max-[350px]:leading-tight">
+      <h1 className="min-w-0 flex-1 break-words text-center text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl max-[350px]:leading-tight">
         {title}
       </h1>
-      <span
-        aria-hidden="true"
-        className="size-11 shrink-0 max-[350px]:size-[44px]"
-      />
+      <span aria-hidden="true" className="size-[44px] shrink-0" />
     </div>
   )
 }
@@ -224,7 +222,7 @@ function ToggleChoice({
   detail?: string
 }) {
   return (
-    <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-2xl border bg-card px-4 py-2.5 max-[350px]:min-h-[48px] max-[350px]:gap-[8px] max-[350px]:px-[12px] max-[350px]:py-[8px]">
+    <label className="flex min-h-12 min-w-0 max-w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border bg-card px-4 py-2.5 max-[350px]:min-h-[48px] max-[350px]:gap-[8px] max-[350px]:px-[12px] max-[350px]:py-[8px]">
       <span className="min-w-0">
         <span className="block truncate text-sm font-bold">{label}</span>
         {detail && (
@@ -600,11 +598,11 @@ function StudentAssignmentCard({
   const hasMultipleDays = dayIds.length > 1
   return (
     <article
-      className={`flex min-w-0 items-center gap-1 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2 max-[350px]:col-span-1" : ""}`}
+      className={`flex min-w-0 items-center gap-1 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2" : ""}`}
     >
       {current ? (
         <span
-          className="flex min-h-10 min-w-0 flex-1 items-center truncate px-1 text-left text-sm font-bold max-[350px]:min-h-[40px] max-[350px]:break-all max-[350px]:px-[2px] max-[350px]:whitespace-normal"
+          className="flex min-h-10 min-w-0 flex-1 items-center truncate px-1 text-left text-sm font-bold max-[350px]:min-h-[40px] max-[350px]:break-words max-[350px]:px-[2px] max-[350px]:whitespace-normal"
           title={name}
         >
           {name}
@@ -618,7 +616,7 @@ function StudentAssignmentCard({
           title={name}
           type="button"
         >
-          <span className="min-w-0 flex-1 truncate max-[350px]:break-all max-[350px]:whitespace-normal">
+          <span className="min-w-0 flex-1 truncate max-[350px]:break-words max-[350px]:whitespace-normal">
             {name}
           </span>
           <Plus
@@ -744,7 +742,7 @@ function DayEditor({
 
   function renderCards(entries: DutyStudentDayGroupEntry[], current: boolean) {
     return entries.length > 0 ? (
-      <div className="grid grid-cols-2 items-start gap-2 max-[350px]:grid-cols-1 max-[350px]:gap-[4px]">
+      <div className="grid grid-cols-2 items-start gap-2 max-[350px]:gap-[4px]">
         {entries.map((entry) => (
           <StudentAssignmentCard
             allStudents={students}
@@ -1103,12 +1101,12 @@ export function DutyManagement({
     <>
       <DutyHeader onBack={onHome} title="Comandate" />
       {students.length === 0 ? (
-        <section className="rounded-3xl border bg-card p-5 text-center">
+        <section className="rounded-3xl border bg-card p-5 text-center max-[350px]:p-[12px]">
           <ClipboardCheck
             aria-hidden="true"
             className="mx-auto size-8 text-primary"
           />
-          <h2 className="mt-4 text-xl font-black">
+          <h2 className="mt-4 break-words text-xl font-black [overflow-wrap:anywhere]">
             Prima aggiungi gli allievi
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -1118,12 +1116,12 @@ export function DutyManagement({
       ) : assignments.length === 0 &&
         settings.completedDayIds.length === 0 &&
         !manualMode ? (
-        <section className="rounded-3xl border bg-card p-5 text-center">
+        <section className="rounded-3xl border bg-card p-5 text-center max-[350px]:p-[12px]">
           <ClipboardCheck
             aria-hidden="true"
             className="mx-auto size-9 text-primary"
           />
-          <h2 className="mt-4 text-xl font-black">
+          <h2 className="mt-4 break-words text-xl font-black [overflow-wrap:anywhere]">
             Nessuna comandata pianificata
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
