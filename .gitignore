@@ -7,3 +7,6 @@ coverage/
 .vite/
 debug.log
 
+# Written into the working directory when the OCR diagnostic runs.
+ita.traineddata
+
