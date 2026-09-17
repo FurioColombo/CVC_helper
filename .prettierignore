@@ -6,6 +6,7 @@ test-results/
 coverage/
 .evidence/
 AGENTS.md
+CLAUDE.md
 01_PRODUCT_SPEC.md
 02_MVP_SCOPE.md
 03_TECHNICAL_DECISIONS.md
