@@ -17,6 +17,24 @@ function tsvLine(
     .join("\n")
 }
 
+/** A row whose words carry real page coordinates, as a photographed table does. */
+function tsvPlacedLine(
+  line: number,
+  words: Array<{
+    text: string
+    confidence: number
+    left: number
+    width: number
+  }>,
+) {
+  return words
+    .map(
+      ({ text, confidence, left, width }, word) =>
+        `5\t1\t1\t1\t${line}\t${word + 1}\t${left}\t0\t${width}\t20\t${confidence}\t${text}`,
+    )
+    .join("\n")
+}
+
 const HEADER =
   "level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext"
 
@@ -308,5 +326,80 @@ describe("student scan extraction", () => {
       candidates: [],
       unsuitable: true,
     })
+  })
+
+  it("keeps the telephone and age columns out of the name when words carry coordinates", () => {
+    const row = (line: number, surname: string, given: string, phone: string) =>
+      tsvPlacedLine(line, [
+        { text: surname, confidence: 92, left: 100, width: 80 },
+        { text: given, confidence: 92, left: 190, width: 70 },
+        { text: phone, confidence: 90, left: 400, width: 140 },
+        { text: "24", confidence: 88, left: 560, width: 24 },
+        { text: "anni", confidence: 88, left: 590, width: 40 },
+        { text: "-", confidence: 80, left: 636, width: 8 },
+        { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
+      ])
+
+    const result = extractStudentCandidates({
+      confidence: 90,
+      text: "",
+      tsv: [
+        HEADER,
+        row(1, "Cortese", "Massimo", "3775394585"),
+        row(2, "Merluzzi", "Edoardo", "3489083367"),
+        row(3, "Passerini", "Paolo", "3209389744"),
+      ].join("\n"),
+    })
+
+    expect(result.candidates).toHaveLength(3)
+    for (const candidate of result.candidates) {
+      expect(candidate.surname).not.toMatch(/anni/i)
+      expect(candidate.surname).not.toMatch(/\d/)
+      expect(candidate.firstName).not.toMatch(/\d/)
+    }
+    expect(result.candidates[0]?.firstName).toBe("Cortese")
+    expect(result.candidates[0]?.surname).toBe("Massimo")
+    expect(result.candidates[0]?.dateOfBirth).toBe("2002-02-02")
+  })
+
+  it("drops the staff block, including a role code the table rule smudged", () => {
+    const student = (line: number, surname: string, given: string) =>
+      tsvPlacedLine(line, [
+        { text: surname, confidence: 92, left: 100, width: 80 },
+        { text: given, confidence: 92, left: 190, width: 70 },
+        { text: "3775394585", confidence: 90, left: 400, width: 140 },
+        { text: "anni", confidence: 88, left: 590, width: 40 },
+        { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
+      ])
+    const staff = (line: number, surname: string, given: string, role: string) =>
+      tsvPlacedLine(line, [
+        { text: surname, confidence: 92, left: 100, width: 80 },
+        { text: given, confidence: 92, left: 190, width: 70 },
+        { text: role, confidence: 86, left: 300, width: 40 },
+        { text: "3479332075", confidence: 90, left: 400, width: 140 },
+        { text: "anni", confidence: 88, left: 590, width: 40 },
+        { text: "04/04/1997", confidence: 91, left: 650, width: 120 },
+      ])
+
+    const result = extractStudentCandidates({
+      confidence: 90,
+      text: "",
+      tsv: [
+        HEADER,
+        student(1, "Cortese", "Massimo"),
+        student(2, "Merluzzi", "Edoardo"),
+        student(3, "Passerini", "Paolo"),
+        staff(4, "Colombo", "Marco", "ADV"),
+        staff(5, "Erba", "Rinaldo", "ICT"),
+      ].join("\n"),
+    })
+
+    expect(result.candidates).toHaveLength(3)
+    expect(
+      result.candidates.map((candidate) => candidate.firstName),
+    ).not.toContain("Colombo")
+    expect(
+      result.candidates.map((candidate) => candidate.firstName),
+    ).not.toContain("Erba")
   })
 })

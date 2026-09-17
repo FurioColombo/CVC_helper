@@ -1,0 +1,39 @@
+{
+  "milestone": "UG1",
+  "subject": "Student scan read the age column and the staff block as student data",
+  "reportedBy": "human field feedback: OCR very problematic",
+  "measuredOn": "the two supplied roster photographs, held outside the repository and never committed",
+  "rootCause": "parseTsv read Tesseract's TSV but discarded every word coordinate, keeping only text and confidence. Each table row was flattened to one string, and the fields were then hunted by regular expression inside it. The roster is a table, so the age column's wording stayed in the surname, and nothing distinguished a staff row from a student row.",
+  "change": "Word geometry is preserved. The telephone column's left edge is inferred once per page from the median position of the first structured word on each row, and the name cell is taken as the words left of it. Staff rows are detected by the capitalised role code in their own column. Weekday headings are rejected. Where the OCR output carries no geometry, the previous text-range parse still applies unchanged.",
+  "before": {
+    "croppedPhoto": {
+      "candidates": 21,
+      "expected": 20,
+      "nameQuality": "every surname ended in 'anni -'; examples: 'Massimo anni -', 'giuli Gregorio anni -'"
+    },
+    "fullSheetPhoto": {
+      "candidates": 26,
+      "expected": 20,
+      "falsePositives": "the weekday heading row, and all four staff members: Rinaldo Erba Springorum CT, Colombo Marco Furio ADV, Gaboardi Alessandro ADV, La franceschina Alessandra AT"
+    }
+  },
+  "after": {
+    "croppedPhoto": {
+      "candidates": 22,
+      "expected": 20,
+      "nameQuality": "no age wording in any name field"
+    },
+    "fullSheetPhoto": {
+      "candidates": 20,
+      "expected": 20,
+      "falsePositives": "none; the list ends at the last student and the staff block is excluded"
+    }
+  },
+  "tests": "Two regression tests cover a coordinate-bearing table: one asserts the telephone and age columns stay out of the name, one asserts the staff block is dropped including a role code the table rule smudged from CT to ICT. Both fail when the layout inference is disabled. The eight existing geometry-free tests are unchanged and still pass, which is the documented fallback.",
+  "remainingGaps": [
+    "Name order is still not established. The sheet is surname-first, the parser still reports the first token as the given name, and the explicit review choice is the open work in progress.",
+    "MIN_FIELD_CONFIDENCE blanks a field read below 70, so rows such as 'Altomare Valeria' surface with only one half of the name even though both words were read. For a screen whose purpose is human confirmation this is likely the wrong trade, and it is the largest remaining source of half-empty rows: 11 of 20 rows carry both names on the cropped photo and 4 of 20 on the full sheet.",
+    "The cropped photo still yields two rows more than the roster contains, from row fragmentation rather than from column confusion.",
+    "No automated test uses a real photograph; the diagnostic is run by hand against images that must stay out of the repository."
+  ]
+}
