@@ -9,7 +9,7 @@ notes. Baseline 0.1.0 is released; the 0.2.0 field-UX cycle is open at its relea
 ## Where things are
 
 - `AGENTS.md` — execution protocol: read order, evidence and Git rules; start here.
-- `CLAUDE.md` — the same contract plus this machine's runtime, ports and handover rules.
+- `CLAUDE.md` — the same contract plus runtime, ports and agent handover rules.
 - `01`–`04_*.md` — product spec, scope, technical decisions, milestone plan.
 - `src/domain`, `src/persistence` — pure rules, canonical tables, local database.
 - `src/features`, `src/components`, `src/capabilities` — pages, shared UI, OCR/speech.
@@ -19,10 +19,10 @@ notes. Baseline 0.1.0 is released; the 0.2.0 field-UX cycle is open at its relea
 
 ## Run it
 
-Node 24 is required (`.node-version`); Node 18 and 22 fail on Vite. This machine
-has no Node 24 on PATH — `CLAUDE.md` records where to find one. Then `npm ci`,
-`npm run dev` for the app on http://localhost:5173, `npm run build` for the PWA.
-Checks: `npm run verify:quick` (lint, format, types, unit), `npm run verify` (adds
-domain checks and the build), `npm run verify:all` (adds full week and Playwright);
-record a milestone with `npm run evidence -- <ID>`. Ports: dev 5173,
-`npm run preview` 4173, Playwright 4174.
+Node 24 is required (`.node-version`); Node 18 and 22 fail on Vite. If
+`node --version` is not 24.x, `CLAUDE.md` explains how to find or install one.
+Then `npm ci`, `npm run dev` for the app on http://localhost:5173, and
+`npm run build` for the PWA. Checks: `npm run verify:quick` (lint, format, types,
+unit), `npm run verify` (adds domain checks and the build), `npm run verify:all`
+(adds full week and Playwright); record a milestone with `npm run evidence -- <ID>`.
+Ports: dev 5173, `npm run preview` 4173, Playwright 4174.

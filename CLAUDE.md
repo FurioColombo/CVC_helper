@@ -23,52 +23,63 @@ back to the other agent.
    recorded under the currently active milestone; the "Student scan redesign
    correction" entry under UG1 is the established pattern.
 
-## Runtime: Node 24 is required and is not on PATH
+## Runtime: Node 24
 
-`PATH` resolves to Node 18, which cannot run Vite 8. Do not lower `engines`, do
-not change the toolchain, and do not substitute an ad-hoc server to work around
-it. Two Node 24 runtimes already exist on this machine, both vendored by another
-tool rather than installed:
+The toolchain requires Node 24 (`.node-version`, `engines`). Vite 8, the test
+runner and the build all fail on older releases. Do not lower `engines`, do not
+change the toolchain, and do not substitute an ad-hoc server to work around a
+wrong runtime.
 
-| Version  | Path                                                          | Vendored by    |
-| -------- | ------------------------------------------------------------- | -------------- |
-| v24.11.1 | `%LOCALAPPDATA%\ms-playwright-go\1.57.0\node.exe`              | a Go Playwright project |
-| v24.20.0 | `%LOCALAPPDATA%\OpenAI\Codex\runtimes\cua_node\<hash>\bin\node.exe` | Codex Desktop  |
-
-The Codex path carries a content hash that changes when it updates, so
-rediscover it instead of hardcoding it. Every milestone evidence file up to UG1
-was produced on the Codex runtime.
-
-Put one of them first on PATH for the whole shell. Calling npm through the
-binary is not enough: npm scripts spawn `node` again from PATH, so the child
-process silently falls back to Node 18 and fails on `styleText`.
+A machine's default `node` is often older, so check before running anything:
 
 ```bash
-export PATH="$(cygpath "$LOCALAPPDATA")/ms-playwright-go/1.57.0:$PATH"
-node --version   # v24.11.1
+node --version
+```
+
+If it is not 24.x, prefer a version manager that reads `.node-version` — fnm,
+nvm, nvm-windows, asdf or volta — so this repository selects Node 24 without
+changing the machine's default.
+
+Failing that, put a Node 24 binary first on PATH for the whole shell. Calling
+npm through the binary is not enough: npm scripts spawn `node` again from PATH,
+so the child process silently falls back to the older runtime and fails on
+`styleText`.
+
+```bash
+export PATH="/path/to/the/node24/directory:$PATH"
+node --version
 npm run verify:quick
 ```
 
-Confirmed on v24.11.1: vite 8.2.2, tsc 6.0.3, eslint, prettier, the 372 unit
-tests and a Playwright journey through `npm run verify:e2e`.
+Record the runtime actually used in milestone evidence, per `AGENTS.md`
+section 16.
 
-### When a runtime seems to be missing
+### Finding a Node 24 that is already present
 
-Both live inside another tool's cache and can vanish when that tool updates.
-`where node` and `node --version` answer only for PATH, so they cannot tell you
-whether a runtime exists. Search the vendoring roots at real depth — the Codex
-one sits seven levels below `AppData\Local`, and looking in `AppData\Local\Programs`
-or stopping at depth four misses both:
+`where node`, `which node` and `node --version` report only what PATH resolves
+to, so none of them can tell you whether another runtime exists. Editors, CI
+helpers, browser-test drivers and desktop agents commonly vendor their own Node
+inside a cache directory, sometimes seven or eight levels deep, and those copies
+work fine. Search the vendoring roots with generous depth before concluding
+there is none:
 
 ```bash
+# Windows (Git Bash)
 find "$LOCALAPPDATA" "$APPDATA" "/c/Program Files" -maxdepth 8 -iname "node.exe" 2>/dev/null
+
+# macOS and Linux
+find ~/.cache ~/.local ~/Library /opt /usr/local -maxdepth 8 -name node -type f 2>/dev/null
 ```
 
-Only if that finds nothing, install a real Node 24 (about 85 MB). Never conclude
-from a bounded search that a runtime the repository documents does not exist:
-`AGENTS.md` section 16 and this file both assert one, and that documentation
-outranks a negative result from a search you limited yourself. Record the
-runtime actually used in milestone evidence.
+Check each hit with `<path> --version`; any 24.x will do. Search the cache roots
+themselves, not only the directories where applications are installed — a
+vendored runtime is not an installed one. Such a copy can also disappear when
+its owner updates, so treat it as a fallback rather than the arrangement, and
+install a real Node 24 when you can.
+
+Never conclude from a bounded search that a runtime the repository documents
+does not exist. `AGENTS.md` section 16 asserts one, and that outranks a negative
+result from a search whose limits you chose yourself.
 
 ## Servers and ports
 
