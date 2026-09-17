@@ -27,15 +27,21 @@ back to the other agent.
 
 `PATH` resolves to Node 18, which cannot run Vite 8. Do not lower `engines`, do
 not change the toolchain, and do not substitute an ad-hoc server to work around
-it. A Node 24 runtime is already present on this machine:
+it. Two Node 24 runtimes already exist on this machine, both vendored by another
+tool rather than installed:
 
-```
-%LOCALAPPDATA%\ms-playwright-go\1.57.0\node.exe
-```
+| Version  | Path                                                          | Vendored by    |
+| -------- | ------------------------------------------------------------- | -------------- |
+| v24.11.1 | `%LOCALAPPDATA%\ms-playwright-go\1.57.0\node.exe`              | a Go Playwright project |
+| v24.20.0 | `%LOCALAPPDATA%\OpenAI\Codex\runtimes\cua_node\<hash>\bin\node.exe` | Codex Desktop  |
 
-Put it first on PATH for the whole shell. Calling npm through that binary is not
-enough: npm scripts spawn `node` again from PATH, so the child process silently
-falls back to Node 18 and fails on `styleText`.
+The Codex path carries a content hash that changes when it updates, so
+rediscover it instead of hardcoding it. Every milestone evidence file up to UG1
+was produced on the Codex runtime.
+
+Put one of them first on PATH for the whole shell. Calling npm through the
+binary is not enough: npm scripts spawn `node` again from PATH, so the child
+process silently falls back to Node 18 and fails on `styleText`.
 
 ```bash
 export PATH="$(cygpath "$LOCALAPPDATA")/ms-playwright-go/1.57.0:$PATH"
@@ -43,13 +49,26 @@ node --version   # v24.11.1
 npm run verify:quick
 ```
 
-Confirmed on v24.11.1: vite 8.2.2, tsc 6.0.3, eslint, prettier, and a Playwright
-journey through `npm run verify:e2e`.
+Confirmed on v24.11.1: vite 8.2.2, tsc 6.0.3, eslint, prettier, the 372 unit
+tests and a Playwright journey through `npm run verify:e2e`.
 
-That runtime is borrowed from another tool's cache and is not guaranteed to
-survive that tool's next upgrade. If it disappears, install a real Node 24
-(about 85 MB) rather than working around its absence. Record the runtime
-actually used in milestone evidence, per `AGENTS.md` section 16.
+### When a runtime seems to be missing
+
+Both live inside another tool's cache and can vanish when that tool updates.
+`where node` and `node --version` answer only for PATH, so they cannot tell you
+whether a runtime exists. Search the vendoring roots at real depth — the Codex
+one sits seven levels below `AppData\Local`, and looking in `AppData\Local\Programs`
+or stopping at depth four misses both:
+
+```bash
+find "$LOCALAPPDATA" "$APPDATA" "/c/Program Files" -maxdepth 8 -iname "node.exe" 2>/dev/null
+```
+
+Only if that finds nothing, install a real Node 24 (about 85 MB). Never conclude
+from a bounded search that a runtime the repository documents does not exist:
+`AGENTS.md` section 16 and this file both assert one, and that documentation
+outranks a negative result from a search you limited yourself. Record the
+runtime actually used in milestone evidence.
 
 ## Servers and ports
 
