@@ -64,6 +64,28 @@ assert.equal(
   "24",
   ".node-version must match the supported Node major",
 )
+
+// @huggingface/transformers pins an onnxruntime-web 1.26 pre-release whose
+// TransposeDQWeightsForMatMulNBits pass aborts with "Missing required scale:
+// model.decoder.embed_tokens.weight_merged_0_scale" for every Whisper decoder.
+// The model downloaded to 100% and dictation then failed instantly. 1.23 and
+// 1.30 build the same file; 1.26 through 1.29 do not, so the working runtime is
+// held here by an override rather than inherited from the transformers pin.
+const onnxRuntime = packageJson.overrides?.["onnxruntime-web"]
+assert.ok(
+  onnxRuntime,
+  "package.json must override onnxruntime-web: the version transformers pins cannot build a Whisper session",
+)
+const [onnxMajor, onnxMinor] = onnxRuntime.split(".").map(Number)
+assert.ok(
+  !(onnxMajor === 1 && onnxMinor >= 26 && onnxMinor <= 29),
+  `onnxruntime-web ${onnxRuntime} cannot create a Whisper decoder session; keep the override outside 1.26-1.29`,
+)
+assert.equal(
+  packageLock.packages?.["node_modules/onnxruntime-web"]?.version,
+  onnxRuntime,
+  "package-lock.json must resolve onnxruntime-web to the overridden version",
+)
 for (const script of [
   "verify:quick",
   "verify:domain",

@@ -1,0 +1,25 @@
+{
+  "milestone": "UG1",
+  "subject": "Dictation failed immediately after the model reached 100%",
+  "reportedBy": "human field feedback, PC Chrome",
+  "symptom": "Detta showed permission, then loading, then 'Dettatura non riuscita'. The note text was left unchanged. Microphone permission was granted and was never the cause.",
+  "rootCause": {
+    "component": "onnxruntime-web",
+    "version": "1.26.0-dev.20260416-b7804b056c, pinned transitively by @huggingface/transformers 4.2.0",
+    "failure": "InferenceSession creation aborts in the QDQ graph transform TransposeDQWeightsForMatMulNBits with 'Missing required scale: model.decoder.embed_tokens.weight_merged_0_scale'",
+    "why_it_looked_like_a_microphone_bug": "The model files download successfully, so progress reaches 100% before session creation throws. useDictation maps a failure before modelReady to the transcription error state."
+  },
+  "evidence": [
+    "Reproduced in the reporting browser by calling prepareSpeechTranscription directly from the running dev server; 278 progress events reached 100 percent, then the session error was thrown.",
+    "Ruled out the model: whisper-tiny q8, q4 and fp32, whisper-base q8, and the Xenova/whisper-tiny repository all failed with the identical error.",
+    "Ruled out SharedArrayBuffer: the page is not cross-origin isolated and SharedArrayBuffer is undefined, yet a working runtime builds the same file single-threaded.",
+    "Isolated the runtime: the same 30719241-byte decoder_model_merged_quantized.onnx builds a session under onnxruntime-web 1.23.0 and 1.30.0, and fails under 1.26.0 stable and the bundled 1.26 pre-release."
+  ],
+  "fix": "package.json overrides onnxruntime-web to 1.30.0. scripts/check-repository.mjs now fails if that override is missing, falls inside the broken 1.26-1.29 range, or disagrees with package-lock.json.",
+  "verification": {
+    "modelLoad": "prepareSpeechTranscription resolved in 7178 ms through the application module",
+    "endToEnd": "transcribeAudio decoded a 1940478-byte WAV and returned Italian text in 4603 ms, exercising decode, inference and text extraction",
+    "deterministic": "372 unit and component tests, repository check, production build and PWA check all pass on Node 24.21.0"
+  },
+  "remainingGap": "No automated test covers a real model session; U03 and the browser suite use injected speech fixtures, which is why this reached a release candidate. The repository check guards the known-bad range only. A physical microphone pass is still required by the UG1 device checklist."
+}
