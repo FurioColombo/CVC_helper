@@ -1,0 +1,16 @@
+# Normalize line endings. The repository stores LF; without this, Windows
+# checkouts with core.autocrlf=true make every git command emit a
+# "LF will be replaced by CRLF" warning for each file in the repository.
+* text=auto eol=lf
+
+# Binary assets: never convert.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.svg text eol=lf
+*.gz binary
+*.wasm binary
+*.traineddata binary
+*.woff binary
+*.woff2 binary
