@@ -4,6 +4,29 @@ export const MIN_FIELD_CONFIDENCE = 70
 
 export type StudentScanField = "firstName" | "surname" | "dateOfBirth" | "phone"
 
+export type StudentNameOrder =
+  | "given-surname"
+  | "surname-given"
+  | "unknown"
+
+export interface StudentScanNameWord {
+  text: string
+  confidence: number
+}
+
+/**
+ * A name reading is deliberately kept separate from the two persisted fields.
+ * OCR cannot safely infer whether `Rossi Mario` means surname-first or a
+ * malformed given name without column/header evidence or a human choice.
+ */
+export interface StudentScanNameReading {
+  raw: string
+  words: StudentScanNameWord[]
+  order: StudentNameOrder
+  compoundAmbiguity: boolean
+  acknowledged: boolean
+}
+
 export interface StudentScanCandidate {
   sourceId: string
   firstName: string
@@ -12,6 +35,8 @@ export interface StudentScanCandidate {
   phone: string
   sex: StudentSex | null
   confidence: Record<StudentScanField, number>
+  /** Present for OCR lines whose name order needs an explicit review. */
+  nameReading?: StudentScanNameReading
 }
 
 export interface StudentScanResult {
@@ -37,6 +62,9 @@ interface RecognizedWord {
   confidence: number
   start: number
   end: number
+  /** Page coordinates. Zero when the OCR output carries no geometry. */
+  left: number
+  right: number
 }
 
 interface RecognizedLine {
@@ -94,10 +122,18 @@ const STUDENT_SECTION_PATTERN =
 const PERSONNEL_SECTION_PATTERN =
   /\b(?:personale|staff|istruttr(?:ore|ori|ice|ici)|assistent[ei]|volontari[eo]?|segreteria)\b/u
 const NON_STUDENT_LINE_PATTERN =
-  /\b(?:centro\s+velico|cvc|caprera|corso|settimana|elenco|foglio|pagina|pag\.?|stampa|stampat[oa]|generat[oa]|contatti?|informazioni|telefono|cellulare|nascita|cognome|nome|firma|note|totale)\b/u
+  /\b(?:centro\s+velico|cvc|caprera|corso|settimana|elenco|foglio|pagina|pag\.?|stampa|stampat[oa]|generat[oa]|contatti?|informazioni|telefono|cellulare|nascita|cognome|nome|firma|note|totale|luned[ìi]|marted[ìi]|mercoled[ìi]|gioved[ìi]|venerd[ìi]|sabato|domenica)\b/u
 const PERSONNEL_ROW_PREFIX_PATTERN =
   /^(?:adv|is|ct|istruttore|istruttrice|assistente|responsabile|coordinatore|coordinatrice|capocorso|direttore|direttrice|segreteria|staff)\b/u
 const NON_NAME_TOKENS = new Set([
+  // Column wording from the printed roster, which sits beside the names.
+  "anni",
+  "anno",
+  "eta",
+  "età",
+  "tel",
+  "telefono",
+  "cell",
   "attivo",
   "attiva",
   "confermato",
@@ -112,6 +148,178 @@ const NON_NAME_TOKENS = new Set([
   "si",
   "sì",
 ])
+
+// These are only used to make the OCR reading safe for review. They are not
+// a surname dictionary and must never be used to claim that a name is valid.
+const SURNAME_PARTICLES = new Set([
+  "da",
+  "dal",
+  "dalla",
+  "dall",
+  "de",
+  "dei",
+  "degli",
+  "del",
+  "della",
+  "delle",
+  "di",
+  "du",
+  "la",
+  "le",
+  "van",
+  "von",
+])
+
+function normalizedNameToken(value: string) {
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase("it")
+    .replace(/[’']/g, "'")
+    .replace(/[‐‑‒–—]/g, "-")
+    .trim()
+}
+
+function isNameToken(value: string) {
+  const normalized = normalizedNameToken(value)
+  if (!normalized || NON_NAME_TOKENS.has(normalized)) return false
+  // A single letter in these photographs is normally a sex/status mark or a
+  // table checkmark. Keep initials only when they are explicitly hyphenated.
+  if ([...normalized].length < 2 && !normalized.includes("-")) return false
+  return /\p{L}/u.test(normalized)
+}
+
+function nameWordsFromReading(reading: StudentScanNameReading) {
+  const source =
+    reading.words.length > 0
+      ? reading.words
+      : reading.raw
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((text) => ({ text, confidence: 0 }))
+  return source.filter(({ text }) => isNameToken(text))
+}
+
+function joinNameWords(words: StudentScanNameWord[]) {
+  return words.map(({ text }) => text).join(" ").trim()
+}
+
+interface NameSplit {
+  firstName: string
+  surname: string
+  firstNameConfidence: number
+  surnameConfidence: number
+  compoundAmbiguity: boolean
+}
+
+function averageNameConfidence(words: StudentScanNameWord[]) {
+  const confident = words
+    .map(({ confidence }) => confidence)
+    .filter((confidence) => Number.isFinite(confidence) && confidence > 0)
+  if (confident.length === 0) return 0
+  return confident.reduce((sum, confidence) => sum + confidence, 0) / confident.length
+}
+
+/**
+ * Apply an explicitly selected name order to a raw OCR reading.
+ *
+ * The helper intentionally refuses arbitrary surname/given splits. Two words
+ * are unambiguous. A leading Italian surname particle permits the common
+ * `De Angelis Luca` shape. Any other compound shape remains blank and marked
+ * for review so the UI can ask the operator to edit the boundary.
+ */
+export function applyStudentNameOrder(
+  candidate: StudentScanCandidate,
+  order: StudentNameOrder,
+): StudentScanCandidate {
+  const existingReading = candidate.nameReading
+  const reading: StudentScanNameReading = existingReading ?? {
+    raw: [candidate.firstName, candidate.surname].filter(Boolean).join(" "),
+    words: [candidate.firstName, ...candidate.surname.split(/\s+/)]
+      .filter(Boolean)
+      .map((text) => ({ text, confidence: 0 })),
+    order: "given-surname",
+    compoundAmbiguity: false,
+    acknowledged: false,
+  }
+  const words = nameWordsFromReading(reading)
+  const nextReading: StudentScanNameReading = {
+    ...reading,
+    order,
+    acknowledged: false,
+  }
+
+  if (order === "unknown" || words.length < 2) {
+    return {
+      ...candidate,
+      nameReading: {
+        ...nextReading,
+        compoundAmbiguity: order === "unknown" ? words.length > 2 : true,
+      },
+    }
+  }
+
+  let split: NameSplit
+  if (order === "given-surname") {
+    let surnameStart = words.length - 1
+    const particleIndex = words.findIndex(
+      ({ text }, index) =>
+        index > 0 && SURNAME_PARTICLES.has(normalizedNameToken(text)),
+    )
+    if (particleIndex > 0) surnameStart = particleIndex
+    const givenWords = words.slice(0, surnameStart)
+    const surnameWords = words.slice(surnameStart)
+    split = {
+      firstName: joinNameWords(givenWords),
+      surname: joinNameWords(surnameWords),
+      firstNameConfidence: averageNameConfidence(givenWords),
+      surnameConfidence: averageNameConfidence(surnameWords),
+      compoundAmbiguity: false,
+    }
+  } else if (words.length === 2) {
+    split = {
+      firstName: words[1]?.text ?? "",
+      surname: words[0]?.text ?? "",
+      firstNameConfidence: words[1]?.confidence ?? 0,
+      surnameConfidence: words[0]?.confidence ?? 0,
+      compoundAmbiguity: false,
+    }
+  } else if (
+    words.length === 3 &&
+    SURNAME_PARTICLES.has(normalizedNameToken(words[0]?.text ?? ""))
+  ) {
+    split = {
+      firstName: words[2]?.text ?? "",
+      surname: joinNameWords(words.slice(0, 2)),
+      firstNameConfidence: words[2]?.confidence ?? 0,
+      surnameConfidence: averageNameConfidence(words.slice(0, 2)),
+      compoundAmbiguity: false,
+    }
+  } else {
+    split = {
+      firstName: "",
+      surname: "",
+      firstNameConfidence: 0,
+      surnameConfidence: 0,
+      compoundAmbiguity: true,
+    }
+  }
+
+  return {
+    ...candidate,
+    firstName: split.firstName,
+    surname: split.surname,
+    sex: split.firstName ? inferSex(split.firstName) : null,
+    confidence: {
+      ...candidate.confidence,
+      firstName: split.firstNameConfidence || candidate.confidence.firstName,
+      surname: split.surnameConfidence || candidate.confidence.surname,
+    },
+    nameReading: {
+      ...nextReading,
+      compoundAmbiguity: split.compoundAmbiguity,
+    },
+  }
+}
 
 function inferSex(firstName: string): StudentSex | null {
   const normalized = firstName.trim().toLocaleLowerCase("it")
@@ -179,15 +387,22 @@ function parseTsv(
       .filter(({ text }) => text.length > 0)
   }
 
-  const grouped = new Map<string, Array<{ text: string; confidence: number }>>()
+  const grouped = new Map<
+    string,
+    Array<{ text: string; confidence: number; left: number; right: number }>
+  >()
   for (const row of tsv.split(/\r?\n/).slice(1)) {
     const columns = row.split("\t")
     if (columns[0] !== "5" || !columns[11]?.trim()) continue
     const key = columns.slice(1, 5).join(":")
     const words = grouped.get(key) ?? []
+    const left = Number(columns[6]) || 0
+    const width = Number(columns[8]) || 0
     words.push({
       text: columns[11].trim(),
       confidence: Number(columns[10]) || 0,
+      left,
+      right: left + width,
     })
     grouped.set(key, words)
   }
@@ -225,21 +440,27 @@ function overlapsRange(word: RecognizedWord, range: TextRange) {
   return word.end > range.start && word.start < range.end
 }
 
+function nameTokensFromWords(words: RecognizedWord[]) {
+  return words.flatMap((word) =>
+    word.text
+      .replace(NON_NAME_CHARACTERS, " ")
+      .split(/\s+/)
+      .map((text) => text.trim())
+      .filter(
+        (text) =>
+          text.length > 0 && !NON_NAME_TOKENS.has(text.toLocaleLowerCase("it")),
+      )
+      .map((text) => ({ text, confidence: word.confidence })),
+  )
+}
+
 function namePartsOutsideRanges(line: RecognizedLine, ranges: TextRange[]) {
   if (line.words.length > 0) {
-    return line.words.flatMap((word) => {
-      if (ranges.some((range) => overlapsRange(word, range))) return []
-      return word.text
-        .replace(NON_NAME_CHARACTERS, " ")
-        .split(/\s+/)
-        .map((text) => text.trim())
-        .filter(
-          (text) =>
-            text.length > 0 &&
-            !NON_NAME_TOKENS.has(text.toLocaleLowerCase("it")),
-        )
-        .map((text) => ({ text, confidence: word.confidence }))
-    })
+    return nameTokensFromWords(
+      line.words.filter(
+        (word) => !ranges.some((range) => overlapsRange(word, range)),
+      ),
+    )
   }
 
   let unstructuredText = line.text
@@ -259,6 +480,89 @@ function namePartsOutsideRanges(line: RecognizedLine, ranges: TextRange[]) {
     .map((text) => ({ text, confidence: line.confidence }))
 }
 
+/**
+ * The roster is a printed table: name, then telephone, then age and date of
+ * birth, and on the full sheet a role column for staff. Tesseract returns each
+ * table row as a single line, so a text-only parse leaves the age column's
+ * wording inside the surname and cannot separate a staff row from a student
+ * row. When the OCR output carries word coordinates the columns are recovered
+ * from geometry instead; without them the text-range parse stays in charge.
+ */
+interface PageLayout {
+  /** Left edge of the telephone column. Name words sit entirely left of it. */
+  structuredLeft: number
+}
+
+const ROLE_CODES = ["ADV", "CT", "AT", "IS"]
+
+/**
+ * Staff rows carry their role in a column of their own. The code is printed in
+ * capitals, which separates it from the title-case names, and a table rule
+ * frequently attaches one stray capital to it, so `ICT` still means `CT`.
+ */
+function roleCode(word: RecognizedWord) {
+  const letters = word.text.replace(/[^A-Za-z]/g, "")
+  if (letters.length === 0 || letters !== letters.toUpperCase()) return null
+  return (
+    ROLE_CODES.find(
+      (role) => letters === role || letters.slice(1) === role,
+    ) ?? null
+  )
+}
+
+function digitCount(value: string) {
+  return (value.match(/\d/g) ?? []).length
+}
+
+function isStructuredWord(word: RecognizedWord) {
+  const text = word.text.trim()
+  if (normalizedNameToken(text) === "anni") return true
+  if (DATE_PATTERN.test(text)) return true
+  // A telephone survives OCR as one long digit run; a row index does not.
+  return digitCount(text) >= 7
+}
+
+function median(values: number[]) {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((left, right) => left - right)
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
+    : (sorted[middle] ?? 0)
+}
+
+function inferPageLayout(lines: RecognizedLine[]): PageLayout | null {
+  const words = lines.flatMap((line) => line.words)
+  if (words.length === 0) return null
+  // Fixtures and geometry-free OCR report every word at the same position.
+  if (new Set(words.map((word) => word.left)).size < 2) return null
+  if (words.every((word) => word.right <= word.left)) return null
+
+  const columnStarts = lines
+    .map((line) => {
+      const structured = line.words.filter(isStructuredWord)
+      if (structured.length === 0) return null
+      return Math.min(...structured.map((word) => word.left))
+    })
+    .filter((value): value is number => value !== null)
+  // One or two agreeing rows could be a caption; a column needs a majority.
+  if (columnStarts.length < 3) return null
+  return { structuredLeft: median(columnStarts) }
+}
+
+function isLeftOfStructuredColumn(word: RecognizedWord, layout: PageLayout) {
+  return (word.left + word.right) / 2 < layout.structuredLeft
+}
+
+function isPersonnelRow(line: RecognizedLine, layout: PageLayout | null) {
+  if (!layout) return false
+  // The first word of a row is the name itself and can never be the role.
+  return line.words.some(
+    (word, index) =>
+      index > 0 && roleCode(word) && isLeftOfStructuredColumn(word, layout),
+  )
+}
+
 function isObviousNonStudentLine(line: RecognizedLine) {
   const normalized = normalizeLineText(line.text)
   return (
@@ -268,7 +572,7 @@ function isObviousNonStudentLine(line: RecognizedLine) {
   )
 }
 
-function candidateFromLine(line: RecognizedLine) {
+function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
   const dateMatch = line.text.match(DATE_PATTERN)
   const dateStart = dateMatch?.index ?? -1
   const phoneSearchText =
@@ -285,7 +589,15 @@ function candidateFromLine(line: RecognizedLine) {
       ? { start: phoneStart, end: phoneStart + phoneMatch[0].length }
       : null,
   ].filter((range): range is TextRange => Boolean(range))
-  const nameParts = namePartsOutsideRanges(line, structuredRanges)
+  // Geometry gives the name cell directly, which keeps the age column's
+  // wording and the telephone out of the name regardless of how Tesseract
+  // ordered the row's text.
+  const nameParts =
+    layout && line.words.length > 0
+      ? nameTokensFromWords(
+          line.words.filter((word) => isLeftOfStructuredColumn(word, layout)),
+        )
+      : namePartsOutsideRanges(line, structuredRanges)
   const firstName = nameParts[0]?.text ?? ""
   const surname = nameParts
     .slice(1)
@@ -342,8 +654,10 @@ function candidateFromLine(line: RecognizedLine) {
 
 export function extractStudentCandidates(page: OcrPage): StudentScanResult {
   const candidates: StudentScanCandidate[] = []
+  const lines = parseTsv(page.tsv, page.text, page.confidence)
+  const layout = inferPageLayout(lines)
   let inPersonnelSection = false
-  for (const line of parseTsv(page.tsv, page.text, page.confidence)) {
+  for (const line of lines) {
     const normalized = normalizeLineText(line.text)
     if (STUDENT_SECTION_PATTERN.test(normalized)) {
       inPersonnelSection = false
@@ -354,7 +668,10 @@ export function extractStudentCandidates(page: OcrPage): StudentScanResult {
       continue
     }
     if (inPersonnelSection || isObviousNonStudentLine(line)) continue
-    const candidate = candidateFromLine(line)
+    // The staff block at the foot of the sheet carries a role in its own
+    // column. Those people are not students and must never be imported as one.
+    if (isPersonnelRow(line, layout)) continue
+    const candidate = candidateFromLine(line, layout)
     if (candidate) candidates.push(candidate)
   }
 
