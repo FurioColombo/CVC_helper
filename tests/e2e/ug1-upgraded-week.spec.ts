@@ -5,6 +5,9 @@ import { expect, test } from "@playwright/test"
 
 import { SESSION_SEQUENCE } from "../../src/domain/config"
 
+// Matching by pathname keeps this independent of the port the suite runs on.
+const isAppRoot = (target: URL) => target.pathname === "/"
+
 const fixture = JSON.parse(
   readFileSync(
     new URL("../../src/test/fixtures/v0.1.0-course.json", import.meta.url),
@@ -23,7 +26,7 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
   test.setTimeout(600_000)
   context.setDefaultTimeout(30_000)
 
-  await page.route("http://127.0.0.1:4173/", async (route) => {
+  await page.route(isAppRoot, async (route) => {
     await route.fulfill({
       contentType: "text/html",
       body: `<html><body>Preparing legacy course<script type="module">
@@ -39,7 +42,7 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
   })
   await page.goto("/")
   await expect(page.getByText("Legacy course ready")).toBeVisible()
-  await page.unroute("http://127.0.0.1:4173/")
+  await page.unroute(isAppRoot)
   await page.goto("/")
 
   await expect(
