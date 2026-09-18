@@ -86,7 +86,7 @@ describe("student scan extraction", () => {
     ])
   })
 
-  it("keeps reliable fields and blanks each uncertain field independently", () => {
+  it("keeps an uncertain field's text and reports it as uncertain", () => {
     const result = extractStudentCandidates({
       confidence: 78,
       text: "Giulia Bianchl 24/11/1998 347 765 4321",
@@ -104,14 +104,23 @@ describe("student scan extraction", () => {
     })
 
     expect(result.unsuitable).toBe(false)
+    // The review screen corrects what the scan read, so an uncertain reading
+    // is offered rather than blanked. Its confidence stays below the threshold
+    // so the screen can mark it "Da controllare".
     expect(result.candidates[0]).toEqual(
       expect.objectContaining({
         firstName: "Giulia",
-        surname: "",
-        dateOfBirth: "",
+        surname: "Bianchl",
+        dateOfBirth: "1998-11-24",
         phone: "347 765 4321",
         sex: "female",
       }),
+    )
+    expect(result.candidates[0]!.confidence.surname).toBeLessThan(
+      MIN_FIELD_CONFIDENCE,
+    )
+    expect(result.candidates[0]!.confidence.dateOfBirth).toBeLessThan(
+      MIN_FIELD_CONFIDENCE,
     )
   })
 

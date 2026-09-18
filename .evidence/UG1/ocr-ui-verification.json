@@ -1,0 +1,37 @@
+{
+  "milestone": "UG1",
+  "subject": "Scan verified through the real application UI, not only through the parser",
+  "why": "The first round of OCR work was measured with a Node diagnostic that feeds the raw photograph straight to the parser. The application does not do that: it passes the photograph through the crop editor first. Measuring the real path found two defects the diagnostic could not see, and the reporter correctly observed no improvement in the app.",
+  "method": "Playwright drives the real interface at 390x844: create course, Allievi, Scan allievi, attach the photograph to the gallery input, confirm the editor, then read the values out of the review inputs.",
+  "defectsFoundOnlyInTheRealPath": [
+    "DEFAULT_STUDENT_SCAN_CROP discarded four percent of every edge before OCR, cutting into the first column and removing the start of the surnames. The cropped photograph lost Altomare, Bertani and Banella entirely.",
+    "Fields read below MIN_FIELD_CONFIDENCE were blanked by the parser even though the review screen already marks them 'Da controllare'. The operator was made to retype text the scan had in fact read."
+  ],
+  "changes": [
+    "The default crop is the whole frame. A roster photograph is normally framed tightly already, and the operator can still crop.",
+    "An uncertain field keeps its text and its confidence, so the review screen flags it instead of hiding it.",
+    "Row-level noise and field-level uncertainty are now separate thresholds. MIN_ROW_CONFIDENCE, below the field threshold, still rejects a row with nothing trustworthy in it, which preserves the unusable-photograph behaviour that the blanking used to provide."
+  ],
+  "measuredOnTheCroppedRosterPhotograph": {
+    "beforeThisRound": {
+      "rows": 21,
+      "fieldsToComplete": 48,
+      "surnamesPresent": "most rows had an empty name field; Altomare, Bertani and Banella were absent"
+    },
+    "afterThisRound": {
+      "rows": 19,
+      "expected": 20,
+      "fieldsToComplete": 35,
+      "surnamesPresent": "Altomare, Banella, Bragagnolo, Bussotti, Cortese, De giuli Gregorio, De giuli Teodoro, Didonè, Fassi, Graiff, Merluzzi, Magnoni, Miglierina, Mosca, Passerini, Penati, Pietra, Rinaldi, Spagnoli",
+      "telephonesRecovered": 8,
+      "datesRecovered": 3
+    }
+  },
+  "remaining": [
+    "The name order is still inverted: the roster is surname-first and the surname lands in Nome. The explicit order control exists in the review screen and has not yet been exercised by this harness.",
+    "Bertani Roberto falls below the row threshold and is not offered at all.",
+    "Some names carry a trailing artefact from the table rule: 'Massimo Ì', 'Nicola I', 'Simone gi', and two rows begin with a stray 's' or '-'.",
+    "No row is complete enough to count as ready, so the operator still confirms every row."
+  ],
+  "runtime": "Node 24.21.0, 374 unit and component tests, production build and PWA check all pass."
+}

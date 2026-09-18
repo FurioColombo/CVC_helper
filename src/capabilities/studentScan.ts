@@ -2,6 +2,14 @@ import type { StudentSex } from "@/domain/config"
 
 export const MIN_FIELD_CONFIDENCE = 70
 
+/**
+ * Below this, a whole row is treated as noise rather than as a student whose
+ * fields need checking. It is deliberately lower than the field threshold: a
+ * faint but real row is worth correcting, while an unreadable photograph must
+ * still be reported as unusable instead of filled with invented rows.
+ */
+const MIN_ROW_CONFIDENCE = 60
+
 export type StudentScanField = "firstName" | "surname" | "dateOfBirth" | "phone"
 
 export type StudentNameOrder =
@@ -630,24 +638,37 @@ function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
     phone: phoneConfidence,
   }
 
+  // A reading below the threshold is kept and reported as uncertain rather
+  // than discarded. The review screen exists to be corrected, and it already
+  // marks every low-confidence field "Da controllare"; blanking the text only
+  // forced the operator to retype what the scan had in fact read. The sex
+  // suggestion stays gated, because a guess drawn from an unreliable name is
+  // worse than no suggestion.
   const candidate = {
     sourceId: line.id,
-    firstName: confidence.firstName >= MIN_FIELD_CONFIDENCE ? firstName : "",
-    surname: confidence.surname >= MIN_FIELD_CONFIDENCE ? surname : "",
-    dateOfBirth:
-      confidence.dateOfBirth >= MIN_FIELD_CONFIDENCE ? normalizedDate : "",
-    phone:
-      confidence.phone >= MIN_FIELD_CONFIDENCE
-        ? (phoneMatch?.[0].replace(/\s+/g, " ").trim() ?? "")
-        : "",
+    firstName,
+    surname,
+    dateOfBirth: normalizedDate,
+    phone: phoneMatch?.[0].replace(/\s+/g, " ").trim() ?? "",
     sex:
       confidence.firstName >= MIN_FIELD_CONFIDENCE ? inferSex(firstName) : null,
     confidence,
   } satisfies StudentScanCandidate
 
-  const hasReliableName = Boolean(candidate.firstName || candidate.surname)
-  const hasReliableDate = Boolean(candidate.dateOfBirth)
-  if (!hasReliableName && !hasReliableDate) return null
+  // Individual fields may be uncertain and still worth correcting, but a row
+  // with nothing trustworthy anywhere in it is noise. Keeping that distinction
+  // is what still lets an unreadable photograph be reported as unusable
+  // instead of being filled with invented rows.
+  const bestConfidence = Math.max(
+    confidence.firstName,
+    confidence.surname,
+    confidence.dateOfBirth,
+    confidence.phone,
+  )
+  if (bestConfidence < MIN_ROW_CONFIDENCE) return null
+  if (!candidate.firstName && !candidate.surname && !candidate.dateOfBirth) {
+    return null
+  }
   if (!dateMatch && !phoneMatch && nameParts.length < 2) return null
   return candidate
 }
