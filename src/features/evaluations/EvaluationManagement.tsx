@@ -23,6 +23,7 @@ import {
 import { getDefaultEvaluationSession } from "@/domain/evaluations"
 import { getStudentDisplayName } from "@/domain/student"
 import { EvaluationOverview } from "@/features/evaluations/EvaluationOverview"
+import { DictationMeter } from "@/features/speech/DictationMeter"
 import {
   useDictation,
   type SpeechPrepare,
@@ -101,6 +102,12 @@ function EvaluationNoteEditor({
         >
           Nota di {fullName} · {session?.day} {session?.period}
         </label>
+        {dictation.status === "recording" && (
+          <DictationMeter
+            className="text-[#b42318]"
+            stream={dictation.mediaStream}
+          />
+        )}
         <Button
           aria-label={
             dictation.status === "recording"

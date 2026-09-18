@@ -1,0 +1,49 @@
+{
+  "milestone": "UG1",
+  "subject": "Dictation quality: measured A/B over a labelled Italian corpus",
+  "request": "Improve dictation, keep the previous pipeline as a benchmark, vary male and female voices and noise conditions.",
+  "corpus": {
+    "source": "PolyAI/minds14, config it-IT, via the public HuggingFace datasets API. Real Italian speech with human reference transcripts.",
+    "clips": 14,
+    "voices": "7 male (median F0 96-105 Hz) and 7 female (182-190 Hz). Gender is not labelled in the dataset, so it is estimated by autocorrelation F0 and recorded per clip.",
+    "conditions": [
+      "clean",
+      "wind-15 and wind-5: brown noise with slow gusts, the wind a boat crew records into",
+      "babble-10: overlapping speech from other clips",
+      "white-10, pink-5",
+      "quiet: 0.12 gain",
+      "clipped: 6x gain"
+    ],
+    "entries": 112,
+    "note": "The audio is 8 kHz G.711 mu-law telephone speech, which makes absolute error rates high. Only the relative comparison is meaningful. The corpus is built outside the repository and is never committed."
+  },
+  "harnessDefect": "The first corpus was silently corrupt: the source files are WAV format tag 7 (mu-law) and the reader decoded them as linear PCM. Every early number was measured on distorted audio and was discarded. The reader now handles mu-law and A-law.",
+  "results": {
+    "metric": "word error rate, percent, lower is better; LOOP is the share of clips whose output exceeded three times the reference length",
+    "baseline_tiny": { "overall": 303.2, "median": 96.7, "loop": 5 },
+    "tiny_with_guard": { "overall": 89.9, "median": 93.5, "loop": 0 },
+    "tiny_with_guard_and_dsp": { "overall": 90.5, "median": 93.5, "loop": 0 },
+    "base_with_guard": {
+      "overall": 55.5,
+      "median": 55.6,
+      "loop": 0,
+      "clean": 48.5,
+      "wind5": 69.2,
+      "quiet": 48.7,
+      "male": 55.7,
+      "female": 55.2
+    }
+  },
+  "findings": [
+    "The dominant failure was not mishearing but repetition collapse. One six-word reference produced a 444-word output. Generation brakes (no_repeat_ngram_size 5, repetition_penalty 1.15, temperature 0, condition_on_previous_text false) removed every loop and took aggregate error from 303% to 90%.",
+    "Classic DSP did not help. A chain of DC removal, an 80 Hz high pass, RMS normalisation and silence trimming measured 90.5% against 89.9% without it, which is inside the noise. It was not shipped.",
+    "The model is the remaining lever. whisper-base under the same guard roughly halved the error rate against whisper-tiny, for 73 MB of first-use download instead of 39 MB.",
+    "Male and female voices improved by the same margin at every stage, so a per-voice model or per-voice DSP is not justified."
+  ],
+  "shipped": [
+    "TRANSCRIPTION_GUARD applied to every request in src/capabilities/speech.ts",
+    "MODEL_ID switched to onnx-community/whisper-base"
+  ],
+  "reproduce": "Serve the app, then run bench.mjs against a corpus built by fetch-balanced.mjs and build-corpus.mjs. variants.js holds every pipeline tried, including the original as 'baseline', so the comparison can be repeated.",
+  "notVerified": "No physical microphone pass. Chromium's fake audio capture did not inject the file in this environment, so end-to-end dictation was exercised with a real recording only through the benchmark, not through the microphone."
+}
