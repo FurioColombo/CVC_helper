@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  applyStudentNameOrder,
   extractStudentCandidates,
   MIN_FIELD_CONFIDENCE,
 } from "@/capabilities/studentScan"
@@ -415,5 +416,107 @@ describe("student scan extraction", () => {
     expect(
       result.candidates.map((candidate) => candidate.firstName),
     ).not.toContain("Erba")
+  })
+
+  it("reads a name without deciding whether the surname came first", () => {
+    const result = extractStudentCandidates({
+      confidence: 92,
+      text: "Brerado Ramimi",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Brerado", confidence: 93 },
+          { text: "Valeria", confidence: 94 },
+          { text: "11/07/1986", confidence: 92 },
+        ]),
+      ].join("\n"),
+    })
+
+    const [candidate] = result.candidates
+    expect(candidate?.nameReading).toEqual({
+      raw: "Brerado Ramimi",
+      words: [
+        { text: "Brerado", confidence: 93 },
+        { text: "Valeria", confidence: 94 },
+      ],
+      order: "unknown",
+      compoundAmbiguity: false,
+      acknowledged: false,
+    })
+  })
+
+  it("splits a two-word reading both ways from the words as read", () => {
+    const result = extractStudentCandidates({
+      confidence: 92,
+      text: "Brerado Ramimi",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Brerado", confidence: 93 },
+          { text: "Valeria", confidence: 94 },
+        ]),
+      ].join("\n"),
+    })
+    const candidate = result.candidates[0]!
+
+    const surnameFirst = applyStudentNameOrder(candidate, "surname-given")
+    expect(surnameFirst).toEqual(
+      expect.objectContaining({ firstName: "Valeria", surname: "Brerado" }),
+    )
+
+    // Re-deriving from the same reading, so applying an order is idempotent
+    // and reversible rather than a blind exchange of the two fields.
+    expect(applyStudentNameOrder(surnameFirst, "surname-given")).toEqual(
+      expect.objectContaining({ firstName: "Valeria", surname: "Brerado" }),
+    )
+    expect(applyStudentNameOrder(surnameFirst, "given-surname")).toEqual(
+      expect.objectContaining({ firstName: "Brerado", surname: "Valeria" }),
+    )
+  })
+
+  it("keeps a surname particle attached when the sheet is surname first", () => {
+    const result = extractStudentCandidates({
+      confidence: 92,
+      text: "De colomi Rarani",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "De", confidence: 91 },
+          { text: "colomi", confidence: 92 },
+          { text: "Gregorio", confidence: 93 },
+        ]),
+      ].join("\n"),
+    })
+
+    expect(
+      applyStudentNameOrder(result.candidates[0]!, "surname-given"),
+    ).toEqual(
+      expect.objectContaining({ firstName: "Gregorio", surname: "De colomi" }),
+    )
+  })
+
+  it("refuses to guess an ambiguous compound and marks it for review", () => {
+    const result = extractStudentCandidates({
+      confidence: 92,
+      text: "Raraco Tusafio mireni",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Raraco", confidence: 92 },
+          { text: "Tusator", confidence: 93 },
+          { text: "georgia", confidence: 91 },
+        ]),
+      ].join("\n"),
+    })
+
+    const applied = applyStudentNameOrder(
+      result.candidates[0]!,
+      "surname-given",
+    )
+    expect(applied.firstName).toBe("")
+    expect(applied.surname).toBe("")
+    expect(applied.nameReading?.compoundAmbiguity).toBe(true)
+    // The words as read survive, so the operator can retype the boundary.
+    expect(applied.nameReading?.raw).toBe("Raraco Tusafio mireni")
   })
 })

@@ -10,8 +10,10 @@ import {
 import { useEffect, useRef, useState } from "react"
 
 import {
+  applyStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
   scanStudents,
+  type StudentNameOrder,
   type StudentScanCandidate,
   type StudentScanField,
   type StudentScanProgress,
@@ -26,8 +28,12 @@ import { createStudents, type StudentInput } from "@/persistence/students"
 type ScanState =
   "idle" | "scanning" | "review" | "unsuitable" | "error" | "saving"
 
+// The name reading and its order live in the capability, which owns the
+// surname-particle and compound rules. This screen only chooses when to apply
+// them and records that the operator has taken over a row by hand.
 interface ReviewCandidate extends StudentScanCandidate {
   id: string
+  nameManuallyEdited?: boolean
 }
 
 interface Acquisition {
@@ -40,6 +46,15 @@ function needsReview(candidate: ReviewCandidate, field: StudentScanField) {
   return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
 }
 
+function nameReadingNeedsReview(candidate: ReviewCandidate) {
+  const reading = candidate.nameReading
+  if (!reading) return false
+  return (
+    reading.order === "unknown" ||
+    (reading.compoundAmbiguity && !reading.acknowledged)
+  )
+}
+
 function candidateIsReady(candidate: ReviewCandidate, courseStartDate: string) {
   return Boolean(
     candidate.firstName.trim() &&
@@ -47,10 +62,33 @@ function candidateIsReady(candidate: ReviewCandidate, courseStartDate: string) {
     candidate.dateOfBirth &&
     candidate.dateOfBirth <= courseStartDate &&
     candidate.sex &&
+    !nameReadingNeedsReview(candidate) &&
     !(["firstName", "surname", "dateOfBirth", "phone"] as const).some((field) =>
       needsReview(candidate, field),
     ),
   )
+}
+
+/**
+ * Apply an explicitly chosen source order across the sheet without overwriting
+ * operator work. The split itself is the capability's decision; this only picks
+ * which rows it may touch, and there is intentionally no implicit default.
+ */
+export function applyNameOrderToCandidates(
+  candidates: ReviewCandidate[],
+  order: Exclude<StudentNameOrder, "unknown">,
+  scope: "unresolved" | "all",
+): ReviewCandidate[] {
+  return candidates.map((candidate) => {
+    const reading = candidate.nameReading
+    if (!reading || candidate.nameManuallyEdited || reading.acknowledged) {
+      return candidate
+    }
+    if (scope === "unresolved" && reading.order !== "unknown") {
+      return candidate
+    }
+    return { ...applyStudentNameOrder(candidate, order), id: candidate.id }
+  })
 }
 
 function ReviewField({
@@ -109,8 +147,40 @@ function CandidateCard({
       ...candidate,
       [field]: value,
       confidence: { ...candidate.confidence, [field]: 100 },
+      ...(field === "firstName" || field === "surname"
+        ? { nameManuallyEdited: true }
+        : {}),
     })
   }
+
+  function swapNameOrder() {
+    const reading = candidate.nameReading
+    if (!reading) return
+    // An unresolved row is shown given-name-first, so swapping it means the
+    // sheet is surname-first. The split is re-derived from the words as read,
+    // which keeps a surname particle attached and makes this idempotent.
+    const nextOrder: StudentNameOrder =
+      reading.order === "surname-given" ? "given-surname" : "surname-given"
+    onChange({
+      ...applyStudentNameOrder(candidate, nextOrder),
+      id: candidate.id,
+    })
+  }
+
+  function confirmNameOrder() {
+    const reading = candidate.nameReading
+    if (!reading) return
+    onChange({
+      ...candidate,
+      nameReading: {
+        ...reading,
+        order: reading.order === "unknown" ? "given-surname" : reading.order,
+        acknowledged: true,
+      },
+    })
+  }
+
+  const nameNeedsReview = nameReadingNeedsReview(candidate)
 
   return (
     <article
@@ -129,6 +199,50 @@ function CandidateCard({
           <Trash2 aria-hidden="true" className="size-4" />
         </Button>
       </div>
+
+      {candidate.nameReading && (
+        <div className="mb-2 rounded-xl border border-primary/20 bg-primary/5 p-2.5">
+          <p className="text-xs leading-5 text-muted-foreground">
+            <span className="font-bold text-foreground">Letto:</span>{" "}
+            {candidate.nameReading.raw || "testo non disponibile"}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold">
+              {candidate.nameReading.order === "given-surname"
+                ? "Nome · Cognome"
+                : candidate.nameReading.order === "surname-given"
+                  ? "Cognome · Nome"
+                  : "Ordine da decidere"}
+            </span>
+            <Button
+              aria-label={`Scambia nome e cognome riga ${candidate.id}`}
+              className="min-h-10 px-2.5 text-xs"
+              disabled={disabled}
+              onClick={swapNameOrder}
+              type="button"
+              variant="secondary"
+            >
+              Scambia nome e cognome
+            </Button>
+            {nameNeedsReview && (
+              <Button
+                className="min-h-10 px-2.5 text-xs"
+                disabled={disabled}
+                onClick={confirmNameOrder}
+                type="button"
+              >
+                Conferma nome e cognome
+              </Button>
+            )}
+          </div>
+          {candidate.nameReading.compoundAmbiguity &&
+            !candidate.nameReading.acknowledged && (
+              <p className="mt-1 text-xs font-semibold text-[#a2381b]">
+                Nome o cognome composto: controlla la suddivisione.
+              </p>
+            )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <ReviewField
@@ -194,7 +308,9 @@ function CandidateCard({
 
       {invalid && (
         <p className="mt-3 text-xs font-semibold text-[#b42318]" role="alert">
-          Completa nome, cognome, data di nascita e sesso.
+          {nameNeedsReview
+            ? "Conferma la suddivisione di nome e cognome."
+            : "Completa nome, cognome, data di nascita e sesso."}
         </p>
       )}
     </article>
@@ -348,6 +464,7 @@ export function StudentScan({
       !candidate.surname.trim() ||
       !candidate.dateOfBirth ||
       !candidate.sex ||
+      nameReadingNeedsReview(candidate) ||
       (["firstName", "surname", "dateOfBirth", "phone"] as const).some(
         (field) => needsReview(candidate, field),
       ),
@@ -355,6 +472,9 @@ export function StudentScan({
   const readyStudents = candidates.filter((candidate) =>
     candidateIsReady(candidate, courseStartDate),
   ).length
+  const hasUnresolvedNameOrder = candidates.some(
+    (candidate) => candidate.nameReading?.order === "unknown",
+  )
 
   function acquisitionInput(
     ref: React.RefObject<HTMLInputElement | null>,
@@ -595,6 +715,55 @@ export function StudentScan({
               </div>
             </div>
           </section>
+
+          {hasUnresolvedNameOrder && (
+            <section
+              aria-label="Ordine dei nomi"
+              className="mb-3 rounded-2xl border bg-card p-3"
+            >
+              <h2 className="text-sm font-black">Ordine dei nomi</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Scegli solo se il foglio usa lo stesso ordine. Le righe già
+                corrette restano invariate.
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <Button
+                  className="h-auto min-h-10 px-2 text-xs"
+                  disabled={state === "saving"}
+                  onClick={() =>
+                    setCandidates((current) =>
+                      applyNameOrderToCandidates(
+                        current,
+                        "given-surname",
+                        "unresolved",
+                      ),
+                    )
+                  }
+                  type="button"
+                  variant="secondary"
+                >
+                  Applica Nome · Cognome
+                </Button>
+                <Button
+                  className="h-auto min-h-10 px-2 text-xs"
+                  disabled={state === "saving"}
+                  onClick={() =>
+                    setCandidates((current) =>
+                      applyNameOrderToCandidates(
+                        current,
+                        "surname-given",
+                        "unresolved",
+                      ),
+                    )
+                  }
+                  type="button"
+                  variant="secondary"
+                >
+                  Applica Cognome · Nome
+                </Button>
+              </div>
+            </section>
+          )}
 
           <section aria-label="Allievi estratti" className="grid gap-3">
             {candidates.map((candidate, index) => (

@@ -646,6 +646,25 @@ function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
   // forced the operator to retype what the scan had in fact read. The sex
   // suggestion stays gated, because a guess drawn from an unreliable name is
   // worse than no suggestion.
+  // A roster may print either order, and this one prints the surname first.
+  // The words are preserved exactly as read and the order is left unknown, so
+  // the review screen must ask rather than let the first token pass as a given
+  // name. firstName and surname below are only a provisional presentation of
+  // the same words; `raw` is the reading of record.
+  const nameReading: StudentScanNameReading | undefined =
+    nameParts.length >= 2
+      ? {
+          raw: nameParts.map(({ text }) => text).join(" "),
+          words: nameParts.map(({ text, confidence: wordConfidence }) => ({
+            text,
+            confidence: wordConfidence,
+          })),
+          order: "unknown",
+          compoundAmbiguity: nameParts.length > 2,
+          acknowledged: false,
+        }
+      : undefined
+
   const candidate = {
     sourceId: line.id,
     firstName,
@@ -655,6 +674,7 @@ function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
     sex:
       confidence.firstName >= MIN_FIELD_CONFIDENCE ? inferSex(firstName) : null,
     confidence,
+    ...(nameReading ? { nameReading } : {}),
   } satisfies StudentScanCandidate
 
   // Individual fields may be uncertain and still worth correcting, but a row
