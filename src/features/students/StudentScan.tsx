@@ -74,7 +74,7 @@ function candidateIsReady(candidate: ReviewCandidate, courseStartDate: string) {
  * operator work. The split itself is the capability's decision; this only picks
  * which rows it may touch, and there is intentionally no implicit default.
  */
-export function applyNameOrderToCandidates(
+function applyNameOrderToCandidates(
   candidates: ReviewCandidate[],
   order: Exclude<StudentNameOrder, "unknown">,
   scope: "unresolved" | "all",

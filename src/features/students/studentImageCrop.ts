@@ -6,8 +6,15 @@ export interface NormalizedCrop {
 }
 
 export type CropGesture =
-  "move" | "north-west" | "north-east" | "south-west" | "south-east"
-  | "north" | "east" | "south" | "west"
+  | "move"
+  | "north-west"
+  | "north-east"
+  | "south-west"
+  | "south-east"
+  | "north"
+  | "east"
+  | "south"
+  | "west"
 
 /**
  * The whole frame. A roster photograph is normally already framed tightly on
@@ -31,7 +38,10 @@ export interface NormalizedPoint {
  * A table row can be drawn in either direction; both directions describe the
  * same horizontal line for straightening purposes.
  */
-export function normalizedLineAngle(start: NormalizedPoint, end: NormalizedPoint) {
+export function normalizedLineAngle(
+  start: NormalizedPoint,
+  end: NormalizedPoint,
+) {
   const angle = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI
   let normalized = angle
   while (normalized > 90) normalized -= 180
