@@ -157,6 +157,15 @@ Scan accepts a screenshot or photograph of a variable-layout printed sheet. The
 entry offers `Scegli dalla galleria` or `Fai una foto`; camera acquisition uses the
 available full-screen surface, then free rotation and crop.
 
+The adjustment surface is a full-frame document workspace without a rotation
+slider. It supports direct crop, zoom/pan, line-based straightening, precise angle
+adjustment and quarter turns. An already-cropped image starts fully included.
+
+An unstructured name may be printed first-name-first or surname-first. Preserve
+the recognized name for review and require an explicit order choice rather than
+assuming the first token is a first name. Mixed ordering and compound names have
+per-row correction and acknowledgement before insertion.
+
 Extraction attempts first name, surname, date of birth and phone when present.
 Age is derived. Sex inference is only a convenience and is always editable.
 

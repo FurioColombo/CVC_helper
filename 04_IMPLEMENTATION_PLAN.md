@@ -650,3 +650,32 @@ The physical review remains `FAIL` because PC/Android/iPhone microphone checks a
 Android/iPhone native camera, gallery, orientation, crop, OCR and photo-disposal
 checks are still `NOT_RUN`. The package and lockfile therefore remain at 0.1.0;
 the 0.2.0 version bump, release checkpoint and tag wait for those observations.
+
+### Student scan redesign correction — 2026-09-16
+
+Human-requested UG1 correction: replace the P06 adjustment surface with a full-screen, no-slider document editor (zoom/pan, direct crop and line-based/fine straightening), test both supplied real images locally, and make name/surname order an explicit review choice. Two Luna concepts are compared in `.evidence/UG1/scan-redesign/`; the selected direction and bounded implementation/review loop are recorded in `implementation-plan.md` there. This supersedes the P06 mock's slider interaction for this correction. Source images remain transient and are not committed. UG1 remains IN_PROGRESS pending its existing physical-device release evidence.
+
+**Status 2026-09-18 — name order complete, editor redesign outstanding.**
+
+The explicit name-order choice is implemented and verified. The parser now emits
+a name reading for every multi-word name, preserving the words as read with the
+order left `unknown`, so no row can claim the first token is a given name. The
+review screen gates readiness on that choice, offers a per-row swap and confirm,
+and a sheet-wide `Applica Nome · Cognome` / `Applica Cognome · Nome` that skips
+rows the operator has already corrected by hand. The split is derived from the
+words as read rather than by exchanging two fields, which keeps a surname
+particle attached, makes repeated application idempotent, and leaves a genuinely
+ambiguous compound blank and flagged instead of guessed.
+
+Verified on the supplied roster photograph through the running interface: the
+order section appears, nineteen rows offer a swap, and one tap turns
+`Altomare / Valeria` into `Valeria / Altomare`. Covered by four capability tests
+and four component tests.
+
+The full-screen document editor from this correction is **not implemented**.
+`StudentScanImageEditor` still presents the rotation slider that the Product
+Specification paragraph above describes as removed, and has no zoom, pan or
+line-based straightening. Its default crop no longer trims the frame, which was
+removing the start of the surnames before OCR. Until the editor is rebuilt the
+specification is ahead of the code on that paragraph, and this correction stays
+open.

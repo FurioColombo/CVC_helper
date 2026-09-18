@@ -70,6 +70,151 @@ const EXTRACTED: StudentScanResult = {
   ],
 }
 
+/** Two rows read surname-first, as the printed roster actually prints them. */
+const SURNAME_FIRST: StudentScanResult = {
+  aggregateConfidence: 93,
+  unsuitable: false,
+  candidates: [
+    {
+      sourceId: "line-1",
+      firstName: "Altomare",
+      surname: "Valeria",
+      dateOfBirth: "1986-07-01",
+      phone: "",
+      sex: null,
+      confidence: { firstName: 93, surname: 94, dateOfBirth: 92, phone: 0 },
+      nameReading: {
+        raw: "Altomare Valeria",
+        words: [
+          { text: "Altomare", confidence: 93 },
+          { text: "Valeria", confidence: 94 },
+        ],
+        order: "unknown",
+        compoundAmbiguity: false,
+        acknowledged: false,
+      },
+    },
+    {
+      sourceId: "line-2",
+      firstName: "Mosca",
+      surname: "Caterina",
+      dateOfBirth: "2006-12-20",
+      phone: "",
+      sex: null,
+      confidence: { firstName: 92, surname: 93, dateOfBirth: 91, phone: 0 },
+      nameReading: {
+        raw: "Mosca Caterina",
+        words: [
+          { text: "Mosca", confidence: 92 },
+          { text: "Caterina", confidence: 93 },
+        ],
+        order: "unknown",
+        compoundAmbiguity: false,
+        acknowledged: false,
+      },
+    },
+  ],
+}
+
+async function openReview(result: StudentScanResult) {
+  const user = userEvent.setup()
+  render(
+    <StudentScan
+      courseId="course-1"
+      courseStartDate="2026-08-29"
+      onBack={vi.fn()}
+      onCommitted={vi.fn()}
+      scan={vi.fn().mockResolvedValue(result)}
+    />,
+  )
+  await user.upload(
+    screen.getByLabelText("Scegli foto dell’elenco allievi dalla galleria"),
+    new File(["image"], "elenco.png", { type: "image/png" }),
+  )
+  await user.click(screen.getByRole("button", { name: "Usa questa area" }))
+  await screen.findByRole("heading", { name: "Controlla prima di salvare" })
+  return user
+}
+
+describe("StudentScan name order", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:preview"),
+      revokeObjectURL: vi.fn(),
+    })
+    addStudents.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("asks for the order instead of assuming the first word is a given name", async () => {
+    await openReview(SURNAME_FIRST)
+
+    expect(screen.getByLabelText("Ordine dei nomi")).toBeVisible()
+    expect(screen.getAllByText("Ordine da decidere")).toHaveLength(2)
+    expect(screen.getAllByText("Letto:")).toHaveLength(2)
+    expect(screen.getByText("Altomare Valeria")).toBeVisible()
+    // Nothing may be committed while the order is still undecided.
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getByText("0")).toBeVisible()
+  })
+
+  it("applies a chosen order across the sheet and unblocks the rows", async () => {
+    const user = await openReview(SURNAME_FIRST)
+
+    await user.click(
+      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
+    )
+
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
+      "Altomare",
+    )
+    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
+      "Caterina",
+    )
+    expect(screen.getByLabelText(/^Cognome riga line-2-2$/)).toHaveValue(
+      "Mosca",
+    )
+    expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
+  })
+
+  it("leaves a row alone once the operator has typed the name themselves", async () => {
+    const user = await openReview(SURNAME_FIRST)
+
+    const firstName = screen.getByLabelText(/^Nome riga line-1-1$/)
+    await user.clear(firstName)
+    await user.type(firstName, "Valeria")
+
+    await user.click(
+      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
+    )
+
+    // The hand-corrected row keeps what was typed rather than being re-split.
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
+      "Caterina",
+    )
+  })
+
+  it("swaps a single row without touching the others", async () => {
+    const user = await openReview(SURNAME_FIRST)
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Scambia nome e cognome riga line-1-1",
+      }),
+    )
+
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Mosca")
+  })
+})
+
 describe("StudentScan", () => {
   beforeEach(() => {
     vi.clearAllMocks()

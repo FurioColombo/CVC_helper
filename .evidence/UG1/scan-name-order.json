@@ -1,0 +1,31 @@
+{
+  "milestone": "UG1",
+  "correction": "Student scan redesign — name order half",
+  "subject": "The name-order review existed but could never run",
+  "analysisOfTheWorkInProgress": {
+    "defect": "The review screen carried a full name-order feature that was unreachable. Nothing ever produced a name reading: the parser built candidates without one and the screen mapped them through untouched, so `candidate.nameReading` was always undefined. Every gate, the per-row panel and the sheet-wide section were therefore permanently inert, which is exactly what the live interface showed: inverted names and no control to fix them.",
+    "duplication": "Two incompatible implementations shared the name `applyStudentNameOrder`. The capability version splits a single candidate from the words as read, handles surname particles, detects compound ambiguity and recomputes confidence. The screen's own version exchanged the two fields and ignored all of it. The types were duplicated alongside it."
+  },
+  "resolution": [
+    "candidateFromLine now emits a reading for any multi-word name: the words exactly as read, order 'unknown', compound flagged above two words. firstName and surname remain a provisional presentation; raw is the reading of record.",
+    "The screen's duplicate types and function are gone. It imports the capability and keeps only applyNameOrderToCandidates, which decides which rows may be touched and delegates the split.",
+    "The per-row swap re-derives from the reading instead of exchanging fields, so it is idempotent and keeps a particle attached."
+  ],
+  "verification": {
+    "capabilityTests": [
+      "a two-word name is read without an order being chosen",
+      "applying an order splits from the words as read, and reapplying is idempotent and reversible",
+      "a surname particle stays with the surname when the sheet is surname-first",
+      "an ambiguous compound is left blank and flagged rather than guessed, with the raw reading preserved"
+    ],
+    "componentTests": [
+      "the order is asked for and nothing is ready until it is chosen",
+      "a sheet-wide choice applies and unblocks the rows",
+      "a row corrected by hand is left alone by the sheet-wide choice",
+      "a single row swaps without touching the others"
+    ],
+    "realPhotograph": "Through the running interface on the supplied roster: the order section is present, 19 rows offer a swap, and one tap turns Altomare/Valeria into Valeria/Altomare and Cortese/'Massimo Ì' into Massimo/Cortese. Banella/'Claudia georgia' correctly becomes blank and flagged, being a three-word compound with no particle.",
+    "suite": "378 unit and component tests, typecheck, lint, production build, PWA check and repository check pass on Node 24.21.0."
+  },
+  "stillOpen": "The full-screen document editor of this correction is not implemented. StudentScanImageEditor still has the rotation slider that the Product Specification describes as removed, and no zoom, pan or line-based straightening. Recorded in the plan so the specification and the code disagree visibly rather than silently."
+}
