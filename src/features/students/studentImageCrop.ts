@@ -7,12 +7,52 @@ export interface NormalizedCrop {
 
 export type CropGesture =
   "move" | "north-west" | "north-east" | "south-west" | "south-east"
+  | "north" | "east" | "south" | "west"
 
+/**
+ * The whole frame. A roster photograph is normally already framed tightly on
+ * the table, so trimming a default margin cut into the first column and lost
+ * the start of the surnames before OCR ever ran. The operator can still crop.
+ */
 export const DEFAULT_STUDENT_SCAN_CROP: NormalizedCrop = {
-  x: 0.04,
-  y: 0.04,
-  width: 0.92,
-  height: 0.92,
+  x: 0,
+  y: 0,
+  width: 1,
+  height: 1,
+}
+
+export interface NormalizedPoint {
+  x: number
+  y: number
+}
+
+/**
+ * Return the signed angle of a line in degrees, normalized to [-90, 90].
+ * A table row can be drawn in either direction; both directions describe the
+ * same horizontal line for straightening purposes.
+ */
+export function normalizedLineAngle(start: NormalizedPoint, end: NormalizedPoint) {
+  const angle = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI
+  let normalized = angle
+  while (normalized > 90) normalized -= 180
+  while (normalized < -90) normalized += 180
+  return normalized
+}
+
+/**
+ * Calculate the signed rotation delta for a radial direct-manipulation handle.
+ */
+export function rotationDeltaFromPoints(
+  center: NormalizedPoint,
+  start: NormalizedPoint,
+  current: NormalizedPoint,
+) {
+  const startAngle = Math.atan2(start.y - center.y, start.x - center.x)
+  const currentAngle = Math.atan2(current.y - center.y, current.x - center.x)
+  let delta = ((currentAngle - startAngle) * 180) / Math.PI
+  while (delta > 180) delta -= 360
+  while (delta < -180) delta += 360
+  return delta
 }
 
 const MIN_CROP_SIZE = 0.16
