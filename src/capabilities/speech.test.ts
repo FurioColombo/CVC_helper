@@ -60,9 +60,15 @@ describe("local Italian speech provider", () => {
     expect(secondProgress).toEqual(["processing"])
     expect(loadTranscriber).toHaveBeenCalledOnce()
     expect(decode).toHaveBeenCalledTimes(2)
+    // The repetition brakes travel with every request: without them Whisper
+    // turns a short note into hundreds of repeated words.
     expect(transcriber).toHaveBeenCalledWith(new Float32Array([0.2, -0.1]), {
       language: "italian",
       task: "transcribe",
+      no_repeat_ngram_size: 5,
+      repetition_penalty: 1.15,
+      temperature: 0,
+      condition_on_previous_text: false,
     })
   })
 

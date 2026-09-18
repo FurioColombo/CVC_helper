@@ -107,6 +107,12 @@ export function FaultForm({
       <div className="grid gap-2 text-sm font-bold">
         <div className="flex items-center justify-between gap-3">
           <label htmlFor="fault-description">Descrizione</label>
+          {dictation.status === "recording" && (
+            <DictationMeter
+              className="text-[#b42318]"
+              stream={dictation.mediaStream}
+            />
+          )}
           <Button
             aria-label={
               dictation.status === "recording"
@@ -277,3 +283,4 @@ export function FaultForm({
     </form>
   )
 }
+import { DictationMeter } from "@/features/speech/DictationMeter"

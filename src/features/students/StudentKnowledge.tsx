@@ -16,6 +16,7 @@ import { StudentSizeSelector } from "@/components/StudentSizeSelector"
 import { Button } from "@/components/ui/button"
 import type { StudentSize } from "@/domain/config"
 import { getStudentDisplayName } from "@/domain/student"
+import { DictationMeter } from "@/features/speech/DictationMeter"
 import {
   useDictation,
   type SpeechPrepare,
@@ -325,49 +326,57 @@ function KnowledgeCard({
             />
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <Button
-                aria-label={
-                  dictation.status === "recording"
-                    ? `Termina dettatura di ${displayName}`
-                    : `Detta nota di ${displayName}`
-                }
-                className={`h-11 px-3 text-xs ${dictation.status === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
-                disabled={
-                  !dictation.supported ||
-                  dictationBusy ||
-                  dictation.status === "review"
-                }
-                onClick={() =>
-                  dictation.status === "recording"
-                    ? dictation.stop()
-                    : void dictation.start()
-                }
-                type="button"
-                variant="secondary"
-              >
-                {dictationBusy ? (
-                  <LoaderCircle
-                    aria-hidden="true"
-                    className="size-4 animate-spin"
+              <div className="flex min-w-0 items-center gap-2">
+                <Button
+                  aria-label={
+                    dictation.status === "recording"
+                      ? `Termina dettatura di ${displayName}`
+                      : `Detta nota di ${displayName}`
+                  }
+                  className={`h-11 px-3 text-xs ${dictation.status === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
+                  disabled={
+                    !dictation.supported ||
+                    dictationBusy ||
+                    dictation.status === "review"
+                  }
+                  onClick={() =>
+                    dictation.status === "recording"
+                      ? dictation.stop()
+                      : void dictation.start()
+                  }
+                  type="button"
+                  variant="secondary"
+                >
+                  {dictationBusy ? (
+                    <LoaderCircle
+                      aria-hidden="true"
+                      className="size-4 animate-spin"
+                    />
+                  ) : dictation.status === "recording" ? (
+                    <Square
+                      aria-hidden="true"
+                      className="size-3.5 fill-current"
+                    />
+                  ) : (
+                    <Mic aria-hidden="true" className="size-4" />
+                  )}
+                  {dictation.status === "recording"
+                    ? "Termina"
+                    : dictation.status === "permission"
+                      ? "Permesso…"
+                      : dictation.status === "loading"
+                        ? `Caricamento${dictationProgress}`
+                        : dictation.status === "processing"
+                          ? "Elaborazione…"
+                          : "Detta"}
+                </Button>
+                {dictation.status === "recording" && (
+                  <DictationMeter
+                    className="text-[#b42318]"
+                    stream={dictation.mediaStream}
                   />
-                ) : dictation.status === "recording" ? (
-                  <Square
-                    aria-hidden="true"
-                    className="size-3.5 fill-current"
-                  />
-                ) : (
-                  <Mic aria-hidden="true" className="size-4" />
                 )}
-                {dictation.status === "recording"
-                  ? "Termina"
-                  : dictation.status === "permission"
-                    ? "Permesso…"
-                    : dictation.status === "loading"
-                      ? `Caricamento${dictationProgress}`
-                      : dictation.status === "processing"
-                        ? "Elaborazione…"
-                        : "Detta"}
-              </Button>
+              </div>
               <Button onClick={closeNoteEditor} type="button">
                 Fine
               </Button>

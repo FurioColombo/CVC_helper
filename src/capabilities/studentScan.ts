@@ -12,10 +12,7 @@ const MIN_ROW_CONFIDENCE = 60
 
 export type StudentScanField = "firstName" | "surname" | "dateOfBirth" | "phone"
 
-export type StudentNameOrder =
-  | "given-surname"
-  | "surname-given"
-  | "unknown"
+export type StudentNameOrder = "given-surname" | "surname-given" | "unknown"
 
 export interface StudentScanNameWord {
   text: string
@@ -208,7 +205,10 @@ function nameWordsFromReading(reading: StudentScanNameReading) {
 }
 
 function joinNameWords(words: StudentScanNameWord[]) {
-  return words.map(({ text }) => text).join(" ").trim()
+  return words
+    .map(({ text }) => text)
+    .join(" ")
+    .trim()
 }
 
 interface NameSplit {
@@ -224,7 +224,10 @@ function averageNameConfidence(words: StudentScanNameWord[]) {
     .map(({ confidence }) => confidence)
     .filter((confidence) => Number.isFinite(confidence) && confidence > 0)
   if (confident.length === 0) return 0
-  return confident.reduce((sum, confidence) => sum + confidence, 0) / confident.length
+  return (
+    confident.reduce((sum, confidence) => sum + confidence, 0) /
+    confident.length
+  )
 }
 
 /**
@@ -512,9 +515,8 @@ function roleCode(word: RecognizedWord) {
   const letters = word.text.replace(/[^A-Za-z]/g, "")
   if (letters.length === 0 || letters !== letters.toUpperCase()) return null
   return (
-    ROLE_CODES.find(
-      (role) => letters === role || letters.slice(1) === role,
-    ) ?? null
+    ROLE_CODES.find((role) => letters === role || letters.slice(1) === role) ??
+    null
   )
 }
 

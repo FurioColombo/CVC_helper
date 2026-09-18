@@ -43,6 +43,9 @@ export function useDictation({
   const [status, setStatus] = useState<DictationStatus>("idle")
   const [error, setError] = useState<DictationError | null>(null)
   const [loadPercent, setLoadPercent] = useState<number | undefined>()
+  // Exposed so the panel can show a live level while the microphone is open.
+  // It is the same stream the recorder uses; the meter only reads from it.
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const stoppedStreamsRef = useRef(new WeakSet<MediaStream>())
@@ -75,6 +78,7 @@ export function useDictation({
       stoppedStreamsRef.current.add(stream)
     }
     if (stream === streamRef.current) streamRef.current = null
+    setMediaStream((current) => (current === stream ? null : current))
   }
 
   async function finishTranscription(recorder: MediaRecorder, attempt: number) {
@@ -166,6 +170,7 @@ export function useDictation({
       recorder.onstop = () => void finishTranscription(recorder, attempt)
       recorder.start()
       setLoadPercent(undefined)
+      setMediaStream(stream)
       setStatus("recording")
     } catch {
       stopStream(stream)
@@ -236,6 +241,7 @@ export function useDictation({
     error,
     loadPercent,
     supported,
+    mediaStream,
     start,
     stop,
     cancel,

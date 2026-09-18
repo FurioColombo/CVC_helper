@@ -380,7 +380,12 @@ describe("student scan extraction", () => {
         { text: "anni", confidence: 88, left: 590, width: 40 },
         { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
       ])
-    const staff = (line: number, surname: string, given: string, role: string) =>
+    const staff = (
+      line: number,
+      surname: string,
+      given: string,
+      role: string,
+    ) =>
       tsvPlacedLine(line, [
         { text: surname, confidence: 92, left: 100, width: 80 },
         { text: given, confidence: 92, left: 190, width: 70 },
