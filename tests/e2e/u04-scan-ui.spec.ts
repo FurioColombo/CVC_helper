@@ -42,15 +42,16 @@ test("keeps acquisition and adjustment usable on compact screens", async ({
     }),
   ).toBeVisible()
   // The correction replaced the rotation slider with a document workspace.
-  await expect(page.locator(`input[type="range"]`)).toHaveCount(0)
+  await expect(page.locator('input[type="range"]')).toHaveCount(0)
   await expect(page.getByLabel("Area di lavoro foto")).toBeVisible()
+  await expect(page.getByAltText("Anteprima foto da ritagliare")).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Raddrizza con una linea" }),
   ).toBeVisible()
-  await page.getByLabel("Angolo in gradi").fill("-2.5")
-  await expect(page.getByLabel("Angolo in gradi")).toHaveValue("-2.5")
-  await page.getByRole("button", { name: "Aumenta ingrandimento" }).click()
-  await expect(page.getByText("125%")).toBeVisible()
+  const dial = page.getByRole("slider", { name: "Inclinazione in gradi" })
+  await dial.focus()
+  await dial.press("ArrowRight")
+  await expect(dial).toHaveAttribute("aria-valuenow", "0.1")
   await page.getByRole("group", { name: /Area di ritaglio/ }).press("ArrowDown")
   await page.screenshot({
     fullPage: true,

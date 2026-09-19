@@ -1,0 +1,29 @@
+{
+  "milestone": "UG1",
+  "subject": "Adjustment surface reworked, and three review improvements",
+  "editorDefect": "The rebuilt workspace rendered the photograph at 0 by 0 in Chrome. An aspect-ratio box with no resolvable length collapses, so there was literally nothing to look at while editing. The fitted box is now computed from the measured stage and the picture's aspect, observed for resize, and asserted in the browser at 390 by 844.",
+  "interaction": {
+    "reference": "The Photos-style pattern: the picture under a frame, a translucent ruler dial for inclination, minimal chrome. Dial spacing follows the documented 6 pixels per degree over plus or minus 45 degrees.",
+    "shipped": [
+      "translucent ruler with 91 ticks, taller every five degrees, a caret at centre and a live readout; drag it or use arrows for a tenth, shift for a whole degree, Home to level",
+      "pinch and wheel zoom with panning bounded to what the zoom pushes off-frame, replacing the zoom buttons",
+      "corner brackets instead of filled circles, and a thirds grid that appears only while a gesture is live",
+      "text actions Annulla and Ripristina in the header, one white commit pill, ghost circular icons for the rest"
+    ]
+  },
+  "reviewImprovements": {
+    "nameOrderRememberedPerCourse": "A club's sheet is printed one way, so the order is asked once per course and applied to every later scan. The question is replaced by the remembered answer with an Inverti per tutti action. Stored per course in local storage: it is an interface preference, not course data, and a schema change during a release gate was not worth one tap.",
+    "strayTokensDropped": "A name token must be three characters or a known surname particle. This removes the table-rule debris OCR produced: the Ì in 'Massimo Ì', the gi in 'Simone gi', a lone s or -.",
+    "sexSuggestedFromTheName": "Italian given names carry gender in the ending far more reliably than in any list, so -a suggests female and -o male, with a short override set for the names that lie (Andrea, Luca, Nicola, Mattia; Nives, Ester). Anything else stays unset. It is a suggestion and remains editable.",
+    "rowConfirmation": "Confidence is the scan's opinion; a person who has read the row overrules it. A Controlla toggle clears a row's review flags, so 'allievi pronti' is reachable on a real photograph instead of permanently zero. Rows are not marked ready automatically: these are names and dates of birth, and minor status depends on them."
+  },
+  "measuredOnTheCroppedRosterPhotograph": {
+    "rows": 20,
+    "expected": 20,
+    "fieldsToComplete": "36 before, 20 after, because the sex suggestion now fills a field per row",
+    "recovered": "Bertani Roberto, which had fallen below the row threshold while carrying stray tokens",
+    "nameOrder": "one tap turns Altomare/Valeria into Valeria/Altomare across the sheet"
+  },
+  "verification": "verify:quick passes with 389 unit and component tests; the u04 browser journey passes on all three device projects at 320x664 including the 200 percent text pass; the production build and repository checks pass.",
+  "notVerified": "Pinch zoom and the line gesture have not been exercised on a physical touch screen."
+}

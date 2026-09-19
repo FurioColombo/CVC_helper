@@ -1,23 +1,14 @@
-import {
-  Check,
-  LoaderCircle,
-  Minus,
-  Plus,
-  Redo2,
-  RotateCcw,
-  RotateCw,
-  Ruler,
-  X,
-} from "lucide-react"
+import { Check, LoaderCircle, RotateCcw, Ruler } from "lucide-react"
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
 } from "react"
 
-import { Button } from "@/components/ui/button"
 import {
   createStudentScanPreview,
   DEFAULT_STUDENT_SCAN_CROP,
@@ -38,53 +29,47 @@ interface PointerGesture {
   offset: { x: number; y: number }
 }
 
-interface StraightenLine {
-  start: NormalizedPoint
-  end: NormalizedPoint
-}
-
 const MIN_ZOOM = 1
 const MAX_ZOOM = 4
-const ZOOM_STEP = 0.25
-const FINE_ANGLE_STEP = 0.1
+const MAX_TILT = 45
+const TILT_STEP = 0.1
+/** Pixels of ruler travel per degree, the spacing the Photos dial uses. */
+const PIXELS_PER_DEGREE = 6
 
-const CROP_HANDLES: Array<{
+const CROP_CORNERS: Array<{
   gesture: Exclude<CropGesture, "move">
   label: string
-  className: string
+  position: string
+  bracket: string
 }> = [
   {
     gesture: "north-west",
     label: "Ridimensiona ritaglio dall’angolo in alto a sinistra",
-    className: "-left-5 -top-5 cursor-nwse-resize",
+    position: "left-0 top-0",
+    bracket: "border-l-[3px] border-t-[3px] rounded-tl-sm",
   },
   {
     gesture: "north-east",
     label: "Ridimensiona ritaglio dall’angolo in alto a destra",
-    className: "-right-5 -top-5 cursor-nesw-resize",
+    position: "right-0 top-0",
+    bracket: "border-r-[3px] border-t-[3px] rounded-tr-sm",
   },
   {
     gesture: "south-west",
     label: "Ridimensiona ritaglio dall’angolo in basso a sinistra",
-    className: "-bottom-5 -left-5 cursor-nesw-resize",
+    position: "bottom-0 left-0",
+    bracket: "border-b-[3px] border-l-[3px] rounded-bl-sm",
   },
   {
     gesture: "south-east",
     label: "Ridimensiona ritaglio dall’angolo in basso a destra",
-    className: "-bottom-5 -right-5 cursor-nwse-resize",
+    position: "right-0 bottom-0",
+    bracket: "border-r-[3px] border-b-[3px] rounded-br-sm",
   },
 ]
 
-function rotateByQuarterTurn(current: number, direction: -1 | 1) {
-  const next = current + direction * 90
-  return next > 180 ? next - 360 : next < -180 ? next + 360 : next
-}
-
-function clampAngle(value: number) {
-  const rounded = Math.round(value * 10) / 10
-  if (rounded > 180) return rounded - 360
-  if (rounded < -180) return rounded + 360
-  return rounded
+function clampTilt(value: number) {
+  return Math.min(MAX_TILT, Math.max(-MAX_TILT, Math.round(value * 10) / 10))
 }
 
 function clampZoom(value: number) {
@@ -92,9 +77,8 @@ function clampZoom(value: number) {
 }
 
 /**
- * Pan is expressed in stage widths so it survives a resize. The image may not
- * be dragged away from the frame: at fit there is nothing to pan, and at higher
- * zoom the travel is exactly the part of the image pushed outside the stage.
+ * Pan is expressed in stage widths. At fit there is nothing to pan; above it the
+ * travel is exactly the part of the image the zoom pushes outside the frame.
  */
 function clampOffset(offset: { x: number; y: number }, zoom: number) {
   const travel = Math.max(0, (zoom - 1) / (2 * zoom))
@@ -105,8 +89,27 @@ function clampOffset(offset: { x: number; y: number }, zoom: number) {
 }
 
 /**
- * The full-frame document workspace: no rotation slider, direct crop, zoom and
- * pan, and straightening taken from a line drawn along a rule on the sheet.
+ * Fit a picture inside the stage. The box is computed rather than left to CSS:
+ * an aspect-ratio box with no resolvable length collapses to nothing, which is
+ * how this surface once rendered an invisible photograph.
+ */
+function fitInside(
+  stage: { width: number; height: number },
+  aspect: number,
+): { width: number; height: number } {
+  if (stage.width <= 0 || stage.height <= 0 || !Number.isFinite(aspect)) {
+    return { width: 0, height: 0 }
+  }
+  const byWidth = { width: stage.width, height: stage.width / aspect }
+  if (byWidth.height <= stage.height) return byWidth
+  return { width: stage.height * aspect, height: stage.height }
+}
+
+const TICKS = Array.from({ length: MAX_TILT * 2 + 1 }, (_, i) => i - MAX_TILT)
+
+/**
+ * The adjustment surface: the picture fills the frame, a translucent ruler
+ * carries the inclination, and the controls stay out of the way.
  */
 export function StudentScanImageEditorDocument({
   file,
@@ -119,12 +122,18 @@ export function StudentScanImageEditorDocument({
   onCancel: () => void
   onUse: (image: Blob) => void
 }) {
-  const [rotation, setRotation] = useState(0)
+  const [quarter, setQuarter] = useState(0)
+  const [tilt, setTilt] = useState(0)
   const [crop, setCrop] = useState(DEFAULT_STUDENT_SCAN_CROP)
   const [zoom, setZoom] = useState(MIN_ZOOM)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [straightening, setStraightening] = useState(false)
-  const [line, setLine] = useState<StraightenLine | null>(null)
+  const [line, setLine] = useState<{
+    start: NormalizedPoint
+    end: NormalizedPoint
+  } | null>(null)
+  const [adjusting, setAdjusting] = useState(false)
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
   const [preview, setPreview] = useState<{
     url: string
     width: number
@@ -136,14 +145,37 @@ export function StudentScanImageEditorDocument({
   const stageRef = useRef<HTMLDivElement | null>(null)
   const pointerGestureRef = useRef<PointerGesture | null>(null)
   const linePointerRef = useRef<number | null>(null)
+  const rulerPointerRef = useRef<{
+    pointerId: number
+    startX: number
+    tilt: number
+  } | null>(null)
+  const pinchRef = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const pinchStartRef = useRef<{ distance: number; zoom: number } | null>(null)
   const previewSequenceRef = useRef(0)
   const activeRef = useRef(true)
+
+  const rotation = quarter + tilt
 
   useEffect(() => {
     activeRef.current = true
     return () => {
       activeRef.current = false
     }
+  }, [])
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    if (!stage) return
+    const measure = () => {
+      const bounds = stage.getBoundingClientRect()
+      setStageSize({ width: bounds.width, height: bounds.height })
+    }
+    measure()
+    if (typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(measure)
+    observer.observe(stage)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -186,9 +218,13 @@ export function StudentScanImageEditorDocument({
     [preview],
   )
 
+  const fitted = preview
+    ? fitInside(stageSize, preview.width / preview.height)
+    : { width: 0, height: 0 }
+
   function stagePoint(event: ReactPointerEvent<HTMLElement>): NormalizedPoint {
     const bounds = stageRef.current?.getBoundingClientRect()
-    if (!bounds) return { x: 0, y: 0 }
+    if (!bounds || !bounds.width || !bounds.height) return { x: 0, y: 0 }
     return {
       x: (event.clientX - bounds.left) / bounds.width,
       y: (event.clientY - bounds.top) / bounds.height,
@@ -202,7 +238,8 @@ export function StudentScanImageEditorDocument({
     if (straightening) return
     event.preventDefault()
     event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    setAdjusting(true)
     pointerGestureRef.current = {
       pointerId: event.pointerId,
       gesture,
@@ -214,11 +251,30 @@ export function StudentScanImageEditorDocument({
   }
 
   function movePointer(event: ReactPointerEvent<HTMLElement>) {
+    if (pinchRef.current.has(event.pointerId)) {
+      pinchRef.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+      })
+      const points = [...pinchRef.current.values()]
+      if (points.length === 2 && pinchStartRef.current) {
+        const distance = Math.hypot(
+          points[0]!.x - points[1]!.x,
+          points[0]!.y - points[1]!.y,
+        )
+        const next = clampZoom(
+          (pinchStartRef.current.zoom * distance) /
+            pinchStartRef.current.distance,
+        )
+        setZoom(next)
+        setOffset((current) => clampOffset(current, next))
+        return
+      }
+    }
     const gesture = pointerGestureRef.current
     const bounds = stageRef.current?.getBoundingClientRect()
     if (!gesture || !bounds || gesture.pointerId !== event.pointerId) return
-    // Pointer travel is divided by the zoom so a drag keeps up with the
-    // fingertip instead of racing ahead of it when the view is magnified.
+    if (!bounds.width || !bounds.height) return
     const deltaX = (event.clientX - gesture.startX) / (bounds.width * zoom)
     const deltaY = (event.clientY - gesture.startY) / (bounds.height * zoom)
     if (gesture.gesture === "pan") {
@@ -234,14 +290,43 @@ export function StudentScanImageEditorDocument({
   }
 
   function finishPointer(event: ReactPointerEvent<HTMLElement>) {
-    if (pointerGestureRef.current?.pointerId === event.pointerId)
+    pinchRef.current.delete(event.pointerId)
+    if (pinchRef.current.size < 2) pinchStartRef.current = null
+    if (pointerGestureRef.current?.pointerId === event.pointerId) {
       pointerGestureRef.current = null
+    }
+    if (!pointerGestureRef.current && !rulerPointerRef.current)
+      setAdjusting(false)
+  }
+
+  function trackPinch(event: ReactPointerEvent<HTMLElement>) {
+    pinchRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    })
+    const points = [...pinchRef.current.values()]
+    if (points.length === 2) {
+      pinchStartRef.current = {
+        distance: Math.hypot(
+          points[0]!.x - points[1]!.x,
+          points[0]!.y - points[1]!.y,
+        ),
+        zoom,
+      }
+    }
+  }
+
+  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    if (!preview) return
+    const next = clampZoom(zoom - event.deltaY / 500)
+    setZoom(next)
+    setOffset((current) => clampOffset(current, next))
   }
 
   function beginLine(event: ReactPointerEvent<HTMLElement>) {
     if (!straightening) return
     event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
     linePointerRef.current = event.pointerId
     const point = stagePoint(event)
     setLine({ start: point, end: point })
@@ -265,10 +350,52 @@ export function StudentScanImageEditorDocument({
       // A tap is not a line. Ignore it rather than snapping to a wild angle.
       if (travelled < 0.05) return null
       const angle = normalizedLineAngle(current.start, current.end)
-      setRotation((value) => clampAngle(value - angle))
+      setTilt((value) => clampTilt(value - angle))
       return null
     })
     setStraightening(false)
+  }
+
+  function beginRuler(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault()
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    rulerPointerRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      tilt,
+    }
+    setAdjusting(true)
+  }
+
+  function moveRuler(event: ReactPointerEvent<HTMLDivElement>) {
+    const ruler = rulerPointerRef.current
+    if (!ruler || ruler.pointerId !== event.pointerId) return
+    // Dragging left reveals larger angles, as the dial under a thumb would.
+    setTilt(
+      clampTilt(
+        ruler.tilt - (event.clientX - ruler.startX) / PIXELS_PER_DEGREE,
+      ),
+    )
+  }
+
+  function finishRuler(event: ReactPointerEvent<HTMLDivElement>) {
+    if (rulerPointerRef.current?.pointerId !== event.pointerId) return
+    rulerPointerRef.current = null
+    if (!pointerGestureRef.current) setAdjusting(false)
+  }
+
+  function rulerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const step = event.shiftKey ? 1 : TILT_STEP
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+      event.preventDefault()
+      setTilt((current) => clampTilt(current - step))
+    } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+      event.preventDefault()
+      setTilt((current) => clampTilt(current + step))
+    } else if (event.key === "Home") {
+      event.preventDefault()
+      setTilt(0)
+    }
   }
 
   function moveHandleWithKeyboard(
@@ -336,18 +463,13 @@ export function StudentScanImageEditorDocument({
   }
 
   function resetAll() {
-    setRotation(0)
+    setQuarter(0)
+    setTilt(0)
     setCrop(DEFAULT_STUDENT_SCAN_CROP)
     setZoom(MIN_ZOOM)
     setOffset({ x: 0, y: 0 })
     setLine(null)
     setStraightening(false)
-  }
-
-  function changeZoom(next: number) {
-    const nextZoom = clampZoom(next)
-    setZoom(nextZoom)
-    setOffset((current) => clampOffset(current, nextZoom))
   }
 
   async function handleUseArea() {
@@ -364,51 +486,42 @@ export function StudentScanImageEditorDocument({
     }
   }
 
-  const controlClass =
-    "size-11 border-white/25 bg-white/10 p-0 text-white hover:bg-white/15"
+  const ghost =
+    "grid size-11 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 active:scale-95 disabled:opacity-40"
 
   return (
     <section
       aria-label="Raddrizza e ritaglia foto"
       aria-modal="true"
-      className="fixed inset-0 z-70 flex flex-col overflow-hidden bg-[#09182b] text-white"
+      className="fixed inset-0 z-70 flex flex-col overflow-hidden bg-black text-white"
       onKeyDown={handleDialogKeyDown}
       ref={dialogRef}
       role="dialog"
     >
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/15 px-3 py-2">
-        <Button
+      <header className="flex shrink-0 items-center justify-between px-4 py-3 text-sm">
+        <button
           aria-label="Chiudi regolazione foto"
           autoFocus
-          className={controlClass}
+          className="min-h-11 rounded-full px-2 font-semibold text-white/85 transition hover:text-white"
           onClick={onCancel}
           type="button"
-          variant="secondary"
         >
-          <X aria-hidden="true" className="size-5" />
-        </Button>
-        <div className="min-w-0 text-center">
-          <h2 className="truncate text-base font-black">
-            Raddrizza e ritaglia
-          </h2>
-          <p className="text-[0.7rem] text-white/70">
-            {source === "camera" ? "Foto appena scattata" : "Dalla galleria"}
-          </p>
-        </div>
-        <Button
+          Annulla
+        </button>
+        <p className="truncate text-xs font-semibold text-white/60">
+          {source === "camera" ? "Foto appena scattata" : "Dalla galleria"}
+        </p>
+        <button
           aria-label="Ripristina foto"
-          className={controlClass}
+          className="min-h-11 rounded-full px-2 font-semibold text-white/85 transition hover:text-white disabled:opacity-40"
           disabled={preparing}
           onClick={resetAll}
           type="button"
-          variant="secondary"
         >
-          <Redo2 aria-hidden="true" className="size-5" />
-        </Button>
+          Ripristina
+        </button>
       </header>
 
-      {/* The stage owns the whole frame and clips its own dimming, so the mask
-          can never spill over the controls below it. */}
       <div
         aria-label="Area di lavoro foto"
         className="relative min-h-0 flex-1 touch-none overflow-hidden select-none"
@@ -417,6 +530,7 @@ export function StudentScanImageEditorDocument({
           commitLine(event)
         }}
         onPointerDown={(event) => {
+          trackPinch(event)
           if (straightening) beginLine(event)
           else beginPointerGesture(event, "pan")
         }}
@@ -428,18 +542,18 @@ export function StudentScanImageEditorDocument({
           finishPointer(event)
           commitLine(event)
         }}
+        onWheel={handleWheel}
         ref={stageRef}
       >
         {preview ? (
-          <div
-            className="absolute inset-0 grid place-items-center"
-            style={{
-              transform: `translate(${offset.x * 100}%, ${offset.y * 100}%) scale(${zoom})`,
-            }}
-          >
+          <div className="absolute inset-0 grid place-items-center">
             <div
-              className="relative max-h-full max-w-full"
-              style={{ aspectRatio: `${preview.width} / ${preview.height}` }}
+              className="relative"
+              style={{
+                width: fitted.width || undefined,
+                height: fitted.height || undefined,
+                transform: `translate(${offset.x * 100}%, ${offset.y * 100}%) scale(${zoom})`,
+              }}
             >
               <img
                 alt="Anteprima foto da ritagliare"
@@ -449,7 +563,7 @@ export function StudentScanImageEditorDocument({
               />
               <div
                 aria-label="Area di ritaglio. Trascina o usa le frecce per spostarla"
-                className="absolute cursor-move border-2 border-white outline outline-[9999px] outline-[rgb(3_12_25/0.58)]"
+                className="absolute cursor-move outline outline-[9999px] outline-black/55"
                 onKeyDown={moveCropWithKeyboard}
                 onPointerDown={(event) => beginPointerGesture(event, "move")}
                 role="group"
@@ -461,21 +575,33 @@ export function StudentScanImageEditorDocument({
                 }}
                 tabIndex={0}
               >
-                {CROP_HANDLES.map((handle) => (
+                <div className="absolute inset-0 border border-white/70" />
+                {/* Thirds appear only while a gesture is live, as Photos does. */}
+                <div
+                  className={`pointer-events-none absolute inset-0 transition-opacity duration-200 ${adjusting ? "opacity-100" : "opacity-0"}`}
+                >
+                  <div className="absolute inset-y-0 left-1/3 w-px bg-white/30" />
+                  <div className="absolute inset-y-0 left-2/3 w-px bg-white/30" />
+                  <div className="absolute inset-x-0 top-1/3 h-px bg-white/30" />
+                  <div className="absolute inset-x-0 top-2/3 h-px bg-white/30" />
+                </div>
+                {CROP_CORNERS.map((corner) => (
                   <button
-                    aria-label={handle.label}
-                    className={`absolute grid size-10 place-items-center rounded-full border-2 border-white bg-primary shadow-lg ${handle.className}`}
-                    key={handle.gesture}
+                    aria-label={corner.label}
+                    className={`absolute grid size-11 ${corner.position}`}
+                    key={corner.gesture}
                     onKeyDown={(event) =>
-                      moveHandleWithKeyboard(event, handle.gesture)
+                      moveHandleWithKeyboard(event, corner.gesture)
                     }
                     onPointerDown={(event) =>
-                      beginPointerGesture(event, handle.gesture)
+                      beginPointerGesture(event, corner.gesture)
                     }
                     style={{ transform: `scale(${1 / zoom})` }}
                     type="button"
                   >
-                    <span className="size-2 rounded-full bg-white" />
+                    <span
+                      className={`size-6 border-white ${corner.bracket} ${corner.position.includes("right") ? "justify-self-end" : ""} ${corner.position.includes("bottom") ? "self-end" : ""}`}
+                    />
                   </button>
                 ))}
               </div>
@@ -485,20 +611,20 @@ export function StudentScanImageEditorDocument({
           <div className="grid size-full place-items-center">
             <LoaderCircle
               aria-label="Preparo anteprima"
-              className="size-8 animate-spin text-white/80"
+              className="size-7 animate-spin text-white/70"
             />
           </div>
         )}
 
         {straightening && (
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-x-0 top-3 text-center text-xs font-semibold text-white">
+            <p className="absolute inset-x-0 top-4 text-center text-xs font-semibold text-white/90">
               Traccia una linea lungo una riga del foglio
-            </div>
+            </p>
             {line && (
               <svg className="absolute inset-0 size-full">
                 <line
-                  stroke="#70a8ff"
+                  stroke="#f5c451"
                   strokeWidth={2}
                   x1={`${line.start.x * 100}%`}
                   x2={`${line.end.x * 100}%`}
@@ -511,131 +637,92 @@ export function StudentScanImageEditorDocument({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-white/15 px-3 py-3">
-        <div className="mx-auto grid w-full max-w-xl gap-2">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button
-              aria-label="Ruota 90 gradi a sinistra"
-              className={controlClass}
-              disabled={preparing}
-              onClick={() =>
-                setRotation((current) => rotateByQuarterTurn(current, -1))
-              }
-              type="button"
-              variant="secondary"
-            >
-              <RotateCcw aria-hidden="true" className="size-5" />
-            </Button>
-            <Button
-              aria-label="Ruota 90 gradi a destra"
-              className={controlClass}
-              disabled={preparing}
-              onClick={() =>
-                setRotation((current) => rotateByQuarterTurn(current, 1))
-              }
-              type="button"
-              variant="secondary"
-            >
-              <RotateCw aria-hidden="true" className="size-5" />
-            </Button>
-            <Button
-              aria-label="Raddrizza con una linea"
-              aria-pressed={straightening}
-              className={`min-h-11 px-3 text-xs ${straightening ? "bg-white text-[#09182b]" : "border-white/25 bg-white/10 text-white hover:bg-white/15"}`}
-              disabled={preparing || !preview}
-              onClick={() => {
-                setLine(null)
-                setStraightening((current) => !current)
-              }}
-              type="button"
-              variant="secondary"
-            >
-              <Ruler aria-hidden="true" className="size-4" />
-              Linea
-            </Button>
-            <Button
-              aria-label="Riduci ingrandimento"
-              className={controlClass}
-              disabled={preparing || zoom <= MIN_ZOOM}
-              onClick={() => changeZoom(zoom - ZOOM_STEP)}
-              type="button"
-              variant="secondary"
-            >
-              <Minus aria-hidden="true" className="size-5" />
-            </Button>
-            <output className="min-w-14 text-center text-xs font-bold">
-              {Math.round(zoom * 100)}%
-            </output>
-            <Button
-              aria-label="Aumenta ingrandimento"
-              className={controlClass}
-              disabled={preparing || zoom >= MAX_ZOOM}
-              onClick={() => changeZoom(zoom + ZOOM_STEP)}
-              type="button"
-              variant="secondary"
-            >
-              <Plus aria-hidden="true" className="size-5" />
-            </Button>
+      {/* Inclination: a translucent dial over the picture, not a control bar. */}
+      <div className="relative shrink-0 px-4 pb-3">
+        <div
+          aria-label="Inclinazione in gradi"
+          aria-valuemax={MAX_TILT}
+          aria-valuemin={-MAX_TILT}
+          aria-valuenow={tilt}
+          aria-valuetext={`${tilt.toFixed(1).replace(".", ",")} gradi`}
+          className="relative h-16 touch-none overflow-hidden select-none"
+          onKeyDown={rulerKeyDown}
+          onPointerCancel={finishRuler}
+          onPointerDown={beginRuler}
+          onPointerMove={moveRuler}
+          onPointerUp={finishRuler}
+          role="slider"
+          tabIndex={0}
+          style={{
+            maskImage:
+              "linear-gradient(90deg, transparent, black 18%, black 82%, transparent)",
+            WebkitMaskImage:
+              "linear-gradient(90deg, transparent, black 18%, black 82%, transparent)",
+          }}
+        >
+          <div
+            className="absolute top-6 left-1/2 flex items-end"
+            style={{
+              transform: `translateX(calc(-50% - ${tilt * PIXELS_PER_DEGREE}px))`,
+            }}
+          >
+            {TICKS.map((tick) => (
+              <span
+                className="flex shrink-0 justify-center"
+                key={tick}
+                style={{ width: PIXELS_PER_DEGREE }}
+              >
+                <span
+                  className={
+                    tick % 5 === 0
+                      ? "h-4 w-px bg-white/80"
+                      : "h-2 w-px bg-white/30"
+                  }
+                />
+              </span>
+            ))}
           </div>
+          <output className="absolute inset-x-0 top-0 text-center text-sm font-semibold tabular-nums text-white">
+            {tilt === 0 ? "0°" : `${tilt.toFixed(1).replace(".", ",")}°`}
+          </output>
+          <span className="pointer-events-none absolute top-5 left-1/2 h-6 w-0.5 -translate-x-1/2 rounded-full bg-[#f5c451]" />
+        </div>
+      </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button
-              aria-label="Ruota di un decimo di grado a sinistra"
-              className={controlClass}
-              disabled={preparing}
-              onClick={() =>
-                setRotation((current) => clampAngle(current - FINE_ANGLE_STEP))
-              }
-              type="button"
-              variant="secondary"
-            >
-              −
-            </Button>
-            <label className="grid gap-1 text-xs font-bold">
-              <span className="sr-only">Angolo in gradi</span>
-              <input
-                aria-label="Angolo in gradi"
-                className="h-11 w-24 rounded-xl border border-white/25 bg-white/10 px-2 text-center text-sm text-white"
-                disabled={preparing}
-                inputMode="decimal"
-                max={180}
-                min={-180}
-                onChange={(event) =>
-                  setRotation(clampAngle(Number(event.target.value) || 0))
-                }
-                step={FINE_ANGLE_STEP}
-                type="number"
-                value={rotation}
-              />
-            </label>
-            <Button
-              aria-label="Ruota di un decimo di grado a destra"
-              className={controlClass}
-              disabled={preparing}
-              onClick={() =>
-                setRotation((current) => clampAngle(current + FINE_ANGLE_STEP))
-              }
-              type="button"
-              variant="secondary"
-            >
-              +
-            </Button>
-          </div>
-
-          {error && (
-            <p
-              className="text-center text-xs font-semibold text-[#ffb4ab]"
-              role="alert"
-            >
-              Non riesco a preparare questa foto. Scegline un’altra.
-            </p>
-          )}
-
-          <Button
-            className="w-full"
+      <div className="shrink-0 px-4 pb-5">
+        <div className="mx-auto flex w-full max-w-md items-center gap-3">
+          <button
+            aria-label="Ruota 90 gradi a sinistra"
+            className={ghost}
+            disabled={preparing}
+            onClick={() => setQuarter((current) => (current - 90) % 360)}
+            type="button"
+          >
+            <RotateCcw aria-hidden="true" className="size-5" />
+          </button>
+          <button
+            aria-label="Raddrizza con una linea"
+            aria-pressed={straightening}
+            className={`${ghost} ${straightening ? "bg-[#f5c451] text-black" : ""}`}
+            disabled={preparing || !preview}
+            onClick={() => {
+              setLine(null)
+              setStraightening((current) => !current)
+            }}
+            type="button"
+          >
+            <Ruler aria-hidden="true" className="size-5" />
+          </button>
+          <output
+            aria-label="Ingrandimento"
+            className="min-w-12 text-xs font-semibold tabular-nums text-white/60"
+          >
+            {Math.round(zoom * 100)}%
+          </output>
+          <button
+            className="ml-auto grid min-h-12 flex-1 place-items-center rounded-full bg-white text-sm font-bold text-black transition active:scale-[0.98] disabled:opacity-40"
             disabled={!preview || preparing}
             onClick={() => void handleUseArea()}
-            size="lg"
             type="button"
           >
             {preparing ? (
@@ -644,11 +731,21 @@ export function StudentScanImageEditorDocument({
                 className="size-5 animate-spin"
               />
             ) : (
-              <Check aria-hidden="true" className="size-5" />
+              <span className="flex items-center gap-2">
+                <Check aria-hidden="true" className="size-4" />
+                Usa questa area
+              </span>
             )}
-            {preparing ? "Preparo l’area…" : "Usa questa area"}
-          </Button>
+          </button>
         </div>
+        {error && (
+          <p
+            className="mt-2 text-center text-xs font-semibold text-[#ffb4ab]"
+            role="alert"
+          >
+            Non riesco a preparare questa foto. Scegline un’altra.
+          </p>
+        )}
       </div>
     </section>
   )

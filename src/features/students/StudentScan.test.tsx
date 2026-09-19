@@ -1,4 +1,5 @@
 import {
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -138,6 +139,8 @@ async function openReview(result: StudentScanResult) {
 
 describe("StudentScan name order", () => {
   beforeEach(() => {
+    // The chosen order is remembered per course, so each test starts fresh.
+    window.localStorage.clear()
     vi.clearAllMocks()
     vi.stubGlobal("URL", {
       ...URL,
@@ -180,7 +183,30 @@ describe("StudentScan name order", () => {
     expect(screen.getByLabelText(/^Cognome riga line-2-2$/)).toHaveValue(
       "Mosca",
     )
-    expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
+    // The question is replaced by the remembered answer, not asked again.
+    const banner = within(screen.getByLabelText("Ordine dei nomi"))
+    expect(
+      screen.queryByRole("button", { name: "Applica Cognome · Nome" }),
+    ).not.toBeInTheDocument()
+    expect(banner.getByText("Cognome · Nome")).toBeVisible()
+    expect(
+      banner.getByRole("button", { name: "Inverti per tutti" }),
+    ).toBeVisible()
+  })
+
+  it("remembers the order for the next scan of the same course", async () => {
+    const user = await openReview(SURNAME_FIRST)
+    await user.click(
+      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
+    )
+    cleanup()
+
+    await openReview(SURNAME_FIRST)
+    // Asked once per course: the second scan arrives already the right way up.
+    expect(
+      screen.queryByRole("button", { name: "Applica Cognome · Nome" }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
   })
 
   it("leaves a row alone once the operator has typed the name themselves", async () => {
