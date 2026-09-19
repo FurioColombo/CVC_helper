@@ -1,0 +1,165 @@
+{
+  "milestone": "UG1",
+  "entry": "Boat marks, dictation on every note, evaluation note preview",
+  "date": "2026-09-19",
+  "runtime": {
+    "node": "24.21.0",
+    "source": "fnm, $APPDATA/fnm/node-versions/v24.21.0/installation",
+    "note": "AGENTS.md section 16. The machine default is 18.13.0; Node 24 was put first on PATH for the whole shell."
+  },
+  "request": [
+    "Review the boat card marks; the RS Quest is cut, complete it.",
+    "Offer several card designs and leave the screenshots so the owner chooses.",
+    "Give every note field in the application the dictation option, including the ones on the student card.",
+    "Show the evaluation note itself instead of the words 'Nota presente', clamped over several lines, and test it graphically with long strings."
+  ],
+  "boat_marks": {
+    "rs_quest_was_cut": {
+      "finding": "public/brand/boats/rs-quest.png shipped at 410x117, opaque white, artwork bleeding off every edge; the final 't' of 'Quest' was sliced vertically.",
+      "cause": "The 2026-09-18 commit took docs/post-mvp/mockups/assets/rs-quest.png, the truncated source, rather than rs-quest-complete.png, which the mock's own README names as the RS Quest asset.",
+      "fix": "Normalised the complete 701x240 source: background removed by flooding the light region inwards from the border so the counters inside the letters stay, antialiased edges feathered by lightness, trimmed to the artwork, scaled to a 60px ink height.",
+      "generation_not_used": "No image generation was needed and none is available in this session; the complete artwork already existed in the repository."
+    },
+    "uneven_marks": {
+      "finding": "All seven marks shared a 256x72 plate with wide empty margins, so `object-fit: contain` fitted the plate rather than the artwork. J/80 occupies 33 of 256 px, so it rendered at roughly a seventh of the width of RS Quest at the same slot.",
+      "fix": "Every mark trimmed to its own artwork. Resulting aspect ratios 0.55 (J/80) to 3.75 (RS Quest); `contain` now normalises them optically."
+    },
+    "first_27_is_the_wrong_boat": {
+      "finding": "The artwork supplied for First 27 reads '27.7' — the Beneteau First 27.7, a different model from the First 25.7 and First 27 in the domain.",
+      "decision": "That type falls back to the written mark. Naming the wrong model on a boat card is worse than naming none. The file is kept in public/brand/boats/ for comparison and one line restores it when correct artwork arrives."
+    },
+    "variants_offered": {
+      "gallery": ".evidence/UG1/boat-card-variants/index.html",
+      "screenshots": [
+        "variant-a.png (current: bordered grey chip)",
+        "variant-b.png (mark free on the card, state as a dot)",
+        "variant-e.png (B with the vector state icons)",
+        "variant-f.png (B with the left status rule) — SELECTED",
+        "variant-g.png (number first, then mark, then state)",
+        "variant-c.png (number in a solid plate)",
+        "variant-d.png (status bar flush left, number right)"
+      ],
+      "selected": "B with the vector state icons and the left status rule, at the owner's direction of 2026-09-19.",
+      "icons_kept": "Rulebook R06 and R20 require a symbol or label per state, not colour alone, so the three vector icons stay instead of the three identical dots shown in variant-b."
+    },
+    "mark_slot_sized_in_pixels": "h-[36px] w-[88px] rather than rem. At 200% text the number and the state label must grow; the mark is decoration and doubling it crowded out the number the operator is looking for. Verified in .evidence/U05/boats-stress-pixel-7-chrome.png."
+  },
+  "border_colour_cascade_defect": {
+    "finding": "`* { border-color: var(--border) }` in src/styles.css was unlayered. Tailwind emits its utilities inside `@layer utilities`, and an unlayered rule outranks every layer whatever its specificity, so every border colour in the application was silently overridden by the neutral default.",
+    "evidence": "The built bundle puts the utilities layer at bytes 6726..52065 and the `*` rule at 52461, outside it. `.border-l-\\[\\#e0a31a\\]{border-left-color:#e0a31a}` is emitted and was still not applied on screen.",
+    "scope": "About 70 declarations: the boat fault rule, the recording outline, form error borders, `focus-visible:border-primary`, and the crew selector's grey/blue/green, which rulebook R21 requires.",
+    "fix": "Moved the default into `@layer base`, where it remains the fallback and the utilities win.",
+    "verification": "Before and after in .evidence/U05/boats-status-pixel-7-chrome.png and .evidence/U09/p15-320.png: the P15 legend's blue now actually reaches the available boats.",
+    "note": "This was not in the requested scope but the requested status accent cannot render without it."
+  },
+  "dictation_everywhere": {
+    "before": "Three screens carried their own copy of the same trigger, status, review and error panels: FaultForm, EvaluationManagement, StudentKnowledge. Three note fields had no dictation at all.",
+    "shared": [
+      "src/features/speech/dictationState.ts — status predicates and the naming contract",
+      "src/features/speech/DictationControls.tsx — DictationTrigger and DictationPanels",
+      "src/features/speech/DictatedNoteField.tsx — a labelled note that can be written or spoken"
+    ],
+    "added_to": [
+      "StudentManagement: Nota iniziale",
+      "StudentManagement: Nota del corso",
+      "FaultCard: the description editor of an existing fault"
+    ],
+    "net_change": "About 300 duplicated lines removed while adding three fields.",
+    "accessible_name_changed": "The evaluation review buttons were named only 'Scarta' and 'Usa testo'. They now carry the same specific names as the other two screens ('Usa trascrizione valutazione di …'), so the controls are distinguishable when several are on a page. One assertion in EvaluationManagement.test.tsx was updated.",
+    "save_is_blocked_while_dictation_is_pending": "isDictationPending gates the fault form and the fault card save, so a transcript cannot be written to a record before it is accepted or discarded."
+  },
+  "evaluation_note_preview": {
+    "before": "The status line said 'Nota presente', which reported that a note existed but never what it said.",
+    "after": "The note itself under the row, clamped to two lines with the browser's ellipsis, with the pen icon. The text is not truncated in the DOM, so a screen reader and a text search still see all of it. The save status keeps its own aria-live region so a note is never announced as a save state.",
+    "graphical_test": {
+      "spec": "tests/e2e/u10-evaluations.spec.ts — 'shows the evaluation note itself, clamped to two lines however long it is'",
+      "asserts": [
+        "a 180-character note and a short note are both shown",
+        "'Nota presente' no longer appears",
+        "scrollHeight exceeds clientHeight, and clientHeight is at most two line boxes",
+        "the clamp still holds at 200% text",
+        "no horizontal page scroll at 320px"
+      ],
+      "screenshots": [
+        ".evidence/UG1/evaluation-note-preview-pixel-7-chrome.png",
+        ".evidence/UG1/evaluation-note-preview-200-pixel-7-chrome.png"
+      ]
+    },
+    "weekly_grid_untouched": "WeeklyEvaluationGrid keeps 'nota presente' in its accessible name: its cells are 28px and cannot show text."
+  },
+  "verification": {
+    "verify:quick": "PASS — lint 0 warnings, format, typecheck, 396 unit and component tests (was 390)",
+    "new_tests": [
+      "src/features/speech/DictatedNoteField.test.tsx — append, discard and failure paths",
+      "src/features/students/StudentManagement.test.tsx — both notes offer dictation",
+      "src/features/boats/FaultCard.test.tsx — dictating a correction, save blocked until accepted",
+      "src/features/evaluations/EvaluationManagement.test.tsx — the note is shown and clamped",
+      "tests/e2e/u10-evaluations.spec.ts — the graphical clamp journey"
+    ],
+    "verify:e2e": "PASS — 125 passed, 4 intended project-matrix skips, 0 failed, across pixel-7-chrome, iphone-13-viewport and iphone-13-webkit-core (29.9 min)"
+  },
+  "open": [
+    "First 27 needs correct artwork; it shows the written mark until then. In the P15 boat selector that fallback is scaled down by the selector's own transform and is small, so on a Cabinato 3 course the boat is identified by its number rather than by the mark until the artwork arrives.",
+    "The PWA icon still uses #063b52 and is not aligned to the mark's palette.",
+    "Green for 'Disponibile' in the boat list sits next to blue for 'Disponibile' in the P15 crew selector, where green means 'Assegnata'. Both are internally consistent and labelled; worth a decision if the two are ever seen together."
+  ],
+  "regressions_found_by_the_first_full_browser_run": {
+    "why_they_were_not_known": "The scan editor rebuild, the name-order gate and the review rework were verified with verify:quick and selected specs. The full Playwright suite was not run after them, and an earlier report of 'e2e green across three device projects' was not based on a full run. The first full run in this entry failed ten journeys.",
+    "already_broken_before_this_entry": [
+      {
+        "journeys": [
+          "student-scan",
+          "student-management-gate"
+        ],
+        "cause": "Both still drove 'Rotazione foto da meno 180 a 180 gradi', the slider removed when StudentScanImageEditorDocument replaced the classic editor. The label now exists only in StudentScanImageEditorClassic, which is not the selected editor.",
+        "fix": "Both specs drive the ruler dial ('Inclinazione in gradi') instead."
+      },
+      {
+        "journeys": [
+          "student-scan",
+          "student-management-gate"
+        ],
+        "cause": "Committing a scanned row needs the sheet's name order, which the name-order gate introduced; neither spec stated one, so the commit did nothing.",
+        "fix": "Both answer 'Applica Nome · Cognome' before committing, which is the flow the screen now asks for."
+      },
+      {
+        "journeys": [
+          "student-scan"
+        ],
+        "cause": "REAL DEFECT, not a stale spec: the review list overflowed the page by 179px at 320px with 200% text. The list was a bare `grid`, whose implicit column is `auto` and resolved to the widest card's max-content (487px inside a 296px container). The name-order buttons are each wider than a 320px viewport at that text size, so wrapping the row could not help.",
+        "fix": "`grid-cols-1` on the list, the card header cluster wraps, and the two name-order buttons may wrap their label. Document and card overflow both measured 0 afterwards.",
+        "user_visible": "On a phone at large text the review cards ran off the side of the screen. It shipped in the previous commit."
+      },
+      {
+        "journeys": [
+          "evaluation-overview"
+        ],
+        "cause": "A race, not a break. `getByRole('heading', { name: /Aldo/ })` is unambiguous until the embedded history mounts its own 'Aldo Rossi' heading; on a loaded machine both were present and strict mode refused. It passed again on a quiet machine.",
+        "fix": "The assertion names the heading exactly."
+      },
+      {
+        "journeys": [
+          "duties"
+        ],
+        "cause": "Hit its own 300s budget during the contended full run; passed in the clean run.",
+        "fix": "None. Worth watching: the file is already flagged as slow at 5 minutes."
+      }
+    ],
+    "caused_by_this_entry": [
+      {
+        "journeys": [
+          "u02-students"
+        ],
+        "cause": "`getByLabel` matches a substring, so 'Nota iniziale' also matched the new 'Detta nota iniziale' button.",
+        "fix": "The spec names the control by role, as the evaluation specs already did."
+      },
+      {
+        "journeys": [
+          "ug1-duty-reflow"
+        ],
+        "cause": "The dictation trigger beside the field label pushed the student form to 343px at 320px with 200% text, and the save button could not be clicked.",
+        "fix": "The label row wraps and the field is width-contained. Measured 320px afterwards."
+      }
+    ]
+  }
+}

@@ -2,11 +2,8 @@ import {
   Check,
   ChevronLeft,
   LoaderCircle,
-  Mic,
   NotebookPen,
   Pencil,
-  Square,
-  Trash2,
   X,
 } from "lucide-react"
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
@@ -16,7 +13,11 @@ import { StudentSizeSelector } from "@/components/StudentSizeSelector"
 import { Button } from "@/components/ui/button"
 import type { StudentSize } from "@/domain/config"
 import { getStudentDisplayName } from "@/domain/student"
-import { DictationMeter } from "@/features/speech/DictationMeter"
+import {
+  DictationPanels,
+  DictationTrigger,
+} from "@/features/speech/DictationControls"
+import { type DictationNaming } from "@/features/speech/dictationState"
 import {
   useDictation,
   type SpeechPrepare,
@@ -144,13 +145,10 @@ function KnowledgeCard({
     }
   }, [courseId, student.id])
 
-  const dictationBusy = new Set(["permission", "loading", "processing"]).has(
-    dictation.status,
-  )
-  const dictationProgress =
-    dictation.status === "loading" && dictation.loadPercent !== undefined
-      ? ` ${dictation.loadPercent}%`
-      : ""
+  const dictationNaming: DictationNaming = {
+    start: `Detta nota di ${displayName}`,
+    subject: `di ${displayName}`,
+  }
 
   function closeNoteEditor() {
     if (dictation.status === "review") {
@@ -326,148 +324,22 @@ function KnowledgeCard({
             />
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <Button
-                  aria-label={
-                    dictation.status === "recording"
-                      ? `Termina dettatura di ${displayName}`
-                      : `Detta nota di ${displayName}`
-                  }
-                  className={`h-11 px-3 text-xs ${dictation.status === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
-                  disabled={
-                    !dictation.supported ||
-                    dictationBusy ||
-                    dictation.status === "review"
-                  }
-                  onClick={() =>
-                    dictation.status === "recording"
-                      ? dictation.stop()
-                      : void dictation.start()
-                  }
-                  type="button"
-                  variant="secondary"
-                >
-                  {dictationBusy ? (
-                    <LoaderCircle
-                      aria-hidden="true"
-                      className="size-4 animate-spin"
-                    />
-                  ) : dictation.status === "recording" ? (
-                    <Square
-                      aria-hidden="true"
-                      className="size-3.5 fill-current"
-                    />
-                  ) : (
-                    <Mic aria-hidden="true" className="size-4" />
-                  )}
-                  {dictation.status === "recording"
-                    ? "Termina"
-                    : dictation.status === "permission"
-                      ? "Permesso…"
-                      : dictation.status === "loading"
-                        ? `Caricamento${dictationProgress}`
-                        : dictation.status === "processing"
-                          ? "Elaborazione…"
-                          : "Detta"}
-                </Button>
-                {dictation.status === "recording" && (
-                  <DictationMeter
-                    className="text-[#b42318]"
-                    stream={dictation.mediaStream}
-                  />
-                )}
-              </div>
+              <DictationTrigger
+                dictation={dictation}
+                naming={dictationNaming}
+              />
               <Button onClick={closeNoteEditor} type="button">
                 Fine
               </Button>
             </div>
 
-            {!dictation.supported && dictation.status === "idle" && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Dettatura non disponibile in questo browser. Puoi scrivere la
-                nota.
-              </p>
-            )}
-
-            {(dictation.status === "permission" ||
-              dictation.status === "recording" ||
-              dictation.status === "loading" ||
-              dictation.status === "processing") && (
-              <div
-                aria-live="polite"
-                className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2"
-                role="status"
-              >
-                <p className="text-xs font-semibold text-muted-foreground">
-                  {dictation.status === "permission"
-                    ? "Attendo il permesso del microfono…"
-                    : dictation.status === "recording"
-                      ? "Registrazione in corso"
-                      : dictation.status === "loading"
-                        ? `Caricamento del modello vocale${dictationProgress}…`
-                        : "Elaborazione locale dell’audio…"}
-                </p>
-                <Button
-                  aria-label={`Annulla dettatura di ${displayName}`}
-                  className="size-10 shrink-0 p-0"
-                  onClick={dictation.cancel}
-                  type="button"
-                  variant="secondary"
-                >
-                  <X aria-hidden="true" className="size-4" />
-                </Button>
-              </div>
-            )}
-
-            {dictation.status === "review" && (
-              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Rileggi la trascrizione: il testo non viene salvato finché non
-                  lo confermi.
-                </p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <Button
-                    aria-label={`Scarta trascrizione di ${displayName}`}
-                    onClick={dictation.cancel}
-                    type="button"
-                    variant="secondary"
-                  >
-                    <Trash2 aria-hidden="true" className="size-4" />
-                    Scarta
-                  </Button>
-                  <Button
-                    aria-label={`Usa trascrizione di ${displayName}`}
-                    onClick={dictation.accept}
-                    type="button"
-                  >
-                    <Check aria-hidden="true" className="size-4" />
-                    Usa testo
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {dictation.status === "error" && (
-              <div
-                className="mt-3 flex items-start justify-between gap-3"
-                role="alert"
-              >
-                <p className="text-xs font-semibold text-[#b42318]">
-                  {dictation.error === "permission"
-                    ? "Permesso microfono non concesso. Il testo è rimasto invariato."
-                    : "Dettatura non riuscita. Il testo è rimasto invariato."}
-                </p>
-                <Button
-                  aria-label={`Riprovare dettatura di ${displayName}`}
-                  className="h-10 shrink-0 px-3 text-xs"
-                  onClick={() => void dictation.start()}
-                  type="button"
-                  variant="secondary"
-                >
-                  Riprova
-                </Button>
-              </div>
-            )}
+            <DictationPanels
+              className="mt-3"
+              dictation={dictation}
+              naming={dictationNaming}
+              reviewHint="Rileggi la trascrizione: il testo non viene salvato finché non lo confermi."
+              unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
+            />
           </section>
         </div>
       )}

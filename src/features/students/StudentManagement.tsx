@@ -28,6 +28,7 @@ import {
 import { formatEvaluationSession } from "@/domain/evaluations"
 import { validateStudentRecords } from "@/domain/invariants"
 import { calculateAge, getStudentDisplayName, isMinor } from "@/domain/student"
+import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
 import { StudentScan } from "@/features/students/StudentScan"
 import { StudentEvaluationHistory } from "@/features/evaluations/StudentEvaluationHistory"
@@ -425,29 +426,31 @@ function StudentForm({
 
         <StudentSizeSelector onChange={setSize} value={size} />
 
-        <Field
-          label="Nota iniziale"
+        <DictatedNoteField
           hint="Esperienza o informazioni note prima del corso."
-        >
-          <textarea
-            aria-label="Nota iniziale"
-            className="min-h-24 w-full resize-y rounded-xl border bg-card px-3 py-2.5 text-base font-normal leading-6 outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-            onChange={(event) => setInitialNote(event.target.value)}
-            value={initialNote}
-          />
-        </Field>
+          label="Nota iniziale"
+          naming={{
+            start: "Detta nota iniziale",
+            subject: "nota iniziale",
+          }}
+          onChange={setInitialNote}
+          reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
+          unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
+          value={initialNote}
+        />
 
-        <Field
-          label="Nota del corso"
+        <DictatedNoteField
           hint="Nota generale per questa settimana, distinta dalle valutazioni."
-        >
-          <textarea
-            aria-label="Nota del corso"
-            className="min-h-24 w-full resize-y rounded-xl border bg-card px-3 py-2.5 text-base font-normal leading-6 outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-            onChange={(event) => setCourseNote(event.target.value)}
-            value={courseNote}
-          />
-        </Field>
+          label="Nota del corso"
+          naming={{
+            start: "Detta nota del corso",
+            subject: "nota del corso",
+          }}
+          onChange={setCourseNote}
+          reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
+          unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
+          value={courseNote}
+        />
 
         {error && (
           <div className="flex items-center justify-between gap-3" role="alert">

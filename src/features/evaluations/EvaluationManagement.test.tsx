@@ -106,6 +106,28 @@ describe("evaluation management", () => {
     vi.unstubAllGlobals()
   })
 
+  it("shows the note itself under the row, clamped instead of summarised", async () => {
+    const longNote =
+      "Virata molto pulita anche con raffica, ha tenuto la barca piatta per tutta la bolina e ha corretto la rotta da sola senza farsi dire nulla, ottimo lavoro anche in poppa."
+    getEvaluations.mockResolvedValue([
+      {
+        id: "evaluation-1",
+        studentId: "student-1",
+        sessionId: "sat-pm",
+        value: "+",
+        note: longNote,
+      },
+    ])
+    renderScreen()
+
+    // The word "Nota presente" said that a note existed but never what it was.
+    expect(await screen.findByText(longNote)).toBeVisible()
+    expect(screen.queryByText("Nota presente")).toBeNull()
+    // Two lines cap the row however long the note is; the browser adds the
+    // ellipsis, so the text stays whole for a screen reader and for search.
+    expect(screen.getByText(longNote)).toHaveClass("line-clamp-2")
+  })
+
   it("saves a direct mark and note for the exact student and session", async () => {
     const user = userEvent.setup()
     renderScreen()
@@ -309,7 +331,11 @@ describe("evaluation management", () => {
     )
     expect(save).not.toHaveBeenCalled()
     expect(stopTrack).toHaveBeenCalledOnce()
-    await user.click(screen.getByRole("button", { name: "Usa testo" }))
+    await user.click(
+      screen.getByRole("button", {
+        name: "Usa trascrizione valutazione di Aldo",
+      }),
+    )
     await user.type(
       screen.getByRole("textbox", { name: "Nota valutazione di Aldo" }),
       " e pulita",

@@ -34,10 +34,12 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   await expect(
     page.getByRole("dialog", { name: "Raddrizza e ritaglia foto" }),
   ).toBeVisible()
-  const rotation = page.getByLabel("Rotazione foto da meno 180 a 180 gradi")
-  await rotation.fill("7")
-  await expect(page.getByText("7°")).toBeVisible()
-  await rotation.fill("0")
+  // The rotation slider was replaced by the document workspace's ruler dial.
+  const tilt = page.getByRole("slider", { name: "Inclinazione in gradi" })
+  await tilt.press("ArrowRight")
+  await expect(tilt).toHaveAttribute("aria-valuenow", "0.1")
+  await tilt.press("Home")
+  await expect(tilt).toHaveAttribute("aria-valuenow", "0")
   await page
     .getByRole("group", { name: /Area di ritaglio/ })
     .press("ArrowRight")
@@ -63,6 +65,14 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   await expect(page.getByLabel(/^Telefono riga/).nth(0)).toHaveValue(
     "333 123 4567",
   )
+  // The review now insists the operator says which name came first before a
+  // row can be committed; answering once applies to the whole sheet.
+  await expect(
+    page.getByRole("heading", { name: "Come sono scritti i nomi?" }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Applica Nome · Cognome" }).click()
+  await expect(page.getByText("Nomi letti come")).toBeVisible()
+
   const counters = page.getByLabel("Stato revisione scansione")
   await expect(counters.getByText("3")).toHaveCount(1)
   await expect(counters.getByText("0")).toHaveCount(2)

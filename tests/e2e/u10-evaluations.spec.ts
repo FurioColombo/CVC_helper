@@ -297,3 +297,90 @@ test("keeps a typed evaluation note recoverable when microphone permission is de
     .click()
   await expect(note).toHaveValue("Testo corretto e salvato")
 })
+
+test("shows the evaluation note itself, clamped to two lines however long it is", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(120_000)
+  await page.setViewportSize({ width: 320, height: 664 })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await addStudent(page, "Alessandro", "Bernardeschi")
+  await addStudent(page, "Bea", "Verdi")
+  await page.getByRole("button", { name: "Indietro da Allievi" }).click()
+  await page.getByRole("button", { name: "Valutazioni" }).click()
+  await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
+
+  const shortNote = "Bene in bolina."
+  const longNote =
+    "Virata molto pulita anche con la raffica, ha tenuto la barca piatta per " +
+    "tutta la bolina e ha corretto la rotta da sola senza che nessuno le " +
+    "dicesse niente, ottimo lavoro anche in poppa con il vento in calo e mare " +
+    "formato da ovest."
+
+  for (const [name, text] of [
+    ["Alessandro", longNote],
+    ["Bea", shortNote],
+  ] as const) {
+    await page
+      .getByRole("button", { name: `Aggiungi nota valutazione di ${name}` })
+      .click()
+    await page
+      .getByRole("textbox", { name: `Nota valutazione di ${name}` })
+      .fill(text)
+    await page.getByRole("button", { name: "Salva nota" }).click()
+    await expect(
+      page.getByRole("button", {
+        name: `Modifica nota valutazione di ${name}`,
+      }),
+    ).toBeVisible()
+  }
+
+  // The note is shown, not the words "Nota presente".
+  await expect(page.getByText("Nota presente")).toHaveCount(0)
+  const long = page.getByText(longNote)
+  await expect(long).toBeVisible()
+  await expect(page.getByText(shortNote)).toBeVisible()
+
+  // Clamped: the element is shorter than its own content, and the clamp holds
+  // the row to two lines whatever the note says.
+  const clamp = await long.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+    lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+  }))
+  expect(clamp.scrollHeight).toBeGreaterThan(clamp.clientHeight)
+  expect(clamp.clientHeight).toBeLessThanOrEqual(clamp.lineHeight * 2 + 1)
+  await expectNoHorizontalPageScroll(page)
+
+  const evidenceDirectory = path.join(process.cwd(), ".evidence", "UG1")
+  mkdirSync(evidenceDirectory, { recursive: true })
+  await page.screenshot({
+    path: path.join(
+      evidenceDirectory,
+      `evaluation-note-preview-${testInfo.project.name}.png`,
+    ),
+    fullPage: true,
+  })
+
+  // The clamp must survive 200% text as well, where two lines are much taller.
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  await expectNoHorizontalPageScroll(page)
+  const enlarged = await long.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+  }))
+  expect(enlarged.clientHeight).toBeLessThanOrEqual(enlarged.lineHeight * 2 + 1)
+  await page.screenshot({
+    path: path.join(
+      evidenceDirectory,
+      `evaluation-note-preview-200-${testInfo.project.name}.png`,
+    ),
+    fullPage: true,
+  })
+})

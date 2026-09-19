@@ -23,6 +23,8 @@ test("keeps the complete student workflow consistent across reload", async ({
   await expect(
     page.getByRole("heading", { name: "Controlla prima di salvare" }),
   ).toBeVisible({ timeout: 30_000 })
+  // Committing a scanned row needs the sheet's name order to be stated.
+  await page.getByRole("button", { name: "Applica Nome · Cognome" }).click()
   const correctedSurname = page.getByLabel(/^Cognome riga/).nth(1)
   await expect(correctedSurname).toHaveValue("Bianchi")
   await correctedSurname.fill("Bianchini")

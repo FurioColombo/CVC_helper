@@ -24,6 +24,27 @@ const FAULT: FaultRecord = {
   updatedAt: "2026-08-29T10:00:00.000Z",
 }
 
+class FakeMediaRecorder {
+  mimeType = "audio/webm"
+  state: RecordingState = "inactive"
+  ondataavailable: ((event: BlobEvent) => void) | null = null
+  onstop: (() => void) | null = null
+
+  constructor(stream: MediaStream) {
+    void stream
+  }
+
+  start() {
+    this.state = "recording"
+  }
+
+  stop() {
+    this.state = "inactive"
+    this.ondataavailable?.({ data: new Blob(["voice"]) } as BlobEvent)
+    this.onstop?.()
+  }
+}
+
 describe("FaultCard", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -162,6 +183,70 @@ describe("FaultCard", () => {
     expect(updateFaultState).toHaveBeenLastCalledWith("fault-1", "reported")
     await waitFor(() =>
       expect(communicated).toHaveAttribute("aria-pressed", "true"),
+    )
+  })
+
+  it("lets the operator dictate the correction to a description", async () => {
+    const transcribe = vi.fn().mockResolvedValue("e cuscinetto da sostituire")
+    const stopTrack = vi.fn()
+    Object.defineProperty(globalThis, "MediaRecorder", {
+      configurable: true,
+      value: FakeMediaRecorder,
+    })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: stopTrack }],
+        }),
+      },
+    })
+    const user = userEvent.setup()
+    render(
+      <FaultCard
+        fault={{ ...FAULT, description: "Timone duro" }}
+        onChanged={vi.fn().mockResolvedValue(undefined)}
+        transcribe={transcribe}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "Modifica avaria Timone duro" }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Detta descrizione avaria" }),
+    )
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Termina dettatura descrizione avaria",
+      }),
+    )
+
+    const editor = screen.getByLabelText("Modifica descrizione Timone duro")
+    await waitFor(() =>
+      expect(editor).toHaveValue("Timone duro e cuscinetto da sostituire"),
+    )
+    // Saving waits for the transcript to be accepted or thrown away, so a
+    // half-finished dictation cannot be written to the record.
+    expect(
+      screen.getByRole("button", {
+        name: "Salva descrizione Timone duro",
+      }),
+    ).toBeDisabled()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Usa trascrizione descrizione avaria",
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Salva descrizione Timone duro" }),
+    )
+    await waitFor(() =>
+      expect(updateFaultDescription).toHaveBeenCalledWith(
+        "fault-1",
+        "Timone duro e cuscinetto da sostituire",
+      ),
     )
   })
 })

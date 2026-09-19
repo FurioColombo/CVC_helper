@@ -103,9 +103,10 @@ derivato finale è rinviato.
 
 **Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; indisponibilità corso e deselezione sessione sono azioni distinte.
 
-- Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti. I sei nuovi loghi del mock sono tavole trasparenti uniformate a 256 × 72 px.
+- Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti. Ogni logo è ritagliato sul proprio disegno e non su una tavola condivisa: `object-fit: contain` deve normalizzare i marchi fra loro, non i margini vuoti. Il riquadro del marchio è misurato in pixel, così al 200 % del testo crescono numero ed etichetta e non la decorazione.
+- Il marchio sta sulla scheda senza pastiglia grigia attorno. Un modello senza artwork corretto ricade sulla sigla scritta: l'immagine fornita per First 27 riporta `27.7`, che è un'altra barca, e resta esclusa finché non arriva quella giusta.
 - A 320 px il trattamento dell'identità si compatta per lasciare interamente visibili anche i numeri a due cifre (11, 14, 15).
-- Rendere “Da controllare” giallo; mantenere “Disponibile” neutro e leggibile, senza confonderlo con l'assegnazione verde usata in P15.
+- Rendere “Da controllare” giallo; mantenere “Disponibile” leggibile e senza confonderlo con l'assegnazione verde usata in P15. Dal 2026-09-19 un filo colorato a sinistra porta lo stato anche a colpo d'occhio: blu disponibile — lo stesso blu che in P15 vuol dire disponibile —, ambra da controllare, grigio non disponibile. Icona ed etichetta restano: il colore non è mai da solo.
 - Elenco compatto; dettaglio con guasti aperti in evidenza, risolti secondari.
 - Separare Elimina inserimento errato, disponibilità corso e selezione uscita della sessione. Lo scollegamento è limitato alla sessione aperta e non produce una cascata implicita.
 
@@ -225,6 +226,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 - Nome e ++, +, =, -, -- condividono una sola riga. Il nome è un bottone che apre la nota; sullo schermo stress può essere abbreviato visivamente, mantenendo nome completo nell'etichetta accessibile. Icone con area di tocco da 40 px al posto dei caratteri grezzi.
 - Nessuna selezione è il default; toccare di nuovo il valore selezionato annulla il voto. Nessun pulsante `~`.
 - Positivi verdi, negativi rossi, neutro distinto e assenza vuota nei riepiloghi. A terra resta presente e valutabile; nota legata alla sessione esatta.
+- Sotto la riga compare la nota stessa, non la scritta “Nota presente”: due righe con i puntini di sospensione del browser, testo intero nel DOM per lettori di schermo e ricerca. Lo stato di salvataggio conserva la sua area `aria-live`, così una nota non viene mai annunciata come esito di salvataggio.
 
 **Mock:** due viste, nome lungo, tutti i valori, assenza, A terra, nota, save/error, tastiera. **Accettazione:** un tap per valore nella vista operativa; nessuna perdita di note; stessa valutazione nelle due viste; sessione non si confonde dopo scroll/reload. **Baseline:** `EvaluationManagement.tsx`.
 
@@ -261,6 +263,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 - Stati distinti nello stesso pannello: richiesta permesso al primo tap Detta (non all'apertura app), asset in caricamento, pronto/registrazione, elaborazione, testo da rivedere, errore recuperabile.
 - Comunicare primo download e avanzamento reale disponibile; niente percentuale inventata. Riprova e annullamento con effetto reale.
 - Conservare testo già digitato se fallisce la dettatura; trascritto editabile e confermabile; audio scartato.
+- Dal 2026-09-19 il comportamento non vive più solo in P05/P09/P17: ogni campo nota dell'app lo espone, comprese le due note della scheda allievo e la descrizione di un'avaria già aperta. Un solo `DictationTrigger`, un solo `DictationPanels` e un `DictatedNoteField` per le note etichettate, invece di una copia per schermata. Il salvataggio resta bloccato finché una trascrizione non è accettata o scartata.
 
 **Mock:** tutti gli stati sopra dentro le tre superfici ospitanti; nessuna voce P20 nel selettore. **Accettazione:** percorso reale su browser PC, Android e iPhone, fixture audio automatizzate e collaudo fisico finale dell'autore; errori non lasciano la UI bloccata; assenza di audio persistito. **Baseline:** `src/capabilities/speech.ts` e chiamanti.
 

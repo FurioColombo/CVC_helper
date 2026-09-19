@@ -708,3 +708,82 @@ mark's inks measure `#e04040` and `#3060a0`; the Home card accent becomes
 `--accent-red: #cf3a35`, darkened for contrast on the light background, and the
 blue accent and the primary action share `#2f5fa0` so the interface carries one
 blue instead of three. The PWA icon still uses `#063b52` and is not yet aligned.
+
+**Status 2026-09-19 — boat marks, dictation on every note, evaluation note preview.**
+
+The RS Quest mark was cut on the right. The previous entry took the truncated
+`rs-quest.png` from the mock's assets instead of `rs-quest-complete.png`, which
+that folder's README names as the RS Quest asset; the complete artwork was in
+the repository all along. It is now normalised the way the other six were.
+
+All seven marks shared a `256 × 72` plate with wide empty margins, so
+`object-fit: contain` fitted the plate rather than the artwork and a narrow mark
+such as J/80 rendered at a fraction of the size of RS Quest. Each file is now
+trimmed to its own artwork, which is what made the row uneven.
+
+The artwork supplied for `First 27` reads `27.7`, which is the First 27.7 — a
+different boat. That type falls back to the written mark until correct artwork
+arrives; naming the wrong model on a card is worse than naming none.
+
+The row itself follows the owner's choice of 2026-09-19 from the seven
+treatments in `.evidence/UG1/boat-card-variants/`: the mark sits on the card
+with no chip, the number is the second thing read, and a coloured rule down the
+left carries the state. The vector state icons stay, because R06 and R20 want a
+symbol per state rather than colour alone. The mark slot is sized in pixels, not
+rem, so 200 % text grows the number and the state and not the decoration.
+
+`* { border-color: var(--border) }` in `src/styles.css` was unlayered. Tailwind
+emits its utilities inside `@layer utilities`, and an unlayered rule outranks
+every layer whatever its specificity, so roughly seventy border colours across
+the application were silently replaced by the neutral default — including the
+grey, blue and green that R21 requires of the P15 boat selector. The default now
+sits in `@layer base`. The state rule this entry adds cannot render without it.
+
+Every note in the application can now be dictated. The trigger, the live status,
+the transcript review and the failure panel were duplicated on three screens and
+absent from three note fields; they are now `DictationTrigger`,
+`DictationPanels` and `DictatedNoteField`, and the student card's two notes and
+the fault card's description editor have gained dictation. About three hundred
+duplicated lines went away in the process. Saving is blocked while a transcript
+is unaccepted, so generated text cannot reach a record without a decision.
+
+The evaluation row shows the note itself rather than the words "Nota presente",
+clamped to two lines with the browser's ellipsis. The text stays whole in the
+DOM, so assistive technology and text search still see all of it, and the save
+status keeps its own live region so a note is never announced as a save state.
+The clamp is verified graphically with a long string at 320 px and at 200 % text.
+
+Evidence: `.evidence/UG1/boat-marks-notes-and-evaluation-preview.json`.
+
+**Status 2026-09-19 — first full browser run since the scan rework.**
+
+The scan editor rebuild, the name-order gate and the review rework were closed on
+`verify:quick` and selected specs. The full Playwright suite was not run after
+them, and the report of "e2e green across three device projects" in that entry
+was not based on a full run. The first full run in this entry failed ten
+journeys, most of them damage those entries had already done.
+
+The one real defect: the scan review list overflowed the page by 179 px at
+320 px with 200 % text. The list was a bare `grid`, whose implicit column is
+`auto` and resolved to the widest card's max-content — 487 px inside a 296 px
+container — and the two name-order buttons are each wider than a 320 px viewport
+at that text size, so wrapping the row could not rescue it. On a phone at large
+text the review cards ran off the side of the screen. Fixed with `grid-cols-1`
+on the list, a wrapping card header and wrappable button labels; document and
+card overflow both measure zero afterwards.
+
+The rest were stale specs: `student-scan.spec.ts` and
+`student-management-gate.spec.ts` still drove the rotation slider that
+`StudentScanImageEditorDocument` replaced, and neither stated the sheet's name
+order, which the gate now requires before a scanned row can be committed. Both
+now drive the ruler dial and answer the order, which is the flow the screen asks
+of an operator. `evaluation-overview.spec.ts` carried a latent race — a loose
+`/Aldo/` heading match becomes ambiguous once the embedded history mounts its
+own heading — and now names the heading exactly.
+
+Two failures belonged to this entry and are fixed: `getByLabel("Nota iniziale")`
+also matched the new "Detta nota iniziale" button, and the dictation trigger
+beside a field label pushed the student form to 343 px at the stress viewport.
+
+`npm run verify:e2e` now passes: 125 journeys, four intended project-matrix
+skips, no failures, across Pixel Chromium, iPhone Chromium and iPhone WebKit.
