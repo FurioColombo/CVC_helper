@@ -85,38 +85,53 @@ interface OcrPage {
   confidence: number
 }
 
+// Women whose names do not end in -a.
 const FEMALE_NAMES = new Set([
-  "alessandra",
-  "anna",
-  "chiara",
-  "elena",
-  "elisa",
-  "francesca",
-  "giulia",
-  "laura",
-  "lucia",
-  "maria",
-  "martina",
-  "sara",
-  "sofia",
-  "valentina",
+  "agnes",
+  "alice",
+  "beatrice",
+  "carmen",
+  "catherine",
+  "clio",
+  "consuelo",
+  "dafne",
+  "ester",
+  "irene",
+  "ines",
+  "isabel",
+  "loredana",
+  "margot",
+  "miriam",
+  "nives",
+  "noemi",
+  "rachele",
+  "veronique",
 ])
 
+// Men whose names end in -a, plus the common -e names a reader expects placed.
 const MALE_NAMES = new Set([
-  "alessandro",
   "andrea",
-  "davide",
-  "francesco",
-  "giacomo",
-  "giovanni",
+  "battista",
+  "elia",
+  "enea",
+  "gioele",
   "luca",
-  "marco",
-  "mario",
-  "matteo",
+  "mattia",
+  "michele",
   "nicola",
-  "paolo",
+  "daniele",
+  "davide",
+  "emanuele",
+  "gabriele",
+  "giuseppe",
+  "lorenzo",
+  "nicolo",
+  "nicolò",
+  "raffaele",
+  "salvatore",
+  "samuele",
   "simone",
-  "stefano",
+  "tommaso",
 ])
 
 const DATE_PATTERN = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/
@@ -187,10 +202,13 @@ function normalizedNameToken(value: string) {
 function isNameToken(value: string) {
   const normalized = normalizedNameToken(value)
   if (!normalized || NON_NAME_TOKENS.has(normalized)) return false
-  // A single letter in these photographs is normally a sex/status mark or a
-  // table checkmark. Keep initials only when they are explicitly hyphenated.
-  if ([...normalized].length < 2 && !normalized.includes("-")) return false
-  return /\p{L}/u.test(normalized)
+  if (!/\p{L}/u.test(normalized)) return false
+  if (normalized.includes("-")) return true
+  // Surname particles are the only short words that belong in a name.
+  if (SURNAME_PARTICLES.has(normalized)) return true
+  // Everything else short is a table rule or a stray mark that survived OCR:
+  // the "Ì" in "Massimo Ì", the "gi" in "Simone gi", a lone "s" or "-".
+  return [...normalized].length >= 3
 }
 
 function nameWordsFromReading(reading: StudentScanNameReading) {
@@ -332,10 +350,23 @@ export function applyStudentNameOrder(
   }
 }
 
+/**
+ * Italian given names carry their gender in the ending far more reliably than
+ * in any list: -a is female, -o is male. The two sets above are not a
+ * dictionary of valid names; they exist to override the ending where it lies,
+ * which is a short and well-known group (Andrea, Luca, Nicola, Mattia are men;
+ * Nives and Ester are women). Anything else stays unknown rather than guessed.
+ *
+ * The result is only ever a suggestion and is always editable, so a wrong
+ * ending costs one tap; refusing to suggest costs one on every row.
+ */
 function inferSex(firstName: string): StudentSex | null {
-  const normalized = firstName.trim().toLocaleLowerCase("it")
+  const normalized = normalizedNameToken(firstName.split(/\s+/)[0] ?? "")
+  if (!normalized || [...normalized].length < 3) return null
   if (FEMALE_NAMES.has(normalized)) return "female"
   if (MALE_NAMES.has(normalized)) return "male"
+  if (normalized.endsWith("a")) return "female"
+  if (normalized.endsWith("o")) return "male"
   return null
 }
 
@@ -457,10 +488,7 @@ function nameTokensFromWords(words: RecognizedWord[]) {
       .replace(NON_NAME_CHARACTERS, " ")
       .split(/\s+/)
       .map((text) => text.trim())
-      .filter(
-        (text) =>
-          text.length > 0 && !NON_NAME_TOKENS.has(text.toLocaleLowerCase("it")),
-      )
+      .filter(isNameToken)
       .map((text) => ({ text, confidence: word.confidence })),
   )
 }

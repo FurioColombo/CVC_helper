@@ -30,10 +30,9 @@ vi.mock("@/features/students/studentImageCrop", async () => {
 
 import { StudentScanImageEditorDocument } from "@/features/students/StudentScanImageEditorDocument"
 
-async function openEditor(overrides: {
-  onUse?: () => void
-  onCancel?: () => void
-}) {
+async function openEditor(
+  overrides: { onUse?: () => void; onCancel?: () => void } = {},
+) {
   render(
     <StudentScanImageEditorDocument
       file={new File(["photo"], "roster.jpg", { type: "image/jpeg" })}
@@ -46,6 +45,31 @@ async function openEditor(overrides: {
   await vi.advanceTimersByTimeAsync(130)
   await screen.findByAltText("Anteprima foto da ritagliare")
 }
+
+function stageWithBounds() {
+  const stage = screen.getByLabelText("Area di lavoro foto")
+  stage.setPointerCapture = vi.fn()
+  stage.releasePointerCapture = vi.fn()
+  vi.spyOn(stage, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    top: 0,
+    width: 400,
+    height: 400,
+    right: 400,
+    bottom: 400,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  })
+  return stage
+}
+
+const tiltValue = () =>
+  Number(
+    screen
+      .getByLabelText("Inclinazione in gradi")
+      .getAttribute("aria-valuenow"),
+  )
 
 describe("StudentScanImageEditorDocument", () => {
   beforeEach(() => {
@@ -68,73 +92,43 @@ describe("StudentScanImageEditorDocument", () => {
     document.body.style.overflow = ""
   })
 
-  it("offers the document workspace without a rotation slider", async () => {
-    await openEditor({})
-    expect(
-      await screen.findByAltText("Anteprima foto da ritagliare"),
-    ).toBeVisible()
+  it("shows the picture in a workspace with a dial instead of a slider", async () => {
+    await openEditor()
 
     // The correction replaces the slider outright; it must not come back.
     expect(document.querySelector('input[type="range"]')).toBeNull()
     expect(screen.getByLabelText("Area di lavoro foto")).toBeVisible()
-    expect(screen.getByLabelText("Angolo in gradi")).toHaveValue(0)
-    for (const name of [
-      "Raddrizza con una linea",
-      "Aumenta ingrandimento",
-      "Riduci ingrandimento",
-      "Ruota 90 gradi a sinistra",
-      "Ruota di un decimo di grado a destra",
-    ]) {
-      expect(screen.getByRole("button", { name })).toBeVisible()
-    }
+    expect(screen.getByAltText("Anteprima foto da ritagliare")).toBeVisible()
+
+    const dial = screen.getByRole("slider", { name: "Inclinazione in gradi" })
+    expect(dial).toHaveAttribute("aria-valuenow", "0")
+    expect(dial).toHaveAttribute("aria-valuemin", "-45")
+    expect(dial).toHaveAttribute("aria-valuemax", "45")
+    expect(
+      screen.getByRole("button", { name: "Raddrizza con una linea" }),
+    ).toBeVisible()
   })
 
-  it("adjusts the angle in tenths and by quarter turns", async () => {
+  it("adjusts the inclination by tenths, by whole degrees and back to level", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    await openEditor({})
-    const angle = screen.getByLabelText("Angolo in gradi")
+    await openEditor()
+    const dial = screen.getByRole("slider", { name: "Inclinazione in gradi" })
+    dial.focus()
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Ruota di un decimo di grado a destra",
-      }),
-    )
-    expect(angle).toHaveValue(0.1)
+    await user.keyboard("{ArrowRight}")
+    expect(tiltValue()).toBeCloseTo(0.1)
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Ruota di un decimo di grado a sinistra",
-      }),
-    )
-    expect(angle).toHaveValue(0)
+    await user.keyboard("{Shift>}{ArrowRight}{/Shift}")
+    expect(tiltValue()).toBeCloseTo(1.1)
 
-    await user.click(
-      screen.getByRole("button", { name: "Ruota 90 gradi a sinistra" }),
-    )
-    expect(angle).toHaveValue(-90)
-
-    fireEvent.change(angle, { target: { value: "-2.5" } })
-    expect(angle).toHaveValue(-2.5)
+    await user.keyboard("{Home}")
+    expect(tiltValue()).toBe(0)
   })
 
   it("straightens from a line drawn along a rule on the sheet", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    await openEditor({})
-
-    const stage = screen.getByLabelText("Area di lavoro foto")
-    stage.setPointerCapture = vi.fn()
-    stage.releasePointerCapture = vi.fn()
-    vi.spyOn(stage, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 400,
-      height: 400,
-      right: 400,
-      bottom: 400,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    })
+    await openEditor()
+    const stage = stageWithBounds()
 
     await user.click(
       screen.getByRole("button", { name: "Raddrizza con una linea" }),
@@ -148,7 +142,7 @@ describe("StudentScanImageEditorDocument", () => {
     fireEvent.pointerMove(stage, { pointerId: 1, clientX: 200, clientY: 200 })
     fireEvent.pointerUp(stage, { pointerId: 1, clientX: 200, clientY: 200 })
 
-    expect(screen.getByLabelText("Angolo in gradi")).toHaveValue(-45)
+    expect(tiltValue()).toBeCloseTo(-45)
     // The mode releases itself so the next drag crops rather than re-measures.
     expect(
       screen.getByRole("button", { name: "Raddrizza con una linea" }),
@@ -157,21 +151,8 @@ describe("StudentScanImageEditorDocument", () => {
 
   it("ignores a tap that is too short to be a line", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    await openEditor({})
-
-    const stage = screen.getByLabelText("Area di lavoro foto")
-    stage.setPointerCapture = vi.fn()
-    vi.spyOn(stage, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 400,
-      height: 400,
-      right: 400,
-      bottom: 400,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    })
+    await openEditor()
+    const stage = stageWithBounds()
 
     await user.click(
       screen.getByRole("button", { name: "Raddrizza con una linea" }),
@@ -180,28 +161,22 @@ describe("StudentScanImageEditorDocument", () => {
     fireEvent.pointerMove(stage, { pointerId: 2, clientX: 103, clientY: 101 })
     fireEvent.pointerUp(stage, { pointerId: 2, clientX: 103, clientY: 101 })
 
-    expect(screen.getByLabelText("Angolo in gradi")).toHaveValue(0)
+    expect(tiltValue()).toBe(0)
   })
 
-  it("zooms within bounds and resets everything together", async () => {
+  it("returns inclination and quarter turns to their start", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    await openEditor({})
+    await openEditor()
 
-    expect(
-      screen.getByRole("button", { name: "Riduci ingrandimento" }),
-    ).toBeDisabled()
-    const zoomIn = screen.getByRole("button", { name: "Aumenta ingrandimento" })
-    await user.click(zoomIn)
-    expect(screen.getByText("125%")).toBeVisible()
-
+    screen.getByRole("slider", { name: "Inclinazione in gradi" }).focus()
+    await user.keyboard("{ArrowRight}{ArrowRight}")
     await user.click(
-      screen.getByRole("button", {
-        name: "Ruota di un decimo di grado a destra",
-      }),
+      screen.getByRole("button", { name: "Ruota 90 gradi a sinistra" }),
     )
+    expect(tiltValue()).toBeCloseTo(0.2)
+
     await user.click(screen.getByRole("button", { name: "Ripristina foto" }))
-    expect(screen.getByText("100%")).toBeVisible()
-    expect(screen.getByLabelText("Angolo in gradi")).toHaveValue(0)
+    expect(tiltValue()).toBe(0)
   })
 
   it("keeps crop keyboard movement, the focus trap and Escape", async () => {

@@ -1,5 +1,6 @@
 import {
   Camera,
+  Check,
   ChevronLeft,
   FileCheck2,
   ImagePlus,
@@ -23,6 +24,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
 import { StudentScanImageEditor } from "@/features/students/StudentScanImageEditor"
+import {
+  readNameOrderPreference,
+  writeNameOrderPreference,
+} from "@/features/students/studentScanNameOrderPreference"
 import { createStudents, type StudentInput } from "@/persistence/students"
 
 type ScanState =
@@ -34,6 +39,8 @@ type ScanState =
 interface ReviewCandidate extends StudentScanCandidate {
   id: string
   nameManuallyEdited?: boolean
+  /** The operator has read this row and vouches for it as it stands. */
+  confirmed?: boolean
 }
 
 interface Acquisition {
@@ -42,6 +49,11 @@ interface Acquisition {
 }
 
 function needsReview(candidate: ReviewCandidate, field: StudentScanField) {
+  // Confidence is the scan's opinion; a person who has read the row overrules
+  // it. Without this the counter can never reach zero on a real photograph,
+  // because a correct reading of a faint sheet still scores below the
+  // threshold, and the operator is left retyping text that was already right.
+  if (candidate.confirmed) return false
   if (field === "phone" && !candidate.phone.trim()) return false
   return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
 }
@@ -186,18 +198,36 @@ function CandidateCard({
     <article
       className={`rounded-2xl border bg-card p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${invalid ? "border-[#d92d20]" : ""}`}
     >
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-base font-black">Allievo {index + 1}</h2>
-        <Button
-          aria-label={`Rimuovi allievo ${index + 1}`}
-          className="scroll-mt-[180px] size-10 px-0 text-[#b42318]"
-          disabled={disabled}
-          onClick={onRemove}
-          type="button"
-          variant="secondary"
-        >
-          <Trash2 aria-hidden="true" className="size-4" />
-        </Button>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="min-w-0 truncate text-base font-black">
+          Allievo {index + 1}
+        </h2>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            aria-label={`Segna controllata la riga di allievo ${index + 1}`}
+            aria-pressed={Boolean(candidate.confirmed)}
+            className={`min-h-10 px-2.5 text-xs ${candidate.confirmed ? "border-[#2e7d51] text-[#1d6b41]" : ""}`}
+            disabled={disabled}
+            onClick={() =>
+              onChange({ ...candidate, confirmed: !candidate.confirmed })
+            }
+            type="button"
+            variant="secondary"
+          >
+            <Check aria-hidden="true" className="size-3.5" />
+            {candidate.confirmed ? "Controllato" : "Controlla"}
+          </Button>
+          <Button
+            aria-label={`Rimuovi allievo ${index + 1}`}
+            className="scroll-mt-[180px] size-10 px-0 text-[#b42318]"
+            disabled={disabled}
+            onClick={onRemove}
+            type="button"
+            variant="secondary"
+          >
+            <Trash2 aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
       </div>
 
       {candidate.nameReading && (
@@ -348,6 +378,10 @@ export function StudentScan({
   })
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [candidates, setCandidates] = useState<ReviewCandidate[]>([])
+  const [nameOrder, setNameOrder] = useState<Exclude<
+    StudentNameOrder,
+    "unknown"
+  > | null>(null)
   const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set())
   const [saveError, setSaveError] = useState(false)
   const [acquisition, setAcquisition] = useState<Acquisition>()
@@ -399,11 +433,18 @@ export function StudentScan({
         setState("unsuitable")
         return
       }
+      const scanned = result.candidates.map((candidate, index) => ({
+        ...candidate,
+        id: `${candidate.sourceId}-${index + 1}`,
+      }))
+      // A course's sheet is printed one way round, so the order is asked once
+      // and then applied for every later scan of the same course.
+      const remembered = readNameOrderPreference(courseId)
+      setNameOrder(remembered)
       setCandidates(
-        result.candidates.map((candidate, index) => ({
-          ...candidate,
-          id: `${candidate.sourceId}-${index + 1}`,
-        })),
+        remembered
+          ? applyNameOrderToCandidates(scanned, remembered, "unresolved")
+          : scanned,
       )
       setState("review")
     } catch {
@@ -716,53 +757,82 @@ export function StudentScan({
             </div>
           </section>
 
-          {hasUnresolvedNameOrder && (
+          {hasUnresolvedNameOrder ? (
             <section
               aria-label="Ordine dei nomi"
               className="mb-3 rounded-2xl border bg-card p-3"
             >
-              <h2 className="text-sm font-black">Ordine dei nomi</h2>
+              <h2 className="text-sm font-black">Come sono scritti i nomi?</h2>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Scegli solo se il foglio usa lo stesso ordine. Le righe già
-                corrette restano invariate.
+                Lo chiedo una volta sola: la scelta vale per le prossime
+                scansioni di questo corso. Le righe già corrette restano
+                invariate.
               </p>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <Button
-                  className="h-auto min-h-10 px-2 text-xs"
-                  disabled={state === "saving"}
-                  onClick={() =>
-                    setCandidates((current) =>
-                      applyNameOrderToCandidates(
-                        current,
-                        "given-surname",
-                        "unresolved",
-                      ),
-                    )
-                  }
-                  type="button"
-                  variant="secondary"
-                >
-                  Applica Nome · Cognome
-                </Button>
-                <Button
-                  className="h-auto min-h-10 px-2 text-xs"
-                  disabled={state === "saving"}
-                  onClick={() =>
-                    setCandidates((current) =>
-                      applyNameOrderToCandidates(
-                        current,
-                        "surname-given",
-                        "unresolved",
-                      ),
-                    )
-                  }
-                  type="button"
-                  variant="secondary"
-                >
-                  Applica Cognome · Nome
-                </Button>
+                {(
+                  [
+                    ["given-surname", "Nome · Cognome"],
+                    ["surname-given", "Cognome · Nome"],
+                  ] as const
+                ).map(([order, label]) => (
+                  <Button
+                    className="h-auto min-h-10 px-2 text-xs"
+                    disabled={state === "saving"}
+                    key={order}
+                    onClick={() => {
+                      writeNameOrderPreference(courseId, order)
+                      setNameOrder(order)
+                      setCandidates((current) =>
+                        applyNameOrderToCandidates(
+                          current,
+                          order,
+                          "unresolved",
+                        ),
+                      )
+                    }}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Applica {label}
+                  </Button>
+                ))}
               </div>
             </section>
+          ) : (
+            nameOrder && (
+              <section
+                aria-label="Ordine dei nomi"
+                className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border bg-card px-3 py-2"
+              >
+                <p className="text-xs text-muted-foreground">
+                  Nomi letti come{" "}
+                  <span className="font-bold text-foreground">
+                    {nameOrder === "surname-given"
+                      ? "Cognome · Nome"
+                      : "Nome · Cognome"}
+                  </span>
+                </p>
+                <Button
+                  className="h-auto min-h-10 px-2.5 text-xs"
+                  disabled={state === "saving"}
+                  onClick={() => {
+                    const next =
+                      nameOrder === "surname-given"
+                        ? "given-surname"
+                        : "surname-given"
+                    writeNameOrderPreference(courseId, next)
+                    setNameOrder(next)
+                    setCandidates((current) =>
+                      applyNameOrderToCandidates(current, next, "all"),
+                    )
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  Inverti per tutti
+                </Button>
+              </section>
+            )
           )}
 
           <section aria-label="Allievi estratti" className="grid gap-3">
