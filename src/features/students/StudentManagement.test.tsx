@@ -216,6 +216,24 @@ describe("StudentManagement", () => {
     expect(await screen.findByText("Salvato")).toBeVisible()
   })
 
+  it("offers dictation on both notes of the student card", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+
+    // Every note in the app can be spoken, not only the ones on the screens
+    // that had dictation first.
+    expect(
+      screen.getByRole("button", { name: "Detta nota iniziale" }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: "Detta nota del corso" }),
+    ).toBeVisible()
+  })
+
   it("keeps typed text and offers retry after autosave fails", async () => {
     getStudents.mockResolvedValue([MARIO])
     editStudent.mockRejectedValueOnce(new Error("offline"))

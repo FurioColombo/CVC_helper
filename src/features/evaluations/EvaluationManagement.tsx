@@ -1,14 +1,9 @@
 import {
-  Check,
   ChevronLeft,
   FilePenLine,
   LoaderCircle,
-  Mic,
   RotateCcw,
-  Square,
-  Trash2,
   UsersRound,
-  X,
 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
@@ -23,7 +18,11 @@ import {
 import { getDefaultEvaluationSession } from "@/domain/evaluations"
 import { getStudentDisplayName } from "@/domain/student"
 import { EvaluationOverview } from "@/features/evaluations/EvaluationOverview"
-import { DictationMeter } from "@/features/speech/DictationMeter"
+import {
+  DictationPanels,
+  DictationTrigger,
+} from "@/features/speech/DictationControls"
+import { type DictationNaming } from "@/features/speech/dictationState"
 import {
   useDictation,
   type SpeechPrepare,
@@ -80,13 +79,10 @@ function EvaluationNoteEditor({
     transcribe,
     prepare: prepareSpeech,
   })
-  const dictationBusy = ["permission", "loading", "processing"].includes(
-    dictation.status,
-  )
-  const dictationProgress =
-    dictation.status === "loading" && dictation.loadPercent !== undefined
-      ? ` ${dictation.loadPercent}%`
-      : ""
+  const dictationNaming: DictationNaming = {
+    start: `Detta nota valutazione di ${name}`,
+    subject: `valutazione di ${name}`,
+  }
 
   function cancelNote() {
     if (dictation.status !== "idle") dictation.cancel()
@@ -102,50 +98,7 @@ function EvaluationNoteEditor({
         >
           Nota di {fullName} · {session?.day} {session?.period}
         </label>
-        {dictation.status === "recording" && (
-          <DictationMeter
-            className="text-[#b42318]"
-            stream={dictation.mediaStream}
-          />
-        )}
-        <Button
-          aria-label={
-            dictation.status === "recording"
-              ? `Termina dettatura valutazione di ${name}`
-              : `Detta nota valutazione di ${name}`
-          }
-          className={`h-11 px-3 text-xs ${dictation.status === "recording" ? "border-[#d92d20] text-[#b42318]" : ""}`}
-          disabled={
-            !dictation.supported ||
-            saving ||
-            dictationBusy ||
-            dictation.status === "review"
-          }
-          onClick={() =>
-            dictation.status === "recording"
-              ? dictation.stop()
-              : void dictation.start()
-          }
-          type="button"
-          variant="secondary"
-        >
-          {dictationBusy ? (
-            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-          ) : dictation.status === "recording" ? (
-            <Square aria-hidden="true" className="size-3.5 fill-current" />
-          ) : (
-            <Mic aria-hidden="true" className="size-4" />
-          )}
-          {dictation.status === "recording"
-            ? "Termina"
-            : dictation.status === "permission"
-              ? "Permesso…"
-              : dictation.status === "loading"
-                ? `Caricamento${dictationProgress}`
-                : dictation.status === "processing"
-                  ? "Elaborazione…"
-                  : "Detta"}
-        </Button>
+        <DictationTrigger dictation={dictation} naming={dictationNaming} />
       </div>
       <textarea
         aria-label={`Nota valutazione di ${name}`}
@@ -159,91 +112,13 @@ function EvaluationNoteEditor({
         placeholder="Nota facoltativa per questa sessione"
         value={note}
       />
-      {!dictation.supported && dictation.status === "idle" && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Dettatura non disponibile in questo browser. Puoi scrivere la nota.
-        </p>
-      )}
-      {(dictation.status === "permission" ||
-        dictation.status === "recording" ||
-        dictation.status === "loading" ||
-        dictation.status === "processing") && (
-        <div
-          className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2"
-          role="status"
-          aria-live="polite"
-        >
-          <p className="text-xs font-semibold text-muted-foreground">
-            {dictation.status === "permission"
-              ? "Attendo il permesso del microfono…"
-              : dictation.status === "recording"
-                ? "Registrazione in corso"
-                : dictation.status === "loading"
-                  ? `Caricamento del modello vocale${dictationProgress}…`
-                  : "Elaborazione locale dell’audio…"}
-          </p>
-          <Button
-            aria-label={`Annulla dettatura valutazione di ${name}`}
-            className="size-10 shrink-0 p-0"
-            onClick={dictation.cancel}
-            type="button"
-            variant="secondary"
-          >
-            <X aria-hidden="true" className="size-4" />
-          </Button>
-        </div>
-      )}
-      {dictation.status === "review" && (
-        <div className="mt-2 rounded-xl border border-primary/30 bg-card p-3">
-          <p className="text-xs leading-5 text-muted-foreground">
-            Rileggi la trascrizione. Il testo sarà salvato solo con la nota.
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <Button
-              onClick={() => {
-                dictation.cancel()
-              }}
-              type="button"
-              variant="secondary"
-            >
-              <Trash2 aria-hidden="true" className="size-4" />
-              Scarta
-            </Button>
-            <Button
-              onClick={dictation.accept}
-              type="button"
-              variant="secondary"
-            >
-              <Check aria-hidden="true" className="size-4" />
-              Usa testo
-            </Button>
-          </div>
-        </div>
-      )}
-      {dictation.status === "error" && (
-        <div
-          className="mt-2 flex items-center justify-between gap-3"
-          role="alert"
-        >
-          <p className="text-xs font-semibold text-[#b42318]">
-            {dictation.error === "permission"
-              ? "Permesso microfono non concesso. Il testo è rimasto invariato."
-              : "Dettatura non riuscita. Il testo è rimasto invariato."}
-          </p>
-          {dictation.supported && (
-            <Button
-              aria-label={`Riprovare dettatura valutazione di ${name}`}
-              className="h-10 shrink-0 px-3 text-xs"
-              onClick={() => void dictation.start()}
-              type="button"
-              variant="secondary"
-            >
-              <RotateCcw aria-hidden="true" className="size-3.5" />
-              Riprova
-            </Button>
-          )}
-        </div>
-      )}
+      <DictationPanels
+        className="mt-2"
+        dictation={dictation}
+        naming={dictationNaming}
+        reviewHint="Rileggi la trascrizione. Il testo sarà salvato solo con la nota."
+        unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
+      />
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button
           disabled={saving}
@@ -312,6 +187,7 @@ function EvaluationCard({
 }) {
   const name = displayName(student, students)
   const fullName = `${student.firstName} ${student.surname}`.trim()
+  const noteSummary = evaluation.note?.trim() ?? ""
   const noteButtonRef = useRef<HTMLButtonElement>(null)
   const wasNoteOpen = useRef(noteOpen)
 
@@ -392,10 +268,20 @@ function EvaluationCard({
             ? "Non salvato"
             : saved
               ? "Salvato"
-              : evaluation.note
-                ? "Nota presente"
-                : ""}
+              : ""}
       </div>
+      {noteSummary && (
+        // The note itself, not the word "nota": what was written is the useful
+        // thing at a glance. Two lines cap the row height however long the note
+        // is, and the name button above opens it in full.
+        <p className="mt-1 flex min-w-0 items-start gap-1.5 text-xs leading-4 text-muted-foreground">
+          <FilePenLine
+            aria-hidden="true"
+            className="mt-px size-3.5 shrink-0 text-primary"
+          />
+          <span className="line-clamp-2 min-w-0">{noteSummary}</span>
+        </p>
+      )}
       {saveError && (
         <button
           aria-label={`Riprova salvataggio valutazione di ${name}`}

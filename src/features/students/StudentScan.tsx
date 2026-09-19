@@ -198,11 +198,13 @@ function CandidateCard({
     <article
       className={`rounded-2xl border bg-card p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${invalid ? "border-[#d92d20]" : ""}`}
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="min-w-0 truncate text-base font-black">
           Allievo {index + 1}
         </h2>
-        <div className="flex shrink-0 items-center gap-2">
+        {/* The cluster wraps under the heading at 200% text rather than
+            widening the card past the viewport. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Button
             aria-label={`Segna controllata la riga di allievo ${index + 1}`}
             aria-pressed={Boolean(candidate.confirmed)}
@@ -246,7 +248,7 @@ function CandidateCard({
             </span>
             <Button
               aria-label={`Scambia nome e cognome riga ${candidate.id}`}
-              className="min-h-10 px-2.5 text-xs"
+              className="min-h-10 max-w-full min-w-0 px-2.5 text-xs whitespace-normal"
               disabled={disabled}
               onClick={swapNameOrder}
               type="button"
@@ -256,7 +258,7 @@ function CandidateCard({
             </Button>
             {nameNeedsReview && (
               <Button
-                className="min-h-10 px-2.5 text-xs"
+                className="min-h-10 max-w-full min-w-0 px-2.5 text-xs whitespace-normal"
                 disabled={disabled}
                 onClick={confirmNameOrder}
                 type="button"
@@ -835,7 +837,13 @@ export function StudentScan({
             )
           )}
 
-          <section aria-label="Allievi estratti" className="grid gap-3">
+          {/* `grid-cols-1` rather than a bare `grid`: the implicit column is
+              `auto`, which resolves to the widest card's max-content and pushes
+              the page sideways at 320px with 200% text. */}
+          <section
+            aria-label="Allievi estratti"
+            className="grid grid-cols-1 gap-3"
+          >
             {candidates.map((candidate, index) => (
               <CandidateCard
                 candidate={candidate}

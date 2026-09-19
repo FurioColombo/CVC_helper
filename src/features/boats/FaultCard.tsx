@@ -17,6 +17,19 @@ import {
 } from "@/domain/config"
 import { BoatIdentity } from "@/features/boats/BoatIdentity"
 import {
+  DictationPanels,
+  DictationTrigger,
+} from "@/features/speech/DictationControls"
+import {
+  isDictationPending,
+  type DictationNaming,
+} from "@/features/speech/dictationState"
+import {
+  useDictation,
+  type SpeechPrepare,
+  type SpeechTranscribe,
+} from "@/features/speech/useDictation"
+import {
   updateFaultDescription,
   updateFaultState,
   type FaultRecord,
@@ -30,11 +43,15 @@ export function FaultCard({
   boatType,
   boatNumber,
   onChanged,
+  transcribe,
+  prepareSpeech,
 }: {
   fault: FaultRecord
   boatType?: BoatType
   boatNumber?: string
   onChanged: () => Promise<void>
+  transcribe?: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
 }) {
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -48,6 +65,17 @@ export function FaultCard({
   const refreshingStateRef = useRef(false)
   const queuedStateRef = useRef<FaultState | null>(null)
   const requestedStateRef = useRef(fault.state)
+  const dictation = useDictation({
+    value: description,
+    onDraft: setDescription,
+    onAccept: () => undefined,
+    transcribe,
+    prepare: prepareSpeech,
+  })
+  const dictationNaming: DictationNaming = {
+    start: "Detta descrizione avaria",
+    subject: "descrizione avaria",
+  }
 
   async function persistState(firstState: FaultState) {
     if (stateInFlightRef.current) {
@@ -141,7 +169,7 @@ export function FaultCard({
           disabled={
             descriptionSaving ||
             pendingState !== null ||
-            (editing && !description.trim())
+            (editing && (!description.trim() || isDictationPending(dictation)))
           }
           onClick={() => {
             if (editing) void saveDescription()
@@ -160,12 +188,26 @@ export function FaultCard({
       </div>
 
       {editing ? (
-        <textarea
-          aria-label={`Modifica descrizione ${fault.description}`}
-          className="mt-2 min-h-24 w-full resize-y rounded-xl border bg-card px-3 py-2 text-base font-normal leading-6 outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
-          onChange={(event) => setDescription(event.target.value)}
-          value={description}
-        />
+        <div className="mt-2 grid gap-2">
+          <textarea
+            aria-label={`Modifica descrizione ${fault.description}`}
+            className="min-h-24 w-full resize-y rounded-xl border bg-card px-3 py-2 text-base font-normal leading-6 outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30"
+            onChange={(event) => {
+              dictation.syncValue(event.target.value)
+              setDescription(event.target.value)
+            }}
+            value={description}
+          />
+          <div className="flex justify-end">
+            <DictationTrigger dictation={dictation} naming={dictationNaming} />
+          </div>
+          <DictationPanels
+            dictation={dictation}
+            naming={dictationNaming}
+            reviewHint="Rileggi la trascrizione prima di salvare la descrizione."
+            unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la descrizione."
+          />
+        </div>
       ) : (
         <button
           aria-expanded={expanded}

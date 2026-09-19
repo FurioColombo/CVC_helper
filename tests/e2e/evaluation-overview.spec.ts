@@ -102,7 +102,11 @@ test("summarizes actual marks and links exact evaluation history", async ({
   await page
     .getByRole("button", { name: "Apri dettaglio di Aldo, cognome Rossi" })
     .click()
-  await expect(page.getByRole("heading", { name: /Aldo/ })).toBeVisible()
+  // Exact: once the embedded history has loaded, its "Aldo Rossi" heading
+  // also matches a loose /Aldo/, so the loose form is a race.
+  await expect(
+    page.getByRole("heading", { name: "Aldo", exact: true }),
+  ).toBeVisible()
   const history = page.getByRole("region", { name: "Storico valutazioni" })
   const weeklyGrid = history.getByRole("table", {
     name: "Valutazioni settimanali di Aldo",

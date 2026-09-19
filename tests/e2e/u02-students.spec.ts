@@ -88,8 +88,12 @@ test("keeps the compact list and complete profile usable at the stress viewport"
     .getByRole("group", { name: "Taglia" })
     .getByText("L", { exact: true })
     .click()
-  await page.getByLabel("Nota iniziale").fill("Esperienza Optimist")
-  await page.getByLabel("Nota del corso").fill("Migliora nelle virate")
+  await page
+    .getByRole("textbox", { name: "Nota iniziale" })
+    .fill("Esperienza Optimist")
+  await page
+    .getByRole("textbox", { name: "Nota del corso" })
+    .fill("Migliora nelle virate")
   await expect(page.getByText("Salvato", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Fine" }).click()
   await expect(page.getByText("Esperienza Optimist")).toBeVisible()
