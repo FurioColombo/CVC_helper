@@ -29,9 +29,9 @@ vi.mock("@/features/students/studentImageCrop", () => ({
   ) => updateCrop(crop, gesture, dx, dy),
 }))
 
-import { StudentScanImageEditor } from "@/features/students/StudentScanImageEditor"
+import { StudentScanImageEditorClassic as StudentScanImageEditor } from "@/features/students/StudentScanImageEditorClassic"
 
-describe("StudentScanImageEditor", () => {
+describe("StudentScanImageEditorClassic", () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.stubGlobal("URL", {
