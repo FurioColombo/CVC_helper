@@ -20,12 +20,17 @@
   --card: #ffffff;
   --muted: #e8eef6;
   --muted-foreground: #53667d;
-  --primary: #204c8c;
+  --primary: #2f5fa0;
   --primary-foreground: #ffffff;
   --border: #cfdae7;
-  --ring: #326fc6;
-  --accent-orange: #e08042;
-  --accent-blue: #204c8c;
+  --ring: #4a7fc4;
+  /* Taken from the CVC mark in public/brand/cvc-symbol.png, whose two inks
+     measure #e04040 and #3060a0. The red is darkened a little so a 3px rule
+     and a 4px border read clearly against the light background, and the blue
+     is the same one the primary action uses so the interface carries one
+     blue instead of three. */
+  --accent-red: #cf3a35;
+  --accent-blue: #2f5fa0;
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -131,8 +136,8 @@ body {
     transform 120ms ease;
 }
 
-.home-card--orange {
-  border-top-color: var(--accent-orange);
+.home-card--accent {
+  border-top-color: var(--accent-red);
 }
 
 .home-card:hover {
@@ -172,7 +177,7 @@ body {
 }
 
 .course-preview {
-  border-left: 4px solid var(--accent-orange);
+  border-left: 4px solid var(--accent-red);
   border-radius: 14px;
   background: var(--muted);
   padding: 0.875rem;

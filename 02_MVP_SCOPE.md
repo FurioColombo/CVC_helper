@@ -122,9 +122,14 @@ OCR and STT are included. Their acceptance needs physical-device evidence during
 their milestones. Missing access to a device may hold that milestone open, but it
 does not justify a simulated PASS or silently remove the feature.
 
-Boat logos supplied during design are references, not assumed licensed production
-assets. Lack of proven provenance uses the approved neutral text/model fallback
-and does not block implementation.
+Boat logos supplied during design were treated as references, not assumed
+licensed production assets, and the approved neutral text/model fallback shipped
+in their place.
+
+The owner authorised their use on 2026-09-18. The marks are now shown, and the
+written model remains the fallback whenever an asset is missing or cannot be
+decoded, so a boat is always identifiable. Provenance remains the owner's
+responsibility; nothing here asserts a licence.
 
 `CVC Helper` is the provisional usable name for 0.2.0. A final name/derived mark is
 deferred and does not block the cycle.
