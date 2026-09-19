@@ -41,8 +41,16 @@ test("keeps acquisition and adjustment usable on compact screens", async ({
       name: "Ridimensiona ritaglio dall’angolo in basso a destra",
     }),
   ).toBeVisible()
-  await page.getByLabel("Rotazione foto da meno 180 a 180 gradi").fill("-23")
-  await expect(page.getByText("-23°")).toBeVisible()
+  // The correction replaced the rotation slider with a document workspace.
+  await expect(page.locator(`input[type="range"]`)).toHaveCount(0)
+  await expect(page.getByLabel("Area di lavoro foto")).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Raddrizza con una linea" }),
+  ).toBeVisible()
+  await page.getByLabel("Angolo in gradi").fill("-2.5")
+  await expect(page.getByLabel("Angolo in gradi")).toHaveValue("-2.5")
+  await page.getByRole("button", { name: "Aumenta ingrandimento" }).click()
+  await expect(page.getByText("125%")).toBeVisible()
   await page.getByRole("group", { name: /Area di ritaglio/ }).press("ArrowDown")
   await page.screenshot({
     fullPage: true,

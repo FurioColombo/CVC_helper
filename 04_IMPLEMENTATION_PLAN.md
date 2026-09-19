@@ -679,3 +679,19 @@ line-based straightening. Its default crop no longer trims the frame, which was
 removing the start of the surnames before OCR. Until the editor is rebuilt the
 specification is ahead of the code on that paragraph, and this correction stays
 open.
+
+**Status 2026-09-19 — adjustment surface rebuilt.**
+
+The full-frame document workspace replaces the rotation slider, closing the gap
+recorded above: direct crop as before, zoom with bounded panning, straightening
+from a line drawn along a rule, quarter turns, tenth-of-a-degree steps and an
+exact angle. The dimming mask is clipped to the stage. The Product Specification
+paragraph and the code now agree.
+
+The previous surface is kept verbatim as `StudentScanImageEditorClassic` with its
+own tests, selected by `STUDENT_SCAN_EDITOR` in
+`src/features/students/studentScanEditorChoice.ts`, so the two can be compared by
+changing one value. Evidence: `.evidence/UG1/scan-document-editor.json`.
+
+UG1 remains IN_PROGRESS for its physical-device release evidence, which now also
+covers touch panning and the line gesture on a real phone.

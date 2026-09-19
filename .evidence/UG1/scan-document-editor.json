@@ -1,0 +1,26 @@
+{
+  "milestone": "UG1",
+  "correction": "Student scan redesign — adjustment surface",
+  "delivered": "The full-frame document workspace replaces the rotation slider. Direct crop with four handles and keyboard movement is unchanged; zoom 100-400% with panning bounded to the part of the image pushed outside the frame; straightening by drawing a line along a rule on the sheet; quarter turns; tenth-of-a-degree steps and an exact numeric angle. The dimming mask is clipped to the stage, so it no longer spills over the controls.",
+  "originalKept": {
+    "component": "StudentScanImageEditorClassic",
+    "switch": "src/features/students/studentScanEditorChoice.ts",
+    "howToReinstate": "Set STUDENT_SCAN_EDITOR to 'classic'. Both surfaces take the same props and both keep their own tests, so the comparison is one value rather than a revert.",
+    "why": "Requested for side-by-side comparison, the same arrangement as the previous dictation pipeline kept as a benchmark."
+  },
+  "verification": {
+    "documentEditorTests": [
+      "the workspace renders and no range input exists anywhere in it",
+      "the angle moves in tenths, by quarter turns and by exact entry",
+      "a line drawn at 45 degrees rotates the sheet back by 45 and releases the mode",
+      "a tap too short to be a line is ignored rather than snapping to a wild angle",
+      "zoom is bounded and reset returns angle, crop, zoom and pan together",
+      "crop keyboard movement, the focus trap and Escape still work"
+    ],
+    "classicEditorTests": "kept and passing against StudentScanImageEditorClassic, so the surface stays reinstatable with confidence",
+    "browser": "tests/e2e/u04-scan-ui.spec.ts updated to the new controls and passing on pixel-7-chrome, iphone-13-viewport and iphone-13-webkit-core at 320x664, asserting no horizontal overflow of document or dialog, plus the 200 percent text journey",
+    "realPhotograph": "The supplied roster still reaches review through the new surface with the same 19 rows, and the name-order choice still corrects the inversion, so replacing the editor did not regress the pipeline.",
+    "suite": "388 unit and component tests, verify:quick, production build, domain and repository checks pass on Node 24.21.0"
+  },
+  "notVerified": "Pinch-to-zoom is deliberately absent; zoom is by button so it is reachable by keyboard and testable. No physical device pass: touch panning, the line gesture and camera acquisition still need a real phone."
+}
