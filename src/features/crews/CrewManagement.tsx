@@ -162,7 +162,7 @@ function BoatMark({
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${size === "large" ? "h-[32px] w-[68px] [&>span]:scale-[0.82]" : "h-[24px] w-[60px] [&>span]:scale-[0.68]"}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${size === "large" ? "h-[32px] w-[68px] [&>span]:scale-[0.77]" : "h-[24px] w-[60px] [&>span]:scale-[0.66]"}`}
     >
       <BoatModelMark type={type} />
     </span>

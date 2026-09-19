@@ -36,8 +36,15 @@
     "Segoe UI", sans-serif;
 }
 
-* {
-  border-color: var(--border);
+/* Tailwind emits its utilities inside `@layer utilities`, and an unlayered
+   rule outranks every layer whatever its specificity. Declared unlayered, this
+   default silently beat every `border-*` colour in the application: the boat
+   state rule, the recording outline, the crew selector's green and blue. It
+   belongs in `base`, where it stays the fallback and the utilities win. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 html {
