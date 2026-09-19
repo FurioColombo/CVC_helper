@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -221,7 +221,7 @@ describe("BoatManagement", () => {
     )
   })
 
-  it("keeps model marks neutral while exposing the three operational states", async () => {
+  it("shows the model mark while exposing the three operational states", async () => {
     const secondBoat: BoatRecord = {
       ...BOAT,
       id: "boat-2",
@@ -243,9 +243,29 @@ describe("BoatManagement", () => {
     expect(screen.getByText("1 avaria")).toBeVisible()
     expect(screen.getByText("Non disponibile", { exact: true })).toBeVisible()
     expect(screen.getByText("Disponibile", { exact: true })).toBeVisible()
-    expect(screen.getByText("FIRST", { exact: true })).toBeVisible()
-    expect(screen.getByText("27", { exact: true })).toBeVisible()
+    // The manufacturer marks are shown under the owner's authorisation of
+    // 2026-09-18. The model stays in the accessible name, so the boat is
+    // identifiable without seeing the picture, and the written model remains
+    // the fallback when an asset cannot be decoded.
+    expect(screen.getByLabelText("Modello First 27")).toBeVisible()
+    expect(screen.getByLabelText("Modello Laser Vago")).toBeVisible()
     expect(screen.getByText("15", { exact: true })).toBeVisible()
+  })
+
+  it("falls back to the written model when a mark cannot be shown", async () => {
+    getBoats.mockResolvedValue([BOAT])
+    getFaults.mockResolvedValue([])
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    const mark = await screen.findByLabelText(`Modello ${BOAT.type}`)
+    const logo = mark.querySelector("img")
+    expect(logo).not.toBeNull()
+
+    fireEvent.error(logo!)
+    expect(mark.querySelector("img")).toBeNull()
+    expect(mark.textContent?.replace(/\s+/g, "")).toBe(
+      BOAT.type.replace(/[\s.]/g, "").toUpperCase(),
+    )
   })
 
   it("deletes a mistaken boat only after explicit confirmation", async () => {

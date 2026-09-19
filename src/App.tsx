@@ -58,7 +58,7 @@ type ShellView =
   | "settings"
 
 const HOME_CARDS = [
-  { id: "students", label: "Allievi", icon: GraduationCap, tone: "orange" },
+  { id: "students", label: "Allievi", icon: GraduationCap, tone: "accent" },
   { id: "boats", label: "Barche", icon: Sailboat, tone: "blue" },
   {
     id: "sessions",
@@ -66,12 +66,12 @@ const HOME_CARDS = [
     icon: ClipboardCheck,
     tone: "blue",
   },
-  { id: "crews", label: "Equipaggi", icon: UsersRound, tone: "orange" },
+  { id: "crews", label: "Equipaggi", icon: UsersRound, tone: "accent" },
   {
     id: "evaluations",
     label: "Valutazioni",
     icon: ListChecks,
-    tone: "orange",
+    tone: "accent",
   },
   { id: "volunteers", label: "Volontari", icon: HandHeart, tone: "blue" },
 ] as const

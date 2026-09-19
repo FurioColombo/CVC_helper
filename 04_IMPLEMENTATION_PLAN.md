@@ -695,3 +695,16 @@ changing one value. Evidence: `.evidence/UG1/scan-document-editor.json`.
 
 UG1 remains IN_PROGRESS for its physical-device release evidence, which now also
 covers touch panning and the line gesture on a real phone.
+
+**Status 2026-09-19 — brand marks and palette.**
+
+Owner authorisation of 2026-09-18 lifts the deferral on the supplied boat logos.
+They ship in `public/brand/boats/`, and `BoatModelMark` keeps the written model
+as the fallback when an asset is missing or fails to decode, so the neutral
+treatment is still what a reader falls back to rather than a gap.
+
+The interface accents are now taken from the CVC mark rather than invented. The
+mark's inks measure `#e04040` and `#3060a0`; the Home card accent becomes
+`--accent-red: #cf3a35`, darkened for contrast on the light background, and the
+blue accent and the primary action share `#2f5fa0` so the interface carries one
+blue instead of three. The PWA icon still uses `#063b52` and is not yet aligned.
