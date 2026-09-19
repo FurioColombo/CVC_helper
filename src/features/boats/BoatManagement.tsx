@@ -284,21 +284,33 @@ function BoatEntryForm({
   )
 }
 
+/**
+ * `edge` is the coloured rule down the left of the row: the state is readable
+ * from the edge of the list while scrolling. Colour alone never carries it —
+ * the icon and the written label sit in the row as well (rulebook R06, R20).
+ *
+ * Available is blue, not green. P15 already spends green on "assegnata", and
+ * the page changelog asks P08 not to borrow it; blue is what P15 calls
+ * "disponibile", so the two screens end up saying the same thing.
+ */
 const STATE_COPY = {
   clear: {
     label: "Disponibile",
     Icon: CheckCircle2,
     text: "text-muted-foreground",
+    edge: "border-l-[#2f5fa0]",
   },
   fault: {
     label: "Da controllare",
     Icon: TriangleAlert,
     text: "text-[#835900]",
+    edge: "border-l-[#e0a31a]",
   },
   unavailable: {
     label: "Non disponibile",
     Icon: Ban,
     text: "text-muted-foreground",
+    edge: "border-l-[#7b858a]",
   },
 } as const
 
@@ -324,13 +336,14 @@ function BoatList({
         return (
           <button
             aria-label={`${boat.type} ${boat.number}, ${copy.label}${openCount ? `, ${openCount} ${openCount === 1 ? "avaria" : "avarie"}` : ""}`}
-            className={`flex min-h-18 items-center gap-3 rounded-2xl border border-l-4 p-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-2 ${state === "fault" ? "border-l-[#e0a31a]" : state === "unavailable" ? "border-l-[#7b858a] bg-muted/70 text-muted-foreground" : "border-l-transparent bg-card"}`}
+            className={`flex min-h-18 items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"
           >
             <BoatIdentity
               className="flex-1 max-[380px]:basis-full"
+              muted={state === "unavailable"}
               number={boat.number}
               type={boat.type}
             />
