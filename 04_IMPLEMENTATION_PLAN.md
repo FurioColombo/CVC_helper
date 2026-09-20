@@ -939,6 +939,29 @@ boats going out and every other session are untouched.
 including the reload that proves the change was persisted, and the two domain
 functions have their own table of cases.
 
+**Status 2026-09-20 — full release gate re-run after the day's work.**
+
+`npm run verify:all` on Node 24.21.0: lint, formatting, typecheck, 400 unit and
+component tests across 38 files, repository and canonical-domain checks, the
+0.1.0 compatibility fixture at its 22 rows, the production PWA build with its
+five precached OCR assets, the deterministic D2 full week with its course-state
+invariants, and 135 Playwright journeys across Pixel Chromium, iPhone Chromium
+and iPhone WebKit.
+
+One journey failed on the first pass, and it was the new
+`ug1-compact-rows.spec.ts`, not the application: it measured the three parts of
+the crew header with three separate `boundingBox` calls immediately after
+placing a person. The placement is saved asynchronously, and when it lands the
+pool loses a row and everything below it moves up, so two of the three
+measurements straddled the re-render and disagreed by the height of a pool row.
+The spec now waits for the settled card and takes all three rectangles in one
+layout pass; it passes three times in a row, and the full suite re-ran green at
+129 passed, 6 intended project-matrix skips, none failed.
+
+That is a measurement bug the first run of the day could not have caught,
+because the spec only became load-sensitive once the crew card grew the members
+it now measures around.
+
 **Repository cleanup, 2026-09-20.** Asked for as three ranked tiers. Deleted
 outright: `debug.log`, `test-results/` and `dist/` — all ignored, all
 regenerated, and the last one a build from before the 2026-09-19 entries that

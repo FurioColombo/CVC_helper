@@ -1,0 +1,36 @@
+{
+  "milestone": "UG1",
+  "record": "Full release gate after the 2026-09-20 changes",
+  "runtime": "Node 24.21.0",
+  "command": "npm run verify:all",
+  "deterministic": {
+    "lint": "PASS",
+    "formatCheck": "PASS",
+    "typecheck": "PASS (noUnusedLocals and noUnusedParameters now on in both projects)",
+    "unit": "PASS — 400 tests across 38 files",
+    "repository": "PASS — structure and command surface",
+    "domain": "PASS — canonical tables and runtime foundation scenario",
+    "compatibility": "PASS — 0.1.0 fixture, 22 rows",
+    "build": "PASS — PWA manifest, icons, service worker, 5 precached OCR assets",
+    "fullWeek": "PASS — deterministic D2 full week and course-state invariants"
+  },
+  "browser": {
+    "projects": ["pixel-7-chrome", "iphone-13-viewport", "iphone-13-webkit-core"],
+    "firstRun": "128 passed, 6 skipped, 1 failed",
+    "failure": {
+      "spec": "tests/e2e/ug1-compact-rows.spec.ts",
+      "cause": "The spec, not the application. It measured the crew header's three parts with three separate boundingBox calls immediately after placing a person. That placement is saved asynchronously; when it lands the pool loses a row and everything below moves up, so the measurements straddled the re-render and disagreed by 64px — the height of a pool row.",
+      "fix": "Wait for the settled crew card, then take all three rectangles in one page.evaluate, which is a single layout pass.",
+      "confirmation": "Three consecutive repeats pass."
+    },
+    "rerun": "129 passed, 6 intended project-matrix skips, none failed (26.6m)"
+  },
+  "coveredToday": [
+    "the compact student, volunteer and crew rows and their markers",
+    "the profile double-click shortcut",
+    "every boat mark measured against its slot, and the card height",
+    "adding and removing a crew, including the reload that proves persistence",
+    "the evaluation note and save state sharing one line"
+  ],
+  "stillOpen": "UG1's physical-device evidence is unchanged and still required: the microphone checks on PC, Android and iPhone, and the camera, crop, OCR and photo-disposal checks on Android Chrome and iPhone Safari. The long press on a profile field and the touch geometry of the new rows join that list."
+}
