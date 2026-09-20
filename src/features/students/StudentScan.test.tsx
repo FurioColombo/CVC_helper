@@ -13,8 +13,8 @@ vi.mock("@/persistence/students", () => ({
   createStudents: vi.fn(),
 }))
 
-vi.mock("@/features/students/StudentScanImageEditor", () => ({
-  StudentScanImageEditor: ({
+vi.mock("@/features/students/StudentScanImageEditorDocument", () => ({
+  StudentScanImageEditorDocument: ({
     file,
     onCancel,
     onUse,

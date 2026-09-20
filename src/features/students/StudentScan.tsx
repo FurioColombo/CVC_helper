@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
-import { StudentScanImageEditor } from "@/features/students/StudentScanImageEditor"
+import { StudentScanImageEditorDocument } from "@/features/students/StudentScanImageEditorDocument"
 import {
   readNameOrderPreference,
   writeNameOrderPreference,
@@ -912,7 +912,7 @@ export function StudentScan({
       )}
 
       {acquisition && (
-        <StudentScanImageEditor
+        <StudentScanImageEditorDocument
           file={acquisition.file}
           onCancel={closeAcquisition}
           onUse={(image) => {

@@ -338,7 +338,6 @@ function KnowledgeCard({
               dictation={dictation}
               naming={dictationNaming}
               reviewHint="Rileggi la trascrizione: il testo non viene salvato finché non lo confermi."
-              unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
             />
           </section>
         </div>

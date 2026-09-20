@@ -38,11 +38,3 @@ export function writeNameOrderPreference(
     // Remembering is a convenience; failing to remember must not break a scan.
   }
 }
-
-export function forgetNameOrderPreference(courseId: string) {
-  try {
-    window.localStorage.removeItem(`${STORAGE_PREFIX}${courseId}`)
-  } catch {
-    // As above: the scan continues with the order chosen for this session.
-  }
-}
