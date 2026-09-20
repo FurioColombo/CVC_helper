@@ -270,7 +270,7 @@ function StudentList({
               aria-hidden="true"
               className={`hidden size-8 shrink-0 place-items-center rounded-lg min-[380px]:grid ${student.active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
             >
-              <SexIcon className="size-[18px]" sex={student.sex} />
+              <SexIcon className="size-5" sex={student.sex} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block break-words text-[0.95rem] font-bold leading-tight">
@@ -524,7 +524,7 @@ function StudentForm({
                   value={option.id}
                 />
                 <span className="flex h-12 items-center justify-center gap-1.5 rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
-                  <SexIcon className="size-[18px]" sex={option.id} />
+                  <SexIcon className="size-5" sex={option.id} />
                   {option.label}
                 </span>
               </label>
