@@ -82,7 +82,8 @@ test("keeps every model mark inside its slot", async ({ page }, testInfo) => {
   }
 
   // The rows must also stay the height the list expects: a mark taller than
-  // its slot pushed the card over the one below it.
+  // its slot pushed the card over the one below it, and the 2026-09-20 pass
+  // took a quarter of the height out of every card — 72px around a 36px mark.
   const cardHeights = await page
     .getByRole("region", { name: "Elenco barche" })
     .evaluate((list) =>
@@ -90,7 +91,7 @@ test("keeps every model mark inside its slot", async ({ page }, testInfo) => {
         (card) => card.getBoundingClientRect().height,
       ),
     )
-  expect(Math.max(...cardHeights)).toBeLessThanOrEqual(96)
+  expect(Math.max(...cardHeights)).toBeLessThanOrEqual(56)
 
   const evidenceDirectory = path.resolve(".evidence/UG1")
   mkdirSync(evidenceDirectory, { recursive: true })
