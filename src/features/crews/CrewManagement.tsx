@@ -165,16 +165,18 @@ type AnnouncementLine = {
 function BoatMark({
   type,
   size = "compact",
+  muted = false,
 }: {
   type: BoatRecord["type"]
   size?: "compact" | "large"
+  muted?: boolean
 }) {
   return (
     <span
       aria-hidden="true"
       className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${size === "large" ? "h-[32px] w-[68px] [&>span]:scale-[0.77]" : "h-[24px] w-[60px] [&>span]:scale-[0.66]"}`}
     >
-      <BoatModelMark type={type} />
+      <BoatModelMark muted={muted} type={type} />
     </span>
   )
 }
@@ -204,11 +206,15 @@ function BoatSummary({
     )
   }
   if (inferredType) {
+    // The model the session is going out in, with no hull chosen yet — the
+    // "modello senza numero" state of the specification. The mark is muted, so
+    // a crew that has a boat (full colour, with its number) cannot be confused
+    // with one that only knows the model.
     if (large) {
       return (
         <span className="flex min-w-0 flex-col items-center gap-0.5">
-          <BoatMark size="large" type={inferredType} />
-          <span className="text-xs font-black leading-4 whitespace-nowrap">
+          <BoatMark muted size="large" type={inferredType} />
+          <span className="text-xs font-black leading-4 whitespace-nowrap text-muted-foreground">
             Senza barca
           </span>
         </span>
@@ -216,8 +222,10 @@ function BoatSummary({
     }
     return (
       <span className="flex min-w-0 items-center gap-1.5">
-        <BoatMark size={large ? "large" : "compact"} type={inferredType} />
-        <span className="text-sm font-black">Senza barca</span>
+        <BoatMark muted size="compact" type={inferredType} />
+        <span className="text-sm font-black text-muted-foreground">
+          Senza barca
+        </span>
       </span>
     )
   }
