@@ -73,22 +73,29 @@ export function DictationTrigger({
 }
 
 /**
+ * Said the same way on every screen, so it lives here rather than in six call
+ * sites that differed only in the last word.
+ */
+const UNSUPPORTED_HINT =
+  "Dettatura non disponibile in questo browser. Puoi scrivere il testo."
+
+/**
  * Everything dictation shows below the field: the note when the browser cannot
  * record, the live status with its cancel, the transcript review, and the
- * failure with its retry. `reviewHint` and `unsupportedHint` stay with the
- * caller because what happens to the text on accept differs by screen.
+ * failure with its retry. `reviewHint` stays with the caller because what
+ * happens to the text on accept differs by screen.
  */
 export function DictationPanels({
   dictation,
   naming,
   reviewHint,
-  unsupportedHint,
+  unsupportedHint = UNSUPPORTED_HINT,
   className = "",
 }: {
   dictation: Dictation
   naming: DictationNaming
   reviewHint: string
-  unsupportedHint: string
+  unsupportedHint?: string
   className?: string
 }) {
   const showStatus =

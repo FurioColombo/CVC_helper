@@ -16,7 +16,7 @@
   "boat_marks": {
     "rs_quest_was_cut": {
       "finding": "public/brand/boats/rs-quest.png shipped at 410x117, opaque white, artwork bleeding off every edge; the final 't' of 'Quest' was sliced vertically.",
-      "cause": "The 2026-09-18 commit took docs/post-mvp/mockups/assets/rs-quest.png, the truncated source, rather than rs-quest-complete.png, which the mock's own README names as the RS Quest asset.",
+      "cause": "The 2026-09-18 commit took the truncated docs/post-mvp/mockups/assets/rs-quest.png rather than rs-quest-complete.png, which the mock's own README names as the RS Quest asset. The truncated file was deleted on 2026-09-19.",
       "fix": "Normalised the complete 701x240 source: background removed by flooding the light region inwards from the border so the counters inside the letters stay, antialiased edges feathered by lightness, trimmed to the artwork, scaled to a 60px ink height.",
       "generation_not_used": "No image generation was needed and none is available in this session; the complete artwork already existed in the repository."
     },
@@ -25,22 +25,15 @@
       "fix": "Every mark trimmed to its own artwork. Resulting aspect ratios 0.55 (J/80) to 3.75 (RS Quest); `contain` now normalises them optically."
     },
     "first_27_is_the_wrong_boat": {
-      "finding": "The artwork supplied for First 27 reads '27.7' — the Beneteau First 27.7, a different model from the First 25.7 and First 27 in the domain.",
-      "decision": "That type falls back to the written mark. Naming the wrong model on a boat card is worse than naming none. The file is kept in public/brand/boats/ for comparison and one line restores it when correct artwork arrives."
+      "finding": "The artwork supplied for First 27 read '27.7' — the Beneteau First 27.7, a different model.",
+      "fix": "The digits are separable glyph runs in the artwork: '2' at x39-48, '7' at x52-62 and '.7' at x64-76. Clearing the last run leaves '27' set in the mark's own typeface rather than a number pasted in some other face. The mark now reads FIRST 27.",
+      "limitation": "The seahorse plate is the older Beneteau First mark, which is what the supplied artwork uses across the First family. The model number is now right; the brand mark is the one the club supplied."
     },
     "variants_offered": {
-      "gallery": ".evidence/UG1/boat-card-variants/index.html",
-      "screenshots": [
-        "variant-a.png (current: bordered grey chip)",
-        "variant-b.png (mark free on the card, state as a dot)",
-        "variant-e.png (B with the vector state icons)",
-        "variant-f.png (B with the left status rule) — SELECTED",
-        "variant-g.png (number first, then mark, then state)",
-        "variant-c.png (number in a solid plate)",
-        "variant-d.png (status bar flush left, number right)"
-      ],
-      "selected": "B with the vector state icons and the left status rule, at the owner's direction of 2026-09-19.",
-      "icons_kept": "Rulebook R06 and R20 require a symbol or label per state, not colour alone, so the three vector icons stay instead of the three identical dots shown in variant-b."
+      "compared": "Seven treatments were rendered at phone width and reviewed on 2026-09-19: the current bordered chip, the mark free on the card with a dot and with the vector icons, that plus a left status rule, number-first, a solid number plate, and a flush status bar.",
+      "selected": "Number first, then the mark, then the state, with the left status rule — 'F' in that comparison.",
+      "gallery_removed": "The comparison page and its screenshots were deleted on 2026-09-19 once the choice was made; keeping six rejected treatments as evidence only invites drift.",
+      "icons_kept": "Rulebook R06 and R20 require a symbol or label per state, not colour alone, so the three vector icons stay rather than three identical dots."
     },
     "mark_slot_sized_in_pixels": "h-[36px] w-[88px] rather than rem. At 200% text the number and the state label must grow; the mark is decoration and doubling it crowded out the number the operator is looking for. Verified in .evidence/U05/boats-stress-pixel-7-chrome.png."
   },

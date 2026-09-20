@@ -38,7 +38,7 @@ export function DictatedNoteField({
   onChange: (value: string) => void
   naming: DictationNaming
   reviewHint: string
-  unsupportedHint: string
+  unsupportedHint?: string
   placeholder?: string
   className?: string
   textareaClassName?: string

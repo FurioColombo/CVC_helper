@@ -49,22 +49,6 @@ export function normalizedLineAngle(
   return normalized
 }
 
-/**
- * Calculate the signed rotation delta for a radial direct-manipulation handle.
- */
-export function rotationDeltaFromPoints(
-  center: NormalizedPoint,
-  start: NormalizedPoint,
-  current: NormalizedPoint,
-) {
-  const startAngle = Math.atan2(start.y - center.y, start.x - center.x)
-  const currentAngle = Math.atan2(current.y - center.y, current.x - center.x)
-  let delta = ((currentAngle - startAngle) * 180) / Math.PI
-  while (delta > 180) delta -= 360
-  while (delta < -180) delta += 360
-  return delta
-}
-
 const MIN_CROP_SIZE = 0.16
 
 function clamp(value: number, minimum: number, maximum: number) {

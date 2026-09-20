@@ -123,7 +123,6 @@ export function FaultForm({
         dictation={dictation}
         naming={dictationNaming}
         reviewHint="Rileggi la trascrizione. Puoi modificarla prima di usarla."
-        unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la descrizione."
       />
 
       {saveError && (

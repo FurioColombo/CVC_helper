@@ -205,7 +205,6 @@ export function FaultCard({
             dictation={dictation}
             naming={dictationNaming}
             reviewHint="Rileggi la trascrizione prima di salvare la descrizione."
-            unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la descrizione."
           />
         </div>
       ) : (
