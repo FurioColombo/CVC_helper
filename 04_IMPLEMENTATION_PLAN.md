@@ -897,13 +897,15 @@ row.**
 
 Two further owner requests after seeing the density pass running.
 
-The sex figures are now drawn faces rather than the Mars and Venus symbols,
-which read as symbols and not as people. No icon set in use has gendered heads,
-so `PersonBadges` draws three on the set's own 24px grid: Uomo and Donna filled,
-because at 18px a 2px outline loses the hair that tells them apart, with the
-woman's hair half again as wide as the head; Altro keeps the outline figure
-already in use, so the three differ in silhouette and in weight rather than in
-an hairstyle alone. Judged at the size they are actually used, not at 64px.
+The sex figures are faces rather than the Mars and Venus symbols, which read as
+symbols and not as people. Two hand-drawn attempts were rejected by the owner —
+the second was passable at 18px and poor enlarged — so the third went looking
+for a designed set instead: the faces are now Material Symbols `face_6` (short
+hair), `face_3` (long hair) and `face` (none), © Google under Apache 2.0, with
+one change of ours, a pair of sunglasses in place of the eyes on all three. The
+hair is then the only variable. The outlines are embedded with their attribution
+in `src/components/PersonBadges.tsx` and recorded in the README; no icon
+dependency is added, which keeps `03_TECHNICAL_DECISIONS.md` section 2 intact.
 
 On P08 the state opens the row: the circled check and the written label sit
 right after the coloured rule and in the same blue, in a fixed-width column, so

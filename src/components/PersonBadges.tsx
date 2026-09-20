@@ -50,52 +50,81 @@ export function DutyBadge({
 }
 
 /**
- * Three faces, drawn rather than borrowed: the icon set has no gendered heads,
- * and the Mars and Venus symbols that stood here first read as symbols rather
- * than as people. Uomo and Donna are filled, because at 18px a 2px outline
- * loses the hair that tells them apart; Altro keeps the outline figure, so the
- * three differ in silhouette and in weight and not only in a hairstyle.
+ * Three faces from Material Symbols — `face_6`, `face_3` and `face` —
+ * © Google, Apache License 2.0 (https://github.com/google/material-design-icons).
+ * The outlines are theirs; nothing is redrawn, and no dependency is added.
  *
- * The same 24px grid, head and shoulders as the set's own figures, so they sit
- * beside them without looking imported.
+ * The one change is ours: the two eyes are replaced by the same pair of
+ * sunglasses on all three, so the only thing that differs between them is the
+ * hair. Hand-drawn attempts at this failed twice — the Mars and Venus symbols
+ * read as symbols rather than people, and silhouettes built from a circle and a
+ * pair of shoulders could not carry a hairstyle at 18px without falling apart
+ * when enlarged. A designed set solves both at once.
+ *
+ * Material's grid is `0 -960 960 960`, not the 24px one, and is kept as drawn.
  */
-const SHOULDERS = "M4.8 22.4a7.2 7.2 0 0 1 14.4 0z"
-
-function FaceMan(props: React.SVGProps<SVGSVGElement>) {
+function Sunglasses({ eyeY }: { eyeY: number }) {
   return (
-    <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
-      <circle cx="12" cy="8.8" r="4.2" />
-      <path d={SHOULDERS} />
+    <>
+      <rect height="96" rx="44" width="172" x="286" y={eyeY - 48} />
+      <rect height="96" rx="44" width="172" x="502" y={eyeY - 48} />
+      <rect height="28" rx="14" width="84" x="438" y={eyeY - 20} />
+    </>
+  )
+}
+
+function MaterialFace({
+  d,
+  eyeY,
+  className,
+}: {
+  d: string
+  eyeY: number
+  className?: string
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="currentColor"
+      viewBox="0 -960 960 960"
+    >
+      <path d={d} />
+      <Sunglasses eyeY={eyeY} />
     </svg>
   )
 }
 
-function FaceWoman(props: React.SVGProps<SVGSVGElement>) {
+/** `face_6`: short hair with a fringe. */
+function FaceMan({ className }: { className?: string }) {
   return (
-    <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
-      {/* The hair is half again as wide as the head and ends below the jaw.
-          At 18px that width is the whole difference between the two faces:
-          anything drawn inside the head is lost at this size. */}
-      <path d="M5.2 9.4C5.2 4.8 8.2 1.8 12 1.8s6.8 3 6.8 7.6v5.2h-3.1V9.2a3.7 3.7 0 0 0-7.4 0v5.4H5.2z" />
-      <circle cx="12" cy="9.2" r="3.8" />
-      <path d={SHOULDERS} />
-    </svg>
+    <MaterialFace
+      className={className}
+      d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-80q134 0 227.5-94T800-482q-71-7-109-44.5T626-618q-5-11-14.5-16.5T591-640H370q-12 0-21.5 5.5T334-618q-27 55-66 92.5T160-481q0 134 93.5 227.5T480-160Z"
+      eyeY={-440}
+    />
   )
 }
 
-function FaceNeutral(props: React.SVGProps<SVGSVGElement>) {
+/** `face_3`: long hair falling either side of the face. */
+function FaceWoman({ className }: { className?: string }) {
   return (
-    <svg fill="none" viewBox="0 0 24 24" {...props}>
-      {/* Altro keeps the outline figure the set already used: a third weight
-          reads at a glance where a third hairstyle would not. */}
-      <circle cx="12" cy="8.6" r="4.4" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M4.8 20.6a7.2 7.2 0 0 1 14.4 0"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
+    <MaterialFace
+      className={className}
+      d="M480-240q134 0 227-93.5T800-560q0-31-5-59.5T779-675q-27 17-57 26t-62 9q-54 0-101.5-24.5T480-734q-31 45-78.5 69.5T300-640q-32 0-62-9t-57-26q-11 27-16 55.5t-5 59.5q0 133 93.5 226.5T480-240ZM88-80q-35 0-59-26T8-167l36-395q8-84 45.5-157t96-126.5q58.5-53.5 134-84T480-960q85 0 160.5 30.5t134 84Q833-792 870.5-719T916-562l36 395q3 35-21 61t-59 26H88Z"
+      eyeY={-520}
+    />
+  )
+}
+
+/** `face`: no hair at all, which is what makes Altro the neutral one. */
+function FaceNeutral({ className }: { className?: string }) {
+  return (
+    <MaterialFace
+      className={className}
+      d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Z"
+      eyeY={-440}
+    />
   )
 }
 
@@ -118,7 +147,7 @@ export function SexIcon({
   className?: string
 }) {
   const Icon = SEX_ICONS[sex ?? "other"]
-  return <Icon aria-hidden="true" className={className} />
+  return <Icon className={className} />
 }
 
 export function VolunteerRoleBadge({

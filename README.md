@@ -33,6 +33,17 @@ A prompt can be as short as:
 The 0.1.0 harness and 0.2.0 activation foundation are complete. The plan's first
 incomplete U-series milestone is the implementation entry point.
 
+## Third-party assets
+
+Icons come from `lucide-react`, the project's icon dependency (ISC licence).
+Three student figures in `src/components/PersonBadges.tsx` are Material Symbols
+outlines — `face_6`, `face_3` and `face` — © Google, used under the Apache
+License 2.0, with the sunglasses added by this project. The attribution is kept
+in that file; no icon dependency is added for them.
+
+Boat marks under `public/brand/boats/` were supplied by the club and authorised
+for use by the owner on 2026-09-18; see `02_MVP_SCOPE.md` section 5.
+
 ## Local environment
 
 Use Node.js 24 and install the locked dependencies with `npm ci`. The required
