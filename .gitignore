@@ -10,3 +10,5 @@ debug.log
 # Written into the working directory when the OCR diagnostic runs.
 ita.traineddata
 
+# Audio and image corpora supplied for local benchmarking. Never committed.
+data/
