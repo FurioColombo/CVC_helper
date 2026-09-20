@@ -1,0 +1,18 @@
+{
+  "milestone": "UG1",
+  "correction": "Boat marks did not fit their slot — 2026-09-20",
+  "reported": "From the running app: on Barche the RS 500 and J/80 marks stood outside their rows, over the cards below them.",
+  "cause": "BoatModelMark sized the image with `h-full`. Its slot is a grid with `content-center`, which makes the row content-sized, so the percentage height had nothing definite to resolve against and the image fell back to its intrinsic 60px inside a 36px row. Width was unaffected, because the column's 88px is definite.",
+  "whyItShipped": "A wide mark is capped by that 88px and still looks right: RS Quest is 225x60 and renders 88x23. Every fleet the browser suite has ever built is RS Quest, so no journey rendered a narrow mark. J/80 is 33x60, RS 500 76x60, First 27 102x60 — all of them stood 60px tall.",
+  "fix": "The image carries the slot's own size, `h-[36px] w-[88px]` with `object-contain object-left`, instead of a percentage.",
+  "verification": {
+    "runtime": "Node 24.21.0",
+    "newSpec": "tests/e2e/ug1-boat-mark-fit.spec.ts builds a fleet of all seven canonical types and measures each image's rect against its slot's rect, plus the resulting card height. It fails on overflow of more than 1px in either axis. A missing asset still passes, because the written mark is the documented fallback.",
+    "browser": "37 journeys pass across the three device projects: boats, u05-boats-ui, u06-fault-ui, crew-copy-read (the announcement view, which scales the same mark), ug1-boat-mark-fit and ug1-compact-rows.",
+    "screenshot": ".evidence/UG1/boat-marks-every-type.png shows all seven types in one list."
+  },
+  "stillOpen": {
+    "firstTwentySeven": "The First 27 mark reads FIRST 27, but its `27` is noticeably smaller than the `25.7` on the First 25.7 mark: it is what was left after the `.7` glyph run was cleared on 2026-09-19. Redrawing the artwork or returning that type to the written fallback is a product decision, not a defect fix.",
+    "firstPlate": "Both First marks carry the black seahorse plate of the supplied artwork. That is the mark the club supplied, not damage."
+  }
+}
