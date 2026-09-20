@@ -161,26 +161,46 @@ test("keeps the repeated rows compact and their markers legible", async ({
     .getByRole("button", { name: /Sposta Marta in equipaggio 1/ })
     .click()
 
-  const destination = page.getByRole("button", {
-    name: /^Destinazione equipaggio 1:/,
+  // The placement is saved asynchronously and the pool loses a row when it
+  // lands, which moves everything below it. Wait for the settled card, then
+  // measure the three parts in one layout pass: three separate boundingBox
+  // calls can straddle a re-render and disagree by the height of a pool row.
+  const crewCard = page
+    .getByRole("region", { name: "Equipaggi della sessione" })
+    .getByRole("article")
+    .first()
+  await expect(crewCard.getByRole("button", { name: /^Marta,/ })).toBeVisible()
+  await expect(pool.getByRole("button", { name: "Marta" })).toHaveCount(0)
+
+  const header = await crewCard.evaluate((card) => {
+    const rect = (element: Element | null) => {
+      if (!element) return null
+      const { x, y, width, height } = element.getBoundingClientRect()
+      return { x, y, width, height }
+    }
+    return {
+      destination: rect(card.querySelector('[aria-label^="Destinazione"]')),
+      heading: rect(card.querySelector("h2")),
+      count: rect(
+        [...card.querySelectorAll("span")].find(
+          (span) => span.textContent?.trim() === "1/2",
+        ) ?? null,
+      ),
+    }
   })
-  const crewHeading = page.getByRole("heading", { name: "Equipaggio 1" })
-  const destinationBox = await destination.boundingBox()
-  const headingBox = await crewHeading.boundingBox()
-  const countBox = await page.getByText("1/2", { exact: true }).boundingBox()
-  expect(destinationBox).not.toBeNull()
-  expect(headingBox).not.toBeNull()
-  expect(countBox).not.toBeNull()
+  expect(header.destination).not.toBeNull()
+  expect(header.heading).not.toBeNull()
+  expect(header.count).not.toBeNull()
   // Same row: every centre falls inside the destination control's height.
-  const rowCentre = destinationBox!.y + destinationBox!.height / 2
-  for (const box of [headingBox!, countBox!]) {
+  const rowCentre = header.destination!.y + header.destination!.height / 2
+  for (const box of [header.heading!, header.count!]) {
     expect(Math.abs(box.y + box.height / 2 - rowCentre)).toBeLessThanOrEqual(
-      destinationBox!.height / 2,
+      header.destination!.height / 2,
     )
   }
-  expect(headingBox!.x).toBeLessThan(destinationBox!.x)
-  expect(countBox!.x).toBeGreaterThan(
-    destinationBox!.x + destinationBox!.width - 1,
+  expect(header.heading!.x).toBeLessThan(header.destination!.x)
+  expect(header.count!.x).toBeGreaterThan(
+    header.destination!.x + header.destination!.width - 1,
   )
   await page.setViewportSize({ width: 320, height: 664 })
   await expectNoHorizontalPageScroll(page)
