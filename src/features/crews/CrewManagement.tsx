@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   CircleMinus,
   Copy,
-  HandHeart,
   Info,
   ShipWheel,
   TriangleAlert,
@@ -22,12 +21,19 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  DutyBadge,
+  MinorBadge,
+  VolunteerRoleBadge,
+  type DutyMarker,
+} from "@/components/PersonBadges"
 import { BoatModelMark } from "@/features/boats/BoatIdentity"
 import {
   SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
   SESSION_SMONTANTE_DUTY_DAY,
   type SessionId,
+  type VolunteerRole,
 } from "@/domain/config"
 import {
   assignAvailableSessionBoat,
@@ -58,7 +64,7 @@ import {
   validateCrewRecords,
   validateDutyRecords,
 } from "@/domain/invariants"
-import { getStudentDisplayName } from "@/domain/student"
+import { getStudentDisplayName, isMinor } from "@/domain/student"
 import {
   listBoats,
   listFaults,
@@ -135,7 +141,7 @@ function CrewHeader({
 
 function samePerson(left: CrewPersonRef | null, right: CrewPersonRef) {
   return (
-    left?.personId === right.personId && left.personType === right.personType
+    left?.personId === right.personId && left?.personType === right.personType
   )
 }
 
@@ -366,6 +372,9 @@ function PersonButton({
   person,
   label,
   detail,
+  markers,
+  markerDescription,
+  role,
   selected,
   disabled,
   onTap,
@@ -377,6 +386,9 @@ function PersonButton({
   person: CrewPersonRef
   label: string
   detail: string
+  markers?: React.ReactNode
+  markerDescription?: string
+  role?: VolunteerRole
   selected: boolean
   disabled: boolean
   onTap: () => void
@@ -400,6 +412,10 @@ function PersonButton({
   return (
     <button
       aria-label={ariaLabel ?? label}
+      // The badges sit inside a button whose aria-label replaces its content,
+      // so their meaning would be lost. It goes in the description instead of
+      // the name, which stays the person — the same arrangement P17 uses.
+      aria-description={markerDescription || undefined}
       aria-pressed={selected}
       className={`flex min-h-14 min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"}`}
       disabled={disabled}
@@ -467,20 +483,20 @@ function PersonButton({
       }}
       type="button"
     >
-      {!compact && (
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-xs font-black text-foreground">
-          {person.personType === "volunteer" ? (
-            <HandHeart aria-hidden="true" className="size-4" />
-          ) : (
-            label.slice(0, 1).toLocaleUpperCase("it-IT")
-          )}
-        </span>
-      )}
+      {!compact &&
+        (person.personType === "volunteer" && role ? (
+          <VolunteerRoleBadge className="size-9 text-xs" role={role} />
+        ) : (
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-xs font-black text-foreground">
+            {label.slice(0, 1).toLocaleUpperCase("it-IT")}
+          </span>
+        ))}
       <span className="min-w-0 flex-1">
         <span
-          className={`block text-sm font-bold break-words ${compact ? "leading-4" : "leading-5"}`}
+          className={`flex min-w-0 items-center gap-1 text-sm font-bold ${compact ? "leading-4" : "leading-5"}`}
         >
-          {label}
+          <span className="min-w-0 break-words">{label}</span>
+          {markers}
         </span>
         <span
           className={`block opacity-75 ${compact ? "text-[0.68rem] leading-4" : "truncate text-xs"}`}
@@ -970,12 +986,45 @@ export function CrewManagement({
     }
     const student = studentById.get(person.personId)
     const size = student?.size ? ` · ${student.size}` : ""
-    const dutyMarker = currentDutyStudentIds.has(person.personId)
-      ? " · C"
+    return `${student?.active === 0 ? "Disabilitato" : "Allievo"}${size}`
+  }
+
+  /**
+   * Minore and comandata as the badges the rulebook names, beside the person
+   * they describe. Each badge carries its own meaning, and the same words go
+   * into the button's accessible name, which would otherwise hide them.
+   */
+  function personMarkers(person: CrewPersonRef) {
+    const student =
+      person.personType === "student"
+        ? studentById.get(person.personId)
+        : undefined
+    if (!student) return { nodes: null, description: "" }
+    const minor = isMinor(student.dateOfBirth, course.startDate)
+    const duty: DutyMarker | null = currentDutyStudentIds.has(person.personId)
+      ? "current"
       : smontanteDutyStudentIds.has(person.personId)
-        ? " · SM"
-        : ""
-    return `${student?.active === 0 ? "Disabilitato" : "Allievo"}${size}${dutyMarker}`
+        ? "smontante"
+        : null
+    if (!minor && !duty) return { nodes: null, description: "" }
+    return {
+      nodes: (
+        <>
+          {minor && <MinorBadge />}
+          {duty && <DutyBadge kind={duty} />}
+        </>
+      ),
+      description: [
+        minor ? "minorenne" : "",
+        duty === "current"
+          ? "in comandata"
+          : duty === "smontante"
+            ? "smontante"
+            : "",
+      ]
+        .filter(Boolean)
+        .join(", "),
+    }
   }
 
   const selectedBoatTypes = Array.from(
@@ -1741,13 +1790,17 @@ export function CrewManagement({
                           personId: student.id,
                           personType: "student",
                         }
+                        const markers = personMarkers(person)
                         return (
                           <PersonButton
+                            ariaLabel={personLabel(person)}
                             compact
                             detail={personDetail(person)}
                             disabled={busy}
                             key={student.id}
                             label={personLabel(person)}
+                            markers={markers.nodes}
+                            markerDescription={markers.description}
                             onLongPress={() => onOpenStudent(student.id)}
                             onTap={() => tapPerson(person)}
                             person={person}
@@ -1921,14 +1974,43 @@ export function CrewManagement({
                 >
                   {plan.crews.map((crew, crewIndex) => (
                     <article
-                      className="rounded-3xl border bg-card p-4"
+                      className="rounded-3xl border bg-card p-3"
                       key={crew.id}
                     >
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <h2 className="font-black">
+                      {/* Number, boat and headcount share the header row: the
+                          destination used to own a line of its own under it,
+                          which cost every crew card 3.5rem of the screen. */}
+                      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <h2 className="shrink-0 text-sm font-black">
                           Equipaggio {crewIndex + 1}
                         </h2>
-                        <div className="flex items-center gap-2">
+                        <button
+                          aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
+                          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
+                          disabled={busy}
+                          onClick={() => {
+                            setSelected(null)
+                            setDestinationCrewId((current) =>
+                              current === crew.id ? null : crew.id,
+                            )
+                          }}
+                          type="button"
+                        >
+                          <BoatSummary
+                            boat={
+                              crew.boatId
+                                ? (boatById.get(crew.boatId) ?? null)
+                                : null
+                            }
+                            destination={crew.destination}
+                            inferredType={
+                              selectedBoatTypes.length === 1
+                                ? selectedBoatTypes[0]
+                                : null
+                            }
+                          />
+                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
                           {(() => {
                             const warnings = warningsByCrew.get(crew.id) ?? []
                             const crewWarnings = warnings.filter(
@@ -1960,7 +2042,7 @@ export function CrewManagement({
                                 aria-controls={`crew-warning-detail-${crew.id}`}
                                 aria-expanded={warningCrewId === crew.id}
                                 aria-label={`Avvisi equipaggio ${crewIndex + 1}: ${severity === "red" ? "rosso" : "giallo"}, ${count}`}
-                                className={`grid size-11 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
+                                className={`grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
                                 onClick={() =>
                                   setWarningCrewId((current) =>
                                     current === crew.id ? null : crew.id,
@@ -2043,38 +2125,6 @@ export function CrewManagement({
                           })()}
                         </section>
                       )}
-                      <button
-                        aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
-                        className={`mb-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
-                        disabled={busy}
-                        onClick={() => {
-                          setSelected(null)
-                          setDestinationCrewId((current) =>
-                            current === crew.id ? null : crew.id,
-                          )
-                        }}
-                        type="button"
-                      >
-                        <span className="min-w-0">
-                          <BoatSummary
-                            boat={
-                              crew.boatId
-                                ? (boatById.get(crew.boatId) ?? null)
-                                : null
-                            }
-                            destination={crew.destination}
-                            inferredType={
-                              selectedBoatTypes.length === 1
-                                ? selectedBoatTypes[0]
-                                : null
-                            }
-                          />
-                        </span>
-                        <ShipWheel
-                          aria-hidden="true"
-                          className="size-5 shrink-0"
-                        />
-                      </button>
                       <div className="grid gap-2 min-[560px]:grid-cols-2">
                         {crew.members.map((person) => (
                           <div
@@ -2086,8 +2136,17 @@ export function CrewManagement({
                               detail={personDetail(person)}
                               disabled={busy}
                               label={personLabel(person)}
+                              markers={personMarkers(person).nodes}
+                              markerDescription={
+                                personMarkers(person).description
+                              }
                               onDoubleTap={() =>
                                 void commit(removePerson(plan, person))
+                              }
+                              role={
+                                person.personType === "volunteer"
+                                  ? volunteerById.get(person.personId)?.role
+                                  : undefined
                               }
                               onLongPress={
                                 person.personType === "student"
@@ -2170,6 +2229,10 @@ export function CrewManagement({
                             detail="A terra · conta nella completezza"
                             disabled={busy}
                             label={personLabel(person)}
+                            markers={personMarkers(person).nodes}
+                            markerDescription={
+                              personMarkers(person).description
+                            }
                             onDoubleTap={() =>
                               void commit(removePerson(plan, person))
                             }
@@ -2234,6 +2297,7 @@ export function CrewManagement({
                           label={personLabel(person)}
                           onTap={() => tapPerson(person)}
                           person={person}
+                          role={volunteer.role}
                           selected={samePerson(selected, person)}
                         />
                       )

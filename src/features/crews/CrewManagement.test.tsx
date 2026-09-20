@@ -155,6 +155,44 @@ describe("CrewManagement", () => {
     savePlan.mockResolvedValue(undefined)
   })
 
+  it("marks a minor in the pool and keeps the boat on the crew header row", async () => {
+    getStudents.mockResolvedValue([
+      { ...STUDENTS[0]!, dateOfBirth: "2010-05-04" },
+      ...STUDENTS.slice(1),
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+      }),
+    )
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    const aldo = await screen.findByRole("button", { name: "Aldo" })
+    expect(within(aldo).getByLabelText("Minorenne")).toHaveTextContent("M")
+    // The name stays the person; the badge reaches assistive technology as a
+    // description, which an aria-label would otherwise swallow.
+    expect(aldo).toHaveAttribute("aria-description", "minorenne")
+    expect(screen.getByRole("button", { name: "Bea" })).not.toHaveAttribute(
+      "aria-description",
+    )
+
+    // Crew number, destination and headcount share one row, so the header and
+    // the boat no longer take a line each.
+    const destination = screen.getByRole("button", {
+      name: "Destinazione equipaggio 1: Non assegnato",
+    })
+    const header = destination.parentElement!
+    expect(header).toHaveTextContent("Equipaggio 1")
+    expect(header).toHaveTextContent("0/2")
+  })
+
   it("explains the one-empty-crew limit when nobody is available", async () => {
     getStudents.mockResolvedValue([])
     getVolunteers.mockResolvedValue([])
@@ -277,16 +315,19 @@ describe("CrewManagement", () => {
     )
 
     const aldoMorning = await screen.findByRole("button", { name: "Aldo" })
-    expect(within(aldoMorning).getByText("Allievo · M · C")).toBeVisible()
+    expect(within(aldoMorning).getByText("Allievo · M")).toBeVisible()
+    expect(
+      within(aldoMorning).getByLabelText("In comandata"),
+    ).toHaveTextContent("C")
 
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Sessione" }),
       "sun-pm",
     )
     const aldo = await screen.findByRole("button", { name: "Aldo" })
-    expect(within(aldo).getByText("Allievo · M · SM")).toBeVisible()
+    expect(within(aldo).getByLabelText("Smontante")).toHaveTextContent("SM")
     const bea = screen.getByRole("button", { name: "Bea" })
-    expect(within(bea).getByText("Allievo · M · C")).toBeVisible()
+    expect(within(bea).getByLabelText("In comandata")).toBeVisible()
   })
 
   it("hides the previous plan while a newly selected session loads", async () => {

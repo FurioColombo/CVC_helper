@@ -62,6 +62,22 @@ describe("VolunteerManagement", () => {
     )
   })
 
+  it("names the role on the list row instead of one icon for everyone", async () => {
+    getVolunteers.mockResolvedValue([
+      ANNA,
+      { ...ANNA, id: "volunteer-2", name: "Carlo Verdi", role: "CT" as const },
+    ])
+    render(<VolunteerManagement courseId="course-1" onHome={vi.fn()} />)
+
+    const anna = await screen.findByRole("button", {
+      name: "Anna Bianchi, ruolo ADV",
+    })
+    expect(anna).toHaveTextContent("ADV")
+    expect(
+      screen.getByRole("button", { name: "Carlo Verdi, ruolo CT" }),
+    ).toHaveTextContent("CT")
+  })
+
   it("edits the name and role while keeping the record course-scoped", async () => {
     getVolunteers.mockResolvedValue([ANNA])
     const user = userEvent.setup()

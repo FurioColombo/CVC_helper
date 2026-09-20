@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { VolunteerRoleBadge } from "@/components/PersonBadges"
 import { VOLUNTEER_ROLES, type VolunteerRole } from "@/domain/config"
 import { validateVolunteerRecords } from "@/domain/invariants"
 import {
@@ -76,7 +77,7 @@ function VolunteerRoleChoice({
               type="radio"
               value={option}
             />
-            <span className="grid h-12 place-items-center rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+            <span className="grid h-12 place-items-center rounded-xl border bg-card text-base font-black transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
               {option}
             </span>
           </label>
@@ -193,21 +194,19 @@ function VolunteerList({
       {volunteers.map((volunteer) => (
         <button
           aria-label={`${volunteer.name}, ruolo ${volunteer.role}`}
-          className="flex min-h-18 items-center gap-3 rounded-2xl border bg-card p-3.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="flex min-h-14 items-center gap-3 rounded-2xl border bg-card px-3 py-2 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
           key={volunteer.id}
           onClick={() => onOpen(volunteer.id)}
           type="button"
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#fff1d6] text-[#9a5b00]">
-            <HandHeart aria-hidden="true" className="size-5" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-base font-bold">
-              {volunteer.name}
-            </span>
-            <span className="mt-1 inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-black tracking-wide text-primary">
-              {volunteer.role}
-            </span>
+          {/* The role is the identity: ADV, IS or CT in place of one icon that
+              said "volunteer" three times over. */}
+          <VolunteerRoleBadge
+            className="size-11 text-sm"
+            role={volunteer.role}
+          />
+          <span className="min-w-0 flex-1 truncate text-base font-bold">
+            {volunteer.name}
           </span>
           <Pencil aria-hidden="true" className="size-4 text-muted-foreground" />
         </button>

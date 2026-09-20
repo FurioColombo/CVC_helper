@@ -223,9 +223,12 @@ test("verifies the complete crew workflow across students, duties and boats", as
   await expect(
     page.getByRole("button", { name: "Fina, A terra" }),
   ).toBeVisible()
-  await expect(
-    studentPool.getByRole("button", { name: "Carlo" }),
-  ).toContainText("Allievo · M · C")
+  const carlo = studentPool.getByRole("button", { name: "Carlo" })
+  await expect(carlo).toContainText("Allievo · M")
+  // The comandata is the badge the rulebook names, and its meaning reaches
+  // assistive technology through the description rather than the name.
+  await expect(carlo.getByLabel("In comandata")).toHaveText("C")
+  await expect(carlo).toHaveAttribute("aria-description", "in comandata")
   await expect(page.getByText("Allievi sistemati 5/6")).toBeVisible()
 
   const copiedWarning = page.getByRole("button", {

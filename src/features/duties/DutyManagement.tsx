@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { MinorBadge } from "@/components/PersonBadges"
 import { DUTY_DAYS, type DutyDayId, type DutyTieBreaker } from "@/domain/config"
 import {
   generateDutyProposal,
@@ -625,14 +626,7 @@ function StudentAssignmentCard({
           />
         </button>
       )}
-      {isMinor(student.dateOfBirth, referenceDate) && (
-        <span
-          aria-label={`${name}, minorenne`}
-          className="grid size-4 shrink-0 place-items-center rounded-full bg-[#d33a4a] text-[9px] font-black text-white max-[350px]:size-[16px]"
-        >
-          M
-        </span>
-      )}
+      {isMinor(student.dateOfBirth, referenceDate) && <MinorBadge />}
       {student.active === 0 && (
         <span className="hidden shrink-0 text-[10px] font-bold text-muted-foreground min-[520px]:inline">
           Disabilitato
@@ -1270,11 +1264,7 @@ export function DutyManagement({
                                   isMinor(
                                     student.dateOfBirth,
                                     referenceDate,
-                                  ) && (
-                                    <span className="grid size-4 shrink-0 place-items-center rounded-full bg-[#d33a4a] text-[9px] font-black text-white">
-                                      M
-                                    </span>
-                                  )}
+                                  ) && <MinorBadge />}
                                 {personWarning && (
                                   <AlertTriangle
                                     aria-label={`Avviso per ${name}`}

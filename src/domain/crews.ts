@@ -4,6 +4,7 @@ import {
   type BoatAvailability,
   type BoatType,
   type CrewDestination,
+  type CourseCode,
   type CourseFamily,
   type CourseLevel,
   type SessionId,
@@ -167,8 +168,7 @@ export function formatCrewAnnouncement({
 
 export function getStandardCrewSize(family: CourseFamily, level: CourseLevel) {
   const prefix = family === "Deriva" ? "D" : "C"
-  const config =
-    COURSE_CONFIG[`${prefix}${level}` as keyof typeof COURSE_CONFIG]
+  const config = COURSE_CONFIG[`${prefix}${level}` as CourseCode]
   return config && "standardCrewSize" in config ? config.standardCrewSize : null
 }
 

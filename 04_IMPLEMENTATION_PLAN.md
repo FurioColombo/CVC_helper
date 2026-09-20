@@ -688,10 +688,11 @@ from a line drawn along a rule, quarter turns, tenth-of-a-degree steps and an
 exact angle. The dimming mask is clipped to the stage. The Product Specification
 paragraph and the code now agree.
 
-The previous surface is kept verbatim as `StudentScanImageEditorClassic` with its
-own tests, selected by `STUDENT_SCAN_EDITOR` in
-`src/features/students/studentScanEditorChoice.ts`, so the two can be compared by
-changing one value. Evidence: `.evidence/UG1/scan-document-editor.json`.
+The previous surface was kept for comparison as `StudentScanImageEditorClassic`,
+selected by `STUDENT_SCAN_EDITOR`. The comparison is over: the classic surface,
+its tests and the switch were deleted on 2026-09-19 and `StudentScan` mounts the
+document editor directly. Its history is in this repository if it is ever
+wanted. Evidence: `.evidence/UG1/scan-document-editor.json`.
 
 UG1 remains IN_PROGRESS for its physical-device release evidence, which now also
 covers touch panning and the line gesture on a real phone.
@@ -726,7 +727,7 @@ different boat. That type falls back to the written mark until correct artwork
 arrives; naming the wrong model on a card is worse than naming none.
 
 The row itself follows the owner's choice of 2026-09-19 from the seven
-treatments in `.evidence/UG1/boat-card-variants/`: the mark sits on the card
+treatments compared on 2026-09-19: the mark sits on the card
 with no chip, the number is the second thing read, and a coloured rule down the
 left carries the state. The vector state icons stay, because R06 and R20 want a
 symbol per state rather than colour alone. The mark slot is sized in pixels, not
@@ -787,3 +788,110 @@ beside a field label pushed the student form to 343 px at the stress viewport.
 
 `npm run verify:e2e` now passes: 125 journeys, four intended project-matrix
 skips, no failures, across Pixel Chromium, iPhone Chromium and iPhone WebKit.
+
+**Status 2026-09-19 — chosen designs kept, alternatives removed.**
+
+The boat row takes the number-first treatment: the number opens the row in its
+own column so the marks stay aligned under one another whether the boat is 7 or
+115, the mark follows it, the state closes it, and the coloured rule stays on
+the left. The comparison page and its six rejected treatments are deleted;
+keeping alternatives as evidence only invites drift.
+
+The First 27 artwork read `27.7`. The digits are separable glyph runs, so
+clearing the last one leaves `27` set in the mark's own typeface rather than a
+number pasted in another face. The model number is now right; the seahorse plate
+is still the older Beneteau First mark, which is what the supplied artwork uses
+across the family. The mark is back in use and no longer falls back to text.
+
+Removed as no longer used: `StudentScanImageEditorClassic`, its tests and the
+`STUDENT_SCAN_EDITOR` switch, now that the document editor is the accepted
+surface and `StudentScan` mounts it directly; the truncated
+`mockups/assets/rs-quest.png`, superseded by the complete artwork beside it;
+`rotationDeltaFromPoints`, the radial-handle helper the classic editor used; and
+`forgetNameOrderPreference`, which never had a caller. The "dictation not
+available" sentence was written out in six places and is now one default on
+`DictationPanels`.
+
+The dictation wiring that remains at each call site — a `useDictation` hook, a
+naming pair and the two components — is the minimum for a screen that must also
+observe the dictation state to gate its own save. It is not duplication that can
+be factored away without giving each host a callback for state it already holds.
+
+**Status 2026-09-20 — the repeated rows lose a line, and the markers become
+badges.**
+
+Human request of 2026-09-20, recorded here under the active milestone because
+UG1 is the open one. Six changes, all to rows that repeat tens of times in a
+week of use, plus one answer to a question about a shortcut.
+
+`PersonBadges` is the new home of the four markers the rulebook's visual
+dictionary names but which the code wrote out differently on each screen:
+`MinorBadge` (white `M` on red), `DutyBadge` (`C` on blue, `SM` outlined for
+the smontante), `SexIcon` and `VolunteerRoleBadge`. Allievi, Comandate and
+Equipaggi now render the same `M`; before this, three screens drew three
+different ones and Equipaggi drew none at all.
+
+- **P03** — the student card drops from 84 px to 56 px and the sex stops being
+  a letter. Mars, Venus and the neutral figure carry it, so the only `M` in a
+  row is the minor badge, which R03's own brief asks for ("evitare tre M
+  ambigue per sesso/taglia/minore"). Below 380 px the figure moves into the
+  detail line rather than taking width from the name. A new card starts on
+  `Altro`.
+- **P04** — double click, or a long press on touch, on a profile field opens
+  the edit form with that field focused. The Product Specification allowed this
+  in section 3.3 and the P04 brief proposed exactly this behaviour; U02 closed
+  without it and without recording the omission, so it was forgotten rather
+  than deferred. `Modifica` remains the explicit path, which is what R09
+  requires of an advanced gesture.
+- **P10** — the volunteer row shows `ADV`, `IS` or `CT` where a hand-and-heart
+  icon used to say "volunteer" three times identically. The duplicate role
+  chip under the name goes, and the row drops to 56 px. The Home card keeps its
+  own icon: it stands for the section, not for a person with a role.
+- **P14** — crew number, boat and headcount share the header row. The
+  destination control had a line of its own under the heading and cost every
+  crew card about 3.5 rem; it keeps its accessible name, its unavailable-boat
+  red and its 44 px target, and the row wraps instead of overflowing at 320 px
+  and at 200 % text.
+- **The badges and assistive technology** — a person button carries an
+  `aria-label`, which replaces its content, so a badge inside it is silent.
+  The first attempt appended the markers to that name. The full browser suite
+  then failed four journeys that select a person by exact name, which is the
+  right objection: the name of a control should be the person. The markers
+  moved to `aria-description`, the arrangement P17 already uses, and every
+  existing journey passes unchanged.
+- **P17** — the note and the save state share the line under the evaluation
+  row. They never compete: the state is empty except around a write. The live
+  region stays mounted while empty, because a live region inserted together
+  with its text is not announced.
+
+Evidence: `.evidence/UG1/compact-rows-and-markers.json`, with
+`tests/e2e/ug1-compact-rows.spec.ts` measuring the row geometry rather than its
+styling, so the screens can keep moving without the spec becoming a pixel diff.
+
+**Repository cleanup, 2026-09-20.** Asked for as three ranked tiers. Deleted
+outright: `debug.log`, `test-results/` and `dist/` — all ignored, all
+regenerated, and the last one a build from before the 2026-09-19 entries that
+`npm run preview` and `npm run check:ocr-offline` were still serving.
+
+The second tier went to an independent review agent, which kept more than it
+removed and found four contained fixes instead: `noUnusedLocals` and
+`noUnusedParameters` now on in both `tsconfig` projects (both compile clean,
+and they catch unused private class members, which ESLint does not); the
+`Intl.Collator` in `src/domain/evaluations.ts` hoisted out of the comparator
+body, where it was allocated once per comparison; the nullable `left` in
+`samePerson` guarded on both accesses in `CrewManagement`; and `CourseCode`,
+exported and never used, adopted at the three sites that wrote
+`keyof typeof COURSE_CONFIG` inline.
+
+It found no dead specs: the older 0.1.0-era Playwright journeys each hold an
+assertion the U-series ones do not, and two of them are the only WebKit
+coverage of their area, because that project selects specs by filename. The
+`.evidence/UG1/scan-redesign` concepts stay too — the shipped editor is a merge
+of both, not a winner.
+
+The tiers, their evidence and the five questions left for the owner are in
+`.evidence/UG1/cleanup-inventory.json`. The search found little else, and the
+reason is structural: ESLint already runs `@typescript-eslint/no-unused-vars`
+at `--max-warnings 0`, so unused locals and imports cannot reach a commit.
+Unused *exports* are the one category nothing checks — 36 of them exist, and 30
+are the module's own API.

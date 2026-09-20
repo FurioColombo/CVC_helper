@@ -342,7 +342,7 @@ describe("DutyManagement", () => {
     expect(
       within(
         screen.getByRole("region", { name: "Allievi comandata Domenica" }),
-      ).getByLabelText("Nome1, minorenne"),
+      ).getByLabelText("Minorenne"),
     ).toBeVisible()
     await user.click(studentButton)
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())

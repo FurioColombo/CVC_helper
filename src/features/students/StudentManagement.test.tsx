@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -138,6 +138,45 @@ describe("StudentManagement", () => {
     expect(
       await screen.findByRole("button", { name: "Riattiva allievo" }),
     ).toBeVisible()
+  })
+
+  it("starts a new card on Altro and shows the sex as a figure in the list", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    // The list carries the sex as an icon, so the row no longer prints an "M"
+    // that could be read as the minor marker or as a size.
+    const card = await screen.findByRole("button", {
+      name: /Mario, 16 anni, M, Minorenne/,
+    })
+    expect(within(card).getByLabelText("Minorenne")).toHaveTextContent("M")
+    expect(within(card).getAllByText("M")).toHaveLength(1)
+    expect(card.querySelector("svg")).not.toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+    await user.click(
+      screen.getAllByRole("button", { name: "Aggiungi allievo" })[0]!,
+    )
+    expect(screen.getByRole("radio", { name: "Altro" })).toBeChecked()
+  })
+
+  it("opens the edit form focused on the field a double click names", async () => {
+    getStudents.mockResolvedValue([{ ...MARIO, phone: "3331234567" }])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: /Mario, 16 anni, M, Minorenne/,
+      }),
+    )
+    await user.dblClick(screen.getByText("3331234567"))
+
+    expect(
+      await screen.findByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    await waitFor(() => expect(screen.getByLabelText("Telefono")).toHaveFocus())
   })
 
   it("refuses structurally invalid persisted student records", async () => {

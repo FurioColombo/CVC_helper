@@ -117,7 +117,6 @@ function EvaluationNoteEditor({
         dictation={dictation}
         naming={dictationNaming}
         reviewHint="Rileggi la trascrizione. Il testo sarà salvato solo con la nota."
-        unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
       />
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button
@@ -257,31 +256,38 @@ function EvaluationCard({
           Valutazione mancante: resta comunque valutabile.
         </p>
       )}
-      <div
-        aria-label={`Stato salvataggio valutazione di ${name}`}
-        aria-live="polite"
-        className={`mt-1 text-right text-xs font-semibold ${saveError ? "text-[#b42318]" : "text-muted-foreground"}`}
-      >
-        {saving
-          ? "Salvataggio…"
-          : saveError
-            ? "Non salvato"
-            : saved
-              ? "Salvato"
-              : ""}
+      {/* The note and the save state share one line: they never compete for
+          attention — the state is empty except for the moment around a write —
+          and a line each cost every row 1rem of screen. The note itself is
+          shown, not the word "nota": what was written is the useful thing at a
+          glance. Two lines cap the row height however long the note is, and
+          the name button above opens it in full. The wrapper and the live
+          region stay mounted whatever the state, because a live region
+          inserted together with its text is not announced. */}
+      <div className="mt-1 flex min-w-0 items-start gap-2 text-xs leading-4">
+        {noteSummary && (
+          <p className="flex min-w-0 flex-1 items-start gap-1.5 text-muted-foreground">
+            <FilePenLine
+              aria-hidden="true"
+              className="mt-px size-3.5 shrink-0 text-primary"
+            />
+            <span className="line-clamp-2 min-w-0">{noteSummary}</span>
+          </p>
+        )}
+        <div
+          aria-label={`Stato salvataggio valutazione di ${name}`}
+          aria-live="polite"
+          className={`ml-auto shrink-0 text-right font-semibold ${saveError ? "text-[#b42318]" : "text-muted-foreground"}`}
+        >
+          {saving
+            ? "Salvataggio…"
+            : saveError
+              ? "Non salvato"
+              : saved
+                ? "Salvato"
+                : ""}
+        </div>
       </div>
-      {noteSummary && (
-        // The note itself, not the word "nota": what was written is the useful
-        // thing at a glance. Two lines cap the row height however long the note
-        // is, and the name button above opens it in full.
-        <p className="mt-1 flex min-w-0 items-start gap-1.5 text-xs leading-4 text-muted-foreground">
-          <FilePenLine
-            aria-hidden="true"
-            className="mt-px size-3.5 shrink-0 text-primary"
-          />
-          <span className="line-clamp-2 min-w-0">{noteSummary}</span>
-        </p>
-      )}
       {saveError && (
         <button
           aria-label={`Riprova salvataggio valutazione di ${name}`}

@@ -2,6 +2,7 @@ import {
   COURSE_CONFIG,
   type BoatAvailability,
   type BoatType,
+  type CourseCode,
   type CourseFamily,
   type CourseLevel,
   type FaultState,
@@ -26,7 +27,7 @@ export function getDefaultBoatType(
 ): BoatType | null {
   const code = `${family === "Deriva" ? "D" : "C"}${level}`
   return code in COURSE_CONFIG
-    ? COURSE_CONFIG[code as keyof typeof COURSE_CONFIG].defaultBoatType
+    ? COURSE_CONFIG[code as CourseCode].defaultBoatType
     : null
 }
 
