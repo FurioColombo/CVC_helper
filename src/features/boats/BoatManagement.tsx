@@ -326,7 +326,7 @@ function BoatList({
   onOpen: (boatId: string) => void
 }) {
   return (
-    <section aria-label="Elenco barche" className="grid gap-2.5">
+    <section aria-label="Elenco barche" className="grid gap-2">
       {boats.map((boat) => {
         const boatFaults = faults.filter((fault) => fault.boatId === boat.id)
         const openCount = boatFaults.filter(
@@ -338,7 +338,10 @@ function BoatList({
         return (
           <button
             aria-label={`${boat.type} ${boat.number}, ${copy.label}${openCount ? `, ${openCount} ${openCount === 1 ? "avaria" : "avarie"}` : ""}`}
-            className={`flex min-h-18 items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
+            // 3.375rem rather than 4.5, and half the vertical padding: the row
+            // was 72px tall around a 36px mark, so a quarter of every card was
+            // air. The mark keeps its size; only the space around it goes.
+            className={`flex min-h-[3.375rem] items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-1.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-1.5 max-[380px]:py-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"

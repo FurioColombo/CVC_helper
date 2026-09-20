@@ -911,6 +911,12 @@ availability reads down one column while scrolling and the numbers and marks
 after it stay aligned. Below 380px the column releases and the identity wraps,
 as it already did.
 
+The P08 card is then a quarter shorter — 72px to 54px, half the vertical
+padding — because a 36px mark sat in a 72px row and the rest was air. The mark
+keeps its size; the space around it goes. Seven boats now fit where five did.
+`ug1-boat-mark-fit.spec.ts` measures the card height as well as the mark, so it
+cannot creep back.
+
 **Status 2026-09-20 — the number of crews can change after setup.**
 
 Reported from the running app: eighteen students, ten crews chosen at setup,
