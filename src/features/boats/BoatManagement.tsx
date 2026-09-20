@@ -297,7 +297,9 @@ const STATE_COPY = {
   clear: {
     label: "Disponibile",
     Icon: CheckCircle2,
-    text: "text-muted-foreground",
+    // The same blue as the rule on the left of the card: one colour for one
+    // state, said twice in the same row.
+    text: "text-[#2f5fa0]",
     edge: "border-l-[#2f5fa0]",
   },
   fault: {
@@ -341,17 +343,15 @@ function BoatList({
             onClick={() => onOpen(boat.id)}
             type="button"
           >
-            <BoatIdentity
-              className="flex-1 max-[380px]:basis-full"
-              muted={state === "unavailable"}
-              number={boat.number}
-              type={boat.type}
-            />
+            {/* The state opens the row, in the colour of the rule beside it,
+                so the availability of the fleet reads down one column while
+                scrolling. It keeps a fixed width, so the numbers and the marks
+                after it stay aligned from row to row. */}
             <span
-              className={`flex min-w-0 shrink-0 items-center gap-1.5 text-right text-xs font-bold max-[380px]:flex-1 max-[380px]:text-left ${copy.text}`}
+              className={`flex w-[6.75rem] shrink-0 items-center gap-1.5 text-xs font-bold max-[380px]:w-auto max-[380px]:flex-1 ${copy.text}`}
             >
               <StateIcon aria-hidden="true" className="size-4 shrink-0" />
-              <span className="max-w-[8.5rem] leading-4">
+              <span className="min-w-0 leading-4">
                 {copy.label}
                 {openCount > 0 && (
                   <span className="block font-medium">
@@ -360,6 +360,12 @@ function BoatList({
                 )}
               </span>
             </span>
+            <BoatIdentity
+              className="flex-1 max-[380px]:basis-full"
+              muted={state === "unavailable"}
+              number={boat.number}
+              type={boat.type}
+            />
             <ChevronLeft
               aria-hidden="true"
               className="size-4 rotate-180 text-muted-foreground"

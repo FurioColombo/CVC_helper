@@ -892,6 +892,45 @@ Open, and a product call rather than a defect: the First 27 artwork reads
 2026-09-19. Either the artwork is redrawn or that type goes back to the written
 fallback.
 
+**Status 2026-09-20 — faces instead of symbols, and the boat state opens the
+row.**
+
+Two further owner requests after seeing the density pass running.
+
+The sex figures are now drawn faces rather than the Mars and Venus symbols,
+which read as symbols and not as people. No icon set in use has gendered heads,
+so `PersonBadges` draws three on the set's own 24px grid: Uomo and Donna filled,
+because at 18px a 2px outline loses the hair that tells them apart, with the
+woman's hair half again as wide as the head; Altro keeps the outline figure
+already in use, so the three differ in silhouette and in weight rather than in
+an hairstyle alone. Judged at the size they are actually used, not at 64px.
+
+On P08 the state opens the row: the circled check and the written label sit
+right after the coloured rule and in the same blue, in a fixed-width column, so
+availability reads down one column while scrolling and the numbers and marks
+after it stay aligned. Below 380px the column releases and the identity wraps,
+as it already did.
+
+**Status 2026-09-20 — the number of crews can change after setup.**
+
+Reported from the running app: eighteen students, ten crews chosen at setup,
+then the decision not to embark volunteers left one crew empty with no way to
+remove it. The count was fixed once the session was prepared, because the setup
+screen only appears while the session has no crews at all.
+
+An empty crew now carries the control that removes it on its own card, to the
+right of its free slots. A crew holding someone does not show it at all, so
+nobody is lost to a stray tap, and `removeEmptyCrew` refuses a crew with
+members rather than throwing, so a stale tap does nothing. `Aggiungi
+equipaggio` closes the list and makes the removal reversible without returning
+to setup — the underlying complaint was that the number could not be changed,
+not only that it could not be reduced. Both are session-local: A terra, the
+boats going out and every other session are untouched.
+
+`tests/e2e/ug1-crew-count.spec.ts` covers the pair through the interface,
+including the reload that proves the change was persisted, and the two domain
+functions have their own table of cases.
+
 **Repository cleanup, 2026-09-20.** Asked for as three ranked tiers. Deleted
 outright: `debug.log`, `test-results/` and `dist/` — all ignored, all
 regenerated, and the last one a build from before the 2026-09-19 entries that

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  addCrew,
   assignAvailableSessionBoat,
   assignCrewDestination,
   copyPreviousBoatSelection,
@@ -13,6 +14,7 @@ import {
   getSessionBoatStates,
   getStandardCrewSize,
   movePerson,
+  removeEmptyCrew,
   removePerson,
   setBoatGoingOut,
   swapPeople,
@@ -397,5 +399,37 @@ describe("crew composition rules", () => {
         memberLabels: ["Mario", "Luca"],
       }),
     ).toBe("Mezzi — Mario / Luca")
+  })
+  it("adds a crew and removes an empty one, session-locally", () => {
+    const added = addCrew(EMPTY_PLAN, "sat-pm", () => "crew-3")
+    expect(added.crews.map(({ id }) => id)).toEqual([
+      "crew-1",
+      "crew-2",
+      "crew-3",
+    ])
+    expect(added.crews[2]).toMatchObject({
+      sessionId: "sat-pm",
+      members: [],
+      destination: "unassigned",
+      boatId: null,
+    })
+    expect(added.landStudentIds).toBe(EMPTY_PLAN.landStudentIds)
+
+    const removed = removeEmptyCrew(added, "crew-2")
+    expect(removed.crews.map(({ id }) => id)).toEqual(["crew-1", "crew-3"])
+  })
+
+  it("refuses to remove a crew that still holds someone", () => {
+    const manned = movePerson(
+      EMPTY_PLAN,
+      STUDENT_1,
+      {
+        kind: "crew",
+        crewId: "crew-1",
+      },
+      2,
+    )
+    expect(removeEmptyCrew(manned, "crew-1")).toBe(manned)
+    expect(removeEmptyCrew(manned, "missing")).toBe(manned)
   })
 })

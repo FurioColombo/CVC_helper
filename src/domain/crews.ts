@@ -387,6 +387,42 @@ export function removePerson(plan: CrewPlan, person: CrewPersonRef) {
   return withoutPerson(plan, person)
 }
 
+/**
+ * The number of crews is chosen before composing, and the session then has to
+ * survive the outing changing shape: a volunteer who does not sail leaves an
+ * empty crew behind. Both operations are session-local and touch nothing else
+ * in the plan.
+ *
+ * Removing refuses a crew that still holds someone rather than throwing: the
+ * control that calls it is only offered on an empty crew, and a stale tap
+ * should do nothing rather than lose a person.
+ */
+export function addCrew(
+  plan: CrewPlan,
+  sessionId: SessionId,
+  createId: () => string = () => crypto.randomUUID(),
+): CrewPlan {
+  return {
+    ...plan,
+    crews: [
+      ...plan.crews,
+      {
+        id: createId(),
+        sessionId,
+        members: [],
+        destination: "unassigned",
+        boatId: null,
+      },
+    ],
+  }
+}
+
+export function removeEmptyCrew(plan: CrewPlan, crewId: string): CrewPlan {
+  const crew = plan.crews.find(({ id }) => id === crewId)
+  if (!crew || crew.members.length > 0) return plan
+  return { ...plan, crews: plan.crews.filter(({ id }) => id !== crewId) }
+}
+
 export function movePerson(
   plan: CrewPlan,
   person: CrewPersonRef,

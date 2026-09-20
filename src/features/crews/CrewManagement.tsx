@@ -5,7 +5,9 @@ import {
   CircleMinus,
   Copy,
   Info,
+  Plus,
   ShipWheel,
+  Trash2,
   TriangleAlert,
   X,
   UsersRound,
@@ -36,6 +38,7 @@ import {
   type VolunteerRole,
 } from "@/domain/config"
 import {
+  addCrew,
   assignAvailableSessionBoat,
   assignCrewDestination,
   copyPreviousBoatSelection,
@@ -46,6 +49,7 @@ import {
   getPreviousSessionId,
   getStandardCrewSize,
   movePerson,
+  removeEmptyCrew,
   removePerson,
   setBoatGoingOut,
   swapPeople,
@@ -2125,82 +2129,112 @@ export function CrewManagement({
                           })()}
                         </section>
                       )}
-                      <div className="grid gap-2 min-[560px]:grid-cols-2">
-                        {crew.members.map((person) => (
-                          <div
-                            className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1"
-                            key={`${person.personType}:${person.personId}`}
-                          >
-                            <PersonButton
-                              ariaLabel={`${personLabel(person)}, equipaggio ${crewIndex + 1}`}
-                              detail={personDetail(person)}
-                              disabled={busy}
-                              label={personLabel(person)}
-                              markers={personMarkers(person).nodes}
-                              markerDescription={
-                                personMarkers(person).description
-                              }
-                              onDoubleTap={() =>
-                                void commit(removePerson(plan, person))
-                              }
-                              role={
-                                person.personType === "volunteer"
-                                  ? volunteerById.get(person.personId)?.role
-                                  : undefined
-                              }
-                              onLongPress={
-                                person.personType === "student"
-                                  ? () => onOpenStudent(person.personId)
-                                  : undefined
-                              }
-                              onTap={() => tapPerson(person)}
-                              person={person}
-                              selected={samePerson(selected, person)}
-                            />
-                            <button
-                              aria-label={`Rendi disponibile ${personLabel(person)}`}
-                              className="grid min-h-14 min-w-11 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
-                              disabled={busy}
-                              onClick={() =>
-                                void commit(removePerson(plan, person))
-                              }
-                              title="Rendi disponibile"
-                              type="button"
+                      {/* The slots and, on an empty crew only, the control
+                          that removes it: the number of crews is chosen before
+                          composing and the outing changes shape afterwards. */}
+                      <div className="flex items-stretch gap-2">
+                        <div className="grid min-w-0 flex-1 gap-2 min-[560px]:grid-cols-2">
+                          {crew.members.map((person) => (
+                            <div
+                              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1"
+                              key={`${person.personType}:${person.personId}`}
                             >
-                              <CircleMinus
-                                aria-hidden="true"
-                                className="size-4"
+                              <PersonButton
+                                ariaLabel={`${personLabel(person)}, equipaggio ${crewIndex + 1}`}
+                                detail={personDetail(person)}
+                                disabled={busy}
+                                label={personLabel(person)}
+                                markers={personMarkers(person).nodes}
+                                markerDescription={
+                                  personMarkers(person).description
+                                }
+                                onDoubleTap={() =>
+                                  void commit(removePerson(plan, person))
+                                }
+                                role={
+                                  person.personType === "volunteer"
+                                    ? volunteerById.get(person.personId)?.role
+                                    : undefined
+                                }
+                                onLongPress={
+                                  person.personType === "student"
+                                    ? () => onOpenStudent(person.personId)
+                                    : undefined
+                                }
+                                onTap={() => tapPerson(person)}
+                                person={person}
+                                selected={samePerson(selected, person)}
                               />
-                            </button>
-                          </div>
-                        ))}
-                        {Array.from(
-                          {
-                            length: standardCrewSize
-                              ? Math.max(
-                                  0,
-                                  standardCrewSize - crew.members.length,
-                                )
-                              : 1,
-                          },
-                          (_, index) => (
-                            <button
-                              aria-label={`Posto libero ${index + 1} equipaggio ${crewIndex + 1}`}
-                              className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
-                              disabled={!selected || busy}
-                              key={index}
-                              onClick={() => placeInCrew(crew.id)}
-                              type="button"
-                            >
-                              {selected
-                                ? `Inserisci ${personLabel(selected)}`
-                                : "Posto libero"}
-                            </button>
-                          ),
+                              <button
+                                aria-label={`Rendi disponibile ${personLabel(person)}`}
+                                className="grid min-h-14 min-w-11 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
+                                disabled={busy}
+                                onClick={() =>
+                                  void commit(removePerson(plan, person))
+                                }
+                                title="Rendi disponibile"
+                                type="button"
+                              >
+                                <CircleMinus
+                                  aria-hidden="true"
+                                  className="size-4"
+                                />
+                              </button>
+                            </div>
+                          ))}
+                          {Array.from(
+                            {
+                              length: standardCrewSize
+                                ? Math.max(
+                                    0,
+                                    standardCrewSize - crew.members.length,
+                                  )
+                                : 1,
+                            },
+                            (_, index) => (
+                              <button
+                                aria-label={`Posto libero ${index + 1} equipaggio ${crewIndex + 1}`}
+                                className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
+                                disabled={!selected || busy}
+                                key={index}
+                                onClick={() => placeInCrew(crew.id)}
+                                type="button"
+                              >
+                                {selected
+                                  ? `Inserisci ${personLabel(selected)}`
+                                  : "Posto libero"}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                        {crew.members.length === 0 && (
+                          <button
+                            aria-label={`Elimina equipaggio ${crewIndex + 1}`}
+                            className="grid w-11 shrink-0 place-items-center rounded-2xl border border-dashed border-[#d92d20]/45 text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
+                            disabled={busy}
+                            onClick={() =>
+                              void commit(removeEmptyCrew(plan, crew.id))
+                            }
+                            title="Elimina equipaggio"
+                            type="button"
+                          >
+                            <Trash2 aria-hidden="true" className="size-4" />
+                          </button>
                         )}
                       </div>
                     </article>
                   ))}
+                  {/* Symmetry with the control above: a crew removed by
+                      mistake can be put back without leaving the workspace. */}
+                  <button
+                    className="min-h-11 rounded-2xl border border-dashed border-primary/50 px-3 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50"
+                    disabled={busy || plan.crews.length >= maxCrewCount}
+                    onClick={() => void commit(addCrew(plan, sessionId))}
+                    type="button"
+                  >
+                    <Plus aria-hidden="true" className="mr-1 inline size-4" />
+                    Aggiungi equipaggio
+                  </button>
                 </section>
 
                 <section
