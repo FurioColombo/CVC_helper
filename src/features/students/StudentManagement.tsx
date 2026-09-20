@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { MinorBadge, SexIcon } from "@/components/PersonBadges"
 import { StudentSizeSelector } from "@/components/StudentSizeSelector"
 import {
   DUTY_DAYS,
@@ -47,13 +48,25 @@ import {
   type StudentRecord,
 } from "@/persistence/students"
 
+/** A field of the edit form that the profile can open focused. */
+type StudentField =
+  | "firstName"
+  | "surname"
+  | "dateOfBirth"
+  | "sex"
+  | "phone"
+  | "nickname"
+  | "size"
+  | "initialNote"
+  | "courseNote"
+
 type StudentScreen =
   | { kind: "list" }
   | { kind: "create" }
   | { kind: "scan" }
   | { kind: "knowledge" }
   | { kind: "detail"; studentId: string }
-  | { kind: "edit"; studentId: string }
+  | { kind: "edit"; studentId: string; focusField?: StudentField }
 
 type LoadState = "loading" | "ready" | "error"
 
@@ -74,6 +87,96 @@ function sexLabel(sex: StudentSex | null, compact = false) {
 function formatDate(date: string) {
   const [year, month, day] = date.split("-")
   return `${day}/${month}/${year}`
+}
+
+/**
+ * Double click with a pointer, or a long press on touch, as the shortcut the
+ * Product Specification allows on a profile field. `Modifica` remains the
+ * explicit path, so this never becomes the only way to reach the form.
+ */
+function useFieldShortcut(onShortcut: () => void) {
+  const pressStartedAt = useRef<number | null>(null)
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null)
+  const pressMoved = useRef(false)
+  const longPressed = useRef(false)
+
+  function cancelPress() {
+    pressStartedAt.current = null
+    pressOrigin.current = null
+    pressMoved.current = false
+  }
+
+  return {
+    onDoubleClick: () => {
+      if (longPressed.current) {
+        longPressed.current = false
+        return
+      }
+      onShortcut()
+    },
+    onPointerCancel: cancelPress,
+    onPointerDown: (event: React.PointerEvent) => {
+      if (event.pointerType === "mouse") return
+      longPressed.current = false
+      pressStartedAt.current = event.timeStamp
+      pressOrigin.current = { x: event.clientX, y: event.clientY }
+      pressMoved.current = false
+    },
+    onPointerLeave: cancelPress,
+    onPointerMove: (event: React.PointerEvent) => {
+      const origin = pressOrigin.current
+      if (!origin) return
+      if (
+        Math.abs(event.clientX - origin.x) > 10 ||
+        Math.abs(event.clientY - origin.y) > 10
+      ) {
+        pressMoved.current = true
+      }
+    },
+    onPointerUp: (event: React.PointerEvent) => {
+      const startedAt = pressStartedAt.current
+      cancelPress()
+      if (
+        startedAt === null ||
+        pressMoved.current ||
+        event.timeStamp - startedAt < 500
+      ) {
+        return
+      }
+      longPressed.current = true
+      onShortcut()
+    },
+  }
+}
+
+function ProfileField({
+  label,
+  icon,
+  value,
+  onShortcut,
+  field,
+}: {
+  label: string
+  icon?: React.ReactNode
+  value: React.ReactNode
+  onShortcut: () => void
+  field: StudentField
+}) {
+  const shortcut = useFieldShortcut(onShortcut)
+  return (
+    <div
+      className="min-w-0 bg-muted p-3 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
+      data-profile-field={field}
+      title={`Doppio clic o pressione prolungata per modificare: ${label}`}
+      {...shortcut}
+    >
+      <dt className="flex items-center gap-2 text-sm text-muted-foreground">
+        {icon}
+        {label}
+      </dt>
+      <dd className="mt-1 break-words text-sm font-bold">{value}</dd>
+    </div>
+  )
 }
 
 function StudentPageHeader({
@@ -147,7 +250,7 @@ function StudentList({
   return (
     <section
       aria-label="Elenco allievi"
-      className="grid grid-cols-2 gap-2 pb-24"
+      className="grid grid-cols-2 gap-1.5 pb-24"
     >
       {students.map((student) => {
         const displayName = getStudentDisplayName(student, students)
@@ -156,31 +259,30 @@ function StudentList({
         return (
           <button
             aria-label={`${displayName}, ${age} anni, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
-            className={`flex min-h-[5.25rem] min-w-0 items-center gap-2 rounded-2xl border bg-card p-3 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${student.active ? "" : "opacity-55"}`}
+            className={`flex min-h-14 min-w-0 items-center gap-2 rounded-xl border bg-card px-2 py-1.5 text-left shadow-[0_4px_12px_rgb(6_59_82/0.04)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${student.active ? "" : "opacity-55"}`}
             key={student.id}
             onClick={() => onOpen(student.id)}
             type="button"
           >
+            {/* The figure carries the sex; below 380px it moves into the detail
+                line, where it costs no width of its own. */}
             <span
               aria-hidden="true"
-              className={`hidden size-9 shrink-0 place-items-center rounded-xl min-[380px]:grid ${student.active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+              className={`hidden size-8 shrink-0 place-items-center rounded-lg min-[380px]:grid ${student.active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
             >
-              <UserRound className="size-5" />
+              <SexIcon className="size-[18px]" sex={student.sex} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block break-words text-[0.95rem] font-bold leading-tight">
                 {displayName}
               </span>
-              <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.72rem] text-muted-foreground">
+              <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.72rem] leading-4 text-muted-foreground">
+                <SexIcon
+                  className="size-3.5 min-[380px]:hidden"
+                  sex={student.sex}
+                />
                 <span>{age} anni</span>
-                <span aria-label={`Sesso: ${sexLabel(student.sex)}`}>
-                  {sexLabel(student.sex, true)}
-                </span>
-                {minor && (
-                  <span className="rounded-full bg-[#b42318] px-2 py-0.5 font-bold text-white">
-                    M<span className="sr-only">inorenne</span>
-                  </span>
-                )}
+                {minor && <MinorBadge />}
                 {!student.active && (
                   <span className="font-bold">Non disponibile</span>
                 )}
@@ -197,13 +299,15 @@ function Field({
   label,
   children,
   hint,
+  field,
 }: {
   label: string
   children: React.ReactNode
   hint?: string
+  field?: StudentField
 }) {
   return (
-    <label className="grid gap-2 text-sm font-bold">
+    <label className="grid gap-2 text-sm font-bold" data-field={field}>
       <span>{label}</span>
       {children}
       {hint && (
@@ -218,11 +322,13 @@ function Field({
 function StudentForm({
   course,
   student,
+  focusField,
   onCancel,
   onSaved,
 }: {
   course: CourseRecord
   student?: StudentRecord
+  focusField?: StudentField
   onCancel: () => void
   onSaved: () => void
 }) {
@@ -230,7 +336,11 @@ function StudentForm({
   const [surname, setSurname] = useState(student?.surname ?? "")
   const [nickname, setNickname] = useState(student?.nickname ?? "")
   const [dateOfBirth, setDateOfBirth] = useState(student?.dateOfBirth ?? "")
-  const [sex, setSex] = useState<StudentSex | "">(student?.sex ?? "")
+  // A new card starts on Altro: it is the value that claims nothing, and the
+  // other two are one tap away.
+  const [sex, setSex] = useState<StudentSex | "">(
+    student?.sex ?? (student ? "" : "other"),
+  )
   const [phone, setPhone] = useState(student?.phone ?? "")
   const [size, setSize] = useState<StudentSize | "">(student?.size ?? "")
   const [initialNote, setInitialNote] = useState(student?.initialNote ?? "")
@@ -241,6 +351,23 @@ function StudentForm({
   const initialized = useRef(false)
   const saveChain = useRef<Promise<void>>(Promise.resolve())
   const saveVersion = useRef(0)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (!focusField) return
+    const group = formRef.current?.querySelector<HTMLElement>(
+      `[data-field="${focusField}"]`,
+    )
+    const target =
+      group?.querySelector<HTMLElement>(
+        'input:not([type="radio"]), textarea',
+      ) ??
+      group?.querySelector<HTMLElement>(
+        'input[type="radio"]:checked, [aria-pressed="true"]',
+      ) ??
+      group?.querySelector<HTMLElement>('input[type="radio"], button')
+    target?.focus()
+  }, [focusField])
 
   const input = useMemo<StudentEditInput>(
     () => ({
@@ -347,9 +474,9 @@ function StudentForm({
         onBack={() => void exitForm()}
         title={student ? "Modifica allievo" : "Nuovo allievo"}
       />
-      <form className="grid gap-5" onSubmit={save}>
+      <form className="grid gap-5" onSubmit={save} ref={formRef}>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Nome">
+          <Field field="firstName" label="Nome">
             <Input
               autoComplete="given-name"
               onChange={(event) => setFirstName(event.target.value)}
@@ -357,7 +484,7 @@ function StudentForm({
               value={firstName}
             />
           </Field>
-          <Field label="Cognome">
+          <Field field="surname" label="Cognome">
             <Input
               autoComplete="family-name"
               onChange={(event) => setSurname(event.target.value)}
@@ -368,6 +495,7 @@ function StudentForm({
         </div>
 
         <Field
+          field="dateOfBirth"
           label="Data di nascita"
           hint="Formato GG/MM/AAAA. Età e stato Minorenne sono calcolati all’inizio del corso."
         >
@@ -381,7 +509,7 @@ function StudentForm({
           />
         </Field>
 
-        <fieldset className="grid gap-2 text-sm font-bold">
+        <fieldset className="grid gap-2 text-sm font-bold" data-field="sex">
           <legend>Sesso</legend>
           <div className="grid grid-cols-3 gap-2">
             {STUDENT_SEXES.map((option) => (
@@ -395,7 +523,8 @@ function StudentForm({
                   type="radio"
                   value={option.id}
                 />
-                <span className="grid h-12 place-items-center rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+                <span className="flex h-12 items-center justify-center gap-1.5 rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+                  <SexIcon className="size-[18px]" sex={option.id} />
                   {option.label}
                 </span>
               </label>
@@ -403,7 +532,7 @@ function StudentForm({
           </div>
         </fieldset>
 
-        <Field label="Telefono">
+        <Field field="phone" label="Telefono">
           <Input
             autoComplete="tel"
             inputMode="tel"
@@ -414,6 +543,7 @@ function StudentForm({
         </Field>
 
         <Field
+          field="nickname"
           label="Nome visualizzato / soprannome"
           hint="Facoltativo. Se vuoto, il nome breve viene generato automaticamente."
         >
@@ -424,33 +554,37 @@ function StudentForm({
           />
         </Field>
 
-        <StudentSizeSelector onChange={setSize} value={size} />
+        <div data-field="size">
+          <StudentSizeSelector onChange={setSize} value={size} />
+        </div>
 
-        <DictatedNoteField
-          hint="Esperienza o informazioni note prima del corso."
-          label="Nota iniziale"
-          naming={{
-            start: "Detta nota iniziale",
-            subject: "nota iniziale",
-          }}
-          onChange={setInitialNote}
-          reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
-          unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
-          value={initialNote}
-        />
+        <div data-field="initialNote">
+          <DictatedNoteField
+            hint="Esperienza o informazioni note prima del corso."
+            label="Nota iniziale"
+            naming={{
+              start: "Detta nota iniziale",
+              subject: "nota iniziale",
+            }}
+            onChange={setInitialNote}
+            reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
+            value={initialNote}
+          />
+        </div>
 
-        <DictatedNoteField
-          hint="Nota generale per questa settimana, distinta dalle valutazioni."
-          label="Nota del corso"
-          naming={{
-            start: "Detta nota del corso",
-            subject: "nota del corso",
-          }}
-          onChange={setCourseNote}
-          reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
-          unsupportedHint="Dettatura non disponibile in questo browser. Puoi scrivere la nota."
-          value={courseNote}
-        />
+        <div data-field="courseNote">
+          <DictatedNoteField
+            hint="Nota generale per questa settimana, distinta dalle valutazioni."
+            label="Nota del corso"
+            naming={{
+              start: "Detta nota del corso",
+              subject: "nota del corso",
+            }}
+            onChange={setCourseNote}
+            reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
+            value={courseNote}
+          />
+        </div>
 
         {error && (
           <div className="flex items-center justify-between gap-3" role="alert">
@@ -515,7 +649,7 @@ function StudentDetail({
   student: StudentRecord
   students: StudentRecord[]
   onBack: () => void
-  onEdit: () => void
+  onEdit: (focusField?: StudentField) => void
   onChanged: () => Promise<void>
   onDeleted: () => Promise<void>
   focusEvaluationHistory: boolean
@@ -531,6 +665,9 @@ function StudentDetail({
   const displayName = getStudentDisplayName(student, students)
   const age = calculateAge(student.dateOfBirth, course.startDate)
   const minor = isMinor(student.dateOfBirth, course.startDate)
+  const nameShortcut = useFieldShortcut(() => onEdit("firstName"))
+  const initialNoteShortcut = useFieldShortcut(() => onEdit("initialNote"))
+  const courseNoteShortcut = useFieldShortcut(() => onEdit("courseNote"))
 
   async function toggleActive() {
     setChanging(true)
@@ -607,7 +744,7 @@ function StudentDetail({
           <Button
             aria-label="Modifica allievo"
             className="h-[44px] min-h-[44px] shrink-0 gap-[8px] px-[12px] text-[14px] [&>svg]:size-[16px]"
-            onClick={onEdit}
+            onClick={() => onEdit()}
             variant="secondary"
           >
             <Pencil aria-hidden="true" className="size-4" />
@@ -620,9 +757,13 @@ function StudentDetail({
       <section
         className={`rounded-3xl border bg-card p-4 shadow-[0_12px_32px_rgb(6_59_82/0.07)] ${student.active ? "" : "opacity-65"}`}
       >
-        <div className="flex items-start gap-3">
+        <div
+          className="flex items-start gap-3 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
+          title="Doppio clic o pressione prolungata per modificare: Nome"
+          {...nameShortcut}
+        >
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
-            <UserRound aria-hidden="true" className="size-6" />
+            <SexIcon className="size-6" sex={student.sex} />
           </span>
           <div className="min-w-0">
             <h2 className="truncate text-2xl font-black tracking-tight">
@@ -647,43 +788,51 @@ function StudentDetail({
         </div>
 
         <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border">
-          <div className="min-w-0 bg-muted p-3">
-            <dt className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays aria-hidden="true" className="size-4" /> Età
-            </dt>
-            <dd className="mt-1 text-sm font-bold">{age} anni</dd>
-          </div>
-          <div className="min-w-0 bg-muted p-3">
-            <dt className="text-sm text-muted-foreground">Data di nascita</dt>
-            <dd className="mt-1 text-sm font-bold">
-              {formatDate(student.dateOfBirth)}
-            </dd>
-          </div>
-          <div className="min-w-0 bg-muted p-3">
-            <dt className="text-sm text-muted-foreground">Sesso</dt>
-            <dd className="mt-1 text-sm font-bold">{sexLabel(student.sex)}</dd>
-          </div>
-          <div className="min-w-0 bg-muted p-3">
-            <dt className="text-sm text-muted-foreground">Taglia</dt>
-            <dd className="mt-1 text-sm font-bold">{student.size || "—"}</dd>
-          </div>
-          <div className="min-w-0 bg-muted p-3">
-            <dt className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Phone aria-hidden="true" className="size-4" /> Telefono
-            </dt>
-            <dd className="mt-1 break-words text-sm font-bold">
-              {student.phone || "—"}
-            </dd>
-          </div>
-          <div className="min-w-0 bg-muted p-3">
-            <dt className="text-sm text-muted-foreground">Nome visualizzato</dt>
-            <dd className="mt-1 break-words text-sm font-bold">
-              {displayName}
-            </dd>
-          </div>
+          <ProfileField
+            field="dateOfBirth"
+            icon={<CalendarDays aria-hidden="true" className="size-4" />}
+            label="Età"
+            onShortcut={() => onEdit("dateOfBirth")}
+            value={`${age} anni`}
+          />
+          <ProfileField
+            field="dateOfBirth"
+            label="Data di nascita"
+            onShortcut={() => onEdit("dateOfBirth")}
+            value={formatDate(student.dateOfBirth)}
+          />
+          <ProfileField
+            field="sex"
+            label="Sesso"
+            onShortcut={() => onEdit("sex")}
+            value={sexLabel(student.sex)}
+          />
+          <ProfileField
+            field="size"
+            label="Taglia"
+            onShortcut={() => onEdit("size")}
+            value={student.size || "—"}
+          />
+          <ProfileField
+            field="phone"
+            icon={<Phone aria-hidden="true" className="size-4" />}
+            label="Telefono"
+            onShortcut={() => onEdit("phone")}
+            value={student.phone || "—"}
+          />
+          <ProfileField
+            field="nickname"
+            label="Nome visualizzato"
+            onShortcut={() => onEdit("nickname")}
+            value={displayName}
+          />
         </dl>
 
-        <div className="mt-4 rounded-2xl bg-muted p-4">
+        <div
+          className="mt-4 rounded-2xl bg-muted p-4 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
+          title="Doppio clic o pressione prolungata per modificare: Nota iniziale"
+          {...initialNoteShortcut}
+        >
           <h3 className="text-sm font-semibold">Nota iniziale</h3>
           <p className="mt-1 whitespace-pre-wrap text-sm font-normal leading-6 text-muted-foreground">
             {student.initialNote || "Nessuna nota iniziale."}
@@ -691,7 +840,11 @@ function StudentDetail({
         </div>
 
         {student.courseNote && (
-          <div className="mt-3 rounded-2xl bg-[#eef5ff] p-4">
+          <div
+            className="mt-3 rounded-2xl bg-[#eef5ff] p-4 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
+            title="Doppio clic o pressione prolungata per modificare: Nota del corso"
+            {...courseNoteShortcut}
+          >
             <h3 className="text-sm font-semibold">Nota del corso</h3>
             <p className="mt-1 whitespace-pre-wrap text-sm font-normal leading-6 text-muted-foreground">
               {student.courseNote}
@@ -946,6 +1099,7 @@ export function StudentManagement({
     return (
       <StudentForm
         course={course}
+        focusField={screen.focusField}
         key={selectedStudent.id}
         onCancel={() =>
           setScreen({ kind: "detail", studentId: selectedStudent.id })
@@ -976,8 +1130,8 @@ export function StudentManagement({
           await refreshStudents()
           setScreen({ kind: "list" })
         }}
-        onEdit={() =>
-          setScreen({ kind: "edit", studentId: selectedStudent.id })
+        onEdit={(focusField) =>
+          setScreen({ kind: "edit", focusField, studentId: selectedStudent.id })
         }
         student={selectedStudent}
         students={students}

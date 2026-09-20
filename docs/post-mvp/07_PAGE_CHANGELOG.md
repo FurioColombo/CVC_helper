@@ -46,6 +46,8 @@ derivato finale è rinviato.
 
 - Due colonne come prima proposta; card con nome identificabile, età, indicatore sesso e M minore. Dati personali di dettaglio non entrano nella lista.
 - Ridurre l'icona generica; evitare tre M ambigue per sesso/taglia/minore. Disabilitati ancora visibili e distinguibili.
+- Dal 2026-09-20 l'indicatore di sesso è una figura e non più una lettera: Marte per maschio, Venere per femmina, la figura neutra per Altro e per il dato mancante. Così l'unica `M` della riga è il badge rosso del minorenne. Sotto i 380 px la figura scende nella riga dei dettagli, dove non toglie larghezza al nome.
+- La card è alta una riga sola (56 px minimi invece di 84): nome, e sotto età e marcatori. Su ventitré allievi questo è circa un terzo di scorrimento in meno a parità di dati.
 - Aggiungi come pulsante flottante blu in basso a destra, sopra safe area/navigazione e senza coprire l'ultima persona. Menu secondario mantiene Scan e Conoscenza.
 - Ordinamento già in parte presente: attivi prima, cognome; proposta conservare questo raggruppamento e usare nome visualizzato come tie-break. Selettore avanzato fuori dal nucleo.
 
@@ -58,7 +60,8 @@ derivato finale è rinviato.
 - La card Valutazioni contiene la griglia settimanale completa già usata in P18/P19, senza cambiare semantica, colori o ordine delle sessioni.
 
 - Stesso form con anagrafica, nickname, telefono, taglia, nota iniziale e accesso alle valutazioni. Sesso come tre pulsanti diretti. La vista principale deve entrare sul 430/412/390 senza scroll inutile.
-- Percorso esplicito Modifica; scorciatoia desktop/long press nel profilo sul campo. Prima proposta: apre il form e focalizza il campo; inline soltanto se semplice e coerente.
+- Percorso esplicito Modifica; scorciatoia desktop/long press nel profilo sul campo. Prima proposta: apre il form e focalizza il campo; inline soltanto se semplice e coerente. Implementata il 2026-09-20: doppio clic o pressione prolungata su nome, età, data, sesso, taglia, telefono, nome visualizzato, nota iniziale e nota del corso apre `Modifica allievo` con quel campo già a fuoco. `Modifica` resta il percorso esplicito, quindi la scorciatoia non è mai l'unica via (R09).
+- Il form di un nuovo allievo parte con il sesso su `Altro`: è il valore che non afferma nulla e gli altri due sono a un tocco. La revisione dello scan continua a chiedere una scelta esplicita per riga, perché lì il campo è una lettura da confermare, non un default.
 - Nell'header del profilo usare l'etichetta breve “Modifica”; il contesto rende superfluo “dati”.
 - Mostrare Salvataggio/Salvato/errore senza popup per ogni edit. Creazione resta confermata esplicitamente; i record esistenti possono usare il contratto autosave Q09.
 - Eliminazione in zona secondaria distinta dalla disattivazione. Mostrare nome dell'allievo, conseguenza e conferma. Se usato, spiegare i legami effettivi con giorni/sessioni; niente cancellazioni a cascata.
@@ -104,7 +107,8 @@ derivato finale è rinviato.
 **Richieste:** BOAT-02, FAULT-02, CREW-06. **Natura:** grafica; indisponibilità corso e deselezione sessione sono azioni distinte.
 
 - Identificativo condiviso con logo del modello completo quando disponibile e numero subito a destra, senza ripetere il nome in testo; disponibilità e numero avarie distinti. Ogni logo è ritagliato sul proprio disegno e non su una tavola condivisa: `object-fit: contain` deve normalizzare i marchi fra loro, non i margini vuoti. Il riquadro del marchio è misurato in pixel, così al 200 % del testo crescono numero ed etichetta e non la decorazione.
-- Il marchio sta sulla scheda senza pastiglia grigia attorno. Un modello senza artwork corretto ricade sulla sigla scritta: l'immagine fornita per First 27 riporta `27.7`, che è un'altra barca, e resta esclusa finché non arriva quella giusta.
+- La riga si apre con il numero, che tiene una colonna propria perché i marchi restino allineati fra loro, poi il marchio e infine lo stato.
+- Il marchio sta sulla scheda senza pastiglia grigia attorno. Un modello senza artwork corretto ricade sulla sigla scritta: l'immagine fornita per First 27 riportava `27.7`, che è un'altra barca: le cifre sono gruppi separabili nel disegno, quindi il `.7` è stato tolto e il marchio legge `FIRST 27` nel carattere suo.
 - A 320 px il trattamento dell'identità si compatta per lasciare interamente visibili anche i numeri a due cifre (11, 14, 15).
 - Rendere “Da controllare” giallo; mantenere “Disponibile” leggibile e senza confonderlo con l'assegnazione verde usata in P15. Dal 2026-09-19 un filo colorato a sinistra porta lo stato anche a colpo d'occhio: blu disponibile — lo stesso blu che in P15 vuol dire disponibile —, ambra da controllare, grigio non disponibile. Icona ed etichetta restano: il colore non è mai da solo.
 - Elenco compatto; dettaglio con guasti aperti in evidenza, risolti secondari.
@@ -129,7 +133,7 @@ derivato finale è rinviato.
 **Richieste:** VOL-01/02/03, UX-G03/04. **Natura:** ruolo dominio + grafica.
 
 - Nome e scelta diretta ADV/IS/CT. Nessun altro ruolo.
-- Usare una piccola identità visiva coerente con le persone, senza aggiungere decorazione generica.
+- Usare una piccola identità visiva coerente con le persone, senza aggiungere decorazione generica. Dal 2026-09-20 la tessera accanto al nome porta la sigla del ruolo — ADV, IS o CT — al posto della mano con il cuore, che diceva “volontario” tre volte uguale e il ruolo non lo diceva mai. La riga perde anche la pastiglia sotto il nome, che ripeteva la stessa informazione, e scende a 56 px. Lo stesso trattamento vale nel pool Equipaggi.
 - Togliere testo permanente sulle regole allievi; lista compatta con ruolo visibile.
 - Stesso lessico e stile del pool Equipaggi; modifica dati già presenti compatibile.
 
@@ -182,6 +186,8 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 - Header con titolo e sessione affiancati. Setup conserva numero equipaggi distinto da persone/barche; non introduce creazione automatica.
 - Workspace con pool allievi e card equipaggi consultabili insieme. Ogni equipaggio è una card larga su tre righe: destinazione reale o “Senza barca”, numero equipaggio separato, primo e secondo membro; così nomi lunghi, numero barca e numero equipaggio non competono fra loro. Non ripetere l'etichetta generica “Destinazione”.
+- Dal 2026-09-20 numero equipaggio, barca e conteggio stanno sulla stessa riga: `Equipaggio 1 · [marchio + numero oppure Senza barca] · 1/2`. La destinazione occupava una riga propria sotto l'intestazione e costava a ogni card circa 3,5 rem; il controllo resta lo stesso, con la stessa etichetta accessibile e lo stesso rosso per la barca indisponibile. A larghezze strette o al 200 % del testo la riga va a capo invece di sbordare.
+- Minorenne e comandata compaiono accanto alla persona, non solo nel testo dei dettagli: badge `M` bianco su rosso e `C` bianco su blu — `SM` per lo smontante — come li nomina il dizionario del rulebook. Gli stessi badge sono usati in Allievi e in Comandate. Il pulsante della persona ha un `aria-label` che sostituisce il contenuto, quindi il significato dei badge passa dalla descrizione e non dal nome: il nome resta la persona, come in P17.
 - Disponibili = mancanti azionabili. Niente dialog mancanti. Contatore tiene conto di allievi in equipaggio **o A terra**; volontari esclusi. Etichetta breve proposta “Collocati 18/21” da confrontare con “Inseriti”.
 - `A terra` e `Volontari` restano flottanti rispettivamente in basso a sinistra e destra, con contatore fra loro; non coprono slot o navigazione.
 - Pool volontari separato, meno prioritario; breve scroll ammesso. A terra sempre distinto da equipaggio. Una destinazione compatta per card; barche in P15.
@@ -227,6 +233,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 - Nessuna selezione è il default; toccare di nuovo il valore selezionato annulla il voto. Nessun pulsante `~`.
 - Positivi verdi, negativi rossi, neutro distinto e assenza vuota nei riepiloghi. A terra resta presente e valutabile; nota legata alla sessione esatta.
 - Sotto la riga compare la nota stessa, non la scritta “Nota presente”: due righe con i puntini di sospensione del browser, testo intero nel DOM per lettori di schermo e ricerca. Lo stato di salvataggio conserva la sua area `aria-live`, così una nota non viene mai annunciata come esito di salvataggio.
+- Dal 2026-09-20 nota e stato di salvataggio condividono quella riga: la nota a sinistra, `Salvataggio…` / `Salvato` / `Non salvato` a destra. Non competono mai, perché lo stato è vuoto tranne che nell'istante attorno a una scrittura, e due righe separate costavano 1 rem a ogni allievo. L'area `aria-live` resta montata anche quando è vuota: inserita insieme al proprio testo non verrebbe annunciata.
 
 **Mock:** due viste, nome lungo, tutti i valori, assenza, A terra, nota, save/error, tastiera. **Accettazione:** un tap per valore nella vista operativa; nessuna perdita di note; stessa valutazione nelle due viste; sessione non si confonde dopo scroll/reload. **Baseline:** `EvaluationManagement.tsx`.
 

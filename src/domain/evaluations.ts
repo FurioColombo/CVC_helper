@@ -55,11 +55,15 @@ export function summarizeEvaluations(
   }
 }
 
+// Hoisted: built inside the comparator this allocated one collator per
+// comparison, which is O(n log n) of them per sort.
+const STUDENT_COLLATOR = new Intl.Collator("it-IT", { sensitivity: "base" })
+
 function compareStudents(
   left: EvaluationStudentRef,
   right: EvaluationStudentRef,
 ) {
-  return new Intl.Collator("it-IT", { sensitivity: "base" }).compare(
+  return STUDENT_COLLATOR.compare(
     `${left.surname} ${left.firstName}`,
     `${right.surname} ${right.firstName}`,
   )

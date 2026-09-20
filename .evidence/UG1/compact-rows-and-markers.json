@@ -1,0 +1,59 @@
+{
+  "milestone": "UG1",
+  "correction": "Compact repeated rows and shared person markers — 2026-09-20",
+  "request": "Owner request of 2026-09-20: a tighter Allievi page with three sex icons and Altro as the default, the volunteer icon replaced by the role, minore and comandata shown in Equipaggi, the crew boat moved onto the crew header row, the evaluation note moved onto the save-state line, an answer about the profile double-click shortcut, and a ranked repository cleanup.",
+  "sharedComponent": {
+    "file": "src/components/PersonBadges.tsx",
+    "why": "The rulebook's visual dictionary already specified a white M on red for a minor and a white C on blue for the current duty. The code wrote a different M in Allievi and in Comandate and no M at all in Equipaggi, where the duty was the text ' · C' inside a details line. One component now serves all three.",
+    "exports": [
+      "MinorBadge — accessible name 'Minorenne'",
+      "DutyBadge — 'In comandata' (C, solid blue) and 'Smontante' (SM, outlined), distinct as the dictionary requires",
+      "SexIcon — Mars, Venus and the neutral figure; a missing value reads as Altro",
+      "VolunteerRoleBadge — ADV, IS or CT"
+    ]
+  },
+  "changes": {
+    "p03_students": {
+      "density": "The card drops from a 5.25rem minimum to 3.5rem: padding 0.75rem to 0.5rem/0.625rem, the detail line tightened to leading-4, grid gap 0.5rem to 0.375rem.",
+      "sex": "A figure replaces the letter. The row's only 'M' is now the minor badge, which is what the P03 brief asked for when it said to avoid three ambiguous Ms for sex, size and minor status.",
+      "narrowViewport": "Below 380px the figure moves from the avatar tile into the detail line, so it never takes width from the name.",
+      "ariaUnchanged": "The card's accessible name still reads '<name>, <age> anni, <sex>, Minorenne', so every existing journey and screen-reader habit is unchanged."
+    },
+    "p04_profile": {
+      "shortcut": "Double click with a pointer, or a 500ms press on touch, on name, age, date of birth, sex, size, phone, display name, initial note or course note opens 'Modifica allievo' with that field focused.",
+      "specStatus": "01_PRODUCT_SPEC.md section 3.3 allowed it and the P04 brief proposed it; U02 closed without it and without recording the omission. It was forgotten, not deferred.",
+      "accessibility": "Modifica stays the explicit path (R09). Text selection is only suppressed under `pointer: coarse`, so a phone number can still be selected with a mouse.",
+      "newStudentDefault": "A new card starts on Altro. The scan review still asks for an explicit choice per row, because there the field is a reading to confirm rather than a default to accept."
+    },
+    "p10_volunteers": {
+      "change": "The hand-and-heart tile becomes the role: ADV, IS or CT. The duplicate role chip under the name goes and the row drops from 4.5rem to 3.5rem.",
+      "unchanged": "The Home card keeps the hand-and-heart icon: it stands for the section, not for a person with a role. The empty state keeps it for the same reason."
+    },
+    "p14_crews": {
+      "header": "Crew number, destination control and headcount share the header row; the destination had a line of its own and cost every crew card about 3.5rem.",
+      "preserved": "Same accessible name, same 44px target, same red treatment for an unavailable assigned boat, same popup. The row wraps rather than overflowing at 320px and at 200% text.",
+      "markers": "Minore and comandata now appear beside the name in the pool, in crews and in A terra.",
+      "howTheBadgesAreAnnounced": "The person button carries an aria-label, which replaces its content, so a badge inside it would be silent. The first attempt appended the markers to that name; the full browser suite then failed four journeys that select a person by exact name, which is the right objection — the name of a control should be the person. The markers moved to aria-description, the arrangement P17 already uses for the same problem, and every existing journey passes unchanged."
+    },
+    "p17_evaluations": {
+      "change": "The note preview and the save state share one line: note left, 'Salvataggio…' / 'Salvato' / 'Non salvato' right.",
+      "why": "They never compete — the state is empty except around a write — and a line each cost every student 1rem.",
+      "liveRegion": "The wrapper and the aria-live region stay mounted while empty. A live region inserted together with its text is not announced."
+    }
+  },
+  "verification": {
+    "runtime": "Node 24.21.0",
+    "suite": "npm run verify:quick passes: lint, format, typecheck and 398 unit and component tests across 38 files, up from 394 with the five cases below.",
+    "newTests": [
+      "StudentManagement: a new card starts on Altro, and the list row carries the sex as a figure with exactly one M, the minor badge",
+      "StudentManagement: a double click on the phone field opens Modifica allievo with the phone input focused",
+      "CrewManagement: a minor in the pool carries the badge, and the crew header holds number, destination and headcount in one row",
+      "VolunteerManagement: the list row names the role rather than showing one icon for everyone",
+      "CrewManagement: the duty cues are now badges with their own accessible names, In comandata and Smontante, instead of the text ' · C' and ' · SM'"
+    ],
+    "browser": "tests/e2e/ug1-compact-rows.spec.ts on pixel-7-chrome: the student card measures at most 64 px, the double-click shortcut focuses the field, the volunteer row names the role, the crew header's three parts share one row in that order, the evaluation note and save state share their line, and no screen scrolls horizontally at 320 px or at 200 % text. Screenshots: students-compact-rows.png, volunteers-role-rows.png, crew-header-one-row.png, crew-header-one-row-200.png, evaluation-note-and-state-row.png, evaluation-note-and-state-row-200.png.",
+    "regression": "The complete Playwright suite ran on all three device projects. Its four name-based failures produced the aria-description correction above; crew-copy-read failed once on a dev-server reload caused by editing files during the run, and passes on its own. After the correction, ug1-compact-rows, crew-management-gate, full-week, ug1-upgraded-week and crew-copy-read pass on every project they run in — 8 runs, no failures — and the one assertion that read the old ' · C' text now reads the badge and the description.",
+    "commands": ["npm run verify:quick", "npm run verify:e2e"]
+  },
+  "notVerified": "No physical device pass: the long press on a profile field and the touch geometry of the new rows still need a real phone, and they join the UG1 physical-device checklist."
+}
