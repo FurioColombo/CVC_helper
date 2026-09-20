@@ -53,9 +53,15 @@ export function BoatModelMark({
           .split("\n")
           .map((line) => <span key={line}>{line}</span>)
       ) : (
+        // The size is repeated on the image rather than left to `h-full`:
+        // `content-center` makes the grid row content-sized, so a percentage
+        // height had nothing definite to resolve against and every mark fell
+        // back to its intrinsic 60px. A wide mark was still capped by the
+        // column's 88px and looked right, which is why RS Quest hid this,
+        // while J/80, RS 500 and First 27 stood 60px tall in a 36px row.
         <img
           alt=""
-          className="h-full w-full object-contain object-left"
+          className="h-[36px] w-[88px] object-contain object-left"
           onError={() => setLogoUnavailable(true)}
           src={BOAT_LOGOS[type]}
         />

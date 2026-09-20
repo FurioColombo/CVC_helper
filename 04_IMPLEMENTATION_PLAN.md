@@ -868,6 +868,30 @@ Evidence: `.evidence/UG1/compact-rows-and-markers.json`, with
 `tests/e2e/ug1-compact-rows.spec.ts` measuring the row geometry rather than its
 styling, so the screens can keep moving without the spec becoming a pixel diff.
 
+**Status 2026-09-20 — the boat marks did not fit their slot.**
+
+Reported from the running app: on Barche the RS 500 and J/80 marks stood far
+outside their rows, over the cards below them.
+
+`BoatModelMark` sized the image with `h-full`. The slot is a grid with
+`content-center`, which makes the row content-sized, so that percentage had
+nothing definite to resolve against and every mark fell back to its intrinsic
+60 px height inside a 36 px row. A wide mark was still capped by the column's
+88 px and looked right, which is exactly why this shipped: every fleet the
+browser suite ever rendered was RS Quest. The image now carries the slot's own
+`h-[36px] w-[88px]` with `object-contain`.
+
+`tests/e2e/ug1-boat-mark-fit.spec.ts` builds a fleet of all seven canonical
+types and measures each image against its slot, which is the assertion that
+would have caught it. The written mark remains the fallback, so a missing
+asset still passes.
+
+Open, and a product call rather than a defect: the First 27 artwork reads
+`FIRST 27`, but the `27` is noticeably smaller than the `25.7` on the First
+25.7 mark, because it is what was left after the `.7` glyph run was cleared on
+2026-09-19. Either the artwork is redrawn or that type goes back to the written
+fallback.
+
 **Repository cleanup, 2026-09-20.** Asked for as three ranked tiers. Deleted
 outright: `debug.log`, `test-results/` and `dist/` — all ignored, all
 regenerated, and the last one a build from before the 2026-09-19 entries that
