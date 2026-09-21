@@ -19,3 +19,17 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run verify:all
+      # playwright.config.ts already keeps a trace on failure, but nothing ever
+      # collected it, so a failure that only happens on this runner could be
+      # read solely through the truncated annotation text. That is how the
+      # ug1-duty-reflow click failure stayed undiagnosed. Keep the trace and the
+      # report so the next one can be opened instead of guessed at.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
