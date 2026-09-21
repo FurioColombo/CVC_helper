@@ -1469,10 +1469,51 @@ explained; CI is green on `codex/0.3.0`; and the decision about platform
 coverage is written into `03_TECHNICAL_DECISIONS.md` section 6 so the next cycle
 inherits it.
 
+### Progress
+
+**2026-09-21 — diagnosed, two of three fixed.**
+
+Reproduced the mechanism rather than the platform: the failures are geometry
+assertions that only break where the fonts are wider, and chasing fonts is how
+they were missed. Widening the glyphs with `letter-spacing` at 320 px and 200 %
+text drives the same thing a wider font does, under the Pixel 7 descriptor the
+CI project uses.
+
+- **`u09-crews`** — reproduced exactly. One extra pixel of spacing put the
+  select at 327 on a 320 viewport against CI's 351; measured directly, it was
+  329 px wide inside a 296 px label. `SessionChoice` wrapped a bare `<select>`
+  in a grid label, and a select is sized by its widest option unless told
+  otherwise. With `w-full min-w-0` it now measures exactly its label and shows
+  zero overflow even at 2 px of spacing, where it used to overflow by 21.
+- **`student-scan`** — not reproduced. The card overflow stayed 0 here at every
+  spacing tried. What did reproduce in the same cards is the field caption and
+  its `Da controllare` flag sharing a half-width column in a flex row: 12 px
+  over at these fonts, 22 px with wider glyphs, because flex items do not shrink
+  below their own content. That row now wraps and breaks. Whether it was the
+  cause of the 8 px is CI's to say, not this entry's.
+- **`ug1-duty-reflow`** — untouched, deliberately. It does not reproduce: the
+  page scrolls, 514 px of scroll is available, the button sits 105 px below the
+  fold and the click succeeds. So "the button cannot be reached" is wrong. The
+  only evidence was a truncated annotation, and this entry's own required work
+  says to diagnose before touching it.
+
+**The layouts were fixed, not the assertions.** R18 forbids horizontal scrolling
+in the operating interface and the runner is telling the truth about a viewport
+the rulebook covers; widening an allowance to make CI green would falsify the
+check. Noted in passing: the 3 px allowance already sitting in
+`student-scan.spec.ts` is itself a smell, and is left alone rather than widened.
+
+**The harness gained the thing that was missing.** `playwright.config.ts`
+already keeps a trace on failure and the workflow threw it away, so a
+runner-only failure could be read solely through truncated annotation text.
+`ci.yml` now uploads `test-results/` and `playwright-report/` on failure.
+`AGENTS.md` section 6 already claimed CI did this; it did not.
+
 ### Evidence
 
-`.evidence/CI-REGRESSION/` — the failing run, the three causes, what changed,
-and a green run afterwards.
+`.evidence/CI-REGRESSION/` — `diagnosis.json` holds the failing run, the method,
+the three causes with what was and was not reproduced, and the harness change.
+`outcome.json` records the run that decides it.
 
 
 ## V02 — The dictation control stops changing size

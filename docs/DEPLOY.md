@@ -43,9 +43,19 @@ without that base path produces an app that 404s on a project site, which is why
 
 ## Deploying and redeploying
 
-`.github/workflows/deploy-pages.yml` builds and publishes on every push to `main`
-or `codex/0.3.0`, and on demand from the Actions tab. To redeploy, push; to
+`.github/workflows/deploy-pages.yml` builds and publishes on every push to
+`main`, and on demand from the Actions tab. To redeploy, push `main`; to
 redeploy without a change, run the workflow manually.
+
+**Only `main` deploys**, and that is not a preference. GitHub's `github-pages`
+environment allows the default branch alone unless its deployment-branch rules
+are changed, so a run from any other branch builds fine and is then refused at
+the publish step with _"Branch X is not allowed to deploy to github-pages due to
+environment protection rules"_. That is what happened on the first attempt from
+`codex/0.3.0`. Work on a branch, then push `main` when you want the site to
+move. The alternative is to allow the working branch in Settings → Environments
+→ github-pages → Deployment branches, which is a choice about what `main` means
+rather than a technical constraint.
 
 Two settings have to be right, and they are the repository owner's to set:
 

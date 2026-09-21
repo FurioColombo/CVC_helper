@@ -7,9 +7,14 @@ name: Deploy to GitHub Pages
 # A project site serves from /<repo>/, so the build is given that base path.
 # Nothing else about the build changes.
 
+# Only main. The github-pages environment allows the default branch alone
+# unless its deployment-branch rules are changed, so a run from any other branch
+# builds and is then refused at the publish step. Listing codex/0.3.0 here as
+# well just started two runs that fought over the `pages` concurrency group and
+# cancelled each other. Push main to deploy.
 on:
   push:
-    branches: [main, codex/0.3.0]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

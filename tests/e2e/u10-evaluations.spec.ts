@@ -341,9 +341,14 @@ test("shows the evaluation note itself, clamped to two lines however long it is"
 
   // The note is shown, not the words "Nota presente".
   await expect(page.getByText("Nota presente")).toHaveCount(0)
-  const long = page.getByText(longNote)
+  // Scoped to the clamped preview. A bare getByText also matches the note
+  // editor's textarea when one is open, which made this strict-mode violation
+  // appear and disappear depending on timing.
+  const preview = (text: string) =>
+    page.locator("span.line-clamp-2").filter({ hasText: text })
+  const long = preview(longNote)
   await expect(long).toBeVisible()
-  await expect(page.getByText(shortNote)).toBeVisible()
+  await expect(preview(shortNote)).toBeVisible()
 
   // Clamped: the element is shorter than its own content, and the clamp holds
   // the row to two lines whatever the note says.
