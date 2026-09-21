@@ -1567,10 +1567,15 @@ export function CrewManagement({
               })}
             </div>
             {boatPageCount > 1 && (
-              <div className="mt-2 flex items-center justify-between gap-2 text-xs font-bold">
+              // The pager holds two word labels and a counter in a
+              // justify-between row. At 200% text they no longer fit across
+              // 320px, and flex items do not shrink below their own content, so
+              // the row pushed the whole document to 323px and the fixed
+              // navigation followed it. It wraps now.
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs font-bold">
                 <button
                   aria-label="Barche precedenti"
-                  className="min-h-10 rounded-lg px-[6px] text-primary disabled:text-muted-foreground"
+                  className="min-h-10 min-w-0 rounded-lg px-[6px] text-primary disabled:text-muted-foreground"
                   disabled={visibleBoatPage === 0}
                   onClick={() => setBoatPage((page) => Math.max(0, page - 1))}
                   type="button"
@@ -1582,7 +1587,7 @@ export function CrewManagement({
                 </span>
                 <button
                   aria-label="Altre barche"
-                  className="min-h-10 rounded-lg px-[6px] text-primary disabled:text-muted-foreground"
+                  className="min-h-10 min-w-0 rounded-lg px-[6px] text-primary disabled:text-muted-foreground"
                   disabled={visibleBoatPage === boatPageCount - 1}
                   onClick={() =>
                     setBoatPage((page) => Math.min(boatPageCount - 1, page + 1))
