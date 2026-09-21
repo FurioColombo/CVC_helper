@@ -1173,7 +1173,7 @@ than what happened.
 | --- | --- |
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
 | V01 — reachable from a phone | IN_PROGRESS — **the site is live at https://furiocolombo.github.io/CVC_helper/** and works when driven there; waiting only on the owner's phone |
-| CI regression | OPEN — red on Linux since the 0.2.0 work; blocks UG2 |
+| CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
 | V02–V05, UG2 | PENDING — blocked by the controller until V01 is COMPLETE |
 
 **Done in this session:** 0.2.0 closed and tagged; the brief's sections 3–8
@@ -1187,9 +1187,9 @@ Pages switched to GitHub Actions.
 1. DONE — the deploy publishes and the URL serves a working app.
 2. The owner opens it on their phone. That is what closes V01's remaining
    acceptance criteria; nothing about a device is recorded without them.
-3. Fix the CI regression. It is red today and UG2 cannot claim its ladder while
-   it is.
-4. `milestone:complete V01`, checkpoint, then V02.
+3. DONE — the CI regression is fixed and CI is green on Linux.
+4. `milestone:complete V01` once the owner has used the URL on their phone, then
+   V02.
 
 **Then, in order, and not reordered:** V02 the dictation control, V03
 transcription quality under the latency constraint, V04 the crop editor's two
@@ -1409,7 +1409,7 @@ technical constraint, and it is the owner's to state.
 
 **Category:** FOUNDATION (harness defect, not a brief milestone)
 **Raised:** 2026-09-21, by the first push of the 0.3.0 cycle
-**Status:** OPEN — must be green before UG2
+**Status:** CLOSED 2026-09-21 — CI green on `codex/0.3.0` and on `main`
 
 Not part of `0_3_0_OWNER_BRIEF.md`. It is here because `AGENTS.md` section 5
 makes CI part of the command surface and UG2's acceptance criteria require the
@@ -1509,11 +1509,53 @@ runner-only failure could be read solely through truncated annotation text.
 `ci.yml` now uploads `test-results/` and `playwright-report/` on failure.
 `AGENTS.md` section 6 already claimed CI did this; it did not.
 
+### Outcome
+
+**Closed 2026-09-21. Run `35645831554`: 0 failed, 124 passed, 6 intended
+project-matrix skips. Green on `codex/0.3.0` and on `main`, and the Pages deploy
+from the same commit succeeded.** It took six rounds.
+
+Four of the five original failures were one bug in four places: an element sized
+by its own content, in a container with no room, and nothing telling it it may
+shrink. The session select escaping its label by 33 px; the scan review's field
+caption sharing a half-width column with its `Da controllare` flag; the
+boat-strip pager's two word labels and a counter in a `justify-between` row; the
+Comandate empty state's two action buttons, whose longest word plus padding no
+longer fitted. Each fixed with `min-w-0` and, where a word had to give,
+`break-words`.
+
+The fifth was different in kind: the fixed bottom navigation covered anything the
+browser scrolled into view mid-page, because `pb-28` clears the bar at the end of
+the document and does nothing in the middle of one. Fixed with
+`scroll-margin-bottom` on interactive elements. That one was an R12 defect for a
+keyboard user, not only a test problem.
+
+**Not one of the five was a test being wrong about the app.** Every threshold in
+every failing assertion was correct, which is why none was touched.
+
+Found on the way: `u10-evaluations:301` was flaky on both projects, a
+strict-mode violation where `getByText` matched both the clamped preview and an
+open note editor's textarea. Latent and unrelated; the locator is scoped now.
+
+Two rounds went on wrong guesses about the duty-reflow click, both made from a
+truncated annotation — first that the button was unreachable, then that its own
+parent section intercepted it. Both wrong. A probe that reported what the page
+actually looked like settled it in one round, and the offender lists in both
+overflow specs now name the element instead of printing a number. One of those
+new lists then produced a false positive of its own, flagging a `truncate` box
+whose `scrollWidth` exceeds its `clientWidth` by design; both filters now ignore
+elements that clip.
+
+The decision this leaves behind is in `03_TECHNICAL_DECISIONS.md` section 6.1:
+CI is the authority for the browser suite, a local run is advisory, a geometry
+assertion must name its element, and the layout gets fixed rather than the
+threshold.
+
 ### Evidence
 
 `.evidence/CI-REGRESSION/` — `diagnosis.json` holds the failing run, the method,
-the three causes with what was and was not reproduced, and the harness change.
-`outcome.json` records the run that decides it.
+each cause with what was and was not reproduced, and the harness changes.
+`outcome.json` records the green run and checks off the acceptance criteria.
 
 
 ## V02 — The dictation control stops changing size
