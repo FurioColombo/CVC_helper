@@ -398,6 +398,7 @@
         ".evidence/S1/verification.json",
         ".evidence/S1/scan-field-selection.json",
         ".evidence/S1/review-load-measurement.json",
+        ".evidence/S1/review-load-photographs.json",
         ".evidence/S1/browser-evidence.json",
         ".evidence/S1/self-review.json"
       ],
