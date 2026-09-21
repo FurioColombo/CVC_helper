@@ -18,7 +18,51 @@ test("Comandate empty state and proposal reflow at 320 px with 200% text", async
   await page.getByRole("button", { name: "Livello 2" }).click()
   await page.getByRole("button", { name: "Crea corso" }).click()
   await page.getByRole("button", { name: "Allievi" }).click()
-  await page.getByRole("button", { name: "Aggiungi allievo" }).click()
+  // This click times out on the Linux runner and not here, with the empty-state
+  // section reported as intercepting pointer events. The annotation text is
+  // truncated at exactly the useful word, so the spec says what it sees: what
+  // is at the click point, and which state the screen is actually in.
+  try {
+    await page.getByRole("button", { name: "Aggiungi allievo" }).click()
+  } catch (error) {
+    const seen = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("button")].find(
+        (candidate) =>
+          (candidate.textContent || "").trim().startsWith("Aggiungi allievo"),
+      )
+      const box = button?.getBoundingClientRect()
+      const at =
+        box &&
+        document.elementFromPoint(
+          Math.round(box.left + box.width / 2),
+          Math.round(box.top + box.height / 2),
+        )
+      return {
+        screen: document.querySelector("main")?.innerText?.slice(0, 200),
+        buttonFound: Boolean(button),
+        buttonBox: box && {
+          x: Math.round(box.x),
+          y: Math.round(box.y),
+          w: Math.round(box.width),
+          h: Math.round(box.height),
+        },
+        viewport: { w: innerWidth, h: innerHeight },
+        scrollable:
+          document.scrollingElement!.scrollHeight -
+          document.scrollingElement!.clientHeight,
+        atClickPoint: at && {
+          tag: at.tagName,
+          className: at.className?.toString().slice(0, 90),
+          isTheButton: at === button,
+          containsTheButton: button ? at.contains(button) : null,
+        },
+      }
+    })
+    throw new Error(
+      `${String(error).split("\n")[0]}\nwhat the page looked like: ${JSON.stringify(seen, null, 2)}`,
+      { cause: error },
+    )
+  }
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
   await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
