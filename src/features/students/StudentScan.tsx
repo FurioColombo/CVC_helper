@@ -118,10 +118,14 @@ function ReviewField({
   const uncertain = needsReview(candidate, field)
   return (
     <label className="grid min-w-0 gap-1.5 text-sm font-bold">
-      <span className="flex items-center justify-between gap-2">
-        <span>{label}</span>
+      {/* The caption and its "Da controllare" flag share a half-width column.
+          At 200% text neither fits beside the other, and flex items will not
+          shrink below their own content unless told to, so the row used to push
+          past the card. It wraps and breaks instead. */}
+      <span className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+        <span className="min-w-0 break-words">{label}</span>
         {uncertain && (
-          <span className="text-[0.68rem] font-bold text-[#a2381b]">
+          <span className="min-w-0 text-[0.68rem] font-bold break-words text-[#a2381b]">
             Da controllare
           </span>
         )}

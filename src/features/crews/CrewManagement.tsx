@@ -533,10 +533,15 @@ function SessionChoice({
   onChange: (sessionId: SessionId) => void
 }) {
   return (
-    <label className="grid text-sm font-bold">
+    // A select is sized by its widest option unless it is told otherwise, so
+    // without `w-full min-w-0` this one grows past its own label and pushes the
+    // page sideways. At 320px and 200% text it fits on this machine by a couple
+    // of pixels and overflows on a runner whose fonts are wider, which is how
+    // it reached CI unnoticed.
+    <label className="grid min-w-0 text-sm font-bold">
       <span className="sr-only">Sessione</span>
       <select
-        className="h-11 rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+        className="h-11 w-full min-w-0 rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
         disabled={disabled}
         onChange={(event) => onChange(event.target.value as SessionId)}
         value={sessionId}
