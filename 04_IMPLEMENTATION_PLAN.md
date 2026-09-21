@@ -1174,7 +1174,7 @@ than what happened.
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
 | V01 — reachable from a phone | COMPLETE — live at https://furiocolombo.github.io/CVC_helper/, installed and opening on the owner's phone |
 | CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
-| S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **not yet attributed** and that is what holds the milestone open |
+| S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **attributed** (66 measured on the owner's own crop); two decisions on how to reduce it are with the owner |
 | V02–V05, UG2 | PENDING — the controller blocks V02 until S1 is COMPLETE |
 
 **Done in this session:** 0.2.0 closed and tagged; the brief's sections 3–8
@@ -1198,14 +1198,20 @@ as a mechanism but unattributed, one deferred by the owner. See
 
 **Immediately next:**
 
-1. **Blocked, asked once.** The owner sends the photograph they scanned, or reads
-   off the three on-screen counters plus the number of students on the sheet.
-   Then `npm run measure:scan-review -- <photo> .evidence/S1/review-load-photograph.json`
-   attributes the 67 in one run, and S1's fourth acceptance criterion becomes
-   checkable. Nothing is to be loosened before that; the plan's own rule is that
-   67 is the number to explain before it is the number to reduce.
-2. Apply the named fix, re-measure the same way, close S1 with `npm run verify`.
-3. Then V02, starting with the independent design review the owner asked for
+1. DONE — the owner sent six photographs and the 67 is attributed: 66 measured,
+   split by cause. See "The 67, attributed" under S1.
+2. **Two decisions are the owner's**, put to them on 2026-09-22 and not to be
+   guessed: whether to un-defer line fragmentation, now measured as the largest
+   remaining cause and present on all six photographs; and whether to corroborate
+   a low-confidence date against the age printed beside it, which clears nine
+   flags on independent evidence but confirms only the year.
+3. Not blocked by either, and next in any case: **stop showing the count before
+   the name-order question is answered.** Nineteen of the owner's twenty-nine
+   missing fields were the sex inferred from a surname. This is a presentation
+   defect, not an OCR one.
+4. Apply whatever 2 and 3 settle, re-measure the same way, close S1 with
+   `npm run verify`.
+5. Then V02, starting with the independent design review the owner asked for
    twice — a reviewer validates the design **before** it is built.
 
 **Then, in order:** S1 the student scan — inserted ahead of V02 on the owner's
@@ -1709,10 +1715,54 @@ H2 was my own leading theory before it was measured. It is recorded as rejected
 because the rule here is to explain the number before reducing it, and a fix
 aimed at the wrong rule would have cost a cycle.
 
-**What unblocks it:** the owner's photograph, or the three on-screen counters
-read off the scan they already did plus the sheet's student count. Then
-`npm run measure:scan-review -- <photo> .evidence/S1/review-load-photograph.json`.
-No threshold has been moved and no rule relaxed in the meantime.
+### The 67, attributed — 2026-09-22
+
+The owner sent six photographs of the sheet. Measured on the crop they scanned:
+**66 flagged fields against their 67.** The number is explained, and the four
+hypotheses above are settled — three of them differently from how they stood
+that morning. Full record in `.evidence/S1/review-load-photographs.json`; the
+images are **not** committed and must not be, because the repository is public
+and the sheet carries twenty students and five staff with telephone numbers and
+dates of birth, three of them minors.
+
+| State | Fields flagged | Rows to review |
+| --- | --- | --- |
+| As the owner saw it — telephone read, name order unanswered | **66** | 22 |
+| Telephone off (S1's new default) | 51 | 22 |
+| Telephone off, name order answered (one tap, already existed) | **36** | 16 |
+
+**The finding that matters most.** Twenty-nine of the sixty-six were missing
+fields, and **nineteen of those twenty-nine were the sex**. The sex is inferred
+from the given name; this sheet is written surname first; and the counter is
+computed *before* the operator answers which name comes first — so it is
+inferred from a surname and fails on nearly every row. The number that made the
+owner judge the feature unusable is the number before the one question the
+screen is already asking, and the screen gives no sign the two are connected. No
+amount of OCR accuracy would have changed those nineteen. H2 was right about the
+mechanism and wrong about the reason: it is not that Italian names defeat the
+ending rule, it is that the rule is applied to the wrong word.
+
+**H3 is demoted.** Exactly one student on this sheet is written with three words
+and no particle. The blanking costs 3 fields, not 60. The two `De giuli` rows
+resolve correctly once the order is answered.
+
+**H4 is promoted, and it is the owner's call.** Line fragmentation appears on
+**all six** photographs. A row's date breaks off into a line of its own, which
+both invents a row and robs the real one of its date. On the owner's crop it
+accounts for roughly 10 of the 15 remaining missing fields. On the two worst
+photographs it cascades: 41 rows read for a 25-row sheet with 93 missing fields;
+18 rows with 51. This is the item deferred past 0.3.0 in brief section 9 — it is
+now the largest remaining cause, and un-deferring it needs the owner's word.
+
+**The residual 36, named:** ~10 fragmentation, 3 the ambiguous compound, 2 the
+two spurious rows' own names, 21 low confidence on readings that are in fact
+correct (Graiff at 13, Bragagnolo at 34, Fassi at 35, dates at 42 and 44). The
+last group is *not* to be cleared by lowering the threshold: one flagged surname
+read "Atessandro" for "Alessandro", and dropping the threshold would have passed
+it silently. The sheet does print the age beside the date — "24 anni -
+02/02/2002" — which corroborates it without touching any threshold; its honest
+limit is that the age confirms only the year, so a misread day would pass too.
+Recorded as an option, not taken unilaterally.
 
 **Noticed, not fixed** (scope discipline; recorded per the brief): `inferSex`
 suggests female for Gianluca, because the `-a` ending decides it and the male

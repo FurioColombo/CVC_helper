@@ -22,15 +22,84 @@ import { pathToFileURL } from "node:url"
 const root = resolve(import.meta.dirname, "..")
 const require = createRequire(pathToFileURL(resolve(root, "package.json")).href)
 const { createWorker, OEM, PSM } = require("tesseract.js")
-const { extractStudentCandidates, MIN_FIELD_CONFIDENCE } = await import(
+const {
+  applyStudentNameOrder,
+  extractStudentCandidates,
+  MIN_FIELD_CONFIDENCE,
+} = await import(
   pathToFileURL(resolve(root, "src/capabilities/studentScan.ts")).href
 )
 
+const positional = process.argv.slice(2).filter((arg) => !arg.startsWith("--"))
+const flag = (name) =>
+  process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split("=")[1]
+
 const imagePath = resolve(
   root,
-  process.argv[2] ?? "tests/fixtures/ocr-sheet-clear.png",
+  positional[0] ?? "tests/fixtures/ocr-sheet-clear.png",
 )
-const outputPath = process.argv[3] ? resolve(root, process.argv[3]) : null
+const outputPath = positional[1] ? resolve(root, positional[1]) : null
+
+/**
+ * `--crop=left,top,width,height` as fractions of the image, standing in for
+ * what the operator does in the crop editor before a scan. Fractions rather
+ * than pixels so one value works across photographs of different sizes.
+ */
+const cropFractions = flag("crop")?.split(",").map(Number)
+
+/**
+ * `--order=surname-given` or `given-surname`: also report the counts as they
+ * stand once the operator has answered the review's name-order question, which
+ * is one tap for the whole sheet.
+ */
+const nameOrder = flag("order") ?? null
+
+const bytes = await readFile(imagePath)
+
+/**
+ * Dimensions straight from the container, because there is no image library in
+ * this project and adding one to crop a rectangle would be a poor trade.
+ */
+function imageSize(buffer) {
+  if (buffer.readUInt32BE(0) === 0x89504e47) {
+    return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) }
+  }
+  let offset = 2
+  while (offset < buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      offset += 1
+      continue
+    }
+    const marker = buffer[offset + 1]
+    // SOF0-SOF15, excluding the four that are not frame headers.
+    if (
+      marker >= 0xc0 &&
+      marker <= 0xcf &&
+      marker !== 0xc4 &&
+      marker !== 0xc8 &&
+      marker !== 0xcc
+    ) {
+      return {
+        height: buffer.readUInt16BE(offset + 5),
+        width: buffer.readUInt16BE(offset + 7),
+      }
+    }
+    offset += 2 + buffer.readUInt16BE(offset + 2)
+  }
+  throw new Error(`Could not read the dimensions of ${imagePath}`)
+}
+
+let rectangle
+if (cropFractions) {
+  const { width, height } = imageSize(bytes)
+  const [left, top, cropWidth, cropHeight] = cropFractions
+  rectangle = {
+    left: Math.round(left * width),
+    top: Math.round(top * height),
+    width: Math.round(cropWidth * width),
+    height: Math.round(cropHeight * height),
+  }
+}
 
 const worker = await createWorker("ita", OEM.LSTM_ONLY, {
   corePath: resolve(root, "node_modules/tesseract.js-core"),
@@ -40,8 +109,8 @@ const worker = await createWorker("ita", OEM.LSTM_ONLY, {
 await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO })
 const started = Date.now()
 const { data } = await worker.recognize(
-  await readFile(imagePath),
-  { rotateAuto: true },
+  bytes,
+  rectangle ? { rotateAuto: true, rectangle } : { rotateAuto: true },
   { text: true, tsv: true },
 )
 const recognitionMs = Date.now() - started
@@ -52,9 +121,18 @@ await worker.terminate()
  * if these two ever drift the measurement is worthless, and a copy that reads
  * like the component is easier to check against it than an abstraction.
  */
-function audit(readPhone) {
-  const { candidates, unsuitable, aggregateConfidence } =
-    extractStudentCandidates(data, { readPhone })
+function audit(readPhone, order = null) {
+  const extracted = extractStudentCandidates(data, { readPhone })
+  const { unsuitable, aggregateConfidence } = extracted
+  // The screen asks which name came first before anything can be committed,
+  // and one answer applies to the whole sheet. Counting only the state before
+  // that answer overstates the work by everything the answer resolves, so both
+  // states are reported.
+  const candidates = order
+    ? extracted.candidates.map((candidate) =>
+        applyStudentNameOrder(candidate, order),
+      )
+    : extracted.candidates
   const fields = readPhone
     ? ["firstName", "surname", "dateOfBirth", "phone"]
     : ["firstName", "surname", "dateOfBirth"]
@@ -82,6 +160,7 @@ function audit(readPhone) {
 
   return {
     readPhone,
+    nameOrderAnswered: order,
     unsuitable,
     aggregateConfidence,
     rows: candidates.length,
@@ -112,10 +191,19 @@ const measurement = {
   image: relative(root, imagePath).replaceAll("\\", "/"),
   measuredAt: new Date().toISOString(),
   runtime: process.version,
+  crop: cropFractions ? { fractions: cropFractions, pixels: rectangle } : null,
   recognitionMs,
   minFieldConfidence: MIN_FIELD_CONFIDENCE,
   withTelephone: audit(true),
   withoutTelephone: audit(false),
+  // What the operator is actually left with: the telephone off, which is now
+  // the default, and the one name-order question answered.
+  afterTheNameOrderAnswer: nameOrder
+    ? {
+        withTelephone: audit(true, nameOrder),
+        withoutTelephone: audit(false, nameOrder),
+      }
+    : null,
 }
 
 const report = JSON.stringify(measurement, null, 2)

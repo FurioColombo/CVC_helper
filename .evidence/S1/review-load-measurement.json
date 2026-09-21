@@ -6,7 +6,7 @@
     "node": "v24.21.0",
     "platform": "win32"
   },
-  "status": "PARTIAL — the mechanism is measured, the owner's number is not yet attributed",
+  "status": "SUPERSEDED IN PART by .evidence/S1/review-load-photographs.json, 2026-09-22",
   "theNumberToExplain": {
     "reported": "67 fields left to check",
     "by": "the owner, 2026-09-21, on their own phone, from a photograph of the same roster used in testing but 'molto più chiara e pulita'",
@@ -71,5 +71,16 @@
     "thenWhat": "`npm run measure:scan-review -- <photo> .evidence/S1/review-load-photograph.json` gives the split by cause in one run, on the same arithmetic as the screen, and the acceptance criterion — materially fewer than 67, attributed to a named cause rather than a loosened threshold — becomes checkable.",
     "cheaperAlternative": "The three counters are on the screen the owner already saw. Reading off all three, plus how many students the sheet has, would narrow it to one of the hypotheses above without sending anything.",
     "notDoneInstead": "No threshold was moved and no rule was relaxed to make the number smaller. Doing that before knowing the cause is precisely what the plan forbids."
+  },
+  "supersededBy": {
+    "file": ".evidence/S1/review-load-photographs.json",
+    "what": "The owner sent six photographs of the sheet. The 67 is attributed: 66 measured on the crop they scanned.",
+    "howTheVerdictsChanged": {
+      "S1-H1-NAME-ORDER": "Still rejected as 'the 67', but its share was badly underestimated here. Answering the order drops the count from 51 to 36, because nineteen missing sex fields are inferred from a surname until it is answered.",
+      "S1-H2-SEX-INFERENCE": "Rejected here for the wrong reason. The ending rule is fine; it is applied to the wrong word before the name order is answered. Sex was 19 of the 29 missing fields.",
+      "S1-H3-AMBIGUOUS-COMPOUND": "Demoted. One row on the real sheet, 3 fields, not the twenty-two rows the arithmetic fitted.",
+      "S1-H4-LINE-FRAGMENTATION": "Promoted to the largest remaining cause. Present on all six photographs."
+    },
+    "keptRatherThanRewritten": "This file records what was known before the photographs arrived, including a hypothesis that was mine and wrong. Rewriting it would falsify the record of how the number was actually explained."
   }
 }

@@ -1,0 +1,106 @@
+{
+  "milestone": "S1",
+  "subject": "The owner's 67, attributed against their own photographs",
+  "date": "2026-09-22",
+  "runtime": {
+    "node": "v24.21.0",
+    "platform": "win32"
+  },
+  "privacy": {
+    "imagesNotCommitted": "The six photographs are of a real roster: twenty students and five staff, with telephone numbers and dates of birth, three of them minors. This repository is public. The images stay outside the working tree and only counts are recorded here — no name, no number, no date, and no path that would locate them.",
+    "consequence": "These measurements are not reproducible from the repository alone. That is the correct trade and it is stated rather than worked around. The committed fixture stays the reproducible case."
+  },
+  "method": {
+    "tool": "npm run measure:scan-review -- <image> [output] [--order=<order>] [--crop=l,t,w,h]",
+    "note": "--order reports the counts as they stand once the operator has answered the review's one name-order question, which applies to the whole sheet. Without it the tool reports only the state before that answer, which is what the owner was looking at."
+  },
+  "theAttribution": {
+    "image": "the crop the owner scanned — the names, telephone and age columns of the roster, 20 students",
+    "measured": 66,
+    "ownerReported": 67,
+    "verdict": "This is the number. A 22-row read produced 66 flagged fields against the 67 the owner counted on their phone; the remaining one is within a row of difference between their crop and this one. The 67 is explained.",
+    "breakdown": {
+      "asTheOwnerSawIt": {
+        "telephone": "read",
+        "nameOrder": "not yet answered",
+        "rows": 22,
+        "rowsToReview": 22,
+        "missingFields": 29,
+        "lowConfidenceFields": 37,
+        "lowConfidenceByField": {
+          "firstName": 10,
+          "surname": 3,
+          "dateOfBirth": 9,
+          "phone": 15
+        },
+        "fieldsFlagged": 66
+      },
+      "withTheTelephoneOff": {
+        "whatChanged": "S1's toggle, at its new default",
+        "fieldsFlagged": 51,
+        "reduction": "66 → 51, −23%, entirely the 15 low-confidence telephone readings"
+      },
+      "withTheTelephoneOffAndTheNameOrderAnswered": {
+        "whatChanged": "nothing new — one tap that already existed",
+        "rowsToReview": 16,
+        "missingFields": 15,
+        "lowConfidenceFields": 21,
+        "lowConfidenceByField": {
+          "firstName": 3,
+          "surname": 9,
+          "dateOfBirth": 9
+        },
+        "fieldsFlagged": 36,
+        "reduction": "66 → 36, −45%"
+      }
+    }
+  },
+  "theFindingThatMattersMost": {
+    "id": "S1-THE-COUNT-IS-SHOWN-TOO-EARLY",
+    "finding": "Twenty-nine of the owner's sixty-six were missing fields, and nineteen of those twenty-nine were the sex. The sex is inferred from the given name, the sheet is written surname first, and the counter is computed before the operator has answered which name comes first — so it is inferred from a surname and fails. Answering the question takes one tap and drops missing fields from 29 to 15 and the total from 51 to 36.",
+    "consequence": "The number that made the owner judge the feature unusable is, by a wide margin, the number before the one question the screen is already asking. The screen shows the work outstanding and the way to remove half of it at the same time, and gives no sign that they are connected.",
+    "notAnOcrProblem": "No amount of OCR accuracy would have changed those nineteen."
+  },
+  "residualCauses": {
+    "total": 36,
+    "named": [
+      {
+        "cause": "Line fragmentation",
+        "costsOnThisImage": "about 10 of the 15 missing fields",
+        "what": "A row's date of birth breaks off into an OCR line of its own. That produces a spurious row carrying only a date — two of them here — and leaves the real row without its date. Rows with no date at all: 6.",
+        "seenOn": "all six photographs, without exception. On the two taken at an angle it is catastrophic: one produced 41 rows for a 25-row sheet and 93 missing fields, another 51 missing fields on 18 rows.",
+        "status": "This is the item the owner deferred past 0.3.0 in brief section 9. It is now measured as the largest remaining cause. Un-deferring it is the owner's call and has been put to them; nothing has been changed here."
+      },
+      {
+        "cause": "A genuinely ambiguous compound name",
+        "costsOnThisImage": "3 of the 15 missing fields",
+        "what": "One student is written with three words and no surname particle. Under 'Cognome · Nome' the split is refused and the name is blanked, keeping the words under 'Letto:'. One row on this sheet, not the twenty-two H3 predicted.",
+        "status": "H3 from the earlier round is hereby demoted: the mechanism is real, its share is one row."
+      },
+      {
+        "cause": "Low confidence on readings that are in fact correct",
+        "costsOnThisImage": "21 of the 36",
+        "what": "Nine surnames, nine dates and three given names read below 70 that are right when checked against the sheet — Graiff at 13, Bragagnolo at 34, Fassi at 35, dates at 42 and 44.",
+        "butAlsoEarnedItsKeep": "One of the flagged surnames was read 'Atessandro' for 'Alessandro'. Lowering the threshold to clear the twenty-one would have let that one through silently, which is the trade the plan forbids: a confident wrong name is worse than a flagged right one.",
+        "optionRecorded": "The sheet prints the age beside the date — '24 anni - 02/02/2002' — so the two corroborate each other without touching any threshold. It would clear the nine date flags on independent evidence. Its honest limit is that the age only confirms the year: a misread day would be corroborated too. Put to the owner rather than decided here."
+      }
+    ]
+  },
+  "acrossAllSixPhotographs": {
+    "note": "Counts after the name-order answer, telephone off. The sheet has 20 students and 5 staff.",
+    "rows": [
+      { "image": 1, "kind": "the owner's crop", "rowsRead": 22, "missingFields": 15 },
+      { "image": 2, "kind": "full sheet, flat, even light", "rowsRead": 21, "missingFields": 7 },
+      { "image": 3, "kind": "full sheet, angled, handwriting, shadow", "rowsRead": 41, "missingFields": 93 },
+      { "image": 4, "kind": "full sheet, angled, handwriting", "rowsRead": 20, "missingFields": 13 },
+      { "image": 5, "kind": "full sheet, flat, plastic sleeve", "rowsRead": 19, "missingFields": 6 },
+      { "image": 6, "kind": "full sheet, flat, plastic sleeve, glare", "rowsRead": 18, "missingFields": 51 }
+    ],
+    "whatItSays": "Three of the six read well enough to be worth reviewing. The owner's own judgement — that the one with the warnings was the clearest and the others also looked problematic — matches the measurement: the two worst are not the angled ones by themselves, they are the ones where fragmentation cascades. Row counts of 41 and 18 against a true 25 are the same defect in both directions: lines split, or lines lost."
+  },
+  "whatThisDoesAndDoesNotClose": {
+    "closes": "S1's requirement to explain the 67 before reducing it. It is explained, to within one field, and split by cause.",
+    "doesNotClose": "The acceptance criterion needs the count materially reduced by a named cause. S1's own change accounts for 66 → 51. The further 51 → 36 is a tap that already existed and is not a reduction S1 delivered, only one it revealed. The remaining work depends on two decisions that are the owner's.",
+    "nothingLoosened": "MIN_FIELD_CONFIDENCE is still 70. No rule was relaxed to make a number smaller."
+  }
+}
