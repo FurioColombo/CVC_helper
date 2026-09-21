@@ -15,11 +15,28 @@ const manifest = JSON.parse(
   readFileSync(resolve(root, "dist", "manifest.webmanifest"), "utf8"),
 )
 
+// The manifest's URLs are absolute on the serving origin, so they carry the
+// base path the build was made for. dist/ is the root of that base, so the base
+// has to come off again before a URL becomes a file path.
+const base = manifest.scope ?? "/"
+const distPath = (url) =>
+  resolve(
+    root,
+    "dist",
+    url.startsWith(base) ? url.slice(base.length) : url.replace(/^\//, ""),
+  )
+
+assert.equal(
+  manifest.start_url,
+  base,
+  "PWA start_url and scope must agree, or an installed app opens outside its own scope",
+)
+
 for (const size of ["192x192", "512x512"]) {
   const icon = manifest.icons?.find((candidate) => candidate.sizes === size)
   assert.ok(icon, `PWA manifest is missing the ${size} icon`)
   assert.ok(
-    existsSync(resolve(root, "dist", icon.src.replace(/^\//, ""))),
+    existsSync(distPath(icon.src)),
     `Built PWA icon does not exist: ${icon.src}`,
   )
 }

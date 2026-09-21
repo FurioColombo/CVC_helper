@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import type { BoatType } from "@/domain/config"
+import { assetPath } from "@/lib/assetPath"
 
 /**
  * Manufacturer marks, used with the owner's authorisation of 2026-09-18. The
@@ -13,13 +14,13 @@ import type { BoatType } from "@/domain/config"
  * a fraction of the size of a wide one such as RS Quest.
  */
 const BOAT_LOGOS: Record<BoatType, string> = {
-  "RS Toura": "/brand/boats/rs-toura.png",
-  "RS Quest": "/brand/boats/rs-quest.png",
-  "Laser Vago": "/brand/boats/laser-vago.png",
-  "RS 500": "/brand/boats/rs-500.png",
-  "J/80": "/brand/boats/j80.png",
-  "First 25.7": "/brand/boats/first-25-7.png",
-  "First 27": "/brand/boats/first-27.png",
+  "RS Toura": assetPath("/brand/boats/rs-toura.png"),
+  "RS Quest": assetPath("/brand/boats/rs-quest.png"),
+  "Laser Vago": assetPath("/brand/boats/laser-vago.png"),
+  "RS 500": assetPath("/brand/boats/rs-500.png"),
+  "J/80": assetPath("/brand/boats/j80.png"),
+  "First 25.7": assetPath("/brand/boats/first-25-7.png"),
+  "First 27": assetPath("/brand/boats/first-27.png"),
 }
 
 const BOAT_MARKS: Record<BoatType, string> = {

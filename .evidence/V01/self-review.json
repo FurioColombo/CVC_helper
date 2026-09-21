@@ -1,0 +1,58 @@
+{
+  "milestone": "V01",
+  "reviewerRole": "self review, FOUNDATION",
+  "reviewedOn": "2026-09-21",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "V01-PHONE-PENDING",
+      "finding": "The acceptance criteria that need a real phone are not met and are not claimed: the URL loading over HTTPS, the database opening there, dictation and scanning reaching their first asset fetch, and a second offline load. They wait on two repository settings that belong to the owner's account — making the repository public and setting the Pages source to GitHub Actions — and then on the owner opening the URL. V01 stays IN_PROGRESS.",
+      "notSimulated": "Everything proven here was proven on this machine, in Chromium and WebKit, against a real production build served at the real base path. None of it is recorded as a device observation."
+    },
+    {
+      "id": "V01-CLAUDE-MD-WAS-WRONG",
+      "finding": "CLAUDE.md asserted that the app cannot run without SharedArrayBuffer, and that assertion implied the host must be able to send COOP/COEP — which would have ruled out GitHub Pages and forced the speech model same-origin. The measurement disproved it: with SharedArrayBuffer deleted before any app code runs, the database opens, takes a course and keeps it across a reload, in both engines. The paragraph is corrected, the old reason is recorded as having been wrong, and the pane's actual symptom is now stated: it stops at 'Apertura del corso…' with 'Failed to fetch a worker script' from inside the PowerSync worker.",
+      "worthNoting": "This is exactly what the brief meant by 'Measure this, do not assume'. Had it been assumed, V01 would have bought a header-capable host and moved a 73 MB model for nothing."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "V01-PREVIEW-NEEDS-THE-ENV-TOO",
+      "finding": "vite preview reads CVC_BASE_PATH from the same config, so a preview started without it serves a subpath build at the root and every asset 404s. That looked like a broken build for a few minutes and was not one. Written into docs/DEPLOY.md so the next person loses no time to it."
+    },
+    {
+      "id": "V01-PANE-SYMPTOM-UNDIAGNOSED",
+      "finding": "Why the built-in browser pane fails is still unknown — the worker script itself fetches with a 200, a shared worker constructs and a dedicated module worker loads, so the failure is inside the worker's own module graph. CLAUDE.md says not to debug the pane and nothing depends on it, so this was left alone and recorded rather than chased."
+    },
+    {
+      "id": "V01-HISTORY-BECOMES-PUBLIC",
+      "finding": "Making the repository public publishes its whole history, which includes .evidence/ — among it recorded command output from 0.1.0 carrying the owner's own home-directory path, and the specs, plan and reviews. Nothing there is anyone else's data, and the owner chose this knowing the site would be public, but it is a consequence of the choice rather than of the deploy and is recorded as such."
+    }
+  ],
+  "scopeCheck": {
+    "addedNoBackend": true,
+    "addedNoAccountOrAuth": true,
+    "addedNoSynchronisation": true,
+    "addedNoAnalytics": true,
+    "addedNoNetworkCall": "measured: zero off-origin requests on a cold load through course creation",
+    "behaviourChangeAtTheDefaultBase": "none. With CVC_BASE_PATH unset the base stays '/', the manifest is unchanged, and 400 unit tests, the domain and compatibility checks, the production build and the touched browser journeys all pass as before."
+  },
+  "verificationRun": [
+    "npm run verify:quick — 38 files, 400 tests, lint, formatting, typecheck",
+    "npm run verify:domain — repository, canonical domain tables, 0.1.0 compatibility fixture at 22 rows",
+    "npm run build at base '/' and at base '/CVC_helper/' — both pass check-built-pwa",
+    "npm run check:ocr-offline at both bases",
+    "npm run measure:isolation against the production subpath build in chromium, chromium without SharedArrayBuffer, and webkit",
+    "npm run verify:e2e -- ug1-boat-mark-fit, u01-shell, u04-scan-ui, student-scan --project=pixel-7-chrome: 5 passed. These are the journeys that exercise the asset paths this milestone changed."
+  ],
+  "evidenceInspected": [
+    ".evidence/V01/isolation-measurement.json: three runs, all opening the database and keeping a write, none with SharedArrayBuffer",
+    ".evidence/V01/deployment-evidence.json: the host decision, the base-path work and its verification, the offline proof, the privacy measurement",
+    "docs/DEPLOY.md: deploy, redeploy, build locally, prove offline, take down",
+    ".github/workflows/deploy-pages.yml",
+    "vite.config.ts, src/lib/assetPath.ts and the three call sites that used absolute origin paths",
+    "scripts/check-built-pwa.mjs and scripts/check-ocr-offline.mjs, both now base-aware",
+    "04_IMPLEMENTATION_PLAN.md V01 required behaviour and acceptance criteria"
+  ]
+}

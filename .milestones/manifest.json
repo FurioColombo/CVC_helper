@@ -379,7 +379,7 @@
     {
       "id": "V01",
       "category": "FOUNDATION",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/V01/verification.json",
