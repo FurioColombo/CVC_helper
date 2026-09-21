@@ -1,0 +1,46 @@
+{
+  "milestone": "S1",
+  "subject": "The telephone choice, driven through real browsers on the real OCR",
+  "date": "2026-09-22",
+  "runtime": {
+    "node": "v24.21.0",
+    "platform": "win32",
+    "harness": "Playwright, three device projects as playwright.config.ts defines them"
+  },
+  "journeys": [
+    {
+      "spec": "tests/e2e/s1-scan-phone-option.spec.ts",
+      "project": "pixel-7-chrome",
+      "result": "PASS (5.8s)",
+      "whyOnlyOneProject": "It is one full Tesseract pass over a real photograph and the option is not platform-specific. The scan screen itself is covered on all three projects by u04-scan-ui.spec.ts, and the telephone-reading journey by student-scan.spec.ts on two.",
+      "whatItProves": [
+        "The box is unchecked on arrival: the operator has to ask for the number.",
+        "With it unchecked, the same three rows are read, with the same names and the same dates of birth as the journey that does read the number.",
+        "No Telefono field exists anywhere in the review — asserted by count, not by visibility, so a hidden one would still fail.",
+        "After answering the name order once the counters read 3 rows / 0 fields / 3 ready, and all three commit.",
+        "The saved student's own profile shows Telefono —. Nothing reached the record."
+      ]
+    },
+    {
+      "spec": "tests/e2e/student-scan.spec.ts",
+      "projects": ["pixel-7-chrome", "iphone-13-viewport"],
+      "result": "PASS",
+      "changedHere": "It now ticks the box before acquiring, because it is the journey that proves the telephone column is read correctly and that is no longer the default. It also asserts the box starts unchecked, so the default is pinned from both sides."
+    },
+    {
+      "spec": "tests/e2e/u04-scan-ui.spec.ts",
+      "projects": ["pixel-7-chrome", "iphone-13-viewport", "iphone-13-webkit-core"],
+      "result": "PASS",
+      "changedHere": "S1 added a control to the scan entry screen, and the reflow rule applies to it like anything else. At 320 px with 200% text the checkbox is visible, unchecked, and the document still does not scroll horizontally — the same assertion that caught four separate overflow defects during the CI regression.",
+      "whyItMatters": "The control is a box beside two lines of Italian, which is exactly the shape that overflowed on the Comandate empty state and the session selector. It was measured rather than assumed."
+    }
+  ],
+  "commandsRun": [
+    "npm run verify:e2e -- s1-scan-phone-option.spec.ts --project=pixel-7-chrome — 1 passed",
+    "npm run verify:e2e -- student-scan.spec.ts u04-scan-ui.spec.ts — 8 passed"
+  ],
+  "notClaimed": {
+    "physicalDevice": "Nothing here was run on a physical phone. The owner's own device checks are theirs to run and belong to UG2; no simulated PASS is recorded.",
+    "theOwnersPhotograph": "These journeys use the committed fixture. They prove the option behaves; they say nothing about the 67, which review-load-measurement.json addresses and does not yet resolve."
+  }
+}

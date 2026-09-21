@@ -56,10 +56,30 @@ export interface StudentScanProgress {
   value: number
 }
 
+/**
+ * What the operator asked to be read.
+ *
+ * `readPhone: false` means the telephone is not reported: no candidate carries
+ * one and the review never shows or counts one. It does **not** mean the
+ * telephone pattern stops being looked for internally, and that distinction is
+ * deliberate. The roster is a printed table whose telephone column is what
+ * tells the parser where the name cell ends; the same match also decides that a
+ * faint row is a row at all. Switching the detection off would make the names
+ * worse, which is the opposite of why the option exists.
+ */
+export interface StudentScanOptions {
+  readPhone: boolean
+}
+
+export const DEFAULT_STUDENT_SCAN_OPTIONS: StudentScanOptions = {
+  readPhone: true,
+}
+
 export interface StudentScanProvider {
   scanStudents(
     image: Blob,
     onProgress?: (progress: StudentScanProgress) => void,
+    options?: StudentScanOptions,
   ): Promise<StudentScanResult>
 }
 
@@ -611,7 +631,11 @@ function isObviousNonStudentLine(line: RecognizedLine) {
   )
 }
 
-function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
+function candidateFromLine(
+  line: RecognizedLine,
+  layout: PageLayout | null,
+  options: StudentScanOptions,
+) {
   const dateMatch = line.text.match(DATE_PATTERN)
   const dateStart = dateMatch?.index ?? -1
   const phoneSearchText =
@@ -699,7 +723,11 @@ function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
     firstName,
     surname,
     dateOfBirth: normalizedDate,
-    phone: phoneMatch?.[0].replace(/\s+/g, " ").trim() ?? "",
+    // Detected either way — the column bounds the name — but only reported
+    // when it was asked for.
+    phone: options.readPhone
+      ? (phoneMatch?.[0].replace(/\s+/g, " ").trim() ?? "")
+      : "",
     sex:
       confidence.firstName >= MIN_FIELD_CONFIDENCE ? inferSex(firstName) : null,
     confidence,
@@ -724,7 +752,10 @@ function candidateFromLine(line: RecognizedLine, layout: PageLayout | null) {
   return candidate
 }
 
-export function extractStudentCandidates(page: OcrPage): StudentScanResult {
+export function extractStudentCandidates(
+  page: OcrPage,
+  options: StudentScanOptions = DEFAULT_STUDENT_SCAN_OPTIONS,
+): StudentScanResult {
   const candidates: StudentScanCandidate[] = []
   const lines = parseTsv(page.tsv, page.text, page.confidence)
   const layout = inferPageLayout(lines)
@@ -743,7 +774,7 @@ export function extractStudentCandidates(page: OcrPage): StudentScanResult {
     // The staff block at the foot of the sheet carries a role in its own
     // column. Those people are not students and must never be imported as one.
     if (isPersonnelRow(line, layout)) continue
-    const candidate = candidateFromLine(line, layout)
+    const candidate = candidateFromLine(line, layout, options)
     if (candidate) candidates.push(candidate)
   }
 
@@ -790,6 +821,7 @@ class LocalTesseractStudentScanProvider implements StudentScanProvider {
   async scanStudents(
     image: Blob,
     onProgress?: (progress: StudentScanProgress) => void,
+    options: StudentScanOptions = DEFAULT_STUDENT_SCAN_OPTIONS,
   ) {
     progressListener = onProgress
     try {
@@ -799,7 +831,7 @@ class LocalTesseractStudentScanProvider implements StudentScanProvider {
         { rotateAuto: true },
         { text: true, tsv: true },
       )
-      return extractStudentCandidates(result.data)
+      return extractStudentCandidates(result.data, options)
     } finally {
       progressListener = undefined
     }
@@ -811,6 +843,7 @@ export const studentScanProvider = new LocalTesseractStudentScanProvider()
 export function scanStudents(
   image: Blob,
   onProgress?: (progress: StudentScanProgress) => void,
+  options: StudentScanOptions = DEFAULT_STUDENT_SCAN_OPTIONS,
 ) {
-  return studentScanProvider.scanStudents(image, onProgress)
+  return studentScanProvider.scanStudents(image, onProgress, options)
 }

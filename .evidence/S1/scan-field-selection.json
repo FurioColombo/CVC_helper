@@ -1,0 +1,46 @@
+{
+  "milestone": "S1",
+  "subject": "Choosing, at scan time, whether the telephone column is read at all",
+  "date": "2026-09-22",
+  "runtime": {
+    "node": "v24.21.0",
+    "platform": "win32"
+  },
+  "askedFor": {
+    "by": "the owner, 2026-09-21, after the first scan on their own phone",
+    "words": "quando fai scan fammi scegliere se far leggere anche numero di telefono. se non è spuntato non lo provare nemmeno a leggere per semplificare il test e concentrarci sulla parte importante del problema che sono nomi e date di nascita",
+    "reading": "Two things: a choice, and a default that simplifies. The purpose given is the test, so the default is off."
+  },
+  "whatWasBuilt": {
+    "control": "A checkbox on the scan entry screen: 'Leggi anche il telefono' / 'Lasciato spento, i numeri non vengono letti né richiesti.' Unchecked on arrival, every time. It is not remembered between scans, because it is a property of this test rather than of the course.",
+    "capability": "StudentScanOptions { readPhone } threaded through scanStudents → StudentScanProvider.scanStudents → extractStudentCandidates → candidateFromLine. The default is readPhone: true, so every existing caller and test behaves exactly as before.",
+    "review": "reviewedFields(readPhone) is the single list the screen works from. It drives the rows-to-check counter, the readiness of a row, the commit gate and which ReviewField is rendered. There is no second place that hard-codes four fields any more.",
+    "record": "The card's field grid collapses from two columns to one when the telephone is off, so the date of birth is not left beside a hole."
+  },
+  "unattemptedMeansUnattempted": {
+    "claim": "Unchecked, no telephone is reported, shown, counted or stored.",
+    "provenBy": [
+      "src/capabilities/studentScan.test.ts — 'does not report a telephone that was not asked for, and reads the same names': the same page parsed both ways. Reported numbers become '', and firstName/surname/dateOfBirth are identical between the two runs.",
+      "src/features/students/StudentScan.test.tsx — 'does not ask for, show, count or store a telephone left unread': the scan is called with { readPhone: false }; no Telefono field exists in the review; a row whose only doubt is a 41-confidence number reads 0 rows to check, 0 fields to complete, 1 student ready; and the committed record carries phone: null.",
+      "src/features/students/StudentScan.test.tsx — 'reads and reviews the telephone when it is asked for': the same row, the same photograph, with the box ticked, costs one check. That is the counterfactual, without which the first test proves nothing.",
+      "tests/e2e/s1-scan-phone-option.spec.ts — the whole journey on the real OCR: default unchecked, three rows read, no Telefono field, 3 ready, committed, and the student's own profile shows Telefono —."
+    ]
+  },
+  "theOneThingThatIsNotLiteral": {
+    "finding": "'non lo provare nemmeno a leggere' is honoured at the output, not inside the parser, and this is a deliberate departure that the owner should know about.",
+    "why": "The telephone pattern is load-bearing for the two fields the owner actually cares about. PageLayout.structuredLeft — the boundary that keeps digits and the age column out of the surname — is the left edge of the telephone column. The same match is one of the three things that make a faint line count as a row at all (`!dateMatch && !phoneMatch && nameParts.length < 2` rejects it). Removing the detection would lose rows and let numbers bleed into names.",
+    "consequence": "Switching the detection off would have made the names worse, which is the opposite of the stated purpose. So the column is still located; it is simply never reported.",
+    "provenBy": "src/capabilities/studentScan.test.ts — 'still recognises a row carried by its telephone when the telephone is not reported', and the identical-names assertion in the test above.",
+    "whatTheOwnerGets": "Everything they asked for that is observable: no number read out, nothing to check, nothing to type, nothing saved. What they do not get is a saving in OCR time, because Tesseract reads the whole page either way; the option is about the review, not about speed."
+  },
+  "notChanged": {
+    "threshold": "MIN_FIELD_CONFIDENCE is still 70. Nothing was loosened.",
+    "blanking": "No field that was previously shown is blanked. A low-confidence reading still keeps its text and is marked, as UG1 corrected it.",
+    "gate": "The review gate is untouched: nothing enters the course unreviewed, and the name-order question is still asked."
+  },
+  "verificationRun": [
+    "npm run verify:quick — 38 files, 404 tests, lint, formatting, typecheck. 400 before this milestone, 4 added here.",
+    "npm run verify:e2e -- s1-scan-phone-option.spec.ts --project=pixel-7-chrome — 1 passed",
+    "npm run verify:e2e -- student-scan.spec.ts u04-scan-ui.spec.ts — 8 passed across all three device projects"
+  ]
+}

@@ -1165,7 +1165,7 @@ Feature milestones use the `V` series. The gate keeps the `UG` series and is
 
 ## Where this cycle stands
 
-Updated 2026-09-21. Keep this current: it is the first thing the next session
+Updated 2026-09-22. Keep this current: it is the first thing the next session
 reads, and it is the only place that says what is happening *right now* rather
 than what happened.
 
@@ -1173,27 +1173,40 @@ than what happened.
 | --- | --- |
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
 | V01 — reachable from a phone | COMPLETE — live at https://furiocolombo.github.io/CVC_helper/, installed and opening on the owner's phone |
-| S1 — student scan, fewer fields to check | PENDING — raised from that phone session; runs before V02 |
 | CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
-| V02–V05, UG2 | PENDING — blocked by the controller until V01 is COMPLETE |
+| S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **not yet attributed** and that is what holds the milestone open |
+| V02–V05, UG2 | PENDING — the controller blocks V02 until S1 is COMPLETE |
 
 **Done in this session:** 0.2.0 closed and tagged; the brief's sections 3–8
 written into this plan as V01–V05 and UG2 before any of their code; V01's
 isolation measurement, base-path portability, offline proof, privacy check,
 deploy workflow and `docs/DEPLOY.md`; the repository pushed and made public and
-Pages switched to GitHub Actions.
+Pages switched to GitHub Actions; the CI regression closed; S1's telephone
+choice delivered with its tests, browser journeys and measurement tool.
+
+**S1, precisely where it stands.** The half that was asked for directly is
+finished: the scan entry screen carries an opt-in "Leggi anche il telefono",
+unchecked by default, and unchecked means the number is not reported, not shown,
+not counted and not stored. 404 unit tests, the three touched browser specs
+across all device projects, and a new `s1-scan-phone-option.spec.ts` journey all
+pass. The half that explains the owner's 67 is blocked: the committed fixture has
+three rows and yields `rowsToReview 3, missingFields 0, lowConfidence 0,
+unresolvedNameOrder 3`, which cannot produce a count like 67. Four hypotheses are
+stated and tested as far as the repository allows — two rejected, one confirmed
+as a mechanism but unattributed, one deferred by the owner. See
+`.evidence/S1/review-load-measurement.json`.
 
 **Immediately next:**
 
-1. DONE — the deploy publishes and the URL serves a working app.
-2. The owner opens it on their phone. That is what closes V01's remaining
-   acceptance criteria; nothing about a device is recorded without them.
-3. DONE — the CI regression is fixed and CI is green on Linux.
-4. DONE — V01 is COMPLETE.
-5. S1: the scan's telephone column becomes a choice, and the 67 fields left to
-   check on a clean photograph get explained before they get reduced.
-6. Then V02, starting with the independent design review the owner asked for
-   twice.
+1. **Blocked, asked once.** The owner sends the photograph they scanned, or reads
+   off the three on-screen counters plus the number of students on the sheet.
+   Then `npm run measure:scan-review -- <photo> .evidence/S1/review-load-photograph.json`
+   attributes the 67 in one run, and S1's fourth acceptance criterion becomes
+   checkable. Nothing is to be loosened before that; the plan's own rule is that
+   67 is the number to explain before it is the number to reduce.
+2. Apply the named fix, re-measure the same way, close S1 with `npm run verify`.
+3. Then V02, starting with the independent design review the owner asked for
+   twice — a reviewer validates the design **before** it is built.
 
 **Then, in order:** S1 the student scan — inserted ahead of V02 on the owner's
 instruction of 2026-09-21, because they are testing now and the scan is what
@@ -1586,7 +1599,7 @@ each cause with what was and was not reproduced, and the harness changes.
 ## S1 — Student scan: choose the columns, and cut what must be checked
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Raised:** 2026-09-21, by the owner, from the first real scan on their own phone
 
 Not part of `0_3_0_OWNER_BRIEF.md`. It is here because the owner used the
@@ -1656,6 +1669,56 @@ The two OCR follow-ups the owner deferred past 0.3.0 on 2026-09-21 — line
 fragmentation, and the absence of an automated test over a real photograph —
 stay deferred. This milestone does not reopen them, though what it measures may
 inform them.
+
+### Progress, 2026-09-22
+
+**Done — the column choice.** `StudentScanOptions { readPhone }` runs through
+`scanStudents` → `extractStudentCandidates` → `candidateFromLine`, defaulting to
+`true` so no existing caller changes. The scan entry screen carries an opt-in
+checkbox, unchecked on arrival. `reviewedFields(readPhone)` is now the single
+list the screen works from, so the counters, the readiness of a row, the commit
+gate and the rendered fields cannot disagree. Proven by four new tests and a new
+journey: unchecked, no telephone is reported, shown, counted or stored, and the
+names and dates read identically.
+
+One departure, stated rather than buried: _"non lo provare nemmeno a leggere"_ is
+honoured at the output, not inside the parser. The telephone pattern still runs
+because `PageLayout.structuredLeft` — the boundary that keeps digits and the age
+column out of the surname — **is** the left edge of the telephone column, and the
+same match is one of three things that let a faint line count as a row at all.
+Switching the detection off would make the names worse, which is the opposite of
+the purpose the owner gave. Everything observable is as asked.
+
+**Blocked — the count.** `scripts/measure-scan-review.mjs` is new and reusable:
+it runs the real OCR and counts exactly the way the screen counts, split by
+cause, with the telephone read and not read. On the committed fixture every row
+is flagged solely by the name-order gate, which one tap clears for the whole
+sheet. Three rows cannot produce 67 of anything, so this fixture is not evidence
+about what the owner saw.
+
+Hypotheses, tested as far as the repository allows:
+
+| # | Hypothesis | Verdict |
+| --- | --- | --- |
+| H1 | The name-order gate is the 67 | REJECTED — one tap clears the sheet, and it flags rows, not fields |
+| H2 | `sex` is unsuggested on many Italian names | REJECTED — 6 of 87 common names, 6.9%; under two fields on a class of 25 |
+| H3 | "Cognome · Nome" blanks compound names, 3 missing fields each | CONFIRMED as a mechanism, UNATTRIBUTED as the cause; 67 / 3 ≈ 22 rows is a fit, not a finding |
+| H4 | Line fragmentation splits rows | NOT TESTED — deferred by the owner; listed so it is not quietly excluded |
+
+H2 was my own leading theory before it was measured. It is recorded as rejected
+because the rule here is to explain the number before reducing it, and a fix
+aimed at the wrong rule would have cost a cycle.
+
+**What unblocks it:** the owner's photograph, or the three on-screen counters
+read off the scan they already did plus the sheet's student count. Then
+`npm run measure:scan-review -- <photo> .evidence/S1/review-load-photograph.json`.
+No threshold has been moved and no rule relaxed in the meantime.
+
+**Noticed, not fixed** (scope discipline; recorded per the brief): `inferSex`
+suggests female for Gianluca, because the `-a` ending decides it and the male
+override list does not contain the name. The ambiguous-compound rule blanks three
+fields per row where it fires. The telephone choice is not remembered between
+scans, unlike the name order.
 
 
 ## V02 — The dictation control stops changing size

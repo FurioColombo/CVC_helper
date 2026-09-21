@@ -1,0 +1,75 @@
+{
+  "milestone": "S1",
+  "subject": "Where the review load of a scan comes from, and what part of the owner's 67 this can and cannot account for",
+  "date": "2026-09-22",
+  "runtime": {
+    "node": "v24.21.0",
+    "platform": "win32"
+  },
+  "status": "PARTIAL — the mechanism is measured, the owner's number is not yet attributed",
+  "theNumberToExplain": {
+    "reported": "67 fields left to check",
+    "by": "the owner, 2026-09-21, on their own phone, from a photograph of the same roster used in testing but 'molto più chiara e pulita'",
+    "whyItMatters": "67 missing fields, 67 low-confidence fields and 67 rows whose name order is undecided are three different defects with three different fixes, and a threshold lowered on a hunch trades one failure for a worse one. The plan's own rule: 67 is the number to explain before it is the number to reduce."
+  },
+  "howItIsCounted": {
+    "tool": "scripts/measure-scan-review.mjs, new here, run as `npm run measure:scan-review -- [image] [output.json]`",
+    "method": "Runs the real Tesseract pass over an image and then counts exactly the way StudentScan.tsx counts, split by cause, with the telephone read and not read. The arithmetic is copied rather than imported: an abstraction shared with the component could drift silently, a copy that reads like it can be checked against it.",
+    "theThreeCounters": {
+      "righe da controllare": "rows with anything outstanding",
+      "campi da completare": "missing firstName, surname, dateOfBirth or sex — four terms per row",
+      "allievi pronti": "rows that could be committed now"
+    },
+    "andAFourth": "unresolvedNameOrder — rows whose name order the operator has not answered. It blocks a row without being a field, so it is counted separately."
+  },
+  "measuredOnTheCommittedFixture": {
+    "image": "tests/fixtures/ocr-sheet-clear.png",
+    "raw": ".evidence/S1/review-load-clear-fixture.json",
+    "result": {
+      "rows": 3,
+      "rowsToReview": 3,
+      "missingFields": 0,
+      "lowConfidenceFields": 0,
+      "unresolvedNameOrder": 3,
+      "identicalWithAndWithoutTheTelephone": true
+    },
+    "whatItSays": "On this fixture the entire review load is the name-order question, which one tap answers for the whole sheet — after 'Applica Nome · Cognome' the counters read 0 / 0 / 3, as tests/e2e/s1-scan-phone-option.spec.ts asserts. Nothing here produces a count like 67.",
+    "whatItAlsoSays": "Reading the telephone or not changes none of the four numbers. The option costs the names nothing, which is the claim scan-field-selection.json had to support.",
+    "honestLimit": "Three rows cannot produce 67 of anything. This fixture cannot reproduce what the owner saw and is not evidence about it."
+  },
+  "hypothesesTestedWithoutThePhotograph": [
+    {
+      "id": "S1-H1-NAME-ORDER",
+      "hypothesis": "The 67 is the name-order gate flagging every row.",
+      "verdict": "REJECTED",
+      "why": "The gate is answered once for the whole sheet and the rows clear immediately; it also flags rows, not fields. It cannot cost 67 checks however many rows there are."
+    },
+    {
+      "id": "S1-H2-SEX-INFERENCE",
+      "hypothesis": "sex is one of the four terms in 'campi da completare' and is only suggested from -a/-o endings plus two override lists, so an ordinary Italian roster leaves many rows without one — one missing field each.",
+      "verdict": "REJECTED as a major cause, and it was my own leading theory before it was measured",
+      "measurement": "87 common Italian given names run through the inference: 6 returned no suggestion (Christian, Cristian, Giovanni, Luigi, Matilde, Nicole) — 6.9%. On a class of 25 that is under two fields.",
+      "butAlsoFound": "Gianluca is suggested female, because the rule reads the -a ending and the override lists do not contain it. One wrong tap per Gianluca. Noticed, not fixed here: it is an adjacent improvement and the brief's scope discipline says to record what I notice. See self-review.json."
+    },
+    {
+      "id": "S1-H3-AMBIGUOUS-COMPOUND",
+      "hypothesis": "Answering 'Cognome · Nome' blanks any name of three or more words that does not start with a recognised particle — firstName, surname and sex all become empty — so each such row costs 3 missing fields.",
+      "verdict": "CONFIRMED as a mechanism, UNATTRIBUTED as the cause",
+      "measurement": "Six synthetic rows in the shape a real roster has: under 'Cognome · Nome', 'De Angelis Luca' and 'Di Marco Paolo' split correctly on their particles, but 'Cortese Massimo Maria' and 'Bianchi Anna Chiara' blank to 3 missing fields each. 2 of 6 rows, 6 missing fields.",
+      "arithmetic": "67 / 3 is roughly 22 rows. A roster of that size where most rows carry a middle name or a two-word surname without a particle would produce a number of this order. That is a fit, not a finding.",
+      "whyItIsNotFixedHere": "The plan says measure before changing anything, and this is a rule that was written deliberately — the words as read survive in nameReading.raw and the screen shows them under 'Letto:', so nothing is lost, only retyped. Whether to offer a most-likely split marked for attention instead of a blank is a real question, and it should be answered against the owner's sheet rather than against six names I chose."
+    },
+    {
+      "id": "S1-H4-LINE-FRAGMENTATION",
+      "hypothesis": "A row broken across OCR lines yields partial candidates, each missing most of its fields.",
+      "verdict": "NOT TESTED",
+      "why": "Line fragmentation is one of the two OCR follow-ups the owner deferred past 0.3.0 on 2026-09-21, and S1 does not reopen them. It is listed because it would produce exactly this shape of number and must not be quietly excluded."
+    }
+  ],
+  "whatIsNeededToFinish": {
+    "the": "photograph the owner scanned, or any photograph of a real roster of that size",
+    "thenWhat": "`npm run measure:scan-review -- <photo> .evidence/S1/review-load-photograph.json` gives the split by cause in one run, on the same arithmetic as the screen, and the acceptance criterion — materially fewer than 67, attributed to a named cause rather than a loosened threshold — becomes checkable.",
+    "cheaperAlternative": "The three counters are on the screen the owner already saw. Reading off all three, plus how many students the sheet has, would narrow it to one of the hypotheses above without sending anything.",
+    "notDoneInstead": "No threshold was moved and no rule was relaxed to make the number smaller. Doing that before knowing the cause is precisely what the plan forbids."
+  }
+}

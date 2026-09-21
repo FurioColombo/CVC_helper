@@ -1,0 +1,60 @@
+{
+  "milestone": "S1",
+  "reviewerRole": "self review, FEATURE",
+  "reviewedOn": "2026-09-22",
+  "verdict": "INCOMPLETE — the delivered half is reviewed and passes; the milestone is not closed",
+  "whyNotClosed": "S1 has four acceptance criteria. Three are met and proven. The fourth — 'the fields left to check on a clean photograph are materially fewer than 67 and the reduction is attributed to a named cause rather than to a loosened threshold' — cannot be met from the repository, because the photograph that produced the 67 is on the owner's phone and the committed fixture has three rows. Closing on the other three would be claiming a result that was not run.",
+  "blockers": [
+    {
+      "id": "S1-NEEDS-THE-SHEET",
+      "blocker": "Attribution of the 67 needs the owner's photograph, or the three on-screen counters read off it.",
+      "whatWasDoneInstead": "Everything that does not depend on it: the toggle in full, its tests, its browser journeys, a reusable measurement tool, and four hypotheses stated and tested as far as they can be without the image. Two are rejected, one is confirmed as a mechanism but unattributed, one is out of scope by the owner's own deferral.",
+      "options": "In review-load-measurement.json under whatIsNeededToFinish."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "S1-NOT-LITERALLY-UNATTEMPTED",
+      "finding": "'non lo provare nemmeno a leggere' is honoured at the output rather than inside the parser. The telephone pattern still runs, because PageLayout.structuredLeft — the boundary that keeps digits and the age column out of the surname — is the left edge of the telephone column, and the same match is one of three things that let a faint line count as a row at all.",
+      "why": "Switching the detection off would have made names and dates worse, which is the opposite of the purpose the owner gave for asking. Everything observable is as asked: nothing read out, nothing shown, nothing counted, nothing stored.",
+      "whatTheOwnerDoesNotGet": "A saving in scan time. Tesseract reads the whole page either way.",
+      "flaggedTo": "the owner, in the turn that delivered this"
+    },
+    {
+      "id": "S1-MY-OWN-THEORY-WAS-WRONG",
+      "finding": "Before measuring, I expected the sex suggestion to be a large part of the 67 — it is a required field inferred mainly from -a/-o endings, and Italian has many given names that end otherwise. The measurement says 6.9% of 87 common names get no suggestion, under two fields on a class of 25. The override lists are doing more work than reading the function suggested.",
+      "worthNoting": "Recorded because the plan's rule is to explain the number before reducing it, and a rejected hypothesis is part of the explanation. Had this been assumed, the fix would have been aimed at the wrong rule."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "S1-GIANLUCA",
+      "finding": "inferSex suggests female for Gianluca: the -a ending decides it and the male override list does not contain the name. One wrong tap on every Gianluca. Found while measuring, not fixed — it is an adjacent improvement and the brief's scope discipline says to record what I notice. A one-entry change to MALE_NAMES, best made when the sex rule is next opened on evidence rather than on a single name."
+    },
+    {
+      "id": "S1-COMPOUND-BLANKS-THREE-FIELDS",
+      "finding": "Answering 'Cognome · Nome' on a name of three or more words with no recognised particle blanks firstName, surname and sex — three of the four terms in 'campi da completare' — and leaves the words only under 'Letto:'. It is deliberate and nothing is lost, but it is the single most expensive row outcome in the review, and it is the mechanism that best fits a number like 67. Measured in review-load-measurement.json, deliberately not changed before the owner's sheet says whether it is the cause."
+    },
+    {
+      "id": "S1-OPTION-NOT-REMEMBERED",
+      "finding": "The choice resets on every scan rather than being remembered per course, unlike the name order. That is intentional for a testing aid and it is a guess about intent; if the owner scans repeatedly with the box ticked it should be remembered the same way the name order is."
+    }
+  ],
+  "scopeCheck": {
+    "changedOnlyWhatWasAsked": "The scan capability's signature, the scan screen, and the three specs that touch them. Nothing in the parser's rules, no threshold, no confidence value, no blanking behaviour.",
+    "newSurface": "One checkbox, one npm script (measure:scan-review), one e2e spec.",
+    "defaultsUnchangedForEveryOtherCaller": "StudentScanOptions defaults to readPhone: true at every level, so nothing that does not pass the option behaves differently.",
+    "noBackend": true,
+    "noNetworkCall": true
+  },
+  "verificationRun": [
+    "npm run verify:quick — 38 files, 404 tests, lint, formatting, typecheck (400 before this milestone)",
+    "npm run typecheck — clean",
+    "npm run verify:e2e -- s1-scan-phone-option.spec.ts --project=pixel-7-chrome — 1 passed",
+    "npm run verify:e2e -- student-scan.spec.ts u04-scan-ui.spec.ts — 8 passed across three device projects",
+    "npm run measure:scan-review -- tests/fixtures/ocr-sheet-clear.png .evidence/S1/review-load-clear-fixture.json"
+  ],
+  "notRun": [
+    "npm run verify — S1's declared verification script. It belongs at closure, on a settled tree, and closure is blocked. Recorded as not run rather than implied."
+  ]
+}

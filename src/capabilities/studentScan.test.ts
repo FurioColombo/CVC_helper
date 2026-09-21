@@ -519,4 +519,76 @@ describe("student scan extraction", () => {
     // The words as read survive, so the operator can retype the boundary.
     expect(applied.nameReading?.raw).toBe("Banella Claudia georgia")
   })
+  it("does not report a telephone that was not asked for, and reads the same names", () => {
+    const row = (line: number, surname: string, given: string, phone: string) =>
+      tsvPlacedLine(line, [
+        { text: surname, confidence: 92, left: 100, width: 80 },
+        { text: given, confidence: 92, left: 190, width: 70 },
+        { text: phone, confidence: 90, left: 400, width: 140 },
+        { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
+      ])
+    const page = {
+      confidence: 90,
+      text: "",
+      tsv: [
+        HEADER,
+        row(1, "Cortese", "Massimo", "3775394585"),
+        row(2, "Merluzzi", "Edoardo", "3489083367"),
+        row(3, "Passerini", "Paolo", "3209389744"),
+      ].join("\n"),
+    }
+
+    const asked = extractStudentCandidates(page, { readPhone: true })
+    const notAsked = extractStudentCandidates(page, { readPhone: false })
+
+    expect(asked.candidates.map((candidate) => candidate.phone)).toEqual([
+      "3775394585",
+      "3489083367",
+      "3209389744",
+    ])
+    // Nothing to review, nothing to confirm, nothing to store.
+    expect(notAsked.candidates.map((candidate) => candidate.phone)).toEqual([
+      "",
+      "",
+      "",
+    ])
+    // And the reason the option is safe: the telephone column still bounds the
+    // name cell, so the two fields the course needs are read identically.
+    expect(
+      notAsked.candidates.map(({ firstName, surname, dateOfBirth }) => ({
+        firstName,
+        surname,
+        dateOfBirth,
+      })),
+    ).toEqual(
+      asked.candidates.map(({ firstName, surname, dateOfBirth }) => ({
+        firstName,
+        surname,
+        dateOfBirth,
+      })),
+    )
+  })
+
+  it("still recognises a row carried by its telephone when the telephone is not reported", () => {
+    // A row whose given name smudged below the field threshold. What makes it a
+    // row at all is the telephone plus the date; drop the detection and the row
+    // disappears, taking a student with it.
+    const page = {
+      confidence: 88,
+      text: "",
+      tsv: [
+        HEADER,
+        tsvPlacedLine(1, [
+          { text: "Rossi", confidence: 91, left: 100, width: 80 },
+          { text: "3331234567", confidence: 90, left: 400, width: 140 },
+          { text: "12/03/2008", confidence: 92, left: 650, width: 120 },
+        ]),
+      ].join("\n"),
+    }
+
+    const result = extractStudentCandidates(page, { readPhone: false })
+    expect(result.candidates).toHaveLength(1)
+    expect(result.candidates[0]?.dateOfBirth).toBe("2008-03-12")
+    expect(result.candidates[0]?.phone).toBe("")
+  })
 })
