@@ -182,7 +182,7 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
 
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
-      path: path.resolve(".evidence/G3/duties-gate-iphone13.png"),
+      path: path.resolve("test-results/screenshots/duties-gate-iphone13.png"),
     })
   }
 })

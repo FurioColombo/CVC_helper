@@ -136,8 +136,9 @@ For every milestone:
 12. Re-run required verification.
 13. Run `milestone:complete`.
 14. Update milestone status, evidence summary, decisions, and known limitations in `04_IMPLEMENTATION_PLAN.md`.
-15. Create a descriptive Git checkpoint commit.
-16. Only then begin the next milestone.
+15. Sweep the working and evidence directories and move or remove what the milestone made and nobody needs.
+16. Create a descriptive Git checkpoint commit.
+17. Only then begin the next milestone.
 
 Do not carry an unexplained dirty working tree from one completed milestone into the next.
 

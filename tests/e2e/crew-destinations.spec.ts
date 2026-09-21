@@ -123,7 +123,7 @@ test("persists outgoing boats, exact destinations and unavailable-boat warnings"
 
   if (testInfo.project.name === "iphone-13-viewport") {
     const screenshotPath = path.resolve(
-      ".evidence/M10/crew-destinations-iphone13.png",
+      "test-results/screenshots/crew-destinations-iphone13.png",
     )
     mkdirSync(path.dirname(screenshotPath), { recursive: true })
     await page.screenshot({ fullPage: true, path: screenshotPath })

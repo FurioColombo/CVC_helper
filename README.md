@@ -1,4 +1,4 @@
-# CVC Helper — 0.2.0 working set
+# CVC Helper — 0.3.0 working set
 
 This repository pack is intentionally designed so Codex can be started with a very short prompt and then operate autonomously from repository instructions.
 
@@ -10,7 +10,7 @@ Authoritative documents:
 
 1. `AGENTS.md` — autonomous execution protocol and verification contract.
 2. `01_PRODUCT_SPEC.md` — user-visible behavior and business/domain rules.
-3. `02_MVP_SCOPE.md` — completed 0.1.0 baseline and active 0.2.0 boundaries.
+3. `02_MVP_SCOPE.md` — completed 0.1.0 baseline and 0.2.0 boundaries.
 4. `03_TECHNICAL_DECISIONS.md` — architecture, stack and harness decisions.
 5. `04_IMPLEMENTATION_PLAN.md` — ordered milestones, gates, evidence and progress ledger.
 
@@ -30,8 +30,9 @@ A prompt can be as short as:
 > autonomously. Follow its scope, target, verification, evidence, review and Git
 > requirements.
 
-The 0.1.0 harness and 0.2.0 activation foundation are complete. The plan's first
-incomplete U-series milestone is the implementation entry point.
+0.1.0 and 0.2.0 are released and tagged. The plan's active cycle is 0.3.0, under
+`# Cycle 0.3.0`, and its first incomplete V-series milestone is the entry point.
+`docs/post-mvp/0_3_0_OWNER_BRIEF.md` is the human decision record behind it.
 
 ## Third-party assets
 

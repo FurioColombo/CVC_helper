@@ -26,10 +26,19 @@ for (const item of candidates) {
     const { samples, sampleRate } = dsp.readWav(bytes)
     const f0 = dsp.estimateF0(samples, sampleRate)
     if (f0) scored.push({ ...item, bytes, f0, sampleRate })
-  } catch {}
+  } catch {
+    // A clip that will not fetch or decode is simply not a candidate.
+  }
 }
 scored.sort((a, b) => a.f0 - b.f0)
-console.log("scored:", scored.length, "f0 range:", scored[0]?.f0.toFixed(0), "-", scored.at(-1)?.f0.toFixed(0))
+console.log(
+  "scored:",
+  scored.length,
+  "f0 range:",
+  scored[0]?.f0.toFixed(0),
+  "-",
+  scored.at(-1)?.f0.toFixed(0),
+)
 
 const male = scored.filter((s) => s.f0 < 165).slice(0, 7)
 const female = scored.filter((s) => s.f0 >= 180 && s.f0 < 260).slice(0, 7)

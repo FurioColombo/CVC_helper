@@ -1,8 +1,13 @@
-# Implementation Plan — 0.2.0 UX cycle
+# Implementation Plan — 0.2.0 UX cycle and 0.3.0
 
-This is the active execution ledger for the 0.2.0 cycle. The completed 0.1.0
-ledger is archived at `archive/v0.1.0/04_IMPLEMENTATION_PLAN.md`; its milestones
-remain complete and must not be reopened.
+This is the execution ledger. It holds the completed 0.2.0 UX cycle (U00–U10,
+UG1) and the active 0.3.0 cycle (V01–V05, UG2), which begins at `# Cycle 0.3.0`
+below. The completed 0.1.0 ledger is archived at
+`archive/v0.1.0/04_IMPLEMENTATION_PLAN.md`; its milestones remain complete and
+must not be reopened, and neither may the 0.2.0 ones.
+
+Everything above `# Cycle 0.3.0` describes the 0.2.0 cycle. Read the 0.3.0
+section for the active work.
 
 **Baseline:** app 0.1.0 at commit `c907b19`.
 
@@ -594,7 +599,7 @@ Evidence: `.evidence/U10/`.
 ## UG1 — Full 0.2.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -610,13 +615,23 @@ Validate a realistic complete week upgraded from 0.1.0 and prepare release 0.2.0
 - Compare the three contract viewports to mock r10; record intentional differences.
 - Complete functional, field-UX/accessibility, data-integrity, regression, scope
   and code-quality reviews; zero blockers.
-- Complete the deferred U03 physical microphone checklist on PC, Android and
-  iPhone, plus native camera/gallery, orientation, crop, OCR review and source
-  photo disposal checks on Android Chrome and iPhone Safari. Record a dedicated
-  physical-device review; automated fixtures do not satisfy this release check.
-- Set package/lock to 0.2.0, create concise `CHANGELOG.md`, update this log and make
-  a clean release checkpoint. A Git tag is created only when the release is
-  actually declared.
+- **Re-scoped to UG2 by the owner on 2026-09-21** (`docs/post-mvp/0_3_0_OWNER_BRIEF.md`
+  section 1.1): the deferred U03 physical microphone checklist on PC, Android and
+  iPhone, and the native camera/gallery, orientation, crop, OCR review and source
+  photo disposal checks on Android Chrome and iPhone Safari. They are **not**
+  passed and **not** waived. They move because they need a trusted HTTPS origin
+  the app does not yet have, and providing one is V01, the first 0.3.0 milestone.
+  `docs/post-mvp/UG1_DEVICE_VALIDATION.md` is unchanged and becomes UG2's
+  checklist; its rule stands that a simulated PASS is never recorded.
+  `physical-device-review.json` is reissued against the re-scoped criterion and
+  records the authorisation, the date and the fact that no device observation has
+  been made. The 2026-09-15 review is kept as
+  `physical-device-review-2026-09-15.json`.
+- Set package/lock to 0.2.0, move the `check-repository.mjs` version assertion and
+  its message with the release rather than deleting it, create concise
+  `CHANGELOG.md`, update this log and make a clean release checkpoint. The owner
+  declared the release on 2026-09-21, so the checkpoint is tagged `v0.2.0`,
+  annotated.
 - Required files under `.evidence/UG1/`: `verification.json`,
   `browser-evidence.json`, `migration-evidence.json`, `functional-review.json`,
   `field-ux-review.json`, `data-integrity-review.json`,
@@ -628,9 +643,15 @@ Validate a realistic complete week upgraded from 0.1.0 and prepare release 0.2.0
 ### Acceptance criteria
 
 Every included traceability row has implementation and evidence; every deferred
-item remains absent or explicitly isolated; all deterministic checks and required
-physical checks pass; reviews have no blockers; data survives; working tree is
-clean after the release checkpoint.
+item remains absent or explicitly isolated; all deterministic checks pass;
+reviews have no blockers; data survives; working tree is clean after the release
+checkpoint.
+
+The physical-device observations are **not** part of these criteria any more.
+The owner moved them to UG2 on 2026-09-21 because the app has no reachable HTTPS
+origin to run them against. 0.2.0 therefore ships with a known limitation, stated
+below and in `CHANGELOG.md`: dictation and scanning are verified by benchmark and
+by Playwright, never yet on a real phone.
 
 ### Completion log
 
@@ -989,3 +1010,503 @@ reason is structural: ESLint already runs `@typescript-eslint/no-unused-vars`
 at `--max-warnings 0`, so unused locals and imports cannot reach a commit.
 Unused *exports* are the one category nothing checks — 36 of them exist, and 30
 are the module's own API.
+
+
+**Status 2026-09-21 — UG1 closes as release 0.2.0.**
+
+Authorised by the repository owner in `docs/post-mvp/0_3_0_OWNER_BRIEF.md`
+section 1: _"Possiamo considerare lo stato attuale un 0.2.0, fai i test e
+chiudiamo questa cosa."_ The brief is a human decision record and under
+`AGENTS.md` section 2 it outranks the older acceptance criteria it changes.
+
+**The physical-device checks are re-scoped to UG2, not passed.** The 2026-09-15
+review returned `FAIL` on `UG1-PHYSICAL-STT` and `UG1-PHYSICAL-OCR`, and it is
+kept verbatim as `physical-device-review-2026-09-15.json`. The owner did not
+override it; they changed UG1's acceptance criteria, which is theirs to do, and
+the reason is concrete: the phone checks need a trusted HTTPS origin, because a
+browser withholds the camera and the microphone over plain HTTP; the app has
+none, and providing one is V01. The PC microphone check is the exception — its
+recorded access is localhost, a secure context — so it was deferred for want of
+time, not of an origin, and it moves with the other two rather than being
+claimed. The reissued `physical-device-review.json` takes the
+re-scope itself as its subject and records that no device observation has been
+made. `docs/post-mvp/UG1_DEVICE_VALIDATION.md` is unchanged and becomes UG2's
+checklist; its rule stands that a simulated PASS is never recorded.
+`02_MVP_SCOPE.md` sections 5 and 6 carry the same amendment, so the scope
+document and the plan no longer disagree.
+
+**Known limitation of 0.2.0.** Neither dictation nor scanning has been tried on a
+real phone. Dictation is verified by a measured benchmark over a labelled Italian
+corpus; scanning is verified against a synthetic corpus with known field and
+person values, plus a hand-run diagnostic on two real photographs that are not
+committed and that no automated test uses. Both are verified by Playwright
+journeys across three device profiles. None of that is a phone. This is in
+`CHANGELOG.md` as well. Also carried forward: after an evaluation fails to save, the attempted
+value stays visible and retryable, but leaving that session before retrying
+discards the attempt.
+
+**Released.** `package.json` and `package-lock.json`, both the root `version` and
+`packages[""].version`, moved to 0.2.0. The assertion in
+`scripts/check-repository.mjs` moved with the release instead of being deleted:
+it now pins 0.2.0 until UG2, with the reason beside it. The 0.1.0 compatibility
+fixture is untouched — it is the data contract, not the application version.
+`CHANGELOG.md` leads with scanning, dictation and the visual work, which is what
+the owner required, and was audited by an adversarial reviewer rather than sent
+for approval; see `.evidence/UG1/changelog-review.json`.
+
+That audit earned its keep. It returned one blocker and three precision errors,
+all accepted. The blocker: _"Nothing is sent anywhere"_, written under a heading
+about dictating on the device, was false in the one way that matters — the audio
+and the transcript never leave the device, but the Whisper model is not bundled,
+so the first dictation fetches about 73 MB from the Hugging Face CDN and
+dictation cannot work offline until it has. The plan said so in its own words
+under V01. The three others: the student card's measured 84 px to 56 px was being
+claimed for the duty list, which never had a height recorded at all; the labelled
+Italian corpus verifies dictation and not scanning, which is measured against a
+synthetic corpus and a hand-run check on two uncommitted photographs; and the
+HTTPS reason does not cover the PC microphone check, whose own evidence records
+localhost as an available secure context, so it was deferred for want of time.
+The reviewer also found five things that shipped and went unmentioned, including
+the course/week note, safe student deletion and the double-click-to-edit
+shortcut. All of it is in the changelog now, and the HTTPS correction propagated
+to `02_MVP_SCOPE.md`, the physical-device review and this entry.
+
+**Two marks, one number.** `first-27.png` was the 25.7 artwork with the `.7`
+cleared, which left a `27` eight pixels tall beside a wordmark sized for
+fourteen — the open product call recorded on 2026-09-20. Both marks are now built
+on `first-27.png`'s plate and wordmark, with the 25.7 mark's numerals at their
+native size and their right edge on the last column of `FIRST`. The two files
+differ by 543 pixels, every one of them inside the digits. Evidence:
+`first-marks.json`; `ug1-boat-mark-fit.spec.ts` re-run and passing.
+
+**One blue.** The launcher icon, the three PNGs, `theme-color` and `theme_color`
+were `#063b52`, a third blue aligned to nothing. They are now `#2f5fa0`, which is
+what `--primary` and `--accent-blue` already are and what the `#3060a0` ink in
+`public/brand/cvc-symbol.png` measures to. The PNGs are re-rendered from the SVG
+so the two cannot drift apart again. Noted and not changed, because it is outside
+this brief: `vite.config.ts` `background_color` is still `#f4f1e8`, a cream
+unrelated to `--background`.
+
+**The evidence directory is a place to look things up again.** The twenty-one
+closed 0.1.0 milestone directories moved to `archive/v0.1.0/evidence/`, beside
+the 0.1.0 ledger already there, and the sixty-one `requiredEvidence` paths in the
+manifest moved with them, so `milestone:check -- M5` still resolves and no status
+changed. `ocr-sheet-clear.png` and `ocr-sheet-blurred.png` were never evidence —
+four specs and `check:ocr-offline` read them as inputs — and are now in
+`tests/fixtures/`. Twelve 0.1.0-era specs wrote screenshots back into closed
+milestone directories on every `verify:e2e`, which is why that tree could never
+stay tidy; they write to `test-results/screenshots/` now. The U-series keeps its
+screenshots, because its `browser-evidence.json` and reviews reference them by
+path and rewriting closed evidence to tidy it would be the wrong trade.
+
+**No path may belong to one machine.** `.evidence/UG1/bench.mjs` resolved
+`playwright` through an absolute `createRequire` path and was therefore already
+broken for anyone else. The speech harness moved to `scripts/speech-bench/` with
+a README and `npm run speech:bench`, the OCR diagnostic to `scripts/` with
+`npm run diagnose:ocr`, and both came inside lint and formatting — six errors
+surfaced and were fixed. `check-repository.mjs` now sweeps every tracked
+non-binary file and fails on a home-directory path, exempting only the recorded
+command output of closed runs and the owner brief that quotes the defect. The
+check was negative-tested against a planted file.
+
+**Two specs folded away.** `evaluations.spec.ts` and `volunteers.spec.ts` are
+gone, but only after both survived the test the owner set. The one assertion
+`evaluations.spec.ts` alone made — that a student A terra carries a saved
+evaluation inside the crew-grouped view — is in `evaluation-gate.spec.ts`, which
+is in the WebKit project, so it gained coverage it never had. The `--` value that
+`cleanup-inventory.json` listed as unique to it is in fact exercised by
+`u10-evaluations.spec.ts` and read back from the history grid; that note was
+stale. `volunteers.spec.ts`'s two unique assertions — a form saved without
+touching the role produces ADV, and an edit may change the role — are in
+`u07-volunteers.spec.ts`. Neither deleted spec was in the WebKit `testMatch`, so
+no project coverage was lost.
+
+`AGENTS.md` section 6 gains one step, at the owner's request: sweep the working
+and evidence directories before the checkpoint commit.
+
+**The gate.** `npm run verify:all` on Node 24.21.0, selected by fnm from
+`.node-version` because the host default is older: lint, formatting, typecheck,
+400 unit and component tests across 38 files, the repository and canonical-domain
+checks, the 0.1.0 compatibility fixture at its 22 rows, the production PWA build
+with its 5 precached OCR assets, the deterministic D2 full week with its
+course-state invariants, and 131 Playwright journeys across Pixel Chromium,
+iPhone Chromium and iPhone WebKit — 125 passed, 6 intended project-matrix skips,
+none failed. 29 minutes. Recorded in `.evidence/UG1/verification.json`.
+
+The journey count fell from 135 to 131 because two superseded specs were folded
+away, which removes two runs on each of two projects.
+
+Two earlier attempts at this run were discarded rather than reported. The first
+was stopped deliberately: files were still being edited underneath it, so its
+record would have described no particular tree. The second genuinely failed, and
+it failed on the absolute-path check added in this same milestone, because the
+evidence file describing that check quoted the offending path verbatim. That is
+the check working, and it is recorded in `release-0.2.0.json` rather than
+quietly fixed.
+
+# Cycle 0.3.0
+
+Source: `docs/post-mvp/0_3_0_OWNER_BRIEF.md`, captured from the repository owner
+on 2026-09-21. Under `AGENTS.md` section 2 that brief is an explicit human
+instruction and outranks any older plan text that disagrees with it. The
+milestones below are its sections 3 to 8, written here before any of them was
+implemented, because the owner asked for that order explicitly.
+
+**Baseline:** app 0.2.0 at the release checkpoint tagged `v0.2.0` on
+`codex/post-mvp-ux-planning`. All 0.3.0 work lives on `codex/0.3.0`, branched
+from that checkpoint.
+
+The 0.2.0 U-series and UG1 are closed history. Do not reopen them; a correction
+to completed work is recorded under the active 0.3.0 milestone, as the "Student
+scan redesign correction" entry under UG1 did for 0.2.0.
+
+Feature milestones use the `V` series. The gate keeps the `UG` series and is
+`UG2`, which is what the brief calls it.
+
+## Frozen 0.3.0 scope and traceability
+
+| Brief section | Disposition | Canonical area | Milestone |
+| --- | --- | --- | --- |
+| 3 — reachable from a phone over HTTPS | INCLUDED | Deployment | V01 |
+| 4 — dictation control stops resizing | INCLUDED | Shared speech UI / P05, P09, P17 | V02 |
+| 5 — transcription quality and latency | INCLUDED | Speech capability | V03 |
+| 5 — transcript confirmation step removed | INCLUDED | Shared speech UI / P05, P09, P17 | V03 |
+| 6.1 — crop edge handles | INCLUDED | Student scan / P06 | V04 |
+| 6.2 — rotation follows the finger | INCLUDED | Student scan / P06 | V04 |
+| 7 — LLM-assisted scanning path | INCLUDED, alongside on-device OCR | Student scan / P06 | V05 |
+| 8 — 0.3.0 integration gate | INCLUDED | Release | UG2 |
+| OCR line fragmentation | DEFERRED past 0.3.0 by the owner (brief section 9) | Student scan | backlog |
+| Automated test over a real photograph | DEFERRED past 0.3.0 by the owner (brief section 9) | Student scan | backlog |
+| Final product name and derived brand mark | DEFERRED, unchanged from 0.2.0 | Branding | backlog |
+
+Everything `02_MVP_SCOPE.md` section 4 defers stays deferred. 0.3.0 adds no
+backend, no account, no synchronisation and no analytics; V01 publishes the same
+local-first build to a static origin and nothing more.
+
+## V01 — Reachable from a phone, over HTTPS
+
+**Category:** FOUNDATION
+**Status:** PENDING
+
+### Goal
+
+The owner opens a URL on their own phone, installs the PWA if they want, and the
+app works: local-only data, no backend, no accounts. This unblocks every physical
+check UG1 deferred.
+
+### Required behavior and evidence
+
+- Measure, do not assume, whether the app needs cross-origin isolation on a
+  phone. Desktop Chrome still hands out `SharedArrayBuffer` without
+  `Cross-Origin-Opener-Policy`/`Cross-Origin-Embedder-Policy`; Android Chrome
+  does not. The repository configures neither header today and the app works in
+  desktop Chrome, so the desktop result proves nothing about the phone.
+- Establish what `require-corp` would break before choosing it. The speech model
+  is fetched from huggingface.co on first use, and under `require-corp` a
+  cross-origin fetch without `Cross-Origin-Resource-Policy` fails. Either the
+  host supports `credentialless`, or the model is served from the same origin, or
+  isolation is not needed at all. OCR assets are already local and are not at
+  risk.
+- Choose the host from that measurement, not from preference, and say what was
+  measured.
+- No course data of any kind may be seeded into a deployed build. The deployment
+  adds no analytics and no network call the app does not already make.
+- Deliver a documented, repeatable deploy, the URL, and a `docs/` page saying how
+  to redeploy and how to take it down.
+- Prove a cold phone load works offline afterwards.
+- Required files under `.evidence/V01/`: `verification.json`,
+  `isolation-measurement.json`, `deployment-evidence.json`, `self-review.json`.
+
+### Acceptance criteria
+
+The URL loads on a real phone over HTTPS; the database opens there; dictation and
+scanning reach their first real asset fetch; a second, offline load still works;
+the deploy and the takedown are written down and repeatable by someone else; no
+course data, analytics or new network call ships.
+
+## V02 — The dictation control stops changing size
+
+**Category:** FEATURE
+**Status:** PENDING
+
+### Goal
+
+`DictationTrigger` is a text button whose label changes with its state — `Detta`,
+`Permesso…`, `Caricamento 62%`, `Termina`, `Elaborazione…` — so its width changes
+with it, and at the long end it overflows the pane. Screenshots:
+`docs/post-mvp/brief-0.3.0/dictation-stop-overflow.png` and
+`dictation-loading-overflow.png`.
+
+### Required behavior and evidence
+
+The owner's design, which is a specification and not a suggestion:
+
+- `DictationMeter` is out of scope. _"Mi piace molto l'animazione della waveform,
+  tienila com'è."_
+- Recording keeps its border, its filled red square, its label and its colours,
+  but the whole element stays **square** instead of stretching sideways, with the
+  label under the square, and the word becomes **Stop** rather than `Termina`.
+- Processing uses the same square element with only a red spinner inside it and
+  no word.
+- Permission uses the same square with its label under the icon, in the colour
+  that state should have, following whatever the stop state settles on.
+- Loading must hold the same box while the percentage runs from one to three
+  digits.
+
+Two acceptance criteria the owner stated twice:
+
+1. An **independent specialised reviewer validates the design before it is
+   built** — accessibility and mobile, plus field UX. A square control with a
+   label underneath must still clear R04, and must not lose its accessible name
+   when the visible word changes; `aria-label` already carries the full sentence
+   and keeps doing so.
+2. The sizes are then **measured**. A Playwright spec drives the control through
+   idle, permission, loading with a long percentage, recording, processing and
+   error, at the narrow viewport and at 200% text, asserting a stable box and no
+   horizontal page scroll (R18). The bug escaped because no test ever rendered
+   the long labels.
+
+Record the visual decision in `docs/post-mvp/07_PAGE_CHANGELOG.md` against P05,
+P09 and P17, which are the pages it changes.
+
+- Required files under `.evidence/V02/`: `design-review.json` (independent,
+  recorded before implementation), `verification.json`, `browser-evidence.json`,
+  `control-geometry.json`, `accessibility-mobile-review.json`.
+
+### Acceptance criteria
+
+The control's rendered box is identical in every state at every contract
+viewport, within one device pixel; no state produces horizontal page scroll; the
+touch target stays at least 44 px; the accessible name still says what the
+control does in each state; the pre-implementation design review has no blockers.
+
+## V03 — Another round on transcription quality, under a latency constraint
+
+**Category:** FEATURE
+**Status:** PENDING
+
+### Goal
+
+Owner: _"la qualità è molto migliorata, ma non è ottima, è buona, siamo un po'
+borderline usabile."_ Quality must improve measurably and time must not increase:
+_"Il tempo non può aumentare, anzi per essere usabile dovrebbe calare minimo di
+un 20%, idealmente molto di più."_
+
+**A quality win that costs time does not close this milestone.** The latency
+constraint is part of the gate, not a nice-to-have.
+
+### Required behavior and evidence
+
+- Read `.evidence/UG1/speech-quality-benchmark.json` before planning anything. It
+  is the record of the last round and it will save a day. Its findings: the
+  dominant failure was repetition collapse, fixed by `TRANSCRIPTION_GUARD`
+  (303% to 90% aggregate WER); a generic DSP chain measured neutral (90.5%
+  against 89.9%) and was not shipped; the model was the lever, `whisper-base`
+  halving `tiny`'s error to 55.5% for 73 MB of first-use download. That corpus is
+  8 kHz mu-law telephone speech, so only its comparisons mean anything.
+- The owner supplied a real corpus:
+  `data/test/transcription/Italian_Conversational_Speech_Corpus.zip`, 823 MB,
+  untracked and staying that way (`data/` is in `.gitignore`). It is
+  conversational Italian rather than telephone audio, so this round can produce
+  an absolute number worth quoting.
+- The benchmark harness must gain **latency**: wall clock and real-time factor
+  per clip, warm model, same machine, several repeats, median not mean, reported
+  beside WER.
+- The harness scripts currently sitting in `.evidence/UG1/` move to `scripts/`
+  with a documented entry point (see UG1's 2026-09-21 housekeeping).
+- Take DSP seriously this time, because the last attempt tried one generic chain
+  on the weakest model. Read first: Whisper's own preprocessing, what the model
+  was trained on, what the transformers.js and whisper.cpp issue trackers say
+  about front-end filtering, and the published work on noise robustness. Whisper
+  is trained on largely unfiltered audio, so aggressive filtering can hurt; that
+  is a hypothesis to measure, not a reason to skip the experiment.
+- Candidates worth a measured A/B: band limiting matched to what the model
+  expects, multiband compression, spectral or learned noise suppression, silence
+  and pause-length normalisation, VAD-driven trimming of dead air. Pause
+  normalisation is also a latency lever, and so are chunking, weight
+  quantisation, and a smaller model that DSP makes viable again. The 20% may come
+  from anywhere.
+- Every variant goes in the variants file, every number in the evidence, and the
+  shipped configuration is the one the numbers chose.
+- **Remove the transcript confirmation step.** Owner: _"elimina la conferma della
+  trascrizione, come se ci fosse subito confermato usa testo, è uno step
+  inutile."_ Screenshot: `docs/post-mvp/brief-0.3.0/dictation-review-step.png`.
+  The transcript goes straight into the field; the text stays editable, which is
+  what made the review step redundant. `DictationPanels`' review branch and its
+  two buttons come out, `Scarta` goes with them, and cancelling mid-recording
+  must still work. `review` may stop being a `dictationState` status at all —
+  remove it if nothing else uses it. Undo is the field itself; say so in the page
+  changelog rather than inventing a new affordance.
+- The milestone needs an **independent specialised reviewer** before closure.
+- Required files under `.evidence/V03/`: `verification.json`,
+  `speech-quality-benchmark.json` (this round, with latency),
+  `browser-evidence.json`, `speech-review.json`.
+
+### Acceptance criteria
+
+Median word error rate on the new corpus is measurably better than the shipped
+0.2.0 configuration on the same corpus and the same machine; **median
+end-to-end transcription time falls by at least 20%** against that same
+baseline; both numbers are in the evidence with the method that produced them;
+the shipped configuration is the one the measurements chose; the confirmation
+step is gone and no transcript can reach a record without the user seeing it in
+an editable field; the independent review has no blockers.
+
+If DSP does not move the numbers, say so plainly, as the last round did, and
+spend the remaining effort on the model and on latency. That is a result, not a
+failure.
+
+## V04 — The crop editor's remaining two details
+
+**Category:** FEATURE
+**Status:** PENDING
+
+### Goal
+
+Owner: _"per OCR grandi miglioramenti, prima di tutto grafici, rimangono
+dettagli."_ Two of them.
+
+### Required behavior and evidence
+
+**Edge handles.** Sketch:
+`docs/post-mvp/brief-0.3.0/crop-edge-handles-sketch.png`, where red is the four
+corner brackets that exist and green is what is added: one handle in the middle
+of each edge, drawn as a short stroke parallel to its edge, moving that one side.
+_"Chiaramente è solo un disegno qualitativo: dimensioni, colore eccetera devono
+sempre seguire il design un po' Apple della cosa e quello che già è fatto, che è
+positivo."_
+
+- `CROP_CORNERS` and `updateNormalizedCrop` in
+  `src/features/students/StudentScanImageEditorDocument.tsx` and
+  `studentImageCrop.ts` already model gestures as named handles, so this extends
+  an existing shape rather than adding a mechanism.
+- Keyboard support exists on the corners (`moveHandleWithKeyboard`) and must
+  exist on the edges too, with an accessible name each.
+- The 44 px target rule still applies to a handle drawn much smaller than its hit
+  area.
+
+**Rotation has to follow the finger.** Owner: _"quando ruoto l'immagine deve
+ruotare già durante il drag, non dopo, altrimenti diventa difficile da usare."_
+
+- Diagnosed: the tilt ruler updates state on every pointer move, but the visible
+  bitmap is regenerated by an effect behind a 120 ms `setTimeout` that the next
+  move event cancels, so nothing turns until the drag stops.
+- The fix separates the two: transform what is already on screen live — the image
+  and the crop frame together — and keep the debounced bitmap regeneration for
+  quality after the gesture settles.
+- Evidence must show the angle tracking the pointer **mid-drag**, not only the
+  end state.
+
+Record both in `docs/post-mvp/07_PAGE_CHANGELOG.md` against P06.
+
+- Required files under `.evidence/V04/`: `verification.json`,
+  `browser-evidence.json`, `self-review.json`.
+
+### Acceptance criteria
+
+Each edge handle moves exactly one side, by pointer and by keyboard, with its own
+accessible name and a hit area of at least 44 px; the corners keep their
+behaviour; the image and the crop frame rotate during the drag and the
+high-quality bitmap still settles afterwards; no regression in the existing scan
+journeys.
+
+## V05 — The LLM-assisted scanning path
+
+**Category:** RULE_HEAVY
+**Status:** PENDING
+
+### Goal
+
+A second way to get a roster into the app, **alongside** the on-device OCR and
+never instead of it — the owner said so twice. The user photographs the roster,
+pastes it into whatever assistant they already use together with a prompt copied
+from inside the app, and pastes the assistant's answer back into a field in the
+app, which parses it into the same reviewable student list.
+
+### Required behavior and evidence
+
+The owner's own warning is the design problem, so it is the first requirement:
+_"il prompt deve essere veramente in grado di costringere l'LLM a ritornare un
+risultato copiabile e sempre compatibile con il campo da riempire. Spostare la
+difficoltà di parsare l'immagine a parsare un output di LLM non deterministico e
+difficilmente controllabile sarebbe un autogol che vorrei evitare."_
+
+The acceptance criteria are therefore about the parser, not the prompt.
+
+- The pasted format is strict, small and self-evident, and the parser is written
+  against a specification the app itself states — not inferred from one model's
+  habits.
+- The parser is tested against deliberately malformed input: prose wrapped around
+  the data, a code fence, smart quotes, a trailing apology, a missing column, an
+  invented column, a header row, an empty answer. **None of it may produce a
+  silently wrong student.**
+- What cannot be parsed is reported as unparsed, with the offending line visible
+  and the option to fix it in place.
+- Every imported row lands in the same manual review the camera path already
+  requires. Nothing enters the course unreviewed.
+- The prompt is copyable in one tap from inside the app, and the app never talks
+  to an assistant itself. **No network call is added.**
+- Both paths stay, and the camera path stays first.
+- RULE_HEAVY, so an independent adversarial reviewer runs before closure and
+  tries to falsify the parser rather than approve it.
+- Required files under `.evidence/V05/`: `verification.json`,
+  `browser-evidence.json`, `parser-robustness.json`, `domain-review.json`.
+
+### Acceptance criteria
+
+The stated format round-trips; every malformed case in the corpus is either
+parsed correctly or reported as unparsed with its line; no case produces a wrong
+student silently; imported rows are indistinguishable from scanned rows at the
+review step and cannot commit without it; the app makes no network request on
+this path; the on-device camera path is unchanged.
+
+## UG2 — Full 0.3.0 integration and release gate
+
+**Category:** INTEGRATION_GATE
+**Status:** PENDING
+
+### Goal
+
+Owner: _"anche per raggiungimento 0.3.0 servono tutti i test indipendenti,
+mettilo a piano."_ UG2 carries the weight UG1 had, plus the physical-device
+checklist 0.2.0 deferred, now runnable because V01 gave it a URL.
+
+### Required work and evidence
+
+- The full deterministic ladder: `npm run verify:all`, the deterministic full
+  week, and the browser suite across the three device projects.
+- A realistic upgraded week through the visible app, including close/reopen and
+  midweek change.
+- Migration proof from **both** the 0.1.0 and the 0.2.0 fixtures.
+- The six independent reviews with zero blockers: functional,
+  field-UX/accessibility, data-integrity, regression, scope and code-quality.
+- The physical-device checklist in `docs/post-mvp/UG1_DEVICE_VALIDATION.md`, run
+  by the owner on their own phone against the V01 URL. Real microphone
+  permission, Italian capture, cancellation and recovery on PC, Android Chrome
+  and iPhone Safari; native camera and gallery, orientation, crop, OCR review,
+  commit/reopen and source-photo disposal on Android Chrome and iPhone Safari.
+  **These are the owner's to run. Never record a simulated PASS.**
+- Test data, in the owner's words: _"sì, vai con dati tuoi sintetici. Sii critico
+  nella generazione per avere esempi problematici sia come individui che come
+  gruppo, coprire i corner case, e esempi anche con tanti allievi, tipo fino a
+  una quarantina max."_ Generate that roster deliberately hostile: accented and
+  apostrophed names, two students who differ by one character, a name long enough
+  to break a row, minors either side of a birthday boundary, a group whose sizes
+  do not divide into the fleet, a course with more students than seats, forty
+  students. No real people.
+- Release mechanics repeat UG1's: version bump with the `check-repository.mjs`
+  assertion moved alongside it, `CHANGELOG.md`, plan, manifest, one clean
+  checkpoint commit, annotated tag.
+- Required files under `.evidence/UG2/`: `verification.json`,
+  `browser-evidence.json`, `migration-evidence.json`, `synthetic-roster.json`,
+  `functional-review.json`, `field-ux-review.json`,
+  `data-integrity-review.json`, `regression-review.json`, `scope-review.json`,
+  `code-quality-review.json`, `physical-device-review.json`.
+
+### Acceptance criteria
+
+Every included 0.3.0 traceability row has implementation and evidence; every
+deferred item remains absent or explicitly isolated; all deterministic checks
+pass; the six reviews have no blockers; both fixtures upgrade without loss; the
+physical checklist is actually run on real devices and passes; the working tree
+is clean after the release checkpoint.

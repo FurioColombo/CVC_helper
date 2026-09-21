@@ -317,7 +317,9 @@ test("verifies the complete crew workflow across students, duties and boats", as
     /Allievi sistemati|Barche in uscita|Avvisi|Taglie/,
   )
   if (testInfo.project.name === "iphone-13-viewport") {
-    const screenshotPath = path.resolve(".evidence/G4/crew-gate-iphone13.png")
+    const screenshotPath = path.resolve(
+      "test-results/screenshots/crew-gate-iphone13.png",
+    )
     mkdirSync(path.dirname(screenshotPath), { recursive: true })
     await page.screenshot({ path: screenshotPath })
   }

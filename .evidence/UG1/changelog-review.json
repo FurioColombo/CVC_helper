@@ -1,0 +1,85 @@
+{
+  "milestone": "UG1",
+  "reviewerRole": "adversarial changelog reviewer",
+  "subject": "CHANGELOG.md for release 0.2.0",
+  "reviewedOn": "2026-09-21",
+  "request": "docs/post-mvp/0_3_0_OWNER_BRIEF.md section 1.3. The owner declined to review the changelog and asked instead for an adversarial internal pass: find what the changelog claims but the repository does not support, and what shipped but went unmentioned.",
+  "method": "Independent reviewer, read-only, with the changelog, the plan, the specs, the evidence and the source. Each finding had to name a file and what was or was not in it.",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "CHG-OVERFLOW-SCOPE-01",
+      "finding": "\"no sideways scrolling at 320 px and 200% text\" is assembled from per-page journeys rather than one sweep, and the 200% condition is emulated with `html { font-size: 200% }`, which reproduces a text-size preference and not a browser page zoom. The coverage is genuinely broad, so this is a generalisation rather than an error.",
+      "resolution": "The claim now says every page was checked, which is what the per-page journeys support, instead of asserting the property of the application as a whole."
+    }
+  ],
+  "findingsAtFirstPass": {
+    "verdict": "PASS_WITH_FINDINGS with one blocker and three important findings, all accepted and all fixed before the release checkpoint",
+    "resolved": [
+      {
+        "id": "CHG-NETWORK-01",
+        "severity": "blocker",
+        "finding": "\"Nothing is sent anywhere\", under a heading about dictating on the device, told a reader that dictation involves no network. The audio and the text genuinely never leave the device, but the Whisper model is not bundled and not precached: the first dictation fetches about 73 MB from the Hugging Face CDN, and until that has happened once dictation cannot work offline at all. The plan contradicted the sentence in its own words at 04_IMPLEMENTATION_PLAN.md V01.",
+        "evidence": "src/capabilities/speech.ts:69 MODEL_ID onnx-community/whisper-base, loaded by pipeline() at :209 with no env.allowRemoteModels = false and no localModelPath anywhere; vite.config.ts precaches the five local OCR assets and no model weights; public/ holds no model asset; scripts/check-ocr-offline.mjs proves a first OCR scan offline and has no speech equivalent.",
+        "resolution": "The changelog now separates the two: the recording and the transcript never leave the device and the audio is discarded, and the model is downloaded once, about 73 MB, the first time anyone dictates, and runs from cache after that."
+      },
+      {
+        "id": "CHG-DUTY-HEIGHT-01",
+        "severity": "important",
+        "finding": "\"student and duty lists whose rows lost a third of their height\" attributed the student card's measured reduction to the duty list as well. The 84 px to 56 px figure is the student card alone; no duty-row height change is recorded in the plan, the evidence or any spec, and the density pass never measured one. The volunteer row that did shrink went 72 px to 56 px, which is 22%, not a third.",
+        "evidence": "04_IMPLEMENTATION_PLAN.md:855 and :869; .evidence/UG1/compact-rows-and-markers.json has entries for p03, p04, p10, p14 and p17 and none for duties; tests/e2e/ug1-compact-rows.spec.ts takes no boundingBox on Comandate.",
+        "resolution": "The changelog now quotes the measured numbers against the rows they were measured on, and says the duty screens were compacted without attaching a figure to them."
+      },
+      {
+        "id": "CHG-OCR-BENCHMARK-01",
+        "severity": "important",
+        "finding": "\"Dictation and scanning have been verified by a measured benchmark over a labelled Italian corpus\" transferred dictation's verification method onto scanning. The labelled Italian corpus is speech only. Scanning's quality evidence is a synthetic anonymous corpus plus a hand-run diagnostic against two real photographs that are deliberately not committed and that no automated test uses.",
+        "evidence": ".evidence/UG1/speech-quality-benchmark.json is entirely speech; .evidence/U04/ocr-quality-evidence.json corpus.privacy is \"anonymous synthetic names and data only\"; .evidence/UG1/ocr-column-extraction.json remainingGaps states that no automated test uses a real photograph.",
+        "resolution": "The changelog, the physical-device review and the plan now state each method against the feature it actually covers."
+      },
+      {
+        "id": "CHG-HTTPS-REASON-01",
+        "severity": "important",
+        "finding": "\"The physical microphone and camera checks need a trusted HTTPS address the app does not have yet\" applied the phone's blocker to all three deferred targets. The PC microphone check records localhost as an available secure context: it could have run and simply was not. The owner's own brief scopes the reason narrowly, to the phone checks.",
+        "evidence": ".evidence/U03/speech-device-evidence.json, target \"Windows PC with Chrome or Edge\": status NOT_RUN, access \"http://127.0.0.1:4173/ is a secure-context exception for localhost\", environmentReadiness.localhostPreview \"available for the PC check\"; docs/post-mvp/0_3_0_OWNER_BRIEF.md section 1.1.",
+        "resolution": "Corrected in CHANGELOG.md, .evidence/UG1/physical-device-review.json, 02_MVP_SCOPE.md section 5 and the UG1 completion log: the phone checks need the origin, the PC check was runnable and was not run, and it moves with the others rather than being claimed."
+      },
+      {
+        "id": "CHG-NOVELTY-01",
+        "severity": "quality of life",
+        "finding": "The first two entries read as new capabilities. Roster scanning and local Italian dictation both shipped in 0.1.0; what 0.2.0 delivered is the column-based reading, the document editor, the name-order gate, dictation on every note field and a much better model. A reader comparing the two releases was given no way to tell which parts were new.",
+        "evidence": "02_MVP_SCOPE.md:12-15, the 0.1.0 baseline.",
+        "resolution": "The changelog opens by saying both existed in 0.1.0 and that what follows is what changed, and each entry now names the change rather than the feature."
+      },
+      {
+        "id": "CHG-EVIDENCE-STATE-01",
+        "severity": "quality of life, not a changelog defect",
+        "finding": "While the audit ran, .evidence/UG1/verification.json had been rewritten to FAIL with exit code 3221225794 by a verify:all that was terminated mid-build. The machine-recorded gate was a FAIL at that moment.",
+        "resolution": "That run was deliberately stopped because files were still being edited under it, which would have made its record meaningless. It was replaced by a clean full run on a settled tree, which is the verification.json this milestone closes on."
+      }
+    ],
+    "unmentionedChangesAdded": [
+      "A second, distinct course/week note per student, with its nullable courseNote field and migration.",
+      "Safe permanent student deletion: blocked while the student appears in history, with the blocking references listed and disable offered instead.",
+      "Double-click, or long-press on touch, on a profile field opens the edit form with that field focused.",
+      "The multi-number boat parser: commas, spaces, newlines or semicolons in one field, repeated separators ignored, duplicates collapsed.",
+      "That dictation got substantially more accurate rather than merely existing, with the repetition collapse fixed, the measured numbers, the first-use download it costs, and the PC Chrome runtime failure that is now fixed and guarded."
+    ]
+  },
+  "evidenceInspected": [
+    "CHANGELOG.md, claim by claim, keyed to its lines",
+    "04_IMPLEMENTATION_PLAN.md U00-U10 completion logs and the UG1 dated status entries",
+    "01_PRODUCT_SPEC.md sections 1, 9 and 10; 02_MVP_SCOPE.md sections 1, 3 and 4",
+    "src/capabilities/speech.ts, src/features/speech/useDictation.ts and DictationControls.tsx: every dictation state claim holds",
+    "src/capabilities/studentScan.ts column recovery, staff-row rejection and unknown name order; src/features/students/StudentScan.tsx commit gate and object-URL revocation",
+    "src/domain/duties.ts floor(N/D) and the exact remainder; src/domain/crews.ts addCrew and removeEmptyCrew",
+    "src/domain/duties.ts and src/domain/evaluations.ts contain no volunteer reference, so CT is structurally outside every student rule",
+    ".evidence/UG1/migration-evidence.json with the 13-table, 22-row 0.1.0 fixture and its tests: the Migration paragraph is fully supported",
+    ".evidence/UG1/physical-device-review.json and the 2026-09-15 original; .evidence/U03/speech-device-evidence.json; .evidence/U04/ocr-quality-evidence.json",
+    ".evidence/UG1/browser-evidence.json P01-P19 traceability and the six UG1 reviews, all PASS_WITH_FINDINGS with zero blockers",
+    "playwright.config.ts: the scanning and dictation journeys run on all three device projects",
+    "vite.config.ts, scripts/check-built-pwa.mjs and check-ocr-offline.mjs: five OCR assets precached and proven offline, nothing equivalent for the speech model"
+  ]
+}

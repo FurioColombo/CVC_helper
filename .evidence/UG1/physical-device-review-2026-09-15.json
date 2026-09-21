@@ -1,0 +1,24 @@
+{
+  "milestone": "UG1",
+  "reviewerRole": "physical-device release reviewer",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "UG1-PHYSICAL-STT",
+      "finding": "Real microphone permission, Italian capture/transcription, cancellation and recovery have not been observed on PC, Android Chrome and iPhone Safari."
+    },
+    {
+      "id": "UG1-PHYSICAL-OCR",
+      "finding": "Native camera/gallery, orientation, crop, OCR review, commit/reopen and source-photo disposal have not been observed on Android Chrome and iPhone Safari."
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    ".evidence/U03/speech-device-evidence.json: all three physical targets NOT_RUN",
+    ".evidence/U04/ocr-quality-evidence.json: physicalDeviceChecks DEFERRED_TO_UG1",
+    "docs/post-mvp/UG1_DEVICE_VALIDATION.md: concrete human-operated procedure",
+    ".evidence/U03 and U04 automated fixtures: useful regression evidence but not a physical substitute"
+  ],
+  "closureRule": "Keep UG1 IN_PROGRESS and package/lock at 0.1.0 until actual device observations are recorded and this review is repeated."
+}

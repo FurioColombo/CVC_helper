@@ -40,4 +40,11 @@ export default tseslint.config(
     files: ["scripts/**/*.{js,mjs,ts}", "*.config.{js,ts}"],
     languageOptions: { globals: globals.node },
   },
+  {
+    // The speech benchmark drives a real page: bench.mjs evaluates callbacks
+    // inside it and variants.js is injected wholesale, so these files use
+    // browser globals as well as Node's.
+    files: ["scripts/speech-bench/**/*.{js,mjs}"],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
 )

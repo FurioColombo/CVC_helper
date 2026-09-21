@@ -51,6 +51,25 @@ test("adds, edits and reloads every volunteer role across staff-only surfaces", 
   await expect(
     page.getByRole("heading", { name: "Nessun volontario" }),
   ).toBeVisible()
+
+  // A form that is saved without touching the role must still produce a usable
+  // volunteer, and ADV is the role it produces. Folded in from
+  // volunteers.spec.ts, which this journey otherwise supersedes.
+  await page.getByRole("button", { name: "Aggiungi volontario" }).click()
+  await page.getByLabel("Nome completo").fill("Giulia Default")
+  await page.getByRole("button", { name: "Salva volontario" }).click()
+  await expect(
+    page.getByRole("button", { name: "Giulia Default, ruolo ADV" }),
+  ).toBeVisible()
+
+  // Editing may change the role, not only the name. Same origin.
+  await page.getByRole("button", { name: "Giulia Default, ruolo ADV" }).click()
+  await page.getByText("IS", { exact: true }).click()
+  await page.getByRole("button", { name: "Salva volontario" }).click()
+  await expect(
+    page.getByRole("button", { name: "Giulia Default, ruolo IS" }),
+  ).toBeVisible()
+
   await addVolunteer(page, "Anna ADV", "ADV")
   await addVolunteer(page, "Irene IS", "IS")
   await addVolunteer(page, "Carlo CT", "CT")
@@ -74,10 +93,10 @@ test("adds, edits and reloads every volunteer role across staff-only surfaces", 
     page.getByRole("button", { name: "Carlo Capo Turno, ruolo CT" }),
   ).toBeVisible()
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/U07")
-    await mkdir(evidenceDirectory, { recursive: true })
+    const screenshotDirectory = path.resolve("test-results/screenshots")
+    await mkdir(screenshotDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "u07-volunteer-list-pixel-7.png"),
+      path: path.join(screenshotDirectory, "u07-volunteer-list-pixel-7.png"),
       fullPage: true,
     })
   }
@@ -118,9 +137,9 @@ test("adds, edits and reloads every volunteer role across staff-only surfaces", 
     }),
   ).toBeVisible()
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/U07")
+    const screenshotDirectory = path.resolve("test-results/screenshots")
     await page.screenshot({
-      path: path.join(evidenceDirectory, "u07-crew-ct-pixel-7.png"),
+      path: path.join(screenshotDirectory, "u07-crew-ct-pixel-7.png"),
       fullPage: true,
     })
   }
@@ -151,10 +170,10 @@ test("adds, edits and reloads every volunteer role across staff-only surfaces", 
   )
 
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/U07")
-    await mkdir(evidenceDirectory, { recursive: true })
+    const screenshotDirectory = path.resolve("test-results/screenshots")
+    await mkdir(screenshotDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "u07-staff-surfaces-pixel-7.png"),
+      path: path.join(screenshotDirectory, "u07-staff-surfaces-pixel-7.png"),
       fullPage: true,
     })
   }
@@ -241,10 +260,10 @@ test("keeps the direct volunteer form usable at 320px and 200% text", async ({
   ).toBe(true)
 
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/U07")
-    await mkdir(evidenceDirectory, { recursive: true })
+    const screenshotDirectory = path.resolve("test-results/screenshots")
+    await mkdir(screenshotDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "u07-volunteer-stress-pixel-7.png"),
+      path: path.join(screenshotDirectory, "u07-volunteer-stress-pixel-7.png"),
     })
   }
 })

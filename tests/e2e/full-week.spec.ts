@@ -512,10 +512,10 @@ test("runs one deterministic D2 course through a complete sailing week", async (
     ),
   ).toBe(true)
 
-  const evidenceDirectory = path.resolve(".evidence/M15")
-  mkdirSync(evidenceDirectory, { recursive: true })
+  const screenshotDirectory = path.resolve("test-results/screenshots")
+  mkdirSync(screenshotDirectory, { recursive: true })
   await app.screenshot({
     fullPage: true,
-    path: path.join(evidenceDirectory, "full-week-final.png"),
+    path: path.join(screenshotDirectory, "full-week-final.png"),
   })
 })

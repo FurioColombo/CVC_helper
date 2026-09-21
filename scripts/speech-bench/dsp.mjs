@@ -1,6 +1,5 @@
 // Minimal WAV + DSP helpers for building a labelled speech test corpus.
 
-
 /** G.711 mu-law to linear. Telephone corpora ship as WAV format tag 7. */
 function muLawToLinear(byte) {
   const u = ~byte & 0xff
@@ -16,23 +15,30 @@ function aLawToLinear(byte) {
   a &= 0x7f
   const exponent = a >> 4
   const mantissa = a & 0x0f
-  let value = exponent === 0 ? (mantissa << 4) + 8 : ((mantissa << 4) + 0x108) << (exponent - 1)
+  let value =
+    exponent === 0
+      ? (mantissa << 4) + 8
+      : ((mantissa << 4) + 0x108) << (exponent - 1)
   return (sign ? -value : value) / 32768
 }
 
 export function readWav(buffer) {
-  const view = new DataView(
-    buffer.buffer,
-    buffer.byteOffset,
-    buffer.byteLength,
-  )
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
   const tag = (o) =>
     String.fromCharCode(
-      view.getUint8(o), view.getUint8(o + 1), view.getUint8(o + 2), view.getUint8(o + 3),
+      view.getUint8(o),
+      view.getUint8(o + 1),
+      view.getUint8(o + 2),
+      view.getUint8(o + 3),
     )
   if (tag(0) !== "RIFF" || tag(8) !== "WAVE") throw new Error("not a WAV")
-  let sampleRate = 0, channels = 1, bits = 16, dataOffset = 0, dataLength = 0, format = 1
-  for (let o = 12; o + 8 <= view.byteLength; ) {
+  let sampleRate = 0,
+    channels = 1,
+    bits = 16,
+    dataOffset = 0,
+    dataLength = 0,
+    format = 1
+  for (let o = 12; o + 8 <= view.byteLength;) {
     const id = tag(o)
     const size = view.getUint32(o + 4, true)
     const body = o + 8
@@ -107,14 +113,19 @@ export function estimateF0(samples, sampleRate) {
   for (let start = 0; start + frame < samples.length; start += hop) {
     const win = samples.subarray(start, start + frame)
     if (rms(win) < global * 0.6) continue
-    let bestLag = 0, best = 0, zero = 0
+    let bestLag = 0,
+      best = 0,
+      zero = 0
     for (let i = 0; i < frame; i += 1) zero += win[i] * win[i]
     if (zero <= 0) continue
     for (let lag = minLag; lag <= maxLag; lag += 1) {
       let sum = 0
       for (let i = 0; i + lag < frame; i += 1) sum += win[i] * win[i + lag]
       const norm = sum / zero
-      if (norm > best) { best = norm; bestLag = lag }
+      if (norm > best) {
+        best = norm
+        bestLag = lag
+      }
     }
     if (best > 0.35 && bestLag > 0) found.push(sampleRate / bestLag)
   }
@@ -134,11 +145,13 @@ function coloured(n, kind) {
   const white = whiteNoise(n)
   const out = new Float32Array(n)
   if (kind === "pink") {
-    let b0 = 0, b1 = 0, b2 = 0
+    let b0 = 0,
+      b1 = 0,
+      b2 = 0
     for (let i = 0; i < n; i += 1) {
-      b0 = 0.99765 * b0 + white[i] * 0.0990460
-      b1 = 0.96300 * b1 + white[i] * 0.2965164
-      b2 = 0.57000 * b2 + white[i] * 1.0526913
+      b0 = 0.99765 * b0 + white[i] * 0.099046
+      b1 = 0.963 * b1 + white[i] * 0.2965164
+      b2 = 0.57 * b2 + white[i] * 1.0526913
       out[i] = (b0 + b1 + b2 + white[i] * 0.1848) * 0.2
     }
   } else {
@@ -157,7 +170,11 @@ function windNoise(n, sampleRate) {
   const out = new Float32Array(n)
   for (let i = 0; i < n; i += 1) {
     const t = i / sampleRate
-    const gust = 0.55 + 0.45 * Math.sin(2 * Math.PI * 0.23 * t + 1.1) * Math.sin(2 * Math.PI * 0.07 * t)
+    const gust =
+      0.55 +
+      0.45 *
+        Math.sin(2 * Math.PI * 0.23 * t + 1.1) *
+        Math.sin(2 * Math.PI * 0.07 * t)
     out[i] = base[i] * gust
   }
   return out

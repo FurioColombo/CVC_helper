@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises"
 import { basename } from "node:path"
 
 import { createWorker, OEM, PSM } from "tesseract.js"
-import { extractStudentCandidates } from "../../src/capabilities/studentScan.ts"
+import { extractStudentCandidates } from "../src/capabilities/studentScan.ts"
 
 const inputPaths = process.argv.slice(2)
 if (inputPaths.length === 0) {
@@ -43,26 +43,28 @@ function summarize(path, data) {
   }
   const fields = result.candidates.map(fieldPresence)
   const counts = Object.fromEntries(
-    Object.keys(fields[0] ?? {
-      firstName: false,
-      surname: false,
-      dateOfBirth: false,
-      phone: false,
-    }).map((key) => [key, fields.filter((row) => row[key]).length]),
+    Object.keys(
+      fields[0] ?? {
+        firstName: false,
+        surname: false,
+        dateOfBirth: false,
+        phone: false,
+      },
+    ).map((key) => [key, fields.filter((row) => row[key]).length]),
   )
   const structuralRows = fields.filter(
     (row) => row.firstName && row.surname,
   ).length
   const completeRows = fields.filter(
-    (row) =>
-      row.firstName && row.surname && row.dateOfBirth && row.phone,
+    (row) => row.firstName && row.surname && row.dateOfBirth && row.phone,
   ).length
   const weakRows = fields.filter(
     (row) =>
       (row.firstName ? 1 : 0) +
         (row.surname ? 1 : 0) +
         (row.dateOfBirth ? 1 : 0) +
-        (row.phone ? 1 : 0) < 2,
+        (row.phone ? 1 : 0) <
+      2,
   ).length
   const expectedStudentRows = basename(path).toLowerCase().includes("copy")
     ? 20

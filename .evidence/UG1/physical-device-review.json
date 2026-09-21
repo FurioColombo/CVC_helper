@@ -1,24 +1,48 @@
 {
   "milestone": "UG1",
   "reviewerRole": "physical-device release reviewer",
-  "verdict": "FAIL",
-  "blockers": [
+  "reviewedOn": "2026-09-21",
+  "subject": "UG1's re-scoped physical-device criterion, not the device checks themselves",
+  "authorisation": {
+    "source": "docs/post-mvp/0_3_0_OWNER_BRIEF.md section 1.1",
+    "capturedFrom": "the repository owner, 2026-09-21",
+    "decision": "The physical microphone and camera/OCR observations move from UG1 to UG2. The owner changed UG1's acceptance criteria, which is theirs to do; they did not override the 2026-09-15 review, which is kept verbatim as physical-device-review-2026-09-15.json.",
+    "reason": "The phone checks need a trusted HTTPS origin, because a browser withholds the camera and the microphone from a page served over plain HTTP. The app has none, and providing one is V01, the first 0.3.0 milestone. Running them was not possible, not merely inconvenient. The PC microphone check is the exception: .evidence/U03/speech-device-evidence.json records http://127.0.0.1:4173/ as an available secure-context exception for it, so it could have run and simply was not. It moves with the other two rather than being claimed.",
+    "notWaived": "The checks remain required for 0.3.0 and are UG2 acceptance criteria. docs/post-mvp/UG1_DEVICE_VALIDATION.md is unchanged and becomes UG2's checklist."
+  },
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
     {
       "id": "UG1-PHYSICAL-STT",
-      "finding": "Real microphone permission, Italian capture/transcription, cancellation and recovery have not been observed on PC, Android Chrome and iPhone Safari."
+      "state": "NOT_RUN, re-scoped to UG2; the PC target was runnable and was not run",
+      "finding": "Real microphone permission, Italian capture and transcription, cancellation and recovery have not been observed on PC, Android Chrome or iPhone Safari. Dictation is evidenced by a measured benchmark over a labelled Italian corpus and by Playwright journeys using audio fixtures. Neither is a physical check and neither is recorded as one."
     },
     {
       "id": "UG1-PHYSICAL-OCR",
-      "finding": "Native camera/gallery, orientation, crop, OCR review, commit/reopen and source-photo disposal have not been observed on Android Chrome and iPhone Safari."
+      "state": "NOT_RUN, re-scoped to UG2",
+      "finding": "Native camera and gallery acquisition, device orientation, crop, OCR review, commit/reopen and source-photo disposal have not been observed on Android Chrome or iPhone Safari. Scanning is evidenced by a bounded anonymous corpus and by Playwright journeys against file inputs."
     }
   ],
-  "importantFindings": [],
-  "qolFindings": [],
-  "evidenceInspected": [
-    ".evidence/U03/speech-device-evidence.json: all three physical targets NOT_RUN",
-    ".evidence/U04/ocr-quality-evidence.json: physicalDeviceChecks DEFERRED_TO_UG1",
-    "docs/post-mvp/UG1_DEVICE_VALIDATION.md: concrete human-operated procedure",
-    ".evidence/U03 and U04 automated fixtures: useful regression evidence but not a physical substitute"
+  "qolFindings": [
+    {
+      "id": "UG1-DEVICE-DOC-DRIFT",
+      "finding": "docs/post-mvp/UG1_DEVICE_VALIDATION.md step 3 instructs the operator to tap 'Usa testo' and 'Scarta'. V03 removes the transcript confirmation step, so that wording will be stale by the time UG2 runs the checklist. The owner asked for the document to stay exactly as written, so it is recorded here rather than edited."
+    },
+    {
+      "id": "UG1-PC-CHECK-RUNNABLE",
+      "finding": "The PC microphone check did not share the other targets' blocker. Its recorded access is localhost, which is a secure context, so it was deferred for want of time rather than for want of an origin. Stated plainly here and in CHANGELOG.md rather than folded into the HTTPS reason."
+    }
   ],
-  "closureRule": "Keep UG1 IN_PROGRESS and package/lock at 0.1.0 until actual device observations are recorded and this review is repeated."
+  "knownLimitationOf0_2_0": "Neither dictation nor scanning has been tried on a real phone. Dictation is verified by a measured benchmark over a labelled Italian corpus; scanning is verified against a synthetic corpus with known field and person values, plus a hand-run diagnostic on two real photographs that are not committed and that no automated test uses. Both are verified by Playwright journeys across three device profiles. Recorded in 04_IMPLEMENTATION_PLAN.md and in CHANGELOG.md.",
+  "evidenceInspected": [
+    ".evidence/UG1/physical-device-review-2026-09-15.json: the FAIL this review re-scopes, kept unchanged",
+    ".evidence/U03/speech-device-evidence.json: all three physical targets still NOT_RUN",
+    ".evidence/U04/ocr-quality-evidence.json: physicalDeviceChecks still deferred",
+    ".evidence/UG1/speech-quality-benchmark.json: the measured A/B that stands in for quality, explicitly not for a device check",
+    "docs/post-mvp/UG1_DEVICE_VALIDATION.md: the human-operated procedure, unchanged and now UG2's",
+    "docs/post-mvp/0_3_0_OWNER_BRIEF.md section 1.1: the owner's authorisation",
+    "04_IMPLEMENTATION_PLAN.md UG1 required work and acceptance criteria, amended to match"
+  ],
+  "closureRule": "UG1 may close and ship as 0.2.0. It may not claim any physical-device observation. UG2 cannot close without the real ones, and a simulated PASS is never recorded."
 }

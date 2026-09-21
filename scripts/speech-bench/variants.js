@@ -18,17 +18,35 @@
       dtype: "q8",
       dsp: ["dc", "highpass", "normalize", "trim"],
     },
-    hp: { model: "onnx-community/whisper-tiny", dtype: "q8", dsp: ["dc", "highpass"] },
-    norm: { model: "onnx-community/whisper-tiny", dtype: "q8", dsp: ["dc", "normalize"] },
+    hp: {
+      model: "onnx-community/whisper-tiny",
+      dtype: "q8",
+      dsp: ["dc", "highpass"],
+    },
+    norm: {
+      model: "onnx-community/whisper-tiny",
+      dtype: "q8",
+      dsp: ["dc", "normalize"],
+    },
     base: { model: "onnx-community/whisper-base", dtype: "q8", dsp: [] },
-    guard: { model: "onnx-community/whisper-tiny", dtype: "q8", dsp: [], gen: GUARD },
+    guard: {
+      model: "onnx-community/whisper-tiny",
+      dtype: "q8",
+      dsp: [],
+      gen: GUARD,
+    },
     dspguard: {
       model: "onnx-community/whisper-tiny",
       dtype: "q8",
       dsp: ["dc", "highpass", "normalize", "trim"],
       gen: GUARD,
     },
-    baseguard: { model: "onnx-community/whisper-base", dtype: "q8", dsp: ["dc", "normalize", "trim"], gen: GUARD },
+    baseguard: {
+      model: "onnx-community/whisper-base",
+      dtype: "q8",
+      dsp: ["dc", "normalize", "trim"],
+      gen: GUARD,
+    },
     dspbase: {
       model: "onnx-community/whisper-base",
       dtype: "q8",
@@ -83,7 +101,11 @@
     if (rms < 1e-6) return input
     let peak = 0
     for (const v of input) peak = Math.max(peak, Math.abs(v))
-    const gain = Math.min(maxGain, target / rms, peak > 0 ? 0.97 / peak : maxGain)
+    const gain = Math.min(
+      maxGain,
+      target / rms,
+      peak > 0 ? 0.97 / peak : maxGain,
+    )
     if (!Number.isFinite(gain) || gain <= 0) return input
     const out = new Float32Array(input.length)
     for (let i = 0; i < input.length; i += 1) out[i] = input[i] * gain
@@ -101,7 +123,8 @@
     for (let start = 0; start < input.length; start += frame) {
       let energy = 0
       const end = Math.min(input.length, start + frame)
-      for (let i = start; i < end; i += 1) energy = Math.max(energy, Math.abs(input[i]))
+      for (let i = start; i < end; i += 1)
+        energy = Math.max(energy, Math.abs(input[i]))
       if (energy > floor) {
         if (first < 0) first = start
         last = end
@@ -109,7 +132,10 @@
     }
     if (first < 0 || last <= first) return input
     const pad = Math.round(0.1 * SAMPLE_RATE)
-    return input.slice(Math.max(0, first - pad), Math.min(input.length, last + pad))
+    return input.slice(
+      Math.max(0, first - pad),
+      Math.min(input.length, last + pad),
+    )
   }
 
   const STAGES = { dc: removeDc, highpass: highPass, normalize, trim }

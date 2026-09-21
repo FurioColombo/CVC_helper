@@ -2,7 +2,7 @@ import path from "node:path"
 
 import { expect, test } from "@playwright/test"
 
-const CLEAR_ROSTER = path.resolve(".evidence/M0/ocr-sheet-clear.png")
+const CLEAR_ROSTER = path.resolve("tests/fixtures/ocr-sheet-clear.png")
 
 test("keeps the complete student workflow consistent across reload", async ({
   page,
@@ -159,7 +159,7 @@ test("keeps the complete student workflow consistent across reload", async ({
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
       fullPage: true,
-      path: path.resolve(".evidence/G1/final-list-iphone13.png"),
+      path: path.resolve("test-results/screenshots/final-list-iphone13.png"),
     })
   }
 })

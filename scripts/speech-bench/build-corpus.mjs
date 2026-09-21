@@ -19,9 +19,18 @@ for (const clip of loaded) {
 }
 console.log("=== estimated voice labels (median F0) ===")
 for (const c of loaded) {
-  console.log(c.file, c.f0 ? `${c.f0.toFixed(0)} Hz` : "n/a", "->", c.voice, `${c.sampleRate}Hz`)
+  console.log(
+    c.file,
+    c.f0 ? `${c.f0.toFixed(0)} Hz` : "n/a",
+    "->",
+    c.voice,
+    `${c.sampleRate}Hz`,
+  )
 }
-const counts = loaded.reduce((a, c) => ({ ...a, [c.voice]: (a[c.voice] ?? 0) + 1 }), {})
+const counts = loaded.reduce(
+  (a, c) => ({ ...a, [c.voice]: (a[c.voice] ?? 0) + 1 }),
+  {},
+)
 console.log("counts:", JSON.stringify(counts))
 
 const CONDITIONS = [
@@ -37,16 +46,27 @@ const CONDITIONS = [
 
 const manifest = []
 for (const clip of loaded) {
-  const pool = loaded.filter((o) => o !== clip).slice(0, 3).map((o) => o.samples)
+  const pool = loaded
+    .filter((o) => o !== clip)
+    .slice(0, 3)
+    .map((o) => o.samples)
   for (const condition of CONDITIONS) {
     let samples = clip.samples
     if (condition.kind) {
-      const noise = dsp.makeNoise(condition.kind, samples.length, clip.sampleRate, pool)
+      const noise = dsp.makeNoise(
+        condition.kind,
+        samples.length,
+        clip.sampleRate,
+        pool,
+      )
       samples = dsp.mixAtSnr(samples, noise, condition.snr)
     }
     if (condition.gain) samples = dsp.applyGain(samples, condition.gain)
     const file = `${clip.file.replace(".wav", "")}__${condition.id}.wav`
-    writeFileSync(`${OUT}/noisy/${file}`, dsp.writeWav(samples, clip.sampleRate))
+    writeFileSync(
+      `${OUT}/noisy/${file}`,
+      dsp.writeWav(samples, clip.sampleRate),
+    )
     manifest.push({
       file,
       source: clip.file,
@@ -59,4 +79,9 @@ for (const clip of loaded) {
   }
 }
 writeFileSync(`${OUT}/manifest.json`, JSON.stringify(manifest, null, 2))
-console.log("corpus entries:", manifest.length, "conditions:", CONDITIONS.length)
+console.log(
+  "corpus entries:",
+  manifest.length,
+  "conditions:",
+  CONDITIONS.length,
+)

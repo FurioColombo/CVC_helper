@@ -6,7 +6,7 @@ import { preview } from "vite"
 const root = resolve(import.meta.dirname, "..")
 const port = 4175
 const url = `http://127.0.0.1:${port}`
-const roster = resolve(root, ".evidence/M0/ocr-sheet-clear.png")
+const roster = resolve(root, "tests/fixtures/ocr-sheet-clear.png")
 
 const server = await preview({
   configFile: resolve(root, "vite.config.ts"),

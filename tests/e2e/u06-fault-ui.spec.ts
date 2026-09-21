@@ -91,11 +91,14 @@ async function capturePixelScreenshot(
   name: string,
 ) {
   if (testInfo.project.name !== "pixel-7-chrome") return
-  const evidenceDirectory = path.resolve(".evidence/U06")
-  await mkdir(evidenceDirectory, { recursive: true })
+  const screenshotDirectory = path.resolve("test-results/screenshots")
+  await mkdir(screenshotDirectory, { recursive: true })
   await page.screenshot({
     fullPage: true,
-    path: path.join(evidenceDirectory, `${name}-${testInfo.project.name}.png`),
+    path: path.join(
+      screenshotDirectory,
+      `${name}-${testInfo.project.name}.png`,
+    ),
   })
 }
 

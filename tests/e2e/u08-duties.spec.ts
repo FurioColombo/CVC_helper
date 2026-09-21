@@ -42,10 +42,10 @@ test("previews, confirms and edits duties directly from the seven day cards", as
   ).toBeVisible()
   await expect(page.getByText("Nessun dato salvato")).toBeVisible()
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/U08")
-    await mkdir(evidenceDirectory, { recursive: true })
+    const screenshotDirectory = path.resolve("test-results/screenshots")
+    await mkdir(screenshotDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "u08-p12-preview-pixel-7.png"),
+      path: path.join(screenshotDirectory, "u08-p12-preview-pixel-7.png"),
       fullPage: true,
     })
   }
@@ -132,7 +132,9 @@ test("previews, confirms and edits duties directly from the seven day cards", as
   await expect(page.getByText("Dom", { exact: true })).toBeVisible()
   if (testInfo.project.name === "pixel-7-chrome") {
     await page.screenshot({
-      path: path.resolve(".evidence/U08/u08-p13-direct-edit-pixel-7.png"),
+      path: path.resolve(
+        "test-results/screenshots/u08-p13-direct-edit-pixel-7.png",
+      ),
       fullPage: true,
     })
   }
@@ -166,10 +168,10 @@ test("previews, confirms and edits duties directly from the seven day cards", as
   ).not.toContainText("Nome3")
 
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/U08")
-    await mkdir(evidenceDirectory, { recursive: true })
+    const screenshotDirectory = path.resolve("test-results/screenshots")
+    await mkdir(screenshotDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "u08-p11-p13-pixel-7.png"),
+      path: path.join(screenshotDirectory, "u08-p11-p13-pixel-7.png"),
       fullPage: true,
     })
   }
@@ -231,7 +233,7 @@ test("keeps long-name P13 cards readable and tappable at 320px and 200% text", a
   expect(removeBox!.height).toBeGreaterThanOrEqual(40)
   if (testInfo.project.name === "pixel-7-chrome") {
     await page.screenshot({
-      path: path.resolve(".evidence/U08/u08-p13-stress-pixel-7.png"),
+      path: path.resolve("test-results/screenshots/u08-p13-stress-pixel-7.png"),
       fullPage: true,
     })
   }
@@ -266,7 +268,7 @@ test("keeps the P12 controls usable at 320px and 200% text", async ({
   ).toBeDisabled()
   if (testInfo.project.name === "pixel-7-chrome") {
     await page.screenshot({
-      path: path.resolve(".evidence/U08/u08-p12-stress-pixel-7.png"),
+      path: path.resolve("test-results/screenshots/u08-p12-stress-pixel-7.png"),
       fullPage: true,
     })
   }

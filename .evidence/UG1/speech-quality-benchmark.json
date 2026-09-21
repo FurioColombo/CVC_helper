@@ -20,9 +20,21 @@
   "harnessDefect": "The first corpus was silently corrupt: the source files are WAV format tag 7 (mu-law) and the reader decoded them as linear PCM. Every early number was measured on distorted audio and was discarded. The reader now handles mu-law and A-law.",
   "results": {
     "metric": "word error rate, percent, lower is better; LOOP is the share of clips whose output exceeded three times the reference length",
-    "baseline_tiny": { "overall": 303.2, "median": 96.7, "loop": 5 },
-    "tiny_with_guard": { "overall": 89.9, "median": 93.5, "loop": 0 },
-    "tiny_with_guard_and_dsp": { "overall": 90.5, "median": 93.5, "loop": 0 },
+    "baseline_tiny": {
+      "overall": 303.2,
+      "median": 96.7,
+      "loop": 5
+    },
+    "tiny_with_guard": {
+      "overall": 89.9,
+      "median": 93.5,
+      "loop": 0
+    },
+    "tiny_with_guard_and_dsp": {
+      "overall": 90.5,
+      "median": 93.5,
+      "loop": 0
+    },
     "base_with_guard": {
       "overall": 55.5,
       "median": 55.6,
@@ -44,6 +56,6 @@
     "TRANSCRIPTION_GUARD applied to every request in src/capabilities/speech.ts",
     "MODEL_ID switched to onnx-community/whisper-base"
   ],
-  "reproduce": "Serve the app, then run bench.mjs against a corpus built by fetch-balanced.mjs and build-corpus.mjs. variants.js holds every pipeline tried, including the original as 'baseline', so the comparison can be repeated.",
+  "reproduce": "npm run speech:bench -- <corpus> [url] [variants], against a corpus built by fetch-balanced.mjs then build-corpus.mjs. The harness moved from this directory to scripts/speech-bench/ on 2026-09-21 and is documented in its README; variants.js still holds every pipeline tried, including the original as 'baseline', so the comparison can be repeated.",
   "notVerified": "No physical microphone pass. Chromium's fake audio capture did not inject the file in this environment, so end-to-end dictation was exercised with a real recording only through the benchmark, not through the microphone."
 }

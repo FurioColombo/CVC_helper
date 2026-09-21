@@ -3,7 +3,7 @@ import path from "node:path"
 
 import { expect, type Page, test } from "@playwright/test"
 
-const evidenceDirectory = path.resolve(".evidence/U02")
+const screenshotDirectory = path.resolve("test-results/screenshots")
 
 async function createCourse(page: Page) {
   await page.goto("/")
@@ -33,7 +33,7 @@ async function addStudent(
 test("keeps the compact list and complete profile usable at the stress viewport", async ({
   page,
 }, testInfo) => {
-  mkdirSync(evidenceDirectory, { recursive: true })
+  mkdirSync(screenshotDirectory, { recursive: true })
   await page.setViewportSize({ width: 320, height: 664 })
   await createCourse(page)
   await addStudent(page, "Mario", "Rossi", "2010-01-01")
@@ -76,7 +76,7 @@ test("keeps the compact list and complete profile usable at the stress viewport"
   ).toBe(true)
   await page.screenshot({
     path: path.join(
-      evidenceDirectory,
+      screenshotDirectory,
       `p03-stress-${testInfo.project.name}.png`,
     ),
     fullPage: true,
@@ -139,7 +139,7 @@ test("keeps the compact list and complete profile usable at the stress viewport"
   ).toBe(true)
   await page.screenshot({
     path: path.join(
-      evidenceDirectory,
+      screenshotDirectory,
       `p04-profile-${testInfo.project.name}.png`,
     ),
     fullPage: true,

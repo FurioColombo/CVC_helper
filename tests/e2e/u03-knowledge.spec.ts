@@ -79,7 +79,7 @@ test("keeps P05 compact and preserves a rapid note edit at stress width", async 
   expect(overflow).toBe(false)
   await page.screenshot({
     fullPage: true,
-    path: `.evidence/U03/p05-stress-${testInfo.project.name}.png`,
+    path: `test-results/screenshots/p05-stress-${testInfo.project.name}.png`,
   })
 
   await target
@@ -94,7 +94,7 @@ test("keeps P05 compact and preserves a rapid note edit at stress width", async 
     page.getByRole("button", { name: "Detta nota di Alessandro M." }),
   ).toBeVisible()
   await page.screenshot({
-    path: `.evidence/U03/p05-note-panel-${testInfo.project.name}.png`,
+    path: `test-results/screenshots/p05-note-panel-${testInfo.project.name}.png`,
   })
   await page
     .getByLabel("Nota iniziale di Alessandro M.")
