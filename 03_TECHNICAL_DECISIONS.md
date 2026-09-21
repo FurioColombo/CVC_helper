@@ -169,6 +169,38 @@ density/overflow is material; avoid multiplying every test across every viewport
 CI uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
 failure artifacts where useful. Local checks remain required.
 
+### 6.1 Platform coverage of the browser suite
+
+Decided 2026-09-21, after `verify:all` passed on Windows and failed on the Linux
+runner for six rounds.
+
+**CI is the authority for the browser suite. A local run is advisory.** The suite
+asserts rendered geometry, and geometry depends on the platform's fonts: the
+runner's are wider, so four layouts that fitted here by a couple of pixels
+overflowed there. A green local run means the change is probably sound; only a
+green CI run means the suite passes. Milestone evidence may cite a local run for
+what it is, and must not present it as the gate.
+
+**A geometry assertion must name the element it is complaining about.** Reporting
+a page width and nothing else costs a full CI round trip every time it fails,
+which is most of what those six rounds were. Report offenders widest-first, and
+exclude elements that clip: a `truncate` box exceeds its own `clientWidth` by
+design and cannot push anything.
+
+**Fix the layout, not the threshold.** R18 forbids horizontal scrolling in the
+operating interface and R12 forbids a floating element covering a control, at the
+contract viewports including 320 px at 200 % text. When the runner reports an
+overflow at those sizes it is telling the truth. Widening an allowance to go
+green falsifies the check. If a threshold genuinely has to move, the reason
+belongs in the code and in the milestone evidence.
+
+**Reproduce the mechanism, not the platform.** Extra `letter-spacing` at the
+stress viewport, under the same device descriptor the CI project uses, does to a
+layout what a wider font does. It reproduced three of four overflow causes
+locally and is much cheaper than a CI round. Where it does not reproduce, make
+the code under test report what it sees rather than guessing from a truncated
+log.
+
 ## 7. Versioning and release
 
 Use low-effort semantic versions:

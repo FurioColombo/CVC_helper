@@ -1,0 +1,37 @@
+{
+  "subject": "CI regression closed",
+  "closedOn": "2026-09-21",
+  "greenRun": {
+    "id": 35645831554,
+    "commit": "307ce05",
+    "branch": "codex/0.3.0",
+    "conclusion": "success",
+    "alsoGreenOn": "main, same commit, and the Pages deploy from it succeeded"
+  },
+  "from": "5 failed, 120 passed, on the first CI run this cycle",
+  "to": "0 failed, 124 passed, 6 intended project-matrix skips",
+  "roundsItTook": 6,
+  "whatWasActuallyWrong": {
+    "oneBugInFourPlaces": "An element sized by its own content, in a container with no room, and nothing telling it it may shrink. The session select escaping its label by 33px; the scan review's field caption sharing a half-width column with its 'Da controllare' flag; the boat-strip pager's two word labels and counter in a justify-between row; the Comandate empty state's two action buttons, whose longest word plus padding no longer fitted. Each fixed with min-w-0 and, where a word had to give, break-words.",
+    "oneOverlay": "The fixed bottom navigation covered anything the browser scrolled into view mid-page. The page's pb-28 clears the bar at the end of the document and does nothing in the middle of one. Fixed with scroll-margin-bottom on interactive elements, tracking the bar's height and the safe area. This was an R12 defect for a keyboard user, not only a test problem.",
+    "notOneOfThem": "None was a test being wrong about the app. Every threshold in every failing assertion was correct."
+  },
+  "foundOnTheWay": [
+    "u10-evaluations:301 was flaky on both projects: getByText(longNote) matched the clamped preview span and the note editor's textarea, so it was a strict-mode violation that appeared only when an editor happened to be open. Latent, unrelated, fixed by scoping the locator.",
+    "Both overflow specs reported a number and not an element. u09 took the first eight offenders in document order, which listed ancestors and omitted the cause. ug1-duty-reflow reported only headings, so a 35px overflow said nothing at all. Both now report offenders widest-first.",
+    "The offender filter I added then produced a false positive of its own: it counted any element whose scrollWidth exceeded its clientWidth, which is true by design of every `truncate` box. It flagged 'Bilancia minori' on a screen measuring exactly 320. Both filters now require an element either to reach past the viewport or to overflow itself without clipping."
+  ],
+  "harnessChanges": [
+    ".github/workflows/ci.yml uploads test-results/ and playwright-report/ on failure, 14-day retention. playwright.config.ts already kept a trace and nothing collected it, so a runner-only failure could be read solely through truncated annotation text. AGENTS.md section 6 already claimed CI did this.",
+    "tests/e2e/ug1-duty-reflow.spec.ts reports what it sees when the setup click fails: the screen's text, the button's box, the viewport, available scroll, and what elementFromPoint returns at the click centre including whether it contains the button. That probe is what identified the navigation overlay after two wrong guesses from the truncated log."
+  ],
+  "methodThatWorked": "Reproduce the mechanism, not the platform. The failures only appear where fonts are wider, and chasing fonts is what hid them. Extra letter-spacing at 320px and 200% text, under the same Pixel 7 descriptor CI uses, does to a layout what a wider font does. Three of the four overflow causes reproduced that way and were fixed before a CI round; the two that did not reproduce were handled by making the code under test say what it saw, rather than by guessing.",
+  "honestNote": "Two of the six rounds were spent on wrong guesses about the duty-reflow click, made from a truncated annotation: first that the button was unreachable, then that its own parent section intercepted it. Both were wrong. The probe settled it in one round. The lesson is already recorded in the plan: a geometry assertion that cannot name the geometry costs a full round trip every time it fails.",
+  "acceptanceCriteria": {
+    "verifyAllGreenOnLinux": "PASS \u2014 run 35645831554",
+    "noAssertionLoosenedWithoutReason": "PASS \u2014 no threshold changed. One filter was narrowed to stop counting clipped elements, with the reason in the code and here.",
+    "threeOriginalFailuresFixedOrExplained": "PASS \u2014 all five fixed in the application, plus one spec locator and two diagnostics",
+    "ciGreenOnCodex0_3_0": "PASS",
+    "platformCoverageDecisionRecorded": "PASS \u2014 03_TECHNICAL_DECISIONS.md section 6.1: CI is the authority for the browser suite, a local run is advisory, a geometry assertion must name its element and ignore clipped boxes, the layout gets fixed rather than the threshold, and the mechanism is reproduced with letter-spacing rather than by chasing fonts."
+  }
+}
