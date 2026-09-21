@@ -89,6 +89,13 @@ test("keeps scan entry readable at 200 percent text", async ({ page }) => {
   ]) {
     await expect(page.getByRole("button", { name })).toBeVisible()
   }
+  // S1 added a choice to this screen; at 200% text it is two lines of Italian
+  // beside a box, which is exactly the shape that overflowed elsewhere.
+  const readPhone = page.getByRole("checkbox", {
+    name: /Leggi anche il telefono/,
+  })
+  await expect(readPhone).toBeVisible()
+  await expect(readPhone).not.toBeChecked()
   const overflow = await page.evaluate(
     () =>
       document.documentElement.scrollWidth -

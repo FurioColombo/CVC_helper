@@ -487,3 +487,147 @@ describe("StudentScan", () => {
     await waitFor(() => expect(onCommitted).toHaveBeenCalledOnce())
   })
 })
+
+/**
+ * The telephone is the third column of the roster and the one the course does
+ * not need. Left unread it must be absent everywhere: not asked of the scan,
+ * not shown, not counted against the operator, not stored.
+ */
+describe("StudentScan telephone option", () => {
+  /** The same row as the sheet gives it, with and without the number read. */
+  const WITH_PHONE: StudentScanResult = {
+    aggregateConfidence: 92,
+    unsuitable: false,
+    candidates: [
+      {
+        sourceId: "line-1",
+        firstName: "Mario",
+        surname: "Rossi",
+        dateOfBirth: "2008-03-12",
+        phone: "333 123 456?",
+        sex: "male",
+        // Only the number is doubtful, so it alone decides whether this row
+        // costs the operator a check.
+        confidence: { firstName: 96, surname: 95, dateOfBirth: 96, phone: 41 },
+      },
+    ],
+  }
+  const WITHOUT_PHONE: StudentScanResult = {
+    ...WITH_PHONE,
+    candidates: [{ ...WITH_PHONE.candidates[0]!, phone: "" }],
+  }
+
+  /** Mirrors the capability: asked for, or blank. */
+  function scanHonouringTheOption() {
+    return vi.fn(
+      async (
+        _image: Blob,
+        _onProgress?: unknown,
+        options?: { readPhone: boolean },
+      ) => (options?.readPhone ? WITH_PHONE : WITHOUT_PHONE),
+    )
+  }
+
+  async function scanWith(
+    scan: ReturnType<typeof scanHonouringTheOption>,
+    turnThePhoneOn: boolean,
+  ) {
+    const user = userEvent.setup()
+    render(
+      <StudentScan
+        courseId="course-1"
+        courseStartDate="2026-08-29"
+        onBack={vi.fn()}
+        onCommitted={vi.fn()}
+        scan={scan}
+      />,
+    )
+    const option = screen.getByRole("checkbox", {
+      name: /Leggi anche il telefono/,
+    })
+    expect(option).not.toBeChecked()
+    if (turnThePhoneOn) await user.click(option)
+    await user.upload(
+      screen.getByLabelText("Scegli foto dell’elenco allievi dalla galleria"),
+      new File(["image"], "elenco.png", { type: "image/png" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Usa questa area" }))
+    await screen.findByRole("heading", { name: "Controlla prima di salvare" })
+    return user
+  }
+
+  /** The three review counters, read by their captions rather than by value. */
+  function counters() {
+    const section = screen.getByLabelText("Stato revisione scansione")
+    const read = (caption: string) =>
+      within(section).getByText(caption).parentElement?.querySelector("strong")
+        ?.textContent
+    return {
+      rowsToReview: read("righe da controllare"),
+      missingFields: read("campi da completare"),
+      ready: read("allievi pronti"),
+    }
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear()
+    vi.clearAllMocks()
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:preview"),
+      revokeObjectURL: vi.fn(),
+    })
+    addStudents.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("does not ask for, show, count or store a telephone left unread", async () => {
+    const scan = scanHonouringTheOption()
+    const user = await scanWith(scan, false)
+
+    expect(scan).toHaveBeenCalledWith(expect.anything(), expect.any(Function), {
+      readPhone: false,
+    })
+    expect(screen.queryByLabelText(/^Telefono riga/)).not.toBeInTheDocument()
+    // The doubtful number would have been the one thing to check. It is not
+    // read, so the row is ready and the counters say so.
+    expect(counters()).toEqual({
+      rowsToReview: "0",
+      missingFields: "0",
+      ready: "1",
+    })
+
+    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
+    await waitFor(() =>
+      expect(addStudents).toHaveBeenCalledWith("course-1", [
+        {
+          firstName: "Mario",
+          surname: "Rossi",
+          nickname: null,
+          dateOfBirth: "2008-03-12",
+          sex: "male",
+          phone: null,
+        },
+      ]),
+    )
+  })
+
+  it("reads and reviews the telephone when it is asked for", async () => {
+    const scan = scanHonouringTheOption()
+    await scanWith(scan, true)
+
+    expect(scan).toHaveBeenCalledWith(expect.anything(), expect.any(Function), {
+      readPhone: true,
+    })
+    expect(screen.getByLabelText(/^Telefono riga/)).toHaveValue("333 123 456?")
+    // Same row, same photograph: now it costs a check.
+    expect(counters()).toEqual({
+      rowsToReview: "1",
+      missingFields: "0",
+      ready: "0",
+    })
+  })
+})

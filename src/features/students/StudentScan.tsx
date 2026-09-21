@@ -17,6 +17,7 @@ import {
   type StudentNameOrder,
   type StudentScanCandidate,
   type StudentScanField,
+  type StudentScanOptions,
   type StudentScanProgress,
   type StudentScanResult,
 } from "@/capabilities/studentScan"
@@ -48,6 +49,17 @@ interface Acquisition {
   source: "camera" | "gallery"
 }
 
+/**
+ * The fields this scan is reviewing. The telephone is in the roster but is only
+ * read when the operator asked for it, so everything that counts, gates or
+ * renders a field works from this list rather than from a fixed four.
+ */
+function reviewedFields(readPhone: boolean): readonly StudentScanField[] {
+  return readPhone
+    ? (["firstName", "surname", "dateOfBirth", "phone"] as const)
+    : (["firstName", "surname", "dateOfBirth"] as const)
+}
+
 function needsReview(candidate: ReviewCandidate, field: StudentScanField) {
   // Confidence is the scan's opinion; a person who has read the row overrules
   // it. Without this the counter can never reach zero on a real photograph,
@@ -67,7 +79,11 @@ function nameReadingNeedsReview(candidate: ReviewCandidate) {
   )
 }
 
-function candidateIsReady(candidate: ReviewCandidate, courseStartDate: string) {
+function candidateIsReady(
+  candidate: ReviewCandidate,
+  courseStartDate: string,
+  readPhone: boolean,
+) {
   return Boolean(
     candidate.firstName.trim() &&
     candidate.surname.trim() &&
@@ -75,9 +91,7 @@ function candidateIsReady(candidate: ReviewCandidate, courseStartDate: string) {
     candidate.dateOfBirth <= courseStartDate &&
     candidate.sex &&
     !nameReadingNeedsReview(candidate) &&
-    !(["firstName", "surname", "dateOfBirth", "phone"] as const).some((field) =>
-      needsReview(candidate, field),
-    ),
+    !reviewedFields(readPhone).some((field) => needsReview(candidate, field)),
   )
 }
 
@@ -147,6 +161,7 @@ function CandidateCard({
   index,
   invalid,
   disabled,
+  readPhone,
   onChange,
   onRemove,
 }: {
@@ -155,6 +170,7 @@ function CandidateCard({
   index: number
   invalid: boolean
   disabled: boolean
+  readPhone: boolean
   onChange: (candidate: ReviewCandidate) => void
   onRemove: () => void
 }) {
@@ -299,7 +315,9 @@ function CandidateCard({
         />
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div
+        className={`mt-2 grid gap-2 ${readPhone ? "grid-cols-2" : "grid-cols-1"}`}
+      >
         <ReviewField
           candidate={candidate}
           field="dateOfBirth"
@@ -309,15 +327,17 @@ function CandidateCard({
           onChange={(value) => updateField("dateOfBirth", value)}
           type="date"
         />
-        <ReviewField
-          candidate={candidate}
-          field="phone"
-          inputMode="tel"
-          label="Telefono"
-          disabled={disabled}
-          onChange={(value) => updateField("phone", value)}
-          type="tel"
-        />
+        {readPhone && (
+          <ReviewField
+            candidate={candidate}
+            field="phone"
+            inputMode="tel"
+            label="Telefono"
+            disabled={disabled}
+            onChange={(value) => updateField("phone", value)}
+            type="tel"
+          />
+        )}
       </div>
 
       <fieldset className="mt-2 grid gap-1.5 text-sm font-bold">
@@ -369,6 +389,7 @@ export function StudentScan({
   scan?: (
     image: Blob,
     onProgress?: (progress: StudentScanProgress) => void,
+    options?: StudentScanOptions,
   ) => Promise<StudentScanResult>
 }) {
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -377,6 +398,10 @@ export function StudentScan({
   const cameraButtonRef = useRef<HTMLButtonElement>(null)
   const scanGenerationRef = useRef(0)
   const saveInFlightRef = useRef(false)
+  // Off by default. The owner asked for the telephone to be opt-in so a scan
+  // can be judged on the names and the dates of birth, which is what the course
+  // actually needs; the number is useful and rarely urgent.
+  const [readPhone, setReadPhone] = useState(false)
   const [state, setState] = useState<ScanState>("idle")
   const [progress, setProgress] = useState<StudentScanProgress>({
     phase: "loading",
@@ -429,11 +454,15 @@ export function StudentScan({
     setInvalidIds(new Set())
     setSaveError(false)
     try {
-      const result = await scan(file, (nextProgress) => {
-        if (scanGenerationRef.current === generation) {
-          setProgress(nextProgress)
-        }
-      })
+      const result = await scan(
+        file,
+        (nextProgress) => {
+          if (scanGenerationRef.current === generation) {
+            setProgress(nextProgress)
+          }
+        },
+        { readPhone },
+      )
       if (scanGenerationRef.current !== generation) return
       if (result.unsuitable) {
         setState("unsuitable")
@@ -467,7 +496,10 @@ export function StudentScan({
     if (saveInFlightRef.current) return
     const invalid = new Set(
       candidates
-        .filter((candidate) => !candidateIsReady(candidate, courseStartDate))
+        .filter(
+          (candidate) =>
+            !candidateIsReady(candidate, courseStartDate, readPhone),
+        )
         .map(({ id }) => id),
     )
     setInvalidIds(invalid)
@@ -512,12 +544,10 @@ export function StudentScan({
       !candidate.dateOfBirth ||
       !candidate.sex ||
       nameReadingNeedsReview(candidate) ||
-      (["firstName", "surname", "dateOfBirth", "phone"] as const).some(
-        (field) => needsReview(candidate, field),
-      ),
+      reviewedFields(readPhone).some((field) => needsReview(candidate, field)),
   ).length
   const readyStudents = candidates.filter((candidate) =>
-    candidateIsReady(candidate, courseStartDate),
+    candidateIsReady(candidate, courseStartDate, readPhone),
   ).length
   const hasUnresolvedNameOrder = candidates.some(
     (candidate) => candidate.nameReading?.order === "unknown",
@@ -579,9 +609,27 @@ export function StudentScan({
           </span>
           <h2 className="mt-4 text-xl font-black">Importa l’elenco</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Inquadra bene nomi, date di nascita e telefoni. L’analisi avviene
-            sul dispositivo.
+            Inquadra bene nomi e date di nascita. L’analisi avviene sul
+            dispositivo.
           </p>
+          {/* The telephone is opt-in. Left off, it is not reported and not
+              counted, so the review is about the two fields the course needs. */}
+          <label className="mt-4 flex min-w-0 items-start gap-3 rounded-2xl border bg-muted/50 p-3 text-left">
+            <input
+              checked={readPhone}
+              className="mt-[2px] size-5 shrink-0 accent-[var(--primary)]"
+              onChange={(event) => setReadPhone(event.target.checked)}
+              type="checkbox"
+            />
+            <span className="min-w-0">
+              <span className="block text-sm font-bold">
+                Leggi anche il telefono
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                Lasciato spento, i numeri non vengono letti né richiesti.
+              </span>
+            </span>
+          </label>
           {state === "error" && (
             <p
               className="mt-3 text-sm font-semibold text-[#b42318]"
@@ -854,6 +902,7 @@ export function StudentScan({
                 courseStartDate={courseStartDate}
                 disabled={state === "saving"}
                 index={index}
+                readPhone={readPhone}
                 invalid={invalidIds.has(candidate.id)}
                 key={candidate.id}
                 onChange={(updated) =>

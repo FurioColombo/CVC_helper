@@ -3,5 +3,17 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  // The build uses the referenced projects and Vite resolves "@/" itself, so
+  // this is not for the build. It is for tooling that reads the root config and
+  // runs the app's modules directly under Node: scripts/ocr-real-diagnostic.mjs
+  // imports src/capabilities/studentScan.ts, which gained a value import of
+  // "@/lib/assetPath" and stopped resolving. Type-only "@/" imports had hidden
+  // the gap because they are erased before Node sees them.
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
 }

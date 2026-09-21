@@ -27,6 +27,15 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
     page.getByLabel("Scatta foto dell’elenco allievi"),
   ).toHaveAttribute("capture", "environment")
 
+  // The telephone is opt-in since S1 and this journey is the one that proves
+  // the column is read correctly, so it asks for it. The off path, which is
+  // now the default, is s1-scan-phone-option.spec.ts.
+  const readPhone = page.getByRole("checkbox", {
+    name: /Leggi anche il telefono/,
+  })
+  await expect(readPhone).not.toBeChecked()
+  await readPhone.check()
+
   const input = page.getByLabel(
     "Scegli foto dell’elenco allievi dalla galleria",
   )
