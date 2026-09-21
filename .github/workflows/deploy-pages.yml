@@ -34,9 +34,17 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Build for the project subpath
-        env:
-          CVC_BASE_PATH: ${{ github.event.repository.name }}
-        run: npm run build
+        # github.repository is always "owner/name"; take the name from it rather
+        # than from the event payload, which is not guaranteed to carry a
+        # repository object. An empty base here would build a root site and
+        # every asset would 404 under /<repo>/ — a silent, confusing failure.
+        run: |
+          set -euo pipefail
+          base="${GITHUB_REPOSITORY##*/}"
+          test -n "$base"
+          echo "Building for base /$base/"
+          CVC_BASE_PATH="$base" npm run build
+          grep -q "\"scope\":\"/$base/\"" dist/manifest.webmanifest
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
