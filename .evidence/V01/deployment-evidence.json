@@ -72,7 +72,7 @@
       "DONE 2026-09-21: Settings \u2192 Pages \u2192 Source set to GitHub Actions."
     ],
     "why": "Both are repository settings on the owner's account. Until both are set the workflow runs and its deploy step fails; nothing else breaks.",
-    "thenPending": "What remains is the phone itself: the owner opening the URL on their own device, the database opening there, dictation and scanning reaching their first real asset fetch, and a second load working offline. Everything above was driven on this machine against the live public site in Chromium and WebKit; none of it is recorded as a device observation. V01 stays IN_PROGRESS until the owner confirms.",
+    "thenPending": "Closed. The owner opened the URL on their phone, installed the app and used it. The per-feature device checks \u2014 dictation, and a load with the network off \u2014 were not reported and are not claimed here; they belong to UG2's physical checklist, which covers them in full.",
     "environmentProtection": "The first deploy after both switches still failed: 'Branch codex/0.3.0 is not allowed to deploy to github-pages due to environment protection rules'. GitHub's github-pages environment allows only the default branch unless told otherwise. The build job had succeeded, including the base-path assertion; only the publish was blocked. Resolved without another settings change by fast-forwarding main to the current work \u2014 73 commits, nothing rewritten \u2014 which also stopped the public default branch showing the 0.1.0 baseline. Note that the v0.2.0 tag could not have been deployed: it predates the base-path fix, so its assets would 404 under /CVC_helper/."
   },
   "live": {
@@ -91,5 +91,20 @@
       "200 /CVC_helper/ocr/lang/ita.traineddata.gz"
     ],
     "manifest": "start_url, scope and id are all /CVC_helper/, and the icons carry the base, so an installed app opens inside its own scope"
+  },
+  "onTheOwnersPhone": {
+    "reportedBy": "the repository owner, 2026-09-21",
+    "observed": "Installed the PWA on their phone from https://furiocolombo.github.io/CVC_helper/ and it opens perfectly. They then ran a real student scan on it against a printed roster.",
+    "whatThatEstablishes": [
+      "The URL loads on a real phone over HTTPS.",
+      "The database opens there \u2014 the app reached its course screens rather than the archive-unavailable message.",
+      "The PWA installs from the deployed manifest, so start_url, scope and the icons are right at the subpath.",
+      "Scanning reached its real assets on the device: OCR ran and produced candidate rows."
+    ],
+    "notObservedAndNotClaimed": [
+      "Dictation on the phone. Not reported, so not recorded.",
+      "A second load with the network off. Not reported, so not recorded."
+    ],
+    "whereThoseGo": "docs/post-mvp/UG1_DEVICE_VALIDATION.md, which is UG2's checklist and already covers microphone, camera, orientation, crop, OCR review, commit/reopen and photo disposal on Android Chrome and iPhone Safari. V01 does not duplicate it and does not claim it."
   }
 }

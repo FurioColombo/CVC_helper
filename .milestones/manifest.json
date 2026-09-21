@@ -379,7 +379,7 @@
     {
       "id": "V01",
       "category": "FOUNDATION",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/V01/verification.json",
@@ -388,6 +388,20 @@
         ".evidence/V01/self-review.json"
       ],
       "requiredReviews": [".evidence/V01/self-review.json"]
+    },
+    {
+      "id": "S1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S1/verification.json",
+        ".evidence/S1/scan-field-selection.json",
+        ".evidence/S1/review-load-measurement.json",
+        ".evidence/S1/browser-evidence.json",
+        ".evidence/S1/self-review.json"
+      ],
+      "requiredReviews": [".evidence/S1/self-review.json"]
     },
     {
       "id": "V02",
