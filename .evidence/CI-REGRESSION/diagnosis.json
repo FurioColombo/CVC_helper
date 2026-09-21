@@ -1,0 +1,78 @@
+{
+  "subject": "npm run verify:all passes on Windows and fails on the Linux runner",
+  "raised": "2026-09-21, by the first push of the 0.3.0 cycle",
+  "notPartOf": "docs/post-mvp/0_3_0_OWNER_BRIEF.md. Tracked because AGENTS.md section 5 makes CI part of the command surface and UG2's acceptance criteria require the full deterministic ladder.",
+  "howItHid": "The repository was private and nothing was pushed for the whole 0.2.0 cycle, so the workflow U00 wrote never ran against the code it guards. U00's completion log says CI runs the verify:all surface; that was true of the configuration and untrue of any run. Last green run: 2026-09-03, against the 0.1.0 baseline at c907b19.",
+  "failingRun": {
+    "id": 35567591949,
+    "branch": "codex/0.3.0",
+    "commit": "d59f94f",
+    "duration": "23m 44s",
+    "result": "120 passed, 6 intended project-matrix skips, 5 failed",
+    "everythingBeforeTheBrowserSuite": "lint, formatting, typecheck, 400 unit tests across 38 files, repository and canonical-domain checks, the 0.1.0 compatibility fixture, the production PWA build and the deterministic full week all passed on the runner. The failures are confined to Playwright."
+  },
+  "method": {
+    "problem": "The three failures are assertions about rendered geometry, and they only fail where the fonts are wider. Chasing fonts is how this was missed in the first place.",
+    "approach": "Reproduce the mechanism rather than the platform. The mechanism under test is 'an element sized by its own content escapes its container', and letter-spacing drives exactly that. A layout that survives extra letter-spacing at 320px and 200% text survives a wider font.",
+    "fidelity": "The reproduction used the Pixel 7 device descriptor, the same one the CI project uses, because isMobile and deviceScaleFactor change layout."
+  },
+  "causes": [
+    {
+      "id": "CI-SELECT-OVERFLOW",
+      "spec": "tests/e2e/u09-crews.spec.ts",
+      "ciSymptom": "document 351px against a 320px viewport; named offender SELECT, right edge 351",
+      "reproducedLocally": true,
+      "reproduction": "At 320px and 200% text with one extra pixel of letter-spacing, the select reached 327 on a 320 viewport. Measured directly: the select was 329px wide inside a 296px label, so it was escaping its own parent by 33px.",
+      "rootCause": "SessionChoice in src/features/crews/CrewManagement.tsx wrapped a bare <select> in a grid label. A select is sized by its widest option unless told otherwise, and neither the label nor the select allowed shrinking below that intrinsic width.",
+      "fix": "w-full and min-w-0 on the select, min-w-0 on the label.",
+      "afterFix": "The select measures exactly its label, 296px, and the page shows zero overflow at 0px, 1px and 2px of extra letter-spacing, where 2px previously overflowed by 21px.",
+      "note": "On this machine it fit at 200% text by a couple of pixels. That is the whole reason it reached CI: the assertion was correct and the margin was nil."
+    },
+    {
+      "id": "CI-SCAN-CARD-OVERFLOW",
+      "spec": "tests/e2e/student-scan.spec.ts:96",
+      "ciSymptom": "review cards overflow their container by 8px against an allowance of 3; the document itself does not overflow",
+      "reproducedLocally": false,
+      "reproduction": "Not reproduced. The scan review was driven at 320px and 200% text under the Pixel 7 descriptor with up to 2px of extra letter-spacing, and the card overflow stayed 0. What did reproduce, in the same cards, is a caption row overflowing its own box by 12px at this machine's fonts and 22px with wider glyphs.",
+      "rootCause": "In src/features/students/StudentScan.tsx the field caption and its 'Da controllare' flag share a half-width column in a flex row. At 200% text neither fits beside the other, and flex items do not shrink below their own content unless told to, so the row pushed past its column.",
+      "fix": "The row wraps (flex-wrap with a small row gap) and both spans get min-w-0 and break-words.",
+      "afterFix": "The caption row no longer overflows at any tested spacing, and the card overflow stays 0.",
+      "honestly": "This fix is reasoned from the same mechanism as the first, not from a local reproduction of the 8px figure. Whether it was the cause is for CI to say, not this file."
+    },
+    {
+      "id": "CI-ADD-BUTTON-CLICK",
+      "spec": "tests/e2e/ug1-duty-reflow.spec.ts",
+      "ciSymptom": "clicking 'Aggiungi allievo' times out at 30s. Playwright reports the button resolved, visible, enabled, stable and scrolled into view, then names a <section class=\"rounded-3xl bord\u2026\"> \u2014 the truncation cuts the line, but that is Playwright's 'intercepts pointer events'. The named section matches EmptyStudents in src/features/students/StudentManagement.tsx, which is the button's own parent.",
+      "reproducedLocally": false,
+      "whatWasChecked": "At 320px and 200% text under the Pixel 7 descriptor, with and without wider glyphs: the page scrolls (scrollHeight 1178 against a 664 viewport, 514px of scroll available), the empty-state section is 810px tall, the button sits 105px below the fold, and the click succeeds. So 'the button cannot be reached' is not the explanation.",
+      "fix": "None. Not touched.",
+      "why": "The plan entry for this work says to diagnose this one before touching it, and the only evidence available was a truncated annotation. Guessing at a pointer-interception bug and changing layering on that basis is how a real defect gets papered over."
+    }
+  ],
+  "harnessChange": {
+    "what": "playwright.config.ts already sets trace: retain-on-failure, and .github/workflows/ci.yml discarded the output, so a failure that only happens on the runner could be read solely through truncated annotation text. The workflow now uploads test-results/ and playwright-report/ on failure, with 14-day retention.",
+    "why": "AGENTS.md section 6 already claimed CI uploads failure artifacts where useful. It did not. This is the missing piece, and it is what makes CI-ADD-BUTTON-CLICK diagnosable on the next run."
+  },
+  "principleApplied": "The layouts were fixed, not the assertions. An 8px overflow and a 31px overshoot at 320px are real: R18 forbids horizontal scrolling in the operating interface, and the runner is telling the truth about a viewport the rulebook's own contract covers. Raising an allowance to make CI green would have been falsifying the check. The 3px allowance already in student-scan.spec.ts is itself a smell and is left alone for now rather than widened.",
+  "localVerification": [
+    "npm run lint, npm run typecheck: clean",
+    "npm run test: 38 files, 400 tests passed",
+    "npm run verify:e2e -- u09-crews, student-scan, u04-scan-ui, ug1-duty-reflow --project=pixel-7-chrome: 6 passed"
+  ],
+  "status": "One of three fixed and confirmed by CI. One improved from 31px to 3px, with the diagnostic sharpened to name the remainder. One still open and now diagnosable. A flaky spec bug found and fixed on the way.",
+  "firstFixRun": {
+    "id": 35635226831,
+    "commit": "f554823",
+    "result": "3 failed, 2 flaky, 6 skipped, 120 passed in 11.7m \u2014 down from 5 failed",
+    "fixed": "student-scan.spec.ts no longer fails. The caption-row fix was the cause after all, reasoned rather than reproduced, and CI confirmed it.",
+    "improvedButNotFixed": "u09-crews went from 351px on a 320 viewport to 323px \u2014 the select accounted for 28 of the 31px. 3px remain and the spec's own offender report could not say from where: it took the first eight elements in document order, which filled the list with ancestors that merely contain the overflow and left the responsible element out entirely.",
+    "unchanged": "ug1-duty-reflow still fails, as expected; it was not touched.",
+    "newlyVisible": "u10-evaluations:301 became flaky on both projects: getByText(longNote) matched both the clamped preview span and the note editor's textarea, a strict-mode violation that appears or not depending on whether an editor is open. Latent, not caused by this work, and now fixed by scoping the locator to the preview.",
+    "artifactUpload": "The new upload step ran and succeeded, so a trace exists for the next investigation. Downloading it needs authentication, so it was not used here."
+  },
+  "secondRound": {
+    "u09Diagnostic": "The offender report now sorts by how far past the right edge each element reaches, reports selfOverflow and whether the element clips, and keeps the widest eight. That is what will name the remaining 3px.",
+    "u10Locator": "Scoped to span.line-clamp-2, so the preview assertion cannot match an open editor's textarea.",
+    "principle": "Neither change touches an assertion's threshold. One makes a failure legible; the other stops a locator matching two elements."
+  }
+}

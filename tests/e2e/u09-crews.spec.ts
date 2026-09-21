@@ -21,20 +21,26 @@ async function assertNoHorizontalOverflow(page: Page) {
     viewport: document.documentElement.clientWidth,
     innerWidth,
     body: document.body.scrollWidth,
+    // Sorted by how far past the right edge each element reaches, widest
+    // first. This used to take the first eight in document order, which filled
+    // the list with ancestors that merely contain the overflow and left the
+    // element responsible out of it entirely.
     offenders: [...document.querySelectorAll<HTMLElement>("body *")]
-      .filter(
-        (element) =>
-          element.getBoundingClientRect().right >
-            document.documentElement.clientWidth + 1 ||
-          element.scrollWidth > element.clientWidth + 1,
-      )
-      .slice(0, 8)
       .map((element) => ({
         tag: element.tagName,
         className: element.className,
         label: element.getAttribute("aria-label"),
         right: Math.round(element.getBoundingClientRect().right),
-      })),
+        selfOverflow: element.scrollWidth - element.clientWidth,
+        clipped: getComputedStyle(element).overflowX !== "visible",
+      }))
+      .filter(
+        (entry) =>
+          entry.right > document.documentElement.clientWidth + 1 ||
+          entry.selfOverflow > 1,
+      )
+      .sort((a, b) => b.right - a.right || b.selfOverflow - a.selfOverflow)
+      .slice(0, 8),
   }))
   expect(widths.document, JSON.stringify(widths)).toBeLessThanOrEqual(
     widths.viewport + 1,
