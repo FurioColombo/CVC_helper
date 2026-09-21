@@ -89,6 +89,12 @@ test("Comandate empty state and proposal reflow at 320 px with 200% text", async
         // element responsible — a grid of two buttons whose longest word plus
         // padding no longer fitted at 200% text — took a separate run to find.
         // Widest first, so the cause leads and its ancestors follow.
+        //
+        // An element that clips is not an offender. `truncate` means
+        // overflow-hidden with an ellipsis, so its scrollWidth exceeds its
+        // clientWidth by design and it cannot push anything: counting those
+        // flagged "Bilancia minori" on the proposal screen, where the page
+        // measured exactly 320.
         offenders: [...document.querySelectorAll<HTMLElement>("body *")]
           .map((element) => ({
             tag: element.tagName,
@@ -96,11 +102,12 @@ test("Comandate empty state and proposal reflow at 320 px with 200% text", async
             text: (element.textContent || "").trim().slice(0, 40),
             right: Math.round(element.getBoundingClientRect().right),
             selfOverflow: element.scrollWidth - element.clientWidth,
+            clips: getComputedStyle(element).overflowX !== "visible",
           }))
           .filter(
             (entry) =>
               entry.right > document.documentElement.clientWidth + 1 ||
-              entry.selfOverflow > 1,
+              (entry.selfOverflow > 1 && !entry.clips),
           )
           .sort((a, b) => b.right - a.right || b.selfOverflow - a.selfOverflow)
           .slice(0, 6),

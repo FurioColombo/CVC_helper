@@ -34,10 +34,12 @@ async function assertNoHorizontalOverflow(page: Page) {
         selfOverflow: element.scrollWidth - element.clientWidth,
         clipped: getComputedStyle(element).overflowX !== "visible",
       }))
+      // A clipped element cannot push the page: `truncate` and any
+      // overflow-hidden box exceeds its own clientWidth by design.
       .filter(
         (entry) =>
           entry.right > document.documentElement.clientWidth + 1 ||
-          entry.selfOverflow > 1,
+          (entry.selfOverflow > 1 && !entry.clipped),
       )
       .sort((a, b) => b.right - a.right || b.selfOverflow - a.selfOverflow)
       .slice(0, 8),
