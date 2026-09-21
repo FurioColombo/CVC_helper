@@ -1163,6 +1163,39 @@ scan redesign correction" entry under UG1 did for 0.2.0.
 Feature milestones use the `V` series. The gate keeps the `UG` series and is
 `UG2`, which is what the brief calls it.
 
+## Where this cycle stands
+
+Updated 2026-09-21. Keep this current: it is the first thing the next session
+reads, and it is the only place that says what is happening *right now* rather
+than what happened.
+
+| Item | Status |
+| --- | --- |
+| 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
+| V01 — reachable from a phone | IN_PROGRESS — built and measured; waiting on a confirmed deploy and the owner's phone |
+| CI regression | OPEN — red on Linux since the 0.2.0 work; blocks UG2 |
+| V02–V05, UG2 | PENDING — blocked by the controller until V01 is COMPLETE |
+
+**Done in this session:** 0.2.0 closed and tagged; the brief's sections 3–8
+written into this plan as V01–V05 and UG2 before any of their code; V01's
+isolation measurement, base-path portability, offline proof, privacy check,
+deploy workflow and `docs/DEPLOY.md`; the repository pushed and made public and
+Pages switched to GitHub Actions.
+
+**Immediately next:**
+
+1. Confirm the Pages deploy actually publishes and the URL serves the app.
+2. The owner opens it on their phone. That is what closes V01's remaining
+   acceptance criteria; nothing about a device is recorded without them.
+3. Fix the CI regression. It is red today and UG2 cannot claim its ladder while
+   it is.
+4. `milestone:complete V01`, checkpoint, then V02.
+
+**Then, in order, and not reordered:** V02 the dictation control, V03
+transcription quality under the latency constraint, V04 the crop editor's two
+details, V05 the LLM-assisted scanning path, UG2 the gate. Each with the full
+lifecycle of `AGENTS.md` section 6 around it.
+
 ## Frozen 0.3.0 scope and traceability
 
 | Brief section | Disposition | Canonical area | Milestone |
@@ -1283,9 +1316,135 @@ taking it down.
 
 **Still open, and why V01 stays IN_PROGRESS.** Two repository settings belong to
 the owner's account: making the repository public, and setting Pages' source to
-GitHub Actions. Until both are set the workflow runs and its deploy step fails.
-After that, the acceptance criteria that need a real phone are the owner's to
-confirm. Nothing about a device is recorded here.
+GitHub Actions. After that, the acceptance criteria that need a real phone are
+the owner's to confirm. Nothing about a device is recorded here.
+
+**2026-09-21, later — pushed, and both switches are set.**
+
+`codex/post-mvp-ux-planning`, `codex/0.3.0` and the annotated `v0.2.0` tag are on
+the remote. The owner made the repository public and set Pages' source to GitHub
+Actions; `has_pages` is now true. The deploy is expected at
+`https://furiocolombo.github.io/CVC_helper/` on the next push.
+
+**2026-09-21 — the first push in this cycle broke a silence: CI has been red
+since the 0.2.0 work began.**
+
+This repository had never been pushed during the 0.2.0 cycle, so
+`.github/workflows/ci.yml` had never run against any of it. The last green run
+was 2026-09-03 on `main`, which is still the 0.1.0 baseline at `c907b19`. The
+first push of this cycle ran it against 0.2.0 and 0.3.0 code and it failed on
+every branch, including the `v0.2.0` tag.
+
+The job gets all the way through lint, formatting, typecheck, 400 unit tests,
+the domain and compatibility checks, the production build and the deterministic
+full week. It fails in the browser suite: **120 passed, 6 intended skips, 5
+failed**, in 20.5 minutes. Three distinct causes, none of them flaky, all of
+them reproducing across retries:
+
+1. **`student-scan.spec.ts:96`** — the review cards overflow their container by
+   8 px against an allowance of 3. The page itself does not scroll sideways
+   (`reviewOverflow.document` is 0), so this is the cards, not the layout.
+2. **`u09-crews.spec.ts`** — the document measures 351 px against a 320 px
+   viewport. The named offender is the session `<select>`, whose right edge sits
+   at 351.
+3. **`ug1-duty-reflow.spec.ts`** — `Aggiungi allievo` resolves, is reported
+   visible, enabled, stable and scrolled into view, and then the click times out
+   at 30 s. The truncated log points at a `<section>` rather than the button,
+   which suggests something is intercepting the pointer at 320 px with 200 %
+   text, but the log is cut off and that part is a hypothesis, not a finding.
+
+The first two are almost certainly font metrics: a native `<select>` and text
+run wider on the Linux runner's fonts than on this machine's, and the layouts
+have no margin left at the stress viewport. The third is not yet understood.
+
+**What this means, stated plainly.** The 0.2.0 release gate passed — on Windows.
+The same suite on Linux does not. `verify:all` is therefore not the
+platform-independent gate `AGENTS.md` section 5 takes it for, and the UG1
+completion log's claim should be read as what it literally recorded: a green run
+on Node 24.21.0 on this machine. Nothing in the release is retracted — the
+failures are three stress-viewport assertions, not broken product behaviour —
+but the gate was narrower than it looked, and CI existed without ever being
+exercised.
+
+**Disposition.** This is a defect in the harness and in two or three layouts, not
+in the brief. It is recorded here rather than folded silently into V01, it must
+be green before UG2 can honestly claim its deterministic ladder, and it is the
+next thing taken up after the deploy is confirmed. See the CI regression entry
+below.
+
+Also noted, non-blocking: GitHub warns that `actions/checkout@v4` and
+`actions/setup-node@v4` target Node 20, which is deprecated on runners and is
+being forced to Node 24.
+
+## CI regression — the browser suite is not platform-independent
+
+**Category:** FOUNDATION (harness defect, not a brief milestone)
+**Raised:** 2026-09-21, by the first push of the 0.3.0 cycle
+**Status:** OPEN — must be green before UG2
+
+Not part of `0_3_0_OWNER_BRIEF.md`. It is here because `AGENTS.md` section 5
+makes CI part of the command surface and UG2's acceptance criteria require the
+full deterministic ladder, which cannot honestly be claimed while the ladder
+fails on the machine CI runs on. Recorded as its own item rather than absorbed
+into V01, so it cannot be lost.
+
+### What is wrong
+
+`npm run verify:all` passes on Windows and fails on the Linux runner, in the
+browser suite only: 120 passed, 6 intended skips, 5 failed. Everything before
+the browser suite — lint, formatting, typecheck, 400 unit tests, domain and
+compatibility checks, the production build, the deterministic full week — passes
+on both.
+
+| Spec | Symptom | Likely cause |
+| --- | --- | --- |
+| `student-scan.spec.ts:96` | review cards overflow their container by 8 px, allowance 3; the document itself does not overflow | text metrics: the cards have no margin left at the stress viewport |
+| `u09-crews.spec.ts` | document 351 px against a 320 px viewport; the offender is the session `<select>`, right edge 351 | a native select sized by its longest option, wider under the runner's fonts |
+| `ug1-duty-reflow.spec.ts` | `Aggiungi allievo` is visible, enabled, stable and scrolled into view, then the click times out at 30 s | unknown; the truncated log points at a `<section>`, suggesting pointer interception at 320 px and 200 % text |
+
+The first two reproduced identically across all three attempts, so they are
+deterministic, not flaky. The third also failed on all three.
+
+### Why it went unnoticed
+
+The repository was private and nothing was pushed for the whole 0.2.0 cycle, so
+the workflow written in U00 never ran against the code it was meant to guard.
+U00's completion log says "CI now runs the same `verify:all` surface"; that was
+true of the configuration and untrue of any actual run. The last green CI run is
+2026-09-03, against the 0.1.0 baseline.
+
+### Required work
+
+- Reproduce on Linux rather than guessing. The three failures are assertions
+  about rendered geometry, so they need a Linux rendering to be read honestly;
+  guessing at font metrics from Windows is how this was missed in the first
+  place.
+- Fix the layouts, not the assertions. An 8 px overflow and a 31 px overshoot at
+  320 px are real: R18 says no horizontal scrolling in the operating interface,
+  and the runner is telling the truth about a viewport the rulebook's own
+  contract covers. Raising the allowance to make CI green would be falsifying
+  the check.
+- Diagnose the `ug1-duty-reflow` click before touching it. A visible, stable,
+  scrolled-into-view element that cannot be clicked is either an overlay or a
+  hit-testing problem, and both are real defects at the stress viewport.
+- Decide what to do about platform coverage generally: the suite asserts
+  geometry and only ever ran on one platform's fonts. Either the assertions gain
+  a tolerance that is justified and written down, or the geometry stops being
+  this tight, or CI becomes the authority and local runs are advisory.
+
+### Acceptance criteria
+
+`npm run verify:all` passes on the Linux runner with no assertion loosened
+without a recorded reason; the three failures are fixed in the layouts or
+explained; CI is green on `codex/0.3.0`; and the decision about platform
+coverage is written into `03_TECHNICAL_DECISIONS.md` section 6 so the next cycle
+inherits it.
+
+### Evidence
+
+`.evidence/CI-REGRESSION/` — the failing run, the three causes, what changed,
+and a green run afterwards.
+
 
 ## V02 — The dictation control stops changing size
 
