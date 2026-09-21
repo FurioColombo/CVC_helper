@@ -1121,9 +1121,14 @@ export function DutyManagement({
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Crea una proposta uniforme, poi modificala liberamente.
           </p>
-          <div className="mt-6 grid gap-2">
+          {/* A grid track is sized by its widest item's own content, and a
+              button will not shrink below its longest word plus its padding. At
+              200% text "Configura manualmente" needs more than this card gives
+              it, so the row pushed the page sideways. Same treatment as the
+              heading above: let it shrink and let the word break. */}
+          <div className="mt-6 grid min-w-0 gap-2">
             <Button
-              className="w-full"
+              className="w-full min-w-0 break-words [overflow-wrap:anywhere]"
               onClick={() =>
                 setScreen({ kind: "configure", recalculate: false })
               }
@@ -1132,7 +1137,7 @@ export function DutyManagement({
               Proponi comandate
             </Button>
             <Button
-              className="w-full"
+              className="w-full min-w-0 break-words [overflow-wrap:anywhere]"
               onClick={() => setManualMode(true)}
               size="lg"
               variant="secondary"
