@@ -1186,7 +1186,7 @@ local-first build to a static origin and nothing more.
 ## V01 — Reachable from a phone, over HTTPS
 
 **Category:** FOUNDATION
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 ### Goal
 
@@ -1223,6 +1223,69 @@ The URL loads on a real phone over HTTPS; the database opens there; dictation an
 scanning reach their first real asset fetch; a second, offline load still works;
 the deploy and the takedown are written down and repeatable by someone else; no
 course data, analytics or new network call ships.
+
+### Progress log
+
+**2026-09-21 — the measurement, and what it changed.**
+
+The brief said to measure whether the app needs cross-origin isolation rather
+than assume it. It does not. `npm run measure:isolation` drives the real app
+with `SharedArrayBuffer` deleted before any app code runs — the condition
+Android Chrome and iOS Safari impose on a page that is not cross-origin
+isolated — and in Chromium, in Chromium with it explicitly removed, and in
+WebKit the database opened, took a course and kept it across a reload. WebKit
+has no OPFS at all and still worked.
+
+That answers the milestone's three open questions at once. No COOP/COEP is
+needed, so a host that cannot set headers is fine; `require-corp` therefore
+never applies, so the speech model fetch from huggingface.co is not at risk and
+nothing had to be moved same-origin; and the host can be chosen on other
+grounds.
+
+It also contradicted this repository. `CLAUDE.md` asserted that the built-in
+browser pane cannot run the app because it exposes no `SharedArrayBuffer`, so
+wa-sqlite cannot open the database. That was wrong, and expensively so: taken at
+face value it would have bought a header-capable host and moved 73 MB of model
+weights for nothing. The paragraph is corrected, the old reason is recorded as
+having been wrong, and the pane's real symptom is now stated — it stops at
+`Apertura del corso…` with `Failed to fetch a worker script` from inside the
+PowerSync worker. Why is still unknown; `CLAUDE.md` says not to debug the pane
+and nothing depends on it, so it is recorded rather than chased.
+
+**The app no longer assumes it owns the root of its origin.** Every asset was an
+absolute path from `/`. On a project host serving at `/<repo>/` the page loads
+and nothing in it works. `vite.config.ts` takes a base from `CVC_BASE_PATH` and
+derives the manifest's `start_url`, `scope`, `id` and icon paths from it; a new
+`src/lib/assetPath.ts` resolves against `import.meta.env.BASE_URL`, and the OCR
+worker, the CVC symbol and the seven boat marks use it. `check-built-pwa.mjs`
+strips the base before turning a manifest URL into a file path, and now also
+asserts that `start_url` and `scope` agree, because an installed app whose
+`start_url` sits outside its own scope opens in a browser tab instead.
+`check-ocr-offline.mjs` takes the base from the resolved preview config, so the
+offline proof is about a URL somebody will actually open, and says which one.
+
+Verified at the subpath against a real production build: the app runs in all
+three engine configurations, every asset class answers 200 under
+`/CVC_helper/`, the same paths 404 at the root — so the base is genuinely in
+effect — and the offline first-OCR-scan check passes at both bases. The default
+base is still `/` and nothing changes there.
+
+**Privacy.** Zero off-origin requests on a cold load through course creation, no
+course data anywhere in `dist/`, no analytics. The one cross-origin call the app
+makes is the speech model on first dictation, which predates this milestone.
+
+**The host.** The measurement left the choice open, so the owner was asked once,
+with options. They chose to make the repository public and use GitHub Pages, at
+`https://furiocolombo.github.io/CVC_helper/`, and accepted a public URL.
+`.github/workflows/deploy-pages.yml` builds with the base path and publishes;
+`docs/DEPLOY.md` covers redeploying, building locally, proving offline and
+taking it down.
+
+**Still open, and why V01 stays IN_PROGRESS.** Two repository settings belong to
+the owner's account: making the repository public, and setting Pages' source to
+GitHub Actions. Until both are set the workflow runs and its deploy step fails.
+After that, the acceptance criteria that need a real phone are the owner's to
+confirm. Nothing about a device is recorded here.
 
 ## V02 — The dictation control stops changing size
 

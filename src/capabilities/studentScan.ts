@@ -1,4 +1,5 @@
 import type { StudentSex } from "@/domain/config"
+import { absoluteAssetUrl } from "@/lib/assetPath"
 
 export const MIN_FIELD_CONFIDENCE = 70
 
@@ -756,9 +757,10 @@ export function extractStudentCandidates(page: OcrPage): StudentScanResult {
 let progressListener: ((progress: StudentScanProgress) => void) | undefined
 let workerPromise: Promise<import("tesseract.js").Worker> | undefined
 
-function assetUrl(path: string) {
-  return new URL(path, window.location.origin).href
-}
+// Tesseract needs absolute URLs, and they must respect the base path the app
+// was built for: resolving against the origin drops it and 404s on a project
+// host that serves the app at /<repo>/.
+const assetUrl = absoluteAssetUrl
 
 async function getWorker() {
   workerPromise ??= import("tesseract.js")

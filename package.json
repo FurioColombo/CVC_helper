@@ -24,6 +24,7 @@
     "check:ocr-offline": "node scripts/check-ocr-offline.mjs",
     "speech:bench": "node scripts/speech-bench/bench.mjs",
     "diagnose:ocr": "node --import tsx scripts/ocr-real-diagnostic.mjs",
+    "measure:isolation": "node scripts/measure-isolation.mjs",
     "verify:quick": "npm run lint && npm run format:check && npm run typecheck && npm run test",
     "verify:domain": "npm run check:repository && npm run check:domain && npm run check:compatibility",
     "verify:e2e": "node scripts/run-e2e.mjs",

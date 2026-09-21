@@ -1,0 +1,73 @@
+{
+  "milestone": "V01",
+  "subject": "Does the app need cross-origin isolation to open its database?",
+  "measuredOn": "2026-09-21T00:35:48.896Z",
+  "url": "http://127.0.0.1:4180/CVC_helper/",
+  "method": "The real app, driven in Playwright. SharedArrayBuffer is deleted before any app script runs, which is the condition Android Chrome and iOS Safari impose on a page that is not cross-origin isolated. The outcome is what the user sees: the course-creation screen, or the archive-unavailable message.",
+  "runs": [
+    {
+      "engine": "chromium",
+      "sharedArrayBufferHidden": false,
+      "databaseOpened": true,
+      "writeSurvivedReload": true,
+      "visibleOutcome": "ready",
+      "platform": {
+        "crossOriginIsolated": false,
+        "mainThread": {
+          "hasSharedArrayBuffer": false
+        },
+        "inWorker": {
+          "hasSharedArrayBuffer": false,
+          "hasSyncAccessHandle": true,
+          "syncWrittenBytes": 2,
+          "syncAccessWorks": true
+        },
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36"
+      },
+      "consoleErrors": []
+    },
+    {
+      "engine": "chromium",
+      "sharedArrayBufferHidden": true,
+      "databaseOpened": true,
+      "writeSurvivedReload": true,
+      "visibleOutcome": "ready",
+      "platform": {
+        "crossOriginIsolated": false,
+        "mainThread": {
+          "hasSharedArrayBuffer": false
+        },
+        "inWorker": {
+          "hasSharedArrayBuffer": false,
+          "hasSyncAccessHandle": true,
+          "syncWrittenBytes": 2,
+          "syncAccessWorks": true
+        },
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36"
+      },
+      "consoleErrors": []
+    },
+    {
+      "engine": "webkit",
+      "sharedArrayBufferHidden": false,
+      "databaseOpened": true,
+      "writeSurvivedReload": true,
+      "visibleOutcome": "ready",
+      "platform": {
+        "crossOriginIsolated": false,
+        "mainThread": {
+          "hasSharedArrayBuffer": false
+        },
+        "inWorker": {
+          "hasSharedArrayBuffer": false,
+          "hasSyncAccessHandle": false,
+          "syncAccessWorks": false,
+          "syncAccessError": "TypeError: undefined is not an object (evaluating 'navigator.storage.getDirectory')"
+        },
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15"
+      },
+      "consoleErrors": []
+    }
+  ],
+  "conclusion": "The database opens, takes a write and keeps it across a reload without SharedArrayBuffer, so the app does not need cross-origin isolation and any static host will do."
+}

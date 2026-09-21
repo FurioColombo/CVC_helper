@@ -1,0 +1,74 @@
+{
+  "milestone": "V01",
+  "subject": "Making the app reachable from a phone over HTTPS",
+  "date": "2026-09-21",
+  "runtime": { "node": "v24.21.0", "platform": "win32" },
+  "hostDecision": {
+    "decidedBy": "the isolation measurement first, then the owner, asked once on 2026-09-21 when the measurement left the choice open",
+    "measurementSaid": "The app needs no cross-origin isolation, so any static host will do — including one that cannot set headers. See isolation-measurement.json.",
+    "whatRemainedOpen": "github.com/FurioColombo/CVC_helper returns 404 to an anonymous request, so the repository is private, and GitHub Pages from a private repository needs a paid plan. That is an account fact, not something a measurement can settle.",
+    "ownerChose": "Make the repository public and use GitHub Pages. A public URL is acceptable; no login is in scope.",
+    "url": "https://furiocolombo.github.io/CVC_helper/",
+    "consequence": "A project site serves from a subdirectory, so the build had to stop assuming it owns the root of its origin."
+  },
+  "crossOriginIsolation": {
+    "needed": false,
+    "thereforeCoopCoep": "not configured, and not needed",
+    "thereforeRequireCorp": "never applies, so the speech model fetch from huggingface.co on first dictation is not at risk and nothing had to be moved same-origin",
+    "detail": "isolation-measurement.json"
+  },
+  "basePathWork": {
+    "why": "Every asset was written as an absolute path from the origin root. On a project host that serves the app at /CVC_helper/, every one of them is a 404: the page loads and nothing in it works.",
+    "changed": [
+      "vite.config.ts: base comes from CVC_BASE_PATH, default '/' so nothing changes until a build asks for it. The web manifest's start_url, scope, id and icon srcs are derived from it, because an installed PWA navigates to those itself.",
+      "src/lib/assetPath.ts: new. assetPath() and absoluteAssetUrl() resolve against import.meta.env.BASE_URL.",
+      "src/capabilities/studentScan.ts: the OCR worker, core and language paths resolved against window.location.origin, which drops the base path. They use absoluteAssetUrl now.",
+      "src/components/CvcMark.tsx and src/features/boats/BoatIdentity.tsx: the CVC symbol and the seven boat marks.",
+      "scripts/check-built-pwa.mjs: the manifest's URLs carry the base, so it has to come off again before a URL becomes a path under dist/. It also now asserts start_url and scope agree, because an installed app whose start_url is outside its own scope opens in a browser tab instead.",
+      "scripts/check-ocr-offline.mjs: takes the base from the resolved preview config, so the offline proof is about the URL people will actually open, and says which base it tested."
+    ],
+    "verifiedAtTheSubpath": {
+      "built": "CVC_BASE_PATH=CVC_helper npm run build",
+      "servedBy": "CVC_BASE_PATH=CVC_helper vite preview on 127.0.0.1:4180",
+      "appRuns": "chromium, chromium with SharedArrayBuffer removed, and webkit: the database opened, took a course and kept it across a reload in all three",
+      "assetsResolve": [
+        "200 /CVC_helper/ocr/worker.min.js",
+        "200 /CVC_helper/ocr/lang/ita.traineddata.gz",
+        "200 /CVC_helper/ocr/core/tesseract-core-lstm.wasm.js",
+        "200 /CVC_helper/brand/cvc-symbol.png",
+        "200 /CVC_helper/brand/boats/first-27.png",
+        "200 /CVC_helper/icons/cvc-helper-192.png",
+        "200 /CVC_helper/manifest.webmanifest",
+        "200 /CVC_helper/sw.js"
+      ],
+      "andNotAtTheRoot": "404 /ocr/worker.min.js — the base path is genuinely in effect rather than being papered over by a fallback"
+    },
+    "rootBuildUnchanged": "npm run build with no CVC_BASE_PATH still produces scope '/' and start_url '/', and check-built-pwa passes."
+  },
+  "offlineColdLoad": {
+    "atTheSubpath": "PASS: installed PWA at /CVC_helper/ completed its first local OCR scan while offline (3/3 people correctly associated)",
+    "atTheRoot": "PASS: installed PWA at / completed its first local OCR scan while offline (3/3 people correctly associated)",
+    "method": "scripts/check-ocr-offline.mjs installs the service worker, confirms it controls the page, goes offline, confirms an un-precached request under the app's own base now fails, then runs a real OCR scan from the precache."
+  },
+  "privacy": {
+    "courseDataInTheBuild": "none. dist/ was searched for every person in the fixtures and journeys and for the 0.1.0 compatibility fixture; nothing matched. A stranger opening the URL gets an empty app.",
+    "analyticsAdded": "none",
+    "offOriginRequestsOnAColdLoad": 0,
+    "method": "The built app was loaded from a preview server and driven through course creation while every request was recorded. No request left the origin.",
+    "theOneCrossOriginCall": "The Whisper model, from huggingface.co, on first dictation. It predates this milestone, nothing here added it, and it is stated in CHANGELOG.md.",
+    "noteOnStringsInTheBundle": "cdn.jsdelivr.net appears in the transformers.js bundle as a default it does not use here: the ONNX runtime wasm is bundled locally, and the measurement recorded zero off-origin requests. github.com, react.dev, w3.org and similar are attribution and documentation strings, not fetches."
+  },
+  "deployMechanism": {
+    "workflow": ".github/workflows/deploy-pages.yml — builds with CVC_BASE_PATH set to the repository name and publishes dist/ through actions/deploy-pages",
+    "triggers": "push to main or codex/0.3.0, and manual dispatch",
+    "documentation": "docs/DEPLOY.md — what was measured, where it is, how to redeploy, how to build it yourself, how to prove it still works offline, how to take it down, and what does and does not ship"
+  },
+  "notYetDone": {
+    "ownerSettings": [
+      "Make the repository public (Settings → General → Change repository visibility).",
+      "Settings → Pages → Build and deployment → Source: GitHub Actions."
+    ],
+    "why": "Both are repository settings on the owner's account. Until both are set the workflow runs and its deploy step fails; nothing else breaks.",
+    "thenPending": "The acceptance criteria that need a real phone — the URL loading, the database opening there, dictation and scanning reaching their first asset fetch, and a second offline load — are the owner's to confirm. V01 stays IN_PROGRESS until they do. No simulated result is recorded."
+  }
+}

@@ -100,10 +100,19 @@ that are not real.
 
 ## Verifying the app in a browser
 
-- **Claude's built-in browser pane cannot run this app.** Its Chromium exposes no
-  `SharedArrayBuffer`, so wa-sqlite cannot open the database and the app stops at
-  "Archivio non disponibile / Non riesco ad aprire i dati locali". That is the
-  pane, not a defect. Do not debug it.
+- **Claude's built-in browser pane cannot run this app.** It stops at
+  "Apertura del corso…" and logs `Failed to fetch a worker script`, from inside
+  the PowerSync database worker. That is the pane, not a defect. Do not debug it.
+
+  The reason recorded here until 2026-09-21 — that the pane exposes no
+  `SharedArrayBuffer`, so wa-sqlite cannot open the database — was wrong, and it
+  mattered: it implied the app needs a cross-origin-isolated host. V01 measured
+  the opposite. With `SharedArrayBuffer` deleted before any app code runs, in
+  both Chromium and WebKit, the database opens, takes a course and keeps it
+  across a reload. The app needs no COOP/COEP and any static host will do. See
+  `.evidence/V01/isolation-measurement.json` and `docs/DEPLOY.md`.
+
+  Re-measure with `npm run measure:isolation` rather than assuming either way.
 - For a visual check, use the real Chrome tools instead. The app reaches the
   course-creation screen there against either the dev server or the preview build.
 - Milestone evidence still means Playwright, per `AGENTS.md` section 9. A manual

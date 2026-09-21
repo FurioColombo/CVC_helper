@@ -5,13 +5,18 @@ import { preview } from "vite"
 
 const root = resolve(import.meta.dirname, "..")
 const port = 4175
-const url = `http://127.0.0.1:${port}`
 const roster = resolve(root, "tests/fixtures/ocr-sheet-clear.png")
 
 const server = await preview({
   configFile: resolve(root, "vite.config.ts"),
   preview: { host: "127.0.0.1", port, strictPort: true },
 })
+// The app may be built for a subdirectory of its host, in which case both the
+// page and the service worker's scope live under that base. Take it from the
+// resolved config rather than assuming the origin root, or this check proves
+// the offline behaviour of a URL nobody will visit.
+const base = server.config.base || "/"
+const url = `http://127.0.0.1:${port}${base}`
 const browser = await chromium.launch()
 
 try {
@@ -30,16 +35,19 @@ try {
 
   await context.setOffline(true)
   await page.reload({ waitUntil: "domcontentloaded" })
-  const networkIsBlocked = await page.evaluate(async () => {
+  // Ask for something under the app's own base that the precache cannot hold.
+  // The base is passed in rather than read from the page, so this file needs no
+  // browser globals.
+  const networkIsBlocked = await page.evaluate(async (pageUrl) => {
     try {
-      await fetch(`/not-precached-${crypto.randomUUID()}`, {
+      await fetch(`${pageUrl}not-precached-${crypto.randomUUID()}`, {
         cache: "no-store",
       })
       return false
     } catch {
       return true
     }
-  })
+  }, url)
   if (!networkIsBlocked) {
     throw new Error("Unexpected network response while browser is offline")
   }
@@ -74,7 +82,7 @@ try {
   }
 
   console.log(
-    "PASS: installed PWA completed its first local OCR scan while offline (3/3 people correctly associated)",
+    `PASS: installed PWA at ${base} completed its first local OCR scan while offline (3/3 people correctly associated)`,
   )
   await context.close()
 } finally {

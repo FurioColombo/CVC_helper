@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+# The app is local-first and has no backend, so "deploying" is publishing a
+# folder of static files. V01 measured that it needs no cross-origin isolation,
+# so a host that cannot set headers — which GitHub Pages cannot — is fine.
+#
+# A project site serves from /<repo>/, so the build is given that base path.
+# Nothing else about the build changes.
+
+on:
+  push:
+    branches: [main, codex/0.3.0]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and let a newer push win rather than queueing behind an
+# older one that is about to be superseded.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build for the project subpath
+        env:
+          CVC_BASE_PATH: ${{ github.event.repository.name }}
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

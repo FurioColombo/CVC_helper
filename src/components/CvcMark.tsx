@@ -1,3 +1,5 @@
+import { assetPath } from "@/lib/assetPath"
+
 type CvcMarkProps = {
   compact?: boolean
 }
@@ -9,7 +11,7 @@ export function CvcMark({ compact = false }: CvcMarkProps) {
       className={`cvc-symbol${compact ? " cvc-symbol--compact" : ""}`}
       role="img"
     >
-      <img alt="" src="/brand/cvc-symbol.png" />
+      <img alt="" src={assetPath("/brand/cvc-symbol.png")} />
     </span>
   )
 }

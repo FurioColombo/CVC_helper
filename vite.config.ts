@@ -57,7 +57,19 @@ function localOcrAssets(): Plugin {
   }
 }
 
+// Where the app will be served from. `/` for a host that gives it the root of a
+// domain; `/<repo>/` for a project host that serves it from a subdirectory.
+// V01 measured that the app needs no cross-origin isolation, so any static host
+// will do — but only if its base path reaches the assets, which is what this is
+// for. Set CVC_BASE_PATH at build time; the default changes nothing.
+const base = (() => {
+  const configured = process.env.CVC_BASE_PATH?.trim()
+  if (!configured || configured === "/") return "/"
+  return `/${configured.replace(/^\/+|\/+$/g, "")}/`
+})()
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -71,16 +83,20 @@ export default defineConfig({
         theme_color: "#2f5fa0",
         background_color: "#f4f1e8",
         display: "standalone",
-        start_url: "/",
+        // An installed PWA navigates to these itself, so they have to carry the
+        // base path rather than assume the origin root.
+        start_url: base,
+        scope: base,
+        id: base,
         lang: "it",
         icons: [
           {
-            src: "/icons/cvc-helper-192.png",
+            src: `${base}icons/cvc-helper-192.png`,
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/icons/cvc-helper-512.png",
+            src: `${base}icons/cvc-helper-512.png`,
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
