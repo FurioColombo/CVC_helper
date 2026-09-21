@@ -45,6 +45,20 @@
   * {
     border-color: var(--border);
   }
+
+  /* The bottom navigation is fixed, so anything the browser scrolls into view
+     can come to rest underneath it: a control reached by Tab, an anchor
+     target, a field focused when the keyboard opens. The page's own `pb-28`
+     reserves room at the end of the document and does nothing for an element
+     in the middle of it, which is how a primary action ends up behind the bar
+     at 200% text — R12 says a floating element must not cover a control or the
+     focus. Reserving the bar's height as scroll margin is what stops it.
+
+     The value tracks the bar: `pt-2` + `min-h-14` + its bottom padding, plus
+     the safe area, so it scales with the text like the bar does. */
+  :where(a[href], button, input, select, textarea, summary, [tabindex]) {
+    scroll-margin-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
 }
 
 html {
