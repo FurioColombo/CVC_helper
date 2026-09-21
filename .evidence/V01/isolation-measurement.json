@@ -1,8 +1,8 @@
 {
   "milestone": "V01",
   "subject": "Does the app need cross-origin isolation to open its database?",
-  "measuredOn": "2026-09-21T00:35:48.896Z",
-  "url": "http://127.0.0.1:4180/CVC_helper/",
+  "measuredOn": "2026-09-21T17:20:59.784Z",
+  "url": "https://furiocolombo.github.io/CVC_helper/",
   "method": "The real app, driven in Playwright. SharedArrayBuffer is deleted before any app script runs, which is the condition Android Chrome and iOS Safari impose on a page that is not cross-origin isolated. The outcome is what the user sees: the course-creation screen, or the archive-unavailable message.",
   "runs": [
     {
