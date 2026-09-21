@@ -1172,7 +1172,7 @@ than what happened.
 | Item | Status |
 | --- | --- |
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
-| V01 — reachable from a phone | IN_PROGRESS — built and measured; waiting on a confirmed deploy and the owner's phone |
+| V01 — reachable from a phone | IN_PROGRESS — **the site is live at https://furiocolombo.github.io/CVC_helper/** and works when driven there; waiting only on the owner's phone |
 | CI regression | OPEN — red on Linux since the 0.2.0 work; blocks UG2 |
 | V02–V05, UG2 | PENDING — blocked by the controller until V01 is COMPLETE |
 
@@ -1184,7 +1184,7 @@ Pages switched to GitHub Actions.
 
 **Immediately next:**
 
-1. Confirm the Pages deploy actually publishes and the URL serves the app.
+1. DONE — the deploy publishes and the URL serves a working app.
 2. The owner opens it on their phone. That is what closes V01's remaining
    acceptance criteria; nothing about a device is recorded without them.
 3. Fix the CI regression. It is red today and UG2 cannot claim its ladder while
@@ -1375,6 +1375,35 @@ below.
 Also noted, non-blocking: GitHub warns that `actions/checkout@v4` and
 `actions/setup-node@v4` target Node 20, which is deprecated on runners and is
 being forced to Node 24.
+
+**2026-09-21 — the site is live.**
+
+`https://furiocolombo.github.io/CVC_helper/` serves the app. Driven there with
+`npm run measure:isolation` against the public URL: in Chromium, in Chromium with
+`SharedArrayBuffer` removed, and in WebKit, the database opened, took a course
+and kept it across a reload, with no console errors. Every asset class answers
+200 under the base, and the manifest's `start_url`, `scope` and `id` are all
+`/CVC_helper/`, so an installed app opens inside its own scope.
+
+Getting there needed one thing the plan had not anticipated. With the repository
+public and Pages set to GitHub Actions, the deploy still failed: *"Branch
+`codex/0.3.0` is not allowed to deploy to github-pages due to environment
+protection rules."* GitHub's `github-pages` environment allows only the default
+branch unless told otherwise. The build job had already succeeded, base-path
+assertion included; only the publish was refused.
+
+Resolved without asking for a third settings change, by fast-forwarding `main`
+to the current work: 73 commits, a clean fast-forward, nothing rewritten. That
+also stopped the public default branch from showing the 0.1.0 baseline, which
+was misleading the moment the repository became public — and it removes the
+footgun of a deploy trigger on a `main` that was 73 commits behind. The `v0.2.0`
+tag could not have been deployed instead: it predates the base-path fix, so its
+assets would 404 under `/CVC_helper/`.
+
+The alternative, if `main` should go back to tracking releases rather than work
+in progress, is to allow `codex/0.3.0` in the environment's deployment branch
+rules and revert `main`. That is a preference about branch meaning, not a
+technical constraint, and it is the owner's to state.
 
 ## CI regression — the browser suite is not platform-independent
 

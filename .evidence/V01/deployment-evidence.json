@@ -2,10 +2,13 @@
   "milestone": "V01",
   "subject": "Making the app reachable from a phone over HTTPS",
   "date": "2026-09-21",
-  "runtime": { "node": "v24.21.0", "platform": "win32" },
+  "runtime": {
+    "node": "v24.21.0",
+    "platform": "win32"
+  },
   "hostDecision": {
     "decidedBy": "the isolation measurement first, then the owner, asked once on 2026-09-21 when the measurement left the choice open",
-    "measurementSaid": "The app needs no cross-origin isolation, so any static host will do — including one that cannot set headers. See isolation-measurement.json.",
+    "measurementSaid": "The app needs no cross-origin isolation, so any static host will do \u2014 including one that cannot set headers. See isolation-measurement.json.",
     "whatRemainedOpen": "github.com/FurioColombo/CVC_helper returns 404 to an anonymous request, so the repository is private, and GitHub Pages from a private repository needs a paid plan. That is an account fact, not something a measurement can settle.",
     "ownerChose": "Make the repository public and use GitHub Pages. A public URL is acceptable; no login is in scope.",
     "url": "https://furiocolombo.github.io/CVC_helper/",
@@ -41,7 +44,7 @@
         "200 /CVC_helper/manifest.webmanifest",
         "200 /CVC_helper/sw.js"
       ],
-      "andNotAtTheRoot": "404 /ocr/worker.min.js — the base path is genuinely in effect rather than being papered over by a fallback"
+      "andNotAtTheRoot": "404 /ocr/worker.min.js \u2014 the base path is genuinely in effect rather than being papered over by a fallback"
     },
     "rootBuildUnchanged": "npm run build with no CVC_BASE_PATH still produces scope '/' and start_url '/', and check-built-pwa passes."
   },
@@ -59,16 +62,34 @@
     "noteOnStringsInTheBundle": "cdn.jsdelivr.net appears in the transformers.js bundle as a default it does not use here: the ONNX runtime wasm is bundled locally, and the measurement recorded zero off-origin requests. github.com, react.dev, w3.org and similar are attribution and documentation strings, not fetches."
   },
   "deployMechanism": {
-    "workflow": ".github/workflows/deploy-pages.yml — builds with CVC_BASE_PATH set to the repository name and publishes dist/ through actions/deploy-pages",
+    "workflow": ".github/workflows/deploy-pages.yml \u2014 builds with CVC_BASE_PATH set to the repository name and publishes dist/ through actions/deploy-pages",
     "triggers": "push to main or codex/0.3.0, and manual dispatch",
-    "documentation": "docs/DEPLOY.md — what was measured, where it is, how to redeploy, how to build it yourself, how to prove it still works offline, how to take it down, and what does and does not ship"
+    "documentation": "docs/DEPLOY.md \u2014 what was measured, where it is, how to redeploy, how to build it yourself, how to prove it still works offline, how to take it down, and what does and does not ship"
   },
   "notYetDone": {
     "ownerSettings": [
-      "Make the repository public (Settings → General → Change repository visibility).",
-      "Settings → Pages → Build and deployment → Source: GitHub Actions."
+      "DONE 2026-09-21: repository made public.",
+      "DONE 2026-09-21: Settings \u2192 Pages \u2192 Source set to GitHub Actions."
     ],
     "why": "Both are repository settings on the owner's account. Until both are set the workflow runs and its deploy step fails; nothing else breaks.",
-    "thenPending": "The acceptance criteria that need a real phone — the URL loading, the database opening there, dictation and scanning reaching their first asset fetch, and a second offline load — are the owner's to confirm. V01 stays IN_PROGRESS until they do. No simulated result is recorded."
+    "thenPending": "What remains is the phone itself: the owner opening the URL on their own device, the database opening there, dictation and scanning reaching their first real asset fetch, and a second load working offline. Everything above was driven on this machine against the live public site in Chromium and WebKit; none of it is recorded as a device observation. V01 stays IN_PROGRESS until the owner confirms.",
+    "environmentProtection": "The first deploy after both switches still failed: 'Branch codex/0.3.0 is not allowed to deploy to github-pages due to environment protection rules'. GitHub's github-pages environment allows only the default branch unless told otherwise. The build job had succeeded, including the base-path assertion; only the publish was blocked. Resolved without another settings change by fast-forwarding main to the current work \u2014 73 commits, nothing rewritten \u2014 which also stopped the public default branch showing the 0.1.0 baseline. Note that the v0.2.0 tag could not have been deployed: it predates the base-path fix, so its assets would 404 under /CVC_helper/."
+  },
+  "live": {
+    "url": "https://furiocolombo.github.io/CVC_helper/",
+    "confirmedOn": "2026-09-21",
+    "deployRun": "Deploy to GitHub Pages, from main, conclusion success",
+    "drivenOnTheLiveSite": "npm run measure:isolation against the public URL: chromium, chromium with SharedArrayBuffer removed, and webkit. In all three the database opened, took a course and kept it across a reload, with no console errors.",
+    "assetsServe": [
+      "200 /CVC_helper/",
+      "200 /CVC_helper/manifest.webmanifest",
+      "200 /CVC_helper/sw.js",
+      "200 /CVC_helper/icons/cvc-helper-192.png",
+      "200 /CVC_helper/brand/cvc-symbol.png",
+      "200 /CVC_helper/brand/boats/first-27.png",
+      "200 /CVC_helper/ocr/worker.min.js",
+      "200 /CVC_helper/ocr/lang/ita.traineddata.gz"
+    ],
+    "manifest": "start_url, scope and id are all /CVC_helper/, and the icons carry the base, so an installed app opens inside its own scope"
   }
 }
