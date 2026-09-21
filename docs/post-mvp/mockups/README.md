@@ -28,7 +28,7 @@ Sono disponibili P01–P19. P20 è stata eliminata: `Detta` gestisce permesso, r
 
 L'header usa il simbolo intero dell'asset pubblicato nella [home CVC](https://www.centrovelicocaprera.it/), acquisito il 4 settembre 2026. Il file non è stato ridisegnato; la resa ritaglia visivamente soltanto la scritta della copia locale `assets/logo-fcvc.avif`.
 
-Il logo RS Quest in `assets/rs-quest.png` è la copia non modificata fornita dall'autore nella revisione r1. SHA-256: `F7B5DC1A95C233A3805AC5AE361ECA4D5BF9508D206AD9B5B62CA11CF5D181AB`. Poiché l'originale è già tagliato sul lato destro, la r10 usa `assets/rs-quest-complete.png`, una ricostruzione grafica generata per completare la lettera finale (701 × 240, SHA-256 `5C1BF936707E3B4E7F70476B9A830A5EADA086EE06FC9FA3B3AE057E887B1B52`). È una proposta del mock, non un nuovo asset ufficiale; l'originale resta conservato.
+Il logo RS Quest della r10 è `assets/rs-quest-complete.png` (701 × 240, SHA-256 `5C1BF936707E3B4E7F70476B9A830A5EADA086EE06FC9FA3B3AE057E887B1B52`), una ricostruzione grafica generata per completare la lettera finale, perché la copia fornita dall'autore nella r1 era già tagliata sul lato destro. È una proposta del mock, non un nuovo asset ufficiale. La copia tagliata `assets/rs-quest.png` è stata eliminata il 19 settembre 2026, quando l'app ha adottato l'artwork completo: restava soltanto come confronto e induceva in errore. Resta nella storia Git di questo repository.
 
 Il nome “CVC Helper” e il blu funzionale restano proposte. Le immagini Instagram come sfondo o card sono un upgrade futuro e non sono state copiate nella galleria.
 

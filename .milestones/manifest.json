@@ -6,11 +6,11 @@
       "category": "FOUNDATION",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M0/verification.json",
-        ".evidence/M0/controller-refusal.txt",
-        ".evidence/M0/persistence-spike.md",
-        ".evidence/M0/ocr-spike.md",
-        ".evidence/M0/stt-spike.md"
+        "archive/v0.1.0/evidence/M0/verification.json",
+        "archive/v0.1.0/evidence/M0/controller-refusal.txt",
+        "archive/v0.1.0/evidence/M0/persistence-spike.md",
+        "archive/v0.1.0/evidence/M0/ocr-spike.md",
+        "archive/v0.1.0/evidence/M0/stt-spike.md"
       ]
     },
     {
@@ -18,8 +18,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M1/verification.json",
-        ".evidence/M1/self-review.md"
+        "archive/v0.1.0/evidence/M1/verification.json",
+        "archive/v0.1.0/evidence/M1/self-review.md"
       ]
     },
     {
@@ -27,8 +27,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M2/verification.json",
-        ".evidence/M2/self-review.md"
+        "archive/v0.1.0/evidence/M2/verification.json",
+        "archive/v0.1.0/evidence/M2/self-review.md"
       ]
     },
     {
@@ -36,8 +36,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M3/verification.json",
-        ".evidence/M3/self-review.md"
+        "archive/v0.1.0/evidence/M3/verification.json",
+        "archive/v0.1.0/evidence/M3/self-review.md"
       ]
     },
     {
@@ -45,8 +45,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M4/verification.json",
-        ".evidence/M4/self-review.md"
+        "archive/v0.1.0/evidence/M4/verification.json",
+        "archive/v0.1.0/evidence/M4/self-review.md"
       ]
     },
     {
@@ -54,9 +54,9 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/G1/verification.json",
-        ".evidence/G1/functional-review.md",
-        ".evidence/G1/field-ux-review.md"
+        "archive/v0.1.0/evidence/G1/verification.json",
+        "archive/v0.1.0/evidence/G1/functional-review.md",
+        "archive/v0.1.0/evidence/G1/field-ux-review.md"
       ]
     },
     {
@@ -64,8 +64,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M5/verification.json",
-        ".evidence/M5/self-review.md"
+        "archive/v0.1.0/evidence/M5/verification.json",
+        "archive/v0.1.0/evidence/M5/self-review.md"
       ]
     },
     {
@@ -73,8 +73,8 @@
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M6/verification.json",
-        ".evidence/M6/domain-review.md"
+        "archive/v0.1.0/evidence/M6/verification.json",
+        "archive/v0.1.0/evidence/M6/domain-review.md"
       ]
     },
     {
@@ -82,9 +82,9 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/G2/verification.json",
-        ".evidence/G2/functional-review.md",
-        ".evidence/G2/field-ux-review.md"
+        "archive/v0.1.0/evidence/G2/verification.json",
+        "archive/v0.1.0/evidence/G2/functional-review.md",
+        "archive/v0.1.0/evidence/G2/field-ux-review.md"
       ]
     },
     {
@@ -92,8 +92,8 @@
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M7/verification.json",
-        ".evidence/M7/domain-review.md"
+        "archive/v0.1.0/evidence/M7/verification.json",
+        "archive/v0.1.0/evidence/M7/domain-review.md"
       ]
     },
     {
@@ -101,9 +101,9 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/G3/verification.json",
-        ".evidence/G3/functional-review.md",
-        ".evidence/G3/field-ux-review.md"
+        "archive/v0.1.0/evidence/G3/verification.json",
+        "archive/v0.1.0/evidence/G3/functional-review.md",
+        "archive/v0.1.0/evidence/G3/field-ux-review.md"
       ]
     },
     {
@@ -111,8 +111,8 @@
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M8/verification.json",
-        ".evidence/M8/domain-review.md"
+        "archive/v0.1.0/evidence/M8/verification.json",
+        "archive/v0.1.0/evidence/M8/domain-review.md"
       ]
     },
     {
@@ -120,8 +120,8 @@
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M9/verification.json",
-        ".evidence/M9/domain-review.md"
+        "archive/v0.1.0/evidence/M9/verification.json",
+        "archive/v0.1.0/evidence/M9/domain-review.md"
       ]
     },
     {
@@ -129,8 +129,8 @@
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M10/verification.json",
-        ".evidence/M10/domain-review.md"
+        "archive/v0.1.0/evidence/M10/verification.json",
+        "archive/v0.1.0/evidence/M10/domain-review.md"
       ]
     },
     {
@@ -138,8 +138,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M11/verification.json",
-        ".evidence/M11/self-review.md"
+        "archive/v0.1.0/evidence/M11/verification.json",
+        "archive/v0.1.0/evidence/M11/self-review.md"
       ]
     },
     {
@@ -147,11 +147,11 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/G4/verification.json",
-        ".evidence/G4/functional-review.md",
-        ".evidence/G4/domain-review.md",
-        ".evidence/G4/field-ux-review.md",
-        ".evidence/G4/regression-review.md"
+        "archive/v0.1.0/evidence/G4/verification.json",
+        "archive/v0.1.0/evidence/G4/functional-review.md",
+        "archive/v0.1.0/evidence/G4/domain-review.md",
+        "archive/v0.1.0/evidence/G4/field-ux-review.md",
+        "archive/v0.1.0/evidence/G4/regression-review.md"
       ]
     },
     {
@@ -159,8 +159,8 @@
       "category": "RULE_HEAVY",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M12/verification.json",
-        ".evidence/M12/domain-review.md"
+        "archive/v0.1.0/evidence/M12/verification.json",
+        "archive/v0.1.0/evidence/M12/domain-review.md"
       ]
     },
     {
@@ -168,8 +168,8 @@
       "category": "FEATURE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M13/verification.json",
-        ".evidence/M13/self-review.md"
+        "archive/v0.1.0/evidence/M13/verification.json",
+        "archive/v0.1.0/evidence/M13/self-review.md"
       ]
     },
     {
@@ -177,9 +177,9 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/G5/verification.json",
-        ".evidence/G5/functional-review.md",
-        ".evidence/G5/ux-review.md"
+        "archive/v0.1.0/evidence/G5/verification.json",
+        "archive/v0.1.0/evidence/G5/functional-review.md",
+        "archive/v0.1.0/evidence/G5/ux-review.md"
       ]
     },
     {
@@ -187,10 +187,10 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M14/verification.json",
-        ".evidence/M14/mobile-accessibility-review.md",
-        ".evidence/M14/code-quality-review.md",
-        ".evidence/M14/regression-review.md"
+        "archive/v0.1.0/evidence/M14/verification.json",
+        "archive/v0.1.0/evidence/M14/mobile-accessibility-review.md",
+        "archive/v0.1.0/evidence/M14/code-quality-review.md",
+        "archive/v0.1.0/evidence/M14/regression-review.md"
       ]
     },
     {
@@ -198,15 +198,15 @@
       "category": "INTEGRATION_GATE",
       "status": "COMPLETE",
       "requiredEvidence": [
-        ".evidence/M15/verification.json",
-        ".evidence/M15/domain-prosecutor.md",
-        ".evidence/M15/field-ux-review.md",
-        ".evidence/M15/data-integrity-review.md",
-        ".evidence/M15/regression-review.md",
-        ".evidence/M15/product-scope-review.md",
-        ".evidence/M15/code-quality-review.md",
-        ".evidence/M15/accessibility-mobile-review.md",
-        ".evidence/M15/chaos-user-review.md"
+        "archive/v0.1.0/evidence/M15/verification.json",
+        "archive/v0.1.0/evidence/M15/domain-prosecutor.md",
+        "archive/v0.1.0/evidence/M15/field-ux-review.md",
+        "archive/v0.1.0/evidence/M15/data-integrity-review.md",
+        "archive/v0.1.0/evidence/M15/regression-review.md",
+        "archive/v0.1.0/evidence/M15/product-scope-review.md",
+        "archive/v0.1.0/evidence/M15/code-quality-review.md",
+        "archive/v0.1.0/evidence/M15/accessibility-mobile-review.md",
+        "archive/v0.1.0/evidence/M15/chaos-user-review.md"
       ]
     },
     {
@@ -351,7 +351,7 @@
     {
       "id": "UG1",
       "category": "INTEGRATION_GATE",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/UG1/verification.json",
@@ -374,6 +374,102 @@
         ".evidence/UG1/scope-review.json",
         ".evidence/UG1/code-quality-review.json",
         ".evidence/UG1/physical-device-review.json"
+      ]
+    },
+    {
+      "id": "V01",
+      "category": "FOUNDATION",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/V01/verification.json",
+        ".evidence/V01/isolation-measurement.json",
+        ".evidence/V01/deployment-evidence.json",
+        ".evidence/V01/self-review.json"
+      ],
+      "requiredReviews": [".evidence/V01/self-review.json"]
+    },
+    {
+      "id": "V02",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/V02/verification.json",
+        ".evidence/V02/design-review.json",
+        ".evidence/V02/browser-evidence.json",
+        ".evidence/V02/control-geometry.json",
+        ".evidence/V02/accessibility-mobile-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/V02/design-review.json",
+        ".evidence/V02/accessibility-mobile-review.json"
+      ]
+    },
+    {
+      "id": "V03",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/V03/verification.json",
+        ".evidence/V03/speech-quality-benchmark.json",
+        ".evidence/V03/browser-evidence.json",
+        ".evidence/V03/speech-review.json"
+      ],
+      "requiredReviews": [".evidence/V03/speech-review.json"]
+    },
+    {
+      "id": "V04",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/V04/verification.json",
+        ".evidence/V04/browser-evidence.json",
+        ".evidence/V04/self-review.json"
+      ],
+      "requiredReviews": [".evidence/V04/self-review.json"]
+    },
+    {
+      "id": "V05",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/V05/verification.json",
+        ".evidence/V05/browser-evidence.json",
+        ".evidence/V05/parser-robustness.json",
+        ".evidence/V05/domain-review.json"
+      ],
+      "requiredReviews": [".evidence/V05/domain-review.json"]
+    },
+    {
+      "id": "UG2",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/UG2/verification.json",
+        ".evidence/UG2/browser-evidence.json",
+        ".evidence/UG2/migration-evidence.json",
+        ".evidence/UG2/synthetic-roster.json",
+        ".evidence/UG2/functional-review.json",
+        ".evidence/UG2/field-ux-review.json",
+        ".evidence/UG2/data-integrity-review.json",
+        ".evidence/UG2/regression-review.json",
+        ".evidence/UG2/scope-review.json",
+        ".evidence/UG2/code-quality-review.json",
+        ".evidence/UG2/physical-device-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/UG2/functional-review.json",
+        ".evidence/UG2/field-ux-review.json",
+        ".evidence/UG2/data-integrity-review.json",
+        ".evidence/UG2/regression-review.json",
+        ".evidence/UG2/scope-review.json",
+        ".evidence/UG2/code-quality-review.json",
+        ".evidence/UG2/physical-device-review.json"
       ]
     }
   ]

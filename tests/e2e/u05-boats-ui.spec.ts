@@ -189,7 +189,7 @@ test("keeps two-digit boat identities readable at the stress viewport", async ({
   )
   await page.screenshot({
     path: path.resolve(
-      `.evidence/U05/boats-stress-${testInfo.project.name}.png`,
+      `test-results/screenshots/boats-stress-${testInfo.project.name}.png`,
     ),
   })
 })
@@ -225,7 +225,7 @@ test("separates fault state from availability and keeps explicit state cues", as
   await page.screenshot({
     fullPage: true,
     path: path.resolve(
-      `.evidence/U05/boats-status-${testInfo.project.name}.png`,
+      `test-results/screenshots/boats-status-${testInfo.project.name}.png`,
     ),
   })
 

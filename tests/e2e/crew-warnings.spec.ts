@@ -85,7 +85,7 @@ test("shows one worst-severity crew warning with all size and pair details", asy
 
   if (testInfo.project.name === "iphone-13-viewport") {
     const screenshotPath = path.resolve(
-      ".evidence/M9/crew-warnings-iphone13.png",
+      "test-results/screenshots/crew-warnings-iphone13.png",
     )
     mkdirSync(path.dirname(screenshotPath), { recursive: true })
     await page.screenshot({ path: screenshotPath })

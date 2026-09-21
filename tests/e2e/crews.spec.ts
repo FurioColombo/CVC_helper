@@ -51,7 +51,9 @@ test("composes, swaps and persists session-specific crews and A terra", async ({
   await studentPool.getByRole("button", { name: "Aldo" }).click()
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
-      path: path.resolve(".evidence/M8/crew-shortcuts-iphone13.png"),
+      path: path.resolve(
+        "test-results/screenshots/crew-shortcuts-iphone13.png",
+      ),
     })
   }
   await page
@@ -116,7 +118,7 @@ test("composes, swaps and persists session-specific crews and A terra", async ({
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
       fullPage: true,
-      path: path.resolve(".evidence/M8/crews-iphone13.png"),
+      path: path.resolve("test-results/screenshots/crews-iphone13.png"),
     })
   }
 })

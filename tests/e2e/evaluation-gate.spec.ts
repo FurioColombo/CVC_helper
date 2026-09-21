@@ -140,6 +140,14 @@ test("verifies the evaluation workflow across an evolving week", async ({
     page.getByText("Valutazione mancante: resta comunque valutabile."),
   ).toBeVisible()
   await setEvaluation(page, "Carlo", "=")
+  // A terra is a cue, not an exclusion: the student is evaluated where the
+  // crew grouping puts him, and the value holds there. Folded in from
+  // evaluations.spec.ts, which this journey otherwise supersedes.
+  await expect(
+    page
+      .getByRole("region", { name: "A terra" })
+      .getByRole("button", { name: "Valutazione di Carlo: =", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true")
 
   await page.getByLabel("Sessione valutazioni").selectOption("mon-am")
   await page
@@ -220,7 +228,7 @@ test("verifies the evaluation workflow across an evolving week", async ({
 
   if (testInfo.project.name === "iphone-13-viewport") {
     const screenshotPath = path.resolve(
-      ".evidence/G5/evaluation-gate-iphone13.png",
+      "test-results/screenshots/evaluation-gate-iphone13.png",
     )
     mkdirSync(path.dirname(screenshotPath), { recursive: true })
     await page.screenshot({ path: screenshotPath, fullPage: true })

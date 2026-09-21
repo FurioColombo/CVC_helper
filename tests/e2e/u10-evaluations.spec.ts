@@ -152,10 +152,10 @@ test("edits thirteen sessions through one compact row and reads the same week in
   await expect(overviewGrid.locator("tbody > tr")).toHaveCount(7)
   await expect(overviewGrid.locator("[data-evaluation]")).toHaveCount(13)
 
-  const evidenceDirectory = path.join(process.cwd(), ".evidence", "U10")
-  mkdirSync(evidenceDirectory, { recursive: true })
+  const screenshotDirectory = path.resolve("test-results/screenshots")
+  mkdirSync(screenshotDirectory, { recursive: true })
   await page.screenshot({
-    path: path.join(evidenceDirectory, `p18-${testInfo.project.name}.png`),
+    path: path.join(screenshotDirectory, `p18-${testInfo.project.name}.png`),
   })
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
@@ -173,7 +173,7 @@ test("edits thirteen sessions through one compact row and reads the same week in
   expect(nameFit.scrollWidth - nameFit.clientWidth).toBeLessThanOrEqual(1)
   await page.screenshot({
     path: path.join(
-      evidenceDirectory,
+      screenshotDirectory,
       `p18-stress-${testInfo.project.name}.png`,
     ),
     fullPage: true,
@@ -198,7 +198,7 @@ test("edits thirteen sessions through one compact row and reads the same week in
   await expect(history.getByLabel("Lunedì AM: --")).toBeVisible()
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
-    path: path.join(evidenceDirectory, `p19-${testInfo.project.name}.png`),
+    path: path.join(screenshotDirectory, `p19-${testInfo.project.name}.png`),
   })
 
   await page.evaluate(() => {
@@ -207,7 +207,7 @@ test("edits thirteen sessions through one compact row and reads the same week in
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
     path: path.join(
-      evidenceDirectory,
+      screenshotDirectory,
       `p19-stress-${testInfo.project.name}.png`,
     ),
     fullPage: true,
@@ -231,7 +231,7 @@ test("edits thirteen sessions through one compact row and reads the same week in
   }
   await page.screenshot({
     path: path.join(
-      evidenceDirectory,
+      screenshotDirectory,
       `p17-stress-${testInfo.project.name}.png`,
     ),
   })

@@ -78,10 +78,10 @@ test("manages boats and simultaneous faults through detail and global entry", as
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
       fullPage: true,
-      path: path.resolve(".evidence/M6/boats-iphone13.png"),
+      path: path.resolve("test-results/screenshots/boats-iphone13.png"),
     })
     await page.screenshot({
-      path: path.resolve(".evidence/G2/boats-gate-iphone13.png"),
+      path: path.resolve("test-results/screenshots/boats-gate-iphone13.png"),
     })
   }
 

@@ -2,8 +2,8 @@ import path from "node:path"
 
 import { expect, test } from "@playwright/test"
 
-const CLEAR_ROSTER = path.resolve(".evidence/M0/ocr-sheet-clear.png")
-const BLURRED_ROSTER = path.resolve(".evidence/M0/ocr-sheet-blurred.png")
+const CLEAR_ROSTER = path.resolve("tests/fixtures/ocr-sheet-clear.png")
+const BLURRED_ROSTER = path.resolve("tests/fixtures/ocr-sheet-blurred.png")
 
 test("rejects a bad image and commits only reviewed OCR rows", async ({
   page,
@@ -111,7 +111,7 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
       fullPage: true,
-      path: path.resolve(".evidence/U04/review-iphone13.png"),
+      path: path.resolve("test-results/screenshots/review-iphone13.png"),
     })
   }
 

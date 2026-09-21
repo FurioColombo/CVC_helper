@@ -132,10 +132,10 @@ test("summarizes actual marks and links exact evaluation history", async ({
   ).not.toBeFocused()
 
   if (testInfo.project.name === "iphone-13-viewport") {
-    const evidenceDirectory = path.join(process.cwd(), ".evidence", "M13")
-    mkdirSync(evidenceDirectory, { recursive: true })
+    const screenshotDirectory = path.resolve("test-results/screenshots")
+    mkdirSync(screenshotDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "evaluation-overview-iphone13.png"),
+      path: path.join(screenshotDirectory, "evaluation-overview-iphone13.png"),
       fullPage: true,
     })
   }

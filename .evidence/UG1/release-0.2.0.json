@@ -1,0 +1,104 @@
+{
+  "milestone": "UG1",
+  "subject": "Closing UG1 as release 0.2.0",
+  "date": "2026-09-21",
+  "authorisation": "docs/post-mvp/0_3_0_OWNER_BRIEF.md section 1, captured from the repository owner on 2026-09-21",
+  "runtime": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "selectedBy": "fnm, reading .node-version; the host default is older",
+    "platform": "win32"
+  },
+  "work": {
+    "physicalChecksRescoped": {
+      "brief": "1.1",
+      "did": "Kept the 2026-09-15 FAIL verbatim as physical-device-review-2026-09-15.json. Issued a new physical-device-review.json whose subject is the re-scoped criterion, recording the owner's authorisation, the date and the fact that no device observation has been made. Amended UG1's required work and acceptance criteria in the plan so the checks read as re-scoped to UG2, not as passed. Recorded the limitation in the plan and in CHANGELOG.md.",
+      "unchanged": "docs/post-mvp/UG1_DEVICE_VALIDATION.md, which becomes UG2's checklist."
+    },
+    "version": {
+      "brief": "1.2",
+      "did": "package.json and package-lock.json, both the root version and packages[\"\"].version, moved 0.1.0 to 0.2.0. The assertion in scripts/check-repository.mjs moved with the release rather than being deleted: it now pins 0.2.0 until UG2, with the reason in a comment. The 0.1.0 compatibility fixture is untouched."
+    },
+    "changelog": {
+      "brief": "1.3",
+      "did": "CHANGELOG.md rewritten for 0.1.0 to 0.2.0, leading with scanning, dictation and the visual work, which is what the owner required. Not sent to the owner for approval; an adversarial reviewer audited it instead.",
+      "review": ".evidence/UG1/changelog-review.json"
+    },
+    "documentationCorrections": {
+      "brief": "1.4",
+      "did": "docs/post-mvp/mockups/README.md no longer claims the truncated assets/rs-quest.png is preserved; the sentence now says it was deleted on 2026-09-19 when the app adopted the complete artwork, and that it remains in Git history. The file was not restored. .evidence/UG1/field-feedback-followups.md rewritten against what shipped: four of its five points are closed, and the two OCR follow-ups the owner deferred survive there and in the 0.3.0 traceability table."
+    },
+    "iconPalette": {
+      "brief": "1.5",
+      "chosenBlue": "#2f5fa0",
+      "why": "It is the one blue the application already carries: --primary and --accent-blue are both #2f5fa0, itself taken from the #3060a0 ink measured in public/brand/cvc-symbol.png. The boat marks are monochrome black-on-transparent and contribute no blue, so the shared blue is the app's own. #063b52 was aligned to nothing.",
+      "changed": [
+        "public/icons/cvc-helper.svg",
+        "public/icons/cvc-helper-180.png",
+        "public/icons/cvc-helper-192.png",
+        "public/icons/cvc-helper-512.png",
+        "index.html theme-color",
+        "vite.config.ts theme_color"
+      ],
+      "method": "The three PNGs are re-rendered from the SVG at 180, 192 and 512, so the launcher icons and the source cannot drift apart again.",
+      "noted": "vite.config.ts background_color is still #f4f1e8, a cream unrelated to --background (#f2f6fb). Out of this brief's scope; recorded rather than changed."
+    },
+    "firstMarks": {
+      "brief": "1.6",
+      "did": "Rebuilt both, see first-marks.json. tests/e2e/ug1-boat-mark-fit.spec.ts re-run and passing on pixel-7-chrome.",
+      "closes": "The open product call recorded on 2026-09-20, that the First 27 number was noticeably smaller than the First 25.7 one."
+    },
+    "evidenceHousekeeping": {
+      "brief": "1.7",
+      "did": "Moved, never deleted.",
+      "moved": [
+        ".evidence/M0 through M15 and G1 through G5 to archive/v0.1.0/evidence/, beside the 0.1.0 ledger that was already there. 61 requiredEvidence paths in .milestones/manifest.json were rewritten so every one still resolves; the milestone statuses are untouched.",
+        "ocr-sheet-clear.png and ocr-sheet-blurred.png from .evidence/M0/ to tests/fixtures/. They were never evidence: four Playwright specs and check:ocr-offline read them as inputs.",
+        "Every journey wrote its screenshots back into a milestone's evidence directory on each verify:e2e, closed milestones included, so the move could not have held and a full run always left the tree dirty with re-encoded images. Only the active milestone's specs write into .evidence/ now; everything else writes to test-results/screenshots/, which Git ignores."
+      ],
+      "notMoved": ".evidence/U00 through U10 keep their committed screenshots. Their browser-evidence.json and review files reference those images by path, and those milestones are closed: moving the images would break references inside evidence that must not be rewritten. The images stay as the record of what was observed then, and nothing overwrites them any more. .evidence/UG1 keeps its screenshots and its specs keep refreshing them, because it is the active milestone.",
+      "measured": "13.0 MB of screenshots under .evidence/ before; the 0.1.0 tree that moved accounts for 3.6 MB and 21 of the 33 directories."
+    },
+    "absolutePaths": {
+      "brief": "1.8",
+      "swept": "Every tracked file.",
+      "found": [
+        ".evidence/UG1/bench.mjs line 5 hard-coded this author's checkout path in a createRequire call, so the benchmark could only run on one machine. Now createRequire(import.meta.url). The path itself is not quoted here, because the check added below would then fail on this very file: it did, once, and that is the check working.",
+        "Twenty 0.1.0-era verification.json files contain /Users/<name>/... inside recorded command output. These are machine-recorded output from completed runs; rewriting them would falsify the record, so the check exempts verification.json under any evidence directory and says why.",
+        "docs/post-mvp/0_3_0_OWNER_BRIEF.md quotes the defective path as the finding. Exempt by name, with the reason in the check."
+      ],
+      "guard": "scripts/check-repository.mjs now scans every tracked non-binary file under 2 MB and fails on a path rooted in a user home directory. Negative-tested: a planted file was caught and named by path and line.",
+      "scriptsMoved": {
+        "to": "scripts/speech-bench/ (bench.mjs, build-corpus.mjs, dsp.mjs, fetch-balanced.mjs, variants.js) and scripts/ocr-real-diagnostic.mjs",
+        "entryPoints": "npm run speech:bench and npm run diagnose:ocr, documented in scripts/speech-bench/README.md",
+        "consequence": "They are now linted and formatted like the rest of the repository. Six lint errors surfaced and were fixed: browser globals are declared for the files Playwright injects into the page, and one empty catch was given its reason."
+      }
+    },
+    "specConsolidation": {
+      "brief": "1.9",
+      "decision": "Folded and deleted. Both survived the test the brief set.",
+      "evaluationsSpec": {
+        "uniqueAssertion": "An A terra student carries a saved evaluation, visible and pressed inside the A terra region of the crew-grouped view. evaluation-gate.spec.ts asserted the region and the missing-value hint but never that a value held there.",
+        "foldedInto": "tests/e2e/evaluation-gate.spec.ts, on the session where Carlo is already A terra, so no count or ordering assertion moved.",
+        "supersededBy": "evaluation-gate.spec.ts and u10-evaluations.spec.ts. The -- value, which .evidence/UG1/cleanup-inventory.json listed as unique to this spec, is in fact exercised by u10-evaluations.spec.ts line 95 and read back from the history grid.",
+        "webkit": "Not in the iphone-13-webkit-core testMatch, so no WebKit coverage was lost. evaluation-gate.spec.ts is in it, so the folded assertion gains WebKit coverage it did not have."
+      },
+      "volunteersSpec": {
+        "uniqueAssertions": [
+          "A form saved without touching the role produces an ADV volunteer.",
+          "An edit may change the role, not only the name."
+        ],
+        "foldedInto": "tests/e2e/u07-volunteers.spec.ts",
+        "webkit": "Neither spec is in the WebKit testMatch, so nothing was lost."
+      },
+      "verified": "npm run verify:e2e -- tests/e2e/u07-volunteers.spec.ts tests/e2e/evaluation-gate.spec.ts --project=pixel-7-chrome: 3 passed."
+    },
+    "harnessAmendment": {
+      "brief": "1.10",
+      "did": "AGENTS.md section 6 gains step 15: sweep the working and evidence directories and move or remove what the milestone made and nobody needs. One sentence, before the checkpoint commit. data/ was already in .gitignore."
+    }
+  },
+  "planAndManifest": {
+    "0.3.0 milestones written before any 0.3.0 code": "V01 to V05 and UG2, in 04_IMPLEMENTATION_PLAN.md under '# Cycle 0.3.0' and in .milestones/manifest.json with status PENDING. scripts/check-repository.mjs now asserts plan/manifest agreement for them too."
+  }
+}

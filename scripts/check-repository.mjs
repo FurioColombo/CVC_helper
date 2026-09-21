@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
-import { existsSync, readFileSync } from "node:fs"
+import { execFileSync } from "node:child_process"
+import { existsSync, readFileSync, statSync } from "node:fs"
 import { resolve } from "node:path"
 
 const root = resolve(import.meta.dirname, "..")
@@ -39,10 +40,14 @@ const packageJson = JSON.parse(
 const packageLock = JSON.parse(
   readFileSync(resolve(root, "package-lock.json"), "utf8"),
 )
+// The assertion moves with the release rather than being deleted at it. UG1
+// declared 0.2.0 on 2026-09-21, so this now pins the released version and will
+// pin 0.3.0 at UG2. The 0.1.0 compatibility fixture is a different thing and
+// stays where it is: it is the data contract, not the application version.
 assert.equal(
   packageJson.version,
-  "0.1.0",
-  "package.json must identify the completed baseline as 0.1.0 until UG1",
+  "0.2.0",
+  "package.json must identify the released application as 0.2.0 until UG2",
 )
 assert.equal(
   packageLock.version,
@@ -149,6 +154,12 @@ for (const id of [
   "U09",
   "U10",
   "UG1",
+  "V01",
+  "V02",
+  "V03",
+  "V04",
+  "V05",
+  "UG2",
 ]) {
   const milestone = manifest.milestones.find((item) => item.id === id)
   assert.ok(milestone, `Missing active-cycle milestone: ${id}`)
@@ -192,6 +203,49 @@ for (const staleMarker of [
     `Active documents retain stale planning marker: ${staleMarker}`,
   )
 }
+
+// A path rooted in one person's home directory makes the repository work on one
+// machine only. `.evidence/UG1/bench.mjs` hard-coded this author's checkout and
+// was therefore already broken for anyone else; it moved to scripts/ on
+// 2026-09-21 and the path went with it. This keeps it out.
+const ABSOLUTE_PATH =
+  /(?:[A-Za-z]:[\\/]Users[\\/])|(?:\/Users\/[a-z])|(?:\/home\/[a-z])/
+const ABSOLUTE_PATH_EXEMPT = new Map([
+  [
+    "docs/post-mvp/0_3_0_OWNER_BRIEF.md",
+    "human decision record; it quotes the defective path as the finding",
+  ],
+])
+const BINARY_EXTENSION =
+  /\.(png|jpe?g|gif|ico|avif|webp|woff2?|wasm|gz|zip|traineddata|pdf|mp3|wav)$/i
+const trackedFiles = execFileSync("git", ["ls-files", "-z"], {
+  cwd: root,
+  encoding: "utf8",
+  maxBuffer: 32 * 1024 * 1024,
+})
+  .split("\0")
+  .filter(Boolean)
+const absolutePathHits = []
+for (const file of trackedFiles) {
+  if (BINARY_EXTENSION.test(file)) continue
+  // Machine-recorded command output from milestones that are closed history,
+  // wherever that evidence now lives. Rewriting it would falsify the record of
+  // what those runs printed.
+  if (/(?:^|\/)\.?evidence\/.*verification\.json$/.test(file)) continue
+  if (ABSOLUTE_PATH_EXEMPT.has(file)) continue
+  const absolute = resolve(root, file)
+  if (!existsSync(absolute) || statSync(absolute).size > 2 * 1024 * 1024)
+    continue
+  const contents = readFileSync(absolute, "utf8")
+  contents.split("\n").forEach((line, index) => {
+    if (ABSOLUTE_PATH.test(line)) absolutePathHits.push(`${file}:${index + 1}`)
+  })
+}
+assert.deepEqual(
+  absolutePathHits,
+  [],
+  `Absolute machine-specific paths must not be committed:\n- ${absolutePathHits.join("\n- ")}`,
+)
 
 const workflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8")
 assert.match(workflow, /npm run verify:all/, "CI must run verify:all")

@@ -4,7 +4,8 @@ CVC Helper is a mobile-first offline PWA for running one week of a CVC sailing c
 students, boats and faults, Comandate, crews with boat assignment, evaluations and
 volunteers (ADV/IS/CT). Data stays on the device in a local PowerSync database — no
 account, backend or sync; Italian OCR reads student sheets and Italian speech dictates
-notes. Baseline 0.1.0 is released; the 0.2.0 field-UX cycle is open at its release gate.
+notes. 0.2.0, the field-UX release, was tagged on 2026-09-21; the 0.3.0 cycle is the
+active work and lives on `codex/0.3.0`.
 
 ## Where things are
 
@@ -13,9 +14,12 @@ notes. Baseline 0.1.0 is released; the 0.2.0 field-UX cycle is open at its relea
 - `01`–`04_*.md` — product spec, scope, technical decisions, milestone plan.
 - `src/domain`, `src/persistence` — pure rules, canonical tables, local database.
 - `src/features`, `src/components`, `src/capabilities` — pages, shared UI, OCR/speech.
-- `tests/e2e`, `scripts/` — Playwright journeys; verification and milestone tooling.
-- `.evidence/<ID>/` — per-milestone verification, reviews and screenshots.
-- `docs/post-mvp/` — design rulebook, page changelog, frozen mock, device checklist.
+- `tests/e2e`, `tests/fixtures`, `scripts/` — Playwright journeys and their inputs;
+  verification and milestone tooling, the speech benchmark and the OCR diagnostic.
+- `.evidence/<ID>/` — per-milestone verification, reviews and screenshots for the
+  active cycles; the closed 0.1.0 evidence is in `archive/v0.1.0/evidence/`.
+- `docs/post-mvp/` — design rulebook, page changelog, frozen mock, device checklist,
+  and `0_3_0_OWNER_BRIEF.md`, the human decision record driving 0.3.0.
 
 ## Run it
 

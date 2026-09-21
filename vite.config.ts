@@ -68,7 +68,7 @@ export default defineConfig({
         name: "CVC Helper",
         short_name: "CVC Helper",
         description: "Supporto operativo locale per una settimana CVC Caprera.",
-        theme_color: "#063b52",
+        theme_color: "#2f5fa0",
         background_color: "#f4f1e8",
         display: "standalone",
         start_url: "/",

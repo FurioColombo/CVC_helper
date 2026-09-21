@@ -95,7 +95,9 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   await expect(report).toContainText("Carlo — non disponibile")
   await expect(report).not.toContainText("Aldo")
   if (testInfo.project.name === "iphone-13-viewport") {
-    const reportPath = path.resolve(".evidence/M11/copy-report-iphone13.png")
+    const reportPath = path.resolve(
+      "test-results/screenshots/copy-report-iphone13.png",
+    )
     mkdirSync(path.dirname(reportPath), { recursive: true })
     await page.screenshot({ path: reportPath })
   }
@@ -146,7 +148,7 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   )
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
-      path: path.resolve(".evidence/M11/announcement-iphone13.png"),
+      path: path.resolve("test-results/screenshots/announcement-iphone13.png"),
     })
   }
   await readView.getByRole("button", { name: "Chiudi vista lettura" }).click()

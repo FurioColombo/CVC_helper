@@ -114,7 +114,7 @@ test("keeps P14–P16 compact while assigning and unlinking session boats", asyn
   )
   expect(memberBottom).toBeLessThanOrEqual(railTop + 1)
   if (testInfo.project.name === "pixel-7-chrome") {
-    const screenshotPath = path.resolve(".evidence/U09/p14-320.png")
+    const screenshotPath = path.resolve("test-results/screenshots/p14-320.png")
     mkdirSync(path.dirname(screenshotPath), { recursive: true })
     await page.screenshot({ path: screenshotPath })
   }
@@ -157,7 +157,9 @@ test("keeps P14–P16 compact while assigning and unlinking session boats", asyn
   await page.setViewportSize({ width: 320, height: 664 })
   await page.evaluate(() => window.scrollTo(0, 0))
   if (testInfo.project.name === "pixel-7-chrome") {
-    await page.screenshot({ path: path.resolve(".evidence/U09/p15-320.png") })
+    await page.screenshot({
+      path: path.resolve("test-results/screenshots/p15-320.png"),
+    })
   }
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
@@ -257,7 +259,9 @@ test("keeps P14–P16 compact while assigning and unlinking session boats", asyn
   await expect(readView.getByText("Senza barca").first()).toBeVisible()
   await assertNoHorizontalOverflow(page)
   if (testInfo.project.name === "pixel-7-chrome") {
-    await page.screenshot({ path: path.resolve(".evidence/U09/p16-320.png") })
+    await page.screenshot({
+      path: path.resolve("test-results/screenshots/p16-320.png"),
+    })
   }
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"

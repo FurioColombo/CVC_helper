@@ -1,0 +1,45 @@
+{
+  "milestone": "UG1",
+  "subject": "The two Beneteau First marks now differ only in their digits",
+  "request": "docs/post-mvp/0_3_0_OWNER_BRIEF.md section 1.6, with docs/post-mvp/brief-0.3.0/first-marks-reference.png as the specification",
+  "ownerInstruction": "rendili uguali in tutto e per tutto uno all'altro tranne per il numero. Usa come base quello di sotto, ma mettendo i numeri con dimensione di quello di sopra, allineati a destra verticalmente con la scritta FIRST.",
+  "why": "first-27.png was the 25.7 artwork with the .7 glyph run cleared, which is why its number was small and sat nowhere in particular. The 2026-09-20 plan entry recorded this as an open product call: redraw the artwork or fall back to the written mark.",
+  "measuredBefore": {
+    "first-25-7.png": {
+      "canvas": "115x60",
+      "plate": { "x": 1, "y": 0, "w": 30, "h": 41 },
+      "numerals": { "x": 47, "y": 21, "w": 67, "h": 14, "right": 113 },
+      "wordmark": { "x": 0, "y": 46, "w": 115, "h": 14, "right": 114 }
+    },
+    "first-27.png": {
+      "canvas": "102x60",
+      "plate": { "x": 0, "y": 0, "w": 29, "h": 45 },
+      "numerals": { "x": 39, "y": 29, "w": 24, "h": 8, "right": 62 },
+      "wordmark": { "x": 1, "y": 47, "w": 101, "h": 13, "right": 101 }
+    }
+  },
+  "method": [
+    "first-27.png is the base for both: its canvas, seahorse plate and FIRST wordmark are used unchanged, and the area between the plate and the wordmark is cleared.",
+    "The numerals are lifted from first-25-7.png at their native 14 px height, so they are the same typeface at the same size in both marks. 27 is composed from that mark's own 2 and 7 glyph runs, joined with the 6 px gap the source uses between 2 and 5.",
+    "Each numeral run is placed with its right edge on column 101, which is the last column of the FIRST wordmark.",
+    "The numerals' baseline is left where the base already had it, bottom row 36, because only the size and the horizontal alignment were asked to change."
+  ],
+  "measuredAfter": {
+    "canvas": "102x60, identical for both",
+    "first-25-7.png": {
+      "numerals": { "x": 35, "y": 23, "w": 67, "h": 14, "right": 101 },
+      "gapFromPlate": 6
+    },
+    "first-27.png": {
+      "numerals": { "x": 61, "y": 23, "w": 41, "h": 14, "right": 101 },
+      "gapFromPlate": 32
+    },
+    "pixelDifferenceBetweenTheTwoFiles": {
+      "differingPixels": 543,
+      "boundingBox": { "x": 35, "y": 23, "x2": 83, "y2": 36 },
+      "meaning": "Every differing pixel lies inside the digit run. The plate, the wordmark, the canvas and the shared trailing 7 are byte-identical, which is the owner's 'uguali in tutto e per tutto tranne per il numero' stated as a measurement."
+    }
+  },
+  "verified": "npm run verify:e2e -- tests/e2e/ug1-boat-mark-fit.spec.ts --project=pixel-7-chrome passed: it builds a fleet of all seven canonical types and measures each image against its 36x88 slot, and it measures the card height.",
+  "noted": "The 27 mark now carries 32 px of empty space between the plate and its digits, against 6 px on the 25.7 mark, because both are right-aligned to the wordmark and 27 is the shorter run. That is what right-alignment means here and it is what the reference image shows."
+}

@@ -122,6 +122,15 @@ OCR and STT are included. Their acceptance needs physical-device evidence during
 their milestones. Missing access to a device may hold that milestone open, but it
 does not justify a simulated PASS or silently remove the feature.
 
+**Amended 2026-09-21 by the owner** (`docs/post-mvp/0_3_0_OWNER_BRIEF.md` section
+1.1). The physical-device evidence for OCR and STT moves from UG1 to UG2, because
+the phone checks need a trusted HTTPS origin the app does not have and providing
+one is the first 0.3.0 milestone. The PC microphone check could have run over
+localhost and simply was not; it moves with the other two rather than being
+claimed. It is re-scoped, not waived, and the rule above stands
+unchanged: no simulated PASS, and the feature is not removed. 0.2.0 therefore
+ships with that limitation stated in `CHANGELOG.md`.
+
 Boat logos supplied during design were treated as references, not assumed
 licensed production assets, and the approved neutral text/model fallback shipped
 in their place.
@@ -145,8 +154,9 @@ Version 0.2.0 is complete only when:
 - every deferred item remains absent or explicitly isolated;
 - the 0.1.0 compatibility fixture opens under the final schema without record,
   reference, value, note or history loss;
-- `npm run verify:all`, the deterministic full-week scenario and required browser
-  and physical-device checks pass;
+- `npm run verify:all`, the deterministic full-week scenario and the required
+  browser checks pass (the physical-device checks were moved to UG2 on
+  2026-09-21, see section 5);
 - final functional, field-UX/accessibility, data-integrity, regression, scope and
   code-quality reviews have zero blockers;
 - package/lock and `CHANGELOG.md` describe 0.2.0 and the working tree is clean after

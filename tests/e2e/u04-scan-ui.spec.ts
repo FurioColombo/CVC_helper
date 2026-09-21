@@ -2,7 +2,7 @@ import path from "node:path"
 
 import { expect, test } from "@playwright/test"
 
-const CLEAR_ROSTER = path.resolve(".evidence/M0/ocr-sheet-clear.png")
+const CLEAR_ROSTER = path.resolve("tests/fixtures/ocr-sheet-clear.png")
 
 async function openScan(page: import("@playwright/test").Page) {
   await page.goto("/")
@@ -55,7 +55,9 @@ test("keeps acquisition and adjustment usable on compact screens", async ({
   await page.getByRole("group", { name: /Area di ritaglio/ }).press("ArrowDown")
   await page.screenshot({
     fullPage: true,
-    path: path.resolve(`.evidence/U04/editor-${testInfo.project.name}.png`),
+    path: path.resolve(
+      `test-results/screenshots/editor-${testInfo.project.name}.png`,
+    ),
   })
 
   const overflow = await page.evaluate(() => ({
