@@ -84,11 +84,32 @@ test("Comandate empty state and proposal reflow at 320 px with 200% text", async
           width: heading.clientWidth,
           contentWidth: heading.scrollWidth,
         })),
+        // Reported because a page width on its own cannot be acted on. This
+        // assertion failed for a while saying only 355 against 320, and the
+        // element responsible — a grid of two buttons whose longest word plus
+        // padding no longer fitted at 200% text — took a separate run to find.
+        // Widest first, so the cause leads and its ancestors follow.
+        offenders: [...document.querySelectorAll<HTMLElement>("body *")]
+          .map((element) => ({
+            tag: element.tagName,
+            className: element.className,
+            text: (element.textContent || "").trim().slice(0, 40),
+            right: Math.round(element.getBoundingClientRect().right),
+            selfOverflow: element.scrollWidth - element.clientWidth,
+          }))
+          .filter(
+            (entry) =>
+              entry.right > document.documentElement.clientWidth + 1 ||
+              entry.selfOverflow > 1,
+          )
+          .sort((a, b) => b.right - a.right || b.selfOverflow - a.selfOverflow)
+          .slice(0, 6),
       })),
     ).toEqual(
       expect.objectContaining({
         pageWidth: 320,
         viewportWidth: 320,
+        offenders: [],
         headings: expect.arrayContaining([
           expect.objectContaining({ width: expect.any(Number) }),
         ]),

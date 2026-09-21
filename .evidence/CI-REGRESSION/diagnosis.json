@@ -45,8 +45,19 @@
       "ciSymptom": "clicking 'Aggiungi allievo' times out at 30s. Playwright reports the button resolved, visible, enabled, stable and scrolled into view, then names a <section class=\"rounded-3xl bord\u2026\"> \u2014 the truncation cuts the line, but that is Playwright's 'intercepts pointer events'. The named section matches EmptyStudents in src/features/students/StudentManagement.tsx, which is the button's own parent.",
       "reproducedLocally": false,
       "whatWasChecked": "At 320px and 200% text under the Pixel 7 descriptor, with and without wider glyphs: the page scrolls (scrollHeight 1178 against a 664 viewport, 514px of scroll available), the empty-state section is 810px tall, the button sits 105px below the fold, and the click succeeds. So 'the button cannot be reached' is not the explanation.",
-      "fix": "None. Not touched.",
-      "why": "The plan entry for this work says to diagnose this one before touching it, and the only evidence available was a truncated annotation. Guessing at a pointer-interception bug and changing layering on that basis is how a real defect gets papered over."
+      "fix": "scroll-margin-bottom on interactive elements, in @layer base, tracking the bar's height plus the safe area. Fixed in the app rather than in the spec's click: anything the browser scrolls into view mid-page could land behind the bar, including a control reached by Tab, which is an R12 defect for a keyboard user and not only a test problem.",
+      "why": "The plan entry for this work says to diagnose this one before touching it, and the only evidence available was a truncated annotation. Guessing at a pointer-interception bug and changing layering on that basis is how a real defect gets papered over.",
+      "resolved": "The probe settled it: the element at the click point was an app-nav-button. The fixed bottom navigation was covering the target \u2014 box 568-664, centre 616, in a 727px viewport where the bar occupies roughly 578 down, because at 200% text its min-h-14 buttons make it about 149px tall. Not the empty-state section, which is what the truncated annotation suggested and what two guesses assumed. The page container's pb-28 reserves 224px and clears the bar at the end of the document, which does nothing for an element in the middle of one."
+    },
+    {
+      "id": "CI-DUTY-REFLOW-OVERFLOW",
+      "spec": "tests/e2e/ug1-duty-reflow.spec.ts",
+      "ciSymptom": "pageWidth 355 against a viewportWidth of 320, at the Comandate empty state. Surfaced only once the click above was fixed; it was hidden behind it.",
+      "reproducedLocally": true,
+      "reproduction": "Driven to Comandate at 320px and 200% text under the Pixel 7 descriptor: the div holding 'Proponi comandate' and 'Configura manualmente' overflowed its own box by 12px at these fonts and 23px with one extra pixel of letter-spacing.",
+      "rootCause": "A grid track is sized by its widest item's own content, and a button will not shrink below its longest word plus its padding. At 200% text 'Configura manualmente' needs more width than the card gives it.",
+      "fix": "min-w-0 on the grid and the buttons, and break-words with overflow-wrap:anywhere on the labels \u2014 the same treatment the heading directly above it already had.",
+      "afterFix": "Zero offenders at the empty state, at the empty state with wider glyphs, and on the proposal screen."
     }
   ],
   "harnessChange": {
@@ -74,5 +85,39 @@
     "u09Diagnostic": "The offender report now sorts by how far past the right edge each element reaches, reports selfOverflow and whether the element clips, and keeps the widest eight. That is what will name the remaining 3px.",
     "u10Locator": "Scoped to span.line-clamp-2, so the preview assertion cannot match an open editor's textarea.",
     "principle": "Neither change touches an assertion's threshold. One makes a failure legible; the other stops a locator matching two elements."
-  }
+  },
+  "rounds": [
+    {
+      "run": 35567591949,
+      "commit": "d59f94f",
+      "result": "5 failed",
+      "note": "the first CI run of the 0.2.0/0.3.0 code"
+    },
+    {
+      "run": 35635226831,
+      "commit": "f554823",
+      "result": "3 failed, 2 flaky",
+      "note": "select and scan-caption fixes; student-scan confirmed fixed"
+    },
+    {
+      "run": 35637153134,
+      "commit": "12acfb9",
+      "result": "3 failed, 0 flaky",
+      "note": "u10 flake fixed; the u09 diagnostic sharpened so it could name its offender"
+    },
+    {
+      "run": 35639276334,
+      "commit": "c0771e4",
+      "result": "1 failed",
+      "note": "boat-strip pager wrapped; u09 fixed. Only the duty-reflow click left, now carrying its own probe"
+    },
+    {
+      "run": 35641682560,
+      "commit": "b475b39",
+      "result": "1 failed, in a different place",
+      "note": "scroll-margin fixed the click; the spec then failed on its own subject, the Comandate reflow, at 355px against 320"
+    }
+  ],
+  "lessonRecorded": "Both overflow specs reported a number and not an element. u09 took the first eight offenders in document order, which listed ancestors and omitted the cause; ug1-duty-reflow reported only headings, so a 35px overflow said nothing at all. Both now report the offenders widest-first, and ug1-duty-reflow asserts the list is empty rather than only checking the page width. An assertion about geometry that cannot name the geometry costs a full CI round trip every time it fails.",
+  "pattern": "Four of the five failures were one bug in four places: an element sized by its own content, in a container with no room, and nothing telling it it may shrink \u2014 a select, a field caption, a pager row, a pair of buttons. The fifth was a different species: a fixed overlay with no scroll reservation. None of them was a test being wrong about the app."
 }
