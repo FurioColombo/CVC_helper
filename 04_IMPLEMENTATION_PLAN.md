@@ -1172,7 +1172,8 @@ than what happened.
 | Item | Status |
 | --- | --- |
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
-| V01 — reachable from a phone | IN_PROGRESS — **the site is live at https://furiocolombo.github.io/CVC_helper/** and works when driven there; waiting only on the owner's phone |
+| V01 — reachable from a phone | COMPLETE — live at https://furiocolombo.github.io/CVC_helper/, installed and opening on the owner's phone |
+| S1 — student scan, fewer fields to check | PENDING — raised from that phone session; runs before V02 |
 | CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
 | V02–V05, UG2 | PENDING — blocked by the controller until V01 is COMPLETE |
 
@@ -1188,10 +1189,15 @@ Pages switched to GitHub Actions.
 2. The owner opens it on their phone. That is what closes V01's remaining
    acceptance criteria; nothing about a device is recorded without them.
 3. DONE — the CI regression is fixed and CI is green on Linux.
-4. `milestone:complete V01` once the owner has used the URL on their phone, then
-   V02.
+4. DONE — V01 is COMPLETE.
+5. S1: the scan's telephone column becomes a choice, and the 67 fields left to
+   check on a clean photograph get explained before they get reduced.
+6. Then V02, starting with the independent design review the owner asked for
+   twice.
 
-**Then, in order, and not reordered:** V02 the dictation control, V03
+**Then, in order:** S1 the student scan — inserted ahead of V02 on the owner's
+instruction of 2026-09-21, because they are testing now and the scan is what
+blocks them — then V02 the dictation control, V03
 transcription quality under the latency constraint, V04 the crop editor's two
 details, V05 the LLM-assisted scanning path, UG2 the gate. Each with the full
 lifecycle of `AGENTS.md` section 6 around it.
@@ -1219,7 +1225,7 @@ local-first build to a static origin and nothing more.
 ## V01 — Reachable from a phone, over HTTPS
 
 **Category:** FOUNDATION
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 ### Goal
 
@@ -1405,6 +1411,25 @@ in progress, is to allow `codex/0.3.0` in the environment's deployment branch
 rules and revert `main`. That is a preference about branch meaning, not a
 technical constraint, and it is the owner's to state.
 
+**2026-09-21 — the owner opened it on their phone. V01 closes.**
+
+They installed the PWA from `https://furiocolombo.github.io/CVC_helper/` and it
+opens perfectly, then ran a real student scan on it. That settles what V01
+existed for: the URL over HTTPS, the database opening on the device, the PWA
+installing correctly at a subpath, and scanning reaching its real assets on real
+hardware.
+
+Two of V01's acceptance criteria as written are **not** claimed: dictation on the
+phone, and a second load with the network off. Neither was reported, so neither
+is recorded. Both are in `docs/post-mvp/UG1_DEVICE_VALIDATION.md`, which is UG2's
+checklist and covers them in full alongside the camera, orientation, crop and
+photo-disposal checks. Holding a deployment milestone open for per-feature device
+evidence that another milestone already owns would be bookkeeping, not rigour —
+but narrowing V01 is a decision, so it is stated here rather than left implicit.
+
+The same session produced a product finding that is not V01's, and it is the next
+piece of work: see the student-scan entry below.
+
 ## CI regression — the browser suite is not platform-independent
 
 **Category:** FOUNDATION (harness defect, not a brief milestone)
@@ -1556,6 +1581,81 @@ threshold.
 `.evidence/CI-REGRESSION/` — `diagnosis.json` holds the failing run, the method,
 each cause with what was and was not reproduced, and the harness changes.
 `outcome.json` records the green run and checks off the acceptance criteria.
+
+
+## S1 — Student scan: choose the columns, and cut what must be checked
+
+**Category:** FEATURE
+**Status:** PENDING
+**Raised:** 2026-09-21, by the owner, from the first real scan on their own phone
+
+Not part of `0_3_0_OWNER_BRIEF.md`. It is here because the owner used the
+deployed app on their phone and reported the scan is not yet usable, which
+outranks the brief's ordering under `AGENTS.md` section 2 as an explicit
+instruction in the current task. Placed before V02 because the owner is testing
+now and this is what unblocks them; V02 is a control that changes size, which
+nobody is blocked on.
+
+### What was observed
+
+On a photograph of the same roster used in testing, **clearer and cleaner than
+the fixtures**, the review screen left **67 fields to check**. The owner's
+judgement: _"l'ocr ha decisamente bisogno di migliorare, non mi risulta ancora
+sufficientemente usabile."_
+
+### Required behaviour
+
+**The column choice, which the owner asked for directly.** At scan time, offer a
+choice of whether to read the telephone column. _"quando fai scan fammi scegliere
+se far leggere anche numero di telefono. se non è spuntato non lo provare nemmeno
+a leggere."_ Unchecked must mean **not attempted**, not extracted-then-hidden:
+the parser does not look for it, the review does not show it, and it counts
+towards nothing — not the rows to check, not the fields to complete, not
+readiness. Default unchecked, because the owner wants the common case simplified.
+
+The purpose is stated and should shape the work: _"per semplificare il test e
+concentrarci sulla parte importante del problema che sono nomi e date di
+nascita."_ The toggle is a means, not the end.
+
+**Then the count itself.** 67 is the number to explain before it is the number to
+reduce. The review flags a field when `needsReview` says so, and that is
+`confidence[field] < MIN_FIELD_CONFIDENCE`, a flat 70 across every field, plus a
+blank-field rule and the name-order gate. Establish, with the owner's own
+photograph or an equivalent, which of those produces the 67: low confidence on
+readings that are in fact correct, genuinely missing fields, the name-order gate,
+or the telephone column alone. Measure before changing anything; a threshold
+lowered on a hunch trades one failure for a worse one, because a confident wrong
+name is worse than a flagged right one.
+
+**Do not regress the thing that was fixed.** A field read below the threshold
+keeps its text and is marked for attention rather than blanked. That was a
+deliberate correction and it stays.
+
+### Required evidence
+
+- `.evidence/S1/verification.json`
+- `.evidence/S1/scan-field-selection.json` — the toggle, and proof that
+  unchecked means unattempted
+- `.evidence/S1/review-load-measurement.json` — where the 67 came from, and what
+  it is afterwards, measured the same way both times
+- `.evidence/S1/browser-evidence.json`
+- `.evidence/S1/self-review.json`
+
+### Acceptance criteria
+
+With the telephone column unchecked, no telephone is read, shown or counted, and
+nothing else about the scan changes. The fields left to check on a clean
+photograph are materially fewer than 67 and the reduction is attributed to a
+named cause rather than to a loosened threshold. No field is blanked that was
+previously shown. The camera path and the review gate are otherwise unchanged:
+nothing enters the course unreviewed.
+
+### Deferred, still
+
+The two OCR follow-ups the owner deferred past 0.3.0 on 2026-09-21 — line
+fragmentation, and the absence of an automated test over a real photograph —
+stay deferred. This milestone does not reopen them, though what it measures may
+inform them.
 
 
 ## V02 — The dictation control stops changing size

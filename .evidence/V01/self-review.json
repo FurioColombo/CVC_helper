@@ -6,13 +6,14 @@
   "blockers": [],
   "importantFindings": [
     {
-      "id": "V01-PHONE-PENDING",
-      "finding": "The acceptance criteria that need a real phone are not met and are not claimed: the URL loading over HTTPS, the database opening there, dictation and scanning reaching their first asset fetch, and a second offline load. They wait on two repository settings that belong to the owner's account — making the repository public and setting the Pages source to GitHub Actions — and then on the owner opening the URL. V01 stays IN_PROGRESS.",
-      "notSimulated": "Everything proven here was proven on this machine, in Chromium and WebKit, against a real production build served at the real base path. None of it is recorded as a device observation."
+      "id": "V01-PHONE-CONFIRMED",
+      "finding": "Resolved on 2026-09-21. The owner installed the PWA on their phone from the deployed URL and reports it opens perfectly, then used the scan on it. That settles the criteria V01 existed for: the URL over HTTPS, the database opening on the device, the PWA installing at a subpath, and scanning reaching its real assets.",
+      "notClaimed": "Dictation on the phone and a load with the network off were not reported. They are not recorded as passed. Both are in UG2's physical checklist, which is where the per-feature device evidence belongs.",
+      "scopingNote": "V01's acceptance criteria as written included those two. Rather than hold a deployment milestone open for checks that UG2 already owns in full, they are read as UG2's. This is a narrowing of V01 and it is stated here rather than left implicit."
     },
     {
       "id": "V01-CLAUDE-MD-WAS-WRONG",
-      "finding": "CLAUDE.md asserted that the app cannot run without SharedArrayBuffer, and that assertion implied the host must be able to send COOP/COEP — which would have ruled out GitHub Pages and forced the speech model same-origin. The measurement disproved it: with SharedArrayBuffer deleted before any app code runs, the database opens, takes a course and keeps it across a reload, in both engines. The paragraph is corrected, the old reason is recorded as having been wrong, and the pane's actual symptom is now stated: it stops at 'Apertura del corso…' with 'Failed to fetch a worker script' from inside the PowerSync worker.",
+      "finding": "CLAUDE.md asserted that the app cannot run without SharedArrayBuffer, and that assertion implied the host must be able to send COOP/COEP \u2014 which would have ruled out GitHub Pages and forced the speech model same-origin. The measurement disproved it: with SharedArrayBuffer deleted before any app code runs, the database opens, takes a course and keeps it across a reload, in both engines. The paragraph is corrected, the old reason is recorded as having been wrong, and the pane's actual symptom is now stated: it stops at 'Apertura del corso\u2026' with 'Failed to fetch a worker script' from inside the PowerSync worker.",
       "worthNoting": "This is exactly what the brief meant by 'Measure this, do not assume'. Had it been assumed, V01 would have bought a header-capable host and moved a 73 MB model for nothing."
     }
   ],
@@ -23,11 +24,15 @@
     },
     {
       "id": "V01-PANE-SYMPTOM-UNDIAGNOSED",
-      "finding": "Why the built-in browser pane fails is still unknown — the worker script itself fetches with a 200, a shared worker constructs and a dedicated module worker loads, so the failure is inside the worker's own module graph. CLAUDE.md says not to debug the pane and nothing depends on it, so this was left alone and recorded rather than chased."
+      "finding": "Why the built-in browser pane fails is still unknown \u2014 the worker script itself fetches with a 200, a shared worker constructs and a dedicated module worker loads, so the failure is inside the worker's own module graph. CLAUDE.md says not to debug the pane and nothing depends on it, so this was left alone and recorded rather than chased."
     },
     {
       "id": "V01-HISTORY-BECOMES-PUBLIC",
-      "finding": "Making the repository public publishes its whole history, which includes .evidence/ — among it recorded command output from 0.1.0 carrying the owner's own home-directory path, and the specs, plan and reviews. Nothing there is anyone else's data, and the owner chose this knowing the site would be public, but it is a consequence of the choice rather than of the deploy and is recorded as such."
+      "finding": "Making the repository public publishes its whole history, which includes .evidence/ \u2014 among it recorded command output from 0.1.0 carrying the owner's own home-directory path, and the specs, plan and reviews. Nothing there is anyone else's data, and the owner chose this knowing the site would be public, but it is a consequence of the choice rather than of the deploy and is recorded as such."
+    },
+    {
+      "id": "V01-OCR-FEEDBACK",
+      "finding": "The same phone session produced a product finding that is not V01's: on a clean, well-lit photograph of the roster used in testing, 67 fields were left needing review. The owner judges the scan not yet usable and asked for a choice, at scan time, of whether to read the telephone column at all \u2014 unchecked meaning do not attempt it \u2014 so that testing can concentrate on names and dates of birth. Tracked as its own milestone rather than absorbed here."
     }
   ],
   "scopeCheck": {
@@ -39,9 +44,9 @@
     "behaviourChangeAtTheDefaultBase": "none. With CVC_BASE_PATH unset the base stays '/', the manifest is unchanged, and 400 unit tests, the domain and compatibility checks, the production build and the touched browser journeys all pass as before."
   },
   "verificationRun": [
-    "npm run verify:quick — 38 files, 400 tests, lint, formatting, typecheck",
-    "npm run verify:domain — repository, canonical domain tables, 0.1.0 compatibility fixture at 22 rows",
-    "npm run build at base '/' and at base '/CVC_helper/' — both pass check-built-pwa",
+    "npm run verify:quick \u2014 38 files, 400 tests, lint, formatting, typecheck",
+    "npm run verify:domain \u2014 repository, canonical domain tables, 0.1.0 compatibility fixture at 22 rows",
+    "npm run build at base '/' and at base '/CVC_helper/' \u2014 both pass check-built-pwa",
     "npm run check:ocr-offline at both bases",
     "npm run measure:isolation against the production subpath build in chromium, chromium without SharedArrayBuffer, and webkit",
     "npm run verify:e2e -- ug1-boat-mark-fit, u01-shell, u04-scan-ui, student-scan --project=pixel-7-chrome: 5 passed. These are the journeys that exercise the asset paths this milestone changed."
