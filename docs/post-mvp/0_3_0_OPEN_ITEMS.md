@@ -1,138 +1,190 @@
-# Open items — what was asked for and is not yet built
+# Open items — requests checked against the code
 
-**Opened 2026-09-22**, at the owner's request: _"vedi di preparare documento con
-tutte le cose mancanti, oltre a questi next step appena indicati."_
+**R1 completed 2026-09-22.** This is the code-audited list requested by the
+owner. The complete source and request-family ledger is
+`.evidence/R1/sweep-coverage.json`.
 
-This is the output of **R1** in `04_IMPLEMENTATION_PLAN.md` and it is a first
-draft, not the finished sweep. It carries what is known today. R1's job is to
-make it complete by checking every past request against the code rather than
-against the plan, and it has not run yet.
+This document records missing or partial behaviour. It does not authorise a
+fix: every item has an owner, and each owner must use the milestone lifecycle.
 
-Two rules for this file:
+## Planned in 0.3.0
 
-- **An item here names a file and a line for what the code does now**, or says
-  explicitly that it has not been checked. No "probably".
-- **This file does not authorise fixes.** Every item is owned by a milestone, an
-  existing one or a new one. A list of missing things is a list of temptations,
-  and scope discipline has to survive it.
+### V02 — the dictation control changes width
 
----
+The owner asked for one stable square control across permission, model loading,
+recording and processing. The current trigger still renders changing labels
+(`Termina`, `Permesso…`, `Caricamento…`, `Elaborazione…`) at
+`src/features/speech/DictationControls.tsx:45-68`; its width therefore remains
+content-driven. **Verdict: missing, owned by V02.** V02 begins with the required
+independent field-UX/accessibility design review before implementation.
 
-## 1. The instructions given on 2026-09-22
+### V03 — speech quality, latency and the confirmation step
 
-These are written up in full in `04_IMPLEMENTATION_PLAN.md`; the headings below
-are the short form.
+The owner asked for a measured quality improvement without increased time, with
+at least a 20% latency reduction as the usable target, and removal of the extra
+transcript confirmation step. The state machine still includes `review` at
+`src/features/speech/useDictation.ts:15,117,203,213`, and the UI still presents
+`Scarta` and `Usa testo` at
+`src/features/speech/DictationControls.tsx:138-161`.
+**Verdict: missing, owned by V03.** V03 also owns updating the physical-device
+checklist whose instructions still name those two buttons.
 
-| #   | What the owner asked                                                                                     | Milestone | State                              |
-| --- | -------------------------------------------------------------------------------------------------------- | --------- | ---------------------------------- |
-| 1.1 | Deduce the name order yourself, from the same name lists used for the sex, one order for the whole sheet | **S2**    | PENDING, specified, ready to build |
-| 1.2 | Report the age in the app, not the date of birth; use the date to corroborate the age                    | **S3**    | PENDING, specified, ready to build |
-| 1.3 | Explain what line fragmentation means                                                                    | **S4**    | ANSWERED below and in the plan     |
-| 1.4 | Decide whether to fix line fragmentation                                                                 | **S4**    | **Waiting on the owner**           |
-| 1.5 | Sweep every past request against the code                                                                | **R1**    | PENDING; this file is its output   |
+### V04 — crop edge handles and live rotation
 
-### 1.3 — What "line fragmentation" means
+The owner's edge-handle sketch is not implemented: the document editor defines
+and renders only four `CROP_CORNERS` at
+`src/features/students/StudentScanImageEditorDocument.tsx:39-69,588-606`, even
+though the crop domain already supports north/east/south/west gestures at
+`src/features/students/studentImageCrop.ts:7-17,76-91`.
 
-Tesseract does not read a table. It reads a page, and groups words into **lines**
-of its own choosing from their geometry. On a printed roster the cells belonging
-to one student — name, telephone, age, date — are far apart across the page, with
-ruled lines and empty space between them. When the photograph is slightly skewed,
-or a rule is thick, or the light falls unevenly, Tesseract decides that what is
-really one row is **two lines**: the name on one, the date on another.
+The visible bitmap also does not follow the finger while the ruler moves. Image
+regeneration is delayed at
+`src/features/students/StudentScanImageEditorDocument.tsx:183-195`, while the
+bitmap transform at line 555 contains translate and scale but no rotation; only
+the ruler moves at lines 652-666. **Verdict: both missing, owned by V04.**
 
-The app then sees two students:
+### V05 — LLM-assisted scan path
 
-- one with a name and **no date of birth**, and
-- one with a date of birth and **no name at all**.
+The owner asked for a second, explicit LLM-assisted route beside the private
+on-device OCR route. The only production extraction route still parses
+Tesseract lines and calls `candidateFromLine` one line at a time at
+`src/capabilities/studentScan.ts:703-835,837-866`.
+**Verdict: missing, owned by V05.**
 
-One mis-grouping costs four things: a real row loses its date; a row that does not
-exist is invented; that phantom row has two missing name fields; and the operator
-has to work out that it is a phantom and delete it.
+### UG2 — physical checks and release gate
 
-Measured on the owner's own photographs, 2026-09-22: present on **all six**. On
-the crop the owner scanned it was rows 2 and 3 of the read — two dates belonging
-to rows 1 and 4. On the two worst photographs it cascades: one read **41 rows for
-a 25-row sheet** with 93 missing fields, another read 18 rows with 51.
+The owner's phone/browser checks remain open by decision. The current code also
+leaves three observations for that real-device gate: the exceptional exact-date
+panel introduced by S3 (`src/features/students/StudentScan.tsx:438-465`), the
+large sticky crop/review band at 200% text
+(`src/features/students/StudentScan.tsx:907`), and the tall sticky boat strip
+with its four-column grid
+(`src/features/crews/CrewManagement.tsx:1468-1510`).
+**Verdict: automated evidence exists, physical result not claimed; owned by
+UG2.**
 
-### 1.4 — The decision waiting
+## Deferred by the owner or frozen scope
 
-The owner deferred line fragmentation past 0.3.0 themselves, in
-`0_3_0_OWNER_BRIEF.md` section 9. Under `AGENTS.md` section 2 that deferral
-stands until the owner lifts it. The measurement has changed what is known — it is
-now the largest remaining cause of the review load — but a measurement does not
-overrule a decision.
+### S4 — OCR line fragmentation
 
-Until it is lifted, the review load on a twenty-student sheet stops falling at
-roughly 36 flagged fields. S4 in the plan sketches the fix and its risk so the
-decision can be made with the cost in view.
+The OCR parser treats every Tesseract line as a possible student and calls
+`candidateFromLine` separately at
+`src/capabilities/studentScan.ts:837-866`. It does not merge horizontally
+separated fragments that share a table row. The supplied photographs confirm
+that this is the largest remaining review-load cause.
+**Verdict: missing, owned by S4, deferred by the owner in the 0.3.0 brief
+section 9. Do not start until that deferral is lifted.**
 
----
+### Automated real-photograph regression
 
-## 2. Named by the owner as possibly missed
+The repository has synthetic public fixtures, while the real-photo measurement
+remains manual because the photographs contain students' and staff members'
+personal data. The production measurement entry point is
+`src/capabilities/studentScan.ts:837-866`; the private inputs live only under
+ignored `data/private/ocr-owner/`.
+**Verdict: missing by explicit deferral.** A future fixture must be synthetic or
+irreversibly anonymised; the supplied originals must never be committed.
 
-### 2.1 The OCR image does not turn during the rotation drag
+### Final product name and derived mark
 
-- **Asked:** `0_3_0_OWNER_BRIEF.md` section 6.2 — _"quando ruoto l'immagine deve
-  ruotare già durante il drag, non dopo, altrimenti diventa difficile da usare."_
-- **State: real, already diagnosed, and owned by V04.** Not an oversight.
-- **What the code does now:** the tilt ruler in
-  `src/features/students/StudentScanImageEditorDocument.tsx` updates state on
-  every pointer move, but the visible bitmap is regenerated by an effect behind a
-  120 ms `setTimeout` that the next move event cancels. Nothing turns until the
-  drag stops.
-- **Owner:** V04, with the fix and the evidence requirement already written —
-  the angle must be shown tracking the pointer **mid-drag**, not only at the end.
+The product still uses the provisional name `CVC Helper`; the manifest values
+remain in `vite.config.ts:74-85` and the current CVC identity is documented as
+provisional. **Verdict: intentionally deferred by the owner.**
 
-### 2.2 Spacing between cards in the evaluations tab, between crews
+### Other frozen deferrals
 
-- **Asked:** the owner, 2026-09-22 — _"spazio tra card nella tab valutazione tra
-  equipaggi."_
-- **State: real, and owned by nothing yet.**
-- **What the code does now:** in
-  [EvaluationManagement.tsx:655](../../src/features/evaluations/EvaluationManagement.tsx:655)
-  the list container is `grid gap-1.5` — 6 px — and each crew's `<section>` at
-  [line 672](../../src/features/evaluations/EvaluationManagement.tsx:672) is
-  `grid gap-3` — 12 px. So cards **inside** one crew sit 12 px apart, while one
-  crew's last card and the next crew's heading are separated by the outer 6 px
-  plus the heading's `mt-2`. The grouping reads backwards: the gap between groups
-  is tighter than the gap within them. The same applies to the `A terra` and
-  `Non assegnati` sections at lines 687 and 701.
-- **Needs:** an owner. A candidate for R1 to place, since it is a design-rulebook
-  matter (grouping and rhythm) rather than a scan matter.
+The global sweep reconfirmed the 0.2.0 scope deferrals: the broad custom icon
+programme (including semantic fault-part icons), advanced student sorting,
+Instagram photography, dashboards, backend/synchronisation/authentication,
+native brightness, image export, automatic crew generation, evaluation-band
+hints, general content areas, synchronised timelines and fixed crew-size
+formulae outside D2-D5. The implemented neutral fault fallback is visible at
+`src/features/boats/FaultCard.tsx:152`; the local-only persistence decision is
+implemented from `src/persistence/db.ts:49`. **Verdict: deferred by scope, not
+missed implementation.**
 
-### 2.3 "e sicuramente qualche altra cosa"
+## Corrections found by R1
 
-The owner's own words, and the reason R1 exists. Not yet swept.
+These items were not owned before the sweep. They are now assigned to **F1 —
+R1 follow-up corrections**, after V05 and before UG2.
 
----
+### F1.1 — evaluation crew grouping reads backwards
 
-## 3. Parked by policy, and where each one is recorded
+The owner explicitly asked for more space between crews in Valutazioni. The
+outer group list is `gap-1.5` at
+`src/features/evaluations/EvaluationManagement.tsx:655`, while every crew,
+`A terra`, and `Non assegnati` section uses `gap-3` at lines 672, 688 and 702.
+Cards inside a group therefore have more space than adjacent groups.
+**Verdict: missing.**
 
-Scope discipline says to record what is noticed instead of fixing it. That policy
-has been putting items in the `qolFindings` of each milestone's self-review, which
-is where R1 must look. Carried forward here so they are visible in one place.
+### F1.2 — moving during a profile long press does not cancel release
 
-| Item                                                                                                                          | Recorded in                                                                  | State                                                                                                                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `inferSex` suggests **female for Gianluca** — the `-a` ending decides it and the male override list does not contain the name | `.evidence/S1/self-review.json`                                              | Open. One entry in `MALE_NAMES`. Best made when the sex rule is next opened on evidence; **S2 opens it**, so S2 should absorb this                                                  |
-| The ambiguous-compound rule **blanks three fields** per row where it fires, leaving the words only under "Letto:"             | `.evidence/S1/self-review.json`, `.evidence/S1/review-load-photographs.json` | Open, and now measured at **one row** on the owner's sheet rather than the twenty-two the arithmetic had fitted. Low priority on that evidence                                      |
-| The telephone choice is **not remembered** between scans, unlike the name order                                               | `.evidence/S1/self-review.json`                                              | Open, and deliberate for a testing aid. Revisit if the owner scans repeatedly with it on                                                                                            |
-| **21 fields flagged that are correct** — Graiff at 13, Bragagnolo at 34, Fassi at 35, dates at 42 and 44                      | `.evidence/S1/review-load-photographs.json`                                  | Nine of them are the dates, which **S3** clears on corroboration. The twelve name flags stay: one of them caught `Atessandro` for `Alessandro`, and the threshold is what caught it |
-| Why the **built-in browser pane** cannot run the app is still unknown                                                         | `.evidence/V01/self-review.json`                                             | Open and deliberately not chased. `CLAUDE.md` says not to debug the pane and nothing depends on it                                                                                  |
-| `vite preview` needs `CVC_BASE_PATH` too, or a subpath build serves from the root and every asset 404s                        | `.evidence/V01/self-review.json`                                             | Closed by documentation — `docs/DEPLOY.md`                                                                                                                                          |
-| Making the repository public published its whole history, including `.evidence/`                                              | `.evidence/V01/self-review.json`                                             | Accepted by the owner as a consequence of the hosting choice. **Constrains everything after it**: no photograph of a real roster may be committed                                   |
+`useFieldShortcut` detects movement, but `onPointerUp` calls `cancelPress()` at
+`src/features/students/StudentManagement.tsx:131-136`; `cancelPress()` clears
+`pressMoved` at lines 98-102 before the release condition reads it. A moved touch
+held for 500 ms can still open the edit form. This violates the requested
+long-press shortcut behaviour. **Verdict: implementation defect.**
 
----
+### F1.3 — a failed evaluation can be discarded by navigation
 
-## 4. Constraints this list must respect
+A failed save intentionally keeps the attempted value and records its student
+in `saveErrors` at
+`src/features/evaluations/EvaluationManagement.tsx:429-463`. View and session
+navigation only block active saves or an open note at lines 519-522 and 541-555;
+they do not block or resolve `saveErrors`. Changing view/session can therefore
+discard the unsaved attempt. **Verdict: partial.**
 
-- **The repository is public.** The six photographs of 2026-09-22 show twenty
-  students and five staff with telephone numbers and dates of birth, three of
-  them minors. They are not in the working tree and must not be. Only counts are
-  recorded. The consequence is that the photograph measurements are **not
-  reproducible from the repository alone**, and `tests/fixtures/ocr-sheet-clear.png`
-  stays the reproducible case.
-- **Physical-device checks belong to the owner**, on their own phone, and no
-  simulated PASS is ever recorded. UG2 holds the checklist.
-- **`MIN_FIELD_CONFIDENCE` stays at 70** unless something other than a wish to see
-  a smaller number moves it.
+### F1.4 — per-row name swap can overwrite manual correction
+
+The row-level swap re-applies OCR-derived words at
+`src/features/students/StudentScan.tsx:261-273`. If the operator first edits a
+name and then invokes the explicit swap, those manual values can be replaced.
+**Verdict: implementation defect in an existing fallback.**
+
+### F1.5 — invalid profile edits make Back appear inert
+
+`persistEdit` returns `false` for missing required values without setting an
+explanatory error at
+`src/features/students/StudentManagement.tsx:392-401`; `exitForm` only leaves
+after a successful result at lines 457-464. Data is protected, but Back gives no
+reason for staying. **Verdict: partial.**
+
+### F1.6 — autosave can briefly under-report pending work
+
+Each newer edit increments the version and clears `saving` before its debounce
+at `src/features/students/StudentManagement.tsx:428-438`, even while an older
+queued request can still be running. Versioning prevents stale success and data
+loss, but the status can briefly say less than the queue does.
+**Verdict: presentation defect.**
+
+### F1.7 — installed-app splash colour does not match the app background
+
+The PWA manifest still uses cream `#f4f1e8` at `vite.config.ts:84`, while the
+application background is the blue-grey surface recorded by UG1. This can show
+as a mismatched launch surface on an installed phone. **Verdict: missing visual
+polish.**
+
+## Findings checked and closed or intentionally unchanged
+
+| Finding                                             | Code check and disposition                                                                                                                                                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| S1 telephone choice is not remembered               | `useState(false)` at `src/features/students/StudentScan.tsx:533` deliberately restores the requested privacy-safe default for every scan. No contrary owner request; unchanged.                                                                  |
+| S2 suffix votes can include surnames                | `inferStudentNameOrder` at `src/capabilities/studentScan.ts:409-449` exposes both vote counts and falls back on ties; all five supplied captures selected the correct order. Accepted limitation, with manual sheet and row correction retained. |
+| S3 manual create/edit still needs an exact date     | The storage and rules contract remains exact DOB; the form at `src/features/students/StudentManagement.tsx:493-503` is intentional.                                                                                                              |
+| Gianluca sex inference                              | Closed in S2: the male-name table is used before suffix inference at `src/capabilities/studentScan.ts:136-160,389-399`.                                                                                                                          |
+| Low-confidence text                                 | Still visible and marked; `MIN_FIELD_CONFIDENCE` remains 70. The scan review renders editable values at `src/features/students/StudentScan.tsx:372-465`.                                                                                         |
+| Deletion pending label                              | Closed since the earlier review: the confirmation button now shows `Eliminazione…` at `src/features/students/StudentManagement.tsx:956`.                                                                                                         |
+| Preview subpath 404                                 | Closed in documentation; `docs/DEPLOY.md:83-89` now requires the same `CVC_BASE_PATH` for preview.                                                                                                                                               |
+| Built-in browser pane                               | Excluded from product scope by `CLAUDE.md`; production browsers and the deployed PWA are the verification targets.                                                                                                                               |
+| Multiple-tab warning                                | Multi-tab and synchronisation are explicitly outside scope; the database remains local-only.                                                                                                                                                     |
+| Large JavaScript chunks and OCR development warning | Build/tooling observations, not unimplemented owner requests. Production build and OCR paths pass; UG2 remains the next full gate.                                                                                                               |
+| Public Git history                                  | Accepted consequence of the chosen public Pages host. It is why private roster photographs stay under ignored `data/private/`.                                                                                                                   |
+
+## Privacy and evidence boundary
+
+The five supplied originals are stored locally under
+`data/private/ocr-owner/`, which is covered by the repository's `data/` ignore
+rule. `git check-ignore` confirms the directory is ignored and `git ls-files`
+contains none of the files. Only aggregate counts enter committed evidence.
+The originals, prepared derivatives and OCR outputs must stay out of Git and the
+web.

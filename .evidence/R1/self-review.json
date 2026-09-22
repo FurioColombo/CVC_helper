@@ -1,0 +1,38 @@
+{
+  "milestone": "R1",
+  "reviewerRole": "self review, REVIEW",
+  "reviewedOn": "2026-09-22",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "R1-ALL-SOURCES-SWEPT",
+      "finding": "Every required current, archived, specification, changelog, milestone and self-review source is recorded as swept in sweep-coverage.json. Findings were checked against production code rather than milestone status."
+    },
+    {
+      "id": "R1-OWNER-NAMED-ITEMS",
+      "finding": "Both owner-named examples are confirmed: rotation is already owned by V04; reversed evaluation crew spacing had no owner and is now assigned to F1."
+    },
+    {
+      "id": "R1-NEW-DEFECTS-OWNED",
+      "finding": "The sweep also found a moved-long-press defect, failed-evaluation navigation loss, OCR name-swap overwrite risk, invalid-edit Back silence, autosave status gap and PWA launch-colour mismatch. F1 owns all seven corrections and precedes UG2."
+    },
+    {
+      "id": "R1-SCOPE-PRESERVED",
+      "finding": "R1 changed no application behaviour. Owner and scope deferrals remain deferred, especially S4, real-photo automation, final branding and broad custom icons."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "R1-LINE-NUMBERS",
+      "finding": "The audit cites code line numbers at this checkpoint. Later implementation will move lines, so the owning milestone should update this living list when closing an item."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/post-mvp/0_3_0_OPEN_ITEMS.md",
+    ".evidence/R1/sweep-coverage.json",
+    "All sources listed in sweep-coverage.json",
+    "Production code paths cited by each open item",
+    ".milestones/manifest.json and 04_IMPLEMENTATION_PLAN.md for ownership"
+  ]
+}

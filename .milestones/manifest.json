@@ -449,7 +449,7 @@
     {
       "id": "R1",
       "category": "REVIEW",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/R1/verification.json",
@@ -516,6 +516,19 @@
         ".evidence/V05/domain-review.json"
       ],
       "requiredReviews": [".evidence/V05/domain-review.json"],
+      "allowedIncompletePredecessors": ["S4"]
+    },
+    {
+      "id": "F1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/F1/verification.json",
+        ".evidence/F1/browser-evidence.json",
+        ".evidence/F1/self-review.json"
+      ],
+      "requiredReviews": [".evidence/F1/self-review.json"],
       "allowedIncompletePredecessors": ["S4"]
     },
     {

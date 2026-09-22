@@ -1,0 +1,328 @@
+{
+  "milestone": "R1",
+  "reviewedOn": "2026-09-22",
+  "method": "Every historical request source was read, then each disposition was checked against production code. Completed milestone status was not accepted as implementation evidence.",
+  "sources": [
+    {
+      "source": "docs/post-mvp/0_3_0_OWNER_BRIEF.md",
+      "status": "SWEPT",
+      "result": "V01 and S1-S3 are implemented; V02-V05 and UG2 remain planned; S4, real-photo automation and final branding remain explicitly deferred."
+    },
+    {
+      "source": "docs/post-mvp/brief-0.3.0/dictation-stop-overflow.png",
+      "status": "SWEPT",
+      "result": "Reproduced in code as content-sized changing labels; V02."
+    },
+    {
+      "source": "docs/post-mvp/brief-0.3.0/dictation-loading-overflow.png",
+      "status": "SWEPT",
+      "result": "Reproduced in code as percentage text inside the trigger; V02."
+    },
+    {
+      "source": "docs/post-mvp/brief-0.3.0/dictation-review-step.png",
+      "status": "SWEPT",
+      "result": "The pictured Scarta/Usa testo state remains present; V03."
+    },
+    {
+      "source": "docs/post-mvp/brief-0.3.0/crop-edge-handles-sketch.png",
+      "status": "SWEPT",
+      "result": "Only corner handles render; edge gestures exist in the domain but are not connected; V04."
+    },
+    {
+      "source": "docs/post-mvp/brief-0.3.0/first-marks-reference.png",
+      "status": "SWEPT",
+      "result": "Reference belongs to the already completed boat-mark correction; no open request found."
+    },
+    {
+      "source": "archive/v0.2.0-design-history/05_POST_MVP_UX_CHANGE_REQUESTS.md",
+      "status": "SWEPT",
+      "result": "All UX-G, BRAND, ICON, STT, OCR, STUD, BOAT, VOL, CMD, CREW, FAULT and EVAL request families accounted below."
+    },
+    {
+      "source": "archive/v0.2.0-design-history/sources/05_original_with_comments.txt",
+      "status": "SWEPT",
+      "result": "Original wording, owner comments and question dispositions cross-checked with the consolidated request families."
+    },
+    {
+      "source": "archive/v0.2.0-design-history/11_MOCK_REVIEW.md",
+      "status": "SWEPT",
+      "result": "Mock corrections are implemented or represented by the explicit deferred icon/branding scope."
+    },
+    {
+      "source": "archive/v0.2.0-design-history/12_R2_REVIEW_QUESTIONS.md",
+      "status": "SWEPT",
+      "result": "Resolved answers were traced through the request-family ledger; no unanswered implementation request found."
+    },
+    {
+      "source": "01_PRODUCT_SPEC.md",
+      "status": "SWEPT",
+      "result": "Current domain behaviour was spot-checked in students, boats, volunteers, duties, crews, faults and evaluations; F1 records the implementation defects found."
+    },
+    {
+      "source": "02_MVP_SCOPE.md",
+      "status": "SWEPT",
+      "result": "Every named deferral remains absent or isolated; no deferred backend, sync, auth, analytics or native packaging was introduced."
+    },
+    {
+      "source": "docs/post-mvp/06_DESIGN_RULEBOOK.md",
+      "status": "SWEPT",
+      "result": "Evaluation grouping and moved-long-press defects found; other rulebook observations are assigned to planned physical/accessibility evidence."
+    },
+    {
+      "source": "docs/post-mvp/07_PAGE_CHANGELOG.md",
+      "status": "SWEPT",
+      "result": "P01-P19 decisions checked by page family; the profile long-press implementation disagrees with its intended gesture cancellation."
+    },
+    {
+      "source": "04_IMPLEMENTATION_PLAN.md completed milestone acceptance criteria",
+      "status": "SWEPT",
+      "result": "Acceptance claims were checked against code and parked review findings; completion status alone was not used."
+    },
+    {
+      "source": ".evidence/U00/self-review.json",
+      "status": "SWEPT",
+      "result": "OCR development warning and large chunks are tooling observations; multiple-tab support is explicitly out of scope."
+    },
+    {
+      "source": ".evidence/U01/self-review.json",
+      "status": "SWEPT",
+      "result": "First-launch identity and shared palette were intended; large chunk warning is unchanged tooling evidence."
+    },
+    {
+      "source": ".evidence/U03/self-review.json",
+      "status": "SWEPT",
+      "result": "Large chunk warning is a build observation; V03 owns measured speech quality and latency."
+    },
+    {
+      "source": ".evidence/U04/self-review.json",
+      "status": "SWEPT",
+      "result": "Broader physical raster/WebKit and 200% sticky-band observations are assigned to UG2; private-photo automation remains owner-deferred."
+    },
+    {
+      "source": ".evidence/U06/self-review.json",
+      "status": "SWEPT",
+      "result": "No QoL findings."
+    },
+    {
+      "source": ".evidence/U10/self-review.json",
+      "status": "SWEPT",
+      "result": "Failed-save navigation can discard the attempted evaluation; assigned to F1."
+    },
+    {
+      "source": ".evidence/V01/self-review.json",
+      "status": "SWEPT",
+      "result": "Preview documentation is fixed, the built-in pane is excluded by the runtime contract, public history constrains privacy, and OCR feedback closed through S1-S3."
+    },
+    {
+      "source": ".evidence/S1/self-review.json",
+      "status": "SWEPT",
+      "result": "Telephone resets to the explicit privacy-safe default off; no contrary request justifies persistence."
+    },
+    {
+      "source": ".evidence/S2/self-review.json",
+      "status": "SWEPT",
+      "result": "Suffix-vote limitation is disclosed and recoverable; row swap can overwrite manual edits and is assigned to F1."
+    },
+    {
+      "source": ".evidence/S3/self-review.json",
+      "status": "SWEPT",
+      "result": "Exact-date correction wording goes to UG2 physical field review; manual exact DOB remains required by the stored contract."
+    }
+  ],
+  "requestFamilies": [
+    {
+      "ids": "UX-G01-G04, UX-G06-G07",
+      "verdict": "DONE_WITH_F1_CORRECTIONS",
+      "codeEvidence": [
+        "src/features/students/StudentManagement.tsx:248",
+        "src/features/duties/DutyManagement.tsx:490-549",
+        "src/features/crews/CrewManagement.tsx:1468-1764",
+        "src/features/evaluations/EvaluationManagement.tsx:519-716"
+      ],
+      "owner": "F1 for the proved gesture, grouping and failed-save gaps"
+    },
+    {
+      "ids": "UX-G05, ICON-01",
+      "verdict": "PARTIAL_BY_DESIGN",
+      "codeEvidence": [
+        "src/features/boats/FaultCard.tsx:152",
+        "src/features/evaluations/EvaluationManagement.tsx:237-247"
+      ],
+      "owner": "Deferred scope for a broad custom icon programme"
+    },
+    {
+      "ids": "BRAND-01",
+      "verdict": "DONE_PROVISIONALLY",
+      "codeEvidence": ["vite.config.ts:74-85"],
+      "owner": "Current product"
+    },
+    {
+      "ids": "BRAND-02",
+      "verdict": "DEFERRED",
+      "codeEvidence": ["vite.config.ts:74-85"],
+      "owner": "Owner-deferred backlog"
+    },
+    {
+      "ids": "STT-001",
+      "verdict": "PARTIAL",
+      "codeEvidence": [
+        "src/features/speech/DictationControls.tsx:39-68",
+        "src/features/speech/DictationControls.tsx:138-161",
+        "src/features/speech/useDictation.ts:15-213"
+      ],
+      "owner": "V02 and V03"
+    },
+    {
+      "ids": "OCR-001",
+      "verdict": "PARTIAL",
+      "codeEvidence": [
+        "src/capabilities/studentScan.ts:409-474",
+        "src/capabilities/studentScan.ts:703-866",
+        "src/features/students/StudentScan.tsx:533-1053"
+      ],
+      "owner": "S4 deferred; V04 and V05 planned; S1-S3 complete"
+    },
+    {
+      "ids": "STUD-01, STUD-02, STUD-04-STUD-09",
+      "verdict": "DONE_WITH_SMALL_F1_FINDINGS",
+      "codeEvidence": [
+        "src/features/students/StudentManagement.tsx:225-280",
+        "src/features/students/StudentManagement.tsx:392-517",
+        "src/features/students/StudentManagement.tsx:662-956",
+        "src/persistence/students.ts:276-320"
+      ],
+      "owner": "F1 for invalid-Back explanation and pending autosave status"
+    },
+    {
+      "ids": "STUD-03",
+      "verdict": "PARTIAL_DEFECT",
+      "codeEvidence": ["src/features/students/StudentManagement.tsx:91-145"],
+      "owner": "F1"
+    },
+    {
+      "ids": "BOAT-01-BOAT-02",
+      "verdict": "DONE",
+      "codeEvidence": [
+        "src/domain/boat.ts:13-45",
+        "src/features/boats/FaultCard.tsx:152"
+      ],
+      "owner": "Completed U05/U06"
+    },
+    {
+      "ids": "VOL-01-VOL-03",
+      "verdict": "DONE",
+      "codeEvidence": [
+        "src/domain/config.ts:163",
+        "src/features/volunteers/VolunteerManagement.tsx:69-202",
+        "src/features/crews/CrewManagement.tsx:2332"
+      ],
+      "owner": "Completed U07"
+    },
+    {
+      "ids": "CMD-01-CMD-08",
+      "verdict": "DONE",
+      "codeEvidence": [
+        "src/features/duties/DutyManagement.tsx:406-549",
+        "src/features/duties/DutyManagement.tsx:739-1302"
+      ],
+      "owner": "Completed U08"
+    },
+    {
+      "ids": "CREW-01-CREW-10",
+      "verdict": "DONE_WITH_UG2_PHYSICAL_MONITORING",
+      "codeEvidence": [
+        "src/features/crews/CrewManagement.tsx:451",
+        "src/features/crews/CrewManagement.tsx:664-915",
+        "src/features/crews/CrewManagement.tsx:1468-1764"
+      ],
+      "owner": "UG2 for real-device/tall-fixture validation"
+    },
+    {
+      "ids": "FAULT-01, FAULT-02, FAULT-04",
+      "verdict": "DONE",
+      "codeEvidence": ["src/features/boats/FaultCard.tsx:152-253"],
+      "owner": "Completed U06"
+    },
+    {
+      "ids": "FAULT-03",
+      "verdict": "DEFERRED",
+      "codeEvidence": ["src/features/boats/FaultCard.tsx:152"],
+      "owner": "Frozen deferred icon scope"
+    },
+    {
+      "ids": "EVAL-01-EVAL-08",
+      "verdict": "DONE_WITH_F1_CORRECTIONS",
+      "codeEvidence": [
+        "src/features/evaluations/EvaluationManagement.tsx:189-304",
+        "src/features/evaluations/EvaluationManagement.tsx:519-716",
+        "src/features/evaluations/EvaluationOverview.tsx:102-124"
+      ],
+      "owner": "F1 for crew spacing and failed-save navigation"
+    },
+    {
+      "ids": "0.3.0 V01",
+      "verdict": "DONE",
+      "codeEvidence": ["vite.config.ts:64-85", "docs/DEPLOY.md:42-93"],
+      "owner": "Completed V01"
+    },
+    {
+      "ids": "0.3.0 S1-S3",
+      "verdict": "DONE",
+      "codeEvidence": [
+        "src/features/students/StudentScan.tsx:533-1053",
+        "src/capabilities/studentScan.ts:389-474",
+        "src/features/students/StudentManagement.tsx:661-791"
+      ],
+      "owner": "Completed S1-S3"
+    },
+    {
+      "ids": "0.3.0 S4",
+      "verdict": "DEFERRED",
+      "codeEvidence": ["src/capabilities/studentScan.ts:837-866"],
+      "owner": "S4, awaiting the owner to lift section 9 deferral"
+    },
+    {
+      "ids": "0.3.0 V02-V05",
+      "verdict": "PENDING",
+      "codeEvidence": [
+        "src/features/speech/DictationControls.tsx:39-68",
+        "src/features/speech/useDictation.ts:15-213",
+        "src/features/students/StudentScanImageEditorDocument.tsx:39-69",
+        "src/capabilities/studentScan.ts:837-866"
+      ],
+      "owner": "V02, V03, V04 and V05"
+    },
+    {
+      "ids": "0.3.0 UG2",
+      "verdict": "PENDING_OWNER_DEVICE_CHECKS_AND_GATE",
+      "codeEvidence": [
+        "docs/post-mvp/UG1_DEVICE_VALIDATION.md:1",
+        "src/features/students/StudentScan.tsx:907",
+        "src/features/crews/CrewManagement.tsx:1468-1510"
+      ],
+      "owner": "UG2"
+    }
+  ],
+  "newOwnersCreated": [
+    {
+      "milestone": "F1",
+      "items": [
+        "Evaluation crew-group spacing",
+        "Moved profile long press",
+        "Failed-evaluation navigation/discard",
+        "Row name-swap overwrites manual text",
+        "Invalid-edit Back explanation",
+        "Autosave pending indicator",
+        "PWA launch background colour"
+      ]
+    }
+  ],
+  "privacy": {
+    "privateInputs": "Five owner photographs are stored only under ignored data/private/ocr-owner/.",
+    "committedContent": "Aggregate counts only; no names, phone numbers, dates of birth, photographs, prepared derivatives or OCR text.",
+    "checks": [
+      "git check-ignore confirms the private directory is ignored",
+      "git ls-files data/private returns no tracked files"
+    ]
+  }
+}

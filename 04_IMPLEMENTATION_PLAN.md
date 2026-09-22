@@ -1174,12 +1174,12 @@ than what happened.
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
 | V01 — reachable from a phone | COMPLETE — live at https://furiocolombo.github.io/CVC_helper/, installed and opening on the owner's phone |
 | CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
-| S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **attributed** (66 measured on the owner's own crop) |
-| S2 — deduce which name is which | IN_PROGRESS — implemented; fixture and local browser verified; private-photo remeasurement outstanding |
-| S3 — the age is the field | PENDING — the owner asked for the app to report an age, corroborated by the date |
+| S1 — student scan, fewer fields to check | COMPLETE — five supplied originals measure 16–24 fewer flags each; telephone stays opt-in and confidence stays at 70 |
+| S2 — deduce which name is which | COMPLETE — every supplied capture chooses surname-given; Gianluca and ambiguous-row preservation included |
+| S3 — the age is the field | COMPLETE — age is presented, the printed age corroborates DOB, and exact DOB remains the stored rules value |
 | S4 — line fragmentation | PENDING — **needs the owner to lift their own deferral**; measured as the largest residual cause |
-| R1 — what was asked for and never built | PENDING — the global sweep the owner asked for |
-| V02–V05, UG2 | PENDING — the controller blocks each on the one before it |
+| R1 — what was asked for and never built | COMPLETE — every required source and parked self-review finding is code-audited; seven corrections are owned by F1 |
+| V02–V05, F1, UG2 | PENDING — V02 starts with the independent design review; F1 owns corrections found by R1 |
 
 **Done in this session:** 0.2.0 closed and tagged; the brief's sections 3–8
 written into this plan as V01–V05 and UG2 before any of their code; V01's
@@ -1188,52 +1188,28 @@ deploy workflow and `docs/DEPLOY.md`; the repository pushed and made public and
 Pages switched to GitHub Actions; the CI regression closed; S1's telephone
 choice delivered with its tests, browser journeys and measurement tool.
 
-**S1, precisely where it stands.** The half that was asked for directly is
-finished: the scan entry screen carries an opt-in "Leggi anche il telefono",
-unchecked by default, and unchecked means the number is not reported, not shown,
-not counted and not stored. 404 unit tests, the three touched browser specs
-across all device projects, and a new `s1-scan-phone-option.spec.ts` journey all
-pass. The half that explains the owner's 67 is blocked: the committed fixture has
-three rows and yields `rowsToReview 3, missingFields 0, lowConfidence 0,
-unresolvedNameOrder 3`, which cannot produce a count like 67. Four hypotheses are
-stated and tested as far as the repository allows — two rejected, one confirmed
-as a mechanism but unattributed, one deferred by the owner. See
-`.evidence/S1/review-load-measurement.json`.
+**S1, precisely where it stands.** Complete. The scan entry screen carries an
+opt-in "Leggi anche il telefono", unchecked by default, and unchecked means the
+number is not reported, shown, counted or stored. S2 now infers the sheet's name
+order and S3 presents/corroborates age. The five supplied originals measure
+16–24 fewer flags each from the original-like state to the implemented state.
+The residual is dominated by line fragmentation, which is measured under S4 and
+still deferred. See `.evidence/S1/review-load-photographs.json`.
 
-**Immediately next.** The state was frozen here on 2026-09-22 at the owner's
-request, with the tree clean and everything below written down rather than
-carried in a session.
-
-1. DONE — the owner sent six photographs and the 67 is attributed: 66 measured,
-   split by cause. See "The 67, attributed" under S1.
-2. **S2 — deduce the name order.** The owner's own idea and the largest single
-   win available: it removes the question *and* the nineteen missing sex fields
-   the unanswered question was costing. Start here.
-3. **S3 — the age becomes the field**, corroborated by the date of birth, which
-   stays stored and stays the source of every rule that depends on it. The
-   owner's question about a sheet with no age column is answered inside the
-   milestone.
-4. **S4 — line fragmentation.** Explained in full under its own heading, because
-   the owner asked what it means. It needs one decision: the owner deferred it
-   themselves in brief section 9, and a measurement does not overrule a decision.
-   Until it is lifted, the review load stops falling at roughly 36 fields on a
-   twenty-student sheet.
-5. **R1 — the global sweep**, against the code rather than against this plan.
-   `docs/post-mvp/0_3_0_OPEN_ITEMS.md` is its output and already exists in first
-   draft, seeded with the two items the owner named.
-6. Close S1 once S2 and S3 have moved the count, re-measured the same way.
-7. Then V02, starting with the independent design review the owner asked for
-   twice — a reviewer validates the design **before** it is built.
+**Immediately next.** S1, S2 and S3 are complete at checkpoint `c29374e`. Five
+private originals were measured through the real OCR path and remain only under
+ignored `data/private`; aggregate counts are committed. R1 has closed the global
+code sweep in `docs/post-mvp/0_3_0_OPEN_ITEMS.md`. S4 remains deferred. After the
+R1 checkpoint, start V02 with the independent design review the owner asked for
+twice — a reviewer validates the design **before** it is built.
 
 This order is the owner's, from their message of 2026-09-22, and S2–R1 sit ahead
 of V02 for the same reason S1 did: the owner is testing the scan now.
 
-**Then, in order:** S1 the student scan — inserted ahead of V02 on the owner's
-instruction of 2026-09-21, because they are testing now and the scan is what
-blocks them — then V02 the dictation control, V03
-transcription quality under the latency constraint, V04 the crop editor's two
-details, V05 the LLM-assisted scanning path, UG2 the gate. Each with the full
-lifecycle of `AGENTS.md` section 6 around it.
+**Then, in order:** V02 the dictation control, V03 transcription quality under
+the latency constraint, V04 the crop editor's two details, V05 the LLM-assisted
+scanning path, F1 the corrections found by R1, and UG2 the gate. Each uses the
+full lifecycle of `AGENTS.md` section 6.
 
 ## Frozen 0.3.0 scope and traceability
 
@@ -1262,6 +1238,7 @@ than silently appended.
 | Deduce the name order from the given-name lists | INCLUDED, owner 2026-09-22 | Student scan / P06 | S2 |
 | Report the age, not the date of birth; corroborate the two | INCLUDED, owner 2026-09-22 | Student scan / P06, student record | S3 |
 | Sweep every past request against the code | INCLUDED, owner 2026-09-22 | Whole product | R1 |
+| Corrections proved by the global sweep | INCLUDED, R1 2026-09-22 | Students, evaluations, installed PWA | F1 |
 
 Everything `02_MVP_SCOPE.md` section 4 defers stays deferred. 0.3.0 adds no
 backend, no account, no synchronisation and no analytics; V01 publishes the same
@@ -2081,7 +2058,7 @@ attributed to this cause alone, measured the same way before and after.
 ## R1 — What was asked for and never built
 
 **Category:** REVIEW
-**Status:** PENDING
+**Status:** COMPLETE
 **Raised:** 2026-09-22, by the owner
 
 ### Goal
@@ -2141,6 +2118,17 @@ line for what the code does now. No entry says "probably" — an item either was
 checked or is listed as unchecked with the reason. The two known items appear with
 the verdicts above. Anything found that nothing owns is given an owner: an
 existing milestone, a new one, or the deferred list with the owner's reason.
+
+### Completion log
+
+Completed 2026-09-22. The source-by-source and request-family ledger is
+`.evidence/R1/sweep-coverage.json`; the maintained human list is
+`docs/post-mvp/0_3_0_OPEN_ITEMS.md`. Both owner-named examples were confirmed.
+Seven previously unowned corrections are now F1. Planned V02-V05 and UG2 work
+stays with those milestones; S4, real-photo automation, final branding and the
+other frozen deferrals remain deferred. R1 changed no application behaviour.
+`npm run verify` passed on Node 24.19.0 with 38 files and 428 tests, domain and
+0.1.0 compatibility checks, and the production PWA build.
 
 ### What this review is not
 
@@ -2384,6 +2372,47 @@ parsed correctly or reported as unparsed with its line; no case produces a wrong
 student silently; imported rows are indistinguishable from scanned rows at the
 review step and cannot commit without it; the app makes no network request on
 this path; the on-device camera path is unchanged.
+
+## F1 — Corrections found by the global request sweep
+
+**Category:** FEATURE
+**Status:** PENDING
+**Raised:** 2026-09-22 by R1, from owner requests and recorded reviewer findings
+
+### Goal
+
+Close the small implementation gaps that R1 proved against the code and that no
+existing milestone owned. This milestone follows V05 so the current 0.3.0
+sequence remains intact, and precedes UG2 so the integration gate verifies the
+corrected behaviour.
+
+### Required behaviour and evidence
+
+- Evaluation cards must group visually by crew: the gap between crew sections is
+  larger than the gap between cards inside one crew, including `A terra` and
+  `Non assegnati`.
+- Moving more than the gesture tolerance cancels the profile-field long press;
+  release after a moved hold never opens editing. Double click and a stationary
+  long press keep working, with the explicit `Modifica` route unchanged.
+- A failed evaluation save cannot be silently discarded by changing session,
+  view or leaving the page. The operator gets an explicit retry/discard choice.
+- A row-level name-order swap preserves manual name edits or asks before replacing
+  them; it never silently restores older OCR text over newer operator text.
+- Back from an invalid student edit explains the missing required value while
+  keeping the data-protecting refusal.
+- Student autosave status stays pending while any queued write or debounce is
+  outstanding.
+- The installed-app manifest background matches the application's launch
+  surface.
+- Required files under `.evidence/F1/`: `verification.json`,
+  `browser-evidence.json`, `self-review.json`.
+
+### Acceptance criteria
+
+Component tests reproduce every defect before the fix. Browser journeys cover
+evaluation grouping, failed-save navigation, moved long press, invalid-edit Back
+and the manual-name/swap sequence. The installed manifest carries the current
+background colour. `npm run verify` passes, and the self-review has no blockers.
 
 ## UG2 — Full 0.3.0 integration and release gate
 
