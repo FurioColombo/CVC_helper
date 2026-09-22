@@ -1,0 +1,38 @@
+{
+  "milestone": "D0",
+  "reviewedOn": "2026-09-23",
+  "runtime": "Node 24.19.0",
+  "readPath": {
+    "contract": "AGENTS.md",
+    "claudeEntry": "CLAUDE.md imports @AGENTS.md",
+    "activePlan": "04_IMPLEMENTATION_PLAN.md",
+    "localRuntimeOnDemand": "docs/LOCAL_DEVELOPMENT.md",
+    "archivedPlan": "archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md"
+  },
+  "sizeBeforeAfterLines": {
+    "implementationPlan": [2468, 327],
+    "claudeEntry": [157, 7]
+  },
+  "decisions": [
+    "Retain the minimal CLAUDE.md import because Claude Code documents that file as its automatic project memory entry; do not assume AGENTS.md alone is autoloaded.",
+    "Preserve the previous plan and operating files in archive; completed milestones remain in the manifest and Git history.",
+    "Keep product, scope and technical decisions authoritative while reading only relevant sections during active work.",
+    "Move local ports, Node 24 setup and browser caveats to an on-demand development guide.",
+    "Exclude ignored private data from ESLint and Prettier; local OCR experiments are outside the public application verification surface.",
+    "Register every 2026-09-23 request in the active milestone plan and code-audited open-items list; future-only crew +/- and duplicate history redesign are recorded but not scheduled.",
+    "Update product and scope rules narrowly where the new age-only entry, sheet order, crew export, icon and navigation requests supersede old wording."
+  ],
+  "safety": {
+    "privatePhotosLocation": "ignored data/private/ocr-owner/",
+    "gitIgnoreRule": "data/",
+    "trackedPrivatePaths": 0,
+    "publicEvidence": "aggregate counts only"
+  },
+  "checks": [
+    "npm run check:repository passed on Node 24.19.0",
+    "git diff --check passed",
+    "git check-ignore matched the private OCR directory",
+    "git ls-files data/private returned no paths",
+    "The first npm run evidence -- D0 failed because ESLint scanned newly created ignored OCR prototypes; the lint and format exclusions were corrected, and the rerun passed 428 tests, domain, compatibility and build"
+  ]
+}

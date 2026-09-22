@@ -1,31 +1,26 @@
 # AGENTS.md
 
-This repository is the shared operating contract for Codex and Claude Code.
+This repository is designed for autonomous Codex implementation.
 
 The human should be able to start work with a very short prompt. Therefore the repository itself is the operating contract, source of truth, progress tracker, and verification harness.
 
 ## 1. Read order
 
-At the start of a turn, before writing application code:
+Before writing application code:
 
 1. Read this file completely.
-2. Inspect `git status`, the latest checkpoint and `.milestones/manifest.json`.
-   Never erase or claim another agent's unfinished work.
-3. In `04_IMPLEMENTATION_PLAN.md`, read **Where this cycle stands** and the
-   active milestone. Read other milestone sections only for a dependency.
-4. Read the relevant sections of `01_PRODUCT_SPEC.md`, `02_MVP_SCOPE.md` and
-   `03_TECHNICAL_DECISIONS.md` for the active work. These remain authoritative;
-   use search to find the relevant sections instead of loading old history.
-5. For UI work, read the relevant sections of
+2. Read `01_PRODUCT_SPEC.md` completely.
+3. Read `02_MVP_SCOPE.md` completely.
+4. Read `03_TECHNICAL_DECISIONS.md` completely.
+5. Read `04_IMPLEMENTATION_PLAN.md` completely.
+6. For the active milestone only, read the relevant sections of
    `docs/post-mvp/06_DESIGN_RULEBOOK.md` and
    `docs/post-mvp/07_PAGE_CHANGELOG.md`, then inspect the frozen mock target linked
    there.
-6. Check Node 24 and follow `docs/LOCAL_DEVELOPMENT.md` for ports/browser tools.
-7. Start from the first eligible incomplete milestone in the active plan; an
-   explicitly deferred milestone is not eligible until the owner lifts it.
+7. Inspect the repository, runtime and Git state.
+8. Start from the first incomplete milestone in `04_IMPLEMENTATION_PLAN.md`.
 
-`archive/` holds prior plans and instructions. Read it only for requested
-historical rationale or a specific active dependency. It is not authoritative.
+Do not read `archive/` unless a human explicitly asks for historical rationale. Archived files are not authoritative.
 
 ## 2. Source-of-truth hierarchy
 
@@ -213,7 +208,7 @@ Possible roles:
 - accessibility/mobile reviewer: touch targets, focus, viewport, input behavior;
 - chaos user: use the app in unusual order and try to break assumptions.
 
-Reviewer output is structured JSON recorded as
+For active 0.2.0 milestones, reviewer output is structured JSON recorded as
 evidence with:
 - verdict: PASS / PASS_WITH_FINDINGS / FAIL;
 - blockers;
@@ -342,9 +337,9 @@ Do not stop for ordinary implementation choices, naming, local refactors, CSS de
 
 ## 15. Scope discipline
 
-Implement only the current approved scope in `02_MVP_SCOPE.md`, the active plan
-and the owner's latest explicit instructions. A deferred item requires an
-explicit human scope change plus updated plan and evidence before implementation.
+Implement only the included 0.2.0 scope in `02_MVP_SCOPE.md` and the active
+milestone. A deferred item requires an explicit human scope change plus updated
+plan and evidence before implementation.
 
 In particular, do not prematurely add:
 - multi-device synchronization;
@@ -358,15 +353,16 @@ In particular, do not prematurely add:
 
 ## 16. Runtime preflight
 
-The repository requires Node 24. If PATH exposes an older Node, do not lower
-`engines` or change the toolchain. `docs/LOCAL_DEVELOPMENT.md` has the local
-runtime procedure. Record the actual runtime in verification evidence.
+The repository requires Node 24. If the host PATH exposes an older Node, do not
+lower `engines` or change the toolchain. In Codex Desktop, load the bundled
+workspace dependencies and invoke the provided Node 24 executable. Record the
+runtime used in verification evidence.
 
 ## 17. Completion standard
 
-The active release is complete only when:
+Version 0.2.0 is complete only when:
 
-- all required active milestones and the integration gate are COMPLETE;
+- all U-series milestones and the final integration gate are COMPLETE;
 - `npm run verify:all` passes;
 - the deterministic full-week scenario passes;
 - final specialized reviews contain no blockers;
@@ -374,10 +370,5 @@ The active release is complete only when:
 - the working tree is clean;
 - the final Git checkpoint exists.
 
-If deterministic or required physical-device verification fails, the release is
-not complete. Physical-device evidence belongs to the owner on their devices;
-never record a simulated PASS.
-
-Private roster photographs and derivatives remain under ignored `data/private/`.
-Never commit or publish them, raw OCR text or real students' personal data.
-Only aggregate counts may enter evidence in this public repository.
+If deterministic or required physical-device verification fails, 0.2.0 is not
+complete.

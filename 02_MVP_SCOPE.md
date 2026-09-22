@@ -1,8 +1,9 @@
-# Scope — baseline 0.1.0 and cycle 0.2.0
+# Scope — 0.1.0/0.2.0 baseline and 0.3.0 amendments
 
-This document defines what the active cycle must and must not deliver. Product
-semantics live in `01_PRODUCT_SPEC.md`; milestone order and evidence live in
-`04_IMPLEMENTATION_PLAN.md`.
+The 0.1.0/0.2.0 sections below preserve the released scope. The narrow 0.3.0
+amendments in section 4 and the owner's current instructions set the active
+boundary. Product semantics live in `01_PRODUCT_SPEC.md`; milestone order and
+evidence live in `04_IMPLEMENTATION_PLAN.md`.
 
 ## 1. Completed 0.1.0 baseline
 
@@ -115,6 +116,13 @@ and the plan/evidence are updated first:
 - synchronized horizontal timelines/search;
 - read-only sharing, backend, Auth, synchronization, conflicts or multiple editors;
 - native packaging and platform-specific brightness control.
+
+For 0.3.0, the owner explicitly lifted three narrow deferrals on 2026-09-23:
+the installed icon with the Home CVC mark and `HELPER` below it; a single-image
+export of the **crew summary**; and better on-device roster OCR, including
+line-fragment reconstruction. The final product name, a broad icon programme,
+other image exports and all other deferrals above remain deferred. The active
+acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
 
 ## 5. Conditional evidence, not optional scope
 

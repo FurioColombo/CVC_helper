@@ -6,6 +6,9 @@ import { resolve } from "node:path"
 const root = resolve(import.meta.dirname, "..")
 const requiredFiles = [
   "AGENTS.md",
+  "CLAUDE.md",
+  "docs/LOCAL_DEVELOPMENT.md",
+  "archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md",
   ".node-version",
   ".github/workflows/ci.yml",
   ".milestones/manifest.json",
@@ -142,28 +145,17 @@ for (const id of completedBaselineIds) {
   )
 }
 for (const id of [
-  "U00",
-  "U01",
-  "U02",
-  "U03",
-  "U04",
-  "U05",
-  "U06",
-  "U07",
-  "U08",
-  "U09",
-  "U10",
-  "UG1",
-  "V01",
-  "S1",
-  "S2",
-  "S3",
-  "S4",
-  "R1",
+  "D0",
   "V02",
-  "V03",
+  "S4",
   "V04",
+  "S5",
+  "N1",
+  "C1",
+  "E1",
+  "V03",
   "V05",
+  "F1",
   "UG2",
 ]) {
   const milestone = manifest.milestones.find((item) => item.id === id)
@@ -185,6 +177,18 @@ for (const id of [
     `Plan/manifest status mismatch for ${id}`,
   )
 }
+for (const milestone of manifest.milestones) {
+  if (plan.includes(`## ${milestone.id} —`)) continue
+  assert.equal(
+    milestone.status,
+    "COMPLETE",
+    `Incomplete milestone missing from active plan: ${milestone.id}`,
+  )
+}
+assert.ok(
+  readFileSync(resolve(root, "CLAUDE.md"), "utf8").includes("@AGENTS.md"),
+  "Claude Code entry point must import the shared operating contract",
+)
 
 const activeDesignText = [
   "01_PRODUCT_SPEC.md",

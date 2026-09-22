@@ -434,19 +434,6 @@
       "allowedIncompletePredecessors": ["S1", "S2"]
     },
     {
-      "id": "S4",
-      "category": "FEATURE",
-      "status": "PENDING",
-      "verificationScripts": ["verify"],
-      "requiredEvidence": [
-        ".evidence/S4/verification.json",
-        ".evidence/S4/fragmentation-measurement.json",
-        ".evidence/S4/browser-evidence.json",
-        ".evidence/S4/self-review.json"
-      ],
-      "requiredReviews": [".evidence/S4/self-review.json"]
-    },
-    {
       "id": "R1",
       "category": "REVIEW",
       "status": "COMPLETE",
@@ -458,6 +445,18 @@
       ],
       "requiredReviews": [".evidence/R1/self-review.json"],
       "allowedIncompletePredecessors": ["S1", "S2", "S3", "S4"]
+    },
+    {
+      "id": "D0",
+      "category": "FOUNDATION",
+      "status": "COMPLETE",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/D0/verification.json",
+        ".evidence/D0/doc-audit.json",
+        ".evidence/D0/self-review.json"
+      ],
+      "requiredReviews": [".evidence/D0/self-review.json"]
     },
     {
       "id": "V02",
@@ -474,8 +473,102 @@
       "requiredReviews": [
         ".evidence/V02/design-review.json",
         ".evidence/V02/accessibility-mobile-review.json"
+      ]
+    },
+    {
+      "id": "S4",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S4/verification.json",
+        ".evidence/S4/ocr-options.json",
+        ".evidence/S4/fragmentation-measurement.json",
+        ".evidence/S4/synthetic-regression.json",
+        ".evidence/S4/browser-evidence.json",
+        ".evidence/S4/domain-review.json",
+        ".evidence/S4/self-review.json"
       ],
-      "allowedIncompletePredecessors": ["S4"]
+      "requiredReviews": [
+        ".evidence/S4/domain-review.json",
+        ".evidence/S4/self-review.json"
+      ]
+    },
+    {
+      "id": "V04",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/V04/verification.json",
+        ".evidence/V04/browser-evidence.json",
+        ".evidence/V04/performance.json",
+        ".evidence/V04/field-ux-review.json",
+        ".evidence/V04/self-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/V04/field-ux-review.json",
+        ".evidence/V04/self-review.json"
+      ]
+    },
+    {
+      "id": "S5",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S5/verification.json",
+        ".evidence/S5/migration-evidence.json",
+        ".evidence/S5/browser-evidence.json",
+        ".evidence/S5/domain-review.json",
+        ".evidence/S5/self-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/S5/domain-review.json",
+        ".evidence/S5/self-review.json"
+      ]
+    },
+    {
+      "id": "N1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/N1/verification.json",
+        ".evidence/N1/browser-evidence.json",
+        ".evidence/N1/icon-review.json",
+        ".evidence/N1/self-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/N1/icon-review.json",
+        ".evidence/N1/self-review.json"
+      ]
+    },
+    {
+      "id": "C1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/C1/verification.json",
+        ".evidence/C1/browser-evidence.json",
+        ".evidence/C1/summary-image.json",
+        ".evidence/C1/self-review.json"
+      ],
+      "requiredReviews": [".evidence/C1/self-review.json"]
+    },
+    {
+      "id": "E1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/E1/verification.json",
+        ".evidence/E1/browser-evidence.json",
+        ".evidence/E1/geometry.json",
+        ".evidence/E1/self-review.json"
+      ],
+      "requiredReviews": [".evidence/E1/self-review.json"]
     },
     {
       "id": "V03",
@@ -488,21 +581,7 @@
         ".evidence/V03/browser-evidence.json",
         ".evidence/V03/speech-review.json"
       ],
-      "requiredReviews": [".evidence/V03/speech-review.json"],
-      "allowedIncompletePredecessors": ["S4"]
-    },
-    {
-      "id": "V04",
-      "category": "FEATURE",
-      "status": "PENDING",
-      "verificationScripts": ["verify"],
-      "requiredEvidence": [
-        ".evidence/V04/verification.json",
-        ".evidence/V04/browser-evidence.json",
-        ".evidence/V04/self-review.json"
-      ],
-      "requiredReviews": [".evidence/V04/self-review.json"],
-      "allowedIncompletePredecessors": ["S4"]
+      "requiredReviews": [".evidence/V03/speech-review.json"]
     },
     {
       "id": "V05",
@@ -515,8 +594,7 @@
         ".evidence/V05/parser-robustness.json",
         ".evidence/V05/domain-review.json"
       ],
-      "requiredReviews": [".evidence/V05/domain-review.json"],
-      "allowedIncompletePredecessors": ["S4"]
+      "requiredReviews": [".evidence/V05/domain-review.json"]
     },
     {
       "id": "F1",
@@ -528,8 +606,7 @@
         ".evidence/F1/browser-evidence.json",
         ".evidence/F1/self-review.json"
       ],
-      "requiredReviews": [".evidence/F1/self-review.json"],
-      "allowedIncompletePredecessors": ["S4"]
+      "requiredReviews": [".evidence/F1/self-review.json"]
     },
     {
       "id": "UG2",
@@ -557,8 +634,7 @@
         ".evidence/UG2/scope-review.json",
         ".evidence/UG2/code-quality-review.json",
         ".evidence/UG2/physical-device-review.json"
-      ],
-      "allowedIncompletePredecessors": ["S4"]
+      ]
     }
   ]
 }
