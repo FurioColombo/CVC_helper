@@ -405,6 +405,58 @@
       "requiredReviews": [".evidence/S1/self-review.json"]
     },
     {
+      "id": "S2",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S2/verification.json",
+        ".evidence/S2/order-inference-measurement.json",
+        ".evidence/S2/browser-evidence.json",
+        ".evidence/S2/self-review.json"
+      ],
+      "requiredReviews": [".evidence/S2/self-review.json"]
+    },
+    {
+      "id": "S3",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S3/verification.json",
+        ".evidence/S3/age-as-the-field.json",
+        ".evidence/S3/corroboration-measurement.json",
+        ".evidence/S3/browser-evidence.json",
+        ".evidence/S3/self-review.json"
+      ],
+      "requiredReviews": [".evidence/S3/self-review.json"]
+    },
+    {
+      "id": "S4",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S4/verification.json",
+        ".evidence/S4/fragmentation-measurement.json",
+        ".evidence/S4/browser-evidence.json",
+        ".evidence/S4/self-review.json"
+      ],
+      "requiredReviews": [".evidence/S4/self-review.json"]
+    },
+    {
+      "id": "R1",
+      "category": "REVIEW",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/R1/verification.json",
+        ".evidence/R1/sweep-coverage.json",
+        ".evidence/R1/self-review.json"
+      ],
+      "requiredReviews": [".evidence/R1/self-review.json"]
+    },
+    {
       "id": "V02",
       "category": "FEATURE",
       "status": "PENDING",

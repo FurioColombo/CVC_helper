@@ -1174,8 +1174,12 @@ than what happened.
 | 0.2.0 release | DONE — tagged `v0.2.0` at `8e9b2b7`, pushed |
 | V01 — reachable from a phone | COMPLETE — live at https://furiocolombo.github.io/CVC_helper/, installed and opening on the owner's phone |
 | CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
-| S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **attributed** (66 measured on the owner's own crop); two decisions on how to reduce it are with the owner |
-| V02–V05, UG2 | PENDING — the controller blocks V02 until S1 is COMPLETE |
+| S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **attributed** (66 measured on the owner's own crop) |
+| S2 — deduce which name is which | PENDING — the owner's own idea, and the measurement says it is the biggest single win |
+| S3 — the age is the field | PENDING — the owner asked for the app to report an age, corroborated by the date |
+| S4 — line fragmentation | PENDING — **needs the owner to lift their own deferral**; measured as the largest residual cause |
+| R1 — what was asked for and never built | PENDING — the global sweep the owner asked for |
+| V02–V05, UG2 | PENDING — the controller blocks each on the one before it |
 
 **Done in this session:** 0.2.0 closed and tagged; the brief's sections 3–8
 written into this plan as V01–V05 and UG2 before any of their code; V01's
@@ -1196,23 +1200,33 @@ stated and tested as far as the repository allows — two rejected, one confirme
 as a mechanism but unattributed, one deferred by the owner. See
 `.evidence/S1/review-load-measurement.json`.
 
-**Immediately next:**
+**Immediately next.** The state was frozen here on 2026-09-22 at the owner's
+request, with the tree clean and everything below written down rather than
+carried in a session.
 
 1. DONE — the owner sent six photographs and the 67 is attributed: 66 measured,
    split by cause. See "The 67, attributed" under S1.
-2. **Two decisions are the owner's**, put to them on 2026-09-22 and not to be
-   guessed: whether to un-defer line fragmentation, now measured as the largest
-   remaining cause and present on all six photographs; and whether to corroborate
-   a low-confidence date against the age printed beside it, which clears nine
-   flags on independent evidence but confirms only the year.
-3. Not blocked by either, and next in any case: **stop showing the count before
-   the name-order question is answered.** Nineteen of the owner's twenty-nine
-   missing fields were the sex inferred from a surname. This is a presentation
-   defect, not an OCR one.
-4. Apply whatever 2 and 3 settle, re-measure the same way, close S1 with
-   `npm run verify`.
-5. Then V02, starting with the independent design review the owner asked for
+2. **S2 — deduce the name order.** The owner's own idea and the largest single
+   win available: it removes the question *and* the nineteen missing sex fields
+   the unanswered question was costing. Start here.
+3. **S3 — the age becomes the field**, corroborated by the date of birth, which
+   stays stored and stays the source of every rule that depends on it. The
+   owner's question about a sheet with no age column is answered inside the
+   milestone.
+4. **S4 — line fragmentation.** Explained in full under its own heading, because
+   the owner asked what it means. It needs one decision: the owner deferred it
+   themselves in brief section 9, and a measurement does not overrule a decision.
+   Until it is lifted, the review load stops falling at roughly 36 fields on a
+   twenty-student sheet.
+5. **R1 — the global sweep**, against the code rather than against this plan.
+   `docs/post-mvp/0_3_0_OPEN_ITEMS.md` is its output and already exists in first
+   draft, seeded with the two items the owner named.
+6. Close S1 once S2 and S3 have moved the count, re-measured the same way.
+7. Then V02, starting with the independent design review the owner asked for
    twice — a reviewer validates the design **before** it is built.
+
+This order is the owner's, from their message of 2026-09-22, and S2–R1 sit ahead
+of V02 for the same reason S1 did: the owner is testing the scan now.
 
 **Then, in order:** S1 the student scan — inserted ahead of V02 on the owner's
 instruction of 2026-09-21, because they are testing now and the scan is what
@@ -1233,9 +1247,21 @@ lifecycle of `AGENTS.md` section 6 around it.
 | 6.2 — rotation follows the finger | INCLUDED | Student scan / P06 | V04 |
 | 7 — LLM-assisted scanning path | INCLUDED, alongside on-device OCR | Student scan / P06 | V05 |
 | 8 — 0.3.0 integration gate | INCLUDED | Release | UG2 |
-| OCR line fragmentation | DEFERRED past 0.3.0 by the owner (brief section 9) | Student scan | backlog |
-| Automated test over a real photograph | DEFERRED past 0.3.0 by the owner (brief section 9) | Student scan | backlog |
+| OCR line fragmentation | DEFERRED past 0.3.0 by the owner (brief section 9); **written up as S4 and awaiting the owner's word**, after measurement on 2026-09-22 made it the largest residual cause | Student scan / P06 | S4 |
+| Automated test over a real photograph | DEFERRED past 0.3.0 by the owner (brief section 9). The six photographs of 2026-09-22 cannot become fixtures: the repository is public and the sheet carries minors' personal data | Student scan | backlog |
 | Final product name and derived brand mark | DEFERRED, unchanged from 0.2.0 | Branding | backlog |
+
+Added after the brief was frozen, on the owner's explicit instruction of
+2026-09-21 and 2026-09-22. `AGENTS.md` section 2 puts a live instruction above
+older plan text, so these are in scope for 0.3.0 and are recorded here rather
+than silently appended.
+
+| Source | Disposition | Canonical area | Milestone |
+| --- | --- | --- | --- |
+| Telephone column becomes a scan-time choice | INCLUDED, owner 2026-09-21 | Student scan / P06 | S1 |
+| Deduce the name order from the given-name lists | INCLUDED, owner 2026-09-22 | Student scan / P06 | S2 |
+| Report the age, not the date of birth; corroborate the two | INCLUDED, owner 2026-09-22 | Student scan / P06, student record | S3 |
+| Sweep every past request against the code | INCLUDED, owner 2026-09-22 | Whole product | R1 |
 
 Everything `02_MVP_SCOPE.md` section 4 defers stays deferred. 0.3.0 adds no
 backend, no account, no synchronisation and no analytics; V01 publishes the same
@@ -1769,6 +1795,304 @@ suggests female for Gianluca, because the `-a` ending decides it and the male
 override list does not contain the name. The ambiguous-compound rule blanks three
 fields per row where it fires. The telephone choice is not remembered between
 scans, unlike the name order.
+
+
+## S2 — Work out which name is which, instead of asking
+
+**Category:** FEATURE
+**Status:** PENDING
+**Raised:** 2026-09-22, by the owner, after the 67 was attributed
+
+### Goal
+
+Owner: _"per l'ocr, prova a dedurre ordine tu tra nome e cognome! usa gli stessi
+nomi che usi per il sesso per capire dove è il nome e dove il cognome, l'ordine
+sarà lo stesso per tutte le righe in teoria."_
+
+The measurement is what makes this the first thing to build. Nineteen of the
+owner's twenty-nine missing fields were the sex, inferred from a surname because
+the counter is computed before the order question is answered. Answering it takes
+the count from 51 to 36. Deducing it removes the question **and** those nineteen
+in one move, and it is the owner's own idea.
+
+### Required behaviour
+
+**Decide once per sheet, from the evidence already on the page.** `FEMALE_NAMES`,
+`MALE_NAMES` and the `-a`/`-o` ending rule in `inferSex` already recognise Italian
+given names. Run that recognition over the **first** word and the **last** word of
+every row's name cell, count how many rows each position recognises, and take the
+position with more. On the owner's sheet the last word wins twenty to nothing:
+Valeria, Roberto, Leonardo, Jacopo, Massimo, Gregorio, Teodoro, Nicola, Pietro,
+Leonardo, Edoardo, Caterina, Alessandro, Caterina, Paolo, Lisa, Vittoria, Luca,
+Simone — against Altomare, Bertani, Bragagnolo, Bussotti, Cortese, Didonè, Fassi,
+Graiff, Merluzzi, Magnoni, Miglierina, Mosca, Passerini, Penati, Pietra, Rinaldi,
+Spagnoli.
+
+**One order for the whole sheet**, as the owner says: a roster is printed from one
+template. Decide per page, not per row.
+
+**Say it, and let it be overruled.** The banner keeps the wording it already has
+for a remembered answer and gains the reason it chose — the screen must not
+silently assert a name order. `Inverti per tutti` stays, and the per-row swap
+stays. An inference the operator corrects must be remembered for that course
+exactly as an explicit answer is today.
+
+**Ask only when the page does not say.** If neither position wins — too few
+recognised names, or a tie — the question is asked exactly as it is now. The
+deduction removes a question that had an answer on the page; it does not remove
+the fallback.
+
+**Do not let the deduction weaken the gate.** A row whose own words are still
+ambiguous (three words, no particle) is still marked for review. Deducing the
+page's order is not deducing every row's split.
+
+### Required evidence
+
+- `.evidence/S2/verification.json`
+- `.evidence/S2/order-inference-measurement.json` — the vote on the owner's
+  photographs and on the committed fixture, and the count before and after,
+  measured with `npm run measure:scan-review`
+- `.evidence/S2/browser-evidence.json`
+- `.evidence/S2/self-review.json`
+
+### Acceptance criteria
+
+On the owner's own sheet the order is deduced correctly without being asked, and
+the missing-field count drops by the nineteen sex fields that the unanswered
+question was costing. A sheet the deduction cannot read still asks. The operator
+can still overrule, for one row or for all of them, and the correction is
+remembered. Nothing is committed unreviewed.
+
+### Risk to state rather than discover
+
+A wrong deduction is worse than a question, because it is silent. The vote must
+be reported in the banner and the counter-evidence — how many rows recognised
+each position — belongs in the evidence file, so a future wrong call can be
+diagnosed rather than guessed at.
+
+
+## S3 — The age is the field; the date of birth corroborates it
+
+**Category:** FEATURE
+**Status:** PENDING
+**Raised:** 2026-09-22, by the owner
+
+### Goal
+
+Two instructions, one mechanism.
+
+Owner, on using one to confirm the other: _"usiamo data di nascita per confermare
+età -> sì!"_ And on what the app should show: _"voglio un cambio comunque ->
+riportami nella app solo età, non data di nascita. puoi usare data di nascita per
+confermare età."_
+
+The sheet prints both, side by side — `24 anni - 02/02/2002`. They are two
+independent readings of one fact, so each can vouch for the other without any
+threshold being touched. On the owner's crop nine dates were flagged below 70 and
+were correct; corroboration clears them on evidence rather than by relaxing a
+rule.
+
+### The owner's own question, answered here
+
+_"ma cosa succede se poi il foglio è diverso e non c'è età?"_
+
+Then there is nothing to corroborate with, and the date stands on its own exactly
+as it does today: read, kept, and flagged if its confidence is below the
+threshold. Corroboration only ever **removes** a flag when a second reading
+agrees; it never adds one and it is never required. The reverse case — an age
+column and no date — is the same in the other direction: the age is taken as read
+and flagged on its own confidence. A sheet with neither has no row.
+
+### Required behaviour
+
+**What the app shows.** The age, not the date of birth. This is a change to the
+review screen and to the student record's presentation, and it needs a decision
+recorded before it is built, because the date of birth is not only a display
+field:
+
+- The domain uses it. `src/domain` derives the minor/adult distinction from it,
+  and the roster itself marks three students in red for exactly that reason.
+- 0.1.0 data carries it, and `src/test/fixtures/v0.1.0-course.json` is the data
+  contract that `check:compatibility` holds.
+
+So the change is **presentational**: the date of birth stays stored, stays the
+source of the age, and stops being the thing the operator is shown and asked to
+confirm. What the review asks for is the age; what the profile shows is the age.
+Any screen that must show a date of birth after this — if any — is named in the
+milestone's evidence with its reason.
+
+**Corroboration.** When a row carries both an age and a date, and the age the
+date implies agrees with the age as printed, neither field is flagged on
+confidence alone. The tolerance is one year, because a sheet is printed before
+the course and a birthday can fall in between.
+
+**The limit, stated.** The age confirms the **year** only. `02/02/2002` and
+`07/02/2002` imply the same age, so a misread day is corroborated too. That is
+acceptable where the age is what the app now shows and the day is no longer the
+field being confirmed — and it is the reason this milestone pairs the two
+instructions instead of doing the corroboration alone.
+
+**Nothing is loosened.** `MIN_FIELD_CONFIDENCE` stays at 70. One flagged surname
+on the owner's sheet read `Atessandro` for `Alessandro`; the threshold is what
+caught it.
+
+### Required evidence
+
+- `.evidence/S3/verification.json`
+- `.evidence/S3/age-as-the-field.json` — the presentation decision, every screen
+  that changes, and what still holds a date of birth and why
+- `.evidence/S3/corroboration-measurement.json` — the flag count before and
+  after, on the owner's photographs and on the fixture
+- `.evidence/S3/browser-evidence.json`
+- `.evidence/S3/self-review.json`
+
+### Acceptance criteria
+
+The review asks for an age and the profile shows an age. The date of birth is
+still stored, still derives the age, and still drives every rule that depends on
+it; `check:compatibility` passes unchanged. On the owner's sheet the nine
+corroborated dates are no longer flagged, and a sheet without an age column
+behaves exactly as it does today. No threshold moved.
+
+
+## S4 — Line fragmentation
+
+**Category:** FEATURE
+**Status:** PENDING — **needs one decision from the owner before it starts**
+**Raised:** 2026-09-22, promoted by measurement from the deferred list
+
+### What "line fragmentation" means — the owner asked
+
+Tesseract does not read a table. It reads a page and groups words into **lines**
+of its own choosing, from their geometry. On a printed roster the cells of one
+student — the name, the telephone, the age and the date — are far apart across the
+page, separated by ruled lines and empty space. When the photograph is slightly
+skewed, or a rule is thick, or the light falls unevenly, Tesseract decides that
+what is really one row is **two lines**: the name on one, the date on another.
+
+What the app then sees is two students:
+
+- one with a name and no date of birth, and
+- one with a date of birth and no name at all.
+
+So a single mis-grouping costs four things: a real row loses its date, a row that
+does not exist is invented, that phantom row has two missing name fields, and the
+operator has to notice it is a phantom and delete it.
+
+On the owner's crop, rows 2 and 3 of the read were exactly this — two dates that
+belong to rows 1 and 4. On the two worst of the six photographs it cascades: one
+read **41 rows for a 25-row sheet** with 93 missing fields; another read 18 rows
+with 51. It is present, to some degree, on **all six**.
+
+### Why it is not already being fixed
+
+The owner deferred it past 0.3.0 in `0_3_0_OWNER_BRIEF.md` section 9, together
+with the absence of an automated test over a real photograph. Under `AGENTS.md`
+section 2 that deferral stands until the owner lifts it. The measurement has
+changed what is known — it is now the largest remaining cause of the review load
+— but a measurement does not overrule a decision.
+
+**The decision needed:** lift the deferral, or leave it and accept that the
+review load stops falling at roughly 36 fields on a twenty-student sheet.
+
+### The fix, sketched so the decision can be made with the cost in view
+
+Rejoin lines that belong to the same table row before parsing, using the word
+geometry that `parseTsv` already carries. Two OCR lines whose vertical centres
+are within a fraction of a row's height, and whose horizontal extents do not
+overlap, are one row. The row height comes from the page itself — the median
+line height — so it needs no per-sheet tuning. `inferPageLayout` already computes
+page-level geometry, which is where this belongs.
+
+The risk is the opposite error: merging two genuinely different students into one
+row, which is worse than splitting one. The merge must therefore be conservative
+and must refuse when both fragments carry a name.
+
+### Required evidence, when it starts
+
+- `.evidence/S4/verification.json`
+- `.evidence/S4/fragmentation-measurement.json` — rows read against rows on the
+  sheet, and the flag count, across all six photographs before and after
+- `.evidence/S4/browser-evidence.json`
+- `.evidence/S4/self-review.json`
+
+### Acceptance criteria, when it starts
+
+On each of the owner's six photographs the number of rows read is the number of
+students on the sheet, and no row is a phantom carrying only a date. No two
+students are ever merged into one row. The flag count falls and the reduction is
+attributed to this cause alone, measured the same way before and after.
+
+
+## R1 — What was asked for and never built
+
+**Category:** REVIEW
+**Status:** PENDING
+**Raised:** 2026-09-22, by the owner
+
+### Goal
+
+Owner: _"grossa review globale autonoma per vedere se tutto quello che ho chiesto
+in passato è stato implementato o meno, ci sono cose che ti sono sfuggite tipo il
+refresh della immagine ocr alla rotazione mi sembra, ma anche altro, spazio tra
+card nella tab valutazione tra equipaggi e sicuramente qualche altra cosa."_
+
+A full sweep of every request the owner has made across the project's history,
+against what the code actually does, producing one list of what is missing.
+
+### Required behaviour
+
+**The sources to sweep, all of them.** `docs/post-mvp/0_3_0_OWNER_BRIEF.md` and
+its annotated screenshots; the 0.2.0 brief and UG1's own correction entries;
+`01_PRODUCT_SPEC.md`, `02_MVP_SCOPE.md`, `docs/post-mvp/06_DESIGN_RULEBOOK.md`
+and `07_PAGE_CHANGELOG.md`; the completed milestones' acceptance criteria in this
+plan; and the `qolFindings` of every `.evidence/*/self-review.json`, which is
+where noticed-but-not-fixed items have been parked by policy.
+
+**Every finding must be checked against the code, not against the plan.** A
+milestone marked COMPLETE is not evidence that its criteria are met; the point of
+this review is to find where the two disagree.
+
+**Each entry carries:** what was asked, in the owner's words where they exist;
+where it was asked; what the code does now, with a file and a line; whether it is
+missing, partly done, or done and mis-remembered; and which milestone owns it.
+
+**Two are already known and must appear**, with their verdicts as established on
+2026-09-22:
+
+- *The OCR image does not turn during the rotation drag.* Real, and already
+  diagnosed and owned by **V04** — the tilt ruler updates state on every pointer
+  move but the bitmap regeneration sits behind a 120 ms timeout that the next
+  move cancels. Not an oversight; queued.
+- *Spacing between cards in the evaluations tab, between crews.* Real and not
+  yet owned by anything. In `src/features/evaluations/EvaluationManagement.tsx`
+  the list container is `grid gap-1.5` and each crew's `<section>` is
+  `grid gap-3`, so cards **inside** a crew sit 12 px apart while one crew's last
+  card and the next crew's heading are only 6 px plus `mt-2` apart. The grouping
+  reads backwards: the gap between groups is tighter than the gap within them.
+
+### Required evidence
+
+- `.evidence/R1/verification.json`
+- `docs/post-mvp/0_3_0_OPEN_ITEMS.md` — the list itself, kept current as items
+  are closed
+- `.evidence/R1/sweep-coverage.json` — every source swept, and for each one what
+  was found and what was checked in the code
+- `.evidence/R1/self-review.json`
+
+### Acceptance criteria
+
+Every source above is swept and recorded as swept. Every entry names a file and a
+line for what the code does now. No entry says "probably" — an item either was
+checked or is listed as unchecked with the reason. The two known items appear with
+the verdicts above. Anything found that nothing owns is given an owner: an
+existing milestone, a new one, or the deferred list with the owner's reason.
+
+### What this review is not
+
+It is not licence to fix what it finds. It produces the list; the fixes are
+milestones of their own, so that scope discipline survives a document that is
+itself a list of temptations.
 
 
 ## V02 — The dictation control stops changing size
