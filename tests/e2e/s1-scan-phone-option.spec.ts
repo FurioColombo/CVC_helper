@@ -49,7 +49,7 @@ test("scans without reading the telephone, and saves no number", async ({
   // Nothing about a telephone anywhere on the review.
   await expect(page.getByLabel(/^Telefono riga/)).toHaveCount(0)
 
-  await page.getByRole("button", { name: "Applica Nome · Cognome" }).click()
+  await expect(page.getByText(/Dedotto dal foglio/)).toBeVisible()
   const counters = page.getByLabel("Stato revisione scansione")
   await expect(counters.getByText("3")).toHaveCount(1)
   await expect(counters.getByText("0")).toHaveCount(2)

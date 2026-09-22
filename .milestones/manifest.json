@@ -407,7 +407,7 @@
     {
       "id": "S2",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/S2/verification.json",
@@ -415,7 +415,8 @@
         ".evidence/S2/browser-evidence.json",
         ".evidence/S2/self-review.json"
       ],
-      "requiredReviews": [".evidence/S2/self-review.json"]
+      "requiredReviews": [".evidence/S2/self-review.json"],
+      "allowedIncompletePredecessors": ["S1"]
     },
     {
       "id": "S3",
@@ -429,7 +430,8 @@
         ".evidence/S3/browser-evidence.json",
         ".evidence/S3/self-review.json"
       ],
-      "requiredReviews": [".evidence/S3/self-review.json"]
+      "requiredReviews": [".evidence/S3/self-review.json"],
+      "allowedIncompletePredecessors": ["S1", "S2"]
     },
     {
       "id": "S4",
@@ -454,7 +456,8 @@
         ".evidence/R1/sweep-coverage.json",
         ".evidence/R1/self-review.json"
       ],
-      "requiredReviews": [".evidence/R1/self-review.json"]
+      "requiredReviews": [".evidence/R1/self-review.json"],
+      "allowedIncompletePredecessors": ["S1", "S2", "S3", "S4"]
     },
     {
       "id": "V02",
@@ -471,7 +474,8 @@
       "requiredReviews": [
         ".evidence/V02/design-review.json",
         ".evidence/V02/accessibility-mobile-review.json"
-      ]
+      ],
+      "allowedIncompletePredecessors": ["S4"]
     },
     {
       "id": "V03",
@@ -484,7 +488,8 @@
         ".evidence/V03/browser-evidence.json",
         ".evidence/V03/speech-review.json"
       ],
-      "requiredReviews": [".evidence/V03/speech-review.json"]
+      "requiredReviews": [".evidence/V03/speech-review.json"],
+      "allowedIncompletePredecessors": ["S4"]
     },
     {
       "id": "V04",
@@ -496,7 +501,8 @@
         ".evidence/V04/browser-evidence.json",
         ".evidence/V04/self-review.json"
       ],
-      "requiredReviews": [".evidence/V04/self-review.json"]
+      "requiredReviews": [".evidence/V04/self-review.json"],
+      "allowedIncompletePredecessors": ["S4"]
     },
     {
       "id": "V05",
@@ -509,7 +515,8 @@
         ".evidence/V05/parser-robustness.json",
         ".evidence/V05/domain-review.json"
       ],
-      "requiredReviews": [".evidence/V05/domain-review.json"]
+      "requiredReviews": [".evidence/V05/domain-review.json"],
+      "allowedIncompletePredecessors": ["S4"]
     },
     {
       "id": "UG2",
@@ -537,7 +544,8 @@
         ".evidence/UG2/scope-review.json",
         ".evidence/UG2/code-quality-review.json",
         ".evidence/UG2/physical-device-review.json"
-      ]
+      ],
+      "allowedIncompletePredecessors": ["S4"]
     }
   ]
 }

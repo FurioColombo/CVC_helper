@@ -1,0 +1,54 @@
+{
+  "image": "tests/fixtures/ocr-sheet-clear.png",
+  "measuredAt": "2026-09-22T06:42:57.977Z",
+  "runtime": "v24.19.0",
+  "crop": null,
+  "recognitionMs": 824,
+  "minFieldConfidence": 70,
+  "withTelephone": {
+    "readPhone": true,
+    "nameOrderAnswered": null,
+    "nameOrderInference": {
+      "order": "given-surname",
+      "firstWordVotes": 3,
+      "lastWordVotes": 0
+    },
+    "unsuitable": false,
+    "aggregateConfidence": 94,
+    "rows": 3,
+    "rowsToReview": 0,
+    "missingFields": 0,
+    "lowConfidenceFields": 0,
+    "lowConfidenceByField": {
+      "firstName": 0,
+      "surname": 0,
+      "dateOfBirth": 0,
+      "phone": 0
+    },
+    "unresolvedNameOrder": 0,
+    "fieldsFlagged": 0
+  },
+  "withoutTelephone": {
+    "readPhone": false,
+    "nameOrderAnswered": null,
+    "nameOrderInference": {
+      "order": "given-surname",
+      "firstWordVotes": 3,
+      "lastWordVotes": 0
+    },
+    "unsuitable": false,
+    "aggregateConfidence": 94,
+    "rows": 3,
+    "rowsToReview": 0,
+    "missingFields": 0,
+    "lowConfidenceFields": 0,
+    "lowConfidenceByField": {
+      "firstName": 0,
+      "surname": 0,
+      "dateOfBirth": 0
+    },
+    "unresolvedNameOrder": 0,
+    "fieldsFlagged": 0
+  },
+  "afterTheNameOrderAnswer": null
+}

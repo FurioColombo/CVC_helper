@@ -16,6 +16,7 @@ test("keeps the complete student workflow consistent across reload", async ({
   await page.getByRole("button", { name: "Allievi" }).click()
 
   await page.getByRole("button", { name: "Scan allievi" }).click()
+  await page.getByRole("checkbox", { name: /Leggi anche il telefono/ }).check()
   await page
     .getByLabel("Scegli foto dell’elenco allievi dalla galleria")
     .setInputFiles(CLEAR_ROSTER)
@@ -23,8 +24,8 @@ test("keeps the complete student workflow consistent across reload", async ({
   await expect(
     page.getByRole("heading", { name: "Controlla prima di salvare" }),
   ).toBeVisible({ timeout: 30_000 })
-  // Committing a scanned row needs the sheet's name order to be stated.
-  await page.getByRole("button", { name: "Applica Nome · Cognome" }).click()
+  // The page reports its inferred order before the explicit commit.
+  await expect(page.getByText(/Dedotto dal foglio/)).toBeVisible()
   const correctedSurname = page.getByLabel(/^Cognome riga/).nth(1)
   await expect(correctedSurname).toHaveValue("Bianchi")
   await correctedSurname.fill("Bianchini")

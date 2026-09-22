@@ -74,12 +74,11 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   await expect(page.getByLabel(/^Telefono riga/).nth(0)).toHaveValue(
     "333 123 4567",
   )
-  // The review now insists the operator says which name came first before a
-  // row can be committed; answering once applies to the whole sheet.
+  // This sheet supplies a clear vote, so no order question is necessary.
   await expect(
     page.getByRole("heading", { name: "Come sono scritti i nomi?" }),
-  ).toBeVisible()
-  await page.getByRole("button", { name: "Applica Nome · Cognome" }).click()
+  ).not.toBeVisible()
+  await expect(page.getByText(/Dedotto dal foglio/)).toBeVisible()
   await expect(page.getByText("Nomi letti come")).toBeVisible()
 
   const counters = page.getByLabel("Stato revisione scansione")

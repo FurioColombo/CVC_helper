@@ -1,0 +1,24 @@
+{
+  "milestone": "S2",
+  "reviewerRole": "self review, FEATURE",
+  "verdict": "FAIL",
+  "blockers": [
+    { "id": "S2-PRIVATE-MEASUREMENT", "finding": "Implementation is ready for measurement, but the required rerun on the owner's private sheet is NOT_RUN. Do not close S2 or claim its photographic reduction." }
+  ],
+  "importantFindings": [
+    "Compound inference must not clear the ambiguity gate or erase existing text; corrected and component-tested.",
+    "Existing student-management browser journey expected a telephone without opting in after S1. Its setup now opts in and preserves the original assertion."
+  ],
+  "qolFindings": [
+    "Suffix recognition is not dictionary recognition: a/o surnames contribute votes. The banner exposes both counts, ties ask, and the human correction persists.",
+    "Per-row swap continues the existing behaviour of re-deriving raw OCR words; it can replace manually edited fields if the operator explicitly invokes it."
+  ],
+  "evidenceInspected": [
+    "src/capabilities/studentScan.ts",
+    "src/features/students/StudentScan.tsx",
+    "src/capabilities/studentScan.test.ts",
+    "src/features/students/StudentScan.test.tsx",
+    ".evidence/S2/fixture-before.json",
+    ".evidence/S2/fixture-after.json"
+  ]
+}

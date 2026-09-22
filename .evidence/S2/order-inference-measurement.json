@@ -1,0 +1,27 @@
+{
+  "milestone": "S2",
+  "runtime": "v24.19.0",
+  "method": "npm run measure:scan-review, real Tesseract, identical committed raster before and after; threshold 70",
+  "fixture": {
+    "before": "fixture-before.json",
+    "after": "fixture-after.json",
+    "firstWordVotes": 3,
+    "lastWordVotes": 0,
+    "rowsToReviewBefore": 3,
+    "rowsToReviewAfter": 0,
+    "fieldsFlaggedBefore": 0,
+    "fieldsFlaggedAfter": 0
+  },
+  "ownerPhotographs": {
+    "status": "NOT_RUN",
+    "reason": "The private photographs are not attached to this session and are deliberately absent from this public repository. The prior count-only report cannot be reprocessed as OCR input.",
+    "priorMeasurement": "../S1/review-load-photographs.json",
+    "noClaim": "Neither the prior 20-0 vote nor the removal of nineteen missing sex fields has been reproduced. The implemented recogniser includes suffixes: surnames ending in a/o also vote. Even the two-row synthetic component case gives 1-2, not 0-2. Missing fields in the prior photograph report fell by fourteen overall (29 to 15), not nineteen overall. New counts must be measured."
+  },
+  "decisions": [
+    "Use exactly inferSex recognition, including its existing suffix rule; no new name dictionary.",
+    "A strict majority with at least two supporting rows decides one order per sheet. Otherwise ask.",
+    "A remembered explicit choice takes precedence; a deduction itself is not remembered as if it were a human answer.",
+    "Ambiguous compound splits retain their current visible text and their unresolved review gate. No previously shown field is blanked."
+  ]
+}

@@ -25,6 +25,7 @@ const { createWorker, OEM, PSM } = require("tesseract.js")
 const {
   applyStudentNameOrder,
   extractStudentCandidates,
+  inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
 } = await import(
   pathToFileURL(resolve(root, "src/capabilities/studentScan.ts")).href
@@ -124,13 +125,16 @@ await worker.terminate()
 function audit(readPhone, order = null) {
   const extracted = extractStudentCandidates(data, { readPhone })
   const { unsuitable, aggregateConfidence } = extracted
+  const inference = inferStudentNameOrder(extracted.candidates)
+  const selectedOrder =
+    order ?? (inference.order === "unknown" ? null : inference.order)
   // The screen asks which name came first before anything can be committed,
   // and one answer applies to the whole sheet. Counting only the state before
   // that answer overstates the work by everything the answer resolves, so both
   // states are reported.
-  const candidates = order
+  const candidates = selectedOrder
     ? extracted.candidates.map((candidate) =>
-        applyStudentNameOrder(candidate, order),
+        applyStudentNameOrder(candidate, selectedOrder),
       )
     : extracted.candidates
   const fields = readPhone
@@ -161,6 +165,7 @@ function audit(readPhone, order = null) {
   return {
     readPhone,
     nameOrderAnswered: order,
+    nameOrderInference: inference,
     unsuitable,
     aggregateConfidence,
     rows: candidates.length,

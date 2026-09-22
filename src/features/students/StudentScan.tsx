@@ -12,9 +12,11 @@ import { useEffect, useRef, useState } from "react"
 
 import {
   applyStudentNameOrder,
+  inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
   scanStudents,
   type StudentNameOrder,
+  type StudentNameOrderInference,
   type StudentScanCandidate,
   type StudentScanField,
   type StudentScanOptions,
@@ -413,6 +415,8 @@ export function StudentScan({
     StudentNameOrder,
     "unknown"
   > | null>(null)
+  const [orderInference, setOrderInference] =
+    useState<StudentNameOrderInference | null>(null)
   const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set())
   const [saveError, setSaveError] = useState(false)
   const [acquisition, setAcquisition] = useState<Acquisition>()
@@ -472,13 +476,17 @@ export function StudentScan({
         ...candidate,
         id: `${candidate.sourceId}-${index + 1}`,
       }))
-      // A course's sheet is printed one way round, so the order is asked once
-      // and then applied for every later scan of the same course.
+      // An explicit correction outranks the sheet vote. An inferred order is
+      // not persisted as a human preference; the next sheet gets its own vote.
       const remembered = readNameOrderPreference(courseId)
-      setNameOrder(remembered)
+      const inference = inferStudentNameOrder(scanned)
+      const selected =
+        remembered ?? (inference.order === "unknown" ? null : inference.order)
+      setOrderInference(remembered ? null : inference)
+      setNameOrder(selected)
       setCandidates(
-        remembered
-          ? applyNameOrderToCandidates(scanned, remembered, "unresolved")
+        selected
+          ? applyNameOrderToCandidates(scanned, selected, "unresolved")
           : scanned,
       )
       setState("review")
@@ -836,6 +844,7 @@ export function StudentScan({
                     onClick={() => {
                       writeNameOrderPreference(courseId, order)
                       setNameOrder(order)
+                      setOrderInference(null)
                       setCandidates((current) =>
                         applyNameOrderToCandidates(
                           current,
@@ -865,6 +874,13 @@ export function StudentScan({
                       ? "Cognome · Nome"
                       : "Nome · Cognome"}
                   </span>
+                  {orderInference && (
+                    <span className="mt-1 block">
+                      Dedotto dal foglio: nome riconosciuto in prima posizione
+                      in {orderInference.firstWordVotes} righe, in ultima in{" "}
+                      {orderInference.lastWordVotes}.
+                    </span>
+                  )}
                 </p>
                 <Button
                   className="h-auto min-h-10 px-2.5 text-xs"
@@ -876,6 +892,7 @@ export function StudentScan({
                         : "surname-given"
                     writeNameOrderPreference(courseId, next)
                     setNameOrder(next)
+                    setOrderInference(null)
                     setCandidates((current) =>
                       applyNameOrderToCandidates(current, next, "all"),
                     )
