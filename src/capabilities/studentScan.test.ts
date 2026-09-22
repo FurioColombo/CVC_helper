@@ -2,9 +2,50 @@ import { describe, expect, it } from "vitest"
 
 import {
   applyStudentNameOrder,
+  inferStudentNameOrder,
   extractStudentCandidates,
   MIN_FIELD_CONFIDENCE,
 } from "@/capabilities/studentScan"
+
+describe("sheet name-order vote", () => {
+  it.each([
+    ["Rossi Mario\nBianchi Gianluca\nDe Angelis Luca", "surname-given", 0, 3],
+    ["Mario Rossi\nGianluca Bianchi\nLuca De Angelis", "given-surname", 3, 0],
+    ["Andrea Luca\nNicola Mattia", "unknown", 2, 2],
+    ["Smith Chris\nJones Alex", "unknown", 0, 0],
+    ["Rossi Mario", "unknown", 0, 1],
+    ["Mosca Caterina\nBianchi Giulia", "surname-given", 1, 2],
+  ] as const)("votes on %s", (text, order, firstWordVotes, lastWordVotes) => {
+    const { candidates } = extractStudentCandidates({
+      text,
+      tsv: null,
+      confidence: 95,
+    })
+    expect(inferStudentNameOrder(candidates)).toEqual({
+      order,
+      firstWordVotes,
+      lastWordVotes,
+    })
+  })
+
+  it("suggests male for Gianluca and preserves a low-confidence name", () => {
+    const { candidates } = extractStudentCandidates({
+      text: "Rossi Gianluca",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Rossi", confidence: 50 },
+          { text: "Gianluca", confidence: 95 },
+        ]),
+      ].join("\n"),
+      confidence: 80,
+    })
+    const result = applyStudentNameOrder(candidates[0]!, "surname-given")
+    expect(result.sex).toBe("male")
+    expect(result.surname).toBe("Rossi")
+    expect(result.confidence.surname).toBe(50)
+  })
+})
 
 function tsvLine(
   line: number,
@@ -513,8 +554,8 @@ describe("student scan extraction", () => {
       result.candidates[0]!,
       "surname-given",
     )
-    expect(applied.firstName).toBe("")
-    expect(applied.surname).toBe("")
+    expect(applied.firstName).toBe("Banella")
+    expect(applied.surname).toBe("Claudia georgia")
     expect(applied.nameReading?.compoundAmbiguity).toBe(true)
     // The words as read survive, so the operator can retype the boundary.
     expect(applied.nameReading?.raw).toBe("Banella Claudia georgia")

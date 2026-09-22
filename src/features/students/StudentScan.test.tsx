@@ -154,24 +154,29 @@ describe("StudentScan name order", () => {
     vi.unstubAllGlobals()
   })
 
-  it("asks for the order instead of assuming the first word is a given name", async () => {
-    await openReview(SURNAME_FIRST)
+  it("asks when too few rows support a deduction", async () => {
+    await openReview({
+      ...SURNAME_FIRST,
+      candidates: SURNAME_FIRST.candidates.slice(0, 1),
+    })
 
     expect(screen.getByLabelText("Ordine dei nomi")).toBeVisible()
-    expect(screen.getAllByText("Ordine da decidere")).toHaveLength(2)
-    expect(screen.getAllByText("Letto:")).toHaveLength(2)
+    expect(screen.getAllByText("Ordine da decidere")).toHaveLength(1)
+    expect(screen.getAllByText("Letto:")).toHaveLength(1)
     expect(screen.getByText("Altomare Valeria")).toBeVisible()
     // Nothing may be committed while the order is still undecided.
     const counters = screen.getByLabelText("Stato revisione scansione")
     expect(within(counters).getByText("0")).toBeVisible()
   })
 
-  it("applies a chosen order across the sheet and unblocks the rows", async () => {
-    const user = await openReview(SURNAME_FIRST)
-
-    await user.click(
-      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
-    )
+  it("deduces one order across the sheet and reports both votes before commit", async () => {
+    await openReview(SURNAME_FIRST)
+    expect(
+      screen.getByText(
+        /Dedotto dal foglio:.*prima posizione in 1 righe, in ultima in 2/,
+      ),
+    ).toBeVisible()
+    expect(addStudents).not.toHaveBeenCalled()
 
     expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
     expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
@@ -196,9 +201,7 @@ describe("StudentScan name order", () => {
 
   it("remembers the order for the next scan of the same course", async () => {
     const user = await openReview(SURNAME_FIRST)
-    await user.click(
-      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
-    )
+    await user.click(screen.getByRole("button", { name: "Inverti per tutti" }))
     cleanup()
 
     await openReview(SURNAME_FIRST)
@@ -206,7 +209,55 @@ describe("StudentScan name order", () => {
     expect(
       screen.queryByRole("button", { name: "Applica Cognome · Nome" }),
     ).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue(
+      "Altomare",
+    )
+    expect(screen.queryByText(/Dedotto dal foglio/)).not.toBeInTheDocument()
+  })
+
+  it("keeps the explicit fallback and remembers its answer", async () => {
+    const uncertainSheet = {
+      ...SURNAME_FIRST,
+      candidates: SURNAME_FIRST.candidates.slice(0, 1),
+    }
+    const user = await openReview(uncertainSheet)
+    await user.click(
+      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
+    )
+    cleanup()
+    await openReview(uncertainSheet)
+    expect(screen.getByLabelText(/^Nome riga/)).toHaveValue("Valeria")
+    expect(
+      screen.queryByText("Come sono scritti i nomi?"),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps compound text visible and refuses commit until its split is reviewed", async () => {
+    const compound = structuredClone(SURNAME_FIRST.candidates[0]!)
+    compound.sourceId = "compound"
+    compound.firstName = "Rossi"
+    compound.surname = "Maria Giulia"
+    compound.nameReading = {
+      raw: "Rossi Maria Giulia",
+      words: ["Rossi", "Maria", "Giulia"].map((text) => ({
+        text,
+        confidence: 95,
+      })),
+      order: "unknown",
+      compoundAmbiguity: true,
+      acknowledged: false,
+    }
+    const user = await openReview({
+      ...SURNAME_FIRST,
+      candidates: [...SURNAME_FIRST.candidates, compound],
+    })
+    expect(screen.getByLabelText(/^Nome riga compound/)).toHaveValue("Rossi")
+    expect(screen.getByLabelText(/^Cognome riga compound/)).toHaveValue(
+      "Maria Giulia",
+    )
+    expect(screen.getByText(/Nome o cognome composto/)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Aggiungi 3 allievi" }))
+    expect(addStudents).not.toHaveBeenCalled()
   })
 
   it("leaves a row alone once the operator has typed the name themselves", async () => {
@@ -216,15 +267,11 @@ describe("StudentScan name order", () => {
     await user.clear(firstName)
     await user.type(firstName, "Valeria")
 
-    await user.click(
-      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
-    )
+    await user.click(screen.getByRole("button", { name: "Inverti per tutti" }))
 
     // The hand-corrected row keeps what was typed rather than being re-split.
     expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
-      "Caterina",
-    )
+    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Mosca")
   })
 
   it("swaps a single row without touching the others", async () => {
@@ -236,8 +283,12 @@ describe("StudentScan name order", () => {
       }),
     )
 
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Mosca")
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue(
+      "Altomare",
+    )
+    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
+      "Caterina",
+    )
   })
 })
 

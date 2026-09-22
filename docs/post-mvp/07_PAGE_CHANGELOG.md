@@ -323,3 +323,5 @@ secondari e varianti sono specificati nei paragrafi `Mock`/`Accettazione` e vann
 realizzati e provati nell'app. Le interazioni del prototipo sono dimostrative,
 senza dati reali, microfono, fotocamera o persistenza; il target congelato non
 costituisce prova di implementazione.
+
+S2 · P06, 2026-09-22: one sheet-wide first/last-word vote uses the existing sex recogniser; at least two supporting rows and a strict majority are required. The banner reports both counts and keeps sheet-wide and per-row corrections. Explicit course preferences win over inference. Ambiguous compounds keep their visible text and still require acknowledgement. No confidence threshold changes.

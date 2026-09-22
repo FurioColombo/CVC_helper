@@ -1,0 +1,27 @@
+{
+  "milestone": "S2",
+  "target": "P06 mock r10, superseded for name order by the owner's S2 instruction",
+  "baseCommit": "0705748",
+  "testedTree": "S2 working changes before checkpoint",
+  "runtime": "v24.19.0",
+  "project": "pixel-7-chrome",
+  "status": "PASS",
+  "scope": "Local advisory browser evidence, not CI or a physical-device observation",
+  "runs": [
+    {
+      "command": "npm run verify:e2e -- student-scan.spec.ts s1-scan-phone-option.spec.ts student-management-gate.spec.ts --project=pixel-7-chrome",
+      "result": "2 passed, 1 failed: student-management expected a phone without opting in. Updated its setup; original phone assertion preserved."
+    },
+    {
+      "command": "npm run verify:e2e -- student-management-gate.spec.ts --project=pixel-7-chrome",
+      "result": "1 passed"
+    }
+  ],
+  "assertions": [
+    "Real clear-raster OCR reports the inferred sheet order without asking",
+    "Telephone off stays absent through review, commit and profile",
+    "Telephone opt-in survives commit and reload",
+    "Poor image rejection, name correction, row removal and explicit commit",
+    "Review at 320x664 and 200% text keeps the existing overflow and focused-control clearance assertions"
+  ]
+}

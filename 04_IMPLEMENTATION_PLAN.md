@@ -1175,7 +1175,7 @@ than what happened.
 | V01 — reachable from a phone | COMPLETE — live at https://furiocolombo.github.io/CVC_helper/, installed and opening on the owner's phone |
 | CI regression | CLOSED — CI green on Linux; 0 failed, 124 passed |
 | S1 — student scan, fewer fields to check | IN_PROGRESS — the telephone choice is built, tested and verified; the 67 is **attributed** (66 measured on the owner's own crop) |
-| S2 — deduce which name is which | PENDING — the owner's own idea, and the measurement says it is the biggest single win |
+| S2 — deduce which name is which | IN_PROGRESS — implemented; fixture and local browser verified; private-photo remeasurement outstanding |
 | S3 — the age is the field | PENDING — the owner asked for the app to report an age, corroborated by the date |
 | S4 — line fragmentation | PENDING — **needs the owner to lift their own deferral**; measured as the largest residual cause |
 | R1 — what was asked for and never built | PENDING — the global sweep the owner asked for |
@@ -1800,7 +1800,7 @@ scans, unlike the name order.
 ## S2 — Work out which name is which, instead of asking
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Raised:** 2026-09-22, by the owner, after the 67 was attributed
 
 ### Goal
@@ -1870,6 +1870,29 @@ be reported in the banner and the counter-evidence — how many rows recognised
 each position — belongs in the evidence file, so a future wrong call can be
 diagnosed rather than guessed at.
 
+
+### Progress, Codex continuation 2026-09-22
+
+Implemented a sheet-wide first/last-word vote using exactly the existing sex
+recogniser, including its suffixes. Two supporting rows are required, ties ask,
+and explicit course preferences outrank inference. The banner reports both votes;
+per-row and sheet-wide corrections remain. Gianluca now suggests male. Ambiguous
+compounds retain their visible words and remain gated for review.
+
+Real OCR on the committed fixture: 3–0 given-name-first, rows needing review 3 → 0,
+flagged fields 0 → 0. This fixture cannot establish the owner's photographic
+reduction. The private photographs are absent from this session; S2 stays
+IN_PROGRESS and its review records that missing evidence as a blocker. No 20–0
+photographic vote or nineteen-field reduction is claimed. The suffix rule itself
+also recognises a/o surnames, so the stated 20–0 must be remeasured rather than
+copied into evidence.
+
+Three affected local Pixel browser journeys pass, including correction/removal,
+explicit commit, reload and 320px/200% review layout. The student-management
+journey needed an S1 carryover correction: it expected a phone while leaving the
+new opt-in unchecked. Its setup now opts in; its original assertion remains.
+Node 24.19.0 is the bundled runtime actually used. No deploy or physical-device
+result is claimed. This is an implementation checkpoint, not milestone closure.
 
 ## S3 — The age is the field; the date of birth corroborates it
 
@@ -2381,3 +2404,5 @@ deferred item remains absent or explicitly isolated; all deterministic checks
 pass; the six reviews have no blockers; both fixtures upgrade without loss; the
 physical checklist is actually run on real devices and passes; the working tree
 is clean after the release checkpoint.
+
+Execution amendment, 2026-09-22: the current owner instruction explicitly allows S2, S3 and R1 work before S1 closes and keeps S4 deferred. The controller records these bounded predecessor exceptions in the manifest. S2/S3 may retain outstanding private-photograph measurement while the independent work continues; this does not waive their completion criteria. V02 still waits for S1/S2/S3/R1 closure, and S4 remains outside the required 0.3.0 sequence.

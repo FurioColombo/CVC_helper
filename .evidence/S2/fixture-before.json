@@ -1,0 +1,44 @@
+{
+  "image": "tests/fixtures/ocr-sheet-clear.png",
+  "measuredAt": "2026-09-22T06:39:57.103Z",
+  "runtime": "v24.19.0",
+  "crop": null,
+  "recognitionMs": 850,
+  "minFieldConfidence": 70,
+  "withTelephone": {
+    "readPhone": true,
+    "nameOrderAnswered": null,
+    "unsuitable": false,
+    "aggregateConfidence": 94,
+    "rows": 3,
+    "rowsToReview": 3,
+    "missingFields": 0,
+    "lowConfidenceFields": 0,
+    "lowConfidenceByField": {
+      "firstName": 0,
+      "surname": 0,
+      "dateOfBirth": 0,
+      "phone": 0
+    },
+    "unresolvedNameOrder": 3,
+    "fieldsFlagged": 0
+  },
+  "withoutTelephone": {
+    "readPhone": false,
+    "nameOrderAnswered": null,
+    "unsuitable": false,
+    "aggregateConfidence": 94,
+    "rows": 3,
+    "rowsToReview": 3,
+    "missingFields": 0,
+    "lowConfidenceFields": 0,
+    "lowConfidenceByField": {
+      "firstName": 0,
+      "surname": 0,
+      "dateOfBirth": 0
+    },
+    "unresolvedNameOrder": 3,
+    "fieldsFlagged": 0
+  },
+  "afterTheNameOrderAnswer": null
+}

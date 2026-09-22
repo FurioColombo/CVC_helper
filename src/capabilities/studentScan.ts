@@ -136,6 +136,7 @@ const MALE_NAMES = new Set([
   "elia",
   "enea",
   "gioele",
+  "gianluca",
   "luca",
   "mattia",
   "michele",
@@ -274,8 +275,8 @@ function averageNameConfidence(words: StudentScanNameWord[]) {
  *
  * The helper intentionally refuses arbitrary surname/given splits. Two words
  * are unambiguous. A leading Italian surname particle permits the common
- * `De Angelis Luca` shape. Any other compound shape remains blank and marked
- * for review so the UI can ask the operator to edit the boundary.
+ * `De Angelis Luca` shape. Other compounds retain the current reading and stay
+ * marked for review: choosing an order must never erase a visible field.
  */
 export function applyStudentNameOrder(
   candidate: StudentScanCandidate,
@@ -346,10 +347,10 @@ export function applyStudentNameOrder(
     }
   } else {
     split = {
-      firstName: "",
-      surname: "",
-      firstNameConfidence: 0,
-      surnameConfidence: 0,
+      firstName: candidate.firstName,
+      surname: candidate.surname,
+      firstNameConfidence: candidate.confidence.firstName,
+      surnameConfidence: candidate.confidence.surname,
       compoundAmbiguity: true,
     }
   }
@@ -389,6 +390,38 @@ function inferSex(firstName: string): StudentSex | null {
   if (normalized.endsWith("a")) return "female"
   if (normalized.endsWith("o")) return "male"
   return null
+}
+
+export interface StudentNameOrderInference {
+  order: StudentNameOrder
+  firstWordVotes: number
+  lastWordVotes: number
+}
+
+/** A sheet votes once per name cell, using exactly the sex suggestion rule.
+ * Two supporting rows are the minimum; a tie or a single name still asks.
+ * Endings can also recognise surnames, so both vote counts remain visible.
+ */
+export function inferStudentNameOrder(
+  candidates: StudentScanCandidate[],
+): StudentNameOrderInference {
+  let firstWordVotes = 0
+  let lastWordVotes = 0
+  for (const { nameReading } of candidates) {
+    if (!nameReading) continue
+    const words = nameWordsFromReading(nameReading)
+    if (words.length < 2) continue
+    firstWordVotes += Number(inferSex(words[0]!.text) !== null)
+    lastWordVotes += Number(inferSex(words.at(-1)!.text) !== null)
+  }
+  const order =
+    Math.max(firstWordVotes, lastWordVotes) < 2 ||
+    firstWordVotes === lastWordVotes
+      ? "unknown"
+      : firstWordVotes > lastWordVotes
+        ? "given-surname"
+        : "surname-given"
+  return { order, firstWordVotes, lastWordVotes }
 }
 
 function normalizeDate(match: RegExpMatchArray | null) {

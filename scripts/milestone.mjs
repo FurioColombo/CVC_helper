@@ -113,9 +113,12 @@ function setPlanStatus(id, status) {
 }
 
 function assertPreviousComplete(manifest, index) {
+  const current = manifest.milestones[index]
   const previous = manifest.milestones.slice(0, index)
   const incomplete = previous.find(
-    (milestone) => milestone.status !== "COMPLETE",
+    (milestone) =>
+      milestone.status !== "COMPLETE" &&
+      !(current.allowedIncompletePredecessors ?? []).includes(milestone.id),
   )
   if (incomplete) {
     throw new Error(`Previous milestone ${incomplete.id} is not COMPLETE`)
