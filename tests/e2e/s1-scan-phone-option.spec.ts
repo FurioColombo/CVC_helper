@@ -39,13 +39,14 @@ test("scans without reading the telephone, and saves no number", async ({
     page.getByRole("heading", { name: "Controlla prima di salvare" }),
   ).toBeVisible({ timeout: 30_000 })
 
-  // Same three rows, same names and dates as the journey that reads the
-  // number: switching the column off costs nothing on the fields that matter.
+  // Same three rows, same names and ages as the journey that reads the number:
+  // switching the column off costs nothing on the fields that matter.
   await expect(page.getByLabel(/^Nome riga/)).toHaveCount(3)
   await expect(page.getByLabel(/^Nome riga/).nth(0)).toHaveValue("Mario")
-  await expect(page.getByLabel(/^Data di nascita riga/).nth(1)).toHaveValue(
-    "1998-11-24",
-  )
+  await expect(page.getByLabel(/^Età riga/).nth(1)).toHaveValue("27")
+  await expect(
+    page.getByLabel(/^Data esatta per le regole sui minori riga/),
+  ).toHaveCount(0)
   // Nothing about a telephone anywhere on the review.
   await expect(page.getByLabel(/^Telefono riga/)).toHaveCount(0)
 

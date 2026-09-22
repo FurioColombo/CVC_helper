@@ -1,4 +1,5 @@
 import type { StudentSex } from "@/domain/config"
+import { calculateAge } from "@/domain/student"
 import { absoluteAssetUrl } from "@/lib/assetPath"
 
 export const MIN_FIELD_CONFIDENCE = 70
@@ -43,6 +44,8 @@ export interface StudentScanCandidate {
   confidence: Record<StudentScanField, number>
   /** Present for OCR lines whose name order needs an explicit review. */
   nameReading?: StudentScanNameReading
+  /** Independent printed age; transient OCR evidence, never persisted. */
+  ageReading?: { value: number; confidence: number }
 }
 
 export interface StudentScanResult {
@@ -157,6 +160,7 @@ const MALE_NAMES = new Set([
 ])
 
 const DATE_PATTERN = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/
+const AGE_PATTERN = /\b(\d{1,3})\s+ann[oi]\b/iu
 const PHONE_PATTERN = /(?:\+?39[ .-]*)?(?:\d[ .-]*){9,10}/
 const NON_NAME_CHARACTERS = /[^\p{L}'’ -]/gu
 const STUDENT_SECTION_PATTERN =
@@ -443,6 +447,38 @@ function normalizeDate(match: RegExpMatchArray | null) {
   return iso
 }
 
+/** Age is always evaluated at course start, never at the wall-clock scan date. */
+export function studentScanAge(
+  candidate: StudentScanCandidate,
+  referenceDate: string,
+) {
+  // A printed age is the value the review presents. The stored birth date is
+  // still the source for minor/adult rules and supplies a derived age only on
+  // sheets that do not print one.
+  if (candidate.ageReading) return candidate.ageReading.value
+  if (candidate.dateOfBirth)
+    return calculateAge(candidate.dateOfBirth, referenceDate)
+  return null
+}
+
+export function studentScanAgeCorroborated(
+  candidate: StudentScanCandidate,
+  referenceDate: string,
+) {
+  const { ageReading, dateOfBirth } = candidate
+  if (!ageReading || !dateOfBirth || dateOfBirth > referenceDate) return false
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOfBirth)
+  if (
+    !match ||
+    normalizeDate(["", match[3]!, match[2]!, match[1]!] as RegExpMatchArray) !==
+      dateOfBirth
+  )
+    return false
+  return (
+    Math.abs(calculateAge(dateOfBirth, referenceDate) - ageReading.value) <= 1
+  )
+}
+
 function average(values: number[], fallback: number) {
   if (values.length === 0) return fallback
   return values.reduce((total, value) => total + value, 0) / values.length
@@ -670,6 +706,7 @@ function candidateFromLine(
   options: StudentScanOptions,
 ) {
   const dateMatch = line.text.match(DATE_PATTERN)
+  const ageMatch = line.text.match(AGE_PATTERN)
   const dateStart = dateMatch?.index ?? -1
   const phoneSearchText =
     dateMatch && dateStart >= 0
@@ -756,6 +793,18 @@ function candidateFromLine(
     firstName,
     surname,
     dateOfBirth: normalizedDate,
+    ...(ageMatch
+      ? {
+          ageReading: {
+            value: Number(ageMatch[1]),
+            confidence: confidenceForRange(
+              line,
+              ageMatch.index ?? 0,
+              (ageMatch.index ?? 0) + ageMatch[1]!.length,
+            ),
+          },
+        }
+      : {}),
     // Detected either way — the column bounds the name — but only reported
     // when it was asked for.
     phone: options.readPhone

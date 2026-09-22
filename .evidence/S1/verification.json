@@ -1,0 +1,25 @@
+{
+  "milestone": "S1",
+  "status": "PASS",
+  "recordedAt": "2026-09-22T18:22:26.184Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.2.0",
+  "gitCommit": "141814c4d69f3056daf6a10a0bba8fffef0ee5ef",
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-09-22T18:19:50.957Z",
+      "durationMs": 155225,
+      "exitCode": 0,
+      "outputTail": "(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\nPWA v1.3.0\nmode      generateSW\nprecache  30 entries (22294.00 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-398fc23b.js\nPASS: built PWA manifest, icons, service worker and 5 precached OCR assets"
+    }
+  ],
+  "postReviewFix": {
+    "command": "npm run verify:quick",
+    "status": "PASS",
+    "runtime": "v24.19.0",
+    "result": "38 test files, 428 tests; lint, formatting and typecheck passed",
+    "reason": "Rerun after ensuring a row-level confirmation cannot bypass the exact-date requirement following a manual age correction."
+  }
+}

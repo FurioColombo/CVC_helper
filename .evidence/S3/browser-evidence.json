@@ -1,0 +1,16 @@
+{
+  "milestone": "S3",
+  "runtime": "v24.19.0",
+  "status": "PASS",
+  "scope": "Local Chromium device emulation; not a physical-device result.",
+  "project": "iphone-13-viewport",
+  "command": "npm run verify:e2e -- tests/e2e/student-scan.spec.ts tests/e2e/student-management-gate.spec.ts --project=iphone-13-viewport",
+  "result": "2 passed",
+  "assertions": [
+    "The real OCR fixture presents age in review and hides an unneeded exact-date control.",
+    "The review still commits the exact stored birth date and reloads derived ages.",
+    "The student profile presents age without a duplicate birth-date tile; exact date remains available in edit mode.",
+    "The scan review remains within the existing 320 px and 200% text overflow bounds."
+  ],
+  "screenshot": "age-review-iphone13.png"
+}

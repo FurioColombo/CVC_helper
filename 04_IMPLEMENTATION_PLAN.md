@@ -1631,7 +1631,7 @@ each cause with what was and was not reproduced, and the harness changes.
 ## S1 — Student scan: choose the columns, and cut what must be checked
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 **Raised:** 2026-09-21, by the owner, from the first real scan on their own phone
 
 Not part of `0_3_0_OWNER_BRIEF.md`. It is here because the owner used the
@@ -1796,11 +1796,23 @@ override list does not contain the name. The ambiguous-compound rule blanks thre
 fields per row where it fires. The telephone choice is not remembered between
 scans, unlike the name order.
 
+### Closure measurement, 2026-09-22
+
+The owner supplied five originals, now held only under ignored `data/private`.
+After orientation normalization and the editor's 2600 px size cap, each was run
+through the real OCR counter. Comparing the original-like state (telephone read,
+order unanswered, no age corroboration) with the implemented state (telephone
+off, automatic order, age corroboration), every capture drops by a measured
+16–24 flags: 77→53, 47→30, 154→136, 45→26 and 59→43. No threshold moved and no
+low-confidence text was blanked. The residual high counts occur on captures whose
+rows fragment or disappear; that is S4, still deferred. S1's count is therefore
+both attributed and materially reduced on the owner's own photographs.
+
 
 ## S2 — Work out which name is which, instead of asking
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 **Raised:** 2026-09-22, by the owner, after the 67 was attributed
 
 ### Goal
@@ -1880,24 +1892,25 @@ per-row and sheet-wide corrections remain. Gianluca now suggests male. Ambiguous
 compounds retain their visible words and remain gated for review.
 
 Real OCR on the committed fixture: 3–0 given-name-first, rows needing review 3 → 0,
-flagged fields 0 → 0. This fixture cannot establish the owner's photographic
-reduction. The private photographs are absent from this session; S2 stays
-IN_PROGRESS and its review records that missing evidence as a blocker. No 20–0
-photographic vote or nineteen-field reduction is claimed. The suffix rule itself
-also recognises a/o surnames, so the stated 20–0 must be remeasured rather than
-copied into evidence.
+flagged fields 0 → 0. Five supplied private captures were then measured from
+ignored storage. Every capture chooses surname-given: last-word votes beat
+first-word votes 16–5, 12–3, 20–6, 15–3 and 21–7. Missing fields fall on every
+run, by 11–16 per capture. The plan's hand-stated 20–0 and nineteen-field result
+are not reproduced because the required `inferSex` recogniser also votes for
+a/o surnames and the earlier overall count was 29→15. Measured results replace
+that arithmetic; the decision itself is stable across all five photographs.
 
 Three affected local Pixel browser journeys pass, including correction/removal,
 explicit commit, reload and 320px/200% review layout. The student-management
 journey needed an S1 carryover correction: it expected a phone while leaving the
 new opt-in unchecked. Its setup now opts in; its original assertion remains.
 Node 24.19.0 is the bundled runtime actually used. No deploy or physical-device
-result is claimed. This is an implementation checkpoint, not milestone closure.
+result is claimed. Required evidence is present and S2 is complete.
 
 ## S3 — The age is the field; the date of birth corroborates it
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 **Raised:** 2026-09-22, by the owner
 
 ### Goal
@@ -1976,6 +1989,24 @@ still stored, still derives the age, and still drives every rule that depends on
 it; `check:compatibility` passes unchanged. On the owner's sheet the nine
 corroborated dates are no longer flagged, and a sheet without an age column
 behaves exactly as it does today. No threshold moved.
+
+### Progress, 2026-09-22
+
+Review and profile now present age;
+the exact date remains stored and is exposed only when missing, doubtful or
+inconsistent with a manually edited age. Age-only rows and age corrections must
+supply or explicitly confirm the exact date before persistence, so no day or
+month is invented. The committed no-age OCR fixture remains at zero flags and
+the controlled low-confidence-date case falls from one flag to zero only when
+an independently read age agrees. Focused component tests and the two affected
+iPhone-viewport browser journeys pass on Node 24.19.0. Five supplied originals
+were measured from ignored local storage. Four low-confidence dates are cleared
+by a separately read matching age; one of the five runs has no such pair. The
+earlier visual estimate of nine is not reproduced: remaining doubtful dates do
+not retain an independently readable age after OCR, mostly where the row
+fragments or disappears. They stay flagged. This is the safe measured outcome,
+`MIN_FIELD_CONFIDENCE` remains 70, and S3 is complete with that residual assigned
+to deferred S4.
 
 
 ## S4 — Line fragmentation

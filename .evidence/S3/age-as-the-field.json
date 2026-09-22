@@ -1,0 +1,13 @@
+{
+  "milestone": "S3",
+  "recordedBeforeImplementation": true,
+  "decision": "Stored date of birth and course-start reference date remain the sole sources for persisted age/minor calculations. No schema change, cached age, invented birthday or migration change.",
+  "presentation": {
+    "profile": "Remove the duplicate date-of-birth display; retain the existing derived age and its edit shortcut.",
+    "scanReview": "Age is the primary field. The exact date is exposed only when it is missing, doubtful, or conflicts with the reviewed age; saving remains blocked until that exact date is valid.",
+    "manualCreateAndEdit": "Exact-date input remains because manual creation has no second reading to corroborate it and the date is required by the domain contract."
+  },
+  "corroboration": "Read an explicit number followed by anni/anno independently from the date. At course start, difference at most one year corroborates confidence, without modifying either reading or MIN_FIELD_CONFIDENCE. Invalid/future dates do not corroborate. Without age, date confidence behaves as before.",
+  "limit": "Agreement corroborates age, not the day or month. Exact-date minor rules still use the retained date.",
+  "ageOnlyAndCorrectionRule": "Request the exact date before persistence. The app never invents a day or month and never stores an approximate birthday. This preserves the 0.1.0 data contract and the owner's instruction that the date remains the source of minor/adult rules."
+}

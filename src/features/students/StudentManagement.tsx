@@ -84,11 +84,6 @@ function sexLabel(sex: StudentSex | null, compact = false) {
   return compact ? option.label : option.detailLabel
 }
 
-function formatDate(date: string) {
-  const [year, month, day] = date.split("-")
-  return `${day}/${month}/${year}`
-}
-
 /**
  * Double click with a pointer, or a long press on touch, as the shortcut the
  * Product Specification allows on a profile field. `Modifica` remains the
@@ -794,12 +789,6 @@ function StudentDetail({
             label="Età"
             onShortcut={() => onEdit("dateOfBirth")}
             value={`${age} anni`}
-          />
-          <ProfileField
-            field="dateOfBirth"
-            label="Data di nascita"
-            onShortcut={() => onEdit("dateOfBirth")}
-            value={formatDate(student.dateOfBirth)}
           />
           <ProfileField
             field="sex"

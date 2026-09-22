@@ -1,0 +1,26 @@
+{
+  "milestone": "S3",
+  "reviewerRole": "self review, FEATURE",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    "An age cannot determine an exact birthday. Age-only rows and manual age corrections therefore expose and require the exact date before persistence; no approximate birthday is invented.",
+    "A manually retyped age is not treated as independent corroboration of the date it was derived from. The exact date must be explicitly confirmed.",
+    "The stored date remains the only persisted value and the source for minor/adult rules and compatibility.",
+    "Private-photo OCR clears four date flags, not the nine estimated visually on the earlier crop. Remaining low-confidence dates do not have a usable independent age reading and stay flagged."
+  ],
+  "qolFindings": [
+    "The exceptional exact-date correction panel adds height only to rows that still need it. Physical use should confirm the wording is clear under time pressure.",
+    "Manual create/edit still asks for an exact date because there is no second reading and the storage contract requires it."
+  ],
+  "evidenceInspected": [
+    "src/capabilities/studentScan.ts",
+    "src/features/students/StudentScan.tsx",
+    "src/features/students/StudentManagement.tsx",
+    "src/capabilities/studentScan.test.ts",
+    "src/features/students/StudentScan.test.tsx",
+    ".evidence/S3/corroboration-measurement.json",
+    ".evidence/S3/browser-evidence.json",
+    "Five ignored private-photo measurement outputs; only aggregate counts were copied into corroboration-measurement.json"
+  ]
+}

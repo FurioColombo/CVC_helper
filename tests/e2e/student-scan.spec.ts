@@ -68,9 +68,10 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   await expect(page.getByLabel(/^Cognome riga/).nth(2)).toHaveValue(
     "De Angelis",
   )
-  await expect(page.getByLabel(/^Data di nascita riga/).nth(1)).toHaveValue(
-    "1998-11-24",
-  )
+  await expect(page.getByLabel(/^Età riga/).nth(1)).toHaveValue("27")
+  await expect(
+    page.getByLabel(/^Data esatta per le regole sui minori riga/),
+  ).toHaveCount(0)
   await expect(page.getByLabel(/^Telefono riga/).nth(0)).toHaveValue(
     "333 123 4567",
   )
@@ -119,7 +120,7 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
       fullPage: true,
-      path: path.resolve("test-results/screenshots/review-iphone13.png"),
+      path: path.resolve(".evidence/S3/age-review-iphone13.png"),
     })
   }
 
