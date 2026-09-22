@@ -10,6 +10,7 @@ export default tseslint.config(
       ".evidence",
       "archive",
       "coverage",
+      "data",
       "dist",
       "node_modules",
       "playwright-report",

@@ -1,8 +1,9 @@
-# Technical Decisions — 0.2.0 cycle
+# Technical Decisions — current architecture
 
 This document is authoritative for architecture, technology, persistence and
 verification. Product behavior belongs in `01_PRODUCT_SPEC.md` and scope in
-`02_MVP_SCOPE.md`.
+`02_MVP_SCOPE.md`. The released 0.2.0 decisions remain in force during 0.3.0
+unless the owner changes them explicitly.
 
 ## 1. Runtime and stack
 
@@ -205,19 +206,19 @@ log.
 
 Use low-effort semantic versions:
 
-- current baseline: 0.1.0;
-- active UX cycle: 0.2.0, assigned only at the final release gate;
+- released baselines: 0.1.0 and 0.2.0;
+- active cycle: 0.3.0, assigned only at its release gate;
 - patch numbers for separately released fixes;
 - later minor numbers for recognizable feature/change packages;
 - 1.0.0 only after an explicit stability decision.
 
-Do not version every card or milestone. Create one concise `CHANGELOG.md` at the
-0.2.0 release with date, three to six user-visible changes and material migration
-or limitation notes. Create a Git tag only when the release is actually declared.
+Do not version every card or milestone. Update `CHANGELOG.md` at the 0.3.0 gate
+with user-visible changes and material migration or limitation notes. Create a
+Git tag only when the release is actually declared.
 
 ## 8. Explicit non-goals
 
 Do not add a custom backend, GraphQL, global state framework, generalized
 repository/provider architecture, custom sync/conflict engine, Supabase/Auth,
 native code, release-management service, large design system, generic content
-system or speculative abstraction during 0.2.0.
+system or speculative abstraction during 0.3.0.

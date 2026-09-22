@@ -62,6 +62,9 @@ The persistent bottom navigation has exactly `Avarie`, `Home`, `Equipaggi`, with
 Home central. Settings is secondary. Home is not an operational dashboard in
 0.2.0.
 
+On an installed phone, browser Back/swipe-back returns to the preceding in-app
+screen when there is one, rather than closing the app from a nested screen.
+
 Course locking, read-only closure and rich historical-course browsing are not
 required. Existing course data remains editable.
 
@@ -73,7 +76,8 @@ A student has:
 
 - first name and surname;
 - optional nickname/display-name override;
-- date of birth and derived age/minor status;
+- date of birth when known, or a declared age in completed years at the course
+  reference date when an exact birthday is unavailable;
 - sex: `F`, `M` or `Altro`;
 - optional phone;
 - operational size: XS, S, M, L or XL;
@@ -81,12 +85,14 @@ A student has:
 - optional course/week note;
 - active/disabled state.
 
-Age and minor status are calculated at the course reference date, not from a
-cached age. A minor has an explicit red `M`/`Minorenne` marker whose meaning is
-available without colour.
+When a birth date exists, age and minor status are calculated at the course
+reference date, never from a cached age. Otherwise, the declared age determines
+them at that same reference date. Do not fabricate a birth date. A minor has an
+explicit red `M`/`Minorenne` marker whose meaning is available without colour.
 
-The compact generated name is the unique first name. If first names collide, add
-the surname initial, for example `Mario R.`. A manual nickname overrides this.
+The compact generated name is the unique first name. If first names collide,
+show enough of each surname to distinguish them, for example `Mario Ros.` and
+`Mario Roc.`. A manual nickname overrides this.
 
 ### 3.2 Student list
 
@@ -135,9 +141,9 @@ display type.
 
 The Valutazioni card contains the same complete weekly grid used in P18/P19. It
 fits without horizontal scrolling. The read-only history starts with that grid,
-then groups sessions by day with AM/PM subcards and their notes. The student's
-name is the main sticky subject while the list scrolls. Editing remains in the
-Valutazioni workflow.
+then groups sessions by day with AM/PM subcards and their notes. Tapping a
+session opens its Valutazioni screen. The student's name is the main sticky
+subject while the list scrolls. Editing remains in the Valutazioni workflow.
 
 ### 3.5 Disable and delete
 
@@ -160,24 +166,32 @@ available full-screen surface, then free rotation and crop.
 The adjustment surface is a full-frame document workspace without a rotation
 slider. It supports direct crop, zoom/pan, line-based straightening, precise angle
 adjustment and quarter turns. An already-cropped image starts fully included.
+The crop frame shows its selected contents at a modest readable zoom, with the
+outside darker and subtly blurred; rotation follows the gesture smoothly.
 
 An unstructured name may be printed first-name-first or surname-first. Preserve
-the recognized name for review and require an explicit order choice rather than
-assuming the first token is a first name. Mixed ordering and compound names have
-per-row correction and acknowledgement before insertion.
+the recognized name for review. Infer one order per sheet from recognized given
+names at both ends of each row; leave an explicit whole-sheet correction. Mixed
+ordering and compound names still need editable per-row fields and
+acknowledgement before insertion, without a separate row-level swap control.
 
-Extraction attempts first name, surname, date of birth and phone when present.
-Age is derived. Sex inference is only a convenience and is always editable.
+Extraction attempts first name, surname, date of birth, printed age and phone
+when present. A reliable date corroborates the printed age and remains the
+source of minor rules. If the operator manually enters only an age, the exact
+date is unnecessary. Sex inference is only a convenience and is always editable.
 
-Confidence is field-level. Keep a field only when reasonably reliable; otherwise
-leave it empty. A reliable name may survive with a missing date and vice versa.
+Confidence is field-level. Keep recognized text visible even when confidence is
+low, mark it for review, and never turn a previously shown reading into a blank
+field merely to lower the review count. A reliable name may survive with a
+missing age/date and vice versa.
 Blurred, cropped or unreliable images prompt retake/re-upload rather than false
 certainty.
 
 Human review is mandatory before commit. Rows and fields are editable; false rows
 can be removed. Sticky live counters show rows to check, fields to complete and
-students ready/inserted, updating after every change. Source photos are not
-retained as application data.
+students ready/inserted, updating after every change. Tapping a pending counter
+moves to its first matching row or field. Source photos are not retained as
+application data.
 
 ## 4. Boats and faults
 
@@ -329,7 +343,8 @@ Sessions run in this fixed order: Saturday PM, then Sunday AM/PM through Friday
 AM/PM, for thirteen sessions. Identity is day plus AM/PM; no operational timestamp
 is required.
 
-Before composing, choose the number of crews. Keep separate:
+Before composing, choose the number of crews. An empty count input represents
+zero, including while the user replaces a number. Keep separate:
 
 - number of crews;
 - people per crew;
@@ -344,9 +359,10 @@ outside 0.2.0.
 
 ### 7.2 People, A terra and composition
 
-The student pool shows available/unassigned students and may include compact size,
-current duty (`C`), just-finished duty (`SM`) and relevant history cues. It does
-not include assigned people. A separate lower-priority pool shows volunteers.
+The student pool shows available/unassigned students, with those on current
+Comandata first, and may include compact size, current duty (`C`), just-finished
+duty (`SM`) and relevant history cues. It does not include assigned people. A
+separate lower-priority pool shows volunteers.
 
 Every active relevant student should normally be in a real crew or `A terra`.
 `A terra` is an individual placement, counts as accounted for and never counts as
@@ -357,6 +373,13 @@ free slot/crew; tap another assigned person to swap. Selection is visible. Doubl
 click/tap on an assigned student returns only that person to Disponibili and frees
 the slot; an explicit accessible command does the same. Long press may open the
 profile but is never the sole path.
+
+Selected members use three columns by default, with a persistent Settings choice
+for two. The available-person destination popup previews names and vacant places
+in crews that have room, offers a new crew, A terra and Mezzi, and says
+`Equipaggi pieni` when no existing crew can accept a person. Its opening scrolls
+the underlying workspace to the first crew with room while keeping focus in the
+popup.
 
 `A terra` and `Volontari` remain reachable at the lower left/right without covering
 content, with the compact placed/total count between them. Missing people remain
@@ -438,6 +461,11 @@ It supports exact boat, model without number, no boat and Mezzi. A permitted mod
 asset is optional; the same-size text fallback is required. Screen wake lock is
 allowed when straightforward; native brightness control is deferred.
 
+The 0.3.0 crew summary also shows Comandata and minor markers and can be
+downloaded or copied as one complete image. All crews must fit on one page;
+above twelve crews two columns are allowed. Preserve readable names by reducing
+vertical spacing before font size.
+
 ## 8. Evaluations
 
 Evaluations belong to one student and one session. Values are `++`, `+`, `=`, `-`,
@@ -491,8 +519,9 @@ fixed threshold is invented before evidence exists.
 
 OCR uses the acquisition/review contract in section 3.6. Quality is measured
 against anonymous/synthetic field/person truth. Aim near 90% of readable fields on
-typical fixtures while preferring empty/manual correction over a confident wrong
-association. Human review, not the percentage alone, controls commit.
+typical fixtures while keeping low-confidence readings visible for manual review
+and avoiding confident wrong associations. Human review, not the percentage
+alone, controls commit.
 
 ## 10. Persistence, privacy and future sharing
 

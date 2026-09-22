@@ -10,8 +10,13 @@ active work and lives on `codex/0.3.0`.
 ## Where things are
 
 - `AGENTS.md` — execution protocol: read order, evidence and Git rules; start here.
-- `CLAUDE.md` — the same contract plus runtime, ports and agent handover rules.
-- `01`–`04_*.md` — product spec, scope, technical decisions, milestone plan.
+- `CLAUDE.md` — the small Claude Code entry point to the shared contract.
+- `docs/LOCAL_DEVELOPMENT.md` — Node 24, ports and browser verification, read
+  when needed.
+- `01`–`03_*.md` — product spec, scope and technical decisions; consult the
+  relevant sections for the active milestone.
+- `04_IMPLEMENTATION_PLAN.md` — short active ledger. Completed plan history is
+  preserved under `archive/` and is not in the default read path.
 - `src/domain`, `src/persistence` — pure rules, canonical tables, local database.
 - `src/features`, `src/components`, `src/capabilities` — pages, shared UI, OCR/speech.
 - `tests/e2e`, `tests/fixtures`, `scripts/` — Playwright journeys and their inputs;
@@ -24,7 +29,7 @@ active work and lives on `codex/0.3.0`.
 ## Run it
 
 Node 24 is required (`.node-version`); Node 18 and 22 fail on Vite. If
-`node --version` is not 24.x, `CLAUDE.md` explains how to find or install one.
+`node --version` is not 24.x, `docs/LOCAL_DEVELOPMENT.md` explains the runtime.
 Then `npm ci`, `npm run dev` for the app on http://localhost:5173, and
 `npm run build` for the PWA. Checks: `npm run verify:quick` (lint, format, types,
 unit), `npm run verify` (adds domain checks and the build), `npm run verify:all`
