@@ -372,7 +372,9 @@ describe("StudentScan", () => {
     await user.click(screen.getByRole("button", { name: "Aggiungi 2 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()
     expect(
-      screen.getByText("Completa nome, cognome, data di nascita e sesso."),
+      screen.getByText(
+        "Completa nome, cognome, età, data esatta quando richiesta e sesso.",
+      ),
     ).toBeVisible()
 
     const surname = screen.getByLabelText(/^Cognome riga line-1-1$/)
@@ -536,6 +538,137 @@ describe("StudentScan", () => {
     ).toBeDisabled()
     finishSave?.([])
     await waitFor(() => expect(onCommitted).toHaveBeenCalledOnce())
+  })
+})
+
+describe("StudentScan age-first review", () => {
+  const baseCandidate = {
+    sourceId: "line-age",
+    firstName: "Mario",
+    surname: "Rossi",
+    dateOfBirth: "2002-02-02",
+    phone: "",
+    sex: "male" as const,
+    confidence: { firstName: 95, surname: 95, dateOfBirth: 44, phone: 0 },
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear()
+    vi.clearAllMocks()
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:preview"),
+      revokeObjectURL: vi.fn(),
+    })
+    addStudents.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("shows age and accepts an independent matching age as corroboration", async () => {
+    await openReview({
+      aggregateConfidence: 80,
+      unsuitable: false,
+      candidates: [
+        {
+          ...baseCandidate,
+          ageReading: { value: 24, confidence: 97 },
+        },
+      ],
+    })
+
+    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue(24)
+    expect(
+      screen.queryByLabelText(/Data esatta per le regole sui minori/),
+    ).not.toBeInTheDocument()
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getByText("1")).toBeVisible()
+    expect(within(counters).getAllByText("0")).toHaveLength(2)
+  })
+
+  it("keeps a doubtful date visible when no printed age corroborates it", async () => {
+    await openReview({
+      aggregateConfidence: 80,
+      unsuitable: false,
+      candidates: [baseCandidate],
+    })
+
+    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue(24)
+    expect(
+      screen.getByLabelText(
+        "Data esatta per le regole sui minori riga line-age-1",
+      ),
+    ).toHaveValue("2002-02-02")
+    expect(
+      screen.getByText(/L’età non basta a ricavare giorno e mese/),
+    ).toBeVisible()
+  })
+
+  it("requires an exact date for an age-only row and never invents one", async () => {
+    await openReview({
+      aggregateConfidence: 80,
+      unsuitable: false,
+      candidates: [
+        {
+          ...baseCandidate,
+          dateOfBirth: "",
+          ageReading: { value: 24, confidence: 94 },
+          confidence: { ...baseCandidate.confidence, dateOfBirth: 0 },
+        },
+      ],
+    })
+
+    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue(24)
+    expect(
+      screen.getByLabelText(
+        "Data esatta per le regole sui minori riga line-age-1",
+      ),
+    ).toHaveValue("")
+    expect(addStudents).not.toHaveBeenCalled()
+  })
+
+  it("reveals the exact date when an age correction conflicts with it", async () => {
+    const user = await openReview({
+      aggregateConfidence: 95,
+      unsuitable: false,
+      candidates: [
+        {
+          ...baseCandidate,
+          confidence: { ...baseCandidate.confidence, dateOfBirth: 95 },
+        },
+      ],
+    })
+
+    const age = screen.getByLabelText("Età riga line-age-1")
+    expect(
+      screen.queryByLabelText(/Data esatta per le regole sui minori/),
+    ).not.toBeInTheDocument()
+    await user.clear(age)
+    await user.type(age, "20")
+    const exactDate = screen.getByLabelText(
+      "Data esatta per le regole sui minori riga line-age-1",
+    )
+    expect(exactDate).toHaveValue("2002-02-02")
+
+    // Confirming the row cannot turn an edited age into an approximate
+    // birthday. The exact date still has to be supplied and agree.
+    await user.click(
+      screen.getByRole("button", {
+        name: "Segna controllata la riga di allievo 1",
+      }),
+    )
+    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
+    expect(addStudents).not.toHaveBeenCalled()
+
+    fireEvent.change(exactDate, { target: { value: "2006-02-02" } })
+    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
+    await waitFor(() =>
+      expect(addStudents).toHaveBeenCalledWith("course-1", [
+        expect.objectContaining({ dateOfBirth: "2006-02-02" }),
+      ]),
+    )
   })
 })
 

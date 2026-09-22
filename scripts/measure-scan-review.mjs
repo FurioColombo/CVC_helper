@@ -9,7 +9,7 @@
  * with the telephone read and not read.
  *
  * Usage:
- *   npm run measure:scan-review -- [image] [output.json]
+ *   npm run measure:scan-review -- [image] [output.json] [--reference-date=YYYY-MM-DD]
  *
  * The image defaults to the committed clear fixture. Point it at a photograph
  * of a real sheet to attribute a real number.
@@ -27,6 +27,7 @@ const {
   extractStudentCandidates,
   inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
+  studentScanAgeCorroborated,
 } = await import(
   pathToFileURL(resolve(root, "src/capabilities/studentScan.ts")).href
 )
@@ -54,6 +55,8 @@ const cropFractions = flag("crop")?.split(",").map(Number)
  * is one tap for the whole sheet.
  */
 const nameOrder = flag("order") ?? null
+const referenceDate =
+  flag("reference-date") ?? new Date().toISOString().slice(0, 10)
 
 const bytes = await readFile(imagePath)
 
@@ -122,12 +125,15 @@ await worker.terminate()
  * if these two ever drift the measurement is worthless, and a copy that reads
  * like the component is easier to check against it than an abstraction.
  */
-function audit(readPhone, order = null) {
+function audit(readPhone, order = null, useAutomaticInference = true) {
   const extracted = extractStudentCandidates(data, { readPhone })
   const { unsuitable, aggregateConfidence } = extracted
   const inference = inferStudentNameOrder(extracted.candidates)
   const selectedOrder =
-    order ?? (inference.order === "unknown" ? null : inference.order)
+    order ??
+    (useAutomaticInference && inference.order !== "unknown"
+      ? inference.order
+      : null)
   // The screen asks which name came first before anything can be committed,
   // and one answer applies to the whole sheet. Counting only the state before
   // that answer overstates the work by everything the answer resolves, so both
@@ -141,6 +147,13 @@ function audit(readPhone, order = null) {
     ? ["firstName", "surname", "dateOfBirth", "phone"]
     : ["firstName", "surname", "dateOfBirth"]
   const uncertain = (candidate, field) =>
+    field === "phone" && !candidate.phone.trim()
+      ? false
+      : field === "dateOfBirth" &&
+          studentScanAgeCorroborated(candidate, referenceDate)
+        ? false
+        : candidate.confidence[field] < MIN_FIELD_CONFIDENCE
+  const uncertainBeforeAgeCorroboration = (candidate, field) =>
     field === "phone" && !candidate.phone.trim()
       ? false
       : candidate.confidence[field] < MIN_FIELD_CONFIDENCE
@@ -161,10 +174,25 @@ function audit(readPhone, order = null) {
       total + fields.filter((field) => uncertain(candidate, field)).length,
     0,
   )
+  const lowConfidenceFieldsBeforeAgeCorroboration = candidates.reduce(
+    (total, candidate) =>
+      total +
+      fields.filter((field) =>
+        uncertainBeforeAgeCorroboration(candidate, field),
+      ).length,
+    0,
+  )
+  const corroboratedDates = candidates.filter(
+    (candidate) =>
+      uncertainBeforeAgeCorroboration(candidate, "dateOfBirth") &&
+      studentScanAgeCorroborated(candidate, referenceDate),
+  ).length
 
   return {
     readPhone,
     nameOrderAnswered: order,
+    automaticNameOrderApplied:
+      !order && useAutomaticInference ? selectedOrder : null,
     nameOrderInference: inference,
     unsuitable,
     aggregateConfidence,
@@ -178,9 +206,22 @@ function audit(readPhone, order = null) {
         orderUndecided(candidate) ||
         fields.some((field) => uncertain(candidate, field)),
     ).length,
+    rowsToReviewBeforeAgeCorroboration: candidates.filter(
+      (candidate) =>
+        !candidate.firstName.trim() ||
+        !candidate.surname.trim() ||
+        !candidate.dateOfBirth ||
+        !candidate.sex ||
+        orderUndecided(candidate) ||
+        fields.some((field) =>
+          uncertainBeforeAgeCorroboration(candidate, field),
+        ),
+    ).length,
     // The three causes, separately, because they are three different fixes.
     missingFields,
     lowConfidenceFields,
+    lowConfidenceFieldsBeforeAgeCorroboration,
+    corroboratedDates,
     lowConfidenceByField: Object.fromEntries(
       fields.map((field) => [
         field,
@@ -189,6 +230,8 @@ function audit(readPhone, order = null) {
     ),
     unresolvedNameOrder: candidates.filter(orderUndecided).length,
     fieldsFlagged: missingFields + lowConfidenceFields,
+    fieldsFlaggedBeforeAgeCorroboration:
+      missingFields + lowConfidenceFieldsBeforeAgeCorroboration,
   }
 }
 
@@ -198,7 +241,12 @@ const measurement = {
   runtime: process.version,
   crop: cropFractions ? { fractions: cropFractions, pixels: rectangle } : null,
   recognitionMs,
+  referenceDate,
   minFieldConfidence: MIN_FIELD_CONFIDENCE,
+  beforeAutomaticNameOrder: {
+    withTelephone: audit(true, null, false),
+    withoutTelephone: audit(false, null, false),
+  },
   withTelephone: audit(true),
   withoutTelephone: audit(false),
   // What the operator is actually left with: the telephone off, which is now

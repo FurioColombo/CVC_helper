@@ -13,10 +13,18 @@
     "fieldsFlaggedAfter": 0
   },
   "ownerPhotographs": {
-    "status": "NOT_RUN",
-    "reason": "The private photographs are not attached to this session and are deliberately absent from this public repository. The prior count-only report cannot be reprocessed as OCR input.",
-    "priorMeasurement": "../S1/review-load-photographs.json",
-    "noClaim": "Neither the prior 20-0 vote nor the removal of nineteen missing sex fields has been reproduced. The implemented recogniser includes suffixes: surnames ending in a/o also vote. Even the two-row synthetic component case gives 1-2, not 0-2. Missing fields in the prior photograph report fell by fourteen overall (29 to 15), not nineteen overall. New counts must be measured."
+    "status": "PASS_WITH_FINDINGS",
+    "privacy": "Five originals are stored only under ignored data/private. No photograph, name, phone number, birth date, hash or locating path is recorded here.",
+    "preparation": "Each original was orientation-normalized and reduced to the editor's 2600 px maximum before the real OCR run. Counts are after telephone-off, using course reference date 2026-08-08.",
+    "measurements": [
+      { "image": 1, "rows": 25, "firstWordVotes": 5, "lastWordVotes": 16, "missingBefore": 38, "missingAfter": 23 },
+      { "image": 2, "rows": 17, "firstWordVotes": 3, "lastWordVotes": 12, "missingBefore": 22, "missingAfter": 11 },
+      { "image": 3, "rows": 40, "firstWordVotes": 6, "lastWordVotes": 20, "missingBefore": 93, "missingAfter": 77 },
+      { "image": 4, "rows": 16, "firstWordVotes": 3, "lastWordVotes": 15, "missingBefore": 21, "missingAfter": 9 },
+      { "image": 5, "rows": 29, "firstWordVotes": 7, "lastWordVotes": 21, "missingBefore": 39, "missingAfter": 23 }
+    ],
+    "result": "Surname-given wins on every supplied photograph, so the question is removed on every one. Missing fields fall on every run, by 11 to 16 per capture (70 across five repeated views of the same roster).",
+    "discrepancy": "The plan's hand count said 20-0. The required reused inferSex recogniser also votes for surnames ending in a/o, so real OCR votes are not 20-0. The decision is nevertheless unanimous across the five captures. The prior 29 to 15 count was a fourteen-field overall reduction, not nineteen; measured counts replace that arithmetic rather than restating it."
   },
   "decisions": [
     "Use exactly inferSex recognition, including its existing suffix rule; no new name dictionary.",

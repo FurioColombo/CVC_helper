@@ -83,7 +83,7 @@ test("keeps the repeated rows compact and their markers legible", async ({
 
   // P04 — a double click on a profile field opens the form on that field.
   await page.getByRole("button", { name: /^Aldo, \d+ anni, M/ }).click()
-  await page.getByText("Data di nascita").dblclick()
+  await page.getByText("Età", { exact: true }).dblclick()
   await expect(
     page.getByRole("heading", { name: "Modifica allievo" }),
   ).toBeVisible()

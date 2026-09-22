@@ -15,6 +15,8 @@ import {
   inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
   scanStudents,
+  studentScanAge,
+  studentScanAgeCorroborated,
   type StudentNameOrder,
   type StudentNameOrderInference,
   type StudentScanCandidate,
@@ -42,6 +44,10 @@ type ScanState =
 interface ReviewCandidate extends StudentScanCandidate {
   id: string
   nameManuallyEdited?: boolean
+  /** Editable presentation value. It is never persisted in place of a date. */
+  reviewAge: string
+  ageManuallyEdited?: boolean
+  exactDateManuallyConfirmed?: boolean
   /** The operator has read this row and vouches for it as it stands. */
   confirmed?: boolean
 }
@@ -62,14 +68,62 @@ function reviewedFields(readPhone: boolean): readonly StudentScanField[] {
     : (["firstName", "surname", "dateOfBirth"] as const)
 }
 
-function needsReview(candidate: ReviewCandidate, field: StudentScanField) {
+function needsReview(
+  candidate: ReviewCandidate,
+  field: StudentScanField,
+  courseStartDate?: string,
+) {
   // Confidence is the scan's opinion; a person who has read the row overrules
   // it. Without this the counter can never reach zero on a real photograph,
   // because a correct reading of a faint sheet still scores below the
   // threshold, and the operator is left retyping text that was already right.
   if (candidate.confirmed) return false
   if (field === "phone" && !candidate.phone.trim()) return false
+  if (
+    field === "dateOfBirth" &&
+    courseStartDate &&
+    !candidate.ageManuallyEdited &&
+    studentScanAgeCorroborated(candidate, courseStartDate)
+  ) {
+    return false
+  }
   return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
+}
+
+function parsedReviewAge(candidate: ReviewCandidate) {
+  if (!/^\d{1,3}$/.test(candidate.reviewAge)) return null
+  const age = Number(candidate.reviewAge)
+  return age >= 0 && age <= 120 ? age : null
+}
+
+function ageConflictsWithStoredDate(
+  candidate: ReviewCandidate,
+  courseStartDate: string,
+) {
+  const reviewedAge = parsedReviewAge(candidate)
+  if (reviewedAge === null || !candidate.dateOfBirth) return false
+  const storedAge = studentScanAge(
+    { ...candidate, ageReading: undefined },
+    courseStartDate,
+  )
+  return storedAge === null || Math.abs(storedAge - reviewedAge) > 1
+}
+
+function ageNeedsReview(candidate: ReviewCandidate, courseStartDate: string) {
+  if (parsedReviewAge(candidate) === null) return true
+  if (candidate.ageManuallyEdited && !candidate.exactDateManuallyConfirmed) {
+    return true
+  }
+  if (
+    candidate.confirmed &&
+    !ageConflictsWithStoredDate(candidate, courseStartDate)
+  ) {
+    return false
+  }
+  return (
+    ageConflictsWithStoredDate(candidate, courseStartDate) ||
+    needsReview(candidate, "dateOfBirth", courseStartDate)
+  )
 }
 
 function nameReadingNeedsReview(candidate: ReviewCandidate) {
@@ -93,7 +147,10 @@ function candidateIsReady(
     candidate.dateOfBirth <= courseStartDate &&
     candidate.sex &&
     !nameReadingNeedsReview(candidate) &&
-    !reviewedFields(readPhone).some((field) => needsReview(candidate, field)),
+    !ageNeedsReview(candidate, courseStartDate) &&
+    !reviewedFields(readPhone).some((field) =>
+      needsReview(candidate, field, courseStartDate),
+    ),
   )
 }
 
@@ -115,7 +172,7 @@ function applyNameOrderToCandidates(
     if (scope === "unresolved" && reading.order !== "unknown") {
       return candidate
     }
-    return { ...applyStudentNameOrder(candidate, order), id: candidate.id }
+    return { ...candidate, ...applyStudentNameOrder(candidate, order) }
   })
 }
 
@@ -184,6 +241,20 @@ function CandidateCard({
       ...(field === "firstName" || field === "surname"
         ? { nameManuallyEdited: true }
         : {}),
+      ...(field === "dateOfBirth" ? { exactDateManuallyConfirmed: true } : {}),
+    })
+  }
+
+  function updateAge(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 3)
+    const parsed = /^\d{1,3}$/.test(digits) ? Number(digits) : null
+    onChange({
+      ...candidate,
+      reviewAge: digits,
+      ageManuallyEdited: true,
+      ...(parsed !== null
+        ? { ageReading: { value: parsed, confidence: 100 } }
+        : { ageReading: undefined }),
     })
   }
 
@@ -196,8 +267,8 @@ function CandidateCard({
     const nextOrder: StudentNameOrder =
       reading.order === "surname-given" ? "given-surname" : "surname-given"
     onChange({
+      ...candidate,
       ...applyStudentNameOrder(candidate, nextOrder),
-      id: candidate.id,
     })
   }
 
@@ -215,6 +286,12 @@ function CandidateCard({
   }
 
   const nameNeedsReview = nameReadingNeedsReview(candidate)
+  const reviewAgeNeedsAttention = ageNeedsReview(candidate, courseStartDate)
+  const showExactDate =
+    !candidate.dateOfBirth ||
+    (candidate.ageManuallyEdited && !candidate.exactDateManuallyConfirmed) ||
+    ageConflictsWithStoredDate(candidate, courseStartDate) ||
+    needsReview(candidate, "dateOfBirth", courseStartDate)
 
   return (
     <article
@@ -320,15 +397,27 @@ function CandidateCard({
       <div
         className={`mt-2 grid gap-2 ${readPhone ? "grid-cols-2" : "grid-cols-1"}`}
       >
-        <ReviewField
-          candidate={candidate}
-          field="dateOfBirth"
-          label="Data di nascita"
-          disabled={disabled}
-          max={courseStartDate}
-          onChange={(value) => updateField("dateOfBirth", value)}
-          type="date"
-        />
+        <label className="grid min-w-0 gap-1.5 text-sm font-bold">
+          <span className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+            <span>Età</span>
+            {reviewAgeNeedsAttention && (
+              <span className="min-w-0 text-[0.68rem] font-bold break-words text-[#a2381b]">
+                Da controllare
+              </span>
+            )}
+          </span>
+          <Input
+            aria-label={`Età riga ${candidate.id}`}
+            className={`scroll-mt-[180px] ${reviewAgeNeedsAttention ? "border-[#f79009]" : ""}`}
+            disabled={disabled}
+            inputMode="numeric"
+            max="120"
+            min="0"
+            onChange={(event) => updateAge(event.target.value)}
+            type="number"
+            value={candidate.reviewAge}
+          />
+        </label>
         {readPhone && (
           <ReviewField
             candidate={candidate}
@@ -341,6 +430,44 @@ function CandidateCard({
           />
         )}
       </div>
+
+      {showExactDate && (
+        <div className="mt-2 rounded-xl border border-[#f79009]/60 bg-[#fff4e5]/60 p-2.5">
+          <ReviewField
+            candidate={candidate}
+            field="dateOfBirth"
+            label="Data esatta per le regole sui minori"
+            disabled={disabled}
+            max={courseStartDate}
+            onChange={(value) => updateField("dateOfBirth", value)}
+            type="date"
+          />
+          <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+            L’età non basta a ricavare giorno e mese. Controlla la data completa
+            prima di salvare.
+          </p>
+          {candidate.dateOfBirth && !candidate.exactDateManuallyConfirmed && (
+            <Button
+              className="mt-2 min-h-10 w-full text-xs"
+              disabled={disabled}
+              onClick={() =>
+                onChange({
+                  ...candidate,
+                  confidence: {
+                    ...candidate.confidence,
+                    dateOfBirth: 100,
+                  },
+                  exactDateManuallyConfirmed: true,
+                })
+              }
+              type="button"
+              variant="secondary"
+            >
+              Conferma data esatta
+            </Button>
+          )}
+        </div>
+      )}
 
       <fieldset className="mt-2 grid gap-1.5 text-sm font-bold">
         <legend>Sesso</legend>
@@ -368,7 +495,7 @@ function CandidateCard({
         <p className="mt-3 text-xs font-semibold text-[#b42318]" role="alert">
           {nameNeedsReview
             ? "Conferma la suddivisione di nome e cognome."
-            : "Completa nome, cognome, data di nascita e sesso."}
+            : "Completa nome, cognome, età, data esatta quando richiesta e sesso."}
         </p>
       )}
     </article>
@@ -475,6 +602,7 @@ export function StudentScan({
       const scanned = result.candidates.map((candidate, index) => ({
         ...candidate,
         id: `${candidate.sourceId}-${index + 1}`,
+        reviewAge: String(studentScanAge(candidate, courseStartDate) ?? ""),
       }))
       // An explicit correction outranks the sheet vote. An inferred order is
       // not persisted as a human preference; the next sheet gets its own vote.
@@ -552,7 +680,10 @@ export function StudentScan({
       !candidate.dateOfBirth ||
       !candidate.sex ||
       nameReadingNeedsReview(candidate) ||
-      reviewedFields(readPhone).some((field) => needsReview(candidate, field)),
+      ageNeedsReview(candidate, courseStartDate) ||
+      reviewedFields(readPhone).some((field) =>
+        needsReview(candidate, field, courseStartDate),
+      ),
   ).length
   const readyStudents = candidates.filter((candidate) =>
     candidateIsReady(candidate, courseStartDate, readPhone),

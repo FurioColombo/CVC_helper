@@ -5,7 +5,68 @@ import {
   inferStudentNameOrder,
   extractStudentCandidates,
   MIN_FIELD_CONFIDENCE,
+  studentScanAge,
+  studentScanAgeCorroborated,
 } from "@/capabilities/studentScan"
+
+describe("independent printed age", () => {
+  function readAgeRow(text: string) {
+    return extractStudentCandidates({ text, tsv: null, confidence: 65 })
+      .candidates[0]!
+  }
+
+  it.each([
+    ["Mario Rossi 24 anni - 02/02/2002", true],
+    ["Mario Rossi 23 anni - 02/02/2002", true],
+    ["Mario Rossi 25 anni - 02/02/2002", true],
+    ["Mario Rossi 22 anni - 02/02/2002", false],
+    ["Mario Rossi 24 anni - 31/02/2002", false],
+    ["Mario Rossi 0 anni - 02/02/2027", false],
+    ["Mario Rossi 02/02/2002", false],
+    ["Mario Rossi 24 anni", false],
+  ])("corroborates only valid agreement: %s", (text, expected) => {
+    const candidate = readAgeRow(text)
+    expect(studentScanAgeCorroborated(candidate, "2026-08-29")).toBe(expected)
+    expect(candidate.confidence.dateOfBirth).toBe(
+      candidate.dateOfBirth ? 65 : 0,
+    )
+    expect(MIN_FIELD_CONFIDENCE).toBe(70)
+  })
+
+  it("reports the independently read age while retaining the stored date", () => {
+    const candidate = readAgeRow("Mario Rossi 23 anni - 02/02/2002")
+    expect(candidate.ageReading).toEqual({ value: 23, confidence: 65 })
+    expect(studentScanAge(candidate, "2026-08-29")).toBe(23)
+    expect(candidate.dateOfBirth).toBe("2002-02-02")
+  })
+
+  it("keeps an age-only reading without inventing a birth date", () => {
+    const candidate = readAgeRow("Mario Rossi 24 anni")
+    expect(studentScanAge(candidate, "2026-08-29")).toBe(24)
+    expect(candidate.dateOfBirth).toBe("")
+    expect(candidate.surname).toBe("Rossi")
+  })
+
+  it("measures the age independently of a low-confidence date", () => {
+    const candidate = extractStudentCandidates({
+      text: "Mario Rossi 24 anni 02/02/2002",
+      confidence: 80,
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Mario", confidence: 95 },
+          { text: "Rossi", confidence: 93 },
+          { text: "24", confidence: 97 },
+          { text: "anni", confidence: 95 },
+          { text: "02/02/2002", confidence: 44 },
+        ]),
+      ].join("\n"),
+    }).candidates[0]!
+    expect(candidate.ageReading).toEqual({ value: 24, confidence: 97 })
+    expect(candidate.confidence.dateOfBirth).toBe(44)
+    expect(studentScanAgeCorroborated(candidate, "2026-08-29")).toBe(true)
+  })
+})
 
 describe("sheet name-order vote", () => {
   it.each([

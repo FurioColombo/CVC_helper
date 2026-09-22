@@ -392,7 +392,7 @@
     {
       "id": "S1",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/S1/verification.json",
@@ -407,7 +407,7 @@
     {
       "id": "S2",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/S2/verification.json",
@@ -421,7 +421,7 @@
     {
       "id": "S3",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/S3/verification.json",

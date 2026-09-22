@@ -1,0 +1,53 @@
+{
+  "milestone": "S3",
+  "runtime": "v24.19.0",
+  "minFieldConfidence": 70,
+  "referenceDate": "2026-08-29",
+  "method": "Real OCR for the committed raster plus table-driven extraction and review-count tests for independent age/date readings.",
+  "committedFixture": {
+    "source": "fixture-no-age.json",
+    "printedAgePresent": false,
+    "rows": 3,
+    "rowsToReview": 0,
+    "fieldsFlagged": 0,
+    "result": "No age column exists, so corroboration changes no flag. The date stands on its own at the unchanged threshold."
+  },
+  "controlledRows": [
+    {
+      "input": "Mario Rossi 24 anni 02/02/2002",
+      "ageConfidence": 97,
+      "dateConfidence": 44,
+      "beforeCorroborationFlags": 1,
+      "afterCorroborationFlags": 0,
+      "corroborated": true
+    },
+    {
+      "input": "Mario Rossi 22 anni 02/02/2002",
+      "beforeCorroborationFlags": 1,
+      "afterCorroborationFlags": 1,
+      "corroborated": false,
+      "reason": "Difference exceeds the one-year tolerance."
+    },
+    {
+      "input": "Mario Rossi 02/02/2002",
+      "beforeCorroborationFlags": 1,
+      "afterCorroborationFlags": 1,
+      "corroborated": false,
+      "reason": "No independent age reading exists."
+    }
+  ],
+  "ownerPhotographs": {
+    "status": "PASS_WITH_FINDINGS",
+    "privacy": "Five originals are stored only under ignored data/private. No photograph, name, phone number, birth date, hash or locating path is recorded here.",
+    "preparation": "Each original was orientation-normalized and reduced to the editor's 2600 px maximum before real OCR. Counts are after surname-given inference, telephone off, at reference date 2026-08-08.",
+    "measurements": [
+      { "image": 1, "rows": 25, "flagsBefore": 54, "flagsAfter": 53, "corroboratedDates": 1 },
+      { "image": 2, "rows": 17, "flagsBefore": 31, "flagsAfter": 30, "corroboratedDates": 1 },
+      { "image": 3, "rows": 40, "flagsBefore": 137, "flagsAfter": 136, "corroboratedDates": 1 },
+      { "image": 4, "rows": 16, "flagsBefore": 27, "flagsAfter": 26, "corroboratedDates": 1 },
+      { "image": 5, "rows": 29, "flagsBefore": 43, "flagsAfter": 43, "corroboratedDates": 0 }
+    ],
+    "result": "Four low-confidence dates are cleared by an independent matching age across the five captures; no threshold moves. On image 4 this also reduces rows needing review from 11 to 10.",
+    "discrepancy": "The earlier visual inspection counted nine correct low-confidence dates on one crop. Only four low-confidence date candidates in these five original-photo OCR runs also retain an independently parsed age. The others cannot be cleared safely; fragmented or lost age/date lines remain the deferred S4 cause."
+  }
+}

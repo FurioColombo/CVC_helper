@@ -148,7 +148,22 @@ test("keeps the complete student workflow consistent across reload", async ({
   await expect(
     page.getByRole("heading", { name: "Giulia Bianchini", exact: true }),
   ).toBeVisible()
-  await expect(page.getByText("24/11/1998")).toBeVisible()
+  await expect(page.getByText("24/11/1998")).not.toBeVisible()
+  await expect(
+    page
+      .locator("dt", { hasText: /^Età$/ })
+      .locator("xpath=following-sibling::dd[1]"),
+  ).toHaveText("27 anni")
+  // The date remains intact behind the normal age presentation.
+  await page
+    .getByRole("button", { name: "Modifica allievo", exact: true })
+    .click()
+  await expect(page.getByLabel("Data di nascita", { exact: true })).toHaveValue(
+    "1998-11-24",
+  )
+  await page
+    .getByRole("button", { name: "Indietro da Modifica allievo" })
+    .click()
   await expect(page.getByText("347 765 4321")).toBeVisible()
   await page.getByRole("button", { name: "Indietro da Profilo" }).click()
 

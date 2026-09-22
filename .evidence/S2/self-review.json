@@ -1,13 +1,12 @@
 {
   "milestone": "S2",
   "reviewerRole": "self review, FEATURE",
-  "verdict": "FAIL",
-  "blockers": [
-    { "id": "S2-PRIVATE-MEASUREMENT", "finding": "Implementation is ready for measurement, but the required rerun on the owner's private sheet is NOT_RUN. Do not close S2 or claim its photographic reduction." }
-  ],
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
   "importantFindings": [
     "Compound inference must not clear the ambiguity gate or erase existing text; corrected and component-tested.",
-    "Existing student-management browser journey expected a telephone without opting in after S1. Its setup now opts in and preserves the original assertion."
+    "Existing student-management browser journey expected a telephone without opting in after S1. Its setup now opts in and preserves the original assertion.",
+    "All five private captures choose surname-given. The measured missing-field reductions are 15, 11, 16, 12 and 16; the plan's hand-stated nineteen and 20-0 vote are not reproduced because inferSex also recognises surname suffixes."
   ],
   "qolFindings": [
     "Suffix recognition is not dictionary recognition: a/o surnames contribute votes. The banner exposes both counts, ties ask, and the human correction persists.",
@@ -19,6 +18,7 @@
     "src/capabilities/studentScan.test.ts",
     "src/features/students/StudentScan.test.tsx",
     ".evidence/S2/fixture-before.json",
-    ".evidence/S2/fixture-after.json"
+    ".evidence/S2/fixture-after.json",
+    "Five ignored private-photo measurement outputs; only aggregate counts were copied into order-inference-measurement.json"
   ]
 }

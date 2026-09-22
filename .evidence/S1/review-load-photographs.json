@@ -98,9 +98,26 @@
     ],
     "whatItSays": "Three of the six read well enough to be worth reviewing. The owner's own judgement — that the one with the warnings was the clearest and the others also looked problematic — matches the measurement: the two worst are not the angled ones by themselves, they are the ones where fragmentation cascades. Row counts of 41 and 18 against a true 25 are the same defect in both directions: lines split, or lines lost."
   },
+  "remeasureAfterS2AndS3": {
+    "runtime": "v24.19.0",
+    "status": "PASS_WITH_FINDINGS",
+    "privacy": "Five supplied originals now live only under ignored data/private. They were orientation-normalized and reduced to the editor's 2600 px maximum. Only aggregate counts are recorded.",
+    "comparison": [
+      { "image": 1, "rows": 25, "before": 77, "after": 53, "reduction": 24 },
+      { "image": 2, "rows": 17, "before": 47, "after": 30, "reduction": 17 },
+      { "image": 3, "rows": 40, "before": 154, "after": 136, "reduction": 18 },
+      { "image": 4, "rows": 16, "before": 45, "after": 26, "reduction": 19 },
+      { "image": 5, "rows": 29, "before": 59, "after": 43, "reduction": 16 }
+    ],
+    "states": {
+      "before": "Telephone read, automatic name order disabled, no age/date corroboration.",
+      "after": "Telephone off, automatic name order, age/date corroboration. MIN_FIELD_CONFIDENCE remains 70."
+    },
+    "attribution": "Every supplied photograph has 16 to 24 fewer flagged fields. S1 removes low-confidence telephone fields, S2 removes the name-order question and restores sex inference, and S3 clears four date flags where a separately read age agrees. Residual inflation tracks fragmented or lost rows, the still-deferred S4 cause."
+  },
   "whatThisDoesAndDoesNotClose": {
-    "closes": "S1's requirement to explain the 67 before reducing it. It is explained, to within one field, and split by cause.",
-    "doesNotClose": "The acceptance criterion needs the count materially reduced by a named cause. S1's own change accounts for 66 → 51. The further 51 → 36 is a tap that already existed and is not a reduction S1 delivered, only one it revealed. The remaining work depends on two decisions that are the owner's.",
+    "closes": "S1's count requirement. The 67 was explained to within one field, and every supplied original now measures 16 to 24 fewer flags under the implemented S1-S3 path, split by named cause.",
+    "doesNotClose": "It does not claim OCR is finished. Fragmentation remains the largest residual cause and S4 remains deferred by the owner.",
     "nothingLoosened": "MIN_FIELD_CONFIDENCE is still 70. No rule was relaxed to make a number smaller."
   }
 }
