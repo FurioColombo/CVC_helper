@@ -1,0 +1,43 @@
+{
+  "milestone": "S4",
+  "status": "Additional local probes do not yet satisfy the S4 acceptance gate",
+  "runtime": "Node v24.19.0",
+  "privacy": "Aggregate counts only. Owner photographs, OCR text, row-level truth and derived images remain in ignored data/private/.",
+  "baseline": {
+    "candidateRowsByCapture": [20, 21, 29, 21, 20],
+    "reviewFlagsByCapture": [15, 18, 35, 23, 5],
+    "clearestCaptureStudentsMatched": 20,
+    "clearestCaptureExpectedStudents": 20,
+    "clearestCaptureUnflaggedWrongGivenNames": 1,
+    "clearestCaptureUnflaggedWrongSurnames": 1,
+    "minFieldConfidence": 70,
+    "telephone": "off"
+  },
+  "probes": [
+    {
+      "approach": "Tesseract LSTM choice mode 2",
+      "scope": "Five prepared captures",
+      "result": "Primary TSV was byte-identical to the default on all five. Candidate rows and review flags were unchanged; no name correction or confident-error detection was demonstrated.",
+      "decision": "Reject production integration."
+    },
+    {
+      "approach": "Locally available alternate Italian traineddata",
+      "scope": "Clearest prepared capture",
+      "result": "The same 20 students and five review flags; no primary name was corrected or newly flagged. The alternate traineddata is 6,933,830 bytes versus 1,660,998 bytes for the current model, exceeding the 4,500,000-byte Workbox per-file precache limit.",
+      "decision": "Reject production integration."
+    },
+    {
+      "approach": "Grayscale, normalization and mild sharpening before recognition",
+      "scope": "Clearest prepared capture",
+      "result": "Twenty candidate rows and five review flags before and after. Recognition was 4,749 ms before versus 4,021 ms after, plus 972 ms preprocessing; this single run does not establish a performance gain. The private name evaluator disagreed with the established audit on one unflagged surname, so its name-accuracy totals are not used.",
+      "decision": "Reject this variant: it does not reduce review work and has no validated name-accuracy benefit."
+    },
+    {
+      "approach": "DOB-anchored name-column crop reread",
+      "scope": "Five prepared captures",
+      "result": "Seventy of 100 name-cell crops yielded parsed names. The final audit first reproduced the established 30 wrong name fields and 11 unflagged errors across 100 DOB-matched student appearances. In the hybrid, flagged name fields fell from 52 to 45, but wrong names rose from 30 to 31 and unflagged errors from 11 to 13: zero corrections and one regression. On the clearest capture, flags fell from five to two while unflagged name errors rose from two to three. Added recognition took 23.8 seconds across five captures. An earlier truth table mismatched two of twenty names; its comparisons were discarded before the corrected audit.",
+      "decision": "Reject production integration: the lower counter hides more incorrect names."
+    }
+  ],
+  "guardrail": "A lower flag count without validated name correctness is not an S4 pass. No confidence threshold, existing visible text or production OCR path changed."
+}
