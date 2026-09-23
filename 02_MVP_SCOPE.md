@@ -126,6 +126,12 @@ unless the operator enables a Settings override. The final product name, a
 broad icon programme, other image exports and remaining deferrals above remain
 deferred. The active acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
 
+The owner moved the remaining S4 fewer-than-five review-flag target to a final
+Claude Code follow-up after the 0.3.0 gate. It is not a gate prerequisite. The
+implemented OCR path and its privacy, confidence, visible-text and device-check
+requirements remain in scope; this does not approve silent name errors or a
+lower confidence threshold.
+
 ## 5. Conditional evidence, not optional scope
 
 OCR and STT are included. Their acceptance needs physical-device evidence during

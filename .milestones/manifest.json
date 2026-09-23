@@ -476,25 +476,6 @@
       ]
     },
     {
-      "id": "S4",
-      "category": "RULE_HEAVY",
-      "status": "IN_PROGRESS",
-      "verificationScripts": ["verify"],
-      "requiredEvidence": [
-        ".evidence/S4/verification.json",
-        ".evidence/S4/ocr-options.json",
-        ".evidence/S4/fragmentation-measurement.json",
-        ".evidence/S4/synthetic-regression.json",
-        ".evidence/S4/browser-evidence.json",
-        ".evidence/S4/domain-review.json",
-        ".evidence/S4/self-review.json"
-      ],
-      "requiredReviews": [
-        ".evidence/S4/domain-review.json",
-        ".evidence/S4/self-review.json"
-      ]
-    },
-    {
       "id": "V04",
       "category": "FEATURE",
       "status": "PENDING",
@@ -634,6 +615,25 @@
         ".evidence/UG2/scope-review.json",
         ".evidence/UG2/code-quality-review.json",
         ".evidence/UG2/physical-device-review.json"
+      ]
+    },
+    {
+      "id": "S4",
+      "category": "RULE_HEAVY",
+      "status": "IN_PROGRESS",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/S4/verification.json",
+        ".evidence/S4/ocr-options.json",
+        ".evidence/S4/fragmentation-measurement.json",
+        ".evidence/S4/synthetic-regression.json",
+        ".evidence/S4/browser-evidence.json",
+        ".evidence/S4/domain-review.json",
+        ".evidence/S4/self-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/S4/domain-review.json",
+        ".evidence/S4/self-review.json"
       ]
     }
   ]
