@@ -76,8 +76,8 @@ A student has:
 
 - first name and surname;
 - optional nickname/display-name override;
-- date of birth when known, or a declared age in completed years at the course
-  reference date when an exact birthday is unavailable;
+- date of birth when known, or a manually correctable declared age in completed
+  years on the first day of the course when an exact birthday is unavailable;
 - sex: `F`, `M` or `Altro`;
 - optional phone;
 - operational size: XS, S, M, L or XL;
@@ -85,10 +85,11 @@ A student has:
 - optional course/week note;
 - active/disabled state.
 
-When a birth date exists, age and minor status are calculated at the course
-reference date, never from a cached age. Otherwise, the declared age determines
-them at that same reference date. Do not fabricate a birth date. A minor has an
-explicit red `M`/`Minorenne` marker whose meaning is available without colour.
+When a birth date exists, age and minor status are calculated on the first day
+of the course, never from a cached age. Otherwise, the declared age determines
+them on that day and the operator may correct it. Do not fabricate a birth
+date. A minor has an explicit red `M`/`Minorenne` marker whose meaning is
+available without colour.
 
 The compact generated name is the unique first name. If first names collide,
 show enough of each surname to distinguish them, for example `Mario Ros.` and
@@ -177,8 +178,10 @@ acknowledgement before insertion, without a separate row-level swap control.
 
 Extraction attempts first name, surname, date of birth, printed age and phone
 when present. A reliable date corroborates the printed age and remains the
-source of minor rules. If the operator manually enters only an age, the exact
-date is unnecessary. Sex inference is only a convenience and is always editable.
+source of minor rules. If the operator manually enters only an age, it means
+completed years on the first day of the course; the exact date is unnecessary
+and the age can be corrected later. Sex inference is only a convenience and is
+always editable.
 
 Confidence is field-level. Keep recognized text visible even when confidence is
 low, mark it for review, and never turn a previously shown reading into a blank
@@ -352,10 +355,12 @@ zero, including while the user replaces a number. Keep separate:
 - boats selected for this outing;
 - exact crew-to-boat assignment.
 
-D2–D5 crews contain exactly two people. D1 and cabin courses may use larger,
-non-fixed crews: propose an even initial distribution across the chosen crews and
-allow unrestricted manual adjustment. Fixed formulas for those courses are
-outside 0.2.0.
+D2–D5 crews default to two people and remain fixed at two unless a
+Settings-only override is enabled. With that override, add/remove controls on
+the crew card permit manual adjustment. D1 and cabin courses start at four
+people per crew and permit manual adjustment. Crew capacity is independent of
+the two/three-column display setting. These are the 0.3.0 rules; 0.2.0 used an
+even proposal for D1/cabin courses.
 
 ### 7.2 People, A terra and composition
 
@@ -374,8 +379,9 @@ click/tap on an assigned student returns only that person to Disponibili and fre
 the slot; an explicit accessible command does the same. Long press may open the
 profile but is never the sole path.
 
-Selected members use three columns by default, with a persistent Settings choice
-for two. The available-person destination popup previews names and vacant places
+Selected members use three columns by default, with a persistent Settings
+choice for two. This display choice stays in Settings, not on the Equipaggi
+page. The available-person destination popup previews names and vacant places
 in crews that have room, offers a new crew, A terra and Mezzi, and says
 `Equipaggi pieni` when no existing crew can accept a person. Its opening scrolls
 the underlying workspace to the first crew with room while keeping focus in the
@@ -462,9 +468,10 @@ asset is optional; the same-size text fallback is required. Screen wake lock is
 allowed when straightforward; native brightness control is deferred.
 
 The 0.3.0 crew summary also shows Comandata and minor markers and can be
-downloaded or copied as one complete image. All crews must fit on one page;
-above twelve crews two columns are allowed. Preserve readable names by reducing
-vertical spacing before font size.
+downloaded as one complete image. If Copy is offered, it copies that image,
+never plain text. All crews must fit on one page; above twelve crews two
+columns are allowed. Preserve readable names by reducing vertical spacing
+before font size.
 
 ## 8. Evaluations
 

@@ -1,51 +1,31 @@
-# Questions for the owner — 0.3.0
+# Owner decisions and open questions — 0.3.0
 
-Updated 2026-09-23. The product instructions are sufficiently specific to
-implement and test. The working decisions below prevent repeat questions.
+Updated 2026-09-23 from the owner's answers in this file. These decisions
+supersede the earlier working assumptions where they differ.
 
-| Topic                        | Working decision and evidence to check                                                                                                                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Age entered without birthday | Treat it as completed years at the course start. Store the declared age and its provenance; do not fabricate a date. Minor rules use that age when DOB is absent. S5 tests birthday boundaries and old records.     |
-| OCR target                   | Reproduce the owner's roughly 26 flags on the same ignored good photograph, with the same review counter and scan settings. Fewer than five is the target; zero is ideal. Do not reduce confidence 70 or hide text. |
-| Crop look                    | Use a modest zoom that keeps the selected area readable, a darker softly blurred exterior and live rotation. Compare on phone-sized viewports and review rendered frames.                                           |
-| Dictation control            | Preserve the present appearance if it fits. The fixed square was a suggestion, not a requirement. Independent design review still happens before code.                                                              |
-| Crew summary image           | A full-page **download** satisfies “download OR copy”; add copy only if it proves reliable across target mobile browsers. All crews must fit without shrinking names into illegibility.                             |
-| Three-person crew row        | Default to three; Settings offers two or three. The two-column choice is the user's fallback on smaller phones.                                                                                                     |
-| PWA icon                     | Reuse the Home CVC symbol with white background and HELPER in CVC blue. The final product name remains undecided.                                                                                                   |
+| Topic                         | Owner decision                                                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Age without an exact birthday | It is completed years on the **first day of the course**. The operator can correct the age manually. S5 stores its provenance and never invents a birthday.                                                  |
+| OCR acceptance                | Keep improving OCR toward **fewer than five** review flags on the good photograph, ideally zero. A lower counter cannot hide wrong names, lower confidence 70 or discard recognized text. S4 remains open.   |
+| Crop appearance               | Confirmed: a modest readable zoom inside the crop, darker subtly blurred exterior and fluid rotation. V04 verifies on phone-sized viewports.                                                                 |
+| Dictation control             | The responsive V02 appearance is acceptable; no fixed square is required.                                                                                                                                    |
+| Crew summary sharing          | If a **Copy** action is offered, it must copy the complete summary **image**, never plain text. Download remains an image export.                                                                            |
+| Crew capacity                 | D1 and Cabinato crews start at four and permit manual changes. D2–D5 stay fixed at two by default; a Settings-only flag enables add/remove students on crew cards. Capacity is separate from screen columns. |
+| Selected-name display         | Keep the separate two/three names-per-row choice **only in Settings**; do not add this control to the Equipaggi page.                                                                                        |
+| PWA icon                      | Working design remains the Home CVC symbol on white with blue `HELPER`; the final product name remains undecided.                                                                                            |
 
-If testing reveals a genuinely blocking semantic choice, append one concise
-question with the measured alternatives and complete independent work before
-asking the owner once.
+The owner confirmed the two/three-name **display** setting remains and that a
+separate Settings flag may override the default two-person D2–D5 crew limit.
+The crew-card add/remove controls are in C1 for that override and for manually
+adjustable D1/Cabinato crews. No open C1 question remains.
 
-## OCR acceptance decision
+## Privacy work deferred by the owner
 
-S4 is still open after three OCR approaches, an all-five photograph truth audit,
-name-cell rereads and image-scale trials. The selected 2600-pixel path recovers
-all twenty students on each capture by unique birth date, but the clearest
-capture has five review flags and three wrong name fields, two of them
-unflagged. A 2800-pixel rendering reaches four flags while increasing
-unflagged wrong surnames from one to two. Lowering confidence 70 or hiding
-readings is not an option.
-
-Should S4 keep the owner's fewer-than-five **and** safe-name target, leaving
-later milestones blocked while local OCR research continues? Or should the
-acceptance contract change to require explicit verification of **every name**
-before import, accepting more review work in exchange for proceeding with the
-other 0.3.0 milestones? The current plan assumes the first option until the
-owner explicitly changes it.
-
-## New privacy decision
-
-The five private photographs remain ignored and have no matching path in the
-local Git history or exact JPEG blob match in local Git objects. A local audit
-found roster-value matches in 61 historical text blob versions across 24 paths;
-that count also includes the owner's name in archived path logs. The affected
-refs include local/remote-tracking `main`, both 0.3.0 branches and the released
-`v0.2.0` tag. This is a local-ref audit, not a fresh read of the remote host.
-Replacing them in the current tree will not remove them from older public
-commits. After the current-tree scrub is verified, should the repository
-history and release tag be rewritten to remove those older examples? That would
-require a coordinated force-push and fresh clones for collaborators and cannot
-erase existing clones or hosting caches. The
-alternative is to keep history intact while ensuring future commits contain
-only fictional examples. No history rewrite is authorized yet.
+The five private photographs remain ignored and have no matching path or exact
+JPEG blob in local Git objects. A local audit found roster-value matches in 61
+historical text blob versions across 24 paths; that count includes the owner's
+name inside archived path logs. Current tracked examples are fictionalized,
+but older refs and the `v0.2.0` tag retain earlier text. The owner placed any
+coordinated history/tag rewrite in **future todos** and did not authorize it
+for this cycle. Do not force-push or rewrite history now. See
+`.evidence/S4/privacy-audit.json` for aggregate audit counts.

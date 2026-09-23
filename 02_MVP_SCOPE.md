@@ -117,12 +117,14 @@ and the plan/evidence are updated first:
 - read-only sharing, backend, Auth, synchronization, conflicts or multiple editors;
 - native packaging and platform-specific brightness control.
 
-For 0.3.0, the owner explicitly lifted three narrow deferrals on 2026-09-23:
+For 0.3.0, the owner explicitly lifted narrow deferrals on 2026-09-23:
 the installed icon with the Home CVC mark and `HELPER` below it; a single-image
 export of the **crew summary**; and better on-device roster OCR, including
-line-fragment reconstruction. The final product name, a broad icon programme,
-other image exports and all other deferrals above remain deferred. The active
-acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
+line-fragment reconstruction. C1 also adds a four-person starting capacity for
+D1/cabin courses, plus crew-card add/remove controls; D2–D5 stay fixed at two
+unless the operator enables a Settings override. The final product name, a
+broad icon programme, other image exports and remaining deferrals above remain
+deferred. The active acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
 
 ## 5. Conditional evidence, not optional scope
 
