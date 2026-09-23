@@ -15,7 +15,7 @@ current contract. `.milestones/manifest.json` is the machine-readable lifecycle.
 | R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
 | D0 | Complete. The active plan and Claude entry are short; prior files are archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
 | V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
-| S4 | In progress. The three prototypes are compared; DPI 180 and conservative TSV geometry are integrated. The clearest private photo has 20/20 rows but five field flags and unflagged name errors, so the acceptance gate remains open. |
+| S4 | In progress. The three prototypes are compared; DPI 180 and conservative TSV geometry are integrated. The clearest private photo has 20/20 rows but five field flags and unflagged name errors. The owner reconfirmed the fewer-than-five target without relaxing name safety, so the acceptance gate remains open. |
 | V04, S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
@@ -32,6 +32,14 @@ only stay inside its pane, not have identical dimensions; S4's deferral is lifte
 an age entered manually must not require an exact birthday; the per-row name
 swap is to be removed. The rest of the frozen deferrals remain in
 `docs/post-mvp/0_3_0_OPEN_ITEMS.md`.
+
+The owner confirmed age-only entry means completed years on the **first course
+day**, with manual correction allowed later. For C1, Copy (if present) must copy
+the image itself, and the two/three selected-name display choice belongs only
+in Settings. Crew capacity is a separate rule: D1/Cabinato starts at four and
+allows manual change; D2–D5 stays fixed at two by default, with a Settings-only
+override to enable add/remove on crew cards. No crew-size rule follows from
+display columns.
 
 ### Execution order
 
@@ -225,8 +233,9 @@ viewports. Record P06 changes in the page changelog.
 
 - A manually entered age in years is sufficient; remove the exceptional
   **“Data esatta per le regole sui minori”** box from the scan review. Persist
-  the declared age as age-at-course-start without inventing a birthday. Exact
-  DOB remains when actually read/entered, and remains authoritative there.
+  the declared age as completed years on the first course day, allow later
+  manual correction and never invent a birthday. Exact DOB remains when
+  actually read/entered, and remains authoritative there.
   Update student schema/migration, minor/adult rules, 0.1.0 compatibility and
   all affected UI/tests so no rule relies on a fabricated day. Mark age-only
   provenance clearly in edit/profile views.
@@ -276,25 +285,33 @@ name collision tests, self-review and relevant page changelog updates.
   can replace `1` with `8` normally. Preserve valid limits when committed.
 - Put students in Comandata first in the available pool, with deterministic
   ordering within both groups.
+- For D1 and Cabinato, start people-per-crew capacity at four and permit manual
+  adjustment. D2–D5 remain fixed at two by default; a Settings-only flag
+  enables add/remove students on crew cards. Keep capacity separate from the
+  selected-name display density and test both settings independently.
 - Show selected crew members three per row by default, with a Settings choice
-  for two or three. Test 320 px, 200% text, long names and 40 students: names
-  may truncate accessibly, but layout and controls must stay intact.
+  for two or three; do not put this control on the Equipaggi page. Test 320 px,
+  200% text, long names and 40 students: names may truncate accessibly, but
+  layout and controls must stay intact.
 - The available-student destination menu previews each eligible crew by member
   names and `-` for vacancies, shows only crews with room, and has actions for
   **Nuovo equipaggio**, **A terra** and **Mezzi**. If no existing crew has room,
   say **“Equipaggi pieni”**. Opening the menu scrolls the page behind it to the
   first crew with a vacancy, without moving keyboard focus out of the menu.
 - Summary shows the Comandata and minor icons. Offer download **or** copy of
-  the complete summary as one image. All crews fit on one page; use two columns
-  above 12 crews and reduce vertical spacing before reducing name font size.
+  the complete summary as one image. If Copy is offered, it must copy an image,
+  never plain text. All crews fit on one page; use two columns above 12 crews
+  and reduce vertical spacing before reducing name font size.
   Ensure the image has no cut-off content and does not include private source
   photographs.
 
 **Evidence:** settings persistence, component/domain tests, browser journeys,
 summary image measurements and visual review at narrow/long-course cases.
 
-The proposed `+` and `-` controls on a crew card are **future-only**. They are
-recorded in the open-items backlog and are not part of C1.
+The owner lifted the `+`/`-` crew-card deferral for C1 on 2026-09-23: these
+controls support D1/Cabinato manual adjustment and appear for D2–D5 only when
+the Settings override is enabled. Keep the override in Settings, not on the
+Equipaggi page.
 
 ## E1 — Evaluation grouping and student history route
 

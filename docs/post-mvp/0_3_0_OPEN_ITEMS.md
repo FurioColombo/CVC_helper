@@ -82,6 +82,15 @@ independent OCR approaches are being measured before a production choice.
 
 ## Deferred by the owner or frozen scope
 
+### Historical roster text in public Git refs
+
+The current tree uses fictional examples, but an aggregate local-ref audit found
+older roster-value text in Git history. The owner deferred a coordinated
+history/tag rewrite to future work on 2026-09-23. That future task must assess
+published refs and collaborator clones before any force-push. Private
+photographs remain ignored; no exact photograph blob was found in local refs.
+See `.evidence/S4/privacy-audit.json` for aggregate counts.
+
 ### Automated real-photograph regression
 
 The repository has synthetic public fixtures, while the real-photo measurement
@@ -106,8 +115,9 @@ The global sweep reconfirmed the 0.2.0 scope deferrals: the broad custom icon
 programme (including semantic fault-part icons), advanced student sorting,
 Instagram photography, dashboards, backend/synchronisation/authentication,
 native brightness, general image export, automatic crew generation, evaluation-band
-hints, general content areas, synchronised timelines and fixed crew-size
-formulae outside D2-D5. The implemented neutral fault fallback is visible at
+hints, general content areas, synchronised timelines and special crew-size
+formulae beyond the 0.3.0 C1 defaults/override. The implemented neutral fault
+fallback is visible at
 `src/features/boats/FaultCard.tsx:152`; the local-only persistence decision is
 implemented from `src/persistence/db.ts:49`. **Verdict: deferred by scope, not
 missed implementation.** C1 explicitly adds export of the crew summary only.
@@ -193,17 +203,17 @@ acceptance tests are in the active implementation plan.
 | Disambiguate same given name and surname initial; nickname wins                                                       | `src/domain/student.ts:41-54` falls back to one surname initial. Partial.                                                                                        | N1    |
 | Empty crew-count input means zero and permits replacing 1 with 8                                                      | `src/features/crews/CrewManagement.tsx:1720-1738` converts empty input back to 1. Missing.                                                                       | C1    |
 | Students in Comandata first among available students                                                                  | `src/features/crews/CrewManagement.tsx:1803-1829` renders the current pool order. Missing.                                                                       | C1    |
-| Three selected students per row, with a two/three Settings choice                                                     | Crew-member layout at `src/features/crews/CrewManagement.tsx:2154-2222` has no user setting. Missing.                                                            | C1    |
+| Three selected students per row, with a two/three choice only in Settings                                             | Crew-member layout at `src/features/crews/CrewManagement.tsx:2154-2222` has no user setting. Missing.                                                            | C1    |
+| D1/Cabinato start at four per crew; D2–D5 default to fixed pairs with a Settings override for manual add/remove       | The earlier crew-card controls do not implement the new course defaults and override. Missing.                                                                   | C1    |
 | Destination menu previews member names/vacancies, eligible crews, new crew, land and means; page scrolls to a vacancy | `src/features/crews/CrewManagement.tsx:1928-1986` lists crew numbers and limited actions without that preview or background scroll. Missing.                     | C1    |
 | Commandata/minor icons and a complete single-image crew summary                                                       | `src/features/crews/CrewManagement.tsx:636-682` renders the current summary without those badges or export. Missing.                                             | C1    |
 | Less space between members and more between evaluation crews                                                          | `src/features/evaluations/EvaluationManagement.tsx:655-709` uses the reverse spacing hierarchy. Missing.                                                         | E1    |
 | Tap a student-history session to open its evaluations                                                                 | Student detail passes history at `src/features/students/StudentManagement.tsx:848-850` without a session-navigation callback. Missing.                           | E1    |
 
-The owner also proposed `+` and `-` controls on each crew card for adding and
-removing a student, but explicitly said **remember this for later, do not build
-it now**. The current card actions are at
-`src/features/crews/CrewManagement.tsx:2154-2222`; this idea remains in the
-future backlog with no active milestone.
+The owner lifted the `+`/`-` crew-card deferral on 2026-09-23. C1 implements
+manual adjustment for D1/Cabinato and, when enabled in Settings, D2–D5. The
+Settings override and two/three-name display choice are separate controls;
+neither belongs on the Equipaggi page.
 
 The second, repetitive evaluation presentation in student detail is also a
 future redesign. E1 only adds navigation from a session to its exact
@@ -212,19 +222,19 @@ Valutazioni screen; the current history component is mounted at
 
 ## Findings checked and closed or intentionally unchanged
 
-| Finding                                             | Code check and disposition                                                                                                                                                                                                                       |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S1 telephone choice is not remembered               | `useState(false)` at `src/features/students/StudentScan.tsx:533` deliberately restores the requested privacy-safe default for every scan. No contrary owner request; unchanged.                                                                  |
-| S2 suffix votes can include surnames                | `inferStudentNameOrder` at `src/capabilities/studentScan.ts:409-449` exposes both vote counts and falls back on ties; all five supplied captures selected the correct order. Accepted limitation, with manual sheet and row correction retained. |
-| S3 manual create/edit still needs an exact date     | The old storage contract remains at `src/features/students/StudentManagement.tsx:493-503`. The owner now permits age-only scan entry; S5 will migrate it without inventing a birthday.                                                           |
-| Gianluca sex inference                              | Closed in S2: the male-name table is used before suffix inference at `src/capabilities/studentScan.ts:136-160,389-399`.                                                                                                                          |
-| Low-confidence text                                 | Still visible and marked; `MIN_FIELD_CONFIDENCE` remains 70. The scan review renders editable values at `src/features/students/StudentScan.tsx:372-465`.                                                                                         |
-| Deletion pending label                              | Closed since the earlier review: the confirmation button now shows `Eliminazione…` at `src/features/students/StudentManagement.tsx:956`.                                                                                                         |
-| Preview subpath 404                                 | Closed in documentation; `docs/DEPLOY.md:83-89` now requires the same `CVC_BASE_PATH` for preview.                                                                                                                                               |
-| Built-in browser pane                               | Excluded from product scope by `docs/LOCAL_DEVELOPMENT.md`; production browsers and the deployed PWA are the verification targets.                                                                                                               |
-| Multiple-tab warning                                | Multi-tab and synchronisation are explicitly outside scope; the database remains local-only.                                                                                                                                                     |
-| Large JavaScript chunks and OCR development warning | Build/tooling observations, not unimplemented owner requests. Production build and OCR paths pass; UG2 remains the next full gate.                                                                                                               |
-| Public Git history                                  | Accepted consequence of the chosen public Pages host. It is why private roster photographs stay under ignored `data/private/`.                                                                                                                   |
+| Finding                                             | Code check and disposition                                                                                                                                                                                                                            |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1 telephone choice is not remembered               | `useState(false)` at `src/features/students/StudentScan.tsx:533` deliberately restores the requested privacy-safe default for every scan. No contrary owner request; unchanged.                                                                       |
+| S2 suffix votes can include surnames                | `inferStudentNameOrder` at `src/capabilities/studentScan.ts:409-449` exposes both vote counts and falls back on ties; all five supplied captures selected the correct order. Accepted limitation, with manual sheet and row correction retained.      |
+| S3 manual create/edit still needs an exact date     | The old storage contract remains at `src/features/students/StudentManagement.tsx:493-503`. The owner now permits age-only scan entry; S5 will migrate it without inventing a birthday.                                                                |
+| Gianluca sex inference                              | Closed in S2: the male-name table is used before suffix inference at `src/capabilities/studentScan.ts:136-160,389-399`.                                                                                                                               |
+| Low-confidence text                                 | Still visible and marked; `MIN_FIELD_CONFIDENCE` remains 70. The scan review renders editable values at `src/features/students/StudentScan.tsx:372-465`.                                                                                              |
+| Deletion pending label                              | Closed since the earlier review: the confirmation button now shows `Eliminazione…` at `src/features/students/StudentManagement.tsx:956`.                                                                                                              |
+| Preview subpath 404                                 | Closed in documentation; `docs/DEPLOY.md:83-89` now requires the same `CVC_BASE_PATH` for preview.                                                                                                                                                    |
+| Built-in browser pane                               | Excluded from product scope by `docs/LOCAL_DEVELOPMENT.md`; production browsers and the deployed PWA are the verification targets.                                                                                                                    |
+| Multiple-tab warning                                | Multi-tab and synchronisation are explicitly outside scope; the database remains local-only.                                                                                                                                                          |
+| Large JavaScript chunks and OCR development warning | Build/tooling observations, not unimplemented owner requests. Production build and OCR paths pass; UG2 remains the next full gate.                                                                                                                    |
+| Public Git history                                  | Private photographs remain ignored and no exact JPEG blob was found in local history. Older refs contain real roster-value text; the owner deferred any coordinated history/tag rewrite to a future task. Current tracked examples are fictionalized. |
 
 ## Privacy and evidence boundary
 
