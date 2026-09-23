@@ -80,9 +80,9 @@
       {
         "cause": "Low confidence on readings that are in fact correct",
         "costsOnThisImage": "21 of the 36",
-        "what": "Nine surnames, nine dates and three given names read below 70 that are right when checked against the sheet — Graiff at 13, Bragagnolo at 34, Fassi at 35, dates at 42 and 44.",
+        "what": "Nine surnames, nine dates and three given names read below 70 that are right when checked against the sheet — Travio at 13, Savagnoli at 34, Pordelli at 35, dates at 42 and 44.",
         "butAlsoEarnedItsKeep": "One of the flagged surnames was read 'Atessandro' for 'Alessandro'. Lowering the threshold to clear the twenty-one would have let that one through silently, which is the trade the plan forbids: a confident wrong name is worse than a flagged right one.",
-        "optionRecorded": "The sheet prints the age beside the date — '24 anni - 02/02/2002' — so the two corroborate each other without touching any threshold. It would clear the nine date flags on independent evidence. Its honest limit is that the age only confirms the year: a misread day would be corroborated too. Put to the owner rather than decided here."
+        "optionRecorded": "The sheet prints the age beside the date — '24 anni - 12/02/2002' — so the two corroborate each other without touching any threshold. It would clear the nine date flags on independent evidence. Its honest limit is that the age only confirms the year: a misread day would be corroborated too. Put to the owner rather than decided here."
       }
     ]
   },

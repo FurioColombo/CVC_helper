@@ -1,0 +1,63 @@
+{
+  "milestone": "S4",
+  "status": "in progress; good-photo target not met",
+  "runtime": "Node v24.19.0",
+  "settings": {
+    "tesseractDpi": 180,
+    "minFieldConfidence": 70,
+    "telephone": "off",
+    "nameOrder": "automatic sheet inference",
+    "referenceDate": "2026-09-22"
+  },
+  "privatePreparedPhotos": {
+    "count": 5,
+    "candidateRowsBySample": [20, 21, 29, 21, 20],
+    "flaggedFieldsBySample": [15, 18, 35, 23, 5],
+    "structuredFragmentJoinsBySample": [0, 0, 0, 0, 0],
+    "unresolvedFragmentsBySample": [5, 5, 4, 4, 4],
+    "unresolvedReason": "All are mixed text and structured fragments, not safe structured-only joins.",
+    "comparison": "Geometry joined no real-photo fragments and reassigned no field. Preserving a weak unresolved age fragment adds one incomplete review row and four flags to sample 4; the other four samples retain their prior counts.",
+    "singleNameTokenReview": "A lone name token, including a low-confidence reading, is retained as an incomplete row; this added no candidates or flags on the five prepared photos.",
+    "clearestSampleTrueRows": {
+      "expectedStudents": 20,
+      "candidateStudents": 20,
+      "missingStudents": 0,
+      "crossRowAssociations": 0,
+      "lowConfidenceSurnames": 5,
+      "wrongGivenNamesUnflagged": 1,
+      "wrongSurnamesUnflagged": 1
+    }
+  },
+  "fictitiousCorpus": {
+    "variants": 4,
+    "expectedPeoplePerVariant": 10,
+    "wideColumnVariantBeforeHeaderlessTsvFix": {
+      "candidateRows": 22,
+      "matchedPeople": 0,
+      "missingPeople": 10,
+      "falseRows": 22
+    },
+    "wideColumnVariantAfterHeaderlessTsvFix": {
+      "structuredFragmentJoins": 30,
+      "candidateRows": 12,
+      "matchedPeople": 10,
+      "missingPeople": 0,
+      "falseRows": 2,
+      "falseRowsMarkedForReview": 2,
+      "correctReadableFields": 49,
+      "readableFields": 49
+    },
+    "allVariantsAfterFix": {
+      "expectedPeople": 40,
+      "matchedPeople": 40,
+      "missingPeople": 0,
+      "duplicateOrConflictedAssociations": 0,
+      "falseRows": 8,
+      "falseRowsWithoutReview": 0,
+      "correctReadableFields": 196,
+      "readableFields": 196,
+      "fieldFlagsByVariant": [3, 2, 2, 3]
+    }
+  },
+  "privacy": "Only counts appear here. Real photos, raw OCR, and row-indexed truth remain under ignored data/private. The committed corpus is wholly fictitious."
+}

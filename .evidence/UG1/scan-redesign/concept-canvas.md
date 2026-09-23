@@ -47,8 +47,8 @@ dashboard cards.
   image the stage, use a clipped mask that ends at the stage boundary, and keep
   controls at normal ink/white contrast.
 
-The supplied sheets visibly show names such as `Altomare Valeria`,
-`Banella Claudia georgia`, `De giuli Gregorio` and `De giuli Teodoro`. The source
+The supplied sheets visibly show names such as `Veldoro Valeria`,
+`Rumeria Claudia georgia`, `De veltri Gregorio` and `De veltri Teodoro`. The source
 column is not a reliable signal that the first token is a first name. OCR and
 review must preserve separate `firstName` and `surname` fields, expose both
 labels, and let the reviewer swap/repair them. Never infer the storage order
@@ -242,9 +242,9 @@ hint under the primary action or in the review intro:
 
 In the review card, keep fields explicitly labelled `Nome` and `Cognome`, even
 when the source row is a single string. Provide a compact `Scambia` action (or
-editable fields with clear labels) so `Altomare Valeria` can become surname
-`Altomare`, first name `Valeria` when appropriate, while another sheet using
-`Valeria Altomare` is also representable. The sort/display formatter must consume
+editable fields with clear labels) so `Veldoro Valeria` can become surname
+`Veldoro`, first name `Valeria` when appropriate, while another sheet using
+`Valeria Veldoro` is also representable. The sort/display formatter must consume
 the structured fields and never use the crop's visual token order as a rule.
 
 The crop guide should label columns only as optional, non-binding hints: `Nome ·
@@ -271,7 +271,7 @@ burned onto the image or interpreted as OCR data.
    skew and handwritten marks as recovery/low-confidence cases, not as reasons
    to invent fields.
 5. **Review slice (Luna high):** adversarially test mixed name orders,
-   `De giuli`/multi-token surnames, lowercase names, duplicate-looking names,
+   `De veltri`/multi-token surnames, lowercase names, duplicate-looking names,
    missing phones and staff rows. Verify no false personnel row is committed and
    fields remain independently editable.
 6. **Integration reviewer (Luna xhigh):** inspect a fresh browser screenshot and

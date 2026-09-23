@@ -1,0 +1,93 @@
+{
+  "milestone": "S4",
+  "status": "prototype comparison complete; S4 acceptance remains open",
+  "runtime": "Node v24.19.0",
+  "privacy": "Five local photographs of one roster were used, not five independent rosters. Only aggregate counts appear here; originals, raw OCR and ground truth remain under ignored data/private.",
+  "comparisonBasis": {
+    "expectedStudentsPerImage": 20,
+    "expectedStaffPerImage": 5,
+    "telephone": "off",
+    "nameOrder": "automatic sheet-wide inference",
+    "ageDateCorroboration": "enabled",
+    "referenceDate": "2026-09-22",
+    "imagePreparation": "orientation-normalized, maximum 2600 px, matching the scan editor input",
+    "minFieldConfidence": 70,
+    "caution": "A smaller review counter is not evidence of more correct students or correctly associated fields."
+  },
+  "currentTesseract": {
+    "candidateRowsAcrossFive": 127,
+    "candidateRowsBySample": [25, 17, 40, 16, 29],
+    "flagsAcrossFive": 288,
+    "flagsBySample": [53, 30, 136, 26, 43],
+    "recognitionMsBySample": [7441, 7157, 5226, 10366, 3763],
+    "measurement": "npm run measure:scan-review -- <prepared private image> <ignored output> --reference-date=2026-09-22"
+  },
+  "approaches": [
+    {
+      "id": "tsv-row-geometry",
+      "candidateRowsAcrossFive": 104,
+      "flagsAcrossFive": 121,
+      "assessment": "Reject this prototype as a production default. A crop with 20 candidates and only two flags still missed one true student and added one false row. Row coverage and false-association safeguards need further work."
+    },
+    {
+      "id": "tesseract-dpi-180",
+      "candidateRowsAcrossFive": 110,
+      "flagsAcrossFive": 92,
+      "flagsBySample": [15, 18, 35, 19, 5],
+      "clearestSampleAudit": {
+        "studentRowsRecovered": 20,
+        "missingStudentRows": 0,
+        "staffCandidates": 0,
+        "wrongCrossRowAssociations": 0,
+        "exactNameCells": 19,
+        "correctGivenNames": 19,
+        "correctSurnames": 18,
+        "fieldsFlagged": 5
+      },
+      "assessment": "Best current candidate, but the clearest sample still misses the owner's fewer-than-five target and has two surname errors. A shadowed sample still yields 29 candidates for 20 students. Production integration needs full truth and regression checks."
+    },
+    {
+      "id": "paddleocr-js-local-browser",
+      "flagsBySample": [0, 0, 13, 8, 0],
+      "exactStudentIdentitiesAcrossOneHundred": 82,
+      "missingStudentIdentities": 18,
+      "unmatchedCandidateRows": 17,
+      "wrongRowAssociations": 25,
+      "wrongHighConfidenceFields": 76,
+      "meanPredictionMs": 11500,
+      "sameHarnessTesseractMeanMs": 11400,
+      "modelArchiveBytes": 6318080,
+      "isolatedBuildBytes": 56885454,
+      "offlineBrowserTrial": "local inference passed with external network blocked; installed-PWA first-use offline cache was not verified",
+      "assessment": "Reject this adapter as a production replacement. Three zero-flag samples each still contained a missed identity and confident wrong fields. Local browser execution was demonstrated, but installed-PWA first-use offline caching was not."
+    }
+  ],
+  "conservativeProductionCandidate": {
+    "engine": "local Tesseract with DPI 180 and guarded TSV fragment joining",
+    "preparedPhotoCandidateRows": [20, 21, 29, 21, 20],
+    "preparedPhotoFlags": [15, 18, 35, 23, 5],
+    "privateGeometryJoins": 0,
+    "syntheticWideColumnGeometryJoins": 30,
+    "note": "The fourth private photo has an extra incomplete review row after weak age text is preserved. No real-photo field is reassigned."
+  },
+  "nameCellSecondPass": {
+    "status": "experimental only",
+    "clearestPhotoFlaggedSurnamesRetested": 5,
+    "wouldCrossConfidence70": 1,
+    "additionalRecognitionSeconds": "0.91 to 1.36",
+    "reasonNotIntegrated": "Two private visual audits disagree on whether the promoted surname is exact; the other four remain flagged, and unflagged name errors are unaffected."
+  },
+  "nameCellVariants": {
+    "status": "experimental only",
+    "variantsCompared": 8,
+    "clearestPhotoFlaggedSurnamesRetested": 5,
+    "singleWordPassReportedExactPromotions": 3,
+    "singleWordPassReportedWrongPromotions": 0,
+    "singleWordPassRemainingFlags": 2,
+    "sevenCropRowsRecognitionMs": 285,
+    "unflaggedWrongNameFieldsCorrected": 0,
+    "limit": "The focused private audit includes a disputed transcription, and no all-person/all-photo truth audit supports promotion. The variant did not change the two unflagged wrong name fields, so a lower flag count alone would not satisfy S4."
+  },
+  "nextExperiment": "Complete aggregate-only person/field truth coverage for all five captures, then test name-cell rereads across all rows against both missed and confident-wrong names. Preserve threshold 70 and visible source text.",
+  "decision": "Continue with the local Tesseract path; retain threshold 70 and visible uncertain text. Do not treat a lower counter as correctness. None of the three prototypes or experimental name-cell passes satisfies S4 acceptance."
+}

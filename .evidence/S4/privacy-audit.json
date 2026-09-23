@@ -1,0 +1,14 @@
+{
+  "milestone": "S4",
+  "runtime": "Node v24.19.0",
+  "sourcePhotographsUnderIgnoredPrivateDirectory": 5,
+  "trackedFilesUnderDataPrivate": 0,
+  "currentTreeRosterLiteralAudit": {
+    "sourceSurnameMatchesOutsideOwnerPathLogs": 0,
+    "sourceDateOfBirthMatches": 0,
+    "sourceTelephoneMatches": 0,
+    "note": "The remaining six surname-token matches are the owner's surname in archived absolute local path logs and the owner's brief, not roster records."
+  },
+  "historicalRefs": "Local remote-tracking and release refs still contain earlier roster examples. Current-tree fictionalization does not remove that history; a separate owner decision is recorded in docs/post-mvp/0_3_0_QUESTIONS.md.",
+  "privacy": "This report contains counts and categories only; no image names, OCR text, student names, dates of birth, or telephone numbers."
+}

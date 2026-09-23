@@ -9,14 +9,14 @@
  * with the telephone read and not read.
  *
  * Usage:
- *   npm run measure:scan-review -- [image] [output.json] [--reference-date=YYYY-MM-DD]
+ *   npm run measure:scan-review -- [image] [output.json] [--dpi=auto|N] [--reference-date=YYYY-MM-DD]
  *
  * The image defaults to the committed clear fixture. Point it at a photograph
  * of a real sheet to attribute a real number.
  */
 import { createRequire } from "node:module"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
-import { dirname, relative, resolve } from "node:path"
+import { dirname, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 
 const root = resolve(import.meta.dirname, "..")
@@ -27,6 +27,7 @@ const {
   extractStudentCandidates,
   inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
+  TESSERACT_USER_DEFINED_DPI,
   studentScanAgeCorroborated,
 } = await import(
   pathToFileURL(resolve(root, "src/capabilities/studentScan.ts")).href
@@ -57,6 +58,16 @@ const cropFractions = flag("crop")?.split(",").map(Number)
 const nameOrder = flag("order") ?? null
 const referenceDate =
   flag("reference-date") ?? new Date().toISOString().slice(0, 10)
+const dpiArgument = flag("dpi") ?? String(TESSERACT_USER_DEFINED_DPI)
+const userDefinedDpi = dpiArgument === "auto" ? null : Number(dpiArgument)
+if (
+  userDefinedDpi !== null &&
+  (!Number.isInteger(userDefinedDpi) ||
+    userDefinedDpi < 1 ||
+    userDefinedDpi > 300)
+) {
+  throw new Error("--dpi must be auto or an integer from 1 to 300")
+}
 
 const bytes = await readFile(imagePath)
 
@@ -110,7 +121,12 @@ const worker = await createWorker("ita", OEM.LSTM_ONLY, {
   langPath: resolve(root, "node_modules/@tesseract.js-data/ita/4.0.0_best_int"),
   logger: () => {},
 })
-await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO })
+await worker.setParameters({
+  tessedit_pageseg_mode: PSM.AUTO,
+  ...(userDefinedDpi === null
+    ? {}
+    : { user_defined_dpi: String(userDefinedDpi) }),
+})
 const started = Date.now()
 const { data } = await worker.recognize(
   bytes,
@@ -182,6 +198,14 @@ function audit(readPhone, order = null, useAutomaticInference = true) {
       ).length,
     0,
   )
+  const missingByField = {
+    firstName: candidates.filter((candidate) => !candidate.firstName.trim())
+      .length,
+    surname: candidates.filter((candidate) => !candidate.surname.trim()).length,
+    dateOfBirth: candidates.filter((candidate) => !candidate.dateOfBirth)
+      .length,
+    sex: candidates.filter((candidate) => !candidate.sex).length,
+  }
   const corroboratedDates = candidates.filter(
     (candidate) =>
       uncertainBeforeAgeCorroboration(candidate, "dateOfBirth") &&
@@ -228,6 +252,15 @@ function audit(readPhone, order = null, useAutomaticInference = true) {
         candidates.filter((candidate) => uncertain(candidate, field)).length,
       ]),
     ),
+    missingByField,
+    compoundAmbiguityRows: candidates.filter(
+      (candidate) => candidate.nameReading?.compoundAmbiguity,
+    ).length,
+    compoundAmbiguityRowsWithFieldFlags: candidates.filter(
+      (candidate) =>
+        candidate.nameReading?.compoundAmbiguity &&
+        fields.some((field) => uncertain(candidate, field)),
+    ).length,
     unresolvedNameOrder: candidates.filter(orderUndecided).length,
     fieldsFlagged: missingFields + lowConfidenceFields,
     fieldsFlaggedBeforeAgeCorroboration:
@@ -236,11 +269,12 @@ function audit(readPhone, order = null, useAutomaticInference = true) {
 }
 
 const measurement = {
-  image: relative(root, imagePath).replaceAll("\\", "/"),
+  imageSource: "caller-provided",
   measuredAt: new Date().toISOString(),
   runtime: process.version,
   crop: cropFractions ? { fractions: cropFractions, pixels: rectangle } : null,
   recognitionMs,
+  tesseractUserDefinedDpi: userDefinedDpi,
   referenceDate,
   minFieldConfidence: MIN_FIELD_CONFIDENCE,
   beforeAutomaticNameOrder: {

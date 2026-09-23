@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test"
 const CLEAR_ROSTER = path.resolve("tests/fixtures/ocr-sheet-clear.png")
 const BLURRED_ROSTER = path.resolve("tests/fixtures/ocr-sheet-blurred.png")
 
-test("rejects a bad image and commits only reviewed OCR rows", async ({
+test("warns on a bad image and commits only reviewed OCR rows", async ({
   page,
 }, testInfo) => {
   test.setTimeout(90_000)
@@ -56,10 +56,18 @@ test("rejects a bad image and commits only reviewed OCR rows", async ({
   await expect(page.getByText("Immagine poco leggibile")).toBeVisible({
     timeout: 30_000,
   })
-  await expect(page.getByText("Controlla prima di salvare")).not.toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "Controlla prima di salvare" }),
+  ).toBeVisible()
+  await expect(page.getByLabel(/^Nome riga/).first()).toBeVisible()
+  await expect(page.getByLabel(/^Nome riga/).first()).toHaveValue(/\S/)
+  await expect(
+    page.getByRole("button", { name: "Rifai la foto" }),
+  ).toBeVisible()
 
   await input.setInputFiles(CLEAR_ROSTER)
   await page.getByRole("button", { name: "Usa questa area" }).click()
+  await expect(page.getByText("Immagine poco leggibile")).not.toBeVisible()
   await expect(
     page.getByRole("heading", { name: "Controlla prima di salvare" }),
   ).toBeVisible({ timeout: 30_000 })

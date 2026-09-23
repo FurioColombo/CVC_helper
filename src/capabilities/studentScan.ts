@@ -1,14 +1,19 @@
 import type { StudentSex } from "@/domain/config"
 import { calculateAge } from "@/domain/student"
 import { absoluteAssetUrl } from "@/lib/assetPath"
+import { proposeStudentNameTripletSplit } from "./studentNameTriplet"
+import { reconstructStudentScanTsvFragments } from "./studentScanRowGeometry"
 
 export const MIN_FIELD_CONFIDENCE = 70
 
+/** Candidate setting measured against the private five-photo capture set. */
+export const TESSERACT_USER_DEFINED_DPI = 180
+
 /**
- * Below this, a whole row is treated as noise rather than as a student whose
- * fields need checking. It is deliberately lower than the field threshold: a
- * faint but real row is worth correcting, while an unreadable photograph must
- * still be reported as unusable instead of filled with invented rows.
+ * Unanchored noise below this is omitted. Two recognizable name tokens or a
+ * valid date are retained even below this row threshold: dropping a weak
+ * person or readable date while keeping stronger neighbors would silently
+ * omit a reviewable reading.
  */
 const MIN_ROW_CONFIDENCE = 60
 
@@ -159,6 +164,10 @@ const MALE_NAMES = new Set([
   "tommaso",
 ])
 
+// These exact irregular-name overrides are evidence for a possible second
+// given name. Suffixes alone are not: Italian surnames also end in -a or -o.
+const KNOWN_GIVEN_NAMES = new Set([...FEMALE_NAMES, ...MALE_NAMES])
+
 const DATE_PATTERN = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/
 const AGE_PATTERN = /\b(\d{1,3})\s+ann[oi]\b/iu
 const PHONE_PATTERN = /(?:\+?39[ .-]*)?(?:\d[ .-]*){9,10}/
@@ -277,10 +286,9 @@ function averageNameConfidence(words: StudentScanNameWord[]) {
 /**
  * Apply an explicitly selected name order to a raw OCR reading.
  *
- * The helper intentionally refuses arbitrary surname/given splits. Two words
- * are unambiguous. A leading Italian surname particle permits the common
- * `De Angelis Luca` shape. Other compounds retain the current reading and stay
- * marked for review: choosing an order must never erase a visible field.
+ * Two words are unambiguous. A surname particle or two exact given-name cues
+ * can resolve a triplet; other compounds stay marked for review. Choosing an
+ * order must never erase the OCR reading.
  */
 export function applyStudentNameOrder(
   candidate: StudentScanCandidate,
@@ -314,6 +322,17 @@ export function applyStudentNameOrder(
   }
 
   let split: NameSplit
+  const triplet =
+    words.length === 3
+      ? proposeStudentNameTripletSplit(
+          [words[0]!.text, words[1]!.text, words[2]!.text],
+          order,
+          {
+            surnameParticles: SURNAME_PARTICLES,
+            knownGivenNames: KNOWN_GIVEN_NAMES,
+          },
+        )
+      : null
   if (order === "given-surname") {
     let surnameStart = words.length - 1
     const particleIndex = words.findIndex(
@@ -328,7 +347,7 @@ export function applyStudentNameOrder(
       surname: joinNameWords(surnameWords),
       firstNameConfidence: averageNameConfidence(givenWords),
       surnameConfidence: averageNameConfidence(surnameWords),
-      compoundAmbiguity: false,
+      compoundAmbiguity: triplet?.ambiguity ?? words.length > 2,
     }
   } else if (words.length === 2) {
     split = {
@@ -338,15 +357,15 @@ export function applyStudentNameOrder(
       surnameConfidence: words[0]?.confidence ?? 0,
       compoundAmbiguity: false,
     }
-  } else if (
-    words.length === 3 &&
-    SURNAME_PARTICLES.has(normalizedNameToken(words[0]?.text ?? ""))
-  ) {
+  } else if (triplet && !triplet.ambiguity) {
+    const surnameWordCount = triplet.candidate.surname.split(/\s+/).length
+    const surnameWords = words.slice(0, surnameWordCount)
+    const givenWords = words.slice(surnameWordCount)
     split = {
-      firstName: words[2]?.text ?? "",
-      surname: joinNameWords(words.slice(0, 2)),
-      firstNameConfidence: words[2]?.confidence ?? 0,
-      surnameConfidence: averageNameConfidence(words.slice(0, 2)),
+      firstName: joinNameWords(givenWords),
+      surname: joinNameWords(surnameWords),
+      firstNameConfidence: averageNameConfidence(givenWords),
+      surnameConfidence: averageNameConfidence(surnameWords),
       compoundAmbiguity: false,
     }
   } else {
@@ -826,11 +845,23 @@ function candidateFromLine(
     confidence.dateOfBirth,
     confidence.phone,
   )
-  if (bestConfidence < MIN_ROW_CONFIDENCE) return null
-  if (!candidate.firstName && !candidate.surname && !candidate.dateOfBirth) {
+  // A separate structured fragment may be too far from every name for a safe
+  // join. Keep its reading as an incomplete review row even when confidence is
+  // low; the operator can attach or remove it without losing OCR text.
+  const hasStructuredReading =
+    Boolean(normalizedDate) ||
+    Boolean(ageMatch) ||
+    (options.readPhone && Boolean(phoneMatch))
+  if (
+    bestConfidence < MIN_ROW_CONFIDENCE &&
+    nameParts.length === 0 &&
+    !hasStructuredReading
+  ) {
     return null
   }
-  if (!dateMatch && !phoneMatch && nameParts.length < 2) return null
+  if (!candidate.firstName && !candidate.surname && !hasStructuredReading) {
+    return null
+  }
   return candidate
 }
 
@@ -839,7 +870,8 @@ export function extractStudentCandidates(
   options: StudentScanOptions = DEFAULT_STUDENT_SCAN_OPTIONS,
 ): StudentScanResult {
   const candidates: StudentScanCandidate[] = []
-  const lines = parseTsv(page.tsv, page.text, page.confidence)
+  const tsv = page.tsv ? reconstructStudentScanTsvFragments(page.tsv).tsv : null
+  const lines = parseTsv(tsv, page.text, page.confidence)
   const layout = inferPageLayout(lines)
   let inPersonnelSection = false
   for (const line of lines) {
@@ -889,7 +921,10 @@ async function getWorker() {
         },
         workerPath: assetUrl("/ocr/worker.min.js"),
       })
-      await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO })
+      await worker.setParameters({
+        tessedit_pageseg_mode: PSM.AUTO,
+        user_defined_dpi: String(TESSERACT_USER_DEFINED_DPI),
+      })
       return worker
     })
     .catch((error: unknown) => {

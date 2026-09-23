@@ -24,7 +24,7 @@
       "a row corrected by hand is left alone by the sheet-wide choice",
       "a single row swaps without touching the others"
     ],
-    "realPhotograph": "Through the running interface on the supplied roster: the order section is present, 19 rows offer a swap, and one tap turns Altomare/Valeria into Valeria/Altomare and Cortese/'Massimo Ì' into Massimo/Cortese. Banella/'Claudia georgia' correctly becomes blank and flagged, being a three-word compound with no particle.",
+    "realPhotograph": "Through the running interface on the supplied roster: the order section is present, 19 rows offer a swap, and one tap turns Veldoro/Valeria into Valeria/Veldoro and Feriani/'Massimo Ì' into Massimo/Feriani. Rumeria/'Claudia georgia' correctly becomes blank and flagged, being a three-word compound with no particle.",
     "suite": "378 unit and component tests, typecheck, lint, production build, PWA check and repository check pass on Node 24.21.0."
   },
   "stillOpen": "The full-screen document editor of this correction is not implemented. StudentScanImageEditor still has the rotation slider that the Product Specification describes as removed, and no zoom, pan or line-based straightening. Recorded in the plan so the specification and the code disagree visibly rather than silently."

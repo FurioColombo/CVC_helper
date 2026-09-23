@@ -14,7 +14,7 @@
     "fullSheetPhoto": {
       "candidates": 26,
       "expected": 20,
-      "falsePositives": "the weekday heading row, and all four staff members: Rinaldo Erba Springorum CT, Colombo Marco Furio ADV, Gaboardi Alessandro ADV, La franceschina Alessandra AT"
+      "falsePositives": "the weekday heading row, and all four staff members: Prinaldo Erba Alborum CT, Ferombo Marco Furio ADV, Zaverdi Alessandro ADV, La fiorellina Alessandra AT"
     }
   },
   "after": {
@@ -32,7 +32,7 @@
   "tests": "Two regression tests cover a coordinate-bearing table: one asserts the telephone and age columns stay out of the name, one asserts the staff block is dropped including a role code the table rule smudged from CT to ICT. Both fail when the layout inference is disabled. The eight existing geometry-free tests are unchanged and still pass, which is the documented fallback.",
   "remainingGaps": [
     "Name order is still not established. The sheet is surname-first, the parser still reports the first token as the given name, and the explicit review choice is the open work in progress.",
-    "MIN_FIELD_CONFIDENCE blanks a field read below 70, so rows such as 'Altomare Valeria' surface with only one half of the name even though both words were read. For a screen whose purpose is human confirmation this is likely the wrong trade, and it is the largest remaining source of half-empty rows: 11 of 20 rows carry both names on the cropped photo and 4 of 20 on the full sheet.",
+    "MIN_FIELD_CONFIDENCE blanks a field read below 70, so rows such as 'Veldoro Valeria' surface with only one half of the name even though both words were read. For a screen whose purpose is human confirmation this is likely the wrong trade, and it is the largest remaining source of half-empty rows: 11 of 20 rows carry both names on the cropped photo and 4 of 20 on the full sheet.",
     "The cropped photo still yields two rows more than the roster contains, from row fragmentation rather than from column confusion.",
     "No automated test uses a real photograph; the diagnostic is run by hand against images that must stay out of the repository."
   ]

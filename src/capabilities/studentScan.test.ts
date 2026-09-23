@@ -16,13 +16,13 @@ describe("independent printed age", () => {
   }
 
   it.each([
-    ["Mario Rossi 24 anni - 02/02/2002", true],
-    ["Mario Rossi 23 anni - 02/02/2002", true],
-    ["Mario Rossi 25 anni - 02/02/2002", true],
-    ["Mario Rossi 22 anni - 02/02/2002", false],
+    ["Mario Rossi 24 anni - 12/02/2002", true],
+    ["Mario Rossi 23 anni - 12/02/2002", true],
+    ["Mario Rossi 25 anni - 12/02/2002", true],
+    ["Mario Rossi 22 anni - 12/02/2002", false],
     ["Mario Rossi 24 anni - 31/02/2002", false],
     ["Mario Rossi 0 anni - 02/02/2027", false],
-    ["Mario Rossi 02/02/2002", false],
+    ["Mario Rossi 12/02/2002", false],
     ["Mario Rossi 24 anni", false],
   ])("corroborates only valid agreement: %s", (text, expected) => {
     const candidate = readAgeRow(text)
@@ -34,10 +34,10 @@ describe("independent printed age", () => {
   })
 
   it("reports the independently read age while retaining the stored date", () => {
-    const candidate = readAgeRow("Mario Rossi 23 anni - 02/02/2002")
+    const candidate = readAgeRow("Mario Rossi 23 anni - 12/02/2002")
     expect(candidate.ageReading).toEqual({ value: 23, confidence: 65 })
     expect(studentScanAge(candidate, "2026-08-29")).toBe(23)
-    expect(candidate.dateOfBirth).toBe("2002-02-02")
+    expect(candidate.dateOfBirth).toBe("2002-02-12")
   })
 
   it("keeps an age-only reading without inventing a birth date", () => {
@@ -49,7 +49,7 @@ describe("independent printed age", () => {
 
   it("measures the age independently of a low-confidence date", () => {
     const candidate = extractStudentCandidates({
-      text: "Mario Rossi 24 anni 02/02/2002",
+      text: "Mario Rossi 24 anni 12/02/2002",
       confidence: 80,
       tsv: [
         HEADER,
@@ -58,7 +58,7 @@ describe("independent printed age", () => {
           { text: "Rossi", confidence: 93 },
           { text: "24", confidence: 97 },
           { text: "anni", confidence: 95 },
-          { text: "02/02/2002", confidence: 44 },
+          { text: "12/02/2002", confidence: 44 },
         ]),
       ].join("\n"),
     }).candidates[0]!
@@ -75,7 +75,7 @@ describe("sheet name-order vote", () => {
     ["Andrea Luca\nNicola Mattia", "unknown", 2, 2],
     ["Smith Chris\nJones Alex", "unknown", 0, 0],
     ["Rossi Mario", "unknown", 0, 1],
-    ["Mosca Caterina\nBianchi Giulia", "surname-given", 1, 2],
+    ["Liosca Caterina\nBianchi Giulia", "surname-given", 1, 2],
   ] as const)("votes on %s", (text, order, firstWordVotes, lastWordVotes) => {
     const { candidates } = extractStudentCandidates({
       text,
@@ -105,6 +105,66 @@ describe("sheet name-order vote", () => {
     expect(result.sex).toBe("male")
     expect(result.surname).toBe("Rossi")
     expect(result.confidence.surname).toBe(50)
+  })
+
+  it("suggests male for Gianluca and preserves a low-confidence name", () => {
+    const { candidates } = extractStudentCandidates({
+      text: "Rovelli Gianluca",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Rovelli", confidence: 50 },
+          { text: "Gianluca", confidence: 95 },
+        ]),
+      ].join("\n"),
+      confidence: 80,
+    })
+    const result = applyStudentNameOrder(candidates[0]!, "surname-given")
+    expect(result.sex).toBe("male")
+    expect(result.surname).toBe("Rovelli")
+    expect(result.confidence.surname).toBe(50)
+  })
+
+  it("resolves two exact given-name cues in a surname-first triplet", () => {
+    const { candidates } = extractStudentCandidates({
+      text: "Mancini Andrea Luca",
+      tsv: null,
+      confidence: 95,
+    })
+    const result = applyStudentNameOrder(candidates[0]!, "surname-given")
+    expect(result.firstName).toBe("Andrea Luca")
+    expect(result.surname).toBe("Mancini")
+    expect(result.nameReading?.raw).toBe("Mancini Andrea Luca")
+    expect(result.nameReading?.compoundAmbiguity).toBe(false)
+    expect(result.sex).toBe("male")
+  })
+
+  it("keeps a conflicting particle triplet visible for review", () => {
+    const { candidates } = extractStudentCandidates({
+      text: "De Andrea Luca",
+      tsv: null,
+      confidence: 95,
+    })
+    const result = applyStudentNameOrder(candidates[0]!, "surname-given")
+    expect(result.nameReading?.raw).toBe("De Andrea Luca")
+    expect(result.nameReading?.compoundAmbiguity).toBe(true)
+    expect([result.firstName, result.surname].join(" ")).toContain("Andrea")
+  })
+
+  it("requires review for an unproven four-word given-first split", () => {
+    const { candidates } = extractStudentCandidates({
+      text: "Esempiocinque Esempiotrenta Esempioquarantasei Esempiootto",
+      tsv: null,
+      confidence: 95,
+    })
+    const result = applyStudentNameOrder(candidates[0]!, "given-surname")
+    expect(result.nameReading?.raw).toBe(
+      "Esempiocinque Esempiotrenta Esempioquarantasei Esempiootto",
+    )
+    expect(result.nameReading?.compoundAmbiguity).toBe(true)
+    expect([result.firstName, result.surname].join(" ")).toBe(
+      "Esempiocinque Esempiotrenta Esempioquarantasei Esempiootto",
+    )
   })
 })
 
@@ -426,18 +486,16 @@ describe("student scan extraction", () => {
     ])
   })
 
-  it("rejects an unsuitable low-confidence image instead of exposing rows", () => {
-    expect(
-      extractStudentCandidates({
-        confidence: 53,
-        text: "Maro Ree 12032008 333 123 4567",
-        tsv: null,
-      }),
-    ).toEqual({
-      aggregateConfidence: 53,
-      candidates: [],
-      unsuitable: true,
+  it("keeps low-confidence name text available for review", () => {
+    const result = extractStudentCandidates({
+      confidence: 53,
+      text: "Maro Ree 12032008 333 123 4567",
+      tsv: null,
     })
+    expect(result.aggregateConfidence).toBe(53)
+    expect(result.unsuitable).toBe(false)
+    expect(result.candidates).toHaveLength(1)
+    expect(result.candidates[0]?.nameReading?.raw).toBe("Maro Ree")
   })
 
   it("keeps the telephone and age columns out of the name when words carry coordinates", () => {
@@ -449,7 +507,7 @@ describe("student scan extraction", () => {
         { text: "24", confidence: 88, left: 560, width: 24 },
         { text: "anni", confidence: 88, left: 590, width: 40 },
         { text: "-", confidence: 80, left: 636, width: 8 },
-        { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
+        { text: "12/02/2002", confidence: 91, left: 650, width: 120 },
       ])
 
     const result = extractStudentCandidates({
@@ -457,9 +515,9 @@ describe("student scan extraction", () => {
       text: "",
       tsv: [
         HEADER,
-        row(1, "Cortese", "Massimo", "3775394585"),
-        row(2, "Merluzzi", "Edoardo", "3489083367"),
-        row(3, "Passerini", "Paolo", "3209389744"),
+        row(1, "Feriani", "Massimo", "3990000006"),
+        row(2, "Vernuzzi", "Edoardo", "3990000012"),
+        row(3, "Rovellini", "Paolo", "3990000016"),
       ].join("\n"),
     })
 
@@ -469,9 +527,9 @@ describe("student scan extraction", () => {
       expect(candidate.surname).not.toMatch(/\d/)
       expect(candidate.firstName).not.toMatch(/\d/)
     }
-    expect(result.candidates[0]?.firstName).toBe("Cortese")
+    expect(result.candidates[0]?.firstName).toBe("Feriani")
     expect(result.candidates[0]?.surname).toBe("Massimo")
-    expect(result.candidates[0]?.dateOfBirth).toBe("2002-02-02")
+    expect(result.candidates[0]?.dateOfBirth).toBe("2002-02-12")
   })
 
   it("drops the staff block, including a role code the table rule smudged", () => {
@@ -479,9 +537,9 @@ describe("student scan extraction", () => {
       tsvPlacedLine(line, [
         { text: surname, confidence: 92, left: 100, width: 80 },
         { text: given, confidence: 92, left: 190, width: 70 },
-        { text: "3775394585", confidence: 90, left: 400, width: 140 },
+        { text: "3990000006", confidence: 90, left: 400, width: 140 },
         { text: "anni", confidence: 88, left: 590, width: 40 },
-        { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
+        { text: "12/02/2002", confidence: 91, left: 650, width: 120 },
       ])
     const staff = (
       line: number,
@@ -493,9 +551,9 @@ describe("student scan extraction", () => {
         { text: surname, confidence: 92, left: 100, width: 80 },
         { text: given, confidence: 92, left: 190, width: 70 },
         { text: role, confidence: 86, left: 300, width: 40 },
-        { text: "3479332075", confidence: 90, left: 400, width: 140 },
+        { text: "3990000021", confidence: 90, left: 400, width: 140 },
         { text: "anni", confidence: 88, left: 590, width: 40 },
-        { text: "04/04/1997", confidence: 91, left: 650, width: 120 },
+        { text: "14/04/1997", confidence: 91, left: 650, width: 120 },
       ])
 
     const result = extractStudentCandidates({
@@ -503,18 +561,18 @@ describe("student scan extraction", () => {
       text: "",
       tsv: [
         HEADER,
-        student(1, "Cortese", "Massimo"),
-        student(2, "Merluzzi", "Edoardo"),
-        student(3, "Passerini", "Paolo"),
-        staff(4, "Colombo", "Marco", "ADV"),
-        staff(5, "Erba", "Rinaldo", "ICT"),
+        student(1, "Feriani", "Massimo"),
+        student(2, "Vernuzzi", "Edoardo"),
+        student(3, "Rovellini", "Paolo"),
+        staff(4, "Ferombo", "Marco", "ADV"),
+        staff(5, "Erba", "Prinaldo", "ICT"),
       ].join("\n"),
     })
 
     expect(result.candidates).toHaveLength(3)
     expect(
       result.candidates.map((candidate) => candidate.firstName),
-    ).not.toContain("Colombo")
+    ).not.toContain("Ferombo")
     expect(
       result.candidates.map((candidate) => candidate.firstName),
     ).not.toContain("Erba")
@@ -523,22 +581,22 @@ describe("student scan extraction", () => {
   it("reads a name without deciding whether the surname came first", () => {
     const result = extractStudentCandidates({
       confidence: 92,
-      text: "Altomare Valeria",
+      text: "Veldor Valeria",
       tsv: [
         HEADER,
         tsvLine(1, [
-          { text: "Altomare", confidence: 93 },
+          { text: "Veldor", confidence: 93 },
           { text: "Valeria", confidence: 94 },
-          { text: "01/07/1986", confidence: 92 },
+          { text: "11/07/1986", confidence: 92 },
         ]),
       ].join("\n"),
     })
 
     const [candidate] = result.candidates
     expect(candidate?.nameReading).toEqual({
-      raw: "Altomare Valeria",
+      raw: "Veldor Valeria",
       words: [
-        { text: "Altomare", confidence: 93 },
+        { text: "Veldor", confidence: 93 },
         { text: "Valeria", confidence: 94 },
       ],
       order: "unknown",
@@ -550,11 +608,11 @@ describe("student scan extraction", () => {
   it("splits a two-word reading both ways from the words as read", () => {
     const result = extractStudentCandidates({
       confidence: 92,
-      text: "Altomare Valeria",
+      text: "Veldor Valeria",
       tsv: [
         HEADER,
         tsvLine(1, [
-          { text: "Altomare", confidence: 93 },
+          { text: "Veldor", confidence: 93 },
           { text: "Valeria", confidence: 94 },
         ]),
       ].join("\n"),
@@ -563,28 +621,28 @@ describe("student scan extraction", () => {
 
     const surnameFirst = applyStudentNameOrder(candidate, "surname-given")
     expect(surnameFirst).toEqual(
-      expect.objectContaining({ firstName: "Valeria", surname: "Altomare" }),
+      expect.objectContaining({ firstName: "Valeria", surname: "Veldor" }),
     )
 
     // Re-deriving from the same reading, so applying an order is idempotent
     // and reversible rather than a blind exchange of the two fields.
     expect(applyStudentNameOrder(surnameFirst, "surname-given")).toEqual(
-      expect.objectContaining({ firstName: "Valeria", surname: "Altomare" }),
+      expect.objectContaining({ firstName: "Valeria", surname: "Veldor" }),
     )
     expect(applyStudentNameOrder(surnameFirst, "given-surname")).toEqual(
-      expect.objectContaining({ firstName: "Altomare", surname: "Valeria" }),
+      expect.objectContaining({ firstName: "Veldor", surname: "Valeria" }),
     )
   })
 
   it("keeps a surname particle attached when the sheet is surname first", () => {
     const result = extractStudentCandidates({
       confidence: 92,
-      text: "De giuli Gregorio",
+      text: "De veltri Gregorio",
       tsv: [
         HEADER,
         tsvLine(1, [
           { text: "De", confidence: 91 },
-          { text: "giuli", confidence: 92 },
+          { text: "veltri", confidence: 92 },
           { text: "Gregorio", confidence: 93 },
         ]),
       ].join("\n"),
@@ -593,18 +651,18 @@ describe("student scan extraction", () => {
     expect(
       applyStudentNameOrder(result.candidates[0]!, "surname-given"),
     ).toEqual(
-      expect.objectContaining({ firstName: "Gregorio", surname: "De giuli" }),
+      expect.objectContaining({ firstName: "Gregorio", surname: "De veltri" }),
     )
   })
 
   it("refuses to guess an ambiguous compound and marks it for review", () => {
     const result = extractStudentCandidates({
       confidence: 92,
-      text: "Banella Claudia georgia",
+      text: "Rumeria Claudia georgia",
       tsv: [
         HEADER,
         tsvLine(1, [
-          { text: "Banella", confidence: 92 },
+          { text: "Rumeria", confidence: 92 },
           { text: "Claudia", confidence: 93 },
           { text: "georgia", confidence: 91 },
         ]),
@@ -615,11 +673,11 @@ describe("student scan extraction", () => {
       result.candidates[0]!,
       "surname-given",
     )
-    expect(applied.firstName).toBe("Banella")
+    expect(applied.firstName).toBe("Rumeria")
     expect(applied.surname).toBe("Claudia georgia")
     expect(applied.nameReading?.compoundAmbiguity).toBe(true)
     // The words as read survive, so the operator can retype the boundary.
-    expect(applied.nameReading?.raw).toBe("Banella Claudia georgia")
+    expect(applied.nameReading?.raw).toBe("Rumeria Claudia georgia")
   })
   it("does not report a telephone that was not asked for, and reads the same names", () => {
     const row = (line: number, surname: string, given: string, phone: string) =>
@@ -627,16 +685,16 @@ describe("student scan extraction", () => {
         { text: surname, confidence: 92, left: 100, width: 80 },
         { text: given, confidence: 92, left: 190, width: 70 },
         { text: phone, confidence: 90, left: 400, width: 140 },
-        { text: "02/02/2002", confidence: 91, left: 650, width: 120 },
+        { text: "12/02/2002", confidence: 91, left: 650, width: 120 },
       ])
     const page = {
       confidence: 90,
       text: "",
       tsv: [
         HEADER,
-        row(1, "Cortese", "Massimo", "3775394585"),
-        row(2, "Merluzzi", "Edoardo", "3489083367"),
-        row(3, "Passerini", "Paolo", "3209389744"),
+        row(1, "Feriani", "Massimo", "3990000006"),
+        row(2, "Vernuzzi", "Edoardo", "3990000012"),
+        row(3, "Rovellini", "Paolo", "3990000016"),
       ].join("\n"),
     }
 
@@ -644,9 +702,9 @@ describe("student scan extraction", () => {
     const notAsked = extractStudentCandidates(page, { readPhone: false })
 
     expect(asked.candidates.map((candidate) => candidate.phone)).toEqual([
-      "3775394585",
-      "3489083367",
-      "3209389744",
+      "3990000006",
+      "3990000012",
+      "3990000016",
     ])
     // Nothing to review, nothing to confirm, nothing to store.
     expect(notAsked.candidates.map((candidate) => candidate.phone)).toEqual([
@@ -692,5 +750,97 @@ describe("student scan extraction", () => {
     expect(result.candidates).toHaveLength(1)
     expect(result.candidates[0]?.dateOfBirth).toBe("2008-03-12")
     expect(result.candidates[0]?.phone).toBe("")
+  })
+
+  it("keeps a weak two-word reading visible for review", () => {
+    const result = extractStudentCandidates({
+      confidence: 53,
+      text: "Esempiotrentadue Esempioquaranta 0000000000",
+      tsv: null,
+    })
+    expect(result.unsuitable).toBe(false)
+    expect(result.candidates).toHaveLength(1)
+    expect(result.candidates[0]?.nameReading?.raw).toBe(
+      "Esempiotrentadue Esempioquaranta",
+    )
+    expect(result.candidates[0]?.confidence.firstName).toBe(53)
+    expect(result.candidates[0]?.confidence.surname).toBe(53)
+  })
+
+  it("keeps single name tokens as incomplete rows even when confidence is low", () => {
+    const result = extractStudentCandidates({
+      confidence: 95,
+      text: "Esempiotrentatre\nEsempioquarantacinque\nEsempiotrentuno Esempioquarantasei",
+      tsv: [
+        HEADER,
+        tsvLine(1, [{ text: "Esempiotrentatre", confidence: 88 }]),
+        tsvLine(2, [{ text: "Esempioquarantacinque", confidence: 55 }]),
+        tsvLine(3, [
+          { text: "Esempiotrentuno", confidence: 95 },
+          { text: "Esempioquarantasei", confidence: 95 },
+        ]),
+      ].join("\n"),
+    })
+    expect(result.unsuitable).toBe(false)
+    expect(result.candidates).toHaveLength(3)
+    expect(result.candidates[0]).toEqual(
+      expect.objectContaining({ firstName: "Esempiotrentatre", surname: "" }),
+    )
+    expect(result.candidates[0]?.confidence.firstName).toBe(88)
+    expect(result.candidates[1]).toEqual(
+      expect.objectContaining({
+        firstName: "Esempioquarantacinque",
+        surname: "",
+      }),
+    )
+    expect(result.candidates[1]?.confidence.firstName).toBe(55)
+  })
+
+  it("keeps a weak date fragment visible when it cannot be joined safely", () => {
+    const result = extractStudentCandidates({
+      confidence: 95,
+      text: "Esempiotrentuno Esempioquarantasei\n04/04/2002",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Esempiotrentuno", confidence: 95 },
+          { text: "Esempioquarantasei", confidence: 95 },
+        ]),
+        tsvLine(2, [{ text: "04/04/2002", confidence: 55 }]),
+      ].join("\n"),
+    })
+    expect(result.candidates).toHaveLength(2)
+    expect(result.candidates[1]?.dateOfBirth).toBe("2002-04-04")
+    expect(result.candidates[1]?.confidence.dateOfBirth).toBe(55)
+    expect(result.candidates[1]?.firstName).toBe("")
+  })
+
+  it("keeps weak unresolved age and opted-in telephone readings visible", () => {
+    const page = {
+      confidence: 95,
+      text: "Esempiotrentuno Esempioquarantasei\n17 anni\n0000000000",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "Esempiotrentuno", confidence: 95 },
+          { text: "Esempioquarantasei", confidence: 95 },
+        ]),
+        tsvLine(2, [
+          { text: "17", confidence: 55 },
+          { text: "anni", confidence: 55 },
+        ]),
+        tsvLine(3, [{ text: "0000000000", confidence: 55 }]),
+      ].join("\n"),
+    }
+    const optedIn = extractStudentCandidates(page, { readPhone: true })
+    expect(optedIn.candidates).toHaveLength(3)
+    expect(optedIn.candidates[1]?.ageReading?.value).toBe(17)
+    expect(optedIn.candidates[1]?.ageReading?.confidence).toBe(55)
+    expect(optedIn.candidates[2]?.phone).toBe("0000000000")
+    expect(optedIn.candidates[2]?.confidence.phone).toBe(55)
+
+    const optedOut = extractStudentCandidates(page, { readPhone: false })
+    expect(optedOut.candidates).toHaveLength(2)
+    expect(optedOut.candidates.every(({ phone }) => phone === "")).toBe(true)
   })
 })

@@ -14,7 +14,7 @@
   },
   "controlledRows": [
     {
-      "input": "Mario Rossi 24 anni 02/02/2002",
+      "input": "Mario Rossi 24 anni 12/02/2002",
       "ageConfidence": 97,
       "dateConfidence": 44,
       "beforeCorroborationFlags": 1,
@@ -22,14 +22,14 @@
       "corroborated": true
     },
     {
-      "input": "Mario Rossi 22 anni 02/02/2002",
+      "input": "Mario Rossi 22 anni 12/02/2002",
       "beforeCorroborationFlags": 1,
       "afterCorroborationFlags": 1,
       "corroborated": false,
       "reason": "Difference exceeds the one-year tolerance."
     },
     {
-      "input": "Mario Rossi 02/02/2002",
+      "input": "Mario Rossi 12/02/2002",
       "beforeCorroborationFlags": 1,
       "afterCorroborationFlags": 1,
       "corroborated": false,

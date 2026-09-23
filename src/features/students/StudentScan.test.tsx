@@ -78,16 +78,16 @@ const SURNAME_FIRST: StudentScanResult = {
   candidates: [
     {
       sourceId: "line-1",
-      firstName: "Altomare",
+      firstName: "Veldor",
       surname: "Valeria",
-      dateOfBirth: "1986-07-01",
+      dateOfBirth: "1986-07-11",
       phone: "",
       sex: null,
       confidence: { firstName: 93, surname: 94, dateOfBirth: 92, phone: 0 },
       nameReading: {
-        raw: "Altomare Valeria",
+        raw: "Veldor Valeria",
         words: [
-          { text: "Altomare", confidence: 93 },
+          { text: "Veldor", confidence: 93 },
           { text: "Valeria", confidence: 94 },
         ],
         order: "unknown",
@@ -97,16 +97,16 @@ const SURNAME_FIRST: StudentScanResult = {
     },
     {
       sourceId: "line-2",
-      firstName: "Mosca",
+      firstName: "Liosca",
       surname: "Caterina",
-      dateOfBirth: "2006-12-20",
+      dateOfBirth: "2006-12-02",
       phone: "",
       sex: null,
       confidence: { firstName: 92, surname: 93, dateOfBirth: 91, phone: 0 },
       nameReading: {
-        raw: "Mosca Caterina",
+        raw: "Liosca Caterina",
         words: [
-          { text: "Mosca", confidence: 92 },
+          { text: "Liosca", confidence: 92 },
           { text: "Caterina", confidence: 93 },
         ],
         order: "unknown",
@@ -163,7 +163,7 @@ describe("StudentScan name order", () => {
     expect(screen.getByLabelText("Ordine dei nomi")).toBeVisible()
     expect(screen.getAllByText("Ordine da decidere")).toHaveLength(1)
     expect(screen.getAllByText("Letto:")).toHaveLength(1)
-    expect(screen.getByText("Altomare Valeria")).toBeVisible()
+    expect(screen.getByText("Veldor Valeria")).toBeVisible()
     // Nothing may be committed while the order is still undecided.
     const counters = screen.getByLabelText("Stato revisione scansione")
     expect(within(counters).getByText("0")).toBeVisible()
@@ -180,13 +180,13 @@ describe("StudentScan name order", () => {
 
     expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
     expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
-      "Altomare",
+      "Veldor",
     )
     expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
       "Caterina",
     )
     expect(screen.getByLabelText(/^Cognome riga line-2-2$/)).toHaveValue(
-      "Mosca",
+      "Liosca",
     )
     // The question is replaced by the remembered answer, not asked again.
     const banner = within(screen.getByLabelText("Ordine dei nomi"))
@@ -209,9 +209,7 @@ describe("StudentScan name order", () => {
     expect(
       screen.queryByRole("button", { name: "Applica Cognome · Nome" }),
     ).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue(
-      "Altomare",
-    )
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Veldor")
     expect(screen.queryByText(/Dedotto dal foglio/)).not.toBeInTheDocument()
   })
 
@@ -271,7 +269,7 @@ describe("StudentScan name order", () => {
 
     // The hand-corrected row keeps what was typed rather than being re-split.
     expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Mosca")
+    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Liosca")
   })
 
   it("swaps a single row without touching the others", async () => {
@@ -283,9 +281,7 @@ describe("StudentScan name order", () => {
       }),
     )
 
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue(
-      "Altomare",
-    )
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Veldor")
     expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
       "Caterina",
     )
@@ -539,6 +535,26 @@ describe("StudentScan", () => {
     finishSave?.([])
     await waitFor(() => expect(onCommitted).toHaveBeenCalledOnce())
   })
+
+  it("warns about a weak image while keeping its recognized fields editable", async () => {
+    await openReview({
+      ...EXTRACTED,
+      aggregateConfidence: 55,
+      candidates: [EXTRACTED.candidates[0]!],
+    })
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Immagine poco leggibile",
+    )
+    expect(screen.getByRole("button", { name: "Rifai la foto" })).toBeVisible()
+    expect(screen.getByRole("textbox", { name: /Nome riga/ })).toHaveValue(
+      "Mario",
+    )
+    expect(screen.getByRole("textbox", { name: /Cognome riga/ })).toHaveValue(
+      "Rossl",
+    )
+    expect(addStudents).not.toHaveBeenCalled()
+  })
 })
 
 describe("StudentScan age-first review", () => {
@@ -546,7 +562,7 @@ describe("StudentScan age-first review", () => {
     sourceId: "line-age",
     firstName: "Mario",
     surname: "Rossi",
-    dateOfBirth: "2002-02-02",
+    dateOfBirth: "2002-02-12",
     phone: "",
     sex: "male" as const,
     confidence: { firstName: 95, surname: 95, dateOfBirth: 44, phone: 0 },
@@ -600,7 +616,7 @@ describe("StudentScan age-first review", () => {
       screen.getByLabelText(
         "Data esatta per le regole sui minori riga line-age-1",
       ),
-    ).toHaveValue("2002-02-02")
+    ).toHaveValue("2002-02-12")
     expect(
       screen.getByText(/L’età non basta a ricavare giorno e mese/),
     ).toBeVisible()
@@ -650,7 +666,7 @@ describe("StudentScan age-first review", () => {
     const exactDate = screen.getByLabelText(
       "Data esatta per le regole sui minori riga line-age-1",
     )
-    expect(exactDate).toHaveValue("2002-02-02")
+    expect(exactDate).toHaveValue("2002-02-12")
 
     // Confirming the row cannot turn an edited age into an approximate
     // birthday. The exact date still has to be supplied and agree.

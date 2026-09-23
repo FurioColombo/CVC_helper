@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "synthetic": true,
+  "description": "Wholly fabricated roster values and names generated only for OCR regression. No personal records are used.",
+  "referenceDate": "2024-09-13",
+  "printedNameOrder": "surname-given",
+  "requiredFields": ["firstName", "surname", "dateOfBirth", "phone"],
+  "readableFields": ["firstName", "surname", "dateOfBirth", "age", "phone"],
+  "expectedAmbiguousNameIds": ["p08"],
+  "variants": [
+    {
+      "file": "roster-soft-skew.png",
+      "rotationDegrees": -0.55,
+      "lighting": "soft-left-to-right",
+      "rowRules": true,
+      "layout": "standard",
+      "columnFragmentationExpected": false,
+      "people": [
+        {
+          "id": "p01",
+          "printedName": "Veldoro Nurelia",
+          "firstName": "Nurelia",
+          "surname": "Veldoro",
+          "dateOfBirth": "2008-02-03",
+          "age": 16,
+          "phone": "000 000 0001"
+        },
+        {
+          "id": "p02",
+          "printedName": "Dalla Brumera Zovelia",
+          "firstName": "Zovelia",
+          "surname": "Dalla Brumera",
+          "dateOfBirth": "2007-05-14",
+          "age": 17,
+          "phone": "000 000 0002"
+        },
+        {
+          "id": "p03",
+          "printedName": "Fiorvane Drelina",
+          "firstName": "Drelina",
+          "surname": "Fiorvane",
+          "dateOfBirth": "2006-08-21",
+          "age": 18,
+          "phone": "000 000 0003"
+        },
+        {
+          "id": "p04",
+          "printedName": "Da Nuvellia Elareno",
+          "firstName": "Elareno",
+          "surname": "Da Nuvellia",
+          "dateOfBirth": "2005-11-06",
+          "age": 18,
+          "phone": "000 000 0004"
+        },
+        {
+          "id": "p05",
+          "printedName": "Torvessa Alunera",
+          "firstName": "Alunera",
+          "surname": "Torvessa",
+          "dateOfBirth": "2009-01-19",
+          "age": 15,
+          "phone": "000 000 0005"
+        },
+        {
+          "id": "p06",
+          "printedName": "Virello Elaria",
+          "firstName": "Elaria",
+          "surname": "Virello",
+          "dateOfBirth": "2004-04-28",
+          "age": 20,
+          "phone": "000 000 0006"
+        },
+        {
+          "id": "p07",
+          "printedName": "Della Veralune Nireva",
+          "firstName": "Nireva",
+          "surname": "Della Veralune",
+          "dateOfBirth": "2007-07-09",
+          "age": 17,
+          "phone": "000 000 0007"
+        },
+        {
+          "id": "p08",
+          "printedName": "Solmeria Thalira Quenora",
+          "firstName": "Thalira Quenora",
+          "surname": "Solmeria",
+          "dateOfBirth": "2005-09-12",
+          "age": 18,
+          "phone": "000 000 0008",
+          "ambiguousCompound": true
+        },
+        {
+          "id": "p09",
+          "printedName": "Qavornellia Liorea",
+          "firstName": "Liorea",
+          "surname": "Qavornellia",
+          "dateOfBirth": "2008-12-01",
+          "age": 15,
+          "phone": "000 000 0009"
+        },
+        {
+          "id": "p10",
+          "printedName": "Nivaldi Veloria",
+          "firstName": "Veloria",
+          "surname": "Nivaldi",
+          "dateOfBirth": "2006-03-25",
+          "age": 18,
+          "phone": "000 000 0010"
+        }
+      ]
+    },
+    {
+      "file": "roster-warm-light.png",
+      "rotationDegrees": 0.75,
+      "lighting": "warm-top-right-falloff",
+      "rowRules": true,
+      "layout": "standard",
+      "columnFragmentationExpected": false,
+      "people": [
+        {
+          "id": "p01",
+          "printedName": "Veldoro Nurelia",
+          "firstName": "Nurelia",
+          "surname": "Veldoro",
+          "dateOfBirth": "2008-02-03",
+          "age": 16,
+          "phone": "000 000 0001"
+        },
+        {
+          "id": "p02",
+          "printedName": "Dalla Brumera Zovelia",
+          "firstName": "Zovelia",
+          "surname": "Dalla Brumera",
+          "dateOfBirth": "2007-05-14",
+          "age": 17,
+          "phone": "000 000 0002"
+        },
+        {
+          "id": "p03",
+          "printedName": "Fiorvane Drelina",
+          "firstName": "Drelina",
+          "surname": "Fiorvane",
+          "dateOfBirth": "2006-08-21",
+          "age": 18,
+          "phone": "000 000 0003"
+        },
+        {
+          "id": "p04",
+          "printedName": "Da Nuvellia Elareno",
+          "firstName": "Elareno",
+          "surname": "Da Nuvellia",
+          "dateOfBirth": "2005-11-06",
+          "age": 18,
+          "phone": "000 000 0004"
+        },
+        {
+          "id": "p05",
+          "printedName": "Torvessa Alunera",
+          "firstName": "Alunera",
+          "surname": "Torvessa",
+          "dateOfBirth": "2009-01-19",
+          "age": 15,
+          "phone": "000 000 0005"
+        },
+        {
+          "id": "p06",
+          "printedName": "Virello Elaria",
+          "firstName": "Elaria",
+          "surname": "Virello",
+          "dateOfBirth": "2004-04-28",
+          "age": 20,
+          "phone": "000 000 0006"
+        },
+        {
+          "id": "p07",
+          "printedName": "Della Veralune Nireva",
+          "firstName": "Nireva",
+          "surname": "Della Veralune",
+          "dateOfBirth": "2007-07-09",
+          "age": 17,
+          "phone": "000 000 0007"
+        },
+        {
+          "id": "p08",
+          "printedName": "Solmeria Thalira Quenora",
+          "firstName": "Thalira Quenora",
+          "surname": "Solmeria",
+          "dateOfBirth": "2005-09-12",
+          "age": 18,
+          "phone": "000 000 0008",
+          "ambiguousCompound": true
+        },
+        {
+          "id": "p09",
+          "printedName": "Qavornellia Liorea",
+          "firstName": "Liorea",
+          "surname": "Qavornellia",
+          "dateOfBirth": "2008-12-01",
+          "age": 15,
+          "phone": "000 000 0009"
+        },
+        {
+          "id": "p10",
+          "printedName": "Nivaldi Veloria",
+          "firstName": "Veloria",
+          "surname": "Nivaldi",
+          "dateOfBirth": "2006-03-25",
+          "age": 18,
+          "phone": "000 000 0010"
+        }
+      ]
+    },
+    {
+      "file": "roster-dim-corner.png",
+      "rotationDegrees": -1.05,
+      "lighting": "mild-bottom-left-vignette",
+      "rowRules": true,
+      "layout": "standard",
+      "columnFragmentationExpected": false,
+      "people": [
+        {
+          "id": "p01",
+          "printedName": "Veldoro Nurelia",
+          "firstName": "Nurelia",
+          "surname": "Veldoro",
+          "dateOfBirth": "2008-02-03",
+          "age": 16,
+          "phone": "000 000 0001"
+        },
+        {
+          "id": "p02",
+          "printedName": "Dalla Brumera Zovelia",
+          "firstName": "Zovelia",
+          "surname": "Dalla Brumera",
+          "dateOfBirth": "2007-05-14",
+          "age": 17,
+          "phone": "000 000 0002"
+        },
+        {
+          "id": "p03",
+          "printedName": "Fiorvane Drelina",
+          "firstName": "Drelina",
+          "surname": "Fiorvane",
+          "dateOfBirth": "2006-08-21",
+          "age": 18,
+          "phone": "000 000 0003"
+        },
+        {
+          "id": "p04",
+          "printedName": "Da Nuvellia Elareno",
+          "firstName": "Elareno",
+          "surname": "Da Nuvellia",
+          "dateOfBirth": "2005-11-06",
+          "age": 18,
+          "phone": "000 000 0004"
+        },
+        {
+          "id": "p05",
+          "printedName": "Torvessa Alunera",
+          "firstName": "Alunera",
+          "surname": "Torvessa",
+          "dateOfBirth": "2009-01-19",
+          "age": 15,
+          "phone": "000 000 0005"
+        },
+        {
+          "id": "p06",
+          "printedName": "Virello Elaria",
+          "firstName": "Elaria",
+          "surname": "Virello",
+          "dateOfBirth": "2004-04-28",
+          "age": 20,
+          "phone": "000 000 0006"
+        },
+        {
+          "id": "p07",
+          "printedName": "Della Veralune Nireva",
+          "firstName": "Nireva",
+          "surname": "Della Veralune",
+          "dateOfBirth": "2007-07-09",
+          "age": 17,
+          "phone": "000 000 0007"
+        },
+        {
+          "id": "p08",
+          "printedName": "Solmeria Thalira Quenora",
+          "firstName": "Thalira Quenora",
+          "surname": "Solmeria",
+          "dateOfBirth": "2005-09-12",
+          "age": 18,
+          "phone": "000 000 0008",
+          "ambiguousCompound": true
+        },
+        {
+          "id": "p09",
+          "printedName": "Qavornellia Liorea",
+          "firstName": "Liorea",
+          "surname": "Qavornellia",
+          "dateOfBirth": "2008-12-01",
+          "age": 15,
+          "phone": "000 000 0009"
+        },
+        {
+          "id": "p10",
+          "printedName": "Nivaldi Veloria",
+          "firstName": "Veloria",
+          "surname": "Nivaldi",
+          "dateOfBirth": "2006-03-25",
+          "age": 18,
+          "phone": "000 000 0010"
+        }
+      ]
+    },
+    {
+      "file": "roster-wide-columns.png",
+      "rotationDegrees": -0.45,
+      "lighting": "soft-right-falloff",
+      "rowRules": true,
+      "layout": "wide-columns",
+      "columnFragmentationExpected": true,
+      "people": [
+        {
+          "id": "p01",
+          "printedName": "Veldoro Nurelia",
+          "firstName": "Nurelia",
+          "surname": "Veldoro",
+          "dateOfBirth": "2008-02-03",
+          "age": 16,
+          "phone": "000 000 0001"
+        },
+        {
+          "id": "p02",
+          "printedName": "Dalla Brumera Zovelia",
+          "firstName": "Zovelia",
+          "surname": "Dalla Brumera",
+          "dateOfBirth": "2007-05-14",
+          "age": 17,
+          "phone": "000 000 0002"
+        },
+        {
+          "id": "p03",
+          "printedName": "Fiorvane Drelina",
+          "firstName": "Drelina",
+          "surname": "Fiorvane",
+          "dateOfBirth": "2006-08-21",
+          "age": 18,
+          "phone": "000 000 0003"
+        },
+        {
+          "id": "p04",
+          "printedName": "Da Nuvellia Elareno",
+          "firstName": "Elareno",
+          "surname": "Da Nuvellia",
+          "dateOfBirth": "2005-11-06",
+          "age": 18,
+          "phone": "000 000 0004"
+        },
+        {
+          "id": "p05",
+          "printedName": "Torvessa Alunera",
+          "firstName": "Alunera",
+          "surname": "Torvessa",
+          "dateOfBirth": "2009-01-19",
+          "age": 15,
+          "phone": "000 000 0005"
+        },
+        {
+          "id": "p06",
+          "printedName": "Virello Elaria",
+          "firstName": "Elaria",
+          "surname": "Virello",
+          "dateOfBirth": "2004-04-28",
+          "age": 20,
+          "phone": "000 000 0006"
+        },
+        {
+          "id": "p07",
+          "printedName": "Della Veralune Nireva",
+          "firstName": "Nireva",
+          "surname": "Della Veralune",
+          "dateOfBirth": "2007-07-09",
+          "age": 17,
+          "phone": "000 000 0007"
+        },
+        {
+          "id": "p08",
+          "printedName": "Solmeria Thalira Quenora",
+          "firstName": "Thalira Quenora",
+          "surname": "Solmeria",
+          "dateOfBirth": "2005-09-12",
+          "age": 18,
+          "phone": "000 000 0008",
+          "ambiguousCompound": true
+        },
+        {
+          "id": "p09",
+          "printedName": "Qavornellia Liorea",
+          "firstName": "Liorea",
+          "surname": "Qavornellia",
+          "dateOfBirth": "2008-12-01",
+          "age": 15,
+          "phone": "000 000 0009"
+        },
+        {
+          "id": "p10",
+          "printedName": "Nivaldi Veloria",
+          "firstName": "Veloria",
+          "surname": "Nivaldi",
+          "dateOfBirth": "2006-03-25",
+          "age": 18,
+          "phone": "000 000 0010"
+        }
+      ]
+    }
+  ]
+}

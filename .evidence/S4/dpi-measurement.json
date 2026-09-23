@@ -1,0 +1,684 @@
+{
+  "milestone": "S4",
+  "measurementStage": "The DPI sweep below preceded the later preservation of unresolved weak age fragments. It remains the historical same-parser comparison for DPI selection; current production-candidate counts are recorded separately below and in fragmentation-measurement.json.",
+  "currentIntegrityPreservingCandidate": {
+    "userDefinedDpi": 180,
+    "candidateRowsBySample": [20, 21, 29, 21, 20],
+    "fieldsFlaggedBySample": [15, 18, 35, 23, 5],
+    "candidateRowsAcrossFive": 111,
+    "fieldsFlaggedAcrossFive": 96,
+    "reasonForDifference": "A weak unresolved age reading on the fourth photo remains as an incomplete row for manual review instead of being dropped."
+  },
+  "runtime": "Node v24.19.0",
+  "engine": "Tesseract.js 7, Italian LSTM, PSM.AUTO",
+  "source": "Five orientation-normalized private roster photos; aggregate-only reporting",
+  "reviewSettings": {
+    "minFieldConfidence": 70,
+    "lowConfidenceTextRemainsVisible": true,
+    "telephoneRead": false,
+    "nameOrder": "automatic inference",
+    "referenceDate": "2026-09-22",
+    "measurement": "measure:scan-review; fieldsFlagged = missingFields + lowConfidenceFields"
+  },
+  "baseline": {
+    "userDefinedDpi": "automatic",
+    "candidateRows": 127.0,
+    "fieldsFlagged": 288.0,
+    "missingFields": 143.0,
+    "lowConfidenceFields": 145.0,
+    "perPhoto": [
+      {
+        "sample": 1,
+        "candidateRows": 25,
+        "fieldsFlagged": 53,
+        "missingFields": 23,
+        "lowConfidenceFields": 30,
+        "lowConfidenceByField": {
+          "firstName": 8,
+          "surname": 17,
+          "dateOfBirth": 5
+        },
+        "recognitionMs": 7441
+      },
+      {
+        "sample": 2,
+        "candidateRows": 17,
+        "fieldsFlagged": 30,
+        "missingFields": 11,
+        "lowConfidenceFields": 19,
+        "lowConfidenceByField": {
+          "firstName": 5,
+          "surname": 12,
+          "dateOfBirth": 2
+        },
+        "recognitionMs": 7157
+      },
+      {
+        "sample": 3,
+        "candidateRows": 40,
+        "fieldsFlagged": 136,
+        "missingFields": 77,
+        "lowConfidenceFields": 59,
+        "lowConfidenceByField": {
+          "firstName": 18,
+          "surname": 19,
+          "dateOfBirth": 22
+        },
+        "recognitionMs": 5226
+      },
+      {
+        "sample": 4,
+        "candidateRows": 16,
+        "fieldsFlagged": 26,
+        "missingFields": 9,
+        "lowConfidenceFields": 17,
+        "lowConfidenceByField": {
+          "firstName": 5,
+          "surname": 7,
+          "dateOfBirth": 5
+        },
+        "recognitionMs": 10366
+      },
+      {
+        "sample": 5,
+        "candidateRows": 29,
+        "fieldsFlagged": 43,
+        "missingFields": 23,
+        "lowConfidenceFields": 20,
+        "lowConfidenceByField": {
+          "firstName": 5,
+          "surname": 8,
+          "dateOfBirth": 7
+        },
+        "recognitionMs": 3763
+      }
+    ]
+  },
+  "results": [
+    {
+      "userDefinedDpi": 180,
+      "candidateRows": 110.0,
+      "fieldsFlagged": 92.0,
+      "missingFields": 27.0,
+      "lowConfidenceFields": 65.0,
+      "meanRecognitionMs": 5209.0,
+      "perPhoto": [
+        {
+          "sample": 1,
+          "candidateRows": 20,
+          "fieldsFlagged": 15,
+          "missingFields": 1,
+          "lowConfidenceFields": 14,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 13,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 2,
+          "compoundAmbiguityRowsWithFieldFlags": 2,
+          "recognitionMs": 5274
+        },
+        {
+          "sample": 2,
+          "candidateRows": 21,
+          "fieldsFlagged": 18,
+          "missingFields": 3,
+          "lowConfidenceFields": 15,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 13,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 2,
+          "compoundAmbiguityRowsWithFieldFlags": 2,
+          "recognitionMs": 6158
+        },
+        {
+          "sample": 3,
+          "candidateRows": 29,
+          "fieldsFlagged": 35,
+          "missingFields": 18,
+          "lowConfidenceFields": 17,
+          "lowConfidenceByField": {
+            "firstName": 5,
+            "surname": 7,
+            "dateOfBirth": 5
+          },
+          "compoundAmbiguityRows": 7,
+          "compoundAmbiguityRowsWithFieldFlags": 7,
+          "recognitionMs": 5006
+        },
+        {
+          "sample": 4,
+          "candidateRows": 20,
+          "fieldsFlagged": 19,
+          "missingFields": 5,
+          "lowConfidenceFields": 14,
+          "lowConfidenceByField": {
+            "firstName": 5,
+            "surname": 8,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 5,
+          "compoundAmbiguityRowsWithFieldFlags": 5,
+          "recognitionMs": 5904
+        },
+        {
+          "sample": 5,
+          "candidateRows": 20,
+          "fieldsFlagged": 5,
+          "missingFields": 0,
+          "lowConfidenceFields": 5,
+          "lowConfidenceByField": {
+            "firstName": 0,
+            "surname": 5,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 0,
+          "recognitionMs": 3703
+        }
+      ]
+    },
+    {
+      "userDefinedDpi": 260,
+      "candidateRows": 129.0,
+      "fieldsFlagged": 226.0,
+      "missingFields": 100.0,
+      "lowConfidenceFields": 126.0,
+      "meanRecognitionMs": 5400.0,
+      "perPhoto": [
+        {
+          "sample": 1,
+          "candidateRows": 21,
+          "fieldsFlagged": 17,
+          "missingFields": 2,
+          "lowConfidenceFields": 15,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 13,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 1,
+          "recognitionMs": 5909
+        },
+        {
+          "sample": 2,
+          "candidateRows": 21,
+          "fieldsFlagged": 20,
+          "missingFields": 3,
+          "lowConfidenceFields": 17,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 15,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 2,
+          "compoundAmbiguityRowsWithFieldFlags": 2,
+          "recognitionMs": 5647
+        },
+        {
+          "sample": 3,
+          "candidateRows": 46,
+          "fieldsFlagged": 164,
+          "missingFields": 91,
+          "lowConfidenceFields": 73,
+          "lowConfidenceByField": {
+            "firstName": 22,
+            "surname": 27,
+            "dateOfBirth": 24
+          },
+          "compoundAmbiguityRows": 25,
+          "compoundAmbiguityRowsWithFieldFlags": 25,
+          "recognitionMs": 5706
+        },
+        {
+          "sample": 4,
+          "candidateRows": 21,
+          "fieldsFlagged": 20,
+          "missingFields": 4,
+          "lowConfidenceFields": 16,
+          "lowConfidenceByField": {
+            "firstName": 3,
+            "surname": 12,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 5,
+          "compoundAmbiguityRowsWithFieldFlags": 5,
+          "recognitionMs": 5862
+        },
+        {
+          "sample": 5,
+          "candidateRows": 20,
+          "fieldsFlagged": 5,
+          "missingFields": 0,
+          "lowConfidenceFields": 5,
+          "lowConfidenceByField": {
+            "firstName": 0,
+            "surname": 5,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 0,
+          "recognitionMs": 3875
+        }
+      ]
+    },
+    {
+      "userDefinedDpi": 270,
+      "candidateRows": 129.0,
+      "fieldsFlagged": 224.0,
+      "missingFields": 100.0,
+      "lowConfidenceFields": 124.0,
+      "meanRecognitionMs": 5155.0,
+      "perPhoto": [
+        {
+          "sample": 1,
+          "candidateRows": 21,
+          "fieldsFlagged": 16,
+          "missingFields": 2,
+          "lowConfidenceFields": 14,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 12,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 1,
+          "recognitionMs": 5553
+        },
+        {
+          "sample": 2,
+          "candidateRows": 21,
+          "fieldsFlagged": 20,
+          "missingFields": 3,
+          "lowConfidenceFields": 17,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 15,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 2,
+          "compoundAmbiguityRowsWithFieldFlags": 2,
+          "recognitionMs": 5589
+        },
+        {
+          "sample": 3,
+          "candidateRows": 46,
+          "fieldsFlagged": 164,
+          "missingFields": 91,
+          "lowConfidenceFields": 73,
+          "lowConfidenceByField": {
+            "firstName": 22,
+            "surname": 27,
+            "dateOfBirth": 24
+          },
+          "compoundAmbiguityRows": 25,
+          "compoundAmbiguityRowsWithFieldFlags": 25,
+          "recognitionMs": 4859
+        },
+        {
+          "sample": 4,
+          "candidateRows": 21,
+          "fieldsFlagged": 19,
+          "missingFields": 4,
+          "lowConfidenceFields": 15,
+          "lowConfidenceByField": {
+            "firstName": 3,
+            "surname": 11,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 5,
+          "compoundAmbiguityRowsWithFieldFlags": 5,
+          "recognitionMs": 6000
+        },
+        {
+          "sample": 5,
+          "candidateRows": 20,
+          "fieldsFlagged": 5,
+          "missingFields": 0,
+          "lowConfidenceFields": 5,
+          "lowConfidenceByField": {
+            "firstName": 0,
+            "surname": 5,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 0,
+          "recognitionMs": 3773
+        }
+      ]
+    },
+    {
+      "userDefinedDpi": 280,
+      "candidateRows": 125.0,
+      "fieldsFlagged": 214.0,
+      "missingFields": 95.0,
+      "lowConfidenceFields": 119.0,
+      "meanRecognitionMs": 5364.0,
+      "perPhoto": [
+        {
+          "sample": 1,
+          "candidateRows": 20,
+          "fieldsFlagged": 13,
+          "missingFields": 0,
+          "lowConfidenceFields": 13,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 12,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 1,
+          "recognitionMs": 5318
+        },
+        {
+          "sample": 2,
+          "candidateRows": 20,
+          "fieldsFlagged": 14,
+          "missingFields": 1,
+          "lowConfidenceFields": 13,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 12,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 1,
+          "recognitionMs": 5793
+        },
+        {
+          "sample": 3,
+          "candidateRows": 45,
+          "fieldsFlagged": 162,
+          "missingFields": 90,
+          "lowConfidenceFields": 72,
+          "lowConfidenceByField": {
+            "firstName": 22,
+            "surname": 27,
+            "dateOfBirth": 23
+          },
+          "compoundAmbiguityRows": 25,
+          "compoundAmbiguityRowsWithFieldFlags": 25,
+          "recognitionMs": 4956
+        },
+        {
+          "sample": 4,
+          "candidateRows": 20,
+          "fieldsFlagged": 20,
+          "missingFields": 4,
+          "lowConfidenceFields": 16,
+          "lowConfidenceByField": {
+            "firstName": 4,
+            "surname": 11,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 5,
+          "compoundAmbiguityRowsWithFieldFlags": 5,
+          "recognitionMs": 6223
+        },
+        {
+          "sample": 5,
+          "candidateRows": 20,
+          "fieldsFlagged": 5,
+          "missingFields": 0,
+          "lowConfidenceFields": 5,
+          "lowConfidenceByField": {
+            "firstName": 0,
+            "surname": 5,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 0,
+          "recognitionMs": 4531
+        }
+      ]
+    },
+    {
+      "userDefinedDpi": 290,
+      "candidateRows": 126.0,
+      "fieldsFlagged": 216.0,
+      "missingFields": 96.0,
+      "lowConfidenceFields": 120.0,
+      "meanRecognitionMs": 6566.0,
+      "perPhoto": [
+        {
+          "sample": 1,
+          "candidateRows": 20,
+          "fieldsFlagged": 14,
+          "missingFields": 0,
+          "lowConfidenceFields": 14,
+          "lowConfidenceByField": {
+            "firstName": 1,
+            "surname": 13,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 1,
+          "recognitionMs": 6847
+        },
+        {
+          "sample": 2,
+          "candidateRows": 21,
+          "fieldsFlagged": 18,
+          "missingFields": 3,
+          "lowConfidenceFields": 15,
+          "lowConfidenceByField": {
+            "firstName": 2,
+            "surname": 12,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 1,
+          "recognitionMs": 8494
+        },
+        {
+          "sample": 3,
+          "candidateRows": 45,
+          "fieldsFlagged": 162,
+          "missingFields": 90,
+          "lowConfidenceFields": 72,
+          "lowConfidenceByField": {
+            "firstName": 22,
+            "surname": 27,
+            "dateOfBirth": 23
+          },
+          "compoundAmbiguityRows": 25,
+          "compoundAmbiguityRowsWithFieldFlags": 25,
+          "recognitionMs": 6585
+        },
+        {
+          "sample": 4,
+          "candidateRows": 20,
+          "fieldsFlagged": 17,
+          "missingFields": 3,
+          "lowConfidenceFields": 14,
+          "lowConfidenceByField": {
+            "firstName": 3,
+            "surname": 10,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 4,
+          "compoundAmbiguityRowsWithFieldFlags": 4,
+          "recognitionMs": 6840
+        },
+        {
+          "sample": 5,
+          "candidateRows": 20,
+          "fieldsFlagged": 5,
+          "missingFields": 0,
+          "lowConfidenceFields": 5,
+          "lowConfidenceByField": {
+            "firstName": 0,
+            "surname": 5,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 0,
+          "recognitionMs": 4065
+        }
+      ]
+    },
+    {
+      "userDefinedDpi": 300,
+      "candidateRows": 126.0,
+      "fieldsFlagged": 228.0,
+      "missingFields": 104.0,
+      "lowConfidenceFields": 124.0,
+      "meanRecognitionMs": 5452.0,
+      "perPhoto": [
+        {
+          "sample": 1,
+          "candidateRows": 20,
+          "fieldsFlagged": 19,
+          "missingFields": 3,
+          "lowConfidenceFields": 16,
+          "lowConfidenceByField": {
+            "firstName": 3,
+            "surname": 13,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 2,
+          "compoundAmbiguityRowsWithFieldFlags": 2,
+          "recognitionMs": 5993
+        },
+        {
+          "sample": 2,
+          "candidateRows": 21,
+          "fieldsFlagged": 24,
+          "missingFields": 7,
+          "lowConfidenceFields": 17,
+          "lowConfidenceByField": {
+            "firstName": 3,
+            "surname": 13,
+            "dateOfBirth": 1
+          },
+          "compoundAmbiguityRows": 2,
+          "compoundAmbiguityRowsWithFieldFlags": 2,
+          "recognitionMs": 6298
+        },
+        {
+          "sample": 3,
+          "candidateRows": 46,
+          "fieldsFlagged": 164,
+          "missingFields": 91,
+          "lowConfidenceFields": 73,
+          "lowConfidenceByField": {
+            "firstName": 22,
+            "surname": 27,
+            "dateOfBirth": 24
+          },
+          "compoundAmbiguityRows": 25,
+          "compoundAmbiguityRowsWithFieldFlags": 25,
+          "recognitionMs": 5035
+        },
+        {
+          "sample": 4,
+          "candidateRows": 19,
+          "fieldsFlagged": 17,
+          "missingFields": 3,
+          "lowConfidenceFields": 14,
+          "lowConfidenceByField": {
+            "firstName": 3,
+            "surname": 11,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 3,
+          "compoundAmbiguityRowsWithFieldFlags": 3,
+          "recognitionMs": 6209
+        },
+        {
+          "sample": 5,
+          "candidateRows": 20,
+          "fieldsFlagged": 4,
+          "missingFields": 0,
+          "lowConfidenceFields": 4,
+          "lowConfidenceByField": {
+            "firstName": 0,
+            "surname": 4,
+            "dateOfBirth": 0
+          },
+          "compoundAmbiguityRows": 1,
+          "compoundAmbiguityRowsWithFieldFlags": 0,
+          "recognitionMs": 3726
+        }
+      ]
+    }
+  ],
+  "clearestSample": {
+    "sample": 5,
+    "expectedStudentRows": 20,
+    "expectedStaffRows": 5,
+    "at180": {
+      "candidateRows": 20,
+      "missingFields": 0,
+      "lowConfidenceFields": 5,
+      "lowConfidenceByField": {
+        "firstName": 0,
+        "surname": 5,
+        "dateOfBirth": 0
+      },
+      "compoundAmbiguityRows": 1,
+      "compoundAmbiguityRowsWithFieldFlags": 0,
+      "trueAudit": {
+        "studentRowsWithOneCandidate": 20,
+        "missingTrueStudentRows": 0,
+        "duplicateOrMergeRows": 0,
+        "candidatesInStaffBlock": 0,
+        "exactNameCellsAtCorrectRow": 19,
+        "correctGivenNameFields": 19,
+        "correctSurnameFields": 18,
+        "wrongGivenNameFields": 1,
+        "wrongGivenNameFieldsFlagged": 0,
+        "wrongSurnameFields": 2,
+        "wrongSurnameFieldsFlagged": 1,
+        "wrongSurnameFieldsUnflagged": 1,
+        "correctDatesAtCorrectRow": 20,
+        "correctPrintedAgesAtCorrectRow": 20,
+        "crossRowNameAssociations": 0,
+        "crossRowDateAssociations": 0,
+        "fieldsOutsideTrueRow": 0
+      }
+    },
+    "at300": {
+      "candidateRows": 20,
+      "missingFields": 0,
+      "lowConfidenceFields": 4,
+      "lowConfidenceByField": {
+        "firstName": 0,
+        "surname": 4,
+        "dateOfBirth": 0
+      },
+      "compoundAmbiguityRows": 1,
+      "compoundAmbiguityRowsWithFieldFlags": 0,
+      "textComparisonTo180": {
+        "firstNameFieldsChanged": 1,
+        "surnameFieldsChanged": 0,
+        "dateOfBirthFieldsChanged": 0,
+        "surnameConfidenceThresholdCrossings": 1
+      },
+      "correctSurnameFields": 18,
+      "wrongSurnameFields": 2,
+      "wrongSurnameFieldsFlagged": 1,
+      "wrongSurnameFieldsUnflagged": 1,
+      "correctGivenNameFields": 18,
+      "wrongGivenNameFields": 2,
+      "wrongGivenNameFieldsFlagged": 0,
+      "oneGivenNameChanged180To300": true,
+      "oneChangedGivenNameCorrectness": "correct-to-wrong",
+      "wrongSurnameFieldsInCompoundAmbiguityRow": 1,
+      "compoundAmbiguityRows": 1,
+      "compoundAmbiguityRowsWithFieldFlags": 0,
+      "note": "Private row-to-truth audit: at both DPI settings, one of two wrong surname fields is low-confidence flagged and one is unflagged. The wrong surname associated with the three-part-name ambiguity is on a row without any field-confidence flag. At 300 DPI one formerly correct given name becomes wrong; neither wrong given-name field is low-confidence flagged."
+    }
+  },
+  "assessment": "DPI 180 is the fixed production candidate because it has the lowest aggregate flags and preserves the audited clear-photo surname readings. No intermediate setting from 260–290 reaches fewer than five flags on the clearest sample; the shadowed sample (sample 3) still produces 45–46 candidate rows and 162–164 flags from 260–300. DPI 300 reaches four flags on sample 5, but one wrong surname remains unflagged and an additional wrong given name is introduced without a flag. That lower count is not safer review.",
+  "autoCliParity": {
+    "sample": 5,
+    "candidateRows": 29,
+    "fieldsFlagged": 43,
+    "matchesPreparedBaseline": true
+  },
+  "privacy": "Contains aggregate counts only; no image paths, OCR strings, student names, dates of birth, or telephone numbers."
+}

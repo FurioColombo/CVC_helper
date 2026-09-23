@@ -690,7 +690,7 @@ ambiguous compound blank and flagged instead of guessed.
 
 Verified on the supplied roster photograph through the running interface: the
 order section appears, nineteen rows offer a swap, and one tap turns
-`Altomare / Valeria` into `Valeria / Altomare`. Covered by four capability tests
+`Veldoro / Valeria` into `Valeria / Veldoro`. Covered by four capability tests
 and four component tests.
 
 The full-screen document editor from this correction is **not implemented**.
@@ -1746,7 +1746,7 @@ mechanism and wrong about the reason: it is not that Italian names defeat the
 ending rule, it is that the rule is applied to the wrong word.
 
 **H3 is demoted.** Exactly one student on this sheet is written with three words
-and no particle. The blanking costs 3 fields, not 60. The two `De giuli` rows
+and no particle. The blanking costs 3 fields, not 60. The two `De veltri` rows
 resolve correctly once the order is answered.
 
 **H4 is promoted, and it is the owner's call.** Line fragmentation appears on
@@ -1759,11 +1759,11 @@ now the largest remaining cause, and un-deferring it needs the owner's word.
 
 **The residual 36, named:** ~10 fragmentation, 3 the ambiguous compound, 2 the
 two spurious rows' own names, 21 low confidence on readings that are in fact
-correct (Graiff at 13, Bragagnolo at 34, Fassi at 35, dates at 42 and 44). The
+correct (Travio at 13, Savagnoli at 34, Pordelli at 35, dates at 42 and 44). The
 last group is *not* to be cleared by lowering the threshold: one flagged surname
 read "Atessandro" for "Alessandro", and dropping the threshold would have passed
 it silently. The sheet does print the age beside the date — "24 anni -
-02/02/2002" — which corroborates it without touching any threshold; its honest
+01/01/2002" — which corroborates it without touching any threshold; its honest
 limit is that the age confirms only the year, so a misread day would pass too.
 Recorded as an option, not taken unilaterally.
 
@@ -1813,9 +1813,9 @@ every row's name cell, count how many rows each position recognises, and take th
 position with more. On the owner's sheet the last word wins twenty to nothing:
 Valeria, Roberto, Leonardo, Jacopo, Massimo, Gregorio, Teodoro, Nicola, Pietro,
 Leonardo, Edoardo, Caterina, Alessandro, Caterina, Paolo, Lisa, Vittoria, Luca,
-Simone — against Altomare, Bertani, Bragagnolo, Bussotti, Cortese, Didonè, Fassi,
-Graiff, Merluzzi, Magnoni, Miglierina, Mosca, Passerini, Penati, Pietra, Rinaldi,
-Spagnoli.
+Simone — against Veldoro, Dervani, Savagnoli, Lissotti, Feriani, Vironè, Pordelli,
+Travio, Vernuzzi, Dolmari, Naverina, Liosca, Rovellini, Vareni, Cedra, Norali,
+Esporli.
 
 **One order for the whole sheet**, as the owner says: a roster is printed from one
 template. Decide per page, not per row.
@@ -1899,7 +1899,7 @@ età -> sì!"_ And on what the app should show: _"voglio un cambio comunque ->
 riportami nella app solo età, non data di nascita. puoi usare data di nascita per
 confermare età."_
 
-The sheet prints both, side by side — `24 anni - 02/02/2002`. They are two
+The sheet prints both, side by side — `24 anni - 01/01/2002`. They are two
 independent readings of one fact, so each can vouch for the other without any
 threshold being touched. On the owner's crop nine dates were flagged below 70 and
 were correct; corroboration clears them on evidence rather than by relaxing a
@@ -1939,8 +1939,8 @@ date implies agrees with the age as printed, neither field is flagged on
 confidence alone. The tolerance is one year, because a sheet is printed before
 the course and a birthday can fall in between.
 
-**The limit, stated.** The age confirms the **year** only. `02/02/2002` and
-`07/02/2002` imply the same age, so a misread day is corroborated too. That is
+**The limit, stated.** The age confirms the **year** only. `01/01/2002` and
+`12/12/2002` imply the same age, so a misread day is corroborated too. That is
 acceptable where the age is what the app now shows and the day is no longer the
 field being confirmed — and it is the reason this milestone pairs the two
 instructions instead of doing the corroboration alone.

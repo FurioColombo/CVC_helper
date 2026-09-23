@@ -546,6 +546,7 @@ export function StudentScan({
     useState<StudentNameOrderInference | null>(null)
   const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set())
   const [saveError, setSaveError] = useState(false)
+  const [imageNeedsRetake, setImageNeedsRetake] = useState(false)
   const [acquisition, setAcquisition] = useState<Acquisition>()
 
   useEffect(() => {
@@ -584,6 +585,7 @@ export function StudentScan({
     setCandidates([])
     setInvalidIds(new Set())
     setSaveError(false)
+    setImageNeedsRetake(false)
     try {
       const result = await scan(
         file,
@@ -599,6 +601,10 @@ export function StudentScan({
         setState("unsuitable")
         return
       }
+      // A weak page can still contain useful words. Warn and offer a retake,
+      // while keeping every reading available for correction instead of
+      // treating a couple of plausible fragments as a trustworthy roster.
+      setImageNeedsRetake(result.aggregateConfidence < MIN_FIELD_CONFIDENCE)
       const scanned = result.candidates.map((candidate, index) => ({
         ...candidate,
         id: `${candidate.sourceId}-${index + 1}`,
@@ -933,6 +939,39 @@ export function StudentScan({
               </span>
             </div>
           </section>
+
+          {imageNeedsRetake && (
+            <section
+              className="mb-3 rounded-2xl border border-[#f79009] bg-[#fff9ef] p-3"
+              role="alert"
+            >
+              <h2 className="text-sm font-black">Immagine poco leggibile</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                La lettura è incerta. Rifai la foto o scegli un’immagine più
+                nitida; i campi letti restano qui per la verifica.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  className="min-h-11"
+                  onClick={() => chooseAnother("camera")}
+                  type="button"
+                  variant="secondary"
+                >
+                  <Camera aria-hidden="true" className="size-4" />
+                  Rifai la foto
+                </Button>
+                <Button
+                  className="min-h-11"
+                  onClick={() => chooseAnother("gallery")}
+                  type="button"
+                  variant="secondary"
+                >
+                  <ImagePlus aria-hidden="true" className="size-4" />
+                  Scegli dalla galleria
+                </Button>
+              </div>
+            </section>
+          )}
 
           <section className="mb-3 rounded-2xl border bg-primary/5 p-3">
             <div className="flex items-start gap-3">

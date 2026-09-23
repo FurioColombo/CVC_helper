@@ -55,7 +55,7 @@
       "id": "S1-H3-AMBIGUOUS-COMPOUND",
       "hypothesis": "Answering 'Cognome · Nome' blanks any name of three or more words that does not start with a recognised particle — firstName, surname and sex all become empty — so each such row costs 3 missing fields.",
       "verdict": "CONFIRMED as a mechanism, UNATTRIBUTED as the cause",
-      "measurement": "Six synthetic rows in the shape a real roster has: under 'Cognome · Nome', 'De Angelis Luca' and 'Di Marco Paolo' split correctly on their particles, but 'Cortese Massimo Maria' and 'Bianchi Anna Chiara' blank to 3 missing fields each. 2 of 6 rows, 6 missing fields.",
+      "measurement": "Six synthetic rows in the shape a real roster has: under 'Cognome · Nome', 'De Angelis Luca' and 'Di Marco Paolo' split correctly on their particles, but 'Feriani Massimo Maria' and 'Bianchi Anna Chiara' blank to 3 missing fields each. 2 of 6 rows, 6 missing fields.",
       "arithmetic": "67 / 3 is roughly 22 rows. A roster of that size where most rows carry a middle name or a two-word surname without a particle would produce a number of this order. That is a fit, not a finding.",
       "whyItIsNotFixedHere": "The plan says measure before changing anything, and this is a rule that was written deliberately — the words as read survive in nameReading.raw and the screen shows them under 'Letto:', so nothing is lost, only retyped. Whether to offer a most-likely split marked for attention instead of a blank is a real question, and it should be answered against the owner's sheet rather than against six names I chose."
     },

@@ -21,8 +21,8 @@
     "rows": 20,
     "expected": 20,
     "fieldsToComplete": "36 before, 20 after, because the sex suggestion now fills a field per row",
-    "recovered": "Bertani Roberto, which had fallen below the row threshold while carrying stray tokens",
-    "nameOrder": "one tap turns Altomare/Valeria into Valeria/Altomare across the sheet"
+    "recovered": "Dervani Roberto, which had fallen below the row threshold while carrying stray tokens",
+    "nameOrder": "one tap turns Veldoro/Valeria into Valeria/Veldoro across the sheet"
   },
   "verification": "verify:quick passes with 389 unit and component tests; the u04 browser journey passes on all three device projects at 320x664 including the 200 percent text pass; the production build and repository checks pass.",
   "notVerified": "Pinch zoom and the line gesture have not been exercised on a physical touch screen."

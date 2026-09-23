@@ -234,6 +234,14 @@ const trackedFiles = execFileSync("git", ["ls-files", "-z"], {
 })
   .split("\0")
   .filter(Boolean)
+const trackedPrivateFiles = trackedFiles.filter((file) =>
+  file.startsWith("data/private/"),
+)
+assert.equal(
+  trackedPrivateFiles.length,
+  0,
+  `Private scan inputs and OCR experiments must not be tracked (${trackedPrivateFiles.length} found)`,
+)
 const absolutePathHits = []
 for (const file of trackedFiles) {
   if (BINARY_EXTENSION.test(file)) continue
