@@ -206,4 +206,192 @@ describe("StudentScanImageEditorDocument", () => {
     await user.click(useArea)
     await waitFor(() => expect(onUse).toHaveBeenCalledOnce())
   })
+
+  it("offers accessible 44px edge handles with keyboard resizing", async () => {
+    await openEditor()
+
+    const edgeLabels = [
+      "Ridimensiona ritaglio dal bordo superiore",
+      "Ridimensiona ritaglio dal bordo destro",
+      "Ridimensiona ritaglio dal bordo inferiore",
+      "Ridimensiona ritaglio dal bordo sinistro",
+    ]
+    const handles = edgeLabels.map((label) =>
+      screen.getByRole("button", { name: label }),
+    )
+
+    for (const handle of handles) {
+      expect(handle.className).toContain("size-11")
+    }
+    expect(handles[0]!.className).toContain("top-0")
+    expect(handles[0]!.style.transform).toContain("translate(-50%, 0)")
+    expect(handles[1]!.className).toContain("right-0")
+    expect(handles[1]!.style.transform).toContain("translate(0, -50%)")
+    expect(handles[2]!.className).toContain("bottom-0")
+    expect(handles[2]!.style.transform).toContain("translate(-50%, 0)")
+    expect(handles[3]!.className).toContain("left-0")
+    expect(handles[3]!.style.transform).toContain("translate(0, -50%)")
+    expect(handles.map((handle) => handle.style.transformOrigin)).toEqual([
+      "50% 0%",
+      "100% 50%",
+      "50% 100%",
+      "0% 50%",
+    ])
+    const cornerLabels = [
+      "Ridimensiona ritaglio dall’angolo in alto a sinistra",
+      "Ridimensiona ritaglio dall’angolo in alto a destra",
+      "Ridimensiona ritaglio dall’angolo in basso a sinistra",
+      "Ridimensiona ritaglio dall’angolo in basso a destra",
+    ]
+    expect(
+      cornerLabels.map(
+        (label) =>
+          screen.getByRole("button", { name: label }).style.transformOrigin,
+      ),
+    ).toEqual(["0% 0%", "100% 0%", "0% 100%", "100% 100%"])
+
+    fireEvent.keyDown(handles[1]!, { key: "ArrowRight" })
+    expect(updateCrop).toHaveBeenCalledWith(expect.any(Object), "east", 0.01, 0)
+  })
+
+  it("moves focus from a keyboard crop handle to the ruler on pointer straightening", async () => {
+    await openEditor()
+    const edge = screen.getByRole("button", {
+      name: "Ridimensiona ritaglio dal bordo destro",
+    })
+    const corner = screen.getByRole("button", {
+      name: "Ridimensiona ritaglio dall’angolo in alto a sinistra",
+    })
+    const dial = screen.getByRole("slider", { name: "Inclinazione in gradi" })
+
+    edge.focus()
+    expect(edge).toHaveFocus()
+    expect(edge.className).toContain("focus-visible:ring-2")
+    expect(corner.className).toContain("focus-visible:ring-2")
+    expect(corner.style.transformOrigin).toBe("0% 0%")
+    expect(dial.className).toContain("focus-visible:ring-2")
+
+    fireEvent.pointerDown(dial, {
+      pointerId: 12,
+      clientX: 200,
+      clientY: 20,
+    })
+    fireEvent.pointerMove(dial, {
+      pointerId: 12,
+      clientX: 182,
+      clientY: 20,
+    })
+    fireEvent.pointerUp(dial, {
+      pointerId: 12,
+      clientX: 182,
+      clientY: 20,
+    })
+
+    expect(dial).toHaveFocus()
+    expect(edge).not.toHaveFocus()
+    expect(tiltValue()).toBeCloseTo(3)
+  })
+
+  it("rotates the image and crop together while deferring preview rendering until release", async () => {
+    await openEditor()
+    const previewCalls = createPreview.mock.calls.length
+    const dial = screen.getByRole("slider", { name: "Inclinazione in gradi" })
+
+    fireEvent.pointerDown(dial, {
+      pointerId: 8,
+      clientX: 200,
+      clientY: 20,
+    })
+    fireEvent.pointerMove(dial, {
+      pointerId: 8,
+      clientX: 182,
+      clientY: 20,
+    })
+
+    const livePreview = screen.getByTestId("student-scan-live-preview")
+    const cropFrame = screen.getByTestId("student-scan-crop-frame")
+    expect(livePreview.style.transform).toBe("rotate(3deg)")
+    expect(livePreview.contains(cropFrame)).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(130)
+    expect(createPreview).toHaveBeenCalledTimes(previewCalls)
+
+    fireEvent.pointerUp(dial, {
+      pointerId: 8,
+      clientX: 182,
+      clientY: 20,
+    })
+    await vi.advanceTimersByTimeAsync(130)
+    await waitFor(() =>
+      expect(createPreview).toHaveBeenCalledTimes(previewCalls + 1),
+    )
+    expect(createPreview).toHaveBeenLastCalledWith(expect.any(File), 3)
+    expect(livePreview.style.transform).toBe("rotate(0deg)")
+  })
+
+  it("inverse-rotates edge drags and preserves the selected output crop when preview settles", async () => {
+    const onUse = vi.fn()
+    await openEditor({ onUse })
+    const stage = stageWithBounds()
+    const selectedCrop = { x: 0.1, y: 0.2, width: 0.6, height: 0.5 }
+    updateCrop.mockReturnValue(selectedCrop)
+
+    await userEvent
+      .setup({ advanceTimers: vi.advanceTimersByTime })
+      .click(screen.getByRole("button", { name: "Ruota 90 gradi a sinistra" }))
+    expect(
+      screen.getByTestId("student-scan-live-preview").style.transform,
+    ).toBe("rotate(-90deg)")
+
+    const east = screen.getByRole("button", {
+      name: "Ridimensiona ritaglio dal bordo destro",
+    })
+    fireEvent.pointerDown(east, {
+      pointerId: 9,
+      clientX: 200,
+      clientY: 200,
+    })
+    fireEvent.pointerMove(stage, {
+      pointerId: 9,
+      clientX: 200,
+      clientY: 160,
+    })
+    fireEvent.pointerUp(stage, {
+      pointerId: 9,
+      clientX: 200,
+      clientY: 160,
+    })
+
+    expect(updateCrop).toHaveBeenCalledWith(
+      expect.any(Object),
+      "east",
+      expect.closeTo(0.1),
+      expect.closeTo(0),
+    )
+    const frame = screen.getByTestId("student-scan-crop-frame")
+    expect(frame.style.left).toBe("10%")
+    expect(frame.style.top).toBe("20%")
+    expect(frame.style.width).toBe("60%")
+    expect(frame.style.height).toBe("50%")
+
+    await vi.advanceTimersByTimeAsync(130)
+    await waitFor(() =>
+      expect(createPreview).toHaveBeenLastCalledWith(expect.any(File), -90),
+    )
+    expect(
+      screen.getByTestId("student-scan-live-preview").style.transform,
+    ).toBe("rotate(0deg)")
+    expect(frame.style.left).toBe("10%")
+    expect(frame.style.top).toBe("20%")
+    expect(frame.style.width).toBe("60%")
+    expect(frame.style.height).toBe("50%")
+
+    fireEvent.click(screen.getByRole("button", { name: "Usa questa area" }))
+    await waitFor(() => expect(onUse).toHaveBeenCalledOnce())
+    expect(prepareImage).toHaveBeenCalledWith(
+      expect.any(File),
+      -90,
+      selectedCrop,
+    )
+  })
 })

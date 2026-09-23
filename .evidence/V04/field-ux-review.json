@@ -1,0 +1,62 @@
+{
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    {
+      "artifact": ".evidence/V04/ux-screenshots/v04-320x664-full.png",
+      "scope": "Headless Chromium mobile emulation with public synthetic OCR sheet; default crop stage and handle bounds."
+    },
+    {
+      "artifact": ".evidence/V04/ux-screenshots/v04-320x664-small.png",
+      "scope": "320x664 emulation at about 20% crop; selected content remains sharp and the exterior is dimmed/subtly blurred."
+    },
+    {
+      "artifact": ".evidence/V04/ux-screenshots/v04-320x664-small-zoom-mid-tilt.png",
+      "scope": "320x664 emulation with small crop, manual zoom and live tilt."
+    },
+    {
+      "artifact": ".evidence/V04/ux-screenshots/v04-390x844-small-zoom-mid-tilt.png",
+      "scope": "390x844 emulation; sharp crop interior, dark/soft exterior and frame tracking image rotation."
+    },
+    {
+      "artifact": ".evidence/V04/ux-screenshots/v04-412x915-small.png",
+      "scope": "412x915 emulation; small-crop frame and stage bounds, no horizontal overflow."
+    },
+    {
+      "artifact": "tests/e2e/u04-scan-ui.spec.ts",
+      "scope": "Independently ran real center drags for all eight crop controls at 20% crop in Pixel 7 Chrome; each center resolved to its own target and changed only intended edges. Independently ran keyboard-edge then ruler-tilt test in Pixel 7 Chrome: 1/1 pass with live transform response 21.5 ms. Root reports final suite 12/12 across Pixel 7 Chrome, iPhone Chromium and iPhone WebKit."
+    },
+    {
+      "artifact": ".evidence/V04/editor-mid-drag.png",
+      "scope": "Visually confirmed after keyboard resize then pointer ruler tilt: yellow focus indicator is on the ruler and absent from prior crop handle; synthetic fixture."
+    },
+    {
+      "artifact": "src/features/students/StudentScanImageEditorDocument.test.tsx",
+      "scope": "Inspected regression test for focus transfer from keyboard-focused crop handle to ruler on pointer straightening; implementer reports focused tests pass."
+    }
+  ],
+  "testAndViewportScope": {
+    "viewports": [
+      "320x664",
+      "390x844",
+      "412x915"
+    ],
+    "browser": "Playwright headless Chromium, mobile emulation, hasTouch enabled, deviceScaleFactor 1; Playwright project suite also exercised configured iPhone WebKit.",
+    "interactions": [
+      "open editor from visible course/student flow",
+      "load public synthetic tests/fixtures/ocr-sheet-clear.png",
+      "keyboard-shrink crop to about 20%",
+      "measure stage/frame and eight handle boxes plus center hit tests",
+      "manual wheel zoom",
+      "drag tilt ruler to a small angle",
+      "visually inspect sharpness and exterior treatment",
+      "real pointer drag from center of each of eight handles at about 20% crop; verify center resolves to intended handle and only the intended crop edges move",
+      "keyboard crop resize followed by pointer ruler tilt; visually inspect focus indicator transfer"
+    ],
+    "runtime": "Bundled Node 24.19.0 runtime (PATH Node 18 was not used for the checks).",
+    "physicalDevice": "No physical device used or claimed.",
+    "limitation": "All viewports and pointer behavior were verified in browser emulation; no physical device or tactile verification is claimed."
+  }
+}

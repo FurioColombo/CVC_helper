@@ -1,0 +1,31 @@
+{
+  "milestone": "V04",
+  "runtime": "Node v24.19.0",
+  "commands": [
+    {
+      "command": "npm.cmd run verify:e2e -- tests/e2e/u04-scan-ui.spec.ts",
+      "result": "PASS",
+      "summary": "12/12 Playwright cases passed across Pixel 7 Chrome, iPhone 13 viewport Chromium and iPhone 13 WebKit core."
+    },
+    {
+      "command": "npm.cmd run verify:e2e -- tests/e2e/student-scan.spec.ts",
+      "result": "PASS",
+      "summary": "2/2 actual scan/review journeys passed on the Pixel 7 and iPhone Chromium projects before the final handle-focus and transform-origin changes; the final V04 suite rechecked crop interactions afterward."
+    }
+  ],
+  "assertions": [
+    "At 320x664, all four default edge targets have at least 44x44 CSS-pixel bounds entirely inside the crop workspace.",
+    "At a centered 20% crop, all eight handle centers receive their own pointerdown and each real drag changes only its intended crop edges in all three browser projects.",
+    "All four edge controls support keyboard resizing; the ruler supports keyboard inclination.",
+    "Image and crop frame move together before pointer release, while the original-resolution preparation still receives the selected rotation and crop.",
+    "The editor and scan entry have no horizontal overflow at 320px; the scan entry remains readable at 200% text.",
+    "The real scan journey retains user review before saving OCR rows."
+  ],
+  "artifacts": [
+    ".evidence/V04/editor-320.png",
+    ".evidence/V04/editor-mid-drag.png",
+    ".evidence/V04/field-ux-review.json"
+  ],
+  "syntheticDataOnly": true,
+  "physicalDeviceVerification": "Not performed; no phone PASS claimed."
+}

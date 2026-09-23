@@ -478,7 +478,7 @@
     {
       "id": "V04",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/V04/verification.json",
