@@ -17,6 +17,23 @@ If testing reveals a genuinely blocking semantic choice, append one concise
 question with the measured alternatives and complete independent work before
 asking the owner once.
 
+## OCR acceptance decision
+
+S4 is still open after three OCR approaches, an all-five photograph truth audit,
+name-cell rereads and image-scale trials. The selected 2600-pixel path recovers
+all twenty students on each capture by unique birth date, but the clearest
+capture has five review flags and three wrong name fields, two of them
+unflagged. A 2800-pixel rendering reaches four flags while increasing
+unflagged wrong surnames from one to two. Lowering confidence 70 or hiding
+readings is not an option.
+
+Should S4 keep the owner's fewer-than-five **and** safe-name target, leaving
+later milestones blocked while local OCR research continues? Or should the
+acceptance contract change to require explicit verification of **every name**
+before import, accepting more review work in exchange for proceeding with the
+other 0.3.0 milestones? The current plan assumes the first option until the
+owner explicitly changes it.
+
 ## New privacy decision
 
 The five private photographs remain ignored and have no matching path in the

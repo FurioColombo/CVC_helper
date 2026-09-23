@@ -88,6 +88,28 @@
     "unflaggedWrongNameFieldsCorrected": 0,
     "limit": "The focused private audit includes a disputed transcription, and no all-person/all-photo truth audit supports promotion. The variant did not change the two unflagged wrong name fields, so a lower flag count alone would not satisfy S4."
   },
-  "nextExperiment": "Complete aggregate-only person/field truth coverage for all five captures, then test name-cell rereads across all rows against both missed and confident-wrong names. Preserve threshold 70 and visible source text.",
+  "allRowSingleWordReread": {
+    "status": "rejected as a production default",
+    "clearestPhotoRowsRetested": 20,
+    "nameTextsChanged": 0,
+    "surnameFieldsStillFlagged": 11,
+    "givenNameFieldsFlagged": 1,
+    "additionalRecognitionMs": 848,
+    "assessment": "Reading every name cell again with PSM.SINGLE_WORD changed no text, left a confident wrong surname, and increased review flags. It cannot resolve the current S4 blocker."
+  },
+  "imageScaleSweep": {
+    "status": "rejected as a production default",
+    "source": "original clear private photograph, orientation-normalized; aggregate-only results",
+    "widthsPx": [1800, 2000, 2200, 2400, 2800, 3000, 3200, 3400, 3800, 4096],
+    "candidateRows": [25, 21, 21, 20, 20, 20, 25, 20, 21, 25],
+    "fieldsFlagged": [8, 5, 5, 5, 4, 5, 10, 8, 12, 8],
+    "at2800": {
+      "studentsMatchedByUniqueDate": 20,
+      "wrongGivenNamesUnflagged": 1,
+      "wrongSurnamesUnflagged": 2
+    },
+    "comparison": "The selected prepared 2600-pixel image has 20 candidates, five flags, one unflagged wrong given name and one unflagged wrong surname. A 2800-pixel image reaches four flags, but doubles the unflagged wrong surnames; the lower counter is not safer."
+  },
+  "nextExperiment": "The all-five truth audit and full-row single-word reread are complete. Neither image scaling nor this reread safely reaches the target. Any further OCR path must be measured against confident wrong names, not just review flags; retain threshold 70 and visible source text.",
   "decision": "Continue with the local Tesseract path; retain threshold 70 and visible uncertain text. Do not treat a lower counter as correctness. None of the three prototypes or experimental name-cell passes satisfies S4 acceptance."
 }
