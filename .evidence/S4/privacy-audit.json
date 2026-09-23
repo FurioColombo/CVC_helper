@@ -3,12 +3,19 @@
   "runtime": "Node v24.19.0",
   "sourcePhotographsUnderIgnoredPrivateDirectory": 5,
   "trackedFilesUnderDataPrivate": 0,
+  "exactSourceJpegBlobMatchesInLocalGitObjects": 0,
   "currentTreeRosterLiteralAudit": {
     "sourceSurnameMatchesOutsideOwnerPathLogs": 0,
     "sourceDateOfBirthMatches": 0,
     "sourceTelephoneMatches": 0,
     "note": "The remaining six surname-token matches are the owner's surname in archived absolute local path logs and the owner's brief, not roster records."
   },
-  "historicalRefs": "Local remote-tracking and release refs still contain earlier roster examples. Current-tree fictionalization does not remove that history; a separate owner decision is recorded in docs/post-mvp/0_3_0_QUESTIONS.md.",
+  "historicalTextAudit": {
+    "matchedTextBlobVersions": 61,
+    "affectedPaths": 24,
+    "scope": "Local Git objects and refs only; matches include the owner's surname inside archived absolute path logs, so these counts are an upper bound for roster-specific text.",
+    "affectedRefClasses": ["main", "0.3.0 branches", "v0.2.0 tag"],
+    "decision": "Current-tree fictionalization does not remove historical text; an owner decision on coordinated history and tag rewriting is recorded in docs/post-mvp/0_3_0_QUESTIONS.md."
+  },
   "privacy": "This report contains counts and categories only; no image names, OCR text, student names, dates of birth, or telephone numbers."
 }

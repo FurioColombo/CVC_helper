@@ -37,12 +37,15 @@ owner explicitly changes it.
 ## New privacy decision
 
 The five private photographs remain ignored and have no matching path in the
-local Git history. A local remote-tracking copy of `main`, however, contains
-real roster examples in tracked tests. The same examples occur in the local
-remote-tracking `main` and `codex/0.3.0` refs and the released `v0.2.0` tag.
+local Git history or exact JPEG blob match in local Git objects. A local audit
+found roster-value matches in 61 historical text blob versions across 24 paths;
+that count also includes the owner's name in archived path logs. The affected
+refs include local/remote-tracking `main`, both 0.3.0 branches and the released
+`v0.2.0` tag. This is a local-ref audit, not a fresh read of the remote host.
 Replacing them in the current tree will not remove them from older public
 commits. After the current-tree scrub is verified, should the repository
 history and release tag be rewritten to remove those older examples? That would
-require a coordinated force-push and fresh clones for collaborators. The
+require a coordinated force-push and fresh clones for collaborators and cannot
+erase existing clones or hosting caches. The
 alternative is to keep history intact while ensuring future commits contain
 only fictional examples. No history rewrite is authorized yet.
