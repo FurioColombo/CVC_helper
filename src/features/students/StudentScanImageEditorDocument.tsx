@@ -27,6 +27,10 @@ interface PointerGesture {
   startY: number
   crop: NormalizedCrop
   offset: { x: number; y: number }
+  imageWidth: number
+  imageHeight: number
+  zoom: number
+  rotation: number
 }
 
 const MIN_ZOOM = 1
@@ -35,35 +39,92 @@ const MAX_TILT = 45
 const TILT_STEP = 0.1
 /** Pixels of ruler travel per degree, the spacing the Photos dial uses. */
 const PIXELS_PER_DEGREE = 6
+/** Keep the centers of adjacent 44px handles far enough apart to select. */
+const CROP_HANDLE_CENTER_SPACING = 140
+
+const CROP_EDGES: Array<{
+  gesture: Exclude<
+    CropGesture,
+    "move" | "north-west" | "north-east" | "south-west" | "south-east"
+  >
+  label: string
+  position: string
+  translate: string
+  transformOrigin: string
+  mark: string
+  markTranslate: string
+}> = [
+  {
+    gesture: "north",
+    label: "Ridimensiona ritaglio dal bordo superiore",
+    position: "left-1/2 top-0",
+    translate: "-50%, 0",
+    transformOrigin: "50% 0%",
+    mark: "h-1 w-5",
+    markTranslate: "0, -20px",
+  },
+  {
+    gesture: "east",
+    label: "Ridimensiona ritaglio dal bordo destro",
+    position: "right-0 top-1/2",
+    translate: "0, -50%",
+    transformOrigin: "100% 50%",
+    mark: "h-5 w-1",
+    markTranslate: "20px, 0",
+  },
+  {
+    gesture: "south",
+    label: "Ridimensiona ritaglio dal bordo inferiore",
+    position: "bottom-0 left-1/2",
+    translate: "-50%, 0",
+    transformOrigin: "50% 100%",
+    mark: "h-1 w-5",
+    markTranslate: "0, 20px",
+  },
+  {
+    gesture: "west",
+    label: "Ridimensiona ritaglio dal bordo sinistro",
+    position: "left-0 top-1/2",
+    translate: "0, -50%",
+    transformOrigin: "0% 50%",
+    mark: "h-5 w-1",
+    markTranslate: "-20px, 0",
+  },
+]
 
 const CROP_CORNERS: Array<{
   gesture: Exclude<CropGesture, "move">
   label: string
   position: string
+  transformOrigin: string
   bracket: string
 }> = [
   {
     gesture: "north-west",
     label: "Ridimensiona ritaglio dall’angolo in alto a sinistra",
     position: "left-0 top-0",
+    transformOrigin: "0% 0%",
     bracket: "border-l-[3px] border-t-[3px] rounded-tl-sm",
   },
   {
     gesture: "north-east",
     label: "Ridimensiona ritaglio dall’angolo in alto a destra",
     position: "right-0 top-0",
+    transformOrigin: "100% 0%",
     bracket: "border-r-[3px] border-t-[3px] rounded-tr-sm",
   },
   {
     gesture: "south-west",
     label: "Ridimensiona ritaglio dall’angolo in basso a sinistra",
     position: "bottom-0 left-0",
+    transformOrigin: "0% 100%",
     bracket: "border-b-[3px] border-l-[3px] rounded-bl-sm",
   },
   {
     gesture: "south-east",
     label: "Ridimensiona ritaglio dall’angolo in basso a destra",
     position: "right-0 bottom-0",
+    transformOrigin: "100% 100%",
     bracket: "border-r-[3px] border-b-[3px] rounded-br-sm",
   },
 ]
@@ -74,6 +135,24 @@ function clampTilt(value: number) {
 
 function clampZoom(value: number) {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(value * 100) / 100))
+}
+
+function cropDisplayZoom(
+  zoom: number,
+  crop: NormalizedCrop,
+  fitted: { width: number; height: number },
+) {
+  const shortestCropEdge = Math.min(
+    crop.width * fitted.width,
+    crop.height * fitted.height,
+  )
+  if (shortestCropEdge <= 0) return zoom
+  return clampZoom(
+    Math.max(
+      zoom,
+      Math.min(MAX_ZOOM, CROP_HANDLE_CENTER_SPACING / shortestCropEdge),
+    ),
+  )
 }
 
 /**
@@ -138,6 +217,7 @@ export function StudentScanImageEditorDocument({
     url: string
     width: number
     height: number
+    degrees: number
   }>()
   const [preparing, setPreparing] = useState(false)
   const [error, setError] = useState(false)
@@ -180,6 +260,7 @@ export function StudentScanImageEditorDocument({
 
   useEffect(() => {
     const sequence = ++previewSequenceRef.current
+    if (adjusting) return
     const timer = window.setTimeout(() => {
       void createStudentScanPreview(file, rotation)
         .then((nextPreview) => {
@@ -190,7 +271,7 @@ export function StudentScanImageEditorDocument({
           setError(false)
           setPreview((current) => {
             if (current) URL.revokeObjectURL(current.url)
-            return nextPreview
+            return { ...nextPreview, degrees: rotation }
           })
         })
         .catch(() => {
@@ -201,7 +282,7 @@ export function StudentScanImageEditorDocument({
       window.clearTimeout(timer)
       previewSequenceRef.current += 1
     }
-  }, [file, rotation])
+  }, [adjusting, file, rotation])
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -221,6 +302,17 @@ export function StudentScanImageEditorDocument({
   const fitted = preview
     ? fitInside(stageSize, preview.width / preview.height)
     : { width: 0, height: 0 }
+  const liveRotation = preview ? rotation - preview.degrees : 0
+  const displayZoom = preview ? cropDisplayZoom(zoom, crop, fitted) : zoom
+  const zoomToCenterCrop = displayZoom > zoom + 0.001
+  const cropCenterX = crop.x + crop.width / 2
+  const cropCenterY = crop.y + crop.height / 2
+  const centerShiftX = zoomToCenterCrop
+    ? (0.5 - cropCenterX) * fitted.width * displayZoom
+    : 0
+  const centerShiftY = zoomToCenterCrop
+    ? (0.5 - cropCenterY) * fitted.height * displayZoom
+    : 0
 
   function stagePoint(event: ReactPointerEvent<HTMLElement>): NormalizedPoint {
     const bounds = stageRef.current?.getBoundingClientRect()
@@ -240,6 +332,14 @@ export function StudentScanImageEditorDocument({
     event.stopPropagation()
     event.currentTarget.setPointerCapture?.(event.pointerId)
     setAdjusting(true)
+    const bounds = stageRef.current?.getBoundingClientRect()
+    const imageFit =
+      preview && bounds
+        ? fitInside(
+            { width: bounds.width, height: bounds.height },
+            preview.width / preview.height,
+          )
+        : fitted
     pointerGestureRef.current = {
       pointerId: event.pointerId,
       gesture,
@@ -247,6 +347,10 @@ export function StudentScanImageEditorDocument({
       startY: event.clientY,
       crop,
       offset,
+      imageWidth: imageFit.width,
+      imageHeight: imageFit.height,
+      zoom: preview ? cropDisplayZoom(zoom, crop, imageFit) : zoom,
+      rotation: liveRotation,
     }
   }
 
@@ -275,17 +379,30 @@ export function StudentScanImageEditorDocument({
     const bounds = stageRef.current?.getBoundingClientRect()
     if (!gesture || !bounds || gesture.pointerId !== event.pointerId) return
     if (!bounds.width || !bounds.height) return
-    const deltaX = (event.clientX - gesture.startX) / (bounds.width * zoom)
-    const deltaY = (event.clientY - gesture.startY) / (bounds.height * zoom)
+    const screenDeltaX = event.clientX - gesture.startX
+    const screenDeltaY = event.clientY - gesture.startY
     if (gesture.gesture === "pan") {
+      const deltaX = screenDeltaX / (bounds.width * gesture.zoom)
+      const deltaY = screenDeltaY / (bounds.height * gesture.zoom)
       setOffset(
         clampOffset(
           { x: gesture.offset.x + deltaX, y: gesture.offset.y + deltaY },
-          zoom,
+          gesture.zoom,
         ),
       )
       return
     }
+    if (!gesture.imageWidth || !gesture.imageHeight) return
+    // The displayed preview and its crop frame rotate together while the
+    // debounced raster catches up. Convert screen movement into that preview's
+    // unrotated coordinate space before changing normalized crop geometry.
+    const radians = (gesture.rotation * Math.PI) / 180
+    const localDeltaX =
+      Math.cos(radians) * screenDeltaX + Math.sin(radians) * screenDeltaY
+    const localDeltaY =
+      -Math.sin(radians) * screenDeltaX + Math.cos(radians) * screenDeltaY
+    const deltaX = localDeltaX / (gesture.imageWidth * gesture.zoom)
+    const deltaY = localDeltaY / (gesture.imageHeight * gesture.zoom)
     setCrop(updateNormalizedCrop(gesture.crop, gesture.gesture, deltaX, deltaY))
   }
 
@@ -358,6 +475,7 @@ export function StudentScanImageEditorDocument({
 
   function beginRuler(event: ReactPointerEvent<HTMLDivElement>) {
     event.preventDefault()
+    event.currentTarget.focus({ preventScroll: true })
     event.currentTarget.setPointerCapture?.(event.pointerId)
     rulerPointerRef.current = {
       pointerId: event.pointerId,
@@ -552,58 +670,137 @@ export function StudentScanImageEditorDocument({
               style={{
                 width: fitted.width || undefined,
                 height: fitted.height || undefined,
-                transform: `translate(${offset.x * 100}%, ${offset.y * 100}%) scale(${zoom})`,
+                transform: `translate(calc(${offset.x * 100}% + ${centerShiftX}px), calc(${offset.y * 100}% + ${centerShiftY}px)) scale(${displayZoom})`,
               }}
             >
-              <img
-                alt="Anteprima foto da ritagliare"
-                className="absolute inset-0 size-full object-contain"
-                draggable={false}
-                src={preview.url}
-              />
               <div
-                aria-label="Area di ritaglio. Trascina o usa le frecce per spostarla"
-                className="absolute cursor-move outline outline-[9999px] outline-black/55"
-                onKeyDown={moveCropWithKeyboard}
-                onPointerDown={(event) => beginPointerGesture(event, "move")}
-                role="group"
+                className="absolute inset-0"
+                data-testid="student-scan-live-preview"
                 style={{
-                  left: `${crop.x * 100}%`,
-                  top: `${crop.y * 100}%`,
-                  width: `${crop.width * 100}%`,
-                  height: `${crop.height * 100}%`,
+                  transform: `rotate(${liveRotation}deg)`,
+                  transformOrigin: "center",
                 }}
-                tabIndex={0}
               >
-                <div className="absolute inset-0 border border-white/70" />
-                {/* Thirds appear only while a gesture is live, as Photos does. */}
+                <img
+                  alt="Anteprima foto da ritagliare"
+                  className="absolute inset-0 size-full object-contain"
+                  draggable={false}
+                  src={preview.url}
+                />
+                {/* Blur/dim only the outside panes; the selected area stays sharp. */}
                 <div
-                  className={`pointer-events-none absolute inset-0 transition-opacity duration-200 ${adjusting ? "opacity-100" : "opacity-0"}`}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-black/15 backdrop-blur-[2px]"
+                  style={{
+                    bottom: `${(1 - crop.y) * 100}%`,
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                  }}
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-black/15 backdrop-blur-[2px]"
+                  style={{
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    top: `${(crop.y + crop.height) * 100}%`,
+                  }}
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-black/15 backdrop-blur-[2px]"
+                  style={{
+                    bottom: `${(1 - crop.y - crop.height) * 100}%`,
+                    left: 0,
+                    right: `${(1 - crop.x) * 100}%`,
+                    top: `${crop.y * 100}%`,
+                  }}
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-black/15 backdrop-blur-[2px]"
+                  style={{
+                    bottom: `${(1 - crop.y - crop.height) * 100}%`,
+                    left: `${(crop.x + crop.width) * 100}%`,
+                    right: 0,
+                    top: `${crop.y * 100}%`,
+                  }}
+                />
+                <div
+                  aria-label="Area di ritaglio. Trascina o usa le frecce per spostarla"
+                  className="absolute cursor-move outline outline-[9999px] outline-black/35"
+                  data-testid="student-scan-crop-frame"
+                  onKeyDown={moveCropWithKeyboard}
+                  onPointerDown={(event) => beginPointerGesture(event, "move")}
+                  role="group"
+                  style={{
+                    left: `${crop.x * 100}%`,
+                    top: `${crop.y * 100}%`,
+                    width: `${crop.width * 100}%`,
+                    height: `${crop.height * 100}%`,
+                  }}
+                  tabIndex={0}
                 >
-                  <div className="absolute inset-y-0 left-1/3 w-px bg-white/30" />
-                  <div className="absolute inset-y-0 left-2/3 w-px bg-white/30" />
-                  <div className="absolute inset-x-0 top-1/3 h-px bg-white/30" />
-                  <div className="absolute inset-x-0 top-2/3 h-px bg-white/30" />
-                </div>
-                {CROP_CORNERS.map((corner) => (
-                  <button
-                    aria-label={corner.label}
-                    className={`absolute grid size-11 ${corner.position}`}
-                    key={corner.gesture}
-                    onKeyDown={(event) =>
-                      moveHandleWithKeyboard(event, corner.gesture)
-                    }
-                    onPointerDown={(event) =>
-                      beginPointerGesture(event, corner.gesture)
-                    }
-                    style={{ transform: `scale(${1 / zoom})` }}
-                    type="button"
+                  <div className="absolute inset-0 border border-white/70" />
+                  {/* Thirds appear only while a gesture is live, as Photos does. */}
+                  <div
+                    className={`pointer-events-none absolute inset-0 transition-opacity duration-200 ${adjusting ? "opacity-100" : "opacity-0"}`}
                   >
-                    <span
-                      className={`size-6 border-white ${corner.bracket} ${corner.position.includes("right") ? "justify-self-end" : ""} ${corner.position.includes("bottom") ? "self-end" : ""}`}
-                    />
-                  </button>
-                ))}
+                    <div className="absolute inset-y-0 left-1/3 w-px bg-white/30" />
+                    <div className="absolute inset-y-0 left-2/3 w-px bg-white/30" />
+                    <div className="absolute inset-x-0 top-1/3 h-px bg-white/30" />
+                    <div className="absolute inset-x-0 top-2/3 h-px bg-white/30" />
+                  </div>
+                  {CROP_EDGES.map((edge) => (
+                    <button
+                      aria-label={edge.label}
+                      className={`absolute z-0 grid size-11 place-items-center outline-none focus-visible:ring-2 focus-visible:ring-[#f5c451] ${edge.position}`}
+                      key={edge.gesture}
+                      onKeyDown={(event) =>
+                        moveHandleWithKeyboard(event, edge.gesture)
+                      }
+                      onPointerDown={(event) =>
+                        beginPointerGesture(event, edge.gesture)
+                      }
+                      style={{
+                        transform: `translate(${edge.translate}) scale(${1 / displayZoom})`,
+                        transformOrigin: edge.transformOrigin,
+                      }}
+                      type="button"
+                    >
+                      <span
+                        className={`${edge.mark} rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.65)]`}
+                        style={{
+                          transform: `translate(${edge.markTranslate})`,
+                        }}
+                      />
+                    </button>
+                  ))}
+                  {CROP_CORNERS.map((corner) => (
+                    <button
+                      aria-label={corner.label}
+                      className={`absolute z-10 grid size-11 outline-none focus-visible:ring-2 focus-visible:ring-[#f5c451] ${corner.position}`}
+                      key={corner.gesture}
+                      onKeyDown={(event) =>
+                        moveHandleWithKeyboard(event, corner.gesture)
+                      }
+                      onPointerDown={(event) =>
+                        beginPointerGesture(event, corner.gesture)
+                      }
+                      style={{
+                        transform: `scale(${1 / displayZoom})`,
+                        transformOrigin: corner.transformOrigin,
+                      }}
+                      type="button"
+                    >
+                      <span
+                        className={`size-6 border-white ${corner.bracket} ${corner.position.includes("right") ? "justify-self-end" : ""} ${corner.position.includes("bottom") ? "self-end" : ""}`}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -645,7 +842,7 @@ export function StudentScanImageEditorDocument({
           aria-valuemin={-MAX_TILT}
           aria-valuenow={tilt}
           aria-valuetext={`${tilt.toFixed(1).replace(".", ",")} gradi`}
-          className="relative h-16 touch-none overflow-hidden select-none"
+          className="relative h-16 touch-none overflow-hidden rounded-xl select-none outline-none focus-visible:ring-2 focus-visible:ring-[#f5c451]"
           onKeyDown={rulerKeyDown}
           onPointerCancel={finishRuler}
           onPointerDown={beginRuler}
@@ -717,7 +914,7 @@ export function StudentScanImageEditorDocument({
             aria-label="Ingrandimento"
             className="min-w-12 text-xs font-semibold tabular-nums text-white/60"
           >
-            {Math.round(zoom * 100)}%
+            {Math.round(displayZoom * 100)}%
           </output>
           <button
             className="ml-auto grid min-h-12 flex-1 place-items-center rounded-full bg-white text-sm font-bold text-black transition active:scale-[0.98] disabled:opacity-40"

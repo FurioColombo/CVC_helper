@@ -16,7 +16,8 @@ current contract. `.milestones/manifest.json` is the machine-readable lifecycle.
 | D0 | Complete. The active plan and Claude entry are short; prior files are archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
 | V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
 | S4 | In progress, deferred to the final Claude Code handoff by the owner. Current OCR improvements and safety checks remain; the remaining fewer-than-five target is not a prerequisite for V04–UG2 or the 0.3.0 gate. No unsafe counter-only variant was integrated. |
-| V04, S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
+| V04 | Complete. Four edge handles, live image/frame tilt and a dimmed, soft exterior were verified with synthetic imagery. `.evidence/V04/` records Node 24.19.0 verification (465 tests), 12 browser cases across Chrome/WebKit, pointer-response samples and a PASS field-UX review. |
+| S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -137,7 +138,7 @@ hosts. No physical phone check is claimed; the owner checks that separately.
 ## V04 — Fluid crop editing
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 Add accessible, ≥44 px edge handles beside the existing corners. During tilt
 drag, the image **and crop frame** must track the pointer each frame; a
@@ -152,6 +153,16 @@ device; instrument frame updates and avoid re-decoding the source every move.
 performance measurement, visual field-UX review and self-review. Test corner,
 edge, keyboard, zoom, crop output and the existing scan journey at narrow
 viewports. Record P06 changes in the page changelog.
+
+**Completion, 2026-09-23:** `.evidence/V04/verification.json` records `npm
+run verify` PASS on Node 24.19.0 (465 tests, domain/compatibility checks and
+PWA build). Twelve V04 Playwright cases passed across Pixel 7 Chrome, iPhone
+viewport Chromium and iPhone WebKit; at a 20% crop, real drags from all eight
+handle centers reached the intended target and changed only the intended edges.
+The synthetic mid-drag frame and response samples are in `.evidence/V04/`;
+independent field-UX review is PASS. The scan/review browser journey also passed
+on two Chromium projects. Physical phone smoothness remains for the owner's
+device check; none is claimed here.
 
 ## S5 — Faster, smaller scan review and age-only entry
 

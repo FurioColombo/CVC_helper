@@ -1,0 +1,25 @@
+{
+  "milestone": "V04",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "Final V04 editor, component-test and Playwright-test diffs",
+    ".evidence/V04/verification.json",
+    ".evidence/V04/browser-evidence.json",
+    ".evidence/V04/performance.json",
+    ".evidence/V04/field-ux-review.json",
+    ".evidence/V04/editor-mid-drag.png"
+  ],
+  "checks": {
+    "deterministic": "npm run evidence -- V04 recorded npm run verify PASS on Node v24.19.0: 42 files, 465 tests, domain and 0.1.0 compatibility checks, and production PWA build.",
+    "browser": "12/12 final V04 Playwright cases passed on three configured browser projects; all eight small-crop handle centers were exercised with real pointer drags.",
+    "privacy": "Only the public synthetic roster was used in V04 browser artifacts. git ls-files data/private returned no tracked files; MIN_FIELD_CONFIDENCE remains 70.",
+    "device": "No physical phone verification was performed or claimed."
+  },
+  "knownLimitations": [
+    "Browser emulation and one pointer-response sample per project do not establish tactile frame rate on the owner's phone; physical-device review remains the owner's check.",
+    "The owner-deferred residual S4 OCR accuracy target is outside V04 and remains the final Claude Code handoff after the 0.3.0 gate."
+  ]
+}

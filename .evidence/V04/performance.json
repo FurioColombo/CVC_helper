@@ -1,0 +1,13 @@
+{
+  "milestone": "V04",
+  "runtime": "Node v24.19.0",
+  "measurement": "Playwright pointermove capture timestamp to live preview style mutation while the tilt pointer remained down; the same crop frame is a child of the transformed preview and its bounds moved before release.",
+  "samplesMs": [
+    { "project": "pixel-7-chrome", "value": 17.3 },
+    { "project": "iphone-13-viewport", "value": 42.7 },
+    { "project": "iphone-13-webkit-core", "value": 26.0 }
+  ],
+  "acceptance": "All three observed updates occurred before the 120 ms raster-preview debounce and before pointer release.",
+  "rasterWork": "The focused component test verified no createStudentScanPreview call during a held tilt gesture, including after 130 ms; one new raster preview was requested after release.",
+  "limitations": "These are one browser-emulation sample per project, not frame-rate statistics or a physical-phone measurement. The owner will assess tactile smoothness on their device."
+}
