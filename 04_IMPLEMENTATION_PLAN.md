@@ -15,7 +15,7 @@ current contract. `.milestones/manifest.json` is the machine-readable lifecycle.
 | R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
 | D0 | Complete. The active plan and Claude entry are short; prior files are archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
 | V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
-| S4 | In progress. The three prototypes are compared; DPI 180 and conservative TSV geometry are integrated. The clearest private photo has 20/20 rows but five field flags and unflagged name errors. The owner reconfirmed the fewer-than-five target without relaxing name safety, so the acceptance gate remains open. |
+| S4 | In progress, deferred to the final Claude Code handoff by the owner. Current OCR improvements and safety checks remain; the remaining fewer-than-five target is not a prerequisite for V04–UG2 or the 0.3.0 gate. No unsafe counter-only variant was integrated. |
 | V04, S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
@@ -28,9 +28,11 @@ reading visible and marked. Physical phone checks belong to the owner; no
 simulated PASS.
 
 The latest owner instruction supersedes older choices where stated: V02 need
-only stay inside its pane, not have identical dimensions; S4's deferral is lifted;
-an age entered manually must not require an exact birthday; the per-row name
-swap is to be removed. The rest of the frozen deferrals remain in
+only stay inside its pane, not have identical dimensions; S4's earlier deferral
+was lifted for the completed experiments, then its remaining quality target was
+moved to the final nonblocking Claude Code handoff; an age entered manually
+must not require an exact birthday; the per-row name swap is to be removed. The
+rest of the frozen deferrals remain in
 `docs/post-mvp/0_3_0_OPEN_ITEMS.md`.
 
 The owner confirmed age-only entry means completed years on the **first course
@@ -45,20 +47,20 @@ display columns.
 
 1. **D0** documentation and scope checkpoint.
 2. **V02** dictation control. The required independent review precedes the fix.
-3. **S4** measured OCR quality, including the three independent approaches and
-   conservative row reconstruction.
-4. **V04** crop editing and live rotation.
-5. **S5** scan review flow, age-only entry and synthetic image regression.
-6. **N1** phone Back, app icon and student name disambiguation.
-7. **C1** crew composition, destination picker and summary export.
-8. **E1** evaluation spacing and student-history navigation.
-9. **V03** speech accuracy, latency and transcript confirmation removal.
-10. **V05** LLM-assisted paste path, beside on-device scanning.
-11. **F1** remaining R1 corrections, then **UG2** integration and release gate.
+3. **V04** crop editing and live rotation.
+4. **S5** scan review flow, age-only entry and synthetic image regression.
+5. **N1** phone Back, app icon and student name disambiguation.
+6. **C1** crew composition, destination picker and summary export.
+7. **E1** evaluation spacing and student-history navigation.
+8. **V03** speech accuracy, latency and transcript confirmation removal.
+9. **V05** LLM-assisted paste path, beside on-device scanning.
+10. **F1** remaining R1 corrections, then **UG2** integration and release gate.
+11. **S4** remaining OCR quality target, handed to Claude Code after the gate.
 
-This order keeps the owner's live scan feedback near the front. Independent
-experiments may run while D0/V02 progress, but tracked feature changes stay
-inside their milestone. Every milestone follows `AGENTS.md`: baseline, start,
+The owner explicitly made the remaining S4 target nonblocking on 2026-09-23.
+The manifest places S4 after UG2 so the lifecycle enforces the revised order;
+S4 retains its unfinished evidence and FAIL review for Claude Code. Every
+milestone follows `AGENTS.md`: baseline, start,
 implementation, evidence, browser work where required, review, verification,
 completion, clean checkpoint. Use `verify:quick` before a commit and
 `verify:all` at UG2 only.
@@ -131,93 +133,6 @@ survives denied microphone access and Retry. `npm run evidence -- V02` passed
 accessibility/mobile review is PASS_WITH_FINDINGS with zero blockers. Its sole
 QoL note is to keep the synthetic wrapper classes aligned with production
 hosts. No physical phone check is claimed; the owner checks that separately.
-
-## S4 — Measured OCR accuracy on real and synthetic rosters
-
-**Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
-
-The owner lifted the earlier deferral on 2026-09-23.
-
-The owner reports about 26 flags on a very good photo and requires **fewer than
-five**, ideally zero, before treating that case as usable. Reconfirm the exact
-baseline with `npm run measure:scan-review -- <private image> [out.json]`; use
-the same image, crop, telephone choice, order, counter and runtime after each
-change. Measure all five supplied captures, not just the best. Report rows,
-missing/low-confidence fields, name order, false merges and elapsed time.
-
-Three independent agents must implement/test distinct prototypes: (1) TSV
-table-row geometry and conservative fragment joining, (2) image preparation,
-deskew/crop/contrast, (3) a different local OCR engine or hybrid if it can meet
-offline browser/privacy/size constraints. Keep prototypes and raw results only
-in ignored `data/private/ocr-experiments/`; commit aggregate comparisons.
-Choose by measured quality, latency, browser feasibility and risk, not by engine
-preference. Tesseract is not presumed the only option.
-
-Join fragments only when row geometry supports it and two actual students
-cannot be merged. Add rules for plausible three-part names and particles, with
-ambiguous cases visible for review. Build generated, wholly fictitious
-medium-difficulty roster images for repeatable regression; include imperfect
-lighting, mild skew, row rules, varied name lengths and three-part names. Keep
-the confidence threshold 70 and every read text visible. A good-photo count
-below five is a hard target; if evidence cannot reach it safely, record the
-measured limit rather than silently weaken safety.
-
-**Evidence:** verification, before/after aggregate measurements, public
-synthetic corpus and tests, browser review, independent adversarial
-data-integrity review, self-review. S4 may close only with no silent student
-merge, no privacy breach and the measured good-photo target achieved; otherwise
-it remains open with the result and next experiment recorded.
-
-**Progress, 2026-09-23.** The local DPI 180 pass initially reduced aggregate
-private-photo flags from 288 to 92 across five prepared captures. Preserving
-unresolved weak structured readings for review now yields 96 flags and
-candidate-row counts `20/21/29/21/20`; the extra row is an incomplete age
-fragment on the fourth capture. On the clearest capture, all 20 students were
-recovered with five low-confidence surname flags, but a row-level private audit
-found one wrong given name and one wrong surname that confidence did not flag,
-plus a second wrong surname that was flagged. DPI 300 reports
-four flags on that capture but introduces another unflagged wrong given name and
-severely worsens the shadowed capture. It is rejected as a counter-only fix.
-Conservative TSV geometry recovered all ten people in a fictitious wide-column
-fixture without a cross-person association; on the five real captures it made
-zero joins or field reassignments. The four-variant generated corpus now uses
-the production DPI 180; it recovers 40/40 fictitious people and 196/196
-readable fields. The targeted mobile browser journey, Node 24 quick/domain
-checks and production build pass. A local name-cell second pass raised one
-surname's confidence above 70, but two private audits disagree on whether that
-reading is exact, so it is not integrated. The independent data-integrity
-review verdict is **FAIL**: the clearest photo has five flags, unflagged wrong
-names remain, and person-level truth coverage is missing for four captures.
-Eight further local name-cell variants were measured privately. A single-word
-pass reported three exact promotions among five flagged surnames in a narrow
-audit, but did not correct either unflagged wrong name field; one private
-transcription is disputed and no all-photo truth audit supports integration.
-An aggregate-only person/field truth audit now covers all five captures: the
-twenty unique printed birth dates each appear once and in order on every scan,
-so all 100 student appearances are associated without a missing or merged
-student. Eleven extra candidates remain. Across those 100 matched rows, 11
-given names and 19 surnames are wrong; two wrong given names and nine wrong
-surnames are unflagged. An all-row single-word reread changed none of the
-twenty names on the clearest capture and increased flagged surnames to eleven.
-A source-resolution sweep found one 2800-pixel rendering with four flags, but
-it had two unflagged wrong surnames versus one in the selected 2600-pixel
-rendering; that smaller counter is rejected. Further OCR changes must improve
-confident-name correctness as well as the counter. S4 remains
-**IN_PROGRESS** and V04 has not started. Aggregate-only details are in
-`.evidence/S4/`.
-
-**Additional probes, 2026-09-23.** Tesseract choice mode produced identical
-primary readings on all five photos. A larger local Italian model gave the
-same five flags and name errors on the clearest photo while exceeding the
-current offline precache size limit. Grayscale/normalization/sharpening left
-that photo at 20 rows and five flags. A DOB-anchored name-cell reread reduced
-flagged name fields from 52 to 45 across the five captures and from five to
-two on the clearest, but the corrected truth audit found wrong names rising
-from 30 to 31 and unflagged errors from 11 to 13; it is rejected. The first
-private comparison used a mismatched truth table and was discarded before the
-final audit. No production OCR change followed these probes. S4 remains
-**IN_PROGRESS**; see `.evidence/S4/targeted-ocr-probes.json`.
 
 ## V04 — Fluid crop editing
 
@@ -404,6 +319,102 @@ physical microphone/camera/OCR checklist on real devices; never substitute a
 simulator result. Record known limitations, bump version/changelog, complete
 the manifest, leave a clean commit and tag only after the gate passes.
 
+The unresolved S4 fewer-than-five target is recorded as a known limitation
+and handed to Claude Code after UG2. UG2 still verifies the current OCR path,
+privacy boundaries and actual device behavior; it does not require S4 closure
+or claim that OCR accuracy met the deferred target.
+
 **Evidence:** `.evidence/UG2/` verification, browser, migration, synthetic
 roster, six reviewer reports and actual physical-device report. Do not publish
 the development branch to `main` or update Pages without asking the owner.
+
+## S4 — Measured OCR accuracy on real and synthetic rosters
+
+**Category:** RULE_HEAVY
+**Status:** IN_PROGRESS
+
+The owner lifted the earlier deferral for the measured prototypes on
+2026-09-23, then moved the unresolved quality target to the final Claude Code
+handoff. S4 stays open, but it is not a predecessor of V04–UG2 and does not
+block the 0.3.0 gate.
+
+The owner reports about 26 flags on a very good photo and requires **fewer than
+five**, ideally zero, before treating that case as usable. Reconfirm the exact
+baseline with `npm run measure:scan-review -- <private image> [out.json]`; use
+the same image, crop, telephone choice, order, counter and runtime after each
+change. Measure all five supplied captures, not just the best. Report rows,
+missing/low-confidence fields, name order, false merges and elapsed time.
+
+Three independent agents must implement/test distinct prototypes: (1) TSV
+table-row geometry and conservative fragment joining, (2) image preparation,
+deskew/crop/contrast, (3) a different local OCR engine or hybrid if it can meet
+offline browser/privacy/size constraints. Keep prototypes and raw results only
+in ignored `data/private/ocr-experiments/`; commit aggregate comparisons.
+Choose by measured quality, latency, browser feasibility and risk, not by engine
+preference. Tesseract is not presumed the only option.
+
+Join fragments only when row geometry supports it and two actual students
+cannot be merged. Add rules for plausible three-part names and particles, with
+ambiguous cases visible for review. Build generated, wholly fictitious
+medium-difficulty roster images for repeatable regression; include imperfect
+lighting, mild skew, row rules, varied name lengths and three-part names. Keep
+the confidence threshold 70 and every read text visible. A good-photo count
+below five remains a target for **S4 closure**; if evidence cannot reach it
+safely, record the measured limit rather than silently weaken safety. It is not
+an acceptance condition for UG2 under the owner's latest instruction.
+
+**Evidence:** verification, before/after aggregate measurements, public
+synthetic corpus and tests, browser review, independent adversarial
+data-integrity review, self-review. S4 may close only with no silent student
+merge, no privacy breach and the measured good-photo target achieved; otherwise
+it remains open with the result and next experiment recorded.
+
+**Progress, 2026-09-23.** The local DPI 180 pass initially reduced aggregate
+private-photo flags from 288 to 92 across five prepared captures. Preserving
+unresolved weak structured readings for review now yields 96 flags and
+candidate-row counts `20/21/29/21/20`; the extra row is an incomplete age
+fragment on the fourth capture. On the clearest capture, all 20 students were
+recovered with five low-confidence surname flags, but a row-level private audit
+found one wrong given name and one wrong surname that confidence did not flag,
+plus a second wrong surname that was flagged. DPI 300 reports
+four flags on that capture but introduces another unflagged wrong given name and
+severely worsens the shadowed capture. It is rejected as a counter-only fix.
+Conservative TSV geometry recovered all ten people in a fictitious wide-column
+fixture without a cross-person association; on the five real captures it made
+zero joins or field reassignments. The four-variant generated corpus now uses
+the production DPI 180; it recovers 40/40 fictitious people and 196/196
+readable fields. The targeted mobile browser journey, Node 24 quick/domain
+checks and production build pass. A local name-cell second pass raised one
+surname's confidence above 70, but two private audits disagree on whether that
+reading is exact, so it is not integrated. The independent data-integrity
+review verdict is **FAIL**: the clearest photo has five flags, unflagged wrong
+names remain, and person-level truth coverage is missing for four captures.
+Eight further local name-cell variants were measured privately. A single-word
+pass reported three exact promotions among five flagged surnames in a narrow
+audit, but did not correct either unflagged wrong name field; one private
+transcription is disputed and no all-photo truth audit supports integration.
+An aggregate-only person/field truth audit now covers all five captures: the
+twenty unique printed birth dates each appear once and in order on every scan,
+so all 100 student appearances are associated without a missing or merged
+student. Eleven extra candidates remain. Across those 100 matched rows, 11
+given names and 19 surnames are wrong; two wrong given names and nine wrong
+surnames are unflagged. An all-row single-word reread changed none of the
+twenty names on the clearest capture and increased flagged surnames to eleven.
+A source-resolution sweep found one 2800-pixel rendering with four flags, but
+it had two unflagged wrong surnames versus one in the selected 2600-pixel
+rendering; that smaller counter is rejected. Further OCR changes must improve
+confident-name correctness as well as the counter. S4 remains
+**IN_PROGRESS**. Aggregate-only details are in
+`.evidence/S4/`.
+
+**Additional probes, 2026-09-23.** Tesseract choice mode produced identical
+primary readings on all five photos. A larger local Italian model gave the
+same five flags and name errors on the clearest photo while exceeding the
+current offline precache size limit. Grayscale/normalization/sharpening left
+that photo at 20 rows and five flags. A DOB-anchored name-cell reread reduced
+flagged name fields from 52 to 45 across the five captures and from five to
+two on the clearest, but the corrected truth audit found wrong names rising
+from 30 to 31 and unflagged errors from 11 to 13; it is rejected. The first
+private comparison used a mismatched truth table and was discarded before the
+final audit. No production OCR change followed these probes. S4 remains
+**IN_PROGRESS**; see `.evidence/S4/targeted-ocr-probes.json`.

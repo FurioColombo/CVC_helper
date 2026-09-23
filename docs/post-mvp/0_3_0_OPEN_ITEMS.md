@@ -71,14 +71,14 @@ UG2.**
 
 ### S4 — OCR line fragmentation
 
-The OCR parser treats every Tesseract line as a possible student and calls
-`candidateFromLine` separately at
-`src/capabilities/studentScan.ts:837-866`. It does not merge horizontally
-separated fragments that share a table row. The supplied photographs confirm
-that this is the largest remaining review-load cause.
-**Verdict: missing, owned by S4.** The owner's new request for fewer than five
-flags on a very good photo lifts the earlier section 9 deferral. Three
-independent OCR approaches are being measured before a production choice.
+The parser now runs conservative TSV row geometry before `candidateFromLine`
+in `src/capabilities/studentScan.ts`. The public wide-column fixture verifies
+safe joins, but the supplied photographs yielded no defensible joins. Their
+residual fragmented readings remain the largest review-load cause.
+**Verdict: partial, owned by S4.** Conservative TSV geometry and DPI 180 are
+integrated, but the good-photo target is unmet. The owner moved the residual
+work to the final Claude Code handoff after UG2, explicitly nonblocking for
+the 0.3.0 gate. Existing safety rules and private-photo boundaries remain.
 
 ## Deferred by the owner or frozen scope
 
