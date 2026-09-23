@@ -207,6 +207,18 @@ confident-name correctness as well as the counter. S4 remains
 **IN_PROGRESS** and V04 has not started. Aggregate-only details are in
 `.evidence/S4/`.
 
+**Additional probes, 2026-09-23.** Tesseract choice mode produced identical
+primary readings on all five photos. A larger local Italian model gave the
+same five flags and name errors on the clearest photo while exceeding the
+current offline precache size limit. Grayscale/normalization/sharpening left
+that photo at 20 rows and five flags. A DOB-anchored name-cell reread reduced
+flagged name fields from 52 to 45 across the five captures and from five to
+two on the clearest, but the corrected truth audit found wrong names rising
+from 30 to 31 and unflagged errors from 11 to 13; it is rejected. The first
+private comparison used a mismatched truth table and was discarded before the
+final audit. No production OCR change followed these probes. S4 remains
+**IN_PROGRESS**; see `.evidence/S4/targeted-ocr-probes.json`.
+
 ## V04 — Fluid crop editing
 
 **Category:** FEATURE
