@@ -5,7 +5,7 @@
   "blockers": [
     "The clearest prepared private photo still has five fields flagged for review; the owner requires fewer than five.",
     "A private row-level audit found an unflagged wrong given name and an unflagged wrong surname on the clearest photo. A lower counter alone would not make this scan reliable.",
-    "Only the clearest capture has person-level truth counts. The other four still need aggregate missing-person, duplicate/merge, and cross-row association audits."
+    "All five captures now have aggregate person-level truth counts, but eleven wrong name fields across the set are unflagged. The selected OCR path still does not expose confident wrong names for explicit review."
   ],
   "importantFindings": [
     "DPI 180 materially reduces review load compared with automatic DPI, but the fourth prepared photo now has one extra incomplete row because a weak age fragment is preserved for manual review instead of silently dropped.",
@@ -14,7 +14,9 @@
     "Four generated fictitious variants preserve forty of forty people and all 196 readable fields, with eight false footer/subtitle candidates visibly marked for review.",
     "A surname-cell second pass would promote one of five low-confidence surnames, but two private audits disagree on whether that promotion is exact, so it is not integrated.",
     "A later eight-variant cell sweep reported three of five exact high-confidence promotions from single-word OCR, but did not correct confident wrong names. Its narrow truth audit is insufficient for production integration.",
-    "Older public evidence and scan fixtures contained roster examples. Current tracked examples were fictionalized without changing aggregate counts; historical Git refs still need the owner's explicit rewrite decision."
+    "Older public evidence and scan fixtures contained roster examples. Current tracked examples were fictionalized without changing aggregate counts; historical Git refs still need the owner's explicit rewrite decision.",
+    "A subsequent private truth audit matched all twenty unique printed birth dates once and in order on each of five captures, resolving the earlier person/field coverage gap. It found thirty wrong name fields, eleven of them unflagged; only aggregate counts are retained publicly.",
+    "An all-row single-word reread changed no name text and raised surname flags to eleven on the clear capture. A 2800-pixel rendering reached four flags but had two confident wrong surnames, versus one at the selected 2600-pixel setting; neither is safe to integrate."
   ],
   "qolFindings": [
     "The shadowed private photo still produces many extra review rows. A future table-band filter needs true-row coverage and false-association proof before it can replace manual removal."
@@ -31,5 +33,6 @@
     ".evidence/S4/fragmentation-measurement.json",
     ".evidence/S4/browser-evidence.json",
     "Ignored private photo measurements and aggregate-only name-cell experiment"
+    ,".evidence/S4/all-photo-truth-audit.json"
   ]
 }

@@ -1,0 +1,35 @@
+{
+  "milestone": "S4",
+  "status": "person and field audit across all five prepared captures; accuracy target remains open",
+  "runtime": "Node v24.19.0",
+  "settings": {
+    "tesseractDpi": 180,
+    "minFieldConfidence": 70,
+    "telephone": "off",
+    "nameOrder": "automatic surname-given inference",
+    "referenceDate": "2026-09-22"
+  },
+  "method": "A private, row-ordered truth table of twenty unique printed birth dates and names was compared with the real OCR/parser output. Every true date appeared once and in sheet order on every capture, independently anchoring candidate-to-person association. Private row-level readings and truth stay under ignored data/private.",
+  "perCapture": [
+    { "sample": 1, "candidateRows": 20, "studentsMatchedByUniqueDate": 20, "extraCandidates": 0, "wrongGivenNames": 1, "wrongSurnames": 4, "unflaggedWrongGivenNames": 0, "unflaggedWrongSurnames": 1 },
+    { "sample": 2, "candidateRows": 21, "studentsMatchedByUniqueDate": 20, "extraCandidates": 1, "wrongGivenNames": 1, "wrongSurnames": 4, "unflaggedWrongGivenNames": 0, "unflaggedWrongSurnames": 1 },
+    { "sample": 3, "candidateRows": 29, "studentsMatchedByUniqueDate": 20, "extraCandidates": 9, "wrongGivenNames": 2, "wrongSurnames": 3, "unflaggedWrongGivenNames": 1, "unflaggedWrongSurnames": 2 },
+    { "sample": 4, "candidateRows": 21, "studentsMatchedByUniqueDate": 20, "extraCandidates": 1, "wrongGivenNames": 6, "wrongSurnames": 6, "unflaggedWrongGivenNames": 0, "unflaggedWrongSurnames": 4 },
+    { "sample": 5, "candidateRows": 20, "studentsMatchedByUniqueDate": 20, "extraCandidates": 0, "wrongGivenNames": 1, "wrongSurnames": 2, "unflaggedWrongGivenNames": 1, "unflaggedWrongSurnames": 1 }
+  ],
+  "totals": {
+    "expectedStudentAppearances": 100,
+    "studentsMatchedByUniqueDate": 100,
+    "missingStudents": 0,
+    "duplicateTrueDateCandidates": 0,
+    "outOfOrderTrueDateAssociations": 0,
+    "wrongBirthDatesOnMatchedRows": 0,
+    "extraCandidates": 11,
+    "wrongGivenNames": 11,
+    "wrongSurnames": 19,
+    "unflaggedWrongGivenNames": 2,
+    "unflaggedWrongSurnames": 9
+  },
+  "caution": "These are five photographs of one roster, not five independent rosters. Unique dates establish row recovery and association for this sheet, but the thirty incorrect name fields and eleven confident wrong name fields prevent S4 closure. An extra candidate is not counted as a student.",
+  "privacy": "Aggregate counts only; no roster text, image filename, telephone, exact birth date or row-indexed truth."
+}

@@ -185,9 +185,18 @@ Eight further local name-cell variants were measured privately. A single-word
 pass reported three exact promotions among five flagged surnames in a narrow
 audit, but did not correct either unflagged wrong name field; one private
 transcription is disputed and no all-photo truth audit supports integration.
-The next experiment is an aggregate-only person/field truth audit of all five
-captures, followed by name rereads measured against confident errors as well
-as review flags. S4 remains **IN_PROGRESS** and V04 has not started. Aggregate-only details are in
+An aggregate-only person/field truth audit now covers all five captures: the
+twenty unique printed birth dates each appear once and in order on every scan,
+so all 100 student appearances are associated without a missing or merged
+student. Eleven extra candidates remain. Across those 100 matched rows, 11
+given names and 19 surnames are wrong; two wrong given names and nine wrong
+surnames are unflagged. An all-row single-word reread changed none of the
+twenty names on the clearest capture and increased flagged surnames to eleven.
+A source-resolution sweep found one 2800-pixel rendering with four flags, but
+it had two unflagged wrong surnames versus one in the selected 2600-pixel
+rendering; that smaller counter is rejected. Further OCR changes must improve
+confident-name correctness as well as the counter. S4 remains
+**IN_PROGRESS** and V04 has not started. Aggregate-only details are in
 `.evidence/S4/`.
 
 ## V04 — Fluid crop editing
