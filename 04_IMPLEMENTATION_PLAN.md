@@ -15,7 +15,7 @@ current contract. `.milestones/manifest.json` is the machine-readable lifecycle.
 | R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
 | D0 | Complete. The active plan and Claude entry are short; prior files are archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
 | V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
-| S4 | Next: the owner reopened OCR accuracy work. Three private prototypes measured geometry, image preparation and an alternative local engine; implement only after comparing true-row accuracy as well as review counts. |
+| S4 | In progress. The three prototypes are compared; DPI 180 and conservative TSV geometry are integrated. The clearest private photo has 20/20 rows but five field flags and unflagged name errors, so the acceptance gate remains open. |
 | V04, S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
@@ -127,7 +127,7 @@ hosts. No physical phone check is claimed; the owner checks that separately.
 ## S4 — Measured OCR accuracy on real and synthetic rosters
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 The owner lifted the earlier deferral on 2026-09-23.
 
@@ -160,6 +160,35 @@ synthetic corpus and tests, browser review, independent adversarial
 data-integrity review, self-review. S4 may close only with no silent student
 merge, no privacy breach and the measured good-photo target achieved; otherwise
 it remains open with the result and next experiment recorded.
+
+**Progress, 2026-09-23.** The local DPI 180 pass initially reduced aggregate
+private-photo flags from 288 to 92 across five prepared captures. Preserving
+unresolved weak structured readings for review now yields 96 flags and
+candidate-row counts `20/21/29/21/20`; the extra row is an incomplete age
+fragment on the fourth capture. On the clearest capture, all 20 students were
+recovered with five low-confidence surname flags, but a row-level private audit
+found one wrong given name and one wrong surname that confidence did not flag,
+plus a second wrong surname that was flagged. DPI 300 reports
+four flags on that capture but introduces another unflagged wrong given name and
+severely worsens the shadowed capture. It is rejected as a counter-only fix.
+Conservative TSV geometry recovered all ten people in a fictitious wide-column
+fixture without a cross-person association; on the five real captures it made
+zero joins or field reassignments. The four-variant generated corpus now uses
+the production DPI 180; it recovers 40/40 fictitious people and 196/196
+readable fields. The targeted mobile browser journey, Node 24 quick/domain
+checks and production build pass. A local name-cell second pass raised one
+surname's confidence above 70, but two private audits disagree on whether that
+reading is exact, so it is not integrated. The independent data-integrity
+review verdict is **FAIL**: the clearest photo has five flags, unflagged wrong
+names remain, and person-level truth coverage is missing for four captures.
+Eight further local name-cell variants were measured privately. A single-word
+pass reported three exact promotions among five flagged surnames in a narrow
+audit, but did not correct either unflagged wrong name field; one private
+transcription is disputed and no all-photo truth audit supports integration.
+The next experiment is an aggregate-only person/field truth audit of all five
+captures, followed by name rereads measured against confident errors as well
+as review flags. S4 remains **IN_PROGRESS** and V04 has not started. Aggregate-only details are in
+`.evidence/S4/`.
 
 ## V04 — Fluid crop editing
 

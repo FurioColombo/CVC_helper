@@ -1,9 +1,7 @@
 # Questions for the owner — 0.3.0
 
-Updated 2026-09-23. **No blocking question at present.** The new instructions
-are sufficiently specific to implement and test. The working decisions below
-are recorded so a later agent does not spend a turn asking for answers already
-implicit in the request.
+Updated 2026-09-23. The product instructions are sufficiently specific to
+implement and test. The working decisions below prevent repeat questions.
 
 | Topic                        | Working decision and evidence to check                                                                                                                                                                              |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,3 +16,16 @@ implicit in the request.
 If testing reveals a genuinely blocking semantic choice, append one concise
 question with the measured alternatives and complete independent work before
 asking the owner once.
+
+## New privacy decision
+
+The five private photographs remain ignored and have no matching path in the
+local Git history. A local remote-tracking copy of `main`, however, contains
+real roster examples in tracked tests. The same examples occur in the local
+remote-tracking `main` and `codex/0.3.0` refs and the released `v0.2.0` tag.
+Replacing them in the current tree will not remove them from older public
+commits. After the current-tree scrub is verified, should the repository
+history and release tag be rewritten to remove those older examples? That would
+require a coordinated force-push and fresh clones for collaborators. The
+alternative is to keep history intact while ensuring future commits contain
+only fictional examples. No history rewrite is authorized yet.

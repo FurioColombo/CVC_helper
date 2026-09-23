@@ -1759,7 +1759,7 @@ now the largest remaining cause, and un-deferring it needs the owner's word.
 
 **The residual 36, named:** ~10 fragmentation, 3 the ambiguous compound, 2 the
 two spurious rows' own names, 21 low confidence on readings that are in fact
-correct (Tortortu at 13, Ninira at 34, Vebrera at 35, dates at 42 and 44). The
+correct (Morvello at 13, Norvelli at 34, Tarsina at 35, dates at 42 and 44). The
 last group is *not* to be cleared by lowering the threshold: one flagged surname
 read "Drelina" for "Elareno", and dropping the threshold would have passed
 it silently. The sheet does print the age beside the date — "24 anni -
@@ -1813,9 +1813,9 @@ every row's name cell, count how many rows each position recognises, and take th
 position with more. On the owner's sheet the last word wins twenty to nothing:
 Zovelia, Alunera, Elaria, Nireva, Liorea, Veloria, Thalira, Quenora, Merovia,
 Elaria, Brisenda, Talvino, Elareno, Talvino, Oriella, Fenaldo, Gisvera, Corvina,
-Simone — against Veldoro, Dovebre, Ninira, Ramitu, Feriani, Lolibre, Vebrera,
-Tortortu, Vernuzzi, Fiorafio, Bresani, Liosca, Rovellini, Corere, Nacofio, Norali,
-Rasalo.
+Amedrio — against Nurelia, Veldoro, Brumera, Fiorvane, Torvessa, Nivaldi, Arvedi,
+Belmonti, Calvessa, Dorlani, Esperti, Faldrini, Gorvessi, Halberi, Ismondi, Lorvani,
+Litorni.
 
 **One order for the whole sheet**, as the owner says: a roster is printed from one
 template. Decide per page, not per row.
@@ -1940,7 +1940,7 @@ confidence alone. The tolerance is one year, because a sheet is printed before
 the course and a birthday can fall in between.
 
 **The limit, stated.** The age confirms the **year** only. `01/01/2002` and
-`07/02/2002` imply the same age, so a misread day is corroborated too. That is
+`12/12/2002` imply the same age, so a misread day is corroborated too. That is
 acceptable where the age is what the app now shows and the day is no longer the
 field being confirmed — and it is the reason this milestone pairs the two
 instructions instead of doing the corroboration alone.

@@ -1,0 +1,148 @@
+{
+  "milestone": "S4",
+  "reviewer": "independent adversarial data-integrity review",
+  "reviewedAt": "2026-09-23",
+  "runtime": "Node v24.19.0",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "S4-DI-01",
+      "title": "The good-photo target is not met",
+      "evidence": "The current DPI 180 candidate reports [15, 18, 35, 23, 5] flagged fields across the five prepared captures. The clearest capture remains at exactly 5, while S4 requires fewer than 5. DPI 300 reaches 4 on that capture only by producing more unflagged wrong name fields.",
+      "requiredAction": "Continue with a measured change that reaches fewer than five flags on the good photo without weakening MIN_FIELD_CONFIDENCE or hiding recognized text; otherwise record the measured limit and leave S4 open."
+    },
+    {
+      "id": "S4-DI-02",
+      "title": "The clearest photo still contains confident wrong names",
+      "evidence": "At DPI 180, the sample 5 truth audit has 1 wrong given name with 0 flagged and 2 wrong surnames with only 1 flagged. At DPI 300, 2 wrong given names are unflagged and 1 wrong surname is unflagged. A lower counter therefore does not indicate safer identity data.",
+      "requiredAction": "Do not treat these readings as settled. Keep the S4 gate open until the selected path avoids unflagged wrong name fields or exposes them for explicit review."
+    },
+    {
+      "id": "S4-DI-03",
+      "title": "Person-level truth coverage is incomplete across the five captures",
+      "evidence": "The aggregate evidence reports row counts, flags, and timing for all five captures, but its person/field truth audit covers only the clearest capture. The other four do not have aggregate missing-person, duplicate/merge, wrong-name, or cross-row association counts, so the evidence cannot establish the no-silent-merge condition across the full supplied set.",
+      "requiredAction": "Add aggregate-only truth-audit counts for each capture or totals that cover all five, without recording names, row-indexed truth, or raw OCR in public evidence."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "S4-DI-04",
+      "status": "FIXED_AND_VERIFIED",
+      "title": "Weak partial rows and unresolved structured readings were being dropped",
+      "finding": "The initial parser discarded a row containing only recognized name tokens below the row threshold and discarded unresolved date, age, and opted-in telephone fragments. The current code retains these as incomplete review candidates when the text is structurally recognizable; an opted-out telephone remains absent. A fabricated mixed-confidence TSV now returns both the weak two-token name row and the normal row. A separate unresolved DOB, age, and opted-in phone remain visible with their original low confidence instead of being joined unsafely.",
+      "verification": "The latest focused studentScan.test.ts run passed 40/40. Direct synthetic checks confirmed weak name confidence 55 remains visible, and low-confidence DOB, age, and opted-in phone fragments remain separate incomplete candidates."
+    },
+    {
+      "id": "S4-DI-05",
+      "status": "FIXED_AND_VERIFIED",
+      "title": "Four-token names could lose their ambiguity marker",
+      "finding": "Applying a given-first order previously split an unproven four-token name as if its boundary were settled. The current parser keeps compoundAmbiguity true and preserves all words in the raw reading.",
+      "verification": "The regression test in studentScan.test.ts checks that the four-token reading stays intact and requires review; the focused file passed 40/40."
+    },
+    {
+      "id": "S4-DI-06",
+      "status": "FIXED_AND_VERIFIED",
+      "title": "Synthetic OCR regression uses the selected production DPI",
+      "finding": "The synthetic worker now sets user_defined_dpi from TESSERACT_USER_DEFINED_DPI, matching the production worker's DPI 180 setting.",
+      "verification": "Independently ran tests/ocr-synthetic-regression.test.ts on Node v24.19.0: 2/2 passed. The refreshed aggregate reports 40/40 people, 196/196 readable fields, 8 false candidate rows all reviewed, and 10 field flags."
+    },
+    {
+      "id": "S4-DI-07",
+      "status": "OPEN",
+      "title": "The experimental name-cell second pass is not safe to count toward the target",
+      "finding": "The aggregate comparison says the extra pass would promote one of five flagged surnames above confidence 70, but two private visual audits disagree on whether that reading is exact. The pass is correctly marked experimental and is not integrated; it must not be used to claim fewer than five flags."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "S4-DI-Q1",
+      "status": "FIXED_AND_VERIFIED",
+      "title": "The measurement output includes the caller's image path",
+      "finding": "measure-scan-review.mjs now writes imageSource: caller-provided and no image path, preventing a private filename or directory from entering a saved measurement."
+    },
+    {
+      "id": "S4-DI-Q2",
+      "title": "Keep the measured field flags distinct from the UI row counter",
+      "finding": "The measurement script computes both fieldsFlagged and rowsToReview, while the comparison evidence reports field flags. Preserve both aggregate metrics so a future fewer-than-five claim can be tied to the intended visible counter."
+    }
+  ],
+  "evidenceInspected": [
+    {
+      "path": "AGENTS.md",
+      "scope": "Read completely; followed S4 review, privacy, and evidence rules."
+    },
+    {
+      "path": "04_IMPLEMENTATION_PLAN.md",
+      "scope": "S4 acceptance, target, prototypes, synthetic corpus, and required evidence."
+    },
+    {
+      "path": ".milestones/manifest.json",
+      "scope": "Confirmed S4 is IN_PROGRESS and checked its required evidence."
+    },
+    {
+      "path": "01_PRODUCT_SPEC.md",
+      "scope": "Student scan review contract, confidence handling, visible text, and privacy."
+    },
+    {
+      "path": "03_TECHNICAL_DECISIONS.md",
+      "scope": "Local OCR boundary and synthetic truth/false-row requirements."
+    },
+    {
+      "path": "src/capabilities/studentScan.ts",
+      "scope": "DPI, confidence threshold, row retention, name order, candidate extraction, and worker setup."
+    },
+    {
+      "path": "src/capabilities/studentNameTriplet.ts",
+      "scope": "Three-token name split and ambiguity behavior."
+    },
+    {
+      "path": "src/capabilities/studentScanRowGeometry.ts",
+      "scope": "TSV parsing, geometry joins, unresolved fragments, and headerless input."
+    },
+    {
+      "path": "src/capabilities/studentScan.test.ts",
+      "scope": "Confidence, partial-row, and compound-name regression cases; 40 tests passed independently."
+    },
+    {
+      "path": "src/capabilities/studentNameTriplet.test.ts",
+      "scope": "Particle, two-given-name, and ambiguous-triplet cases."
+    },
+    {
+      "path": "src/capabilities/studentScanRowGeometry.test.ts",
+      "scope": "Adjacent-row, ties, duplicate fields, staff cues, and headerless TSV cases."
+    },
+    {
+      "path": "scripts/measure-scan-review.mjs",
+      "scope": "Measured counters, runtime, and output privacy behavior."
+    },
+    {
+      "path": "tests/ocr-synthetic-regression.test.ts",
+      "scope": "Synthetic truth association and production DPI 180; the focused OCR regression passed 2/2."
+    },
+    {
+      "path": "scripts/generate-synthetic-ocr-corpus.mjs",
+      "scope": "Fictitious roster generation and test conditions."
+    },
+    {
+      "path": ".evidence/S4/ocr-options.json",
+      "scope": "Five-photo aggregate comparison and second-pass limitation."
+    },
+    {
+      "path": ".evidence/S4/dpi-measurement.json",
+      "scope": "DPI sweep and clearest-photo person/field audit."
+    },
+    {
+      "path": ".evidence/S4/fragmentation-measurement.json",
+      "scope": "Current prepared-photo counts, geometry joins, and clearest-photo audit."
+    },
+    {
+      "path": ".evidence/S4/synthetic-regression.json",
+      "scope": "Aggregate synthetic recovery and false-row results."
+    },
+    {
+      "path": ".evidence/S4/browser-evidence.json",
+      "scope": "Reported browser scan journeys; no physical-device pass claimed."
+    }
+  ],
+  "privacy": "Only public aggregate evidence and wholly fictitious fixtures were inspected. No private photographs, raw OCR, or row-indexed private ground truth were opened. No personal data was copied into this report."
+}

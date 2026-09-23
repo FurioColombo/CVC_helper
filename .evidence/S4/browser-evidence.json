@@ -1,0 +1,18 @@
+{
+  "milestone": "S4",
+  "runtime": "Node v24.19.0",
+  "command": "node scripts/run-e2e.mjs tests/e2e/student-scan.spec.ts tests/e2e/s1-scan-phone-option.spec.ts tests/e2e/u02-students.spec.ts",
+  "result": {
+    "passed": 5,
+    "skipped": 1,
+    "failed": 0,
+    "viewports": ["Pixel 7 Chrome", "iPhone 13 viewport"]
+  },
+  "behaviors": [
+    "A blurred fictitious roster shows a retake warning while retaining recognized fields for review.",
+    "The clear fictitious roster proceeds to mandatory review and saves only corrected rows.",
+    "The telephone remains opt-in and is not saved when off.",
+    "The compact student list and full profile remain usable at the stress viewport."
+  ],
+  "physicalDevice": "Not run; the owner performs this check on their phone."
+}

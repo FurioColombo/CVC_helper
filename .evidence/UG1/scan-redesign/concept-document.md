@@ -9,7 +9,7 @@ This document proposes a replacement interaction for `Scan allievi` image adjust
 Observed test material:
 
 - `IMG-20260809-WA0011.jpg` is a wide photograph of a wrinkled sheet on a desk. The paper is skewed and has perspective distortion; the rows are small; there are handwritten marks in the margins and over cells; the right half contains a dense day/shift grid. A crop that includes the whole sheet also includes a lot of non-student operational material.
-- `IMG-20260809-WA0011copy.jpg` is a tighter crop of the left table. It loses the sheet header and left context, starts close to the first row, and still contains small text, shadows and a curved fold. The visible names look surname-first (`Veldoro Valeria`, `De veltri Gregorio`, `Norali Luca`), with possible multi-word or multi-token given names (`Rumeria Tusafio mireni`). This is evidence that the UI must let the operator decide order; it is not proof that every source uses the same convention.
+- `IMG-20260809-WA0011copy.jpg` is a tighter crop of the left table. It loses the sheet header and left context, starts close to the first row, and still contains small text, shadows and a curved fold. The visible names look surname-first (`Veldoro Valeria`, `De veltri Gregorio`, `Norali Luca`), with possible multi-word or multi-token given names (`Rumeria Clovera gelsina`). This is evidence that the UI must let the operator decide order; it is not proof that every source uses the same convention.
 - The current baseline capture (`test-results/scan-before.png`) renders a 326×183 source inside a 390×844 viewport with substantial unused vertical space. Its large outer crop shadow can also dim the toolbar and footer because the mask extends beyond the stage. The replacement must scale the page to the usable stage, clip the mask to the stage, and leave controls at full contrast.
 
 ## Design direction: “Lente + righello”
@@ -142,7 +142,7 @@ No candidate is persisted before the operator confirms. The source photo remains
 | Crop copy loses header/left context | Show full frame first and presets with visible boundary | Keep raw line and row number; false/missing rows remain removable |
 | Handwritten marks overlap table cells | Darken outside page and avoid automatic handwriting interpretation | Low-confidence fields stay editable and labelled |
 | Printed names appear surname-first | Per-row order control and optional explicit bulk suggestion | Preserve `rawName`, `nameOrder`, field confidence and ambiguity |
-| Multi-token names (`De veltri`, `Tusafio mireni`) | Never split by first token without review | Both fields accept spaces; ambiguous rows remain unresolved |
+| Multi-token names (`De veltri`, `Clovera gelsina`) | Never split by first token without review | Both fields accept spaces; ambiguous rows remain unresolved |
 | Phone/date columns are visually separate | OCR input uses the corrected page, with row crop context | Field-level correction and confidence remain independent |
 
 ## Data and capability changes implied by the design
@@ -221,13 +221,13 @@ applyExplicitNameOrder(candidates, order, scope): candidates
 
 ### Review readiness invariant
 
-The candidate is not ready to insert when `nameReview?.compoundAmbiguity === true` and `acknowledged === false`, even if both editable fields are non-empty. The UI should show the short action `Conferma questa suddivisione` beside that row. After acknowledgement, normal required-field and confidence checks still apply. This prevents `De veltri Gregorio` or `Rumeria Tusafio mireni` from being silently “cleaned up” by a token-count guess.
+The candidate is not ready to insert when `nameReview?.compoundAmbiguity === true` and `acknowledged === false`, even if both editable fields are non-empty. The UI should show the short action `Conferma questa suddivisione` beside that row. After acknowledgement, normal required-field and confidence checks still apply. This prevents `De veltri Gregorio` or `Rumeria Clovera gelsina` from being silently “cleaned up” by a token-count guess.
 
 ### Focused test matrix
 
 **Capability/domain tests**
 
-- Preserve the complete raw string for `Veldoro Valeria`, `De veltri Gregorio` and `Rumeria Tusafio mireni`.
+- Preserve the complete raw string for `Veldoro Valeria`, `De veltri Gregorio` and `Rumeria Clovera gelsina`.
 - Parse or retain both given-first and surname-first candidates without assuming the first token is the given name.
 - Mark multi-token name splits as compound ambiguous when the boundary is not evidenced by a header/column mapping.
 - `swapCandidateName` is reversible after two calls and never changes raw text, date, phone or source region.

@@ -14,7 +14,7 @@
     "fullSheetPhoto": {
       "candidates": 26,
       "expected": 20,
-      "falsePositives": "the weekday heading row, and all four staff members: Prinaldo Erba Mililo CT, Ferombo Marco Furio ADV, Sabremi Alessandro ADV, La fiorellina Alessandra AT"
+      "falsePositives": "the weekday heading row, and all four staff members, each read as a name followed by its role code (CT, ADV, ADV, AT); names omitted"
     }
   },
   "after": {

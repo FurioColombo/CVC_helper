@@ -48,7 +48,7 @@ dashboard cards.
   controls at normal ink/white contrast.
 
 The supplied sheets visibly show names such as `Veldoro Valeria`,
-`Rumeria Tusafio mireni`, `De veltri Gregorio` and `De veltri Teodoro`. The source
+`Rumeria Clovera gelsina`, `De veltri Gregorio` and `De veltri Teodoro`. The source
 column is not a reliable signal that the first token is a first name. OCR and
 review must preserve separate `firstName` and `surname` fields, expose both
 labels, and let the reviewer swap/repair them. Never infer the storage order

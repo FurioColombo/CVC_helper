@@ -1,0 +1,35 @@
+{
+  "milestone": "S4",
+  "status": "in progress; acceptance target not met",
+  "runtime": "Node v24.19.0",
+  "completed": [
+    {
+      "command": "npm run verify:quick",
+      "result": "PASS",
+      "testFiles": 42,
+      "tests": 461
+    },
+    {
+      "command": "npm run verify:domain",
+      "result": "PASS",
+      "checks": ["repository", "domain", "0.1.0 compatibility (22 rows)"]
+    },
+    {
+      "command": "node scripts/run-e2e.mjs tests/e2e/student-scan.spec.ts tests/e2e/s1-scan-phone-option.spec.ts tests/e2e/u02-students.spec.ts",
+      "result": "PASS",
+      "passed": 5,
+      "skipped": 1,
+      "failed": 0
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS",
+      "checks": ["TypeScript project build", "Vite production bundle", "PWA manifest, icons, service worker and five precached OCR assets"]
+    }
+  ],
+  "notRun": [
+    "npm run verify:all (reserved for integration gate)",
+    "Physical-device checks (owner only)"
+  ],
+  "privacy": "Private photographs and OCR derivatives remain ignored under data/private. Current tracked roster examples were fictionalized; only aggregate counts appear in S4 evidence. Historical Git refs may still contain earlier examples, recorded as a separate owner decision."
+}

@@ -109,7 +109,7 @@ const FULL_WEEK_STUDENTS = [
   ["teo-marino", "Teo", "Marino", "1990-01-11", "male", "S"],
   ["ugo-ferri", "Ugo", "Ferri", "1988-12-07", "male", "XL"],
   ["vera-leone", "Vera", "Leone", "2002-03-21", "female", "XS"],
-  ["aldo-colombo", "Aldo", "Colombo", "1994-09-02", "male", "M"],
+  ["aldo-Ferombo", "Aldo", "Ferombo", "1994-09-02", "male", "M"],
   ["zoe-riva", "Zoe", "Riva", "1998-05-13", "female", "L"],
   ["milo-sala", "Milo", "Sala", "1996-07-25", "male", "S"],
 ] as const

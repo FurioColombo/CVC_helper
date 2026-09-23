@@ -1,0 +1,31 @@
+{
+  "milestone": "S4",
+  "runtime": "Node v24.19.0",
+  "command": "node node_modules/vitest/vitest.mjs run tests/ocr-synthetic-regression.test.ts --disableConsoleIntercept --reporter=verbose",
+  "ocrSettings": {
+    "engine": "Tesseract.js 7, Italian LSTM, PSM.AUTO",
+    "userDefinedDpi": 180,
+    "sameAsProduction": true
+  },
+  "result": "2 passed",
+  "corpus": {
+    "variants": 4,
+    "peoplePerVariant": 10,
+    "generated": true,
+    "inventedPeopleAndPhones": true,
+    "conditions": ["mild skew", "uneven lighting", "row rules", "wide columns", "three-part names"],
+    "referenceDate": "2024-09-13"
+  },
+  "afterConservativeGeometry": {
+    "truePeopleRecovered": 40,
+    "expectedPeople": 40,
+    "correctReadableFields": 196,
+    "readableFields": 196,
+    "crossPersonAssociations": 0,
+    "duplicateAssociations": 0,
+    "falseCandidateRows": 8,
+    "falseCandidateRowsMarkedForReview": 8,
+    "flaggedFieldsByVariant": [3, 2, 2, 3]
+  },
+  "limitation": "All eight extra rows are visible subtitle/footer candidates. The synthetic corpus establishes row-join safety for these generated images; it does not prove the five private photos meet the owner's fewer-than-five review target."
+}

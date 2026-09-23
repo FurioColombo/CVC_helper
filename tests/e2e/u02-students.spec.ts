@@ -39,7 +39,7 @@ test("keeps the compact list and complete profile usable at the stress viewport"
   await addStudent(page, "Mario", "Rossi", "2010-01-01")
   await addStudent(page, "Mario", "Bianchi", "2000-01-01")
   await addStudent(page, "Alessandra", "Della Rovere Lunghissima", "1999-04-03")
-  await addStudent(page, "Beatrice", "Colombo", "2001-08-05")
+  await addStudent(page, "Beatrice", "Ferombo", "2001-08-05")
 
   const list = page.getByRole("region", { name: "Elenco allievi" })
   await expect(list).toBeVisible()
