@@ -1,0 +1,3182 @@
+{
+  "command": "npm.cmd run verify:e2e -- v02-dictation-layout.spec.ts --project=pixel-7-chrome",
+  "runtime": "v24.19.0",
+  "measuredAt": "2026-09-23T06:11:38.823Z",
+  "measurements": [
+    {
+      "host": "student",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 618
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 521,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "permission",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 127,
+          "width": 256,
+          "height": 932
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 160,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 416,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 754,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 770,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 922,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "loading-1",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -300,
+          "width": 256,
+          "height": 932
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -267,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": -11,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "loading-100",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -300,
+          "width": 256,
+          "height": 964
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -267,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": -11,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 527,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "recording",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -246,
+          "width": 256,
+          "height": 878
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -213,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 79,
+        "width": 181,
+        "height": 88
+      },
+      "waveform": {
+        "x": 65,
+        "y": 43,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 89,
+          "y": 407,
+          "width": 142,
+          "height": 64
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "processing",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -245,
+          "width": 256,
+          "height": 900
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -212,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 44,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 382,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 398,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 518,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -210,
+          "width": 256,
+          "height": 842
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -177,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 79,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 96
+        },
+        "retry": {
+          "x": 65,
+          "y": 511,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -245,
+          "width": 256,
+          "height": 906
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -212,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 44,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 356,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 65,
+          "y": 356,
+          "width": 190,
+          "height": 160
+        },
+        "retry": {
+          "x": 65,
+          "y": 540,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "review",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -245,
+          "width": 256,
+          "height": 1092
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -212,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 44,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": {
+        "clientWidth": 188,
+        "scrollWidth": 188,
+        "rect": {
+          "x": 65,
+          "y": 356,
+          "width": 190,
+          "height": 458
+        },
+        "discard": {
+          "x": 90,
+          "y": 597,
+          "width": 140,
+          "height": 88
+        },
+        "accept": {
+          "x": 90,
+          "y": 701,
+          "width": 140,
+          "height": 88
+        }
+      }
+    },
+    {
+      "host": "unsupported",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 794
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 521,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "recording",
+      "viewportWidth": 390,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "region": {
+        "clientWidth": 356,
+        "scrollWidth": 356,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 358,
+          "height": 306
+        }
+      },
+      "hostLabel": {
+        "x": 33,
+        "y": 77,
+        "width": 324,
+        "height": 48
+      },
+      "trigger": {
+        "x": 151,
+        "y": 133,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 33,
+        "y": 145,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 324,
+        "scrollWidth": 324,
+        "rect": {
+          "x": 33,
+          "y": 289,
+          "width": 324,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 311,
+          "width": 244,
+          "height": 16
+        },
+        "cancel": {
+          "x": 301,
+          "y": 297,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "student",
+      "state": "recording",
+      "viewportWidth": 412,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 412,
+        "scrollWidth": 412
+      },
+      "region": {
+        "clientWidth": 378,
+        "scrollWidth": 378,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 380,
+          "height": 306
+        }
+      },
+      "hostLabel": {
+        "x": 33,
+        "y": 77,
+        "width": 346,
+        "height": 48
+      },
+      "trigger": {
+        "x": 151,
+        "y": 133,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 33,
+        "y": 145,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 346,
+        "scrollWidth": 346,
+        "rect": {
+          "x": 33,
+          "y": 289,
+          "width": 346,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 311,
+          "width": 266,
+          "height": 16
+        },
+        "cancel": {
+          "x": 323,
+          "y": 297,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 810
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 713,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "permission",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -178,
+          "width": 256,
+          "height": 1124
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -145,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 303,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 641,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 657,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 809,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "loading-1",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -492,
+          "width": 256,
+          "height": 1124
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -459,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": -11,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "loading-100",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -492,
+          "width": 256,
+          "height": 1156
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -459,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": -11,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 527,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "recording",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -438,
+          "width": 256,
+          "height": 1070
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -405,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 79,
+        "width": 181,
+        "height": 88
+      },
+      "waveform": {
+        "x": 65,
+        "y": 43,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 89,
+          "y": 407,
+          "width": 142,
+          "height": 64
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "processing",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -460,
+          "width": 256,
+          "height": 1092
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -427,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 21,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -402,
+          "width": 256,
+          "height": 1034
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -369,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 79,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 96
+        },
+        "retry": {
+          "x": 65,
+          "y": 511,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -455,
+          "width": 256,
+          "height": 1098
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -422,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 26,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 338,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 65,
+          "y": 338,
+          "width": 190,
+          "height": 160
+        },
+        "retry": {
+          "x": 65,
+          "y": 522,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "review",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -455,
+          "width": 256,
+          "height": 1284
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -422,
+        "width": 190,
+        "height": 432
+      },
+      "trigger": {
+        "x": 65,
+        "y": 26,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": {
+        "clientWidth": 188,
+        "scrollWidth": 188,
+        "rect": {
+          "x": 65,
+          "y": 338,
+          "width": 190,
+          "height": 458
+        },
+        "discard": {
+          "x": 90,
+          "y": 579,
+          "width": 140,
+          "height": 88
+        },
+        "accept": {
+          "x": 90,
+          "y": 683,
+          "width": 140,
+          "height": 88
+        }
+      }
+    },
+    {
+      "host": "unsupported",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 794
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 521,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "recording",
+      "viewportWidth": 390,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "region": {
+        "clientWidth": 356,
+        "scrollWidth": 356,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 358,
+          "height": 378
+        }
+      },
+      "hostLabel": {
+        "x": 33,
+        "y": 77,
+        "width": 192,
+        "height": 120
+      },
+      "trigger": {
+        "x": 151,
+        "y": 205,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 33,
+        "y": 217,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 324,
+        "scrollWidth": 324,
+        "rect": {
+          "x": 33,
+          "y": 361,
+          "width": 324,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 383,
+          "width": 244,
+          "height": 16
+        },
+        "cancel": {
+          "x": 301,
+          "y": 369,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "evaluation",
+      "state": "recording",
+      "viewportWidth": 412,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 412,
+        "scrollWidth": 412
+      },
+      "region": {
+        "clientWidth": 378,
+        "scrollWidth": 378,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 380,
+          "height": 378
+        }
+      },
+      "hostLabel": {
+        "x": 33,
+        "y": 77,
+        "width": 192,
+        "height": 120
+      },
+      "trigger": {
+        "x": 151,
+        "y": 205,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 33,
+        "y": 217,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 346,
+        "scrollWidth": 346,
+        "rect": {
+          "x": 33,
+          "y": 361,
+          "width": 346,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 383,
+          "width": 266,
+          "height": 16
+        },
+        "cancel": {
+          "x": 323,
+          "y": 369,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 498
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 497,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "permission",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 151,
+          "width": 256,
+          "height": 812
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 416,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 658,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 674,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 826,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "loading-1",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -180,
+          "width": 256,
+          "height": 812
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 85,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "loading-100",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -180,
+          "width": 256,
+          "height": 844
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 85,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 527,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "recording",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -126,
+          "width": 256,
+          "height": 758
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 175,
+        "width": 181,
+        "height": 88
+      },
+      "waveform": {
+        "x": 65,
+        "y": 139,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 89,
+          "y": 407,
+          "width": 142,
+          "height": 64
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "processing",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -148,
+          "width": 256,
+          "height": 780
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 117,
+        "width": 209,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 209,
+        "scrollWidth": 209,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 209,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 161,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -90,
+          "width": 256,
+          "height": 722
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 175,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 96
+        },
+        "retry": {
+          "x": 65,
+          "y": 511,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -154,
+          "width": 256,
+          "height": 786
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 111,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 327,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 65,
+          "y": 327,
+          "width": 190,
+          "height": 160
+        },
+        "retry": {
+          "x": 65,
+          "y": 511,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "review",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -180,
+          "width": 256,
+          "height": 972
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 65,
+        "y": 85,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": {
+        "clientWidth": 188,
+        "scrollWidth": 188,
+        "rect": {
+          "x": 65,
+          "y": 301,
+          "width": 190,
+          "height": 458
+        },
+        "discard": {
+          "x": 90,
+          "y": 542,
+          "width": 140,
+          "height": 88
+        },
+        "accept": {
+          "x": 90,
+          "y": 646,
+          "width": 140,
+          "height": 88
+        }
+      }
+    },
+    {
+      "host": "unsupported",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 794
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 521,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "recording",
+      "viewportWidth": 390,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "region": {
+        "clientWidth": 356,
+        "scrollWidth": 356,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 358,
+          "height": 262
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 151,
+        "y": 193,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 33,
+        "y": 205,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 324,
+        "scrollWidth": 324,
+        "rect": {
+          "x": 33,
+          "y": 245,
+          "width": 324,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 267,
+          "width": 244,
+          "height": 16
+        },
+        "cancel": {
+          "x": 301,
+          "y": 253,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "knowledge",
+      "state": "recording",
+      "viewportWidth": 412,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 412,
+        "scrollWidth": 412
+      },
+      "region": {
+        "clientWidth": 378,
+        "scrollWidth": 378,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 380,
+          "height": 262
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 151,
+        "y": 193,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 33,
+        "y": 205,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 346,
+        "scrollWidth": 346,
+        "rect": {
+          "x": 33,
+          "y": 245,
+          "width": 346,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 267,
+          "width": 266,
+          "height": 16
+        },
+        "cancel": {
+          "x": 323,
+          "y": 253,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 418
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 321,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "permission",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 732
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 321,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 659,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 675,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 827,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "loading-1",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -100,
+          "width": 256,
+          "height": 732
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -67,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": -11,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "loading-100",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -100,
+          "width": 256,
+          "height": 764
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -67,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": -11,
+        "width": 190,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 128
+        },
+        "cancel": {
+          "x": 89,
+          "y": 527,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "recording",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -46,
+          "width": 256,
+          "height": 678
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -13,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 79,
+        "width": 181,
+        "height": 88
+      },
+      "waveform": {
+        "x": 65,
+        "y": 43,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 89,
+          "y": 407,
+          "width": 142,
+          "height": 64
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "processing",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -68,
+          "width": 256,
+          "height": 700
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -35,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 21,
+        "width": 190,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 359,
+          "width": 190,
+          "height": 240
+        },
+        "text": {
+          "x": 89,
+          "y": 375,
+          "width": 142,
+          "height": 96
+        },
+        "cancel": {
+          "x": 89,
+          "y": 495,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -10,
+          "width": 256,
+          "height": 642
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 23,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 79,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 208
+        },
+        "text": {
+          "x": 65,
+          "y": 391,
+          "width": 190,
+          "height": 96
+        },
+        "retry": {
+          "x": 65,
+          "y": 511,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -63,
+          "width": 256,
+          "height": 706
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -30,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 26,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 190,
+        "scrollWidth": 190,
+        "rect": {
+          "x": 65,
+          "y": 338,
+          "width": 190,
+          "height": 272
+        },
+        "text": {
+          "x": 65,
+          "y": 338,
+          "width": 190,
+          "height": 160
+        },
+        "retry": {
+          "x": 65,
+          "y": 522,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "review",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": -63,
+          "width": 256,
+          "height": 892
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": -30,
+        "width": 151,
+        "height": 40
+      },
+      "trigger": {
+        "x": 65,
+        "y": 26,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": {
+        "clientWidth": 188,
+        "scrollWidth": 188,
+        "rect": {
+          "x": 65,
+          "y": 338,
+          "width": 190,
+          "height": 458
+        },
+        "discard": {
+          "x": 90,
+          "y": 579,
+          "width": 140,
+          "height": 88
+        },
+        "accept": {
+          "x": 90,
+          "y": 683,
+          "width": 140,
+          "height": 88
+        }
+      }
+    },
+    {
+      "host": "unsupported",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 794
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 521,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "recording",
+      "viewportWidth": 390,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "region": {
+        "clientWidth": 356,
+        "scrollWidth": 356,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 358,
+          "height": 250
+        }
+      },
+      "hostLabel": {
+        "x": 33,
+        "y": 89,
+        "width": 76,
+        "height": 20
+      },
+      "trigger": {
+        "x": 266,
+        "y": 77,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 148,
+        "y": 89,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 324,
+        "scrollWidth": 324,
+        "rect": {
+          "x": 33,
+          "y": 233,
+          "width": 324,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 255,
+          "width": 244,
+          "height": 16
+        },
+        "cancel": {
+          "x": 301,
+          "y": 241,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-form",
+      "state": "recording",
+      "viewportWidth": 412,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 412,
+        "scrollWidth": 412
+      },
+      "region": {
+        "clientWidth": 378,
+        "scrollWidth": 378,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 380,
+          "height": 250
+        }
+      },
+      "hostLabel": {
+        "x": 33,
+        "y": 89,
+        "width": 76,
+        "height": 20
+      },
+      "trigger": {
+        "x": 288,
+        "y": 77,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 170,
+        "y": 89,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 346,
+        "scrollWidth": 346,
+        "rect": {
+          "x": 33,
+          "y": 233,
+          "width": 346,
+          "height": 60
+        },
+        "text": {
+          "x": 45,
+          "y": 255,
+          "width": 266,
+          "height": 16
+        },
+        "cancel": {
+          "x": 323,
+          "y": 241,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 346
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 113,
+        "y": 473,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "permission",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 628
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 52,
+        "y": 473,
+        "width": 219,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 603,
+          "width": 219,
+          "height": 240
+        },
+        "text": {
+          "x": 76,
+          "y": 619,
+          "width": 171,
+          "height": 96
+        },
+        "cancel": {
+          "x": 76,
+          "y": 739,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "loading-1",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 660
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 52,
+        "y": 473,
+        "width": 219,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 635,
+          "width": 219,
+          "height": 240
+        },
+        "text": {
+          "x": 76,
+          "y": 651,
+          "width": 171,
+          "height": 96
+        },
+        "cancel": {
+          "x": 76,
+          "y": 771,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "loading-100",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 660
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 52,
+        "y": 473,
+        "width": 219,
+        "height": 146
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 635,
+          "width": 219,
+          "height": 240
+        },
+        "text": {
+          "x": 76,
+          "y": 651,
+          "width": 171,
+          "height": 96
+        },
+        "cancel": {
+          "x": 76,
+          "y": 771,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "recording",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 606
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 52,
+        "y": 509,
+        "width": 181,
+        "height": 88
+      },
+      "waveform": {
+        "x": 52,
+        "y": 473,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 613,
+          "width": 219,
+          "height": 208
+        },
+        "text": {
+          "x": 76,
+          "y": 629,
+          "width": 171,
+          "height": 64
+        },
+        "cancel": {
+          "x": 76,
+          "y": 717,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "processing",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 628
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 52,
+        "y": 473,
+        "width": 219,
+        "height": 114
+      },
+      "waveform": null,
+      "status": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 603,
+          "width": 219,
+          "height": 240
+        },
+        "text": {
+          "x": 76,
+          "y": 619,
+          "width": 171,
+          "height": 96
+        },
+        "cancel": {
+          "x": 76,
+          "y": 739,
+          "width": 88,
+          "height": 88
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 570
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 113,
+        "y": 473,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 577,
+          "width": 219,
+          "height": 208
+        },
+        "text": {
+          "x": 52,
+          "y": 577,
+          "width": 219,
+          "height": 96
+        },
+        "retry": {
+          "x": 52,
+          "y": 697,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "error",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 602
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 113,
+        "y": 473,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": {
+        "clientWidth": 219,
+        "scrollWidth": 219,
+        "rect": {
+          "x": 52,
+          "y": 577,
+          "width": 219,
+          "height": 240
+        },
+        "text": {
+          "x": 52,
+          "y": 577,
+          "width": 219,
+          "height": 128
+        },
+        "retry": {
+          "x": 52,
+          "y": 729,
+          "width": 177,
+          "height": 88
+        }
+      },
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "review",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 251,
+        "scrollWidth": 251,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 780
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 113,
+        "y": 473,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": {
+        "clientWidth": 217,
+        "scrollWidth": 217,
+        "rect": {
+          "x": 52,
+          "y": 577,
+          "width": 219,
+          "height": 418
+        },
+        "discard": {
+          "x": 77,
+          "y": 778,
+          "width": 169,
+          "height": 88
+        },
+        "accept": {
+          "x": 77,
+          "y": 882,
+          "width": 169,
+          "height": 88
+        }
+      }
+    },
+    {
+      "host": "unsupported",
+      "state": "idle",
+      "viewportWidth": 320,
+      "rootFontSize": "32px",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "region": {
+        "clientWidth": 254,
+        "scrollWidth": 254,
+        "rect": {
+          "x": 32,
+          "y": 232,
+          "width": 256,
+          "height": 794
+        }
+      },
+      "hostLabel": {
+        "x": 65,
+        "y": 265,
+        "width": 190,
+        "height": 240
+      },
+      "trigger": {
+        "x": 65,
+        "y": 521,
+        "width": 158,
+        "height": 88
+      },
+      "waveform": null,
+      "status": null,
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "recording",
+      "viewportWidth": 390,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "region": {
+        "clientWidth": 353,
+        "scrollWidth": 353,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 358,
+          "height": 250
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 270,
+        "y": 185,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 152,
+        "y": 197,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 329,
+        "scrollWidth": 329,
+        "rect": {
+          "x": 32,
+          "y": 237,
+          "width": 329,
+          "height": 60
+        },
+        "text": {
+          "x": 44,
+          "y": 259,
+          "width": 249,
+          "height": 16
+        },
+        "cancel": {
+          "x": 305,
+          "y": 245,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    },
+    {
+      "host": "fault-card-edit",
+      "state": "recording",
+      "viewportWidth": 412,
+      "rootFontSize": "16px",
+      "page": {
+        "clientWidth": 412,
+        "scrollWidth": 412
+      },
+      "region": {
+        "clientWidth": 375,
+        "scrollWidth": 375,
+        "rect": {
+          "x": 16,
+          "y": 60,
+          "width": 380,
+          "height": 250
+        }
+      },
+      "hostLabel": null,
+      "trigger": {
+        "x": 292,
+        "y": 185,
+        "width": 91,
+        "height": 44
+      },
+      "waveform": {
+        "x": 174,
+        "y": 197,
+        "width": 110,
+        "height": 20
+      },
+      "status": {
+        "clientWidth": 351,
+        "scrollWidth": 351,
+        "rect": {
+          "x": 32,
+          "y": 237,
+          "width": 351,
+          "height": 60
+        },
+        "text": {
+          "x": 44,
+          "y": 259,
+          "width": 271,
+          "height": 16
+        },
+        "cancel": {
+          "x": 327,
+          "y": 245,
+          "width": 44,
+          "height": 44
+        }
+      },
+      "alert": null,
+      "review": null
+    }
+  ]
+}

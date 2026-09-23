@@ -91,9 +91,9 @@ function EvaluationNoteEditor({
 
   return (
     <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <label
-          className="min-w-0 text-sm font-black"
+          className="min-w-0 basis-48 text-sm font-black"
           htmlFor={`evaluation-note-${student.id}`}
         >
           Nota di {fullName} · {session?.day} {session?.period}

@@ -34,10 +34,12 @@ export function DictationTrigger({
   const recording = dictation.status === "recording"
   const busy = isDictationBusy(dictation)
   return (
-    <span className={`flex min-w-0 items-center gap-2 ${className}`}>
+    <span
+      className={`flex max-w-full min-w-0 flex-wrap items-center gap-2 ${className}`}
+    >
       {recording && (
         <DictationMeter
-          className="text-[#b42318]"
+          className="max-w-full shrink-0 text-[#b42318]"
           stream={dictation.mediaStream}
         />
       )}
@@ -45,7 +47,7 @@ export function DictationTrigger({
         aria-label={
           recording ? `Termina dettatura ${naming.subject}` : naming.start
         }
-        className={`h-11 shrink-0 px-3 text-xs ${recording ? "border-[#d92d20] text-[#b42318]" : ""}`}
+        className={`h-auto min-h-11 min-w-[44px] max-w-full shrink flex-wrap whitespace-normal break-words px-3 py-2 text-center text-xs [overflow-wrap:anywhere] ${recording ? "border-[#d92d20] text-[#b42318]" : ""}`}
         disabled={!dictation.supported || busy || dictation.status === "review"}
         onClick={() => (recording ? dictation.stop() : void dictation.start())}
         type="button"
@@ -103,7 +105,9 @@ export function DictationPanels({
   return (
     <>
       {!dictation.supported && dictation.status === "idle" && (
-        <p className={`text-xs text-muted-foreground ${className}`}>
+        <p
+          className={`min-w-0 text-xs text-muted-foreground [overflow-wrap:anywhere] ${className}`}
+        >
           {unsupportedHint}
         </p>
       )}
@@ -111,10 +115,10 @@ export function DictationPanels({
       {showStatus && (
         <div
           aria-live="polite"
-          className={`flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2 ${className}`}
+          className={`flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2 ${className}`}
           role="status"
         >
-          <p className="text-xs font-semibold text-muted-foreground">
+          <p className="min-w-0 basis-32 flex-1 text-xs font-semibold text-muted-foreground [overflow-wrap:anywhere]">
             {dictation.status === "permission"
               ? "Attendo il permesso del microfono…"
               : dictation.status === "recording"
@@ -125,7 +129,7 @@ export function DictationPanels({
           </p>
           <Button
             aria-label={`Annulla dettatura ${naming.subject}`}
-            className="size-10 shrink-0 p-0"
+            className="size-11 min-h-11 min-w-[44px] shrink-0 p-0"
             onClick={dictation.cancel}
             type="button"
             variant="secondary"
@@ -137,12 +141,12 @@ export function DictationPanels({
 
       {dictation.status === "review" && (
         <div
-          className={`rounded-xl border border-primary/30 bg-primary/5 p-3 ${className}`}
+          className={`@container min-w-0 rounded-xl border border-primary/30 bg-primary/5 p-3 ${className}`}
         >
-          <p className="text-xs leading-5 text-muted-foreground">
+          <p className="min-w-0 text-xs leading-5 text-muted-foreground [overflow-wrap:anywhere]">
             {reviewHint}
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-1 gap-2 @sm:grid-cols-2">
             <Button
               aria-label={`Scarta trascrizione ${naming.subject}`}
               onClick={dictation.cancel}
@@ -166,10 +170,10 @@ export function DictationPanels({
 
       {dictation.status === "error" && (
         <div
-          className={`flex items-start justify-between gap-3 ${className}`}
+          className={`flex min-w-0 flex-wrap items-start justify-between gap-3 ${className}`}
           role="alert"
         >
-          <p className="text-xs font-semibold text-[#b42318]">
+          <p className="min-w-0 basis-32 flex-1 text-xs font-semibold text-[#b42318] [overflow-wrap:anywhere]">
             {dictation.error === "permission"
               ? "Permesso microfono non concesso. Il testo è rimasto invariato."
               : "Dettatura non riuscita. Il testo è rimasto invariato."}
@@ -177,7 +181,7 @@ export function DictationPanels({
           {dictation.supported && (
             <Button
               aria-label={`Riprovare dettatura ${naming.subject}`}
-              className="h-10 shrink-0 px-3 text-xs"
+              className="h-11 min-h-11 min-w-[44px] shrink-0 px-3 text-xs"
               onClick={() => void dictation.start()}
               type="button"
               variant="secondary"
