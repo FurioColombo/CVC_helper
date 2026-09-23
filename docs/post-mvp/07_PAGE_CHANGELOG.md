@@ -78,6 +78,7 @@ derivato finale è rinviato.
 - Taglie XS/S/M/L/XL direttamente selezionabili, controllo compatto da 40 px nella r3 e senza sbordo. A 320 px il gruppo passa sotto il nome.
 - Dare priorità orizzontale al nome: evitare che vada su due righe nei casi realistici. Taglia e nota restano sulla stessa card.
 - “Detta” apre permesso/registrazione/trascrizione nello stesso pannello di modifica testo; nessuna pagina dedicata.
+- Dal 2026-09-23 (V02) etichetta, trigger e stati voce vanno a capo entro la card a 320 px e testo al 200%; annullamento resta almeno 44 × 44 px. La card cresce solo quando serve.
 - Condividere salvataggio e valori con il profilo; nessuna copia separata della nota.
 
 **Mock:** taglia mancante/selezionata, nota breve/lunga, dettatura, errore. **Accettazione:** un tap cambia taglia, testo persistito e condiviso con P04; nessun allievo perso durante navigazione rapida. **Baseline:** `src/features/students/StudentKnowledge.tsx`.
@@ -131,6 +132,7 @@ derivato finale è rinviato.
 - Modifica stato rapida, salvata; ordine/errori coerenti durante tap ripetuti.
 - Icona parte guasta opzionale; default neutro e nessuna classificazione automatica che alteri il testo.
 - Riutilizzare logo barca, numero e accento di stato di P08 per dare una gerarchia riconoscibile anche all'elenco avarie; il mapping del mock copre RS 500, Laser Vago, RS Toura, J/80, First 25.7 e First 27 oltre a RS Quest.
+- Dal 2026-09-23 (V02) il form e la modifica in-card riusano gli stati voce che vanno a capo; messaggio d'errore e Riprova restano dentro il pannello, con azioni di almeno 44 × 44 px.
 
 **Mock:** nessuna avaria, descrizione lunga, più guasti sulla stessa barca, tutti e tre gli stati, errore/retry, form/dettatura. **Accettazione:** più contenuto utile a parità viewport, testo completo raggiungibile in un tap, cambi stato e disponibilità indipendenti dopo reload. **Baseline:** `FaultManagement.tsx`, `FaultCard.tsx`, `FaultForm.tsx`.
 
@@ -242,6 +244,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 - Positivi verdi, negativi rossi, neutro distinto e assenza vuota nei riepiloghi. A terra resta presente e valutabile; nota legata alla sessione esatta.
 - Sotto la riga compare la nota stessa, non la scritta “Nota presente”: due righe con i puntini di sospensione del browser, testo intero nel DOM per lettori di schermo e ricerca. Lo stato di salvataggio conserva la sua area `aria-live`, così una nota non viene mai annunciata come esito di salvataggio.
 - Dal 2026-09-20 nota e stato di salvataggio condividono quella riga: la nota a sinistra, `Salvataggio…` / `Salvato` / `Non salvato` a destra. Non competono mai, perché lo stato è vuoto tranne che nell'istante attorno a una scrittura, e due righe separate costavano 1 rem a ogni allievo. L'area `aria-live` resta montata anche quando è vuota: inserita insieme al proprio testo non verrebbe annunciata.
+- Dal 2026-09-23 (V02) l'intestazione nota può andare su più righe; caricamento, registrazione, errore e revisione restano nel pannello. Le azioni si impilano quando serve; niente quadrato forzato.
 
 **Mock:** due viste, nome lungo, tutti i valori, assenza, A terra, nota, save/error, tastiera. **Accettazione:** un tap per valore nella vista operativa; nessuna perdita di note; stessa valutazione nelle due viste; sessione non si confonde dopo scroll/reload. **Baseline:** `EvaluationManagement.tsx`.
 

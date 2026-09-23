@@ -1,0 +1,67 @@
+{
+  "milestone": "V02",
+  "runtime": "Node v24.19.0",
+  "commands": [
+    {
+      "command": "npm.cmd run verify:e2e -- v02-dictation-layout.spec.ts --project=pixel-7-chrome",
+      "result": "PASS",
+      "summary": "3 Playwright tests passed."
+    },
+    {
+      "command": "npm.cmd run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm.cmd exec eslint -- tests/fixtures/dictation-layout.tsx tests/e2e/v02-dictation-layout.spec.ts src/features/speech/DictationControls.tsx src/features/evaluations/EvaluationManagement.tsx src/features/boats/FaultForm.tsx",
+      "result": "PASS"
+    },
+    {
+      "command": "npm.cmd run test -- src/features/speech/DictatedNoteField.test.tsx",
+      "result": "PASS",
+      "summary": "3 unit tests passed in the focused run."
+    }
+  ],
+  "browserEvidence": {
+    "project": "pixel-7-chrome",
+    "measuredAt": "2026-09-23T06:11:38.823Z",
+    "syntheticViewport": "320x664 with document font size 200%",
+    "syntheticStates": [
+      "idle",
+      "permission",
+      "loading at 1%",
+      "loading at 100%",
+      "recording",
+      "processing",
+      "transcription error",
+      "permission error",
+      "review",
+      "unsupported browser"
+    ],
+    "syntheticHosts": [
+      "student note",
+      "evaluation note",
+      "knowledge note",
+      "fault form",
+      "fault card edit"
+    ],
+    "normalViewports": ["390x844", "412x915"],
+    "assertions": [
+      "No horizontal page, host-region or state-panel overflow and no child escapes its host-region boundary.",
+      "Dictation trigger, cancel, retry, and review actions meet the 44x44 CSS-pixel minimum.",
+      "Keyboard activation enters the permission state.",
+      "Keyboard Cancel and Discard return the synthetic panel to idle; clicking Accept also closes review.",
+      "Unsupported idle is checked at 320x664 and 200% text in all five wrapper iterations.",
+      "The evaluation note label and trigger wrap within the host at 320px and 200% text.",
+      "At 320px/200%, the evaluation loading status text measured 142px wide and the 88px cancel button began below its text; the geometry file records both rectangles.",
+      "Real student create and edit, P05 knowledge note, P17 evaluation note, P09 fault form, and P09 fault-card edit journeys preserve typed text when microphone access is denied and Retry is activated.",
+      "Real fault-form and card errors remain inside their host panels."
+    ],
+    "syntheticDataOnly": true,
+    "physicalDeviceVerification": "Not performed; no device pass claimed."
+  },
+  "artifacts": [
+    ".evidence/V02/control-geometry.json",
+    ".evidence/V02/evaluation-loading-100-stress.png",
+    ".evidence/V02/student-recording-stress.png"
+  ]
+}

@@ -101,8 +101,10 @@ export function FaultForm({
       )}
 
       <div className="grid gap-2 text-sm font-bold">
-        <div className="flex items-center justify-between gap-3">
-          <label htmlFor="fault-description">Descrizione</label>
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <label className="min-w-0" htmlFor="fault-description">
+            Descrizione
+          </label>
           <DictationTrigger dictation={dictation} naming={dictationNaming} />
         </div>
         <textarea

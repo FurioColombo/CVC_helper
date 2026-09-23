@@ -1,0 +1,74 @@
+{
+  "reviewerRole": "independent field-UX and accessibility/mobile reviewer",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "V02-DR-01",
+      "severity": "important",
+      "finding": "The proposed wrapping host row is necessary, especially for the evaluation-note header, which currently uses a non-wrapping flex row. It is not sufficient by itself: the shared trigger's loading label is an intrinsic-width, shrink-0 button, and the recording waveform adds another fixed-width child. The supplied loading and recording screenshots show these controls crossing the note panel's right edge.",
+      "requiredResponse": "Bound the trigger to the panel width, allow its children to wrap, and let the visible label wrap or use a shorter visible state while preserving the complete accessible state. Keep the waveform within the same bounded region; it may move to its own line under pressure."
+    },
+    {
+      "id": "V02-DR-02",
+      "severity": "important",
+      "finding": "DictationPanels has independent overflow paths. The live status row places long progress text beside a fixed cancel action, and the error row places recovery text beside Retry without wrapping or min-width control. A fix limited to DictationTrigger would leave permission, 100% loading, processing, and error layouts vulnerable at enlarged text.",
+      "requiredResponse": "Make status and error content wrap within the panel, give the message a shrinkable min-width, and keep cancel/retry reachable on a second line when needed. Preserve the role=status/alert semantics and the visible progress percentage."
+    },
+    {
+      "id": "V02-DR-03",
+      "severity": "important",
+      "finding": "The shared cancel control is declared 40px wide (`size-10`), below this milestone's explicit 44px target, even though its inherited minimum height is 44px. The retry control also uses a 40px height class. Review buttons use a two-column grid whose labels need a narrow, enlarged-text check.",
+      "requiredResponse": "Give dictation actions at least 44 × 44 CSS px active areas. Keep review actions readable and reachable; stack them when two columns cannot fit at the stressed width."
+    },
+    {
+      "id": "V02-DR-04",
+      "severity": "important",
+      "finding": "The shared control is used beyond P05/P09/P17: student create/edit notes, the StudentKnowledge note editor, fault cards, and fault creation. A shared CSS change can fix the target pages while regressing one of these other hosts, whose action rows have their own wrapping rules.",
+      "requiredResponse": "Add regression coverage for every current DictationTrigger/DictationPanels host, even though the primary acceptance journey is the student note and evaluation note."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "V02-DR-Q1",
+      "finding": "Preserving the current neutral surfaces, blue secondary action, red recording cue, and waveform is appropriate. The owner explicitly accepts natural differences in panel height; fixed square dimensions add no value here."
+    },
+    {
+      "id": "V02-DR-Q2",
+      "finding": "The existing app test convention already defines the useful 320 × 664 viewport and 200% root font-size stress. Reuse that exact setup so overflow diagnostics compare consistently."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md: source-of-truth hierarchy, milestone/reviewer policy, UI verification and privacy rules",
+    "04_IMPLEMENTATION_PLAN.md: V02 scope, pre-implementation review criterion and required evidence",
+    "01_PRODUCT_SPEC.md: operating context and accessibility principles",
+    "docs/post-mvp/06_DESIGN_RULEBOOK.md: R04 touch targets, R05 text resizing, R14 states, R18 no horizontal overflow",
+    "docs/post-mvp/07_PAGE_CHANGELOG.md: P05, P09, P17 and integrated dictation-state requirements",
+    "docs/post-mvp/mockups/README.md and mock.js: frozen r10 target and note/dictation host structure, read statically",
+    "docs/post-mvp/brief-0.3.0/dictation-loading-overflow.png and dictation-stop-overflow.png: panel-edge clipping geometry; personal text omitted from this report",
+    "src/features/speech/DictationControls.tsx and DictationMeter.tsx: trigger, status, review and error layout",
+    "src/features/evaluations/EvaluationManagement.tsx: evaluation-note host header and action layout",
+    "src/features/students/StudentKnowledge.tsx and DictatedNoteField.tsx: student-note host layouts",
+    "src/features/students/StudentManagement.tsx, src/features/boats/FaultCard.tsx and src/features/boats/FaultForm.tsx: other shared-control consumers",
+    "src/features/speech/dictationState.ts: progress percentage and busy-state semantics",
+    "tests/e2e/u01-shell.spec.ts: 320 × 664 plus documentElement font-size 200% stress convention"
+  ],
+  "approvedLayout": {
+    "decision": "Approve the proposed minimal responsive layout, subject to the findings above. Retain the current visual style and allow panel height to grow naturally; do not impose a fixed square or equal dimensions.",
+    "prescription": [
+      "Host label/action rows wrap when their combined intrinsic widths exceed the available line. Keep the label min-width at zero and preserve the association between label and action.",
+      "The trigger has max-width 100%, min-width zero, and can wrap its meter and button within the host panel. Its button remains at least 44px high and wide; its text can wrap. If visible text is shortened, expose the full current state and percentage accessibly.",
+      "Status and error rows wrap inside the panel. Message text can shrink and wrap; cancel/retry actions remain visible and at least 44 × 44px. Keep current live-region roles and do not hide the actual progress value.",
+      "Review actions remain fully readable and reachable. Switch from two columns to one when their content cannot fit without clipping or horizontal overflow.",
+      "Keep the recording meter decorative and hidden from assistive technology, but constrain its canvas and containing row so no part extends outside the note panel."
+    ],
+    "acceptance": [
+      "At 320 × 664 with `document.documentElement.style.fontSize = '200%'`, exercise permission, loading at 1% and 100%, recording, processing, generic and permission-denied error, review, and unsupported idle states in the student-note and evaluation-note hosts. Include long synthetic labels, not personal data.",
+      "Check page and panel `scrollWidth <= clientWidth`; verify trigger, meter, status, cancel, error text, retry, and review buttons stay within the panel. Report offending descendants without collecting or printing real note/student text.",
+      "Measure interactive bounding boxes: trigger, cancel, retry, and review actions are at least 44 × 44 CSS px. Verify progress text remains visible or fully available to assistive technology and the complete action names remain accessible.",
+      "Verify click and keyboard access, live announcements, cancellation/retry, preserved typed text after failure, and that review actions still accept or discard the transcript.",
+      "Run the same state/geometry regression on all current shared-control hosts (student create/edit, StudentKnowledge, evaluation note, fault form and fault-card edit). Also check ordinary 390px and 412px viewports for visual regressions."
+    ],
+    "limitations": "The frozen mock documents the intended note/action relationship but does not simulate all live dictation states. Its source and review checks were inspected statically. Browser rendering of the local mock target was blocked by the browser URL policy; no alternate browser path was attempted."
+  }
+}

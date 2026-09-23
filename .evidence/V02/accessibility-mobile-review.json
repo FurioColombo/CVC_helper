@@ -1,0 +1,50 @@
+{
+  "reviewerRole": "independent adversarial accessibility and mobile reviewer",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "V02-AM-Q1",
+      "finding": "The five full-state layouts are test-only wrappers that mirror each production host. Real application journeys cover create/edit, StudentKnowledge, evaluation, fault form and fault-card edit through permission denial and retry, while `DictatedNoteField.test.tsx` verifies transcript accept/discard with the real hook. Keep the duplicated wrapper classes aligned with their production hosts as those layouts change."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md: reviewer, browser, privacy, and evidence requirements",
+    "04_IMPLEMENTATION_PLAN.md: active V02 acceptance criteria",
+    ".evidence/V02/design-review.json: approved layout and state/host acceptance matrix",
+    ".evidence/V02/browser-evidence.json and control-geometry.json",
+    ".evidence/V02/evaluation-loading-100-stress.png and student-recording-stress.png: visual legibility at 320px and 200% text",
+    "src/features/speech/DictationControls.tsx and DictationMeter.tsx",
+    "src/features/students/StudentKnowledge.tsx and DictatedNoteField.tsx",
+    "src/features/evaluations/EvaluationManagement.tsx",
+    "src/features/boats/FaultForm.tsx and FaultCard.tsx",
+    "tests/e2e/v02-dictation-layout.spec.ts and tests/fixtures/dictation-layout.tsx",
+    "src/features/speech/DictatedNoteField.test.tsx: actual hook accept/discard and typed-text preservation"
+  ],
+  "actualChecks": [
+    {
+      "command": "npm.cmd run verify:e2e -- v02-dictation-layout.spec.ts --project=pixel-7-chrome",
+      "result": "PASS: 3 Playwright tests",
+      "runtime": "Node v24.19.0",
+      "runAt": "2026-09-23T06:11:38Z"
+    },
+    {
+      "check": "Reviewed the resulting 60 browser geometry measurements for student, evaluation, knowledge, fault-form, and fault-card-edit wrappers across all dictation states, the unsupported state, and recording at 390px/412px.",
+      "result": "PASS: page, host-region, status, alert, and review widths fit; the measured trigger, meter, text, and action rectangles remain inside the host region. Trigger, cancel, retry, and review targets meet or exceed 44 × 44 CSS px."
+    },
+    {
+      "check": "Verified unsupported idle at 320px and 200% root text across all five wrapper iterations.",
+      "result": "PASS: 5 measurements at 32px root size; page width 320/320 and host region width 254/254."
+    },
+    {
+      "check": "Visually inspected the stress screenshots and confirmed the long loading/recording status text wraps inside the card with its action still visible and readable."
+    },
+    {
+      "check": "Confirmed live-region roles, text, and accessible labels in source/browser assertions. Keyboard Cancel and Discard, and click Accept, return the synthetic fixture to idle; actual-hook accept/discard behavior is covered by component tests."
+    },
+    {
+      "limitation": "No screen reader or physical phone was used. No physical-device pass is claimed."
+    }
+  ]
+}

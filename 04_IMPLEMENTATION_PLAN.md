@@ -14,8 +14,8 @@ current contract. `.milestones/manifest.json` is the machine-readable lifecycle.
 | S1–S3 | Complete at `c29374e`. The five private photographs showed 16–24 fewer review flags each after telephone opt-in, automatic sheet name order and age/date corroboration. Node 24.19.0, 428 tests and focused browser checks passed. Exact DOB is still stored at this checkpoint. |
 | R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
 | D0 | Complete. The active plan and Claude entry are short; prior files are archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
-| V02 | Next feature. Fix dictation overflow while keeping the appearance the owner likes. Independent design review **before** code. |
-| S4 | The owner has now reopened OCR accuracy work. Three independent agents are comparing geometry, image preparation and an alternative local OCR approach. No result is accepted without comparable measurements. |
+| V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
+| S4 | Next: the owner reopened OCR accuracy work. Three private prototypes measured geometry, image preparation and an alternative local engine; implement only after comparing true-row accuracy as well as review counts. |
 | V04, S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
@@ -88,7 +88,7 @@ is empty. No feature code changed in D0.
 ## V02 — Dictation control fits at every state
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 The deployed older build overflows in Valutazioni; the owner likes the current
 control in the student note and does **not** require a fixed square or identical
@@ -108,6 +108,21 @@ review findings. Record the decision in `07_PAGE_CHANGELOG.md`.
 
 **Evidence:** design review (created before code), verification, browser
 evidence, control geometry and independent accessibility/mobile review.
+
+**Closed 2026-09-23:** The pre-code design review approved a minimal wrapping
+layout. The trigger, meter, status, error and review actions now remain inside
+their note/fault panels; the evaluation and fault-form headers wrap without a
+fixed square. A visual review caught unreadable one-character status wrapping
+at 200% text, so the message now takes a readable line and moves Cancel below
+it when needed. Focused Playwright passed 3/3 on Node 24.19.0 across all
+states in five synthetic host wrappers and real create/edit, knowledge,
+evaluation and fault journeys. All 60 recorded geometries fit, including the
+unsupported state at 320 px/200% and ordinary 390/412 px widths. Typed text
+survives denied microphone access and Retry. `npm run evidence -- V02` passed
+428 tests, domain/compatibility checks and the PWA build. The independent
+accessibility/mobile review is PASS_WITH_FINDINGS with zero blockers. Its sole
+QoL note is to keep the synthetic wrapper classes aligned with production
+hosts. No physical phone check is claimed; the owner checks that separately.
 
 ## S4 — Measured OCR accuracy on real and synthetic rosters
 
