@@ -120,11 +120,12 @@ and the plan/evidence are updated first:
 For 0.3.0, the owner explicitly lifted narrow deferrals on 2026-09-23:
 the installed icon with the Home CVC mark and `HELPER` below it; a single-image
 export of the **crew summary**; and better on-device roster OCR, including
-line-fragment reconstruction. C1 also adds a four-person starting capacity for
-D1/cabin courses, plus crew-card add/remove controls; D2–D5 stay fixed at two
-unless the operator enables a Settings override. The final product name, a
-broad icon programme, other image exports and remaining deferrals above remain
-deferred. The active acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
+line-fragment reconstruction. C1 gives D1/cabin courses a four-person starting
+capacity with manual crew-card adjustment. D2–D5 stay fixed at two for the
+0.3.0 gate; their Settings override and add/remove controls are deferred to the
+final Claude Code follow-up. The final product name, a broad icon programme,
+other image exports and remaining deferrals above remain deferred. The active
+acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
 
 The owner moved the remaining S4 fewer-than-five review-flag target to a final
 Claude Code follow-up after the 0.3.0 gate. It is not a gate prerequisite. The
