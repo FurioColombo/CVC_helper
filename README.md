@@ -5,7 +5,7 @@ and follow the shared repository instructions.
 
 ## Read this first
 
-Shared entry point: `AGENTS.md`; Claude Code loads the short `CLAUDE.md` pointer.
+Shared agent instructions: `AGENTS.md` (read directly by Codex and Claude Code).
 
 Authoritative documents:
 

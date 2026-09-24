@@ -10,7 +10,6 @@ active work and lives on `codex/0.3.0`.
 ## Where things are
 
 - `AGENTS.md` — execution protocol: read order, evidence and Git rules; start here.
-- `CLAUDE.md` — the small Claude Code entry point to the shared contract.
 - `docs/LOCAL_DEVELOPMENT.md` — Node 24, ports and browser verification, read
   when needed.
 - `01`–`03_*.md` — product spec, scope and technical decisions; consult the
