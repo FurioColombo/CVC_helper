@@ -23,6 +23,7 @@ const MARIO: StudentRecord = {
   surname: "Rossi",
   nickname: null,
   dateOfBirth: "2010-01-01",
+  declaredAgeAtCourseStart: null,
   sex: "male",
   phone: null,
   size: null,

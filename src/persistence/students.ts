@@ -9,6 +9,7 @@ export interface StudentRecord {
   surname: string
   nickname: string | null
   dateOfBirth: string
+  declaredAgeAtCourseStart: number | null
   sex: StudentSex | null
   phone: string | null
   size: StudentSize | null
@@ -22,6 +23,7 @@ export interface StudentInput {
   surname: string
   nickname: string | null
   dateOfBirth: string
+  declaredAgeAtCourseStart?: number | null
   sex: StudentSex | null
   phone: string | null
   size?: StudentSize | null
@@ -41,7 +43,7 @@ export interface StudentKnowledgeInput {
 }
 
 const STUDENT_COLUMNS =
-  "id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, size, initialNote, courseNote, active"
+  "id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active"
 
 export type StudentReferenceKind =
   "duty" | "stay-over" | "crew" | "land" | "evaluation"
@@ -141,6 +143,7 @@ export async function createStudent(
     id: crypto.randomUUID(),
     courseId,
     ...input,
+    declaredAgeAtCourseStart: input.declaredAgeAtCourseStart ?? null,
     size: input.size ?? null,
     initialNote: input.initialNote?.trim() || null,
     courseNote: input.courseNote?.trim() || null,
@@ -148,8 +151,8 @@ export async function createStudent(
   }
   await db.execute(
     `INSERT INTO students(
-      id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, size, initialNote, courseNote, active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       student.id,
       student.courseId,
@@ -157,6 +160,7 @@ export async function createStudent(
       student.surname,
       student.nickname,
       student.dateOfBirth,
+      student.declaredAgeAtCourseStart,
       student.sex,
       student.phone,
       student.size,
@@ -177,6 +181,7 @@ export async function createStudents(
     id: crypto.randomUUID(),
     courseId,
     ...input,
+    declaredAgeAtCourseStart: input.declaredAgeAtCourseStart ?? null,
     size: input.size ?? null,
     initialNote: input.initialNote?.trim() || null,
     courseNote: input.courseNote?.trim() || null,
@@ -186,8 +191,8 @@ export async function createStudents(
 
   await db.executeBatch(
     `INSERT INTO students(
-      id, courseId, firstName, surname, nickname, dateOfBirth, sex, phone, size, initialNote, courseNote, active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     students.map((student) => [
       student.id,
       student.courseId,
@@ -195,6 +200,7 @@ export async function createStudents(
       student.surname,
       student.nickname,
       student.dateOfBirth,
+      student.declaredAgeAtCourseStart,
       student.sex,
       student.phone,
       student.size,
@@ -214,7 +220,7 @@ export async function updateStudent(
   await db.init()
   await db.execute(
     `UPDATE students
-     SET firstName = ?, surname = ?, nickname = ?, dateOfBirth = ?, sex = ?, phone = ?,
+     SET firstName = ?, surname = ?, nickname = ?, dateOfBirth = ?, declaredAgeAtCourseStart = ?, sex = ?, phone = ?,
          size = ?, initialNote = ?, courseNote = ?
      WHERE id = ? AND courseId = ?`,
     [
@@ -222,6 +228,7 @@ export async function updateStudent(
       input.surname,
       input.nickname,
       input.dateOfBirth,
+      input.declaredAgeAtCourseStart ?? null,
       input.sex,
       input.phone,
       input.size,

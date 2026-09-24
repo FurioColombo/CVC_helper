@@ -28,6 +28,7 @@ const STUDENTS: StudentRecord[] = Array.from({ length: 8 }, (_, index) => ({
   surname: `Cognome${index + 1}`,
   nickname: null,
   dateOfBirth: index === 0 ? "2010-01-01" : "2000-01-01",
+  declaredAgeAtCourseStart: null,
   sex: index % 2 === 0 ? "female" : "male",
   phone: null,
   size: null,
@@ -69,7 +70,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -93,7 +94,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -132,7 +133,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -168,7 +169,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -190,7 +191,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -229,7 +230,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -261,7 +262,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -293,7 +294,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -329,7 +330,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -380,7 +381,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -459,6 +460,7 @@ describe("DutyManagement", () => {
       surname: `Cognome${index + 1}`,
       nickname: null,
       dateOfBirth: index < 2 ? "2010-01-01" : "2000-01-01",
+      declaredAgeAtCourseStart: null,
       sex: index % 2 === 0 ? "female" : "male",
       phone: null,
       size: null,
@@ -488,7 +490,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 
@@ -533,7 +535,7 @@ describe("DutyManagement", () => {
       <DutyManagement
         courseId="course-1"
         onHome={vi.fn()}
-        referenceDate="2026-08-29"
+        courseStartDate="2026-08-29"
       />,
     )
 

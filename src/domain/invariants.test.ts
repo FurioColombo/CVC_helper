@@ -110,14 +110,50 @@ describe("course-state invariants", () => {
   it("validates persisted student records independently at subsystem reads", () => {
     expect(
       validateStudentRecords([
-        { id: "student-1", active: 1, sex: "male", size: "M" },
-        { id: "student-1", active: 3, sex: "invalid", size: "XXL" },
+        {
+          id: "student-1",
+          dateOfBirth: "2000-01-01",
+          active: 1,
+          sex: "male",
+          size: "M",
+        },
+        {
+          id: "student-1",
+          dateOfBirth: "2000-01-01",
+          active: 3,
+          sex: "invalid",
+          size: "XXL",
+        },
       ]).map(({ code }) => code),
     ).toEqual([
       "duplicate-id",
       "invalid-student-active",
       "invalid-student-sex",
       "invalid-student-size",
+    ])
+  })
+
+  it("accepts an age-only student and rejects missing or invalid age sources", () => {
+    const issues = validateStudentRecords([
+      { id: "age-only", dateOfBirth: "", declaredAgeAtCourseStart: 17 },
+      { id: "missing-age", dateOfBirth: "" },
+      { id: "fractional-age", dateOfBirth: "", declaredAgeAtCourseStart: 17.5 },
+      { id: "too-old", dateOfBirth: "", declaredAgeAtCourseStart: 121 },
+    ])
+
+    expect(issues.map(({ code, path }) => ({ code, path }))).toEqual([
+      {
+        code: "missing-student-age-source",
+        path: "students[1]",
+      },
+      {
+        code: "invalid-student-declared-age",
+        path: "students[2].declaredAgeAtCourseStart",
+      },
+      {
+        code: "invalid-student-declared-age",
+        path: "students[3].declaredAgeAtCourseStart",
+      },
     ])
   })
 

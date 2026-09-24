@@ -73,6 +73,7 @@ const STUDENTS: StudentRecord[] = [
   surname: surname as string,
   nickname: null,
   dateOfBirth: "2000-01-01",
+  declaredAgeAtCourseStart: null,
   sex: null,
   phone: null,
   size: "M",

@@ -34,6 +34,7 @@ const INPUT: StudentInput = {
   surname: "Rossi",
   nickname: null,
   dateOfBirth: "2010-01-01",
+  declaredAgeAtCourseStart: null,
   sex: "male",
   phone: "+39 333 1234567",
 }
@@ -101,6 +102,23 @@ describe("student persistence", () => {
         expect.arrayContaining(["course-1", "Mario", "Rossi", "male", 1]),
         expect.arrayContaining(["course-1", "Giulia", "Bianchi", "female", 1]),
       ]),
+    )
+  })
+
+  it("persists a declared course-start age without a birth date", async () => {
+    const ageOnlyInput = {
+      ...INPUT,
+      dateOfBirth: "",
+      declaredAgeAtCourseStart: 17,
+    }
+
+    const student = await createStudent("course-1", ageOnlyInput)
+
+    expect(student.dateOfBirth).toBe("")
+    expect(student.declaredAgeAtCourseStart).toBe(17)
+    expect(database.execute).toHaveBeenCalledWith(
+      expect.stringContaining("declaredAgeAtCourseStart"),
+      expect.arrayContaining(["", 17]),
     )
   })
 

@@ -179,3 +179,57 @@ test("keeps the complete student workflow consistent across reload", async ({
     })
   }
 })
+
+test("creates, corrects and reloads a declared age without a birth date", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-08-29T12:00:00+02:00"))
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await page.getByRole("button", { name: "Aggiungi allievo" }).click()
+
+  await page.getByLabel("Nome", { exact: true }).fill("Giulia")
+  await page.getByLabel("Cognome", { exact: true }).fill("Bianchi")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("17")
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("Altro", { exact: true })
+    .click()
+  await page.getByRole("button", { name: "Salva allievo" }).click()
+
+  const student = page.getByRole("button", {
+    name: /Giulia, 17 anni, Altro, Minorenne/,
+  })
+  await expect(student).toBeVisible()
+  await student.click()
+  await expect(
+    page.getByText("Età dichiarata all’inizio del corso"),
+  ).toBeVisible()
+  await expect(page.getByText("17 anni · dichiarata")).toBeVisible()
+  await expect(page.getByText("Minorenne")).toBeVisible()
+
+  await page.getByRole("button", { name: "Modifica allievo" }).click()
+  await expect(
+    page.getByLabel("Età compiuta il primo giorno del corso"),
+  ).toHaveValue("17")
+  await expect(page.getByLabel("Data di nascita", { exact: true })).toHaveValue(
+    "",
+  )
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("18")
+  await page.getByRole("button", { name: "Fine" }).click()
+  await expect(page.getByText("18 anni · dichiarata")).toBeVisible()
+  await expect(page.getByText("Minorenne")).not.toBeVisible()
+
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
+  await page.reload()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await expect(
+    page.getByRole("button", { name: /Giulia, 18 anni, Altro/ }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: /Giulia, 18 anni, Altro, Minorenne/ }),
+  ).toHaveCount(0)
+})

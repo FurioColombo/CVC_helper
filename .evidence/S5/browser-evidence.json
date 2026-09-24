@@ -1,0 +1,48 @@
+{
+  "milestone": "S5",
+  "runtime": "Node v24.19.0",
+  "status": "PASS",
+  "scope": "Local Chromium browser emulation; no physical-device result is claimed.",
+  "syntheticRegression": {
+    "source": ".evidence/S4/synthetic-regression.json and tests/ocr-synthetic-regression.test.ts",
+    "corpus": "Four generated medium-difficulty roster variants with invented people and phone numbers, three-part names, mild skew, uneven lighting and wide columns.",
+    "result": "Included in the passing 476-test verify run; the existing OCR geometry regression remains active."
+  },
+  "runs": [
+    {
+      "command": "npm run verify:e2e -- tests/e2e/student-scan.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+      "result": "2 passed",
+      "assertions": [
+        "The user reviews OCR from the public synthetic roster and can correct fields before saving.",
+        "Review counters navigate to the first missing field and first row needing review, with a live announcement.",
+        "The 320 px viewport and 200% text stress case remains within the established horizontal-overflow bounds.",
+        "The exact-date box and per-row name-order swap are absent."
+      ]
+    },
+    {
+      "command": "npm run verify:e2e -- tests/e2e/student-management-gate.spec.ts --project=pixel-7-chrome --grep \"declared age\"",
+      "result": "1 passed",
+      "assertions": [
+        "The user creates an age-only student, sees the declared-age provenance and minor marker, corrects age 17 to 18, and reloads with the correction retained and minor marker removed.",
+        "No date of birth is invented or stored."
+      ]
+    },
+    {
+      "command": "npm run verify:e2e -- tests/e2e/student-management-gate.spec.ts --project=iphone-13-viewport --grep \"declared age\"",
+      "result": "1 passed",
+      "assertions": [
+        "The same age-only create, correction, boundary and reload journey passes at an iPhone-sized viewport."
+      ]
+    },
+    {
+      "command": "npm run verify:e2e -- tests/e2e/u02-migration.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+      "result": "6 passed",
+      "assertions": [
+        "The existing 0.1 database upgrades and reopens without data loss.",
+        "Legacy operational IDs remain stable after no-op and unrelated saves.",
+        "The nullable declared-age column is added to the existing local database."
+      ]
+    }
+  ],
+  "physicalDevice": "Owner verification remains outstanding for UG2."
+}

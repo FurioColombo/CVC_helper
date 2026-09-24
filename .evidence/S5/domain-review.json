@@ -1,0 +1,40 @@
+{
+  "milestone": "S5",
+  "reviewerRole": "independent adversarial domain review, RULE_HEAVY",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    "A low-confidence recognized DOB remains visible and marked “Lettura incerta”; when an independently read age corroborates it within the existing one-year rule, the row may be saved without an explicit confirmation. The retained DOB still determines persisted age and minor/adult status. This matches the established S3 behavior and is not a new S5 defect, but it remains a consequential accepted limitation near the 18-year boundary."
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "AGENTS.md sections 2, 3, 7, 8, 10, 11, 12, 16 and 17",
+    "01_PRODUCT_SPEC.md §3.1 and scan-review rules",
+    "04_IMPLEMENTATION_PLAN.md: Where this cycle stands and S5 acceptance criteria",
+    "docs/post-mvp/0_3_0_QUESTIONS.md: owner-confirmed age-only semantics",
+    "03_TECHNICAL_DECISIONS.md §3.1: additive schema compatibility policy",
+    "src/domain/student.ts and src/domain/student.test.ts: DOB precedence, declared-age anchoring, range and missing-source behavior",
+    "src/domain/duties.ts, src/domain/invariants.ts and corresponding tests: course-start minor rules and structural rejection of missing/invalid age sources",
+    "src/features/students/StudentScan.tsx and StudentScan.test.tsx: optional DOB, retained low-confidence text, counter/readiness behavior, row navigation, and malformed age drafts",
+    "src/features/students/StudentManagement.tsx and StudentManagement.test.tsx: age-only entry, provenance, and edit route",
+    "src/persistence/db.ts, src/persistence/students.ts and src/persistence/students.test.ts: nullable field persistence",
+    "src/test/u02MigrationHarness.ts and tests/e2e/u02-migration.spec.ts: actual legacy 0.1 schema migration and reopen",
+    "tests/e2e/student-management-gate.spec.ts: visible age-only create, correction from 17 to 18, and reload workflow",
+    "tests/fixtures/ocr-sheet-clear.png only; no private roster photographs or personal data"
+  ],
+  "verification": {
+    "runtime": "Node v24.19.0",
+    "independentUnitRuns": [
+      {
+        "command": "npm.cmd exec vitest -- run src/domain/student.test.ts src/domain/invariants.test.ts src/features/students/StudentScan.test.tsx src/features/students/StudentManagement.test.tsx src/persistence/students.test.ts",
+        "result": "PASS: 5 files, 78 tests"
+      },
+      {
+        "command": "npm.cmd exec vitest -- run src/features/students/StudentScan.test.tsx src/features/students/StudentManagement.test.tsx",
+        "result": "PASS: 2 files, 40 tests, including negative, fractional, and out-of-range age drafts"
+      }
+    ],
+    "browserRuns": "The first iPhone viewport attempt exposed a Playwright locator clicking the visually hidden radio instead of its visible label. After that test interaction was corrected, the milestone owner reported the scan workflow passing 2/2 across Pixel/iPhone, the 0.1 migration suite passing 6/6 across Pixel/iPhone, and age-only create/correct/reload passing on each profile.",
+    "physicalDevice": "No physical-device result is claimed."
+  }
+}

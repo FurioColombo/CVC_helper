@@ -186,6 +186,52 @@ export async function runU02MigrationHarness() {
   }
 }
 
+/** Existing 0.1 SQLite table gains the nullable age field and reopens intact. */
+export async function runDeclaredAgeSchemaHarness() {
+  const filename = `declared-age-migration-${crypto.randomUUID()}.db`
+  await seedLegacyFixture(filename)
+
+  const upgraded = createDatabase(filename)
+  await upgraded.init()
+  const legacyStudent = await upgraded.get<{
+    dateOfBirth: string
+    declaredAgeAtCourseStart: number | null
+  }>(
+    "SELECT dateOfBirth, declaredAgeAtCourseStart FROM students WHERE id = ?",
+    ["student-v010-mario"],
+  )
+  if (
+    legacyStudent.dateOfBirth !== "2000-03-12" ||
+    legacyStudent.declaredAgeAtCourseStart !== null
+  ) {
+    throw new Error(
+      "Existing student data did not survive the additive age migration",
+    )
+  }
+
+  await upgraded.execute(
+    `UPDATE students
+     SET dateOfBirth = ?, declaredAgeAtCourseStart = ?
+     WHERE id = ? AND courseId = ?`,
+    ["", 17, "student-v010-mario", "course-v010-d2"],
+  )
+  await upgraded.close()
+
+  const reopened = createDatabase(filename)
+  await reopened.init()
+  const ageOnlyStudent = await reopened.get<{
+    dateOfBirth: string
+    declaredAgeAtCourseStart: number | null
+  }>(
+    "SELECT dateOfBirth, declaredAgeAtCourseStart FROM students WHERE id = ?",
+    ["student-v010-mario"],
+  )
+  await reopened.disconnectAndClear()
+  await reopened.close()
+
+  return { legacyStudent, ageOnlyStudent }
+}
+
 /** Real SQLite regression for stable legacy row IDs after ordinary app saves. */
 export async function runStableIdMigrationHarness() {
   const filename = `stable-id-migration-${crypto.randomUUID()}.db`

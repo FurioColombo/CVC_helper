@@ -28,7 +28,12 @@ import {
 } from "@/domain/config"
 import { formatEvaluationSession } from "@/domain/evaluations"
 import { validateStudentRecords } from "@/domain/invariants"
-import { calculateAge, getStudentDisplayName, isMinor } from "@/domain/student"
+import {
+  calculateStudentAge,
+  getStudentDisplayName,
+  isStudentMinor,
+  MAX_DECLARED_STUDENT_AGE,
+} from "@/domain/student"
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
 import { StudentScan } from "@/features/students/StudentScan"
@@ -53,6 +58,7 @@ type StudentField =
   | "firstName"
   | "surname"
   | "dateOfBirth"
+  | "declaredAgeAtCourseStart"
   | "sex"
   | "phone"
   | "nickname"
@@ -249,8 +255,8 @@ function StudentList({
     >
       {students.map((student) => {
         const displayName = getStudentDisplayName(student, students)
-        const age = calculateAge(student.dateOfBirth, course.startDate)
-        const minor = isMinor(student.dateOfBirth, course.startDate)
+        const age = calculateStudentAge(student, course.startDate)
+        const minor = isStudentMinor(student, course.startDate)
         return (
           <button
             aria-label={`${displayName}, ${age} anni, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
@@ -331,6 +337,9 @@ function StudentForm({
   const [surname, setSurname] = useState(student?.surname ?? "")
   const [nickname, setNickname] = useState(student?.nickname ?? "")
   const [dateOfBirth, setDateOfBirth] = useState(student?.dateOfBirth ?? "")
+  const [declaredAge, setDeclaredAge] = useState(
+    student?.declaredAgeAtCourseStart?.toString() ?? "",
+  )
   // A new card starts on Altro: it is the value that claims nothing, and the
   // other two are one tap away.
   const [sex, setSex] = useState<StudentSex | "">(
@@ -370,6 +379,8 @@ function StudentForm({
       surname: surname.trim(),
       nickname: nickname.trim() || null,
       dateOfBirth,
+      declaredAgeAtCourseStart:
+        dateOfBirth || declaredAge.trim() === "" ? null : Number(declaredAge),
       sex: sex || null,
       phone: phone.trim() || null,
       size: size || null,
@@ -379,6 +390,7 @@ function StudentForm({
     [
       courseNote,
       dateOfBirth,
+      declaredAge,
       firstName,
       initialNote,
       nickname,
@@ -394,7 +406,11 @@ function StudentForm({
       !student ||
       !input.firstName ||
       !input.surname ||
-      !input.dateOfBirth ||
+      (!input.dateOfBirth &&
+        (typeof input.declaredAgeAtCourseStart !== "number" ||
+          !Number.isInteger(input.declaredAgeAtCourseStart) ||
+          input.declaredAgeAtCourseStart < 0 ||
+          input.declaredAgeAtCourseStart > MAX_DECLARED_STUDENT_AGE)) ||
       !input.sex
     ) {
       return false
@@ -491,18 +507,37 @@ function StudentForm({
 
         <Field
           field="dateOfBirth"
-          label="Data di nascita"
-          hint="Formato GG/MM/AAAA. Età e stato Minorenne sono calcolati all’inizio del corso."
+          label="Data di nascita (se nota)"
+          hint="Se la data non è disponibile, inserisci l’età compiuta al primo giorno del corso."
         >
           <Input
             aria-label="Data di nascita"
             max={course.startDate}
             onChange={(event) => setDateOfBirth(event.target.value)}
-            required
             type="date"
             value={dateOfBirth}
           />
         </Field>
+
+        {!dateOfBirth && (
+          <Field
+            field="declaredAgeAtCourseStart"
+            hint="Età dichiarata al primo giorno del corso. Resta fissa per questa scheda e non inventa una data di nascita."
+            label="Età compiuta il primo giorno del corso"
+          >
+            <Input
+              aria-label="Età compiuta il primo giorno del corso"
+              inputMode="numeric"
+              max={MAX_DECLARED_STUDENT_AGE}
+              min={0}
+              onChange={(event) => setDeclaredAge(event.target.value)}
+              required
+              step={1}
+              type="number"
+              value={declaredAge}
+            />
+          </Field>
+        )}
 
         <fieldset className="grid gap-2 text-sm font-bold" data-field="sex">
           <legend>Sesso</legend>
@@ -658,8 +693,9 @@ function StudentDetail({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const displayName = getStudentDisplayName(student, students)
-  const age = calculateAge(student.dateOfBirth, course.startDate)
-  const minor = isMinor(student.dateOfBirth, course.startDate)
+  const age = calculateStudentAge(student, course.startDate)
+  const minor = isStudentMinor(student, course.startDate)
+  const ageIsDeclared = !student.dateOfBirth.trim()
   const nameShortcut = useFieldShortcut(() => onEdit("firstName"))
   const initialNoteShortcut = useFieldShortcut(() => onEdit("initialNote"))
   const courseNoteShortcut = useFieldShortcut(() => onEdit("courseNote"))
@@ -784,11 +820,15 @@ function StudentDetail({
 
         <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border">
           <ProfileField
-            field="dateOfBirth"
+            field={ageIsDeclared ? "declaredAgeAtCourseStart" : "dateOfBirth"}
             icon={<CalendarDays aria-hidden="true" className="size-4" />}
-            label="Età"
-            onShortcut={() => onEdit("dateOfBirth")}
-            value={`${age} anni`}
+            label={
+              ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
+            }
+            onShortcut={() =>
+              onEdit(ageIsDeclared ? "declaredAgeAtCourseStart" : "dateOfBirth")
+            }
+            value={ageIsDeclared ? `${age} anni · dichiarata` : `${age} anni`}
           />
           <ProfileField
             field="sex"

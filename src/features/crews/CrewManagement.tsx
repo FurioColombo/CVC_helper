@@ -68,7 +68,7 @@ import {
   validateCrewRecords,
   validateDutyRecords,
 } from "@/domain/invariants"
-import { getStudentDisplayName, isMinor } from "@/domain/student"
+import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
 import {
   listBoats,
   listFaults,
@@ -1017,7 +1017,7 @@ export function CrewManagement({
         ? studentById.get(person.personId)
         : undefined
     if (!student) return { nodes: null, description: "" }
-    const minor = isMinor(student.dateOfBirth, course.startDate)
+    const minor = isStudentMinor(student, course.startDate)
     const duty: DutyMarker | null = currentDutyStudentIds.has(person.personId)
       ? "current"
       : smontanteDutyStudentIds.has(person.personId)

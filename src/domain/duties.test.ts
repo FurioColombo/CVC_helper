@@ -24,7 +24,7 @@ const CONFIG: DutyConfig = {
   balanceSex: true,
   tieBreaker: "alphabetical",
   stayOverStudentIds: [],
-  referenceDate: "2026-08-29",
+  courseStartDate: "2026-08-29",
 }
 
 function students(count: number): DutyStudent[] {

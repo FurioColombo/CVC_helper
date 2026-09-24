@@ -495,7 +495,7 @@
     {
       "id": "S5",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/S5/verification.json",

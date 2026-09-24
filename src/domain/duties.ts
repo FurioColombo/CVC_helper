@@ -4,7 +4,7 @@ import {
   type DutyTieBreaker,
   type StudentSex,
 } from "@/domain/config"
-import { calculateAge, isMinor } from "@/domain/student"
+import { calculateStudentAge, isStudentMinor } from "@/domain/student"
 
 export interface DutyStudent {
   id: string
@@ -12,6 +12,7 @@ export interface DutyStudent {
   surname: string
   nickname?: string | null
   dateOfBirth: string
+  declaredAgeAtCourseStart?: number | null
   sex: StudentSex | null
   active: 0 | 1
 }
@@ -30,7 +31,7 @@ export interface DutyConfig {
   balanceSex: boolean
   tieBreaker: DutyTieBreaker
   stayOverStudentIds: string[]
-  referenceDate: string
+  courseStartDate: string
 }
 
 export interface DutyProposal {
@@ -156,10 +157,12 @@ function compareStudents(
   left: DutyStudent,
   right: DutyStudent,
   tieBreaker: DutyTieBreaker,
+  courseStartDate: string,
 ) {
   if (tieBreaker === "similar-age") {
     return (
-      left.dateOfBirth.localeCompare(right.dateOfBirth) ||
+      calculateStudentAge(right, courseStartDate) -
+        calculateStudentAge(left, courseStartDate) ||
       compareAlphabetically(left, right)
     )
   }
@@ -274,7 +277,7 @@ function selectFridayStudents(
     allStudents.length === 0
       ? 0
       : allStudents.filter((student) =>
-          isMinor(student.dateOfBirth, config.referenceDate),
+          isStudentMinor(student, config.courseStartDate),
         ).length / allStudents.length
   const knownSex = allStudents.filter(
     ({ sex }) => sex === "male" || sex === "female",
@@ -290,9 +293,8 @@ function selectFridayStudents(
       const score = (student: DutyStudent) => {
         const minors =
           selected.filter((item) =>
-            isMinor(item.dateOfBirth, config.referenceDate),
-          ).length +
-          (isMinor(student.dateOfBirth, config.referenceDate) ? 1 : 0)
+            isStudentMinor(item, config.courseStartDate),
+          ).length + (isStudentMinor(student, config.courseStartDate) ? 1 : 0)
         const minorDeviation = Math.abs(
           minors - overallMinorRatio * progressiveSlots,
         )
@@ -308,7 +310,7 @@ function selectFridayStudents(
       }
       return (
         score(left) - score(right) ||
-        compareStudents(left, right, config.tieBreaker)
+        compareStudents(left, right, config.tieBreaker, config.courseStartDate)
       )
     })
     selected.push(pool.shift()!)
@@ -351,7 +353,7 @@ function balanceScore(
   if (config.balanceMinors) {
     score.push(
       ...metrics(
-        counts((student) => isMinor(student.dateOfBirth, config.referenceDate)),
+        counts((student) => isStudentMinor(student, config.courseStartDate)),
       ),
     )
   }
@@ -471,7 +473,7 @@ export function generateDutyProposal(
     const student = byId.get(assignment.studentId)
     if (!student) return
     assignedCounts[assignment.dayId] += 1
-    if (isMinor(student.dateOfBirth, config.referenceDate)) {
+    if (isStudentMinor(student, config.courseStartDate)) {
       minorCounts[assignment.dayId] += 1
     }
     if (student.sex === "male") maleCounts[assignment.dayId] += 1
@@ -492,14 +494,14 @@ export function generateDutyProposal(
       pinnedFridayStudentIds.add(student.id)
       assignments.push({ dayId: "friday", studentId: student.id })
       assignedCounts.friday += 1
-      if (isMinor(student.dateOfBirth, config.referenceDate)) {
+      if (isStudentMinor(student, config.courseStartDate)) {
         minorCounts.friday += 1
       }
       if (student.sex === "male") maleCounts.friday += 1
       if (student.sex === "female") femaleCounts.friday += 1
       agesByDay.set("friday", [
         ...(agesByDay.get("friday") ?? []),
-        calculateAge(student.dateOfBirth, config.referenceDate),
+        calculateStudentAge(student, config.courseStartDate),
       ])
       remaining.splice(
         remaining.findIndex(({ id }) => id === student.id),
@@ -519,8 +521,8 @@ export function generateDutyProposal(
   )
   remaining.sort((left, right) => {
     if (config.balanceMinors) {
-      const leftMinor = isMinor(left.dateOfBirth, config.referenceDate)
-      const rightMinor = isMinor(right.dateOfBirth, config.referenceDate)
+      const leftMinor = isStudentMinor(left, config.courseStartDate)
+      const rightMinor = isStudentMinor(right, config.courseStartDate)
       if (leftMinor !== rightMinor) return leftMinor ? -1 : 1
     }
     if (config.balanceSex) {
@@ -535,7 +537,12 @@ export function generateDutyProposal(
         if (abundanceDifference !== 0) return abundanceDifference
       }
     }
-    return compareStudents(left, right, config.tieBreaker)
+    return compareStudents(
+      left,
+      right,
+      config.tieBreaker,
+      config.courseStartDate,
+    )
   })
 
   for (const student of remaining) {
@@ -543,8 +550,8 @@ export function generateDutyProposal(
       (dayId) => assignedCounts[dayId] < capacities[dayId],
     )
     if (openDays.length === 0) break
-    const studentIsMinor = isMinor(student.dateOfBirth, config.referenceDate)
-    const age = calculateAge(student.dateOfBirth, config.referenceDate)
+    const studentIsMinor = isStudentMinor(student, config.courseStartDate)
+    const age = calculateStudentAge(student, config.courseStartDate)
     openDays.sort((left, right) => {
       const minorDifference =
         config.balanceMinors && studentIsMinor
@@ -776,7 +783,7 @@ export function getDutyWarnings(
             return (
               assignedDay === dayId &&
               student !== undefined &&
-              isMinor(student.dateOfBirth, config.referenceDate)
+              isStudentMinor(student, config.courseStartDate)
             )
           }).length,
       ),
