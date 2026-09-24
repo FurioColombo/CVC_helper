@@ -541,7 +541,7 @@
     {
       "id": "E1",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/E1/verification.json",

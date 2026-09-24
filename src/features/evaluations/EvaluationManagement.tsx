@@ -652,7 +652,7 @@ export function EvaluationManagement({
         />
       )}
       {!loading && !loadError && students.length > 0 && view !== "overview" && (
-        <div className="mt-3 grid gap-1.5">
+        <div className="mt-3 grid gap-4">
           {view === "students" && students.map(renderCard)}
           {view === "crews" && (
             <>
@@ -669,7 +669,7 @@ export function EvaluationManagement({
                 if (members.length === 0) return null
                 return (
                   <section
-                    className="grid gap-3"
+                    className="grid gap-1.5"
                     key={crew.id}
                     aria-labelledby={`evaluation-crew-${crew.id}`}
                   >
@@ -685,7 +685,7 @@ export function EvaluationManagement({
               })}
               {landIds.size > 0 && (
                 <section
-                  className="grid gap-3"
+                  className="grid gap-1.5"
                   aria-labelledby="evaluation-land-title"
                 >
                   <h2
@@ -699,7 +699,7 @@ export function EvaluationManagement({
               )}
               {unassigned.length > 0 && (
                 <section
-                  className="grid gap-3"
+                  className="grid gap-1.5"
                   aria-labelledby="evaluation-unassigned-title"
                 >
                   <h2

@@ -342,3 +342,10 @@ the shortest distinguishing surname prefixes; saved nicknames take precedence
 and exact display duplicates receive stable ordinals. Pixel 7 Chrome and
 iPhone-sized browser journeys pass; installed-device Back and launcher
 rendering remain for owner verification.
+
+E1 · P04/P19, 2026-09-24: tapping any recorded course session in the student
+history opens that exact session in Valutazioni; the Valutazioni back action
+returns to the same student profile. Crew-member cards now sit closer together,
+with a larger gap between crew, A terra and Non assegnati groups. The note editor
+was checked at 320 px/200% and at 390/412 px; its text and controls remain
+inside the panel, and the page has no horizontal overflow. See `.evidence/E1/`.

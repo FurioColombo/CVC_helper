@@ -1,0 +1,31 @@
+{
+  "milestone": "E1",
+  "status": "PASS",
+  "nodeVersion": "v24.19.0",
+  "browserProject": "pixel-7-chrome",
+  "command": "npm run verify:e2e -- --project=pixel-7-chrome tests/e2e/e1-evaluation-history-layout.spec.ts",
+  "result": "2 passed",
+  "journeys": [
+    {
+      "name": "evaluation crew spacing",
+      "viewport": { "width": 320, "height": 664 },
+      "rootFontSize": "200%",
+      "syntheticStudents": 40,
+      "groupSizes": [36, 2, 1, 1],
+      "result": "A 36-student crew, a two-student crew, A terra and Non assegnati rendered without horizontal overflow. Across all 35 adjacent pairs in the large crew, the member gap changed from 24 px to 12 px; the gaps between all groups changed from 92 px to 100 px."
+    },
+    {
+      "name": "note editor and exact session navigation",
+      "stressViewport": { "width": 320, "height": 664 },
+      "normalViewports": [390, 412],
+      "result": "A multiline synthetic note remained editable at 320 px/200%, with all editor children inside the panel and no page overflow at 320, 390 or 412 px. A session opened from the student history selected sun-am in Valutazioni; its back action returned to that student's profile."
+    }
+  ],
+  "screenshots": [
+    "evaluation-groups-320-200.png",
+    "evaluation-note-320-200.png"
+  ],
+  "limitations": [
+    "The native textarea drag handle is not exposed by the mobile browser emulation; the test verifies its vertical-resize CSS and that multiline content and controls remain within the panel."
+  ]
+}
