@@ -332,3 +332,13 @@ S2 · P06, 2026-09-22: one sheet-wide first/last-word vote uses the existing sex
 S3 · P04/P06, 2026-09-22: the profile shows derived age only; the duplicate birth-date tile is removed. Scan review now presents age. A matching independently read age clears a doubtful date flag; the exact stored date appears only when missing, doubtful, or inconsistent with an edited age. Manual create/edit and the profile age shortcut retain the exact-date input because the stored date still drives minor rules.
 
 V04 · P06, 2026-09-23: four accessible edge handles join the corner handles. During straightening, the image and crop frame rotate together immediately; the raster preview settles after the gesture. The selected area stays sharp, with the outside dimmed and softly blurred. Narrow crops receive enough presentation zoom to keep the handles separate; the prepared OCR image still uses the original source and selected crop.
+
+N1 · P01/P03, 2026-09-24: the installable app icon uses the full Home CVC
+symbol on white with HELPER in CVC blue below; one checked-in SVG source
+generates the 180, 192 and 512 px PNGs. Browser Back now returns through shell
+and nested student screens, closes the active dialog, and restores the student
+route after reload. Matching given names with the same surname initial show
+the shortest distinguishing surname prefixes; saved nicknames take precedence
+and exact display duplicates receive stable ordinals. Pixel 7 Chrome and
+iPhone-sized browser journeys pass; installed-device Back and launcher
+rendering remain for owner verification.

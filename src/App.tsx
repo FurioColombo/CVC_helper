@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CourseIdentity } from "@/components/CourseIdentity"
 import { CvcMark } from "@/components/CvcMark"
+import { closeActiveDialogOnBack } from "@/navigation/browserHistory"
 import {
   COURSE_FAMILIES,
   COURSE_LEVELS,
@@ -56,6 +57,67 @@ type ShellView =
   | "evaluations"
   | "volunteers"
   | "settings"
+
+const SHELL_HISTORY_KEY = "__cvcHelperShell"
+const STUDENT_SCREEN_HISTORY_KEY = "__cvcHelperStudentScreen"
+
+type ShellHistoryEntry = {
+  view: ShellView
+  depth: number
+  studentToOpen?: string
+  studentReturnView?: ShellView
+}
+
+function isShellView(value: unknown): value is ShellView {
+  return (
+    value === "faults" ||
+    value === "home" ||
+    value === "crews" ||
+    value === "students" ||
+    value === "boats" ||
+    value === "sessions" ||
+    value === "evaluations" ||
+    value === "volunteers" ||
+    value === "settings"
+  )
+}
+
+function readShellHistoryEntry(state: unknown): ShellHistoryEntry | null {
+  if (!state || typeof state !== "object") return null
+  const entry = (state as Record<string, unknown>)[SHELL_HISTORY_KEY]
+  if (!entry || typeof entry !== "object") return null
+  const candidate = entry as Partial<ShellHistoryEntry>
+  if (!isShellView(candidate.view)) return null
+  return {
+    view: candidate.view,
+    depth:
+      typeof candidate.depth === "number" &&
+      Number.isInteger(candidate.depth) &&
+      candidate.depth >= 0
+        ? candidate.depth
+        : 0,
+    ...(typeof candidate.studentToOpen === "string"
+      ? { studentToOpen: candidate.studentToOpen }
+      : {}),
+    ...(isShellView(candidate.studentReturnView)
+      ? { studentReturnView: candidate.studentReturnView }
+      : {}),
+  }
+}
+
+function pushShellHistoryEntry(entry: ShellHistoryEntry) {
+  const current = window.history.state
+  const state =
+    current && typeof current === "object"
+      ? (current as Record<string, unknown>)
+      : {}
+  const nextState: Record<string, unknown> = {
+    ...state,
+    [SHELL_HISTORY_KEY]: entry,
+  }
+  delete nextState[STUDENT_SCREEN_HISTORY_KEY]
+  window.history.pushState(nextState, "", window.location.href)
+}
 
 const HOME_CARDS = [
   { id: "students", label: "Allievi", icon: GraduationCap, tone: "accent" },
@@ -329,25 +391,100 @@ function SettingsView({
 }
 
 function AppShell({ course }: { course: CourseRecord }) {
-  const [view, setView] = useState<ShellView>("home")
-  const [studentToOpen, setStudentToOpen] = useState<string | null>(null)
-  const [studentReturnView, setStudentReturnView] =
-    useState<ShellView>("students")
+  const [initialHistoryEntry] = useState(() =>
+    readShellHistoryEntry(window.history.state),
+  )
+  const [view, setView] = useState<ShellView>(
+    initialHistoryEntry?.view ?? "home",
+  )
+  const [studentToOpen, setStudentToOpen] = useState<string | null>(
+    initialHistoryEntry?.studentToOpen ?? null,
+  )
+  const [studentReturnView, setStudentReturnView] = useState<ShellView>(
+    initialHistoryEntry?.studentReturnView ?? "students",
+  )
   const [crewSessionId, setCrewSessionId] = useState<SessionId>("sat-pm")
   const [evaluationSessionId, setEvaluationSessionId] = useState<SessionId>()
   const [evaluationView, setEvaluationView] =
     useState<EvaluationView>("students")
   const mainRef = useRef<HTMLElement>(null)
+  const historyDepthRef = useRef(initialHistoryEntry?.depth ?? 0)
   const primaryView =
     view === "faults" || view === "home" || view === "crews" ? view : null
+
+  useEffect(() => {
+    const currentEntry = readShellHistoryEntry(window.history.state)
+    if (!currentEntry) {
+      const homeEntry: ShellHistoryEntry = { view: "home", depth: 0 }
+      pushShellHistoryEntry(homeEntry)
+      historyDepthRef.current = homeEntry.depth
+    } else {
+      historyDepthRef.current = currentEntry.depth
+    }
+
+    function restoreFromHistory(event: PopStateEvent) {
+      if (closeActiveDialogOnBack()) {
+        event.stopImmediatePropagation()
+        return
+      }
+      const entry = readShellHistoryEntry(event.state)
+      if (!entry) {
+        historyDepthRef.current = 0
+        setStudentToOpen(null)
+        setStudentReturnView("students")
+        setView("home")
+        return
+      }
+      historyDepthRef.current = entry.depth
+      setStudentToOpen(entry.studentToOpen ?? null)
+      setStudentReturnView(entry.studentReturnView ?? "students")
+      setView(entry.view)
+    }
+
+    window.addEventListener("popstate", restoreFromHistory)
+    return () => window.removeEventListener("popstate", restoreFromHistory)
+  }, [])
 
   useEffect(() => {
     mainRef.current?.focus()
   }, [view])
 
-  function navigate(next: ShellView) {
-    if (next !== "students") setStudentToOpen(null)
+  function navigate(
+    next: ShellView,
+    options: { studentToOpen?: string; studentReturnView?: ShellView } = {},
+  ) {
+    const currentEntry = readShellHistoryEntry(window.history.state)
+    if (
+      currentEntry?.view === next &&
+      currentEntry.studentToOpen === options.studentToOpen &&
+      currentEntry.studentReturnView === options.studentReturnView
+    ) {
+      return
+    }
+    const entry: ShellHistoryEntry = {
+      view: next,
+      depth: (currentEntry?.depth ?? historyDepthRef.current) + 1,
+      ...(options.studentToOpen
+        ? { studentToOpen: options.studentToOpen }
+        : {}),
+      ...(options.studentReturnView
+        ? { studentReturnView: options.studentReturnView }
+        : {}),
+    }
+    pushShellHistoryEntry(entry)
+    historyDepthRef.current = entry.depth
+    setStudentToOpen(entry.studentToOpen ?? null)
+    setStudentReturnView(entry.studentReturnView ?? "students")
     setView(next)
+  }
+
+  function goBack(fallback: ShellView) {
+    const currentEntry = readShellHistoryEntry(window.history.state)
+    if ((currentEntry?.depth ?? historyDepthRef.current) > 0) {
+      window.history.back()
+      return
+    }
+    if (view !== fallback) navigate(fallback)
   }
 
   return (
@@ -373,7 +510,7 @@ function AppShell({ course }: { course: CourseRecord }) {
       >
         {view === "home" && <Home course={course} onNavigate={navigate} />}
         {view === "settings" && (
-          <SettingsView course={course} onHome={() => setView("home")} />
+          <SettingsView course={course} onHome={() => goBack("home")} />
         )}
         {view === "students" && (
           <StudentManagement
@@ -383,30 +520,30 @@ function AppShell({ course }: { course: CourseRecord }) {
             }
             initialStudentId={studentToOpen}
             key={studentToOpen ?? "student-list"}
-            onHome={() => navigate("home")}
-            onInitialStudentBack={() => navigate(studentReturnView)}
+            onHome={() => goBack("home")}
+            onInitialStudentBack={() => goBack(studentReturnView)}
           />
         )}
         {view === "volunteers" && (
           <VolunteerManagement
             courseId={course.id}
-            onHome={() => setView("home")}
+            onHome={() => goBack("home")}
           />
         )}
         {view === "boats" && (
-          <BoatManagement course={course} onHome={() => setView("home")} />
+          <BoatManagement course={course} onHome={() => goBack("home")} />
         )}
         {view === "faults" && (
           <FaultManagement
             courseId={course.id}
-            onHome={() => setView("home")}
-            onOpenBoats={() => setView("boats")}
+            onHome={() => goBack("home")}
+            onOpenBoats={() => navigate("boats")}
           />
         )}
         {view === "sessions" && (
           <DutyManagement
             courseId={course.id}
-            onHome={() => setView("home")}
+            onHome={() => goBack("home")}
             courseStartDate={course.startDate}
           />
         )}
@@ -414,11 +551,12 @@ function AppShell({ course }: { course: CourseRecord }) {
           <CrewManagement
             course={course}
             initialSessionId={crewSessionId}
-            onHome={() => navigate("home")}
+            onHome={() => goBack("home")}
             onOpenStudent={(studentId) => {
-              setStudentToOpen(studentId)
-              setStudentReturnView("crews")
-              setView("students")
+              navigate("students", {
+                studentToOpen: studentId,
+                studentReturnView: "crews",
+              })
             }}
             onSessionChange={setCrewSessionId}
           />
@@ -428,11 +566,12 @@ function AppShell({ course }: { course: CourseRecord }) {
             course={course}
             initialSessionId={evaluationSessionId}
             initialView={evaluationView}
-            onHome={() => setView("home")}
+            onHome={() => goBack("home")}
             onOpenStudent={(studentId) => {
-              setStudentToOpen(studentId)
-              setStudentReturnView("evaluations")
-              setView("students")
+              navigate("students", {
+                studentToOpen: studentId,
+                studentReturnView: "evaluations",
+              })
             }}
             onSessionChange={setEvaluationSessionId}
             onViewChange={setEvaluationView}

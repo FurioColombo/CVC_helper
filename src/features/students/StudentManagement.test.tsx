@@ -201,6 +201,26 @@ describe("StudentManagement", () => {
     ).toBeVisible()
   })
 
+  it("uses distinguishing surname prefixes in the student selection list", async () => {
+    getStudents.mockResolvedValue([
+      { ...MARIO, id: "student-rossi", firstName: "Mario", surname: "Rossi" },
+      { ...MARIO, id: "student-rocchi", firstName: "Mario", surname: "Rocchi" },
+    ])
+
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Mario Ros., 16 anni, M, Minorenne",
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole("button", {
+        name: "Mario Roc., 16 anni, M, Minorenne",
+      }),
+    ).toBeVisible()
+  })
+
   it("starts a new card on Altro and shows the sex as a figure in the list", async () => {
     getStudents.mockResolvedValue([MARIO])
     const user = userEvent.setup()

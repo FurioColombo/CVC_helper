@@ -73,6 +73,72 @@ describe("student domain rules", () => {
     expect(getStudentDisplayName(students[1]!, students)).toBe("mario B.")
   })
 
+  it("shows the shortest surname prefixes that distinguish matching initials", () => {
+    const students = [
+      { firstName: "Mario", surname: "Rossi" },
+      { firstName: "Mario", surname: "Rocchi" },
+      { firstName: "Mario", surname: "Rota" },
+    ]
+
+    expect(
+      students.map((student) => getStudentDisplayName(student, students)),
+    ).toEqual(["Mario Ros.", "Mario Roc.", "Mario Rot."])
+  })
+
+  it("uses the full shorter surname when one surname prefixes another", () => {
+    const students = [
+      { firstName: "Mario", surname: "Ro" },
+      { firstName: "Mario", surname: "Rossi" },
+    ]
+
+    expect(
+      students.map((student) => getStudentDisplayName(student, students)),
+    ).toEqual(["Mario Ro", "Mario Ros."])
+  })
+
+  it("gives exact duplicate names stable ordinals based on student IDs", () => {
+    const duplicateWithLaterId = {
+      id: "student-z",
+      firstName: "Mario",
+      surname: "Rossi",
+    }
+    const duplicateWithEarlierId = {
+      id: "student-a",
+      firstName: "Mario",
+      surname: "Rossi",
+    }
+    const students = [duplicateWithLaterId, duplicateWithEarlierId]
+
+    expect(getStudentDisplayName(duplicateWithLaterId, students)).toBe(
+      "Mario Rossi (2)",
+    )
+    expect(getStudentDisplayName(duplicateWithEarlierId, students)).toBe(
+      "Mario Rossi (1)",
+    )
+    expect(
+      getStudentDisplayName(duplicateWithEarlierId, [...students].reverse()),
+    ).toBe("Mario Rossi (1)")
+  })
+
+  it("normalizes accents for collision detection and keeps suffix order stable", () => {
+    const withoutAccent = {
+      id: "student-a",
+      firstName: "Jose",
+      surname: "Alvarez",
+    }
+    const withAccent = {
+      id: "student-b",
+      firstName: "José",
+      surname: "Álvarez",
+    }
+    const students = [withAccent, withoutAccent]
+
+    expect(getStudentDisplayName(withAccent, students)).toBe("José Álvarez (2)")
+    expect(getStudentDisplayName(withoutAccent, students)).toBe(
+      "Jose Alvarez (1)",
+    )
+  })
+
   it("lets an explicit nickname override collision handling", () => {
     const students = [
       { firstName: "Mario", surname: "Rossi", nickname: "Marty" },
@@ -81,5 +147,24 @@ describe("student domain rules", () => {
 
     expect(getStudentDisplayName(students[0]!, students)).toBe("Marty")
     expect(getStudentDisplayName(students[1]!, students)).toBe("Mario B.")
+  })
+
+  it("keeps duplicate nicknames and distinguishes them with stable ordinals", () => {
+    const first = {
+      id: "student-a",
+      firstName: "Mario",
+      surname: "Rossi",
+      nickname: "Marty",
+    }
+    const second = {
+      id: "student-b",
+      firstName: "Marco",
+      surname: "Bianchi",
+      nickname: "Marty",
+    }
+    const students = [second, first]
+
+    expect(getStudentDisplayName(first, students)).toBe("Marty (1)")
+    expect(getStudentDisplayName(second, students)).toBe("Marty (2)")
   })
 })

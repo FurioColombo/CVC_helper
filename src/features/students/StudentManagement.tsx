@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MinorBadge, SexIcon } from "@/components/PersonBadges"
 import { StudentSizeSelector } from "@/components/StudentSizeSelector"
+import { closeActiveDialogOnBack } from "@/navigation/browserHistory"
 import {
   DUTY_DAYS,
   SESSION_SEQUENCE,
@@ -73,6 +74,75 @@ type StudentScreen =
   | { kind: "knowledge" }
   | { kind: "detail"; studentId: string }
   | { kind: "edit"; studentId: string; focusField?: StudentField }
+
+const STUDENT_SCREEN_HISTORY_KEY = "__cvcHelperStudentScreen"
+const APP_SHELL_HISTORY_KEY = "__cvcHelperShell"
+
+const STUDENT_FIELDS = new Set<StudentField>([
+  "firstName",
+  "surname",
+  "dateOfBirth",
+  "declaredAgeAtCourseStart",
+  "sex",
+  "phone",
+  "nickname",
+  "size",
+  "initialNote",
+  "courseNote",
+])
+
+function readStudentScreenHistory(state: unknown): StudentScreen | null {
+  if (!state || typeof state !== "object") return null
+  const screen = (state as Record<string, unknown>)[STUDENT_SCREEN_HISTORY_KEY]
+  if (!screen || typeof screen !== "object") return null
+  const candidate = screen as Partial<StudentScreen>
+  if (
+    candidate.kind === "list" ||
+    candidate.kind === "create" ||
+    candidate.kind === "scan" ||
+    candidate.kind === "knowledge"
+  ) {
+    return { kind: candidate.kind }
+  }
+  if (
+    (candidate.kind === "detail" || candidate.kind === "edit") &&
+    typeof candidate.studentId === "string"
+  ) {
+    return candidate.kind === "edit"
+      ? {
+          kind: "edit",
+          studentId: candidate.studentId,
+          ...(typeof candidate.focusField === "string" &&
+          STUDENT_FIELDS.has(candidate.focusField as StudentField)
+            ? { focusField: candidate.focusField as StudentField }
+            : {}),
+        }
+      : { kind: "detail", studentId: candidate.studentId }
+  }
+  return null
+}
+
+function readInitialStudentScreenHistory() {
+  const state = window.history.state
+  if (!state || typeof state !== "object") return null
+  const appEntry = (state as Record<string, unknown>)[APP_SHELL_HISTORY_KEY]
+  if (!appEntry || typeof appEntry !== "object") return null
+  if ((appEntry as { view?: unknown }).view !== "students") return null
+  return readStudentScreenHistory(state)
+}
+
+function pushStudentScreenHistory(screen: StudentScreen) {
+  const current = window.history.state
+  const state =
+    current && typeof current === "object"
+      ? (current as Record<string, unknown>)
+      : {}
+  window.history.pushState(
+    { ...state, [STUDENT_SCREEN_HISTORY_KEY]: screen },
+    "",
+    window.location.href,
+  )
+}
 
 type LoadState = "loading" | "ready" | "error"
 
@@ -1020,12 +1090,59 @@ export function StudentManagement({
 }) {
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
+  const [initialStudentScreen] = useState(readInitialStudentScreenHistory)
   const [screen, setScreen] = useState<StudentScreen>(
-    initialStudentId
-      ? { kind: "detail", studentId: initialStudentId }
-      : { kind: "list" },
+    () =>
+      initialStudentScreen ??
+      (initialStudentId
+        ? { kind: "detail", studentId: initialStudentId }
+        : { kind: "list" }),
   )
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (!initialStudentScreen) {
+      const state = window.history.state
+      if (
+        state &&
+        typeof state === "object" &&
+        STUDENT_SCREEN_HISTORY_KEY in state
+      ) {
+        const cleanState = { ...(state as Record<string, unknown>) }
+        delete cleanState[STUDENT_SCREEN_HISTORY_KEY]
+        window.history.replaceState(cleanState, "", window.location.href)
+      }
+    }
+
+    function restoreStudentScreen(event: PopStateEvent) {
+      if (closeActiveDialogOnBack()) {
+        event.stopImmediatePropagation()
+        return
+      }
+      const nestedScreen = readStudentScreenHistory(event.state)
+      setScreen(
+        nestedScreen ??
+          (initialStudentId
+            ? { kind: "detail", studentId: initialStudentId }
+            : { kind: "list" }),
+      )
+    }
+    window.addEventListener("popstate", restoreStudentScreen)
+    return () => window.removeEventListener("popstate", restoreStudentScreen)
+  }, [initialStudentId, initialStudentScreen])
+
+  function navigateStudentScreen(next: StudentScreen) {
+    pushStudentScreenHistory(next)
+    setScreen(next)
+  }
+
+  function backStudentScreen(fallback: StudentScreen) {
+    if (readStudentScreenHistory(window.history.state)) {
+      window.history.back()
+      return
+    }
+    setScreen(fallback)
+  }
 
   async function refreshStudents() {
     try {
@@ -1083,10 +1200,10 @@ export function StudentManagement({
     return (
       <StudentForm
         course={course}
-        onCancel={() => setScreen({ kind: "list" })}
+        onCancel={() => backStudentScreen({ kind: "list" })}
         onSaved={() => {
           void refreshStudents()
-          setScreen({ kind: "list" })
+          backStudentScreen({ kind: "list" })
         }}
       />
     )
@@ -1096,7 +1213,7 @@ export function StudentManagement({
     return (
       <StudentKnowledge
         courseId={course.id}
-        onBack={() => setScreen({ kind: "list" })}
+        onBack={() => backStudentScreen({ kind: "list" })}
         onSaved={(studentId: string, input: StudentKnowledgeInput) => {
           setStudents((current) =>
             current.map((student) =>
@@ -1114,12 +1231,12 @@ export function StudentManagement({
       <StudentScan
         courseId={course.id}
         courseStartDate={course.startDate}
-        onBack={() => setScreen({ kind: "list" })}
+        onBack={() => backStudentScreen({ kind: "list" })}
         onCommitted={() => {
           void refreshStudents()
-          setScreen({ kind: "list" })
+          backStudentScreen({ kind: "list" })
         }}
-        onManualAdd={() => setScreen({ kind: "create" })}
+        onManualAdd={() => navigateStudentScreen({ kind: "create" })}
       />
     )
   }
@@ -1131,11 +1248,11 @@ export function StudentManagement({
         focusField={screen.focusField}
         key={selectedStudent.id}
         onCancel={() =>
-          setScreen({ kind: "detail", studentId: selectedStudent.id })
+          backStudentScreen({ kind: "detail", studentId: selectedStudent.id })
         }
         onSaved={() => {
           void refreshStudents()
-          setScreen({ kind: "detail", studentId: selectedStudent.id })
+          backStudentScreen({ kind: "detail", studentId: selectedStudent.id })
         }}
         student={selectedStudent}
       />
@@ -1152,15 +1269,19 @@ export function StudentManagement({
             onInitialStudentBack()
             return
           }
-          setScreen({ kind: "list" })
+          backStudentScreen({ kind: "list" })
         }}
         onChanged={refreshStudents}
         onDeleted={async () => {
           await refreshStudents()
-          setScreen({ kind: "list" })
+          backStudentScreen({ kind: "list" })
         }}
         onEdit={(focusField) =>
-          setScreen({ kind: "edit", focusField, studentId: selectedStudent.id })
+          navigateStudentScreen({
+            kind: "edit",
+            focusField,
+            studentId: selectedStudent.id,
+          })
         }
         student={selectedStudent}
         students={students}
@@ -1198,7 +1319,7 @@ export function StudentManagement({
             className="justify-start"
             onClick={() => {
               setMenuOpen(false)
-              setScreen({ kind: "create" })
+              navigateStudentScreen({ kind: "create" })
             }}
             variant="secondary"
           >
@@ -1209,7 +1330,7 @@ export function StudentManagement({
             className="justify-start"
             onClick={() => {
               setMenuOpen(false)
-              setScreen({ kind: "scan" })
+              navigateStudentScreen({ kind: "scan" })
             }}
             variant="secondary"
           >
@@ -1221,7 +1342,7 @@ export function StudentManagement({
             disabled={students.length === 0}
             onClick={() => {
               setMenuOpen(false)
-              setScreen({ kind: "knowledge" })
+              navigateStudentScreen({ kind: "knowledge" })
             }}
             variant="secondary"
           >
@@ -1232,20 +1353,22 @@ export function StudentManagement({
       )}
       {students.length === 0 ? (
         <EmptyStudents
-          onAdd={() => setScreen({ kind: "create" })}
-          onScan={() => setScreen({ kind: "scan" })}
+          onAdd={() => navigateStudentScreen({ kind: "create" })}
+          onScan={() => navigateStudentScreen({ kind: "scan" })}
         />
       ) : (
         <>
           <StudentList
             course={course}
-            onOpen={(studentId) => setScreen({ kind: "detail", studentId })}
+            onOpen={(studentId) =>
+              navigateStudentScreen({ kind: "detail", studentId })
+            }
             students={students}
           />
           <Button
             aria-label="Aggiungi allievo"
             className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full p-0 shadow-[0_10px_28px_rgb(13_91_166/0.3)]"
-            onClick={() => setScreen({ kind: "create" })}
+            onClick={() => navigateStudentScreen({ kind: "create" })}
           >
             <Plus aria-hidden="true" className="size-6" />
           </Button>

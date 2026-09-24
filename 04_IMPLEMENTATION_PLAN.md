@@ -20,7 +20,8 @@ lifecycle.
 | S4 | In progress, deferred to the final Claude Code handoff by the owner. Current OCR improvements and safety checks remain; the remaining fewer-than-five target is not a prerequisite for V04–UG2 or the 0.3.0 gate. No unsafe counter-only variant was integrated. |
 | V04 | Complete. Four edge handles, live image/frame tilt and a dimmed, soft exterior were verified with synthetic imagery. `.evidence/V04/` records Node 24.19.0 verification (465 tests), 12 browser cases across Chrome/WebKit, pointer-response samples and a PASS field-UX review. |
 | S5 | Complete. Age-only entry, persistence and course-start minor rules are covered by migration/domain tests and Pixel/iPhone-sized browser journeys. `.evidence/S5/` records 476 passing tests, the 0.1 schema migration, browser checks and a zero-blocker independent review. |
-| N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
+| N1 | Complete. Node 24.19.0, 482 unit/component tests, domain/compatibility checks, production build and eight Pixel/iPhone browser journeys passed; see `.evidence/N1/`. Physical installed-app Back and icon appearance remain for the owner to check. |
+| C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -73,7 +74,7 @@ completion, clean checkpoint. Use `verify:quick` before a commit and
 ## N1 — Phone navigation, identity and student names
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 - Android/iPhone browser Back or swipe-back navigates to the previous in-app
   screen instead of closing the PWA when there is in-app history. Preserve
@@ -93,6 +94,17 @@ completion, clean checkpoint. Use `verify:quick` before a commit and
 
 **Evidence:** verification, browser Back journeys, icon renders/visual review,
 name collision tests, self-review and relevant page changelog updates.
+
+**Outcome, 2026-09-24:** Complete. Name selections use the shortest surname
+prefix that distinguishes matching given names, with nicknames preserved and
+exact duplicates ordered by stable student ID. In-app Back restores shell and
+student screens, closes the active dialog, and does not leave a duplicate
+student-list entry after creation. The launcher icon uses the Home CVC symbol
+on white with blue HELPER below. Node 24.19.0 `npm run verify` passed (482
+tests, domain, compatibility and production build); eight focused browser
+journeys passed on Pixel 7 Chrome and iPhone 13 viewport. See `.evidence/N1/`.
+The owner still needs to verify native device Back/swipe and installed launcher
+rendering; no physical-device pass is claimed.
 
 ## C1 — Crew entry, destination picker and shareable summary
 
