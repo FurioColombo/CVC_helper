@@ -744,6 +744,7 @@ function StudentDetail({
   onChanged,
   onDeleted,
   focusEvaluationHistory,
+  onOpenEvaluationSession,
 }: {
   course: CourseRecord
   student: StudentRecord
@@ -753,6 +754,7 @@ function StudentDetail({
   onChanged: () => Promise<void>
   onDeleted: () => Promise<void>
   focusEvaluationHistory: boolean
+  onOpenEvaluationSession: (sessionId: SessionId) => void
 }) {
   const [changing, setChanging] = useState(false)
   const [error, setError] = useState(false)
@@ -954,6 +956,7 @@ function StudentDetail({
         <StudentEvaluationHistory
           courseId={course.id}
           focusOnMount={focusEvaluationHistory}
+          onOpenEvaluationSession={onOpenEvaluationSession}
           studentId={student.id}
           studentName={displayName}
           studentFullName={`${student.firstName} ${student.surname}`}
@@ -1081,12 +1084,14 @@ export function StudentManagement({
   initialStudentId,
   onInitialStudentBack,
   focusEvaluationHistory = false,
+  onOpenEvaluationSession = () => undefined,
 }: {
   course: CourseRecord
   onHome: () => void
   initialStudentId?: string | null
   onInitialStudentBack?: () => void
   focusEvaluationHistory?: boolean
+  onOpenEvaluationSession?: (sessionId: SessionId) => void
 }) {
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
@@ -1264,6 +1269,7 @@ export function StudentManagement({
       <StudentDetail
         course={course}
         focusEvaluationHistory={focusEvaluationHistory}
+        onOpenEvaluationSession={onOpenEvaluationSession}
         onBack={() => {
           if (initialStudentId && onInitialStudentBack) {
             onInitialStudentBack()

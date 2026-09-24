@@ -1,0 +1,91 @@
+{
+  "milestone": "E1",
+  "nodeVersion": "v24.19.0",
+  "groupSpacing": {
+    "viewport": {
+      "width": 320,
+      "height": 664,
+      "rootFontSize": "200%"
+    },
+    "students": 40,
+    "groups": [
+      36,
+      2,
+      1,
+      1
+    ],
+    "memberGapPx": {
+      "before": 24,
+      "after": {
+        "min": 12,
+        "max": 12
+      }
+    },
+    "groupGapPx": {
+      "before": 92,
+      "after": [
+        100,
+        100,
+        100
+      ]
+    },
+    "page": {
+      "clientWidth": 320,
+      "scrollWidth": 320
+    }
+  },
+  "notePanel": {
+    "stress": {
+      "viewport": {
+        "width": 320,
+        "height": 664
+      },
+      "rootFontSize": "200%",
+      "page": {
+        "clientWidth": 320,
+        "scrollWidth": 320
+      },
+      "panel": {
+        "panelWidth": 296,
+        "panelScrollWidth": 294,
+        "panelLeft": 12,
+        "panelRight": 308,
+        "textareaHeight": 192,
+        "childrenWithinPanel": true
+      },
+      "textareaHeight": 192
+    },
+    "normal": [
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "page": {
+          "clientWidth": 390,
+          "scrollWidth": 390
+        },
+        "panel": {
+          "width": 348,
+          "scrollWidth": 348,
+          "textareaHeight": 96
+        }
+      },
+      {
+        "viewport": {
+          "width": 412,
+          "height": 915
+        },
+        "page": {
+          "clientWidth": 412,
+          "scrollWidth": 412
+        },
+        "panel": {
+          "width": 370,
+          "scrollWidth": 370,
+          "textareaHeight": 96
+        }
+      }
+    ]
+  }
+}

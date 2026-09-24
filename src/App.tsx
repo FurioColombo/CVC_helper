@@ -559,6 +559,11 @@ function AppShell({ course }: { course: CourseRecord }) {
             key={studentToOpen ?? "student-list"}
             onHome={() => goBack("home")}
             onInitialStudentBack={() => goBack(studentReturnView)}
+            onOpenEvaluationSession={(sessionId) => {
+              setEvaluationSessionId(sessionId)
+              setEvaluationView("students")
+              navigate("evaluations")
+            }}
           />
         )}
         {view === "volunteers" && (

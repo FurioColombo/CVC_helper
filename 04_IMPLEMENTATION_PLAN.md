@@ -22,7 +22,8 @@ lifecycle.
 | S5 | Complete. Age-only entry, persistence and course-start minor rules are covered by migration/domain tests and Pixel/iPhone-sized browser journeys. `.evidence/S5/` records 476 passing tests, the 0.1 schema migration, browser checks and a zero-blocker independent review. |
 | N1 | Complete. Node 24.19.0, 482 unit/component tests, domain/compatibility checks, production build and eight Pixel/iPhone browser journeys passed; see `.evidence/N1/`. Physical installed-app Back and icon appearance remain for the owner to check. |
 | C1 | Complete. Node 24.19.0 `npm run verify` passed (507 tests, domain, compatibility and production PWA build); three Pixel 7 Chrome journeys passed, including the 40-student 320 px/200% stress case. The synthetic 13-crew image fits on one page in two columns. See `.evidence/C1/`. |
-| E1, V03, V05, F1, UG2 | Pending in the sequence below. |
+| E1 | Complete. Pixel 7 browser journeys cover the 40-student crew layout, exact-session route, and Valutazioni note panel; see `.evidence/E1/`. |
+| V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -146,7 +147,7 @@ not block UG2. Do not add it to the 0.3.0 gate.
 ## E1 — Evaluation grouping and student history route
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 In Valutazioni → Equipaggi, reduce the gap **between members of one crew** and
 increase the gap **between crew groups**, including A terra/Non assegnati. The
@@ -155,10 +156,26 @@ which reverses that hierarchy. Match the owner's observed local and deployed
 cases, then test at 320 px/200% and with large crews. In student detail, keep
 the excellent evaluation summary; tapping a session opens Valutazioni at that
 exact session. The duplicate second history presentation is a future redesign,
-not a removal in this milestone.
+not a removal in this milestone. The owner also reports that the shared V02 note
+panel now behaves in Allievo but still breaks in Valutazioni. Verify the real
+Valutazioni host at 320 px/200% and normal phone widths, including natural
+textarea height resizing. Fixed dimensions are not required; change the layout
+only if the panel, text or controls clip or overflow.
 
 **Evidence:** verification, browser journey from student session to evaluation,
 before/after geometry, visual review and self-review.
+
+**Outcome, 2026-09-24:** Complete. On Node 24.19.0, `npm run verify` passed
+(507 tests, domain and compatibility checks, production build). Two Pixel 7
+Chrome browser journeys passed. With a 40-student synthetic plan and a
+36-person crew at 320 px/200% text, member gaps changed from 24 px to 12 px and
+the gaps between crew, A terra and Non assegnati changed from 92 px to 100 px;
+the page stayed 320 px wide. Tapping a student-history session opened that
+exact session in Valutazioni and returned to the same profile. The Valutazioni
+note editor fit at 320 px/200% and 390/412 px, so no V02 layout change was
+needed. Native textarea drag resizing is not exposed by mobile browser
+emulation; computed vertical-resize support and panel containment were checked.
+See `.evidence/E1/`.
 
 ## V03 — Speech accuracy and latency
 

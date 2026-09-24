@@ -47,26 +47,39 @@ function HistorySessionCard({
   period,
   sessionId,
   record,
+  onOpenSession,
 }: {
   period: "AM" | "PM"
   sessionId: SessionId
   record: EvaluationRecord | undefined
+  onOpenSession: (sessionId: SessionId) => void
 }) {
   const sessionLabel = formatEvaluationSession(sessionId)
   const value = record?.value ?? null
   const note = record?.note?.trim() ?? ""
   const tone = evaluationTone(value)
+  const actionId = `history-session-action-${sessionId}`
+  const noteId = `history-session-note-${sessionId}`
 
   return (
-    <article
-      aria-label={`Sessione ${sessionLabel}; valutazione ${value ?? "mancante"}`}
-      className="min-w-0 rounded-xl border bg-muted/45 px-2.5 py-2 text-xs leading-5"
+    <button
+      aria-describedby={note ? noteId : undefined}
+      aria-labelledby={actionId}
+      className="flex min-h-11 min-w-0 w-full flex-col rounded-xl border bg-muted/45 px-2.5 py-2 text-left text-xs leading-5 outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
+      data-evaluation={value ?? "empty"}
       data-session-id={sessionId}
+      onClick={() => onOpenSession(sessionId)}
+      type="button"
     >
-      <div className="flex min-w-0 items-center justify-between gap-2">
-        <h4 className="truncate text-sm font-bold text-foreground">{period}</h4>
+      <span className="sr-only" id={actionId}>
+        Apri Valutazioni di {sessionLabel}; valutazione {value ?? "mancante"}
+      </span>
+      <span className="flex min-w-0 items-center justify-between gap-2">
+        <span className="truncate text-sm font-bold text-foreground">
+          {period}
+        </span>
         <span
-          aria-hidden={value === null}
+          aria-hidden="true"
           className={`grid size-7 shrink-0 place-items-center rounded-lg border text-sm font-black leading-none ${
             tone === "positive"
               ? "border-[#8abd93] bg-[#f0f8f1] text-[#327144]"
@@ -76,18 +89,20 @@ function HistorySessionCard({
                   ? "border-[#a9b7c7] bg-[#f0f3f7] text-[#53667d]"
                   : "border-border bg-background text-transparent"
           }`}
-          data-evaluation={value ?? "empty"}
           title={value ? `Valutazione ${value}` : "Nessuna valutazione"}
         >
           {value ?? ""}
         </span>
-      </div>
+      </span>
       {note && (
-        <p className="mt-1 break-words whitespace-pre-wrap text-muted-foreground">
+        <span
+          className="mt-1 block break-words whitespace-pre-wrap text-muted-foreground"
+          id={noteId}
+        >
           {note}
-        </p>
+        </span>
       )}
-    </article>
+    </button>
   )
 }
 
@@ -118,12 +133,14 @@ export function StudentEvaluationHistory({
   studentName,
   studentFullName,
   focusOnMount = false,
+  onOpenEvaluationSession,
 }: {
   courseId: string
   studentId: string
   studentName?: string
   studentFullName?: string
   focusOnMount?: boolean
+  onOpenEvaluationSession: (sessionId: SessionId) => void
 }) {
   const [records, setRecords] = useState<EvaluationRecord[]>([])
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
@@ -244,6 +261,7 @@ export function StudentEvaluationHistory({
                     return (
                       <HistorySessionCard
                         key={session.id}
+                        onOpenSession={onOpenEvaluationSession}
                         period={period}
                         sessionId={session.id}
                         record={records.find(

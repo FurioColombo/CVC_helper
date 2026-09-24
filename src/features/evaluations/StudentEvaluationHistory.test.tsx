@@ -32,26 +32,44 @@ describe("StudentEvaluationHistory", () => {
   })
 
   it("shows the exact chronological session, symbol and associated note", async () => {
+    const onOpenEvaluationSession = vi.fn()
+    const user = userEvent.setup()
     render(
-      <StudentEvaluationHistory courseId="course-1" studentId="student-1" />,
+      <StudentEvaluationHistory
+        courseId="course-1"
+        onOpenEvaluationSession={onOpenEvaluationSession}
+        studentId="student-1"
+      />,
     )
 
     const history = await screen.findByRole("region", {
       name: "Storico valutazioni",
     })
-    expect(within(history).getByLabelText("Sabato PM: +")).toBeVisible()
     expect(
-      within(history).getByLabelText("Domenica AM: nessuna valutazione"),
-    ).toBeEmptyDOMElement()
-    expect(within(history).getByLabelText("Lunedì AM: ++")).toBeVisible()
+      within(history).getByRole("button", {
+        name: "Apri Valutazioni di Sabato PM; valutazione +",
+      }),
+    ).toBeVisible()
+    expect(
+      within(history).getByRole("button", {
+        name: "Apri Valutazioni di Domenica AM; valutazione mancante",
+      }),
+    ).toHaveAttribute("data-evaluation", "empty")
+    const mondaySession = within(history).getByRole("button", {
+      name: "Apri Valutazioni di Lunedì AM; valutazione ++",
+    })
+    expect(mondaySession).toBeVisible()
     expect(within(history).getByText("Ottima virata")).toBeVisible()
     expect(
       within(history).getByRole("heading", { name: "Allievo" }).parentElement,
     ).toHaveClass("sticky")
     expect(getHistory).toHaveBeenCalledWith("course-1", "student-1")
+
+    await user.click(mondaySession)
+    expect(onOpenEvaluationSession).toHaveBeenCalledExactlyOnceWith("mon-am")
   })
 
-  it("groups every canonical day into AM and PM read-only cards", async () => {
+  it("links every canonical session while keeping absent half-days static", async () => {
     getHistory.mockResolvedValue([
       {
         id: "neutral",
@@ -72,6 +90,7 @@ describe("StudentEvaluationHistory", () => {
     render(
       <StudentEvaluationHistory
         courseId="course-1"
+        onOpenEvaluationSession={() => undefined}
         studentId="student-1"
         studentFullName="Mario Rossi"
         studentName="Mario"
@@ -90,35 +109,24 @@ describe("StudentEvaluationHistory", () => {
     const monday = within(chronology).getByRole("region", { name: "Lunedì" })
     expect(within(monday).getByText("AM")).toBeVisible()
     expect(within(monday).getByText("PM")).toBeVisible()
-    const mondayAm = within(monday).getByLabelText(
-      "Sessione Lunedì AM; valutazione =",
-    )
-    expect(within(mondayAm).getByTitle("Valutazione =")).toHaveAttribute(
-      "data-evaluation",
-      "=",
-    )
-    const mondayPm = within(monday).getByLabelText(
-      "Sessione Lunedì PM; valutazione mancante",
-    )
-    expect(within(mondayPm).getByTitle("Nessuna valutazione")).toHaveAttribute(
-      "data-evaluation",
-      "empty",
-    )
+    const mondayAm = within(monday).getByRole("button", {
+      name: "Apri Valutazioni di Lunedì AM; valutazione =",
+    })
+    expect(mondayAm).toHaveAttribute("data-evaluation", "=")
+    const mondayPm = within(monday).getByRole("button", {
+      name: "Apri Valutazioni di Lunedì PM; valutazione mancante",
+    })
+    expect(mondayPm).toHaveAttribute("data-evaluation", "empty")
     expect(within(monday).queryByText("Nessuna nota.")).not.toBeInTheDocument()
 
-    const sunday = within(chronology).getByRole("region", {
-      name: "Domenica",
+    const saturday = within(chronology).getByRole("region", {
+      name: "Sabato",
     })
-    const blank = within(sunday).getByLabelText(
-      "Sessione Domenica AM; valutazione mancante",
+    const blank = within(saturday).getByLabelText(
+      "Sessione Sabato AM; nessuna sessione",
     )
-    expect(within(blank).getByTitle("Nessuna valutazione")).toHaveAttribute(
-      "data-evaluation",
-      "empty",
-    )
-    expect(within(blank).getByTitle("Nessuna valutazione")).toHaveTextContent(
-      "",
-    )
+    expect(within(blank).getByText("Nessuna sessione.")).toBeVisible()
+    const sunday = within(chronology).getByRole("region", { name: "Domenica" })
     expect(within(sunday).getByText("Osservare la partenza")).toBeVisible()
   })
 
@@ -130,6 +138,7 @@ describe("StudentEvaluationHistory", () => {
       <StudentEvaluationHistory
         courseId="course-1"
         focusOnMount
+        onOpenEvaluationSession={() => undefined}
         studentId="student-1"
         studentName="Mario Rossi"
       />,
