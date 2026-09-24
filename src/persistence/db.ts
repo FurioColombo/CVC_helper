@@ -69,6 +69,8 @@ const dutySettings = Table.createLocalOnly({
 const crews = Table.createLocalOnly({
   courseId: column.text,
   sessionId: column.text,
+  // Nullable for local databases created before C1; readCrewPlan normalizes it.
+  capacity: column.integer,
   destination: column.text,
   boatId: column.text,
   position: column.integer,

@@ -21,9 +21,14 @@ export interface CrewDraft {
   id: string
   sessionId: SessionId
   members: CrewPersonRef[]
+  /** Maximum members for this crew; fixed at two for D2–D5. */
+  capacity: number
   destination: CrewDestination
   boatId: string | null
 }
+
+/** Manual capacity can grow to the synthetic 40-student stress-case size. */
+export const MAX_FLEXIBLE_CREW_CAPACITY = 40
 
 export interface CrewPlan {
   crews: CrewDraft[]
@@ -122,6 +127,7 @@ export function copyPreviousCrewPlan({
         id: createId(),
         sessionId,
         members: crew.members.filter(keepMember),
+        capacity: crew.capacity,
         destination: "unassigned",
         boatId: null,
       })),
@@ -170,6 +176,69 @@ export function getStandardCrewSize(family: CourseFamily, level: CourseLevel) {
   const prefix = family === "Deriva" ? "D" : "C"
   const config = COURSE_CONFIG[`${prefix}${level}` as CourseCode]
   return config && "standardCrewSize" in config ? config.standardCrewSize : null
+}
+
+export function getInitialCrewCapacity(
+  family: CourseFamily,
+  level: CourseLevel,
+) {
+  return getStandardCrewSize(family, level) ?? 4
+}
+
+/**
+ * Normalizes the nullable field added after 0.1.0. Legacy flexible crews start
+ * at four, but preserve every existing member if a crew was already larger.
+ */
+export function normalizeCrewCapacity(
+  capacity: number | null | undefined,
+  memberCount: number,
+  family: CourseFamily,
+  level: CourseLevel,
+) {
+  const standard = getStandardCrewSize(family, level)
+  if (standard !== null) {
+    if (capacity !== null && capacity !== undefined && capacity !== standard) {
+      throw new Error("Invalid persisted crew capacity")
+    }
+    return standard
+  }
+  if (capacity === null || capacity === undefined)
+    return Math.max(4, memberCount)
+  if (
+    !Number.isInteger(capacity) ||
+    capacity < Math.max(1, memberCount) ||
+    capacity > Math.max(MAX_FLEXIBLE_CREW_CAPACITY, memberCount)
+  ) {
+    throw new Error("Invalid persisted crew capacity")
+  }
+  return capacity
+}
+
+export function setCrewCapacity(
+  plan: CrewPlan,
+  crewId: string,
+  capacity: number,
+  family: CourseFamily,
+  level: CourseLevel,
+) {
+  const crew = plan.crews.find(({ id }) => id === crewId)
+  if (!crew) throw new Error("Missing crew")
+  if (getStandardCrewSize(family, level) !== null) {
+    throw new Error("Crew capacity is fixed for this course")
+  }
+  if (
+    !Number.isInteger(capacity) ||
+    capacity < Math.max(1, crew.members.length) ||
+    capacity > Math.max(MAX_FLEXIBLE_CREW_CAPACITY, crew.members.length)
+  ) {
+    throw new Error("Invalid crew capacity")
+  }
+  return {
+    ...plan,
+    crews: plan.crews.map((candidate) =>
+      candidate.id === crewId ? { ...candidate, capacity } : candidate,
+    ),
+  }
 }
 
 export function getEvenCrewTargets(peopleCount: number, crewCount: number) {
@@ -401,6 +470,7 @@ export function addCrew(
   plan: CrewPlan,
   sessionId: SessionId,
   createId: () => string = () => crypto.randomUUID(),
+  capacity = 4,
 ): CrewPlan {
   return {
     ...plan,
@@ -410,6 +480,7 @@ export function addCrew(
         id: createId(),
         sessionId,
         members: [],
+        capacity,
         destination: "unassigned",
         boatId: null,
       },
@@ -427,7 +498,6 @@ export function movePerson(
   plan: CrewPlan,
   person: CrewPersonRef,
   destination: CrewDestinationTarget,
-  crewSize: number,
 ) {
   const next = withoutPerson(plan, person)
   if (destination.kind === "land") {
@@ -441,7 +511,7 @@ export function movePerson(
   }
   const crew = next.crews.find(({ id }) => id === destination.crewId)
   if (!crew) throw new Error("Missing crew")
-  if (crew.members.length >= crewSize) throw new Error("Crew is full")
+  if (crew.members.length >= crew.capacity) throw new Error("Crew is full")
   return {
     ...next,
     crews: next.crews.map((candidate) =>

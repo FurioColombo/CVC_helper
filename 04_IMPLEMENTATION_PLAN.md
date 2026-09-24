@@ -21,7 +21,8 @@ lifecycle.
 | V04 | Complete. Four edge handles, live image/frame tilt and a dimmed, soft exterior were verified with synthetic imagery. `.evidence/V04/` records Node 24.19.0 verification (465 tests), 12 browser cases across Chrome/WebKit, pointer-response samples and a PASS field-UX review. |
 | S5 | Complete. Age-only entry, persistence and course-start minor rules are covered by migration/domain tests and Pixel/iPhone-sized browser journeys. `.evidence/S5/` records 476 passing tests, the 0.1 schema migration, browser checks and a zero-blocker independent review. |
 | N1 | Complete. Node 24.19.0, 482 unit/component tests, domain/compatibility checks, production build and eight Pixel/iPhone browser journeys passed; see `.evidence/N1/`. Physical installed-app Back and icon appearance remain for the owner to check. |
-| C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
+| C1 | Complete. Node 24.19.0 `npm run verify` passed (507 tests, domain, compatibility and production PWA build); three Pixel 7 Chrome journeys passed, including the 40-student 320 px/200% stress case. The synthetic 13-crew image fits on one page in two columns. See `.evidence/C1/`. |
+| E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -109,7 +110,7 @@ rendering; no physical-device pass is claimed.
 ## C1 — Crew entry, destination picker and shareable summary
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 - Crew count input permits an empty draft, interpreted as zero crews, so users
   can replace `1` with `8` normally. Preserve valid limits when committed.

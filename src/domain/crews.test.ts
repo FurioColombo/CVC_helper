@@ -8,14 +8,17 @@ import {
   copyPreviousCrewPlan,
   formatCrewAnnouncement,
   getCrewCompleteness,
+  getInitialCrewCapacity,
   getCrewSizeStatus,
   getEvenCrewTargets,
   getPreviousSessionId,
   getSessionBoatStates,
   getStandardCrewSize,
+  normalizeCrewCapacity,
   movePerson,
   removeEmptyCrew,
   removePerson,
+  setCrewCapacity,
   setBoatGoingOut,
   swapPeople,
   type CrewPlan,
@@ -40,6 +43,7 @@ const EMPTY_PLAN: CrewPlan = {
       id: "crew-1",
       sessionId: "sat-pm",
       members: [],
+      capacity: 2,
       destination: "unassigned",
       boatId: null,
     },
@@ -47,6 +51,7 @@ const EMPTY_PLAN: CrewPlan = {
       id: "crew-2",
       sessionId: "sat-pm",
       members: [],
+      capacity: 2,
       destination: "unassigned",
       boatId: null,
     },
@@ -90,32 +95,57 @@ describe("crew composition rules", () => {
     expect(getEvenCrewTargets(2, 4)).toEqual([1, 1, 0, 0])
   })
 
+  it("starts flexible crews at four and preserves legacy members when normalizing capacity", () => {
+    expect(getInitialCrewCapacity("Deriva", 1)).toBe(4)
+    expect(getInitialCrewCapacity("Cabinato", 3)).toBe(4)
+    expect(getInitialCrewCapacity("Deriva", 2)).toBe(2)
+    expect(normalizeCrewCapacity(null, 3, "Cabinato", 3)).toBe(4)
+    expect(normalizeCrewCapacity(null, 6, "Deriva", 1)).toBe(6)
+    expect(normalizeCrewCapacity(null, 3, "Deriva", 2)).toBe(2)
+    expect(() => normalizeCrewCapacity(4, 0, "Deriva", 2)).toThrow(
+      "Invalid persisted crew capacity",
+    )
+  })
+
+  it("adjusts flexible capacity without dropping members or exceeding 40", () => {
+    const flexible: CrewPlan = {
+      ...EMPTY_PLAN,
+      crews: [{ ...EMPTY_PLAN.crews[0]!, capacity: 4, members: [STUDENT_1] }],
+    }
+    expect(
+      setCrewCapacity(flexible, "crew-1", 1, "Deriva", 1).crews[0],
+    ).toMatchObject({ capacity: 1, members: [STUDENT_1] })
+    expect(() => setCrewCapacity(flexible, "crew-1", 0, "Deriva", 1)).toThrow(
+      "Invalid crew capacity",
+    )
+    expect(() =>
+      setCrewCapacity(flexible, "crew-1", 41, "Cabinato", 3),
+    ).toThrow("Invalid crew capacity")
+    expect(() => setCrewCapacity(EMPTY_PLAN, "crew-1", 3, "Deriva", 2)).toThrow(
+      "fixed",
+    )
+  })
+
   it("moves a person out of the source before assigning the destination", () => {
-    const first = movePerson(
-      EMPTY_PLAN,
-      STUDENT_1,
-      { kind: "crew", crewId: "crew-1" },
-      2,
-    )
-    const moved = movePerson(
-      first,
-      STUDENT_1,
-      { kind: "crew", crewId: "crew-2" },
-      2,
-    )
+    const first = movePerson(EMPTY_PLAN, STUDENT_1, {
+      kind: "crew",
+      crewId: "crew-1",
+    })
+    const moved = movePerson(first, STUDENT_1, {
+      kind: "crew",
+      crewId: "crew-2",
+    })
 
     expect(moved.crews[0]!.members).toEqual([])
     expect(moved.crews[1]!.members).toEqual([STUDENT_1])
   })
 
   it("swaps assigned people directly and sends a replaced pool person back to the pool", () => {
-    let plan = movePerson(
-      EMPTY_PLAN,
-      STUDENT_1,
-      { kind: "crew", crewId: "crew-1" },
-      2,
-    )
-    plan = movePerson(plan, STUDENT_2, { kind: "crew", crewId: "crew-2" }, 2)
+    let plan = movePerson(EMPTY_PLAN, STUDENT_1, {
+      kind: "crew",
+      crewId: "crew-1",
+    })
+    plan = movePerson(plan, STUDENT_2, { kind: "crew", crewId: "crew-2" })
     const swapped = swapPeople(plan, STUDENT_1, STUDENT_2)
     const replaced = swapPeople(swapped, VOLUNTEER, STUDENT_1)
 
@@ -128,10 +158,10 @@ describe("crew composition rules", () => {
   })
 
   it("keeps A terra individual and rejects volunteers there", () => {
-    const onLand = movePerson(EMPTY_PLAN, STUDENT_1, { kind: "land" }, 2)
+    const onLand = movePerson(EMPTY_PLAN, STUDENT_1, { kind: "land" })
     expect(onLand.landStudentIds).toEqual(["student-1"])
     expect(onLand.crews).toHaveLength(2)
-    expect(() => movePerson(onLand, VOLUNTEER, { kind: "land" }, 2)).toThrow(
+    expect(() => movePerson(onLand, VOLUNTEER, { kind: "land" })).toThrow(
       "Only students",
     )
   })
@@ -141,17 +171,15 @@ describe("crew composition rules", () => {
       personId: "volunteer-ct-1",
       personType: "volunteer",
     }
-    let plan = movePerson(
-      EMPTY_PLAN,
-      STUDENT_1,
-      { kind: "crew", crewId: "crew-1" },
-      2,
-    )
-    plan = movePerson(plan, ct, { kind: "crew", crewId: "crew-1" }, 2)
+    let plan = movePerson(EMPTY_PLAN, STUDENT_1, {
+      kind: "crew",
+      crewId: "crew-1",
+    })
+    plan = movePerson(plan, ct, { kind: "crew", crewId: "crew-1" })
     expect(getCrewCompleteness(["student-1", "student-2"], plan)).toEqual(
       expect.objectContaining({ accounted: 1, total: 2, complete: false }),
     )
-    plan = movePerson(plan, STUDENT_2, { kind: "land" }, 2)
+    plan = movePerson(plan, STUDENT_2, { kind: "land" })
     expect(getCrewCompleteness(["student-1", "student-2"], plan)).toEqual(
       expect.objectContaining({ accounted: 2, total: 2, complete: true }),
     )
@@ -302,6 +330,7 @@ describe("crew composition rules", () => {
             id: "old-1",
             sessionId: "sun-am",
             members: [STUDENT_1, STUDENT_2, VOLUNTEER],
+            capacity: 5,
             destination: "boat",
             boatId: "boat-2",
           },
@@ -312,6 +341,7 @@ describe("crew composition rules", () => {
               { personId: "student-disabled", personType: "student" },
               { personId: "volunteer-missing", personType: "volunteer" },
             ],
+            capacity: 4,
             destination: "mezzi",
             boatId: null,
           },
@@ -334,6 +364,7 @@ describe("crew composition rules", () => {
           id: "new-1",
           sessionId: "sun-pm",
           members: [VOLUNTEER],
+          capacity: 5,
           destination: "unassigned",
           boatId: null,
         },
@@ -341,6 +372,7 @@ describe("crew composition rules", () => {
           id: "new-2",
           sessionId: "sun-pm",
           members: [],
+          capacity: 4,
           destination: "unassigned",
           boatId: null,
         },
@@ -401,7 +433,7 @@ describe("crew composition rules", () => {
     ).toBe("Mezzi — Mario / Luca")
   })
   it("adds a crew and removes an empty one, session-locally", () => {
-    const added = addCrew(EMPTY_PLAN, "sat-pm", () => "crew-3")
+    const added = addCrew(EMPTY_PLAN, "sat-pm", () => "crew-3", 2)
     expect(added.crews.map(({ id }) => id)).toEqual([
       "crew-1",
       "crew-2",
@@ -410,6 +442,7 @@ describe("crew composition rules", () => {
     expect(added.crews[2]).toMatchObject({
       sessionId: "sat-pm",
       members: [],
+      capacity: 2,
       destination: "unassigned",
       boatId: null,
     })
@@ -420,15 +453,10 @@ describe("crew composition rules", () => {
   })
 
   it("refuses to remove a crew that still holds someone", () => {
-    const manned = movePerson(
-      EMPTY_PLAN,
-      STUDENT_1,
-      {
-        kind: "crew",
-        crewId: "crew-1",
-      },
-      2,
-    )
+    const manned = movePerson(EMPTY_PLAN, STUDENT_1, {
+      kind: "crew",
+      crewId: "crew-1",
+    })
     expect(removeEmptyCrew(manned, "crew-1")).toBe(manned)
     expect(removeEmptyCrew(manned, "missing")).toBe(manned)
   })

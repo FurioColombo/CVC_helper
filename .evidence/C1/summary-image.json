@@ -1,0 +1,28 @@
+{
+  "milestone": "C1",
+  "status": "PASS",
+  "recordedAt": "2026-09-24",
+  "privacy": "Synthetic names only; no private roster photographs or student data.",
+  "browserDownload": {
+    "artifact": ".evidence/C1/crew-summary-browser.svg",
+    "renderedPreview": ".evidence/C1/crew-summary-browser.png",
+    "format": "SVG image",
+    "dimensions": {
+      "width": 1040,
+      "height": 508
+    },
+    "visualInspection": "Downloaded through the visible Equipaggi summary flow. Two complete crews, destination labels and Comandata/minor badges are visible; no content is clipped."
+  },
+  "longCourseStressCase": {
+    "artifact": ".evidence/C1/summary-preview-13.svg",
+    "renderedPreview": ".evidence/C1/summary-preview-13.png",
+    "crewCount": 13,
+    "columns": 2,
+    "distribution": [7, 6],
+    "dimensions": {
+      "width": 1200,
+      "height": 1776
+    },
+    "visualInspection": "All 13 synthetic crew cards fit on one page in two balanced columns. Names, destinations and marker badges remain legible, and the last row is fully visible."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "reviewer": "Codex implementation self-review",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    "The D2–D5 crew-capacity Settings override remains explicitly deferred to the final Claude Code follow-up and was not included in C1.",
+    "The owner must check the installed app on their phone; browser emulation is not a physical-device pass."
+  ],
+  "evidenceInspected": [
+    "git diff and git diff --check",
+    ".evidence/C1/verification.json",
+    ".evidence/C1/browser-evidence.json",
+    ".evidence/C1/summary-image.json",
+    ".evidence/C1/crew-manager-40-students-320px-200-percent.png",
+    ".evidence/C1/crew-card-long-name-320px-200-percent.png",
+    ".evidence/C1/crew-summary-browser.png",
+    ".evidence/C1/summary-preview-13.png",
+    "src/domain/crews.ts and src/domain/crews.test.ts",
+    "src/persistence/crews.ts and src/persistence/crews.test.ts",
+    "src/features/crews/CrewManagement.tsx and src/features/crews/CrewManagement.test.tsx",
+    "src/features/crews/crewDisplayPreference.ts and its tests",
+    "src/features/crews/crewSummaryImage.ts and its tests",
+    "tests/e2e/c1-crew-management.spec.ts"
+  ]
+}

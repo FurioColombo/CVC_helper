@@ -92,6 +92,7 @@ const ACTIVE_COURSE: CourseRecord = {
 describe("course setup and application shell", () => {
   beforeEach(() => {
     window.history.replaceState(null, "", window.location.href)
+    window.localStorage.clear()
     readCourse.mockReset().mockResolvedValue(null)
     saveCourse.mockReset().mockResolvedValue(ACTIVE_COURSE)
     getStudents.mockReset().mockResolvedValue([])
@@ -174,6 +175,38 @@ describe("course setup and application shell", () => {
     expect(
       screen.getByRole("button", { name: "Configura barche" }),
     ).toBeVisible()
+  })
+
+  it("keeps the selected-name display density in Settings across visits", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    await user.click(screen.getByRole("button", { name: "Impostazioni" }))
+
+    const twoPerRow = await screen.findByRole("radio", { name: "2 per riga" })
+    const threePerRow = screen.getByRole("radio", { name: "3 per riga" })
+    expect(threePerRow).toBeChecked()
+    expect(
+      screen.getByText(
+        "Scegli quanti nomi degli allievi selezionati mostrare per riga.",
+      ),
+    ).toBeVisible()
+
+    await user.click(twoPerRow)
+    expect(twoPerRow).toBeChecked()
+    expect(window.localStorage.getItem("cvc-helper.crew-display-columns")).toBe(
+      "2",
+    )
+
+    await user.click(screen.getByRole("button", { name: "Torna alla Home" }))
+    await user.click(screen.getByRole("button", { name: "Impostazioni" }))
+
+    expect(
+      await screen.findByRole("radio", { name: "2 per riga" }),
+    ).toBeChecked()
+    expect(screen.getByRole("radio", { name: "3 per riga" })).not.toBeChecked()
   })
 
   it("opens a dedicated volunteer area from Home", async () => {
@@ -270,6 +303,7 @@ describe("course setup and application shell", () => {
               {
                 id: "crew-1",
                 sessionId,
+                capacity: 2,
                 members: [
                   { personId: "student-1", personType: "student" as const },
                 ],

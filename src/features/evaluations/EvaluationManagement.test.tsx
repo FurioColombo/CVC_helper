@@ -76,6 +76,7 @@ describe("evaluation management", () => {
         {
           id: "crew-1",
           sessionId: "sat-pm",
+          capacity: 2,
           members: [
             { personId: "student-1", personType: "student" },
             { personId: "student-2", personType: "student" },
