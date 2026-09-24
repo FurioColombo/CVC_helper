@@ -512,7 +512,7 @@
     {
       "id": "N1",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/N1/verification.json",

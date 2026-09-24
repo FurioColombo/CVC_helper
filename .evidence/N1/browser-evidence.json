@@ -1,0 +1,27 @@
+{
+  "milestone": "N1",
+  "status": "PASS",
+  "recordedAt": "2026-09-24",
+  "nodeVersion": "v24.19.0",
+  "command": "npm run verify:e2e -- tests/e2e/n1-phone-back.spec.ts tests/e2e/students.spec.ts tests/e2e/student-name-disambiguation.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+  "projects": [
+    "pixel-7-chrome",
+    "iphone-13-viewport"
+  ],
+  "tests": {
+    "passed": 8,
+    "failed": 0
+  },
+  "coverage": [
+    "Shell Back navigation including Faults to Boats and Settings return",
+    "Unsaved student form returns to list",
+    "Student creation does not leave a duplicate list history entry after reload",
+    "Nested student screens and note dialog respond to Back",
+    "Saved note and student route survive reload",
+    "Nickname and student data remain visible after reload",
+    "Same-initial surnames use distinguishing prefixes"
+  ],
+  "limitations": [
+    "Browser journeys do not simulate physical Android/iPhone Back gestures or verify installation on the owner's phone."
+  ]
+}

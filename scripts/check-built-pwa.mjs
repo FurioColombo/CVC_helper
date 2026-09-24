@@ -26,6 +26,17 @@ const distPath = (url) =>
     url.startsWith(base) ? url.slice(base.length) : url.replace(/^\//, ""),
   )
 
+const assertPngDimensions = (path, size) => {
+  const png = readFileSync(path)
+  assert.equal(
+    png.toString("hex", 0, 8),
+    "89504e470d0a1a0a",
+    `${path} must be PNG`,
+  )
+  assert.equal(png.readUInt32BE(16), size, `${path} must be ${size}px wide`)
+  assert.equal(png.readUInt32BE(20), size, `${path} must be ${size}px high`)
+}
+
 assert.equal(
   manifest.start_url,
   base,
@@ -39,7 +50,14 @@ for (const size of ["192x192", "512x512"]) {
     existsSync(distPath(icon.src)),
     `Built PWA icon does not exist: ${icon.src}`,
   )
+  assertPngDimensions(distPath(icon.src), Number.parseInt(size, 10))
 }
+const appleTouchIcon = readFileSync(
+  resolve(root, "dist", "index.html"),
+  "utf8",
+).match(/<link rel="apple-touch-icon" href="([^"]+)"/)
+assert.ok(appleTouchIcon, "Built app is missing its Apple touch icon link")
+assertPngDimensions(distPath(appleTouchIcon[1]), 180)
 assert.ok(
   existsSync(resolve(root, "dist", "sw.js")),
   "PWA service worker missing",

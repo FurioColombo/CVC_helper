@@ -78,7 +78,10 @@ test("adds, disambiguates, edits, disables and restores students", async ({
   ).toBeVisible()
 
   await page.reload()
-  await page.getByRole("button", { name: "Allievi" }).click()
+  await page
+    .getByRole("button", { name: "Indietro da Allievi", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Allievi", exact: true }).click()
   await page
     .getByRole("button", {
       name: /Marty, \d+ anni, M, Minorenne, Non disponibile/,

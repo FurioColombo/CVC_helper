@@ -91,6 +91,7 @@ const ACTIVE_COURSE: CourseRecord = {
 
 describe("course setup and application shell", () => {
   beforeEach(() => {
+    window.history.replaceState(null, "", window.location.href)
     readCourse.mockReset().mockResolvedValue(null)
     saveCourse.mockReset().mockResolvedValue(ACTIVE_COURSE)
     getStudents.mockReset().mockResolvedValue([])
