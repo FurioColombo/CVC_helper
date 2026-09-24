@@ -1,0 +1,18 @@
+{
+  "milestone": "C1",
+  "status": "PASS",
+  "recordedAt": "2026-09-24T12:20:27.949Z",
+  "nodeVersion": "v24.19.0",
+  "appVersion": "0.2.0",
+  "gitCommit": "1f81d413f0f8ceef0737a617ff530f8e2e0ea685",
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-09-24T12:17:11.414Z",
+      "durationMs": 196533,
+      "exitCode": 0,
+      "outputTail": "(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n\nPWA v1.3.0\nmode      generateSW\nprecache  30 entries (22328.83 KiB)\nfiles generated\n  dist/sw.js\n  dist/workbox-398fc23b.js\nPASS: built PWA manifest, icons, service worker and 5 precached OCR assets"
+    }
+  ]
+}

@@ -28,6 +28,10 @@ import { buildCourseDetails } from "@/domain/course"
 import { BoatManagement } from "@/features/boats/BoatManagement"
 import { FaultManagement } from "@/features/boats/FaultManagement"
 import { CrewManagement } from "@/features/crews/CrewManagement"
+import {
+  getCrewDisplayColumns,
+  setCrewDisplayColumns,
+} from "@/features/crews/crewDisplayPreference"
 import { DutyManagement } from "@/features/duties/DutyManagement"
 import {
   EvaluationManagement,
@@ -353,6 +357,10 @@ function SettingsView({
   course: CourseRecord
   onHome: () => void
 }) {
+  const [crewDisplayColumns, setDisplayColumns] = useState<2 | 3>(() =>
+    getCrewDisplayColumns(),
+  )
+
   return (
     <section className="rounded-3xl border bg-card p-6 shadow-[0_18px_50px_rgb(6_59_82/0.08)] max-[350px]:p-[12px]">
       <Settings aria-hidden="true" className="size-8 text-primary" />
@@ -382,6 +390,35 @@ function SettingsView({
           </dd>
         </div>
       </dl>
+      <fieldset className="mt-6 rounded-2xl border bg-card p-4">
+        <legend className="px-1 text-sm font-bold text-primary">
+          Visualizzazione degli equipaggi
+        </legend>
+        <p className="text-sm leading-5 text-muted-foreground">
+          Scegli quanti nomi degli allievi selezionati mostrare per riga.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {([2, 3] as const).map((columns) => (
+            <label
+              className="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2 text-sm font-semibold has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:text-primary focus-within:ring-3 focus-within:ring-ring/30"
+              key={columns}
+            >
+              <input
+                checked={crewDisplayColumns === columns}
+                className="size-4 accent-primary"
+                name="crew-display-columns"
+                onChange={() => {
+                  setDisplayColumns(columns)
+                  setCrewDisplayColumns(columns)
+                }}
+                type="radio"
+                value={columns}
+              />
+              <span>{columns} per riga</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <Button className="mt-7" onClick={onHome} variant="secondary">
         <ChevronLeft aria-hidden="true" className="size-4" />
         Torna alla Home

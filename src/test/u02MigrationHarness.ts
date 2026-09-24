@@ -258,6 +258,7 @@ export async function runStableIdMigrationHarness() {
       {
         id: "crew-v010-sat-pm-1",
         sessionId: "sat-pm" as const,
+        capacity: 2,
         destination: "boat" as const,
         boatId: "boat-v010-quest-7",
         members: [
@@ -268,6 +269,7 @@ export async function runStableIdMigrationHarness() {
       {
         id: "crew-v010-sat-pm-2",
         sessionId: "sat-pm" as const,
+        capacity: 2,
         destination: "mezzi" as const,
         boatId: null,
         members: [

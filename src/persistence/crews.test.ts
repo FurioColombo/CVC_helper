@@ -60,6 +60,7 @@ describe("crew persistence", () => {
         {
           id: "crew-1",
           sessionId: "sat-pm",
+          capacity: null,
           destination: "unassigned",
           boatId: null,
           position: null,
@@ -88,6 +89,7 @@ describe("crew persistence", () => {
       expect.objectContaining({
         crews: [
           expect.objectContaining({
+            capacity: 2,
             members: [
               { personId: "student-1", personType: "student" },
               { personId: "volunteer-1", personType: "volunteer" },
@@ -106,6 +108,7 @@ describe("crew persistence", () => {
           id: "crew-1",
           sessionId: "sat-pm",
           members: [{ personId: "student-1", personType: "student" }],
+          capacity: 2,
           destination: "unassigned",
           boatId: null,
         },
@@ -113,6 +116,7 @@ describe("crew persistence", () => {
           id: "crew-2",
           sessionId: "sat-pm",
           members: [],
+          capacity: 2,
           destination: "unassigned",
           boatId: null,
         },
@@ -150,6 +154,7 @@ describe("crew persistence", () => {
           id: "crew-1",
           sessionId: "sat-pm" as const,
           members: threeMembers,
+          capacity: 4,
           destination: "mezzi" as const,
           boatId: null,
         },
@@ -177,6 +182,35 @@ describe("crew persistence", () => {
     )
   })
 
+  it("normalizes a legacy flexible crew to at least four without dropping members", async () => {
+    database.getOptional.mockResolvedValueOnce({ family: "Cabinato", level: 3 })
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "legacy-cabin-crew",
+          sessionId: "sat-pm",
+          capacity: null,
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce(
+        Array.from({ length: 5 }, (_, index) => ({
+          crewId: "legacy-cabin-crew",
+          personId: `legacy-student-${index + 1}`,
+          personType: "student",
+          position: index,
+        })),
+      )
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    const plan = await readCrewPlan("course-1", "sat-pm")
+    expect(plan.crews[0]).toMatchObject({ capacity: 5 })
+    expect(plan.crews[0]!.members).toHaveLength(5)
+  })
+
   it("refuses duplicate simultaneous assignment before writing", async () => {
     await expect(
       saveCrewPlan("course-1", "sat-pm", {
@@ -184,6 +218,7 @@ describe("crew persistence", () => {
           {
             id: "crew-1",
             sessionId: "sat-pm",
+            capacity: 2,
             members: [{ personId: "student-1", personType: "student" }],
             destination: "unassigned",
             boatId: null,
@@ -204,6 +239,7 @@ describe("crew persistence", () => {
           {
             id: "crew-1",
             sessionId: "sat-pm",
+            capacity: 2,
             members: [{ personId: "person-1", personType: "land" }],
             destination: "unassigned",
             boatId: null,
@@ -220,6 +256,7 @@ describe("crew persistence", () => {
           {
             id: "crew-1",
             sessionId: "sat-pm",
+            capacity: 2,
             members: [],
             destination: "land",
             boatId: null,
@@ -296,6 +333,7 @@ describe("crew persistence", () => {
         {
           id: "crew-1",
           sessionId: "sat-pm",
+          capacity: 2,
           members: [],
           destination: "boat",
           boatId: "boat-2",
@@ -303,6 +341,7 @@ describe("crew persistence", () => {
         {
           id: "crew-2",
           sessionId: "sat-pm",
+          capacity: 2,
           members: [],
           destination: "mezzi",
           boatId: null,
@@ -336,6 +375,7 @@ describe("crew persistence", () => {
             { personId: "student-1", personType: "student" as const },
             { personId: "volunteer-ct", personType: "volunteer" as const },
           ],
+          capacity: 2,
           destination: "boat" as const,
           boatId: "boat-10",
         },
@@ -351,6 +391,7 @@ describe("crew persistence", () => {
         {
           id: "crew-sun-am-1",
           sessionId: "sun-am",
+          capacity: 2,
           destination: "boat",
           boatId: "boat-10",
           position: 0,
@@ -391,6 +432,54 @@ describe("crew persistence", () => {
     )
   })
 
+  it("persists and reloads a manually adjusted flexible capacity", async () => {
+    database.getOptional.mockResolvedValue({ family: "Cabinato", level: 3 })
+    const plan = {
+      crews: [
+        {
+          id: "crew-cabin-1",
+          sessionId: "sat-pm" as const,
+          members: [{ personId: "student-1", personType: "student" as const }],
+          capacity: 6,
+          destination: "unassigned" as const,
+          boatId: null,
+        },
+      ],
+      landStudentIds: [],
+      selectedBoatIds: [],
+    }
+    await saveCrewPlan("course-1", "sat-pm", plan)
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO crews"),
+      [expect.arrayContaining(["crew-cabin-1", "course-1", "sat-pm", 6])],
+    )
+
+    database.getAll.mockReset()
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-cabin-1",
+          sessionId: "sat-pm",
+          capacity: 6,
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-cabin-1",
+          personId: "student-1",
+          personType: "student",
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+    const reloaded = await readCrewPlan("course-1", "sat-pm")
+    expect(reloaded.crews).toEqual(plan.crews)
+  })
+
   it("keeps every unchanged crew, member, boat and land row ID", async () => {
     database.transactionGetAll.mockImplementation((sql: string) => {
       if (sql.includes("FROM crewMembers cm"))
@@ -408,6 +497,7 @@ describe("crew persistence", () => {
           {
             id: "crew-1",
             sessionId: "sat-pm",
+            capacity: 2,
             destination: "boat",
             boatId: "boat-1",
             position: 0,
@@ -433,6 +523,7 @@ describe("crew persistence", () => {
           id: "crew-1",
           sessionId: "sat-pm",
           members: [{ personId: "student-1", personType: "student" }],
+          capacity: 2,
           destination: "boat",
           boatId: "boat-1",
         },
@@ -469,6 +560,7 @@ describe("crew persistence", () => {
           {
             id: "crew-1",
             sessionId: "sat-pm",
+            capacity: 2,
             destination: "unassigned",
             boatId: null,
             position: 1,
@@ -476,6 +568,7 @@ describe("crew persistence", () => {
           {
             id: "crew-old",
             sessionId: "sat-pm",
+            capacity: 2,
             destination: "unassigned",
             boatId: null,
             position: 0,
@@ -507,6 +600,7 @@ describe("crew persistence", () => {
           id: "crew-1",
           sessionId: "sat-pm",
           members: [{ personId: "student-1", personType: "student" }],
+          capacity: 2,
           destination: "boat",
           boatId: "boat-2",
         },
@@ -533,7 +627,7 @@ describe("crew persistence", () => {
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE crews"),
-      [["boat", "boat-2", 0, "crew-1", "course-1", "sat-pm"]],
+      [[2, "boat", "boat-2", 0, "crew-1", "course-1", "sat-pm"]],
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE sessionBoats"),
@@ -605,6 +699,7 @@ describe("crew persistence", () => {
       crews: ["crew-1", "crew-2"].map((id) => ({
         id,
         sessionId: "sat-pm" as const,
+        capacity: 2,
         members: [],
         destination: "boat" as const,
         boatId: "boat-2",
@@ -633,6 +728,7 @@ describe("crew persistence", () => {
         {
           id: "crew-1",
           sessionId: "sat-pm" as const,
+          capacity: 2,
           members: [
             { personId: "student-1", personType: "student" as const },
             { personId: "volunteer-ct", personType: "volunteer" as const },

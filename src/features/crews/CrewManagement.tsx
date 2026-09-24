@@ -30,6 +30,11 @@ import {
   type DutyMarker,
 } from "@/components/PersonBadges"
 import { BoatModelMark } from "@/features/boats/BoatIdentity"
+import { getCrewDisplayColumns } from "@/features/crews/crewDisplayPreference"
+import {
+  downloadCrewSummarySvg,
+  type CrewSummaryLine,
+} from "@/features/crews/crewSummaryImage"
 import {
   SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
@@ -45,12 +50,14 @@ import {
   copyPreviousCrewPlan,
   findPersonLocation,
   getCrewCompleteness,
-  getEvenCrewTargets,
   getPreviousSessionId,
+  getInitialCrewCapacity,
   getStandardCrewSize,
   movePerson,
   removeEmptyCrew,
   removePerson,
+  setCrewCapacity,
+  MAX_FLEXIBLE_CREW_CAPACITY,
   setBoatGoingOut,
   swapPeople,
   type CrewPersonRef,
@@ -85,6 +92,11 @@ import { readDutyPlan } from "@/persistence/duties"
 import type { DutyAssignment } from "@/domain/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import { listVolunteers, type VolunteerRecord } from "@/persistence/volunteers"
+
+const studentPoolCollator = new Intl.Collator("it-IT", {
+  numeric: true,
+  sensitivity: "base",
+})
 
 function CrewHeader({
   onBack,
@@ -159,7 +171,7 @@ type AnnouncementLine = {
   destination: CrewPlan["crews"][number]["destination"]
   boat: BoatRecord | null
   inferredBoatType: BoatRecord["type"] | null
-  memberLabels: string[]
+  members: CrewSummaryLine["members"]
 }
 
 function BoatMark({
@@ -386,6 +398,7 @@ function PersonButton({
   detail,
   markers,
   markerDescription,
+  truncateLabel = false,
   role,
   selected,
   disabled,
@@ -394,12 +407,14 @@ function PersonButton({
   onLongPress,
   ariaLabel,
   compact = false,
+  dense = false,
 }: {
   person: CrewPersonRef
   label: string
   detail: string
   markers?: React.ReactNode
   markerDescription?: string
+  truncateLabel?: boolean
   role?: VolunteerRole
   selected: boolean
   disabled: boolean
@@ -408,6 +423,7 @@ function PersonButton({
   onLongPress?: () => void
   ariaLabel?: string
   compact?: boolean
+  dense?: boolean
 }) {
   const pointerDownAt = useRef<number | null>(null)
   const pointerOrigin = useRef<{ x: number; y: number } | null>(null)
@@ -429,7 +445,7 @@ function PersonButton({
       // the name, which stays the person — the same arrangement P17 uses.
       aria-description={markerDescription || undefined}
       aria-pressed={selected}
-      className={`flex min-h-14 min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"}`}
+      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"}`}
       disabled={disabled}
       onClick={(event) => {
         if (longPressed.current) {
@@ -495,19 +511,27 @@ function PersonButton({
       }}
       type="button"
     >
-      {!compact &&
-        (person.personType === "volunteer" && role ? (
-          <VolunteerRoleBadge className="size-9 text-xs" role={role} />
-        ) : (
+      {person.personType === "volunteer" && role ? (
+        <VolunteerRoleBadge
+          className={`${compact ? "size-7" : "size-9"} shrink-0 text-xs`}
+          role={role}
+        />
+      ) : (
+        !compact && (
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-xs font-black text-foreground">
             {label.slice(0, 1).toLocaleUpperCase("it-IT")}
           </span>
-        ))}
+        )
+      )}
       <span className="min-w-0 flex-1">
         <span
           className={`flex min-w-0 items-center gap-1 text-sm font-bold ${compact ? "leading-4" : "leading-5"}`}
         >
-          <span className="min-w-0 break-words">{label}</span>
+          <span
+            className={`min-w-0 ${truncateLabel ? "truncate" : "break-words"}`}
+          >
+            {label}
+          </span>
           {markers}
         </span>
         <span
@@ -617,10 +641,12 @@ function AnnouncementView({
   sessionId,
   lines,
   onClose,
+  onDownloadImage,
 }: {
   sessionId: SessionId
   lines: AnnouncementLine[]
   onClose: () => void
+  onDownloadImage: () => void
 }) {
   const dialogRef = useDialogFocus<HTMLElement>()
 
@@ -657,7 +683,14 @@ function AnnouncementView({
             <X aria-hidden="true" className="size-6" />
           </button>
         </header>
-        <ol className="mt-3 divide-y divide-[#dbe4e6]">
+        <button
+          className="mt-3 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+          onClick={onDownloadImage}
+          type="button"
+        >
+          Scarica immagine riepilogo
+        </button>
+        <ol className="mt-2 divide-y divide-[#dbe4e6]">
           {lines.map((line) => (
             <li
               aria-label={`Equipaggio ${line.crewNumber}, ${line.boat ? `${line.boat.type} ${line.boat.number}` : line.destination === "mezzi" ? "Mezzi" : "senza barca"}`}
@@ -679,10 +712,15 @@ function AnnouncementView({
                 />
               </div>
               <div className="min-w-0 text-[1.05rem] leading-6 font-black tracking-tight min-[390px]:text-[1.2rem] min-[390px]:leading-7">
-                {line.memberLabels.length > 0 ? (
-                  line.memberLabels.map((memberLabel) => (
-                    <span className="block break-words" key={memberLabel}>
-                      {memberLabel}
+                {line.members.length > 0 ? (
+                  line.members.map((member, index) => (
+                    <span
+                      className="flex min-w-0 flex-wrap items-center gap-x-2 break-words"
+                      key={`${line.crewNumber}:${index}:${member.label}`}
+                    >
+                      <span className="min-w-0">{member.label}</span>
+                      {member.isMinor && <MinorBadge />}
+                      {member.duty && <DutyBadge kind={member.duty} />}
                     </span>
                   ))
                 ) : (
@@ -788,7 +826,7 @@ export function CrewManagement({
     null,
   )
   const [selected, setSelected] = useState<CrewPersonRef | null>(null)
-  const [crewCount, setCrewCount] = useState(1)
+  const [crewCountDraft, setCrewCountDraft] = useState("1")
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
@@ -799,6 +837,7 @@ export function CrewManagement({
   const boatCopyDialogRef = useDialogFocus<HTMLElement>(
     boatCopySelection !== null,
   )
+  const personDestinationRef = useRef<HTMLElement>(null)
 
   const applyLoaded = useCallback(
     (data: Awaited<ReturnType<typeof readValidCrewState>>) => {
@@ -813,7 +852,7 @@ export function CrewManagement({
       })
       setHistory(data.history)
       setDutyAssignments(data.dutyPlan.assignments)
-      setCrewCount(Math.max(1, data.stored.crews.length))
+      setCrewCountDraft(String(Math.max(1, data.stored.crews.length)))
       setSelected(null)
       setWarningCrewId(null)
       setDestinationCrewId(null)
@@ -858,11 +897,7 @@ export function CrewManagement({
   const availablePeopleCount = activeStudents.length + volunteers.length
   const maxCrewCount = Math.max(1, availablePeopleCount)
   const standardCrewSize = getStandardCrewSize(course.family, course.level)
-  const flexibleCrewTargets = getEvenCrewTargets(
-    activeStudents.filter(({ id }) => !plan.landStudentIds.includes(id))
-      .length + volunteers.length,
-    Math.max(1, plan.crews.length),
-  )
+  const crewDisplayColumns = getCrewDisplayColumns()
   const completeness = getCrewCompleteness(
     activeStudents.map(({ id }) => id),
     plan,
@@ -1044,6 +1079,24 @@ export function CrewManagement({
     }
   }
 
+  function summaryMember(
+    person: CrewPersonRef,
+  ): CrewSummaryLine["members"][number] {
+    if (person.personType === "volunteer") {
+      return { label: personLabel(person), isMinor: false, duty: null }
+    }
+    const student = studentById.get(person.personId)
+    return {
+      label: personLabel(person),
+      isMinor: student ? isStudentMinor(student, course.startDate) : false,
+      duty: currentDutyStudentIds.has(person.personId)
+        ? "current"
+        : smontanteDutyStudentIds.has(person.personId)
+          ? "smontante"
+          : null,
+    }
+  }
+
   const selectedBoatTypes = Array.from(
     new Set(
       plan.selectedBoatIds
@@ -1058,9 +1111,25 @@ export function CrewManagement({
       boat: crew.boatId ? (boatById.get(crew.boatId) ?? null) : null,
       inferredBoatType:
         selectedBoatTypes.length === 1 ? selectedBoatTypes[0]! : null,
-      memberLabels: crew.members.map(personLabel),
+      members: crew.members.map(summaryMember),
     }),
   )
+
+  function downloadAnnouncementImage() {
+    const summaryLines: CrewSummaryLine[] = announcementLines.map((line) => ({
+      crewNumber: line.crewNumber,
+      destination:
+        line.destination === "mezzi"
+          ? "Mezzi"
+          : line.boat
+            ? `${line.boat.type} ${line.boat.number}`
+            : line.inferredBoatType
+              ? `${line.inferredBoatType} · Senza barca`
+              : "Senza barca",
+      members: line.members,
+    }))
+    downloadCrewSummarySvg(sessionLabel(sessionId), summaryLines)
+  }
 
   async function commit(next: CrewPlan) {
     if (saveInFlight.current) return false
@@ -1094,11 +1163,18 @@ export function CrewManagement({
 
   async function createCrews() {
     if (saveInFlight.current || copying) return
+    const parsedCount = Number.parseInt(crewCountDraft, 10)
+    const committedCount = Math.min(
+      maxCrewCount,
+      Math.max(0, Number.isFinite(parsedCount) ? parsedCount : 0),
+    )
+    setCrewCountDraft(String(committedCount))
     const next: CrewPlan = {
-      crews: Array.from({ length: crewCount }, () => ({
+      crews: Array.from({ length: committedCount }, () => ({
         id: crypto.randomUUID(),
         sessionId,
         members: [],
+        capacity: getInitialCrewCapacity(course.family, course.level),
         destination: "unassigned",
         boatId: null,
       })),
@@ -1127,7 +1203,7 @@ export function CrewManagement({
         selectedBoatIds: plan.selectedBoatIds,
       })
       if (await commit(copiedPlan)) {
-        setCrewCount(Math.max(1, copiedPlan.crews.length))
+        setCrewCountDraft(String(Math.max(1, copiedPlan.crews.length)))
         setCopyReport(removals.length > 0 ? removals : null)
       }
     } catch {
@@ -1205,14 +1281,7 @@ export function CrewManagement({
   function placeInCrew(crewId: string) {
     if (!selected || busy) return
     try {
-      void commit(
-        movePerson(
-          plan,
-          selected,
-          { kind: "crew", crewId },
-          standardCrewSize ?? Number.MAX_SAFE_INTEGER,
-        ),
-      )
+      void commit(movePerson(plan, selected, { kind: "crew", crewId }))
     } catch {
       setSaveError(true)
     }
@@ -1220,7 +1289,51 @@ export function CrewManagement({
 
   function placeOnLand() {
     if (!selected || selected.personType !== "student" || busy) return
-    void commit(movePerson(plan, selected, { kind: "land" }, 1))
+    void commit(movePerson(plan, selected, { kind: "land" }))
+  }
+
+  function createCrewForSelected(destination: "unassigned" | "mezzi") {
+    if (!selected || busy || plan.crews.length >= maxCrewCount) return
+    const withCrew = addCrew(
+      plan,
+      sessionId,
+      () => crypto.randomUUID(),
+      getInitialCrewCapacity(course.family, course.level),
+    )
+    const newCrewId = withCrew.crews.at(-1)!.id
+    const withDestination =
+      destination === "mezzi"
+        ? assignCrewDestination(withCrew, newCrewId, { kind: "mezzi" })
+        : withCrew
+    try {
+      void commit(
+        movePerson(withDestination, selected, {
+          kind: "crew",
+          crewId: newCrewId,
+        }),
+      )
+    } catch {
+      setSaveError(true)
+    }
+  }
+
+  function adjustCrewCapacity(crewId: string, amount: -1 | 1) {
+    if (busy || standardCrewSize !== null) return
+    const crew = plan.crews.find(({ id }) => id === crewId)
+    if (!crew) return
+    try {
+      void commit(
+        setCrewCapacity(
+          plan,
+          crewId,
+          crew.capacity + amount,
+          course.family,
+          course.level,
+        ),
+      )
+    } catch {
+      setSaveError(true)
+    }
   }
 
   function toggleBoatGoingOut(boat: BoatRecord) {
@@ -1302,11 +1415,24 @@ export function CrewManagement({
     }
   }
 
-  const studentPool = activeStudents.filter(
-    ({ id }) =>
-      findPersonLocation(plan, { personId: id, personType: "student" }).kind ===
-      "pool",
-  )
+  const studentPool = activeStudents
+    .filter(
+      ({ id }) =>
+        findPersonLocation(plan, { personId: id, personType: "student" })
+          .kind === "pool",
+    )
+    .sort((left, right) => {
+      const leftDuty = currentDutyStudentIds.has(left.id) ? 0 : 1
+      const rightDuty = currentDutyStudentIds.has(right.id) ? 0 : 1
+      return (
+        leftDuty - rightDuty ||
+        studentPoolCollator.compare(
+          getStudentDisplayName(left, students),
+          getStudentDisplayName(right, students),
+        ) ||
+        studentPoolCollator.compare(left.id, right.id)
+      )
+    })
   const volunteerPool = volunteers.filter(
     ({ id }) =>
       findPersonLocation(plan, { personId: id, personType: "volunteer" })
@@ -1318,6 +1444,26 @@ export function CrewManagement({
   const destinationCrewIndex = plan.crews.findIndex(
     ({ id }) => id === destinationCrewId,
   )
+  const selectedDestinationOpen = Boolean(
+    selected &&
+    (selectedLocation.kind === "pool" || selected.personType === "volunteer"),
+  )
+  const firstCrewWithRoom = plan.crews.find(
+    (crew) => crew.members.length < crew.capacity,
+  )
+
+  useEffect(() => {
+    if (!selectedDestinationOpen) return
+    if (firstCrewWithRoom) {
+      const crewCard = document.getElementById(
+        `crew-card-${firstCrewWithRoom.id}`,
+      )
+      if (typeof crewCard?.scrollIntoView === "function") {
+        crewCard.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }
+    personDestinationRef.current?.focus()
+  }, [firstCrewWithRoom, selectedDestinationOpen])
 
   if (loadState === "loading") {
     return (
@@ -1360,6 +1506,7 @@ export function CrewManagement({
       {readMode && (
         <AnnouncementView
           lines={announcementLines}
+          onDownloadImage={downloadAnnouncementImage}
           onClose={() => setReadMode(false)}
           sessionId={sessionId}
         />
@@ -1654,7 +1801,7 @@ export function CrewManagement({
           </section>
         </div>
       ) : (
-        <div className="flex h-[calc(100dvh-7rem)] min-h-0 flex-col">
+        <div className="flex min-h-[calc(100dvh-7rem)] flex-col">
           {header}
           <SessionChoice
             disabled={busy || boatCopySelection !== null}
@@ -1721,21 +1868,11 @@ export function CrewManagement({
                 <Input
                   inputMode="numeric"
                   max={maxCrewCount}
-                  min={1}
-                  onChange={(event) =>
-                    setCrewCount(
-                      Math.min(
-                        maxCrewCount,
-                        Math.max(
-                          1,
-                          Math.floor(Number(event.target.value) || 1),
-                        ),
-                      ),
-                    )
-                  }
+                  min={0}
+                  onChange={(event) => setCrewCountDraft(event.target.value)}
                   step={1}
                   type="number"
-                  value={crewCount}
+                  value={crewCountDraft}
                 />
               </label>
               <div
@@ -1931,6 +2068,8 @@ export function CrewManagement({
                     <section
                       aria-label="Destinazione persona selezionata"
                       className="fixed bottom-24 left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+                      ref={personDestinationRef}
+                      tabIndex={-1}
                     >
                       <div className="flex items-center gap-2">
                         <span className="min-w-0 flex-1 truncate text-sm font-bold">
@@ -1954,27 +2093,62 @@ export function CrewManagement({
                           </Button>
                         )}
                       </div>
-                      <div className="mt-2 grid max-h-[24vh] grid-cols-3 gap-1 overflow-y-auto">
-                        {plan.crews.map((crew, crewIndex) => {
-                          const currentCrew =
-                            selectedLocation.kind === "crew" &&
-                            selectedLocation.crewId === crew.id
-                          const full =
-                            standardCrewSize !== null &&
-                            crew.members.length >= standardCrewSize
-                          return (
-                            <Button
-                              aria-label={`Sposta ${personLabel(selected)} in equipaggio ${crewIndex + 1}`}
-                              className="h-11 min-w-0 px-1 text-xs"
-                              disabled={busy || currentCrew || full}
-                              key={crew.id}
-                              onClick={() => placeInCrew(crew.id)}
-                              variant="secondary"
-                            >
-                              Eq. {crewIndex + 1}
-                            </Button>
-                          )
-                        })}
+                      <div className="mt-2 grid max-h-[24vh] grid-cols-2 gap-2 overflow-y-auto">
+                        {plan.crews
+                          .filter((crew) => crew.members.length < crew.capacity)
+                          .map((crew) => {
+                            const crewIndex = plan.crews.findIndex(
+                              ({ id }) => id === crew.id,
+                            )
+                            const currentCrew =
+                              selectedLocation.kind === "crew" &&
+                              selectedLocation.crewId === crew.id
+                            const preview = Array.from(
+                              { length: crew.capacity },
+                              (_, index) =>
+                                crew.members[index]
+                                  ? personLabel(crew.members[index]!)
+                                  : "-",
+                            ).join(" · ")
+                            return (
+                              <Button
+                                aria-label={`Sposta ${personLabel(selected)} in equipaggio ${crewIndex + 1}`}
+                                aria-description={preview}
+                                className="h-auto min-h-14 min-w-0 justify-start px-2 py-1 text-left text-xs"
+                                disabled={busy || currentCrew}
+                                key={crew.id}
+                                onClick={() => placeInCrew(crew.id)}
+                                variant="secondary"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block font-black">
+                                    Eq. {crewIndex + 1}
+                                  </span>
+                                  <span className="block break-words text-[0.65rem] leading-4 text-muted-foreground">
+                                    {preview}
+                                  </span>
+                                </span>
+                              </Button>
+                            )
+                          })}
+                        {plan.crews.every(
+                          (crew) => crew.members.length >= crew.capacity,
+                        ) && (
+                          <p
+                            className="col-span-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold text-muted-foreground"
+                            role="status"
+                          >
+                            Equipaggi pieni
+                          </p>
+                        )}
+                        <Button
+                          className="h-11 min-w-0 px-2 text-xs"
+                          disabled={busy || plan.crews.length >= maxCrewCount}
+                          onClick={() => createCrewForSelected("unassigned")}
+                          variant="secondary"
+                        >
+                          Nuovo equipaggio
+                        </Button>
                         {selected.personType === "student" && (
                           <Button
                             aria-label={`Sposta ${personLabel(selected)} A terra`}
@@ -1986,6 +2160,14 @@ export function CrewManagement({
                             A terra
                           </Button>
                         )}
+                        <Button
+                          className="h-11 min-w-0 px-2 text-xs"
+                          disabled={busy || plan.crews.length >= maxCrewCount}
+                          onClick={() => createCrewForSelected("mezzi")}
+                          variant="secondary"
+                        >
+                          Mezzi
+                        </Button>
                       </div>
                     </section>
                   )}
@@ -1996,7 +2178,8 @@ export function CrewManagement({
                 >
                   {plan.crews.map((crew, crewIndex) => (
                     <article
-                      className="rounded-3xl border bg-card p-3"
+                      className="rounded-3xl border bg-card p-3 max-[350px]:px-[12px]"
+                      id={`crew-card-${crew.id}`}
                       key={crew.id}
                     >
                       {/* Number, boat and headcount share the header row: the
@@ -2079,11 +2262,53 @@ export function CrewManagement({
                               </button>
                             )
                           })()}
-                          <span className="text-xs font-bold text-muted-foreground">
-                            {standardCrewSize
-                              ? `${crew.members.length}/${standardCrewSize}`
-                              : `${crew.members.length} · suggerite ${flexibleCrewTargets[crewIndex]}`}
-                          </span>
+                          {standardCrewSize !== null ? (
+                            <span className="text-xs font-bold text-muted-foreground">
+                              {crew.members.length}/{crew.capacity}
+                            </span>
+                          ) : (
+                            <div
+                              aria-label={`Capienza equipaggio ${crewIndex + 1}`}
+                              className="flex items-center gap-1"
+                              role="group"
+                            >
+                              <button
+                                aria-label={`Riduci capienza equipaggio ${crewIndex + 1}`}
+                                className="grid size-10 place-items-center rounded-lg text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:text-muted-foreground"
+                                disabled={
+                                  busy ||
+                                  crew.capacity <=
+                                    Math.max(1, crew.members.length)
+                                }
+                                onClick={() => adjustCrewCapacity(crew.id, -1)}
+                                type="button"
+                              >
+                                <CircleMinus
+                                  aria-hidden="true"
+                                  className="size-4"
+                                />
+                              </button>
+                              <span className="text-xs font-bold text-muted-foreground">
+                                {crew.members.length}/{crew.capacity}
+                              </span>
+                              <button
+                                aria-label={`Aumenta capienza equipaggio ${crewIndex + 1}`}
+                                className="grid size-10 place-items-center rounded-lg text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:text-muted-foreground"
+                                disabled={
+                                  busy ||
+                                  crew.capacity >=
+                                    Math.max(
+                                      MAX_FLEXIBLE_CREW_CAPACITY,
+                                      crew.members.length,
+                                    )
+                                }
+                                onClick={() => adjustCrewCapacity(crew.id, 1)}
+                                type="button"
+                              >
+                                <Plus aria-hidden="true" className="size-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                       {warningCrewId === crew.id && (
@@ -2151,14 +2376,18 @@ export function CrewManagement({
                           that removes it: the number of crews is chosen before
                           composing and the outing changes shape afterwards. */}
                       <div className="flex items-stretch gap-2">
-                        <div className="grid min-w-0 flex-1 gap-2 min-[560px]:grid-cols-2">
+                        <div
+                          className={`grid min-w-0 flex-1 ${crewDisplayColumns === 2 ? "grid-cols-2 gap-2" : "grid-cols-3 gap-1"}`}
+                        >
                           {crew.members.map((person) => (
                             <div
-                              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1"
+                              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-0"
                               key={`${person.personType}:${person.personId}`}
                             >
                               <PersonButton
                                 ariaLabel={`${personLabel(person)}, equipaggio ${crewIndex + 1}`}
+                                compact
+                                dense
                                 detail={personDetail(person)}
                                 disabled={busy}
                                 label={personLabel(person)}
@@ -2182,10 +2411,11 @@ export function CrewManagement({
                                 onTap={() => tapPerson(person)}
                                 person={person}
                                 selected={samePerson(selected, person)}
+                                truncateLabel
                               />
                               <button
                                 aria-label={`Rendi disponibile ${personLabel(person)}`}
-                                className="grid min-h-14 min-w-11 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
+                                className="grid min-h-[44px] min-w-[40px] place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
                                 disabled={busy}
                                 onClick={() =>
                                   void commit(removePerson(plan, person))
@@ -2202,12 +2432,10 @@ export function CrewManagement({
                           ))}
                           {Array.from(
                             {
-                              length: standardCrewSize
-                                ? Math.max(
-                                    0,
-                                    standardCrewSize - crew.members.length,
-                                  )
-                                : 1,
+                              length: Math.max(
+                                0,
+                                crew.capacity - crew.members.length,
+                              ),
                             },
                             (_, index) => (
                               <button
@@ -2247,7 +2475,16 @@ export function CrewManagement({
                   <button
                     className="min-h-11 rounded-2xl border border-dashed border-primary/50 px-3 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50"
                     disabled={busy || plan.crews.length >= maxCrewCount}
-                    onClick={() => void commit(addCrew(plan, sessionId))}
+                    onClick={() =>
+                      void commit(
+                        addCrew(
+                          plan,
+                          sessionId,
+                          () => crypto.randomUUID(),
+                          getInitialCrewCapacity(course.family, course.level),
+                        ),
+                      )
+                    }
                     type="button"
                   >
                     <Plus aria-hidden="true" className="mr-1 inline size-4" />

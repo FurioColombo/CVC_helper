@@ -1,0 +1,26 @@
+{
+  "milestone": "C1",
+  "status": "PASS",
+  "recordedAt": "2026-09-24",
+  "nodeVersion": "v24.19.0",
+  "command": "npm run verify:e2e -- tests/e2e/c1-crew-management.spec.ts --project=pixel-7-chrome",
+  "projects": ["pixel-7-chrome"],
+  "tests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "coverage": [
+    "Crew-count input can be cleared to zero and replaced with eight.",
+    "A synthetic 40-student roster remains vertically usable at 320 px with 200% text; no horizontal overflow, names remain accessibly labeled and truncated, and removal controls retain at least 40 px width.",
+    "The integrated visible workflow covers D1 capacity adjustment, Comandata-first ordering, vacancy previews, destination actions, Settings-only selected-name density, summary badges and downloading the summary as an SVG image."
+  ],
+  "artifacts": [
+    ".evidence/C1/crew-manager-40-students-320px-200-percent.png",
+    ".evidence/C1/crew-card-long-name-320px-200-percent.png",
+    ".evidence/C1/crew-summary-browser.svg",
+    ".evidence/C1/crew-summary-browser.png"
+  ],
+  "limitations": [
+    "Browser emulation is not a physical-device check; no pass is claimed for the owner's installed phone."
+  ]
+}

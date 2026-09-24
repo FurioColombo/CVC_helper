@@ -7,7 +7,9 @@ import {
   type SessionId,
 } from "@/domain/config"
 import {
+  MAX_FLEXIBLE_CREW_CAPACITY,
   getStandardCrewSize,
+  normalizeCrewCapacity,
   type CrewDraft,
   type CrewPersonRef,
   type CrewPersonType,
@@ -19,6 +21,7 @@ import { db } from "@/persistence/db"
 interface PersistedCrew {
   id: string
   sessionId: string
+  capacity: number | null
   destination: string
   boatId: string | null
   position: number | null
@@ -76,7 +79,7 @@ export async function readCrewPlan(
   const [crewRows, memberRows, landAssignments, sessionBoats] =
     await Promise.all([
       db.getAll<PersistedCrew>(
-        `SELECT id, sessionId, destination, boatId, position
+        `SELECT id, sessionId, capacity, destination, boatId, position
        FROM crews
        WHERE courseId = ? AND sessionId = ?
        ORDER BY position`,
@@ -196,13 +199,22 @@ export async function readCrewPlan(
   }
   return {
     crews: crewRows.map<CrewDraft>(
-      ({ id, sessionId, destination, boatId }) => ({
-        id,
-        sessionId: sessionId as SessionId,
-        members: membersByCrew.get(id) ?? [],
-        destination: destination as CrewDestination,
-        boatId,
-      }),
+      ({ id, sessionId, capacity, destination, boatId }) => {
+        const members = membersByCrew.get(id) ?? []
+        return {
+          id,
+          sessionId: sessionId as SessionId,
+          members,
+          capacity: normalizeCrewCapacity(
+            capacity,
+            members.length,
+            course.family,
+            course.level,
+          ),
+          destination: destination as CrewDestination,
+          boatId,
+        }
+      },
     ),
     landStudentIds: landAssignments.map(({ studentId }) => studentId),
     selectedBoatIds: sessionBoats.map(({ boatId }) => boatId),
@@ -254,6 +266,19 @@ export async function saveCrewPlan(
       throw new Error("Non-boat destination cannot retain a boat")
     }
     if (standardCrewSize !== null && crew.members.length > standardCrewSize) {
+      throw new Error("Crew is over capacity for this course")
+    }
+    if (
+      !Number.isInteger(crew.capacity) ||
+      crew.capacity < Math.max(1, crew.members.length) ||
+      (standardCrewSize !== null && crew.capacity !== standardCrewSize) ||
+      (standardCrewSize === null &&
+        crew.capacity >
+          Math.max(MAX_FLEXIBLE_CREW_CAPACITY, crew.members.length))
+    ) {
+      throw new Error("Invalid crew capacity")
+    }
+    if (crew.members.length > crew.capacity) {
       throw new Error("Crew is over capacity for this course")
     }
     for (const member of crew.members) {
@@ -316,7 +341,7 @@ export async function saveCrewPlan(
       }
     }
     const existingCrews = await transaction.getAll<PersistedCrew>(
-      `SELECT id, sessionId, destination, boatId, position
+      `SELECT id, sessionId, capacity, destination, boatId, position
        FROM crews WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
@@ -395,7 +420,8 @@ export async function saveCrewPlan(
     const updatedCrews = plan.crews.flatMap((crew, position) => {
       const old = existingCrewById.get(crew.id)
       return old &&
-        (old.destination !== crew.destination ||
+        (old.capacity !== crew.capacity ||
+          old.destination !== crew.destination ||
           old.boatId !== crew.boatId ||
           old.position !== position)
         ? [{ crew, position }]
@@ -403,9 +429,10 @@ export async function saveCrewPlan(
     })
     if (updatedCrews.length > 0) {
       await transaction.executeBatch(
-        `UPDATE crews SET destination = ?, boatId = ?, position = ?
+        `UPDATE crews SET capacity = ?, destination = ?, boatId = ?, position = ?
          WHERE id = ? AND courseId = ? AND sessionId = ?`,
         updatedCrews.map(({ crew, position }) => [
+          crew.capacity,
           crew.destination,
           crew.boatId,
           position,
@@ -420,12 +447,13 @@ export async function saveCrewPlan(
     )
     if (addedCrews.length > 0) {
       await transaction.executeBatch(
-        `INSERT INTO crews(id, courseId, sessionId, destination, boatId, position)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO crews(id, courseId, sessionId, capacity, destination, boatId, position)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         addedCrews.map(({ crew, position }) => [
           crew.id,
           courseId,
           sessionId,
+          crew.capacity,
           crew.destination,
           crew.boatId,
           position,
@@ -547,7 +575,7 @@ export async function readCrewHistory(
   await db.init()
   const [crewRows, memberRows] = await Promise.all([
     db.getAll<PersistedCrew>(
-      `SELECT id, sessionId, destination, boatId, position
+      `SELECT id, sessionId, capacity, destination, boatId, position
        FROM crews
        WHERE courseId = ?
        ORDER BY sessionId, position`,
