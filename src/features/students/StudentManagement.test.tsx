@@ -49,6 +49,7 @@ const MARIO: StudentRecord = {
   surname: "Rossi",
   nickname: null,
   dateOfBirth: "2010-01-01",
+  declaredAgeAtCourseStart: null,
   sex: "male",
   phone: null,
   size: null,
@@ -112,6 +113,66 @@ describe("StudentManagement", () => {
         }),
       ),
     )
+  })
+
+  it("creates an age-only student without inventing a birth date", async () => {
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await screen.findByRole("heading", { name: "Allievi" })
+    await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+    await user.click(
+      screen.getAllByRole("button", { name: "Aggiungi allievo" })[0]!,
+    )
+    await user.type(screen.getByLabelText("Nome"), "Giulia")
+    await user.type(screen.getByLabelText("Cognome"), "Bianchi")
+    await user.type(
+      screen.getByLabelText("Età compiuta il primo giorno del corso"),
+      "17",
+    )
+    await user.click(screen.getByRole("radio", { name: "Altro" }))
+    await user.click(screen.getByRole("button", { name: "Salva allievo" }))
+
+    await waitFor(() =>
+      expect(addStudent).toHaveBeenCalledWith(
+        "course-1",
+        expect.objectContaining({
+          firstName: "Giulia",
+          surname: "Bianchi",
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 17,
+        }),
+      ),
+    )
+  })
+
+  it("shows declared-age provenance and opens that value for editing", async () => {
+    getStudents.mockResolvedValue([
+      {
+        ...MARIO,
+        dateOfBirth: "",
+        declaredAgeAtCourseStart: 16,
+      },
+    ])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: /Mario, 16 anni, M, Minorenne/,
+      }),
+    )
+    const ageField = screen.getByText("Età dichiarata all’inizio del corso")
+    expect(ageField.parentElement).toHaveTextContent("16 anni · dichiarata")
+    await user.dblClick(screen.getByText("16 anni · dichiarata"))
+
+    expect(
+      await screen.findByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    expect(
+      screen.getByLabelText("Età compiuta il primo giorno del corso"),
+    ).toHaveFocus()
+    expect(screen.getByText(/non inventa una data di nascita/i)).toBeVisible()
   })
 
   it("shows a minor marker and reverses disabled state", async () => {

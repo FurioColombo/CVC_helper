@@ -407,7 +407,7 @@ function AppShell({ course }: { course: CourseRecord }) {
           <DutyManagement
             courseId={course.id}
             onHome={() => setView("home")}
-            referenceDate={course.startDate}
+            courseStartDate={course.startDate}
           />
         )}
         {view === "crews" && (

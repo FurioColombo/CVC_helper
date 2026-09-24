@@ -3,7 +3,10 @@ import { DUTY_DAYS, SESSION_SEQUENCE, type SessionId } from "./config"
 
 export function buildD2FoundationScenario(): CourseStateSnapshot {
   return {
-    students: [{ id: "student-mario-rossi" }, { id: "student-luca-bianchi" }],
+    students: [
+      { id: "student-mario-rossi", declaredAgeAtCourseStart: 20 },
+      { id: "student-luca-bianchi", declaredAgeAtCourseStart: 21 },
+    ],
     volunteers: [
       { id: "volunteer-adv-anna", name: "Anna Bianchi", role: "ADV" },
     ],

@@ -1,6 +1,6 @@
 # Implementation plan — active 0.3.0 work
 
-Updated 2026-09-23. Read **Where this cycle stands**, then only the section for
+Updated 2026-09-24. Read **Where this cycle stands**, then only the section for
 the active milestone. The full plan through R1 is preserved at
 `archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`; completed 0.1.0 and 0.2.0
 history remains in `archive/`. Archived plans explain decisions but are not the
@@ -17,7 +17,8 @@ current contract. `.milestones/manifest.json` is the machine-readable lifecycle.
 | V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
 | S4 | In progress, deferred to the final Claude Code handoff by the owner. Current OCR improvements and safety checks remain; the remaining fewer-than-five target is not a prerequisite for V04–UG2 or the 0.3.0 gate. No unsafe counter-only variant was integrated. |
 | V04 | Complete. Four edge handles, live image/frame tilt and a dimmed, soft exterior were verified with synthetic imagery. `.evidence/V04/` records Node 24.19.0 verification (465 tests), 12 browser cases across Chrome/WebKit, pointer-response samples and a PASS field-UX review. |
-| S5, N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
+| S5 | Complete. Age-only entry, persistence and course-start minor rules are covered by migration/domain tests and Pixel/iPhone-sized browser journeys. `.evidence/S5/` records 476 passing tests, the 0.1 schema migration, browser checks and a zero-blocker independent review. |
+| N1, C1, E1, V03, V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -39,9 +40,9 @@ rest of the frozen deferrals remain in
 The owner confirmed age-only entry means completed years on the **first course
 day**, with manual correction allowed later. For C1, Copy (if present) must copy
 the image itself, and the two/three selected-name display choice belongs only
-in Settings. Crew capacity is a separate rule: D1/Cabinato starts at four and
-allows manual change; D2–D5 stays fixed at two by default, with a Settings-only
-override to enable add/remove on crew cards. No crew-size rule follows from
+in Settings. Crew capacity is separate: D1/Cabinato starts at four and allows
+manual change; D2–D5 stays fixed at two through the gate. Its Settings override
+is deferred to the final Claude Code follow-up. No crew-size rule follows from
 display columns.
 
 ### Execution order
@@ -56,7 +57,8 @@ display columns.
 8. **V03** speech accuracy, latency and transcript confirmation removal.
 9. **V05** LLM-assisted paste path, beside on-device scanning.
 10. **F1** remaining R1 corrections, then **UG2** integration and release gate.
-11. **S4** remaining OCR quality target, handed to Claude Code after the gate.
+11. **S4** remaining OCR quality target and the deferred D2–D5 crew-capacity
+    override, both handed to Claude Code after the gate.
 
 The owner explicitly made the remaining S4 target nonblocking on 2026-09-23.
 The manifest places S4 after UG2 so the lifecycle enforces the revised order;
@@ -167,7 +169,7 @@ device check; none is claimed here.
 ## S5 — Faster, smaller scan review and age-only entry
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** COMPLETE
 
 - A manually entered age in years is sufficient; remove the exceptional
   **“Data esatta per le regole sui minori”** box from the scan review. Persist
@@ -189,6 +191,19 @@ device check; none is claimed here.
 **Evidence:** schema/domain and compatibility tests, scan component tests,
 visible browser journeys, accessibility/field review and independent domain
 review. No previously shown OCR text may be cleared by an inference.
+
+**Completed 2026-09-24:** `declaredAgeAtCourseStart` is nullable and additive;
+legacy DOBs remain intact, while age-only records survive close/reopen and never
+receive a fabricated birthday. Age and minor status use the exact DOB when it
+exists, otherwise the declared completed age at course start. The scan keeps
+low-confidence DOB text visible and marked, accepts independently corroborated
+age, and preserves invalid manual drafts instead of coercing them. Pixel 7 and
+iPhone-sized Playwright journeys passed for scan review, age-only create/edit/
+reload, and the 0.1 migration (10 cases total). `npm run verify` passed on Node
+24.19.0: 476 tests, domain and compatibility checks, and the PWA build. The
+independent domain review is PASS_WITH_FINDINGS with zero blockers; its accepted
+near-18 DOB-corroboration limitation is recorded in `.evidence/S5/`. Physical
+device checks remain for the owner at UG2.
 
 ## N1 — Phone navigation, identity and student names
 
@@ -224,9 +239,8 @@ name collision tests, self-review and relevant page changelog updates.
 - Put students in Comandata first in the available pool, with deterministic
   ordering within both groups.
 - For D1 and Cabinato, start people-per-crew capacity at four and permit manual
-  adjustment. D2–D5 remain fixed at two by default; a Settings-only flag
-  enables add/remove students on crew cards. Keep capacity separate from the
-  selected-name display density and test both settings independently.
+  adjustment. D2–D5 remain fixed at two for the 0.3.0 gate. Keep capacity
+  separate from selected-name display density.
 - Show selected crew members three per row by default, with a Settings choice
   for two or three; do not put this control on the Equipaggi page. Test 320 px,
   200% text, long names and 40 students: names may truncate accessibly, but
@@ -246,10 +260,10 @@ name collision tests, self-review and relevant page changelog updates.
 **Evidence:** settings persistence, component/domain tests, browser journeys,
 summary image measurements and visual review at narrow/long-course cases.
 
-The owner lifted the `+`/`-` crew-card deferral for C1 on 2026-09-23: these
-controls support D1/Cabinato manual adjustment and appear for D2–D5 only when
-the Settings override is enabled. Keep the override in Settings, not on the
-Equipaggi page.
+The owner confirmed on 2026-09-23 that `+`/`-` crew-card controls support
+D1/Cabinato manual adjustment. On 2026-09-24 the owner deferred the D2–D5
+Settings override to the final Claude Code follow-up; it is outside C1 and does
+not block UG2. Do not add it to the 0.3.0 gate.
 
 ## E1 — Evaluation grouping and student history route
 

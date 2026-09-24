@@ -253,6 +253,7 @@ describe("course setup and application shell", () => {
         surname: "Rossi",
         nickname: null,
         dateOfBirth: "2000-01-01",
+        declaredAgeAtCourseStart: null,
         sex: "male",
         phone: null,
         size: "M",

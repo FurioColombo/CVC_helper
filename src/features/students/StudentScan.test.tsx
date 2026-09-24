@@ -272,19 +272,15 @@ describe("StudentScan name order", () => {
     expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Liosca")
   })
 
-  it("swaps a single row without touching the others", async () => {
-    const user = await openReview(SURNAME_FIRST)
+  it("does not offer a row-level name swap", async () => {
+    await openReview(SURNAME_FIRST)
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Scambia nome e cognome riga line-1-1",
-      }),
-    )
-
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Veldor")
-    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
-      "Caterina",
-    )
+    expect(
+      screen.queryByRole("button", { name: /Scambia nome e cognome riga/ }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Inverti per tutti" }),
+    ).toBeVisible()
   })
 })
 
@@ -369,7 +365,7 @@ describe("StudentScan", () => {
     expect(addStudents).not.toHaveBeenCalled()
     expect(
       screen.getByText(
-        "Completa nome, cognome, età, data esatta quando richiesta e sesso.",
+        "Completa nome, cognome, età e sesso. Controlla la data di nascita se è presente.",
       ),
     ).toBeVisible()
 
@@ -387,6 +383,7 @@ describe("StudentScan", () => {
           surname: "Rossi",
           nickname: null,
           dateOfBirth: "2008-03-12",
+          declaredAgeAtCourseStart: null,
           sex: "male",
           phone: "333 123 4567",
         },
@@ -466,6 +463,62 @@ describe("StudentScan", () => {
     await waitFor(() => expect(addStudents).toHaveBeenCalledTimes(2))
     expect(addStudents.mock.calls[1]?.[1][0]?.surname).toBe("Verdi")
     expect(onCommitted).toHaveBeenCalledOnce()
+  })
+
+  it("counter actions focus the first incomplete field and first row to review", async () => {
+    const user = await openReview({
+      aggregateConfidence: 90,
+      unsuitable: false,
+      candidates: [
+        {
+          sourceId: "line-missing",
+          firstName: "",
+          surname: "Rossi",
+          dateOfBirth: "",
+          ageReading: { value: 24, confidence: 94 },
+          phone: "",
+          sex: "male",
+          confidence: { firstName: 0, surname: 95, dateOfBirth: 0, phone: 0 },
+        },
+        {
+          sourceId: "line-review",
+          firstName: "Luigi",
+          surname: "Bianchi",
+          dateOfBirth: "",
+          ageReading: { value: 24, confidence: 94 },
+          phone: "",
+          sex: "male",
+          confidence: { firstName: 95, surname: 41, dateOfBirth: 0, phone: 0 },
+        },
+      ],
+    })
+
+    await user.click(
+      screen.getByRole("button", { name: "Vai al primo campo da completare" }),
+    )
+    const firstName = screen.getByLabelText("Nome riga line-missing-1")
+    await waitFor(() => expect(firstName).toHaveFocus())
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Riga 1, campo da completare. nome",
+    )
+
+    await user.type(firstName, "Mario")
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getByText("0")).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: "Vai al primo campo da completare" }),
+    ).toBeDisabled()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Vai alla prima riga da controllare",
+      }),
+    )
+    const secondSurname = screen.getByLabelText("Cognome riga line-review-2")
+    await waitFor(() => expect(secondSurname).toHaveFocus())
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Riga 2, riga da controllare. cognome",
+    )
   })
 
   it("returns focus to the acquisition action after cancelling adjustment", async () => {
@@ -595,35 +648,35 @@ describe("StudentScan age-first review", () => {
       ],
     })
 
-    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue(24)
+    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
     expect(
-      screen.queryByLabelText(/Data esatta per le regole sui minori/),
-    ).not.toBeInTheDocument()
+      screen.getByLabelText("Data di nascita riga line-age-1"),
+    ).toHaveValue("2002-02-12")
+    expect(screen.getByText("Lettura incerta")).toBeVisible()
+    expect(screen.queryByText("Da controllare")).not.toBeInTheDocument()
     const counters = screen.getByLabelText("Stato revisione scansione")
-    expect(within(counters).getByText("1")).toBeVisible()
     expect(within(counters).getAllByText("0")).toHaveLength(2)
+    expect(within(counters).getByText("1")).toBeVisible()
   })
 
-  it("keeps a doubtful date visible when no printed age corroborates it", async () => {
+  it("keeps a doubtful recognized date visible when no printed age corroborates it", async () => {
     await openReview({
       aggregateConfidence: 80,
       unsuitable: false,
       candidates: [baseCandidate],
     })
 
-    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue(24)
+    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
     expect(
-      screen.getByLabelText(
-        "Data esatta per le regole sui minori riga line-age-1",
-      ),
+      screen.getByLabelText("Data di nascita riga line-age-1"),
     ).toHaveValue("2002-02-12")
     expect(
-      screen.getByText(/L’età non basta a ricavare giorno e mese/),
-    ).toBeVisible()
+      screen.getByLabelText("Data di nascita riga line-age-1"),
+    ).toHaveClass("border-[#f79009]")
   })
 
-  it("requires an exact date for an age-only row and never invents one", async () => {
-    await openReview({
+  it("saves age-only rows without inventing a date of birth", async () => {
+    const user = await openReview({
       aggregateConfidence: 80,
       unsuitable: false,
       candidates: [
@@ -636,14 +689,55 @@ describe("StudentScan age-first review", () => {
       ],
     })
 
-    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue(24)
+    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
     expect(
-      screen.getByLabelText(
-        "Data esatta per le regole sui minori riga line-age-1",
-      ),
-    ).toHaveValue("")
-    expect(addStudents).not.toHaveBeenCalled()
+      screen.queryByLabelText(/^Data di nascita riga/),
+    ).not.toBeInTheDocument()
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getAllByText("0")).toHaveLength(2)
+    expect(within(counters).getByText("1")).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
+    await waitFor(() =>
+      expect(addStudents).toHaveBeenCalledWith("course-1", [
+        expect.objectContaining({
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 24,
+        }),
+      ]),
+    )
   })
+
+  it.each(["-17", "17.5", "121"])(
+    "keeps invalid age draft %s visible and blocks saving it",
+    async (invalidAge) => {
+      const user = await openReview({
+        aggregateConfidence: 80,
+        unsuitable: false,
+        candidates: [
+          {
+            ...baseCandidate,
+            dateOfBirth: "",
+            ageReading: { value: 24, confidence: 94 },
+            confidence: { ...baseCandidate.confidence, dateOfBirth: 0 },
+          },
+        ],
+      })
+
+      const age = screen.getByLabelText("Età riga line-age-1")
+      fireEvent.change(age, { target: { value: invalidAge } })
+
+      expect(age).toHaveValue(invalidAge)
+      const counters = screen.getByLabelText("Stato revisione scansione")
+      expect(within(counters).getAllByText("1")).toHaveLength(2)
+      expect(within(counters).getByText("0")).toBeVisible()
+
+      await user.click(
+        screen.getByRole("button", { name: "Aggiungi 1 allievo" }),
+      )
+      expect(addStudents).not.toHaveBeenCalled()
+    },
+  )
 
   it("reveals the exact date when an age correction conflicts with it", async () => {
     const user = await openReview({
@@ -659,22 +753,14 @@ describe("StudentScan age-first review", () => {
 
     const age = screen.getByLabelText("Età riga line-age-1")
     expect(
-      screen.queryByLabelText(/Data esatta per le regole sui minori/),
+      screen.queryByLabelText(/^Data di nascita riga/),
     ).not.toBeInTheDocument()
     await user.clear(age)
     await user.type(age, "20")
-    const exactDate = screen.getByLabelText(
-      "Data esatta per le regole sui minori riga line-age-1",
-    )
+    const exactDate = screen.getByLabelText("Data di nascita riga line-age-1")
     expect(exactDate).toHaveValue("2002-02-12")
 
-    // Confirming the row cannot turn an edited age into an approximate
-    // birthday. The exact date still has to be supplied and agree.
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
+    // The recognized DOB remains authoritative until it is corrected or cleared.
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
     expect(addStudents).not.toHaveBeenCalled()
 
@@ -808,6 +894,7 @@ describe("StudentScan telephone option", () => {
           surname: "Rossi",
           nickname: null,
           dateOfBirth: "2008-03-12",
+          declaredAgeAtCourseStart: null,
           sex: "male",
           phone: null,
         },

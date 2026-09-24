@@ -11,13 +11,15 @@ import {
   VOLUNTEER_ROLES,
 } from "./config"
 import { getBoatIdentityKey, normalizeBoatNumber } from "./boat"
+import { MAX_DECLARED_STUDENT_AGE } from "./student"
 
 export interface CourseStateSnapshot {
   students: Array<{
     id: string
     firstName?: string
     surname?: string
-    dateOfBirth?: string
+    dateOfBirth?: string | null
+    declaredAgeAtCourseStart?: number | null
     active?: number
     sex?: string | null
     size?: string | null
@@ -138,6 +140,32 @@ export function validateCourseState(
   const studentSexes = STUDENT_SEXES.map(({ id }) => id)
 
   state.students.forEach((student, index) => {
+    const hasDateOfBirth =
+      typeof student.dateOfBirth === "string" && student.dateOfBirth.trim()
+    const declaredAge = student.declaredAgeAtCourseStart
+    if (
+      declaredAge !== undefined &&
+      declaredAge !== null &&
+      (!Number.isInteger(declaredAge) ||
+        declaredAge < 0 ||
+        declaredAge > MAX_DECLARED_STUDENT_AGE)
+    ) {
+      issues.push({
+        code: "invalid-student-declared-age",
+        path: `students[${index}].declaredAgeAtCourseStart`,
+        message: `Invalid declared age at course start: ${declaredAge}`,
+      })
+    }
+    if (
+      !hasDateOfBirth &&
+      (declaredAge === undefined || declaredAge === null)
+    ) {
+      issues.push({
+        code: "missing-student-age-source",
+        path: `students[${index}]`,
+        message: "Student requires a birth date or declared course-start age",
+      })
+    }
     if (student.active !== undefined && ![0, 1].includes(student.active)) {
       issues.push({
         code: "invalid-student-active",

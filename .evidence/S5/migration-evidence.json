@@ -1,0 +1,20 @@
+{
+  "milestone": "S5",
+  "runtime": "Node v24.19.0",
+  "status": "PASS",
+  "migration": {
+    "source": "Actual 0.1 SQLite fixture",
+    "strategy": "Add nullable declaredAgeAtCourseStart; preserve the existing DOB and let legacy rows begin with a null declared age.",
+    "browserRun": "tests/e2e/u02-migration.spec.ts",
+    "profiles": ["pixel-7-chrome", "iphone-13-viewport"],
+    "result": "6 passed across both profiles"
+  },
+  "reopenAssertions": [
+    "The prior DOB survives the additive schema upgrade.",
+    "The new declared-age column is null for a legacy DOB-backed record.",
+    "A fixture record changed to age-only persists with an empty DOB and declared age 17 after close and reopen.",
+    "Student create, batch-create, edit and list queries include the declared-age field."
+  ],
+  "compatibility": "npm run verify passed the repository's 0.1.0 compatibility fixture (22 rows).",
+  "privacy": "Only synthetic fixtures and aggregate test results were used; no private roster images, OCR text or personal data are included."
+}

@@ -97,3 +97,35 @@ test("keeps legacy operational IDs through no-op and unrelated saves", async ({
     }),
   )
 })
+
+test("adds the nullable course-start age column to an existing local database", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("heading", { name: "Crea il corso" }).waitFor()
+  const result = await page.evaluate(async () => {
+    const modulePath = "/src/test/u02MigrationHarness.ts"
+    const harness = (await import(/* @vite-ignore */ modulePath)) as {
+      runDeclaredAgeSchemaHarness: () => Promise<{
+        legacyStudent: {
+          dateOfBirth: string
+          declaredAgeAtCourseStart: number | null
+        }
+        ageOnlyStudent: {
+          dateOfBirth: string
+          declaredAgeAtCourseStart: number | null
+        }
+      }>
+    }
+    return harness.runDeclaredAgeSchemaHarness()
+  })
+
+  expect(result.legacyStudent).toEqual({
+    dateOfBirth: "2000-03-12",
+    declaredAgeAtCourseStart: null,
+  })
+  expect(result.ageOnlyStudent).toEqual({
+    dateOfBirth: "",
+    declaredAgeAtCourseStart: 17,
+  })
+})

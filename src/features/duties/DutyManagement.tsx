@@ -29,7 +29,7 @@ import {
   type DutyWarning,
 } from "@/domain/duties"
 import { validateDutyRecords } from "@/domain/invariants"
-import { getStudentDisplayName, isMinor } from "@/domain/student"
+import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
 import {
   readDutyPlan,
   saveDutyPlan,
@@ -67,12 +67,22 @@ function getDayLabel(dayId: DutyDayId) {
 
 function asDutyStudents(students: StudentRecord[]): DutyStudent[] {
   return students.map(
-    ({ id, firstName, surname, nickname, dateOfBirth, sex, active }) => ({
+    ({
       id,
       firstName,
       surname,
       nickname,
       dateOfBirth,
+      declaredAgeAtCourseStart,
+      sex,
+      active,
+    }) => ({
+      id,
+      firstName,
+      surname,
+      nickname,
+      dateOfBirth,
+      declaredAgeAtCourseStart,
       sex,
       active,
     }),
@@ -276,7 +286,7 @@ function DutyConfiguration({
   students,
   settings,
   assignments,
-  referenceDate,
+  courseStartDate,
   recalculate,
   onCancel,
   onConfirm,
@@ -284,7 +294,7 @@ function DutyConfiguration({
   students: StudentRecord[]
   settings: CanonicalDutySettings
   assignments: DutyAssignment[]
-  referenceDate: string
+  courseStartDate: string
   recalculate: boolean
   onCancel: () => void
   onConfirm: (
@@ -316,14 +326,14 @@ function DutyConfiguration({
     try {
       return generateDutyProposal(
         asDutyStudents(students),
-        { ...draft, referenceDate },
+        { ...draft, courseStartDate },
         recalculate || draft.completedDayIds.length > 0 ? assignments : [],
         draft.completedDayIds.length > 0 ? draft.completedDayIds : [],
       )
     } catch {
       return null
     }
-  }, [assignments, draft, recalculate, referenceDate, students])
+  }, [assignments, courseStartDate, draft, recalculate, students])
 
   function toggleExtraDay(dayId: DutyDayId) {
     setDraft((current) => {
@@ -577,7 +587,7 @@ function StudentAssignmentCard({
   entry,
   allStudents,
   completedDayIds,
-  referenceDate,
+  courseStartDate,
   current,
   completed,
   saving,
@@ -587,7 +597,7 @@ function StudentAssignmentCard({
   entry: DutyStudentDayGroupEntry
   allStudents: StudentRecord[]
   completedDayIds: readonly DutyDayId[]
-  referenceDate: string
+  courseStartDate: string
   current: boolean
   completed: boolean
   saving: boolean
@@ -626,7 +636,7 @@ function StudentAssignmentCard({
           />
         </button>
       )}
-      {isMinor(student.dateOfBirth, referenceDate) && <MinorBadge />}
+      {isStudentMinor(student, courseStartDate) && <MinorBadge />}
       {student.active === 0 && (
         <span className="hidden shrink-0 text-[10px] font-bold text-muted-foreground min-[520px]:inline">
           Disabilitato
@@ -673,7 +683,7 @@ function DayEditor({
   assignments,
   completedDayIds,
   completed,
-  referenceDate,
+  courseStartDate,
   onBack,
   onSave,
   onComplete,
@@ -683,7 +693,7 @@ function DayEditor({
   assignments: DutyAssignment[]
   completedDayIds: readonly DutyDayId[]
   completed: boolean
-  referenceDate: string
+  courseStartDate: string
   onBack: () => void
   onSave: (assignments: DutyAssignment[]) => Promise<void>
   onComplete: () => Promise<void>
@@ -752,7 +762,7 @@ function DayEditor({
               void updateAssignment(targetDayId, entry.student.id, false)
             }
             saving={saving}
-            referenceDate={referenceDate}
+            courseStartDate={courseStartDate}
           />
         ))}
       </div>
@@ -916,11 +926,11 @@ function WarningList({
 
 export function DutyManagement({
   courseId,
-  referenceDate,
+  courseStartDate,
   onHome,
 }: {
   courseId: string
-  referenceDate: string
+  courseStartDate: string
   onHome: () => void
 }) {
   const [students, setStudents] = useState<StudentRecord[]>([])
@@ -969,7 +979,7 @@ export function DutyManagement({
     ? normalizeProposalSettings(settings, students, assignments)
     : null
   const config: DutyConfig | null = canonicalSettings
-    ? { ...canonicalSettings, referenceDate }
+    ? { ...canonicalSettings, courseStartDate }
     : null
   const warnings = config
     ? getDutyWarnings(
@@ -997,7 +1007,7 @@ export function DutyManagement({
       getDutyWarnings(
         asDutyStudents(students),
         nextAssignments,
-        { ...canonicalNextSettings, referenceDate },
+        { ...canonicalNextSettings, courseStartDate },
         canonicalNextSettings.completedDayIds,
       )
         .filter(({ severity }) => severity === "advisory")
@@ -1046,7 +1056,7 @@ export function DutyManagement({
           setScreen({ kind: "list" })
         }}
         recalculate={screen.recalculate}
-        referenceDate={referenceDate}
+        courseStartDate={courseStartDate}
         settings={canonicalSettings!}
         students={students}
       />
@@ -1069,7 +1079,7 @@ export function DutyManagement({
           setScreen({ kind: "list" })
         }}
         onSave={(next) => persist(next, settings)}
-        referenceDate={referenceDate}
+        courseStartDate={courseStartDate}
         students={students}
       />
     )
@@ -1266,10 +1276,9 @@ export function DutyManagement({
                                   {name}
                                 </span>
                                 {student &&
-                                  isMinor(
-                                    student.dateOfBirth,
-                                    referenceDate,
-                                  ) && <MinorBadge />}
+                                  isStudentMinor(student, courseStartDate) && (
+                                    <MinorBadge />
+                                  )}
                                 {personWarning && (
                                   <AlertTriangle
                                     aria-label={`Avviso per ${name}`}

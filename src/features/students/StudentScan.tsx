@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
+import { MAX_DECLARED_STUDENT_AGE } from "@/domain/student"
 import { StudentScanImageEditorDocument } from "@/features/students/StudentScanImageEditorDocument"
 import {
   readNameOrderPreference,
@@ -47,7 +48,6 @@ interface ReviewCandidate extends StudentScanCandidate {
   /** Editable presentation value. It is never persisted in place of a date. */
   reviewAge: string
   ageManuallyEdited?: boolean
-  exactDateManuallyConfirmed?: boolean
   /** The operator has read this row and vouches for it as it stands. */
   confirmed?: boolean
 }
@@ -79,6 +79,8 @@ function needsReview(
   // threshold, and the operator is left retyping text that was already right.
   if (candidate.confirmed) return false
   if (field === "phone" && !candidate.phone.trim()) return false
+  // Birth date is optional when the row has a valid age for course start.
+  if (field === "dateOfBirth" && !candidate.dateOfBirth) return false
   if (
     field === "dateOfBirth" &&
     courseStartDate &&
@@ -111,8 +113,9 @@ function ageConflictsWithStoredDate(
 
 function ageNeedsReview(candidate: ReviewCandidate, courseStartDate: string) {
   if (parsedReviewAge(candidate) === null) return true
-  if (candidate.ageManuallyEdited && !candidate.exactDateManuallyConfirmed) {
-    return true
+  if (!candidate.dateOfBirth) {
+    if (candidate.ageManuallyEdited || candidate.confirmed) return false
+    return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
   }
   if (
     candidate.confirmed &&
@@ -143,8 +146,8 @@ function candidateIsReady(
   return Boolean(
     candidate.firstName.trim() &&
     candidate.surname.trim() &&
-    candidate.dateOfBirth &&
-    candidate.dateOfBirth <= courseStartDate &&
+    parsedReviewAge(candidate) !== null &&
+    (!candidate.dateOfBirth || candidate.dateOfBirth <= courseStartDate) &&
     candidate.sex &&
     !nameReadingNeedsReview(candidate) &&
     !ageNeedsReview(candidate, courseStartDate) &&
@@ -178,17 +181,24 @@ function applyNameOrderToCandidates(
 
 function ReviewField({
   candidate,
+  courseStartDate,
   field,
   label,
   onChange,
   ...inputProps
 }: {
   candidate: ReviewCandidate
+  courseStartDate: string
   field: StudentScanField
   label: string
   onChange: (value: string) => void
 } & Omit<React.ComponentProps<typeof Input>, "onChange" | "value">) {
-  const uncertain = needsReview(candidate, field)
+  const uncertain = needsReview(candidate, field, courseStartDate)
+  const lowConfidenceDate =
+    field === "dateOfBirth" &&
+    Boolean(candidate.dateOfBirth) &&
+    candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE
+  const flagged = uncertain || lowConfidenceDate
   return (
     <label className="grid min-w-0 gap-1.5 text-sm font-bold">
       {/* The caption and its "Da controllare" flag share a half-width column.
@@ -197,15 +207,16 @@ function ReviewField({
           past the card. It wraps and breaks instead. */}
       <span className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
         <span className="min-w-0 break-words">{label}</span>
-        {uncertain && (
+        {flagged && (
           <span className="min-w-0 text-[0.68rem] font-bold break-words text-[#a2381b]">
-            Da controllare
+            {uncertain ? "Da controllare" : "Lettura incerta"}
           </span>
         )}
       </span>
       <Input
         aria-label={`${label} riga ${candidate.id}`}
-        className={`scroll-mt-[180px] ${uncertain ? "border-[#f79009]" : ""}`}
+        className={`scroll-mt-[180px] ${flagged ? "border-[#f79009]" : ""}`}
+        data-scan-field={field}
         onChange={(event) => onChange(event.target.value)}
         value={candidate[field]}
         {...inputProps}
@@ -223,6 +234,7 @@ function CandidateCard({
   readPhone,
   onChange,
   onRemove,
+  cardRef,
 }: {
   candidate: ReviewCandidate
   courseStartDate: string
@@ -232,6 +244,7 @@ function CandidateCard({
   readPhone: boolean
   onChange: (candidate: ReviewCandidate) => void
   onRemove: () => void
+  cardRef: (node: HTMLElement | null) => void
 }) {
   function updateField(field: StudentScanField, value: string) {
     onChange({
@@ -241,34 +254,20 @@ function CandidateCard({
       ...(field === "firstName" || field === "surname"
         ? { nameManuallyEdited: true }
         : {}),
-      ...(field === "dateOfBirth" ? { exactDateManuallyConfirmed: true } : {}),
     })
   }
 
   function updateAge(value: string) {
-    const digits = value.replace(/\D/g, "").slice(0, 3)
-    const parsed = /^\d{1,3}$/.test(digits) ? Number(digits) : null
+    const parsed = /^\d{1,3}$/.test(value) ? Number(value) : null
+    const validAge =
+      parsed !== null && parsed <= MAX_DECLARED_STUDENT_AGE ? parsed : null
     onChange({
       ...candidate,
-      reviewAge: digits,
+      reviewAge: value,
       ageManuallyEdited: true,
-      ...(parsed !== null
-        ? { ageReading: { value: parsed, confidence: 100 } }
+      ...(validAge !== null
+        ? { ageReading: { value: validAge, confidence: 100 } }
         : { ageReading: undefined }),
-    })
-  }
-
-  function swapNameOrder() {
-    const reading = candidate.nameReading
-    if (!reading) return
-    // An unresolved row is shown given-name-first, so swapping it means the
-    // sheet is surname-first. The split is re-derived from the words as read,
-    // which keeps a surname particle attached and makes this idempotent.
-    const nextOrder: StudentNameOrder =
-      reading.order === "surname-given" ? "given-surname" : "surname-given"
-    onChange({
-      ...candidate,
-      ...applyStudentNameOrder(candidate, nextOrder),
     })
   }
 
@@ -287,18 +286,17 @@ function CandidateCard({
 
   const nameNeedsReview = nameReadingNeedsReview(candidate)
   const reviewAgeNeedsAttention = ageNeedsReview(candidate, courseStartDate)
-  const showExactDate =
-    !candidate.dateOfBirth ||
-    (candidate.ageManuallyEdited && !candidate.exactDateManuallyConfirmed) ||
-    ageConflictsWithStoredDate(candidate, courseStartDate) ||
-    needsReview(candidate, "dateOfBirth", courseStartDate)
 
   return (
     <article
       className={`rounded-2xl border bg-card p-3 shadow-[0_6px_18px_rgb(6_59_82/0.05)] ${invalid ? "border-[#d92d20]" : ""}`}
+      ref={cardRef}
     >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="min-w-0 truncate text-base font-black">
+        <h2
+          className="min-w-0 truncate text-base font-black outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring/50"
+          tabIndex={-1}
+        >
           Allievo {index + 1}
         </h2>
         {/* The cluster wraps under the heading at 200% text rather than
@@ -345,18 +343,9 @@ function CandidateCard({
                   ? "Cognome · Nome"
                   : "Ordine da decidere"}
             </span>
-            <Button
-              aria-label={`Scambia nome e cognome riga ${candidate.id}`}
-              className="min-h-10 max-w-full min-w-0 px-2.5 text-xs whitespace-normal"
-              disabled={disabled}
-              onClick={swapNameOrder}
-              type="button"
-              variant="secondary"
-            >
-              Scambia nome e cognome
-            </Button>
             {nameNeedsReview && (
               <Button
+                aria-label={`Conferma suddivisione nome e cognome riga ${candidate.id}`}
                 className="min-h-10 max-w-full min-w-0 px-2.5 text-xs whitespace-normal"
                 disabled={disabled}
                 onClick={confirmNameOrder}
@@ -379,6 +368,7 @@ function CandidateCard({
         <ReviewField
           autoComplete="given-name"
           candidate={candidate}
+          courseStartDate={courseStartDate}
           field="firstName"
           label="Nome"
           disabled={disabled}
@@ -387,6 +377,7 @@ function CandidateCard({
         <ReviewField
           autoComplete="family-name"
           candidate={candidate}
+          courseStartDate={courseStartDate}
           field="surname"
           label="Cognome"
           disabled={disabled}
@@ -395,32 +386,37 @@ function CandidateCard({
       </div>
 
       <div
-        className={`mt-2 grid gap-2 ${readPhone ? "grid-cols-2" : "grid-cols-1"}`}
+        className={`mt-2 grid min-w-0 items-center gap-2 ${readPhone ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
       >
-        <label className="grid min-w-0 gap-1.5 text-sm font-bold">
-          <span className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-            <span>Età</span>
-            {reviewAgeNeedsAttention && (
-              <span className="min-w-0 text-[0.68rem] font-bold break-words text-[#a2381b]">
-                Da controllare
-              </span>
-            )}
-          </span>
+        <div className="flex min-w-0 items-center gap-2">
+          <label
+            className="shrink-0 text-sm font-bold"
+            htmlFor={`scan-age-${candidate.id}`}
+          >
+            Età
+          </label>
           <Input
             aria-label={`Età riga ${candidate.id}`}
-            className={`scroll-mt-[180px] ${reviewAgeNeedsAttention ? "border-[#f79009]" : ""}`}
+            className={`min-w-0 flex-1 scroll-mt-[180px] ${reviewAgeNeedsAttention ? "border-[#f79009]" : ""}`}
+            data-scan-field="age"
             disabled={disabled}
+            id={`scan-age-${candidate.id}`}
             inputMode="numeric"
-            max="120"
-            min="0"
+            aria-invalid={reviewAgeNeedsAttention}
             onChange={(event) => updateAge(event.target.value)}
-            type="number"
+            type="text"
             value={candidate.reviewAge}
           />
-        </label>
+          {reviewAgeNeedsAttention && (
+            <span className="shrink-0 text-[0.68rem] font-bold text-[#a2381b]">
+              Da controllare
+            </span>
+          )}
+        </div>
         {readPhone && (
           <ReviewField
             candidate={candidate}
+            courseStartDate={courseStartDate}
             field="phone"
             inputMode="tel"
             label="Telefono"
@@ -431,52 +427,37 @@ function CandidateCard({
         )}
       </div>
 
-      {showExactDate && (
-        <div className="mt-2 rounded-xl border border-[#f79009]/60 bg-[#fff4e5]/60 p-2.5">
-          <ReviewField
-            candidate={candidate}
-            field="dateOfBirth"
-            label="Data esatta per le regole sui minori"
-            disabled={disabled}
-            max={courseStartDate}
-            onChange={(value) => updateField("dateOfBirth", value)}
-            type="date"
-          />
-          <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
-            L’età non basta a ricavare giorno e mese. Controlla la data completa
-            prima di salvare.
-          </p>
-          {candidate.dateOfBirth && !candidate.exactDateManuallyConfirmed && (
-            <Button
-              className="mt-2 min-h-10 w-full text-xs"
+      {candidate.dateOfBirth &&
+        (needsReview(candidate, "dateOfBirth", courseStartDate) ||
+          ageConflictsWithStoredDate(candidate, courseStartDate) ||
+          candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE) && (
+          <div className="mt-2">
+            <ReviewField
+              candidate={candidate}
+              courseStartDate={courseStartDate}
+              field="dateOfBirth"
+              label="Data di nascita"
               disabled={disabled}
-              onClick={() =>
-                onChange({
-                  ...candidate,
-                  confidence: {
-                    ...candidate.confidence,
-                    dateOfBirth: 100,
-                  },
-                  exactDateManuallyConfirmed: true,
-                })
-              }
-              type="button"
-              variant="secondary"
-            >
-              Conferma data esatta
-            </Button>
-          )}
-        </div>
-      )}
+              max={courseStartDate}
+              onChange={(value) => updateField("dateOfBirth", value)}
+              type="date"
+            />
+          </div>
+        )}
 
-      <fieldset className="mt-2 grid gap-1.5 text-sm font-bold">
-        <legend>Sesso</legend>
-        <div className="grid grid-cols-3 gap-2">
+      <div
+        aria-labelledby={`scan-sex-label-${candidate.id}`}
+        className="mt-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-sm font-bold"
+        role="radiogroup"
+      >
+        <span id={`scan-sex-label-${candidate.id}`}>Sesso</span>
+        <div className="col-start-2 grid min-w-0 grid-cols-3 gap-2">
           {STUDENT_SEXES.map((option) => (
             <label className="cursor-pointer" key={option.id}>
               <input
                 checked={candidate.sex === option.id}
                 className="peer scroll-mt-[180px] sr-only"
+                data-scan-field="sex"
                 disabled={disabled}
                 name={`scan-sex-${candidate.id}`}
                 onChange={() => onChange({ ...candidate, sex: option.id })}
@@ -489,13 +470,13 @@ function CandidateCard({
             </label>
           ))}
         </div>
-      </fieldset>
+      </div>
 
       {invalid && (
         <p className="mt-3 text-xs font-semibold text-[#b42318]" role="alert">
           {nameNeedsReview
             ? "Conferma la suddivisione di nome e cognome."
-            : "Completa nome, cognome, età, data esatta quando richiesta e sesso."}
+            : "Completa nome, cognome, età e sesso. Controlla la data di nascita se è presente."}
         </p>
       )}
     </article>
@@ -527,6 +508,7 @@ export function StudentScan({
   const cameraButtonRef = useRef<HTMLButtonElement>(null)
   const scanGenerationRef = useRef(0)
   const saveInFlightRef = useRef(false)
+  const candidateCardRefs = useRef(new Map<string, HTMLElement>())
   // Off by default. The owner asked for the telephone to be opt-in so a scan
   // can be judged on the names and the dates of birth, which is what the course
   // actually needs; the number is useful and rarely urgent.
@@ -545,6 +527,7 @@ export function StudentScan({
   const [orderInference, setOrderInference] =
     useState<StudentNameOrderInference | null>(null)
   const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set())
+  const [navigationAnnouncement, setNavigationAnnouncement] = useState("")
   const [saveError, setSaveError] = useState(false)
   const [imageNeedsRetake, setImageNeedsRetake] = useState(false)
   const [acquisition, setAcquisition] = useState<Acquisition>()
@@ -655,6 +638,9 @@ export function StudentScan({
       surname: candidate.surname.trim(),
       nickname: null,
       dateOfBirth: candidate.dateOfBirth,
+      declaredAgeAtCourseStart: candidate.dateOfBirth
+        ? null
+        : parsedReviewAge(candidate),
       sex: candidate.sex as StudentSex,
       phone: candidate.phone.trim() || null,
     }))
@@ -675,28 +661,122 @@ export function StudentScan({
       total +
       Number(!candidate.firstName.trim()) +
       Number(!candidate.surname.trim()) +
-      Number(!candidate.dateOfBirth) +
+      Number(parsedReviewAge(candidate) === null) +
       Number(!candidate.sex),
     0,
   )
-  const rowsToReview = candidates.filter(
-    (candidate) =>
+  function candidateNeedsReview(candidate: ReviewCandidate) {
+    return Boolean(
       !candidate.firstName.trim() ||
       !candidate.surname.trim() ||
-      !candidate.dateOfBirth ||
+      parsedReviewAge(candidate) === null ||
       !candidate.sex ||
       nameReadingNeedsReview(candidate) ||
       ageNeedsReview(candidate, courseStartDate) ||
       reviewedFields(readPhone).some((field) =>
         needsReview(candidate, field, courseStartDate),
       ),
-  ).length
+    )
+  }
+  const rowsToReview = candidates.filter(candidateNeedsReview).length
   const readyStudents = candidates.filter((candidate) =>
     candidateIsReady(candidate, courseStartDate, readPhone),
   ).length
   const hasUnresolvedNameOrder = candidates.some(
     (candidate) => candidate.nameReading?.order === "unknown",
   )
+
+  function firstMissingTarget(candidate: ReviewCandidate) {
+    if (!candidate.firstName.trim()) return "firstName"
+    if (!candidate.surname.trim()) return "surname"
+    if (parsedReviewAge(candidate) === null) return "age"
+    if (!candidate.sex) return "sex"
+    return "firstName"
+  }
+
+  function firstReviewTarget(candidate: ReviewCandidate) {
+    if (nameReadingNeedsReview(candidate)) return "firstName"
+    if (!candidate.firstName.trim() || needsReview(candidate, "firstName")) {
+      return "firstName"
+    }
+    if (!candidate.surname.trim() || needsReview(candidate, "surname")) {
+      return "surname"
+    }
+    if (ageNeedsReview(candidate, courseStartDate)) return "age"
+    if (
+      candidate.dateOfBirth &&
+      needsReview(candidate, "dateOfBirth", courseStartDate)
+    ) {
+      return "dateOfBirth"
+    }
+    if (!candidate.sex) return "sex"
+    if (readPhone && needsReview(candidate, "phone", courseStartDate)) {
+      return "phone"
+    }
+    return "firstName"
+  }
+
+  function jumpToCandidate(
+    candidate: ReviewCandidate,
+    index: number,
+    field: string,
+    reason: "campo da completare" | "riga da controllare",
+  ) {
+    const card = candidateCardRefs.current.get(candidate.id)
+    if (!card) return
+    card.scrollIntoView?.({ behavior: "smooth", block: "start" })
+    window.requestAnimationFrame(() => {
+      const target = Array.from(
+        card.querySelectorAll<HTMLElement>("[data-scan-field]"),
+      ).find((element) => element.dataset.scanField === field)
+      ;(target ?? card.querySelector<HTMLElement>("h2"))?.focus({
+        preventScroll: true,
+      })
+      const targetName: Record<string, string> = {
+        firstName: "nome",
+        surname: "cognome",
+        age: "età",
+        dateOfBirth: "data di nascita",
+        sex: "sesso",
+        phone: "telefono",
+      }
+      setNavigationAnnouncement(
+        `Riga ${index + 1}, ${reason}. ${targetName[field] ?? ""}`,
+      )
+    })
+  }
+
+  function jumpToFirstMissing() {
+    const index = candidates.findIndex(
+      (candidate) =>
+        !candidate.firstName.trim() ||
+        !candidate.surname.trim() ||
+        parsedReviewAge(candidate) === null ||
+        !candidate.sex,
+    )
+    const candidate = candidates[index]
+    if (candidate && index >= 0) {
+      jumpToCandidate(
+        candidate,
+        index,
+        firstMissingTarget(candidate),
+        "campo da completare",
+      )
+    }
+  }
+
+  function jumpToFirstReview() {
+    const index = candidates.findIndex(candidateNeedsReview)
+    const candidate = candidates[index]
+    if (candidate && index >= 0) {
+      jumpToCandidate(
+        candidate,
+        index,
+        firstReviewTarget(candidate),
+        "riga da controllare",
+      )
+    }
+  }
 
   function acquisitionInput(
     ref: React.RefObject<HTMLInputElement | null>,
@@ -912,16 +992,26 @@ export function StudentScan({
             aria-live="polite"
             className="sticky top-0 z-30 mb-3 grid grid-cols-3 gap-1.5 rounded-2xl border bg-background/95 p-2 shadow-[0_8px_24px_rgb(6_59_82/0.1)] backdrop-blur"
           >
-            <div className="rounded-xl bg-muted px-1.5 py-2 text-center">
+            <button
+              aria-label="Vai alla prima riga da controllare"
+              className="rounded-xl bg-muted px-1.5 py-2 text-center outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-70"
+              disabled={rowsToReview === 0 || state === "saving"}
+              onClick={jumpToFirstReview}
+              type="button"
+            >
               <strong className="block text-lg leading-none">
                 {rowsToReview}
               </strong>
               <span className="mt-1 block text-[0.62rem] leading-3 text-muted-foreground">
                 righe da controllare
               </span>
-            </div>
-            <div
-              className={`rounded-xl px-1.5 py-2 text-center ${missingFields ? "bg-[#fff4e5]" : "bg-[#e9f7ef]"}`}
+            </button>
+            <button
+              aria-label="Vai al primo campo da completare"
+              className={`rounded-xl px-1.5 py-2 text-center outline-none transition-colors hover:brightness-[0.98] focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-70 ${missingFields ? "bg-[#fff4e5]" : "bg-[#e9f7ef]"}`}
+              disabled={missingFields === 0 || state === "saving"}
+              onClick={jumpToFirstMissing}
+              type="button"
             >
               <strong className="block text-lg leading-none">
                 {missingFields}
@@ -929,7 +1019,7 @@ export function StudentScan({
               <span className="mt-1 block text-[0.62rem] leading-3 text-muted-foreground">
                 campi da completare
               </span>
-            </div>
+            </button>
             <div className="rounded-xl bg-primary/10 px-1.5 py-2 text-center">
               <strong className="block text-lg leading-none">
                 {readyStudents}
@@ -939,6 +1029,14 @@ export function StudentScan({
               </span>
             </div>
           </section>
+          <p
+            aria-atomic="true"
+            aria-live="polite"
+            className="sr-only"
+            role="status"
+          >
+            {navigationAnnouncement}
+          </p>
 
           {imageNeedsRetake && (
             <section
@@ -1092,6 +1190,10 @@ export function StudentScan({
                 readPhone={readPhone}
                 invalid={invalidIds.has(candidate.id)}
                 key={candidate.id}
+                cardRef={(node) => {
+                  if (node) candidateCardRefs.current.set(candidate.id, node)
+                  else candidateCardRefs.current.delete(candidate.id)
+                }}
                 onChange={(updated) =>
                   setCandidates((current) =>
                     current.map((item) =>

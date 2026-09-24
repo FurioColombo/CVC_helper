@@ -4,6 +4,13 @@ export interface StudentIdentity {
   nickname?: string | null
 }
 
+export interface StudentAgeSource {
+  dateOfBirth?: string | null
+  declaredAgeAtCourseStart?: number | null
+}
+
+export const MAX_DECLARED_STUDENT_AGE = 120
+
 function parseDateOnly(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!match) throw new Error(`Invalid date-only value: ${value}`)
@@ -32,6 +39,38 @@ export function calculateAge(dateOfBirth: string, referenceDate: string) {
 
 export function isMinor(dateOfBirth: string, referenceDate: string) {
   return calculateAge(dateOfBirth, referenceDate) < 18
+}
+
+/**
+ * Resolves age for a course-scoped student. A real birth date always wins and
+ * continues to progress at the supplied course boundary. Without one, the
+ * declared completed age is fixed to the course's first day and does not
+ * progress when a downstream session uses another reference date.
+ */
+export function calculateStudentAge(
+  student: StudentAgeSource,
+  courseStartDate: string,
+) {
+  if (student.dateOfBirth?.trim()) {
+    return calculateAge(student.dateOfBirth, courseStartDate)
+  }
+  const age = student.declaredAgeAtCourseStart
+  if (age === null || age === undefined) {
+    throw new Error(
+      "Student requires a birth date or declared course-start age",
+    )
+  }
+  if (!Number.isInteger(age) || age < 0 || age > MAX_DECLARED_STUDENT_AGE) {
+    throw new Error("Invalid declared age at course start")
+  }
+  return age
+}
+
+export function isStudentMinor(
+  student: StudentAgeSource,
+  courseStartDate: string,
+) {
+  return calculateStudentAge(student, courseStartDate) < 18
 }
 
 export function getStudentDisplayName<T extends StudentIdentity>(

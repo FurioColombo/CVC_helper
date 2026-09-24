@@ -80,6 +80,10 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
   await expect(
     page.getByLabel(/^Data esatta per le regole sui minori riga/),
   ).toHaveCount(0)
+  const uncertainDates = page.getByLabel(/^Data di nascita riga/)
+  for (let index = 0; index < (await uncertainDates.count()); index += 1) {
+    await expect(uncertainDates.nth(index)).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
+  }
   await expect(page.getByLabel(/^Telefono riga/).nth(0)).toHaveValue(
     "333 123 4567",
   )
@@ -93,6 +97,25 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
   const counters = page.getByLabel("Stato revisione scansione")
   await expect(counters.getByText("3")).toHaveCount(1)
   await expect(counters.getByText("0")).toHaveCount(2)
+  const firstSurname = page.getByLabel(/^Cognome riga/).first()
+  await firstSurname.fill("")
+  await page
+    .getByRole("button", { name: "Vai al primo campo da completare" })
+    .click()
+  await expect(firstSurname).toBeFocused()
+  await expect(page.getByRole("status")).toContainText(
+    "Riga 1, campo da completare. cognome",
+  )
+  await page
+    .getByRole("button", { name: "Vai alla prima riga da controllare" })
+    .click()
+  await expect(firstSurname).toBeFocused()
+  await expect(page.getByRole("status")).toContainText(
+    "Riga 1, riga da controllare. cognome",
+  )
+  await firstSurname.fill("Rossi corretto")
+  await expect(firstSurname).toHaveValue("Rossi corretto")
+
   await page.setViewportSize({ width: 320, height: 664 })
   const enlargedText = await page.addStyleTag({
     content: "html { font-size: 200% !important; }",
@@ -128,14 +151,10 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
   if (testInfo.project.name === "iphone-13-viewport") {
     await page.screenshot({
       fullPage: true,
-      path: path.resolve(".evidence/S3/age-review-iphone13.png"),
+      path: path.resolve("test-results/age-review-iphone13.png"),
     })
   }
 
-  await page
-    .getByLabel(/^Cognome riga/)
-    .nth(0)
-    .fill("Rossi corretto")
   await page.getByRole("button", { name: "Rimuovi allievo 3" }).click()
   await expect(counters.getByText("2")).toBeVisible()
   await page.getByRole("button", { name: "Aggiungi 2 allievi" }).click()
