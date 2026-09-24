@@ -6,7 +6,6 @@ import { resolve } from "node:path"
 const root = resolve(import.meta.dirname, "..")
 const requiredFiles = [
   "AGENTS.md",
-  "CLAUDE.md",
   "docs/LOCAL_DEVELOPMENT.md",
   "archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md",
   ".node-version",
@@ -166,7 +165,18 @@ for (const id of [
     `Missing verification script contract: ${id}`,
   )
   const sectionStart = plan.indexOf(`## ${id} —`)
-  assert.ok(sectionStart >= 0, `Active plan is missing ${id}`)
+  if (sectionStart < 0) {
+    assert.equal(
+      milestone.status,
+      "COMPLETE",
+      `Active plan is missing incomplete milestone ${id}`,
+    )
+    assert.ok(
+      plan.includes(`| ${id} | Complete.`),
+      `Archived milestone ${id} needs a concise completion row in the active plan`,
+    )
+    continue
+  }
   const nextSection = plan.indexOf("\n## ", sectionStart + 4)
   const section = plan.slice(
     sectionStart,
@@ -185,11 +195,6 @@ for (const milestone of manifest.milestones) {
     `Incomplete milestone missing from active plan: ${milestone.id}`,
   )
 }
-assert.ok(
-  readFileSync(resolve(root, "CLAUDE.md"), "utf8").includes("@AGENTS.md"),
-  "Claude Code entry point must import the shared operating contract",
-)
-
 const activeDesignText = [
   "01_PRODUCT_SPEC.md",
   "02_MVP_SCOPE.md",
