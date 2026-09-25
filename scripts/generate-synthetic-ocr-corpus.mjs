@@ -107,6 +107,34 @@ const people = [
     phone: "000 000 0010",
   },
 ]
+// Staff printed in their own ruled block under the numbered register, with a
+// role code between name and telephone. They are never students.
+const staff = [
+  {
+    id: "s1",
+    printedName: "Brunaldi Ottorino",
+    role: "CT",
+    phone: "000 000 0101",
+    age: 44,
+    dateOfBirth: "1980-04-11",
+  },
+  {
+    id: "s2",
+    printedName: "Carvessi Liandra",
+    role: "ADV",
+    phone: "000 000 0102",
+    age: 33,
+    dateOfBirth: "1991-02-07",
+  },
+  {
+    id: "s3",
+    printedName: "Morvenda Ulisse",
+    role: "IS",
+    phone: "000 000 0103",
+    age: 29,
+    dateOfBirth: "1995-06-19",
+  },
+]
 const referenceDate = "2024-09-13"
 
 const variants = [
@@ -139,12 +167,50 @@ const variants = [
     shadowOpacity: 0.1,
     layout: "wide-columns",
   },
+  // A fully ruled register with a row-number column, where the rule sits just
+  // before each name: the layout that made Tesseract read `7|Surname`.
+  {
+    file: "roster-numbered-grid.png",
+    rotationDegrees: 0.6,
+    lighting: "soft-left-to-right",
+    base: "#f5f3ec",
+    shadowOpacity: 0.08,
+    layout: "numbered-grid",
+    // Camera softness, which is what lets the rule fuse with its neighbours.
+    blurSigma: 1.2,
+  },
+  // The same register with the staff in a second ruled block below it, each
+  // with a role code. Staff are never students.
+  {
+    file: "roster-numbered-grid-staff.png",
+    rotationDegrees: 0.6,
+    lighting: "soft-left-to-right",
+    base: "#f5f3ec",
+    shadowOpacity: 0.08,
+    layout: "numbered-grid",
+    blurSigma: 1.2,
+    staffBlock: true,
+  },
 ]
 
 const firstRowY = 265
 const rowHeight = 72
 
 function layoutFor(variant) {
+  if (variant.layout === "numbered-grid") {
+    return {
+      width: 1800,
+      height: variant.staffBlock ? 1420 : 1120,
+      ...(variant.staffBlock ? { staffBlock: true, roleX: 640 } : {}),
+      borderX: 62,
+      numberX: 105,
+      ruleX: 110,
+      nameX: 116,
+      phoneX: 852,
+      ageX: 1186,
+      dateX: 1430,
+    }
+  }
   if (variant.layout === "wide-columns") {
     return {
       width: 2200,
@@ -176,13 +242,65 @@ function escapeXml(value) {
 function rowMarkup(person, index, layout) {
   const y = firstRowY + index * rowHeight
   const birth = person.dateOfBirth.split("-").reverse().join("/")
+  const number = layout.numberX
+    ? `<text x="${layout.numberX}" y="${y}" text-anchor="end" class="number">${index + 1}</text>`
+    : ""
   return `
     <line x1="92" y1="${y + 32}" x2="${layout.width - 92}" y2="${y + 32}" stroke="#aeb4b0" stroke-width="1.25" opacity="0.68" />
-    <text x="${layout.nameX}" y="${y}" class="name">${escapeXml(person.printedName)}</text>
+    ${number}<text x="${layout.nameX}" y="${y}" class="name">${escapeXml(person.printedName)}</text>
     <text x="${layout.phoneX}" y="${y}" class="phone">${escapeXml(person.phone)}</text>
     <text x="${layout.ageX}" y="${y}" class="age">${person.age} anni</text>
     <text x="${layout.dateX}" y="${y}" class="date">${birth}</text>
   `
+}
+
+function gridMarkup(layout) {
+  if (!layout.ruleX) return ""
+  const bottom = firstRowY + people.length * rowHeight - 40
+  return [
+    layout.borderX,
+    layout.ruleX,
+    ...[layout.phoneX, layout.ageX, layout.dateX].map((x) => x - 24),
+    layout.width - 92,
+  ]
+    .map(
+      (x) =>
+        `<line x1="${x}" y1="183" x2="${x}" y2="${bottom}" stroke="#3d4442" stroke-width="2.5" />`,
+    )
+    .join("")
+}
+
+function staffMarkup(layout) {
+  if (!layout.staffBlock) return ""
+  const top = firstRowY + people.length * rowHeight + 40
+  const firstBaseline = top + 40
+  const bottom = firstBaseline + (staff.length - 1) * rowHeight + 32
+  const columns = [
+    layout.ruleX,
+    layout.roleX - 24,
+    ...[layout.phoneX, layout.ageX, layout.dateX].map((x) => x - 24),
+    layout.width - 92,
+  ]
+  const verticals = columns
+    .map(
+      (x) =>
+        `<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="#3d4442" stroke-width="2.5" />`,
+    )
+    .join("")
+  const rows = staff
+    .map((member, index) => {
+      const y = firstBaseline + index * rowHeight
+      const birth = member.dateOfBirth.split("-").reverse().join("/")
+      return `
+    <line x1="${layout.ruleX}" y1="${y + 32}" x2="${layout.width - 92}" y2="${y + 32}" stroke="#aeb4b0" stroke-width="1.25" opacity="0.68" />
+    <text x="${layout.nameX}" y="${y}" class="name">${escapeXml(member.printedName)}</text>
+    <text x="${layout.roleX}" y="${y}" class="role">${member.role}</text>
+    <text x="${layout.phoneX}" y="${y}" class="phone">${escapeXml(member.phone)}</text>
+    <text x="${layout.ageX}" y="${y}" class="age">${member.age} anni</text>
+    <text x="${layout.dateX}" y="${y}" class="date">${birth}</text>`
+    })
+    .join("")
+  return `<line x1="${layout.ruleX}" y1="${top}" x2="${layout.width - 92}" y2="${top}" stroke="#747c7a" stroke-width="2" opacity="0.75" />${verticals}${rows}`
 }
 
 function makeSvg(variant) {
@@ -192,11 +310,12 @@ function makeSvg(variant) {
     .map((person, index) => rowMarkup(person, index, layout))
     .join("")
   const paperWidth = width - 76
+  const paperHeight = height - 56
   const background = `
     <rect width="${width}" height="${height}" fill="#d9d7d1" />
     <rect width="${width}" height="${height}" fill="url(#ambient)" />
-    <rect x="38" y="28" width="${paperWidth}" height="1064" rx="5" fill="${variant.base}" stroke="#c8c5bd" stroke-width="2" />
-    <rect x="38" y="28" width="${paperWidth}" height="1064" rx="5" fill="url(#paper-light)" />
+    <rect x="38" y="28" width="${paperWidth}" height="${paperHeight}" rx="5" fill="${variant.base}" stroke="#c8c5bd" stroke-width="2" />
+    <rect x="38" y="28" width="${paperWidth}" height="${paperHeight}" rx="5" fill="url(#paper-light)" />
     <g transform="rotate(${variant.rotationDegrees} ${width / 2} ${height / 2})">
       <text x="120" y="105" class="title">ELENCO PARTECIPANTI</text>
       <text x="120" y="143" class="subhead">Registro di prova · dati inventati</text>
@@ -205,8 +324,9 @@ function makeSvg(variant) {
       <text x="${layout.ageX}" y="211" class="head">ETÀ</text>
       <text x="${layout.dateX}" y="211" class="head">DATA DI NASCITA</text>
       <line x1="92" y1="226" x2="${width - 92}" y2="226" stroke="#747c7a" stroke-width="2" opacity="0.75" />
-      ${rows}
+      ${gridMarkup(layout)}${rows}
       <line x1="92" y1="${firstRowY + people.length * rowHeight - 40}" x2="${width - 92}" y2="${firstRowY + people.length * rowHeight - 40}" stroke="#aeb4b0" stroke-width="1.25" opacity="0.68" />
+      ${staffMarkup(layout)}
       <text x="120" y="${height - 76}" class="footer">FAC-SIMILE · SOLO PER VERIFICA SOFTWARE</text>
     </g>
     <rect width="${width}" height="${height}" fill="url(#vignette)" opacity="${variant.shadowOpacity}" />
@@ -234,7 +354,8 @@ function makeSvg(variant) {
       .subhead { font: 400 19px Arial, sans-serif; fill: #66706e; }
       .head { font: 700 19px Arial, sans-serif; fill: #47514f; letter-spacing: 0.15px; }
       .name { font: 500 29px Arial, sans-serif; fill: #172223; }
-      .phone, .age, .date { font: 400 27px Arial, sans-serif; fill: #263132; }
+      .phone, .age, .date, .number { font: 400 27px Arial, sans-serif; fill: #263132; }
+      .role { font: 700 25px Arial, sans-serif; fill: #263132; }
       .footer { font: 700 15px Arial, sans-serif; fill: #79807c; letter-spacing: 0.9px; }
     </style>
     ${background}
@@ -245,7 +366,8 @@ await mkdir(fixtureDirectory, { recursive: true })
 
 for (const variant of variants) {
   const svg = Buffer.from(makeSvg(variant))
-  await sharp(svg)
+  const rendered = sharp(svg)
+  await (variant.blurSigma ? rendered.blur(variant.blurSigma) : rendered)
     .png({ compressionLevel: 9, adaptiveFiltering: false })
     .toFile(path.join(fixtureDirectory, variant.file))
 }
@@ -270,6 +392,7 @@ const truth = {
     layout: variant.layout ?? "standard",
     columnFragmentationExpected: variant.layout === "wide-columns",
     people,
+    ...(variant.staffBlock ? { staff } : {}),
   })),
 }
 

@@ -30,7 +30,7 @@
   "remaining": [
     "The name order is still inverted: the roster is surname-first and the surname lands in Nome. The explicit order control exists in the review screen and has not yet been exercised by this harness.",
     "Restoni Alunera falls below the row threshold and is not offered at all.",
-    "Some names carry a trailing artefact from the table rule: 'Massimo Ì', 'Nicola I', 'Simone gi', and two rows begin with a stray 's' or '-'.",
+    "Some names carry a trailing artefact from the table rule: 'Nurelia Ì', 'Elaria I', 'Nireva gi', and two rows begin with a stray 's' or '-'.",
     "No row is complete enough to count as ready, so the operator still confirms every row."
   ],
   "runtime": "Node 24.21.0, 374 unit and component tests, production build and PWA check all pass."

@@ -9,15 +9,19 @@
  * with the telephone read and not read.
  *
  * Usage:
- *   npm run measure:scan-review -- [image] [output.json] [--dpi=auto|N] [--reference-date=YYYY-MM-DD]
+ *   npm run measure:scan-review -- [image] [output.json] [--dpi=auto|N] [--reference-date=YYYY-MM-DD] [--no-rule-erasure]
  *
  * The image defaults to the committed clear fixture. Point it at a photograph
- * of a real sheet to attribute a real number.
+ * of a real sheet to attribute a real number. The scan erases vertical table
+ * rules before recognition, so this does too; `--no-rule-erasure` measures the
+ * image as chosen, for comparison.
  */
 import { createRequire } from "node:module"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
+
+import { eraseRulesFromImageBytes } from "./roster-image.mjs"
 
 const root = resolve(import.meta.dirname, "..")
 const require = createRequire(pathToFileURL(resolve(root, "package.json")).href)
@@ -28,9 +32,13 @@ const {
   inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
   TESSERACT_USER_DEFINED_DPI,
+  studentScanAge,
   studentScanAgeCorroborated,
 } = await import(
   pathToFileURL(resolve(root, "src/capabilities/studentScan.ts")).href
+)
+const { eraseVerticalTableRules } = await import(
+  pathToFileURL(resolve(root, "src/capabilities/studentScanRules.ts")).href
 )
 
 const positional = process.argv.slice(2).filter((arg) => !arg.startsWith("--"))
@@ -69,7 +77,11 @@ if (
   throw new Error("--dpi must be auto or an integer from 1 to 300")
 }
 
-const bytes = await readFile(imagePath)
+const chosen = await readFile(imagePath)
+const ruleErasure = process.argv.includes("--no-rule-erasure")
+  ? null
+  : await eraseRulesFromImageBytes(chosen, eraseVerticalTableRules)
+const bytes = ruleErasure?.bytes ?? chosen
 
 /**
  * Dimensions straight from the container, because there is no image library in
@@ -262,9 +274,102 @@ function audit(readPhone, order = null, useAutomaticInference = true) {
         fields.some((field) => uncertain(candidate, field)),
     ).length,
     unresolvedNameOrder: candidates.filter(orderUndecided).length,
+    // The fields above count a missing birth date, as the screen did before
+    // S5; they are kept so earlier S4 evidence stays comparable.
     fieldsFlagged: missingFields + lowConfidenceFields,
     fieldsFlaggedBeforeAgeCorroboration:
       missingFields + lowConfidenceFieldsBeforeAgeCorroboration,
+    screen: screenAudit(candidates, fields),
+  }
+}
+
+/**
+ * StudentScan.tsx as it stands after S5 and UX1, copied literally for rows no
+ * operator has confirmed, acknowledged or edited yet: a birth date is optional
+ * when the age is valid, the age is its own reviewed field, an empty name is
+ * flagged, and a compound name blocks its row until the split is confirmed.
+ */
+function screenAudit(candidates, fields) {
+  const reviewAge = (candidate) =>
+    String(studentScanAge(candidate, referenceDate) ?? "")
+  const parsedReviewAge = (candidate) => {
+    const value = reviewAge(candidate)
+    if (!/^\d{1,3}$/.test(value)) return null
+    const age = Number(value)
+    return age >= 0 && age <= 120 ? age : null
+  }
+  const emptyName = (candidate, field) =>
+    (field === "firstName" || field === "surname") && !candidate[field].trim()
+  const needsReview = (candidate, field) => {
+    if (emptyName(candidate, field)) return true
+    if (field === "phone" && !candidate.phone.trim()) return false
+    if (field === "dateOfBirth" && !candidate.dateOfBirth) return false
+    if (
+      field === "dateOfBirth" &&
+      studentScanAgeCorroborated(candidate, referenceDate)
+    )
+      return false
+    return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
+  }
+  const ageConflictsWithStoredDate = (candidate) => {
+    const reviewedAge = parsedReviewAge(candidate)
+    if (reviewedAge === null || !candidate.dateOfBirth) return false
+    const storedAge = studentScanAge(
+      { ...candidate, ageReading: undefined },
+      referenceDate,
+    )
+    return storedAge === null || Math.abs(storedAge - reviewedAge) > 1
+  }
+  const ageNeedsReview = (candidate) => {
+    if (parsedReviewAge(candidate) === null) return true
+    if (!candidate.dateOfBirth)
+      return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
+    return (
+      ageConflictsWithStoredDate(candidate) ||
+      needsReview(candidate, "dateOfBirth")
+    )
+  }
+  const nameReadingNeedsReview = (candidate) =>
+    Boolean(candidate.nameReading) &&
+    !candidate.nameReading.acknowledged &&
+    (candidate.nameReading.order === "unknown" ||
+      candidate.nameReading.compoundAmbiguity)
+  const missing = (candidate) =>
+    Number(!candidate.firstName.trim()) +
+    Number(!candidate.surname.trim()) +
+    Number(parsedReviewAge(candidate) === null) +
+    Number(!candidate.sex)
+  // An empty name is already counted as missing; each field counts once.
+  const marked = (candidate) =>
+    fields.filter(
+      (field) => !emptyName(candidate, field) && needsReview(candidate, field),
+    ).length +
+    Number(parsedReviewAge(candidate) !== null && ageNeedsReview(candidate))
+  const rowNeedsReview = (candidate) =>
+    missing(candidate) > 0 ||
+    nameReadingNeedsReview(candidate) ||
+    ageNeedsReview(candidate) ||
+    fields.some((field) => needsReview(candidate, field))
+  const ready = (candidate) =>
+    missing(candidate) === 0 &&
+    (!candidate.dateOfBirth || candidate.dateOfBirth <= referenceDate) &&
+    !nameReadingNeedsReview(candidate) &&
+    !ageNeedsReview(candidate) &&
+    !fields.some((field) => needsReview(candidate, field))
+  const missingFields = candidates.reduce(
+    (total, candidate) => total + missing(candidate),
+    0,
+  )
+  const markedFields = candidates.reduce(
+    (total, candidate) => total + marked(candidate),
+    0,
+  )
+  return {
+    missingFields,
+    fieldsMarkedForReview: markedFields,
+    fieldsFlagged: missingFields + markedFields,
+    rowsToReview: candidates.filter(rowNeedsReview).length,
+    readyRows: candidates.filter(ready).length,
   }
 }
 
@@ -274,6 +379,9 @@ const measurement = {
   runtime: process.version,
   crop: cropFractions ? { fractions: cropFractions, pixels: rectangle } : null,
   recognitionMs,
+  ruleErasure: ruleErasure
+    ? { rules: ruleErasure.rules, erasedPixels: ruleErasure.erasedPixels }
+    : null,
   tesseractUserDefinedDpi: userDefinedDpi,
   referenceDate,
   minFieldConfidence: MIN_FIELD_CONFIDENCE,

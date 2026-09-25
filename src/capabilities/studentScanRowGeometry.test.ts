@@ -79,6 +79,98 @@ function makeDate(block: number, line: number, top: number, left = 650) {
 }
 
 describe("reconstructStudentScanTsvFragments", () => {
+  it("joins an age-and-date cell printed with a dash separator", () => {
+    // `17 anni - 12/03/2008` in its own column block: the lone dash has no
+    // letter and must not make the fragment look like a name.
+    const original = page(makeStudent(1, 100), {
+      block: 2,
+      line: 1,
+      words: [
+        { text: "17", left: 520, top: 101, width: 22 },
+        { text: "anni", left: 548, top: 101, width: 40 },
+        { text: "-", left: 594, top: 101, width: 8 },
+        { text: "12/03/2008", left: 610, top: 101, width: 105 },
+      ],
+    })
+    const result = reconstructStudentScanTsvFragments(original)
+    expect(result.joins).toEqual([
+      {
+        fragmentSourceId: "1:2:1:1",
+        targetSourceId: "1:1:1:1",
+        fields: ["age", "dateOfBirth"],
+      },
+    ])
+    expect(result.unresolved).toEqual([])
+  })
+
+  it("joins inside the student band but never completes a row below it", () => {
+    // Five evenly spaced students, then after a gap a staff line whose role
+    // code was not read and whose date sits in its own column block.
+    const students = [0, 1, 2, 3, 4].map((index) =>
+      makeStudent(index + 1, 100 + index * 44),
+    )
+    const studentDates = [0, 1, 2, 3, 4].map((index) =>
+      makeDate(2, index + 1, 101 + index * 44),
+    )
+    const staff = {
+      block: 1,
+      line: 6,
+      words: [
+        { text: "Orsola", left: 100, top: 520, width: 55 },
+        { text: "Brenti", left: 165, top: 520, width: 58 },
+      ],
+    } satisfies TestLine
+    const result = reconstructStudentScanTsvFragments(
+      page(...students, ...studentDates, staff, makeDate(3, 1, 521)),
+    )
+
+    expect(result.tableBand.supported).toBe(true)
+    expect(result.joins.map(({ targetSourceId }) => targetSourceId)).toEqual([
+      "1:1:1:1",
+      "1:1:1:2",
+      "1:1:1:3",
+      "1:1:1:4",
+      "1:1:1:5",
+    ])
+    expect(result.unresolved).toEqual([
+      {
+        sourceId: "1:3:1:1",
+        fields: ["dateOfBirth"],
+        reason: "outside-table-band",
+      },
+    ])
+  })
+
+  it("leaves a student after a missed row to review rather than join it", () => {
+    // Five evenly spaced students, then one row OCR missed, then a student
+    // whose date sits in its own column block, off the band's pitch.
+    const students = [0, 1, 2, 3, 4].map((index) =>
+      makeStudent(index + 1, 100 + index * 44),
+    )
+    const studentDates = [0, 1, 2, 3, 4].map((index) =>
+      makeDate(2, index + 1, 101 + index * 44),
+    )
+    const result = reconstructStudentScanTsvFragments(
+      page(
+        ...students,
+        ...studentDates,
+        makeStudent(6, 100 + 6 * 44),
+        makeDate(3, 1, 101 + 6 * 44),
+      ),
+    )
+
+    // It errs toward review: the date stays its own row and is never given
+    // to a neighbour.
+    expect(result.joins).toHaveLength(5)
+    expect(result.unresolved).toEqual([
+      {
+        sourceId: "1:3:1:1",
+        fields: ["dateOfBirth"],
+        reason: "outside-table-band",
+      },
+    ])
+  })
+
   it("accepts Tesseract.js headerless TSV as well as fixture TSV", () => {
     const headerless = page(makeStudent(1, 100), makeDate(2, 1, 102))
       .split("\n")

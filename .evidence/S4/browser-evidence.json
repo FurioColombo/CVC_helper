@@ -1,18 +1,33 @@
 {
   "milestone": "S4",
-  "runtime": "Node v24.19.0",
-  "command": "node scripts/run-e2e.mjs tests/e2e/student-scan.spec.ts tests/e2e/s1-scan-phone-option.spec.ts tests/e2e/u02-students.spec.ts",
+  "runtime": "Node v24.21.0",
+  "measuredAt": "2026-09-25",
+  "code": "S4 checkpoint rebased on codex/0.3.0 3dc4360 (UX1 review screen), after the third review round",
+  "command": "npx playwright test with a temporary local config on port 4274 whose projects equal playwright.config.ts (so no other agent's server on 4174 is reused): tests/e2e/s4-ruled-roster-scan.spec.ts tests/e2e/student-scan.spec.ts tests/e2e/s1-scan-phone-option.spec.ts tests/e2e/u04-scan-ui.spec.ts",
   "result": {
-    "passed": 5,
+    "runs": 22,
+    "passed": 20,
     "skipped": 1,
-    "failed": 0,
-    "viewports": ["Pixel 7 Chrome", "iPhone 13 viewport"]
+    "failed": 1,
+    "viewports": [
+      "Pixel 7 Chrome",
+      "iPhone 13 viewport (Chromium)",
+      "iPhone 13 WebKit"
+    ],
+    "s4Journeys": "6 of 6: both ruled-roster journeys on all three projects, also run on their own",
+    "failures": [
+      {
+        "test": "s1-scan-phone-option.spec.ts on Pixel 7",
+        "cause": "Pre-existing on codex/0.3.0: UX1 removed the 'Dedotto dal foglio' caption from StudentScan.tsx but the spec still expects it. Not an S4 file; left to its owner."
+      }
+    ],
+    "earlierRun": "An earlier full run on the same branch also failed u04-scan-ui 'edge handles work by keyboard and tilt updates the crop image live' on WebKit under parallel load; it passed 3 of 3 times on its own and in this run. The rule eraser runs only after the crop is accepted."
   },
   "behaviors": [
-    "A blurred fictitious roster shows a retake warning while retaining recognized fields for review.",
-    "The clear fictitious roster proceeds to mandatory review and saves only corrected rows.",
-    "The telephone remains opt-in and is not saved when off.",
-    "The compact student list and full profile remain usable at the stress viewport."
+    "The fictitious numbered, ruled roster is scanned through the real crop editor and review in Chromium and WebKit; every person's surname appears once, in the surname field, without 'Da controllare', the given names match, the three-word name keeps its compound warning, and no more rows are counted as ready students than there are settled people on the sheet.",
+    "The same register with a ruled staff block below it: every student appears once with an age that needs no review (derived from the birth date), every staff name row shows its age as needing review, and the ready-student count never exceeds the settled students (review S4-DI-09).",
+    "The blurred/clear scan journey reaches review, correction and save with the preparation in the path; the earlier failure after reload is fixed on codex/0.3.0.",
+    "Crop-editor journeys (compact screens, 200% text, edge handles, eight targets) pass in Chromium and WebKit."
   ],
-  "physicalDevice": "Not run; the owner performs this check on their phone."
+  "physicalDevice": "Not run; the owner performs this check on their phone, including scan time with the eraser."
 }

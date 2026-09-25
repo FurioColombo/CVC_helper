@@ -1,6 +1,6 @@
 {
   "milestone": "S4",
-  "status": "prototype comparison complete; S4 acceptance remains open",
+  "status": "rule erasure selected and integrated; see rule-erasure-measurement.json",
   "runtime": "Node v24.19.0",
   "privacy": "Five local photographs of one roster were used, not five independent rosters. Only aggregate counts appear here; originals, raw OCR and ground truth remain under ignored data/private.",
   "comparisonBasis": {
@@ -16,10 +16,28 @@
   },
   "currentTesseract": {
     "candidateRowsAcrossFive": 127,
-    "candidateRowsBySample": [25, 17, 40, 16, 29],
+    "candidateRowsBySample": [
+      25,
+      17,
+      40,
+      16,
+      29
+    ],
     "flagsAcrossFive": 288,
-    "flagsBySample": [53, 30, 136, 26, 43],
-    "recognitionMsBySample": [7441, 7157, 5226, 10366, 3763],
+    "flagsBySample": [
+      53,
+      30,
+      136,
+      26,
+      43
+    ],
+    "recognitionMsBySample": [
+      7441,
+      7157,
+      5226,
+      10366,
+      3763
+    ],
     "measurement": "npm run measure:scan-review -- <prepared private image> <ignored output> --reference-date=2026-09-22"
   },
   "approaches": [
@@ -33,7 +51,13 @@
       "id": "tesseract-dpi-180",
       "candidateRowsAcrossFive": 110,
       "flagsAcrossFive": 92,
-      "flagsBySample": [15, 18, 35, 19, 5],
+      "flagsBySample": [
+        15,
+        18,
+        35,
+        19,
+        5
+      ],
       "clearestSampleAudit": {
         "studentRowsRecovered": 20,
         "missingStudentRows": 0,
@@ -48,7 +72,13 @@
     },
     {
       "id": "paddleocr-js-local-browser",
-      "flagsBySample": [0, 0, 13, 8, 0],
+      "flagsBySample": [
+        0,
+        0,
+        13,
+        8,
+        0
+      ],
       "exactStudentIdentitiesAcrossOneHundred": 82,
       "missingStudentIdentities": 18,
       "unmatchedCandidateRows": 17,
@@ -60,12 +90,60 @@
       "isolatedBuildBytes": 56885454,
       "offlineBrowserTrial": "local inference passed with external network blocked; installed-PWA first-use offline cache was not verified",
       "assessment": "Reject this adapter as a production replacement. Three zero-flag samples each still contained a missed identity and confident wrong fields. Local browser execution was demonstrated, but installed-PWA first-use offline caching was not."
+    },
+    {
+      "id": "vertical-rule-erasure",
+      "measuredAt": "2026-09-25",
+      "flagsBySample": [
+        0,
+        17,
+        41,
+        8,
+        0
+      ],
+      "flagsAcrossFive": 66,
+      "candidateRowsAcrossFive": 116,
+      "correctedTruth": {
+        "studentsMatched": 100,
+        "missingStudents": 0,
+        "wrongGivenNames": 4,
+        "wrongSurnames": 4,
+        "wrongNameFieldsUnflaggedAndNotBlockedForReview": 0
+      },
+      "assessment": "Selected. The row-number rule fused with every surname, so the surname inherited the junk's confidence; erasing only long vertical rules makes the number its own word. With the compound-split presentation fix, the clearest capture reads all 40 name fields exactly with no flags, misread-name rows fall from 10 to 4 across the five captures and no confident wrong name is left without a review block.",
+      "measuredAtCode": "the first erasure commit, before the independent review fixes",
+      "afterReviewFixes": {
+        "flagsBySample": [
+          5,
+          24,
+          35,
+          8,
+          0
+        ],
+        "flagsAcrossFive": 72,
+        "screenRowsToReviewAcrossFive": 26,
+        "readyRowsThatAreNotStudents": 0,
+        "wrongNameFieldsUnflaggedAndNotBlockedForReview": 0,
+        "why": "The table-band gate leaves staff-block fragments on samples 1 and 2 as rows to review instead of joining one into a ready-looking staff row; see rule-erasure-measurement.json."
+      }
     }
   ],
   "conservativeProductionCandidate": {
     "engine": "local Tesseract with DPI 180 and guarded TSV fragment joining",
-    "preparedPhotoCandidateRows": [20, 21, 29, 21, 20],
-    "preparedPhotoFlags": [15, 18, 35, 23, 5],
+    "preparedPhotoCandidateRows": [
+      20,
+      21,
+      29,
+      21,
+      20
+    ],
+    "preparedPhotoFlags": [
+      15,
+      18,
+      35,
+      23,
+      5
+    ],
     "privateGeometryJoins": 0,
     "syntheticWideColumnGeometryJoins": 30,
     "note": "The fourth private photo has an extra incomplete review row after weak age text is preserved. No real-photo field is reassigned."
@@ -100,9 +178,42 @@
   "imageScaleSweep": {
     "status": "rejected as a production default",
     "source": "original clear private photograph, orientation-normalized; aggregate-only results",
-    "widthsPx": [1800, 2000, 2200, 2400, 2800, 3000, 3200, 3400, 3800, 4096],
-    "candidateRows": [25, 21, 21, 20, 20, 20, 25, 20, 21, 25],
-    "fieldsFlagged": [8, 5, 5, 5, 4, 5, 10, 8, 12, 8],
+    "widthsPx": [
+      1800,
+      2000,
+      2200,
+      2400,
+      2800,
+      3000,
+      3200,
+      3400,
+      3800,
+      4096
+    ],
+    "candidateRows": [
+      25,
+      21,
+      21,
+      20,
+      20,
+      20,
+      25,
+      20,
+      21,
+      25
+    ],
+    "fieldsFlagged": [
+      8,
+      5,
+      5,
+      5,
+      4,
+      5,
+      10,
+      8,
+      12,
+      8
+    ],
     "at2800": {
       "studentsMatchedByUniqueDate": 20,
       "wrongGivenNamesUnflagged": 1,
@@ -110,6 +221,6 @@
     },
     "comparison": "The selected prepared 2600-pixel image has 20 candidates, five flags, one unflagged wrong given name and one unflagged wrong surname. A 2800-pixel image reaches four flags, but doubles the unflagged wrong surnames; the lower counter is not safer."
   },
-  "nextExperiment": "The all-five truth audit and full-row single-word reread are complete. Neither image scaling nor this reread safely reaches the target. Any further OCR path must be measured against confident wrong names, not just review flags; retain threshold 70 and visible source text.",
-  "decision": "Continue with the local Tesseract path; retain threshold 70 and visible uncertain text. Do not treat a lower counter as correctness. None of the three prototypes or experimental name-cell passes satisfies S4 acceptance."
+  "nextExperiment": "Staff-block rows below the student table still fragment on some captures and appear as removable extra rows; a staff exclusion that does not depend on reading the role code is the remaining lever. The shadowed capture (sample 3) keeps most of the remaining flags.",
+  "decision": "Integrate local vertical-rule erasure before Tesseract (studentScanRules.ts), keep threshold 70 and every reading visible. The earlier DPI 180 and conservative-geometry work remains; rejected variants from 2026-09-23 and 2026-09-25 are listed in targeted-ocr-probes.json."
 }

@@ -1,6 +1,7 @@
 {
   "milestone": "S4",
-  "runtime": "Node v24.19.0",
+  "runtime": "Node v24.21.0",
+  "runtimeNote": "The first three audits below were measured earlier on Node v24.19.0 and are kept as recorded.",
   "sourcePhotographsUnderIgnoredPrivateDirectory": 5,
   "trackedFilesUnderDataPrivate": 0,
   "exactSourceJpegBlobMatchesInLocalGitObjects": 0,
@@ -14,8 +15,88 @@
     "matchedTextBlobVersions": 61,
     "affectedPaths": 24,
     "scope": "Local Git objects and refs only; matches include the owner's surname inside archived absolute path logs, so these counts are an upper bound for roster-specific text.",
-    "affectedRefClasses": ["main", "0.3.0 branches", "v0.2.0 tag"],
+    "affectedRefClasses": [
+      "main",
+      "0.3.0 branches",
+      "v0.2.0 tag"
+    ],
     "decision": "Current-tree fictionalization does not remove historical text; an owner decision on coordinated history and tag rewriting is recorded in docs/post-mvp/0_3_0_QUESTIONS.md."
   },
-  "privacy": "This report contains counts and categories only; no image names, OCR text, student names, dates of birth, or telephone numbers."
+  "privacy": "This report contains counts and categories only; no image names, OCR text, student names, dates of birth, or telephone numbers.",
+  "update2026_09_25": {
+    "method": "Local scripts under ignored data/private compare letter-token sequences of every tracked and untracked text file (JSON evidence, Markdown, code, fixtures; case-insensitive, so quotes, apostrophes and punctuation cannot hide a name) with the private roster truth: real surnames, each word of a compound surname on its own, any surname word next to a word of the same student's given name, full multi-word given names, given-plus-surname pairs and birth dates. Output is paths and counts only. The per-word needles were added after review S4-DI-15 showed that whole-surname matching missed one word of a compound surname next to its own given name.",
+    "workingTreeAtS4Checkpoint": {
+      "filesScanned": 482,
+      "hits": 0,
+      "scan": "including the per-word needles"
+    },
+    "s4CheckpointCommit": "The branch's S4 work is one checkpoint commit on top of codex/0.3.0 3dc4360; its tree has 0 hits. The earlier unpublished work-in-progress commits, one of which (c0c2afe) had re-added the name pair in a test line, were squashed before anything was pushed, so no commit this branch adds carries it.",
+    "preExistingFinding": {
+      "what": "One real student's complete two-word given name, attached to an invented surname, was used as a 'fictitious' compound-name example. No real surname, birth date, telephone or given-plus-surname pair was in these files.",
+      "filesInCodex030Tree": [
+        "src/capabilities/studentScan.test.ts",
+        ".evidence/UG1/scan-redesign/concept-document.md",
+        ".evidence/UG1/scan-redesign/concept-canvas.md",
+        ".evidence/UG1/scan-name-order.json"
+      ],
+      "wholeWordOccurrencesReplaced": 20,
+      "occurrencesNote": "10 of each of the two name words across the four files. The first pass missed the JSON file (review S4-DI-08); it is replaced too.",
+      "firstCommitted": "2026-09-18",
+      "fixedOnThisBranch": "All four files now use invented names; a fresh scan of the whole working tree finds 0 hits."
+    },
+    "publishedRefsStillContaining": {
+      "origin/main": {
+        "files": 5,
+        "fullMultiWordGivenName": 4,
+        "surnameWordOfCompoundSurname": 2,
+        "surnameWordWithOwnGivenName": 1
+      },
+      "origin/codex/0.3.0": {
+        "files": 5,
+        "fullMultiWordGivenName": 4,
+        "surnameWordOfCompoundSurname": 2,
+        "surnameWordWithOwnGivenName": 1
+      },
+      "local codex/0.3.0 (3dc4360)": {
+        "files": 5,
+        "fullMultiWordGivenName": 4,
+        "surnameWordOfCompoundSurname": 2,
+        "surnameWordWithOwnGivenName": 1
+      },
+      "origin/codex/post-mvp-ux-planning": {
+        "files": 9,
+        "realSurnames": 45,
+        "givenPlusSurnamePairs": 32,
+        "surnameWordWithOwnGivenName": 32,
+        "surnameWordOfCompoundSurname": 10,
+        "fullMultiWordGivenName": 4,
+        "birthDates": 6
+      },
+      "v0.2.0": {
+        "files": 9,
+        "realSurnames": 45,
+        "givenPlusSurnamePairs": 32,
+        "surnameWordWithOwnGivenName": 32,
+        "surnameWordOfCompoundSurname": 10,
+        "fullMultiWordGivenName": 4,
+        "birthDates": 6
+      },
+      "note": "Each count is the number of distinct real-name or date matches, summed over files. The raw-OCR given names and staff names above are also in these refs' copies of the six files."
+    },
+    "notDone": "Published branches and the v0.2.0 tag still contain real student data (above). Rewriting or deleting published refs is the owner's decision (docs/post-mvp/0_3_0_QUESTIONS.md); nothing was pushed, rewritten or deleted on any shared ref.",
+    "rawOcrExamplesFound": {
+      "what": "Evidence and an archived plan written before S4 quoted raw OCR text from the owner's roster photographs: one real surname word with that student's given name (review S4-DI-15), real given names inside OCR fragments, the class's given names listed in sheet order, surname readings within two letters of real surnames, and four staff members' names with their role codes.",
+      "files": [
+        ".evidence/UG1/ocr-column-extraction.json",
+        ".evidence/UG1/ocr-ui-verification.json",
+        ".evidence/UG1/scan-editor-and-easy-wins.json",
+        ".evidence/S1/review-load-photographs.json",
+        ".evidence/S1/review-load-measurement.json",
+        "archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md"
+      ],
+      "fix": "Each real name word, and each word within two edits of one on the affected lines, is replaced by an invented name; the staff list is replaced by its role codes. Meaning, counts and the order of events are unchanged.",
+      "method": "Lines were chosen by a count-only locator (real name words shown as placeholders) and edited by script, so no name was printed or retyped.",
+      "residual": "Lone common Italian given names also occur in fictional test data and mock-ups at the rate expected by coincidence (up to 7 distinct per file in fixtures written from scratch); those were not changed. One S1 line lists common given names used to test sex inference, not roster data; kept."
+    }
+  }
 }

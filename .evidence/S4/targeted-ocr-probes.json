@@ -1,11 +1,23 @@
 {
   "milestone": "S4",
-  "status": "Additional local probes do not yet satisfy the S4 acceptance gate",
+  "status": "Rule erasure integrated 2026-09-25; the probes below were measured and rejected",
   "runtime": "Node v24.19.0",
   "privacy": "Aggregate counts only. Owner photographs, OCR text, row-level truth and derived images remain in ignored data/private/.",
   "baseline": {
-    "candidateRowsByCapture": [20, 21, 29, 21, 20],
-    "reviewFlagsByCapture": [15, 18, 35, 23, 5],
+    "candidateRowsByCapture": [
+      20,
+      21,
+      29,
+      21,
+      20
+    ],
+    "reviewFlagsByCapture": [
+      15,
+      18,
+      35,
+      23,
+      5
+    ],
     "clearestCaptureStudentsMatched": 20,
     "clearestCaptureExpectedStudents": 20,
     "clearestCaptureUnflaggedWrongGivenNames": 1,
@@ -37,7 +49,77 @@
       "scope": "Five prepared captures",
       "result": "Seventy of 100 name-cell crops yielded parsed names. The final audit first reproduced the established 30 wrong name fields and 11 unflagged errors across 100 DOB-matched student appearances. In the hybrid, flagged name fields fell from 52 to 45, but wrong names rose from 30 to 31 and unflagged errors from 11 to 13: zero corrections and one regression. On the clearest capture, flags fell from five to two while unflagged name errors rose from two to three. Added recognition took 23.8 seconds across five captures. An earlier truth table mismatched two of twenty names; its comparisons were discarded before the corrected audit.",
       "decision": "Reject production integration: the lower counter hides more incorrect names."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Tesseract thresholding_method 1 (Leptonica adaptive Otsu)",
+      "scope": "Five captures",
+      "result": "244 flags and 48 extra rows versus 96 and 11.",
+      "decision": "Reject."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Tesseract thresholding_method 2 (Sauvola)",
+      "scope": "Five captures",
+      "result": "70 flags and the shadowed capture recovers structure, but wrong names rise (corrected truth 14 given / 17 surnames versus 11 / 14) with 3 unflagged wrong names outside review.",
+      "decision": "Reject: fewer flags, less correct names."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Page segmentation modes 4, 6, 11 and 12",
+      "scope": "Five captures",
+      "result": "PSM 4: 112 flags (4 on the clearest). PSM 6: 591. PSM 11/12: 950 because every word becomes its own row, although individual words were read slightly better.",
+      "decision": "Reject."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Letter-only symbol confidence from the JSON output",
+      "scope": "Five captures",
+      "result": "Would reach 0 flags on the clearest capture, but per-symbol confidences are 86-99 even inside words Tesseract scores 4-28; unflagged wrong names rise from 11 to 27 (inherited truth).",
+      "decision": "Reject as unsafe: it hides the uncertainty the word score carries."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Greyscale conversion before OCR",
+      "scope": "Five captures",
+      "result": "Tesseract binarizes colour per channel for layout; a pre-converted grey image lost 19 of 100 students on the two 'used' captures.",
+      "decision": "Reject; the eraser repaints only rule pixels and keeps colour."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Horizontal rule erasure",
+      "scope": "Five captures",
+      "result": "Removing row rules makes Tesseract split the table into columns everywhere (about 50 rows per capture).",
+      "decision": "Reject; vertical rules only."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Wider erase bands (2-3 px slant spread, 10 px thickness, 1-1.5 px margin)",
+      "scope": "Five captures",
+      "result": "Clips letters touching a rule; misread rows rise up to 19 of 100 (inherited truth), and a 1 px margin introduced a confident wrong surname.",
+      "decision": "Reject; median rule width plus 0.5 px."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Straight-line rule fit",
+      "scope": "Five captures",
+      "result": "The row-number rule bends about 12 px across the table on the clearest capture; a straight fit rejects it and leaves the surnames flagged.",
+      "decision": "Reject in favour of row-by-row tracking."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Detection on row-pair averaged image (speed)",
+      "scope": "Five captures",
+      "result": "80 flags and 5 wrong given names / 5 wrong surnames versus 66 and 4 / 4.",
+      "decision": "Reject; full-resolution detection kept."
+    },
+    {
+      "date": "2026-09-25",
+      "approach": "Dropping staff-row date fragments",
+      "scope": "Five captures",
+      "result": "No leftover fragment is attributed to a detected staff row, so no effect.",
+      "decision": "Not integrated."
     }
   ],
-  "guardrail": "A lower flag count without validated name correctness is not an S4 pass. No confidence threshold, existing visible text or production OCR path changed."
+  "guardrail": "Every accepted change was measured against name correctness with the private truth table, not only the counter. No confidence threshold changed, and no field is given more confidence than OCR reported for its own words."
 }
