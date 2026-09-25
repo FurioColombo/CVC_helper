@@ -25,7 +25,7 @@ lifecycle.
 | E1 | Complete. Pixel 7 browser journeys cover the 40-student crew layout, exact-session route, and Valutazioni note panel; see `.evidence/E1/`. |
 | UX1 | Complete. Node 24.19.0 `npm run verify` passed (537 tests, domain/compatibility and PWA build), seven Pixel 7 browser journeys passed, and the independent adversarial review ended PASS after the exact-slot persistence defect was fixed. See `.evidence/UX1/`. |
 | UX2 | Complete. Whole-page boat swipe and free-slot selection without popup passed 3 focused Pixel/iPhone browser cases (one intentional skip); Node 24.19.0 `npm run verify` passed 538 tests, domain/compatibility and PWA build. Independent adversarial review: PASS. Four development audits and evidence are in `.evidence/UX2/` and `docs/post-mvp/0_3_0_DEVELOPMENT_AUDIT.md`. |
-| V03 | Automated work and independent code review are done. Physical PC/Android/iPhone speech evidence remains outstanding; V03 stays IN_PROGRESS. |
+| V03 | Complete by the owner's 2026-09-25 acceptance after Android and PC/Chrome use. Speech is borderline usable, slow and imperfect. Apple/iPhone was unavailable and remains untested; see `.evidence/V03/speech-device-evidence.json`. |
 | V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
@@ -82,18 +82,18 @@ implementation, evidence, browser work where required, review, verification,
 completion, clean checkpoint. Use `verify:quick` before a commit and
 `verify:all` at UG2 only.
 
-The 2026-09-25 owner request explicitly puts UX1 and the subsequent UX2 phone
-feedback ahead of the remaining V03 owner-device checks. This is a sequencing
-exception while V03 is
-waiting on external evidence, not a V03 completion. Keep its existing work and
-evidence intact; do not claim physical-device success. The owner explicitly
-approved deployment after adversarial review for phone testing. Pages deploys
-only from `main`.
+The 2026-09-25 owner request put UX1 and the subsequent UX2 phone feedback
+ahead of V03's owner-device checks. The owner later accepted the current speech
+path after Android and PC/Chrome use, with Apple/iPhone unavailable. This closes
+V03 only; the untested Apple path is a reminder for the UG2 release-candidate
+check. Do not claim a physical iPhone PASS. The owner explicitly approved
+deployment after adversarial review for phone testing. Pages deploys only from
+`main`.
 
 ## V03 — Speech accuracy and latency
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 Read `.evidence/UG1/speech-quality-benchmark.json` first. Benchmark the owner's
 ignored conversational Italian corpus with WER and median warm-model latency,
@@ -102,11 +102,14 @@ the usable latency target is at least 20% less. Compare DSP, pause trimming,
 model/quantisation and chunking against the baseline; ship only a measured win.
 Remove the separate `Scarta`/`Usa testo` confirmation: transcript enters the
 editable field directly. Keep cancellation and failure recovery. Update the
-physical-device checklist before UG2. Per `03_TECHNICAL_DECISIONS.md` §5, V03
-also remains open until the owner records labelled physical speech checks on
-PC, Android and iPhone in `.evidence/V03/speech-device-evidence.json`. The UG2
-check must repeat speech on its exact release candidate and cover physical
-phone scanning; V03 device results do not substitute for UG2 evidence.
+physical-device checklist before UG2. The owner accepted V03 on 2026-09-25
+after trying speech on Android and PC/Chrome, while describing it as slow,
+imperfect and only borderline usable. No per-step device timings or recovery
+results were reported. Apple/iPhone could not be tested and remains explicitly
+untested in `.evidence/V03/speech-device-evidence.json`. This is a V03-only
+exception to `03_TECHNICAL_DECISIONS.md` §5, not an iPhone PASS. UG2 must repeat
+speech on its exact release candidate and cover physical phone scanning; V03
+device results do not substitute for UG2 evidence.
 
 **Evidence:** benchmark, verification, browser evidence, speech review and page
 changelog and owner-provided physical-device evidence. The 823 MB corpus and
@@ -122,8 +125,17 @@ measured 54.2% at 9,804 ms. Keep the production model unchanged. Aggregate-only
 results are in `.evidence/V03/speech-quality-benchmark.json`; raw benchmark
 data remains ignored. `npm run verify` passed with 520 tests and four refreshed
 Pixel 7 Chrome journeys passed. The independent review found no remaining
-implementation blocker; owner-run PC/Android/iPhone speech checks remain
-required before V03 can close. No `verify:all` run is claimed.
+implementation blocker. The owner's subsequent Android and PC/Chrome feedback
+accepts the current path with known quality and latency limits; Apple/iPhone
+remains untested and on the UG2 checklist. No `verify:all` run is claimed.
+
+**Closure, 2026-09-25:** Node 24.19.0 `npm run verify` passed 538 tests,
+domain/compatibility checks and the production PWA build. The earlier four
+focused Pixel 7 browser journeys remain the browser evidence; they were not
+rerun for this owner-acceptance update. The independent closure review is
+PASS_WITH_FINDINGS with zero blockers. The owner's device report accepts speech
+as borderline usable after Android and PC/Chrome use. Apple/iPhone and detailed
+physical checklist steps are unverified and remain on the UG2 checklist.
 
 ## V05 — LLM-assisted paste path
 

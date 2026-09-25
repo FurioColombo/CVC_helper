@@ -9,11 +9,15 @@ Use the same commit on every device in a milestone run. The PC can use
 a **trusted HTTPS** address for that build; plain LAN HTTP does not grant the
 required camera/microphone access. Record the URL, commit, browser and OS version.
 
-## V03 speech checks: required before V03 closes
+## V03 speech checks
 
 Record the owner's results, one entry per physical target, in
 `.evidence/V03/speech-device-evidence.json`. All three targets are required by
 `03_TECHNICAL_DECISIONS.md` §5. Do not store the utterance or recognized text.
+The owner accepted V03 on 2026-09-25 after Android and PC/Chrome use despite
+slow, imperfect recognition. Apple/iPhone was unavailable and remains untested.
+This exception closes V03 only; the unreported detailed checks below are not
+marked PASS. Repeat the release-candidate checks at UG2.
 
 1. Open a student's note editor. Type a short prefix, then tap **Detta**.
    Confirm permission is requested only after the tap.

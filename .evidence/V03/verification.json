@@ -1,26 +1,30 @@
 {
   "milestone": "V03",
-  "status": "PASS_AUTOMATED_CHECKS",
-  "recordedAt": "2026-09-24T19:18:01Z",
+  "status": "PASS",
+  "recordedAt": "2026-09-25T18:00:57Z",
   "runtime": {
     "node": "v24.19.0"
   },
   "checks": [
     {
       "command": "npm run verify",
-      "result": "PASS",
-      "details": "Lint, formatting, typecheck, 46 test files / 520 tests, repository and domain checks, the 0.1.0 compatibility fixture (22 rows), production PWA build and PWA check passed."
+      "status": "PASS",
+      "details": "Rerun on the current working tree with Node 24.19.0: lint, formatting, typecheck, 46 test files / 538 tests, repository and domain checks, the 0.1.0 compatibility fixture (22 rows), production PWA build and PWA check passed."
     },
     {
       "command": "npm run verify:e2e -- v03-dictation-direct-insert.spec.ts v02-dictation-layout.spec.ts --project=pixel-7-chrome",
-      "result": "PASS",
-      "details": "4 browser journeys passed at 2026-09-24T19:16:43Z; see browser-evidence.json.",
+      "status": "PASS",
+      "details": "4 browser journeys previously passed at 2026-09-24T19:16:43Z; not rerun for this owner-acceptance-only closure. See browser-evidence.json.",
       "recordedAt": "2026-09-24T19:16:43Z"
     }
   ],
   "notRun": [
     "npm run verify:all (reserved for the UG2 gate)",
-    "Physical microphone checks on owner devices"
+    "Physical Apple/iPhone microphone check",
+    "Detailed per-step physical speech checklist on the reported Android and PC/Chrome devices"
   ],
-  "releaseState": "V03 remains in progress until the owner records labelled physical speech checks on the required PC, Android and iPhone devices. These browser tests do not simulate physical-device success."
+  "attempts": [
+    "The first 2026-09-25 verify attempt passed 538 tests but stopped at check:repository because the plan was prematurely marked COMPLETE while the manifest still said IN_PROGRESS. The plan was restored to IN_PROGRESS and the full verify command passed."
+  ],
+  "releaseState": "The owner accepts V03 as closed after Android and PC/Chrome use despite borderline speech quality and latency. Apple/iPhone is untested and remains on the UG2 release-candidate checklist. No simulated physical-device PASS is claimed."
 }

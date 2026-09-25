@@ -56,6 +56,6 @@
     "Results describe this 56-clip local corpus and the measured machine/runtime only.",
     "The corpus condition was clean; performance under noisy speech conditions is not established.",
     "No per-clip values, audio, reference transcripts or hypotheses are included in public evidence.",
-    "Physical microphone checks remain outstanding and are tracked separately."
+    "Subsequent owner device acceptance and the untested Apple/iPhone reminder are tracked separately in speech-device-evidence.json."
   ]
 }

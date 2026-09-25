@@ -580,7 +580,7 @@
     {
       "id": "V03",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/V03/verification.json",

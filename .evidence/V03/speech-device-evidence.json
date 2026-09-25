@@ -1,0 +1,34 @@
+{
+  "milestone": "V03",
+  "reportedAt": "2026-09-25",
+  "source": "Owner feedback in the active Codex conversation",
+  "acceptance": "The owner accepts the current speech path as closed for V03. Speech is borderline usable, somewhat slow and imperfect, after use on Android and on Chrome/PC.",
+  "buildAndVersions": "The owner did not provide an exact build, URL, browser version, OS version or device timings with this feedback.",
+  "targets": [
+    {
+      "target": "Android",
+      "status": "OWNER_REPORTED_USABLE_WITH_LIMITATIONS",
+      "observation": "Speech was tried and judged borderline usable, but slow and imperfect.",
+      "detailedChecklist": "Not reported; no per-step PASS is claimed."
+    },
+    {
+      "target": "PC / Chrome",
+      "status": "OWNER_REPORTED_USABLE_WITH_LIMITATIONS",
+      "observation": "Speech was tried and judged borderline usable, but slow and imperfect.",
+      "detailedChecklist": "Not reported; the exact browser/device mapping and per-step results were not supplied."
+    },
+    {
+      "target": "Apple iPhone / Safari",
+      "status": "NOT_TESTED",
+      "reason": "The owner cannot test on an Apple device at present.",
+      "reminder": "Run and record the physical Apple/iPhone speech check when a device becomes available. Never infer a PASS from WebKit emulation."
+    }
+  ],
+  "unreportedChecks": [
+    "Exact release commit and browser/OS versions",
+    "Cold and warm loading and recording-to-insertion times",
+    "Permission, denial, cancellation and retry behavior on physical devices",
+    "Edit, persistence and all speech-host checks on physical devices"
+  ],
+  "scope": "Owner acceptance closes V03 only. UG2 retains its independent exact-release-candidate physical-device checklist. No raw utterance, transcript or audio is recorded."
+}

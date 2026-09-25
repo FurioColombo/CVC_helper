@@ -134,6 +134,12 @@ Audio is transient. Tests use deterministic audio fixtures, but milestone closur
 also requires labelled physical PC/Android/iPhone evidence. Record latency rather
 than inventing a fixed threshold.
 
+The owner made a V03-only acceptance exception on 2026-09-25: Android and
+PC/Chrome use was sufficient to close that milestone with the current slow,
+imperfect speech path. Apple/iPhone was unavailable, remains untested and stays
+on the UG2 release-candidate checklist. Do not convert this exception into a
+physical iPhone PASS.
+
 OCR tests use an anonymous/synthetic corpus with field/person truth, poor-image and
 false-row cases. Measure correct readable fields associated with the correct
 person. Full-screen camera, free rotation/crop and mandatory review are UI

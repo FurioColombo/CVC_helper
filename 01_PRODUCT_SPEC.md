@@ -552,6 +552,11 @@ shows invented progress. Reliability is verified on PC, Android and iPhone with
 automated fixtures plus physical checks. Latency is measured and reported; no
 fixed threshold is invented before evidence exists.
 
+For V03 only, the owner accepted the existing speech path on 2026-09-25 after
+using it on Android and PC/Chrome, despite slow and imperfect recognition.
+Physical Apple/iPhone speech was unavailable and is not verified. Keep it on
+the UG2 release-candidate checklist; V03 closure does not imply an iPhone pass.
+
 OCR uses the acquisition/review contract in section 3.6. Quality is measured
 against anonymous/synthetic field/person truth. Aim near 90% of readable fields on
 typical fixtures while keeping low-confidence readings visible for manual review
