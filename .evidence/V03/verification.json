@@ -1,0 +1,26 @@
+{
+  "milestone": "V03",
+  "status": "PASS_AUTOMATED_CHECKS",
+  "recordedAt": "2026-09-24T19:18:01Z",
+  "runtime": {
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "command": "npm run verify",
+      "result": "PASS",
+      "details": "Lint, formatting, typecheck, 46 test files / 520 tests, repository and domain checks, the 0.1.0 compatibility fixture (22 rows), production PWA build and PWA check passed."
+    },
+    {
+      "command": "npm run verify:e2e -- v03-dictation-direct-insert.spec.ts v02-dictation-layout.spec.ts --project=pixel-7-chrome",
+      "result": "PASS",
+      "details": "4 browser journeys passed at 2026-09-24T19:16:43Z; see browser-evidence.json.",
+      "recordedAt": "2026-09-24T19:16:43Z"
+    }
+  ],
+  "notRun": [
+    "npm run verify:all (reserved for the UG2 gate)",
+    "Physical microphone checks on owner devices"
+  ],
+  "releaseState": "V03 remains in progress until the owner records labelled physical speech checks on the required PC, Android and iPhone devices. These browser tests do not simulate physical-device success."
+}

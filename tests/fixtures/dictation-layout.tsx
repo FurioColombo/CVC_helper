@@ -100,18 +100,11 @@ function DictationLayoutFixture() {
     },
     stop: () => setStatus("processing"),
     cancel: () => setStatus("idle"),
-    accept: () => setStatus("idle"),
     syncValue: () => undefined,
   }
 
   const trigger = <DictationTrigger dictation={dictation} naming={naming} />
-  const panels = (
-    <DictationPanels
-      dictation={dictation}
-      naming={naming}
-      reviewHint="Rileggi la trascrizione sintetica prima di confermarla."
-    />
-  )
+  const panels = <DictationPanels dictation={dictation} naming={naming} />
   const textarea = (
     <textarea
       aria-label={label}

@@ -47,6 +47,12 @@ export const TRANSCRIPTION_GUARD = {
   condition_on_previous_text: false,
 } as const
 
+export const PRODUCTION_SPEECH_CONFIG = {
+  modelId: "onnx-community/whisper-base",
+  dtype: "q8",
+  generationOptions: TRANSCRIPTION_GUARD,
+} as const
+
 type ModelProgress = { status?: string; progress?: number }
 type ModelProgressListener = (percent?: number) => void
 type TranscriberLoader = (
@@ -66,8 +72,6 @@ export interface LocalSpeechProviderDependencies {
  * warranted. It costs about 73 MB of first-use download against 39 MB, once,
  * and then runs offline from cache.
  */
-const MODEL_ID = "onnx-community/whisper-base"
-
 function readFourCharacters(view: DataView, offset: number) {
   return String.fromCharCode(
     view.getUint8(offset),
@@ -207,19 +211,25 @@ async function decodeAudio(audio: Blob) {
 
 async function loadWhisperTranscriber(onProgress: ModelProgressListener) {
   const { pipeline } = await import("@huggingface/transformers")
-  return (await pipeline("automatic-speech-recognition", MODEL_ID, {
-    dtype: "q8",
-    progress_callback: (event: ModelProgress) => {
-      if (event.status !== "progress_total" && event.status !== "ready") return
-      const percent =
-        event.status === "progress_total" && typeof event.progress === "number"
-          ? Math.max(0, Math.min(100, Math.round(event.progress)))
-          : event.status === "ready"
-            ? 100
-            : undefined
-      onProgress(percent)
+  return (await pipeline(
+    "automatic-speech-recognition",
+    PRODUCTION_SPEECH_CONFIG.modelId,
+    {
+      dtype: PRODUCTION_SPEECH_CONFIG.dtype,
+      progress_callback: (event: ModelProgress) => {
+        if (event.status !== "progress_total" && event.status !== "ready")
+          return
+        const percent =
+          event.status === "progress_total" &&
+          typeof event.progress === "number"
+            ? Math.max(0, Math.min(100, Math.round(event.progress)))
+            : event.status === "ready"
+              ? 100
+              : undefined
+        onProgress(percent)
+      },
     },
-  })) as SpeechTranscriber
+  )) as SpeechTranscriber
 }
 
 /**
@@ -277,7 +287,7 @@ export function createLocalItalianSpeechProvider(
       const result = await engine(await decode(audio), {
         language: "italian",
         task: "transcribe",
-        ...TRANSCRIPTION_GUARD,
+        ...PRODUCTION_SPEECH_CONFIG.generationOptions,
       })
       return result.text.trim()
     },

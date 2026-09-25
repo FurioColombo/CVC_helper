@@ -1,0 +1,61 @@
+{
+  "milestone": "V03",
+  "status": "COMPLETE_NO_WINNER",
+  "recordedAt": "2026-09-24T18:45:46Z",
+  "runtime": {
+    "node": "v24.19.0"
+  },
+  "corpus": {
+    "clipCount": 56,
+    "conditions": ["clean"],
+    "measuredRounds": 3,
+    "warmupRoundsExcluded": true,
+    "rawAudioAndTranscripts": "Ignored local data only; omitted from this evidence."
+  },
+  "method": {
+    "latency": "Median warm latency per clip across three measured rounds. Timing starts inside the browser callback after Playwright transfers the audio bytes, and includes decode, preprocessing and inference.",
+    "quality": "Word error rate (WER), lower is better.",
+    "acceptanceRule": "Ship only a variant with improved quality and no increase in warm latency; the aspirational usable-latency target is at least 20% lower than baseline.",
+    "variants": ["current", "currenttrim", "currentdsp", "currentq4", "tinyguard", "currentchunked"]
+  },
+  "aggregateResults": {
+    "clean": {
+      "clipCount": 56,
+      "werPercent": {
+        "current": 53.8,
+        "currenttrim": 52.5,
+        "currentdsp": 52.5,
+        "currentq4": 50.4,
+        "tinyguard": 70.4,
+        "currentchunked": 54.2
+      },
+      "medianWarmLatencyMs": {
+        "current": 5308,
+        "currenttrim": 5533,
+        "currentdsp": 5511,
+        "currentq4": 9594,
+        "tinyguard": 2690,
+        "currentchunked": 9804
+      },
+      "medianPerClipWerPercent": {"current": 47.6, "currenttrim": 52.4, "currentdsp": 45.9, "currentq4": 41.8, "tinyguard": 72.6, "currentchunked": 51.0},
+      "loopRatePercent": {"current": 0, "currenttrim": 0, "currentdsp": 0, "currentq4": 0, "tinyguard": 0, "currentchunked": 0}
+    },
+    "byVoiceGroup": {
+      "male": {
+        "werPercent": {"current": 55.9, "currenttrim": 52.9, "currentdsp": 56.1, "currentq4": 52.9, "tinyguard": 75.3, "currentchunked": 56.5},
+        "medianWarmLatencyMs": {"current": 5507, "currenttrim": 5607, "currentdsp": 5596, "currentq4": 10483, "tinyguard": 2734, "currentchunked": 9953}
+      },
+      "female": {
+        "werPercent": {"current": 51.7, "currenttrim": 52.1, "currentdsp": 49.1, "currentq4": 48.1, "tinyguard": 65.7, "currentchunked": 52.1},
+        "medianWarmLatencyMs": {"current": 5248, "currenttrim": 5299, "currentdsp": 5386, "currentq4": 9285, "tinyguard": 2612, "currentchunked": 9781}
+      }
+    }
+  },
+  "decision": "Retain the production whisper-base q8 configuration. Trim and DSP slightly improve overall WER but increase latency; q4 improves WER with substantially higher latency; tinyguard is faster with materially worse WER; chunking is worse on both measures. No candidate meets the acceptance rule.",
+  "limitations": [
+    "Results describe this 56-clip local corpus and the measured machine/runtime only.",
+    "The corpus condition was clean; performance under noisy speech conditions is not established.",
+    "No per-clip values, audio, reference transcripts or hypotheses are included in public evidence.",
+    "Physical microphone checks remain outstanding and are tracked separately."
+  ]
+}

@@ -1,6 +1,26 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+const speechMocks = vi.hoisted(() => ({
+  prepareSpeechTranscription: vi.fn(),
+  transcribeAudio: vi.fn(),
+}))
+
+vi.mock("@/capabilities/speech", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/capabilities/speech")>()
+  return {
+    ...actual,
+    prepareSpeechTranscription: speechMocks.prepareSpeechTranscription,
+    transcribeAudio: speechMocks.transcribeAudio,
+  }
+})
 
 vi.mock("@/persistence/students", () => ({
   assessStudentDeletion: vi.fn(),
@@ -17,6 +37,27 @@ vi.mock("@/persistence/evaluations", () => ({
   listCourseEvaluations: vi.fn().mockResolvedValue([]),
   listStudentEvaluations: vi.fn().mockResolvedValue([]),
 }))
+
+class FakeMediaRecorder {
+  mimeType = "audio/webm"
+  state: RecordingState = "inactive"
+  ondataavailable: ((event: BlobEvent) => void) | null = null
+  onstop: (() => void) | null = null
+
+  constructor(stream: MediaStream) {
+    void stream
+  }
+
+  start() {
+    this.state = "recording"
+  }
+
+  stop() {
+    this.state = "inactive"
+    this.ondataavailable?.({ data: new Blob(["voice"]) } as BlobEvent)
+    this.onstop?.()
+  }
+}
 
 import { StudentManagement } from "@/features/students/StudentManagement"
 import type { CourseRecord } from "@/persistence/courses"
@@ -72,11 +113,158 @@ describe("StudentManagement", () => {
     editStudent.mockReset()
     removeStudent.mockReset()
     getStudents.mockResolvedValue([])
+    speechMocks.prepareSpeechTranscription.mockReset()
+    speechMocks.prepareSpeechTranscription.mockResolvedValue(undefined)
+    speechMocks.transcribeAudio.mockReset()
     addStudent.mockResolvedValue(MARIO)
     changeActive.mockResolvedValue(undefined)
     assessDeletion.mockResolvedValue({ canDelete: true, references: [] })
     editStudent.mockResolvedValue(undefined)
     removeStudent.mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    cleanup()
+    Object.defineProperty(globalThis, "MediaRecorder", {
+      configurable: true,
+      value: originalMediaRecorder,
+    })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: originalMediaDevices,
+    })
+  })
+
+  const originalMediaRecorder = globalThis.MediaRecorder
+  const originalMediaDevices = navigator.mediaDevices
+
+  it("waits to save a new student until note dictation finishes", async () => {
+    let resolveTranscript!: (transcript: string) => void
+    speechMocks.transcribeAudio.mockReturnValue(
+      new Promise<string>((resolve) => {
+        resolveTranscript = resolve
+      }),
+    )
+    Object.defineProperty(globalThis, "MediaRecorder", {
+      configurable: true,
+      value: FakeMediaRecorder,
+    })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    })
+
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+    await screen.findByRole("heading", { name: "Allievi" })
+    await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+    await user.click(
+      screen.getAllByRole("button", { name: "Aggiungi allievo" })[0]!,
+    )
+    await user.type(screen.getByLabelText("Nome"), "Mario")
+    await user.type(screen.getByLabelText("Cognome"), "Rossi")
+    await user.type(screen.getByLabelText(/^Data di nascita/), "2010-01-01")
+
+    await user.click(
+      screen.getByRole("button", { name: "Detta nota iniziale" }),
+    )
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Termina dettatura nota iniziale",
+      }),
+    )
+    await waitFor(() => expect(speechMocks.transcribeAudio).toHaveBeenCalled())
+
+    const saveButton = screen.getByRole("button", { name: "Salva allievo" })
+    expect(saveButton).toBeDisabled()
+    await user.click(saveButton)
+    expect(addStudent).not.toHaveBeenCalled()
+
+    resolveTranscript("equipaggio sicuro")
+    await waitFor(() => expect(saveButton).toBeEnabled())
+    expect(screen.getByLabelText("Nota iniziale")).toHaveValue(
+      "equipaggio sicuro",
+    )
+    await user.click(saveButton)
+
+    await waitFor(() =>
+      expect(addStudent).toHaveBeenCalledWith(
+        "course-1",
+        expect.objectContaining({ initialNote: "equipaggio sicuro" }),
+      ),
+    )
+  })
+
+  it("keeps an edit open when the back action is tapped during dictation", async () => {
+    let resolveTranscript!: (transcript: string) => void
+    speechMocks.transcribeAudio.mockReturnValue(
+      new Promise<string>((resolve) => {
+        resolveTranscript = resolve
+      }),
+    )
+    getStudents.mockResolvedValue([MARIO])
+    Object.defineProperty(globalThis, "MediaRecorder", {
+      configurable: true,
+      value: FakeMediaRecorder,
+    })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    })
+
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.click(
+      screen.getByRole("button", { name: "Detta nota del corso" }),
+    )
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Termina dettatura nota del corso",
+      }),
+    )
+    await waitFor(() => expect(speechMocks.transcribeAudio).toHaveBeenCalled())
+
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+    )
+    expect(
+      screen.getByText("Attendi la fine della dettatura prima di uscire."),
+    ).toBeVisible()
+    expect(
+      screen.getByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    expect(editStudent).not.toHaveBeenCalled()
+
+    resolveTranscript("controllare la deriva")
+    expect(await screen.findByLabelText("Nota del corso")).toHaveValue(
+      "controllare la deriva",
+    )
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Attendi la fine della dettatura prima di uscire."),
+      ).not.toBeInTheDocument(),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+    )
+
+    await waitFor(() =>
+      expect(editStudent).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({ courseNote: "controllare la deriva" }),
+      ),
+    )
   })
 
   it("creates a student through the manual form", async () => {

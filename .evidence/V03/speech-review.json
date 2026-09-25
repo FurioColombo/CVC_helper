@@ -1,0 +1,48 @@
+{
+  "milestone": "V03",
+  "reviewer": "independent V03 benchmark and safety reviewer",
+  "reviewedAt": "2026-09-24T19:17:00Z",
+  "verdict": "FAIL",
+  "blockers": [
+    "Owner-run speech observations on PC, Android and iPhone are still required before V03 closes. Browser fixtures do not replace physical microphone checks. UG2 must repeat speech checks on its exact release candidate."
+  ],
+  "importantFindings": [
+    {
+      "finding": "The measured decision is supported: no candidate improves WER without increasing warm latency, so retaining production whisper-base q8 is appropriate. Trimming and DSP improve WER to 52.5% from 53.8% but are slower; q4 improves WER to 50.4% but is substantially slower; tinyguard is faster but has much worse WER; chunking is worse on both measures.",
+      "evidence": ".evidence/V03/speech-quality-benchmark.json"
+    },
+    {
+      "finding": "The benchmark timer starts after Playwright transfers audio bytes and includes decoding, preprocessing and inference. The measured corpus is clean-only; noisy-condition performance is not established.",
+      "evidence": "scripts/speech-bench/bench.mjs and .evidence/V03/speech-quality-benchmark.json"
+    },
+    {
+      "finding": "The output writer validates before temporary-file creation and before atomic rename; exclusive temp creation, link checks and cleanup cover the reviewed output-path risks. Tests exercise rejected revalidation and successful replacement.",
+      "evidence": "scripts/speech-bench/result-path.mjs and tests/speech-bench-metrics.test.js"
+    },
+    {
+      "finding": "Student-note save is disabled during unresolved dictation, and header-back is blocked until transcription completes. Browser evidence uses synthetic audio and makes no physical microphone claim.",
+      "evidence": "StudentManagement and dictation tests, plus .evidence/V03/browser-evidence.json"
+    }
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "Benchmark implementation, variant mapping, scheduling, metrics, result-path safeguards, and tests.",
+    "Aggregate V03 benchmark, verification and browser evidence, plan, milestone manifest, and owner-run device checklist.",
+    "Production speech configuration and dictated-note save/back code and tests.",
+    "No data/ paths or raw benchmark output."
+  ],
+  "testsRunByReviewer": [],
+  "verificationRunAfterReview": {
+    "command": "npm run verify",
+    "runtime": "v24.19.0",
+    "result": "PASS",
+    "details": "46 test files / 520 tests, repository/domain/compatibility checks and production PWA build passed."
+  },
+  "browserRunAfterReview": {
+    "command": "npm run verify:e2e -- v03-dictation-direct-insert.spec.ts v02-dictation-layout.spec.ts --project=pixel-7-chrome",
+    "runtime": "v24.19.0",
+    "result": "4 passed",
+    "recordedAt": "2026-09-24T19:16:43Z"
+  },
+  "recordingNote": "The reviewer also reported that this required artifact was absent during inspection. This file now records the review; the remaining blocker is owner-run physical-device evidence."
+}

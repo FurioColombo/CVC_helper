@@ -1,5 +1,21 @@
 import { createRequire } from "node:module"
-import { readFileSync, writeFileSync } from "node:fs"
+import { execFileSync, spawnSync } from "node:child_process"
+import { readFileSync, realpathSync } from "node:fs"
+import { join, relative } from "node:path"
+import {
+  buildRoundSchedule,
+  loopRate,
+  median,
+  medianPerClipLatency,
+  rotateRoundGroups,
+} from "./metrics.mjs"
+import {
+  isAllowedBenchmarkResultPath,
+  isPathWithinDirectory,
+  resolveBenchmarkOutputPath,
+  toGitPathspec,
+  writeBenchmarkResultsSafely,
+} from "./result-path.mjs"
 
 // Resolved from this file rather than from an absolute path, so the benchmark
 // runs on any checkout. Playwright is a devDependency of the repository, not of
@@ -8,10 +24,69 @@ const require = createRequire(import.meta.url)
 const { chromium } = require("playwright")
 
 const CORPUS = process.argv[2]
-const URL = process.argv[3] ?? "http://localhost:5173/"
+const APP_URL = process.argv[3] ?? "http://localhost:5173/"
 const VARIANTS = (process.argv[4] ?? "baseline,dsp").split(",")
 const CONDITIONS = (process.argv[5] ?? "").split(",").filter(Boolean)
+const WARM_ROUNDS = Number(process.env.SPEECH_BENCH_ROUNDS ?? 3)
 
+if (!Number.isInteger(WARM_ROUNDS) || WARM_ROUNDS < 1) {
+  throw new Error("SPEECH_BENCH_ROUNDS must be a positive integer")
+}
+
+function resolveResultsPath() {
+  const corpusPath = realpathSync(CORPUS)
+  const candidate = join(corpusPath, "results.json")
+  const resultsPath = resolveBenchmarkOutputPath(candidate)
+  const repositoryRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd: import.meta.dirname,
+    encoding: "utf8",
+  }).trim()
+  let isIgnored = false
+  let isTracked = false
+
+  if (isPathWithinDirectory(resultsPath, repositoryRoot)) {
+    const relativeResultsPath = toGitPathspec(
+      relative(repositoryRoot, resultsPath),
+    )
+    const trackedCheck = spawnSync(
+      "git",
+      ["ls-files", "--error-unmatch", "--", relativeResultsPath],
+      { cwd: repositoryRoot, windowsHide: true },
+    )
+    if (trackedCheck.error) throw trackedCheck.error
+    if (trackedCheck.status === 0) isTracked = true
+    else if (trackedCheck.status !== 1) {
+      throw new Error("Git could not verify whether results.json is tracked")
+    }
+
+    const ignoreCheck = spawnSync(
+      "git",
+      ["check-ignore", "--quiet", "--", relativeResultsPath],
+      { cwd: repositoryRoot, windowsHide: true },
+    )
+    if (ignoreCheck.error) throw ignoreCheck.error
+    if (ignoreCheck.status === 0) isIgnored = true
+    else if (ignoreCheck.status !== 1) {
+      throw new Error("Git could not verify whether results.json is ignored")
+    }
+  }
+
+  if (
+    !isAllowedBenchmarkResultPath(
+      resultsPath,
+      repositoryRoot,
+      isIgnored,
+      isTracked,
+    )
+  ) {
+    throw new Error(
+      "Refusing to write per-clip speech benchmark results inside the repository unless results.json is Git-ignored",
+    )
+  }
+  return resultsPath
+}
+
+const RESULTS_PATH = resolveResultsPath()
 const manifest = JSON.parse(readFileSync(`${CORPUS}/manifest.json`, "utf8"))
 const entries = CONDITIONS.length
   ? manifest.filter((m) => CONDITIONS.includes(m.condition))
@@ -48,106 +123,217 @@ function wer(reference, hypothesis) {
 }
 
 const browser = await chromium.launch()
-const page = await browser.newPage()
-page.on("console", (m) => {
-  if (m.type() === "error") console.log("PAGE ERROR:", m.text().slice(0, 160))
-})
-await page.goto(URL)
-await page.waitForTimeout(2000)
-await page.addScriptTag({
-  content: readFileSync(process.argv[6] ?? CORPUS + "/../variants.js", "utf8"),
-})
+try {
+  const page = await browser.newPage()
+  await page.goto(APP_URL)
+  await page.waitForTimeout(2000)
+  const productionConfig = await page.evaluate(async () => {
+    const { PRODUCTION_SPEECH_CONFIG } =
+      await import("/src/capabilities/speech.ts")
+    return PRODUCTION_SPEECH_CONFIG
+  })
+  await page.evaluate((config) => {
+    window.__productionSpeechConfig = config
+  }, productionConfig)
+  await page.addScriptTag({
+    content: readFileSync(
+      process.argv[6] ?? new URL("./variants.js", import.meta.url),
+      "utf8",
+    ),
+  })
+  const variantGroups = await page.evaluate((names) => {
+    return window.__getVariantGroups(names)
+  }, VARIANTS)
 
-const results = []
-for (const variant of VARIANTS) {
-  console.log(`\n### loading variant: ${variant}`)
-  await page.evaluate(async (v) => {
-    await window.__prepareVariant(v)
-  }, variant)
-  for (const entry of entries) {
-    const b64 = readFileSync(`${CORPUS}/noisy/${entry.file}`).toString("base64")
-    const text = await page.evaluate(
-      async ([v, data]) => window.__runVariant(v, data),
-      [variant, b64],
-    )
-    const { errors, words } = wer(entry.text, text ?? "")
-    results.push({ variant, ...entry, hypothesis: text, errors, words })
-    process.stdout.write(".")
+  const resultsByVariant = VARIANTS.map((variant) =>
+    entries.map((entry) => ({
+      variant,
+      ...entry,
+      hypothesis: null,
+      errors: 0,
+      words: 0,
+      warmLatencyMs: [],
+      medianWarmLatencyMs: null,
+    })),
+  )
+  const results = resultsByVariant.flat()
+  const warmupBytes = entries.length
+    ? new Uint8Array(readFileSync(`${CORPUS}/noisy/${entries[0].file}`))
+    : null
+
+  for (let roundIndex = 0; roundIndex < WARM_ROUNDS; roundIndex += 1) {
+    console.log(`Running warm round ${roundIndex + 1}/${WARM_ROUNDS}`)
+    if (entries.length) {
+      for (const [groupPosition, group] of rotateRoundGroups(
+        variantGroups,
+        roundIndex,
+      ).entries()) {
+        const firstVariant = group.variants[0].variant
+        console.log(
+          `Loading model group ${groupPosition + 1}/${variantGroups.length}`,
+        )
+        await page.evaluate(
+          (name) => window.__prepareVariant(name),
+          firstVariant,
+        )
+        try {
+          for (const { variant } of rotateRoundGroups(
+            group.variants,
+            roundIndex,
+          )) {
+            await page.evaluate(
+              async ([name, data]) => window.__runVariant(name, data),
+              [variant, warmupBytes],
+            )
+          }
+
+          for (const { entry, entryIndex, variants } of buildRoundSchedule(
+            group.variants,
+            entries,
+            roundIndex,
+          )) {
+            const audioBytes = new Uint8Array(
+              readFileSync(`${CORPUS}/noisy/${entry.file}`),
+            )
+            for (const { variant, variantIndex } of variants) {
+              const measurement = await page.evaluate(
+                async ([name, data]) => {
+                  const started = performance.now()
+                  const text = await window.__runVariant(name, data)
+                  return { text, elapsedMs: performance.now() - started }
+                },
+                [variant, audioBytes],
+              )
+              const row = resultsByVariant[variantIndex][entryIndex]
+              row.warmLatencyMs.push(measurement.elapsedMs)
+              if (roundIndex === 0) {
+                row.hypothesis = measurement.text
+                const { errors, words } = wer(
+                  entry.text,
+                  measurement.text ?? "",
+                )
+                row.errors = errors
+                row.words = words
+              }
+            }
+          }
+        } finally {
+          await page.evaluate(
+            (name) => window.__releaseVariantGroup(name),
+            firstVariant,
+          )
+        }
+      }
+    }
   }
-}
-await browser.close()
 
-writeFileSync(`${CORPUS}/results.json`, JSON.stringify(results, null, 2))
-
-function median(values) {
-  if (!values.length) return 0
-  const sorted = [...values].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
-}
-
-function loopRate(rows) {
-  if (!rows.length) return "n/a"
-  const looped = rows.filter(
-    (r) =>
-      String(r.hypothesis).split(/s+/).filter(Boolean).length > r.words * 3,
-  ).length
-  return ((100 * looped) / rows.length).toFixed(0)
-}
-
-function medianWer(rows) {
-  if (!rows.length) return "n/a"
-  return median(
-    rows.map((r) => (100 * r.errors) / Math.max(1, r.words)),
-  ).toFixed(1)
-}
-
-function summarize(rows) {
-  const errors = rows.reduce((a, r) => a + r.errors, 0)
-  const words = rows.reduce((a, r) => a + r.words, 0)
-  return words ? ((100 * errors) / words).toFixed(1) : "n/a"
-}
-
-console.log("\n\n=== WER %% (lower is better) ===")
-const conditions = [...new Set(results.map((r) => r.condition))]
-const header = [
-  "condition".padEnd(12),
-  ...VARIANTS.map((v) => v.padStart(10)),
-].join(" ")
-console.log(header)
-for (const c of conditions) {
-  const row = [c.padEnd(12)]
-  for (const v of VARIANTS) {
-    row.push(
-      summarize(
-        results.filter((r) => r.condition === c && r.variant === v),
-      ).padStart(10),
-    )
+  for (const row of results) {
+    row.medianWarmLatencyMs = median(row.warmLatencyMs)
   }
-  console.log(row.join(" "))
-}
-console.log("-".repeat(header.length))
-for (const voice of ["male", "female"]) {
-  const row = [`${voice}`.padEnd(12)]
-  for (const v of VARIANTS) {
-    row.push(
-      summarize(
-        results.filter((r) => r.voice === voice && r.variant === v),
-      ).padStart(10),
-    )
+
+  // Per-clip transcripts and timings stay beside the ignored input corpus.
+  writeBenchmarkResultsSafely(
+    RESULTS_PATH,
+    JSON.stringify(results, null, 2),
+    resolveResultsPath,
+  )
+
+  function medianWer(rows) {
+    if (!rows.length) return "n/a"
+    return median(
+      rows.map((r) => (100 * r.errors) / Math.max(1, r.words)),
+    ).toFixed(1)
   }
-  console.log(row.join(" "))
+
+  function summarize(rows) {
+    const errors = rows.reduce((a, r) => a + r.errors, 0)
+    const words = rows.reduce((a, r) => a + r.words, 0)
+    return words ? ((100 * errors) / words).toFixed(1) : "n/a"
+  }
+
+  function summarizeLatency(rows) {
+    const latency = medianPerClipLatency(rows)
+    return latency === null ? "n/a" : latency.toFixed(0)
+  }
+
+  console.log("\n\n=== WER %% (lower is better) ===")
+  const conditions = [...new Set(results.map((r) => r.condition))]
+  const header = [
+    "condition".padEnd(12),
+    ...VARIANTS.map((v) => v.padStart(10)),
+  ].join(" ")
+  console.log(header)
+  for (const c of conditions) {
+    const row = [c.padEnd(12)]
+    for (const v of VARIANTS) {
+      row.push(
+        summarize(
+          results.filter((r) => r.condition === c && r.variant === v),
+        ).padStart(10),
+      )
+    }
+    console.log(row.join(" "))
+  }
+  console.log("-".repeat(header.length))
+  for (const voice of ["male", "female"]) {
+    const row = [`${voice}`.padEnd(12)]
+    for (const v of VARIANTS) {
+      row.push(
+        summarize(
+          results.filter((r) => r.voice === voice && r.variant === v),
+        ).padStart(10),
+      )
+    }
+    console.log(row.join(" "))
+  }
+  console.log("-".repeat(header.length))
+  const med = ["MEDIAN WER".padEnd(12)]
+  for (const v of VARIANTS)
+    med.push(medianWer(results.filter((r) => r.variant === v)).padStart(10))
+  console.log(med.join(" "))
+  const loops = ["LOOP %".padEnd(12)]
+  for (const v of VARIANTS)
+    loops.push(loopRate(results.filter((r) => r.variant === v)).padStart(10))
+  console.log(loops.join(" "))
+  const total = ["OVERALL".padEnd(12)]
+  for (const v of VARIANTS)
+    total.push(summarize(results.filter((r) => r.variant === v)).padStart(10))
+  console.log(total.join(" "))
+
+  console.log(
+    `\n=== MEDIAN WARM LATENCY ms (per-clip median, ${WARM_ROUNDS} measured rounds) ===`,
+  )
+  console.log(header)
+  for (const c of conditions) {
+    const row = [c.padEnd(12)]
+    for (const v of VARIANTS) {
+      row.push(
+        summarizeLatency(
+          results.filter((r) => r.condition === c && r.variant === v),
+        ).padStart(10),
+      )
+    }
+    console.log(row.join(" "))
+  }
+  console.log("-".repeat(header.length))
+  for (const voice of ["male", "female"]) {
+    const row = [`${voice}`.padEnd(12)]
+    for (const v of VARIANTS) {
+      row.push(
+        summarizeLatency(
+          results.filter((r) => r.voice === voice && r.variant === v),
+        ).padStart(10),
+      )
+    }
+    console.log(row.join(" "))
+  }
+  console.log("-".repeat(header.length))
+  const latencyTotal = ["OVERALL".padEnd(12)]
+  for (const v of VARIANTS)
+    latencyTotal.push(
+      summarizeLatency(results.filter((r) => r.variant === v)).padStart(10),
+    )
+  console.log(latencyTotal.join(" "))
+} finally {
+  await browser.close()
 }
-console.log("-".repeat(header.length))
-const med = ["MEDIAN WER".padEnd(12)]
-for (const v of VARIANTS)
-  med.push(medianWer(results.filter((r) => r.variant === v)).padStart(10))
-console.log(med.join(" "))
-const loops = ["LOOP %".padEnd(12)]
-for (const v of VARIANTS)
-  loops.push(loopRate(results.filter((r) => r.variant === v)).padStart(10))
-console.log(loops.join(" "))
-const total = ["OVERALL".padEnd(12)]
-for (const v of VARIANTS)
-  total.push(summarize(results.filter((r) => r.variant === v)).padStart(10))
-console.log(total.join(" "))

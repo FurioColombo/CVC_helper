@@ -105,10 +105,7 @@ describe("FaultForm voice input", () => {
     expect(createFault).not.toHaveBeenCalled()
     expect(stopTrack).toHaveBeenCalledOnce()
     await user.type(screen.getByLabelText("Descrizione"), " molto")
-    expect(screen.getByRole("button", { name: "Salva avaria" })).toBeDisabled()
-    await user.click(
-      screen.getByRole("button", { name: "Usa trascrizione avaria" }),
-    )
+    expect(screen.getByRole("button", { name: "Salva avaria" })).toBeEnabled()
     await user.click(screen.getByRole("button", { name: "Salva avaria" }))
 
     expect(transcribe).toHaveBeenCalledWith(

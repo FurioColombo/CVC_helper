@@ -46,7 +46,7 @@ export function FaultForm({
   const dictation = useDictation({
     value: description,
     onDraft: setDescription,
-    onAccept: () => undefined,
+    onTranscript: () => undefined,
     transcribe,
     prepare: prepareSpeech,
   })
@@ -58,7 +58,7 @@ export function FaultForm({
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const value = description.trim()
-    if (!boatId || !value || dictation.status === "review") return
+    if (!boatId || !value) return
     setSaving(true)
     setSaveError(false)
     try {
@@ -121,11 +121,7 @@ export function FaultForm({
         />
       </div>
 
-      <DictationPanels
-        dictation={dictation}
-        naming={dictationNaming}
-        reviewHint="Rileggi la trascrizione. Puoi modificarla prima di usarla."
-      />
+      <DictationPanels dictation={dictation} naming={dictationNaming} />
 
       {saveError && (
         <p className="text-sm font-semibold text-[#a2381b]" role="alert">

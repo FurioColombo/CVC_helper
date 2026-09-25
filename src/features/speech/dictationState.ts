@@ -17,17 +17,13 @@ export interface DictationNaming {
 const BUSY_STATUSES = new Set(["permission", "loading", "processing"])
 
 /** True while the microphone or the model is occupied and cannot be asked again. */
-export function isDictationBusy(dictation: Dictation) {
+export function isDictationBusy(dictation: Pick<Dictation, "status">) {
   return BUSY_STATUSES.has(dictation.status)
 }
 
-/** True while dictation owns the text, so a form must not be submitted yet. */
-export function isDictationPending(dictation: Dictation) {
-  return (
-    isDictationBusy(dictation) ||
-    dictation.status === "recording" ||
-    dictation.status === "review"
-  )
+/** True while the microphone or model is active, so a form must wait. */
+export function isDictationPending(dictation: Pick<Dictation, "status">) {
+  return isDictationBusy(dictation) || dictation.status === "recording"
 }
 
 export function dictationProgressSuffix(dictation: Dictation) {

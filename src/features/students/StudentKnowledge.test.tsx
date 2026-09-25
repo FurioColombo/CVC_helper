@@ -281,28 +281,18 @@ describe("StudentKnowledge", () => {
 
     const note = await screen.findByLabelText("Nota iniziale di Mario")
     expect(note).toHaveValue("Appunto digitato Buona sensibilità al timone")
-    expect(saveKnowledge).not.toHaveBeenCalledWith(
-      "student-1",
-      "course-1",
-      expect.objectContaining({
-        initialNote: "Appunto digitato Buona sensibilità al timone",
-      }),
+    await waitFor(() =>
+      expect(saveKnowledge).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({
+          initialNote: "Appunto digitato Buona sensibilità al timone",
+        }),
+      ),
     )
     expect(stopTrack).toHaveBeenCalledOnce()
 
     await user.type(note, ", ascolta le consegne")
-    expect(saveKnowledge).not.toHaveBeenCalledWith(
-      "student-1",
-      "course-1",
-      expect.objectContaining({
-        initialNote:
-          "Appunto digitato Buona sensibilità al timone, ascolta le consegne",
-      }),
-    )
-    await user.click(
-      screen.getByRole("button", { name: "Usa trascrizione di Mario" }),
-    )
-
     await waitFor(() =>
       expect(saveKnowledge).toHaveBeenCalledWith("student-1", "course-1", {
         size: null,
@@ -316,7 +306,7 @@ describe("StudentKnowledge", () => {
     )
   })
 
-  it("discards review text and ignores a late result after processing is cancelled", async () => {
+  it("persists completed speech directly and ignores a late result after processing is cancelled", async () => {
     const stopTrack = vi.fn()
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
@@ -374,20 +364,15 @@ describe("StudentKnowledge", () => {
     await user.click(
       await screen.findByRole("button", { name: "Termina dettatura di Mario" }),
     )
-    await user.click(
-      await screen.findByRole("button", {
-        name: "Scarta trascrizione di Mario",
-      }),
-    )
-    expect(screen.getByLabelText("Nota iniziale di Mario")).toHaveValue(
-      "Testo manuale",
-    )
-    expect(saveKnowledge).not.toHaveBeenCalledWith(
-      "student-1",
-      "course-1",
-      expect.objectContaining({
-        initialNote: "Testo manuale prima trascrizione",
-      }),
+    expect(note).toHaveValue("Testo manuale prima trascrizione")
+    await waitFor(() =>
+      expect(saveKnowledge).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({
+          initialNote: "Testo manuale prima trascrizione",
+        }),
+      ),
     )
 
     await user.click(
@@ -396,13 +381,24 @@ describe("StudentKnowledge", () => {
     await user.click(
       await screen.findByRole("button", { name: "Termina dettatura di Mario" }),
     )
-    expect(note).toHaveValue("Testo manuale seconda trascrizione")
+    expect(note).toHaveValue(
+      "Testo manuale prima trascrizione seconda trascrizione",
+    )
+    await waitFor(() =>
+      expect(saveKnowledge).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({
+          initialNote: "Testo manuale prima trascrizione seconda trascrizione",
+        }),
+      ),
+    )
     await user.click(
       screen.getByRole("button", { name: "Chiudi nota di Mario" }),
     )
     await user.click(screen.getByRole("button", { name: "Nota di Mario" }))
     expect(screen.getByLabelText("Nota iniziale di Mario")).toHaveValue(
-      "Testo manuale",
+      "Testo manuale prima trascrizione seconda trascrizione",
     )
 
     await user.click(
@@ -418,10 +414,12 @@ describe("StudentKnowledge", () => {
     await act(async () => resolveLateTranscript?.("risultato tardivo"))
 
     expect(screen.getByLabelText("Nota iniziale di Mario")).toHaveValue(
-      "Testo manuale",
+      "Testo manuale prima trascrizione seconda trascrizione",
     )
     expect(
-      screen.queryByRole("button", { name: "Usa trascrizione di Mario" }),
+      screen.queryByRole("button", {
+        name: /Scarta trascrizione|Usa trascrizione/,
+      }),
     ).not.toBeInTheDocument()
     expect(saveKnowledge).not.toHaveBeenCalledWith(
       "student-1",
@@ -644,7 +642,7 @@ describe("StudentKnowledge", () => {
     )
   })
 
-  it("shows measurable loading and processing before editable review", async () => {
+  it("shows loading and processing before inserting and saving the transcript", async () => {
     const stopTrack = vi.fn()
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
@@ -721,15 +719,21 @@ describe("StudentKnowledge", () => {
     await act(async () => resolveTranscript?.("Testo dalla fixture"))
 
     expect(
-      await screen.findByRole("button", {
-        name: "Usa trascrizione di Mario",
+      screen.queryByRole("button", {
+        name: /Scarta trascrizione|Usa trascrizione/,
       }),
-    ).toBeVisible()
+    ).not.toBeInTheDocument()
     expect(screen.getByLabelText("Nota iniziale di Mario")).toHaveValue(
       "Testo dalla fixture",
     )
     expect(stopTrack).toHaveBeenCalledOnce()
-    expect(saveKnowledge).not.toHaveBeenCalled()
+    await waitFor(() =>
+      expect(saveKnowledge).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({ initialNote: "Testo dalla fixture" }),
+      ),
+    )
     expect(prepareSpeech).toHaveBeenCalledBefore(transcribe)
   })
 })

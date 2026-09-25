@@ -7,13 +7,7 @@ import {
 } from "@/capabilities/speech"
 
 export type DictationStatus =
-  | "idle"
-  | "permission"
-  | "recording"
-  | "loading"
-  | "processing"
-  | "review"
-  | "error"
+  "idle" | "permission" | "recording" | "loading" | "processing" | "error"
 
 export type DictationError =
   "unsupported" | "permission" | "recording" | "transcription"
@@ -30,13 +24,13 @@ export type SpeechPrepare = (
 export function useDictation({
   value,
   onDraft,
-  onAccept,
+  onTranscript,
   transcribe = transcribeAudio,
   prepare,
 }: {
   value: string
   onDraft: (value: string) => void
-  onAccept: (value: string) => void
+  onTranscript: (value: string) => void
   transcribe?: SpeechTranscribe
   prepare?: SpeechPrepare
 }) {
@@ -50,7 +44,6 @@ export function useDictation({
   const streamRef = useRef<MediaStream | null>(null)
   const stoppedStreamsRef = useRef(new WeakSet<MediaStream>())
   const chunksRef = useRef<Blob[]>([])
-  const beforeVoiceRef = useRef("")
   const valueRef = useRef(value)
   const attemptRef = useRef(0)
   const mountedRef = useRef(true)
@@ -107,14 +100,14 @@ export function useDictation({
       const normalized = transcript.trim()
       if (!normalized) throw new Error("Empty transcript")
       const currentText = valueRef.current
-      beforeVoiceRef.current = currentText
       const prefix = currentText.trim()
       const nextDraft = prefix ? `${prefix} ${normalized}` : normalized
       valueRef.current = nextDraft
       onDraft(nextDraft)
+      onTranscript(nextDraft)
       setError(null)
       setLoadPercent(undefined)
-      setStatus("review")
+      setStatus("idle")
     } catch {
       if (!mountedRef.current || attempt !== attemptRef.current) return
       setError("transcription")
@@ -200,18 +193,8 @@ export function useDictation({
     recorderRef.current = null
     chunksRef.current = []
     stopStream()
-    if (status === "review") {
-      valueRef.current = beforeVoiceRef.current
-      onDraft(beforeVoiceRef.current)
-    }
     setError(null)
     setLoadPercent(undefined)
-    setStatus("idle")
-  }
-
-  function accept() {
-    if (status !== "review") return
-    onAccept(valueRef.current)
     setStatus("idle")
   }
 
@@ -245,7 +228,6 @@ export function useDictation({
     start,
     stop,
     cancel,
-    accept,
     syncValue,
   }
 }

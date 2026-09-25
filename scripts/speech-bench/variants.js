@@ -1,17 +1,56 @@
 ;(() => {
   const SAMPLE_RATE = 16000
-  const pipelines = {}
+  const production = window.__productionSpeechConfig
+  if (!production) throw new Error("production speech config was not provided")
 
-  // Whisper collapses into a repetition loop on short or poor audio. These
-  // generation settings are the documented brakes for it.
-  const GUARD = {
-    no_repeat_ngram_size: 5,
-    repetition_penalty: 1.15,
-    temperature: 0,
-    condition_on_previous_text: false,
+  let activePipeline
+  let activeGroupKey
+
+  function groupKey(spec) {
+    return `${spec.model}|${spec.dtype}`
   }
 
   const SPECS = {
+    current: {
+      model: production.modelId,
+      dtype: production.dtype,
+      dsp: [],
+      gen: production.generationOptions,
+    },
+    currenttrim: {
+      model: production.modelId,
+      dtype: production.dtype,
+      dsp: ["trim"],
+      gen: production.generationOptions,
+    },
+    currentdsp: {
+      model: production.modelId,
+      dtype: production.dtype,
+      dsp: ["dc", "highpass", "normalize", "trim"],
+      gen: production.generationOptions,
+    },
+    currentq4: {
+      model: production.modelId,
+      dtype: "q4",
+      dsp: [],
+      gen: production.generationOptions,
+    },
+    tinyguard: {
+      model: "onnx-community/whisper-tiny",
+      dtype: "q8",
+      dsp: [],
+      gen: production.generationOptions,
+    },
+    currentchunked: {
+      model: production.modelId,
+      dtype: production.dtype,
+      dsp: [],
+      gen: {
+        ...production.generationOptions,
+        chunk_length_s: 8,
+        stride_length_s: 2,
+      },
+    },
     baseline: { model: "onnx-community/whisper-tiny", dtype: "q8", dsp: [] },
     dsp: {
       model: "onnx-community/whisper-tiny",
@@ -33,19 +72,19 @@
       model: "onnx-community/whisper-tiny",
       dtype: "q8",
       dsp: [],
-      gen: GUARD,
+      gen: production.generationOptions,
     },
     dspguard: {
       model: "onnx-community/whisper-tiny",
       dtype: "q8",
       dsp: ["dc", "highpass", "normalize", "trim"],
-      gen: GUARD,
+      gen: production.generationOptions,
     },
     baseguard: {
       model: "onnx-community/whisper-base",
       dtype: "q8",
       dsp: ["dc", "normalize", "trim"],
-      gen: GUARD,
+      gen: production.generationOptions,
     },
     dspbase: {
       model: "onnx-community/whisper-base",
@@ -55,6 +94,9 @@
   }
 
   async function transformers() {
+    if (window.__speechBenchPipelineFactory) {
+      return { pipeline: window.__speechBenchPipelineFactory }
+    }
     const direct = "/node_modules/.vite/deps/@huggingface_transformers.js"
     try {
       return await import(direct)
@@ -140,10 +182,8 @@
 
   const STAGES = { dc: removeDc, highpass: highPass, normalize, trim }
 
-  async function decode(base64) {
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i)
+  async function decode(audioBytes) {
+    const bytes = new Uint8Array(audioBytes)
     const context = new AudioContext({ sampleRate: SAMPLE_RATE })
     try {
       const buffer = await context.decodeAudioData(bytes.buffer)
@@ -160,24 +200,64 @@
     }
   }
 
+  async function disposeActivePipeline() {
+    if (!activePipeline) return
+    const previous = activePipeline
+    try {
+      await previous.dispose?.()
+    } finally {
+      activePipeline = undefined
+      activeGroupKey = undefined
+    }
+  }
+
+  window.__getVariantGroups = (names) => {
+    const groups = new Map()
+    names.forEach((name, variantIndex) => {
+      const spec = SPECS[name]
+      if (!spec) throw new Error(`unknown variant ${name}`)
+      const key = groupKey(spec)
+      let group = groups.get(key)
+      if (!group) {
+        group = { key, variants: [] }
+        groups.set(key, group)
+      }
+      group.variants.push({ variant: name, variantIndex })
+    })
+    return [...groups.values()]
+  }
+
   window.__prepareVariant = async (name) => {
     const spec = SPECS[name]
     if (!spec) throw new Error(`unknown variant ${name}`)
-    if (pipelines[name]) return true
+    const key = groupKey(spec)
+    if (activePipeline && activeGroupKey === key) return true
+    await disposeActivePipeline()
     const { pipeline } = await transformers()
-    pipelines[name] = await pipeline(
+    activePipeline = await pipeline(
       "automatic-speech-recognition",
       spec.model,
       { dtype: spec.dtype },
     )
+    activeGroupKey = key
     return true
   }
 
-  window.__runVariant = async (name, base64) => {
+  window.__releaseVariantGroup = async (name) => {
     const spec = SPECS[name]
-    let audio = await decode(base64)
+    if (!spec) throw new Error(`unknown variant ${name}`)
+    if (activeGroupKey === groupKey(spec)) await disposeActivePipeline()
+  }
+
+  window.__runVariant = async (name, audioBytes) => {
+    const spec = SPECS[name]
+    if (!spec) throw new Error(`unknown variant ${name}`)
+    if (!activePipeline || activeGroupKey !== groupKey(spec)) {
+      throw new Error(`variant group is not active: ${name}`)
+    }
+    let audio = await decode(audioBytes)
     for (const stage of spec.dsp) audio = STAGES[stage](audio)
-    const result = await pipelines[name](audio, {
+    const result = await activePipeline(audio, {
       language: "italian",
       task: "transcribe",
       ...(spec.gen ?? {}),
