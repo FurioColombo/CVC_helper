@@ -226,19 +226,11 @@ describe("FaultCard", () => {
     await waitFor(() =>
       expect(editor).toHaveValue("Timone duro e cuscinetto da sostituire"),
     )
-    // Saving waits for the transcript to be accepted or thrown away, so a
-    // half-finished dictation cannot be written to the record.
     expect(
       screen.getByRole("button", {
         name: "Salva descrizione Timone duro",
       }),
-    ).toBeDisabled()
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Usa trascrizione descrizione avaria",
-      }),
-    )
+    ).toBeEnabled()
     await user.click(
       screen.getByRole("button", { name: "Salva descrizione Timone duro" }),
     )

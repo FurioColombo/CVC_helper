@@ -1,0 +1,35 @@
+{
+  "milestone": "V03",
+  "status": "PASS",
+  "recordedAt": "2026-09-24T19:16:43Z",
+  "nodeVersion": "v24.19.0",
+  "headCommit": "3ba5a38",
+  "sourceState": "Working tree with uncommitted V03 implementation changes at the time of this browser run.",
+  "browserProject": "pixel-7-chrome",
+  "viewport": "Pixel 7 Chrome Playwright project; layout regression journey covers stress and ordinary widths.",
+  "command": "npm run verify:e2e -- v03-dictation-direct-insert.spec.ts v02-dictation-layout.spec.ts --project=pixel-7-chrome",
+  "result": "4 passed",
+  "relatedEvidenceRefreshed": [
+    {
+      "path": ".evidence/V02/control-geometry.json",
+      "reason": "The V02 layout regression was rerun against the V03 direct-insert controls, removing obsolete accept/discard review-state measurements."
+    },
+    {
+      "path": ".evidence/V02/evaluation-loading-100-stress.png",
+      "reason": "Regenerated as part of the same synthetic V02 layout regression run."
+    }
+  ],
+  "journeys": [
+    {
+      "name": "direct transcript insertion, edit and persistence",
+      "result": "A synthetic transcript was appended to the existing note, the user edited and saved it, and the edited note survived reload. No accept/discard action was present."
+    },
+    {
+      "name": "dictation layout and recovery regressions",
+      "result": "Three Pixel 7 Chrome journeys passed for control states at stress/ordinary widths, denial preserving typed text and retry, and fault-form/open-card note hosts."
+    }
+  ],
+  "limitations": [
+    "Browser recording and transcription used deterministic synthetic fixtures; this is not physical microphone evidence. V03 cannot close until the owner records physical PC, Android and iPhone results in speech-device-evidence.json. UG2 must repeat the relevant checks on its exact release candidate."
+  ]
+}

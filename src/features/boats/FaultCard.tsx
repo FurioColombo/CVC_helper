@@ -68,7 +68,7 @@ export function FaultCard({
   const dictation = useDictation({
     value: description,
     onDraft: setDescription,
-    onAccept: () => undefined,
+    onTranscript: () => undefined,
     transcribe,
     prepare: prepareSpeech,
   })
@@ -201,11 +201,7 @@ export function FaultCard({
           <div className="flex justify-end">
             <DictationTrigger dictation={dictation} naming={dictationNaming} />
           </div>
-          <DictationPanels
-            dictation={dictation}
-            naming={dictationNaming}
-            reviewHint="Rileggi la trascrizione prima di salvare la descrizione."
-          />
+          <DictationPanels dictation={dictation} naming={dictationNaming} />
         </div>
       ) : (
         <button

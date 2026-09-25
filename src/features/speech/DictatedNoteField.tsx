@@ -1,11 +1,14 @@
-import { useId } from "react"
+import { useEffect, useId } from "react"
 
 import { transcribeAudio } from "@/capabilities/speech"
 import {
   DictationPanels,
   DictationTrigger,
 } from "@/features/speech/DictationControls"
-import { type DictationNaming } from "@/features/speech/dictationState"
+import {
+  isDictationPending,
+  type DictationNaming,
+} from "@/features/speech/dictationState"
 import {
   useDictation,
   type SpeechPrepare,
@@ -23,8 +26,8 @@ export function DictatedNoteField({
   hint,
   value,
   onChange,
+  onPendingChange,
   naming,
-  reviewHint,
   unsupportedHint,
   placeholder,
   className = "",
@@ -36,8 +39,8 @@ export function DictatedNoteField({
   hint?: string
   value: string
   onChange: (value: string) => void
+  onPendingChange?: (pending: boolean) => void
   naming: DictationNaming
-  reviewHint: string
   unsupportedHint?: string
   placeholder?: string
   className?: string
@@ -49,10 +52,15 @@ export function DictatedNoteField({
   const dictation = useDictation({
     value,
     onDraft: onChange,
-    onAccept: () => undefined,
+    onTranscript: () => undefined,
     transcribe,
     prepare: prepareSpeech,
   })
+  const dictationStatus = dictation.status
+
+  useEffect(() => {
+    onPendingChange?.(isDictationPending({ status: dictationStatus }))
+  }, [dictationStatus, onPendingChange])
 
   return (
     <div className={`grid min-w-0 gap-2 text-sm font-bold ${className}`}>
@@ -84,7 +92,6 @@ export function DictatedNoteField({
       <DictationPanels
         dictation={dictation}
         naming={naming}
-        reviewHint={reviewHint}
         unsupportedHint={unsupportedHint}
       />
     </div>

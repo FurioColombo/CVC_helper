@@ -6,6 +6,7 @@ vi.mock("@huggingface/transformers", () => ({ pipeline: pipelineMock }))
 
 import {
   createLocalItalianSpeechProvider,
+  PRODUCTION_SPEECH_CONFIG,
   type SpeechTranscriber,
 } from "@/capabilities/speech"
 
@@ -65,10 +66,7 @@ describe("local Italian speech provider", () => {
     expect(transcriber).toHaveBeenCalledWith(new Float32Array([0.2, -0.1]), {
       language: "italian",
       task: "transcribe",
-      no_repeat_ngram_size: 5,
-      repetition_penalty: 1.15,
-      temperature: 0,
-      condition_on_previous_text: false,
+      ...PRODUCTION_SPEECH_CONFIG.generationOptions,
     })
   })
 
@@ -108,6 +106,11 @@ describe("local Italian speech provider", () => {
     })
 
     expect(progress).toEqual([undefined, 42, 100])
+    expect(pipelineMock).toHaveBeenCalledWith(
+      "automatic-speech-recognition",
+      PRODUCTION_SPEECH_CONFIG.modelId,
+      expect.objectContaining({ dtype: PRODUCTION_SPEECH_CONFIG.dtype }),
+    )
   })
 
   it("allows a model load to be retried after a transient failure", async () => {

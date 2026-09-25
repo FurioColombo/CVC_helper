@@ -12,7 +12,7 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -420,12 +420,27 @@ function StudentForm({
   const [initialNote, setInitialNote] = useState(student?.initialNote ?? "")
   const [courseNote, setCourseNote] = useState(student?.courseNote ?? "")
   const [saving, setSaving] = useState(false)
+  const [initialNoteDictationPending, setInitialNoteDictationPending] =
+    useState(false)
+  const [courseNoteDictationPending, setCourseNoteDictationPending] =
+    useState(false)
+  const [exitBlockedByDictation, setExitBlockedByDictation] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(false)
   const initialized = useRef(false)
   const saveChain = useRef<Promise<void>>(Promise.resolve())
   const saveVersion = useRef(0)
   const formRef = useRef<HTMLFormElement>(null)
+  const dictationPending =
+    initialNoteDictationPending || courseNoteDictationPending
+  const reportInitialNoteDictationPending = useCallback((pending: boolean) => {
+    if (pending) setExitBlockedByDictation(false)
+    setInitialNoteDictationPending(pending)
+  }, [])
+  const reportCourseNoteDictationPending = useCallback((pending: boolean) => {
+    if (pending) setExitBlockedByDictation(false)
+    setCourseNoteDictationPending(pending)
+  }, [])
 
   useEffect(() => {
     if (!focusField) return
@@ -542,6 +557,10 @@ function StudentForm({
   }
 
   async function exitForm() {
+    if (dictationPending) {
+      setExitBlockedByDictation(true)
+      return
+    }
     if (!student) {
       onCancel()
       return
@@ -555,6 +574,11 @@ function StudentForm({
         onBack={() => void exitForm()}
         title={student ? "Modifica allievo" : "Nuovo allievo"}
       />
+      {exitBlockedByDictation && dictationPending && (
+        <p className="mb-4 text-sm text-muted-foreground" role="status">
+          Attendi la fine della dettatura prima di uscire.
+        </p>
+      )}
       <form className="grid gap-5" onSubmit={save} ref={formRef}>
         <div className="grid grid-cols-2 gap-3">
           <Field field="firstName" label="Nome">
@@ -667,7 +691,7 @@ function StudentForm({
               subject: "nota iniziale",
             }}
             onChange={setInitialNote}
-            reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
+            onPendingChange={reportInitialNoteDictationPending}
             value={initialNote}
           />
         </div>
@@ -681,7 +705,7 @@ function StudentForm({
               subject: "nota del corso",
             }}
             onChange={setCourseNote}
-            reviewHint="Rileggi la trascrizione: il testo viene salvato con la scheda."
+            onPendingChange={reportCourseNoteDictationPending}
             value={courseNote}
           />
         </div>
@@ -726,7 +750,14 @@ function StudentForm({
               Annulla
             </Button>
           )}
-          <Button disabled={saving} type="submit">
+          <Button
+            disabled={
+              saving ||
+              initialNoteDictationPending ||
+              courseNoteDictationPending
+            }
+            type="submit"
+          >
             {saving ? "Salvataggio…" : student ? "Fine" : "Salva allievo"}
           </Button>
         </div>

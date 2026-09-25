@@ -105,8 +105,6 @@ async function measureGeometry(region: Locator, host: string, state: string) {
         element.querySelector<HTMLElement>(`button[aria-label^="${prefix}"]`)
       const statusPanel = element.querySelector<HTMLElement>("[role=status]")
       const alertPanel = element.querySelector<HTMLElement>("[role=alert]")
-      const useTranscript = named("Usa trascrizione")
-      const reviewPanel = useTranscript?.parentElement?.parentElement ?? null
       return {
         host: metadata.host,
         state: metadata.state,
@@ -142,15 +140,6 @@ async function measureGeometry(region: Locator, host: string, state: string) {
               rect: rect(alertPanel),
               text: rect(alertPanel.querySelector("p")),
               retry: rect(named("Riprovare dettatura")),
-            }
-          : null,
-        review: reviewPanel
-          ? {
-              clientWidth: reviewPanel.clientWidth,
-              scrollWidth: reviewPanel.scrollWidth,
-              rect: rect(reviewPanel),
-              discard: rect(named("Scarta trascrizione")),
-              accept: rect(useTranscript),
             }
           : null,
       }
@@ -247,7 +236,6 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
         error: "permission",
         liveText: "Permesso microfono non concesso",
       },
-      { status: "review", liveText: "Rileggi la trascrizione sintetica" },
     ]
 
     for (const scenario of cases) {
@@ -329,34 +317,6 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
           alertTextBox!.y + alertTextBox!.height,
         )
         await expectPageAndPanelFit(page, alert)
-      } else if (scenario.status === "review") {
-        const accept = region.getByRole("button", {
-          name: `Usa trascrizione ${SUBJECT}`,
-        })
-        const discard = region.getByRole("button", {
-          name: `Scarta trascrizione ${SUBJECT}`,
-        })
-        await expect(accept).toBeVisible()
-        await expect(region).toContainText(scenario.liveText)
-        await expect44Px(accept)
-        await expect44Px(discard)
-        await expectPageAndPanelFit(page)
-        await discard.focus()
-        await page.keyboard.press("Enter")
-        await expect(accept).toHaveCount(0)
-        await expect(
-          region.getByRole("textbox", { name: /Nota di Alessandra/ }),
-        ).toHaveValue("Testo scritto prima della prova di dettatura.")
-
-        await page.evaluate(() => {
-          window.setDictationFixtureState?.("review")
-        })
-        await expect(accept).toBeVisible()
-        await accept.click()
-        await expect(accept).toHaveCount(0)
-        await expect(
-          region.getByRole("textbox", { name: /Nota di Alessandra/ }),
-        ).toHaveValue("Testo scritto prima della prova di dettatura.")
       }
       await expectPageAndPanelFit(page, region)
       if (

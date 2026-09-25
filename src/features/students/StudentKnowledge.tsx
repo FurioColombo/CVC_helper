@@ -120,8 +120,8 @@ function KnowledgeCard({
   const dictation = useDictation({
     value: initialNote,
     onDraft: setInitialNote,
-    onAccept: (acceptedNote) =>
-      schedule(normalizeKnowledge(size, acceptedNote), 0),
+    onTranscript: (transcript) =>
+      schedule(normalizeKnowledge(size, transcript), 0),
     transcribe,
     prepare: prepareSpeech,
   })
@@ -151,14 +151,8 @@ function KnowledgeCard({
   }
 
   function closeNoteEditor() {
-    if (dictation.status === "review") {
-      // Closing is not consent to persist a generated transcript. The explicit
-      // Usa testo action is the only acceptance path.
-      dictation.cancel()
-    } else {
-      if (dictation.status !== "idle") dictation.cancel()
-      schedule(normalizeKnowledge(size, initialNote), 0)
-    }
+    if (dictation.status !== "idle") dictation.cancel()
+    schedule(normalizeKnowledge(size, initialNote), 0)
     setNoteOpen(false)
     window.requestAnimationFrame(() => noteButtonRef.current?.focus())
   }
@@ -316,8 +310,7 @@ function KnowledgeCard({
                 const nextNote = event.target.value
                 dictation.syncValue(nextNote)
                 setInitialNote(nextNote)
-                if (dictation.status !== "review")
-                  schedule(normalizeKnowledge(size, nextNote), 500)
+                schedule(normalizeKnowledge(size, nextNote), 500)
               }}
               placeholder="Nessuna nota speciale"
               value={initialNote}
@@ -337,7 +330,6 @@ function KnowledgeCard({
               className="mt-3"
               dictation={dictation}
               naming={dictationNaming}
-              reviewHint="Rileggi la trascrizione: il testo non viene salvato finché non lo confermi."
             />
           </section>
         </div>

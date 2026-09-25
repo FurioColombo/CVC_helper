@@ -1,12 +1,4 @@
-import {
-  Check,
-  LoaderCircle,
-  Mic,
-  RotateCcw,
-  Square,
-  Trash2,
-  X,
-} from "lucide-react"
+import { LoaderCircle, Mic, RotateCcw, Square, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -48,7 +40,7 @@ export function DictationTrigger({
           recording ? `Termina dettatura ${naming.subject}` : naming.start
         }
         className={`h-auto min-h-11 min-w-[44px] max-w-full shrink flex-wrap whitespace-normal break-words px-3 py-2 text-center text-xs [overflow-wrap:anywhere] ${recording ? "border-[#d92d20] text-[#b42318]" : ""}`}
-        disabled={!dictation.supported || busy || dictation.status === "review"}
+        disabled={!dictation.supported || busy}
         onClick={() => (recording ? dictation.stop() : void dictation.start())}
         type="button"
         variant="secondary"
@@ -83,20 +75,16 @@ const UNSUPPORTED_HINT =
 
 /**
  * Everything dictation shows below the field: the note when the browser cannot
- * record, the live status with its cancel, the transcript review, and the
- * failure with its retry. `reviewHint` stays with the caller because what
- * happens to the text on accept differs by screen.
+ * record, the live status with its cancel, and the failure with its retry.
  */
 export function DictationPanels({
   dictation,
   naming,
-  reviewHint,
   unsupportedHint = UNSUPPORTED_HINT,
   className = "",
 }: {
   dictation: Dictation
   naming: DictationNaming
-  reviewHint: string
   unsupportedHint?: string
   className?: string
 }) {
@@ -136,35 +124,6 @@ export function DictationPanels({
           >
             <X aria-hidden="true" className="size-4" />
           </Button>
-        </div>
-      )}
-
-      {dictation.status === "review" && (
-        <div
-          className={`@container min-w-0 rounded-xl border border-primary/30 bg-primary/5 p-3 ${className}`}
-        >
-          <p className="min-w-0 text-xs leading-5 text-muted-foreground [overflow-wrap:anywhere]">
-            {reviewHint}
-          </p>
-          <div className="mt-2 grid grid-cols-1 gap-2 @sm:grid-cols-2">
-            <Button
-              aria-label={`Scarta trascrizione ${naming.subject}`}
-              onClick={dictation.cancel}
-              type="button"
-              variant="secondary"
-            >
-              <Trash2 aria-hidden="true" className="size-4" />
-              Scarta
-            </Button>
-            <Button
-              aria-label={`Usa trascrizione ${naming.subject}`}
-              onClick={dictation.accept}
-              type="button"
-            >
-              <Check aria-hidden="true" className="size-4" />
-              Usa testo
-            </Button>
-          </div>
         </div>
       )}
 

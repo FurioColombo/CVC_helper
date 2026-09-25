@@ -1,35 +1,46 @@
-# UG1 physical-device validation
+# Owner-run physical-device validation
 
-This is the remaining human-operated release check. Record the observed result in
-`.evidence/U03/speech-device-evidence.json` and
-`.evidence/U04/ocr-quality-evidence.json`; the UG1 reviewer must inspect both.
-Do not mark the checks passed from a simulator or injected audio/photo fixture.
+These checks require real hardware and must be performed by the owner. Do not
+mark checks passed from a simulator or injected audio/photo fixture. Keep all
+utterances anonymous and all scan rosters fictitious.
 
-Use the same 0.2.0 release-candidate commit on every device. The PC can use
+Use the same commit on every device in a milestone run. The PC can use
 `http://127.0.0.1:4173/` in Chrome or Edge. Android Chrome and iPhone Safari need
 a **trusted HTTPS** address for that build; plain LAN HTTP does not grant the
 required camera/microphone access. Record the URL, commit, browser and OS version.
-Use an anonymous test course and roster; do not put real student data in evidence.
 
-## Speech: PC, Android and iPhone
+## V03 speech checks: required before V03 closes
 
-1. Open a student's note editor. Type a short prefix, then tap **Dettatura**.
+Record the owner's results, one entry per physical target, in
+`.evidence/V03/speech-device-evidence.json`. All three targets are required by
+`03_TECHNICAL_DECISIONS.md` §5. Do not store the utterance or recognized text.
+
+1. Open a student's note editor. Type a short prefix, then tap **Detta**.
    Confirm permission is requested only after the tap.
-2. On cold first use, observe asset loading/progress, then recording. Speak one
-   short Italian sentence. Tap **Termina** and review the editable transcript.
-3. Correct it, tap **Usa testo**, close and reopen the app. Confirm the final text
-   persists. Repeat once with **Scarta**; the earlier typed text must remain.
-4. Deny permission and retry. Cancel during recording or processing; text remains,
-   retry is possible, and the operating-system microphone indicator turns off.
+2. On cold first use, observe model loading/progress, then recording. Speak one
+   short Italian sentence and tap **Termina**. Confirm the transcript is appended
+   directly to the editable note without a separate accept/discard step.
+3. Correct the inserted text, close and reopen the app, and confirm it persists.
+   Repeat with an empty note and confirm the transcript appears there too.
+4. Deny permission and retry. Cancel during loading, recording or processing;
+   typed text must remain, retry must be possible, and the operating-system
+   microphone indicator must turn off.
 5. Also dictate a short fault description and evaluation note in their in-place
-   panels. No audio file should appear in course data after reopen.
+   panels, edit the inserted text, and confirm each host saves it. No audio file
+   should appear in course data after reopen.
 
-For each device record the expected phrase, observed transcript, recognition
-errors, cold and warm load times, recording-to-review time, recovery behavior and
-overall PASS/FAIL. There is no fixed speed or accuracy threshold; the result must
-be editable and recoverable.
+For each device record whether the anonymous test utterance was substantially
+recovered, cold and warm model load times, recording-to-insertion time,
+edit/persistence and recovery behavior, and overall PASS/FAIL. Do not store the
+phrase or transcript. The result must be editable and recoverable.
 
-## Scan: Android and iPhone
+## UG2 release-candidate checks
+
+Repeat speech against the exact UG2 release candidate and record it in
+`.evidence/UG2/physical-device-review.json`. The V03 results do not replace this
+release-candidate check.
+
+### Scan: Android and iPhone
 
 1. From **Scan allievi**, try **Fai una foto** and **Scegli da galleria**. Confirm
    native acquisition, full-screen camera, correct EXIF orientation and a usable
@@ -44,5 +55,5 @@ Record device/browser version, photo conditions, expected and correct
 person–field matches, corrections, orientation/crop outcome, commit/reload result,
 source-photo disposal and PASS/FAIL. Keep photographs out of the repository.
 
-UG1 remains open until all three speech targets and both phone scan targets have
+UG2 remains open until the three speech targets and both phone scan targets have
 real observations and the dedicated physical-device review has no blocker.
