@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-25",
+  "runtime": "Node 24.19.0",
+  "command": "npm run verify:e2e -- tests/e2e/ux2-crew-interactions.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport",
+  "result": "PASS",
+  "passed": 3,
+  "skipped": 1,
+  "skippedReason": "The exact-slot journey intentionally runs only on Pixel 7 Chrome; boat interactions run on both viewports.",
+  "observed": [
+    "No free-slot popup; second tap deselects, another slot changes the target, and a pool student occupies the exact chosen position after reload",
+    "Selecting a distant free slot scrolls available students into view; focus and Escape return work",
+    "Left/right touch and mouse swipes change one page of eight boats; vertical and diagonal gestures do not change pages",
+    "Swipe gestures do not activate boats; ordinary boat taps, Enter, Space, Previous and More remain usable",
+    "No horizontal overflow in the focused narrow viewport journey"
+  ],
+  "physicalDeviceResult": "not_run_by_agent"
+}

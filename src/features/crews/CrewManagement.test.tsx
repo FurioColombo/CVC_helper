@@ -818,7 +818,7 @@ describe("CrewManagement", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("fills the crew selected from a free slot through the student picker", async () => {
+  it("selects a free slot, scrolls to available students and fills it without a popup", async () => {
     getPlan.mockResolvedValue(
       stored({
         crews: [
@@ -840,18 +840,28 @@ describe("CrewManagement", () => {
     const vacancy = await screen.findByRole("button", {
       name: "Posto libero 1 equipaggio 1",
     })
+    const pool = screen.getByRole("region", { name: "Allievi disponibili" })
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(pool.closest("section"), "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    })
     await user.click(vacancy)
     expect(vacancy).toHaveAttribute("aria-pressed", "true")
-    expect(
-      await screen.findByRole("dialog", {
-        name: "Scegli un allievo per il posto libero 1 equipaggio 1",
-      }),
-    ).toBeVisible()
-    await user.click(
-      screen.getByRole("button", {
-        name: "Bea, inserisci nel posto libero 1 equipaggio 1",
-      }),
-    )
+    const firstStudent = within(pool).getAllByRole("button")[0]!
+    expect(document.activeElement).toBe(firstStudent)
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "start",
+    })
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    await user.keyboard("{Escape}")
+    expect(vacancy).toHaveAttribute("aria-pressed", "false")
+    expect(document.activeElement).toBe(vacancy)
+    await user.keyboard("{Enter}")
+    expect(vacancy).toHaveAttribute("aria-pressed", "true")
+    expect(document.activeElement).toBe(firstStudent)
+    await user.click(within(pool).getByRole("button", { name: "Bea" }))
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(savePlan.mock.calls[0]![2].crews).toEqual(
@@ -886,11 +896,7 @@ describe("CrewManagement", () => {
         name: "Posto libero 2 equipaggio 1",
       }),
     )
-    await user.click(
-      await screen.findByRole("button", {
-        name: "Bea, inserisci nel posto libero 2 equipaggio 1",
-      }),
-    )
+    await user.click(screen.getByRole("button", { name: "Bea" }))
 
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(savePlan.mock.calls[0]![2].crews).toEqual([
@@ -910,7 +916,7 @@ describe("CrewManagement", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("keeps the chosen vacancy after Escape so a pool tap targets its crew", async () => {
+  it("cancels a selected vacancy on a second tap and switches selection to another slot", async () => {
     getPlan.mockResolvedValue(
       stored({
         crews: [
@@ -929,29 +935,37 @@ describe("CrewManagement", () => {
       />,
     )
 
-    const adjacentCrewVacancy = await screen.findByRole("button", {
-      name: "Posto libero 2 equipaggio 2",
+    const firstVacancy = await screen.findByRole("button", {
+      name: "Posto libero 1 equipaggio 1",
     })
-    await user.click(adjacentCrewVacancy)
-    expect(adjacentCrewVacancy).toHaveAttribute("aria-pressed", "true")
-    await user.keyboard("{Escape}")
-    expect(
-      screen.queryByRole("dialog", {
-        name: "Scegli un allievo per il posto libero 2 equipaggio 2",
-      }),
-    ).not.toBeInTheDocument()
-    expect(adjacentCrewVacancy).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "Aldo" })).toHaveFocus()
+    const secondVacancy = await screen.findByRole("button", {
+      name: "Posto libero 2 equipaggio 1",
+    })
+
+    await user.click(firstVacancy)
+    expect(firstVacancy).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Toccalo di nuovo per annullare.",
+    )
+    await user.click(firstVacancy)
+    expect(firstVacancy).toHaveAttribute("aria-pressed", "false")
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+
+    await user.click(firstVacancy)
+    await user.click(secondVacancy)
+    expect(firstVacancy).toHaveAttribute("aria-pressed", "false")
+    expect(secondVacancy).toHaveAttribute("aria-pressed", "true")
 
     await user.click(screen.getByRole("button", { name: "Aldo" }))
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(savePlan.mock.calls[0]![2].crews).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: "crew-1", members: [] }),
         expect.objectContaining({
-          id: "crew-2",
+          id: "crew-1",
           members: [{ personId: "student-1", personType: "student" }],
+          memberPositions: [1],
         }),
+        expect.objectContaining({ id: "crew-2", members: [] }),
       ]),
     )
   })
@@ -1173,6 +1187,139 @@ describe("CrewManagement", () => {
         name: "Equipaggi non disponibili",
       }),
     ).toBeVisible()
+  })
+
+  it("pages whole boat sets with touch and mouse pointers without activating a boat", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+      }),
+    )
+    getBoats.mockResolvedValue(
+      Array.from({ length: 10 }, (_, index) => ({
+        id: `boat-${index + 1}`,
+        courseId: COURSE.id,
+        type: "RS Quest" as const,
+        number: String(index + 1),
+        availability: "available" as const,
+      })),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Apri barche della sessione" }),
+    )
+    const grid = screen.getByTestId("boat-page-grid")
+    const firstBoat = within(grid).getByRole("button", {
+      name: /RS Quest 1 · Disponibile/,
+    })
+
+    fireEvent.pointerDown(firstBoat, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      clientX: 220,
+      clientY: 80,
+    })
+    fireEvent.pointerMove(grid, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 120,
+      clientY: 82,
+    })
+    fireEvent.pointerUp(grid, {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      clientX: 120,
+      clientY: 82,
+    })
+
+    const ninthBoat = within(grid).getByRole("button", {
+      name: /RS Quest 9 · Disponibile/,
+    })
+    expect(screen.getByText("2/2", { exact: true })).toBeVisible()
+    fireEvent.click(ninthBoat, { detail: 1 })
+    expect(ninthBoat).toHaveAttribute("aria-pressed", "false")
+    expect(savePlan).not.toHaveBeenCalled()
+
+    await user.click(ninthBoat)
+    await waitFor(() =>
+      expect(ninthBoat).toHaveAttribute("aria-pressed", "true"),
+    )
+    const savesAfterTap = savePlan.mock.calls.length
+
+    fireEvent.pointerDown(ninthBoat, {
+      pointerId: 2,
+      pointerType: "mouse",
+      isPrimary: true,
+      button: 0,
+      clientX: 120,
+      clientY: 80,
+    })
+    fireEvent.pointerUp(grid, {
+      pointerId: 2,
+      pointerType: "mouse",
+      isPrimary: true,
+      clientX: 220,
+      clientY: 81,
+    })
+    const firstBoatAgain = within(grid).getByRole("button", {
+      name: /RS Quest 1 · Disponibile/,
+    })
+    expect(firstBoatAgain).toBeVisible()
+    expect(screen.getByText("1/2", { exact: true })).toBeVisible()
+    expect(savePlan).toHaveBeenCalledTimes(savesAfterTap)
+
+    fireEvent.pointerDown(firstBoatAgain, {
+      pointerId: 3,
+      pointerType: "mouse",
+      isPrimary: true,
+      button: 0,
+      clientX: 120,
+      clientY: 80,
+    })
+    fireEvent.pointerUp(grid, {
+      pointerId: 3,
+      pointerType: "mouse",
+      isPrimary: true,
+      clientX: 125,
+      clientY: 160,
+    })
+    fireEvent.click(firstBoatAgain, { detail: 1 })
+    expect(firstBoatAgain).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByText("1/2", { exact: true })).toBeVisible()
+    expect(savePlan).toHaveBeenCalledTimes(savesAfterTap)
+
+    fireEvent.pointerDown(firstBoatAgain, {
+      pointerId: 4,
+      pointerType: "mouse",
+      isPrimary: true,
+      button: 0,
+      clientX: 120,
+      clientY: 80,
+    })
+    fireEvent.pointerUp(grid, {
+      pointerId: 4,
+      pointerType: "mouse",
+      isPrimary: true,
+      clientX: 40,
+      clientY: 160,
+    })
+    fireEvent.click(firstBoatAgain, { detail: 1 })
+    expect(firstBoatAgain).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByText("1/2", { exact: true })).toBeVisible()
+    expect(savePlan).toHaveBeenCalledTimes(savesAfterTap)
   })
 
   it("selects outgoing boats separately and prevents duplicate exact assignment", async () => {

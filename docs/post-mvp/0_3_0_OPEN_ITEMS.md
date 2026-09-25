@@ -4,6 +4,12 @@
 owner. The complete source and request-family ledger is
 `.evidence/R1/sweep-coverage.json`.
 
+**Historical snapshot:** verdicts and source line numbers below describe the
+R1 audit date, not today's implementation status. Several items marked
+"missing" here were later completed. Use `04_IMPLEMENTATION_PLAN.md` and
+`.milestones/manifest.json` for current status; retain this list as the request
+ledger until F1 reconciles its remaining corrections.
+
 This document records missing or partial behaviour. It does not authorise a
 fix: every item has an owner, and each owner must use the milestone lifecycle.
 
