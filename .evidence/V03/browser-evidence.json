@@ -30,6 +30,6 @@
     }
   ],
   "limitations": [
-    "Browser recording and transcription used deterministic synthetic fixtures; this is not physical microphone evidence. V03 cannot close until the owner records physical PC, Android and iPhone results in speech-device-evidence.json. UG2 must repeat the relevant checks on its exact release candidate."
+    "Browser recording and transcription used deterministic synthetic fixtures; this is not physical microphone evidence. The owner subsequently accepted V03 after Android and PC/Chrome use, with Apple/iPhone untested as recorded in speech-device-evidence.json. UG2 must repeat the relevant checks on its exact release candidate."
   ]
 }
