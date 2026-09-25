@@ -21,6 +21,8 @@ export interface CrewDraft {
   id: string
   sessionId: SessionId
   members: CrewPersonRef[]
+  /** Physical crew slot for each compact member entry; omitted for packed crews. */
+  memberPositions?: number[]
   /** Maximum members for this crew; fixed at two for D2–D5. */
   capacity: number
   destination: CrewDestination
@@ -50,7 +52,7 @@ export interface SessionBoatState {
 }
 
 export type CrewDestinationTarget =
-  { kind: "crew"; crewId: string } | { kind: "land" }
+  { kind: "crew"; crewId: string; slotIndex?: number } | { kind: "land" }
 
 export type CrewOperationalDestination =
   { kind: "unassigned" } | { kind: "mezzi" } | { kind: "boat"; boatId: string }
@@ -75,8 +77,56 @@ export interface CopyPreviousCrewPlanInput {
 
 export type CrewPersonLocation =
   | { kind: "pool" }
-  | { kind: "crew"; crewId: string; memberIndex: number }
+  | {
+      kind: "crew"
+      crewId: string
+      memberIndex: number
+      slotIndex: number
+    }
   | { kind: "land"; memberIndex: number }
+
+export function getCrewMemberPosition(
+  crew: Pick<CrewDraft, "members" | "memberPositions">,
+  memberIndex: number,
+) {
+  return crew.memberPositions?.[memberIndex] ?? memberIndex
+}
+
+export function getCrewMemberAtPosition(
+  crew: Pick<CrewDraft, "members" | "memberPositions">,
+  slotIndex: number,
+) {
+  const memberIndex = crew.members.findIndex(
+    (_, index) => getCrewMemberPosition(crew, index) === slotIndex,
+  )
+  return memberIndex < 0 ? undefined : crew.members[memberIndex]
+}
+
+export function getOpenCrewSlotIndexes(
+  crew: Pick<CrewDraft, "members" | "memberPositions" | "capacity">,
+) {
+  const occupied = new Set(
+    crew.members.map((_, index) => getCrewMemberPosition(crew, index)),
+  )
+  return Array.from({ length: crew.capacity }, (_, index) => index).filter(
+    (index) => !occupied.has(index),
+  )
+}
+
+function withMemberPositions(
+  crew: CrewDraft,
+  members: CrewPersonRef[],
+  positions: number[],
+): CrewDraft {
+  const base = { ...crew }
+  delete base.memberPositions
+  const isPacked = positions.every((position, index) => position === index)
+  return {
+    ...base,
+    members,
+    ...(isPacked ? {} : { memberPositions: positions }),
+  }
+}
 
 function samePerson(left: CrewPersonRef, right: CrewPersonRef) {
   return (
@@ -123,14 +173,27 @@ export function copyPreviousCrewPlan({
 
   return {
     plan: {
-      crews: previousPlan.crews.map((crew) => ({
-        id: createId(),
-        sessionId,
-        members: crew.members.filter(keepMember),
-        capacity: crew.capacity,
-        destination: "unassigned",
-        boatId: null,
-      })),
+      crews: previousPlan.crews.map((crew) => {
+        const members: CrewPersonRef[] = []
+        const positions: number[] = []
+        crew.members.forEach((person, index) => {
+          if (!keepMember(person)) return
+          members.push(person)
+          positions.push(getCrewMemberPosition(crew, index))
+        })
+        return withMemberPositions(
+          {
+            id: createId(),
+            sessionId,
+            members: [],
+            capacity: crew.capacity,
+            destination: "unassigned",
+            boatId: null,
+          },
+          members,
+          positions,
+        )
+      }),
       landStudentIds: [...currentLandStudentIds],
       selectedBoatIds: [...selectedBoatIds],
     },
@@ -229,7 +292,10 @@ export function setCrewCapacity(
   if (
     !Number.isInteger(capacity) ||
     capacity < Math.max(1, crew.members.length) ||
-    capacity > Math.max(MAX_FLEXIBLE_CREW_CAPACITY, crew.members.length)
+    capacity > Math.max(MAX_FLEXIBLE_CREW_CAPACITY, crew.members.length) ||
+    crew.members.some(
+      (_, index) => getCrewMemberPosition(crew, index) >= capacity,
+    )
   ) {
     throw new Error("Invalid crew capacity")
   }
@@ -404,7 +470,14 @@ export function findPersonLocation(
     const memberIndex = crew.members.findIndex((member) =>
       samePerson(member, person),
     )
-    if (memberIndex >= 0) return { kind: "crew", crewId: crew.id, memberIndex }
+    if (memberIndex >= 0) {
+      return {
+        kind: "crew",
+        crewId: crew.id,
+        memberIndex,
+        slotIndex: getCrewMemberPosition(crew, memberIndex),
+      }
+    }
   }
   if (person.personType === "student") {
     const memberIndex = plan.landStudentIds.indexOf(person.personId)
@@ -416,10 +489,16 @@ export function findPersonLocation(
 function withoutPerson(plan: CrewPlan, person: CrewPersonRef): CrewPlan {
   return {
     ...plan,
-    crews: plan.crews.map((crew) => ({
-      ...crew,
-      members: crew.members.filter((member) => !samePerson(member, person)),
-    })),
+    crews: plan.crews.map((crew) => {
+      const members: CrewPersonRef[] = []
+      const positions: number[] = []
+      crew.members.forEach((member, index) => {
+        if (samePerson(member, person)) return
+        members.push(member)
+        positions.push(getCrewMemberPosition(crew, index))
+      })
+      return withMemberPositions(crew, members, positions)
+    }),
     landStudentIds:
       person.personType === "student"
         ? plan.landStudentIds.filter((id) => id !== person.personId)
@@ -445,9 +524,17 @@ function putAtLocation(
     ...plan,
     crews: plan.crews.map((crew) => {
       if (crew.id !== location.crewId) return crew
-      const members = [...crew.members]
-      members.splice(location.memberIndex, 0, person)
-      return { ...crew, members }
+      const entries = crew.members.map((member, memberIndex) => ({
+        member,
+        slotIndex: getCrewMemberPosition(crew, memberIndex),
+      }))
+      entries.push({ member: person, slotIndex: location.slotIndex })
+      entries.sort((left, right) => left.slotIndex - right.slotIndex)
+      return withMemberPositions(
+        crew,
+        entries.map(({ member }) => member),
+        entries.map(({ slotIndex }) => slotIndex),
+      )
     }),
   }
 }
@@ -511,14 +598,27 @@ export function movePerson(
   }
   const crew = next.crews.find(({ id }) => id === destination.crewId)
   if (!crew) throw new Error("Missing crew")
-  if (crew.members.length >= crew.capacity) throw new Error("Crew is full")
+  const openSlots = getOpenCrewSlotIndexes(crew)
+  const slotIndex = destination.slotIndex ?? openSlots[0]
+  if (slotIndex === undefined || !openSlots.includes(slotIndex)) {
+    throw new Error("Crew slot is not available")
+  }
   return {
     ...next,
-    crews: next.crews.map((candidate) =>
-      candidate.id === crew.id
-        ? { ...candidate, members: [...candidate.members, person] }
-        : candidate,
-    ),
+    crews: next.crews.map((candidate) => {
+      if (candidate.id !== crew.id) return candidate
+      const entries = candidate.members.map((member, memberIndex) => ({
+        member,
+        slotIndex: getCrewMemberPosition(candidate, memberIndex),
+      }))
+      entries.push({ member: person, slotIndex })
+      entries.sort((left, right) => left.slotIndex - right.slotIndex)
+      return withMemberPositions(
+        candidate,
+        entries.map(({ member }) => member),
+        entries.map(({ slotIndex: position }) => position),
+      )
+    }),
   }
 }
 

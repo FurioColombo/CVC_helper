@@ -187,26 +187,26 @@ describe("course setup and application shell", () => {
 
     const twoPerRow = await screen.findByRole("radio", { name: "2 per riga" })
     const threePerRow = screen.getByRole("radio", { name: "3 per riga" })
-    expect(threePerRow).toBeChecked()
+    expect(twoPerRow).toBeChecked()
     expect(
       screen.getByText(
         "Scegli quanti nomi degli allievi selezionati mostrare per riga.",
       ),
     ).toBeVisible()
 
-    await user.click(twoPerRow)
-    expect(twoPerRow).toBeChecked()
+    await user.click(threePerRow)
+    expect(threePerRow).toBeChecked()
     expect(window.localStorage.getItem("cvc-helper.crew-display-columns")).toBe(
-      "2",
+      "3",
     )
 
     await user.click(screen.getByRole("button", { name: "Torna alla Home" }))
     await user.click(screen.getByRole("button", { name: "Impostazioni" }))
 
     expect(
-      await screen.findByRole("radio", { name: "2 per riga" }),
+      await screen.findByRole("radio", { name: "3 per riga" }),
     ).toBeChecked()
-    expect(screen.getByRole("radio", { name: "3 per riga" })).not.toBeChecked()
+    expect(screen.getByRole("radio", { name: "2 per riga" })).not.toBeChecked()
   })
 
   it("opens a dedicated volunteer area from Home", async () => {

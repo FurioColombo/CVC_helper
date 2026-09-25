@@ -32,7 +32,7 @@ import {
 import { BoatModelMark } from "@/features/boats/BoatIdentity"
 import { getCrewDisplayColumns } from "@/features/crews/crewDisplayPreference"
 import {
-  downloadCrewSummarySvg,
+  downloadCrewSummaryPng,
   type CrewSummaryLine,
 } from "@/features/crews/crewSummaryImage"
 import {
@@ -49,7 +49,9 @@ import {
   copyPreviousBoatSelection,
   copyPreviousCrewPlan,
   findPersonLocation,
+  getCrewMemberAtPosition,
   getCrewCompleteness,
+  getOpenCrewSlotIndexes,
   getPreviousSessionId,
   getInitialCrewCapacity,
   getStandardCrewSize,
@@ -97,6 +99,8 @@ const studentPoolCollator = new Intl.Collator("it-IT", {
   numeric: true,
   sensitivity: "base",
 })
+
+type CrewSlotSelection = { crewId: string; slotIndex: number }
 
 function CrewHeader({
   onBack,
@@ -408,6 +412,9 @@ function PersonButton({
   ariaLabel,
   compact = false,
   dense = false,
+  className = "",
+  centered = false,
+  dataCrewSlotStudent = false,
 }: {
   person: CrewPersonRef
   label: string
@@ -424,6 +431,9 @@ function PersonButton({
   ariaLabel?: string
   compact?: boolean
   dense?: boolean
+  className?: string
+  centered?: boolean
+  dataCrewSlotStudent?: boolean
 }) {
   const pointerDownAt = useRef<number | null>(null)
   const pointerOrigin = useRef<{ x: number; y: number } | null>(null)
@@ -445,7 +455,8 @@ function PersonButton({
       // the name, which stays the person — the same arrangement P17 uses.
       aria-description={markerDescription || undefined}
       aria-pressed={selected}
-      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"}`}
+      data-crew-slot-student={dataCrewSlotStudent || undefined}
+      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"} ${className}`}
       disabled={disabled}
       onClick={(event) => {
         if (longPressed.current) {
@@ -525,7 +536,7 @@ function PersonButton({
       )}
       <span className="min-w-0 flex-1">
         <span
-          className={`flex min-w-0 items-center gap-1 text-sm font-bold ${compact ? "leading-4" : "leading-5"}`}
+          className={`flex min-w-0 items-center gap-1 text-sm font-bold ${compact ? "leading-4" : "leading-5"} ${centered ? "justify-center text-center" : ""}`}
         >
           <span
             className={`min-w-0 ${truncateLabel ? "truncate" : "break-words"}`}
@@ -535,7 +546,7 @@ function PersonButton({
           {markers}
         </span>
         <span
-          className={`block opacity-75 ${compact ? "text-[0.68rem] leading-4" : "truncate text-xs"}`}
+          className={`block truncate opacity-75 ${compact ? "text-[0.68rem] leading-4" : "text-xs"}`}
         >
           {detail}
         </span>
@@ -642,11 +653,13 @@ function AnnouncementView({
   lines,
   onClose,
   onDownloadImage,
+  imageExportState,
 }: {
   sessionId: SessionId
   lines: AnnouncementLine[]
   onClose: () => void
   onDownloadImage: () => void
+  imageExportState: "idle" | "busy" | "error"
 }) {
   const dialogRef = useDialogFocus<HTMLElement>()
 
@@ -685,11 +698,19 @@ function AnnouncementView({
         </header>
         <button
           className="mt-3 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+          disabled={imageExportState === "busy"}
           onClick={onDownloadImage}
           type="button"
         >
-          Scarica immagine riepilogo
+          {imageExportState === "busy"
+            ? "Preparo immagine…"
+            : "Scarica immagine riepilogo"}
         </button>
+        {imageExportState === "error" && (
+          <p className="mt-2 text-sm font-semibold text-[#a2381b]" role="alert">
+            Impossibile scaricare il riepilogo PNG. Riprova.
+          </p>
+        )}
         <ol className="mt-2 divide-y divide-[#dbe4e6]">
           {lines.map((line) => (
             <li
@@ -826,6 +847,9 @@ export function CrewManagement({
     null,
   )
   const [selected, setSelected] = useState<CrewPersonRef | null>(null)
+  const [selectedCrewSlot, setSelectedCrewSlot] =
+    useState<CrewSlotSelection | null>(null)
+  const [crewSlotPickerOpen, setCrewSlotPickerOpen] = useState(false)
   const [crewCountDraft, setCrewCountDraft] = useState("1")
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -833,11 +857,16 @@ export function CrewManagement({
   const [saving, setSaving] = useState(false)
   const [copying, setCopying] = useState(false)
   const [saveError, setSaveError] = useState(false)
+  const [imageExportState, setImageExportState] = useState<
+    "idle" | "busy" | "error"
+  >("idle")
   const saveInFlight = useRef(false)
   const boatCopyDialogRef = useDialogFocus<HTMLElement>(
     boatCopySelection !== null,
   )
   const personDestinationRef = useRef<HTMLElement>(null)
+  const studentPoolRef = useRef<HTMLElement>(null)
+  const crewSlotPickerRef = useRef<HTMLElement>(null)
 
   const applyLoaded = useCallback(
     (data: Awaited<ReturnType<typeof readValidCrewState>>) => {
@@ -854,6 +883,8 @@ export function CrewManagement({
       setDutyAssignments(data.dutyPlan.assignments)
       setCrewCountDraft(String(Math.max(1, data.stored.crews.length)))
       setSelected(null)
+      setSelectedCrewSlot(null)
+      setCrewSlotPickerOpen(false)
       setWarningCrewId(null)
       setDestinationCrewId(null)
       setCopyReport(null)
@@ -1083,7 +1114,12 @@ export function CrewManagement({
     person: CrewPersonRef,
   ): CrewSummaryLine["members"][number] {
     if (person.personType === "volunteer") {
-      return { label: personLabel(person), isMinor: false, duty: null }
+      return {
+        label: personLabel(person),
+        isMinor: false,
+        duty: null,
+        role: volunteerById.get(person.personId)?.role ?? null,
+      }
     }
     const student = studentById.get(person.personId)
     return {
@@ -1115,20 +1151,76 @@ export function CrewManagement({
     }),
   )
 
-  function downloadAnnouncementImage() {
-    const summaryLines: CrewSummaryLine[] = announcementLines.map((line) => ({
-      crewNumber: line.crewNumber,
-      destination:
-        line.destination === "mezzi"
-          ? "Mezzi"
-          : line.boat
-            ? `${line.boat.type} ${line.boat.number}`
-            : line.inferredBoatType
-              ? `${line.inferredBoatType} · Senza barca`
-              : "Senza barca",
-      members: line.members,
-    }))
-    downloadCrewSummarySvg(sessionLabel(sessionId), summaryLines)
+  async function downloadAnnouncementImage() {
+    if (imageExportState === "busy") return
+    const assigned = new Set(
+      plan.crews.flatMap((crew) =>
+        crew.members.map((person) => `${person.personType}:${person.personId}`),
+      ),
+    )
+    const availableMembers = [
+      ...activeStudents
+        .filter(
+          (student) =>
+            !assigned.has(`student:${student.id}`) &&
+            !plan.landStudentIds.includes(student.id),
+        )
+        .map((student) =>
+          summaryMember({ personType: "student", personId: student.id }),
+        ),
+      ...volunteers
+        .filter((volunteer) => !assigned.has(`volunteer:${volunteer.id}`))
+        .map((volunteer) =>
+          summaryMember({ personType: "volunteer", personId: volunteer.id }),
+        ),
+    ]
+    const summaryLines: CrewSummaryLine[] = [
+      { category: "available", members: availableMembers },
+      ...announcementLines.map((line): CrewSummaryLine => ({
+        category:
+          line.members.length === 0
+            ? "empty"
+            : line.destination === "mezzi"
+              ? "mezzi"
+              : "sailing",
+        crewNumber: line.crewNumber,
+        destination:
+          line.destination === "mezzi"
+            ? "Mezzi"
+            : line.boat
+              ? `${line.boat.type} ${line.boat.number}`
+              : line.inferredBoatType
+                ? `${line.inferredBoatType} · Senza barca`
+                : "Senza barca",
+        members: line.members,
+      })),
+    ]
+    const landMembers = plan.landStudentIds
+      .filter((id) => studentById.has(id))
+      .map((id) => summaryMember({ personType: "student", personId: id }))
+    if (landMembers.length > 0) {
+      summaryLines.push({ category: "a-terra", members: landMembers })
+    }
+    const representedBoats = new Set(
+      plan.crews.map((crew) => crew.boatId).filter((id) => id !== null),
+    )
+    for (const boatId of plan.selectedBoatIds) {
+      if (representedBoats.has(boatId)) continue
+      const boat = boatById.get(boatId)
+      if (!boat) continue
+      summaryLines.push({
+        category: "empty",
+        destination: `${boat.type} ${boat.number}`,
+        members: [],
+      })
+    }
+    setImageExportState("busy")
+    try {
+      await downloadCrewSummaryPng(sessionLabel(sessionId), summaryLines)
+      setImageExportState("idle")
+    } catch {
+      setImageExportState("error")
+    }
   }
 
   async function commit(next: CrewPlan) {
@@ -1150,6 +1242,8 @@ export function CrewManagement({
         })),
       ])
       setSelected(null)
+      setSelectedCrewSlot(null)
+      setCrewSlotPickerOpen(false)
       setWarningCrewId(null)
       return true
     } catch {
@@ -1261,6 +1355,15 @@ export function CrewManagement({
 
   function tapPerson(person: CrewPersonRef) {
     if (saveInFlight.current || copying) return
+    if (selectedCrewSlot) {
+      const location = findPersonLocation(plan, person)
+      if (person.personType === "student" && location.kind === "pool") {
+        void fillSelectedCrewSlot(person)
+        return
+      }
+      setSelectedCrewSlot(null)
+      setCrewSlotPickerOpen(false)
+    }
     if (!selected || samePerson(selected, person)) {
       setSelected(samePerson(selected, person) ? null : person)
       setDestinationCrewId(null)
@@ -1284,6 +1387,78 @@ export function CrewManagement({
       void commit(movePerson(plan, selected, { kind: "crew", crewId }))
     } catch {
       setSaveError(true)
+    }
+  }
+
+  function fillSelectedCrewSlot(person: CrewPersonRef) {
+    if (!selectedCrewSlot || busy) return
+    const crew = plan.crews.find(({ id }) => id === selectedCrewSlot.crewId)
+    if (
+      !crew ||
+      !getOpenCrewSlotIndexes(crew).includes(selectedCrewSlot.slotIndex)
+    ) {
+      return
+    }
+    try {
+      void commit(
+        movePerson(plan, person, {
+          kind: "crew",
+          crewId: selectedCrewSlot.crewId,
+          slotIndex: selectedCrewSlot.slotIndex,
+        }),
+      ).then((saved) => {
+        if (!saved) return
+        setSelectedCrewSlot(null)
+        setCrewSlotPickerOpen(false)
+      })
+    } catch {
+      setSaveError(true)
+    }
+  }
+
+  function chooseCrewSlot(crewId: string, slotIndex: number) {
+    if (busy) return
+    if (selected) {
+      try {
+        void commit(
+          movePerson(plan, selected, { kind: "crew", crewId, slotIndex }),
+        ).then((saved) => {
+          if (!saved) return
+          setSelected(null)
+          setSelectedCrewSlot(null)
+          setCrewSlotPickerOpen(false)
+        })
+      } catch {
+        setSaveError(true)
+      }
+      return
+    }
+    setSelectedCrewSlot({ crewId, slotIndex })
+    setCrewSlotPickerOpen(true)
+    setSelected(null)
+    setDestinationCrewId(null)
+    setWarningCrewId(null)
+  }
+
+  function dismissCrewSlotPicker() {
+    setCrewSlotPickerOpen(false)
+    const firstAvailableStudent =
+      studentPoolRef.current?.querySelector<HTMLButtonElement>(
+        '[aria-label="Allievi disponibili"] button',
+      )
+    if (firstAvailableStudent) {
+      firstAvailableStudent.focus({ preventScroll: true })
+      return
+    }
+    if (selectedCrewSlot) {
+      document
+        .getElementById(
+          "crew-slot-" +
+            selectedCrewSlot.crewId +
+            "-" +
+            selectedCrewSlot.slotIndex,
+        )
+        ?.focus({ preventScroll: true })
     }
   }
 
@@ -1444,6 +1619,9 @@ export function CrewManagement({
   const destinationCrewIndex = plan.crews.findIndex(
     ({ id }) => id === destinationCrewId,
   )
+  const selectedCrewSlotIndex = selectedCrewSlot
+    ? plan.crews.findIndex(({ id }) => id === selectedCrewSlot.crewId)
+    : -1
   const selectedDestinationOpen = Boolean(
     selected &&
     (selectedLocation.kind === "pool" || selected.personType === "volunteer"),
@@ -1464,6 +1642,21 @@ export function CrewManagement({
     }
     personDestinationRef.current?.focus()
   }, [firstCrewWithRoom, selectedDestinationOpen])
+
+  useEffect(() => {
+    if (!selectedCrewSlot || !crewSlotPickerOpen) return
+    if (typeof studentPoolRef.current?.scrollIntoView === "function") {
+      studentPoolRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    }
+    const firstChoice =
+      crewSlotPickerRef.current?.querySelector<HTMLButtonElement>(
+        "[data-crew-slot-student]",
+      ) ?? crewSlotPickerRef.current?.querySelector<HTMLButtonElement>("button")
+    firstChoice?.focus({ preventScroll: true })
+  }, [crewSlotPickerOpen, selectedCrewSlot])
 
   if (loadState === "loading") {
     return (
@@ -1505,6 +1698,7 @@ export function CrewManagement({
     <>
       {readMode && (
         <AnnouncementView
+          imageExportState={imageExportState}
           lines={announcementLines}
           onDownloadImage={downloadAnnouncementImage}
           onClose={() => setReadMode(false)}
@@ -1934,11 +2128,101 @@ export function CrewManagement({
                   </section>
                 )}
 
-                {studentPool.length > 0 && (
-                  <section>
+                {(studentPool.length > 0 || selectedCrewSlot) && (
+                  <section ref={studentPoolRef}>
                     <h2 className="text-sm font-black tracking-wide uppercase">
                       Disponibili · {studentPool.length}
                     </h2>
+                    {selectedCrewSlot &&
+                      selectedCrewSlotIndex >= 0 &&
+                      crewSlotPickerOpen && (
+                        <section
+                          aria-label={
+                            "Scegli un allievo per il posto libero " +
+                            (selectedCrewSlot.slotIndex + 1) +
+                            " equipaggio " +
+                            (selectedCrewSlotIndex + 1)
+                          }
+                          className="mt-2 rounded-2xl border border-primary/35 bg-background p-3 shadow-sm"
+                          id="crew-slot-student-picker"
+                          onKeyDown={(
+                            event: ReactKeyboardEvent<HTMLElement>,
+                          ) => {
+                            if (event.key === "Escape") {
+                              event.preventDefault()
+                              dismissCrewSlotPicker()
+                            }
+                          }}
+                          ref={crewSlotPickerRef}
+                          role="dialog"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="min-w-0 text-sm font-black">
+                              Allievo per equipaggio {selectedCrewSlotIndex + 1}
+                            </h3>
+                            <button
+                              aria-label="Chiudi scelta allievo"
+                              className="min-h-11 shrink-0 rounded-xl px-3 text-xs font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                              onClick={dismissCrewSlotPicker}
+                              type="button"
+                            >
+                              Chiudi
+                            </button>
+                          </div>
+                          {studentPool.length > 0 ? (
+                            <div className="mt-2 grid max-h-[24vh] grid-cols-2 gap-2 overflow-y-auto">
+                              {studentPool.map((student) => {
+                                const person: CrewPersonRef = {
+                                  personId: student.id,
+                                  personType: "student",
+                                }
+                                const markers = personMarkers(person)
+                                return (
+                                  <PersonButton
+                                    ariaLabel={
+                                      personLabel(person) +
+                                      ", inserisci nel posto libero " +
+                                      (selectedCrewSlot.slotIndex + 1) +
+                                      " equipaggio " +
+                                      (selectedCrewSlotIndex + 1)
+                                    }
+                                    compact
+                                    dataCrewSlotStudent
+                                    detail={personDetail(person)}
+                                    disabled={busy}
+                                    key={student.id}
+                                    label={personLabel(person)}
+                                    markers={markers.nodes}
+                                    markerDescription={markers.description}
+                                    onTap={() => fillSelectedCrewSlot(person)}
+                                    person={person}
+                                    selected={false}
+                                  />
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <p
+                              className="mt-2 rounded-xl bg-muted px-3 py-2 text-sm font-semibold text-muted-foreground"
+                              role="status"
+                            >
+                              Nessun allievo disponibile.
+                            </p>
+                          )}
+                        </section>
+                      )}
+                    {selectedCrewSlot &&
+                      selectedCrewSlotIndex >= 0 &&
+                      !crewSlotPickerOpen && (
+                        <p
+                          className="mt-2 rounded-xl bg-primary/5 px-3 py-2 text-sm font-semibold text-primary"
+                          role="status"
+                        >
+                          Posto libero {selectedCrewSlot.slotIndex + 1}{" "}
+                          equipaggio {selectedCrewSlotIndex + 1} selezionato ·{" "}
+                          tocca un allievo disponibile per inserirlo.
+                        </p>
+                      )}
                     <div
                       aria-label="Allievi disponibili"
                       className="mt-2 grid grid-cols-2 gap-2"
@@ -2105,10 +2389,13 @@ export function CrewManagement({
                               selectedLocation.crewId === crew.id
                             const preview = Array.from(
                               { length: crew.capacity },
-                              (_, index) =>
-                                crew.members[index]
-                                  ? personLabel(crew.members[index]!)
-                                  : "-",
+                              (_, index) => {
+                                const member = getCrewMemberAtPosition(
+                                  crew,
+                                  index,
+                                )
+                                return member ? personLabel(member) : "-"
+                              },
                             ).join(" · ")
                             return (
                               <Button
@@ -2278,7 +2565,10 @@ export function CrewManagement({
                                 disabled={
                                   busy ||
                                   crew.capacity <=
-                                    Math.max(1, crew.members.length)
+                                    Math.max(1, crew.members.length) ||
+                                  !getOpenCrewSlotIndexes(crew).includes(
+                                    crew.capacity - 1,
+                                  )
                                 }
                                 onClick={() => adjustCrewCapacity(crew.id, -1)}
                                 type="button"
@@ -2375,82 +2665,132 @@ export function CrewManagement({
                       {/* The slots and, on an empty crew only, the control
                           that removes it: the number of crews is chosen before
                           composing and the outing changes shape afterwards. */}
-                      <div className="flex items-stretch gap-2">
+                      <div className="flex min-w-0 items-stretch gap-2">
                         <div
                           className={`grid min-w-0 flex-1 ${crewDisplayColumns === 2 ? "grid-cols-2 gap-2" : "grid-cols-3 gap-1"}`}
                         >
-                          {crew.members.map((person) => (
-                            <div
-                              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-0"
-                              key={`${person.personType}:${person.personId}`}
-                            >
-                              <PersonButton
-                                ariaLabel={`${personLabel(person)}, equipaggio ${crewIndex + 1}`}
-                                compact
-                                dense
-                                detail={personDetail(person)}
-                                disabled={busy}
-                                label={personLabel(person)}
-                                markers={personMarkers(person).nodes}
-                                markerDescription={
-                                  personMarkers(person).description
-                                }
-                                onDoubleTap={() =>
-                                  void commit(removePerson(plan, person))
-                                }
-                                role={
-                                  person.personType === "volunteer"
-                                    ? volunteerById.get(person.personId)?.role
-                                    : undefined
-                                }
-                                onLongPress={
-                                  person.personType === "student"
-                                    ? () => onOpenStudent(person.personId)
-                                    : undefined
-                                }
-                                onTap={() => tapPerson(person)}
-                                person={person}
-                                selected={samePerson(selected, person)}
-                                truncateLabel
-                              />
-                              <button
-                                aria-label={`Rendi disponibile ${personLabel(person)}`}
-                                className="grid min-h-[44px] min-w-[40px] place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
-                                disabled={busy}
-                                onClick={() =>
-                                  void commit(removePerson(plan, person))
-                                }
-                                title="Rendi disponibile"
-                                type="button"
-                              >
-                                <CircleMinus
-                                  aria-hidden="true"
-                                  className="size-4"
-                                />
-                              </button>
-                            </div>
-                          ))}
                           {Array.from(
-                            {
-                              length: Math.max(
-                                0,
-                                crew.capacity - crew.members.length,
-                              ),
+                            { length: crew.capacity },
+                            (_, slotIndex) => {
+                              const person = getCrewMemberAtPosition(
+                                crew,
+                                slotIndex,
+                              )
+                              if (!person) {
+                                const isSelectedSlot =
+                                  selectedCrewSlot?.crewId === crew.id &&
+                                  selectedCrewSlot.slotIndex === slotIndex
+                                return (
+                                  <button
+                                    id={
+                                      "crew-slot-" + crew.id + "-" + slotIndex
+                                    }
+                                    aria-controls={
+                                      isSelectedSlot && crewSlotPickerOpen
+                                        ? "crew-slot-student-picker"
+                                        : undefined
+                                    }
+                                    aria-expanded={
+                                      isSelectedSlot
+                                        ? crewSlotPickerOpen
+                                        : undefined
+                                    }
+                                    aria-label={
+                                      selected
+                                        ? "Inserisci " +
+                                          personLabel(selected) +
+                                          " nel posto libero " +
+                                          (slotIndex + 1) +
+                                          " equipaggio " +
+                                          (crewIndex + 1)
+                                        : "Posto libero " +
+                                          (slotIndex + 1) +
+                                          " equipaggio " +
+                                          (crewIndex + 1)
+                                    }
+                                    aria-pressed={isSelectedSlot}
+                                    className={
+                                      "min-h-12 min-w-0 w-full break-words rounded-2xl border border-dashed px-1 text-center text-xs font-bold leading-4 text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 " +
+                                      (isSelectedSlot
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "bg-muted/40 enabled:border-primary/50 enabled:text-primary")
+                                    }
+                                    disabled={busy}
+                                    key={slotIndex}
+                                    onClick={() =>
+                                      chooseCrewSlot(crew.id, slotIndex)
+                                    }
+                                    type="button"
+                                  >
+                                    {selected
+                                      ? "Inserisci"
+                                      : isSelectedSlot
+                                        ? "Selezionato"
+                                        : "Posto libero"}
+                                  </button>
+                                )
+                              }
+                              return (
+                                <div
+                                  className="relative min-w-0"
+                                  key={`${person.personType}:${person.personId}`}
+                                >
+                                  <PersonButton
+                                    ariaLabel={
+                                      personLabel(person) +
+                                      ", equipaggio " +
+                                      (crewIndex + 1)
+                                    }
+                                    compact
+                                    centered
+                                    className="!justify-center !px-[40px] !text-center"
+                                    dense
+                                    detail={personDetail(person)}
+                                    disabled={busy}
+                                    label={personLabel(person)}
+                                    markers={personMarkers(person).nodes}
+                                    markerDescription={
+                                      personMarkers(person).description
+                                    }
+                                    onDoubleTap={() =>
+                                      void commit(removePerson(plan, person))
+                                    }
+                                    role={
+                                      person.personType === "volunteer"
+                                        ? volunteerById.get(person.personId)
+                                            ?.role
+                                        : undefined
+                                    }
+                                    onLongPress={
+                                      person.personType === "student"
+                                        ? () => onOpenStudent(person.personId)
+                                        : undefined
+                                    }
+                                    onTap={() => tapPerson(person)}
+                                    person={person}
+                                    selected={samePerson(selected, person)}
+                                    truncateLabel
+                                  />
+                                  <button
+                                    aria-label={
+                                      "Rendi disponibile " + personLabel(person)
+                                    }
+                                    className="absolute right-0 top-0 grid size-[44px] place-items-center rounded-xl bg-transparent text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      void commit(removePerson(plan, person))
+                                    }
+                                    title="Rendi disponibile"
+                                    type="button"
+                                  >
+                                    <CircleMinus
+                                      aria-hidden="true"
+                                      className="size-[18px]"
+                                    />
+                                  </button>
+                                </div>
+                              )
                             },
-                            (_, index) => (
-                              <button
-                                aria-label={`Posto libero ${index + 1} equipaggio ${crewIndex + 1}`}
-                                className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
-                                disabled={!selected || busy}
-                                key={index}
-                                onClick={() => placeInCrew(crew.id)}
-                                type="button"
-                              >
-                                {selected
-                                  ? `Inserisci ${personLabel(selected)}`
-                                  : "Posto libero"}
-                              </button>
-                            ),
                           )}
                         </div>
                         {crew.members.length === 0 && (

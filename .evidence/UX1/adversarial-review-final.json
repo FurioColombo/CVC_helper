@@ -1,0 +1,26 @@
+{
+  "reviewer": "independent GPT-6 Luna xhigh adversarial UX1 reviewer",
+  "reviewedAt": "2026-09-25",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolutionOfInitialFail": [
+    "The selected physical crew slot now persists through assignment, removal, swap, session copy and reload; the Pixel 7 browser test verifies slot 1 stays empty after filling slot 2, including after reload.",
+    "The mixed available-person summary section is labeled Persone disponibili.",
+    "Historical crew reads accept unique sparse positions and legacy null positions, and reject duplicate or out-of-capacity positions."
+  ],
+  "evidenceInspected": [
+    "src/domain/crews.ts and src/domain/crews.test.ts",
+    "src/persistence/crews.ts and src/persistence/crews.test.ts",
+    "src/features/crews/CrewManagement.tsx and its tests",
+    "src/features/crews/crewSummaryImage.ts and its tests",
+    "tests/e2e/ux1-reverse-crew-assignment.spec.ts",
+    ".evidence/UX1/adversarial-review-initial.json"
+  ],
+  "testsRunByReviewer": [],
+  "verificationObserved": "Root and implementation agent reported Node 24 focused tests and Pixel 7 browser journeys; the reviewer independently inspected their assertions and the final diff.",
+  "limitations": [
+    "Browser verification is emulation, not an owner-run physical-device check."
+  ]
+}

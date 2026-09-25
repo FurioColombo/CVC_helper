@@ -16,14 +16,14 @@ describe("crew display column preference", () => {
     vi.restoreAllMocks()
   })
 
-  it("defaults to three columns when no preference exists", () => {
-    expect(getCrewDisplayColumns()).toBe(3)
+  it("defaults to two columns when no preference exists", () => {
+    expect(getCrewDisplayColumns()).toBe(2)
   })
 
-  it("defaults to three columns when stored data is invalid", () => {
+  it("defaults to two columns when stored data is invalid", () => {
     window.localStorage.setItem(STORAGE_KEY, "four")
 
-    expect(getCrewDisplayColumns()).toBe(3)
+    expect(getCrewDisplayColumns()).toBe(2)
   })
 
   it.each([2, 3] as const)("persists %i columns locally", (columns) => {
@@ -41,7 +41,7 @@ describe("crew display column preference", () => {
       throw new DOMException("Storage blocked", "SecurityError")
     })
 
-    expect(getCrewDisplayColumns()).toBe(3)
+    expect(getCrewDisplayColumns()).toBe(2)
     expect(() => setCrewDisplayColumns(2)).not.toThrow()
   })
 })

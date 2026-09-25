@@ -174,7 +174,9 @@ An unstructured name may be printed first-name-first or surname-first. Preserve
 the recognized name for review. Infer one order per sheet from recognized given
 names at both ends of each row; leave an explicit whole-sheet correction. Mixed
 ordering and compound names still need editable per-row fields and
-acknowledgement before insertion, without a separate row-level swap control.
+acknowledgement before insertion. An icon-only per-row swap exchanges given name
+and surname; its accessible name explains the action. The sheet-wide order
+control remains available.
 
 Extraction attempts first name, surname, date of birth, printed age and phone
 when present. A reliable date corroborates the printed age and remains the
@@ -195,6 +197,15 @@ can be removed. Sticky live counters show rows to check, fields to complete and
 students ready/inserted, updating after every change. Tapping a pending counter
 moves to its first matching row or field. Source photos are not retained as
 application data.
+
+Leaving a flagged, nonempty field after focusing it acknowledges that field,
+even if its text was unchanged. Empty required fields remain pending. Once all
+flagged fields are edited or acknowledged and no other unresolved warning or
+required empty field remains, the row is considered reviewed automatically.
+Show a source-reading or name-order panel only for actionable ambiguity,
+compound names or low confidence, since ordinary recognized text is already in
+the editable fields. Age and sex share a responsive row; sex choices use compact
+`M`, `F`, `Alt` labels, where `Alt` abbreviates the existing broad `Altro` value.
 
 ## 4. Boats and faults
 
@@ -379,9 +390,15 @@ click/tap on an assigned student returns only that person to Disponibili and fre
 the slot; an explicit accessible command does the same. Long press may open the
 profile but is never the sole path.
 
-Selected members use three columns by default, with a persistent Settings
-choice for two. This display choice stays in Settings, not on the Equipaggi
-page. The available-person destination popup previews names and vacant places
+Selected members use two equal-width columns by default, with a persistent
+Settings choice for three. Cards fill and center within their columns, with an
+integrated accessible remove action that does not take a separate column. This
+display choice stays in Settings, not on the Equipaggi page. Tapping a free
+slot selects that exact crew position, scrolls the available-person pool into
+view and opens a popup listing available students; choosing one fills the
+selected position, which remains visible after reload. If
+dismissed, the selected crew can still be filled by tapping a student in the
+pool. The available-person destination popup previews names and vacant places
 in crews that have room, offers a new crew, A terra and Mezzi, and says
 `Equipaggi pieni` when no existing crew can accept a person. Its opening scrolls
 the underlying workspace to the first crew with room while keeping focus in the
@@ -467,9 +484,13 @@ It supports exact boat, model without number, no boat and Mezzi. A permitted mod
 asset is optional; the same-size text fallback is required. Screen wake lock is
 allowed when straightforward; native brightness control is deferred.
 
-The 0.3.0 crew summary also shows Comandata and minor markers and can be
-downloaded as one complete image. If Copy is offered, it copies that image,
-never plain text. All crews must fit on one page; above twelve crews two
+The 0.3.0 crew summary shows `IS`, `ADV`, `CT`, Comandata and minor markers and
+downloads as one complete phone-compatible PNG in the app's visual style. It
+starts with remaining available students, then occupied sailing crews, Mezzi,
+A terra as a crew-like group with its own icon, and empty boats/crews last. If
+no students remain available, a small centered CVC-blue `Tutti gli allievi
+assegnati` note appears at the bottom. If Copy is offered, it copies that image,
+never plain text. All groups must fit in the image; above twelve crews two
 columns are allowed. Preserve readable names by reducing vertical spacing
 before font size.
 
@@ -492,6 +513,9 @@ icons; positives are green, negatives red and neutral distinct. A second tap on
 the selected value clears it. There is no sixth absence control. Tapping the name
 opens the note editor in the same panel. Notes accept typing or voice and remain
 attached to the exact session. Past records remain editable.
+
+Keep the space between student rows compact in both Allievi and Equipaggi views,
+without overlapping note panels, save feedback or crew group boundaries.
 
 `Riepilogo` shows one compact student card with a complete seven-day × AM/PM grid,
 a 40 px name row, actual evaluation count and an `Ordinamento` label above compact

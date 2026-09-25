@@ -199,6 +199,31 @@ describe("evaluation management", () => {
     )
   })
 
+  it("tightens evaluation card gaps in both views and preserves group and touch targets", async () => {
+    const user = userEvent.setup()
+    renderScreen()
+
+    const allievoName = await screen.findByRole("button", {
+      name: "Aggiungi nota valutazione di Aldo",
+    })
+    const allievoCard = allievoName.closest("article")
+    expect(allievoCard?.parentElement).toHaveClass("gap-2")
+
+    await user.click(screen.getByRole("button", { name: "Equipaggi" }))
+    const crew = screen.getByRole("region", { name: "Equipaggio 1" })
+    const crewCards = within(crew).getAllByRole("article")
+    expect(crewCards[0]?.parentElement).toHaveClass("gap-1")
+    expect(crew.parentElement).toHaveClass("gap-4")
+
+    const marks = within(crew).getByRole("group", {
+      name: "Valutazione di Aldo",
+    })
+    const firstMark = within(marks).getByRole("button", {
+      name: "Valutazione di Aldo: ++",
+    })
+    expect(firstMark).toHaveClass("h-[40px]", "w-[40px]")
+  })
+
   it("loads and edits a past session selected explicitly", async () => {
     getEvaluations.mockImplementation(async (_courseId, sessionId) =>
       sessionId === "sat-pm"
@@ -333,11 +358,7 @@ describe("evaluation management", () => {
     )
     expect(save).not.toHaveBeenCalled()
     expect(stopTrack).toHaveBeenCalledOnce()
-    await user.click(
-      screen.getByRole("button", {
-        name: "Usa trascrizione valutazione di Aldo",
-      }),
-    )
+    expect(screen.getByRole("button", { name: "Salva nota" })).toBeEnabled()
     await user.type(
       screen.getByRole("textbox", { name: "Nota valutazione di Aldo" }),
       " e pulita",

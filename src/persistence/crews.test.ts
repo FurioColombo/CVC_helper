@@ -101,6 +101,95 @@ describe("crew persistence", () => {
     )
   })
 
+  it("round trips an intentionally empty first member slot", async () => {
+    await saveCrewPlan("course-1", "sat-pm", {
+      crews: [
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-1", personType: "student" }],
+          memberPositions: [1],
+          capacity: 2,
+          destination: "unassigned",
+          boatId: null,
+        },
+      ],
+      landStudentIds: [],
+      selectedBoatIds: [],
+    })
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO crewMembers"),
+      [expect.arrayContaining(["crew-1", "student-1", "student", 1])],
+    )
+
+    database.getAll.mockReset()
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          capacity: 2,
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-1",
+          personId: "student-1",
+          personType: "student",
+          position: 1,
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    await expect(readCrewPlan("course-1", "sat-pm")).resolves.toMatchObject({
+      crews: [
+        {
+          members: [{ personId: "student-1", personType: "student" }],
+          memberPositions: [1],
+        },
+      ],
+    })
+  })
+
+  it.each([
+    {
+      label: "duplicate slots",
+      members: [
+        { personId: "student-1", personType: "student" as const },
+        { personId: "student-2", personType: "student" as const },
+      ],
+      memberPositions: [1, 1],
+    },
+    {
+      label: "out-of-range slot",
+      members: [{ personId: "student-1", personType: "student" as const }],
+      memberPositions: [2],
+    },
+  ])("rejects persisted crew $label before writing", async (crew) => {
+    await expect(
+      saveCrewPlan("course-1", "sat-pm", {
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: crew.members,
+            memberPositions: crew.memberPositions,
+            capacity: 2,
+            destination: "unassigned",
+            boatId: null,
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      }),
+    ).rejects.toThrow("Invalid crew member position")
+    expect(database.writeTransaction).not.toHaveBeenCalled()
+  })
+
   it("inserts one session atomically including empty crews", async () => {
     await saveCrewPlan("course-1", "sat-pm", {
       crews: [
@@ -802,5 +891,111 @@ describe("crew persistence", () => {
     ])
     expect(database.getAll.mock.calls[0]![0]).toContain("FROM crews")
     expect(database.getAll.mock.calls[0]![0]).not.toContain("landAssignments")
+  })
+
+  it("includes member-position gaps in pair history but still rejects duplicates", async () => {
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-1",
+          personId: "student-1",
+          personType: "student",
+          position: 1,
+        },
+      ])
+
+    await expect(readCrewHistory("course-1")).resolves.toEqual([
+      { crewId: "crew-1", sessionId: "sat-pm", studentIds: ["student-1"] },
+    ])
+
+    database.getAll.mockReset()
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-1",
+          personId: "student-1",
+          personType: "student",
+          position: 1,
+        },
+        {
+          crewId: "crew-1",
+          personId: "student-2",
+          personType: "student",
+          position: 1,
+        },
+      ])
+
+    await expect(readCrewHistory("course-1")).rejects.toThrow(
+      "Invalid persisted crew history members",
+    )
+  })
+
+  it("accepts legacy null positions and rejects member slots beyond crew capacity", async () => {
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          capacity: 2,
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-1",
+          personId: "student-1",
+          personType: "student",
+          position: null,
+        },
+      ])
+
+    await expect(readCrewHistory("course-1")).resolves.toEqual([
+      { crewId: "crew-1", sessionId: "sat-pm", studentIds: ["student-1"] },
+    ])
+
+    database.getAll.mockReset()
+    database.getAll
+      .mockResolvedValueOnce([
+        {
+          id: "crew-1",
+          sessionId: "sat-pm",
+          capacity: 2,
+          destination: "unassigned",
+          boatId: null,
+          position: 0,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          crewId: "crew-1",
+          personId: "student-1",
+          personType: "student",
+          position: 2,
+        },
+      ])
+
+    await expect(readCrewHistory("course-1")).rejects.toThrow(
+      "Invalid persisted crew history members",
+    )
   })
 })
