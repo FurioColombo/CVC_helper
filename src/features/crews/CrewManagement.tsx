@@ -19,6 +19,8 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -414,7 +416,6 @@ function PersonButton({
   dense = false,
   className = "",
   centered = false,
-  dataCrewSlotStudent = false,
 }: {
   person: CrewPersonRef
   label: string
@@ -433,7 +434,6 @@ function PersonButton({
   dense?: boolean
   className?: string
   centered?: boolean
-  dataCrewSlotStudent?: boolean
 }) {
   const pointerDownAt = useRef<number | null>(null)
   const pointerOrigin = useRef<{ x: number; y: number } | null>(null)
@@ -455,7 +455,6 @@ function PersonButton({
       // the name, which stays the person — the same arrangement P17 uses.
       aria-description={markerDescription || undefined}
       aria-pressed={selected}
-      data-crew-slot-student={dataCrewSlotStudent || undefined}
       className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"} ${className}`}
       disabled={disabled}
       onClick={(event) => {
@@ -839,6 +838,17 @@ export function CrewManagement({
   const [readMode, setReadMode] = useState(false)
   const [boatMode, setBoatMode] = useState(false)
   const [boatPage, setBoatPage] = useState(0)
+  const boatSwipeStart = useRef<{
+    pointerId: number
+    x: number
+    y: number
+  } | null>(null)
+  const suppressBoatClick = useRef<{
+    pointerId: number
+    pointerType: string
+    expiresAt: number
+  } | null>(null)
+  const suppressBoatClickTimer = useRef<number | null>(null)
   const [selectedCrewForBoat, setSelectedCrewForBoat] = useState<string | null>(
     null,
   )
@@ -849,7 +859,6 @@ export function CrewManagement({
   const [selected, setSelected] = useState<CrewPersonRef | null>(null)
   const [selectedCrewSlot, setSelectedCrewSlot] =
     useState<CrewSlotSelection | null>(null)
-  const [crewSlotPickerOpen, setCrewSlotPickerOpen] = useState(false)
   const [crewCountDraft, setCrewCountDraft] = useState("1")
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -866,7 +875,7 @@ export function CrewManagement({
   )
   const personDestinationRef = useRef<HTMLElement>(null)
   const studentPoolRef = useRef<HTMLElement>(null)
-  const crewSlotPickerRef = useRef<HTMLElement>(null)
+  const returnFocusToCrewSlot = useRef<string | null>(null)
 
   const applyLoaded = useCallback(
     (data: Awaited<ReturnType<typeof readValidCrewState>>) => {
@@ -883,8 +892,8 @@ export function CrewManagement({
       setDutyAssignments(data.dutyPlan.assignments)
       setCrewCountDraft(String(Math.max(1, data.stored.crews.length)))
       setSelected(null)
+      returnFocusToCrewSlot.current = null
       setSelectedCrewSlot(null)
-      setCrewSlotPickerOpen(false)
       setWarningCrewId(null)
       setDestinationCrewId(null)
       setCopyReport(null)
@@ -1242,8 +1251,8 @@ export function CrewManagement({
         })),
       ])
       setSelected(null)
+      returnFocusToCrewSlot.current = null
       setSelectedCrewSlot(null)
-      setCrewSlotPickerOpen(false)
       setWarningCrewId(null)
       return true
     } catch {
@@ -1361,8 +1370,8 @@ export function CrewManagement({
         void fillSelectedCrewSlot(person)
         return
       }
+      returnFocusToCrewSlot.current = null
       setSelectedCrewSlot(null)
-      setCrewSlotPickerOpen(false)
     }
     if (!selected || samePerson(selected, person)) {
       setSelected(samePerson(selected, person) ? null : person)
@@ -1408,8 +1417,8 @@ export function CrewManagement({
         }),
       ).then((saved) => {
         if (!saved) return
+        returnFocusToCrewSlot.current = null
         setSelectedCrewSlot(null)
-        setCrewSlotPickerOpen(false)
       })
     } catch {
       setSaveError(true)
@@ -1424,42 +1433,40 @@ export function CrewManagement({
           movePerson(plan, selected, { kind: "crew", crewId, slotIndex }),
         ).then((saved) => {
           if (!saved) return
+          returnFocusToCrewSlot.current = null
           setSelected(null)
           setSelectedCrewSlot(null)
-          setCrewSlotPickerOpen(false)
         })
       } catch {
         setSaveError(true)
       }
       return
     }
+    if (
+      selectedCrewSlot?.crewId === crewId &&
+      selectedCrewSlot.slotIndex === slotIndex
+    ) {
+      returnFocusToCrewSlot.current = null
+      setSelectedCrewSlot(null)
+      return
+    }
+    returnFocusToCrewSlot.current = `crew-slot-${crewId}-${slotIndex}`
     setSelectedCrewSlot({ crewId, slotIndex })
-    setCrewSlotPickerOpen(true)
     setSelected(null)
     setDestinationCrewId(null)
     setWarningCrewId(null)
   }
 
-  function dismissCrewSlotPicker() {
-    setCrewSlotPickerOpen(false)
-    const firstAvailableStudent =
-      studentPoolRef.current?.querySelector<HTMLButtonElement>(
-        '[aria-label="Allievi disponibili"] button',
-      )
-    if (firstAvailableStudent) {
-      firstAvailableStudent.focus({ preventScroll: true })
-      return
-    }
-    if (selectedCrewSlot) {
-      document
-        .getElementById(
-          "crew-slot-" +
-            selectedCrewSlot.crewId +
-            "-" +
-            selectedCrewSlot.slotIndex,
-        )
-        ?.focus({ preventScroll: true })
-    }
+  function cancelCrewSlotSelection() {
+    if (!selectedCrewSlot) return
+    returnFocusToCrewSlot.current = `crew-slot-${selectedCrewSlot.crewId}-${selectedCrewSlot.slotIndex}`
+    setSelectedCrewSlot(null)
+  }
+
+  function handleStudentPoolKeyDown(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== "Escape" || !selectedCrewSlot) return
+    event.preventDefault()
+    cancelCrewSlotSelection()
   }
 
   function placeOnLand() {
@@ -1525,6 +1532,86 @@ export function CrewManagement({
     } catch {
       setSaveError(true)
     }
+  }
+
+  function startBoatSwipe(event: ReactPointerEvent<HTMLDivElement>) {
+    if (
+      !event.isPrimary ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    )
+      return
+    boatSwipeStart.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    }
+    suppressBoatClick.current = null
+    if (suppressBoatClickTimer.current !== null) {
+      window.clearTimeout(suppressBoatClickTimer.current)
+      suppressBoatClickTimer.current = null
+    }
+  }
+
+  function finishBoatSwipe(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = boatSwipeStart.current
+    boatSwipeStart.current = null
+    if (!start || start.pointerId !== event.pointerId) return
+
+    const horizontalDistance = event.clientX - start.x
+    const verticalDistance = event.clientY - start.y
+    const horizontalSwipe =
+      Math.abs(horizontalDistance) >= 48 &&
+      Math.abs(horizontalDistance) >= Math.abs(verticalDistance) * 1.25
+    if (Math.max(Math.abs(horizontalDistance), Math.abs(verticalDistance)) < 48)
+      return
+    suppressBoatClick.current = {
+      pointerId: event.pointerId,
+      pointerType: event.pointerType,
+      expiresAt: Date.now() + 500,
+    }
+    suppressBoatClickTimer.current = window.setTimeout(() => {
+      suppressBoatClick.current = null
+      suppressBoatClickTimer.current = null
+    }, 500)
+    if (!horizontalSwipe) return
+    setBoatPage((page) =>
+      horizontalDistance < 0
+        ? Math.min(boatPageCount - 1, page + 1)
+        : Math.max(0, page - 1),
+    )
+  }
+
+  function cancelBoatSwipe() {
+    boatSwipeStart.current = null
+    suppressBoatClick.current = null
+    if (suppressBoatClickTimer.current !== null) {
+      window.clearTimeout(suppressBoatClickTimer.current)
+      suppressBoatClickTimer.current = null
+    }
+  }
+
+  function suppressClickAfterBoatSwipe(event: ReactMouseEvent<HTMLDivElement>) {
+    const pending = suppressBoatClick.current
+    if (!pending) return
+    if (event.detail === 0 || Date.now() > pending.expiresAt) return
+    const pointerEvent =
+      "pointerType" in event.nativeEvent
+        ? (event.nativeEvent as PointerEvent)
+        : null
+    if (
+      pointerEvent &&
+      (pointerEvent.pointerType !== pending.pointerType ||
+        pointerEvent.pointerId !== pending.pointerId)
+    ) {
+      return
+    }
+    suppressBoatClick.current = null
+    if (suppressBoatClickTimer.current !== null) {
+      window.clearTimeout(suppressBoatClickTimer.current)
+      suppressBoatClickTimer.current = null
+    }
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   function selectCrewForBoat(crewId: string) {
@@ -1644,19 +1731,24 @@ export function CrewManagement({
   }, [firstCrewWithRoom, selectedDestinationOpen])
 
   useEffect(() => {
-    if (!selectedCrewSlot || !crewSlotPickerOpen) return
+    if (!selectedCrewSlot) {
+      const focusTarget = returnFocusToCrewSlot.current
+      returnFocusToCrewSlot.current = null
+      if (focusTarget) {
+        document.getElementById(focusTarget)?.focus({ preventScroll: true })
+      }
+      return
+    }
     if (typeof studentPoolRef.current?.scrollIntoView === "function") {
       studentPoolRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       })
     }
-    const firstChoice =
-      crewSlotPickerRef.current?.querySelector<HTMLButtonElement>(
-        "[data-crew-slot-student]",
-      ) ?? crewSlotPickerRef.current?.querySelector<HTMLButtonElement>("button")
-    firstChoice?.focus({ preventScroll: true })
-  }, [crewSlotPickerOpen, selectedCrewSlot])
+    studentPoolRef.current
+      ?.querySelector<HTMLButtonElement>("button:not(:disabled)")
+      ?.focus({ preventScroll: true })
+  }, [selectedCrewSlot])
 
   if (loadState === "loading") {
     return (
@@ -1846,7 +1938,17 @@ export function CrewManagement({
                 Assegnata
               </span>
             </div>
-            <div className="mt-2 grid grid-cols-4 gap-1.5">
+            <div
+              aria-label="Pagina barche"
+              className="mt-2 grid grid-cols-4 gap-1.5"
+              data-testid="boat-page-grid"
+              onClickCapture={suppressClickAfterBoatSwipe}
+              onPointerCancel={cancelBoatSwipe}
+              onPointerDown={startBoatSwipe}
+              onPointerUp={finishBoatSwipe}
+              role="group"
+              style={{ touchAction: "pan-y" }}
+            >
               {visibleBoats.map((boat) => {
                 const selectedBoat = plan.selectedBoatIds.includes(boat.id)
                 const assignedCrewIndex = plan.crews.findIndex(
@@ -2129,103 +2231,30 @@ export function CrewManagement({
                 )}
 
                 {(studentPool.length > 0 || selectedCrewSlot) && (
-                  <section ref={studentPoolRef}>
+                  <section
+                    onKeyDown={handleStudentPoolKeyDown}
+                    ref={studentPoolRef}
+                  >
                     <h2 className="text-sm font-black tracking-wide uppercase">
                       Disponibili · {studentPool.length}
                     </h2>
-                    {selectedCrewSlot &&
-                      selectedCrewSlotIndex >= 0 &&
-                      crewSlotPickerOpen && (
-                        <section
-                          aria-label={
-                            "Scegli un allievo per il posto libero " +
-                            (selectedCrewSlot.slotIndex + 1) +
-                            " equipaggio " +
-                            (selectedCrewSlotIndex + 1)
-                          }
-                          className="mt-2 rounded-2xl border border-primary/35 bg-background p-3 shadow-sm"
-                          id="crew-slot-student-picker"
-                          onKeyDown={(
-                            event: ReactKeyboardEvent<HTMLElement>,
-                          ) => {
-                            if (event.key === "Escape") {
-                              event.preventDefault()
-                              dismissCrewSlotPicker()
-                            }
-                          }}
-                          ref={crewSlotPickerRef}
-                          role="dialog"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <h3 className="min-w-0 text-sm font-black">
-                              Allievo per equipaggio {selectedCrewSlotIndex + 1}
-                            </h3>
-                            <button
-                              aria-label="Chiudi scelta allievo"
-                              className="min-h-11 shrink-0 rounded-xl px-3 text-xs font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-                              onClick={dismissCrewSlotPicker}
-                              type="button"
-                            >
-                              Chiudi
-                            </button>
-                          </div>
-                          {studentPool.length > 0 ? (
-                            <div className="mt-2 grid max-h-[24vh] grid-cols-2 gap-2 overflow-y-auto">
-                              {studentPool.map((student) => {
-                                const person: CrewPersonRef = {
-                                  personId: student.id,
-                                  personType: "student",
-                                }
-                                const markers = personMarkers(person)
-                                return (
-                                  <PersonButton
-                                    ariaLabel={
-                                      personLabel(person) +
-                                      ", inserisci nel posto libero " +
-                                      (selectedCrewSlot.slotIndex + 1) +
-                                      " equipaggio " +
-                                      (selectedCrewSlotIndex + 1)
-                                    }
-                                    compact
-                                    dataCrewSlotStudent
-                                    detail={personDetail(person)}
-                                    disabled={busy}
-                                    key={student.id}
-                                    label={personLabel(person)}
-                                    markers={markers.nodes}
-                                    markerDescription={markers.description}
-                                    onTap={() => fillSelectedCrewSlot(person)}
-                                    person={person}
-                                    selected={false}
-                                  />
-                                )
-                              })}
-                            </div>
-                          ) : (
-                            <p
-                              className="mt-2 rounded-xl bg-muted px-3 py-2 text-sm font-semibold text-muted-foreground"
-                              role="status"
-                            >
-                              Nessun allievo disponibile.
-                            </p>
-                          )}
-                        </section>
-                      )}
-                    {selectedCrewSlot &&
-                      selectedCrewSlotIndex >= 0 &&
-                      !crewSlotPickerOpen && (
-                        <p
-                          className="mt-2 rounded-xl bg-primary/5 px-3 py-2 text-sm font-semibold text-primary"
-                          role="status"
-                        >
-                          Posto libero {selectedCrewSlot.slotIndex + 1}{" "}
-                          equipaggio {selectedCrewSlotIndex + 1} selezionato ·{" "}
-                          tocca un allievo disponibile per inserirlo.
-                        </p>
-                      )}
+                    {selectedCrewSlot && selectedCrewSlotIndex >= 0 && (
+                      <p
+                        className="mt-2 rounded-xl bg-primary/5 px-3 py-2 text-sm font-semibold text-primary"
+                        role="status"
+                      >
+                        Posto libero {selectedCrewSlot.slotIndex + 1} equipaggio{" "}
+                        {selectedCrewSlotIndex + 1} selezionato ·{" "}
+                        {studentPool.length > 0
+                          ? "tocca un allievo disponibile per inserirlo. "
+                          : "nessun allievo disponibile. "}
+                        Toccalo di nuovo per annullare.
+                      </p>
+                    )}
                     <div
                       aria-label="Allievi disponibili"
                       className="mt-2 grid grid-cols-2 gap-2"
+                      id="crew-available-students"
                       role="region"
                     >
                       {studentPool.map((student) => {
@@ -2686,13 +2715,8 @@ export function CrewManagement({
                                       "crew-slot-" + crew.id + "-" + slotIndex
                                     }
                                     aria-controls={
-                                      isSelectedSlot && crewSlotPickerOpen
-                                        ? "crew-slot-student-picker"
-                                        : undefined
-                                    }
-                                    aria-expanded={
                                       isSelectedSlot
-                                        ? crewSlotPickerOpen
+                                        ? "crew-available-students"
                                         : undefined
                                     }
                                     aria-label={
@@ -2717,6 +2741,15 @@ export function CrewManagement({
                                     }
                                     disabled={busy}
                                     key={slotIndex}
+                                    onKeyDown={(event) => {
+                                      if (
+                                        event.key === "Escape" &&
+                                        isSelectedSlot
+                                      ) {
+                                        event.preventDefault()
+                                        cancelCrewSlotSelection()
+                                      }
+                                    }}
                                     onClick={() =>
                                       chooseCrewSlot(crew.id, slotIndex)
                                     }

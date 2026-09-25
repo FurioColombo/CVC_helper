@@ -2,6 +2,8 @@
 
 Read this when running the app or its checks. The operating contract is
 `AGENTS.md`; the active work is in `04_IMPLEMENTATION_PLAN.md`.
+Use `npm run milestone:status` for the compact current state before opening the
+full milestone manifest.
 
 ## Runtime
 

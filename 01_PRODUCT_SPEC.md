@@ -394,11 +394,11 @@ Selected members use two equal-width columns by default, with a persistent
 Settings choice for three. Cards fill and center within their columns, with an
 integrated accessible remove action that does not take a separate column. This
 display choice stays in Settings, not on the Equipaggi page. Tapping a free
-slot selects that exact crew position, scrolls the available-person pool into
-view and opens a popup listing available students; choosing one fills the
-selected position, which remains visible after reload. If
-dismissed, the selected crew can still be filled by tapping a student in the
-pool. The available-person destination popup previews names and vacant places
+slot selects that exact crew position and scrolls the available-person pool into
+view without opening another popup. Tapping the same selected slot again cancels
+the selection; tapping a different free slot changes it. Tapping a student in
+the pool fills the selected position, which remains visible after reload. The
+available-person destination popup previews names and vacant places
 in crews that have room, offers a new crew, A terra and Mezzi, and says
 `Equipaggi pieni` when no existing crew can accept a person. Its opening scrolls
 the underlying workspace to the first crew with room while keeping focus in the
@@ -426,6 +426,10 @@ Sort numbers numerically. Each boat is:
 - grey: unavailable;
 - blue: available and not assigned;
 - green: assigned to a crew.
+
+When the boat list has multiple pages, `Precedenti` and `Altre` remain visible.
+A horizontal swipe across the boat grid changes one whole page at a time in the
+same direction, without activating a boat or scrolling one boat at a time.
 
 The compact destination popup uses the same states and order. To assign, select a
 crew without a boat and tap a blue boat. Persist one mapping for the open session;

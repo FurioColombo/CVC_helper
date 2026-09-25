@@ -125,6 +125,18 @@ function assertPreviousComplete(manifest, index) {
   }
 }
 
+function status() {
+  const milestones = readManifest().milestones
+  const latestComplete = milestones.findLast(
+    (milestone) => milestone.status === "COMPLETE",
+  )
+  console.log(`Latest complete: ${latestComplete?.id ?? "none"}`)
+  for (const milestone of milestones) {
+    if (milestone.status === "COMPLETE") continue
+    console.log(`${milestone.id}: ${milestone.status} (${milestone.category})`)
+  }
+}
+
 function start(id) {
   const manifest = readManifest()
   const { index, milestone } = findMilestone(manifest, id)
@@ -246,8 +258,9 @@ const [operation, id] = process.argv.slice(2)
 
 try {
   if (operation === "self-test") selfTest()
+  else if (operation === "status") status()
   else if (!id)
-    throw new Error("Usage: milestone.mjs <start|check|complete> <ID>")
+    throw new Error("Usage: milestone.mjs status | <start|check|complete> <ID>")
   else if (operation === "start") start(id)
   else if (operation === "check") check(id)
   else if (operation === "complete") complete(id)

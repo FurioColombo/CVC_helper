@@ -566,6 +566,18 @@
       "requiredReviews": [".evidence/UX1/self-review.json"]
     },
     {
+      "id": "UX2",
+      "category": "FEATURE",
+      "status": "COMPLETE",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/UX2/verification.json",
+        ".evidence/UX2/browser-evidence.json",
+        ".evidence/UX2/self-review.json"
+      ],
+      "requiredReviews": [".evidence/UX2/self-review.json"]
+    },
+    {
       "id": "V03",
       "category": "FEATURE",
       "status": "IN_PROGRESS",

@@ -201,6 +201,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 - Disponibili = mancanti azionabili. Niente dialog mancanti. Contatore tiene conto di allievi in equipaggio **o A terra**; volontari esclusi. Etichetta breve proposta “Collocati 18/21” da confrontare con “Inseriti”.
 - `A terra` e `Volontari` restano flottanti rispettivamente in basso a sinistra e destra, con contatore fra loro; non coprono slot o navigazione.
 - Pool volontari separato, meno prioritario; breve scroll ammesso. A terra sempre distinto da equipaggio. Una destinazione compatta per card; barche in P15.
+- Dal feedback su telefono del 2026-09-25, toccare `Posto libero` seleziona esattamente quel posto e porta i Disponibili in vista senza aprire un secondo popup. Toccando ancora lo stesso posto lo si deseleziona; un altro posto libero cambia la selezione. Un allievo nel pool riempie il posto selezionato.
 - Toccando la barca/destinazione si apre il selettore di destinazione; toccando il triangolo si leggono tutte le ragioni. Conservare selezione/move/swap, long press profilo, C/SM e taglia.
 - Doppio click desktop o doppio tap touch su un allievo già inserito lo riporta fra i Disponibili e lascia lo slot libero. L'implementazione offre anche un comando esplicito equivalente e accessibile.
 - Il warning equipaggio è distinto da quello barca: la r3 mostra due XL insieme anche su una barca disponibile. “Altre azioni” usa tre puntini; il selettore sessione è un controllo piatto e contestuale.
@@ -212,6 +213,7 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 **Richieste:** CREW-01/06/08, BOAT-02. **Natura:** pannello grafico, associazione equipaggio–barca e deselezione della sola sessione aperta.
 
 - Selettore barche sticky in una fascia breve contestuale alla sessione, su due righe e senza scroll orizzontale. Ogni controllo mostra logo/modello sopra e numero sotto, inclusi i numeri a due cifre.
+- Quando la griglia delle barche è paginata, uno swipe orizzontale cambia pagina intera come i comandi `Precedenti` e `Altre`, che restano disponibili. Il gesto non seleziona una barca e non fa scorrere una card alla volta.
 - Le card riepilogo equipaggio riducono lo spazio sotto i nomi e usano lo stesso logo della barca invece di ripetere “Quest” in testo.
 - Rendere distinti barche che escono, associazione esatta all'equipaggio, Mezzi, Non assegnato. Le card barca hanno tre stati con legenda: grigio = non disponibile, verde = assegnata, blu = disponibile non assegnata.
 - Per assegnare una barca: selezionare un equipaggio senza barca, poi una card blu. La card diventa verde, il riepilogo equipaggio mostra la barca e l'associazione viene persistita per la sessione aperta.
