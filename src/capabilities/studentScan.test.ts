@@ -737,8 +737,10 @@ describe("student scan extraction", () => {
     "12/09/2026 Corso Deriva Livello 2",
     "08/09/2026 Stampato alle ore 10",
     "15/06/2026 Pagina Iscritti 1",
+    "Del 12/09/2026 Corso Deriva Livello 2",
+    "N. 3 del 12/09/2026 Elenco Iscritti",
   ])(
-    "never reads a heading that starts with a date as a student: %s",
+    "never reads a heading that starts with its date as a student: %s",
     (line) => {
       const { candidates } = extractStudentCandidates({
         confidence: 92,
@@ -750,7 +752,7 @@ describe("student scan extraction", () => {
         ].join("\n"),
       })
 
-      // No letter precedes the date, so the whole line is the heading.
+      // No name word precedes the date, so the whole line is the heading.
       expect(candidates.map(({ dateOfBirth }) => dateOfBirth)).toEqual([
         "2010-04-03",
       ])

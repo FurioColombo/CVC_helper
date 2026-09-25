@@ -243,7 +243,7 @@ function isNameToken(value: string) {
   // Surname particles are the only short words that belong in a name.
   if (SURNAME_PARTICLES.has(normalized)) return true
   // Everything else short is a table rule or a stray mark that survived OCR:
-  // the "Ì" in "Massimo Ì", the "gi" in "Simone gi", a lone "s" or "-".
+  // the "Ì" in "Nurelia Ì", the "gi" in "Amedrio gi", a lone "s" or "-".
   return [...normalized].length >= 3
 }
 
@@ -740,8 +740,9 @@ function isPersonnelRow(line: RecognizedLine, layout: PageLayout | null) {
  * whole line for a heading. Keyword tests look only here, because noise read
  * from the grid to the right (a `pag` or `note` after the date) would
  * otherwise silently drop a student, or turn every following row into staff.
- * A line with no letter before its first date has no name cell, so a heading
- * or footer that starts with a date is judged on the whole line.
+ * Without a word of three or more letters that is not a particle before its
+ * first date, a line has no name cell, so a heading or footer such as
+ * `12/09/2026 Corso …` or `N. 3 del 12/09/2026 Elenco …` is judged whole.
  */
 function leadingText(line: RecognizedLine) {
   const starts = [DATE_PATTERN, AGE_PATTERN, PHONE_PATTERN]
@@ -749,7 +750,12 @@ function leadingText(line: RecognizedLine) {
     .filter((index): index is number => index !== undefined)
   const leading =
     starts.length > 0 ? line.text.slice(0, Math.min(...starts)) : line.text
-  return normalizeLineText(/\p{L}/u.test(leading) ? leading : line.text)
+  const nameCell = (leading.match(/\p{L}+/gu) ?? []).some(
+    (word) =>
+      [...word].length >= 3 &&
+      !SURNAME_PARTICLES.has(normalizedNameToken(word)),
+  )
+  return normalizeLineText(nameCell ? leading : line.text)
 }
 
 function isObviousNonStudentLine(line: RecognizedLine) {

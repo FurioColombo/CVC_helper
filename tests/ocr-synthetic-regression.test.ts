@@ -1,3 +1,7 @@
+// @vitest-environment node
+// Tesseract reads its local language data only outside a DOM; under jsdom the
+// relative path is resolved as a URL and fetched.
+
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
