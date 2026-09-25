@@ -12,7 +12,7 @@ lifecycle.
 
 | Work | State and evidence |
 | --- | --- |
-| 0.2.0 and V01 | Complete. `v0.2.0` is tagged. The app is deployed at `https://furiocolombo.github.io/CVC_helper/` and opens on the owner's phone. Pages deploys from `main`, which is behind this development branch. Do not promote without the owner's approval. |
+| 0.2.0 and V01 | Complete. `v0.2.0` is tagged. Pages deploys from `main`; with the owner's 2026-09-25 approval, `main` was fast-forwarded through UX1 at `9a1de6e`. The Pages workflow passed and the public site served the UX1 bundle. Installed-app checks on the owner's phone remain theirs to perform. |
 | S1–S3 | Complete at `c29374e`. The five private photographs showed 16–24 fewer review flags each after telephone opt-in, automatic sheet name order and age/date corroboration. Node 24.19.0, 428 tests and focused browser checks passed. Exact DOB is still stored at this checkpoint. |
 | R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
 | D0 | Complete. The shared agent contract and active plan are concise; closed detail is archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
@@ -82,8 +82,9 @@ completion, clean checkpoint. Use `verify:quick` before a commit and
 The 2026-09-25 owner request explicitly puts UX1 implementation ahead of the
 remaining V03 owner-device checks. This is a sequencing exception while V03 is
 waiting on external evidence, not a V03 completion. Keep its existing work and
-evidence intact; do not claim physical-device success or promote `main` without
-the owner's explicit deployment approval.
+evidence intact; do not claim physical-device success. The owner explicitly
+approved deployment after UX1 adversarial review; `main` was promoted at
+`9a1de6e` for phone testing.
 
 ## N1 — Phone navigation, identity and student names
 
