@@ -1,6 +1,6 @@
 # Implementation plan — active 0.3.0 work
 
-Updated 2026-09-24. Read **Where this cycle stands**, then only the section for
+Updated 2026-09-25. Read **Where this cycle stands**, then only the section for
 the active milestone. Closed 0.3.0 milestone details are in
 `archive/v0.3.0-completed-milestones.md`; the full plan through R1 is at
 `archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`. Completed 0.1.0 and
@@ -23,7 +23,9 @@ lifecycle.
 | N1 | Complete. Node 24.19.0, 482 unit/component tests, domain/compatibility checks, production build and eight Pixel/iPhone browser journeys passed; see `.evidence/N1/`. Physical installed-app Back and icon appearance remain for the owner to check. |
 | C1 | Complete. Node 24.19.0 `npm run verify` passed (507 tests, domain, compatibility and production PWA build); three Pixel 7 Chrome journeys passed, including the 40-student 320 px/200% stress case. The synthetic 13-crew image fits on one page in two columns. See `.evidence/C1/`. |
 | E1 | Complete. Pixel 7 browser journeys cover the 40-student crew layout, exact-session route, and Valutazioni note panel; see `.evidence/E1/`. |
-| V03, V05, F1, UG2 | Pending in the sequence below. |
+| UX1 | Complete. Node 24.19.0 `npm run verify` passed (537 tests, domain/compatibility and PWA build), seven Pixel 7 browser journeys passed, and the independent adversarial review ended PASS after the exact-slot persistence defect was fixed. See `.evidence/UX1/`. |
+| V03 | Automated work and independent code review are done. Physical PC/Android/iPhone speech evidence remains outstanding; V03 stays IN_PROGRESS. |
+| V05, F1, UG2 | Pending in the sequence below. |
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -38,8 +40,9 @@ The latest owner instruction supersedes older choices where stated: V02 need
 only stay inside its pane, not have identical dimensions; S4's earlier deferral
 was lifted for the completed experiments, then its remaining quality target was
 moved to the final nonblocking Claude Code handoff; an age entered manually
-must not require an exact birthday; the per-row name swap is to be removed. The
-rest of the frozen deferrals remain in
+must not require an exact birthday. S5 removed the per-row name swap under the
+then-current instruction; UX1 restores an icon-only per-row correction at the
+owner's 2026-09-25 request. The rest of the frozen deferrals remain in
 `docs/post-mvp/0_3_0_OPEN_ITEMS.md`.
 
 The owner confirmed age-only entry means completed years on the **first course
@@ -48,7 +51,8 @@ the image itself, and the two/three selected-name display choice belongs only
 in Settings. Crew capacity is separate: D1/Cabinato starts at four and allows
 manual change; D2–D5 stays fixed at two through the gate. Its Settings override
 is deferred to the final Claude Code follow-up. No crew-size rule follows from
-display columns.
+display columns. UX1 changes the default display choice to two names per row;
+the Settings option for three remains. Crew capacity rules do not change.
 
 ### Execution order
 
@@ -59,10 +63,12 @@ display columns.
 5. **N1** phone Back, app icon and student name disambiguation.
 6. **C1** crew composition, destination picker and summary export.
 7. **E1** evaluation spacing and student-history navigation.
-8. **V03** speech accuracy, latency and transcript confirmation removal.
-9. **V05** LLM-assisted paste path, beside on-device scanning.
-10. **F1** remaining R1 corrections, then **UG2** integration and release gate.
-11. **S4** remaining OCR quality target and the deferred D2–D5 crew-capacity
+8. **UX1** owner corrections to crew composition, scan review, summary image
+   and evaluation density.
+9. **V03** speech accuracy, latency and transcript confirmation removal.
+10. **V05** LLM-assisted paste path, beside on-device scanning.
+11. **F1** remaining R1 corrections, then **UG2** integration and release gate.
+12. **S4** remaining OCR quality target and the deferred D2–D5 crew-capacity
     override, both handed to Claude Code after the gate.
 
 The owner explicitly made the remaining S4 target nonblocking on 2026-09-23.
@@ -72,6 +78,12 @@ milestone follows `AGENTS.md`: baseline, start,
 implementation, evidence, browser work where required, review, verification,
 completion, clean checkpoint. Use `verify:quick` before a commit and
 `verify:all` at UG2 only.
+
+The 2026-09-25 owner request explicitly puts UX1 implementation ahead of the
+remaining V03 owner-device checks. This is a sequencing exception while V03 is
+waiting on external evidence, not a V03 completion. Keep its existing work and
+evidence intact; do not claim physical-device success or promote `main` without
+the owner's explicit deployment approval.
 
 ## N1 — Phone navigation, identity and student names
 
@@ -177,10 +189,74 @@ needed. Native textarea drag resizing is not exposed by mobile browser
 emulation; computed vertical-resize support and panel containment were checked.
 See `.evidence/E1/`.
 
+## UX1 — Owner phone-preview corrections
+
+**Category:** FEATURE
+**Status:** COMPLETE
+
+Implement the 2026-09-25 corrections against the local 0.3.0 preview. Use
+synthetic people in automated/browser evidence; never commit the supplied
+screenshots or private roster data.
+
+- **Equipaggi composition:** show selected members in two equal-width columns
+  by default, centered within cards that fill each column. Keep the persistent
+  Settings-only choice for three columns. Compare an inset corner remove icon
+  with an integrated edge action and choose the clearer compact treatment;
+  keep a reachable roughly 44 px target and full accessible label. Tapping a
+  free slot visibly selects it, scrolls the available-student pool into view,
+  and opens an in-context popup of available students. Choosing one assigns
+  that exact persisted slot, leaving other slots empty; after dismissing the
+  popup, that crew can also be filled by tapping a student in the pool.
+  Preserve student-first assignment,
+  swap, explicit removal, keyboard access and persistence. Do not change D2–D5
+  crew capacity or add the deferred Settings override.
+- **Scan review:** a nonempty flagged field counts as reviewed when the user
+  leaves it after focusing, even without changing the value. Editing all
+  flagged fields can clear the row automatically when no empty required field
+  or other unresolved warning remains. Empty fields stay pending. Remove the
+  always-visible `Lettura`/sheet-order panel; show source reading or name-order
+  information only for actionable ambiguity, compound names or low confidence.
+  Restore an icon-only per-row name/surname swap with an accessible name, while
+  retaining the sheet-wide order control. Put age and sex on one responsive row
+  with compact `M`, `F`, `Alt` choices; `Alt` abbreviates the existing `Altro`
+  value and does not relabel every such record as nonbinary. Keep low-confidence
+  text visible and `MIN_FIELD_CONFIDENCE` at 70.
+- **Valutazioni:** reduce vertical space between student evaluation cards in
+  both Allievi and Equipaggi views while preserving note, save state, clear
+  group boundaries and touch targets. Test dense rows, notes and 320 px/200%.
+- **Summary:** download one phone-compatible PNG with the app's type and visual
+  style, not an SVG file. Include available students at the top, then occupied
+  sailing crews, Mezzi, A terra as a crew-like group with its own icon, and
+  empty boats/crews last. Show the `IS`, `ADV`, `CT`, Comandata and minor markers.
+  When no students remain available, put a small centered CVC-blue `Tutti gli
+  allievi assegnati` note at the page bottom. Include all groups in one image;
+  above twelve crews use two columns before shrinking names. Keep the complete
+  summary free of private source photos.
+
+**Evidence:** Node 24 verification, targeted unit/component and browser flows
+for both assignment directions and scan-review transitions, screenshots and
+geometry at normal phone and 320 px/200%, PNG decoding/dimensions/content with
+more than twelve crews, plus a structured self-review with QoL findings. Review
+the Luna implementations against the requested screenshots and loop on findings
+before closure. The pre-work baseline is the 2026-09-24 Node 24.19.0 `verify`
+pass (520 tests, domain/compatibility and production build) and four focused
+Pixel 7 browser journeys for V03.
+
+**Completion, 2026-09-25:** The 2-column member cards are centered with a
+44 px integrated remove action; the selected physical crew slot persists
+through assignment and reload. Scan-review and evaluation spacing corrections
+are covered by component and browser checks. The summary downloads one PNG
+with all requested groups and badges. The first adversarial review found that
+slot 2 filled slot 1; the persistence and browser regression were fixed, and
+the final independent verdict is PASS with no open findings. Node 24.19.0
+`npm run verify` passed with 537 tests, domain and 0.1.0 compatibility checks,
+and the production PWA build. Seven Pixel 7 browser journeys passed, including
+the 320 px/200% stress case. No physical-device PASS or `verify:all` is claimed.
+
 ## V03 — Speech accuracy and latency
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Read `.evidence/UG1/speech-quality-benchmark.json` first. Benchmark the owner's
 ignored conversational Italian corpus with WER and median warm-model latency,
@@ -189,10 +265,28 @@ the usable latency target is at least 20% less. Compare DSP, pause trimming,
 model/quantisation and chunking against the baseline; ship only a measured win.
 Remove the separate `Scarta`/`Usa testo` confirmation: transcript enters the
 editable field directly. Keep cancellation and failure recovery. Update the
-physical-device checklist text before UG2.
+physical-device checklist before UG2. Per `03_TECHNICAL_DECISIONS.md` §5, V03
+also remains open until the owner records labelled physical speech checks on
+PC, Android and iPhone in `.evidence/V03/speech-device-evidence.json`. The UG2
+check must repeat speech on its exact release candidate and cover physical
+phone scanning; V03 device results do not substitute for UG2 evidence.
 
 **Evidence:** benchmark, verification, browser evidence, speech review and page
-changelog. The 823 MB corpus remains under ignored `data/`.
+changelog and owner-provided physical-device evidence. The 823 MB corpus and
+all roster photographs remain under ignored `data/`.
+
+**Progress, 2026-09-24:** A matched three-round run over 56 private clean-condition
+clips found
+no variant that improves WER without increasing warm latency. The current
+whisper-base q8 model measured 53.8% overall WER at 5,308 ms median warm
+latency. Pause trimming and DSP measured 52.5% WER at 5,533 ms and 5,511 ms;
+q4 measured 50.4% at 9,594 ms; tiny measured 70.4% at 2,690 ms; chunked
+measured 54.2% at 9,804 ms. Keep the production model unchanged. Aggregate-only
+results are in `.evidence/V03/speech-quality-benchmark.json`; raw benchmark
+data remains ignored. `npm run verify` passed with 520 tests and four refreshed
+Pixel 7 Chrome journeys passed. The independent review found no remaining
+implementation blocker; owner-run PC/Android/iPhone speech checks remain
+required before V03 can close. No `verify:all` run is claimed.
 
 ## V05 — LLM-assisted paste path
 
@@ -218,8 +312,8 @@ R1's [open-items list](docs/post-mvp/0_3_0_OPEN_ITEMS.md) owns corrections
 not already absorbed into S5, N1 or E1: moved long press must not open edit;
 failed evaluation save must require an explicit retry/discard before navigation;
 invalid student edit Back must explain its refusal; autosave status must cover
-queued writes. The row name-swap is removed in S5, evaluation spacing is E1,
-and launch background is N1. Update the living R1 list as each closes.
+queued writes. UX1 owns the restored row name-swap and further evaluation-row
+density; launch background is N1. Update the living R1 list as each closes.
 
 **Evidence:** verification, defect reproductions and fixes, browser journeys
 and self-review. No unowned finding carries into UG2.

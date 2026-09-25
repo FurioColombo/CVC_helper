@@ -75,7 +75,7 @@ function EvaluationNoteEditor({
   const dictation = useDictation({
     value: note,
     onDraft: setNote,
-    onAccept: () => undefined,
+    onTranscript: () => undefined,
     transcribe,
     prepare: prepareSpeech,
   })
@@ -116,7 +116,6 @@ function EvaluationNoteEditor({
         className="mt-2"
         dictation={dictation}
         naming={dictationNaming}
-        reviewHint="Rileggi la trascrizione. Il testo sarà salvato solo con la nota."
       />
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button
@@ -133,8 +132,7 @@ function EvaluationNoteEditor({
             dictation.status === "permission" ||
             dictation.status === "recording" ||
             dictation.status === "loading" ||
-            dictation.status === "processing" ||
-            dictation.status === "review"
+            dictation.status === "processing"
           }
           onClick={() => void onSave(note.trim() || null)}
           type="button"
@@ -652,7 +650,7 @@ export function EvaluationManagement({
         />
       )}
       {!loading && !loadError && students.length > 0 && view !== "overview" && (
-        <div className="mt-3 grid gap-4">
+        <div className={`mt-3 grid ${view === "students" ? "gap-2" : "gap-4"}`}>
           {view === "students" && students.map(renderCard)}
           {view === "crews" && (
             <>
@@ -669,7 +667,7 @@ export function EvaluationManagement({
                 if (members.length === 0) return null
                 return (
                   <section
-                    className="grid gap-1.5"
+                    className="grid gap-1"
                     key={crew.id}
                     aria-labelledby={`evaluation-crew-${crew.id}`}
                   >
@@ -685,7 +683,7 @@ export function EvaluationManagement({
               })}
               {landIds.size > 0 && (
                 <section
-                  className="grid gap-1.5"
+                  className="grid gap-1"
                   aria-labelledby="evaluation-land-title"
                 >
                   <h2
@@ -699,7 +697,7 @@ export function EvaluationManagement({
               )}
               {unassigned.length > 0 && (
                 <section
-                  className="grid gap-1.5"
+                  className="grid gap-1"
                   aria-labelledby="evaluation-unassigned-title"
                 >
                   <h2

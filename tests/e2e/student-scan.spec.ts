@@ -91,8 +91,8 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
   await expect(
     page.getByRole("heading", { name: "Come sono scritti i nomi?" }),
   ).not.toBeVisible()
-  await expect(page.getByText(/Dedotto dal foglio/)).toBeVisible()
-  await expect(page.getByText("Nomi letti come")).toBeVisible()
+  await expect(page.getByText(/Dedotto dal foglio/)).not.toBeVisible()
+  await expect(page.getByText("Nomi letti come")).not.toBeVisible()
 
   const counters = page.getByLabel("Stato revisione scansione")
   await expect(counters.getByText("3")).toHaveCount(1)
@@ -155,6 +155,20 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
     })
   }
 
+  const thirdName = page.getByLabel(/^Nome riga/).nth(2)
+  const thirdSurname = page.getByLabel(/^Cognome riga/).nth(2)
+  const originalThirdName = await thirdName.inputValue()
+  const originalThirdSurname = await thirdSurname.inputValue()
+  await page
+    .getByRole("button", { name: "Scambia nome e cognome riga 3" })
+    .click()
+  await expect(thirdName).toHaveValue(originalThirdSurname)
+  await expect(thirdSurname).toHaveValue(originalThirdName)
+  await page
+    .getByRole("button", { name: "Scambia nome e cognome riga 3" })
+    .click()
+  await expect(thirdName).toHaveValue(originalThirdName)
+
   await page.getByRole("button", { name: "Rimuovi allievo 3" }).click()
   await expect(counters.getByText("2")).toBeVisible()
   await page.getByRole("button", { name: "Aggiungi 2 allievi" }).click()
@@ -167,7 +181,7 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
   ).toBeVisible()
 
   await page.reload()
-  await page.getByRole("button", { name: "Allievi" }).click()
+  await expect(page.getByRole("button", { name: "Menu allievi" })).toBeVisible()
   await expect(
     page.getByRole("button", { name: /Mario, 18 anni, M/ }),
   ).toBeVisible()

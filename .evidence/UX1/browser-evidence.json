@@ -1,0 +1,25 @@
+{
+  "milestone": "UX1",
+  "status": "PASS",
+  "recordedAt": "2026-09-25",
+  "nodeVersion": "v24.19.0",
+  "project": "pixel-7-chrome",
+  "combinedRun": {
+    "command": "npm run verify:e2e -- --project=pixel-7-chrome tests/e2e/ux1-reverse-crew-assignment.spec.ts tests/e2e/c1-crew-management.spec.ts tests/e2e/student-scan.spec.ts tests/e2e/e1-evaluation-history-layout.spec.ts",
+    "passed": 7,
+    "failed": 0
+  },
+  "finalCardFollowUps": [
+    "The 320 px/200% 40-student crew stress journey passed after fixed-pixel symmetric card padding and a 44 px remove target. The long visible name truncates to an initial with an ellipsis, without overlap or horizontal overflow.",
+    "The free-slot-to-student assignment journey passed after the final card change. It checks normal-phone name centering geometrically, pool scrolling, the popup, pool-tap assignment after Escape, and reload persistence. Selecting slot 2 leaves slot 1 empty both before and after reload."
+  ],
+  "artifacts": [
+    ".evidence/UX1/crew-card-two-column-phone.png",
+    ".evidence/UX1/crew-card-long-name-320px-200-percent.png",
+    ".evidence/UX1/crew-manager-40-students-320px-200-percent.png",
+    ".evidence/UX1/crew-summary-browser.png"
+  ],
+  "limitations": [
+    "Pixel 7 Chrome is browser emulation, not an owner-run physical-device PASS."
+  ]
+}

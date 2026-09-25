@@ -7,6 +7,7 @@ import {
   copyPreviousBoatSelection,
   copyPreviousCrewPlan,
   formatCrewAnnouncement,
+  getOpenCrewSlotIndexes,
   getCrewCompleteness,
   getInitialCrewCapacity,
   getCrewSizeStatus,
@@ -138,6 +139,51 @@ describe("crew composition rules", () => {
 
     expect(moved.crews[0]!.members).toEqual([])
     expect(moved.crews[1]!.members).toEqual([STUDENT_1])
+  })
+
+  it("keeps the tapped physical crew slot through moves, swaps and capacity changes", () => {
+    let plan = movePerson(EMPTY_PLAN, STUDENT_1, {
+      kind: "crew",
+      crewId: "crew-1",
+      slotIndex: 1,
+    })
+
+    expect(plan.crews[0]).toMatchObject({
+      members: [STUDENT_1],
+      memberPositions: [1],
+    })
+    expect(getOpenCrewSlotIndexes(plan.crews[0]!)).toEqual([0])
+
+    plan = movePerson(plan, STUDENT_2, {
+      kind: "crew",
+      crewId: "crew-1",
+    })
+    expect(plan.crews[0]).toMatchObject({
+      members: [STUDENT_2, STUDENT_1],
+    })
+
+    plan = movePerson(plan, VOLUNTEER, {
+      kind: "crew",
+      crewId: "crew-2",
+      slotIndex: 1,
+    })
+    const swapped = swapPeople(plan, STUDENT_1, VOLUNTEER)
+    expect(swapped.crews[0]).toMatchObject({
+      members: [STUDENT_2, VOLUNTEER],
+    })
+    expect(swapped.crews[1]).toMatchObject({
+      members: [STUDENT_1],
+      memberPositions: [1],
+    })
+
+    const removed = removePerson(swapped, STUDENT_2)
+    expect(removed.crews[0]).toMatchObject({
+      members: [VOLUNTEER],
+      memberPositions: [1],
+    })
+    expect(() => setCrewCapacity(removed, "crew-1", 1, "Cabinato", 3)).toThrow(
+      "Invalid crew capacity",
+    )
   })
 
   it("swaps assigned people directly and sends a replaced pool person back to the pool", () => {
@@ -330,6 +376,7 @@ describe("crew composition rules", () => {
             id: "old-1",
             sessionId: "sun-am",
             members: [STUDENT_1, STUDENT_2, VOLUNTEER],
+            memberPositions: [0, 1, 2],
             capacity: 5,
             destination: "boat",
             boatId: "boat-2",
@@ -364,6 +411,7 @@ describe("crew composition rules", () => {
           id: "new-1",
           sessionId: "sun-pm",
           members: [VOLUNTEER],
+          memberPositions: [2],
           capacity: 5,
           destination: "unassigned",
           boatId: null,

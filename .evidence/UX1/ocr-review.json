@@ -1,0 +1,19 @@
+{
+  "milestone": "UX1",
+  "status": "PASS",
+  "recordedAt": "2026-09-25",
+  "nodeVersion": "v24.19.0",
+  "evidence": [
+    "StudentScan component tests cover unchanged nonempty low-confidence name and age acknowledgement on blur, automatic row readiness, and empty required fields remaining pending.",
+    "Component tests cover the contextual source-reading warning, accessible per-row swap, responsive M/F/Alt labels with full accessible Altro wording, and the sheet-wide order correction.",
+    "The Pixel 7 Chrome OCR journey passed: a poor image is warned about and only reviewed rows are committed.",
+    "Low-confidence source text remains in its editable field; MIN_FIELD_CONFIDENCE remains 70."
+  ],
+  "source": [
+    "src/features/students/StudentScan.test.tsx",
+    "tests/e2e/student-scan.spec.ts"
+  ],
+  "limitations": [
+    "The browser fixture did not generate a nonempty low-confidence field suitable for the blur transition; that transition was exercised in the component test. No owner-photo OCR accuracy result is claimed by UX1."
+  ]
+}

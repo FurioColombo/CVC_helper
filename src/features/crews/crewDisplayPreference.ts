@@ -4,10 +4,10 @@ const STORAGE_KEY = "cvc-helper.crew-display-columns"
 export function getCrewDisplayColumns(): 2 | 3 {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY)
-    return stored === "2" ? 2 : 3
+    return stored === "3" ? 3 : 2
   } catch {
     // A blocked storage API must not prevent Settings or crews from opening.
-    return 3
+    return 2
   }
 }
 

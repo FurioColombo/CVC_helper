@@ -8,6 +8,7 @@ import {
 } from "@/domain/config"
 import {
   MAX_FLEXIBLE_CREW_CAPACITY,
+  getCrewMemberPosition,
   getStandardCrewSize,
   normalizeCrewCapacity,
   type CrewDraft,
@@ -156,33 +157,48 @@ export async function readCrewPlan(
     },
   )
   const nextMemberPosition = new Map<string, number>()
-  if (
-    memberRows.some(({ crewId, position }) => {
-      const expected = nextMemberPosition.get(crewId) ?? 0
-      nextMemberPosition.set(crewId, expected + 1)
-      return position !== null && position !== expected
-    })
-  ) {
-    throw new Error("Invalid persisted crew member order")
-  }
-  const membersByCrew = new Map<string, CrewPersonRef[]>()
-  const seenPeople = new Set<string>()
-  memberRows.forEach(({ crewId, personId, personType }) => {
-    const personKey = `${personType}:${personId}`
-    if (seenPeople.has(personKey)) {
-      throw new Error("Invalid persisted crew plan: duplicate person")
+  const occupiedMemberPositions = new Map<string, Set<number>>()
+  const positionedMemberRows = memberRows.map((member) => {
+    const expected = nextMemberPosition.get(member.crewId) ?? 0
+    const slotIndex = member.position ?? expected
+    const occupied = occupiedMemberPositions.get(member.crewId) ?? new Set()
+    if (occupied.has(slotIndex)) {
+      throw new Error("Invalid persisted crew member order")
     }
-    seenPeople.add(personKey)
-    membersByCrew.set(crewId, [
-      ...(membersByCrew.get(crewId) ?? []),
-      { personId, personType: personType as CrewPersonType },
-    ])
+    occupied.add(slotIndex)
+    occupiedMemberPositions.set(member.crewId, occupied)
+    nextMemberPosition.set(member.crewId, Math.max(expected, slotIndex + 1))
+    return { ...member, slotIndex }
   })
+  const membersByCrew = new Map<
+    string,
+    { members: CrewPersonRef[]; positions: number[] }
+  >()
+  const seenPeople = new Set<string>()
+  positionedMemberRows.forEach(
+    ({ crewId, personId, personType, slotIndex }) => {
+      const personKey = `${personType}:${personId}`
+      if (seenPeople.has(personKey)) {
+        throw new Error("Invalid persisted crew plan: duplicate person")
+      }
+      seenPeople.add(personKey)
+      const crewMembers = membersByCrew.get(crewId) ?? {
+        members: [],
+        positions: [],
+      }
+      crewMembers.members.push({
+        personId,
+        personType: personType as CrewPersonType,
+      })
+      crewMembers.positions.push(slotIndex)
+      membersByCrew.set(crewId, crewMembers)
+    },
+  )
   const standardCrewSize = getStandardCrewSize(course.family, course.level)
   if (
     standardCrewSize !== null &&
     [...membersByCrew.values()].some(
-      (members) => members.length > standardCrewSize,
+      ({ members }) => members.length > standardCrewSize,
     )
   ) {
     throw new Error("Invalid persisted crew plan: crew is over capacity")
@@ -200,17 +216,32 @@ export async function readCrewPlan(
   return {
     crews: crewRows.map<CrewDraft>(
       ({ id, sessionId, capacity, destination, boatId }) => {
-        const members = membersByCrew.get(id) ?? []
+        const crewMembers = membersByCrew.get(id) ?? {
+          members: [],
+          positions: [],
+        }
+        const normalizedCapacity = normalizeCrewCapacity(
+          capacity,
+          crewMembers.members.length,
+          course.family,
+          course.level,
+        )
+        if (
+          crewMembers.positions.some(
+            (position) => position >= normalizedCapacity,
+          )
+        ) {
+          throw new Error("Invalid persisted crew member position")
+        }
+        const isPacked = crewMembers.positions.every(
+          (position, index) => position === index,
+        )
         return {
           id,
           sessionId: sessionId as SessionId,
-          members,
-          capacity: normalizeCrewCapacity(
-            capacity,
-            members.length,
-            course.family,
-            course.level,
-          ),
+          members: crewMembers.members,
+          ...(isPacked ? {} : { memberPositions: crewMembers.positions }),
+          capacity: normalizedCapacity,
           destination: destination as CrewDestination,
           boatId,
         }
@@ -280,6 +311,21 @@ export async function saveCrewPlan(
     }
     if (crew.members.length > crew.capacity) {
       throw new Error("Crew is over capacity for this course")
+    }
+    if (
+      (crew.memberPositions !== undefined &&
+        crew.memberPositions.length !== crew.members.length) ||
+      crew.members.some((_, index) => {
+        const position = getCrewMemberPosition(crew, index)
+        return (
+          !Number.isInteger(position) ||
+          position < 0 ||
+          position >= crew.capacity ||
+          (index > 0 && position <= getCrewMemberPosition(crew, index - 1))
+        )
+      })
+    ) {
+      throw new Error("Invalid crew member position")
     }
     for (const member of crew.members) {
       if (!member.personId || !isPersonType(member.personType)) {
@@ -364,10 +410,10 @@ export async function saveCrewPlan(
     const memberKey = ({ crewId, personType, personId }: PersistedMember) =>
       JSON.stringify([crewId, personType, personId])
     const nextMembers = plan.crews.flatMap((crew) =>
-      crew.members.map((member, position) => ({
+      crew.members.map((member, index) => ({
         crewId: crew.id,
         ...member,
-        position,
+        position: getCrewMemberPosition(crew, index),
       })),
     )
     const existingCrewById = new Map(
@@ -573,6 +619,11 @@ export async function readCrewHistory(
   courseId: string,
 ): Promise<CrewHistoryEntry[]> {
   await db.init()
+  const course = await db.getOptional<PersistedCourseCrewConfig>(
+    "SELECT family, level FROM courses WHERE id = ? LIMIT 1",
+    [courseId],
+  )
+  if (!course) throw new Error("Crew course does not exist")
   const [crewRows, memberRows] = await Promise.all([
     db.getAll<PersistedCrew>(
       `SELECT id, sessionId, capacity, destination, boatId, position
@@ -604,18 +655,40 @@ export async function readCrewHistory(
   ) {
     throw new Error("Invalid persisted crew history")
   }
+  const memberCountByCrew = new Map<string, number>()
+  memberRows.forEach(({ crewId }) => {
+    memberCountByCrew.set(crewId, (memberCountByCrew.get(crewId) ?? 0) + 1)
+  })
+  const capacityByCrew = new Map(
+    crewRows.map(({ id, capacity }) => [
+      id,
+      normalizeCrewCapacity(
+        capacity,
+        memberCountByCrew.get(id) ?? 0,
+        course.family,
+        course.level,
+      ),
+    ]),
+  )
   const nextMemberPosition = new Map<string, number>()
-  if (
-    memberRows.some(({ crewId, personType, position }) => {
-      const expected = nextMemberPosition.get(crewId) ?? 0
-      nextMemberPosition.set(crewId, expected + 1)
-      return (
-        !isPersonType(personType) ||
-        (position !== null && position !== expected)
-      )
-    })
-  ) {
-    throw new Error("Invalid persisted crew history members")
+  const occupiedMemberPositions = new Map<string, Set<number>>()
+  for (const { crewId, personId, personType, position } of memberRows) {
+    const expected = nextMemberPosition.get(crewId) ?? 0
+    const slotIndex = position ?? expected
+    const occupied = occupiedMemberPositions.get(crewId) ?? new Set()
+    if (
+      !isPersonType(personType) ||
+      !personId ||
+      !Number.isInteger(slotIndex) ||
+      slotIndex < 0 ||
+      slotIndex >= (capacityByCrew.get(crewId) ?? 0) ||
+      occupied.has(slotIndex)
+    ) {
+      throw new Error("Invalid persisted crew history members")
+    }
+    occupied.add(slotIndex)
+    occupiedMemberPositions.set(crewId, occupied)
+    nextMemberPosition.set(crewId, Math.max(expected, slotIndex + 1))
   }
   const studentsByCrew = new Map<string, string[]>()
   memberRows.forEach(({ crewId, personId, personType }) => {

@@ -552,14 +552,29 @@
       "requiredReviews": [".evidence/E1/self-review.json"]
     },
     {
+      "id": "UX1",
+      "category": "FEATURE",
+      "status": "COMPLETE",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/UX1/verification.json",
+        ".evidence/UX1/browser-evidence.json",
+        ".evidence/UX1/ocr-review.json",
+        ".evidence/UX1/summary-image.json",
+        ".evidence/UX1/self-review.json"
+      ],
+      "requiredReviews": [".evidence/UX1/self-review.json"]
+    },
+    {
       "id": "V03",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/V03/verification.json",
         ".evidence/V03/speech-quality-benchmark.json",
         ".evidence/V03/browser-evidence.json",
+        ".evidence/V03/speech-device-evidence.json",
         ".evidence/V03/speech-review.json"
       ],
       "requiredReviews": [".evidence/V03/speech-review.json"]

@@ -1,0 +1,24 @@
+{
+  "milestone": "UX1",
+  "status": "PASS",
+  "recordedAt": "2026-09-25",
+  "nodeVersion": "v24.19.0",
+  "browserExport": {
+    "artifact": ".evidence/UX1/crew-summary-browser.png",
+    "format": "png",
+    "width": 2080,
+    "height": 1346,
+    "inspection": "Decoded with sharp and visually inspected; text, crew cards, badges, A terra and the blue all-assigned note are rendered in one image."
+  },
+  "automatedCoverage": [
+    "The export integration browser journey downloads a PNG with a valid signature.",
+    "Renderer tests verify available people (including volunteers under an accurate Persone disponibili label), occupied crews, Mezzi, A terra, empty boats/crews and IS/ADV/CT, duty and minor markers in the requested order.",
+    "A synthetic 13-crew, two-column image decodes at 2400 px width at 2x density with visible title ink and all groups in one PNG."
+  ],
+  "source": [
+    "src/features/crews/crewSummaryImage.test.ts",
+    "src/features/crews/CrewManagement.test.tsx",
+    "tests/e2e/c1-crew-management.spec.ts"
+  ],
+  "privateData": "No roster photograph, derivative or real student details were used in this artifact."
+}

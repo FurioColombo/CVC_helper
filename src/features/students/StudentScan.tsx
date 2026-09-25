@@ -1,4 +1,5 @@
 import {
+  ArrowLeftRight,
   Camera,
   Check,
   ChevronLeft,
@@ -48,6 +49,8 @@ interface ReviewCandidate extends StudentScanCandidate {
   /** Editable presentation value. It is never persisted in place of a date. */
   reviewAge: string
   ageManuallyEdited?: boolean
+  /** A nonempty low-confidence reading reviewed by focus and blur. */
+  acknowledgedFields?: Partial<Record<StudentScanField | "age", boolean>>
   /** The operator has read this row and vouches for it as it stands. */
   confirmed?: boolean
 }
@@ -73,6 +76,13 @@ function needsReview(
   field: StudentScanField,
   courseStartDate?: string,
 ) {
+  // A required name cannot be acknowledged while it is empty.
+  if (
+    (field === "firstName" || field === "surname") &&
+    !candidate[field].trim()
+  ) {
+    return true
+  }
   // Confidence is the scan's opinion; a person who has read the row overrules
   // it. Without this the counter can never reach zero on a real photograph,
   // because a correct reading of a faint sheet still scores below the
@@ -81,6 +91,7 @@ function needsReview(
   if (field === "phone" && !candidate.phone.trim()) return false
   // Birth date is optional when the row has a valid age for course start.
   if (field === "dateOfBirth" && !candidate.dateOfBirth) return false
+  if (candidate.acknowledgedFields?.[field]) return false
   if (
     field === "dateOfBirth" &&
     courseStartDate &&
@@ -114,7 +125,13 @@ function ageConflictsWithStoredDate(
 function ageNeedsReview(candidate: ReviewCandidate, courseStartDate: string) {
   if (parsedReviewAge(candidate) === null) return true
   if (!candidate.dateOfBirth) {
-    if (candidate.ageManuallyEdited || candidate.confirmed) return false
+    if (
+      candidate.ageManuallyEdited ||
+      candidate.confirmed ||
+      candidate.acknowledgedFields?.age
+    ) {
+      return false
+    }
     return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
   }
   if (
@@ -133,8 +150,8 @@ function nameReadingNeedsReview(candidate: ReviewCandidate) {
   const reading = candidate.nameReading
   if (!reading) return false
   return (
-    reading.order === "unknown" ||
-    (reading.compoundAmbiguity && !reading.acknowledged)
+    !reading.acknowledged &&
+    (reading.order === "unknown" || reading.compoundAmbiguity)
   )
 }
 
@@ -185,6 +202,7 @@ function ReviewField({
   field,
   label,
   onChange,
+  onAcknowledge,
   ...inputProps
 }: {
   candidate: ReviewCandidate
@@ -192,12 +210,14 @@ function ReviewField({
   field: StudentScanField
   label: string
   onChange: (value: string) => void
-} & Omit<React.ComponentProps<typeof Input>, "onChange" | "value">) {
+  onAcknowledge: () => void
+} & Omit<React.ComponentProps<typeof Input>, "onChange" | "onBlur" | "value">) {
   const uncertain = needsReview(candidate, field, courseStartDate)
   const lowConfidenceDate =
     field === "dateOfBirth" &&
     Boolean(candidate.dateOfBirth) &&
-    candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE
+    candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE &&
+    !candidate.acknowledgedFields?.dateOfBirth
   const flagged = uncertain || lowConfidenceDate
   return (
     <label className="grid min-w-0 gap-1.5 text-sm font-bold">
@@ -218,6 +238,9 @@ function ReviewField({
         className={`scroll-mt-[180px] ${flagged ? "border-[#f79009]" : ""}`}
         data-scan-field={field}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={() => {
+          if (flagged && candidate[field].trim()) onAcknowledge()
+        }}
         value={candidate[field]}
         {...inputProps}
       />
@@ -265,6 +288,10 @@ function CandidateCard({
       ...candidate,
       reviewAge: value,
       ageManuallyEdited: true,
+      acknowledgedFields: {
+        ...candidate.acknowledgedFields,
+        age: false,
+      },
       ...(validAge !== null
         ? { ageReading: { value: validAge, confidence: 100 } }
         : { ageReading: undefined }),
@@ -285,7 +312,50 @@ function CandidateCard({
   }
 
   const nameNeedsReview = nameReadingNeedsReview(candidate)
+  const hasUnacknowledgedLowConfidenceName =
+    !candidate.confirmed &&
+    (["firstName", "surname"] as const).some(
+      (field) =>
+        candidate.confidence[field] < MIN_FIELD_CONFIDENCE &&
+        !candidate.acknowledgedFields?.[field],
+    )
+  const nameReadingVisible = Boolean(
+    candidate.nameReading &&
+    (nameNeedsReview || hasUnacknowledgedLowConfidenceName),
+  )
   const reviewAgeNeedsAttention = ageNeedsReview(candidate, courseStartDate)
+
+  function acknowledgeField(field: StudentScanField | "age") {
+    onChange({
+      ...candidate,
+      acknowledgedFields: {
+        ...candidate.acknowledgedFields,
+        [field]: true,
+      },
+    })
+  }
+
+  function swapNameFields() {
+    onChange({
+      ...candidate,
+      firstName: candidate.surname,
+      surname: candidate.firstName,
+      confidence: {
+        ...candidate.confidence,
+        firstName: 100,
+        surname: 100,
+      },
+      nameManuallyEdited: true,
+      ...(candidate.nameReading
+        ? {
+            nameReading: {
+              ...candidate.nameReading,
+              acknowledged: true,
+            },
+          }
+        : {}),
+    })
+  }
 
   return (
     <article
@@ -302,6 +372,16 @@ function CandidateCard({
         {/* The cluster wraps under the heading at 200% text rather than
             widening the card past the viewport. */}
         <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Button
+            aria-label={`Scambia nome e cognome riga ${index + 1}`}
+            className="size-10 shrink-0 px-0"
+            disabled={disabled}
+            onClick={swapNameFields}
+            type="button"
+            variant="secondary"
+          >
+            <ArrowLeftRight aria-hidden="true" className="size-4" />
+          </Button>
           <Button
             aria-label={`Segna controllata la riga di allievo ${index + 1}`}
             aria-pressed={Boolean(candidate.confirmed)}
@@ -329,7 +409,7 @@ function CandidateCard({
         </div>
       </div>
 
-      {candidate.nameReading && (
+      {nameReadingVisible && candidate.nameReading && (
         <div className="mb-2 rounded-xl border border-primary/20 bg-primary/5 p-2.5">
           <p className="text-xs leading-5 text-muted-foreground">
             <span className="font-bold text-foreground">Letto:</span>{" "}
@@ -373,6 +453,7 @@ function CandidateCard({
           label="Nome"
           disabled={disabled}
           onChange={(value) => updateField("firstName", value)}
+          onAcknowledge={() => acknowledgeField("firstName")}
         />
         <ReviewField
           autoComplete="family-name"
@@ -382,36 +463,71 @@ function CandidateCard({
           label="Cognome"
           disabled={disabled}
           onChange={(value) => updateField("surname", value)}
+          onAcknowledge={() => acknowledgeField("surname")}
         />
       </div>
 
       <div
         className={`mt-2 grid min-w-0 items-center gap-2 ${readPhone ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
       >
-        <div className="flex min-w-0 items-center gap-2">
-          <label
-            className="shrink-0 text-sm font-bold"
-            htmlFor={`scan-age-${candidate.id}`}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex min-w-[120px] flex-1 items-center gap-2">
+            <label
+              className="shrink-0 text-sm font-bold"
+              htmlFor={`scan-age-${candidate.id}`}
+            >
+              Età
+            </label>
+            <Input
+              aria-label={`Età riga ${candidate.id}`}
+              className={`min-w-0 flex-1 scroll-mt-[180px] ${reviewAgeNeedsAttention ? "border-[#f79009]" : ""}`}
+              data-scan-field="age"
+              disabled={disabled}
+              id={`scan-age-${candidate.id}`}
+              inputMode="numeric"
+              aria-invalid={reviewAgeNeedsAttention}
+              onBlur={() => {
+                if (reviewAgeNeedsAttention && candidate.reviewAge.trim()) {
+                  acknowledgeField("age")
+                }
+              }}
+              onChange={(event) => updateAge(event.target.value)}
+              type="text"
+              value={candidate.reviewAge}
+            />
+            {reviewAgeNeedsAttention && (
+              <span className="shrink-0 text-[0.68rem] font-bold text-[#a2381b]">
+                Da controllare
+              </span>
+            )}
+          </div>
+          <div
+            aria-labelledby={`scan-sex-label-${candidate.id}`}
+            className="flex shrink-0 items-center gap-2 text-sm font-bold"
+            role="radiogroup"
           >
-            Età
-          </label>
-          <Input
-            aria-label={`Età riga ${candidate.id}`}
-            className={`min-w-0 flex-1 scroll-mt-[180px] ${reviewAgeNeedsAttention ? "border-[#f79009]" : ""}`}
-            data-scan-field="age"
-            disabled={disabled}
-            id={`scan-age-${candidate.id}`}
-            inputMode="numeric"
-            aria-invalid={reviewAgeNeedsAttention}
-            onChange={(event) => updateAge(event.target.value)}
-            type="text"
-            value={candidate.reviewAge}
-          />
-          {reviewAgeNeedsAttention && (
-            <span className="shrink-0 text-[0.68rem] font-bold text-[#a2381b]">
-              Da controllare
-            </span>
-          )}
+            <span id={`scan-sex-label-${candidate.id}`}>Sesso</span>
+            <div className="grid grid-cols-3 gap-1">
+              {STUDENT_SEXES.map((option) => (
+                <label className="cursor-pointer" key={option.id}>
+                  <input
+                    aria-label={option.detailLabel}
+                    checked={candidate.sex === option.id}
+                    className="peer scroll-mt-[180px] sr-only"
+                    data-scan-field="sex"
+                    disabled={disabled}
+                    name={`scan-sex-${candidate.id}`}
+                    onChange={() => onChange({ ...candidate, sex: option.id })}
+                    type="radio"
+                    value={option.id}
+                  />
+                  <span className="grid size-[40px] place-items-center rounded-xl border bg-card text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+                    {option.id === "other" ? "Alt" : option.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
         {readPhone && (
           <ReviewField
@@ -422,6 +538,7 @@ function CandidateCard({
             label="Telefono"
             disabled={disabled}
             onChange={(value) => updateField("phone", value)}
+            onAcknowledge={() => acknowledgeField("phone")}
             type="tel"
           />
         )}
@@ -440,37 +557,11 @@ function CandidateCard({
               disabled={disabled}
               max={courseStartDate}
               onChange={(value) => updateField("dateOfBirth", value)}
+              onAcknowledge={() => acknowledgeField("dateOfBirth")}
               type="date"
             />
           </div>
         )}
-
-      <div
-        aria-labelledby={`scan-sex-label-${candidate.id}`}
-        className="mt-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-sm font-bold"
-        role="radiogroup"
-      >
-        <span id={`scan-sex-label-${candidate.id}`}>Sesso</span>
-        <div className="col-start-2 grid min-w-0 grid-cols-3 gap-2">
-          {STUDENT_SEXES.map((option) => (
-            <label className="cursor-pointer" key={option.id}>
-              <input
-                checked={candidate.sex === option.id}
-                className="peer scroll-mt-[180px] sr-only"
-                data-scan-field="sex"
-                disabled={disabled}
-                name={`scan-sex-${candidate.id}`}
-                onChange={() => onChange({ ...candidate, sex: option.id })}
-                type="radio"
-                value={option.id}
-              />
-              <span className="grid h-10 place-items-center rounded-xl border bg-card text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
-                {option.label}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
 
       {invalid && (
         <p className="mt-3 text-xs font-semibold text-[#b42318]" role="alert">
@@ -682,9 +773,9 @@ export function StudentScan({
   const readyStudents = candidates.filter((candidate) =>
     candidateIsReady(candidate, courseStartDate, readPhone),
   ).length
-  const hasUnresolvedNameOrder = candidates.some(
-    (candidate) => candidate.nameReading?.order === "unknown",
-  )
+  const hasUnresolvedNameOrder =
+    !nameOrder &&
+    candidates.some((candidate) => candidate.nameReading?.order === "unknown")
 
   function firstMissingTarget(candidate: ReviewCandidate) {
     if (!candidate.firstName.trim()) return "firstName"
@@ -1098,6 +1189,13 @@ export function StudentScan({
                 scansioni di questo corso. Le righe già corrette restano
                 invariate.
               </p>
+              {orderInference && (
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Il foglio non dà un ordine certo: nome in prima posizione in{" "}
+                  {orderInference.firstWordVotes} righe, in ultima in{" "}
+                  {orderInference.lastWordVotes}.
+                </p>
+              )}
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {(
                   [
@@ -1130,28 +1228,11 @@ export function StudentScan({
               </div>
             </section>
           ) : (
-            nameOrder && (
-              <section
-                aria-label="Ordine dei nomi"
-                className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border bg-card px-3 py-2"
-              >
-                <p className="text-xs text-muted-foreground">
-                  Nomi letti come{" "}
-                  <span className="font-bold text-foreground">
-                    {nameOrder === "surname-given"
-                      ? "Cognome · Nome"
-                      : "Nome · Cognome"}
-                  </span>
-                  {orderInference && (
-                    <span className="mt-1 block">
-                      Dedotto dal foglio: nome riconosciuto in prima posizione
-                      in {orderInference.firstWordVotes} righe, in ultima in{" "}
-                      {orderInference.lastWordVotes}.
-                    </span>
-                  )}
-                </p>
+            nameOrder &&
+            candidates.some((candidate) => candidate.nameReading) && (
+              <div className="mb-2 flex justify-end">
                 <Button
-                  className="h-auto min-h-10 px-2.5 text-xs"
+                  className="min-h-10 px-2.5 text-xs"
                   disabled={state === "saving"}
                   onClick={() => {
                     const next =
@@ -1168,9 +1249,10 @@ export function StudentScan({
                   type="button"
                   variant="secondary"
                 >
+                  <ArrowLeftRight aria-hidden="true" className="size-3.5" />
                   Inverti per tutti
                 </Button>
-              </section>
+              </div>
             )
           )}
 

@@ -1,8 +1,8 @@
-import { copyFileSync, mkdirSync, readFileSync, unlinkSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { mkdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 
 import { expect, type Page, test } from "@playwright/test"
+import sharp from "sharp"
 
 const COUNT_STUDENTS = [
   "Alba",
@@ -203,9 +203,11 @@ test("keeps a forty-student roster usable at 320 px with 200% text", async ({
   }))
   expect(nameGeometry.nameWidth).toBeGreaterThan(0)
   expect(nameGeometry.personButtonWidth).toBeGreaterThanOrEqual(40)
-  await expect(
-    crew.getByRole("button", { name: `Rendi disponibile ${longName}` }),
-  ).toHaveCSS("min-width", "40px")
+  const removeBox = await crew
+    .getByRole("button", { name: `Rendi disponibile ${longName}` })
+    .boundingBox()
+  expect(removeBox?.width).toBeGreaterThanOrEqual(44)
+  expect(removeBox?.height).toBeGreaterThanOrEqual(44)
   const columns = await crew
     .locator("div.grid-cols-2, div.grid-cols-3")
     .first()
@@ -213,7 +215,7 @@ test("keeps a forty-student roster usable at 320 px with 200% text", async ({
       (element) =>
         getComputedStyle(element).gridTemplateColumns.split(" ").length,
     )
-  expect(columns).toBe(3)
+  expect(columns).toBe(2)
   expect(
     await page.evaluate(() => ({
       viewportWidth: document.documentElement.clientWidth,
@@ -221,16 +223,16 @@ test("keeps a forty-student roster usable at 320 px with 200% text", async ({
     })),
   ).toEqual({ viewportWidth: 320, pageWidth: 320 })
 
-  mkdirSync(path.resolve(".evidence/C1"), { recursive: true })
+  mkdirSync(path.resolve(".evidence/UX1"), { recursive: true })
   await crew.screenshot({
     path: path.resolve(
-      ".evidence/C1/crew-card-long-name-320px-200-percent.png",
+      ".evidence/UX1/crew-card-long-name-320px-200-percent.png",
     ),
   })
   await page.screenshot({
     fullPage: true,
     path: path.resolve(
-      ".evidence/C1/crew-manager-40-students-320px-200-percent.png",
+      ".evidence/UX1/crew-manager-40-students-320px-200-percent.png",
     ),
   })
 })
@@ -263,8 +265,7 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
   await returnToHome(page, "Comandate")
 
   await page.getByRole("button", { name: "Impostazioni" }).click()
-  await expect(page.getByRole("radio", { name: "3 per riga" })).toBeChecked()
-  await page.getByRole("radio", { name: "2 per riga" }).check()
+  await expect(page.getByRole("radio", { name: "2 per riga" })).toBeChecked()
   await page.getByRole("button", { name: "Torna alla Home" }).click()
 
   const primaryNav = page.getByRole("navigation", {
@@ -392,27 +393,18 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
     .getByRole("button", { name: "Scarica immagine riepilogo" })
     .click()
   const download = await downloadPromise
-  const temporarySvgPath = path.join(
-    tmpdir(),
-    `cvc-crew-summary-${process.pid}-${testInfo.retry}.svg`,
+  mkdirSync(path.resolve(".evidence/UX1"), { recursive: true })
+  const evidencePath = path.resolve(".evidence/UX1/crew-summary-browser.png")
+  await download.saveAs(evidencePath)
+  expect(download.suggestedFilename()).toMatch(/\.png$/i)
+  const image = readFileSync(evidencePath)
+  expect(image.subarray(0, 8)).toEqual(
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   )
-  const evidencePath = path.resolve(".evidence/C1/crew-summary-browser.svg")
-  await download.saveAs(temporarySvgPath)
-  const svg = readFileSync(temporarySvgPath, "utf8")
-  expect(svg).toContain('aria-label="Riepilogo equipaggi"')
-  expect(svg).toContain('data-columns="1"')
-  expect(svg.match(/data-crew-number=/g)).toHaveLength(2)
-  for (const firstName of [
-    "Zeno",
-    "Berto",
-    "Carlo",
-    "Dina",
-    "Ernesto",
-    "Fiona",
-  ])
-    expect(svg).toContain(firstName)
-  expect(svg).toContain("Comandata")
-  expect(svg).toContain("Minorenne")
+  const metadata = await sharp(image).metadata()
+  expect(metadata.format).toBe("png")
+  expect(metadata.width).toBeGreaterThan(500)
+  expect(metadata.height).toBeGreaterThan(100)
 
   await page.getByRole("button", { name: "Chiudi vista lettura" }).click()
 
@@ -433,11 +425,9 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
     pageWidth: document.documentElement.scrollWidth,
   }))
   expect(layout).toEqual({ viewportWidth: 320, pageWidth: 320 })
-  mkdirSync(path.resolve(".evidence/C1"), { recursive: true })
+  mkdirSync(path.resolve(".evidence/UX1"), { recursive: true })
   await page.screenshot({
     fullPage: true,
-    path: path.resolve(".evidence/C1/crew-manager-320px-200-percent.png"),
+    path: path.resolve(".evidence/UX1/crew-manager-320px-200-percent.png"),
   })
-  copyFileSync(temporarySvgPath, evidencePath)
-  unlinkSync(temporarySvgPath)
 })

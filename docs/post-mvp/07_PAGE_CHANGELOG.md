@@ -278,10 +278,10 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 **Richieste:** STT-001, UX-G04. **Natura:** affidabilità e feedback. **Decisione r1:** P20 non esiste più come vista. Il comportamento vive nei pannelli testo P05/P09/P17.
 
-- Stati distinti nello stesso pannello: richiesta permesso al primo tap Detta (non all'apertura app), asset in caricamento, pronto/registrazione, elaborazione, testo da rivedere, errore recuperabile.
+- Stati distinti nello stesso pannello: richiesta permesso al primo tap Detta (non all'apertura app), asset in caricamento, registrazione, elaborazione ed errore recuperabile.
 - Comunicare primo download e avanzamento reale disponibile; niente percentuale inventata. Riprova e annullamento con effetto reale.
-- Conservare testo già digitato se fallisce la dettatura; trascritto editabile e confermabile; audio scartato.
-- Dal 2026-09-19 il comportamento non vive più solo in P05/P09/P17: ogni campo nota dell'app lo espone, comprese le due note della scheda allievo e la descrizione di un'avaria già aperta. Un solo `DictationTrigger`, un solo `DictationPanels` e un `DictatedNoteField` per le note etichettate, invece di una copia per schermata. Il salvataggio resta bloccato finché una trascrizione non è accettata o scartata.
+- Conservare il testo già digitato se permesso o trascrizione falliscono; inserire subito il testo riconosciuto nel campo modificabile; scartare l'audio.
+- Dal 2026-09-19 il comportamento non vive più solo in P05/P09/P17: ogni campo nota dell'app lo espone, comprese le due note della scheda allievo e la descrizione di un'avaria già aperta. Un solo `DictationTrigger`, un solo `DictationPanels` e un `DictatedNoteField` per le note etichettate, invece di una copia per schermata. Il salvataggio attende solo la fine della registrazione e dell'elaborazione; non richiede un'ulteriore conferma del testo.
 
 **Mock:** tutti gli stati sopra dentro le tre superfici ospitanti; nessuna voce P20 nel selettore. **Accettazione:** percorso reale su browser PC, Android e iPhone, fixture audio automatizzate e collaudo fisico finale dell'autore; errori non lasciano la UI bloccata; assenza di audio persistito. **Baseline:** `src/capabilities/speech.ts` e chiamanti.
 
@@ -349,3 +349,15 @@ returns to the same student profile. Crew-member cards now sit closer together,
 with a larger gap between crew, A terra and Non assegnati groups. The note editor
 was checked at 320 px/200% and at 390/412 px; its text and controls remain
 inside the panel, and the page has no horizontal overflow. See `.evidence/E1/`.
+
+UX1 · P06/P14/P16/P17, 2026-09-25: the owner identified further corrections in
+the local phone preview. The selected-member grid defaults to two full-width
+columns with a Settings-only three-column choice and an integrated remove
+action. Free slots offer the reverse student picker and retain the exact chosen
+position after reload. Scan review acknowledges a
+nonempty flagged field on blur, uses contextual reading warnings, restores the
+accessible row swap, and places age beside compact sex choices. Evaluation rows
+become denser. The crew summary downloads as one PNG with available students,
+occupied crews, Mezzi, A terra, empty boats and role/duty/minor markers in that
+order. These are owner-approved amendments to the frozen r10 target; UX1 browser
+and image evidence, plus a zero-blocker adversarial review, determine completion.

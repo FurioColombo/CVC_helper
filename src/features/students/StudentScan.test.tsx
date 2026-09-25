@@ -169,13 +169,8 @@ describe("StudentScan name order", () => {
     expect(within(counters).getByText("0")).toBeVisible()
   })
 
-  it("deduces one order across the sheet and reports both votes before commit", async () => {
+  it("deduces one order across the sheet without a generic order panel", async () => {
     await openReview(SURNAME_FIRST)
-    expect(
-      screen.getByText(
-        /Dedotto dal foglio:.*prima posizione in 1 righe, in ultima in 2/,
-      ),
-    ).toBeVisible()
     expect(addStudents).not.toHaveBeenCalled()
 
     expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
@@ -188,14 +183,15 @@ describe("StudentScan name order", () => {
     expect(screen.getByLabelText(/^Cognome riga line-2-2$/)).toHaveValue(
       "Liosca",
     )
-    // The question is replaced by the remembered answer, not asked again.
-    const banner = within(screen.getByLabelText("Ordine dei nomi"))
+    // The inferred correction is applied, while the sheet-wide correction
+    // remains available as a compact action rather than a reading banner.
+    expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: "Applica Cognome · Nome" }),
     ).not.toBeInTheDocument()
-    expect(banner.getByText("Cognome · Nome")).toBeVisible()
+    expect(screen.queryByText("Letto:")).not.toBeInTheDocument()
     expect(
-      banner.getByRole("button", { name: "Inverti per tutti" }),
+      screen.getByRole("button", { name: "Inverti per tutti" }),
     ).toBeVisible()
   })
 
@@ -272,12 +268,39 @@ describe("StudentScan name order", () => {
     expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Liosca")
   })
 
-  it("does not offer a row-level name swap", async () => {
-    await openReview(SURNAME_FIRST)
+  it("offers an accessible per-row swap and acknowledges that row", async () => {
+    const candidate: StudentScanResult["candidates"][number] = {
+      ...SURNAME_FIRST.candidates[0]!,
+      sex: "female" as const,
+    }
+    const user = await openReview({
+      ...SURNAME_FIRST,
+      candidates: [candidate],
+    })
 
-    expect(
-      screen.queryByRole("button", { name: /Scambia nome e cognome riga/ }),
-    ).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: "Scambia nome e cognome riga 1" }),
+    )
+
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
+      "Veldor",
+    )
+    expect(screen.queryByText("Letto:")).not.toBeInTheDocument()
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getAllByText("0")).toHaveLength(2)
+    expect(within(counters).getByText("1")).toBeVisible()
+    // The sheet order question remains available for other or future rows.
+    expect(screen.getByLabelText("Ordine dei nomi")).toBeVisible()
+
+    await user.click(
+      screen.getByRole("button", { name: "Applica Cognome · Nome" }),
+    )
+    expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
+      "Veldor",
+    )
     expect(
       screen.getByRole("button", { name: "Inverti per tutti" }),
     ).toBeVisible()
@@ -390,6 +413,128 @@ describe("StudentScan", () => {
       ]),
     )
     expect(onCommitted).toHaveBeenCalledOnce()
+  })
+
+  it("acknowledges a nonempty low-confidence field on focus and blur unchanged", async () => {
+    const candidate: StudentScanResult["candidates"][number] = {
+      ...EXTRACTED.candidates[0]!,
+      confidence: {
+        ...EXTRACTED.candidates[0]!.confidence,
+        surname: 61,
+      },
+      nameReading: {
+        raw: "Mario Rossl",
+        words: [
+          { text: "Mario", confidence: 96 },
+          { text: "Rossl", confidence: 61 },
+        ],
+        order: "given-surname",
+        compoundAmbiguity: false,
+        acknowledged: false,
+      },
+    }
+    const user = await openReview({
+      ...EXTRACTED,
+      candidates: [candidate],
+    })
+    const surname = screen.getByLabelText("Cognome riga line-1-1")
+
+    expect(surname).toHaveValue("Rossl")
+    expect(surname).toHaveClass("border-[#f79009]")
+    expect(screen.getByText("Mario Rossl")).toBeVisible()
+    await user.click(surname)
+    await user.tab()
+
+    expect(surname).toHaveValue("Rossl")
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getAllByText("0")).toHaveLength(2)
+    expect(within(counters).getByText("1")).toBeVisible()
+    expect(surname).not.toHaveClass("border-[#f79009]")
+    expect(screen.queryByText("Mario Rossl")).not.toBeInTheDocument()
+  })
+
+  it("keeps an empty flagged required field pending after focus and blur", async () => {
+    const candidate = {
+      ...EXTRACTED.candidates[0]!,
+      firstName: "",
+      confidence: {
+        ...EXTRACTED.candidates[0]!.confidence,
+        firstName: 0,
+      },
+    }
+    const user = await openReview({
+      ...EXTRACTED,
+      candidates: [candidate],
+    })
+    const firstName = screen.getByLabelText("Nome riga line-1-1")
+
+    await user.click(firstName)
+    await user.tab()
+
+    expect(firstName).toHaveValue("")
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getAllByText("1")).toHaveLength(2)
+    expect(within(counters).getByText("0")).toBeVisible()
+    expect(firstName).toHaveClass("border-[#f79009]")
+  })
+
+  it("shows compact sex choices with the full accessible Altro name", async () => {
+    await openReview({
+      aggregateConfidence: 90,
+      unsuitable: false,
+      candidates: [
+        {
+          ...EXTRACTED.candidates[0]!,
+          dateOfBirth: "",
+          ageReading: { value: 18, confidence: 90 },
+          confidence: {
+            ...EXTRACTED.candidates[0]!.confidence,
+            dateOfBirth: 0,
+          },
+          sex: "other",
+        },
+      ],
+    })
+
+    expect(screen.getByText("Alt")).toBeVisible()
+    const otherOption = screen.getByRole("radio", { name: "Altro" })
+    expect(otherOption).toHaveAttribute("value", "other")
+    expect(otherOption).toBeChecked()
+    const age = screen.getByLabelText("Età riga line-1-1")
+    const ageAndSexRow = age.parentElement?.parentElement
+    expect(ageAndSexRow).toContainElement(
+      screen.getByRole("radiogroup", { name: "Sesso" }),
+    )
+  })
+
+  it("acknowledges a nonempty low-confidence age on focus and blur unchanged", async () => {
+    const user = await openReview({
+      aggregateConfidence: 82,
+      unsuitable: false,
+      candidates: [
+        {
+          ...EXTRACTED.candidates[0]!,
+          dateOfBirth: "",
+          ageReading: { value: 18, confidence: 48 },
+          confidence: {
+            ...EXTRACTED.candidates[0]!.confidence,
+            dateOfBirth: 0,
+          },
+        },
+      ],
+    })
+    const age = screen.getByLabelText("Età riga line-1-1")
+
+    expect(age).toHaveValue("18")
+    expect(age).toHaveAttribute("aria-invalid", "true")
+    await user.click(age)
+    await user.tab()
+
+    expect(age).toHaveValue("18")
+    expect(age).toHaveAttribute("aria-invalid", "false")
+    const counters = screen.getByLabelText("Stato revisione scansione")
+    expect(within(counters).getAllByText("0")).toHaveLength(2)
+    expect(within(counters).getByText("1")).toBeVisible()
   })
 
   it("asks for another image when extraction is unsuitable", async () => {
