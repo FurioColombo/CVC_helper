@@ -655,16 +655,16 @@ describe("student scan extraction", () => {
     )
   })
 
-  it("refuses to guess an ambiguous compound and marks it for review", () => {
+  it("offers a possible split of an ambiguous compound and marks it for review", () => {
     const result = extractStudentCandidates({
       confidence: 92,
-      text: "Rumeria Tusafio mireni",
+      text: "Rumeria Clovera gelsina",
       tsv: [
         HEADER,
         tsvLine(1, [
           { text: "Rumeria", confidence: 92 },
-          { text: "Tusator", confidence: 93 },
-          { text: "georgia", confidence: 91 },
+          { text: "Clovera", confidence: 93 },
+          { text: "gelsina", confidence: 91 },
         ]),
       ].join("\n"),
     })
@@ -673,12 +673,117 @@ describe("student scan extraction", () => {
       result.candidates[0]!,
       "surname-given",
     )
-    expect(applied.firstName).toBe("Rumeria")
-    expect(applied.surname).toBe("Tusafio mireni")
+    // The first word is surname under either reading of a surname-first
+    // sheet, so it is never offered as the given name.
+    expect(applied.firstName).toBe("Clovera gelsina")
+    expect(applied.surname).toBe("Rumeria")
     expect(applied.nameReading?.compoundAmbiguity).toBe(true)
     // The words as read survive, so the operator can retype the boundary.
-    expect(applied.nameReading?.raw).toBe("Rumeria Tusafio mireni")
+    expect(applied.nameReading?.raw).toBe("Rumeria Clovera gelsina")
   })
+
+  it("keeps a leading particle with its surname in an unproven longer name", () => {
+    const result = extractStudentCandidates({
+      confidence: 92,
+      text: "De Varni Elsa Mirta",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "De", confidence: 91 },
+          { text: "Varni", confidence: 92 },
+          { text: "Elsa", confidence: 93 },
+          { text: "Mirta", confidence: 90 },
+        ]),
+      ].join("\n"),
+    })
+
+    const applied = applyStudentNameOrder(
+      result.candidates[0]!,
+      "surname-given",
+    )
+    expect(applied.surname).toBe("De Varni")
+    expect(applied.firstName).toBe("Elsa Mirta")
+    expect(applied.nameReading?.compoundAmbiguity).toBe(true)
+    expect(applied.nameReading?.raw).toBe("De Varni Elsa Mirta")
+    expect(applied.confidence).toMatchObject({ surname: 91, firstName: 90 })
+  })
+
+  it("keeps a student row whose grid noise reads as a heading keyword", () => {
+    const { candidates } = extractStudentCandidates({
+      confidence: 92,
+      tsv: null,
+      text: [
+        "COGNOME E NOME",
+        // Noise from the attendance grid, after the row's own columns.
+        "Varni Lodovica 16 anni - 03/04/2010 pag",
+        "Selmi Arduino 17 anni - 05/06/2009 staff",
+        "Orvesi Talia 15 anni - 07/08/2011 note",
+        "Data stampa 08/09/2026",
+        "Pag. 1 di 2",
+        "ADV Brenti Orsola 01/02/1980",
+      ].join("\n"),
+    })
+
+    // No student is dropped, and noise does not turn later rows into staff;
+    // the print-date footer and the staff row stay out.
+    expect(candidates.map(({ dateOfBirth }) => dateOfBirth)).toEqual([
+      "2010-04-03",
+      "2009-06-05",
+      "2011-08-07",
+    ])
+  })
+
+  it.each([
+    "12/09/2026 Corso Deriva Livello 2",
+    "08/09/2026 Stampato alle ore 10",
+    "15/06/2026 Pagina Iscritti 1",
+    "Del 12/09/2026 Corso Deriva Livello 2",
+    "N. 3 del 12/09/2026 Elenco Iscritti",
+  ])(
+    "never reads a heading that starts with its date as a student: %s",
+    (line) => {
+      const { candidates } = extractStudentCandidates({
+        confidence: 92,
+        tsv: null,
+        text: [
+          "COGNOME E NOME",
+          line,
+          "Varni Lodovica 16 anni - 03/04/2010",
+        ].join("\n"),
+      })
+
+      // No name word precedes the date, so the whole line is the heading.
+      expect(candidates.map(({ dateOfBirth }) => dateOfBirth)).toEqual([
+        "2010-04-03",
+      ])
+    },
+  )
+
+  it("never lets a confident particle lift an uncertain surname word", () => {
+    const result = extractStudentCandidates({
+      confidence: 92,
+      text: "De Varni Elsa Mirta",
+      tsv: [
+        HEADER,
+        tsvLine(1, [
+          { text: "De", confidence: 97 },
+          { text: "Varni", confidence: 41 },
+          { text: "Elsa", confidence: 0 },
+          { text: "Mirta", confidence: 95 },
+        ]),
+      ].join("\n"),
+    })
+
+    const applied = applyStudentNameOrder(
+      result.candidates[0]!,
+      "surname-given",
+    )
+    expect(applied.confidence.surname).toBe(41)
+    // A word read with no confidence stays uncertain, not replaced.
+    expect(applied.confidence.firstName).toBe(0)
+    expect(applied.confidence.surname).toBeLessThan(MIN_FIELD_CONFIDENCE)
+  })
+
   it("does not report a telephone that was not asked for, and reads the same names", () => {
     const row = (line: number, surname: string, given: string, phone: string) =>
       tsvPlacedLine(line, [

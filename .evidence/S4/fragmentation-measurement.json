@@ -1,6 +1,6 @@
 {
   "milestone": "S4",
-  "status": "in progress; good-photo target not met",
+  "status": "good-photo target met after rule erasure; see rule-erasure-measurement.json",
   "runtime": "Node v24.19.0",
   "settings": {
     "tesseractDpi": 180,
@@ -11,10 +11,34 @@
   },
   "privatePreparedPhotos": {
     "count": 5,
-    "candidateRowsBySample": [20, 21, 29, 21, 20],
-    "flaggedFieldsBySample": [15, 18, 35, 23, 5],
-    "structuredFragmentJoinsBySample": [0, 0, 0, 0, 0],
-    "unresolvedFragmentsBySample": [5, 5, 4, 4, 4],
+    "candidateRowsBySample": [
+      20,
+      21,
+      29,
+      21,
+      20
+    ],
+    "flaggedFieldsBySample": [
+      15,
+      18,
+      35,
+      23,
+      5
+    ],
+    "structuredFragmentJoinsBySample": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "unresolvedFragmentsBySample": [
+      5,
+      5,
+      4,
+      4,
+      4
+    ],
     "unresolvedReason": "All are mixed text and structured fragments, not safe structured-only joins.",
     "comparison": "Geometry joined no real-photo fragments and reassigned no field. Preserving a weak unresolved age fragment adds one incomplete review row and four flags to sample 4; the other four samples retain their prior counts.",
     "singleNameTokenReview": "A lone name token, including a low-confidence reading, is retained as an incomplete row; this added no candidates or flags on the five prepared photos.",
@@ -56,8 +80,41 @@
       "falseRowsWithoutReview": 0,
       "correctReadableFields": 196,
       "readableFields": 196,
-      "fieldFlagsByVariant": [3, 2, 2, 3]
+      "fieldFlagsByVariant": [
+        3,
+        2,
+        2,
+        3
+      ]
     }
   },
-  "privacy": "Only counts appear here. Real photos, raw OCR, and row-indexed truth remain under ignored data/private. The committed corpus is wholly fictitious."
+  "privacy": "Only counts appear here. Real photos, raw OCR, and row-indexed truth remain under ignored data/private. The committed corpus is wholly fictitious.",
+  "afterRuleErasure": {
+    "measuredAt": "2026-09-25",
+    "runtime": "Node v24.21.0",
+    "code": "S4 checkpoint after the independent review fixes",
+    "candidateRowsBySample": [
+      21,
+      26,
+      29,
+      21,
+      20
+    ],
+    "flaggedFieldsBySample": [
+      5,
+      24,
+      35,
+      8,
+      0
+    ],
+    "columnSplit": "With vertical rules gone Tesseract sometimes separates a table into name, telephone and age-date column blocks. A token without a letter (a lone dash in the age-date cell) previously counted as an unknown name token and blocked the existing conservative join; it no longer does. The join rule itself (unique vertical anchor, disjoint columns, no duplicate field, no staff cue) is unchanged.",
+    "tableBandGate": "After review S4-DI-09 a fragment is never joined to a line outside the regular-pitch student band. At the first erasure commit one staff name line on sample 2 was completed by a joined age-date cell and looked ready; now such cells stay separate rows (reason outside-table-band), which costs 5 and 7 flags on samples 1 and 2.",
+    "studentsMatchedByUniqueDate": 100,
+    "missingStudents": 0,
+    "mergedStudents": 0,
+    "extraCandidates": 17,
+    "extraCandidatesReady": 0,
+    "extraCandidatesNote": "Mostly the staff block at the foot of the sheet and its cells. On the five captures none looks ready and none is associated with a student. Across 25 perturbed inputs, 2 staff rows read complete on one text line (not joined) looked ready on 1 input with erasure, and on 2 inputs without erasure; see rule-erasure-measurement.json.",
+    "superseded": "The earlier afterRuleErasure note in this file ('visible and marked for review') was not true for the joined staff row found by the review; it is replaced by this block."
+  }
 }

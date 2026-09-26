@@ -8,6 +8,7 @@ export type StudentScanTsvUnresolvedReason =
   | "overlapping-columns"
   | "duplicate-field"
   | "staff-row"
+  | "outside-table-band"
 
 export interface StudentScanTsvJoin {
   fragmentSourceId: string
@@ -26,7 +27,10 @@ export interface StudentScanTsvReconstruction {
   tsv: string
   joins: StudentScanTsvJoin[]
   unresolved: StudentScanTsvUnresolvedFragment[]
-  /** Geometry-only hint; it never removes or changes a name-bearing row. */
+  /**
+   * Geometry hint. It never removes or changes a name-bearing row, but a
+   * fragment is only joined to a row inside a supported band.
+   */
   tableBand: StudentScanTsvTableBand
 }
 
@@ -144,11 +148,15 @@ function remainingText(text: string, matches: TextFieldMatch[]) {
   )) {
     result = `${result.slice(0, match.start)} ${result.slice(match.end)}`
   }
-  return result
-    .replace(/[^\p{L}'’ -]/gu, " ")
-    .split(/\s+/u)
-    .map((token) => token.trim().toLocaleLowerCase("it"))
-    .filter((token) => token.length > 0 && !STRUCTURED_LABELS.has(token))
+  return (
+    result
+      .replace(/[^\p{L}'’ -]/gu, " ")
+      .split(/\s+/u)
+      .map((token) => token.trim().toLocaleLowerCase("it"))
+      // A lone dash or apostrophe, like the separator in
+      // `17 anni - 01/02/2009`, has no letter and cannot be a name.
+      .filter((token) => /\p{L}/u.test(token) && !STRUCTURED_LABELS.has(token))
+  )
 }
 
 function roleToken(word: TsvWord) {
@@ -400,6 +408,12 @@ export function reconstructStudentScanTsvFragments(
     (line) => line.isNameBearing && line.hasGeometry,
   )
   const tableBand = diagnoseTableBand(nameRows)
+  // Rows outside the regularly spaced student band, such as the staff block
+  // below it, never receive a joined date or age: a staff name whose role
+  // code was not read would otherwise become a complete, ready student.
+  const outsideBand = new Set(
+    tableBand.supported ? tableBand.outsideSourceIds : [],
+  )
   const unresolved: StudentScanTsvUnresolvedFragment[] = []
   const fragments = lines.filter(
     (line) => line.fields.length > 0 && !line.isNameBearing,
@@ -445,6 +459,10 @@ export function reconstructStudentScanTsvFragments(
       closest.distance > verticalTolerance(closest.row, fragment)
     ) {
       blockedReasons.set(fragment.id, "no-unique-row")
+      continue
+    }
+    if (outsideBand.has(closest.row.id)) {
+      blockedReasons.set(fragment.id, "outside-table-band")
       continue
     }
     const secondClosest = withDistance[1]

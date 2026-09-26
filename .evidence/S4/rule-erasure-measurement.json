@@ -1,0 +1,361 @@
+{
+  "milestone": "S4",
+  "measuredAt": "2026-09-25",
+  "runtime": "Node v24.21.0",
+  "privacy": "Aggregate counts only. The five owner photographs, OCR text, per-row truth and derived crops stay in ignored data/private. Samples are numbered 1-5 as in earlier S4 evidence; 5 is the clearest capture and 1-2 are near-duplicate close captures of the same sheet.",
+  "settings": {
+    "engine": "Tesseract.js 7, Italian best_int LSTM, PSM.AUTO, user_defined_dpi 180, rotateAuto",
+    "minFieldConfidence": 70,
+    "telephone": "off",
+    "nameOrder": "automatic sheet inference (surname-given on every sample)",
+    "referenceDate": "2026-09-22",
+    "input": "the same orientation-normalized prepared captures (max 2600 px) used by all earlier S4 measurements",
+    "code": "branch claude/s4-ocr-optimization at its S4 checkpoint, rebased on codex/0.3.0 3dc4360 (UX1); the scan capability code is unchanged by that rebase"
+  },
+  "diagnosis": {
+    "finding": "The roster prints a row number, a vertical rule and then the surname. Tesseract removes rules only from its internal layout image; the LSTM recognizer reads the original pixels, so the number, the rule and the surname arrive as one word (masked shape `9|Aaaaaaa`). The parser already stripped the digits and the rule from the text, but the surname kept the whole word's confidence.",
+    "beforeErasure": {
+      "surnameWordsCorrectButBelow70": 37,
+      "surnameWordsCorrect": 86,
+      "givenNameWordsCorrectButBelow70": 0,
+      "givenNameWordsCorrect": 107,
+      "scope": "first name word (surname) vs later name words, matched rows with the expected token count, all five samples"
+    },
+    "splitFinding": "An unproven three-word surname-first name was presented with its first word (the surname under either reading) in the given-name field. That one student produced a wrong given name and a wrong surname on every sample; the row was already blocked for an explicit split confirmation."
+  },
+  "change": [
+    "src/capabilities/studentScanRules.ts tracks long, possibly curved vertical rules on RGBA pixels and repaints only each rule's own band (median rule width plus 0.5 px) with the paper beside it; the scan applies it on a canvas before recognition and keeps the chosen image when nothing is erased or no canvas is available.",
+    "Eraser, after review S4-DI-10: a second tracking pass lets no slice wider than the rule's own clean width + 1 px move the track, so a thin stroke touching a rule is no longer pulled into the erased band (unit tests: 3 px and 5 px strokes touching on either side).",
+    "Eraser, after review S4-DI-17: a letter touching the rule may be bridged for up to 120 rows (a text line on a close 2600 px capture), kept only when the rule continues clean after it, and each rule is followed from the seed row nearest its middle whose slice has the rule's typical width, so a tall touching letter can no longer start the track off centre. Seeds within 10 px of the photo's own edge are ignored: that robust start otherwise found the dark border of two perturbed captures and, by repainting it, shifted Tesseract's page layout (sample 5 at 75% went from 1 to 8 flags); the native sample 5 border strip the previous eraser repainted is also left alone now, with identical results on all five captures. Tests cover 45-, 60- and 90-row touching strokes and an edge border; erase-only time on the five captures stays about 160-270 ms in Node.",
+    "studentScanRowGeometry.ts: a token without a letter (a lone dash in `17 anni - 01/02/2009`) no longer makes a structured column fragment look like a name.",
+    "studentScanRowGeometry.ts, after review S4-DI-09: a fragment is never joined to a line outside the regular-pitch student band that diagnoseTableBand already computed; it stays its own row with reason `outside-table-band`.",
+    "studentScan.ts: an unproven surname-first compound is offered as surname (plus a following particle word) and given names; compoundAmbiguity stays true and the screen still requires the split to be confirmed. Each field keeps the minimum confidence of its own words, so a confident particle cannot lift a weak word (after review S4-DI-13).",
+    "studentScan.ts: a heading or footer keyword is looked for only in the text before a row's first date, age or telephone, so grid noise read as `pag` or `corso` beside a student's birth date no longer drops that student (found by the perturbation matrix: one student dropped on sample 4 at 75% scale). When that text has no word of three or more letters that is not a particle, the line has no name cell and is judged whole, so a heading that starts with a date, or with only a particle or abbreviation before it, is still excluded (reviews S4-DI-16 and S4-DI-19; five unit tests, each failing without the rule). The S4-DI-19 part was added after the round-3 review of 5591d14; the five native captures are unchanged by it."
+  ],
+  "officialCounter": {
+    "command": "node --import tsx scripts/measure-scan-review.mjs <prepared capture> --reference-date=2026-09-22 [--no-rule-erasure], withoutTelephone",
+    "counters": {
+      "fieldsFlagged": "legacy S4 counter kept for comparison with earlier evidence: missing fields (first name, surname, birth date, sex) + fields below 70",
+      "screen.fieldsFlagged": "the review screen after S5 and UX1: missing first name, surname, age or sex, plus each other field it marks 'Da controllare'; every field counted once",
+      "screen.rowsToReview": "the screen's 'righe da controllare', including a compound name that waits for its split to be confirmed"
+    },
+    "noErasureSameParser": {
+      "fieldsFlaggedBySample": [
+        15,
+        18,
+        35,
+        25,
+        5
+      ],
+      "fieldsFlagged": 98,
+      "screenFieldsFlaggedBySample": [
+        14,
+        16,
+        22,
+        23,
+        5
+      ],
+      "screenFieldsFlagged": 80,
+      "screenRowsToReviewBySample": [
+        14,
+        15,
+        13,
+        13,
+        6
+      ],
+      "screenRowsToReview": 61,
+      "screenReadyRows": 50,
+      "candidateRowsBySample": [
+        20,
+        21,
+        29,
+        21,
+        20
+      ]
+    },
+    "withErasure": {
+      "fieldsFlaggedBySample": [
+        5,
+        24,
+        35,
+        8,
+        0
+      ],
+      "fieldsFlagged": 72,
+      "screenFieldsFlaggedBySample": [
+        3,
+        14,
+        22,
+        6,
+        0
+      ],
+      "screenFieldsFlagged": 45,
+      "screenRowsToReviewBySample": [
+        2,
+        7,
+        12,
+        4,
+        1
+      ],
+      "screenRowsToReview": 26,
+      "screenReadyRows": 91,
+      "candidateRowsBySample": [
+        21,
+        26,
+        29,
+        21,
+        20
+      ],
+      "rulesErasedBySample": [
+        24,
+        24,
+        23,
+        23,
+        23
+      ]
+    },
+    "earlierCheckpoints": {
+      "3ba5a38BeforeS4Work": {
+        "fieldsFlaggedBySample": [
+          15,
+          18,
+          35,
+          23,
+          5
+        ],
+        "fieldsFlagged": 96
+      },
+      "firstErasureCommitBeforeReview": {
+        "fieldsFlaggedBySample": [
+          0,
+          17,
+          41,
+          8,
+          0
+        ],
+        "fieldsFlagged": 66,
+        "note": "Superseded. Samples 1 and 2 were lower because staff-block fragments were joined into complete rows, one of which looked ready (review blocker S4-DI-09). The band gate now leaves those fragments as separate rows to review, which costs 5 and 7 flags there."
+      }
+    },
+    "goodPhotoTarget": "Sample 5 (clearest): 5 -> 0 fields flagged on both counters; the screen still asks for one row, the three-word name's split confirmation."
+  },
+  "readyRowsThatAreNotStudents": {
+    "definition": "candidate rows the screen would count as 'allievi pronti' that match no student in the private truth table",
+    "fiveCapturesWithErasure": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "fiveCapturesWithoutErasure": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "before": "1 on sample 2 at the first erasure commit (a staff name line completed by a joined age-date fragment); the band gate removes it"
+  },
+  "truthAudit": {
+    "method": "Rows aligned to a private 20-row truth table; the twenty printed birth dates are unique and every one is matched once and in sheet order on every sample, so person association does not depend on names.",
+    "truthCorrection": "One surname in the inherited private truth table omits a printed letter. Every OCR reading of that cell on all five samples and all variants agrees with each other and not with the table; a local visual check of the printed cell on sample 5 confirmed the OCR reading. The correction lives only in ignored data/private; both tables are reported. The independent reviewer re-derived it (8 printed letters against 7 in the table).",
+    "correctedTruth": {
+      "noErasure": {
+        "studentsMatched": 100,
+        "missingStudents": 0,
+        "mergedOrDuplicateStudents": 0,
+        "wrongBirthDates": 0,
+        "wrongGivenNames": 6,
+        "wrongSurnames": 9,
+        "wrongNameFieldsUnflaggedAndNotBlockedForReview": 1,
+        "rowsWithMisreadNameText": 10
+      },
+      "withErasure": {
+        "studentsMatched": 100,
+        "missingStudents": 0,
+        "mergedOrDuplicateStudents": 0,
+        "wrongBirthDates": 0,
+        "extraCandidates": 17,
+        "extraCandidatesReady": 0,
+        "wrongGivenNames": 4,
+        "wrongGivenNamesUnflagged": 2,
+        "wrongSurnames": 4,
+        "wrongSurnamesUnflagged": 0,
+        "wrongNameFieldsUnflaggedAndNotBlockedForReview": 0,
+        "rowsWithMisreadNameText": 4,
+        "rowsWithOnlyAWrongSplit": 0,
+        "bySample": [
+          {
+            "sample": 1,
+            "wrongGivenNames": 0,
+            "wrongSurnames": 0
+          },
+          {
+            "sample": 2,
+            "wrongGivenNames": 0,
+            "wrongSurnames": 0
+          },
+          {
+            "sample": 3,
+            "wrongGivenNames": 2,
+            "wrongGivenNamesUnflagged": 1,
+            "wrongSurnames": 2,
+            "wrongSurnamesUnflagged": 0
+          },
+          {
+            "sample": 4,
+            "wrongGivenNames": 2,
+            "wrongGivenNamesUnflagged": 1,
+            "wrongSurnames": 2,
+            "wrongSurnamesUnflagged": 0
+          },
+          {
+            "sample": 5,
+            "wrongGivenNames": 0,
+            "wrongSurnames": 0
+          }
+        ],
+        "unflaggedWrongGivenNamesNote": "Both are on rows that the screen blocks until the name split is confirmed (an extra OCR token made them compound)."
+      }
+    },
+    "inheritedTruthUnchanged": {
+      "withErasure": {
+        "wrongGivenNames": 4,
+        "wrongSurnames": 9,
+        "wrongNameFieldsUnflaggedAndNotBlockedForReview": 5
+      },
+      "difference": "All five extra surname errors and all five unblocked ones are the single disputed truth-table entry above, once per sample; after erasure that surname is read confidently as printed."
+    },
+    "sample5": {
+      "studentsMatched": 20,
+      "nameFieldsCorrect": 40,
+      "nameFieldsWrong": 0,
+      "fieldsFlagged": 0
+    }
+  },
+  "attribution": {
+    "measuredAt": "the first erasure commit, before the review fixes; kept for the split between the two changes",
+    "parserOnlyNoErasure": {
+      "fieldsFlagged": 96,
+      "wrongGivenNames": 6,
+      "wrongSurnames": 9,
+      "rowsWithMisreadNameText": 10
+    },
+    "erasureOnlyEarlierParser": {
+      "fieldsFlagged": 74,
+      "wrongGivenNames": 9,
+      "wrongSurnames": 9,
+      "rowsWithMisreadNameText": 4
+    },
+    "both": {
+      "fieldsFlagged": 66,
+      "wrongGivenNames": 4,
+      "wrongSurnames": 4,
+      "rowsWithMisreadNameText": 4
+    },
+    "disclosure": "Of the 17 fewer wrong name fields, 10 come from presenting one blocked three-word name the plausible way round; that row still waits for the operator's split confirmation."
+  },
+  "perturbationMatrix": {
+    "inputs": "each of the five captures unchanged, at 90%, 75% and 60% scale, rotated +0.5 and -1 degrees, cropped 2% inside every edge, and re-encoded as JPEG quality 70: 40 inputs, each read with and without erasure. The last three were added from the independent reviewer's sweep (S4-DI-18).",
+    "scope": "Counts hold for these 40 inputs only; other captures can behave differently.",
+    "firstTwentyFive": {
+      "withErasure": {
+        "screenRowsToReview": 162,
+        "readyRowsThatAreNotStudents": 2,
+        "inputsWithSuch": 1,
+        "wrongNamesUnflaggedAndNotBlocked": 1,
+        "studentsDropped": 0,
+        "birthDatesMatchedOnce": "499 of 500"
+      },
+      "withoutErasure": {
+        "screenRowsToReview": 332,
+        "readyRowsThatAreNotStudents": 2,
+        "inputsWithSuch": 2,
+        "wrongNamesUnflaggedAndNotBlocked": 7,
+        "studentsDropped": 0,
+        "birthDatesMatchedOnce": "498 of 500"
+      }
+    },
+    "allForty": {
+      "withErasure": {
+        "screenRowsToReview": 295,
+        "readyRowsThatAreNotStudents": 3,
+        "inputsWithSuch": 2,
+        "wrongNameFields": 114,
+        "wrongNamesUnflaggedAndNotBlocked": 9,
+        "studentsMissingPerAligner": 7,
+        "birthDatesMatchedOnce": "769 of 800",
+        "retakeWarnings": 1
+      },
+      "withoutErasure": {
+        "screenRowsToReview": 582,
+        "readyRowsThatAreNotStudents": 2,
+        "inputsWithSuch": 2,
+        "wrongNameFields": 121,
+        "wrongNamesUnflaggedAndNotBlocked": 14,
+        "studentsMissingPerAligner": 18,
+        "birthDatesMatchedOnce": "763 of 800",
+        "retakeWarnings": 4
+      }
+    },
+    "rangesWithErasure": {
+      "screenRowsToReviewBySample": [
+        "2-8",
+        "1-10",
+        "5-30",
+        "3-14",
+        "1-3"
+      ],
+      "harnessFlagsBySample": [
+        "1-22",
+        "1-22",
+        "4-90",
+        "6-45",
+        "0-2"
+      ]
+    },
+    "rangesWithoutErasure": {
+      "screenRowsToReviewBySample": [
+        "12-18",
+        "14-17",
+        "11-54",
+        "7-17",
+        "3-8"
+      ],
+      "harnessFlagsBySample": [
+        "13-29",
+        "14-29",
+        "14-224",
+        "15-50",
+        "2-7"
+      ]
+    },
+    "harnessFlagsNote": "The private harness counts an empty name both as missing and as low confidence, so its flag counts run higher than the official counter; rows to review are counted exactly as on screen.",
+    "studentLoss": "Within the first 25 inputs the aligner's one 'missing' student per mode was checked: the student is present with the exact name and birth date, out of sheet order. On the added inputs, sample 4 rotated -1 degree or cropped 2% loses whole rows at the OCR level in both modes: 6 of 20 birth dates reach the parser with erasure, 4 and 2 without (3+3 students missing with erasure, 4+13 without). The rows matched to missing students carry staff dates and stay behind the name gate; none is ready. With erasure those two inputs also pair 4 staff birth dates with the rows the aligner matched to missing students; every such row lacks a confident name, stays behind the name gate and is not ready (review S4-DI-Q10).",
+    "retakeWarning": "The screen's retake warning shows when Tesseract's page confidence is below 70. Erasure raises page confidence on these failed reads (81 and 75, against 71 and 68 without), so on the two sample-4 inputs that lose rows the warning shows in neither with erasure and in one without. A row-count cue that does not rely on page confidence is recorded as a follow-up.",
+    "reading": "Erasure halves the rows to review and reduces confident wrong names, but it is not uniformly better: on the shadowed, used capture (sample 3) some rotated and JPEG inputs get more flags and rows with erasure. The clearest capture stays at 0-2 flags and 1-3 rows to review on every input.",
+    "rerunAfterReview": "Re-run on the final code after the post-review S4-DI-19 change: all 80 per-input results are identical to those of the reviewed commit 5591d14."
+  },
+  "sensitivity": "Staff-block rows at the foot of the sheet fragment differently with small pixel changes, so samples 1 and 2 move by several flags between equivalent inputs. Student association was identical across them.",
+  "eraserLatency": {
+    "image": "fictitious numbered roster upscaled to 2600 x 1950 (the editor's maximum)",
+    "nodeEraseOnlyMs": "170-240",
+    "chromiumEraseOnlyMs": "256-387",
+    "chromiumDecodeEraseEncodeMs": 660,
+    "chromium4xCpuThrottleEraseOnlyMs": "1835-2091",
+    "chromium4xCpuThrottleDecodeEraseEncodeMs": 2468,
+    "webkitEraseOnlyMs": "349-492",
+    "webkitDecodeEraseEncodeMs": 926,
+    "measuredAt": "the eraser before the second tracking pass; the pass re-tracks only the rules already found",
+    "assessment": "Additive to on-device OCR that already takes several seconds per photo; physical phone timing belongs to the owner's device check."
+  },
+  "safety": {
+    "minFieldConfidenceUnchanged": 70,
+    "everyReadingVisible": "yes: fragments the band gate refuses stay on screen as their own rows to review or remove",
+    "confidence": "No field confidence is raised above what OCR reported for its own words. The surname-first compound presentation now assigns each field the minimum confidence of its own words, where it previously used an average (review S4-DI-13).",
+    "joins": "Only the existing conservative rule (unique vertical anchor, disjoint columns, no duplicate field, no staff cue), now also refused outside the student band",
+    "knownResidualHazard": "A staff row read complete on one text line, with its role code missed, can still look ready: 3 rows on 2 of 40 perturbed inputs with erasure, 2 rows on 2 inputs without, 0 on the five native captures. It does not come from a join. The review screen has no table-band gate; see the S4 limitations in the plan."
+  },
+  "syntheticColumnDrop": "On the fictitious staff sheet, after erasure, Tesseract's page layout drops the whole student age column (and its heading). Not observed on the real captures: every printed birth date was matched once on all five, and 499 of 500 across the 25 perturbed inputs. While the birth date is read the age follows from it; see synthetic-regression.json."
+}

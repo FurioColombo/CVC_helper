@@ -1,31 +1,69 @@
 {
   "milestone": "S4",
-  "runtime": "Node v24.19.0",
-  "command": "node node_modules/vitest/vitest.mjs run tests/ocr-synthetic-regression.test.ts --disableConsoleIntercept --reporter=verbose",
+  "runtime": "Node v24.21.0",
+  "measuredAt": "2026-09-25",
+  "command": "node node_modules/vitest/vitest.mjs run tests/ocr-synthetic-regression.test.ts --disableConsoleIntercept",
   "ocrSettings": {
     "engine": "Tesseract.js 7, Italian LSTM, PSM.AUTO",
     "userDefinedDpi": 180,
-    "sameAsProduction": true
+    "sameAsProduction": true,
+    "preparation": "Each image goes through the same vertical-rule erasure the scan applies (scripts/roster-image.mjs + src/capabilities/studentScanRules.ts) before recognition."
   },
   "result": "2 passed",
   "corpus": {
-    "variants": 4,
+    "variants": 6,
     "peoplePerVariant": 10,
-    "generated": true,
-    "inventedPeopleAndPhones": true,
-    "conditions": ["mild skew", "uneven lighting", "row rules", "wide columns", "three-part names"],
+    "generated": "scripts/generate-synthetic-ocr-corpus.mjs; the first five images are byte-identical to the previous checkpoint",
+    "inventedPeopleStaffAndPhones": true,
+    "conditions": [
+      "mild skew",
+      "uneven lighting",
+      "row rules",
+      "wide columns",
+      "three-part names",
+      "numbered ruled grid with camera softness",
+      "the same grid with three staff members in a second ruled block, each with a role code (review S4-DI-09)"
+    ],
     "referenceDate": "2024-09-13"
   },
-  "afterConservativeGeometry": {
-    "truePeopleRecovered": 40,
-    "expectedPeople": 40,
-    "correctReadableFields": 196,
-    "readableFields": 196,
+  "registers": {
+    "files": 5,
+    "truePeopleRecovered": 50,
+    "expectedPeople": 50,
+    "correctReadableFields": 245,
+    "readableFields": 245,
     "crossPersonAssociations": 0,
     "duplicateAssociations": 0,
-    "falseCandidateRows": 8,
-    "falseCandidateRowsMarkedForReview": 8,
-    "flaggedFieldsByVariant": [3, 2, 2, 3]
+    "falseCandidateRows": 10,
+    "falseCandidateRowsWithoutReview": 0,
+    "fieldReviewFlags": 2,
+    "rowsToReview": 15,
+    "bounds": "per sheet: at most 2 false rows (subtitle, footer), none without review, no missing or duplicate person, field accuracy at least 0.9, fewer than 5 field flags and fewer than 5 rows to review"
   },
-  "limitation": "All eight extra rows are visible subtitle/footer candidates. The synthetic corpus establishes row-join safety for these generated images; it does not prove the five private photos meet the owner's fewer-than-five review target."
+  "numberedGridVariant": {
+    "file": "roster-numbered-grid.png",
+    "withoutErasure": "two real people's surnames below 70 (row number and rule read into the surname word)",
+    "withErasure": "no real person's surname below 70; the test asserts this and that more than 4 rules were erased",
+    "rulesErased": 8
+  },
+  "staffSheet": {
+    "file": "roster-numbered-grid-staff.png",
+    "rulesErased": 14,
+    "truePeopleRecovered": 10,
+    "missingPeople": 0,
+    "crossPersonAssociations": 0,
+    "duplicateAssociations": 0,
+    "wrongReadings": 0,
+    "falseCandidateRows": 13,
+    "falseCandidateRowsWithoutReview": 0,
+    "studentRowsToReview": 1,
+    "falseRowComposition": "subtitle, footer, the three staff name lines, and the eight staff telephone, age and birth-date cells that the table-band gate refused to join to them; each is shown as its own row to review or remove",
+    "missingFields": 10,
+    "correctReadableFields": 39,
+    "readableFields": 49,
+    "columnDrop": "After rule erasure Tesseract's page layout drops the whole student age column of this sheet, including the ETA heading. Masking the staff telephone cells brings it back, masking other staff cells does not, and without erasure all 13 ages are read: a layout instability, not a parser rule. Names, birth dates and telephones are all right, and the screen derives each age from the birth date, within the one year it already accepts between printed and derived age, so no student row asks for review because of it.",
+    "assertions": "at most 2 + 4 x staff false rows, none looking ready, no wrong reading (a field is either right or missing), fewer than 5 student rows to review, every student's birth date read and derived age within one year",
+    "whyASeparateSheet": "The five registers keep their earlier strict bounds unchanged. Adding the staff block to the numbered grid itself exposed the column drop above; keeping it as a sixth sheet records that failure with its own honest bounds instead of loosening the others."
+  },
+  "limitation": "The generated corpus proves the preparation path and row safety on fictitious sheets; the real-capture target is measured privately and reported in aggregate in rule-erasure-measurement.json."
 }

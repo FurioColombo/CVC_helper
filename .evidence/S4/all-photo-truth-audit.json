@@ -1,6 +1,6 @@
 {
   "milestone": "S4",
-  "status": "person and field audit across all five prepared captures; accuracy target remains open",
+  "status": "person and field audit across all five captures; updated 2026-09-25 after rule erasure",
   "runtime": "Node v24.19.0",
   "settings": {
     "tesseractDpi": 180,
@@ -11,11 +11,56 @@
   },
   "method": "A private, row-ordered truth table of twenty unique printed birth dates and names was compared with the real OCR/parser output. Every true date appeared once and in sheet order on every capture, independently anchoring candidate-to-person association. Private row-level readings and truth stay under ignored data/private.",
   "perCapture": [
-    { "sample": 1, "candidateRows": 20, "studentsMatchedByUniqueDate": 20, "extraCandidates": 0, "wrongGivenNames": 1, "wrongSurnames": 4, "unflaggedWrongGivenNames": 0, "unflaggedWrongSurnames": 1 },
-    { "sample": 2, "candidateRows": 21, "studentsMatchedByUniqueDate": 20, "extraCandidates": 1, "wrongGivenNames": 1, "wrongSurnames": 4, "unflaggedWrongGivenNames": 0, "unflaggedWrongSurnames": 1 },
-    { "sample": 3, "candidateRows": 29, "studentsMatchedByUniqueDate": 20, "extraCandidates": 9, "wrongGivenNames": 2, "wrongSurnames": 3, "unflaggedWrongGivenNames": 1, "unflaggedWrongSurnames": 2 },
-    { "sample": 4, "candidateRows": 21, "studentsMatchedByUniqueDate": 20, "extraCandidates": 1, "wrongGivenNames": 6, "wrongSurnames": 6, "unflaggedWrongGivenNames": 0, "unflaggedWrongSurnames": 4 },
-    { "sample": 5, "candidateRows": 20, "studentsMatchedByUniqueDate": 20, "extraCandidates": 0, "wrongGivenNames": 1, "wrongSurnames": 2, "unflaggedWrongGivenNames": 1, "unflaggedWrongSurnames": 1 }
+    {
+      "sample": 1,
+      "candidateRows": 20,
+      "studentsMatchedByUniqueDate": 20,
+      "extraCandidates": 0,
+      "wrongGivenNames": 1,
+      "wrongSurnames": 4,
+      "unflaggedWrongGivenNames": 0,
+      "unflaggedWrongSurnames": 1
+    },
+    {
+      "sample": 2,
+      "candidateRows": 21,
+      "studentsMatchedByUniqueDate": 20,
+      "extraCandidates": 1,
+      "wrongGivenNames": 1,
+      "wrongSurnames": 4,
+      "unflaggedWrongGivenNames": 0,
+      "unflaggedWrongSurnames": 1
+    },
+    {
+      "sample": 3,
+      "candidateRows": 29,
+      "studentsMatchedByUniqueDate": 20,
+      "extraCandidates": 9,
+      "wrongGivenNames": 2,
+      "wrongSurnames": 3,
+      "unflaggedWrongGivenNames": 1,
+      "unflaggedWrongSurnames": 2
+    },
+    {
+      "sample": 4,
+      "candidateRows": 21,
+      "studentsMatchedByUniqueDate": 20,
+      "extraCandidates": 1,
+      "wrongGivenNames": 6,
+      "wrongSurnames": 6,
+      "unflaggedWrongGivenNames": 0,
+      "unflaggedWrongSurnames": 4
+    },
+    {
+      "sample": 5,
+      "candidateRows": 20,
+      "studentsMatchedByUniqueDate": 20,
+      "extraCandidates": 0,
+      "wrongGivenNames": 1,
+      "wrongSurnames": 2,
+      "unflaggedWrongGivenNames": 1,
+      "unflaggedWrongSurnames": 1
+    }
   ],
   "totals": {
     "expectedStudentAppearances": 100,
@@ -31,5 +76,55 @@
     "unflaggedWrongSurnames": 9
   },
   "caution": "These are five photographs of one roster, not five independent rosters. Unique dates establish row recovery and association for this sheet, but the thirty incorrect name fields and eleven confident wrong name fields prevent S4 closure. An extra candidate is not counted as a student.",
-  "privacy": "Aggregate counts only; no roster text, image filename, telephone, exact birth date or row-indexed truth."
+  "privacy": "Aggregate counts only; no roster text, image filename, telephone, exact birth date or row-indexed truth.",
+  "update2026_09_25": {
+    "runtime": "Node v24.21.0",
+    "truthCorrection": "One surname in the inherited table omits a printed letter; all OCR readings on every capture agree with the print (visually checked on sample 5). Counts are given for both tables.",
+    "afterCorrectedTruth": {
+      "studentsMatchedByUniqueDate": 100,
+      "missingStudents": 0,
+      "duplicateTrueDateCandidates": 0,
+      "outOfOrderTrueDateAssociations": 0,
+      "wrongBirthDatesOnMatchedRows": 0,
+      "extraCandidates": 17,
+      "wrongGivenNames": 4,
+      "wrongSurnames": 4,
+      "unflaggedWrongGivenNames": 2,
+      "unflaggedWrongSurnames": 0,
+      "unflaggedWrongNamesOutsideSplitReview": 0,
+      "extraCandidatesReady": 0
+    },
+    "beforeCorrectedTruth": {
+      "wrongGivenNames": 11,
+      "wrongSurnames": 14,
+      "unflaggedWrongGivenNames": 2,
+      "unflaggedWrongSurnames": 7,
+      "unflaggedWrongNamesOutsideSplitReview": 1
+    },
+    "afterInheritedTruth": {
+      "wrongGivenNames": 4,
+      "wrongSurnames": 9,
+      "unflaggedWrongGivenNames": 2,
+      "unflaggedWrongSurnames": 5,
+      "unflaggedWrongNamesOutsideSplitReview": 5
+    },
+    "sample5": {
+      "students": 20,
+      "nameFieldsCorrect": 40,
+      "fieldsFlagged": 0
+    },
+    "details": "rule-erasure-measurement.json",
+    "code": "S4 checkpoint after the independent review fixes (re-measured with fresh OCR)",
+    "noErasureSameParserCorrectedTruth": {
+      "studentsMatchedByUniqueDate": 100,
+      "missingStudents": 0,
+      "wrongBirthDatesOnMatchedRows": 0,
+      "extraCandidates": 11,
+      "extraCandidatesReady": 0,
+      "wrongGivenNames": 6,
+      "wrongSurnames": 9,
+      "unflaggedWrongNamesOutsideSplitReview": 1
+    }
+  },
+  "cautionSuperseded": "The 'caution' above describes the 3ba5a38 path (runtime above). It is superseded by update2026_09_25: after rule erasure and the review fixes, 8 wrong name fields remain, none of them both unflagged and outside a row blocked for split confirmation."
 }

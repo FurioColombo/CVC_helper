@@ -245,10 +245,12 @@ describe("StudentScan name order", () => {
       ...SURNAME_FIRST,
       candidates: [...SURNAME_FIRST.candidates, compound],
     })
-    expect(screen.getByLabelText(/^Nome riga compound/)).toHaveValue("Rossi")
-    expect(screen.getByLabelText(/^Cognome riga compound/)).toHaveValue(
+    // Surname first, so `Rossi` is surname under either split; the unproven
+    // boundary is offered, not settled.
+    expect(screen.getByLabelText(/^Nome riga compound/)).toHaveValue(
       "Maria Giulia",
     )
+    expect(screen.getByLabelText(/^Cognome riga compound/)).toHaveValue("Rossi")
     expect(screen.getByText(/Nome o cognome composto/)).toBeVisible()
     await user.click(screen.getByRole("button", { name: "Aggiungi 3 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()

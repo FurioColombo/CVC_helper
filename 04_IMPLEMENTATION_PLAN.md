@@ -17,7 +17,7 @@ lifecycle.
 | R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
 | D0 | Complete. The shared agent contract and active plan are concise; closed detail is archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
 | V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
-| S4 | In progress, deferred to the final Claude Code handoff by the owner. Current OCR improvements and safety checks remain; the remaining fewer-than-five target is not a prerequisite for V04–UG2 or the 0.3.0 gate. No unsafe counter-only variant was integrated. |
+| S4 | Complete at the owner's request ahead of UG2; merged from `claude/s4-ocr-optimization` on 2026-09-26. Vertical table rules are erased before OCR: the clearest photo went from 5 flags to 0, and review rows across the five fell from 61 to 26, with no merged, missing or ready non-student row. The independent data-integrity review is PASS_WITH_FINDINGS with no blockers; see `.evidence/S4/` and the S4 section for limitations. |
 | V04 | Complete. Four edge handles, live image/frame tilt and a dimmed, soft exterior were verified with synthetic imagery. `.evidence/V04/` records Node 24.19.0 verification (465 tests), 12 browser cases across Chrome/WebKit, pointer-response samples and a PASS field-UX review. |
 | S5 | Complete. Age-only entry, persistence and course-start minor rules are covered by migration/domain tests and Pixel/iPhone-sized browser journeys. `.evidence/S5/` records 476 passing tests, the 0.1 schema migration, browser checks and a zero-blocker independent review. |
 | N1 | Complete. Node 24.19.0, 482 unit/component tests, domain/compatibility checks, production build and eight Pixel/iPhone browser journeys passed; see `.evidence/N1/`. Physical installed-app Back and icon appearance remain for the owner to check. |
@@ -75,8 +75,10 @@ the Settings option for three remains. Crew capacity rules do not change.
     override, both handed to Claude Code after the gate.
 
 The owner explicitly made the remaining S4 target nonblocking on 2026-09-23.
-The manifest places S4 after UG2 so the lifecycle enforces the revised order;
-S4 retains its unfinished evidence and FAIL review for Claude Code. Every
+The manifest places S4 after UG2; on 2026-09-25 the owner asked Claude Code to
+complete S4 on a separate branch, so its manifest entry allows V03, V05, F1 and
+UG2 to be incomplete. The D2–D5 crew-capacity override is not part of S4 and
+remains open. Every
 milestone follows `AGENTS.md`: baseline, start,
 implementation, evidence, browser work where required, review, verification,
 completion, clean checkpoint. Use `verify:quick` before a commit and
@@ -189,10 +191,11 @@ physical microphone/camera/OCR checklist on real devices; never substitute a
 simulator result. Record known limitations, bump version/changelog, complete
 the manifest, leave a clean commit and tag only after the gate passes.
 
-The unresolved S4 fewer-than-five target is recorded as a known limitation
-and handed to Claude Code after UG2. UG2 still verifies the current OCR path,
-privacy boundaries and actual device behavior; it does not require S4 closure
-or claim that OCR accuracy met the deferred target.
+S4 was completed on its own branch and merged before UG2, so UG2 verifies the
+erased-rule OCR path, its privacy boundaries and actual device behavior,
+including the eraser's time on a phone. UG2 does not otherwise depend on S4.
+`tests/e2e/s1-scan-phone-option.spec.ts` still expects a caption UX1 removed
+and fails on Pixel 7; it must be fixed before the UG2 browser run.
 
 **Evidence:** `.evidence/UG2/` verification, browser, migration, synthetic
 roster, six reviewer reports and actual physical-device report. Do not publish
@@ -201,12 +204,11 @@ the development branch to `main` or update Pages without asking the owner.
 ## S4 — Measured OCR accuracy on real and synthetic rosters
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 The owner lifted the earlier deferral for the measured prototypes on
 2026-09-23, then moved the unresolved quality target to the final Claude Code
-handoff. S4 stays open, but it is not a predecessor of V04–UG2 and does not
-block the 0.3.0 gate.
+handoff. It is not a predecessor of V04–UG2 and does not block the 0.3.0 gate.
 
 The owner reports about 26 flags on a very good photo and requires **fewer than
 five**, ideally zero, before treating that case as usable. Reconfirm the exact
@@ -239,4 +241,51 @@ data-integrity review, self-review. S4 may close only with no silent student
 merge, no privacy breach and the measured good-photo target achieved; otherwise
 it remains open with the result and next experiment recorded.
 
-Historical measurements, failed variants and audit corrections are preserved in `archive/v0.3.0-s4-measurement-history.md`; aggregate outputs remain in `.evidence/S4/`. None of those probes justified a production OCR change. Read the archived sequence before resuming S4 so rejected variants are not repeated.
+**Resolved, 2026-09-25 (Claude Code, branch `claude/s4-ocr-optimization`).**
+The owner asked for S4 to be completed on a separate branch. The roster prints
+a row number, a vertical rule and then the surname; Tesseract removes rules
+only from its layout image, so the recognizer read `12|Surname` as one word and
+the surname kept the junk's confidence. Of 86 correctly read surnames, 37 were
+below 70 for that reason. The scan now erases long vertical table rules on a
+canvas before recognition (`src/capabilities/studentScanRules.ts`), painting
+only each tracked rule's own band; the same code runs in `measure:scan-review`
+and the synthetic regression. A fragment is never joined to a line outside the
+student table band, an unproven surname-first compound is offered as surname
+plus given names with each field at the minimum confidence of its own words
+and still blocked for the split confirmation, and heading keywords count only
+before a row's first date, age or telephone unless no name word precedes it. The
+eraser keeps letters that touch a rule and ignores the photo's own edge.
+
+Measured with `measure:scan-review` on the same five prepared captures,
+settings and reference date, with and without erasure on the same parser:
+legacy flags `[15,18,35,25,5]` → `[5,24,35,8,0]` (98 → 72); the screen's rows
+to review 61 → 26 and ready rows 50 → 91. The clearest capture has 0 flags and
+reads all 40 name fields exactly; one row still asks for its three-word name's
+split. Against the private truth table, 100 of 100 student appearances stay
+matched once and in order, with no missing or merged student, no wrong birth
+date and no ready row that is not a student; wrong name fields fall from 15 to
+8 and none is left confident outside a split-review block (previously one).
+Across 40 perturbed inputs (scale, rotation, crop, JPEG) rows to review halve
+(582 → 295), confident wrong names outside split review fall from 14 to 9, and
+the clearest capture stays at 0–2 flags; the shadowed capture can be worse with
+erasure when rotated or compressed. The independent data-integrity review's
+blockers (real student and staff names quoted from raw OCR in pre-S4 evidence
+and the archived plan, and a staff row completed by a join into a ready-looking
+row) are fixed; its report is `.evidence/S4/domain-review.json`.
+
+Known limitations: a staff row read complete on one text line with its role
+code missed can still look ready (2 of 40 perturbed inputs with erasure, 2
+without, none on the five captures); the proper fix is a table-band gate in the
+review screen. When Tesseract loses whole rows (sample 4 rotated 1° or cropped),
+erasure raises page confidence enough that the retake warning may not show; a
+row-count cue is the follow-up. A surname that is itself a heading keyword is
+still dropped as a heading, as before S4. On a fictitious sheet with a staff
+block Tesseract's layout can drop the whole age column after erasure; the age
+then follows from the birth date. The eraser costs about 0.3–0.5 s in desktop
+Chromium/WebKit and about 2 s at 4× CPU throttling; the owner's phone check
+remains. Published refs (`main`, `codex/0.3.0`, `codex/post-mvp-ux-planning`,
+`v0.2.0`) still contain real student data from before S4; any history rewrite
+is the owner's decision. The D2–D5 crew-capacity override listed beside S4 in
+the execution order is not part of this milestone and remains open.
+
+Historical measurements, failed variants and audit corrections are preserved in `archive/v0.3.0-s4-measurement-history.md`; aggregate outputs remain in `.evidence/S4/`. None of the probes before rule erasure justified a production OCR change; the later rejected variants are in `.evidence/S4/targeted-ocr-probes.json`.

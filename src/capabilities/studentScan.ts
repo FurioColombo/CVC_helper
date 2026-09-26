@@ -3,6 +3,7 @@ import { calculateAge } from "@/domain/student"
 import { absoluteAssetUrl } from "@/lib/assetPath"
 import { proposeStudentNameTripletSplit } from "./studentNameTriplet"
 import { reconstructStudentScanTsvFragments } from "./studentScanRowGeometry"
+import { eraseVerticalTableRulesFromImage } from "./studentScanRules"
 
 export const MIN_FIELD_CONFIDENCE = 70
 
@@ -242,7 +243,7 @@ function isNameToken(value: string) {
   // Surname particles are the only short words that belong in a name.
   if (SURNAME_PARTICLES.has(normalized)) return true
   // Everything else short is a table rule or a stray mark that survived OCR:
-  // the "Ì" in "Massimo Ì", the "gi" in "Simone gi", a lone "s" or "-".
+  // the "Ì" in "Nurelia Ì", the "gi" in "Amedrio gi", a lone "s" or "-".
   return [...normalized].length >= 3
 }
 
@@ -270,6 +271,8 @@ interface NameSplit {
   firstNameConfidence: number
   surnameConfidence: number
   compoundAmbiguity: boolean
+  /** A zero is a real reading, not a missing one to fall back from. */
+  exactConfidence?: boolean
 }
 
 function averageNameConfidence(words: StudentScanNameWord[]) {
@@ -369,12 +372,30 @@ export function applyStudentNameOrder(
       compoundAmbiguity: false,
     }
   } else {
+    // Surname first with an unproven boundary. The first word belongs to the
+    // surname under either reading, so it is never offered as the given name:
+    // a particle keeps the word after it, the rest is presented as given names
+    // like the given-first default above, and the row stays marked for review.
+    let surnameEnd = 1
+    while (
+      surnameEnd < words.length - 1 &&
+      SURNAME_PARTICLES.has(normalizedNameToken(words[surnameEnd - 1]!.text))
+    ) {
+      surnameEnd += 1
+    }
+    const surnameWords = words.slice(0, surnameEnd)
+    const givenWords = words.slice(surnameEnd)
+    // The weakest word speaks for the field, so a confident particle can
+    // never lift an uncertain surname over the threshold.
+    const weakest = (group: StudentScanNameWord[]) =>
+      Math.min(...group.map(({ confidence }) => confidence))
     split = {
-      firstName: candidate.firstName,
-      surname: candidate.surname,
-      firstNameConfidence: candidate.confidence.firstName,
-      surnameConfidence: candidate.confidence.surname,
+      firstName: joinNameWords(givenWords),
+      surname: joinNameWords(surnameWords),
+      firstNameConfidence: weakest(givenWords),
+      surnameConfidence: weakest(surnameWords),
       compoundAmbiguity: true,
+      exactConfidence: words.some(({ confidence }) => confidence > 0),
     }
   }
 
@@ -385,8 +406,12 @@ export function applyStudentNameOrder(
     sex: split.firstName ? inferSex(split.firstName) : null,
     confidence: {
       ...candidate.confidence,
-      firstName: split.firstNameConfidence || candidate.confidence.firstName,
-      surname: split.surnameConfidence || candidate.confidence.surname,
+      firstName: split.exactConfidence
+        ? split.firstNameConfidence
+        : split.firstNameConfidence || candidate.confidence.firstName,
+      surname: split.exactConfidence
+        ? split.surnameConfidence
+        : split.surnameConfidence || candidate.confidence.surname,
     },
     nameReading: {
       ...nextReading,
@@ -710,11 +735,34 @@ function isPersonnelRow(line: RecognizedLine, layout: PageLayout | null) {
   )
 }
 
+/**
+ * The words before a row's first date, age or telephone: its name cell, or the
+ * whole line for a heading. Keyword tests look only here, because noise read
+ * from the grid to the right (a `pag` or `note` after the date) would
+ * otherwise silently drop a student, or turn every following row into staff.
+ * Without a word of three or more letters that is not a particle before its
+ * first date, a line has no name cell, so a heading or footer such as
+ * `12/09/2026 Corso …` or `N. 3 del 12/09/2026 Elenco …` is judged whole.
+ */
+function leadingText(line: RecognizedLine) {
+  const starts = [DATE_PATTERN, AGE_PATTERN, PHONE_PATTERN]
+    .map((pattern) => line.text.match(pattern)?.index)
+    .filter((index): index is number => index !== undefined)
+  const leading =
+    starts.length > 0 ? line.text.slice(0, Math.min(...starts)) : line.text
+  const nameCell = (leading.match(/\p{L}+/gu) ?? []).some(
+    (word) =>
+      [...word].length >= 3 &&
+      !SURNAME_PARTICLES.has(normalizedNameToken(word)),
+  )
+  return normalizeLineText(nameCell ? leading : line.text)
+}
+
 function isObviousNonStudentLine(line: RecognizedLine) {
   const normalized = normalizeLineText(line.text)
   return (
     normalized.length === 0 ||
-    NON_STUDENT_LINE_PATTERN.test(normalized) ||
+    NON_STUDENT_LINE_PATTERN.test(leadingText(line)) ||
     PERSONNEL_ROW_PREFIX_PATTERN.test(normalized)
   )
 }
@@ -875,12 +923,12 @@ export function extractStudentCandidates(
   const layout = inferPageLayout(lines)
   let inPersonnelSection = false
   for (const line of lines) {
-    const normalized = normalizeLineText(line.text)
-    if (STUDENT_SECTION_PATTERN.test(normalized)) {
+    const leading = leadingText(line)
+    if (STUDENT_SECTION_PATTERN.test(leading)) {
       inPersonnelSection = false
       continue
     }
-    if (PERSONNEL_SECTION_PATTERN.test(normalized)) {
+    if (PERSONNEL_SECTION_PATTERN.test(leading)) {
       inPersonnelSection = true
       continue
     }
@@ -944,7 +992,7 @@ class LocalTesseractStudentScanProvider implements StudentScanProvider {
     try {
       const worker = await getWorker()
       const result = await worker.recognize(
-        image,
+        await eraseVerticalTableRulesFromImage(image),
         { rotateAuto: true },
         { text: true, tsv: true },
       )

@@ -1,3 +1,7 @@
+// @vitest-environment node
+// Tesseract reads its local language data only outside a DOM; under jsdom the
+// relative path is resolved as a URL and fetched.
+
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
@@ -8,11 +12,14 @@ import {
   applyStudentNameOrder,
   extractStudentCandidates,
   MIN_FIELD_CONFIDENCE,
+  studentScanAge,
   studentScanAgeCorroborated,
   TESSERACT_USER_DEFINED_DPI,
   type StudentScanCandidate,
   type StudentScanField,
 } from "@/capabilities/studentScan"
+import { eraseVerticalTableRules } from "@/capabilities/studentScanRules"
+import { eraseRulesFromImageBytes } from "../scripts/roster-image.mjs"
 
 interface SyntheticPerson {
   id: string
@@ -33,6 +40,10 @@ interface SyntheticVariant {
   layout: string
   columnFragmentationExpected: boolean
   people: SyntheticPerson[]
+  /** Printed below the register with a role code; never students. */
+  staff?: Array<
+    Omit<SyntheticPerson, "firstName" | "surname"> & { role: string }
+  >
 }
 
 interface SyntheticTruth {
@@ -58,7 +69,9 @@ interface ImageMeasurement {
   missingFields: number
   fieldReviewFlags: number
   rowsToReview: number
+  studentRowsToReview: number
   ambiguousNameRows: number
+  wrongReadableFields: number
   correctReadableFields: number
   readableFields: number
   fieldAccuracy: number
@@ -225,12 +238,22 @@ function associateCandidate(
   return { person: evidence[0], identityConflict: false }
 }
 
+// The review screen's own rules since S5 and UX1 (StudentScan.tsx), kept
+// literal for rows nobody has confirmed or edited yet: a birth date is optional
+// when the age is valid, the age is reviewed, and an empty name is flagged.
 function candidateFieldNeedsReview(
   candidate: StudentScanCandidate,
   field: StudentScanField,
   referenceDate: string,
 ) {
+  if (
+    (field === "firstName" || field === "surname") &&
+    !candidate[field].trim()
+  ) {
+    return true
+  }
   if (field === "phone" && !candidate.phone.trim()) return false
+  if (field === "dateOfBirth" && !candidate.dateOfBirth) return false
   if (
     field === "dateOfBirth" &&
     studentScanAgeCorroborated(candidate, referenceDate)
@@ -240,28 +263,48 @@ function candidateFieldNeedsReview(
   return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
 }
 
+function reviewAge(candidate: StudentScanCandidate, referenceDate: string) {
+  const age = studentScanAge(candidate, referenceDate)
+  return age !== null && age >= 0 && age <= 120 ? age : null
+}
+
+function ageNeedsReview(
+  candidate: StudentScanCandidate,
+  referenceDate: string,
+) {
+  const age = reviewAge(candidate, referenceDate)
+  if (age === null) return true
+  if (!candidate.dateOfBirth) {
+    return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
+  }
+  const storedAge = studentScanAge(
+    { ...candidate, ageReading: undefined },
+    referenceDate,
+  )
+  return (
+    storedAge === null ||
+    Math.abs(storedAge - age) > 1 ||
+    candidateFieldNeedsReview(candidate, "dateOfBirth", referenceDate)
+  )
+}
+
 function candidateNeedsRowReview(
   candidate: StudentScanCandidate,
   referenceDate: string,
 ) {
   const unresolvedName = Boolean(
     candidate.nameReading &&
+    !candidate.nameReading.acknowledged &&
     (candidate.nameReading.order === "unknown" ||
-      (candidate.nameReading.compoundAmbiguity &&
-        !candidate.nameReading.acknowledged)),
-  )
-  const ageMismatch = Boolean(
-    candidate.ageReading &&
-    candidate.dateOfBirth &&
-    !studentScanAgeCorroborated(candidate, referenceDate),
+      candidate.nameReading.compoundAmbiguity),
   )
   return (
     !candidate.firstName.trim() ||
     !candidate.surname.trim() ||
-    !candidate.dateOfBirth ||
+    reviewAge(candidate, referenceDate) === null ||
     !candidate.sex ||
     unresolvedName ||
-    ageMismatch ||
+    ageNeedsReview(candidate, referenceDate) ||
     reviewedFields.some((field) =>
       candidateFieldNeedsReview(candidate, field, referenceDate),
     )
@@ -291,9 +334,11 @@ function countField(
   fields: ReturnType<typeof emptyFieldCounts>,
   field: keyof ReturnType<typeof emptyFieldCounts>,
   correct: boolean,
+  read = true,
 ) {
   fields[field].total += 1
   fields[field].correct += Number(correct)
+  return Number(read && !correct)
 }
 
 function measureImage(
@@ -332,6 +377,7 @@ function measureImage(
 
   const fields = emptyFieldCounts()
   let missingFields = 0
+  let wrongReadableFields = 0
   for (const person of people) {
     const candidate = assigned.get(person.id)
     if (!candidate) {
@@ -348,36 +394,47 @@ function measureImage(
       continue
     }
 
+    // A field counts as wrong only when something was read into it.
     const recognizedRawName = normalizedText(rawName(candidate))
     if (person.ambiguousCompound) {
-      countField(
+      wrongReadableFields += countField(
         fields,
         "printedName",
         recognizedRawName === normalizedText(person.printedName),
+        Boolean(recognizedRawName),
       )
     } else {
-      countField(
+      wrongReadableFields += countField(
         fields,
         "firstName",
         normalizedText(candidate.firstName) ===
           normalizedText(person.firstName),
+        Boolean(candidate.firstName.trim()),
       )
-      countField(
+      wrongReadableFields += countField(
         fields,
         "surname",
         normalizedText(candidate.surname) === normalizedText(person.surname),
+        Boolean(candidate.surname.trim()),
       )
     }
-    countField(
+    wrongReadableFields += countField(
       fields,
       "dateOfBirth",
       candidate.dateOfBirth === person.dateOfBirth,
+      Boolean(candidate.dateOfBirth),
     )
-    countField(fields, "age", candidate.ageReading?.value === person.age)
-    countField(
+    wrongReadableFields += countField(
+      fields,
+      "age",
+      candidate.ageReading?.value === person.age,
+      candidate.ageReading !== undefined,
+    )
+    wrongReadableFields += countField(
       fields,
       "phone",
       digits(candidate.phone) === digits(person.phone),
+      Boolean(candidate.phone.trim()),
     )
     missingFields += Number(!candidate.firstName.trim())
     missingFields += Number(!candidate.surname.trim())
@@ -402,6 +459,9 @@ function measureImage(
   const rowsToReview = candidates.filter((candidate) =>
     candidateNeedsRowReview(candidate, referenceDate),
   ).length
+  const studentRowsToReview = mappedCandidates.filter((candidate) =>
+    candidateNeedsRowReview(candidate, referenceDate),
+  ).length
   const correctReadableFields = Object.values(fields).reduce(
     (total, field) => total + field.correct,
     0,
@@ -423,7 +483,9 @@ function measureImage(
     missingFields,
     fieldReviewFlags,
     rowsToReview,
+    studentRowsToReview,
     ambiguousNameRows: expectedAmbiguousRows,
+    wrongReadableFields,
     correctReadableFields,
     readableFields,
     fieldAccuracy:
@@ -456,7 +518,8 @@ describe("synthetic roster OCR regression", () => {
     expect(truth.synthetic).toBe(true)
     expect(truth.referenceDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(truth.readableFields).toContain("age")
-    expect(truth.variants).toHaveLength(4)
+    expect(truth.variants).toHaveLength(6)
+    expect(truth.variants.filter((variant) => variant.staff)).toHaveLength(1)
     expect(truth.variants.every((variant) => variant.rowRules)).toBe(true)
     expect(
       truth.variants.every(
@@ -470,9 +533,16 @@ describe("synthetic roster OCR regression", () => {
     const mappedByImage = new Map<string, Map<string, StudentScanCandidate>>()
 
     for (const variant of truth.variants) {
-      const bytes = await readFile(path.join(fixtureDirectory, variant.file))
+      // The same preparation the scan applies in the browser before OCR.
+      const prepared = await eraseRulesFromImageBytes(
+        await readFile(path.join(fixtureDirectory, variant.file)),
+        eraseVerticalTableRules,
+      )
+      if (variant.layout === "numbered-grid") {
+        expect(prepared.rules, "numbered grid rules erased").toBeGreaterThan(4)
+      }
       const { data } = await worker.recognize(
-        bytes,
+        Buffer.from(prepared.bytes),
         { rotateAuto: true },
         { text: true, tsv: true },
       )
@@ -494,6 +564,16 @@ describe("synthetic roster OCR regression", () => {
           byPerson.set(person.id, candidate)
       }
       mappedByImage.set(variant.file, byPerson)
+      if (variant.layout === "numbered-grid") {
+        // With the rule gone the row number is its own word, so no surname
+        // inherits the confidence of `7|` fused to its first letter.
+        expect(
+          [...byPerson.values()].filter(
+            (candidate) => candidate.confidence.surname < MIN_FIELD_CONFIDENCE,
+          ),
+          "numbered grid surnames flagged",
+        ).toHaveLength(0)
+      }
       measurements.push(
         measureImage(
           variant.file,
@@ -504,7 +584,15 @@ describe("synthetic roster OCR regression", () => {
       )
     }
 
-    const aggregate = measurements.reduce(
+    const staffCount = (file: string) =>
+      truth.variants.find((variant) => variant.file === file)?.staff?.length ??
+      0
+    // The register alone is held to the strict bounds. The sheet with a staff
+    // block is judged separately below.
+    const registers = measurements.filter(
+      (measurement) => staffCount(measurement.file) === 0,
+    )
+    const aggregate = registers.reduce(
       (total, measurement) => ({
         expectedRows: total.expectedRows + measurement.expectedRows,
         candidateRows: total.candidateRows + measurement.candidateRows,
@@ -556,15 +644,17 @@ describe("synthetic roster OCR regression", () => {
           missingFields: measurement.missingFields,
           fieldReviewFlags: measurement.fieldReviewFlags,
           rowsToReview: measurement.rowsToReview,
+          studentRowsToReview: measurement.studentRowsToReview,
+          wrongReadableFields: measurement.wrongReadableFields,
           correctReadableFields: measurement.correctReadableFields,
           readableFields: measurement.readableFields,
           fieldAccuracy: measurement.fieldAccuracy,
         })),
-        aggregate: { ...aggregate, fieldAccuracy: accuracy },
+        registersAggregate: { ...aggregate, fieldAccuracy: accuracy },
       }),
     )
 
-    for (const measurement of measurements) {
+    for (const measurement of registers) {
       // Visible captions can become removable candidate rows. They must never
       // be counted as real people or silently pass through review.
       expect(
@@ -600,7 +690,8 @@ describe("synthetic roster OCR regression", () => {
       ).toBeLessThan(5)
     }
 
-    expect(aggregate.falseRows).toBeLessThanOrEqual(8)
+    // At most the subtitle and footer of each sheet, as asserted per image.
+    expect(aggregate.falseRows).toBeLessThanOrEqual(2 * registers.length)
     expect(aggregate.falseRowsWithoutReview).toBe(0)
     expect(aggregate.missingRows).toBe(0)
     expect(aggregate.duplicateRows).toBe(0)
@@ -608,8 +699,63 @@ describe("synthetic roster OCR regression", () => {
     expect(aggregate.missingFields).toBe(0)
     expect(accuracy).toBeGreaterThanOrEqual(0.9)
     expect(aggregate.rowsToReview).toBeGreaterThanOrEqual(
-      truth.expectedAmbiguousNameIds.length * truth.variants.length,
+      truth.expectedAmbiguousNameIds.length * registers.length,
     )
+
+    // Staff below the register are refused by the table-band gate, so their
+    // names and fields stay apart as rows to review or remove: at most a name
+    // row and one row per field (phone, age, birth date) each. None may look
+    // ready, no student may take a staff value, and every student reading is
+    // either right or missing. Measured here: after rule erasure Tesseract's
+    // page layout drops the whole student age column of this sheet. While the
+    // birth date is read the screen derives the age from it, within the one
+    // year the review screen already accepts between printed and derived age.
+    for (const measurement of measurements) {
+      const staff = staffCount(measurement.file)
+      if (staff === 0) continue
+      expect(
+        measurement.falseRows,
+        `${measurement.file} false rows`,
+      ).toBeLessThanOrEqual(2 + 4 * staff)
+      expect(
+        measurement.falseRowsWithoutReview,
+        `${measurement.file} false rows without review`,
+      ).toBe(0)
+      expect(measurement.missingRows, `${measurement.file} missing rows`).toBe(
+        0,
+      )
+      expect(
+        measurement.duplicateRows,
+        `${measurement.file} duplicate associations`,
+      ).toBe(0)
+      expect(
+        measurement.identityConflicts,
+        `${measurement.file} identity conflicts`,
+      ).toBe(0)
+      expect(
+        measurement.wrongReadableFields,
+        `${measurement.file} wrong readings`,
+      ).toBe(0)
+      expect(
+        measurement.studentRowsToReview,
+        `${measurement.file} student rows to review`,
+      ).toBeLessThan(5)
+      const variant = truth.variants.find(
+        ({ file }) => file === measurement.file,
+      )
+      for (const person of variant?.people ?? []) {
+        const candidate = mappedByImage.get(measurement.file)?.get(person.id)
+        expect(candidate?.dateOfBirth, `${person.id} birth date`).toBe(
+          person.dateOfBirth,
+        )
+        const age = studentScanAge(candidate!, truth.referenceDate)
+        expect(age, `${person.id} age`).not.toBeNull()
+        expect(
+          Math.abs(age! - person.age),
+          `${person.id} age`,
+        ).toBeLessThanOrEqual(1)
+      }
+    }
 
     for (const variant of truth.variants) {
       const byPerson = mappedByImage.get(variant.file)

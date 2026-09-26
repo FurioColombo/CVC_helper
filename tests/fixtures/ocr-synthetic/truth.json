@@ -411,6 +411,234 @@
           "phone": "000 000 0010"
         }
       ]
+    },
+    {
+      "file": "roster-numbered-grid.png",
+      "rotationDegrees": 0.6,
+      "lighting": "soft-left-to-right",
+      "rowRules": true,
+      "layout": "numbered-grid",
+      "columnFragmentationExpected": false,
+      "people": [
+        {
+          "id": "p01",
+          "printedName": "Veldoro Nurelia",
+          "firstName": "Nurelia",
+          "surname": "Veldoro",
+          "dateOfBirth": "2008-02-03",
+          "age": 16,
+          "phone": "000 000 0001"
+        },
+        {
+          "id": "p02",
+          "printedName": "Dalla Brumera Zovelia",
+          "firstName": "Zovelia",
+          "surname": "Dalla Brumera",
+          "dateOfBirth": "2007-05-14",
+          "age": 17,
+          "phone": "000 000 0002"
+        },
+        {
+          "id": "p03",
+          "printedName": "Fiorvane Drelina",
+          "firstName": "Drelina",
+          "surname": "Fiorvane",
+          "dateOfBirth": "2006-08-21",
+          "age": 18,
+          "phone": "000 000 0003"
+        },
+        {
+          "id": "p04",
+          "printedName": "Da Nuvellia Elareno",
+          "firstName": "Elareno",
+          "surname": "Da Nuvellia",
+          "dateOfBirth": "2005-11-06",
+          "age": 18,
+          "phone": "000 000 0004"
+        },
+        {
+          "id": "p05",
+          "printedName": "Torvessa Alunera",
+          "firstName": "Alunera",
+          "surname": "Torvessa",
+          "dateOfBirth": "2009-01-19",
+          "age": 15,
+          "phone": "000 000 0005"
+        },
+        {
+          "id": "p06",
+          "printedName": "Virello Elaria",
+          "firstName": "Elaria",
+          "surname": "Virello",
+          "dateOfBirth": "2004-04-28",
+          "age": 20,
+          "phone": "000 000 0006"
+        },
+        {
+          "id": "p07",
+          "printedName": "Della Veralune Nireva",
+          "firstName": "Nireva",
+          "surname": "Della Veralune",
+          "dateOfBirth": "2007-07-09",
+          "age": 17,
+          "phone": "000 000 0007"
+        },
+        {
+          "id": "p08",
+          "printedName": "Solmeria Thalira Quenora",
+          "firstName": "Thalira Quenora",
+          "surname": "Solmeria",
+          "dateOfBirth": "2005-09-12",
+          "age": 18,
+          "phone": "000 000 0008",
+          "ambiguousCompound": true
+        },
+        {
+          "id": "p09",
+          "printedName": "Qavornellia Liorea",
+          "firstName": "Liorea",
+          "surname": "Qavornellia",
+          "dateOfBirth": "2008-12-01",
+          "age": 15,
+          "phone": "000 000 0009"
+        },
+        {
+          "id": "p10",
+          "printedName": "Nivaldi Veloria",
+          "firstName": "Veloria",
+          "surname": "Nivaldi",
+          "dateOfBirth": "2006-03-25",
+          "age": 18,
+          "phone": "000 000 0010"
+        }
+      ]
+    },
+    {
+      "file": "roster-numbered-grid-staff.png",
+      "rotationDegrees": 0.6,
+      "lighting": "soft-left-to-right",
+      "rowRules": true,
+      "layout": "numbered-grid",
+      "columnFragmentationExpected": false,
+      "people": [
+        {
+          "id": "p01",
+          "printedName": "Veldoro Nurelia",
+          "firstName": "Nurelia",
+          "surname": "Veldoro",
+          "dateOfBirth": "2008-02-03",
+          "age": 16,
+          "phone": "000 000 0001"
+        },
+        {
+          "id": "p02",
+          "printedName": "Dalla Brumera Zovelia",
+          "firstName": "Zovelia",
+          "surname": "Dalla Brumera",
+          "dateOfBirth": "2007-05-14",
+          "age": 17,
+          "phone": "000 000 0002"
+        },
+        {
+          "id": "p03",
+          "printedName": "Fiorvane Drelina",
+          "firstName": "Drelina",
+          "surname": "Fiorvane",
+          "dateOfBirth": "2006-08-21",
+          "age": 18,
+          "phone": "000 000 0003"
+        },
+        {
+          "id": "p04",
+          "printedName": "Da Nuvellia Elareno",
+          "firstName": "Elareno",
+          "surname": "Da Nuvellia",
+          "dateOfBirth": "2005-11-06",
+          "age": 18,
+          "phone": "000 000 0004"
+        },
+        {
+          "id": "p05",
+          "printedName": "Torvessa Alunera",
+          "firstName": "Alunera",
+          "surname": "Torvessa",
+          "dateOfBirth": "2009-01-19",
+          "age": 15,
+          "phone": "000 000 0005"
+        },
+        {
+          "id": "p06",
+          "printedName": "Virello Elaria",
+          "firstName": "Elaria",
+          "surname": "Virello",
+          "dateOfBirth": "2004-04-28",
+          "age": 20,
+          "phone": "000 000 0006"
+        },
+        {
+          "id": "p07",
+          "printedName": "Della Veralune Nireva",
+          "firstName": "Nireva",
+          "surname": "Della Veralune",
+          "dateOfBirth": "2007-07-09",
+          "age": 17,
+          "phone": "000 000 0007"
+        },
+        {
+          "id": "p08",
+          "printedName": "Solmeria Thalira Quenora",
+          "firstName": "Thalira Quenora",
+          "surname": "Solmeria",
+          "dateOfBirth": "2005-09-12",
+          "age": 18,
+          "phone": "000 000 0008",
+          "ambiguousCompound": true
+        },
+        {
+          "id": "p09",
+          "printedName": "Qavornellia Liorea",
+          "firstName": "Liorea",
+          "surname": "Qavornellia",
+          "dateOfBirth": "2008-12-01",
+          "age": 15,
+          "phone": "000 000 0009"
+        },
+        {
+          "id": "p10",
+          "printedName": "Nivaldi Veloria",
+          "firstName": "Veloria",
+          "surname": "Nivaldi",
+          "dateOfBirth": "2006-03-25",
+          "age": 18,
+          "phone": "000 000 0010"
+        }
+      ],
+      "staff": [
+        {
+          "id": "s1",
+          "printedName": "Brunaldi Ottorino",
+          "role": "CT",
+          "phone": "000 000 0101",
+          "age": 44,
+          "dateOfBirth": "1980-04-11"
+        },
+        {
+          "id": "s2",
+          "printedName": "Carvessi Liandra",
+          "role": "ADV",
+          "phone": "000 000 0102",
+          "age": 33,
+          "dateOfBirth": "1991-02-07"
+        },
+        {
+          "id": "s3",
+          "printedName": "Morvenda Ulisse",
+          "role": "IS",
+          "phone": "000 000 0103",
+          "age": 29,
+          "dateOfBirth": "1995-06-19"
+        }
+      ]
     }
   ]
 }

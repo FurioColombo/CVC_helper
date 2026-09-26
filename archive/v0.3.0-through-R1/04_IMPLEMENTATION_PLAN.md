@@ -690,7 +690,7 @@ ambiguous compound blank and flagged instead of guessed.
 
 Verified on the supplied roster photograph through the running interface: the
 order section appears, nineteen rows offer a swap, and one tap turns
-`Veldoro / Valeria` into `Valeria / Veldoro`. Covered by four capability tests
+`Nurelia / Zovelia` into `Zovelia / Nurelia`. Covered by four capability tests
 and four component tests.
 
 The full-screen document editor from this correction is **not implemented**.
@@ -1815,7 +1815,7 @@ Zovelia, Alunera, Elaria, Nireva, Liorea, Veloria, Thalira, Quenora, Merovia,
 Elaria, Brisenda, Talvino, Elareno, Talvino, Oriella, Fenaldo, Gisvera, Corvina,
 Amedrio — against Nurelia, Veldoro, Brumera, Fiorvane, Torvessa, Nivaldi, Arvedi,
 Belmonti, Calvessa, Dorlani, Esperti, Faldrini, Gorvessi, Halberi, Ismondi, Lorvani,
-Litorni.
+Morsetti.
 
 **One order for the whole sheet**, as the owner says: a roster is printed from one
 template. Decide per page, not per row.
