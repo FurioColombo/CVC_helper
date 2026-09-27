@@ -71,6 +71,18 @@ where they differ. The plan toward a shared database and 1.0.0 is in
    automatically, and your five photos read exactly as before. Staff printed
    without a role code now need one tap each to remove. Keep this, safer
    direction?
+8. **The rewritten `v0.2.0` no longer passes its own tests.** The history
+   rewrite replaced the real names in two old test files
+   (`studentScan.test.ts`, `StudentScan.test.tsx`) with invented ones, but
+   not always the same invented name in a test's input and in its expected
+   result. At `v0.2.0` and `codex/post-mvp-ux-planning`, three scan unit
+   tests therefore fail, and CI on those two refs failed after the push. No
+   application file changed: the `v0.2.0` app is exactly what it was, and
+   `main` is unaffected (its files are identical to the verified ones and
+   its tests pass). Making the old tests pass again needs a second, consistent
+   rewrite and another force-push of all four refs, which would also retire
+   the commits published today. Recommended: accept it and treat `v0.2.0` as
+   an archive. Tell us if you want the second rewrite.
 
 ## Decisions of 2026-09-23
 
