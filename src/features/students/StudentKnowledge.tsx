@@ -316,7 +316,7 @@ function KnowledgeCard({
               value={initialNote}
             />
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
               <DictationTrigger
                 dictation={dictation}
                 naming={dictationNaming}

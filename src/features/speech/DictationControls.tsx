@@ -39,7 +39,10 @@ export function DictationTrigger({
         aria-label={
           recording ? `Termina dettatura ${naming.subject}` : naming.start
         }
-        className={`h-auto min-h-11 min-w-[44px] max-w-full shrink flex-wrap whitespace-normal break-words px-3 py-2 text-center text-xs [overflow-wrap:anywhere] ${recording ? "border-[#d92d20] text-[#b42318]" : ""}`}
+        // Only `anywhere` lets the label shrink below its longest word. A
+        // `break-words` beside it won the cascade, so "Elaborazione…" in a
+        // wide font at 200% pushed a 320px card sideways.
+        className={`h-auto min-h-11 min-w-[44px] max-w-full shrink flex-wrap whitespace-normal px-3 py-2 text-center text-xs [overflow-wrap:anywhere] ${recording ? "border-[#d92d20] text-[#b42318]" : ""}`}
         disabled={!dictation.supported || busy}
         onClick={() => (recording ? dictation.stop() : void dictation.start())}
         type="button"

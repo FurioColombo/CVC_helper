@@ -240,6 +240,13 @@ non-student row, and no flag on the clearest one. What remains is in
 before the first 0.3.0 push; its aggregate results are in
 `.evidence/F1/history-rewrite.json`, committed on the rewritten line.
 
+After the push, CI's first complete browser run failed one V02 stress check,
+so Pages kept the previous build. Linux Chromium falls back to DejaVu Sans,
+where "Elaborazione…" at 200% text was wider than the Conoscenza allievi note
+card: the dictation button's `break-words` overrode `overflow-wrap:anywhere`,
+and the row lacked `min-w-0`. Both are fixed. The V02 stress matrix now uses a
+wide font, so it fails locally on the old code the same way CI did.
+
 ## UG2 — 0.3.0 integration and release gate
 
 **Category:** INTEGRATION_GATE

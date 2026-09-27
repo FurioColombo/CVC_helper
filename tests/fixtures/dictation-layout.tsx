@@ -130,7 +130,7 @@ function DictationLayoutFixture() {
     field = (
       <>
         {textarea}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
           {trigger}
           <button className="min-h-11 rounded-xl border px-4" type="button">
             Fine

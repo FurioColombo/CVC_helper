@@ -16,6 +16,9 @@ const NORMAL_VIEWPORTS = [
   { width: 390, height: 844 },
   { width: 412, height: 915 },
 ]
+// CI's Linux Chromium falls back to DejaVu Sans, much wider than Segoe UI or
+// Roboto. The stress checks pin a wide font so a local pass means a CI pass.
+const STRESS_FONT = '"DejaVu Sans", Verdana, sans-serif'
 
 async function createCourse(page: Page) {
   await page.goto("/")
@@ -194,9 +197,10 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
   ]) {
     await page.setViewportSize(STRESS_VIEWPORT)
     await page.goto(`/tests/fixtures/dictation-layout.html?host=${host}`)
-    await page.evaluate(() => {
+    await page.evaluate((font) => {
       document.documentElement.style.fontSize = "200%"
-    })
+      document.documentElement.style.setProperty("--font-sans", font)
+    }, STRESS_FONT)
     const region = page.getByRole("region", { name: `Campo sintetico ${host}` })
     await expect(region).toBeVisible()
     if (host === "evaluation") {
@@ -346,6 +350,7 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
 
     await page.evaluate(() => {
       document.documentElement.style.fontSize = ""
+      document.documentElement.style.removeProperty("--font-sans")
     })
     for (const viewport of NORMAL_VIEWPORTS) {
       await page.setViewportSize(viewport)
@@ -358,9 +363,10 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
 
     await page.setViewportSize(STRESS_VIEWPORT)
     await page.goto("/tests/fixtures/dictation-layout.html?host=unsupported")
-    await page.evaluate(() => {
+    await page.evaluate((font) => {
       document.documentElement.style.fontSize = "200%"
-    })
+      document.documentElement.style.setProperty("--font-sans", font)
+    }, STRESS_FONT)
     const unsupported = page.getByRole("region", {
       name: "Campo sintetico unsupported",
     })
@@ -382,6 +388,7 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
     })
     await page.evaluate(() => {
       document.documentElement.style.fontSize = ""
+      document.documentElement.style.removeProperty("--font-sans")
       window.setDictationFixtureState?.("recording")
     })
     for (const viewport of NORMAL_VIEWPORTS) {
