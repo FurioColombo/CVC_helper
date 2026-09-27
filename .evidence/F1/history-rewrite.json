@@ -1,0 +1,58 @@
+{
+  "milestone": "F1",
+  "ownerDecision": "2026-09-26: rewrite the public Git history that still contained real students' and staff data",
+  "rewrittenAt": "2026-09-27",
+  "method": "A fresh `git clone --mirror` of the final local history. Text blobs were scrubbed by content (real names, staff names, birth dates and telephone numbers replaced by invented values) and commit messages rewritten, with git fast-export and fast-import only. Only the four published refs were pushed; no other branch and no refs/codex/*. Aggregate counts only; no value is recorded.",
+  "refs": {
+    "refs/heads/main": {
+      "before": "651d204559d2c2410eb5aaf4f098ebb9b6e460b5",
+      "after": "this commit (its parent is the rewritten tip f8c0a57faf4b10c19c3ce04638744a4d2b42b1f9)"
+    },
+    "refs/heads/codex/0.3.0": {
+      "before": "651d204559d2c2410eb5aaf4f098ebb9b6e460b5",
+      "after": "same as main"
+    },
+    "refs/heads/codex/post-mvp-ux-planning": {
+      "before": "8e9b2b79f5275f4c881f5751c1fbbee322271633",
+      "after": "ccf528e5135210ea1d0402607c9f6a18a2e210c6"
+    },
+    "refs/tags/v0.2.0": {
+      "before": "8e9b2b79f5275f4c881f5751c1fbbee322271633",
+      "after": "ccf528e5135210ea1d0402607c9f6a18a2e210c6"
+    }
+  },
+  "replaced": {
+    "textBlobsScanned": 1707,
+    "changedBlobs": 58,
+    "lines": 126,
+    "names": 205,
+    "staffNames": 93,
+    "birthDates": 62,
+    "telephoneNumbers": 53,
+    "commitMessages": 4
+  },
+  "scanAfterRewrite": {
+    "refs": 4,
+    "blobsScanned": 1701,
+    "names": 0,
+    "staffNames": 0,
+    "birthDates": 0,
+    "telephoneNumbers": 0,
+    "commitMessages": 0
+  },
+  "currentFilesUnchanged": {
+    "mainTreeBefore": "028de1ddb2b7ba3eddba4d2edbfa5713f40b5e28",
+    "mainTreeAfter": "028de1ddb2b7ba3eddba4d2edbfa5713f40b5e28",
+    "identical": true
+  },
+  "commits": {
+    "old": 138,
+    "unchanged": 74,
+    "rewritten": 64
+  },
+  "preRewriteCommits": [
+    "70f62a58231ad5c65634e5a339055e6b551c482d"
+  ],
+  "preRewriteCommitsNote": "The earliest old commits whose content changed; every rewritten old commit descends from one of them. npm run check:repository fails when HEAD contains one (AGENTS.md §13).",
+  "ownerActions": "docs/post-mvp/0_3_0_QUESTIONS.md question 1: ask GitHub Support to purge cached views and unreferenced objects, delete Actions runs and artifacts from before the rewrite, and delete the Codex worktree, refs/codex/* and any other pre-rewrite copy before the next Codex session."
+}
