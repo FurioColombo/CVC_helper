@@ -30,6 +30,7 @@ import {
 } from "@/domain/duties"
 import { validateDutyRecords } from "@/domain/invariants"
 import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
+import { useNestedScreen } from "@/navigation/nestedScreen"
 import {
   readDutyPlan,
   saveDutyPlan,
@@ -51,6 +52,32 @@ type DutyScreen =
   | { kind: "warnings" }
 
 const DAY_IDS = DUTY_DAYS.map(({ id }) => id) as DutyDayId[]
+
+function parseDutyScreen(value: unknown): DutyScreen | null {
+  if (!value || typeof value !== "object") return null
+  const candidate = value as {
+    kind?: unknown
+    recalculate?: unknown
+    dayId?: unknown
+  }
+  if (candidate.kind === "list" || candidate.kind === "warnings") {
+    return { kind: candidate.kind }
+  }
+  if (
+    candidate.kind === "configure" &&
+    typeof candidate.recalculate === "boolean"
+  ) {
+    return { kind: "configure", recalculate: candidate.recalculate }
+  }
+  if (
+    candidate.kind === "day" &&
+    typeof candidate.dayId === "string" &&
+    DAY_IDS.includes(candidate.dayId as DutyDayId)
+  ) {
+    return { kind: "day", dayId: candidate.dayId as DutyDayId }
+  }
+  return null
+}
 const SHORT_DAY_LABELS: Record<DutyDayId, string> = {
   monday: "Lun",
   tuesday: "Mar",
@@ -937,7 +964,11 @@ export function DutyManagement({
   const [assignments, setAssignments] = useState<DutyAssignment[]>([])
   const [settings, setSettings] = useState<DutySettingsWithExtras | null>(null)
   const [manualMode, setManualMode] = useState(false)
-  const [screen, setScreen] = useState<DutyScreen>({ kind: "list" })
+  const [screen, openScreen, closeScreen] = useNestedScreen<DutyScreen>(
+    "duties",
+    { kind: "list" },
+    parseDutyScreen,
+  )
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
@@ -1050,10 +1081,10 @@ export function DutyManagement({
     return (
       <DutyConfiguration
         assignments={assignments}
-        onCancel={() => setScreen({ kind: "list" })}
+        onCancel={() => closeScreen({ kind: "list" })}
         onConfirm={async (nextSettings, proposal) => {
           await persist(proposal.assignments, nextSettings)
-          setScreen({ kind: "list" })
+          closeScreen({ kind: "list" })
         }}
         recalculate={screen.recalculate}
         courseStartDate={courseStartDate}
@@ -1070,13 +1101,13 @@ export function DutyManagement({
         completedDayIds={settings.completedDayIds}
         completed={settings.completedDayIds.includes(screen.dayId)}
         dayId={screen.dayId}
-        onBack={() => setScreen({ kind: "list" })}
+        onBack={() => closeScreen({ kind: "list" })}
         onComplete={async () => {
           await persist(assignments, {
             ...settings,
             completedDayIds: [...settings.completedDayIds, screen.dayId],
           })
-          setScreen({ kind: "list" })
+          closeScreen({ kind: "list" })
         }}
         onSave={(next) => persist(next, settings)}
         courseStartDate={courseStartDate}
@@ -1095,7 +1126,7 @@ export function DutyManagement({
             acknowledgedWarningKeys: [...settings.acknowledgedWarningKeys, key],
           })
         }
-        onBack={() => setScreen({ kind: "list" })}
+        onBack={() => closeScreen({ kind: "list" })}
         warnings={warnings}
       />
     )
@@ -1140,7 +1171,7 @@ export function DutyManagement({
             <Button
               className="w-full min-w-0 break-words [overflow-wrap:anywhere]"
               onClick={() =>
-                setScreen({ kind: "configure", recalculate: false })
+                openScreen({ kind: "configure", recalculate: false })
               }
               size="lg"
             >
@@ -1162,7 +1193,7 @@ export function DutyManagement({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() =>
-                  setScreen({ kind: "configure", recalculate: true })
+                  openScreen({ kind: "configure", recalculate: true })
                 }
                 variant="secondary"
               >
@@ -1170,7 +1201,7 @@ export function DutyManagement({
                 Ricalcola
               </Button>
               <Button
-                onClick={() => setScreen({ kind: "warnings" })}
+                onClick={() => openScreen({ kind: "warnings" })}
                 variant={visibleWarningCount > 0 ? "default" : "secondary"}
               >
                 <AlertTriangle aria-hidden="true" className="size-4" />
@@ -1238,7 +1269,7 @@ export function DutyManagement({
                   <button
                     aria-label={`${label}, ${names.length} assegnati${completed ? ", completata" : ""}`}
                     className="block w-full text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-                    onClick={() => setScreen({ kind: "day", dayId: id })}
+                    onClick={() => openScreen({ kind: "day", dayId: id })}
                     type="button"
                   >
                     <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
@@ -1331,7 +1362,7 @@ export function DutyManagement({
             <Button
               className="mt-4 w-full"
               onClick={() =>
-                setScreen({ kind: "configure", recalculate: false })
+                openScreen({ kind: "configure", recalculate: false })
               }
               variant="secondary"
             >

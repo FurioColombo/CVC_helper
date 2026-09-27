@@ -1,11 +1,20 @@
-PASS: controller refused missing, failed and blocked evidence
+PASS: controller refused missing, failed, hand-written, partial, stale and blocked evidence
 
 PASS: missing evidence refused
 Completion refused; missing evidence:
 - .evidence/__synthetic__/intentionally-missing.txt
 
 PASS: failed verification refused
-Completion refused; verification.json does not report all PASS
+Completion refused; verification.json: it does not report all PASS
+
+PASS: hand-written verification refused
+Completion refused; verification.json: it was not written by npm run evidence
+
+PASS: verification missing a required script refused
+Completion refused; verification.json: it lacks a passing run of: verify
+
+PASS: verification of an older source refused
+Completion refused; verification.json: the source changed after it was recorded; run npm run evidence again
 
 PASS: review blocker refused
 Completion refused; a required review is invalid, FAIL, or has blockers

@@ -160,8 +160,9 @@ test("verifies the evaluation workflow across an evolving week", async ({
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   await setEvaluation(page, "Bea", "+")
 
+  // N1: reload restores the same screen (Valutazioni), so there is no Home
+  // "Valutazioni" card to click here.
   await page.reload()
-  await page.getByRole("button", { name: "Valutazioni" }).click()
   await page
     .getByRole("button", {
       name: /(?:Aggiungi|Modifica) nota valutazione di Aldo/,

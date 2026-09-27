@@ -1,8 +1,9 @@
-import { mkdirSync, readFileSync } from "node:fs"
-import path from "node:path"
+import { readFileSync } from "node:fs"
 
 import { expect, type Page, test } from "@playwright/test"
 import sharp from "sharp"
+
+import { evidenceOutputPath } from "./evidence"
 
 const COUNT_STUDENTS = [
   "Alba",
@@ -223,16 +224,19 @@ test("keeps a forty-student roster usable at 320 px with 200% text", async ({
     })),
   ).toEqual({ viewportWidth: 320, pageWidth: 320 })
 
-  mkdirSync(path.resolve(".evidence/UX1"), { recursive: true })
   await crew.screenshot({
-    path: path.resolve(
-      ".evidence/UX1/crew-card-long-name-320px-200-percent.png",
+    path: evidenceOutputPath(
+      testInfo,
+      "UX1",
+      "crew-card-long-name-320px-200-percent.png",
     ),
   })
   await page.screenshot({
     fullPage: true,
-    path: path.resolve(
-      ".evidence/UX1/crew-manager-40-students-320px-200-percent.png",
+    path: evidenceOutputPath(
+      testInfo,
+      "UX1",
+      "crew-manager-40-students-320px-200-percent.png",
     ),
   })
 })
@@ -393,8 +397,11 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
     .getByRole("button", { name: "Scarica immagine riepilogo" })
     .click()
   const download = await downloadPromise
-  mkdirSync(path.resolve(".evidence/UX1"), { recursive: true })
-  const evidencePath = path.resolve(".evidence/UX1/crew-summary-browser.png")
+  const evidencePath = evidenceOutputPath(
+    testInfo,
+    "UX1",
+    "crew-summary-browser.png",
+  )
   await download.saveAs(evidencePath)
   expect(download.suggestedFilename()).toMatch(/\.png$/i)
   const image = readFileSync(evidencePath)
@@ -425,9 +432,12 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
     pageWidth: document.documentElement.scrollWidth,
   }))
   expect(layout).toEqual({ viewportWidth: 320, pageWidth: 320 })
-  mkdirSync(path.resolve(".evidence/UX1"), { recursive: true })
   await page.screenshot({
     fullPage: true,
-    path: path.resolve(".evidence/UX1/crew-manager-320px-200-percent.png"),
+    path: evidenceOutputPath(
+      testInfo,
+      "UX1",
+      "crew-manager-320px-200-percent.png",
+    ),
   })
 })

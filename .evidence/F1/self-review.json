@@ -1,0 +1,189 @@
+{
+  "milestone": "F1",
+  "reviewerRole": "self review, FEATURE, with the disposition of every finding of the independent reviews of the merged 0.3.0 line (round 1 on 5c1e029) and of F1 itself (rounds 2 to 12)",
+  "reviewedAt": "2026-09-27",
+  "runtime": "Node v24.21.0",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "scope": "F1 carries the R1 corrections, the fixes from the adversarial review of the merged line, the owner's 2026-09-26 decisions (erase course in Settings, volunteers outside crew warnings, particles Lo/Li/El/Al/De/Di, history rewrite before the push) and the harness hardening. V05 is closed separately; its screen shares StudentScan.tsx, so F1 and V05 are verified on the same final source digest.",
+  "acceptance": {
+    "movedLongPressDoesNotOpenEdit": "met: StudentManagement.test 'does not open the edit form when a long press moved'",
+    "failedEvaluationSaveNeedsRetryOrDiscard": "met: Riprova/Scarta at the top; session change disabled; the screen's Back, bottom navigation and phone Back are held by the shared leave guard (EvaluationManagement.test, App.test with window.history.back)",
+    "invalidEditBackExplains": "met: Back and phone Back name the fields to complete and focus the first (StudentManagement.test; browser journey f1-navigation-guards)",
+    "autosaveStatusCoversQueuedWrites": "met: StudentManagement.test 'keeps saving visible while a queued edit waits behind an older write'",
+    "launchColour": "met: manifest background_color #f2f6fb equals --background; scripts/check-built-pwa.mjs asserts it",
+    "railGeometry": "met: a real defect, not a stale assertion; the crew column is bounded (h-[calc(100dvh-7rem)] min-h-[28rem]) so the workspace scrolls inside it and the rail stays above the bottom navigation; u09-crews passes on Pixel 7 and iPhone viewport",
+    "noUnownedFindingIntoUG2": "met: every finding below is fixed, owned by UG2, recorded in docs/post-mvp/1_0_0_NEXT_STEPS.md, or asked in docs/post-mvp/0_3_0_QUESTIONS.md"
+  },
+  "roundOne": {
+    "crews": {
+      "CR-1 blocker": "fixed: Copia equipaggi asks before replacing composed crews (A terra alone does not ask, the copy keeps it); nothing to copy is reported; Escape and phone Back cannot close the question while it saves; tests",
+      "CR-2": "fixed: a blue boat moves a crew that already has one; save errors show in boat mode; tests",
+      "CR-3": "fixed: popup uses the strip's state mapping, wording and legend, with the state in each accessible name; test",
+      "CR-4": "fixed: invariants check capacity, the D2–D5 fixed size and member slots; table tests; check:domain and check:full-week pass",
+      "CR-5": "owner decision 2026-09-26: volunteers do not count; the code already counted students only; test added",
+      "CR-6": "fixed: A terra ordered by name; tests",
+      "CR-7": "partial: two stale helpers removed; three tested but unused helpers kept pending the owner's answer on boat-fault crew warnings (0_3_0_QUESTIONS.md question 3)",
+      "CR-8": "fixed: an unavailable selected boat is labelled Non disponibile in the summary image; test",
+      "CR-9": "fixed: Equipaggi pieni computed over eligible target crews; test"
+    },
+    "scan": {
+      "SC-1 blocker": "fixed: the swap moves confidence and acknowledgement with the text; a compound or dropped-word reading stays pending; tests",
+      "SC-2 blocker": "fixed: a typed age must match a stored date exactly; a printed age may be a year off but never across 18; a conflict is explained with a one-tap 'Usa l’età dalla data'; tests",
+      "SC-3 blocker": "fixed: only a printed age read at >= 70 corroborates a date; tests",
+      "SC-4 blocker": "fixed: Lo, Li, El, Al, De, Di stay with the surname; an unknown short word inside a name stays in the reading and marks the split, with or without a table layout (round 2 F1R-1); tests; five private photos unchanged",
+      "SC-5": "fixed: sex suggestion gated by confidence and re-inferred after a swap or a name edit unless the operator chose it; tests",
+      "SC-6": "fixed: the date field stays mounted once shown; an age derived from the date follows it when the date changes or is cleared; tests",
+      "SC-7": "fixed: counter navigation never arms acknowledgement; test",
+      "SC-8": "fixed: invalid dates are flagged, never calculated; invariants reject malformed stored dates; tests",
+      "SC-9": "fixed: a remembered order no longer overrides a decisive sheet vote; test",
+      "SC-10": "fixed: an unsaved review is guarded on Back, phone Back, bottom navigation, another image and the update banner; tests",
+      "SC-11": "fixed by design in round 8: no staff heading drops the rows after it any more, because every round from 4 to 8 found another staff-like line (a label, a blank form field, a line split from its names, a surname that is a heading word) that a staff section silently emptied of students; the rows after a staff line are marked possible-staff until a student heading (any line with Allievi, Studenti, Partecipanti, Iscritti or Corsisti) instead: always after a line with a staff word and no date, age or telephone, and after a staff line with a date; a column label, or a staff line with a telephone or age but no date, marks them only after a row that reads as a student or before a student heading, so the school's contact line and the table header above the students mark nothing unless a student-word line follows the students; a row whose name (the words before its first date, age or telephone) carries a staff word is always marked, while a staff word printed after the dates is not seen (rounds 9 and 11); staff rows with a role code are still left out one by one; the five private photos are unchanged; the review cost and the student-word cases are recorded in next steps; tests (rounds 4 to 10: F1F-2, F1F-3, F1C-3, F1C-4, F1R6-1, F1R6-2, F1R6-5, F1R7-1 to F1R7-3, F1R8-1, F1R8-2, F1R8-5, F1R8-6, F1R9-1, F1R9-2, F1R10-1, F1R10-2)",
+      "SC-12": "fixed: a row with a heading word or heading phrase anywhere in the name (Sabato, Corso, Domenica, Centro Velico) is kept and marked possible-heading when an age is read, or when two or more name words are read with a date that could be a birth date or, in a table, with a telephone; an age-range line is dropped when its first name word is a heading word ('Corso Deriva 8-12 anni') or it has no name, and otherwise kept and marked ('Gruppo Vela 8-12 anni'); with no age read, a date that cannot be a birth date makes it a heading (rounds 4 to 8: F1F-1, F1C-1, F1R6-3, F1R6-4, F1R7-4, F1R8-3); the remaining cases are listed in next steps; tests",
+      "SC-13": "fixed: an unplaced role code marks the row possible-staff until checked; tests",
+      "SC-14": "fixed: two dates or ages on one line mark the row possible-merged-rows; tests",
+      "SC-15": "not changed: speculative drift join, no case in the photos or the synthetic corpus",
+      "SC-16": "not changed: speculative zero-confidence fallback",
+      "SC-17": "owned by UG2: eraser time measured on the owner's phone (UG1_DEVICE_VALIDATION.md)",
+      "SC-18": "fixed: a row matching another row or an existing student by name and birth date or age is flagged until 'Tieni entrambi' or removal, on the camera and assistant paths; owner may restrict it to pasted rows (0_3_0_QUESTIONS.md question 5)",
+      "SC-19": "fixed: read ages outside 4–99 are marked until the age itself is typed or checked; tests"
+    },
+    "persistenceNavigation": {
+      "PN-1 blocker": "fixed: leave guard for the edit form; pending edit written on pagehide, hidden page and unmount; tests",
+      "PN-2 blocker": "fixed: the student list is reread after phone Back; browser journey",
+      "PN-3 blocker": "fixed: nested history in Barche, Avarie, Comandate and Volontari; component tests; browser journey for Barche",
+      "PN-4": "fixed: an open note holds every exit; tests and browser journey",
+      "PN-5": "fixed: edit refuses a malformed date or one after the course start; invariants check the format always and the range with the course start",
+      "PN-6": "owned by UG2 (0.2.0 migration fixture and reopen evidence)",
+      "PN-7, PN-8, PN-9": "not changed: navigation polish recorded in next steps",
+      "PN-10": "fixed: evaluation save in one transaction; test",
+      "PN-11": "fixed: screen error boundary with a way back Home; test"
+    },
+    "releaseReadiness": {
+      "RR-1 blocker": "addressed in the repository: all 34 failing browser tests triaged (33 stale, 1 real rail defect fixed); results of the final full run in browser-evidence.json; CI result follows the push; UG2 remains",
+      "RR-2 blocker": "fixed: completion needs recorder-made verification of every declared script on a matching source digest; hand-written, partial and stale files are refused (self-test); focused tests fail both runners (round 2 F1R-3)",
+      "RR-3 blocker": "fixed: the browser runner starts its own server on a free port",
+      "RR-4 blocker": "owner decision 2026-09-26: history rewritten on a fresh mirror immediately before the first 0.3.0 push, only the four published refs pushed; results in .evidence/F1/history-rewrite.json (written after the rewrite, with the earliest pre-rewrite commits as full ids); right after the push the main checkout's main, codex/0.3.0, codex/post-mvp-ux-planning and v0.2.0 point at the rewritten history; in copies holding the rewritten history AGENTS.md §13 forbids working from a pre-rewrite copy and check:repository (CI with full history, after a push) refuses a HEAD that contains a listed pre-rewrite commit; copies that never fetched the rewrite (the Codex worktree, refs/codex/*) have neither, so the owner deletes them before the next Codex session (0_3_0_QUESTIONS.md question 1, plan) (rounds 4 and 5, F1F-4 and F1C-2); the GitHub purge is an owner action",
+      "RR-5": "fixed: Pages deploys only after CI passes on the same commit, with an offline check at the subpath",
+      "RR-6": "fixed: ONNX Runtime loads from the app's origin on both branches (speech.test.ts); a recorded first dictation on 2026-09-26 made no jsDelivr request (summary in browser-evidence.json)",
+      "RR-7": "fixed: whisper-base pinned to 1846881b6b3a3024392c1eea3ad983695bc23925 (speech.test.ts)",
+      "RR-8": "fixed: recordings over 30 s are transcribed in chunks; tests",
+      "RR-9": "fixed: offline check in verify:all and the deploy; the startup brand image is precached",
+      "RR-10": "fixed: browser specs write screenshots to test output unless CVC_EVIDENCE_REFRESH names the milestone",
+      "RR-11": "fixed: the review gate is one module used by the screen, the measurement script, the synthetic regression and the private harness",
+      "RR-12": "fixed: updates wait for Aggiorna, which asks the leave guard first, or Più tardi",
+      "RR-13": "owner decision 2026-09-26: erase course in Settings; implemented and tested; stale history entries of an erased course open Home",
+      "RR-14": "same as CR-7",
+      "RR-15": "fixed: the model is prepared before the microphone opens; device errors named; an offline first download is explained",
+      "RR-16": "owned by UG2: memory measured on a phone",
+      "RR-17": "fixed: self-test cleans up; built-manifest base-path and background checks",
+      "RR-18": "fixed: spec retitled for 0.3.0; scope admits V05, UX amendments and the erase; deploy docs corrected",
+      "RR-19": "not changed: small dead helpers recorded in next steps"
+    }
+  },
+  "roundTwo": {
+    "F1R-1 blocker": "fixed: interior-word check uses the raw words outside the structured ranges on crops without a layout; tests for Lo Re, Li Wu, Del Re",
+    "F1R-2 blocker": "fixed in the wording: the rewrite is described as the procedure run immediately before the push, with results in history-rewrite.json; round 3 F1R3-2 completed the corrections",
+    "F1R-3 blocker": "fixed: forbidOnly true, allowOnly false",
+    "F1R-4": "fixed: Aggiorna goes through applyUpdateWhenSafe → requestLeave; tests",
+    "F1R-5": "fixed: any student heading ends the staff section; test",
+    "F1R-6": "fixed for table rows whose first name word is not a keyword; residual recorded in next steps",
+    "F1R-7": "mitigated: offline first-dictation message and test; UG2 checklist step for dictation after the update",
+    "F1R-8": "handled: F1 and V05 are verified and closed on the same final source digest",
+    "F1R-9": "fixed: the swap keeps a dropped-word reading pending",
+    "F1R-10": "recorded in next steps (restore by entry id instead of a time window)",
+    "F1R-11": "fixed: Escape ignored while the copy saves; test",
+    "F1R-12": "fixed: Più tardi; the banner measures the bottom navigation, not the crew rail; tests",
+    "F1R-13": "fixed: shell history entries carry the course id; a foreign entry opens Home; App test and browser journey",
+    "F1R-14": "fixed: unit tests for both runtime branches; the 2026-09-26 network recording summarised in browser-evidence.json"
+  },
+  "roundThree": {
+    "F1R3-1 blocker": "fixed: this self-review replaces the stale one; the final independent review is a required review in the manifest; browser evidence records the source digest of its run",
+    "F1R3-2 blocker": "fixed: no document claims the rewrite, push, closure or green runs before they exist; contradictions in the plan and open-items list removed; post-push retirement of pre-rewrite copies listed",
+    "F1R3-3": "handled as F1R-8",
+    "F1R3-4": "fixed: rows after a staff heading with a date are marked possible-staff; test",
+    "F1R3-5": "fixed: a heading whose first name word is a keyword is not kept; test",
+    "F1R3-6": "recorded in next steps",
+    "F1R3-7": "fixed: tests for the update wiring, the crew copy Escape, the foreign-course history entry and the Safari runtime branch",
+    "F1R3-8": "accepted and recorded in next steps (new-student draft and unread pasted answer, as N1 approved for the new-student form)"
+  },
+  "evidenceInspected": [
+    ".evidence/F1/review-crews.json, review-scan.json, review-persistence-navigation.json, review-release-readiness.json (round 1)",
+    ".evidence/F1/review-round-2.json to review-round-6.json",
+    "git diff 5c1e029 and untracked files of claude/f1",
+    "unit/component suites; tests/e2e/f1-navigation-guards.spec.ts; the repaired browser specs",
+    "private five-photo harness (aggregate counts only): matched 100, missing 0, merged 0, extra ready 0, clearest photo 0 flags"
+  ],
+  "importantFindings": [],
+  "qolFindings": [],
+  "roundFour": {
+    "F1F-1 blocker": "fixed: see SC-12; the self-review and next steps now describe the remaining case exactly; tests for Sabato Marco, Corso Marta, Domenica Rossi with a misread age word, and for a telephone-only row; the heading test pins today's date; five private photos unchanged",
+    "F1F-4 blocker": "fixed: see RR-4; the guard was tested by hand both ways (a listed ancestor fails, an unknown commit passes)",
+    "F1F-2": "fixed: see SC-11; the contact-line test now asserts that no row is marked",
+    "F1F-3": "fixed: the pattern reads istrutt(ore|ori|rice|rici); tests for Istruttori, Istruttore, Istruttrici and Personale headings",
+    "F1F-5": "fixed: the plan's UG2 section no longer sends the next agent after the repaired s1-scan-phone-option spec",
+    "F1F-6": "fixed: the Safari and non-Safari runtime tests assert the exact runtime files of their branch",
+    "F1F-7": "fixed: documents say 'immediately before the first 0.3.0 push' instead of a date",
+    "F1F-8": "fixed: F1 now declares verify:all and V05 declares verify plus verify:e2e:v05, so npm run evidence records the browser runs on the source digest; browser-evidence.json summarises those recorded runs"
+  },
+  "roundFive": {
+    "F1C-1 blocker": "fixed: see SC-12; tests for 'Corso Deriva 8-12 anni' and 'CORSO VELA 10-14 ANNI' (text and table), 'Settimana Deriva 12 anni' kept and marked, and the heading-word test now expects the mark; five private photos unchanged",
+    "F1C-2 blocker": "fixed: question 1 now says which copies hold the protections and which do not, that CI reports after a push rather than preventing it, and asks the owner to delete the Codex worktree and refs/codex/* before the next Codex session; the plan states the same precondition for UG2",
+    "F1C-3": "fixed in round 6: see SC-11 (round 5's word count left single-word names open, F1R6-1)",
+    "F1C-4": "fixed: see SC-11; tests for a dated staff heading at the top and for a stray title row above a contact line",
+    "F1C-5": "partly fixed: entries must be full 40-character commit ids; a missing object still counts as not an ancestor, which is correct in a full clone and in CI (full history); the guard still passes when the list file is absent, which is the state before the rewrite",
+    "F1C-6": "fixed: the next-steps bullet now lists exactly when such a row is kept, marked or dropped"
+  },
+  "roundSix": {
+    "F1R6-1 blocker": "fixed in round 7: see SC-11 (round 6 still let a singular role line with no surviving name word start the section, F1R7-1)",
+    "F1R6-2": "fixed: see SC-11; tests for 'Personale del turno', 'Assistenti del turno', 'Staff' and 'Staff del Centro Velico'",
+    "F1R6-3": "fixed: see SC-12; test for 'Gruppo Vela 8-12 anni'",
+    "F1R6-4": "fixed: see SC-12; test for 'Rossi Domenica 12/03/2014' on a crop with no age; next steps reworded",
+    "F1R6-5": "fixed: see SC-11; only rows that read as students arm a contact line before it, and a student heading after it arms it too (round 7 F1R7-3)",
+    "F1R6-6": "fixed: question 1 names npm run verify and verify:all; the CI comment says the check detects and reports after a push"
+  },
+  "roundSeven": {
+    "F1R7-1 blocker": "fixed in round 8: see SC-11 (round 7 still let a plural label start the section, F1R8-1)",
+    "F1R7-2": "fixed: see SC-11; test for 'Istruttrice Deriva'",
+    "F1R7-3": "fixed: see SC-11; test for 'Personale tel. 3331234567' before 'Allievi', and for a contact line with no student heading after it",
+    "F1R7-4": "fixed in round 8: see SC-12 (round 7 missed the phrase 'Centro Velico', F1R8-3)",
+    "F1R7-5": "fixed: the next-steps bullet was rewritten against the new rules, and a bullet records the staff-line review cost"
+  },
+  "roundEight": {
+    "F1R8-1 blocker": "fixed by design: see SC-11; tests for 'Istruttori:', 'Istruttori: ________', 'Istruttori: Sabato e Corso', 'Corso Istruttori', 'Personale del turno', 'Assistenti del turno' and 'Staff', before and after the students",
+    "F1R8-2": "fixed: see SC-11; tests for 'Nome assistente:' and the other labels above and between students, and (round 9, F1R9-1) at the top before a student heading",
+    "F1R8-3": "fixed: see SC-12; test for 'Centro Velico 12 anni'",
+    "F1R8-4": "fixed: the staff-line bullet in next steps was rewritten for the new rule",
+    "F1R8-5": "fixed: Iscritti and Corsisti are student headings; tests",
+    "F1R8-6": "fixed: volontaria is a staff word; test"
+  },
+  "roundNine": {
+    "note": "review-round-9.json: PASS_WITH_FINDINGS with no blockers; its findings were fixed before the closure re-review",
+    "F1R9-1": "fixed: see SC-11; test for 'Nome assistente:' at the top before 'Allievi'",
+    "F1R9-2": "fixed: see SC-11; test for 'Neri volontario 30 anni'",
+    "F1R9-3": "recorded, not fixed: the round-9 fix (a count or mixed line is not a student heading) broke numbered and staff-column student headings (round 10, F1R10-2) and was reverted; the behaviour is listed in next steps",
+    "F1R9-4": "recorded, not fixed: the round-9 fix (a student-word line with an age is a row) made aged group headings ready students (round 10, F1R10-1 blocker) and was reverted; rows with Allievo or Allieva in the name are dropped as at 5c1e029, and rows with Iscritti or Corsisti in the name are new drops since round 8 added those headings; both are listed in next steps"
+  },
+  "roundTen": {
+    "note": "review-round-10.json: F1 FAIL, caused by the round-9 fixes for F1R9-3 and F1R9-4, which were reverted; F1R9-1 and F1R9-2 were verified fixed and kept",
+    "F1R10-1 blocker": "fixed by the revert: any line with a student word is a student heading again, as at 5c1e029 (now with Iscritti and Corsisti) and in round 9; tests for 'Allievi Deriva 12/14 anni', 'Allievi Deriva 12 anni' and 'Partecipanti Vela 10—12 anni' at the top and between students",
+    "F1R10-2": "fixed by the revert; tests for 'Nome assistente:' above 'Allievi turno 2', 'ELENCO PARTECIPANTI 2026' and 'Iscritti: 12'",
+    "F1R10-3": "recorded in next steps (a student-word footer makes a contact line or table header at the top mark every student): review noise only"
+  },
+  "roundEleven": {
+    "note": "review-round-11.json: F1 PASS_WITH_FINDINGS and V05 PASS, no blockers; combined with round 12 (the race fix) as .evidence/F1/independent-review.json, and copied as .evidence/V05/domain-review.json; its two wording findings were fixed in documents and evidence only, with no source change",
+    "F1R11-1": "fixed: next steps and SC-11 say a staff word is seen only in the row's name, before its first date, age or telephone",
+    "F1R11-2": "fixed: F1R9-4 and F1R10-1 name the Iscritti/Corsisti difference from 5c1e029, and next steps says which fixes were tried"
+  },
+  "finalRun": {
+    "navigation race": "found by the recorded verify:all run on the round-11 source: crew-destinations failed once on Pixel 7 because Home, tapped while the fault screen's app Back was still landing, was pushed before that Back and undone by it; fixed: every history push (App navigate, nested screens, student screens) waits for a pending app Back (afterPendingBack in src/navigation/browserHistory.ts); unit test; crew-destinations passed 3 of 3 on Pixel 7 and 42 of 42 navigation and boat journeys passed on all projects; reviewed in round 12"
+  },
+  "roundTwelve": {
+    "note": "review-round-12.json: PASS_WITH_FINDINGS with no blockers, on the race fix",
+    "F1R12-1": "recorded in next steps: a save that closes its screen after the user already pressed Back goes back one screen too far; no data is lost",
+    "F1R12-2": "recorded in next steps: a boat or student tapped while leaving the area can leave one dead Back entry",
+    "F1R12-3": "recorded in next steps: a tap on the area being left, inside the Back's latency, can be lost or duplicated",
+    "F1R12-4": "recorded in next steps: if an app Back never lands, the next phone Back skips the dialog close and the leave guard once",
+    "F1R12-5": "recorded in next steps (speculative): two app Backs in flight share one pending record"
+  }
+}

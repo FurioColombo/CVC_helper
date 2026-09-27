@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/courses", () => ({
+  eraseAllCourseData: vi.fn().mockResolvedValue(undefined),
   getActiveCourse: vi.fn(),
   saveActiveCourse: vi.fn(),
 }))
@@ -63,19 +64,22 @@ vi.mock("@/persistence/evaluations", () => ({
   saveEvaluation: vi.fn(),
 }))
 
-import { App } from "@/App"
+import { App, ScreenErrorBoundary } from "@/App"
 import {
+  eraseAllCourseData,
   getActiveCourse,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
 import { readCrewPlan } from "@/persistence/crews"
+import { saveEvaluation } from "@/persistence/evaluations"
 import { listStudents } from "@/persistence/students"
 
 const readCourse = vi.mocked(getActiveCourse)
 const saveCourse = vi.mocked(saveActiveCourse)
 const getCrewPlan = vi.mocked(readCrewPlan)
 const getStudents = vi.mocked(listStudents)
+const writeEvaluation = vi.mocked(saveEvaluation)
 
 const ACTIVE_COURSE: CourseRecord = {
   id: "course-1",
@@ -175,6 +179,27 @@ describe("course setup and application shell", () => {
     expect(
       screen.getByRole("button", { name: "Configura barche" }),
     ).toBeVisible()
+  })
+
+  // F1 review round 3, F1R3-7/F1R-13: after a course is erased and a new one
+  // created, browser history can still hold a screen entry from the old
+  // course. That entry must open Home for the new course rather than the old
+  // screen, but nothing exercised this directly.
+  it("opens Home instead of a history entry left over from an erased course", async () => {
+    window.history.replaceState(
+      { __cvcHelperShell: { view: "settings", depth: 1, courseId: "old" } },
+      "",
+      window.location.href,
+    )
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    render(<App />)
+
+    expect(
+      await screen.findByRole("heading", { name: "D2 - 35 | 2026" }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole("heading", { name: "Impostazioni" }),
+    ).not.toBeInTheDocument()
   })
 
   it("keeps the selected-name display density in Settings across visits", async () => {
@@ -343,5 +368,147 @@ describe("course setup and application shell", () => {
     expect(screen.getByRole("combobox", { name: "Sessione" })).toHaveValue(
       "wed-pm",
     )
+  })
+
+  it("holds the bottom navigation and the phone Back until a failed evaluation is retried or discarded", async () => {
+    readCourse.mockResolvedValue(ACTIVE_COURSE)
+    getStudents.mockResolvedValue([
+      {
+        id: "student-1",
+        courseId: ACTIVE_COURSE.id,
+        firstName: "Aldo",
+        surname: "Rossi",
+        nickname: null,
+        dateOfBirth: "2000-01-01",
+        declaredAgeAtCourseStart: null,
+        sex: "male",
+        phone: null,
+        size: null,
+        initialNote: null,
+        courseNote: null,
+        active: 1,
+      },
+    ])
+    writeEvaluation.mockRejectedValueOnce(new Error("offline write failed"))
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    await user.click(screen.getByRole("button", { name: "Valutazioni" }))
+    await user.click(
+      await screen.findByRole("button", { name: "Valutazione di Aldo: +" }),
+    )
+    const alert = await screen.findByRole("alert")
+
+    const primaryNavigation = screen.getByRole("navigation", {
+      name: "Navigazione principale",
+    })
+    await user.click(
+      within(primaryNavigation).getByRole("button", { name: "Home" }),
+    )
+    expect(screen.getByRole("heading", { name: "Valutazioni" })).toBeVisible()
+    expect(alert).toHaveFocus()
+
+    window.history.back()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.getByRole("heading", { name: "Valutazioni" })).toBeVisible()
+
+    await user.click(within(alert).getByRole("button", { name: "Scarta" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+    )
+    // The same phone Back now leaves, which also shows the held Back above
+    // really reached the guard.
+    window.history.back()
+    expect(
+      await screen.findByRole("heading", { name: "D2 - 35 | 2026" }),
+    ).toBeVisible()
+  })
+})
+
+describe("starting a new course from Settings", () => {
+  beforeEach(() => {
+    window.history.replaceState(null, "", window.location.href)
+    vi.mocked(getActiveCourse).mockReset().mockResolvedValue(ACTIVE_COURSE)
+    vi.mocked(eraseAllCourseData).mockClear()
+  })
+
+  it("erases the course only after an explicit confirmation, then opens course creation", async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    await user.click(screen.getByRole("button", { name: "Impostazioni" }))
+    await user.click(
+      screen.getByRole("button", {
+        name: "Elimina il corso e inizia un nuovo corso",
+      }),
+    )
+    const eraseAll = screen.getByRole("button", { name: "Elimina tutto" })
+    expect(eraseAll).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "Annulla" }))
+    expect(eraseAllCourseData).not.toHaveBeenCalled()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Elimina il corso e inizia un nuovo corso",
+      }),
+    )
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Ho capito: i dati non si possono recuperare",
+      }),
+    )
+    await user.click(screen.getByRole("button", { name: "Elimina tutto" }))
+
+    expect(
+      await screen.findByRole("heading", { name: "Crea il corso" }),
+    ).toBeVisible()
+    expect(eraseAllCourseData).toHaveBeenCalledOnce()
+    expect(window.history.state).toBeNull()
+  })
+
+  it("keeps the course and says so when the erase fails", async () => {
+    vi.mocked(eraseAllCourseData).mockRejectedValueOnce(new Error("locked"))
+    const user = userEvent.setup()
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    await user.click(screen.getByRole("button", { name: "Impostazioni" }))
+    await user.click(
+      screen.getByRole("button", {
+        name: "Elimina il corso e inizia un nuovo corso",
+      }),
+    )
+    await user.click(screen.getByRole("checkbox"))
+    await user.click(screen.getByRole("button", { name: "Elimina tutto" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Il corso non è stato eliminato.",
+    )
+    expect(screen.getByRole("heading", { name: "Impostazioni" })).toBeVisible()
+  })
+})
+
+describe("screen error boundary", () => {
+  it("replaces a screen that fails to render with a way back Home", () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined)
+    function Broken(): never {
+      throw new Error("render failed")
+    }
+    render(
+      <ScreenErrorBoundary>
+        <Broken />
+      </ScreenErrorBoundary>,
+    )
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Nessun dato è stato cancellato.",
+    )
+    expect(
+      screen.getByRole("button", { name: "Torna alla Home" }),
+    ).toBeVisible()
+    consoleError.mockRestore()
   })
 })

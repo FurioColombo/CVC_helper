@@ -146,6 +146,12 @@ test("visible Back from Students returns home after reload", async ({
     state: window.history.state,
     length: window.history.length,
   }))
-  expect(afterBack.state.__cvcHelperShell).toEqual({ view: "home", depth: 0 })
+  // Shell entries also carry the course they belong to (F1R-13).
+  expect(afterBack.state.__cvcHelperShell).toEqual({
+    view: "home",
+    depth: 0,
+    courseId: beforeBack.state.__cvcHelperShell.courseId,
+  })
+  expect(typeof afterBack.state.__cvcHelperShell.courseId).toBe("string")
   expect(afterBack.length).toBe(beforeBack.length)
 })

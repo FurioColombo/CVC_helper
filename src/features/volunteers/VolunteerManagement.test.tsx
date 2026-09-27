@@ -101,6 +101,26 @@ describe("VolunteerManagement", () => {
     )
   })
 
+  it("returns to the volunteer list on phone Back instead of leaving the area", async () => {
+    getVolunteers.mockResolvedValue([ANNA])
+    const onHome = vi.fn()
+    const user = userEvent.setup()
+    render(<VolunteerManagement courseId="course-1" onHome={onHome} />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Anna Bianchi, ruolo ADV" }),
+    )
+    expect(
+      screen.getByRole("heading", { name: "Modifica volontario" }),
+    ).toBeVisible()
+
+    window.history.back()
+    expect(
+      await screen.findByRole("heading", { name: "Volontari" }),
+    ).toBeVisible()
+    expect(onHome).not.toHaveBeenCalled()
+  })
+
   it("refuses structurally invalid persisted volunteer records", async () => {
     getVolunteers.mockResolvedValue([{ ...ANNA, role: "student" as never }])
 

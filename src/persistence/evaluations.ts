@@ -128,44 +128,50 @@ export async function saveEvaluation(
 ): Promise<EvaluationRecord | null> {
   await db.init()
   assertInput(sessionId, input)
-  const students = await db.getAll<{ id: string }>(
-    "SELECT id FROM students WHERE id = ? AND courseId = ?",
-    [studentId, courseId],
-  )
-  if (students.length !== 1) {
-    throw new Error("Evaluation student does not belong to course")
-  }
-  const existing = await db.getAll<{ id: string }>(
-    "SELECT id FROM evaluations WHERE studentId = ? AND sessionId = ?",
-    [studentId, sessionId],
-  )
-  if (existing.length > 1) throw new Error("Duplicate persisted evaluation")
-  const normalized: EvaluationInput = {
-    value: input.value,
-    note: normalizeNote(input.note),
-  }
-  if (normalized.value === null && normalized.note === null) {
-    if (existing[0]) {
-      await db.execute("DELETE FROM evaluations WHERE id = ?", [existing[0].id])
-    }
-    return null
-  }
-  if (existing[0]) {
-    await db.execute(
-      "UPDATE evaluations SET value = ?, note = ? WHERE id = ?",
-      [normalized.value, normalized.note, existing[0].id],
+  // One transaction: two overlapping saves for the same student and session
+  // must not both find no row and insert a duplicate.
+  return db.writeTransaction(async (transaction) => {
+    const students = await transaction.getAll<{ id: string }>(
+      "SELECT id FROM students WHERE id = ? AND courseId = ?",
+      [studentId, courseId],
     )
-    return { id: existing[0].id, studentId, sessionId, ...normalized }
-  }
-  const record: EvaluationRecord = {
-    id: crypto.randomUUID(),
-    studentId,
-    sessionId,
-    ...normalized,
-  }
-  await db.execute(
-    "INSERT INTO evaluations(id, studentId, sessionId, value, note) VALUES (?, ?, ?, ?, ?)",
-    [record.id, studentId, sessionId, record.value, record.note],
-  )
-  return record
+    if (students.length !== 1) {
+      throw new Error("Evaluation student does not belong to course")
+    }
+    const existing = await transaction.getAll<{ id: string }>(
+      "SELECT id FROM evaluations WHERE studentId = ? AND sessionId = ?",
+      [studentId, sessionId],
+    )
+    if (existing.length > 1) throw new Error("Duplicate persisted evaluation")
+    const normalized: EvaluationInput = {
+      value: input.value,
+      note: normalizeNote(input.note),
+    }
+    if (normalized.value === null && normalized.note === null) {
+      if (existing[0]) {
+        await transaction.execute("DELETE FROM evaluations WHERE id = ?", [
+          existing[0].id,
+        ])
+      }
+      return null
+    }
+    if (existing[0]) {
+      await transaction.execute(
+        "UPDATE evaluations SET value = ?, note = ? WHERE id = ?",
+        [normalized.value, normalized.note, existing[0].id],
+      )
+      return { id: existing[0].id, studentId, sessionId, ...normalized }
+    }
+    const record: EvaluationRecord = {
+      id: crypto.randomUUID(),
+      studentId,
+      sessionId,
+      ...normalized,
+    }
+    await transaction.execute(
+      "INSERT INTO evaluations(id, studentId, sessionId, value, note) VALUES (?, ?, ?, ?, ?)",
+      [record.id, studentId, sessionId, record.value, record.note],
+    )
+    return record
+  })
 }

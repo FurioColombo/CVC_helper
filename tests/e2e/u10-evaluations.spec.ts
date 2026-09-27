@@ -3,6 +3,8 @@ import path from "node:path"
 
 import { expect, type Page, test } from "@playwright/test"
 
+import { evidenceOutputPath } from "./evidence"
+
 const SESSIONS = [
   "sat-pm",
   "sun-am",
@@ -128,8 +130,10 @@ test("edits thirteen sessions through one compact row and reads the same week in
     }),
   ).toHaveAttribute("aria-pressed", "false")
 
+  // N1: reload restores the same screen (Valutazioni), so there is no Home
+  // "Valutazioni" card to click here; clicking it would instead hit the
+  // screen's own "Indietro da Valutazioni" Back button.
   await page.reload()
-  await page.getByRole("button", { name: "Valutazioni" }).click()
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   await expect(
     page.getByRole("button", {
@@ -289,8 +293,9 @@ test("keeps a typed evaluation note recoverable when microphone permission is de
   await expect(
     page.getByRole("button", { name: "Modifica nota valutazione di Aldo" }),
   ).toBeVisible()
+  // N1: reload restores the same screen (Valutazioni), so there is no Home
+  // "Valutazioni" card to click here.
   await page.reload()
-  await page.getByRole("button", { name: "Valutazioni" }).click()
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   await page
     .getByRole("button", { name: "Modifica nota valutazione di Aldo" })
@@ -361,11 +366,10 @@ test("shows the evaluation note itself, clamped to two lines however long it is"
   expect(clamp.clientHeight).toBeLessThanOrEqual(clamp.lineHeight * 2 + 1)
   await expectNoHorizontalPageScroll(page)
 
-  const evidenceDirectory = path.join(process.cwd(), ".evidence", "UG1")
-  mkdirSync(evidenceDirectory, { recursive: true })
   await page.screenshot({
-    path: path.join(
-      evidenceDirectory,
+    path: evidenceOutputPath(
+      testInfo,
+      "UG1",
       `evaluation-note-preview-${testInfo.project.name}.png`,
     ),
     fullPage: true,
@@ -382,8 +386,9 @@ test("shows the evaluation note itself, clamped to two lines however long it is"
   }))
   expect(enlarged.clientHeight).toBeLessThanOrEqual(enlarged.lineHeight * 2 + 1)
   await page.screenshot({
-    path: path.join(
-      evidenceDirectory,
+    path: evidenceOutputPath(
+      testInfo,
+      "UG1",
       `evaluation-note-preview-200-${testInfo.project.name}.png`,
     ),
     fullPage: true,

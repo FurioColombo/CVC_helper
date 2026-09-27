@@ -1,5 +1,8 @@
 import {
+  act,
   cleanup,
+  createEvent,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -60,6 +63,7 @@ class FakeMediaRecorder {
 }
 
 import { StudentManagement } from "@/features/students/StudentManagement"
+import { requestLeave } from "@/navigation/browserHistory"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   assessStudentDeletion,
@@ -638,6 +642,182 @@ describe("StudentManagement", () => {
     expect(screen.queryByText("Salvato")).not.toBeInTheDocument()
     resolveSecond?.()
     expect(await screen.findByText("Salvato")).toBeVisible()
+  })
+
+  it.each([
+    ["the page is hidden or closed", "pagehide"],
+    ["the form unmounts", "unmount"],
+  ])(
+    "writes an edit still waiting for autosave when %s",
+    async (_case, trigger) => {
+      getStudents.mockResolvedValue([MARIO])
+      const user = userEvent.setup()
+      const view = render(
+        <StudentManagement course={COURSE} onHome={vi.fn()} />,
+      )
+
+      await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+      await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+      await user.type(screen.getByLabelText("Telefono"), "333")
+      expect(editStudent).not.toHaveBeenCalled()
+      if (trigger === "pagehide") window.dispatchEvent(new Event("pagehide"))
+      else view.unmount()
+
+      await waitFor(() =>
+        expect(editStudent).toHaveBeenCalledWith(
+          "student-1",
+          "course-1",
+          expect.objectContaining({ phone: "333" }),
+        ),
+      )
+    },
+  )
+
+  it("refuses a birth date after the course start instead of saving it", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    const date = screen.getByLabelText("Data di nascita")
+    fireEvent.change(date, { target: { value: "2030-05-01" } })
+    expect(
+      await screen.findByText(
+        "Non salvato: completa una data di nascita non successiva all’inizio del corso.",
+      ),
+    ).toBeVisible()
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    expect(editStudent).not.toHaveBeenCalled()
+  })
+
+  it("keeps saving visible while a queued edit waits behind an older write", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    let resolveFirst: (() => void) | undefined
+    editStudent.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (resolveFirst = resolve)),
+    )
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.type(screen.getByLabelText("Telefono"), "1")
+    await waitFor(() => expect(editStudent).toHaveBeenCalledTimes(1), {
+      timeout: 2_000,
+    })
+    // A newer edit arrives while the first write is still running: the status
+    // must keep saying a save is in progress, before and after the debounce.
+    await user.type(screen.getByLabelText("Nota del corso"), "Bozza")
+    expect(screen.getByRole("status")).toHaveTextContent("Salvataggio…")
+    // Past the debounce the newer write is queued behind the first one.
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    expect(editStudent).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("status")).toHaveTextContent("Salvataggio…")
+    resolveFirst?.()
+    await waitFor(() => expect(editStudent).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText("Salvato")).toBeVisible()
+  })
+
+  it("explains why Back keeps an edit open while a required field is empty", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.clear(screen.getByLabelText("Cognome"))
+    expect(
+      await screen.findByText("Non salvato: completa cognome."),
+    ).toBeVisible()
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+    )
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Per uscire completa cognome. Le altre modifiche sono già salvate.",
+    )
+    expect(
+      screen.getByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    expect(screen.getByLabelText("Cognome")).toHaveFocus()
+    expect(editStudent).not.toHaveBeenCalled()
+
+    await user.type(screen.getByLabelText("Cognome"), "Bianchi")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+    )
+    await waitFor(() =>
+      expect(editStudent).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({ surname: "Bianchi" }),
+      ),
+    )
+  })
+
+  it("holds the phone Back and the bottom navigation like the form's Back", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    await user.clear(screen.getByLabelText("Nome"))
+    const leave = vi.fn()
+    act(() => requestLeave(leave))
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Per uscire completa nome.",
+    )
+    expect(leave).not.toHaveBeenCalled()
+
+    await user.type(screen.getByLabelText("Nome"), "Marco")
+    act(() => requestLeave(leave))
+    // The latest edit is written before the held navigation completes.
+    await waitFor(() => expect(leave).toHaveBeenCalledTimes(1))
+    expect(editStudent).toHaveBeenLastCalledWith(
+      "student-1",
+      "course-1",
+      expect.objectContaining({ firstName: "Marco" }),
+    )
+  })
+
+  it("does not open the edit form when a long press moved", async () => {
+    getStudents.mockResolvedValue([{ ...MARIO, phone: "3331234567" }])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    const field = screen.getByText("3331234567")
+
+    function press(moveTo: number) {
+      const at = (type: "pointerDown" | "pointerMove" | "pointerUp") =>
+        createEvent[type](field, {
+          pointerId: 1,
+          pointerType: "touch",
+          isPrimary: true,
+          clientX: type === "pointerDown" ? 100 : moveTo,
+          clientY: 100,
+        })
+      const down = at("pointerDown")
+      Object.defineProperty(down, "timeStamp", { value: 1_000 })
+      const move = at("pointerMove")
+      const up = at("pointerUp")
+      Object.defineProperty(up, "timeStamp", { value: 1_700 })
+      fireEvent(field, down)
+      fireEvent(field, move)
+      fireEvent(field, up)
+    }
+
+    press(140)
+    expect(
+      screen.queryByRole("heading", { name: "Modifica allievo" }),
+    ).not.toBeInTheDocument()
+
+    press(104)
+    expect(
+      await screen.findByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
   })
 
   it("confirms and atomically deletes only an unused student", async () => {

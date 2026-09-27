@@ -140,6 +140,11 @@ imperfect speech path. Apple/iPhone was unavailable, remains untested and stays
 on the UG2 release-candidate checklist. Do not convert this exception into a
 physical iPhone PASS.
 
+The speech runtime loads ONNX Runtime from the app's own origin and pins the
+Whisper model to a fixed Hugging Face revision; the model weights are the only
+third-party download, on first use. The roster assistant path (V05) adds no
+network call: the operator carries the photograph and the answer.
+
 OCR tests use an anonymous/synthetic corpus with field/person truth, poor-image and
 false-row cases. Measure correct readable fields associated with the correct
 person. Full-screen camera, free rotation/crop and mandatory review are UI
@@ -153,13 +158,18 @@ Keep the existing harness and command surface:
 - `npm run verify:domain`: repository, canonical-table and invariant checks;
 - `npm run verify`: quick + domain + production PWA build;
 - `npm run verify:e2e`: complete Playwright browser suite;
-- `npm run verify:all`: verify + deterministic full week + E2E;
+- `npm run verify:all`: verify + deterministic full week + offline check of
+  the built PWA + E2E;
 - `npm run milestone:start|check|complete -- <ID>`;
 - `npm run evidence -- <ID>`.
 
 The milestone manifest declares verification scripts, evidence and structured
 review files. Completion is refused when evidence is missing, verification is not
-all PASS, a review verdict is FAIL or any blocker exists. Old 0.1.0 milestone
+all PASS, a review verdict is FAIL or any blocker exists. Since F1 a new
+completion also requires `verification.json` written by `npm run evidence`,
+with a passing run of every declared script and a source digest equal to the
+current working tree's, so a hand-written file, a partial run or code changed
+after the run cannot close a milestone. Old 0.1.0 milestone
 statuses remain immutable history.
 
 Evidence under `.evidence/<ID>/` is small and reproducible: machine verification,
@@ -174,7 +184,9 @@ and core iPhone WebKit coverage. Test 320 × 664, 390 × 844 and 412 × 915 wher
 density/overflow is material; avoid multiplying every test across every viewport.
 
 CI uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
-failure artifacts where useful. Local checks remain required.
+failure artifacts where useful. Local checks remain required. GitHub Pages
+publishes `main` only after CI passes on the same commit and after the built app
+is proven to work offline at its subpath.
 
 ### 6.1 Platform coverage of the browser suite
 

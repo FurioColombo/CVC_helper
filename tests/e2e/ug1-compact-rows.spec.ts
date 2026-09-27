@@ -1,7 +1,6 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
+
+import { evidenceOutputPath } from "./evidence"
 
 /**
  * The 2026-09-20 density pass: the rows that repeat most in the application
@@ -10,8 +9,6 @@ import { expect, type Page, test } from "@playwright/test"
  * name. Each assertion here is the shape of a row, not its styling, so the
  * screens can keep changing without this spec turning into a pixel diff.
  */
-
-const evidenceDirectory = path.resolve(".evidence/UG1")
 
 async function addStudent(
   page: Page,
@@ -46,7 +43,6 @@ test("keeps the repeated rows compact and their markers legible", async ({
     "Row geometry is measured on one project",
   )
   test.setTimeout(180_000)
-  mkdirSync(evidenceDirectory, { recursive: true })
 
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
@@ -77,7 +73,7 @@ test("keeps the repeated rows compact and their markers legible", async ({
   expect(await minorCard.locator("svg").count()).toBeGreaterThan(0)
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
-    path: path.join(evidenceDirectory, "students-compact-rows.png"),
+    path: evidenceOutputPath(testInfo, "UG1", "students-compact-rows.png"),
     fullPage: true,
   })
 
@@ -116,7 +112,7 @@ test("keeps the repeated rows compact and their markers legible", async ({
   const volunteerBox = await volunteerRow.boundingBox()
   expect(volunteerBox!.height).toBeLessThanOrEqual(64)
   await page.screenshot({
-    path: path.join(evidenceDirectory, "volunteers-role-rows.png"),
+    path: evidenceOutputPath(testInfo, "UG1", "volunteers-role-rows.png"),
     fullPage: true,
   })
   await page.getByRole("button", { name: "Indietro da Volontari" }).click()
@@ -205,7 +201,7 @@ test("keeps the repeated rows compact and their markers legible", async ({
   await page.setViewportSize({ width: 320, height: 664 })
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
-    path: path.join(evidenceDirectory, "crew-header-one-row.png"),
+    path: evidenceOutputPath(testInfo, "UG1", "crew-header-one-row.png"),
     fullPage: true,
   })
 
@@ -215,7 +211,7 @@ test("keeps the repeated rows compact and their markers legible", async ({
   })
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
-    path: path.join(evidenceDirectory, "crew-header-one-row-200.png"),
+    path: evidenceOutputPath(testInfo, "UG1", "crew-header-one-row-200.png"),
     fullPage: true,
   })
   await page.evaluate(() => {
@@ -248,7 +244,11 @@ test("keeps the repeated rows compact and their markers legible", async ({
   expect(stateBox!.x).toBeGreaterThan(noteBox!.x)
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
-    path: path.join(evidenceDirectory, "evaluation-note-and-state-row.png"),
+    path: evidenceOutputPath(
+      testInfo,
+      "UG1",
+      "evaluation-note-and-state-row.png",
+    ),
     fullPage: true,
   })
 
@@ -258,7 +258,11 @@ test("keeps the repeated rows compact and their markers legible", async ({
   })
   await expectNoHorizontalPageScroll(page)
   await page.screenshot({
-    path: path.join(evidenceDirectory, "evaluation-note-and-state-row-200.png"),
+    path: evidenceOutputPath(
+      testInfo,
+      "UG1",
+      "evaluation-note-and-state-row-200.png",
+    ),
     fullPage: true,
   })
 })

@@ -1,0 +1,46 @@
+{
+  "milestone": "V05",
+  "recordedBy": "npm run evidence -- V05 (scripts/record-verification.mjs), which ran npm run verify:e2e:v05; summarised from that run's output",
+  "sourceDigest": "decd43318c2ef6cf0a43c2f6d906351f7fdefb4097e0485a87e2f187c0fc3f29",
+  "runtime": "v24.21.0",
+  "recordedAt": "2026-09-27T19:53:24.282Z",
+  "command": "npm run verify:e2e:v05 (tests/e2e/v05-assistant-paste.spec.ts, own server on a free port)",
+  "result": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "projects": [
+      "pixel-7-chrome",
+      "iphone-13-viewport",
+      "iphone-13-webkit-core"
+    ],
+    "titles": [
+      "copies the prompt, reads a pasted answer, fixes or leaves out every unread line, and saves with no network call"
+    ]
+  },
+  "exitCode": 0,
+  "alsoInFullRun": {
+    "source": "npm run evidence -- F1 (verify:all), same source digest",
+    "sameDigest": true,
+    "result": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-viewport",
+        "iphone-13-webkit-core"
+      ],
+      "titles": [
+        "copies the prompt, reads a pasted answer, fixes or leaves out every unread line, and saves with no network call"
+      ]
+    }
+  },
+  "behaviors": [
+    "The prompt is copied in one tap and the format is stated by the app.",
+    "A pasted answer with fictitious names is read into the same review as a scan; every pasted row needs its own check and the count must be confirmed.",
+    "Unread lines stay visible with their text and reason; each is fixed in place (Rileggi riga) or left out explicitly before saving.",
+    "The journey fails on any request to a foreign host, any non-GET request, or any request URL that carries a pasted value."
+  ],
+  "physicalDevice": "Not run; the owner tries the path with the assistant the centre will use at UG2."
+}

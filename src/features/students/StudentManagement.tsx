@@ -18,7 +18,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MinorBadge, SexIcon } from "@/components/PersonBadges"
 import { StudentSizeSelector } from "@/components/StudentSizeSelector"
-import { closeActiveDialogOnBack } from "@/navigation/browserHistory"
+import {
+  afterPendingBack,
+  historyBack,
+  holdBackNavigation,
+  useLeaveGuard,
+} from "@/navigation/browserHistory"
 import {
   DUTY_DAYS,
   SESSION_SEQUENCE,
@@ -33,6 +38,7 @@ import {
   calculateStudentAge,
   getStudentDisplayName,
   isStudentMinor,
+  isValidDateOnly,
   MAX_DECLARED_STUDENT_AGE,
 } from "@/domain/student"
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
@@ -206,12 +212,9 @@ function useFieldShortcut(onShortcut: () => void) {
     },
     onPointerUp: (event: React.PointerEvent) => {
       const startedAt = pressStartedAt.current
+      const moved = pressMoved.current
       cancelPress()
-      if (
-        startedAt === null ||
-        pressMoved.current ||
-        event.timeStamp - startedAt < 500
-      ) {
+      if (startedAt === null || moved || event.timeStamp - startedAt < 500) {
         return
       }
       longPressed.current = true
@@ -390,6 +393,22 @@ function Field({
   )
 }
 
+function listInItalian(items: string[]) {
+  if (items.length < 2) return items.join("")
+  return `${items.slice(0, -1).join(", ")} e ${items.at(-1)}`
+}
+
+function focusFormField(form: HTMLFormElement | null, field: StudentField) {
+  const group = form?.querySelector<HTMLElement>(`[data-field="${field}"]`)
+  const target =
+    group?.querySelector<HTMLElement>('input:not([type="radio"]), textarea') ??
+    group?.querySelector<HTMLElement>(
+      'input[type="radio"]:checked, [aria-pressed="true"]',
+    ) ??
+    group?.querySelector<HTMLElement>('input[type="radio"], button')
+  target?.focus()
+}
+
 function StudentForm({
   course,
   student,
@@ -419,17 +438,25 @@ function StudentForm({
   const [size, setSize] = useState<StudentSize | "">(student?.size ?? "")
   const [initialNote, setInitialNote] = useState(student?.initialNote ?? "")
   const [courseNote, setCourseNote] = useState(student?.courseNote ?? "")
-  const [saving, setSaving] = useState(false)
+  // An edit waiting for its autosave and a write still running both count as
+  // saving, so the status never says less than the queue holds.
+  const [queued, setQueued] = useState(false)
+  const [inFlight, setInFlight] = useState(0)
+  const [creating, setCreating] = useState(false)
   const [initialNoteDictationPending, setInitialNoteDictationPending] =
     useState(false)
   const [courseNoteDictationPending, setCourseNoteDictationPending] =
     useState(false)
   const [exitBlockedByDictation, setExitBlockedByDictation] = useState(false)
+  const [exitBlockedByMissing, setExitBlockedByMissing] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(false)
   const initialized = useRef(false)
   const saveChain = useRef<Promise<void>>(Promise.resolve())
   const saveVersion = useRef(0)
+  // The latest valid edit still waiting for its debounce: written at once if
+  // the page is hidden or closed, or the form unmounts, before the timer fires.
+  const unsavedEdit = useRef<StudentEditInput | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const dictationPending =
     initialNoteDictationPending || courseNoteDictationPending
@@ -443,19 +470,7 @@ function StudentForm({
   }, [])
 
   useEffect(() => {
-    if (!focusField) return
-    const group = formRef.current?.querySelector<HTMLElement>(
-      `[data-field="${focusField}"]`,
-    )
-    const target =
-      group?.querySelector<HTMLElement>(
-        'input:not([type="radio"]), textarea',
-      ) ??
-      group?.querySelector<HTMLElement>(
-        'input[type="radio"]:checked, [aria-pressed="true"]',
-      ) ??
-      group?.querySelector<HTMLElement>('input[type="radio"], button')
-    target?.focus()
+    if (focusField) focusFormField(formRef.current, focusField)
   }, [focusField])
 
   const input = useMemo<StudentEditInput>(
@@ -486,23 +501,47 @@ function StudentForm({
     ],
   )
 
-  async function persistEdit(draftVersion?: number) {
+  const missingFields = useMemo(() => {
+    const missing: { field: StudentField; label: string }[] = []
+    if (!input.firstName) missing.push({ field: "firstName", label: "nome" })
+    if (!input.surname) missing.push({ field: "surname", label: "cognome" })
     if (
-      !student ||
-      !input.firstName ||
-      !input.surname ||
-      (!input.dateOfBirth &&
-        (typeof input.declaredAgeAtCourseStart !== "number" ||
-          !Number.isInteger(input.declaredAgeAtCourseStart) ||
-          input.declaredAgeAtCourseStart < 0 ||
-          input.declaredAgeAtCourseStart > MAX_DECLARED_STUDENT_AGE)) ||
-      !input.sex
+      input.dateOfBirth &&
+      (!isValidDateOnly(input.dateOfBirth) ||
+        input.dateOfBirth > course.startDate)
     ) {
-      return false
+      missing.push({
+        field: "dateOfBirth",
+        label: "una data di nascita non successiva all’inizio del corso",
+      })
+    } else if (
+      !input.dateOfBirth &&
+      (typeof input.declaredAgeAtCourseStart !== "number" ||
+        !Number.isInteger(input.declaredAgeAtCourseStart) ||
+        input.declaredAgeAtCourseStart < 0 ||
+        input.declaredAgeAtCourseStart > MAX_DECLARED_STUDENT_AGE)
+    ) {
+      missing.push({
+        field: "declaredAgeAtCourseStart",
+        label: "data di nascita o età",
+      })
     }
+    if (!input.sex) missing.push({ field: "sex", label: "sesso" })
+    return missing
+  }, [course.startDate, input])
+  const missingLabels =
+    student && missingFields.length > 0
+      ? listInItalian(missingFields.map(({ label }) => label))
+      : null
+  const savingEdit = inFlight > 0 || (queued && !missingLabels)
+
+  async function persistEdit(draftVersion?: number) {
+    setQueued(false)
+    if (!student || missingFields.length > 0) return false
     const version = draftVersion ?? ++saveVersion.current
     const snapshot = input
-    setSaving(true)
+    unsavedEdit.current = null
+    setInFlight((count) => count + 1)
     setSaved(false)
     setError(false)
     const request = saveChain.current.then(() =>
@@ -511,17 +550,13 @@ function StudentForm({
     saveChain.current = request.catch(() => undefined)
     try {
       await request
-      if (version === saveVersion.current) {
-        setSaving(false)
-        setSaved(true)
-      }
+      if (version === saveVersion.current) setSaved(true)
       return true
     } catch {
-      if (version === saveVersion.current) {
-        setSaving(false)
-        setError(true)
-      }
+      if (version === saveVersion.current) setError(true)
       return false
+    } finally {
+      setInFlight((count) => count - 1)
     }
   }
 
@@ -533,30 +568,61 @@ function StudentForm({
     }
     const draftVersion = ++saveVersion.current
     setSaved(false)
-    setSaving(false)
+    setQueued(true)
+    setExitBlockedByMissing(false)
+    unsavedEdit.current = missingFields.length === 0 ? input : null
     const timer = window.setTimeout(() => void persistEdit(draftVersion), 500)
     return () => window.clearTimeout(timer)
     // input contains the complete editable snapshot and intentionally drives autosave.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input, student?.id])
 
+  useEffect(() => {
+    if (!student) return
+    const studentId = student.id
+    function flush() {
+      const snapshot = unsavedEdit.current
+      if (!snapshot) return
+      unsavedEdit.current = null
+      saveChain.current = saveChain.current
+        .then(() => updateStudent(studentId, course.id, snapshot))
+        .catch(() => undefined)
+    }
+    function flushWhenHidden() {
+      if (document.visibilityState === "hidden") flush()
+    }
+    window.addEventListener("pagehide", flush)
+    document.addEventListener("visibilitychange", flushWhenHidden)
+    return () => {
+      window.removeEventListener("pagehide", flush)
+      document.removeEventListener("visibilitychange", flushWhenHidden)
+      flush()
+    }
+  }, [course.id, student])
+
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSaving(true)
+    if (student) {
+      if (await persistEdit()) onSaved()
+      return
+    }
+    setCreating(true)
     setError(false)
     try {
-      if (student) {
-        const persisted = await persistEdit()
-        if (!persisted) return
-      } else await createStudent(course.id, input)
+      await createStudent(course.id, input)
       onSaved()
     } catch {
-      setSaving(false)
+      setCreating(false)
       setError(true)
     }
   }
 
-  async function exitForm() {
+  /**
+   * The form's Back, the bottom navigation and the phone's Back all end here
+   * for an existing student: the edit is saved before leaving, and an edit that
+   * cannot be saved yet keeps the form open with the reason.
+   */
+  async function exitForm(leave?: () => void) {
     if (dictationPending) {
       setExitBlockedByDictation(true)
       return
@@ -565,8 +631,25 @@ function StudentForm({
       onCancel()
       return
     }
-    if (await persistEdit()) onSaved()
+    const firstMissing = missingFields[0]
+    if (firstMissing) {
+      setExitBlockedByMissing(true)
+      focusFormField(formRef.current, firstMissing.field)
+      return
+    }
+    if (!(await persistEdit())) return
+    if (leave) leave()
+    else onSaved()
   }
+
+  useLeaveGuard(
+    student
+      ? (leave) => {
+          void exitForm(leave)
+          return true
+        }
+      : null,
+  )
 
   return (
     <>
@@ -577,6 +660,12 @@ function StudentForm({
       {exitBlockedByDictation && dictationPending && (
         <p className="mb-4 text-sm text-muted-foreground" role="status">
           Attendi la fine della dettatura prima di uscire.
+        </p>
+      )}
+      {exitBlockedByMissing && missingLabels && (
+        <p className="mb-4 text-sm font-semibold text-[#a2381b]" role="alert">
+          Per uscire completa {missingLabels}. Le altre modifiche sono già
+          salvate.
         </p>
       )}
       <form className="grid gap-5" onSubmit={save} ref={formRef}>
@@ -727,20 +816,26 @@ function StudentForm({
           </div>
         )}
 
-        {student && (saving || saved) && (
+        {student && (savingEdit || saved || missingLabels) && (
           <p
             className="flex items-center gap-2 text-sm text-muted-foreground"
             role="status"
           >
-            {saving ? (
+            {savingEdit ? (
               <LoaderCircle
                 aria-hidden="true"
                 className="size-4 animate-spin"
               />
             ) : (
-              <Check aria-hidden="true" className="size-4 text-[#18794e]" />
+              !missingLabels && (
+                <Check aria-hidden="true" className="size-4 text-[#18794e]" />
+              )
             )}
-            {saving ? "Salvataggio…" : "Salvato"}
+            {savingEdit
+              ? "Salvataggio…"
+              : missingLabels
+                ? `Non salvato: completa ${missingLabels}.`
+                : "Salvato"}
           </p>
         )}
 
@@ -752,13 +847,18 @@ function StudentForm({
           )}
           <Button
             disabled={
-              saving ||
+              inFlight > 0 ||
+              creating ||
               initialNoteDictationPending ||
               courseNoteDictationPending
             }
             type="submit"
           >
-            {saving ? "Salvataggio…" : student ? "Fine" : "Salva allievo"}
+            {inFlight > 0 || creating
+              ? "Salvataggio…"
+              : student
+                ? "Fine"
+                : "Salva allievo"}
           </Button>
         </div>
       </form>
@@ -1150,8 +1250,9 @@ export function StudentManagement({
       }
     }
 
+    let active = true
     function restoreStudentScreen(event: PopStateEvent) {
-      if (closeActiveDialogOnBack()) {
+      if (holdBackNavigation(event)) {
         event.stopImmediatePropagation()
         return
       }
@@ -1162,19 +1263,33 @@ export function StudentManagement({
             ? { kind: "detail", studentId: initialStudentId }
             : { kind: "list" }),
       )
+      // The phone's Back skips the form's own completion callback, so the
+      // screen it returns to rereads what the form saved.
+      readValidStudents(course.id)
+        .then((records) => {
+          if (active) setStudents(records)
+        })
+        .catch(() => {
+          if (active) setLoadState("error")
+        })
     }
     window.addEventListener("popstate", restoreStudentScreen)
-    return () => window.removeEventListener("popstate", restoreStudentScreen)
-  }, [initialStudentId, initialStudentScreen])
+    return () => {
+      active = false
+      window.removeEventListener("popstate", restoreStudentScreen)
+    }
+  }, [course.id, initialStudentId, initialStudentScreen])
 
   function navigateStudentScreen(next: StudentScreen) {
-    pushStudentScreenHistory(next)
-    setScreen(next)
+    afterPendingBack(() => {
+      pushStudentScreenHistory(next)
+      setScreen(next)
+    })
   }
 
   function backStudentScreen(fallback: StudentScreen) {
     if (readStudentScreenHistory(window.history.state)) {
-      window.history.back()
+      historyBack()
       return
     }
     setScreen(fallback)
@@ -1267,6 +1382,7 @@ export function StudentManagement({
       <StudentScan
         courseId={course.id}
         courseStartDate={course.startDate}
+        existingStudents={students}
         onBack={() => backStudentScreen({ kind: "list" })}
         onCommitted={() => {
           void refreshStudents()

@@ -10,7 +10,36 @@ export type DictationStatus =
   "idle" | "permission" | "recording" | "loading" | "processing" | "error"
 
 export type DictationError =
-  "unsupported" | "permission" | "recording" | "transcription"
+  | "unsupported"
+  | "permission"
+  | "device"
+  | "offline"
+  | "recording"
+  | "transcription"
+
+/**
+ * `getUserMedia` rejects with a `DOMException` whose `name` says why. Denied
+ * or policy-blocked permission is what the existing "permission" message
+ * already covers; a missing or already-claimed microphone is a different
+ * situation the instructor cannot fix by granting anything, so it gets its
+ * own "device" message. Anything else (or a non-DOMException, as fixtures in
+ * tests use) falls back to "permission" — the safest guess before this fix,
+ * and still a reasonable one.
+ */
+function mapGetUserMediaError(error: unknown): DictationError {
+  const name = error instanceof DOMException ? error.name : undefined
+  switch (name) {
+    case "NotAllowedError":
+    case "SecurityError":
+      return "permission"
+    case "NotFoundError":
+    case "NotReadableError":
+    case "OverconstrainedError":
+      return "device"
+    default:
+      return "permission"
+  }
+}
 
 export type SpeechTranscribe = (
   audio: Blob,
@@ -128,19 +157,14 @@ export function useDictation({
     const attempt = ++attemptRef.current
     setError(null)
     setLoadPercent(undefined)
-    setStatus("permission")
-    let stream: MediaStream | null = null
-    let modelReady = false
-
+    // The model is prepared before the microphone is ever requested. On a
+    // first use that means the (possibly minutes-long) download runs with no
+    // stream open at all, rather than leaving the microphone live — and the
+    // browser's own in-use indicator on — for the whole wait. Once the model
+    // is cached this resolves immediately, so later uses feel the same as
+    // before.
+    setStatus("loading")
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      if (!mountedRef.current || attempt !== attemptRef.current) {
-        stopStream(stream)
-        return
-      }
-
-      streamRef.current = stream
-      setStatus("loading")
       await prepareForSpeech({
         onProgress(progress) {
           if (!mountedRef.current || attempt !== attemptRef.current) return
@@ -148,12 +172,35 @@ export function useDictation({
           setLoadPercent(progress.percent)
         },
       })
-      modelReady = true
-      if (!mountedRef.current || attempt !== attemptRef.current) {
-        stopStream(stream)
-        return
-      }
+    } catch {
+      if (!mountedRef.current || attempt !== attemptRef.current) return
+      // The model is downloaded once per device (and again after an update
+      // that pins a new revision); offline, that download is what failed.
+      setError(navigator.onLine === false ? "offline" : "transcription")
+      setLoadPercent(undefined)
+      setStatus("error")
+      return
+    }
+    if (!mountedRef.current || attempt !== attemptRef.current) return
 
+    setLoadPercent(undefined)
+    setStatus("permission")
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    } catch (mediaError) {
+      if (!mountedRef.current || attempt !== attemptRef.current) return
+      setError(mapGetUserMediaError(mediaError))
+      setStatus("error")
+      return
+    }
+    if (!mountedRef.current || attempt !== attemptRef.current) {
+      stopStream(stream)
+      return
+    }
+
+    streamRef.current = stream
+    try {
       const recorder = new MediaRecorder(stream)
       recorderRef.current = recorder
       chunksRef.current = []
@@ -168,9 +215,7 @@ export function useDictation({
     } catch {
       stopStream(stream)
       if (!mountedRef.current || attempt !== attemptRef.current) return
-      setError(
-        !stream ? "permission" : modelReady ? "recording" : "transcription",
-      )
+      setError("recording")
       setStatus("error")
     }
   }

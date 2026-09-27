@@ -173,8 +173,10 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
   await expect(completedSaturday).toContainText(completedNames ?? "")
   await assertHealthyFuturePlan()
 
+  // N1: reload restores the same screen (Comandate), so there is no Home
+  // "Comandate" card to click here; clicking it would instead hit the
+  // screen's own "Indietro da Comandate" Back button.
   await page.reload()
-  await page.getByRole("button", { name: "Comandate" }).click()
   await expect(
     page.getByRole("button", { name: /Sabato, 3 assegnati, completata/ }),
   ).toContainText(completedNames ?? "")

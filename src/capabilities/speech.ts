@@ -1,3 +1,16 @@
+// The default onnxruntime-web loader (see `configureLocalOnnxRuntime` below)
+// fetches its executable WASM from cdn.jsdelivr.net unless told otherwise —
+// an off-origin, non-local-first request the app must not make. Vite already
+// bundles the ONNX Runtime web build for the WASM execution provider, so a
+// `?url` import gives the exact same files as build-time assets served from
+// this origin. Both variants exist because Safari and everything else load a
+// different pre-built runtime; see `isSafariBrowser` below for the split
+// transformers.js itself uses.
+import ortWasmSimdThreadedMjsUrl from "onnxruntime-web/ort-wasm-simd-threaded.mjs?url"
+import ortWasmSimdThreadedWasmUrl from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
+import ortWasmSimdThreadedAsyncifyMjsUrl from "onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url"
+import ortWasmSimdThreadedAsyncifyWasmUrl from "onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url"
+
 export type SpeechTranscriptionPhase = "loading" | "processing"
 
 export interface SpeechTranscriptionProgress {
@@ -47,11 +60,78 @@ export const TRANSCRIPTION_GUARD = {
   condition_on_previous_text: false,
 } as const
 
+/**
+ * Without a pin, `pipeline()` follows the moving `main` branch of
+ * `onnx-community/whisper-base` and a future upload could silently change
+ * accuracy or output shape from under the measured word-error-rate figures
+ * above. Checked against `https://huggingface.co/api/models/onnx-community/
+ * whisper-base` on 2026-09-26: `sha` `1846881b…`, `lastModified`
+ * 2025-06-19T13:49:48Z — already before the 2026-09-24 S4 measurement date,
+ * so this pin is the exact revision that benchmark covers, not a guess. If
+ * that API ever reports a newer `lastModified`, re-measure before moving the
+ * pin.
+ */
+const WHISPER_BASE_REVISION = "1846881b6b3a3024392c1eea3ad983695bc23925"
+
 export const PRODUCTION_SPEECH_CONFIG = {
   modelId: "onnx-community/whisper-base",
+  revision: WHISPER_BASE_REVISION,
   dtype: "q8",
   generationOptions: TRANSCRIPTION_GUARD,
 } as const
+
+/**
+ * Whisper's own attention window is 30 seconds; transformers.js silently
+ * truncates anything longer unless chunking is requested explicitly. A
+ * dictated avaria or evaluation note can run past that on a talkative
+ * instructor, so anything longer is chunked. `stride_length_s` follows the
+ * library's own chunk_length_s/6 rule of thumb so chunk boundaries overlap
+ * enough to stitch words back together; short clips keep the plain call so
+ * their behaviour (and the measured guard settings) is unchanged.
+ */
+const WHISPER_SAMPLE_RATE = 16_000
+const MAX_UNCHUNKED_AUDIO_SECONDS = 30
+const CHUNK_LENGTH_SECONDS = 30
+const STRIDE_LENGTH_SECONDS = CHUNK_LENGTH_SECONDS / 6
+
+/**
+ * Mirrors `apis.IS_SAFARI` from `@huggingface/transformers`, which is not
+ * part of that package's public exports. Safari and everything else load a
+ * different pre-built onnxruntime-web WASM variant (see the module-level
+ * imports above); this decides which local pair to hand it.
+ */
+function isSafariBrowser() {
+  if (typeof navigator === "undefined") return false
+  const userAgent = navigator.userAgent
+  const vendor = navigator.vendor || ""
+  const isAppleVendor = vendor.includes("Apple")
+  const notOtherBrowser =
+    !/CriOS|FxiOS|EdgiOS|OPiOS|mercury|brave/i.test(userAgent) &&
+    !userAgent.includes("Chrome") &&
+    !userAgent.includes("Android")
+  return isAppleVendor && notOtherBrowser
+}
+
+/**
+ * Points onnxruntime-web at the WASM runtime files Vite already emits for
+ * this build instead of the cdn.jsdelivr.net default transformers.js sets on
+ * import (`backends/onnx.js`, `if (!ONNX_ENV.wasm.wasmPaths) { … }`). Reading
+ * `env.backends.onnx` right after the dynamic import runs after that default
+ * assignment, so overwriting `wasmPaths` here always wins before any session
+ * is created — `ensureWasmLoaded()` only reads it lazily, at first inference.
+ */
+function configureLocalOnnxRuntime(transformersEnv: {
+  backends?: { onnx?: { wasm?: { wasmPaths?: unknown } } }
+}) {
+  const wasm = transformersEnv.backends?.onnx?.wasm
+  if (!wasm) return
+  wasm.wasmPaths = isSafariBrowser()
+    ? { mjs: ortWasmSimdThreadedMjsUrl, wasm: ortWasmSimdThreadedWasmUrl }
+    : {
+        mjs: ortWasmSimdThreadedAsyncifyMjsUrl,
+        wasm: ortWasmSimdThreadedAsyncifyWasmUrl,
+      }
+}
 
 type ModelProgress = { status?: string; progress?: number }
 type ModelProgressListener = (percent?: number) => void
@@ -210,11 +290,13 @@ async function decodeAudio(audio: Blob) {
 }
 
 async function loadWhisperTranscriber(onProgress: ModelProgressListener) {
-  const { pipeline } = await import("@huggingface/transformers")
+  const { pipeline, env } = await import("@huggingface/transformers")
+  configureLocalOnnxRuntime(env)
   return (await pipeline(
     "automatic-speech-recognition",
     PRODUCTION_SPEECH_CONFIG.modelId,
     {
+      revision: PRODUCTION_SPEECH_CONFIG.revision,
       dtype: PRODUCTION_SPEECH_CONFIG.dtype,
       progress_callback: (event: ModelProgress) => {
         if (event.status !== "progress_total" && event.status !== "ready")
@@ -284,10 +366,20 @@ export function createLocalItalianSpeechProvider(
       await prepare(options)
       const engine = await getTranscriber()
       options.onProgress?.({ phase: "processing" })
-      const result = await engine(await decode(audio), {
+      const samples = await decode(audio)
+      const durationSeconds = samples.length / WHISPER_SAMPLE_RATE
+      const chunking =
+        durationSeconds > MAX_UNCHUNKED_AUDIO_SECONDS
+          ? {
+              chunk_length_s: CHUNK_LENGTH_SECONDS,
+              stride_length_s: STRIDE_LENGTH_SECONDS,
+            }
+          : {}
+      const result = await engine(samples, {
         language: "italian",
         task: "transcribe",
         ...PRODUCTION_SPEECH_CONFIG.generationOptions,
+        ...chunking,
       })
       return result.text.trim()
     },

@@ -133,4 +133,26 @@ describe("FaultManagement", () => {
     )
     expect(onOpenBoats).toHaveBeenCalledOnce()
   })
+
+  it("returns to the fault list on phone Back instead of leaving the area", async () => {
+    vi.mocked(listFaults).mockResolvedValue(FAULTS)
+    const onHome = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <FaultManagement
+        courseId="course-1"
+        onHome={onHome}
+        onOpenBoats={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Segnala avaria" }),
+    )
+    expect(screen.getByLabelText("Barca")).toBeVisible()
+
+    window.history.back()
+    expect(await screen.findByRole("heading", { name: "Avarie" })).toBeVisible()
+    expect(onHome).not.toHaveBeenCalled()
+  })
 })

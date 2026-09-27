@@ -1,9 +1,9 @@
-import { mkdirSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { readFileSync } from "node:fs"
 
 import { expect, test } from "@playwright/test"
 
 import { SESSION_SEQUENCE } from "../../src/domain/config"
+import { evidenceOutputPath } from "./evidence"
 
 // Matching by pathname keeps this independent of the port the suite runs on.
 const isAppRoot = (target: URL) => target.pathname === "/"
@@ -199,9 +199,7 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
   expect(originalRows.evaluations?.length).toBeGreaterThan(
     fixture.tables.evaluations?.length ?? 0,
   )
-  const evidenceDirectory = resolve(".evidence/UG1")
-  mkdirSync(evidenceDirectory, { recursive: true })
   await reopened.screenshot({
-    path: resolve(evidenceDirectory, "upgraded-week-overview.png"),
+    path: evidenceOutputPath(testInfo, "UG1", "upgraded-week-overview.png"),
   })
 })

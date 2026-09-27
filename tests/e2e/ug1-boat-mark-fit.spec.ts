@@ -1,7 +1,6 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, test } from "@playwright/test"
+
+import { evidenceOutputPath } from "./evidence"
 
 /**
  * Every model mark, measured in its slot.
@@ -93,10 +92,8 @@ test("keeps every model mark inside its slot", async ({ page }, testInfo) => {
     )
   expect(Math.max(...cardHeights)).toBeLessThanOrEqual(56)
 
-  const evidenceDirectory = path.resolve(".evidence/UG1")
-  mkdirSync(evidenceDirectory, { recursive: true })
   await page.screenshot({
-    path: path.join(evidenceDirectory, "boat-marks-every-type.png"),
+    path: evidenceOutputPath(testInfo, "UG1", "boat-marks-every-type.png"),
     fullPage: true,
   })
 })

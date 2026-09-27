@@ -81,8 +81,9 @@ test("adds, edits and reloads every volunteer role across staff-only surfaces", 
     page.getByRole("button", { name: "Carlo Capo Turno, ruolo CT" }),
   ).toBeVisible()
 
+  // N1: reload restores the same screen (the Volontari list), so there is
+  // no Home "Volontari" card to click here.
   await page.reload()
-  await page.getByRole("button", { name: "Volontari" }).click()
   await expect(
     page.getByRole("button", { name: "Anna ADV, ruolo ADV" }),
   ).toBeVisible()

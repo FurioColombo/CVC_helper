@@ -48,3 +48,52 @@ export async function saveActiveCourse(
 
   return course
 }
+
+/**
+ * Every table that holds course data, children first. The app keeps one
+ * course at a time, so starting a new one erases the whole local archive:
+ * nothing about the previous week's students (minors included) stays behind
+ * on the device.
+ */
+export const COURSE_DATA_TABLES = [
+  "evaluations",
+  "crewMembers",
+  "crews",
+  "landAssignments",
+  "sessionBoats",
+  "dutyAssignments",
+  "dutySettings",
+  "faults",
+  "boats",
+  "volunteers",
+  "students",
+  "courses",
+] as const
+
+const COURSE_PREFERENCE_PREFIXES = ["cvc-helper.scan-name-order."]
+
+export async function eraseAllCourseData() {
+  await db.init()
+  await db.writeTransaction(async (transaction) => {
+    for (const table of COURSE_DATA_TABLES) {
+      await transaction.execute(`DELETE FROM ${table}`)
+    }
+  })
+  // Deleted rows can survive in free database pages until they are reused;
+  // compacting rewrites the file without them. Where the storage layer
+  // cannot compact, the rows are still gone from every query.
+  try {
+    await db.execute("VACUUM")
+  } catch {
+    // Not supported by every browser storage backend.
+  }
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (COURSE_PREFERENCE_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+        window.localStorage.removeItem(key)
+      }
+    }
+  } catch {
+    // Storage may be unavailable; these are only interface preferences.
+  }
+}

@@ -101,6 +101,65 @@ describe("crew persistence", () => {
     )
   })
 
+  it("orders A terra students by name instead of their random assignment id", async () => {
+    database.getAll
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: "land-zzz", sessionId: "sat-pm", studentId: "student-b" },
+        { id: "land-aaa", sessionId: "sat-pm", studentId: "student-a" },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: "student-b",
+          surname: "Bianchi",
+          nickname: null,
+          firstName: "Luca",
+        },
+        {
+          id: "student-a",
+          surname: "Alberti",
+          nickname: null,
+          firstName: "Anna",
+        },
+      ])
+
+    const plan = await readCrewPlan("course-1", "sat-pm")
+
+    // The land assignment rows come back "b" before "a" (their insertion/id
+    // order); the returned plan must still list them by surname.
+    expect(plan.landStudentIds).toEqual(["student-a", "student-b"])
+    expect(plan.landAssignments.map(({ studentId }) => studentId)).toEqual([
+      "student-a",
+      "student-b",
+    ])
+  })
+
+  it("keeps A terra ordering deterministic when a student's name is missing", async () => {
+    database.getAll
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: "land-1", sessionId: "sat-pm", studentId: "student-unnamed" },
+        { id: "land-2", sessionId: "sat-pm", studentId: "student-a" },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: "student-a",
+          surname: "Alberti",
+          nickname: null,
+          firstName: "Anna",
+        },
+      ])
+
+    const plan = await readCrewPlan("course-1", "sat-pm")
+
+    // A known name always sorts before one with no matching student row.
+    expect(plan.landStudentIds).toEqual(["student-a", "student-unnamed"])
+  })
+
   it("round trips an intentionally empty first member slot", async () => {
     await saveCrewPlan("course-1", "sat-pm", {
       crews: [
@@ -142,6 +201,7 @@ describe("crew persistence", () => {
           position: 1,
         },
       ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
 
@@ -511,6 +571,7 @@ describe("crew persistence", () => {
           position: 0,
         },
       ])
+      .mockResolvedValueOnce([])
 
     await expect(readCrewPlan("course-1", "sun-am")).resolves.toEqual(
       expect.objectContaining({
@@ -563,6 +624,7 @@ describe("crew persistence", () => {
           position: 0,
         },
       ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
     const reloaded = await readCrewPlan("course-1", "sat-pm")

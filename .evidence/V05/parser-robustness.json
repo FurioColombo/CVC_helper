@@ -1,0 +1,483 @@
+{
+  "milestone": "V05",
+  "recordedAt": "2026-09-27T15:23:52.529Z",
+  "runtime": "v24.21.0",
+  "corpus": "src/capabilities/rosterPaste.corpus.ts (fictitious names only)",
+  "courseStartDate": "2026-08-29",
+  "cases": 32,
+  "passed": 32,
+  "silentlyWrongStudents": 0,
+  "results": [
+    {
+      "case": "the stated format",
+      "studentsRead": 3,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "prose before and a trailing apology after the block",
+      "studentsRead": 1,
+      "unparsedLines": 2,
+      "reasons": [
+        "testo prima del blocco",
+        "testo dopo la riga FINE"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a code fence around the block",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "smart quotes and an apostrophe in a surname",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a missing column",
+      "studentsRead": 1,
+      "unparsedLines": 1,
+      "reasons": [
+        "età non valida"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "an invented column",
+      "studentsRead": 0,
+      "unparsedLines": 1,
+      "reasons": [
+        "6 campi invece di 5"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a repeated header inside the block",
+      "studentsRead": 2,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "an empty answer",
+      "studentsRead": 0,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": false,
+      "formatMissing": true,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "prose only, without the format",
+      "studentsRead": 0,
+      "unparsedLines": 1,
+      "reasons": [
+        "fuori dal formato: manca la riga di intestazione"
+      ],
+      "complete": false,
+      "formatMissing": true,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a Markdown table instead of the format",
+      "studentsRead": 0,
+      "unparsedLines": 3,
+      "reasons": [
+        "fuori dal formato: manca la riga di intestazione",
+        "fuori dal formato: manca la riga di intestazione",
+        "fuori dal formato: manca la riga di intestazione"
+      ],
+      "complete": false,
+      "formatMissing": true,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "numbered rows",
+      "studentsRead": 0,
+      "unparsedLines": 2,
+      "reasons": [
+        "cognome non valido",
+        "cognome non valido"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a date in another format, an impossible date and a future date",
+      "studentsRead": 0,
+      "unparsedLines": 3,
+      "reasons": [
+        "data di nascita non valida (GG/MM/AAAA)",
+        "data di nascita non valida (GG/MM/AAAA)",
+        "data di nascita dopo l'inizio del corso"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "an age written in words or out of range",
+      "studentsRead": 0,
+      "unparsedLines": 2,
+      "reasons": [
+        "età non valida",
+        "età non valida"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "an answer cut short before FINE",
+      "studentsRead": 1,
+      "unparsedLines": 1,
+      "reasons": [
+        "2 campi invece di 5"
+      ],
+      "complete": false,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a note echoed from the prompt and a comment row",
+      "studentsRead": 1,
+      "unparsedLines": 2,
+      "reasons": [
+        "1 campi invece di 5",
+        "1 campi invece di 5"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a header without accents and a trailing separator",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "an empty surname or a digit in a name",
+      "studentsRead": 0,
+      "unparsedLines": 2,
+      "reasons": [
+        "cognome non valido",
+        "cognome non valido"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "text after FINE that looks like a row",
+      "studentsRead": 1,
+      "unparsedLines": 1,
+      "reasons": [
+        "testo dopo la riga FINE"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "Windows line endings and non-breaking spaces",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "day and month swapped against a printed age",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "empty trailing fields dropped by the assistant",
+      "studentsRead": 2,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "header words and a note written as names",
+      "studentsRead": 0,
+      "unparsedLines": 2,
+      "reasons": [
+        "cognome non valido",
+        "cognome non valido"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "the last row of an answer cut short",
+      "studentsRead": 1,
+      "unparsedLines": 1,
+      "reasons": [
+        "forse troncata: manca la riga FINE"
+      ],
+      "complete": false,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a row that starts like a code fence",
+      "studentsRead": 0,
+      "unparsedLines": 1,
+      "reasons": [
+        "cognome non valido"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "placeholders written with punctuation or a single letter",
+      "studentsRead": 0,
+      "unparsedLines": 4,
+      "reasons": [
+        "cognome non valido",
+        "cognome non valido",
+        "cognome non valido",
+        "nome non valido"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a header with a trailing separator and an apostrophe accent",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a header typed with a typographic apostrophe",
+      "studentsRead": 1,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "an age written one column too far with the telephone off",
+      "studentsRead": 0,
+      "unparsedLines": 1,
+      "reasons": [
+        "nella colonna Telefono c’è «16», che non è un telefono"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a dash or N/D written for an empty field",
+      "studentsRead": 2,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a birth date one column too far with the telephone off",
+      "studentsRead": 0,
+      "unparsedLines": 1,
+      "reasons": [
+        "nella colonna Telefono c’è «12/03/2010», che non è un telefono"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a birth date in another format one column too far, telephone off",
+      "studentsRead": 0,
+      "unparsedLines": 5,
+      "reasons": [
+        "nella colonna Telefono c’è «2010-03-12», che non è un telefono",
+        "nella colonna Telefono c’è «12 / 03 / 2011», che non è un telefono",
+        "nella colonna Telefono c’è «12032012», che non è un telefono",
+        "nella colonna Telefono c’è «12.3.13», che non è un telefono",
+        "nella colonna Telefono c’è «01 02 14», che non è un telefono"
+      ],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    },
+    {
+      "case": "a telephone in groups with the telephone off is ignored",
+      "studentsRead": 3,
+      "unparsedLines": 0,
+      "reasons": [],
+      "complete": true,
+      "formatMissing": false,
+      "unexpectedStudents": 0,
+      "missingStudents": 0,
+      "unparsedWithoutTextOrReason": 0,
+      "rowsWithoutReviewWarning": 0,
+      "pass": true
+    }
+  ]
+}

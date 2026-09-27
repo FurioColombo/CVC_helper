@@ -313,6 +313,14 @@ Prefer one clean checkpoint per completed milestone, with additional checkpoints
 
 Do not rewrite or erase healthy history merely to hide a failed approach.
 
+The published history was rewritten once, immediately before the first 0.3.0
+push, to remove real roster data (owner decision of 2026-09-26). Never pull,
+merge, rebase, cherry-pick or push from a copy of the repository made before
+that rewrite: re-clone, or reset its branches to `origin` first.
+`npm run check:repository` fails when `HEAD` contains a commit listed in
+`.evidence/F1/history-rewrite.json` as `preRewriteCommits`; CI fetches the full
+history so the same check runs there.
+
 ## 14. Retry and recovery
 
 Do not repeat the same failing approach indefinitely.

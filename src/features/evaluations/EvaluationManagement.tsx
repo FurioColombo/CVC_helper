@@ -36,6 +36,7 @@ import {
   type EvaluationRecord,
 } from "@/persistence/evaluations"
 import { listStudents, type StudentRecord } from "@/persistence/students"
+import { useLeaveGuard } from "@/navigation/browserHistory"
 
 export type EvaluationView = "students" | "crews" | "overview"
 interface EvaluationDraft {
@@ -378,6 +379,37 @@ export function EvaluationManagement({
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [saveErrors, setSaveErrors] = useState<Set<string>>(new Set())
   const [noteStudentId, setNoteStudentId] = useState<string | null>(null)
+  const [heldLeave, setHeldLeave] = useState<"note" | "saving" | null>(null)
+  const pendingLeave = useRef<(() => void) | null>(null)
+  const saveErrorAlert = useRef<HTMLDivElement>(null)
+
+  // Leaving by the screen's Back, the bottom navigation or the phone's Back
+  // never drops a note being written or a value that failed to save: a failed
+  // save needs an explicit Riprova or Scarta first, and a save in progress
+  // completes before the screen is left.
+  useLeaveGuard((leave) => {
+    if (noteStudentId !== null) {
+      setHeldLeave("note")
+      return true
+    }
+    if (saveErrors.size > 0) {
+      saveErrorAlert.current?.focus()
+      return true
+    }
+    if (savingIds.size > 0) {
+      pendingLeave.current = leave
+      setHeldLeave("saving")
+      return true
+    }
+    return false
+  })
+
+  useEffect(() => {
+    if (savingIds.size > 0 || !pendingLeave.current) return
+    const leave = pendingLeave.current
+    pendingLeave.current = null
+    if (saveErrors.size === 0) leave()
+  }, [savingIds, saveErrors])
 
   useEffect(() => {
     let active = true
@@ -475,7 +507,10 @@ export function EvaluationManagement({
         key={student.id}
         noteOpen={noteStudentId === student.id}
         onCloseNote={() => setNoteStudentId(null)}
-        onOpenNote={() => setNoteStudentId(student.id)}
+        onOpenNote={() => {
+          setHeldLeave(null)
+          setNoteStudentId(student.id)
+        }}
         onSaveNote={async (note) => {
           const saved = await persistStudent(student.id, {
             value: evaluation.value,
@@ -520,13 +555,29 @@ export function EvaluationManagement({
     onViewChange?.(nextView)
   }
 
+  function retryFailedSaves() {
+    for (const studentId of saveErrors) {
+      const attempt = records.get(studentId)
+      void persistStudent(studentId, {
+        value: attempt?.value ?? null,
+        note: attempt?.note ?? null,
+      })
+    }
+  }
+
+  function discardFailedSaves() {
+    // Rereading the session replaces every unsaved attempt with what is stored.
+    setNoteStudentId(null)
+    setLoading(true)
+    setRetry((value) => value + 1)
+  }
+
   return (
     <>
       <div className="mb-3 flex min-w-0 flex-wrap items-center gap-1">
         <button
           aria-label="Indietro da Valutazioni"
           className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-          disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={onHome}
           type="button"
         >
@@ -539,7 +590,12 @@ export function EvaluationManagement({
           <select
             aria-label="Sessione valutazioni"
             className="h-[44px] min-w-[160px] max-w-full flex-1 rounded-xl border bg-card px-[8px] text-sm font-bold outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
-            disabled={loading || savingIds.size > 0 || noteStudentId !== null}
+            disabled={
+              loading ||
+              savingIds.size > 0 ||
+              saveErrors.size > 0 ||
+              noteStudentId !== null
+            }
             onChange={(event) => {
               const nextSessionId = event.target.value as SessionId
               if (nextSessionId === sessionId) return
@@ -594,6 +650,52 @@ export function EvaluationManagement({
         </button>
       </div>
 
+      {saveErrors.size > 0 && (
+        <div
+          className="mt-3 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-3 text-sm font-semibold text-[#9a3412] outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          ref={saveErrorAlert}
+          role="alert"
+          tabIndex={-1}
+        >
+          <p>
+            {saveErrors.size === 1
+              ? "Una valutazione non è stata salvata."
+              : `${saveErrors.size} valutazioni non sono state salvate.`}{" "}
+            Riprova o scarta prima di uscire o cambiare sessione.
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Button
+              disabled={savingIds.size > 0}
+              onClick={retryFailedSaves}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" className="size-4" />
+              Riprova
+            </Button>
+            <Button
+              disabled={savingIds.size > 0}
+              onClick={discardFailedSaves}
+              type="button"
+              variant="secondary"
+            >
+              Scarta
+            </Button>
+          </div>
+        </div>
+      )}
+      {heldLeave === "note" && noteStudentId !== null && (
+        <p className="mt-3 text-sm font-semibold text-[#9a3412]" role="alert">
+          Salva o annulla la nota prima di uscire.
+        </p>
+      )}
+      {heldLeave === "saving" && savingIds.size > 0 && (
+        <p
+          className="mt-3 text-sm font-semibold text-muted-foreground"
+          role="status"
+        >
+          Salvataggio in corso: esco appena finisce.
+        </p>
+      )}
       {loadError && (
         <section
           className="mt-5 rounded-2xl border bg-card p-5 text-center"
@@ -710,14 +812,6 @@ export function EvaluationManagement({
                 </section>
               )}
             </>
-          )}
-          {saveErrors.size > 0 && (
-            <p
-              className="rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-3 text-sm font-semibold text-[#9a3412]"
-              role="alert"
-            >
-              Una modifica non è stata salvata. Riprova sul relativo allievo.
-            </p>
           )}
         </div>
       )}

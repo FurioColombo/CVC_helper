@@ -52,8 +52,14 @@ test("autosaves and restores student knowledge", async ({ page }) => {
     }),
   ).toBeVisible()
 
+  // N1: reload restores the same screen (Mario's profile), not Home, so
+  // confirm that first and use the screen's own Back button to reach the
+  // Allievi list before reopening the knowledge menu.
   await page.reload()
-  await page.getByRole("button", { name: "Allievi" }).click()
+  await expect(
+    page.getByRole("button", { name: "Indietro da Profilo" }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await openKnowledge(page)
   await expect(
     page

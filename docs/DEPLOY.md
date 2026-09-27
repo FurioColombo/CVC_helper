@@ -43,9 +43,12 @@ without that base path produces an app that 404s on a project site, which is why
 
 ## Deploying and redeploying
 
-`.github/workflows/deploy-pages.yml` builds and publishes on every push to
-`main`, and on demand from the Actions tab. To redeploy, push `main`; to
-redeploy without a change, run the workflow manually.
+`.github/workflows/deploy-pages.yml` publishes `main` only after the
+deterministic verification workflow (`ci.yml`) has passed on that exact commit,
+and first proves the built app works offline at its subpath
+(`check:ocr-offline`). A push whose CI fails is not deployed. To redeploy, push
+`main` and let CI pass; to redeploy without a change, run the workflow manually
+from the Actions tab.
 
 **Only `main` deploys**, and that is not a preference. GitHub's `github-pages`
 environment allows the default branch alone unless its deployment-branch rules
@@ -113,9 +116,26 @@ who opens the URL gets an empty app.
 
 Nothing was added for the deployment — no analytics, no beacons, no error
 reporting. Measured on a cold load through course creation: **zero off-origin
-requests**. The only cross-origin request the app ever makes is the speech model
-on first dictation, which predates this milestone and is stated in
-`CHANGELOG.md`.
+requests**. The only cross-origin request the app ever makes is the Whisper
+model weights, from huggingface.co on first dictation, which predates this
+milestone and is stated in `CHANGELOG.md`.
+
+The WebAssembly engine that _runs_ that model (`onnxruntime-web`, loaded
+through `@huggingface/transformers`) is a separate matter from the model
+weights themselves, and is not fetched from anywhere but this origin.
+Left to its default, `@huggingface/transformers` fetches its executable
+ONNX Runtime `.wasm`/`.mjs` from `cdn.jsdelivr.net` — that would have been a
+second cross-origin request, of _executable_ code, on every first dictation
+on a cold cache. `src/capabilities/speech.ts` (`configureLocalOnnxRuntime`)
+overrides `env.backends.onnx.wasm.wasmPaths` to the same files Vite already
+emits into `dist/assets/` for the build, before any inference session is
+created, so both the Safari and non-Safari ONNX Runtime variants load
+same-origin instead. Verified by recording every request host through a real
+first dictation (create a course, open a note, record, stop) against a
+`vite preview` build: no request went to `cdn.jsdelivr.net`, and the ONNX
+Runtime `.wasm`/`.mjs` came from the preview's own origin. The script and its
+request log live under the (git-ignored) `data/private/speech-check/`
+directory, not in this repository's history.
 
 The site is public. Anyone with the URL can open it. Everything they create
 stays in their own browser, because there is no backend to send it to.

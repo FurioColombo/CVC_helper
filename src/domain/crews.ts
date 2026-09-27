@@ -307,39 +307,6 @@ export function setCrewCapacity(
   }
 }
 
-export function getEvenCrewTargets(peopleCount: number, crewCount: number) {
-  if (!Number.isInteger(peopleCount) || peopleCount < 0) {
-    throw new Error("People count must be a non-negative integer")
-  }
-  if (!Number.isInteger(crewCount) || crewCount < 1) {
-    throw new Error("Crew count must be a positive integer")
-  }
-  const base = Math.floor(peopleCount / crewCount)
-  const remainder = peopleCount % crewCount
-  return Array.from(
-    { length: crewCount },
-    (_, index) => base + (index < remainder ? 1 : 0),
-  )
-}
-
-export function getCrewSizeStatus(
-  memberCount: number,
-  family: CourseFamily,
-  level: CourseLevel,
-) {
-  if (!Number.isInteger(memberCount) || memberCount < 0) {
-    throw new Error("Crew member count must be a non-negative integer")
-  }
-  const requiredSize = getStandardCrewSize(family, level)
-  return {
-    requiredSize,
-    flexible: requiredSize === null,
-    complete: requiredSize === null || memberCount === requiredSize,
-    canAdd: requiredSize === null || memberCount < requiredSize,
-    overCapacity: requiredSize !== null && memberCount > requiredSize,
-  }
-}
-
 export function getSessionBoatStates(
   boats: ReadonlyArray<{
     id: string
@@ -410,6 +377,14 @@ export function setBoatGoingOut(
   }
 }
 
+/**
+ * Assigns a blue (available, unassigned) boat to a crew. A crew that already
+ * has a different boat is moved to the new one in the same step: one boat per
+ * crew and one crew per boat already hold, so there is nothing unsafe about
+ * releasing the old link first. The old boat is not removed from the outing —
+ * it simply goes back to blue, available for another crew — matching how
+ * deselecting a boat from the current outing only ever clears a crew link.
+ */
 export function assignAvailableSessionBoat(
   plan: CrewPlan,
   crewId: string,
@@ -418,7 +393,7 @@ export function assignAvailableSessionBoat(
 ) {
   const crew = plan.crews.find(({ id }) => id === crewId)
   if (!crew) throw new Error("Missing crew")
-  if (crew.boatId) throw new Error("Crew already has a boat")
+  if (crew.boatId === boatId) return plan
   if (!availableBoatIds.has(boatId)) {
     throw new Error("Boat is not available")
   }

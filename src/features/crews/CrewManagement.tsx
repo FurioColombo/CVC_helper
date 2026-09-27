@@ -52,10 +52,12 @@ import {
   copyPreviousCrewPlan,
   findPersonLocation,
   getCrewMemberAtPosition,
+  getCrewMemberPosition,
   getCrewCompleteness,
   getOpenCrewSlotIndexes,
   getPreviousSessionId,
   getInitialCrewCapacity,
+  getSessionBoatStates,
   getStandardCrewSize,
   movePerson,
   removeEmptyCrew,
@@ -67,6 +69,7 @@ import {
   type CrewPersonRef,
   type CrewPlan,
   type CrewCopyRemoval,
+  type SessionBoatDisplayState,
 } from "@/domain/crews"
 import {
   getCrewWarnings,
@@ -170,6 +173,25 @@ function samePerson(left: CrewPersonRef | null, right: CrewPersonRef) {
 function sessionLabel(sessionId: SessionId) {
   const session = SESSION_SEQUENCE.find(({ id }) => id === sessionId)
   return session ? `${session.day} ${session.period}` : sessionId
+}
+
+/**
+ * Shared with the session boat strip so the compact per-crew destination
+ * popup always describes a boat the same way: same three states, same words.
+ * Colour alone never carries the meaning in either place.
+ */
+function sessionBoatStateLabel(
+  displayState: SessionBoatDisplayState,
+  assignedCrewIndex: number,
+  selectedForOuting: boolean,
+) {
+  if (displayState === "unavailable") return "Non disponibile"
+  if (displayState === "assigned") {
+    return `Assegnata all’equipaggio ${assignedCrewIndex + 1}`
+  }
+  return selectedForOuting
+    ? "Disponibile non assegnata, in uscita"
+    : "Disponibile non assegnata, non in uscita"
 }
 
 type AnnouncementLine = {
@@ -647,6 +669,82 @@ function CopyReportDialog({
   )
 }
 
+function CrewCopyConfirmDialog({
+  fromSessionLabel,
+  replacedMemberCount,
+  replacedBoatLinkCount,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  fromSessionLabel: string
+  replacedMemberCount: number
+  replacedBoatLinkCount: number
+  busy: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const dialogRef = useDialogFocus<HTMLElement>()
+  return (
+    <div className="fixed inset-0 z-60 grid place-items-center bg-foreground/35 p-5">
+      <section
+        aria-labelledby="crew-copy-confirm-title"
+        aria-modal="true"
+        className="w-full max-w-sm rounded-3xl border bg-card p-5 shadow-2xl"
+        // While the replacement is being saved, Escape and the phone's Back
+        // must not close the dialog as if the copy had been cancelled.
+        onKeyDown={(event) =>
+          handleDialogKeyDown(event, dialogRef.current, () => {
+            if (!busy) onCancel()
+          })
+        }
+        ref={dialogRef}
+        role="dialog"
+      >
+        <h2 className="text-xl font-black" id="crew-copy-confirm-title">
+          Sostituire gli equipaggi di questa sessione?
+        </h2>
+        <p className="mt-2 text-sm leading-5 text-muted-foreground">
+          Questa sessione ha già del lavoro fatto. Copiando da{" "}
+          {fromSessionLabel}, gli equipaggi attuali verranno sostituiti con
+          quelli di quella sessione
+          {(replacedMemberCount > 0 || replacedBoatLinkCount > 0) && (
+            <>
+              :{" "}
+              {replacedMemberCount > 0 && (
+                <span className="font-black text-foreground">
+                  {replacedMemberCount}{" "}
+                  {replacedMemberCount === 1
+                    ? "persona in equipaggio"
+                    : "persone in equipaggio"}
+                </span>
+              )}
+              {replacedMemberCount > 0 && replacedBoatLinkCount > 0 && " e "}
+              {replacedBoatLinkCount > 0 && (
+                <span className="font-black text-foreground">
+                  {replacedBoatLinkCount}{" "}
+                  {replacedBoatLinkCount === 1
+                    ? "barca collegata"
+                    : "barche collegate"}
+                </span>
+              )}
+            </>
+          )}
+          . A terra non cambia.
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <Button disabled={busy} onClick={onCancel} variant="secondary">
+            Annulla
+          </Button>
+          <Button disabled={busy} onClick={onConfirm}>
+            {busy ? "Copia…" : "Sostituisci"}
+          </Button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function AnnouncementView({
   sessionId,
   lines,
@@ -757,7 +855,11 @@ function AnnouncementView({
   )
 }
 
-async function readValidCrewState(courseId: string, sessionId: SessionId) {
+async function readValidCrewState(
+  courseId: string,
+  sessionId: SessionId,
+  course: { family: CourseRecord["family"]; level: CourseRecord["level"] },
+) {
   const [students, volunteers, boats, faults, stored, history, dutyPlan] =
     await Promise.all([
       listStudents(courseId),
@@ -768,18 +870,33 @@ async function readValidCrewState(courseId: string, sessionId: SessionId) {
       readCrewHistory(courseId),
       readDutyPlan(courseId),
     ])
-  const invariantCrews = stored.crews.map((crew) => ({
-    id: crew.id,
-    sessionId: crew.sessionId,
-    studentIds: crew.members
-      .filter(({ personType }) => personType === "student")
-      .map(({ personId }) => personId),
-    volunteerIds: crew.members
-      .filter(({ personType }) => personType === "volunteer")
-      .map(({ personId }) => personId),
-    destination: crew.destination,
-    boatId: crew.boatId ?? undefined,
-  }))
+  const invariantCrews = stored.crews.map((crew) => {
+    const studentEntries: number[] = []
+    const volunteerEntries: number[] = []
+    const studentIds: string[] = []
+    const volunteerIds: string[] = []
+    crew.members.forEach((member, memberIndex) => {
+      const position = getCrewMemberPosition(crew, memberIndex)
+      if (member.personType === "student") {
+        studentIds.push(member.personId)
+        studentEntries.push(position)
+      } else {
+        volunteerIds.push(member.personId)
+        volunteerEntries.push(position)
+      }
+    })
+    return {
+      id: crew.id,
+      sessionId: crew.sessionId,
+      studentIds,
+      volunteerIds,
+      studentPositions: studentEntries,
+      volunteerPositions: volunteerEntries,
+      capacity: crew.capacity,
+      destination: crew.destination,
+      boatId: crew.boatId ?? undefined,
+    }
+  })
   if (
     validateBoatRecords(boats, faults).length > 0 ||
     validateCrewRecords(
@@ -793,6 +910,7 @@ async function readValidCrewState(courseId: string, sessionId: SessionId) {
         sessionId,
         boatId,
       })),
+      course,
     ).length > 0 ||
     hasCrewHistoryIssues(students, volunteers, history) ||
     validateDutyRecords(
@@ -835,6 +953,13 @@ export function CrewManagement({
   const [boatCopySelection, setBoatCopySelection] = useState<string[] | null>(
     null,
   )
+  const [pendingCrewCopy, setPendingCrewCopy] = useState<{
+    copiedPlan: CrewPlan
+    removals: CrewCopyRemoval[]
+    replacedMemberCount: number
+    replacedBoatLinkCount: number
+  } | null>(null)
+  const [copyNothingToCopy, setCopyNothingToCopy] = useState(false)
   const [readMode, setReadMode] = useState(false)
   const [boatMode, setBoatMode] = useState(false)
   const [boatPage, setBoatPage] = useState(0)
@@ -898,6 +1023,8 @@ export function CrewManagement({
       setDestinationCrewId(null)
       setCopyReport(null)
       setBoatCopySelection(null)
+      setPendingCrewCopy(null)
+      setCopyNothingToCopy(false)
       setReadMode(false)
       setBoatMode(false)
       setSelectedCrewForBoat(null)
@@ -909,7 +1036,12 @@ export function CrewManagement({
   async function load(nextSessionId = sessionId) {
     setLoadState("loading")
     try {
-      applyLoaded(await readValidCrewState(course.id, nextSessionId))
+      applyLoaded(
+        await readValidCrewState(course.id, nextSessionId, {
+          family: course.family,
+          level: course.level,
+        }),
+      )
     } catch (error) {
       console.error("Crew load failed", error)
       setLoadState("error")
@@ -918,7 +1050,10 @@ export function CrewManagement({
 
   useEffect(() => {
     let active = true
-    readValidCrewState(course.id, sessionId)
+    readValidCrewState(course.id, sessionId, {
+      family: course.family,
+      level: course.level,
+    })
       .then((data) => {
         if (active) applyLoaded(data)
       })
@@ -929,7 +1064,7 @@ export function CrewManagement({
     return () => {
       active = false
     }
-  }, [applyLoaded, course.id, sessionId])
+  }, [applyLoaded, course.family, course.id, course.level, sessionId])
 
   const activeStudents = students.filter(({ active }) => active === 1)
   const previousSessionId = getPreviousSessionId(sessionId)
@@ -1017,6 +1152,12 @@ export function CrewManagement({
       })
     return result
   }, [faults])
+  // Same source of truth as the session boat strip, so the compact
+  // destination popup below can never drift into its own state mapping.
+  const sessionBoatStates = useMemo(
+    () => getSessionBoatStates(boats, plan, unresolvedFaultBoatIds),
+    [boats, plan, unresolvedFaultBoatIds],
+  )
   const warningsByCrew = useMemo(() => {
     const sizes = new Map(students.map(({ id, size }) => [id, size] as const))
     return new Map(
@@ -1217,9 +1358,16 @@ export function CrewManagement({
       if (representedBoats.has(boatId)) continue
       const boat = boatById.get(boatId)
       if (!boat) continue
+      // A boat can be selected for the outing yet later marked unavailable at
+      // the fleet level without ever being linked to a crew. It still is not
+      // a free boat ready to use, so say so instead of listing it as if it
+      // were — matching the "Non disponibile" wording used everywhere else.
       summaryLines.push({
         category: "empty",
-        destination: `${boat.type} ${boat.number}`,
+        destination:
+          boat.availability === "unavailable"
+            ? `${boat.type} ${boat.number} · Non disponibile`
+            : `${boat.type} ${boat.number}`,
         members: [],
       })
     }
@@ -1287,12 +1435,40 @@ export function CrewManagement({
     await commit(next)
   }
 
+  /**
+   * Anything an unconfirmed replacement from Copia equipaggi would lose. A
+   * terra is kept by the copy, so it alone does not need a confirmation.
+   */
+  function crewPlanHasComposition(candidate: CrewPlan) {
+    return candidate.crews.some(
+      (crew) =>
+        crew.members.length > 0 ||
+        crew.boatId !== null ||
+        crew.destination !== "unassigned",
+    )
+  }
+
+  async function applyCopiedCrews(
+    copiedPlan: CrewPlan,
+    removals: CrewCopyRemoval[],
+  ) {
+    if (await commit(copiedPlan)) {
+      setCrewCountDraft(String(Math.max(1, copiedPlan.crews.length)))
+      setCopyReport(removals.length > 0 ? removals : null)
+    }
+  }
+
   async function copyPreviousCrews() {
     if (!previousSessionId || saveInFlight.current || copying) return
     setCopying(true)
     setSaveError(false)
+    setCopyNothingToCopy(false)
     try {
       const previousPlan = await readCrewPlan(course.id, previousSessionId)
+      if (previousPlan.crews.length === 0) {
+        setCopyNothingToCopy(true)
+        return
+      }
       const dutyDayId = SESSION_DUTY_DAY[sessionId]
       const { plan: copiedPlan, removals } = copyPreviousCrewPlan({
         previousPlan,
@@ -1305,15 +1481,52 @@ export function CrewManagement({
           .map(({ studentId }) => studentId),
         selectedBoatIds: plan.selectedBoatIds,
       })
-      if (await commit(copiedPlan)) {
-        setCrewCountDraft(String(Math.max(1, copiedPlan.crews.length)))
-        setCopyReport(removals.length > 0 ? removals : null)
+      // Copying into an already-composed session silently replaced it. Ask
+      // first whenever the current session already has someone placed (in a
+      // crew or A terra) or a boat linked — even though A terra itself
+      // carries over untouched, the session already has real work in it.
+      // The dialog itself only ever claims what actually gets replaced: the
+      // crews (members and boat links), never A terra.
+      if (crewPlanHasComposition(plan)) {
+        setPendingCrewCopy({
+          copiedPlan,
+          removals,
+          replacedMemberCount: plan.crews.reduce(
+            (sum, crew) => sum + crew.members.length,
+            0,
+          ),
+          replacedBoatLinkCount: plan.crews.filter(
+            (crew) => crew.boatId !== null,
+          ).length,
+        })
+        return
       }
+      await applyCopiedCrews(copiedPlan, removals)
     } catch {
       setSaveError(true)
     } finally {
       setCopying(false)
     }
+  }
+
+  async function confirmCrewCopy() {
+    if (!pendingCrewCopy || saveInFlight.current) return
+    setCopying(true)
+    try {
+      await applyCopiedCrews(
+        pendingCrewCopy.copiedPlan,
+        pendingCrewCopy.removals,
+      )
+    } catch {
+      setSaveError(true)
+    } finally {
+      setCopying(false)
+      setPendingCrewCopy(null)
+    }
+  }
+
+  function cancelCrewCopy() {
+    setPendingCrewCopy(null)
   }
 
   async function preparePreviousBoats() {
@@ -1804,6 +2017,16 @@ export function CrewManagement({
           removals={copyReport}
         />
       )}
+      {pendingCrewCopy && previousSessionId && (
+        <CrewCopyConfirmDialog
+          busy={busy}
+          fromSessionLabel={sessionLabel(previousSessionId)}
+          onCancel={cancelCrewCopy}
+          onConfirm={() => void confirmCrewCopy()}
+          replacedBoatLinkCount={pendingCrewCopy.replacedBoatLinkCount}
+          replacedMemberCount={pendingCrewCopy.replacedMemberCount}
+        />
+      )}
       {boatCopySelection && (
         <div className="fixed inset-0 z-60 grid place-items-center bg-foreground/35 p-5">
           <section
@@ -1896,6 +2119,14 @@ export function CrewManagement({
               <span className="hidden min-[390px]:inline">Equipaggi</span>
             </button>
           </div>
+          {saveError && (
+            <p
+              className="mb-3 text-sm font-semibold text-[#a2381b]"
+              role="alert"
+            >
+              Modifica non valida o non salvata. Riprova.
+            </p>
+          )}
           <section
             aria-label="Barche della sessione"
             className="sticky top-0 z-20 -mx-[20px] border-y bg-background/95 px-[20px] py-2 shadow-[0_6px_16px_rgb(6_59_82/0.08)] backdrop-blur max-[350px]:-mx-[12px] max-[350px]:px-[12px]"
@@ -1957,18 +2188,16 @@ export function CrewManagement({
                 )
                 const unavailable = boat.availability === "unavailable"
                 const hasFault = unresolvedFaultBoatIds.has(boat.id)
-                const state = unavailable
+                const state: SessionBoatDisplayState = unavailable
                   ? "unavailable"
                   : assignedCrewIndex >= 0
                     ? "assigned"
                     : "available"
-                const stateLabel = unavailable
-                  ? "Non disponibile"
-                  : assignedCrewIndex >= 0
-                    ? `Assegnata all’equipaggio ${assignedCrewIndex + 1}`
-                    : selectedBoat
-                      ? "Disponibile non assegnata, in uscita"
-                      : "Disponibile non assegnata, non in uscita"
+                const stateLabel = sessionBoatStateLabel(
+                  state,
+                  assignedCrewIndex,
+                  selectedBoat,
+                )
                 return (
                   <button
                     aria-label={`${boat.type} ${boat.number} · ${stateLabel}${hasFault ? ", avaria da controllare" : ""}`}
@@ -2097,16 +2326,22 @@ export function CrewManagement({
           </section>
         </div>
       ) : (
-        <div className="flex min-h-[calc(100dvh-7rem)] flex-col">
+        // A bounded column, so the workspace scrolls inside it and the quick
+        // access rail stays above the bottom navigation (P14). On a screen too
+        // short for the header and a usable workspace the page scrolls instead.
+        <div className="flex h-[calc(100dvh-7rem)] min-h-[28rem] flex-col">
           {header}
           <SessionChoice
-            disabled={busy || boatCopySelection !== null}
+            disabled={
+              busy || boatCopySelection !== null || pendingCrewCopy !== null
+            }
             onChange={(next) => {
               if (
                 next === sessionId ||
                 saveInFlight.current ||
                 copying ||
-                boatCopySelection
+                boatCopySelection ||
+                pendingCrewCopy
               )
                 return
               setLoadState("loading")
@@ -2124,7 +2359,9 @@ export function CrewManagement({
               <Button
                 aria-label={`Copia equipaggi da ${sessionLabel(previousSessionId)}`}
                 className="h-auto min-h-11 px-2 text-xs"
-                disabled={busy || boatCopySelection !== null}
+                disabled={
+                  busy || boatCopySelection !== null || pendingCrewCopy !== null
+                }
                 onClick={() => void copyPreviousCrews()}
                 variant="secondary"
               >
@@ -2134,7 +2371,9 @@ export function CrewManagement({
               <Button
                 aria-label={`Copia barche da ${sessionLabel(previousSessionId)}`}
                 className="h-auto min-h-11 px-2 text-xs"
-                disabled={busy || boatCopySelection !== null}
+                disabled={
+                  busy || boatCopySelection !== null || pendingCrewCopy !== null
+                }
                 onClick={() => void preparePreviousBoats()}
                 variant="secondary"
               >
@@ -2142,6 +2381,15 @@ export function CrewManagement({
                 Copia barche
               </Button>
             </div>
+          )}
+
+          {copyNothingToCopy && (
+            <p
+              className="mt-3 text-sm font-semibold text-muted-foreground"
+              role="status"
+            >
+              Non c’è nulla da copiare: la sessione precedente non ha equipaggi.
+            </p>
           )}
 
           {saveError && (
@@ -2314,6 +2562,33 @@ export function CrewManagement({
                         Chiudi
                       </button>
                     </div>
+                    <div
+                      aria-label="Legenda stato barche"
+                      className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.68rem] font-bold"
+                      role="list"
+                    >
+                      <span className="flex items-center gap-1" role="listitem">
+                        <span
+                          aria-hidden="true"
+                          className="size-2.5 rounded-full bg-[#8b9aa0]"
+                        />
+                        Non disponibile
+                      </span>
+                      <span className="flex items-center gap-1" role="listitem">
+                        <span
+                          aria-hidden="true"
+                          className="size-2.5 rounded-full bg-[#2f80ed]"
+                        />
+                        Disponibile
+                      </span>
+                      <span className="flex items-center gap-1" role="listitem">
+                        <span
+                          aria-hidden="true"
+                          className="size-2.5 rounded-full bg-[#2f8f46]"
+                        />
+                        Assegnata
+                      </span>
+                    </div>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <Button
                         className="h-auto min-h-14 min-w-0 px-2 text-xs"
@@ -2325,27 +2600,34 @@ export function CrewManagement({
                       >
                         Non assegnato
                       </Button>
-                      {sortedBoats
-                        .filter(({ id }) => plan.selectedBoatIds.includes(id))
-                        .map((boat) => {
-                          const boatId = boat.id
-                          const usedByAnotherCrew = plan.crews.some(
-                            (crew) =>
-                              crew.id !== destinationCrewId &&
-                              crew.boatId === boatId,
-                          )
+                      {sessionBoatStates
+                        .filter((state) => state.selected)
+                        .map((state) => {
+                          const boatId = state.boatId
+                          const assignedCrewIndex = state.assignedCrewId
+                            ? plan.crews.findIndex(
+                                ({ id }) => id === state.assignedCrewId,
+                              )
+                            : -1
+                          const isOwnBoat =
+                            assignedCrewIndex >= 0 &&
+                            assignedCrewIndex === destinationCrewIndex
+                          const assignedElsewhere =
+                            assignedCrewIndex >= 0 && !isOwnBoat
                           const unavailableForThisCrew =
-                            boat.availability === "unavailable" &&
-                            plan.crews.find(
-                              ({ id }) => id === destinationCrewId,
-                            )?.boatId !== boatId
+                            state.displayState === "unavailable" && !isOwnBoat
+                          const stateLabel = sessionBoatStateLabel(
+                            state.displayState,
+                            assignedCrewIndex,
+                            state.selected,
+                          )
                           return (
                             <Button
-                              aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${boatLabel(boatId)}`}
-                              className={`h-auto min-h-14 min-w-0 px-2 text-xs ${boat.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : usedByAnotherCrew ? "bg-muted text-muted-foreground" : "border-[#2f80ed] bg-[#edf5ff] text-[#1356a2]"}`}
+                              aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${state.type} ${state.number}, ${stateLabel}`}
+                              className={`h-auto min-h-14 min-w-0 px-2 text-xs ${state.displayState === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : assignedElsewhere ? "bg-muted text-muted-foreground" : "border-[#2f80ed] bg-[#edf5ff] text-[#1356a2]"}`}
                               disabled={
                                 busy ||
-                                usedByAnotherCrew ||
+                                assignedElsewhere ||
                                 unavailableForThisCrew
                               }
                               key={boatId}
@@ -2355,9 +2637,9 @@ export function CrewManagement({
                               variant="secondary"
                             >
                               <span className="flex min-w-0 items-center justify-center gap-1">
-                                <BoatMark type={boat.type} />
+                                <BoatMark type={state.type} />
                                 <span className="tabular-nums">
-                                  {boat.number}
+                                  {state.number}
                                 </span>
                               </span>
                             </Button>
@@ -2407,15 +2689,34 @@ export function CrewManagement({
                         )}
                       </div>
                       <div className="mt-2 grid max-h-[24vh] grid-cols-2 gap-2 overflow-y-auto">
-                        {plan.crews
-                          .filter((crew) => crew.members.length < crew.capacity)
-                          .map((crew) => {
+                        {(() => {
+                          // "Full" is judged over crews this person could
+                          // actually move to. The person's own current crew
+                          // never counts: it has room only because they are
+                          // sitting in it, so offering it back as a target
+                          // (disabled) hid the real "nowhere to go" case.
+                          const targetCrews = plan.crews.filter(
+                            (crew) =>
+                              crew.members.length < crew.capacity &&
+                              !(
+                                selectedLocation.kind === "crew" &&
+                                selectedLocation.crewId === crew.id
+                              ),
+                          )
+                          if (targetCrews.length === 0) {
+                            return (
+                              <p
+                                className="col-span-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold text-muted-foreground"
+                                role="status"
+                              >
+                                Equipaggi pieni
+                              </p>
+                            )
+                          }
+                          return targetCrews.map((crew) => {
                             const crewIndex = plan.crews.findIndex(
                               ({ id }) => id === crew.id,
                             )
-                            const currentCrew =
-                              selectedLocation.kind === "crew" &&
-                              selectedLocation.crewId === crew.id
                             const preview = Array.from(
                               { length: crew.capacity },
                               (_, index) => {
@@ -2431,7 +2732,7 @@ export function CrewManagement({
                                 aria-label={`Sposta ${personLabel(selected)} in equipaggio ${crewIndex + 1}`}
                                 aria-description={preview}
                                 className="h-auto min-h-14 min-w-0 justify-start px-2 py-1 text-left text-xs"
-                                disabled={busy || currentCrew}
+                                disabled={busy}
                                 key={crew.id}
                                 onClick={() => placeInCrew(crew.id)}
                                 variant="secondary"
@@ -2446,17 +2747,8 @@ export function CrewManagement({
                                 </span>
                               </Button>
                             )
-                          })}
-                        {plan.crews.every(
-                          (crew) => crew.members.length >= crew.capacity,
-                        ) && (
-                          <p
-                            className="col-span-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold text-muted-foreground"
-                            role="status"
-                          >
-                            Equipaggi pieni
-                          </p>
-                        )}
+                          })
+                        })()}
                         <Button
                           className="h-11 min-w-0 px-2 text-xs"
                           disabled={busy || plan.crews.length >= maxCrewCount}

@@ -28,6 +28,7 @@ import { validateBoatRecords } from "@/domain/invariants"
 import { BoatIdentity } from "@/features/boats/BoatIdentity"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
+import { useNestedScreen } from "@/navigation/nestedScreen"
 import type { CourseRecord } from "@/persistence/courses"
 import {
   createBoat,
@@ -48,6 +49,25 @@ type BoatScreen =
   | { kind: "fault"; boatId: string }
 
 type LoadState = "loading" | "ready" | "error"
+
+function parseBoatScreen(value: unknown): BoatScreen | null {
+  if (!value || typeof value !== "object") return null
+  const candidate = value as { kind?: unknown; boatId?: unknown }
+  if (
+    candidate.kind === "list" ||
+    candidate.kind === "configure" ||
+    candidate.kind === "create"
+  ) {
+    return { kind: candidate.kind }
+  }
+  if (
+    (candidate.kind === "detail" || candidate.kind === "fault") &&
+    typeof candidate.boatId === "string"
+  ) {
+    return { kind: candidate.kind, boatId: candidate.boatId }
+  }
+  return null
+}
 
 async function readValidBoatData(courseId: string) {
   const [boats, faults] = await Promise.all([
@@ -589,7 +609,11 @@ export function BoatManagement({
   const [boats, setBoats] = useState<BoatRecord[]>([])
   const [faults, setFaults] = useState<CourseFaultRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
-  const [screen, setScreen] = useState<BoatScreen>({ kind: "list" })
+  const [screen, openScreen, closeScreen] = useNestedScreen<BoatScreen>(
+    "boats",
+    { kind: "list" },
+    parseBoatScreen,
+  )
 
   async function refresh() {
     try {
@@ -652,7 +676,7 @@ export function BoatManagement({
     return (
       <>
         <BoatPageHeader
-          onBack={() => setScreen({ kind: "list" })}
+          onBack={() => closeScreen({ kind: "list" })}
           title={
             screen.kind === "configure" ? "Configura barche" : "Nuova barca"
           }
@@ -661,10 +685,10 @@ export function BoatManagement({
           course={course}
           existingBoats={boats}
           multiple={screen.kind === "configure"}
-          onCancel={() => setScreen({ kind: "list" })}
+          onCancel={() => closeScreen({ kind: "list" })}
           onSaved={() => {
             void refresh()
-            setScreen({ kind: "list" })
+            closeScreen({ kind: "list" })
           }}
         />
       </>
@@ -675,18 +699,20 @@ export function BoatManagement({
     return (
       <>
         <BoatPageHeader
-          onBack={() => setScreen({ kind: "detail", boatId: selectedBoat.id })}
+          onBack={() =>
+            closeScreen({ kind: "detail", boatId: selectedBoat.id })
+          }
           title="Nuova avaria"
         />
         <FaultForm
           boats={[selectedBoat]}
           fixedBoatId={selectedBoat.id}
           onCancel={() =>
-            setScreen({ kind: "detail", boatId: selectedBoat.id })
+            closeScreen({ kind: "detail", boatId: selectedBoat.id })
           }
           onSaved={async () => {
             await refresh()
-            setScreen({ kind: "detail", boatId: selectedBoat.id })
+            closeScreen({ kind: "detail", boatId: selectedBoat.id })
           }}
         />
       </>
@@ -699,11 +725,13 @@ export function BoatManagement({
         boat={selectedBoat}
         courseId={course.id}
         faults={selectedFaults}
-        onAddFault={() => setScreen({ kind: "fault", boatId: selectedBoat.id })}
-        onBack={() => setScreen({ kind: "list" })}
+        onAddFault={() =>
+          openScreen({ kind: "fault", boatId: selectedBoat.id })
+        }
+        onBack={() => closeScreen({ kind: "list" })}
         onDeleted={() => {
           void refresh()
-          setScreen({ kind: "list" })
+          closeScreen({ kind: "list" })
         }}
         onRefresh={refresh}
       />
@@ -719,7 +747,7 @@ export function BoatManagement({
               <Button
                 aria-label="Configura numeri barche"
                 className="h-11 px-3 max-[380px]:h-10 max-[380px]:px-2 max-[380px]:text-xs"
-                onClick={() => setScreen({ kind: "configure" })}
+                onClick={() => openScreen({ kind: "configure" })}
                 variant="secondary"
               >
                 Configura
@@ -727,7 +755,7 @@ export function BoatManagement({
               <Button
                 aria-label="Aggiungi barca"
                 className="size-11 px-0 max-[380px]:size-10"
-                onClick={() => setScreen({ kind: "create" })}
+                onClick={() => openScreen({ kind: "create" })}
               >
                 <Plus aria-hidden="true" className="size-5" />
               </Button>
@@ -738,12 +766,12 @@ export function BoatManagement({
         title="Barche"
       />
       {boats.length === 0 ? (
-        <EmptyBoats onConfigure={() => setScreen({ kind: "configure" })} />
+        <EmptyBoats onConfigure={() => openScreen({ kind: "configure" })} />
       ) : (
         <BoatList
           boats={boats}
           faults={faults}
-          onOpen={(boatId) => setScreen({ kind: "detail", boatId })}
+          onOpen={(boatId) => openScreen({ kind: "detail", boatId })}
         />
       )}
     </>

@@ -11,12 +11,25 @@ import {
   UsersRound,
   Wrench,
 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import {
+  Component,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 
 import { Button } from "@/components/ui/button"
 import { CourseIdentity } from "@/components/CourseIdentity"
 import { CvcMark } from "@/components/CvcMark"
-import { closeActiveDialogOnBack } from "@/navigation/browserHistory"
+import {
+  afterPendingBack,
+  historyBack,
+  holdBackNavigation,
+  requestLeave,
+} from "@/navigation/browserHistory"
+import { NESTED_SCREEN_KEY_PREFIX } from "@/navigation/nestedScreen"
 import {
   COURSE_FAMILIES,
   COURSE_LEVELS,
@@ -37,6 +50,7 @@ import {
   EvaluationManagement,
   type EvaluationView,
 } from "@/features/evaluations/EvaluationManagement"
+import { CourseErase } from "@/features/settings/CourseErase"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
@@ -70,6 +84,8 @@ type ShellHistoryEntry = {
   depth: number
   studentToOpen?: string
   studentReturnView?: ShellView
+  /** The course the entry belongs to; entries of an erased course are ignored. */
+  courseId?: string
 }
 
 function isShellView(value: unknown): value is ShellView {
@@ -106,7 +122,19 @@ function readShellHistoryEntry(state: unknown): ShellHistoryEntry | null {
     ...(isShellView(candidate.studentReturnView)
       ? { studentReturnView: candidate.studentReturnView }
       : {}),
+    ...(typeof candidate.courseId === "string"
+      ? { courseId: candidate.courseId }
+      : {}),
   }
+}
+
+/**
+ * After a course is erased and a new one created, the browser history still
+ * holds the old course's screens; those entries open Home instead.
+ */
+function readCourseHistoryEntry(state: unknown, courseId: string) {
+  const entry = readShellHistoryEntry(state)
+  return entry?.courseId && entry.courseId !== courseId ? null : entry
 }
 
 function pushShellHistoryEntry(entry: ShellHistoryEntry) {
@@ -120,6 +148,9 @@ function pushShellHistoryEntry(entry: ShellHistoryEntry) {
     [SHELL_HISTORY_KEY]: entry,
   }
   delete nextState[STUDENT_SCREEN_HISTORY_KEY]
+  for (const key of Object.keys(nextState)) {
+    if (key.startsWith(NESTED_SCREEN_KEY_PREFIX)) delete nextState[key]
+  }
   window.history.pushState(nextState, "", window.location.href)
 }
 
@@ -193,6 +224,52 @@ function ErrorScreen({ onRetry }: { onRetry: () => void }) {
       </section>
     </main>
   )
+}
+
+/**
+ * A screen that throws while rendering would otherwise blank the whole app.
+ * Stored data is untouched by a render error, so the fallback says so and
+ * reopens Home rather than the screen that failed.
+ */
+export class ScreenErrorBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-8">
+        <Brand />
+        <section
+          className="mt-8 rounded-3xl border bg-card p-6 shadow-sm"
+          role="alert"
+        >
+          <h1 className="text-2xl font-black tracking-tight">
+            Questa schermata non si è aperta
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Nessun dato è stato cancellato. Riapri l’app dalla Home.
+          </p>
+          <Button
+            className="mt-6 w-full"
+            onClick={() => {
+              window.history.replaceState(null, "", window.location.href)
+              window.location.reload()
+            }}
+            size="lg"
+          >
+            Torna alla Home
+          </Button>
+        </section>
+      </main>
+    )
+  }
 }
 
 function CourseCreation({
@@ -353,9 +430,11 @@ function Home({
 function SettingsView({
   course,
   onHome,
+  onCourseErased,
 }: {
   course: CourseRecord
   onHome: () => void
+  onCourseErased: () => void
 }) {
   const [crewDisplayColumns, setDisplayColumns] = useState<2 | 3>(() =>
     getCrewDisplayColumns(),
@@ -419,6 +498,7 @@ function SettingsView({
           ))}
         </div>
       </fieldset>
+      <CourseErase course={course} onErased={onCourseErased} />
       <Button className="mt-7" onClick={onHome} variant="secondary">
         <ChevronLeft aria-hidden="true" className="size-4" />
         Torna alla Home
@@ -427,9 +507,15 @@ function SettingsView({
   )
 }
 
-function AppShell({ course }: { course: CourseRecord }) {
+function AppShell({
+  course,
+  onCourseErased,
+}: {
+  course: CourseRecord
+  onCourseErased: () => void
+}) {
   const [initialHistoryEntry] = useState(() =>
-    readShellHistoryEntry(window.history.state),
+    readCourseHistoryEntry(window.history.state, course.id),
   )
   const [view, setView] = useState<ShellView>(
     initialHistoryEntry?.view ?? "home",
@@ -450,9 +536,13 @@ function AppShell({ course }: { course: CourseRecord }) {
     view === "faults" || view === "home" || view === "crews" ? view : null
 
   useEffect(() => {
-    const currentEntry = readShellHistoryEntry(window.history.state)
+    const currentEntry = readCourseHistoryEntry(window.history.state, course.id)
     if (!currentEntry) {
-      const homeEntry: ShellHistoryEntry = { view: "home", depth: 0 }
+      const homeEntry: ShellHistoryEntry = {
+        view: "home",
+        depth: 0,
+        courseId: course.id,
+      }
       pushShellHistoryEntry(homeEntry)
       historyDepthRef.current = homeEntry.depth
     } else {
@@ -460,11 +550,11 @@ function AppShell({ course }: { course: CourseRecord }) {
     }
 
     function restoreFromHistory(event: PopStateEvent) {
-      if (closeActiveDialogOnBack()) {
+      if (holdBackNavigation(event)) {
         event.stopImmediatePropagation()
         return
       }
-      const entry = readShellHistoryEntry(event.state)
+      const entry = readCourseHistoryEntry(event.state, course.id)
       if (!entry) {
         historyDepthRef.current = 0
         setStudentToOpen(null)
@@ -480,7 +570,7 @@ function AppShell({ course }: { course: CourseRecord }) {
 
     window.addEventListener("popstate", restoreFromHistory)
     return () => window.removeEventListener("popstate", restoreFromHistory)
-  }, [])
+  }, [course.id])
 
   useEffect(() => {
     mainRef.current?.focus()
@@ -498,9 +588,20 @@ function AppShell({ course }: { course: CourseRecord }) {
     ) {
       return
     }
+    // A screen with unsaved work may hold the move and complete it later.
+    // After a Back already on its way, or it would undo the new entry.
+    requestLeave(() => afterPendingBack(() => pushView(next, options)))
+  }
+
+  function pushView(
+    next: ShellView,
+    options: { studentToOpen?: string; studentReturnView?: ShellView },
+  ) {
+    const currentEntry = readShellHistoryEntry(window.history.state)
     const entry: ShellHistoryEntry = {
       view: next,
       depth: (currentEntry?.depth ?? historyDepthRef.current) + 1,
+      courseId: course.id,
       ...(options.studentToOpen
         ? { studentToOpen: options.studentToOpen }
         : {}),
@@ -516,12 +617,14 @@ function AppShell({ course }: { course: CourseRecord }) {
   }
 
   function goBack(fallback: ShellView) {
-    const currentEntry = readShellHistoryEntry(window.history.state)
-    if ((currentEntry?.depth ?? historyDepthRef.current) > 0) {
-      window.history.back()
-      return
-    }
-    if (view !== fallback) navigate(fallback)
+    requestLeave(() => {
+      const currentEntry = readShellHistoryEntry(window.history.state)
+      if ((currentEntry?.depth ?? historyDepthRef.current) > 0) {
+        historyBack()
+        return
+      }
+      if (view !== fallback) navigate(fallback)
+    })
   }
 
   return (
@@ -547,7 +650,11 @@ function AppShell({ course }: { course: CourseRecord }) {
       >
         {view === "home" && <Home course={course} onNavigate={navigate} />}
         {view === "settings" && (
-          <SettingsView course={course} onHome={() => goBack("home")} />
+          <SettingsView
+            course={course}
+            onCourseErased={onCourseErased}
+            onHome={() => goBack("home")}
+          />
         )}
         {view === "students" && (
           <StudentManagement
@@ -698,5 +805,17 @@ export function App() {
       />
     )
   }
-  return <AppShell course={appState.course} />
+  return (
+    <ScreenErrorBoundary>
+      <AppShell
+        course={appState.course}
+        onCourseErased={() => {
+          // The next course starts from Home, not from the erased course's
+          // screens that the browser history still remembers.
+          window.history.replaceState(null, "", window.location.href)
+          setAppState({ status: "no-course" })
+        }}
+      />
+    </ScreenErrorBoundary>
+  )
 }

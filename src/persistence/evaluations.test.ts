@@ -4,6 +4,7 @@ const database = vi.hoisted(() => ({
   execute: vi.fn(),
   getAll: vi.fn(),
   init: vi.fn(),
+  writeTransaction: vi.fn(),
 }))
 
 vi.mock("@/persistence/db", () => ({ db: database }))
@@ -20,6 +21,10 @@ describe("evaluation persistence", () => {
     vi.clearAllMocks()
     database.init.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
+    database.writeTransaction.mockImplementation(
+      async (write: (transaction: typeof database) => unknown) =>
+        write(database),
+    )
   })
 
   it("reads the exact course session and normalizes an empty note", async () => {
@@ -45,6 +50,24 @@ describe("evaluation persistence", () => {
     expect(database.getAll).toHaveBeenCalledWith(
       expect.stringContaining("JOIN students"),
       ["course-1", "wed-pm"],
+    )
+  })
+
+  it("reads and writes one evaluation inside a single transaction", async () => {
+    database.getAll
+      .mockResolvedValueOnce([{ id: "student-1" }])
+      .mockResolvedValueOnce([])
+
+    await saveEvaluation("course-1", "student-1", "sun-am", {
+      value: "+",
+      note: null,
+    })
+
+    expect(database.writeTransaction).toHaveBeenCalledOnce()
+    expect(database.getAll).toHaveBeenCalledTimes(2)
+    expect(database.execute).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO evaluations"),
+      expect.any(Array),
     )
   })
 

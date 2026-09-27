@@ -361,10 +361,12 @@ describe("CrewManagement", () => {
           {
             id: "crew-1",
             sessionId: "sat-pm",
+            // Two members: the fixed D2 crew capacity is two. The grid class
+            // this test checks applies to the slot container regardless of
+            // how many slots are filled.
             members: [
               { personId: "student-1", personType: "student" },
               { personId: "student-2", personType: "student" },
-              { personId: "student-3", personType: "student" },
             ],
           },
         ],
@@ -561,6 +563,43 @@ describe("CrewManagement", () => {
     })
     await user.click(
       within(volunteers).getByRole("button", { name: "Vera ADV" }),
+    )
+    expect(
+      within(
+        screen.getByRole("region", {
+          name: "Destinazione persona selezionata",
+        }),
+      ).getByRole("status"),
+    ).toHaveTextContent("Equipaggi pieni")
+  })
+
+  it("says Equipaggi pieni when the only crew with room is the selected volunteer's own crew", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "volunteer-1", personType: "volunteer" }],
+          },
+        ],
+        landStudentIds: [],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    // The volunteer's own crew has room (1/2), but it is not a real target:
+    // moving them "into" the crew they are already in is a no-op, so it must
+    // not hide the fact that there is nowhere else to put them.
+    await user.click(
+      await screen.findByRole("button", { name: "Vera ADV, equipaggio 1" }),
     )
     expect(
       within(
@@ -1165,6 +1204,73 @@ describe("CrewManagement", () => {
     expect(within(detail).getByText(/ultima Martedì AM/)).toBeVisible()
   })
 
+  it("counts only students toward crew size and repeat warnings, never a volunteer riding along", async () => {
+    // D1 is flexible (no fixed crew size), so a volunteer can share the crew
+    // with the same two students as the test above without tripping the
+    // separate D2-D5 fixed-size rule. The owner's rule (CR-5): a volunteer
+    // must never add, remove or change a size or repetition warning.
+    const flexibleCourse: CourseRecord = {
+      ...COURSE,
+      family: "Deriva",
+      level: 1,
+    }
+    getStudents.mockResolvedValue([
+      { ...STUDENTS[0]!, size: "XS" },
+      { ...STUDENTS[1]!, size: "S" },
+    ])
+    getPlan.mockResolvedValue(
+      stored(
+        {
+          crews: [
+            {
+              id: "crew-current",
+              sessionId: "wed-pm",
+              members: [
+                { personId: "student-1", personType: "student" },
+                { personId: "student-2", personType: "student" },
+                { personId: "volunteer-1", personType: "volunteer" },
+              ],
+              capacity: 4,
+            },
+          ],
+          landStudentIds: [],
+        },
+        "wed-pm",
+      ),
+    )
+    getHistory.mockResolvedValue([
+      {
+        crewId: "crew-previous",
+        sessionId: "tue-am",
+        studentIds: ["student-2", "student-1"],
+      },
+    ])
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={flexibleCourse}
+        initialSessionId="wed-pm"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    // Exactly the same "rosso, 2" as the students-only case above: the
+    // volunteer does not add a third warning or change the severity.
+    const warning = await screen.findByRole("button", {
+      name: "Avvisi equipaggio 1: rosso, 2",
+    })
+    await user.click(warning)
+
+    const detail = screen.getByRole("region", {
+      name: "Dettaglio avvisi equipaggio 1",
+    })
+    expect(within(detail).getByText("Taglie XS + S")).toBeVisible()
+    expect(
+      within(detail).getByText("Coppia nelle ultime 3 sessioni"),
+    ).toBeVisible()
+  })
+
   it("refuses dangling people in persisted crew history", async () => {
     getHistory.mockResolvedValue([
       {
@@ -1378,7 +1484,7 @@ describe("CrewManagement", () => {
     )
     await user.click(
       screen.getByRole("button", {
-        name: "Assegna equipaggio 1 a RS Quest 2",
+        name: /^Assegna equipaggio 1 a RS Quest 2, Disponibile non assegnata, in uscita$/,
       }),
     )
     await waitFor(() =>
@@ -1396,7 +1502,7 @@ describe("CrewManagement", () => {
     )
     expect(
       screen.getByRole("button", {
-        name: "Assegna equipaggio 2 a RS Quest 2",
+        name: "Assegna equipaggio 2 a RS Quest 2, Assegnata all’equipaggio 1",
       }),
     ).toBeDisabled()
     await user.click(screen.getByRole("button", { name: "Mezzi" }))
@@ -1413,6 +1519,129 @@ describe("CrewManagement", () => {
         ]),
       }),
     )
+  })
+
+  it("moves a crew to a newly chosen boat from Barche in uscita instead of failing silently", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2", "boat-7"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Apri barche della sessione" }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Equipaggio 1, RS Quest 2" }),
+    )
+    const boat7 = screen.getByRole("button", {
+      name: /^RS Quest 7 · Disponibile non assegnata, in uscita/,
+    })
+    expect(boat7).toBeEnabled()
+    await user.click(boat7)
+
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    const saved = savePlan.mock.calls[0]![2]
+    expect(saved.crews[0]).toEqual(
+      expect.objectContaining({
+        id: "crew-1",
+        destination: "boat",
+        boatId: "boat-7",
+      }),
+    )
+    expect(
+      screen.queryByText("Modifica non valida o non salvata. Riprova."),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows a save error inside Barche in uscita instead of hiding it", async () => {
+    savePlan.mockRejectedValueOnce(new Error("boom"))
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Apri barche della sessione" }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: /^RS Quest 2 · Disponibile non assegnata/,
+      }),
+    )
+
+    await screen.findByText("Modifica non valida o non salvata. Riprova.")
+    expect(
+      screen.getByRole("heading", { name: "Barche in uscita" }),
+    ).toBeVisible()
+  })
+
+  it("labels boats in the compact destination popup the same way as the strip", async () => {
+    getBoats.mockResolvedValue([
+      { ...BOATS[0]!, availability: "unavailable" },
+      BOATS[1]!,
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Destinazione equipaggio 1: Non assegnato",
+      }),
+    )
+
+    const popup = screen.getByRole("region", {
+      name: "Destinazione equipaggio 1",
+    })
+    expect(within(popup).getByText("Non disponibile")).toBeVisible()
+    expect(within(popup).getByText("Disponibile")).toBeVisible()
+    expect(within(popup).getByText("Assegnata")).toBeVisible()
+    expect(
+      within(popup).getByRole("button", {
+        name: "Assegna equipaggio 1 a RS Quest 2, Non disponibile",
+      }),
+    ).toBeDisabled()
   })
 
   it("keeps an unavailable assigned boat and raises one red crew warning", async () => {
@@ -1533,6 +1762,11 @@ describe("CrewManagement", () => {
         name: "Copia equipaggi da Domenica AM",
       }),
     )
+    // The current session has only an A terra placement, which the copy keeps,
+    // so nothing is replaced and no confirmation is asked.
+    expect(
+      screen.queryByRole("button", { name: "Sostituisci" }),
+    ).not.toBeInTheDocument()
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     const copied = savePlan.mock.calls[0]![2]
     expect(copied.selectedBoatIds).toEqual(["boat-7"])
@@ -1612,6 +1846,291 @@ describe("CrewManagement", () => {
     await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
     expect(
       screen.queryByRole("dialog", { name: "Equipaggi copiati" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Aldo, equipaggio 1" }),
+    ).toBeVisible()
+  })
+
+  it("asks for confirmation before copying into a session that already has crews composed", async () => {
+    const current = stored(
+      {
+        crews: [
+          {
+            id: "current-1",
+            sessionId: "sun-am",
+            members: [{ personId: "student-1", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      },
+      "sun-am",
+    )
+    const previous = stored({
+      crews: [
+        {
+          id: "previous-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-2", personType: "student" }],
+        },
+      ],
+      landStudentIds: [],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Sabato PM",
+      }),
+    )
+
+    await screen.findByRole("dialog", {
+      name: "Sostituire gli equipaggi di questa sessione?",
+    })
+    expect(savePlan).not.toHaveBeenCalled()
+  })
+
+  it("leaves the current crews unchanged when the copy confirmation is cancelled", async () => {
+    const current = stored(
+      {
+        crews: [
+          {
+            id: "current-1",
+            sessionId: "sun-am",
+            members: [{ personId: "student-1", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      },
+      "sun-am",
+    )
+    const previous = stored({
+      crews: [
+        {
+          id: "previous-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-2", personType: "student" }],
+        },
+      ],
+      landStudentIds: [],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Sabato PM",
+      }),
+    )
+    await user.click(await screen.findByRole("button", { name: "Annulla" }))
+
+    expect(
+      screen.queryByRole("dialog", {
+        name: "Sostituire gli equipaggi di questa sessione?",
+      }),
+    ).not.toBeInTheDocument()
+    expect(savePlan).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole("button", { name: "Aldo, equipaggio 1" }),
+    ).toBeVisible()
+  })
+
+  it("replaces the composed session once the copy is confirmed", async () => {
+    const current = stored(
+      {
+        crews: [
+          {
+            id: "current-1",
+            sessionId: "sun-am",
+            members: [{ personId: "student-1", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      },
+      "sun-am",
+    )
+    const previous = stored({
+      crews: [
+        {
+          id: "previous-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-2", personType: "student" }],
+        },
+      ],
+      landStudentIds: [],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Sabato PM",
+      }),
+    )
+    await user.click(await screen.findByRole("button", { name: "Sostituisci" }))
+
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    const copied = savePlan.mock.calls[0]![2]
+    expect(copied.crews).toHaveLength(1)
+    expect(copied.crews[0]!.members).toEqual([
+      { personId: "student-2", personType: "student" },
+    ])
+    expect(
+      screen.queryByRole("dialog", {
+        name: "Sostituire gli equipaggi di questa sessione?",
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  // F1 review round 3, F1R3-7: the dialog already ignores Escape while busy
+  // (F1R-11-style guard extended here), but nothing exercised it. Holding the
+  // save promise open makes the busy window observable.
+  it("does not close the copy confirmation on Escape while the copy is being saved", async () => {
+    const current = stored(
+      {
+        crews: [
+          {
+            id: "current-1",
+            sessionId: "sun-am",
+            members: [{ personId: "student-1", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      },
+      "sun-am",
+    )
+    const previous = stored({
+      crews: [
+        {
+          id: "previous-1",
+          sessionId: "sat-pm",
+          members: [{ personId: "student-2", personType: "student" }],
+        },
+      ],
+      landStudentIds: [],
+    })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    let resolveSave: (() => void) | undefined
+    savePlan.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveSave = resolve
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Sabato PM",
+      }),
+    )
+    await user.click(await screen.findByRole("button", { name: "Sostituisci" }))
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Sostituire gli equipaggi di questa sessione?",
+    })
+    expect(within(dialog).getByRole("button", { name: "Copia…" })).toBeVisible()
+
+    await user.keyboard("{Escape}")
+    expect(
+      screen.getByRole("dialog", {
+        name: "Sostituire gli equipaggi di questa sessione?",
+      }),
+    ).toBeVisible()
+    expect(savePlan).toHaveBeenCalledOnce()
+
+    resolveSave?.()
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", {
+          name: "Sostituire gli equipaggi di questa sessione?",
+        }),
+      ).not.toBeInTheDocument(),
+    )
+  })
+
+  it("changes nothing when copying from a previous session with no crews", async () => {
+    const current = stored(
+      {
+        crews: [
+          {
+            id: "current-1",
+            sessionId: "sun-am",
+            members: [{ personId: "student-1", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      },
+      "sun-am",
+    )
+    const previous = stored({ crews: [], landStudentIds: [] })
+    getPlan.mockImplementation(async (_courseId, requestedSessionId) =>
+      requestedSessionId === "sat-pm" ? previous : current,
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        initialSessionId="sun-am"
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Copia equipaggi da Sabato PM",
+      }),
+    )
+
+    await screen.findByText(
+      "Non c’è nulla da copiare: la sessione precedente non ha equipaggi.",
+    )
+    expect(savePlan).not.toHaveBeenCalled()
+    expect(
+      screen.queryByRole("dialog", {
+        name: "Sostituire gli equipaggi di questa sessione?",
+      }),
     ).not.toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: "Aldo, equipaggio 1" }),
@@ -1867,5 +2386,39 @@ describe("CrewManagement", () => {
       { category: "a-terra", members: [{ label: "Bea" }] },
       { category: "empty", destination: "RS Quest 7", members: [] },
     ])
+  })
+
+  it("labels a selected but unavailable boat as not available in the PNG summary, not as free", async () => {
+    getBoats.mockResolvedValue([{ ...BOATS[1]!, availability: "unavailable" }])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-7"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
+    )
+    await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
+    const [, lines] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
+    expect(lines).toContainEqual(
+      expect.objectContaining({
+        category: "empty",
+        destination: "RS Quest 7 · Non disponibile",
+        members: [],
+      }),
+    )
   })
 })

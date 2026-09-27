@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto"
+import { readFileSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
@@ -68,6 +70,28 @@ const base = (() => {
   return `/${configured.replace(/^\/+|\/+$/g, "")}/`
 })()
 
+// The Home header's CVC mark (`CvcMark.tsx`) renders on first paint, on every
+// screen the router can land on cold, so it has to survive an offline cold
+// start the same way the OCR/speech runtime assets do. It is deliberately
+// the only PNG added here — `globPatterns` below excludes images on purpose
+// so the seven boat marks (rendered only once a course/boat screen is open,
+// never at startup) do not balloon the install precache. The revision is a
+// content hash rather than `null` because this file, unlike a hashed
+// `dist/assets/*` chunk, keeps its literal filename across builds.
+const BRAND_STARTUP_IMAGES = ["brand/cvc-symbol.png"] as const
+
+function brandStartupManifestEntries() {
+  return BRAND_STARTUP_IMAGES.map((relativePath) => {
+    const contents = readFileSync(
+      path.resolve(import.meta.dirname, "public", relativePath),
+    )
+    return {
+      url: relativePath,
+      revision: createHash("sha256").update(contents).digest("hex"),
+    }
+  })
+}
+
 export default defineConfig({
   base,
   plugins: [
@@ -75,13 +99,22 @@ export default defineConfig({
     tailwindcss(),
     localOcrAssets(),
     VitePWA({
-      registerType: "autoUpdate",
+      // "autoUpdate" swaps the service worker and reloads the page the moment
+      // a new version activates, with no chance for the instructor to finish
+      // whatever they were doing first. A reload mid-scan-review or mid-note
+      // would discard it. "prompt" leaves the current tab alone until
+      // `UpdateAvailableBanner` (mounted from `src/main.tsx`) asks and the
+      // instructor taps Aggiorna.
+      registerType: "prompt",
       manifest: {
         name: "CVC Helper",
         short_name: "CVC Helper",
         description: "Supporto operativo locale per una settimana CVC Caprera.",
         theme_color: "#2f5fa0",
-        background_color: "#f4f1e8",
+        // Matches `--background` in src/styles.css — checked by
+        // scripts/check-built-pwa.mjs so the two cannot drift again the way
+        // this cream value drifted from the app's actual surface colour.
+        background_color: "#f2f6fb",
         display: "standalone",
         // An installed PWA navigates to these itself, so they have to carry the
         // base path rather than assume the origin root.
@@ -112,6 +145,9 @@ export default defineConfig({
         // The largest local OCR core is ~3.9 MB. Keep a small margin while
         // still making unexpectedly large assets visible in the build.
         maximumFileSizeToCacheInBytes: 4_500_000,
+        // Precached explicitly rather than by extension: see
+        // `brandStartupManifestEntries` above for why only this one PNG.
+        additionalManifestEntries: brandStartupManifestEntries(),
         runtimeCaching: [
           {
             urlPattern: /\/ocr\//,
@@ -126,7 +162,11 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\/assets\/ort-wasm-.*\.wasm$/,
+            // Covers both the .wasm binary and its .mjs loader factory — the
+            // local onnxruntime-web runtime `configureLocalOnnxRuntime` in
+            // src/capabilities/speech.ts points at, in place of the
+            // cdn.jsdelivr.net default transformers.js would otherwise fetch.
+            urlPattern: /\/assets\/ort-wasm-.*\.(?:wasm|mjs)$/,
             handler: "CacheFirst",
             options: {
               cacheName: "cvc-speech-runtime",

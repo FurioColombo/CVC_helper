@@ -24,8 +24,8 @@ test("keeps the complete student workflow consistent across reload", async ({
   await expect(
     page.getByRole("heading", { name: "Controlla prima di salvare" }),
   ).toBeVisible({ timeout: 30_000 })
-  // The page reports its inferred order before the explicit commit.
-  await expect(page.getByText(/Dedotto dal foglio/)).toBeVisible()
+  // UX1: the name order is inferred silently, with no caption shown for a
+  // confident read, so the intended behaviour is just the corrected value.
   const correctedSurname = page.getByLabel(/^Cognome riga/).nth(1)
   await expect(correctedSurname).toHaveValue("Bianchi")
   await correctedSurname.fill("Bianchini")
@@ -109,8 +109,9 @@ test("keeps the complete student workflow consistent across reload", async ({
     }),
   ).toBeVisible()
 
+  // N1: the app restores its current screen (Allievi list) across reload,
+  // so there is no Home "Allievi" card to click here.
   await page.reload()
-  await page.getByRole("button", { name: "Allievi" }).click()
   await expect(
     page.getByRole("button", { name: /Mario R\., 18 anni, M/ }),
   ).toBeVisible()
@@ -224,8 +225,10 @@ test("creates, corrects and reloads a declared age without a birth date", async 
   await expect(page.getByText("Minorenne")).not.toBeVisible()
 
   await page.getByRole("button", { name: "Indietro da Profilo" }).click()
+  // N1: reload restores the same Allievi list screen, so no Home navigation
+  // is needed (and none is available: only its own Back button matches
+  // "Allievi" as a substring).
   await page.reload()
-  await page.getByRole("button", { name: "Allievi" }).click()
   await expect(
     page.getByRole("button", { name: /Giulia, 18 anni, Altro/ }),
   ).toBeVisible()

@@ -142,8 +142,10 @@ test("previews, confirms and edits duties directly from the seven day cards", as
   await page
     .getByRole("button", { name: "Indietro da Comandata sabato" })
     .click()
+  // N1: reload restores the same screen (Comandate), so there is no Home
+  // "Comandate" card to click here; clicking it would instead hit the
+  // screen's own "Indietro da Comandate" Back button.
   await page.reload()
-  await page.getByRole("button", { name: "Comandate" }).click()
   await expect(
     page.getByRole("status", { name: /Copertura comandate 8\/8/ }),
   ).toBeVisible()
@@ -158,8 +160,8 @@ test("previews, confirms and edits duties directly from the seven day cards", as
   await page
     .getByRole("button", { name: "Indietro da Comandata sabato" })
     .click()
+  // N1: reload restores the same screen (Comandate); see the comment above.
   await page.reload()
-  await page.getByRole("button", { name: "Comandate" }).click()
   await expect(
     page.getByRole("button", { name: /^Sabato, \d+ assegnati/ }),
   ).toContainText("Nome3")

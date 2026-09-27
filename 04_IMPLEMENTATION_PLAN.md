@@ -1,6 +1,6 @@
 # Implementation plan — active 0.3.0 work
 
-Updated 2026-09-25. Read **Where this cycle stands**, then only the section for
+Updated 2026-09-27. Read **Where this cycle stands**, then only the section for
 the active milestone. Closed 0.3.0 milestone details are in
 `archive/v0.3.0-completed-milestones.md`; the full plan through R1 is at
 `archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`. Completed 0.1.0 and
@@ -26,7 +26,16 @@ lifecycle.
 | UX1 | Complete. Node 24.19.0 `npm run verify` passed (537 tests, domain/compatibility and PWA build), seven Pixel 7 browser journeys passed, and the independent adversarial review ended PASS after the exact-slot persistence defect was fixed. See `.evidence/UX1/`. |
 | UX2 | Complete. Whole-page boat swipe and free-slot selection without popup passed 3 focused Pixel/iPhone browser cases (one intentional skip); Node 24.19.0 `npm run verify` passed 538 tests, domain/compatibility and PWA build. Independent adversarial review: PASS. Four development audits and evidence are in `.evidence/UX2/` and `docs/post-mvp/0_3_0_DEVELOPMENT_AUDIT.md`. |
 | V03 | Complete by the owner's 2026-09-25 acceptance after Android and PC/Chrome use. Speech is borderline usable, slow and imperfect. Apple/iPhone was unavailable and remains untested; see `.evidence/V03/speech-device-evidence.json`. |
-| V05, F1, UG2 | Pending in the sequence below. |
+| V05 | Complete. The assistant paste path sits after the camera and gallery: the app gives the prompt and the format, reads the pasted answer into the same review, shows every line it cannot read, needs a check of every pasted row and a count confirmation, and makes no network call. `.evidence/V05/` records `npm run verify` and the browser journey on three projects on the final source, a 32-case parser corpus with no silently wrong student, and ten independent reviews ending PASS. |
+| F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
+| UG2 | Pending: the owner's physical checks and the precondition below. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
+
+**Before the next Codex session (precondition for UG2):** the published
+history was rewritten before the first 0.3.0 push to remove real roster data.
+The owner deletes the Codex worktree `.codex/worktrees/ux1-pages-promotion`
+and `refs/codex/*`, which still hold the old history, and any other copy made
+before the rewrite. Work only in a copy that holds the rewritten history
+(`AGENTS.md` §13; `docs/post-mvp/0_3_0_QUESTIONS.md` question 1).
 
 The five supplied roster photographs and all derivatives are local-only under
 ignored `data/private/ocr-owner/`. They show real students and staff, including
@@ -142,7 +151,7 @@ physical checklist steps are unverified and remain on the UG2 checklist.
 ## V05 — LLM-assisted paste path
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** COMPLETE
 
 Keep on-device camera OCR first. Add a second route that lets the user copy a
 strict prompt, send the photograph to an assistant of their own choice, and
@@ -154,10 +163,28 @@ never silently wrong students. Every row requires normal manual review.
 **Evidence:** parser robustness corpus, browser journey, no-network proof,
 verification and an independent adversarial domain review.
 
+**Closure, 2026-09-27:** The assistant section follows the camera and gallery
+in the scan screen. The app offers a prompt copied in one tap, states the
+format (`CVC-ALLIEVI v1`, five columns, `FINE`) and reads the pasted answer
+into the same review as a scan. Every pasted row is marked `Riga scritta
+dall’assistente` and needs its own check; `Sono tutti` confirms the number of
+rows read and is asked again when that number changes; unread lines stay
+visible with their text and reason until fixed in place or left out; a
+duplicate of another row or of an existing student waits for `Tieni
+entrambi`. An answer of more than 150 rows is refused whole. The parser corpus
+passes 32 of 32 cases with no silently wrong student
+(`.evidence/V05/parser-robustness.json`). The browser journey passes on Pixel 7
+Chrome, the iPhone 13 viewport and iPhone 13 WebKit, and fails on any foreign
+host, any non-GET request or any request carrying a pasted value. Ten
+independent reviews end with PASS (`domain-review.json`); every finding's
+disposition is in `self-review.json`. The owner decides whether one
+confirmation may replace the per-row check (`0_3_0_QUESTIONS.md` question 2),
+and tries the path with the assistant the centre will use at UG2.
+
 ## F1 — Remaining R1 corrections
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** COMPLETE
 
 R1's [open-items list](docs/post-mvp/0_3_0_OPEN_ITEMS.md) owns corrections
 not already absorbed into S5, N1 or E1: moved long press must not open edit;
@@ -175,6 +202,43 @@ the appropriate side before UG2. Update the living R1 list as each closes.
 
 **Evidence:** verification, defect reproductions and fixes, browser journeys
 and self-review. No unowned finding carries into UG2.
+
+On 2026-09-26 the owner asked Claude Code to merge S4 and take F1 next, ahead
+of V05; the manifest lets F1 start with V05 incomplete. F1 also triages the
+adversarial review of the merged line and the browser failures found by the
+full suite, so that each is fixed here or has an owner before UG2.
+
+**Closure, 2026-09-27:** The four R1 corrections are fixed and tested: a
+moved long press never opens the edit form; a failed evaluation save needs
+`Riprova` or `Scarta` before any exit, phone Back and the bottom navigation
+included; Back from an invalid edit names the fields to complete; queued
+autosaves show `Salvataggio…`. The launch colour is the app surface
+`#f2f6fb`, checked in the built manifest. The Pixel P14–P16 rail failure was a
+real defect: the crew column is now bounded, so the rail stays above the
+bottom navigation. Four independent reviews of the merged line at `5c1e029`
+(crews, scan, persistence and navigation, release readiness) found blockers,
+all fixed; review rounds 2 to 11 reviewed F1 itself until the last found none.
+The main changes: a shared leave guard and nested phone Back in Barche,
+Avarie, Comandate and Volontari; the scan review gate in one module; scan
+fixes for swapped names, ages and dates, surname particles, headings and staff
+rows, where no staff heading drops rows any more; evaluation saves in one
+transaction; a screen error boundary; erasing the course from Settings; an
+update banner that asks before reloading; the speech runtime from the app's
+own origin, a pinned model and chunked long recordings; Pages deploys only
+after CI, with an offline check; `npm run evidence` records the source digest,
+and completion refuses hand-written, partial or stale verification. 33 browser
+specs that described older screens were repaired. The first recorded
+`verify:all` on the final source then caught a timing defect: Home tapped
+while the app's own Back was still landing was undone by it. Every history
+move now waits for that Back; review round 12 found no blocker, and the
+narrower cases left are in next steps. `.evidence/F1/verification.json`
+records `verify:all` on the fixed source. The five private photographs read
+exactly as after S4: 100 of 100 students matched, none missing, no ready
+non-student row, and no flag on the clearest one. What remains is in
+`docs/post-mvp/1_0_0_NEXT_STEPS.md` and, for the owner,
+`docs/post-mvp/0_3_0_QUESTIONS.md`. The history is rewritten immediately
+before the first 0.3.0 push; its aggregate results are in
+`.evidence/F1/history-rewrite.json`, committed on the rewritten line.
 
 ## UG2 — 0.3.0 integration and release gate
 
@@ -194,8 +258,8 @@ the manifest, leave a clean commit and tag only after the gate passes.
 S4 was completed on its own branch and merged before UG2, so UG2 verifies the
 erased-rule OCR path, its privacy boundaries and actual device behavior,
 including the eraser's time on a phone. UG2 does not otherwise depend on S4.
-`tests/e2e/s1-scan-phone-option.spec.ts` still expects a caption UX1 removed
-and fails on Pixel 7; it must be fixed before the UG2 browser run.
+F1 repaired the browser specs that still described older screens, including
+`tests/e2e/s1-scan-phone-option.spec.ts`; see F1's closure for the full run.
 
 **Evidence:** `.evidence/UG2/` verification, browser, migration, synthetic
 roster, six reviewer reports and actual physical-device report. Do not publish
@@ -279,13 +343,15 @@ without, none on the five captures); the proper fix is a table-band gate in the
 review screen. When Tesseract loses whole rows (sample 4 rotated 1° or cropped),
 erasure raises page confidence enough that the retake warning may not show; a
 row-count cue is the follow-up. A surname that is itself a heading keyword is
-still dropped as a heading, as before S4. On a fictitious sheet with a staff
+still dropped as a heading, as before S4 (F1 narrowed this and stopped staff
+headings from dropping rows; see `docs/post-mvp/1_0_0_NEXT_STEPS.md`). On a
+fictitious sheet with a staff
 block Tesseract's layout can drop the whole age column after erasure; the age
 then follows from the birth date. The eraser costs about 0.3–0.5 s in desktop
 Chromium/WebKit and about 2 s at 4× CPU throttling; the owner's phone check
 remains. Published refs (`main`, `codex/0.3.0`, `codex/post-mvp-ux-planning`,
-`v0.2.0`) still contain real student data from before S4; any history rewrite
-is the owner's decision. The D2–D5 crew-capacity override listed beside S4 in
+`v0.2.0`) contained real student data from before S4; the owner approved a
+history rewrite on 2026-09-26, carried out before the first 0.3.0 push (F1). The D2–D5 crew-capacity override listed beside S4 in
 the execution order is not part of this milestone and remains open.
 
 Historical measurements, failed variants and audit corrections are preserved in `archive/v0.3.0-s4-measurement-history.md`; aggregate outputs remain in `.evidence/S4/`. None of the probes before rule erasure justified a production OCR change; the later rejected variants are in `.evidence/S4/targeted-ocr-probes.json`.

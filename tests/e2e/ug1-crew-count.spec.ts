@@ -1,7 +1,6 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
+
+import { evidenceOutputPath } from "./evidence"
 
 /**
  * The number of crews is chosen before composing, and until now it could not
@@ -86,10 +85,8 @@ test("removes an empty crew from its card and adds one back", async ({
   ).toBeVisible()
 
   if (testInfo.project.name === "pixel-7-chrome") {
-    const evidenceDirectory = path.resolve(".evidence/UG1")
-    mkdirSync(evidenceDirectory, { recursive: true })
     await page.screenshot({
-      path: path.join(evidenceDirectory, "crew-count-controls.png"),
+      path: evidenceOutputPath(testInfo, "UG1", "crew-count-controls.png"),
       fullPage: true,
     })
   }

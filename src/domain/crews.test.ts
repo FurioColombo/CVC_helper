@@ -10,8 +10,6 @@ import {
   getOpenCrewSlotIndexes,
   getCrewCompleteness,
   getInitialCrewCapacity,
-  getCrewSizeStatus,
-  getEvenCrewTargets,
   getPreviousSessionId,
   getSessionBoatStates,
   getStandardCrewSize,
@@ -75,26 +73,6 @@ describe("crew composition rules", () => {
       expect(getStandardCrewSize(family, level)).toBe(expected)
     },
   )
-
-  it.each([
-    ["Deriva", 2, 1, false, true],
-    ["Deriva", 2, 2, true, false],
-    ["Deriva", 2, 3, false, false],
-    ["Deriva", 1, 5, true, true],
-    ["Cabinato", 3, 7, true, true],
-  ] as const)(
-    "assesses %s level %s with %s people using the canonical size rule",
-    (family, level, memberCount, complete, canAdd) => {
-      expect(getCrewSizeStatus(memberCount, family, level)).toEqual(
-        expect.objectContaining({ complete, canAdd }),
-      )
-    },
-  )
-
-  it("proposes an even target for flexible crews without assigning people", () => {
-    expect(getEvenCrewTargets(10, 3)).toEqual([4, 3, 3])
-    expect(getEvenCrewTargets(2, 4)).toEqual([1, 1, 0, 0])
-  })
 
   it("starts flexible crews at four and preserves legacy members when normalizing capacity", () => {
     expect(getInitialCrewCapacity("Deriva", 1)).toBe(4)
@@ -289,6 +267,35 @@ describe("crew composition rules", () => {
     expect(directlyAssigned.crews[0]).toEqual(
       expect.objectContaining({ destination: "boat", boatId: "boat-2" }),
     )
+  })
+
+  it("moves a crew that already has a boat to a newly chosen one instead of throwing", () => {
+    const withBoat = assignAvailableSessionBoat(
+      setBoatGoingOut(EMPTY_PLAN, "boat-2", true),
+      "crew-1",
+      "boat-2",
+      new Set(["boat-2"]),
+    )
+    const moved = assignAvailableSessionBoat(
+      withBoat,
+      "crew-1",
+      "boat-3",
+      new Set(["boat-3"]),
+    )
+    expect(moved.crews[0]).toEqual(
+      expect.objectContaining({ destination: "boat", boatId: "boat-3" }),
+    )
+    // The old boat is not removed from the outing, it just goes back to
+    // being free — the same as deselecting a boat only ever clears the link.
+    expect(moved.selectedBoatIds).toEqual(
+      expect.arrayContaining(["boat-2", "boat-3"]),
+    )
+    expect(moved.crews.some((crew) => crew.boatId === "boat-2")).toBe(false)
+
+    // Choosing the boat the crew already has is a harmless no-op.
+    expect(
+      assignAvailableSessionBoat(moved, "crew-1", "boat-3", new Set()),
+    ).toBe(moved)
   })
 
   it("sorts numeric boat states and keeps selection, assignment, availability and faults distinct", () => {

@@ -79,7 +79,27 @@ test("keeps legacy operational IDs through no-op and unrelated saves", async ({
     "sessionBoats",
   ]) {
     const originalIds = result.before[table]!.map(({ id }) => id).sort()
-    expect(result.afterNoOp[table]).toEqual(result.before[table])
+    if (table === "crews") {
+      // D2 has a fixed standard crew size (see COURSE_CONFIG /
+      // normalizeCrewCapacity), so the first save after upgrading a legacy
+      // database backfills each crew's capacity from the pre-capacity
+      // legacy null to that standard size. That backfill is intentional
+      // domain behavior, so every OTHER field must still be an exact no-op.
+      const stripCapacity = (rows: Array<Record<string, unknown>>) =>
+        rows.map((row) =>
+          Object.fromEntries(
+            Object.entries(row).filter(([key]) => key !== "capacity"),
+          ),
+        )
+      expect(stripCapacity(result.afterNoOp[table]!)).toEqual(
+        stripCapacity(result.before[table]!),
+      )
+      for (const row of result.afterNoOp[table]!) {
+        expect(row.capacity).toBe(2)
+      }
+    } else {
+      expect(result.afterNoOp[table]).toEqual(result.before[table])
+    }
     expect(result.afterNoOp[table]!.map(({ id }) => id).sort()).toEqual(
       originalIds,
     )

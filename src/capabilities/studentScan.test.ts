@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   applyStudentNameOrder,
@@ -25,12 +25,23 @@ describe("independent printed age", () => {
     ["Mario Rossi 12/02/2002", false],
     ["Mario Rossi 24 anni", false],
   ])("corroborates only valid agreement: %s", (text, expected) => {
-    const candidate = readAgeRow(text)
+    const read = readAgeRow(text)
+    // A reliable printed age, as it must be to vouch for the date.
+    const candidate = read.ageReading
+      ? { ...read, ageReading: { ...read.ageReading, confidence: 90 } }
+      : read
     expect(studentScanAgeCorroborated(candidate, "2026-08-29")).toBe(expected)
     expect(candidate.confidence.dateOfBirth).toBe(
       candidate.dateOfBirth ? 65 : 0,
     )
     expect(MIN_FIELD_CONFIDENCE).toBe(70)
+  })
+
+  it("never lets an uncertain printed age vouch for an uncertain date", () => {
+    const candidate = readAgeRow("Mario Rossi 24 anni - 12/02/2002")
+    expect(candidate.ageReading!.confidence).toBeLessThan(MIN_FIELD_CONFIDENCE)
+    expect(candidate.confidence.dateOfBirth).toBeLessThan(MIN_FIELD_CONFIDENCE)
+    expect(studentScanAgeCorroborated(candidate, "2026-08-29")).toBe(false)
   })
 
   it("reports the independently read age while retaining the stored date", () => {
@@ -948,4 +959,833 @@ describe("student scan extraction", () => {
     expect(optedOut.candidates).toHaveLength(2)
     expect(optedOut.candidates.every(({ phone }) => phone === "")).toBe(true)
   })
+})
+
+describe("readings the parser used to drop silently", () => {
+  function read(text: string) {
+    return extractStudentCandidates({ text, tsv: null, confidence: 92 })
+  }
+
+  it.each(["Lo", "Li", "El", "Al", "De", "Di"])(
+    "keeps the surname particle %s with its surname",
+    (particle) => {
+      const [candidate] = read(
+        `${particle} Bardino Marco 12/03/2010 16 anni`,
+      ).candidates
+      const applied = applyStudentNameOrder(candidate!, "surname-given")
+      expect(applied.surname).toBe(`${particle} Bardino`)
+      expect(applied.firstName).toBe("Marco")
+    },
+  )
+
+  it("keeps a particle read from a placed table cell", () => {
+    const row = (line: number, words: string[]) =>
+      tsvPlacedLine(line, [
+        ...words.map((text, index) => ({
+          text,
+          confidence: 93,
+          left: 20 + index * 90,
+          width: 80,
+        })),
+        { text: "3331234567", confidence: 93, left: 400, width: 110 },
+        { text: "16", confidence: 93, left: 520, width: 20 },
+        { text: "anni", confidence: 93, left: 545, width: 40 },
+        { text: "12/03/2010", confidence: 93, left: 600, width: 100 },
+      ])
+    const result = extractStudentCandidates({
+      confidence: 93,
+      text: "",
+      tsv: [
+        HEADER,
+        row(1, ["Lo", "Bardino", "Marco"]),
+        row(2, ["Verdi", "Anna"]),
+        row(3, ["Neri", "Paolo"]),
+      ].join("\n"),
+    })
+    const applied = applyStudentNameOrder(
+      result.candidates[0]!,
+      "surname-given",
+    )
+    expect(applied.surname).toBe("Lo Bardino")
+    expect(applied.nameReading?.raw).toBe("Lo Bardino Marco")
+  })
+
+  it("keeps an unknown short word inside a name in the reading and marks the split", () => {
+    const [candidate] = read("Bardino Xq Marco 12/03/2010 16 anni").candidates
+    expect(candidate!.nameReading?.raw).toBe("Bardino Xq Marco")
+    expect(candidate!.nameReading?.droppedInteriorWord).toBe(true)
+    const applied = applyStudentNameOrder(candidate!, "surname-given")
+    expect(applied.nameReading?.compoundAmbiguity).toBe(true)
+  })
+
+  it("does not drop the rows below a contact line with a keyword", () => {
+    const result = read(
+      [
+        "Segreteria didattica: 0212345678",
+        "Bardino Marco 12/03/2010 16 anni",
+        "Verdi Anna 01/02/2011 15 anni",
+        "Neri Paolo 05/06/2012 14 anni",
+      ].join("\n"),
+    )
+    expect(result.unsuitable).toBe(false)
+    expect(
+      result.candidates.map(({ firstName, rowWarning }) => [
+        firstName,
+        rowWarning ?? null,
+      ]),
+    ).toEqual([
+      ["Bardino", null],
+      ["Verdi", null],
+      ["Neri", null],
+    ])
+  })
+
+  it.each(["Istruttori", "Istruttrici", "Personale", "Volontaria"])(
+    "marks, never drops, the staff below a %s heading",
+    (heading) => {
+      const result = read(
+        [
+          "Bardino Marco 12/03/2010 16 anni",
+          heading,
+          "Verdani Luca 03/04/1990 36 anni",
+        ].join("\n"),
+      )
+      expect(
+        result.candidates.map(({ firstName, rowWarning }) => [
+          firstName,
+          rowWarning ?? null,
+        ]),
+      ).toEqual([
+        ["Bardino", null],
+        ["Verdani", "possible-staff"],
+      ])
+    },
+  )
+
+  it("marks, never drops, the rows below a singular Istruttore line", () => {
+    const result = read(
+      [
+        "Bardino Marco 12/03/2010 16 anni",
+        "Istruttore",
+        "Verdani Luca 03/04/1990 36 anni",
+      ].join("\n"),
+    )
+    expect(
+      result.candidates.map(({ firstName, rowWarning }) => [
+        firstName,
+        rowWarning ?? null,
+      ]),
+    ).toEqual([
+      ["Bardino", null],
+      ["Verdani", "possible-staff"],
+    ])
+  })
+
+  it("keeps a staff row under a Personale heading for review, never ready", () => {
+    const result = read(
+      [
+        "Bardino Marco 12/03/2010 16 anni",
+        "Personale",
+        "Verdi Anna 01/02/1990 36 anni",
+      ].join("\n"),
+    )
+    // Under a staff heading the row is kept for review, never ready.
+    expect(
+      result.candidates.map(({ firstName, rowWarning }) => [
+        firstName,
+        rowWarning ?? null,
+      ]),
+    ).toEqual([
+      ["Bardino", null],
+      ["Verdi", "possible-staff"],
+    ])
+  })
+
+  it("keeps a student whose name is also a heading word when an age is printed", () => {
+    const result = read(
+      [
+        "Bardino Domenica 12/03/2010 16 anni",
+        "Sabato Marco 01/02/2011 15 anni",
+      ].join("\n"),
+    )
+    // Kept, and marked wherever the heading word is: "Settimana Deriva 12
+    // anni" and "Turno Domenica 12 anni" read the same way.
+    expect(
+      result.candidates.map(({ rowWarning }) => rowWarning ?? null),
+    ).toEqual(["possible-heading", "possible-heading"])
+  })
+
+  it("marks a row with a staff role code the layout cannot place", () => {
+    const [candidate] = read(
+      "Bardino Luca IS 3331234567 34 anni 03/04/1992",
+    ).candidates
+    expect(candidate!.rowWarning).toBe("possible-staff")
+  })
+
+  it("marks a line carrying two rows' dates and ages", () => {
+    const [candidate] = read(
+      "Fornace Sara 12/03/2010 16 anni Pellandi Paolo 01/02/2011 15 anni",
+    ).candidates
+    expect(candidate!.rowWarning).toBe("possible-merged-rows")
+  })
+})
+
+describe("readings kept on crops and headings (F1 re-review)", () => {
+  it.each([
+    ["Lo", "Re", "Marco"],
+    ["Li", "Wu", "Anna"],
+    ["Del", "Re", "Marco"],
+  ])(
+    "marks %s %s %s on a crop too small for a table layout",
+    (particle, short, given) => {
+      const result = extractStudentCandidates({
+        confidence: 92,
+        text: "",
+        tsv: [
+          HEADER,
+          tsvLine(1, [
+            { text: particle, confidence: 92 },
+            { text: short, confidence: 92 },
+            { text: given, confidence: 92 },
+            { text: "12/03/2010", confidence: 92 },
+          ]),
+          tsvLine(2, [
+            { text: "Verdani", confidence: 92 },
+            { text: "Giulia", confidence: 92 },
+            { text: "01/02/2011", confidence: 92 },
+          ]),
+        ].join("\n"),
+      })
+      const reading = result.candidates[0]!.nameReading!
+      expect(reading.droppedInteriorWord).toBe(true)
+      expect(reading.raw).toContain(short)
+      const applied = applyStudentNameOrder(
+        result.candidates[0]!,
+        "surname-given",
+      )
+      expect(applied.nameReading?.compoundAmbiguity).toBe(true)
+    },
+  )
+
+  it("ends the staff marking at a student heading that carries an age", () => {
+    const result = extractStudentCandidates({
+      text: [
+        "Personale",
+        "Neri Paolo IS 3331234567 34 anni 03/04/1992",
+        "Allievi (8-12 anni)",
+        "Bardino Marco 12/03/2014 12 anni",
+        "Verdi Anna 01/02/2015 11 anni",
+        "Rossa Ada 05/06/2016 10 anni",
+      ].join("\n"),
+      tsv: null,
+      confidence: 92,
+    })
+    expect(
+      result.candidates.map(({ firstName, rowWarning }) => [
+        firstName,
+        rowWarning ?? null,
+      ]),
+    ).toEqual([
+      ["Neri", "possible-staff"],
+      ["Bardino", null],
+      ["Verdi", null],
+      ["Rossa", null],
+    ])
+  })
+
+  it("keeps a table row whose given name is a heading word when the age word is misread", () => {
+    const row = (line: number, words: string[], age: string) =>
+      tsvPlacedLine(line, [
+        ...words.map((text, index) => ({
+          text,
+          confidence: 93,
+          left: 20 + index * 90,
+          width: 80,
+        })),
+        { text: "3331234567", confidence: 93, left: 400, width: 110 },
+        { text: "12", confidence: 93, left: 520, width: 20 },
+        { text: age, confidence: 93, left: 545, width: 40 },
+        { text: "01/02/2014", confidence: 93, left: 600, width: 100 },
+      ])
+    const result = extractStudentCandidates({
+      confidence: 93,
+      text: "",
+      tsv: [
+        HEADER,
+        row(1, ["Bardino", "Domenica"], "annl"),
+        row(2, ["Verdi", "Anna"], "anni"),
+        row(3, ["Neri", "Paolo"], "anni"),
+        row(4, ["Rossa", "Ada"], "anni"),
+      ].join("\n"),
+    })
+    expect(result.candidates).toHaveLength(4)
+  })
+})
+
+describe("section and heading rules (F1 round 3)", () => {
+  // Whether a date can be a birth date depends on today's date.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-09-27T12:00:00"))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function headingWordRow(
+    line: number,
+    words: string[],
+    fields: { phone?: boolean; ageWord?: string; date?: string },
+  ) {
+    return tsvPlacedLine(line, [
+      ...words.map((text, index) => ({
+        text,
+        confidence: 93,
+        left: 20 + index * 90,
+        width: 80,
+      })),
+      ...(fields.phone
+        ? [{ text: "3331234567", confidence: 93, left: 400, width: 110 }]
+        : []),
+      ...(fields.ageWord
+        ? [
+            { text: "12", confidence: 93, left: 520, width: 20 },
+            { text: fields.ageWord, confidence: 93, left: 545, width: 40 },
+          ]
+        : []),
+      ...(fields.date
+        ? [{ text: fields.date, confidence: 93, left: 600, width: 100 }]
+        : []),
+    ])
+  }
+
+  it.each([
+    [["Sabato", "Marco"]],
+    [["Corso", "Marta"]],
+    [["Domenica", "Rossi"]],
+  ])(
+    "keeps and marks a table row led by a heading word %j when the age word is misread",
+    (words) => {
+      const result = extractStudentCandidates({
+        confidence: 93,
+        text: "",
+        tsv: [
+          HEADER,
+          headingWordRow(1, words, {
+            phone: true,
+            ageWord: "annl",
+            date: "01/02/2014",
+          }),
+          headingWordRow(2, ["Verdi", "Anna"], {
+            phone: true,
+            ageWord: "anni",
+            date: "01/02/2014",
+          }),
+          headingWordRow(3, ["Neri", "Paolo"], {
+            phone: true,
+            ageWord: "anni",
+            date: "05/06/2014",
+          }),
+          headingWordRow(4, ["Rossa", "Ada"], {
+            phone: true,
+            ageWord: "anni",
+            date: "07/08/2014",
+          }),
+        ].join("\n"),
+      })
+      expect(
+        result.candidates.map(({ rowWarning }) => rowWarning ?? null),
+      ).toEqual(["possible-heading", null, null, null])
+      const kept = result.candidates[0]!
+      expect(`${kept.firstName} ${kept.surname}`).toContain(words[1]!)
+    },
+  )
+
+  it("keeps and marks a table row led by a heading word with only a telephone", () => {
+    const result = extractStudentCandidates({
+      confidence: 93,
+      text: "",
+      tsv: [
+        HEADER,
+        headingWordRow(1, ["Sabato", "Marco"], { phone: true }),
+        headingWordRow(2, ["Verdi", "Anna"], { phone: true }),
+        headingWordRow(3, ["Neri", "Paolo"], { phone: true }),
+        headingWordRow(4, ["Rossa", "Ada"], { phone: true }),
+      ].join("\n"),
+    })
+    expect(
+      result.candidates.map(({ rowWarning }) => rowWarning ?? null),
+    ).toEqual(["possible-heading", null, null, null])
+  })
+
+  it("marks the rows after a staff heading that carries a date as possible staff", () => {
+    const result = extractStudentCandidates({
+      text: [
+        "Bardino Marco 12/03/2014 12 anni",
+        "Personale al 29/08/2026",
+        "Bianchi Luca 03/04/1990 36 anni",
+      ].join("\n"),
+      tsv: null,
+      confidence: 92,
+    })
+    expect(
+      result.candidates.map(({ firstName, rowWarning }) => [
+        firstName,
+        rowWarning ?? null,
+      ]),
+    ).toEqual([
+      ["Bardino", null],
+      // The heading itself is kept as a visible row to remove: a staff word in
+      // a line with a date is not proof it holds no student.
+      ["Personale", "possible-staff"],
+      ["Bianchi", "possible-staff"],
+    ])
+  })
+
+  it("still drops a laid-out heading that starts with its keyword", () => {
+    const row = (line: number, words: string[], date: string) =>
+      tsvPlacedLine(line, [
+        ...words.map((text, index) => ({
+          text,
+          confidence: 93,
+          left: 20 + index * 90,
+          width: 80,
+        })),
+        { text: "3331234567", confidence: 93, left: 400, width: 110 },
+        { text: date, confidence: 93, left: 600, width: 100 },
+      ])
+    const result = extractStudentCandidates({
+      confidence: 93,
+      text: "",
+      tsv: [
+        HEADER,
+        row(1, ["Corso", "Deriva", "Livello"], "29/08/2026"),
+        row(2, ["Verdi", "Anna"], "01/02/2014"),
+        row(3, ["Neri", "Paolo"], "05/06/2013"),
+        row(4, ["Rossa", "Ada"], "07/08/2012"),
+      ].join("\n"),
+    })
+    expect(result.candidates.map(({ firstName }) => firstName)).toEqual([
+      "Verdi",
+      "Neri",
+      "Rossa",
+    ])
+  })
+})
+
+describe("section and heading rules (F1 round 5)", () => {
+  function read(text: string) {
+    return extractStudentCandidates({ text, tsv: null, confidence: 92 })
+  }
+  const students = [
+    "Bardino Marco 12/03/2014 12 anni",
+    "Verdi Anna 01/02/2015 11 anni",
+    "Rossa Ada 05/06/2016 10 anni",
+  ]
+  const warnings = (text: string) =>
+    read(text).candidates.map(({ firstName, rowWarning }) => [
+      firstName,
+      rowWarning ?? null,
+    ])
+
+  it.each(["Corso Deriva 8-12 anni", "CORSO VELA 10-14 ANNI"])(
+    "drops the course heading %s with an age range",
+    (heading) => {
+      expect(warnings([heading, ...students].join("\n"))).toEqual([
+        ["Bardino", null],
+        ["Verdi", null],
+        ["Rossa", null],
+      ])
+    },
+  )
+
+  it("drops a laid-out course heading with an age range", () => {
+    const result = extractStudentCandidates({
+      confidence: 93,
+      text: "",
+      tsv: [
+        HEADER,
+        tsvPlacedLine(1, [
+          { text: "Corso", confidence: 93, left: 20, width: 80 },
+          { text: "Deriva", confidence: 93, left: 110, width: 80 },
+          { text: "8-12", confidence: 93, left: 520, width: 20 },
+          { text: "anni", confidence: 93, left: 545, width: 40 },
+        ]),
+        ...[
+          ["Bardino", "Marco", "01/02/2014"],
+          ["Verdi", "Anna", "05/06/2014"],
+          ["Rossa", "Ada", "07/08/2014"],
+        ].map(([surname, given, date], index) =>
+          tsvPlacedLine(index + 2, [
+            { text: surname!, confidence: 93, left: 20, width: 80 },
+            { text: given!, confidence: 93, left: 110, width: 80 },
+            { text: "3331234567", confidence: 93, left: 400, width: 110 },
+            { text: "12", confidence: 93, left: 520, width: 20 },
+            { text: "anni", confidence: 93, left: 545, width: 40 },
+            { text: date!, confidence: 93, left: 600, width: 100 },
+          ]),
+        ),
+      ].join("\n"),
+    })
+    expect(result.candidates.map(({ firstName }) => firstName)).toEqual([
+      "Bardino",
+      "Verdi",
+      "Rossa",
+    ])
+  })
+
+  it("keeps and marks a heading word before a single printed age", () => {
+    expect(
+      warnings(["Settimana Deriva 12 anni", ...students].join("\n"))[0],
+    ).toEqual(["Settimana", "possible-heading"])
+  })
+
+  it("skips one named staff line and marks, never drops, the students after it", () => {
+    expect(
+      warnings(
+        ["Elenco partecipanti", "Istruttore: Verdani Luca", ...students].join(
+          "\n",
+        ),
+      ),
+    ).toEqual([
+      ["Bardino", "possible-staff"],
+      ["Verdi", "possible-staff"],
+      ["Rossa", "possible-staff"],
+    ])
+    expect(
+      warnings(
+        [students[0], "Istruttore Verdani Luca", ...students.slice(1)].join(
+          "\n",
+        ),
+      ).map(([firstName]) => firstName),
+    ).toEqual(["Bardino", "Verdi", "Rossa"])
+  })
+
+  it("marks the staff after a heading with filler words", () => {
+    expect(
+      warnings(
+        [
+          ...students,
+          "Istruttori di turno",
+          "Verdani Luca 03/04/1990 36 anni",
+        ].join("\n"),
+      ),
+    ).toEqual([
+      ["Bardino", null],
+      ["Verdi", null],
+      ["Rossa", null],
+      ["Verdani", "possible-staff"],
+    ])
+  })
+
+  it("marks the rows below a dated staff heading even at the top", () => {
+    expect(
+      warnings(
+        [
+          "Personale al 29/08/2026",
+          "Verdani Luca 03/04/1990 36 anni",
+          "Allievi",
+          ...students,
+        ].join("\n"),
+      ).filter(([firstName]) => firstName !== "Personale"),
+    ).toEqual([
+      ["Verdani", "possible-staff"],
+      ["Bardino", null],
+      ["Verdi", null],
+      ["Rossa", null],
+    ])
+  })
+
+  it("does not let a stray title row turn a contact line into a staff mark", () => {
+    expect(
+      warnings(
+        [
+          "Registro di prova dati inventati",
+          "Segreteria didattica: 0212345678",
+          ...students,
+        ].join("\n"),
+      ).filter(([firstName]) =>
+        ["Bardino", "Verdi", "Rossa"].includes(firstName as string),
+      ),
+    ).toEqual([
+      ["Bardino", null],
+      ["Verdi", null],
+      ["Rossa", null],
+    ])
+  })
+})
+
+describe("staff lines and headings (F1 round 6)", () => {
+  // Whether a date can be a birth date depends on today's date.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-09-27T12:00:00"))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const students = [
+    "Bardino Marco 12/03/2014 12 anni",
+    "Verdi Anna 01/02/2015 11 anni",
+    "Rossa Ada 05/06/2016 10 anni",
+  ]
+  const warnings = (lines: string[]) =>
+    extractStudentCandidates({
+      text: lines.join("\n"),
+      tsv: null,
+      confidence: 92,
+    }).candidates.map(({ firstName, rowWarning }) => [
+      firstName,
+      rowWarning ?? null,
+    ])
+  const unmarkedStudents = [
+    ["Bardino", null],
+    ["Verdi", null],
+    ["Rossa", null],
+  ]
+
+  it.each([
+    "Istruttore: Verdani",
+    "Istruttore: L. Verdani",
+    "Istruttore: Wu Li",
+    "Istruttore Verdani",
+    "Istruttrice: Anna",
+    "Assistente: Neri",
+    "Istruttore:",
+    "Istruttore: ______",
+    "Istruttore di turno",
+    "Istruttore: Sabato",
+    "Istruttrice Deriva",
+  ])(
+    "skips the staff line %s and marks, never drops, the rows after it",
+    (staff) => {
+      const marked = [
+        ["Bardino", "possible-staff"],
+        ["Verdi", "possible-staff"],
+        ["Rossa", "possible-staff"],
+      ]
+      expect(warnings([staff, ...students])).toEqual(marked)
+      expect(warnings(["Elenco partecipanti", staff, ...students])).toEqual(
+        marked,
+      )
+      expect(warnings([students[0]!, staff, ...students.slice(1)])).toEqual([
+        ["Bardino", null],
+        ["Verdi", "possible-staff"],
+        ["Rossa", "possible-staff"],
+      ])
+      // A student heading ends the marking.
+      expect(
+        warnings([
+          staff,
+          "Verdani Luca 03/04/1990 36 anni",
+          "Allievi",
+          ...students,
+        ]),
+      ).toEqual([["Verdani", "possible-staff"], ...unmarkedStudents])
+    },
+  )
+
+  it.each([
+    "Cognome Nome Nascita Istruttore",
+    "Nome istruttore:",
+    "Firma istruttore",
+    "Nome assistente:",
+  ])("skips the label %s alone above the students", (label) => {
+    expect(warnings([label, ...students])).toEqual(unmarkedStudents)
+    // Below a student it may head a staff table: the rows after it are marked.
+    expect(warnings([students[0]!, label, ...students.slice(1)])).toEqual([
+      ["Bardino", null],
+      ["Verdi", "possible-staff"],
+      ["Rossa", "possible-staff"],
+    ])
+  })
+
+  it("marks the rows between a staff contact line and the student heading", () => {
+    expect(
+      warnings([
+        "Personale tel. 3331234567",
+        "Verdani Luca 03/04/1990 36 anni",
+        "Allievi",
+        ...students,
+      ]).filter(([firstName]) => firstName !== "Personale"),
+    ).toEqual([["Verdani", "possible-staff"], ...unmarkedStudents])
+    // With no student heading after it, it is the school's contact line.
+    expect(
+      warnings(["Segreteria 0212345678", ...students]).filter(([firstName]) =>
+        ["Bardino", "Verdi", "Rossa"].includes(firstName as string),
+      ),
+    ).toEqual(unmarkedStudents)
+  })
+
+  it("marks an aged row with a heading word anywhere in the name", () => {
+    expect(
+      warnings([
+        "Turno Domenica 12 anni",
+        "N. 3 Corso Vela 12 anni",
+        ...students,
+      ]),
+    ).toEqual([
+      ["Turno", "possible-heading"],
+      [expect.any(String), "possible-heading"],
+      ...unmarkedStudents,
+    ])
+  })
+
+  it.each([
+    "Personale del turno",
+    "Assistenti del turno",
+    "Staff",
+    "Istruttori:",
+    "Istruttori: ________",
+    "Istruttori: Sabato e Corso",
+    "Corso Istruttori",
+  ])("marks, never drops, the rows after the heading %s", (heading) => {
+    expect(
+      warnings([...students, heading, "Verdani Luca 03/04/1990 36 anni"]),
+    ).toEqual([...unmarkedStudents, ["Verdani", "possible-staff"]])
+    expect(warnings([heading, ...students])).toEqual([
+      ["Bardino", "possible-staff"],
+      ["Verdi", "possible-staff"],
+      ["Rossa", "possible-staff"],
+    ])
+  })
+
+  it.each(["Iscritti", "Corsisti"])(
+    "ends the staff marking at the student heading %s",
+    (heading) => {
+      expect(
+        warnings([
+          "Personale tel. 3331234567",
+          "Verdani Luca 03/04/1990 36 anni",
+          heading,
+          ...students,
+        ]).filter(([firstName]) => firstName !== "Personale"),
+      ).toEqual([["Verdani", "possible-staff"], ...unmarkedStudents])
+    },
+  )
+
+  it("marks an aged heading phrase such as Centro Velico", () => {
+    expect(warnings(["Centro Velico 12 anni", ...students])).toEqual([
+      ["Centro", "possible-heading"],
+      ...unmarkedStudents,
+    ])
+  })
+
+  it("marks the rows after a staff line it cannot place, until the students", () => {
+    expect(
+      warnings([
+        "Staff del Centro Velico",
+        "Verdani Luca 03/04/1990 36 anni",
+        "Allievi",
+        ...students,
+      ]),
+    ).toEqual([["Verdani", "possible-staff"], ...unmarkedStudents])
+  })
+
+  it("keeps and marks an age-range line that starts with no heading word", () => {
+    expect(warnings(["Gruppo Vela 8-12 anni", ...students])).toEqual([
+      ["Gruppo", "possible-heading"],
+      ...unmarkedStudents,
+    ])
+  })
+
+  it("keeps and marks a student called Domenica on a crop with no age", () => {
+    expect(
+      warnings([
+        "Rossi Domenica 12/03/2014",
+        "Verdi Anna 01/02/2015",
+        "Stampato il 20/08/2026",
+      ]),
+    ).toEqual([
+      ["Rossi", "possible-heading"],
+      ["Verdi", null],
+    ])
+  })
+
+  it("does not let a dated title turn a contact line into a staff mark", () => {
+    expect(
+      warnings([
+        "Registro aggiornato al 20/08/2026",
+        "Segreteria didattica: 0212345678",
+        ...students,
+      ]).filter(([firstName]) =>
+        ["Bardino", "Verdi", "Rossa"].includes(firstName as string),
+      ),
+    ).toEqual(unmarkedStudents)
+  })
+})
+
+describe("student headings and staff words (F1 rounds 9 and 10)", () => {
+  // Whether a date can be a birth date depends on today's date.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-09-27T12:00:00"))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const students = [
+    "Bardino Marco 12/03/2014 12 anni",
+    "Verdi Anna 01/02/2015 11 anni",
+    "Rossa Ada 05/06/2016 10 anni",
+  ]
+  const unmarkedStudents = [
+    ["Bardino", null],
+    ["Verdi", null],
+    ["Rossa", null],
+  ]
+  const warnings = (lines: string[]) =>
+    extractStudentCandidates({
+      text: lines.join("\n"),
+      tsv: null,
+      confidence: 92,
+    }).candidates.map(({ firstName, rowWarning }) => [
+      firstName,
+      rowWarning ?? null,
+    ])
+
+  it("marks the staff between a label at the top and the student heading", () => {
+    expect(
+      warnings([
+        "Nome assistente:",
+        "Verdani Luca 03/04/1990 36 anni",
+        "Allievi",
+        ...students,
+      ]),
+    ).toEqual([["Verdani", "possible-staff"], ...unmarkedStudents])
+  })
+
+  it("marks a row that carries a staff word itself", () => {
+    expect(warnings(["Neri volontario 30 anni", ...students])).toEqual([
+      ["Neri", "possible-staff"],
+      ...unmarkedStudents,
+    ])
+  })
+
+  it.each([
+    "Allievi Deriva 12/14 anni",
+    "Allievi Deriva 12 anni",
+    "Partecipanti Vela 10—12 anni",
+  ])("drops the student heading %s, never reads it as a student", (heading) => {
+    expect(warnings([heading, ...students])).toEqual(unmarkedStudents)
+    expect(warnings([students[0]!, heading, ...students.slice(1)])).toEqual(
+      unmarkedStudents,
+    )
+  })
+
+  it.each(["Allievi turno 2", "ELENCO PARTECIPANTI 2026", "Iscritti: 12"])(
+    "marks the staff between a label at the top and the heading %s",
+    (heading) => {
+      expect(
+        warnings([
+          "Nome assistente:",
+          "Verdani Luca 03/04/1990 36 anni",
+          heading,
+          ...students,
+        ]),
+      ).toEqual([["Verdani", "possible-staff"], ...unmarkedStudents])
+    },
+  )
 })

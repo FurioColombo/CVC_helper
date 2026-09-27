@@ -1,11 +1,12 @@
-import { mkdir, writeFile } from "node:fs/promises"
-import path from "node:path"
+import { writeFile } from "node:fs/promises"
 
 import { expect, type Locator, type Page, test } from "@playwright/test"
 import type {
   DictationError,
   DictationStatus,
 } from "@/features/speech/useDictation"
+
+import { evidenceOutputPath } from "./evidence"
 
 const SUBJECT =
   "nota sintetica di Alessandra Bernardeschi per sabato pomeriggio"
@@ -182,9 +183,7 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
     "The synthetic state matrix runs once; real-host checks use the same browser.",
   )
 
-  const evidenceDirectory = path.resolve(".evidence/V02")
   const geometry: Array<Awaited<ReturnType<typeof measureGeometry>>> = []
-  await mkdir(evidenceDirectory, { recursive: true })
 
   for (const host of [
     "student",
@@ -326,8 +325,9 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
       ) {
         await page.screenshot({
           fullPage: true,
-          path: path.join(
-            evidenceDirectory,
+          path: evidenceOutputPath(
+            testInfo,
+            "V02",
             "evaluation-loading-100-stress.png",
           ),
         })
@@ -335,7 +335,11 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
       if (host === "student" && scenario.status === "recording") {
         await page.screenshot({
           fullPage: true,
-          path: path.join(evidenceDirectory, "student-recording-stress.png"),
+          path: evidenceOutputPath(
+            testInfo,
+            "V02",
+            "student-recording-stress.png",
+          ),
         })
       }
     }
@@ -389,7 +393,7 @@ test("shared controls fit every dictation state at stress and ordinary widths", 
   }
 
   await writeFile(
-    path.join(evidenceDirectory, "control-geometry.json"),
+    evidenceOutputPath(testInfo, "V02", "control-geometry.json"),
     `${JSON.stringify(
       {
         command:

@@ -2,6 +2,8 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { spawn, spawnSync } from "node:child_process"
 
+import { RECORDER_ID, sourceDigest } from "./verification-digest.mjs"
+
 const milestone = process.argv[2]
 if (!milestone) {
   console.error("Usage: record-verification.mjs <ID>")
@@ -33,6 +35,13 @@ const gitCommit = spawnSync("git", ["rev-parse", "HEAD"], {
   cwd: root,
   encoding: "utf8",
 }).stdout.trim()
+// Taken before the run: the source the checks below actually exercise.
+const source = sourceDigest(root)
+const uncommitted = spawnSync(
+  "git",
+  ["status", "--porcelain", "--", ".", ":!.evidence", ":!.milestones"],
+  { cwd: root, encoding: "utf8" },
+).stdout.trim()
 
 for (const script of scripts) {
   const startedAt = new Date().toISOString()
@@ -86,7 +95,14 @@ writeFileSync(
       appVersion: JSON.parse(
         readFileSync(resolve(root, "package.json"), "utf8"),
       ).version,
+      recorder: RECORDER_ID,
       gitCommit,
+      // The commit alone does not say what ran: the tree may hold uncommitted
+      // work. The digest identifies the exact source; see verification-digest.
+      workingTreeClean: uncommitted.length === 0,
+      sourceDigest: source.digest,
+      sourceFiles: source.files,
+      verificationScripts: scripts,
       checks,
     },
     null,

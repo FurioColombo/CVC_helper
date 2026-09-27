@@ -110,6 +110,22 @@ test("keeps P14–P16 compact while assigning and unlinking session boats", asyn
   const appNavTop = await page
     .getByRole("navigation", { name: "Navigazione principale" })
     .evaluate((element) => element.getBoundingClientRect().top)
+  // F1 triage (2026-09-26): this assertion is correct, not stale. P14 in
+  // docs/post-mvp/07_PAGE_CHANGELOG.md requires "A terra"/"Volontari" (this
+  // rail) to stay floating above the fixed app navigation. The rail
+  // (aria-label="Accesso rapido equipaggi", CrewManagement.tsx ~line 2982)
+  // has no sticky/fixed positioning, and its scroll ancestor
+  // (aria-label="Composizione equipaggi", ~line 2197, `flex-1 overflow-y-auto`)
+  // only gets a bounded height from a `flex flex-col` parent with a fixed
+  // height; the actual page wrapper (~line 676) uses `min-h-full`, which
+  // grows with content instead of bounding it. So the rail is not pinned:
+  // it flows to the bottom of the (unbounded) page, well past the fixed nav,
+  // for any session with enough crews/members. Reproduced on baseline commit
+  // 3dc4360, before UX2, so this predates the recent crew-paging change.
+  // Do not weaken this assertion; the fix belongs in CrewManagement.tsx
+  // (give the workspace a bounded-height flex column so the existing
+  // `overflow-y-auto`/`flex-1` classes actually create an internal scroll
+  // region, and make the rail sticky/fixed at its bottom).
   expect(railBottom).toBeLessThanOrEqual(appNavTop + 1)
   await crewContent
     .getByRole("button", { name: "Bea, equipaggio 1" })

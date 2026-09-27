@@ -13,6 +13,29 @@ ledger until F1 reconciles its remaining corrections.
 This document records missing or partial behaviour. It does not authorise a
 fix: every item has an owner, and each owner must use the milestone lifecycle.
 
+## Reconciliation at F1 (2026-09-26)
+
+F1 closed the remaining R1 corrections and reconciled this ledger. Current
+state of every item below:
+
+| Item                                    | State now                                                                                                       |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| V02, V03, V04, S5, N1, C1, E1, UX1, UX2 | Complete in their milestones.                                                                                   |
+| S4 OCR fragmentation                    | Complete (rule erasure, 2026-09-25); remaining limitations in the plan.                                         |
+| V05 assistant path                      | Complete in V05 (see the plan).                                                                                 |
+| F1.2 moved long press                   | Fixed: a moved press never opens the edit form.                                                                 |
+| F1.3 failed evaluation save             | Fixed: Riprova or Scarta is required before any exit, including phone Back and the bottom navigation.           |
+| F1.5 invalid edit Back                  | Fixed: Back names the fields to complete and focuses the first; the phone's Back does the same.                 |
+| F1.6 autosave status                    | Fixed: a queued edit and a running write both show `Salvataggio…`.                                              |
+| N1 launch colour                        | Fixed: the manifest background is the app surface `#f2f6fb`, checked in the built manifest.                     |
+| Pixel P14–P16 rail geometry             | Triaged in F1; see the plan's F1 section.                                                                       |
+| Historical roster text in Git refs      | Rewritten immediately before the first 0.3.0 push, at the owner's 2026-09-26 request; see `0_3_0_QUESTIONS.md`. |
+| UG2 physical checks                     | Still the owner's; UG2 is the next milestone.                                                                   |
+
+F1 also fixed the blockers of the independent reviews of the merged line
+(`.evidence/F1/review-*.json`); their dispositions are in
+`.evidence/F1/self-review.json`.
+
 ## Planned in 0.3.0
 
 ### V02 — the dictation control changes width
@@ -92,10 +115,9 @@ the 0.3.0 gate. Existing safety rules and private-photo boundaries remain.
 
 The current tree uses fictional examples, but an aggregate local-ref audit found
 older roster-value text in Git history. The owner deferred a coordinated
-history/tag rewrite to future work on 2026-09-23. That future task must assess
-published refs and collaborator clones before any force-push. Private
-photographs remain ignored; no exact photograph blob was found in local refs.
-See `.evidence/S4/privacy-audit.json` for aggregate counts.
+history/tag rewrite on 2026-09-23 and approved it on 2026-09-26; it was carried
+out immediately before the first 0.3.0 push (see `0_3_0_QUESTIONS.md`). Private photographs remain ignored; no
+exact photograph blob was ever committed.
 
 ### Automated real-photograph regression
 
@@ -229,19 +251,19 @@ Valutazioni screen; the current history component is mounted at
 
 ## Findings checked and closed or intentionally unchanged
 
-| Finding                                             | Code check and disposition                                                                                                                                                                                                                            |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S1 telephone choice is not remembered               | `useState(false)` at `src/features/students/StudentScan.tsx:533` deliberately restores the requested privacy-safe default for every scan. No contrary owner request; unchanged.                                                                       |
-| S2 suffix votes can include surnames                | `inferStudentNameOrder` at `src/capabilities/studentScan.ts:409-449` exposes both vote counts and falls back on ties; all five supplied captures selected the correct order. Accepted limitation, with manual sheet and row correction retained.      |
-| S3 manual create/edit still needs an exact date     | The old storage contract remains at `src/features/students/StudentManagement.tsx:493-503`. The owner now permits age-only scan entry; S5 will migrate it without inventing a birthday.                                                                |
-| Gianluca sex inference                              | Closed in S2: the male-name table is used before suffix inference at `src/capabilities/studentScan.ts:136-160,389-399`.                                                                                                                               |
-| Low-confidence text                                 | Still visible and marked; `MIN_FIELD_CONFIDENCE` remains 70. The scan review renders editable values at `src/features/students/StudentScan.tsx:372-465`.                                                                                              |
-| Deletion pending label                              | Closed since the earlier review: the confirmation button now shows `Eliminazione…` at `src/features/students/StudentManagement.tsx:956`.                                                                                                              |
-| Preview subpath 404                                 | Closed in documentation; `docs/DEPLOY.md:83-89` now requires the same `CVC_BASE_PATH` for preview.                                                                                                                                                    |
-| Built-in browser pane                               | Excluded from product scope by `docs/LOCAL_DEVELOPMENT.md`; production browsers and the deployed PWA are the verification targets.                                                                                                                    |
-| Multiple-tab warning                                | Multi-tab and synchronisation are explicitly outside scope; the database remains local-only.                                                                                                                                                          |
-| Large JavaScript chunks and OCR development warning | Build/tooling observations, not unimplemented owner requests. Production build and OCR paths pass; UG2 remains the next full gate.                                                                                                                    |
-| Public Git history                                  | Private photographs remain ignored and no exact JPEG blob was found in local history. Older refs contain real roster-value text; the owner deferred any coordinated history/tag rewrite to a future task. Current tracked examples are fictionalized. |
+| Finding                                             | Code check and disposition                                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1 telephone choice is not remembered               | `useState(false)` at `src/features/students/StudentScan.tsx:533` deliberately restores the requested privacy-safe default for every scan. No contrary owner request; unchanged.                                                                                                                                 |
+| S2 suffix votes can include surnames                | `inferStudentNameOrder` at `src/capabilities/studentScan.ts:409-449` exposes both vote counts and falls back on ties; all five supplied captures selected the correct order. Accepted limitation, with manual sheet and row correction retained.                                                                |
+| S3 manual create/edit still needs an exact date     | The old storage contract remains at `src/features/students/StudentManagement.tsx:493-503`. The owner now permits age-only scan entry; S5 will migrate it without inventing a birthday.                                                                                                                          |
+| Gianluca sex inference                              | Closed in S2: the male-name table is used before suffix inference at `src/capabilities/studentScan.ts:136-160,389-399`.                                                                                                                                                                                         |
+| Low-confidence text                                 | Still visible and marked; `MIN_FIELD_CONFIDENCE` remains 70. The scan review renders editable values at `src/features/students/StudentScan.tsx:372-465`.                                                                                                                                                        |
+| Deletion pending label                              | Closed since the earlier review: the confirmation button now shows `Eliminazione…` at `src/features/students/StudentManagement.tsx:956`.                                                                                                                                                                        |
+| Preview subpath 404                                 | Closed in documentation; `docs/DEPLOY.md:83-89` now requires the same `CVC_BASE_PATH` for preview.                                                                                                                                                                                                              |
+| Built-in browser pane                               | Excluded from product scope by `docs/LOCAL_DEVELOPMENT.md`; production browsers and the deployed PWA are the verification targets.                                                                                                                                                                              |
+| Multiple-tab warning                                | Multi-tab and synchronisation are explicitly outside scope; the database remains local-only.                                                                                                                                                                                                                    |
+| Large JavaScript chunks and OCR development warning | Build/tooling observations, not unimplemented owner requests. Production build and OCR paths pass; UG2 remains the next full gate.                                                                                                                                                                              |
+| Public Git history                                  | Private photographs remain ignored and no exact JPEG blob was found in local history. Older refs contained real roster-value text; the owner approved a coordinated history/tag rewrite on 2026-09-26, done before the first 0.3.0 push (see `0_3_0_QUESTIONS.md`). Current tracked examples are fictionalized. |
 
 ## Privacy and evidence boundary
 

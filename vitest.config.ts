@@ -14,6 +14,8 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     exclude: ["tests/e2e/**", "node_modules/**", "dist/**"],
     maxWorkers: 1,
+    // A stray it.only must fail the run, not silently skip the rest.
+    allowOnly: false,
     testTimeout: 10_000,
     css: true,
     coverage: {

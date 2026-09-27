@@ -1,0 +1,53 @@
+{
+  "milestone": "V05",
+  "reviewerRole": "self review with the disposition of every finding of the independent V05 reviews",
+  "reviewedAt": "2026-09-27",
+  "runtime": "Node v24.21.0",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "rounds": {
+    "roundOne": "review-round-1.json, FAIL: V5-1 to V5-12 fixed; verified in round 2 (review-round-2.json, roundOneFindingsVerified)",
+    "roundTwo": "review-round-2.json, PASS_WITH_FINDINGS with no blockers: V5R2-1 to V5R2-11 fixed or recorded; verified in the final round (review-final-round.json, previousFindingsVerified)",
+    "finalRound": "review-final-round.json, PASS_WITH_FINDINGS with no blockers (V5F-1 to V5F-5)",
+    "closureRound": "review-round-5.json, PASS_WITH_FINDINGS with no blockers: V5F-1 to V5F-5 verified fixed; V5C-1 below",
+    "roundSix": "review-round-6.json, PASS_WITH_FINDINGS with no blockers: V5C-1 verified fixed; V6-1 below",
+    "roundSeven": "review-round-7.json, PASS_WITH_FINDINGS with no blockers: V6-1 verified fixed; V7-1 below",
+    "roundEight": "review-round-8.json, PASS_WITH_FINDINGS with no blockers: V7-1 verified fixed; V8-1 and V8-2 below",
+    "roundNine": "review-round-9.json, PASS_WITH_FINDINGS with no blockers: V8-1 and V8-2 verified fixed; V9-1 below",
+    "roundTen": "review-round-10.json, PASS_WITH_FINDINGS with no blockers: V9-1 verified fixed; V10-1 below",
+    "roundEleven": "review-round-11.json, PASS with no findings: V10-1 verified as recorded; copied as domain-review.json"
+  },
+  "finalRoundDispositions": {
+    "V5F-1": "fixed: 'Sono tutti' confirms a number of rows; it cannot be answered while an unread line is pending, and it is asked again when the number of pasted rows changes (a row removed); tests",
+    "V5F-2": "fixed: a header typed with ’ (Eta’) is the stated format; corpus case",
+    "V5F-3": "fixed: an age/date conflict also offers 'Correggi la data', which moves to the date; an age the operator typed is labelled 'Età inserita'; tests",
+    "V5F-4": "fixed: with the telephone off, an age, a word or a date (in the shapes listed under V6-1 to V9-1) in the Telefono column makes the line unread with its value named; a telephone, even malformed, is ignored, except a grouped one that has a date's shape with dots or dashes and a trailing pair (02.12.34 56), which is shown as unread; corpus cases and test",
+    "V5F-5": "fixed: the browser journey also fails when any recorded request URL carries a pasted value"
+  },
+  "acceptance": {
+    "statedFormatRoundTrips": "met: parser-robustness.json, every case of the corpus",
+    "malformedParsedOrShownUnread": "met: parser-robustness.json records 0 silently wrong students; unread lines are shown with their text and reason and are fixed in place or left out explicitly",
+    "everyRowReviewed": "met: every pasted row carries the from-assistant warning and needs its own check; the count must be confirmed",
+    "promptCopyable": "met: one-tap copy with a selectable fallback (browser journey)",
+    "noNetworkCall": "met: the browser journey refuses foreign hosts, non-GET requests and any request URL carrying a pasted value",
+    "cameraPathFirstAndUnchanged": "met: the camera and gallery remain first; the assistant section follows them"
+  },
+  "evidenceInspected": [
+    ".evidence/V05/review-round-1.json, review-round-2.json, review-final-round.json, review-round-5.json, review-round-6.json",
+    ".evidence/V05/parser-robustness.json",
+    "src/capabilities/rosterPaste.ts, rosterPaste.corpus.ts, rosterPaste.test.ts",
+    "src/features/students/StudentScan.tsx, StudentScanAssistant.tsx, StudentScan.test.tsx",
+    "tests/e2e/v05-assistant-paste.spec.ts"
+  ],
+  "importantFindings": [],
+  "qolFindings": [],
+  "closureRoundDispositions": {
+    "V5C-1": "fixed: '-', '–', '—', 'N/D' and 'n.d.' in any optional column count as empty; corpus case",
+    "V6-1": "fixed: with the telephone off, a value counts as a telephone only when it has telephone characters, at least four digits, and either nine or more digits or no year in it; corpus case with 2010-03-12, 12 / 03 / 2011 and 12032012",
+    "V7-1": "fixed: see V8-1",
+    "V8-1": "fixed: only a whole value shaped as day, month and year (with dots, slashes, dashes or spaces, the year of two digits or 19xx/20xx), perhaps followed by an age, counts as a date; a telephone written in groups (0789.12.34.56, 02-12-34-56) is ignored again; corpus cases",
+    "V8-2": "fixed: a spaced date with a two-digit year (01 02 14) is shown; so with the telephone off, a date in the Telefono column is shown as an unread line when it is written with dots, slashes, dashes or spaces, as an ISO date, or as eight digits with a four-digit year; six digits run together (010214) are still read as a short telephone and ignored; corpus case",
+    "V9-1": "fixed: a trailing age is accepted only after a date written with dots, slashes or dashes, so a telephone in space-separated pairs (06 12 34 56) is ignored again; a spaced date followed by an age (01 02 2014 16) is therefore read as a telephone and ignored; corpus case",
+    "V10-1": "recorded: V5F-4 now names the grouped telephone shapes that are shown; a spaced date followed by an age (01 02 14 16) is read as a telephone and ignored, as V9-1 states; with the Età column empty the row then needs its age or date typed, so nothing wrong is saved"
+  }
+}

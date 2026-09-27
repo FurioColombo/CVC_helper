@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { VolunteerRoleBadge } from "@/components/PersonBadges"
 import { VOLUNTEER_ROLES, type VolunteerRole } from "@/domain/config"
 import { validateVolunteerRecords } from "@/domain/invariants"
+import { useNestedScreen } from "@/navigation/nestedScreen"
 import {
   createVolunteer,
   listVolunteers,
@@ -18,6 +19,18 @@ type VolunteerScreen =
   { kind: "list" } | { kind: "create" } | { kind: "edit"; volunteerId: string }
 
 type LoadState = "loading" | "ready" | "error"
+
+function parseVolunteerScreen(value: unknown): VolunteerScreen | null {
+  if (!value || typeof value !== "object") return null
+  const candidate = value as { kind?: unknown; volunteerId?: unknown }
+  if (candidate.kind === "list" || candidate.kind === "create") {
+    return { kind: candidate.kind }
+  }
+  if (candidate.kind === "edit" && typeof candidate.volunteerId === "string") {
+    return { kind: "edit", volunteerId: candidate.volunteerId }
+  }
+  return null
+}
 
 async function readValidVolunteers(courseId: string) {
   const records = await listVolunteers(courseId)
@@ -224,7 +237,11 @@ export function VolunteerManagement({
 }) {
   const [volunteers, setVolunteers] = useState<VolunteerRecord[]>([])
   const [loadState, setLoadState] = useState<LoadState>("loading")
-  const [screen, setScreen] = useState<VolunteerScreen>({ kind: "list" })
+  const [screen, openScreen, closeScreen] = useNestedScreen<VolunteerScreen>(
+    "volunteers",
+    { kind: "list" },
+    parseVolunteerScreen,
+  )
 
   async function refreshVolunteers() {
     try {
@@ -282,15 +299,15 @@ export function VolunteerManagement({
     return (
       <>
         <VolunteerPageHeader
-          onBack={() => setScreen({ kind: "list" })}
+          onBack={() => closeScreen({ kind: "list" })}
           title="Nuovo volontario"
         />
         <VolunteerForm
           courseId={courseId}
-          onCancel={() => setScreen({ kind: "list" })}
+          onCancel={() => closeScreen({ kind: "list" })}
           onSaved={() => {
             void refreshVolunteers()
-            setScreen({ kind: "list" })
+            closeScreen({ kind: "list" })
           }}
         />
       </>
@@ -301,16 +318,16 @@ export function VolunteerManagement({
     return (
       <>
         <VolunteerPageHeader
-          onBack={() => setScreen({ kind: "list" })}
+          onBack={() => closeScreen({ kind: "list" })}
           title="Modifica volontario"
         />
         <VolunteerForm
           courseId={courseId}
           key={selectedVolunteer.id}
-          onCancel={() => setScreen({ kind: "list" })}
+          onCancel={() => closeScreen({ kind: "list" })}
           onSaved={() => {
             void refreshVolunteers()
-            setScreen({ kind: "list" })
+            closeScreen({ kind: "list" })
           }}
           volunteer={selectedVolunteer}
         />
@@ -326,7 +343,7 @@ export function VolunteerManagement({
             <Button
               aria-label="Aggiungi volontario"
               className="size-11 px-0"
-              onClick={() => setScreen({ kind: "create" })}
+              onClick={() => openScreen({ kind: "create" })}
             >
               <Plus aria-hidden="true" className="size-5" />
             </Button>
@@ -336,10 +353,10 @@ export function VolunteerManagement({
         title="Volontari"
       />
       {volunteers.length === 0 ? (
-        <EmptyVolunteers onAdd={() => setScreen({ kind: "create" })} />
+        <EmptyVolunteers onAdd={() => openScreen({ kind: "create" })} />
       ) : (
         <VolunteerList
-          onOpen={(volunteerId) => setScreen({ kind: "edit", volunteerId })}
+          onOpen={(volunteerId) => openScreen({ kind: "edit", volunteerId })}
           volunteers={volunteers}
         />
       )}

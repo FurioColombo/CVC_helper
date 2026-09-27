@@ -127,6 +127,12 @@ final Claude Code follow-up. The final product name, a broad icon programme,
 other image exports and remaining deferrals above remain deferred. The active
 acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
 
+Also in 0.3.0: the V05 assistant path for rosters, beside on-device OCR (the
+app states the format and sends nothing itself); the UX1/UX2 owner corrections
+to crew composition, scan review, summary image and evaluation density; and,
+by the owner's 2026-09-26 decision, an erase-and-start-new-course action in
+Settings. Read-only sharing, backend, Auth and synchronization stay deferred.
+
 The owner moved the remaining S4 fewer-than-five review-flag target to a final
 Claude Code follow-up after the 0.3.0 gate. It is not a gate prerequisite. The
 implemented OCR path and its privacy, confidence, visible-text and device-check

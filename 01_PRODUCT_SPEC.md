@@ -1,7 +1,7 @@
-# Product Specification — 0.2.0 cycle
+# Product Specification — 0.3.0 cycle
 
 This is the authoritative source for user-visible behavior and business rules. It
-contains the complete 0.1.0 baseline plus the approved 0.2.0 changes. Historical
+contains the complete 0.1.0 baseline plus the approved 0.2.0 and 0.3.0 changes. Historical
 documents and mock behavior never override it.
 
 ## 1. Product and operating context
@@ -67,6 +67,17 @@ screen when there is one, rather than closing the app from a nested screen.
 
 Course locking, read-only closure and rich historical-course browsing are not
 required. Existing course data remains editable.
+
+Settings offers the only way to start the next course (owner decision,
+2026-09-26): `Elimina il corso e inizia un nuovo corso` erases the current
+course and everything recorded in it from the device, after a confirmation
+that names the course and an explicit acknowledgement that the data cannot be
+recovered, then opens course creation. A failed erase changes nothing.
+
+A screen with work that cannot be left behind silently (an edit not yet
+saveable, a note being written, a failed save, an unsaved scan review) holds
+its own Back, the bottom navigation and the phone's Back alike, and says why or
+asks before discarding.
 
 ## 3. Students
 
@@ -191,6 +202,14 @@ field merely to lower the review count. A reliable name may survive with a
 missing age/date and vice versa.
 Blurred, cropped or unreliable images prompt retake/re-upload rather than false
 certainty.
+
+Beside the camera path, and never before it, scan offers an assistant path
+(V05): the operator copies a strict prompt, sends the photograph to an
+assistant of their own choice, and pastes the answer back. The app never
+contacts the assistant. The app states the format; a line that does not match
+it exactly is shown as unread, with its text and the reason, and can be fixed
+in place. Every row read from an answer needs the operator's check before it
+can be saved.
 
 Human review is mandatory before commit. Rows and fields are editable; false rows
 can be removed. Sticky live counters show rows to check, fields to complete and

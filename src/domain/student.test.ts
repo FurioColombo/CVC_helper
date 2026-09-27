@@ -6,6 +6,7 @@ import {
   getStudentDisplayName,
   isMinor,
   isStudentMinor,
+  isValidDateOnly,
 } from "@/domain/student"
 
 describe("student domain rules", () => {
@@ -166,5 +167,19 @@ describe("student domain rules", () => {
 
     expect(getStudentDisplayName(first, students)).toBe("Marty (1)")
     expect(getStudentDisplayName(second, students)).toBe("Marty (2)")
+  })
+})
+
+describe("date-only validity", () => {
+  it.each([
+    ["2010-02-28", true],
+    ["2012-02-29", true],
+    ["2011-02-29", false],
+    ["2010-13-01", false],
+    ["20140-02-16", false],
+    ["2010-2-16", false],
+    ["", false],
+  ])("treats %s as valid: %s", (value, expected) => {
+    expect(isValidDateOnly(value)).toBe(expected)
   })
 })

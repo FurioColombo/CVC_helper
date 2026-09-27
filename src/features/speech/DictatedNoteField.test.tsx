@@ -4,7 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useState } from "react"
 
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
-import type { SpeechTranscribe } from "@/features/speech/useDictation"
+import type {
+  SpeechPrepare,
+  SpeechTranscribe,
+} from "@/features/speech/useDictation"
 
 class FakeMediaRecorder {
   mimeType = "audio/webm"
@@ -27,13 +30,20 @@ class FakeMediaRecorder {
   }
 }
 
-function Harness({ transcribe }: { transcribe: SpeechTranscribe }) {
+function Harness({
+  transcribe,
+  prepareSpeech,
+}: {
+  transcribe: SpeechTranscribe
+  prepareSpeech?: SpeechPrepare
+}) {
   const [note, setNote] = useState("")
   return (
     <DictatedNoteField
       label="Nota del corso"
       naming={{ start: "Detta nota del corso", subject: "nota del corso" }}
       onChange={setNote}
+      prepareSpeech={prepareSpeech}
       transcribe={transcribe}
       unsupportedHint="Dettatura non disponibile in questo browser."
       value={note}
@@ -200,4 +210,104 @@ describe("DictatedNoteField", () => {
       }),
     ).not.toBeInTheDocument()
   })
+
+  it("says the first download needs a connection when the model cannot load offline", async () => {
+    const onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+    const getUserMedia = vi.fn()
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia },
+    })
+    const user = userEvent.setup()
+    render(
+      <Harness
+        prepareSpeech={vi.fn().mockRejectedValue(new Error("offline"))}
+        transcribe={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "Detta nota del corso" }),
+    )
+
+    expect(
+      await screen.findByText(
+        "Serve una connessione per scaricare il modello vocale, la prima volta. Il testo è rimasto invariato.",
+      ),
+    ).toBeVisible()
+    expect(getUserMedia).not.toHaveBeenCalled()
+    onLine.mockRestore()
+  })
+
+  it("prepares the speech model before ever requesting the microphone", async () => {
+    const order: string[] = []
+    const prepareSpeech = vi.fn(async () => {
+      order.push("prepare")
+    })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn(async () => {
+          order.push("getUserMedia")
+          return { getTracks: () => [{ stop: stopTrack }] }
+        }),
+      },
+    })
+    const user = userEvent.setup()
+    render(<Harness prepareSpeech={prepareSpeech} transcribe={vi.fn()} />)
+
+    await user.click(
+      screen.getByRole("button", { name: "Detta nota del corso" }),
+    )
+    await screen.findByRole("button", {
+      name: "Termina dettatura nota del corso",
+    })
+
+    expect(order).toEqual(["prepare", "getUserMedia"])
+  })
+
+  it.each([
+    [
+      "NotAllowedError",
+      "Permesso microfono non concesso. Il testo è rimasto invariato.",
+    ],
+    [
+      "SecurityError",
+      "Permesso microfono non concesso. Il testo è rimasto invariato.",
+    ],
+    [
+      "NotFoundError",
+      "Microfono non disponibile o già in uso. Il testo è rimasto invariato.",
+    ],
+    [
+      "NotReadableError",
+      "Microfono non disponibile o già in uso. Il testo è rimasto invariato.",
+    ],
+    [
+      "OverconstrainedError",
+      "Microfono non disponibile o già in uso. Il testo è rimasto invariato.",
+    ],
+  ])(
+    "maps a getUserMedia %s to the matching Italian message",
+    async (domExceptionName, message) => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: vi
+            .fn()
+            .mockRejectedValue(
+              new DOMException("no microphone", domExceptionName),
+            ),
+        },
+      })
+      const user = userEvent.setup()
+      render(<Harness transcribe={vi.fn()} />)
+
+      await user.click(
+        screen.getByRole("button", { name: "Detta nota del corso" }),
+      )
+
+      expect(await screen.findByText(message)).toBeVisible()
+    },
+  )
 })

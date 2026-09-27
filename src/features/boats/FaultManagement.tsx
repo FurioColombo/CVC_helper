@@ -5,12 +5,19 @@ import { Button } from "@/components/ui/button"
 import { validateBoatRecords } from "@/domain/invariants"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
+import { useNestedScreen } from "@/navigation/nestedScreen"
 import {
   listBoats,
   listFaults,
   type BoatRecord,
   type CourseFaultRecord,
 } from "@/persistence/boats"
+
+type FaultScreen = "list" | "create"
+
+function parseFaultScreen(value: unknown): FaultScreen | null {
+  return value === "list" || value === "create" ? value : null
+}
 
 async function readValidFaultData(courseId: string) {
   const [boats, faults] = await Promise.all([
@@ -34,7 +41,11 @@ export function FaultManagement({
 }) {
   const [boats, setBoats] = useState<BoatRecord[]>([])
   const [faults, setFaults] = useState<CourseFaultRecord[]>([])
-  const [screen, setScreen] = useState<"list" | "create">("list")
+  const [screen, openScreen, closeScreen] = useNestedScreen<FaultScreen>(
+    "faults",
+    "list",
+    parseFaultScreen,
+  )
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
@@ -95,7 +106,7 @@ export function FaultManagement({
           <button
             aria-label="Indietro da Nuova avaria"
             className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-            onClick={() => setScreen("list")}
+            onClick={() => closeScreen("list")}
             type="button"
           >
             <ChevronLeft aria-hidden="true" className="size-5" />
@@ -104,10 +115,10 @@ export function FaultManagement({
         </div>
         <FaultForm
           boats={boats}
-          onCancel={() => setScreen("list")}
+          onCancel={() => closeScreen("list")}
           onSaved={async () => {
             await refresh()
-            setScreen("list")
+            closeScreen("list")
           }}
         />
       </>
@@ -135,7 +146,7 @@ export function FaultManagement({
           <Button
             aria-label="Segnala avaria"
             className="size-11 px-0"
-            onClick={() => setScreen("create")}
+            onClick={() => openScreen("create")}
           >
             <Plus aria-hidden="true" className="size-5" />
           </Button>
@@ -166,7 +177,7 @@ export function FaultManagement({
           </p>
           <Button
             className="mt-6 w-full"
-            onClick={() => setScreen("create")}
+            onClick={() => openScreen("create")}
             size="lg"
           >
             Segnala avaria

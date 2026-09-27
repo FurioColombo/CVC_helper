@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const { pipelineMock } = vi.hoisted(() => ({ pipelineMock: vi.fn() }))
 
-vi.mock("@huggingface/transformers", () => ({ pipeline: pipelineMock }))
+vi.mock("@huggingface/transformers", () => ({
+  pipeline: pipelineMock,
+  // `configureLocalOnnxRuntime` reads this shape off the real module's `env`
+  // export to point onnxruntime-web at local WASM assets (RR-6); the mock
+  // needs the same shape so the named import resolves at all.
+  env: { backends: { onnx: { wasm: {} } } },
+}))
 
 import {
   createLocalItalianSpeechProvider,
@@ -113,6 +119,49 @@ describe("local Italian speech provider", () => {
     )
   })
 
+  it("chunks a dictation longer than 30 seconds instead of silently truncating it", async () => {
+    const transcriber = vi
+      .fn<SpeechTranscriber>()
+      .mockResolvedValue({ text: "nota lunga" })
+    // 31 seconds at Whisper's 16 kHz mono sample rate.
+    const longAudio = new Float32Array(31 * 16_000)
+    const decode = vi.fn().mockResolvedValue(longAudio)
+    const provider = createLocalItalianSpeechProvider({
+      decode,
+      loadTranscriber: vi.fn().mockResolvedValue(transcriber),
+    })
+
+    await provider.transcribeAudio(new Blob(["fixture-audio"]))
+
+    expect(transcriber).toHaveBeenCalledWith(longAudio, {
+      language: "italian",
+      task: "transcribe",
+      ...PRODUCTION_SPEECH_CONFIG.generationOptions,
+      chunk_length_s: 30,
+      stride_length_s: 5,
+    })
+  })
+
+  it("keeps the plain, unchunked call for a clip of 30 seconds or less", async () => {
+    const transcriber = vi
+      .fn<SpeechTranscriber>()
+      .mockResolvedValue({ text: "nota breve" })
+    const shortAudio = new Float32Array(30 * 16_000)
+    const decode = vi.fn().mockResolvedValue(shortAudio)
+    const provider = createLocalItalianSpeechProvider({
+      decode,
+      loadTranscriber: vi.fn().mockResolvedValue(transcriber),
+    })
+
+    await provider.transcribeAudio(new Blob(["fixture-audio"]))
+
+    expect(transcriber).toHaveBeenCalledWith(shortAudio, {
+      language: "italian",
+      task: "transcribe",
+      ...PRODUCTION_SPEECH_CONFIG.generationOptions,
+    })
+  })
+
   it("allows a model load to be retried after a transient failure", async () => {
     const transcriber = vi
       .fn<SpeechTranscriber>()
@@ -130,5 +179,101 @@ describe("local Italian speech provider", () => {
     await expect(provider.transcribeAudio(audio)).rejects.toThrow("offline")
     await expect(provider.transcribeAudio(audio)).resolves.toBe("recuperato")
     expect(loadTranscriber).toHaveBeenCalledTimes(2)
+  })
+
+  // F1F-6: jsdom's own default `navigator.vendor` is "Apple Computer, Inc."
+  // (with a userAgent that names no other browser), which is enough on its
+  // own to satisfy `isSafariBrowser()` — so, left at that default, this test
+  // would silently exercise the Safari branch below instead of this one. A
+  // non-Apple vendor and a Chrome userAgent are set explicitly so the
+  // asyncify pair this branch actually assigns is what gets asserted.
+  it("loads the pinned model with the ONNX runtime from the app's own files", async () => {
+    Object.defineProperty(navigator, "vendor", {
+      configurable: true,
+      value: "Google Inc.",
+    })
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    })
+    try {
+      pipelineMock.mockResolvedValue(vi.fn().mockResolvedValue({ text: "ok" }))
+      const provider = createLocalItalianSpeechProvider({
+        decode: vi.fn().mockResolvedValue(new Float32Array([0.1])),
+      })
+
+      await provider.prepare()
+
+      const { env } = await import("@huggingface/transformers")
+      const wasmPaths = (
+        env as { backends: { onnx: { wasm: { wasmPaths?: unknown } } } }
+      ).backends.onnx.wasm.wasmPaths as { mjs: string; wasm: string }
+      // Never the jsDelivr default: executable code comes from this build.
+      expect(JSON.stringify(wasmPaths)).not.toMatch(/jsdelivr|https?:/)
+      // The exact asyncify pair this branch assigns (see the ternary in
+      // `configureLocalOnnxRuntime`), not just the prefix the Safari
+      // branch's own files share with these: a regex matching that shared
+      // prefix alone would pass just as well against the non-asyncify pair.
+      expect(wasmPaths.mjs).toMatch(
+        /ort-wasm-simd-threaded\.asyncify\.mjs(\?.*)?$/,
+      )
+      expect(wasmPaths.wasm).toMatch(
+        /ort-wasm-simd-threaded\.asyncify\.wasm(\?.*)?$/,
+      )
+      expect(pipelineMock).toHaveBeenCalledWith(
+        "automatic-speech-recognition",
+        PRODUCTION_SPEECH_CONFIG.modelId,
+        expect.objectContaining({
+          revision: PRODUCTION_SPEECH_CONFIG.revision,
+        }),
+      )
+      expect(PRODUCTION_SPEECH_CONFIG.revision).toMatch(/^[0-9a-f]{40}$/)
+    } finally {
+      Reflect.deleteProperty(navigator, "vendor")
+      Reflect.deleteProperty(navigator, "userAgent")
+    }
+  })
+
+  // F1 review round 3, F1R3-7/F1R-14: the Safari and non-Safari branches use
+  // different pre-built ONNX runtime pairs (`isSafariBrowser`/
+  // `configureLocalOnnxRuntime` in speech.ts); this proves the Safari one
+  // never points at jsDelivr either, and that it is truly the non-asyncify
+  // pair rather than merely matching a prefix the asyncify files share.
+  it("also avoids jsDelivr on the Safari branch of the local ONNX runtime paths", async () => {
+    Object.defineProperty(navigator, "vendor", {
+      configurable: true,
+      value: "Apple Computer, Inc.",
+    })
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    })
+    try {
+      pipelineMock.mockResolvedValue(vi.fn().mockResolvedValue({ text: "ok" }))
+      const provider = createLocalItalianSpeechProvider({
+        decode: vi.fn().mockResolvedValue(new Float32Array([0.1])),
+      })
+
+      await provider.prepare()
+
+      const { env } = await import("@huggingface/transformers")
+      const wasmPaths = (
+        env as { backends: { onnx: { wasm: { wasmPaths?: unknown } } } }
+      ).backends.onnx.wasm.wasmPaths as { mjs: string; wasm: string }
+      expect(JSON.stringify(wasmPaths)).not.toMatch(/jsdelivr|https?:/)
+      // The exact non-asyncify pair this branch assigns, and never the
+      // asyncify one: the shared "ort-wasm-simd-threaded" prefix alone would
+      // pass against either file, which is exactly what let this assertion
+      // stay green regardless of which pair actually got chosen.
+      expect(wasmPaths.mjs).toMatch(/ort-wasm-simd-threaded\.mjs(\?.*)?$/)
+      expect(wasmPaths.wasm).toMatch(/ort-wasm-simd-threaded\.wasm(\?.*)?$/)
+      expect(wasmPaths.mjs).not.toContain("asyncify")
+      expect(wasmPaths.wasm).not.toContain("asyncify")
+    } finally {
+      Reflect.deleteProperty(navigator, "vendor")
+      Reflect.deleteProperty(navigator, "userAgent")
+    }
   })
 })

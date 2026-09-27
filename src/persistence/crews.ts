@@ -57,11 +57,53 @@ interface PersistedCourseCrewConfig {
   level: CourseLevel
 }
 
+interface PersistedStudentNameKey {
+  id: string
+  surname: string
+  nickname: string | null
+  firstName: string
+}
+
 export interface CrewPlanRecord extends CrewPlan {
   landAssignments: PersistedLandAssignment[]
 }
 
 const SESSION_IDS = SESSION_SEQUENCE.map(({ id }) => id)
+
+const landOrderCollator = new Intl.Collator("it-IT", {
+  numeric: true,
+  sensitivity: "base",
+})
+
+/**
+ * A terra has no meaningful order of its own — unlike crew slots, there is no
+ * position to persist. Ordering by the row's own random id (its insertion
+ * order) reshuffled the list on every reload. Sorting by name instead, the
+ * same key `listStudents` uses, gives a stable, human-meaningful order that
+ * matches how the rest of the app lists students.
+ */
+function compareLandStudents(
+  leftId: string,
+  rightId: string,
+  nameByStudentId: ReadonlyMap<string, PersistedStudentNameKey>,
+) {
+  const left = nameByStudentId.get(leftId)
+  const right = nameByStudentId.get(rightId)
+  if (!left || !right) {
+    if (left) return -1
+    if (right) return 1
+    return landOrderCollator.compare(leftId, rightId)
+  }
+  return (
+    landOrderCollator.compare(left.surname, right.surname) ||
+    landOrderCollator.compare(
+      left.nickname?.trim() || left.firstName,
+      right.nickname?.trim() || right.firstName,
+    ) ||
+    landOrderCollator.compare(left.firstName, right.firstName) ||
+    landOrderCollator.compare(leftId, rightId)
+  )
+}
 
 function isPersonType(value: string): value is CrewPersonType {
   return value === "student" || value === "volunteer"
@@ -77,7 +119,7 @@ export async function readCrewPlan(
     [courseId],
   )
   if (!course) throw new Error("Crew course does not exist")
-  const [crewRows, memberRows, landAssignments, sessionBoats] =
+  const [crewRows, memberRows, landAssignments, sessionBoats, studentNameRows] =
     await Promise.all([
       db.getAll<PersistedCrew>(
         `SELECT id, sessionId, capacity, destination, boatId, position
@@ -107,6 +149,13 @@ export async function readCrewPlan(
        WHERE courseId = ? AND sessionId = ?
        ORDER BY position`,
         [courseId, sessionId],
+      ),
+      // Only used to give A terra a stable, name-based order (see
+      // compareLandStudents); the actual land assignment rows above still
+      // come back in whatever order SQLite returns them.
+      db.getAll<PersistedStudentNameKey>(
+        `SELECT id, surname, nickname, firstName FROM students WHERE courseId = ?`,
+        [courseId],
       ),
     ])
   const selectedBoatIds = new Set(sessionBoats.map(({ boatId }) => boatId))
@@ -213,6 +262,12 @@ export async function readCrewPlan(
     }
     landStudentIds.add(studentId)
   }
+  const nameByStudentId = new Map(
+    studentNameRows.map((student) => [student.id, student]),
+  )
+  const orderedLandAssignments = [...landAssignments].sort((left, right) =>
+    compareLandStudents(left.studentId, right.studentId, nameByStudentId),
+  )
   return {
     crews: crewRows.map<CrewDraft>(
       ({ id, sessionId, capacity, destination, boatId }) => {
@@ -247,9 +302,9 @@ export async function readCrewPlan(
         }
       },
     ),
-    landStudentIds: landAssignments.map(({ studentId }) => studentId),
+    landStudentIds: orderedLandAssignments.map(({ studentId }) => studentId),
     selectedBoatIds: sessionBoats.map(({ boatId }) => boatId),
-    landAssignments,
+    landAssignments: orderedLandAssignments,
   }
 }
 

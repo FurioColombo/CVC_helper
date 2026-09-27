@@ -7,13 +7,16 @@ name: Deploy to GitHub Pages
 # A project site serves from /<repo>/, so the build is given that base path.
 # Nothing else about the build changes.
 
-# Only main. The github-pages environment allows the default branch alone
-# unless its deployment-branch rules are changed, so a run from any other branch
-# builds and is then refused at the publish step. Listing codex/0.3.0 here as
-# well just started two runs that fought over the `pages` concurrency group and
-# cancelled each other. Push main to deploy.
+# Only main, and only a commit whose deterministic verification passed: the
+# deploy waits for the CI workflow on main and publishes exactly the commit it
+# verified. Three phone-test deploys once went live from commits whose CI had
+# failed. The github-pages environment allows the default branch alone, so a
+# run from any other branch would be refused at the publish step anyway.
+# workflow_dispatch stays for a deliberate manual republish of main.
 on:
-  push:
+  workflow_run:
+    workflows: ["Deterministic verification"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -30,9 +33,15 @@ concurrency:
 
 jobs:
   build:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -50,6 +59,12 @@ jobs:
           echo "Building for base /$base/"
           CVC_BASE_PATH="$base" npm run build
           grep -q "\"scope\":\"/$base/\"" dist/manifest.webmanifest
+      - run: npx playwright install --with-deps chromium
+      - name: Prove the published build works offline at its subpath
+        run: |
+          set -euo pipefail
+          base="${GITHUB_REPOSITORY##*/}"
+          CVC_BASE_PATH="$base" npm run check:ocr-offline
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

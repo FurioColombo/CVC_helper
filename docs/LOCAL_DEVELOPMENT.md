@@ -28,15 +28,21 @@ manager that reads `.node-version` is also valid.
 
 ## Servers
 
-| Port | Purpose                 | Command              |
-| ---- | ----------------------- | -------------------- |
-| 5173 | Vite development        | `npm run dev`        |
-| 4173 | Built PWA preview       | `npm run preview`    |
-| 4174 | Playwright-owned server | `npm run verify:e2e` |
+| Port               | Purpose                 | Command                           |
+| ------------------ | ----------------------- | --------------------------------- |
+| 5173               | Vite development        | `npm run dev`                     |
+| 4173               | Built PWA preview       | `npm run preview`                 |
+| OS-assigned (RR-3) | Playwright-owned server | `npm run verify:e2e`              |
+| 4174               | Playwright-owned server | `npx playwright test` (no runner) |
 
-The browser suite checks that a reused 4174 process is the Vite server. Stop
-stray servers before a browser run. For a subpath preview use the same
-`CVC_BASE_PATH` used at build time; `docs/DEPLOY.md` gives exact commands.
+`npm run verify:e2e` (`scripts/run-e2e.mjs`) picks a free port itself and
+passes it to Playwright as `CVC_E2E_BASE_URL`; `playwright.config.ts` starts
+its own Vite dev server on that URL (`reuseExistingServer: false`), so a
+browser run never attaches to a server left running by another worktree or a
+stale build. Running Playwright directly, without the runner, falls back to
+the historical fixed port 4174, still with its own dedicated server. For a
+subpath preview use the same `CVC_BASE_PATH` used at build time;
+`docs/DEPLOY.md` gives exact commands.
 
 The built-in Claude browser pane stops inside the PowerSync worker with
 `Failed to fetch a worker script`. Use Chrome or Playwright for browser

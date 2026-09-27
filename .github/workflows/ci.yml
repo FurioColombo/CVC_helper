@@ -11,7 +11,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
+      # The whole history, so check:repository can detect a pushed history
+      # that brings back commits from before the 0.3.0 history rewrite
+      # (AGENTS.md §13). It reports after the push; it cannot prevent one.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24

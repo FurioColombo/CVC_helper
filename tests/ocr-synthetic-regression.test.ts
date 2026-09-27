@@ -13,11 +13,15 @@ import {
   extractStudentCandidates,
   MIN_FIELD_CONFIDENCE,
   studentScanAge,
-  studentScanAgeCorroborated,
   TESSERACT_USER_DEFINED_DPI,
   type StudentScanCandidate,
   type StudentScanField,
 } from "@/capabilities/studentScan"
+import {
+  candidateNeedsReview,
+  needsReview,
+  toReviewCandidate,
+} from "@/capabilities/studentScanReview"
 import { eraseVerticalTableRules } from "@/capabilities/studentScanRules"
 import { eraseRulesFromImageBytes } from "../scripts/roster-image.mjs"
 
@@ -238,53 +242,16 @@ function associateCandidate(
   return { person: evidence[0], identityConflict: false }
 }
 
-// The review screen's own rules since S5 and UX1 (StudentScan.tsx), kept
-// literal for rows nobody has confirmed or edited yet: a birth date is optional
-// when the age is valid, the age is reviewed, and an empty name is flagged.
+// The review screen's own gate, for rows nobody has confirmed or edited yet.
 function candidateFieldNeedsReview(
   candidate: StudentScanCandidate,
   field: StudentScanField,
   referenceDate: string,
 ) {
-  if (
-    (field === "firstName" || field === "surname") &&
-    !candidate[field].trim()
-  ) {
-    return true
-  }
-  if (field === "phone" && !candidate.phone.trim()) return false
-  if (field === "dateOfBirth" && !candidate.dateOfBirth) return false
-  if (
-    field === "dateOfBirth" &&
-    studentScanAgeCorroborated(candidate, referenceDate)
-  ) {
-    return false
-  }
-  return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
-}
-
-function reviewAge(candidate: StudentScanCandidate, referenceDate: string) {
-  const age = studentScanAge(candidate, referenceDate)
-  return age !== null && age >= 0 && age <= 120 ? age : null
-}
-
-function ageNeedsReview(
-  candidate: StudentScanCandidate,
-  referenceDate: string,
-) {
-  const age = reviewAge(candidate, referenceDate)
-  if (age === null) return true
-  if (!candidate.dateOfBirth) {
-    return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
-  }
-  const storedAge = studentScanAge(
-    { ...candidate, ageReading: undefined },
+  return needsReview(
+    toReviewCandidate(candidate, 0, referenceDate),
+    field,
     referenceDate,
-  )
-  return (
-    storedAge === null ||
-    Math.abs(storedAge - age) > 1 ||
-    candidateFieldNeedsReview(candidate, "dateOfBirth", referenceDate)
   )
 }
 
@@ -292,22 +259,10 @@ function candidateNeedsRowReview(
   candidate: StudentScanCandidate,
   referenceDate: string,
 ) {
-  const unresolvedName = Boolean(
-    candidate.nameReading &&
-    !candidate.nameReading.acknowledged &&
-    (candidate.nameReading.order === "unknown" ||
-      candidate.nameReading.compoundAmbiguity),
-  )
-  return (
-    !candidate.firstName.trim() ||
-    !candidate.surname.trim() ||
-    reviewAge(candidate, referenceDate) === null ||
-    !candidate.sex ||
-    unresolvedName ||
-    ageNeedsReview(candidate, referenceDate) ||
-    reviewedFields.some((field) =>
-      candidateFieldNeedsReview(candidate, field, referenceDate),
-    )
+  return candidateNeedsReview(
+    toReviewCandidate(candidate, 0, referenceDate),
+    referenceDate,
+    true,
   )
 }
 

@@ -38,7 +38,25 @@ export interface StudentScanNameReading {
   order: StudentNameOrder
   compoundAmbiguity: boolean
   acknowledged: boolean
+  /**
+   * A short word read between two name words and left out of the fields (a
+   * particle the parser does not know, or a stray mark). `raw` keeps it, and
+   * the split stays marked for review whatever order is chosen.
+   */
+  droppedInteriorWord?: boolean
 }
+
+/**
+ * Why a row read as a person still needs a look before it can be saved: a
+ * staff role code the table layout could not place, two rows' dates or ages
+ * read on one line, or a row written by an assistant rather than read by the
+ * scan, which has no confidence of its own to trust.
+ */
+export type StudentScanRowWarning =
+  | "possible-staff"
+  | "possible-merged-rows"
+  | "possible-heading"
+  | "from-assistant"
 
 export interface StudentScanCandidate {
   sourceId: string
@@ -52,6 +70,7 @@ export interface StudentScanCandidate {
   nameReading?: StudentScanNameReading
   /** Independent printed age; transient OCR evidence, never persisted. */
   ageReading?: { value: number; confidence: number }
+  rowWarning?: StudentScanRowWarning
 }
 
 export interface StudentScanResult {
@@ -174,9 +193,9 @@ const AGE_PATTERN = /\b(\d{1,3})\s+ann[oi]\b/iu
 const PHONE_PATTERN = /(?:\+?39[ .-]*)?(?:\d[ .-]*){9,10}/
 const NON_NAME_CHARACTERS = /[^\p{L}'’ -]/gu
 const STUDENT_SECTION_PATTERN =
-  /\b(?:alliev[ioea]|student(?:e|i|essa|esse)|partecipanti)\b/u
+  /\b(?:alliev[ioea]|student(?:e|i|essa|esse)|partecipanti|iscritt[ie]|corsist[ie])\b/u
 const PERSONNEL_SECTION_PATTERN =
-  /\b(?:personale|staff|istruttr(?:ore|ori|ice|ici)|assistent[ei]|volontari[eo]?|segreteria)\b/u
+  /\b(?:personale|staff|istrutt(?:ore|ori|rice|rici)|assistent[ei]|volontari[aeo]?|segreteria)\b/u
 const NON_STUDENT_LINE_PATTERN =
   /\b(?:centro\s+velico|cvc|caprera|corso|settimana|elenco|foglio|pagina|pag\.?|stampa|stampat[oa]|generat[oa]|contatti?|informazioni|telefono|cellulare|nascita|cognome|nome|firma|note|totale|luned[ìi]|marted[ìi]|mercoled[ìi]|gioved[ìi]|venerd[ìi]|sabato|domenica)\b/u
 const PERSONNEL_ROW_PREFIX_PATTERN =
@@ -222,6 +241,10 @@ const SURNAME_PARTICLES = new Set([
   "du",
   "la",
   "le",
+  "li",
+  "lo",
+  "el",
+  "al",
   "van",
   "von",
 ])
@@ -319,7 +342,9 @@ export function applyStudentNameOrder(
       ...candidate,
       nameReading: {
         ...nextReading,
-        compoundAmbiguity: order === "unknown" ? words.length > 2 : true,
+        compoundAmbiguity:
+          (order === "unknown" ? words.length > 2 : true) ||
+          Boolean(reading.droppedInteriorWord),
       },
     }
   }
@@ -399,23 +424,32 @@ export function applyStudentNameOrder(
     }
   }
 
+  const firstNameConfidence = split.exactConfidence
+    ? split.firstNameConfidence
+    : split.firstNameConfidence || candidate.confidence.firstName
+  const surnameConfidence = split.exactConfidence
+    ? split.surnameConfidence
+    : split.surnameConfidence || candidate.confidence.surname
+
   return {
     ...candidate,
     firstName: split.firstName,
     surname: split.surname,
-    sex: split.firstName ? inferSex(split.firstName) : null,
+    // A guess drawn from an unreliable given name is worse than no
+    // suggestion, exactly as candidateFromLine already gates it.
+    sex:
+      split.firstName && firstNameConfidence >= MIN_FIELD_CONFIDENCE
+        ? inferSex(split.firstName)
+        : null,
     confidence: {
       ...candidate.confidence,
-      firstName: split.exactConfidence
-        ? split.firstNameConfidence
-        : split.firstNameConfidence || candidate.confidence.firstName,
-      surname: split.exactConfidence
-        ? split.surnameConfidence
-        : split.surnameConfidence || candidate.confidence.surname,
+      firstName: firstNameConfidence,
+      surname: surnameConfidence,
     },
     nameReading: {
       ...nextReading,
-      compoundAmbiguity: split.compoundAmbiguity,
+      compoundAmbiguity:
+        split.compoundAmbiguity || Boolean(reading.droppedInteriorWord),
     },
   }
 }
@@ -430,7 +464,7 @@ export function applyStudentNameOrder(
  * The result is only ever a suggestion and is always editable, so a wrong
  * ending costs one tap; refusing to suggest costs one on every row.
  */
-function inferSex(firstName: string): StudentSex | null {
+export function inferSex(firstName: string): StudentSex | null {
   const normalized = normalizedNameToken(firstName.split(/\s+/)[0] ?? "")
   if (!normalized || [...normalized].length < 3) return null
   if (FEMALE_NAMES.has(normalized)) return "female"
@@ -511,6 +545,9 @@ export function studentScanAgeCorroborated(
 ) {
   const { ageReading, dateOfBirth } = candidate
   if (!ageReading || !dateOfBirth || dateOfBirth > referenceDate) return false
+  // Only a reliable printed age can vouch for an uncertain date: two readings
+  // below the threshold must not clear each other.
+  if (ageReading.confidence < MIN_FIELD_CONFIDENCE) return false
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOfBirth)
   if (
     !match ||
@@ -673,13 +710,57 @@ const ROLE_CODES = ["ADV", "CT", "AT", "IS"]
  * capitals, which separates it from the title-case names, and a table rule
  * frequently attaches one stray capital to it, so `ICT` still means `CT`.
  */
-function roleCode(word: RecognizedWord) {
+function roleCode(word: Pick<RecognizedWord, "text">) {
   const letters = word.text.replace(/[^A-Za-z]/g, "")
   if (letters.length === 0 || letters !== letters.toUpperCase()) return null
   return (
     ROLE_CODES.find((role) => letters === role || letters.slice(1) === role) ??
     null
   )
+}
+
+/**
+ * A role code anywhere after the first word. Without a table layout (a tight
+ * crop with too few rows) or with the role column right of the dates, the
+ * code cannot prove a staff row, but the row must not pass as a ready student.
+ */
+function hasRoleCode(line: RecognizedLine) {
+  const words =
+    line.words.length > 0
+      ? line.words
+      : line.text.split(/\s+/).map((text) => ({ text }))
+  return words.some((word, index) => index > 0 && roleCode(word) !== null)
+}
+
+function countMatches(text: string, pattern: RegExp) {
+  return (text.match(new RegExp(pattern.source, `${pattern.flags}g`)) ?? [])
+    .length
+}
+
+/**
+ * The words between the first and last name word, as read. A short word
+ * between two name words that is not a known particle is left out of the
+ * fields, but it may be part of a surname the parser does not know, so the
+ * reading keeps it and the split is marked for review.
+ */
+function interiorNameSpan(tokens: string[]) {
+  const kept = tokens.map((token) => isNameToken(token))
+  const first = kept.indexOf(true)
+  const last = kept.lastIndexOf(true)
+  if (first === -1 || first === last) return { dropped: false, raw: null }
+  const span = tokens.slice(first, last + 1)
+  const dropped = span.some(
+    (token) =>
+      !isNameToken(token) &&
+      /^\p{L}+$/u.test(token) &&
+      !NON_NAME_TOKENS.has(normalizedNameToken(token)),
+  )
+  return {
+    dropped,
+    raw: dropped
+      ? span.filter((token) => /\p{L}/u.test(token)).join(" ")
+      : null,
+  }
 }
 
 function digitCount(value: string) {
@@ -758,13 +839,158 @@ function leadingText(line: RecognizedLine) {
   return normalizeLineText(nameCell ? leading : line.text)
 }
 
-function isObviousNonStudentLine(line: RecognizedLine) {
-  const normalized = normalizeLineText(line.text)
-  return (
-    normalized.length === 0 ||
-    NON_STUDENT_LINE_PATTERN.test(leadingText(line)) ||
-    PERSONNEL_ROW_PREFIX_PATTERN.test(normalized)
+function hasStructuredField(line: RecognizedLine) {
+  return [DATE_PATTERN, AGE_PATTERN, PHONE_PATTERN].some((pattern) =>
+    pattern.test(line.text),
   )
+}
+
+// The youngest age the review accepts as read (PLAUSIBLE_SCAN_AGE in
+// studentScanReview.ts): a more recent date is not a student's birth date.
+const YOUNGEST_STUDENT_AGE = 4
+
+function todayDateOnly() {
+  const now = new Date()
+  return [
+    String(now.getFullYear()),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-")
+}
+
+function couldBeBirthDate(match: RegExpMatchArray) {
+  const iso = normalizeDate(match)
+  // An impossible date is a misreading, not proof of a heading.
+  if (!iso) return true
+  const today = todayDateOnly()
+  return iso <= today && calculateAge(iso, today) >= YOUNGEST_STUDENT_AGE
+}
+
+type LineKind = "skip" | "row" | "possible-heading"
+
+// "8-12 anni" describes a course, never one person.
+const AGE_RANGE_PATTERN = /\b\d{1,2}\s*[-–]\s*\d{1,3}\s+ann[oi]\b/iu
+
+function isHeadingWord(word: string) {
+  return NON_STUDENT_LINE_PATTERN.test(normalizeLineText(word))
+}
+
+// A heading word, or a heading phrase across words ("Centro Velico").
+function hasHeadingWords(words: string[]) {
+  return (
+    words.some(isHeadingWord) ||
+    NON_STUDENT_LINE_PATTERN.test(normalizeLineText(words.join(" ")))
+  )
+}
+
+function nameCellWords(line: RecognizedLine, layout: PageLayout) {
+  return nameTokensFromWords(
+    line.words.filter((word) => isLeftOfStructuredColumn(word, layout)),
+  ).map(({ text }) => text)
+}
+
+function classifyLine(
+  line: RecognizedLine,
+  layout: PageLayout | null,
+): LineKind {
+  const normalized = normalizeLineText(line.text)
+  if (normalized.length === 0) return "skip"
+  if (PERSONNEL_ROW_PREFIX_PATTERN.test(normalized)) return "skip"
+  // A printed age belongs to a person, not to a heading: a student whose name
+  // holds a heading word (Domenica, Sabato, Corso) stays a row to review,
+  // marked, because "Settimana Deriva 12 anni" reads the same way.
+  if (AGE_PATTERN.test(line.text)) {
+    const words =
+      layout && line.words.length > 0
+        ? nameCellWords(line, layout)
+        : (leadingText(line).match(/\p{L}+/gu) ?? [])
+    // An age range is a course's, never one person's: after a leading heading
+    // word or with no name at all the line is a heading; otherwise ("Gruppo
+    // Vela 8-12 anni") it is kept, marked.
+    if (AGE_RANGE_PATTERN.test(line.text)) {
+      return words.length === 0 || isHeadingWord(words[0]!)
+        ? "skip"
+        : "possible-heading"
+    }
+    return hasHeadingWords(words) ? "possible-heading" : "row"
+  }
+  // So does a table row: two name words in the name column beside a date or a
+  // telephone, even when the age word itself was misread. With a heading word
+  // in it the row may be a heading ("Corso Deriva …") or a student called
+  // Corso or Sabato: it is kept and marked, and dropped only when its date
+  // cannot be a student's birth date (the course or print date).
+  const dateMatch = line.text.match(DATE_PATTERN)
+  if (layout && (dateMatch || PHONE_PATTERN.test(line.text))) {
+    const nameWords = nameCellWords(line, layout)
+    if (nameWords.length >= 2) {
+      if (!hasHeadingWords(nameWords)) return "row"
+      if (dateMatch && !couldBeBirthDate(dateMatch)) return "skip"
+      return "possible-heading"
+    }
+  }
+  if (!NON_STUDENT_LINE_PATTERN.test(leadingText(line))) return "row"
+  // Without a table layout, two name words before a date that could be a
+  // birth date may still be a student ("Rossi Domenica 12/03/2014"): kept,
+  // marked. A course or print date makes it a heading.
+  if (dateMatch?.index !== undefined && couldBeBirthDate(dateMatch)) {
+    const nameWords = (
+      line.text.slice(0, dateMatch.index).match(/\p{L}{2,}/gu) ?? []
+    ).filter((word) => {
+      const token = normalizedNameToken(word)
+      return !SURNAME_PARTICLES.has(token) && !STAFF_HEADING_FILLER.has(token)
+    })
+    if (nameWords.length >= 2) return "possible-heading"
+  }
+  return "skip"
+}
+
+// The collective heading of a staff block, as opposed to one person's role.
+const COLLECTIVE_STAFF_PATTERN =
+  /^(?:personale|staff|istruttori|istruttrici|assistenti|volontari|volontarie|segreteria)$/u
+// A column or form label ("Cognome Nome Nascita Istruttore", "Firma
+// istruttore"), which names a field rather than a person or a section.
+const LABEL_WORD_PATTERN =
+  /^(?:cognome|nome|nascita|telefono|cellulare|firma|note|data)$/u
+// Short words that are not names (articles, prepositions, "turno").
+const STAFF_HEADING_FILLER = new Set([
+  "e",
+  "ed",
+  "di",
+  "del",
+  "della",
+  "dei",
+  "degli",
+  "delle",
+  "il",
+  "la",
+  "i",
+  "gli",
+  "le",
+  "per",
+  "turno",
+  "turni",
+])
+
+/**
+ * A staff line that is a column or form label ("Cognome Nome Nascita
+ * Istruttore", "Nome assistente:") rather than the heading of a staff block:
+ * a label word and no collective staff word.
+ */
+function isColumnLabel(leading: string) {
+  const words = leading.match(/\p{L}+/gu) ?? []
+  return (
+    words.some((word) => LABEL_WORD_PATTERN.test(word)) &&
+    !words.some((word) => COLLECTIVE_STAFF_PATTERN.test(word))
+  )
+}
+
+/** A row that reads as a student: a birth date or a plausible age. */
+function readsAsStudent({ dateOfBirth, ageReading }: StudentScanCandidate) {
+  if (dateOfBirth) {
+    const [year, month, day] = dateOfBirth.split("-")
+    return couldBeBirthDate(["", day, month, year] as RegExpMatchArray)
+  }
+  return Boolean(ageReading && ageReading.value >= YOUNGEST_STUDENT_AGE)
 }
 
 function candidateFromLine(
@@ -792,12 +1018,34 @@ function candidateFromLine(
   // Geometry gives the name cell directly, which keeps the age column's
   // wording and the telephone out of the name regardless of how Tesseract
   // ordered the row's text.
-  const nameParts =
+  const nameCellWords =
     layout && line.words.length > 0
-      ? nameTokensFromWords(
-          line.words.filter((word) => isLeftOfStructuredColumn(word, layout)),
+      ? line.words.filter((word) => isLeftOfStructuredColumn(word, layout))
+      : null
+  const nameParts = nameCellWords
+    ? nameTokensFromWords(nameCellWords)
+    : namePartsOutsideRanges(line, structuredRanges)
+  // The interior-word check needs the words as read, before the short ones are
+  // filtered out: from the name cell with a layout, or from every word outside
+  // the date and telephone on a crop too small to have one.
+  const rawNameWords =
+    nameCellWords ??
+    (line.words.length > 0
+      ? line.words.filter(
+          (word) =>
+            !structuredRanges.some((range) => overlapsRange(word, range)),
         )
-      : namePartsOutsideRanges(line, structuredRanges)
+      : null)
+  const interior = interiorNameSpan(
+    rawNameWords
+      ? rawNameWords.flatMap((word) =>
+          word.text
+            .replace(NON_NAME_CHARACTERS, " ")
+            .split(/\s+/)
+            .filter(Boolean),
+        )
+      : nameParts.map(({ text }) => text),
+  )
   const firstName = nameParts[0]?.text ?? ""
   const surname = nameParts
     .slice(1)
@@ -844,16 +1092,26 @@ function candidateFromLine(
   const nameReading: StudentScanNameReading | undefined =
     nameParts.length >= 2
       ? {
-          raw: nameParts.map(({ text }) => text).join(" "),
+          raw: interior.raw ?? nameParts.map(({ text }) => text).join(" "),
           words: nameParts.map(({ text, confidence: wordConfidence }) => ({
             text,
             confidence: wordConfidence,
           })),
           order: "unknown",
-          compoundAmbiguity: nameParts.length > 2,
+          compoundAmbiguity: nameParts.length > 2 || interior.dropped,
           acknowledged: false,
+          ...(interior.dropped ? { droppedInteriorWord: true } : {}),
         }
       : undefined
+  // Two dates or two ages on one line are two rows read as one: only the
+  // first of each would be kept, and confirming the name would merge people.
+  const rowWarning: StudentScanRowWarning | undefined =
+    countMatches(line.text, DATE_PATTERN) > 1 ||
+    countMatches(line.text, AGE_PATTERN) > 1
+      ? "possible-merged-rows"
+      : hasRoleCode(line)
+        ? "possible-staff"
+        : undefined
 
   const candidate = {
     sourceId: line.id,
@@ -881,6 +1139,7 @@ function candidateFromLine(
       confidence.firstName >= MIN_FIELD_CONFIDENCE ? inferSex(firstName) : null,
     confidence,
     ...(nameReading ? { nameReading } : {}),
+    ...(rowWarning ? { rowWarning } : {}),
   } satisfies StudentScanCandidate
 
   // Individual fields may be uncertain and still worth correcting, but a row
@@ -921,23 +1180,69 @@ export function extractStudentCandidates(
   const tsv = page.tsv ? reconstructStudentScanTsvFragments(page.tsv).tsv : null
   const lines = parseTsv(tsv, page.text, page.confidence)
   const layout = inferPageLayout(lines)
-  let inPersonnelSection = false
-  for (const line of lines) {
+  // No staff heading drops the rows after it: a heading that looks like one
+  // may be a label, a blank form field or a line split from its names, and
+  // the students after it would vanish unseen. The rows after a staff line
+  // are marked as possible staff until a student heading instead, and staff
+  // rows that carry a role code are still left out one by one
+  // (isPersonnelRow). A staff line that carries a date marks them always
+  // ("Personale al 29/08/2026"); one that carries only a telephone, or a
+  // column label ("Cognome Nome Nascita Istruttore"), marks them when a row
+  // that reads as a student came before it or, for the telephone, a student
+  // heading comes after it. Otherwise it is the school's contact line or the
+  // table header above the students, and marks nothing.
+  let afterPersonnelMention = false
+  // Whether a student heading follows a line: then the rows between a staff
+  // contact line or label and that heading are not the students.
+  const studentHeadingFollows = lines.map(() => false)
+  for (let index = lines.length - 2; index >= 0; index -= 1) {
+    studentHeadingFollows[index] =
+      studentHeadingFollows[index + 1]! ||
+      STUDENT_SECTION_PATTERN.test(leadingText(lines[index + 1]!))
+  }
+  for (const [index, line] of lines.entries()) {
     const leading = leadingText(line)
+    // Any student heading ends the marking.
     if (STUDENT_SECTION_PATTERN.test(leading)) {
-      inPersonnelSection = false
+      afterPersonnelMention = false
       continue
     }
-    if (PERSONNEL_SECTION_PATTERN.test(leading)) {
-      inPersonnelSection = true
-      continue
+    const staffWord = PERSONNEL_SECTION_PATTERN.test(leading)
+    if (staffWord) {
+      if (!hasStructuredField(line)) {
+        if (
+          !isColumnLabel(leading) ||
+          candidates.some(readsAsStudent) ||
+          studentHeadingFollows[index]
+        )
+          afterPersonnelMention = true
+        continue
+      }
+      if (
+        DATE_PATTERN.test(line.text) ||
+        candidates.some(readsAsStudent) ||
+        studentHeadingFollows[index]
+      )
+        afterPersonnelMention = true
     }
-    if (inPersonnelSection || isObviousNonStudentLine(line)) continue
+    const kind = classifyLine(line, layout)
+    if (kind === "skip") continue
     // The staff block at the foot of the sheet carries a role in its own
     // column. Those people are not students and must never be imported as one.
     if (isPersonnelRow(line, layout)) continue
     const candidate = candidateFromLine(line, layout, options)
-    if (candidate) candidates.push(candidate)
+    if (candidate) {
+      // A row that carries a staff word itself ("Neri volontario 30 anni") is
+      // marked too, wherever it is.
+      const rowWarning: StudentScanRowWarning | undefined =
+        candidate.rowWarning ??
+        (afterPersonnelMention || staffWord
+          ? "possible-staff"
+          : kind === "possible-heading"
+            ? "possible-heading"
+            : undefined)
+      candidates.push(rowWarning ? { ...candidate, rowWarning } : candidate)
+    }
   }
 
   return {

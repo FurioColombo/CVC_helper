@@ -273,6 +273,49 @@ assert.deepEqual(
 
 const workflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8")
 assert.match(workflow, /npm run verify:all/, "CI must run verify:all")
+assert.match(
+  workflow,
+  /fetch-depth: 0/,
+  "CI must fetch the full history so the pre-rewrite check below is real",
+)
+
+// The published history was rewritten before the first 0.3.0 push to remove
+// real roster data. A copy made before that still holds the old commits, and
+// merging or pushing from it would publish them again. The rewrite lists the
+// earliest changed commits of the old history: every old commit descends from
+// one of them, so none may be reachable from HEAD. Before the rewrite the list
+// does not exist yet and there is nothing to check.
+const historyRewritePath = resolve(root, ".evidence/F1/history-rewrite.json")
+if (existsSync(historyRewritePath)) {
+  const { preRewriteCommits } = JSON.parse(
+    readFileSync(historyRewritePath, "utf8"),
+  )
+  // Full ids only: a short, mistyped or empty entry would silently count as
+  // "not an ancestor" below.
+  assert.ok(
+    Array.isArray(preRewriteCommits) &&
+      preRewriteCommits.length > 0 &&
+      preRewriteCommits.every((commit) => /^[0-9a-f]{40}$/.test(commit)),
+    "history-rewrite.json must list preRewriteCommits as full commit ids",
+  )
+  const reachable = preRewriteCommits.filter((commit) => {
+    try {
+      execFileSync("git", ["merge-base", "--is-ancestor", commit, "HEAD"], {
+        cwd: root,
+        stdio: "ignore",
+      })
+      return true
+    } catch {
+      // Exit 1: not an ancestor. A missing object cannot be an ancestor either.
+      return false
+    }
+  })
+  assert.deepEqual(
+    reachable,
+    [],
+    "HEAD contains commits from before the history rewrite. Do not push: re-clone, or reset this copy's branches to origin (AGENTS.md §13)",
+  )
+}
 
 assert.ok(
   packageJson.dependencies?.["@powersync/web"],

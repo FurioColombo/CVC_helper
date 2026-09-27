@@ -22,6 +22,27 @@ function parseDateOnly(value: string) {
   }
 }
 
+/**
+ * A real calendar date written as YYYY-MM-DD. A date input can hand over a
+ * five-digit year or an impossible day while it is being typed; those must be
+ * refused as values, not crash the age calculation.
+ */
+export function isValidDateOnly(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return false
+  const [year, month, day] = match.slice(1).map(Number) as [
+    number,
+    number,
+    number,
+  ]
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  )
+}
+
 function normalizedName(value: string) {
   return value
     .normalize("NFC")

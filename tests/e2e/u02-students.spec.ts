@@ -121,9 +121,9 @@ test("keeps the compact list and complete profile usable at the stress viewport"
     )
   })
 
+  // N1: reload restores the same screen (Mario R.'s profile), so there is
+  // no Home "Allievi" card to click and no card to click back into either.
   await page.reload()
-  await page.getByRole("button", { name: "Allievi" }).click()
-  await page.getByRole("button", { name: /Mario R\., 16 anni/ }).click()
   await expect(page.getByText("Esperienza Optimist")).toBeVisible()
   await expect(page.getByText("Migliora nelle virate")).toBeVisible()
   await expect(page.getByText("L", { exact: true })).toBeVisible()

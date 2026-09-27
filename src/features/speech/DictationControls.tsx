@@ -135,7 +135,11 @@ export function DictationPanels({
           <p className="min-w-0 basis-32 flex-1 text-xs font-semibold text-[#b42318] [overflow-wrap:anywhere]">
             {dictation.error === "permission"
               ? "Permesso microfono non concesso. Il testo è rimasto invariato."
-              : "Dettatura non riuscita. Il testo è rimasto invariato."}
+              : dictation.error === "device"
+                ? "Microfono non disponibile o già in uso. Il testo è rimasto invariato."
+                : dictation.error === "offline"
+                  ? "Serve una connessione per scaricare il modello vocale, la prima volta. Il testo è rimasto invariato."
+                  : "Dettatura non riuscita. Il testo è rimasto invariato."}
           </p>
           {dictation.supported && (
             <Button

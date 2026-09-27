@@ -1,0 +1,34 @@
+{
+  "milestone": "V05",
+  "status": "PASS",
+  "recordedAt": "2026-09-27T19:53:24.282Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.2.0",
+  "recorder": "scripts/record-verification.mjs@2",
+  "gitCommit": "5c1e0299fcb464fba90b6a53b802408d5947b2ac",
+  "workingTreeClean": false,
+  "sourceDigest": "decd43318c2ef6cf0a43c2f6d906351f7fdefb4097e0485a87e2f187c0fc3f29",
+  "sourceFiles": 308,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:v05"
+  ],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-09-27T19:47:38.558Z",
+      "durationMs": 304617,
+      "exitCode": 0,
+      "outputTail": "\u001b[33m\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 12.0s inside plugin hooks (31.3s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 20.8s, 1 call)\n  - vite:worker-import-meta-url transform (69%, 8.3s, 1 call)\n  - @tailwindcss/vite:generate:build transform (9%, 1.1s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (4 calls)\n  - vite:asset-import-meta-url transform (5 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 1 precached brand image"
+    },
+    {
+      "command": "npm run verify:e2e:v05",
+      "status": "PASS",
+      "startedAt": "2026-09-27T19:52:43.178Z",
+      "durationMs": 41103,
+      "exitCode": 0,
+      "outputTail": "\n[WebServer] 9:52:50 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:52:50 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 1 [pixel-7-chrome] › tests\\e2e\\v05-assistant-paste.spec.ts:26:1 › copies the prompt, reads a pasted answer, fixes or leaves out every unread line, and saves with no network call (6.5s)\n[WebServer] 9:52:58 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:52:58 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 2 [iphone-13-viewport] › tests\\e2e\\v05-assistant-paste.spec.ts:26:1 › copies the prompt, reads a pasted answer, fixes or leaves out every unread line, and saves with no network call (6.1s)\n[WebServer] 9:53:06 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:53:06 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 3 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:26:1 › copies the prompt, reads a pasted answer, fixes or leaves out every unread line, and saves with no network call (18.3s)\n\n  3 passed (39.4s)"
+    }
+  ]
+}

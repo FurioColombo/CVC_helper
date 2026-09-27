@@ -275,8 +275,9 @@ test("persists unavailable status and permits deletion only for an unreferenced 
   await openBoat(page, "RS Quest", 2)
   await page.getByRole("button", { name: "Rendi indisponibile" }).click()
   await page.getByRole("button", { name: /Indietro da RS Quest 2/ }).click()
+  // N1: reload restores the same screen (the Barche list), so there is no
+  // Home "Barche" card to click here.
   await page.reload()
-  await page.getByRole("button", { name: "Barche" }).click()
   await expect(
     boatCard(page, "RS Quest", 2).getByText(/Non disponibile/),
   ).toBeVisible()

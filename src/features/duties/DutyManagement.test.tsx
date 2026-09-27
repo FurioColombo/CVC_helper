@@ -515,6 +515,35 @@ describe("DutyManagement", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("returns to the day plan on phone Back instead of leaving the area", async () => {
+    getPlan.mockResolvedValue({
+      assignments: [{ dayId: "saturday", studentId: "student-1" }],
+      settings: SETTINGS,
+    })
+    const onHome = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={onHome}
+        courseStartDate="2026-08-29"
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: /Sabato, 1 assegnati/ }),
+    )
+    expect(
+      screen.getByRole("region", { name: "Allievi comandata Sabato" }),
+    ).toBeVisible()
+
+    window.history.back()
+    expect(
+      await screen.findByRole("heading", { name: "Comandate" }),
+    ).toBeVisible()
+    expect(onHome).not.toHaveBeenCalled()
+  })
+
   it("reports an acknowledgement persistence failure", async () => {
     getPlan.mockResolvedValue({
       assignments: [

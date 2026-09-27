@@ -448,6 +448,7 @@ describe("StudentKnowledge", () => {
         courseId="course-1"
         onBack={vi.fn()}
         onSaved={vi.fn()}
+        prepareSpeech={vi.fn().mockResolvedValue(undefined)}
         students={[{ ...MARIO, initialNote: "Testo già scritto" }]}
       />,
     )
@@ -459,7 +460,10 @@ describe("StudentKnowledge", () => {
       screen.getByRole("button", { name: "Detta nota di Mario" }),
     )
 
-    expect(getUserMedia).toHaveBeenCalledWith({ audio: true })
+    // The model is made ready first, then the microphone is requested.
+    await waitFor(() =>
+      expect(getUserMedia).toHaveBeenCalledWith({ audio: true }),
+    )
     expect(
       await screen.findByText(
         "Permesso microfono non concesso. Il testo è rimasto invariato.",
@@ -563,7 +567,10 @@ describe("StudentKnowledge", () => {
     )
     await act(async () => resolvePreparation?.())
 
-    await waitFor(() => expect(stopTrack).toHaveBeenCalledOnce())
+    // The microphone is never opened while the model loads, so a cancelled
+    // load has no stream to close and records nothing.
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+    expect(stopTrack).not.toHaveBeenCalled()
     expect(constructRecorder).not.toHaveBeenCalled()
     expect(transcribe).not.toHaveBeenCalled()
     expect(
@@ -629,7 +636,8 @@ describe("StudentKnowledge", () => {
       "Testo già scritto",
     )
     expect(startRecording).not.toHaveBeenCalled()
-    expect(stopTrack).toHaveBeenCalledOnce()
+    // The failed load happened before the microphone was requested.
+    expect(stopTrack).not.toHaveBeenCalled()
 
     await user.click(
       screen.getByRole("button", { name: "Riprovare dettatura di Mario" }),

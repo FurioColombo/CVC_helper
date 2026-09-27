@@ -1,0 +1,25 @@
+{
+  "milestone": "V05",
+  "reviewedAt": "2026-09-27",
+  "tree": "claude/f1 working tree after the round-10 revert; source unchanged since (only documents and evidence were edited for F1R11-1 and F1R11-2)",
+  "history": "ten reviews; the earlier reports are review-round-1, review-round-2, review-final-round and review-round-5 to review-round-10",
+  "reviewerRole": "V05 adversarial domain reviewer, closure round 11",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "previousFindingsVerified": [
+    {
+      "id": "V10-1",
+      "status": "recorded",
+      "note": "rosterPaste.ts (17:23:06) and the corpus (17:23:45) have not changed since round 10. parser-robustness.json (15:23:52Z) is newer than both. Reruns of r8v, r9v, r10v and r10w give logs byte-identical to round 10. The new probe r11v tried 16 more shapes: dotted, dashed and spaced telephones in groups (0789.12.34.56, 02-12-34-56, 333.123.4567, +39 333 123 4567, (+39) 333.123.45.67 …) are ignored. Values shaped like a date with a trailing pair (02.12.34 56, 02/12/34 56, 12-03-2010 16) are shown as unread. That is what V5F-4 now says, together with the V6-1 to V9-1 date shapes it refers to. The (b) residual behaves as the disposition says. With Età empty, 'Veldor;Marta;;;01 02 14 16' is read with no date and no age, so the row is not ready until an age is typed, and nothing wrong can be saved. The V05 code is untouched by the F1 revert, which changed only studentScan.ts, its test, next steps and the two self-reviews."
+    }
+  ],
+  "evidenceInspected": [
+    ".evidence/V05/review-round-10.json; .evidence/V05/self-review.json (V5F-4, V6-1 to V10-1, closureRoundDispositions); parser-robustness.json (recordedAt compared with source modification times)",
+    "src/capabilities/rosterPaste.ts unchanged since round 10 (checked with find -newermt: files changed since 17:30 are only the F1/V05 review and self-review JSON, 1_0_0_NEXT_STEPS.md, studentScan.ts and studentScan.test.ts)",
+    "src/features/students/StudentScan.tsx commitCandidates: every row must be ready and the paste count confirmed before a save",
+    "vitest: studentScan.test.ts, studentScanReview.test.ts, rosterPaste.test.ts 188/188 pass; node scripts/check-repository.mjs PASS",
+    "Probes with fictitious values in scratchpad/review-probes/round11: reruns of r8v, r9v, r10v, r10w (identical to round 10) and the new r11v (logs *.log)"
+  ]
+}

@@ -594,8 +594,8 @@
     {
       "id": "V05",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "status": "COMPLETE",
+      "verificationScripts": ["verify", "verify:e2e:v05"],
       "requiredEvidence": [
         ".evidence/V05/verification.json",
         ".evidence/V05/browser-evidence.json",
@@ -607,14 +607,19 @@
     {
       "id": "F1",
       "category": "FEATURE",
-      "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "status": "COMPLETE",
+      "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/F1/verification.json",
         ".evidence/F1/browser-evidence.json",
-        ".evidence/F1/self-review.json"
+        ".evidence/F1/self-review.json",
+        ".evidence/F1/independent-review.json"
       ],
-      "requiredReviews": [".evidence/F1/self-review.json"]
+      "requiredReviews": [
+        ".evidence/F1/self-review.json",
+        ".evidence/F1/independent-review.json"
+      ],
+      "allowedIncompletePredecessors": ["V05"]
     },
     {
       "id": "UG2",

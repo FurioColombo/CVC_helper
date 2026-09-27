@@ -9,15 +9,16 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
+import type { UnparsedPasteLine } from "@/capabilities/rosterPaste"
 import {
   applyStudentNameOrder,
+  inferSex,
   inferStudentNameOrder,
   MIN_FIELD_CONFIDENCE,
   scanStudents,
   studentScanAge,
-  studentScanAgeCorroborated,
   type StudentNameOrder,
   type StudentNameOrderInference,
   type StudentScanCandidate,
@@ -25,153 +26,82 @@ import {
   type StudentScanOptions,
   type StudentScanProgress,
   type StudentScanResult,
+  type StudentScanRowWarning,
 } from "@/capabilities/studentScan"
+import {
+  ageConflictsWithStoredDate,
+  ageNeedsReview,
+  candidateIsReady,
+  candidateNeedsReview,
+  missingFieldCount,
+  nameReadingNeedsReview,
+  needsReview,
+  parsedReviewAge,
+  rowWarningNeedsReview,
+  toReviewCandidate,
+  type ScanReviewCandidate,
+} from "@/capabilities/studentScanReview"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { STUDENT_SEXES, type StudentSex } from "@/domain/config"
-import { MAX_DECLARED_STUDENT_AGE } from "@/domain/student"
+import {
+  calculateAge,
+  isValidDateOnly,
+  MAX_DECLARED_STUDENT_AGE,
+} from "@/domain/student"
+import {
+  StudentScanAssistantSection,
+  StudentScanUnparsedLines,
+} from "@/features/students/StudentScanAssistant"
 import { StudentScanImageEditorDocument } from "@/features/students/StudentScanImageEditorDocument"
 import {
   readNameOrderPreference,
   writeNameOrderPreference,
 } from "@/features/students/studentScanNameOrderPreference"
-import { createStudents, type StudentInput } from "@/persistence/students"
+import { requestLeave, useLeaveGuard } from "@/navigation/browserHistory"
+import {
+  createStudents,
+  type StudentInput,
+  type StudentRecord,
+} from "@/persistence/students"
 
 type ScanState =
   "idle" | "scanning" | "review" | "unsuitable" | "error" | "saving"
 
-// The name reading and its order live in the capability, which owns the
-// surname-particle and compound rules. This screen only chooses when to apply
-// them and records that the operator has taken over a row by hand.
-interface ReviewCandidate extends StudentScanCandidate {
-  id: string
-  nameManuallyEdited?: boolean
-  /** Editable presentation value. It is never persisted in place of a date. */
-  reviewAge: string
-  ageManuallyEdited?: boolean
-  /** A nonempty low-confidence reading reviewed by focus and blur. */
-  acknowledgedFields?: Partial<Record<StudentScanField | "age", boolean>>
-  /** The operator has read this row and vouches for it as it stands. */
-  confirmed?: boolean
+/**
+ * `sexManuallyChosen` remembers whether the operator picked the sex
+ * themselves, as opposed to a suggestion the scan or a split inferred. A
+ * choice the operator made must never be overwritten by a later guess; a
+ * suggestion is only ever a suggestion and must not survive attached to a
+ * given name it was never read from. `scannedFirstName` is the given name the
+ * row started with, so a field that started blank and is being filled in for
+ * the first time is not mistaken for a name that changed.
+ */
+type ReviewCandidate = ScanReviewCandidate & {
+  sexManuallyChosen?: boolean
+  scannedFirstName?: string
+  /** The operator pressed "Tieni entrambi" on a possible-duplicate warning
+   * the screen computed for this row (V05 review V5-5). An edit that makes
+   * the row stop matching clears the warning on its own; this flag only
+   * covers the case where it still matches and the operator vouches for it
+   * anyway. */
+  duplicateAcknowledged?: boolean
+}
+
+const ROW_WARNING_TEXT: Record<StudentScanRowWarning, string> = {
+  "possible-staff":
+    "Forse personale e non un allievo: controlla la riga sul foglio, poi segnala controllata o rimuovila.",
+  "possible-merged-rows":
+    "Forse due righe lette insieme: controlla nomi e date sul foglio, correggi o rimuovi la riga.",
+  "possible-heading":
+    "Forse un’intestazione e non un allievo: controlla la riga sul foglio, poi segnala controllata o rimuovila.",
+  "from-assistant":
+    "Riga scritta dall’assistente: confrontala con il foglio e segnala controllata.",
 }
 
 interface Acquisition {
   file: File
   source: "camera" | "gallery"
-}
-
-/**
- * The fields this scan is reviewing. The telephone is in the roster but is only
- * read when the operator asked for it, so everything that counts, gates or
- * renders a field works from this list rather than from a fixed four.
- */
-function reviewedFields(readPhone: boolean): readonly StudentScanField[] {
-  return readPhone
-    ? (["firstName", "surname", "dateOfBirth", "phone"] as const)
-    : (["firstName", "surname", "dateOfBirth"] as const)
-}
-
-function needsReview(
-  candidate: ReviewCandidate,
-  field: StudentScanField,
-  courseStartDate?: string,
-) {
-  // A required name cannot be acknowledged while it is empty.
-  if (
-    (field === "firstName" || field === "surname") &&
-    !candidate[field].trim()
-  ) {
-    return true
-  }
-  // Confidence is the scan's opinion; a person who has read the row overrules
-  // it. Without this the counter can never reach zero on a real photograph,
-  // because a correct reading of a faint sheet still scores below the
-  // threshold, and the operator is left retyping text that was already right.
-  if (candidate.confirmed) return false
-  if (field === "phone" && !candidate.phone.trim()) return false
-  // Birth date is optional when the row has a valid age for course start.
-  if (field === "dateOfBirth" && !candidate.dateOfBirth) return false
-  if (candidate.acknowledgedFields?.[field]) return false
-  if (
-    field === "dateOfBirth" &&
-    courseStartDate &&
-    !candidate.ageManuallyEdited &&
-    studentScanAgeCorroborated(candidate, courseStartDate)
-  ) {
-    return false
-  }
-  return candidate.confidence[field] < MIN_FIELD_CONFIDENCE
-}
-
-function parsedReviewAge(candidate: ReviewCandidate) {
-  if (!/^\d{1,3}$/.test(candidate.reviewAge)) return null
-  const age = Number(candidate.reviewAge)
-  return age >= 0 && age <= 120 ? age : null
-}
-
-function ageConflictsWithStoredDate(
-  candidate: ReviewCandidate,
-  courseStartDate: string,
-) {
-  const reviewedAge = parsedReviewAge(candidate)
-  if (reviewedAge === null || !candidate.dateOfBirth) return false
-  const storedAge = studentScanAge(
-    { ...candidate, ageReading: undefined },
-    courseStartDate,
-  )
-  return storedAge === null || Math.abs(storedAge - reviewedAge) > 1
-}
-
-function ageNeedsReview(candidate: ReviewCandidate, courseStartDate: string) {
-  if (parsedReviewAge(candidate) === null) return true
-  if (!candidate.dateOfBirth) {
-    if (
-      candidate.ageManuallyEdited ||
-      candidate.confirmed ||
-      candidate.acknowledgedFields?.age
-    ) {
-      return false
-    }
-    return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
-  }
-  if (
-    candidate.confirmed &&
-    !ageConflictsWithStoredDate(candidate, courseStartDate)
-  ) {
-    return false
-  }
-  return (
-    ageConflictsWithStoredDate(candidate, courseStartDate) ||
-    needsReview(candidate, "dateOfBirth", courseStartDate)
-  )
-}
-
-function nameReadingNeedsReview(candidate: ReviewCandidate) {
-  const reading = candidate.nameReading
-  if (!reading) return false
-  return (
-    !reading.acknowledged &&
-    (reading.order === "unknown" || reading.compoundAmbiguity)
-  )
-}
-
-function candidateIsReady(
-  candidate: ReviewCandidate,
-  courseStartDate: string,
-  readPhone: boolean,
-) {
-  return Boolean(
-    candidate.firstName.trim() &&
-    candidate.surname.trim() &&
-    parsedReviewAge(candidate) !== null &&
-    (!candidate.dateOfBirth || candidate.dateOfBirth <= courseStartDate) &&
-    candidate.sex &&
-    !nameReadingNeedsReview(candidate) &&
-    !ageNeedsReview(candidate, courseStartDate) &&
-    !reviewedFields(readPhone).some((field) =>
-      needsReview(candidate, field, courseStartDate),
-    ),
-  )
 }
 
 /**
@@ -196,6 +126,113 @@ function applyNameOrderToCandidates(
   })
 }
 
+/**
+ * Case, accents and incidental extra spacing are an assistant's or a scan's
+ * typography, not a different name, so they are folded away before two rows'
+ * surname and given name are compared for a possible duplicate.
+ */
+function duplicateNamePart(value: string) {
+  return value
+    .normalize("NFC")
+    .trim()
+    .replace(/\s+/g, " ")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLocaleLowerCase("it-IT")
+}
+
+/**
+ * The one value that stands in for a row's age when comparing it against
+ * another row for a possible duplicate (V05 review V5-5): the birth date's
+ * computed age when the row has a usable date, its printed or declared age
+ * otherwise. Converting a date to an age here, rather than comparing dates
+ * literally, is what lets a scanned row with a full date and an existing
+ * profile that only ever recorded a declared age still be compared at all.
+ */
+function duplicateAgeSignal(
+  dateOfBirth: string,
+  age: number | null,
+  courseStartDate: string,
+) {
+  if (dateOfBirth && isValidDateOnly(dateOfBirth)) {
+    return calculateAge(dateOfBirth, courseStartDate)
+  }
+  return age
+}
+
+function duplicateSignature(
+  firstName: string,
+  surname: string,
+  dateOfBirth: string,
+  age: number | null,
+  courseStartDate: string,
+) {
+  if (!firstName.trim() || !surname.trim()) return null
+  const ageSignal = duplicateAgeSignal(dateOfBirth, age, courseStartDate)
+  if (ageSignal === null) return null
+  return `${duplicateNamePart(surname)}|${duplicateNamePart(firstName)}#${ageSignal}`
+}
+
+/**
+ * Possible duplicates, within the pasted or scanned batch itself and against
+ * the course's existing roster (V05 review V5-5). This lives here, in the
+ * screen, rather than in the review gate module: it compares rows against
+ * each other and against data the gate never sees, which is not a rule about
+ * one candidate's own fields. Only the later occurrence of a collision is
+ * flagged, so resolving it never depends on touching the row it matches.
+ */
+function findPossibleDuplicates(
+  candidates: ReviewCandidate[],
+  existingStudents: StudentRecord[],
+  courseStartDate: string,
+): Map<string, string> {
+  const matches = new Map<string, string>()
+  const existingBySignature = new Map<string, string>()
+  existingStudents.forEach((student) => {
+    const key = duplicateSignature(
+      student.firstName,
+      student.surname,
+      student.dateOfBirth,
+      student.declaredAgeAtCourseStart,
+      courseStartDate,
+    )
+    if (key && !existingBySignature.has(key)) {
+      existingBySignature.set(
+        key,
+        `${student.firstName} ${student.surname}`.trim(),
+      )
+    }
+  })
+
+  const seenBySignature = new Map<string, ReviewCandidate>()
+  candidates.forEach((candidate) => {
+    const key = duplicateSignature(
+      candidate.firstName,
+      candidate.surname,
+      candidate.dateOfBirth,
+      parsedReviewAge(candidate),
+      courseStartDate,
+    )
+    if (!key) return
+    const existingMatch = existingBySignature.get(key)
+    if (existingMatch) {
+      matches.set(candidate.id, existingMatch)
+      return
+    }
+    const earlier = seenBySignature.get(key)
+    if (earlier) {
+      matches.set(
+        candidate.id,
+        `${earlier.firstName} ${earlier.surname}`.trim(),
+      )
+      return
+    }
+    seenBySignature.set(key, candidate)
+  })
+
+  return matches
+}
+
 function ReviewField({
   candidate,
   courseStartDate,
@@ -203,6 +240,7 @@ function ReviewField({
   label,
   onChange,
   onAcknowledge,
+  consumeProgrammaticFocus,
   ...inputProps
 }: {
   candidate: ReviewCandidate
@@ -211,7 +249,13 @@ function ReviewField({
   label: string
   onChange: (value: string) => void
   onAcknowledge: () => void
-} & Omit<React.ComponentProps<typeof Input>, "onChange" | "onBlur" | "value">) {
+  /** True when this exact focus was the counter's own navigation rather than
+   * the operator's pointer or keyboard, so it must not arm acknowledgement. */
+  consumeProgrammaticFocus: (target: EventTarget | null) => boolean
+} & Omit<
+  React.ComponentProps<typeof Input>,
+  "onChange" | "onBlur" | "onFocus" | "value"
+>) {
   const uncertain = needsReview(candidate, field, courseStartDate)
   const lowConfidenceDate =
     field === "dateOfBirth" &&
@@ -219,6 +263,10 @@ function ReviewField({
     candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE &&
     !candidate.acknowledgedFields?.dateOfBirth
   const flagged = uncertain || lowConfidenceDate
+  // A blur only counts as review when this field's own focus was the
+  // operator's doing. A focus the counter gave it programmatically, then lost
+  // again on the next tap, must never silently acknowledge the field.
+  const armedRef = useRef(false)
   return (
     <label className="grid min-w-0 gap-1.5 text-sm font-bold">
       {/* The caption and its "Da controllare" flag share a half-width column.
@@ -238,8 +286,14 @@ function ReviewField({
         className={`scroll-mt-[180px] ${flagged ? "border-[#f79009]" : ""}`}
         data-scan-field={field}
         onChange={(event) => onChange(event.target.value)}
+        onFocus={(event) => {
+          armedRef.current = !consumeProgrammaticFocus(event.target)
+        }}
         onBlur={() => {
-          if (flagged && candidate[field].trim()) onAcknowledge()
+          if (armedRef.current && flagged && candidate[field].trim()) {
+            onAcknowledge()
+          }
+          armedRef.current = false
         }}
         value={candidate[field]}
         {...inputProps}
@@ -251,25 +305,87 @@ function ReviewField({
 function CandidateCard({
   candidate,
   courseStartDate,
+  duplicateOf,
   index,
   invalid,
   disabled,
   readPhone,
+  consumeProgrammaticFocus,
   onChange,
   onRemove,
   cardRef,
 }: {
   candidate: ReviewCandidate
   courseStartDate: string
+  /** The name of the row or existing student this candidate's normalized
+   * name and date/age match, if any (computed by the screen; see
+   * `findPossibleDuplicates`). */
+  duplicateOf?: string
   index: number
   invalid: boolean
   disabled: boolean
   readPhone: boolean
+  consumeProgrammaticFocus: (target: EventTarget | null) => boolean
   onChange: (candidate: ReviewCandidate) => void
   onRemove: () => void
   cardRef: (node: HTMLElement | null) => void
 }) {
+  // Once the date field has earned a place in the review for this row, it
+  // stays mounted for the rest of the review: a value the operator is still
+  // typing, or has just cleared, must not vanish from under their cursor.
+  // The flag is state latched during render (React's supported pattern for
+  // adjusting state as it renders), not a ref written during render.
+  const [dateFieldEverShown, setDateFieldEverShown] = useState(false)
+  const dateFieldNeedsAttention = Boolean(
+    candidate.dateOfBirth &&
+    // A row written by an assistant carries no real confidence of its own
+    // (rosterPaste always reports 100), so nothing else here would ever flag
+    // it: the date must be shown on its own so the operator can compare it
+    // against the sheet (V05 review V5-2), the one field most likely to hide
+    // a day/month swap or a year slip behind a printed age that looks fine.
+    (candidate.rowWarning === "from-assistant" ||
+      needsReview(candidate, "dateOfBirth", courseStartDate) ||
+      ageConflictsWithStoredDate(candidate, courseStartDate) ||
+      candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE),
+  )
+  if (dateFieldNeedsAttention && !dateFieldEverShown) {
+    setDateFieldEverShown(true)
+  }
+  const showDateField = dateFieldEverShown || dateFieldNeedsAttention
+  const ageArmedRef = useRef(false)
+  // Holds the date field's own wrapper so "Correggi la data" can find and
+  // focus that input directly (V05 review V5F-3), without a card-wide lookup
+  // for a field this component already renders itself.
+  const dateFieldWrapperRef = useRef<HTMLDivElement>(null)
+
   function updateField(field: StudentScanField, value: string) {
+    // A sex suggestion is only ever evidence about the given name it was read
+    // from. Once the operator changes a name that was actually read, the old
+    // guess is not evidence about the new one and must not silently survive
+    // attached to it, unless the operator picked the sex themselves. A field
+    // that started blank is being completed, not corrected, so whatever sex
+    // it already carries is left alone while it is typed in.
+    const staleSex =
+      field === "firstName" &&
+      !candidate.sexManuallyChosen &&
+      Boolean(candidate.scannedFirstName?.trim())
+    // The age shown is either typed by the operator or printed on the sheet;
+    // neither is a fact about the date, so neither is touched here. Anything
+    // else is a value derived from the date alone (a camera row with no
+    // printed age, or a pasted row where the date disagreed with the printed
+    // age and so kept no ageReading), and must move with it: otherwise
+    // clearing or fixing a wrong date leaves a stale age that still saves
+    // (V05 review V5R2-1/V5R2-8), and the row never explains why (blank
+    // becomes a missing field the gate already catches).
+    const derivesAgeFromDate =
+      field === "dateOfBirth" &&
+      !candidate.ageManuallyEdited &&
+      !candidate.ageReading
+    const recomputedAge = derivesAgeFromDate
+      ? value && isValidDateOnly(value)
+        ? String(calculateAge(value, courseStartDate))
+        : ""
+      : null
     onChange({
       ...candidate,
       [field]: value,
@@ -277,6 +393,9 @@ function CandidateCard({
       ...(field === "firstName" || field === "surname"
         ? { nameManuallyEdited: true }
         : {}),
+      // The typed given name is the operator's own, so it may suggest again.
+      ...(staleSex ? { sex: inferSex(value) } : {}),
+      ...(recomputedAge !== null ? { reviewAge: recomputedAge } : {}),
     })
   }
 
@@ -324,6 +443,44 @@ function CandidateCard({
     (nameNeedsReview || hasUnacknowledgedLowConfidenceName),
   )
   const reviewAgeNeedsAttention = ageNeedsReview(candidate, courseStartDate)
+  const duplicateUnresolved =
+    Boolean(duplicateOf) && !candidate.duplicateAcknowledged
+  // The date, not a printed or typed age, is what gets stored; a conflict
+  // between them must say what the date alone gives, one tap away from
+  // fixing it, rather than leaving the operator to guess or retype a number
+  // that is not even on the sheet (V05 review V5R2-1).
+  const storedDateValid =
+    Boolean(candidate.dateOfBirth) && isValidDateOnly(candidate.dateOfBirth)
+  const derivedAgeFromDate = storedDateValid
+    ? studentScanAge({ ...candidate, ageReading: undefined }, courseStartDate)
+    : null
+  const ageDateConflict =
+    storedDateValid &&
+    derivedAgeFromDate !== null &&
+    ageConflictsWithStoredDate(candidate, courseStartDate)
+
+  function useAgeFromDate() {
+    if (derivedAgeFromDate === null) return
+    onChange({
+      ...candidate,
+      reviewAge: String(derivedAgeFromDate),
+      ageReading: undefined,
+      ageManuallyEdited: false,
+    })
+  }
+
+  /** The conflict's other way out: rather than accept the age the date
+   * implies, the operator may instead have misread the year onto the sheet
+   * (or into the assistant's answer) and wants to fix the date itself. Moves
+   * focus straight to that row's own date field (V05 review V5F-3) instead
+   * of just naming it. */
+  function correctDate() {
+    const input = dateFieldWrapperRef.current?.querySelector<HTMLElement>(
+      '[data-scan-field="dateOfBirth"]',
+    )
+    input?.scrollIntoView?.({ behavior: "smooth", block: "start" })
+    input?.focus({ preventScroll: true })
+  }
 
   function acknowledgeField(field: StudentScanField | "age") {
     onChange({
@@ -336,22 +493,51 @@ function CandidateCard({
   }
 
   function swapNameFields() {
+    const reading = candidate.nameReading
+    // Two words are unambiguous: swapping them is itself the whole answer to
+    // which one is the given name, so the reading is resolved. A compound
+    // reading's split is a separate question the swap does not settle, so it
+    // stays pending.
+    // A short word left out between the two (droppedInteriorWord) means the
+    // reading is not really two words, so the swap does not settle it.
+    const twoWordReading =
+      reading?.words.length === 2 && !reading.droppedInteriorWord
     onChange({
       ...candidate,
       firstName: candidate.surname,
       surname: candidate.firstName,
+      // The confidence and the acknowledgement travel with the text: a
+      // low-confidence reading that moves from one field to the other must
+      // still be flagged there, not silently cleared by the swap.
       confidence: {
         ...candidate.confidence,
-        firstName: 100,
-        surname: 100,
+        firstName: candidate.confidence.surname,
+        surname: candidate.confidence.firstName,
+      },
+      acknowledgedFields: {
+        ...candidate.acknowledgedFields,
+        firstName: candidate.acknowledgedFields?.surname,
+        surname: candidate.acknowledgedFields?.firstName,
       },
       nameManuallyEdited: true,
-      ...(candidate.nameReading
+      // The old suggestion was read from the given name that just moved to
+      // the surname field; it says nothing about the new given name.
+      ...(candidate.sexManuallyChosen
+        ? {}
+        : {
+            sex:
+              candidate.confidence.surname >= MIN_FIELD_CONFIDENCE
+                ? inferSex(candidate.surname)
+                : null,
+          }),
+      // The swapped-in text is now the row's given name, so a later edit to
+      // it is judged against this value, not the word that used to be there.
+      scannedFirstName: candidate.surname,
+      ...(reading
         ? {
-            nameReading: {
-              ...candidate.nameReading,
-              acknowledged: true,
-            },
+            nameReading: twoWordReading
+              ? { ...reading, acknowledged: true }
+              : reading,
           }
         : {}),
     })
@@ -385,6 +571,7 @@ function CandidateCard({
           <Button
             aria-label={`Segna controllata la riga di allievo ${index + 1}`}
             aria-pressed={Boolean(candidate.confirmed)}
+            data-scan-field="row"
             className={`min-h-10 px-2.5 text-xs ${candidate.confirmed ? "border-[#2e7d51] text-[#1d6b41]" : ""}`}
             disabled={disabled}
             onClick={() =>
@@ -444,10 +631,41 @@ function CandidateCard({
         </div>
       )}
 
+      {duplicateUnresolved && (
+        <div
+          className="mb-2 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-2.5"
+          role="alert"
+        >
+          <p className="text-xs leading-5 font-semibold text-[#9a3412]">
+            Possibile doppione di {duplicateOf}: rimuovi la riga se è lo stesso
+            allievo.
+          </p>
+          <Button
+            className="mt-2 min-h-10 px-2.5 text-xs"
+            data-scan-field="duplicate"
+            disabled={disabled}
+            onClick={() =>
+              onChange({ ...candidate, duplicateAcknowledged: true })
+            }
+            type="button"
+            variant="secondary"
+          >
+            Tieni entrambi
+          </Button>
+        </div>
+      )}
+
+      {candidate.rowWarning && rowWarningNeedsReview(candidate) && (
+        <p className="mb-2 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-2.5 text-xs leading-5 font-semibold text-[#9a3412]">
+          {ROW_WARNING_TEXT[candidate.rowWarning]}
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         <ReviewField
           autoComplete="given-name"
           candidate={candidate}
+          consumeProgrammaticFocus={consumeProgrammaticFocus}
           courseStartDate={courseStartDate}
           field="firstName"
           label="Nome"
@@ -458,6 +676,7 @@ function CandidateCard({
         <ReviewField
           autoComplete="family-name"
           candidate={candidate}
+          consumeProgrammaticFocus={consumeProgrammaticFocus}
           courseStartDate={courseStartDate}
           field="surname"
           label="Cognome"
@@ -486,10 +705,18 @@ function CandidateCard({
               id={`scan-age-${candidate.id}`}
               inputMode="numeric"
               aria-invalid={reviewAgeNeedsAttention}
+              onFocus={(event) => {
+                ageArmedRef.current = !consumeProgrammaticFocus(event.target)
+              }}
               onBlur={() => {
-                if (reviewAgeNeedsAttention && candidate.reviewAge.trim()) {
+                if (
+                  ageArmedRef.current &&
+                  reviewAgeNeedsAttention &&
+                  candidate.reviewAge.trim()
+                ) {
                   acknowledgeField("age")
                 }
+                ageArmedRef.current = false
               }}
               onChange={(event) => updateAge(event.target.value)}
               type="text"
@@ -517,7 +744,13 @@ function CandidateCard({
                     data-scan-field="sex"
                     disabled={disabled}
                     name={`scan-sex-${candidate.id}`}
-                    onChange={() => onChange({ ...candidate, sex: option.id })}
+                    onChange={() =>
+                      onChange({
+                        ...candidate,
+                        sex: option.id,
+                        sexManuallyChosen: true,
+                      })
+                    }
                     type="radio"
                     value={option.id}
                   />
@@ -532,6 +765,7 @@ function CandidateCard({
         {readPhone && (
           <ReviewField
             candidate={candidate}
+            consumeProgrammaticFocus={consumeProgrammaticFocus}
             courseStartDate={courseStartDate}
             field="phone"
             inputMode="tel"
@@ -544,30 +778,63 @@ function CandidateCard({
         )}
       </div>
 
-      {candidate.dateOfBirth &&
-        (needsReview(candidate, "dateOfBirth", courseStartDate) ||
-          ageConflictsWithStoredDate(candidate, courseStartDate) ||
-          candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE) && (
-          <div className="mt-2">
-            <ReviewField
-              candidate={candidate}
-              courseStartDate={courseStartDate}
-              field="dateOfBirth"
-              label="Data di nascita"
-              disabled={disabled}
-              max={courseStartDate}
-              onChange={(value) => updateField("dateOfBirth", value)}
-              onAcknowledge={() => acknowledgeField("dateOfBirth")}
-              type="date"
-            />
-          </div>
-        )}
+      {showDateField && (
+        <div className="mt-2" ref={dateFieldWrapperRef}>
+          <ReviewField
+            candidate={candidate}
+            consumeProgrammaticFocus={consumeProgrammaticFocus}
+            courseStartDate={courseStartDate}
+            field="dateOfBirth"
+            label="Data di nascita"
+            disabled={disabled}
+            max={courseStartDate}
+            onChange={(value) => updateField("dateOfBirth", value)}
+            onAcknowledge={() => acknowledgeField("dateOfBirth")}
+            type="date"
+          />
+          {ageDateConflict && (
+            <div className="mt-2 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-2.5">
+              <p className="text-xs leading-5 font-semibold text-[#9a3412]">
+                {candidate.ageManuallyEdited
+                  ? "Età inserita"
+                  : "Età sul foglio"}{" "}
+                {candidate.reviewAge}, dalla data {derivedAgeFromDate}{" "}
+                all’inizio del corso.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  className="min-h-10 px-2.5 text-xs"
+                  disabled={disabled}
+                  onClick={useAgeFromDate}
+                  type="button"
+                  variant="secondary"
+                >
+                  Usa l’età dalla data
+                </Button>
+                <Button
+                  className="min-h-10 px-2.5 text-xs"
+                  disabled={disabled}
+                  onClick={correctDate}
+                  type="button"
+                  variant="secondary"
+                >
+                  Correggi la data
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {invalid && (
         <p className="mt-3 text-xs font-semibold text-[#b42318]" role="alert">
           {nameNeedsReview
             ? "Conferma la suddivisione di nome e cognome."
-            : "Completa nome, cognome, età e sesso. Controlla la data di nascita se è presente."}
+            : duplicateUnresolved
+              ? "Possibile doppione: tieni entrambi oppure rimuovi la riga."
+              : rowWarningNeedsReview(candidate)
+                ? "Controlla la riga sul foglio e segnala controllata, oppure rimuovila."
+                : "Completa nome, cognome, età e sesso. Controlla la data di nascita se è presente."}
         </p>
       )}
     </article>
@@ -577,6 +844,7 @@ function CandidateCard({
 export function StudentScan({
   courseId,
   courseStartDate,
+  existingStudents = [],
   onBack,
   onCommitted,
   onManualAdd = onBack,
@@ -584,6 +852,9 @@ export function StudentScan({
 }: {
   courseId: string
   courseStartDate: string
+  /** The course's current roster, used only to flag a possible duplicate
+   * (V05 review V5-5); never persisted from here. */
+  existingStudents?: StudentRecord[]
   onBack: () => void
   onCommitted: () => void
   onManualAdd?: () => void
@@ -600,6 +871,22 @@ export function StudentScan({
   const scanGenerationRef = useRef(0)
   const saveInFlightRef = useRef(false)
   const candidateCardRefs = useRef(new Map<string, HTMLElement>())
+  // The unread-line inputs the counter can jump to once no candidate row
+  // needs review first (V05 review V5-3), keyed by 1-based source line.
+  const unparsedLineRefs = useRef(new Map<number, HTMLElement>())
+  // The paste review's completeness confirmation button (V05 review
+  // V5R2-2/V5R2-3): where a save refused for that reason alone is sent, once
+  // every unread line is already resolved.
+  const pasteConfirmationRef = useRef<HTMLElement | null>(null)
+  // The exact element the counters last focused programmatically. A field
+  // that merely receives this focus and then loses it again must not count
+  // as reviewed by the operator.
+  const armedFocusTargetRef = useRef<HTMLElement | null>(null)
+  // A successful save must never be second-guessed by the leave guard: once
+  // it flips, discarding is no longer possible, so there is nothing left to
+  // ask about.
+  const committedRef = useRef(false)
+  const discardAlertRef = useRef<HTMLElement>(null)
   // Off by default. The owner asked for the telephone to be opt-in so a scan
   // can be judged on the names and the dates of birth, which is what the course
   // actually needs; the number is useful and rarely urgent.
@@ -622,6 +909,31 @@ export function StudentScan({
   const [saveError, setSaveError] = useState(false)
   const [imageNeedsRetake, setImageNeedsRetake] = useState(false)
   const [acquisition, setAcquisition] = useState<Acquisition>()
+  const [discardConfirmation, setDiscardConfirmation] = useState<{
+    onConfirm: () => void
+  } | null>(null)
+  // Set only when the review on screen came from a pasted assistant answer:
+  // which of its lines could not be read, whether its FINE line was ever
+  // found, and the row count the operator last confirmed as the sheet's
+  // whole roster (V05 review V5R2-3: required for every pasted answer, not
+  // only an interrupted one). `confirmedCount` names a specific number
+  // rather than a plain yes/no (V05 review V5F-1): a confirmation given for
+  // N rows must not silently keep covering a different N after a row is
+  // left out or removed, so it is treated as still standing only while no
+  // unread line remains and today's row count is exactly the one that was
+  // confirmed. Absent for an ordinary scan review, which has no such lines
+  // and no such count to confirm.
+  const [pasteImport, setPasteImport] = useState<{
+    unparsed: UnparsedPasteLine[]
+    complete: boolean
+    confirmedCount: number | null
+  } | null>(null)
+  // The assistant section's own state lives here, not inside it: a discarded
+  // review can then hand the operator back to exactly the text they pasted
+  // (V05 review V5-6), which the section itself would otherwise lose the
+  // moment an import replaces it on screen.
+  const [assistantExpanded, setAssistantExpanded] = useState(false)
+  const [assistantAnswer, setAssistantAnswer] = useState("")
 
   useEffect(() => {
     return () => {
@@ -636,9 +948,75 @@ export function StudentScan({
     [],
   )
 
+  useEffect(() => {
+    if (!discardConfirmation) return
+    discardAlertRef.current?.scrollIntoView?.({
+      behavior: "smooth",
+      block: "start",
+    })
+    discardAlertRef.current?.focus({ preventScroll: true })
+  }, [discardConfirmation])
+
+  // A review with candidates in it represents work the operator has not yet
+  // saved: leaving without asking would silently discard every correction
+  // made so far. A successful save is the one way out that needs no question.
+  // `committedRef` is read inside the guard itself, not just when this value
+  // is built, because setting it does not by itself cause a re-render: a
+  // save can succeed and call `onCommitted` before this component ever
+  // renders again, and a guard built before that must still see it.
+  // An unread line is exactly as much unsaved work as a candidate row: it
+  // came from the same pasted answer and leaving without asking would
+  // silently drop it (V05 review V5-4), even when no candidate exists yet.
+  // A paste review with neither (every row unread was left out, or the
+  // answer had none at all) still holds the pasted text itself: leaving
+  // without asking would drop that too (V05 review V5R2-5), so the mere
+  // presence of a paste review is already unsaved work, not just what came
+  // out of it.
+  const hasUnsavedReview = candidates.length > 0 || pasteImport !== null
+  useLeaveGuard(
+    hasUnsavedReview
+      ? (leave) => {
+          if (committedRef.current) return false
+          setDiscardConfirmation({
+            onConfirm: () => {
+              setDiscardConfirmation(null)
+              leave()
+            },
+          })
+          return true
+        }
+      : null,
+  )
+
+  function consumeProgrammaticFocus(target: EventTarget | null) {
+    const matched =
+      armedFocusTargetRef.current !== null &&
+      armedFocusTargetRef.current === target
+    armedFocusTargetRef.current = null
+    return matched
+  }
+
   function chooseAnother(source: "camera" | "gallery") {
     if (source === "camera") cameraInputRef.current?.click()
     else galleryInputRef.current?.click()
+  }
+
+  /**
+   * Another image or a retake replaces every row on screen. While there is
+   * still a review in progress, that replacement is exactly as destructive as
+   * leaving the screen, so it asks the same question first.
+   */
+  function requestAnotherImage(source: "camera" | "gallery") {
+    if (!hasUnsavedReview) {
+      chooseAnother(source)
+      return
+    }
+    setDiscardConfirmation({
+      onConfirm: () => {
+        setDiscardConfirmation(null)
+        chooseAnother(source)
+      },
+    })
   }
 
   function closeAcquisition() {
@@ -660,6 +1038,10 @@ export function StudentScan({
     setInvalidIds(new Set())
     setSaveError(false)
     setImageNeedsRetake(false)
+    // A fresh image replaces any earlier assistant import exactly as it
+    // replaces a scan: the unparsed lines and the incomplete-answer notice
+    // belonged to a different sheet.
+    setPasteImport(null)
     try {
       const result = await scan(
         file,
@@ -680,17 +1062,32 @@ export function StudentScan({
       // treating a couple of plausible fragments as a trustworthy roster.
       setImageNeedsRetake(result.aggregateConfidence < MIN_FIELD_CONFIDENCE)
       const scanned = result.candidates.map((candidate, index) => ({
-        ...candidate,
-        id: `${candidate.sourceId}-${index + 1}`,
-        reviewAge: String(studentScanAge(candidate, courseStartDate) ?? ""),
+        ...toReviewCandidate(candidate, index, courseStartDate),
+        // The name the row started with. A sex suggestion can only ever have
+        // come from a given name that was actually read, so a row that
+        // started blank keeps whatever sex it carries while it is filled in
+        // for the first time; only a change to a name that really was read
+        // makes the old suggestion stale.
+        scannedFirstName: candidate.firstName,
       }))
       // An explicit correction outranks the sheet vote. An inferred order is
       // not persisted as a human preference; the next sheet gets its own vote.
+      // But a remembered choice is a tie-breaker for a sheet that cannot
+      // decide on its own, not a license to override one that just did: a
+      // decisive vote that disagrees with memory is asked about again rather
+      // than silently overridden, since applying the wrong order mangles
+      // every name on the sheet.
       const remembered = readNameOrderPreference(courseId)
       const inference = inferStudentNameOrder(scanned)
-      const selected =
-        remembered ?? (inference.order === "unknown" ? null : inference.order)
-      setOrderInference(remembered ? null : inference)
+      const disagreesWithMemory =
+        remembered !== null &&
+        inference.order !== "unknown" &&
+        inference.order !== remembered
+      const selected = disagreesWithMemory
+        ? null
+        : (remembered ??
+          (inference.order === "unknown" ? null : inference.order))
+      setOrderInference(!remembered || disagreesWithMemory ? inference : null)
       setNameOrder(selected)
       setCandidates(
         selected
@@ -708,18 +1105,223 @@ export function StudentScan({
     }
   }
 
+  /**
+   * The assistant path's counterpart to `handleImage`: the answer is already
+   * parsed, so this only opens the same review state a scan would, minus the
+   * name-order question the columns already answer.
+   */
+  function handlePasteImport(result: {
+    candidates: StudentScanCandidate[]
+    unparsed: UnparsedPasteLine[]
+    complete: boolean
+  }) {
+    // Invalidate any scan still in flight: a pasted answer replaces whatever
+    // the camera path was doing, exactly as a fresh image would.
+    scanGenerationRef.current += 1
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(undefined)
+    const mapped = result.candidates.map((candidate, index) => ({
+      ...toReviewCandidate(candidate, index, courseStartDate),
+      // Mirrors the scan path: a sex suggestion is only ever evidence about a
+      // given name that was actually read.
+      scannedFirstName: candidate.firstName,
+    }))
+    setCandidates(mapped)
+    setPasteImport({
+      unparsed: result.unparsed,
+      complete: result.complete,
+      confirmedCount: null,
+    })
+    setInvalidIds(new Set())
+    setSaveError(false)
+    setImageNeedsRetake(false)
+    // The columns already say which word is the surname, so there is nothing
+    // left for the name-order question to resolve.
+    setNameOrder(null)
+    setOrderInference(null)
+    setState("review")
+  }
+
+  /** A line the answer got wrong, fixed in place and read again. Inserted at
+   * its own position in the sheet (V05 review V5-11) rather than appended:
+   * the operator compares the review against the sheet in that order, and a
+   * fix landing at the end would put every later row out of place. */
+  function handlePasteLineResolved(
+    line: UnparsedPasteLine,
+    candidate: StudentScanCandidate,
+  ) {
+    setCandidates((current) => {
+      const resolved = {
+        ...toReviewCandidate(candidate, current.length, courseStartDate),
+        scannedFirstName: candidate.firstName,
+      }
+      const insertAt = current.findIndex((existing) => {
+        const match = /^paste-(\d+)$/.exec(existing.sourceId)
+        return match !== null && Number(match[1]) > line.line
+      })
+      if (insertAt === -1) return [...current, resolved]
+      return [
+        ...current.slice(0, insertAt),
+        resolved,
+        ...current.slice(insertAt),
+      ]
+    })
+    setPasteImport((current) =>
+      current
+        ? {
+            ...current,
+            unparsed: current.unparsed.filter(
+              (item) => item.line !== line.line,
+            ),
+          }
+        : current,
+    )
+  }
+
+  /** The operator chose not to fix this line: it is left out of the roster
+   * without being read (V05 review V5-3). */
+  function leaveOutUnparsedLine(line: UnparsedPasteLine) {
+    setPasteImport((current) =>
+      current
+        ? {
+            ...current,
+            unparsed: current.unparsed.filter(
+              (item) => item.line !== line.line,
+            ),
+          }
+        : current,
+    )
+  }
+
+  /** The completeness confirmation's "Sono tutti" (V05 review V5R2-3):
+   * required before saving for every pasted answer, not only an interrupted
+   * one, so a well-formed answer that silently omits a student still asks
+   * the operator to count. Records the row count being confirmed rather than
+   * a plain yes/no (V05 review V5F-1): it is disabled while an unread line
+   * is still pending, so this only ever runs once none remain. */
+  function confirmPasteComplete() {
+    setPasteImport((current) =>
+      current ? { ...current, confirmedCount: candidates.length } : current,
+    )
+  }
+
+  function registerPasteConfirmation(node: HTMLElement | null) {
+    pasteConfirmationRef.current = node
+  }
+
+  /** The counter's ordinary navigation goes to a plain "riga da controllare";
+   * a save the operator just asked for and did not get must say so instead
+   * (V05 review V5R2-2), on the same element. */
+  function jumpToPasteConfirmation(
+    reason: "riga da controllare" | "save refused" = "riga da controllare",
+  ) {
+    const button = pasteConfirmationRef.current
+    button?.scrollIntoView?.({ behavior: "smooth", block: "start" })
+    button?.focus({ preventScroll: true })
+    setNavigationAnnouncement(
+      reason === "save refused"
+        ? "Salvataggio bloccato: conferma se sono tutti gli allievi del foglio."
+        : "Conferma se sono tutti gli allievi del foglio, riga da controllare.",
+    )
+  }
+
+  function registerUnparsedLineInput(line: number, node: HTMLElement | null) {
+    if (node) unparsedLineRefs.current.set(line, node)
+    else unparsedLineRefs.current.delete(line)
+  }
+
+  function jumpToUnparsedLine(
+    line: UnparsedPasteLine,
+    reason: "riga da controllare" | "save refused" = "riga da controllare",
+  ) {
+    const input = unparsedLineRefs.current.get(line.line)
+    input?.scrollIntoView?.({ behavior: "smooth", block: "start" })
+    input?.focus({ preventScroll: true })
+    setNavigationAnnouncement(
+      reason === "save refused"
+        ? `Salvataggio bloccato: correggi o lascia fuori la riga non letta ${line.line}.`
+        : `Riga non letta ${line.line}, riga da controllare.`,
+    )
+  }
+
+  /** A way back to exactly what was pasted (V05 review V5-6), asked for like
+   * any other discard: the review on screen is replaced, not merely hidden. */
+  function returnToPastedAnswer() {
+    setDiscardConfirmation({
+      onConfirm: () => {
+        setDiscardConfirmation(null)
+        setCandidates([])
+        setPasteImport(null)
+        setInvalidIds(new Set())
+        setSaveError(false)
+        setState("idle")
+        setAssistantExpanded(true)
+      },
+    })
+  }
+
+  // Possible duplicates: computed here, not in the review gate module (V05
+  // review V5-5), and combined with the gate's own result everywhere below
+  // that decides whether a row still needs review or is ready to save.
+  const duplicateMatches = useMemo(
+    () => findPossibleDuplicates(candidates, existingStudents, courseStartDate),
+    [candidates, existingStudents, courseStartDate],
+  )
+  const candidateHasUnresolvedDuplicate = (candidate: ReviewCandidate) =>
+    duplicateMatches.has(candidate.id) && !candidate.duplicateAcknowledged
+
+  // The completeness confirmation covers a specific row count, not a plain
+  // yes/no (V05 review V5F-1): it only counts as still given while no unread
+  // line remains and the number of pasted rows on screen today is exactly
+  // the one that was confirmed. Leaving a line out after confirming, or
+  // removing a candidate row, changes that count and must ask again rather
+  // than silently keep covering a roster that is no longer the one the
+  // operator counted.
+  const pasteCountConfirmed = Boolean(
+    pasteImport &&
+    pasteImport.unparsed.length === 0 &&
+    pasteImport.confirmedCount === candidates.length,
+  )
+
   async function commitCandidates() {
     if (saveInFlightRef.current) return
     const invalid = new Set(
       candidates
         .filter(
           (candidate) =>
-            !candidateIsReady(candidate, courseStartDate, readPhone),
+            !candidateIsReady(candidate, courseStartDate, readPhone) ||
+            candidateHasUnresolvedDuplicate(candidate),
         )
         .map(({ id }) => id),
     )
     setInvalidIds(invalid)
-    if (invalid.size > 0 || candidates.length === 0) return
+    // An unread line that is neither fixed nor explicitly left out, or the
+    // completeness confirmation the operator has not yet given, must block
+    // the save exactly like an invalid row: otherwise the roster saves with
+    // that student silently missing (V05 review V5-3/V5R2-3).
+    const hasUnresolvedPasteLines = Boolean(pasteImport?.unparsed.length)
+    const answerNeedsConfirmation = Boolean(pasteImport && !pasteCountConfirmed)
+    if (
+      invalid.size > 0 ||
+      candidates.length === 0 ||
+      hasUnresolvedPasteLines ||
+      answerNeedsConfirmation
+    ) {
+      // A refusal for a paste reason must say so, not do nothing: the
+      // operator taps Aggiungi, sees no change and has no idea why (V05
+      // review V5R2-2). Candidate-row refusals already have their own
+      // "righe da controllare"/"campi da completare" counters to jump with;
+      // this only covers the two reasons that counter cannot reach on its
+      // own once every candidate row is otherwise ready.
+      if (invalid.size === 0 && candidates.length > 0) {
+        if (hasUnresolvedPasteLines) {
+          jumpToUnparsedLine(pasteImport!.unparsed[0]!, "save refused")
+        } else if (answerNeedsConfirmation) {
+          jumpToPasteConfirmation("save refused")
+        }
+      }
+      return
+    }
 
     saveInFlightRef.current = true
     setState("saving")
@@ -743,35 +1345,32 @@ export function StudentScan({
       setSaveError(true)
       return
     }
+    committedRef.current = true
     onCommitted()
   }
 
   const progressPercent = Math.round(progress.value * 100)
   const missingFields = candidates.reduce(
-    (total, candidate) =>
-      total +
-      Number(!candidate.firstName.trim()) +
-      Number(!candidate.surname.trim()) +
-      Number(parsedReviewAge(candidate) === null) +
-      Number(!candidate.sex),
+    (total, candidate) => total + missingFieldCount(candidate),
     0,
   )
-  function candidateNeedsReview(candidate: ReviewCandidate) {
-    return Boolean(
-      !candidate.firstName.trim() ||
-      !candidate.surname.trim() ||
-      parsedReviewAge(candidate) === null ||
-      !candidate.sex ||
-      nameReadingNeedsReview(candidate) ||
-      ageNeedsReview(candidate, courseStartDate) ||
-      reviewedFields(readPhone).some((field) =>
-        needsReview(candidate, field, courseStartDate),
-      ),
-    )
-  }
-  const rowsToReview = candidates.filter(candidateNeedsReview).length
-  const readyStudents = candidates.filter((candidate) =>
-    candidateIsReady(candidate, courseStartDate, readPhone),
+  const rowNeedsReview = (candidate: ReviewCandidate) =>
+    candidateNeedsReview(candidate, courseStartDate, readPhone) ||
+    candidateHasUnresolvedDuplicate(candidate)
+  // Each remaining unread line is exactly one more row the operator still
+  // has to deal with (V05 review V5-3), so it counts here alongside every
+  // candidate that still needs a look. The pending completeness confirmation
+  // is exactly the same kind of outstanding row (V05 review V5R2-3): without
+  // it this counter could reach zero while a save is still refused, which is
+  // exactly the silent-refusal bug the counter exists to prevent.
+  const rowsToReview =
+    candidates.filter(rowNeedsReview).length +
+    (pasteImport?.unparsed.length ?? 0) +
+    (pasteImport && !pasteCountConfirmed ? 1 : 0)
+  const readyStudents = candidates.filter(
+    (candidate) =>
+      candidateIsReady(candidate, courseStartDate, readPhone) &&
+      !candidateHasUnresolvedDuplicate(candidate),
   ).length
   const hasUnresolvedNameOrder =
     !nameOrder &&
@@ -804,6 +1403,8 @@ export function StudentScan({
     if (readPhone && needsReview(candidate, "phone", courseStartDate)) {
       return "phone"
     }
+    if (rowWarningNeedsReview(candidate)) return "row"
+    if (candidateHasUnresolvedDuplicate(candidate)) return "duplicate"
     return "firstName"
   }
 
@@ -820,9 +1421,11 @@ export function StudentScan({
       const target = Array.from(
         card.querySelectorAll<HTMLElement>("[data-scan-field]"),
       ).find((element) => element.dataset.scanField === field)
-      ;(target ?? card.querySelector<HTMLElement>("h2"))?.focus({
-        preventScroll: true,
-      })
+      const focusTarget = target ?? card.querySelector<HTMLElement>("h2")
+      // This is the counter's own navigation, not the operator reaching for
+      // the field themselves, so it must not arm an acknowledgement.
+      armedFocusTargetRef.current = focusTarget
+      focusTarget?.focus({ preventScroll: true })
       const targetName: Record<string, string> = {
         firstName: "nome",
         surname: "cognome",
@@ -830,6 +1433,8 @@ export function StudentScan({
         dateOfBirth: "data di nascita",
         sex: "sesso",
         phone: "telefono",
+        row: "segnala la riga controllata",
+        duplicate: "possibile doppione",
       }
       setNavigationAnnouncement(
         `Riga ${index + 1}, ${reason}. ${targetName[field] ?? ""}`,
@@ -857,7 +1462,7 @@ export function StudentScan({
   }
 
   function jumpToFirstReview() {
-    const index = candidates.findIndex(candidateNeedsReview)
+    const index = candidates.findIndex(rowNeedsReview)
     const candidate = candidates[index]
     if (candidate && index >= 0) {
       jumpToCandidate(
@@ -866,7 +1471,47 @@ export function StudentScan({
         firstReviewTarget(candidate),
         "riga da controllare",
       )
+      return
     }
+    // No candidate row needs a look, but an unread line still does (V05
+    // review V5-3): the counter has somewhere left to send the operator.
+    const line = pasteImport?.unparsed[0]
+    if (line) {
+      jumpToUnparsedLine(line)
+      return
+    }
+    // Nothing left but the completeness confirmation itself (V05 review
+    // V5R2-3): the counter still has somewhere to send the operator.
+    if (pasteImport && !pasteCountConfirmed) jumpToPasteConfirmation()
+  }
+
+  /** The discard prompt's own heading: it must name the unread lines
+   * whenever any remain (V05 review V5-4), alongside the candidate rows when
+   * there are any, so the operator knows exactly what leaving would drop. */
+  function discardConfirmationHeading() {
+    const studentsCount = candidates.length
+    const unreadCount = pasteImport?.unparsed.length ?? 0
+    const studentsPart =
+      studentsCount > 0
+        ? `la revisione di ${studentsCount} ${studentsCount === 1 ? "allievo" : "allievi"}`
+        : ""
+    const unreadPart =
+      unreadCount > 0
+        ? `${unreadCount} ${unreadCount === 1 ? "riga non letta" : "righe non lette"}`
+        : ""
+    if (studentsPart && unreadPart) {
+      return `Scartare ${studentsPart} e ${unreadPart}?`
+    }
+    if (studentsPart || unreadPart)
+      return `Scartare ${studentsPart || unreadPart}?`
+    // Neither a candidate row nor an unread line remains: a paste review
+    // read nothing at all from the answer (only its header and FINE), yet
+    // the pasted text itself is still what leaving would drop (V05 review
+    // V5R2-5). Without this fallback the heading reads the meaningless
+    // "Scartare ?".
+    return pasteImport
+      ? "Scartare la risposta dell’assistente?"
+      : "Scartare questa revisione?"
   }
 
   function acquisitionInput(
@@ -900,7 +1545,7 @@ export function StudentScan({
         <button
           aria-label="Indietro da Scan allievi"
           className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-          onClick={onBack}
+          onClick={() => requestLeave(onBack)}
           type="button"
         >
           <ChevronLeft aria-hidden="true" className="size-5" />
@@ -919,71 +1564,82 @@ export function StudentScan({
       {acquisitionInput(cameraInputRef, "camera")}
 
       {(state === "idle" || state === "error") && (
-        <section className="rounded-3xl border bg-card [padding:clamp(8px,4vw,20px)] text-center shadow-[0_12px_32px_rgb(6_59_82/0.07)]">
-          <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted text-primary">
-            <Camera aria-hidden="true" className="size-7" />
-          </span>
-          <h2 className="mt-4 text-xl font-black">Importa l’elenco</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Inquadra bene nomi e date di nascita. L’analisi avviene sul
-            dispositivo.
-          </p>
-          {/* The telephone is opt-in. Left off, it is not reported and not
-              counted, so the review is about the two fields the course needs. */}
-          <label className="mt-4 flex min-w-0 items-start gap-3 rounded-2xl border bg-muted/50 p-3 text-left">
-            <input
-              checked={readPhone}
-              className="mt-[2px] size-5 shrink-0 accent-[var(--primary)]"
-              onChange={(event) => setReadPhone(event.target.checked)}
-              type="checkbox"
-            />
-            <span className="min-w-0">
-              <span className="block text-sm font-bold">
-                Leggi anche il telefono
-              </span>
-              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-                Lasciato spento, i numeri non vengono letti né richiesti.
-              </span>
+        <>
+          <section className="rounded-3xl border bg-card [padding:clamp(8px,4vw,20px)] text-center shadow-[0_12px_32px_rgb(6_59_82/0.07)]">
+            <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted text-primary">
+              <Camera aria-hidden="true" className="size-7" />
             </span>
-          </label>
-          {state === "error" && (
-            <p
-              className="mt-3 text-sm font-semibold text-[#b42318]"
-              role="alert"
-            >
-              Non sono riuscito ad analizzare l’immagine. Riprova.
+            <h2 className="mt-4 text-xl font-black">Importa l’elenco</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Inquadra bene nomi e date di nascita. L’analisi avviene sul
+              dispositivo.
             </p>
-          )}
-          <div className="mt-5 grid gap-2">
-            <Button
-              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
-              onClick={() => chooseAnother("camera")}
-              ref={cameraButtonRef}
-              size="lg"
-            >
-              <Camera aria-hidden="true" className="size-5" />
-              Fai una foto
-            </Button>
-            <Button
-              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
-              onClick={() => chooseAnother("gallery")}
-              ref={galleryButtonRef}
-              size="lg"
-              variant="secondary"
-            >
-              <ImagePlus aria-hidden="true" className="size-5" />
-              Scegli dalla galleria
-            </Button>
-            <Button
-              className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
-              onClick={onManualAdd}
-              variant="secondary"
-            >
-              <UserPlus aria-hidden="true" className="size-5" />
-              Inserisci manualmente
-            </Button>
-          </div>
-        </section>
+            {/* The telephone is opt-in. Left off, it is not reported and not
+              counted, so the review is about the two fields the course needs. */}
+            <label className="mt-4 flex min-w-0 items-start gap-3 rounded-2xl border bg-muted/50 p-3 text-left">
+              <input
+                checked={readPhone}
+                className="mt-[2px] size-5 shrink-0 accent-[var(--primary)]"
+                onChange={(event) => setReadPhone(event.target.checked)}
+                type="checkbox"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-bold">
+                  Leggi anche il telefono
+                </span>
+                <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                  Lasciato spento, i numeri non vengono letti né richiesti.
+                </span>
+              </span>
+            </label>
+            {state === "error" && (
+              <p
+                className="mt-3 text-sm font-semibold text-[#b42318]"
+                role="alert"
+              >
+                Non sono riuscito ad analizzare l’immagine. Riprova.
+              </p>
+            )}
+            <div className="mt-5 grid gap-2">
+              <Button
+                className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+                onClick={() => chooseAnother("camera")}
+                ref={cameraButtonRef}
+                size="lg"
+              >
+                <Camera aria-hidden="true" className="size-5" />
+                Fai una foto
+              </Button>
+              <Button
+                className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+                onClick={() => chooseAnother("gallery")}
+                ref={galleryButtonRef}
+                size="lg"
+                variant="secondary"
+              >
+                <ImagePlus aria-hidden="true" className="size-5" />
+                Scegli dalla galleria
+              </Button>
+              <Button
+                className="h-auto min-h-[48px] w-full gap-[6px] px-[8px] py-[8px] [&>svg]:size-[20px]"
+                onClick={onManualAdd}
+                variant="secondary"
+              >
+                <UserPlus aria-hidden="true" className="size-5" />
+                Inserisci manualmente
+              </Button>
+            </div>
+          </section>
+          <StudentScanAssistantSection
+            answer={assistantAnswer}
+            courseStartDate={courseStartDate}
+            expanded={assistantExpanded}
+            onAnswerChange={setAssistantAnswer}
+            onExpandedChange={setAssistantExpanded}
+            onImport={handlePasteImport}
+            readPhone={readPhone}
+          />
+        </>
       )}
 
       {state === "scanning" && (
@@ -1129,6 +1785,39 @@ export function StudentScan({
             {navigationAnnouncement}
           </p>
 
+          {discardConfirmation && (
+            <section
+              className="mb-3 rounded-2xl border border-[#f79009] bg-[#fff9ef] p-3 outline-none"
+              ref={discardAlertRef}
+              role="alert"
+              tabIndex={-1}
+            >
+              <h2 className="text-sm font-black">
+                {discardConfirmationHeading()}
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Le correzioni fatte finora non sono state salvate.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  className="min-h-11"
+                  onClick={() => setDiscardConfirmation(null)}
+                  type="button"
+                >
+                  Continua la revisione
+                </Button>
+                <Button
+                  className="min-h-11"
+                  onClick={discardConfirmation.onConfirm}
+                  type="button"
+                  variant="secondary"
+                >
+                  Scarta
+                </Button>
+              </div>
+            </section>
+          )}
+
           {imageNeedsRetake && (
             <section
               className="mb-3 rounded-2xl border border-[#f79009] bg-[#fff9ef] p-3"
@@ -1142,7 +1831,7 @@ export function StudentScan({
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button
                   className="min-h-11"
-                  onClick={() => chooseAnother("camera")}
+                  onClick={() => requestAnotherImage("camera")}
                   type="button"
                   variant="secondary"
                 >
@@ -1151,7 +1840,7 @@ export function StudentScan({
                 </Button>
                 <Button
                   className="min-h-11"
-                  onClick={() => chooseAnother("gallery")}
+                  onClick={() => requestAnotherImage("gallery")}
                   type="button"
                   variant="secondary"
                 >
@@ -1256,6 +1945,24 @@ export function StudentScan({
             )
           )}
 
+          {pasteImport && (
+            <StudentScanUnparsedLines
+              complete={pasteImport.complete}
+              countConfirmed={pasteCountConfirmed}
+              courseStartDate={courseStartDate}
+              disabled={state === "saving"}
+              lines={pasteImport.unparsed}
+              onConfirmComplete={confirmPasteComplete}
+              onLeaveOut={leaveOutUnparsedLine}
+              onRegisterConfirmation={registerPasteConfirmation}
+              onRegisterInput={registerUnparsedLineInput}
+              onResolved={handlePasteLineResolved}
+              onReturnToAnswer={returnToPastedAnswer}
+              readCount={candidates.length}
+              readPhone={readPhone}
+            />
+          )}
+
           {/* `grid-cols-1` rather than a bare `grid`: the implicit column is
               `auto`, which resolves to the widest card's max-content and pushes
               the page sideways at 320px with 200% text. */}
@@ -1266,8 +1973,10 @@ export function StudentScan({
             {candidates.map((candidate, index) => (
               <CandidateCard
                 candidate={candidate}
+                consumeProgrammaticFocus={consumeProgrammaticFocus}
                 courseStartDate={courseStartDate}
                 disabled={state === "saving"}
+                duplicateOf={duplicateMatches.get(candidate.id)}
                 index={index}
                 readPhone={readPhone}
                 invalid={invalidIds.has(candidate.id)}
@@ -1294,8 +2003,11 @@ export function StudentScan({
 
           {candidates.length === 0 && (
             <p className="rounded-2xl border bg-card p-4 text-sm font-semibold">
-              Hai rimosso tutte le righe. Scegli un’altra immagine oppure torna
-              indietro.
+              {pasteImport
+                ? pasteImport.unparsed.length > 0
+                  ? "Nessun allievo letto dalla risposta. Correggi le righe non lette qui sotto oppure torna alla risposta."
+                  : "Nessun allievo letto dalla risposta. Torna alla risposta per correggerla."
+                : "Hai rimosso tutte le righe. Scegli un’altra immagine oppure torna indietro."}
             </p>
           )}
 
@@ -1313,7 +2025,7 @@ export function StudentScan({
               aria-label="Scegli un’altra immagine"
               className="size-[48px] px-0"
               disabled={state === "saving"}
-              onClick={() => chooseAnother("gallery")}
+              onClick={() => requestAnotherImage("gallery")}
               type="button"
               variant="secondary"
             >

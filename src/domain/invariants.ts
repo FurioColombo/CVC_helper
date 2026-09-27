@@ -9,9 +9,12 @@ import {
   STUDENT_SEXES,
   STUDENT_SIZES,
   VOLUNTEER_ROLES,
+  type CourseFamily,
+  type CourseLevel,
 } from "./config"
 import { getBoatIdentityKey, normalizeBoatNumber } from "./boat"
-import { MAX_DECLARED_STUDENT_AGE } from "./student"
+import { getStandardCrewSize } from "./crews"
+import { isValidDateOnly, MAX_DECLARED_STUDENT_AGE } from "./student"
 
 export interface CourseStateSnapshot {
   students: Array<{
@@ -51,6 +54,12 @@ export interface CourseStateSnapshot {
     volunteerIds: string[]
     destination: string
     boatId?: string
+    /** Optional: enables the crew-capacity/over-capacity checks below. */
+    capacity?: number
+    /** Optional: slot index for each entry in studentIds/volunteerIds, in
+     * order. Enables the duplicate/out-of-range slot checks below. */
+    studentPositions?: number[]
+    volunteerPositions?: number[]
   }>
   landAssignments: Array<{
     id: string
@@ -69,6 +78,14 @@ export interface CourseStateSnapshot {
     value: string | null
     note?: string | null
   }>
+  /** Optional: enables the D2–D5 fixed-crew-size check below, independent of
+   * whatever a (possibly corrupted) per-crew capacity claims. */
+  course?: {
+    family: CourseFamily
+    level: CourseLevel
+    /** Optional: enables the birth-date-after-course-start check. */
+    startDate?: string
+  }
 }
 
 export interface InvariantIssue {
@@ -154,6 +171,24 @@ export function validateCourseState(
         code: "invalid-student-declared-age",
         path: `students[${index}].declaredAgeAtCourseStart`,
         message: `Invalid declared age at course start: ${declaredAge}`,
+      })
+    }
+    // A malformed date would throw in every age calculation that reads it.
+    if (hasDateOfBirth && !isValidDateOnly(student.dateOfBirth!.trim())) {
+      issues.push({
+        code: "invalid-student-date-of-birth",
+        path: `students[${index}].dateOfBirth`,
+        message: `Invalid birth date: ${student.dateOfBirth}`,
+      })
+    } else if (
+      hasDateOfBirth &&
+      state.course?.startDate &&
+      student.dateOfBirth!.trim() > state.course.startDate
+    ) {
+      issues.push({
+        code: "student-born-after-course-start",
+        path: `students[${index}].dateOfBirth`,
+        message: `Birth date ${student.dateOfBirth} is after the course start`,
       })
     }
     if (
@@ -456,6 +491,81 @@ export function validateCourseState(
         message: `Destination ${crew.destination} cannot retain boat ${crew.boatId}`,
       })
     }
+
+    const totalMembers = crew.studentIds.length + crew.volunteerIds.length
+    if (crew.capacity !== undefined) {
+      if (!Number.isInteger(crew.capacity) || crew.capacity < 1) {
+        issues.push({
+          code: "invalid-crew-capacity",
+          path: `crews[${index}].capacity`,
+          message: `Invalid crew capacity: ${crew.capacity}`,
+        })
+      } else if (totalMembers > crew.capacity) {
+        issues.push({
+          code: "crew-over-capacity",
+          path: `crews[${index}]`,
+          message: `Crew ${crew.id} has ${totalMembers} members over capacity ${crew.capacity}`,
+        })
+      }
+    }
+    const standardCrewSize = state.course
+      ? getStandardCrewSize(state.course.family, state.course.level)
+      : null
+    if (standardCrewSize !== null && totalMembers > standardCrewSize) {
+      issues.push({
+        code: "crew-exceeds-fixed-size",
+        path: `crews[${index}]`,
+        message: `Crew ${crew.id} has ${totalMembers} members but this course fixes crews at ${standardCrewSize}`,
+      })
+    }
+
+    const seenSlots = new Set<number>()
+    function checkSlot(
+      kind: "student" | "volunteer",
+      slotIndex: number,
+      position: number | undefined,
+    ) {
+      const outOfRange =
+        !Number.isInteger(position) ||
+        (position as number) < 0 ||
+        (crew.capacity !== undefined && (position as number) >= crew.capacity)
+      if (outOfRange) {
+        issues.push({
+          code: "invalid-crew-member-slot",
+          path: `crews[${index}].${kind}Positions[${slotIndex}]`,
+          message: `Invalid crew member slot: ${position}`,
+        })
+        return
+      }
+      const slot = position as number
+      if (seenSlots.has(slot)) {
+        issues.push({
+          code: "duplicate-crew-member-slot",
+          path: `crews[${index}].${kind}Positions[${slotIndex}]`,
+          message: `Crew ${crew.id} has two members in slot ${slot}`,
+        })
+        return
+      }
+      seenSlots.add(slot)
+    }
+    if (crew.studentPositions !== undefined) {
+      crew.studentIds.forEach((_, studentIndex) =>
+        checkSlot(
+          "student",
+          studentIndex,
+          crew.studentPositions?.[studentIndex],
+        ),
+      )
+    }
+    if (crew.volunteerPositions !== undefined) {
+      crew.volunteerIds.forEach((_, volunteerIndex) =>
+        checkSlot(
+          "volunteer",
+          volunteerIndex,
+          crew.volunteerPositions?.[volunteerIndex],
+        ),
+      )
+    }
   })
 
   state.landAssignments.forEach((assignment, index) => {
@@ -596,6 +706,7 @@ export function validateCrewRecords(
   landAssignments: CourseStateSnapshot["landAssignments"],
   boats: CourseStateSnapshot["boats"] = [],
   sessionBoats: CourseStateSnapshot["sessionBoats"] = [],
+  course?: CourseStateSnapshot["course"],
 ) {
   return validateCourseState({
     students,
@@ -606,5 +717,6 @@ export function validateCrewRecords(
     landAssignments,
     sessionBoats,
     evaluations: [],
+    course,
   })
 }

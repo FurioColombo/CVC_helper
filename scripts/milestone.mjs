@@ -1,6 +1,14 @@
 import { execFileSync } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { resolve } from "node:path"
+
+import { RECORDER_ID, sourceDigest } from "./verification-digest.mjs"
 
 const root = resolve(import.meta.dirname, "..")
 const manifestPath = resolve(root, ".milestones/manifest.json")
@@ -39,21 +47,52 @@ function missingEvidence(milestone) {
   )
 }
 
-function verificationPassed(milestone) {
+/**
+ * Why a milestone's verification does not count, or null when it does. The
+ * strict rules apply to a completion being made now: the file must come from
+ * the recorder, cover every script the manifest names with exit code 0, and
+ * describe the source as it still is. Milestones closed before those rules
+ * existed are only checked for their recorded PASS.
+ */
+function verificationProblem(milestone, { strict }) {
   const verificationPath = milestone.requiredEvidence?.find((path) =>
     path.endsWith("verification.json"),
   )
-  if (!verificationPath) return true
+  if (!verificationPath) return null
 
   const verification = JSON.parse(
     readFileSync(resolve(root, verificationPath), "utf8"),
   )
-  return (
+  const passed =
     verification.status === "PASS" &&
     Array.isArray(verification.checks) &&
     verification.checks.length > 0 &&
     verification.checks.every((check) => check.status === "PASS")
+  if (!passed) return "it does not report all PASS"
+  if (!strict) return null
+  if (verification.recorder !== RECORDER_ID) {
+    return "it was not written by npm run evidence"
+  }
+  const required = milestone.verificationScripts ?? []
+  const missing = required.filter(
+    (script) =>
+      !verification.checks.some(
+        (check) =>
+          check.command === `npm run ${script}` &&
+          check.status === "PASS" &&
+          check.exitCode === 0,
+      ),
   )
+  if (missing.length > 0) {
+    return `it lacks a passing run of: ${missing.join(", ")}`
+  }
+  if (!/^v24\./.test(verification.nodeVersion ?? "")) {
+    return "it was not recorded on Node 24"
+  }
+  if (verification.sourceDigest !== sourceDigest(root).digest) {
+    return "the source changed after it was recorded; run npm run evidence again"
+  }
+  return null
 }
 
 function reviewPassed(path) {
@@ -74,17 +113,16 @@ function reviewsPassed(milestone) {
   return (milestone.requiredReviews ?? []).every(reviewPassed)
 }
 
-function assertEvidenceComplete(milestone) {
+function assertEvidenceComplete(milestone, { strict = true } = {}) {
   const missing = missingEvidence(milestone)
   if (missing.length > 0) {
     throw new Error(
       `Completion refused; missing evidence:\n- ${missing.join("\n- ")}`,
     )
   }
-  if (!verificationPassed(milestone)) {
-    throw new Error(
-      "Completion refused; verification.json does not report all PASS",
-    )
+  const problem = verificationProblem(milestone, { strict })
+  if (problem) {
+    throw new Error(`Completion refused; verification.json: ${problem}`)
   }
   if (!reviewsPassed(milestone)) {
     throw new Error(
@@ -162,11 +200,11 @@ function check(id) {
       ? "Required evidence: present"
       : `Required evidence missing:\n- ${missing.join("\n- ")}`,
   )
-  if (
-    missing.length > 0 ||
-    !verificationPassed(milestone) ||
-    !reviewsPassed(milestone)
-  )
+  const strict = milestone.status !== "COMPLETE"
+  const problem =
+    missing.length > 0 ? null : verificationProblem(milestone, { strict })
+  if (problem) console.log(`Verification not accepted: ${problem}`)
+  if (missing.length > 0 || problem || !reviewsPassed(milestone))
     process.exitCode = 1
 }
 
@@ -203,6 +241,29 @@ function selfTest() {
       evidenceInspected: ["synthetic evidence"],
     })}\n`,
   )
+  const passingCheck = (script) => ({
+    command: `npm run ${script}`,
+    status: "PASS",
+    exitCode: 0,
+  })
+  const writeVerification = (name, content) =>
+    writeFileSync(
+      resolve(evidenceDirectory, name),
+      `${JSON.stringify({ status: "PASS", nodeVersion: "v24.0.0", ...content })}\n`,
+    )
+  writeVerification("handwritten-verification.json", {
+    checks: [passingCheck("verify")],
+  })
+  writeVerification("partial-verification.json", {
+    recorder: RECORDER_ID,
+    sourceDigest: sourceDigest(root).digest,
+    checks: [passingCheck("verify:quick")],
+  })
+  writeVerification("stale-verification.json", {
+    recorder: RECORDER_ID,
+    sourceDigest: "source-before-a-later-change",
+    checks: [passingCheck("verify")],
+  })
 
   const cases = [
     {
@@ -218,6 +279,32 @@ function selfTest() {
         requiredEvidence: [".evidence/__synthetic__/verification.json"],
       },
       expected: "Completion refused; verification.json",
+    },
+    {
+      name: "hand-written verification",
+      milestone: {
+        verificationScripts: ["verify"],
+        requiredEvidence: [
+          ".evidence/__synthetic__/handwritten-verification.json",
+        ],
+      },
+      expected: "Completion refused; verification.json: it was not written",
+    },
+    {
+      name: "verification missing a required script",
+      milestone: {
+        verificationScripts: ["verify"],
+        requiredEvidence: [".evidence/__synthetic__/partial-verification.json"],
+      },
+      expected: "Completion refused; verification.json: it lacks",
+    },
+    {
+      name: "verification of an older source",
+      milestone: {
+        verificationScripts: ["verify"],
+        requiredEvidence: [".evidence/__synthetic__/stale-verification.json"],
+      },
+      expected: "Completion refused; verification.json: the source changed",
     },
     {
       name: "review blocker",
@@ -242,11 +329,13 @@ function selfTest() {
     return `PASS: ${name} refused\n${refusal}`
   })
 
+  // The synthetic files exist only for this run; leaving them behind dirtied
+  // the tree after every self-test.
+  rmSync(evidenceDirectory, { recursive: true, force: true })
   const message =
-    "PASS: controller refused missing, failed and blocked evidence"
+    "PASS: controller refused missing, failed, hand-written, partial, stale and blocked evidence"
   const u00EvidenceDirectory = resolve(root, ".evidence/U00")
   mkdirSync(u00EvidenceDirectory, { recursive: true })
-  mkdirSync(evidenceDirectory, { recursive: true })
   writeFileSync(
     resolve(u00EvidenceDirectory, "controller-refusal.txt"),
     `${message}\n\n${results.join("\n\n")}\n`,

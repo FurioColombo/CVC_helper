@@ -58,6 +58,38 @@ release-candidate check.
 Record device/browser version, photo conditions, expected and correct
 person–field matches, corrections, orientation/crop outcome, commit/reload result,
 source-photo disposal and PASS/FAIL. Keep photographs out of the repository.
+Also note how long the scan takes from **Usa questa area** to the review: the
+table-rule eraser added in S4 costs about 0.3–0.5 s on a desktop and about 2 s at
+4× CPU throttling.
 
-UG2 remains open until the three speech targets and both phone scan targets have
-real observations and the dedicated physical-device review has no blocker.
+### Assistant path (V05): Android and iPhone
+
+1. From **Scan allievi**, open **Oppure usa un assistente**, copy the
+   instructions, and send a photo of a fictitious or already public roster to
+   the assistant the sailing centre has authorised.
+2. Paste the answer back. Confirm every row shows its birth date, needs its own
+   **Controlla**, and that an unread line must be fixed or left out before
+   saving. Note which assistant and how many lines were unread.
+
+### Installed app: offline, Back, update and new course
+
+1. Install the app on the home screen. Put the phone in airplane mode and cold
+   open it: Home, a student edit, a crew change and a scan must work offline.
+2. **Dictation after this update, offline:** the first dictation after
+   installing this version downloads the speech model again. Offline it must
+   say that a connection is needed the first time and keep the typed text;
+   online it must download once and then work offline.
+3. Use the phone's Back in every area (Allievi, Barche, Avarie, Comandate,
+   Equipaggi, Valutazioni, Volontari, Impostazioni): it returns to the previous
+   screen of the area and never leaves an unsaved edit, an open note or a
+   failed evaluation save without saying so.
+4. When **Nuova versione disponibile** appears, **Più tardi** hides it and
+   **Aggiorna** asks before leaving unsaved work.
+5. Check the home-screen icon and that the launch screen colour matches the
+   app background.
+6. Only on a device you can reset: **Impostazioni → Elimina il corso e inizia
+   un nuovo corso** asks for confirmation and opens course creation.
+
+UG2 remains open until the three speech targets, both phone scan targets, the
+assistant path and the installed-app checks have real observations and the
+dedicated physical-device review has no blocker.

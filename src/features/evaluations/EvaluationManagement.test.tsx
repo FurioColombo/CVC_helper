@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -11,6 +11,7 @@ vi.mock("@/persistence/evaluations", () => ({
 }))
 
 import { EvaluationManagement } from "@/features/evaluations/EvaluationManagement"
+import { requestLeave } from "@/navigation/browserHistory"
 import type { CourseRecord } from "@/persistence/courses"
 import { readCrewPlan } from "@/persistence/crews"
 import { listEvaluations, saveEvaluation } from "@/persistence/evaluations"
@@ -471,6 +472,112 @@ describe("evaluation management", () => {
     expect(
       await screen.findByRole("button", { name: "Valutazione di Aldo: --" }),
     ).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("requires Riprova or Scarta after a failed save before leaving or changing session", async () => {
+    save.mockRejectedValueOnce(new Error("offline write failed"))
+    const user = userEvent.setup()
+    renderScreen()
+    const mark = await screen.findByRole("button", {
+      name: "Valutazione di Aldo: +",
+    })
+    await user.click(mark)
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(
+      "Una valutazione non è stata salvata. Riprova o scarta prima di uscire o cambiare sessione.",
+    )
+    expect(screen.getByLabelText("Sessione valutazioni")).toBeDisabled()
+
+    // The screen's Back, the bottom navigation and the phone's Back all ask
+    // the same guard, which keeps the attempt and points at the choice.
+    const leave = vi.fn()
+    act(() => requestLeave(leave))
+    expect(leave).not.toHaveBeenCalled()
+    expect(alert).toHaveFocus()
+    expect(mark).toHaveAttribute("aria-pressed", "true")
+
+    await user.click(within(alert).getByRole("button", { name: "Scarta" }))
+    expect(
+      await screen.findByRole("button", { name: "Valutazione di Aldo: +" }),
+    ).toHaveAttribute("aria-pressed", "false")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(getEvaluations).toHaveBeenCalledTimes(2)
+    act(() => requestLeave(leave))
+    expect(leave).toHaveBeenCalledTimes(1)
+  })
+
+  it("retries every failed save from the alert, then lets the screen be left", async () => {
+    save
+      .mockRejectedValueOnce(new Error("offline write failed"))
+      .mockRejectedValueOnce(new Error("offline write failed"))
+    const user = userEvent.setup()
+    renderScreen()
+    await user.click(
+      await screen.findByRole("button", { name: "Valutazione di Aldo: +" }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Valutazione di Bea: -" }),
+    )
+    const alert = await screen.findByRole("alert")
+    await waitFor(() =>
+      expect(alert).toHaveTextContent("2 valutazioni non sono state salvate."),
+    )
+    await user.click(within(alert).getByRole("button", { name: "Riprova" }))
+    await waitFor(() =>
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+    )
+    expect(save).toHaveBeenCalledWith("course-1", "student-1", "sat-pm", {
+      value: "+",
+      note: null,
+    })
+    expect(save).toHaveBeenLastCalledWith("course-1", "student-2", "sat-pm", {
+      value: "-",
+      note: null,
+    })
+    const leave = vi.fn()
+    act(() => requestLeave(leave))
+    expect(leave).toHaveBeenCalledTimes(1)
+  })
+
+  it("holds leaving while a note is open and completes it after a pending save", async () => {
+    let resolveSave!: () => void
+    save.mockImplementationOnce(
+      (_courseId, studentId, sessionId, input) =>
+        new Promise((resolve) => {
+          resolveSave = () =>
+            resolve({
+              id: `evaluation-${studentId}-${sessionId}`,
+              studentId,
+              sessionId,
+              ...input,
+            })
+        }),
+    )
+    const user = userEvent.setup()
+    renderScreen()
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Aggiungi nota valutazione di Bea",
+      }),
+    )
+    const leave = vi.fn()
+    act(() => requestLeave(leave))
+    expect(leave).not.toHaveBeenCalled()
+    expect(
+      screen.getByText("Salva o annulla la nota prima di uscire."),
+    ).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Annulla" }))
+
+    await user.click(
+      screen.getByRole("button", { name: "Valutazione di Aldo: ++" }),
+    )
+    act(() => requestLeave(leave))
+    expect(
+      screen.getByText("Salvataggio in corso: esco appena finisce."),
+    ).toBeVisible()
+    expect(leave).not.toHaveBeenCalled()
+    await act(async () => resolveSave())
+    await waitFor(() => expect(leave).toHaveBeenCalledTimes(1))
   })
 
   it("keeps the latest note and exact session visible when saving fails, then retries", async () => {

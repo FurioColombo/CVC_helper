@@ -1,41 +1,29 @@
 import { spawn } from "node:child_process"
+import { createServer } from "node:net"
 import { resolve } from "node:path"
 
-import { createServer } from "vite"
-
 const root = resolve(import.meta.dirname, "..")
-const url = "http://127.0.0.1:4174"
-let server = null
 
-async function respondsAt(path = "/") {
-  try {
-    const response = await fetch(`${url}${path}`, {
-      signal: AbortSignal.timeout(2_000),
+// RR-3: an OS-assigned free port, found by binding to port 0 and releasing it
+// immediately. This is handed to Playwright (see playwright.config.ts) as the
+// server it must start itself. Picking a fresh port every run, instead of a
+// fixed one, means this can never attach to a Vite server left running by
+// another worktree or a stale build — Playwright's own `webServer` (with
+// `reuseExistingServer: false`) always launches a brand new process here.
+async function getFreePort() {
+  return new Promise((resolvePort, reject) => {
+    const probe = createServer()
+    probe.unref()
+    probe.on("error", reject)
+    probe.listen(0, "127.0.0.1", () => {
+      const { port } = probe.address()
+      probe.close(() => resolvePort(port))
     })
-    return response.ok
-  } catch {
-    return false
-  }
-}
-
-// Only the Vite dev server serves its own client module. Reusing anything else
-// on this port would test whatever that process happens to serve, which can be
-// a stale build, so fail loudly instead.
-const viteIsReady = await respondsAt("/@vite/client")
-
-if (!viteIsReady) {
-  if (await respondsAt("/")) {
-    throw new Error(
-      `${url} is already serving something that is not the Vite dev server. ` +
-        `Stop that process before running the browser suite.`,
-    )
-  }
-  server = await createServer({
-    configFile: resolve(root, "vite.config.ts"),
-    server: { host: "127.0.0.1", port: 4174, strictPort: true },
   })
-  await server.listen()
 }
+
+const port = await getFreePort()
+const baseURL = `http://127.0.0.1:${port}`
 
 const playwrightCli = resolve(
   root,
@@ -50,7 +38,7 @@ const status = await new Promise((resolveStatus, reject) => {
     [playwrightCli, "test", ...process.argv.slice(2)],
     {
       cwd: root,
-      env: { ...process.env, CVC_E2E_SERVER_READY: "1" },
+      env: { ...process.env, CVC_E2E_BASE_URL: baseURL },
       stdio: "inherit",
     },
   )
@@ -58,5 +46,4 @@ const status = await new Promise((resolveStatus, reject) => {
   child.on("close", (exitCode) => resolveStatus(exitCode ?? 1))
 })
 
-if (server) await server.close()
 process.exitCode = status

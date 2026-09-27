@@ -175,6 +175,25 @@ describe("BoatManagement", () => {
     expect(screen.getByText("Scotta usurata")).toBeVisible()
   })
 
+  it("walks the phone Back through boat detail and a new fault before leaving", async () => {
+    getBoats.mockResolvedValue([BOAT])
+    const onHome = vi.fn()
+    const user = userEvent.setup()
+    render(<BoatManagement course={COURSE} onHome={onHome} />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "RS Quest 7, Disponibile" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Segnala" }))
+    expect(screen.getByRole("heading", { name: "Nuova avaria" })).toBeVisible()
+
+    window.history.back()
+    expect(await screen.findByRole("button", { name: "Segnala" })).toBeVisible()
+    window.history.back()
+    expect(await screen.findByRole("heading", { name: "Barche" })).toBeVisible()
+    expect(onHome).not.toHaveBeenCalled()
+  })
+
   it("greys the complete boat row when unavailable", async () => {
     getBoats.mockResolvedValue([{ ...BOAT, availability: "unavailable" }])
     const user = userEvent.setup()

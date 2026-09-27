@@ -16,6 +16,36 @@ describe("course-state invariants", () => {
     expect(validateCourseState(buildD2FoundationScenario())).toEqual([])
   })
 
+  it.each([
+    ["20140-02-16", "invalid-student-date-of-birth"],
+    ["2011-02-29", "invalid-student-date-of-birth"],
+    ["2030-05-01", "student-born-after-course-start"],
+  ])("rejects the stored birth date %s", (dateOfBirth, code) => {
+    const state = buildD2FoundationScenario()
+    state.course = { family: "Deriva", level: 2, startDate: "2026-08-29" }
+    state.students[0] = { ...state.students[0]!, dateOfBirth }
+    expect(validateCourseState(state).map((issue) => issue.code)).toContain(
+      code,
+    )
+  })
+
+  it("checks a birth date's format, but not its range, when loading students alone", () => {
+    const student = {
+      id: "student-1",
+      firstName: "Marta",
+      surname: "Veldor",
+      dateOfBirth: "2030-05-01",
+    }
+    // Without the course start there is no range to check; an earlier
+    // version could store such a date, and the list must still open.
+    expect(validateStudentRecords([student])).toEqual([])
+    expect(
+      validateStudentRecords([{ ...student, dateOfBirth: "20140-02-16" }]).map(
+        (issue) => issue.code,
+      ),
+    ).toEqual(["invalid-student-date-of-birth"])
+  })
+
   it("detects duplicate assignments and dangling references", () => {
     const state = buildD2FoundationScenario()
     state.crews.push({
@@ -384,5 +414,218 @@ describe("course-state invariants", () => {
         "duplicate-session-volunteer",
       ]),
     )
+  })
+
+  describe("crew capacity and member slots", () => {
+    it("accepts a well-formed crew with capacity and slot data", () => {
+      const issues = validateCrewRecords(
+        [
+          {
+            id: "student-1",
+            active: 1,
+            sex: "male",
+            size: "M",
+            declaredAgeAtCourseStart: 20,
+          },
+          {
+            id: "student-2",
+            active: 1,
+            sex: "male",
+            size: "M",
+            declaredAgeAtCourseStart: 20,
+          },
+        ],
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1", "student-2"],
+            volunteerIds: [],
+            destination: "unassigned",
+            capacity: 2,
+            studentPositions: [0, 1],
+          },
+        ],
+        [],
+      )
+
+      expect(issues).toEqual([])
+    })
+
+    it("flags a crew that has more members than its declared capacity", () => {
+      const issues = validateCrewRecords(
+        [
+          { id: "student-1", active: 1, sex: "male", size: "M" },
+          { id: "student-2", active: 1, sex: "male", size: "M" },
+          { id: "student-3", active: 1, sex: "male", size: "M" },
+        ],
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1", "student-2", "student-3"],
+            volunteerIds: [],
+            destination: "unassigned",
+            capacity: 2,
+          },
+        ],
+        [],
+      ).map(({ code }) => code)
+
+      expect(issues).toEqual(expect.arrayContaining(["crew-over-capacity"]))
+    })
+
+    it("flags an invalid crew capacity value", () => {
+      const issues = validateCrewRecords(
+        [{ id: "student-1", active: 1, sex: "male", size: "M" }],
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1"],
+            volunteerIds: [],
+            destination: "unassigned",
+            capacity: 0,
+          },
+        ],
+        [],
+      ).map(({ code }) => code)
+
+      expect(issues).toEqual(expect.arrayContaining(["invalid-crew-capacity"]))
+    })
+
+    it("flags a D2 crew above the fixed two-person size even without a capacity field", () => {
+      const issues = validateCrewRecords(
+        [
+          { id: "student-1", active: 1, sex: "male", size: "M" },
+          { id: "student-2", active: 1, sex: "male", size: "M" },
+          { id: "student-3", active: 1, sex: "male", size: "M" },
+        ],
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1", "student-2", "student-3"],
+            volunteerIds: [],
+            destination: "unassigned",
+          },
+        ],
+        [],
+        [],
+        [],
+        { family: "Deriva", level: 2 },
+      ).map(({ code }) => code)
+
+      expect(issues).toEqual(
+        expect.arrayContaining(["crew-exceeds-fixed-size"]),
+      )
+    })
+
+    it("does not apply the fixed two-person rule to flexible D1/cabin crews", () => {
+      const students = Array.from({ length: 4 }, (_, index) => ({
+        id: `student-${index}`,
+        active: 1 as const,
+        sex: "male" as const,
+        size: "M" as const,
+      }))
+      const issues = validateCrewRecords(
+        students,
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: students.map(({ id }) => id),
+            volunteerIds: [],
+            destination: "unassigned",
+            capacity: 4,
+          },
+        ],
+        [],
+        [],
+        [],
+        { family: "Deriva", level: 1 },
+      ).map(({ code }) => code)
+
+      expect(issues).not.toContain("crew-exceeds-fixed-size")
+      expect(issues).not.toContain("crew-over-capacity")
+    })
+
+    it("flags two students sharing the same crew slot", () => {
+      const issues = validateCrewRecords(
+        [
+          { id: "student-1", active: 1, sex: "male", size: "M" },
+          { id: "student-2", active: 1, sex: "male", size: "M" },
+        ],
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1", "student-2"],
+            volunteerIds: [],
+            destination: "unassigned",
+            capacity: 2,
+            studentPositions: [0, 0],
+          },
+        ],
+        [],
+      ).map(({ code }) => code)
+
+      expect(issues).toEqual(
+        expect.arrayContaining(["duplicate-crew-member-slot"]),
+      )
+    })
+
+    it("flags a volunteer and a student sharing the same crew slot", () => {
+      const issues = validateCrewRecords(
+        [{ id: "student-1", active: 1, sex: "male", size: "M" }],
+        [{ id: "volunteer-1", name: "Anna", role: "ADV" }],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1"],
+            volunteerIds: ["volunteer-1"],
+            destination: "unassigned",
+            capacity: 2,
+            studentPositions: [0],
+            volunteerPositions: [0],
+          },
+        ],
+        [],
+      ).map(({ code }) => code)
+
+      expect(issues).toEqual(
+        expect.arrayContaining(["duplicate-crew-member-slot"]),
+      )
+    })
+
+    it("flags a crew member slot outside the crew's capacity", () => {
+      const issues = validateCrewRecords(
+        [{ id: "student-1", active: 1, sex: "male", size: "M" }],
+        [],
+        [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            studentIds: ["student-1"],
+            volunteerIds: [],
+            destination: "unassigned",
+            capacity: 2,
+            studentPositions: [5],
+          },
+        ],
+        [],
+      ).map(({ code }) => code)
+
+      expect(issues).toEqual(
+        expect.arrayContaining(["invalid-crew-member-slot"]),
+      )
+    })
   })
 })

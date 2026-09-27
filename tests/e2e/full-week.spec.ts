@@ -210,7 +210,9 @@ test("runs one deterministic D2 course through a complete sailing week", async (
 
   await app.getByRole("button", { name: "Allievi" }).click()
   for (const student of scenario.students) await addStudent(app, student)
-  await expect(app.getByRole("button", { name: /^Aldo C\.,/ })).toBeVisible()
+  // The second Aldo's surname was scrubbed from "Colombo" to "Ferombo" for
+  // privacy (S4), so the disambiguating initial is now F, not C.
+  await expect(app.getByRole("button", { name: /^Aldo F\.,/ })).toBeVisible()
   await expect(
     app.getByRole("button", { name: /^Aldo R\.,.*Minorenne/ }),
   ).toBeVisible()
@@ -306,8 +308,10 @@ test("runs one deterministic D2 course through a complete sailing week", async (
     .getByRole("button", { name: "Indietro da Comandata mercoledì" })
     .click()
   await expect(wednesday).toContainText(replacement)
+  // N1: reload restores the same screen (Comandate), so there is no Home
+  // "Comandate" card to click here; clicking it would instead hit the
+  // screen's own "Indietro da Comandate" Back button.
   await app.reload()
-  await app.getByRole("button", { name: "Comandate" }).click()
   await expect(wednesday).toContainText(replacement)
   await app.getByRole("button", { name: "Indietro da Comandate" }).click()
 
