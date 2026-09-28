@@ -15,7 +15,7 @@ async function createCourseWithStudents(page: Page) {
     await page.getByRole("button", { name: "Aggiungi allievo" }).first().click()
     await page.getByLabel("Nome", { exact: true }).fill(name)
     await page.getByLabel("Cognome", { exact: true }).fill("Prova")
-    await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
+    await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
     await page
       .getByRole("group", { name: "Sesso" })
       .getByText("M", { exact: true })

@@ -17,12 +17,14 @@ async function addStudent(
   page: Page,
   firstName: string,
   surname: string,
-  dateOfBirth: string,
+  age: number,
 ) {
   await page.getByRole("button", { name: "Aggiungi allievo" }).click()
   await page.getByLabel("Nome", { exact: true }).fill(firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(surname)
-  await page.getByLabel("Data di nascita", { exact: true }).fill(dateOfBirth)
+  await page
+    .getByLabel("Età compiuta il primo giorno del corso", { exact: true })
+    .fill(String(age))
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText("M", { exact: true })
@@ -36,10 +38,10 @@ test("keeps the compact list and complete profile usable at the stress viewport"
   mkdirSync(screenshotDirectory, { recursive: true })
   await page.setViewportSize({ width: 320, height: 664 })
   await createCourse(page)
-  await addStudent(page, "Mario", "Rossi", "2010-01-01")
-  await addStudent(page, "Mario", "Bianchi", "2000-01-01")
-  await addStudent(page, "Alessandra", "Della Rovere Lunghissima", "1999-04-03")
-  await addStudent(page, "Beatrice", "Ferombo", "2001-08-05")
+  await addStudent(page, "Mario", "Rossi", 16)
+  await addStudent(page, "Mario", "Bianchi", 26)
+  await addStudent(page, "Alessandra", "Della Rovere Lunghissima", 27)
+  await addStudent(page, "Beatrice", "Ferombo", 25)
 
   const list = page.getByRole("region", { name: "Elenco allievi" })
   await expect(list).toBeVisible()

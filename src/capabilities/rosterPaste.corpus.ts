@@ -17,6 +17,12 @@ const HEADER = "Cognome;Nome;Data di nascita;Età;Telefono"
 const FENCE = "`".repeat(3)
 const block = (...rows: string[]) =>
   ["CVC-ALLIEVI v1", HEADER, ...rows, "FINE"].join("\n")
+// A phone's own line separator (F2): built from its code point, not a \u
+// escape, since some tooling silently turns that escape back into the
+// character itself.
+const PHONE_LINE_SEPARATOR = String.fromCharCode(8232) // U+2028
+const joinedIntoOneLine = (...rows: string[]) =>
+  ["CVC-ALLIEVI v1", HEADER, ...rows, "FINE"].join(" ")
 
 export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
   {
@@ -27,8 +33,8 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
       "Lo Bardino;Luca;;14;",
     ),
     students: [
-      ["Veldor", "Marta", "2010-03-12", null],
-      ["De Varni", "Elsa Mirta", "2011-02-01", null],
+      ["Veldor", "Marta", "", 16],
+      ["De Varni", "Elsa Mirta", "", 15],
       ["Lo Bardino", "Luca", "", 14],
     ],
     unparsed: 0,
@@ -41,7 +47,7 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
       block("Veldor;Marta;12/03/2010;16;"),
       "Spero sia utile! Scusa se qualche dato manca.",
     ].join("\n"),
-    students: [["Veldor", "Marta", "2010-03-12", null]],
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 2,
     complete: true,
   },
@@ -50,14 +56,14 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
     answer: [`${FENCE}text`, block("Veldor;Marta;12/03/2010;16;"), FENCE].join(
       "\n",
     ),
-    students: [["Veldor", "Marta", "2010-03-12", null]],
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 0,
     complete: true,
   },
   {
     name: "smart quotes and an apostrophe in a surname",
     answer: block("D’Arvelo;Nives;05/06/2012;14;"),
-    students: [["D’Arvelo", "Nives", "2012-06-05", null]],
+    students: [["D’Arvelo", "Nives", "", 14]],
     unparsed: 0,
     complete: true,
   },
@@ -79,7 +85,7 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
     name: "a repeated header inside the block",
     answer: block("Veldor;Marta;12/03/2010;16;", HEADER, "Neri;Paolo;;15;"),
     students: [
-      ["Veldor", "Marta", "2010-03-12", null],
+      ["Veldor", "Marta", "", 16],
       ["Neri", "Paolo", "", 15],
     ],
     unparsed: 0,
@@ -146,7 +152,7 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
       "Veldor;Marta;12/03/2010;16;",
       "Neri;Pao",
     ].join("\n"),
-    students: [["Veldor", "Marta", "2010-03-12", null]],
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 1,
     complete: false,
   },
@@ -169,7 +175,7 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
       "Veldor;Marta;12/03/2010;16;;",
       "FINE",
     ].join("\n"),
-    students: [["Veldor", "Marta", "2010-03-12", null]],
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 0,
     complete: true,
   },
@@ -190,16 +196,18 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
   {
     name: "Windows line endings and non-breaking spaces",
     answer: block("Veldor; Marta;12/03/2010;16;").replace(/\n/g, "\r\n"),
-    students: [["Veldor", "Marta", "2010-03-12", null]],
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 0,
     complete: true,
   },
   {
     name: "day and month swapped against a printed age",
     answer: block("Veldor;Marta;03/12/2010;16;"),
-    // The age that disagrees with the date is kept, so the review shows the
-    // conflict instead of storing the swapped date silently.
-    students: [["Veldor", "Marta", "2010-12-03", 16]],
+    // The paste is trusted (owner decision 2026-09-28): the printed age wins
+    // regardless of what the date would have given, and the date itself is
+    // never carried on the candidate, so a swapped day and month never shows
+    // up as a conflict to resolve.
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 0,
     complete: true,
   },
@@ -228,7 +236,7 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
       "Veldor;Marta;12/03/2010;16;",
       "Neri;Paolo;01/02/2011;15;",
     ].join("\n"),
-    students: [["Veldor", "Marta", "2010-03-12", null]],
+    students: [["Veldor", "Marta", "", 16]],
     unparsed: 1,
     complete: false,
   },
@@ -326,5 +334,111 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
     ],
     unparsed: 0,
     complete: true,
+  },
+  {
+    // F2: the ChatGPT app's copy button on Android can deliver U+2028 line
+    // separators; a textarea still renders each as a line break, so the
+    // pasted text looks unchanged.
+    name: "U+2028 line separators from a phone's copy path",
+    answer: [
+      "CVC-ALLIEVI v1",
+      HEADER,
+      "Veldor;Marta;12/03/2010;16;",
+      "Neri;Paolo;01/02/2011;15;",
+      "FINE",
+    ].join(PHONE_LINE_SEPARATOR),
+    students: [
+      ["Veldor", "Marta", "", 16],
+      ["Neri", "Paolo", "", 15],
+    ],
+    unparsed: 0,
+    complete: true,
+  },
+  {
+    name: "bold-wrapped lines and a trailing backslash hard break",
+    answer: [
+      "**CVC-ALLIEVI v1**",
+      "__Cognome;Nome;Data di nascita;Età;Telefono__",
+      "Veldor;Marta;12/03/2010;16;\\",
+      "**FINE**",
+    ].join("\n"),
+    students: [["Veldor", "Marta", "", 16]],
+    unparsed: 0,
+    complete: true,
+  },
+  {
+    name: "a fence with an uppercase info string",
+    answer: ["```TEXT", block("Veldor;Marta;12/03/2010;16;"), "```"].join("\n"),
+    students: [["Veldor", "Marta", "", 16]],
+    unparsed: 0,
+    complete: true,
+  },
+  {
+    // F2: a phone or chat app can turn every line break into a plain space,
+    // joining the header, every row and FINE into one paragraph that still
+    // looks unchanged in a textarea. The parser rebuilds the rows from the
+    // fixed five-field structure.
+    name: "every line break turned into a space, with a telephone in each row",
+    answer: joinedIntoOneLine(
+      "Veldor;Marta;12/03/2010;16;3331234567",
+      "Neri;Paolo;01/02/2011;15;3339876543",
+    ),
+    students: [
+      ["Veldor", "Marta", "", 16],
+      ["Neri", "Paolo", "", 15],
+    ],
+    unparsed: 0,
+    complete: true,
+  },
+  {
+    name: "every line break turned into a space, with empty telephones",
+    answer: joinedIntoOneLine(
+      "Veldor;Marta;12/03/2010;16;",
+      "Neri;Paolo;01/02/2011;15;",
+    ),
+    students: [
+      ["Veldor", "Marta", "", 16],
+      ["Neri", "Paolo", "", 15],
+    ],
+    unparsed: 0,
+    complete: true,
+  },
+  {
+    name: "every line break turned into a space, with a surname containing a space",
+    answer: joinedIntoOneLine(
+      "Veldor;Marta;12/03/2010;16;",
+      "De Luca;Elsa;01/02/2011;15;",
+    ),
+    students: [
+      ["Veldor", "Marta", "", 16],
+      ["De Luca", "Elsa", "", 15],
+    ],
+    unparsed: 0,
+    complete: true,
+  },
+  {
+    // The boundary token has no letter at all to split on (nothing readable
+    // as the next row's surname), so nothing here can be trusted apart.
+    name: "joined line breaks where a boundary has no next surname to find",
+    answer: joinedIntoOneLine(
+      "Veldor;Marta;12/03/2010;16;999",
+      "888;Paolo;01/02/2011;15;777",
+    ),
+    students: [],
+    unparsed: 1,
+    complete: false,
+    formatMissing: true,
+  },
+  {
+    // A missing separator shifts every field after it, so the total token
+    // count no longer divides into whole rows: nothing is read from it.
+    name: "joined line breaks where the field count no longer divides into rows",
+    answer: joinedIntoOneLine(
+      "Veldor;Marta;12/03/2010;16 Neri;Paolo;01/02/2011;15;",
+    ),
+    students: [],
+    unparsed: 1,
+    complete: false,
+    formatMissing: true,
   },
 ]

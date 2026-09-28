@@ -18,7 +18,7 @@ async function addStudents(page: Page, count: number, longNames = false) {
       .getByLabel("Nome", { exact: true })
       .fill(longNames ? `NomeLunghissimo${index}` : `Nome${index}`)
     await page.getByLabel("Cognome", { exact: true }).fill(`Cognome${index}`)
-    await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
+    await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
     await page
       .getByRole("group", { name: "Sesso" })
       .getByText(index % 2 === 0 ? "M" : "F", { exact: true })

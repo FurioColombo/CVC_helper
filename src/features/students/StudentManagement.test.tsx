@@ -171,7 +171,10 @@ describe("StudentManagement", () => {
     )
     await user.type(screen.getByLabelText("Nome"), "Mario")
     await user.type(screen.getByLabelText("Cognome"), "Rossi")
-    await user.type(screen.getByLabelText(/^Data di nascita/), "2010-01-01")
+    await user.type(
+      screen.getByLabelText("Età compiuta il primo giorno del corso"),
+      "16",
+    )
 
     await user.click(
       screen.getByRole("button", { name: "Detta nota iniziale" }),
@@ -287,7 +290,10 @@ describe("StudentManagement", () => {
     await user.click(screen.getByRole("button", { name: "Aggiungi allievo" }))
     await user.type(screen.getByLabelText("Nome"), "Mario")
     await user.type(screen.getByLabelText("Cognome"), "Rossi")
-    await user.type(screen.getByLabelText(/^Data di nascita/), "2010-01-01")
+    await user.type(
+      screen.getByLabelText("Età compiuta il primo giorno del corso"),
+      "16",
+    )
     expect(screen.getByRole("group", { name: "Sesso" })).toBeVisible()
     expect(screen.getByRole("radio", { name: "F" })).toBeVisible()
     expect(screen.getByRole("radio", { name: "Altro" })).toBeVisible()
@@ -300,7 +306,8 @@ describe("StudentManagement", () => {
         expect.objectContaining({
           firstName: "Mario",
           surname: "Rossi",
-          dateOfBirth: "2010-01-01",
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 16,
           sex: "other",
         }),
       ),
@@ -338,6 +345,99 @@ describe("StudentManagement", () => {
     )
   })
 
+  // Task 4 (owner, 2026-09-28): the three-dot menu and the empty Allievi page
+  // used to offer a different pair of methods; both now list the same three
+  // (manual, scan, assistant), in the same order, with the same icons.
+  describe("one set of ways to add students", () => {
+    function methodButtons(container: HTMLElement) {
+      return within(container)
+        .getAllByRole("button")
+        .filter((button) =>
+          ["Aggiungi allievo", "Scan allievi", "Usa un assistente"].includes(
+            button.textContent ?? "",
+          ),
+        )
+    }
+
+    it("lists the same methods, in the same order, on the empty page and in the menu", async () => {
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+      await screen.findByRole("heading", { name: "Allievi" })
+
+      const emptyPageMethods = methodButtons(document.body).map(
+        (button) => button.textContent,
+      )
+      expect(emptyPageMethods).toEqual([
+        "Aggiungi allievo",
+        "Scan allievi",
+        "Usa un assistente",
+      ])
+
+      await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+      const menu = screen.getByLabelText("Azioni allievi")
+      const menuMethods = within(menu)
+        .getAllByRole("button")
+        .filter((button) =>
+          ["Aggiungi allievo", "Scan allievi", "Usa un assistente"].includes(
+            button.textContent ?? "",
+          ),
+        )
+        .map((button) => button.textContent)
+      expect(menuMethods).toEqual(emptyPageMethods)
+    })
+
+    it("opens the assistant, already expanded, from the empty page", async () => {
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+      await screen.findByRole("heading", { name: "Allievi" })
+
+      await user.click(
+        screen.getByRole("button", { name: "Usa un assistente" }),
+      )
+
+      expect(
+        await screen.findByRole("heading", { name: "Scan allievi" }),
+      ).toBeVisible()
+      // Expanded on arrival: the paste box is visible without the operator
+      // tapping "Oppure usa un assistente" themselves.
+      expect(screen.getByLabelText("Risposta dell’assistente")).toBeVisible()
+    })
+
+    it("opens the assistant, already expanded, from the menu", async () => {
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+      await screen.findByRole("heading", { name: "Allievi" })
+
+      await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+      await user.click(
+        within(screen.getByLabelText("Azioni allievi")).getByRole("button", {
+          name: "Usa un assistente",
+        }),
+      )
+
+      expect(
+        await screen.findByRole("heading", { name: "Scan allievi" }),
+      ).toBeVisible()
+      expect(screen.getByLabelText("Risposta dell’assistente")).toBeVisible()
+    })
+
+    it("still opens Scan allievi collapsed, ready for the camera first", async () => {
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+      await screen.findByRole("heading", { name: "Allievi" })
+
+      await user.click(screen.getByRole("button", { name: "Scan allievi" }))
+
+      expect(
+        await screen.findByRole("heading", { name: "Scan allievi" }),
+      ).toBeVisible()
+      expect(screen.getByRole("button", { name: "Fai una foto" })).toBeVisible()
+      expect(
+        screen.queryByLabelText("Risposta dell’assistente"),
+      ).not.toBeInTheDocument()
+    })
+  })
+
   it("shows declared-age provenance and opens that value for editing", async () => {
     getStudents.mockResolvedValue([
       {
@@ -364,7 +464,7 @@ describe("StudentManagement", () => {
     expect(
       screen.getByLabelText("Età compiuta il primo giorno del corso"),
     ).toHaveFocus()
-    expect(screen.getByText(/non inventa una data di nascita/i)).toBeVisible()
+    expect(screen.getByText(/puoi correggerla in seguito/i)).toBeVisible()
   })
 
   it("shows a minor marker and reverses disabled state", async () => {
@@ -673,20 +773,16 @@ describe("StudentManagement", () => {
     },
   )
 
-  it("refuses a birth date after the course start instead of saving it", async () => {
+  it("refuses an age over the maximum instead of saving it", async () => {
     getStudents.mockResolvedValue([MARIO])
     const user = userEvent.setup()
     render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
 
     await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
     await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
-    const date = screen.getByLabelText("Data di nascita")
-    fireEvent.change(date, { target: { value: "2030-05-01" } })
-    expect(
-      await screen.findByText(
-        "Non salvato: completa una data di nascita non successiva all’inizio del corso.",
-      ),
-    ).toBeVisible()
+    const age = screen.getByLabelText("Età compiuta il primo giorno del corso")
+    fireEvent.change(age, { target: { value: "500" } })
+    expect(await screen.findByText("Non salvato: completa età.")).toBeVisible()
     await new Promise((resolve) => setTimeout(resolve, 700))
     expect(editStudent).not.toHaveBeenCalled()
   })

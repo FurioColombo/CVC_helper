@@ -48,15 +48,13 @@ export interface StudentScanNameReading {
 
 /**
  * Why a row read as a person still needs a look before it can be saved: a
- * staff role code the table layout could not place, two rows' dates or ages
- * read on one line, or a row written by an assistant rather than read by the
- * scan, which has no confidence of its own to trust.
+ * staff role code the table layout could not place, or two rows' dates or
+ * ages read on one line. A pasted row carries no warning of its own kind: the
+ * assistant path is trusted (owner decision 2026-09-28) and needs no per-row
+ * check.
  */
 export type StudentScanRowWarning =
-  | "possible-staff"
-  | "possible-merged-rows"
-  | "possible-heading"
-  | "from-assistant"
+  "possible-staff" | "possible-merged-rows" | "possible-heading"
 
 export interface StudentScanCandidate {
   sourceId: string

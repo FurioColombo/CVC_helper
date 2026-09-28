@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { StudentScanCandidate } from "@/capabilities/studentScan"
 import {
-  ageConflictsWithStoredDate,
+  ageConflictsWithReadDate,
   candidateIsReady,
   needsReview,
   summarizeScanReview,
@@ -45,29 +45,41 @@ describe("scan review age against a stored birth date", () => {
         dateOfBirth,
         ageReading: { value: age, confidence: 95 },
       })
-      expect(ageConflictsWithStoredDate(candidate, COURSE_START)).toBe(conflict)
+      expect(ageConflictsWithReadDate(candidate, COURSE_START)).toBe(conflict)
       expect(candidateIsReady(candidate, COURSE_START, false)).toBe(!conflict)
     },
   )
 
-  it.each([
-    ["17", true],
-    ["19", true],
-    ["18", false],
-  ])(
-    "an age typed as %s must match the birth date exactly (conflict: %s)",
-    (typed, conflict) => {
+  // Review fix (owner decision 2026-09-28): the operator's decision wins.
+  // Typing an age resolves a conflict outright, with no requirement that it
+  // then matches the internally read date — unlike the old rule, which held
+  // a typed age to an exact match and left the operator stuck when the
+  // printed age was right and the date was misread.
+  it.each(["17", "19", "18", "99"])(
+    "never conflicts once the operator types an age (%s), even against a disagreeing date",
+    (typed) => {
       const candidate = row({}, { reviewAge: typed, ageManuallyEdited: true })
-      expect(ageConflictsWithStoredDate(candidate, COURSE_START)).toBe(conflict)
-      expect(candidateIsReady(candidate, COURSE_START, false)).toBe(!conflict)
+      expect(ageConflictsWithReadDate(candidate, COURSE_START)).toBe(false)
+      expect(candidateIsReady(candidate, COURSE_START, false)).toBe(true)
     },
   )
+
+  // The other new way out: acknowledging the printed age as it stands,
+  // without typing anything and without adopting the date's own age.
+  it("never conflicts once the operator acknowledges the printed age", () => {
+    const candidate = row(
+      { dateOfBirth: "2008-03-10", ageReading: { value: 16, confidence: 95 } },
+      { acknowledgedFields: { age: true } },
+    )
+    expect(ageConflictsWithReadDate(candidate, COURSE_START)).toBe(false)
+    expect(candidateIsReady(candidate, COURSE_START, false)).toBe(true)
+  })
 
   it("flags a half-typed date instead of calculating an age from it", () => {
     // The operator edits a row that already shows its age.
     const candidate = row({}, { dateOfBirth: "20140-02-16" })
     expect(needsReview(candidate, "dateOfBirth", COURSE_START)).toBe(true)
-    expect(ageConflictsWithStoredDate(candidate, COURSE_START)).toBe(true)
+    expect(ageConflictsWithReadDate(candidate, COURSE_START)).toBe(true)
     expect(candidateIsReady(candidate, COURSE_START, false)).toBe(false)
   })
 
@@ -156,20 +168,6 @@ describe("row warnings and implausible ages", () => {
         false,
       ),
     ).toBe(true)
-  })
-
-  it("holds an assistant's row whose age is a year off its date", () => {
-    // 03/12/2010 read with day and month swapped: 15 at the course start,
-    // while the sheet printed 16.
-    const candidate = row({
-      dateOfBirth: "2010-12-03",
-      ageReading: { value: 16, confidence: 100 },
-      rowWarning: "from-assistant",
-    })
-    expect(ageConflictsWithStoredDate(candidate, COURSE_START)).toBe(true)
-    expect(
-      candidateIsReady({ ...candidate, confirmed: true }, COURSE_START, false),
-    ).toBe(false)
   })
 
   it("accepts an unusual age the operator typed", () => {

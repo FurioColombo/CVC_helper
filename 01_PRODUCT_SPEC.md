@@ -87,8 +87,9 @@ A student has:
 
 - first name and surname;
 - optional nickname/display-name override;
-- date of birth when known, or a manually correctable declared age in completed
-  years on the first day of the course when an exact birthday is unavailable;
+- a manually correctable declared age in completed years on the first day of
+  the course, or (only for a student stored before the 2026-09-28 decision
+  below) a date of birth;
 - sex: `F`, `M` or `Altro`;
 - optional phone;
 - operational size: XS, S, M, L or XL;
@@ -96,11 +97,16 @@ A student has:
 - optional course/week note;
 - active/disabled state.
 
-When a birth date exists, age and minor status are calculated on the first day
-of the course, never from a cached age. Otherwise, the declared age determines
-them on that day and the operator may correct it. Do not fabricate a birth
-date. A minor has an explicit red `M`/`Minorenne` marker whose meaning is
-available without colour.
+**Owner decision 2026-09-28: age only, in every mode.** Scan, the assistant
+paste and manual entry all store the declared age and never a date of birth;
+do not fabricate one. A date a scan or a pasted answer reads is used only
+internally, to compute the age when none was printed and, for a scan, to
+corroborate a printed age; it is never itself what gets stored. A student
+stored before this decision keeps its date of birth, which still determines
+its age and minor status on the first day of the course, never from a cached
+age; correcting its declared age later drops that date. A minor has an
+explicit red `M`/`Minorenne` marker whose meaning is available without
+colour.
 
 The compact generated name is the unique first name. If first names collide,
 show enough of each surname to distinguish them, for example `Mario Ros.` and
@@ -189,12 +195,15 @@ acknowledgement before insertion. An icon-only per-row swap exchanges given name
 and surname; its accessible name explains the action. The sheet-wide order
 control remains available.
 
-Extraction attempts first name, surname, date of birth, printed age and phone
-when present. A reliable date corroborates the printed age and remains the
-source of minor rules. If the operator manually enters only an age, it means
-completed years on the first day of the course; the exact date is unnecessary
-and the age can be corrected later. Sex inference is only a convenience and is
-always editable.
+Extraction attempts first name, surname, a date of birth, printed age and
+phone when present. Age only, in every mode (owner decision 2026-09-28): the
+date is read only internally, to compute the age when none was printed and to
+corroborate a printed age when both are present; the review shows and stores
+the age, never the date. A computed age inherits the date's confidence, and
+when the printed age and the date's age disagree the printed age wins and the
+row stays marked for review, naming both ages but never the date. The exact
+date is unnecessary and the age can be corrected later. Sex inference is only
+a convenience and is always editable.
 
 Confidence is field-level. Keep recognized text visible even when confidence is
 low, mark it for review, and never turn a previously shown reading into a blank
@@ -206,10 +215,14 @@ certainty.
 Beside the camera path, and never before it, scan offers an assistant path
 (V05): the operator copies a strict prompt, sends the photograph to an
 assistant of their own choice, and pastes the answer back. The app never
-contacts the assistant. The app states the format; a line that does not match
-it exactly is shown as unread, with its text and the reason, and can be fixed
-in place. Every row read from an answer needs the operator's check before it
-can be saved.
+contacts the assistant. The app states the format, tolerant of the line
+breaks and typography a phone or chat app's own copy path adds; a line that
+does not match it exactly is shown as unread, with its text and the reason,
+and can be fixed in place. The paste is trusted (owner decision 2026-09-28):
+no row needs its own check, but the operator confirms the sheet's whole count
+once (`Sono tutti`), and a row that matches another row or an existing
+student by name and age still needs `Tieni entrambi` or removal, on this path
+and on the camera path alike.
 
 Human review is mandatory before commit. Rows and fields are editable; false rows
 can be removed. Sticky live counters show rows to check, fields to complete and

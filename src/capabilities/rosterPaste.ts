@@ -11,11 +11,7 @@
  * still needs the operator's check in the ordinary review.
  */
 import { inferSex, type StudentScanCandidate } from "@/capabilities/studentScan"
-import {
-  calculateAge,
-  isValidDateOnly,
-  MAX_DECLARED_STUDENT_AGE,
-} from "@/domain/student"
+import { isValidDateOnly, MAX_DECLARED_STUDENT_AGE } from "@/domain/student"
 
 export const ROSTER_PASTE_BEGIN = "CVC-ALLIEVI v1"
 export const ROSTER_PASTE_END = "FINE"
@@ -37,12 +33,14 @@ export const ROSTER_PASTE_HEADER = ROSTER_PASTE_COLUMNS.join(";")
 export function rosterPastePrompt(options: { readPhone: boolean }) {
   return [
     "Leggi la foto allegata: è l'elenco degli allievi di un corso di vela.",
-    "Rispondi SOLO con il blocco qui sotto, senza nessun testo prima o dopo e senza formattazione (niente Markdown, niente tabelle, niente ```).",
+    "Rispondi SOLO con il blocco qui sotto, dentro un unico blocco di codice (```), senza nessun testo prima o dopo e senza altra formattazione Markdown.",
     "",
+    "```",
     ROSTER_PASTE_BEGIN,
     ROSTER_PASTE_HEADER,
     "(una riga per ogni allievo)",
     ROSTER_PASTE_END,
+    "```",
     "",
     "Regole:",
     `- Copia esattamente le righe ${ROSTER_PASTE_BEGIN}, ${ROSTER_PASTE_HEADER} e ${ROSTER_PASTE_END}.`,
@@ -76,6 +74,23 @@ export interface RosterPasteResult {
   formatMissing: boolean
   /** More rows than ROSTER_PASTE_MAX_ROWS: nothing was read as a student. */
   tooLong?: boolean
+  /**
+   * Aggregate, content-free facts about the answer, set whenever it is
+   * refused as out of format. A phone paste can still fail in ways the owner
+   * cannot see from here (a chat app's own quirks), so this is what the
+   * operator can read back to us without ever pasting the roster itself.
+   */
+  diagnostics?: RosterPasteDiagnostics
+}
+
+export interface RosterPasteDiagnostics {
+  /** Non-empty lines the parser found once it split the answer. */
+  lineCount: number
+  /** The header was not on a line of its own, but was found merged inside one. */
+  headerFoundInline: boolean
+  /** U+2028, U+2029 or NEL (U+0085) characters removed while splitting lines:
+   * a phone copy path's own line terminators, invisible in a textarea. */
+  unicodeSeparatorCount: number
 }
 
 const NAME_PATTERN = /^[\p{L}][\p{L}'’ .-]*$/u
@@ -124,6 +139,21 @@ function looksLikePhone(value: string) {
 // An assistant's way of writing an empty field.
 const EMPTY_FIELD = /^(?:[-–—]|n\.?\s*d\.?|n\/d)$/iu
 
+// Every Unicode line terminator a phone or chat app's copy path can produce:
+// CRLF/CR/LF, vertical tab, form feed, NEL (U+0085) and the Unicode line/
+// paragraph separators (U+2028/U+2029). A textarea renders all of these as a
+// line break, so the pasted text looks unchanged even though `\r\n|\r|\n`
+// alone would read it as one long line.
+const LINE_SEPARATOR = String.fromCharCode(8232) // U+2028
+const PARAGRAPH_SEPARATOR = String.fromCharCode(8233) // U+2029
+const LINE_SPLIT = new RegExp(
+  `\\r\\n|[\\r\\n\\v\\f\\u0085${LINE_SEPARATOR}${PARAGRAPH_SEPARATOR}]`,
+)
+const UNICODE_LINE_SEPARATORS = new RegExp(
+  `[\\u0085${LINE_SEPARATOR}${PARAGRAPH_SEPARATOR}]`,
+  "gu",
+)
+
 function normalizeLine(value: string) {
   return (
     value
@@ -135,9 +165,25 @@ function normalizeLine(value: string) {
   )
 }
 
+/**
+ * A chat app's own typography around an otherwise plain line: a trailing
+ * backslash hard break, or the whole line wrapped in `**bold**`/`__bold__`.
+ * Stripped before every other check, so a header, a row or FINE still
+ * matches when a phone's copy path added it, exactly as case, accents and a
+ * trailing separator already are for the header.
+ */
+function stripLineDecoration(line: string) {
+  let value = line
+  if (value.endsWith("\\")) value = value.slice(0, -1).trimEnd()
+  const bold = /^(\*\*|__)(.+)\1$/.exec(value)
+  if (bold) value = bold[2]!.trim()
+  return value
+}
+
 function isFence(line: string) {
-  // A fence may carry a lower-case language tag; a line such as ```Neri is a row.
-  return /^`{3,}[a-z0-9-]*$/.test(line) || /^~{3,}[a-z0-9-]*$/.test(line)
+  // A fence may carry an info string in any case (```text, ```CSV, …); a
+  // line such as ```Neri is a row, not a fence, and is left alone.
+  return /^`{3,}[A-Za-z0-9-]*$/.test(line) || /^~{3,}[A-Za-z0-9-]*$/.test(line)
 }
 
 function headerKey(line: string) {
@@ -247,12 +293,13 @@ export function parseRosterPasteRow(
       reason: `nella colonna Telefono c’è «${rawPhone}», che non è un telefono`,
     }
   }
-  // With a date the age follows from it, and the date is what is stored. A
-  // printed age is kept only when it disagrees, so the review shows the
-  // conflict (a day and month swapped, a year misread) instead of hiding it.
-  const keepAge =
-    age !== null &&
-    (!dateOfBirth || calculateAge(dateOfBirth, options.courseStartDate) !== age)
+  // The paste is trusted (owner decision 2026-09-28): a printed age is always
+  // taken as it stands, never compared against the date for a conflict. The
+  // date is then no more than internal working data that produced it, and is
+  // not carried on the candidate at all; the age is what age-only mode
+  // stores. Without a printed age, the date is what is left to compute one
+  // from downstream (`studentScanAge`), so it stays on the candidate.
+  const keptDate = age === null ? dateOfBirth : ""
 
   return {
     ok: true,
@@ -260,24 +307,113 @@ export function parseRosterPasteRow(
       sourceId: `paste-${line}`,
       firstName,
       surname,
-      dateOfBirth,
+      dateOfBirth: keptDate,
       phone: options.readPhone ? rawPhone : "",
       sex: inferSex(firstName),
-      // The assistant reports no confidence. The row warning makes every row
-      // wait for the operator's check against the sheet, and the review shows
-      // every value read, the birth date included.
+      // The assistant reports no confidence, but the paste is trusted: every
+      // field reads as fully confident, and no row needs its own check.
       confidence: {
         firstName: 100,
         surname: 100,
-        dateOfBirth: dateOfBirth ? 100 : 0,
+        dateOfBirth: keptDate ? 100 : 0,
         phone: options.readPhone && rawPhone ? 100 : 0,
       },
-      ...(keepAge && age !== null
-        ? { ageReading: { value: age, confidence: 100 } }
-        : {}),
-      rowWarning: "from-assistant",
+      ...(age !== null ? { ageReading: { value: age, confidence: 100 } } : {}),
     },
   }
+}
+
+// Built from the stated columns so an accent, case or apostrophe difference
+// in "Età" (already tolerated by `headerKey`) is tolerated here too, without
+// needing to normalize the whole surrounding line just to search it.
+const HEADER_INLINE_REGEX = new RegExp(
+  ROSTER_PASTE_COLUMNS.map((column) =>
+    column === "Età"
+      ? "Et[aà]['’]?"
+      : column.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"),
+  ).join("\\s*;\\s*"),
+  "iu",
+)
+
+/**
+ * The header found merged inside a line instead of on one of its own: a
+ * phone's copy path can turn every line break into a plain space, joining
+ * the header, every row and FINE into one paragraph that still looks
+ * unchanged in a textarea. Returns where the match starts and ends, so text
+ * before it on the same line can be reported and the rows can be rebuilt
+ * from what follows it.
+ */
+function findInlineHeaderEnd(
+  lines: string[],
+): { lineIndex: number; start: number; end: number } | null {
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = HEADER_INLINE_REGEX.exec(lines[index]!)
+    if (match) {
+      return {
+        lineIndex: index,
+        start: match.index,
+        end: match.index + match[0].length,
+      }
+    }
+  }
+  return null
+}
+
+type JoinedRowsResult =
+  | { ok: true; rowTexts: string[]; complete: boolean; afterFineText: string }
+  | { ok: false }
+
+/**
+ * Rebuilds a row's worth of `;`-separated fields from text whose line breaks
+ * were all turned into spaces. `;` still separates the five fields of a row,
+ * but the boundary between one row's telephone and the next row's surname is
+ * only a space (the lost line break), so splitting the whole text on `;`
+ * merges those two fields into one token every four tokens: exactly 4k+1
+ * tokens for k rows. A single letter marks where the next surname starts
+ * inside that merged token: before it must be a telephone number or nothing,
+ * after it a valid name, or nothing here can be trusted apart.
+ */
+function reconstructJoinedRows(afterHeader: string): JoinedRowsResult {
+  let body = afterHeader
+  let complete = false
+  let afterFineText = ""
+  const fineMatches = [...body.matchAll(/\bFINE\b/gu)]
+  const lastFine = fineMatches.at(-1)
+  if (lastFine) {
+    afterFineText = body.slice(lastFine.index + lastFine[0].length).trim()
+    body = body.slice(0, lastFine.index)
+    complete = true
+  }
+
+  const tokens = body.split(";")
+  if ((tokens.length - 1) % 4 !== 0) return { ok: false }
+  const rowCount = (tokens.length - 1) / 4
+  if (rowCount < 1) return { ok: false }
+
+  const rowTexts: string[] = []
+  let surname = tokens[0]!.trim()
+  for (let row = 0; row < rowCount; row += 1) {
+    const base = 4 * row
+    const firstName = tokens[base + 1]!.trim()
+    const dateOfBirth = tokens[base + 2]!.trim()
+    const age = tokens[base + 3]!.trim()
+    const tail = tokens[base + 4]!
+    if (row === rowCount - 1) {
+      rowTexts.push(
+        [surname, firstName, dateOfBirth, age, tail.trim()].join(";"),
+      )
+      break
+    }
+    const letter = /\p{L}/u.exec(tail)
+    if (!letter) return { ok: false }
+    const phone = tail.slice(0, letter.index).trim()
+    const nextSurname = tail.slice(letter.index).trim()
+    if (phone !== "" && !/^[\d\s+]+$/u.test(phone)) return { ok: false }
+    if (!isPersonName(nextSurname)) return { ok: false }
+    rowTexts.push([surname, firstName, dateOfBirth, age, phone].join(";"))
+    surname = nextSurname
+  }
+  return { ok: true, rowTexts, complete, afterFineText }
 }
 
 /**
@@ -289,13 +425,146 @@ export function parseRosterPaste(
   answer: string,
   options: { courseStartDate: string; readPhone: boolean },
 ): RosterPasteResult {
-  const lines = answer.split(/\r\n|\r|\n/).map(normalizeLine)
+  const lines = answer
+    .split(LINE_SPLIT)
+    .map(normalizeLine)
+    .map(stripLineDecoration)
+  const unicodeSeparatorCount = (answer.match(UNICODE_LINE_SEPARATORS) ?? [])
+    .length
+  const lineCount = lines.filter((text) => text !== "").length
   const headerIndex = lines.findIndex(isHeader)
   const candidates: StudentScanCandidate[] = []
   const unparsed: UnparsedPasteLine[] = []
   let complete = false
 
   if (headerIndex === -1) {
+    const inline = findInlineHeaderEnd(lines)
+    if (inline) {
+      // Text before the header, the way the normal path treats a line
+      // before its own header line: reported unless it is the begin marker
+      // or a fence. A phone's join can leave this on an earlier physical
+      // line (a paragraph break that survived) or merged onto the header's
+      // own line ahead of the match.
+      const before: UnparsedPasteLine[] = []
+      for (let index = 0; index < inline.lineIndex; index += 1) {
+        const text = lines[index]!
+        if (text && !isFence(text) && text !== ROSTER_PASTE_BEGIN) {
+          before.push({
+            line: index + 1,
+            text,
+            reason: "testo prima del blocco",
+          })
+        }
+      }
+      const headerLine = lines[inline.lineIndex]!
+      const beforeOnHeaderLine = headerLine.slice(0, inline.start).trim()
+      if (beforeOnHeaderLine && beforeOnHeaderLine !== ROSTER_PASTE_BEGIN) {
+        before.push({
+          line: inline.lineIndex + 1,
+          text: beforeOnHeaderLine,
+          reason: "testo prima del blocco",
+        })
+      }
+
+      const rebuilt = reconstructJoinedRows(headerLine.slice(inline.end))
+      if (rebuilt.ok) {
+        const rows: UnparsedPasteLine[] = []
+        let line = inline.lineIndex + 2
+        for (const text of rebuilt.rowTexts) {
+          const row = parseRosterPasteRow(text, line, options)
+          if (row.ok) candidates.push(row.candidate)
+          else rows.push({ line, text, reason: row.reason })
+          line += 1
+        }
+
+        // Without the closing line the last rebuilt row may be a fragment
+        // that never finished arriving: not trusted as read, exactly like
+        // the normal path's own truncation check below.
+        if (!rebuilt.complete && candidates.length > 0) {
+          const last = candidates.at(-1)!
+          const lineNumber = Number(last.sourceId.slice("paste-".length))
+          if (!rows.some((entry) => entry.line > lineNumber)) {
+            candidates.pop()
+            rows.push({
+              line: lineNumber,
+              text: rebuilt.rowTexts.at(-1)!,
+              reason: "forse troncata: manca la riga FINE",
+            })
+          }
+        }
+
+        // Text after FINE, the way the normal path treats a line after its
+        // own closing line: leftover text still on the same joined line, or
+        // a later physical line entirely (another paragraph break that
+        // survived). Both continue this branch's own synthetic line count
+        // rather than the real physical index, which would otherwise repeat
+        // a number a rebuilt row already used.
+        const after: UnparsedPasteLine[] = []
+        if (rebuilt.complete) {
+          if (rebuilt.afterFineText) {
+            after.push({
+              line,
+              text: rebuilt.afterFineText,
+              reason: "testo dopo la riga FINE",
+            })
+            line += 1
+          }
+          for (
+            let index = inline.lineIndex + 1;
+            index < lines.length;
+            index += 1
+          ) {
+            const text = lines[index]!
+            if (text && !isFence(text)) {
+              after.push({ line, text, reason: "testo dopo la riga FINE" })
+              line += 1
+            }
+          }
+        }
+
+        const allUnparsed = [...before, ...rows, ...after]
+        if (candidates.length + allUnparsed.length > ROSTER_PASTE_MAX_ROWS) {
+          return {
+            candidates: [],
+            unparsed: [],
+            complete: rebuilt.complete,
+            formatMissing: false,
+            tooLong: true,
+          }
+        }
+        return {
+          candidates,
+          unparsed: allUnparsed,
+          complete: rebuilt.complete,
+          formatMissing: false,
+          diagnostics: {
+            lineCount,
+            headerFoundInline: true,
+            unicodeSeparatorCount,
+          },
+        }
+      }
+      // The header is there, but its rows cannot be told apart safely: read
+      // nothing, with the one reason that actually explains it.
+      return {
+        candidates: [],
+        unparsed: [
+          {
+            line: inline.lineIndex + 1,
+            text: lines[inline.lineIndex]!,
+            reason:
+              "gli a capo della risposta sono andati persi: copiala di nuovo con il tasto copia del blocco di codice, oppure incollala da un computer",
+          },
+        ],
+        complete: false,
+        formatMissing: true,
+        diagnostics: {
+          lineCount,
+          headerFoundInline: true,
+          unicodeSeparatorCount,
+        },
+      }
+    }
     lines.forEach((text, index) => {
       if (text && !isFence(text)) {
         unparsed.push({
@@ -305,7 +574,17 @@ export function parseRosterPaste(
         })
       }
     })
-    return { candidates, unparsed, complete, formatMissing: true }
+    return {
+      candidates,
+      unparsed,
+      complete,
+      formatMissing: true,
+      diagnostics: {
+        lineCount,
+        headerFoundInline: false,
+        unicodeSeparatorCount,
+      },
+    }
   }
 
   lines.forEach((text, index) => {

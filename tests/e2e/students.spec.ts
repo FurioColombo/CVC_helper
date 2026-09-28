@@ -10,12 +10,14 @@ async function createCourse(page: Page) {
 
 async function addStudent(
   page: Page,
-  input: { firstName: string; surname: string; dateOfBirth: string },
+  input: { firstName: string; surname: string; age: number },
 ) {
   await page.getByRole("button", { name: "Aggiungi allievo" }).click()
   await page.getByLabel("Nome", { exact: true }).fill(input.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(input.surname)
-  await page.getByLabel(/^Data di nascita/).fill(input.dateOfBirth)
+  await page
+    .getByLabel("Età compiuta il primo giorno del corso")
+    .fill(String(input.age))
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText("M", { exact: true })
@@ -32,22 +34,14 @@ test("adds, disambiguates, edits, disables and restores students", async ({
   await expect(
     page.getByRole("heading", { name: "Nessun allievo" }),
   ).toBeVisible()
-  await addStudent(page, {
-    firstName: "Mario",
-    surname: "Rossi",
-    dateOfBirth: "2010-01-01",
-  })
+  await addStudent(page, { firstName: "Mario", surname: "Rossi", age: 16 })
   await expect(
     page.getByRole("button", {
       name: /Mario, \d+ anni, M, Minorenne/,
     }),
   ).toBeVisible()
 
-  await addStudent(page, {
-    firstName: "Mario",
-    surname: "Bianchi",
-    dateOfBirth: "2000-01-01",
-  })
+  await addStudent(page, { firstName: "Mario", surname: "Bianchi", age: 30 })
   await expect(page.getByText("Mario R.", { exact: true })).toBeVisible()
   await expect(page.getByText("Mario B.", { exact: true })).toBeVisible()
 

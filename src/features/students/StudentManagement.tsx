@@ -2,6 +2,7 @@ import {
   CalendarDays,
   Check,
   ChevronLeft,
+  ClipboardPaste,
   LoaderCircle,
   MoreVertical,
   NotebookPen,
@@ -38,7 +39,6 @@ import {
   calculateStudentAge,
   getStudentDisplayName,
   isStudentMinor,
-  isValidDateOnly,
   MAX_DECLARED_STUDENT_AGE,
 } from "@/domain/student"
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
@@ -64,7 +64,6 @@ import {
 type StudentField =
   | "firstName"
   | "surname"
-  | "dateOfBirth"
   | "declaredAgeAtCourseStart"
   | "sex"
   | "phone"
@@ -76,7 +75,10 @@ type StudentField =
 type StudentScreen =
   | { kind: "list" }
   | { kind: "create" }
-  | { kind: "scan" }
+  // Task 4 (owner, 2026-09-28): the menu and the empty page open the same
+  // methods; `initialAssistantExpanded` lands directly in the assistant
+  // section from either one, without the operator opening it themselves.
+  | { kind: "scan"; initialAssistantExpanded?: boolean }
   | { kind: "knowledge" }
   | { kind: "detail"; studentId: string }
   | { kind: "edit"; studentId: string; focusField?: StudentField }
@@ -87,7 +89,6 @@ const APP_SHELL_HISTORY_KEY = "__cvcHelperShell"
 const STUDENT_FIELDS = new Set<StudentField>([
   "firstName",
   "surname",
-  "dateOfBirth",
   "declaredAgeAtCourseStart",
   "sex",
   "phone",
@@ -282,13 +283,57 @@ function StudentPageHeader({
   )
 }
 
+/**
+ * The ways to add a student, in one place (Task 4, owner 2026-09-28): the
+ * empty Allievi page and the three-dot menu used to offer a different pair
+ * of methods (manual and scan only, with the assistant paste reachable only
+ * after opening the scan screen); both now read this same list, so a method
+ * added or reworded here appears identically, in the same order, wherever
+ * students can be added. "Scan allievi" is a single method here exactly as
+ * it already is today: the camera/gallery choice lives one screen deeper and
+ * is not promoted, since it is not a separate entry at this level.
+ */
+function addStudentMethods(handlers: {
+  onManual: () => void
+  onScan: () => void
+  onAssistant: () => void
+}) {
+  return [
+    {
+      key: "manual",
+      label: "Aggiungi allievo",
+      icon: <Plus aria-hidden="true" className="size-5" />,
+      onSelect: handlers.onManual,
+    },
+    {
+      key: "scan",
+      label: "Scan allievi",
+      icon: <ScanLine aria-hidden="true" className="size-5" />,
+      onSelect: handlers.onScan,
+    },
+    {
+      key: "assistant",
+      label: "Usa un assistente",
+      icon: <ClipboardPaste aria-hidden="true" className="size-5" />,
+      onSelect: handlers.onAssistant,
+    },
+  ] as const
+}
+
 function EmptyStudents({
   onAdd,
   onScan,
+  onAssistant,
 }: {
   onAdd: () => void
   onScan: () => void
+  onAssistant: () => void
 }) {
+  const methods = addStudentMethods({
+    onManual: onAdd,
+    onScan,
+    onAssistant,
+  })
   return (
     <section className="rounded-3xl border bg-card p-5 text-center shadow-[0_12px_32px_rgb(6_59_82/0.07)]">
       <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted text-primary">
@@ -296,17 +341,20 @@ function EmptyStudents({
       </span>
       <h2 className="mt-4 text-xl font-black">Nessun allievo</h2>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-        Aggiungi manualmente il primo allievo per iniziare.
+        Aggiungi il primo allievo per iniziare, in uno di questi modi.
       </p>
       <div className="mt-6 grid gap-3">
-        <Button onClick={onAdd} size="lg">
-          <Plus aria-hidden="true" className="size-5" />
-          Aggiungi allievo
-        </Button>
-        <Button onClick={onScan} size="lg" variant="secondary">
-          <ScanLine aria-hidden="true" className="size-5" />
-          Scan allievi
-        </Button>
+        {methods.map((method, index) => (
+          <Button
+            key={method.key}
+            onClick={method.onSelect}
+            size="lg"
+            variant={index === 0 ? undefined : "secondary"}
+          >
+            {method.icon}
+            {method.label}
+          </Button>
+        ))}
       </div>
     </section>
   )
@@ -425,9 +473,17 @@ function StudentForm({
   const [firstName, setFirstName] = useState(student?.firstName ?? "")
   const [surname, setSurname] = useState(student?.surname ?? "")
   const [nickname, setNickname] = useState(student?.nickname ?? "")
-  const [dateOfBirth, setDateOfBirth] = useState(student?.dateOfBirth ?? "")
+  // Age only, in every mode (owner decision 2026-09-28): the form has no
+  // date field. An existing student's age is computed once, from whichever
+  // of a real birth date or an already-declared age it has, and shown as the
+  // starting value; it never moves again on its own. Saving that exact
+  // number back keeps the student's stored date, saving a different one
+  // replaces it with the declared age and drops the date (see `input` below).
+  const [initialDeclaredAge] = useState(() =>
+    student ? calculateStudentAge(student, course.startDate) : null,
+  )
   const [declaredAge, setDeclaredAge] = useState(
-    student?.declaredAgeAtCourseStart?.toString() ?? "",
+    initialDeclaredAge !== null ? String(initialDeclaredAge) : "",
   )
   // A new card starts on Altro: it is the value that claims nothing, and the
   // other two are one tap away.
@@ -473,14 +529,27 @@ function StudentForm({
     if (focusField) focusFormField(formRef.current, focusField)
   }, [focusField])
 
+  // A declared age of exactly the value this form started with, for an
+  // existing student, leaves that student's stored data untouched (a real
+  // birth date included); any other value declares the new age and drops
+  // whatever birth date the student had.
+  const parsedDeclaredAge = /^\d{1,3}$/.test(declaredAge.trim())
+    ? Number(declaredAge.trim())
+    : null
+  const ageUnchanged =
+    student !== undefined &&
+    initialDeclaredAge !== null &&
+    parsedDeclaredAge === initialDeclaredAge
+
   const input = useMemo<StudentEditInput>(
     () => ({
       firstName: firstName.trim(),
       surname: surname.trim(),
       nickname: nickname.trim() || null,
-      dateOfBirth,
-      declaredAgeAtCourseStart:
-        dateOfBirth || declaredAge.trim() === "" ? null : Number(declaredAge),
+      dateOfBirth: ageUnchanged ? student!.dateOfBirth : "",
+      declaredAgeAtCourseStart: ageUnchanged
+        ? student!.declaredAgeAtCourseStart
+        : parsedDeclaredAge,
       sex: sex || null,
       phone: phone.trim() || null,
       size: size || null,
@@ -488,15 +557,16 @@ function StudentForm({
       courseNote: courseNote.trim() || null,
     }),
     [
+      ageUnchanged,
       courseNote,
-      dateOfBirth,
-      declaredAge,
       firstName,
       initialNote,
       nickname,
+      parsedDeclaredAge,
       phone,
       sex,
       size,
+      student,
       surname,
     ],
   )
@@ -506,29 +576,15 @@ function StudentForm({
     if (!input.firstName) missing.push({ field: "firstName", label: "nome" })
     if (!input.surname) missing.push({ field: "surname", label: "cognome" })
     if (
-      input.dateOfBirth &&
-      (!isValidDateOnly(input.dateOfBirth) ||
-        input.dateOfBirth > course.startDate)
+      parsedDeclaredAge === null ||
+      parsedDeclaredAge < 0 ||
+      parsedDeclaredAge > MAX_DECLARED_STUDENT_AGE
     ) {
-      missing.push({
-        field: "dateOfBirth",
-        label: "una data di nascita non successiva all’inizio del corso",
-      })
-    } else if (
-      !input.dateOfBirth &&
-      (typeof input.declaredAgeAtCourseStart !== "number" ||
-        !Number.isInteger(input.declaredAgeAtCourseStart) ||
-        input.declaredAgeAtCourseStart < 0 ||
-        input.declaredAgeAtCourseStart > MAX_DECLARED_STUDENT_AGE)
-    ) {
-      missing.push({
-        field: "declaredAgeAtCourseStart",
-        label: "data di nascita o età",
-      })
+      missing.push({ field: "declaredAgeAtCourseStart", label: "età" })
     }
     if (!input.sex) missing.push({ field: "sex", label: "sesso" })
     return missing
-  }, [course.startDate, input])
+  }, [input, parsedDeclaredAge])
   const missingLabels =
     student && missingFields.length > 0
       ? listInItalian(missingFields.map(({ label }) => label))
@@ -689,38 +745,22 @@ function StudentForm({
         </div>
 
         <Field
-          field="dateOfBirth"
-          label="Data di nascita (se nota)"
-          hint="Se la data non è disponibile, inserisci l’età compiuta al primo giorno del corso."
+          field="declaredAgeAtCourseStart"
+          hint="Anni compiuti il primo giorno del corso; puoi correggerla in seguito."
+          label="Età compiuta il primo giorno del corso"
         >
           <Input
-            aria-label="Data di nascita"
-            max={course.startDate}
-            onChange={(event) => setDateOfBirth(event.target.value)}
-            type="date"
-            value={dateOfBirth}
+            aria-label="Età compiuta il primo giorno del corso"
+            inputMode="numeric"
+            max={MAX_DECLARED_STUDENT_AGE}
+            min={0}
+            onChange={(event) => setDeclaredAge(event.target.value)}
+            required
+            step={1}
+            type="number"
+            value={declaredAge}
           />
         </Field>
-
-        {!dateOfBirth && (
-          <Field
-            field="declaredAgeAtCourseStart"
-            hint="Età dichiarata al primo giorno del corso. Resta fissa per questa scheda e non inventa una data di nascita."
-            label="Età compiuta il primo giorno del corso"
-          >
-            <Input
-              aria-label="Età compiuta il primo giorno del corso"
-              inputMode="numeric"
-              max={MAX_DECLARED_STUDENT_AGE}
-              min={0}
-              onChange={(event) => setDeclaredAge(event.target.value)}
-              required
-              step={1}
-              type="number"
-              value={declaredAge}
-            />
-          </Field>
-        )}
 
         <fieldset className="grid gap-2 text-sm font-bold" data-field="sex">
           <legend>Sesso</legend>
@@ -1023,14 +1063,12 @@ function StudentDetail({
 
         <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border">
           <ProfileField
-            field={ageIsDeclared ? "declaredAgeAtCourseStart" : "dateOfBirth"}
+            field="declaredAgeAtCourseStart"
             icon={<CalendarDays aria-hidden="true" className="size-4" />}
             label={
               ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
             }
-            onShortcut={() =>
-              onEdit(ageIsDeclared ? "declaredAgeAtCourseStart" : "dateOfBirth")
-            }
+            onShortcut={() => onEdit("declaredAgeAtCourseStart")}
             value={ageIsDeclared ? `${age} anni · dichiarata` : `${age} anni`}
           />
           <ProfileField
@@ -1383,6 +1421,7 @@ export function StudentManagement({
         courseId={course.id}
         courseStartDate={course.startDate}
         existingStudents={students}
+        initialAssistantExpanded={screen.initialAssistantExpanded}
         onBack={() => backStudentScreen({ kind: "list" })}
         onCommitted={() => {
           void refreshStudents()
@@ -1468,28 +1507,28 @@ export function StudentManagement({
           className="mb-4 grid gap-2 rounded-2xl border bg-card p-2 shadow-[0_8px_24px_rgb(6_59_82/0.08)]"
           id="student-actions"
         >
-          <Button
-            className="justify-start"
-            onClick={() => {
-              setMenuOpen(false)
-              navigateStudentScreen({ kind: "create" })
-            }}
-            variant="secondary"
-          >
-            <Plus aria-hidden="true" className="size-5" />
-            Aggiungi allievo
-          </Button>
-          <Button
-            className="justify-start"
-            onClick={() => {
-              setMenuOpen(false)
-              navigateStudentScreen({ kind: "scan" })
-            }}
-            variant="secondary"
-          >
-            <ScanLine aria-hidden="true" className="size-5" />
-            Scan allievi
-          </Button>
+          {addStudentMethods({
+            onManual: () => navigateStudentScreen({ kind: "create" }),
+            onScan: () => navigateStudentScreen({ kind: "scan" }),
+            onAssistant: () =>
+              navigateStudentScreen({
+                kind: "scan",
+                initialAssistantExpanded: true,
+              }),
+          }).map((method) => (
+            <Button
+              className="justify-start"
+              key={method.key}
+              onClick={() => {
+                setMenuOpen(false)
+                method.onSelect()
+              }}
+              variant="secondary"
+            >
+              {method.icon}
+              {method.label}
+            </Button>
+          ))}
           <Button
             className="justify-start"
             disabled={students.length === 0}
@@ -1507,6 +1546,12 @@ export function StudentManagement({
       {students.length === 0 ? (
         <EmptyStudents
           onAdd={() => navigateStudentScreen({ kind: "create" })}
+          onAssistant={() =>
+            navigateStudentScreen({
+              kind: "scan",
+              initialAssistantExpanded: true,
+            })
+          }
           onScan={() => navigateStudentScreen({ kind: "scan" })}
         />
       ) : (

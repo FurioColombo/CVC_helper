@@ -9,7 +9,7 @@ async function createCourseAndStudent(page: Page) {
   await page.getByRole("button", { name: "Aggiungi allievo" }).click()
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
-  await page.getByLabel(/^Data di nascita/).fill("2010-01-01")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("16")
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText("M", { exact: true })

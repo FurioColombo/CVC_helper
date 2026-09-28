@@ -52,7 +52,7 @@ test("Back follows nested screens, closes a dialog, and keeps local data", async
   ).toBeVisible()
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
-  await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
 
   await page.goBack()
   await expect(page.getByRole("heading", { name: "Allievi" })).toBeVisible()
@@ -62,7 +62,7 @@ test("Back follows nested screens, closes a dialog, and keeps local data", async
     .click()
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
-  await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
   await page.getByRole("button", { name: "Salva allievo", exact: true }).click()
   await expect(page.getByRole("button", { name: /^Mario,/ })).toBeVisible()
 
@@ -120,7 +120,7 @@ test("visible Back from Students returns home after reload", async ({
     .click()
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
-  await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
   await page.getByRole("button", { name: "Salva allievo", exact: true }).click()
   await page.getByRole("button", { name: /^Mario,/ }).click()
   await page

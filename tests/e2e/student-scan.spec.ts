@@ -80,10 +80,9 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
   await expect(
     page.getByLabel(/^Data esatta per le regole sui minori riga/),
   ).toHaveCount(0)
-  const uncertainDates = page.getByLabel(/^Data di nascita riga/)
-  for (let index = 0; index < (await uncertainDates.count()); index += 1) {
-    await expect(uncertainDates.nth(index)).toHaveValue(/^\d{4}-\d{2}-\d{2}$/)
-  }
+  // Age only, in every mode (owner decision 2026-09-28): the review shows
+  // the age, never a date field, on the camera path either.
+  await expect(page.getByLabel(/^Data di nascita riga/)).toHaveCount(0)
   await expect(page.getByLabel(/^Telefono riga/).nth(0)).toHaveValue(
     "333 123 4567",
   )

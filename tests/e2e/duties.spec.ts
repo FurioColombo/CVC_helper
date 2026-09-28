@@ -21,8 +21,8 @@ async function addStudent(
   await page.getByLabel("Nome", { exact: true }).fill(`Nome${index}`)
   await page.getByLabel("Cognome", { exact: true }).fill(`Cognome${index}`)
   await page
-    .getByLabel(/^Data di nascita/)
-    .fill(options.minor ? "2010-01-01" : "2000-01-01")
+    .getByLabel("Età compiuta il primo giorno del corso")
+    .fill(options.minor ? "16" : "26")
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText(options.female ? "F" : "M", { exact: true })

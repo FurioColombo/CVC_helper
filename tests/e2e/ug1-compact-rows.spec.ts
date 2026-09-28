@@ -14,13 +14,15 @@ async function addStudent(
   page: Page,
   firstName: string,
   surname: string,
-  dateOfBirth: string,
+  age: number,
   sex: "F" | "M" | "Altro" = "M",
 ) {
   await page.getByRole("button", { name: "Aggiungi allievo" }).first().click()
   await page.getByLabel("Nome", { exact: true }).fill(firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(surname)
-  await page.getByLabel(/^Data di nascita/).fill(dateOfBirth)
+  await page
+    .getByLabel("Età compiuta il primo giorno del corso")
+    .fill(String(age))
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText(sex, { exact: true })
@@ -56,9 +58,9 @@ test("keeps the repeated rows compact and their markers legible", async ({
 
   // P03 — a student row is one card high, and the figure carries the sex.
   await page.getByRole("button", { name: "Allievi" }).click()
-  await addStudent(page, "Marta", "Alberti", "2010-06-02", "F")
-  await addStudent(page, "Aldo", "Rossi", "2000-01-01", "M")
-  await addStudent(page, "Remo", "Zeta", "1998-03-04", "Altro")
+  await addStudent(page, "Marta", "Alberti", 16, "F")
+  await addStudent(page, "Aldo", "Rossi", 26, "M")
+  await addStudent(page, "Remo", "Zeta", 28, "Altro")
 
   const minorCard = page.getByRole("button", {
     name: /^Marta, \d+ anni, F, Minorenne/,
@@ -78,12 +80,19 @@ test("keeps the repeated rows compact and their markers legible", async ({
   })
 
   // P04 — a double click on a profile field opens the form on that field.
+  // Age only, in every mode (owner decision 2026-09-28): a student created
+  // here is always declared-age, so the profile's age label carries that
+  // qualifier, and the field the double click opens is the age field.
   await page.getByRole("button", { name: /^Aldo, \d+ anni, M/ }).click()
-  await page.getByText("Età", { exact: true }).dblclick()
+  await page
+    .getByText("Età dichiarata all’inizio del corso", { exact: true })
+    .dblclick()
   await expect(
     page.getByRole("heading", { name: "Modifica allievo" }),
   ).toBeVisible()
-  await expect(page.getByLabel(/^Data di nascita/)).toBeFocused()
+  await expect(
+    page.getByLabel("Età compiuta il primo giorno del corso"),
+  ).toBeFocused()
   await page.getByRole("button", { name: "Fine" }).click()
   await page.getByRole("button", { name: "Indietro da Profilo" }).click()
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()

@@ -34,7 +34,7 @@ test("keeps the complete student workflow consistent across reload", async ({
   await page.getByRole("button", { name: "Aggiungi allievo" }).click()
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Verdi")
-  await page.getByLabel(/^Data di nascita/).fill("2010-01-01")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("16")
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText("M", { exact: true })
@@ -150,18 +150,19 @@ test("keeps the complete student workflow consistent across reload", async ({
     page.getByRole("heading", { name: "Giulia Bianchini", exact: true }),
   ).toBeVisible()
   await expect(page.getByText("24/11/1998")).not.toBeVisible()
+  // Age only, in every mode (owner decision 2026-09-28): a scanned date is
+  // never stored, so this student is declared-age like any other new one.
   await expect(
     page
-      .locator("dt", { hasText: /^Età$/ })
+      .locator("dt", { hasText: /^Età dichiarata all.inizio del corso$/ })
       .locator("xpath=following-sibling::dd[1]"),
-  ).toHaveText("27 anni")
-  // The date remains intact behind the normal age presentation.
+  ).toHaveText("27 anni · dichiarata")
   await page
     .getByRole("button", { name: "Modifica allievo", exact: true })
     .click()
-  await expect(page.getByLabel("Data di nascita", { exact: true })).toHaveValue(
-    "1998-11-24",
-  )
+  await expect(
+    page.getByLabel("Età compiuta il primo giorno del corso"),
+  ).toHaveValue("27")
   await page
     .getByRole("button", { name: "Indietro da Modifica allievo" })
     .click()
@@ -216,9 +217,6 @@ test("creates, corrects and reloads a declared age without a birth date", async 
   await expect(
     page.getByLabel("Età compiuta il primo giorno del corso"),
   ).toHaveValue("17")
-  await expect(page.getByLabel("Data di nascita", { exact: true })).toHaveValue(
-    "",
-  )
   await page.getByLabel("Età compiuta il primo giorno del corso").fill("18")
   await page.getByRole("button", { name: "Fine" }).click()
   await expect(page.getByText("18 anni · dichiarata")).toBeVisible()

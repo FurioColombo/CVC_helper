@@ -17,6 +17,7 @@ import {
   ROSTER_PASTE_HEADER,
   ROSTER_PASTE_MAX_ROWS,
   rosterPastePrompt,
+  type RosterPasteDiagnostics,
   type UnparsedPasteLine,
 } from "@/capabilities/rosterPaste"
 import type { StudentScanCandidate } from "@/capabilities/studentScan"
@@ -67,7 +68,11 @@ export function StudentScanAssistantSection({
   // V5R2-7). A runaway answer is a different problem with its own message
   // (tooLong) and no per-line detail to show.
   const [readError, setReadError] = useState<
-    | { kind: "format-missing"; lines: UnparsedPasteLine[] }
+    | {
+        kind: "format-missing"
+        lines: UnparsedPasteLine[]
+        diagnostics?: RosterPasteDiagnostics
+      }
     | { kind: "too-long" }
     | null
   >(null)
@@ -94,7 +99,11 @@ export function StudentScanAssistantSection({
       return
     }
     if (result.formatMissing) {
-      setReadError({ kind: "format-missing", lines: result.unparsed })
+      setReadError({
+        kind: "format-missing",
+        lines: result.unparsed,
+        diagnostics: result.diagnostics,
+      })
       return
     }
     setReadError(null)
@@ -162,6 +171,12 @@ export function StudentScanAssistantSection({
               value={answer}
             />
           </label>
+          {/* F2: the advice is for the operator, not the assistant, so it
+              belongs here rather than in the copied prompt. */}
+          <p className="text-xs leading-5 text-muted-foreground">
+            Dal telefono, copia la risposta con il tasto copia del blocco di
+            codice: mantiene gli a capo.
+          </p>
 
           {readError?.kind === "format-missing" && (
             <div role="alert">
@@ -179,6 +194,17 @@ export function StudentScanAssistantSection({
                     </li>
                   ))}
                 </ul>
+              )}
+              {readError.diagnostics && (
+                <p className="mt-1.5 text-[0.68rem] leading-4 text-muted-foreground">
+                  Dettagli tecnici, senza il testo incollato: righe lette{" "}
+                  {readError.diagnostics.lineCount}, intestazione{" "}
+                  {readError.diagnostics.headerFoundInline
+                    ? "trovata dentro una riga"
+                    : "non trovata"}
+                  , separatori speciali (U+2028/U+2029/NEL){" "}
+                  {readError.diagnostics.unicodeSeparatorCount}.
+                </p>
               )}
             </div>
           )}

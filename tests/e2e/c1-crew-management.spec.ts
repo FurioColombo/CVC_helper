@@ -17,13 +17,13 @@ const COUNT_STUDENTS = [
 ]
 
 const CREW_STUDENTS = [
-  { firstName: "Berto", surname: "Rossi", birthDate: "2000-01-01" },
-  { firstName: "Carlo", surname: "Neri", birthDate: "2000-01-01" },
-  { firstName: "Dina", surname: "Blu", birthDate: "2000-01-01" },
-  { firstName: "Ernesto", surname: "Verdi", birthDate: "2000-01-01" },
-  { firstName: "Fiona", surname: "Gialli", birthDate: "2000-01-01" },
-  { firstName: "Giulio", surname: "Neri", birthDate: "2000-01-01" },
-  { firstName: "Zeno", surname: "Bianchi", birthDate: "2012-01-01" },
+  { firstName: "Berto", surname: "Rossi", age: 26 },
+  { firstName: "Carlo", surname: "Neri", age: 26 },
+  { firstName: "Dina", surname: "Blu", age: 26 },
+  { firstName: "Ernesto", surname: "Verdi", age: 26 },
+  { firstName: "Fiona", surname: "Gialli", age: 26 },
+  { firstName: "Giulio", surname: "Neri", age: 26 },
+  { firstName: "Zeno", surname: "Bianchi", age: 14 },
 ] as const
 
 async function createCourse(page: Page, level: 1 | 2) {
@@ -35,14 +35,14 @@ async function createCourse(page: Page, level: 1 | 2) {
 
 async function addStudent(
   page: Page,
-  student: { firstName: string; surname: string; birthDate?: string },
+  student: { firstName: string; surname: string; age?: number },
 ) {
   await page.getByRole("button", { name: "Aggiungi allievo" }).first().click()
   await page.getByLabel("Nome", { exact: true }).fill(student.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(student.surname)
   await page
-    .getByLabel(/^Data di nascita/)
-    .fill(student.birthDate ?? "2000-01-01")
+    .getByLabel("Età compiuta il primo giorno del corso")
+    .fill(String(student.age ?? 26))
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText("M", { exact: true })

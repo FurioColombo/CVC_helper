@@ -65,7 +65,7 @@ test("Comandate empty state and proposal reflow at 320 px with 200% text", async
   }
   await page.getByLabel("Nome", { exact: true }).fill("Mario")
   await page.getByLabel("Cognome", { exact: true }).fill("Rossi")
-  await page.getByLabel(/^Data di nascita/).fill("2000-01-01")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText("M", { exact: true })

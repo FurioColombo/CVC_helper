@@ -29,7 +29,7 @@ import {
   type StudentScanRowWarning,
 } from "@/capabilities/studentScan"
 import {
-  ageConflictsWithStoredDate,
+  ageConflictsWithReadDate,
   ageNeedsReview,
   candidateIsReady,
   candidateNeedsReview,
@@ -95,8 +95,6 @@ const ROW_WARNING_TEXT: Record<StudentScanRowWarning, string> = {
     "Forse due righe lette insieme: controlla nomi e date sul foglio, correggi o rimuovi la riga.",
   "possible-heading":
     "Forse un’intestazione e non un allievo: controlla la riga sul foglio, poi segnala controllata o rimuovila.",
-  "from-assistant":
-    "Riga scritta dall’assistente: confrontala con il foglio e segnala controllata.",
 }
 
 interface Acquisition {
@@ -257,12 +255,6 @@ function ReviewField({
   "onChange" | "onBlur" | "onFocus" | "value"
 >) {
   const uncertain = needsReview(candidate, field, courseStartDate)
-  const lowConfidenceDate =
-    field === "dateOfBirth" &&
-    Boolean(candidate.dateOfBirth) &&
-    candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE &&
-    !candidate.acknowledgedFields?.dateOfBirth
-  const flagged = uncertain || lowConfidenceDate
   // A blur only counts as review when this field's own focus was the
   // operator's doing. A focus the counter gave it programmatically, then lost
   // again on the next tap, must never silently acknowledge the field.
@@ -275,22 +267,22 @@ function ReviewField({
           past the card. It wraps and breaks instead. */}
       <span className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
         <span className="min-w-0 break-words">{label}</span>
-        {flagged && (
+        {uncertain && (
           <span className="min-w-0 text-[0.68rem] font-bold break-words text-[#a2381b]">
-            {uncertain ? "Da controllare" : "Lettura incerta"}
+            Da controllare
           </span>
         )}
       </span>
       <Input
         aria-label={`${label} riga ${candidate.id}`}
-        className={`scroll-mt-[180px] ${flagged ? "border-[#f79009]" : ""}`}
+        className={`scroll-mt-[180px] ${uncertain ? "border-[#f79009]" : ""}`}
         data-scan-field={field}
         onChange={(event) => onChange(event.target.value)}
         onFocus={(event) => {
           armedRef.current = !consumeProgrammaticFocus(event.target)
         }}
         onBlur={() => {
-          if (armedRef.current && flagged && candidate[field].trim()) {
+          if (armedRef.current && uncertain && candidate[field].trim()) {
             onAcknowledge()
           }
           armedRef.current = false
@@ -330,33 +322,7 @@ function CandidateCard({
   onRemove: () => void
   cardRef: (node: HTMLElement | null) => void
 }) {
-  // Once the date field has earned a place in the review for this row, it
-  // stays mounted for the rest of the review: a value the operator is still
-  // typing, or has just cleared, must not vanish from under their cursor.
-  // The flag is state latched during render (React's supported pattern for
-  // adjusting state as it renders), not a ref written during render.
-  const [dateFieldEverShown, setDateFieldEverShown] = useState(false)
-  const dateFieldNeedsAttention = Boolean(
-    candidate.dateOfBirth &&
-    // A row written by an assistant carries no real confidence of its own
-    // (rosterPaste always reports 100), so nothing else here would ever flag
-    // it: the date must be shown on its own so the operator can compare it
-    // against the sheet (V05 review V5-2), the one field most likely to hide
-    // a day/month swap or a year slip behind a printed age that looks fine.
-    (candidate.rowWarning === "from-assistant" ||
-      needsReview(candidate, "dateOfBirth", courseStartDate) ||
-      ageConflictsWithStoredDate(candidate, courseStartDate) ||
-      candidate.confidence.dateOfBirth < MIN_FIELD_CONFIDENCE),
-  )
-  if (dateFieldNeedsAttention && !dateFieldEverShown) {
-    setDateFieldEverShown(true)
-  }
-  const showDateField = dateFieldEverShown || dateFieldNeedsAttention
   const ageArmedRef = useRef(false)
-  // Holds the date field's own wrapper so "Correggi la data" can find and
-  // focus that input directly (V05 review V5F-3), without a card-wide lookup
-  // for a field this component already renders itself.
-  const dateFieldWrapperRef = useRef<HTMLDivElement>(null)
 
   function updateField(field: StudentScanField, value: string) {
     // A sex suggestion is only ever evidence about the given name it was read
@@ -369,23 +335,6 @@ function CandidateCard({
       field === "firstName" &&
       !candidate.sexManuallyChosen &&
       Boolean(candidate.scannedFirstName?.trim())
-    // The age shown is either typed by the operator or printed on the sheet;
-    // neither is a fact about the date, so neither is touched here. Anything
-    // else is a value derived from the date alone (a camera row with no
-    // printed age, or a pasted row where the date disagreed with the printed
-    // age and so kept no ageReading), and must move with it: otherwise
-    // clearing or fixing a wrong date leaves a stale age that still saves
-    // (V05 review V5R2-1/V5R2-8), and the row never explains why (blank
-    // becomes a missing field the gate already catches).
-    const derivesAgeFromDate =
-      field === "dateOfBirth" &&
-      !candidate.ageManuallyEdited &&
-      !candidate.ageReading
-    const recomputedAge = derivesAgeFromDate
-      ? value && isValidDateOnly(value)
-        ? String(calculateAge(value, courseStartDate))
-        : ""
-      : null
     onChange({
       ...candidate,
       [field]: value,
@@ -395,7 +344,6 @@ function CandidateCard({
         : {}),
       // The typed given name is the operator's own, so it may suggest again.
       ...(staleSex ? { sex: inferSex(value) } : {}),
-      ...(recomputedAge !== null ? { reviewAge: recomputedAge } : {}),
     })
   }
 
@@ -445,10 +393,13 @@ function CandidateCard({
   const reviewAgeNeedsAttention = ageNeedsReview(candidate, courseStartDate)
   const duplicateUnresolved =
     Boolean(duplicateOf) && !candidate.duplicateAcknowledged
-  // The date, not a printed or typed age, is what gets stored; a conflict
-  // between them must say what the date alone gives, one tap away from
-  // fixing it, rather than leaving the operator to guess or retype a number
-  // that is not even on the sheet (V05 review V5R2-1).
+  // The date is never shown or edited directly (age-only entry, owner
+  // decision 2026-09-28): it is internal working data the scan read
+  // alongside a printed age, kept only so a real conflict between the two
+  // can still be surfaced. A conflict says what the date alone gives, so the
+  // operator can adopt it in one tap without ever seeing the date itself
+  // (V05 review V5R2-1); the operator's decision always wins in the end
+  // (owner decision 2026-09-28), whichever of the three ways out they take.
   const storedDateValid =
     Boolean(candidate.dateOfBirth) && isValidDateOnly(candidate.dateOfBirth)
   const derivedAgeFromDate = storedDateValid
@@ -457,7 +408,7 @@ function CandidateCard({
   const ageDateConflict =
     storedDateValid &&
     derivedAgeFromDate !== null &&
-    ageConflictsWithStoredDate(candidate, courseStartDate)
+    ageConflictsWithReadDate(candidate, courseStartDate)
 
   function useAgeFromDate() {
     if (derivedAgeFromDate === null) return
@@ -467,19 +418,6 @@ function CandidateCard({
       ageReading: undefined,
       ageManuallyEdited: false,
     })
-  }
-
-  /** The conflict's other way out: rather than accept the age the date
-   * implies, the operator may instead have misread the year onto the sheet
-   * (or into the assistant's answer) and wants to fix the date itself. Moves
-   * focus straight to that row's own date field (V05 review V5F-3) instead
-   * of just naming it. */
-  function correctDate() {
-    const input = dateFieldWrapperRef.current?.querySelector<HTMLElement>(
-      '[data-scan-field="dateOfBirth"]',
-    )
-    input?.scrollIntoView?.({ behavior: "smooth", block: "start" })
-    input?.focus({ preventScroll: true })
   }
 
   function acknowledgeField(field: StudentScanField | "age") {
@@ -778,51 +716,35 @@ function CandidateCard({
         )}
       </div>
 
-      {showDateField && (
-        <div className="mt-2" ref={dateFieldWrapperRef}>
-          <ReviewField
-            candidate={candidate}
-            consumeProgrammaticFocus={consumeProgrammaticFocus}
-            courseStartDate={courseStartDate}
-            field="dateOfBirth"
-            label="Data di nascita"
-            disabled={disabled}
-            max={courseStartDate}
-            onChange={(value) => updateField("dateOfBirth", value)}
-            onAcknowledge={() => acknowledgeField("dateOfBirth")}
-            type="date"
-          />
-          {ageDateConflict && (
-            <div className="mt-2 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-2.5">
-              <p className="text-xs leading-5 font-semibold text-[#9a3412]">
-                {candidate.ageManuallyEdited
-                  ? "Età inserita"
-                  : "Età sul foglio"}{" "}
-                {candidate.reviewAge}, dalla data {derivedAgeFromDate}{" "}
-                all’inizio del corso.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button
-                  className="min-h-10 px-2.5 text-xs"
-                  disabled={disabled}
-                  onClick={useAgeFromDate}
-                  type="button"
-                  variant="secondary"
-                >
-                  Usa l’età dalla data
-                </Button>
-                <Button
-                  className="min-h-10 px-2.5 text-xs"
-                  disabled={disabled}
-                  onClick={correctDate}
-                  type="button"
-                  variant="secondary"
-                >
-                  Correggi la data
-                </Button>
-              </div>
-            </div>
-          )}
+      {ageDateConflict && (
+        <div className="mt-2 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-2.5">
+          {/* A typed or acknowledged age never conflicts any more (the
+              operator's decision wins), so this box only ever shows the
+              printed reading, never one the operator entered themselves. */}
+          <p className="text-xs leading-5 font-semibold text-[#9a3412]">
+            Età sul foglio {candidate.reviewAge}, dalla data{" "}
+            {derivedAgeFromDate} all’inizio del corso.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              className="min-h-10 px-2.5 text-xs"
+              disabled={disabled}
+              onClick={useAgeFromDate}
+              type="button"
+              variant="secondary"
+            >
+              Usa l’età dalla data ({derivedAgeFromDate})
+            </Button>
+            <Button
+              className="min-h-10 px-2.5 text-xs"
+              disabled={disabled}
+              onClick={() => acknowledgeField("age")}
+              type="button"
+              variant="secondary"
+            >
+              Tieni l’età sul foglio ({candidate.reviewAge})
+            </Button>
+          </div>
         </div>
       )}
 
@@ -834,7 +756,7 @@ function CandidateCard({
               ? "Possibile doppione: tieni entrambi oppure rimuovi la riga."
               : rowWarningNeedsReview(candidate)
                 ? "Controlla la riga sul foglio e segnala controllata, oppure rimuovila."
-                : "Completa nome, cognome, età e sesso. Controlla la data di nascita se è presente."}
+                : "Completa nome, cognome, età e sesso."}
         </p>
       )}
     </article>
@@ -845,6 +767,7 @@ export function StudentScan({
   courseId,
   courseStartDate,
   existingStudents = [],
+  initialAssistantExpanded = false,
   onBack,
   onCommitted,
   onManualAdd = onBack,
@@ -855,6 +778,11 @@ export function StudentScan({
   /** The course's current roster, used only to flag a possible duplicate
    * (V05 review V5-5); never persisted from here. */
   existingStudents?: StudentRecord[]
+  /** Lands directly in the assistant section (Task 4): the "Usa un
+   * assistente" method, offered beside "Aggiungi allievo" and "Scan allievi"
+   * from the empty Allievi page and the three-dot menu, opens this same
+   * screen already expanded rather than making the operator open it again. */
+  initialAssistantExpanded?: boolean
   onBack: () => void
   onCommitted: () => void
   onManualAdd?: () => void
@@ -932,7 +860,9 @@ export function StudentScan({
   // review can then hand the operator back to exactly the text they pasted
   // (V05 review V5-6), which the section itself would otherwise lose the
   // moment an import replaces it on screen.
-  const [assistantExpanded, setAssistantExpanded] = useState(false)
+  const [assistantExpanded, setAssistantExpanded] = useState(
+    initialAssistantExpanded,
+  )
   const [assistantAnswer, setAssistantAnswer] = useState("")
 
   useEffect(() => {
@@ -1326,14 +1256,15 @@ export function StudentScan({
     saveInFlightRef.current = true
     setState("saving")
     setSaveError(false)
+    // Age only, in every mode (owner decision 2026-09-28): a read date, when
+    // there was one, only ever computed the age shown above; it is never
+    // itself what gets stored, on the camera path or the pasted one.
     const inputs: StudentInput[] = candidates.map((candidate) => ({
       firstName: candidate.firstName.trim(),
       surname: candidate.surname.trim(),
       nickname: null,
-      dateOfBirth: candidate.dateOfBirth,
-      declaredAgeAtCourseStart: candidate.dateOfBirth
-        ? null
-        : parsedReviewAge(candidate),
+      dateOfBirth: "",
+      declaredAgeAtCourseStart: parsedReviewAge(candidate),
       sex: candidate.sex as StudentSex,
       phone: candidate.phone.trim() || null,
     }))
@@ -1392,13 +1323,9 @@ export function StudentScan({
     if (!candidate.surname.trim() || needsReview(candidate, "surname")) {
       return "surname"
     }
+    // The date itself is never shown; a low-confidence date only ever
+    // surfaces through the age it produced, already covered above.
     if (ageNeedsReview(candidate, courseStartDate)) return "age"
-    if (
-      candidate.dateOfBirth &&
-      needsReview(candidate, "dateOfBirth", courseStartDate)
-    ) {
-      return "dateOfBirth"
-    }
     if (!candidate.sex) return "sex"
     if (readPhone && needsReview(candidate, "phone", courseStartDate)) {
       return "phone"
@@ -1430,7 +1357,6 @@ export function StudentScan({
         firstName: "nome",
         surname: "cognome",
         age: "età",
-        dateOfBirth: "data di nascita",
         sex: "sesso",
         phone: "telefono",
         row: "segnala la riga controllata",

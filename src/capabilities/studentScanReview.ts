@@ -106,30 +106,36 @@ export function parsedReviewAge(candidate: ScanReviewCandidate) {
 }
 
 /**
- * The review shows one age while a birth date, when present, is what is
- * stored. A printed age may be a year off (it can be computed on another day),
- * but never so far that the student changes between minor and adult, and an
- * age the operator typed must match the date exactly: otherwise the date
- * silently overrides what was entered.
+ * The review shows one age while a birth date, when present, is never stored
+ * or shown itself (age-only entry, owner decision 2026-09-28): it is only
+ * ever internal working data the scan read alongside a printed age, kept
+ * only so a conflict between the two can still be surfaced. A printed age
+ * may be a year off the date (it can be computed on another day), but never
+ * so far that the student changes between minor and adult.
+ *
+ * The operator's decision wins once made (owner decision 2026-09-28): typing
+ * an age or acknowledging the printed one resolves the conflict outright,
+ * with no requirement that it then matches the date. Until one of those
+ * happens (or the operator instead adopts the date's own age), the row stays
+ * marked.
  */
-export function ageConflictsWithStoredDate(
+export function ageConflictsWithReadDate(
   candidate: ScanReviewCandidate,
   courseStartDate: string,
 ) {
   const reviewedAge = parsedReviewAge(candidate)
   if (reviewedAge === null || !candidate.dateOfBirth) return false
+  if (candidate.ageManuallyEdited || candidate.acknowledgedFields?.age) {
+    return false
+  }
   if (!isValidDateOnly(candidate.dateOfBirth)) return true
-  const storedAge = studentScanAge(
+  const readAge = studentScanAge(
     { ...candidate, ageReading: undefined },
     courseStartDate,
   )
-  if (storedAge === null) return true
-  // A typed age, or an age an assistant wrote beside a date it disagrees with,
-  // must match the date exactly (a swapped day and month is often a year off).
-  if (candidate.ageManuallyEdited || candidate.rowWarning === "from-assistant")
-    return storedAge !== reviewedAge
+  if (readAge === null) return true
   return (
-    Math.abs(storedAge - reviewedAge) > 1 ||
+    Math.abs(readAge - reviewedAge) > 1 ||
     isMinor(candidate.dateOfBirth, courseStartDate) !== reviewedAge < 18
   )
 }
@@ -165,7 +171,7 @@ export function ageNeedsReview(
     }
     return (candidate.ageReading?.confidence ?? 0) < MIN_FIELD_CONFIDENCE
   }
-  if (ageConflictsWithStoredDate(candidate, courseStartDate)) return true
+  if (ageConflictsWithReadDate(candidate, courseStartDate)) return true
   if (candidate.confirmed) return false
   return needsReview(candidate, "dateOfBirth", courseStartDate)
 }

@@ -17,7 +17,7 @@ async function addStudent(page: Page, firstName: string, surname: string) {
     .click()
   await page.getByLabel("Nome", { exact: true }).fill(firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(surname)
-  await page.getByLabel(/^Data di nascita/).fill("2010-03-12")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("16")
   await page.getByRole("button", { name: "Salva allievo", exact: true }).click()
   await expect(
     page.getByRole("button", { name: new RegExp(`^${firstName},`) }),

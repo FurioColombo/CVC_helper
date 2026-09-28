@@ -12,6 +12,7 @@ import {
 import { SESSION_SEQUENCE } from "../../src/domain/config"
 import { formatCourseIdentity, getIsoWeekInfo } from "../../src/domain/course"
 import { buildD2FullWeekScenario } from "../../src/domain/scenarios"
+import { calculateAge } from "../../src/domain/student"
 
 const scenario = buildD2FullWeekScenario()
 const duplicateNames = new Set(
@@ -46,7 +47,12 @@ async function addStudent(
   await page.getByRole("button", { name: "Aggiungi allievo" }).click()
   await page.getByLabel("Nome", { exact: true }).fill(student.firstName)
   await page.getByLabel("Cognome", { exact: true }).fill(student.surname)
-  await page.getByLabel(/^Data di nascita/).fill(student.dateOfBirth)
+  // Age only, in every mode (owner decision 2026-09-28): the manual form has
+  // no date field any more, so the age is computed here, against the same
+  // course start date the scenario itself uses, and typed in directly.
+  await page
+    .getByLabel("Età compiuta il primo giorno del corso")
+    .fill(String(calculateAge(student.dateOfBirth, scenario.course.startDate)))
   await page
     .getByRole("group", { name: "Sesso" })
     .getByText(student.sex === "female" ? "F" : "M", { exact: true })

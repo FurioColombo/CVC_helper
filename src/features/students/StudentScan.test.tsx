@@ -433,9 +433,7 @@ describe("StudentScan", () => {
     await user.click(screen.getByRole("button", { name: "Aggiungi 2 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()
     expect(
-      screen.getByText(
-        "Completa nome, cognome, età e sesso. Controlla la data di nascita se è presente.",
-      ),
+      screen.getByText("Completa nome, cognome, età e sesso."),
     ).toBeVisible()
 
     const surname = screen.getByLabelText(/^Cognome riga line-1-1$/)
@@ -451,8 +449,8 @@ describe("StudentScan", () => {
           firstName: "Mario",
           surname: "Rossi",
           nickname: null,
-          dateOfBirth: "2008-03-12",
-          declaredAgeAtCourseStart: null,
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 18,
           sex: "male",
           phone: "333 123 4567",
         },
@@ -827,7 +825,7 @@ describe("StudentScan age-first review", () => {
     vi.unstubAllGlobals()
   })
 
-  it("shows age and accepts an independent matching age as corroboration", async () => {
+  it("shows the printed age and never a date field, even with a matching, independent corroboration", async () => {
     await openReview({
       aggregateConfidence: 80,
       unsuitable: false,
@@ -841,29 +839,28 @@ describe("StudentScan age-first review", () => {
 
     expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
     expect(
-      screen.getByLabelText("Data di nascita riga line-age-1"),
-    ).toHaveValue("2002-02-12")
-    expect(screen.getByText("Lettura incerta")).toBeVisible()
+      screen.queryByLabelText(/^Data di nascita riga/),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText("Da controllare")).not.toBeInTheDocument()
     const counters = screen.getByLabelText("Stato revisione scansione")
     expect(within(counters).getAllByText("0")).toHaveLength(2)
     expect(within(counters).getByText("1")).toBeVisible()
   })
 
-  it("keeps a doubtful recognized date visible when no printed age corroborates it", async () => {
+  it("marks a computed age for check, on the age field itself, when the recognized date has low confidence", async () => {
     await openReview({
       aggregateConfidence: 80,
       unsuitable: false,
       candidates: [baseCandidate],
     })
 
-    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
+    const age = screen.getByLabelText("Età riga line-age-1")
+    expect(age).toHaveValue("24")
+    expect(age).toHaveClass("border-[#f79009]")
+    expect(screen.getByText("Da controllare")).toBeVisible()
     expect(
-      screen.getByLabelText("Data di nascita riga line-age-1"),
-    ).toHaveValue("2002-02-12")
-    expect(
-      screen.getByLabelText("Data di nascita riga line-age-1"),
-    ).toHaveClass("border-[#f79009]")
+      screen.queryByLabelText(/^Data di nascita riga/),
+    ).not.toBeInTheDocument()
   })
 
   it("saves age-only rows without inventing a date of birth", async () => {
@@ -930,63 +927,129 @@ describe("StudentScan age-first review", () => {
     },
   )
 
-  it("reveals the exact date when an age correction conflicts with it", async () => {
-    const user = await openReview({
-      aggregateConfidence: 95,
-      unsuitable: false,
-      candidates: [
-        {
-          ...baseCandidate,
-          confidence: { ...baseCandidate.confidence, dateOfBirth: 95 },
-        },
-      ],
+  // The date field and its "Correggi la data" button are gone (owner
+  // decision 2026-09-28): the ways out of an age/date conflict are adopting
+  // the date's own age, keeping the printed age, or typing a new one — never
+  // editing a date field, which the operator never sees.
+  describe("age/date conflict: the operator's decision wins (owner decision 2026-09-28)", () => {
+    // A printed age (20) that disagrees with the internally read date's own
+    // age (24, more than a year off) conflicts until the operator resolves
+    // it, one of three ways.
+    function conflictingCandidate() {
+      return {
+        ...baseCandidate,
+        ageReading: { value: 20, confidence: 90 },
+        confidence: { ...baseCandidate.confidence, dateOfBirth: 95 },
+      }
+    }
+
+    it("blocks saving until resolved, and never shows a date field", async () => {
+      const user = await openReview({
+        aggregateConfidence: 95,
+        unsuitable: false,
+        candidates: [conflictingCandidate()],
+      })
+
+      expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("20")
+      expect(
+        screen.getByText(
+          "Età sul foglio 20, dalla data 24 all’inizio del corso.",
+        ),
+      ).toBeVisible()
+      expect(
+        screen.queryByLabelText(/^Data di nascita riga/),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole("button", { name: "Correggi la data" }),
+      ).not.toBeInTheDocument()
+
+      await user.click(
+        screen.getByRole("button", { name: "Aggiungi 1 allievo" }),
+      )
+      expect(addStudents).not.toHaveBeenCalled()
     })
 
-    const age = screen.getByLabelText("Età riga line-age-1")
-    expect(
-      screen.queryByLabelText(/^Data di nascita riga/),
-    ).not.toBeInTheDocument()
-    await user.clear(age)
-    await user.type(age, "20")
-    const exactDate = screen.getByLabelText("Data di nascita riga line-age-1")
-    expect(exactDate).toHaveValue("2002-02-12")
+    it("Usa l’età dalla data (N) adopts the date’s own age and saves it", async () => {
+      const user = await openReview({
+        aggregateConfidence: 95,
+        unsuitable: false,
+        candidates: [conflictingCandidate()],
+      })
+      const age = screen.getByLabelText("Età riga line-age-1")
 
-    // The recognized DOB remains authoritative until it is corrected or cleared.
-    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
-    expect(addStudents).not.toHaveBeenCalled()
+      await user.click(
+        screen.getByRole("button", { name: "Usa l’età dalla data (24)" }),
+      )
+      expect(age).toHaveValue("24")
+      expect(screen.queryByText(/Età sul foglio/)).not.toBeInTheDocument()
 
-    fireEvent.change(exactDate, { target: { value: "2006-02-02" } })
-    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
-    await waitFor(() =>
-      expect(addStudents).toHaveBeenCalledWith("course-1", [
-        expect.objectContaining({ dateOfBirth: "2006-02-02" }),
-      ]),
-    )
-  })
-
-  // V05 review V5F-3: an age the operator typed in is not a fact the sheet
-  // printed, so a conflict with the recognized date must say so rather than
-  // claim a number that was never on the sheet at all.
-  it("labels a manually typed age as inserita, not sul foglio, when it conflicts with the recognized date", async () => {
-    const user = await openReview({
-      aggregateConfidence: 95,
-      unsuitable: false,
-      candidates: [
-        {
-          ...baseCandidate,
-          confidence: { ...baseCandidate.confidence, dateOfBirth: 95 },
-        },
-      ],
+      await user.click(
+        screen.getByRole("button", { name: "Aggiungi 1 allievo" }),
+      )
+      await waitFor(() =>
+        expect(addStudents).toHaveBeenCalledWith("course-1", [
+          expect.objectContaining({
+            dateOfBirth: "",
+            declaredAgeAtCourseStart: 24,
+          }),
+        ]),
+      )
     })
 
-    const age = screen.getByLabelText("Età riga line-age-1")
-    await user.clear(age)
-    await user.type(age, "20")
+    it("Tieni l’età sul foglio (M) keeps the printed age and saves it", async () => {
+      const user = await openReview({
+        aggregateConfidence: 95,
+        unsuitable: false,
+        candidates: [conflictingCandidate()],
+      })
+      const age = screen.getByLabelText("Età riga line-age-1")
 
-    expect(
-      screen.getByText("Età inserita 20, dalla data 24 all’inizio del corso."),
-    ).toBeVisible()
-    expect(screen.queryByText(/Età sul foglio/)).not.toBeInTheDocument()
+      await user.click(
+        screen.getByRole("button", { name: "Tieni l’età sul foglio (20)" }),
+      )
+      expect(age).toHaveValue("20")
+      expect(screen.queryByText(/Età sul foglio/)).not.toBeInTheDocument()
+
+      await user.click(
+        screen.getByRole("button", { name: "Aggiungi 1 allievo" }),
+      )
+      await waitFor(() =>
+        expect(addStudents).toHaveBeenCalledWith("course-1", [
+          expect.objectContaining({
+            dateOfBirth: "",
+            declaredAgeAtCourseStart: 20,
+          }),
+        ]),
+      )
+    })
+
+    it("typing a new age resolves it, with no requirement that it match the date", async () => {
+      const user = await openReview({
+        aggregateConfidence: 95,
+        unsuitable: false,
+        candidates: [conflictingCandidate()],
+      })
+      const age = screen.getByLabelText("Età riga line-age-1")
+
+      await user.clear(age)
+      await user.type(age, "30")
+      expect(screen.queryByText(/Età sul foglio/)).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole("button", { name: /Usa l’età dalla data/ }),
+      ).not.toBeInTheDocument()
+
+      await user.click(
+        screen.getByRole("button", { name: "Aggiungi 1 allievo" }),
+      )
+      await waitFor(() =>
+        expect(addStudents).toHaveBeenCalledWith("course-1", [
+          expect.objectContaining({
+            dateOfBirth: "",
+            declaredAgeAtCourseStart: 30,
+          }),
+        ]),
+      )
+    })
   })
 })
 
@@ -1109,8 +1172,8 @@ describe("StudentScan telephone option", () => {
           firstName: "Mario",
           surname: "Rossi",
           nickname: null,
-          dateOfBirth: "2008-03-12",
-          declaredAgeAtCourseStart: null,
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 18,
           sex: "male",
           phone: null,
         },
@@ -1318,121 +1381,6 @@ describe("StudentScan sex suggestion freshness", () => {
     await user.type(firstName, "Mario")
 
     expect(screen.getByRole("radio", { name: "Uomo" })).toBeChecked()
-  })
-})
-
-describe("StudentScan date of birth field stability", () => {
-  const candidate: StudentScanResult["candidates"][number] = {
-    sourceId: "line-1",
-    firstName: "Mario",
-    surname: "Rossi",
-    dateOfBirth: "2008-03-12",
-    phone: "",
-    sex: "male",
-    confidence: { firstName: 95, surname: 95, dateOfBirth: 44, phone: 0 },
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    vi.stubGlobal("URL", {
-      ...URL,
-      createObjectURL: vi.fn(() => "blob:preview"),
-      revokeObjectURL: vi.fn(),
-    })
-    addStudents.mockResolvedValue([])
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it("stays mounted through a valid correction and a cleared value", async () => {
-    await openReview({
-      aggregateConfidence: 90,
-      unsuitable: false,
-      candidates: [candidate],
-    })
-    const date = screen.getByLabelText(/^Data di nascita riga/)
-    expect(date).toBeVisible()
-
-    // A first change resolves the low-confidence reading, which unmounted
-    // the field under the old, confidence-only render condition.
-    fireEvent.change(date, { target: { value: "2008-03-20" } })
-    expect(screen.getByLabelText(/^Data di nascita riga/)).toHaveValue(
-      "2008-03-20",
-    )
-
-    // A second change must still land on the same, still-mounted field.
-    fireEvent.change(date, { target: { value: "2008-04-11" } })
-    expect(screen.getByLabelText(/^Data di nascita riga/)).toHaveValue(
-      "2008-04-11",
-    )
-
-    // Clearing the date must not remove the only way back into the field.
-    fireEvent.change(date, { target: { value: "" } })
-    expect(screen.getByLabelText(/^Data di nascita riga/)).toHaveValue("")
-    fireEvent.change(date, { target: { value: "2008-05-02" } })
-    expect(screen.getByLabelText(/^Data di nascita riga/)).toHaveValue(
-      "2008-05-02",
-    )
-  })
-
-  it("keeps a five-digit year flagged for review instead of crashing", async () => {
-    const user = await openReview({
-      aggregateConfidence: 90,
-      unsuitable: false,
-      candidates: [candidate],
-    })
-    const date = screen.getByLabelText(/^Data di nascita riga/)
-
-    fireEvent.change(date, { target: { value: "20140-02-16" } })
-
-    expect(
-      screen.getByRole("heading", { name: "Controlla prima di salvare" }),
-    ).toBeVisible()
-    expect(date).toHaveValue("20140-02-16")
-    expect(date).toHaveClass("border-[#f79009]")
-
-    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
-    expect(addStudents).not.toHaveBeenCalled()
-  })
-
-  // V05 review V5R2-1/V5R2-8: an age nobody printed or typed is only ever a
-  // fact about the date. Editing or clearing the date must move it, rather
-  // than leaving a stale number that still saves once the row is otherwise
-  // ready.
-  it("recomputes an age nobody printed or typed when the date changes, and clears it when the date is cleared", async () => {
-    await openReview({
-      aggregateConfidence: 90,
-      unsuitable: false,
-      candidates: [candidate],
-    })
-    const date = screen.getByLabelText(/^Data di nascita riga/)
-    const age = screen.getByLabelText(/^Età riga/)
-    // Nothing was printed: the age shown is the one the date itself gives.
-    expect(age).toHaveValue("18")
-
-    fireEvent.change(date, { target: { value: "2010-03-12" } })
-    expect(age).toHaveValue("16")
-
-    fireEvent.change(date, { target: { value: "" } })
-    expect(age).toHaveValue("")
-  })
-
-  it("leaves a manually typed age alone when the date is edited afterwards", async () => {
-    await openReview({
-      aggregateConfidence: 90,
-      unsuitable: false,
-      candidates: [candidate],
-    })
-    const date = screen.getByLabelText(/^Data di nascita riga/)
-    const age = screen.getByLabelText(/^Età riga/)
-
-    fireEvent.change(age, { target: { value: "20" } })
-    expect(age).toHaveValue("20")
-
-    fireEvent.change(date, { target: { value: "2005-01-01" } })
-    expect(age).toHaveValue("20")
   })
 })
 
@@ -1790,6 +1738,15 @@ describe("StudentScan assistant paste", () => {
     ).not.toBeInTheDocument()
   })
 
+  // Review fix: the phone copy-button advice is for the operator, so it must
+  // appear beside the paste box itself, not inside the text the assistant
+  // reads (already covered in rosterPaste.test.ts).
+  it("shows the phone copy-button advice beside the paste box, not in the copied prompt", async () => {
+    await openAssistant()
+    expect(screen.getByText(/tasto copia del blocco di codice/)).toBeVisible()
+    expect(ROSTER_PASTE_PROMPT).not.toContain("tasto copia del blocco")
+  })
+
   it("keeps the prompt on screen, selectable, when the clipboard is unavailable", async () => {
     const user = await openAssistant()
     Reflect.deleteProperty(navigator, "clipboard")
@@ -1805,7 +1762,7 @@ describe("StudentScan assistant paste", () => {
     expect(fallback).toHaveAttribute("readonly")
   })
 
-  it("reads a well-formed answer into the same review, pending until checked, and saves", async () => {
+  it("reads a well-formed answer into the same review, trusted without a per-row check, and saves", async () => {
     const user = await openAssistant()
     fillAnswer(
       [
@@ -1826,26 +1783,25 @@ describe("StudentScan assistant paste", () => {
     // No name-order question: the columns already say which word is which.
     expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
     expect(screen.queryByText("Letto:")).not.toBeInTheDocument()
-    expect(screen.getAllByText(/Riga scritta dall.assistente/)).toHaveLength(2)
-    // The pending completeness confirmation is one more row to review, on top
-    // of the two unchecked candidate rows (V05 review V5R2-3).
+    // The owner checks the pasted rows (owner decision 2026-09-28): no row
+    // needs its own Controlla tap, and both are ready without one.
+    expect(
+      screen.queryByText(/Riga scritta dall.assistente/),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByText(
         /Letti 2 allievi dalla risposta: sono tutti quelli del foglio\?/,
       ),
     ).toBeVisible()
     const counters = screen.getByLabelText("Stato revisione scansione")
-    expect(within(counters).getByText("3")).toBeVisible()
-    expect(within(counters).getAllByText("0")).toHaveLength(2)
+    // Only the pending completeness confirmation is left to review.
+    expect(within(counters).getByText("1")).toBeVisible()
+    expect(within(counters).getByText("0")).toBeVisible()
+    expect(within(counters).getByText("2")).toBeVisible()
     expect(addStudents).not.toHaveBeenCalled()
 
-    for (const button of screen.getAllByRole("button", {
-      name: /^Segna controllata la riga di allievo \d+$/,
-    })) {
-      await user.click(button)
-    }
-    // Every row is checked but the sheet's completeness is not yet confirmed:
-    // saving must still be refused (V05 review V5R2-3).
+    // Nothing but the sheet's completeness confirmation stands between two
+    // trusted rows and saving.
     await user.click(screen.getByRole("button", { name: "Aggiungi 2 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()
 
@@ -1884,7 +1840,6 @@ describe("StudentScan assistant paste", () => {
     expect(
       screen.getByText("data di nascita non valida (GG/MM/AAAA)"),
     ).toBeVisible()
-    expect(screen.getAllByText(/Riga scritta dall.assistente/)).toHaveLength(1)
 
     const lineInput = screen.getByLabelText("Testo riga 4")
     expect(lineInput).toHaveValue("Verdi;Luca;31/13/2010;;")
@@ -1895,7 +1850,6 @@ describe("StudentScan assistant paste", () => {
     expect(
       screen.queryByRole("heading", { name: /Righe non lette/ }),
     ).not.toBeInTheDocument()
-    expect(screen.getAllByText(/Riga scritta dall.assistente/)).toHaveLength(2)
     expect(screen.getByLabelText(/^Nome riga paste-4/)).toHaveValue("Luca")
   })
 
@@ -2015,17 +1969,17 @@ describe("StudentScan assistant paste", () => {
     expect(
       screen.queryByRole("heading", { name: /Righe non lette/ }),
     ).not.toBeInTheDocument()
-    // Both rows, neither checked yet, still show the assistant-row warning:
-    // the fix ran and added the second row rather than losing it.
-    expect(screen.getAllByText(/Riga scritta dall.assistente/)).toHaveLength(2)
+    // The fix ran and added the second row (its name field is visible)
+    // rather than losing it, and neither row needs its own check.
+    expect(screen.getByLabelText(/^Nome riga paste-4/)).toHaveValue("Paolo")
     // The fix ran, but nothing was saved: Enter never reached the form.
     expect(addStudents).not.toHaveBeenCalled()
   })
 
-  // V05 review V5-2 (blocker): the pasted birth date must always be shown so
-  // the operator can compare it against the sheet, even when the printed age
-  // and the date agree and every other field looks correct.
-  it("always shows the pasted birth date, and keeps it visible after Controlla", async () => {
+  // Age only, in every mode (owner decision 2026-09-28): the paste is
+  // trusted, so a printed age always wins over a disagreeing date, with no
+  // conflict banner and no date field ever shown for it.
+  it("takes the printed age over the pasted date without ever showing the date", async () => {
     const user = await openAssistant()
     fillAnswer(
       [
@@ -2038,23 +1992,27 @@ describe("StudentScan assistant paste", () => {
     await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
 
-    const date = screen.getByLabelText(/^Data di nascita riga/)
-    expect(date).toHaveValue("2010-03-12")
+    expect(screen.getByLabelText(/^Età riga/)).toHaveValue("16")
+    expect(
+      screen.queryByLabelText(/^Data di nascita riga/),
+    ).not.toBeInTheDocument()
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
-    expect(screen.getByLabelText(/^Data di nascita riga/)).toHaveValue(
-      "2010-03-12",
+    await user.click(screen.getByRole("button", { name: "Sono tutti" }))
+    await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
+    await waitFor(() =>
+      expect(addStudents).toHaveBeenCalledWith("course-1", [
+        expect.objectContaining({
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 16,
+        }),
+      ]),
     )
   })
 
   // V05 review V5-3: every remaining unread line counts as a row still to
   // review, and once no candidate needs a look the counter sends the
   // operator to the first unread line instead of doing nothing.
-  it("counts unread lines among rows to review and lets the counter reach one once every candidate is checked", async () => {
+  it("counts an unread line and the pending confirmation among rows to review, since the read row needs no check", async () => {
     const user = await openAssistant()
     fillAnswer(
       [
@@ -2072,15 +2030,9 @@ describe("StudentScan assistant paste", () => {
       name: "Vai alla prima riga da controllare",
     })
     const rowsToReview = () => reviewButton.querySelector("strong")?.textContent
-    // One row from the assistant still to check, one unread line, and the
-    // pending completeness confirmation (V05 review V5R2-3).
-    expect(rowsToReview()).toBe("3")
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
+    // The one row read cleanly is trusted and needs no check of its own: only
+    // the unread line and the pending completeness confirmation count here
+    // (V05 review V5R2-3).
     expect(rowsToReview()).toBe("2")
 
     await user.click(reviewButton)
@@ -2102,11 +2054,6 @@ describe("StudentScan assistant paste", () => {
     )
     await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
 
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
     expect(addStudents).not.toHaveBeenCalled()
@@ -2140,11 +2087,6 @@ describe("StudentScan assistant paste", () => {
     await screen.findByText(/risposta sembra interrotta/)
     // The truncated last line is moved to the unread lines; leave it out so
     // only the acknowledgement is left standing between here and saving.
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
     await user.click(screen.getByRole("button", { name: "Lascia fuori" }))
 
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
@@ -2184,11 +2126,6 @@ describe("StudentScan assistant paste", () => {
       screen.queryByText("Prima decidi le righe non lette."),
     ).not.toBeInTheDocument()
     // Still required: leaving out the line answers nothing on its own.
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
     expect(addStudents).not.toHaveBeenCalled()
   })
@@ -2209,16 +2146,6 @@ describe("StudentScan assistant paste", () => {
     await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 2",
-      }),
-    )
     await user.click(screen.getByRole("button", { name: "Sono tutti" }))
     expect(
       screen.queryByText(/sono tutti quelli del foglio\?/),
@@ -2337,13 +2264,6 @@ describe("StudentScan assistant paste", () => {
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
 
     expect(screen.getByText(/Possibile doppione di Marta Veldor/)).toBeVisible()
-
-    // Checking every row on its own is not enough to clear the flag.
-    for (const button of screen.getAllByRole("button", {
-      name: /^Segna controllata la riga di allievo \d+$/,
-    })) {
-      await user.click(button)
-    }
     await user.click(screen.getByRole("button", { name: "Aggiungi 2 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()
 
@@ -2358,10 +2278,11 @@ describe("StudentScan assistant paste", () => {
     await waitFor(() => expect(addStudents).toHaveBeenCalled())
   })
 
-  // V05 review V5R2-1: a printed age that disagrees with the pasted date must
-  // say what the date alone gives, and let the operator adopt it in one tap
-  // instead of retyping a number that is not even on the sheet.
-  it("explains a printed age that disagrees with the pasted date and fixes it with one tap", async () => {
+  // Age only, in every mode (owner decision 2026-09-28): the paste is
+  // trusted, so a printed age wins over a disagreeing date outright, with no
+  // conflict to explain and no "Correggi la data" button, since the date
+  // field itself is gone from the review.
+  it("takes the printed age over a disagreeing pasted date, with no conflict shown", async () => {
     const user = await openAssistant()
     fillAnswer(
       [
@@ -2374,60 +2295,29 @@ describe("StudentScan assistant paste", () => {
     await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
 
+    expect(screen.queryByText(/Età sul foglio/)).not.toBeInTheDocument()
     expect(
-      screen.getByText(
-        "Età sul foglio 15, dalla data 16 all’inizio del corso.",
-      ),
-    ).toBeVisible()
+      screen.queryByRole("button", { name: "Usa l’età dalla data" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Correggi la data" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText(/^Data di nascita riga/),
+    ).not.toBeInTheDocument()
     const age = screen.getByLabelText(/^Età riga/)
     expect(age).toHaveValue("15")
 
-    await user.click(
-      screen.getByRole("button", { name: "Usa l’età dalla data" }),
-    )
-
-    expect(age).toHaveValue("16")
-    expect(screen.queryByText(/Età sul foglio/)).not.toBeInTheDocument()
-
-    // The row no longer conflicts and can be checked and saved normally.
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
     await user.click(screen.getByRole("button", { name: "Sono tutti" }))
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
-    await waitFor(() => expect(addStudents).toHaveBeenCalled())
-  })
-
-  // V05 review V5F-3: the conflict's other way out. The printed age may be
-  // right and the date the misread one (a slipped year), so the operator
-  // must be able to reach the date field in one tap instead of only ever
-  // accepting the age the date implies.
-  it("moves focus to the date field when Correggi la data is tapped", async () => {
-    const user = await openAssistant()
-    fillAnswer(
-      [
-        ROSTER_PASTE_BEGIN,
-        ROSTER_PASTE_HEADER,
-        "Veldor;Marta;12/03/2010;15;",
-        ROSTER_PASTE_END,
-      ].join("\n"),
-    )
-    await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
-    await screen.findByRole("heading", { name: "Controlla prima di salvare" })
-
-    await user.click(screen.getByRole("button", { name: "Correggi la data" }))
-
     await waitFor(() =>
-      expect(screen.getByLabelText(/^Data di nascita riga/)).toHaveFocus(),
+      expect(addStudents).toHaveBeenCalledWith("course-1", [
+        expect.objectContaining({
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 15,
+        }),
+      ]),
     )
-    // Neither way out was taken: the conflict, and the printed age, remain.
-    expect(
-      screen.getByText(
-        "Età sul foglio 15, dalla data 16 all’inizio del corso.",
-      ),
-    ).toBeVisible()
   })
 
   // V05 review V5R2-2: a save refused only for a paste reason (an unread line
@@ -2446,11 +2336,6 @@ describe("StudentScan assistant paste", () => {
     )
     await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
 
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
 
@@ -2477,11 +2362,6 @@ describe("StudentScan assistant paste", () => {
     )
     await user.click(screen.getByRole("button", { name: "Leggi risposta" }))
     await screen.findByRole("heading", { name: "Controlla prima di salvare" })
-    await user.click(
-      screen.getByRole("button", {
-        name: "Segna controllata la riga di allievo 1",
-      }),
-    )
 
     await user.click(screen.getByRole("button", { name: "Aggiungi 1 allievo" }))
 
