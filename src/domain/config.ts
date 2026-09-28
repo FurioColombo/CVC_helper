@@ -25,18 +25,22 @@ export type BoatType = (typeof BOAT_TYPES)[number]
 /**
  * One class colour per boat model, used only for the crew-summary number and
  * card edge (owner's F3 C6 design, 2026-09-28); names stay ink everywhere.
- * The owner chose the five Deriva/Mezzi colours below; the three Cabinato
- * models are not yet part of a frozen mock, so they share a placeholder blue
- * distinct from Mezzi until the owner picks their own.
+ * The owner chose the five Deriva/Mezzi colours below. The three Cabinato
+ * models are not yet part of a frozen mock, so instead of inventing a colour
+ * each is the dominant fully-opaque ink pixel sampled from its own brand
+ * logo in public/brand/boats/ (the anti-aliased edge pixels were excluded),
+ * until the owner picks their own. All three already clear the 3:1 large-text
+ * contrast minimum on white (`config.test.ts` computes and checks this for
+ * every `BOAT_TYPES` entry), so none needed darkening.
  */
 export const BOAT_TYPE_CLASS_COLORS = {
   "RS Toura": "#157a73",
   "RS Quest": "#2f9e46",
   "Laser Vago": "#c96a12",
   "RS 500": "#d81c82",
-  "J/80": "#5b5fc7",
-  "First 25.7": "#5b5fc7",
-  "First 27": "#5b5fc7",
+  "J/80": "#00345c", // sampled ink of public/brand/boats/j80.png (rgb(0,52,92)); 12.8:1 on white
+  "First 25.7": "#000000", // sampled ink of public/brand/boats/first-25-7.png (pure black); 21:1 on white
+  "First 27": "#000000", // sampled ink of public/brand/boats/first-27.png (pure black, same wordmark ink as First 25.7); 21:1 on white
 } as const satisfies Record<BoatType, string>
 
 /** The Mezzi pseudo-group's class colour; Mezzi is a crew destination, not a `BoatType`. */

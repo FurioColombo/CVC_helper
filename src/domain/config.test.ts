@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  BOAT_TYPE_CLASS_COLORS,
   BOAT_TYPES,
   COURSE_CONFIG,
   DUTY_DAYS,
@@ -12,6 +13,45 @@ import {
   STUDENT_SIZES,
   VOLUNTEER_ROLES,
 } from "@/domain/config"
+
+/**
+ * A from-scratch, dependency-free WCAG 2.x contrast computation (relative
+ * luminance in https://www.w3.org/TR/WCAG21/#dfn-relative-luminance, ratio in
+ * https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio), kept independent of any
+ * application code so this test cannot pass merely by agreeing with a shared
+ * implementation bug.
+ */
+function hexToRgb(hex: string) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex)
+  if (!match) throw new Error(`Not a #rrggbb colour: ${hex}`)
+  return {
+    r: parseInt(match[1]!, 16),
+    g: parseInt(match[2]!, 16),
+    b: parseInt(match[3]!, 16),
+  }
+}
+
+function srgbChannelToLinear(channel8Bit: number) {
+  const channel = channel8Bit / 255
+  return channel <= 0.03928
+    ? channel / 12.92
+    : Math.pow((channel + 0.055) / 1.055, 2.4)
+}
+
+function relativeLuminance(hex: string) {
+  const { r, g, b } = hexToRgb(hex)
+  return (
+    0.2126 * srgbChannelToLinear(r) +
+    0.7152 * srgbChannelToLinear(g) +
+    0.0722 * srgbChannelToLinear(b)
+  )
+}
+
+function contrastRatio(hexA: string, hexB: string) {
+  const lighter = Math.max(relativeLuminance(hexA), relativeLuminance(hexB))
+  const darker = Math.min(relativeLuminance(hexA), relativeLuminance(hexB))
+  return (lighter + 0.05) / (darker + 0.05)
+}
 
 describe("canonical domain configuration", () => {
   it("contains the normative course boat defaults", () => {
@@ -101,5 +141,19 @@ describe("canonical domain configuration", () => {
     expect(SIZE_WARNING_MATRIX.S.M).toBe("none")
     expect(SIZE_WARNING_MATRIX.L.L).toBe("yellow")
     expect(SIZE_WARNING_MATRIX.XL.XL).toBe("red")
+  })
+
+  it("gives every boat type a class colour that reads on white (F3 C6)", () => {
+    // R06 (docs/post-mvp/06_DESIGN_RULEBOOK.md): "large text" (the bold
+    // ≥20px boat number the crew-summary card puts in this colour) needs at
+    // least 3:1 against its background — here the card's white (#ffffff).
+    for (const type of BOAT_TYPES) {
+      const color = BOAT_TYPE_CLASS_COLORS[type]
+      expect(color, `${type} has no class colour`).toMatch(/^#[0-9a-f]{6}$/i)
+      expect(
+        contrastRatio(color, "#ffffff"),
+        `${type} (${color}) on white`,
+      ).toBeGreaterThanOrEqual(3)
+    }
   })
 })

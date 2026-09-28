@@ -263,7 +263,13 @@ function announcementLineClassColor(line: AnnouncementLine) {
 
 function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
   return (
-    <div className="col-span-2 mt-4 flex items-center gap-2 first:mt-0">
+    // `col-span-full` (grid-column: 1 / -1), not a hardcoded `col-span-2`:
+    // the grid below now sizes its own column count from the text-size-aware
+    // `minmax(min(100%, …), 1fr)` track, so a fixed span of 2 would ask for a
+    // second column that does not exist at one column and force an implicit
+    // extra track wider than the viewport — the exact overflow this heading
+    // must never cause.
+    <div className="col-span-full mt-4 flex items-center gap-2 first:mt-0">
       {group.kind === "boat" ? (
         <BoatModelHeaderMark type={group.boatType} />
       ) : group.kind === "mezzi" ? (
@@ -327,7 +333,7 @@ function AnnouncementCrewCard({ line }: { line: AnnouncementLine }) {
               className="flex min-w-0 items-center gap-1"
               key={`${line.crewId}:${index}:${member.label}`}
             >
-              <span className="min-w-0 truncate text-[13.5px] leading-4 font-bold text-[#102f3b]">
+              <span className="min-w-0 break-words text-[13.5px] leading-4 font-bold [overflow-wrap:anywhere] text-[#102f3b]">
                 {member.label}
               </span>
               {member.isMinor && <MinorBadge />}
@@ -361,13 +367,13 @@ function AnnouncementPersonList({
   members: CrewSummaryLine["members"]
 }) {
   return (
-    <div className="col-span-2 flex flex-wrap gap-x-3 gap-y-1.5 rounded-[10px] border border-[#c8d7db] bg-white px-3 py-2.5">
+    <div className="col-span-full flex flex-wrap gap-x-3 gap-y-1.5 rounded-[10px] border border-[#c8d7db] bg-white px-3 py-2.5">
       {members.map((member, index) => (
         <span
           className="inline-flex min-w-0 items-center gap-1"
           key={`${member.label}:${index}`}
         >
-          <span className="text-[13.5px] font-bold text-[#102f3b]">
+          <span className="break-words text-[13.5px] font-bold [overflow-wrap:anywhere] text-[#102f3b]">
             {member.label}
           </span>
           {member.isMinor && <MinorBadge />}
@@ -386,10 +392,10 @@ function AnnouncementPersonList({
 
 function AnnouncementLabelList({ labels }: { labels: string[] }) {
   return (
-    <div className="col-span-2 flex flex-wrap gap-x-3 gap-y-1 rounded-[10px] border border-dashed border-[#c8d7db] bg-white px-3 py-2.5">
+    <div className="col-span-full flex flex-wrap gap-x-3 gap-y-1 rounded-[10px] border border-dashed border-[#c8d7db] bg-white px-3 py-2.5">
       {labels.map((label, index) => (
         <span
-          className="text-[13px] font-bold text-[#6b8790]"
+          className="break-words text-[13px] font-bold [overflow-wrap:anywhere] text-[#6b8790]"
           key={`${label}:${index}`}
         >
           {label}
@@ -413,7 +419,7 @@ function AnnouncementSectionHeading({
   icon: React.ReactNode
 }) {
   return (
-    <div className="col-span-2 mt-4 flex items-center gap-2">
+    <div className="col-span-full mt-4 flex items-center gap-2">
       <span className="flex items-center gap-1.5 text-[#0b526b]">
         {icon}
         <span className="text-[11px] font-black tracking-[0.08em] uppercase">
@@ -1017,7 +1023,7 @@ function AnnouncementView({
               Equipaggi
             </p>
             <h1
-              className="mt-0.5 truncate text-xl font-black leading-tight"
+              className="mt-0.5 break-words text-xl font-black leading-tight [overflow-wrap:anywhere]"
               id="crew-announcement-title"
             >
               {sessionLabel(sessionId)}
@@ -1047,7 +1053,20 @@ function AnnouncementView({
             Impossibile scaricare il riepilogo PNG. Riprova.
           </p>
         )}
-        <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+        {/*
+         * The column count follows the text size, not a fixed viewport
+         * breakpoint: `minmax(min(100%, 9rem), 1fr)` asks each track for at
+         * least 9rem, but never more than the container itself has. 9rem
+         * (144px) at the normal 16px root keeps exactly two columns from
+         * 326 CSS px of width upward — 390×844, the frozen C6 target, renders
+         * the same 176px-wide cards as before — while at the 320 CSS px/200%
+         * text accessibility stress (docs/post-mvp/06_DESIGN_RULEBOOK.md
+         * §5), 9rem is 288px, wider than the ~256px of content left after
+         * padding, so `min(100%, 9rem)` collapses to the container's own
+         * width and auto-fill places a single full-width column instead of
+         * squeezing two illegible ones.
+         */}
+        <div className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,9rem),1fr))]">
           {groups.map((group) => {
             const groupKey = `${group.kind}:${group.kind === "boat" ? group.boatType : ""}`
             return (
@@ -1055,7 +1074,7 @@ function AnnouncementView({
                 <AnnouncementGroupHeading group={group} />
                 {/* `contents` keeps the cards valid `<li>`s of a real list
                     without taking the `<ul>` a grid cell of its own — the
-                    two-column flow needs every card as a direct grid child. */}
+                    column flow needs every card as a direct grid child. */}
                 <ul className="contents">
                   {group.lines.map((line) => (
                     <AnnouncementCrewCard key={line.crewId} line={line} />
