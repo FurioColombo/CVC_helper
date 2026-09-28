@@ -256,7 +256,7 @@ wide font, so it fails locally on the old code the same way CI did.
 ## F2 — Allievi: assistant paste on phones, age only, one set of methods
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 The owner's 2026-09-28 feedback after using 0.3.0 (decisions in
 `docs/post-mvp/0_3_0_QUESTIONS.md`):

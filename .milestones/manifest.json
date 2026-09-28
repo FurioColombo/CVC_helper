@@ -624,7 +624,7 @@
     {
       "id": "F2",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/F2/verification.json",
