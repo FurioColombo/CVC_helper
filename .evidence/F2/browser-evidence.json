@@ -1,0 +1,66 @@
+{
+  "milestone": "F2",
+  "recordedBy": "npm run evidence -- F2 (scripts/record-verification.mjs), which ran npm run verify:all including the full browser suite; summarised from that run's output",
+  "sourceDigest": "be5c2afb8bc47808a764f98032f974d6a4a16f1e15c6d1b9c4d30bbbb468d610",
+  "runtime": "v24.21.0",
+  "command": "npm run verify:e2e (all Playwright projects, own server on a free port)",
+  "exitCode": 0,
+  "fullSuite": {
+    "passed": 186,
+    "skipped": 16,
+    "failed": 0
+  },
+  "journeys": {
+    "v05-assistant-paste": {
+      "passed": 12,
+      "failed": 0,
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-viewport",
+        "iphone-13-webkit-core"
+      ],
+      "covers": [
+        "the prompt asks for one code block and is copied in one tap; the phone tip sits beside the paste box",
+        "an answer with U+2028 separators and one joined into a single line are both read",
+        "pasted rows need no per-row check; unread lines and the Sono tutti count still gate saving",
+        "no request to a foreign host, no non-GET request, no pasted value in any URL",
+        "the empty Allievi page and the Allievi menu offer the same three methods; the assistant opens already expanded"
+      ]
+    },
+    "student-management-gate": {
+      "passed": 6,
+      "failed": 0,
+      "covers": [
+        "manual entry with the age only"
+      ]
+    },
+    "students": {
+      "passed": 4,
+      "failed": 0
+    },
+    "u02-students": {
+      "passed": 2,
+      "failed": 0
+    },
+    "student-scan": {
+      "passed": 2,
+      "failed": 0,
+      "covers": [
+        "camera review shows and saves the age, never a date"
+      ]
+    },
+    "s4-ruled-roster-scan": {
+      "passed": 6,
+      "failed": 0
+    },
+    "full-week": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 1,
+      "note": "the second project skips it by design"
+    }
+  },
+  "visualCheck": "Screenshots by the orchestrating session on a dev server (Pixel 7 viewport): the empty Allievi page, the Allievi menu, both scan screens, the assistant section opened from the empty page, the manual form with only the age. Not stored: synthetic data, reviewed in session.",
+  "physicalDevice": "Not run by an agent. On 2026-09-28 the owner reported the camera scan on their phone as very good; the phone paste that failed before F2 is theirs to retry at UG2.",
+  "recordedAt": "2026-09-28T20:30:02.935Z"
+}

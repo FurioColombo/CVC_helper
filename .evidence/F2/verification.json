@@ -1,0 +1,25 @@
+{
+  "milestone": "F2",
+  "status": "PASS",
+  "recordedAt": "2026-09-28T20:30:02.935Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.2.0",
+  "recorder": "scripts/record-verification.mjs@2",
+  "gitCommit": "9cf5470a309e8a5e461648324bcf0089559944c3",
+  "workingTreeClean": true,
+  "sourceDigest": "be5c2afb8bc47808a764f98032f974d6a4a16f1e15c6d1b9c4d30bbbb468d610",
+  "sourceFiles": 310,
+  "verificationScripts": [
+    "verify:all"
+  ],
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-09-28T19:51:10.891Z",
+      "durationMs": 2332037,
+      "exitCode": 0,
+      "outputTail": "[WebServer] 10:29:35 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:29:35 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 200 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (8.7s)\n[WebServer] 10:29:44 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:29:44 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 201 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › reads an answer whose line breaks were all turned into spaces (9.6s)\n[WebServer] 10:29:54 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:29:54 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 202 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:346:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (7.9s)\n\n  16 skipped\n  186 passed (32.3m)"
+    }
+  ]
+}

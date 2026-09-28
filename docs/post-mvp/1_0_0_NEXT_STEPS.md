@@ -91,6 +91,11 @@ replicate, so its rules must be settled first.
 
 ## Engineering follow-ups that do not need a decision
 
+- F2 limitations: a pasted surname or first name equal to a placeholder word
+  the parser refuses (for example `Nota`) is shown as unread and must be fixed
+  in place; the Allievi list computes every student's age while it draws, so
+  a corrupt stored birth date (no current path creates one) would break the
+  list, as it did the edit form before F2 guarded it.
 - The OCR worker and speech pipeline stay in memory for the whole session;
   measure memory on a low-end phone at UG2 and release them if needed.
 - Phone Back after adding a student manually from Scan returns to Scan; Back

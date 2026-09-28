@@ -1,0 +1,64 @@
+{
+  "milestone": "F2",
+  "reviewer": "Claude Code (Opus, orchestrating session) — self-review of the Sonnet implementation agents' work",
+  "reviewedCommits": ["6782e2d", "9cf5470"],
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "F2S-1",
+      "title": "An age conflict could not be resolved in favour of the sheet",
+      "evidence": "First implementation: ageConflictsWithStoredDate still required a typed age to match the read date, and the conflict box offered only 'Usa l’età dalla data' after the date field was removed.",
+      "disposition": "Fixed before 6782e2d: renamed ageConflictsWithReadDate; a typed or acknowledged age resolves the conflict; new 'Tieni l’età sul foglio (N)' button; component tests for the three ways out."
+    },
+    {
+      "id": "F2S-2",
+      "title": "The phone-copy tip was written into the assistant's prompt",
+      "evidence": "rosterPastePrompt ended with advice for the operator, sent to the assistant.",
+      "disposition": "Fixed before 6782e2d: removed from the prompt, shown beside the paste box."
+    },
+    {
+      "id": "F2S-3",
+      "title": "Joined-lines recovery trusted a possibly truncated last row",
+      "evidence": "Without FINE the rebuilt last row was read, unlike the normal path.",
+      "disposition": "Fixed before 6782e2d: reported as 'forse troncata: manca la riga FINE'; text before and after the block reported like the normal path; unit tests."
+    },
+    {
+      "id": "F2S-4",
+      "title": "The measured age accuracy needed the sheets' real course date",
+      "evidence": "The private harness first compared ages at its fixed reference date (2026-09-22) and reported 15 of 100 ages off by one year.",
+      "disposition": "Not a defect: every printed age on all five sheets fits one course date between 2026-07-30 and 2026-08-16; at 2026-08-03 the review's ages are 100 of 100 correct (0 wrong, 0 unflagged). Aggregates below."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "F2S-5",
+      "title": "Four e2e specs had been written with CRLF line endings",
+      "disposition": "Fixed before 6782e2d: converted to LF."
+    },
+    {
+      "id": "F2S-6",
+      "title": "The Allievi list computes every student's age during render; a corrupt stored date would break the list",
+      "disposition": "Pre-existing, needs corrupt data; recorded in docs/post-mvp/1_0_0_NEXT_STEPS.md."
+    }
+  ],
+  "independentReviewDispositions": {
+    "F2R-1": "Fixed in 9cf5470 (recovery only when row data follows the header on its line; otherwise the preface is reported and the normal path reads the rows); unit tests.",
+    "F2R-2": "Fixed in 9cf5470 (a valid age is validated first and the date is then ignored); unit tests; the V05 journey's fixable line changed to a bad date with no age.",
+    "F2R-3": "Fixed in 9cf5470 (isValidDateOnly guard; the form starts from the declared age or empty and a save drops the bad date); component test.",
+    "F2R-4": "Accepted as a known limitation: a surname equal to a placeholder word (e.g. 'Nota') is shown as unread and is fixed in place; recorded in docs/post-mvp/1_0_0_NEXT_STEPS.md."
+  },
+  "privatePhotoRegression": {
+    "note": "Five owner photographs, local only under ignored data/private; aggregate counts only.",
+    "before": "F1: screenFlags 50, screenRows 27, ready 90, extraReady 0, matched 100 of 100, missingStudents 0, wrongDob 0",
+    "after": "F2 (6782e2d): screenFlags 50, screenRows 27, ready 90, extraReady 0, matched 100 of 100, missingStudents 0, wrongDob 0; ages at the sheets' course date: 100 checked, 0 wrong, 0 wrong and unflagged"
+  },
+  "evidenceInspected": [
+    "Every diff of the implementation agents (6782e2d, 9cf5470) read before commit",
+    "Screenshots through a dev server: the empty Allievi page, the Allievi menu, both scan screens, the assistant opened from the empty page, the manual form with only the age",
+    "npm run evidence -- F2 on 6782e2d: verify:all exit 0 (839 unit tests; 186 browser tests passed, 16 skipped, 0 failed)",
+    "node scripts/run-e2e.mjs v05-assistant-paste, student-management-gate, students on the F2R fixes: 17 passed, 3 failed (the main V05 journey on its three projects, whose fixable line had a bad date next to a valid age, now read directly); after updating that line the V05 spec passed 12 of 12",
+    "Private harness on the five photographs (aggregates above)",
+    ".evidence/F2/independent-review.json"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "milestone": "F2",
+  "reviewer": "independent adversarial domain/data-integrity reviewer (Claude Sonnet subagent, did not write F2)",
+  "role": "domain prosecutor + data-integrity reviewer",
+  "reviewedCommit": "6782e2d",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "F2R-1",
+      "title": "Preface text merged onto the header's own line rejected the whole answer with a misleading reason, even when every row kept its line break",
+      "evidence": "src/capabilities/rosterPaste.ts parseRosterPaste inline-header branch always fed the rest of the header line to reconstructJoinedRows and gave up when it held no rows. Repro: 'Ecco il risultato: Cognome;Nome;Data di nascita;Età;Telefono' followed by two intact row lines and FINE gave no candidates and the reason 'gli a capo della risposta sono andati persi'.",
+      "impact": "Defeats F2 item 1 (a forgiving phone paste) for a plausible assistant slip, and sends the operator to a retry that fails the same way. Nothing saved wrong; visible and editable."
+    },
+    {
+      "id": "F2R-2",
+      "title": "A row's malformed, impossible or future date rejected a row whose printed age was valid",
+      "evidence": "parseRosterPasteRow validated the date before the age and returned ok:false on any date failure. 'Rossi;Anna;1/3/2010;15;', 'Rossi;Anna;30/02/2010;15;' and 'Rossi;Anna;01/01/2027;15;' were rejected although age 15 was given; the order predates F2.",
+      "impact": "Contradicts the age-only decision (the printed age wins, the date is scaffolding). Visible, not silent."
+    },
+    {
+      "id": "F2R-3",
+      "title": "A corrupt stored date of birth crashed the student edit form",
+      "evidence": "StudentManagement.tsx computed calculateStudentAge in the form's useState initializer; parseDateOnly throws for a value such as 'not-a-date'. Before F2 the form held the raw string and stayed editable.",
+      "impact": "Needs pre-existing corrupt data (no current entry path produces it), but made such a record uncorrectable through the UI."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "F2R-4",
+      "title": "The placeholder-word list rejects a real surname such as 'Nota'",
+      "evidence": "rosterPaste.ts PLACEHOLDER_NAMES and isPersonName: 'Nota;Anna;12/03/2010;;' is refused as 'cognome non valido'.",
+      "impact": "Narrow; the row stays visible and can be fixed in place."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md §8 and §17; 04_IMPLEMENTATION_PLAN.md F2; docs/post-mvp/0_3_0_QUESTIONS.md decisions of 2026-09-28; 01_PRODUCT_SPEC.md student, scan and assistant-paste sections",
+    "git diff 25efb27 6782e2d -- src tests 01_PRODUCT_SPEC.md, read in full",
+    "rosterPaste.ts, StudentScanAssistant.tsx and studentScanReview.ts read in full; src/domain/student.ts; every remaining dateOfBirth reference in src (duties, scenarios, invariants, persistence): age and minor logic go through calculateStudentAge/isStudentMinor, no new-student date path found",
+    "npx vitest run rosterPaste.test.ts and studentScanReview test: 84/84 passed; StudentManagement.test.tsx: 30/30 passed",
+    "Repository-wide grep for 'from-assistant' and 'ageConflictsWithStoredDate': none left",
+    "Four throwaway scripts against the real modules (header preface; duplicated header, apostrophes, dash-empty fields, spaced phones, missing trailing field, CRLF with U+2028, fence info strings, bold and backslash decoration, placeholder collision, age boundary; date-versus-age order; calculateStudentAge on a corrupt date)"
+  ]
+}

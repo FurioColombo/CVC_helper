@@ -28,8 +28,8 @@ lifecycle.
 | V03 | Complete by the owner's 2026-09-25 acceptance after Android and PC/Chrome use. Speech is borderline usable, slow and imperfect. Apple/iPhone was unavailable and remains untested; see `.evidence/V03/speech-device-evidence.json`. |
 | V05 | Complete. The assistant paste path sits after the camera and gallery: the app gives the prompt and the format, reads the pasted answer into the same review, shows every line it cannot read, needs a check of every pasted row and a count confirmation, and makes no network call. `.evidence/V05/` records `npm run verify` and the browser journey on three projects on the final source, a 32-case parser corpus with no silently wrong student, and ten independent reviews ending PASS. |
 | F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
-| F2 | Pending, active. The owner's 2026-09-28 Allievi feedback: the assistant paste from a phone, trusted pasted rows, age only in every mode, one set of ways to add students. |
-| F3 | Pending, after F2. Open faults as crew warnings; crew summary in one window, in a design the owner picks from five; a readable exported image; a Comandate summary. |
+| F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
+| F3 | Pending, active. Open faults as crew warnings; the crew summary in the owner's chosen design C6; a readable exported image; a Comandate summary. |
 | UG2 | Pending: F2, F3, the owner's remaining physical checks and the precondition below. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
 
 **Before the next Codex session (precondition for UG2):** the published
@@ -256,7 +256,7 @@ wide font, so it fails locally on the old code the same way CI did.
 ## F2 — Allievi: assistant paste on phones, age only, one set of methods
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 The owner's 2026-09-28 feedback after using 0.3.0 (decisions in
 `docs/post-mvp/0_3_0_QUESTIONS.md`):
@@ -288,6 +288,22 @@ The owner's 2026-09-28 feedback after using 0.3.0 (decisions in
 **Evidence:** `.evidence/F2/` verification, browser evidence (Pixel and iPhone
 sizes), self-review and one independent adversarial review (data integrity of
 the age change and the paste parser), zero blockers.
+
+**Closure.** Sonnet implementation agents wrote F2; Claude Code reviewed every
+diff and sent back four problems before the first commit: an age conflict
+could not be settled in favour of the sheet, the phone tip was inside the
+assistant's prompt, a joined answer without FINE trusted its last row, and
+four specs had CRLF endings. The independent review then found no blocker and
+three important findings, all fixed in `9cf5470`: a preface on the header's
+line no longer throws the answer away, a valid age wins over a bad date in the
+same row, and a corrupt stored birth date no longer crashes the edit form. The
+remaining limitations (a surname equal to a placeholder word, the Allievi list
+with a corrupt stored date) are in `docs/post-mvp/1_0_0_NEXT_STEPS.md`. On the
+five private photographs the review counts are unchanged from F1 (50 flags, 27
+rows to review, 90 ready, no non-student ready, 100 of 100 matched, none
+missing); every printed age fits one course date between 30 July and
+16 August 2026, and at that date all 100 reviewed ages are right. The owner
+retries the phone paste at UG2.
 
 ## F3 — Crew warnings, crew and Comandate summaries
 
