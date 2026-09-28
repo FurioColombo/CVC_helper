@@ -1686,6 +1686,212 @@ describe("CrewManagement", () => {
     expect(screen.getByText(/RS Quest 2 resta assegnata/)).toBeVisible()
   })
 
+  // Owner decision 2026-09-28 (0_3_0_QUESTIONS.md question 3): an open fault on
+  // the assigned boat is a yellow crew warning, kept separate from the red
+  // unavailable-boat one, and drawn from the same canonical
+  // `getBoatCrewWarnings` the domain tests already cover state by state.
+  it.each([
+    ["open", "Avaria aperta"],
+    ["reported", "Avaria comunicata"],
+  ] as const)(
+    "shows a yellow crew warning naming a %s fault on the assigned boat",
+    async (state, expectedTitle) => {
+      getFaults.mockResolvedValue([
+        {
+          id: "fault-1",
+          boatId: "boat-2",
+          description: "Timone duro",
+          state,
+          createdAt: "2026-08-29T10:00:00.000Z",
+          updatedAt: "2026-08-29T10:00:00.000Z",
+          boatType: "RS Quest",
+          boatNumber: "2",
+        },
+      ])
+      getPlan.mockResolvedValue(
+        stored({
+          crews: [
+            {
+              id: "crew-1",
+              sessionId: "sat-pm",
+              members: [],
+              destination: "boat",
+              boatId: "boat-2",
+            },
+          ],
+          landStudentIds: [],
+          selectedBoatIds: ["boat-2"],
+        }),
+      )
+      const user = userEvent.setup()
+      render(
+        <CrewManagement
+          course={COURSE}
+          onHome={vi.fn()}
+          onOpenStudent={vi.fn()}
+        />,
+      )
+
+      const warning = await screen.findByRole("button", {
+        name: "Avvisi equipaggio 1: giallo, 1",
+      })
+      await user.click(warning)
+      expect(screen.getByText(expectedTitle)).toBeVisible()
+      expect(screen.getByText(/RS Quest 2 · Timone duro/)).toBeVisible()
+    },
+  )
+
+  it("raises no crew warning for a resolved fault or a boat without faults", async () => {
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Timone duro",
+        state: "resolved",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+          {
+            id: "crew-2",
+            sessionId: "sat-pm",
+            members: [],
+            destination: "boat",
+            boatId: "boat-7",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2", "boat-7"],
+      }),
+    )
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole("button", {
+      name: "Destinazione equipaggio 1: RS Quest 2",
+    })
+    expect(
+      screen.queryByRole("button", { name: /Avvisi equipaggio/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("names every open fault under one yellow warning when a boat has several", async () => {
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Timone duro",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+      {
+        id: "fault-2",
+        boatId: "boat-2",
+        description: "Vela strappata",
+        state: "reported",
+        createdAt: "2026-08-29T11:00:00.000Z",
+        updatedAt: "2026-08-29T11:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    // One badge, not two: `getBoatCrewWarnings` reports one boat-fault reason
+    // per boat carrying the unresolved count, same as unavailable never
+    // doubling up.
+    const warning = await screen.findByRole("button", {
+      name: "Avvisi equipaggio 1: giallo, 1",
+    })
+    await user.click(warning)
+    expect(screen.getByText(/Timone duro/)).toBeVisible()
+    expect(screen.getByText(/Vela strappata/)).toBeVisible()
+  })
+
+  it("shows the fault warning for a crew of only a volunteer, unaffected by composition", async () => {
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Timone duro",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "volunteer-1", personType: "volunteer" }],
+            destination: "boat",
+            boatId: "boat-2",
+            capacity: 4,
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole("button", {
+      name: "Avvisi equipaggio 1: giallo, 1",
+    })
+  })
+
   it("does not offer previous-session copy in the first canonical session", async () => {
     render(
       <CrewManagement
@@ -2255,7 +2461,9 @@ describe("CrewManagement", () => {
     })
     expect(within(noExactBoatCrew).getByText("Carlo")).toBeVisible()
     expect(within(noExactBoatCrew).getByText("Vera ADV")).toBeVisible()
-    expect(within(noExactBoatCrew).getByText("Senza barca")).toBeVisible()
+    // No boat and no single inferred model: it groups under its own C6
+    // heading rather than repeating "Senza barca" on every one of its cards.
+    expect(within(view).getByText("Equipaggi senza barca")).toBeVisible()
     expect(
       within(view).queryByText(/Allievi sistemati|Barche in uscita|Avvisi/),
     ).not.toBeInTheDocument()
@@ -2265,6 +2473,136 @@ describe("CrewManagement", () => {
     await user.keyboard("{Escape}")
     expect(
       screen.queryByRole("dialog", { name: "Vista lettura equipaggi" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("groups the F3 C6 read view by boat model in canonical order, colours cards by class, uses the gommone Mezzi icon and marks an open-fault card", async () => {
+    getBoats.mockResolvedValue([
+      {
+        id: "boat-toura-1",
+        courseId: COURSE.id,
+        type: "RS Toura",
+        number: "1",
+        availability: "available",
+      },
+      BOATS[0]!, // RS Quest 2
+      {
+        id: "boat-500-5",
+        courseId: COURSE.id,
+        type: "RS 500",
+        number: "5",
+        availability: "available",
+      },
+    ])
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Timone duro",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-toura",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-1", personType: "student" }],
+            destination: "boat",
+            boatId: "boat-toura-1",
+          },
+          {
+            id: "crew-quest",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-2", personType: "student" }],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+          {
+            id: "crew-500",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-3", personType: "student" }],
+            destination: "boat",
+            boatId: "boat-500-5",
+          },
+          {
+            id: "crew-mezzi",
+            sessionId: "sat-pm",
+            members: [{ personId: "volunteer-1", personType: "volunteer" }],
+            destination: "mezzi",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-toura-1", "boat-2", "boat-500-5"],
+      }),
+    )
+    const user = userEvent.setup()
+    const { container } = render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    const view = screen.getByRole("dialog", {
+      name: "Vista lettura equipaggi",
+    })
+
+    // Canonical `BOAT_TYPES` order (RS Toura, RS Quest, Laser Vago, RS 500),
+    // Mezzi always last, regardless of crew-plan or boat-creation order.
+    const touraLogo = within(view).getByAltText("RS Toura")
+    const questLogo = within(view).getByAltText("RS Quest")
+    const rs500Logo = within(view).getByAltText("RS 500")
+    const mezziHeading = within(view).getByText("Mezzi")
+    const isBefore = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(isBefore(touraLogo, questLogo)).toBe(true)
+    expect(isBefore(questLogo, rs500Logo)).toBe(true)
+    expect(isBefore(rs500Logo, mezziHeading)).toBe(true)
+
+    // Class colour: the owner's table, used only for the number and edge.
+    const touraCard = within(view).getByRole("listitem", {
+      name: "Equipaggio 1, RS Toura 1",
+    })
+    expect(within(touraCard).getByText("1")).toHaveStyle({
+      color: "#157a73",
+    })
+    expect(touraCard.firstElementChild).toHaveStyle({
+      backgroundColor: "#157a73",
+    })
+    const rs500Card = within(view).getByRole("listitem", {
+      name: "Equipaggio 3, RS 500 5",
+    })
+    expect(within(rs500Card).getByText("5")).toHaveStyle({
+      color: "#d81c82",
+    })
+
+    // The owner's new gommone icon, not the old placeholder, in both the
+    // Mezzi heading and its card's number column.
+    expect(
+      container.querySelectorAll('path[d^="M7 6.5H15"]').length,
+    ).toBeGreaterThanOrEqual(2)
+    expect(container.querySelector('path[d="M4 9h20v12H4z"]')).toBeNull()
+
+    // The open fault on RS Quest 2 is a yellow warning on its card, same
+    // place and style as an unavailable-boat warning would be.
+    const questCard = within(view).getByRole("listitem", {
+      name: "Equipaggio 2, RS Quest 2",
+    })
+    expect(
+      within(questCard).getByRole("img", { name: "Avviso equipaggio: giallo" }),
+    ).toBeVisible()
+    expect(
+      within(touraCard).queryByRole("img", { name: /Avviso equipaggio/ }),
     ).not.toBeInTheDocument()
   })
 

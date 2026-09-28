@@ -108,7 +108,12 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
     name: "Vista lettura equipaggi",
   })
   await expect(firstReadView.getByText("Aldo", { exact: true })).toBeVisible()
-  await expect(firstReadView.getByText("Equipaggio vuoto")).toBeVisible()
+  // Aldo's own crew is occupied but boat-less ("Equipaggi senza barca"
+  // group); crew 2 is empty and unassigned, so it is the exact-text
+  // "Senza barca" item in the trailing empty section.
+  await expect(
+    firstReadView.getByText("Senza barca", { exact: true }),
+  ).toBeVisible()
   await firstReadView
     .getByRole("button", { name: "Chiudi vista lettura" })
     .click()
@@ -139,10 +144,11 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
     name: "Equipaggio 1, RS Quest 2",
   })
   await expect(assignedRow.getByText("Aldo")).toBeVisible()
-  const emptyRow = readView.getByRole("listitem", {
-    name: "Equipaggio 2, senza barca",
-  })
-  await expect(emptyRow.getByText("Equipaggio vuoto")).toBeVisible()
+  // Crew 2 stays empty and unassigned: it joins the unused-boat "RS Quest 7"
+  // in the trailing "Barche ed equipaggi vuoti" section, with its own
+  // inferred-model label rather than a per-crew row.
+  await expect(readView.getByText("RS Quest · Senza barca")).toBeVisible()
+  await expect(readView.getByText("RS Quest 7")).toBeVisible()
   await expect(readView).not.toContainText(
     /Allievi sistemati|Barche in uscita|Avvisi/,
   )

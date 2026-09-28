@@ -512,6 +512,10 @@ Other strong warnings include an active student missing from crew/A terra and a
 D1 morning-duty student who is not A terra. A duty assignment alone does not
 automatically move a student A terra.
 
+A crew assigned a boat with an open or communicated (unresolved) fault shows a
+yellow warning naming the fault, kept as its own boat reason distinct from an
+unavailable-boat red warning (owner decision 2026-09-28).
+
 ### 7.5 Read/announcement view
 
 Announcement mode removes editing and decision-support detail. Each compact row

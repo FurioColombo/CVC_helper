@@ -96,7 +96,11 @@ export function getBoatCrewWarnings({
   return warnings
 }
 
-export function getCrewWarningSummary(warnings: readonly CrewWarningReason[]) {
+export function getCrewWarningSummary(warnings: readonly CrewWarningReason[]): {
+  severity: "red" | "yellow" | null
+  crewReasons: Exclude<CrewWarning, { kind: "boat-unavailable" }>[]
+  boatReasons: BoatCrewWarning[]
+} {
   const crewReasons = warnings.filter(
     (warning): warning is Exclude<CrewWarning, { kind: "boat-unavailable" }> =>
       warning.kind !== "boat-unavailable" && warning.kind !== "boat-fault",

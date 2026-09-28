@@ -5,14 +5,18 @@ import {
   CircleMinus,
   Copy,
   Info,
+  PersonStanding,
   Plus,
+  Sailboat,
   ShipWheel,
   Trash2,
   TriangleAlert,
+  Users,
   X,
   UsersRound,
 } from "lucide-react"
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -31,13 +35,20 @@ import {
   VolunteerRoleBadge,
   type DutyMarker,
 } from "@/components/PersonBadges"
-import { BoatModelMark } from "@/features/boats/BoatIdentity"
+import {
+  BoatModelHeaderMark,
+  BoatModelMark,
+  GommoneIcon,
+} from "@/features/boats/BoatIdentity"
 import { getCrewDisplayColumns } from "@/features/crews/crewDisplayPreference"
 import {
   downloadCrewSummaryPng,
   type CrewSummaryLine,
 } from "@/features/crews/crewSummaryImage"
 import {
+  BOAT_TYPES,
+  BOAT_TYPE_CLASS_COLORS,
+  MEZZI_CLASS_COLOR,
   SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
   SESSION_SMONTANTE_DUTY_DAY,
@@ -72,10 +83,12 @@ import {
   type SessionBoatDisplayState,
 } from "@/domain/crews"
 import {
+  getBoatCrewWarnings,
   getCrewWarnings,
-  getWorstCrewWarningSeverity,
+  getCrewWarningSummary,
   type CrewHistoryEntry,
   type CrewWarning,
+  type CrewWarningReason,
 } from "@/domain/crewWarnings"
 import {
   validateBoatRecords,
@@ -195,11 +208,222 @@ function sessionBoatStateLabel(
 }
 
 type AnnouncementLine = {
+  crewId: string
   crewNumber: number
   destination: CrewPlan["crews"][number]["destination"]
   boat: BoatRecord | null
   inferredBoatType: BoatRecord["type"] | null
   members: CrewSummaryLine["members"]
+  warning: { severity: "red" | "yellow"; count: number } | null
+}
+
+/**
+ * F3 C6 target (owner, 2026-09-28): occupied crews group by boat model under
+ * the class logo, in canonical `BOAT_TYPES` order; a crew with people but no
+ * boat yet falls back to its own group so it still reads as an occupied
+ * outing; Mezzi is always last. Empty crews are not occupied groups — they
+ * join unused boats in the "Barche ed equipaggi vuoti" section below.
+ */
+type AnnouncementGroup =
+  | { kind: "boat"; boatType: BoatRecord["type"]; lines: AnnouncementLine[] }
+  | { kind: "unassigned"; lines: AnnouncementLine[] }
+  | { kind: "mezzi"; lines: AnnouncementLine[] }
+
+function groupOccupiedAnnouncementLines(
+  lines: readonly AnnouncementLine[],
+): AnnouncementGroup[] {
+  const occupied = lines.filter((line) => line.members.length > 0)
+  const groups: AnnouncementGroup[] = []
+  for (const boatType of BOAT_TYPES) {
+    const boatLines = occupied.filter(
+      (line) => line.destination === "boat" && line.boat?.type === boatType,
+    )
+    if (boatLines.length > 0)
+      groups.push({ kind: "boat", boatType, lines: boatLines })
+  }
+  const unassignedLines = occupied.filter(
+    (line) =>
+      line.destination !== "mezzi" &&
+      !(line.destination === "boat" && line.boat),
+  )
+  if (unassignedLines.length > 0) {
+    groups.push({ kind: "unassigned", lines: unassignedLines })
+  }
+  const mezziLines = occupied.filter((line) => line.destination === "mezzi")
+  if (mezziLines.length > 0) groups.push({ kind: "mezzi", lines: mezziLines })
+  return groups
+}
+
+/** The class colour a card's own group uses, straight from the line. */
+function announcementLineClassColor(line: AnnouncementLine) {
+  if (line.destination === "mezzi") return MEZZI_CLASS_COLOR
+  if (line.boat) return BOAT_TYPE_CLASS_COLORS[line.boat.type]
+  return "#6b8790"
+}
+
+function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
+  return (
+    <div className="col-span-2 mt-4 flex items-center gap-2 first:mt-0">
+      {group.kind === "boat" ? (
+        <BoatModelHeaderMark type={group.boatType} />
+      ) : group.kind === "mezzi" ? (
+        <span className="flex items-center gap-1.5 text-[#0b526b]">
+          <GommoneIcon className="size-[17px]" />
+          <span className="text-[11px] font-black tracking-[0.08em] uppercase">
+            Mezzi
+          </span>
+        </span>
+      ) : (
+        <span className="text-[11px] font-black tracking-[0.08em] text-[#0b526b] uppercase">
+          Equipaggi senza barca
+        </span>
+      )}
+      <span aria-hidden="true" className="h-px flex-1 bg-[#dbe4e6]" />
+      <span className="text-[9px] font-bold text-[#6b8790]">
+        {group.lines.length}
+      </span>
+    </div>
+  )
+}
+
+function AnnouncementCrewCard({ line }: { line: AnnouncementLine }) {
+  const classColor = announcementLineClassColor(line)
+  return (
+    <li
+      aria-label={`Equipaggio ${line.crewNumber}, ${
+        line.boat
+          ? `${line.boat.type} ${line.boat.number}`
+          : line.destination === "mezzi"
+            ? "Mezzi"
+            : "senza barca"
+      }`}
+      className="relative flex min-w-0 overflow-hidden rounded-[10px] border border-[#c8d7db] bg-white"
+    >
+      <span
+        aria-hidden="true"
+        className="w-1 shrink-0"
+        style={{ backgroundColor: classColor }}
+      />
+      <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
+        <span className="w-[26px] shrink-0 pt-px" style={{ color: classColor }}>
+          {line.boat ? (
+            <span className="block text-xl leading-none font-black tracking-tight tabular-nums">
+              {line.boat.number}
+            </span>
+          ) : line.destination === "mezzi" ? (
+            <GommoneIcon className="mt-px block size-[15px]" />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="block text-xl leading-none font-black"
+            >
+              –
+            </span>
+          )}
+        </span>
+        <div className="grid min-w-0 flex-1 gap-px">
+          {line.members.map((member, index) => (
+            <div
+              className="flex min-w-0 items-center gap-1"
+              key={`${line.crewId}:${index}:${member.label}`}
+            >
+              <span className="min-w-0 truncate text-[13.5px] leading-4 font-bold text-[#102f3b]">
+                {member.label}
+              </span>
+              {member.isMinor && <MinorBadge />}
+              {member.duty && <DutyBadge kind={member.duty} />}
+              {member.role && (
+                <VolunteerRoleBadge
+                  className="h-[13px] min-w-[13px] rounded-[4px] px-[3px] text-[9px] leading-none"
+                  role={member.role}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {line.warning && (
+        <span
+          aria-label={`Avviso equipaggio: ${line.warning.severity === "red" ? "rosso" : "giallo"}`}
+          className={`absolute top-2 right-2 grid size-4 shrink-0 place-items-center rounded-[7px] ${line.warning.severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
+          role="img"
+        >
+          <TriangleAlert aria-hidden="true" className="size-2.5" />
+        </span>
+      )}
+    </li>
+  )
+}
+
+function AnnouncementPersonList({
+  members,
+}: {
+  members: CrewSummaryLine["members"]
+}) {
+  return (
+    <div className="col-span-2 flex flex-wrap gap-x-3 gap-y-1.5 rounded-[10px] border border-[#c8d7db] bg-white px-3 py-2.5">
+      {members.map((member, index) => (
+        <span
+          className="inline-flex min-w-0 items-center gap-1"
+          key={`${member.label}:${index}`}
+        >
+          <span className="text-[13.5px] font-bold text-[#102f3b]">
+            {member.label}
+          </span>
+          {member.isMinor && <MinorBadge />}
+          {member.duty && <DutyBadge kind={member.duty} />}
+          {member.role && (
+            <VolunteerRoleBadge
+              className="h-[13px] min-w-[13px] rounded-[4px] px-[3px] text-[9px] leading-none"
+              role={member.role}
+            />
+          )}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function AnnouncementLabelList({ labels }: { labels: string[] }) {
+  return (
+    <div className="col-span-2 flex flex-wrap gap-x-3 gap-y-1 rounded-[10px] border border-dashed border-[#c8d7db] bg-white px-3 py-2.5">
+      {labels.map((label, index) => (
+        <span
+          className="text-[13px] font-bold text-[#6b8790]"
+          key={`${label}:${index}`}
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * A section below the boat groups: icon, uppercase label, thin rule and
+ * count, same grammar as a boat-model group heading but never a boat colour.
+ */
+function AnnouncementSectionHeading({
+  label,
+  count,
+  icon,
+}: {
+  label: string
+  count: number
+  icon: React.ReactNode
+}) {
+  return (
+    <div className="col-span-2 mt-4 flex items-center gap-2">
+      <span className="flex items-center gap-1.5 text-[#0b526b]">
+        {icon}
+        <span className="text-[11px] font-black tracking-[0.08em] uppercase">
+          {label}
+        </span>
+      </span>
+      <span aria-hidden="true" className="h-px flex-1 bg-[#dbe4e6]" />
+      <span className="text-[9px] font-bold text-[#6b8790]">{count}</span>
+    </div>
+  )
 }
 
 function BoatMark({
@@ -745,20 +969,35 @@ function CrewCopyConfirmDialog({
   )
 }
 
+/**
+ * F3 C6 read view (owner target, 2026-09-28): occupied crews grouped by boat
+ * model under the class logo, two columns, no "Equipaggio N" label. The
+ * sections the summary already had — available people, A terra, empty boats
+ * — follow the same visual language after the boat groups, so the primary
+ * "who sails where" content is what a hurried reader sees first and the
+ * 13-crew stress case still fits one screen without scrolling.
+ */
 function AnnouncementView({
   sessionId,
   lines,
+  availableMembers,
+  landMembers,
+  emptyLabels,
   onClose,
   onDownloadImage,
   imageExportState,
 }: {
   sessionId: SessionId
   lines: AnnouncementLine[]
+  availableMembers: CrewSummaryLine["members"]
+  landMembers: CrewSummaryLine["members"]
+  emptyLabels: string[]
   onClose: () => void
   onDownloadImage: () => void
   imageExportState: "idle" | "busy" | "error"
 }) {
   const dialogRef = useDialogFocus<HTMLElement>()
+  const groups = groupOccupiedAnnouncementLines(lines)
 
   return (
     <section
@@ -771,14 +1010,14 @@ function AnnouncementView({
       ref={dialogRef}
       role="dialog"
     >
-      <div className="mx-auto min-h-full w-full max-w-2xl px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <header className="flex items-center justify-between gap-4 border-b border-[#c8d7db] pb-4">
-          <div>
-            <p className="text-xs font-black tracking-[0.16em] uppercase">
+      <div className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <header className="flex items-center justify-between gap-3 border-b border-[#c8d7db] pb-2.5">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black tracking-[0.14em] uppercase">
               Equipaggi
             </p>
             <h1
-              className="mt-1 text-2xl font-black"
+              className="mt-0.5 truncate text-xl font-black leading-tight"
               id="crew-announcement-title"
             >
               {sessionLabel(sessionId)}
@@ -786,15 +1025,15 @@ function AnnouncementView({
           </div>
           <button
             aria-label="Chiudi vista lettura"
-            className="grid size-12 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
             onClick={onClose}
             type="button"
           >
-            <X aria-hidden="true" className="size-6" />
+            <X aria-hidden="true" className="size-5" />
           </button>
         </header>
         <button
-          className="mt-3 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+          className="mt-2.5 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
           disabled={imageExportState === "busy"}
           onClick={onDownloadImage}
           type="button"
@@ -808,48 +1047,56 @@ function AnnouncementView({
             Impossibile scaricare il riepilogo PNG. Riprova.
           </p>
         )}
-        <ol className="mt-2 divide-y divide-[#dbe4e6]">
-          {lines.map((line) => (
-            <li
-              aria-label={`Equipaggio ${line.crewNumber}, ${line.boat ? `${line.boat.type} ${line.boat.number}` : line.destination === "mezzi" ? "Mezzi" : "senza barca"}`}
-              className="grid min-w-0 grid-cols-[3.25rem_minmax(5.5rem,7rem)_minmax(0,1fr)] items-center gap-3 py-4"
-              key={line.crewNumber}
-            >
-              <div className="grid min-h-14 place-items-center border-r border-[#dbe4e6] pr-3 text-[#487080]">
-                <span className="text-[0.65rem] font-bold uppercase">Eq.</span>
-                <strong className="text-xl font-black tabular-nums text-[#102f3b]">
-                  {line.crewNumber}
-                </strong>
-              </div>
-              <div className="min-w-0 text-center">
-                <BoatSummary
-                  boat={line.boat}
-                  destination={line.destination}
-                  inferredType={line.inferredBoatType}
-                  large
-                />
-              </div>
-              <div className="min-w-0 text-[1.05rem] leading-6 font-black tracking-tight min-[390px]:text-[1.2rem] min-[390px]:leading-7">
-                {line.members.length > 0 ? (
-                  line.members.map((member, index) => (
-                    <span
-                      className="flex min-w-0 flex-wrap items-center gap-x-2 break-words"
-                      key={`${line.crewNumber}:${index}:${member.label}`}
-                    >
-                      <span className="min-w-0">{member.label}</span>
-                      {member.isMinor && <MinorBadge />}
-                      {member.duty && <DutyBadge kind={member.duty} />}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-base font-bold text-[#6b8790]">
-                    Equipaggio vuoto
-                  </span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
+        <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+          {groups.map((group) => {
+            const groupKey = `${group.kind}:${group.kind === "boat" ? group.boatType : ""}`
+            return (
+              <Fragment key={groupKey}>
+                <AnnouncementGroupHeading group={group} />
+                {/* `contents` keeps the cards valid `<li>`s of a real list
+                    without taking the `<ul>` a grid cell of its own — the
+                    two-column flow needs every card as a direct grid child. */}
+                <ul className="contents">
+                  {group.lines.map((line) => (
+                    <AnnouncementCrewCard key={line.crewId} line={line} />
+                  ))}
+                </ul>
+              </Fragment>
+            )
+          })}
+          {availableMembers.length > 0 && (
+            <>
+              <AnnouncementSectionHeading
+                count={availableMembers.length}
+                icon={<Users aria-hidden="true" className="size-[15px]" />}
+                label="Persone disponibili"
+              />
+              <AnnouncementPersonList members={availableMembers} />
+            </>
+          )}
+          {landMembers.length > 0 && (
+            <>
+              <AnnouncementSectionHeading
+                count={landMembers.length}
+                icon={
+                  <PersonStanding aria-hidden="true" className="size-[15px]" />
+                }
+                label="A terra"
+              />
+              <AnnouncementPersonList members={landMembers} />
+            </>
+          )}
+          {emptyLabels.length > 0 && (
+            <>
+              <AnnouncementSectionHeading
+                count={emptyLabels.length}
+                icon={<Sailboat aria-hidden="true" className="size-[15px]" />}
+                label="Barche ed equipaggi vuoti"
+              />
+              <AnnouncementLabelList labels={emptyLabels} />
+            </>
+          )}
+        </div>
       </div>
     </section>
   )
@@ -1160,9 +1407,9 @@ export function CrewManagement({
   )
   const warningsByCrew = useMemo(() => {
     const sizes = new Map(students.map(({ id, size }) => [id, size] as const))
-    return new Map(
+    return new Map<string, CrewWarningReason[]>(
       plan.crews.map((crew) => {
-        const warnings = getCrewWarnings(
+        const warnings: CrewWarningReason[] = getCrewWarnings(
           {
             crewId: crew.id,
             sessionId,
@@ -1174,22 +1421,22 @@ export function CrewManagement({
           sizes,
         )
         const boat = crew.boatId ? boatById.get(crew.boatId) : undefined
-        if (
-          crew.destination === "boat" &&
-          boat?.availability === "unavailable"
-        ) {
-          warnings.push({
-            key: `boat-unavailable:${boat.id}`,
-            kind: "boat-unavailable",
-            severity: "red",
-            boatId: boat.id,
-            boatLabel: `${boat.type} ${boat.number}`,
-          })
+        if (crew.destination === "boat" && boat) {
+          warnings.push(
+            ...getBoatCrewWarnings({
+              boatId: boat.id,
+              boatLabel: `${boat.type} ${boat.number}`,
+              availability: boat.availability,
+              faultStates: (openFaultsByBoat.get(boat.id) ?? []).map(
+                ({ state }) => state,
+              ),
+            }),
+          )
         }
         return [crew.id, warnings]
       }),
     )
-  }, [boatById, history, plan.crews, sessionId, students])
+  }, [boatById, history, openFaultsByBoat, plan.crews, sessionId, students])
 
   function boatLabel(boatId: string) {
     const boat = boatById.get(boatId)
@@ -1291,39 +1538,86 @@ export function CrewManagement({
     ),
   )
   const announcementLines: AnnouncementLine[] = plan.crews.map(
-    (crew, index) => ({
-      crewNumber: index + 1,
-      destination: crew.destination,
-      boat: crew.boatId ? (boatById.get(crew.boatId) ?? null) : null,
-      inferredBoatType:
-        selectedBoatTypes.length === 1 ? selectedBoatTypes[0]! : null,
-      members: crew.members.map(summaryMember),
-    }),
+    (crew, index) => {
+      const summary = getCrewWarningSummary(warningsByCrew.get(crew.id) ?? [])
+      return {
+        crewId: crew.id,
+        crewNumber: index + 1,
+        destination: crew.destination,
+        boat: crew.boatId ? (boatById.get(crew.boatId) ?? null) : null,
+        inferredBoatType:
+          selectedBoatTypes.length === 1 ? selectedBoatTypes[0]! : null,
+        members: crew.members.map(summaryMember),
+        warning: summary.severity
+          ? {
+              severity: summary.severity,
+              count: summary.crewReasons.length + summary.boatReasons.length,
+            }
+          : null,
+      }
+    },
   )
+
+  // Shared by the on-screen read view and the PNG export, so both agree on
+  // who counts as available, who is A terra and which selected boats never
+  // got a crew — the export keeps its own current anatomy (second half of
+  // F3), but not its own copy of this bookkeeping.
+  const assignedPeople = new Set(
+    plan.crews.flatMap((crew) =>
+      crew.members.map((person) => `${person.personType}:${person.personId}`),
+    ),
+  )
+  const availableMembers = [
+    ...activeStudents
+      .filter(
+        (student) =>
+          !assignedPeople.has(`student:${student.id}`) &&
+          !plan.landStudentIds.includes(student.id),
+      )
+      .map((student) =>
+        summaryMember({ personType: "student", personId: student.id }),
+      ),
+    ...volunteers
+      .filter((volunteer) => !assignedPeople.has(`volunteer:${volunteer.id}`))
+      .map((volunteer) =>
+        summaryMember({ personType: "volunteer", personId: volunteer.id }),
+      ),
+  ]
+  const landMembers = plan.landStudentIds
+    .filter((id) => studentById.has(id))
+    .map((id) => summaryMember({ personType: "student", personId: id }))
+  const representedBoatIds = new Set(
+    plan.crews.map((crew) => crew.boatId).filter((id) => id !== null),
+  )
+  const emptyCrewLabels = announcementLines
+    .filter((line) => line.members.length === 0)
+    .map((line) =>
+      line.destination === "mezzi"
+        ? "Mezzi"
+        : line.boat
+          ? `${line.boat.type} ${line.boat.number}`
+          : line.inferredBoatType
+            ? `${line.inferredBoatType} · Senza barca`
+            : "Senza barca",
+    )
+  const emptyBoatLabels = plan.selectedBoatIds
+    .filter((boatId) => !representedBoatIds.has(boatId))
+    .map((boatId) => boatById.get(boatId))
+    // A boat can be selected for the outing yet later marked unavailable at
+    // the fleet level without ever being linked to a crew. It still is not a
+    // free boat ready to use, so say so instead of listing it as if it were.
+    .map((boat) =>
+      boat
+        ? boat.availability === "unavailable"
+          ? `${boat.type} ${boat.number} · Non disponibile`
+          : `${boat.type} ${boat.number}`
+        : null,
+    )
+    .filter((label): label is string => label !== null)
+  const emptyAnnouncementLabels = [...emptyCrewLabels, ...emptyBoatLabels]
 
   async function downloadAnnouncementImage() {
     if (imageExportState === "busy") return
-    const assigned = new Set(
-      plan.crews.flatMap((crew) =>
-        crew.members.map((person) => `${person.personType}:${person.personId}`),
-      ),
-    )
-    const availableMembers = [
-      ...activeStudents
-        .filter(
-          (student) =>
-            !assigned.has(`student:${student.id}`) &&
-            !plan.landStudentIds.includes(student.id),
-        )
-        .map((student) =>
-          summaryMember({ personType: "student", personId: student.id }),
-        ),
-      ...volunteers
-        .filter((volunteer) => !assigned.has(`volunteer:${volunteer.id}`))
-        .map((volunteer) =>
-          summaryMember({ personType: "volunteer", personId: volunteer.id }),
-        ),
-    ]
     const summaryLines: CrewSummaryLine[] = [
       { category: "available", members: availableMembers },
       ...announcementLines.map((line): CrewSummaryLine => ({
@@ -1345,31 +1639,11 @@ export function CrewManagement({
         members: line.members,
       })),
     ]
-    const landMembers = plan.landStudentIds
-      .filter((id) => studentById.has(id))
-      .map((id) => summaryMember({ personType: "student", personId: id }))
     if (landMembers.length > 0) {
       summaryLines.push({ category: "a-terra", members: landMembers })
     }
-    const representedBoats = new Set(
-      plan.crews.map((crew) => crew.boatId).filter((id) => id !== null),
-    )
-    for (const boatId of plan.selectedBoatIds) {
-      if (representedBoats.has(boatId)) continue
-      const boat = boatById.get(boatId)
-      if (!boat) continue
-      // A boat can be selected for the outing yet later marked unavailable at
-      // the fleet level without ever being linked to a crew. It still is not
-      // a free boat ready to use, so say so instead of listing it as if it
-      // were — matching the "Non disponibile" wording used everywhere else.
-      summaryLines.push({
-        category: "empty",
-        destination:
-          boat.availability === "unavailable"
-            ? `${boat.type} ${boat.number} · Non disponibile`
-            : `${boat.type} ${boat.number}`,
-        members: [],
-      })
+    for (const label of emptyBoatLabels) {
+      summaryLines.push({ category: "empty", destination: label, members: [] })
     }
     setImageExportState("busy")
     try {
@@ -2003,7 +2277,10 @@ export function CrewManagement({
     <>
       {readMode && (
         <AnnouncementView
+          availableMembers={availableMembers}
+          emptyLabels={emptyAnnouncementLabels}
           imageExportState={imageExportState}
+          landMembers={landMembers}
           lines={announcementLines}
           onDownloadImage={downloadAnnouncementImage}
           onClose={() => setReadMode(false)}
@@ -2826,29 +3103,11 @@ export function CrewManagement({
                         <div className="flex shrink-0 items-center gap-1">
                           {(() => {
                             const warnings = warningsByCrew.get(crew.id) ?? []
-                            const crewWarnings = warnings.filter(
-                              (warning) => warning.kind !== "boat-unavailable",
-                            )
-                            const boatWarnings = warnings.filter(
-                              (warning) => warning.kind === "boat-unavailable",
-                            )
-                            const faultsForCrew =
-                              crew.destination === "boat" && crew.boatId
-                                ? (openFaultsByBoat.get(crew.boatId) ?? [])
-                                : []
-                            const hasRed =
-                              getWorstCrewWarningSeverity(crewWarnings) ===
-                                "red" || boatWarnings.length > 0
-                            const severity = hasRed
-                              ? "red"
-                              : crewWarnings.length > 0 ||
-                                  faultsForCrew.length > 0
-                                ? "yellow"
-                                : null
+                            const summary = getCrewWarningSummary(warnings)
+                            const severity = summary.severity
                             const count =
-                              crewWarnings.length +
-                              boatWarnings.length +
-                              faultsForCrew.length
+                              summary.crewReasons.length +
+                              summary.boatReasons.length
                             if (!severity) return null
                             return (
                               <button
@@ -2930,24 +3189,31 @@ export function CrewManagement({
                         >
                           {(() => {
                             const warnings = warningsByCrew.get(crew.id) ?? []
-                            const crewWarnings = warnings.filter(
-                              (warning) => warning.kind !== "boat-unavailable",
-                            )
-                            const boatWarnings = warnings.filter(
-                              (warning) => warning.kind === "boat-unavailable",
+                            const summary = getCrewWarningSummary(warnings)
+                            const boatUnavailableWarnings =
+                              summary.boatReasons.filter(
+                                (
+                                  warning,
+                                ): warning is Extract<
+                                  CrewWarning,
+                                  { kind: "boat-unavailable" }
+                                > => warning.kind === "boat-unavailable",
+                              )
+                            const hasFaultWarning = summary.boatReasons.some(
+                              (warning) => warning.kind === "boat-fault",
                             )
                             const faultsForCrew =
-                              crew.destination === "boat" && crew.boatId
+                              hasFaultWarning && crew.boatId
                                 ? (openFaultsByBoat.get(crew.boatId) ?? [])
                                 : []
                             return (
                               <>
-                                {crewWarnings.length > 0 && (
+                                {summary.crewReasons.length > 0 && (
                                   <div className="grid gap-2">
                                     <h3 className="text-xs font-black tracking-wide text-muted-foreground uppercase">
                                       Composizione equipaggio
                                     </h3>
-                                    {crewWarnings.map((warning) => (
+                                    {summary.crewReasons.map((warning) => (
                                       <CrewWarningDetail
                                         key={warning.key}
                                         personLabel={personLabel}
@@ -2956,13 +3222,13 @@ export function CrewManagement({
                                     ))}
                                   </div>
                                 )}
-                                {(boatWarnings.length > 0 ||
+                                {(boatUnavailableWarnings.length > 0 ||
                                   faultsForCrew.length > 0) && (
                                   <div className="grid gap-2">
                                     <h3 className="text-xs font-black tracking-wide text-muted-foreground uppercase">
                                       Barca
                                     </h3>
-                                    {boatWarnings.map((warning) => (
+                                    {boatUnavailableWarnings.map((warning) => (
                                       <CrewWarningDetail
                                         key={warning.key}
                                         personLabel={personLabel}

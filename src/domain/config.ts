@@ -22,6 +22,26 @@ export const BOAT_TYPES = [
 ] as const
 export type BoatType = (typeof BOAT_TYPES)[number]
 
+/**
+ * One class colour per boat model, used only for the crew-summary number and
+ * card edge (owner's F3 C6 design, 2026-09-28); names stay ink everywhere.
+ * The owner chose the five Deriva/Mezzi colours below; the three Cabinato
+ * models are not yet part of a frozen mock, so they share a placeholder blue
+ * distinct from Mezzi until the owner picks their own.
+ */
+export const BOAT_TYPE_CLASS_COLORS = {
+  "RS Toura": "#157a73",
+  "RS Quest": "#2f9e46",
+  "Laser Vago": "#c96a12",
+  "RS 500": "#d81c82",
+  "J/80": "#5b5fc7",
+  "First 25.7": "#5b5fc7",
+  "First 27": "#5b5fc7",
+} as const satisfies Record<BoatType, string>
+
+/** The Mezzi pseudo-group's class colour; Mezzi is a crew destination, not a `BoatType`. */
+export const MEZZI_CLASS_COLOR = "#0b526b"
+
 export const COURSE_CONFIG = {
   D1: { family: "Deriva", level: 1, defaultBoatType: "RS Toura" },
   D2: {

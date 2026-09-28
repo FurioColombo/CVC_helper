@@ -277,9 +277,8 @@ test("keeps P14–P16 compact while assigning and unlinking session boats", asyn
   await page.getByRole("button", { name: "Torna agli equipaggi" }).click()
   await page.getByRole("button", { name: "Apri vista lettura" }).click()
   const readView = page.getByRole("dialog", { name: "Vista lettura equipaggi" })
-  await expect(
-    readView.getByRole("listitem", { name: "Equipaggio 1, senza barca" }),
-  ).toBeVisible()
+  // The crew is empty (both members were sent back to the pool above), so it
+  // reads as an unused, inferred-model boat slot rather than its own card.
   await expect(readView.getByText("Senza barca").first()).toBeVisible()
   await assertNoHorizontalOverflow(page)
   if (testInfo.project.name === "pixel-7-chrome") {
