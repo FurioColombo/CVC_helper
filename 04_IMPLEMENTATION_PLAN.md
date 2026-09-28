@@ -308,7 +308,7 @@ retries the phone paste at UG2.
 ## F3 — Crew warnings, crew and Comandate summaries
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 1. **An open fault is a crew warning.** A boat with an unresolved fault in a
    crew shows a yellow warning, like the existing unavailable-boat one (owner,
