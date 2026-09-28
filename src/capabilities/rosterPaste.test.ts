@@ -288,4 +288,115 @@ describe("roster paste parser", () => {
     expect(candidate.ageReading).toEqual({ value: 40, confidence: 100 })
     expect(candidate.confidence.dateOfBirth).toBe(0)
   })
+
+  // F2R-2: the date is only scaffolding for a missing age. A printed age
+  // wins outright, so a badly formatted, impossible or future date next to
+  // one is never a reason to reject the row; without an age, the same date
+  // still has to be valid.
+  describe("a printed age wins over a bad date next to it (F2R-2)", () => {
+    it.each([
+      ["a single-digit day and month", "Rossi;Anna;1/3/2010;15;"],
+      ["an impossible calendar date", "Rossi;Anna;30/02/2010;15;"],
+      ["a date after the course start", "Rossi;Anna;01/01/2027;15;"],
+    ])("reads the age and drops %s next to it", (_name, row) => {
+      const answer = [
+        ROSTER_PASTE_BEGIN,
+        ROSTER_PASTE_HEADER,
+        row,
+        ROSTER_PASTE_END,
+      ].join("\n")
+      const result = parseRosterPaste(answer, OPTIONS)
+      expect(result.unparsed).toEqual([])
+      expect(result.candidates).toHaveLength(1)
+      expect(result.candidates[0]!.dateOfBirth).toBe("")
+      expect(result.candidates[0]!.ageReading).toEqual({
+        value: 15,
+        confidence: 100,
+      })
+    })
+
+    it.each([
+      [
+        "a single-digit day and month",
+        "Rossi;Anna;1/3/2010;;",
+        "data di nascita non valida (GG/MM/AAAA)",
+      ],
+      [
+        "an impossible calendar date",
+        "Rossi;Anna;30/02/2010;;",
+        "data di nascita non valida (GG/MM/AAAA)",
+      ],
+      [
+        "a date after the course start",
+        "Rossi;Anna;01/01/2027;;",
+        "data di nascita dopo l'inizio del corso",
+      ],
+    ])(
+      "still rejects %s when there is no age to fall back on",
+      (_name, row, reason) => {
+        const answer = [
+          ROSTER_PASTE_BEGIN,
+          ROSTER_PASTE_HEADER,
+          row,
+          ROSTER_PASTE_END,
+        ].join("\n")
+        const result = parseRosterPaste(answer, OPTIONS)
+        expect(result.candidates).toEqual([])
+        expect(result.unparsed).toHaveLength(1)
+        expect(result.unparsed[0]!.reason).toBe(reason)
+      },
+    )
+  })
+
+  // F2R-1: the header can be on a line of its own that also carries an
+  // assistant's preface ("Ecco il risultato: <header>"), with the rows on
+  // their own real lines after it. This is not a joined answer (no line
+  // breaks were lost), so it must not be misread as one.
+  describe("preface text sharing the header's own line (F2R-1)", () => {
+    it("reads every row and reports the preface, instead of claiming line breaks were lost", () => {
+      const answer = [
+        "Ecco il risultato: Cognome;Nome;Data di nascita;Età;Telefono",
+        "Rossi;Anna;12/03/2010;;",
+        "Neri;Paolo;01/02/2011;15;",
+        "FINE",
+      ].join("\n")
+      const result = parseRosterPaste(answer, OPTIONS)
+      expect(result.formatMissing).toBe(false)
+      expect(result.candidates.map((candidate) => candidate.surname)).toEqual([
+        "Rossi",
+        "Neri",
+      ])
+      expect(result.unparsed).toEqual([
+        {
+          line: 1,
+          text: "Ecco il risultato:",
+          reason: "testo prima del blocco",
+        },
+      ])
+    })
+
+    it("still recognizes the begin marker alone before the header on its line", () => {
+      const answer = [
+        `${ROSTER_PASTE_BEGIN} ${ROSTER_PASTE_HEADER}`,
+        "Rossi;Anna;;15;",
+        ROSTER_PASTE_END,
+      ].join("\n")
+      const result = parseRosterPaste(answer, OPTIONS)
+      expect(result.unparsed).toEqual([])
+      expect(result.candidates).toHaveLength(1)
+    })
+
+    it("still recovers a truly joined answer (every line break turned into a space)", () => {
+      const answer = [
+        ROSTER_PASTE_BEGIN,
+        ROSTER_PASTE_HEADER,
+        "Veldor;Marta;12/03/2010;16;",
+        ROSTER_PASTE_END,
+      ].join(" ")
+      const result = parseRosterPaste(answer, OPTIONS)
+      expect(result.formatMissing).toBe(false)
+      expect(result.candidates).toHaveLength(1)
+      expect(result.candidates[0]!.surname).toBe("Veldor")
+    })
+  })
 })

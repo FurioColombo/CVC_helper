@@ -127,14 +127,20 @@ export const ROSTER_PASTE_CORPUS: RosterPasteCase[] = [
     complete: true,
   },
   {
-    name: "a date in another format, an impossible date and a future date",
+    // F2R-2: a printed age wins outright, so a malformed or impossible date
+    // next to one is not even looked at; only the row with no age at all
+    // still needs a valid date, and a future date still fails it.
+    name: "a malformed or impossible date next to a printed age is ignored; a future date with no age still fails",
     answer: block(
       "Veldor;Marta;2010-03-12;16;",
       "Neri;Paolo;31/02/2011;15;",
       "Rossa;Ada;01/01/2030;;",
     ),
-    students: [],
-    unparsed: 3,
+    students: [
+      ["Veldor", "Marta", "", 16],
+      ["Neri", "Paolo", "", 15],
+    ],
+    unparsed: 1,
     complete: true,
   },
   {

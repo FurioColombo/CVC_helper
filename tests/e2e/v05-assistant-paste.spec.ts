@@ -108,14 +108,15 @@ test("copies the prompt, reads a pasted answer, fixes or leaves out every unread
   }
 
   // A fictitious answer with two bad lines otherwise matching the stated
-  // format: one worth fixing in place (an impossible date), one worth
-  // leaving out entirely (not a name at all). Ages are printed so the
-  // expected values do not depend on the day the test happens to run.
+  // format: one worth fixing in place (an impossible date and no age, so
+  // nothing to fall back on), one worth leaving out entirely (not a name at
+  // all). The fix adds the age, so the expected values do not depend on the
+  // day the test happens to run.
   const answer = [
     ROSTER_PASTE_BEGIN,
     ROSTER_PASTE_HEADER,
     "Bianchi;Sara;12/04/2011;15;",
-    "Verdi;Luca;31/13/2010;14;",
+    "Verdi;Luca;31/13/2010;;",
     "1;1;;;",
     ROSTER_PASTE_END,
   ].join("\n")
@@ -144,8 +145,8 @@ test("copies the prompt, reads a pasted answer, fixes or leaves out every unread
   // Two unread lines are on screen; scope to line 4's own row so its
   // "Rileggi riga" is not ambiguous with the other line's.
   const badLineRow = badLineInput.locator("xpath=ancestor::div[1]")
-  await expect(badLineInput).toHaveValue("Verdi;Luca;31/13/2010;14;")
-  await badLineInput.fill("Verdi;Luca;13/03/2010;14;")
+  await expect(badLineInput).toHaveValue("Verdi;Luca;31/13/2010;;")
+  await badLineInput.fill("Verdi;Luca;;14;")
   await badLineRow.getByRole("button", { name: "Rileggi riga" }).click()
 
   await expect(

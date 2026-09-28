@@ -258,19 +258,6 @@ export function parseRosterPasteRow(
   if (!isPersonName(surname)) return { ok: false, reason: "cognome non valido" }
   if (!isPersonName(firstName)) return { ok: false, reason: "nome non valido" }
 
-  let dateOfBirth = ""
-  if (rawDate) {
-    const match = DATE_PATTERN.exec(rawDate)
-    const iso = match ? `${match[3]}-${match[2]}-${match[1]}` : ""
-    if (!iso || !isValidDateOnly(iso)) {
-      return { ok: false, reason: "data di nascita non valida (GG/MM/AAAA)" }
-    }
-    if (iso > options.courseStartDate) {
-      return { ok: false, reason: "data di nascita dopo l'inizio del corso" }
-    }
-    dateOfBirth = iso
-  }
-
   let age: number | null = null
   if (rawAge) {
     if (
@@ -280,6 +267,23 @@ export function parseRosterPasteRow(
       return { ok: false, reason: "età non valida" }
     }
     age = Number(rawAge)
+  }
+
+  // A printed age wins outright (owner decision 2026-09-28): the date is
+  // only scaffolding for a missing age, so it is validated, and can reject
+  // the row, only when there is no age to fall back on. A malformed or
+  // impossible date next to a valid age is not even looked at.
+  let dateOfBirth = ""
+  if (age === null && rawDate) {
+    const match = DATE_PATTERN.exec(rawDate)
+    const iso = match ? `${match[3]}-${match[2]}-${match[1]}` : ""
+    if (!iso || !isValidDateOnly(iso)) {
+      return { ok: false, reason: "data di nascita non valida (GG/MM/AAAA)" }
+    }
+    if (iso > options.courseStartDate) {
+      return { ok: false, reason: "data di nascita dopo l'inizio del corso" }
+    }
+    dateOfBirth = iso
   }
   if (options.readPhone && rawPhone && !PHONE_PATTERN.test(rawPhone)) {
     return { ok: false, reason: "telefono non valido" }
@@ -294,20 +298,18 @@ export function parseRosterPasteRow(
     }
   }
   // The paste is trusted (owner decision 2026-09-28): a printed age is always
-  // taken as it stands, never compared against the date for a conflict. The
-  // date is then no more than internal working data that produced it, and is
-  // not carried on the candidate at all; the age is what age-only mode
-  // stores. Without a printed age, the date is what is left to compute one
-  // from downstream (`studentScanAge`), so it stays on the candidate.
-  const keptDate = age === null ? dateOfBirth : ""
-
+  // taken as it stands, never compared against the date for a conflict, and
+  // `dateOfBirth` above is already empty whenever one was read. The age is
+  // what age-only mode stores; without a printed age, the date is what is
+  // left to compute one from downstream (`studentScanAge`), so it stays on
+  // the candidate.
   return {
     ok: true,
     candidate: {
       sourceId: `paste-${line}`,
       firstName,
       surname,
-      dateOfBirth: keptDate,
+      dateOfBirth,
       phone: options.readPhone ? rawPhone : "",
       sex: inferSex(firstName),
       // The assistant reports no confidence, but the paste is trusted: every
@@ -315,7 +317,7 @@ export function parseRosterPasteRow(
       confidence: {
         firstName: 100,
         surname: 100,
-        dateOfBirth: keptDate ? 100 : 0,
+        dateOfBirth: dateOfBirth ? 100 : 0,
         phone: options.readPhone && rawPhone ? 100 : 0,
       },
       ...(age !== null ? { ageReading: { value: age, confidence: 100 } } : {}),
@@ -432,7 +434,7 @@ export function parseRosterPaste(
   const unicodeSeparatorCount = (answer.match(UNICODE_LINE_SEPARATORS) ?? [])
     .length
   const lineCount = lines.filter((text) => text !== "").length
-  const headerIndex = lines.findIndex(isHeader)
+  let headerIndex = lines.findIndex(isHeader)
   const candidates: StudentScanCandidate[] = []
   const unparsed: UnparsedPasteLine[] = []
   let complete = false
@@ -440,103 +442,132 @@ export function parseRosterPaste(
   if (headerIndex === -1) {
     const inline = findInlineHeaderEnd(lines)
     if (inline) {
-      // Text before the header, the way the normal path treats a line
-      // before its own header line: reported unless it is the begin marker
-      // or a fence. A phone's join can leave this on an earlier physical
-      // line (a paragraph break that survived) or merged onto the header's
-      // own line ahead of the match.
-      const before: UnparsedPasteLine[] = []
-      for (let index = 0; index < inline.lineIndex; index += 1) {
-        const text = lines[index]!
-        if (text && !isFence(text) && text !== ROSTER_PASTE_BEGIN) {
+      const headerLine = lines[inline.lineIndex]!
+      const beforeOnHeaderLine = headerLine.slice(0, inline.start).trim()
+      const afterHeaderLine = headerLine.slice(inline.end)
+
+      // The recovery below only applies when row data was actually joined
+      // onto the header's own line (a phone's line breaks turned to spaces,
+      // still visible as row fields after the header). Otherwise the header
+      // really is alone on its line, with ordinary preface text in front of
+      // it on that same line, handled after this branch.
+      if (afterHeaderLine.includes(";")) {
+        // Text before the header, the way the normal path treats a line
+        // before its own header line: reported unless it is the begin marker
+        // or a fence. A phone's join can leave this on an earlier physical
+        // line (a paragraph break that survived) or merged onto the header's
+        // own line ahead of the match.
+        const before: UnparsedPasteLine[] = []
+        for (let index = 0; index < inline.lineIndex; index += 1) {
+          const text = lines[index]!
+          if (text && !isFence(text) && text !== ROSTER_PASTE_BEGIN) {
+            before.push({
+              line: index + 1,
+              text,
+              reason: "testo prima del blocco",
+            })
+          }
+        }
+        if (beforeOnHeaderLine && beforeOnHeaderLine !== ROSTER_PASTE_BEGIN) {
           before.push({
-            line: index + 1,
-            text,
+            line: inline.lineIndex + 1,
+            text: beforeOnHeaderLine,
             reason: "testo prima del blocco",
           })
         }
-      }
-      const headerLine = lines[inline.lineIndex]!
-      const beforeOnHeaderLine = headerLine.slice(0, inline.start).trim()
-      if (beforeOnHeaderLine && beforeOnHeaderLine !== ROSTER_PASTE_BEGIN) {
-        before.push({
-          line: inline.lineIndex + 1,
-          text: beforeOnHeaderLine,
-          reason: "testo prima del blocco",
-        })
-      }
 
-      const rebuilt = reconstructJoinedRows(headerLine.slice(inline.end))
-      if (rebuilt.ok) {
-        const rows: UnparsedPasteLine[] = []
-        let line = inline.lineIndex + 2
-        for (const text of rebuilt.rowTexts) {
-          const row = parseRosterPasteRow(text, line, options)
-          if (row.ok) candidates.push(row.candidate)
-          else rows.push({ line, text, reason: row.reason })
-          line += 1
-        }
-
-        // Without the closing line the last rebuilt row may be a fragment
-        // that never finished arriving: not trusted as read, exactly like
-        // the normal path's own truncation check below.
-        if (!rebuilt.complete && candidates.length > 0) {
-          const last = candidates.at(-1)!
-          const lineNumber = Number(last.sourceId.slice("paste-".length))
-          if (!rows.some((entry) => entry.line > lineNumber)) {
-            candidates.pop()
-            rows.push({
-              line: lineNumber,
-              text: rebuilt.rowTexts.at(-1)!,
-              reason: "forse troncata: manca la riga FINE",
-            })
-          }
-        }
-
-        // Text after FINE, the way the normal path treats a line after its
-        // own closing line: leftover text still on the same joined line, or
-        // a later physical line entirely (another paragraph break that
-        // survived). Both continue this branch's own synthetic line count
-        // rather than the real physical index, which would otherwise repeat
-        // a number a rebuilt row already used.
-        const after: UnparsedPasteLine[] = []
-        if (rebuilt.complete) {
-          if (rebuilt.afterFineText) {
-            after.push({
-              line,
-              text: rebuilt.afterFineText,
-              reason: "testo dopo la riga FINE",
-            })
+        const rebuilt = reconstructJoinedRows(afterHeaderLine)
+        if (rebuilt.ok) {
+          const rows: UnparsedPasteLine[] = []
+          let line = inline.lineIndex + 2
+          for (const text of rebuilt.rowTexts) {
+            const row = parseRosterPasteRow(text, line, options)
+            if (row.ok) candidates.push(row.candidate)
+            else rows.push({ line, text, reason: row.reason })
             line += 1
           }
-          for (
-            let index = inline.lineIndex + 1;
-            index < lines.length;
-            index += 1
-          ) {
-            const text = lines[index]!
-            if (text && !isFence(text)) {
-              after.push({ line, text, reason: "testo dopo la riga FINE" })
-              line += 1
+
+          // Without the closing line the last rebuilt row may be a fragment
+          // that never finished arriving: not trusted as read, exactly like
+          // the normal path's own truncation check below.
+          if (!rebuilt.complete && candidates.length > 0) {
+            const last = candidates.at(-1)!
+            const lineNumber = Number(last.sourceId.slice("paste-".length))
+            if (!rows.some((entry) => entry.line > lineNumber)) {
+              candidates.pop()
+              rows.push({
+                line: lineNumber,
+                text: rebuilt.rowTexts.at(-1)!,
+                reason: "forse troncata: manca la riga FINE",
+              })
             }
           }
-        }
 
-        const allUnparsed = [...before, ...rows, ...after]
-        if (candidates.length + allUnparsed.length > ROSTER_PASTE_MAX_ROWS) {
+          // Text after FINE, the way the normal path treats a line after its
+          // own closing line: leftover text still on the same joined line, or
+          // a later physical line entirely (another paragraph break that
+          // survived). Both continue this branch's own synthetic line count
+          // rather than the real physical index, which would otherwise repeat
+          // a number a rebuilt row already used.
+          const after: UnparsedPasteLine[] = []
+          if (rebuilt.complete) {
+            if (rebuilt.afterFineText) {
+              after.push({
+                line,
+                text: rebuilt.afterFineText,
+                reason: "testo dopo la riga FINE",
+              })
+              line += 1
+            }
+            for (
+              let index = inline.lineIndex + 1;
+              index < lines.length;
+              index += 1
+            ) {
+              const text = lines[index]!
+              if (text && !isFence(text)) {
+                after.push({ line, text, reason: "testo dopo la riga FINE" })
+                line += 1
+              }
+            }
+          }
+
+          const allUnparsed = [...before, ...rows, ...after]
+          if (candidates.length + allUnparsed.length > ROSTER_PASTE_MAX_ROWS) {
+            return {
+              candidates: [],
+              unparsed: [],
+              complete: rebuilt.complete,
+              formatMissing: false,
+              tooLong: true,
+            }
+          }
           return {
-            candidates: [],
-            unparsed: [],
+            candidates,
+            unparsed: allUnparsed,
             complete: rebuilt.complete,
             formatMissing: false,
-            tooLong: true,
+            diagnostics: {
+              lineCount,
+              headerFoundInline: true,
+              unicodeSeparatorCount,
+            },
           }
         }
+        // The header is there, but its rows cannot be told apart safely: read
+        // nothing, with the one reason that actually explains it.
         return {
-          candidates,
-          unparsed: allUnparsed,
-          complete: rebuilt.complete,
-          formatMissing: false,
+          candidates: [],
+          unparsed: [
+            {
+              line: inline.lineIndex + 1,
+              text: lines[inline.lineIndex]!,
+              reason:
+                "gli a capo della risposta sono andati persi: copiala di nuovo con il tasto copia del blocco di codice, oppure incollala da un computer",
+            },
+          ],
+          complete: false,
+          formatMissing: true,
           diagnostics: {
             lineCount,
             headerFoundInline: true,
@@ -544,46 +575,42 @@ export function parseRosterPaste(
           },
         }
       }
-      // The header is there, but its rows cannot be told apart safely: read
-      // nothing, with the one reason that actually explains it.
+
+      // The header is on a line of its own; the text in front of it on that
+      // same line is an assistant's ordinary preface (unless it is only the
+      // begin marker), reported like any other line before the block. Lines
+      // before it, FINE, truncation and text after FINE all read through the
+      // normal per-line path just below, exactly as when the header line
+      // carries nothing else.
+      if (beforeOnHeaderLine && beforeOnHeaderLine !== ROSTER_PASTE_BEGIN) {
+        unparsed.push({
+          line: inline.lineIndex + 1,
+          text: beforeOnHeaderLine,
+          reason: "testo prima del blocco",
+        })
+      }
+      headerIndex = inline.lineIndex
+    } else {
+      lines.forEach((text, index) => {
+        if (text && !isFence(text)) {
+          unparsed.push({
+            line: index + 1,
+            text,
+            reason: "fuori dal formato: manca la riga di intestazione",
+          })
+        }
+      })
       return {
-        candidates: [],
-        unparsed: [
-          {
-            line: inline.lineIndex + 1,
-            text: lines[inline.lineIndex]!,
-            reason:
-              "gli a capo della risposta sono andati persi: copiala di nuovo con il tasto copia del blocco di codice, oppure incollala da un computer",
-          },
-        ],
-        complete: false,
+        candidates,
+        unparsed,
+        complete,
         formatMissing: true,
         diagnostics: {
           lineCount,
-          headerFoundInline: true,
+          headerFoundInline: false,
           unicodeSeparatorCount,
         },
       }
-    }
-    lines.forEach((text, index) => {
-      if (text && !isFence(text)) {
-        unparsed.push({
-          line: index + 1,
-          text,
-          reason: "fuori dal formato: manca la riga di intestazione",
-        })
-      }
-    })
-    return {
-      candidates,
-      unparsed,
-      complete,
-      formatMissing: true,
-      diagnostics: {
-        lineCount,
-        headerFoundInline: false,
-        unicodeSeparatorCount,
-      },
     }
   }
 

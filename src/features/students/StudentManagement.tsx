@@ -39,6 +39,7 @@ import {
   calculateStudentAge,
   getStudentDisplayName,
   isStudentMinor,
+  isValidDateOnly,
   MAX_DECLARED_STUDENT_AGE,
 } from "@/domain/student"
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
@@ -473,15 +474,24 @@ function StudentForm({
   const [firstName, setFirstName] = useState(student?.firstName ?? "")
   const [surname, setSurname] = useState(student?.surname ?? "")
   const [nickname, setNickname] = useState(student?.nickname ?? "")
+  // F2R-3: a stored date that is not a real date-only value must not crash
+  // this form (`calculateStudentAge` throws on one). Treated exactly like a
+  // student with no birth date at all: fall back to the declared age on
+  // file, or leave the field empty for the operator to fill in.
+  const hadInvalidStoredDate = Boolean(
+    student?.dateOfBirth.trim() && !isValidDateOnly(student.dateOfBirth),
+  )
   // Age only, in every mode (owner decision 2026-09-28): the form has no
   // date field. An existing student's age is computed once, from whichever
   // of a real birth date or an already-declared age it has, and shown as the
   // starting value; it never moves again on its own. Saving that exact
   // number back keeps the student's stored date, saving a different one
   // replaces it with the declared age and drops the date (see `input` below).
-  const [initialDeclaredAge] = useState(() =>
-    student ? calculateStudentAge(student, course.startDate) : null,
-  )
+  const [initialDeclaredAge] = useState(() => {
+    if (!student) return null
+    if (hadInvalidStoredDate) return student.declaredAgeAtCourseStart ?? null
+    return calculateStudentAge(student, course.startDate)
+  })
   const [declaredAge, setDeclaredAge] = useState(
     initialDeclaredAge !== null ? String(initialDeclaredAge) : "",
   )
@@ -532,12 +542,15 @@ function StudentForm({
   // A declared age of exactly the value this form started with, for an
   // existing student, leaves that student's stored data untouched (a real
   // birth date included); any other value declares the new age and drops
-  // whatever birth date the student had.
+  // whatever birth date the student had. A stored date the form could not
+  // even read (F2R-3) is never "untouched data" worth keeping, so a save
+  // always replaces it with whatever age is now in the field.
   const parsedDeclaredAge = /^\d{1,3}$/.test(declaredAge.trim())
     ? Number(declaredAge.trim())
     : null
   const ageUnchanged =
     student !== undefined &&
+    !hadInvalidStoredDate &&
     initialDeclaredAge !== null &&
     parsedDeclaredAge === initialDeclaredAge
 

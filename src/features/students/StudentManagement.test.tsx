@@ -41,6 +41,19 @@ vi.mock("@/persistence/evaluations", () => ({
   listStudentEvaluations: vi.fn().mockResolvedValue([]),
 }))
 
+// F2R-3: a corrupt stored date is normally caught by the domain invariant
+// gate before any screen renders at all (a separate, structural check). This
+// wraps the real check so one test can bypass it just for its one corrupt
+// record, to exercise the edit form's own defense in isolation; every other
+// test keeps the real check, since the mock's default delegates to it.
+vi.mock("@/domain/invariants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/domain/invariants")>()
+  return {
+    ...actual,
+    validateStudentRecords: vi.fn(actual.validateStudentRecords),
+  }
+})
+
 class FakeMediaRecorder {
   mimeType = "audio/webm"
   state: RecordingState = "inactive"
@@ -62,6 +75,7 @@ class FakeMediaRecorder {
   }
 }
 
+import { validateStudentRecords } from "@/domain/invariants"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { requestLeave } from "@/navigation/browserHistory"
 import type { CourseRecord } from "@/persistence/courses"
@@ -109,6 +123,7 @@ const changeActive = vi.mocked(setStudentActive)
 const assessDeletion = vi.mocked(assessStudentDeletion)
 const removeStudent = vi.mocked(deleteUnusedStudent)
 const editStudent = vi.mocked(updateStudent)
+const checkStudents = vi.mocked(validateStudentRecords)
 
 describe("StudentManagement", () => {
   beforeEach(() => {
@@ -465,6 +480,53 @@ describe("StudentManagement", () => {
       screen.getByLabelText("Età compiuta il primo giorno del corso"),
     ).toHaveFocus()
     expect(screen.getByText(/puoi correggerla in seguito/i)).toBeVisible()
+  })
+
+  // F2R-3: `calculateStudentAge` throws for a stored date it cannot parse,
+  // and the edit form used to call it while computing its very first state
+  // (`initialDeclaredAge`), crashing before the form could even open. The
+  // domain invariant gate would normally keep a record this corrupt off
+  // every screen first (a separate, structural check); `checkStudents` is
+  // relaxed for just this one record so the test can reach the edit form
+  // directly (via the same history-state deep link a reload restores) and
+  // exercise the form's own defense in isolation.
+  it("opens the edit form with an empty age field for a corrupt stored date, and saves after an age is typed", async () => {
+    getStudents.mockResolvedValue([
+      { ...MARIO, dateOfBirth: "not-a-date", declaredAgeAtCourseStart: null },
+    ])
+    checkStudents.mockReturnValueOnce([])
+    window.history.replaceState(
+      {
+        __cvcHelperShell: { view: "students" },
+        __cvcHelperStudentScreen: { kind: "edit", studentId: "student-1" },
+      },
+      "",
+      window.location.href,
+    )
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    const ageField = screen.getByLabelText(
+      "Età compiuta il primo giorno del corso",
+    )
+    expect(ageField).toHaveValue(null)
+
+    await user.type(ageField, "14")
+
+    await waitFor(() =>
+      expect(editStudent).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 14,
+        }),
+      ),
+    )
+    expect(await screen.findByText("Salvato")).toBeVisible()
   })
 
   it("shows a minor marker and reverses disabled state", async () => {

@@ -1955,7 +1955,10 @@ describe("StudentScan assistant paste", () => {
         ROSTER_PASTE_BEGIN,
         ROSTER_PASTE_HEADER,
         "Veldor;Marta;12/03/2010;16;",
-        "Neri;Paolo;31/02/2011;15;",
+        // No age here (F2R-2): a printed age would otherwise win outright and
+        // the bad date would never even be checked, leaving nothing unread
+        // for this test to fix.
+        "Neri;Paolo;31/02/2011;;",
         ROSTER_PASTE_END,
       ].join("\n"),
     )
