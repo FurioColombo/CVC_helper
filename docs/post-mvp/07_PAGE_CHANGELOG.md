@@ -363,3 +363,14 @@ become denser. The crew summary downloads as one PNG with available students,
 occupied crews, Mezzi, A terra, empty boats and role/duty/minor markers in that
 order. These are owner-approved amendments to the frozen r10 target; UX1 browser
 and image evidence, plus a zero-blocker adversarial review, determine completion.
+
+F3 · crew summary (read view and image), 2026-09-28: after two rounds of
+proposals on a design canvas the owner chose **C6** as the new target:
+[f3-crew-summary-c6.html](mockups/f3-crew-summary-c6.html) and its 390×844
+screenshot. Crews are grouped by boat model under the class logo in two
+columns; each card has a 4px class-colour edge and the boat number bold in the
+class colour in a fixed left column, top-aligned with the first name; no
+"Equipaggio N". Thirteen synthetic crews fit one 390×844 screen and still fit
+at 360 px. The mock shows occupied crews and Mezzi only: F3 keeps the other
+sections the summary already has (available students, A terra, empty boats)
+in the same visual language, and the exported image follows the same design.

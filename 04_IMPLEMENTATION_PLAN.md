@@ -298,8 +298,12 @@ the age change and the paste parser), zero blockers.
    crew shows a yellow warning, like the existing unavailable-boat one (owner,
    question 3).
 2. **The crew summary fits one window.** All crews visible at once, in two
-   columns, with a smaller crew number. The owner chooses one of five designs
-   before implementation.
+   columns. The owner chose design **C6** on 2026-09-28, after two rounds of
+   proposals: crews grouped by boat model under the class logo, each card
+   with a 4px class-colour edge, the boat number bold in the class colour in
+   a fixed left column top-aligned with the first name, no "Equipaggio N".
+   Frozen target: `docs/post-mvp/mockups/f3-crew-summary-c6.html` and its
+   390×844 screenshot (synthetic data; 13 crews fit at 390 and 360 px).
 3. **The exported image reads like the screen.** "Scarica immagine riepilogo"
    produces a readable image in the chosen design, with every crew even when
    they do not fit one screen.
