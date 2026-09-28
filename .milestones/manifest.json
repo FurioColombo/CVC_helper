@@ -622,6 +622,34 @@
       "allowedIncompletePredecessors": ["V05"]
     },
     {
+      "id": "F2",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/F2/verification.json",
+        ".evidence/F2/browser-evidence.json",
+        ".evidence/F2/self-review.json",
+        ".evidence/F2/independent-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/F2/self-review.json",
+        ".evidence/F2/independent-review.json"
+      ]
+    },
+    {
+      "id": "F3",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/F3/verification.json",
+        ".evidence/F3/browser-evidence.json",
+        ".evidence/F3/self-review.json"
+      ],
+      "requiredReviews": [".evidence/F3/self-review.json"]
+    },
+    {
       "id": "UG2",
       "category": "INTEGRATION_GATE",
       "status": "PENDING",

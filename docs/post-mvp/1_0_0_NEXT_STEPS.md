@@ -17,12 +17,13 @@ the physical-device evidence UG2 requires:
 
 - speech on the exact release candidate, including **iPhone/Safari**, which has
   never been tested;
-- the camera scan on a real phone, including the time the new rule eraser adds
-  (about 0.3–0.5 s on desktop, about 2 s at 4× CPU throttling);
 - the installed app offline (airplane mode: cold open, edit, scan), phone Back
   in every area, the icon and launch colour, and the new update banner;
-- the assistant paste path (V05) with the assistant the centre will actually
-  use.
+- the assistant paste path (V05) on the phone again, after F2's fix.
+
+On 2026-09-28 the owner reported the camera scan on their phone as very good
+and definitely usable. The paste worked on a PC, but a phone copy was refused;
+F2 fixes that. F2 and F3 carry the rest of that day's feedback.
 
 Until UG2 passes, 0.3.0 is not released, and a shared database should not be
 built on top of it. The local app is the product the shared version will
@@ -76,11 +77,20 @@ replicate, so its rules must be settled first.
   assistant the operator chooses. For a shared deployment, consider
   self-hosting the speech model files.
 
+## Future work the owner added on 2026-09-28
+
+- **Speech.** Kept as it is for 0.3.0, but too slow and imprecise. Improve speed
+  and accuracy, and download the speech model with the app (today it downloads
+  on the first dictation), so dictation works offline from the start.
+- **A full local reset.** Erasing the course deletes its rows and compacts the
+  database where the browser allows; offer a full local reset as well, so
+  deleted rows cannot linger in unused database pages.
+- **GitHub Support.** GitHub still serves the pre-rewrite commits by their old
+  ids until it purges them. The owner deferred asking GitHub Support to remove
+  cached views and unreferenced objects.
+
 ## Engineering follow-ups that do not need a decision
 
-- GitHub still serves the pre-rewrite commits by their old ids until GitHub
-  purges them: ask GitHub Support to remove cached views and unreferenced
-  objects (see `0_3_0_QUESTIONS.md`).
 - The OCR worker and speech pipeline stay in memory for the whole session;
   measure memory on a low-end phone at UG2 and release them if needed.
 - Phone Back after adding a student manually from Scan returns to Scan; Back

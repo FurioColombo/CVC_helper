@@ -1,9 +1,29 @@
 # Owner decisions and open questions — 0.3.0
 
-Updated 2026-09-27. The newest decisions and the questions still open are
-first; the 2026-09-23 decisions follow. Later decisions supersede earlier ones
-where they differ. The plan toward a shared database and 1.0.0 is in
+Updated 2026-09-28. The newest decisions and the questions still open are
+first; older decisions follow. Later decisions supersede earlier ones where
+they differ. The plan toward a shared database and 1.0.0 is in
 [`1_0_0_NEXT_STEPS.md`](1_0_0_NEXT_STEPS.md).
+
+## Decisions of 2026-09-28
+
+The owner answered the eight questions below after using the app, and asked
+for new work, planned as F2 and F3 in `04_IMPLEMENTATION_PLAN.md`.
+
+| Topic                           | Owner decision                                                                                                                                                                                                                                           |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Old history on this computer | A new Codex session deletes the old Codex worktree and the pre-rewrite checkpoint refs; Claude Code wrote its prompt. **GitHub Support is not contacted for now.**                                                                                       |
+| 2. Rows from an assistant       | **Trust the paste**: no per-row `Controlla`; the owner checks the rows. Keep the `Sono tutti` count confirmation (F2).                                                                                                                                   |
+| Paste on a phone                | The ChatGPT app's copy button on a phone gave "not in the requested format" for an answer a PC read. To fix in F2.                                                                                                                                       |
+| Age and date of birth           | **Age only, in every mode**: scan, paste and manual entry keep the age on the first course day, never the date of birth (F2).                                                                                                                            |
+| Ways to add students            | The Allievi menu and the empty Allievi page must open the same methods page, and the empty page must offer the scan and the assistant too (F2).                                                                                                          |
+| 3. Open fault as a crew warning | **Yes**, a yellow crew warning (F3).                                                                                                                                                                                                                     |
+| Crew summary and image          | All crews in one window, two columns, smaller crew number; the owner picks one of five designs. The exported image must be readable, like a screenshot of the summary, and hold every crew. A Comandate summary and export in the same format (F3).      |
+| 4. Erasing the course           | Accepted for now; a full local reset goes to future work.                                                                                                                                                                                                |
+| 5. Duplicate check              | **Keep it on both** the camera and the assistant path.                                                                                                                                                                                                   |
+| 6. Physical checks              | Camera scan: **works very well**, now definitely usable, and with the paste fallback the owner is satisfied. Speech: kept as it is for now, but too slow and imprecise; improving it, including downloading the model with the app, goes to future work. |
+| 7. Staff headings               | **Fine as it is.**                                                                                                                                                                                                                                       |
+| 8. Rewritten `v0.2.0`           | **Accepted**: `v0.2.0` is an archive, no second rewrite.                                                                                                                                                                                                 |
 
 ## Decisions of 2026-09-26
 
@@ -15,7 +35,22 @@ where they differ. The plan toward a shared database and 1.0.0 is in
 | V05 assistant path           | **Stays in 0.3.0**, beside the camera path.                                                                                                                                                                                                                                                                                                                                                                                     |
 | Surname particles            | Keep **Lo, Li, El, Al, De, Di** with the surname. Done and tested.                                                                                                                                                                                                                                                                                                                                                              |
 
-## Open questions for the owner
+## Still open for the owner
+
+1. **Delete the old copies (a Codex session does it).** Until then the Codex
+   worktree `.codex/worktrees/ux1-pages-promotion` and two checkpoint refs
+   under `refs/codex/turn-diffs/` keep the pre-rewrite history on this
+   computer. Run it when no agent is working in the repository, since it
+   prunes objects. GitHub keeps serving the old commits by their old ids until
+   GitHub Support purges them; the owner has deferred that request.
+2. **Choose the crew summary design (F3).** Five designs will be offered; F3
+   implements the one chosen, in the app and in the exported image.
+3. **The remaining physical checks (UG2).** After F2, paste an assistant's
+   answer on the phone again. Still to check: the installed app offline, phone
+   Back in every area, the update banner, and speech on an iPhone (Apple was
+   never tested). The checklist is `UG1_DEVICE_VALIDATION.md`.
+
+## Questions of 2026-09-27 (answered on 2026-09-28)
 
 1. **After the history rewrite (owner actions).** GitHub can still serve the
    old commits by their old ids until it purges them: please ask GitHub
