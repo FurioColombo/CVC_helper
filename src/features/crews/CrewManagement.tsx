@@ -274,7 +274,7 @@ function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
         <BoatModelHeaderMark type={group.boatType} />
       ) : group.kind === "mezzi" ? (
         <span className="flex items-center gap-1.5 text-[#0b526b]">
-          <GommoneIcon className="size-[17px]" />
+          <GommoneIcon className="size-5" />
           <span className="text-[11px] font-black tracking-[0.08em] uppercase">
             Mezzi
           </span>
@@ -317,7 +317,10 @@ function AnnouncementCrewCard({ line }: { line: AnnouncementLine }) {
               {line.boat.number}
             </span>
           ) : line.destination === "mezzi" ? (
-            <GommoneIcon className="mt-px block size-[15px]" />
+            <GommoneIcon
+              className="-mt-0.5 block size-5"
+              orientation="vertical"
+            />
           ) : (
             <span
               aria-hidden="true"

@@ -2586,11 +2586,17 @@ describe("CrewManagement", () => {
       color: "#d81c82",
     })
 
-    // The owner's new gommone icon, not the old placeholder, in both the
-    // Mezzi heading and its card's number column.
-    expect(
-      container.querySelectorAll('path[d^="M7 6.5H15"]').length,
-    ).toBeGreaterThanOrEqual(2)
+    // The owner's gommone icon, not the old placeholder: horizontal in the
+    // Mezzi heading, turned bow up in its card's number column.
+    const gommoni = Array.from(
+      container.querySelectorAll('path[d^="M6.8 5.75H15"]'),
+    )
+    expect(gommoni.length).toBeGreaterThanOrEqual(2)
+    const turns = gommoni.map(
+      (path) => path.parentElement?.getAttribute("transform") ?? null,
+    )
+    expect(turns).toContain(null)
+    expect(turns).toContain("rotate(-90 12 12)")
     expect(container.querySelector('path[d="M4 9h20v12H4z"]')).toBeNull()
 
     // The open fault on RS Quest 2 is a yellow warning on its card, same

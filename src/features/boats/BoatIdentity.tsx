@@ -122,12 +122,20 @@ export function BoatModelHeaderMark({
 }
 
 /**
- * The owner's gommone mark for Mezzi (2026-09-28): a horizontal RIB, bow
- * right, with its console. Replaces the placeholder house-shaped icon
- * wherever the live app shows a Mezzi icon; `crewSummaryImage.ts` keeps its
- * own icon until the exported image is redone in the second half of F3.
+ * The owner's gommone mark for Mezzi (2026-09-28): a RIB seen from above,
+ * tubes as a double line whose tails run past the transom, a softly pointed
+ * bow, and the propeller as an 8 between the tails. Drawn bow right; the
+ * owner wants it horizontal in a heading and vertical (bow up) in a card.
+ * `crewSummaryImage.ts` keeps its own icon until the exported image is
+ * redone in the second half of F3.
  */
-export function GommoneIcon({ className = "" }: { className?: string }) {
+export function GommoneIcon({
+  className = "",
+  orientation = "horizontal",
+}: {
+  className?: string
+  orientation?: "horizontal" | "vertical"
+}) {
   return (
     <svg
       aria-hidden="true"
@@ -136,20 +144,22 @@ export function GommoneIcon({ className = "" }: { className?: string }) {
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
+      strokeWidth={1.7}
       viewBox="0 0 24 24"
     >
-      <path d="M7 6.5H15c3.7 0 6.3 2.3 7.5 5.5-1.2 3.2-3.8 5.5-7.5 5.5H7" />
-      <path d="M7 9.5H15c2.2 0 3.7 1 4.5 2.5-.8 1.5-2.3 2.5-4.5 2.5H7" />
-      <path d="M7 6.5a1.5 1.5 0 0 0 0 3" />
-      <path d="M7 14.5a1.5 1.5 0 0 0 0 3" />
-      <path d="M9.5 9.5v5" />
-      <path d="M9.5 12H3.9" />
-      <path
-        d="M2.6 12c-.7-.45-1-.9-1-1.4a1 1 0 0 1 2 0c0 .5-.3.95-1 1.4s-1 .9-1 1.4a1 1 0 0 0 2 0c0-.5-.3-.95-1-1.4z"
-        strokeWidth={1.75}
-      />
-      <rect height="2.4" rx=".6" width="2.6" x="12" y="10.8" />
+      <g
+        transform={orientation === "vertical" ? "rotate(-90 12 12)" : undefined}
+      >
+        <path d="M6.8 5.75H15C18.6 5.75 21.3 8 22.5 12 21.3 16 18.6 18.25 15 18.25H6.8" />
+        <path d="M6.8 8.35H15C17.3 8.35 18.9 9.6 19.7 12 18.9 14.4 17.3 15.65 15 15.65H6.8" />
+        <path d="M6.8 5.75a1.3 1.3 0 0 0 0 2.6" />
+        <path d="M6.8 15.65a1.3 1.3 0 0 0 0 2.6" />
+        <path d="M10.2 8.35v7.3" />
+        <path
+          d="M8 12c-.5-.35-.75-.65-.75-1a.75.75 0 0 1 1.5 0c0 .35-.25.65-.75 1s-.75.65-.75 1a.75.75 0 0 0 1.5 0c0-.35-.25-.65-.75-1z"
+          strokeWidth={1.1}
+        />
+      </g>
     </svg>
   )
 }
