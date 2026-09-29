@@ -1,27 +1,23 @@
 import { useState } from "react"
 
 import type { BoatType } from "@/domain/config"
-import { assetPath } from "@/lib/assetPath"
+import {
+  BOAT_LOGOS,
+  GOMMONE_HULL_PATHS,
+  GOMMONE_PROPELLER_PATH,
+  GOMMONE_PROPELLER_STROKE_WIDTH,
+  GOMMONE_STROKE_WIDTH,
+  GOMMONE_VIEW_BOX,
+  gommoneTransform,
+} from "@/features/boats/boatMarks"
 
-/**
- * Manufacturer marks, used with the owner's authorisation of 2026-09-18. The
- * written model stays as the fallback: if an asset is missing or fails to
- * decode, the card still says which boat it is rather than showing a gap.
- *
- * Each file is trimmed to its own artwork rather than sharing one plate, so
- * `object-fit: contain` normalises the marks against each other instead of
- * against empty margins. A narrow mark such as J/80 would otherwise render at
- * a fraction of the size of a wide one such as RS Quest.
- */
-const BOAT_LOGOS: Record<BoatType, string> = {
-  "RS Toura": assetPath("/brand/boats/rs-toura.png"),
-  "RS Quest": assetPath("/brand/boats/rs-quest.png"),
-  "Laser Vago": assetPath("/brand/boats/laser-vago.png"),
-  "RS 500": assetPath("/brand/boats/rs-500.png"),
-  "J/80": assetPath("/brand/boats/j80.png"),
-  "First 25.7": assetPath("/brand/boats/first-25-7.png"),
-  "First 27": assetPath("/brand/boats/first-27.png"),
-}
+// The manufacturer marks and the gommone path data live in `boatMarks.ts`
+// (used with the owner's authorisation of 2026-09-18 for the marks, and the
+// owner's final gommone mark of 2026-09-28 for the icon), not in this
+// component file: a plain data module can be imported by both this file's
+// components and `crewSummaryImage.ts`'s non-JSX rasteriser, and this
+// project's Fast Refresh lint rule only allows a component file to export
+// components.
 
 const BOAT_MARKS: Record<BoatType, string> = {
   "RS Toura": "RS\nTOURA",
@@ -122,12 +118,12 @@ export function BoatModelHeaderMark({
 }
 
 /**
- * The owner's gommone mark for Mezzi (2026-09-28): a RIB seen from above,
- * tubes as a double line whose tails run past the transom, a softly pointed
- * bow, and the propeller as an 8 between the tails. Drawn bow right; the
- * owner wants it horizontal in a heading and vertical (bow up) in a card.
- * `crewSummaryImage.ts` keeps its own icon until the exported image is
- * redone in the second half of F3.
+ * The owner's gommone mark for Mezzi (2026-09-28, commit 629e09d): a RIB seen
+ * from above, tubes as a double line whose tails run past the transom, a
+ * softly pointed bow, and the propeller as an 8 between the tails, no shaft.
+ * Drawn bow right; the owner wants it horizontal in a heading and vertical
+ * (bow up) in a card. The path data lives in `boatMarks.ts` so
+ * `crewSummaryImage.ts` draws the exact same mark in the exported PNG.
  */
 export function GommoneIcon({
   className = "",
@@ -144,20 +140,16 @@ export function GommoneIcon({
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={1.7}
-      viewBox="0 0 24 24"
+      strokeWidth={GOMMONE_STROKE_WIDTH}
+      viewBox={GOMMONE_VIEW_BOX}
     >
-      <g
-        transform={orientation === "vertical" ? "rotate(-90 12 12)" : undefined}
-      >
-        <path d="M6.8 5.75H15C18.6 5.75 21.3 8 22.5 12 21.3 16 18.6 18.25 15 18.25H6.8" />
-        <path d="M6.8 8.35H15C17.3 8.35 18.9 9.6 19.7 12 18.9 14.4 17.3 15.65 15 15.65H6.8" />
-        <path d="M6.8 5.75a1.3 1.3 0 0 0 0 2.6" />
-        <path d="M6.8 15.65a1.3 1.3 0 0 0 0 2.6" />
-        <path d="M10.2 8.35v7.3" />
+      <g transform={gommoneTransform(orientation)}>
+        {GOMMONE_HULL_PATHS.map((d) => (
+          <path d={d} key={d} />
+        ))}
         <path
-          d="M8 12c-.5-.35-.75-.65-.75-1a.75.75 0 0 1 1.5 0c0 .35-.25.65-.75 1s-.75.65-.75 1a.75.75 0 0 0 1.5 0c0-.35-.25-.65-.75-1z"
-          strokeWidth={1.1}
+          d={GOMMONE_PROPELLER_PATH}
+          strokeWidth={GOMMONE_PROPELLER_STROKE_WIDTH}
         />
       </g>
     </svg>

@@ -70,18 +70,33 @@ const base = (() => {
   return `/${configured.replace(/^\/+|\/+$/g, "")}/`
 })()
 
-// The Home header's CVC mark (`CvcMark.tsx`) renders on first paint, on every
-// screen the router can land on cold, so it has to survive an offline cold
-// start the same way the OCR/speech runtime assets do. It is deliberately
-// the only PNG added here — `globPatterns` below excludes images on purpose
-// so the seven boat marks (rendered only once a course/boat screen is open,
-// never at startup) do not balloon the install precache. The revision is a
-// content hash rather than `null` because this file, unlike a hashed
-// `dist/assets/*` chunk, keeps its literal filename across builds.
-const BRAND_STARTUP_IMAGES = ["brand/cvc-symbol.png"] as const
+// `globPatterns` below excludes images on purpose (icons and screenshots
+// would otherwise balloon the install precache), so every PNG the app
+// actually needs to work offline is listed here explicitly instead of by
+// extension. The Home header's CVC mark (`CvcMark.tsx`) renders on first
+// paint, on every screen the router can land on cold, so it has to survive
+// an offline cold start the same way the OCR/speech runtime assets do. F3
+// (owner, 2026-09-28) added the seven boat-model marks in
+// `public/brand/boats/` (~57 KB total): the crew-summary read view
+// (`BoatModelMark`/`BoatModelHeaderMark` in `BoatIdentity.tsx`) and its
+// exported PNG (`crewSummaryImage.ts`, which decodes the same files to embed
+// them in the image) both depend on them, and an operator reading or sharing
+// that summary offline on the water has no way to fetch a missing one. The
+// revision is a content hash rather than `null` because these files, unlike
+// a hashed `dist/assets/*` chunk, keep their literal filename across builds.
+const BRAND_PRECACHED_IMAGES = [
+  "brand/cvc-symbol.png",
+  "brand/boats/rs-toura.png",
+  "brand/boats/rs-quest.png",
+  "brand/boats/laser-vago.png",
+  "brand/boats/rs-500.png",
+  "brand/boats/j80.png",
+  "brand/boats/first-25-7.png",
+  "brand/boats/first-27.png",
+] as const
 
-function brandStartupManifestEntries() {
-  return BRAND_STARTUP_IMAGES.map((relativePath) => {
+function brandPrecachedManifestEntries() {
+  return BRAND_PRECACHED_IMAGES.map((relativePath) => {
     const contents = readFileSync(
       path.resolve(import.meta.dirname, "public", relativePath),
     )
@@ -146,8 +161,8 @@ export default defineConfig({
         // still making unexpectedly large assets visible in the build.
         maximumFileSizeToCacheInBytes: 4_500_000,
         // Precached explicitly rather than by extension: see
-        // `brandStartupManifestEntries` above for why only this one PNG.
-        additionalManifestEntries: brandStartupManifestEntries(),
+        // `brandPrecachedManifestEntries` above for which PNGs and why.
+        additionalManifestEntries: brandPrecachedManifestEntries(),
         runtimeCaching: [
           {
             urlPattern: /\/ocr\//,

@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
+import sharp from "sharp"
 
 /**
  * F3 C6 target: a realistic 13-crew course (owner, 2026-09-28) grouped by
@@ -308,6 +309,34 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
     path: testInfo.outputPath("f3-crew-summary-320-200pct.png"),
     fullPage: false,
   })
+
+  // Back to a normal viewport before exercising the PNG export: the download
+  // itself does not depend on the page's own size, but a stale 320 px/200%
+  // layout left over from the stress case above is not what an operator
+  // actually taps "Scarica immagine riepilogo" from.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = ""
+  })
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    readView
+      .getByRole("button", { name: "Scarica immagine riepilogo" })
+      .click(),
+  ])
+  const pngPath = testInfo.outputPath("f3-crew-summary-13-crew-export.png")
+  await download.saveAs(pngPath)
+  const metadata = await sharp(pngPath).metadata()
+  expect(metadata.format).toBe("png")
+  // `crewSummaryImage.ts` lays the summary out at a fixed logical width of
+  // 1080px, then rasterises at its default 2× pixel ratio for a crisp phone
+  // image (`buildCrewSummaryPng`'s own unit test pins the same 1080×2
+  // relationship) — so the file the browser actually saves is 2160px wide.
+  expect(metadata.width).toBe(1080 * 2)
+  // Thirteen crews across five groups (four boat models plus Mezzi) stack
+  // well past a single phone screen; a height under this floor would mean
+  // the export collapsed instead of growing to fit every crew.
+  expect(metadata.height).toBeGreaterThan(2000)
 })
 
 const D1_BOAT_TYPE = "RS Toura"
@@ -473,5 +502,96 @@ test("fits ten 4-student D1 crews, single boat model, on one 390×844 screen", a
   ).toBeLessThanOrEqual(overflow390.clientHeight + 1)
   for (const card of await readView.getByRole("listitem").all()) {
     await expect(card).toBeInViewport()
+  }
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    readView
+      .getByRole("button", { name: "Scarica immagine riepilogo" })
+      .click(),
+  ])
+  const pngPath = testInfo.outputPath("f3-crew-summary-d1-export.png")
+  await download.saveAs(pngPath)
+  const metadata = await sharp(pngPath).metadata()
+  expect(metadata.format).toBe("png")
+  // Same fixed 1080px logical width as the 13-crew export above, rasterised
+  // at the same default 2× pixel ratio.
+  expect(metadata.width).toBe(1080 * 2)
+  // Ten four-member crews in one group are denser than the mixed 13-crew
+  // course (bigger cards, fewer groups); still well past a single screen.
+  expect(metadata.height).toBeGreaterThan(2000)
+})
+
+/**
+ * F3, offline read (owner, 2026-09-28): "readable on the water", where an
+ * operator reopening the crew summary may already have lost connectivity.
+ * `vite.config.ts`'s `BRAND_PRECACHED_IMAGES` gives the seven boat-model
+ * marks that install-time guarantee in the real, built app (verified by
+ * `scripts/check-ocr-offline.mjs`'s pattern of `context.setOffline` against a
+ * production preview build). This suite runs against the plain Vite dev
+ * server (`playwright.config.ts`'s `webServer`), which registers no service
+ * worker at all, so the same precache cannot be exercised here. What this
+ * test proves instead, deterministically and without a production build: a
+ * boat-model `<img>` that already decoded once during this page's lifetime
+ * keeps rendering from the browser's own in-page image cache — never the
+ * `BoatModelHeaderMark` name-only fallback — when the read view is closed
+ * and reopened while the browser is offline, the same guarantee the real
+ * install's precache gives for a first offline open after an earlier one.
+ */
+test("keeps showing the boat-model logo in the read view after it was loaded once, even offline", async ({
+  page,
+  context,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "Browser image-cache behaviour is Chromium-specific; one check is sufficient",
+  )
+  test.setTimeout(60_000)
+
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 1" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+
+  await seedTenCrewCourseD1(page)
+  await page.reload()
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Equipaggi" })
+    .click()
+
+  await page.getByRole("button", { name: "Apri vista lettura" }).click()
+  const readView = page.getByRole("dialog", {
+    name: "Vista lettura equipaggi",
+  })
+  const logo = readView.getByAltText(D1_BOAT_TYPE, { exact: true })
+  await expect(logo).toBeVisible()
+  await expect
+    .poll(() => logo.evaluate((image: HTMLImageElement) => image.naturalWidth))
+    .toBeGreaterThan(0)
+
+  // Close the read view through the app's own client-side navigation (no
+  // full page reload), so React unmounts its `<img>`, then go offline: any
+  // new network fetch from here on fails.
+  await page.getByRole("button", { name: "Chiudi vista lettura" }).click()
+  await context.setOffline(true)
+  try {
+    // Reopen the read view. React remounts an `<img>` pointing at the exact
+    // same same-origin URL this page already decoded once above.
+    await page.getByRole("button", { name: "Apri vista lettura" }).click()
+    const reopenedLogo = readView.getByAltText(D1_BOAT_TYPE, { exact: true })
+    await expect(reopenedLogo).toBeVisible()
+    await expect
+      .poll(() =>
+        reopenedLogo.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0)
+    // Never the name-only text `BoatModelHeaderMark` falls back to when its
+    // image errors.
+    await expect(readView.getByText(D1_BOAT_TYPE, { exact: true })).toHaveCount(
+      0,
+    )
+  } finally {
+    await context.setOffline(false)
   }
 })

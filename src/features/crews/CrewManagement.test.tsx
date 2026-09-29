@@ -2664,30 +2664,35 @@ describe("CrewManagement", () => {
       }),
     )
     await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
-    const [title, lines] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
-    expect(title).toBe("Sabato PM")
-    expect(lines).toHaveLength(14)
-    expect(lines[0]).toMatchObject({
-      category: "available",
-      members: [
-        { label: "Carlo", isMinor: false, duty: null },
-        { label: "Vera ADV", role: "ADV" },
+    const [model] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
+    // The exporter now takes the exact same `CrewSummarySections` model the
+    // read view rendered above, not its own flat line list: one occupied
+    // ("Equipaggi senza barca") group with the sole non-empty crew, the same
+    // twelve empty crews as "Senza barca" labels, no boat selected.
+    expect(model.title).toBe("Sabato PM")
+    expect(model.groups).toHaveLength(1)
+    expect(model.groups[0]).toMatchObject({
+      kind: "unassigned",
+      lines: [
+        {
+          crewNumber: 1,
+          destination: "unassigned",
+          members: [
+            { label: "Aldo", isMinor: true, duty: "current" },
+            { label: "Bea", isMinor: false, duty: null },
+          ],
+        },
       ],
     })
-    expect(lines[1]).toMatchObject({
-      category: "sailing",
-      crewNumber: 1,
-      destination: "Senza barca",
-      members: [
-        { label: "Aldo", isMinor: true, duty: "current" },
-        { label: "Bea", isMinor: false, duty: null },
-      ],
-    })
-    expect(lines[13]).toMatchObject({
-      category: "empty",
-      crewNumber: 13,
-      members: [],
-    })
+    expect(model.availableMembers).toMatchObject([
+      { label: "Carlo", isMinor: false, duty: null },
+      { label: "Vera ADV", role: "ADV" },
+    ])
+    expect(model.landMembers).toEqual([])
+    expect(model.emptyLabels).toHaveLength(12)
+    expect(model.emptyLabels.every((label) => label === "Senza barca")).toBe(
+      true,
+    )
   })
 
   it("includes available people, Mezzi, A terra and an unassigned boat in the PNG summary", async () => {
@@ -2720,16 +2725,19 @@ describe("CrewManagement", () => {
       screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
     )
     await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
-    const [, lines] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
-    expect(lines).toMatchObject([
+    const [model] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
+    expect(model.groups).toMatchObject([
       {
-        category: "available",
-        members: [{ label: "Carlo" }, { label: "Vera ADV", role: "ADV" }],
+        kind: "mezzi",
+        lines: [{ crewNumber: 1, members: [{ label: "Aldo" }] }],
       },
-      { category: "mezzi", crewNumber: 1, members: [{ label: "Aldo" }] },
-      { category: "a-terra", members: [{ label: "Bea" }] },
-      { category: "empty", destination: "RS Quest 7", members: [] },
     ])
+    expect(model.availableMembers).toMatchObject([
+      { label: "Carlo" },
+      { label: "Vera ADV", role: "ADV" },
+    ])
+    expect(model.landMembers).toMatchObject([{ label: "Bea" }])
+    expect(model.emptyLabels).toEqual(["RS Quest 7"])
   })
 
   it("labels a selected but unavailable boat as not available in the PNG summary, not as free", async () => {
@@ -2756,13 +2764,7 @@ describe("CrewManagement", () => {
       screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
     )
     await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
-    const [, lines] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
-    expect(lines).toContainEqual(
-      expect.objectContaining({
-        category: "empty",
-        destination: "RS Quest 7 · Non disponibile",
-        members: [],
-      }),
-    )
+    const [model] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
+    expect(model.emptyLabels).toContain("RS Quest 7 · Non disponibile")
   })
 })

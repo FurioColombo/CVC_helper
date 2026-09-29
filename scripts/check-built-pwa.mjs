@@ -11,11 +11,24 @@ const OCR_ASSETS = [
   "ocr/core/tesseract-core-relaxedsimd-lstm.wasm.js",
 ]
 const OCR_MAX_ASSET_BYTES = 4_500_000
-// Rendered on first paint on every cold-start screen (App.tsx's header), so
-// it has to survive an offline install the same way OCR does. Kept in sync
-// by hand with `BRAND_STARTUP_IMAGES` in vite.config.ts, which is what
-// actually puts it in the precache.
-const BRAND_STARTUP_IMAGES = ["brand/cvc-symbol.png"]
+// The CVC mark is rendered on first paint on every cold-start screen
+// (App.tsx's header), so it has to survive an offline install the same way
+// OCR does. The seven boat-model marks are not needed at startup, but the F3
+// crew-summary read view and its exported PNG (`BoatIdentity.tsx`,
+// `crewSummaryImage.ts`) both depend on them working offline too — an
+// operator reading or sharing that summary on the water has no way to fetch
+// a missing one. Kept in sync by hand with `BRAND_PRECACHED_IMAGES` in
+// vite.config.ts, which is what actually puts these in the precache.
+const BRAND_PRECACHED_IMAGES = [
+  "brand/cvc-symbol.png",
+  "brand/boats/rs-toura.png",
+  "brand/boats/rs-quest.png",
+  "brand/boats/laser-vago.png",
+  "brand/boats/rs-500.png",
+  "brand/boats/j80.png",
+  "brand/boats/first-25-7.png",
+  "brand/boats/first-27.png",
+]
 const manifest = JSON.parse(
   readFileSync(resolve(root, "dist", "manifest.webmanifest"), "utf8"),
 )
@@ -138,18 +151,15 @@ for (const asset of OCR_ASSETS) {
   )
 }
 
-for (const asset of BRAND_STARTUP_IMAGES) {
+for (const asset of BRAND_PRECACHED_IMAGES) {
   const assetPath = resolve(root, "dist", asset)
-  assert.ok(
-    existsSync(assetPath),
-    `Built brand startup image does not exist: ${asset}`,
-  )
+  assert.ok(existsSync(assetPath), `Built brand image does not exist: ${asset}`)
   assert.ok(
     serviceWorker.includes(`url:"${asset}"`),
-    `Built service worker does not precache brand startup image: ${asset}`,
+    `Built service worker does not precache brand image: ${asset}`,
   )
 }
 
 console.log(
-  `PASS: built PWA manifest, icons, service worker, ${OCR_ASSETS.length} precached OCR assets and ${BRAND_STARTUP_IMAGES.length} precached brand image`,
+  `PASS: built PWA manifest, icons, service worker, ${OCR_ASSETS.length} precached OCR assets and ${BRAND_PRECACHED_IMAGES.length} precached brand images`,
 )

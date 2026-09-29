@@ -1,49 +1,98 @@
-export type CrewSummaryRole = "IS" | "ADV" | "CT"
-export type CrewSummaryCategory =
-  "available" | "sailing" | "mezzi" | "a-terra" | "empty"
+import {
+  BOAT_LOGOS,
+  GOMMONE_HULL_PATHS,
+  GOMMONE_PROPELLER_PATH,
+  GOMMONE_PROPELLER_STROKE_WIDTH,
+  GOMMONE_STROKE_WIDTH,
+  gommoneTransform,
+} from "@/features/boats/boatMarks"
+import type { BoatType } from "@/domain/config"
+import {
+  crewLineClassColor,
+  type CrewSummaryCrewLine,
+  type CrewSummaryGroup,
+  type CrewSummaryMember,
+  type CrewSummarySections,
+} from "@/features/crews/crewSummaryModel"
 
-export type CrewSummaryMember = {
-  label: string
-  isMinor: boolean
-  duty: "current" | "smontante" | null
-  role?: CrewSummaryRole | null
-}
-
-export type CrewSummaryLine = {
-  category: CrewSummaryCategory
-  crewNumber?: number
-  destination?: string
-  members: CrewSummaryMember[]
-}
+export type {
+  CrewSummaryCrewLine,
+  CrewSummaryGroup,
+  CrewSummaryMember,
+  CrewSummarySections,
+} from "@/features/crews/crewSummaryModel"
 
 export type CrewSummaryOptions = {
   /** Output pixel density. The default produces a crisp 2× phone image. */
   pixelRatio?: number
 }
 
-const CATEGORY_ORDER: CrewSummaryCategory[] = [
-  "available",
-  "sailing",
-  "mezzi",
-  "a-terra",
-  "empty",
-]
-const CATEGORY_LABEL: Record<CrewSummaryCategory, string> = {
-  available: "Persone disponibili",
-  sailing: "Equipaggi in uscita",
-  mezzi: "Mezzi",
-  "a-terra": "A terra",
-  empty: "Barche ed equipaggi vuoti",
-}
-const CREW_LIMIT_FOR_TWO_COLUMNS = 12
-const ONE_COLUMN_WIDTH = 1040
-const TWO_COLUMN_WIDTH = 1200
-const PAGE_PADDING = 28
+/**
+ * F3, second half (owner, 2026-09-28): "a screenshot of the crews", not the
+ * card-per-crew flyer this replaced. The exporter now renders the exact same
+ * `CrewSummarySections` the read view's `AnnouncementView` shows — same
+ * boat-model grouping in canonical order, same 4px class-colour edge, same
+ * bold class-colour boat number in a fixed left column, same warm-paper
+ * palette — at a fixed 1080px width so it reads well shared on a phone, with
+ * the height growing to fit every crew on one tall image however many there
+ * are. Class-logo PNGs are embedded as data URLs so the SVG carries them with
+ * no further network fetch once rasterised; a model whose logo fails to load
+ * falls back to its name as text, same as `BoatModelHeaderMark` on screen.
+ */
+
+const WIDTH = 1080
+const PAGE_PADDING = 40
 const COLUMN_GAP = 24
-const CARD_GAP = 12
+const CARD_GAP = 24
+const GROUP_GAP = 40
+const HEADING_CONTENT_GAP = 20
+
 const FONT_FAMILY =
   "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-const BLUE = "#2f5fa0"
+
+// The read view's own warm-paper palette (`AnnouncementView` in
+// CrewManagement.tsx), not the app's general `--background`/`--primary`: the
+// exported image is a screenshot of that view, so it uses the same colours.
+const BG = "#fffdf8"
+const INK = "#102f3b"
+const ACCENT = "#0b526b"
+const BORDER = "#c8d7db"
+const RULE = "#dbe4e6"
+const MUTED = "#6b8790"
+const CARD_BG = "#ffffff"
+// The two marker colours below are the *live* `PersonBadges.tsx` colours
+// (the app's general `--primary` blue and the amber role chip), not the
+// static mock's placeholder blue — the export must match what the read view
+// actually renders today, which is the code, not the frozen mock.
+const DUTY_BLUE = "#2f5fa0"
+const ROLE_BG = "#fff1d6"
+const ROLE_FG = "#8a5200"
+const MINOR_BG = "#b42318"
+const WARNING_YELLOW_BG = "#fff3cd"
+const WARNING_YELLOW_FG = "#8a5a00"
+const WARNING_RED_BG = "#fee4e2"
+const WARNING_RED_FG = "#b42318"
+
+const NAME_FONT = 32
+const NAME_LINE_HEIGHT = 40
+const BADGE_HEIGHT = 32
+const BADGE_FONT = 18
+const BADGE_GAP = 8
+const ROW_GAP = 16
+
+const CARD_EDGE_WIDTH = 8
+const CARD_PADDING = 24
+const CARD_NUMBER_COLUMN_WIDTH = 92
+const CARD_NUMBER_FONT = 54
+// Only as tall as the boat number needs: a card grows with its names, and a
+// fixed taller floor left most two-person cards half empty.
+const CARD_MIN_HEIGHT = CARD_PADDING * 2 + 56
+
+const GROUP_HEADING_HEIGHT = 64
+const GROUP_LOGO_HEIGHT = 52
+const GROUP_LOGO_MAX_WIDTH = 300
+const SECTION_HEADING_HEIGHT = 56
+const SECTION_ICON_SIZE = 30
 
 function cleanText(value: unknown): string {
   const source = String(value ?? "")
@@ -58,7 +107,7 @@ function cleanText(value: unknown): string {
       (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
       (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
       (codePoint >= 0x10000 && codePoint <= 0x10ffff)
-    result += validXmlCharacter ? character : "\uFFFD"
+    result += validXmlCharacter ? character : "�"
   }
 
   return result
@@ -97,6 +146,10 @@ function wrapText(text: string, maxWidth: number, fontSize: number): string[] {
   return lines.length ? lines : ["—"]
 }
 
+function estimateTextWidth(text: string, fontSize: number): number {
+  return Array.from(text).length * fontSize * 0.58
+}
+
 function renderTextLines(
   lines: string[],
   x: number,
@@ -113,35 +166,87 @@ function renderTextLines(
     .join("")
 }
 
-type Badge = {
-  text: string
-  width: number
-  fill: string
-  color: string
-  stroke?: string
+/**
+ * The app's own icon vocabulary, redrawn as raw paths so the exporter needs
+ * no `<foreignObject>` or icon library at rasterisation time: the gommone
+ * draws the exact same `GOMMONE_HULL_PATHS`/`GOMMONE_PROPELLER_PATH` as
+ * `GommoneIcon` (`boatMarks.ts`, shared with `BoatIdentity.tsx`), and the
+ * warning triangle is lucide's `triangle-alert`, the same one
+ * `AnnouncementCrewCard` uses. The three section icons (available/A
+ * terra/empty) are lucide's `users`, `person-standing` and `sailboat` for
+ * visual consistency with the rest of the app, though the task only requires
+ * the gommone and warning icons to be pixel-identical.
+ */
+type IconKind = "warning" | "gommone" | "available" | "a-terra" | "empty"
+
+function renderIcon(
+  kind: IconKind,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  orientation: "horizontal" | "vertical" = "horizontal",
+): string {
+  const scale = size / 24
+  const wrap = (inner: string, strokeWidth = 2) =>
+    `<g transform="translate(${x} ${y}) scale(${scale})" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${inner}</g>`
+  switch (kind) {
+    case "warning":
+      return wrap(
+        '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+      )
+    case "gommone": {
+      const transform = gommoneTransform(orientation)
+      const hull = GOMMONE_HULL_PATHS.map((d) => `<path d="${d}"/>`).join("")
+      const propeller = `<path d="${GOMMONE_PROPELLER_PATH}" stroke-width="${GOMMONE_PROPELLER_STROKE_WIDTH}"/>`
+      const inner = transform
+        ? `<g transform="${transform}">${hull}${propeller}</g>`
+        : `${hull}${propeller}`
+      return wrap(inner, GOMMONE_STROKE_WIDTH)
+    }
+    case "available":
+      return wrap(
+        '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+      )
+    case "a-terra":
+      return wrap(
+        '<circle cx="12" cy="5" r="1"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/>',
+      )
+    case "empty":
+      return wrap(
+        '<path d="M10 2v15"/><path d="M7 22a4 4 0 0 1-4-4 1 1 0 0 1 1-1h16a1 1 0 0 1 1 1 4 4 0 0 1-4 4z"/><path d="M9.159 2.46a1 1 0 0 1 1.521-.193l9.977 8.98A1 1 0 0 1 20 13H4a1 1 0 0 1-.824-1.567z"/>',
+      )
+  }
 }
 
+type Badge = { text: string; fill: string; color: string; stroke?: string }
+
+/** Minor, then duty, then volunteer role — the same order and colours
+ *  `AnnouncementCrewCard` renders live (`isMinor`, then `duty`, then
+ *  `role`), not the mock's placeholder order or colours. */
 function memberBadges(member: CrewSummaryMember): Badge[] {
   const badges: Badge[] = []
-  if (member.role) {
-    const width = member.role === "ADV" ? 34 : 28
-    badges.push({ text: member.role, width, fill: "#eaf1fa", color: BLUE })
+  if (member.isMinor) {
+    badges.push({ text: "M", fill: MINOR_BG, color: "#ffffff" })
   }
   if (member.duty === "current") {
-    badges.push({ text: "C", width: 18, fill: BLUE, color: "#ffffff" })
+    badges.push({ text: "C", fill: DUTY_BLUE, color: "#ffffff" })
   } else if (member.duty === "smontante") {
     badges.push({
       text: "SM",
-      width: 25,
       fill: "#ffffff",
-      color: BLUE,
-      stroke: BLUE,
+      color: DUTY_BLUE,
+      stroke: DUTY_BLUE,
     })
   }
-  if (member.isMinor) {
-    badges.push({ text: "M", width: 18, fill: "#b42318", color: "#ffffff" })
+  if (member.role) {
+    badges.push({ text: member.role, fill: ROLE_BG, color: ROLE_FG })
   }
   return badges
+}
+
+function badgeWidth(text: string): number {
+  return Math.max(34, Math.round(text.length * BADGE_FONT * 0.62) + 20)
 }
 
 function renderBadges(
@@ -149,157 +254,123 @@ function renderBadges(
   x: number,
   y: number,
 ): { svg: string; width: number } {
-  const gap = 4
   let cursorX = x
   const svg = badges
     .map((badge) => {
+      const width = badgeWidth(badge.text)
       const currentX = cursorX
-      cursorX += badge.width + gap
-      return `<g><rect x="${currentX}" y="${y}" width="${badge.width}" height="18" rx="5" fill="${badge.fill}" stroke="${badge.stroke ?? "none"}" stroke-width="${badge.stroke ? 1.5 : 0}"/><text x="${currentX + badge.width / 2}" y="${y + 12.5}" text-anchor="middle" font-family="${FONT_FAMILY}" font-size="${badge.text.length > 2 ? 8 : 9}" font-weight="800" fill="${badge.color}">${badge.text}</text></g>`
+      cursorX += width + BADGE_GAP
+      return `<g><rect x="${currentX}" y="${y}" width="${width}" height="${BADGE_HEIGHT}" rx="8" fill="${badge.fill}" ${badge.stroke ? `stroke="${badge.stroke}" stroke-width="2"` : ""}/><text x="${currentX + width / 2}" y="${y + BADGE_HEIGHT / 2 + 6}" text-anchor="middle" font-family="${FONT_FAMILY}" font-size="${BADGE_FONT}" font-weight="800" fill="${badge.color}">${escapeXml(badge.text)}</text></g>`
     })
     .join("")
-  return {
-    svg,
-    width: badges.length ? cursorX - x - gap : 0,
-  }
+  return { svg, width: badges.length ? cursorX - x - BADGE_GAP : 0 }
 }
 
-function layoutMember(
+function layoutMemberRow(
   member: CrewSummaryMember,
   x: number,
   y: number,
   width: number,
 ): { svg: string; height: number } {
-  const padding = 2
-  const fontSize = 18
-  const lineHeight = 22
   const badges = memberBadges(member)
-  const badgeWidth = badges.reduce(
-    (sum, badge, index) => sum + badge.width + (index ? 4 : 0),
+  const badgesWidth = badges.reduce(
+    (sum, badge, index) =>
+      sum + badgeWidth(badge.text) + (index ? BADGE_GAP : 0),
     0,
   )
-  const nameWidth = Math.max(
-    74,
-    width - padding * 2 - badgeWidth - (badgeWidth ? 7 : 0),
-  )
+  const nameWidth = Math.max(100, width - badgesWidth - (badgesWidth ? 20 : 0))
   const label = cleanText(member.label).trim() || "Nome non disponibile"
-  const nameLines = wrapText(label, nameWidth, fontSize)
-  const height = Math.max(26, nameLines.length * lineHeight + 4)
-  const text = renderTextLines(
+  const nameLines = wrapText(label, nameWidth, NAME_FONT)
+  const height = Math.max(NAME_LINE_HEIGHT, nameLines.length * NAME_LINE_HEIGHT)
+  const nameSvg = renderTextLines(
     nameLines,
-    x + padding,
-    y + 18,
-    fontSize,
-    lineHeight,
-    'fill="#172b47"',
+    x,
+    y + NAME_FONT,
+    NAME_FONT,
+    NAME_LINE_HEIGHT,
+    `font-weight="700" fill="${INK}"`,
   )
-  const badgeSvg = renderBadges(
-    badges,
-    x + width - padding - badgeWidth,
-    y + 3,
-  ).svg
+  const badgeSvg = badges.length
+    ? renderBadges(
+        badges,
+        x + width - badgesWidth,
+        y + (NAME_LINE_HEIGHT - BADGE_HEIGHT) / 2,
+      ).svg
+    : ""
 
   return {
-    svg: `<g data-member-label="${escapeXml(label)}">${text}${badgeSvg}</g>`,
+    svg: `<g data-member-label="${escapeXml(label)}">${nameSvg}${badgeSvg}</g>`,
     height,
   }
 }
 
-function renderCategoryIcon(
-  category: CrewSummaryCategory,
+function renderWarningBadge(
+  severity: "red" | "yellow",
   x: number,
   y: number,
 ): string {
-  const common = `fill="none" stroke="${BLUE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`
-  let drawing: string
-  if (category === "available") {
-    drawing = `<circle cx="${x + 9}" cy="${y + 7}" r="3"/><circle cx="${x + 20}" cy="${y + 7}" r="3"/><path d="M${x + 3} ${y + 20}c.3-4 2.7-6 6-6 1.6 0 2.8.5 3.7 1.4M${x + 25} ${y + 20}c-.3-4-2.7-6-6-6-1.6 0-2.8.5-3.7 1.4M${x + 9} ${y + 21}c.3-4 2.8-6 6-6s5.7 2 6 6"/>`
-  } else if (category === "sailing" || category === "empty") {
-    drawing = `<path d="M${x + 3} ${y + 18}h22l-3 4H7zM${x + 14} ${y + 2}v15M${x + 12} ${y + 4}L${x + 6} ${y + 13}h8zM${x + 16} ${y + 6}h7v7z"${category === "empty" ? ' stroke-dasharray="2 2"' : ""}/>`
-  } else if (category === "mezzi") {
-    drawing = `<path d="M${x + 4} ${y + 9}h20v12H4zM${x + 9} ${y + 9}V5h10v4M${x + 11} ${y + 14}h6"/>`
-  } else {
-    // A standing person on a ground line keeps A terra distinct from the boat groups.
-    drawing = `<circle cx="${x + 14}" cy="${y + 5}" r="3"/><path d="M${x + 14} ${y + 8}v7m0-4-5 4m5-4 5 4m-5-4-4 9m4-9 4 9M${x + 3} ${y + 23}h22"/>`
-  }
-  return `<g ${common} aria-label="${CATEGORY_LABEL[category]}">${drawing}</g>`
-}
-
-function renderSectionHeading(
-  category: CrewSummaryCategory,
-  y: number,
-): string {
-  const iconX = PAGE_PADDING
-  const iconY = y + 1
-  const textY = y + 20
-  const label = CATEGORY_LABEL[category]
-  return `<g data-summary-section="${category}">${renderCategoryIcon(category, iconX, iconY)}<text x="${PAGE_PADDING + 34}" y="${textY}" font-family="${FONT_FAMILY}" font-size="19" font-weight="700" fill="#172b47">${escapeXml(label)}</text><line x1="${PAGE_PADDING}" y1="${y + 31}" x2="${PAGE_PADDING + 70}" y2="${y + 31}" stroke="${BLUE}" stroke-width="3" stroke-linecap="round"/></g>`
-}
-
-function crewNumber(line: CrewSummaryLine): number | null {
-  return Number.isFinite(line.crewNumber) && (line.crewNumber ?? 0) > 0
-    ? Math.trunc(line.crewNumber!)
-    : null
+  const size = 44
+  const bg = severity === "red" ? WARNING_RED_BG : WARNING_YELLOW_BG
+  const fg = severity === "red" ? WARNING_RED_FG : WARNING_YELLOW_FG
+  const iconSize = 24
+  return `<g aria-label="Avviso equipaggio: ${severity === "red" ? "rosso" : "giallo"}"><rect x="${x}" y="${y}" width="${size}" height="${size}" rx="14" fill="${bg}"/>${renderIcon("warning", x + (size - iconSize) / 2, y + (size - iconSize) / 2, iconSize, fg)}</g>`
 }
 
 function renderCrewCard(
-  line: CrewSummaryLine,
+  line: CrewSummaryCrewLine,
   x: number,
   y: number,
   width: number,
 ): { svg: string; height: number } {
-  const padding = 14
-  const contentWidth = width - padding * 2
-  const headingSize = 19
-  const number = crewNumber(line)
-  const title =
-    number !== null
-      ? `Equipaggio ${number}`
-      : line.category === "empty"
-        ? "Barca libera"
-        : "Equipaggio"
-  const destination = cleanText(line.destination).trim()
-  const destinationText =
-    line.category === "mezzi" ? "Mezzi" : destination || "Senza barca"
-  const destinationLabel = line.category === "mezzi" ? "Destinazione" : "Barca"
-  const destinationLines = wrapText(
-    `${destinationLabel}: ${destinationText}`,
-    contentWidth,
-    14,
-  )
-  let cursorY = y + padding + headingSize + 5
-  let inner = `<text x="${x + padding}" y="${y + padding + headingSize}" font-family="${FONT_FAMILY}" font-size="${headingSize}" font-weight="700" fill="#172b47">${escapeXml(title)}</text>`
-  inner += renderTextLines(
-    destinationLines,
-    x + padding,
-    cursorY + 14,
-    14,
-    18,
-    'fill="#53667d"',
-  )
-  cursorY += destinationLines.length * 18 + 6
+  const classColor = crewLineClassColor(line)
+  const contentX = x + CARD_EDGE_WIDTH + CARD_PADDING
+  const contentWidth = width - CARD_EDGE_WIDTH - CARD_PADDING * 2
+  const textX = contentX + CARD_NUMBER_COLUMN_WIDTH
+  const textWidth = Math.max(120, contentWidth - CARD_NUMBER_COLUMN_WIDTH)
 
-  const members = Array.isArray(line.members) ? line.members : []
-  if (members.length === 0) {
-    inner += `<text x="${x + padding}" y="${cursorY + 16}" font-family="${FONT_FAMILY}" font-size="15" fill="#64778a">Nessun allievo assegnato</text>`
-    cursorY += 22
+  let cursorY = y + CARD_PADDING
+  const rows: string[] = []
+  if (line.members.length === 0) {
+    rows.push(
+      `<text x="${textX}" y="${cursorY + NAME_FONT}" font-family="${FONT_FAMILY}" font-size="24" fill="${MUTED}">Nessuno assegnato</text>`,
+    )
+    cursorY += NAME_LINE_HEIGHT
   } else {
-    members.forEach((member, memberIndex) => {
-      const rendered = layoutMember(member, x + padding, cursorY, contentWidth)
-      inner += rendered.svg
-      cursorY += rendered.height + 2
-      if (memberIndex < members.length - 1) {
-        inner += `<line x1="${x + padding}" y1="${cursorY}" x2="${x + width - padding}" y2="${cursorY}" stroke="#e5ebf0" stroke-width="1"/>`
-        cursorY += 5
-      }
+    line.members.forEach((member) => {
+      const rendered = layoutMemberRow(member, textX, cursorY, textWidth)
+      rows.push(rendered.svg)
+      cursorY += rendered.height + ROW_GAP
     })
+    cursorY -= ROW_GAP
   }
 
-  const height = Math.max(82, cursorY - y + padding - 3)
-  const crewAttribute = number === null ? "" : ` data-crew-number="${number}"`
+  const height = Math.max(CARD_MIN_HEIGHT, cursorY - y + CARD_PADDING)
+  const numberSvg = line.boat
+    ? `<text x="${contentX}" y="${y + CARD_PADDING + CARD_NUMBER_FONT * 0.78}" font-family="${FONT_FAMILY}" font-size="${CARD_NUMBER_FONT}" font-weight="800" fill="${classColor}">${escapeXml(line.boat.number)}</text>`
+    : line.destination === "mezzi"
+      ? // Vertical, bow up — same orientation `AnnouncementCrewCard` gives
+        // `GommoneIcon` in the boat-number column of a Mezzi card.
+        renderIcon(
+          "gommone",
+          contentX,
+          y + CARD_PADDING + 4,
+          46,
+          classColor,
+          "vertical",
+        )
+      : `<text x="${contentX}" y="${y + CARD_PADDING + CARD_NUMBER_FONT * 0.78}" font-family="${FONT_FAMILY}" font-size="${CARD_NUMBER_FONT}" font-weight="800" fill="${classColor}">–</text>`
+  const warningSvg = line.warning
+    ? renderWarningBadge(line.warning.severity, x + width - 60, y + 16)
+    : ""
+  const cardLabel = line.boat
+    ? `${line.boat.type} ${line.boat.number}`
+    : line.destination === "mezzi"
+      ? "Mezzi"
+      : "Senza barca"
+
   return {
     height,
-    svg: `<g data-summary-category="${line.category}"${crewAttribute} aria-label="${escapeXml(title)}"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="12" fill="#ffffff" stroke="#cfdae7" stroke-width="1.5"/>${inner}</g>`,
+    svg: `<g data-summary-crew-number="${line.crewNumber}" aria-label="Equipaggio ${line.crewNumber}, ${escapeXml(cardLabel)}"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="24" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="2"/><rect x="${x}" y="${y}" width="${CARD_EDGE_WIDTH}" height="${height}" fill="${classColor}"/>${numberSvg}${rows.join("")}${warningSvg}</g>`,
   }
 }
 
@@ -309,21 +380,20 @@ function renderRosterCard(
   y: number,
   width: number,
 ): { svg: string; height: number } {
-  const padding = 14
-  const columnGap = 18
-  const columns = 2
-  const columnWidth = (width - padding * 2 - columnGap) / columns
-  const rows: string[] = []
+  const padding = CARD_PADDING
+  const columnGap = 36
+  const columnWidth = (width - padding * 2 - columnGap) / 2
   let cursorY = y + padding
+  const rows: string[] = []
 
-  for (let index = 0; index < members.length; index += columns) {
+  for (let index = 0; index < members.length; index += 2) {
     const left = members[index]
     const right = members[index + 1]
     const leftLayout = left
-      ? layoutMember(left, x + padding, cursorY, columnWidth)
+      ? layoutMemberRow(left, x + padding, cursorY, columnWidth)
       : null
     const rightLayout = right
-      ? layoutMember(
+      ? layoutMemberRow(
           right,
           x + padding + columnWidth + columnGap,
           cursorY,
@@ -332,113 +402,297 @@ function renderRosterCard(
       : null
     if (leftLayout) rows.push(leftLayout.svg)
     if (rightLayout) rows.push(rightLayout.svg)
-    cursorY += Math.max(leftLayout?.height ?? 0, rightLayout?.height ?? 0) + 5
+    cursorY +=
+      Math.max(leftLayout?.height ?? 0, rightLayout?.height ?? 0) + ROW_GAP
   }
 
-  const height = Math.max(58, cursorY - y + padding - 5)
+  const height = Math.max(120, cursorY - ROW_GAP - y + padding)
   return {
     height,
-    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="12" fill="#ffffff" stroke="#cfdae7" stroke-width="1.5"/>${rows.join("")}</g>`,
+    svg: `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="24" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="2"/>${rows.join("")}`,
   }
 }
 
-function linesForCategory(
-  lines: CrewSummaryLine[],
-  category: CrewSummaryCategory,
-): CrewSummaryLine[] {
-  return lines.filter((line) => line.category === category)
-}
+function renderLabelListCard(
+  labels: string[],
+  x: number,
+  y: number,
+  width: number,
+): { svg: string; height: number } {
+  const padding = CARD_PADDING
+  const columnGap = 36
+  const columnWidth = (width - padding * 2 - columnGap) / 2
+  const fontSize = 26
+  const lineHeight = 34
+  let cursorY = y + padding
+  const rows: string[] = []
 
-export function buildCrewSummarySvg(
-  title: string,
-  lines: CrewSummaryLine[],
-): string {
-  const safeLines = Array.isArray(lines) ? lines : []
-  const orderedCategories = CATEGORY_ORDER.map((category) => ({
-    category,
-    lines: linesForCategory(safeLines, category),
-  }))
-  const crewCount = safeLines.filter(
-    ({ category }) => category !== "available",
-  ).length
-  const columns = crewCount > CREW_LIMIT_FOR_TWO_COLUMNS ? 2 : 1
-  const width = columns === 1 ? ONE_COLUMN_WIDTH : TWO_COLUMN_WIDTH
-  const contentWidth = width - PAGE_PADDING * 2
-  const columnWidth =
-    columns === 1 ? contentWidth : (contentWidth - COLUMN_GAP) / 2
-  const titleLines = wrapText(
-    cleanText(title).trim() || "Riepilogo equipaggi",
-    contentWidth,
-    26,
-  )
-  const titleLineHeight = 34
-  const titleHeight = PAGE_PADDING + titleLines.length * titleLineHeight + 28
-  let cursorY = titleHeight
-  let content = ""
-  let hasAvailableStudents = false
-
-  for (const { category, lines: categoryLines } of orderedCategories) {
-    if (categoryLines.length === 0) continue
-    const members = categoryLines.flatMap((line) =>
-      Array.isArray(line.members) ? line.members : [],
-    )
-    if (category === "available") {
-      hasAvailableStudents = members.some((member) => !member.role)
-      if (!members.length) continue
-    }
-    content += renderSectionHeading(category, cursorY)
-    cursorY += 42
-
-    if (category === "available" || category === "a-terra") {
-      const rendered = renderRosterCard(
-        members,
-        PAGE_PADDING,
-        cursorY,
-        contentWidth,
-      )
-      content += rendered.svg
-      cursorY += rendered.height + 16
-      continue
-    }
-
-    for (let index = 0; index < categoryLines.length; index += columns) {
-      const row = categoryLines.slice(index, index + columns)
-      const rendered = row.map((line, offset) =>
-        renderCrewCard(
-          line,
-          PAGE_PADDING + offset * (columnWidth + COLUMN_GAP),
-          cursorY,
-          columnWidth,
+  for (let index = 0; index < labels.length; index += 2) {
+    const left = labels[index]
+    const right = labels[index + 1]
+    const leftLines = left
+      ? wrapText(cleanText(left), columnWidth, fontSize)
+      : []
+    const rightLines = right
+      ? wrapText(cleanText(right), columnWidth, fontSize)
+      : []
+    if (left) {
+      rows.push(
+        renderTextLines(
+          leftLines,
+          x + padding,
+          cursorY + fontSize,
+          fontSize,
+          lineHeight,
+          `font-weight="700" fill="${MUTED}"`,
         ),
       )
-      content += rendered.map(({ svg }) => svg).join("")
-      cursorY += Math.max(...rendered.map(({ height }) => height)) + CARD_GAP
     }
-    cursorY += 5
+    if (right) {
+      rows.push(
+        renderTextLines(
+          rightLines,
+          x + padding + columnWidth + columnGap,
+          cursorY + fontSize,
+          fontSize,
+          lineHeight,
+          `font-weight="700" fill="${MUTED}"`,
+        ),
+      )
+    }
+    cursorY +=
+      Math.max(leftLines.length, rightLines.length, 1) * lineHeight + ROW_GAP
   }
 
-  if (!hasAvailableStudents) {
-    cursorY += 2
-    content += `<text data-all-assigned-note="true" x="${width / 2}" y="${cursorY + 16}" text-anchor="middle" font-family="${FONT_FAMILY}" font-size="14" font-weight="600" fill="${BLUE}">Tutti gli allievi assegnati</text>`
-    cursorY += 32
+  const height = Math.max(100, cursorY - ROW_GAP - y + padding)
+  return {
+    height,
+    svg: `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="24" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="2" stroke-dasharray="10 8"/>${rows.join("")}`,
+  }
+}
+
+/** A logo already decoded to a data URL, with its intrinsic size so the
+ *  group heading can size the mark at a fixed height without distortion. */
+export type LoadedLogo = { dataUrl: string; width: number; height: number }
+
+function renderGroupHeading(
+  group: CrewSummaryGroup,
+  logos: Partial<Record<BoatType, LoadedLogo>>,
+  y: number,
+  contentWidth: number,
+): { svg: string; height: number } {
+  const centerY = y + GROUP_HEADING_HEIGHT / 2
+  let markSvg: string
+  let markRight: number
+
+  if (group.kind === "boat") {
+    const logo = logos[group.boatType]
+    if (logo && logo.width > 0 && logo.height > 0) {
+      const rawWidth = GROUP_LOGO_HEIGHT * (logo.width / logo.height)
+      const markWidth = Math.min(GROUP_LOGO_MAX_WIDTH, rawWidth)
+      const markHeight = markWidth * (logo.height / logo.width)
+      const markY = y + (GROUP_HEADING_HEIGHT - markHeight) / 2
+      markSvg = `<image href="${logo.dataUrl}" x="${PAGE_PADDING}" y="${markY}" width="${markWidth}" height="${markHeight}" preserveAspectRatio="xMidYMid meet"/>`
+      markRight = PAGE_PADDING + markWidth
+    } else {
+      const text = escapeXml(group.boatType)
+      markSvg = `<text x="${PAGE_PADDING}" y="${centerY + 8}" font-family="${FONT_FAMILY}" font-size="24" font-weight="800" fill="${INK}">${text}</text>`
+      markRight = PAGE_PADDING + estimateTextWidth(group.boatType, 24)
+    }
+  } else if (group.kind === "mezzi") {
+    const label = "MEZZI"
+    markSvg = `${renderIcon("gommone", PAGE_PADDING, centerY - 18, 36, ACCENT)}<text x="${PAGE_PADDING + 48}" y="${centerY + 8}" font-family="${FONT_FAMILY}" font-size="22" font-weight="800" letter-spacing="1.5" fill="${ACCENT}">${label}</text>`
+    markRight =
+      PAGE_PADDING + 48 + estimateTextWidth(label, 22) + 1.5 * label.length
+  } else {
+    const label = "EQUIPAGGI SENZA BARCA"
+    markSvg = `<text x="${PAGE_PADDING}" y="${centerY + 8}" font-family="${FONT_FAMILY}" font-size="22" font-weight="800" letter-spacing="1.5" fill="${ACCENT}">${label}</text>`
+    markRight = PAGE_PADDING + estimateTextWidth(label, 22) + 1.5 * label.length
   }
 
-  const height = Math.max(160, cursorY + PAGE_PADDING)
-  const titleSvg = renderTextLines(
+  const count = group.lines.length
+  const countSvg = `<text x="${PAGE_PADDING + contentWidth}" y="${centerY + 7}" text-anchor="end" font-family="${FONT_FAMILY}" font-size="20" font-weight="700" fill="${MUTED}">${count}</text>`
+  const ruleX1 = markRight + 20
+  const ruleX2 = PAGE_PADDING + contentWidth - 56
+  const ruleSvg =
+    ruleX2 > ruleX1
+      ? `<line x1="${ruleX1}" y1="${centerY}" x2="${ruleX2}" y2="${centerY}" stroke="${RULE}" stroke-width="2"/>`
+      : ""
+
+  return {
+    svg: `<g data-summary-group="${group.kind}">${markSvg}${ruleSvg}${countSvg}</g>`,
+    height: GROUP_HEADING_HEIGHT,
+  }
+}
+
+function renderSectionHeading(
+  label: string,
+  count: number,
+  icon: IconKind,
+  y: number,
+  contentWidth: number,
+): { svg: string; height: number } {
+  const centerY = y + SECTION_HEADING_HEIGHT / 2
+  const iconSvg = renderIcon(
+    icon,
+    PAGE_PADDING,
+    centerY - SECTION_ICON_SIZE / 2,
+    SECTION_ICON_SIZE,
+    ACCENT,
+  )
+  const labelText = label.toLocaleUpperCase("it-IT")
+  const labelX = PAGE_PADDING + SECTION_ICON_SIZE + 14
+  const labelSvg = `<text x="${labelX}" y="${centerY + 8}" font-family="${FONT_FAMILY}" font-size="24" font-weight="800" letter-spacing="1.2" fill="${ACCENT}">${escapeXml(labelText)}</text>`
+  const labelWidth = estimateTextWidth(labelText, 24) + 1.2 * labelText.length
+  const countSvg = `<text x="${PAGE_PADDING + contentWidth}" y="${centerY + 7}" text-anchor="end" font-family="${FONT_FAMILY}" font-size="20" font-weight="700" fill="${MUTED}">${count}</text>`
+  const ruleX1 = labelX + labelWidth + 20
+  const ruleX2 = PAGE_PADDING + contentWidth - 56
+  const ruleSvg =
+    ruleX2 > ruleX1
+      ? `<line x1="${ruleX1}" y1="${centerY}" x2="${ruleX2}" y2="${centerY}" stroke="${RULE}" stroke-width="2"/>`
+      : ""
+
+  return {
+    svg: `<g data-summary-section="${escapeXml(label)}">${iconSvg}${labelSvg}${ruleSvg}${countSvg}</g>`,
+    height: SECTION_HEADING_HEIGHT,
+  }
+}
+
+/**
+ * The pure builder both `buildCrewSummaryPng` and its unit tests call: given
+ * the shared `CrewSummarySections` (the exact same object the read view's
+ * `AnnouncementView` renders) and any boat-model logos already decoded to
+ * data URLs, it returns the finished SVG markup with no further I/O. A
+ * missing logo entry renders the model name as text instead, exactly like
+ * `BoatModelHeaderMark`'s own `onError` fallback.
+ */
+export function buildCrewSummarySvg(
+  model: CrewSummarySections,
+  logos: Partial<Record<BoatType, LoadedLogo>> = {},
+): string {
+  const contentWidth = WIDTH - PAGE_PADDING * 2
+  const columnWidth = (contentWidth - COLUMN_GAP) / 2
+
+  let cursorY = PAGE_PADDING
+  let content = ""
+
+  content += `<text x="${PAGE_PADDING}" y="${cursorY + 24}" font-family="${FONT_FAMILY}" font-size="26" font-weight="800" letter-spacing="3" fill="${INK}">EQUIPAGGI</text>`
+  cursorY += 50
+  const titleText = cleanText(model.title).trim() || "Riepilogo equipaggi"
+  const titleLines = wrapText(titleText, contentWidth, 58)
+  content += renderTextLines(
     titleLines,
     PAGE_PADDING,
-    PAGE_PADDING + 25,
-    26,
-    titleLineHeight,
-    'font-weight="750" fill="#172b47"',
+    cursorY + 50,
+    58,
+    66,
+    `font-weight="800" fill="${INK}"`,
   )
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Riepilogo equipaggi" font-family="${FONT_FAMILY}" data-columns="${columns}"><rect width="${width}" height="${height}" fill="#f2f6fb"/><rect x="${PAGE_PADDING}" y="${PAGE_PADDING + titleLines.length * titleLineHeight + 2}" width="64" height="4" rx="2" fill="${BLUE}"/>${titleSvg}${content}</svg>`
+  cursorY += titleLines.length * 66 + 22
+  content += `<line x1="${PAGE_PADDING}" y1="${cursorY}" x2="${WIDTH - PAGE_PADDING}" y2="${cursorY}" stroke="${BORDER}" stroke-width="2"/>`
+  cursorY += 44
+
+  let isFirstBlock = true
+  const beforeBlock = () => {
+    if (!isFirstBlock) cursorY += GROUP_GAP
+    isFirstBlock = false
+  }
+
+  for (const group of model.groups) {
+    beforeBlock()
+    const heading = renderGroupHeading(group, logos, cursorY, contentWidth)
+    content += heading.svg
+    cursorY += heading.height + HEADING_CONTENT_GAP
+
+    for (let index = 0; index < group.lines.length; index += 2) {
+      const leftLine = group.lines[index]!
+      const rightLine = group.lines[index + 1]
+      const left = renderCrewCard(leftLine, PAGE_PADDING, cursorY, columnWidth)
+      const right = rightLine
+        ? renderCrewCard(
+            rightLine,
+            PAGE_PADDING + columnWidth + COLUMN_GAP,
+            cursorY,
+            columnWidth,
+          )
+        : null
+      content += left.svg + (right?.svg ?? "")
+      cursorY += Math.max(left.height, right?.height ?? 0)
+      if (index + 2 < group.lines.length) cursorY += CARD_GAP
+    }
+  }
+
+  if (model.availableMembers.length > 0) {
+    beforeBlock()
+    const heading = renderSectionHeading(
+      "Persone disponibili",
+      model.availableMembers.length,
+      "available",
+      cursorY,
+      contentWidth,
+    )
+    content += heading.svg
+    cursorY += heading.height + HEADING_CONTENT_GAP
+    const card = renderRosterCard(
+      model.availableMembers,
+      PAGE_PADDING,
+      cursorY,
+      contentWidth,
+    )
+    content += card.svg
+    cursorY += card.height
+  }
+
+  if (model.landMembers.length > 0) {
+    beforeBlock()
+    const heading = renderSectionHeading(
+      "A terra",
+      model.landMembers.length,
+      "a-terra",
+      cursorY,
+      contentWidth,
+    )
+    content += heading.svg
+    cursorY += heading.height + HEADING_CONTENT_GAP
+    const card = renderRosterCard(
+      model.landMembers,
+      PAGE_PADDING,
+      cursorY,
+      contentWidth,
+    )
+    content += card.svg
+    cursorY += card.height
+  }
+
+  if (model.emptyLabels.length > 0) {
+    beforeBlock()
+    const heading = renderSectionHeading(
+      "Barche ed equipaggi vuoti",
+      model.emptyLabels.length,
+      "empty",
+      cursorY,
+      contentWidth,
+    )
+    content += heading.svg
+    cursorY += heading.height + HEADING_CONTENT_GAP
+    const card = renderLabelListCard(
+      model.emptyLabels,
+      PAGE_PADDING,
+      cursorY,
+      contentWidth,
+    )
+    content += card.svg
+    cursorY += card.height
+  }
+
+  const height = Math.max(320, cursorY + PAGE_PADDING)
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${height}" viewBox="0 0 ${WIDTH} ${height}" role="img" aria-label="Riepilogo equipaggi" font-family="${FONT_FAMILY}"><rect width="${WIDTH}" height="${height}" fill="${BG}"/>${content}</svg>`
 }
 
 function makeFilename(title: string): string {
   const slug = cleanText(title)
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
@@ -454,6 +708,56 @@ function loadImage(url: string): Promise<HTMLImageElement> {
       reject(new Error("Impossibile preparare il riepilogo."))
     image.src = url
   })
+}
+
+/**
+ * Decodes a same-origin boat-model logo through an offscreen canvas and
+ * reads it back as a data URL, so the final SVG carries the pixels inline
+ * instead of an external reference the rasteriser would have to fetch a
+ * second time. Same-origin only (`boatMarks.ts`'s `BOAT_LOGOS`), so the
+ * canvas is never tainted. Any failure — missing file, decode error, no 2D
+ * context — resolves to `null` rather than rejecting, so one bad logo never
+ * blocks the whole export; the caller falls back to text for that model.
+ */
+async function loadBoatLogo(type: BoatType): Promise<LoadedLogo | null> {
+  try {
+    const image = await loadImage(BOAT_LOGOS[type])
+    const width = image.naturalWidth || image.width
+    const height = image.naturalHeight || image.height
+    if (!width || !height) return null
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext("2d")
+    if (!context) return null
+    context.drawImage(image, 0, 0, width, height)
+    return { dataUrl: canvas.toDataURL("image/png"), width, height }
+  } catch {
+    return null
+  }
+}
+
+async function loadBoatLogos(
+  model: CrewSummarySections,
+): Promise<Partial<Record<BoatType, LoadedLogo>>> {
+  const boatTypes = Array.from(
+    new Set(
+      model.groups
+        .filter(
+          (group): group is Extract<CrewSummaryGroup, { kind: "boat" }> =>
+            group.kind === "boat",
+        )
+        .map((group) => group.boatType),
+    ),
+  )
+  const entries = await Promise.all(
+    boatTypes.map(async (type) => [type, await loadBoatLogo(type)] as const),
+  )
+  const logos: Partial<Record<BoatType, LoadedLogo>> = {}
+  for (const [type, logo] of entries) {
+    if (logo) logos[type] = logo
+  }
+  return logos
 }
 
 function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -477,8 +781,7 @@ function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 export async function buildCrewSummaryPng(
-  title: string,
-  lines: CrewSummaryLine[],
+  model: CrewSummarySections,
   options: CrewSummaryOptions = {},
 ): Promise<Blob> {
   if (
@@ -487,7 +790,8 @@ export async function buildCrewSummaryPng(
   ) {
     throw new Error("Il riepilogo PNG richiede un browser compatibile.")
   }
-  const svg = buildCrewSummarySvg(title, lines)
+  const logos = await loadBoatLogos(model)
+  const svg = buildCrewSummarySvg(model, logos)
   const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" })
   const svgUrl = URL.createObjectURL(svgBlob)
   try {
@@ -519,8 +823,7 @@ export async function buildCrewSummaryPng(
 }
 
 export async function downloadCrewSummaryPng(
-  title: string,
-  lines: CrewSummaryLine[],
+  model: CrewSummarySections,
   options: CrewSummaryOptions = {},
 ): Promise<void> {
   if (
@@ -531,11 +834,11 @@ export async function downloadCrewSummaryPng(
       "Il download del riepilogo richiede un browser compatibile.",
     )
   }
-  const png = await buildCrewSummaryPng(title, lines, options)
+  const png = await buildCrewSummaryPng(model, options)
   const url = URL.createObjectURL(png)
   const anchor = document.createElement("a")
   anchor.href = url
-  anchor.download = makeFilename(title)
+  anchor.download = makeFilename(model.title)
   anchor.style.display = "none"
   try {
     document.body.appendChild(anchor)

@@ -41,14 +41,16 @@ import {
   GommoneIcon,
 } from "@/features/boats/BoatIdentity"
 import { getCrewDisplayColumns } from "@/features/crews/crewDisplayPreference"
+import { downloadCrewSummaryPng } from "@/features/crews/crewSummaryImage"
 import {
-  downloadCrewSummaryPng,
-  type CrewSummaryLine,
-} from "@/features/crews/crewSummaryImage"
+  buildCrewSummarySections,
+  crewLineClassColor,
+  type CrewSummaryCrewLine,
+  type CrewSummaryGroup,
+  type CrewSummaryMember,
+  type CrewSummarySections,
+} from "@/features/crews/crewSummaryModel"
 import {
-  BOAT_TYPES,
-  BOAT_TYPE_CLASS_COLORS,
-  MEZZI_CLASS_COLOR,
   SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
   SESSION_SMONTANTE_DUTY_DAY,
@@ -207,14 +209,16 @@ function sessionBoatStateLabel(
     : "Disponibile non assegnata, non in uscita"
 }
 
-type AnnouncementLine = {
-  crewId: string
-  crewNumber: number
-  destination: CrewPlan["crews"][number]["destination"]
-  boat: BoatRecord | null
+/**
+ * The read view's own line shape, layered over the shared
+ * `CrewSummaryCrewLine` (`crewSummaryModel.ts`, also used by the PNG
+ * exporter) with the one field only this screen needs: `inferredBoatType`,
+ * for a boat-less crew whose session has a single selected boat model (the
+ * "modello senza numero" state), used only by the empty-boats label list
+ * below, never by grouping or by the exported image.
+ */
+type AnnouncementLine = CrewSummaryCrewLine & {
   inferredBoatType: BoatRecord["type"] | null
-  members: CrewSummaryLine["members"]
-  warning: { severity: "red" | "yellow"; count: number } | null
 }
 
 /**
@@ -222,44 +226,11 @@ type AnnouncementLine = {
  * the class logo, in canonical `BOAT_TYPES` order; a crew with people but no
  * boat yet falls back to its own group so it still reads as an occupied
  * outing; Mezzi is always last. Empty crews are not occupied groups — they
- * join unused boats in the "Barche ed equipaggi vuoti" section below.
+ * join unused boats in the "Barche ed equipaggi vuoti" section below. The
+ * grouping itself lives in `crewSummaryModel.ts` so the read view and the
+ * exported image can never disagree on it.
  */
-type AnnouncementGroup =
-  | { kind: "boat"; boatType: BoatRecord["type"]; lines: AnnouncementLine[] }
-  | { kind: "unassigned"; lines: AnnouncementLine[] }
-  | { kind: "mezzi"; lines: AnnouncementLine[] }
-
-function groupOccupiedAnnouncementLines(
-  lines: readonly AnnouncementLine[],
-): AnnouncementGroup[] {
-  const occupied = lines.filter((line) => line.members.length > 0)
-  const groups: AnnouncementGroup[] = []
-  for (const boatType of BOAT_TYPES) {
-    const boatLines = occupied.filter(
-      (line) => line.destination === "boat" && line.boat?.type === boatType,
-    )
-    if (boatLines.length > 0)
-      groups.push({ kind: "boat", boatType, lines: boatLines })
-  }
-  const unassignedLines = occupied.filter(
-    (line) =>
-      line.destination !== "mezzi" &&
-      !(line.destination === "boat" && line.boat),
-  )
-  if (unassignedLines.length > 0) {
-    groups.push({ kind: "unassigned", lines: unassignedLines })
-  }
-  const mezziLines = occupied.filter((line) => line.destination === "mezzi")
-  if (mezziLines.length > 0) groups.push({ kind: "mezzi", lines: mezziLines })
-  return groups
-}
-
-/** The class colour a card's own group uses, straight from the line. */
-function announcementLineClassColor(line: AnnouncementLine) {
-  if (line.destination === "mezzi") return MEZZI_CLASS_COLOR
-  if (line.boat) return BOAT_TYPE_CLASS_COLORS[line.boat.type]
-  return "#6b8790"
-}
+type AnnouncementGroup = CrewSummaryGroup
 
 function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
   return (
@@ -292,8 +263,8 @@ function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
   )
 }
 
-function AnnouncementCrewCard({ line }: { line: AnnouncementLine }) {
-  const classColor = announcementLineClassColor(line)
+function AnnouncementCrewCard({ line }: { line: CrewSummaryCrewLine }) {
+  const classColor = crewLineClassColor(line)
   return (
     <li
       aria-label={`Equipaggio ${line.crewNumber}, ${
@@ -364,11 +335,7 @@ function AnnouncementCrewCard({ line }: { line: AnnouncementLine }) {
   )
 }
 
-function AnnouncementPersonList({
-  members,
-}: {
-  members: CrewSummaryLine["members"]
-}) {
+function AnnouncementPersonList({ members }: { members: CrewSummaryMember[] }) {
   return (
     <div className="col-span-full flex flex-wrap gap-x-3 gap-y-1.5 rounded-[10px] border border-[#c8d7db] bg-white px-3 py-2.5">
       {members.map((member, index) => (
@@ -987,26 +954,18 @@ function CrewCopyConfirmDialog({
  * 13-crew stress case still fits one screen without scrolling.
  */
 function AnnouncementView({
-  sessionId,
-  lines,
-  availableMembers,
-  landMembers,
-  emptyLabels,
+  summary,
   onClose,
   onDownloadImage,
   imageExportState,
 }: {
-  sessionId: SessionId
-  lines: AnnouncementLine[]
-  availableMembers: CrewSummaryLine["members"]
-  landMembers: CrewSummaryLine["members"]
-  emptyLabels: string[]
+  summary: CrewSummarySections
   onClose: () => void
   onDownloadImage: () => void
   imageExportState: "idle" | "busy" | "error"
 }) {
   const dialogRef = useDialogFocus<HTMLElement>()
-  const groups = groupOccupiedAnnouncementLines(lines)
+  const { groups, availableMembers, landMembers, emptyLabels } = summary
 
   return (
     <section
@@ -1029,7 +988,7 @@ function AnnouncementView({
               className="mt-0.5 break-words text-xl font-black leading-tight [overflow-wrap:anywhere]"
               id="crew-announcement-title"
             >
-              {sessionLabel(sessionId)}
+              {summary.title}
             </h1>
           </div>
           <button
@@ -1529,9 +1488,7 @@ export function CrewManagement({
     }
   }
 
-  function summaryMember(
-    person: CrewPersonRef,
-  ): CrewSummaryLine["members"][number] {
+  function summaryMember(person: CrewPersonRef): CrewSummaryMember {
     if (person.personType === "volunteer") {
       return {
         label: personLabel(person),
@@ -1582,8 +1539,7 @@ export function CrewManagement({
 
   // Shared by the on-screen read view and the PNG export, so both agree on
   // who counts as available, who is A terra and which selected boats never
-  // got a crew — the export keeps its own current anatomy (second half of
-  // F3), but not its own copy of this bookkeeping.
+  // got a crew.
   const assignedPeople = new Set(
     plan.crews.flatMap((crew) =>
       crew.members.map((person) => `${person.personType}:${person.personId}`),
@@ -1638,38 +1594,23 @@ export function CrewManagement({
     .filter((label): label is string => label !== null)
   const emptyAnnouncementLabels = [...emptyCrewLabels, ...emptyBoatLabels]
 
+  // The one model the read view renders and the PNG export rasterises
+  // (`crewSummaryModel.ts`): built once here from the same ingredients as
+  // the read view's own sections above, so a fix to the grouping reaches
+  // both at once and they can never show a different order or membership.
+  const crewSummary: CrewSummarySections = buildCrewSummarySections({
+    title: sessionLabel(sessionId),
+    lines: announcementLines,
+    availableMembers,
+    landMembers,
+    emptyLabels: emptyAnnouncementLabels,
+  })
+
   async function downloadAnnouncementImage() {
     if (imageExportState === "busy") return
-    const summaryLines: CrewSummaryLine[] = [
-      { category: "available", members: availableMembers },
-      ...announcementLines.map((line): CrewSummaryLine => ({
-        category:
-          line.members.length === 0
-            ? "empty"
-            : line.destination === "mezzi"
-              ? "mezzi"
-              : "sailing",
-        crewNumber: line.crewNumber,
-        destination:
-          line.destination === "mezzi"
-            ? "Mezzi"
-            : line.boat
-              ? `${line.boat.type} ${line.boat.number}`
-              : line.inferredBoatType
-                ? `${line.inferredBoatType} · Senza barca`
-                : "Senza barca",
-        members: line.members,
-      })),
-    ]
-    if (landMembers.length > 0) {
-      summaryLines.push({ category: "a-terra", members: landMembers })
-    }
-    for (const label of emptyBoatLabels) {
-      summaryLines.push({ category: "empty", destination: label, members: [] })
-    }
     setImageExportState("busy")
     try {
-      await downloadCrewSummaryPng(sessionLabel(sessionId), summaryLines)
+      await downloadCrewSummaryPng(crewSummary)
       setImageExportState("idle")
     } catch {
       setImageExportState("error")
@@ -2299,14 +2240,10 @@ export function CrewManagement({
     <>
       {readMode && (
         <AnnouncementView
-          availableMembers={availableMembers}
-          emptyLabels={emptyAnnouncementLabels}
           imageExportState={imageExportState}
-          landMembers={landMembers}
-          lines={announcementLines}
           onDownloadImage={downloadAnnouncementImage}
           onClose={() => setReadMode(false)}
-          sessionId={sessionId}
+          summary={crewSummary}
         />
       )}
       {copyReport && (
