@@ -1022,7 +1022,10 @@ function DutySummaryDayCard({
             <Check aria-label="Completata" className="size-3" />
           )}
         </span>
-        <div className="grid min-w-0 flex-1 content-start gap-px">
+        {/* `pr-5` keeps every name clear of the 16px corner warning badge. */}
+        <div
+          className={`grid min-w-0 flex-1 content-start gap-px ${day.warning ? "pr-5" : ""}`}
+        >
           {day.members.length === 0 ? (
             <span className="text-sm font-bold text-muted-foreground">
               Nessun assegnato
@@ -1085,8 +1088,8 @@ function handleSummaryDialogKeyDown(
  * The Comandate counterpart of `AnnouncementView` in `CrewManagement.tsx`:
  * same header grammar (eyebrow, title, close, "Scarica immagine
  * riepilogo"), same text-size-aware column rule
- * (`minmax(min(100%,9rem),1fr)`, see that file's own comment for why 9rem
- * keeps two columns from 326 CSS px and collapses to one at the 320 px/200%
+ * (`minmax(min(100%,8.8rem),1fr)`, see that file's own comment for why 8.8rem
+ * keeps two columns from 320 CSS px and collapses to one at the 320 px/200%
  * text stress). Reachable only once a rota exists (`DutyManagement`'s own
  * "list" branch gates the opening button on `assignments.length > 0`).
  */
@@ -1185,7 +1188,7 @@ function DutySummaryView({
             Impossibile scaricare il riepilogo PNG. Riprova.
           </p>
         )}
-        <ul className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,9rem),1fr))]">
+        <ul className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,8.8rem),1fr))]">
           {summary.days.map((day) => (
             <DutySummaryDayCard day={day} key={day.dayId} />
           ))}
@@ -1451,7 +1454,14 @@ export function DutyManagement({
             <button
               aria-label="Apri riepilogo comandate"
               className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              onClick={() => setShowSummary(true)}
+              onClick={() => {
+                // A failed image export must not greet the next opening with
+                // its old error; one still in flight keeps "Preparo…".
+                setImageExportState((state) =>
+                  state === "error" ? "idle" : state,
+                )
+                setShowSummary(true)
+              }}
               type="button"
             >
               <BookOpenText aria-hidden="true" className="size-[20px]" />

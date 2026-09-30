@@ -8,7 +8,11 @@ import {
 } from "@/features/boats/boatMarks"
 import type { BoatType } from "@/domain/config"
 import {
+  allStudentsAssigned,
+  crewCardLabel,
   crewLineClassColor,
+  groupNumberWidthEm,
+  modelOnlyName,
   type CrewSummaryCrewLine,
   type CrewSummaryGroup,
   type CrewSummaryMember,
@@ -32,6 +36,9 @@ import {
   PAGE_PADDING,
   RULE,
   ROW_GAP,
+  WARNING_BADGE_OFFSET,
+  WARNING_BADGE_RESERVE,
+  WARNING_BADGE_TOP,
   WIDTH,
   cleanText,
   downloadPngBlob,
@@ -90,12 +97,25 @@ const DUTY_BLUE = "#2f5fa0"
 const ROLE_BG = "#fff1d6"
 const ROLE_FG = "#8a5200"
 
+// The number column is never narrower than this (room for two digits at the
+// number's font size, plus a gap before the names), and grows to the widest
+// boat number of its group — up to `CARD_NUMBER_MAX_SHARE` of the card's
+// content, past which the number shrinks instead of crowding the names out.
 const CARD_NUMBER_COLUMN_WIDTH = 92
 const CARD_NUMBER_FONT = 54
+const CARD_NUMBER_GAP = 20
+const CARD_NUMBER_MAX_SHARE = 0.45
+const CARD_NUMBER_MIN_FONT = 20
+// "<model> · Senza barca", muted, above the names of a crew that is listed
+// under its model with no boat chosen yet.
+const CAPTION_FONT = 22
+const CAPTION_LINE_HEIGHT = 28
+const CAPTION_GAP = 8
 // Only as tall as the boat number needs: a card grows with its names, and a
 // fixed taller floor left most two-person cards half empty.
 const CARD_MIN_HEIGHT = CARD_PADDING * 2 + 56
 
+const ALL_ASSIGNED_FONT = 28
 const GROUP_GAP = 40
 const HEADING_CONTENT_GAP = 20
 const GROUP_HEADING_HEIGHT = 64
@@ -192,8 +212,45 @@ function layoutCrewMemberRow(
   x: number,
   y: number,
   width: number,
+  reserveFirstLine = 0,
 ): { svg: string; height: number } {
-  return layoutMemberRow(member.label, memberBadges(member), x, y, width)
+  return layoutMemberRow(
+    member.label,
+    memberBadges(member),
+    x,
+    y,
+    width,
+    reserveFirstLine,
+  )
+}
+
+type NumberColumn = { width: number; fontSize: number }
+
+/**
+ * The number column every card of a group shares, sized from the widest boat
+ * number in that group so the names still line up within it: never narrower
+ * than `CARD_NUMBER_COLUMN_WIDTH`, which fits two digits. A longer number
+ * (115, 1234, A12) widens it; one too long for even the capped column is drawn
+ * smaller rather than over the first name.
+ */
+export function crewNumberColumn(
+  lines: readonly CrewSummaryCrewLine[],
+  contentWidth: number,
+): NumberColumn {
+  const widest = groupNumberWidthEm(lines) * CARD_NUMBER_FONT
+  const width = Math.min(
+    contentWidth * CARD_NUMBER_MAX_SHARE,
+    Math.max(CARD_NUMBER_COLUMN_WIDTH, Math.ceil(widest + CARD_NUMBER_GAP)),
+  )
+  const room = width - CARD_NUMBER_GAP
+  const fontSize =
+    widest > room
+      ? Math.max(
+          CARD_NUMBER_MIN_FONT,
+          Math.floor((CARD_NUMBER_FONT * room) / widest),
+        )
+      : CARD_NUMBER_FONT
+  return { width, fontSize }
 }
 
 function renderCrewCard(
@@ -201,23 +258,56 @@ function renderCrewCard(
   x: number,
   y: number,
   width: number,
+  numberColumn: NumberColumn,
 ): { svg: string; height: number } {
   const classColor = crewLineClassColor(line)
   const contentX = x + CARD_EDGE_WIDTH + CARD_PADDING
   const contentWidth = width - CARD_EDGE_WIDTH - CARD_PADDING * 2
-  const textX = contentX + CARD_NUMBER_COLUMN_WIDTH
-  const textWidth = Math.max(120, contentWidth - CARD_NUMBER_COLUMN_WIDTH)
+  const textX = contentX + numberColumn.width
+  const textWidth = Math.max(120, contentWidth - numberColumn.width)
+  // The corner warning badge is drawn over the card's first text row: that
+  // row (the caption, else the first name) stays clear of it.
+  let reserve = line.warning ? WARNING_BADGE_RESERVE : 0
 
   let cursorY = y + CARD_PADDING
   const rows: string[] = []
+  const modelOnly = modelOnlyName(line)
+  if (modelOnly) {
+    const caption = wrapText(
+      `${cleanText(modelOnly)} · Senza barca`,
+      textWidth,
+      CAPTION_FONT,
+      Math.max(60, textWidth - reserve),
+    )
+    rows.push(
+      renderTextLines(
+        caption,
+        textX,
+        cursorY + CAPTION_FONT,
+        CAPTION_FONT,
+        CAPTION_LINE_HEIGHT,
+        `data-summary-caption="senza-barca" font-weight="700" fill="${MUTED}"`,
+      ),
+    )
+    cursorY += caption.length * CAPTION_LINE_HEIGHT + CAPTION_GAP
+    // The caption ends where the badge does (y + 60), so the names below it
+    // are already clear.
+    reserve = 0
+  }
   if (line.members.length === 0) {
     rows.push(
       `<text x="${textX}" y="${cursorY + NAME_FONT}" font-family="${FONT_FAMILY}" font-size="24" fill="${MUTED}">Nessuno assegnato</text>`,
     )
     cursorY += NAME_LINE_HEIGHT
   } else {
-    line.members.forEach((member) => {
-      const rendered = layoutCrewMemberRow(member, textX, cursorY, textWidth)
+    line.members.forEach((member, index) => {
+      const rendered = layoutCrewMemberRow(
+        member,
+        textX,
+        cursorY,
+        textWidth,
+        index === 0 ? reserve : 0,
+      )
       rows.push(rendered.svg)
       cursorY += rendered.height + ROW_GAP
     })
@@ -225,8 +315,9 @@ function renderCrewCard(
   }
 
   const height = Math.max(CARD_MIN_HEIGHT, cursorY - y + CARD_PADDING)
+  const numberBaseline = y + CARD_PADDING + numberColumn.fontSize * 0.78
   const numberSvg = line.boat
-    ? `<text x="${contentX}" y="${y + CARD_PADDING + CARD_NUMBER_FONT * 0.78}" font-family="${FONT_FAMILY}" font-size="${CARD_NUMBER_FONT}" font-weight="800" fill="${classColor}">${escapeXml(line.boat.number)}</text>`
+    ? `<text x="${contentX}" y="${numberBaseline}" font-family="${FONT_FAMILY}" font-size="${numberColumn.fontSize}" font-weight="800" fill="${classColor}">${escapeXml(line.boat.number)}</text>`
     : line.destination === "mezzi"
       ? // Vertical, bow up — same orientation `AnnouncementCrewCard` gives
         // `GommoneIcon` in the boat-number column of a Mezzi card.
@@ -238,24 +329,22 @@ function renderCrewCard(
           classColor,
           "vertical",
         )
-      : `<text x="${contentX}" y="${y + CARD_PADDING + CARD_NUMBER_FONT * 0.78}" font-family="${FONT_FAMILY}" font-size="${CARD_NUMBER_FONT}" font-weight="800" fill="${classColor}">–</text>`
+      : // No boat yet: a muted dash, never the class colour a real number
+        // wears, so a crew that only knows its model cannot be mistaken for
+        // one with a boat.
+        `<text x="${contentX}" y="${y + CARD_PADDING + CARD_NUMBER_FONT * 0.78}" font-family="${FONT_FAMILY}" font-size="${CARD_NUMBER_FONT}" font-weight="800" fill="${MUTED}">–</text>`
   const warningSvg = line.warning
     ? renderWarningBadge(
         line.warning.severity,
-        x + width - 60,
-        y + 16,
+        x + width - WARNING_BADGE_OFFSET,
+        y + WARNING_BADGE_TOP,
         `Avviso equipaggio: ${line.warning.severity === "red" ? "rosso" : "giallo"}`,
       )
     : ""
-  const cardLabel = line.boat
-    ? `${line.boat.type} ${line.boat.number}`
-    : line.destination === "mezzi"
-      ? "Mezzi"
-      : "Senza barca"
 
   return {
     height,
-    svg: `<g data-summary-crew-number="${line.crewNumber}" aria-label="Equipaggio ${line.crewNumber}, ${escapeXml(cardLabel)}">${renderCardFrame(x, y, width, height, classColor)}${numberSvg}${rows.join("")}${warningSvg}</g>`,
+    svg: `<g data-summary-crew-number="${line.crewNumber}" aria-label="Equipaggio ${line.crewNumber}, ${escapeXml(cleanText(crewCardLabel(line)))}">${renderCardFrame(x, y, width, height, classColor)}${numberSvg}${rows.join("")}${warningSvg}</g>`,
   }
 }
 
@@ -370,8 +459,18 @@ function renderGroupHeading(
   let markSvg: string
   let markRight: number
 
-  if (group.kind === "boat") {
-    const logo = logos[group.boatType]
+  // A model's name as text: the fallback for a logo that is missing or failed
+  // to load, and the only mark a model outside the known list has.
+  const modelNameMark = (name: string) => {
+    const text = cleanText(name)
+    return {
+      svg: `<text x="${PAGE_PADDING}" y="${centerY + 8}" font-family="${FONT_FAMILY}" font-size="24" font-weight="800" fill="${INK}">${escapeXml(text)}</text>`,
+      right: PAGE_PADDING + estimateTextWidth(text, 24),
+    }
+  }
+
+  if (group.kind === "boat" || group.kind === "other-model") {
+    const logo = group.kind === "boat" ? logos[group.boatType] : undefined
     if (logo && logo.width > 0 && logo.height > 0) {
       const rawWidth = GROUP_LOGO_HEIGHT * (logo.width / logo.height)
       const markWidth = Math.min(GROUP_LOGO_MAX_WIDTH, rawWidth)
@@ -380,9 +479,11 @@ function renderGroupHeading(
       markSvg = `<image href="${logo.dataUrl}" x="${PAGE_PADDING}" y="${markY}" width="${markWidth}" height="${markHeight}" preserveAspectRatio="xMidYMid meet"/>`
       markRight = PAGE_PADDING + markWidth
     } else {
-      const text = escapeXml(group.boatType)
-      markSvg = `<text x="${PAGE_PADDING}" y="${centerY + 8}" font-family="${FONT_FAMILY}" font-size="24" font-weight="800" fill="${INK}">${text}</text>`
-      markRight = PAGE_PADDING + estimateTextWidth(group.boatType, 24)
+      const mark = modelNameMark(
+        group.kind === "boat" ? group.boatType : group.modelName,
+      )
+      markSvg = mark.svg
+      markRight = mark.right
     }
   } else if (group.kind === "mezzi") {
     const label = "MEZZI"
@@ -473,30 +574,8 @@ export function buildCrewSummarySvg(
     isFirstBlock = false
   }
 
-  for (const group of model.groups) {
-    beforeBlock()
-    const heading = renderGroupHeading(group, logos, cursorY, contentWidth)
-    content += heading.svg
-    cursorY += heading.height + HEADING_CONTENT_GAP
-
-    for (let index = 0; index < group.lines.length; index += 2) {
-      const leftLine = group.lines[index]!
-      const rightLine = group.lines[index + 1]
-      const left = renderCrewCard(leftLine, PAGE_PADDING, cursorY, columnWidth)
-      const right = rightLine
-        ? renderCrewCard(
-            rightLine,
-            PAGE_PADDING + columnWidth + COLUMN_GAP,
-            cursorY,
-            columnWidth,
-          )
-        : null
-      content += left.svg + (right?.svg ?? "")
-      cursorY += Math.max(left.height, right?.height ?? 0)
-      if (index + 2 < group.lines.length) cursorY += CARD_GAP
-    }
-  }
-
+  // The summary starts with whoever is still available to place (owner,
+  // UX1; spec §7.5), then the occupied crews.
   if (model.availableMembers.length > 0) {
     beforeBlock()
     const heading = renderSectionHeading(
@@ -516,6 +595,39 @@ export function buildCrewSummarySvg(
     )
     content += card.svg
     cursorY += card.height
+  }
+
+  const cardContentWidth = columnWidth - CARD_EDGE_WIDTH - CARD_PADDING * 2
+  for (const group of model.groups) {
+    beforeBlock()
+    const heading = renderGroupHeading(group, logos, cursorY, contentWidth)
+    content += heading.svg
+    cursorY += heading.height + HEADING_CONTENT_GAP
+    const numberColumn = crewNumberColumn(group.lines, cardContentWidth)
+
+    for (let index = 0; index < group.lines.length; index += 2) {
+      const leftLine = group.lines[index]!
+      const rightLine = group.lines[index + 1]
+      const left = renderCrewCard(
+        leftLine,
+        PAGE_PADDING,
+        cursorY,
+        columnWidth,
+        numberColumn,
+      )
+      const right = rightLine
+        ? renderCrewCard(
+            rightLine,
+            PAGE_PADDING + columnWidth + COLUMN_GAP,
+            cursorY,
+            columnWidth,
+            numberColumn,
+          )
+        : null
+      content += left.svg + (right?.svg ?? "")
+      cursorY += Math.max(left.height, right?.height ?? 0)
+      if (index + 2 < group.lines.length) cursorY += CARD_GAP
+    }
   }
 
   if (model.landMembers.length > 0) {
@@ -558,6 +670,14 @@ export function buildCrewSummarySvg(
     )
     content += card.svg
     cursorY += card.height
+  }
+
+  // With no student left to place the summary closes on a small centred
+  // note, in the read view's own accent blue.
+  if (allStudentsAssigned(model)) {
+    beforeBlock()
+    content += `<text data-all-assigned-note="true" x="${WIDTH / 2}" y="${cursorY + ALL_ASSIGNED_FONT}" text-anchor="middle" font-family="${FONT_FAMILY}" font-size="${ALL_ASSIGNED_FONT}" font-weight="700" fill="${ACCENT}">Tutti gli allievi assegnati</text>`
+    cursorY += ALL_ASSIGNED_FONT + 6
   }
 
   const height = Math.max(320, cursorY + PAGE_PADDING)

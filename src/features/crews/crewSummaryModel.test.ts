@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  allStudentsAssigned,
   buildCrewSummarySections,
+  crewCardLabel,
   crewLineClassColor,
+  groupNumberWidthEm,
   groupOccupiedCrewLines,
+  modelOnlyName,
   type CrewSummaryCrewLine,
   type CrewSummaryMember,
 } from "./crewSummaryModel"
@@ -136,6 +140,104 @@ describe("groupOccupiedCrewLines", () => {
     expect(groups[0]).toMatchObject({ kind: "boat", boatType: "RS Quest" })
   })
 
+  it("lists a boat-less occupied crew under the session's one model, in crew order with that model's boat crews", () => {
+    const lines: CrewSummaryCrewLine[] = [
+      line({
+        crewId: "c-quest-2",
+        crewNumber: 1,
+        destination: "boat",
+        boat: { type: "RS Quest", number: "2" },
+        inferredBoatType: "RS Quest",
+      }),
+      line({
+        crewId: "c-model-only",
+        crewNumber: 2,
+        destination: "unassigned",
+        inferredBoatType: "RS Quest",
+      }),
+      line({
+        crewId: "c-quest-7",
+        crewNumber: 3,
+        destination: "boat",
+        boat: { type: "RS Quest", number: "7" },
+        inferredBoatType: "RS Quest",
+      }),
+      line({
+        crewId: "c-mezzi",
+        crewNumber: 4,
+        destination: "mezzi",
+        inferredBoatType: "RS Quest",
+      }),
+    ]
+
+    const groups = groupOccupiedCrewLines(lines)
+
+    expect(groups.map((group) => group.kind)).toEqual(["boat", "mezzi"])
+    expect(groups[0]).toMatchObject({ kind: "boat", boatType: "RS Quest" })
+    expect(groups[0]?.lines.map((crewLine) => crewLine.crewId)).toEqual([
+      "c-quest-2",
+      "c-model-only",
+      "c-quest-7",
+    ])
+    // Mezzi never takes the session's model, even with one inferred.
+    expect(groups[1]?.lines.map((crewLine) => crewLine.crewId)).toEqual([
+      "c-mezzi",
+    ])
+  })
+
+  it("never drops a crew whose boat model is outside BOAT_TYPES: a trailing group per model, before the unassigned and Mezzi groups", () => {
+    const lines: CrewSummaryCrewLine[] = [
+      line({ crewId: "c-mezzi", crewNumber: 1, destination: "mezzi" }),
+      line({
+        crewId: "c-hobie-1",
+        crewNumber: 2,
+        destination: "boat",
+        boat: { type: "Hobie 16", number: "1" },
+      }),
+      line({ crewId: "c-none", crewNumber: 3 }),
+      line({
+        crewId: "c-toura",
+        crewNumber: 4,
+        destination: "boat",
+        boat: { type: "RS Toura", number: "4" },
+      }),
+      line({
+        crewId: "c-snipe",
+        crewNumber: 5,
+        destination: "boat",
+        boat: { type: "Snipe", number: "9" },
+      }),
+      line({
+        crewId: "c-hobie-2",
+        crewNumber: 6,
+        destination: "boat",
+        boat: { type: "Hobie 16", number: "2" },
+      }),
+    ]
+
+    const groups = groupOccupiedCrewLines(lines)
+
+    expect(
+      groups.map((group) =>
+        group.kind === "boat"
+          ? group.boatType
+          : group.kind === "other-model"
+            ? group.modelName
+            : group.kind,
+      ),
+    ).toEqual(["RS Toura", "Hobie 16", "Snipe", "unassigned", "mezzi"])
+    // Every occupied crew appears exactly once.
+    expect(
+      groups
+        .flatMap((group) => group.lines.map((crewLine) => crewLine.crewId))
+        .sort(),
+    ).toEqual(lines.map((crewLine) => crewLine.crewId).sort())
+    expect(groups[1]?.lines.map((crewLine) => crewLine.crewId)).toEqual([
+      "c-hobie-1",
+      "c-hobie-2",
+    ])
+  })
+
   it("keeps each crew's warning on its line through grouping", () => {
     const lines: CrewSummaryCrewLine[] = [
       line({
@@ -180,6 +282,111 @@ describe("crewLineClassColor", () => {
         line({ crewId: "c", crewNumber: 1, destination: "unassigned" }),
       ),
     ).toBe("#6b8790")
+  })
+
+  it("takes the session's inferred model colour for a boat-less crew, and grey for a model it does not know", () => {
+    expect(
+      crewLineClassColor(
+        line({
+          crewId: "c",
+          crewNumber: 1,
+          destination: "unassigned",
+          inferredBoatType: "RS Quest",
+        }),
+      ),
+    ).toBe("#2f9e46")
+    expect(
+      crewLineClassColor(
+        line({
+          crewId: "c",
+          crewNumber: 1,
+          destination: "boat",
+          boat: { type: "Hobie 16", number: "1" },
+        }),
+      ),
+    ).toBe("#6b8790")
+  })
+})
+
+describe("crewCardLabel and modelOnlyName", () => {
+  it("names the exact boat, Mezzi, the model without a boat, or no boat at all", () => {
+    const boat = line({
+      crewId: "a",
+      crewNumber: 1,
+      destination: "boat",
+      boat: { type: "RS Quest", number: "2" },
+    })
+    const mezzi = line({ crewId: "b", crewNumber: 2, destination: "mezzi" })
+    const modelOnly = line({
+      crewId: "c",
+      crewNumber: 3,
+      inferredBoatType: "RS Quest",
+    })
+    const none = line({ crewId: "d", crewNumber: 4 })
+
+    expect(crewCardLabel(boat)).toBe("RS Quest 2")
+    expect(crewCardLabel(mezzi)).toBe("Mezzi")
+    expect(crewCardLabel(modelOnly)).toBe("RS Quest · Senza barca")
+    expect(crewCardLabel(none)).toBe("senza barca")
+    expect(modelOnlyName(boat)).toBeNull()
+    expect(modelOnlyName(mezzi)).toBeNull()
+    expect(modelOnlyName(modelOnly)).toBe("RS Quest")
+    expect(modelOnlyName(none)).toBeNull()
+  })
+})
+
+describe("groupNumberWidthEm", () => {
+  const numbered = (number: string | null) =>
+    line({
+      crewId: `c-${number}`,
+      crewNumber: 1,
+      destination: number ? "boat" : "mezzi",
+      boat: number ? { type: "RS Toura", number } : null,
+    })
+
+  it("follows the widest boat number of the group, for long numbers and ones with a letter", () => {
+    const two = groupNumberWidthEm([numbered("7"), numbered("12")])
+    const three = groupNumberWidthEm([numbered("7"), numbered("115")])
+    const four = groupNumberWidthEm([numbered("12"), numbered("1234")])
+    const letter = groupNumberWidthEm([numbered("A12")])
+
+    expect(three).toBeGreaterThan(two)
+    expect(four).toBeGreaterThan(three)
+    // A capital is wider than a digit.
+    expect(letter).toBeGreaterThan(two)
+    expect(groupNumberWidthEm([numbered("1234"), numbered("7")])).toBe(four)
+  })
+
+  it("is zero for a group with no boat number (Mezzi, no boat)", () => {
+    expect(groupNumberWidthEm([numbered(null)])).toBe(0)
+    expect(groupNumberWidthEm([])).toBe(0)
+  })
+})
+
+describe("allStudentsAssigned", () => {
+  const sections = (availableMembers: CrewSummaryMember[]) =>
+    buildCrewSummarySections({
+      title: "Sabato PM",
+      lines: [],
+      availableMembers,
+      landMembers: [],
+      emptyLabels: [],
+    })
+
+  it("is true with nobody available, and with only volunteers left", () => {
+    expect(allStudentsAssigned(sections([]))).toBe(true)
+    expect(
+      allStudentsAssigned(sections([member("Vera ADV", { role: "ADV" })])),
+    ).toBe(true)
+  })
+
+  it("is false while any student remains available", () => {
+    expect(allStudentsAssigned(sections([member("Aldo")]))).toBe(false)
+    expect(
+      allStudentsAssigned(
+        sections([member("Vera ADV", { role: "ADV" }), member("Aldo")]),
+      ),
+    ).toBe(false)
   })
 })
 

@@ -22,6 +22,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -43,8 +44,12 @@ import {
 import { getCrewDisplayColumns } from "@/features/crews/crewDisplayPreference"
 import { downloadCrewSummaryPng } from "@/features/crews/crewSummaryImage"
 import {
+  allStudentsAssigned,
   buildCrewSummarySections,
+  crewCardLabel,
   crewLineClassColor,
+  groupNumberWidthEm,
+  modelOnlyName,
   type CrewSummaryCrewLine,
   type CrewSummaryGroup,
   type CrewSummaryMember,
@@ -210,24 +215,13 @@ function sessionBoatStateLabel(
 }
 
 /**
- * The read view's own line shape, layered over the shared
- * `CrewSummaryCrewLine` (`crewSummaryModel.ts`, also used by the PNG
- * exporter) with the one field only this screen needs: `inferredBoatType`,
- * for a boat-less crew whose session has a single selected boat model (the
- * "modello senza numero" state), used only by the empty-boats label list
- * below, never by grouping or by the exported image.
- */
-type AnnouncementLine = CrewSummaryCrewLine & {
-  inferredBoatType: BoatRecord["type"] | null
-}
-
-/**
  * F3 C6 target (owner, 2026-09-28): occupied crews group by boat model under
  * the class logo, in canonical `BOAT_TYPES` order; a crew with people but no
- * boat yet falls back to its own group so it still reads as an occupied
- * outing; Mezzi is always last. Empty crews are not occupied groups — they
- * join unused boats in the "Barche ed equipaggi vuoti" section below. The
- * grouping itself lives in `crewSummaryModel.ts` so the read view and the
+ * boat yet sits in its session's one model when there is one (marked "Senza
+ * barca") and otherwise falls back to its own group so it still reads as an
+ * occupied outing; Mezzi is always last. Empty crews are not occupied groups
+ * — they join unused boats in the "Barche ed equipaggi vuoti" section below.
+ * The grouping itself lives in `crewSummaryModel.ts` so the read view and the
  * exported image can never disagree on it.
  */
 type AnnouncementGroup = CrewSummaryGroup
@@ -243,6 +237,10 @@ function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
     <div className="col-span-full mt-4 flex items-center gap-2 first:mt-0">
       {group.kind === "boat" ? (
         <BoatModelHeaderMark type={group.boatType} />
+      ) : group.kind === "other-model" ? (
+        <span className="break-words text-xs font-black tracking-wide text-[#102f3b] uppercase [overflow-wrap:anywhere]">
+          {group.modelName}
+        </span>
       ) : group.kind === "mezzi" ? (
         <span className="flex items-center gap-1.5 text-[#0b526b]">
           <GommoneIcon className="size-5" />
@@ -263,17 +261,26 @@ function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
   )
 }
 
-function AnnouncementCrewCard({ line }: { line: CrewSummaryCrewLine }) {
+/**
+ * `numberWidthEm` is the widest boat number of the card's group
+ * (`groupNumberWidthEm`): the fixed 26px number column of the C6 target is
+ * the floor, and the column grows with the group's widest number — set on
+ * every card of the group, so the names still line up — instead of letting a
+ * 3- or 4-character number run into the first name. `em` resolves against the
+ * column's own 20px number size (`text-xl`), so it also follows the text size.
+ */
+function AnnouncementCrewCard({
+  line,
+  numberWidthEm,
+}: {
+  line: CrewSummaryCrewLine
+  numberWidthEm: number
+}) {
   const classColor = crewLineClassColor(line)
+  const modelOnly = modelOnlyName(line)
   return (
     <li
-      aria-label={`Equipaggio ${line.crewNumber}, ${
-        line.boat
-          ? `${line.boat.type} ${line.boat.number}`
-          : line.destination === "mezzi"
-            ? "Mezzi"
-            : "senza barca"
-      }`}
+      aria-label={`Equipaggio ${line.crewNumber}, ${crewCardLabel(line)}`}
       className="relative flex min-w-0 overflow-hidden rounded-[10px] border border-[#c8d7db] bg-white"
     >
       <span
@@ -282,9 +289,22 @@ function AnnouncementCrewCard({ line }: { line: CrewSummaryCrewLine }) {
         style={{ backgroundColor: classColor }}
       />
       <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
-        <span className="w-[26px] shrink-0 pt-px" style={{ color: classColor }}>
+        <span
+          className="w-[max(26px,var(--boat-number-width))] max-w-[45%] shrink-0 pt-px text-xl"
+          // A crew with no boat yet wears the muted grey, never the class
+          // colour a real number has.
+          style={
+            {
+              color:
+                line.boat || line.destination === "mezzi"
+                  ? classColor
+                  : "#6b8790",
+              "--boat-number-width": `${numberWidthEm}em`,
+            } as CSSProperties
+          }
+        >
           {line.boat ? (
-            <span className="block text-xl leading-none font-black tracking-tight tabular-nums">
+            <span className="block text-xl leading-none font-black tracking-tight tabular-nums [overflow-wrap:anywhere]">
               {line.boat.number}
             </span>
           ) : line.destination === "mezzi" ? (
@@ -301,7 +321,19 @@ function AnnouncementCrewCard({ line }: { line: CrewSummaryCrewLine }) {
             </span>
           )}
         </span>
-        <div className="grid min-w-0 flex-1 gap-px">
+        {/* `pr-5` keeps every name clear of the 16px corner warning badge
+            (8px in from the card edge), as in the frozen C6 mock. */}
+        <div
+          className={`grid min-w-0 flex-1 gap-px ${line.warning ? "pr-5" : ""}`}
+        >
+          {modelOnly && (
+            <span
+              className="break-words text-[10px] leading-3 font-bold [overflow-wrap:anywhere] text-[#6b8790]"
+              data-summary-caption="senza-barca"
+            >
+              {modelOnly} · Senza barca
+            </span>
+          )}
           {line.members.map((member, index) => (
             <div
               className="flex min-w-0 items-center gap-1"
@@ -389,7 +421,7 @@ function AnnouncementSectionHeading({
   icon: React.ReactNode
 }) {
   return (
-    <div className="col-span-full mt-4 flex items-center gap-2">
+    <div className="col-span-full mt-4 flex items-center gap-2 first:mt-0">
       <span className="flex items-center gap-1.5 text-[#0b526b]">
         {icon}
         <span className="text-[11px] font-black tracking-[0.08em] uppercase">
@@ -948,10 +980,11 @@ function CrewCopyConfirmDialog({
 /**
  * F3 C6 read view (owner target, 2026-09-28): occupied crews grouped by boat
  * model under the class logo, two columns, no "Equipaggio N" label. The
- * sections the summary already had — available people, A terra, empty boats
- * — follow the same visual language after the boat groups, so the primary
- * "who sails where" content is what a hurried reader sees first and the
- * 13-crew stress case still fits one screen without scrolling.
+ * sections the summary already had keep the same visual language and the
+ * order the spec (§7.5) gives: whoever is still available first, then the
+ * boat groups and Mezzi, A terra and the empty boats, closed by a small
+ * "Tutti gli allievi assegnati" note when no student is left to place. A
+ * fully assigned 13-crew course still fits one screen without scrolling.
  */
 function AnnouncementView({
   summary,
@@ -1017,34 +1050,19 @@ function AnnouncementView({
         )}
         {/*
          * The column count follows the text size, not a fixed viewport
-         * breakpoint: `minmax(min(100%, 9rem), 1fr)` asks each track for at
-         * least 9rem, but never more than the container itself has. 9rem
-         * (144px) at the normal 16px root keeps exactly two columns from
-         * 326 CSS px of width upward — 390×844, the frozen C6 target, renders
-         * the same 176px-wide cards as before — while at the 320 CSS px/200%
+         * breakpoint: `minmax(min(100%, 8.8rem), 1fr)` asks each track for at
+         * least 8.8rem, but never more than the container itself has. 8.8rem
+         * (140.8px) at the normal 16px root keeps exactly two columns from
+         * 320 CSS px of width upward (2 × 140.8 + the 6px gap = 287.6px, the
+         * 288px left after the 16px side padding) — 390×844, the frozen C6
+         * target, renders 176px-wide cards — while at the 320 CSS px/200%
          * text accessibility stress (docs/post-mvp/06_DESIGN_RULEBOOK.md
-         * §5), 9rem is 288px, wider than the ~256px of content left after
-         * padding, so `min(100%, 9rem)` collapses to the container's own
-         * width and auto-fill places a single full-width column instead of
-         * squeezing two illegible ones.
+         * §5), 8.8rem is 281.6px, wider than the ~256px of content left
+         * after padding, so `min(100%, 8.8rem)` collapses to the container's
+         * own width and auto-fill places a single full-width column instead
+         * of squeezing two illegible ones.
          */}
-        <div className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,9rem),1fr))]">
-          {groups.map((group) => {
-            const groupKey = `${group.kind}:${group.kind === "boat" ? group.boatType : ""}`
-            return (
-              <Fragment key={groupKey}>
-                <AnnouncementGroupHeading group={group} />
-                {/* `contents` keeps the cards valid `<li>`s of a real list
-                    without taking the `<ul>` a grid cell of its own — the
-                    column flow needs every card as a direct grid child. */}
-                <ul className="contents">
-                  {group.lines.map((line) => (
-                    <AnnouncementCrewCard key={line.crewId} line={line} />
-                  ))}
-                </ul>
-              </Fragment>
-            )
-          })}
+        <div className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,8.8rem),1fr))]">
           {availableMembers.length > 0 && (
             <>
               <AnnouncementSectionHeading
@@ -1055,6 +1073,33 @@ function AnnouncementView({
               <AnnouncementPersonList members={availableMembers} />
             </>
           )}
+          {groups.map((group) => {
+            const groupKey = `${group.kind}:${
+              group.kind === "boat"
+                ? group.boatType
+                : group.kind === "other-model"
+                  ? group.modelName
+                  : ""
+            }`
+            const numberWidthEm = groupNumberWidthEm(group.lines)
+            return (
+              <Fragment key={groupKey}>
+                <AnnouncementGroupHeading group={group} />
+                {/* `contents` keeps the cards valid `<li>`s of a real list
+                    without taking the `<ul>` a grid cell of its own — the
+                    column flow needs every card as a direct grid child. */}
+                <ul className="contents">
+                  {group.lines.map((line) => (
+                    <AnnouncementCrewCard
+                      key={line.crewId}
+                      line={line}
+                      numberWidthEm={numberWidthEm}
+                    />
+                  ))}
+                </ul>
+              </Fragment>
+            )
+          })}
           {landMembers.length > 0 && (
             <>
               <AnnouncementSectionHeading
@@ -1076,6 +1121,14 @@ function AnnouncementView({
               />
               <AnnouncementLabelList labels={emptyLabels} />
             </>
+          )}
+          {allStudentsAssigned(summary) && (
+            <p
+              className="col-span-full mt-3 text-center text-[11px] font-bold text-[#0b526b]"
+              data-all-assigned-note="true"
+            >
+              Tutti gli allievi assegnati
+            </p>
           )}
         </div>
       </div>
@@ -1516,7 +1569,7 @@ export function CrewManagement({
         .filter((type): type is BoatRecord["type"] => Boolean(type)),
     ),
   )
-  const announcementLines: AnnouncementLine[] = plan.crews.map(
+  const announcementLines: CrewSummaryCrewLine[] = plan.crews.map(
     (crew, index) => {
       const summary = getCrewWarningSummary(warningsByCrew.get(crew.id) ?? [])
       return {
@@ -2230,7 +2283,12 @@ export function CrewManagement({
         setDestinationCrewId(null)
         setSelected(null)
       }}
-      onRead={() => setReadMode(true)}
+      onRead={() => {
+        // A failed image export must not greet the next opening with its
+        // old error; one still in flight keeps its "Preparo immagine…".
+        setImageExportState((state) => (state === "error" ? "idle" : state))
+        setReadMode(true)
+      }}
       sessionId={sessionId}
       readDisabled={busy || plan.crews.length === 0}
     />

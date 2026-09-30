@@ -76,37 +76,80 @@ export const escapeXml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;")
 
+/**
+ * Every summary text is bold, so the estimate is for bold Inter/system-ui:
+ * capitals and the wide letters run well past the ~0.6em of a lowercase one,
+ * `i`, `l` and punctuation well under it. A flat per-character width used to
+ * under-measure "FRANCESCA BIANCHI" and let an all-capitals name run past its
+ * card; these classes round each one slightly up instead, so a line the
+ * estimate says fits does fit.
+ */
+const NARROW_CHARACTERS = new Set("ijlI.,:;'!|")
+const WIDE_CHARACTERS = new Set("MWmw@%")
+
+function characterWidthEm(character: string): number {
+  if (/\s/u.test(character) || NARROW_CHARACTERS.has(character)) return 0.32
+  if (WIDE_CHARACTERS.has(character)) return 1.05
+  if (/\p{Lu}/u.test(character)) return 0.78
+  if (/\p{Nd}/u.test(character)) return 0.66
+  // Emoji, CJK and other full-width scripts.
+  if ((character.codePointAt(0) ?? 0) >= 0x2e80) return 1.05
+  return 0.62
+}
+
+export function estimateTextWidth(text: string, fontSize: number): number {
+  let ems = 0
+  for (const character of text) ems += characterWidthEm(character)
+  return ems * fontSize
+}
+
+/**
+ * Word-wraps `text` so no line's estimated width passes `maxWidth`; a word
+ * wider than a whole line is cut between letters instead of being left to run
+ * past the card. `firstLineMaxWidth` narrows only the first line, for a row
+ * whose start shares the card's top edge with something drawn over it (the
+ * corner warning badge).
+ */
 export function wrapText(
   text: string,
   maxWidth: number,
   fontSize: number,
+  firstLineMaxWidth: number = maxWidth,
 ): string[] {
   const words = text.trim().split(/\s+/u).filter(Boolean)
-  const maxCharacters = Math.max(6, Math.floor(maxWidth / (fontSize * 0.58)))
   const lines: string[] = []
   let current = ""
+  const fits = (value: string) =>
+    estimateTextWidth(value, fontSize) <=
+    (lines.length === 0 ? firstLineMaxWidth : maxWidth)
 
   for (const word of words) {
     let rest = word
-    while (Array.from(rest).length > maxCharacters) {
-      lines.push(Array.from(rest).slice(0, maxCharacters).join(""))
-      rest = Array.from(rest).slice(maxCharacters).join("")
-    }
-    const next = current ? `${current} ${rest}` : rest
-    if (Array.from(next).length > maxCharacters && current) {
+    if (current) {
+      if (fits(`${current} ${rest}`)) {
+        current = `${current} ${rest}`
+        continue
+      }
       lines.push(current)
-      current = rest
-    } else {
-      current = next
     }
+    // `rest` now starts a fresh line.
+    while (!fits(rest)) {
+      const letters = Array.from(rest)
+      let count = 1
+      while (
+        count < letters.length &&
+        fits(letters.slice(0, count + 1).join(""))
+      ) {
+        count += 1
+      }
+      lines.push(letters.slice(0, count).join(""))
+      rest = letters.slice(count).join("")
+    }
+    current = rest
   }
 
   if (current) lines.push(current)
   return lines.length ? lines : ["—"]
-}
-
-export function estimateTextWidth(text: string, fontSize: number): number {
-  return Array.from(text).length * fontSize * 0.58
 }
 
 export function renderTextLines(
@@ -145,6 +188,17 @@ export function renderVectorIcon(
   return `<g transform="translate(${x} ${y}) scale(${scale})" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${innerSvg}</g>`
 }
 
+// The corner badge sits 16px below a card's top edge and 60px in from its right
+// edge (`WARNING_BADGE_OFFSET`), so it overhangs the text area — which ends
+// `CARD_PADDING` in from that edge — by the difference. A card's first name
+// line gives up that overhang plus a gap (`WARNING_BADGE_RESERVE`); the badge
+// ends at y+60, before the second line starts (y+64), so only the first line
+// can collide.
+export const WARNING_BADGE_SIZE = 44
+export const WARNING_BADGE_OFFSET = 60
+export const WARNING_BADGE_TOP = 16
+export const WARNING_BADGE_RESERVE = WARNING_BADGE_OFFSET - CARD_PADDING + 12
+
 // lucide's `triangle-alert` (aliased as `alert-triangle`), the same icon
 // `AnnouncementCrewCard` and the Comandate day card use on screen.
 const WARNING_TRIANGLE_INNER =
@@ -163,7 +217,7 @@ export function renderWarningBadge(
   y: number,
   ariaLabel: string,
 ): string {
-  const size = 44
+  const size = WARNING_BADGE_SIZE
   const bg = severity === "red" ? WARNING_RED_BG : WARNING_YELLOW_BG
   const fg = severity === "red" ? WARNING_RED_FG : WARNING_YELLOW_FG
   const iconSize = 24
@@ -204,7 +258,10 @@ export function renderBadges(
  * leaves no room — one roster row, whether it belongs to a crew member or a
  * duty student. The caller supplies the already-decided badges (minor/duty/
  * role for a crew member, minor only for a duty student), so this stays
- * ignorant of what a badge means.
+ * ignorant of what a badge means. `reserveFirstLine` keeps the row's first
+ * line (and its badges, when it is also the last) that many pixels clear of
+ * the card's right edge, for a card whose corner warning badge is drawn over
+ * its first row.
  */
 export function layoutMemberRow(
   label: string,
@@ -212,6 +269,7 @@ export function layoutMemberRow(
   x: number,
   y: number,
   width: number,
+  reserveFirstLine = 0,
 ): { svg: string; height: number } {
   const badgesWidth = badges.reduce(
     (sum, badge, index) =>
@@ -220,7 +278,12 @@ export function layoutMemberRow(
   )
   const nameWidth = Math.max(100, width - badgesWidth - (badgesWidth ? 20 : 0))
   const cleanLabel = cleanText(label).trim() || "Nome non disponibile"
-  const nameLines = wrapText(cleanLabel, nameWidth, NAME_FONT)
+  const nameLines = wrapText(
+    cleanLabel,
+    nameWidth,
+    NAME_FONT,
+    Math.max(60, nameWidth - reserveFirstLine),
+  )
   const height = Math.max(NAME_LINE_HEIGHT, nameLines.length * NAME_LINE_HEIGHT)
   const nameSvg = renderTextLines(
     nameLines,
@@ -231,11 +294,12 @@ export function layoutMemberRow(
     `font-weight="700" fill="${INK}"`,
   )
   const lastLine = nameLines.length - 1
-  // Names are bold, and the width estimate is for regular text: leave room so
-  // a badge never touches the name it follows.
   const afterName =
-    x + estimateTextWidth(nameLines[lastLine] ?? "", NAME_FONT) * 1.12 + 18
-  const badgesX = Math.min(afterName, x + width - badgesWidth)
+    x + estimateTextWidth(nameLines[lastLine] ?? "", NAME_FONT) + 18
+  const badgesX = Math.min(
+    afterName,
+    x + width - badgesWidth - (lastLine === 0 ? reserveFirstLine : 0),
+  )
   const badgeSvg = badges.length
     ? renderBadges(
         badges,
@@ -252,7 +316,9 @@ export function layoutMemberRow(
 
 /** The rounded white card body plus its left coloured edge — every summary
  *  card (a crew, a Comandata day) is this frame with feature-specific content
- *  layered on top at the same coordinates. */
+ *  layered on top at the same coordinates. The edge is clipped to the card's
+ *  own rounded shape, as the screen's `overflow-hidden` does, so its square
+ *  corners never poke out past the 24px radius. */
 export function renderCardFrame(
   x: number,
   y: number,
@@ -261,7 +327,8 @@ export function renderCardFrame(
   edgeColor: string,
   edgeWidth: number = CARD_EDGE_WIDTH,
 ): string {
-  return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="24" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="2"/><rect x="${x}" y="${y}" width="${edgeWidth}" height="${height}" fill="${edgeColor}"/>`
+  const clipId = `card-clip-${x}-${y}`.replace(/[^\w-]/gu, "_")
+  return `<clipPath id="${clipId}"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="24"/></clipPath><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="24" fill="${CARD_BG}" stroke="${BORDER}" stroke-width="2"/><rect x="${x}" y="${y}" width="${edgeWidth}" height="${height}" fill="${edgeColor}" clip-path="url(#${clipId})"/>`
 }
 
 /**
@@ -296,12 +363,30 @@ export function renderSummaryHeader(input: {
   return { svg, height: cursorY - PAGE_PADDING }
 }
 
-export function loadImage(url: string): Promise<HTMLImageElement> {
+// A logo the service worker has not cached, on a phone with a poor signal,
+// can sit unanswered for far longer than anyone will wait on "Preparo
+// immagine…". Past this the load is treated as failed.
+export const IMAGE_LOAD_TIMEOUT_MS = 8000
+
+export function loadImage(
+  url: string,
+  timeoutMs: number = IMAGE_LOAD_TIMEOUT_MS,
+): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = () =>
+    const timer = window.setTimeout(() => {
+      image.onload = null
+      image.onerror = null
       reject(new Error("Impossibile preparare il riepilogo."))
+    }, timeoutMs)
+    image.onload = () => {
+      window.clearTimeout(timer)
+      resolve(image)
+    }
+    image.onerror = () => {
+      window.clearTimeout(timer)
+      reject(new Error("Impossibile preparare il riepilogo."))
+    }
     image.src = url
   })
 }
@@ -331,6 +416,26 @@ export type RasteriseOptions = {
   pixelRatio?: number
 }
 
+// iOS Safari refuses, or silently blanks, a canvas past 16,777,216 pixels
+// (4096²); a round 16M keeps a margin under it.
+export const MAX_CANVAS_PIXELS = 16_000_000
+
+/**
+ * The density to rasterise an image of this logical size at: the requested
+ * one (2× by default, never above 3×, never below 1×), lowered — below 1× if
+ * it must be — until the canvas stays within `MAX_CANVAS_PIXELS`. A large
+ * course (dozens of four-person crews) makes a tall image; a slightly softer
+ * complete one beats a blank or failed one.
+ */
+export function summaryPixelRatio(
+  width: number,
+  height: number,
+  requested = 2,
+): number {
+  const wanted = Math.min(3, Math.max(1, requested))
+  return Math.min(wanted, Math.sqrt(MAX_CANVAS_PIXELS / (width * height)))
+}
+
 /**
  * Turns a finished, self-contained SVG string (its own `width`/`height`
  * attributes included) into a rasterised PNG blob at `pixelRatio` — the one
@@ -358,14 +463,16 @@ export async function rasteriseSvgToPng(
       throw new Error("Impossibile leggere le dimensioni del riepilogo.")
     const width = Number(dimensions[1])
     const height = Number(dimensions[2])
-    const pixelRatio = Math.min(3, Math.max(1, options.pixelRatio ?? 2))
+    const pixelRatio = summaryPixelRatio(width, height, options.pixelRatio)
     const canvas = document.createElement("canvas")
-    canvas.width = Math.ceil(width * pixelRatio)
-    canvas.height = Math.ceil(height * pixelRatio)
+    // Rounded down, so the clamp in `summaryPixelRatio` is never exceeded by
+    // a rounded-up pixel; the scale below follows the canvas actually made.
+    canvas.width = Math.max(1, Math.floor(width * pixelRatio))
+    canvas.height = Math.max(1, Math.floor(height * pixelRatio))
     const context = canvas.getContext("2d")
     if (!context)
       throw new Error("Il browser non supporta la creazione di PNG.")
-    context.scale(pixelRatio, pixelRatio)
+    context.scale(canvas.width / width, canvas.height / height)
     context.drawImage(image, 0, 0, width, height)
     const png = await canvasToPng(canvas)
     if (png.type && png.type !== "image/png") {

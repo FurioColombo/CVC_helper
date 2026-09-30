@@ -17,6 +17,9 @@ import {
   NAME_LINE_HEIGHT,
   PAGE_PADDING,
   ROW_GAP,
+  WARNING_BADGE_OFFSET,
+  WARNING_BADGE_RESERVE,
+  WARNING_BADGE_TOP,
   WIDTH,
   downloadPngBlob,
   escapeXml,
@@ -98,13 +101,15 @@ function renderDayCard(
     )
     cursorY += NAME_LINE_HEIGHT
   } else {
-    day.members.forEach((member) => {
+    day.members.forEach((member, index) => {
+      // The corner warning badge is drawn over the first row: keep it clear.
       const rendered = layoutMemberRow(
         member.label,
         memberBadges(member),
         textX,
         cursorY,
         textWidth,
+        index === 0 && day.warning ? WARNING_BADGE_RESERVE : 0,
       )
       rows.push(rendered.svg)
       cursorY += rendered.height + ROW_GAP
@@ -132,8 +137,8 @@ function renderDayCard(
   const warningSvg = day.warning
     ? renderWarningBadge(
         day.warning.severity,
-        x + width - 60,
-        y + 16,
+        x + width - WARNING_BADGE_OFFSET,
+        y + WARNING_BADGE_TOP,
         `Avviso comandata: ${day.warning.severity === "red" ? "rosso" : "giallo"}`,
       )
     : ""

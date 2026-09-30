@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import sharp from "sharp"
 
+import { NAME_FONT, estimateTextWidth } from "@/lib/summaryImage"
 import { buildDutySummarySections } from "./dutySummaryModel"
 import {
   buildDutySummaryPng,
@@ -211,6 +212,61 @@ describe("Comandate summary SVG layout", () => {
     expect(
       parsed.querySelector('[data-summary-day="sunday"] [aria-label]'),
     ).toBeNull()
+  })
+
+  it.each([["FRANCESCA BIANCHI"], ["GIANFRANCESCOANTONIO"], ["WWWWWWWWWWWW"]])(
+    "keeps the first line of %s clear of a day's corner warning badge and inside the card",
+    (name) => {
+      const model = buildDutySummarySections({
+        title: "t",
+        lines: [
+          dayLine({
+            dayId: "saturday",
+            members: [member(name), member("Bea Conti")],
+            warning: { severity: "yellow", count: 1 },
+          }),
+        ],
+      })
+      const parsed = parseSvg(buildDutySummarySvg(model))
+      const card = parsed.querySelector('[data-summary-day="saturday"]')!
+      const frame = card.querySelector('rect[fill="#ffffff"]')!
+      const textRight =
+        Number(frame.getAttribute("x")) +
+        Number(frame.getAttribute("width")) -
+        24
+      const badgeX = Number(
+        card.querySelector('[aria-label^="Avviso"] rect')?.getAttribute("x"),
+      )
+      const lines = Array.from(
+        card.querySelectorAll("[data-member-label] > text"),
+        (node) => ({
+          text: node.textContent ?? "",
+          right:
+            Number(node.getAttribute("x")) +
+            estimateTextWidth(node.textContent ?? "", NAME_FONT),
+        }),
+      )
+
+      expect(lines[0]!.right).toBeLessThanOrEqual(badgeX)
+      for (const line of lines) {
+        expect(line.right, line.text).toBeLessThanOrEqual(textRight)
+      }
+    },
+  )
+
+  it("clips a day card's edge to its rounded corners", () => {
+    const model = buildDutySummarySections({
+      title: "t",
+      lines: [dayLine({ dayId: "saturday", members: [member("Aldo Rossi")] })],
+    })
+    const card = parseSvg(buildDutySummarySvg(model)).querySelector(
+      '[data-summary-day="saturday"]',
+    )!
+    const id = card.querySelector("clipPath")?.getAttribute("id")
+    expect(id).toBeTruthy()
+    expect(
+      card.querySelector("rect[clip-path]")?.getAttribute("clip-path"),
+    ).toBe(`url(#${id})`)
   })
 
   it("colours a completed day's edge and label green, and an ordinary day's edge accent blue", () => {

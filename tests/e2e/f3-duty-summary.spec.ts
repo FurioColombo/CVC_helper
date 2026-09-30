@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 import sharp from "sharp"
 
 /**
@@ -18,6 +18,15 @@ import sharp from "sharp"
 const TOTAL_STUDENTS = 14
 const LONG_NAME_INDEX = TOTAL_STUDENTS
 const LONG_NAME = `NomeLunghissimoDiProva${LONG_NAME_INDEX}`
+
+/** The distinct left edges the cards start at, left to right: one value for a
+ *  single column, two for two columns. */
+async function distinctCardLefts(cards: Locator): Promise<number[]> {
+  const lefts = await cards.evaluateAll((items) =>
+    items.map((item) => Math.round(item.getBoundingClientRect().left)),
+  )
+  return [...new Set(lefts)].sort((a, b) => a - b)
+}
 
 async function createCourse(page: Page) {
   await page.goto("/")
@@ -114,9 +123,26 @@ test("shows a readable Comandate summary for a typical week and exports it as a 
     await expect(card).toBeInViewport()
   }
 
+  // 320 px with normal text: two columns still fit (8.8rem tracks, 2 × 140.8
+  // plus the 6px gap = 287.6px of the 288px left after the side padding).
+  await page.setViewportSize({ width: 320, height: 664 })
+  const normalLefts = await distinctCardLefts(view.getByRole("listitem"))
+  expect(normalLefts, JSON.stringify(normalLefts)).toHaveLength(2)
+  const normalWidths = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    viewport: document.documentElement.clientWidth,
+  }))
+  expect(
+    normalWidths.document,
+    JSON.stringify(normalWidths),
+  ).toBeLessThanOrEqual(normalWidths.viewport + 1)
+  await page.screenshot({
+    path: testInfo.outputPath("f3-duty-summary-320.png"),
+    fullPage: false,
+  })
+
   // 320 px/200% text: scroll is allowed, horizontal overflow is not
   // (docs/post-mvp/06_DESIGN_RULEBOOK.md §5's accessibility stress profile).
-  await page.setViewportSize({ width: 320, height: 664 })
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
   })
@@ -131,8 +157,10 @@ test("shows a readable Comandate summary for a typical week and exports it as a 
   await expect(stressCards).toHaveCount(7)
 
   // One column: every card starts at the same left edge, the same
-  // `minmax(min(100%, 9rem), 1fr)` column rule `f3-crew-summary.spec.ts`
-  // exercises for the crew summary.
+  // `minmax(min(100%, 8.8rem), 1fr)` column rule `f3-crew-summary.spec.ts`
+  // exercises for the crew summary (8.8rem is 281.6px at 200%, more than the
+  // 256px available).
+  expect(await distinctCardLefts(stressCards)).toHaveLength(1)
   const cardLefts = await Promise.all(
     (await stressCards.all()).map(async (card) => {
       const box = await card.boundingBox()

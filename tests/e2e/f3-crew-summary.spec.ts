@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 import sharp from "sharp"
 
 /**
@@ -13,10 +13,21 @@ import sharp from "sharp"
  *
  * A second, single-model course (10 crews of 4 on RS Toura, the D1 default)
  * checks that a denser but visually simpler roster also fits one screen: the
- * two-column card grid now sizes its columns from `min(100%, 9rem)` rather
+ * two-column card grid now sizes its columns from `min(100%, 8.8rem)` rather
  * than a fixed `grid-cols-2`, so both crew shapes must be exercised, not just
- * the mixed-model one.
+ * the mixed-model one. A third course gives its boats numbers of three or
+ * four characters (115, 1234, A12) to check the number column keeps them
+ * clear of the first name, on screen and in the exported image.
  */
+
+/** The distinct left edges the cards start at, left to right: one value for a
+ *  single column, two for two columns. */
+async function distinctCardLefts(cards: Locator): Promise<number[]> {
+  const lefts = await cards.evaluateAll((items) =>
+    items.map((item) => Math.round(item.getBoundingClientRect().left)),
+  )
+  return [...new Set(lefts)].sort((a, b) => a - b)
+}
 
 const BOATS_BY_TYPE: Record<string, string[]> = {
   "RS Toura": ["4", "7", "9"],
@@ -195,6 +206,11 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
   for (const card of await readView.getByRole("listitem").all()) {
     await expect(card).toBeInViewport()
   }
+  // Every student is seated, so the summary closes on its small centred note
+  // (spec §7.5), and that too stays on the one screen.
+  await expect(
+    readView.getByText("Tutti gli allievi assegnati"),
+  ).toBeInViewport()
 
   // Boat-model groups appear in canonical order (RS Toura, RS Quest, Laser
   // Vago, RS 500), Mezzi always last, regardless of crew-plan or
@@ -231,9 +247,29 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
     rs500BeforeMezzi: true,
   })
 
+  // 320 px with normal text: two columns still fit (8.8rem tracks, 2 × 140.8
+  // plus the 6px gap = 287.6px of the 288px left after the side padding), so
+  // the phone-sized stress width is not spent on a single column.
+  await page.setViewportSize({ width: 320, height: 664 })
+  const normalCards = readView.getByRole("listitem")
+  await expect(normalCards).toHaveCount(TOTAL_CREWS)
+  const normalLefts = await distinctCardLefts(normalCards)
+  expect(normalLefts, JSON.stringify(normalLefts)).toHaveLength(2)
+  const normalWidths = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    viewport: document.documentElement.clientWidth,
+  }))
+  expect(
+    normalWidths.document,
+    JSON.stringify(normalWidths),
+  ).toBeLessThanOrEqual(normalWidths.viewport + 1)
+  await page.screenshot({
+    path: testInfo.outputPath("f3-crew-summary-320.png"),
+    fullPage: false,
+  })
+
   // 320 px/200% text: scroll is allowed, horizontal overflow is not
   // (docs/post-mvp/06_DESIGN_RULEBOOK.md §5's accessibility stress profile).
-  await page.setViewportSize({ width: 320, height: 664 })
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
   })
@@ -247,9 +283,10 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
   const stressCards = readView.getByRole("listitem")
   await expect(stressCards).toHaveCount(TOTAL_CREWS)
 
-  // One column: 9rem no longer fits twice in the available width, so every
-  // card starts at the same left edge instead of the two ~150 px columns
-  // that used to truncate every name to a couple of letters.
+  // One column: 8.8rem (281.6px at 200%) no longer fits twice in the 256px
+  // available, so every card starts at the same left edge instead of the two
+  // ~150 px columns that used to truncate every name to a couple of letters.
+  expect(await distinctCardLefts(stressCards)).toHaveLength(1)
   const cardLefts = await Promise.all(
     (await stressCards.all()).map(async (card) => {
       const box = await card.boundingBox()
@@ -342,7 +379,6 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
 const D1_BOAT_TYPE = "RS Toura"
 const D1_BOAT_COUNT = 10
 const D1_MEMBERS_PER_CREW = 4
-const D1_TOTAL_STUDENTS = D1_BOAT_COUNT * D1_MEMBERS_PER_CREW // 40
 
 /**
  * D1's own default (`COURSE_CONFIG.D1.defaultBoatType`, no fixed standard
@@ -350,11 +386,20 @@ const D1_TOTAL_STUDENTS = D1_BOAT_COUNT * D1_MEMBERS_PER_CREW // 40
  * single-model, denser roster than the mixed 13-crew course above, seeded
  * the same way (through the app's own persistence, same pattern as the
  * 40-student stress case in c1-crew-management.spec.ts) so this exercises
- * the read view itself rather than 40 manual student forms.
+ * the read view itself rather than 40 manual student forms. By default ten
+ * boats numbered 1–10 with four students each; `numbers` and
+ * `membersPerCrew` choose other boats (and so crews) and crew sizes.
  */
-async function seedTenCrewCourseD1(page: Page) {
+async function seedTenCrewCourseD1(
+  page: Page,
+  options: { numbers?: string[]; membersPerCrew?: number } = {},
+) {
+  const boatNumbers =
+    options.numbers ??
+    Array.from({ length: D1_BOAT_COUNT }, (_, index) => String(index + 1))
+  const crewSize = options.membersPerCrew ?? D1_MEMBERS_PER_CREW
   const seededStudents = Array.from(
-    { length: D1_TOTAL_STUDENTS },
+    { length: boatNumbers.length * crewSize },
     (_, index) => ({
       firstName: `Allievo${String(index + 1).padStart(2, "0")}`,
       surname: "Prova",
@@ -370,7 +415,7 @@ async function seedTenCrewCourseD1(page: Page) {
   )
 
   await page.evaluate(
-    async ({ students, boatType, boatCount, membersPerCrew }) => {
+    async ({ students, boatType, numbers, membersPerCrew }) => {
       // Same absolute-path-via-variable workaround as the 13-crew seed above:
       // `import(<literal>)` is statically resolved by `tsc -b`, which does
       // not see the Vite-only ignore comment, and fails to find these
@@ -424,10 +469,7 @@ async function seedTenCrewCourseD1(page: Page) {
       )
       const createdBoats = await boatApi.createBoats(
         course.id,
-        Array.from({ length: boatCount }, (_, index) => ({
-          type: boatType,
-          number: String(index + 1),
-        })),
+        numbers.map((number) => ({ type: boatType, number })),
       )
 
       let studentIndex = 0
@@ -452,8 +494,8 @@ async function seedTenCrewCourseD1(page: Page) {
     {
       students: seededStudents,
       boatType: D1_BOAT_TYPE,
-      boatCount: D1_BOAT_COUNT,
-      membersPerCrew: D1_MEMBERS_PER_CREW,
+      numbers: boatNumbers,
+      membersPerCrew: crewSize,
     },
   )
 }
@@ -520,6 +562,129 @@ test("fits ten 4-student D1 crews, single boat model, on one 390×844 screen", a
   // Ten four-member crews in one group are denser than the mixed 13-crew
   // course (bigger cards, fewer groups); still well past a single screen.
   expect(metadata.height).toBeGreaterThan(2000)
+})
+
+/**
+ * A boat number is any text `normalizeBoatNumber` lets through, so "115",
+ * "1234" and "A12" are real. The fixed 26px number column the C6 target draws
+ * for two digits used to let them run into the first name; it now grows with
+ * the group's widest number, on every card, and the image does the same.
+ */
+test("keeps boat numbers of three or four characters clear of the first name, on screen and in the image", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "One full synthetic long-number journey is sufficient",
+  )
+  test.setTimeout(60_000)
+  const numbers = ["4", "115", "1234", "A12"]
+
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 1" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+
+  await seedTenCrewCourseD1(page, { numbers, membersPerCrew: 2 })
+  await page.reload()
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Equipaggi" })
+    .click()
+  await page.getByRole("button", { name: "Apri vista lettura" }).click()
+  const readView = page.getByRole("dialog", {
+    name: "Vista lettura equipaggi",
+  })
+  await expect(readView.getByRole("listitem")).toHaveCount(numbers.length)
+
+  /** Each card's number is fully drawn, on one line, ends before the first
+   *  name starts, and the names of every card start the same distance in. */
+  async function expectNumbersClearOfNames(where: string) {
+    const nameOffsets: number[] = []
+    for (const number of numbers) {
+      const card = readView.getByRole("listitem", {
+        name: new RegExp(`^Equipaggio \\d+, RS Toura ${number}$`),
+      })
+      const numberEl = card.getByText(number, { exact: true })
+      const glyphs = await numberEl.evaluate((element) => {
+        const range = document.createRange()
+        range.selectNodeContents(element)
+        const rect = range.getBoundingClientRect()
+        return {
+          right: rect.right,
+          height: rect.height,
+          fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+          scrollWidth: element.scrollWidth,
+          clientWidth: element.clientWidth,
+        }
+      })
+      const nameBox = await card
+        .getByText(/^Allievo\d+$/)
+        .first()
+        .boundingBox()
+      const cardBox = await card.boundingBox()
+      if (!nameBox || !cardBox) throw new Error(`No box for ${number}`)
+      const context = `${where} ${number}: ${JSON.stringify({ glyphs, nameBox })}`
+      expect(glyphs.right, context).toBeLessThanOrEqual(nameBox.x)
+      expect(glyphs.scrollWidth, context).toBeLessThanOrEqual(
+        glyphs.clientWidth,
+      )
+      // One line, not a number broken across two.
+      expect(glyphs.height, context).toBeLessThan(glyphs.fontSize * 1.5)
+      nameOffsets.push(nameBox.x - cardBox.x)
+    }
+    for (const offset of nameOffsets) {
+      expect(
+        Math.abs(offset - nameOffsets[0]!),
+        `${where}: ${JSON.stringify(nameOffsets)}`,
+      ).toBeLessThanOrEqual(1)
+    }
+  }
+  async function expectNoHorizontalOverflow(where: string) {
+    const widths = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth,
+      viewport: document.documentElement.clientWidth,
+    }))
+    expect(
+      widths.document,
+      `${where}: ${JSON.stringify(widths)}`,
+    ).toBeLessThanOrEqual(widths.viewport + 1)
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expectNumbersClearOfNames("390")
+  await page.screenshot({
+    path: testInfo.outputPath("f3-crew-summary-long-numbers-390.png"),
+    fullPage: false,
+  })
+  await page.setViewportSize({ width: 320, height: 664 })
+  await expectNumbersClearOfNames("320")
+  await expectNoHorizontalOverflow("320")
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  await expectNumbersClearOfNames("320/200%")
+  await expectNoHorizontalOverflow("320/200%")
+  await page.screenshot({
+    path: testInfo.outputPath("f3-crew-summary-long-numbers-320-200pct.png"),
+    fullPage: false,
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = ""
+  })
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    readView
+      .getByRole("button", { name: "Scarica immagine riepilogo" })
+      .click(),
+  ])
+  const pngPath = testInfo.outputPath("f3-crew-summary-long-numbers-export.png")
+  await download.saveAs(pngPath)
+  const metadata = await sharp(pngPath).metadata()
+  expect(metadata.format).toBe("png")
+  expect(metadata.width).toBe(1080 * 2)
 })
 
 /**

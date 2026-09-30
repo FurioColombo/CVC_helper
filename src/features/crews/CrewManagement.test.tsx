@@ -37,6 +37,7 @@ vi.mock("@/features/crews/crewSummaryImage", () => ({
 
 import { CrewManagement } from "@/features/crews/CrewManagement"
 import { downloadCrewSummaryPng } from "@/features/crews/crewSummaryImage"
+import { estimateTextWidth } from "@/lib/summaryImage"
 import type { CrewDraft, CrewPlan } from "@/domain/crews"
 import {
   listBoats,
@@ -2456,14 +2457,33 @@ describe("CrewManagement", () => {
     expect(within(exactBoatCrew).getByText("Aldo")).toBeVisible()
     expect(within(exactBoatCrew).getByText("Bea")).toBeVisible()
     expect(within(exactBoatCrew).getByText("2")).toBeVisible()
+    // Both selected boats are RS Quest, so the crew with people and no boat
+    // yet is listed under that one model, as "<model> · Senza barca" with a
+    // muted dash where a boat number would be (the "modello senza numero"
+    // state, spec §7.5) — in the same group as the exact-boat crew, not in a
+    // group of its own.
     const noExactBoatCrew = within(view).getByRole("listitem", {
-      name: "Equipaggio 2, senza barca",
+      name: "Equipaggio 2, RS Quest · Senza barca",
     })
     expect(within(noExactBoatCrew).getByText("Carlo")).toBeVisible()
     expect(within(noExactBoatCrew).getByText("Vera ADV")).toBeVisible()
-    // No boat and no single inferred model: it groups under its own C6
-    // heading rather than repeating "Senza barca" on every one of its cards.
-    expect(within(view).getByText("Equipaggi senza barca")).toBeVisible()
+    expect(
+      within(noExactBoatCrew).getByText("RS Quest · Senza barca"),
+    ).toBeVisible()
+    expect(within(noExactBoatCrew).getByText("–").parentElement).toHaveStyle({
+      color: "#6b8790",
+    })
+    expect(noExactBoatCrew.firstElementChild).toHaveStyle({
+      backgroundColor: "#2f9e46",
+    })
+    expect(noExactBoatCrew.parentElement).toBe(exactBoatCrew.parentElement)
+    expect(within(view).getAllByAltText("RS Quest")).toHaveLength(1)
+    expect(
+      within(view).queryByText("Equipaggi senza barca"),
+    ).not.toBeInTheDocument()
+    expect(
+      within(exactBoatCrew).queryByText(/Senza barca/),
+    ).not.toBeInTheDocument()
     expect(
       within(view).queryByText(/Allievi sistemati|Barche in uscita|Avvisi/),
     ).not.toBeInTheDocument()
@@ -2474,6 +2494,308 @@ describe("CrewManagement", () => {
     expect(
       screen.queryByRole("dialog", { name: "Vista lettura equipaggi" }),
     ).not.toBeInTheDocument()
+  })
+
+  it("starts the read view with the people still available, and closes it with 'Tutti gli allievi assegnati' only when no student is left", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-1", personType: "student" }],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: ["student-2"],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    const user = userEvent.setup()
+    const { unmount } = render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    let view = screen.getByRole("dialog", { name: "Vista lettura equipaggi" })
+    const isBefore = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+    // Carlo (a student) and Vera (a volunteer) are still available: their
+    // section leads the grid, ahead of the RS Quest group, and there is no
+    // closing note.
+    const availableHeading = within(view).getByText("Persone disponibili")
+    expect(within(view).getByText("Carlo")).toBeVisible()
+    expect(within(view).getByText("Vera ADV")).toBeVisible()
+    expect(
+      isBefore(availableHeading, within(view).getByAltText("RS Quest")),
+    ).toBe(true)
+    expect(
+      availableHeading.closest("div.col-span-full")?.previousElementSibling,
+    ).toBeNull()
+    expect(
+      within(view).queryByText("Tutti gli allievi assegnati"),
+    ).not.toBeInTheDocument()
+
+    // Seat Carlo: only the volunteer is left, which never counts as a
+    // student, so the summary now closes on the note, below everything else.
+    unmount()
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [
+              { personId: "student-1", personType: "student" },
+              { personId: "student-3", personType: "student" },
+            ],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: ["student-2"],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    view = screen.getByRole("dialog", { name: "Vista lettura equipaggi" })
+    const note = within(view).getByText("Tutti gli allievi assegnati")
+    expect(note).toHaveClass("text-center")
+    expect(note.nextElementSibling).toBeNull()
+    expect(isBefore(within(view).getByText("A terra"), note)).toBe(true)
+    expect(isBefore(within(view).getByAltText("RS Quest"), note)).toBe(true)
+  })
+
+  it("widens a group's boat-number column to its widest number (115, 1234, A12) on every card, and leaves other groups at the 26px floor", async () => {
+    const boat = (id: string, type: BoatRecord["type"], number: string) => ({
+      id,
+      courseId: COURSE.id,
+      type,
+      number,
+      availability: "available" as const,
+    })
+    getBoats.mockResolvedValue([
+      boat("boat-q7", "RS Quest", "7"),
+      boat("boat-q115", "RS Quest", "115"),
+      boat("boat-q1234", "RS Quest", "1234"),
+      boat("boat-qa12", "RS Quest", "A12"),
+      boat("boat-t4", "RS Toura", "4"),
+    ])
+    const crew = (id: string, boatId: string, personId: string) => ({
+      id,
+      sessionId: "sat-pm" as const,
+      members: [{ personId, personType: "student" as const }],
+      destination: "boat" as const,
+      boatId,
+    })
+    getVolunteers.mockResolvedValue([
+      ...VOLUNTEERS,
+      { id: "volunteer-2", courseId: COURSE.id, name: "Dario IS", role: "IS" },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          crew("crew-1", "boat-q7", "student-1"),
+          crew("crew-2", "boat-q115", "student-2"),
+          crew("crew-3", "boat-q1234", "student-3"),
+          {
+            id: "crew-4",
+            sessionId: "sat-pm",
+            members: [{ personId: "volunteer-1", personType: "volunteer" }],
+            destination: "boat",
+            boatId: "boat-qa12",
+          },
+          {
+            id: "crew-5",
+            sessionId: "sat-pm",
+            members: [{ personId: "volunteer-2", personType: "volunteer" }],
+            destination: "boat",
+            boatId: "boat-t4",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [
+          "boat-q7",
+          "boat-q115",
+          "boat-q1234",
+          "boat-qa12",
+          "boat-t4",
+        ],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    const view = screen.getByRole("dialog", { name: "Vista lettura equipaggi" })
+
+    const widthOf = (cardName: string, number: string) => {
+      const card = within(view).getByRole("listitem", { name: cardName })
+      const column = within(card).getByText(number).parentElement!
+      return column.style.getPropertyValue("--boat-number-width")
+    }
+    const widest = `${estimateTextWidth("1234", 1)}em`
+    // One width for the whole RS Quest group, from its widest number, so the
+    // first names still line up; every number is shown in full.
+    expect(widthOf("Equipaggio 1, RS Quest 7", "7")).toBe(widest)
+    expect(widthOf("Equipaggio 2, RS Quest 115", "115")).toBe(widest)
+    expect(widthOf("Equipaggio 3, RS Quest 1234", "1234")).toBe(widest)
+    expect(widthOf("Equipaggio 4, RS Quest A12", "A12")).toBe(widest)
+    // Four characters are wider than the two digits the 26px column fits;
+    // the column is the wider of that floor and the em width.
+    expect(estimateTextWidth("1234", 1) * 20).toBeGreaterThan(26)
+    expect(within(view).getByText("1234").parentElement!.className).toContain(
+      "w-[max(26px,var(--boat-number-width))]",
+    )
+    // Another group is sized by its own numbers: RS Toura's single digit
+    // stays inside the 26px floor, untouched by RS Quest's long ones.
+    const touraWidth = `${estimateTextWidth("4", 1)}em`
+    expect(widthOf("Equipaggio 5, RS Toura 4", "4")).toBe(touraWidth)
+    expect(touraWidth).not.toBe(widest)
+    expect(estimateTextWidth("4", 1) * 20).toBeLessThan(26)
+  })
+
+  it("keeps every name of a card with a warning clear of the corner badge", async () => {
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Timone duro",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T10:00:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-1", personType: "student" }],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+          {
+            id: "crew-2",
+            sessionId: "sat-pm",
+            members: [
+              { personId: "student-2", personType: "student" },
+              { personId: "student-3", personType: "student" },
+            ],
+            destination: "boat",
+            boatId: "boat-7",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2", "boat-7"],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    const view = screen.getByRole("dialog", { name: "Vista lettura equipaggi" })
+
+    const warned = within(view).getByRole("listitem", {
+      name: "Equipaggio 1, RS Quest 2",
+    })
+    const clear = within(view).getByRole("listitem", {
+      name: "Equipaggio 2, RS Quest 7",
+    })
+    expect(
+      within(warned).getByRole("img", { name: "Avviso equipaggio: giallo" }),
+    ).toBeVisible()
+    expect(within(warned).getByText("Aldo").closest(".grid")).toHaveClass(
+      "pr-5",
+    )
+    expect(within(clear).getByText("Bea").closest(".grid")).not.toHaveClass(
+      "pr-5",
+    )
+  })
+
+  it("drops a failed image export's error when the read view is opened again", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-1", personType: "student" }],
+            destination: "boat",
+            boatId: "boat-2",
+          },
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-2"],
+      }),
+    )
+    vi.mocked(downloadCrewSummaryPng).mockRejectedValueOnce(
+      new Error("canvas too large"),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+    await user.click(
+      await screen.findByRole("button", { name: "Apri vista lettura" }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
+    )
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Impossibile scaricare il riepilogo PNG. Riprova.",
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "Chiudi vista lettura" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Apri vista lettura" }))
+
+    expect(
+      within(
+        screen.getByRole("dialog", { name: "Vista lettura equipaggi" }),
+      ).queryByRole("alert"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
+    ).toBeEnabled()
   })
 
   it("groups the F3 C6 read view by boat model in canonical order, colours cards by class, uses the gommone Mezzi icon and marks an open-fault card", async () => {

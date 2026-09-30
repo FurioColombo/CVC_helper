@@ -527,7 +527,12 @@ allowed when straightforward; native brightness control is deferred.
 The 0.3.0 crew summary shows `IS`, `ADV`, `CT`, Comandata and minor markers and
 downloads as one complete phone-compatible PNG in the app's visual style. It
 starts with remaining available students, then occupied sailing crews, Mezzi,
-A terra as a crew-like group with its own icon, and empty boats/crews last. If
+A terra as a crew-like group with its own icon, and empty boats/crews last. The
+occupied crews follow the owner's C6 layout (2026-09-28): grouped by boat model
+under the class logo, two columns, each card with a 4px class-colour edge and
+the boat number in a left column as wide as the group's widest number. A crew
+with people and no boat, in a session whose boats are all one model, is listed
+in that model's group as `<model> · Senza barca` with a muted mark. If
 no students remain available, a small centered CVC-blue `Tutti gli allievi
 assegnati` note appears at the bottom. If Copy is offered, it copies that image,
 never plain text. All groups must fit in the image; above twelve crews two

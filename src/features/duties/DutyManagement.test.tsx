@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DUTY_DAYS } from "@/domain/config"
 
@@ -673,5 +673,142 @@ describe("DutyManagement", () => {
     const thursday = model.days.find((day) => day.dayId === "thursday")
     expect(thursday?.members).toEqual([])
     expect(thursday?.completed).toBe(false)
+  })
+
+  describe("Comandate read view", () => {
+    const PLAN: Awaited<ReturnType<typeof readDutyPlan>> = {
+      // In this fixture Saturday carries a warning; Sunday and Monday do not.
+      assignments: [
+        { dayId: "saturday", studentId: "student-2" },
+        { dayId: "sunday", studentId: "student-3" },
+        { dayId: "monday", studentId: "student-4" },
+      ],
+      settings: SETTINGS,
+    }
+    const renderDuties = () =>
+      render(
+        <DutyManagement
+          courseId="course-1"
+          onHome={vi.fn()}
+          courseStartDate="2026-08-29"
+        />,
+      )
+
+    afterEach(() => {
+      document.documentElement.style.overflow = ""
+      document.body.style.overflow = ""
+    })
+
+    it("locks the page scroll while it is open and gives back the previous values when it closes by button, by Escape and on unmount", async () => {
+      getPlan.mockResolvedValue(PLAN)
+      // Values the page had before the view opened, neither of them empty, so
+      // "restored" cannot be mistaken for "cleared".
+      document.documentElement.style.overflow = "auto"
+      document.body.style.overflow = "scroll"
+      const user = userEvent.setup()
+      const { unmount } = renderDuties()
+      const open = () =>
+        user.click(
+          screen.getByRole("button", { name: "Apri riepilogo comandate" }),
+        )
+      await screen.findByRole("button", { name: "Apri riepilogo comandate" })
+
+      await open()
+      expect(
+        screen.getByRole("dialog", { name: "Vista lettura comandate" }),
+      ).toBeVisible()
+      expect(document.documentElement.style.overflow).toBe("hidden")
+      expect(document.body.style.overflow).toBe("hidden")
+
+      // Closed with its own button.
+      await user.click(
+        screen.getByRole("button", { name: "Chiudi vista lettura" }),
+      )
+      expect(
+        screen.queryByRole("dialog", { name: "Vista lettura comandate" }),
+      ).not.toBeInTheDocument()
+      expect(document.documentElement.style.overflow).toBe("auto")
+      expect(document.body.style.overflow).toBe("scroll")
+
+      // Closed with Escape. The phone's Back is not wired to this overlay: it
+      // is a plain boolean on the list screen, closed by its own X/Escape.
+      await open()
+      expect(document.documentElement.style.overflow).toBe("hidden")
+      await user.keyboard("{Escape}")
+      expect(
+        screen.queryByRole("dialog", { name: "Vista lettura comandate" }),
+      ).not.toBeInTheDocument()
+      expect(document.documentElement.style.overflow).toBe("auto")
+      expect(document.body.style.overflow).toBe("scroll")
+
+      // Left open and unmounted (navigating away from the Comandate screen).
+      await open()
+      expect(document.body.style.overflow).toBe("hidden")
+      unmount()
+      expect(document.documentElement.style.overflow).toBe("auto")
+      expect(document.body.style.overflow).toBe("scroll")
+    })
+
+    it("keeps names clear of the corner warning badge on a card that has one", async () => {
+      getPlan.mockResolvedValue(PLAN)
+      const user = userEvent.setup()
+      renderDuties()
+      await user.click(
+        await screen.findByRole("button", { name: "Apri riepilogo comandate" }),
+      )
+      const view = screen.getByRole("dialog", {
+        name: "Vista lettura comandate",
+      })
+
+      const warned = within(view).getByRole("listitem", {
+        name: "Sabato, 1 assegnati",
+      })
+      expect(
+        within(warned).getByRole("img", { name: /Avviso comandata/ }),
+      ).toBeVisible()
+      expect(within(warned).getByText("Nome2").closest(".grid")).toHaveClass(
+        "pr-5",
+      )
+      const clear = within(view).getByRole("listitem", {
+        name: "Domenica, 1 assegnati",
+      })
+      expect(
+        within(clear).queryByRole("img", { name: /Avviso comandata/ }),
+      ).not.toBeInTheDocument()
+      expect(within(clear).getByText("Nome3").closest(".grid")).not.toHaveClass(
+        "pr-5",
+      )
+    })
+
+    it("drops a failed image export's error when it is opened again", async () => {
+      getPlan.mockResolvedValue(PLAN)
+      vi.mocked(downloadDutySummaryPng).mockRejectedValueOnce(
+        new Error("canvas too large"),
+      )
+      const user = userEvent.setup()
+      renderDuties()
+      await user.click(
+        await screen.findByRole("button", { name: "Apri riepilogo comandate" }),
+      )
+      await user.click(
+        screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
+      )
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Impossibile scaricare il riepilogo PNG. Riprova.",
+      )
+
+      await user.click(
+        screen.getByRole("button", { name: "Chiudi vista lettura" }),
+      )
+      await user.click(
+        screen.getByRole("button", { name: "Apri riepilogo comandate" }),
+      )
+
+      expect(
+        within(
+          screen.getByRole("dialog", { name: "Vista lettura comandate" }),
+        ).queryByRole("alert"),
+      ).not.toBeInTheDocument()
+    })
   })
 })
