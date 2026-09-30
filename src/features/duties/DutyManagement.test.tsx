@@ -13,7 +13,12 @@ vi.mock("@/persistence/students", () => ({
   listStudents: vi.fn(),
 }))
 
+vi.mock("@/features/duties/dutySummaryImage", () => ({
+  downloadDutySummaryPng: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { DutyManagement } from "@/features/duties/DutyManagement"
+import { downloadDutySummaryPng } from "@/features/duties/dutySummaryImage"
 import {
   readDutyPlan,
   saveDutyPlan,
@@ -575,5 +580,98 @@ describe("DutyManagement", () => {
       "Eccezione non salvata. Riprova.",
     )
     expect(screen.getByText("Preferenza venerdì non soddisfatta")).toBeVisible()
+  })
+
+  it("shows the F3 Comandate summary entry point only once a rota exists", async () => {
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        courseStartDate="2026-08-29"
+      />,
+    )
+
+    await screen.findByRole("button", { name: "Proponi comandate" })
+    expect(
+      screen.queryByRole("button", { name: "Apri riepilogo comandate" }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Proponi comandate" }))
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
+
+    expect(
+      await screen.findByRole("button", { name: "Apri riepilogo comandate" }),
+    ).toBeVisible()
+  })
+
+  it("renders every day of the F3 Comandate summary in order and downloads the same model", async () => {
+    getPlan.mockResolvedValue({
+      assignments: [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "sunday", studentId: "student-2" },
+        { dayId: "monday", studentId: "student-2" },
+        { dayId: "tuesday", studentId: "student-3" },
+        { dayId: "wednesday", studentId: "student-4" },
+        { dayId: "friday", studentId: "student-6" },
+      ],
+      settings: { ...SETTINGS, completedDayIds: ["saturday"] },
+    })
+    const user = userEvent.setup()
+    render(
+      <DutyManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        courseStartDate="2026-08-29"
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", { name: "Apri riepilogo comandate" }),
+    )
+    const view = screen.getByRole("dialog", { name: "Vista lettura comandate" })
+    expect(within(view).getAllByRole("listitem")).toHaveLength(7)
+
+    const saturdayCard = within(view).getByRole("listitem", {
+      name: "Sabato, 1 assegnati, completata",
+    })
+    expect(within(saturdayCard).getByText("Nome1")).toBeVisible()
+    expect(within(saturdayCard).getByText("M", { exact: true })).toBeVisible()
+
+    // Thursday got no assignment at all in this fixture.
+    const thursdayCard = within(view).getByRole("listitem", {
+      name: "Giovedì, 0 assegnati",
+    })
+    expect(within(thursdayCard).getByText("Nessun assegnato")).toBeVisible()
+
+    await user.click(
+      within(view).getByRole("button", { name: "Scarica immagine riepilogo" }),
+    )
+    await waitFor(() => expect(downloadDutySummaryPng).toHaveBeenCalledOnce())
+    const [model] = vi.mocked(downloadDutySummaryPng).mock.calls[0]!
+    expect(model.days.map((day) => day.dayId)).toEqual([
+      "saturday",
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+    ])
+    expect(model.days[0]).toMatchObject({
+      dayId: "saturday",
+      completed: true,
+      members: [{ label: "Nome1", isMinor: true }],
+    })
+    // Student 2 is assigned twice (Domenica and Lunedì): both days show a
+    // warning in the exported model, the same "assegnato più volte" rule the
+    // ordinary P11 list already enforces.
+    const sunday = model.days.find((day) => day.dayId === "sunday")
+    const monday = model.days.find((day) => day.dayId === "monday")
+    expect(sunday?.warning).not.toBeNull()
+    expect(monday?.warning).not.toBeNull()
+    const thursday = model.days.find((day) => day.dayId === "thursday")
+    expect(thursday?.members).toEqual([])
+    expect(thursday?.completed).toBe(false)
   })
 })

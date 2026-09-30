@@ -104,13 +104,13 @@ export const SESSION_SEQUENCE = [
 export type SessionId = (typeof SESSION_SEQUENCE)[number]["id"]
 
 export const DUTY_DAYS = [
-  { id: "saturday", label: "Sabato" },
-  { id: "sunday", label: "Domenica" },
-  { id: "monday", label: "Lunedì" },
-  { id: "tuesday", label: "Martedì" },
-  { id: "wednesday", label: "Mercoledì" },
-  { id: "thursday", label: "Giovedì" },
-  { id: "friday", label: "Venerdì" },
+  { id: "saturday", label: "Sabato", short: "Sab" },
+  { id: "sunday", label: "Domenica", short: "Dom" },
+  { id: "monday", label: "Lunedì", short: "Lun" },
+  { id: "tuesday", label: "Martedì", short: "Mar" },
+  { id: "wednesday", label: "Mercoledì", short: "Mer" },
+  { id: "thursday", label: "Giovedì", short: "Gio" },
+  { id: "friday", label: "Venerdì", short: "Ven" },
 ] as const
 export type DutyDayId = (typeof DUTY_DAYS)[number]["id"]
 

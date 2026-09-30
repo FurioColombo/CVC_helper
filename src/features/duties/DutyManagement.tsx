@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BookOpenText,
   Check,
   ChevronLeft,
   ClipboardCheck,
@@ -8,7 +9,14 @@ import {
   Settings2,
   X,
 } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react"
 
 import { Button } from "@/components/ui/button"
 import { MinorBadge } from "@/components/PersonBadges"
@@ -37,6 +45,14 @@ import {
   type DutySettingsRecord,
 } from "@/persistence/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
+import { downloadDutySummaryPng } from "@/features/duties/dutySummaryImage"
+import {
+  buildDutySummarySections,
+  dutySummaryWarning,
+  type DutySummaryDayLine,
+  type DutySummaryMember,
+  type DutySummarySections,
+} from "@/features/duties/dutySummaryModel"
 
 type DutySettingsWithExtras = DutySettingsRecord & {
   extraDayIds?: DutyDayId[]
@@ -78,15 +94,13 @@ function parseDutyScreen(value: unknown): DutyScreen | null {
   }
   return null
 }
-const SHORT_DAY_LABELS: Record<DutyDayId, string> = {
-  monday: "Lun",
-  tuesday: "Mar",
-  wednesday: "Mer",
-  thursday: "Gio",
-  friday: "Ven",
-  saturday: "Sab",
-  sunday: "Dom",
-}
+// Derived from `DUTY_DAYS`'s own `short` field rather than repeated here:
+// `dutySummaryModel.ts` reads the same canonical abbreviations for the F3
+// Comandate summary, so a future change to a day's short label only has to
+// happen once.
+const SHORT_DAY_LABELS: Record<DutyDayId, string> = Object.fromEntries(
+  DUTY_DAYS.map(({ id, short }) => [id, short]),
+) as Record<DutyDayId, string>
 
 function getDayLabel(dayId: DutyDayId) {
   return DUTY_DAYS.find(({ id }) => id === dayId)?.label ?? dayId
@@ -229,7 +243,19 @@ async function readValidDutyData(courseId: string) {
   }
 }
 
-function DutyHeader({ title, onBack }: { title: string; onBack: () => void }) {
+function DutyHeader({
+  title,
+  onBack,
+  action,
+}: {
+  title: string
+  onBack: () => void
+  /** An optional trailing icon button (F3's "Apri riepilogo comandate"),
+   *  balancing the leading Back button the way `CrewHeader`'s own read/boats
+   *  buttons do. The other `DutyHeader` call sites pass nothing and keep the
+   *  plain spacer. */
+  action?: React.ReactNode
+}) {
   return (
     <div className="mb-5 flex min-w-0 items-center gap-1 max-[350px]:items-start">
       <button
@@ -243,7 +269,7 @@ function DutyHeader({ title, onBack }: { title: string; onBack: () => void }) {
       <h1 className="min-w-0 flex-1 break-words text-center text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl max-[350px]:leading-tight">
         {title}
       </h1>
-      <span aria-hidden="true" className="size-[44px] shrink-0" />
+      {action ?? <span aria-hidden="true" className="size-[44px] shrink-0" />}
     </div>
   )
 }
@@ -951,6 +977,224 @@ function WarningList({
   )
 }
 
+// The read view's own completed-day green: the same colour
+// `border-[#b8dfbf]`/`text-[#176b2c]` the P11 list already uses for a
+// completed day card and its check mark, reused here rather than invented,
+// and shared with `dutySummaryImage.ts`'s own `COMPLETED_COLOR`.
+const SUMMARY_COMPLETED_COLOR = "#176b2c"
+const SUMMARY_ACCENT_COLOR = "#0b526b"
+
+/**
+ * F3 (owner, 2026-09-28): "the summary of the Comandate in a similar format
+ * [to the crew summary]." One card per duty day, same visual language as
+ * `AnnouncementCrewCard` in `CrewManagement.tsx` — a 4px class-colour edge, a
+ * fixed left column top-aligned with the first name, a corner warning badge —
+ * with the day's own short label standing in for a boat number and green
+ * standing in for "completata".
+ */
+function DutySummaryDayCard({
+  day,
+}: {
+  day: DutySummarySections["days"][number]
+}) {
+  const edgeColor = day.completed
+    ? SUMMARY_COMPLETED_COLOR
+    : SUMMARY_ACCENT_COLOR
+  return (
+    <li
+      aria-label={`${day.label}, ${day.members.length} assegnati${day.completed ? ", completata" : ""}`}
+      className="relative flex min-w-0 overflow-hidden rounded-[10px] border border-[#c8d7db] bg-white"
+    >
+      <span
+        aria-hidden="true"
+        className="w-1 shrink-0"
+        style={{ backgroundColor: edgeColor }}
+      />
+      <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
+        <span
+          className="flex w-[34px] shrink-0 flex-col gap-0.5 pt-px"
+          style={{ color: edgeColor }}
+        >
+          <span className="block text-base leading-none font-black tracking-tight">
+            {day.shortLabel}
+          </span>
+          {day.completed && (
+            <Check aria-label="Completata" className="size-3" />
+          )}
+        </span>
+        <div className="grid min-w-0 flex-1 content-start gap-px">
+          {day.members.length === 0 ? (
+            <span className="text-sm font-bold text-muted-foreground">
+              Nessun assegnato
+            </span>
+          ) : (
+            day.members.map((member, index) => (
+              <div
+                className="flex min-w-0 items-center gap-1"
+                key={`${day.dayId}:${index}:${member.label}`}
+              >
+                <span className="min-w-0 break-words text-[13.5px] leading-4 font-bold [overflow-wrap:anywhere] text-[#102f3b]">
+                  {member.label}
+                </span>
+                {member.isMinor && <MinorBadge />}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      {day.warning && (
+        <span
+          aria-label={`Avviso comandata: ${day.warning.severity === "red" ? "rosso" : "giallo"}`}
+          className={`absolute top-2 right-2 grid size-4 shrink-0 place-items-center rounded-[7px] ${day.warning.severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
+          role="img"
+        >
+          <AlertTriangle aria-hidden="true" className="size-2.5" />
+        </span>
+      )}
+    </li>
+  )
+}
+
+function handleSummaryDialogKeyDown(
+  event: ReactKeyboardEvent<HTMLElement>,
+  dialog: HTMLElement | null,
+  onClose: () => void,
+) {
+  if (event.key === "Escape") {
+    event.preventDefault()
+    onClose()
+    return
+  }
+  if (event.key !== "Tab" || !dialog) return
+  const controls = Array.from(
+    dialog.querySelectorAll<HTMLElement>("button:not(:disabled)"),
+  )
+  if (controls.length === 0) return
+  const first = controls[0]!
+  const last = controls.at(-1)!
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+/**
+ * The Comandate counterpart of `AnnouncementView` in `CrewManagement.tsx`:
+ * same header grammar (eyebrow, title, close, "Scarica immagine
+ * riepilogo"), same text-size-aware column rule
+ * (`minmax(min(100%,9rem),1fr)`, see that file's own comment for why 9rem
+ * keeps two columns from 326 CSS px and collapses to one at the 320 px/200%
+ * text stress). Reachable only once a rota exists (`DutyManagement`'s own
+ * "list" branch gates the opening button on `assignments.length > 0`).
+ */
+function DutySummaryView({
+  summary,
+  onClose,
+  onDownloadImage,
+  imageExportState,
+}: {
+  summary: DutySummarySections
+  onClose: () => void
+  onDownloadImage: () => void
+  imageExportState: "idle" | "busy" | "error"
+}) {
+  const dialogRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const previouslyFocused = document.activeElement
+    dialogRef.current
+      ?.querySelector<HTMLElement>("button:not(:disabled)")
+      ?.focus()
+    return () => {
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+    }
+  }, [])
+  // The seven-day list underneath keeps its own normal-flow height even
+  // while this full-screen overlay covers it, so a plan tall enough to need
+  // its own scroll (a real Comandate week at 320 px/200% text) makes the
+  // page itself scrollable behind the dialog. That is not just wasted
+  // motion: `position: fixed; inset-x-0` elements (the app's bottom nav)
+  // then measure their own width against the browser's scrollbar-inclusive
+  // viewport instead of `documentElement.clientWidth`, a few CSS px wider
+  // than the page — a real R18 violation
+  // (docs/post-mvp/06_DESIGN_RULEBOOK.md §2's "no horizontal scroll",
+  // measured as `scrollWidth <= clientWidth`). Locking the page's own scroll
+  // for as long as this reads-everything-at-once overlay is open — the
+  // standard modal pattern — removes the underlying scrollbar entirely, so
+  // the quirk never triggers; the dialog's own `overflow-y-auto` remains the
+  // only way to reach content past one screen.
+  useEffect(() => {
+    const html = document.documentElement
+    const previousHtmlOverflow = html.style.overflow
+    const previousBodyOverflow = document.body.style.overflow
+    html.style.overflow = "hidden"
+    document.body.style.overflow = "hidden"
+    return () => {
+      html.style.overflow = previousHtmlOverflow
+      document.body.style.overflow = previousBodyOverflow
+    }
+  }, [])
+
+  return (
+    <section
+      aria-label="Vista lettura comandate"
+      aria-modal="true"
+      className="fixed inset-0 z-60 overflow-y-auto bg-[#fffdf8] text-[#102f3b]"
+      onKeyDown={(event) =>
+        handleSummaryDialogKeyDown(event, dialogRef.current, onClose)
+      }
+      ref={dialogRef}
+      role="dialog"
+    >
+      <div className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <header className="flex items-center justify-between gap-3 border-b border-[#c8d7db] pb-2.5">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black tracking-[0.14em] uppercase">
+              Comandate
+            </p>
+            <h1
+              className="mt-0.5 break-words text-xl font-black leading-tight [overflow-wrap:anywhere]"
+              id="duty-summary-title"
+            >
+              {summary.title}
+            </h1>
+          </div>
+          <button
+            aria-label="Chiudi vista lettura"
+            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" className="size-5" />
+          </button>
+        </header>
+        <button
+          className="mt-2.5 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+          disabled={imageExportState === "busy"}
+          onClick={onDownloadImage}
+          type="button"
+        >
+          {imageExportState === "busy"
+            ? "Preparo immagine…"
+            : "Scarica immagine riepilogo"}
+        </button>
+        {imageExportState === "error" && (
+          <p className="mt-2 text-sm font-semibold text-[#a2381b]" role="alert">
+            Impossibile scaricare il riepilogo PNG. Riprova.
+          </p>
+        )}
+        <ul className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,9rem),1fr))]">
+          {summary.days.map((day) => (
+            <DutySummaryDayCard day={day} key={day.dayId} />
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
 export function DutyManagement({
   courseId,
   courseStartDate,
@@ -972,6 +1216,14 @@ export function DutyManagement({
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   )
+  // A plain boolean, not a `DutyScreen` variant: the F3 summary is a
+  // read-only overlay atop the list screen, the same architectural choice
+  // `CrewManagement.tsx`'s own `readMode` makes for `AnnouncementView`,
+  // closed by its own X/Escape rather than the app's Back navigation.
+  const [showSummary, setShowSummary] = useState(false)
+  const [imageExportState, setImageExportState] = useState<
+    "idle" | "busy" | "error"
+  >("idle")
 
   const applyLoaded = useCallback(
     (data: Awaited<ReturnType<typeof readValidDutyData>>) => {
@@ -1077,6 +1329,50 @@ export function DutyManagement({
     )
   }
 
+  // The one model the read view renders and the PNG export rasterises
+  // (`dutySummaryModel.ts`), built once here from the same `assignments`,
+  // `students` and `visibleWarnings` the list screen's own day cards already
+  // use above, so a fix to the grouping or the warning rule reaches both the
+  // summary and the ordinary P11 list at once. `buildDutySummarySections`
+  // places the seven lines in canonical day order and sorts each day's names,
+  // so this map does not have to.
+  const dutySummary: DutySummarySections = buildDutySummarySections({
+    title: "Riepilogo comandate",
+    lines: DAY_IDS.map((dayId): DutySummaryDayLine => {
+      const dayMembers: DutySummaryMember[] = assignments
+        .filter((assignment) => assignment.dayId === dayId)
+        .map(({ studentId }) => {
+          const student = students.find(({ id }) => id === studentId)
+          return {
+            label: student
+              ? getStudentDisplayName(student, students)
+              : "Allievo mancante",
+            isMinor: student ? isStudentMinor(student, courseStartDate) : false,
+          }
+        })
+      const dayWarnings = visibleWarnings.filter((warning) =>
+        warningDayIds(warning).includes(dayId),
+      )
+      return {
+        dayId,
+        members: dayMembers,
+        completed: settings.completedDayIds.includes(dayId),
+        warning: dutySummaryWarning(dayWarnings),
+      }
+    }),
+  })
+
+  async function downloadSummaryImage() {
+    if (imageExportState === "busy") return
+    setImageExportState("busy")
+    try {
+      await downloadDutySummaryPng(dutySummary)
+      setImageExportState("idle")
+    } catch {
+      setImageExportState("error")
+    }
+  }
+
   if (screen.kind === "configure") {
     return (
       <DutyConfiguration
@@ -1134,7 +1430,37 @@ export function DutyManagement({
 
   return (
     <>
-      <DutyHeader onBack={onHome} title="Comandate" />
+      {showSummary && (
+        <DutySummaryView
+          imageExportState={imageExportState}
+          onClose={() => setShowSummary(false)}
+          onDownloadImage={downloadSummaryImage}
+          summary={dutySummary}
+        />
+      )}
+      <DutyHeader
+        action={
+          // "Once a rota exists (only then)" (owner): the same condition the
+          // screen itself already uses just below to choose the seven-day
+          // grid over "Nessuna comandata pianificata" — an assignment or a
+          // completed day (even one completed with nobody on it) is a rota;
+          // an untouched manual-mode grid with neither is not, so the entry
+          // point stays off the plain spacer until there is something to
+          // read.
+          assignments.length > 0 || settings.completedDayIds.length > 0 ? (
+            <button
+              aria-label="Apri riepilogo comandate"
+              className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+              onClick={() => setShowSummary(true)}
+              type="button"
+            >
+              <BookOpenText aria-hidden="true" className="size-[20px]" />
+            </button>
+          ) : undefined
+        }
+        onBack={onHome}
+        title="Comandate"
+      />
       {students.length === 0 ? (
         <section className="rounded-3xl border bg-card p-5 text-center max-[350px]:p-[12px]">
           <ClipboardCheck
