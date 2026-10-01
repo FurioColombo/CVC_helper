@@ -1,0 +1,60 @@
+{
+  "milestone": "F3",
+  "reviewer": "independent adversarial reviewer (Claude Sonnet subagent, did not write F3)",
+  "role": "regression hunter + field UX + data integrity",
+  "reviewedCommit": "7811fad",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "F3R-1",
+      "title": "Boat numbers of 3+ characters collide with the first name in the read view and the PNG",
+      "evidence": "CrewManagement.tsx fixed w-[26px] number column with text-xl digits; crewSummaryImage.ts CARD_NUMBER_COLUMN_WIDTH 92 with a 54px font. Rendered numbers 115, 888, 1234, A12: '115Anna Verdi' touches, '1234' prints over the name. normalizeBoatNumber allows any length; tests used numbers 1..13 only.",
+      "impact": "The number the instructor scans for runs into the first name on screen and in the shared image. No person dropped."
+    },
+    {
+      "id": "F3R-2",
+      "title": "The warning badge and the width estimate hide names in the image; possible overlap on screen",
+      "evidence": "crewSummaryImage.ts draws a 44px warning badge over the first name row; estimateTextWidth (0.58em per character) under-measures capitals: 'FRANCESCA BIANCHI' on a warned card is partly covered, 'WWWW…' runs past the card. On screen the 16px corner badge can cover the last 12px of a full-width first line.",
+      "impact": "A name on a warned crew can be partly unreadable in the exported image."
+    },
+    {
+      "id": "F3R-3",
+      "title": "The exporter has no canvas size guard",
+      "evidence": "summaryImage.ts always rasterises at pixelRatio 2: 45 four-person crews give a 16284 px tall canvas (35M pixels); iOS Safari caps a canvas at about 16.7M pixels.",
+      "impact": "Not a regression (the pre-F3 exporter had the same fixed 2x); a large course could give a blank image or the download error on an iPhone."
+    },
+    {
+      "id": "F3R-4",
+      "title": "Product spec §7.5 was not reconciled with the new summary",
+      "evidence": "Spec §7.5 and the UX1 changelog: the summary starts with remaining available students, a centered 'Tutti gli allievi assegnati' note closes it when none remain, and a boat-less crew in a one-model session reads '<model> · Senza barca'. F3 moved available people after the crews, dropped the note and put that crew under 'Equipaggi senza barca'.",
+      "impact": "Three silent semantic changes against an owner-approved spec (AGENTS.md §2)."
+    },
+    {
+      "id": "F3R-5",
+      "title": "No test asserts that the Comandate scroll lock is released",
+      "evidence": "DutyManagement.tsx saves and restores html/body overflow; the code is correct today but no test checks it after closing, Escape or unmount.",
+      "impact": "A later edit could leak overflow:hidden and freeze scrolling unnoticed."
+    }
+  ],
+  "qolFindings": [
+    { "id": "F3R-6", "title": "groupOccupiedCrewLines drops a crew whose boat type is not in BOAT_TYPES (unreachable today: readValidCrewState rejects such boats)" },
+    { "id": "F3R-7", "title": "Export error state persists across reopen; loadImage has no timeout" },
+    { "id": "F3R-8", "title": "The crew badge count now counts reasons, not faults (intentional; the detail lists each fault)" },
+    { "id": "F3R-9", "title": "In the image the class edge pokes past the rounded corners; row cards keep their own heights" },
+    { "id": "F3R-10", "title": "Two columns need at least 326 px: 320 px at normal text falls to one column" },
+    { "id": "F3R-11", "title": "Control characters print as a replacement glyph in the PNG" },
+    { "id": "F3R-12", "title": "A fully empty summary shows only a header" },
+    { "id": "F3R-13", "title": "The read view's lists are display:contents, which drops list semantics in older Safari" }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md §8; 04_IMPLEMENTATION_PLAN.md F3; 0_3_0_QUESTIONS.md decisions of 2026-09-28; 07_PAGE_CHANGELOG.md F3; the C6 frozen target; 01_PRODUCT_SPEC.md §7.4 and §7.5; rulebook R05/R18",
+    "git diff f1a03e1 7811fad for the read views, the crew and duty summary models and images, src/lib/summaryImage.ts, boatMarks.ts, BoatIdentity.tsx, config.ts, crewWarnings.ts, vite.config.ts, check-built-pwa.mjs and the changed e2e specs",
+    "Warnings old vs new: unavailable-boat red, open/reported fault yellow, each fault in the detail, size/pair/group warnings all preserved; unavailable plus faulted gives red with both reasons",
+    "Grouping: every occupied crew lands in exactly one group; the read view and PNG share one CrewSummarySections object",
+    "Throwaway scripts in the scratchpad: model attack (0 duplicates), hostile names and escaping (well-formed XML via jsdom, librsvg renders), 13/45 crews, Comandate image, canvas sizes",
+    "Offline: eight brand PNGs precached relative to the service worker; every logo URL through assetPath",
+    "Single vitest files passed: crewSummaryModel, dutySummaryModel, config, crewSummaryImage, dutySummaryImage, crewWarnings",
+    "Not verified: a device render, iOS canvas limits"
+  ]
+}

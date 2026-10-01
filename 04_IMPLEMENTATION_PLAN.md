@@ -29,8 +29,8 @@ lifecycle.
 | V05 | Complete. The assistant paste path sits after the camera and gallery: the app gives the prompt and the format, reads the pasted answer into the same review, shows every line it cannot read, needs a check of every pasted row and a count confirmation, and makes no network call. `.evidence/V05/` records `npm run verify` and the browser journey on three projects on the final source, a 32-case parser corpus with no silently wrong student, and ten independent reviews ending PASS. |
 | F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
 | F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
-| F3 | Pending, active. Open faults as crew warnings; the crew summary in the owner's chosen design C6; a readable exported image; a Comandate summary. |
-| UG2 | Pending: F2, F3, the owner's remaining physical checks and the precondition below. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
+| F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
+| UG2 | Pending: the owner's remaining physical checks and the precondition below. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
 
 **Before the next Codex session (precondition for UG2):** the published
 history was rewritten before the first 0.3.0 push to remove real roster data.
@@ -308,7 +308,7 @@ retries the phone paste at UG2.
 ## F3 — Crew warnings, crew and Comandate summaries
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 1. **An open fault is a crew warning.** A boat with an unresolved fault in a
    crew shows a yellow warning, like the existing unavailable-boat one (owner,
@@ -329,6 +329,26 @@ retries the phone paste at UG2.
 **Evidence:** `.evidence/F3/` verification, browser evidence with a 13-crew
 synthetic course at 320 px and at ordinary widths, exported images, the owner's
 design choice, self-review.
+
+**Closure.** The owner chose C6 after two rounds on a design canvas, then drew
+the Mezzi icon with Claude Code from a photo of the centre’s RIB (seen from
+above, tube tails past the transom, an ∞ propeller, horizontal in headings and
+vertical in cards). Sonnet agents built the four parts; Claude Code checked
+every screenshot and exported image and sent back what fell short: names cut
+to an ellipsis at 320 px with 200% text, half-empty image cards, a stale copy
+of the old icon in the exporter, and three Comandate details. The independent
+review found no blocker and five important findings, fixed in `e19f8ec`:
+long boat numbers ran into the names, a warning badge could hide a name in
+the image, no canvas limit for very large courses, and three behaviours the
+spec and UX1 had approved — the available students first, the closing
+"Tutti gli allievi assegnati" note and "<model> · Senza barca" — had been
+dropped and are restored; a test now pins that the Comandate view releases
+the page scroll. The eight brand images are precached for offline use. Known
+limitations (control characters in the image, an empty summary with only its
+header, list semantics in old Safari) are in the evidence. The first evidence
+run lost one WebKit timing test to parallel load and the second hung a WebKit
+worker at shutdown after every test had passed; the third, on the same
+source, is clean. The owner checks the summary, images and icon on the phone.
 
 ## UG2 — 0.3.0 integration and release gate
 

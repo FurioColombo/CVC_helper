@@ -1,0 +1,68 @@
+{
+  "milestone": "F3",
+  "reviewer": "Claude Code (Opus, orchestrating session) — self-review of the Sonnet implementation agents' work",
+  "reviewedCommits": ["b2c0cea", "c857f26", "629e09d", "dcca297", "1fa4a46", "7811fad", "e19f8ec"],
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "F3S-1",
+      "title": "At 320 px with 200% text the two-column crew summary truncated names to 'A..'",
+      "evidence": "Screenshot of the first read view (b2c0cea).",
+      "disposition": "Fixed in c857f26: the column rule follows the text size (minmax(min(100%, 9rem), 1fr), later 8.8rem), names and the title wrap; a D1 10×4 course was added to the fit test."
+    },
+    {
+      "id": "F3S-2",
+      "title": "Exported crew cards had a fixed 176 px floor that left two-person cards half empty",
+      "evidence": "The first C6 export (13 crews, 2160×4244).",
+      "disposition": "Fixed in dcca297: the floor is what the number needs; the same image is 11% shorter."
+    },
+    {
+      "id": "F3S-3",
+      "title": "The Comandate summary: names spread down a stretched card, day labels smaller than the names in the image, the minor badge at the card's edge",
+      "evidence": "Screenshots and the exported PNG of the first Comandate version.",
+      "disposition": "Fixed before 7811fad: content-start on the names, a 40 px day label, badges placed after the name's last line in the shared image module (both images)."
+    },
+    {
+      "id": "F3S-4",
+      "title": "The exporter kept a stale copy of the old gommone paths",
+      "evidence": "crewSummaryImage.ts after the interrupted export agent still drew the pre-629e09d mark with a shaft and a console.",
+      "disposition": "Fixed in dcca297: boatMarks.ts is the one source for the app icon and the image; tests pin it."
+    },
+    {
+      "id": "F3S-5",
+      "title": "The first full evidence run failed one WebKit timing test",
+      "evidence": "u04-scan-ui 'tilt updates the crop image live' (100 ms budget) failed on iphone-13-webkit-core while the independent reviewer ran tests in parallel; F3 changes no scan file (git diff f1a03e1 7811fad -- src/features/students src/capabilities is empty).",
+      "disposition": "Load-induced: the spec passed 3 of 3 alone; the final evidence run was recorded with the machine otherwise idle."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "F3S-6",
+      "title": "The design page (claude.ai canvas) re-saved two boards and dropped content because of a valueless data attribute",
+      "disposition": "Fixed on the page; later boards carry no data-* hooks. Not part of the app."
+    }
+  ],
+  "independentReviewDispositions": {
+    "F3R-1": "Fixed in e19f8ec (group-wide number column, tested with 115, 1234, A12 on screen and in the image).",
+    "F3R-2": "Fixed in e19f8ec (badge reserve on the first row, capital-aware width estimate, pr-5 on warned cards).",
+    "F3R-3": "Fixed in e19f8ec (pixel ratio clamped to at most 16M canvas pixels).",
+    "F3R-4": "Fixed in e19f8ec (available students lead, 'Tutti gli allievi assegnati' closes, '<model> · Senza barca' restored).",
+    "F3R-5": "Fixed in e19f8ec (component test for close, Escape and unmount).",
+    "F3R-6": "Fixed in e19f8ec (unknown model gets its own group).",
+    "F3R-7": "Fixed in e19f8ec (8 s timeout, error cleared on reopen).",
+    "F3R-8": "Accepted: the badge counts reasons; the detail lists every fault.",
+    "F3R-9": "Edge clip fixed in e19f8ec; row cards keep their own heights (accepted).",
+    "F3R-10": "Fixed in e19f8ec (8.8rem: two columns at 320 px normal text, one at 200%).",
+    "F3R-11": "Accepted limitation: control characters print as a replacement glyph in the image.",
+    "F3R-12": "Accepted limitation: a fully empty summary shows only its header.",
+    "F3R-13": "Accepted limitation: display:contents lists lose list semantics in Safari before 16."
+  },
+  "evidenceInspected": [
+    "Every agent diff before its commit; the design canvas boards before publishing",
+    "Screenshots: read view at 390×844 (13 crews, D1 10×4), 320 px normal text, 320 px/200% text; Comandate at the same sizes; long boat numbers",
+    "Exported PNGs: 13 crews, D1 10×4, long numbers, the Comandate week",
+    "Unit/component runs of the crew, duty and lib suites after each fix; the f3 browser specs after each fix",
+    ".evidence/F3/independent-review.json"
+  ]
+}

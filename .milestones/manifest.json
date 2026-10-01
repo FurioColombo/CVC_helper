@@ -640,7 +640,7 @@
     {
       "id": "F3",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/F3/verification.json",

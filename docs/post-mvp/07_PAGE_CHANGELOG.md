@@ -374,3 +374,18 @@ class colour in a fixed left column, top-aligned with the first name; no
 at 360 px. The mock shows occupied crews and Mezzi only: F3 keeps the other
 sections the summary already has (available students, A terra, empty boats)
 in the same visual language, and the exported image follows the same design.
+
+F3 · Mezzi icon and Comandate summary, 2026-09-29: the Mezzi carry the owner's
+gommone (seen from above, tube tails past the transom, an ∞ propeller, no
+shaft), horizontal in the group heading and vertical in each card; one module
+(`boatMarks.ts`) feeds the app and the image. The Comandate page gains a
+read view in the same language once a rota exists — the seven days as cards,
+the short day label leading, names with the minor badge — and a 1080 px image
+built from the same shared primitives as the crew image.
+
+F3 · review fixes, 2026-10-01: the C6 summary keeps the behaviours the spec
+and UX1 approved — the remaining available students lead it, "Tutti gli allievi
+assegnati" closes it when none remain, and a boat-less crew in a one-model
+session reads "<model> · Senza barca" in that model's group. Boat numbers of any
+length get a column as wide as the widest in their group; two columns from
+320 px at normal text, one at 200%.
