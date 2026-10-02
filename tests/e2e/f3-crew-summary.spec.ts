@@ -579,6 +579,14 @@ test("keeps boat numbers of three or four characters clear of the first name, on
   )
   test.setTimeout(60_000)
   const numbers = ["4", "115", "1234", "A12"]
+  // CI’s Linux Chromium draws in DejaVu Sans, far wider than Segoe UI:
+  // pin a wide font so a local pass means a CI pass (as in the V02 spec).
+  await page.addInitScript(() => {
+    document.documentElement.style.setProperty(
+      "--font-sans",
+      '"DejaVu Sans", Verdana, sans-serif',
+    )
+  })
 
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()

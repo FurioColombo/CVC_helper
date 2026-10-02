@@ -37,7 +37,6 @@ vi.mock("@/features/crews/crewSummaryImage", () => ({
 
 import { CrewManagement } from "@/features/crews/CrewManagement"
 import { downloadCrewSummaryPng } from "@/features/crews/crewSummaryImage"
-import { estimateTextWidth } from "@/lib/summaryImage"
 import type { CrewDraft, CrewPlan } from "@/domain/crews"
 import {
   listBoats,
@@ -2657,25 +2656,24 @@ describe("CrewManagement", () => {
       const column = within(card).getByText(number).parentElement!
       return column.style.getPropertyValue("--boat-number-width")
     }
-    const widest = `${estimateTextWidth("1234", 1)}em`
+    // `ch` of the column's own font: one per digit, a margin per letter,
+    // plus 0.2ch for the tight letter spacing (groupNumberWidthCh).
+    const widest = "4.2ch"
     // One width for the whole RS Quest group, from its widest number, so the
     // first names still line up; every number is shown in full.
     expect(widthOf("Equipaggio 1, RS Quest 7", "7")).toBe(widest)
     expect(widthOf("Equipaggio 2, RS Quest 115", "115")).toBe(widest)
     expect(widthOf("Equipaggio 3, RS Quest 1234", "1234")).toBe(widest)
     expect(widthOf("Equipaggio 4, RS Quest A12", "A12")).toBe(widest)
-    // Four characters are wider than the two digits the 26px column fits;
-    // the column is the wider of that floor and the em width.
-    expect(estimateTextWidth("1234", 1) * 20).toBeGreaterThan(26)
+    // The column is the wider of the 26px floor and that width.
     expect(within(view).getByText("1234").parentElement!.className).toContain(
       "w-[max(26px,var(--boat-number-width))]",
     )
     // Another group is sized by its own numbers: RS Toura's single digit
     // stays inside the 26px floor, untouched by RS Quest's long ones.
-    const touraWidth = `${estimateTextWidth("4", 1)}em`
+    const touraWidth = "1.2ch"
     expect(widthOf("Equipaggio 5, RS Toura 4", "4")).toBe(touraWidth)
     expect(touraWidth).not.toBe(widest)
-    expect(estimateTextWidth("4", 1) * 20).toBeLessThan(26)
   })
 
   it("keeps every name of a card with a warning clear of the corner badge", async () => {

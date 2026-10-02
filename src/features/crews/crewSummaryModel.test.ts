@@ -5,6 +5,7 @@ import {
   buildCrewSummarySections,
   crewCardLabel,
   crewLineClassColor,
+  groupNumberWidthCh,
   groupNumberWidthEm,
   groupOccupiedCrewLines,
   modelOnlyName,
@@ -332,6 +333,20 @@ describe("crewCardLabel and modelOnlyName", () => {
     expect(modelOnlyName(mezzi)).toBeNull()
     expect(modelOnlyName(modelOnly)).toBe("RS Quest")
     expect(modelOnlyName(none)).toBeNull()
+  })
+})
+
+describe("groupNumberWidthCh", () => {
+  it("counts each digit as one ch and gives letters a margin, widest number of the group", () => {
+    const line = (number: string | null) =>
+      ({
+        boat: number === null ? null : { number },
+      }) as unknown as Parameters<typeof groupNumberWidthCh>[0][number]
+    expect(groupNumberWidthCh([line("7"), line("12")])).toBe(2)
+    expect(groupNumberWidthCh([line("12"), line("1234")])).toBe(4)
+    expect(groupNumberWidthCh([line("A12")])).toBeCloseTo(3.4)
+    expect(groupNumberWidthCh([line(null)])).toBe(0)
+    expect(groupNumberWidthCh([])).toBe(0)
   })
 })
 

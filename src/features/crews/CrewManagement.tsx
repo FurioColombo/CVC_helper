@@ -48,7 +48,7 @@ import {
   buildCrewSummarySections,
   crewCardLabel,
   crewLineClassColor,
-  groupNumberWidthEm,
+  groupNumberWidthCh,
   modelOnlyName,
   type CrewSummaryCrewLine,
   type CrewSummaryGroup,
@@ -262,19 +262,20 @@ function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
 }
 
 /**
- * `numberWidthEm` is the widest boat number of the card's group
- * (`groupNumberWidthEm`): the fixed 26px number column of the C6 target is
+ * `numberWidthCh` is the widest boat number of the card's group
+ * (`groupNumberWidthCh`): the fixed 26px number column of the C6 target is
  * the floor, and the column grows with the group's widest number — set on
  * every card of the group, so the names still line up — instead of letting a
- * 3- or 4-character number run into the first name. `em` resolves against the
- * column's own 20px number size (`text-xl`), so it also follows the text size.
+ * 3- or 4-character number run into the first name. `ch` resolves against the
+ * column's own font (black, `text-xl`, tabular digits), so it matches the
+ * digits in any font and follows the text size.
  */
 function AnnouncementCrewCard({
   line,
-  numberWidthEm,
+  numberWidthCh,
 }: {
   line: CrewSummaryCrewLine
-  numberWidthEm: number
+  numberWidthCh: number
 }) {
   const classColor = crewLineClassColor(line)
   const modelOnly = modelOnlyName(line)
@@ -290,7 +291,7 @@ function AnnouncementCrewCard({
       />
       <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
         <span
-          className="w-[max(26px,var(--boat-number-width))] max-w-[45%] shrink-0 pt-px text-xl"
+          className="w-[max(26px,var(--boat-number-width))] max-w-[45%] shrink-0 pt-px text-xl font-black tracking-tight tabular-nums"
           // A crew with no boat yet wears the muted grey, never the class
           // colour a real number has.
           style={
@@ -299,12 +300,12 @@ function AnnouncementCrewCard({
                 line.boat || line.destination === "mezzi"
                   ? classColor
                   : "#6b8790",
-              "--boat-number-width": `${numberWidthEm}em`,
+              "--boat-number-width": `${numberWidthCh + 0.2}ch`,
             } as CSSProperties
           }
         >
           {line.boat ? (
-            <span className="block text-xl leading-none font-black tracking-tight tabular-nums [overflow-wrap:anywhere]">
+            <span className="block text-xl leading-none font-black tracking-tight whitespace-nowrap tabular-nums">
               {line.boat.number}
             </span>
           ) : line.destination === "mezzi" ? (
@@ -324,7 +325,7 @@ function AnnouncementCrewCard({
         {/* `pr-5` keeps every name clear of the 16px corner warning badge
             (8px in from the card edge), as in the frozen C6 mock. */}
         <div
-          className={`grid min-w-0 flex-1 gap-px ${line.warning ? "pr-5" : ""}`}
+          className={`grid min-w-0 flex-1 content-start gap-px ${line.warning ? "pr-5" : ""}`}
         >
           {modelOnly && (
             <span
@@ -1081,7 +1082,7 @@ function AnnouncementView({
                   ? group.modelName
                   : ""
             }`
-            const numberWidthEm = groupNumberWidthEm(group.lines)
+            const numberWidthCh = groupNumberWidthCh(group.lines)
             return (
               <Fragment key={groupKey}>
                 <AnnouncementGroupHeading group={group} />
@@ -1093,7 +1094,7 @@ function AnnouncementView({
                     <AnnouncementCrewCard
                       key={line.crewId}
                       line={line}
-                      numberWidthEm={numberWidthEm}
+                      numberWidthCh={numberWidthCh}
                     />
                   ))}
                 </ul>

@@ -107,11 +107,34 @@ export function crewLineClassColor(line: CrewSummaryCrewLine): string {
 }
 
 /**
+ * The same column for the read view, in `ch` of the number's own font: with
+ * tabular numerals every digit is exactly one `ch` wide in whatever font the
+ * phone uses, so a 4-digit number needs 4ch on any system — an `em` estimate
+ * held on Windows but wrapped "1234" under Linux's wider DejaVu Sans. Letters
+ * vary by font and get a margin.
+ */
+export function groupNumberWidthCh(
+  lines: readonly CrewSummaryCrewLine[],
+): number {
+  return Math.max(
+    0,
+    ...lines.map((line) =>
+      line.boat
+        ? Array.from(line.boat.number).reduce(
+            (width, char) => width + (/\d/.test(char) ? 1 : 1.4),
+            0,
+          )
+        : 0,
+    ),
+  )
+}
+
+/**
  * How wide the boat-number column of a group's cards must be, in em of the
  * number's own font size: the widest number in the group (a 3- or 4-character
  * number, or one with a letter, is wider than the two digits the column was
  * first drawn for). Every card of the group gets the same column, so the
- * names still line up within it.
+ * names still line up within it. Used by the image, whose font size is fixed.
  */
 export function groupNumberWidthEm(
   lines: readonly CrewSummaryCrewLine[],
