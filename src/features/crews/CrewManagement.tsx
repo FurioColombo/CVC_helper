@@ -291,7 +291,7 @@ function AnnouncementCrewCard({
       />
       <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
         <span
-          className="w-[max(26px,var(--boat-number-width))] max-w-[45%] shrink-0 pt-px text-xl font-black tracking-tight tabular-nums"
+          className="w-[max(26px,var(--boat-number-width))] shrink-0 pt-px text-xl font-black tracking-tight tabular-nums"
           // A crew with no boat yet wears the muted grey, never the class
           // colour a real number has.
           style={
