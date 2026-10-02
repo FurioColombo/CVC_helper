@@ -1,13 +1,13 @@
 {
   "milestone": "F3",
   "status": "PASS",
-  "recordedAt": "2026-10-01T00:12:59.335Z",
+  "recordedAt": "2026-10-02T20:31:31.360Z",
   "nodeVersion": "v24.21.0",
   "appVersion": "0.2.0",
   "recorder": "scripts/record-verification.mjs@2",
-  "gitCommit": "e19f8ec1b05208ff1fd5b1de2efbf9a0da5950bc",
-  "workingTreeClean": false,
-  "sourceDigest": "fe39e0d59a940384e419c6309eb1a79201630a6f5c5d3733a58560d9dcc54051",
+  "gitCommit": "a6e00b6963e23aadade2c695e416990e60b62ee4",
+  "workingTreeClean": true,
+  "sourceDigest": "a547bcc75eeabbc993cc6293f60a5065e9a9a54d988e3dd081137838b40c30a7",
   "sourceFiles": 321,
   "verificationScripts": [
     "verify:all"
@@ -16,10 +16,10 @@
     {
       "command": "npm run verify:all",
       "status": "PASS",
-      "startedAt": "2026-09-30T23:36:37.405Z",
-      "durationMs": 2181922,
+      "startedAt": "2026-10-02T19:55:02.678Z",
+      "durationMs": 2188679,
       "exitCode": 0,
-      "outputTail": "[WebServer] 2:12:32 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:12:32 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 210 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (9.4s)\n[WebServer] 2:12:41 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:12:41 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 211 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › reads an answer whose line breaks were all turned into spaces (8.9s)\n[WebServer] 2:12:50 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:12:50 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 212 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:346:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (7.9s)\n\n  21 skipped\n  191 passed (31.6m)"
+      "outputTail": "[WebServer] 10:31:07 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:31:07 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 210 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (8.4s)\n[WebServer] 10:31:15 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:31:15 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 211 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › reads an answer whose line breaks were all turned into spaces (8.2s)\n[WebServer] 10:31:23 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:31:23 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 212 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:346:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (7.4s)\n\n  21 skipped\n  191 passed (31.3m)"
     }
   ]
 }

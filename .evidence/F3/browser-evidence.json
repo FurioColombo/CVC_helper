@@ -1,9 +1,9 @@
 {
   "milestone": "F3",
   "recordedBy": "npm run evidence -- F3 (scripts/record-verification.mjs), which ran npm run verify:all including the full browser suite; summarised from that run’s output",
-  "sourceDigest": "fe39e0d59a940384e419c6309eb1a79201630a6f5c5d3733a58560d9dcc54051",
+  "sourceDigest": "a547bcc75eeabbc993cc6293f60a5065e9a9a54d988e3dd081137838b40c30a7",
   "runtime": "v24.21.0",
-  "recordedAt": "2026-10-01T00:12:59.335Z",
+  "recordedAt": "2026-10-02T20:31:31.360Z",
   "command": "npm run verify:e2e (all Playwright projects, own server on a free port)",
   "exitCode": 0,
   "fullSuite": {
@@ -109,5 +109,6 @@
   },
   "earlierRuns": "Run 1 (7811fad): one WebKit timing test of the scan crop (u04, 100 ms budget) failed while the independent reviewer ran tests in parallel; it passed 3 of 3 alone and F3 changes no scan file. Run 2 (e19f8ec): every test passed, but a WebKit worker hung on shutdown (Playwright force-killed it after 300 s), so the run exited 1. Run 3, recorded here, on the same source: clean.",
   "visualCheck": "Screenshots and exported PNGs reviewed by the orchestrating session: 13 crews, D1 10x4, long boat numbers, 320 px normal and 200% text, the Comandate week. Synthetic data; stored only in ignored test-results.",
-  "physicalDevice": "Not run by an agent: the owner checks the summary, the downloaded images and the Mezzi icon on their phone at UG2."
+  "physicalDevice": "Not run by an agent: the owner checks the summary, the downloaded images and the Mezzi icon on their phone at UG2.",
+  "afterCompletion": "After F3 was first completed at f1cfdf1, CI on Linux failed the long-number journey: in DejaVu Sans a 4-digit number wrapped at 390 px (em estimate) and overflowed a 45% cap at 320 px. d8653a0 sizes the column in ch of the number’s own font and keeps the number on one line; a6e00b6 drops the cap. CI passed on codex/0.3.0 and main at a6e00b6 and Pages deployed it; this evidence is re-recorded on that source."
 }

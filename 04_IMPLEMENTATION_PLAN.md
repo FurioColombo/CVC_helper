@@ -349,6 +349,11 @@ header, list semantics in old Safari) are in the evidence. The first evidence
 run lost one WebKit timing test to parallel load and the second hung a WebKit
 worker at shutdown after every test had passed; the third, on the same
 source, is clean. The owner checks the summary, images and icon on the phone.
+After the first push, CI on Linux failed the long-number journey: in
+DejaVu Sans a 4-digit number wrapped or overflowed its column. The column is
+now sized in `ch` of the number’s own font with no cap (`d8653a0`, `a6e00b6`);
+CI passed and Pages deployed `a6e00b6`, and the F3 evidence is re-recorded on
+that source.
 
 ## UG2 — 0.3.0 integration and release gate
 
