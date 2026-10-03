@@ -1,6 +1,6 @@
 # Implementation plan — active 0.3.0 work
 
-Updated 2026-09-28. Read **Where this cycle stands**, then only the section for
+Updated 2026-10-03. Read **Where this cycle stands**, then only the section for
 the active milestone. Closed 0.3.0 milestone details are in
 `archive/v0.3.0-completed-milestones.md`; the full plan through R1 is at
 `archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`. Completed 0.1.0 and
@@ -30,7 +30,7 @@ lifecycle.
 | F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
 | F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
 | F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
-| F4 | In progress. The owner's 2026-10-03 phone feedback: a free seat takes a volunteer; the summary image becomes a screenshot of the summary, saved and copied from a floating button. |
+| F4 | Complete. The owner's 2026-10-03 phone feedback: a free seat takes a volunteer, and the crew and Comandate summary images are screenshots of the summary, saved and copied from a floating button at the bottom right. `.evidence/F4/` records `npm run verify:all` on the final source (934 unit tests; 196 browser tests passed, 34 skipped, none failed), the browser evidence and the self-review (no blocker). The owner checks the image in WhatsApp on their phones. |
 | UG2 | Pending: the owner's remaining physical checks and the precondition below. On 2026-10-03 the owner confirmed on Android phone Back, the assistant paste (ChatGPT and Claude) and the installed app offline. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
 
 **Before the next Codex session (precondition for UG2):** the published
@@ -360,7 +360,7 @@ that source.
 ## F4 — Free seat for volunteers, summary image as a screenshot
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 The owner's 2026-10-03 phone feedback. They confirmed on Android that phone
 Back, the assistant paste (ChatGPT and Claude apps) and the installed app
@@ -385,6 +385,27 @@ offline work.
 **Evidence:** `.evidence/F4/` verification, browser evidence (the exported image
 compared with a screenshot of the same summary, offline logos, the clipboard
 image, 320 px and 200% text), self-review.
+
+**Closure.** Claude Code fixed the free seat (`3c0a820`): the tap only
+filled a seat with a student from the pool, so a volunteer fell through to
+their destination chooser; anyone still available now fills it, with a unit
+test and a Pixel 7 journey that survives a reload. A Sonnet agent built the
+image (`43b6654`) and Claude Code reviewed the code and every exported image
+against the screen. The page is cloned with its computed styles into an SVG
+`foreignObject` and drawn on a canvas by the browser itself, so the image is
+the screen without the status bar, the close button or the new button, and
+with every group; no dependency was added and about 4,000 lines of canvas
+drawing were removed. The browser test compares the saved PNG with
+Playwright's own screenshot of the same content and rejects blank, shifted
+and greyscale images. A web app cannot write into the gallery: Android
+downloads (the gallery's Download album) and copies; iPhone opens the share
+sheet, whose `Salva immagine` reaches Photos, and copies. The iPhone share
+sheet, Safari's clipboard and its canvas read-back are verified only on the
+WebKit engine and in unit tests, and are the owner's to check. Two full runs
+on the same source each lost tests unrelated to F4 that pass alone (the
+40-student layout, the denied-microphone alert, WebKit phone Back after a
+Valutazioni note); the third, recorded in `.evidence/F4/`, is clean: 934
+unit tests, 196 browser tests passed, 34 skipped, none failed.
 
 ## UG2 — 0.3.0 integration and release gate
 

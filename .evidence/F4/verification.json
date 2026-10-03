@@ -1,0 +1,25 @@
+{
+  "milestone": "F4",
+  "status": "PASS",
+  "recordedAt": "2026-10-03T18:46:15.846Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.2.0",
+  "recorder": "scripts/record-verification.mjs@2",
+  "gitCommit": "43b6654946a344a9807317e7f0824f4af5108378",
+  "workingTreeClean": true,
+  "sourceDigest": "a06237e6a3f6a18d9a49c5f5a8bd79ffd585676765b73f9faf77b75351e23b4b",
+  "sourceFiles": 324,
+  "verificationScripts": [
+    "verify:all"
+  ],
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-10-03T18:09:00.425Z",
+      "durationMs": 2235418,
+      "exitCode": 0,
+      "outputTail": "[WebServer] 8:45:51 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 8:45:51 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 228 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (8.0s)\n[WebServer] 8:45:59 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 8:45:59 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 229 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › reads an answer whose line breaks were all turned into spaces (8.3s)\n[WebServer] 8:46:08 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 8:46:08 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 230 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:346:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (7.4s)\n\n  34 skipped\n  196 passed (30.6m)"
+    }
+  ]
+}

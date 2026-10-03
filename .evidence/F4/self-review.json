@@ -1,0 +1,51 @@
+{
+  "milestone": "F4",
+  "reviewer": "Claude Code (Opus, orchestrating session) — self-review of its own free-seat fix and of the Sonnet implementation agent's summary-image work",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "F4S-1",
+      "title": "The iPhone paths are verified on the WebKit engine and in unit tests, not on an iPhone",
+      "evidence": "Playwright WebKit (iphone-13-webkit-core) renders the PNG with the logos and passes the similarity check, but it has no navigator.share, so it takes the download path. The share sheet inside the tap, Safari's clipboard write with a promise as the item data, and reading a foreignObject drawing back from a canvas on iOS are covered only by unit tests with fakes.",
+      "disposition": "Accepted for F4: the share step offers a second-tap Condividi when Safari refuses it, and a refused copy is reported. The owner checks the image on the iPhone at UG2; no simulated PASS is recorded."
+    },
+    {
+      "id": "F4S-2",
+      "title": "A web app cannot write into the phone's gallery directly",
+      "evidence": "On Android the image is a download, which gallery apps show in the Download album rather than the camera roll; on iPhone a download goes to Files.",
+      "disposition": "Accepted platform limit, stated in the plan and the changelog: Android downloads and copies; iPhone opens the share sheet (Salva immagine puts it in Photos) and copies; Condividi offers the share sheet, and WhatsApp in it, wherever the phone can share files."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "F4S-3",
+      "title": "At 320 px with 200% text the button wraps to two lines and its note covers much of the screen",
+      "evidence": "scratchpad screenshot f4-crew-summary-button-320-200pct.png (synthetic data, not stored).",
+      "disposition": "Accepted: the stress case stays usable, the note hides after about six seconds, and the last card stays clear of the button at the end of the scroll (browser test)."
+    },
+    {
+      "id": "F4S-4",
+      "title": "The offline browser test runs on the dev server, which has no service worker",
+      "evidence": "tests/e2e/f3-crew-summary.spec.ts offline case.",
+      "disposition": "Accepted: it proves the cache and decoded-pixel fallback; the precache of the eight brand images is asserted on the production build by scripts/check-built-pwa.mjs, and the owner confirmed the installed app offline on 2026-10-03."
+    },
+    {
+      "id": "F4S-5",
+      "title": "The image is rendered about 250 ms after the summary opens, and again after a resize",
+      "disposition": "Accepted: it keeps the tap instant and the iPhone share sheet inside the tap; a tap reuses the image unless the content, width, density or text size changed."
+    }
+  ],
+  "checks": [
+    "Free seat: CrewManagement.test.tsx 'fills a selected vacancy with an available volunteer, like a student' and tests/e2e/ux2-crew-interactions.spec.ts 'fills a chosen free seat with an available volunteer (F4)' (Pixel 7 Chrome, survives a reload). Both would fail on the old code, which opened the volunteer's destination chooser.",
+    "Image fidelity: every exported PNG reviewed by eye against the screen (13 crews, D1 10x4, long numbers, offline, the Comandate week, WebKit); the browser test compares the PNG with Playwright's own screenshot of the same content and rejects a blank, a 6 px shifted and a greyscale image on every run.",
+    "Code read in full: src/lib/pageSnapshot.ts, src/lib/summaryShare.ts, src/components/SummaryImageButton.tsx and the two views' diffs. The clipboard write starts synchronously inside the tap; a failed render reports nothing copied; the close button, the button and its note are excluded from the image; no new dependency."
+  ],
+  "evidenceInspected": [
+    "git diff 3c0a820..working tree (CrewManagement.tsx, DutyManagement.tsx, the new lib and component files, the deleted canvas exporters, the specs)",
+    "Exported PNGs and screen references in the session scratchpad (synthetic data only, not stored)",
+    "Screenshots of both views with the button and its note at 390x844 and 320 px/200% text",
+    "The implementation agent's similarity measurements (faithful 0.6-1.4 mean difference; blank 10.4, shifted 5.6, greyscale colour 5.9)",
+    ".evidence/F4/verification.json"
+  ]
+}

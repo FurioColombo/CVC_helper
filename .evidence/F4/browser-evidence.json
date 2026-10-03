@@ -1,0 +1,48 @@
+{
+  "milestone": "F4",
+  "recordedBy": "npm run evidence -- F4 (scripts/record-verification.mjs), which ran npm run verify:all including the full browser suite; summarised from that run's output",
+  "sourceDigest": "a06237e6a3f6a18d9a49c5f5a8bd79ffd585676765b73f9faf77b75351e23b4b",
+  "gitCommit": "43b6654",
+  "runtime": "v24.21.0",
+  "command": "npm run verify:e2e (all Playwright projects, own server on a free port, one worker)",
+  "exitCode": 0,
+  "fullSuite": {
+    "passed": 196,
+    "skipped": 34,
+    "failed": 0,
+    "note": "Skips are the existing per-project gating. Two earlier full runs on the same source each lost tests that pass alone: the 40-student 320 px/200% crew layout and the denied-microphone dictation alert (first run), and WebKit phone Back after saving a Valutazioni note (second run). Each passed in isolation (6 of 6 and 6 of 6 repeats); F4 changes no navigation, evaluation or speech file. The third run, recorded here, is clean."
+  },
+  "journeys": {
+    "ux2-crew-interactions: fills a chosen free seat with an available volunteer (F4)": {
+      "projects": ["pixel-7-chrome"],
+      "covers": [
+        "Posto libero, then a volunteer in Volontari disponibili: the volunteer takes that seat without the destination chooser, the other seat stays free, and the placement survives a reload"
+      ]
+    },
+    "f3-crew-summary": {
+      "projects": ["pixel-7-chrome", "iphone-13-webkit-core"],
+      "covers": [
+        "the floating Salva immagine button saves a PNG whose width is the content's CSS width times the device pixel ratio and whose height covers every group of a 13-crew course",
+        "the PNG matches Playwright's own screenshot of the same content (mean greyscale difference within 2.5, under 1.2% of pixels off, block colour within 2.2), and a blank, a 6 px shifted and a greyscale image are rejected on every run",
+        "the close button's place is empty in the image; the clipboard holds an image/png of the same size",
+        "offline, after a width change forces a new render, the boat logos are still in the image",
+        "at 390 px, 320 px and 320 px/200% text the last card ends above the button at the end of the scroll, the button is at least 48 px tall, the close button is not covered and nothing scrolls sideways",
+        "WebKit makes the image with the logos (download path: Playwright WebKit has no navigator.share)",
+        "the F3 read-view checks: 13 crews and ten D1 crews on one 390x844 screen, long boat numbers, logos after going offline"
+      ]
+    },
+    "f3-duty-summary": {
+      "projects": ["pixel-7-chrome"],
+      "covers": [
+        "the Comandate summary saves an image of the screen from the same floating button"
+      ]
+    },
+    "c1-crew-management, crew-copy-read, crew-management-gate, u09-crews": {
+      "projects": ["pixel-7-chrome", "iphone-13-viewport", "iphone-13-webkit-core"],
+      "note": "regression of the crew page around the changed button and seat handling; all passed where they run"
+    }
+  },
+  "visualCheck": "Reviewed by the orchestrating session: the exported 13-crew PNG (Chromium 1023x1934 at 390 px; WebKit 1170x2211), the D1, long-number and offline variants, the Comandate PNG, and both views with the button and its note at 390x844 and 320 px/200% text. Synthetic data; not stored.",
+  "physicalDevice": "Not run by an agent. On 2026-10-03 the owner passed phone Back, the assistant paste (ChatGPT and Claude apps) and the installed app offline on Android. Saving, copying and pasting the new image in WhatsApp, on Android and on iPhone, is theirs to check at UG2.",
+  "recordedAt": "2026-10-03T18:46:15.846Z"
+}
