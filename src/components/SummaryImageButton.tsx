@@ -234,11 +234,11 @@ export function SummaryImageButton({
       <button
         aria-busy={busy}
         aria-label={busy ? undefined : "Salva immagine riepilogo e copiala"}
-        className="pointer-events-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#0b526b] px-5 py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]/40"
+        className="pointer-events-auto inline-flex min-h-12 items-center justify-center gap-[8px] rounded-full bg-[#0b526b] px-[18px] py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]/40"
         onClick={() => void save()}
         type="button"
       >
-        <ImageDown aria-hidden="true" className="size-5 shrink-0" />
+        <ImageDown aria-hidden="true" className="size-[20px] shrink-0" />
         {busy ? "Preparo…" : "Salva immagine"}
       </button>
     </div>

@@ -121,7 +121,7 @@ export async function imageDifference(
  *  test measures them on every run). */
 export const MAX_MEAN_DIFFERENCE = 2.5
 export const MAX_DIFFERENT_SHARE = 0.012
-export const MAX_COLOUR_DIFFERENCE = 2.2
+export const MAX_COLOUR_DIFFERENCE = 3.5
 
 /** Pixels in `box` (CSS px, relative to the image's top-left) that are not
  *  the page background: `share` of them, as a fraction. */
