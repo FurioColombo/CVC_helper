@@ -524,8 +524,12 @@ It supports exact boat, model without number, no boat and Mezzi. A permitted mod
 asset is optional; the same-size text fallback is required. Screen wake lock is
 allowed when straightforward; native brightness control is deferred.
 
-The 0.3.0 crew summary shows `IS`, `ADV`, `CT`, Comandata and minor markers and
-downloads as one complete phone-compatible PNG in the app's visual style. It
+The 0.3.0 crew summary shows `IS`, `ADV`, `CT`, Comandata and minor markers. A
+floating button at the bottom right saves it as one complete PNG that is a
+screenshot of the summary's content — every group, without the phone's status
+bar or the page's controls — and copies the same image to the clipboard, so it
+can be pasted into a chat (owner, 2026-10-03; the Comandate summary does the
+same). It
 starts with remaining available students, then occupied sailing crews, Mezzi,
 A terra as a crew-like group with its own icon, and empty boats/crews last. The
 occupied crews follow the owner's C6 layout (2026-09-28): grouped by boat model

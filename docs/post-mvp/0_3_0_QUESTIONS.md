@@ -1,9 +1,19 @@
 # Owner decisions and open questions — 0.3.0
 
-Updated 2026-09-28. The newest decisions and the questions still open are
+Updated 2026-10-03. The newest decisions and the questions still open are
 first; older decisions follow. Later decisions supersede earlier ones where
 they differ. The plan toward a shared database and 1.0.0 is in
 [`1_0_0_NEXT_STEPS.md`](1_0_0_NEXT_STEPS.md).
+
+## Decisions of 2026-10-03
+
+After using F3 on their Android phone (planned as F4):
+
+| Topic                    | Owner report or decision                                                                                                                                                                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Physical checks (UG2)    | **Pass on Android**: phone Back, the assistant paste from the ChatGPT and Claude apps, and the installed app offline.                                                                                                                                                                        |
+| Free seat and volunteers | Tapping `Posto libero` and then a volunteer must put the volunteer in that seat (it did not).                                                                                                                                                                                                |
+| Summary image            | The summary page is now very good; the drawn image is not. The image must simply be a screenshot of the summary's content, without the phone's status bar, saved straight to the gallery and copied, so it can be pasted in WhatsApp. The button becomes a floating one at the bottom right. |
 
 ## Decisions of 2026-09-28
 
@@ -44,10 +54,11 @@ for new work, planned as F2 and F3 in `04_IMPLEMENTATION_PLAN.md`.
    computer. Run it when no agent is working in the repository, since it
    prunes objects. GitHub keeps serving the old commits by their old ids until
    GitHub Support purges them; the owner has deferred that request.
-2. **The remaining physical checks (UG2).** After F2, paste an assistant's
-   answer on the phone again. Still to check: the installed app offline, phone
-   Back in every area, the update banner, and speech on an iPhone (Apple was
-   never tested). The checklist is `UG1_DEVICE_VALIDATION.md`.
+2. **The remaining physical checks (UG2).** Done on Android on 2026-10-03:
+   the assistant paste, the installed app offline and phone Back. Still to
+   check: the F4 summary image (saved, copied and pasted in WhatsApp), the
+   update banner, and speech on an iPhone (Apple was never tested). The
+   checklist is `UG1_DEVICE_VALIDATION.md`.
 
 ## Questions of 2026-09-27 (answered on 2026-09-28)
 

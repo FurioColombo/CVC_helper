@@ -30,7 +30,8 @@ lifecycle.
 | F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
 | F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
 | F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
-| UG2 | Pending: the owner's remaining physical checks and the precondition below. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
+| F4 | In progress. The owner's 2026-10-03 phone feedback: a free seat takes a volunteer; the summary image becomes a screenshot of the summary, saved and copied from a floating button. |
+| UG2 | Pending: the owner's remaining physical checks and the precondition below. On 2026-10-03 the owner confirmed on Android phone Back, the assistant paste (ChatGPT and Claude) and the installed app offline. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
 
 **Before the next Codex session (precondition for UG2):** the published
 history was rewritten before the first 0.3.0 push to remove real roster data.
@@ -85,7 +86,8 @@ the Settings option for three remains. Crew capacity rules do not change.
 11. **V05** LLM-assisted paste path, beside on-device scanning.
 12. **F1** remaining R1 corrections.
 13. **F2** and **F3**, the owner's 2026-09-28 feedback after using the app,
-    then **UG2** integration and release gate.
+    and **F4**, their 2026-10-03 phone feedback, then **UG2** integration and
+    release gate.
 14. **S4** remaining OCR quality target and the deferred D2–D5 crew-capacity
     override, both handed to Claude Code after the gate.
 
@@ -354,6 +356,35 @@ DejaVu Sans a 4-digit number wrapped or overflowed its column. The column is
 now sized in `ch` of the number’s own font with no cap (`d8653a0`, `a6e00b6`);
 CI passed and Pages deployed `a6e00b6`, and the F3 evidence is re-recorded on
 that source.
+
+## F4 — Free seat for volunteers, summary image as a screenshot
+
+**Category:** FEATURE
+**Status:** IN_PROGRESS
+
+The owner's 2026-10-03 phone feedback. They confirmed on Android that phone
+Back, the assistant paste (ChatGPT and Claude apps) and the installed app
+offline work.
+
+1. **A free seat takes a volunteer.** Tapping `Posto libero` and then a volunteer
+   in `Volontari disponibili` puts the volunteer in that seat, as it already
+   did for a student; it used to open the volunteer's destination chooser.
+2. **The summary image is a screenshot of the summary.** The crew and the
+   Comandate summaries are now liked as they are on screen, and the drawn
+   image was not. The image is the summary's own content rendered as the
+   page shows it, at the phone's width and pixel density, with every group
+   even past one screen, without the status bar, the close button or the
+   new button. The hand-drawn canvas exporters are removed.
+3. **Save and copy in one tap.** `Scarica immagine riepilogo` is replaced by a
+   floating button at the bottom right. One tap saves the image (Android and
+   computers download it, where the gallery's Download album shows it; iPhone
+   opens the share sheet, whose `Salva immagine` puts it in Photos) and
+   copies it, so the owner can paste it in WhatsApp. A short note says what
+   happened, with `Condividi` where the phone can share files.
+
+**Evidence:** `.evidence/F4/` verification, browser evidence (the exported image
+compared with a screenshot of the same summary, offline logos, the clipboard
+image, 320 px and 200% text), self-review.
 
 ## UG2 — 0.3.0 integration and release gate
 

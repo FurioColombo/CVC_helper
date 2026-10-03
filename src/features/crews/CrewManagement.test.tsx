@@ -955,6 +955,63 @@ describe("CrewManagement", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("fills a selected vacancy with an available volunteer, like a student", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-1", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      }),
+    )
+    const user = userEvent.setup()
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Posto libero 2 equipaggio 1",
+      }),
+    )
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "tocca un allievo o un volontario disponibile per inserirlo.",
+    )
+    const volunteers = screen.getByRole("region", {
+      name: "Volontari disponibili",
+    })
+    await user.click(
+      within(volunteers).getByRole("button", { name: "Vera ADV" }),
+    )
+
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    expect(savePlan.mock.calls[0]![2].crews).toEqual([
+      expect.objectContaining({
+        id: "crew-1",
+        members: [
+          { personId: "student-1", personType: "student" },
+          { personId: "volunteer-1", personType: "volunteer" },
+        ],
+      }),
+    ])
+    expect(
+      screen.queryByRole("region", {
+        name: "Destinazione persona selezionata",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      await screen.findByRole("button", { name: "Vera ADV, equipaggio 1" }),
+    ).toBeVisible()
+  })
+
   it("cancels a selected vacancy on a second tap and switches selection to another slot", async () => {
     getPlan.mockResolvedValue(
       stored({

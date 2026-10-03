@@ -1869,8 +1869,9 @@ export function CrewManagement({
   function tapPerson(person: CrewPersonRef) {
     if (saveInFlight.current || copying) return
     if (selectedCrewSlot) {
-      const location = findPersonLocation(plan, person)
-      if (person.personType === "student" && location.kind === "pool") {
+      // Anyone still available fills the chosen seat: a student from the
+      // pool or a volunteer from "Volontari disponibili" (owner, UG2).
+      if (findPersonLocation(plan, person).kind === "pool") {
         void fillSelectedCrewSlot(person)
         return
       }
@@ -2788,9 +2789,13 @@ export function CrewManagement({
                       >
                         Posto libero {selectedCrewSlot.slotIndex + 1} equipaggio{" "}
                         {selectedCrewSlotIndex + 1} selezionato ·{" "}
-                        {studentPool.length > 0
-                          ? "tocca un allievo disponibile per inserirlo. "
-                          : "nessun allievo disponibile. "}
+                        {studentPool.length > 0 && volunteerPool.length > 0
+                          ? "tocca un allievo o un volontario disponibile per inserirlo. "
+                          : studentPool.length > 0
+                            ? "tocca un allievo disponibile per inserirlo. "
+                            : volunteerPool.length > 0
+                              ? "nessun allievo disponibile; tocca un volontario per inserirlo. "
+                              : "nessuno disponibile. "}
                         Toccalo di nuovo per annullare.
                       </p>
                     )}
@@ -3513,7 +3518,10 @@ export function CrewManagement({
                   </div>
                 </section>
 
-                <section id="crew-volunteer-section">
+                <section
+                  id="crew-volunteer-section"
+                  onKeyDown={handleStudentPoolKeyDown}
+                >
                   <h2 className="text-sm font-black tracking-wide uppercase">
                     Volontari disponibili · {volunteerPool.length}
                   </h2>
