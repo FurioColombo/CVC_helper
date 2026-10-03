@@ -1,5 +1,23 @@
 import { expect, type Locator, type Page, test } from "@playwright/test"
 import sharp from "sharp"
+import {
+  D1_BOAT_COUNT,
+  D1_BOAT_TYPE,
+  TOTAL_CREWS,
+  TOTAL_STUDENTS,
+  seedTenCrewCourseD1,
+  seedThirteenCrewCourse,
+} from "./summary-helpers"
+import {
+  MAX_COLOUR_DIFFERENCE,
+  MAX_DIFFERENT_SHARE,
+  MAX_MEAN_DIFFERENCE,
+  captureSaveButtonWithNote,
+  expectLogosInImage,
+  expectSaveButtonLayout,
+  imageDifference,
+  saveAndCheckSummaryImage,
+} from "./summary-image-checks"
 
 /**
  * F3 C6 target: a realistic 13-crew course (owner, 2026-09-28) grouped by
@@ -17,7 +35,10 @@ import sharp from "sharp"
  * than a fixed `grid-cols-2`, so both crew shapes must be exercised, not just
  * the mixed-model one. A third course gives its boats numbers of three or
  * four characters (115, 1234, A12) to check the number column keeps them
- * clear of the first name, on screen and in the exported image.
+ * clear of the first name, on screen and in the saved image.
+ *
+ * F4: the saved image is a screenshot of this very summary, saved and copied
+ * by a floating button; `f4-summary-image` tests below cover it.
  */
 
 /** The distinct left edges the cards start at, left to right: one value for a
@@ -27,138 +48,6 @@ async function distinctCardLefts(cards: Locator): Promise<number[]> {
     items.map((item) => Math.round(item.getBoundingClientRect().left)),
   )
   return [...new Set(lefts)].sort((a, b) => a - b)
-}
-
-const BOATS_BY_TYPE: Record<string, string[]> = {
-  "RS Toura": ["4", "7", "9"],
-  "RS Quest": ["12", "15", "18", "21"],
-  "Laser Vago": ["3", "6"],
-  "RS 500": ["2", "5"],
-}
-const TOTAL_BOATS = Object.values(BOATS_BY_TYPE).flat().length // 11
-const MEZZI_CREW_COUNT = 2
-const TOTAL_CREWS = TOTAL_BOATS + MEZZI_CREW_COUNT // 13
-const MEMBERS_PER_CREW = 2
-const TOTAL_STUDENTS = TOTAL_CREWS * MEMBERS_PER_CREW
-
-async function seedThirteenCrewCourse(page: Page) {
-  const seededStudents = Array.from({ length: TOTAL_STUDENTS }, (_, index) => ({
-    firstName: `Allievo${String(index + 1).padStart(2, "0")}`,
-    surname: "Prova",
-    nickname: null,
-    dateOfBirth: "2000-01-01",
-    declaredAgeAtCourseStart: null,
-    sex: "male",
-    phone: null,
-    size: null,
-    initialNote: null,
-    courseNote: null,
-  }))
-
-  await page.evaluate(
-    async ({ students, boatsByType, membersPerCrew, mezziCrewCount }) => {
-      // Each path goes through a variable rather than an inline string
-      // literal: `import(<literal>)` is statically resolved by `tsc -b`
-      // (which does not see the Vite-only ignore comment) and fails to find
-      // these absolute dev-server paths, exactly as the 40-student stress
-      // seed in c1-crew-management.spec.ts already works around.
-      const courseModulePath = "/src/persistence/courses.ts"
-      const studentsModulePath = "/src/persistence/students.ts"
-      const boatsModulePath = "/src/persistence/boats.ts"
-      const crewsModulePath = "/src/persistence/crews.ts"
-      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-        getActiveCourse: () => Promise<{ id: string } | null>
-      }
-      const studentApi = (await import(
-        /* @vite-ignore */ studentsModulePath
-      )) as {
-        createStudents: (
-          courseId: string,
-          entries: Array<Record<string, unknown>>,
-        ) => Promise<Array<{ id: string }>>
-      }
-      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
-        createBoats: (
-          courseId: string,
-          inputs: Array<{ type: string; number: string }>,
-        ) => Promise<Array<{ id: string; type: string; number: string }>>
-      }
-      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
-        saveCrewPlan: (
-          courseId: string,
-          sessionId: string,
-          plan: {
-            crews: Array<{
-              id: string
-              sessionId: string
-              members: Array<{ personId: string; personType: string }>
-              capacity: number
-              destination: string
-              boatId: string | null
-            }>
-            landStudentIds: string[]
-            selectedBoatIds: string[]
-          },
-        ) => Promise<unknown>
-      }
-      const course = await courseApi.getActiveCourse()
-      if (!course) {
-        throw new Error("Synthetic 13-crew course requires an active course")
-      }
-      const createdStudents = await studentApi.createStudents(
-        course.id,
-        students,
-      )
-      const createdBoats: Array<{ id: string }> = []
-      for (const [type, numbers] of Object.entries(boatsByType)) {
-        const boats = await boatApi.createBoats(
-          course.id,
-          numbers.map((number) => ({ type, number })),
-        )
-        createdBoats.push(...boats)
-      }
-
-      let studentIndex = 0
-      function nextMembers() {
-        const members = Array.from({ length: membersPerCrew }, () => ({
-          personId: createdStudents[studentIndex++]!.id,
-          personType: "student",
-        }))
-        return members
-      }
-
-      const crews = [
-        ...createdBoats.map((boat) => ({
-          id: crypto.randomUUID(),
-          sessionId: "sat-pm",
-          members: nextMembers(),
-          capacity: membersPerCrew,
-          destination: "boat",
-          boatId: boat.id,
-        })),
-        ...Array.from({ length: mezziCrewCount }, () => ({
-          id: crypto.randomUUID(),
-          sessionId: "sat-pm",
-          members: nextMembers(),
-          capacity: membersPerCrew,
-          destination: "mezzi",
-          boatId: null,
-        })),
-      ]
-
-      await crewApi.saveCrewPlan(course.id, "sat-pm", {
-        crews,
-        landStudentIds: [],
-        selectedBoatIds: createdBoats.map((boat) => boat.id),
-      })
-    },
-    {
-      students: seededStudents,
-      boatsByType: BOATS_BY_TYPE,
-      membersPerCrew: MEMBERS_PER_CREW,
-      mezziCrewCount: MEZZI_CREW_COUNT,
-    },
-  )
 }
 
 test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat model, and degrades cleanly at 320 px/200% text", async ({
@@ -346,159 +235,7 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
     path: testInfo.outputPath("f3-crew-summary-320-200pct.png"),
     fullPage: false,
   })
-
-  // Back to a normal viewport before exercising the PNG export: the download
-  // itself does not depend on the page's own size, but a stale 320 px/200%
-  // layout left over from the stress case above is not what an operator
-  // actually taps "Scarica immagine riepilogo" from.
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.evaluate(() => {
-    document.documentElement.style.fontSize = ""
-  })
-  const [download] = await Promise.all([
-    page.waitForEvent("download"),
-    readView
-      .getByRole("button", { name: "Scarica immagine riepilogo" })
-      .click(),
-  ])
-  const pngPath = testInfo.outputPath("f3-crew-summary-13-crew-export.png")
-  await download.saveAs(pngPath)
-  const metadata = await sharp(pngPath).metadata()
-  expect(metadata.format).toBe("png")
-  // `crewSummaryImage.ts` lays the summary out at a fixed logical width of
-  // 1080px, then rasterises at its default 2× pixel ratio for a crisp phone
-  // image (`buildCrewSummaryPng`'s own unit test pins the same 1080×2
-  // relationship) — so the file the browser actually saves is 2160px wide.
-  expect(metadata.width).toBe(1080 * 2)
-  // Thirteen crews across five groups (four boat models plus Mezzi) stack
-  // well past a single phone screen; a height under this floor would mean
-  // the export collapsed instead of growing to fit every crew.
-  expect(metadata.height).toBeGreaterThan(2000)
 })
-
-const D1_BOAT_TYPE = "RS Toura"
-const D1_BOAT_COUNT = 10
-const D1_MEMBERS_PER_CREW = 4
-
-/**
- * D1's own default (`COURSE_CONFIG.D1.defaultBoatType`, no fixed standard
- * crew size so the app's own `getInitialCrewCapacity` falls back to 4): a
- * single-model, denser roster than the mixed 13-crew course above, seeded
- * the same way (through the app's own persistence, same pattern as the
- * 40-student stress case in c1-crew-management.spec.ts) so this exercises
- * the read view itself rather than 40 manual student forms. By default ten
- * boats numbered 1–10 with four students each; `numbers` and
- * `membersPerCrew` choose other boats (and so crews) and crew sizes.
- */
-async function seedTenCrewCourseD1(
-  page: Page,
-  options: { numbers?: string[]; membersPerCrew?: number } = {},
-) {
-  const boatNumbers =
-    options.numbers ??
-    Array.from({ length: D1_BOAT_COUNT }, (_, index) => String(index + 1))
-  const crewSize = options.membersPerCrew ?? D1_MEMBERS_PER_CREW
-  const seededStudents = Array.from(
-    { length: boatNumbers.length * crewSize },
-    (_, index) => ({
-      firstName: `Allievo${String(index + 1).padStart(2, "0")}`,
-      surname: "Prova",
-      nickname: null,
-      dateOfBirth: "2000-01-01",
-      declaredAgeAtCourseStart: null,
-      sex: "male",
-      phone: null,
-      size: null,
-      initialNote: null,
-      courseNote: null,
-    }),
-  )
-
-  await page.evaluate(
-    async ({ students, boatType, numbers, membersPerCrew }) => {
-      // Same absolute-path-via-variable workaround as the 13-crew seed above:
-      // `import(<literal>)` is statically resolved by `tsc -b`, which does
-      // not see the Vite-only ignore comment, and fails to find these
-      // dev-server-only paths.
-      const studentsModulePath = "/src/persistence/students.ts"
-      const boatsModulePath = "/src/persistence/boats.ts"
-      const crewsModulePath = "/src/persistence/crews.ts"
-      const courseModulePath = "/src/persistence/courses.ts"
-      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-        getActiveCourse: () => Promise<{ id: string } | null>
-      }
-      const studentApi = (await import(
-        /* @vite-ignore */ studentsModulePath
-      )) as {
-        createStudents: (
-          courseId: string,
-          entries: Array<Record<string, unknown>>,
-        ) => Promise<Array<{ id: string }>>
-      }
-      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
-        createBoats: (
-          courseId: string,
-          inputs: Array<{ type: string; number: string }>,
-        ) => Promise<Array<{ id: string; type: string; number: string }>>
-      }
-      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
-        saveCrewPlan: (
-          courseId: string,
-          sessionId: string,
-          plan: {
-            crews: Array<{
-              id: string
-              sessionId: string
-              members: Array<{ personId: string; personType: string }>
-              capacity: number
-              destination: string
-              boatId: string | null
-            }>
-            landStudentIds: string[]
-            selectedBoatIds: string[]
-          },
-        ) => Promise<unknown>
-      }
-      const course = await courseApi.getActiveCourse()
-      if (!course) {
-        throw new Error("Synthetic 10-crew D1 course requires an active course")
-      }
-      const createdStudents = await studentApi.createStudents(
-        course.id,
-        students,
-      )
-      const createdBoats = await boatApi.createBoats(
-        course.id,
-        numbers.map((number) => ({ type: boatType, number })),
-      )
-
-      let studentIndex = 0
-      const crews = createdBoats.map((boat) => ({
-        id: crypto.randomUUID(),
-        sessionId: "sat-pm",
-        members: Array.from({ length: membersPerCrew }, () => ({
-          personId: createdStudents[studentIndex++]!.id,
-          personType: "student",
-        })),
-        capacity: membersPerCrew,
-        destination: "boat",
-        boatId: boat.id,
-      }))
-
-      await crewApi.saveCrewPlan(course.id, "sat-pm", {
-        crews,
-        landStudentIds: [],
-        selectedBoatIds: createdBoats.map((boat) => boat.id),
-      })
-    },
-    {
-      students: seededStudents,
-      boatType: D1_BOAT_TYPE,
-      numbers: boatNumbers,
-      membersPerCrew: crewSize,
-    },
-  )
-}
 
 test("fits ten 4-student D1 crews, single boat model, on one 390×844 screen", async ({
   page,
@@ -546,22 +283,10 @@ test("fits ten 4-student D1 crews, single boat model, on one 390×844 screen", a
     await expect(card).toBeInViewport()
   }
 
-  const [download] = await Promise.all([
-    page.waitForEvent("download"),
-    readView
-      .getByRole("button", { name: "Scarica immagine riepilogo" })
-      .click(),
-  ])
-  const pngPath = testInfo.outputPath("f3-crew-summary-d1-export.png")
-  await download.saveAs(pngPath)
-  const metadata = await sharp(pngPath).metadata()
-  expect(metadata.format).toBe("png")
-  // Same fixed 1080px logical width as the 13-crew export above, rasterised
-  // at the same default 2× pixel ratio.
-  expect(metadata.width).toBe(1080 * 2)
-  // Ten four-member crews in one group are denser than the mixed 13-crew
-  // course (bigger cards, fewer groups); still well past a single screen.
-  expect(metadata.height).toBeGreaterThan(2000)
+  // Four names a card, one model: the image is still the screen.
+  await saveAndCheckSummaryImage(page, readView, testInfo, {
+    name: "f4-crew-summary-d1",
+  })
 })
 
 /**
@@ -682,17 +407,10 @@ test("keeps boat numbers of three or four characters clear of the first name, on
     document.documentElement.style.fontSize = ""
   })
 
-  const [download] = await Promise.all([
-    page.waitForEvent("download"),
-    readView
-      .getByRole("button", { name: "Scarica immagine riepilogo" })
-      .click(),
-  ])
-  const pngPath = testInfo.outputPath("f3-crew-summary-long-numbers-export.png")
-  await download.saveAs(pngPath)
-  const metadata = await sharp(pngPath).metadata()
-  expect(metadata.format).toBe("png")
-  expect(metadata.width).toBe(1080 * 2)
+  // In the wide pinned font too: the image is what the screen shows.
+  await saveAndCheckSummaryImage(page, readView, testInfo, {
+    name: "f4-crew-summary-long-numbers",
+  })
 })
 
 /**
@@ -767,4 +485,230 @@ test("keeps showing the boat-model logo in the read view after it was loaded onc
   } finally {
     await context.setOffline(false)
   }
+})
+
+/**
+ * F4: "Scarica immagine riepilogo" is replaced by a floating "Salva immagine"
+ * button. One tap saves the image (a screenshot of the summary's content, no
+ * status bar, close button or save button) and copies it to the clipboard.
+ */
+async function openThirteenCrewSummary(page: Page) {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 1" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await seedThirteenCrewCourse(page)
+  await page.reload()
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Equipaggi" })
+    .click()
+  await page.getByRole("button", { name: "Apri vista lettura" }).click()
+  const view = page.getByRole("dialog", { name: "Vista lettura equipaggi" })
+  await expect(view.getByRole("listitem")).toHaveCount(TOTAL_CREWS)
+  return view
+}
+
+test("saves the 13-crew summary as a screenshot of the screen and copies the same image", async ({
+  page,
+  context,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "One full synthetic 13-crew image journey is sufficient",
+  )
+  test.setTimeout(90_000)
+  await context.grantPermissions(["clipboard-read", "clipboard-write"])
+  const view = await openThirteenCrewSummary(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  const result = await saveAndCheckSummaryImage(page, view, testInfo, {
+    name: "f4-crew-summary-13-crews",
+    expectedNote: /^Immagine salvata e copiata\. Incollala su WhatsApp\.$/,
+  })
+  await expectLogosInImage(view, result)
+  // Every group, below the 844 px fold or not, is in the image: thirteen
+  // crews in five groups plus the closing note.
+  expect(result.cssHeight).toBeGreaterThan(600)
+
+  // The check above would also pass if its thresholds were loose. These are
+  // what it must reject: a blank page, the right page 6 px out of place, and
+  // the same page without colour. (The same page without its logos, and 2 px
+  // out of place, are only measured: the logos have their own check below,
+  // and 2 px is within what two renderers disagree on.)
+  const cssHeight = Math.round(result.visibleHeight)
+  const pixelWidth = Math.round(result.cssWidth * result.ratio)
+  const pixelHeight = Math.round(cssHeight * result.ratio)
+  const background = { r: 0xff, g: 0xfd, b: 0xf8 }
+  const shiftedBy = (cssPixels: number) =>
+    sharp(result.png)
+      .extend({ top: Math.round(cssPixels * result.ratio), background })
+      .extract({ left: 0, top: 0, width: pixelWidth, height: pixelHeight })
+      .toBuffer()
+  const logoBoxes = await view.locator("img").evaluateAll(
+    (images, rootBox) =>
+      images.map((image) => {
+        const box = image.getBoundingClientRect()
+        return {
+          x: box.x - rootBox.x,
+          y: box.y - rootBox.y,
+          width: box.width,
+          height: box.height,
+        }
+      }),
+    result.root,
+  )
+  const wrongImages: Record<string, Buffer> = {
+    blank: await sharp({
+      create: {
+        width: pixelWidth,
+        height: pixelHeight,
+        channels: 3,
+        background,
+      },
+    })
+      .png()
+      .toBuffer(),
+    shifted6px: await shiftedBy(6),
+
+    shifted2px: await shiftedBy(2),
+    withoutColour: await sharp(result.png).greyscale().toBuffer(),
+    withoutLogos: await sharp(result.png)
+      .composite(
+        logoBoxes.map((box) => ({
+          input: {
+            create: {
+              width: Math.round(box.width * result.ratio),
+              height: Math.round(box.height * result.ratio),
+              channels: 3,
+              background,
+            },
+          },
+          left: Math.round(box.x * result.ratio),
+          top: Math.round(box.y * result.ratio),
+        })),
+      )
+      .toBuffer(),
+  }
+  const measured: Record<string, unknown> = { faithful: result.difference }
+  for (const [name, wrong] of Object.entries(wrongImages)) {
+    const difference = await imageDifference(
+      wrong,
+      result.screenshot,
+      result.cssWidth,
+      cssHeight,
+    )
+    measured[name] = difference
+    if (name === "shifted2px" || name === "withoutLogos") continue
+    expect(
+      difference.mean > MAX_MEAN_DIFFERENCE ||
+        difference.share > MAX_DIFFERENT_SHARE ||
+        difference.colour > MAX_COLOUR_DIFFERENCE,
+      `${name} must be rejected: ${JSON.stringify(difference)}`,
+    ).toBe(true)
+  }
+  testInfo.annotations.push({
+    type: "difference",
+    description: JSON.stringify(measured),
+  })
+
+  // The clipboard holds the same image, as an image.
+  const copied = await page.evaluate(async () => {
+    const items = await navigator.clipboard.read()
+    const item = items[0]
+    if (!item) return null
+    const blob = await item.getType("image/png")
+    const bitmap = await createImageBitmap(blob)
+    return {
+      types: item.types,
+      width: bitmap.width,
+      height: bitmap.height,
+    }
+  })
+  const metadata = await sharp(result.png).metadata()
+  expect(copied).toEqual({
+    types: ["image/png"],
+    width: metadata.width,
+    height: metadata.height,
+  })
+
+  // The note goes away by itself.
+  await expect(view.getByRole("status")).toHaveText("", { timeout: 10_000 })
+})
+
+test("keeps the boat logos in the saved image when the phone is offline", async ({
+  page,
+  context,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "Browser network emulation is Chromium-specific; one check is sufficient",
+  )
+  test.setTimeout(90_000)
+  const view = await openThirteenCrewSummary(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const logos = view.locator("img")
+  await expect(logos).toHaveCount(4)
+  for (const logo of await logos.all()) {
+    await expect
+      .poll(() =>
+        logo.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0)
+  }
+
+  await context.setOffline(true)
+  try {
+    // A different width than the image may already have been prepared for, so
+    // the tap has to make a new one, with no network.
+    await page.setViewportSize({ width: 384, height: 844 })
+    const result = await saveAndCheckSummaryImage(page, view, testInfo, {
+      name: "f4-crew-summary-offline",
+    })
+    await expectLogosInImage(view, result)
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
+test("keeps the floating save button clear of the last card, the close button and the page width", async ({
+  page,
+  context,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "One full synthetic layout journey is sufficient",
+  )
+  test.setTimeout(120_000)
+  await context.grantPermissions(["clipboard-read", "clipboard-write"])
+  const view = await openThirteenCrewSummary(page)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expectSaveButtonLayout(view, "390×844")
+  await page.setViewportSize({ width: 320, height: 664 })
+  await expectSaveButtonLayout(view, "320×664")
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  await expectSaveButtonLayout(view, "320×664 / 200% text")
+
+  await captureSaveButtonWithNote(page, view, "f4-crew-summary")
+})
+
+test("makes the image in WebKit too, with the boat logos", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "iphone-13-webkit-core",
+    "WebKit renders foreignObject differently from Chromium; checked there",
+  )
+  test.setTimeout(120_000)
+  const view = await openThirteenCrewSummary(page)
+  // Playwright's WebKit is not an iPhone: no share sheet, so the image is
+  // downloaded; the copy goes to its clipboard all the same.
+  const result = await saveAndCheckSummaryImage(page, view, testInfo, {
+    name: "f4-crew-summary-13-crews-webkit",
+  })
+  await expectLogosInImage(view, result)
+  expect(result.ratio).toBe(3)
 })

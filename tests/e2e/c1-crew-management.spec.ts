@@ -394,7 +394,7 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
 
   const downloadPromise = page.waitForEvent("download")
   await summary
-    .getByRole("button", { name: "Scarica immagine riepilogo" })
+    .getByRole("button", { name: "Salva immagine riepilogo e copiala" })
     .click()
   const download = await downloadPromise
   const evidencePath = evidenceOutputPath(

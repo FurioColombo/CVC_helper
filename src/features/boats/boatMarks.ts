@@ -4,12 +4,10 @@ import { assetPath } from "@/lib/assetPath"
 /**
  * Manufacturer marks and the owner's gommone icon vocabulary, kept in their
  * own plain module rather than in `BoatIdentity.tsx`: a component file may
- * only export components under this project's Fast Refresh lint rule, and
- * `crewSummaryImage.ts` (no JSX, rasterises the PNG export) needs these exact
- * values too. `BoatIdentity.tsx`'s `BoatModelMark`, `BoatModelHeaderMark` and
- * `GommoneIcon` and the exported crew-summary PNG both draw from here, so the
- * live app and the image handed to an operator can never show a different
- * boat mark or a different gommone.
+ * only export components under this project's Fast Refresh lint rule.
+ * `BoatIdentity.tsx`'s `BoatModelMark`, `BoatModelHeaderMark` and
+ * `GommoneIcon` draw from here (the saved summary image is a screenshot of
+ * the screen, so it shows the same marks).
  *
  * The written model stays as the fallback wherever a logo is used: if an
  * asset is missing or fails to decode, the card still says which boat it is
@@ -35,9 +33,7 @@ export const BOAT_LOGOS: Record<BoatType, string> = {
  * bow, and the propeller as an ∞ between the tails, no shaft. Drawn bow right
  * in a 24×24 viewBox, where the ∞ stands upright; `gommoneTransform("vertical")`
  * rotates it -90° about the centre (12, 12) for bow-up use, where it lies
- * down. The one source both `GommoneIcon` (a live `<svg>`) and
- * `crewSummaryImage.ts` (a rasterised `<path>` string) draw from, so a future
- * change to the mark only has to happen once.
+ * down. `GommoneIcon` draws from it.
  */
 export const GOMMONE_VIEW_BOX = "0 0 24 24"
 export const GOMMONE_STROKE_WIDTH = 1.7

@@ -6,16 +6,13 @@ import {
   type CrewDestination,
   type VolunteerRole,
 } from "@/domain/config"
-import { estimateTextWidth } from "@/lib/summaryImage"
 
 /**
- * The one crew-summary data model, shared by the on-screen F3 C6 read view
- * (`AnnouncementView` in `CrewManagement.tsx`) and the exported PNG
- * (`crewSummaryImage.ts`). Both used to compute their own grouping from
- * scratch; a mismatch there would show the operator one order on screen and a
- * different one in the image they hand out. `buildCrewSummarySections` is the
- * single place that turns a flat crew-plan-derived line list into the grouped
- * shape both renderers read.
+ * The crew-summary data model behind the F3 C6 read view
+ * (`AnnouncementView` in `CrewManagement.tsx`). The saved image is a
+ * screenshot of that view (F4), so there is nothing else to keep in step.
+ * `buildCrewSummarySections` is the single place that turns a flat
+ * crew-plan-derived line list into the grouped shape the view reads.
  */
 
 export type CrewSummaryMember = {
@@ -86,7 +83,7 @@ export function modelOnlyName(line: CrewSummaryCrewLine): string | null {
     : null
 }
 
-/** What a card says it is to a screen reader (and on the image's own `<g>`):
+/** What a card says it is to a screen reader:
  *  "<model> <number>", "Mezzi", "<model> · Senza barca" or "senza barca". */
 export function crewCardLabel(line: CrewSummaryCrewLine): string {
   if (line.boat) return `${line.boat.type} ${line.boat.number}`
@@ -125,24 +122,6 @@ export function groupNumberWidthCh(
             0,
           )
         : 0,
-    ),
-  )
-}
-
-/**
- * How wide the boat-number column of a group's cards must be, in em of the
- * number's own font size: the widest number in the group (a 3- or 4-character
- * number, or one with a letter, is wider than the two digits the column was
- * first drawn for). Every card of the group gets the same column, so the
- * names still line up within it. Used by the image, whose font size is fixed.
- */
-export function groupNumberWidthEm(
-  lines: readonly CrewSummaryCrewLine[],
-): number {
-  return Math.max(
-    0,
-    ...lines.map((line) =>
-      line.boat ? estimateTextWidth(line.boat.number, 1) : 0,
     ),
   )
 }
@@ -205,9 +184,8 @@ export function allStudentsAssigned(model: CrewSummarySections): boolean {
 }
 
 /**
- * The single entry point both renderers call: the read view builds its DOM
- * from the same `CrewSummarySections` the exporter rasterises, so a group
- * order or membership fix here reaches both at once.
+ * The single entry point: the read view builds its DOM from the
+ * `CrewSummarySections` this returns.
  */
 export function buildCrewSummarySections(input: {
   title: string

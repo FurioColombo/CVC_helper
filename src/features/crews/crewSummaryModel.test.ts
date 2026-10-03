@@ -6,7 +6,6 @@ import {
   crewCardLabel,
   crewLineClassColor,
   groupNumberWidthCh,
-  groupNumberWidthEm,
   groupOccupiedCrewLines,
   modelOnlyName,
   type CrewSummaryCrewLine,
@@ -347,34 +346,6 @@ describe("groupNumberWidthCh", () => {
     expect(groupNumberWidthCh([line("A12")])).toBeCloseTo(3.4)
     expect(groupNumberWidthCh([line(null)])).toBe(0)
     expect(groupNumberWidthCh([])).toBe(0)
-  })
-})
-
-describe("groupNumberWidthEm", () => {
-  const numbered = (number: string | null) =>
-    line({
-      crewId: `c-${number}`,
-      crewNumber: 1,
-      destination: number ? "boat" : "mezzi",
-      boat: number ? { type: "RS Toura", number } : null,
-    })
-
-  it("follows the widest boat number of the group, for long numbers and ones with a letter", () => {
-    const two = groupNumberWidthEm([numbered("7"), numbered("12")])
-    const three = groupNumberWidthEm([numbered("7"), numbered("115")])
-    const four = groupNumberWidthEm([numbered("12"), numbered("1234")])
-    const letter = groupNumberWidthEm([numbered("A12")])
-
-    expect(three).toBeGreaterThan(two)
-    expect(four).toBeGreaterThan(three)
-    // A capital is wider than a digit.
-    expect(letter).toBeGreaterThan(two)
-    expect(groupNumberWidthEm([numbered("1234"), numbered("7")])).toBe(four)
-  })
-
-  it("is zero for a group with no boat number (Mezzi, no boat)", () => {
-    expect(groupNumberWidthEm([numbered(null)])).toBe(0)
-    expect(groupNumberWidthEm([])).toBe(0)
   })
 })
 

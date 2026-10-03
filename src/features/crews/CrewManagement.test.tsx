@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/crews", () => ({
   readCrewHistory: vi.fn(),
@@ -31,12 +31,20 @@ vi.mock("@/persistence/volunteers", () => ({
   listVolunteers: vi.fn(),
 }))
 
-vi.mock("@/features/crews/crewSummaryImage", () => ({
-  downloadCrewSummaryPng: vi.fn().mockResolvedValue(undefined),
+// The page is not laid out in jsdom: what is checked is which element is
+// handed to the snapshot and what the button does with the result.
+vi.mock("@/lib/pageSnapshot", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/pageSnapshot")>()),
+  renderElementToPng: vi.fn(),
+  waitForImages: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { CrewManagement } from "@/features/crews/CrewManagement"
-import { downloadCrewSummaryPng } from "@/features/crews/crewSummaryImage"
+import { renderElementToPng } from "@/lib/pageSnapshot"
+import {
+  restoreSummaryImageBrowser,
+  stubSummaryImageBrowser,
+} from "@/test/summaryImageHarness"
 import type { CrewDraft, CrewPlan } from "@/domain/crews"
 import {
   listBoats,
@@ -2801,56 +2809,150 @@ describe("CrewManagement", () => {
     )
   })
 
-  it("drops a failed image export's error when the read view is opened again", async () => {
-    getPlan.mockResolvedValue(
-      stored({
-        crews: [
-          {
-            id: "crew-1",
-            sessionId: "sat-pm",
-            members: [{ personId: "student-1", personType: "student" }],
-            destination: "boat",
-            boatId: "boat-2",
-          },
-        ],
-        landStudentIds: [],
-        selectedBoatIds: ["boat-2"],
-      }),
-    )
-    vi.mocked(downloadCrewSummaryPng).mockRejectedValueOnce(
-      new Error("canvas too large"),
-    )
-    const user = userEvent.setup()
-    render(
-      <CrewManagement
-        course={COURSE}
-        onHome={vi.fn()}
-        onOpenStudent={vi.fn()}
-      />,
-    )
-    await user.click(
-      await screen.findByRole("button", { name: "Apri vista lettura" }),
-    )
-    await user.click(
-      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
-    )
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Impossibile scaricare il riepilogo PNG. Riprova.",
-    )
+  describe("F4 summary image", () => {
+    const pngBlob = () => new Blob(["png"], { type: "image/png" })
+    const openReadView = async (user: ReturnType<typeof userEvent.setup>) => {
+      render(
+        <CrewManagement
+          course={COURSE}
+          onHome={vi.fn()}
+          onOpenStudent={vi.fn()}
+        />,
+      )
+      await user.click(
+        await screen.findByRole("button", { name: "Apri vista lettura" }),
+      )
+      return screen.getByRole("dialog", { name: "Vista lettura equipaggi" })
+    }
+    const oneCrew = () =>
+      getPlan.mockResolvedValue(
+        stored({
+          crews: [
+            {
+              id: "crew-1",
+              sessionId: "sat-pm",
+              members: [{ personId: "student-1", personType: "student" }],
+              destination: "boat",
+              boatId: "boat-2",
+            },
+          ],
+          landStudentIds: [],
+          selectedBoatIds: ["boat-2"],
+        }),
+      )
+    let browser: ReturnType<typeof stubSummaryImageBrowser>
+    // userEvent puts a clipboard of its own on the page when it is set up, so
+    // the recording one goes on after it.
+    const setupUser = () => {
+      const user = userEvent.setup()
+      browser = stubSummaryImageBrowser()
+      return user
+    }
 
-    await user.click(
-      screen.getByRole("button", { name: "Chiudi vista lettura" }),
-    )
-    await user.click(screen.getByRole("button", { name: "Apri vista lettura" }))
+    beforeEach(() => {
+      vi.mocked(renderElementToPng).mockReset()
+      vi.mocked(renderElementToPng).mockResolvedValue(pngBlob())
+    })
+    afterEach(restoreSummaryImageBrowser)
 
-    expect(
-      within(
-        screen.getByRole("dialog", { name: "Vista lettura equipaggi" }),
-      ).queryByRole("alert"),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
-    ).toBeEnabled()
+    it("replaces the old download button with one floating button that saves and copies the screenshot of the content", async () => {
+      oneCrew()
+      const user = setupUser()
+      const view = await openReadView(user)
+      expect(
+        within(view).queryByRole("button", {
+          name: "Scarica immagine riepilogo",
+        }),
+      ).not.toBeInTheDocument()
+
+      const save = within(view).getByRole("button", {
+        name: "Salva immagine riepilogo e copiala",
+      })
+      expect(save).toHaveTextContent("Salva immagine")
+      await user.click(save)
+
+      expect(
+        await within(view).findByText(
+          "Immagine salvata e copiata. Incollala su WhatsApp.",
+        ),
+      ).toBeVisible()
+      expect(renderElementToPng).toHaveBeenCalledOnce()
+      const [element, options] = vi.mocked(renderElementToPng).mock.calls[0]!
+      // The content with its header, not the whole dialog; the close button is
+      // inside it and marked to be left out, the save button is not inside.
+      expect(view).not.toBe(element)
+      expect(view.contains(element)).toBe(true)
+      expect(
+        within(element).getByRole("heading", { name: "Sabato PM" }),
+      ).toBeInTheDocument()
+      expect(within(element).getByText("Aldo")).toBeInTheDocument()
+      const close = within(element).getByRole("button", {
+        name: "Chiudi vista lettura",
+      })
+      expect(close).toHaveAttribute("data-snapshot-exclude", "true")
+      expect(element.contains(save)).toBe(false)
+      expect(save.closest("[data-snapshot-exclude]")).toHaveAttribute(
+        "data-snapshot-exclude",
+        "true",
+      )
+      expect(options).toMatchObject({ background: "#fffdf8" })
+      expect(options?.rootStyle).toMatchObject({
+        paddingTop: "16px",
+        paddingBottom: "16px",
+      })
+
+      expect(browser.downloads).toEqual(["sabato-pm.png"])
+      expect(browser.clipboardWrite).toHaveBeenCalledOnce()
+      const [[item]] = browser.clipboardWrite.mock.calls[0] as [
+        [{ items: Record<string, Promise<Blob>> }],
+      ]
+      expect(Object.keys(item.items)).toEqual(["image/png"])
+      expect((await item.items["image/png"]!).type).toBe("image/png")
+    })
+
+    it("keeps the content clear of the floating button at the end of the scroll", async () => {
+      oneCrew()
+      const user = setupUser()
+      const view = await openReadView(user)
+      const content = within(view)
+        .getByRole("heading", { name: "Sabato PM" })
+        .closest("div.max-w-2xl")
+      expect(content?.className).toMatch(/pb-\[calc\(5rem\+env\(/)
+    })
+
+    it("says when the image could not be made, and drops that message when the view is opened again", async () => {
+      oneCrew()
+      vi.mocked(renderElementToPng).mockRejectedValue(
+        new Error("canvas too large"),
+      )
+      const user = setupUser()
+      const view = await openReadView(user)
+      await user.click(
+        within(view).getByRole("button", {
+          name: "Salva immagine riepilogo e copiala",
+        }),
+      )
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Impossibile creare l’immagine. Riprova.",
+      )
+      expect(browser.downloads).toEqual([])
+
+      await user.click(
+        screen.getByRole("button", { name: "Chiudi vista lettura" }),
+      )
+      await user.click(
+        screen.getByRole("button", { name: "Apri vista lettura" }),
+      )
+      const reopened = screen.getByRole("dialog", {
+        name: "Vista lettura equipaggi",
+      })
+      expect(within(reopened).queryByRole("alert")).not.toBeInTheDocument()
+      expect(
+        within(reopened).getByRole("button", {
+          name: "Salva immagine riepilogo e copiala",
+        }),
+      ).toBeEnabled()
+    })
   })
 
   it("groups the F3 C6 read view by boat model in canonical order, colours cards by class, uses the gommone Mezzi icon and marks an open-fault card", async () => {
@@ -2989,7 +3091,7 @@ describe("CrewManagement", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("shows duty/minor badges and sends every crew to the image download", async () => {
+  it("shows duty/minor badges and lists every crew with no boat as such", async () => {
     getStudents.mockResolvedValue([
       { ...STUDENTS[0]!, dateOfBirth: "2010-05-04" },
       ...STUDENTS.slice(1),
@@ -3035,44 +3137,22 @@ describe("CrewManagement", () => {
     expect(within(firstCrew).getByLabelText("Minorenne")).toBeVisible()
     expect(within(firstCrew).getByLabelText("In comandata")).toBeVisible()
 
-    await user.click(
-      within(view).getByRole("button", {
-        name: "Scarica immagine riepilogo",
-      }),
-    )
-    await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
-    const [model] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
-    // The exporter now takes the exact same `CrewSummarySections` model the
-    // read view rendered above, not its own flat line list: one occupied
-    // ("Equipaggi senza barca") group with the sole non-empty crew, the same
-    // twelve empty crews as "Senza barca" labels, no boat selected.
-    expect(model.title).toBe("Sabato PM")
-    expect(model.groups).toHaveLength(1)
-    expect(model.groups[0]).toMatchObject({
-      kind: "unassigned",
-      lines: [
-        {
-          crewNumber: 1,
-          destination: "unassigned",
-          members: [
-            { label: "Aldo", isMinor: true, duty: "current" },
-            { label: "Bea", isMinor: false, duty: null },
-          ],
-        },
-      ],
-    })
-    expect(model.availableMembers).toMatchObject([
-      { label: "Carlo", isMinor: false, duty: null },
-      { label: "Vera ADV", role: "ADV" },
-    ])
-    expect(model.landMembers).toEqual([])
-    expect(model.emptyLabels).toHaveLength(12)
-    expect(model.emptyLabels.every((label) => label === "Senza barca")).toBe(
-      true,
-    )
+    // One occupied crew with no boat, no model and no boat selected: an
+    // "Equipaggi senza barca" group; the other twelve crews are empty and
+    // read as "Senza barca" labels; Carlo and the volunteer are still
+    // available.
+    expect(within(view).getByText("Equipaggi senza barca")).toBeVisible()
+    expect(within(firstCrew).getByText("Aldo")).toBeVisible()
+    expect(within(firstCrew).getByText("Bea")).toBeVisible()
+    expect(within(view).getByText("Persone disponibili")).toBeVisible()
+    expect(within(view).getByText("Carlo")).toBeVisible()
+    expect(within(view).getByText("Vera ADV")).toBeVisible()
+    expect(within(view).getByText("Barche ed equipaggi vuoti")).toBeVisible()
+    expect(within(view).getAllByText("Senza barca")).toHaveLength(12)
+    expect(within(view).queryByText("A terra")).not.toBeInTheDocument()
   })
 
-  it("includes available people, Mezzi, A terra and an unassigned boat in the PNG summary", async () => {
+  it("shows available people, Mezzi, A terra and an unassigned boat in the read view", async () => {
     getPlan.mockResolvedValue(
       stored({
         crews: [
@@ -3098,26 +3178,23 @@ describe("CrewManagement", () => {
     await user.click(
       await screen.findByRole("button", { name: "Apri vista lettura" }),
     )
-    await user.click(
-      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
-    )
-    await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
-    const [model] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
-    expect(model.groups).toMatchObject([
-      {
-        kind: "mezzi",
-        lines: [{ crewNumber: 1, members: [{ label: "Aldo" }] }],
-      },
-    ])
-    expect(model.availableMembers).toMatchObject([
-      { label: "Carlo" },
-      { label: "Vera ADV", role: "ADV" },
-    ])
-    expect(model.landMembers).toMatchObject([{ label: "Bea" }])
-    expect(model.emptyLabels).toEqual(["RS Quest 7"])
+    const view = screen.getByRole("dialog", {
+      name: "Vista lettura equipaggi",
+    })
+    // Aldo sails with the Mezzi, Bea is on land, Carlo and the volunteer are
+    // still to place, and the selected boat nobody sails is listed as empty.
+    const mezzi = within(view).getByRole("listitem", {
+      name: "Equipaggio 1, Mezzi",
+    })
+    expect(within(mezzi).getByText("Aldo")).toBeVisible()
+    expect(within(view).getByText("A terra")).toBeVisible()
+    expect(within(view).getByText("Bea")).toBeVisible()
+    expect(within(view).getByText("Carlo")).toBeVisible()
+    expect(within(view).getByText("Vera ADV")).toBeVisible()
+    expect(within(view).getByText("RS Quest 7")).toBeVisible()
   })
 
-  it("labels a selected but unavailable boat as not available in the PNG summary, not as free", async () => {
+  it("labels a selected but unavailable boat as not available in the read view, not as free", async () => {
     getBoats.mockResolvedValue([{ ...BOATS[1]!, availability: "unavailable" }])
     getPlan.mockResolvedValue(
       stored({
@@ -3137,11 +3214,10 @@ describe("CrewManagement", () => {
     await user.click(
       await screen.findByRole("button", { name: "Apri vista lettura" }),
     )
-    await user.click(
-      screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
-    )
-    await waitFor(() => expect(downloadCrewSummaryPng).toHaveBeenCalledOnce())
-    const [model] = vi.mocked(downloadCrewSummaryPng).mock.calls[0]!
-    expect(model.emptyLabels).toContain("RS Quest 7 · Non disponibile")
+    expect(
+      within(
+        screen.getByRole("dialog", { name: "Vista lettura equipaggi" }),
+      ).getByText("RS Quest 7 · Non disponibile"),
+    ).toBeVisible()
   })
 })

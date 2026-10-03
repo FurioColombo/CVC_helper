@@ -389,3 +389,19 @@ assegnati" closes it when none remain, and a boat-less crew in a one-model
 session reads "<model> · Senza barca" in that model's group. Boat numbers of any
 length get a column as wide as the widest in their group; two columns from
 320 px at normal text, one at 200%.
+
+F4 · summary image as a screenshot, 2026-10-03: the crew and the Comandate
+summaries lose "Scarica immagine riepilogo" and the hand-drawn image behind it.
+A floating pill at the bottom right, CVC blue with white bold text — an image
+icon and "Salva immagine" (accessible name "Salva immagine riepilogo e
+copiala"), 48 px tall and wrapping to two lines at 200% text — saves and copies
+the summary in one tap. The image is the summary's own content as the page
+draws it, header included, at the phone's width and pixel density (2× to 3×),
+with every group even past one screen and without the status bar, the close
+button or the new button. Android and computers download it (the gallery's
+Download album); an iPhone opens the share sheet, whose "Salva immagine" puts
+it in Photos. A short note above the button says what happened ("Immagine
+salvata e copiata. Incollala su WhatsApp.") and offers "Condividi" where the
+phone can share files; it hides after about six seconds unless focus is in it.
+The content keeps 5rem of room under it so the button never covers the last
+card, at 390 px, 320 px and 320 px with 200% text.

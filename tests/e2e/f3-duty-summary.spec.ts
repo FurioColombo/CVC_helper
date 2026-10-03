@@ -1,5 +1,9 @@
 import { expect, type Locator, type Page, test } from "@playwright/test"
-import sharp from "sharp"
+import {
+  captureSaveButtonWithNote,
+  expectSaveButtonLayout,
+  saveAndCheckSummaryImage,
+} from "./summary-image-checks"
 
 /**
  * F3, last part (owner, 2026-09-28): "the summary of the Comandate in a
@@ -11,8 +15,8 @@ import sharp from "sharp"
  * then the new "Riepilogo comandate" read view is opened, checked to fit one
  * 390×844 screen and to stay readable (no horizontal overflow, no truncated
  * name) at the 320 px/200% text accessibility stress
- * (`docs/post-mvp/06_DESIGN_RULEBOOK.md` §5), and its PNG export is
- * downloaded and measured.
+ * (`docs/post-mvp/06_DESIGN_RULEBOOK.md` §5), and (F4) the floating "Salva
+ * immagine" button's file is downloaded and compared with the screen.
  */
 
 const TOTAL_STUDENTS = 14
@@ -55,14 +59,16 @@ async function addStudent(
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
-test("shows a readable Comandate summary for a typical week and exports it as a PNG", async ({
+test("shows a readable Comandate summary for a typical week and saves it as an image of the screen", async ({
   page,
+  context,
 }, testInfo) => {
   test.skip(
     testInfo.project.name !== "pixel-7-chrome",
     "One full synthetic Comandate-summary journey is sufficient",
   )
   test.setTimeout(180_000)
+  await context.grantPermissions(["clipboard-read", "clipboard-write"])
 
   await createCourse(page)
   await page.getByRole("button", { name: "Allievi" }).click()
@@ -195,25 +201,25 @@ test("shows a readable Comandate summary for a typical week and exports it as a 
     fullPage: false,
   })
 
-  // Back to a normal viewport before exercising the PNG export.
+  // The floating save button stays clear of the last card, the close button
+  // and the page width at the three sizes (the 320 px/200% one is still on).
+  await expectSaveButtonLayout(view, "320×664 / 200% text")
   await page.setViewportSize({ width: 390, height: 844 })
   await page.evaluate(() => {
     document.documentElement.style.fontSize = ""
   })
-  const [download] = await Promise.all([
-    page.waitForEvent("download"),
-    view.getByRole("button", { name: "Scarica immagine riepilogo" }).click(),
-  ])
-  const pngPath = testInfo.outputPath("f3-duty-summary-export.png")
-  await download.saveAs(pngPath)
-  const metadata = await sharp(pngPath).metadata()
-  expect(metadata.format).toBe("png")
-  // `dutySummaryImage.ts` lays the summary out at a fixed logical width of
-  // 1080px, then rasterises at its default 2× pixel ratio, exactly like the
-  // crew export — so the file the browser actually saves is 2160px wide.
-  expect(metadata.width).toBe(1080 * 2)
-  // Seven day cards across four rows stack well past a phone screen at the
-  // 2× pixel ratio; a height under this floor would mean the export
-  // collapsed instead of growing to fit every day.
-  expect(metadata.height).toBeGreaterThan(1000)
+  await expectSaveButtonLayout(view, "390×844")
+  await page.setViewportSize({ width: 320, height: 664 })
+  await expectSaveButtonLayout(view, "320×664")
+
+  // F4: one tap saves the Comandate summary as a screenshot of it, with the
+  // seven days and without the close button or the save button.
+  await page.setViewportSize({ width: 390, height: 844 })
+  const result = await saveAndCheckSummaryImage(page, view, testInfo, {
+    name: "f4-duty-summary",
+    expectedNote: /^Immagine salvata e copiata\. Incollala su WhatsApp\.$/,
+  })
+  expect(result.cssHeight).toBeGreaterThan(300)
+
+  await captureSaveButtonWithNote(page, view, "f4-duty-summary")
 })

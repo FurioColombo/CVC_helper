@@ -14,10 +14,8 @@ import {
 // The manufacturer marks and the gommone path data live in `boatMarks.ts`
 // (used with the owner's authorisation of 2026-09-18 for the marks, and the
 // owner's final gommone mark of 2026-09-28 for the icon), not in this
-// component file: a plain data module can be imported by both this file's
-// components and `crewSummaryImage.ts`'s non-JSX rasteriser, and this
-// project's Fast Refresh lint rule only allows a component file to export
-// components.
+// component file: this project's Fast Refresh lint rule only allows a
+// component file to export components.
 
 const BOAT_MARKS: Record<BoatType, string> = {
   "RS Toura": "RS\nTOURA",
@@ -122,8 +120,7 @@ export function BoatModelHeaderMark({
  * from above, tubes as a double line whose tails run past the transom, a
  * softly pointed bow, and the propeller as an 8 between the tails, no shaft.
  * Drawn bow right; the owner wants it horizontal in a heading and vertical
- * (bow up) in a card. The path data lives in `boatMarks.ts` so
- * `crewSummaryImage.ts` draws the exact same mark in the exported PNG.
+ * (bow up) in a card. The path data lives in `boatMarks.ts`.
  */
 export function GommoneIcon({
   className = "",

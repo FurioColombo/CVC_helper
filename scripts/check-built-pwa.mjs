@@ -14,8 +14,8 @@ const OCR_MAX_ASSET_BYTES = 4_500_000
 // The CVC mark is rendered on first paint on every cold-start screen
 // (App.tsx's header), so it has to survive an offline install the same way
 // OCR does. The seven boat-model marks are not needed at startup, but the F3
-// crew-summary read view and its exported PNG (`BoatIdentity.tsx`,
-// `crewSummaryImage.ts`) both depend on them working offline too — an
+// crew-summary read view (`BoatIdentity.tsx`) and the image saved from it
+// (F4, `pageSnapshot.ts`) both depend on them working offline too — an
 // operator reading or sharing that summary on the water has no way to fetch
 // a missing one. Kept in sync by hand with `BRAND_PRECACHED_IMAGES` in
 // vite.config.ts, which is what actually puts these in the precache.

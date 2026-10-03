@@ -78,10 +78,10 @@ const base = (() => {
 // an offline cold start the same way the OCR/speech runtime assets do. F3
 // (owner, 2026-09-28) added the seven boat-model marks in
 // `public/brand/boats/` (~57 KB total): the crew-summary read view
-// (`BoatModelMark`/`BoatModelHeaderMark` in `BoatIdentity.tsx`) and its
-// exported PNG (`crewSummaryImage.ts`, which decodes the same files to embed
-// them in the image) both depend on them, and an operator reading or sharing
-// that summary offline on the water has no way to fetch a missing one. The
+// (`BoatModelMark`/`BoatModelHeaderMark` in `BoatIdentity.tsx`) and the image
+// saved from it (F4: a screenshot that fetches these same files to embed
+// them) both depend on them, and an operator reading or sharing that summary
+// offline on the water has no way to fetch a missing one. The
 // revision is a content hash rather than `null` because these files, unlike
 // a hashed `dist/assets/*` chunk, keep their literal filename across builds.
 const BRAND_PRECACHED_IMAGES = [

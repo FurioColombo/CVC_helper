@@ -30,6 +30,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SummaryImageButton } from "@/components/SummaryImageButton"
 import {
   DutyBadge,
   MinorBadge,
@@ -42,7 +43,6 @@ import {
   GommoneIcon,
 } from "@/features/boats/BoatIdentity"
 import { getCrewDisplayColumns } from "@/features/crews/crewDisplayPreference"
-import { downloadCrewSummaryPng } from "@/features/crews/crewSummaryImage"
 import {
   allStudentsAssigned,
   buildCrewSummarySections,
@@ -103,6 +103,7 @@ import {
   validateDutyRecords,
 } from "@/domain/invariants"
 import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
+import { makeSummaryFilename } from "@/lib/summaryShare"
 import {
   listBoats,
   listFaults,
@@ -986,19 +987,19 @@ function CrewCopyConfirmDialog({
  * boat groups and Mezzi, A terra and the empty boats, closed by a small
  * "Tutti gli allievi assegnati" note when no student is left to place. A
  * fully assigned 13-crew course still fits one screen without scrolling.
+ * F4: the floating "Salva immagine" button saves and copies a screenshot of
+ * this very content (`captureRef`), header included, close button not.
  */
 function AnnouncementView({
   summary,
   onClose,
-  onDownloadImage,
-  imageExportState,
 }: {
   summary: CrewSummarySections
   onClose: () => void
-  onDownloadImage: () => void
-  imageExportState: "idle" | "busy" | "error"
 }) {
   const dialogRef = useDialogFocus<HTMLElement>()
+  // What the saved image is a screenshot of: this content, not the dialog.
+  const captureRef = useRef<HTMLDivElement>(null)
   const { groups, availableMembers, landMembers, emptyLabels } = summary
 
   return (
@@ -1012,7 +1013,12 @@ function AnnouncementView({
       ref={dialogRef}
       role="dialog"
     >
-      <div className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      {/* The bottom padding keeps the last card clear of the floating save
+          button; the image swaps both paddings for a plain 16px. */}
+      <div
+        className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]"
+        ref={captureRef}
+      >
         <header className="flex items-center justify-between gap-3 border-b border-[#c8d7db] pb-2.5">
           <div className="min-w-0">
             <p className="text-[11px] font-black tracking-[0.14em] uppercase">
@@ -1028,27 +1034,13 @@ function AnnouncementView({
           <button
             aria-label="Chiudi vista lettura"
             className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            data-snapshot-exclude="true"
             onClick={onClose}
             type="button"
           >
             <X aria-hidden="true" className="size-5" />
           </button>
         </header>
-        <button
-          className="mt-2.5 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
-          disabled={imageExportState === "busy"}
-          onClick={onDownloadImage}
-          type="button"
-        >
-          {imageExportState === "busy"
-            ? "Preparo immagine…"
-            : "Scarica immagine riepilogo"}
-        </button>
-        {imageExportState === "error" && (
-          <p className="mt-2 text-sm font-semibold text-[#a2381b]" role="alert">
-            Impossibile scaricare il riepilogo PNG. Riprova.
-          </p>
-        )}
         {/*
          * The column count follows the text size, not a fixed viewport
          * breakpoint: `minmax(min(100%, 8.8rem), 1fr)` asks each track for at
@@ -1133,6 +1125,10 @@ function AnnouncementView({
           )}
         </div>
       </div>
+      <SummaryImageButton
+        captureRef={captureRef}
+        filename={makeSummaryFilename(summary.title, "riepilogo-equipaggi")}
+      />
     </section>
   )
 }
@@ -1273,9 +1269,6 @@ export function CrewManagement({
   const [saving, setSaving] = useState(false)
   const [copying, setCopying] = useState(false)
   const [saveError, setSaveError] = useState(false)
-  const [imageExportState, setImageExportState] = useState<
-    "idle" | "busy" | "error"
-  >("idle")
   const saveInFlight = useRef(false)
   const boatCopyDialogRef = useDialogFocus<HTMLElement>(
     boatCopySelection !== null,
@@ -1648,10 +1641,8 @@ export function CrewManagement({
     .filter((label): label is string => label !== null)
   const emptyAnnouncementLabels = [...emptyCrewLabels, ...emptyBoatLabels]
 
-  // The one model the read view renders and the PNG export rasterises
-  // (`crewSummaryModel.ts`): built once here from the same ingredients as
-  // the read view's own sections above, so a fix to the grouping reaches
-  // both at once and they can never show a different order or membership.
+  // The one model the read view renders (`crewSummaryModel.ts`), built once
+  // here from the same ingredients as the read view's own sections above.
   const crewSummary: CrewSummarySections = buildCrewSummarySections({
     title: sessionLabel(sessionId),
     lines: announcementLines,
@@ -1659,17 +1650,6 @@ export function CrewManagement({
     landMembers,
     emptyLabels: emptyAnnouncementLabels,
   })
-
-  async function downloadAnnouncementImage() {
-    if (imageExportState === "busy") return
-    setImageExportState("busy")
-    try {
-      await downloadCrewSummaryPng(crewSummary)
-      setImageExportState("idle")
-    } catch {
-      setImageExportState("error")
-    }
-  }
 
   async function commit(next: CrewPlan) {
     if (saveInFlight.current) return false
@@ -2285,12 +2265,7 @@ export function CrewManagement({
         setDestinationCrewId(null)
         setSelected(null)
       }}
-      onRead={() => {
-        // A failed image export must not greet the next opening with its
-        // old error; one still in flight keeps its "Preparo immagine…".
-        setImageExportState((state) => (state === "error" ? "idle" : state))
-        setReadMode(true)
-      }}
+      onRead={() => setReadMode(true)}
       sessionId={sessionId}
       readDisabled={busy || plan.crews.length === 0}
     />
@@ -2300,8 +2275,6 @@ export function CrewManagement({
     <>
       {readMode && (
         <AnnouncementView
-          imageExportState={imageExportState}
-          onDownloadImage={downloadAnnouncementImage}
           onClose={() => setReadMode(false)}
           summary={crewSummary}
         />

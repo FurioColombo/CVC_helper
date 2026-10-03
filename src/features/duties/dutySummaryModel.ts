@@ -1,14 +1,12 @@
 import { DUTY_DAYS, type DutyDayId } from "@/domain/config"
 
 /**
- * The one Comandate-summary data model, shared by the F3 read view
- * (`DutySummaryView` in `DutyManagement.tsx`) and the exported PNG
- * (`dutySummaryImage.ts`) — the Comandate counterpart of
- * `crewSummaryModel.ts`. Both used to compute their own day order and member
- * sort from scratch; a mismatch there would show a different name order on
- * screen than in the image handed out. `buildDutySummarySections` is the
- * single place that turns the seven (possibly unordered, possibly partial)
- * day lines into the canonical, member-sorted shape both renderers read.
+ * The Comandate-summary data model behind the F3 read view
+ * (`DutySummaryView` in `DutyManagement.tsx`) — the Comandate counterpart of
+ * `crewSummaryModel.ts`; the saved image (F4) is a screenshot of that view.
+ * `buildDutySummarySections` is the single place that turns the seven
+ * (possibly unordered, possibly partial) day lines into the canonical,
+ * member-sorted shape the view reads.
  */
 
 export type DutySummaryMember = {

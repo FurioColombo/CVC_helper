@@ -20,6 +20,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { MinorBadge } from "@/components/PersonBadges"
+import { SummaryImageButton } from "@/components/SummaryImageButton"
 import { DUTY_DAYS, type DutyDayId, type DutyTieBreaker } from "@/domain/config"
 import {
   generateDutyProposal,
@@ -38,6 +39,7 @@ import {
 } from "@/domain/duties"
 import { validateDutyRecords } from "@/domain/invariants"
 import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
+import { makeSummaryFilename } from "@/lib/summaryShare"
 import { useNestedScreen } from "@/navigation/nestedScreen"
 import {
   readDutyPlan,
@@ -45,7 +47,6 @@ import {
   type DutySettingsRecord,
 } from "@/persistence/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
-import { downloadDutySummaryPng } from "@/features/duties/dutySummaryImage"
 import {
   buildDutySummarySections,
   dutySummaryWarning,
@@ -979,8 +980,7 @@ function WarningList({
 
 // The read view's own completed-day green: the same colour
 // `border-[#b8dfbf]`/`text-[#176b2c]` the P11 list already uses for a
-// completed day card and its check mark, reused here rather than invented,
-// and shared with `dutySummaryImage.ts`'s own `COMPLETED_COLOR`.
+// completed day card and its check mark, reused here rather than invented.
 const SUMMARY_COMPLETED_COLOR = "#176b2c"
 const SUMMARY_ACCENT_COLOR = "#0b526b"
 
@@ -1086,8 +1086,9 @@ function handleSummaryDialogKeyDown(
 
 /**
  * The Comandate counterpart of `AnnouncementView` in `CrewManagement.tsx`:
- * same header grammar (eyebrow, title, close, "Scarica immagine
- * riepilogo"), same text-size-aware column rule
+ * same header grammar (eyebrow, title, close), the same floating "Salva
+ * immagine" button (F4: a screenshot of `captureRef`'s content, saved and
+ * copied), same text-size-aware column rule
  * (`minmax(min(100%,8.8rem),1fr)`, see that file's own comment for why 8.8rem
  * keeps two columns from 320 CSS px and collapses to one at the 320 px/200%
  * text stress). Reachable only once a rota exists (`DutyManagement`'s own
@@ -1096,15 +1097,13 @@ function handleSummaryDialogKeyDown(
 function DutySummaryView({
   summary,
   onClose,
-  onDownloadImage,
-  imageExportState,
 }: {
   summary: DutySummarySections
   onClose: () => void
-  onDownloadImage: () => void
-  imageExportState: "idle" | "busy" | "error"
 }) {
   const dialogRef = useRef<HTMLElement>(null)
+  // What the saved image is a screenshot of: this content, not the dialog.
+  const captureRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const previouslyFocused = document.activeElement
     dialogRef.current
@@ -1151,7 +1150,12 @@ function DutySummaryView({
       ref={dialogRef}
       role="dialog"
     >
-      <div className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      {/* The bottom padding keeps the last card clear of the floating save
+          button; the image swaps both paddings for a plain 16px. */}
+      <div
+        className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]"
+        ref={captureRef}
+      >
         <header className="flex items-center justify-between gap-3 border-b border-[#c8d7db] pb-2.5">
           <div className="min-w-0">
             <p className="text-[11px] font-black tracking-[0.14em] uppercase">
@@ -1167,33 +1171,23 @@ function DutySummaryView({
           <button
             aria-label="Chiudi vista lettura"
             className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            data-snapshot-exclude="true"
             onClick={onClose}
             type="button"
           >
             <X aria-hidden="true" className="size-5" />
           </button>
         </header>
-        <button
-          className="mt-2.5 min-h-11 rounded-xl border border-[#c8d7db] bg-white px-4 text-sm font-bold text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
-          disabled={imageExportState === "busy"}
-          onClick={onDownloadImage}
-          type="button"
-        >
-          {imageExportState === "busy"
-            ? "Preparo immagine…"
-            : "Scarica immagine riepilogo"}
-        </button>
-        {imageExportState === "error" && (
-          <p className="mt-2 text-sm font-semibold text-[#a2381b]" role="alert">
-            Impossibile scaricare il riepilogo PNG. Riprova.
-          </p>
-        )}
         <ul className="mt-1.5 grid gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,8.8rem),1fr))]">
           {summary.days.map((day) => (
             <DutySummaryDayCard day={day} key={day.dayId} />
           ))}
         </ul>
       </div>
+      <SummaryImageButton
+        captureRef={captureRef}
+        filename={makeSummaryFilename(summary.title, "riepilogo-comandate")}
+      />
     </section>
   )
 }
@@ -1224,9 +1218,6 @@ export function DutyManagement({
   // `CrewManagement.tsx`'s own `readMode` makes for `AnnouncementView`,
   // closed by its own X/Escape rather than the app's Back navigation.
   const [showSummary, setShowSummary] = useState(false)
-  const [imageExportState, setImageExportState] = useState<
-    "idle" | "busy" | "error"
-  >("idle")
 
   const applyLoaded = useCallback(
     (data: Awaited<ReturnType<typeof readValidDutyData>>) => {
@@ -1365,17 +1356,6 @@ export function DutyManagement({
     }),
   })
 
-  async function downloadSummaryImage() {
-    if (imageExportState === "busy") return
-    setImageExportState("busy")
-    try {
-      await downloadDutySummaryPng(dutySummary)
-      setImageExportState("idle")
-    } catch {
-      setImageExportState("error")
-    }
-  }
-
   if (screen.kind === "configure") {
     return (
       <DutyConfiguration
@@ -1435,9 +1415,7 @@ export function DutyManagement({
     <>
       {showSummary && (
         <DutySummaryView
-          imageExportState={imageExportState}
           onClose={() => setShowSummary(false)}
-          onDownloadImage={downloadSummaryImage}
           summary={dutySummary}
         />
       )}
@@ -1454,14 +1432,7 @@ export function DutyManagement({
             <button
               aria-label="Apri riepilogo comandate"
               className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              onClick={() => {
-                // A failed image export must not greet the next opening with
-                // its old error; one still in flight keeps "Preparo…".
-                setImageExportState((state) =>
-                  state === "error" ? "idle" : state,
-                )
-                setShowSummary(true)
-              }}
+              onClick={() => setShowSummary(true)}
               type="button"
             >
               <BookOpenText aria-hidden="true" className="size-[20px]" />

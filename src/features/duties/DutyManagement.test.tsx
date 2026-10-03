@@ -13,12 +13,20 @@ vi.mock("@/persistence/students", () => ({
   listStudents: vi.fn(),
 }))
 
-vi.mock("@/features/duties/dutySummaryImage", () => ({
-  downloadDutySummaryPng: vi.fn().mockResolvedValue(undefined),
+// The page is not laid out in jsdom: what is checked is which element is
+// handed to the snapshot and what the button does with the result.
+vi.mock("@/lib/pageSnapshot", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/pageSnapshot")>()),
+  renderElementToPng: vi.fn(),
+  waitForImages: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { DutyManagement } from "@/features/duties/DutyManagement"
-import { downloadDutySummaryPng } from "@/features/duties/dutySummaryImage"
+import { renderElementToPng } from "@/lib/pageSnapshot"
+import {
+  restoreSummaryImageBrowser,
+  stubSummaryImageBrowser,
+} from "@/test/summaryImageHarness"
 import {
   readDutyPlan,
   saveDutyPlan,
@@ -605,7 +613,7 @@ describe("DutyManagement", () => {
     ).toBeVisible()
   })
 
-  it("renders every day of the F3 Comandate summary in order and downloads the same model", async () => {
+  it("renders every day of the F3 Comandate summary in order", async () => {
     getPlan.mockResolvedValue({
       assignments: [
         { dayId: "saturday", studentId: "student-1" },
@@ -644,35 +652,16 @@ describe("DutyManagement", () => {
     })
     expect(within(thursdayCard).getByText("Nessun assegnato")).toBeVisible()
 
-    await user.click(
-      within(view).getByRole("button", { name: "Scarica immagine riepilogo" }),
-    )
-    await waitFor(() => expect(downloadDutySummaryPng).toHaveBeenCalledOnce())
-    const [model] = vi.mocked(downloadDutySummaryPng).mock.calls[0]!
-    expect(model.days.map((day) => day.dayId)).toEqual([
-      "saturday",
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-    ])
-    expect(model.days[0]).toMatchObject({
-      dayId: "saturday",
-      completed: true,
-      members: [{ label: "Nome1", isMinor: true }],
-    })
-    // Student 2 is assigned twice (Domenica and Lunedì): both days show a
-    // warning in the exported model, the same "assegnato più volte" rule the
-    // ordinary P11 list already enforces.
-    const sunday = model.days.find((day) => day.dayId === "sunday")
-    const monday = model.days.find((day) => day.dayId === "monday")
-    expect(sunday?.warning).not.toBeNull()
-    expect(monday?.warning).not.toBeNull()
-    const thursday = model.days.find((day) => day.dayId === "thursday")
-    expect(thursday?.members).toEqual([])
-    expect(thursday?.completed).toBe(false)
+    // Student 2 is assigned twice (Domenica and Lunedì): both days carry a
+    // warning, the same "assegnato più volte" rule the ordinary P11 list
+    // already enforces.
+    for (const name of ["Domenica, 1 assegnati", "Lunedì, 1 assegnati"]) {
+      expect(
+        within(within(view).getByRole("listitem", { name })).getByRole("img", {
+          name: /Avviso comandata/,
+        }),
+      ).toBeVisible()
+    }
   })
 
   describe("Comandate read view", () => {
@@ -780,35 +769,106 @@ describe("DutyManagement", () => {
       )
     })
 
-    it("drops a failed image export's error when it is opened again", async () => {
-      getPlan.mockResolvedValue(PLAN)
-      vi.mocked(downloadDutySummaryPng).mockRejectedValueOnce(
-        new Error("canvas too large"),
-      )
-      const user = userEvent.setup()
-      renderDuties()
-      await user.click(
-        await screen.findByRole("button", { name: "Apri riepilogo comandate" }),
-      )
-      await user.click(
-        screen.getByRole("button", { name: "Scarica immagine riepilogo" }),
-      )
-      expect(await screen.findByRole("alert")).toHaveTextContent(
-        "Impossibile scaricare il riepilogo PNG. Riprova.",
-      )
+    describe("F4 summary image", () => {
+      let browser: ReturnType<typeof stubSummaryImageBrowser>
+      // userEvent puts a clipboard of its own on the page when it is set up,
+      // so the recording one goes on after it.
+      const setupUser = () => {
+        const user = userEvent.setup()
+        browser = stubSummaryImageBrowser()
+        return user
+      }
+      beforeEach(() => {
+        vi.mocked(renderElementToPng).mockReset()
+        vi.mocked(renderElementToPng).mockResolvedValue(
+          new Blob(["png"], { type: "image/png" }),
+        )
+      })
+      afterEach(restoreSummaryImageBrowser)
 
-      await user.click(
-        screen.getByRole("button", { name: "Chiudi vista lettura" }),
-      )
-      await user.click(
-        screen.getByRole("button", { name: "Apri riepilogo comandate" }),
-      )
+      it("replaces the old download button with one floating button that saves and copies the screenshot of the content", async () => {
+        getPlan.mockResolvedValue(PLAN)
+        const user = setupUser()
+        renderDuties()
+        await user.click(
+          await screen.findByRole("button", {
+            name: "Apri riepilogo comandate",
+          }),
+        )
+        const view = screen.getByRole("dialog", {
+          name: "Vista lettura comandate",
+        })
+        expect(
+          within(view).queryByRole("button", {
+            name: "Scarica immagine riepilogo",
+          }),
+        ).not.toBeInTheDocument()
 
-      expect(
-        within(
-          screen.getByRole("dialog", { name: "Vista lettura comandate" }),
-        ).queryByRole("alert"),
-      ).not.toBeInTheDocument()
+        const save = within(view).getByRole("button", {
+          name: "Salva immagine riepilogo e copiala",
+        })
+        expect(save).toHaveTextContent("Salva immagine")
+        await user.click(save)
+
+        expect(
+          await within(view).findByText(
+            "Immagine salvata e copiata. Incollala su WhatsApp.",
+          ),
+        ).toBeVisible()
+        expect(renderElementToPng).toHaveBeenCalledOnce()
+        const [element, options] = vi.mocked(renderElementToPng).mock.calls[0]!
+        // The seven days under their header, not the dialog: the close button
+        // is inside and marked to be left out, the save button is outside.
+        expect(view).not.toBe(element)
+        expect(view.contains(element)).toBe(true)
+        expect(
+          within(element).getByRole("heading", { level: 1 }),
+        ).toBeInTheDocument()
+        expect(within(element).getAllByRole("listitem")).toHaveLength(7)
+        expect(
+          within(element).getByRole("button", { name: "Chiudi vista lettura" }),
+        ).toHaveAttribute("data-snapshot-exclude", "true")
+        expect(element.contains(save)).toBe(false)
+        expect(options).toMatchObject({ background: "#fffdf8" })
+        expect(browser.downloads).toEqual(["riepilogo-comandate.png"])
+        expect(browser.clipboardWrite).toHaveBeenCalledOnce()
+      })
+
+      it("says when the image could not be made, and drops that message when it is opened again", async () => {
+        getPlan.mockResolvedValue(PLAN)
+        vi.mocked(renderElementToPng).mockRejectedValue(
+          new Error("canvas too large"),
+        )
+        const user = setupUser()
+        renderDuties()
+        await user.click(
+          await screen.findByRole("button", {
+            name: "Apri riepilogo comandate",
+          }),
+        )
+        await user.click(
+          screen.getByRole("button", {
+            name: "Salva immagine riepilogo e copiala",
+          }),
+        )
+        expect(await screen.findByRole("alert")).toHaveTextContent(
+          "Impossibile creare l’immagine. Riprova.",
+        )
+        expect(browser.downloads).toEqual([])
+
+        await user.click(
+          screen.getByRole("button", { name: "Chiudi vista lettura" }),
+        )
+        await user.click(
+          screen.getByRole("button", { name: "Apri riepilogo comandate" }),
+        )
+
+        expect(
+          within(
+            screen.getByRole("dialog", { name: "Vista lettura comandate" }),
+          ).queryByRole("alert"),
+        ).not.toBeInTheDocument()
+      })
     })
   })
 })

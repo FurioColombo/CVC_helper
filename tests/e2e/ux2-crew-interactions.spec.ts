@@ -150,6 +150,81 @@ test("selects, cancels and fills exact crew slots from the available pool", asyn
   ).toBeVisible()
 })
 
+test("fills a chosen free seat with an available volunteer (F4)", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "The volunteer seat journey runs once on Pixel 7 Chrome",
+  )
+  test.setTimeout(90_000)
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await page.getByRole("button", { name: "Aggiungi allievo" }).first().click()
+  await page.getByLabel("Nome", { exact: true }).fill("Alba")
+  await page.getByLabel("Cognome", { exact: true }).fill("Prova")
+  await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
+  await page
+    .getByRole("group", { name: "Sesso" })
+    .getByText("F", { exact: true })
+    .click()
+  await page.getByRole("button", { name: "Salva allievo" }).click()
+  await page.getByRole("button", { name: "Indietro da Allievi" }).click()
+  await page.getByRole("button", { name: "Volontari" }).click()
+  await page.getByRole("button", { name: "Aggiungi volontario" }).click()
+  await page.getByLabel("Nome completo").fill("Vera ADV")
+  await page.getByRole("button", { name: "Salva volontario" }).click()
+  await page.getByRole("button", { name: "Indietro da Volontari" }).click()
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Equipaggi" })
+    .click()
+  await page.getByRole("spinbutton").fill("1")
+  await page.getByRole("button", { name: "Crea equipaggi" }).click()
+
+  const crew = page
+    .getByRole("region", { name: "Equipaggi della sessione" })
+    .getByRole("article")
+    .nth(0)
+  const seat = crew.getByRole("button", { name: "Posto libero 2 equipaggio 1" })
+  await seat.click()
+  await expect(seat).toHaveAttribute("aria-pressed", "true")
+  await expect(page.getByRole("status").first()).toContainText(
+    "tocca un allievo o un volontario disponibile",
+  )
+  await page
+    .getByRole("region", { name: "Volontari disponibili" })
+    .getByRole("button", { name: "Vera ADV" })
+    .click()
+
+  await expect(
+    crew.getByRole("button", { name: "Vera ADV, equipaggio 1" }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("region", { name: "Destinazione persona selezionata" }),
+  ).toHaveCount(0)
+  await expect(
+    crew.getByRole("button", { name: "Posto libero 1 equipaggio 1" }),
+  ).toBeVisible()
+  await expect(page.getByText("Nessun volontario disponibile.")).toBeVisible()
+
+  await page.reload()
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Equipaggi" })
+    .click()
+  await expect(
+    page
+      .getByRole("region", { name: "Equipaggi della sessione" })
+      .getByRole("article")
+      .nth(0)
+      .getByRole("button", { name: "Vera ADV, equipaggio 1" }),
+  ).toBeVisible()
+})
+
 async function dispatchTouchSwipe(
   page: Page,
   grid: Locator,
