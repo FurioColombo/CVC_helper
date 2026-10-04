@@ -155,22 +155,20 @@ function pushShellHistoryEntry(entry: ShellHistoryEntry) {
 }
 
 const HOME_CARDS = [
-  { id: "students", label: "Allievi", icon: GraduationCap, tone: "accent" },
-  { id: "boats", label: "Barche", icon: Sailboat, tone: "blue" },
+  { id: "students", label: "Allievi", icon: GraduationCap },
+  { id: "boats", label: "Barche", icon: Sailboat },
   {
     id: "sessions",
     label: "Comandate",
     icon: ClipboardCheck,
-    tone: "blue",
   },
-  { id: "crews", label: "Equipaggi", icon: UsersRound, tone: "accent" },
+  { id: "crews", label: "Equipaggi", icon: UsersRound },
   {
     id: "evaluations",
     label: "Valutazioni",
     icon: ListChecks,
-    tone: "accent",
   },
-  { id: "volunteers", label: "Volontari", icon: HandHeart, tone: "blue" },
+  { id: "volunteers", label: "Volontari", icon: HandHeart },
 ] as const
 
 function formatDate(date: string) {
@@ -410,9 +408,9 @@ function Home({
 
       <section aria-label="Aree del corso">
         <div className="grid grid-cols-2 gap-2.5">
-          {HOME_CARDS.map(({ id, label, icon: Icon, tone }) => (
+          {HOME_CARDS.map(({ id, label, icon: Icon }) => (
             <button
-              className={`home-card home-card--${tone}`}
+              className="home-card"
               key={id}
               onClick={() => onNavigate(id)}
               type="button"

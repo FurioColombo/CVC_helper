@@ -2591,12 +2591,12 @@ describe("CrewManagement", () => {
     const isBefore = (a: Element, b: Element) =>
       Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
 
-    // Carlo (a student) and Vera (a volunteer) are still available: their
-    // section leads the grid, ahead of the RS Quest group, and there is no
-    // closing note.
-    const availableHeading = within(view).getByText("Persone disponibili")
+    // Carlo (a student) is still available: his section leads the grid,
+    // ahead of the RS Quest group, and there is no closing note. Vera, a
+    // volunteer outside every crew, is not announced (owner, 2026-10-04).
+    const availableHeading = within(view).getByText("Allievi disponibili")
     expect(within(view).getByText("Carlo")).toBeVisible()
-    expect(within(view).getByText("Vera ADV")).toBeVisible()
+    expect(within(view).queryByText("Vera ADV")).not.toBeInTheDocument()
     expect(
       isBefore(availableHeading, within(view).getByAltText("RS Quest")),
     ).toBe(true)
@@ -2607,8 +2607,8 @@ describe("CrewManagement", () => {
       within(view).queryByText("Tutti gli allievi assegnati"),
     ).not.toBeInTheDocument()
 
-    // Seat Carlo: only the volunteer is left, which never counts as a
-    // student, so the summary now closes on the note, below everything else.
+    // Seat Carlo: no student is left, so the summary now closes on the
+    // note, below everything else.
     unmount()
     getPlan.mockResolvedValue(
       stored({
@@ -3139,14 +3139,14 @@ describe("CrewManagement", () => {
 
     // One occupied crew with no boat, no model and no boat selected: an
     // "Equipaggi senza barca" group; the other twelve crews are empty and
-    // read as "Senza barca" labels; Carlo and the volunteer are still
-    // available.
+    // read as "Senza barca" labels; Carlo is still available, the
+    // volunteer outside every crew is not listed.
     expect(within(view).getByText("Equipaggi senza barca")).toBeVisible()
     expect(within(firstCrew).getByText("Aldo")).toBeVisible()
     expect(within(firstCrew).getByText("Bea")).toBeVisible()
-    expect(within(view).getByText("Persone disponibili")).toBeVisible()
+    expect(within(view).getByText("Allievi disponibili")).toBeVisible()
     expect(within(view).getByText("Carlo")).toBeVisible()
-    expect(within(view).getByText("Vera ADV")).toBeVisible()
+    expect(within(view).queryByText("Vera ADV")).not.toBeInTheDocument()
     expect(within(view).getByText("Barche ed equipaggi vuoti")).toBeVisible()
     expect(within(view).getAllByText("Senza barca")).toHaveLength(12)
     expect(within(view).queryByText("A terra")).not.toBeInTheDocument()
@@ -3190,7 +3190,7 @@ describe("CrewManagement", () => {
     expect(within(view).getByText("A terra")).toBeVisible()
     expect(within(view).getByText("Bea")).toBeVisible()
     expect(within(view).getByText("Carlo")).toBeVisible()
-    expect(within(view).getByText("Vera ADV")).toBeVisible()
+    expect(within(view).queryByText("Vera ADV")).not.toBeInTheDocument()
     expect(within(view).getByText("RS Quest 7")).toBeVisible()
   })
 

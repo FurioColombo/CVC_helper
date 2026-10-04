@@ -983,7 +983,7 @@ function CrewCopyConfirmDialog({
  * F3 C6 read view (owner target, 2026-09-28): occupied crews grouped by boat
  * model under the class logo, two columns, no "Equipaggio N" label. The
  * sections the summary already had keep the same visual language and the
- * order the spec (§7.5) gives: whoever is still available first, then the
+ * order the spec (§7.5) gives: the students still available first, then the
  * boat groups and Mezzi, A terra and the empty boats, closed by a small
  * "Tutti gli allievi assegnati" note when no student is left to place. A
  * fully assigned 13-crew course still fits one screen without scrolling.
@@ -1061,7 +1061,7 @@ function AnnouncementView({
               <AnnouncementSectionHeading
                 count={availableMembers.length}
                 icon={<Users aria-hidden="true" className="size-[15px]" />}
-                label="Persone disponibili"
+                label="Allievi disponibili"
               />
               <AnnouncementPersonList members={availableMembers} />
             </>
@@ -1119,6 +1119,8 @@ function AnnouncementView({
             <p
               className="col-span-full mt-3 text-center text-[11px] font-bold text-[#0b526b]"
               data-all-assigned-note="true"
+              // Shown on screen, left out of the shared image (owner).
+              data-snapshot-exclude="true"
             >
               Tutti gli allievi assegnati
             </p>
@@ -1602,11 +1604,7 @@ export function CrewManagement({
       .map((student) =>
         summaryMember({ personType: "student", personId: student.id }),
       ),
-    ...volunteers
-      .filter((volunteer) => !assignedPeople.has(`volunteer:${volunteer.id}`))
-      .map((volunteer) =>
-        summaryMember({ personType: "volunteer", personId: volunteer.id }),
-      ),
+    // Volunteers outside a crew are not announced (owner, 2026-10-04).
   ]
   const landMembers = plan.landStudentIds
     .filter((id) => studentById.has(id))

@@ -157,10 +157,6 @@ body {
     transform 120ms ease;
 }
 
-.home-card--accent {
-  border-top-color: var(--accent-red);
-}
-
 .home-card:hover {
   background: #f8fafc;
 }
