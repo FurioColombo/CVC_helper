@@ -261,3 +261,234 @@ export async function seedTenCrewCourseD1(
     },
   )
 }
+
+/** Every name below is invented. These are shown as the people's own labels
+ *  (a student's nickname is what the crew summary writes). */
+export const DOUBLE_NAME_CREWS = {
+  "RS Toura 4": [
+    "Maria Chiara De Santis",
+    "Anna Maria Lo Russo",
+    "Gian Marco Dalla Valle",
+  ],
+  // The boat is unavailable: the card carries the red warning badge.
+  "RS Toura 7": [
+    "Francesca Romana Di Pietro",
+    "Giovanni Battista Della Rovere",
+    "Pier Luigi De Angelis",
+  ],
+  // Four names; the first is also a minor.
+  "RS Quest 12": [
+    "Alessandro Maria Giuseppe Rossi Bianchi",
+    "Niccolò D’Angelo",
+    "Çağla Özdemir",
+    "Bartolomeo Montefeltro-Della Rovere",
+  ],
+  // Four names, one on duty today (C) and one who came off yesterday (SM).
+  "RS Quest 15": [
+    "Maria Grazia Lo Presti",
+    "Luca",
+    "Elisabetta De Luca",
+    "Gian Carlo Dalla Chiesa",
+  ],
+  // Two students and a volunteer.
+  "Laser Vago 3": ["Rosa Maria Dal Pozzo", "Ugo Bassani"],
+  // A crew with people and no boat yet (and a minor).
+  "Senza barca": [
+    "Maria Teresa Di Stefano",
+    "Anna Chiara Lo Giudice",
+    "Giovanni Maria Della Valle",
+  ],
+  Mezzi: [
+    "Carla Maria De Marchi",
+    "Tommaso Lo Bianco",
+    "Giuseppina Dalla Costa",
+  ],
+} as const
+export const DOUBLE_NAME_LAND = ["Rosa Maria De Rosa"] as const
+export const DOUBLE_NAME_AVAILABLE = [
+  "Carlo Alberto Dalla Torre",
+  "Ugo",
+] as const
+export const DOUBLE_NAME_SESSION = "sun-pm"
+
+/**
+ * A "Domenica PM" with the shapes that stress the summary: double first names
+ * and surnames and a very long one, accents, three and four names a card, a
+ * volunteer, minors, a card with no boat ("Equipaggi senza barca"), a card
+ * with the red warning badge, a duty and a smontante badge, someone A terra,
+ * students still available and an empty boat (the dashed list). Seeded through
+ * the app's own persistence like the courses above.
+ */
+export async function seedDoubleNameCourse(page: Page) {
+  await page.evaluate(
+    async ({ crews, land, available, sessionId }) => {
+      const courseModulePath = "/src/persistence/courses.ts"
+      const studentsModulePath = "/src/persistence/students.ts"
+      const volunteersModulePath = "/src/persistence/volunteers.ts"
+      const boatsModulePath = "/src/persistence/boats.ts"
+      const crewsModulePath = "/src/persistence/crews.ts"
+      const dutiesModulePath = "/src/persistence/duties.ts"
+      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
+        getActiveCourse: () => Promise<{ id: string } | null>
+      }
+      const studentApi = (await import(
+        /* @vite-ignore */ studentsModulePath
+      )) as {
+        createStudents: (
+          courseId: string,
+          entries: Array<Record<string, unknown>>,
+        ) => Promise<Array<{ id: string }>>
+      }
+      const volunteerApi = (await import(
+        /* @vite-ignore */ volunteersModulePath
+      )) as {
+        createVolunteer: (
+          courseId: string,
+          input: { name: string; role: string },
+        ) => Promise<{ id: string }>
+      }
+      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
+        createBoats: (
+          courseId: string,
+          inputs: Array<{ type: string; number: string }>,
+        ) => Promise<Array<{ id: string; type: string; number: string }>>
+        setBoatAvailability: (
+          boatId: string,
+          courseId: string,
+          availability: string,
+        ) => Promise<void>
+      }
+      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
+        saveCrewPlan: (
+          courseId: string,
+          sessionId: string,
+          plan: Record<string, unknown>,
+        ) => Promise<unknown>
+      }
+      const dutyApi = (await import(/* @vite-ignore */ dutiesModulePath)) as {
+        saveDutyPlan: (
+          courseId: string,
+          assignments: Array<{ dayId: string; studentId: string }>,
+          settings: Record<string, unknown>,
+        ) => Promise<unknown>
+      }
+      const course = await courseApi.getActiveCourse()
+      if (!course) throw new Error("The double-name course needs a course")
+
+      const minors = new Set([
+        "Alessandro Maria Giuseppe Rossi Bianchi",
+        "Maria Teresa Di Stefano",
+      ])
+      const everyone = [
+        ...Object.values(crews).flat(),
+        ...land,
+        ...available,
+      ] as string[]
+      const students = await studentApi.createStudents(
+        course.id,
+        everyone.map((label) => ({
+          firstName: "Prova",
+          surname: "Fittizio",
+          nickname: label,
+          dateOfBirth: minors.has(label) ? "2015-05-05" : "2000-01-01",
+          declaredAgeAtCourseStart: null,
+          sex: "male",
+          phone: null,
+          size: null,
+          initialNote: null,
+          courseNote: null,
+        })),
+      )
+      const idOf = (label: string) => students[everyone.indexOf(label)]!.id
+
+      const boats = await boatApi.createBoats(course.id, [
+        { type: "RS Toura", number: "4" },
+        { type: "RS Toura", number: "7" },
+        { type: "RS Quest", number: "12" },
+        { type: "RS Quest", number: "15" },
+        { type: "Laser Vago", number: "3" },
+        { type: "RS 500", number: "8" },
+      ])
+      const boatOf = (name: string) => {
+        const split = name.lastIndexOf(" ")
+        const type = name.slice(0, split)
+        const number = name.slice(split + 1)
+        return boats.find(
+          (boat) => boat.type === type && boat.number === number,
+        )
+      }
+      await boatApi.setBoatAvailability(
+        boatOf("RS Toura 7")!.id,
+        course.id,
+        "unavailable",
+      )
+      const volunteers: Record<string, { id: string }> = {
+        "Laser Vago 3": await volunteerApi.createVolunteer(course.id, {
+          name: "Paolo",
+          role: "CT",
+        }),
+        Mezzi: await volunteerApi.createVolunteer(course.id, {
+          name: "Sofia Maria",
+          role: "ADV",
+        }),
+      }
+
+      const planCrews = Object.entries(crews).map(([name, labels]) => {
+        const volunteer = volunteers[name]
+        const members = [
+          ...labels.map((label) => ({
+            personId: idOf(label),
+            personType: "student",
+          })),
+          ...(volunteer
+            ? [{ personId: volunteer.id, personType: "volunteer" }]
+            : []),
+        ]
+        return {
+          id: crypto.randomUUID(),
+          sessionId,
+          members,
+          capacity: members.length,
+          destination:
+            name === "Mezzi"
+              ? "mezzi"
+              : name === "Senza barca"
+                ? "unassigned"
+                : "boat",
+          boatId: boatOf(name)?.id ?? null,
+        }
+      })
+      await crewApi.saveCrewPlan(course.id, sessionId, {
+        crews: planCrews,
+        landStudentIds: land.map(idOf),
+        selectedBoatIds: boats.map((boat) => boat.id),
+      })
+
+      // Sunday PM: Sunday's duty is "in comandata" (C), Saturday's came off
+      // the day before ("smontante", SM).
+      await dutyApi.saveDutyPlan(
+        course.id,
+        [
+          { dayId: "sunday", studentId: idOf("Luca") },
+          { dayId: "saturday", studentId: idOf("Gian Carlo Dalla Chiesa") },
+        ],
+        {
+          desiredPerDay: 1,
+          fewerDayIds: [],
+          balanceMinors: false,
+          balanceSex: false,
+          tieBreaker: "alphabetical",
+          stayOverStudentIds: [],
+          completedDayIds: [],
+          acknowledgedWarningKeys: [],
+        },
+      )
+    },
+    {
+      crews: DOUBLE_NAME_CREWS,
+      land: DOUBLE_NAME_LAND,
+      available: DOUBLE_NAME_AVAILABLE,
+      sessionId: DOUBLE_NAME_SESSION,
+    },
+  )
+}

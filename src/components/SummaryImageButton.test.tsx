@@ -34,8 +34,8 @@ function Harness() {
 }
 
 const pngBlob = () => new Blob(["png"], { type: "image/png" })
-const saveButton = () =>
-  screen.getByRole("button", { name: "Salva immagine riepilogo e copiala" })
+const copyButton = () =>
+  screen.getByRole("button", { name: "Copia immagine riepilogo" })
 
 /** The status region is always there, empty; this waits for a note in it. */
 async function statusWith(text: RegExp) {
@@ -68,11 +68,13 @@ afterEach(() => {
 })
 
 describe("SummaryImageButton", () => {
-  it("is a floating button at the bottom right with a visible label that its accessible name contains, left out of the image", () => {
+  it("is a floating button at the bottom right with a visible label that its accessible name contains, a copy icon, left out of the image", () => {
     render(<Harness />)
-    const button = saveButton()
-    expect(button).toHaveTextContent("Salva immagine")
-    expect(button.getAttribute("aria-label")).toContain("Salva immagine")
+    const button = copyButton()
+    expect(button).toHaveTextContent("Copia immagine")
+    expect(button.getAttribute("aria-label")).toContain("Copia immagine")
+    expect(button.querySelector("svg.lucide-copy")).not.toBeNull()
+    expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true")
     const floating = button.parentElement!
     expect(floating).toHaveAttribute("data-snapshot-exclude", "true")
     expect(floating.className).toContain("fixed")
@@ -85,18 +87,16 @@ describe("SummaryImageButton", () => {
     expect(button).toHaveAttribute("aria-busy", "false")
   })
 
-  it("renders the image ahead of the tap and uses that one", async () => {
+  it("renders the image ahead of the tap and copies that one", async () => {
     render(<Harness />)
     await vi.waitFor(() => expect(renderElementToPng).toHaveBeenCalledOnce())
 
-    fireEvent.click(saveButton())
+    fireEvent.click(copyButton())
     expect(
-      await screen.findByText(
-        "Immagine salvata e copiata. Incollala su WhatsApp.",
-      ),
+      await screen.findByText("Immagine copiata. Incollala su WhatsApp."),
     ).toBeVisible()
     expect(renderElementToPng).toHaveBeenCalledOnce()
-    expect(browser.downloads).toEqual(["sabato-pm.png"])
+    expect(browser.clipboardWrite).toHaveBeenCalledOnce()
   })
 
   it("renders on the tap when it has not been rendered ahead, and shows it is busy meanwhile", async () => {
@@ -108,7 +108,7 @@ describe("SummaryImageButton", () => {
     )
     render(<Harness />)
 
-    fireEvent.click(saveButton())
+    fireEvent.click(copyButton())
     const busy = await screen.findByRole("button", { name: "Preparo…" })
     expect(busy).toHaveAttribute("aria-busy", "true")
     // A second tap while it works does not start a second image.
@@ -116,30 +116,108 @@ describe("SummaryImageButton", () => {
     expect(browser.clipboardWrite).toHaveBeenCalledOnce()
 
     await act(async () => finish(pngBlob()))
-    expect(await statusWith(/Immagine salvata e copiata/)).toHaveTextContent(
-      "Immagine salvata e copiata",
+    expect(await statusWith(/Immagine copiata/)).toHaveTextContent(
+      "Immagine copiata. Incollala su WhatsApp.",
     )
-    expect(saveButton()).toHaveAttribute("aria-busy", "false")
+    expect(copyButton()).toHaveAttribute("aria-busy", "false")
     expect(renderElementToPng).toHaveBeenCalledOnce()
   })
 
-  it("says the image is only saved when the clipboard would not take it, and only copied when nothing could be saved", async () => {
+  it("never downloads a file, and never opens the share sheet by itself, not even on an iPhone", async () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(IPHONE)
+    const share = stubSharing()
+    const createObjectURL = vi.fn(() => "blob:summary")
+    URL.createObjectURL = createObjectURL
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click")
+    try {
+      render(<Harness />)
+      fireEvent.click(copyButton())
+      await statusWith(/Immagine copiata/)
+
+      expect(share).not.toHaveBeenCalled()
+      expect(createObjectURL).not.toHaveBeenCalled()
+      expect(click).not.toHaveBeenCalled()
+    } finally {
+      delete (URL as unknown as Record<string, unknown>).createObjectURL
+    }
+  })
+
+  it("offers Condividi after the copy where the phone can share files, and it opens the sheet with the image from its own tap", async () => {
+    const share = stubSharing()
+    render(<Harness />)
+    fireEvent.click(copyButton())
+
+    const note = await statusWith(/Immagine copiata/)
+    fireEvent.click(within(note).getByRole("button", { name: "Condividi" }))
+    await act(async () => undefined)
+    expect(share).toHaveBeenCalledOnce()
+    const [data] = share.mock.calls[0]!
+    expect(data.files).toHaveLength(1)
+    expect(data.files[0]).toMatchObject({
+      name: "sabato-pm.png",
+      type: "image/png",
+    })
+    // Shared: nothing left to say.
+    expect(screen.getByRole("status")).toBeEmptyDOMElement()
+  })
+
+  it("has no Condividi where the phone cannot share files", async () => {
+    render(<Harness />)
+    fireEvent.click(copyButton())
+    const note = await statusWith(/Immagine copiata/)
+    expect(
+      within(note).queryByRole("button", { name: "Condividi" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("closing the share sheet is not an error, and a share that fails says so", async () => {
+    const share = stubSharing(
+      vi
+        .fn()
+        .mockRejectedValueOnce(new DOMException("Cancelled", "AbortError"))
+        .mockRejectedValueOnce(new TypeError("Broken")),
+    )
+    render(<Harness />)
+    fireEvent.click(copyButton())
+    const note = await statusWith(/Immagine copiata/)
+
+    fireEvent.click(within(note).getByRole("button", { name: "Condividi" }))
+    await act(async () => undefined)
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+
+    fireEvent.click(copyButton())
+    const again = await statusWith(/Immagine copiata/)
+    fireEvent.click(within(again).getByRole("button", { name: "Condividi" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Condivisione non riuscita. Riprova.",
+    )
+    expect(share).toHaveBeenCalledTimes(2)
+  })
+
+  it("says the copy failed and offers Condividi where the phone can share", async () => {
+    stubSharing()
     browser.clipboardWrite.mockRejectedValue(new Error("Denied"))
     render(<Harness />)
-    fireEvent.click(saveButton())
-    expect(await statusWith(/Copia non riuscita/)).toHaveTextContent(
-      "Immagine salvata. Copia non riuscita.",
-    )
+    fireEvent.click(copyButton())
 
-    browser.clipboardWrite.mockResolvedValue(undefined)
-    URL.createObjectURL = vi.fn(() => {
-      throw new Error("No downloads")
-    })
-    fireEvent.click(saveButton())
-    await act(async () => undefined)
-    expect(await statusWith(/Immagine copiata. Incollala/)).toHaveTextContent(
-      "Immagine copiata. Incollala su WhatsApp.",
+    const note = await statusWith(/Copia non riuscita/)
+    expect(note).toHaveTextContent("Copia non riuscita.")
+    expect(
+      within(note).getByRole("button", { name: "Condividi" }),
+    ).toBeVisible()
+  })
+
+  it("says the copy failed, as an alert, where nothing else can send the image", async () => {
+    browser.clipboardWrite.mockRejectedValue(new Error("Denied"))
+    render(<Harness />)
+    fireEvent.click(copyButton())
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Copia non riuscita.",
     )
+    expect(
+      screen.queryByRole("button", { name: "Condividi" }),
+    ).not.toBeInTheDocument()
   })
 
   it("says so, as an alert, when the image could not be made, and makes it again on the next tap", async () => {
@@ -147,71 +225,16 @@ describe("SummaryImageButton", () => {
       new Error("canvas too large"),
     )
     render(<Harness />)
-    fireEvent.click(saveButton())
+    fireEvent.click(copyButton())
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Impossibile creare l’immagine. Riprova.",
     )
-    expect(browser.downloads).toEqual([])
 
-    fireEvent.click(saveButton())
+    fireEvent.click(copyButton())
     expect(
-      await screen.findByText(
-        "Immagine salvata e copiata. Incollala su WhatsApp.",
-      ),
+      await screen.findByText("Immagine copiata. Incollala su WhatsApp."),
     ).toBeVisible()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    expect(browser.downloads).toEqual(["sabato-pm.png"])
-  })
-
-  it("on an iPhone shares instead of downloading and offers Condividi, which opens the sheet again from its own tap", async () => {
-    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(IPHONE)
-    const share = stubSharing()
-    render(<Harness />)
-    fireEvent.click(saveButton())
-
-    const note = await statusWith(/Per la galleria/)
-    expect(note).toHaveTextContent(
-      "Immagine copiata. Per la galleria scegli Salva immagine.",
-    )
-    expect(browser.downloads).toEqual([])
-    expect(share).toHaveBeenCalledOnce()
-
-    fireEvent.click(within(note).getByRole("button", { name: "Condividi" }))
-    await act(async () => undefined)
-    expect(share).toHaveBeenCalledTimes(2)
-    expect(share.mock.calls[1]![0].files[0].name).toBe("sabato-pm.png")
-    // Shared: nothing left to say.
-    expect(screen.getByRole("status")).toBeEmptyDOMElement()
-  })
-
-  it("offers Condividi when a browser that can share files downloaded instead (Android)", async () => {
-    stubSharing()
-    render(<Harness />)
-    fireEvent.click(saveButton())
-    const note = await statusWith(/Immagine salvata e copiata/)
-    expect(note).toHaveTextContent("Immagine salvata e copiata")
-    expect(
-      within(note).getByRole("button", { name: "Condividi" }),
-    ).toBeVisible()
-  })
-
-  it("asks for a second tap when the share sheet is refused for the first", async () => {
-    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(IPHONE)
-    const share = stubSharing(
-      vi
-        .fn()
-        .mockRejectedValueOnce(new DOMException("Too late", "NotAllowedError"))
-        .mockResolvedValue(undefined),
-    )
-    render(<Harness />)
-    fireEvent.click(saveButton())
-    const note = await statusWith(/Tocca Condividi/)
-    expect(note).toHaveTextContent(
-      "Immagine copiata. Tocca Condividi per salvarla.",
-    )
-    fireEvent.click(within(note).getByRole("button", { name: "Condividi" }))
-    await act(async () => undefined)
-    expect(share).toHaveBeenCalledTimes(2)
   })
 
   describe("the note", () => {
@@ -221,33 +244,31 @@ describe("SummaryImageButton", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(400)
       })
-      fireEvent.click(saveButton())
+      fireEvent.click(copyButton())
       await act(async () => {
         await vi.advanceTimersByTimeAsync(0)
       })
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "Immagine salvata e copiata",
-      )
+      expect(screen.getByRole("status")).toHaveTextContent("Immagine copiata")
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(5900)
       })
-      expect(screen.getByRole("status")).toHaveTextContent("Immagine salvata")
+      expect(screen.getByRole("status")).toHaveTextContent("Immagine copiata")
       await act(async () => {
         await vi.advanceTimersByTimeAsync(200)
       })
       expect(screen.getByRole("status")).toBeEmptyDOMElement()
 
       // A new tap clears an old note at once, before the new one is made.
-      fireEvent.click(saveButton())
+      fireEvent.click(copyButton())
       await act(async () => {
         await vi.advanceTimersByTimeAsync(0)
       })
-      expect(screen.getByRole("status")).toHaveTextContent("Immagine salvata")
+      expect(screen.getByRole("status")).toHaveTextContent("Immagine copiata")
       vi.mocked(renderElementToPng).mockReturnValue(
         new Promise(() => undefined),
       )
-      fireEvent.click(saveButton())
+      fireEvent.click(copyButton())
       expect(screen.getByRole("status")).toBeEmptyDOMElement()
     })
 
@@ -258,7 +279,7 @@ describe("SummaryImageButton", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(400)
       })
-      fireEvent.click(saveButton())
+      fireEvent.click(copyButton())
       await act(async () => {
         await vi.advanceTimersByTimeAsync(0)
       })
@@ -270,7 +291,7 @@ describe("SummaryImageButton", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(20_000)
       })
-      expect(screen.getByRole("status")).toHaveTextContent("Immagine salvata")
+      expect(screen.getByRole("status")).toHaveTextContent("Immagine copiata")
 
       act(() => share.blur())
       await act(async () => {
@@ -281,8 +302,8 @@ describe("SummaryImageButton", () => {
 
     it("is announced politely and kept out of the image", async () => {
       render(<Harness />)
-      fireEvent.click(saveButton())
-      const note = await statusWith(/Immagine salvata/)
+      fireEvent.click(copyButton())
+      const note = await statusWith(/Immagine copiata/)
       expect(note).toHaveAttribute("aria-live", "polite")
       expect(note.closest("[data-snapshot-exclude]")).toHaveAttribute(
         "data-snapshot-exclude",

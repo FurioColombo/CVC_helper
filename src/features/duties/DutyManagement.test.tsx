@@ -786,7 +786,7 @@ describe("DutyManagement", () => {
       })
       afterEach(restoreSummaryImageBrowser)
 
-      it("replaces the old download button with one floating button that saves and copies the screenshot of the content", async () => {
+      it("has one floating button that copies the screenshot of the content, and no download", async () => {
         getPlan.mockResolvedValue(PLAN)
         const user = setupUser()
         renderDuties()
@@ -804,15 +804,18 @@ describe("DutyManagement", () => {
           }),
         ).not.toBeInTheDocument()
 
-        const save = within(view).getByRole("button", {
-          name: "Salva immagine riepilogo e copiala",
+        expect(
+          within(view).queryByRole("button", { name: /Salva immagine/ }),
+        ).not.toBeInTheDocument()
+        const copy = within(view).getByRole("button", {
+          name: "Copia immagine riepilogo",
         })
-        expect(save).toHaveTextContent("Salva immagine")
-        await user.click(save)
+        expect(copy).toHaveTextContent("Copia immagine")
+        await user.click(copy)
 
         expect(
           await within(view).findByText(
-            "Immagine salvata e copiata. Incollala su WhatsApp.",
+            "Immagine copiata. Incollala su WhatsApp.",
           ),
         ).toBeVisible()
         expect(renderElementToPng).toHaveBeenCalledOnce()
@@ -828,9 +831,8 @@ describe("DutyManagement", () => {
         expect(
           within(element).getByRole("button", { name: "Chiudi vista lettura" }),
         ).toHaveAttribute("data-snapshot-exclude", "true")
-        expect(element.contains(save)).toBe(false)
-        expect(options).toMatchObject({ background: "#fffdf8" })
-        expect(browser.downloads).toEqual(["riepilogo-comandate.png"])
+        expect(element.contains(copy)).toBe(false)
+        expect(options).toEqual({ background: "#fffdf8" })
         expect(browser.clipboardWrite).toHaveBeenCalledOnce()
       })
 
@@ -848,13 +850,12 @@ describe("DutyManagement", () => {
         )
         await user.click(
           screen.getByRole("button", {
-            name: "Salva immagine riepilogo e copiala",
+            name: "Copia immagine riepilogo",
           }),
         )
         expect(await screen.findByRole("alert")).toHaveTextContent(
           "Impossibile creare l’immagine. Riprova.",
         )
-        expect(browser.downloads).toEqual([])
 
         await user.click(
           screen.getByRole("button", { name: "Chiudi vista lettura" }),

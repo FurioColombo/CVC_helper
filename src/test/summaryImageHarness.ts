@@ -1,10 +1,9 @@
 import { vi } from "vitest"
 
 /**
- * The browser pieces the summary image's save-and-copy needs and jsdom lacks:
- * the clipboard and its item class, object URLs and an anchor that can be
- * "clicked" to download. `stubSummaryImageBrowser` installs recording fakes;
- * `restoreSummaryImageBrowser` takes them away again.
+ * The browser pieces the summary image's copy needs and jsdom lacks: the
+ * clipboard and its item class. `stubSummaryImageBrowser` installs recording
+ * fakes; `restoreSummaryImageBrowser` takes them away again.
  */
 
 export class FakeClipboardItem {
@@ -18,21 +17,13 @@ export class FakeClipboardItem {
 }
 
 export function stubSummaryImageBrowser() {
-  const downloads: string[] = []
   const clipboardWrite = vi.fn().mockResolvedValue(undefined)
   vi.stubGlobal("ClipboardItem", FakeClipboardItem)
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
     value: { write: clipboardWrite },
   })
-  URL.createObjectURL = vi.fn(() => "blob:summary")
-  URL.revokeObjectURL = vi.fn()
-  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
-    this: HTMLAnchorElement,
-  ) {
-    downloads.push(this.download)
-  })
-  return { downloads, clipboardWrite }
+  return { clipboardWrite }
 }
 
 export function restoreSummaryImageBrowser() {
@@ -42,7 +33,4 @@ export function restoreSummaryImageBrowser() {
   delete target.clipboard
   delete target.share
   delete target.canShare
-  const urls = URL as unknown as Record<string, unknown>
-  delete urls.createObjectURL
-  delete urls.revokeObjectURL
 }

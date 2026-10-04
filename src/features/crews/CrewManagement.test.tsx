@@ -2855,7 +2855,7 @@ describe("CrewManagement", () => {
     })
     afterEach(restoreSummaryImageBrowser)
 
-    it("replaces the old download button with one floating button that saves and copies the screenshot of the content", async () => {
+    it("has one floating button that copies the screenshot of the content, and no download", async () => {
       oneCrew()
       const user = setupUser()
       const view = await openReadView(user)
@@ -2864,16 +2864,19 @@ describe("CrewManagement", () => {
           name: "Scarica immagine riepilogo",
         }),
       ).not.toBeInTheDocument()
+      expect(
+        within(view).queryByRole("button", { name: /Salva immagine/ }),
+      ).not.toBeInTheDocument()
 
-      const save = within(view).getByRole("button", {
-        name: "Salva immagine riepilogo e copiala",
+      const copy = within(view).getByRole("button", {
+        name: "Copia immagine riepilogo",
       })
-      expect(save).toHaveTextContent("Salva immagine")
-      await user.click(save)
+      expect(copy).toHaveTextContent("Copia immagine")
+      await user.click(copy)
 
       expect(
         await within(view).findByText(
-          "Immagine salvata e copiata. Incollala su WhatsApp.",
+          "Immagine copiata. Incollala su WhatsApp.",
         ),
       ).toBeVisible()
       expect(renderElementToPng).toHaveBeenCalledOnce()
@@ -2890,18 +2893,13 @@ describe("CrewManagement", () => {
         name: "Chiudi vista lettura",
       })
       expect(close).toHaveAttribute("data-snapshot-exclude", "true")
-      expect(element.contains(save)).toBe(false)
-      expect(save.closest("[data-snapshot-exclude]")).toHaveAttribute(
+      expect(element.contains(copy)).toBe(false)
+      expect(copy.closest("[data-snapshot-exclude]")).toHaveAttribute(
         "data-snapshot-exclude",
         "true",
       )
-      expect(options).toMatchObject({ background: "#fffdf8" })
-      expect(options?.rootStyle).toMatchObject({
-        paddingTop: "16px",
-        paddingBottom: "16px",
-      })
+      expect(options).toEqual({ background: "#fffdf8" })
 
-      expect(browser.downloads).toEqual(["sabato-pm.png"])
       expect(browser.clipboardWrite).toHaveBeenCalledOnce()
       const [[item]] = browser.clipboardWrite.mock.calls[0] as [
         [{ items: Record<string, Promise<Blob>> }],
@@ -2929,13 +2927,12 @@ describe("CrewManagement", () => {
       const view = await openReadView(user)
       await user.click(
         within(view).getByRole("button", {
-          name: "Salva immagine riepilogo e copiala",
+          name: "Copia immagine riepilogo",
         }),
       )
       expect(await screen.findByRole("alert")).toHaveTextContent(
         "Impossibile creare l’immagine. Riprova.",
       )
-      expect(browser.downloads).toEqual([])
 
       await user.click(
         screen.getByRole("button", { name: "Chiudi vista lettura" }),
@@ -2949,7 +2946,7 @@ describe("CrewManagement", () => {
       expect(within(reopened).queryByRole("alert")).not.toBeInTheDocument()
       expect(
         within(reopened).getByRole("button", {
-          name: "Salva immagine riepilogo e copiala",
+          name: "Copia immagine riepilogo",
         }),
       ).toBeEnabled()
     })

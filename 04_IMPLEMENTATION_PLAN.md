@@ -30,7 +30,7 @@ lifecycle.
 | F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
 | F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
 | F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
-| F4 | Complete. The owner's 2026-10-03 phone feedback: a free seat takes a volunteer, and the crew and Comandate summary images are screenshots of the summary, saved and copied from a floating button at the bottom right. `.evidence/F4/` records `npm run verify:all` on the final source (934 unit tests; 196 browser tests passed, 34 skipped, none failed), the browser evidence and the self-review (no blocker). The owner checks the image in WhatsApp on their phones. |
+| F4 | Reopened on 2026-10-04 for the owner's phone feedback: the image is now painted from the screen's own layout (copy and share only, no download), unplaced volunteers leave the summary, Home menu cards are all blue. Awaiting the owner's phone check; `verify:all` evidence is re-recorded after it. |
 | UG2 | Pending: the owner's remaining physical checks and the precondition below. On 2026-10-03 the owner confirmed on Android phone Back, the assistant paste (ChatGPT and Claude) and the installed app offline. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
 
 **Before the next Codex session (precondition for UG2):** the published
@@ -360,7 +360,7 @@ that source.
 ## F4 — Free seat for volunteers, summary image as a screenshot
 
 **Category:** FEATURE
-**Status:** COMPLETE
+**Status:** IN_PROGRESS
 
 The owner's 2026-10-03 phone feedback. They confirmed on Android that phone
 Back, the assistant paste (ChatGPT and Claude apps) and the installed app
@@ -406,6 +406,26 @@ on the same source each lost tests unrelated to F4 that pass alone (the
 40-student layout, the denied-microphone alert, WebKit phone Back after a
 Valutazioni note); the third, recorded in `.evidence/F4/`, is clean: 934
 unit tests, 196 browser tests passed, 34 skipped, none failed.
+
+**Follow-up of 2026-10-04 (reopened).** On the owner's Android phone the
+deployed image was broken: inside the SVG image the phone laid the text out
+again with different measurements, and the clone had every box's size frozen,
+so names wrapped after a few letters, were drawn over the next line and left
+their cards. A Sonnet agent replaced the renderer with a geometry replay: the
+page's own layout is read (boxes, borders, radii, clips, each word's place
+through `Range` rects, logos and icons) and painted on a canvas, so the image
+keeps the screen's line breaks by construction; each text node's font size
+is calibrated against its on-screen word widths. The owner also asked for:
+no download (copy and share only: one tap on `Copia immagine` copies, the
+note offers `Condividi`); no unplaced volunteers in the crew summary; no
+`Tutti gli allievi assegnati` in the image; blue accents on every Home menu
+card. The Comandate day label now sits in a rem-sized column, so it no longer
+runs into the names at 320 px with 200% text. New browser checks use double
+names and surnames, a crew without a boat and 3–4 names per card, require
+every on-screen word to have ink in its place and no card to have ink
+outside it, and prove that the image survives text measuring 18% wider or
+15% narrower than the screen. The full `verify:all` evidence is re-recorded
+after the owner confirms the image on the phone.
 
 ## UG2 — 0.3.0 integration and release gate
 

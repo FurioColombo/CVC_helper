@@ -1,8 +1,8 @@
 import { expect, type Locator, type Page, test } from "@playwright/test"
 import {
-  captureSaveButtonWithNote,
-  expectSaveButtonLayout,
-  saveAndCheckSummaryImage,
+  captureCopyButtonWithNote,
+  copyAndCheckSummaryImage,
+  expectCopyButtonLayout,
 } from "./summary-image-checks"
 
 /**
@@ -15,8 +15,8 @@ import {
  * then the new "Riepilogo comandate" read view is opened, checked to fit one
  * 390×844 screen and to stay readable (no horizontal overflow, no truncated
  * name) at the 320 px/200% text accessibility stress
- * (`docs/post-mvp/06_DESIGN_RULEBOOK.md` §5), and (F4) the floating "Salva
- * immagine" button's file is downloaded and compared with the screen.
+ * (`docs/post-mvp/06_DESIGN_RULEBOOK.md` §5), and (F4) the floating "Copia
+ * immagine" button's image is compared with the screen at all three sizes.
  */
 
 const TOTAL_STUDENTS = 14
@@ -59,7 +59,7 @@ async function addStudent(
   await page.getByRole("button", { name: "Salva allievo" }).click()
 }
 
-test("shows a readable Comandate summary for a typical week and saves it as an image of the screen", async ({
+test("shows a readable Comandate summary for a typical week and copies it as an image of the screen", async ({
   page,
   context,
 }, testInfo) => {
@@ -201,25 +201,46 @@ test("shows a readable Comandate summary for a typical week and saves it as an i
     fullPage: false,
   })
 
-  // The floating save button stays clear of the last card, the close button
+  // The floating copy button stays clear of the last card, the close button
   // and the page width at the three sizes (the 320 px/200% one is still on).
-  await expectSaveButtonLayout(view, "320×664 / 200% text")
+  await expectCopyButtonLayout(view, "320×664 / 200% text")
   await page.setViewportSize({ width: 390, height: 844 })
   await page.evaluate(() => {
     document.documentElement.style.fontSize = ""
   })
-  await expectSaveButtonLayout(view, "390×844")
+  await expectCopyButtonLayout(view, "390×844")
   await page.setViewportSize({ width: 320, height: 664 })
-  await expectSaveButtonLayout(view, "320×664")
+  await expectCopyButtonLayout(view, "320×664")
 
-  // F4: one tap saves the Comandate summary as a screenshot of it, with the
-  // seven days and without the close button or the save button.
+  // F4: one tap copies the Comandate summary as a screenshot of it, with the
+  // seven days and without the close button or the copy button, at each of
+  // the three sizes: the long name and the two-column cards are laid out
+  // differently in each, and the image has to follow the screen in all.
+  const profiles = [
+    { name: "390x844", width: 390, height: 844, fontSize: "" },
+    { name: "320", width: 320, height: 664, fontSize: "" },
+    { name: "320-200pct", width: 320, height: 664, fontSize: "200%" },
+  ]
+  for (const profile of profiles) {
+    await page.setViewportSize({ width: profile.width, height: profile.height })
+    await page.evaluate((fontSize) => {
+      document.documentElement.style.fontSize = fontSize
+    }, profile.fontSize)
+    const result = await copyAndCheckSummaryImage(page, view, testInfo, {
+      name: `f4-duty-summary-${profile.name}`,
+      endsWithLastCard: true,
+    })
+    expect(result.cssHeight).toBeGreaterThan(300)
+    // The long name is in the image in the lines the screen has it in.
+    expect(
+      result.measure.leaves.some((leaf) => leaf.text === LONG_NAME),
+      profile.name,
+    ).toBe(true)
+  }
+
   await page.setViewportSize({ width: 390, height: 844 })
-  const result = await saveAndCheckSummaryImage(page, view, testInfo, {
-    name: "f4-duty-summary",
-    expectedNote: /^Immagine salvata e copiata\. Incollala su WhatsApp\.$/,
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = ""
   })
-  expect(result.cssHeight).toBeGreaterThan(300)
-
-  await captureSaveButtonWithNote(page, view, "f4-duty-summary")
+  await captureCopyButtonWithNote(page, view, "f4-duty-summary")
 })

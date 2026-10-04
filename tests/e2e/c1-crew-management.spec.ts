@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
 
 import { expect, type Page, test } from "@playwright/test"
 import sharp from "sharp"
 
 import { evidenceOutputPath } from "./evidence"
+import { copySummaryImage } from "./summary-image-checks"
 
 const COUNT_STUDENTS = [
   "Alba",
@@ -392,19 +393,13 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
   await expect(summaryCrew1.getByLabel("In comandata")).toHaveText("C")
   await expect(summaryCrew1.getByLabel("Minorenne")).toHaveText("M")
 
-  const downloadPromise = page.waitForEvent("download")
-  await summary
-    .getByRole("button", { name: "Salva immagine riepilogo e copiala" })
-    .click()
-  const download = await downloadPromise
-  const evidencePath = evidenceOutputPath(
-    testInfo,
-    "UX1",
-    "crew-summary-browser.png",
+  // The summary's floating button copies a screenshot of it; the page hands
+  // the PNG over through its dev-only test hook.
+  const image = await copySummaryImage(page, summary)
+  writeFileSync(
+    evidenceOutputPath(testInfo, "UX1", "crew-summary-browser.png"),
+    image,
   )
-  await download.saveAs(evidencePath)
-  expect(download.suggestedFilename()).toMatch(/\.png$/i)
-  const image = readFileSync(evidencePath)
   expect(image.subarray(0, 8)).toEqual(
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   )

@@ -1,13 +1,13 @@
-import { ImageDown, Share2 } from "lucide-react"
+import { Copy, Share2 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
 import { renderElementToPng, waitForImages } from "@/lib/pageSnapshot"
 import {
   SUMMARY_SNAPSHOT_OPTIONS,
   canShareFile,
-  saveAndCopySummaryImage,
+  copySummaryImage,
   shareImageFile,
-  type SummaryShareResult,
+  type SummaryCopyResult,
 } from "@/lib/summaryShare"
 
 // How long a note stays up, unless a finger or the keyboard is on it.
@@ -24,35 +24,9 @@ const FAILED_NOTE: Note = {
   canShare: false,
 }
 
-function noteFor(result: SummaryShareResult): Note {
-  const canShare = result.file !== null && canShareFile(result.file)
-  if (result.shareBlocked) {
-    return {
-      kind: "status",
-      text: result.copied
-        ? "Immagine copiata. Tocca Condividi per salvarla."
-        : "Tocca Condividi per salvare l’immagine.",
-      canShare,
-    }
-  }
-  if (result.saved === "share") {
-    return {
-      kind: "status",
-      text: result.copied
-        ? "Immagine copiata. Per la galleria scegli Salva immagine."
-        : "Copia non riuscita. Per la galleria scegli Salva immagine.",
-      canShare,
-    }
-  }
-  if (result.saved === "download") {
-    return {
-      kind: "status",
-      text: result.copied
-        ? "Immagine salvata e copiata. Incollala su WhatsApp."
-        : "Immagine salvata. Copia non riuscita.",
-      canShare,
-    }
-  }
+function noteFor(result: SummaryCopyResult): Note {
+  if (!result.file) return FAILED_NOTE
+  const canShare = canShareFile(result.file)
   if (result.copied) {
     return {
       kind: "status",
@@ -60,7 +34,13 @@ function noteFor(result: SummaryShareResult): Note {
       canShare,
     }
   }
-  return FAILED_NOTE
+  // The copy failed but the image exists: where the phone can share files,
+  // that is another way to send it.
+  return {
+    kind: canShare ? "status" : "alert",
+    text: "Copia non riuscita.",
+    canShare,
+  }
 }
 
 /** What the picture depends on: the width and density it is drawn at and the
@@ -84,11 +64,12 @@ async function renderSummaryPng(root: HTMLElement): Promise<Blob> {
 }
 
 /**
- * The floating "Salva immagine" button of a summary view, and the note that
- * says what it did. One tap saves the summary as an image — a screenshot of
- * `captureRef`'s content — and copies it, so it can be pasted into WhatsApp.
- * The image is rendered ahead of the tap, which keeps the tap instant and the
- * phone's share sheet inside the gesture that asked for it.
+ * The floating "Copia immagine" button of a summary view, and the note that
+ * says what it did. One tap copies the summary as an image — a screenshot of
+ * `captureRef`'s content — so it can be pasted into WhatsApp; where the phone
+ * can share files the note offers `Condividi` too. The image is rendered ahead
+ * of the tap, which keeps the tap instant and the clipboard write (which
+ * Safari allows only inside the tap) inside the gesture that asked for it.
  *
  * The whole thing is left out of the image (`data-snapshot-exclude`); it sits
  * outside `captureRef`'s element as well.
@@ -145,7 +126,7 @@ export function SummaryImageButton({
     return () => window.clearTimeout(timer)
   }, [note, focusInNote])
 
-  async function save() {
+  async function copy() {
     if (busyRef.current) return
     busyRef.current = true
     setBusy(true)
@@ -153,7 +134,7 @@ export function SummaryImageButton({
     setFocusInNote(false)
     try {
       // `prepare` and the clipboard write both start inside this tap.
-      const result = await saveAndCopySummaryImage({
+      const result = await copySummaryImage({
         png: prepare(),
         filename,
       })
@@ -233,13 +214,13 @@ export function SummaryImageButton({
       )}
       <button
         aria-busy={busy}
-        aria-label={busy ? undefined : "Salva immagine riepilogo e copiala"}
+        aria-label={busy ? undefined : "Copia immagine riepilogo"}
         className="pointer-events-auto inline-flex min-h-12 items-center justify-center gap-[8px] rounded-full bg-[#0b526b] px-[18px] py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]/40"
-        onClick={() => void save()}
+        onClick={() => void copy()}
         type="button"
       >
-        <ImageDown aria-hidden="true" className="size-[20px] shrink-0" />
-        {busy ? "Preparo…" : "Salva immagine"}
+        <Copy aria-hidden="true" className="size-[20px] shrink-0" />
+        {busy ? "Preparo…" : "Copia immagine"}
       </button>
     </div>
   )

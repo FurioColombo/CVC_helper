@@ -1,15 +1,32 @@
 /**
- * Renders a live DOM element to a PNG the way the screen shows it — a
- * screenshot taken from inside the page. The summaries (crews, Comandate) used
- * to be redrawn by hand on a canvas and never looked like the page; this hands
- * the page itself to the browser's own renderer instead, so Tailwind's
- * colours, the grid, fonts and icons come out exactly as on screen.
+ * Renders a live DOM element to a PNG that looks like the screen: a screenshot
+ * taken from inside the page. The summaries (crews, Comandate) are laid out by
+ * the browser for this very phone, so the image does not lay anything out
+ * again; it replays the geometry the screen already has.
  *
- * How: the element is cloned with every computed style written inline (an SVG
- * `<foreignObject>` has no access to the page's stylesheets), wrapped in an
- * SVG, loaded as an image and drawn on a canvas at the phone's pixel density.
- * Pseudo-elements (`::before`, `::after`) are not copied; the summaries use
- * none.
+ * Why not hand the page to the browser's SVG `<foreignObject>` renderer: the
+ * text is then laid out a second time, in a separate image document, where a
+ * phone can measure it differently (another font, a text scale). Every frozen
+ * box size was then wrong at once: names wrapped early, drew over the next
+ * name and ran out of their cards.
+ *
+ * How, in two steps:
+ *  1. `Recorder` reads the element's whole subtree synchronously, in tree
+ *     order: each box's rectangle, colours, borders, radii and shadows, each
+ *     word's rectangles (a `Range` over the word), each `<img>` and each
+ *     inline `<svg>` icon. What it records is plain data.
+ *  2. The data is painted on a canvas with the 2D API: boxes and borders,
+ *     words at the x and baseline where the screen has them, images, and the
+ *     icons (each a standalone SVG with no text in it, which renders the same
+ *     everywhere).
+ *
+ * What the painter supports is what the summaries use: background colours,
+ * solid and dashed borders with a differing side, per-corner radii, inset and
+ * outer shadows, overflow clipping, text with letter spacing, `text-transform`
+ * and tabular numerals, `object-fit` images and SVG icons. Not painted:
+ * gradients and background images, text decoration, transforms, filters,
+ * `z-index` (items are painted in tree order), pseudo-elements and form
+ * controls; the summaries use none.
  */
 
 export type SnapshotOptions = {
@@ -18,9 +35,6 @@ export type SnapshotOptions = {
   pixelRatio?: number
   /** Canvas colour under the element's own (transparent) background. */
   background?: string
-  /** Inline overrides for the root only, in the image and for measuring: the
-   *  screen's safe-area and button padding, which the image does not want. */
-  rootStyle?: Record<string, string>
   /** Elements to leave out of the image. Default: those carrying a
    *  `data-snapshot-exclude` attribute that has a value. */
   exclude?: (element: Element) => boolean
@@ -35,13 +49,21 @@ const defaultExclude = (element: Element) =>
 // (4096²); a round 16M keeps a margin under it.
 export const MAX_CANVAS_PIXELS = 16_000_000
 
-// An image the service worker has not cached, on a poor signal, can sit
-// unanswered for far longer than anyone will wait. Past this it is dropped
-// from the picture (an empty logo) rather than failing the whole image.
+// Decoding an icon is instant; this only stops a browser that never answers
+// from holding the whole image up. A missed icon is left out of the picture.
 export const IMAGE_LOAD_TIMEOUT_MS = 8000
 
-const TRANSPARENT_PIXEL =
-  "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA="
+/** Plain space above the first and below the last thing in the image: the
+ *  screen's safe-area inset and the room left for the floating button are
+ *  about the phone, not the page. */
+const MARGIN = 16
+
+/** A text node whose words measure this much (as a share) off their width on
+ *  screen is drawn at a corrected size; below it, the font is taken as is. */
+const SIZE_TOLERANCE = 0.03
+
+const SVG_NS = "http://www.w3.org/2000/svg"
+const SKIPPED_TAGS = new Set(["script", "style", "noscript", "template"])
 
 /**
  * The density to render at: the requested one (the screen's, by default),
@@ -61,30 +83,6 @@ export function snapshotPixelRatio(
     : 2
   return Math.min(wanted, Math.sqrt(MAX_CANVAS_PIXELS / (width * height)))
 }
-
-/** Text and attribute values go through an XML serializer, which would make
- *  an unloadable image of a name holding a control character. */
-export function cleanText(value: unknown): string {
-  const source = String(value ?? "")
-  let result = ""
-
-  for (const character of source) {
-    const codePoint = character.codePointAt(0) ?? 0
-    const validXmlCharacter =
-      codePoint === 0x9 ||
-      codePoint === 0xa ||
-      codePoint === 0xd ||
-      (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
-      (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
-      (codePoint >= 0x10000 && codePoint <= 0x10ffff)
-    result += validXmlCharacter ? character : "�"
-  }
-
-  return result
-}
-
-const delay = (ms: number) =>
-  new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
 /**
  * Resolves once every `<img>` under `root` has loaded or failed, or after
@@ -116,6 +114,922 @@ export async function waitForImages(
   window.clearTimeout(timer)
 }
 
+// ---------------------------------------------------------------------------
+// What is recorded
+// ---------------------------------------------------------------------------
+
+/** A rectangle in CSS px, relative to the image's top-left corner. */
+type Rect = { x: number; y: number; width: number; height: number }
+/** Corner radii, top-left first and clockwise: horizontal and vertical. */
+type Radii = Array<[number, number]>
+/** One border side; a side that paints nothing has width 0. */
+type Side = { width: number; color: string; style: string }
+type Shadow = {
+  inset: boolean
+  color: string
+  x: number
+  y: number
+  blur: number
+  spread: number
+}
+
+type BoxItem = {
+  kind: "box"
+  alpha: number
+  rect: Rect
+  radii: Radii
+  background: string | null
+  /** Top, right, bottom, left; null when no side paints. */
+  borders: Side[] | null
+  shadows: Shadow[]
+}
+/** Everything until the matching `end-clip` is cut to this rounded rectangle. */
+type ClipItem = { kind: "clip"; rect: Rect; radii: Radii }
+type EndClipItem = { kind: "end-clip" }
+/** Where the screen has this text: a word's one rectangle (`whole`), or each
+ *  of its characters' when it is broken over lines or set in tabular digits. */
+type Piece = { text: string; rect: Rect }
+type Word = { whole: boolean; pieces: Piece[] }
+type TextItem = {
+  kind: "text"
+  alpha: number
+  color: string
+  fontStyle: string
+  fontWeight: string
+  fontSize: number
+  fontFamily: string
+  textRendering: string
+  letterSpacing: number
+  tabular: boolean
+  words: Word[]
+}
+type ImageItem = {
+  kind: "image"
+  alpha: number
+  /** The live, already decoded element (same origin, so the canvas stays readable). */
+  image: HTMLImageElement
+  /** Its content box. */
+  rect: Rect
+  fit: string
+  position: string
+}
+type IconItem = {
+  kind: "icon"
+  alpha: number
+  rect: Rect
+  /** A detached copy with every paint property written inline. */
+  svg: SVGSVGElement
+}
+type Item = BoxItem | ClipItem | EndClipItem | TextItem | ImageItem | IconItem
+
+type Recording = { items: Item[]; width: number; height: number }
+
+const px = (value: string) => {
+  const number = Number.parseFloat(value)
+  return Number.isFinite(number) ? number : 0
+}
+
+const isTransparent = (colour: string) =>
+  colour === "" ||
+  colour === "transparent" ||
+  /[,/]\s*0(?:\.0+)?\s*\)$/u.test(colour)
+
+const CORNERS = [
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-right-radius",
+  "border-bottom-left-radius",
+]
+const SIDES = ["top", "right", "bottom", "left"]
+
+/** Radii in px; a percentage is of the box. Like the browser, all are scaled
+ *  down together when two neighbours would not fit along a side. */
+function readRadii(style: CSSStyleDeclaration, rect: Rect): Radii {
+  const radii = CORNERS.map((name): [number, number] => {
+    const [horizontal = "0", vertical = horizontal] = style
+      .getPropertyValue(name)
+      .split(" ")
+    const resolve = (value: string, whole: number) =>
+      value.endsWith("%") ? (px(value) / 100) * whole : px(value)
+    return [resolve(horizontal, rect.width), resolve(vertical, rect.height)]
+  })
+  const fits = (available: number, first: number, second: number) =>
+    first + second > available ? available / (first + second) : 1
+  const factor = Math.min(
+    fits(rect.width, radii[0]![0], radii[1]![0]),
+    fits(rect.height, radii[1]![1], radii[2]![1]),
+    fits(rect.width, radii[3]![0], radii[2]![0]),
+    fits(rect.height, radii[0]![1], radii[3]![1]),
+  )
+  return radii.map(([h, v]) => [h * factor, v * factor])
+}
+
+function readBorders(style: CSSStyleDeclaration): Side[] | null {
+  const sides = SIDES.map((side): Side => {
+    const borderStyle = style.getPropertyValue(`border-${side}-style`)
+    const hidden = borderStyle === "none" || borderStyle === "hidden"
+    return {
+      width: hidden ? 0 : px(style.getPropertyValue(`border-${side}-width`)),
+      color: style.getPropertyValue(`border-${side}-color`),
+      style: borderStyle,
+    }
+  })
+  return sides.some((side) => side.width > 0) ? sides : null
+}
+
+/** Splits at the commas that are not inside a colour function. */
+function splitShadows(value: string): string[] {
+  const parts: string[] = []
+  let depth = 0
+  let start = 0
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index]
+    if (character === "(") depth += 1
+    else if (character === ")") depth -= 1
+    else if (character === "," && depth === 0) {
+      parts.push(value.slice(start, index))
+      start = index + 1
+    }
+  }
+  parts.push(value.slice(start))
+  return parts
+}
+
+function readShadows(style: CSSStyleDeclaration): Shadow[] {
+  const value = style.boxShadow
+  if (!value || value === "none") return []
+  return splitShadows(value).map((part): Shadow => {
+    const color = /(?:[a-z-]+)\([^)]*\)|#[0-9a-f]+/iu.exec(part)?.[0]
+    const [x = 0, y = 0, blur = 0, spread = 0] = Array.from(
+      part
+        .replace(/(?:[a-z-]+)\([^)]*\)/giu, "")
+        .matchAll(/-?[\d.]+px|\b0\b/gu),
+      (match) => px(match[0]),
+    )
+    return {
+      inset: /\binset\b/u.test(part),
+      color: color ?? style.color,
+      x,
+      y,
+      blur,
+      spread,
+    }
+  })
+}
+
+const ICON_PROPERTIES = [
+  "fill",
+  "fill-opacity",
+  "fill-rule",
+  "stroke",
+  "stroke-width",
+  "stroke-linecap",
+  "stroke-linejoin",
+  "stroke-miterlimit",
+  "stroke-dasharray",
+  "stroke-dashoffset",
+  "stroke-opacity",
+  "opacity",
+  "display",
+  "visibility",
+]
+
+/**
+ * A detached copy of an inline icon that needs no page: the paint properties
+ * the page's CSS gave each element are written inline (as the computed values,
+ * so `currentColor` is already a colour), and the classes that only the page's
+ * stylesheet understands are dropped. Geometry and `transform` attributes stay.
+ */
+function cloneIcon(svg: SVGSVGElement): SVGSVGElement {
+  const copy = svg.cloneNode(true) as SVGSVGElement
+  const sources = [svg, ...Array.from(svg.querySelectorAll("*"))]
+  const copies = [copy, ...Array.from(copy.querySelectorAll("*"))]
+  sources.forEach((source, index) => {
+    const target = copies[index]!
+    const computed = getComputedStyle(source)
+    let css = index === 0 ? `color:${computed.color};` : ""
+    for (const name of ICON_PROPERTIES) {
+      const value = computed.getPropertyValue(name)
+      if (value) css += `${name}:${value};`
+    }
+    target.setAttribute("style", css)
+    for (const { name } of Array.from(target.attributes)) {
+      if (/^(?:class$|role$|aria-|data-)/u.test(name)) {
+        target.removeAttribute(name)
+      }
+    }
+  })
+  return copy
+}
+
+/** Each character with its UTF-16 offset in the word (a letter with its
+ *  accents, an emoji with its modifiers, count as one). */
+function characters(word: string): Array<{ text: string; index: number }> {
+  if (typeof Intl.Segmenter === "function") {
+    return Array.from(
+      new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(word),
+      ({ segment, index }) => ({ text: segment, index }),
+    )
+  }
+  let index = 0
+  return Array.from(word, (text) => {
+    const entry = { text, index }
+    index += text.length
+    return entry
+  })
+}
+
+/** The text as the screen shows it: the DOM keeps what was typed, the
+ *  `text-transform` is applied only when drawing. */
+function transformText(text: string, transform: string, atWordStart: boolean) {
+  if (transform === "uppercase") return text.toUpperCase()
+  if (transform === "lowercase") return text.toLowerCase()
+  if (transform === "capitalize" && atWordStart) {
+    return text.charAt(0).toUpperCase() + text.slice(1)
+  }
+  return text
+}
+
+const visibleRects = (range: Range) =>
+  Array.from(range.getClientRects()).filter(
+    (rect) => rect.width > 0 && rect.height > 0,
+  )
+
+/** What the root's box adds up to when the subtree is read: the item list, in
+ *  paint order, and how far down it reaches. Every coordinate is read from the
+ *  live layout in this one synchronous pass, so scrolling and later changes to
+ *  the page do not matter. */
+class Recorder {
+  private readonly items: Item[] = []
+  private readonly width: number
+  private readonly originX: number
+  private readonly originY: number
+  private lowest = MARGIN
+
+  constructor(
+    private readonly root: HTMLElement,
+    private readonly exclude: (element: Element) => boolean,
+  ) {
+    const rect = root.getBoundingClientRect()
+    const style = getComputedStyle(root)
+    this.width = Math.ceil(rect.width)
+    this.originX = rect.left
+    // The image starts 16px above the root's content, not above its padding.
+    this.originY =
+      rect.top + px(style.borderTopWidth) + px(style.paddingTop) - MARGIN
+  }
+
+  record(): Recording {
+    this.visit(this.root, 1)
+    return {
+      items: this.items,
+      width: this.width,
+      height: Math.ceil(this.lowest + MARGIN),
+    }
+  }
+
+  private place(rect: DOMRect): Rect {
+    return {
+      x: rect.left - this.originX,
+      y: rect.top - this.originY,
+      width: rect.width,
+      height: rect.height,
+    }
+  }
+
+  /** The image ends below the lowest thing that is painted, so what is left
+   *  out (the note at the end, the floating button) leaves no blank space. */
+  private reach(rect: Rect) {
+    this.lowest = Math.max(this.lowest, rect.y + rect.height)
+  }
+
+  private visit(element: Element, parentAlpha: number) {
+    if (SKIPPED_TAGS.has(element.localName) || this.exclude(element)) return
+    const style = getComputedStyle(element)
+    if (style.display === "none") return
+    const opacity = Number.parseFloat(style.opacity)
+    const alpha = parentAlpha * (Number.isFinite(opacity) ? opacity : 1)
+    // `visibility: hidden` paints nothing, but a child may be visible again.
+    const visible = style.visibility === "visible"
+    const rect = this.place(element.getBoundingClientRect())
+    // `display: contents` has no box of its own, only children.
+    const hasBox =
+      style.display !== "contents" && rect.width > 0 && rect.height > 0
+
+    if (element.namespaceURI === SVG_NS && element.localName === "svg") {
+      if (visible && hasBox) {
+        this.items.push({
+          kind: "icon",
+          alpha,
+          rect,
+          svg: cloneIcon(element as SVGSVGElement),
+        })
+        this.reach(rect)
+      }
+      return
+    }
+
+    const radii = hasBox ? readRadii(style, rect) : []
+    if (visible && hasBox) this.recordBox(rect, radii, style, alpha)
+
+    const image =
+      element.localName === "img" ? (element as HTMLImageElement) : null
+    const clip =
+      hasBox &&
+      (image
+        ? radii.some(([h, v]) => h > 0 && v > 0)
+        : style.overflowX !== "visible" || style.overflowY !== "visible")
+    if (clip) {
+      this.items.push({
+        kind: "clip",
+        ...paddingBox(rect, radii, readBorders(style)),
+      })
+    }
+    if (image) {
+      if (visible && hasBox) this.recordImage(image, rect, style, alpha)
+    } else {
+      for (let child = element.firstChild; child; child = child.nextSibling) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          this.recordText(child as Text, style, alpha)
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          this.visit(child as Element, alpha)
+        }
+      }
+    }
+    if (clip) this.items.push({ kind: "end-clip" })
+  }
+
+  private recordBox(
+    rect: Rect,
+    radii: Radii,
+    style: CSSStyleDeclaration,
+    alpha: number,
+  ) {
+    const background = isTransparent(style.backgroundColor)
+      ? null
+      : style.backgroundColor
+    const borders = readBorders(style)
+    const shadows = readShadows(style)
+    if (!background && !borders && shadows.length === 0) return
+    this.items.push({
+      kind: "box",
+      alpha,
+      rect,
+      radii,
+      background,
+      borders,
+      shadows,
+    })
+    if (background || borders) this.reach(rect)
+  }
+
+  private recordImage(
+    image: HTMLImageElement,
+    rect: Rect,
+    style: CSSStyleDeclaration,
+    alpha: number,
+  ) {
+    // One that has not loaded (or failed) is an empty slot, as on screen.
+    if (!image.complete || image.naturalWidth === 0) return
+    const [top, right, bottom, left] = SIDES.map(
+      (side) =>
+        px(style.getPropertyValue(`border-${side}-width`)) +
+        px(style.getPropertyValue(`padding-${side}`)),
+    ) as [number, number, number, number]
+    this.items.push({
+      kind: "image",
+      alpha,
+      image,
+      rect: {
+        x: rect.x + left,
+        y: rect.y + top,
+        width: rect.width - left - right,
+        height: rect.height - top - bottom,
+      },
+      fit: style.objectFit,
+      position: style.objectPosition,
+    })
+    this.reach(rect)
+  }
+
+  /** Where the screen has each word of the text node, asked of the browser:
+   *  a `Range` over the word gives one rectangle per line it sits on. */
+  private recordText(node: Text, style: CSSStyleDeclaration, alpha: number) {
+    if (style.visibility !== "visible" || !/\S/u.test(node.data)) return
+    const tabular = style.fontVariantNumeric.includes("tabular-nums")
+    const transform = style.textTransform
+    const range = node.ownerDocument.createRange()
+    const words: Word[] = []
+
+    for (const match of node.data.matchAll(/\S+/gu)) {
+      const word = match[0]
+      const start = match.index
+      range.setStart(node, start)
+      range.setEnd(node, start + word.length)
+      const rects = visibleRects(range)
+      if (rects.length === 0) continue
+      if (rects.length === 1 && !tabular) {
+        words.push({
+          whole: true,
+          pieces: [
+            {
+              text: transformText(word, transform, true),
+              rect: this.place(rects[0]!),
+            },
+          ],
+        })
+        continue
+      }
+      // Broken over two lines, or digits that each own a column: draw each
+      // character where the screen has it, never re-wrapping anything.
+      const pieces: Piece[] = []
+      for (const { text, index } of characters(word)) {
+        range.setStart(node, start + index)
+        range.setEnd(node, start + index + text.length)
+        const [rect] = visibleRects(range)
+        if (!rect) continue
+        pieces.push({
+          text: transformText(text, transform, index === 0),
+          rect: this.place(rect),
+        })
+      }
+      if (pieces.length > 0) words.push({ whole: false, pieces })
+    }
+    if (words.length === 0) return
+
+    for (const word of words) {
+      for (const piece of word.pieces) this.reach(piece.rect)
+    }
+    this.items.push({
+      kind: "text",
+      alpha,
+      color: style.color,
+      fontStyle: style.fontStyle,
+      fontWeight: style.fontWeight,
+      fontSize: px(style.fontSize),
+      fontFamily: style.fontFamily,
+      textRendering: style.textRendering,
+      letterSpacing: px(style.letterSpacing),
+      tabular,
+      words,
+    })
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Painting
+// ---------------------------------------------------------------------------
+
+/** The padding box (inside the border) and its radii, the area overflow clips
+ *  to and the inset shadow lies in. */
+function paddingBox(
+  rect: Rect,
+  radii: Radii,
+  borders: Side[] | null,
+): { rect: Rect; radii: Radii } {
+  if (!borders) return { rect, radii }
+  const [top, right, bottom, left] = borders.map((side) => side.width) as [
+    number,
+    number,
+    number,
+    number,
+  ]
+  return {
+    rect: {
+      x: rect.x + left,
+      y: rect.y + top,
+      width: rect.width - left - right,
+      height: rect.height - top - bottom,
+    },
+    radii: radii.map(([h, v], corner) => {
+      // Top-left, top-right, bottom-right, bottom-left.
+      const horizontal = corner === 0 || corner === 3 ? left : right
+      const vertical = corner < 2 ? top : bottom
+      return [Math.max(0, h - horizontal), Math.max(0, v - vertical)]
+    }),
+  }
+}
+
+/** Adds a rounded rectangle, with an elliptical arc per corner, to the path. */
+function addRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  rect: Rect,
+  radii: Radii,
+) {
+  const { x, y, width, height } = rect
+  const [tl, tr, br, bl] = radii as [
+    [number, number],
+    [number, number],
+    [number, number],
+    [number, number],
+  ]
+  const corner = (
+    cx: number,
+    cy: number,
+    [rx, ry]: [number, number],
+    from: number,
+  ) => {
+    if (rx > 0 && ry > 0) {
+      ctx.ellipse(cx, cy, rx, ry, 0, from, from + Math.PI / 2)
+    }
+  }
+  ctx.moveTo(x + tl[0], y)
+  ctx.lineTo(x + width - tr[0], y)
+  corner(x + width - tr[0], y + tr[1], tr, -Math.PI / 2)
+  ctx.lineTo(x + width, y + height - br[1])
+  corner(x + width - br[0], y + height - br[1], br, 0)
+  ctx.lineTo(x + bl[0], y + height)
+  corner(x + bl[0], y + height - bl[1], bl, Math.PI / 2)
+  ctx.lineTo(x, y + tl[1])
+  corner(x + tl[0], y + tl[1], tl, Math.PI)
+  ctx.closePath()
+}
+
+const NO_RADII: Radii = [
+  [0, 0],
+  [0, 0],
+  [0, 0],
+  [0, 0],
+]
+const withRadii = (radii: Radii) => (radii.length === 4 ? radii : NO_RADII)
+
+/** Grows (or, with a negative amount, shrinks) a rounded rectangle. */
+function grow(rect: Rect, radii: Radii, amount: number) {
+  return {
+    rect: {
+      x: rect.x - amount,
+      y: rect.y - amount,
+      width: rect.width + 2 * amount,
+      height: rect.height + 2 * amount,
+    },
+    radii: withRadii(radii).map(([h, v]): [number, number] => [
+      h > 0 ? Math.max(0, h + amount) : 0,
+      v > 0 ? Math.max(0, v + amount) : 0,
+    ]),
+  }
+}
+
+/** Canvas shadows are in device pixels, whatever the scale in force. */
+const deviceScale = (ctx: CanvasRenderingContext2D) => ctx.getTransform().a
+
+function paintOuterShadow(
+  ctx: CanvasRenderingContext2D,
+  item: BoxItem,
+  shadow: Shadow,
+) {
+  // A canvas shadow is only cast by something drawn; the shape is drawn far to
+  // the left, off the canvas, and its shadow brought back.
+  const far = 100_000
+  const { rect, radii } = grow(item.rect, item.radii, shadow.spread)
+  const scale = deviceScale(ctx)
+  ctx.save()
+  ctx.shadowColor = shadow.color
+  ctx.shadowBlur = shadow.blur * scale
+  ctx.shadowOffsetX = (shadow.x + far) * scale
+  ctx.shadowOffsetY = shadow.y * scale
+  ctx.fillStyle = "#000"
+  ctx.beginPath()
+  addRoundedRect(ctx, { ...rect, x: rect.x - far }, radii)
+  ctx.fill()
+  ctx.restore()
+}
+
+function paintInsetShadow(
+  ctx: CanvasRenderingContext2D,
+  item: BoxItem,
+  shadow: Shadow,
+) {
+  const inside = paddingBox(item.rect, withRadii(item.radii), item.borders)
+  const hole = grow(
+    {
+      ...inside.rect,
+      x: inside.rect.x + shadow.x,
+      y: inside.rect.y + shadow.y,
+    },
+    inside.radii,
+    -shadow.spread,
+  )
+  // The shadow is the frame between a rectangle larger than the box and the
+  // hole the spread and offset leave, cut to the box.
+  const frame = grow(
+    inside.rect,
+    NO_RADII,
+    shadow.blur * 2 +
+      Math.abs(shadow.x) +
+      Math.abs(shadow.y) +
+      shadow.spread +
+      2,
+  ).rect
+  ctx.save()
+  ctx.beginPath()
+  addRoundedRect(ctx, inside.rect, inside.radii)
+  ctx.clip()
+  ctx.beginPath()
+  ctx.rect(frame.x, frame.y, frame.width, frame.height)
+  if (hole.rect.width > 0 && hole.rect.height > 0) {
+    addRoundedRect(ctx, hole.rect, hole.radii)
+  }
+  ctx.fillStyle = shadow.color
+  if (shadow.blur > 0) {
+    ctx.shadowColor = shadow.color
+    ctx.shadowBlur = shadow.blur * deviceScale(ctx)
+  }
+  ctx.fill("evenodd")
+  ctx.restore()
+}
+
+/** The four border sides, between the box's outer edge and its padding box. */
+function paintBorders(ctx: CanvasRenderingContext2D, item: BoxItem) {
+  const borders = item.borders!
+  const [top, right, bottom, left] = borders as [Side, Side, Side, Side]
+  const radii = withRadii(item.radii)
+  const { rect } = item
+  const inside = paddingBox(rect, radii, borders)
+  const ring = () => {
+    ctx.beginPath()
+    addRoundedRect(ctx, rect, radii)
+    if (inside.rect.width > 0 && inside.rect.height > 0) {
+      addRoundedRect(ctx, inside.rect, inside.radii)
+    }
+  }
+
+  const first = borders.find((side) => side.width > 0)!
+  const alike = borders.every(
+    (side) =>
+      side.width === first.width &&
+      side.color === first.color &&
+      side.style === first.style,
+  )
+  ctx.save()
+  if (alike && (first.style === "dashed" || first.style === "dotted")) {
+    // Dashes run along the middle of the border, round the corners.
+    const middle = grow(rect, radii, -first.width / 2)
+    ctx.beginPath()
+    addRoundedRect(ctx, middle.rect, middle.radii)
+    ctx.lineWidth = first.width
+    ctx.strokeStyle = first.color
+    const dash = first.style === "dotted" ? 1 : first.width >= 3 ? 2 : 3
+    const gap = first.style === "dotted" ? 1 : first.width >= 3 ? 1 : 2
+    ctx.setLineDash([dash * first.width, gap * first.width])
+    ctx.stroke()
+  } else if (alike) {
+    ring()
+    ctx.fillStyle = first.color
+    ctx.fill("evenodd")
+  } else {
+    // A side of its own colour or width (a coloured edge): each side is a
+    // trapezoid mitred to its neighbours, cut to the ring so the rounded
+    // corners stay right.
+    ring()
+    ctx.clip("evenodd")
+    const { x, y, width, height } = rect
+    const lW = left.width
+    const rW = right.width
+    const tW = top.width
+    const bW = bottom.width
+    const bands: Array<[Side, Array<[number, number]>]> = [
+      [
+        top,
+        [
+          [x, y],
+          [x + width, y],
+          [x + width - rW, y + tW],
+          [x + lW, y + tW],
+        ],
+      ],
+      [
+        right,
+        [
+          [x + width, y],
+          [x + width, y + height],
+          [x + width - rW, y + height - bW],
+          [x + width - rW, y + tW],
+        ],
+      ],
+      [
+        bottom,
+        [
+          [x + width, y + height],
+          [x, y + height],
+          [x + lW, y + height - bW],
+          [x + width - rW, y + height - bW],
+        ],
+      ],
+      [
+        left,
+        [
+          [x, y + height],
+          [x, y],
+          [x + lW, y + tW],
+          [x + lW, y + height - bW],
+        ],
+      ],
+    ]
+    for (const [side, points] of bands) {
+      if (side.width <= 0) continue
+      ctx.fillStyle = side.color
+      ctx.beginPath()
+      points.forEach(([px, py], index) =>
+        index === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py),
+      )
+      ctx.closePath()
+      ctx.fill()
+    }
+  }
+  ctx.restore()
+}
+
+function paintBox(ctx: CanvasRenderingContext2D, item: BoxItem) {
+  const radii = withRadii(item.radii)
+  ctx.save()
+  ctx.globalAlpha = item.alpha
+  for (const shadow of item.shadows) {
+    if (!shadow.inset) paintOuterShadow(ctx, item, shadow)
+  }
+  if (item.background) {
+    ctx.fillStyle = item.background
+    ctx.beginPath()
+    addRoundedRect(ctx, item.rect, radii)
+    ctx.fill()
+  }
+  for (const shadow of item.shadows) {
+    if (shadow.inset) paintInsetShadow(ctx, item, shadow)
+  }
+  if (item.borders) paintBorders(ctx, item)
+  ctx.restore()
+}
+
+/** Sets the canvas font; one the canvas rejects keeps the last one, so the
+ *  shorthand is checked and, if refused, replaced by a plain one. */
+function setFont(ctx: CanvasRenderingContext2D, item: TextItem, size: number) {
+  const style = item.fontStyle.startsWith("oblique") ? "italic" : item.fontStyle
+  ctx.font = "10px sans-serif"
+  const unchanged = ctx.font
+  ctx.font = `${style} ${item.fontWeight} ${size}px ${item.fontFamily}`
+  if (ctx.font === unchanged) {
+    ctx.font = `${style} ${item.fontWeight} ${size}px sans-serif`
+  }
+  const rendering = item.textRendering.toLowerCase()
+  if ("textRendering" in ctx) {
+    ctx.textRendering =
+      rendering === "optimizelegibility"
+        ? "optimizeLegibility"
+        : rendering === "geometricprecision"
+          ? "geometricPrecision"
+          : rendering === "optimizespeed"
+            ? "optimizeSpeed"
+            : "auto"
+  }
+}
+
+/** Letter spacing the canvas can apply itself (most can); otherwise it is
+ *  added by hand, character by character. */
+function setLetterSpacing(ctx: CanvasRenderingContext2D, spacing: number) {
+  if (!("letterSpacing" in ctx)) return false
+  ctx.letterSpacing = `${spacing}px`
+  return true
+}
+
+function textWidth(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  spacing: number,
+  native: boolean,
+) {
+  const width = ctx.measureText(text).width
+  return native ? width : width + spacing * Array.from(text).length
+}
+
+/** The font's ascent and descent, in the size in force. */
+function fontExtent(ctx: CanvasRenderingContext2D, size: number) {
+  const metrics = ctx.measureText("Hg")
+  return {
+    ascent:
+      typeof metrics.fontBoundingBoxAscent === "number"
+        ? metrics.fontBoundingBoxAscent
+        : size * 0.8,
+    descent:
+      typeof metrics.fontBoundingBoxDescent === "number"
+        ? metrics.fontBoundingBoxDescent
+        : size * 0.2,
+  }
+}
+
+/**
+ * How much to scale the font size by so that a canvas word is as wide as the
+ * same word on screen. This is what absorbs a phone whose canvas resolves the
+ * font differently from its page, or scales its text: the screen's word widths
+ * are the truth, whatever the computed font size says. 1 unless the words are
+ * off by more than `SIZE_TOLERANCE`; a text with no whole word to measure
+ * (digits, a word broken over lines) is judged by its height instead.
+ */
+function calibratedScale(ctx: CanvasRenderingContext2D, item: TextItem) {
+  setFont(ctx, item, item.fontSize)
+  const native = setLetterSpacing(ctx, item.letterSpacing)
+  let onScreen = 0
+  let measured = 0
+  if (!item.tabular) {
+    for (const word of item.words) {
+      if (!word.whole) continue
+      const piece = word.pieces[0]!
+      onScreen += piece.rect.width
+      measured += textWidth(ctx, piece.text, item.letterSpacing, native)
+    }
+  }
+  const clamp = (scale: number) => Math.min(2, Math.max(0.5, scale))
+  if (measured > 0 && onScreen > 0) {
+    const scale = onScreen / measured
+    return Math.abs(scale - 1) > SIZE_TOLERANCE ? clamp(scale) : 1
+  }
+  const { ascent, descent } = fontExtent(ctx, item.fontSize)
+  const rectHeight = item.words[0]?.pieces[0]?.rect.height ?? 0
+  const scale = rectHeight / (ascent + descent)
+  // A line box's height is rounded, so this is judged more loosely.
+  return rectHeight > 0 && Math.abs(scale - 1) > 0.1 ? clamp(scale) : 1
+}
+
+function paintText(ctx: CanvasRenderingContext2D, item: TextItem) {
+  ctx.save()
+  ctx.globalAlpha = item.alpha
+  ctx.fillStyle = item.color
+  ctx.textAlign = "left"
+  ctx.textBaseline = "alphabetic"
+  const scale = calibratedScale(ctx, item)
+  const size = item.fontSize * scale
+  const spacing = item.letterSpacing * scale
+  setFont(ctx, item, size)
+  const native = setLetterSpacing(ctx, spacing)
+  const { ascent, descent } = fontExtent(ctx, size)
+
+  for (const word of item.words) {
+    for (const piece of word.pieces) {
+      const { rect, text } = piece
+      // The baseline sits where the font's ascent and descent divide the
+      // line's box on screen.
+      const baseline = rect.y + (rect.height * ascent) / (ascent + descent)
+      let x = rect.x
+      if (item.tabular) {
+        // Digits that share a width are centred in their column.
+        x += (rect.width - textWidth(ctx, text, spacing, native)) / 2
+      }
+      if (native || spacing === 0) {
+        ctx.fillText(text, x, baseline)
+      } else {
+        for (const character of text) {
+          ctx.fillText(character, x, baseline)
+          x += textWidth(ctx, character, spacing, false)
+        }
+      }
+    }
+  }
+  ctx.restore()
+}
+
+/** `object-position` as a pair of lengths or percentages of the free space. */
+function positionOffsets(
+  position: string,
+  freeWidth: number,
+  freeHeight: number,
+): [number, number] {
+  const [horizontal = "50%", vertical = "50%"] = position.split(" ")
+  const resolve = (value: string, free: number) =>
+    value.endsWith("%") ? (px(value) / 100) * free : px(value)
+  return [resolve(horizontal, freeWidth), resolve(vertical, freeHeight)]
+}
+
+function paintImage(ctx: CanvasRenderingContext2D, item: ImageItem) {
+  const { image, rect } = item
+  const naturalWidth = image.naturalWidth
+  const naturalHeight = image.naturalHeight
+  const contain = Math.min(
+    rect.width / naturalWidth,
+    rect.height / naturalHeight,
+  )
+  const cover = Math.max(rect.width / naturalWidth, rect.height / naturalHeight)
+  let scaleX = rect.width / naturalWidth
+  let scaleY = rect.height / naturalHeight
+  if (item.fit === "contain") scaleX = scaleY = contain
+  else if (item.fit === "cover") scaleX = scaleY = cover
+  else if (item.fit === "none") scaleX = scaleY = 1
+  else if (item.fit === "scale-down") scaleX = scaleY = Math.min(1, contain)
+  const width = naturalWidth * scaleX
+  const height = naturalHeight * scaleY
+  const [offsetX, offsetY] = positionOffsets(
+    item.position,
+    rect.width - width,
+    rect.height - height,
+  )
+  ctx.save()
+  ctx.globalAlpha = item.alpha
+  ctx.beginPath()
+  ctx.rect(rect.x, rect.y, rect.width, rect.height)
+  ctx.clip()
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = "high"
+  ctx.drawImage(image, rect.x + offsetX, rect.y + offsetY, width, height)
+  ctx.restore()
+}
+
 /** Loads `url` into an `Image` and decodes it, or rejects after `timeoutMs`. */
 function loadImage(url: string, timeoutMs: number): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -141,233 +1055,86 @@ function loadImage(url: string, timeoutMs: number): Promise<HTMLImageElement> {
   })
 }
 
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(blob)
-  })
-}
-
-/** An `<img>`'s picture as a data URL: its own bytes when the browser can
- *  fetch them (offline too: `force-cache` and the service worker both answer),
- *  else the already-decoded pixels. */
-async function imageDataUrl(
-  image: HTMLImageElement,
-  timeoutMs: number,
-): Promise<string> {
-  const src = image.currentSrc || image.src
-  if (src.startsWith("data:")) return src
-  const controller = new AbortController()
-  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const response = await fetch(src, {
-      cache: "force-cache",
-      signal: controller.signal,
-    })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const blob = await response.blob()
-    if (blob.type && !blob.type.startsWith("image/")) {
-      throw new Error("Not an image")
-    }
-    return await blobToDataUrl(blob)
-  } catch (error) {
-    if (!image.complete || image.naturalWidth === 0) throw error
-    const canvas = document.createElement("canvas")
-    canvas.width = image.naturalWidth
-    canvas.height = image.naturalHeight
-    canvas.getContext("2d")?.drawImage(image, 0, 0)
-    return canvas.toDataURL("image/png")
-  } finally {
-    window.clearTimeout(timer)
-  }
-}
-
-// A tag's style with no author CSS at all, to tell what the page changed.
-// The sandbox is a hidden same-origin frame: the browser's own defaults, not
-// an approximation (a `<div>` is block, a `<ul>` indented, text is black).
-type DefaultStyles = Map<string, string>
-type Sandbox = {
-  frame: HTMLIFrameElement
-  document: Document
-  svg: Element
-  cache: Map<string, DefaultStyles>
-}
-let sandboxPromise: Promise<Sandbox> | null = null
-
-async function getSandbox(): Promise<Sandbox> {
-  // A frame taken out of the page (a test clearing the body) no longer
-  // computes styles; make another.
-  if (sandboxPromise && !(await sandboxPromise).frame.isConnected) {
-    sandboxPromise = null
-  }
-  sandboxPromise ??= new Promise<Sandbox>((resolve, reject) => {
-    const timer = window.setTimeout(
-      () => reject(new Error("Sandbox unavailable")),
-      IMAGE_LOAD_TIMEOUT_MS,
-    )
-    const frame = document.createElement("iframe")
-    frame.setAttribute("aria-hidden", "true")
-    frame.tabIndex = -1
-    frame.style.cssText =
-      "position:fixed;left:-10000px;top:0;width:100px;height:100px;border:0;visibility:hidden;pointer-events:none"
-    frame.srcdoc = "<!doctype html><html><body></body></html>"
-    frame.onload = () => {
-      window.clearTimeout(timer)
-      const frameDocument = frame.contentDocument
-      if (!frameDocument) return reject(new Error("Sandbox unavailable"))
-      const svg = frameDocument.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "svg",
-      )
-      frameDocument.body.append(svg)
-      resolve({ frame, document: frameDocument, svg, cache: new Map() })
-    }
-    frame.onerror = () => {
-      window.clearTimeout(timer)
-      reject(new Error("Sandbox unavailable"))
-    }
-    document.body.append(frame)
-  }).catch((error) => {
-    sandboxPromise = null
-    throw error
-  })
-  return sandboxPromise
-}
-
-function defaultStylesFor(sandbox: Sandbox, element: Element): DefaultStyles {
-  const key = `${element.namespaceURI}|${element.localName}`
-  let styles = sandbox.cache.get(key)
-  if (styles) return styles
-  const pristine = sandbox.document.createElementNS(
-    element.namespaceURI,
-    element.localName,
-  )
-  const inSvg = element.namespaceURI === "http://www.w3.org/2000/svg"
-  ;(inSvg ? sandbox.svg : sandbox.document.body).append(pristine)
-  const computed = sandbox.document.defaultView!.getComputedStyle(pristine)
-  styles = new Map()
-  for (let index = 0; index < computed.length; index += 1) {
-    const name = computed[index]!
-    styles.set(name, computed.getPropertyValue(name))
-  }
-  pristine.remove()
-  sandbox.cache.set(key, styles)
-  return styles
-}
-
-// What never changes a still picture, or only restates another property: the
-// logical twins (`margin-inline-start` of `margin-left`, `inline-size` of
-// `width`) keep the output a third smaller, with the physical ones written.
-const SKIPPED_PROPERTY =
-  /^(?:transition|animation|scroll|overscroll|cursor$|pointer-events$|user-select$|touch-action$|will-change$|resize$|interactivity$|-webkit-(?:tap-highlight|user|locale))|(?:^|-)(?:inline|block)(?:-|$)/u
-
-// Written whatever the sandbox says, because their computed value depends on
-// other properties and so is no evidence of what the element asked for. A
-// size the sandbox happens to share with an element is not "the default": an
-// element laid out `auto` there would not take the same width here. A border
-// width computes to 0 under `border-style: none`, but the same 0 left out
-// would come back as the initial `medium` once the style is `solid`.
-const ALWAYS_WRITTEN_PROPERTY =
-  /^(?:width|height|(?:border-(?:top|right|bottom|left)|outline|column-rule)-width)$/u
-
-const NOT_COPIED_ELEMENTS = new Set(["script", "style", "noscript", "template"])
-
-function camelToKebab(name: string) {
-  return name.replace(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`)
-}
-
-/** Sets inline overrides and returns the function that puts back what was
- *  there; the page is changed only while it is measured and read, in one
- *  synchronous stretch, so nothing is painted in between. */
-function applyTemporaryStyle(
-  element: HTMLElement,
-  style: Record<string, string> | undefined,
-): () => void {
-  if (!style) return () => undefined
-  const previous = element.getAttribute("style")
-  for (const [name, value] of Object.entries(style)) {
-    element.style.setProperty(camelToKebab(name), value)
-  }
-  return () => {
-    if (previous === null) element.removeAttribute("style")
-    else element.setAttribute("style", previous)
-  }
-}
-
-type CloneContext = {
-  sandbox: Sandbox
-  exclude: (element: Element) => boolean
-  images: Array<{ source: HTMLImageElement; clone: HTMLImageElement }>
-}
-
-/** The attributes worth keeping: SVG geometry (`d`, `viewBox`, ...) and an
- *  image's `src`. Classes mean nothing without the page's stylesheets, and
- *  accessible names carry people's names the picture does not need. */
-function pruneAttributes(clone: Element) {
-  const isSvg = clone.namespaceURI === "http://www.w3.org/2000/svg"
-  for (const { name, value } of Array.from(clone.attributes)) {
-    const keep = isSvg
-      ? !/^(?:xmlns$|class$|style$|role$|aria-|data-)/u.test(name)
-      : name === "src"
-    if (!keep) clone.removeAttribute(name)
-    else clone.setAttribute(name, cleanText(value))
-  }
-}
-
-function cloneTree(source: Element, context: CloneContext): Element | null {
-  const computed = getComputedStyle(source)
-  if (computed.display === "none") return null
-  const clone = source.cloneNode(false) as Element
-  pruneAttributes(clone)
-
-  const defaults = defaultStylesFor(context.sandbox, source)
-  let css = ""
-  for (let index = 0; index < computed.length; index += 1) {
-    const name = computed[index]!
-    if (SKIPPED_PROPERTY.test(name)) continue
-    const value = computed.getPropertyValue(name)
-    if (ALWAYS_WRITTEN_PROPERTY.test(name) || defaults.get(name) !== value) {
-      css += `${name}:${value};`
-    }
-  }
-  clone.setAttribute("style", cleanText(css))
-
-  if (source instanceof HTMLImageElement) {
-    clone.removeAttribute("srcset")
-    context.images.push({ source, clone: clone as HTMLImageElement })
-    return clone
-  }
-  for (const child of Array.from(source.childNodes)) {
-    if (child.nodeType === Node.TEXT_NODE) {
-      clone.append(document.createTextNode(cleanText(child.textContent)))
-    } else if (
-      child instanceof Element &&
-      !NOT_COPIED_ELEMENTS.has(child.localName) &&
-      !context.exclude(child)
-    ) {
-      const childClone = cloneTree(child, context)
-      if (childClone) clone.append(childClone)
-    }
-  }
-  return clone
-}
-
-async function embedImages(context: CloneContext, timeoutMs: number) {
+/** Each icon as a standalone SVG image, sized to the pixels it is drawn in
+ *  (so any browser rasterises it crisply). One that will not load is left out. */
+async function loadIcons(
+  items: Item[],
+  ratio: number,
+): Promise<Map<IconItem, HTMLImageElement>> {
+  const icons = new Map<IconItem, HTMLImageElement>()
   await Promise.all(
-    context.images.map(async ({ source, clone }) => {
+    items.map(async (item) => {
+      if (item.kind !== "icon") return
+      const svg = item.svg
+      svg.setAttribute("width", String(item.rect.width * ratio))
+      svg.setAttribute("height", String(item.rect.height * ratio))
+      let markup = new XMLSerializer().serializeToString(svg)
+      if (!markup.includes(`xmlns="${SVG_NS}"`)) {
+        markup = markup.replace("<svg", `<svg xmlns="${SVG_NS}"`)
+      }
       try {
-        const dataUrl = await imageDataUrl(source, timeoutMs)
-        await loadImage(dataUrl, timeoutMs)
-        clone.setAttribute("src", dataUrl)
+        icons.set(
+          item,
+          await loadImage(
+            `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`,
+            IMAGE_LOAD_TIMEOUT_MS,
+          ),
+        )
       } catch {
-        // The slot keeps its size (its dimensions are inline); only the
-        // picture is missing.
-        clone.setAttribute("src", TRANSPARENT_PIXEL)
+        // An icon is decoration: the picture is complete without it.
       }
     }),
   )
+  return icons
+}
+
+function paint(
+  ctx: CanvasRenderingContext2D,
+  recording: Recording,
+  icons: Map<IconItem, HTMLImageElement>,
+  ratio: number,
+  background: string,
+) {
+  ctx.fillStyle = background
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.scale(ratio, ratio)
+  for (const item of recording.items) {
+    switch (item.kind) {
+      case "box":
+        paintBox(ctx, item)
+        break
+      case "clip":
+        ctx.save()
+        ctx.beginPath()
+        addRoundedRect(ctx, item.rect, withRadii(item.radii))
+        ctx.clip()
+        break
+      case "end-clip":
+        ctx.restore()
+        break
+      case "text":
+        paintText(ctx, item)
+        break
+      case "image":
+        paintImage(ctx, item)
+        break
+      case "icon": {
+        const icon = icons.get(item)
+        if (!icon) break
+        ctx.save()
+        ctx.globalAlpha = item.alpha
+        ctx.drawImage(
+          icon,
+          item.rect.x,
+          item.rect.y,
+          item.rect.width,
+          item.rect.height,
+        )
+        ctx.restore()
+        break
+      }
+    }
+  }
 }
 
 function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -379,94 +1146,35 @@ function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
   })
 }
 
-// WebKit (every iPhone browser) can paint a foreignObject's images blank on
-// the first draw of a freshly loaded SVG; a second draw a moment later shows
-// them. Other engines get it right the first time and are drawn once.
-function needsSecondDraw() {
-  const agent = navigator.userAgent
-  return (
-    /AppleWebKit/u.test(agent) &&
-    !/(?:Chrome|Chromium|Edg|OPR|Android)\//u.test(agent)
-  )
-}
-
 /**
  * Renders `element` — its full height, not only the part on screen — to a PNG
  * at the screen's pixel density. The page is read synchronously and left as
- * it was; everything after that (images, rendering) works on the copy.
+ * it was; everything after that (icons, painting) works on what was recorded.
+ * The image is the element's width, runs from 16px above its content to 16px
+ * below the lowest thing painted, and shows nothing marked for exclusion.
  */
 export async function renderElementToPng(
   element: HTMLElement,
   options: SnapshotOptions = {},
 ): Promise<Blob> {
-  const sandbox = await getSandbox()
-  const context: CloneContext = {
-    sandbox,
-    exclude: options.exclude ?? defaultExclude,
-    images: [],
-  }
-
-  // Measured and copied with the image's own padding in force, so the
-  // styles and the size agree. Restored before anything else can paint.
-  const restore = applyTemporaryStyle(element, options.rootStyle)
-  let root: Element | null
-  let width: number
-  let height: number
-  try {
-    const rect = element.getBoundingClientRect()
-    width = Math.ceil(rect.width)
-    height = Math.ceil(Math.max(rect.height, element.scrollHeight))
-    root = cloneTree(element, context)
-  } finally {
-    restore()
-  }
-  if (!root || width < 1 || height < 1) {
+  const recording = new Recorder(
+    element,
+    options.exclude ?? defaultExclude,
+  ).record()
+  const { width, height } = recording
+  if (recording.items.length === 0 || width < 1 || height < 1) {
     throw new Error("Niente da trasformare in immagine.")
   }
-  for (const [name, value] of Object.entries(options.rootStyle ?? {})) {
-    ;(root as HTMLElement).style.setProperty(camelToKebab(name), value)
-  }
-  ;(root as HTMLElement).style.setProperty("width", `${width}px`)
-
-  await embedImages(context, IMAGE_LOAD_TIMEOUT_MS)
 
   const ratio = snapshotPixelRatio(width, height, options.pixelRatio)
-  // Rounded down, so the 16M-pixel clamp is never exceeded by a rounded-up row.
-  const canvasWidth = Math.max(1, Math.floor(width * ratio))
-  const canvasHeight = Math.max(1, Math.floor(height * ratio))
-  const markup = new XMLSerializer().serializeToString(root)
-  // The SVG is exactly canvas-sized and drawn 1:1; the density comes from a
-  // CSS scale on the content, not from the SVG's viewBox. WebKit, scaling a
-  // foreignObject by viewBox, paints every positioned element (each card here)
-  // unscaled at the wrong place; a plain CSS transform is laid out right and
-  // still rasterised at full density.
-  const scaleX = canvasWidth / width
-  const scaleY = canvasHeight / height
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}">` +
-    `<foreignObject x="0" y="0" width="${canvasWidth}" height="${canvasHeight}">` +
-    `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden;transform:scale(${scaleX},${scaleY});transform-origin:0 0">${markup}</div>` +
-    `</foreignObject></svg>`
-  const image = await loadImage(
-    `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
-    IMAGE_LOAD_TIMEOUT_MS,
-  )
-
   const canvas = document.createElement("canvas")
-  canvas.width = canvasWidth
-  canvas.height = canvasHeight
-  const canvasContext = canvas.getContext("2d")
-  if (!canvasContext) throw new Error("Il browser non supporta i PNG.")
-  const paint = () => {
-    canvasContext.fillStyle = options.background ?? "#ffffff"
-    canvasContext.fillRect(0, 0, canvasWidth, canvasHeight)
-    canvasContext.drawImage(image, 0, 0)
-  }
-  paint()
-  if (needsSecondDraw()) {
-    await delay(100)
-    paint()
-  }
+  canvas.width = Math.max(1, Math.round(width * ratio))
+  canvas.height = Math.max(1, Math.round(height * ratio))
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Il browser non supporta i PNG.")
+
+  const icons = await loadIcons(recording.items, ratio)
+  paint(ctx, recording, icons, ratio, options.background ?? "#ffffff")
 
   const png = await canvasToPng(canvas)
   if (png.type && png.type !== "image/png") {

@@ -1011,8 +1011,10 @@ function DutySummaryDayCard({
         style={{ backgroundColor: edgeColor }}
       />
       <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
+        {/* In rem, like the label inside it: a fixed 34px column let the
+            label run into the names once the phone enlarged its text. */}
         <span
-          className="flex w-[34px] shrink-0 flex-col gap-0.5 pt-px"
+          className="flex w-[2.25rem] shrink-0 flex-col gap-0.5 pt-px"
           style={{ color: edgeColor }}
         >
           <span className="block text-base leading-none font-black tracking-tight">
@@ -1086,9 +1088,9 @@ function handleSummaryDialogKeyDown(
 
 /**
  * The Comandate counterpart of `AnnouncementView` in `CrewManagement.tsx`:
- * same header grammar (eyebrow, title, close), the same floating "Salva
- * immagine" button (F4: a screenshot of `captureRef`'s content, saved and
- * copied), same text-size-aware column rule
+ * same header grammar (eyebrow, title, close), the same floating "Copia
+ * immagine" button (F4: a screenshot of `captureRef`'s content, copied), same
+ * text-size-aware column rule
  * (`minmax(min(100%,8.8rem),1fr)`, see that file's own comment for why 8.8rem
  * keeps two columns from 320 CSS px and collapses to one at the 320 px/200%
  * text stress). Reachable only once a rota exists (`DutyManagement`'s own
@@ -1150,8 +1152,8 @@ function DutySummaryView({
       ref={dialogRef}
       role="dialog"
     >
-      {/* The bottom padding keeps the last card clear of the floating save
-          button; the image swaps both paddings for a plain 16px. */}
+      {/* The bottom padding keeps the last card clear of the floating copy
+          button; the image has a plain 16px above and below instead. */}
       <div
         className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]"
         ref={captureRef}

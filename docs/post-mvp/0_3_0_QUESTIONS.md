@@ -1,9 +1,20 @@
 # Owner decisions and open questions — 0.3.0
 
-Updated 2026-10-03. The newest decisions and the questions still open are
+Updated 2026-10-04. The newest decisions and the questions still open are
 first; older decisions follow. Later decisions supersede earlier ones where
 they differ. The plan toward a shared database and 1.0.0 is in
 [`1_0_0_NEXT_STEPS.md`](1_0_0_NEXT_STEPS.md).
+
+## Decisions of 2026-10-04
+
+After using the deployed F4 on their Android phone:
+
+| Topic            | Owner report or decision                                                                                                                                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Saving the image | Copying works; the download is redundant with the copied screenshot and is removed. Keep **copy and share** only.                                                                                                                                                |
+| The image itself | Broken on the phone: names wrap after a few letters with room to spare and are drawn over the next line, double names and surnames break, the "Equipaggi senza barca" heading runs under the cards, third lines leave the card. The image must match the screen. |
+| Summary content  | Volunteers (`ADV`, `IS`, `CT`) who are not in a crew are not shown. "Tutti gli allievi assegnati" stays on screen but not in the image.                                                                                                                          |
+| Home menu        | Every menu card takes the blue accent; no red.                                                                                                                                                                                                                   |
 
 ## Decisions of 2026-10-03
 
@@ -56,7 +67,8 @@ for new work, planned as F2 and F3 in `04_IMPLEMENTATION_PLAN.md`.
    GitHub Support purges them; the owner has deferred that request.
 2. **The remaining physical checks (UG2).** Done on Android on 2026-10-03:
    the assistant paste, the installed app offline and phone Back. Still to
-   check: the F4 summary image (saved, copied and pasted in WhatsApp), the
+   check: the F4 summary image after the 2026-10-04 fix (Copia immagine,
+   pasted in WhatsApp, and Condividi), the
    update banner, and speech on an iPhone (Apple was never tested). The
    checklist is `UG1_DEVICE_VALIDATION.md`.
 

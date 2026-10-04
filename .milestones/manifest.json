@@ -652,7 +652,7 @@
     {
       "id": "F4",
       "category": "FEATURE",
-      "status": "COMPLETE",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/F4/verification.json",

@@ -8,25 +8,16 @@ import {
 
 import {
   canShareFile,
-  isIosDevice,
+  copySummaryImage,
   makeSummaryFilename,
-  saveAndCopySummaryImage,
+  shareImageFile,
 } from "./summaryShare"
-
-const IPHONE =
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
-const ANDROID =
-  "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36"
 
 const pngBlob = () => new Blob(["png"], { type: "image/png" })
 
 let browser: ReturnType<typeof stubSummaryImageBrowser>
 
-function setAgent(agent: string) {
-  vi.spyOn(navigator, "userAgent", "get").mockReturnValue(agent)
-}
-
-/** A browser that can share files, as an iPhone's can. */
+/** A browser that can share files, as an Android phone's or an iPhone's can. */
 function stubSharing(
   share: (data: ShareData) => Promise<void> = () => Promise.resolve(),
 ) {
@@ -42,32 +33,27 @@ function stubSharing(
   return shareSpy
 }
 
+type TestHook = { __CVC_TEST__?: { summaryImage?: Blob } }
+
 beforeEach(() => {
   browser = stubSummaryImageBrowser()
-  setAgent(ANDROID)
 })
 afterEach(() => {
   restoreSummaryImageBrowser()
-  const target = navigator as unknown as Record<string, unknown>
-  delete target.maxTouchPoints
+  delete (window as TestHook).__CVC_TEST__
 })
 
-describe("saveAndCopySummaryImage", () => {
-  it("downloads the file and copies the image on Android and computers", async () => {
+describe("copySummaryImage", () => {
+  it("copies the image to the clipboard, as an image, and hands back the file for Condividi", async () => {
     const png = pngBlob()
-    const result = await saveAndCopySummaryImage({
+    const result = await copySummaryImage({
       png: Promise.resolve(png),
       filename: "riepilogo.png",
     })
 
-    expect(result).toMatchObject({
-      saved: "download",
-      copied: true,
-      shareBlocked: false,
-    })
+    expect(result.copied).toBe(true)
     expect(result.file?.name).toBe("riepilogo.png")
     expect(result.file?.type).toBe("image/png")
-    expect(browser.downloads).toEqual(["riepilogo.png"])
     expect(browser.clipboardWrite).toHaveBeenCalledOnce()
     const [[item]] = browser.clipboardWrite.mock.calls[0] as [
       [FakeClipboardItem],
@@ -76,10 +62,29 @@ describe("saveAndCopySummaryImage", () => {
     expect(await item.items["image/png"]).toBe(png)
   })
 
+  it("only copies: no file is downloaded and the share sheet is not opened on its own", async () => {
+    const share = stubSharing()
+    const createObjectURL = vi.fn(() => "blob:summary")
+    URL.createObjectURL = createObjectURL
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click")
+    try {
+      await copySummaryImage({
+        png: Promise.resolve(pngBlob()),
+        filename: "riepilogo.png",
+      })
+
+      expect(share).not.toHaveBeenCalled()
+      expect(createObjectURL).not.toHaveBeenCalled()
+      expect(click).not.toHaveBeenCalled()
+    } finally {
+      delete (URL as unknown as Record<string, unknown>).createObjectURL
+    }
+  })
+
   it("starts the clipboard write inside the tap, before the image is even ready", () => {
     // Safari accepts the write only from the gesture, with a promise for the
     // data to be filled in later.
-    void saveAndCopySummaryImage({
+    void copySummaryImage({
       png: new Promise(() => undefined),
       filename: "riepilogo.png",
     })
@@ -90,121 +95,38 @@ describe("saveAndCopySummaryImage", () => {
     expect(item.items["image/png"]).toBeInstanceOf(Promise)
   })
 
-  it("on an iPhone opens the share sheet instead of downloading (a download goes to Files, not Photos), and copies", async () => {
-    setAgent(IPHONE)
-    const share = stubSharing()
-    const result = await saveAndCopySummaryImage({
-      png: Promise.resolve(pngBlob()),
-      filename: "riepilogo.png",
-    })
-
-    expect(result).toMatchObject({
-      saved: "share",
-      copied: true,
-      shareBlocked: false,
-    })
-    expect(share).toHaveBeenCalledOnce()
-    const [data] = share.mock.calls[0]!
-    expect(data.files).toHaveLength(1)
-    expect(data.files![0]).toMatchObject({
-      name: "riepilogo.png",
-      type: "image/png",
-    })
-    expect(browser.downloads).toEqual([])
-    expect(browser.clipboardWrite).toHaveBeenCalledOnce()
-  })
-
-  it("treats closing the share sheet as nothing to report", async () => {
-    setAgent(IPHONE)
-    stubSharing(() =>
-      Promise.reject(new DOMException("Share canceled", "AbortError")),
-    )
-    const result = await saveAndCopySummaryImage({
-      png: Promise.resolve(pngBlob()),
-      filename: "riepilogo.png",
-    })
-
-    expect(result).toMatchObject({
-      saved: "share",
-      copied: true,
-      shareBlocked: false,
-    })
-    expect(browser.downloads).toEqual([])
-  })
-
-  it("reports a share sheet the browser would not open from this tap, so a second tap can", async () => {
-    setAgent(IPHONE)
-    stubSharing(() =>
-      Promise.reject(new DOMException("Too late", "NotAllowedError")),
-    )
-    const result = await saveAndCopySummaryImage({
-      png: Promise.resolve(pngBlob()),
-      filename: "riepilogo.png",
-    })
-
-    expect(result).toMatchObject({
-      saved: "none",
-      copied: true,
-      shareBlocked: true,
-    })
-    expect(result.file).not.toBeNull()
-    expect(browser.downloads).toEqual([])
-  })
-
-  it("downloads when sharing fails for any other reason", async () => {
-    setAgent(IPHONE)
-    stubSharing(() => Promise.reject(new TypeError("Broken")))
-    const result = await saveAndCopySummaryImage({
-      png: Promise.resolve(pngBlob()),
-      filename: "riepilogo.png",
-    })
-
-    expect(result).toMatchObject({ saved: "download", shareBlocked: false })
-    expect(browser.downloads).toEqual(["riepilogo.png"])
-  })
-
-  it("downloads on an iPhone that cannot share files", async () => {
-    setAgent(IPHONE)
-    const result = await saveAndCopySummaryImage({
-      png: Promise.resolve(pngBlob()),
-      filename: "riepilogo.png",
-    })
-
-    expect(result.saved).toBe("download")
-    expect(browser.downloads).toEqual(["riepilogo.png"])
-  })
-
-  it("saves without copying where the browser has no clipboard", async () => {
+  it("says the copy failed, and still gives the file, where the browser has no clipboard", async () => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: undefined,
     })
-    const result = await saveAndCopySummaryImage({
+    const result = await copySummaryImage({
       png: Promise.resolve(pngBlob()),
       filename: "riepilogo.png",
     })
 
-    expect(result).toMatchObject({ saved: "download", copied: false })
-    expect(browser.downloads).toEqual(["riepilogo.png"])
+    expect(result.copied).toBe(false)
+    expect(result.file).not.toBeNull()
   })
 
-  it("says so when the clipboard refuses the image, and still saves it", async () => {
+  it("says so when the clipboard refuses the image, and still gives the file", async () => {
     browser.clipboardWrite.mockRejectedValue(
       new DOMException("Denied", "NotAllowedError"),
     )
-    const result = await saveAndCopySummaryImage({
+    const result = await copySummaryImage({
       png: Promise.resolve(pngBlob()),
       filename: "riepilogo.png",
     })
 
-    expect(result).toMatchObject({ saved: "download", copied: false })
+    expect(result.copied).toBe(false)
+    expect(result.file).not.toBeNull()
     expect(browser.clipboardWrite).toHaveBeenCalledOnce()
   })
 
   it("gives a browser that takes no promise for the clipboard data the finished image", async () => {
     const png = pngBlob()
     browser.clipboardWrite.mockRejectedValueOnce(new TypeError("No promises"))
-    const result = await saveAndCopySummaryImage({
+    const result = await copySummaryImage({
       png: Promise.resolve(png),
       filename: "riepilogo.png",
     })
@@ -217,48 +139,24 @@ describe("saveAndCopySummaryImage", () => {
     expect(item.items["image/png"]).toBe(png)
   })
 
-  it("reports nothing saved and nothing copied when the image could not be made", async () => {
-    const result = await saveAndCopySummaryImage({
+  it("reports nothing copied and no file when the image could not be made", async () => {
+    const result = await copySummaryImage({
       png: Promise.reject(new Error("canvas too large")),
       filename: "riepilogo.png",
     })
 
-    expect(result).toEqual({
-      saved: "none",
-      copied: false,
-      shareBlocked: false,
-      file: null,
-    })
-    expect(browser.downloads).toEqual([])
-  })
-})
-
-describe("isIosDevice", () => {
-  it("knows an iPhone, an iPad and an iPad that asks for the desktop site", () => {
-    setAgent(IPHONE)
-    expect(isIosDevice()).toBe(true)
-
-    setAgent(
-      "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
-    )
-    expect(isIosDevice()).toBe(true)
-
-    // An iPad in desktop mode says it is a Mac, but a Mac has no touch screen.
-    setAgent(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
-    )
-    vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel")
-    expect(isIosDevice()).toBe(false)
-    Object.defineProperty(navigator, "maxTouchPoints", {
-      configurable: true,
-      value: 5,
-    })
-    expect(isIosDevice()).toBe(true)
+    expect(result).toEqual({ copied: false, file: null })
   })
 
-  it("is false for Android and computers", () => {
-    setAgent(ANDROID)
-    expect(isIosDevice()).toBe(false)
+  it("hands the image to a page that asked for it (the browser journeys' test hook), and to no other", async () => {
+    const png = pngBlob()
+    await copySummaryImage({ png: Promise.resolve(png), filename: "a.png" })
+    expect((window as TestHook).__CVC_TEST__).toBeUndefined()
+
+    const hook: { summaryImage?: Blob } = {}
+    ;(window as TestHook).__CVC_TEST__ = hook
+    await copySummaryImage({ png: Promise.resolve(png), filename: "a.png" })
+    expect(hook.summaryImage).toBe(png)
   })
 })
 
@@ -281,6 +179,32 @@ describe("canShareFile", () => {
       }),
     })
     expect(canShareFile(file)).toBe(false)
+  })
+})
+
+describe("shareImageFile", () => {
+  const file = new File(["png"], "riepilogo.png", { type: "image/png" })
+
+  it("opens the share sheet with the file", async () => {
+    const share = stubSharing()
+    expect(await shareImageFile(file)).toBe("shared")
+    expect(share).toHaveBeenCalledWith({ files: [file] })
+  })
+
+  it("treats closing the sheet as nothing to report", async () => {
+    stubSharing(() =>
+      Promise.reject(new DOMException("Share canceled", "AbortError")),
+    )
+    expect(await shareImageFile(file)).toBe("cancelled")
+  })
+
+  it("tells a sheet the browser refused to open from this tap from any other failure", async () => {
+    stubSharing(() =>
+      Promise.reject(new DOMException("Too late", "NotAllowedError")),
+    )
+    expect(await shareImageFile(file)).toBe("blocked")
+    stubSharing(() => Promise.reject(new TypeError("Broken")))
+    expect(await shareImageFile(file)).toBe("failed")
   })
 })
 

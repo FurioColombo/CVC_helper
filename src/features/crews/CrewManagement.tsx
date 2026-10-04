@@ -987,8 +987,8 @@ function CrewCopyConfirmDialog({
  * boat groups and Mezzi, A terra and the empty boats, closed by a small
  * "Tutti gli allievi assegnati" note when no student is left to place. A
  * fully assigned 13-crew course still fits one screen without scrolling.
- * F4: the floating "Salva immagine" button saves and copies a screenshot of
- * this very content (`captureRef`), header included, close button not.
+ * F4: the floating "Copia immagine" button copies a screenshot of this very
+ * content (`captureRef`), header included, close button not.
  */
 function AnnouncementView({
   summary,
@@ -1013,8 +1013,8 @@ function AnnouncementView({
       ref={dialogRef}
       role="dialog"
     >
-      {/* The bottom padding keeps the last card clear of the floating save
-          button; the image swaps both paddings for a plain 16px. */}
+      {/* The bottom padding keeps the last card clear of the floating copy
+          button; the image has a plain 16px above and below instead. */}
       <div
         className="mx-auto min-h-full w-full max-w-2xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]"
         ref={captureRef}

@@ -405,3 +405,14 @@ salvata e copiata. Incollala su WhatsApp.") and offers "Condividi" where the
 phone can share files; it hides after about six seconds unless focus is in it.
 The content keeps 5rem of room under it so the button never covers the last
 card, at 390 px, 320 px and 320 px with 200% text.
+
+F4 follow-up, 2026-10-04: the floating pill now reads "Copia immagine" (a copy
+icon; accessible name "Copia immagine riepilogo") and only copies — nothing is
+downloaded. Its note says "Immagine copiata. Incollala su WhatsApp." and offers
+"Condividi" where the phone can share files. The image is painted from the
+screen's own layout, so its line breaks are the screen's, and it leaves out
+the closing "Tutti gli allievi assegnati" note, ending 16 px below the last
+card. The crew summary no longer lists volunteers outside a crew; its first
+section is "Allievi disponibili". The Comandate day label sits in a 2.25rem
+column that grows with the text. Every Home menu card has the blue top
+accent; the red one is gone.
