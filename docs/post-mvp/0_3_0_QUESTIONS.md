@@ -61,12 +61,26 @@ for new work, planned as F2 and F3 in `04_IMPLEMENTATION_PLAN.md`.
 
 ## Still open for the owner
 
-1. **Delete the old copies (a Codex session does it).** Until then the Codex
-   worktree `.codex/worktrees/ux1-pages-promotion` and two checkpoint refs
-   under `refs/codex/turn-diffs/` keep the pre-rewrite history on this
-   computer. Run it when no agent is working in the repository, since it
-   prunes objects. GitHub keeps serving the old commits by their old ids until
-   GitHub Support purges them; the owner has deferred that request.
+1. **Delete the old copies — done locally, 2026-10-06.** The authorized
+   Codex session removed `.codex/worktrees/ux1-pages-promotion/CVC_helper`
+   and its parent folder. The two old checkpoint refs were already absent;
+   no stale ref remained to delete. Retained session refs have zero
+   `data/private/` entries. All 373 remaining reflog entries were expired;
+   `git gc --prune=now` removed marker
+   `70f62a58231ad5c65634e5a339055e6b551c482d`, which is also absent from
+   `git rev-list --all --reflog`. Only the main worktree remains, HEAD was
+   unchanged at `7df7574`, and Node 24.19.0 `npm run check:repository`
+   passed. Checkpoint verification `npm run verify:quick` passed (56 test
+   files, 952 tests). Git object storage fell from about 63.23 MiB to 44.87 MiB;
+   the 2,262 ignored private files were untouched. A read-only search under
+   the user profile, including Desktop, Documents, Downloads, OneDrive and
+   `.codex`, checked 92,105 directories and 12 Git repositories, skipping
+   `node_modules` and private data. Only the main checkout matched the
+   CVC_helper origin; no additional copy was found or deleted. Two directories
+   and 4,379 link targets were unreadable, limiting the search coverage.
+   GitHub keeps serving the old commits by their old ids until GitHub Support
+   purges them;
+   the owner has deferred that request. No push was performed.
 2. **The remaining physical checks (UG2).** Done on Android: the assistant
    paste, the installed app offline and phone Back (2026-10-03), the F4
    summary images (2026-10-05) and the update banner, seen a couple of times
