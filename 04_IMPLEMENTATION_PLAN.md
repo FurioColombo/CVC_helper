@@ -1,6 +1,6 @@
 # Implementation plan — active 0.3.0 work
 
-Updated 2026-10-03. Read **Where this cycle stands**, then only the section for
+Updated 2026-10-05. Read **Where this cycle stands**, then only the section for
 the active milestone. Closed 0.3.0 milestone details are in
 `archive/v0.3.0-completed-milestones.md`; the full plan through R1 is at
 `archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`. Completed 0.1.0 and
@@ -30,7 +30,7 @@ lifecycle.
 | F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
 | F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
 | F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
-| F4 | Reopened on 2026-10-04 for the owner's phone feedback: the image is now painted from the screen's own layout (copy and share only, no download), unplaced volunteers leave the summary, Home menu cards are all blue. Awaiting the owner's phone check; `verify:all` evidence is re-recorded after it. |
+| F4 | Complete. The owner's 2026-10-03/04 phone feedback: a free seat takes a volunteer; the crew and Comandate summaries are copied as an image painted from the screen's own layout (Copia immagine, Condividi; no download); unplaced volunteers leave the summary; the Home menu cards are all blue. The owner confirmed it on Android on 2026-10-05. `.evidence/F4/` records `npm run verify:all` on the deployed source (952 unit tests; 200 browser tests passed, 39 skipped, none failed), the browser evidence and the self-review (no blocker). |
 | UG2 | Pending: the owner's remaining physical checks and the precondition below. On 2026-10-03 the owner confirmed on Android phone Back, the assistant paste (ChatGPT and Claude) and the installed app offline. On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
 
 **Before the next Codex session (precondition for UG2):** the published
@@ -360,7 +360,7 @@ that source.
 ## F4 — Free seat for volunteers, summary image as a screenshot
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** COMPLETE
 
 The owner's 2026-10-03 phone feedback. They confirmed on Android that phone
 Back, the assistant paste (ChatGPT and Claude apps) and the installed app
@@ -424,8 +424,12 @@ runs into the names at 320 px with 200% text. New browser checks use double
 names and surnames, a crew without a boat and 3–4 names per card, require
 every on-screen word to have ink in its place and no card to have ink
 outside it, and prove that the image survives text measuring 18% wider or
-15% narrower than the screen. The full `verify:all` evidence is re-recorded
-after the owner confirms the image on the phone.
+15% narrower than the screen. On 2026-10-05 the owner confirmed on Android, on
+the deployed `5580d33`, that the copied crew and Comandate images, the
+summary and the blue Home cards are all good. `.evidence/F4/` then recorded
+`verify:all` once on that source: 952 unit tests, the full week, the offline
+OCR check, and 200 browser tests passed with 39 skipped by design, none
+failed. The iPhone copy and share remain the owner's to check at UG2.
 
 ## UG2 — 0.3.0 integration and release gate
 

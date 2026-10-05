@@ -1,16 +1,16 @@
 {
   "milestone": "F4",
   "recordedBy": "npm run evidence -- F4 (scripts/record-verification.mjs), which ran npm run verify:all including the full browser suite; summarised from that run's output",
-  "sourceDigest": "a06237e6a3f6a18d9a49c5f5a8bd79ffd585676765b73f9faf77b75351e23b4b",
-  "gitCommit": "43b6654",
+  "sourceDigest": "293f87b9113385ee626730ef4632948e41006538518f48aa6cba6c19b4d0a70b",
+  "gitCommit": "5580d33",
   "runtime": "v24.21.0",
   "command": "npm run verify:e2e (all Playwright projects, own server on a free port, one worker)",
   "exitCode": 0,
   "fullSuite": {
-    "passed": 196,
-    "skipped": 34,
+    "passed": 200,
+    "skipped": 39,
     "failed": 0,
-    "note": "Skips are the existing per-project gating. Two earlier full runs on the same source each lost tests that pass alone: the 40-student 320 px/200% crew layout and the denied-microphone dictation alert (first run), and WebKit phone Back after saving a Valutazioni note (second run). Each passed in isolation (6 of 6 and 6 of 6 repeats); F4 changes no navigation, evaluation or speech file. The third run, recorded here, is clean."
+    "note": "Skips are the existing per-project gating. Recorded once, after the owner confirmed the deployed image on the phone, at the owner's request (2026-10-04) not to repeat the full run on every change. The first F4 source (43b6654) took three full runs: the first two each lost tests unrelated to F4 that passed alone."
   },
   "journeys": {
     "ux2-crew-interactions: fills a chosen free seat with an available volunteer (F4)": {
@@ -22,19 +22,20 @@
     "f3-crew-summary": {
       "projects": ["pixel-7-chrome", "iphone-13-webkit-core"],
       "covers": [
-        "the floating Salva immagine button saves a PNG whose width is the content's CSS width times the device pixel ratio and whose height covers every group of a 13-crew course",
-        "the PNG matches Playwright's own screenshot of the same content (mean greyscale difference within 2.5, under 1.2% of pixels off, block colour within 2.2), and a blank, a 6 px shifted and a greyscale image are rejected on every run",
-        "the close button's place is empty in the image; the clipboard holds an image/png of the same size",
-        "offline, after a width change forces a new render, the boat logos are still in the image",
+        "Copia immagine copies a PNG of the 13-crew summary whose width is the content's CSS width times the device pixel ratio and which ends 16 px below the last card, without the closing 'Tutti gli allievi assegnati' note",
+        "the PNG matches Playwright's own screenshot of the same content (mean greyscale difference within 2.5, under 1.2% of pixels off, 12 px block colour within 2.5), and a blank, a 6 px shifted and a greyscale image are rejected on every run",
+        "double names and surnames, three and four names per card, a crew with no boat, minors, duty and role badges, A terra and an empty boat at 390x844, 320 px and 320 px/200% text: every on-screen word has ink in its place in the PNG and no card has ink outside it (Pixel 7 and WebKit)",
+        "the image is unchanged when the canvas measures text 18% wider or 15% narrower than the page laid it out (the failure mode seen on the owner's Android phone); with calibration disabled the same checks fail",
+        "offline, the boat logos are still in the image",
         "at 390 px, 320 px and 320 px/200% text the last card ends above the button at the end of the scroll, the button is at least 48 px tall, the close button is not covered and nothing scrolls sideways",
-        "WebKit makes the image with the logos (download path: Playwright WebKit has no navigator.share)",
+        "WebKit makes the image with the logos and icons",
         "the F3 read-view checks: 13 crews and ten D1 crews on one 390x844 screen, long boat numbers, logos after going offline"
       ]
     },
     "f3-duty-summary": {
       "projects": ["pixel-7-chrome"],
       "covers": [
-        "the Comandate summary saves an image of the screen from the same floating button"
+        "the Comandate summary copies an image of the screen from the same floating button, at 390x844, 320 px and 320 px/200% text"
       ]
     },
     "c1-crew-management, crew-copy-read, crew-management-gate, u09-crews": {
@@ -42,7 +43,7 @@
       "note": "regression of the crew page around the changed button and seat handling; all passed where they run"
     }
   },
-  "visualCheck": "Reviewed by the orchestrating session: the exported 13-crew PNG (Chromium 1023x1934 at 390 px; WebKit 1170x2211), the D1, long-number and offline variants, the Comandate PNG, and both views with the button and its note at 390x844 and 320 px/200% text. Synthetic data; not stored.",
-  "physicalDevice": "Not run by an agent. On 2026-10-03 the owner passed phone Back, the assistant paste (ChatGPT and Claude apps) and the installed app offline on Android. Saving, copying and pasting the new image in WhatsApp, on Android and on iPhone, is theirs to check at UG2.",
-  "recordedAt": "2026-10-03T18:46:15.846Z"
+  "visualCheck": "Reviewed by the orchestrating session for both renderers: the exported PNGs against their screen references (13 crews, D1, long numbers, offline, double names at three sizes, the Comandate week at three sizes, WebKit, DejaVu Sans, text measured 18% wider and 15% narrower) and both views with the button and its note at 390x844 and 320 px/200% text. Synthetic data; not stored.",
+  "physicalDevice": "Not run by an agent. Owner, Android: on 2026-10-03 phone Back, the assistant paste (ChatGPT and Claude apps) and the installed app offline passed; on 2026-10-04 the first image was broken on the phone; on 2026-10-05, on the deployed 5580d33, copying and pasting the crew and Comandate images, the summary without unplaced volunteers and the blue Home cards are all good. The iPhone remains for UG2.",
+  "recordedAt": "2026-10-05T21:03:27.549Z"
 }
