@@ -89,6 +89,13 @@ replicate, so its rules must be settled first.
   ids until it purges them. The owner deferred asking GitHub Support to remove
   cached views and unreferenced objects.
 
+## Future work the owner added on 2026-10-06
+
+- **A more reliable app update.** The update banner appeared on the owner's
+  Android phone a couple of times, but uninstalling and reinstalling is more
+  reliable. Make an update always reach an installed app (and say so), so no
+  one needs to reinstall.
+
 ## Engineering follow-ups that do not need a decision
 
 - F2 limitations: a pasted surname or first name equal to a placeholder word
