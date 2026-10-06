@@ -1,0 +1,83 @@
+{
+  "milestone": "UG2",
+  "reviewerRole": "physical-device release reviewer",
+  "reviewedOn": "2026-10-06",
+  "subject": "The owner's observations on their own Android phone against docs/post-mvp/UG1_DEVICE_VALIDATION.md, and the owner's release decision for what was not observed",
+  "observer": "The repository owner, on their own Android phone (Chrome, installed app) and, for speech, on PC/Chrome. No agent operated a device and no simulator result is counted here.",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "observations": [
+    {
+      "check": "Camera scan of a printed roster",
+      "date": "2026-09-28",
+      "result": "PASS",
+      "ownerReport": "Scanning works very well and is definitely usable; with the assistant paste as a fallback the owner is satisfied."
+    },
+    {
+      "check": "Assistant path (V05) on the phone",
+      "date": "2026-10-03",
+      "result": "PASS",
+      "ownerReport": "Pasting from the ChatGPT and Claude Android apps works (it failed before F2)."
+    },
+    {
+      "check": "Installed app offline",
+      "date": "2026-10-03",
+      "result": "PASS",
+      "ownerReport": "The installed app offline works."
+    },
+    {
+      "check": "Phone Back",
+      "date": "2026-10-03",
+      "result": "PASS",
+      "ownerReport": "The phone's Back button works."
+    },
+    {
+      "check": "Crew and Comandate summary images (F4)",
+      "date": "2026-10-05",
+      "result": "PASS",
+      "ownerReport": "On the deployed 5580d33: copying and pasting the crew and Comandate images, the summary without unplaced volunteers and the blue Home cards are all good. The earlier image (71a01a7) had failed on the phone on 2026-10-04 and was replaced."
+    },
+    {
+      "check": "Update banner",
+      "date": "2026-10-06",
+      "result": "PASS_WITH_FINDINGS",
+      "ownerReport": "Seen a couple of times; uninstalling and reinstalling is more reliable, but the banner is accepted for now."
+    },
+    {
+      "check": "Speech (dictation)",
+      "date": "2026-09-25 and 2026-09-28",
+      "result": "ACCEPTED_AS_IS",
+      "ownerReport": "Used on Android and PC/Chrome: borderline usable, slow and imprecise. The owner accepted it for 0.3.0 (V03) and moved improvements, including downloading the model with the app, to future work. Not repeated on the exact release candidate."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "UG2-PD-1",
+      "finding": "Nothing was observed on an iPhone: scan, assistant paste, Copia immagine and Condividi, speech and the installed app on iOS Safari have never been tested on a device.",
+      "disposition": "Owner decision of 2026-10-06: the owner has no iPhone; the iPhone checks move to future work and wait until the owner asks. Covered meanwhile only by the Playwright WebKit project."
+    },
+    {
+      "id": "UG2-PD-2",
+      "finding": "Speech is slow and imprecise and was not re-run on the exact release candidate.",
+      "disposition": "Accepted by the owner for 0.3.0 (2026-09-25, 2026-09-28); improvements are future work in docs/post-mvp/1_0_0_NEXT_STEPS.md."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "UG2-PD-3",
+      "finding": "Checklist items with no explicit owner report: the home-screen icon and launch colour, the scan time from 'Usa questa area' to the review, the first offline dictation message after an update, and erasing the course on a resettable device.",
+      "disposition": "Not observed; covered by browser tests where possible. Released under the owner's decision of 2026-10-06 that the deployed app is 0.3.0; listed for the owner to check when convenient."
+    },
+    {
+      "id": "UG2-PD-4",
+      "finding": "The update banner is less reliable than reinstalling.",
+      "disposition": "Accepted for now; a more reliable update is future work (owner, 2026-10-06)."
+    }
+  ],
+  "evidenceInspected": [
+    "The owner's messages of 2026-09-25, 2026-09-28, 2026-10-03, 2026-10-04, 2026-10-05 and 2026-10-06 in the Claude Code session, recorded in docs/post-mvp/0_3_0_QUESTIONS.md",
+    ".evidence/V03/speech-device-evidence.json",
+    ".evidence/F2/browser-evidence.json and .evidence/F4/browser-evidence.json (physicalDevice fields)",
+    "docs/post-mvp/UG1_DEVICE_VALIDATION.md (UG2 release-candidate checks)"
+  ]
+}

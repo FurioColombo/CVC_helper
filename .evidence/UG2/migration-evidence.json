@@ -1,0 +1,103 @@
+{
+  "milestone": "UG2",
+  "status": "PASS",
+  "recordedBy": "Claude Sonnet 5.5 subagent for the UG2 gate; the orchestrating session verifies and records final evidence",
+  "sources": [
+    {
+      "sourceVersion": "0.1.0",
+      "fixture": "src/test/fixtures/v0.1.0-course.json",
+      "originalTableCount": 13,
+      "originalRowCount": 22,
+      "ageRecords": "birth date stored (dateOfBirth), no declared age; the 0.1.0 table set has no students.courseNote, dutySettings.extraDayIds, students.declaredAgeAtCourseStart or crews.capacity",
+      "checks": [
+        {
+          "name": "schema upgrade, age-only column and reopen",
+          "status": "PASS",
+          "evidence": "tests/e2e/u02-migration.spec.ts compares every original table, row ID and value after opening the 0.1.0 PowerSync database with the current schema and reopening it, and proves the nullable declaredAgeAtCourseStart column on an existing table: a legacy student keeps dateOfBirth 2000-03-12 with a null declared age, and after the update writes dateOfBirth '' with declared age 17 that survives a reopen (src/test/u02MigrationHarness.ts: runU02MigrationHarness, runDeclaredAgeSchemaHarness)"
+        },
+        {
+          "name": "stable operational identities",
+          "status": "PASS",
+          "evidence": "tests/e2e/u02-migration.spec.ts (runStableIdMigrationHarness) saves unchanged duties and crews, edits an unrelated future day and crew, reopens, and checks the original duty, crew, member, land and session-boat IDs"
+        },
+        {
+          "name": "visible upgraded week",
+          "status": "PASS",
+          "evidence": "tests/e2e/ug1-upgraded-week.spec.ts seeds the 0.1.0 schema, opens the actual app, edits a duty, keeps the legacy A terra assignment while creating crews, uses all 13 sessions, adds a CT and 12 evaluations, closes and reopens, opens the original note, and compares all 22 original rows and IDs; unchanged in UG2 and re-run on every release"
+        },
+        {
+          "name": "fixture compatibility",
+          "status": "PASS",
+          "evidence": "npm run check:compatibility (scripts/check-v0_1-compatibility.ts) and src/test/fixtures/v0_1_compatibility.test.ts: JSON round trip, references, current domain invariants, ADV/IS rows unchanged, extra-day column absent, course-note default null"
+        }
+      ]
+    },
+    {
+      "sourceVersion": "0.2.0",
+      "fixture": "src/test/fixtures/v0.2.0-course.json",
+      "fixtureShape": "fictitious D2 course 38/2026 (start 2026-09-19): 6 students with an exact birth date and no declared age, 3 volunteers (ADV, CT, IS), 4 boats (one unavailable), 3 faults (open, reported, resolved), 5 duty assignments with extraDayIds and a completed day, 4 crews in the 0.2.0 packed member layout with no capacity column (a full crew with a CT, a part-full Mezzi crew with a free seat, a full pair, one on Sunday), 2 A terra assignments, 3 session boats, 5 evaluations with and without notes and values",
+      "schemaContract": "tag v0.2.0: students.courseNote and dutySettings.extraDayIds present; students.declaredAgeAtCourseStart and crews.capacity absent (frozen in src/test/v020Schema.ts)",
+      "originalTableCount": 13,
+      "originalRowCount": 45,
+      "rowCounts": {
+        "courses": 1,
+        "students": 6,
+        "volunteers": 3,
+        "boats": 4,
+        "faults": 3,
+        "dutyAssignments": 5,
+        "dutySettings": 1,
+        "crews": 4,
+        "crewMembers": 7,
+        "landAssignments": 2,
+        "sessionBoats": 3,
+        "evaluations": 5,
+        "meta": 1
+      },
+      "ageRecords": "all six students have a stored birth date: 15 and a minor (Tom), 17 and a minor who turns 18 on day 4 (Elisa), 18 on the first day and an adult (Irene), 31, 25, and an inactive 38; no declared ages. The UI edit then makes two age-only records (one changed age, one new student); one edited student keeps its stored birth date",
+      "checks": [
+        {
+          "name": "frozen 0.2.0 schema differs from today's by exactly two nullable columns",
+          "status": "PASS",
+          "evidence": "src/test/v020Fixture.test.ts compares src/test/v020Schema.ts with AppSchema: the only additions are crews.capacity and students.declaredAgeAtCourseStart, every 0.2.0 column survives, and every fixture row uses 0.2.0 columns only"
+        },
+        {
+          "name": "fixture is consistent and passes the current domain invariants",
+          "status": "PASS",
+          "evidence": "src/test/v020Fixture.test.ts: unique ids, resolvable references, packed 0.2.0 member positions, validateCourseState with course family, level and start date returns no issue, every legacy crew reads as D2's standard pair through normalizeCrewCapacity, and the ages at the course start are 15m, 17m, 18, 31, 25, 38"
+        },
+        {
+          "name": "schema upgrade and reopen with the two new columns",
+          "status": "PASS",
+          "evidence": "tests/e2e/ug2-upgraded-week.spec.ts, first test (src/test/v020MigrationHarness.ts: runV020MigrationHarness): every original table, row ID and value survives opening the 0.2.0 database with the current schema; declaredAgeAtCourseStart and capacity start null; ages come out of the stored birth dates; an age-only student (dateOfBirth '' and declared age 26) and a stored capacity 2 survive a close and reopen with every other original row unchanged"
+        },
+        {
+          "name": "visible upgraded week from 0.2.0",
+          "status": "PASS",
+          "evidence": "tests/e2e/ug2-upgraded-week.spec.ts, second test: opens the 0.2.0 course in the real app; Allievi shows 15, 17, 18, 31, 25 and 38 anni with the minor badge on the first two and Non disponibile on the last; an unchanged-age edit of Davide (phone only) keeps his birth date; changing Sara's age to 26 makes her age-only ('26 anni · dichiarata'); a new student of 16 is age-only and a minor; the Saturday crews are read in place (Tom and Nico CT, Elisa with a free second seat, Davide and Sara, Irene A terra); Sunday's one crew is read in place and a second is added with a student in one seat and a volunteer in the free seat; Monday is created from nothing with a volunteer in a free seat; both summaries are opened and copied as images through the F4 image checks; a duty is added; four evaluations are added beside the five from 0.2.0; the page is closed and reopened and the same screens re-checked"
+        },
+        {
+          "name": "every original row, id and value after the week and the reopen",
+          "status": "PASS",
+          "evidence": "tests/e2e/ug2-upgraded-week.spec.ts reads the page's database after the reopen and compares all 45 original rows with the fixture (toMatchObject) except the three intended changes below; the untouched Saturday crews were never rewritten and still have no stored capacity"
+        }
+      ],
+      "intentionalNewData": [
+        "students: Davide's phone (birth date and empty declared age unchanged)",
+        "students: Sara's age changed to 26, which stores dateOfBirth '' and declaredAgeAtCourseStart 26",
+        "crews: crew-v020-sun-am-1 gains capacity 2 (D2's standard) because Sunday was saved after the update",
+        "one new age-only student (16, a minor)",
+        "three new crews (one on Sunday, two on the previously empty Monday), each stored with capacity 2",
+        "one new duty assignment (Wednesday)",
+        "four new evaluations (Tom and Davide on Sunday and Monday)"
+      ]
+    }
+  ],
+  "schemaChangesSince0_2_0": [
+    "students.declaredAgeAtCourseStart (nullable integer): the age completed on the course's first day, used when dateOfBirth is empty",
+    "crews.capacity (nullable integer): normalised on read (D2-D5 the standard pair, others the member count or four) and stored on the first crew save of a session",
+    "crewMembers.position keeps its column: 0.2.0 stored a packed index, today it is a seat index, so a packed 0.2.0 crew reads as seats 0..n-1 and a part-full pair leaves the second seat free",
+    "no new table; the persistence read functions changed (A terra ordered by name, evaluation saves in one transaction, erase-all-course-data) without a data change"
+  ],
+  "notes": "The 0.1.0 path is unchanged and was re-run in UG2: tests/e2e/u02-migration.spec.ts (3 tests) on pixel-7-chrome, iphone-13-viewport and, through a temporary configuration that was deleted, WebKit; tests/e2e/ug1-upgraded-week.spec.ts on pixel-7-chrome. The 0.2.0 database-level migration test also ran on all three; the visible 0.2.0 week runs on pixel-7-chrome. The committed iphone-13-webkit-core project does not match the migration specs, so a WebKit run of them is not part of the standing matrix. Every name in both fixtures is invented."
+}

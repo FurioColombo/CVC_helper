@@ -1,0 +1,142 @@
+{
+  "milestone": "UG2",
+  "status": "PASS_WITH_FINDINGS",
+  "recordedBy": "Claude Sonnet 5.5 subagent for the UG2 gate; the orchestrating session verifies and records final evidence",
+  "fictitious": true,
+  "privacy": "Every name, age and number is invented by tests/e2e/ug2-hostile-roster-data.ts; no real roster, photograph, OCR text or private path is read or written. This file holds counts and categories only, never names.",
+  "course": {
+    "code": "D2",
+    "students": 40,
+    "volunteers": 5,
+    "crewDay": "Tuesday PM (tue-pm): Monday's duty students are smontanti (SM), Tuesday's are in comandata (C)"
+  },
+  "roster": {
+    "minors": 8,
+    "ageOnlyRecords": 37,
+    "storedBirthDates": 3,
+    "turningEighteenOnDayFour": 1,
+    "adultsAgedExactlyEighteenAtStart": 2,
+    "withNickname": 3,
+    "singleWordFirstNamesOf18To23Letters": 4,
+    "longestFirstNameCharacters": 25,
+    "longestSurnameCharacters": 24,
+    "doubleOrTripleFirstNames": 7,
+    "surnamesWithParticle": 18,
+    "particlesCovered": ["De", "Di", "Lo", "Dalla", "Della", "Dal", "Van der"],
+    "withApostrophe": 3,
+    "apostropheKinds": ["straight", "curly"],
+    "withHyphen": 2,
+    "withAccentsOrOtherLatinDiacritics": 10,
+    "sameFirstNameGroups": 3,
+    "sameFirstNameBranchesExercised": [
+      "an initial only (the first name is shared, the surname initial is not)",
+      "a surname prefix for names sharing an initial, including a prefix that spans a particle",
+      "two identical names that need an ordinal"
+    ]
+  },
+  "crewDay": {
+    "crews": 15,
+    "boatCrews": 12,
+    "mezziCrews": 2,
+    "crewsWithoutBoat": 1,
+    "boatModelsUsed": ["RS Toura", "RS Quest", "Laser Vago", "RS 500"],
+    "studentsInCrews": 26,
+    "volunteersInCrews": 4,
+    "volunteerRolesInCrews": ["CT", "ADV", "IS"],
+    "volunteersLeftAvailable": 1,
+    "studentsAterra": 8,
+    "studentsUnassigned": 6,
+    "unavailableBoats": 1,
+    "openFaults": 1,
+    "onDutyStudents": 38,
+    "dutyDays": 7,
+    "scrolls": "the crew page and both summaries are longer than the screen at every size"
+  },
+  "sizes": [
+    "390 x 844",
+    "360 x 780",
+    "320 x 664",
+    "320 x 664 with 200% text (the rulebook's stress profile)"
+  ],
+  "engines": {
+    "layoutAudits": "Chromium, Pixel 7 project (the layout is the same in every engine)",
+    "summariesAndImages": "Chromium (Pixel 7 project) and WebKit (iPhone 13 WebKit project)"
+  },
+  "method": "tests/e2e/layout-audit.ts measures the DOM that is drawn: no sideways scroll of the page or of any container (R18), no word over another word or under a control that does not contain it, no word outside its card or button, no tap target under 44 px (40 px in dense repeated groups, R04), words an ellipsis clips listed, words broken mid-word listed; a scrolling page is audited at every paging position and at its end with floating buttons checked. The audit proves itself on a synthetic page (an overlap, a word under a control, a small control, a clipped container, a sideways scroll) and on a clean one. Review PNGs (screen and image for every size and page) were written to a scratch directory outside the repository and not committed.",
+  "checks": [
+    {
+      "name": "Allievi list",
+      "status": "PASS",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: lists the hostile roster in Allievi at four sizes...",
+      "sizes": "all four",
+      "result": "40 buttons; the three same-first-name groups read as an initial, a surname prefix and an ordinal; 8 minor badges; ages from declared values and from stored dates; no sideways scroll, overlap, clipped word or word under a control at any scroll position; 0 words clipped; smallest control 44 x 44; the last row clear of the bottom bar at the end of the page"
+    },
+    {
+      "name": "Crew page at 390, 360 and 320 px",
+      "status": "PASS",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: composes the hostile Tuesday on the crew page...",
+      "sizes": "390 x 844, 360 x 780, 320 x 664",
+      "result": "15 crews and every seated name, A terra and available person in place; no sideways scroll, overlap or word outside its card at any scroll position; smallest control 44 x 44 (dense person buttons held to 40); the 44 px remove button may cover up to 4 px of a clipped name's last glyph (a recorded tolerance); names the card clips by design with an ellipsis (the full name stays in the accessible name): 13, 22 and 29 distinct words at the three sizes"
+    },
+    {
+      "name": "Crew summary and its copied image",
+      "status": "PASS",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: shows and copies the hostile crew summary exactly as the screen has it, at four sizes",
+      "sizes": "all four, Chromium and WebKit",
+      "result": "15 crew cards plus the available and A terra lists; every name drawn whole (wrapped, none clipped), badges M, C, SM, CT, ADV and IS and the boat logos and icons present on screen and in the image; the copy button clear of the content at the end of the scroll; the image is as tall as the content plus 16 px each side, every on-screen word is inked in place, no ink outside a card, and its difference from Playwright's screenshot is under the existing limits (Chromium maximum mean 0.49, share 0.18%, colour 0.44; WebKit maximum mean 0.66, share 0.39%, colour 0.40; limits mean 2.5, share 1.2%, colour 2.5, unchanged); Chromium's clipboard holds the same image"
+    },
+    {
+      "name": "Comandate summary and its copied image",
+      "status": "PASS",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: shows and copies the hostile Comandate summary exactly as the screen has it, at four sizes",
+      "sizes": "all four, Chromium and WebKit",
+      "result": "seven day cards with all 38 on-duty names whole; no overlap or clipped word; the same image checks (Chromium maximum mean 0.33, share 0.20%, colour 0.53; WebKit maximum mean 0.45, share 0.28%, colour 0.29); the image ends 16 px under the last card; Chromium's clipboard holds the same image"
+    },
+    {
+      "name": "Comandate page at 390, 360 and 320 px",
+      "status": "PASS",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: shows the hostile Comandate page at 390, 360 and 320 px...",
+      "sizes": "390 x 844, 360 x 780, 320 x 664",
+      "result": "no sideways scroll, overlap, clipped word or word outside its card at any scroll position; smallest control 44 x 44"
+    }
+  ],
+  "findings": [
+    {
+      "id": "UG2-RS-1",
+      "page": "crew page",
+      "size": "320 px with 200% text",
+      "status": "test.fixme (not fixed, owner design decision)",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps the crew page inside the screen at 320 px with 200% text",
+      "measured": "The composition region scrolls sideways by 42 px (content 338 against 296) because crew cards and header rows are wider than the screen; the same happens with the plain 13-crew course of F3, so it is not special to hostile names. M, SM, C and role badges of a person run under the 44 px remove button; the A terra rows draw words outside their buttons; the bottom bar breaks its own labels mid-word. The ug1 and c1 specs look only at the document's width, which the region's own scroll hides.",
+      "decision": "Left as a fixme: the cards and the bar are the owner's frozen design"
+    },
+    {
+      "id": "UG2-RS-2",
+      "page": "crew page",
+      "size": "390, 360 and 320 px (worst at 320 px)",
+      "status": "test.fixme (not fixed, owner design decision; rulebook R05 identity)",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps at least the first three letters of every name legible on the crew cards...",
+      "measured": "Names clipped by the card's ellipsis show under three letters' width for 1 of 16 clipped names at 390 px, 10 of 25 at 360 px, 17 of 30 at 320 px (a minor with a smontante or comandata badge keeps 3 px of the name), and all 34 at 320 px with 200% text (a volunteer's name has no width). The full name stays in the accessible name and a long press opens the student; tests/e2e/c1-crew-management.spec.ts pins the ellipsis.",
+      "decision": "Left as a fixme"
+    },
+    {
+      "id": "UG2-RS-3",
+      "page": "crew page header",
+      "size": "320 px",
+      "status": "test.fixme (cosmetic, not fixed)",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps the boat mark and number inside their chip in a crew header at 320 px",
+      "measured": "With a warning chip beside it, the boat chip of a header with a two-digit number is 90 px for 94 px of content, so the number reaches about 3 px past the chip's border; nothing is under it",
+      "decision": "Left as a fixme"
+    },
+    {
+      "id": "UG2-RS-4",
+      "page": "populated Comandate page",
+      "size": "320 px with 200% text",
+      "status": "test.fixme (not fixed, owner design decision)",
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps the populated Comandate page inside the screen at 320 px with 200% text",
+      "measured": "The document scrolls sideways by 12 px (332 against 320): the Ricalcola and Avvisi row and the coverage chip are wider than the screen; day card titles are cut to two letters with the count touching the ellipsis; the page title breaks mid-word. The ug1 reflow spec covers the empty and proposal screens only.",
+      "decision": "Left as a fixme"
+    }
+  ],
+  "notes": "No product code was changed. The only repository change outside tests, fixtures and evidence is one addition to the testMatch of the iphone-13-webkit-core project in playwright.config.ts so that the hostile-roster spec's image tests run on WebKit. The summaries (the exports) are clean at every size including the stress profile; the findings are on the two composition pages at the stress profile, plus the crew cards' name clipping at the ordinary phone sizes."
+}

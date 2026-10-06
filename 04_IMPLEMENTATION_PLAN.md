@@ -448,7 +448,7 @@ failed. The iPhone copy and share remain the owner's to check at UG2.
 ## UG2 — 0.3.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Run `verify:all` on Node 24, including the deterministic full week and all
 browser projects. Exercise an upgraded week through the visible UI, close and

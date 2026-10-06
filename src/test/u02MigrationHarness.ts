@@ -95,10 +95,13 @@ const oldSchema = new Schema({
   meta: Table.createLocalOnly({ value: column.integer }),
 })
 
-type FixtureTables = Record<string, Array<Record<string, unknown>>>
+export type FixtureTables = Record<string, Array<Record<string, unknown>>>
 
-async function seedFixture(database: PowerSyncDatabase) {
-  const tables = fixture.tables as FixtureTables
+/** Insert every row of a fixture's tables, in object order, as plain SQL. */
+export async function insertFixtureTables(
+  database: PowerSyncDatabase,
+  tables: FixtureTables,
+) {
   for (const [tableName, rows] of Object.entries(tables)) {
     for (const row of rows) {
       const columns = Object.keys(row)
@@ -128,7 +131,7 @@ export async function seedLegacyFixture(filename: string) {
     database: { dbFilename: filename },
   })
   await legacy.init()
-  await seedFixture(legacy)
+  await insertFixtureTables(legacy, fixture.tables as FixtureTables)
   await legacy.close()
 }
 

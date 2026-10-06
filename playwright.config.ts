@@ -41,7 +41,7 @@ export default defineConfig({
     {
       name: "iphone-13-webkit-core",
       testMatch:
-        /(?:boats|crew-management-gate|duties|evaluation-gate|knowledge|persistence|reopen-persistence|smoke|student-management-gate|u03-knowledge|u03-speech-fixture|u04-scan-ui|s4-ruled-roster-scan|f1-navigation-guards|v05-assistant-paste|f3-crew-summary)\.spec\.ts/,
+        /(?:boats|crew-management-gate|duties|evaluation-gate|knowledge|persistence|reopen-persistence|smoke|student-management-gate|u03-knowledge|u03-speech-fixture|u04-scan-ui|s4-ruled-roster-scan|f1-navigation-guards|v05-assistant-paste|f3-crew-summary|ug2-hostile-roster)\.spec\.ts/,
       use: { ...devices["iPhone 13"], locale: "it-IT" },
     },
   ],
