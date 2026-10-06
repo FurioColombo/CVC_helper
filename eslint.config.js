@@ -15,6 +15,8 @@ export default tseslint.config(
       "node_modules",
       "playwright-report",
       "test-results",
+      // Vendored from powersync-ja/agent-skills; see its .vendor.json.
+      ".claude/skills/powersync",
     ],
   },
   eslint.configs.recommended,

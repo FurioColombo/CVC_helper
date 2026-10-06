@@ -1,0 +1,10 @@
+{
+  "source": "https://github.com/powersync-ja/agent-skills",
+  "path": "skills/powersync",
+  "commit": "670db8e6e93c69e72e142a2bbacf6648d6483f4e",
+  "version": "1.6.3",
+  "license": "MIT",
+  "vendoredOn": "2026-10-06",
+  "localChanges": "none; trimmed to the js platform with the skill's own scripts/trim.mjs (.trim-state.json)",
+  "update": "Re-copy skills/powersync from a fresh clone of the source at a newer commit, run node scripts/trim.mjs --apply from this folder, then update commit, version and vendoredOn here. Do not edit the vendored files."
+}

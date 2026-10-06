@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuses to push commits from before the 0.3.0 history rewrite (AGENTS.md §13).
+exec node scripts/check-push.mjs

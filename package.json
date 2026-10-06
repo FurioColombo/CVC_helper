@@ -7,6 +7,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "prepare": "node scripts/install-git-hooks.mjs",
     "dev": "vite",
     "icons:build": "node scripts/generate-app-icons.mjs",
     "prebuild": "node scripts/check-runtime.mjs",
@@ -22,6 +23,8 @@
     "check:compatibility": "node --import tsx scripts/check-v0_1-compatibility.ts",
     "check:full-week": "node --import tsx scripts/check-full-week.ts",
     "check:repository": "node scripts/check-repository.mjs",
+    "check:staged": "node scripts/check-staged.mjs",
+    "check:docs": "node scripts/check-docs.mjs",
     "check:pwa": "node scripts/check-built-pwa.mjs",
     "precheck:ocr-offline": "node scripts/check-runtime.mjs",
     "check:ocr-offline": "node scripts/check-ocr-offline.mjs",

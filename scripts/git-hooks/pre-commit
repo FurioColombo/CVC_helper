@@ -1,0 +1,4 @@
+#!/bin/sh
+# Shared by every agent and person who commits: npm's prepare script points
+# core.hooksPath here. Never bypass it with --no-verify (scripts/check-staged.mjs).
+exec node scripts/check-staged.mjs

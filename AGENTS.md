@@ -136,15 +136,12 @@ For every milestone:
 6. Add or update automated evidence while implementing.
 7. Exercise user-visible behavior through the browser when required.
 8. Run domain/invariant checks when relevant.
-9. Review the diff.
-10. Perform the required self-review/reviewer level.
-11. Fix findings.
-12. Re-run required verification.
-13. Run `milestone:complete`.
-14. Update milestone status, evidence summary, decisions, and known limitations in `04_IMPLEMENTATION_PLAN.md`.
-15. Sweep the working and evidence directories and move or remove what the milestone made and nobody needs.
-16. Create a descriptive Git checkpoint commit.
-17. Only then begin the next milestone.
+9. Close it with the `milestone-close` skill
+   (`.claude/skills/milestone-close/SKILL.md`): review the diff, run the
+   required reviewers, fix findings, re-run verification once on the final
+   source, `milestone:complete`, the documentation sweep of
+   `docs/DOCS_SYSTEM.md`, and one descriptive checkpoint commit.
+10. Only then begin the next milestone.
 
 Do not carry an unexplained dirty working tree from one completed milestone into the next.
 
@@ -212,15 +209,20 @@ Possible roles:
 - scope reviewer: detect missing MVP behavior or unnecessary post-MVP work;
 - code-quality reviewer: simplicity, duplication, dead code, overengineering;
 - accessibility/mobile reviewer: touch targets, focus, viewport, input behavior;
-- chaos user: use the app in unusual order and try to break assumptions.
+- chaos user: use the app in unusual order and try to break assumptions;
+- security/privacy reviewer: what leaves the device, access rules, keys,
+  deletion — required for any milestone that adds network calls, a backend,
+  authentication, sharing, export or logs;
+- sync-chaos reviewer ("two phones offline"): concurrent offline edits,
+  reconnect order, stale app versions, interrupted uploads — required for any
+  milestone that touches sync, the upload queue, schema versions or conflict
+  rules.
 
-Reviewer output is structured JSON recorded as
-evidence with:
-- verdict: PASS / PASS_WITH_FINDINGS / FAIL;
-- blockers;
-- important findings;
-- QoL findings;
-- evidence inspected.
+Each role is a persona in `.claude/agents/reviewer-<role>.md`, and every
+reviewer follows `docs/agents/REVIEW_PROTOCOL.md`. Its structured JSON report,
+recorded as evidence, gives the verdict (PASS / PASS_WITH_FINDINGS / FAIL),
+blockers, important findings, QoL findings, evidence inspected and the angles
+tried.
 
 FAIL blocks milestone completion.
 PASS_WITH_FINDINGS may close only with zero blockers and when milestone acceptance criteria allow the remaining findings.
@@ -390,3 +392,35 @@ never record a simulated PASS.
 Private roster photographs and derivatives remain under ignored `data/private/`.
 Never commit or publish them, raw OCR text or real students' personal data.
 Only aggregate counts may enter evidence in this public repository.
+Development, tests, seeds, CI and development backends use synthetic data
+only, and no agent tool is ever connected to a production backend.
+
+## 18. Agents, models and shared tools
+
+**Model routing.** Claude Code: the latest Opus orchestrates, plans and
+reviews every diff and screenshot; it delegates bounded implementation to
+Sonnet through `.claude/agents/implementer.md`, and runs reviewers on Opus.
+Codex: the latest Sol at xhigh orchestrates and decides what to delegate to
+Luna at xhigh.
+
+**Shared definitions.** Both agents use the same files. Reviewer personas are
+in `.claude/agents/`; skills are in `.claude/skills/`, and Codex reads a
+skill's `SKILL.md` directly when its description fits the task:
+
+- `milestone-close`: closing a milestone and the documentation sweep;
+- `field-operations-ui`: any screen or mockup work, with the design rulebook;
+- `powersync` (vendored, `.vendor.json`): this project uses PowerSync. Load the
+  powersync skill before any data, schema, or sync work. Repository rules win
+  over its general advice: dependencies stay pinned by the lockfile.
+
+`.mcp.json` adds the PowerSync documentation search (read-only).
+
+**Hooks.** `npm install` points Git at `scripts/git-hooks`: a privacy and
+secrets check before each commit, and a pre-rewrite history check before each
+push. Never bypass them with `--no-verify`; fix a false positive in
+`scripts/privacy-rules.mjs` with a test. Claude Code's SessionStart hook puts
+Node 24 first in its Bash tool.
+
+**Documents** follow `docs/DOCS_SYSTEM.md`: contracts describe the present,
+evidence records what happened, the archive is frozen, and each sweep happens
+at its moment.
