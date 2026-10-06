@@ -79,8 +79,7 @@ for new work, planned as F2 and F3 in `04_IMPLEMENTATION_PLAN.md`.
    CVC_helper origin; no additional copy was found or deleted. Two directories
    and 4,379 link targets were unreadable, limiting the search coverage.
    GitHub keeps serving the old commits by their old ids until GitHub Support
-   purges them;
-   the owner has deferred that request. No push was performed.
+   purges them; the owner has deferred that request.
 2. **The remaining physical checks (UG2).** Done on Android: the assistant
    paste, the installed app offline and phone Back (2026-10-03), the F4
    summary images (2026-10-05) and the update banner, seen a couple of times
