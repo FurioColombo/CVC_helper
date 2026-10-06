@@ -8,26 +8,17 @@ remaining corrections and an independent adversarial review of the whole
 
 ## Is the local version ready to freeze?
 
-**Not yet — one gate remains, and it is the owner's.** The automated side of
-0.3.0 is recorded in `.evidence/F1/` and `.evidence/V05/`: verification on the
-committed source, the browser journeys, and the independent reviews with the
-disposition of every finding. Before any freeze, CI must also pass on the
-pushed `main`; the Pages deploy now waits for it. What no agent can supply is
-the physical-device evidence UG2 requires:
+**Yes, for the owner (2026-10-06): the deployed app is 0.3.0.** Every
+milestone through F4 is complete with its evidence; F4's `verify:all` ran on
+the deployed source. On Android the owner has checked the camera scan, the
+assistant paste from the ChatGPT and Claude apps, the installed app offline,
+phone Back, the summary images and the update banner.
 
-- speech on the exact release candidate, including **iPhone/Safari**, which has
-  never been tested;
-- the installed app offline (airplane mode: cold open, edit, scan), phone Back
-  in every area, the icon and launch colour, and the new update banner;
-- the assistant paste path (V05) on the phone again, after F2's fix.
-
-On 2026-09-28 the owner reported the camera scan on their phone as very good
-and definitely usable. The paste worked on a PC, but a phone copy was refused;
-F2 fixes that. F2 and F3 carry the rest of that day's feedback.
-
-Until UG2 passes, 0.3.0 is not released, and a shared database should not be
-built on top of it. The local app is the product the shared version will
-replicate, so its rules must be settled first.
+Two items are not done and are future work by the owner's decision: the
+iPhone checks (the owner has no iPhone) and asking GitHub Support to purge the
+pre-rewrite commits. The formal UG2 close in `04_IMPLEMENTATION_PLAN.md` (the
+six independent reviews, the version bump and the `v0.3.0` tag) has not been
+run; it waits for the owner too.
 
 ## Recommended sequence
 
@@ -87,10 +78,14 @@ replicate, so its rules must be settled first.
   deleted rows cannot linger in unused database pages.
 - **GitHub Support.** GitHub still serves the pre-rewrite commits by their old
   ids until it purges them. The owner deferred asking GitHub Support to remove
-  cached views and unreferenced objects.
+  cached views and unreferenced objects, and on 2026-10-06 chose not to
+  contact them; it waits until the owner says.
 
 ## Future work the owner added on 2026-10-06
 
+- **The iPhone checks.** Copia immagine and Condividi on the summaries, speech
+  (never tested on Apple), and the installed app. The owner has no iPhone;
+  they wait until the owner asks for them.
 - **A more reliable app update.** The update banner appeared on the owner's
   Android phone a couple of times, but uninstalling and reinstalling is more
   reliable. Make an update always reach an installed app (and say so), so no

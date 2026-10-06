@@ -17,6 +17,9 @@ After using the deployed F4 on their Android phone:
 | Home menu                      | Every menu card takes the blue accent; no red.                                                                                                                                                                                                                   |
 | Update banner                  | (2026-10-06) Seen a couple of times; uninstalling and reinstalling is more reliable, but the banner is accepted for now. A more reliable update goes to future work.                                                                                             |
 | Copies made before the rewrite | (2026-10-06) Claude Code wrote the prompt for the Codex session that deletes them.                                                                                                                                                                               |
+| Release                        | (2026-10-06) The deployed app is 0.3.0 for the owner. The two remaining items move to future work.                                                                                                                                                               |
+| iPhone checks                  | (2026-10-06) Deferred until the owner says: they have no iPhone.                                                                                                                                                                                                 |
+| GitHub Support                 | (2026-10-06) Not contacted; the purge request stays in future work.                                                                                                                                                                                              |
 
 ## Decisions of 2026-10-03
 
@@ -79,14 +82,14 @@ for new work, planned as F2 and F3 in `04_IMPLEMENTATION_PLAN.md`.
    CVC_helper origin; no additional copy was found or deleted. Two directories
    and 4,379 link targets were unreadable, limiting the search coverage.
    GitHub keeps serving the old commits by their old ids until GitHub Support
-   purges them; the owner has deferred that request.
-2. **The remaining physical checks (UG2).** Done on Android: the assistant
-   paste, the installed app offline and phone Back (2026-10-03), the F4
-   summary images (2026-10-05) and the update banner, seen a couple of times
-   (2026-10-06; the owner finds uninstalling and reinstalling more reliable,
-   but accepts the banner for now). Still to check on an iPhone, never
-   tested: Copia immagine and Condividi, and speech. The checklist is
-   `UG1_DEVICE_VALIDATION.md`.
+   purges them; on 2026-10-06 the owner chose not to contact GitHub Support,
+   and the request stays in future work (`1_0_0_NEXT_STEPS.md`).
+2. **The physical checks (UG2) — done on Android.** The assistant paste,
+   the installed app offline and phone Back (2026-10-03), the F4 summary
+   images (2026-10-05) and the update banner, accepted for now (2026-10-06).
+   The owner has no iPhone: the iPhone checks (Copia immagine and Condividi,
+   and speech, never tested on Apple) moved to future work on 2026-10-06 and
+   wait until the owner asks for them.
 
 ## Questions of 2026-09-27 (answered on 2026-09-28)
 
