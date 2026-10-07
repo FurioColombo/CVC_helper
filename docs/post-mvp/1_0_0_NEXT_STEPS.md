@@ -112,6 +112,15 @@ Recorded with their evidence in `.evidence/UG2/*-review.json`; none blocks
   R05): the owner decides whether names may take two lines.
 - **Phone Back** from the crew page's destination chooser and warning detail
   still goes to Home; the boats panel was fixed (UG2-UX-4, partly fixed).
+- **Moderately enlarged text (115–150%) at 360–412 px** (UG2-REG-2, older than
+  0.3.0): the Barche list scrolls sideways from 390 px with 115% text and
+  cuts the boat marks; the crew header puts text under its buttons at 412 px
+  from 120%; "Volontari" in the crew quick bar breaks mid-word at 412 px with
+  150%. Pages also drop to one column earlier than needed (UG2-REG-4). The
+  UG2 checks covered 100% text and the 320 px/200% stress profile only.
+- **Back taps:** a double tap on an in-app Back or close button leaves the
+  area (`historyBack()` is not idempotent, UG2-REG-3); phone Back from the
+  crew destination chooser goes to Home (UG2-REG-5, same as UG2-UX-4).
 - Smaller items: sex inferred wrongly for some foreign first names
   (UG2-FUN-5), no warning for a missing size (UG2-FUN-10), warning severity
   shown by dot colour only in the detail (UG2-FUN-11), the C chip hidden while
