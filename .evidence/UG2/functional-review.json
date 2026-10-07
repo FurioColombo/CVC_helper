@@ -1,0 +1,115 @@
+{
+  "milestone": "UG2",
+  "reviewerRole": "independent functional reviewer",
+  "reviewedOn": "2026-10-07",
+  "reviewedCommit": "990ee0a (review began at 40b55c1; HEAD moved to 990ee0a meanwhile. The working tree also held uncommitted CSS/layout edits to src/features/crews/CrewManagement.tsx and src/features/duties/DutyManagement.tsx from the concurrent 320 px/200% fix; they change no rule or behaviour I probed)",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "UG2-FUN-1",
+      "title": "Comandate page becomes unusable (and the last rotation cannot be completed) when all seven rotations are completed and an active student has no completed duty",
+      "evidence": "Two ways in. (a) Through the UI: Comandate with 3 active students, assignments only for 2 of them; open each day Sabato..Giovedi and tap 'Segna completata' (all succeed); on Venerdi 'Segna completata' fails with the generic 'Modifica non salvata. Riprova.' and nothing is saved. (b) A course whose seven rotations are all completed (nothing in the UI can un-complete a day: DutyManagement.tsx only ever appends to completedDayIds) and then gets an active student without a duty (a late student added in Allievi, or a student re-enabled): opening Comandate shows the screen error boundary 'Questa schermata non si è aperta' on every visit. Reproduced with saveDutyPlan(completedDayIds = all 7) plus one never-assigned active student; console error 'No remaining duty days'. Cause: src/domain/duties.ts:76-92 getDutyDistributionRequirement throws when dayIds is empty and studentCount > 0; it is called, unguarded, from src/features/duties/DutyManagement.tsx:157-165 (deriveExtraDayIds, run on every render through normalizeProposalSettings at :1269), from :385 (DutyConfiguration) and, as the 'legacy' fallback inside the try/catch, from src/domain/duties.ts:703-719 (getDutyWarnings), so the catch re-throws.",
+      "impact": "Rare (needs the week fully marked complete) but unrecoverable from the UI: the Comandate screen and its summary are lost until the course is erased; no data is deleted. Completing Friday with an unassigned student fails without saying why.",
+      "suggestedFix": "Treat zero remaining days as capacities all 0 / extraDayCount 0 in deriveExtraDayIds, DutyConfiguration and getDutyWarnings (an active student with no duty then simply gets the existing 'non assegnato' major warning), and make the completion failure name its reason. Add a unit test: all seven days completed plus one unassigned active student."
+    },
+    {
+      "id": "UG2-FUN-2",
+      "title": "Allievi list (and Volontari list) sorts surnames with accented letters after Z",
+      "evidence": "Seed students with surnames Alvarez(accented A), Zanetti, Evola(accented E), Abate, Ostergaard(O with stroke), Simunic(S with caron), Sala, de Luca, De Rosa and open Allievi: the list reads Abate, de Luca, De Rosa, Eva, Sala, Zanetti, then the accented ones. Italian collation gives Abate, Alvarez, de Luca, De Rosa, Eva, Evola, ..., Sala, Simunic, Zanetti. Cause: src/persistence/students.ts:129 'ORDER BY active DESC, surname COLLATE NOCASE, ...' (SQLite NOCASE only folds ASCII) and no JS re-sort in the list; same pattern for volunteers at src/persistence/volunteers.ts:43. Evaluations, duties, crew pool and A terra already sort with Intl.Collator('it-IT').",
+      "impact": "Spec section 3.2 says 'sort active students by surname and then displayed name'. A student with an accented or non-ASCII initial (international participants, e.g. Celik, Ozdemir, Simunic) is listed at the very end of the roster of a hurried instructor, and the Allievi order disagrees with every other page.",
+      "suggestedFix": "Keep 'active DESC' in SQL but sort the rows in listStudents/listVolunteers with the shared Intl.Collator('it-IT', {sensitivity:'base'}) on surname, then displayed name, then first name; add a persistence test with accented initials."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "UG2-FUN-3",
+      "title": "Italian plural typos on the proposal screen: 'postoi' and 'giornoi' (and '1 allievi')",
+      "evidence": "Comandate > Proponi comandate with 20 students: 'Base per giorno: 20 allievi · 7 giorni · 6 postoi extra' and 'Scegli esattamente 6 giornoi.'. src/features/duties/DutyManagement.tsx:475 appends 'i' to 'posto'; :485-486 appends 'i' to 'giorno'. Same screen with one student reads '1 allievi' (proposalStudentCount allievi, around :476).",
+      "impact": "Visible misspelling on the most important Comandate screen whenever N mod D >= 2 (almost always).",
+      "suggestedFix": "Use explicit singular/plural words ('posto'/'posti', 'giorno'/'giorni', 'allievo'/'allievi')."
+    },
+    {
+      "id": "UG2-FUN-4",
+      "title": "Disambiguated display name shows a stray space before the dot when the surname prefix ends on a particle's space ('Gino De .')",
+      "evidence": "getStudentDisplayName for Gino De Rossi / Gino Del Rossi / Gino Della Rossi gives 'Gino De .', 'Gino Del .', 'Gino Dell.'; Mario De Luca / Mario Del Gatto gives 'Mario De .' / 'Mario Del.'. The distinguishing length counts the space (src/domain/student.ts shortestDistinguishingSurnameLengths, then formatSurnamePrefix at :71 and use at :196). The examples in the spec/changelog ('Mario Ros.', 'Mario De R.', 'Mario Lo Pr.') are correct.",
+      "impact": "Cosmetic, but De/Del/Della/Di/Lo are the particles the owner asked to keep; the label is still distinguishable.",
+      "suggestedFix": "Trim the prefix (or extend it to the next non-space grapheme) before adding the period."
+    },
+    {
+      "id": "UG2-FUN-5",
+      "title": "Sex inference silently labels some male names as female, and the trusted paste path checks nothing",
+      "evidence": "inferSex (src/capabilities/studentScan.ts:465) returns female for Joshua, Luka, Nikola, Ilia, Mika, Sasa/Sasha (names ending in -a/-h outside the curated list) while Luca, Andrea, Nicola, Mattia, Elia are right. A pasted row such as 'Rossi;Luka;;15;' is accepted with sex=female and no flag, because the F2 decision removed the per-row check; only names with no guess (Giovanni, Thomas, Jean, Omar, Yuri...) force a choice.",
+      "impact": "A wrong sex is stored and feeds 'Bilancia M/F' in the duty proposal; the instructor sees only a small sex cue.",
+      "suggestedFix": "Prefer null (forced choice, as for Giovanni) for -a names outside a curated female list, or mark an inferred (not printed) sex as a field to confirm."
+    },
+    {
+      "id": "UG2-FUN-6",
+      "title": "Manual student form accepts ages 0 and 120; scan and paste review flag ages outside 4..99",
+      "evidence": "Add a student with 'Età compiuta il primo giorno del corso' = 0 or 120: saved without comment. The scan/paste review marks an age below 4 or above 99 'Da controllare' (PLAUSIBLE_SCAN_AGE in src/capabilities/studentScanReview.ts:149); manual validation uses only MAX_DECLARED_STUDENT_AGE = 120 (src/domain/student.ts).",
+      "impact": "A mistyped age (e.g. 1 for 21) is stored without warning; it also decides minor status.",
+      "suggestedFix": "Warn (not block) on the same plausible range in the manual form and the profile edit."
+    },
+    {
+      "id": "UG2-FUN-7",
+      "title": "Course start date, ISO week and 'first course day' come from the day the course is created, with no way to correct them",
+      "evidence": "src/App.tsx:284 passes today's date to buildCourseDetails (src/domain/course.ts:64); the start is the Saturday of today's ISO week. Probed for 5-11 Oct 2026: Mon..Fri creation gives start 10 Oct (correct for an upcoming course), Sunday gives 10 Oct, but a course created on Monday 12 Oct, two days after it started, would be dated 17 Oct (week 42). Age and minor status are then computed for the wrong first day (a 17th birthday-to-18th between the two dates flips). Seen from the app: Impostazioni shows the dates but offers no edit.",
+      "impact": "Only for a course created after its first Sunday; but then 'D2 - 42' labels and every age-at-first-day rule are one week off, silently.",
+      "suggestedFix": "Either document 'create the course before Monday' in the creation screen, or let Impostazioni set the start Saturday (and recompute the label)."
+    },
+    {
+      "id": "UG2-FUN-8",
+      "title": "Spec 7.1 describes a D2-D5 Settings override that 0.3.0 does not ship, and the changelog's Known limitations do not say so; Mezzi crews on D2-D5 are fixed at two people",
+      "evidence": "01_PRODUCT_SPEC.md section 7.1 ('remain fixed at two unless a Settings-only override is enabled. With that override, add/remove controls...') and 'These are the 0.3.0 rules'. Impostazioni has only the 2/3 column choice and the erase action (src/features/settings, App.tsx:438-489); no override exists. The owner deferred it (0_3_0_QUESTIONS.md 2026-09-23, 04 plan 'Execution order' item 14) but CHANGELOG.md 0.3.0 does not list it. The deferral also applies to Mezzi: a D2 Mezzi crew cannot hold more than two people (crews.ts getInitialCrewCapacity/setCrewCapacity), so a support boat with a volunteer team needs several Mezzi crews.",
+      "impact": "Documentation gap, not a code defect; the owner may expect the override or a bigger Mezzi crew.",
+      "suggestedFix": "Add the override and the Mezzi capacity to CHANGELOG Known limitations, and mark section 7.1 of the spec as deferred."
+    },
+    {
+      "id": "UG2-FUN-9",
+      "title": "'Copia equipaggi' resets a Mezzi crew to 'Non assegnato'",
+      "evidence": "src/domain/crews.ts copyPreviousCrewPlan builds every copied crew with destination 'unassigned' and boatId null, even for a Mezzi crew (tested at crews.test.ts:378-410). After copying Sabato PM to Domenica AM in the browser every crew showed 'Destinazione equipaggio N: Non assegnato'; 'Copia barche' restores only the boat set, not crew-to-boat links.",
+      "impact": "Spec 7.3 says Mezzi is a real crew; the copy keeps its people but drops its identity, so the instructor re-taps Mezzi each session. May be intended (copy is people only), but is undocumented.",
+      "suggestedFix": "Keep destination 'mezzi' in the copy (a boat link must stay cleared), or state in the copy dialog that destinations are not copied."
+    },
+    {
+      "id": "UG2-FUN-10",
+      "title": "A student without a size silently never gets a size warning",
+      "evidence": "Students added by scan, paste or the manual form have size null unless set in the form/Conoscenza allievi; getTwoPersonSizeWarning (src/domain/crewWarnings.ts:158-174) returns null when either size is missing, and the crew card shows only 'Allievo' (no size) for them (CrewManagement.tsx personDetail).",
+      "impact": "A crew of two students whose sizes were never entered looks clean; the instructor cannot tell 'no problem' from 'unknown'.",
+      "suggestedFix": "Show a small 'taglia?' cue on the person (or a grey note in the warning area) when a two-person crew has a member without a size."
+    },
+    {
+      "id": "UG2-FUN-11",
+      "title": "Crew warning detail rows state severity by dot colour only",
+      "evidence": "CrewWarningDetail and BoatFaultWarningDetail (CrewManagement.tsx, around :575-660) draw a red or amber dot beside titles such as 'Coppia nelle ultime 3 sessioni' / 'Taglie XS + XS' / 'Avaria aperta'; the text never says rosso/giallo (only the triangle button's aria-label does).",
+      "impact": "Spec section 1 asks for colour reinforced by text or another cue; a colour-blind user cannot rank the reasons inside the open detail.",
+      "suggestedFix": "Add a visually hidden or small 'Grave'/'Da verificare' word, or a different icon per severity."
+    },
+    {
+      "id": "UG2-FUN-12",
+      "title": "The 'C' (in comandata) chip disappears when its student is selected",
+      "evidence": "src/components/PersonBadges.tsx:39-41 paints the current-duty badge 'bg-primary text-primary-foreground'; a selected person button is also primary blue, so on selection the chip's box vanishes and only a bare 'c' remains (seen in a 390 px screenshot of Bruno selected in Domenica AM). The minor 'M' chip is red and stays visible.",
+      "impact": "Cosmetic; the duty cue is weaker exactly when the instructor is deciding where to put the person.",
+      "suggestedFix": "Give the chip a white background with primary text when its parent is selected."
+    },
+    {
+      "id": "UG2-FUN-13",
+      "title": "Reloading or reopening the app on the crew page returns to Sabato PM, not the session being worked on",
+      "evidence": "Select Domenica AM, tap Posto libero, fill it, reload the page: Equipaggi reopens on 'Sabato PM'. The Comandate and Allievi screens do come back as they were.",
+      "impact": "During a week the instructor reopens the installed app on the last session each time and must reselect it; the data itself is intact.",
+      "suggestedFix": "Persist the selected session id with the shell history state (onSessionChange already exists)."
+    }
+  ],
+  "evidenceInspected": [
+    "Read: AGENTS.md, 01_PRODUCT_SPEC.md (all), 02_MVP_SCOPE.md, 04_IMPLEMENTATION_PLAN.md ('Where this cycle stands', F2-F4, UG2), docs/post-mvp/0_3_0_QUESTIONS.md, CHANGELOG.md 0.3.0, git log v0.2.0..HEAD, .evidence/UG2/synthetic-roster.json and migration-evidence.json.",
+    "Read source: src/domain/{config,crews,crewWarnings,duties,student,course,evaluations,boat}.ts, src/persistence/{crews,students,boats,courses,evaluations,volunteers}.ts, src/capabilities/rosterPaste.ts, src/features/crews/{CrewManagement.tsx,crewSummaryModel.ts}, src/features/duties/{DutyManagement.tsx,dutySummaryModel.ts}, src/features/settings/CourseErase.tsx, src/components/SummaryImageButton.tsx, src/lib/summaryShare.ts, src/components/PersonBadges.tsx.",
+    "Ran: vitest on src/domain, src/persistence, rosterPaste.test.ts, crewSummaryModel.test.ts and dutySummaryModel.test.ts: 20 files, 384 tests passed (Node 24.21.0). Ran node scripts/run-e2e.mjs tests/e2e/u04-scan-ui.spec.ts --project pixel-7-chrome: 4 passed.",
+    "Table-driven probes (tsx, outside the repo): size warning matrix equals the spec table for all 25 ordered pairs; pair repetition red for 1-3 sessions back and yellow beyond, future and same-session history ignored, group repeat and internal pairs for 3+, three-person crew gets no size warning; boat warnings (unavailable red, unresolved open or communicated fault yellow, resolved none, both reasons kept separate); display-name disambiguation table (found UG2-FUN-4); inferSex table (UG2-FUN-5); course date derivation for every day of 2026-2027 (always a Saturday, ISO week consistent; UG2-FUN-7); default evaluation session boundaries (Sat 17:59/18:00, Sun 12:59/13:00, after Friday).",
+    "Property/fuzz probes: duty proposal over 600 random rosters (0-40 students, 0-5 completed days, stay-over, minors, sex) - every student exactly once, capacities exact, Friday stay-over count = min(capacity, stay-over students), minors spread <= 1 whenever feasible; 54,000 random crew-domain operations (move, swap, remove, A terra, boats, Mezzi, capacity, add/remove crew) on D2, D1 and Cabinato with the persistence invariants re-checked after each step - no violation; 2,000 random copyPreviousCrewPlan runs - no duplicate, no invalid person kept, kept+removed equals previous, A terra unchanged; 1,500 mutated assistant answers (LF/CRLF/U+2028, code fence, preface/suffix, all line breaks lost, bold, truncation, commas) over 18,040 parsed rows - no invented or misattributed student, no phone leaked while phone is off, no truncated answer reported complete.",
+    "Browser probes against my own Vite dev server on port 5199 (Chromium, Pixel 7 profile, it-IT, fictitious data only), now stopped: assistant paste with ages 17/18 and dates on, before and after the first-day boundary (10 Oct 2008 -> 18, 11 Oct 2008 -> 17), duplicate/unread/count gating ('Sono tutti' asked again after a removal; save blocked until done), stored rows have dateOfBirth '' and declared age only, minor markers; duplicate detection against existing students (case, accents, nickname, stored birth date); manual form age boundaries and required age/sex; profile edit autosave keeps a stored birth date until the age itself is changed; Back with an invalid age and with an open evaluation note (both guarded with a message); empty, one-student, one-volunteer, one-boat and D1 courses visit every Home card without error; C4 course boat setup; erase course (checkbox gate, all 12 tables empty, scan-order localStorage keys removed, new course created cleanly).",
+    "Browser probes of crews: D2 warnings in the UI (red size, yellow open fault, yellow communicated fault, red unavailable boat plus red size = 2 reasons, resolved fault none), detail panels, copy crews Sabato PM -> Domenica AM (Anna and Bruno removed as 'comandata', pair repeats red), free seat takes a volunteer then a student and survives reload, destination popup (Nuovo equipaggio, A terra, Mezzi, 'Equipaggi pieni'), D1 morning duty alert only for sun-am and only for students not A terra, copy boats (unavailable boat unticked, 4 saved), boat strip numeric order and paging over 20 boats, crew summary text order, 'Copia immagine' puts a 126 KB image/png on the clipboard with no non-GET request, the copied PNG viewed (no status bar, close button, 'Tutti gli allievi assegnati' or unplaced volunteers; groups, Mezzi, A terra, empty boats).",
+    "Browser probes of Comandate and Valutazioni: proposal for 20 students (base 2, 6 extra days, preview 3/3/3/3/3/3/2), one-student proposal, confirm, day editor order and labels, completing days, midweek 'Ricalcola' with two completed days, one disabled and one new student (14 students over 5 days, completed days unchanged), full-completion failures (UG2-FUN-1), evaluation default session, tap/second tap clears, Equipaggi grouping with A terra cue, Riepilogo counts and ordering by mean (Dario, Anna, Bruno, Carla, then no evaluations).",
+    "Changelog claims checked true in behaviour: age-only in scan/paste/manual; empty Allievi page and menu offer the same three ways in; tap free seat then student or volunteer; person then crew/Mezzi/A terra; boats paged; open-fault crew warning and volunteers excluded from warnings; summaries grouped by model, Mezzi, A terra, available students first, copy as image only; phone Back guards; same-first-name disambiguation (with the particle caveat of UG2-FUN-4); erase course. Not testable here: camera OCR quality figures, dictation, iPhone/Safari clipboard and share, installed-app offline (owner device checks).",
+    "Not reported as new: the 320 px/200% layout items already listed in .evidence/UG2/synthetic-roster.json."
+  ]
+}
