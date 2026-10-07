@@ -75,6 +75,11 @@ second editor is part of this release.
 - **Updating** through the banner works but is not always prompt; the owner
   found reinstalling more reliable, which, without a backup, risks the course
   data.
+- **Create the course before its first Saturday.** Its dates, and so the
+  ages and the minor status worked out from a birth date, come from the day
+  the course is created; there is no way yet to correct them afterwards.
+- **D2–D5 crews stay at two people.** The Settings override for their size is
+  still to come; D1 and cabin courses can already resize their crews.
 - **Some screens are tight at 320 px with 200% text:** a long name on a crew
   card is cut with "…" (the full name stays in the accessible name).
 - **The project's history was rewritten** before 0.3.0 was published, to

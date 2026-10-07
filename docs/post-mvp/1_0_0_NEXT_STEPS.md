@@ -91,6 +91,33 @@ run; it waits for the owner too.
   reliable. Make an update always reach an installed app (and say so), so no
   one needs to reinstall.
 
+## Findings of the UG2 reviews left for later (2026-10-07)
+
+Recorded with their evidence in `.evidence/UG2/*-review.json`; none blocks
+0.3.0. Ask the owner which matter in the field before building them.
+
+- **Course dates** come only from the day the course is created; add a way to
+  correct the start date (UG2-DAT-4, UG2-FUN-7).
+- **Keep the course safe:** call `navigator.storage.persist()` and add export
+  and import (UG2-DAT-5; already step 2 below).
+- **Composing a session from scratch** takes about two long scrolls per
+  student, and the crew just filled is off screen (UG2-UX-2).
+- **The update banner** covers the crew page's floating bar and the Allievi
+  add button while it is shown (UG2-UX-3).
+- **Type scale:** the minor/C/SM markers and some secondary text are 9–11 px,
+  below the rulebook's proposal (UG2-UX-6).
+- **Paste review:** after "Leggi risposta" the count confirmation is above the
+  fold (UG2-UX-8); a pasted answer is lost on Back.
+- **Crew cards** cut a long name with "…" at narrow widths (UG2-RS-2, rulebook
+  R05): the owner decides whether names may take two lines.
+- Smaller items: sex inferred wrongly for some foreign first names
+  (UG2-FUN-5), no warning for a missing size (UG2-FUN-10), warning severity
+  shown by dot colour only in the detail (UG2-FUN-11), the C chip hidden while
+  selected (UG2-FUN-12), the crew page reopening on Sabato PM (UG2-FUN-13),
+  the age field saving a half-typed number (UG2-DAT-6), the OCR worker kept in
+  memory (UG2-DAT-8), two open copies overwriting each other's session plan
+  (UG2-DAT-9), and the wording and layout notes in UG2-UX-10 to 16.
+
 ## Engineering follow-ups that do not need a decision
 
 - F2 limitations: a pasted surname or first name equal to a placeholder word
