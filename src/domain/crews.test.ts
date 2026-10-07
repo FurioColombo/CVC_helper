@@ -427,7 +427,9 @@ describe("crew composition rules", () => {
           sessionId: "sun-pm",
           members: [],
           capacity: 4,
-          destination: "unassigned",
+          // A Mezzi crew keeps its destination; a crew on a boat does not
+          // keep the boat (new-1 above).
+          destination: "mezzi",
           boatId: null,
         },
       ],

@@ -11,7 +11,11 @@ import {
   type StudentScanCandidate,
   type StudentScanField,
 } from "@/capabilities/studentScan"
-import { isMinor, isValidDateOnly } from "@/domain/student"
+import {
+  isMinor,
+  isValidDateOnly,
+  PLAUSIBLE_STUDENT_AGE,
+} from "@/domain/student"
 
 // The review holds a scanned row together with what the operator has done to
 // it. The name reading and its order live in the capability, which owns the
@@ -146,7 +150,7 @@ export function ageConflictsWithReadDate(
  * registration date gives 0), so it is marked until the operator types it or
  * leaves the age field after checking it; checking the whole row is not enough.
  */
-export const PLAUSIBLE_SCAN_AGE = { min: 4, max: 99 } as const
+export const PLAUSIBLE_SCAN_AGE = PLAUSIBLE_STUDENT_AGE
 
 export function ageNeedsReview(
   candidate: ScanReviewCandidate,

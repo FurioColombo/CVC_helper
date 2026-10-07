@@ -873,3 +873,227 @@ describe("DutyManagement", () => {
     })
   })
 })
+
+const ALL_DAYS = DUTY_DAYS.map(({ id }) => id)
+
+function renderDuties() {
+  return render(
+    <DutyManagement
+      courseId="course-1"
+      onHome={vi.fn()}
+      courseStartDate="2026-08-29"
+    />,
+  )
+}
+
+function manyStudents(count: number): StudentRecord[] {
+  return Array.from({ length: count }, (_, index) => ({
+    ...STUDENTS[0]!,
+    id: `student-${index + 1}`,
+    firstName: `Nome${index + 1}`,
+    surname: `Cognome${index + 1}`,
+    dateOfBirth: "2000-01-01",
+  }))
+}
+
+// UG2-FUN-1: the week was fully completed and a student has no duty.
+describe("DutyManagement once every day is completed", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getStudents.mockResolvedValue(STUDENTS)
+    savePlan.mockResolvedValue(undefined)
+  })
+
+  it("opens, and shows the student without a duty as a warning", async () => {
+    getPlan.mockResolvedValue({
+      assignments: ALL_DAYS.map((dayId, index) => ({
+        dayId,
+        studentId: `student-${index + 1}`,
+      })),
+      settings: { ...SETTINGS, completedDayIds: [...ALL_DAYS] },
+    })
+    const user = userEvent.setup()
+    renderDuties()
+
+    expect(
+      await screen.findByRole("status", { name: "Copertura comandate 7/8" }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole("heading", { name: "Comandate non disponibili" }),
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Avvisi · 1" }))
+    expect(
+      await screen.findByText("Nome8 Cognome8 non assegnato"),
+    ).toBeVisible()
+  })
+
+  it("opens Ricalcola with nothing to distribute and nothing to confirm", async () => {
+    getPlan.mockResolvedValue({
+      assignments: ALL_DAYS.map((dayId, index) => ({
+        dayId,
+        studentId: `student-${index + 1}`,
+      })),
+      settings: { ...SETTINGS, completedDayIds: [...ALL_DAYS] },
+    })
+    const user = userEvent.setup()
+    renderDuties()
+
+    await user.click(await screen.findByRole("button", { name: "Ricalcola" }))
+
+    expect(
+      screen.getByText(
+        "Tutte le comandate sono completate: non resta niente da distribuire.",
+      ),
+    ).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: "Conferma proposta" }),
+    ).toBeDisabled()
+    expect(savePlan).not.toHaveBeenCalled()
+  })
+
+  it("completes the last day even though a student still has no duty", async () => {
+    const lastDay = ALL_DAYS.at(-1)!
+    getPlan.mockResolvedValue({
+      assignments: ALL_DAYS.map((dayId, index) => ({
+        dayId,
+        studentId: `student-${index + 1}`,
+      })),
+      settings: {
+        ...SETTINGS,
+        completedDayIds: ALL_DAYS.filter((dayId) => dayId !== lastDay),
+      },
+    })
+    const user = userEvent.setup()
+    renderDuties()
+
+    await user.click(
+      await screen.findByRole("button", { name: /^Venerdì, 1 assegnati/ }),
+    )
+    await user.click(screen.getByRole("button", { name: "Segna completata" }))
+
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(savePlan.mock.calls[0]![2].completedDayIds).toEqual(ALL_DAYS)
+    expect(
+      await screen.findByRole("button", {
+        name: "Venerdì, 1 assegnati, completata",
+      }),
+    ).toBeVisible()
+  })
+})
+
+// UG2-FUN-3: Italian singular and plural on the proposal screen.
+describe("DutyManagement proposal screen wording", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getPlan.mockResolvedValue({ assignments: [], settings: null })
+    savePlan.mockResolvedValue(undefined)
+  })
+
+  it.each([
+    [
+      20,
+      "20 allievi · 7 giorni · 6 posti extra",
+      "Scegli esattamente 6 giorni.",
+    ],
+    [
+      15,
+      "15 allievi · 7 giorni · 1 posto extra",
+      "Scegli esattamente 1 giorno.",
+    ],
+    [1, "1 allievo · 7 giorni · 1 posto extra", "Scegli esattamente 1 giorno."],
+    [14, "14 allievi · 7 giorni", "Scegli esattamente 0 giorni."],
+  ])("reads %s students as %j", async (count, summary, instruction) => {
+    getStudents.mockResolvedValue(manyStudents(count))
+    const user = userEvent.setup()
+    renderDuties()
+
+    await user.click(
+      await screen.findByRole("button", { name: "Proponi comandate" }),
+    )
+
+    const region = screen.getByRole("region", {
+      name: "Riepilogo distribuzione",
+    })
+    expect(within(region).getByText(summary)).toBeVisible()
+    expect(screen.getByText(instruction)).toBeVisible()
+    expect(document.body.textContent).not.toMatch(
+      /postoi|giornoi|\b1 allievi|\b1 giorni|\b1 posti/,
+    )
+  })
+
+  it("says 1 giorno when a single day remains", async () => {
+    getStudents.mockResolvedValue(manyStudents(3))
+    getPlan.mockResolvedValue({
+      assignments: [],
+      settings: {
+        ...SETTINGS,
+        completedDayIds: ALL_DAYS.filter((dayId) => dayId !== "friday"),
+      },
+    })
+    const user = userEvent.setup()
+    renderDuties()
+
+    await user.click(await screen.findByRole("button", { name: "Ricalcola" }))
+
+    expect(screen.getByText("3 allievi · 1 giorno")).toBeVisible()
+  })
+})
+
+// UG2-DAT-1 / DAT-3: the page opens with a damaged record instead of refusing.
+describe("DutyManagement with damaged stored records", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    savePlan.mockResolvedValue(undefined)
+  })
+
+  it("proposes a rota for a student whose stored birth date is not a date", async () => {
+    getStudents.mockResolvedValue(
+      STUDENTS.map((student) =>
+        student.id === "student-3"
+          ? { ...student, dateOfBirth: "2000-02-30" }
+          : student,
+      ),
+    )
+    getPlan.mockResolvedValue({ assignments: [], settings: null })
+    const user = userEvent.setup()
+    renderDuties()
+
+    await user.click(
+      await screen.findByRole("button", { name: "Proponi comandate" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Conferma proposta" }))
+
+    await waitFor(() => expect(savePlan).toHaveBeenCalledOnce())
+    expect(savePlan.mock.calls[0]![1]).toHaveLength(8)
+  })
+
+  it("drops a duty for a student the course no longer has, and reports it", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    getStudents.mockResolvedValue(STUDENTS)
+    getPlan.mockResolvedValue({
+      assignments: [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "wednesday", studentId: "student-that-was-deleted" },
+      ],
+      settings: SETTINGS,
+    })
+    renderDuties()
+
+    expect(
+      await screen.findByRole("button", { name: /^Mercoledì, 0 assegnati/ }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: /^Sabato, 1 assegnati/ }),
+    ).toBeVisible()
+    expect(screen.queryByText("Allievo mancante")).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Comandate non disponibili" }),
+    ).not.toBeInTheDocument()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("wednesday"))
+  })
+})

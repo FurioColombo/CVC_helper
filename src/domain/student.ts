@@ -12,6 +12,21 @@ export interface StudentAgeSource {
 
 export const MAX_DECLARED_STUDENT_AGE = 120
 
+/**
+ * Ages a sailing course can have. The scan review marks a reading outside
+ * them as a misread, and the manual form refuses to store one, so a mistyped
+ * age (a 1 for a 21, a 0 for a blank) is caught wherever an age is entered.
+ */
+export const PLAUSIBLE_STUDENT_AGE = { min: 4, max: 99 } as const
+
+export function isPlausibleStudentAge(age: number) {
+  return (
+    Number.isInteger(age) &&
+    age >= PLAUSIBLE_STUDENT_AGE.min &&
+    age <= PLAUSIBLE_STUDENT_AGE.max
+  )
+}
+
 function parseDateOnly(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!match) throw new Error(`Invalid date-only value: ${value}`)
@@ -69,9 +84,12 @@ function getSurnameInitialKey(surname: string) {
 }
 
 function formatSurnamePrefix(surname: string, length: number) {
+  // A particle ("De Rossi" against "Del Rossi") can end the distinguishing
+  // length on its own space, which must not be left before the period.
   const prefix = Array.from(surname.trim().normalize("NFC"))
     .slice(0, length)
     .join("")
+    .trimEnd()
   const firstGrapheme = Array.from(prefix)[0]
   if (!firstGrapheme) return ""
   return `${firstGrapheme.toLocaleUpperCase("it-IT")}${prefix.slice(firstGrapheme.length)}`
@@ -251,9 +269,8 @@ export function calculateStudentAge(
   student: StudentAgeSource,
   courseStartDate: string,
 ) {
-  if (student.dateOfBirth?.trim()) {
-    return calculateAge(student.dateOfBirth, courseStartDate)
-  }
+  const dateOfBirth = student.dateOfBirth?.trim()
+  if (dateOfBirth) return calculateAge(dateOfBirth, courseStartDate)
   const age = student.declaredAgeAtCourseStart
   if (age === null || age === undefined) {
     throw new Error(
@@ -266,11 +283,74 @@ export function calculateStudentAge(
   return age
 }
 
+/**
+ * The age the screens show, or `null` when the record has no usable age: a
+ * stored birth date that is not a real date (a half-typed year written by an
+ * earlier version) is ignored, and so is a declared age outside its range. A
+ * screen that gets `null` shows the student as "età da completare" so the
+ * operator can repair it in the edit form, instead of refusing to open. A
+ * usable birth date still wins over a declared age.
+ */
+export function resolveStudentAge(
+  student: StudentAgeSource,
+  courseStartDate: string,
+): number | null {
+  const dateOfBirth = student.dateOfBirth?.trim()
+  if (dateOfBirth && isValidDateOnly(dateOfBirth)) {
+    return calculateAge(dateOfBirth, courseStartDate)
+  }
+  const age = student.declaredAgeAtCourseStart
+  return typeof age === "number" &&
+    Number.isInteger(age) &&
+    age >= 0 &&
+    age <= MAX_DECLARED_STUDENT_AGE
+    ? age
+    : null
+}
+
+/** A student whose age is unknown is not marked as a minor: nothing is invented. */
 export function isStudentMinor(
   student: StudentAgeSource,
   courseStartDate: string,
 ) {
-  return calculateStudentAge(student, courseStartDate) < 18
+  const age = resolveStudentAge(student, courseStartDate)
+  return age !== null && age < 18
+}
+
+// Hoisted: one collator, not one per comparison.
+const ITALIAN_NAME_COLLATOR = new Intl.Collator("it-IT", {
+  sensitivity: "base",
+})
+
+/**
+ * Orders two names the way an Italian reader expects: case and accents do not
+ * matter, so "Évola" sits among the E and "Šimunić" among the S. SQLite's own
+ * NOCASE only folds ASCII and would put every accented initial after the Z.
+ */
+export function compareItalianNames(left: string, right: string) {
+  return ITALIAN_NAME_COLLATOR.compare(left, right)
+}
+
+export interface StudentListSortKey {
+  firstName: string
+  surname: string
+  nickname?: string | null
+  active: number
+}
+
+/** Active students first, then by surname and then by the name shown for them. */
+export function compareStudentsForList(
+  left: StudentListSortKey,
+  right: StudentListSortKey,
+) {
+  const shownName = (student: StudentListSortKey) =>
+    student.nickname?.trim() || student.firstName
+  return (
+    right.active - left.active ||
+    compareItalianNames(left.surname, right.surname) ||
+    compareItalianNames(shownName(left), shownName(right)) ||
+    compareItalianNames(left.firstName, right.firstName)
+  )
 }
 
 export function getStudentDisplayName<T extends StudentIdentity>(

@@ -3218,3 +3218,144 @@ describe("CrewManagement", () => {
     ).toBeVisible()
   })
 })
+
+// UG2-DAT-1 / DAT-2 / DAT-3: one damaged stored record used to make Equipaggi
+// "non disponibili". These findings are survivable; a broken reference between
+// records still is not.
+describe("CrewManagement with damaged stored records", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    window.localStorage.clear()
+    getStudents.mockResolvedValue(STUDENTS)
+    getVolunteers.mockResolvedValue(VOLUNTEERS)
+    getBoats.mockResolvedValue(BOATS)
+    getFaults.mockResolvedValue(FAULTS)
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+      }),
+    )
+    getHistory.mockResolvedValue([])
+    getDutyPlan.mockResolvedValue({ assignments: [], settings: null })
+    savePlan.mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  function renderCrews() {
+    return render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+  }
+
+  it.each(["2000-02-30", "0002-03-12", "20000-03-12", "12/03/2000", "abc"])(
+    "opens with a student whose stored birth date is %s, who is no minor",
+    async (dateOfBirth) => {
+      getStudents.mockResolvedValue([
+        { ...STUDENTS[0]!, dateOfBirth },
+        // A real date with stray spaces keeps the age it has: a minor.
+        { ...STUDENTS[1]!, dateOfBirth: " 2010-05-04 " },
+        ...STUDENTS.slice(2),
+      ])
+      renderCrews()
+
+      const damaged = await screen.findByRole("button", { name: "Aldo" })
+      expect(within(damaged).queryByLabelText("Minorenne")).toBeNull()
+      expect(
+        within(screen.getByRole("button", { name: "Bea" })).getByLabelText(
+          "Minorenne",
+        ),
+      ).toBeVisible()
+    },
+  )
+
+  it("opens with a fault whose update is stamped before its creation", async () => {
+    getFaults.mockResolvedValue([
+      {
+        id: "fault-1",
+        boatId: "boat-2",
+        description: "Scotta usurata",
+        state: "open",
+        createdAt: "2026-08-29T10:00:00.000Z",
+        updatedAt: "2026-08-29T09:59:00.000Z",
+        boatType: "RS Quest",
+        boatNumber: "2",
+      },
+    ])
+    renderCrews()
+
+    expect(await screen.findByRole("button", { name: "Aldo" })).toBeVisible()
+    expect(
+      screen.queryByRole("heading", { name: "Equipaggi non disponibili" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("opens with a duty for a student the course no longer has, and reports it", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    getDutyPlan.mockResolvedValue({
+      assignments: [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "wednesday", studentId: "student-that-was-deleted" },
+      ],
+      settings: null,
+    })
+    renderCrews()
+
+    expect(await screen.findByRole("button", { name: "Aldo" })).toBeVisible()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("wednesday"))
+  })
+
+  it("still refuses a crew that names a student the course does not have", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [
+          {
+            id: "crew-1",
+            sessionId: "sat-pm",
+            members: [{ personId: "student-gone", personType: "student" }],
+          },
+        ],
+        landStudentIds: [],
+      }),
+    )
+    renderCrews()
+
+    expect(
+      await screen.findByRole("heading", { name: "Equipaggi non disponibili" }),
+    ).toBeVisible()
+  })
+})
+
+// UG2-FUN-3: "1 equipaggi" on the crew-count note.
+describe("CrewManagement crew-limit wording", () => {
+  it("says 1 equipaggio with 1 persona disponibile", async () => {
+    vi.clearAllMocks()
+    window.localStorage.clear()
+    getStudents.mockResolvedValue(STUDENTS.slice(0, 1))
+    getVolunteers.mockResolvedValue([])
+    getBoats.mockResolvedValue(BOATS)
+    getFaults.mockResolvedValue(FAULTS)
+    getPlan.mockResolvedValue(stored({ crews: [], landStudentIds: [] }))
+    getHistory.mockResolvedValue([])
+    getDutyPlan.mockResolvedValue({ assignments: [], settings: null })
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "Limite attuale: fino a 1 equipaggio con 1 persona disponibile.",
+    )
+  })
+})

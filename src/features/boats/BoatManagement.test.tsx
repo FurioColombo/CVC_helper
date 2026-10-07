@@ -307,3 +307,60 @@ describe("BoatManagement", () => {
     expect(deleteBoat).toHaveBeenCalledWith(BOAT.id, COURSE.id)
   })
 })
+
+// UG2-DAT-2: a fault whose update is stamped before its creation (the phone's clock
+// stepped back) used to make Barche refuse to open; a dangling fault still does.
+describe("BoatManagement with a fault updated before it was created", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getBoats.mockResolvedValue([BOAT])
+    getFaults.mockResolvedValue([])
+  })
+
+  it("opens and shows the boat with its open fault", async () => {
+    getFaults.mockResolvedValue([
+      { ...FAULT, updatedAt: "2026-08-29T09:59:00.000Z" },
+    ])
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("button", { name: /^RS Quest 7, .*1 avaria/ }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole("heading", { name: "Barche non disponibili" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("still refuses a fault that names a boat the course does not have", async () => {
+    getFaults.mockResolvedValue([{ ...FAULT, boatId: "boat-gone" }])
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("heading", { name: "Barche non disponibili" }),
+    ).toBeVisible()
+  })
+})
+
+// UG2-FUN-3: Italian singular and plural in the preview of new boats.
+describe("BoatManagement new-boat preview wording", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getBoats.mockResolvedValue([BOAT])
+    getFaults.mockResolvedValue([])
+  })
+
+  it.each([
+    ["2", "Verrà creata 1 barca RS Quest."],
+    ["2 3 11", "Verranno create 3 barche RS Quest."],
+  ])("reads the numbers %j as %j", async (numbers, expected) => {
+    const user = userEvent.setup()
+    render(<BoatManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(
+      await screen.findByRole("button", { name: "Configura numeri barche" }),
+    )
+    await user.type(screen.getByLabelText("Numeri barca"), numbers)
+
+    expect(screen.getByText(expected)).toBeVisible()
+  })
+})

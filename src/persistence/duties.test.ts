@@ -28,11 +28,27 @@ const SETTINGS: DutySettingsRecord = {
   acknowledgedWarningKeys: ["minor-balance:2,0"],
 }
 
+/**
+ * The transaction's reads share one `getAll` mock: tell the course's students
+ * apart from the stored duty rows by the table the query names.
+ */
+function givenStoredRows({
+  students = ["student-1", "student-2", "student-3"],
+  duties = [],
+}: {
+  students?: string[]
+  duties?: Array<{ id?: string; dayId: string; studentId: string }>
+} = {}) {
+  database.getAll.mockImplementation(async (sql: string) =>
+    sql.includes("FROM students") ? students.map((id) => ({ id })) : duties,
+  )
+}
+
 describe("duty persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     database.init.mockResolvedValue(undefined)
-    database.getAll.mockResolvedValue([])
+    givenStoredRows()
     database.getOptional.mockResolvedValue(null)
     database.writeTransaction.mockImplementation(
       async (
@@ -179,10 +195,12 @@ describe("duty persistence", () => {
     database.getOptional.mockResolvedValue({
       completedDayIds: '["saturday"]',
     })
-    database.getAll.mockResolvedValue([
-      { dayId: "saturday", studentId: "student-1" },
-      { dayId: "sunday", studentId: "student-2" },
-    ])
+    givenStoredRows({
+      duties: [
+        { dayId: "saturday", studentId: "student-1" },
+        { dayId: "sunday", studentId: "student-2" },
+      ],
+    })
 
     await expect(
       saveDutyPlan("course-1", [...assignments], {
@@ -197,10 +215,12 @@ describe("duty persistence", () => {
     database.getOptional.mockResolvedValue({
       completedDayIds: '["saturday"]',
     })
-    database.getAll.mockResolvedValue([
-      { id: "completed-saturday", dayId: "saturday", studentId: "student-1" },
-      { id: "future-sunday", dayId: "sunday", studentId: "student-2" },
-    ])
+    givenStoredRows({
+      duties: [
+        { id: "completed-saturday", dayId: "saturday", studentId: "student-1" },
+        { id: "future-sunday", dayId: "sunday", studentId: "student-2" },
+      ],
+    })
 
     await expect(
       saveDutyPlan(
@@ -224,10 +244,12 @@ describe("duty persistence", () => {
   })
 
   it("retains unchanged assignment IDs while adding and removing other duties", async () => {
-    database.getAll.mockResolvedValue([
-      { id: "retained", dayId: "saturday", studentId: "student-1" },
-      { id: "removed", dayId: "sunday", studentId: "student-2" },
-    ])
+    givenStoredRows({
+      duties: [
+        { id: "retained", dayId: "saturday", studentId: "student-1" },
+        { id: "removed", dayId: "sunday", studentId: "student-2" },
+      ],
+    })
 
     await saveDutyPlan(
       "course-1",
@@ -263,7 +285,7 @@ describe("duty persistence", () => {
   ])(
     "rejects persisted duty rows with a %s before mutation",
     async (_case, rows) => {
-      database.getAll.mockResolvedValue(rows)
+      givenStoredRows({ duties: rows })
       await expect(saveDutyPlan("course-1", [], SETTINGS)).rejects.toThrow(
         "Duplicate persisted duty assignment",
       )
@@ -271,6 +293,59 @@ describe("duty persistence", () => {
       expect(database.execute).not.toHaveBeenCalled()
     },
   )
+
+  // UG2-DAT-3: a second window that still lists a deleted student used to be
+  // able to store a duty for them, which then made Equipaggi and Comandate
+  // refuse to open. Crew and evaluation saves already refused this.
+  it("refuses a duty for a student the course does not have, before writing", async () => {
+    await expect(
+      saveDutyPlan(
+        "course-1",
+        [
+          { dayId: "saturday", studentId: "student-1" },
+          { dayId: "wednesday", studentId: "student-that-was-deleted" },
+        ],
+        { ...SETTINGS, completedDayIds: [] },
+      ),
+    ).rejects.toThrow("Duty student does not belong to course")
+    expect(database.executeBatch).not.toHaveBeenCalled()
+    expect(database.execute).not.toHaveBeenCalled()
+  })
+
+  it("refuses a stay-over preference for a student the course does not have", async () => {
+    await expect(
+      saveDutyPlan("course-1", [], {
+        ...SETTINGS,
+        completedDayIds: [],
+        stayOverStudentIds: ["student-1", "student-that-was-deleted"],
+      }),
+    ).rejects.toThrow("Duty student does not belong to course")
+    expect(database.execute).not.toHaveBeenCalled()
+  })
+
+  it("lets a save that no longer shows a stored duty for a missing student remove it, even on a completed day", async () => {
+    database.getOptional.mockResolvedValue({
+      completedDayIds: '["saturday"]',
+    })
+    givenStoredRows({
+      duties: [
+        { id: "kept", dayId: "saturday", studentId: "student-1" },
+        { id: "dangling", dayId: "saturday", studentId: "student-gone" },
+      ],
+    })
+
+    await expect(
+      saveDutyPlan(
+        "course-1",
+        [{ dayId: "saturday", studentId: "student-1" }],
+        SETTINGS,
+      ),
+    ).resolves.toBeUndefined()
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      "DELETE FROM dutyAssignments WHERE id = ? AND courseId = ?",
+      [["dangling", "course-1"]],
+    )
+  })
 
   it("rejects a persisted fractional desired daily count on reload", async () => {
     database.getOptional.mockResolvedValue({

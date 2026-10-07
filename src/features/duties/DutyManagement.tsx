@@ -29,6 +29,7 @@ import {
   getDutyWarnings,
   getVisibleDutyWarnings,
   groupDutyStudentsForDay,
+  ignoreMissingStudentDuties,
   setStudentDutyForDay,
   type DutyAssignment,
   type DutyConfig,
@@ -37,7 +38,7 @@ import {
   type DutyStudentDayGroupEntry,
   type DutyWarning,
 } from "@/domain/duties"
-import { validateDutyRecords } from "@/domain/invariants"
+import { blockingIssues, validateDutyRecords } from "@/domain/invariants"
 import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
 import { makeSummaryFilename } from "@/lib/summaryShare"
 import { useNestedScreen } from "@/navigation/nestedScreen"
@@ -226,14 +227,18 @@ function defaultSettings(students: StudentRecord[]): CanonicalDutySettings {
 }
 
 async function readValidDutyData(courseId: string) {
-  const [students, plan] = await Promise.all([
+  const [students, storedPlan] = await Promise.all([
     listStudents(courseId),
     readDutyPlan(courseId),
   ])
+  // A duty for a student the course no longer has is dropped from view (and
+  // reported) rather than refusing to open the page that could fix the plan.
+  const plan = ignoreMissingStudentDuties(students, storedPlan)
   const settings = plan.settings ?? defaultSettings(students)
   if (
-    validateDutyRecords(students, plan.assignments, settings.completedDayIds)
-      .length > 0
+    blockingIssues(
+      validateDutyRecords(students, plan.assignments, settings.completedDayIds),
+    ).length > 0
   ) {
     throw new Error("Persisted duty state violates invariants")
   }
@@ -470,20 +475,35 @@ function DutyConfiguration({
               Base per giorno
             </span>
             <span className="block break-words text-xs leading-5 text-muted-foreground">
-              {proposalStudentCount} allievi · {remainingDayIds.length} giorni
+              {proposalStudentCount === 1
+                ? "1 allievo"
+                : `${proposalStudentCount} allievi`}{" "}
+              ·{" "}
+              {remainingDayIds.length === 1
+                ? "1 giorno"
+                : `${remainingDayIds.length} giorni`}
               {distribution.extraDayCount > 0 &&
-                ` · ${distribution.extraDayCount} posto${distribution.extraDayCount === 1 ? "" : "i"} extra`}
+                ` · ${distribution.extraDayCount} ${distribution.extraDayCount === 1 ? "posto" : "posti"} extra`}
             </span>
           </span>
         </section>
+
+        {remainingDayIds.length === 0 && (
+          <p
+            className="break-words rounded-2xl border bg-card p-3 text-sm leading-5 text-muted-foreground"
+            role="status"
+          >
+            Tutte le comandate sono completate: non resta niente da distribuire.
+          </p>
+        )}
 
         <fieldset className="min-w-0 max-w-full">
           <legend className="break-words text-sm font-black">
             Giorni con più persone
           </legend>
           <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
-            Scegli esattamente {distribution.extraDayCount} giorno
-            {distribution.extraDayCount === 1 ? "" : "i"}.
+            Scegli esattamente {distribution.extraDayCount}{" "}
+            {distribution.extraDayCount === 1 ? "giorno" : "giorni"}.
           </p>
           <div className="mt-2 grid min-w-0 max-w-full grid-cols-4 gap-2 max-[350px]:gap-[6px]">
             {remainingDayIds.map((dayId) => {

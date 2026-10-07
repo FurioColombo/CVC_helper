@@ -187,7 +187,10 @@ export function copyPreviousCrewPlan({
             sessionId,
             members: [],
             capacity: crew.capacity,
-            destination: "unassigned",
+            // Mezzi is a real crew, not a boat: copying keeps it. A boat
+            // link is session-local (that boat may be unavailable or not
+            // going out), so a crew on a boat starts without one.
+            destination: crew.destination === "mezzi" ? "mezzi" : "unassigned",
             boatId: null,
           },
           members,

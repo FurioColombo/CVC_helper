@@ -213,3 +213,72 @@ describe("student persistence", () => {
     )
   })
 })
+
+// UG2-FUN-2: the query keeps the active students first, but SQLite's NOCASE
+// only folds ASCII, so the surname order is applied by the Italian collator.
+describe("student list order", () => {
+  const stored = (surname: string, firstName: string, active: 0 | 1 = 1) => ({
+    id: `student-${surname}-${firstName}`,
+    courseId: "course-1",
+    firstName,
+    surname,
+    nickname: null,
+    dateOfBirth: "",
+    declaredAgeAtCourseStart: 20,
+    sex: "male",
+    phone: null,
+    size: null,
+    initialNote: null,
+    courseNote: null,
+    active,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    database.init.mockResolvedValue(undefined)
+  })
+
+  it("lists accented surnames with their base letter, active students first", async () => {
+    // As SQLite returns them: ASCII order, every accented initial last.
+    database.getAll.mockResolvedValue([
+      stored("Abate", "Anna"),
+      stored("de Luca", "Gino"),
+      stored("De Rosa", "Gino"),
+      stored("Sala", "Marco"),
+      stored("Zanetti", "Zeno"),
+      stored("Álvarez", "José"),
+      stored("Östergaard", "Lars"),
+      stored("Šimunić", "Ivan"),
+      stored("Bianchi", "Bea", 0),
+      stored("Éva", "Eva", 0),
+    ])
+
+    const listed = await listStudents("course-1")
+
+    expect(listed.map(({ surname }) => surname)).toEqual([
+      "Abate",
+      "Álvarez",
+      "de Luca",
+      "De Rosa",
+      "Östergaard",
+      "Sala",
+      "Šimunić",
+      "Zanetti",
+      "Bianchi",
+      "Éva",
+    ])
+  })
+
+  it("keeps the order SQLite gave to students it cannot tell apart", async () => {
+    const [first, second] = [
+      { ...stored("Rossi", "Mario"), id: "first" },
+      { ...stored("Rossi", "Mario"), id: "second" },
+    ]
+    database.getAll.mockResolvedValue([first, second])
+
+    expect((await listStudents("course-1")).map(({ id }) => id)).toEqual([
+      "first",
+      "second",
+    ])
+  })
+})

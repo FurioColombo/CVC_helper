@@ -2,7 +2,7 @@ import { ChevronLeft, Plus, Wrench } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { validateBoatRecords } from "@/domain/invariants"
+import { blockingIssues, validateBoatRecords } from "@/domain/invariants"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
 import { useNestedScreen } from "@/navigation/nestedScreen"
@@ -24,7 +24,7 @@ async function readValidFaultData(courseId: string) {
     listBoats(courseId),
     listFaults(courseId),
   ])
-  if (validateBoatRecords(boats, faults).length > 0) {
+  if (blockingIssues(validateBoatRecords(boats, faults)).length > 0) {
     throw new Error("Persisted fault state violates invariants")
   }
   return { boats, faults }

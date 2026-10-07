@@ -156,6 +156,19 @@ export async function saveDutyPlan(
     uniqueKeys.add(key)
   }
   await database.writeTransaction(async (transaction) => {
+    // Like a crew or an evaluation save: a second window can still list a
+    // student who was deleted meanwhile, and its duty must not be stored.
+    const courseStudents = await transaction.getAll<{ id: string }>(
+      "SELECT id FROM students WHERE courseId = ?",
+      [courseId],
+    )
+    const knownStudentIds = new Set(courseStudents.map(({ id }) => id))
+    if (
+      assignments.some(({ studentId }) => !knownStudentIds.has(studentId)) ||
+      settings.stayOverStudentIds.some((id) => !knownStudentIds.has(id))
+    ) {
+      throw new Error("Duty student does not belong to course")
+    }
     const persistedSettings = await transaction.getOptional<{
       completedDayIds: string
     }>(
@@ -185,9 +198,15 @@ export async function saveDutyPlan(
       )
     if (persistedCompletedDayIds.length > 0) {
       const completed = new Set(persistedCompletedDayIds)
+      // A stored duty for a student the course no longer has is not history
+      // worth protecting: the screens do not show it, so a save without it
+      // must be able to remove it even from a completed day.
       const canonical = (rows: DutyAssignment[]) =>
         rows
-          .filter(({ dayId }) => completed.has(dayId))
+          .filter(
+            ({ dayId, studentId }) =>
+              completed.has(dayId) && knownStudentIds.has(studentId),
+          )
           .map(({ dayId, studentId }) => `${dayId}:${studentId}`)
           .sort()
       if (

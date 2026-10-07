@@ -98,6 +98,7 @@ import {
   type CrewWarningReason,
 } from "@/domain/crewWarnings"
 import {
+  blockingIssues,
   validateBoatRecords,
   validateCrewRecords,
   validateDutyRecords,
@@ -117,7 +118,10 @@ import {
   saveCrewPlan,
 } from "@/persistence/crews"
 import { readDutyPlan } from "@/persistence/duties"
-import type { DutyAssignment } from "@/domain/duties"
+import {
+  ignoreMissingStudentDuties,
+  type DutyAssignment,
+} from "@/domain/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import { listVolunteers, type VolunteerRecord } from "@/persistence/volunteers"
 
@@ -570,17 +574,19 @@ function hasCrewHistoryIssues(
   history: CrewHistoryEntry[],
 ) {
   return (
-    validateCrewRecords(
-      students,
-      volunteers,
-      history.map((crew) => ({
-        id: crew.crewId,
-        sessionId: crew.sessionId,
-        studentIds: crew.studentIds,
-        volunteerIds: [],
-        destination: "unassigned",
-      })),
-      [],
+    blockingIssues(
+      validateCrewRecords(
+        students,
+        volunteers,
+        history.map((crew) => ({
+          id: crew.crewId,
+          sessionId: crew.sessionId,
+          studentIds: crew.studentIds,
+          volunteerIds: [],
+          destination: "unassigned",
+        })),
+        [],
+      ),
     ).length > 0
   )
 }
@@ -1153,7 +1159,7 @@ async function readValidCrewState(
   sessionId: SessionId,
   course: { family: CourseRecord["family"]; level: CourseRecord["level"] },
 ) {
-  const [students, volunteers, boats, faults, stored, history, dutyPlan] =
+  const [students, volunteers, boats, faults, stored, history, storedDutyPlan] =
     await Promise.all([
       listStudents(courseId),
       listVolunteers(courseId),
@@ -1163,6 +1169,9 @@ async function readValidCrewState(
       readCrewHistory(courseId),
       readDutyPlan(courseId),
     ])
+  // A duty for a student the course no longer has is dropped (and reported),
+  // not a reason to refuse to open the page.
+  const dutyPlan = ignoreMissingStudentDuties(students, storedDutyPlan)
   const invariantCrews = stored.crews.map((crew) => {
     const studentEntries: number[] = []
     const volunteerEntries: number[] = []
@@ -1191,25 +1200,29 @@ async function readValidCrewState(
     }
   })
   if (
-    validateBoatRecords(boats, faults).length > 0 ||
-    validateCrewRecords(
-      students,
-      volunteers,
-      invariantCrews,
-      stored.landAssignments,
-      boats,
-      stored.selectedBoatIds.map((boatId, index) => ({
-        id: `session-boat-${index}`,
-        sessionId,
-        boatId,
-      })),
-      course,
+    blockingIssues(validateBoatRecords(boats, faults)).length > 0 ||
+    blockingIssues(
+      validateCrewRecords(
+        students,
+        volunteers,
+        invariantCrews,
+        stored.landAssignments,
+        boats,
+        stored.selectedBoatIds.map((boatId, index) => ({
+          id: `session-boat-${index}`,
+          sessionId,
+          boatId,
+        })),
+        course,
+      ),
     ).length > 0 ||
     hasCrewHistoryIssues(students, volunteers, history) ||
-    validateDutyRecords(
-      students,
-      dutyPlan.assignments,
-      dutyPlan.settings?.completedDayIds ?? [],
+    blockingIssues(
+      validateDutyRecords(
+        students,
+        dutyPlan.assignments,
+        dutyPlan.settings?.completedDayIds ?? [],
+      ),
     ).length > 0
   ) {
     throw new Error("Persisted crew state violates invariants")
@@ -2707,7 +2720,7 @@ export function CrewManagement({
                 <p className="font-semibold leading-5">
                   {availablePeopleCount === 0
                     ? "Nessuna persona disponibile: per ora puoi preparare 1 equipaggio vuoto."
-                    : `Limite attuale: fino a ${maxCrewCount} equipaggi con ${availablePeopleCount} ${availablePeopleCount === 1 ? "persona disponibile" : "persone disponibili"}.`}
+                    : `Limite attuale: fino a ${maxCrewCount} ${maxCrewCount === 1 ? "equipaggio" : "equipaggi"} con ${availablePeopleCount} ${availablePeopleCount === 1 ? "persona disponibile" : "persone disponibili"}.`}
                 </p>
               </div>
               <Button

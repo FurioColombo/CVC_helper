@@ -1028,3 +1028,211 @@ describe("StudentManagement", () => {
     ).toBeVisible()
   })
 })
+
+const AGE_MESSAGE = "L’età deve essere tra 4 e 99 anni."
+const AGE_LABEL = "Età compiuta il primo giorno del corso"
+
+async function openManualForm(user: ReturnType<typeof userEvent.setup>) {
+  await screen.findByRole("heading", { name: "Allievi" })
+  await user.click(screen.getByRole("button", { name: "Menu allievi" }))
+  await user.click(
+    screen.getAllByRole("button", { name: "Aggiungi allievo" })[0]!,
+  )
+  await user.type(screen.getByLabelText("Nome"), "Giulia")
+  await user.type(screen.getByLabelText("Cognome"), "Bianchi")
+  await user.click(screen.getByRole("radio", { name: "Altro" }))
+}
+
+// UG2-FUN-6: the manual form takes the same ages the scan review calls
+// plausible, and says so in words.
+describe("StudentManagement age range", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getStudents.mockReset()
+    editStudent.mockReset()
+    getStudents.mockResolvedValue([])
+    addStudent.mockResolvedValue(MARIO)
+    editStudent.mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    cleanup()
+  })
+
+  it.each(["0", "3", "100", "120"])(
+    "refuses the age %s in the manual form and explains the range",
+    async (age) => {
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+      await openManualForm(user)
+
+      await user.type(screen.getByLabelText(AGE_LABEL), age)
+
+      expect(screen.getByText(AGE_MESSAGE)).toBeVisible()
+      expect(screen.getByLabelText(AGE_LABEL)).toBeInvalid()
+      await user.click(screen.getByRole("button", { name: "Salva allievo" }))
+      expect(addStudent).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each(["4", "18", "99"])(
+    "saves the age %s from the manual form",
+    async (age) => {
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+      await openManualForm(user)
+
+      await user.type(screen.getByLabelText(AGE_LABEL), age)
+
+      expect(screen.queryByText(AGE_MESSAGE)).not.toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: "Salva allievo" }))
+      await waitFor(() =>
+        expect(addStudent).toHaveBeenCalledWith(
+          "course-1",
+          expect.objectContaining({ declaredAgeAtCourseStart: Number(age) }),
+        ),
+      )
+    },
+  )
+
+  it("holds back an edit to an implausible age until a plausible one is typed", async () => {
+    getStudents.mockResolvedValue([MARIO])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    const age = screen.getByLabelText(AGE_LABEL)
+    await user.clear(age)
+    await user.type(age, "1")
+
+    expect(await screen.findByText(AGE_MESSAGE)).toBeVisible()
+    expect(screen.getByText("Non salvato: completa età.")).toBeVisible()
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    expect(editStudent).not.toHaveBeenCalled()
+
+    await user.type(age, "9")
+    await waitFor(() =>
+      expect(editStudent).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({
+          dateOfBirth: "",
+          declaredAgeAtCourseStart: 19,
+        }),
+      ),
+    )
+    expect(screen.queryByText(AGE_MESSAGE)).not.toBeInTheDocument()
+  })
+
+  it("never refuses an age the student already has when another field is edited", async () => {
+    getStudents.mockResolvedValue([
+      { ...MARIO, dateOfBirth: "", declaredAgeAtCourseStart: 120 },
+    ])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    await user.click(await screen.findByRole("button", { name: /Mario, 120/ }))
+    await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+    expect(screen.queryByText(AGE_MESSAGE)).not.toBeInTheDocument()
+    await user.type(screen.getByLabelText("Telefono"), "333")
+
+    await waitFor(() =>
+      expect(editStudent).toHaveBeenCalledWith(
+        "student-1",
+        "course-1",
+        expect.objectContaining({
+          declaredAgeAtCourseStart: 120,
+          phone: "333",
+        }),
+      ),
+    )
+  })
+})
+
+// UG2-DAT-1: one damaged stored birth date no longer takes the page with it.
+describe("StudentManagement with an unusable stored birth date", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getStudents.mockReset()
+    editStudent.mockReset()
+    editStudent.mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    cleanup()
+  })
+
+  it.each(["2000-02-30", "0002-03-12", "20000-03-12", "12/03/2000"])(
+    "opens the list with %s, marks the student and lets the age be completed",
+    async (dateOfBirth) => {
+      getStudents.mockResolvedValue([
+        { ...MARIO, dateOfBirth },
+        {
+          ...MARIO,
+          id: "student-2",
+          firstName: "Anna",
+          surname: "Verdi",
+          dateOfBirth: " 2010-01-01 ",
+        },
+      ])
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+      // The page opens (it said "Allievi non disponibili" before), the
+      // damaged student says what is missing and is no minor; the other,
+      // whose date only has stray spaces, keeps the age it really has.
+      const damaged = await screen.findByRole("button", {
+        name: "Mario, età da completare, M",
+      })
+      expect(within(damaged).getByText("Età da completare")).toBeVisible()
+      expect(
+        screen.getByRole("button", { name: "Anna, 16 anni, M, Minorenne" }),
+      ).toBeVisible()
+
+      await user.click(damaged)
+      expect(screen.getByText("Età da completare")).toBeVisible()
+      await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+      const age = screen.getByLabelText(AGE_LABEL)
+      expect(age).toHaveValue(null)
+      await user.type(age, "21")
+
+      await waitFor(() =>
+        expect(editStudent).toHaveBeenCalledWith(
+          "student-1",
+          "course-1",
+          expect.objectContaining({
+            dateOfBirth: "",
+            declaredAgeAtCourseStart: 21,
+          }),
+        ),
+      )
+      expect(await screen.findByText("Salvato")).toBeVisible()
+    },
+  )
+
+  it("keeps a valid declared age when only the birth date is damaged", async () => {
+    getStudents.mockResolvedValue([
+      { ...MARIO, dateOfBirth: "2000-02-30", declaredAgeAtCourseStart: 16 },
+    ])
+    const user = userEvent.setup()
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Mario, 16 anni, M, Minorenne",
+      }),
+    ).toBeVisible()
+    await user.click(screen.getByRole("button", { name: /^Mario, 16/ }))
+    expect(screen.getByText("16 anni · dichiarata")).toBeVisible()
+  })
+
+  it("still refuses a broken reference between records", async () => {
+    getStudents.mockResolvedValue([MARIO, MARIO])
+    render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+    expect(
+      await screen.findByRole("heading", { name: "Allievi non disponibili" }),
+    ).toBeVisible()
+  })
+})

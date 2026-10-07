@@ -34,13 +34,14 @@ import {
   type StudentSize,
 } from "@/domain/config"
 import { formatEvaluationSession } from "@/domain/evaluations"
-import { validateStudentRecords } from "@/domain/invariants"
+import { blockingIssues, validateStudentRecords } from "@/domain/invariants"
 import {
-  calculateStudentAge,
   getStudentDisplayName,
+  isPlausibleStudentAge,
   isStudentMinor,
   isValidDateOnly,
-  MAX_DECLARED_STUDENT_AGE,
+  PLAUSIBLE_STUDENT_AGE,
+  resolveStudentAge,
 } from "@/domain/student"
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
@@ -156,7 +157,9 @@ type LoadState = "loading" | "ready" | "error"
 
 async function readValidStudents(courseId: string) {
   const records = await listStudents(courseId)
-  if (validateStudentRecords(records).length > 0) {
+  // An unusable birth date or age does not stop the list from opening: the
+  // student is shown as "età da completare" and repaired in the edit form.
+  if (blockingIssues(validateStudentRecords(records)).length > 0) {
     throw new Error("Persisted student state violates invariants")
   }
   return records
@@ -377,11 +380,11 @@ function StudentList({
     >
       {students.map((student) => {
         const displayName = getStudentDisplayName(student, students)
-        const age = calculateStudentAge(student, course.startDate)
+        const age = resolveStudentAge(student, course.startDate)
         const minor = isStudentMinor(student, course.startDate)
         return (
           <button
-            aria-label={`${displayName}, ${age} anni, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
+            aria-label={`${displayName}, ${age === null ? "età da completare" : `${age} anni`}, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
             className={`flex min-h-14 min-w-0 items-center gap-2 rounded-xl border bg-card px-2 py-1.5 text-left shadow-[0_4px_12px_rgb(6_59_82/0.04)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${student.active ? "" : "opacity-55"}`}
             key={student.id}
             onClick={() => onOpen(student.id)}
@@ -404,7 +407,13 @@ function StudentList({
                   className="size-3.5 min-[380px]:hidden"
                   sex={student.sex}
                 />
-                <span>{age} anni</span>
+                {age === null ? (
+                  <span className="font-bold text-[#996515]">
+                    Età da completare
+                  </span>
+                ) : (
+                  <span>{age} anni</span>
+                )}
                 {minor && <MinorBadge />}
                 {!student.active && (
                   <span className="font-bold">Non disponibile</span>
@@ -422,21 +431,33 @@ function Field({
   label,
   children,
   hint,
+  error,
   field,
 }: {
   label: string
   children: React.ReactNode
   hint?: string
+  /** Replaces the hint while the value is refused, in words (not colour alone). */
+  error?: string | null
   field?: StudentField
 }) {
   return (
     <label className="grid gap-2 text-sm font-bold" data-field={field}>
       <span>{label}</span>
       {children}
-      {hint && (
-        <span className="text-xs font-normal text-muted-foreground">
-          {hint}
+      {error ? (
+        <span
+          aria-live="polite"
+          className="text-xs font-semibold text-[#a2381b]"
+        >
+          {error}
         </span>
+      ) : (
+        hint && (
+          <span className="text-xs font-normal text-muted-foreground">
+            {hint}
+          </span>
+        )
       )}
     </label>
   )
@@ -474,12 +495,14 @@ function StudentForm({
   const [firstName, setFirstName] = useState(student?.firstName ?? "")
   const [surname, setSurname] = useState(student?.surname ?? "")
   const [nickname, setNickname] = useState(student?.nickname ?? "")
-  // F2R-3: a stored date that is not a real date-only value must not crash
-  // this form (`calculateStudentAge` throws on one). Treated exactly like a
-  // student with no birth date at all: fall back to the declared age on
-  // file, or leave the field empty for the operator to fill in.
+  // F2R-3 / UG2-DAT-1: a stored date that is not a real date-only value (a
+  // half-typed year from 0.2.0, one with stray spaces) must not crash this
+  // form or block the list that opens it. `resolveStudentAge` ignores it, so
+  // it is treated exactly like a student with no birth date at all: fall back
+  // to the declared age on file, or leave the field empty for the operator to
+  // fill in; the first save then replaces it.
   const hadInvalidStoredDate = Boolean(
-    student?.dateOfBirth.trim() && !isValidDateOnly(student.dateOfBirth),
+    student?.dateOfBirth.trim() && !isValidDateOnly(student.dateOfBirth.trim()),
   )
   // Age only, in every mode (owner decision 2026-09-28): the form has no
   // date field. An existing student's age is computed once, from whichever
@@ -487,11 +510,9 @@ function StudentForm({
   // starting value; it never moves again on its own. Saving that exact
   // number back keeps the student's stored date, saving a different one
   // replaces it with the declared age and drops the date (see `input` below).
-  const [initialDeclaredAge] = useState(() => {
-    if (!student) return null
-    if (hadInvalidStoredDate) return student.declaredAgeAtCourseStart ?? null
-    return calculateStudentAge(student, course.startDate)
-  })
+  const [initialDeclaredAge] = useState(() =>
+    student ? resolveStudentAge(student, course.startDate) : null,
+  )
   const [declaredAge, setDeclaredAge] = useState(
     initialDeclaredAge !== null ? String(initialDeclaredAge) : "",
   )
@@ -554,6 +575,15 @@ function StudentForm({
     initialDeclaredAge !== null &&
     parsedDeclaredAge === initialDeclaredAge
 
+  // A new age, or one that replaces the stored one, has to be one a course
+  // can have (the same range the scan review calls plausible). An age the
+  // student already has is never refused here: it is not what is being edited.
+  const ageOutOfRange =
+    parsedDeclaredAge !== null &&
+    !ageUnchanged &&
+    !isPlausibleStudentAge(parsedDeclaredAge)
+  const ageRangeMessage = `L’età deve essere tra ${PLAUSIBLE_STUDENT_AGE.min} e ${PLAUSIBLE_STUDENT_AGE.max} anni.`
+
   const input = useMemo<StudentEditInput>(
     () => ({
       firstName: firstName.trim(),
@@ -588,16 +618,12 @@ function StudentForm({
     const missing: { field: StudentField; label: string }[] = []
     if (!input.firstName) missing.push({ field: "firstName", label: "nome" })
     if (!input.surname) missing.push({ field: "surname", label: "cognome" })
-    if (
-      parsedDeclaredAge === null ||
-      parsedDeclaredAge < 0 ||
-      parsedDeclaredAge > MAX_DECLARED_STUDENT_AGE
-    ) {
+    if (parsedDeclaredAge === null || ageOutOfRange) {
       missing.push({ field: "declaredAgeAtCourseStart", label: "età" })
     }
     if (!input.sex) missing.push({ field: "sex", label: "sesso" })
     return missing
-  }, [input, parsedDeclaredAge])
+  }, [ageOutOfRange, input, parsedDeclaredAge])
   const missingLabels =
     student && missingFields.length > 0
       ? listInItalian(missingFields.map(({ label }) => label))
@@ -673,6 +699,10 @@ function StudentForm({
     event.preventDefault()
     if (student) {
       if (await persistEdit()) onSaved()
+      return
+    }
+    if (ageOutOfRange) {
+      focusFormField(formRef.current, "declaredAgeAtCourseStart")
       return
     }
     setCreating(true)
@@ -758,15 +788,15 @@ function StudentForm({
         </div>
 
         <Field
+          error={ageOutOfRange ? ageRangeMessage : null}
           field="declaredAgeAtCourseStart"
           hint="Anni compiuti il primo giorno del corso; puoi correggerla in seguito."
           label="Età compiuta il primo giorno del corso"
         >
           <Input
+            aria-invalid={ageOutOfRange}
             aria-label="Età compiuta il primo giorno del corso"
             inputMode="numeric"
-            max={MAX_DECLARED_STUDENT_AGE}
-            min={0}
             onChange={(event) => setDeclaredAge(event.target.value)}
             required
             step={1}
@@ -949,9 +979,10 @@ function StudentDetail({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const displayName = getStudentDisplayName(student, students)
-  const age = calculateStudentAge(student, course.startDate)
+  const age = resolveStudentAge(student, course.startDate)
   const minor = isStudentMinor(student, course.startDate)
-  const ageIsDeclared = !student.dateOfBirth.trim()
+  const storedDate = student.dateOfBirth.trim()
+  const ageIsDeclared = !(storedDate && isValidDateOnly(storedDate))
   const nameShortcut = useFieldShortcut(() => onEdit("firstName"))
   const initialNoteShortcut = useFieldShortcut(() => onEdit("initialNote"))
   const courseNoteShortcut = useFieldShortcut(() => onEdit("courseNote"))
@@ -1082,7 +1113,13 @@ function StudentDetail({
               ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
             }
             onShortcut={() => onEdit("declaredAgeAtCourseStart")}
-            value={ageIsDeclared ? `${age} anni · dichiarata` : `${age} anni`}
+            value={
+              age === null
+                ? "Età da completare"
+                : ageIsDeclared
+                  ? `${age} anni · dichiarata`
+                  : `${age} anni`
+            }
           />
           <ProfileField
             field="sex"

@@ -156,3 +156,29 @@ describe("FaultManagement", () => {
     expect(onHome).not.toHaveBeenCalled()
   })
 })
+
+// UG2-DAT-2: the same for Avarie.
+describe("FaultManagement with a fault updated before it was created", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(listBoats).mockResolvedValue(BOATS)
+  })
+
+  it("opens and lists the fault", async () => {
+    vi.mocked(listFaults).mockResolvedValue([
+      { ...FAULTS[0]!, updatedAt: "2026-08-29T09:59:00.000Z" },
+    ])
+    render(
+      <FaultManagement
+        courseId="course-1"
+        onHome={vi.fn()}
+        onOpenBoats={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByText("Timone duro")).toBeVisible()
+    expect(
+      screen.queryByRole("heading", { name: "Avarie non disponibili" }),
+    ).not.toBeInTheDocument()
+  })
+})

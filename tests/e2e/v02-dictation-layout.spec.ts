@@ -7,6 +7,10 @@ import type {
 } from "@/features/speech/useDictation"
 
 import { evidenceOutputPath } from "./evidence"
+import {
+  DICTATION_JOURNEY_TIMEOUT,
+  FIRST_DICTATION_TIMEOUT,
+} from "./speech-download"
 
 const SUBJECT =
   "nota sintetica di Alessandra Bernardeschi per sabato pomeriggio"
@@ -163,7 +167,9 @@ async function expectPermissionError(
   await expect44Px(trigger)
   await trigger.click()
   const alert = page.getByRole("alert").last()
-  await expect(alert).toContainText("Permesso microfono non concesso")
+  await expect(alert).toContainText("Permesso microfono non concesso", {
+    timeout: FIRST_DICTATION_TIMEOUT,
+  })
   await expect(alert).toContainText("Il testo è rimasto invariato")
   const retry = alert.getByRole("button", {
     name: `Riprovare dettatura ${subject}`,
@@ -419,6 +425,7 @@ test("real student create, P05 and P17 note hosts preserve typed text on denial"
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "pixel-7-chrome")
+  test.setTimeout(DICTATION_JOURNEY_TIMEOUT)
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
@@ -534,6 +541,7 @@ test("fault form and open-card edit keep dictation controls inside the card", as
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "pixel-7-chrome")
+  test.setTimeout(DICTATION_JOURNEY_TIMEOUT)
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,

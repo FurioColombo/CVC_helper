@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -303,5 +303,80 @@ describe("boat and fault persistence", () => {
     await expect(deleteBoat("boat-1", "course-1")).rejects.toThrow(
       "did not remove exactly one row",
     )
+  })
+})
+
+// UG2-DAT-2: a phone clock that steps back between creating a fault and editing
+// it used to store an update "before" the creation, which made Avarie, Barche
+// and Equipaggi refuse to open. The statements the app sends are run here on a
+// real SQLite, with the clock set back.
+describe("fault update stamps", () => {
+  const CREATED_AT = "2026-09-19T10:00:00.000Z"
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    database.init.mockResolvedValue(undefined)
+    database.execute.mockResolvedValue([{ id: "fault-1" }])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  async function runOnSqlite(
+    clock: string,
+    update: () => Promise<unknown>,
+  ): Promise<{ createdAt: string; updatedAt: string }> {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(clock))
+    await update()
+    const { DatabaseSync } = await import("node:sqlite")
+    const sqlite = new DatabaseSync(":memory:")
+    sqlite.exec(
+      `CREATE TABLE faults (
+         id TEXT PRIMARY KEY, boatId TEXT, description TEXT, state TEXT,
+         createdAt TEXT, updatedAt TEXT)`,
+    )
+    sqlite
+      .prepare("INSERT INTO faults VALUES (?, ?, ?, ?, ?, ?)")
+      .run("fault-1", "boat-1", "Scotta", "open", CREATED_AT, CREATED_AT)
+    for (const [sql, params] of database.execute.mock.calls as Array<
+      [string, Array<string | number>]
+    >) {
+      sqlite.prepare(sql).all(...params)
+    }
+    const row = sqlite
+      .prepare("SELECT createdAt, updatedAt FROM faults WHERE id = ?")
+      .get("fault-1") as { createdAt: string; updatedAt: string }
+    sqlite.close()
+    return row
+  }
+
+  it.each([
+    ["state", () => updateFaultState("fault-1", "reported")],
+    [
+      "description",
+      () => updateFaultDescription("fault-1", "Scotta della randa"),
+    ],
+  ])(
+    "keeps a %s edit made with the clock set back at the creation time",
+    async (_field, update) => {
+      const row = await runOnSqlite("2026-09-19T09:00:00.000Z", update)
+
+      expect(row.updatedAt).toBe(CREATED_AT)
+      expect(row.updatedAt >= row.createdAt).toBe(true)
+    },
+  )
+
+  it.each([
+    ["state", () => updateFaultState("fault-1", "reported")],
+    [
+      "description",
+      () => updateFaultDescription("fault-1", "Scotta della randa"),
+    ],
+  ])("stamps a %s edit made later with the clock", async (_field, update) => {
+    const row = await runOnSqlite("2026-09-19T11:30:00.000Z", update)
+
+    expect(row.updatedAt).toBe("2026-09-19T11:30:00.000Z")
   })
 })

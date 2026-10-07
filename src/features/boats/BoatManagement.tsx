@@ -24,7 +24,7 @@ import {
   getDefaultBoatType,
   parseBoatNumbers,
 } from "@/domain/boat"
-import { validateBoatRecords } from "@/domain/invariants"
+import { blockingIssues, validateBoatRecords } from "@/domain/invariants"
 import { BoatIdentity } from "@/features/boats/BoatIdentity"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
@@ -74,7 +74,7 @@ async function readValidBoatData(courseId: string) {
     listBoats(courseId),
     listFaults(courseId),
   ])
-  if (validateBoatRecords(boats, faults).length > 0) {
+  if (blockingIssues(validateBoatRecords(boats, faults)).length > 0) {
     throw new Error("Persisted boat state violates invariants")
   }
   return { boats, faults }
@@ -272,7 +272,9 @@ function BoatEntryForm({
           className="rounded-2xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground"
         >
           {numbersToCreate.length > 0
-            ? `Verranno create ${numbersToCreate.length} barche ${type}.`
+            ? numbersToCreate.length === 1
+              ? `Verrà creata 1 barca ${type}.`
+              : `Verranno create ${numbersToCreate.length} barche ${type}.`
             : "Nessuna nuova barca da aggiungere."}
           {duplicateNumbers.length > 0 && (
             <> Ignorati i numeri già presenti: {duplicateNumbers.join(", ")}.</>

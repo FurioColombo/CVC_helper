@@ -1,4 +1,5 @@
 import type { StudentSex, StudentSize } from "@/domain/config"
+import { compareStudentsForList } from "@/domain/student"
 import { normalizeStudentCourseNote } from "@/domain/studentMigration"
 import { db } from "@/persistence/db"
 
@@ -131,7 +132,10 @@ export async function listStudents(courseId: string) {
               firstName COLLATE NOCASE`,
     [courseId],
   )
-  return records.map(normalizeStudentCourseNote)
+  // The query keeps the active students first and gives ties a fixed order;
+  // the surname order itself is the Italian one, because SQLite's NOCASE
+  // sorts every accented initial after the Z. The sort is stable.
+  return records.map(normalizeStudentCourseNote).sort(compareStudentsForList)
 }
 
 export async function createStudent(
