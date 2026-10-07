@@ -22,9 +22,20 @@
     "longestSurnameCharacters": 24,
     "doubleOrTripleFirstNames": 7,
     "surnamesWithParticle": 18,
-    "particlesCovered": ["De", "Di", "Lo", "Dalla", "Della", "Dal", "Van der"],
+    "particlesCovered": [
+      "De",
+      "Di",
+      "Lo",
+      "Dalla",
+      "Della",
+      "Dal",
+      "Van der"
+    ],
     "withApostrophe": 3,
-    "apostropheKinds": ["straight", "curly"],
+    "apostropheKinds": [
+      "straight",
+      "curly"
+    ],
     "withHyphen": 2,
     "withAccentsOrOtherLatinDiacritics": 10,
     "sameFirstNameGroups": 3,
@@ -39,10 +50,19 @@
     "boatCrews": 12,
     "mezziCrews": 2,
     "crewsWithoutBoat": 1,
-    "boatModelsUsed": ["RS Toura", "RS Quest", "Laser Vago", "RS 500"],
+    "boatModelsUsed": [
+      "RS Toura",
+      "RS Quest",
+      "Laser Vago",
+      "RS 500"
+    ],
     "studentsInCrews": 26,
     "volunteersInCrews": 4,
-    "volunteerRolesInCrews": ["CT", "ADV", "IS"],
+    "volunteerRolesInCrews": [
+      "CT",
+      "ADV",
+      "IS"
+    ],
     "volunteersLeftAvailable": 1,
     "studentsAterra": 8,
     "studentsUnassigned": 6,
@@ -105,38 +125,38 @@
       "id": "UG2-RS-1",
       "page": "crew page",
       "size": "320 px with 200% text",
-      "status": "test.fixme (not fixed, owner design decision)",
+      "status": "FIXED in cf26355",
       "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps the crew page inside the screen at 320 px with 200% text",
       "measured": "The composition region scrolls sideways by 42 px (content 338 against 296) because crew cards and header rows are wider than the screen; the same happens with the plain 13-crew course of F3, so it is not special to hostile names. M, SM, C and role badges of a person run under the 44 px remove button; the A terra rows draw words outside their buttons; the bottom bar breaks its own labels mid-word. The ug1 and c1 specs look only at the document's width, which the region's own scroll hides.",
-      "decision": "Left as a fixme: the cards and the bar are the owner's frozen design"
+      "decision": "Fixed: container queries in rem drop a column or wrap only when enlarged text needs it; 56 reference screenshots at 412, 390 and 360 px with ordinary text are pixel-identical before and after. The test now passes on its projects."
     },
     {
       "id": "UG2-RS-2",
       "page": "crew page",
       "size": "390, 360 and 320 px (worst at 320 px)",
-      "status": "test.fixme (not fixed, owner design decision; rulebook R05 identity)",
+      "status": "test.fixme (owner decision pending; rulebook R05 identity)",
       "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps at least the first three letters of every name legible on the crew cards...",
       "measured": "Names clipped by the card's ellipsis show under three letters' width for 1 of 16 clipped names at 390 px, 10 of 25 at 360 px, 17 of 30 at 320 px (a minor with a smontante or comandata badge keeps 3 px of the name), and all 34 at 320 px with 200% text (a volunteer's name has no width). The full name stays in the accessible name and a long press opens the student; tests/e2e/c1-crew-management.spec.ts pins the ellipsis.",
-      "decision": "Left as a fixme"
+      "decision": "Left as a fixme for the owner: real course names are mostly short first names; recorded as a known limitation in CHANGELOG.md 0.3.0."
     },
     {
       "id": "UG2-RS-3",
       "page": "crew page header",
       "size": "320 px",
-      "status": "test.fixme (cosmetic, not fixed)",
+      "status": "FIXED in cf26355",
       "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps the boat mark and number inside their chip in a crew header at 320 px",
       "measured": "With a warning chip beside it, the boat chip of a header with a two-digit number is 90 px for 94 px of content, so the number reaches about 3 px past the chip's border; nothing is under it",
-      "decision": "Left as a fixme"
+      "decision": "Fixed: container queries in rem drop a column or wrap only when enlarged text needs it; 56 reference screenshots at 412, 390 and 360 px with ordinary text are pixel-identical before and after. The test now passes on its projects."
     },
     {
       "id": "UG2-RS-4",
       "page": "populated Comandate page",
       "size": "320 px with 200% text",
-      "status": "test.fixme (not fixed, owner design decision)",
+      "status": "FIXED in cf26355",
       "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps the populated Comandate page inside the screen at 320 px with 200% text",
       "measured": "The document scrolls sideways by 12 px (332 against 320): the Ricalcola and Avvisi row and the coverage chip are wider than the screen; day card titles are cut to two letters with the count touching the ellipsis; the page title breaks mid-word. The ug1 reflow spec covers the empty and proposal screens only.",
-      "decision": "Left as a fixme"
+      "decision": "Fixed: container queries in rem drop a column or wrap only when enlarged text needs it; 56 reference screenshots at 412, 390 and 360 px with ordinary text are pixel-identical before and after. The test now passes on its projects."
     }
   ],
-  "notes": "No product code was changed. The only repository change outside tests, fixtures and evidence is one addition to the testMatch of the iphone-13-webkit-core project in playwright.config.ts so that the hostile-roster spec's image tests run on WebKit. The summaries (the exports) are clean at every size including the stress profile; the findings are on the two composition pages at the stress profile, plus the crew cards' name clipping at the ordinary phone sizes."
+  "notes": "No product code was changed. The only repository change outside tests, fixtures and evidence is one addition to the testMatch of the iphone-13-webkit-core project in playwright.config.ts so that the hostile-roster spec's image tests run on WebKit. The summaries (the exports) are clean at every size including the stress profile; the findings are on the two composition pages at the stress profile, plus the crew cards' name clipping at the ordinary phone sizes. Updated by the orchestrating session after cf26355: RS-1, RS-3 and RS-4 fixed; RS-2 remains for the owner."
 }
