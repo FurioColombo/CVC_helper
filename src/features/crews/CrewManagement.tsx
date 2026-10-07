@@ -55,6 +55,7 @@ import {
   type CrewSummaryMember,
   type CrewSummarySections,
 } from "@/features/crews/crewSummaryModel"
+import { useNestedScreen } from "@/navigation/nestedScreen"
 import {
   SESSION_DUTY_DAY,
   SESSION_SEQUENCE,
@@ -164,7 +165,7 @@ function CrewHeader({
     <div className="mb-5 flex flex-wrap items-center gap-1">
       <button
         aria-label="Indietro da Equipaggi"
-        className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+        className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
         onClick={onBack}
         type="button"
       >
@@ -182,7 +183,7 @@ function CrewHeader({
       </div>
       <button
         aria-label="Apri barche della sessione"
-        className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40"
+        className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-40"
         disabled={boatsDisabled}
         onClick={onBoats}
         type="button"
@@ -191,7 +192,7 @@ function CrewHeader({
       </button>
       <button
         aria-label="Apri vista lettura"
-        className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40"
+        className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-40"
         disabled={readDisabled}
         onClick={onRead}
         type="button"
@@ -272,7 +273,7 @@ function AnnouncementGroupHeading({ group }: { group: AnnouncementGroup }) {
         </span>
       )}
       <span aria-hidden="true" className="h-px flex-1 bg-[#dbe4e6]" />
-      <span className="text-[9px] font-bold text-[#6b8790]">
+      <span className="text-[9px] font-bold text-[#5f7880]">
         {group.lines.length}
       </span>
     </div>
@@ -347,7 +348,7 @@ function AnnouncementCrewCard({
         >
           {modelOnly && (
             <span
-              className="break-words text-[10px] leading-3 font-bold [overflow-wrap:anywhere] text-[#6b8790]"
+              className="break-words text-[10px] leading-3 font-bold [overflow-wrap:anywhere] text-[#5f7880]"
               data-summary-caption="senza-barca"
             >
               {modelOnly} · Senza barca
@@ -416,7 +417,7 @@ function AnnouncementLabelList({ labels }: { labels: string[] }) {
     <div className="col-span-full flex flex-wrap gap-x-3 gap-y-1 rounded-[10px] border border-dashed border-[#c8d7db] bg-white px-3 py-2.5">
       {labels.map((label, index) => (
         <span
-          className="break-words text-[13px] font-bold [overflow-wrap:anywhere] text-[#6b8790]"
+          className="break-words text-[13px] font-bold [overflow-wrap:anywhere] text-[#5f7880]"
           key={`${label}:${index}`}
         >
           {label}
@@ -448,7 +449,7 @@ function AnnouncementSectionHeading({
         </span>
       </span>
       <span aria-hidden="true" className="h-px flex-1 bg-[#dbe4e6]" />
-      <span className="text-[9px] font-bold text-[#6b8790]">{count}</span>
+      <span className="text-[9px] font-bold text-[#5f7880]">{count}</span>
     </div>
   )
 }
@@ -730,7 +731,7 @@ function PersonButton({
       // the name, which stays the person — the same arrangement P17 uses.
       aria-description={markerDescription || undefined}
       aria-pressed={selected}
-      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-[12px] px-[12px] py-2.5"} ${className}`}
+      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-[12px] px-[12px] py-2.5"} ${className}`}
       disabled={disabled}
       onClick={(event) => {
         if (longPressed.current) {
@@ -850,7 +851,7 @@ function SessionChoice({
     <label className="grid min-w-0 text-sm font-bold">
       <span className="sr-only">Sessione</span>
       <select
-        className="h-11 w-full min-w-0 rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+        className="h-11 w-full min-w-0 rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring"
         disabled={disabled}
         onChange={(event) => onChange(event.target.value as SessionId)}
         value={sessionId}
@@ -896,7 +897,7 @@ function CopyReportDialog({
           </div>
           <button
             aria-label="Chiudi riepilogo copia"
-            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
             onClick={onClose}
             type="button"
           >
@@ -1052,7 +1053,7 @@ function AnnouncementView({
           </div>
           <button
             aria-label="Chiudi vista lettura"
-            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]"
             data-snapshot-exclude="true"
             onClick={onClose}
             type="button"
@@ -1230,6 +1231,18 @@ async function readValidCrewState(
   return { students, volunteers, boats, faults, stored, history, dutyPlan }
 }
 
+/**
+ * The crew page's own screens. The session's boats panel is a full screen of
+ * the area, so the phone's Back walks out of it to the composition, as it does
+ * from the nested screens of the other areas (UG2-UX-4). The destination
+ * chooser, a warning's detail and the summary are panels of the composition.
+ */
+type CrewScreen = "crews" | "boats"
+
+function parseCrewScreen(value: unknown): CrewScreen | null {
+  return value === "crews" || value === "boats" ? value : null
+}
+
 export function CrewManagement({
   course,
   initialSessionId = "sat-pm",
@@ -1267,7 +1280,9 @@ export function CrewManagement({
   } | null>(null)
   const [copyNothingToCopy, setCopyNothingToCopy] = useState(false)
   const [readMode, setReadMode] = useState(false)
-  const [boatMode, setBoatMode] = useState(false)
+  const [crewScreen, openCrewScreen, closeCrewScreen] =
+    useNestedScreen<CrewScreen>("crews", "crews", parseCrewScreen)
+  const boatMode = crewScreen === "boats"
   const [boatPage, setBoatPage] = useState(0)
   const boatSwipeStart = useRef<{
     pointerId: number
@@ -1329,7 +1344,6 @@ export function CrewManagement({
       setPendingCrewCopy(null)
       setCopyNothingToCopy(false)
       setReadMode(false)
-      setBoatMode(false)
       setSelectedCrewForBoat(null)
       setLoadState("ready")
     },
@@ -2285,7 +2299,7 @@ export function CrewManagement({
       boatsDisabled={busy || plan.crews.length === 0}
       onBack={onHome}
       onBoats={() => {
-        setBoatMode(true)
+        if (!boatMode) openCrewScreen("boats")
         setDestinationCrewId(null)
         setSelected(null)
       }}
@@ -2352,7 +2366,7 @@ export function CrewManagement({
                   <button
                     aria-label={`${boat.type} ${boat.number} nella copia${assigned ? ", già assegnata" : unavailable ? ", non disponibile" : ""}`}
                     aria-pressed={selectedBoat}
-                    className={`min-h-14 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${selectedBoat ? "border-primary bg-primary text-primary-foreground" : unavailable ? "bg-muted text-muted-foreground" : "bg-card"}`}
+                    className={`min-h-14 rounded-2xl border px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring ${selectedBoat ? "border-primary bg-primary text-primary-foreground" : unavailable ? "bg-muted text-muted-foreground" : "bg-card"}`}
                     disabled={
                       busy || assigned || (unavailable && !selectedBoat)
                     }
@@ -2398,9 +2412,9 @@ export function CrewManagement({
             </div>
             <button
               aria-label="Torna agli equipaggi"
-              className="grid size-11 shrink-0 place-items-center rounded-xl border bg-card text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 min-[390px]:flex min-[390px]:w-auto min-[390px]:px-3"
+              className="grid size-11 shrink-0 place-items-center rounded-xl border bg-card text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring min-[390px]:flex min-[390px]:w-auto min-[390px]:px-3"
               onClick={() => {
-                setBoatMode(false)
+                closeCrewScreen("crews")
                 setSelectedCrewForBoat(null)
               }}
               type="button"
@@ -2495,7 +2509,7 @@ export function CrewManagement({
                   <button
                     aria-label={`${boat.type} ${boat.number} · ${stateLabel}${hasFault ? ", avaria da controllare" : ""}`}
                     aria-pressed={selectedBoat}
-                    className={`relative flex min-h-[3.75rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-0.5 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${unavailable && assignedCrewIndex >= 0 ? "border-[#b42318] bg-[#eef1f2] text-[#5f7075]" : state === "assigned" ? "border-[#2f8f46] bg-[#e9f5eb] text-[#176b2c]" : state === "available" ? (selectedBoat ? "border-[#2f80ed] bg-[#edf5ff] text-[#1356a2]" : "border-[#79a8dd] bg-white text-[#1356a2]") : "border-[#b7c3c7] bg-[#eef1f2] text-[#5f7075]"}`}
+                    className={`relative flex min-h-[3.75rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-0.5 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring ${unavailable && assignedCrewIndex >= 0 ? "border-[#b42318] bg-[#eef1f2] text-[#5f7075]" : state === "assigned" ? "border-[#2f8f46] bg-[#e9f5eb] text-[#176b2c]" : state === "available" ? (selectedBoat ? "border-[#2f80ed] bg-[#edf5ff] text-[#1356a2]" : "border-[#79a8dd] bg-white text-[#1356a2]") : "border-[#b7c3c7] bg-[#eef1f2] text-[#5f7075]"}`}
                     disabled={
                       busy ||
                       (unavailable && !selectedBoat) ||
@@ -2597,7 +2611,7 @@ export function CrewManagement({
                 <button
                   aria-label={`Equipaggio ${crewIndex + 1}, ${boat ? `${boat.type} ${boat.number}` : destination === "mezzi" ? "Mezzi" : "senza barca"}`}
                   aria-pressed={selectedCrew}
-                  className={`grid min-h-16 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-card px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${selectedCrew ? "border-primary bg-primary/5" : ""}`}
+                  className={`grid min-h-16 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-card px-3 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring ${selectedCrew ? "border-primary bg-primary/5" : ""}`}
                   disabled={busy}
                   key={crew.id}
                   onClick={() => selectCrewForBoat(crew.id)}
@@ -2832,8 +2846,8 @@ export function CrewManagement({
 
                 <button
                   aria-label="Gestisci barche in uscita"
-                  className="flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-3 text-left text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-                  onClick={() => setBoatMode(true)}
+                  className="flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-3 text-left text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
+                  onClick={() => openCrewScreen("boats")}
                   type="button"
                 >
                   <span>Barche nell’uscita</span>
@@ -3097,7 +3111,7 @@ export function CrewManagement({
                         </h2>
                         <button
                           aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
-                          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left @max-[17rem]:min-w-min @max-[17rem]:px-0 outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
+                          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left @max-[17rem]:min-w-min @max-[17rem]:px-0 outline-none focus-visible:ring-3 focus-visible:ring-ring ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
                           disabled={busy}
                           onClick={() => {
                             setSelected(null)
@@ -3135,7 +3149,7 @@ export function CrewManagement({
                                 aria-controls={`crew-warning-detail-${crew.id}`}
                                 aria-expanded={warningCrewId === crew.id}
                                 aria-label={`Avvisi equipaggio ${crewIndex + 1}: ${severity === "red" ? "rosso" : "giallo"}, ${count}`}
-                                className={`grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
+                                className={`grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring ${severity === "red" ? "bg-[#fee4e2] text-[#b42318]" : "bg-[#fff3cd] text-[#8a5a00]"}`}
                                 onClick={() =>
                                   setWarningCrewId((current) =>
                                     current === crew.id ? null : crew.id,
@@ -3162,7 +3176,7 @@ export function CrewManagement({
                             >
                               <button
                                 aria-label={`Riduci capienza equipaggio ${crewIndex + 1}`}
-                                className="grid size-10 place-items-center rounded-lg text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:text-muted-foreground"
+                                className="grid size-10 place-items-center rounded-lg text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:text-muted-foreground"
                                 disabled={
                                   busy ||
                                   crew.capacity <=
@@ -3184,7 +3198,7 @@ export function CrewManagement({
                               </span>
                               <button
                                 aria-label={`Aumenta capienza equipaggio ${crewIndex + 1}`}
-                                className="grid size-10 place-items-center rounded-lg text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:text-muted-foreground"
+                                className="grid size-10 place-items-center rounded-lg text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:text-muted-foreground"
                                 disabled={
                                   busy ||
                                   crew.capacity >=
@@ -3313,7 +3327,7 @@ export function CrewManagement({
                                     }
                                     aria-pressed={isSelectedSlot}
                                     className={
-                                      "min-h-12 min-w-0 w-full break-words rounded-2xl border border-dashed px-1 text-center text-xs font-bold leading-4 text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 " +
+                                      "min-h-12 min-w-0 w-full break-words rounded-2xl border border-dashed px-1 text-center text-xs font-bold leading-4 text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-60 " +
                                       (isSelectedSlot
                                         ? "border-primary bg-primary/10 text-primary"
                                         : "bg-muted/40 enabled:border-primary/50 enabled:text-primary")
@@ -3387,7 +3401,7 @@ export function CrewManagement({
                                     aria-label={
                                       "Rendi disponibile " + personLabel(person)
                                     }
-                                    className="absolute right-0 top-0 grid size-[44px] place-items-center rounded-xl bg-transparent text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
+                                    className="absolute right-0 top-0 grid size-[44px] place-items-center rounded-xl bg-transparent text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring"
                                     disabled={busy}
                                     onClick={() =>
                                       void commit(removePerson(plan, person))
@@ -3408,7 +3422,7 @@ export function CrewManagement({
                         {crew.members.length === 0 && (
                           <button
                             aria-label={`Elimina equipaggio ${crewIndex + 1}`}
-                            className="grid w-11 shrink-0 place-items-center rounded-2xl border border-dashed border-[#d92d20]/45 text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
+                            className="grid w-11 shrink-0 place-items-center rounded-2xl border border-dashed border-[#d92d20]/45 text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-60"
                             disabled={busy}
                             onClick={() =>
                               void commit(removeEmptyCrew(plan, crew.id))
@@ -3425,7 +3439,7 @@ export function CrewManagement({
                   {/* Symmetry with the control above: a crew removed by
                       mistake can be put back without leaving the workspace. */}
                   <button
-                    className="min-h-11 rounded-2xl border border-dashed border-primary/50 px-3 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50"
+                    className="min-h-11 rounded-2xl border border-dashed border-primary/50 px-3 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-50"
                     disabled={busy || plan.crews.length >= maxCrewCount}
                     onClick={() =>
                       void commit(
@@ -3484,7 +3498,7 @@ export function CrewManagement({
                           />
                           <button
                             aria-label={`Rendi disponibile ${personLabel(person)}`}
-                            className="grid min-h-14 min-w-[44px] place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
+                            className="grid min-h-14 min-w-[44px] place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring"
                             disabled={busy}
                             onClick={() =>
                               void commit(removePerson(plan, person))
@@ -3502,7 +3516,7 @@ export function CrewManagement({
                     })}
                     <button
                       aria-label="Sposta selezionato A terra"
-                      className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60"
+                      className="min-h-12 rounded-2xl border border-dashed bg-muted/40 px-3 text-sm font-bold text-muted-foreground outline-none enabled:border-primary/50 enabled:text-primary focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-60"
                       disabled={
                         !selected || selected.personType !== "student" || busy
                       }
@@ -3572,7 +3586,7 @@ export function CrewManagement({
                 >
                   <button
                     aria-controls="crew-land-section"
-                    className="min-h-[44px] min-w-0 break-words rounded-xl px-2 text-left text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 @max-[14rem]:min-w-min @max-[14rem]:flex-auto"
+                    className="min-h-[44px] min-w-0 break-words rounded-xl px-2 text-left text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring @max-[14rem]:min-w-min @max-[14rem]:flex-auto"
                     onClick={() =>
                       document
                         .getElementById("crew-land-section")
@@ -3593,7 +3607,7 @@ export function CrewManagement({
                   </span>
                   <button
                     aria-controls="crew-volunteer-section"
-                    className="min-h-[44px] min-w-0 break-words rounded-xl px-2 text-right text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 @max-[14rem]:min-w-min @max-[14rem]:flex-auto"
+                    className="min-h-[44px] min-w-0 break-words rounded-xl px-2 text-right text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring @max-[14rem]:min-w-min @max-[14rem]:flex-auto"
                     onClick={() =>
                       document
                         .getElementById("crew-volunteer-section")

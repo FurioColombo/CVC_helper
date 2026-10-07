@@ -477,7 +477,7 @@ function SettingsView({
         <div className="mt-3 grid grid-cols-2 gap-2">
           {([2, 3] as const).map((columns) => (
             <label
-              className="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2 text-sm font-semibold has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:text-primary focus-within:ring-3 focus-within:ring-ring/30"
+              className="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2 text-sm font-semibold has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:text-primary focus-within:ring-3 focus-within:ring-ring"
               key={columns}
             >
               <input
@@ -733,7 +733,7 @@ function AppShell({
         <div className="grid grid-cols-3 gap-2">
           <button
             aria-current={primaryView === "faults" ? "page" : undefined}
-            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:bg-muted aria-[current=page]:text-primary"
+            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring aria-[current=page]:bg-muted aria-[current=page]:text-primary"
             onClick={() => navigate("faults")}
             type="button"
           >
@@ -742,7 +742,7 @@ function AppShell({
           </button>
           <button
             aria-current={primaryView === "home" ? "page" : undefined}
-            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:bg-muted aria-[current=page]:text-primary"
+            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring aria-[current=page]:bg-muted aria-[current=page]:text-primary"
             onClick={() => navigate("home")}
             type="button"
           >
@@ -751,7 +751,7 @@ function AppShell({
           </button>
           <button
             aria-current={primaryView === "crews" ? "page" : undefined}
-            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/40 aria-[current=page]:bg-muted aria-[current=page]:text-primary"
+            className="app-nav-button flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl font-bold text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring aria-[current=page]:bg-muted aria-[current=page]:text-primary"
             onClick={() => navigate("crews")}
             type="button"
           >

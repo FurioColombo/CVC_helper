@@ -97,18 +97,21 @@ export function EvaluationOverview({
           Le caselle vuote non contano nella valutazione complessiva.
         </p>
       </div>
-      <div className="mt-3">
+      <div className="@container mt-3">
         <span className="block px-1 text-xs font-bold text-muted-foreground">
           Ordinamento
         </span>
+        {/* One column when enlarged text would leave the two buttons less than
+            their longest word wide (UG2-UX-5; a query in rem: 200% text at
+            320 px, never ordinary text). */}
         <div
-          className="mt-1 grid grid-cols-2 gap-2"
+          className="mt-1 grid grid-cols-2 gap-2 @max-[14rem]:grid-cols-1"
           role="group"
           aria-label="Ordine riepilogo"
         >
           <button
             aria-pressed={ordering === "alphabetical"}
-            className="min-h-10 rounded-xl border bg-card px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            className="min-h-10 min-w-0 rounded-xl border bg-card px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
             onClick={() => setOrdering("alphabetical")}
             type="button"
           >
@@ -116,7 +119,7 @@ export function EvaluationOverview({
           </button>
           <button
             aria-pressed={ordering === "strongest"}
-            className="min-h-10 rounded-xl border bg-card px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            className="min-h-10 min-w-0 rounded-xl border bg-card px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
             onClick={() => setOrdering("strongest")}
             title="Ordina per valutazione"
             type="button"
@@ -151,7 +154,7 @@ export function EvaluationOverview({
                 <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <button
                     aria-label={`Apri dettaglio di ${name}, cognome ${student.surname}`}
-                    className="flex min-h-10 min-w-[160px] flex-1 items-center gap-2 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                    className="flex min-h-10 min-w-[160px] flex-1 items-center gap-2 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
                     onClick={() => onOpenStudent(student.id)}
                     type="button"
                   >

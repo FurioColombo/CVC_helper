@@ -272,7 +272,7 @@ function DutyHeader({
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-1 max-[350px]:items-start">
         <button
           aria-label={`Indietro da ${title}`}
-          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
           onClick={onBack}
           type="button"
         >
@@ -556,7 +556,7 @@ function DutyConfiguration({
         <label className="grid min-w-0 max-w-full gap-1.5 text-sm font-bold">
           <span className="break-words">Spareggio deterministico</span>
           <select
-            className="h-12 min-w-0 max-w-full truncate rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/30 max-[350px]:h-[48px] max-[350px]:px-[10px]"
+            className="h-12 min-w-0 max-w-full truncate rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring max-[350px]:h-[48px] max-[350px]:px-[10px]"
             onChange={(event) =>
               setDraft((current) => ({
                 ...current,
@@ -575,7 +575,7 @@ function DutyConfiguration({
             Restano la settimana successiva
           </legend>
           <details className="mt-2 rounded-2xl border bg-card">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:min-h-[48px] max-[350px]:gap-[8px] max-[350px]:px-[12px] max-[350px]:py-[8px]">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring max-[350px]:min-h-[48px] max-[350px]:gap-[8px] max-[350px]:px-[12px] max-[350px]:py-[8px]">
               <span className="min-w-0 break-words">
                 Scegli tra tutti gli allievi
               </span>
@@ -694,12 +694,19 @@ function StudentAssignmentCard({
   const name = getStudentDisplayName(student, allStudents)
   const hasMultipleDays = dayIds.length > 1
   return (
+    // UG2-UX-1: a name is never cut to initials. The name keeps its whole
+    // text as its flex basis, so when the name and the day chip with its remove
+    // button no longer fit side by side the chip and button drop to a row of
+    // their own under it (right-aligned, where they sit in a one-row card). A
+    // name wider than the card breaks onto more lines, as the rulebook asks at
+    // 200% text (R05). A card whose name fits beside its controls is drawn
+    // exactly as before.
     <article
-      className={`flex min-w-0 items-center gap-1 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2" : ""}`}
+      className={`flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-x-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2 @max-[14rem]:col-span-1" : ""}`}
     >
       {current ? (
         <span
-          className="flex min-h-10 min-w-0 flex-1 items-center truncate px-1 text-left text-sm font-bold max-[350px]:min-h-[40px] max-[350px]:break-words max-[350px]:px-[2px] max-[350px]:whitespace-normal"
+          className="flex min-h-10 min-w-0 flex-auto items-center px-1 text-left text-sm font-bold [overflow-wrap:anywhere] max-[350px]:min-h-[40px] max-[350px]:px-[2px]"
           title={name}
         >
           {name}
@@ -707,13 +714,13 @@ function StudentAssignmentCard({
       ) : (
         <button
           aria-label={name}
-          className="flex min-h-10 min-w-0 flex-1 items-center gap-1 rounded-xl px-1 text-left text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:min-h-[40px] max-[350px]:min-w-[40px] max-[350px]:gap-[2px] max-[350px]:rounded-none max-[350px]:px-[2px] max-[350px]:text-primary max-[350px]:shadow-[inset_2px_0_0_#b9d4ec]"
+          className="flex min-h-10 min-w-0 flex-auto items-center gap-1 rounded-xl px-1 text-left text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring max-[350px]:min-h-[40px] max-[350px]:min-w-[40px] max-[350px]:gap-[2px] max-[350px]:rounded-none max-[350px]:px-[2px] max-[350px]:text-primary max-[350px]:shadow-[inset_2px_0_0_#b9d4ec]"
           disabled={completed || saving}
           onClick={onAdd}
           title={name}
           type="button"
         >
-          <span className="min-w-0 flex-1 truncate max-[350px]:break-words max-[350px]:whitespace-normal">
+          <span className="min-w-0 flex-auto [overflow-wrap:anywhere]">
             {name}
           </span>
           <Plus
@@ -735,7 +742,7 @@ function StudentAssignmentCard({
           role="img"
         />
       )}
-      <div className="flex shrink-0 items-center gap-0.5 max-[350px]:gap-[2px]">
+      <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-0.5 max-[350px]:gap-[2px]">
         {dayIds.map((assignedDayId) => (
           <span className="flex items-center gap-0.5" key={assignedDayId}>
             <span
@@ -748,7 +755,7 @@ function StudentAssignmentCard({
             {!completedDayIds.includes(assignedDayId) ? (
               <button
                 aria-label={`Rimuovi ${name} da ${getDayLabel(assignedDayId)}`}
-                className="grid size-10 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40 max-[350px]:size-[40px]"
+                className="grid size-10 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-40 max-[350px]:size-[40px]"
                 disabled={completed || saving}
                 onClick={() => onRemove(assignedDayId)}
                 type="button"
@@ -832,25 +839,30 @@ function DayEditor({
 
   function renderCards(entries: DutyStudentDayGroupEntry[], current: boolean) {
     return entries.length > 0 ? (
-      <div className="grid grid-cols-2 items-start gap-2 max-[350px]:gap-[4px]">
-        {entries.map((entry) => (
-          <StudentAssignmentCard
-            allStudents={students}
-            completed={completed}
-            completedDayIds={completedDayIds}
-            current={current}
-            entry={entry}
-            key={entry.student.id}
-            onAdd={() =>
-              void updateAssignment(dayId, entry.student.id, !current)
-            }
-            onRemove={(targetDayId) =>
-              void updateAssignment(targetDayId, entry.student.id, false)
-            }
-            saving={saving}
-            courseStartDate={courseStartDate}
-          />
-        ))}
+      // One column when enlarged text would leave each card of two too narrow
+      // for a first name (a query on the list's width in rem: 200% text at
+      // 320 px, never ordinary text on a phone).
+      <div className="@container">
+        <div className="grid grid-cols-2 items-start gap-2 @max-[14rem]:grid-cols-1 max-[350px]:gap-[4px]">
+          {entries.map((entry) => (
+            <StudentAssignmentCard
+              allStudents={students}
+              completed={completed}
+              completedDayIds={completedDayIds}
+              current={current}
+              entry={entry}
+              key={entry.student.id}
+              onAdd={() =>
+                void updateAssignment(dayId, entry.student.id, !current)
+              }
+              onRemove={(targetDayId) =>
+                void updateAssignment(targetDayId, entry.student.id, false)
+              }
+              saving={saving}
+              courseStartDate={courseStartDate}
+            />
+          ))}
+        </div>
       </div>
     ) : (
       <p className="rounded-2xl border bg-card px-3 py-3 text-sm text-muted-foreground">
@@ -1204,7 +1216,7 @@ function DutySummaryView({
           </div>
           <button
             aria-label="Chiudi vista lettura"
-            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]"
             data-snapshot-exclude="true"
             onClick={onClose}
             type="button"
@@ -1465,7 +1477,7 @@ export function DutyManagement({
           assignments.length > 0 || settings.completedDayIds.length > 0 ? (
             <button
               aria-label="Apri riepilogo comandate"
-              className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
               onClick={() => setShowSummary(true)}
               type="button"
             >
@@ -1614,7 +1626,7 @@ export function DutyManagement({
                 >
                   <button
                     aria-label={`${label}, ${names.length} assegnati${completed ? ", completata" : ""}`}
-                    className="block w-full text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                    className="block w-full text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
                     onClick={() => openScreen({ kind: "day", dayId: id })}
                     type="button"
                   >
@@ -1673,7 +1685,7 @@ export function DutyManagement({
                     <div className="mt-2 border-t pt-2">
                       <details>
                         <summary
-                          className={`flex min-h-10 cursor-pointer list-none items-center justify-end gap-1 text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${dayHasMajorWarning ? "text-[#b42318]" : "text-[#996515]"}`}
+                          className={`flex min-h-10 cursor-pointer list-none items-center justify-end gap-1 text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring ${dayHasMajorWarning ? "text-[#b42318]" : "text-[#996515]"}`}
                         >
                           <AlertTriangle
                             aria-hidden="true"

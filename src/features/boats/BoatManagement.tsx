@@ -94,7 +94,7 @@ function BoatPageHeader({
       <div className="flex min-w-0 items-center gap-1 max-[380px]:basis-full">
         <button
           aria-label={`Indietro da ${title}`}
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:size-10"
+          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring max-[380px]:size-10"
           onClick={onBack}
           type="button"
         >
@@ -363,7 +363,7 @@ function BoatList({
             // 3.375rem rather than 4.5, and half the vertical padding: the row
             // was 72px tall around a 36px mark, so a quarter of every card was
             // air. The mark keeps its size; only the space around it goes.
-            className={`flex min-h-[3.375rem] items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-1.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-1.5 max-[380px]:py-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
+            className={`flex min-h-[3.375rem] items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-1.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring max-[380px]:flex-wrap max-[380px]:gap-y-1.5 max-[380px]:py-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"

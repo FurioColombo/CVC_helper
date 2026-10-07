@@ -199,21 +199,26 @@ function EvaluationCard({
   function closeNote() {
     onCloseNote()
   }
+  // UG2-UX-5: the row is the query container. The name and the five marks
+  // share a row (R05, P17) as long as the row is at least 14rem wide; narrower
+  // than that (200% text at 320 px: 9rem) the name takes the full width and may
+  // wrap onto several lines, the five marks spread under it, and nothing is cut
+  // to "Vale…". The query is in rem, so ordinary text never triggers it.
   return (
-    <article className="min-w-0">
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_200px] overflow-hidden rounded-xl border bg-card">
+    <article className="@container min-w-0">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_200px] overflow-hidden rounded-xl border bg-card @max-[14rem]:grid-cols-1">
         <button
           aria-description={`Nome completo: ${fullName}${isLand ? ", A terra" : ""}${!student.active ? ", non disponibile" : ""}${evaluation.note ? ", nota presente" : ""}`}
           aria-expanded={noteOpen}
           aria-label={`${evaluation.note ? "Modifica" : "Aggiungi"} nota valutazione di ${name}`}
-          className="flex min-h-[40px] min-w-0 items-center justify-between gap-1 border-r px-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/40"
+          className="flex min-h-[40px] min-w-0 items-center justify-between gap-1 border-r px-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring @max-[14rem]:border-r-0 @max-[14rem]:border-b @max-[14rem]:py-1.5"
           disabled={saving}
           onClick={onOpenNote}
           ref={noteButtonRef}
           title={fullName}
           type="button"
         >
-          <span className="min-w-0 truncate text-[0.8125rem] font-bold max-[350px]:text-[0.75rem]">
+          <span className="min-w-0 text-[0.8125rem] font-bold @min-[14rem]:truncate @max-[14rem]:[overflow-wrap:anywhere] max-[350px]:text-[0.75rem]">
             {fullName}
             {isLand && <small className="text-[#8a4b08]"> · terra</small>}
             {!student.active && (
@@ -237,7 +242,7 @@ function EvaluationCard({
             <button
               aria-label={`Valutazione di ${name}: ${symbol}`}
               aria-pressed={evaluation.value === symbol}
-              className={`grid h-[40px] w-[40px] place-items-center border-l outline-none transition-colors focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/40 disabled:opacity-50 ${symbol.includes("+") ? "text-[#18794e] aria-pressed:bg-[#e4f4e9] aria-pressed:shadow-[inset_0_0_0_2px_#18794e]" : symbol.includes("-") ? "text-[#b42318] aria-pressed:bg-[#fbe8e7] aria-pressed:shadow-[inset_0_0_0_2px_#b42318]" : "text-[#244462] aria-pressed:bg-[#e5effb] aria-pressed:shadow-[inset_0_0_0_2px_#244462]"}`}
+              className={`grid h-[40px] w-[40px] place-items-center border-l outline-none @max-[14rem]:w-full @max-[14rem]:first:border-l-0 transition-colors focus-visible:z-10 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-50 ${symbol.includes("+") ? "text-[#18794e] aria-pressed:bg-[#e4f4e9] aria-pressed:shadow-[inset_0_0_0_2px_#18794e]" : symbol.includes("-") ? "text-[#b42318] aria-pressed:bg-[#fbe8e7] aria-pressed:shadow-[inset_0_0_0_2px_#b42318]" : "text-[#244462] aria-pressed:bg-[#e5effb] aria-pressed:shadow-[inset_0_0_0_2px_#244462]"}`}
               disabled={saving}
               key={symbol}
               onClick={() =>
@@ -577,7 +582,7 @@ export function EvaluationManagement({
       <div className="mb-3 flex min-w-0 flex-wrap items-center gap-1">
         <button
           aria-label="Indietro da Valutazioni"
-          className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
           onClick={onHome}
           type="button"
         >
@@ -623,7 +628,7 @@ export function EvaluationManagement({
       >
         <button
           aria-pressed={view === "students"}
-          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
           disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={() => changeView("students")}
           type="button"
@@ -632,7 +637,7 @@ export function EvaluationManagement({
         </button>
         <button
           aria-pressed={view === "crews"}
-          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
           disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={() => changeView("crews")}
           type="button"
@@ -641,7 +646,7 @@ export function EvaluationManagement({
         </button>
         <button
           aria-pressed={view === "overview"}
-          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
+          className="min-h-[40px] min-w-max flex-[1_1_auto] rounded-lg px-[8px] text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-50 aria-pressed:bg-card aria-pressed:text-primary aria-pressed:shadow-sm"
           disabled={savingIds.size > 0 || noteStudentId !== null}
           onClick={() => changeView("overview")}
           type="button"
@@ -652,7 +657,7 @@ export function EvaluationManagement({
 
       {saveErrors.size > 0 && (
         <div
-          className="mt-3 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-3 text-sm font-semibold text-[#9a3412] outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="mt-3 rounded-xl border border-[#f0b69f] bg-[#fff4ee] p-3 text-sm font-semibold text-[#9a3412] outline-none focus-visible:ring-3 focus-visible:ring-ring"
           ref={saveErrorAlert}
           role="alert"
           tabIndex={-1}

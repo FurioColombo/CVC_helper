@@ -54,7 +54,7 @@ function VolunteerPageHeader({
       <div className="flex min-w-0 items-center gap-1 max-[380px]:basis-full max-[380px]:flex-wrap">
         <button
           aria-label={`Indietro da ${title}`}
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
           onClick={onBack}
           type="button"
         >
@@ -90,7 +90,7 @@ function VolunteerRoleChoice({
               type="radio"
               value={option}
             />
-            <span className="grid h-12 place-items-center rounded-xl border bg-card text-base font-black transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+            <span className="grid h-12 place-items-center rounded-xl border bg-card text-base font-black transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring">
               {option}
             </span>
           </label>
@@ -203,11 +203,23 @@ function VolunteerList({
   onOpen: (volunteerId: string) => void
 }) {
   return (
-    <section aria-label="Elenco volontari" className="grid gap-2.5">
+    // UG2-UX-5: one explicit column, or the implicit one grows to the widest
+    // name (777 px at 320 px with 200% text) and the page scrolls sideways
+    // (R18). A name wraps onto a second line when it is longer than the row
+    // (R05) instead of ending in an ellipsis; a name that fits is drawn as
+    // before. The list is the query container: when enlarged text leaves a
+    // card less than 14rem wide (a query in rem: 200% text at 320 px, never
+    // ordinary text on a phone) the role tile and the pencil share the first
+    // row and the name has the whole second one, so it breaks between words
+    // rather than inside one beside the tile.
+    <section
+      aria-label="Elenco volontari"
+      className="@container grid grid-cols-1 gap-2.5"
+    >
       {volunteers.map((volunteer) => (
         <button
           aria-label={`${volunteer.name}, ruolo ${volunteer.role}`}
-          className="flex min-h-14 items-center gap-3 rounded-2xl border bg-card px-3 py-2 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="flex min-h-14 items-center gap-3 rounded-2xl border bg-card px-3 py-2 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring @max-[14rem]:flex-wrap @max-[14rem]:gap-y-1"
           key={volunteer.id}
           onClick={() => onOpen(volunteer.id)}
           type="button"
@@ -218,10 +230,13 @@ function VolunteerList({
             className="size-11 text-sm"
             role={volunteer.role}
           />
-          <span className="min-w-0 flex-1 truncate text-base font-bold">
+          <span className="min-w-0 flex-1 text-base font-bold [overflow-wrap:anywhere] @max-[14rem]:order-last @max-[14rem]:basis-full">
             {volunteer.name}
           </span>
-          <Pencil aria-hidden="true" className="size-4 text-muted-foreground" />
+          <Pencil
+            aria-hidden="true"
+            className="size-4 text-muted-foreground @max-[14rem]:ml-auto"
+          />
         </button>
       ))}
     </section>

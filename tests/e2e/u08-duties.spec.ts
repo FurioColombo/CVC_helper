@@ -192,6 +192,20 @@ test("keeps long-name P13 cards readable and tappable at 320px and 200% text", a
   await page.getByRole("button", { name: "Proponi comandate" }).click()
   await page.getByRole("button", { name: "Conferma proposta" }).click()
   await page.getByRole("button", { name: /^Sabato, \d+ assegnati/ }).click()
+  const cards = page
+    .getByRole("region", { name: "Allievi comandata Sabato" })
+    .locator("article")
+  await expect(cards).toHaveCount(8)
+  const columnCount = () =>
+    cards
+      .first()
+      .locator("..")
+      .evaluate(
+        (element) =>
+          getComputedStyle(element).gridTemplateColumns.split(" ").length,
+      )
+  // Two cards per row at 320 px with ordinary text (P13).
+  expect(await columnCount()).toBe(2)
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
   })
@@ -200,17 +214,10 @@ test("keeps long-name P13 cards readable and tappable at 320px and 200% text", a
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320)
   await expectNoSidewaysScroll(page, "P13 at 320 px, 200% text")
-  const cards = page
-    .getByRole("region", { name: "Allievi comandata Sabato" })
-    .locator("article")
-  await expect(cards).toHaveCount(8)
-  const ordinaryGrid = cards.first().locator("..")
-  expect(
-    await ordinaryGrid.evaluate(
-      (element) =>
-        getComputedStyle(element).gridTemplateColumns.split(" ").length,
-    ),
-  ).toBe(2)
+  // UG2-UX-1: at 200% a card of two would be under 5rem wide, too narrow for
+  // a first name, so the list is one card per row and each name is drawn whole
+  // (the query is in rem: it never applies to ordinary text on a phone).
+  expect(await columnCount()).toBe(1)
   const overflows = await cards.evaluateAll(
     (elements) =>
       elements.filter(

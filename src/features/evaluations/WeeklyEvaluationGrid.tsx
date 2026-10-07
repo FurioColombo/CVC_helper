@@ -105,7 +105,7 @@ function EvaluationCell({
         aria-label={accessibleLabel}
         aria-pressed={noteOpen}
         className={cn(
-          "relative mx-auto flex h-7 min-h-7 w-full min-w-0 max-w-none items-center justify-center rounded-md border px-0 text-[14px] font-black leading-none outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+          "relative mx-auto flex h-7 min-h-7 w-full min-w-0 max-w-none items-center justify-center rounded-md border px-0 text-[14px] font-black leading-none outline-none focus-visible:ring-3 focus-visible:ring-ring",
           EVALUATION_CELL_STYLES[marker],
           noteOpen && "ring-2 ring-primary/50",
         )}
@@ -192,7 +192,7 @@ export function WeeklyEvaluationGrid({
       className={cn("mt-4 rounded-2xl border bg-card p-3 sm:p-4", className)}
     >
       {showHeader && (
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
           <h3 className="text-sm font-black" id={titleId}>
             {title}
           </h3>
@@ -204,9 +204,13 @@ export function WeeklyEvaluationGrid({
         </div>
       )}
 
+      {/* UG2-UX-5: the table's box is the query container. Narrower than
+          13rem (the profile card at 200% text: 7rem; ordinary text on a 320 px
+          phone is 13.75rem) the seven days wrap as four and three columns, so
+          "Dom" and "Mer" keep their letters instead of ending in an ellipsis. */}
       <div
         className={cn(
-          "min-w-0 overflow-hidden rounded-xl border",
+          "@container min-w-0 overflow-hidden rounded-xl border",
           showHeader && "mt-3",
         )}
       >
@@ -221,7 +225,7 @@ export function WeeklyEvaluationGrid({
               <th scope="col">PM</th>
             </tr>
           </thead>
-          <tbody className="grid grid-cols-7 gap-[2px] p-[2px]">
+          <tbody className="grid grid-cols-7 gap-[2px] p-[2px] @max-[13rem]:grid-cols-4">
             {rows.map((row) => (
               <tr
                 className="grid min-w-0 grid-rows-[auto_auto_auto] gap-[1px] rounded-md border border-border/70 bg-muted/20 p-[2px]"
@@ -304,7 +308,7 @@ export function WeeklyEvaluationGrid({
           {extraNotes > 0 && (
             <button
               aria-expanded={showAllNotes}
-              className="mt-2 min-h-11 rounded-lg px-2 text-sm font-bold text-primary underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="mt-2 min-h-11 rounded-lg px-2 text-sm font-bold text-primary underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring"
               onClick={() => setShowAllNotes((current) => !current)}
               type="button"
             >

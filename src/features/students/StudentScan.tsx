@@ -231,11 +231,33 @@ function findPossibleDuplicates(
   return matches
 }
 
+/** The letters a sex choice shows: "Altro" does not fit the 40 px square. */
+function sexOptionLabel(option: (typeof STUDENT_SEXES)[number]) {
+  return option.id === "other" ? "Alt" : option.label
+}
+
+function missingFieldNames(candidate: ReviewCandidate) {
+  return [
+    !candidate.firstName.trim() && "nome",
+    !candidate.surname.trim() && "cognome",
+    parsedReviewAge(candidate) === null && "età",
+    !candidate.sex && "sesso",
+  ].filter((name): name is string => Boolean(name))
+}
+
+/** "nome", "nome e sesso", "nome, cognome e sesso". */
+function joinItalian(items: string[]) {
+  return items.length <= 1
+    ? (items[0] ?? "")
+    : `${items.slice(0, -1).join(", ")} e ${items.at(-1)}`
+}
+
 function ReviewField({
   candidate,
   courseStartDate,
   field,
   label,
+  rowNumber,
   onChange,
   onAcknowledge,
   consumeProgrammaticFocus,
@@ -245,6 +267,9 @@ function ReviewField({
   courseStartDate: string
   field: StudentScanField
   label: string
+  /** The row's place on screen (the "Allievo n" of its card): the name a
+   * screen reader or a voice command uses, never the internal row id. */
+  rowNumber: number
   onChange: (value: string) => void
   onAcknowledge: () => void
   /** True when this exact focus was the counter's own navigation rather than
@@ -274,7 +299,7 @@ function ReviewField({
         )}
       </span>
       <Input
-        aria-label={`${label} riga ${candidate.id}`}
+        aria-label={`${label} riga ${rowNumber}`}
         className={`scroll-mt-[180px] ${uncertain ? "border-[#f79009]" : ""}`}
         data-scan-field={field}
         onChange={(event) => onChange(event.target.value)}
@@ -488,7 +513,7 @@ function CandidateCard({
     >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2
-          className="min-w-0 truncate text-base font-black outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="min-w-0 truncate text-base font-black outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring"
           tabIndex={-1}
         >
           Allievo {index + 1}
@@ -550,7 +575,7 @@ function CandidateCard({
             </span>
             {nameNeedsReview && (
               <Button
-                aria-label={`Conferma suddivisione nome e cognome riga ${candidate.id}`}
+                aria-label={`Conferma suddivisione nome e cognome riga ${index + 1}`}
                 className="min-h-10 max-w-full min-w-0 px-2.5 text-xs whitespace-normal"
                 disabled={disabled}
                 onClick={confirmNameOrder}
@@ -607,6 +632,7 @@ function CandidateCard({
           courseStartDate={courseStartDate}
           field="firstName"
           label="Nome"
+          rowNumber={index + 1}
           disabled={disabled}
           onChange={(value) => updateField("firstName", value)}
           onAcknowledge={() => acknowledgeField("firstName")}
@@ -618,6 +644,7 @@ function CandidateCard({
           courseStartDate={courseStartDate}
           field="surname"
           label="Cognome"
+          rowNumber={index + 1}
           disabled={disabled}
           onChange={(value) => updateField("surname", value)}
           onAcknowledge={() => acknowledgeField("surname")}
@@ -636,7 +663,7 @@ function CandidateCard({
               Età
             </label>
             <Input
-              aria-label={`Età riga ${candidate.id}`}
+              aria-label={`Età riga ${index + 1}`}
               className={`min-w-0 flex-1 scroll-mt-[180px] ${reviewAgeNeedsAttention ? "border-[#f79009]" : ""}`}
               data-scan-field="age"
               disabled={disabled}
@@ -676,7 +703,7 @@ function CandidateCard({
               {STUDENT_SEXES.map((option) => (
                 <label className="cursor-pointer" key={option.id}>
                   <input
-                    aria-label={option.detailLabel}
+                    aria-label={`${sexOptionLabel(option)} — ${option.detailLabel.toLowerCase()}`}
                     checked={candidate.sex === option.id}
                     className="peer scroll-mt-[180px] sr-only"
                     data-scan-field="sex"
@@ -692,8 +719,8 @@ function CandidateCard({
                     type="radio"
                     value={option.id}
                   />
-                  <span className="grid size-[40px] place-items-center rounded-xl border bg-card text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
-                    {option.id === "other" ? "Alt" : option.label}
+                  <span className="grid size-[40px] place-items-center rounded-xl border bg-card text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring">
+                    {sexOptionLabel(option)}
                   </span>
                 </label>
               ))}
@@ -708,6 +735,7 @@ function CandidateCard({
             field="phone"
             inputMode="tel"
             label="Telefono"
+            rowNumber={index + 1}
             disabled={disabled}
             onChange={(value) => updateField("phone", value)}
             onAcknowledge={() => acknowledgeField("phone")}
@@ -748,15 +776,22 @@ function CandidateCard({
         </div>
       )}
 
+      {/* Not a live region of its own: with many rows refused at once the
+          screen reader would read one alert per row. The screen's one summary
+          alert (above the save button) announces them; this says what is wrong
+          in this row, with its number, for whoever reads on. */}
       {invalid && (
-        <p className="mt-3 text-xs font-semibold text-[#b42318]" role="alert">
+        <p className="mt-3 text-xs font-semibold text-[#b42318]">
+          {`Allievo ${index + 1}: `}
           {nameNeedsReview
-            ? "Conferma la suddivisione di nome e cognome."
+            ? "conferma la suddivisione di nome e cognome."
             : duplicateUnresolved
-              ? "Possibile doppione: tieni entrambi oppure rimuovi la riga."
+              ? "possibile doppione, tieni entrambi oppure rimuovi la riga."
               : rowWarningNeedsReview(candidate)
-                ? "Controlla la riga sul foglio e segnala controllata, oppure rimuovila."
-                : "Completa nome, cognome, età e sesso."}
+                ? "controlla la riga sul foglio e segnala controllata, oppure rimuovila."
+                : missingFieldNames(candidate).length > 0
+                  ? `completa ${joinItalian(missingFieldNames(candidate))}.`
+                  : "controlla i campi segnati “Da controllare”."}
         </p>
       )}
     </article>
@@ -1280,6 +1315,12 @@ export function StudentScan({
     onCommitted()
   }
 
+  // The row numbers (the "Allievo n" of each card) the last refused save
+  // marked, for its one summary alert.
+  const refusedRows = candidates.flatMap((candidate, index) =>
+    invalidIds.has(candidate.id) ? [index + 1] : [],
+  )
+
   const progressPercent = Math.round(progress.value * 100)
   const missingFields = candidates.reduce(
     (total, candidate) => total + missingFieldCount(candidate),
@@ -1470,7 +1511,7 @@ export function StudentScan({
       <div className="mb-4 flex min-w-0 items-center gap-[4px]">
         <button
           aria-label="Indietro da Scan allievi"
-          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
           onClick={() => requestLeave(onBack)}
           type="button"
         >
@@ -1667,7 +1708,7 @@ export function StudentScan({
           >
             <button
               aria-label="Vai alla prima riga da controllare"
-              className="rounded-xl bg-muted px-1.5 py-2 text-center outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-70"
+              className="rounded-xl bg-muted px-1.5 py-2 text-center outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-70"
               disabled={rowsToReview === 0 || state === "saving"}
               onClick={jumpToFirstReview}
               type="button"
@@ -1681,7 +1722,7 @@ export function StudentScan({
             </button>
             <button
               aria-label="Vai al primo campo da completare"
-              className={`rounded-xl px-1.5 py-2 text-center outline-none transition-colors hover:brightness-[0.98] focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-70 ${missingFields ? "bg-[#fff4e5]" : "bg-[#e9f7ef]"}`}
+              className={`rounded-xl px-1.5 py-2 text-center outline-none transition-colors hover:brightness-[0.98] focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-70 ${missingFields ? "bg-[#fff4e5]" : "bg-[#e9f7ef]"}`}
               disabled={missingFields === 0 || state === "saving"}
               onClick={jumpToFirstMissing}
               type="button"
@@ -1943,6 +1984,17 @@ export function StudentScan({
               role="alert"
             >
               Gli allievi non sono stati aggiunti. Controlla e riprova.
+            </p>
+          )}
+
+          {refusedRows.length > 0 && (
+            // One alert for the whole refusal; each card says what its own row
+            // lacks, as text.
+            <p
+              className="mt-4 text-sm font-semibold text-[#b42318]"
+              role="alert"
+            >
+              {`Prima di aggiungere, correggi ${refusedRows.length === 1 ? "la riga" : "le righe"} ${refusedRows.join(", ")}.`}
             </p>
           )}
 

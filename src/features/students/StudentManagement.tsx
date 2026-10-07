@@ -268,21 +268,26 @@ function StudentPageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex min-w-0 items-center justify-between gap-2">
-      <div className="flex min-w-0 flex-1 items-center gap-1">
-        <button
-          aria-label={`Indietro da ${title}`}
-          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-          onClick={onBack}
-          type="button"
-        >
-          <ChevronLeft aria-hidden="true" className="size-5" />
-        </button>
-        <h1 className="min-w-0 break-words text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl">
-          {title}
-        </h1>
+    // UG2-UX-5: the row is the query container. Narrower than 14rem (200% text
+    // at 320 px) the action goes under the title instead of squeezing it until
+    // "Profilo" breaks in the middle of the word; ordinary text never does.
+    <div className="@container mb-5">
+      <div className="flex min-w-0 items-center justify-between gap-2 @max-[14rem]:flex-wrap @max-[14rem]:justify-end">
+        <div className="flex min-w-0 flex-1 items-center gap-1 @max-[14rem]:flex-auto">
+          <button
+            aria-label={`Indietro da ${title}`}
+            className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
+            onClick={onBack}
+            type="button"
+          >
+            <ChevronLeft aria-hidden="true" className="size-5" />
+          </button>
+          <h1 className="min-w-0 break-words text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl">
+            {title}
+          </h1>
+        </div>
+        {action}
       </div>
-      {action}
     </div>
   )
 }
@@ -385,7 +390,7 @@ function StudentList({
         return (
           <button
             aria-label={`${displayName}, ${age === null ? "età da completare" : `${age} anni`}, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
-            className={`flex min-h-14 min-w-0 items-center gap-2 rounded-xl border bg-card px-2 py-1.5 text-left shadow-[0_4px_12px_rgb(6_59_82/0.04)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${student.active ? "" : "opacity-55"}`}
+            className={`flex min-h-14 min-w-0 items-center gap-2 rounded-xl border bg-card px-2 py-1.5 text-left shadow-[0_4px_12px_rgb(6_59_82/0.04)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring ${student.active ? "" : "opacity-55"}`}
             key={student.id}
             onClick={() => onOpen(student.id)}
             type="button"
@@ -819,7 +824,7 @@ function StudentForm({
                   type="radio"
                   value={option.id}
                 />
-                <span className="flex h-12 items-center justify-center gap-1.5 rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+                <span className="flex h-12 items-center justify-center gap-1.5 rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring">
                   <SexIcon className="size-5" sex={option.id} />
                   {option.label}
                 </span>
@@ -1073,10 +1078,15 @@ function StudentDetail({
         title="Profilo"
       />
       <section
-        className={`rounded-3xl border bg-card p-4 shadow-[0_12px_32px_rgb(6_59_82/0.07)] ${student.active ? "" : "opacity-65"}`}
+        className={`@container rounded-3xl border bg-card p-4 shadow-[0_12px_32px_rgb(6_59_82/0.07)] ${student.active ? "" : "opacity-65"}`}
       >
+        {/* UG2-UX-5: the card is the query container. Narrower than 14rem
+            (200% text at 320 px: 7rem) the sex icon sits above the name instead
+            of beside it, so the name has the whole card to wrap in (between
+            words, as R05 asks) rather than ending in an ellipsis or breaking
+            inside a word. A query in rem: ordinary text never triggers it. */}
         <div
-          className="flex items-start gap-3 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
+          className="flex items-start gap-3 @max-[14rem]:flex-col [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
           title="Doppio clic o pressione prolungata per modificare: Nome"
           {...nameShortcut}
         >
@@ -1084,10 +1094,10 @@ function StudentDetail({
             <SexIcon className="size-6" sex={student.sex} />
           </span>
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-black tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight @min-[14rem]:truncate @max-[14rem]:[overflow-wrap:anywhere]">
               {displayName}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground @max-[14rem]:[overflow-wrap:anywhere]">
               {student.firstName} {student.surname}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -1105,48 +1115,52 @@ function StudentDetail({
           </div>
         </div>
 
-        <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border">
-          <ProfileField
-            field="declaredAgeAtCourseStart"
-            icon={<CalendarDays aria-hidden="true" className="size-4" />}
-            label={
-              ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
-            }
-            onShortcut={() => onEdit("declaredAgeAtCourseStart")}
-            value={
-              age === null
-                ? "Età da completare"
-                : ageIsDeclared
-                  ? `${age} anni · dichiarata`
-                  : `${age} anni`
-            }
-          />
-          <ProfileField
-            field="sex"
-            label="Sesso"
-            onShortcut={() => onEdit("sex")}
-            value={sexLabel(student.sex)}
-          />
-          <ProfileField
-            field="size"
-            label="Taglia"
-            onShortcut={() => onEdit("size")}
-            value={student.size || "—"}
-          />
-          <ProfileField
-            field="phone"
-            icon={<Phone aria-hidden="true" className="size-4" />}
-            label="Telefono"
-            onShortcut={() => onEdit("phone")}
-            value={student.phone || "—"}
-          />
-          <ProfileField
-            field="nickname"
-            label="Nome visualizzato"
-            onShortcut={() => onEdit("nickname")}
-            value={displayName}
-          />
-        </dl>
+        {/* One column when enlarged text would leave a cell narrower than its
+            longest label word ("all’inizio"): a query in rem on the list. */}
+        <div className="@container mt-5">
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border @max-[14rem]:grid-cols-1">
+            <ProfileField
+              field="declaredAgeAtCourseStart"
+              icon={<CalendarDays aria-hidden="true" className="size-4" />}
+              label={
+                ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
+              }
+              onShortcut={() => onEdit("declaredAgeAtCourseStart")}
+              value={
+                age === null
+                  ? "Età da completare"
+                  : ageIsDeclared
+                    ? `${age} anni · dichiarata`
+                    : `${age} anni`
+              }
+            />
+            <ProfileField
+              field="sex"
+              label="Sesso"
+              onShortcut={() => onEdit("sex")}
+              value={sexLabel(student.sex)}
+            />
+            <ProfileField
+              field="size"
+              label="Taglia"
+              onShortcut={() => onEdit("size")}
+              value={student.size || "—"}
+            />
+            <ProfileField
+              field="phone"
+              icon={<Phone aria-hidden="true" className="size-4" />}
+              label="Telefono"
+              onShortcut={() => onEdit("phone")}
+              value={student.phone || "—"}
+            />
+            <ProfileField
+              field="nickname"
+              label="Nome visualizzato"
+              onShortcut={() => onEdit("nickname")}
+              value={displayName}
+            />
+          </dl>
+        </div>
 
         <div
           className="mt-4 rounded-2xl bg-muted p-4 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
@@ -1188,7 +1202,7 @@ function StudentDetail({
         )}
 
         <Button
-          className="mt-4 w-full"
+          className="mt-4 h-auto w-full py-2"
           onClick={openLifecycle}
           variant="secondary"
         >
