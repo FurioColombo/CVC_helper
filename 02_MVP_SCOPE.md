@@ -111,7 +111,7 @@ and the plan/evidence are updated first:
   manual adjustment;
 - automatic crew generation/optimization;
 - dashboard widgets, course documents/PDFs/reference-material systems;
-- image exports for crews or Comandate;
+- image exports other than the crew and Comandate summaries;
 - rich course archive/locking, audit/version history and generalized Undo;
 - synchronized horizontal timelines/search;
 - read-only sharing, backend, Auth, synchronization, conflicts or multiple editors;
@@ -129,9 +129,10 @@ acceptance criteria are in `04_IMPLEMENTATION_PLAN.md`.
 
 Also in 0.3.0: the V05 assistant path for rosters, beside on-device OCR (the
 app states the format and sends nothing itself); the UX1/UX2 owner corrections
-to crew composition, scan review, summary image and evaluation density; and,
+to crew composition, scan review, summary image and evaluation density;
 by the owner's 2026-09-26 decision, an erase-and-start-new-course action in
-Settings. Read-only sharing, backend, Auth and synchronization stay deferred.
+Settings; and, by their 2026-09-28 decision (F3, F4), a Comandate summary that
+is copied as an image like the crew summary. Read-only sharing, backend, Auth and synchronization stay deferred.
 
 The owner moved the remaining S4 fewer-than-five review-flag target to a final
 Claude Code follow-up after the 0.3.0 gate. It is not a gate prerequisite. The

@@ -158,7 +158,3 @@ run; it waits for the owner too.
   is dropped, as the scan before F1 already dropped Allievo/Allieva (it did
   not know Iscritti or Corsisti, so it kept "Corsisti Marco …"). A reliable
   fix needs the table's own column structure, not more word lists.
-- The crew warning helpers `getCrewWarningSummary`, `getBoatCrewWarnings` and
-  `formatCrewAnnouncement` are tested but unused; decide with the owner whether
-  a boat's unresolved fault should appear as a crew warning, then use or
-  remove them.

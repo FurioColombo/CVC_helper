@@ -118,8 +118,8 @@ completion, clean checkpoint. Use `verify:quick` before a commit and
 The 2026-09-25 owner request put UX1 and the subsequent UX2 phone feedback
 ahead of V03's owner-device checks. The owner later accepted the current speech
 path after Android and PC/Chrome use, with Apple/iPhone unavailable. This closes
-V03 only; the untested Apple path is a reminder for the UG2 release-candidate
-check. Do not claim a physical iPhone PASS. The owner explicitly approved
+V03 only; the untested Apple path was a reminder for the UG2 release-candidate
+check, which the owner moved to future work on 2026-10-06. Do not claim a physical iPhone PASS. The owner explicitly approved
 deployment after adversarial review for phone testing. Pages deploys only from
 `main`.
 
@@ -160,7 +160,8 @@ data remains ignored. `npm run verify` passed with 520 tests and four refreshed
 Pixel 7 Chrome journeys passed. The independent review found no remaining
 implementation blocker. The owner's subsequent Android and PC/Chrome feedback
 accepts the current path with known quality and latency limits; Apple/iPhone
-remains untested and on the UG2 checklist. No `verify:all` run is claimed.
+remains untested (moved to future work by the owner on 2026-10-06). No
+`verify:all` run is claimed.
 
 **Closure, 2026-09-25:** Node 24.19.0 `npm run verify` passed 538 tests,
 domain/compatibility checks and the production PWA build. The earlier four
@@ -168,7 +169,7 @@ focused Pixel 7 browser journeys remain the browser evidence; they were not
 rerun for this owner-acceptance update. The independent closure review is
 PASS_WITH_FINDINGS with zero blockers. The owner's device report accepts speech
 as borderline usable after Android and PC/Chrome use. Apple/iPhone and detailed
-physical checklist steps are unverified and remain on the UG2 checklist.
+physical checklist steps are unverified; see `.evidence/UG2/physical-device-review.json`.
 
 ## V05 — LLM-assisted paste path
 

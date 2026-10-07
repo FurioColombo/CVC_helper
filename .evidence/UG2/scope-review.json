@@ -1,0 +1,138 @@
+{
+  "milestone": "UG2",
+  "reviewerRole": "independent scope reviewer",
+  "reviewedOn": "2026-10-07",
+  "reviewedCommit": "40b55c1",
+  "verdict": "FAIL",
+  "summary": "Scope is clean: every 0.3.0 milestone and every owner decision I traced is implemented and has a test or evidence file, and nothing out of scope slipped in (no production fetch/XHR/WebSocket/beacon; the only network use is the speech model download, and the roster assistant path adds none; no sync, Auth, backend, native or generic content system). The 2026-10-06 owner decisions (deployed app is 0.3.0; iPhone checks and GitHub Support to future work) are recorded consistently in QUESTIONS, NEXT_STEPS and physical-device-review.json, and no document claims a physical iPhone check. Version 0.3.0 is in package.json, package-lock.json (both entries) and pinned by scripts/check-repository.mjs; the plan status table agrees with the manifest (UG2 IN_PROGRESS, everything else COMPLETE, every required evidence file of the completed milestones exists). Two blockers remain: one false changelog claim (dictation is faster) and four stress-profile layout findings left as test.fixme under an 'owner design decision' the owner never recorded (a fix is under way elsewhere; my review is of 40b55c1 and that fix is not in it). The rest are known-limitation gaps in CHANGELOG.md and authoritative documents that still require what the owner deferred.",
+  "blockers": [
+    {
+      "id": "UG2-SCO-1",
+      "title": "The 0.3.0 changelog says dictation is faster; the measured evidence says it is not",
+      "evidence": "CHANGELOG.md:41-42 ('Dictation is faster and no longer asks to confirm the transcript'). Contradicted by .evidence/V03/speech-quality-benchmark.json (status COMPLETE_NO_WINNER; production whisper-base q8 retained at 53.8% WER and 5,308 ms median warm latency; decision 'No candidate meets the acceptance rule'), .evidence/V03/speech-review.json:9 (the owner's acceptance 'is not evidence of a latency or accuracy improvement') and 04_IMPLEMENTATION_PLAN.md V03 'Progress, 2026-09-24'. git diff v0.2.0..HEAD -- src/capabilities/speech.ts changes the model revision pin, the ONNX runtime origin and chunking above 30 s, not the model or its speed.",
+      "impact": "A false release claim about the one feature the owner called slow and imprecise, on a document the owner asked to be adversarially checked for exactly this (OWNER_BRIEF 1.3).",
+      "suggestedFix": "Reword to what is true: 'Dictation no longer asks to confirm the transcript: the text goes straight into the note. Its speed and accuracy are unchanged; it is still slow and imprecise.' Optionally add that the speech runtime now loads from the app's own origin and the model is pinned."
+    },
+    {
+      "id": "UG2-SCO-2",
+      "title": "R18/R05 layout findings on the crew and Comandate pages are parked as test.fixme under an 'owner design decision' that is recorded nowhere",
+      "evidence": "tests/e2e/ug2-hostile-roster.spec.ts:420, 449, 483 and 690 are test.fixme; .evidence/UG2/synthetic-roster.json findings UG2-RS-1 to UG2-RS-4 ('Left as a fixme: the cards and the bar are the owner's frozen design'). docs/post-mvp/0_3_0_QUESTIONS.md has no such decision. 03_TECHNICAL_DECISIONS.md section 6 ('Fix the layout, not the threshold ... R18 forbids horizontal scrolling ... including 320 px at 200 % text'), 06_DESIGN_RULEBOOK.md R18/R05 and CHANGELOG.md 0.2.0 ('Every page was checked for sideways scrolling down to a 320 px screen at 200% text') make this approved behaviour. The 0.3.0 CHANGELOG does not list it as a limitation.",
+      "impact": "At 40b55c1 the crew page scrolls sideways by 42 px and the populated Comandate page by 12 px at 320 px with 200% text, and 10 of 25 (360 px) and 17 of 30 (320 px) clipped crew-card names show under three letters. That is approved behaviour missing with no owner deferral, and the evidence attributes it to an owner decision that does not exist. Known and being fixed concurrently, so this clears when the fix lands; it is a blocker only for the reviewed commit.",
+      "suggestedFix": "Land the fix, turn the four test.fixme into passing tests, and update synthetic-roster.json (status, findings, notes). If any residue is kept, record the owner's decision in 0_3_0_QUESTIONS.md and list it under Known limitations in CHANGELOG.md. Re-verify after the fix; this review does not cover it."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "UG2-SCO-3",
+      "title": "The physical-device checklist contradicts F2 and the owner's iPhone deferral",
+      "evidence": "docs/post-mvp/UG1_DEVICE_VALIDATION.md:70-72 ('Confirm every row shows its birth date, needs its own Controlla'): F2 and the owner (2026-09-28) removed per-row Controlla and the date (01_PRODUCT_SPEC.md:101, 0_3_0_QUESTIONS.md decisions of 2026-09-28). Lines 93-95 ('UG2 remains open until the three speech targets, both phone scan targets, the assistant path ...') and the headings at lines 47 and 65 ('Android and iPhone') ignore the owner's 2026-10-06 decision (iPhone checks to future work; QUESTIONS.md:21, 90-92). Lines 65-91 list no check for Copia immagine/Condividi, although 04_IMPLEMENTATION_PLAN.md:446 and 1_0_0_NEXT_STEPS.md:86 name it as the owner's check.",
+      "impact": "Anyone running the checklist (the owner, or the future iPhone round) is told to look for behaviour the app no longer has, and the closing rule says the gate cannot close the way the owner decided it will.",
+      "suggestedFix": "Change the assistant step to the F2 behaviour (age shown, no per-row check, Sono tutti count, unread lines), mark the iPhone targets 'deferred by the owner on 2026-10-06 (future work)', replace the closing paragraph with the owner's decision, and add the Copia immagine/Condividi and own-origin speech-runtime checks for the later iPhone round."
+    },
+    {
+      "id": "UG2-SCO-4",
+      "title": "Known limitations omit that the course exists only on the phone, and recommend reinstalling",
+      "evidence": "CHANGELOG.md:62-63 ('uninstalling and reinstalling is more reliable') and 43-44 (erase). No limitation says there is no export or backup: 0_3_0_DEVELOPMENT_AUDIT.md:18 ('Clearing browser data or changing phones can lose courses ... no user-facing restore route was found'), 1_0_0_NEXT_STEPS.md:33 (export/import is 0.4.0 work). 0_3_0_QUESTIONS.md:125-130 and 49 (erase may leave deleted rows in unused database pages on a browser that cannot compact; clearing the site's data is the strongest wipe; a full local reset is future work) and src/persistence/courses.ts:82-89 (VACUUM is best-effort).",
+      "impact": "An instructor following the changelog's own workaround can delete the only copy of a week's students, notes and evaluations (minors' data); and 'Impostazioni can erase the course' reads as a guaranteed wipe. This is exactly the kind of limitation the changelog is supposed to state.",
+      "suggestedFix": "Add: 'The course lives only on this phone. There is no export or backup yet; clearing the browser's data or uninstalling the app may delete it. Reinstall only when the course is no longer needed.' and 'Erasing the course removes its rows but on some browsers they may remain in unused storage pages until reused; clear the site's data for a guaranteed wipe.'"
+    },
+    {
+      "id": "UG2-SCO-5",
+      "title": "The Back claim is stronger than the recorded behaviour",
+      "evidence": "CHANGELOG.md:34-36 ('never drops an unsaved edit or an open note without saying so'). 1_0_0_NEXT_STEPS.md:114-125 and .evidence/F1/self-review.json:108 (F1R3-8): Aggiorna and the phone's Back still discard a half-filled new-student form and a pasted-but-unread assistant answer; F1R12-1 (.evidence/F1/review-round-12.json): a save that closes its screen after the user already pressed Back lands two screens back. The same claim is repeated in UG1_DEVICE_VALIDATION.md:82-85.",
+      "impact": "An overclaim on the feature the owner checked on the phone; no data is lost in the recorded cases, but the sentence is false as written.",
+      "suggestedFix": "Say 'never drops an unsaved edit to an existing record, a failed evaluation save or an open note without saying so', and list the new-student form, the unread pasted answer and the rare save-then-Back timing case as limitations."
+    },
+    {
+      "id": "UG2-SCO-6",
+      "title": "Scanning limitations are not in the known limitations, and the scan claim is unqualified",
+      "evidence": "CHANGELOG.md:10-21 ('with no merged, missing or invented student'). 04_IMPLEMENTATION_PLAN.md:546-558 (S4: a staff row read complete with its role code missed can still look ready, 2 of 40 perturbed inputs; when Tesseract loses whole rows the retake warning may not show; the eraser costs about 2 s at 4x CPU throttling and was never timed on the phone), 1_0_0_NEXT_STEPS.md:135-148 (staff printed without a role code need one tap each; a student whose name or role holds a heading word is dropped).",
+      "impact": "The five-photograph result (no merged, missing or ready non-student row) is true of those photographs only; the review step is what protects the course. A reader of the changelog is not told that review of every row is still necessary.",
+      "suggestedFix": "Add one limitation: 'Scanning can still misread or drop a row, and a staff line can look like a student; check every row against the sheet before saving.' Scope the 'no merged, missing or invented student' sentence to the five supplied sheets."
+    },
+    {
+      "id": "UG2-SCO-7",
+      "title": "'Everything was checked on the owner's Android phone' is contradicted by the physical-device review",
+      "evidence": "CHANGELOG.md:56-58. .evidence/UG2/physical-device-review.json qolFindings UG2-PD-3 (not observed: home-screen icon and launch colour, scan time from 'Usa questa area', the first offline dictation message after an update, erasing the course) and UG2-PD-2 (speech not re-run on the release candidate).",
+      "impact": "A release claim of device verification that the repository's own review says was not made; the changelog's 'Starting over' and icon claims rest on browser tests only.",
+      "suggestedFix": "Say 'The owner used the app on their Android phone (camera scan, assistant paste, installed app offline, phone Back, the summary images, the update banner) and on a computer; the icon, launch colour, scan time and erase-course steps were only checked by browser tests.'"
+    },
+    {
+      "id": "UG2-SCO-8",
+      "title": "The scope document still lists the Comandate image export as deferred; the shipped summary is specified only in passing",
+      "evidence": "02_MVP_SCOPE.md:114 ('image exports for crews or Comandate' deferred) and 126-127 ('other image exports ... remain deferred'); the 0.3.0 amendments (lines 120-136) name only the crew summary. The owner approved the Comandate summary and export on 2026-09-28 (0_3_0_QUESTIONS.md:47) and it shipped in F3/F4 (04_IMPLEMENTATION_PLAN.md:324-346, 399-446; DutyManagement.tsx:1189). 01_PRODUCT_SPEC.md:533 mentions it in one parenthesis; the page changelog (07_PAGE_CHANGELOG.md:378) is the only description.",
+      "impact": "AGENTS.md section 15 requires a deferred item to be lifted by a recorded scope change before implementation; the owner's decision and the plan exist but rank 3 of the source-of-truth hierarchy still says the opposite, so a later agent would remove it as out of scope.",
+      "suggestedFix": "Add the Comandate summary and its copy/share image to the 0.3.0 lifts in 02_MVP_SCOPE.md section 4 and give the Comandate summary a short paragraph in 01_PRODUCT_SPEC.md (seven day cards, every on-duty name, same copy/share behaviour)."
+    },
+    {
+      "id": "UG2-SCO-9",
+      "title": "Authoritative documents still require, or still describe as pending, what the owner decided or deferred",
+      "evidence": "(a) 01_PRODUCT_SPEC.md:602-605 and 03_TECHNICAL_DECISIONS.md:137-141 keep iPhone speech 'on the UG2 release-candidate checklist'; 04_IMPLEMENTATION_PLAN.md:120-122 and 143-145 say 'UG2 must repeat speech on its exact release candidate and cover physical phone scanning', yet physical-device-review.json records speech 'Not repeated on the exact release candidate' and the iPhone checks deferred (QUESTIONS.md:20-21, 51); no document records the waiver of the plan's requirement. (b) 04_IMPLEMENTATION_PLAN.md:34 and 448-471 and 1_0_0_NEXT_STEPS.md:9-30 say the six reviews, version bump and tag 'wait until the owner asks'; the go-ahead for the formal close is not recorded in 0_3_0_QUESTIONS.md. (c) 1_0_0_NEXT_STEPS.md:161-164 still asks whether an open fault should be a crew warning and to 'use or remove' the helpers: the owner said yes on 2026-09-28 and F3 uses getBoatCrewWarnings/getCrewWarningSummary (CrewManagement.tsx:1456, 1570, 3100); only formatCrewAnnouncement (src/domain/crews.ts:217) is still unused outside tests. (d) 03_TECHNICAL_DECISIONS.md:227-228 ('active cycle: 0.3.0, assigned only at its release gate'), README.md:37 and docs/QUICKSTART.md:7-8 (0.2.0 as the last release, 0.3.0 'active') and 03_TECHNICAL_DECISIONS.md:132 (lists a speech 'review' state V03 removed). (e) 0_3_0_OPEN_ITEMS.md:33 and 87-97 say the physical checks are the next milestone.",
+      "impact": "Per AGENTS.md section 2 the owner's instruction wins, but rank 2 and 4 documents and the plan now contradict it, and the closing agent will have to guess whether speech on the release candidate and iPhone were waived or forgotten.",
+      "suggestedFix": "At close: record the owner's go-ahead and an explicit waiver (speech on the release candidate and every iPhone check -> future work, 2026-10-06) in 0_3_0_QUESTIONS.md; align 01 section 'Speech', 03 sections 5 and 7, the plan's V03 and UG2 text and status row, README, QUICKSTART, NEXT_STEPS and OPEN_ITEMS; delete or mark the crew-warning bullet as decided."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "UG2-SCO-10",
+      "title": "Changelog scan figures mix flags and rows and are one measurement behind",
+      "evidence": "CHANGELOG.md:14-17 ('rows needing attention fell from 5 to 0' is the clearest photograph's flags, S4 rule-erasure-measurement.json; 61 to 26 is rows to review). The last measurement on the final scan code is 50 flags and 27 rows to review (.evidence/F2/self-review.json:53-54; F1 changed one row after S4).",
+      "impact": "Small numeric drift in a public document.",
+      "suggestedFix": "Say 'flags' for 5 to 0 and 'about 27' (or cite F2's 27) for the five sheets."
+    },
+    {
+      "id": "UG2-SCO-11",
+      "title": "The migration sentence says anything edited is saved age-only; an edit that leaves the age alone keeps the date",
+      "evidence": "CHANGELOG.md:48-50; src/features/students/StudentManagement.tsx:562-565 (dateOfBirth kept when the age is unchanged); .evidence/UG2/migration-evidence.json (Davide's phone edit keeps his birth date; changing Sara's age drops it).",
+      "impact": "Minor imprecision, in the privacy-protective direction.",
+      "suggestedFix": "'A student who has a date of birth keeps it until their age is changed, which stores the age only.'"
+    },
+    {
+      "id": "UG2-SCO-12",
+      "title": "User-visible changes missing from the changelog",
+      "evidence": "Owner-approved and shipped but unmentioned: D1/Cabinato crews start at four and can be resized (crews.ts, CrewManagement.tsx:1985-1994, 3128-3170; D2-D5 fixed at two, override deferred by the owner on 2026-09-24); the two-or-three names per row choice in Settings; the destination menu previewing members and vacancies; Comandata/minor markers; students in Comandata first among the available; the speech runtime loading from the app's own origin (speech.ts:1-15).",
+      "impact": "The D1/Cabinato and D2-D5 capacity behaviour is a deferral the next release should not lose.",
+      "suggestedFix": "One bullet for crews (four-person D1/Cabinato crews, the display setting, markers) and one line under limitations: 'D2-D5 crews are fixed at two; a Settings override is future work.'"
+    },
+    {
+      "id": "UG2-SCO-13",
+      "title": "The hostile roster has no pair of names that differ by one character",
+      "evidence": "OWNER_BRIEF section 8 asks for 'two students who differ by one character'; tests/e2e/ug2-hostile-roster-data.ts has identical names (Maria Esposito twice), same first name with the same initial (Luca Bianchi/Bellini) and an initial/prefix case, but no near-duplicate (e.g. Rossi/Rosi) for the duplicate and disambiguation paths.",
+      "impact": "One of the owner's listed corner cases is not exercised.",
+      "suggestedFix": "Add one near-duplicate pair to the roster, or say in synthetic-roster.json that the identical and same-initial pairs stand in for it."
+    },
+    {
+      "id": "UG2-SCO-14",
+      "title": "physical-device-review.json gives per-check PASS verdicts from one-line owner reports",
+      "evidence": ".evidence/UG2/physical-device-review.json observations (scan, assistant paste, offline, Back all 'PASS') against UG1_DEVICE_VALIDATION.md:47-91, which lists sub-steps (EXIF orientation, crop, commit/reload, source-photo disposal; Home, a student edit, a crew change and a scan offline; Back in every area). V03's device evidence (.evidence/V03/speech-device-evidence.json) used OWNER_REPORTED_USABLE_WITH_LIMITATIONS and 'no per-step PASS is claimed'.",
+      "impact": "Honest about source and observer, but the verdict granularity is finer than the owner's reports; an auditor could read PASS as every sub-step observed.",
+      "suggestedFix": "Use the V03 wording (OWNER_REPORTED_PASS, 'sub-steps not itemised') for these four rows."
+    },
+    {
+      "id": "UG2-SCO-15",
+      "title": "Working tree and machine state before the commit",
+      "evidence": "An untracked tests/e2e/zz-tmp-ug2-shots.spec.ts marked 'TEMPORARY helper (UG2 layout fix)' is in the working tree (git status). The C: drive reported 0 bytes free during this review (df: 223G used of 223G; shell pipes failed with 'No space left on device'), which will break npm run evidence, the Playwright run and the commit. A parallel worktree CVC_helper-harness on branch claude/harness-0.4-prep (0.4.0 harness, one commit on 8ae1ef5) exists and is outside v0.2.0..HEAD.",
+      "impact": "AGENTS.md section 17 needs a clean tree; evidence cannot be recorded on a full disk; the 0.4.0 branch must not enter the 0.3.0 tag.",
+      "suggestedFix": "Delete the temporary spec before the commit, free disk space (screenshot output, test-results, old dist/worktree artefacts) before running evidence, and keep claude/harness-0.4-prep out of the release."
+    },
+    {
+      "id": "UG2-SCO-16",
+      "title": "Small residue",
+      "evidence": "CHANGELOG.md:3 and scripts/check-repository.mjs:47 date the release 2026-10-06 while the formal close is on or after 2026-10-07; the scenario student id 'aldo-Ferombo' (src/domain/scenarios.ts, a scrub artefact with odd casing); src/domain/crews.ts:217 formatCrewAnnouncement is unused production code since 0.2.0; the rewritten v0.2.0 tag fails three scan tests (QUESTIONS.md:150-161, accepted by the owner) and is not mentioned in the changelog.",
+      "impact": "Cosmetic.",
+      "suggestedFix": "Use the tag date in the changelog or say 'deployed 2026-10-06'; rename the id; remove or use the helper; optionally note that v0.2.0 is an archive."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md sections 1-17; 01_PRODUCT_SPEC.md (scan 3.6, crews 7.4-7.5, speech, invariants); 02_MVP_SCOPE.md; 03_TECHNICAL_DECISIONS.md (sections 1, 3, 5, 6, 7, 8); 04_IMPLEMENTATION_PLAN.md in full; README.md; docs/QUICKSTART.md; docs/DEPLOY.md",
+    "docs/post-mvp/0_3_0_QUESTIONS.md, 0_3_0_OWNER_BRIEF.md, 0_3_0_OPEN_ITEMS.md, 0_3_0_DEVELOPMENT_AUDIT.md, 1_0_0_NEXT_STEPS.md, UG1_DEVICE_VALIDATION.md, 06_DESIGN_RULEBOOK.md (R04, R05, R12, R18, section 5), 07_PAGE_CHANGELOG.md (F3, F4 entries)",
+    "CHANGELOG.md (0.3.0 and 0.2.0 entries) checked claim by claim against code and evidence",
+    ".milestones/manifest.json (every required evidence and review file of all completed milestones exists; UG2 IN_PROGRESS, its verification, browser and five review files not yet written); npm run milestone:status (read only)",
+    ".evidence/UG2/migration-evidence.json, synthetic-roster.json, physical-device-review.json; .evidence/V03 (benchmark, speech-review, speech-device-evidence); .evidence/F1 (self-review, independent-review, review-round-12, history-rewrite refs); .evidence/F2, F3, F4 (verification test counts match the plan: 814/849/947/952 unit tests; 177/186/191/200 browser tests passed), V05 and S4 (domain-review, rule-erasure-measurement, ocr-options)",
+    "git log v0.2.0..HEAD (about 90 commits), git diff v0.2.0..HEAD stat for src/, package.json, vite.config.ts, .github/workflows, and the diffs of src/capabilities/speech.ts and src/domain/{duties,config,crewWarnings,scenarios}.ts",
+    "src/components/SummaryImageButton.tsx, src/lib/summaryShare.ts (copy and share only, no download), src/features/settings/CourseErase.tsx and src/persistence/courses.ts (erase), src/features/crews/crewDisplayPreference.ts, StudentManagement.tsx and StudentScan.tsx (age-only storage), StudentScanAssistant.tsx (privacy note, Sono tutti), StudentScanImageEditorDocument.tsx (edge handles)",
+    "Search of src/ for fetch, XMLHttpRequest, sendBeacon, WebSocket, EventSource and absolute URLs (production code has none; only the pinned speech model download and the service worker)",
+    "scripts/check-repository.mjs version pin; package.json and package-lock.json version 0.3.0; tests/e2e/ug2-hostile-roster.spec.ts and ug2-hostile-roster-data.ts; git status, git worktree list, git branch -vv",
+    "Process note: one recursive grep over the repository root (before I switched to git grep and the Grep tool) matched markdown files under the ignored data/private/claude-s4-work/ test-results; only Playwright test names appeared in the output, nothing was read further, copied or recorded."
+  ]
+}

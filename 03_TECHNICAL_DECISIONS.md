@@ -136,9 +136,9 @@ than inventing a fixed threshold.
 
 The owner made a V03-only acceptance exception on 2026-09-25: Android and
 PC/Chrome use was sufficient to close that milestone with the current slow,
-imperfect speech path. Apple/iPhone was unavailable, remains untested and stays
-on the UG2 release-candidate checklist. Do not convert this exception into a
-physical iPhone PASS.
+imperfect speech path. Apple/iPhone was unavailable and remains untested; on
+2026-10-06 the owner moved the iPhone checks to future work. Do not convert
+this exception into a physical iPhone PASS.
 
 The speech runtime loads ONNX Runtime from the app's own origin and pins the
 Whisper model to a fixed Hugging Face revision; the model weights are the only
@@ -224,13 +224,14 @@ log.
 
 Use low-effort semantic versions:
 
-- released baselines: 0.1.0 and 0.2.0;
-- active cycle: 0.3.0, assigned only at its release gate;
+- released baselines: 0.1.0, 0.2.0 and 0.3.0 (declared at UG2 on 2026-10-07);
+- the next cycle is numbered when it is planned
+  (`docs/post-mvp/1_0_0_NEXT_STEPS.md`) and assigned only at its release gate;
 - patch numbers for separately released fixes;
 - later minor numbers for recognizable feature/change packages;
 - 1.0.0 only after an explicit stability decision.
 
-Do not version every card or milestone. Update `CHANGELOG.md` at the 0.3.0 gate
+Do not version every card or milestone. Update `CHANGELOG.md` at each release gate
 with user-visible changes and material migration or limitation notes. Create a
 Git tag only when the release is actually declared.
 

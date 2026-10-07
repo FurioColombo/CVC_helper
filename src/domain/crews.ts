@@ -214,27 +214,6 @@ export function copyPreviousBoatSelection(
   )
 }
 
-export function formatCrewAnnouncement({
-  destination,
-  exactBoatLabel,
-  inferredBoatType,
-  memberLabels,
-}: {
-  destination: CrewDestination
-  exactBoatLabel?: string | null
-  inferredBoatType?: string | null
-  memberLabels: readonly string[]
-}) {
-  const names = memberLabels.join(" / ") || "Equipaggio vuoto"
-  const prefix =
-    destination === "boat"
-      ? exactBoatLabel
-      : destination === "mezzi"
-        ? "Mezzi"
-        : inferredBoatType
-  return prefix ? `${prefix} — ${names}` : names
-}
-
 export function getStandardCrewSize(family: CourseFamily, level: CourseLevel) {
   const prefix = family === "Deriva" ? "D" : "C"
   const config = COURSE_CONFIG[`${prefix}${level}` as CourseCode]

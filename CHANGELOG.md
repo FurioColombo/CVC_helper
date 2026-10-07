@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — 2026-10-06
+## 0.3.0 — 2026-10-07
 
 0.3.0 is the first version used on a real phone: the app is published over
 HTTPS on GitHub Pages and installs on the home screen, so the camera, the
@@ -10,9 +10,9 @@ since 0.2.0.
 - **Adding students is fast, and only the age is kept.** A printed roster is
   scanned with the camera or from the gallery; the table's ruled lines are
   erased before reading, the sheet's name order is detected, and telephone
-  numbers are read only when asked for. On the clearest supplied photograph
-  the rows needing attention fell from 5 to 0, and across five real sheets
-  from 61 to 26, with no merged, missing or invented student. When a photo is
+  numbers are read only when asked for. On the five real sheets supplied, the
+  rows needing a check fell by more than half, and none of the students on
+  them was merged, lost or invented. When a photo is
   hard, any chat assistant can read it instead: the app gives the prompt,
   takes the pasted answer from a phone or a computer, shows every line it
   could not read, and makes no network call itself. Every mode — scan, paste
@@ -22,7 +22,9 @@ since 0.2.0.
 - **Crews are composed by tapping.** Tap a free seat and then anyone still
   available — a student or a volunteer — to seat them there; tap a person and
   then a crew or a destination (a boat, Mezzi, A terra) the other way round.
-  Boats page with a swipe. A boat with an open fault, like an unavailable
+  Boats page with a swipe. A D1 or cabin course starts its crews at four
+  people, and each crew card can be resized; Impostazioni chooses two or three
+  names per row. A boat with an open fault, like an unavailable
   one, puts a warning on its crew; volunteers never count toward size or
   repeat warnings.
 - **Summaries you can send.** The crew summary groups the crews by boat model
@@ -32,14 +34,16 @@ since 0.2.0.
   the summary as a picture of the screen, every crew included, ready to paste
   in WhatsApp; **Condividi** opens the phone's share sheet.
 - **Moving around a phone.** The phone's Back button walks back through each
-  area and never drops an unsaved edit or an open note without saying so. The
+  area and, in most places, stops before an open note or an unsaved edit is
+  lost. The
   app has its own icon and launch colour. A banner offers each new version.
   Students with the same first name are told apart by the shortest piece of
   surname that does it, keeping particles such as De or Lo with it.
 - **Evaluations and history.** The evaluation rows are denser, a note is one
   tap away, and a student's history opens on the exact session.
-- **Dictation** is faster and no longer asks to confirm the transcript; it is
-  still slow and imprecise, and stays as it is for now.
+- **Dictation** no longer asks to confirm the transcript. Its speed and
+  accuracy are unchanged: it is still slow and imprecise, and stays as it is
+  for now.
 - **Starting over.** Impostazioni can erase the course from the device, after
   a confirmation, and open the creation of a new one.
 
@@ -47,20 +51,32 @@ since 0.2.0.
 
 A 0.1.0 or 0.2.0 course opens unchanged: every record, reference, note and
 identifier is preserved. A student saved with a date of birth keeps it, and
-their age on the first course day is worked out from it; anything edited from
-now on is saved with the age only. No account, server, synchronisation or
+their age on the first course day is worked out from it; a student whose age
+is changed, and every new student, is saved with the age only. No account, server, synchronisation or
 second editor is part of this release.
 
 ### Known limitations
 
-- **No iPhone has been tried.** Everything was checked on the owner's Android
-  phone and on a computer; iPhone/Safari is covered only by browser tests on
-  the WebKit engine. The owner has no iPhone, and those checks wait until they
-  ask for them.
+- **The course lives only on this phone.** There is no export or backup yet.
+  Uninstalling the app or clearing the browser's data can delete the course,
+  so do not reinstall to update in the middle of a course. Erasing the course
+  deletes its rows and compacts the database where the browser allows, but it
+  is not a guaranteed wipe on every browser.
+- **No iPhone has been tried.** The owner checked the main flows on their
+  Android phone — scanning, the assistant paste, offline use, Back, the
+  summary images and the update banner. The app icon and launch colour, the
+  first offline dictation message and erasing the course were not checked on
+  a device, and iPhone/Safari is covered only by browser tests on the WebKit
+  engine. The owner has no iPhone; those checks wait until they ask for them.
+- **Scanning still needs a look at every row.** A staff row can appear ready
+  as a student, and a row whose name reads like a heading can be left out.
 - **Dictation is slow and imprecise**, and its model downloads on the first
   dictation rather than with the app.
-- **Updating** through the banner works, but uninstalling and reinstalling is
-  more reliable.
+- **Updating** through the banner works but is not always prompt; the owner
+  found reinstalling more reliable, which, without a backup, risks the course
+  data.
+- **Some screens are tight at 320 px with 200% text:** a long name on a crew
+  card is cut with "…" (the full name stays in the accessible name).
 - **The project's history was rewritten** before 0.3.0 was published, to
   remove real people's data. GitHub may still serve the old commits by their
   old identifiers until GitHub Support purges them; the owner has not asked.
