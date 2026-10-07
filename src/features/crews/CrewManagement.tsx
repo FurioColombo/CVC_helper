@@ -128,6 +128,19 @@ const studentPoolCollator = new Intl.Collator("it-IT", {
 
 type CrewSlotSelection = { crewId: string; slotIndex: number }
 
+/**
+ * Columns of person buttons (rulebook R05, R18): the number chosen — two, or
+ * three in Settings — and one column fewer when the container is too narrow
+ * for the names. With 200% text a two-column slot left 50 px for a name
+ * between its padding, so the badges ran under the remove button and the card
+ * pushed the page sideways. The query is on the width of the enclosing card in
+ * rem, so it only triggers when the text is enlarged (at 320 px with ordinary
+ * text the card is 16.6rem wide and keeps its columns).
+ */
+const PERSON_COLUMNS_TWO = "grid-cols-2 gap-2 @max-[15rem]:grid-cols-1"
+const PERSON_COLUMNS_THREE =
+  "grid-cols-3 gap-1 @max-[15rem]:grid-cols-2 @max-[10rem]:grid-cols-1"
+
 function CrewHeader({
   onBack,
   onBoats,
@@ -711,7 +724,7 @@ function PersonButton({
       // the name, which stays the person — the same arrangement P17 uses.
       aria-description={markerDescription || undefined}
       aria-pressed={selected}
-      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-3 px-3 py-2.5"} ${className}`}
+      className={`flex ${dense ? "min-h-[44px]" : "min-h-14"} min-w-0 w-full items-center rounded-2xl border bg-card text-left outline-none aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-60 ${dense ? "gap-0 px-0 py-[6px]" : compact ? "gap-1 px-2 py-1.5" : "gap-[12px] px-[12px] py-2.5"} ${className}`}
       disabled={disabled}
       onClick={(event) => {
         if (longPressed.current) {
@@ -784,7 +797,7 @@ function PersonButton({
         />
       ) : (
         !compact && (
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-xs font-black text-foreground">
+          <span className="grid size-[36px] shrink-0 place-items-center rounded-xl bg-muted text-xs font-black text-foreground @max-[12rem]:hidden">
             {label.slice(0, 1).toLocaleUpperCase("it-IT")}
           </span>
         )
@@ -2747,6 +2760,7 @@ export function CrewManagement({
 
                 {(studentPool.length > 0 || selectedCrewSlot) && (
                   <section
+                    className="@container"
                     onKeyDown={handleStudentPoolKeyDown}
                     ref={studentPoolRef}
                   >
@@ -2772,7 +2786,7 @@ export function CrewManagement({
                     )}
                     <div
                       aria-label="Allievi disponibili"
-                      className="mt-2 grid grid-cols-2 gap-2"
+                      className={`mt-2 grid ${PERSON_COLUMNS_TWO}`}
                       id="crew-available-students"
                       role="region"
                     >
@@ -3057,7 +3071,7 @@ export function CrewManagement({
                 >
                   {plan.crews.map((crew, crewIndex) => (
                     <article
-                      className="rounded-3xl border bg-card p-3 max-[350px]:px-[12px]"
+                      className="@container rounded-3xl border bg-card p-3 max-[350px]:px-[12px]"
                       id={`crew-card-${crew.id}`}
                       key={crew.id}
                     >
@@ -3070,7 +3084,7 @@ export function CrewManagement({
                         </h2>
                         <button
                           aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
-                          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
+                          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left @max-[17rem]:min-w-min @max-[17rem]:px-0 outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
                           disabled={busy}
                           onClick={() => {
                             setSelected(null)
@@ -3094,7 +3108,7 @@ export function CrewManagement({
                             }
                           />
                         </button>
-                        <div className="flex shrink-0 items-center gap-1">
+                        <div className="flex shrink-0 items-center gap-1 @max-[17rem]:ml-auto">
                           {(() => {
                             const warnings = warningsByCrew.get(crew.id) ?? []
                             const summary = getCrewWarningSummary(warnings)
@@ -3248,7 +3262,7 @@ export function CrewManagement({
                           composing and the outing changes shape afterwards. */}
                       <div className="flex min-w-0 items-stretch gap-2">
                         <div
-                          className={`grid min-w-0 flex-1 ${crewDisplayColumns === 2 ? "grid-cols-2 gap-2" : "grid-cols-3 gap-1"}`}
+                          className={`grid min-w-0 flex-1 ${crewDisplayColumns === 2 ? PERSON_COLUMNS_TWO : PERSON_COLUMNS_THREE}`}
                         >
                           {Array.from(
                             { length: crew.capacity },
@@ -3418,7 +3432,7 @@ export function CrewManagement({
                 </section>
 
                 <section
-                  className="rounded-3xl border bg-card p-4"
+                  className="rounded-3xl border bg-card p-[16px]"
                   id="crew-land-section"
                 >
                   <div className="mb-3 flex items-center justify-between gap-3">
@@ -3435,7 +3449,7 @@ export function CrewManagement({
                       }
                       return (
                         <div
-                          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1"
+                          className="@container grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1"
                           key={studentId}
                         >
                           <PersonButton
@@ -3457,7 +3471,7 @@ export function CrewManagement({
                           />
                           <button
                             aria-label={`Rendi disponibile ${personLabel(person)}`}
-                            className="grid min-h-14 min-w-11 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
+                            className="grid min-h-14 min-w-[44px] place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40"
                             disabled={busy}
                             onClick={() =>
                               void commit(removePerson(plan, person))
@@ -3527,47 +3541,60 @@ export function CrewManagement({
                   </div>
                 </section>
 
-                <p className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
+                <p className="flex items-center gap-2 rounded-2xl bg-muted px-[16px] py-3 text-xs text-muted-foreground">
                   <ShipWheel aria-hidden="true" className="size-4 shrink-0" />
                   Barche in uscita e destinazioni vengono salvate
                   automaticamente.
                 </p>
               </div>
-              <nav
-                aria-label="Accesso rapido equipaggi"
-                className="z-20 mt-2 grid shrink-0 grid-cols-3 items-center gap-1 rounded-2xl border bg-card/95 p-1.5 shadow-[0_6px_18px_rgb(6_59_82/0.12)] backdrop-blur"
-              >
-                <button
-                  aria-controls="crew-land-section"
-                  className="min-h-11 min-w-0 break-words rounded-xl px-2 text-left text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-                  onClick={() =>
-                    document
-                      .getElementById("crew-land-section")
-                      ?.scrollIntoView({ behavior: "smooth", block: "center" })
-                  }
-                  type="button"
+              {/* Three equal columns; when the text is enlarged until a word of
+                  them no longer fits its column (200% at 320 px broke "Collocati"
+                  and "Volontari"), the bar wraps: the two buttons share the first
+                  row, if they fit, and the count takes the next. The query is on the
+                  bar's width in rem, so it only triggers with enlarged text. */}
+              <div className="@container z-20 mt-2 shrink-0">
+                <nav
+                  aria-label="Accesso rapido equipaggi"
+                  className="grid grid-cols-3 items-center gap-1 rounded-2xl border bg-card/95 p-1.5 shadow-[0_6px_18px_rgb(6_59_82/0.12)] backdrop-blur @max-[14rem]:flex @max-[14rem]:flex-wrap"
                 >
-                  A terra
-                </button>
-                <span
-                  aria-live="polite"
-                  className="min-w-0 break-words rounded-xl bg-[#e8f3f6] px-2 py-2 text-center text-[0.68rem] font-black text-[#164e63]"
-                >
-                  Collocati {completeness.accounted}/{completeness.total}
-                </span>
-                <button
-                  aria-controls="crew-volunteer-section"
-                  className="min-h-11 min-w-0 break-words rounded-xl px-2 text-right text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-                  onClick={() =>
-                    document
-                      .getElementById("crew-volunteer-section")
-                      ?.scrollIntoView({ behavior: "smooth", block: "center" })
-                  }
-                  type="button"
-                >
-                  Volontari
-                </button>
-              </nav>
+                  <button
+                    aria-controls="crew-land-section"
+                    className="min-h-[44px] min-w-0 break-words rounded-xl px-2 text-left text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 @max-[14rem]:min-w-min @max-[14rem]:flex-auto"
+                    onClick={() =>
+                      document
+                        .getElementById("crew-land-section")
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "center",
+                        })
+                    }
+                    type="button"
+                  >
+                    A terra
+                  </button>
+                  <span
+                    aria-live="polite"
+                    className="min-w-0 break-words rounded-xl bg-[#e8f3f6] px-2 py-2 text-center text-[0.68rem] font-black text-[#164e63] @max-[14rem]:order-last @max-[14rem]:basis-full"
+                  >
+                    Collocati {completeness.accounted}/{completeness.total}
+                  </span>
+                  <button
+                    aria-controls="crew-volunteer-section"
+                    className="min-h-[44px] min-w-0 break-words rounded-xl px-2 text-right text-xs font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40 @max-[14rem]:min-w-min @max-[14rem]:flex-auto"
+                    onClick={() =>
+                      document
+                        .getElementById("crew-volunteer-section")
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "center",
+                        })
+                    }
+                    type="button"
+                  >
+                    Volontari
+                  </button>
+                </nav>
+              </div>
             </>
           )}
         </div>

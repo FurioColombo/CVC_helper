@@ -3,6 +3,8 @@ import path from "node:path"
 
 import { expect, type Page, test } from "@playwright/test"
 
+import { expectNoSidewaysScroll } from "./layout-audit"
+
 async function addStudent(page: Page, firstName: string, surname: string) {
   await page.getByRole("button", { name: "Aggiungi allievo" }).click()
   await page.getByLabel("Nome", { exact: true }).fill(firstName)
@@ -47,6 +49,10 @@ async function assertNoHorizontalOverflow(page: Page) {
   expect(widths.document, JSON.stringify(widths)).toBeLessThanOrEqual(
     widths.viewport + 1,
   )
+  // The document is not the only thing that can scroll sideways: the crew
+  // composition region scrolls on its own and hid a 42 px overflow from the
+  // check above (UG2), so every container that scrolls is measured too.
+  await expectNoSidewaysScroll(page, "u09")
 }
 
 test("keeps P14–P16 compact while assigning and unlinking session boats", async ({

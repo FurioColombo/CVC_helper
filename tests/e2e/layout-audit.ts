@@ -1,4 +1,4 @@
-import { expect, type Locator } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 
 /**
  * A measured audit of a screen's layout, for the pages UG2 stresses with a
@@ -437,4 +437,39 @@ export async function expectCleanWhileScrolling(
   const audit = await auditWhileScrolling(root, scroller, options)
   expect(audit.issues, `${where}: ${JSON.stringify(audit.stats)}`).toEqual([])
   return audit
+}
+
+/**
+ * Rulebook R18: no sideways scroll on the page, and none in any container
+ * that scrolls on its own. A page that looks at the document's `scrollWidth`
+ * alone misses the inner scroller: the crew composition region has
+ * `overflow-y: auto`, which also makes it scroll sideways when a card is wider
+ * than it, and the document stays at the width of the screen. Lists every
+ * offender (the element, how wide its content is and how wide it is).
+ */
+export async function expectNoSidewaysScroll(page: Page, where: string) {
+  const offenders = await page.evaluate(() => {
+    const found: string[] = []
+    const candidates = [
+      document.documentElement,
+      ...Array.from(document.querySelectorAll<HTMLElement>("body *")),
+    ]
+    for (const element of candidates) {
+      if (element.clientWidth === 0) continue
+      const style = getComputedStyle(element)
+      if (style.display === "none") continue
+      const scrolls =
+        element === document.documentElement ||
+        /(auto|scroll)/.test(style.overflowX)
+      if (!scrolls || element.scrollWidth <= element.clientWidth + 1) continue
+      const name =
+        element.getAttribute("aria-label") ??
+        (element.textContent ?? "").replace(/s+/g, " ").trim().slice(0, 30)
+      found.push(
+        `${element.tagName.toLowerCase()}[${name}] is ${element.scrollWidth} wide inside ${element.clientWidth}`,
+      )
+    }
+    return found
+  })
+  expect(offenders, `${where}: something scrolls sideways`).toEqual([])
 }

@@ -13,9 +13,9 @@ import {
 } from "../../src/domain/student"
 import {
   auditLayout,
-  auditWhileScrolling,
   expectCleanLayout,
   expectCleanWhileScrolling,
+  expectNoSidewaysScroll,
   type LayoutAudit,
 } from "./layout-audit"
 import {
@@ -73,14 +73,12 @@ async function openHostileCourse(page: Page) {
   await page.reload()
 }
 
-/** The crew page's measures: dense person buttons may be 40 px (R04), the
- *  remove button's tap area covers up to 4 px of a clipped name's last glyph,
- *  and the boat chip of a header at 320 px has its own fixme. */
+/** The crew page's measures: dense person buttons may be 40 px (R04) and the
+ *  remove button's tap area covers up to 4 px of a clipped name's last glyph. */
 const CREW_PAGE_AUDIT = {
   minDenseControl: 40,
   denseControls: "[aria-label*='equipaggio'], [aria-label*='A terra']",
   textUnderControlTolerance: 4,
-  ignore: "[aria-label^='Destinazione equipaggio']",
 }
 
 const nav = (page: Page) =>
@@ -100,6 +98,23 @@ function expectedLabels() {
 }
 const LABELS = expectedLabels()
 const label = (number: number) => LABELS[number - 1]!
+
+/** Every word of every name on the roster. A line may break one of these in
+ *  the middle where it has no other way to fit (a 22-letter first name in a
+ *  card, R05); no other word may be broken: "Volontari" and "Comandate" are
+ *  labels, and a label that does not fit wraps or moves instead. */
+const NAME_WORDS = new Set(
+  [...LABELS, ...HOSTILE_VOLUNTEERS.map(({ name }) => name)].flatMap((name) =>
+    name.split(/\s+/),
+  ),
+)
+
+function expectOnlyNamesBreak(audit: LayoutAudit, where: string) {
+  expect(
+    audit.brokenWords.filter((word) => !NAME_WORDS.has(word)),
+    `${where}: a label that a line broke in the middle`,
+  ).toEqual([])
+}
 
 function reviewName(testInfo: TestInfo, name: string) {
   const suffix = testInfo.project.name === "pixel-7-chrome" ? "" : "-webkit"
@@ -334,29 +349,14 @@ test("composes the hostile Tuesday on the crew page at four sizes without overla
     const composition = page.getByRole("region", {
       name: "Composizione equipaggi",
     })
-    // The stress profile is recorded, not asserted: see the first fixme.
-    const audit = profile.fontSize
-      ? await auditWhileScrolling(
-          page.locator("main"),
-          composition,
-          CREW_PAGE_AUDIT,
-        )
-      : await expectCleanWhileScrolling(
-          page.locator("main"),
-          composition,
-          `Equipaggi ${profile.name}`,
-          CREW_PAGE_AUDIT,
-        )
-    if (profile.fontSize) {
-      testInfo.annotations.push({
-        type: "crew-page-200pct-findings",
-        description: JSON.stringify({
-          count: audit.issues.length,
-          sample: audit.issues.slice(0, 12),
-          brokenWords: audit.brokenWords.slice(0, 20),
-        }),
-      })
-    }
+    const audit = await expectCleanWhileScrolling(
+      page.locator("main"),
+      composition,
+      `Equipaggi ${profile.name}`,
+      CREW_PAGE_AUDIT,
+    )
+    expectOnlyNamesBreak(audit, `Equipaggi ${profile.name}`)
+    await expectNoSidewaysScroll(page, `Equipaggi ${profile.name}`)
     noteAudit(testInfo, `crew-page ${profile.name}`, audit)
     clipped[profile.name] = await measureNameClipping(crews)
     await saveScreen(page, testInfo, `crews-${profile.name}`)
@@ -446,19 +446,18 @@ test.fixme("keeps at least the first three letters of every name legible on the 
   }
 })
 
-test.fixme("keeps the crew page inside the screen at 320 px with 200% text", async ({
+test("keeps the crew page inside the screen at 320 px with 200% text", async ({
   page,
 }, testInfo) => {
-  // Measured by UG2, and not special to the hostile roster (the plain
-  // 13-crew course of F3 does it too): at 320 px with 200% text the
-  // "Composizione equipaggi" region scrolls sideways by 42 px (R18) because
-  // the crew cards and their header rows are wider than the screen; the M, SM,
-  // C and role badges of a person run under the 44 px remove button (R04);
-  // the A terra rows draw words outside their buttons; and the bottom bar
-  // breaks "Collocati", "A terra" and "Volontari" in the middle of the word.
-  // The ug1 and c1 specs only look at the document's width, which the
-  // region's own scroll hides. The cards and the bar are the owner's frozen
-  // design, so this is a design decision, not a fix for the release gate.
+  // Found by UG2, and not special to the hostile roster (the plain 13-crew
+  // course of F3 did it too): at 320 px with 200% text the "Composizione
+  // equipaggi" region scrolled sideways by 42 px (R18) because a card's
+  // header row and its two-column slots were wider than the screen; the M, SM,
+  // C and role badges of a person ran under the 44 px remove button (R04); the
+  // A terra rows drew words outside their buttons; and the bottom bar broke
+  // "Collocati", "A terra" and "Volontari" in the middle of the word. The ug1
+  // and c1 specs only looked at the document's width, which the region's own
+  // scroll hides, so this one measures the region and every card as well.
   test.skip(testInfo.project.name !== "pixel-7-chrome")
   test.setTimeout(180_000)
   await openHostileCourse(page)
@@ -472,22 +471,67 @@ test.fixme("keeps the crew page inside the screen at 320 px with 200% text", asy
       .getByRole("article"),
   ).toHaveCount(HOSTILE_CREWS.length)
   await applyProfile(page, PROFILES[3])
-  await expectCleanWhileScrolling(
+  const composition = page.getByRole("region", {
+    name: "Composizione equipaggi",
+  })
+  const audit = await expectCleanWhileScrolling(
     page.locator("main"),
-    page.getByRole("region", { name: "Composizione equipaggi" }),
+    composition,
     "Equipaggi 320-200pct",
     CREW_PAGE_AUDIT,
   )
+  expectOnlyNamesBreak(audit, "Equipaggi 320-200pct")
+  await expectNoSidewaysScroll(page, "Equipaggi 320-200pct")
+  // The region itself, the page and every card: none is wider inside.
+  const widths = await composition.evaluate((region) => ({
+    region: [region.scrollWidth, region.clientWidth] as const,
+    page: [
+      document.documentElement.scrollWidth,
+      document.documentElement.clientWidth,
+    ] as const,
+    cards: Array.from(region.querySelectorAll("article")).map(
+      (card) => [card.scrollWidth, card.clientWidth] as const,
+    ),
+  }))
+  expect(widths.region[0], JSON.stringify(widths)).toBeLessThanOrEqual(
+    widths.region[1],
+  )
+  expect(widths.page[0], JSON.stringify(widths)).toBeLessThanOrEqual(
+    widths.page[1],
+  )
+  expect(widths.cards).toHaveLength(HOSTILE_CREWS.length)
+  for (const [scroll, client] of widths.cards) {
+    expect(scroll, JSON.stringify(widths)).toBeLessThanOrEqual(client)
+  }
+  // The names have a column of their own again: the two people of a card are
+  // one under the other, each as wide as the card allows.
+  const slotWidths = await composition
+    .getByRole("article")
+    .first()
+    .getByRole("button", { name: /, equipaggio 1$/ })
+    .evaluateAll((buttons) =>
+      buttons.map((button) => Math.round(button.getBoundingClientRect().width)),
+    )
+  expect(slotWidths).toHaveLength(2)
+  expect(Math.min(...slotWidths), JSON.stringify(slotWidths)).toBeGreaterThan(
+    150,
+  )
+  // The bottom bar keeps its labels whole and its buttons 44 px high.
+  const bar = page.getByRole("navigation", { name: "Accesso rapido equipaggi" })
+  for (const name of ["A terra", "Volontari"]) {
+    const box = await bar.getByRole("button", { name }).boundingBox()
+    expect(box!.height, name).toBeGreaterThanOrEqual(44)
+  }
 })
 
-test.fixme("keeps the boat mark and number inside their chip in a crew header at 320 px", async ({
+test("keeps the boat mark and number inside their chip in a crew header at 320 px", async ({
   page,
 }, testInfo) => {
-  // Measured by UG2: with the warning chip beside it, the header's boat chip
-  // ("RS Quest 12") at 320 px is 90 px wide for 94 px of content, so the
-  // number reaches past the chip's border by about 3 px. Cosmetic (the number
-  // stays readable and nothing is under it), and the header is the frozen C
-  // design the one-row specs pin, so it is left for the owner.
+  // Found by UG2: with the warning chip beside it, the header's boat chip
+  // ("RS Quest 12") at 320 px was 90 px wide for 94 px of content, so the
+  // number reached past the chip's border by about 3 px. A card that narrow
+  // now puts the warning and the count on a second row when the chip would
+  // not fit beside them (at 360 px and wider the header is unchanged).
   test.skip(testInfo.project.name !== "pixel-7-chrome")
   test.setTimeout(180_000)
   await openHostileCourse(page)
@@ -664,40 +708,27 @@ test("shows the hostile Comandate page at 390, 360 and 320 px without overlap or
   ).toBeVisible()
   for (const profile of PROFILES) {
     await applyProfile(page, profile)
-    if (profile.fontSize) {
-      // The stress profile is recorded, not asserted: see the fixme below.
-      const audit = await auditWhileScrolling(page.locator("main"), null)
-      testInfo.annotations.push({
-        type: "duty-page-200pct-findings",
-        description: JSON.stringify({
-          count: audit.issues.length,
-          sample: audit.issues.slice(0, 12),
-          documentWidth: audit.stats.documentWidth,
-        }),
-      })
-    } else {
-      const audit = await expectCleanWhileScrolling(
-        page.locator("main"),
-        null,
-        `Comandate ${profile.name}`,
-      )
-      noteAudit(testInfo, `duty-page ${profile.name}`, audit)
-    }
+    const audit = await expectCleanWhileScrolling(
+      page.locator("main"),
+      null,
+      `Comandate ${profile.name}`,
+    )
+    expectOnlyNamesBreak(audit, `Comandate ${profile.name}`)
+    await expectNoSidewaysScroll(page, `Comandate ${profile.name}`)
+    noteAudit(testInfo, `duty-page ${profile.name}`, audit)
     await saveScreen(page, testInfo, `duty-page-${profile.name}`)
   }
 })
 
-test.fixme("keeps the populated Comandate page inside the screen at 320 px with 200% text", async ({
+test("keeps the populated Comandate page inside the screen at 320 px with 200% text", async ({
   page,
 }, testInfo) => {
-  // Measured by UG2, and not special to the hostile roster (the populated
-  // plan page is not in the ug1 reflow spec, which covers the empty state and
-  // the proposal): at 320 px with 200% text the document scrolls sideways by
-  // 12 px (R18) because the "Ricalcola" / "Avvisi" row and the coverage chip
-  // are wider than the screen; the day cards cut their titles to "Sa…" and
-  // "D…" and the count touches the ellipsis; and "Comandate" breaks in the
-  // header. The page is the owner's frozen design, so this is a design
-  // decision, not a fix for the release gate.
+  // Found by UG2, and not special to the hostile roster (the populated plan
+  // page is not in the ug1 reflow spec, which covers the empty state and the
+  // proposal): at 320 px with 200% text the document scrolled sideways by 12
+  // px (R18) because the "Ricalcola" / "Avvisi" row and the coverage chip were
+  // wider than the screen; the day cards cut their titles to "Sa…" and "D…"
+  // and the count touched the ellipsis; and "Comandate" broke in the header.
   test.skip(testInfo.project.name !== "pixel-7-chrome")
   test.setTimeout(180_000)
   await openHostileCourse(page)
@@ -706,9 +737,43 @@ test.fixme("keeps the populated Comandate page inside the screen at 320 px with 
     page.getByRole("region", { name: "Piano comandate" }),
   ).toBeVisible()
   await applyProfile(page, PROFILES[3])
-  await expectCleanWhileScrolling(
+  const audit = await expectCleanWhileScrolling(
     page.locator("main"),
     null,
     "Comandate 320-200pct",
   )
+  expectOnlyNamesBreak(audit, "Comandate 320-200pct")
+  await expectNoSidewaysScroll(page, "Comandate 320-200pct")
+  // The seven day titles are whole (no ellipsis) and so is the page title.
+  for (const day of [
+    "Sabato",
+    "Domenica",
+    "Lunedì",
+    "Martedì",
+    "Mercoledì",
+    "Giovedì",
+    "Venerdì",
+  ]) {
+    expect(audit.truncated, `${day} is cut`).not.toContain(day)
+  }
+  const title = page.getByRole("heading", { name: "Comandate", level: 1 })
+  await expect(title).toBeVisible()
+  expect(
+    await title.evaluate(
+      (heading) => heading.scrollWidth <= heading.clientWidth,
+    ),
+  ).toBe(true)
+  // The two buttons and the coverage line are inside the screen, 44 px high.
+  const screenWidth = await page.evaluate(
+    () => document.documentElement.clientWidth,
+  )
+  for (const name of [/^Ricalcola$/, /^Avvisi · \d+$/]) {
+    const box = await page.getByRole("button", { name }).boundingBox()
+    expect(box!.x + box!.width, String(name)).toBeLessThanOrEqual(screenWidth)
+    expect(box!.height, String(name)).toBeGreaterThanOrEqual(44)
+  }
+  const coverage = await page
+    .getByRole("status", { name: /^Copertura comandate/ })
+    .boundingBox()
+  expect(coverage!.x + coverage!.width).toBeLessThanOrEqual(screenWidth)
 })

@@ -258,19 +258,31 @@ function DutyHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex min-w-0 items-center gap-1 max-[350px]:items-start">
-      <button
-        aria-label={`Indietro da ${title}`}
-        className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-        onClick={onBack}
-        type="button"
-      >
-        <ChevronLeft aria-hidden="true" className="size-5" />
-      </button>
-      <h1 className="min-w-0 flex-1 break-words text-center text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl max-[350px]:leading-tight">
-        {title}
-      </h1>
-      {action ?? <span aria-hidden="true" className="size-[44px] shrink-0" />}
+    // The title shares the row with the two 44 px buttons. When the text is
+    // enlarged until the longest word no longer fits beside them (200% text at
+    // 320 px: "Comandate" broke in the middle), the title takes a row of its own
+    // under the buttons, as the crew header does. The query is on the width of
+    // the header in rem, so it only triggers when the text is the problem.
+    <div className="@container mb-5 min-w-0">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-1 max-[350px]:items-start">
+        <button
+          aria-label={`Indietro da ${title}`}
+          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          onClick={onBack}
+          type="button"
+        >
+          <ChevronLeft aria-hidden="true" className="size-5" />
+        </button>
+        <h1 className="min-w-0 flex-1 break-words text-center text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl max-[350px]:leading-tight @max-[14rem]:order-last @max-[14rem]:basis-full @max-[14rem]:text-left">
+          {title}
+        </h1>
+        {action ?? (
+          <span
+            aria-hidden="true"
+            className="size-[44px] shrink-0 @max-[14rem]:hidden"
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -1497,10 +1509,14 @@ export function DutyManagement({
           </div>
         </section>
       ) : (
-        <>
-          <div className="sticky top-2 z-10 mb-4 grid gap-2">
-            <div className="grid grid-cols-2 gap-2">
+        // The page is the query container, so the Ricalcola / Avvisi / coverage
+        // block can stop being sticky when the text is enlarged until it would
+        // hold more than half of the screen under the list (rulebook R12).
+        <div className="@container">
+          <div className="sticky top-2 z-10 mb-4 grid gap-2 @max-[14rem]:static">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">
               <Button
+                className="h-auto min-h-[44px] min-w-0 py-[8px]"
                 onClick={() =>
                   openScreen({ kind: "configure", recalculate: true })
                 }
@@ -1510,6 +1526,7 @@ export function DutyManagement({
                 Ricalcola
               </Button>
               <Button
+                className="h-auto min-h-[44px] min-w-0 py-[8px]"
                 onClick={() => openScreen({ kind: "warnings" })}
                 variant={visibleWarningCount > 0 ? "default" : "secondary"}
               >
@@ -1525,7 +1542,7 @@ export function DutyManagement({
               return (
                 <div
                   aria-label={`Copertura comandate ${coverage.assigned}/${coverage.total}`}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-black shadow-sm ${coverage.complete ? "bg-card text-foreground" : "border-[#e9d37c] bg-[#fff7df] text-[#78550d]"}`}
+                  className={`flex flex-wrap items-center justify-center gap-x-2 rounded-2xl border px-4 py-2.5 text-center text-sm font-black shadow-sm ${coverage.complete ? "bg-card text-foreground" : "border-[#e9d37c] bg-[#fff7df] text-[#78550d]"}`}
                   role="status"
                 >
                   <span>
@@ -1538,7 +1555,7 @@ export function DutyManagement({
           </div>
           <section
             aria-label="Piano comandate"
-            className="grid grid-cols-2 items-start gap-2.5"
+            className="grid grid-cols-[repeat(auto-fill,minmax(max(8.5rem,calc((100%_-_0.625rem)/2_-_0.5px)),1fr))] items-start gap-2.5"
           >
             {DUTY_DAYS.map(({ id, label }) => {
               const dayAssignments = assignments.filter(
@@ -1679,7 +1696,7 @@ export function DutyManagement({
               Rigenera intera proposta
             </Button>
           )}
-        </>
+        </div>
       )}
     </>
   )

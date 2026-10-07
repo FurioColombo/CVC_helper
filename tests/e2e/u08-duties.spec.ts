@@ -3,6 +3,8 @@ import path from "node:path"
 
 import { expect, test, type Page } from "@playwright/test"
 
+import { expectNoSidewaysScroll } from "./layout-audit"
+
 async function createCourse(page: Page) {
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
@@ -197,6 +199,7 @@ test("keeps long-name P13 cards readable and tappable at 320px and 200% text", a
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320)
+  await expectNoSidewaysScroll(page, "P13 at 320 px, 200% text")
   const cards = page
     .getByRole("region", { name: "Allievi comandata Sabato" })
     .locator("article")
@@ -258,6 +261,7 @@ test("keeps the P12 controls usable at 320px and 200% text", async ({
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(viewport!.width)
+  await expectNoSidewaysScroll(page, "P12 at 320 px, 200% text")
   await expect(
     page.getByRole("heading", { name: "Proposta comandate" }),
   ).toBeVisible()

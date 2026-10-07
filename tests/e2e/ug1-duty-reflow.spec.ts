@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test"
 
+import { expectNoSidewaysScroll } from "./layout-audit"
+
 test("Comandate empty state and proposal reflow at 320 px with 200% text", async ({
   page,
   context,
@@ -128,6 +130,8 @@ test("Comandate empty state and proposal reflow at 320 px with 200% text", async
         .map((heading) => heading.textContent),
     )
     expect(clipped).toEqual([])
+    // And no container that scrolls on its own scrolls sideways.
+    await expectNoSidewaysScroll(page, "Comandate at 320 px, 200% text")
   }
 
   await expect(page.getByRole("heading", { name: "Comandate" })).toBeVisible()
