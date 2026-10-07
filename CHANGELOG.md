@@ -80,8 +80,9 @@ second editor is part of this release.
   the course is created; there is no way yet to correct them afterwards.
 - **D2–D5 crews stay at two people.** The Settings override for their size is
   still to come; D1 and cabin courses can already resize their crews.
-- **Some screens are tight at 320 px with 200% text:** a long name on a crew
-  card is cut with "…" (the full name stays in the accessible name).
+- **Long names on crew cards are cut with "…"** on narrow phones (from about
+  360 px wide, and more with enlarged text); the full name stays in the
+  accessible name, and a long press opens the student.
 - **The project's history was rewritten** before 0.3.0 was published, to
   remove real people's data. GitHub may still serve the old commits by their
   old identifiers until GitHub Support purges them; the owner has not asked.

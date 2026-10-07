@@ -120,6 +120,16 @@ Recorded with their evidence in `.evidence/UG2/*-review.json`; none blocks
 
 ## Engineering follow-ups that do not need a decision
 
+- **Before the shared database (UG2 code-quality review, `.evidence/UG2/code-quality-review.json`):**
+  split `CrewManagement.tsx` (3,600 lines) into a crew-plan hook, the boat
+  pager and its panels (UG2-CQ-1); one dialog focus/Escape helper instead of
+  four (CQ-2); one history-state mechanism (CQ-3); log the cause of a failed
+  save (CQ-4); one age module and one name-folding helper (CQ-5); move the
+  D1-morning rule and duty-settings normalisation into the domain and delete
+  dead helpers (CQ-6); share the two summary shells and name the colours as
+  tokens (CQ-7); one crew-plan validation path and a shared load/error screen
+  (CQ-9); reorganise the e2e suite by feature with typed seeding (CQ-10).
+
 - F2 limitations: a pasted surname or first name equal to a placeholder word
   the parser refuses (for example `Nota`) is shown as unread and must be fixed
   in place; the Allievi list computes every student's age while it draws, so

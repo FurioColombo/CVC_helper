@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { existsSync, readFileSync, statSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { resolve } from "node:path"
 
 const root = resolve(import.meta.dirname, "..")
@@ -160,6 +160,19 @@ for (const asset of BRAND_PRECACHED_IMAGES) {
   )
 }
 
+// The summary image hands its PNG to a test hook only in development
+// (src/lib/summaryShare.ts, guarded by import.meta.env.DEV); a production
+// build that still mentions it would expose course data to any page script.
+for (const file of readdirSync(resolve(root, "dist", "assets"))) {
+  if (!file.endsWith(".js")) continue
+  assert.ok(
+    !readFileSync(resolve(root, "dist", "assets", file), "utf8").includes(
+      "__CVC_TEST__",
+    ),
+    `Built script ${file} still contains the development-only test hook`,
+  )
+}
+
 console.log(
-  `PASS: built PWA manifest, icons, service worker, ${OCR_ASSETS.length} precached OCR assets and ${BRAND_PRECACHED_IMAGES.length} precached brand images`,
+  `PASS: built PWA manifest, icons, service worker, ${OCR_ASSETS.length} precached OCR assets and ${BRAND_PRECACHED_IMAGES.length} precached brand images, no test hook`,
 )

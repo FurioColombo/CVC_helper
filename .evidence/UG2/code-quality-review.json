@@ -1,0 +1,173 @@
+{
+  "milestone": "UG2",
+  "reviewerRole": "independent code-quality reviewer",
+  "reviewedOn": "2026-10-07",
+  "reviewedCommit": "4a434c9",
+  "verdict": "PASS_WITH_FINDINGS",
+  "summary": "No blocker: I found no latent crash, data-corruption path or test that hides a real failure in the committed HEAD. The 0.3.0 code is unusually well commented and strictly typed (one eslint-disable and one 'as unknown as' in non-test source), and the layout and image checks are thoughtful. What will hurt the next person is concentration and duplication: Equipaggi is one 2,385-line component; modal handling, history state, age rules, the two summary views and the semantic palette are each written several times; failure causes are discarded in 58 catch blocks; and some tested domain functions are not the ones production runs. These matter most because the next cycle (shared database, docs/post-mvp/1_0_0_NEXT_STEPS.md) changes exactly these seams. The ten important findings are ordered by how soon they will cost something; none needs to block the tag.",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "UG2-CQ-1",
+      "title": "CrewManagement.tsx is one 2,385-line component with 25 useState, nine copy-pasted commit wrappers and duplicated JSX",
+      "evidence": "src/features/crews/CrewManagement.tsx:1233-3617 (the CrewManagement function; 3,617 lines in the file, 25 useState and 7 useRef). Nine near-identical 'try { void commit(...) } catch { setSaveError(true) }' wrappers at :1895, 1904, 1920, 1940, 1999, 2015, 2038, 2144, 2182. 'selectedDestinationOpen' is computed at :2221 but the same expression is re-typed inline at :2738 and :2958. The boat-state legend JSX is pasted twice (:2438-2464 and :2863-2889). The boat-pager swipe and click-suppression state machine (:1272-1282, 2046-2124: three refs, a timer, about 80 lines) lives inline. The summary derivation (:1587-1676) is recomputed on every render. load() (:1339) and the load effect (:1354) are the same read twice.",
+      "impact": "Every behaviour change in Equipaggi (the busiest screen, and the one the shared-database cycle will change most) means editing a file nobody can hold in their head; a fix applied to one copy of a wrapper, the legend or the destination condition silently misses the other. The component's test file is 3,361 lines for the same reason. Not a defect today, but the likeliest place for the next regression.",
+      "suggestedFix": "Split along seams that already exist, incrementally and under the existing 58 unit tests, with no new abstraction layer: (1) a useCrewPlan(course, sessionId) hook owning load, commit, saveInFlight and saveError and exposing runChange(() => nextPlan), so the nine wrappers become one; (2) BoatPager (swipe, paging, click suppression) and BoatStateLegend components; (3) BoatsPanel, DestinationPopup, PersonDestinationPanel and CrewCard taking props; (4) reuse selectedDestinationOpen; (5) build the summary lines in crewSummaryModel.ts, which already owns the grouping, so the read view and the screen share one derivation."
+    },
+    {
+      "id": "UG2-CQ-2",
+      "title": "Four hand-rolled modal focus traps with different focusable selectors, plus an undocumented Back-to-synthetic-Escape contract",
+      "evidence": "CrewManagement.tsx:530-569 (handleDialogKeyDown and useDialogFocus, used by four dialogs); DutyManagement.tsx:1095-1119 and 1138-1149 (an exact copy named handleSummaryDialogKeyDown, focus effect inlined); StudentKnowledge.tsx:160-185 (its own trap, wider selector); StudentScanImageEditorDocument.tsx:555-580 (another, no textarea or select). The Crew and Duty versions only cycle 'button:not(:disabled)'. src/navigation/browserHistory.ts:26-44 closes the top [role=dialog][aria-modal=true] on the phone's Back by dispatching a synthetic keydown Escape at it. @base-ui/react is already a dependency (src/components/ui/button.tsx) and ships a Dialog with focus management, but only its Button is used.",
+      "impact": "Back handling is correct only while every aria-modal dialog also handles Escape on its own element. A new dialog that does not, or one that deliberately ignores Escape while busy like CrewCopyConfirmDialog, makes the phone's Back silently inert or swallowed after the history entry was already restored. A trap that only knows buttons stops containing focus the day a dialog gets an input. Four copies drift; they already differ.",
+      "suggestedFix": "One useModalDialog({ onEscape, busy }) hook (or Base UI's Dialog) that owns focus-in, focus-return, Tab containment (one shared FOCUSABLE selector) and the Escape handler; have browserHistory call a registry of open dialogs' close() instead of synthesising a KeyboardEvent. Add one test that opens each dialog and presses Back."
+    },
+    {
+      "id": "UG2-CQ-3",
+      "title": "Three separate history-state mechanisms; the same two history keys are declared twice",
+      "evidence": "src/App.tsx:79-80 and src/features/students/StudentManagement.tsx:88-89 each declare __cvcHelperShell and __cvcHelperStudentScreen as separate constants. The 'history.state as object or {}' helper is written three times (App.tsx:143-147, StudentManagement.tsx:143-155, nestedScreen.ts:16-20). StudentManagement.tsx:103-153 and 1325-1395 reimplement what useNestedScreen (nestedScreen.ts:30-80) already does for Boats, Faults, Duties and Volunteers. isShellView (App.tsx:94-106) repeats the nine-member ShellView union by hand. browserHistory.ts keeps six module-level mutable variables and two hard-coded 1,000 ms windows (restoringUntil, the pendingBack fallback timer).",
+      "impact": "Changing a key in one file and not the other makes Back leak or drop a student screen with no compile error. The next navigation fix has to be reasoned through three mechanisms plus global timing state, in the code where the F1 and N1 reviews found their blockers.",
+      "suggestedFix": "Export the keys from one module (for example navigation/historyKeys.ts) with a single historyRecord(state) helper; move Students onto useNestedScreen (it already takes a parse function); derive isShellView from a SHELL_VIEWS const array; name the two 1,000 ms values. Keep the timing machine, but give it a short comment listing its states, since nothing documents them."
+    },
+    {
+      "id": "UG2-CQ-4",
+      "title": "Failure causes are discarded almost everywhere: 58 'catch {' blocks, two console.error calls in the whole app",
+      "evidence": "git grep -c 'catch {' over non-test src totals 58 (CrewManagement 13, DutyManagement 6, StudentManagement 5, BoatManagement 4, and so on). Logging exists only at CrewManagement.tsx:1349 and :1364 (load) and as a console.warn inside a domain function (domain/duties.ts:280). Save paths that turn any error into a generic message with the cause dropped: CrewManagement.tsx:1701 (commit), :1800, :1815, :1846; DutyManagement.tsx:1270; StudentManagement.tsx:645-655 and :684; StudentScan.tsx:1273 and :1028; CourseErase.tsx:30. StudentManagement.tsx:645 even chains request.catch(() => undefined) into the save queue.",
+      "impact": "On the owner's phone, with no backup and no remote logging, 'Modifica non valida o non salvata' is all anyone learns about a PowerSync or SQLite failure (quota, locked database, corrupt row). The next cycle adds a network and a second writer, and diagnosing from a phone will need the cause. Intentional swallowing (storage preferences, clipboard) is mixed with accidental swallowing and cannot be told apart by reading.",
+      "suggestedFix": "A ten-line reportError(context, error) that console.errors a short context plus error name and message (never record contents, per the privacy note in the data-integrity review), called from every catch that sets an error state; leave the preference and clipboard catches silent but comment them. ignoreMissingStudentDuties should return the dropped count and let the caller report instead of calling console.warn from the domain."
+    },
+    {
+      "id": "UG2-CQ-5",
+      "title": "The age rules are re-implemented in five places, with a hard copy of the plausible-age minimum and two age resolvers",
+      "evidence": "The 'digits only, 1 to 3 chars, then an upper bound' age parse is written four times: StudentManagement.tsx:569-571, StudentScan.tsx:350-354, rosterPaste.ts:261-268 and studentScanReview.ts:106-110 (the last with a literal 120 instead of MAX_DECLARED_STUDENT_AGE). studentScan.ts:846-848 YOUNGEST_STUDENT_AGE = 4 is a manual copy of PLAUSIBLE_STUDENT_AGE.min; its comment points at a re-export PLAUSIBLE_SCAN_AGE (studentScanReview.ts:153) that exists only so domain/student.test.ts:297 can assert it is the same object (a domain test importing from capabilities). domain/student.ts has both calculateStudentAge (:268, throws) and resolveStudentAge (:290, null on bad data) with near-identical range checks; calculateStudentAge has no production caller (only src/test/v020MigrationHarness.ts:71, tests/e2e/ug2-hostile-roster.spec.ts:197 and unit tests). Accent and case name folding is copied three times: domain/student.ts:61-69, StudentScan.tsx:132-140 (duplicateNamePart) and rosterPaste.ts:195-201.",
+      "impact": "AGENTS.md section 10 wants finite rules in one canonical place. A change to the age range, or to how an age is typed (the UG2 reviews already moved it twice), must be found by grep in five files. The next person will pick the throwing resolver, which reintroduces the crash class UG2-DAT-1 removed.",
+      "suggestedFix": "Add parseAgeInput(text): number | null to domain/student.ts (digits only, 0 to MAX_DECLARED_STUDENT_AGE) and call it from the four sites; import PLAUSIBLE_STUDENT_AGE.min in studentScan.ts and delete the alias and its test; delete calculateStudentAge (use resolveStudentAge in the oracle code) or move it under src/test; export foldName from domain/student.ts and use it in the scan screen and the paste parser."
+    },
+    {
+      "id": "UG2-CQ-6",
+      "title": "Some business rules are tested in the domain but run as a second copy in a component; others live only in components; dead code is mixed in",
+      "evidence": "pruneDutyWarningAcknowledgements (domain/duties.ts:667) is unit-tested (duties.test.ts:828) but DutyManagement.persist re-implements it inline (DutyManagement.tsx:1317-1333), so the test proves a function production does not call. The D1-morning-comandata warning required by the spec (01_PRODUCT_SPEC.md:511-512) is computed inside the component with a string trick, course.family === 'Deriva' && course.level === 1 && sessionId.endsWith('-am') (CrewManagement.tsx:1402-1410), although SESSION_SEQUENCE carries period 'AM', and it is covered only by a jsdom component test (CrewManagement.test.tsx:790). Duty proposal normalisation (deriveExtraDayIds, normalizeProposalSettings, defaultSettings, DutyManagement.tsx:158-227) is domain arithmetic (desiredPerDay is floor of students over remaining days) in the UI file, exported nowhere and tested only through the screen. Dead: getAccumulatedEvaluationSessions (domain/evaluations.ts:102, test only) and listFaultsForBoat (persistence/boats.ts:61, no caller, no test).",
+      "impact": "A fix to the tested function does not change behaviour; a fix to the real behaviour is not covered by the table-driven tests AGENTS.md section 4 asks for. The '-am' suffix test breaks silently if a session id is ever renamed.",
+      "suggestedFix": "Call pruneDutyWarningAcknowledgements from persist and keep its test; move the D1 rule to getD1MorningDutyNotLand(course, sessionId, dutyStudentIds, landStudentIds) in domain/crews.ts using SESSION_SEQUENCE, with a table test; move the three duty-settings helpers into domain/duties.ts; delete the two dead exports and their tests."
+    },
+    {
+      "id": "UG2-CQ-7",
+      "title": "The two summary views are copy-pasted shells, and the semantic palette is raw hex repeated across the app instead of tokens",
+      "evidence": "CrewManagement.tsx:1012-1155 (AnnouncementView) and DutyManagement.tsx:1131-1227 (DutySummaryView) are the same dialog shell (eyebrow, h1, close button, auto-fill grid, SummaryImageButton). AnnouncementCrewCard (CrewManagement.tsx:291-387) and DutySummaryDayCard (DutyManagement.tsx:1027-1093) share card chrome, corner warning badge and badge classes, and the minmax(min(100%,8.8rem),1fr) literal is repeated in both. Raw colours: #b42318 appears 44 times in 13 files, #a2381b 24 times in 11, #fee4e2 9, #0b526b 11, with #102f3b, #c8d7db and #6b8790 in the summaries, while 03_TECHNICAL_DECISIONS.md section 2 calls for a shared token layer for semantic red/yellow/green/grey and styles.css has no semantic tokens. The image background #fffdf8 is declared as bg-[#fffdf8] in both views, as SUMMARY_SNAPSHOT_OPTIONS.background (summaryShare.ts:9-11) and as BACKGROUND_HEX (tests/e2e/summary-image-checks.ts:25-26); nothing ties them together. SNAPSHOT_EXCLUDE_ATTRIBUTE is exported (pageSnapshot.ts:43) but the literal data-snapshot-exclude=\"true\" is typed at CrewManagement.tsx:1056 and :1142, DutyManagement.tsx:1208 and SummaryImageButton.tsx:172. Comments still describe an 'exporter' and a 'PNG export' that no longer exist as separate code (crewSummaryModel.ts:12-14, dutySummaryModel.ts:3-8 and 91-95, DutyManagement.tsx:1360, CrewManagement.tsx:1615).",
+      "impact": "The summary is the headline 0.3.0 feature and will keep getting design tweaks; each tweak is made twice, and the Comandate and crew views drift (already visible: only the Comandate view locks page scroll). A colour change means a repo-wide search-and-replace of hex values. A mismatched background would show as a visible band in the 16 px margins of the shared image.",
+      "suggestedFix": "Extract SummaryDialog (shell, header, grid, button) and SummaryCard (edge, left column, names, warning badge) into src/components; add semantic CSS tokens (danger, danger-soft, ok, ink, rule, paper) in styles.css and use them through Tailwind; have SUMMARY_SNAPSHOT_OPTIONS read the paper token with getComputedStyle; use the exported attribute constant; fix the stale comments in the same change."
+    },
+    {
+      "id": "UG2-CQ-8",
+      "title": "pageSnapshot is a 1,184-line canvas renderer whose fidelity limits fail silently, and the production strip of the test hook is not checked by the build",
+      "evidence": "src/lib/pageSnapshot.ts:23-29 lists what is not painted (gradients, background images, text decoration, transforms, filters, z-index, pseudo-elements, form controls); Recorder.visit (:406-460) simply ignores those computed styles, and text-overflow ellipsis and line-clamp are not in the list at all. There is no dev-time assertion, so a Tailwind class added to a summary (an underline, a rotate, a gradient) yields an image that differs from the screen and fails nowhere except the Chromium and WebKit image diff in CI (tests/e2e/summary-image-checks.ts:137-139, platform-dependent thresholds). The unit tests (pageSnapshot.test.ts:103-286) re-implement layout with data-rect attributes and a recording canvas, so they pin call order rather than output. summaryShare.ts:103-107 gates window.__CVC_TEST__ on import.meta.env.DEV; the unit test only ever runs with DEV true, and scripts/check-built-pwa.mjs never searches dist for __CVC_TEST__ (the data-integrity review did it by hand; dist/ at HEAD is clean).",
+      "impact": "The module is well documented and the replay approach is sound, but its contract with the rest of the app is an English comment: the person who restyles a summary will not know the renderer exists. The strip guarantee rests on a bundler detail and one manual grep.",
+      "suggestedFix": "In Recorder.visit, when import.meta.env.DEV (so in unit and e2e runs), console.warn or throw on computed text-decoration-line not none, transform not none, background-image not none, filter not none, text-overflow ellipsis and clip-path not none. Add an assertion that dist/assets/*.js does not contain __CVC_TEST__ to scripts/check-built-pwa.mjs. Keep the module's size under watch: its seams (Recorder, painters, loadIcons) are clean enough to split into three files if it grows."
+    },
+    {
+      "id": "UG2-CQ-9",
+      "title": "The same crew-plan validation exists four times, and the load-validate-error pattern is copied into six screens",
+      "evidence": "Crew-plan structural rules (duplicate person, boat assigned twice, boat not selected, position collisions, over capacity) are checked in persistence/crews.ts:104-259 (readCrewPlan), :318-415 (saveCrewPlan), domain/invariants.ts:724 (validateCrewRecords) and again in CrewManagement.tsx:1157-1231 (readValidCrewState, which also hand-builds the invariant shape by splitting members into student and volunteer arrays). The readValid* function, loadState, load()-plus-useEffect twin and the 'Non riesco a leggere l'archivio locale' panel are copied in BoatManagement.tsx:72, FaultManagement.tsx:22, CrewManagement.tsx:1157, DutyManagement.tsx:229, StudentManagement.tsx:158 and VolunteerManagement.tsx:35; Crew logs the error, Duty does not. memberPositions as a parallel array to members (domain/crews.ts:20-32) is what forces the split.",
+      "impact": "docs/post-mvp/1_0_0_NEXT_STEPS.md plans courseId on child tables, rows instead of JSON lists, tombstones and a schema version. Each touches all four validators and all six gates, with different error messages, and one of them will be forgotten.",
+      "suggestedFix": "Not before the shared-database design is fixed, but plan for it: a useValidatedLoad(read, validate) hook plus one LoadErrorPanel; give invariants.ts a crewPlanIssues(plan, ctx) that readCrewPlan and saveCrewPlan call instead of their inline rules; consider memberPositions as an array of { personId, slot }."
+    },
+    {
+      "id": "UG2-CQ-10",
+      "title": "The browser suite is hard to navigate and its seeding is untyped; one known-failing test is parked as test.fixme",
+      "evidence": "tests/e2e has 53 specs, 34 named by milestone code (u03-, ug1-, ux2-, c1-, e1-, f3-, n1-, v05-) and ten that touch crews (c1-crew-management, crew-copy-read, crew-destinations, crew-management-gate, crew-warnings, crews, f3-crew-summary, u09-crews, ug1-crew-count, ux2-crew-interactions). Eleven files seed through (await import(/* @vite-ignore */ '/src/persistence/...')) as { ... } with the API types re-declared by hand (summary-helpers.ts 14 times, ug2-hostile-roster-data.ts 7, and others), so a persistence signature change is invisible to tsc and appears only as a runtime failure on the CI runner. playwright.config.ts:12 sets retries: 2 on CI, which turns an intermittent product bug into a green run. ug2-review-fixes.spec.ts:391 waits 900 ms to prove an autosave did not happen, tied to the literal 500 ms at StudentManagement.tsx:669. ug2-hostile-roster.spec.ts:420 test.fixme records a live R05 defect (crew-card names under three letters at 360 and 320 px); it is not in CHANGELOG.md's known limitations and Playwright reports it as skipped, not failed.",
+      "impact": "Finding where Back is tested needs the milestone log. Typed seeds would have caught the persistence changes of the next cycle at compile time. A skipped test that encodes an accepted defect looks the same as a forgotten one.",
+      "suggestedFix": "Rename by feature when a spec is next touched (crews-*.spec.ts) and keep the milestone code in a comment; one typed seed.ts using typeof import('../../src/persistence/students') for the casts; report flaky retries in the job summary or set retries to 1; export AUTOSAVE_DELAY_MS and derive the wait from it; add the accepted limitation to the CHANGELOG or turn the fixme into an annotated test with a tolerance."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "UG2-CQ-11",
+      "title": "Gesture thresholds are unnamed magic numbers and the long-press is implemented twice with different values",
+      "evidence": "CrewManagement.tsx:743 (double tap 380 ms), :778 (10 px slop), :790 (long press 600 ms), :2072-2084 (swipe 48 px, ratio 1.25, click suppression 500 ms), :1434-1438 (8 boats per page, three literals). StudentManagement.tsx:179-230 useFieldShortcut is a second long-press (500 ms, same 10 px slop).",
+      "impact": "Two long presses in one app feel different and get fixed separately; the F1 review already found a bug in the second.",
+      "suggestedFix": "One useLongPress({ ms, slop }) hook with named constants, and BOATS_PER_PAGE."
+    },
+    {
+      "id": "UG2-CQ-12",
+      "title": "Brand-asset and cache-size lists are hand-synchronised in three places",
+      "evidence": "vite.config.ts:87-96 BRAND_PRECACHED_IMAGES; scripts/check-built-pwa.mjs:22-31 (its own comment says 'kept in sync by hand'); src/features/boats/boatMarks.ts:20-28 BOAT_LOGOS. The 4_500_000 limit appears in vite.config.ts:162 and check-built-pwa.mjs:13.",
+      "impact": "A new BoatType gets a logo in boatMarks (the Record<BoatType, ...> type forces it) but not necessarily in the offline precache, and the check compares dist with its own copy of the list, so it cannot notice.",
+      "suggestedFix": "One brand-assets file imported by vite.config.ts and the check script, with the boat entries derived from the same list boatMarks uses."
+    },
+    {
+      "id": "UG2-CQ-13",
+      "title": "Invariant issue codes are plain strings",
+      "evidence": "src/domain/invariants.ts:91-95 (code: string) and :107-112 (RECOVERABLE_ISSUE_CODES is a ReadonlySet<string>); CourseStateSnapshot (:19-78) uses loosely typed fields such as sex?: string | null and state: string.",
+      "impact": "A typo in a code string, in the emitter or in the recoverable list, silently makes a recoverable issue blocking (a screen refuses to open) or the reverse.",
+      "suggestedFix": "An as-const code list and type InvariantCode; type RECOVERABLE_ISSUE_CODES as ReadonlySet<InvariantCode>."
+    },
+    {
+      "id": "UG2-CQ-14",
+      "title": "The erase-completeness test parses db.ts as text",
+      "evidence": "src/persistence/courses.test.ts:99-110 extracts table names with a regular expression over the source of db.ts, while src/test/v020Fixture.test.ts:41 already reads AppSchema directly. COURSE_DATA_TABLES (persistence/courses.ts:58-71) is a hand list that the 'nothing stays on the device' promise depends on.",
+      "impact": "A reformatted or spread Schema literal makes the regex miss tables; the privacy guarantee for minors' data then rests on a regex.",
+      "suggestedFix": "Compare against the keys of AppSchema (as the fixture test does) instead of the source text."
+    },
+    {
+      "id": "UG2-CQ-15",
+      "title": "A one-line wrapper and its test cover the wrong layer",
+      "evidence": "src/navigation/applyUpdate.ts is requestLeave(update); applyUpdate.test.ts:9-12 says it covers the main.tsx wiring, but nothing renders Root (src/main.tsx:19, exported and never imported). The two tests re-test requestLeave, already covered in browserHistory.test.ts.",
+      "impact": "Changing main.tsx to call updateServiceWorker(true) directly would pass the whole suite.",
+      "suggestedFix": "Inline requestLeave in main.tsx and delete applyUpdate.ts, or render Root with a stubbed useRegisterSW and assert that Aggiorna is held by a guard."
+    },
+    {
+      "id": "UG2-CQ-16",
+      "title": "Small helpers repeated by hand: plurals, family code, session label, Collator, page header and back button",
+      "evidence": "18 'n === 1 ? singular : plural' sites (StudentScan, DutyManagement, CrewManagement and others). family === 'Deriva' ? 'D' : 'C' in CourseIdentity.tsx:19, domain/boat.ts:28, domain/course.ts:71 and :88, domain/crews.ts:221. sessionLabel (CrewManagement.tsx:211) equals formatEvaluationSession (domain/evaluations.ts:116). Seven new Intl.Collator('it-IT', ...) in domain/crews.ts:309, evaluations.ts:60, student.ts:321, CrewManagement.tsx:128 and :1424, persistence/boats.ts:50 and persistence/crews.ts:73. Ten feature headers each hand-write the 44 px Back button with aria-label 'Indietro da ...' (BoatManagement:96, FaultManagement:107 and :136, CrewManagement:166, DutyManagement:274, EvaluationManagement:579, StudentKnowledge:360, StudentManagement:274, StudentScan:1472, VolunteerManagement:56), and 75 raw <button> elements carry the same focus-ring class string.",
+      "impact": "Mild individually; together they are why a global change (touch target, focus ring, plural rule) needs a repo-wide search.",
+      "suggestedFix": "plural(n, one, many), courseFamilyCode and sessionLabel in config.ts, a shared italianCollator, and a PageHeader / IconButton in src/components used when a screen is next touched."
+    },
+    {
+      "id": "UG2-CQ-17",
+      "title": "Lint and type tooling does not enforce the conventions the code relies on",
+      "evidence": "eslint.config.js uses typescript-eslint 'recommended' only: no no-floating-promises although the code marks deliberate fire-and-forget with void hundreds of times (and CrewManagement.tsx:1879 voids a non-promise), and no jsx-a11y although aria-pressed, role and dialog patterns are hand-written 75+ times. package.json has @types/node ^26.4.0 against engines '>=24 <25'.",
+      "impact": "A forgotten void or await on a persistence write, the next cycle's most likely mistake, lints clean; Node 25 and 26 APIs type-check in scripts and fail on the pinned runtime.",
+      "suggestedFix": "Add @typescript-eslint/no-floating-promises (needs parserOptions.projectService), at least for src/persistence and src/features; pin @types/node to ^24; jsx-a11y is optional."
+    },
+    {
+      "id": "UG2-CQ-18",
+      "title": "Comments narrate review history instead of rules, and two ids exist for no reader",
+      "evidence": "StudentScan.tsx carries 31 references such as 'V05 review V5-3', 'V5R2-3' and 'V5F-1' (plus 9 in StudentScanAssistant.tsx and 16 in StudentScan.test.tsx); those ids only resolve inside .evidence. id=duty-summary-title (DutyManagement.tsx:1200) is unused and id=crew-announcement-title (CrewManagement.tsx:1048) is read only by f3-crew-summary.spec.ts:225, while both dialogs name themselves with aria-label.",
+      "impact": "The reason a rule exists is real information, but the next person cannot follow the pointer.",
+      "suggestedFix": "Keep the rule sentence and drop the review ids; use aria-labelledby with the heading ids, or delete them."
+    },
+    {
+      "id": "UG2-CQ-19",
+      "title": "StudentScan is a 1,220-line component with 16 useState and 12 refs; 'row is complete' is decided in four places",
+      "evidence": "src/features/students/StudentScan.tsx:766-1989. The required-fields predicate (first name, surname, age, sex) is spelled out in commitCandidates (:1216-1226 via candidateIsReady), firstMissingTarget (:1310-1316), jumpToFirstMissing (:1371-1388) and missingFieldCount (studentScanReview.ts); the save then relies on it with candidate.sex as StudentSex (:1268). The unsaved-work state (candidates, pasteImport, invalidIds, discardConfirmation, saveError, state) is spread over separate useState calls that are always set together (handleImage :961, handlePasteImport :1043, returnToPastedAnswer :1179).",
+      "impact": "Adding one required field means finding all four, and a missed one lets a row through with a null sex cast away at the boundary.",
+      "suggestedFix": "A missingFields(candidate) list in studentScanReview.ts used by all four; a useReducer for the review state; return a validated StudentInput from the gate instead of casting."
+    },
+    {
+      "id": "UG2-CQ-20",
+      "title": "Persistence and form plumbing duplicates",
+      "evidence": "persistence/students.ts:141-176 createStudent and :179-210 createStudents duplicate the record construction and the INSERT statement (createStudent could be createStudents([input])). StudentManagement.tsx:633-673 holds the autosave (version counter, save chain, unsavedEdit ref, pagehide flush) as about 120 lines inside StudentForm, with an eslint-disable for react-hooks/exhaustive-deps at :672 and an inline 500.",
+      "impact": "A new column must be added to two INSERTs; the autosave queue cannot be reused by the other autosaving form (StudentKnowledge has its own debounce at StudentKnowledge.tsx:113).",
+      "suggestedFix": "A single insert path; extract useAutosave(value, save, { delay }) and use it in both forms."
+    },
+    {
+      "id": "UG2-CQ-21",
+      "title": "The image-versus-screen pixel comparison covers only the first screen of a long summary",
+      "evidence": "tests/e2e/summary-image-checks.ts:570-690: the screenshot clip and the diff use visibleHeight = min(imageHeight, viewport.height - imageTop); everything below the fold is checked structurally (layoutProblems, ink share, margins, logos, icons) but not compared with pixels.",
+      "impact": "A wrong class colour or card edge low in a 13-crew summary is caught only if one of the structural checks happens to see it.",
+      "suggestedFix": "Scroll the overlay and compare successive viewport-high bands, or compare the band around the lowest card as a second region."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md sections 3, 10, 15; 03_TECHNICAL_DECISIONS.md (all, especially 2, 3, 4, 6, 8); CHANGELOG.md 0.3.0; docs/post-mvp/1_0_0_NEXT_STEPS.md (next-cycle plan); the other .evidence/UG2 review files for scope only",
+    "git diff --stat v0.2.0..HEAD (411 files) and tracked file sizes",
+    "src/features/crews/CrewManagement.tsx (all 3,617 lines), crewSummaryModel.ts, crewDisplayPreference.ts, CrewManagement.test.tsx (head and mock strategy)",
+    "src/lib/pageSnapshot.ts (all 1,184 lines), pageSnapshot.test.ts (harness), summaryShare.ts, summaryShare.test.ts, src/components/SummaryImageButton.tsx, src/test/summaryImageHarness.ts",
+    "src/features/duties/DutyManagement.tsx (state, normalisation helpers, summary view, persist) and dutySummaryModel.ts",
+    "src/features/students/StudentScan.tsx (lines 1-1520), StudentManagement.tsx (history helpers, StudentForm autosave, useFieldShortcut), StudentKnowledge.tsx and StudentScanImageEditorDocument.tsx (dialog handlers), rosterPaste.ts (parse core), studentScanReview.ts, studentScan.ts (outline, age and role constants)",
+    "src/features/boats/BoatIdentity.tsx and boatMarks.ts; src/domain/student.ts, crews.ts (head), invariants.ts (head, blockingIssues, record validators), duties.ts (ignoreMissingStudentDuties, prune), evaluations.ts, config.ts (SESSION_SEQUENCE, VOLUNTEER_ROLES)",
+    "src/persistence/db.ts, courses.ts, courses.test.ts, students.ts, crews.ts (readCrewPlan, saveCrewPlan); src/navigation/browserHistory.ts, nestedScreen.ts, applyUpdate.ts and its test; src/App.tsx (history helpers, error boundary, shell); src/main.tsx; UpdateAvailableBanner.tsx; src/styles.css",
+    "tests/e2e/summary-image-checks.ts (head, measureSummary, copyAndCheckSummaryImage), layout-audit.ts (head), summary-helpers.ts, ug2-hostile-roster.spec.ts (the fixme), ug2-hostile-roster-data.ts (head), ug2-review-fixes.spec.ts and ux2-crew-interactions.spec.ts (waitForTimeout); inventory of the 53 specs and greps for test.skip, fixme, waitForTimeout and vite-ignore imports",
+    "package.json, vite.config.ts, vitest.config.ts, playwright.config.ts, eslint.config.js, tsconfig.app.json, .github/workflows/ci.yml and deploy-pages.yml, scripts/check-built-pwa.mjs, run-e2e.mjs, check-runtime.mjs; a search of dist/ for __CVC_TEST__ (absent)",
+    "Static scans with git grep and a scratch Node script over HEAD: exports without a production consumer (59 non-type exports, 27 test-only, 3 dead functions confirmed by hand), catch-block and console inventory, hard-coded colour counts, repeated literals, dependency imports. Nothing in the repository was modified except this file; the uncommitted UI edits of the concurrent agent were not reviewed."
+  ]
+}
