@@ -5,7 +5,7 @@ students, boats and faults, Comandate, crews with boat assignment, evaluations a
 volunteers (ADV/IS/CT). Data stays on the device in a local PowerSync database — no
 account, backend or sync; Italian OCR reads student sheets and Italian speech dictates
 notes. 0.2.0, the field-UX release, was tagged on 2026-09-21, and 0.3.0, the first
-release used on a phone, on 2026-10-07; work continues on `codex/0.3.0`.
+release used on a phone, on 2026-10-08; work continues on `codex/0.3.0`.
 
 ## Where things are
 

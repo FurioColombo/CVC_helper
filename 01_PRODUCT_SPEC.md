@@ -542,7 +542,9 @@ in that model's group as `<model> · Senza barca` with a muted mark. If
 no students remain available, a small centered CVC-blue `Tutti gli allievi
 assegnati` note appears at the bottom. If Copy is offered, it copies that image,
 never plain text. All groups must fit in the image; above twelve crews two
-columns are allowed. Preserve readable names by reducing vertical spacing
+columns are allowed. The Comandate summary (owner, 2026-09-28) lists each
+day's students in the same card style, two columns, and is copied as an image
+the same way. Preserve readable names by reducing vertical spacing
 before font size.
 
 ## 8. Evaluations

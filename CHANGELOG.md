@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — 2026-10-07
+## 0.3.0 — 2026-10-08
 
 0.3.0 is the first version used on a real phone: the app is published over
 HTTPS on GitHub Pages and installs on the home screen, so the camera, the
@@ -72,16 +72,17 @@ second editor is part of this release.
   as a student, and a row whose name reads like a heading can be left out.
 - **Dictation is slow and imprecise**, and its model downloads on the first
   dictation rather than with the app.
-- **Updating** through the banner works but is not always prompt; the owner
-  found reinstalling more reliable, which, without a backup, risks the course
-  data.
+- **Updating** through the banner works but is not always prompt, and while
+  the banner is shown it covers the crew page's floating bar and the Allievi
+  add button; the owner found reinstalling more reliable, which, without a
+  backup, risks the course data.
 - **Create the course before its first Saturday.** Its dates, and so the
   ages and the minor status worked out from a birth date, come from the day
   the course is created; there is no way yet to correct them afterwards.
 - **D2–D5 crews stay at two people.** The Settings override for their size is
   still to come; D1 and cabin courses can already resize their crews.
-- **Long names on crew cards are cut with "…"** on narrow phones (from about
-  360 px wide, and more with enlarged text); the full name stays in the
+- **Long names on crew cards are cut with "…"** on narrow phones (long names
+  from about 390 px wide, and more with enlarged text); the full name stays in the
   accessible name, and a long press opens the student.
 - **The project's history was rewritten** before 0.3.0 was published, to
   remove real people's data. GitHub may still serve the old commits by their

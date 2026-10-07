@@ -137,7 +137,12 @@
       "status": "test.fixme (owner decision pending; rulebook R05 identity)",
       "spec": "tests/e2e/ug2-hostile-roster.spec.ts: keeps at least the first three letters of every name legible on the crew cards...",
       "measured": "Names clipped by the card's ellipsis show under three letters' width for 1 of 16 clipped names at 390 px, 10 of 25 at 360 px, 17 of 30 at 320 px (a minor with a smontante or comandata badge keeps 3 px of the name), and all 34 at 320 px with 200% text (a volunteer's name has no width). The full name stays in the accessible name and a long press opens the student; tests/e2e/c1-crew-management.spec.ts pins the ellipsis.",
-      "decision": "Left as a fixme for the owner: real course names are mostly short first names; recorded as a known limitation in CHANGELOG.md 0.3.0."
+      "decision": "Left as a fixme for the owner: real course names are mostly short first names; recorded as a known limitation in CHANGELOG.md 0.3.0.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "measured": "Re-measured by the independent re-check reviewer after the stress-profile and field-UX fixes: at 320 px with 200% text 13 hostile names are cut and none shows under three letters' width; on the hostile roster names are cut from 390 px with ordinary text, and at 412 px with 130% text. The numbers above describe the source before cf26355 and 1ec3e6c."
+      }
     },
     {
       "id": "UG2-RS-3",

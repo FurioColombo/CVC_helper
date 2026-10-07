@@ -140,9 +140,10 @@ after trying speech on Android and PC/Chrome, while describing it as slow,
 imperfect and only borderline usable. No per-step device timings or recovery
 results were reported. Apple/iPhone could not be tested and remains explicitly
 untested in `.evidence/V03/speech-device-evidence.json`. This is a V03-only
-exception to `03_TECHNICAL_DECISIONS.md` §5, not an iPhone PASS. UG2 must repeat
-speech on its exact release candidate and cover physical phone scanning; V03
-device results do not substitute for UG2 evidence.
+exception to `03_TECHNICAL_DECISIONS.md` §5, not an iPhone PASS. UG2 was to repeat
+speech on its exact release candidate and cover physical phone scanning; at
+UG2 the owner accepted speech as it is and moved the iPhone checks to future
+work (`.evidence/UG2/physical-device-review.json`, UG2-PD-1 and UG2-PD-2).
 
 **Evidence:** benchmark, verification, browser evidence, speech review and page
 changelog and owner-provided physical-device evidence. The 823 MB corpus and

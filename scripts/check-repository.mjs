@@ -44,7 +44,7 @@ const packageLock = JSON.parse(
   readFileSync(resolve(root, "package-lock.json"), "utf8"),
 )
 // The assertion moves with the release rather than being deleted at it. UG1
-// declared 0.2.0 on 2026-09-21 and UG2 declared 0.3.0 on 2026-10-06, so this
+// declared 0.2.0 on 2026-09-21 and UG2 declared 0.3.0 on 2026-10-08, so this
 // pins the released version until the next release gate. The 0.1.0 and 0.2.0
 // compatibility fixtures are a different thing and stay where they are: they
 // are the data contract, not the application version.

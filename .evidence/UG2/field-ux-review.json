@@ -3,17 +3,31 @@
   "reviewerRole": "independent field-UX and accessibility reviewer",
   "reviewedOn": "2026-10-07",
   "reviewedCommit": "cf26355",
-  "verdict": "FAIL",
+  "verdict": "PASS_WITH_FINDINGS",
+  "originalVerdict": "FAIL",
   "verdictRationale": "One blocker: on the Comandata day-edit page the names of the students shown in 'Assegnati ad altri giorni' are clipped to one to four letters at 360-412 px (single letter at 360 px), the widths that most Android phones have. The page's only purpose is choosing who to tap. Everything else is important or minor. The blocker is a one-line CSS change in DutyManagement.tsx; the rest of the app is in good shape for a hurried one-handed user (44 px targets almost everywhere, Italian throughout, no colour-only state, focus trapped correctly in the summary overlays, copy-as-image works).",
+  "recheck": {
+    "reviewer": "independent re-check reviewer",
+    "date": "2026-10-08",
+    "commit": "1ec3e6c",
+    "summary": "The one blocker, UG2-UX-1, is resolved: on the Comandata day-edit page every name is drawn whole at 412, 390, 360 and 320 px and at 320 px with 200% text, for the review's ordinary names and for the hostile roster (my own audit and screenshots, plus the repo's tests). UG2-UX-5, 7 and 9 are resolved (no sideways scroll at 320 px with 200% text on Volontari, Valutazioni and the profile; contrast 4.5:1 or better for the course year and the summary labels, a solid 3.8:1 focus ring; named paste-review fields and one refusal alert). UG2-UX-4 is partial: Back from the boats panel is fixed, Back from the destination chooser and the warning detail still leaves the crew page and is not recorded anywhere. UG2-UX-2, 3, 6 and 8 and the QoL findings UX-10 to 16 are recorded as future work in 1_0_0_NEXT_STEPS.md. With no blocker left the verdict is PASS_WITH_FINDINGS."
+  },
   "method": "All measurements were taken with Playwright Chromium (Pixel 7 profile, viewports 412x915/839, 390x844, 360x780, 320x664, 320x664 with html font-size 200%) against a snapshot of commit cf26355 extracted with git archive into the review scratch directory and served on its own port, because the working tree held concurrent uncommitted edits that intermittently broke the dev server. A fictitious 20-student D2 course (invented names and ages, 3 volunteers, 9 RS Quest boats, two faults, one unavailable boat, a Comandate proposal, ten Sabato PM crews) was built partly through the UI (course creation, manual student, assistant paste with a fictitious answer, boats, faults, volunteers, Comandate proposal, crew composition by taps, copy crews, both summaries with Copia immagine, evaluations with a note) and partly seeded through the app's own persistence modules. An in-page audit measured every visible control's rectangle, computed text contrast against the effective background, listed elements with ellipsis or line clamp whose content is clipped, tested what is under each control's centre (elementFromPoint), and scanned visible text and aria-labels for English. Nothing was read from or written to data/private. No repository file other than this report was changed.",
   "notChecked": "Not testable in this environment and therefore not judged: camera and OCR scan, speech, the real Android soft keyboard, TalkBack/VoiceOver output, the system share sheet (Condividi), iPhone WebKit rendering of the pages, installed-PWA Back behaviour, glare and outdoor legibility. Findings about name clipping and sizes are measurements of the DOM at the stated widths, not photographs of a phone.",
-  "blockers": [
+  "blockers": [],
+  "resolvedBlockers": [
     {
       "id": "UG2-UX-1",
       "title": "Comandata day-edit page: students in 'Assegnati ad altri giorni' are clipped to one to four letters at 360, 390 and 412 px",
       "evidence": "Repro: Home > Comandate, confirm any proposal for 20 students, tap a day card (e.g. Sabato). The section 'Assegnati ad altri giorni' lists every student of the week as a two-column card with name, a blue '+', optional minor badge M, a day chip (Dom, Lun...) and a red X. Measured at commit cf26355 (names are ordinary Italian first names): 412 px: 'Federico' shows 44 of 56 px (Fede...), 'Matteo Maria' 42 of 90, 'Anna Lisa' 45 of 63, 'Edoardo' 43 of 55; 390 px: 'Marta' 28 of 40 px (Ma...), 'Chiara' 31 of 42, 'Matteo Maria' 31 of 90; 360 px: 'Marta' 13 of 40 px (renders as 'M'), 'Federico' 18 of 56 ('F...'), 'Chiara' 16 of 42 ('C..'), 'Matteo Maria' renders 'M.', 'Giorgia' 'Gio...', 'Alessandro' 'Ale...'. Screenshot: scratchpad review-ux/shots/sw-s360-comandata-day.png. Cause: DutyManagement.tsx:682 and :696 use 'truncate' on the name and only switch to 'break-words whitespace-normal' under max-[350px], so the clipped layout applies to exactly the common widths 351-430 px while 320 px (clipped=0) is fine. This is not the crew-card ellipsis decision recorded in synthetic-roster.json (UG2-RS-2 concerns the crew page); the Comandata day-edit page is not mentioned there, and the 320 px/200% fix of cf26355 does not reach it because it only drops a column below 350 px.",
       "impact": "Once a week is proposed, every student is 'assegnato ad altri giorni', so this list is where the instructor moves a student to the open day by tapping the name. At 360 px the name is a single letter ('M' is Marta or Matteo Maria, 'F...' is Federico or Francesca), so the instructor must guess, open another screen, or tap blindly; a wrong tap assigns the wrong student to the day and creates a duplicate-assignment warning. R03/R05 (no identity lost, no ambiguous truncation) are violated on the page that is the core of the Comandate task. The accessible name is complete, so only sighted users are affected.",
-      "suggestedFix": "Let the name wrap instead of truncate at all widths (remove 'truncate' at :682/:696 and apply the existing max-[350px] wrapping rules from 0 px up, with min-h 44-48 px), or raise the 350 px breakpoint to about 430 px so the '+' glyph, day chip and X move below the name; keep the card two-column only where the longest name on the roster fits. Add a Playwright audit for this page at 412, 390, 360 px (the UG2 hostile-roster spec covers 320/200% and the crew cards only)."
+      "suggestedFix": "Let the name wrap instead of truncate at all widths (remove 'truncate' at :682/:696 and apply the existing max-[350px] wrapping rules from 0 px up, with min-h 44-48 px), or raise the 350 px breakpoint to about 430 px so the '+' glyph, day chip and X move below the name; keep the card two-column only where the longest name on the roster fits. Add a Playwright audit for this page at 412, 390, 360 px (the UG2 hostile-roster spec covers 320/200% and the crew cards only).",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RESOLVED",
+        "evidence": "Checked in the browser at 1ec3e6c with my own Playwright script (Chromium, Pixel 7 profile; 412x915, 390x844, 360x780, 320x664 and 320x664 with html font-size 200%) on two courses: the review's own ordinary names (Marta, Federico, Chiara, Matteo Maria, Anna Lisa, Edoardo, Giorgia, Alessandro...) and the hostile 40-student roster (Martedì day page, every section). An independent DOM audit (every text node against every ancestor that clips, ellipsis or line clamp, and every scroll container) found 0 ellipsis, 0 clipped words and no sideways scroll at all five profiles on both courses, and no card whose name text lies outside its card. Screenshots viewed at 412 px, 360 px and 320 px with 200% text: 'Federico', 'Matteo Maria', 'Marta', 'Chiara' read in full; where a name does not fit beside the day chip, the chip and the red X move to a second row of the card (cards 54 px or 94 px tall); a 22-letter single first name wraps inside its card. The repo's two 'UG2-UX-1' tests in tests/e2e/ug2-field-ux-fixes.spec.ts pass on pixel-7-chrome (re-run, 2 passed). The blocker is resolved."
+      }
     }
   ],
   "importantFindings": [
@@ -22,56 +36,104 @@
       "title": "Composing a session from scratch costs about two long swipes and two taps per student, and the crew you just filled is never on screen",
       "evidence": "Repro: Equipaggi, Lunedi AM, 10 crews, 20 available students. The 'Composizione equipaggi' region is its own scroll container 485 px high on a 839 px screen (58 %). The 20-student pool alone is about 700 px, so the pool and the crew cards are never visible together (R01). Measured with real touch taps: to reach a free seat the region has to be scrolled about 600-660 px (two wheel steps); tapping 'Posto libero' jumps the region back to scrollTop 60 (the pool); tapping a student places him and leaves the region on the pool, so the crew that just changed is off screen and the only feedback is the pool shrinking and the 'Collocati n/20' counter. Six placements logged: scrollTop 600/660/660/660/660/660 before each seat tap, 60 after each person tap. 20 students therefore need about 40 taps and 20-40 swipes (two 300 px wheel steps per placement in the test); the pool halves only after ten placements.",
       "impact": "Frequent action, hurried instructor, one hand: the first session of the week (Sabato PM) is composed from scratch. Nothing shows where the student went, so a mis-tap on a neighbouring seat is not noticed. Later sessions use 'Copia equipaggi' and need only corrections, so this is a once-a-week cost, but it is the worst task in the app for taps and scrolling.",
-      "suggestedFix": "After a student is placed, scroll the region so the next free seat is visible (or briefly highlight the seat just filled); or show the pool as a one-row strip pinned above the crews while a seat is selected; or when a free seat is selected collapse the pool to the students not yet placed in a horizontal wrapped strip of the first ~6. Keep the single-tap seat-then-person model."
+      "suggestedFix": "After a student is placed, scroll the region so the next free seat is visible (or briefly highlight the seat just filled); or show the pool as a one-row strip pinned above the crews while a seat is selected; or when a free seat is selected collapse the pool to the students not yet placed in a horizontal wrapped strip of the first ~6. Keep the single-tap seat-then-person model.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "No code change in 1ec3e6c. Recorded as future work in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)': 'Composing a session from scratch takes about two long scrolls per student, and the crew just filled is off screen (UG2-UX-2)'. Not in the CHANGELOG limitations; it is a speed cost, not a wrong behaviour."
+      }
     },
     {
       "id": "UG2-UX-3",
       "title": "The 'Nuova versione disponibile' banner covers the crew page's floating bar and the Allievi add button",
       "evidence": "UpdateAvailableBanner.tsx positions itself fixed at bottom = height of the bottom nav, about 65 px tall, z-10. I reproduced it with the component's exact classes and offset on cf26355 at 412x839: it overlaps 48 of 56 px of the Allievi '+' button (691-747 vs banner 699-764) and 33 of 44 px of the crew page buttons 'A terra' and 'Volontari' plus the 'Collocati' counter (688-732 vs banner 699-764): the whole floating bar is hidden (screenshot review-ux/shots/63-banner-crews.png). Dismissing needs 'Piu tardi'; it is shown per session.",
       "impact": "While the banner is up, tapping the '+' lands on the banner and A terra / Volontari cannot be reached. The owner accepted the banner itself on 2026-10-06; its covering of persistent controls (R12: sticky and floating elements must not cover controls) was not part of that decision. The owner has seen the banner on the phone a couple of times.",
-      "suggestedFix": "Make the banner part of the page flow at the top (or a one-line strip under the header) rather than fixed over the bottom controls; or raise the floating controls by the banner height while it is visible; or show it only on Home and Settings."
+      "suggestedFix": "Make the banner part of the page flow at the top (or a one-line strip under the header) rather than fixed over the bottom controls; or raise the floating controls by the banner height while it is visible; or show it only on Home and Settings.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "No code change in 1ec3e6c. Recorded in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)': 'The update banner covers the crew page's floating bar and the Allievi add button while it is shown (UG2-UX-3)'. The changelog's Updating limitation says only 'works but is not always prompt', so a reader is not told that the banner can cover those controls until Più tardi is tapped."
+      }
     },
     {
       "id": "UG2-UX-4",
       "title": "Phone Back from the session boats panel leaves the crew page and goes to Home",
       "evidence": "Repro on cf26355: Home > Equipaggi (bottom bar) > helm icon 'Apri barche della sessione' > browser Back. Result: Home, not the crew composition ('Torna agli equipaggi' on screen would have done that). Same for the open destination chooser and the opened warning detail: one Back leaves the crew page. Back does close the summary overlay (focus returns to 'Apri vista lettura'), returns from the edit form to the profile, and asks 'Scartare la revisione di 2 allievi?' from an unsaved scan review, so the pattern exists but is not applied to the boats panel. Related to scope-review UG2-SCO-5.",
       "impact": "The boats panel is where the instructor assigns the 7-10 boats of a session and is a full-screen mode; Back is the natural way out. Instead the instructor lands on Home, has to re-enter Equipaggi (and re-pick the session if it is not remembered) and loses the scroll position being worked on.",
-      "suggestedFix": "Push a history entry when the boats panel (and ideally the destination chooser) opens, like the summary overlay does, and close the panel on Back."
+      "suggestedFix": "Push a history entry when the boats panel (and ideally the destination chooser) opens, like the summary overlay does, and close the panel on Back.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "PARTIAL",
+        "evidence": "The case the finding led with is fixed: in my own run on the hostile course, phone Back from the session boats panel (helm icon 'Apri barche della sessione') lands on the crew composition (Sessione selector visible, panel closed), and the repo's UX-4 test passes (re-run). Not fixed: phone Back from the open destination chooser (the panel with 'Chiudi' under a crew's destination button) and from the opened warning detail still goes to Home (verified for both; for the chooser the history length is unchanged when it opens), which the finding named explicitly; the suggested fix had them as 'ideally'. Neither case is recorded in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)' or in the changelog. No data is lost."
+      }
     },
     {
       "id": "UG2-UX-5",
       "title": "320 px with 200% text: Volontari, Valutazioni Riepilogo and the student profile scroll sideways, and several lists lose their names",
       "evidence": "Measured on cf26355 at 320x664 with html font-size 200%: document scrollWidth against clientWidth: Volontari 447 > 320 (names cut at the screen edge, shown in review-ux/shots/sw-s320x2-volontari.png), Valutazioni Riepilogo 347 > 320, student Profilo 328 > 320 (WCAG 1.4.10 and R18). Identity loss at the same size: Valutazioni 'Allievi' rows show 69 of 201 px of 'Valentina Barbieri' (renders 'Vale...'); the boats panel shows 'Giorgia · Alessandro' 60 of 254 px; Comandata day cards 'Valentina' 64 of 127. At 360 px normal text the Valutazioni rows clip the surname ('Valentina Barb...' 85 of 109 px) which is acceptable. The ug2 specs cover crew and Comandate pages only. At 200% the bottom bar's three buttons are 112 px tall each (17 % of a 664 px viewport, plus padding).",
       "impact": "R05 requires text at 200% with names on two lines; WCAG 1.4.4 and 1.4.10 fail on three pages for a user who enlarges text, who is also the user who most needs readable names. Normal-size use is unaffected.",
-      "suggestedFix": "Volontari: allow the name to wrap and drop the fixed-width role tile at 200%. Riepilogo and Profilo: give the weekly grid min-width: 0 and let the seven day columns shrink, or stack Sab-Dom and Lun-Ven. Valutazioni rows: let the name wrap to two lines above the five icons below 360 px or at large text. Extend the ug2 reflow specs to these pages."
+      "suggestedFix": "Volontari: allow the name to wrap and drop the fixed-width role tile at 200%. Riepilogo and Profilo: give the weekly grid min-width: 0 and let the seven day columns shrink, or stack Sab-Dom and Lun-Ven. Valutazioni rows: let the name wrap to two lines above the five icons below 360 px or at large text. Extend the ug2 reflow specs to these pages.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RESOLVED",
+        "evidence": "My own audit of the hostile course at 1ec3e6c: Volontari, Valutazioni (Allievi list and Riepilogo) and the student Profilo at 320 px with 200% text have document scrollWidth equal to clientWidth (320/320), no scroll container wider than its box and no ellipsis, and the Valutazioni and Volontari names are drawn whole at 200%; the 55 'clipped' items on the Profilo are sr-only text only. The repo's two UX-5 tests pass (re-run, 2 passed). Residual, accepted by the review itself at 360 px: the Valutazioni Allievi rows still cut a long name with an ellipsis at 360 and 320 px with ordinary text. The boats panel at 200% was not re-measured."
+      }
     },
     {
       "id": "UG2-UX-6",
       "title": "Person markers and secondary text are below the rulebook's type scale (R05) and carry essential information at 9-11 px",
       "evidence": "Computed font sizes on cf26355 at 412 px: minor badge 'M', comandata badge 'C' and smontante badge 'SM' are 9 px letters in a 16 px box (PersonBadges.tsx:9 text-[9px]; R05: badges 12-13 px 'solo se non portano da soli informazione essenziale', and the minor flag does carry it alone); age in the Allievi card '16 anni' 11.5 px grey; the label 'Allievo' repeated under every name in the crew pool and crew cards 10.9 px (it adds nothing: every card is a student, R02 'ridurre testi permanenti'); 'Collocati 0/20' 10.9 px; 'A terra' / 'Volontari' 12 px; Comandata day chips (Sab, Dom...) 10 px; boat-state legend labels 10.9 px; names in the Allievi card 15.2 px, in the crew card 14 px (R05 proposes 16 px for primary and 14 px for secondary text). At 200% text the px-based badge letters stay 9 px while their box grows.",
       "impact": "For a hurried user in sunlight the minor and on-duty markers (the information that drives warnings and the Comandate rules) and the day chip that says on which day someone is already assigned are the smallest text in the app. Colour does reinforce the letter, so this is legibility, not a colour-only failure.",
-      "suggestedFix": "Raise the markers to at least 12 px letters in a 20 px box (or use 14 px 'M' with the same colour), set the day chip to 12 px, remove the permanent 'Allievo' label (keep the role only for volunteers), show the age at 14 px."
+      "suggestedFix": "Raise the markers to at least 12 px letters in a 20 px box (or use 14 px 'M' with the same colour), set the day chip to 12 px, remove the permanent 'Allievo' label (keep the role only for volunteers), show the age at 14 px.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "No code change (PersonBadges.tsx and the secondary text are not in the 1ec3e6c diff). Recorded in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)': 'Type scale: the minor/C/SM markers and some secondary text are 9-11 px, below the rulebook's proposal (UG2-UX-6)'. Not in the CHANGELOG limitations."
+      }
     },
     {
       "id": "UG2-UX-7",
       "title": "WCAG AA contrast failures: the course year, the summary's small labels, and the keyboard focus ring",
       "evidence": "Measured with computed colours: (a) '| 2026' beside the course code on Home, in Settings, on the create screen and in the erase confirmation is #8591a0 on #f2f6fb or #e8eef6: 2.95:1 and 2.74:1 for 16 px semi-bold text (needs 4.5:1; src/styles.css:117 .course-identity > span). (b) In the crew summary, the group count ('10', 9 px) and 'RS Quest · Senza barca' (10 px) are #6b8790 on #fffdf8/#fff: 3.76:1 and 3.82:1; per the F4 notes the image is painted from the screen's own layout, so the same small text reaches the copied image. (c) Almost every button uses focus-visible:ring-3 focus-visible:ring-ring/40 (button.tsx:8, App.tsx:736, StudentSizeSelector.tsx:33): a 3 px ring of #4a7fc4 at 40 % opacity, about 1.6:1 against the page and cards (WCAG 1.4.11 asks 3:1); the Home cards use a solid 3 px outline (3.7:1) and are fine. Disabled controls (Crea corso, Salva..., 'Ven' in the proposal, 'Seleziona un allievo' 2.55:1) also fall under 4.5:1 but are exempt as inactive. No text on coloured states, badges (white on #b42318 6.5:1) or buttons failed.",
       "impact": "(a) is information the instructor reads on every Home view; (b) is a printed label in the image sent to the group; (c) matters to keyboard, switch and external-keyboard users and anyone using a stylus or trackpad. None blocks a task.",
-      "suggestedFix": "(a) use #5b6b7d or the existing muted foreground #53667d; (b) use #4a6670 or larger text; (c) change ring-ring/40 to a solid 2-3 px ring at full colour (ring-ring), as the Home cards already do."
+      "suggestedFix": "(a) use #5b6b7d or the existing muted foreground #53667d; (b) use #4a6670 or larger text; (c) change ring-ring/40 to a solid 2-3 px ring at full colour (ring-ring), as the Home cards already do.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RESOLVED",
+        "evidence": "(a) The course year (.course-identity > span, src/styles.css) is now #5f6b7a: 5.00:1 on #f2f6fb and 4.65:1 on #e8eef6 (computed). (b) The crew summary's small labels and group count are #5f7880: 4.68:1 on #ffffff and 4.61:1 on #fffdf8 (old #6b8790 was 3.82:1); the no-boat crew number keeps #6b8790 but is 20 px black-weight text, which is large text (3:1). (c) The button, nav, size-selector and summary-button focus rings are now solid (focus-visible:ring-ring, #4a7fc4: 3.78:1 on #f2f6fb, 4.10:1 on white); text inputs and textareas keep ring-ring/30 but also change their border on focus (not named in the finding, not measured). The four UX-7 tests pass on pixel-7-chrome (re-run, with the UX-4 and UX-9 tests: 6 passed)."
+      }
     },
     {
       "id": "UG2-UX-8",
       "title": "After 'Leggi risposta' the paste review opens mid-list, with the count confirmation and the explanation above the fold",
       "evidence": "Repro: Allievi > Menu > Usa un assistente, paste an 18-row answer, tap 'Leggi risposta' (at the bottom of the page, scrollY 324). The review replaces the form in place and the page keeps scrollY 324 of 4572: the visible screen starts at 'Allievo 1', with the sticky counters on top; the title, 'Controlla prima di salvare', 'Torna alla risposta' and 'Letti 18 allievi dalla risposta: sono tutti quelli del foglio? [Sono tutti]' are above it. The 18 rows are about 4,000 px; 'Aggiungi 18 allievi' is at the end. Tapping 'Aggiungi' with a missing field scrolls only 28-224 px and shows the error under the offending row, which can be far from the button. The count confirmation ('Sono tutti') is required: with unread lines it is disabled with 'Prima decidi le righe non lette.'",
       "impact": "The first thing the owner sees after pasting 40 names is the middle of a list; the gate that stops a silent partial import is out of view, and the instructor learns about it only when saving is refused.",
-      "suggestedFix": "Scroll to the top of the review (or to the 'Letti n allievi' card) when the review opens, and focus its heading; when 'Aggiungi' is refused, scroll to and focus the first problem row."
+      "suggestedFix": "Scroll to the top of the review (or to the 'Letti n allievi' card) when the review opens, and focus its heading; when 'Aggiungi' is refused, scroll to and focus the first problem row.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "No code change. Recorded in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)': 'Paste review: after Leggi risposta the count confirmation is above the fold (UG2-UX-8); a pasted answer is lost on Back.' Not in the CHANGELOG limitations; the Sono tutti gate still stops a silent partial import."
+      }
     },
     {
       "id": "UG2-UX-9",
       "title": "Paste-review controls have names that leak internal ids and do not match what is on screen",
       "evidence": "Accessible names read from cf26355: the first-name field is 'Nome riga paste-3-1' (and 'Cognome riga paste-3-1', 'Età riga paste-3-1'): an internal row id, while the card is titled 'Allievo 1' and the swap/remove buttons correctly say 'riga 1' / 'allievo 1'. The three sex radios show 'M', 'F' and 'Alt' (StudentScan.tsx:696) but are named 'Uomo', 'Donna', 'Altro' (WCAG 2.5.3 label in name: 'F' is not in 'Donna'; voice control 'tap F' fails); the manual form shows 'M', 'F', 'Altro'. Each flagged row repeats the same live-region alert text 'Completa nome, cognome, eta e sesso.' (11 identical alerts for 11 rows in the test) even when only the sex is missing, with no row number in the alert.",
       "impact": "TalkBack and Voice Access users, and anyone dictating, cannot tell which row or which field. Screen-reader users hear a wall of identical alerts.",
-      "suggestedFix": "Name fields 'Nome, allievo 1' using the visible index; show 'M / F / Altro' consistently and name the radios the same; make the message specific ('Scegli il sesso') and put the row number in it."
+      "suggestedFix": "Name fields 'Nome, allievo 1' using the visible index; show 'M / F / Altro' consistently and name the radios the same; make the message specific ('Scegli il sesso') and put the row number in it.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RESOLVED",
+        "evidence": "My own run with a different fictitious 5-row answer than the repo test: the fields are 'Nome riga 1', 'Cognome riga 1', 'Età riga 1' (no internal id such as paste-3-1 anywhere in the accessibility tree); the sex radios are named 'M — uomo', 'F — donna', 'Alt — altro' and show 'M', 'F', 'Alt'; a refused save raises one refusal alert ('Prima di aggiungere, correggi le righe 1, 2, 3, 4.') next to the separate, pre-existing 'Sono tutti' alert, instead of one alert per row. The repo's UX-9 test passes (re-run). Nit: every row's radio group is named just 'Sesso', without the row number."
+      }
     }
   ],
   "qolFindings": [
@@ -80,49 +142,91 @@
       "title": "Microcopy: the same idea has different words, weekday capitals are wrong, and some labels are jargon",
       "evidence": "Seen on cf26355: progress 'Allievi sistemati 0/20' (banner) vs 'Collocati 0/20' (floating bar) for the same count (CrewManagement.tsx:2732 and :3579); 'Barche in uscita' (panel title) vs 'Barche nell'uscita' (CrewManagement.tsx:2416, 2826; 'nell'uscita' is not idiomatic); session 'Sabato PM' in the header vs 'Sabato · PM' in the selector; Italian weekdays are lower case mid-sentence but the day-edit page says 'In Sabato · 3', 'Allievi comandata Sabato', 'Rimuovi Valentina da Sabato' while its title says 'Comandata sabato'; the 0/20 progress banner is red-tinted from the start, which reads as an alarm when nothing is wrong yet; 'Spareggio deterministico' (DutyManagement.tsx:537) is a developer term for the tie-break order; the sex shortcut 'Alt' (StudentScan.tsx:696) vs 'Altro'; the icon button that opens the summary is 'Apri vista lettura' (crew page) and 'Apri riepilogo comandate' (Comandate) for the same kind of screen whose title is 'Riepilogo comandate'; 'Copia equipaggi' / 'Copia barche' do not show the source session (the aria-label does: 'da Sabato PM'); the copy result dialog says 'Rimossi: Giulia - comandata' without saying why they were not copied; role label repeated twice in the volunteer pool ('CT' tile and 'CT' under the name). No English text was found anywhere (lang='it', no English in labels).",
       "impact": "Small cost each, but the user has to learn two words for one thing, and capitalised weekdays look like a typo.",
-      "suggestedFix": "Pick one term per concept (e.g. 'Collocati' everywhere, 'Barche in uscita', 'Riepilogo'), lower-case weekdays inside sentences, 'Ordine di parita: alfabetico / eta simile', name the source session on the copy buttons ('Copia da Sabato PM') and say 'non copiati perche in comandata'."
+      "suggestedFix": "Pick one term per concept (e.g. 'Collocati' everywhere, 'Barche in uscita', 'Riepilogo'), lower-case weekdays inside sentences, 'Ordine di parita: alfabetico / eta simile', name the source session on the copy buttons ('Copia da Sabato PM') and say 'non copiati perche in comandata'.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     },
     {
       "id": "UG2-UX-11",
       "title": "The Allievi list is sorted by surname but shows only first names, so it looks unsorted",
       "evidence": "The Allievi grid shows 'Valentina, Giulia, Marta, Elena, Federico, Chiara...' (sorted by surname Barbieri, Bianchi, Bruno, Colombo, Conti, De Luca...). The Valutazioni list shows 'Valentina Barbieri' in the same order, so the logic is invisible only on the Allievi page; the Volontari list is sorted by first name instead.",
       "impact": "Looking for 'Davide' in 20 cards means reading all of them.",
-      "suggestedFix": "Sort by the displayed name (as the pool in Equipaggi does) or show a small surname initial; sort volunteers the same way."
+      "suggestedFix": "Sort by the displayed name (as the pool in Equipaggi does) or show a small surname initial; sort volunteers the same way.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     },
     {
       "id": "UG2-UX-12",
       "title": "Dead ends and hidden affordances",
       "evidence": "'Avvisi · 0' on Comandate opens a whole page that says 'Nessun avviso da gestire.'; the sticky counters at the top of the scan review ('2 righe da controllare', '1 campi da completare') are buttons ('Vai alla prima riga...') but look like read-only tiles, and say '1 campi' in the singular case; the crew destination button ('Senza barca', 'Quest 3') has no chevron or border cue and looks like a label; the destination chooser shows already assigned boats faded and disabled with no indication of which crew has them (the crew number is only in the aria-label), and their numbers are low-contrast grey on pale green; 'Allievo' is repeated on every pool card; the weekly grid on Riepilogo/Profilo draws an 'AM' label and empty space for Sabato although Sabato has no AM session.",
       "impact": "Taps that go nowhere or controls nobody discovers; the grid wording hints at a missing session.",
-      "suggestedFix": "Disable or hide 'Avvisi' at zero; give the scan counters a chevron; add a chevron to the destination button; print 'crew n' on assigned boats in the chooser; hide the Sabato AM label."
+      "suggestedFix": "Disable or hide 'Avvisi' at zero; give the scan counters a chevron; add a chevron to the destination button; print 'crew n' on assigned boats in the chooser; hide the Sabato AM label.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     },
     {
       "id": "UG2-UX-13",
       "title": "Two destructive or lossy exits are quiet",
       "evidence": "Settings > 'Elimina il corso e inizia un nuovo corso' replaces the button by the confirmation panel below the fold (the Annulla and 'Elimina tutto' buttons are at y 845 on an 839 px screen) without scrolling to it; the gate itself (consent checkbox, then 'Elimina tutto') is good. Back from the assistant page with a typed or pasted answer drops the text without asking (a review in progress does ask).",
       "impact": "The first looks like nothing happened; the second can lose a pasted answer the assistant took minutes to produce.",
-      "suggestedFix": "scrollIntoView the confirmation and move focus to it; keep the pasted text until the page is left through the app's own Back with a short confirmation, as the review already does."
+      "suggestedFix": "scrollIntoView the confirmation and move focus to it; keep the pasted text until the page is left through the app's own Back with a short confirmation, as the review already does.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     },
     {
       "id": "UG2-UX-14",
       "title": "Valutazioni: layout shifts, symbol-only names, and a long summary",
       "evidence": "Each rated row grows by 16 px when 'Salvato' appears and the line then stays, so rows below jump down as you rate (Giulia '++' y 183 then 199 after one rating); the five rating buttons are 40 x 40 px with no gap between them. Accessible names are 'Valutazione di Giulia: ++', ':--', ':-' and ':=' (symbols read oddly by a screen reader). The Riepilogo is one card of about 200 px per student (4,100 px for 20 students, about 5 screens) with an almost empty 7 x 2 grid for most of the week.",
       "impact": "Small mis-tap risk while scanning down; slow to read.",
-      "suggestedFix": "Reserve the 'Salvato' line's height from the start or show it only for 2 seconds in the row's own area; name values 'molto positivo', 'positivo', 'neutro', 'negativo', 'molto negativo'; offer a compact table (name + 14 cells) for the Riepilogo."
+      "suggestedFix": "Reserve the 'Salvato' line's height from the start or show it only for 2 seconds in the row's own area; name values 'molto positivo', 'positivo', 'neutro', 'negativo', 'molto negativo'; offer a compact table (name + 14 cells) for the Riepilogo.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     },
     {
       "id": "UG2-UX-15",
       "title": "Comandate proposal: the preview is below the fold when you change a preference",
       "evidence": "At 412x839 the 'Anteprima' heading of the proposal sits at about y 736 (just above the bottom bar), after the day selector, the two switches, the tie-break select and the 'Restano la settimana successiva' row, so none of the seven preview cards is visible without scrolling; toggling 'Bilancia minori' or 'Bilancia M/F' changes the preview out of sight (R01/P12 'preferenze ed effetto nello stesso campo visivo'). The 'Conferma' button is at the end of the page. The disabled 'Ven' (6/6 selected) has 3:1 text and no explanation other than the '6/6 selezionati' line.",
       "impact": "Trial and error needs scrolling between cause and effect.",
-      "suggestedFix": "Put a compact one-line summary (coverage, number of minors per day) next to the switches or make the preview sticky."
+      "suggestedFix": "Put a compact one-line summary (coverage, number of minors per day) next to the switches or make the preview sticky.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     },
     {
       "id": "UG2-UX-16",
       "title": "Required-field messages use the browser's native bubble",
       "evidence": "Tapping 'Salva allievo' with empty required fields shows Chromium's own bubble ('Please fill out this field.' in the emulated English UI); on an Italian phone it will be Italian, but its look and wording are the browser's, it points at one field at a time, and the Manual form, volunteer form and course creation all rely on it.",
       "impact": "Wording and language depend on the phone's browser language, not on the app.",
-      "suggestedFix": "Use noValidate and in-app Italian messages under the field, as the scan review already does."
+      "suggestedFix": "Use noValidate and in-app Italian messages under the field, as the scan review already does.",
+      "recheck": {
+        "date": "2026-10-08",
+        "commit": "1ec3e6c",
+        "status": "RECORDED_AS_LIMITATION",
+        "evidence": "Not changed in 1ec3e6c and not individually re-verified; covered as a group by 'the wording and layout notes in UG2-UX-10 to 16' in 1_0_0_NEXT_STEPS.md, section 'Findings of the UG2 reviews left for later (2026-10-07)'. Spot checks that the text is unchanged: 'Allievi sistemati' (CrewManagement.tsx:2759) and 'Spareggio deterministico' (DutyManagement.tsx:557) still exist."
+      }
     }
   ],
   "whatPassed": [
@@ -139,6 +243,8 @@
     "Playwright journeys on Pixel 7 emulation at 412x839 and 412x915: create course through the UI; empty Allievi/Barche/Avarie/Volontari/Comandate pages; manual student with an empty submit; assistant paste of a fictitious 18-row answer (review, missing age, unread lines, back-from-review confirm, 'Sono tutti'); add 9 boats, two faults, one unavailable boat, three volunteers; Comandate proposal, confirm, day page, Avvisi, summary overlay with Copia immagine and focus-trap check; crew page: create 10 crews, 6 timed seat+student placements, boats panel, destination chooser, warning detail, copy crews to Domenica AM and its result dialog, crew summary with Copia immagine and clipboard type; Valutazioni (rating, note, Riepilogo, Equipaggi tab); student profile; Settings and the erase confirmation; Rigenera and Ricalcola pages; phone Back through six flows.",
     "Responsive audit of 13 pages at 412, 390, 360, 320 and 320 px with html font-size 200 % (shots and counts in scratchpad review-ux/shots and sweep logs): horizontal scroll, controls under 40 px, text under 12 px, text contrast under 4.5:1, clipped names, line clamps.",
     "Simulated update banner using the component's own classes and offset over Allievi and the crew page; focus ring computed styles on Home and Allievi; font sizes of the person cards; short-viewport check of the note field (not reported: Chromium's static 420 px viewport does not model Android's soft keyboard).",
-    "Limits: a concurrent agent was editing src/ during the review (dev-server HMR errors appeared); every reported measurement was repeated on a git archive of cf26355 served from the scratchpad, so none depends on the uncommitted edits. Scratch files, screenshots and the snapshot live under the scratchpad directory, not in the repository."
+    "Limits: a concurrent agent was editing src/ during the review (dev-server HMR errors appeared); every reported measurement was repeated on a git archive of cf26355 served from the scratchpad, so none depends on the uncommitted edits. Scratch files, screenshots and the snapshot live under the scratchpad directory, not in the repository.",
+    "RECHECK 2026-10-08 at 1ec3e6c (independent re-check reviewer): own Playwright scripts (Chromium, Pixel 7 profile, dev server on a private port, stopped afterwards; scripts and screenshots in the scratchpad, none in the repository) on the review's ordinary names and on the hostile 40-student roster seeded through tests/e2e/ug2-hostile-roster-data.ts: Comandata day page, crew page and its name clipping, Volontari, Valutazioni (Allievi and Riepilogo), student Profilo, phone Back from the boats panel, the destination chooser and the warning detail, and the paste review's accessible names and alerts, at 412x915, 390x844, 360x780, 320x664 and 320x664 with html font-size 200% (and 130% and 150% for the crew cards)",
+    "RECHECK repo tests re-run on pixel-7-chrome: ug2-field-ux-fixes.spec.ts UX-1 (2 tests), UX-5 (2), UX-4 (1), UX-7 (4) and UX-9 (1), all passed; computed contrast of #5f6b7a, #5f7880 and the #4a7fc4 ring; src/styles.css and the 1ec3e6c diff; 1_0_0_NEXT_STEPS.md and CHANGELOG.md for what is recorded as limitation"
   ]
 }

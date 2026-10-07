@@ -129,7 +129,8 @@ milestone may change an engine only with evidence that the existing path cannot
 meet the approved workflow and the replacement does not add backend/sync scope.
 
 Speech requests microphone permission only after the user's first recording tap.
-Loading, recording, processing, review, denial and recoverable error are explicit.
+Loading, recording, processing, denial and recoverable error are explicit; since
+V03 the transcript goes straight into the text, with no review step.
 Audio is transient. Tests use deterministic audio fixtures, but milestone closure
 also requires labelled physical PC/Android/iPhone evidence. Record latency rather
 than inventing a fixed threshold.
@@ -224,7 +225,7 @@ log.
 
 Use low-effort semantic versions:
 
-- released baselines: 0.1.0, 0.2.0 and 0.3.0 (declared at UG2 on 2026-10-07);
+- released baselines: 0.1.0, 0.2.0 and 0.3.0 (declared at UG2 on 2026-10-08);
 - the next cycle is numbered when it is planned
   (`docs/post-mvp/1_0_0_NEXT_STEPS.md`) and assigned only at its release gate;
 - patch numbers for separately released fixes;

@@ -17,7 +17,8 @@ Record the owner's results, one entry per physical target, in
 The owner accepted V03 on 2026-09-25 after Android and PC/Chrome use despite
 slow, imperfect recognition. Apple/iPhone was unavailable and remains untested.
 This exception closes V03 only; the unreported detailed checks below are not
-marked PASS. Repeat the release-candidate checks at UG2.
+marked PASS. At UG2 the owner accepted speech as it is (see the outcome
+below).
 
 1. Open a student's note editor. Type a short prefix, then tap **Detta**.
    Confirm permission is requested only after the tap.
@@ -40,9 +41,9 @@ phrase or transcript. The result must be editable and recoverable.
 
 ## UG2 release-candidate checks
 
-Repeat speech against the exact UG2 release candidate and record it in
-`.evidence/UG2/physical-device-review.json`. The V03 results do not replace this
-release-candidate check.
+Speech was to be repeated against the exact UG2 release candidate; the owner
+accepted it as it is instead (UG2-PD-2 in
+`.evidence/UG2/physical-device-review.json`).
 
 ### Scan: Android (iPhone deferred)
 
@@ -98,7 +99,7 @@ table-rule eraser added in S4 costs about 0.3–0.5 s on a desktop and about 2 s
    "Tutti gli allievi assegnati" note.
 2. Tap **Condividi** in the note and check the share sheet offers the image.
 
-**Outcome at UG2 (2026-10-06/07).** The owner ran the checks on their Android
+**Outcome at UG2 (2026-10-06 to 08).** The owner ran the checks on their Android
 phone and released 0.3.0. They had no iPhone: every iPhone check, and the
 items not observed (the icon and launch colour, the scan time, the first
 offline dictation message, erasing the course), are listed in

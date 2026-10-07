@@ -110,6 +110,8 @@ Recorded with their evidence in `.evidence/UG2/*-review.json`; none blocks
   fold (UG2-UX-8); a pasted answer is lost on Back.
 - **Crew cards** cut a long name with "…" at narrow widths (UG2-RS-2, rulebook
   R05): the owner decides whether names may take two lines.
+- **Phone Back** from the crew page's destination chooser and warning detail
+  still goes to Home; the boats panel was fixed (UG2-UX-4, partly fixed).
 - Smaller items: sex inferred wrongly for some foreign first names
   (UG2-FUN-5), no warning for a missing size (UG2-FUN-10), warning severity
   shown by dot colour only in the detail (UG2-FUN-11), the C chip hidden while
