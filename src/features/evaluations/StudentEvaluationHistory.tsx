@@ -217,7 +217,7 @@ export function StudentEvaluationHistory({
             title="Riepilogo settimana"
           />
 
-          <div className="sticky top-0 z-10 -mx-1 mb-2 min-w-0 max-w-full border-b bg-background/95 px-1 py-3 shadow-[0_4px_12px_rgb(23_56_89/0.06)] backdrop-blur-sm">
+          <div className="sticky top-0 z-10 -mx-[4px] mb-2 min-w-0 max-w-full border-b bg-background/95 px-[4px] py-3 shadow-[0_4px_12px_rgb(23_56_89/0.06)] backdrop-blur-sm">
             <h2 className="break-words text-xl font-black leading-tight text-foreground">
               {subjectName}
             </h2>

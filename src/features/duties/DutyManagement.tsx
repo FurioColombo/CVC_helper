@@ -1055,10 +1055,12 @@ function DutySummaryDayCard({
         style={{ backgroundColor: edgeColor }}
       />
       <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
-        {/* In rem, like the label inside it: a fixed 34px column let the
-            label run into the names once the phone enlarged its text. */}
+        {/* At least 2.25rem, like the label inside it, and wider when the
+            label needs it: a fixed 34px column let it run into the names once
+            the phone enlarged its text, and a fixed 2.25rem did the same in
+            a wider font (Linux's DejaVu Sans). */}
         <span
-          className="flex w-[2.25rem] shrink-0 flex-col gap-0.5 pt-px"
+          className="flex min-w-[2.25rem] shrink-0 flex-col gap-0.5 pt-px"
           style={{ color: edgeColor }}
         >
           <span className="block text-base leading-none font-black tracking-tight">
@@ -1718,7 +1720,7 @@ export function DutyManagement({
           </section>
           {settings.completedDayIds.length === 0 && (
             <Button
-              className="mt-4 w-full"
+              className="mt-4 h-auto w-full py-2"
               onClick={() =>
                 openScreen({ kind: "configure", recalculate: false })
               }

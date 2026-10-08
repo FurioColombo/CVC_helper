@@ -799,7 +799,7 @@ function PersonButton({
     >
       {person.personType === "volunteer" && role ? (
         <VolunteerRoleBadge
-          className={`${compact ? "size-7" : "size-9"} shrink-0 text-xs`}
+          className={`${compact ? "h-7 min-w-7" : "h-9 min-w-9"} shrink-0 text-xs`}
           role={role}
         />
       ) : (
@@ -2662,7 +2662,10 @@ export function CrewManagement({
           />
 
           {previousSessionId && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            // Two columns while both buttons fit (every ordinary width, from
+            // 320 px); one when enlarged text or a wider font no longer lets
+            // a word of theirs fit its half.
+            <div className="mt-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))]">
               <Button
                 aria-label={`Copia equipaggi da ${sessionLabel(previousSessionId)}`}
                 className="h-auto min-h-11 px-2 text-xs"
@@ -2844,17 +2847,23 @@ export function CrewManagement({
                   </section>
                 )}
 
-                <button
-                  aria-label="Gestisci barche in uscita"
-                  className="flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-3 text-left text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
-                  onClick={() => openCrewScreen("boats")}
-                  type="button"
-                >
-                  <span>Barche nell’uscita</span>
-                  <span>
-                    {plan.selectedBoatIds.length}/{boats.length}
-                  </span>
-                </button>
+                {/* The count goes under the label when enlarged text leaves no
+                    room beside it. The button sits in a plain block: as a grid
+                    item of this region, Chrome sized its row before its
+                    content wrapped, and the second line spilled out. */}
+                <div>
+                  <button
+                    aria-label="Gestisci barche in uscita"
+                    className="flex min-h-11 w-full flex-wrap items-center justify-between gap-x-3 rounded-xl border bg-card px-3 py-1 text-left text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
+                    onClick={() => openCrewScreen("boats")}
+                    type="button"
+                  >
+                    <span>Barche nell’uscita</span>
+                    <span>
+                      {plan.selectedBoatIds.length}/{boats.length}
+                    </span>
+                  </button>
+                </div>
 
                 {destinationCrewId && destinationCrewIndex >= 0 && (
                   <section
@@ -3111,7 +3120,7 @@ export function CrewManagement({
                         </h2>
                         <button
                           aria-label={`Destinazione equipaggio ${crewIndex + 1}: ${destinationLabel(crew.id)}`}
-                          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left @max-[17rem]:min-w-min @max-[17rem]:px-0 outline-none focus-visible:ring-3 focus-visible:ring-ring ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
+                          className={`flex min-h-11 min-w-min flex-1 items-center justify-center gap-2 rounded-xl border px-2 py-1 text-left @max-[17rem]:px-0 outline-none focus-visible:ring-3 focus-visible:ring-ring ${crew.destination === "boat" && boatById.get(crew.boatId ?? "")?.availability === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : "bg-muted/50"}`}
                           disabled={busy}
                           onClick={() => {
                             setSelected(null)
@@ -3568,10 +3577,12 @@ export function CrewManagement({
                   </div>
                 </section>
 
-                <p className="flex items-center gap-2 rounded-2xl bg-muted px-[16px] py-3 text-xs text-muted-foreground">
+                <p className="flex flex-wrap items-center gap-2 rounded-2xl bg-muted px-[16px] py-3 text-xs text-muted-foreground">
                   <ShipWheel aria-hidden="true" className="size-4 shrink-0" />
-                  Barche in uscita e destinazioni vengono salvate
-                  automaticamente.
+                  <span className="min-w-0 flex-1 basis-40">
+                    Barche in uscita e destinazioni vengono salvate
+                    automaticamente.
+                  </span>
                 </p>
               </div>
               {/* Three equal columns; when the text is enlarged until a word of

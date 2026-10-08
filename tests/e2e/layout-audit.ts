@@ -193,13 +193,33 @@ export async function auditLayout(
         const rects = Array.from(range.getClientRects()).filter(
           (rect) => rect.width > 0 && rect.height > 0,
         )
-        // A word the line broke in the middle (it has pieces on two lines).
+        // A word the line broke in the middle (it has pieces on two lines) —
+        // unless the word alone is wider than the whole component it lives in
+        // (its nearest query container): then no layout could keep it whole,
+        // as with a long surname in the profile's 48 px heading at 320 px with
+        // 200% text in a wide font. A label too wide for its own narrow column
+        // ("Volontari" in a third of the quick bar) still counts.
         if (
           rects.some(
             (rect) => Math.abs(rect.top - rects[0]!.top) > rect.height / 2,
           )
         ) {
-          broken.push(match[0])
+          const wordWidth = rects.reduce((sum, rect) => sum + rect.width, 0)
+          let container: HTMLElement | null = parent
+          while (
+            container &&
+            getComputedStyle(container).containerType === "normal"
+          ) {
+            container = container.parentElement
+          }
+          const containerStyle = container ? getComputedStyle(container) : null
+          const containerWidth =
+            container && containerStyle
+              ? container.clientWidth -
+                Number.parseFloat(containerStyle.paddingLeft) -
+                Number.parseFloat(containerStyle.paddingRight)
+              : Number.POSITIVE_INFINITY
+          if (wordWidth <= containerWidth) broken.push(match[0])
         }
         for (const rect of rects) {
           const visible = visiblePart(rect, parent)
