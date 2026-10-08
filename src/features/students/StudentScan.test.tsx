@@ -186,16 +186,10 @@ describe("StudentScan name order", () => {
     await openReview(SURNAME_FIRST)
     expect(addStudents).not.toHaveBeenCalled()
 
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
-      "Veldor",
-    )
-    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue(
-      "Caterina",
-    )
-    expect(screen.getByLabelText(/^Cognome riga line-2-2$/)).toHaveValue(
-      "Liosca",
-    )
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga 1$/)).toHaveValue("Veldor")
+    expect(screen.getByLabelText(/^Nome riga 2$/)).toHaveValue("Caterina")
+    expect(screen.getByLabelText(/^Cognome riga 2$/)).toHaveValue("Liosca")
     // The inferred correction is applied, while the sheet-wide correction
     // remains available as a compact action rather than a reading banner.
     expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
@@ -224,10 +218,8 @@ describe("StudentScan name order", () => {
       candidates: SURNAME_FIRST.candidates.slice(0, 1),
     })
     expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
-      "Veldor",
-    )
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga 1$/)).toHaveValue("Veldor")
   })
 
   it("asks again when a remembered order disagrees with the sheet's own decisive vote", async () => {
@@ -246,7 +238,7 @@ describe("StudentScan name order", () => {
       screen.getByText(/nome in prima posizione in 1 righe, in ultima in 2/),
     ).toBeVisible()
     // Nothing was silently applied: the raw reading is still on screen.
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Veldor")
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Veldor")
   })
 
   it("keeps the explicit fallback and remembers its answer", async () => {
@@ -287,10 +279,8 @@ describe("StudentScan name order", () => {
     })
     // Surname first, so `Rossi` is surname under either split; the unproven
     // boundary is offered, not settled.
-    expect(screen.getByLabelText(/^Nome riga compound/)).toHaveValue(
-      "Maria Giulia",
-    )
-    expect(screen.getByLabelText(/^Cognome riga compound/)).toHaveValue("Rossi")
+    expect(screen.getByLabelText(/^Nome riga 3$/)).toHaveValue("Maria Giulia")
+    expect(screen.getByLabelText(/^Cognome riga 3$/)).toHaveValue("Rossi")
     expect(screen.getByText(/Nome o cognome composto/)).toBeVisible()
     await user.click(screen.getByRole("button", { name: "Aggiungi 3 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()
@@ -299,15 +289,15 @@ describe("StudentScan name order", () => {
   it("leaves a row alone once the operator has typed the name themselves", async () => {
     const user = await openReview(SURNAME_FIRST)
 
-    const firstName = screen.getByLabelText(/^Nome riga line-1-1$/)
+    const firstName = screen.getByLabelText(/^Nome riga 1$/)
     await user.clear(firstName)
     await user.type(firstName, "Valeria")
 
     await user.click(screen.getByRole("button", { name: "Inverti per tutti" }))
 
     // The hand-corrected row keeps what was typed rather than being re-split.
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Nome riga line-2-2$/)).toHaveValue("Liosca")
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Nome riga 2$/)).toHaveValue("Liosca")
   })
 
   it("offers an accessible per-row swap and acknowledges that row", async () => {
@@ -324,15 +314,13 @@ describe("StudentScan name order", () => {
       screen.getByRole("button", { name: "Scambia nome e cognome riga 1" }),
     )
 
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
-      "Veldor",
-    )
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga 1$/)).toHaveValue("Veldor")
     expect(screen.queryByText("Letto:")).not.toBeInTheDocument()
     // The old suggestion was read from "Veldor", which just became the
     // surname: the suggestion is made again from "Valeria", the given name now.
-    expect(screen.getByRole("radio", { name: "Donna" })).toBeChecked()
-    await user.click(screen.getByRole("radio", { name: "Donna" }))
+    expect(screen.getByRole("radio", { name: "F — donna" })).toBeChecked()
+    await user.click(screen.getByRole("radio", { name: "F — donna" }))
     const counters = screen.getByLabelText("Stato revisione scansione")
     expect(within(counters).getAllByText("0")).toHaveLength(2)
     expect(within(counters).getByText("1")).toBeVisible()
@@ -343,10 +331,8 @@ describe("StudentScan name order", () => {
       screen.getByRole("button", { name: "Applica Cognome · Nome" }),
     )
     expect(screen.queryByLabelText("Ordine dei nomi")).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Valeria")
-    expect(screen.getByLabelText(/^Cognome riga line-1-1$/)).toHaveValue(
-      "Veldor",
-    )
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Valeria")
+    expect(screen.getByLabelText(/^Cognome riga 1$/)).toHaveValue("Veldor")
     expect(
       screen.getByRole("button", { name: "Inverti per tutti" }),
     ).toBeVisible()
@@ -432,11 +418,17 @@ describe("StudentScan", () => {
 
     await user.click(screen.getByRole("button", { name: "Aggiungi 2 allievi" }))
     expect(addStudents).not.toHaveBeenCalled()
+    // One alert for the whole refusal, and the row says what is wrong in it,
+    // with its number, as plain text.
+    expect(screen.getAllByRole("alert")).toHaveLength(1)
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Prima di aggiungere, correggi la riga 1.",
+    )
     expect(
-      screen.getByText("Completa nome, cognome, età e sesso."),
+      screen.getByText(/^Allievo 1: controlla i campi segnati/),
     ).toBeVisible()
 
-    const surname = screen.getByLabelText(/^Cognome riga line-1-1$/)
+    const surname = screen.getByLabelText(/^Cognome riga 1$/)
     await user.clear(surname)
     await user.type(surname, "Rossi")
     await user.click(screen.getByRole("button", { name: "Rimuovi allievo 2" }))
@@ -457,6 +449,40 @@ describe("StudentScan", () => {
       ]),
     )
     expect(onCommitted).toHaveBeenCalledOnce()
+  })
+
+  it("names every review field by its row number and visible letters, and a refused save raises one alert (UG2-UX-9)", async () => {
+    const sheet = structuredClone(EXTRACTED)
+    // Row 1 lacks its first name and its sex, row 2 its sex only.
+    sheet.candidates[0]!.firstName = ""
+    sheet.candidates[0]!.sex = null
+    sheet.candidates[1]!.sex = null
+    const user = await openReview(sheet)
+
+    // Names say "riga n" (the card's "Allievo n"), never an internal row id,
+    // and the sex radios are named with the letters they show.
+    for (const row of [1, 2]) {
+      for (const field of ["Nome", "Cognome", "Età"]) {
+        expect(screen.getByLabelText(`${field} riga ${row}`)).toBeVisible()
+      }
+    }
+    expect(screen.queryByLabelText(/riga line-/)).not.toBeInTheDocument()
+    expect(screen.getAllByRole("radio", { name: "M — uomo" })).toHaveLength(2)
+    expect(screen.getAllByRole("radio", { name: "F — donna" })).toHaveLength(2)
+    const other = screen.getAllByRole("radio", { name: "Alt — altro" })
+    expect(other).toHaveLength(2)
+    // What is drawn on the third choice is "Alt": the name starts with it.
+    expect(other[0]!.closest("label")).toHaveTextContent(/^Alt$/)
+
+    await user.click(screen.getByRole("button", { name: "Aggiungi 2 allievi" }))
+    expect(addStudents).not.toHaveBeenCalled()
+    // One alert for the refusal; each row says what it lacks, as text.
+    expect(screen.getAllByRole("alert")).toHaveLength(1)
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Prima di aggiungere, correggi le righe 1, 2.",
+    )
+    expect(screen.getByText("Allievo 1: completa nome e sesso.")).toBeVisible()
+    expect(screen.getByText("Allievo 2: completa sesso.")).toBeVisible()
   })
 
   it("acknowledges a nonempty low-confidence field on focus and blur unchanged", async () => {
@@ -481,7 +507,7 @@ describe("StudentScan", () => {
       ...EXTRACTED,
       candidates: [candidate],
     })
-    const surname = screen.getByLabelText("Cognome riga line-1-1")
+    const surname = screen.getByLabelText("Cognome riga 1")
 
     expect(surname).toHaveValue("Rossl")
     expect(surname).toHaveClass("border-[#f79009]")
@@ -510,7 +536,7 @@ describe("StudentScan", () => {
       ...EXTRACTED,
       candidates: [candidate],
     })
-    const firstName = screen.getByLabelText("Nome riga line-1-1")
+    const firstName = screen.getByLabelText("Nome riga 1")
 
     await user.click(firstName)
     await user.tab()
@@ -541,10 +567,10 @@ describe("StudentScan", () => {
     })
 
     expect(screen.getByText("Alt")).toBeVisible()
-    const otherOption = screen.getByRole("radio", { name: "Altro" })
+    const otherOption = screen.getByRole("radio", { name: "Alt — altro" })
     expect(otherOption).toHaveAttribute("value", "other")
     expect(otherOption).toBeChecked()
-    const age = screen.getByLabelText("Età riga line-1-1")
+    const age = screen.getByLabelText("Età riga 1")
     const ageAndSexRow = age.parentElement?.parentElement
     expect(ageAndSexRow).toContainElement(
       screen.getByRole("radiogroup", { name: "Sesso" }),
@@ -567,7 +593,7 @@ describe("StudentScan", () => {
         },
       ],
     })
-    const age = screen.getByLabelText("Età riga line-1-1")
+    const age = screen.getByLabelText("Età riga 1")
 
     expect(age).toHaveValue("18")
     expect(age).toHaveAttribute("aria-invalid", "true")
@@ -685,7 +711,7 @@ describe("StudentScan", () => {
     await user.click(
       screen.getByRole("button", { name: "Vai al primo campo da completare" }),
     )
-    const firstName = screen.getByLabelText("Nome riga line-missing-1")
+    const firstName = screen.getByLabelText("Nome riga 1")
     await waitFor(() => expect(firstName).toHaveFocus())
     expect(screen.getByRole("status")).toHaveTextContent(
       "Riga 1, campo da completare. nome",
@@ -703,7 +729,7 @@ describe("StudentScan", () => {
         name: "Vai alla prima riga da controllare",
       }),
     )
-    const secondSurname = screen.getByLabelText("Cognome riga line-review-2")
+    const secondSurname = screen.getByLabelText("Cognome riga 2")
     await waitFor(() => expect(secondSurname).toHaveFocus())
     expect(screen.getByRole("status")).toHaveTextContent(
       "Riga 2, riga da controllare. cognome",
@@ -837,7 +863,7 @@ describe("StudentScan age-first review", () => {
       ],
     })
 
-    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
+    expect(screen.getByLabelText("Età riga 1")).toHaveValue("24")
     expect(
       screen.queryByLabelText(/^Data di nascita riga/),
     ).not.toBeInTheDocument()
@@ -854,7 +880,7 @@ describe("StudentScan age-first review", () => {
       candidates: [baseCandidate],
     })
 
-    const age = screen.getByLabelText("Età riga line-age-1")
+    const age = screen.getByLabelText("Età riga 1")
     expect(age).toHaveValue("24")
     expect(age).toHaveClass("border-[#f79009]")
     expect(screen.getByText("Da controllare")).toBeVisible()
@@ -877,7 +903,7 @@ describe("StudentScan age-first review", () => {
       ],
     })
 
-    expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("24")
+    expect(screen.getByLabelText("Età riga 1")).toHaveValue("24")
     expect(
       screen.queryByLabelText(/^Data di nascita riga/),
     ).not.toBeInTheDocument()
@@ -912,7 +938,7 @@ describe("StudentScan age-first review", () => {
         ],
       })
 
-      const age = screen.getByLabelText("Età riga line-age-1")
+      const age = screen.getByLabelText("Età riga 1")
       fireEvent.change(age, { target: { value: invalidAge } })
 
       expect(age).toHaveValue(invalidAge)
@@ -950,7 +976,7 @@ describe("StudentScan age-first review", () => {
         candidates: [conflictingCandidate()],
       })
 
-      expect(screen.getByLabelText("Età riga line-age-1")).toHaveValue("20")
+      expect(screen.getByLabelText("Età riga 1")).toHaveValue("20")
       expect(
         screen.getByText(
           "Età sul foglio 20, dalla data 24 all’inizio del corso.",
@@ -975,7 +1001,7 @@ describe("StudentScan age-first review", () => {
         unsuitable: false,
         candidates: [conflictingCandidate()],
       })
-      const age = screen.getByLabelText("Età riga line-age-1")
+      const age = screen.getByLabelText("Età riga 1")
 
       await user.click(
         screen.getByRole("button", { name: "Usa l’età dalla data (24)" }),
@@ -1002,7 +1028,7 @@ describe("StudentScan age-first review", () => {
         unsuitable: false,
         candidates: [conflictingCandidate()],
       })
-      const age = screen.getByLabelText("Età riga line-age-1")
+      const age = screen.getByLabelText("Età riga 1")
 
       await user.click(
         screen.getByRole("button", { name: "Tieni l’età sul foglio (20)" }),
@@ -1029,7 +1055,7 @@ describe("StudentScan age-first review", () => {
         unsuitable: false,
         candidates: [conflictingCandidate()],
       })
-      const age = screen.getByLabelText("Età riga line-age-1")
+      const age = screen.getByLabelText("Età riga 1")
 
       await user.clear(age)
       await user.type(age, "30")
@@ -1320,14 +1346,14 @@ describe("StudentScan sex suggestion freshness", () => {
       unsuitable: false,
       candidates: [baseCandidate],
     })
-    expect(screen.getByRole("radio", { name: "Uomo" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "M — uomo" })).toBeChecked()
 
     const firstName = screen.getByLabelText(/^Nome riga/)
     await user.clear(firstName)
     await user.type(firstName, "Giulia")
 
-    expect(screen.getByRole("radio", { name: "Uomo" })).not.toBeChecked()
-    expect(screen.getByRole("radio", { name: "Donna" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "M — uomo" })).not.toBeChecked()
+    expect(screen.getByRole("radio", { name: "F — donna" })).toBeChecked()
   })
 
   it("clears a stale sex on a per-row swap unless the operator chose it", async () => {
@@ -1340,7 +1366,7 @@ describe("StudentScan sex suggestion freshness", () => {
       screen.getByRole("button", { name: "Scambia nome e cognome riga 1" }),
     )
     expect(screen.getByLabelText(/^Nome riga/)).toHaveValue("Rossi")
-    expect(screen.getByRole("radio", { name: "Uomo" })).not.toBeChecked()
+    expect(screen.getByRole("radio", { name: "M — uomo" })).not.toBeChecked()
   })
 
   it("never overrides a sex the operator picked, even after editing the name", async () => {
@@ -1355,14 +1381,14 @@ describe("StudentScan sex suggestion freshness", () => {
         },
       ],
     })
-    await user.click(screen.getByRole("radio", { name: "Altro" }))
-    expect(screen.getByRole("radio", { name: "Altro" })).toBeChecked()
+    await user.click(screen.getByRole("radio", { name: "Alt — altro" }))
+    expect(screen.getByRole("radio", { name: "Alt — altro" })).toBeChecked()
 
     const firstName = screen.getByLabelText(/^Nome riga/)
     await user.clear(firstName)
     await user.type(firstName, "Giulia")
 
-    expect(screen.getByRole("radio", { name: "Altro" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "Alt — altro" })).toBeChecked()
   })
 
   it("does not clear an existing sex while a blank given name is filled in for the first time", async () => {
@@ -1380,7 +1406,7 @@ describe("StudentScan sex suggestion freshness", () => {
     const firstName = screen.getByLabelText(/^Nome riga/)
     await user.type(firstName, "Mario")
 
-    expect(screen.getByRole("radio", { name: "Uomo" })).toBeChecked()
+    expect(screen.getByRole("radio", { name: "M — uomo" })).toBeChecked()
   })
 })
 
@@ -1430,7 +1456,7 @@ describe("StudentScan review counter navigation", () => {
     for (let tap = 0; tap < 4; tap += 1) {
       await user.click(reviewButton)
       await waitFor(() =>
-        expect(screen.getByLabelText(/^Cognome riga line-1-/)).toHaveFocus(),
+        expect(screen.getByLabelText(/^Cognome riga 1/)).toHaveFocus(),
       )
     }
 
@@ -1542,7 +1568,7 @@ describe("StudentScan unsaved review guard", () => {
     await user.click(
       screen.getByRole("button", { name: "Continua la revisione" }),
     )
-    expect(screen.getByLabelText(/^Nome riga line-1-1$/)).toHaveValue("Mario")
+    expect(screen.getByLabelText(/^Nome riga 1$/)).toHaveValue("Mario")
 
     await user.click(
       screen.getByRole("button", { name: "Scegli un’altra immagine" }),
@@ -1850,7 +1876,7 @@ describe("StudentScan assistant paste", () => {
     expect(
       screen.queryByRole("heading", { name: /Righe non lette/ }),
     ).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/^Nome riga paste-4/)).toHaveValue("Luca")
+    expect(screen.getByLabelText(/^Nome riga 2$/)).toHaveValue("Luca")
   })
 
   it("stays on the paste screen with an error when the answer is not in the requested format", async () => {
@@ -1974,7 +2000,7 @@ describe("StudentScan assistant paste", () => {
     ).not.toBeInTheDocument()
     // The fix ran and added the second row (its name field is visible)
     // rather than losing it, and neither row needs its own check.
-    expect(screen.getByLabelText(/^Nome riga paste-4/)).toHaveValue("Paolo")
+    expect(screen.getByLabelText(/^Nome riga 2$/)).toHaveValue("Paolo")
     // The fix ran, but nothing was saved: Enter never reached the form.
     expect(addStudents).not.toHaveBeenCalled()
   })

@@ -542,7 +542,9 @@ in that model's group as `<model> · Senza barca` with a muted mark. If
 no students remain available, a small centered CVC-blue `Tutti gli allievi
 assegnati` note appears at the bottom. If Copy is offered, it copies that image,
 never plain text. All groups must fit in the image; above twelve crews two
-columns are allowed. Preserve readable names by reducing vertical spacing
+columns are allowed. The Comandate summary (owner, 2026-09-28) lists each
+day's students in the same card style, two columns, and is copied as an image
+the same way. Preserve readable names by reducing vertical spacing
 before font size.
 
 ## 8. Evaluations
@@ -601,8 +603,9 @@ fixed threshold is invented before evidence exists.
 
 For V03 only, the owner accepted the existing speech path on 2026-09-25 after
 using it on Android and PC/Chrome, despite slow and imperfect recognition.
-Physical Apple/iPhone speech was unavailable and is not verified. Keep it on
-the UG2 release-candidate checklist; V03 closure does not imply an iPhone pass.
+Physical Apple/iPhone speech was unavailable and is not verified; on 2026-10-06
+the owner moved the iPhone checks to future work. V03 closure does not imply an
+iPhone pass.
 
 OCR uses the acquisition/review contract in section 3.6. Quality is measured
 against anonymous/synthetic field/person truth. Aim near 90% of readable fields on

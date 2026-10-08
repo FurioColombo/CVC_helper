@@ -252,7 +252,11 @@ test("verifies the complete crew workflow across students, duties and boats", as
   }
   await copiedBoats.getByRole("button", { name: "Conferma barche" }).click()
   await assignDestination(page, 1, "RS Quest 2")
-  await assignDestination(page, 2, "Mezzi")
+  // Copying crews keeps a Mezzi crew's destination (UG2-FUN-9): crew 2 was
+  // Mezzi on Saturday and still is, with no boat to pick.
+  await expect(
+    page.getByRole("button", { name: "Destinazione equipaggio 2: Mezzi" }),
+  ).toBeVisible()
   await assignDestination(page, 3, "RS Quest 7")
 
   await page.getByRole("button", { name: "Dina, equipaggio 2" }).click()

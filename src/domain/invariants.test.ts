@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  blockingIssues,
   validateBoatRecords,
   validateCourseState,
   validateCrewRecords,
@@ -627,5 +628,110 @@ describe("course-state invariants", () => {
         expect.arrayContaining(["invalid-crew-member-slot"]),
       )
     })
+  })
+})
+
+// UG2-DAT-1 / DAT-2: the checker keeps reporting these, and a screen that
+// reads the data survives them; nothing else is let through.
+describe("issues a screen survives", () => {
+  const MARTA = {
+    id: "student-1",
+    firstName: "Marta",
+    surname: "Veldor",
+    sex: "female",
+  }
+
+  it.each([
+    ["2000-02-30", "invalid-student-date-of-birth"],
+    ["0002-03-12", "invalid-student-date-of-birth"],
+    ["20000-03-12", "invalid-student-date-of-birth"],
+    ["12/03/2000", "invalid-student-date-of-birth"],
+  ])("reports the stored birth date %s but does not block", (value, code) => {
+    const issues = validateStudentRecords([{ ...MARTA, dateOfBirth: value }])
+
+    expect(issues.map((issue) => issue.code)).toEqual([code])
+    expect(blockingIssues(issues)).toEqual([])
+  })
+
+  it("does not report a valid date with surrounding spaces at all", () => {
+    expect(
+      validateStudentRecords([{ ...MARTA, dateOfBirth: " 2000-03-12 " }]),
+    ).toEqual([])
+  })
+
+  it("does not block a student with no usable age source", () => {
+    const issues = validateStudentRecords([
+      { ...MARTA, dateOfBirth: "", declaredAgeAtCourseStart: null },
+      { id: "student-2", dateOfBirth: "", declaredAgeAtCourseStart: 500 },
+    ])
+
+    expect(issues.map((issue) => issue.code).sort()).toEqual([
+      "invalid-student-declared-age",
+      "missing-student-age-source",
+    ])
+    expect(blockingIssues(issues)).toEqual([])
+  })
+
+  it("does not block a fault updated before it was created", () => {
+    const issues = validateBoatRecords(
+      [
+        {
+          id: "boat-1",
+          type: "RS Quest",
+          number: "7",
+          availability: "available",
+        },
+      ],
+      [
+        {
+          id: "fault-1",
+          boatId: "boat-1",
+          description: "Scotta usurata",
+          state: "open",
+          createdAt: "2026-08-30T12:00:00.000Z",
+          updatedAt: "2026-08-30T11:59:00.000Z",
+        },
+      ],
+    )
+
+    expect(issues.map((issue) => issue.code)).toEqual([
+      "invalid-fault-chronology",
+    ])
+    expect(blockingIssues(issues)).toEqual([])
+  })
+
+  it("still blocks a broken reference, even next to a survivable issue", () => {
+    const issues = [
+      ...validateStudentRecords([{ ...MARTA, dateOfBirth: "2000-02-30" }]),
+      ...validateDutyRecords(
+        [{ ...MARTA, dateOfBirth: "2000-03-12" }],
+        [{ dayId: "monday", studentId: "student-gone" }],
+        [],
+      ),
+      ...validateBoatRecords(
+        [],
+        [
+          {
+            id: "fault-1",
+            boatId: "boat-gone",
+            description: "x",
+            state: "open",
+            createdAt: "2026-08-30T12:00:00.000Z",
+            updatedAt: "2026-08-30T12:00:00.000Z",
+          },
+        ],
+      ),
+    ]
+
+    expect(issues.map((issue) => issue.code).sort()).toEqual([
+      "dangling-duty-student",
+      "dangling-fault-boat",
+      "invalid-student-date-of-birth",
+    ])
+    expect(
+      blockingIssues(issues)
+        .map((issue) => issue.code)
+        .sort(),
+    ).toEqual(["dangling-duty-student", "dangling-fault-boat"])
   })
 })

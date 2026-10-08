@@ -1,0 +1,393 @@
+{
+  "appVersion": "0.2.0",
+  "schemaContract": "PowerSync local-only tables at tag v0.2.0 (students.courseNote and dutySettings.extraDayIds present; students.declaredAgeAtCourseStart and crews.capacity absent)",
+  "tables": {
+    "courses": [
+      {
+        "id": "course-v020-d2",
+        "active": 1,
+        "family": "Deriva",
+        "level": 2,
+        "isoWeek": 38,
+        "year": 2026,
+        "startDate": "2026-09-19",
+        "endDate": "2026-09-26",
+        "label": "D2 38 2026"
+      }
+    ],
+    "students": [
+      {
+        "id": "student-v020-tommaso",
+        "courseId": "course-v020-d2",
+        "firstName": "Tommaso",
+        "surname": "Ferri",
+        "nickname": "Tom",
+        "dateOfBirth": "2011-05-14",
+        "sex": "male",
+        "phone": null,
+        "size": "M",
+        "initialNote": "Prima uscita in barca",
+        "courseNote": "Timone da rivedere",
+        "active": 1
+      },
+      {
+        "id": "student-v020-elisa",
+        "courseId": "course-v020-d2",
+        "firstName": "Elisa",
+        "surname": "Marchetti",
+        "nickname": null,
+        "dateOfBirth": "2008-09-22",
+        "sex": "female",
+        "phone": null,
+        "size": "S",
+        "initialNote": null,
+        "courseNote": null,
+        "active": 1
+      },
+      {
+        "id": "student-v020-irene",
+        "courseId": "course-v020-d2",
+        "firstName": "Irene",
+        "surname": "Gallo",
+        "nickname": null,
+        "dateOfBirth": "2008-09-19",
+        "sex": "female",
+        "phone": null,
+        "size": "M",
+        "initialNote": null,
+        "courseNote": "Compie diciotto anni il primo giorno",
+        "active": 1
+      },
+      {
+        "id": "student-v020-davide",
+        "courseId": "course-v020-d2",
+        "firstName": "Davide",
+        "surname": "Sartori",
+        "nickname": null,
+        "dateOfBirth": "1995-04-03",
+        "sex": "male",
+        "phone": "+390000000002",
+        "size": "L",
+        "initialNote": "Patente nautica",
+        "courseNote": null,
+        "active": 1
+      },
+      {
+        "id": "student-v020-sara",
+        "courseId": "course-v020-d2",
+        "firstName": "Sara",
+        "surname": "Fontana",
+        "nickname": null,
+        "dateOfBirth": "2001-06-08",
+        "sex": "female",
+        "phone": null,
+        "size": "XS",
+        "initialNote": null,
+        "courseNote": "Brava con le manovre",
+        "active": 1
+      },
+      {
+        "id": "student-v020-paolo",
+        "courseId": "course-v020-d2",
+        "firstName": "Paolo",
+        "surname": "Conti",
+        "nickname": null,
+        "dateOfBirth": "1987-11-30",
+        "sex": "male",
+        "phone": null,
+        "size": "XL",
+        "initialNote": "Ritirato dopo il primo giorno",
+        "courseNote": null,
+        "active": 0
+      }
+    ],
+    "volunteers": [
+      {
+        "id": "volunteer-v020-alba",
+        "courseId": "course-v020-d2",
+        "name": "Alba ADV",
+        "role": "ADV"
+      },
+      {
+        "id": "volunteer-v020-nico",
+        "courseId": "course-v020-d2",
+        "name": "Nico CT",
+        "role": "CT"
+      },
+      {
+        "id": "volunteer-v020-ugo",
+        "courseId": "course-v020-d2",
+        "name": "Ugo IS",
+        "role": "IS"
+      }
+    ],
+    "boats": [
+      {
+        "id": "boat-v020-quest-7",
+        "courseId": "course-v020-d2",
+        "type": "RS Quest",
+        "number": "7",
+        "availability": "available"
+      },
+      {
+        "id": "boat-v020-quest-12",
+        "courseId": "course-v020-d2",
+        "type": "RS Quest",
+        "number": "12",
+        "availability": "unavailable"
+      },
+      {
+        "id": "boat-v020-quest-15",
+        "courseId": "course-v020-d2",
+        "type": "RS Quest",
+        "number": "15",
+        "availability": "available"
+      },
+      {
+        "id": "boat-v020-vago-3",
+        "courseId": "course-v020-d2",
+        "type": "Laser Vago",
+        "number": "3",
+        "availability": "available"
+      }
+    ],
+    "faults": [
+      {
+        "id": "fault-v020-quest-7-open",
+        "boatId": "boat-v020-quest-7",
+        "description": "Cima della randa consumata",
+        "state": "open",
+        "createdAt": "2026-09-19T08:00:00.000Z",
+        "updatedAt": "2026-09-19T08:00:00.000Z"
+      },
+      {
+        "id": "fault-v020-quest-12-reported",
+        "boatId": "boat-v020-quest-12",
+        "description": "Deriva che non scende",
+        "state": "reported",
+        "createdAt": "2026-09-19T08:30:00.000Z",
+        "updatedAt": "2026-09-19T09:15:00.000Z"
+      },
+      {
+        "id": "fault-v020-quest-15-resolved",
+        "boatId": "boat-v020-quest-15",
+        "description": "Bozzello da sostituire",
+        "state": "resolved",
+        "createdAt": "2026-09-19T08:45:00.000Z",
+        "updatedAt": "2026-09-19T10:00:00.000Z"
+      }
+    ],
+    "dutyAssignments": [
+      {
+        "id": "duty-v020-saturday-davide",
+        "courseId": "course-v020-d2",
+        "dayId": "saturday",
+        "studentId": "student-v020-davide"
+      },
+      {
+        "id": "duty-v020-sunday-elisa",
+        "courseId": "course-v020-d2",
+        "dayId": "sunday",
+        "studentId": "student-v020-elisa"
+      },
+      {
+        "id": "duty-v020-monday-irene",
+        "courseId": "course-v020-d2",
+        "dayId": "monday",
+        "studentId": "student-v020-irene"
+      },
+      {
+        "id": "duty-v020-monday-tommaso",
+        "courseId": "course-v020-d2",
+        "dayId": "monday",
+        "studentId": "student-v020-tommaso"
+      },
+      {
+        "id": "duty-v020-tuesday-sara",
+        "courseId": "course-v020-d2",
+        "dayId": "tuesday",
+        "studentId": "student-v020-sara"
+      }
+    ],
+    "dutySettings": [
+      {
+        "id": "course-v020-d2",
+        "courseId": "course-v020-d2",
+        "desiredPerDay": 1,
+        "fewerDayIds": "[]",
+        "extraDayIds": "[\"monday\"]",
+        "balanceMinors": 1,
+        "balanceSex": 1,
+        "tieBreaker": "similar-age",
+        "stayOverStudentIds": "[\"student-v020-davide\"]",
+        "completedDayIds": "[\"saturday\"]",
+        "acknowledgedWarningKeys": "[]"
+      }
+    ],
+    "crews": [
+      {
+        "id": "crew-v020-sat-pm-1",
+        "courseId": "course-v020-d2",
+        "sessionId": "sat-pm",
+        "destination": "boat",
+        "boatId": "boat-v020-quest-7",
+        "position": 0
+      },
+      {
+        "id": "crew-v020-sat-pm-2",
+        "courseId": "course-v020-d2",
+        "sessionId": "sat-pm",
+        "destination": "mezzi",
+        "boatId": null,
+        "position": 1
+      },
+      {
+        "id": "crew-v020-sat-pm-3",
+        "courseId": "course-v020-d2",
+        "sessionId": "sat-pm",
+        "destination": "boat",
+        "boatId": "boat-v020-quest-15",
+        "position": 2
+      },
+      {
+        "id": "crew-v020-sun-am-1",
+        "courseId": "course-v020-d2",
+        "sessionId": "sun-am",
+        "destination": "boat",
+        "boatId": "boat-v020-quest-15",
+        "position": 0
+      }
+    ],
+    "crewMembers": [
+      {
+        "id": "member-v020-sat-pm-1-tommaso",
+        "crewId": "crew-v020-sat-pm-1",
+        "personId": "student-v020-tommaso",
+        "personType": "student",
+        "position": 0
+      },
+      {
+        "id": "member-v020-sat-pm-1-nico",
+        "crewId": "crew-v020-sat-pm-1",
+        "personId": "volunteer-v020-nico",
+        "personType": "volunteer",
+        "position": 1
+      },
+      {
+        "id": "member-v020-sat-pm-2-elisa",
+        "crewId": "crew-v020-sat-pm-2",
+        "personId": "student-v020-elisa",
+        "personType": "student",
+        "position": 0
+      },
+      {
+        "id": "member-v020-sat-pm-3-davide",
+        "crewId": "crew-v020-sat-pm-3",
+        "personId": "student-v020-davide",
+        "personType": "student",
+        "position": 0
+      },
+      {
+        "id": "member-v020-sat-pm-3-sara",
+        "crewId": "crew-v020-sat-pm-3",
+        "personId": "student-v020-sara",
+        "personType": "student",
+        "position": 1
+      },
+      {
+        "id": "member-v020-sun-am-1-irene",
+        "crewId": "crew-v020-sun-am-1",
+        "personId": "student-v020-irene",
+        "personType": "student",
+        "position": 0
+      },
+      {
+        "id": "member-v020-sun-am-1-davide",
+        "crewId": "crew-v020-sun-am-1",
+        "personId": "student-v020-davide",
+        "personType": "student",
+        "position": 1
+      }
+    ],
+    "landAssignments": [
+      {
+        "id": "land-v020-sat-pm-irene",
+        "courseId": "course-v020-d2",
+        "sessionId": "sat-pm",
+        "studentId": "student-v020-irene"
+      },
+      {
+        "id": "land-v020-sun-am-elisa",
+        "courseId": "course-v020-d2",
+        "sessionId": "sun-am",
+        "studentId": "student-v020-elisa"
+      }
+    ],
+    "sessionBoats": [
+      {
+        "id": "session-boat-v020-sat-pm-7",
+        "courseId": "course-v020-d2",
+        "sessionId": "sat-pm",
+        "boatId": "boat-v020-quest-7",
+        "position": 0
+      },
+      {
+        "id": "session-boat-v020-sat-pm-15",
+        "courseId": "course-v020-d2",
+        "sessionId": "sat-pm",
+        "boatId": "boat-v020-quest-15",
+        "position": 1
+      },
+      {
+        "id": "session-boat-v020-sun-am-15",
+        "courseId": "course-v020-d2",
+        "sessionId": "sun-am",
+        "boatId": "boat-v020-quest-15",
+        "position": 0
+      }
+    ],
+    "evaluations": [
+      {
+        "id": "evaluation-v020-tommaso-sat-pm",
+        "studentId": "student-v020-tommaso",
+        "sessionId": "sat-pm",
+        "value": "+",
+        "note": "Timone sicuro"
+      },
+      {
+        "id": "evaluation-v020-elisa-sat-pm",
+        "studentId": "student-v020-elisa",
+        "sessionId": "sat-pm",
+        "value": null,
+        "note": "Prima volta sul mezzo di appoggio"
+      },
+      {
+        "id": "evaluation-v020-davide-sat-pm",
+        "studentId": "student-v020-davide",
+        "sessionId": "sat-pm",
+        "value": "++",
+        "note": null
+      },
+      {
+        "id": "evaluation-v020-sara-sat-pm",
+        "studentId": "student-v020-sara",
+        "sessionId": "sat-pm",
+        "value": "=",
+        "note": null
+      },
+      {
+        "id": "evaluation-v020-irene-sun-am",
+        "studentId": "student-v020-irene",
+        "sessionId": "sun-am",
+        "value": "-",
+        "note": "Poca attenzione alla randa"
+      }
+    ],
+    "meta": [
+      {
+        "id": "schema",
+        "value": 1
+      }
+    ]
+  }
+}

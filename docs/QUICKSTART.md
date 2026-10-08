@@ -4,8 +4,8 @@ CVC Helper is a mobile-first offline PWA for running one week of a CVC sailing c
 students, boats and faults, Comandate, crews with boat assignment, evaluations and
 volunteers (ADV/IS/CT). Data stays on the device in a local PowerSync database — no
 account, backend or sync; Italian OCR reads student sheets and Italian speech dictates
-notes. 0.2.0, the field-UX release, was tagged on 2026-09-21; the 0.3.0 cycle is the
-active work and lives on `codex/0.3.0`.
+notes. 0.2.0, the field-UX release, was tagged on 2026-09-21, and 0.3.0, the first
+release used on a phone, on 2026-10-08; work continues on `codex/0.3.0`.
 
 ## Where things are
 

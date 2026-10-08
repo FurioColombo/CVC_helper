@@ -24,7 +24,7 @@ import {
   getDefaultBoatType,
   parseBoatNumbers,
 } from "@/domain/boat"
-import { validateBoatRecords } from "@/domain/invariants"
+import { blockingIssues, validateBoatRecords } from "@/domain/invariants"
 import { BoatIdentity } from "@/features/boats/BoatIdentity"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
@@ -74,7 +74,7 @@ async function readValidBoatData(courseId: string) {
     listBoats(courseId),
     listFaults(courseId),
   ])
-  if (validateBoatRecords(boats, faults).length > 0) {
+  if (blockingIssues(validateBoatRecords(boats, faults)).length > 0) {
     throw new Error("Persisted boat state violates invariants")
   }
   return { boats, faults }
@@ -94,7 +94,7 @@ function BoatPageHeader({
       <div className="flex min-w-0 items-center gap-1 max-[380px]:basis-full">
         <button
           aria-label={`Indietro da ${title}`}
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:size-10"
+          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring max-[380px]:size-10"
           onClick={onBack}
           type="button"
         >
@@ -272,7 +272,9 @@ function BoatEntryForm({
           className="rounded-2xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground"
         >
           {numbersToCreate.length > 0
-            ? `Verranno create ${numbersToCreate.length} barche ${type}.`
+            ? numbersToCreate.length === 1
+              ? `Verrà creata 1 barca ${type}.`
+              : `Verranno create ${numbersToCreate.length} barche ${type}.`
             : "Nessuna nuova barca da aggiungere."}
           {duplicateNumbers.length > 0 && (
             <> Ignorati i numeri già presenti: {duplicateNumbers.join(", ")}.</>
@@ -361,7 +363,7 @@ function BoatList({
             // 3.375rem rather than 4.5, and half the vertical padding: the row
             // was 72px tall around a 36px mark, so a quarter of every card was
             // air. The mark keeps its size; only the space around it goes.
-            className={`flex min-h-[3.375rem] items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-1.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 max-[380px]:flex-wrap max-[380px]:gap-y-1.5 max-[380px]:py-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
+            className={`flex min-h-[3.375rem] items-center gap-3 rounded-2xl border border-l-4 px-3.5 py-1.5 text-left shadow-[0_6px_18px_rgb(6_59_82/0.05)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring max-[380px]:flex-wrap max-[380px]:gap-y-1.5 max-[380px]:py-2 ${copy.edge} ${state === "unavailable" ? "bg-muted/70 text-muted-foreground" : "bg-card"}`}
             key={boat.id}
             onClick={() => onOpen(boat.id)}
             type="button"

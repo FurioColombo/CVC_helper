@@ -19,6 +19,7 @@ After using the deployed F4 on their Android phone:
 | Copies made before the rewrite | (2026-10-06) Claude Code wrote the prompt for the Codex session that deletes them.                                                                                                                                                                               |
 | Release                        | (2026-10-06) The deployed app is 0.3.0 for the owner. The two remaining items move to future work.                                                                                                                                                               |
 | iPhone checks                  | (2026-10-06) Deferred until the owner says: they have no iPhone.                                                                                                                                                                                                 |
+| Formal UG2 close               | (2026-10-06) Go ahead: the six independent reviews, the version bump and the `v0.3.0` tag.                                                                                                                                                                       |
 | GitHub Support                 | (2026-10-06) Not contacted; the purge request stays in future work.                                                                                                                                                                                              |
 
 ## Decisions of 2026-10-03

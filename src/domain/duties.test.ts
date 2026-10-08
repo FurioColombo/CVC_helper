@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { DUTY_DAYS } from "@/domain/config"
 import {
@@ -10,6 +10,7 @@ import {
   getDutyWarnings,
   getVisibleDutyWarnings,
   groupDutyStudentsForDay,
+  ignoreMissingStudentDuties,
   pruneDutyWarningAcknowledgements,
   setStudentDutyForDay,
   type DutyConfig,
@@ -830,5 +831,199 @@ describe("duty proposal rules", () => {
         "stale-warning",
       ]),
     ).toEqual([friday.key])
+  })
+})
+
+const ALL_DAY_IDS = DUTY_DAYS.map(({ id }) => id)
+
+// UG2-FUN-1: once every day is completed there is nothing left to distribute.
+// An active student who never got a duty must still be reported, and none of
+// the functions the Comandate screen calls on every render may throw.
+describe("a week whose every day is completed", () => {
+  it("has nothing to distribute, whoever is still without a duty", () => {
+    expect(getDutyDistributionRequirement(3, [])).toEqual({
+      base: 0,
+      extraDayCount: 0,
+    })
+    expect(getDutyDistributionRequirement(0, [])).toEqual({
+      base: 0,
+      extraDayCount: 0,
+    })
+    // A proposal still cannot place students on no day.
+    expect(() => calculateDutyCapacities(3, [], [])).toThrow(
+      "No remaining duty days",
+    )
+  })
+
+  it("reports an active student without a duty instead of throwing", () => {
+    const records = students(3)
+    const assignments = [
+      { dayId: "saturday" as const, studentId: records[0]!.id },
+      { dayId: "sunday" as const, studentId: records[1]!.id },
+    ]
+    const warnings = getDutyWarnings(
+      records,
+      assignments,
+      { ...CONFIG, extraDayIds: [] },
+      ALL_DAY_IDS,
+    )
+
+    expect(warnings).toEqual([
+      expect.objectContaining({
+        key: `missing:${records[2]!.id}`,
+        severity: "major",
+        studentId: records[2]!.id,
+      }),
+    ])
+  })
+
+  it("also copes with the legacy settings that carry no extra days", () => {
+    const records = students(2)
+    expect(() =>
+      getDutyWarnings(
+        records,
+        [],
+        { ...CONFIG, extraDayIds: undefined as never },
+        ALL_DAY_IDS,
+      ),
+    ).not.toThrow()
+  })
+
+  it("keeps the completed history when every student already served", () => {
+    const records = students(2)
+    const history = [
+      { dayId: "saturday" as const, studentId: records[0]!.id },
+      { dayId: "sunday" as const, studentId: records[1]!.id },
+    ]
+    const proposal = generateDutyProposal(
+      records,
+      { ...CONFIG, extraDayIds: [] },
+      history,
+      ALL_DAY_IDS,
+    )
+
+    expect(proposal.assignments).toEqual(history)
+    expect(Object.values(proposal.capacities).every((n) => n === 0)).toBe(true)
+  })
+})
+
+describe("duty warnings in Italian singular and plural", () => {
+  it("says 1 assegnato and 0 assegnati", () => {
+    const records = students(3)
+    const warnings = getDutyWarnings(
+      records,
+      [
+        { dayId: "monday", studentId: records[0]!.id },
+        { dayId: "tuesday", studentId: records[1]!.id },
+        { dayId: "wednesday", studentId: records[2]!.id },
+      ],
+      {
+        ...CONFIG,
+        extraDayIds: ["saturday", "sunday", "thursday"],
+      },
+    )
+    const details = warnings.map(({ detail }) => detail)
+
+    expect(details).toContain("1 assegnato; proposta equilibrata 0.")
+    expect(details).toContain("0 assegnati; proposta equilibrata 1.")
+    expect(details.join("\n")).not.toMatch(/\b1 assegnati\b/)
+  })
+
+  it.each([
+    // 14 students over 7 days: two a day, so two Friday places.
+    [14, "0 permanenti su 2 posti utili del venerdì."],
+    // 7 students over 7 days: one Friday place.
+    [7, "0 permanenti su 1 posto utile del venerdì."],
+  ])(
+    "reads the stay-over advisory for %s students",
+    (studentCount, expected) => {
+      const records = students(studentCount)
+      const warning = getDutyWarnings(records, [], {
+        ...CONFIG,
+        extraDayIds: [],
+        stayOverStudentIds: records.slice(0, 2).map(({ id }) => id),
+      }).find(({ key }) => key.startsWith("friday-stayover"))
+
+      expect(warning?.detail).toBe(expected)
+    },
+  )
+})
+
+// UG2-DAT-1: a stored birth date that is not a real date must not stop the
+// duty proposal or the warnings; the student has no known age, is not marked
+// a minor, and still gets a duty.
+describe("a student with no usable age", () => {
+  const UNUSABLE_DATES = [
+    "2000-02-30",
+    "0002-03-12",
+    "20000-03-12",
+    "12/03/2000",
+    "not-a-date",
+  ]
+
+  it.each(UNUSABLE_DATES)(
+    "still gets a duty and a warning pass with the stored date %s",
+    (dateOfBirth) => {
+      const records = students(8)
+      records[3] = {
+        ...records[3]!,
+        dateOfBirth,
+        declaredAgeAtCourseStart: null,
+      }
+      for (const tieBreaker of ["alphabetical", "similar-age"] as const) {
+        const config = {
+          ...CONFIG,
+          tieBreaker,
+          extraDayIds: ["saturday"] as DutyConfig["extraDayIds"],
+        }
+        const proposal = generateDutyProposal(records, config)
+        expect(proposal.assignments).toHaveLength(8)
+        expect(
+          proposal.assignments.some(
+            ({ studentId }) => studentId === "student-04",
+          ),
+        ).toBe(true)
+        expect(() =>
+          getDutyWarnings(records, proposal.assignments, config),
+        ).not.toThrow()
+      }
+    },
+  )
+})
+
+describe("a duty for a student the course does not have", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("is dropped from the view and reported, and the rest is kept", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const plan = {
+      assignments: [
+        { dayId: "saturday" as const, studentId: "student-01" },
+        { dayId: "wednesday" as const, studentId: "student-deleted" },
+      ],
+      settings: null,
+    }
+
+    const read = ignoreMissingStudentDuties(students(2), plan)
+
+    expect(read.assignments).toEqual([
+      { dayId: "saturday", studentId: "student-01" },
+    ])
+    expect(read.settings).toBeNull()
+    expect(plan.assignments).toHaveLength(2)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]![0])).toContain("wednesday")
+  })
+
+  it("stays silent when every duty belongs to a student of the course", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const plan = {
+      assignments: [{ dayId: "monday" as const, studentId: "student-02" }],
+    }
+
+    expect(ignoreMissingStudentDuties(students(2), plan)).toEqual(plan)
+    expect(warn).not.toHaveBeenCalled()
   })
 })

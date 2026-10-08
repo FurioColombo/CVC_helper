@@ -187,7 +187,10 @@ export function copyPreviousCrewPlan({
             sessionId,
             members: [],
             capacity: crew.capacity,
-            destination: "unassigned",
+            // Mezzi is a real crew, not a boat: copying keeps it. A boat
+            // link is session-local (that boat may be unavailable or not
+            // going out), so a crew on a boat starts without one.
+            destination: crew.destination === "mezzi" ? "mezzi" : "unassigned",
             boatId: null,
           },
           members,
@@ -212,27 +215,6 @@ export function copyPreviousBoatSelection(
       (available.has(boatId) || requiredBoatIds.includes(boatId)) &&
       values.indexOf(boatId) === index,
   )
-}
-
-export function formatCrewAnnouncement({
-  destination,
-  exactBoatLabel,
-  inferredBoatType,
-  memberLabels,
-}: {
-  destination: CrewDestination
-  exactBoatLabel?: string | null
-  inferredBoatType?: string | null
-  memberLabels: readonly string[]
-}) {
-  const names = memberLabels.join(" / ") || "Equipaggio vuoto"
-  const prefix =
-    destination === "boat"
-      ? exactBoatLabel
-      : destination === "mezzi"
-        ? "Mezzi"
-        : inferredBoatType
-  return prefix ? `${prefix} — ${names}` : names
 }
 
 export function getStandardCrewSize(family: CourseFamily, level: CourseLevel) {

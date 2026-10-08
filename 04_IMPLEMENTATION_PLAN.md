@@ -1,6 +1,6 @@
 # Implementation plan — active 0.3.0 work
 
-Updated 2026-10-06. Read **Where this cycle stands**, then only the section for
+Updated 2026-10-08. Read **Where this cycle stands**, then only the section for
 the active milestone. Closed 0.3.0 milestone details are in
 `archive/v0.3.0-completed-milestones.md`; the full plan through R1 is at
 `archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`. Completed 0.1.0 and
@@ -31,7 +31,7 @@ lifecycle.
 | F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
 | F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
 | F4 | Complete. The owner's 2026-10-03/04 phone feedback: a free seat takes a volunteer; the crew and Comandate summaries are copied as an image painted from the screen's own layout (Copia immagine, Condividi; no download); unplaced volunteers leave the summary; the Home menu cards are all blue. The owner confirmed it on Android on 2026-10-05. `.evidence/F4/` records `npm run verify:all` on the deployed source (952 unit tests; 200 browser tests passed, 39 skipped, none failed), the browser evidence and the self-review (no blocker). |
-| UG2 | Not formally closed. For the owner the deployed app is 0.3.0 (2026-10-06); the iPhone checks (no iPhone) and asking GitHub Support moved to future work by their decision, and the six UG2 reviews, version bump and `v0.3.0` tag wait until the owner asks. The local history-cleanup precondition below is complete. On Android the owner confirmed phone Back, the assistant paste (ChatGPT and Claude) and the installed app offline (2026-10-03), the F4 images (2026-10-05) and the update banner, accepted for now (2026-10-06). On 2026-09-28 the owner reported the camera scan on their phone as fully usable and the paste as a satisfying fallback (the phone paste failure goes to F2); speech stays as it is, slow and imprecise, with work moved to future work. Open questions are in `docs/post-mvp/0_3_0_QUESTIONS.md`; the road to a shared database and 1.0.0 is `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
+| UG2 | Complete; 0.3.0 released and tagged `v0.3.0` on 2026-10-08. Six independent reviews with no remaining blocker (scope and field UX after a re-check), the 0.1.0 and 0.2.0 upgrade journeys, a hostile 40-student roster, and `npm run verify:all` on the final source (1062 unit tests; 244 browser tests passed, 67 skipped, none failed); see `.evidence/UG2/`. The owner's physical checks are recorded for Android; the iPhone checks and asking GitHub Support are future work by the owner's decision. The local history-cleanup precondition below is complete. |
 
 **Local history-cleanup precondition for UG2 — complete 2026-10-06:** the
 published history was rewritten before the first 0.3.0 push to remove real
@@ -118,8 +118,8 @@ completion, clean checkpoint. Use `verify:quick` before a commit and
 The 2026-09-25 owner request put UX1 and the subsequent UX2 phone feedback
 ahead of V03's owner-device checks. The owner later accepted the current speech
 path after Android and PC/Chrome use, with Apple/iPhone unavailable. This closes
-V03 only; the untested Apple path is a reminder for the UG2 release-candidate
-check. Do not claim a physical iPhone PASS. The owner explicitly approved
+V03 only; the untested Apple path was a reminder for the UG2 release-candidate
+check, which the owner moved to future work on 2026-10-06. Do not claim a physical iPhone PASS. The owner explicitly approved
 deployment after adversarial review for phone testing. Pages deploys only from
 `main`.
 
@@ -140,9 +140,10 @@ after trying speech on Android and PC/Chrome, while describing it as slow,
 imperfect and only borderline usable. No per-step device timings or recovery
 results were reported. Apple/iPhone could not be tested and remains explicitly
 untested in `.evidence/V03/speech-device-evidence.json`. This is a V03-only
-exception to `03_TECHNICAL_DECISIONS.md` §5, not an iPhone PASS. UG2 must repeat
-speech on its exact release candidate and cover physical phone scanning; V03
-device results do not substitute for UG2 evidence.
+exception to `03_TECHNICAL_DECISIONS.md` §5, not an iPhone PASS. UG2 was to repeat
+speech on its exact release candidate and cover physical phone scanning; at
+UG2 the owner accepted speech as it is and moved the iPhone checks to future
+work (`.evidence/UG2/physical-device-review.json`, UG2-PD-1 and UG2-PD-2).
 
 **Evidence:** benchmark, verification, browser evidence, speech review and page
 changelog and owner-provided physical-device evidence. The 823 MB corpus and
@@ -160,7 +161,8 @@ data remains ignored. `npm run verify` passed with 520 tests and four refreshed
 Pixel 7 Chrome journeys passed. The independent review found no remaining
 implementation blocker. The owner's subsequent Android and PC/Chrome feedback
 accepts the current path with known quality and latency limits; Apple/iPhone
-remains untested and on the UG2 checklist. No `verify:all` run is claimed.
+remains untested (moved to future work by the owner on 2026-10-06). No
+`verify:all` run is claimed.
 
 **Closure, 2026-09-25:** Node 24.19.0 `npm run verify` passed 538 tests,
 domain/compatibility checks and the production PWA build. The earlier four
@@ -168,7 +170,7 @@ focused Pixel 7 browser journeys remain the browser evidence; they were not
 rerun for this owner-acceptance update. The independent closure review is
 PASS_WITH_FINDINGS with zero blockers. The owner's device report accepts speech
 as borderline usable after Android and PC/Chrome use. Apple/iPhone and detailed
-physical checklist steps are unverified and remain on the UG2 checklist.
+physical checklist steps are unverified; see `.evidence/UG2/physical-device-review.json`.
 
 ## V05 — LLM-assisted paste path
 
@@ -448,7 +450,7 @@ failed. The iPhone copy and share remain the owner's to check at UG2.
 ## UG2 — 0.3.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** PENDING
+**Status:** COMPLETE
 
 Run `verify:all` on Node 24, including the deterministic full week and all
 browser projects. Exercise an upgraded week through the visible UI, close and
@@ -469,6 +471,37 @@ F1 repaired the browser specs that still described older screens, including
 **Evidence:** `.evidence/UG2/` verification, browser, migration, synthetic
 roster, six reviewer reports and actual physical-device report. Do not publish
 the development branch to `main` or update Pages without asking the owner.
+
+**Closure, 2026-10-08.** The owner declared the deployed app 0.3.0 on
+2026-10-06 and asked for the formal close. Sonnet agents built the 0.2.0
+upgrade journey (a frozen 0.2.0 schema and fixture; the 0.1.0 path was
+already covered) and a hostile fictitious 40-student roster, then six
+independent reviewers tried to break the release. Scope (2 blockers: a false
+"faster dictation" claim and four stress-layout defects parked as an
+unrecorded owner decision) and field UX (1 blocker: names cut to initials on
+the Comandata day page at ordinary widths) failed; functional, data
+integrity, code quality and regression passed with findings. Fixed before
+closing: the changelog and every stale document; the crew and Comandate
+pages, Volontari, the profile and Valutazioni at 320 px with 200% text
+(`cf26355`, `1ec3e6c`; ordinary sizes pixel-identical except where a
+finding required a change); the Comandate crash once every day is completed;
+Italian collation and plurals; the manual age range; a copied Mezzi crew;
+malformed birth dates, fault chronology and orphan duties no longer blocking
+screens (`6db5aea`); whole names on the day page, Back from the boats panel,
+contrast and the paste review's accessible names (`1ec3e6c`); a build check
+that the test hook never ships (`b77df80`); and the dictation journeys
+waiting for a slow model download. An independent re-check moved scope and
+field UX to PASS_WITH_FINDINGS. Every remaining finding is fixed, in the
+changelog's known limitations, or in `docs/post-mvp/1_0_0_NEXT_STEPS.md`.
+The physical-device review records the owner's Android observations; the
+iPhone checks and GitHub Support are future work by the owner's decision.
+`npm run verify:all` on the final source (`04bdc51`): 1062 unit tests, the
+full week, the offline OCR check and 244 browser tests passed, 67 skipped by
+design, none failed. CI on Linux had first failed eleven stress-layout checks
+in its wider DejaVu Sans; the layouts were made to wrap instead, and the whole
+suite passed locally with that font pinned before this run. Version 0.3.0, tag `v0.3.0`. Several agents were stopped
+by usage limits and one by a network error; each was relaunched from a clean
+or verified state, and no partial result was used unchecked.
 
 ## S4 — Measured OCR accuracy on real and synthetic rosters
 

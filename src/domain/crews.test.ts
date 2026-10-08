@@ -6,7 +6,6 @@ import {
   assignCrewDestination,
   copyPreviousBoatSelection,
   copyPreviousCrewPlan,
-  formatCrewAnnouncement,
   getOpenCrewSlotIndexes,
   getCrewCompleteness,
   getInitialCrewCapacity,
@@ -428,7 +427,9 @@ describe("crew composition rules", () => {
           sessionId: "sun-pm",
           members: [],
           capacity: 4,
-          destination: "unassigned",
+          // A Mezzi crew keeps its destination; a crew on a boat does not
+          // keep the boat (new-1 above).
+          destination: "mezzi",
           boatId: null,
         },
       ],
@@ -459,34 +460,6 @@ describe("crew composition rules", () => {
     ).toEqual(["boat-2", "boat-7"])
   })
 
-  it("formats every clean announcement state exactly", () => {
-    expect(
-      formatCrewAnnouncement({
-        destination: "boat",
-        exactBoatLabel: "Quest 7",
-        memberLabels: ["Mario", "Luca"],
-      }),
-    ).toBe("Quest 7 — Mario / Luca")
-    expect(
-      formatCrewAnnouncement({
-        destination: "unassigned",
-        inferredBoatType: "Quest",
-        memberLabels: ["Mario", "Luca"],
-      }),
-    ).toBe("Quest — Mario / Luca")
-    expect(
-      formatCrewAnnouncement({
-        destination: "unassigned",
-        memberLabels: ["Mario", "Luca"],
-      }),
-    ).toBe("Mario / Luca")
-    expect(
-      formatCrewAnnouncement({
-        destination: "mezzi",
-        memberLabels: ["Mario", "Luca"],
-      }),
-    ).toBe("Mezzi — Mario / Luca")
-  })
   it("adds a crew and removes an empty one, session-locally", () => {
     const added = addCrew(EMPTY_PLAN, "sat-pm", () => "crew-3", 2)
     expect(added.crews.map(({ id }) => id)).toEqual([

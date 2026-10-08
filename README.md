@@ -1,4 +1,4 @@
-# CVC Helper — 0.3.0 working set
+# CVC Helper — 0.3.0
 
 This repository is designed so Codex or Claude Code can start with a short prompt
 and follow the shared repository instructions.
@@ -34,9 +34,10 @@ A prompt can be as short as:
 > autonomously. Follow its scope, target, verification, evidence, review and Git
 > requirements.
 
-0.1.0 and 0.2.0 are released and tagged. The active cycle is 0.3.0; use the
-plan's **Where this cycle stands** table and first eligible incomplete milestone.
-`docs/post-mvp/0_3_0_OWNER_BRIEF.md` is the human decision record behind it.
+0.1.0, 0.2.0 and 0.3.0 are released and tagged. The road to a shared database
+is `docs/post-mvp/1_0_0_NEXT_STEPS.md`; use the plan's **Where this cycle
+stands** table and first eligible incomplete milestone. The owner's decisions
+are in `docs/post-mvp/0_3_0_QUESTIONS.md`.
 
 ## Third-party assets
 

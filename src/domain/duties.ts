@@ -4,7 +4,7 @@ import {
   type DutyTieBreaker,
   type StudentSex,
 } from "@/domain/config"
-import { calculateStudentAge, isStudentMinor } from "@/domain/student"
+import { isStudentMinor, resolveStudentAge } from "@/domain/student"
 
 export interface DutyStudent {
   id: string
@@ -81,10 +81,9 @@ export function getDutyDistributionRequirement(
     throw new Error("Invalid eligible student count")
   }
   assertCanonicalDaySelection(dayIds)
-  if (dayIds.length === 0) {
-    if (studentCount > 0) throw new Error("No remaining duty days")
-    return { base: 0, extraDayCount: 0 }
-  }
+  // Once every day is completed there is nothing left to distribute, whoever
+  // is still without a duty: that is for the warnings to say, not a failure.
+  if (dayIds.length === 0) return { base: 0, extraDayCount: 0 }
   return {
     base: Math.floor(studentCount / dayIds.length),
     extraDayCount: studentCount % dayIds.length,
@@ -101,6 +100,11 @@ export function calculateDutyCapacities(
     studentCount,
     dayIds,
   )
+  // A proposal has to place everybody it is given, so it cannot be made when
+  // no day is left (the screens only read the zero-day requirement above).
+  if (dayIds.length === 0 && studentCount > 0) {
+    throw new Error("No remaining duty days")
+  }
   assertCanonicalDaySelection(extraDayIds)
   const selectedDays = new Set(dayIds)
   if (
@@ -160,11 +164,10 @@ function compareStudents(
   courseStartDate: string,
 ) {
   if (tieBreaker === "similar-age") {
-    return (
-      calculateStudentAge(right, courseStartDate) -
-        calculateStudentAge(left, courseStartDate) ||
-      compareAlphabetically(left, right)
-    )
+    // A student with no usable age sorts after everybody with one.
+    const age = (student: DutyStudent) =>
+      resolveStudentAge(student, courseStartDate) ?? -1
+    return age(right) - age(left) || compareAlphabetically(left, right)
   }
   return compareAlphabetically(left, right)
 }
@@ -240,6 +243,45 @@ export function setStudentDutyForDay(
         ]
   }
   return assignments.filter((assignment) => !exactMatch(assignment))
+}
+
+/**
+ * Duties for students the course does not have (a write from a second window
+ * that still listed a student who was since deleted, or an older database).
+ * A screen drops them from view instead of refusing to open, and reports how
+ * many it dropped; the next save removes them from the stored plan.
+ */
+export function splitDanglingDutyAssignments(
+  students: ReadonlyArray<{ id: string }>,
+  assignments: readonly DutyAssignment[],
+) {
+  const known = new Set(students.map(({ id }) => id))
+  const kept: DutyAssignment[] = []
+  const dangling: DutyAssignment[] = []
+  for (const assignment of assignments) {
+    ;(known.has(assignment.studentId) ? kept : dangling).push(assignment)
+  }
+  return { kept, dangling }
+}
+
+/**
+ * The stored plan as a screen reads it: duties for students the course does
+ * not have are dropped from the view and reported, never a reason to refuse to
+ * open. The next save removes them from the stored plan.
+ */
+export function ignoreMissingStudentDuties<
+  Plan extends { assignments: DutyAssignment[] },
+>(students: ReadonlyArray<{ id: string }>, plan: Plan): Plan {
+  const { kept, dangling } = splitDanglingDutyAssignments(
+    students,
+    plan.assignments,
+  )
+  if (dangling.length > 0) {
+    console.warn(
+      `Ignoring ${dangling.length} duty assignment(s) for students that are not in the course (days: ${dangling.map(({ dayId }) => dayId).join(", ")})`,
+    )
+  }
+  return { ...plan, assignments: kept }
 }
 
 export function getDutyCoverage(
@@ -499,10 +541,10 @@ export function generateDutyProposal(
       }
       if (student.sex === "male") maleCounts.friday += 1
       if (student.sex === "female") femaleCounts.friday += 1
-      agesByDay.set("friday", [
-        ...(agesByDay.get("friday") ?? []),
-        calculateStudentAge(student, config.courseStartDate),
-      ])
+      const fridayAge = resolveStudentAge(student, config.courseStartDate)
+      if (fridayAge !== null) {
+        agesByDay.set("friday", [...(agesByDay.get("friday") ?? []), fridayAge])
+      }
       remaining.splice(
         remaining.findIndex(({ id }) => id === student.id),
         1,
@@ -551,7 +593,7 @@ export function generateDutyProposal(
     )
     if (openDays.length === 0) break
     const studentIsMinor = isStudentMinor(student, config.courseStartDate)
-    const age = calculateStudentAge(student, config.courseStartDate)
+    const age = resolveStudentAge(student, config.courseStartDate)
     openDays.sort((left, right) => {
       const minorDifference =
         config.balanceMinors && studentIsMinor
@@ -566,7 +608,7 @@ export function generateDutyProposal(
         const sexDifference = counts[left] - counts[right]
         if (sexDifference !== 0) return sexDifference
       }
-      if (config.tieBreaker === "similar-age") {
+      if (config.tieBreaker === "similar-age" && age !== null) {
         const ageDistance = (dayId: DutyDayId) => {
           const ages = agesByDay.get(dayId) ?? []
           if (ages.length === 0) return Number.POSITIVE_INFINITY
@@ -587,7 +629,9 @@ export function generateDutyProposal(
     if (studentIsMinor) minorCounts[dayId] += 1
     if (student.sex === "male") maleCounts[dayId] += 1
     if (student.sex === "female") femaleCounts[dayId] += 1
-    agesByDay.set(dayId, [...(agesByDay.get(dayId) ?? []), age])
+    if (age !== null) {
+      agesByDay.set(dayId, [...(agesByDay.get(dayId) ?? []), age])
+    }
   }
 
   return {
@@ -699,23 +743,28 @@ export function getDutyWarnings(
   const futureEligible = students.filter(
     ({ id, active }) => active === 1 && !completedStudents.has(id),
   )
-  let expected: Record<DutyDayId, number>
-  try {
-    expected = calculateConfiguredDutyCapacities(
-      futureEligible.length,
-      futureDays,
-      config,
-    )
-  } catch {
-    expected = calculateDutyCapacities(
-      futureEligible.length,
-      futureDays,
-      getLegacyExtraDayIds(
+  let expected: Record<DutyDayId, number> = emptyCapacities()
+  // With every day completed nothing is left to distribute: an active student
+  // without a duty is reported by the "non assegnato" warning above, and no
+  // headcount is expected of any day.
+  if (futureDays.length > 0) {
+    try {
+      expected = calculateConfiguredDutyCapacities(
         futureEligible.length,
         futureDays,
-        config.fewerDayIds,
-      ),
-    )
+        config,
+      )
+    } catch {
+      expected = calculateDutyCapacities(
+        futureEligible.length,
+        futureDays,
+        getLegacyExtraDayIds(
+          futureEligible.length,
+          futureDays,
+          config.fewerDayIds,
+        ),
+      )
+    }
   }
   futureDays.forEach((dayId) => {
     const actual = assignments.filter(
@@ -726,7 +775,7 @@ export function getDutyWarnings(
         key: `headcount:${dayId}:${actual}:${expected[dayId]}`,
         severity: "major",
         title: `Numero non previsto per ${dutyDayLabel(dayId)}`,
-        detail: `${actual} assegnati; proposta equilibrata ${expected[dayId]}.`,
+        detail: `${actual} ${actual === 1 ? "assegnato" : "assegnati"}; proposta equilibrata ${expected[dayId]}.`,
         dayId,
       })
     }
@@ -751,7 +800,7 @@ export function getDutyWarnings(
         key: `friday-stayover:${actualStayOver}:${target}:${sortedIds(stayOver)}`,
         severity: "advisory",
         title: "Preferenza venerdì non soddisfatta",
-        detail: `${actualStayOver} permanenti su ${target} posti utili del venerdì.`,
+        detail: `${actualStayOver} ${actualStayOver === 1 ? "permanente" : "permanenti"} su ${target} ${target === 1 ? "posto utile" : "posti utili"} del venerdì.`,
         dayId: "friday",
       })
     }

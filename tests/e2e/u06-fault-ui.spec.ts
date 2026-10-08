@@ -9,6 +9,11 @@ import {
   type TestInfo,
 } from "@playwright/test"
 
+import {
+  DICTATION_JOURNEY_TIMEOUT,
+  FIRST_DICTATION_TIMEOUT,
+} from "./speech-download"
+
 const LONG_FAULT =
   "Scotta randa sfibrata vicino al bozzello di poppa; controllare il grillo prima dell’uscita e sostituire se necessario."
 const SECOND_FAULT = "Timone duro durante la manovra di uscita"
@@ -105,6 +110,7 @@ async function capturePixelScreenshot(
 test("keeps long and simultaneous faults usable across states, reload and speech recovery", async ({
   page,
 }, testInfo) => {
+  test.setTimeout(DICTATION_JOURNEY_TIMEOUT)
   // U03 owns the successful deterministic audio fixture. U06 exercises the
   // real P09 form and a realistic permission failure so typed text survives.
   await page.addInitScript(() => {
@@ -136,7 +142,9 @@ test("keeps long and simultaneous faults usable across states, reload and speech
   await description.fill(LONG_FAULT)
   await dictation.click()
   const speechAlert = page.getByRole("alert")
-  await expect(speechAlert).toContainText(/microfono|dettatura/i)
+  await expect(speechAlert).toContainText(/microfono|dettatura/i, {
+    timeout: FIRST_DICTATION_TIMEOUT,
+  })
   await expect(speechAlert).toContainText(/testo/i)
   await expect(description).toHaveValue(LONG_FAULT)
   // The retry control keeps the shared panel recoverable after denial.

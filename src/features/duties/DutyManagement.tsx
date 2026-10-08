@@ -29,6 +29,7 @@ import {
   getDutyWarnings,
   getVisibleDutyWarnings,
   groupDutyStudentsForDay,
+  ignoreMissingStudentDuties,
   setStudentDutyForDay,
   type DutyAssignment,
   type DutyConfig,
@@ -37,7 +38,7 @@ import {
   type DutyStudentDayGroupEntry,
   type DutyWarning,
 } from "@/domain/duties"
-import { validateDutyRecords } from "@/domain/invariants"
+import { blockingIssues, validateDutyRecords } from "@/domain/invariants"
 import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
 import { makeSummaryFilename } from "@/lib/summaryShare"
 import { useNestedScreen } from "@/navigation/nestedScreen"
@@ -226,14 +227,18 @@ function defaultSettings(students: StudentRecord[]): CanonicalDutySettings {
 }
 
 async function readValidDutyData(courseId: string) {
-  const [students, plan] = await Promise.all([
+  const [students, storedPlan] = await Promise.all([
     listStudents(courseId),
     readDutyPlan(courseId),
   ])
+  // A duty for a student the course no longer has is dropped from view (and
+  // reported) rather than refusing to open the page that could fix the plan.
+  const plan = ignoreMissingStudentDuties(students, storedPlan)
   const settings = plan.settings ?? defaultSettings(students)
   if (
-    validateDutyRecords(students, plan.assignments, settings.completedDayIds)
-      .length > 0
+    blockingIssues(
+      validateDutyRecords(students, plan.assignments, settings.completedDayIds),
+    ).length > 0
   ) {
     throw new Error("Persisted duty state violates invariants")
   }
@@ -258,19 +263,31 @@ function DutyHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex min-w-0 items-center gap-1 max-[350px]:items-start">
-      <button
-        aria-label={`Indietro da ${title}`}
-        className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-        onClick={onBack}
-        type="button"
-      >
-        <ChevronLeft aria-hidden="true" className="size-5" />
-      </button>
-      <h1 className="min-w-0 flex-1 break-words text-center text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl max-[350px]:leading-tight">
-        {title}
-      </h1>
-      {action ?? <span aria-hidden="true" className="size-[44px] shrink-0" />}
+    // The title shares the row with the two 44 px buttons. When the text is
+    // enlarged until the longest word no longer fits beside them (200% text at
+    // 320 px: "Comandate" broke in the middle), the title takes a row of its own
+    // under the buttons, as the crew header does. The query is on the width of
+    // the header in rem, so it only triggers when the text is the problem.
+    <div className="@container mb-5 min-w-0">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-1 max-[350px]:items-start">
+        <button
+          aria-label={`Indietro da ${title}`}
+          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
+          onClick={onBack}
+          type="button"
+        >
+          <ChevronLeft aria-hidden="true" className="size-5" />
+        </button>
+        <h1 className="min-w-0 flex-1 break-words text-center text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl max-[350px]:leading-tight @max-[14rem]:order-last @max-[14rem]:basis-full @max-[14rem]:text-left">
+          {title}
+        </h1>
+        {action ?? (
+          <span
+            aria-hidden="true"
+            className="size-[44px] shrink-0 @max-[14rem]:hidden"
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -458,20 +475,35 @@ function DutyConfiguration({
               Base per giorno
             </span>
             <span className="block break-words text-xs leading-5 text-muted-foreground">
-              {proposalStudentCount} allievi · {remainingDayIds.length} giorni
+              {proposalStudentCount === 1
+                ? "1 allievo"
+                : `${proposalStudentCount} allievi`}{" "}
+              ·{" "}
+              {remainingDayIds.length === 1
+                ? "1 giorno"
+                : `${remainingDayIds.length} giorni`}
               {distribution.extraDayCount > 0 &&
-                ` · ${distribution.extraDayCount} posto${distribution.extraDayCount === 1 ? "" : "i"} extra`}
+                ` · ${distribution.extraDayCount} ${distribution.extraDayCount === 1 ? "posto" : "posti"} extra`}
             </span>
           </span>
         </section>
+
+        {remainingDayIds.length === 0 && (
+          <p
+            className="break-words rounded-2xl border bg-card p-3 text-sm leading-5 text-muted-foreground"
+            role="status"
+          >
+            Tutte le comandate sono completate: non resta niente da distribuire.
+          </p>
+        )}
 
         <fieldset className="min-w-0 max-w-full">
           <legend className="break-words text-sm font-black">
             Giorni con più persone
           </legend>
           <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
-            Scegli esattamente {distribution.extraDayCount} giorno
-            {distribution.extraDayCount === 1 ? "" : "i"}.
+            Scegli esattamente {distribution.extraDayCount}{" "}
+            {distribution.extraDayCount === 1 ? "giorno" : "giorni"}.
           </p>
           <div className="mt-2 grid min-w-0 max-w-full grid-cols-4 gap-2 max-[350px]:gap-[6px]">
             {remainingDayIds.map((dayId) => {
@@ -524,7 +556,7 @@ function DutyConfiguration({
         <label className="grid min-w-0 max-w-full gap-1.5 text-sm font-bold">
           <span className="break-words">Spareggio deterministico</span>
           <select
-            className="h-12 min-w-0 max-w-full truncate rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/30 max-[350px]:h-[48px] max-[350px]:px-[10px]"
+            className="h-12 min-w-0 max-w-full truncate rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring max-[350px]:h-[48px] max-[350px]:px-[10px]"
             onChange={(event) =>
               setDraft((current) => ({
                 ...current,
@@ -543,7 +575,7 @@ function DutyConfiguration({
             Restano la settimana successiva
           </legend>
           <details className="mt-2 rounded-2xl border bg-card">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:min-h-[48px] max-[350px]:gap-[8px] max-[350px]:px-[12px] max-[350px]:py-[8px]">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring max-[350px]:min-h-[48px] max-[350px]:gap-[8px] max-[350px]:px-[12px] max-[350px]:py-[8px]">
               <span className="min-w-0 break-words">
                 Scegli tra tutti gli allievi
               </span>
@@ -662,12 +694,19 @@ function StudentAssignmentCard({
   const name = getStudentDisplayName(student, allStudents)
   const hasMultipleDays = dayIds.length > 1
   return (
+    // UG2-UX-1: a name is never cut to initials. The name keeps its whole
+    // text as its flex basis, so when the name and the day chip with its remove
+    // button no longer fit side by side the chip and button drop to a row of
+    // their own under it (right-aligned, where they sit in a one-row card). A
+    // name wider than the card breaks onto more lines, as the rulebook asks at
+    // 200% text (R05). A card whose name fits beside its controls is drawn
+    // exactly as before.
     <article
-      className={`flex min-w-0 items-center gap-1 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2" : ""}`}
+      className={`flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0 rounded-2xl border bg-card p-1.5 shadow-[0_4px_14px_rgb(6_59_82/0.04)] max-[350px]:gap-x-[2px] max-[350px]:p-[4px] ${hasMultipleDays ? "col-span-2 @max-[14rem]:col-span-1" : ""}`}
     >
       {current ? (
         <span
-          className="flex min-h-10 min-w-0 flex-1 items-center truncate px-1 text-left text-sm font-bold max-[350px]:min-h-[40px] max-[350px]:break-words max-[350px]:px-[2px] max-[350px]:whitespace-normal"
+          className="flex min-h-10 min-w-0 flex-auto items-center px-1 text-left text-sm font-bold [overflow-wrap:anywhere] max-[350px]:min-h-[40px] max-[350px]:px-[2px]"
           title={name}
         >
           {name}
@@ -675,13 +714,13 @@ function StudentAssignmentCard({
       ) : (
         <button
           aria-label={name}
-          className="flex min-h-10 min-w-0 flex-1 items-center gap-1 rounded-xl px-1 text-left text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 max-[350px]:min-h-[40px] max-[350px]:min-w-[40px] max-[350px]:gap-[2px] max-[350px]:rounded-none max-[350px]:px-[2px] max-[350px]:text-primary max-[350px]:shadow-[inset_2px_0_0_#b9d4ec]"
+          className="flex min-h-10 min-w-0 flex-auto items-center gap-1 rounded-xl px-1 text-left text-sm font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring max-[350px]:min-h-[40px] max-[350px]:min-w-[40px] max-[350px]:gap-[2px] max-[350px]:rounded-none max-[350px]:px-[2px] max-[350px]:text-primary max-[350px]:shadow-[inset_2px_0_0_#b9d4ec]"
           disabled={completed || saving}
           onClick={onAdd}
           title={name}
           type="button"
         >
-          <span className="min-w-0 flex-1 truncate max-[350px]:break-words max-[350px]:whitespace-normal">
+          <span className="min-w-0 flex-auto [overflow-wrap:anywhere]">
             {name}
           </span>
           <Plus
@@ -703,7 +742,7 @@ function StudentAssignmentCard({
           role="img"
         />
       )}
-      <div className="flex shrink-0 items-center gap-0.5 max-[350px]:gap-[2px]">
+      <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-0.5 max-[350px]:gap-[2px]">
         {dayIds.map((assignedDayId) => (
           <span className="flex items-center gap-0.5" key={assignedDayId}>
             <span
@@ -716,7 +755,7 @@ function StudentAssignmentCard({
             {!completedDayIds.includes(assignedDayId) ? (
               <button
                 aria-label={`Rimuovi ${name} da ${getDayLabel(assignedDayId)}`}
-                className="grid size-10 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring/40 disabled:opacity-40 max-[350px]:size-[40px]"
+                className="grid size-10 place-items-center rounded-xl text-[#b42318] outline-none hover:bg-[#fff1ed] focus-visible:ring-3 focus-visible:ring-ring disabled:opacity-40 max-[350px]:size-[40px]"
                 disabled={completed || saving}
                 onClick={() => onRemove(assignedDayId)}
                 type="button"
@@ -800,25 +839,30 @@ function DayEditor({
 
   function renderCards(entries: DutyStudentDayGroupEntry[], current: boolean) {
     return entries.length > 0 ? (
-      <div className="grid grid-cols-2 items-start gap-2 max-[350px]:gap-[4px]">
-        {entries.map((entry) => (
-          <StudentAssignmentCard
-            allStudents={students}
-            completed={completed}
-            completedDayIds={completedDayIds}
-            current={current}
-            entry={entry}
-            key={entry.student.id}
-            onAdd={() =>
-              void updateAssignment(dayId, entry.student.id, !current)
-            }
-            onRemove={(targetDayId) =>
-              void updateAssignment(targetDayId, entry.student.id, false)
-            }
-            saving={saving}
-            courseStartDate={courseStartDate}
-          />
-        ))}
+      // One column when enlarged text would leave each card of two too narrow
+      // for a first name (a query on the list's width in rem: 200% text at
+      // 320 px, never ordinary text on a phone).
+      <div className="@container">
+        <div className="grid grid-cols-2 items-start gap-2 @max-[14rem]:grid-cols-1 max-[350px]:gap-[4px]">
+          {entries.map((entry) => (
+            <StudentAssignmentCard
+              allStudents={students}
+              completed={completed}
+              completedDayIds={completedDayIds}
+              current={current}
+              entry={entry}
+              key={entry.student.id}
+              onAdd={() =>
+                void updateAssignment(dayId, entry.student.id, !current)
+              }
+              onRemove={(targetDayId) =>
+                void updateAssignment(targetDayId, entry.student.id, false)
+              }
+              saving={saving}
+              courseStartDate={courseStartDate}
+            />
+          ))}
+        </div>
       </div>
     ) : (
       <p className="rounded-2xl border bg-card px-3 py-3 text-sm text-muted-foreground">
@@ -1011,10 +1055,12 @@ function DutySummaryDayCard({
         style={{ backgroundColor: edgeColor }}
       />
       <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">
-        {/* In rem, like the label inside it: a fixed 34px column let the
-            label run into the names once the phone enlarged its text. */}
+        {/* At least 2.25rem, like the label inside it, and wider when the
+            label needs it: a fixed 34px column let it run into the names once
+            the phone enlarged its text, and a fixed 2.25rem did the same in
+            a wider font (Linux's DejaVu Sans). */}
         <span
-          className="flex w-[2.25rem] shrink-0 flex-col gap-0.5 pt-px"
+          className="flex min-w-[2.25rem] shrink-0 flex-col gap-0.5 pt-px"
           style={{ color: edgeColor }}
         >
           <span className="block text-base leading-none font-black tracking-tight">
@@ -1172,7 +1218,7 @@ function DutySummaryView({
           </div>
           <button
             aria-label="Chiudi vista lettura"
-            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]/30"
+            className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[#c8d7db] bg-white outline-none focus-visible:ring-3 focus-visible:ring-[#0b526b]"
             data-snapshot-exclude="true"
             onClick={onClose}
             type="button"
@@ -1433,7 +1479,7 @@ export function DutyManagement({
           assignments.length > 0 || settings.completedDayIds.length > 0 ? (
             <button
               aria-label="Apri riepilogo comandate"
-              className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="grid size-[44px] shrink-0 place-items-center rounded-xl border bg-card text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
               onClick={() => setShowSummary(true)}
               type="button"
             >
@@ -1497,10 +1543,14 @@ export function DutyManagement({
           </div>
         </section>
       ) : (
-        <>
-          <div className="sticky top-2 z-10 mb-4 grid gap-2">
-            <div className="grid grid-cols-2 gap-2">
+        // The page is the query container, so the Ricalcola / Avvisi / coverage
+        // block can stop being sticky when the text is enlarged until it would
+        // hold more than half of the screen under the list (rulebook R12).
+        <div className="@container">
+          <div className="sticky top-2 z-10 mb-4 grid gap-2 @max-[14rem]:static">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">
               <Button
+                className="h-auto min-h-[44px] min-w-0 py-[8px]"
                 onClick={() =>
                   openScreen({ kind: "configure", recalculate: true })
                 }
@@ -1510,6 +1560,7 @@ export function DutyManagement({
                 Ricalcola
               </Button>
               <Button
+                className="h-auto min-h-[44px] min-w-0 py-[8px]"
                 onClick={() => openScreen({ kind: "warnings" })}
                 variant={visibleWarningCount > 0 ? "default" : "secondary"}
               >
@@ -1525,7 +1576,7 @@ export function DutyManagement({
               return (
                 <div
                   aria-label={`Copertura comandate ${coverage.assigned}/${coverage.total}`}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-black shadow-sm ${coverage.complete ? "bg-card text-foreground" : "border-[#e9d37c] bg-[#fff7df] text-[#78550d]"}`}
+                  className={`flex flex-wrap items-center justify-center gap-x-2 rounded-2xl border px-4 py-2.5 text-center text-sm font-black shadow-sm ${coverage.complete ? "bg-card text-foreground" : "border-[#e9d37c] bg-[#fff7df] text-[#78550d]"}`}
                   role="status"
                 >
                   <span>
@@ -1538,7 +1589,7 @@ export function DutyManagement({
           </div>
           <section
             aria-label="Piano comandate"
-            className="grid grid-cols-2 items-start gap-2.5"
+            className="grid grid-cols-[repeat(auto-fill,minmax(max(8.5rem,calc((100%_-_0.625rem)/2_-_0.5px)),1fr))] items-start gap-2.5"
           >
             {DUTY_DAYS.map(({ id, label }) => {
               const dayAssignments = assignments.filter(
@@ -1577,7 +1628,7 @@ export function DutyManagement({
                 >
                   <button
                     aria-label={`${label}, ${names.length} assegnati${completed ? ", completata" : ""}`}
-                    className="block w-full text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                    className="block w-full text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
                     onClick={() => openScreen({ kind: "day", dayId: id })}
                     type="button"
                   >
@@ -1636,7 +1687,7 @@ export function DutyManagement({
                     <div className="mt-2 border-t pt-2">
                       <details>
                         <summary
-                          className={`flex min-h-10 cursor-pointer list-none items-center justify-end gap-1 text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${dayHasMajorWarning ? "text-[#b42318]" : "text-[#996515]"}`}
+                          className={`flex min-h-10 cursor-pointer list-none items-center justify-end gap-1 text-xs font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring ${dayHasMajorWarning ? "text-[#b42318]" : "text-[#996515]"}`}
                         >
                           <AlertTriangle
                             aria-hidden="true"
@@ -1669,7 +1720,7 @@ export function DutyManagement({
           </section>
           {settings.completedDayIds.length === 0 && (
             <Button
-              className="mt-4 w-full"
+              className="mt-4 h-auto w-full py-2"
               onClick={() =>
                 openScreen({ kind: "configure", recalculate: false })
               }
@@ -1679,7 +1730,7 @@ export function DutyManagement({
               Rigenera intera proposta
             </Button>
           )}
-        </>
+        </div>
       )}
     </>
   )

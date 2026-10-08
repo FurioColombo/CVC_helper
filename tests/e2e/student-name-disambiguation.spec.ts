@@ -37,3 +37,21 @@ test("shows only the surname prefixes needed to distinguish same-initial names",
     page.getByRole("button", { name: /Mario Roc\., \d+ anni, M, Minorenne/ }),
   ).toBeVisible()
 })
+
+// UG2-FUN-4: a surname particle whose own space ends the distinguishing prefix
+// ("De Rossi" against "Del Rossi") must not leave a space before the dot.
+test("keeps the abbreviation dot against a surname particle", async ({
+  page,
+}) => {
+  await createCourse(page)
+  await addStudent(page, "De Rossi", 16)
+  await addStudent(page, "Del Rossi", 16)
+
+  await expect(
+    page.getByRole("button", { name: /^Mario De\., \d+ anni, M, Minorenne$/ }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: /^Mario Del\., \d+ anni, M, Minorenne$/ }),
+  ).toBeVisible()
+  await expect(page.getByRole("button", { name: /\s\.,/ })).toHaveCount(0)
+})

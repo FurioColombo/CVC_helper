@@ -1,0 +1,25 @@
+{
+  "milestone": "UG2",
+  "status": "PASS",
+  "recordedAt": "2026-10-08T03:02:44.798Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@2",
+  "gitCommit": "04bdc5185257fee36012809d9191063c190bc3ca",
+  "workingTreeClean": true,
+  "sourceDigest": "0e70da785b30383c68ff3207102ff7f9ff217cf17f97e1ca092499c5b90109aa",
+  "sourceFiles": 335,
+  "verificationScripts": [
+    "verify:all"
+  ],
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-10-08T02:20:19.406Z",
+      "durationMs": 2545388,
+      "exitCode": 0,
+      "outputTail": "[WebServer] 5:02:22 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 5:02:22 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 309 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (7.9s)\n[WebServer] 5:02:30 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 5:02:30 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 310 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › reads an answer whose line breaks were all turned into spaces (7.4s)\n[WebServer] 5:02:37 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 5:02:37 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 311 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:346:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (6.6s)\n\n  67 skipped\n  244 passed (36.7m)"
+    }
+  ]
+}

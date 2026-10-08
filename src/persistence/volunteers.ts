@@ -1,5 +1,6 @@
 import { VOLUNTEER_ROLES, type VolunteerRole } from "@/domain/config"
 import { validateVolunteerRecords } from "@/domain/invariants"
+import { compareItalianNames } from "@/domain/student"
 import { db } from "@/persistence/db"
 
 export interface VolunteerRecord {
@@ -44,7 +45,10 @@ export async function listVolunteers(courseId: string) {
     [courseId],
   )
   assertVolunteerRecords(records)
-  return records
+  // By name, in Italian order: SQLite's NOCASE puts accented initials last.
+  return records.sort((left, right) =>
+    compareItalianNames(left.name, right.name),
+  )
 }
 
 export async function createVolunteer(

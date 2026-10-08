@@ -114,7 +114,7 @@ export function StudentScanAssistantSection({
     <section className="mt-4 rounded-2xl border bg-card p-3 text-left">
       <button
         aria-expanded={expanded}
-        className="flex min-h-11 w-full items-center justify-between gap-2 text-left text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+        className="flex min-h-11 w-full items-center justify-between gap-2 text-left text-sm font-black outline-none focus-visible:ring-3 focus-visible:ring-ring"
         onClick={() => onExpandedChange(!expanded)}
         type="button"
       >

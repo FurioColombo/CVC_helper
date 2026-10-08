@@ -94,6 +94,28 @@ export interface InvariantIssue {
   message: string
 }
 
+/**
+ * Issues a screen survives instead of refusing to open (UG2). They are real
+ * findings the checker still reports, but none of them is a broken reference,
+ * and a screen that refused to open could not be used to repair them:
+ *
+ * - an unusable birth date or age: the student is shown as "età da completare"
+ *   and fixed in the edit form;
+ * - a fault updated "before" it was created: a phone clock that stepped back
+ *   writes this itself, and no feature reads the order.
+ */
+const RECOVERABLE_ISSUE_CODES: ReadonlySet<string> = new Set([
+  "invalid-student-date-of-birth",
+  "invalid-student-declared-age",
+  "missing-student-age-source",
+  "invalid-fault-chronology",
+])
+
+/** The issues that must still stop a screen from opening. */
+export function blockingIssues(issues: readonly InvariantIssue[]) {
+  return issues.filter(({ code }) => !RECOVERABLE_ISSUE_CODES.has(code))
+}
+
 function hasValue<T extends readonly string[]>(values: T, value: string) {
   return values.includes(value as T[number])
 }

@@ -236,11 +236,15 @@ export async function createFault(boatId: string, description: string) {
   return fault
 }
 
+// A fault is never "updated before it was created". The phone's clock can be
+// set back between the two (a manual fix, a network time step), so the new
+// stamp is the later of the clock and the fault's own creation time. Both are
+// UTC ISO strings of one fixed width, which compare as text in time order.
 export async function updateFaultState(faultId: string, state: FaultState) {
   await db.init()
   if (!FAULT_STATES.includes(state)) throw new Error("Invalid fault state")
   const result = await db.execute<{ id: string }>(
-    "UPDATE faults SET state = ?, updatedAt = ? WHERE id = ? RETURNING id",
+    "UPDATE faults SET state = ?, updatedAt = MAX(?, createdAt) WHERE id = ? RETURNING id",
     [state, new Date().toISOString(), faultId],
   )
   if (Array.from(result).length !== 1) throw new Error("Fault does not exist")
@@ -254,7 +258,7 @@ export async function updateFaultDescription(
   const normalizedDescription = description.trim()
   if (!normalizedDescription) throw new Error("Fault description is required")
   const result = await db.execute<{ id: string }>(
-    "UPDATE faults SET description = ?, updatedAt = ? WHERE id = ? RETURNING id",
+    "UPDATE faults SET description = ?, updatedAt = MAX(?, createdAt) WHERE id = ? RETURNING id",
     [normalizedDescription, new Date().toISOString(), faultId],
   )
   if (Array.from(result).length !== 1) throw new Error("Fault does not exist")

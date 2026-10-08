@@ -4,6 +4,7 @@ import { expect, type Page, test } from "@playwright/test"
 import sharp from "sharp"
 
 import { evidenceOutputPath } from "./evidence"
+import { expectNoSidewaysScroll } from "./layout-audit"
 import { copySummaryImage } from "./summary-image-checks"
 
 const COUNT_STUDENTS = [
@@ -210,20 +211,35 @@ test("keeps a forty-student roster usable at 320 px with 200% text", async ({
     .boundingBox()
   expect(removeBox?.width).toBeGreaterThanOrEqual(44)
   expect(removeBox?.height).toBeGreaterThanOrEqual(44)
-  const columns = await crew
-    .locator("div.grid-cols-2, div.grid-cols-3")
-    .first()
-    .evaluate(
-      (element) =>
-        getComputedStyle(element).gridTemplateColumns.split(" ").length,
-    )
-  expect(columns).toBe(2)
+  const slotColumns = () =>
+    crew
+      .locator("div.grid-cols-2, div.grid-cols-3")
+      .first()
+      .evaluate(
+        (element) =>
+          getComputedStyle(element).gridTemplateColumns.split(" ").length,
+      )
+  // The default is two names per row (UX1). With 200% text a two-column slot
+  // has 50 px for a name between its padding and the badges ran under the
+  // remove button, so the card goes to one column (UG2); with ordinary text
+  // at the same 320 px it keeps its two.
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = ""
+  })
+  expect(await slotColumns()).toBe(2)
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  expect(await slotColumns()).toBe(1)
   expect(
     await page.evaluate(() => ({
       viewportWidth: document.documentElement.clientWidth,
       pageWidth: document.documentElement.scrollWidth,
     })),
   ).toEqual({ viewportWidth: 320, pageWidth: 320 })
+  // The document's width is not the whole story: the composition region
+  // scrolls on its own, and so would any card wider than it.
+  await expectNoSidewaysScroll(page, "40 students, 320 px, 200% text")
 
   await crew.screenshot({
     path: evidenceOutputPath(
@@ -411,22 +427,27 @@ test("covers C1 capacity, duty ordering, destination previews, density and image
   await page.getByRole("button", { name: "Chiudi vista lettura" }).click()
 
   await page.setViewportSize({ width: 320, height: 664 })
+  const slotColumns = () =>
+    crew1
+      .locator("div.grid-cols-2, div.grid-cols-3")
+      .first()
+      .evaluate(
+        (element) =>
+          getComputedStyle(element).gridTemplateColumns.split(" ").length,
+      )
+  // Two names per row at 320 px with ordinary text; one with 200% text (UG2),
+  // where a two-column slot leaves a name 50 px between its padding.
+  expect(await slotColumns()).toBe(2)
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
   })
-  const gridColumnCount = await crew1
-    .locator("div.grid-cols-2, div.grid-cols-3")
-    .first()
-    .evaluate(
-      (element) =>
-        getComputedStyle(element).gridTemplateColumns.split(" ").length,
-    )
-  expect(gridColumnCount).toBe(2)
+  expect(await slotColumns()).toBe(1)
   const layout = await page.evaluate(() => ({
     viewportWidth: document.documentElement.clientWidth,
     pageWidth: document.documentElement.scrollWidth,
   }))
   expect(layout).toEqual({ viewportWidth: 320, pageWidth: 320 })
+  await expectNoSidewaysScroll(page, "C1 crews, 320 px, 200% text")
   await page.screenshot({
     fullPage: true,
     path: evidenceOutputPath(

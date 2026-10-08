@@ -1,0 +1,66 @@
+{
+  "milestone": "UG2",
+  "recordedBy": "npm run evidence -- UG2 (scripts/record-verification.mjs), which ran npm run verify:all including the full browser suite on all three Playwright projects; summarised from that run's output",
+  "sourceDigest": "0e70da785b30383c68ff3207102ff7f9ff217cf17f97e1ca092499c5b90109aa",
+  "gitCommit": "04bdc51",
+  "appVersion": "0.3.0",
+  "runtime": "v24.21.0",
+  "command": "npm run verify:e2e (pixel-7-chrome, iphone-13-viewport, iphone-13-webkit-core; own server on a free port, one worker)",
+  "exitCode": 0,
+  "fullSuite": {
+    "passed": 244,
+    "skipped": 67,
+    "failed": 0,
+    "note": "Skips are each spec's own per-project gating. Recorded on the first full run of the final source. The three dictation journeys that deny the microphone wait for the first speech-model download (tests/e2e/speech-download.ts). Re-recorded after CI on Linux failed eleven stress-layout checks in DejaVu Sans on cafe7c2; the fix (04bdc51) was verified with the whole suite run locally with DejaVu Sans pinned (244 passed, 67 skipped, none failed) before this run with the ordinary font."
+  },
+  "journeys": {
+    "ug2-upgraded-week": {
+      "passed": 3,
+      "covers": [
+        "a fictitious 0.2.0 course (frozen 0.2.0 schema, 45 rows over 13 tables) opens with every table, row and value intact, and both new columns start empty",
+        "through the visible UI: ages and minor badges from stored birth dates, an age edit that makes the record age-only, crews read in place and created in empty sessions (a volunteer in a free seat), both summaries copied as images, a duty and evaluations added, reopen, and all 45 original rows compared"
+      ]
+    },
+    "u02-migration and ug1-upgraded-week": {
+      "passed": 7,
+      "covers": [
+        "the 0.1.0 fixture upgrades with stable identities, and the age-only schema change, through the visible week"
+      ]
+    },
+    "ug2-hostile-roster": {
+      "passed": 17,
+      "covers": [
+        "a fictitious 40-student roster built to break layouts (long, double and accented names, particles, duplicates, a nickname, minors, duties, volunteers in crews, a crew with no boat, Mezzi, A terra, 15 crews)",
+        "Allievi, the crew page, the Comandate page, both summaries and the copied images at 390x844, 360x780, 320x664 and 320 px with 200% text on Chromium, and the images on WebKit",
+        "one case stays test.fixme for the owner: crew cards cut long names with an ellipsis (UG2-RS-2, rulebook R05), recorded in the changelog's known limitations"
+      ]
+    },
+    "ug2-review-fixes": {
+      "passed": 10,
+      "covers": [
+        "malformed stored birth dates, a fault edited after the clock stepped back, and a duty for a missing student no longer block screens",
+        "the Comandate week with every day completed and a student without a duty",
+        "Italian collation of Allievi and Volontari, the manual age range 4-99, a copied Mezzi crew staying Mezzi"
+      ]
+    },
+    "ug2-field-ux-fixes": {
+      "passed": 12,
+      "covers": [
+        "the Comandata day page shows every name whole at 412, 390, 360, 320 px and 320 px with 200% text",
+        "phone Back from the session boats panel returns to the crew composition",
+        "Volontari, the student profile and Valutazioni reflow at 320 px with 200% text",
+        "WCAG AA contrast of the course year, both summaries' labels and the focus ring",
+        "the paste review's field and radio names and its single summary alert"
+      ]
+    },
+    "f3-crew-summary, f3-duty-summary, full-week": {
+      "passed": 14,
+      "covers": [
+        "the F3/F4 summaries and copied images, and the deterministic full week"
+      ]
+    }
+  },
+  "visualCheck": "Reviewed by the orchestrating session during UG2: the hostile-roster screens and images, the 320 px/200% pages before and after the layout fix (56 ordinary-size screenshots identical before and after cf26355), and the Comandata day page before and after 1ec3e6c (84 ordinary-size screenshots against the committed code: 60 identical, 24 changed only where a finding required it). Synthetic data; not stored.",
+  "physicalDevice": ".evidence/UG2/physical-device-review.json: the owner's Android observations; the iPhone checks deferred by the owner on 2026-10-06.",
+  "recordedAt": "2026-10-08T03:02:44.798Z"
+}

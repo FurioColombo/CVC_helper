@@ -65,7 +65,7 @@ function HistorySessionCard({
     <button
       aria-describedby={note ? noteId : undefined}
       aria-labelledby={actionId}
-      className="flex min-h-11 min-w-0 w-full flex-col rounded-xl border bg-muted/45 px-2.5 py-2 text-left text-xs leading-5 outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
+      className="flex min-h-11 min-w-0 w-full flex-col rounded-xl border bg-muted/45 px-2.5 py-2 text-left text-xs leading-5 outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring"
       data-evaluation={value ?? "empty"}
       data-session-id={sessionId}
       onClick={() => onOpenSession(sessionId)}
@@ -174,7 +174,7 @@ export function StudentEvaluationHistory({
   return (
     <section
       aria-label="Storico valutazioni"
-      className="min-w-0 max-w-full outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+      className="min-w-0 max-w-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
       ref={sectionRef}
       tabIndex={focusOnMount ? -1 : undefined}
     >
@@ -196,7 +196,7 @@ export function StudentEvaluationHistory({
             Valutazioni non disponibili.
           </p>
           <button
-            className="min-h-11 rounded-xl border px-3 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            className="min-h-11 rounded-xl border px-3 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
             onClick={() => {
               setLoadState("loading")
               setReloadToken((token) => token + 1)
@@ -217,7 +217,7 @@ export function StudentEvaluationHistory({
             title="Riepilogo settimana"
           />
 
-          <div className="sticky top-0 z-10 -mx-1 mb-2 min-w-0 max-w-full border-b bg-background/95 px-1 py-3 shadow-[0_4px_12px_rgb(23_56_89/0.06)] backdrop-blur-sm">
+          <div className="sticky top-0 z-10 -mx-[4px] mb-2 min-w-0 max-w-full border-b bg-background/95 px-[4px] py-3 shadow-[0_4px_12px_rgb(23_56_89/0.06)] backdrop-blur-sm">
             <h2 className="break-words text-xl font-black leading-tight text-foreground">
               {subjectName}
             </h2>
@@ -244,32 +244,37 @@ export function StudentEvaluationHistory({
                     {sessionCountLabel(sessions.length)}
                   </span>
                 </div>
-                <div className="mt-1.5 grid min-w-0 grid-cols-2 gap-1.5">
-                  {(["AM", "PM"] as const).map((period) => {
-                    const session = sessions.find(
-                      ({ period: sessionPeriod }) => sessionPeriod === period,
-                    )
-                    if (!session) {
+                {/* One column when enlarged text would leave each of the two
+                    cards narrower than "Nessuna sessione." (UG2-UX-5; a query
+                    in rem, so ordinary text never triggers it). */}
+                <div className="@container mt-1.5 min-w-0">
+                  <div className="grid min-w-0 grid-cols-2 gap-1.5 @max-[12rem]:grid-cols-1">
+                    {(["AM", "PM"] as const).map((period) => {
+                      const session = sessions.find(
+                        ({ period: sessionPeriod }) => sessionPeriod === period,
+                      )
+                      if (!session) {
+                        return (
+                          <MissingSessionCard
+                            day={day}
+                            key={period}
+                            period={period}
+                          />
+                        )
+                      }
                       return (
-                        <MissingSessionCard
-                          day={day}
-                          key={period}
+                        <HistorySessionCard
+                          key={session.id}
+                          onOpenSession={onOpenEvaluationSession}
                           period={period}
+                          sessionId={session.id}
+                          record={records.find(
+                            ({ sessionId }) => sessionId === session.id,
+                          )}
                         />
                       )
-                    }
-                    return (
-                      <HistorySessionCard
-                        key={session.id}
-                        onOpenSession={onOpenEvaluationSession}
-                        period={period}
-                        sessionId={session.id}
-                        record={records.find(
-                          ({ sessionId }) => sessionId === session.id,
-                        )}
-                      />
-                    )
-                  })}
+                    })}
+                  </div>
                 </div>
               </section>
             ))}

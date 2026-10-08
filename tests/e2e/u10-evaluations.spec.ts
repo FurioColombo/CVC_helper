@@ -4,6 +4,10 @@ import path from "node:path"
 import { expect, type Page, test } from "@playwright/test"
 
 import { evidenceOutputPath } from "./evidence"
+import {
+  DICTATION_JOURNEY_TIMEOUT,
+  FIRST_DICTATION_TIMEOUT,
+} from "./speech-download"
 
 const SESSIONS = [
   "sat-pm",
@@ -244,7 +248,7 @@ test("edits thirteen sessions through one compact row and reads the same week in
 test("keeps a typed evaluation note recoverable when microphone permission is denied", async ({
   page,
 }) => {
-  test.setTimeout(60_000)
+  test.setTimeout(DICTATION_JOURNEY_TIMEOUT)
   await page.addInitScript(() => {
     Object.defineProperty(window, "MediaRecorder", {
       configurable: true,
@@ -277,6 +281,7 @@ test("keeps a typed evaluation note recoverable when microphone permission is de
     .click()
   await expect(page.getByRole("alert")).toContainText(
     "Permesso microfono non concesso",
+    { timeout: FIRST_DICTATION_TIMEOUT },
   )
   await expect(note).toHaveValue("Testo scritto prima della dettatura")
   await page

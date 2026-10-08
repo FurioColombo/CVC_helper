@@ -34,13 +34,14 @@ import {
   type StudentSize,
 } from "@/domain/config"
 import { formatEvaluationSession } from "@/domain/evaluations"
-import { validateStudentRecords } from "@/domain/invariants"
+import { blockingIssues, validateStudentRecords } from "@/domain/invariants"
 import {
-  calculateStudentAge,
   getStudentDisplayName,
+  isPlausibleStudentAge,
   isStudentMinor,
   isValidDateOnly,
-  MAX_DECLARED_STUDENT_AGE,
+  PLAUSIBLE_STUDENT_AGE,
+  resolveStudentAge,
 } from "@/domain/student"
 import { DictatedNoteField } from "@/features/speech/DictatedNoteField"
 import { StudentKnowledge } from "@/features/students/StudentKnowledge"
@@ -156,7 +157,9 @@ type LoadState = "loading" | "ready" | "error"
 
 async function readValidStudents(courseId: string) {
   const records = await listStudents(courseId)
-  if (validateStudentRecords(records).length > 0) {
+  // An unusable birth date or age does not stop the list from opening: the
+  // student is shown as "età da completare" and repaired in the edit form.
+  if (blockingIssues(validateStudentRecords(records)).length > 0) {
     throw new Error("Persisted student state violates invariants")
   }
   return records
@@ -265,21 +268,26 @@ function StudentPageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-5 flex min-w-0 items-center justify-between gap-2">
-      <div className="flex min-w-0 flex-1 items-center gap-1">
-        <button
-          aria-label={`Indietro da ${title}`}
-          className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-          onClick={onBack}
-          type="button"
-        >
-          <ChevronLeft aria-hidden="true" className="size-5" />
-        </button>
-        <h1 className="min-w-0 break-words text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl">
-          {title}
-        </h1>
+    // UG2-UX-5: the row is the query container. Narrower than 14rem (200% text
+    // at 320 px) the action goes under the title instead of squeezing it until
+    // "Profilo" breaks in the middle of the word; ordinary text never does.
+    <div className="@container mb-5">
+      <div className="flex min-w-0 items-center justify-between gap-2 @max-[14rem]:flex-wrap @max-[14rem]:justify-end">
+        <div className="flex min-w-0 flex-1 items-center gap-1 @max-[14rem]:flex-auto">
+          <button
+            aria-label={`Indietro da ${title}`}
+            className="grid size-[44px] shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
+            onClick={onBack}
+            type="button"
+          >
+            <ChevronLeft aria-hidden="true" className="size-5" />
+          </button>
+          <h1 className="min-w-0 break-words text-2xl font-black tracking-tight [overflow-wrap:anywhere] max-[350px]:text-xl">
+            {title}
+          </h1>
+        </div>
+        {action}
       </div>
-      {action}
     </div>
   )
 }
@@ -377,12 +385,12 @@ function StudentList({
     >
       {students.map((student) => {
         const displayName = getStudentDisplayName(student, students)
-        const age = calculateStudentAge(student, course.startDate)
+        const age = resolveStudentAge(student, course.startDate)
         const minor = isStudentMinor(student, course.startDate)
         return (
           <button
-            aria-label={`${displayName}, ${age} anni, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
-            className={`flex min-h-14 min-w-0 items-center gap-2 rounded-xl border bg-card px-2 py-1.5 text-left shadow-[0_4px_12px_rgb(6_59_82/0.04)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 ${student.active ? "" : "opacity-55"}`}
+            aria-label={`${displayName}, ${age === null ? "età da completare" : `${age} anni`}, ${sexLabel(student.sex, true)}${minor ? ", Minorenne" : ""}${student.active ? "" : ", Non disponibile"}`}
+            className={`flex min-h-14 min-w-0 items-center gap-2 rounded-xl border bg-card px-2 py-1.5 text-left shadow-[0_4px_12px_rgb(6_59_82/0.04)] outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring ${student.active ? "" : "opacity-55"}`}
             key={student.id}
             onClick={() => onOpen(student.id)}
             type="button"
@@ -404,7 +412,13 @@ function StudentList({
                   className="size-3.5 min-[380px]:hidden"
                   sex={student.sex}
                 />
-                <span>{age} anni</span>
+                {age === null ? (
+                  <span className="font-bold text-[#996515]">
+                    Età da completare
+                  </span>
+                ) : (
+                  <span>{age} anni</span>
+                )}
                 {minor && <MinorBadge />}
                 {!student.active && (
                   <span className="font-bold">Non disponibile</span>
@@ -422,21 +436,33 @@ function Field({
   label,
   children,
   hint,
+  error,
   field,
 }: {
   label: string
   children: React.ReactNode
   hint?: string
+  /** Replaces the hint while the value is refused, in words (not colour alone). */
+  error?: string | null
   field?: StudentField
 }) {
   return (
     <label className="grid gap-2 text-sm font-bold" data-field={field}>
       <span>{label}</span>
       {children}
-      {hint && (
-        <span className="text-xs font-normal text-muted-foreground">
-          {hint}
+      {error ? (
+        <span
+          aria-live="polite"
+          className="text-xs font-semibold text-[#a2381b]"
+        >
+          {error}
         </span>
+      ) : (
+        hint && (
+          <span className="text-xs font-normal text-muted-foreground">
+            {hint}
+          </span>
+        )
       )}
     </label>
   )
@@ -474,12 +500,14 @@ function StudentForm({
   const [firstName, setFirstName] = useState(student?.firstName ?? "")
   const [surname, setSurname] = useState(student?.surname ?? "")
   const [nickname, setNickname] = useState(student?.nickname ?? "")
-  // F2R-3: a stored date that is not a real date-only value must not crash
-  // this form (`calculateStudentAge` throws on one). Treated exactly like a
-  // student with no birth date at all: fall back to the declared age on
-  // file, or leave the field empty for the operator to fill in.
+  // F2R-3 / UG2-DAT-1: a stored date that is not a real date-only value (a
+  // half-typed year from 0.2.0, one with stray spaces) must not crash this
+  // form or block the list that opens it. `resolveStudentAge` ignores it, so
+  // it is treated exactly like a student with no birth date at all: fall back
+  // to the declared age on file, or leave the field empty for the operator to
+  // fill in; the first save then replaces it.
   const hadInvalidStoredDate = Boolean(
-    student?.dateOfBirth.trim() && !isValidDateOnly(student.dateOfBirth),
+    student?.dateOfBirth.trim() && !isValidDateOnly(student.dateOfBirth.trim()),
   )
   // Age only, in every mode (owner decision 2026-09-28): the form has no
   // date field. An existing student's age is computed once, from whichever
@@ -487,11 +515,9 @@ function StudentForm({
   // starting value; it never moves again on its own. Saving that exact
   // number back keeps the student's stored date, saving a different one
   // replaces it with the declared age and drops the date (see `input` below).
-  const [initialDeclaredAge] = useState(() => {
-    if (!student) return null
-    if (hadInvalidStoredDate) return student.declaredAgeAtCourseStart ?? null
-    return calculateStudentAge(student, course.startDate)
-  })
+  const [initialDeclaredAge] = useState(() =>
+    student ? resolveStudentAge(student, course.startDate) : null,
+  )
   const [declaredAge, setDeclaredAge] = useState(
     initialDeclaredAge !== null ? String(initialDeclaredAge) : "",
   )
@@ -554,6 +580,15 @@ function StudentForm({
     initialDeclaredAge !== null &&
     parsedDeclaredAge === initialDeclaredAge
 
+  // A new age, or one that replaces the stored one, has to be one a course
+  // can have (the same range the scan review calls plausible). An age the
+  // student already has is never refused here: it is not what is being edited.
+  const ageOutOfRange =
+    parsedDeclaredAge !== null &&
+    !ageUnchanged &&
+    !isPlausibleStudentAge(parsedDeclaredAge)
+  const ageRangeMessage = `L’età deve essere tra ${PLAUSIBLE_STUDENT_AGE.min} e ${PLAUSIBLE_STUDENT_AGE.max} anni.`
+
   const input = useMemo<StudentEditInput>(
     () => ({
       firstName: firstName.trim(),
@@ -588,16 +623,12 @@ function StudentForm({
     const missing: { field: StudentField; label: string }[] = []
     if (!input.firstName) missing.push({ field: "firstName", label: "nome" })
     if (!input.surname) missing.push({ field: "surname", label: "cognome" })
-    if (
-      parsedDeclaredAge === null ||
-      parsedDeclaredAge < 0 ||
-      parsedDeclaredAge > MAX_DECLARED_STUDENT_AGE
-    ) {
+    if (parsedDeclaredAge === null || ageOutOfRange) {
       missing.push({ field: "declaredAgeAtCourseStart", label: "età" })
     }
     if (!input.sex) missing.push({ field: "sex", label: "sesso" })
     return missing
-  }, [input, parsedDeclaredAge])
+  }, [ageOutOfRange, input, parsedDeclaredAge])
   const missingLabels =
     student && missingFields.length > 0
       ? listInItalian(missingFields.map(({ label }) => label))
@@ -673,6 +704,10 @@ function StudentForm({
     event.preventDefault()
     if (student) {
       if (await persistEdit()) onSaved()
+      return
+    }
+    if (ageOutOfRange) {
+      focusFormField(formRef.current, "declaredAgeAtCourseStart")
       return
     }
     setCreating(true)
@@ -758,15 +793,15 @@ function StudentForm({
         </div>
 
         <Field
+          error={ageOutOfRange ? ageRangeMessage : null}
           field="declaredAgeAtCourseStart"
           hint="Anni compiuti il primo giorno del corso; puoi correggerla in seguito."
           label="Età compiuta il primo giorno del corso"
         >
           <Input
+            aria-invalid={ageOutOfRange}
             aria-label="Età compiuta il primo giorno del corso"
             inputMode="numeric"
-            max={MAX_DECLARED_STUDENT_AGE}
-            min={0}
             onChange={(event) => setDeclaredAge(event.target.value)}
             required
             step={1}
@@ -789,7 +824,7 @@ function StudentForm({
                   type="radio"
                   value={option.id}
                 />
-                <span className="flex h-12 items-center justify-center gap-1.5 rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/40">
+                <span className="flex h-12 items-center justify-center gap-1.5 rounded-xl border bg-card text-base transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring">
                   <SexIcon className="size-5" sex={option.id} />
                   {option.label}
                 </span>
@@ -949,9 +984,10 @@ function StudentDetail({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const displayName = getStudentDisplayName(student, students)
-  const age = calculateStudentAge(student, course.startDate)
+  const age = resolveStudentAge(student, course.startDate)
   const minor = isStudentMinor(student, course.startDate)
-  const ageIsDeclared = !student.dateOfBirth.trim()
+  const storedDate = student.dateOfBirth.trim()
+  const ageIsDeclared = !(storedDate && isValidDateOnly(storedDate))
   const nameShortcut = useFieldShortcut(() => onEdit("firstName"))
   const initialNoteShortcut = useFieldShortcut(() => onEdit("initialNote"))
   const courseNoteShortcut = useFieldShortcut(() => onEdit("courseNote"))
@@ -1042,10 +1078,15 @@ function StudentDetail({
         title="Profilo"
       />
       <section
-        className={`rounded-3xl border bg-card p-4 shadow-[0_12px_32px_rgb(6_59_82/0.07)] ${student.active ? "" : "opacity-65"}`}
+        className={`@container rounded-3xl border bg-card p-4 shadow-[0_12px_32px_rgb(6_59_82/0.07)] ${student.active ? "" : "opacity-65"}`}
       >
+        {/* UG2-UX-5: the card is the query container. Narrower than 14rem
+            (200% text at 320 px: 7rem) the sex icon sits above the name instead
+            of beside it, so the name has the whole card to wrap in (between
+            words, as R05 asks) rather than ending in an ellipsis or breaking
+            inside a word. A query in rem: ordinary text never triggers it. */}
         <div
-          className="flex items-start gap-3 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
+          className="flex items-start gap-3 @max-[14rem]:flex-col [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
           title="Doppio clic o pressione prolungata per modificare: Nome"
           {...nameShortcut}
         >
@@ -1053,10 +1094,10 @@ function StudentDetail({
             <SexIcon className="size-6" sex={student.sex} />
           </span>
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-black tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight @min-[14rem]:truncate @max-[14rem]:[overflow-wrap:anywhere]">
               {displayName}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground @max-[14rem]:[overflow-wrap:anywhere]">
               {student.firstName} {student.surname}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -1074,42 +1115,52 @@ function StudentDetail({
           </div>
         </div>
 
-        <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border">
-          <ProfileField
-            field="declaredAgeAtCourseStart"
-            icon={<CalendarDays aria-hidden="true" className="size-4" />}
-            label={
-              ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
-            }
-            onShortcut={() => onEdit("declaredAgeAtCourseStart")}
-            value={ageIsDeclared ? `${age} anni · dichiarata` : `${age} anni`}
-          />
-          <ProfileField
-            field="sex"
-            label="Sesso"
-            onShortcut={() => onEdit("sex")}
-            value={sexLabel(student.sex)}
-          />
-          <ProfileField
-            field="size"
-            label="Taglia"
-            onShortcut={() => onEdit("size")}
-            value={student.size || "—"}
-          />
-          <ProfileField
-            field="phone"
-            icon={<Phone aria-hidden="true" className="size-4" />}
-            label="Telefono"
-            onShortcut={() => onEdit("phone")}
-            value={student.phone || "—"}
-          />
-          <ProfileField
-            field="nickname"
-            label="Nome visualizzato"
-            onShortcut={() => onEdit("nickname")}
-            value={displayName}
-          />
-        </dl>
+        {/* One column when enlarged text would leave a cell narrower than its
+            longest label word ("all’inizio"): a query in rem on the list. */}
+        <div className="@container mt-5">
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-border @max-[14rem]:grid-cols-1">
+            <ProfileField
+              field="declaredAgeAtCourseStart"
+              icon={<CalendarDays aria-hidden="true" className="size-4" />}
+              label={
+                ageIsDeclared ? "Età dichiarata all’inizio del corso" : "Età"
+              }
+              onShortcut={() => onEdit("declaredAgeAtCourseStart")}
+              value={
+                age === null
+                  ? "Età da completare"
+                  : ageIsDeclared
+                    ? `${age} anni · dichiarata`
+                    : `${age} anni`
+              }
+            />
+            <ProfileField
+              field="sex"
+              label="Sesso"
+              onShortcut={() => onEdit("sex")}
+              value={sexLabel(student.sex)}
+            />
+            <ProfileField
+              field="size"
+              label="Taglia"
+              onShortcut={() => onEdit("size")}
+              value={student.size || "—"}
+            />
+            <ProfileField
+              field="phone"
+              icon={<Phone aria-hidden="true" className="size-4" />}
+              label="Telefono"
+              onShortcut={() => onEdit("phone")}
+              value={student.phone || "—"}
+            />
+            <ProfileField
+              field="nickname"
+              label="Nome visualizzato"
+              onShortcut={() => onEdit("nickname")}
+              value={displayName}
+            />
+          </dl>
+        </div>
 
         <div
           className="mt-4 rounded-2xl bg-muted p-4 [@media(pointer:coarse)]:select-none [-webkit-touch-callout:none]"
@@ -1151,7 +1202,7 @@ function StudentDetail({
         )}
 
         <Button
-          className="mt-4 w-full"
+          className="mt-4 h-auto w-full py-2"
           onClick={openLifecycle}
           variant="secondary"
         >

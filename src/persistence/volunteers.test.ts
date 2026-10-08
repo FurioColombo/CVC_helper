@@ -25,10 +25,10 @@ describe("volunteer persistence", () => {
   it("lists unchanged ADV/IS rows together with CT by name", async () => {
     const rows = [
       { id: "volunteer-1", courseId: "course-1", name: "Anna", role: "ADV" },
-      { id: "volunteer-2", courseId: "course-1", name: "Ivo", role: "IS" },
       { id: "volunteer-3", courseId: "course-1", name: "Carla", role: "CT" },
+      { id: "volunteer-2", courseId: "course-1", name: "Ivo", role: "IS" },
     ] as const
-    database.getAll.mockResolvedValue(rows)
+    database.getAll.mockResolvedValue([...rows])
 
     await expect(listVolunteers("course-1")).resolves.toEqual(rows)
 
@@ -130,5 +130,35 @@ describe("volunteer persistence", () => {
     await expect(listVolunteers("course-1")).rejects.toThrow(
       "Invalid persisted volunteer",
     )
+  })
+})
+
+// UG2-FUN-2: SQLite's NOCASE puts an accented initial after the Z.
+describe("volunteer list order", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    database.init.mockResolvedValue(undefined)
+  })
+
+  it("lists accented names with their base letter", async () => {
+    database.getAll.mockResolvedValue(
+      ["Zeno", "Élodie", "Anna", "Ivo", "Östen", "Carla"].map(
+        (name, index) => ({
+          id: `volunteer-${index}`,
+          courseId: "course-1",
+          name,
+          role: "ADV",
+        }),
+      ),
+    )
+
+    expect((await listVolunteers("course-1")).map(({ name }) => name)).toEqual([
+      "Anna",
+      "Carla",
+      "Élodie",
+      "Ivo",
+      "Östen",
+      "Zeno",
+    ])
   })
 })

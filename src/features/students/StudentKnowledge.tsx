@@ -190,7 +190,7 @@ function KnowledgeCard({
         <div className="flex min-w-0 items-center gap-1">
           <button
             aria-label={`Nota di ${displayName}`}
-            className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
             onClick={() => setNoteOpen(true)}
             ref={noteButtonRef}
             type="button"
@@ -358,7 +358,7 @@ export function StudentKnowledge({
       <div className="mb-4 flex items-center gap-1">
         <button
           aria-label="Indietro da Conoscenza allievi"
-          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
           onClick={onBack}
           type="button"
         >

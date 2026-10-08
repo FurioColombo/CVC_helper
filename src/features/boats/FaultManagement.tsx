@@ -2,7 +2,7 @@ import { ChevronLeft, Plus, Wrench } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { validateBoatRecords } from "@/domain/invariants"
+import { blockingIssues, validateBoatRecords } from "@/domain/invariants"
 import { FaultCard } from "@/features/boats/FaultCard"
 import { FaultForm } from "@/features/boats/FaultForm"
 import { useNestedScreen } from "@/navigation/nestedScreen"
@@ -24,7 +24,7 @@ async function readValidFaultData(courseId: string) {
     listBoats(courseId),
     listFaults(courseId),
   ])
-  if (validateBoatRecords(boats, faults).length > 0) {
+  if (blockingIssues(validateBoatRecords(boats, faults)).length > 0) {
     throw new Error("Persisted fault state violates invariants")
   }
   return { boats, faults }
@@ -105,7 +105,7 @@ export function FaultManagement({
         <div className="mb-5 flex items-center gap-1">
           <button
             aria-label="Indietro da Nuova avaria"
-            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
             onClick={() => closeScreen("list")}
             type="button"
           >
@@ -134,7 +134,7 @@ export function FaultManagement({
         <div className="flex min-w-0 items-center gap-1 max-[380px]:basis-full">
           <button
             aria-label="Indietro da Avarie"
-            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            className="grid size-11 shrink-0 place-items-center rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
             onClick={onHome}
             type="button"
           >

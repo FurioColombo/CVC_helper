@@ -17,7 +17,8 @@ Record the owner's results, one entry per physical target, in
 The owner accepted V03 on 2026-09-25 after Android and PC/Chrome use despite
 slow, imperfect recognition. Apple/iPhone was unavailable and remains untested.
 This exception closes V03 only; the unreported detailed checks below are not
-marked PASS. Repeat the release-candidate checks at UG2.
+marked PASS. At UG2 the owner accepted speech as it is (see the outcome
+below).
 
 1. Open a student's note editor. Type a short prefix, then tap **Detta**.
    Confirm permission is requested only after the tap.
@@ -40,11 +41,11 @@ phrase or transcript. The result must be editable and recoverable.
 
 ## UG2 release-candidate checks
 
-Repeat speech against the exact UG2 release candidate and record it in
-`.evidence/UG2/physical-device-review.json`. The V03 results do not replace this
-release-candidate check.
+Speech was to be repeated against the exact UG2 release candidate; the owner
+accepted it as it is instead (UG2-PD-2 in
+`.evidence/UG2/physical-device-review.json`).
 
-### Scan: Android and iPhone
+### Scan: Android (iPhone deferred)
 
 1. From **Scan allievi**, try **Fai una foto** and **Scegli da galleria**. Confirm
    native acquisition, full-screen camera, correct EXIF orientation and a usable
@@ -62,14 +63,14 @@ Also note how long the scan takes from **Usa questa area** to the review: the
 table-rule eraser added in S4 costs about 0.3–0.5 s on a desktop and about 2 s at
 4× CPU throttling.
 
-### Assistant path (V05): Android and iPhone
+### Assistant path (V05): Android (iPhone deferred)
 
 1. From **Scan allievi**, open **Oppure usa un assistente**, copy the
    instructions, and send a photo of a fictitious or already public roster to
    the assistant the sailing centre has authorised.
-2. Paste the answer back. Confirm every row shows its birth date, needs its own
-   **Controlla**, and that an unread line must be fixed or left out before
-   saving. Note which assistant and how many lines were unread.
+2. Paste the answer back. Confirm every row shows the age (never a birth
+   date), pasted rows need no per-row check, an unread line must be fixed or
+   left out, and the **Sono tutti** count is confirmed before saving. Note which assistant and how many lines were unread.
 
 ### Installed app: offline, Back, update and new course
 
@@ -90,6 +91,17 @@ table-rule eraser added in S4 costs about 0.3–0.5 s on a desktop and about 2 s
 6. Only on a device you can reset: **Impostazioni → Elimina il corso e inizia
    un nuovo corso** asks for confirmation and opens course creation.
 
-UG2 remains open until the three speech targets, both phone scan targets, the
-assistant path and the installed-app checks have real observations and the
-dedicated physical-device review has no blocker.
+### Summaries: Copia immagine and Condividi
+
+1. Open the crew summary (**Apri vista lettura**) and the Comandate summary.
+   Tap **Copia immagine**, open WhatsApp and paste: the image must match the
+   screen, with every crew or day, names inside their cards and no
+   "Tutti gli allievi assegnati" note.
+2. Tap **Condividi** in the note and check the share sheet offers the image.
+
+**Outcome at UG2 (2026-10-06 to 08).** The owner ran the checks on their Android
+phone and released 0.3.0. They had no iPhone: every iPhone check, and the
+items not observed (the icon and launch colour, the scan time, the first
+offline dictation message, erasing the course), are listed in
+`.evidence/UG2/physical-device-review.json` and wait in future work until the
+owner asks for them.

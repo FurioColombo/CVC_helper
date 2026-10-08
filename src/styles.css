@@ -114,7 +114,8 @@ body {
 }
 
 .course-identity > span {
-  color: #8591a0;
+  /* 4.6:1 on the page and on the muted surfaces (it was #8591a0, 2.7:1). */
+  color: #5f6b7a;
   font-size: min(1rem, 5vw);
   font-weight: 650;
 }

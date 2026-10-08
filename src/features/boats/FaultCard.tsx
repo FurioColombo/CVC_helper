@@ -207,7 +207,7 @@ export function FaultCard({
         <button
           aria-expanded={expanded}
           aria-label={`${expanded ? "Riduci" : "Apri"} descrizione: ${fault.description}`}
-          className="mt-2 flex min-h-11 w-full items-start gap-1 rounded-lg text-left text-sm font-normal leading-5 outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="mt-2 flex min-h-11 w-full items-start gap-1 rounded-lg text-left text-sm font-normal leading-5 outline-none focus-visible:ring-3 focus-visible:ring-ring"
           onClick={() => setExpanded((current) => !current)}
           type="button"
         >
