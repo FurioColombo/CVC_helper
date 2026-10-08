@@ -1,8 +1,8 @@
 {
   "milestone": "UG2",
   "recordedBy": "npm run evidence -- UG2 (scripts/record-verification.mjs), which ran npm run verify:all including the full browser suite on all three Playwright projects; summarised from that run's output",
-  "sourceDigest": "211570aad0954ddf25da613105a0b5447faada0ef4fb370375a047865450a91a",
-  "gitCommit": "fe3e92f",
+  "sourceDigest": "0e70da785b30383c68ff3207102ff7f9ff217cf17f97e1ca092499c5b90109aa",
+  "gitCommit": "04bdc51",
   "appVersion": "0.3.0",
   "runtime": "v24.21.0",
   "command": "npm run verify:e2e (pixel-7-chrome, iphone-13-viewport, iphone-13-webkit-core; own server on a free port, one worker)",
@@ -11,7 +11,7 @@
     "passed": 244,
     "skipped": 67,
     "failed": 0,
-    "note": "Skips are each spec's own per-project gating. Recorded on the first full run of the final source. The three dictation journeys that deny the microphone wait for the first speech-model download (tests/e2e/speech-download.ts)."
+    "note": "Skips are each spec's own per-project gating. Recorded on the first full run of the final source. The three dictation journeys that deny the microphone wait for the first speech-model download (tests/e2e/speech-download.ts). Re-recorded after CI on Linux failed eleven stress-layout checks in DejaVu Sans on cafe7c2; the fix (04bdc51) was verified with the whole suite run locally with DejaVu Sans pinned (244 passed, 67 skipped, none failed) before this run with the ordinary font."
   },
   "journeys": {
     "ug2-upgraded-week": {
@@ -62,5 +62,5 @@
   },
   "visualCheck": "Reviewed by the orchestrating session during UG2: the hostile-roster screens and images, the 320 px/200% pages before and after the layout fix (56 ordinary-size screenshots identical before and after cf26355), and the Comandata day page before and after 1ec3e6c (84 ordinary-size screenshots against the committed code: 60 identical, 24 changed only where a finding required it). Synthetic data; not stored.",
   "physicalDevice": ".evidence/UG2/physical-device-review.json: the owner's Android observations; the iPhone checks deferred by the owner on 2026-10-06.",
-  "recordedAt": "2026-10-08T00:40:45.439Z"
+  "recordedAt": "2026-10-08T03:02:44.798Z"
 }

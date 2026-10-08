@@ -495,9 +495,11 @@ field UX to PASS_WITH_FINDINGS. Every remaining finding is fixed, in the
 changelog's known limitations, or in `docs/post-mvp/1_0_0_NEXT_STEPS.md`.
 The physical-device review records the owner's Android observations; the
 iPhone checks and GitHub Support are future work by the owner's decision.
-`npm run verify:all` on the final source (`fe3e92f`): 1062 unit tests, the
+`npm run verify:all` on the final source (`04bdc51`): 1062 unit tests, the
 full week, the offline OCR check and 244 browser tests passed, 67 skipped by
-design, none failed. Version 0.3.0, tag `v0.3.0`. Several agents were stopped
+design, none failed. CI on Linux had first failed eleven stress-layout checks
+in its wider DejaVu Sans; the layouts were made to wrap instead, and the whole
+suite passed locally with that font pinned before this run. Version 0.3.0, tag `v0.3.0`. Several agents were stopped
 by usage limits and one by a network error; each was relaunched from a clean
 or verified state, and no partial result was used unchecked.
 
