@@ -710,6 +710,128 @@
         ".evidence/S4/self-review.json"
       ],
       "allowedIncompletePredecessors": ["V03", "V05", "F1", "UG2"]
+    },
+    {
+      "id": "H1",
+      "category": "FOUNDATION",
+      "status": "PENDING",
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/H1/verification.json",
+        ".evidence/H1/test-timing.json",
+        ".evidence/H1/docs-move.json",
+        ".evidence/H1/self-review.json",
+        ".evidence/H1/scope-review.json",
+        ".evidence/H1/code-quality-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/H1/self-review.json",
+        ".evidence/H1/scope-review.json",
+        ".evidence/H1/code-quality-review.json"
+      ]
+    },
+    {
+      "id": "D1",
+      "category": "FOUNDATION",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/D1/verification.json",
+        ".evidence/D1/migration-evidence.json",
+        ".evidence/D1/self-review.json",
+        ".evidence/D1/data-integrity-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/D1/self-review.json",
+        ".evidence/D1/data-integrity-review.json"
+      ]
+    },
+    {
+      "id": "D2",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/D2/verification.json",
+        ".evidence/D2/migration-evidence.json",
+        ".evidence/D2/self-review.json",
+        ".evidence/D2/domain-review.json",
+        ".evidence/D2/data-integrity-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/D2/self-review.json",
+        ".evidence/D2/domain-review.json",
+        ".evidence/D2/data-integrity-review.json"
+      ]
+    },
+    {
+      "id": "D3",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/D3/verification.json",
+        ".evidence/D3/browser-evidence.json",
+        ".evidence/D3/physical-device-review.json",
+        ".evidence/D3/self-review.json",
+        ".evidence/D3/data-integrity-review.json",
+        ".evidence/D3/regression-review.json",
+        ".evidence/D3/field-ux-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/D3/self-review.json",
+        ".evidence/D3/data-integrity-review.json",
+        ".evidence/D3/regression-review.json",
+        ".evidence/D3/field-ux-review.json"
+      ]
+    },
+    {
+      "id": "D4",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/D4/verification.json",
+        ".evidence/D4/round-trip-evidence.json",
+        ".evidence/D4/browser-evidence.json",
+        ".evidence/D4/physical-device-review.json",
+        ".evidence/D4/self-review.json",
+        ".evidence/D4/data-integrity-review.json",
+        ".evidence/D4/security-privacy-review.json",
+        ".evidence/D4/field-ux-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/D4/self-review.json",
+        ".evidence/D4/data-integrity-review.json",
+        ".evidence/D4/security-privacy-review.json",
+        ".evidence/D4/field-ux-review.json"
+      ]
+    },
+    {
+      "id": "UG3",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/UG3/verification.json",
+        ".evidence/UG3/browser-evidence.json",
+        ".evidence/UG3/migration-evidence.json",
+        ".evidence/UG3/physical-device-review.json",
+        ".evidence/UG3/data-integrity-review.json",
+        ".evidence/UG3/regression-review.json",
+        ".evidence/UG3/scope-review.json",
+        ".evidence/UG3/code-quality-review.json",
+        ".evidence/UG3/field-ux-review.json",
+        ".evidence/UG3/security-privacy-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/UG3/data-integrity-review.json",
+        ".evidence/UG3/regression-review.json",
+        ".evidence/UG3/scope-review.json",
+        ".evidence/UG3/code-quality-review.json",
+        ".evidence/UG3/field-ux-review.json",
+        ".evidence/UG3/security-privacy-review.json"
+      ]
     }
   ]
 }

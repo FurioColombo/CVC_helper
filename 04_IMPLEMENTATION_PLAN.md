@@ -1,595 +1,249 @@
-# Implementation plan — active 0.3.0 work
+# Implementation plan — 0.4.0
 
-Updated 2026-10-08. Read **Where this cycle stands**, then only the section for
-the active milestone. Closed 0.3.0 milestone details are in
-`archive/v0.3.0-completed-milestones.md`; the full plan through R1 is at
-`archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md`. Completed 0.1.0 and
-0.2.0 history also remains in `archive/`. Archived plans explain decisions but
-are not the current contract. `.milestones/manifest.json` is the machine-readable
-lifecycle.
+Updated 2026-10-08. Read **Where this cycle stands**, then only the active
+milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §7. The 0.3.0 plan
+is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
+`archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
+
+## Objective
+
+Make the course on the phone safe, and ready to be copied to a server, without
+adding a server. Every record carries what synchronisation will need, the app
+and its data know their versions, updates reach an installed app without a
+reinstall, and a course can be exported, imported and wiped. The harness gets
+faster and shares one set of agent tools.
+
+**0.4.0 is done when** a course created in 0.1, 0.2 or 0.3 opens in 0.4.0 with
+every record, reference and value intact plus complete metadata, survives an
+interrupted upgrade, round-trips through export and import unchanged, and an
+installed 0.4.0 app takes the next update without reinstalling — all proven by
+`verify:all`, the reviews below and the owner's Android checks.
 
 ## Where this cycle stands
 
 | Work | State and evidence |
 | --- | --- |
-| 0.2.0 and V01 | Complete. `v0.2.0` is tagged. Pages deploys from `main`; reviewed phone-test checkpoints are promoted there with the owner's approval. Installed-app checks on the owner's phone remain theirs to perform. |
-| S1–S3 | Complete at `c29374e`. The five private photographs showed 16–24 fewer review flags each after telephone opt-in, automatic sheet name order and age/date corroboration. Node 24.19.0, 428 tests and focused browser checks passed. Exact DOB is still stored at this checkpoint. |
-| R1 | Complete at `52df92d`. [Open items](docs/post-mvp/0_3_0_OPEN_ITEMS.md) is the code-audited request list; `.evidence/R1/sweep-coverage.json` records source coverage. |
-| D0 | Complete. The shared agent contract and active plan are concise; closed detail is archived. Node 24.19.0 `npm run verify` passed (428 tests, domain, compatibility and build); see `.evidence/D0/`. |
-| V02 | Complete. The shared dictation control and all five host layouts fit the 320 px/200% stress case. Independent design and accessibility reviews found no remaining blocker. |
-| S4 | Complete at the owner's request ahead of UG2; merged from `claude/s4-ocr-optimization` on 2026-09-26. Vertical table rules are erased before OCR: the clearest photo went from 5 flags to 0, and review rows across the five fell from 61 to 26, with no merged, missing or ready non-student row. The independent data-integrity review is PASS_WITH_FINDINGS with no blockers; see `.evidence/S4/` and the S4 section for limitations. |
-| V04 | Complete. Four edge handles, live image/frame tilt and a dimmed, soft exterior were verified with synthetic imagery. `.evidence/V04/` records Node 24.19.0 verification (465 tests), 12 browser cases across Chrome/WebKit, pointer-response samples and a PASS field-UX review. |
-| S5 | Complete. Age-only entry, persistence and course-start minor rules are covered by migration/domain tests and Pixel/iPhone-sized browser journeys. `.evidence/S5/` records 476 passing tests, the 0.1 schema migration, browser checks and a zero-blocker independent review. |
-| N1 | Complete. Node 24.19.0, 482 unit/component tests, domain/compatibility checks, production build and eight Pixel/iPhone browser journeys passed; see `.evidence/N1/`. Physical installed-app Back and icon appearance remain for the owner to check. |
-| C1 | Complete. Node 24.19.0 `npm run verify` passed (507 tests, domain, compatibility and production PWA build); three Pixel 7 Chrome journeys passed, including the 40-student 320 px/200% stress case. The synthetic 13-crew image fits on one page in two columns. See `.evidence/C1/`. |
-| E1 | Complete. Pixel 7 browser journeys cover the 40-student crew layout, exact-session route, and Valutazioni note panel; see `.evidence/E1/`. |
-| UX1 | Complete. Node 24.19.0 `npm run verify` passed (537 tests, domain/compatibility and PWA build), seven Pixel 7 browser journeys passed, and the independent adversarial review ended PASS after the exact-slot persistence defect was fixed. See `.evidence/UX1/`. |
-| UX2 | Complete. Whole-page boat swipe and free-slot selection without popup passed 3 focused Pixel/iPhone browser cases (one intentional skip); Node 24.19.0 `npm run verify` passed 538 tests, domain/compatibility and PWA build. Independent adversarial review: PASS. Four development audits and evidence are in `.evidence/UX2/` and `docs/post-mvp/0_3_0_DEVELOPMENT_AUDIT.md`. |
-| V03 | Complete by the owner's 2026-09-25 acceptance after Android and PC/Chrome use. Speech is borderline usable, slow and imperfect. Apple/iPhone was unavailable and remains untested; see `.evidence/V03/speech-device-evidence.json`. |
-| V05 | Complete. The assistant paste path sits after the camera and gallery: the app gives the prompt and the format, reads the pasted answer into the same review, shows every line it cannot read, needs a check of every pasted row and a count confirmation, and makes no network call. `.evidence/V05/` records `npm run verify` and the browser journey on three projects on the final source, a 32-case parser corpus with no silently wrong student, and ten independent reviews ending PASS. |
-| F1 | Complete. The R1 corrections; the fixes from an adversarial review of the whole merged 0.3.0 line and review rounds 2 to 12 of F1 itself, ending PASS_WITH_FINDINGS with no blocker; the owner's 2026-09-26 decisions (erase the course from Settings, volunteers outside crew warnings, surname particles, history rewrite); harness hardening. `.evidence/F1/` records `npm run verify:all` on the final source (814 unit tests, the full week, the offline OCR check, and 177 browser tests passed with 16 skipped by design on Pixel 7 Chrome, the iPhone 13 viewport and iPhone 13 WebKit), the self-review with every finding's disposition and the final independent review. |
-| F2 | Complete. The assistant paste reads phone copies (every Unicode line break, chat typography, an answer joined into one line), pasted rows are trusted, every mode stores the age only, and the empty Allievi page and the menu offer the same three methods. `.evidence/F2/` records `npm run verify:all` on the final source (849 unit tests; 186 browser tests passed, 16 skipped, none failed), the self-review and an independent adversarial review, PASS_WITH_FINDINGS with no blocker, whose three important findings were fixed. The five private photographs read as after F1, and 100 of 100 ages are right at the sheets' own course date. |
-| F3 | Complete. A boat with an open fault gives its crew a yellow warning; the crew summary follows the owner’s design C6 (boat-model groups under the class logos, class colours, two columns, the owner’s gommone icon for the Mezzi), and its downloadable image reads like the screen and holds every crew; the Comandate get the same summary and image. `.evidence/F3/` records `npm run verify:all` on the final source (947 unit tests; 191 browser tests passed, 21 skipped, none failed), the self-review and an independent review, PASS_WITH_FINDINGS with no blocker, whose important findings were fixed. |
-| F4 | Complete. The owner's 2026-10-03/04 phone feedback: a free seat takes a volunteer; the crew and Comandate summaries are copied as an image painted from the screen's own layout (Copia immagine, Condividi; no download); unplaced volunteers leave the summary; the Home menu cards are all blue. The owner confirmed it on Android on 2026-10-05. `.evidence/F4/` records `npm run verify:all` on the deployed source (952 unit tests; 200 browser tests passed, 39 skipped, none failed), the browser evidence and the self-review (no blocker). |
-| UG2 | Complete; 0.3.0 released and tagged `v0.3.0` on 2026-10-08. Six independent reviews with no remaining blocker (scope and field UX after a re-check), the 0.1.0 and 0.2.0 upgrade journeys, a hostile 40-student roster, and `npm run verify:all` on the final source (1062 unit tests; 244 browser tests passed, 67 skipped, none failed); see `.evidence/UG2/`. The owner's physical checks are recorded for Android; the iPhone checks and asking GitHub Support are future work by the owner's decision. The local history-cleanup precondition below is complete. |
+| 0.3.0 | Released and tagged `v0.3.0` on 2026-10-08. Evidence in `.evidence/UG2/`; known limitations in `CHANGELOG.md`; review findings left for later in `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
+| Harness prep | On branch `claude/harness-0.4-prep`: shared hooks, reviewer personas, skills, `docs/DOCS_SYSTEM.md`, `check:docs`. Merged as H1's first step. |
+| H1–UG3 | Pending; H1 is next. |
 
-**Local history-cleanup precondition for UG2 — complete 2026-10-06:** the
-published history was rewritten before the first 0.3.0 push to remove real
-roster data. The authorized Codex session removed the old worktree
-`.codex/worktrees/ux1-pages-promotion/CVC_helper` and its parent folder. The
-two old checkpoint refs were already absent; no stale ref remained to delete.
-Retained session refs point to a tree with zero `data/private/` entries.
-After worktree removal, 373 remaining reflog entries were expired and
-`git gc --prune=now` removed the marker object
-`70f62a58231ad5c65634e5a339055e6b551c482d`. Git object storage fell from about
-63.23 MiB to 44.87 MiB (18.36 MiB freed). Only the main worktree remains;
-HEAD stayed at `7df7574`, the working tree was clean, and Node 24.19.0
-`npm run check:repository` passed before and after cleanup. The ignored
-private files were untouched: 2,262 before and after. Checkpoint verification
-`npm run verify:quick` passed (56 test files, 952 tests). A read-only profile
-search, including Desktop, Documents, Downloads, OneDrive and `.codex`,
-checked 92,105 directories and 12 Git repositories, skipping `node_modules`
-and private data. Only the main checkout matched the CVC_helper origin;
-no additional copy was found or deleted. Search coverage is limited by two
-unreadable directories and 4,379 unresolved link targets. Asking GitHub Support
-to purge the old commits remains deferred by the owner. Work only in a copy
-that holds the rewritten history (`AGENTS.md` §13;
-`docs/post-mvp/0_3_0_QUESTIONS.md` question 1).
+## Execution order
 
-The five supplied roster photographs and all derivatives are local-only under
-ignored `data/private/ocr-owner/`. They show real students and staff, including
-minors. Never add them, raw OCR, names, phone numbers or dates of birth to Git,
-evidence or the web. Only aggregate counts may be committed. The public fixture
-is `tests/fixtures/ocr-sheet-clear.png`; extend it with **synthetic** medium
-difficulty rosters. Keep `MIN_FIELD_CONFIDENCE` at 70 and keep every low-confidence
-reading visible and marked. Physical phone checks belong to the owner; no
-simulated PASS.
+**H1** → **D1** → **D2** → **D3** → **D4** → **UG3**. Field fixes from the UG2
+findings join as an extra milestone only if the owner picks them (see the end).
 
-The latest owner instruction supersedes older choices where stated: V02 need
-only stay inside its pane, not have identical dimensions; S4's earlier deferral
-was lifted for the completed experiments, then its remaining quality target was
-moved to the final nonblocking Claude Code handoff; an age entered manually
-must not require an exact birthday. S5 removed the per-row name swap under the
-then-current instruction; UX1 restores an icon-only per-row correction at the
-owner's 2026-09-25 request. The rest of the frozen deferrals remain in
-`docs/post-mvp/0_3_0_OPEN_ITEMS.md`.
+## Rules for this cycle
 
-The owner confirmed age-only entry means completed years on the **first course
-day**, with manual correction allowed later. For C1, Copy (if present) must copy
-the image itself, and the two/three selected-name display choice belongs only
-in Settings. Crew capacity is separate: D1/Cabinato starts at four and allows
-manual change; D2–D5 stays fixed at two through the gate. Its Settings override
-is deferred to the final Claude Code follow-up. No crew-size rule follows from
-display columns. UX1 changes the default display choice to two names per row;
-the Settings option for three remains. Crew capacity rules do not change.
+- Every milestone has a **success predicate** (one sentence that decides pass
+  or fail) and an **adversarial checklist** (the specific ways it could be
+  wrong). Reviewers attack both; the closure evidence answers both.
+- No server, account or synchronisation code in 0.4.0. Load the `powersync`
+  skill before any schema change, and design each change so 0.5.0 can sync it.
+- Schema changes follow `03_TECHNICAL_DECISIONS.md` §3.1. The 0.1, 0.2 and 0.3
+  fixtures are the regression contract.
+- Synthetic data only, everywhere.
+- Close every milestone with the `milestone-close` skill.
 
-### Execution order
+## H1 — Harness and documentation reset
 
-1. **D0** documentation and scope checkpoint.
-2. **V02** dictation control. The required independent review precedes the fix.
-3. **V04** crop editing and live rotation.
-4. **S5** scan review flow, age-only entry and synthetic image regression.
-5. **N1** phone Back, app icon and student name disambiguation.
-6. **C1** crew composition, destination picker and summary export.
-7. **E1** evaluation spacing and student-history navigation.
-8. **UX1** owner corrections to crew composition, scan review, summary image
-   and evaluation density.
-9. **UX2** owner phone-feedback corrections to boat paging and free-slot selection,
-   followed by functional, code, documentation and tooling audits.
-10. **V03** speech accuracy, latency and transcript confirmation removal.
-11. **V05** LLM-assisted paste path, beside on-device scanning.
-12. **F1** remaining R1 corrections.
-13. **F2** and **F3**, the owner's 2026-09-28 feedback after using the app,
-    and **F4**, their 2026-10-03 phone feedback, then **UG2** integration and
-    release gate.
-14. **S4** remaining OCR quality target and the deferred D2–D5 crew-capacity
-    override, both handed to Claude Code after the gate.
+**Category:** FOUNDATION
+**Status:** PENDING
 
-The owner explicitly made the remaining S4 target nonblocking on 2026-09-23.
-The manifest places S4 after UG2; on 2026-09-25 the owner asked Claude Code to
-complete S4 on a separate branch, so its manifest entry allows V03, V05, F1 and
-UG2 to be incomplete. The D2–D5 crew-capacity override is not part of S4 and
-remains open. Every
-milestone follows `AGENTS.md`: baseline, start,
-implementation, evidence, browser work where required, review, verification,
-completion, clean checkpoint. Use `verify:quick` before a commit and
-`verify:all` at UG2 only.
+1. Merge `claude/harness-0.4-prep`. `npm install` activates the Git hooks; the
+   owner adds the PowerSync documentation server to Codex's configuration.
+2. Run the retrospective with `docs/agents/RETROSPECTIVE_PROMPT.md` in a
+   separate session; adopt the changes the owner picks from its report.
+3. Move the documents into the `docs/DOCS_SYSTEM.md` layout:
+   - `docs/post-mvp/06`, `07` and `mockups/` go to `docs/design/`;
+   - `UG1_DEVICE_VALIDATION.md` becomes the contract `docs/DEVICE_CHECKS.md`;
+   - the 0.3.0 working documents are folded, open items going to
+     `docs/working/BACKLOG.md`, and archived under `archive/v0.3.0/`;
+   - `AGENTS.md` is trimmed to 300 lines, each removed rule given a home;
+   - `02_MVP_SCOPE.md` is rewritten in the present tense;
+   - every path in scripts, tests and documents is updated, and `check:docs`
+     runs in `verify:domain` and before `milestone:complete`.
+4. Make the checks faster, measuring before and after on an idle machine:
+   - unit tests in a Node environment by default, the browser environment only
+     for component tests;
+   - the `iphone-13-viewport` project limited to layout-sensitive specs;
+   - Playwright with two workers if three runs show no new flake;
+   - CI on `push` only (the deploy waits for it), superseded runs cancelled,
+     and browser tests skipped for documentation-only commits;
+   - a flaky test listed in evidence and the backlog as a defect;
+   - the new verification ladder written into `03_TECHNICAL_DECISIONS.md` §6:
+     an ordinary close runs `verify` plus the affected browser specs,
+     `verify:all` runs at gates and in CI.
+5. Review npm 11's install-script allowlist (esbuild, onnxruntime-node,
+   protobufjs, tesseract.js) so `npm ci` is clean locally and in CI.
 
-The 2026-09-25 owner request put UX1 and the subsequent UX2 phone feedback
-ahead of V03's owner-device checks. The owner later accepted the current speech
-path after Android and PC/Chrome use, with Apple/iPhone unavailable. This closes
-V03 only; the untested Apple path was a reminder for the UG2 release-candidate
-check, which the owner moved to future work on 2026-10-06. Do not claim a physical iPhone PASS. The owner explicitly approved
-deployment after adversarial review for phone testing. Pages deploys only from
-`main`.
+**Success predicate:** on the merged branch `check:docs` passes inside
+`verify:domain`, `verify:all` passes with no test lost except duplicates named
+in the timing evidence, and local unit and browser test times each fall by at
+least 30% against the recorded baseline.
 
-## V03 — Speech accuracy and latency
+**Adversarial checklist:** a spec that ends up in no project; a geometry check
+moved off a viewport it needed; a moved document breaks a path used by a script
+or test; a hook that blocks a legitimate commit, or passes on Windows when it
+should fail; the Pages deploy no longer waiting for CI on `main`; a rule lost in
+the `AGENTS.md` trim; tests that pass in the Node environment only because their
+DOM assertions no longer run.
 
-**Category:** FEATURE
-**Status:** COMPLETE
+**Evidence:** `verification.json` (`verify:all`), `test-timing.json` (before and
+after), `docs-move.json` (old path → new home), self-review, scope and
+code-quality reviews.
 
-Read `.evidence/UG1/speech-quality-benchmark.json` first. Benchmark the owner's
-ignored conversational Italian corpus with WER and median warm-model latency,
-same machine and repeated clips. Quality must improve without increased time;
-the usable latency target is at least 20% less. Compare DSP, pause trimming,
-model/quantisation and chunking against the baseline; ship only a measured win.
-Remove the separate `Scarta`/`Usa testo` confirmation: transcript enters the
-editable field directly. Keep cancellation and failure recovery. Update the
-physical-device checklist before UG2. The owner accepted V03 on 2026-09-25
-after trying speech on Android and PC/Chrome, while describing it as slow,
-imperfect and only borderline usable. No per-step device timings or recovery
-results were reported. Apple/iPhone could not be tested and remains explicitly
-untested in `.evidence/V03/speech-device-evidence.json`. This is a V03-only
-exception to `03_TECHNICAL_DECISIONS.md` §5, not an iPhone PASS. UG2 was to repeat
-speech on its exact release candidate and cover physical phone scanning; at
-UG2 the owner accepted speech as it is and moved the iPhone checks to future
-work (`.evidence/UG2/physical-device-review.json`, UG2-PD-1 and UG2-PD-2).
+## D1 — Record metadata and course ownership
 
-**Evidence:** benchmark, verification, browser evidence, speech review and page
-changelog and owner-provided physical-device evidence. The 823 MB corpus and
-all roster photographs remain under ignored `data/`.
+**Category:** FOUNDATION
+**Status:** PENDING
 
-**Progress, 2026-09-24:** A matched three-round run over 56 private clean-condition
-clips found
-no variant that improves WER without increasing warm latency. The current
-whisper-base q8 model measured 53.8% overall WER at 5,308 ms median warm
-latency. Pause trimming and DSP measured 52.5% WER at 5,533 ms and 5,511 ms;
-q4 measured 50.4% at 9,594 ms; tiny measured 70.4% at 2,690 ms; chunked
-measured 54.2% at 9,804 ms. Keep the production model unchanged. Aggregate-only
-results are in `.evidence/V03/speech-quality-benchmark.json`; raw benchmark
-data remains ignored. `npm run verify` passed with 520 tests and four refreshed
-Pixel 7 Chrome journeys passed. The independent review found no remaining
-implementation blocker. The owner's subsequent Android and PC/Chrome feedback
-accepts the current path with known quality and latency limits; Apple/iPhone
-remains untested (moved to future work by the owner on 2026-10-06). No
-`verify:all` run is claimed.
+1. A local `appMeta` table and an ordered, idempotent migration runner that
+   records each step and runs before the first read. A migration interrupted
+   by closing the app, turning the screen off or killing the tab completes on
+   the next open, and nothing is applied twice.
+2. `createdAt` and `updatedAt` (UTC ISO) on every table, set by one write helper
+   on every insert and update path. Existing rows are backfilled; faults keep
+   their own.
+3. `courseId` on faults, crew members and evaluations, backfilled through their
+   parents and set on every new write; the invariant checker requires every
+   child to share its parent's course.
+4. Decide, with the PowerSync documentation, whether deletion markers or
+   per-record versions are needed: PowerSync uploads deletes as operations.
+   Record the decision and its reason in `03_TECHNICAL_DECISIONS.md` §3, and
+   build only what 0.5–0.7 need.
+5. An anonymous 0.3.0 fixture beside the 0.1 and 0.2 ones; all three open
+   through the production boundary.
 
-**Closure, 2026-09-25:** Node 24.19.0 `npm run verify` passed 538 tests,
-domain/compatibility checks and the production PWA build. The earlier four
-focused Pixel 7 browser journeys remain the browser evidence; they were not
-rerun for this owner-acceptance update. The independent closure review is
-PASS_WITH_FINDINGS with zero blockers. The owner's device report accepts speech
-as borderline usable after Android and PC/Chrome use. Apple/iPhone and detailed
-physical checklist steps are unverified; see `.evidence/UG2/physical-device-review.json`.
+**Success predicate:** opening any of the three fixtures, including after an
+interruption at any migration step, yields the same records, references,
+values and counts as before plus complete metadata. Every course-scoped row
+carries its course's id, and `createdAt ≤ updatedAt` holds on every row after
+every write path.
 
-## V05 — LLM-assisted paste path
+**Adversarial checklist:** an `INSERT` or `UPDATE` that bypasses the helper; a
+child backfilled before its parent; a step applied twice after an interruption;
+local time instead of UTC, or a clock that goes backwards; erasing the course
+leaves `appMeta` stale; the invariant checker rejecting a valid old fixture;
+migration time on a 40-student course.
+
+**Evidence:** verification (`verify` and focused browser specs),
+`migration-evidence.json` (fixture counts before and after, interruption runs),
+data-integrity review, self-review.
+
+## D2 — Duty settings as rows
 
 **Category:** RULE_HEAVY
-**Status:** COMPLETE
+**Status:** PENDING
 
-Keep on-device camera OCR first. Add a second route that lets the user copy a
-strict prompt, send the photograph to an assistant of their own choice, and
-paste its result into the same review flow. The app sends nothing itself. The
-format must be specified by the app; malformed prose, fences, missing/invented
-columns, empty answers and trailing text must produce visible unparsed lines,
-never silently wrong students. Every row requires normal manual review.
+The five JSON lists in `dutySettings` become rows of one table: one row per
+item, its kind from canonical configuration (fewer day, extra day, stay over,
+completed day, acknowledged warning), with D1's metadata. They are migrated by
+D1's runner, and read and written item by item, never as a whole list. Duty
+settings normalisation moves into the domain (UG2-CQ-6). Behaviour does not
+change.
 
-**Evidence:** parser robustness corpus, browser journey, no-network proof,
-verification and an independent adversarial domain review.
+**Success predicate:** every duty behaviour, the deterministic full week and the
+duty browser journeys give identical results before and after. Every list item
+is one row, and every fixture's lists migrate with no item lost or duplicated.
 
-**Closure, 2026-09-27:** The assistant section follows the camera and gallery
-in the scan screen. The app offers a prompt copied in one tap, states the
-format (`CVC-ALLIEVI v1`, five columns, `FINE`) and reads the pasted answer
-into the same review as a scan. Every pasted row is marked `Riga scritta
-dall’assistente` and needs its own check; `Sono tutti` confirms the number of
-rows read and is asked again when that number changes; unread lines stay
-visible with their text and reason until fixed in place or left out; a
-duplicate of another row or of an existing student waits for `Tieni
-entrambi`. An answer of more than 150 rows is refused whole. The parser corpus
-passes 32 of 32 cases with no silently wrong student
-(`.evidence/V05/parser-robustness.json`). The browser journey passes on Pixel 7
-Chrome, the iPhone 13 viewport and iPhone 13 WebKit, and fails on any foreign
-host, any non-GET request or any request carrying a pasted value. Ten
-independent reviews end with PASS (`domain-review.json`); every finding's
-disposition is in `self-review.json`. The owner decides whether one
-confirmation may replace the per-row check (`0_3_0_QUESTIONS.md` question 2),
-and tries the path with the assistant the centre will use at UG2.
+**Adversarial checklist:** duplicates or corrupt JSON in old rows; an order the
+old lists implied; completed-day history lost; acknowledged-warning keys in an
+old format; erasing the course leaves rows behind; a toggle written twice.
 
-## F1 — Remaining R1 corrections
+**Evidence:** verification, full-week result, migration evidence,
+domain-prosecutor and data-integrity reviews, self-review.
 
-**Category:** FEATURE
-**Status:** COMPLETE
-
-R1's [open-items list](docs/post-mvp/0_3_0_OPEN_ITEMS.md) owns corrections
-not already absorbed into S5, N1 or E1: moved long press must not open edit;
-failed evaluation save must require an explicit retry/discard before navigation;
-invalid student edit Back must explain its refusal; autosave status must cover
-queued writes. The 2026-09-25 audit found that the installed-app launch
-background still uses cream while the app surface is blue-grey: N1 completed
-its icon and Back scope but left this R1 polish item open, so F1 must reconcile
-the launch colour and verify it in the built manifest. UX1 owns the restored
-row name-swap and further evaluation-row density. Also triage the pre-existing
-Pixel P14–P16 rail geometry E2E failure found during UX2 (`u09-crews.spec.ts`,
-`railBottom=986` versus `appNavTop=589.6` on baseline `3dc4360`): determine
-whether the static rail is a design defect or the assertion is stale, then fix
-the appropriate side before UG2. Update the living R1 list as each closes.
-
-**Evidence:** verification, defect reproductions and fixes, browser journeys
-and self-review. No unowned finding carries into UG2.
-
-On 2026-09-26 the owner asked Claude Code to merge S4 and take F1 next, ahead
-of V05; the manifest lets F1 start with V05 incomplete. F1 also triages the
-adversarial review of the merged line and the browser failures found by the
-full suite, so that each is fixed here or has an owner before UG2.
-
-**Closure, 2026-09-27:** The four R1 corrections are fixed and tested: a
-moved long press never opens the edit form; a failed evaluation save needs
-`Riprova` or `Scarta` before any exit, phone Back and the bottom navigation
-included; Back from an invalid edit names the fields to complete; queued
-autosaves show `Salvataggio…`. The launch colour is the app surface
-`#f2f6fb`, checked in the built manifest. The Pixel P14–P16 rail failure was a
-real defect: the crew column is now bounded, so the rail stays above the
-bottom navigation. Four independent reviews of the merged line at `5c1e029`
-(crews, scan, persistence and navigation, release readiness) found blockers,
-all fixed; review rounds 2 to 11 reviewed F1 itself until the last found none.
-The main changes: a shared leave guard and nested phone Back in Barche,
-Avarie, Comandate and Volontari; the scan review gate in one module; scan
-fixes for swapped names, ages and dates, surname particles, headings and staff
-rows, where no staff heading drops rows any more; evaluation saves in one
-transaction; a screen error boundary; erasing the course from Settings; an
-update banner that asks before reloading; the speech runtime from the app's
-own origin, a pinned model and chunked long recordings; Pages deploys only
-after CI, with an offline check; `npm run evidence` records the source digest,
-and completion refuses hand-written, partial or stale verification. 33 browser
-specs that described older screens were repaired. The first recorded
-`verify:all` on the final source then caught a timing defect: Home tapped
-while the app's own Back was still landing was undone by it. Every history
-move now waits for that Back; review round 12 found no blocker, and the
-narrower cases left are in next steps. `.evidence/F1/verification.json`
-records `verify:all` on the fixed source. The five private photographs read
-exactly as after S4: 100 of 100 students matched, none missing, no ready
-non-student row, and no flag on the clearest one. What remains is in
-`docs/post-mvp/1_0_0_NEXT_STEPS.md` and, for the owner,
-`docs/post-mvp/0_3_0_QUESTIONS.md`. The history is rewritten immediately
-before the first 0.3.0 push; its aggregate results are in
-`.evidence/F1/history-rewrite.json`, committed on the rewritten line.
-
-After the push, CI's first complete browser run failed one V02 stress check,
-so Pages kept the previous build. Linux Chromium falls back to DejaVu Sans,
-where "Elaborazione…" at 200% text was wider than the Conoscenza allievi note
-card: the dictation button's `break-words` overrode `overflow-wrap:anywhere`,
-and the row lacked `min-w-0`. Both are fixed. The V02 stress matrix now uses a
-wide font, so it fails locally on the old code the same way CI did.
-
-## F2 — Allievi: assistant paste on phones, age only, one set of methods
+## D3 — Versions and reliable updates
 
 **Category:** RULE_HEAVY
-**Status:** COMPLETE
+**Status:** PENDING
 
-The owner's 2026-09-28 feedback after using 0.3.0 (decisions in
-`docs/post-mvp/0_3_0_QUESTIONS.md`):
+1. **Compatibility contract** (`03_TECHNICAL_DECISIONS.md` §3.1), the rules the
+   server will enforce from 0.5.0:
+   - the data records its version in `appMeta`;
+   - schema changes only expand, and a removal or rename takes two releases;
+   - an app reads and writes data of its own and the previous minor version;
+   - an app older than the data's minimum writer version opens read-only and
+     says `Aggiorna l'app`.
 
-1. **The paste works from a phone.** An answer copied with the ChatGPT app's
-   copy button on a phone was refused as "not in the requested format" while
-   the same answer pasted on a PC was read. Every Unicode line break (U+2028,
-   U+2029, NEL, CR, CRLF) separates lines, and the typography a phone or chat
-   app adds is tolerated as the header and FINE lines already are. When the
-   header is not on a line of its own but appears inside the text, the error
-   says so instead of the generic message. Unit tests pin each variant; a
-   browser journey pastes a U+2028 answer.
-2. **Pasted rows are trusted.** The owner checks them; no row needs its own
-   `Controlla`. The count confirmation (`Sono tutti`) stays, lines the app
-   could not read still need a decision, and the duplicate check stays on both
-   paths (owner, question 5).
-3. **Age only, in every mode.** Scan, paste and manual entry store the age
-   completed on the first course day and no date of birth. A date read from a
-   sheet or a pasted answer only computes the age when no age was read, and is
-   then dropped; a low-confidence date gives a low-confidence age, marked like
-   any other reading. The manual form loses its date field. Existing students
-   keep what they have; changing the age of one with a date stores the age and
-   drops the date. The duplicate check compares name and age.
-   `01_PRODUCT_SPEC.md` records the change.
-4. **One set of ways to add students.** The Allievi menu and the empty Allievi
-   page open the same methods page, and the empty page offers every method:
-   manual entry, camera or gallery scan, and the assistant.
+   One domain function with table-driven tests over version pairs implements
+   the contract.
+2. **Updates reach installed apps.** Look for a new version when the app returns
+   to the foreground and periodically while it is open, which today happens
+   only at start. The banner never covers a floating bar or the add button
+   (UG2-UX-3). Impostazioni shows the installed version and `Cerca
+   aggiornamenti`, and a short note confirms the update afterwards. The leave
+   guard stays.
+3. **A browser journey:** serve build N, deploy build N+1, bring the app to the
+   foreground, see the offer, update without losing unsaved work.
 
-**Evidence:** `.evidence/F2/` verification, browser evidence (Pixel and iPhone
-sizes), self-review and one independent adversarial review (data integrity of
-the age change and the paste parser), zero blockers.
+**Success predicate:** an installed app brought back to the foreground after a
+deploy offers the update within one minute without reinstalling, and applies it
+without losing unsaved work. An app older than its data's minimum writer
+version never writes.
 
-**Closure.** Sonnet implementation agents wrote F2; Claude Code reviewed every
-diff and sent back four problems before the first commit: an age conflict
-could not be settled in favour of the sheet, the phone tip was inside the
-assistant's prompt, a joined answer without FINE trusted its last row, and
-four specs had CRLF endings. The independent review then found no blocker and
-three important findings, all fixed in `9cf5470`: a preface on the header's
-line no longer throws the answer away, a valid age wins over a bad date in the
-same row, and a corrupt stored birth date no longer crashes the edit form. The
-remaining limitations (a surname equal to a placeholder word, the Allievi list
-with a corrupt stored date) are in `docs/post-mvp/1_0_0_NEXT_STEPS.md`. On the
-five private photographs the review counts are unchanged from F1 (50 flags, 27
-rows to review, 90 ready, no non-student ready, 100 of 100 matched, none
-missing); every printed age fits one course date between 30 July and
-16 August 2026, and at that date all 100 reviewed ages are right. The owner
-retries the phone paste at UG2.
+**Adversarial checklist:** an update loop; a check that fails offline; an update
+arriving mid-migration; two tabs on different versions, where the old one writes
+after the new one migrated; the banner over a nested screen; standalone WebKit
+behaviour.
 
-## F3 — Crew warnings, crew and Comandate summaries
+**Evidence:** verification, compatibility table tests, browser evidence, the
+owner's Android check (update without reinstall), data-integrity,
+regression-hunter and field-UX reviews.
+
+## D4 — Export, import, persistent storage and full reset
 
 **Category:** FEATURE
-**Status:** COMPLETE
+**Status:** PENDING
 
-1. **An open fault is a crew warning.** A boat with an unresolved fault in a
-   crew shows a yellow warning, like the existing unavailable-boat one (owner,
-   question 3).
-2. **The crew summary fits one window.** All crews visible at once, in two
-   columns. The owner chose design **C6** on 2026-09-28, after two rounds of
-   proposals: crews grouped by boat model under the class logo, each card
-   with a 4px class-colour edge, the boat number bold in the class colour in
-   a fixed left column top-aligned with the first name, no "Equipaggio N".
-   Frozen target: `docs/post-mvp/mockups/f3-crew-summary-c6.html` and its
-   390×844 screenshot (synthetic data; 13 crews fit at 390 and 360 px).
-3. **The exported image reads like the screen.** "Scarica immagine riepilogo"
-   produces a readable image in the chosen design, with every crew even when
-   they do not fit one screen.
-4. **A Comandate summary.** After the Comandate are created, the same kind of
-   summary and image export is offered for them.
+1. Ask the browser to keep the data (`navigator.storage.persist()`) when a
+   course is created, and show in Impostazioni whether it agreed.
+2. **Export** the course as one versioned file with identifiers kept, saved or
+   sent through the share sheet. The file name holds no personal name, and the
+   screen says the file contains students' personal data.
+3. **Import** checks the format, the D3 version window and `validateCourseState`
+   before writing anything, and shows what it found. It replaces the current
+   course only after a confirmation; anything invalid changes nothing.
+4. **Full local reset:** closes and deletes the database and the app's caches
+   so no course data remains in the browser (owner, 2026-09-28).
 
-**Evidence:** `.evidence/F3/` verification, browser evidence with a 13-crew
-synthetic course at 320 px and at ordinary widths, exported images, the owner's
-design choice, self-review.
+**Success predicate:** a course exported from one browser and imported into a
+fresh one is identical row for row. A corrupt, invalid or too-new file is
+refused with a reason and changes nothing, and after the full reset no course
+data remains in any browser storage.
 
-**Closure.** The owner chose C6 after two rounds on a design canvas, then drew
-the Mezzi icon with Claude Code from a photo of the centre’s RIB (seen from
-above, tube tails past the transom, an ∞ propeller, horizontal in headings and
-vertical in cards). Sonnet agents built the four parts; Claude Code checked
-every screenshot and exported image and sent back what fell short: names cut
-to an ellipsis at 320 px with 200% text, half-empty image cards, a stale copy
-of the old icon in the exporter, and three Comandate details. The independent
-review found no blocker and five important findings, fixed in `e19f8ec`:
-long boat numbers ran into the names, a warning badge could hide a name in
-the image, no canvas limit for very large courses, and three behaviours the
-spec and UX1 had approved — the available students first, the closing
-"Tutti gli allievi assegnati" note and "<model> · Senza barca" — had been
-dropped and are restored; a test now pins that the Comandate view releases
-the page scroll. The eight brand images are precached for offline use. Known
-limitations (control characters in the image, an empty summary with only its
-header, list semantics in old Safari) are in the evidence. The first evidence
-run lost one WebKit timing test to parallel load and the second hung a WebKit
-worker at shutdown after every test had passed; the third, on the same
-source, is clean. The owner checks the summary, images and icon on the phone.
-After the first push, CI on Linux failed the long-number journey: in
-DejaVu Sans a 4-digit number wrapped or overflowed its column. The column is
-now sized in `ch` of the number’s own font with no cap (`d8653a0`, `a6e00b6`);
-CI passed and Pages deployed `a6e00b6`, and the F3 evidence is re-recorded on
-that source.
+**Adversarial checklist:** import interrupted halfway; a tampered file that
+would break invariants; an identifier collision with the current course; the
+share sheet on WebKit; persistent storage refused; a reset with another tab
+open; personal data in the file name or in logs.
 
-## F4 — Free seat for volunteers, summary image as a screenshot
+**Evidence:** verification, round-trip evidence on Chromium and WebKit, browser
+evidence, the owner's phone check (export to another app and import back),
+data-integrity, security/privacy and field-UX reviews.
 
-**Category:** FEATURE
-**Status:** COMPLETE
-
-The owner's 2026-10-03 phone feedback. They confirmed on Android that phone
-Back, the assistant paste (ChatGPT and Claude apps) and the installed app
-offline work.
-
-1. **A free seat takes a volunteer.** Tapping `Posto libero` and then a volunteer
-   in `Volontari disponibili` puts the volunteer in that seat, as it already
-   did for a student; it used to open the volunteer's destination chooser.
-2. **The summary image is a screenshot of the summary.** The crew and the
-   Comandate summaries are now liked as they are on screen, and the drawn
-   image was not. The image is the summary's own content rendered as the
-   page shows it, at the phone's width and pixel density, with every group
-   even past one screen, without the status bar, the close button or the
-   new button. The hand-drawn canvas exporters are removed.
-3. **Save and copy in one tap.** `Scarica immagine riepilogo` is replaced by a
-   floating button at the bottom right. One tap saves the image (Android and
-   computers download it, where the gallery's Download album shows it; iPhone
-   opens the share sheet, whose `Salva immagine` puts it in Photos) and
-   copies it, so the owner can paste it in WhatsApp. A short note says what
-   happened, with `Condividi` where the phone can share files.
-
-**Evidence:** `.evidence/F4/` verification, browser evidence (the exported image
-compared with a screenshot of the same summary, offline logos, the clipboard
-image, 320 px and 200% text), self-review.
-
-**Closure.** Claude Code fixed the free seat (`3c0a820`): the tap only
-filled a seat with a student from the pool, so a volunteer fell through to
-their destination chooser; anyone still available now fills it, with a unit
-test and a Pixel 7 journey that survives a reload. A Sonnet agent built the
-image (`43b6654`) and Claude Code reviewed the code and every exported image
-against the screen. The page is cloned with its computed styles into an SVG
-`foreignObject` and drawn on a canvas by the browser itself, so the image is
-the screen without the status bar, the close button or the new button, and
-with every group; no dependency was added and about 4,000 lines of canvas
-drawing were removed. The browser test compares the saved PNG with
-Playwright's own screenshot of the same content and rejects blank, shifted
-and greyscale images. A web app cannot write into the gallery: Android
-downloads (the gallery's Download album) and copies; iPhone opens the share
-sheet, whose `Salva immagine` reaches Photos, and copies. The iPhone share
-sheet, Safari's clipboard and its canvas read-back are verified only on the
-WebKit engine and in unit tests, and are the owner's to check. Two full runs
-on the same source each lost tests unrelated to F4 that pass alone (the
-40-student layout, the denied-microphone alert, WebKit phone Back after a
-Valutazioni note); the third, recorded in `.evidence/F4/`, is clean: 934
-unit tests, 196 browser tests passed, 34 skipped, none failed.
-
-**Follow-up of 2026-10-04 (reopened).** On the owner's Android phone the
-deployed image was broken: inside the SVG image the phone laid the text out
-again with different measurements, and the clone had every box's size frozen,
-so names wrapped after a few letters, were drawn over the next line and left
-their cards. A Sonnet agent replaced the renderer with a geometry replay: the
-page's own layout is read (boxes, borders, radii, clips, each word's place
-through `Range` rects, logos and icons) and painted on a canvas, so the image
-keeps the screen's line breaks by construction; each text node's font size
-is calibrated against its on-screen word widths. The owner also asked for:
-no download (copy and share only: one tap on `Copia immagine` copies, the
-note offers `Condividi`); no unplaced volunteers in the crew summary; no
-`Tutti gli allievi assegnati` in the image; blue accents on every Home menu
-card. The Comandate day label now sits in a rem-sized column, so it no longer
-runs into the names at 320 px with 200% text. New browser checks use double
-names and surnames, a crew without a boat and 3–4 names per card, require
-every on-screen word to have ink in its place and no card to have ink
-outside it, and prove that the image survives text measuring 18% wider or
-15% narrower than the screen. On 2026-10-05 the owner confirmed on Android, on
-the deployed `5580d33`, that the copied crew and Comandate images, the
-summary and the blue Home cards are all good. `.evidence/F4/` then recorded
-`verify:all` once on that source: 952 unit tests, the full week, the offline
-OCR check, and 200 browser tests passed with 39 skipped by design, none
-failed. The iPhone copy and share remain the owner's to check at UG2.
-
-## UG2 — 0.3.0 integration and release gate
+## UG3 — 0.4.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** COMPLETE
+**Status:** PENDING
 
-Run `verify:all` on Node 24, including the deterministic full week and all
-browser projects. Exercise an upgraded week through the visible UI, close and
-reopen, and prove 0.1.0/0.2.0 migrations, including age-only records. Generate
-a hostile fictitious 40-student roster and test the crew/export layouts.
-Independent functional, field-UX/accessibility, data-integrity, regression,
-scope and code-quality reviewers must have zero blockers. The owner runs the
-physical microphone/camera/OCR checklist on real devices; never substitute a
-simulator result. Record known limitations, bump version/changelog, complete
-the manifest, leave a clean commit and tag only after the gate passes.
+`verify:all` on the final source. Upgrade journeys from 0.1, 0.2 and 0.3 data
+through the visible UI, an export/import round trip across Chromium and WebKit,
+and the update journey. Reviewers: data integrity, regression, scope, code
+quality, field UX, security/privacy. The owner checks on Android: an update
+without reinstalling, export and import on the phone, persistent storage. Then
+the release-gate documentation sweep, the changelog, version 0.4.0 and the
+tag.
 
-S4 was completed on its own branch and merged before UG2, so UG2 verifies the
-erased-rule OCR path, its privacy boundaries and actual device behavior,
-including the eraser's time on a phone. UG2 does not otherwise depend on S4.
-F1 repaired the browser specs that still described older screens, including
-`tests/e2e/s1-scan-phone-option.spec.ts`; see F1's closure for the full run.
+**Success predicate:** the 0.4.0 objective above holds on the tagged commit, with
+no reviewer blocker and the owner's Android checks recorded.
 
-**Evidence:** `.evidence/UG2/` verification, browser, migration, synthetic
-roster, six reviewer reports and actual physical-device report. Do not publish
-the development branch to `main` or update Pages without asking the owner.
+**Evidence:** `.evidence/UG3/` verification, browser and migration evidence, six
+reviews, the owner's device report.
 
-**Closure, 2026-10-08.** The owner declared the deployed app 0.3.0 on
-2026-10-06 and asked for the formal close. Sonnet agents built the 0.2.0
-upgrade journey (a frozen 0.2.0 schema and fixture; the 0.1.0 path was
-already covered) and a hostile fictitious 40-student roster, then six
-independent reviewers tried to break the release. Scope (2 blockers: a false
-"faster dictation" claim and four stress-layout defects parked as an
-unrecorded owner decision) and field UX (1 blocker: names cut to initials on
-the Comandata day page at ordinary widths) failed; functional, data
-integrity, code quality and regression passed with findings. Fixed before
-closing: the changelog and every stale document; the crew and Comandate
-pages, Volontari, the profile and Valutazioni at 320 px with 200% text
-(`cf26355`, `1ec3e6c`; ordinary sizes pixel-identical except where a
-finding required a change); the Comandate crash once every day is completed;
-Italian collation and plurals; the manual age range; a copied Mezzi crew;
-malformed birth dates, fault chronology and orphan duties no longer blocking
-screens (`6db5aea`); whole names on the day page, Back from the boats panel,
-contrast and the paste review's accessible names (`1ec3e6c`); a build check
-that the test hook never ships (`b77df80`); and the dictation journeys
-waiting for a slow model download. An independent re-check moved scope and
-field UX to PASS_WITH_FINDINGS. Every remaining finding is fixed, in the
-changelog's known limitations, or in `docs/post-mvp/1_0_0_NEXT_STEPS.md`.
-The physical-device review records the owner's Android observations; the
-iPhone checks and GitHub Support are future work by the owner's decision.
-`npm run verify:all` on the final source (`04bdc51`): 1062 unit tests, the
-full week, the offline OCR check and 244 browser tests passed, 67 skipped by
-design, none failed. CI on Linux had first failed eleven stress-layout checks
-in its wider DejaVu Sans; the layouts were made to wrap instead, and the whole
-suite passed locally with that font pinned before this run. Version 0.3.0, tag `v0.3.0`. Several agents were stopped
-by usage limits and one by a network error; each was relaunched from a clean
-or verified state, and no partial result was used unchecked.
+## Waiting for the owner
 
-## S4 — Measured OCR accuracy on real and synthetic rosters
-
-**Category:** RULE_HEAVY
-**Status:** COMPLETE
-
-The owner lifted the earlier deferral for the measured prototypes on
-2026-09-23, then moved the unresolved quality target to the final Claude Code
-handoff. It is not a predecessor of V04–UG2 and does not block the 0.3.0 gate.
-
-The owner reports about 26 flags on a very good photo and requires **fewer than
-five**, ideally zero, before treating that case as usable. Reconfirm the exact
-baseline with `npm run measure:scan-review -- <private image> [out.json]`; use
-the same image, crop, telephone choice, order, counter and runtime after each
-change. Measure all five supplied captures, not just the best. Report rows,
-missing/low-confidence fields, name order, false merges and elapsed time.
-
-Three independent agents must implement/test distinct prototypes: (1) TSV
-table-row geometry and conservative fragment joining, (2) image preparation,
-deskew/crop/contrast, (3) a different local OCR engine or hybrid if it can meet
-offline browser/privacy/size constraints. Keep prototypes and raw results only
-in ignored `data/private/ocr-experiments/`; commit aggregate comparisons.
-Choose by measured quality, latency, browser feasibility and risk, not by engine
-preference. Tesseract is not presumed the only option.
-
-Join fragments only when row geometry supports it and two actual students
-cannot be merged. Add rules for plausible three-part names and particles, with
-ambiguous cases visible for review. Build generated, wholly fictitious
-medium-difficulty roster images for repeatable regression; include imperfect
-lighting, mild skew, row rules, varied name lengths and three-part names. Keep
-the confidence threshold 70 and every read text visible. A good-photo count
-below five remains a target for **S4 closure**; if evidence cannot reach it
-safely, record the measured limit rather than silently weaken safety. It is not
-an acceptance condition for UG2 under the owner's latest instruction.
-
-**Evidence:** verification, before/after aggregate measurements, public
-synthetic corpus and tests, browser review, independent adversarial
-data-integrity review, self-review. S4 may close only with no silent student
-merge, no privacy breach and the measured good-photo target achieved; otherwise
-it remains open with the result and next experiment recorded.
-
-**Resolved, 2026-09-25 (Claude Code, branch `claude/s4-ocr-optimization`).**
-The owner asked for S4 to be completed on a separate branch. The roster prints
-a row number, a vertical rule and then the surname; Tesseract removes rules
-only from its layout image, so the recognizer read `12|Surname` as one word and
-the surname kept the junk's confidence. Of 86 correctly read surnames, 37 were
-below 70 for that reason. The scan now erases long vertical table rules on a
-canvas before recognition (`src/capabilities/studentScanRules.ts`), painting
-only each tracked rule's own band; the same code runs in `measure:scan-review`
-and the synthetic regression. A fragment is never joined to a line outside the
-student table band, an unproven surname-first compound is offered as surname
-plus given names with each field at the minimum confidence of its own words
-and still blocked for the split confirmation, and heading keywords count only
-before a row's first date, age or telephone unless no name word precedes it. The
-eraser keeps letters that touch a rule and ignores the photo's own edge.
-
-Measured with `measure:scan-review` on the same five prepared captures,
-settings and reference date, with and without erasure on the same parser:
-legacy flags `[15,18,35,25,5]` → `[5,24,35,8,0]` (98 → 72); the screen's rows
-to review 61 → 26 and ready rows 50 → 91. The clearest capture has 0 flags and
-reads all 40 name fields exactly; one row still asks for its three-word name's
-split. Against the private truth table, 100 of 100 student appearances stay
-matched once and in order, with no missing or merged student, no wrong birth
-date and no ready row that is not a student; wrong name fields fall from 15 to
-8 and none is left confident outside a split-review block (previously one).
-Across 40 perturbed inputs (scale, rotation, crop, JPEG) rows to review halve
-(582 → 295), confident wrong names outside split review fall from 14 to 9, and
-the clearest capture stays at 0–2 flags; the shadowed capture can be worse with
-erasure when rotated or compressed. The independent data-integrity review's
-blockers (real student and staff names quoted from raw OCR in pre-S4 evidence
-and the archived plan, and a staff row completed by a join into a ready-looking
-row) are fixed; its report is `.evidence/S4/domain-review.json`.
-
-Known limitations: a staff row read complete on one text line with its role
-code missed can still look ready (2 of 40 perturbed inputs with erasure, 2
-without, none on the five captures); the proper fix is a table-band gate in the
-review screen. When Tesseract loses whole rows (sample 4 rotated 1° or cropped),
-erasure raises page confidence enough that the retake warning may not show; a
-row-count cue is the follow-up. A surname that is itself a heading keyword is
-still dropped as a heading, as before S4 (F1 narrowed this and stopped staff
-headings from dropping rows; see `docs/post-mvp/1_0_0_NEXT_STEPS.md`). On a
-fictitious sheet with a staff
-block Tesseract's layout can drop the whole age column after erasure; the age
-then follows from the birth date. The eraser costs about 0.3–0.5 s in desktop
-Chromium/WebKit and about 2 s at 4× CPU throttling; the owner's phone check
-remains. Published refs (`main`, `codex/0.3.0`, `codex/post-mvp-ux-planning`,
-`v0.2.0`) contained real student data from before S4; the owner approved a
-history rewrite on 2026-09-26, carried out before the first 0.3.0 push (F1). The D2–D5 crew-capacity override listed beside S4 in
-the execution order is not part of this milestone and remains open.
-
-Historical measurements, failed variants and audit corrections are preserved in `archive/v0.3.0-s4-measurement-history.md`; aggregate outputs remain in `.evidence/S4/`. None of the probes before rule erasure justified a production OCR change; the later rejected variants are in `.evidence/S4/targeted-ocr-probes.json`.
+Which UG2 findings (`docs/post-mvp/1_0_0_NEXT_STEPS.md`) matter in the field
+enough to join 0.4.0 as a fix milestone? Candidates: correcting the course start
+date (UG2-DAT-4), two open copies overwriting a session plan (UG2-DAT-9), phone
+Back from the crew destination chooser (UG2-UX-4), names on two lines on crew
+cards (UG2-RS-2), layouts at 115–150% text (UG2-REG-2).

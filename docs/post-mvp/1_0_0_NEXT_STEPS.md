@@ -1,5 +1,10 @@
 # Next steps — from the local 0.3.0 app to a shared database and 1.0.0
 
+> **Superseded for sequencing on 2026-10-08.** The versions and their order
+> are now `02_MVP_SCOPE.md` §7, and the 0.4.0 milestones are in
+> `04_IMPLEMENTATION_PLAN.md`. The findings and follow-ups below stay open until
+> H1 folds them into `docs/working/BACKLOG.md`.
+
 Written 2026-09-26/27 by Claude Code at the owner's request, alongside F1 (the
 remaining corrections and an independent adversarial review of the whole
 0.3.0 line) and V05 (the assistant paste path). Their closure evidence is in

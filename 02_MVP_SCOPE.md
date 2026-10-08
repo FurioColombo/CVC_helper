@@ -1,8 +1,8 @@
-# Scope — 0.1.0/0.2.0 baseline and 0.3.0 amendments
+# Scope — released baseline and the road to 1.0.0
 
-The 0.1.0/0.2.0 sections below preserve the released scope. The narrow 0.3.0
-amendments in section 4 and the owner's current instructions set the active
-boundary. Product semantics live in `01_PRODUCT_SPEC.md`; milestone order and
+Sections 1–6 preserve the released 0.1.0–0.3.0 scope; H1 rewrites them in the
+present tense. Section 7 sets the active boundary: 0.4.0 and the versions after
+it. Product semantics live in `01_PRODUCT_SPEC.md`; milestone order and
 evidence live in `04_IMPLEMENTATION_PLAN.md`.
 
 ## 1. Completed 0.1.0 baseline
@@ -185,3 +185,39 @@ Version 0.2.0 is complete only when:
   code-quality reviews have zero blockers;
 - package/lock and `CHANGELOG.md` describe 0.2.0 and the working tree is clean after
   the release checkpoint.
+
+## 7. After 0.3.0: toward a shared database
+
+The owner's decisions of 2026-10-08.
+
+**Objective.** The eventual goal is a course team that edits one course
+together; that is 1.0.0. Before it, the 0.x releases deliver, in this order,
+an online backup, read-only sharing and the season's history.
+
+**Who.** Through 0.x the owner reads and writes, and their course team reads
+only. In 1.0.0 the owner and their team read and write.
+
+**Backend.** Managed Supabase and PowerSync Cloud, both hosted in the EU
+(`03_TECHNICAL_DECISIONS.md` §1).
+
+**Data.** Development and testing use fictional rosters only. The owner will
+present the tool to the centre when it is ready; students sign a release, which
+the owner considers sufficient. Before the first real roster goes online, the
+owner confirms that the release covers storing the roster in this service and
+how long it is kept.
+
+**Offline first, always.** Every release keeps the course fully usable on the
+phone without a network.
+
+| Version | Delivers                                                                                                                                                                         | Who writes            |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| 0.4.0   | Local data readiness: record metadata and course ownership, duty settings as rows, version compatibility and reliable updates, export, import, persistent storage and full reset. No server. | the owner, one device |
+| 0.5.0   | Online backup: the owner signs in, the course is copied to the server and kept up to date from the owner's devices, it can be restored on a new device, and erasing it erases it on the server. | the owner            |
+| 0.6.0   | Read-only sharing: the course team is invited to read the course, sees changes as they happen, and can be removed.                                                                | the owner             |
+| 0.7.0   | Season history: several courses per account, past courses kept read-only, a new course started without erasing the last.                                                        | the owner             |
+| 1.0.0   | Team editing: the owner and the team read and write, with conflict rules, a record of who changed what, roles, and an explicit stability decision.                                | the owner and the team |
+
+**0.4.0 scope:** the milestones H1, D1–D4 and UG3 in
+`04_IMPLEMENTATION_PLAN.md`, plus any UG2 field fixes the owner picks.
+Server, account and synchronisation code, multiple courses per device, and
+conflict handling stay out of 0.4.0.

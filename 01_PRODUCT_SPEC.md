@@ -1,4 +1,4 @@
-# Product Specification — 0.3.0 cycle
+# Product Specification — released 0.3.0 behaviour
 
 This is the authoritative source for user-visible behavior and business rules. It
 contains the complete 0.1.0 baseline plus the approved 0.2.0 and 0.3.0 changes. Historical
@@ -628,9 +628,11 @@ Phone and other personal data appear only where operationally relevant, never in
 announcement rows. All app users are assumed to be authorized instructors or
 assistant instructors; that assumption does not justify showing irrelevant data.
 
-Expected future progression is local single device, then read-only sharing, then
-multi-editor sync if justified. Backend, authentication, synchronization and
-conflict UI are outside 0.2.0.
+The decided progression (owner, 2026-10-08; `02_MVP_SCOPE.md` §7) is an online
+backup for the owner (0.5.0), read-only sharing with the course team (0.6.0),
+the season's history (0.7.0) and team editing (1.0.0). This specification
+describes the released single-device behaviour; each of those releases
+rewrites the sections it changes, starting with §1 at 0.5.0.
 
 ## 11. Canonical domain truth and invariants
 

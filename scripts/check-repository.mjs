@@ -8,6 +8,7 @@ const requiredFiles = [
   "AGENTS.md",
   "docs/LOCAL_DEVELOPMENT.md",
   "archive/v0.3.0-through-R1/04_IMPLEMENTATION_PLAN.md",
+  "archive/v0.3.0/04_IMPLEMENTATION_PLAN.md",
   ".node-version",
   ".github/workflows/ci.yml",
   ".milestones/manifest.json",
@@ -146,6 +147,8 @@ for (const id of completedBaselineIds) {
     `Completed 0.1.0 milestone changed state: ${id}`,
   )
 }
+// 0.3.0 was released at UG2 on 2026-10-08; its milestones are closed history,
+// like the 0.1.0 baseline above.
 for (const id of [
   "D0",
   "V02",
@@ -155,11 +158,25 @@ for (const id of [
   "N1",
   "C1",
   "E1",
+  "UX1",
+  "UX2",
   "V03",
   "V05",
   "F1",
+  "F2",
+  "F3",
+  "F4",
   "UG2",
 ]) {
+  assert.equal(
+    manifest.milestones.find((milestone) => milestone.id === id)?.status,
+    "COMPLETE",
+    `Released 0.3.0 milestone changed state: ${id}`,
+  )
+}
+// The active cycle, 0.4.0. A milestone archived from the plan keeps a status
+// row there (docs/DOCS_SYSTEM.md).
+for (const id of ["H1", "D1", "D2", "D3", "D4", "UG3"]) {
   const milestone = manifest.milestones.find((item) => item.id === id)
   assert.ok(milestone, `Missing active-cycle milestone: ${id}`)
   assert.ok(

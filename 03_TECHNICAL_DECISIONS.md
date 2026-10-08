@@ -2,7 +2,7 @@
 
 This document is authoritative for architecture, technology, persistence and
 verification. Product behavior belongs in `01_PRODUCT_SPEC.md` and scope in
-`02_MVP_SCOPE.md`. The released 0.2.0 decisions remain in force during 0.3.0
+`02_MVP_SCOPE.md`. The released 0.3.0 decisions remain in force during 0.4.0
 unless the owner changes them explicitly.
 
 ## 1. Runtime and stack
@@ -15,8 +15,11 @@ unless the owner changes them explicitly.
 - Primary target: recent Chrome/Chromium on Android.
 - Core flows also run on iPhone/WebKit without disproportionate platform-specific
   engineering.
-- No native app, backend or sync in this cycle. Capacitor and Supabase/PostgreSQL
-  remain possible later paths.
+- No native app, backend or sync in 0.4.0. From 0.5.0 the backend is managed
+  Supabase (Postgres and Auth) with PowerSync Cloud, both hosted in the EU, with
+  separate development and production projects (owner, 2026-10-08;
+  `02_MVP_SCOPE.md` §7). No agent tool connects to production. Capacitor
+  remains a possible later path.
 
 ## 2. UI architecture
 
@@ -80,6 +83,24 @@ Before a schema-changing implementation:
 Additive optional fields receive explicit defaults. New CT role support is an enum
 extension and must leave ADV/IS rows untouched. Destructive/cascading migrations
 need explicit human approval because they change product semantics.
+
+The fixtures of 0.2.0 and, from D1, 0.3.0 join the 0.1.0 one under the same
+rules.
+
+**Compatibility window (owner, 2026-10-06).** Once data is shared, phones run
+different app versions for days, so compatibility is designed in from 0.4.0
+rather than added later:
+
+- schema changes only expand (new tables and optional columns with defaults);
+- removing or renaming a column takes two releases: stop writing it, then stop
+  reading it;
+- an app reads and writes data of its own and the previous minor version;
+- an app older than the data's minimum writer version opens read-only and asks
+  to update.
+
+D3 writes the contract as a tested domain function; the server enforces the
+same rule from 0.5.0. PowerSync's client keeps rows as JSON behind views, so an
+older app ignores a column it does not know.
 
 ### 3.2 Coherent writes
 
@@ -149,7 +170,9 @@ network call: the operator carries the photograph and the answer.
 OCR tests use an anonymous/synthetic corpus with field/person truth, poor-image and
 false-row cases. Measure correct readable fields associated with the correct
 person. Full-screen camera, free rotation/crop and mandatory review are UI
-requirements; images are not retained as app data.
+requirements; images are not retained as app data. The field confidence
+threshold is 70 (`MIN_FIELD_CONFIDENCE`); every reading below it stays visible
+and marked.
 
 ## 6. Verification harness
 
@@ -226,8 +249,8 @@ log.
 Use low-effort semantic versions:
 
 - released baselines: 0.1.0, 0.2.0 and 0.3.0 (declared at UG2 on 2026-10-08);
-- the next cycle is numbered when it is planned
-  (`docs/post-mvp/1_0_0_NEXT_STEPS.md`) and assigned only at its release gate;
+- active cycle: 0.4.0, assigned only at its release gate; the versions after
+  it are planned in `02_MVP_SCOPE.md` §7;
 - patch numbers for separately released fixes;
 - later minor numbers for recognizable feature/change packages;
 - 1.0.0 only after an explicit stability decision.
@@ -241,4 +264,6 @@ Git tag only when the release is actually declared.
 Do not add a custom backend, GraphQL, global state framework, generalized
 repository/provider architecture, custom sync/conflict engine, Supabase/Auth,
 native code, release-management service, large design system, generic content
-system or speculative abstraction during 0.3.0.
+system or speculative abstraction during 0.4.0. Supabase, Auth and sync arrive
+with 0.5.0 as planned in `02_MVP_SCOPE.md` §7; a custom sync or conflict engine
+stays a non-goal.
