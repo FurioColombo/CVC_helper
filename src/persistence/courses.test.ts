@@ -114,7 +114,14 @@ describe("course persistence", () => {
   })
 
   it("erases every course table in one transaction and forgets course preferences", async () => {
-    const transaction = { execute: vi.fn().mockResolvedValue(undefined) }
+    const transaction = {
+      execute: vi.fn().mockResolvedValue(undefined),
+      getAll: vi
+        .fn()
+        .mockResolvedValue(
+          [...COURSE_DATA_TABLES, "meta"].map((name) => ({ name })),
+        ),
+    }
     database.writeTransaction.mockImplementation(
       async (write: (tx: typeof transaction) => unknown) => write(transaction),
     )
@@ -140,6 +147,32 @@ describe("course persistence", () => {
     // A display preference belongs to the device, not to the course.
     expect(window.localStorage.getItem("cvc-helper.crew-display-columns")).toBe(
       "3",
+    )
+  })
+
+  // A 0.3.0 tab that opened the database under the open app dropped the
+  // tables only newer versions declare, with their rows.
+  it("erases the course tables that are still there when an older app dropped one", async () => {
+    const transaction = {
+      execute: vi.fn().mockResolvedValue(undefined),
+      getAll: vi
+        .fn()
+        .mockResolvedValue(
+          COURSE_DATA_TABLES.filter((name) => name !== "dutySettingItems").map(
+            (name) => ({ name }),
+          ),
+        ),
+    }
+    database.writeTransaction.mockImplementation(
+      async (write: (tx: typeof transaction) => unknown) => write(transaction),
+    )
+
+    await eraseAllCourseData()
+
+    expect(transaction.execute.mock.calls.map(([sql]) => sql)).toEqual(
+      COURSE_DATA_TABLES.filter((name) => name !== "dutySettingItems").map(
+        (table) => `DELETE FROM ${table}`,
+      ),
     )
   })
 

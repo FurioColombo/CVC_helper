@@ -157,3 +157,26 @@ test("shows a stale 0.3.0 tab's list changes at once and keeps its stay-over stu
   expect(result.paoloDeletable).toBe(false)
   expect(result.paoloReferences).toContain("stay-over")
 })
+
+test("erases the course after a 0.3.0 tab dropped the rows' table under the open app", async ({
+  page,
+}) => {
+  await openBlankPage(page)
+  const result = await harness<{
+    rowsBefore: number
+    tableDroppedByOlderApp: boolean
+    erased: boolean
+    remaining: Record<string, number>
+  }>(page, "runEraseAfterOlderSchema")
+  record("erase-after-older-schema", result)
+
+  expect(result.rowsBefore).toBe(3)
+  expect(result.tableDroppedByOlderApp).toBe(true)
+  expect(result.erased).toBe(true)
+  expect(result.remaining).toEqual({
+    courses: 0,
+    students: 0,
+    dutySettings: 0,
+    evaluations: 0,
+  })
+})

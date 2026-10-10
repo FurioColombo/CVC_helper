@@ -123,5 +123,8 @@ export async function seedLegacyFixture(filename: string) {
   })
   await legacy.init()
   await insertFixtureTables(legacy, fixture.tables as FixtureTables)
+  // Read before closing: closing straight after a write lost WebKit's test
+  // page now and then (D2 review DP-4).
+  await legacy.get("SELECT count(*) AS count FROM courses")
   await legacy.close()
 }

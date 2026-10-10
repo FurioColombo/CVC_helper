@@ -138,12 +138,22 @@ async function dutySettingItemRepairs(context: Pick<Transaction, "getAll">) {
       ),
     )
   }
+  // A row is kept for the list its id names, not the one its columns name:
+  // the diff keys rows by id (D2 review DI-R2-1).
   return dutySettingItemChanges(
-    stored.filter(
-      ({ courseId, kind }) => !unparsed.has(JSON.stringify([courseId, kind])),
-    ),
+    stored.filter((item) => !unparsed.has(idCourseAndKind(item.id))),
     wanted,
   )
+}
+
+/** The course and kind an item's id names, or "" for an id that names none. */
+function idCourseAndKind(id: string) {
+  try {
+    const [courseId, kind] = JSON.parse(id) as unknown[]
+    return JSON.stringify([courseId, kind])
+  } catch {
+    return ""
+  }
 }
 
 /** Whether the duty-setting rows differ from the lists: one read. */

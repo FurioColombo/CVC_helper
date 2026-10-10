@@ -116,8 +116,9 @@ export function lineProblems(path, line, denylist = []) {
         /^\s*[,}\]]?\s*$/.test(line.slice(match.index + match[0].length))
       if (jsonNumber) continue
       // A process exit code quoted from a log (Windows' 3221226505 is a crash)
-      // has a phone's ten digits.
-      if (/\bcode\s*[=:]?\s*$/i.test(line.slice(0, match.index))) continue
+      // or a review's random seed in prose can have a phone's digits.
+      if (/\b(?:code|seed)\s*[=:]?\s*$/i.test(line.slice(0, match.index)))
+        continue
       const digits = match[0].replace(/\D/g, "").replace(/^39(?=3\d{9}$)/, "")
       if (!SYNTHETIC_PHONES.has(digits)) {
         problems.push(

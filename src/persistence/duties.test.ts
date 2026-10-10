@@ -631,6 +631,31 @@ describe("duty persistence", () => {
       ).toEqual([])
     })
 
+    // D2 review DI-R2-1: a stored row with this course's id but another
+    // course's column is read by its id and replaced, not inserted twice.
+    it("replaces a wanted row filed under another course", async () => {
+      const [monday] = dutySettingItems("course-1", { extraDayIds: ["monday"] })
+      givenStoredRows({ items: [{ ...monday!, courseId: "course-2" }] })
+
+      await saveDutyPlan("course-1", [], {
+        ...SETTINGS,
+        completedDayIds: [],
+        fewerDayIds: [],
+        stayOverStudentIds: [],
+        acknowledgedWarningKeys: [],
+        extraDayIds: ["monday"],
+      })
+
+      expect(batchOf("DELETE FROM dutySettingItems")).toEqual([[monday!.id]])
+      expect(
+        batchOf("INSERT INTO dutySettingItems")?.map((row) => row.slice(0, 3)),
+      ).toEqual([[monday!.id, "course-1", "extra-day"]])
+      expect(database.getAll).toHaveBeenCalledWith(
+        expect.stringContaining("WHERE courseId = ? OR id IN (?)"),
+        ["course-1", monday!.id],
+      )
+    })
+
     it("saves a course whose extra days were never chosen with none", async () => {
       const settings: DutySettingsRecord = { ...SETTINGS, completedDayIds: [] }
       expect(settings).not.toHaveProperty("extraDayIds")

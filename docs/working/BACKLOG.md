@@ -110,6 +110,16 @@ Each passed only on a retry and is a defect to fix (03 §6).
 
 - `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
   — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
+- `d2-duty-items.spec.ts › opens the 0.3.0 duty lists as rows, item by item, none lost or doubled`
+  and `d2-duty-items.spec.ts › rebuilds the rows after a 0.3.0 app drops their table and writes the lists`
+  — iPhone 13 WebKit: the page closes ("Target page, context or browser has
+  been closed"), 2 of 18 runs in D2's round-2 review while other browser runs
+  loaded the machine. Reading back before closing the 0.3.0 instance and the
+  seed (D2) gave 22 of 22 clean runs of the second on an idle machine; the
+  cause inside WebKit is not established (D2 review DP-4).
+- `d2-duty-items.spec.ts › shows a stale 0.3.0 tab's list changes at once and keeps its stay-over student from deletion`
+  — iPhone 13 WebKit, the same page loss, once in D2's pre-check run under
+  the same load.
 
 ## Future work the owner has named
 
@@ -198,4 +208,7 @@ From the D2 reviews (`.evidence/D2/`):
 
 - no integrity check reports a stay-over student who no longer exists, in the
   list or the rows, and the duty screens then refuse every save (DP-Q3; the
-  state predates D2 for the list).
+  state predates D2 for the list);
+- the duty-setting rows' probe reads every row on every open (16 ms for one
+  course, 97 ms for 30 on the development PC); before 0.7.0 keeps a season,
+  scope it to courses that changed or index `courseId` (DI-R2-Q2).

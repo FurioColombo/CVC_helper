@@ -77,8 +77,18 @@ const COURSE_PREFERENCE_PREFIXES = ["cvc-helper.scan-name-order."]
 export async function eraseAllCourseData() {
   await db.init()
   await db.writeTransaction(async (transaction) => {
+    // An older app that opened the database meanwhile dropped the tables only
+    // newer versions declare, their rows with them (03 §3.1); the erase skips
+    // what is gone instead of failing on it (D2 review DP-R2-1).
+    const present = new Set(
+      (
+        await transaction.getAll<{ name: string }>(
+          "SELECT name FROM sqlite_master WHERE type = 'view'",
+        )
+      ).map(({ name }) => name),
+    )
     for (const table of COURSE_DATA_TABLES) {
-      await transaction.execute(`DELETE FROM ${table}`)
+      if (present.has(table)) await transaction.execute(`DELETE FROM ${table}`)
     }
   })
   // Deleted rows can survive in free database pages until they are reused;

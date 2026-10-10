@@ -58,6 +58,9 @@ export async function seed(
   })
   await legacy.init()
   await insertFixtureTables(legacy, tables)
+  // Read before closing: closing straight after a write lost WebKit's test
+  // page now and then (D2 review DP-4).
+  await legacy.get("SELECT count(*) AS count FROM courses")
   await legacy.close()
 }
 

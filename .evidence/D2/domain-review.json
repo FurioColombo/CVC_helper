@@ -1,0 +1,121 @@
+{
+  "reviewerRole": "domain-prosecutor",
+  "persona": "Il Pubblico Ministero",
+  "milestone": "D2",
+  "round": 2,
+  "commit": "1a86168",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DP-R2-1",
+      "title": "Wildcard: when a 0.3.0 tab opens the database while the 0.4.0 app is still open, its schema drops dutySettingItems. 'Elimina il corso' in the 0.4.0 app then fails every time until a reload. At d19b51b the same erase ran in the same state.",
+      "evidence": "eraseAllCourseData (src/persistence/courses.ts:77-84) runs DELETE on every COURSE_DATA_TABLES entry, which now includes dutySettingItems (src/persistence/schema.ts:176), inside one write transaction. Opening the 0.3.0 schema removes the table (ps_data_local__dutySettingItems is absent from sqlite_master), so the transaction fails with 'no such table: dutySettingItems'. Results on the real engine at 1a86168, clean tree (runs finished before the working-tree edits of 18:52). (1) Chromium UI (probe B): the app is open on the 0.3.0 fixture and a second page opens the 0.3.0 schema. Impostazioni > 'Elimina il corso e inizia un nuovo corso' > tick > 'Elimina tutto' shows 'Il corso non è stato eliminato. Nessun dato è cambiato: riprova.' 'Crea il corso' is not shown, and all 7 students remain. (2) Same page on both engines (probe D): Chromium and WebKit each give {itemsTablePresent:false, baseline:'Error: rollback-probe: every DELETE ran', erase:'Error: no such table: dutySettingItems', students:7}. The baseline probe runs d19b51b's statement list (COURSE_TABLES without dutySettingItems, reversed) in a transaction that is then rolled back, so before D2 the erase would have completed. Retrying in the same page meets the same missing table; only a reload re-creates it. Nothing is half-written and the message is accurate. In this state D1 already makes stamped writes fail (D1 DI-R2-Q5), and at d19b51b the new course created after the erase would also have failed. The privacy action (erasing minors' data), however, worked before D2 and does not now. This is the checklist's own case ('a 0.3.0 app opening the database, which drops the new table') with the newer instance still open. Neither D3 nor D4 lists it: D3 names Riprova of prepareDatabase, and D4 names a reset with another tab open, not an erase after an older schema dropped a newer table.",
+      "reproduction": "test-results/d2-r2-pm/browser/{stale.pm.ts (test B), single.pm.ts (test D), probe.ts, playwright.config.ts}. Master copy: session scratchpad pm-d2r2/browser, because a concurrent run with outputDir test-results/ wiped the first copy. Run from the repo root: CVC_E2E_BASE_URL=http://127.0.0.1:<free port> node node_modules/@playwright/test/cli.js test -c test-results/d2-r2-pm/browser/playwright.config.ts single.pm.ts. Suggested fix: let the erase skip a course table that sqlite_master lacks (only a newer-only table can be missing), or add 'erase after an older app dropped a newer table' to D3's checklist beside DI-R2-Q5.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 success predicate ('identical results before and after') and adversarial checklist (0.3.0 app opening the database drops the new table); 01_PRODUCT_SPEC.md §10 (routine recoverable errors stay in context with retry; here the retry cannot succeed); 03_TECHNICAL_DECISIONS.md §3.1"
+    },
+    {
+      "id": "DP-4",
+      "title": "Round-1 DP-4 is not fixed: D2's own browser spec still loses the WebKit page, now in two tests, and the case is not on the flaky-test list",
+      "evidence": "`node scripts/run-e2e.mjs tests/e2e/d2-duty-items.spec.ts --project=iphone-13-webkit-core --retries=0 --repeat-each=3` at 1a86168 (clean tree): 16 passed, 2 failed, 19.6 min. Both failures are 'page.evaluate: Target page, context or browser has been closed', in 'opens the 0.3.0 duty lists as rows ...' (repeat 2) and 'rebuilds the rows after a 0.3.0 app drops their table ...' (repeat 2). The round-2 change (reading the older app's list back before close, src/test/d2DutyItemsHarness.ts:186-192) did not stop the crash. runListsUpgrade was not changed, and its seed() still closes straight after its inserts (src/test/d1MigrationHarness.ts:59-61). D1's spec, which uses the same seed(), passed 16/16 on WebKit in a comparison run (`--repeat-each=2 --retries=0`, 407 s; part of that run overlapped the working-tree edits). The crash rate is therefore higher in the D2 spec, and the cause is still not established. With the default single retry this shows up as a flaky test. docs/working/BACKLOG.md 'Flaky browser tests' does not list it. The only mention is D4's checklist note about closing after a write.",
+      "reproduction": "Command above. Its log was deleted by a concurrent Playwright run that cleared test-results/; the failing test names and errors are quoted here.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 success predicate (duty browser journeys) and evidence; playwright.config.ts webkitCoreSpecs includes d2-duty-items; BACKLOG rule 'each [flaky test] is a defect to fix (03 §6)'"
+    },
+    {
+      "id": "DP-R2-2",
+      "title": "Independent reproduction of data-integrity DI-R2-1: at 1a86168, a duty-setting row whose columns disagree with its id makes the open-time repair or the duty save insert an id that already exists",
+      "evidence": "Real SQLite (node:sqlite), running 1a86168's repairs.ts and dutyItems.ts (git show copies). Row W1: an unparsable stay-over list plus a completed-day row rewritten to kind 'stay-over'. The per-list skip filters stored rows by their columns (repairs.ts:143-147), the diff keys them by id, and repairDutySettingItems throws 'UNIQUE constraint failed: dutySettingItems.id'. On the real engine that rejects prepareDatabase on every open. Row W3: a row carrying this course's item id under another courseId. saveDutyPlan's item step reads only `WHERE courseId = ?` (duties.ts:293-298) and throws the same error, so every duty save fails ('Modifica non salvata') until the next open. Row W3b: the next open's repair then heals it. d19b51b had neither failure mode. Only 0.4.0 writes these rows, always consistent with their ids, so a corrupted database is needed to reach this. The consequence for W1 is the same total lockout I rated important in DP-3. The working tree (uncommitted, 18:52) changes both statements; that change was not reviewed here.",
+      "reproduction": "test-results/d2-r2-pm/unit/repair.test.ts rows W1 and W3 against test-results/d2-r2-pm/unit/at1a86168/ (master copy in scratchpad pm-d2r2/unit). Run: npx vitest run -c test-results/d2-r2-pm/unit/vitest.config.ts. Result: W1 and W3 fail with UNIQUE constraint; W3b, W4, W5, W6 and W8 pass.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 adversarial checklist ('duplicates or corrupt JSON in old rows'); 0.4.0 objective (a course opens intact)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DP-R2-Q1",
+      "title": "03 §3 says 'The journeys check before every close that the rows match the lists', but only the three week journeys do",
+      "evidence": "storedRowIssues (tests/e2e/stored-rows.ts, which now includes dutySettingItemsNeedRepair) is called only in full-week.spec.ts:189, ug1-upgraded-week.spec.ts:148 and ug2-upgraded-week.spec.ts:476. duties.spec.ts, u08-duties.spec.ts, ug1-duty-reflow.spec.ts and f3-duty-summary.spec.ts change stay-over students, extra days and completed days through the UI and never compare rows with lists. Unit tests of saveDutyPlan cover the item writes, and my probe A checked a UI 'Segna completata' (needRepair false), so nothing is known to be wrong. The sentence claims more than the harness does.",
+      "reproduction": "grep -n storedRowIssues tests/e2e/*.spec.ts",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 (D2 paragraph); docs/DOCS_SYSTEM.md (contracts describe the present)"
+    },
+    {
+      "id": "DP-R2-Q2",
+      "title": "Saving now drops a repeated acknowledged-warning key from the stored list. There is no visible effect.",
+      "evidence": "Differential of d19b51b's screen functions (DutyManagement.tsx:135-228 plus persist()) against src/domain/dutySettings.ts over 6,000 seeded interacting cases. Normalisation, defaults and student count agree in every case. The saved settings differ in 327 cases, and only by a repeated acknowledged key stored once (pruneDutyWarningAcknowledgements, duties.ts:676). All readers use a Set (getVisibleDutyWarnings, duties.ts:657-665), and the docstring of dutySettingsForSave records the behaviour. Noted only because the milestone says behaviour does not change.",
+      "reproduction": "test-results/d2-r2-pm/unit/differential.test.ts (seed 301134364): 'differences 0 ack-dedup-only 327'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 ('Behaviour does not change')"
+    }
+  ],
+  "roundOneRecheck": [
+    {
+      "id": "DP-1",
+      "status": "FIXED",
+      "evidence": "The stay-over guard is again json_each over dutySettings.stayOverStudentIds; against d19b51b, src/persistence/students.ts differs only by a comment. `node scripts/run-e2e.mjs tests/e2e/u02-deletion-integrity.spec.ts tests/e2e/d2-duty-items.spec.ts --project=pixel-7-chrome --retries=0` passes 7/7, including the U02 stay-over row that failed in round 1. The new stale-tab test passes 1/1 on Chromium and 3/3 on WebKit. Visible-app probe A (Chromium, two pages): a 0.3.0 instance opened before the app adds student-v030-paolo to the list after the app's open. His profile under 'Disponibilità ed eliminazione' then shows 'Preferenza: resta la prossima settimana' and no 'Elimina definitivamente'. The corrupt-sibling-list case (S3) no longer matters, because the guard does not read the rows."
+    },
+    {
+      "id": "DP-2",
+      "status": "FIXED",
+      "evidence": "readDutyPlan and saveDutyPlan's history guard read only the list, exactly as at d19b51b; apart from the type alias and the item write, the duties.ts diff against d19b51b is empty. Probe A: after the 0.3.0 tab completes Sunday, leaving and re-entering Comandate shows 'Domenica, 1 assegnati, completata'. 'Segna completata' on Monday saves with 0 'Modifica non salvata', and the rows then equal the lists (needRepair false; completed-day rows saturday, sunday, monday)."
+    },
+    {
+      "id": "DP-3",
+      "status": "FIXED",
+      "evidence": "The repair reads only `FROM dutySettings WHERE id = courseId` (repairs.ts:120-121), and a unit test covers it. Real-engine probe C on Chromium and WebKit: the 0.3.0 fixture plus a stray settings row of the same course opens to 'D2 - 38 | 2026', the rows mirror only the canonical row, needRepair is false, and Comandate shows 'Sabato, 1 assegnati, completata'."
+    },
+    {
+      "id": "DP-4",
+      "status": "NOT FIXED",
+      "evidence": "See importantFindings DP-4: 2 of 18 WebKit runs still lose the page, in two different tests."
+    },
+    {
+      "id": "DP-Q1",
+      "status": "RESOLVED",
+      "evidence": "The guard no longer queries item kinds; 'stay-over' is again only the reference label, as at d19b51b."
+    },
+    {
+      "id": "DP-Q2",
+      "status": "FIXED",
+      "evidence": ".milestones/manifest.json D2 e2eSpecs now includes tests/e2e/u02-deletion-integrity.spec.ts."
+    },
+    {
+      "id": "DP-Q3",
+      "status": "SCHEDULED",
+      "evidence": "docs/working/BACKLOG.md 'From the D2 reviews'. While nothing reads the rows, a dangling stay-over row is invisible, and the list case predates D2."
+    },
+    {
+      "id": "DP-Q4",
+      "status": "RESOLVED",
+      "evidence": "Reads use the lists again, so a repeated stay-over id is counted as at d19b51b (the read path is identical by diff). The rows store it once but are not read."
+    },
+    {
+      "id": "DP-Q5",
+      "status": "SCHEDULED",
+      "evidence": "04_IMPLEMENTATION_PLAN.md D3 adversarial checklist names it (DP-Q5)."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .evidence/D2/domain-review-round-1.json and data-integrity-review-round-1.json; the uncommitted .evidence/D2/data-integrity-review.json (DI round 2, read for overlap only); 04_IMPLEMENTATION_PLAN.md D2, D3, D4; 03_TECHNICAL_DECISIONS.md §3 (D1 and D2 paragraphs) and §3.1; 01_PRODUCT_SPEC.md §3.5, §5, §6, §10, §11",
+    "git diff 9813d1a..1a86168 and d19b51b..1a86168 for src/persistence/{duties,students,dutyItems,repairs,migrations,schema,courses}.ts, src/domain/{dutySettings,config}.ts, src/features/duties/DutyManagement.tsx, src/test/d2DutyItemsHarness.ts, tests/e2e/{d2-duty-items.spec.ts,stored-rows.ts}, the manifest, BACKLOG and plan",
+    "Chromium, clean tree: u02-deletion-integrity plus d2-duty-items, 7/7 passed with retries 0. full-week, duties, u08-duties (3 tests) and ug2-upgraded-week (2 tests): 7/7 passed with retries 0 (10.7 min)",
+    "WebKit, clean tree: d2-duty-items with repeat-each 3 and retries 0, 16 passed and 2 failed (page closed). Comparison run of d1-migration with repeat-each 2: 16/16 passed",
+    "npm run check:full-week PASS; npm run check:domain PASS; vitest on duties, dutyItems, repairs, migrations, students and dutySettings tests: 111/111",
+    "Scratch probes (synthetic fixtures only): node:sqlite table of repair and save-step rows W1-W8 against 1a86168's repairs and dutyItems; old-versus-new settings differential over 6,000 cases; browser probes A (stale 0.3.0 tab writes the lists under the open UI), B and D (0.3.0 schema re-init, then erase), C (stray settings row)",
+    "Screenshots seen during the run: Comandate after the stale write, Paolo's profile, the failed erase alert on Chromium",
+    "git status: since 18:52 the working tree carries uncommitted changes by another agent to duties.ts, repairs.ts, their tests, 03, 04 and BACKLOG. Every result above that is attributed to 1a86168 was produced before those changes, or (W1, W3) against git-show copies of 1a86168's files. I did not edit tracked files."
+  ],
+  "anglesTried": {
+    "seed": 301134364,
+    "lenses": [
+      "7. Student-only rules leak to volunteers (seed mod 12 = 4 drew lens 5, already tried in round 1; lens 6 was also tried, so I took the next untried lens). Result: no leak. Volunteer code, invariants and domain duties are unchanged since d19b51b. A volunteer id cannot enter the stay-over list, because both 0.3.0's and 0.4.0's saves check it against students. The deletion guard is student-only, as before.",
+      "11. Two rules that interact (floor(seed/12) mod 12 = 10). Completed-day immutability plus a stay-over set by a stale tab plus a later 0.4.0 save, through the visible UI (probe A: no false refusal, rows mirror the lists). Normalisation differential over minors at the 18-year boundary on the first course day, inactive stay-over students, extra days that are also completed, fewer days, and major plus advisory plus stale acknowledgements: 0 differences, only acknowledged-key dedup (DP-R2-Q2)."
+    ],
+    "wildcard": "A table only the newer version declares, used by a whole-course operation after an older app re-applied its schema under the open newer instance: the erase fails (DP-R2-1). Second part: item rows whose columns disagree with their id, sent through the per-list skip and the save's courseId-scoped read (DP-R2-2)."
+  },
+  "notTested": [
+    "Two-page (two-tab) variants of probes A and B on WebKit: the app page stayed blank while another page of the same context had the database open, a limitation of my harness. B was confirmed on WebKit in one page (probe D); A only on Chromium, with the function-level stale-tab test passing 3/3 on WebKit",
+    "A browser run of the d19b51b build: the baseline was shown with d19b51b's own statement list on the same database (erase) and by diff identity of the read paths",
+    "ug1-duty-reflow, f3-duty-summary and ug1-upgraded-week, which are in D2's focused specs, because of machine load from another agent's browser runs",
+    "The root cause of the WebKit page crash (DP-4), and whether it can occur in iPhone Safari",
+    "The uncommitted working-tree changes made at 18:52 (duties.ts, repairs.ts and docs): not part of commit 1a86168",
+    "Real devices (the owner's checks)"
+  ]
+}

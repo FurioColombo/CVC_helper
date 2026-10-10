@@ -1,0 +1,102 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D2",
+  "round": 2,
+  "commit": "1a86168",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-R2-1",
+      "title": "The per-list skip and the save choose rows by their columns, but the diff keys rows by id. A row whose columns disagree with its id can therefore make the repair or the save insert an id that already exists. With an unparsable list beside it, the app does not open at all, and Riprova and reload fail the same way.",
+      "evidence": "src/persistence/repairs.ts:142-143 drops stored rows whose (courseId, kind) columns name an unparsed list, while `wanted` (repairs.ts:135-139) and dutySettingItemChanges (dutyItems.ts:88-109) key by id. A dropped row whose id is wanted by a list that does parse is missing from storedById, so it goes into `added`, and writeDutySettingItemChanges INSERTs an id that exists. Real engine, same result on Chromium (Pixel 7) and WebKit (iPhone 13): 'skipCollisionKind' (the course's fewerDayIds is '{' and its Monday extra-day row has kind column 'fewer-day') and 'skipCollisionCourse' (a second course whose extraDayIds is '{' and the first course's Monday row filed under it) both give prepareDatabase 'UNIQUE constraint failed: ps_data_local__dutySettingItems.id' on open and again on reopen. Planted in cvc-helper.db and loaded at '/', the app shows 'Archivio non disponibile / Non riesco ad aprire i dati locali', and Riprova and a full reload show it again (screenshots u1-collision-chromium.png, u1-collision-reload-chromium.png). The same column-vs-id gap is in saveDutyPlan: it reads the course's rows with `WHERE courseId = ?` (src/persistence/duties.ts:293-298). One planted row whose id is this course's but whose courseId column names another course makes every duty save fail with the same UNIQUE error until the next open repairs it ('itemUnderOtherCourse', saveBeforeReopen, both engines). Before D2 the save did not touch this table. Two things limit the severity. No writer produces either condition: the open crash needs two independent corruptions, an unparsable list and a row that disagrees with its id, and a list that does not parse is on D2's checklist ('corrupt JSON in old rows'). Second, the open case is the class DI-3 described: a row that nothing reads now makes the whole app unavailable. Which checks notice the state: the probe returns true, validateStoredRows returns [], and validateCourseState takes no duty settings. D4's import, which checks validateCourseState before writing, would be the first path that could write such a file.",
+      "reproduction": "Harness in C:/Users/MARCOF~1/AppData/Local/Temp/claude/C--Users-Marco-Furio-Colombo-Desktop-CVC-helper/7c215a92-4780-4365-9696-28491d3e5340/scratchpad/r2h (it has a node_modules junction to the repository). Commands: planted.spec.ts test 'P3 the two collision cases' and 'P2 planted states, new'; ui2.spec.ts test 'U1'. Run as node node_modules/@playwright/test/cli.js test -c playwright.config.ts --project=chromium|webkit <spec> with CVC_E2E_BASE_URL set to a free port. Results are in P2-chromium.json, P3-webkit.json, P1-chromium.json and P1-webkit.json (itemUnderOtherCourse.saveBeforeReopen), plus the u1-*.png screenshots.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 adversarial checklist ('duplicates or corrupt JSON in old rows'); 0.4.0 objective (a course from 0.1-0.3 opens intact); AGENTS.md §11. Suggested fix: skip by the (course, kind) that the row's id encodes, not by its columns, and select the save's stored rows by id prefix or by every id it wants. Simpler still, write item rows with INSERT OR REPLACE (dutySettings already uses it), so that a mirror row can never block an open or a save."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q1",
+      "title": "What 0.5.0 inherits: the open-time repair is a write that makes the lists win. It deletes, on every open and with no user action, any row of a kind this version does not know and any row the lists lack. D3's checklist names only an older app's save, and 03 §3 does not say that the repair has to be retired or reversed when the rows become the read copy or are synced.",
+      "evidence": "Real engine, Chromium: 'futureKind' (a row of kind 'rest-day') and 'rowOnlyItem' (a stay-over row that no list holds) both make the probe return true, and the next open removes them (P2-chromium.json). prepareDatabase runs this repair before anything else (src/persistence/migrations.ts:86-95). 04_IMPLEMENTATION_PLAN.md:108-109 (D3) mentions only 'an older app's save deleting duty-setting rows of a kind only a newer version knows (D2 review DP-Q5)'; DP-Q5 itself named the repair as well. 03_TECHNICAL_DECISIONS.md:109-114 records that reads move to the rows later and records the base issue (DI-Q3). It does not record that, while this repair exists, any item-by-item merge of the rows (the stated purpose of the item ids) is undone at the next open on whichever phone, because the rows are rebuilt from the whole-list copy. Once the rows sync, that would upload deletes the user never made.",
+      "reproduction": "planted.spec.ts 'P2 planted states, new', cases futureKind and rowOnlyItem.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md Rules ('design each change so 0.5.0 can sync it'), D3 success predicate ('An app older than its data's minimum writer version never writes'). Suggestion: in D3's checklist, name the open-time repairs (D1's and D2's) next to the save, so that the read-only gate runs before prepareDatabase's repairs. In 03 §3, record that the lists-win repair goes, or turns round, in the release that reads or syncs the rows."
+    },
+    {
+      "id": "DI-R2-Q2",
+      "title": "The probe that runs on every open reads every row of every course and diffs them in JavaScript before the first screen. It roughly doubles the open-time probe cost, and the cost grows with the history the device keeps.",
+      "evidence": "Real engine, Chromium on the development PC (which was busy): 1 course with 74 rows (40 stay-over students, 3 fewer days, 4 extra days, 7 completed days, 20 acknowledged keys): dutySettingItemsNeedRepair median 16.3 ms (max 23.1), against 8.8 ms for D1's needsRepair; a duty save median 25.6 ms. 30 courses with 2,220 rows: probe median 97.2 ms (max 143.6), D1's probe 44.3 ms, save 36.6 ms. The table has no index, like the others, so the save's own read of its course grows with the table too (7.9 ms to 13.1 ms). WebKit ran the same probe (C1-webkit.json), but its timings were dominated by the concurrent load (D1's probe alone took a 232 ms median), so they are not usable. At 0.4.0's single course this is acceptable. For 0.7.0's season it is not free on a phone.",
+      "reproduction": "cost.spec.ts 'C1'; C1-chromium.json, C1-webkit.json.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 (repairs on every open; D1 review DI-R2-Q1 made the open of sound data cheap). Suggestion for when courses multiply: scope the probe to courses whose settings or rows changed (for example, compare max(updatedAt) per course first), or add an index on courseId."
+    }
+  ],
+  "roundOneRecheck": [
+    {
+      "id": "DI-1",
+      "status": "FIXED",
+      "evidence": "E1 on Chromium and WebKit, identical. After the stale 0.3.0 tab saves Paolo as staying over, readDutyPlan returns [davide, paolo]. assessStudentDeletion returns canDelete false with a stay-over reference, and deleteUnusedStudent throws StudentDeletionBlockedError, so the student stays. The 0.4.0 save that completes Sunday succeeds and brings the rows level (probe true before the save, false after). After a reload, the read and a save both succeed. Covered by tests/e2e/d2-duty-items.spec.ts:138 and src/test/d2DutyItemsHarness.ts:202."
+    },
+    {
+      "id": "DI-2",
+      "status": "FIXED",
+      "evidence": "E2 on Chromium and WebKit, identical. The read after the older tab's save equals the stored lists (desiredPerDay 2, extra [tuesday], fewer [monday]). The 0.4.0 save keeps them and the rows match. Sunday, completed by the older tab, reads as completed, and the next save succeeds. A stale 0.4.0 screen that read before Sunday was completed is refused loudly ('Completed duty history is immutable'), as at d19b51b. The read path of duties.ts and students.ts is byte-identical to d19b51b (git diff d19b51b..1a86168); the save only appends the item diff inside its transaction."
+    },
+    {
+      "id": "DI-3",
+      "status": "FIXED at open; residual in the save, see DI-R2-1",
+      "evidence": "P1 on Chromium and WebKit. A duplicate settings row (id 'settings-copy') is ignored: the app opens and reopens. An item filed under a foreign course is rebuilt on open. A save made before that open still fails with UNIQUE (DI-R2-1)."
+    },
+    {
+      "id": "DI-Q1",
+      "status": "FIXED",
+      "evidence": "P1 valueDiffersFromId on both engines: the probe returns true and the next open rebuilds the row. validateStoredRows still does not see it, but the journeys' check includes the probe (tests/e2e/stored-rows.ts:26)."
+    },
+    {
+      "id": "DI-Q2",
+      "status": "FIXED",
+      "evidence": "E5 on Chromium and WebKit, identical. After a stale 0.3.0 erase the probe returns true and validateStoredRows reports 3 unknown-course rows; the next open leaves 0 rows and no issues. In P1 the orphan item is removed on open."
+    },
+    {
+      "id": "DI-Q3",
+      "status": "RECORDED, behaviour unchanged as intended",
+      "evidence": "03_TECHNICAL_DECISIONS.md:111-114. E6 on Chromium: tab B adds Sara as staying over, and tab A's stale save removes her row, which is the same last-writer-wins as the whole list."
+    },
+    {
+      "id": "DI-Q4",
+      "status": "FIXED",
+      "evidence": "tests/e2e/d2-duty-items.spec.ts:138-159 with runStaleOlderTab. The 0.3.0 instance stays open, the app opens the database, and the older tab saves through 0.3.0's own statement. The test asserts the read lists and that the stay-over student cannot be deleted."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-data-integrity.md; AGENTS.md",
+    ".evidence/D2/data-integrity-review-round-1.json (my anglesTried: lenses 7 and 2) and domain-review-round-1.json (DP-2, DP-3, DP-Q1 to DP-Q5)",
+    "04_IMPLEMENTATION_PLAN.md D2 and D3; 03_TECHNICAL_DECISIONS.md §3 (D2 paragraph) and §3.1; .milestones/manifest.json D2 (u02-deletion-integrity now in e2eSpecs)",
+    "git diff 9813d1a..1a86168 and d19b51b..1a86168: repairs.ts, dutyItems.ts, duties.ts, students.ts, migrations.ts, schema.ts, the unit tests, d2DutyItemsHarness.ts, d2-duty-items.spec.ts, stored-rows.ts",
+    "src/domain/invariants.ts (validateCourseState takes no duty settings), src/persistence/rowIntegrity.ts, courses.ts eraseAllCourseData, StudentManagement deletion UI, warning-key formats in src/domain/duties.ts (day ids, counts and student ids only, so item ids carry no names)",
+    "tests/e2e/full-week.spec.ts, ug1-upgraded-week.spec.ts, ug2-upgraded-week.spec.ts: the rows check runs before each close or reload",
+    "Ran: npx vitest run on repairs, dutyItems, duties, students and migrations tests: 5 files, 78 tests passed",
+    "Ran the real-engine harness in scratchpad/r2h. review2.spec.ts: E1, E2, E5 on Chromium and WebKit; E6, R1, D1 on Chromium. planted.spec.ts: P1 and P2 on Chromium, P1 and P3 on WebKit. ui2.spec.ts: U1 on Chromium. cost.spec.ts: C1 on Chromium and WebKit. Results are in *-chromium.json, *-webkit.json and *.png in that folder.",
+    "git status after the runs: clean"
+  ],
+  "anglesTried": {
+    "seed": 739968525,
+    "lenses": [
+      "10. Replaying an operation twice (seed mod 12 = 9). R1: two prepareDatabase calls at once on one file both succeed. A third, hand-run repair changes nothing, and saving the same plan twice writes no item rows (timestamps unchanged). A stale 0.4.0 screen's save after a completed day is refused visibly.",
+      "4. Duplicate IDs, dangling references, orphans after a delete (floor(seed/12) mod 12 = 3). D1: after a stale 0.3.0 save drops Paolo from the list, the 0.4.0 deletion goes through and leaves one dangling stay-over row. The probe sees it, and the next save removes it. Orphans after a stale erase go on open (E5). Ids cannot collide (JSON triple). With two courses, each is mirrored on its own; a duplicate settings copy is ignored."
+    ],
+    "wildcard": "Can a mirror that nothing reads still stop the app? I searched for any state of dutySettingItems that makes the open or a save fail, and planted the smallest one at each point where the code selects rows by their columns instead of their id. Found DI-R2-1: two corruptions stop the open, one stops the save until the next open. Following my signature move, the one state no check notices at all is an unparsable stay-over list with a ghost stay-over row kept beside it (probe false by design, validateStoredRows [], validateCourseState blind). It is harmless today because the duty screen reports the corrupt list, as before D2.",
+    "alsoCovered": [
+      "Brief: the mirror drifts only between opens or under an unparsable list, and the probe, now comparing course, kind and value, sees every other drift; the whole-table repair with two courses, a course being erased (0.4.0 erase and a stale 0.3.0 erase) and an item under a foreign course; the per-list skip; the cost of the probe and of the save's extra read; 0.5.0 inheritance (DI-R2-Q1, and DI-Q3 recorded)",
+      "Success predicate: the read path is identical to d19b51b, and the save adds only the item diff in the same transaction",
+      "Checklist: corrupt JSON (per-list skip), duplicates in lists (stored once), completed-day history (the guard reads the list, as before D2), erase, a toggle saved twice, 0.3.0 opening or writing (stale-tab test now in the spec)"
+    ]
+  },
+  "notTested": [
+    "E6, R1 and D1 on WebKit, and P2's futureKind, rowOnlyItem, twoCourses and unparsedListHidesDrift on WebKit. Another agent's suites had the 8 GB machine at full CPU and memory: one WebKit worker ran out of memory (code=134) and P2 timed out at 180 s. The logic does not depend on the engine, and every case rerun on WebKit (E1, E2, E5, P1, P3) matched Chromium exactly.",
+    "Usable WebKit and phone timings for the probe: the WebKit run completed, but its numbers reflect the load, not the code.",
+    "The repository's own d2-duty-items spec and the duty journeys. I did not run them, so as not to overwrite the concurrent run's test-results/e2e-report.json; they are left to the orchestrator's verify:e2e:focus.",
+    "A real 0.3.0 build in a second browser tab: simulated, as in round 1, by a v030Schema PowerSync instance issuing 0.3.0's own save statement.",
+    "Physical Android or iOS devices."
+  ]
+}

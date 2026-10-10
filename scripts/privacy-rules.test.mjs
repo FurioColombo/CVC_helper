@@ -104,6 +104,12 @@ describe("lineProblems", () => {
       lineProblems(".evidence/D2/review.json", "exit code 3221226505"),
     ).toEqual([])
     expect(
+      lineProblems(
+        ".evidence/D2/review.json",
+        '"reproduction": "differential.test.ts (seed 301134364): no differences"',
+      ),
+    ).toEqual([])
+    expect(
       lineProblems(".evidence/D2/review.json", "call 3221226505 tonight"),
     ).not.toEqual([])
   })

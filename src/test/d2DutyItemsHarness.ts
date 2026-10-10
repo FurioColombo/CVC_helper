@@ -247,3 +247,44 @@ export async function runStaleOlderTab() {
     paoloReferences: deletion.references.map(({ kind }) => kind),
   }
 }
+
+/**
+ * D2 review DP-R2-1: a 0.3.0 tab opens the database while the app is open,
+ * and its schema drops the rows' table under the app. Erasing the course must
+ * still remove every course row.
+ */
+export async function runEraseAfterOlderSchema() {
+  await seed("0.3.0", "cvc-helper.db")
+  const { getActiveCourse, eraseAllCourseData } =
+    await import("@/persistence/courses")
+  await getActiveCourse()
+  const { db } = await import("@/persistence/db")
+  const rowsBefore = (await itemSnapshot(db)).length
+
+  const older = new PowerSyncDatabase({
+    schema: v030Schema,
+    database: { dbFilename: "cvc-helper.db" },
+  })
+  await older.init()
+  const tableWhileOlder = await older.getAll(
+    "SELECT name FROM sqlite_master WHERE name = 'ps_data_local__dutySettingItems'",
+  )
+
+  let erased = true
+  await eraseAllCourseData().catch(() => (erased = false))
+  const remaining: Record<string, number> = {}
+  for (const table of ["courses", "students", "dutySettings", "evaluations"]) {
+    remaining[table] = (
+      await older.get<{ count: number }>(
+        `SELECT count(*) AS count FROM ${table}`,
+      )
+    ).count
+  }
+  await older.close()
+  return {
+    rowsBefore,
+    tableDroppedByOlderApp: tableWhileOlder.length === 0,
+    erased,
+    remaining,
+  }
+}

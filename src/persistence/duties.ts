@@ -290,21 +290,21 @@ export async function saveDutyPlan(
     )
     // The same lists, item by item (D2): only the items that changed. A course
     // whose extra days were never chosen is saved with none, as the list above.
+    // The stored rows are the course's and every row holding a wanted id, so a
+    // row filed under another course is replaced, not inserted twice.
+    const wantedItems = dutySettingItems(courseId, {
+      ...settings,
+      extraDayIds: settings.extraDayIds ?? [],
+    })
     const storedItems = await transaction.getAll<DutySettingItem>(
       `SELECT id, courseId, kind, value, position
        FROM dutySettingItems
-       WHERE courseId = ?`,
-      [courseId],
+       WHERE courseId = ? OR id IN (${wantedItems.map(() => "?").join(", ")})`,
+      [courseId, ...wantedItems.map(({ id }) => id)],
     )
     await writeDutySettingItemChanges(
       transaction,
-      dutySettingItemChanges(
-        storedItems,
-        dutySettingItems(courseId, {
-          ...settings,
-          extraDayIds: settings.extraDayIds ?? [],
-        }),
-      ),
+      dutySettingItemChanges(storedItems, wantedItems),
       now,
     )
   })

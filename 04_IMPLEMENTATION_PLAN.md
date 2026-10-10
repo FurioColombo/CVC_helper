@@ -105,9 +105,11 @@ version never writes.
 arriving mid-migration; two tabs on different versions, where the old one writes
 after the new one migrated; an older app re-initialising the schema under an
 open newer one, after which Riprova must reload rather than retry the same
-instance (D1 review DI-R2-Q5); an older app's save deleting duty-setting rows
-of a kind only a newer version knows (D2 review DP-Q5); the banner over a
-nested screen; standalone WebKit behaviour.
+instance (D1 review DI-R2-Q5); an older app's save or open-time repair
+deleting duty-setting rows of a kind only a newer version knows, so the
+read-only check comes before D1's and D2's repairs, which write (D2 reviews
+DP-Q5, DI-R2-Q1); the banner over a nested screen; standalone WebKit
+behaviour.
 
 **Evidence:** verification, compatibility table tests, browser evidence, the
 owner's Android check (update without reinstall), data-integrity,

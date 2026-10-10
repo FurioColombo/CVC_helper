@@ -327,6 +327,22 @@ describe("repairDutySettingItems", () => {
     expect(items().map(({ value }) => value)).toEqual(["student-1"])
   })
 
+  // D2 review DI-R2-1: a row whose kind column names a list that does not
+  // parse, while its id names one that does, must not be inserted twice.
+  it("keeps or rebuilds a row by the list its id names, not its columns", async () => {
+    const { context, settings, items, run } = dutyDatabase()
+    settings("course-1", { extraDayIds: JSON.stringify(["monday"]) })
+    await repairDutySettingItems(context as never, NOW)
+    run("UPDATE dutySettingItems SET kind = 'fewer-day'")
+    run("UPDATE dutySettings SET fewerDayIds = '{'")
+
+    await repairDutySettingItems(context as never, NOW)
+
+    expect(items().map(({ kind, value }) => [kind, value])).toEqual([
+      ["extra-day", "monday"],
+    ])
+  })
+
   it("removes rows of a course without settings and rebuilds a row that disagrees with its id", async () => {
     const { context, settings, items, run } = dutyDatabase()
     settings("course-1", { extraDayIds: JSON.stringify(["monday"]) })

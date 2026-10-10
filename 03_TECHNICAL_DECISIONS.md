@@ -105,10 +105,12 @@ deletion), because an older tab writes only them. Every save writes the
 changed items beside the lists in one transaction, and on open a repair makes
 the rows match the lists of the settings row whose id is the course's: rows an
 older app missed are rebuilt, rows of a course without settings go, a list that
-does not parse keeps its rows. The journeys check before every close that the
-rows match the lists. Reads move to the rows, and the lists stop being written,
-once no older app can write them; then a null `extraDayIds` (extra days never
-chosen) needs its own marker. For 0.5.0 and later: a save diffs the wanted
+does not parse keeps its rows. The full week and both upgraded weeks check, before
+every close or reload, that the rows match the lists. Reads move to the rows, and the lists stop being written,
+once no older app can write them; in that release the repair that makes the
+lists win goes or turns round, since it would otherwise undo any item merged
+into the rows, and a null `extraDayIds` (extra days never chosen) needs its own
+marker. For 0.5.0 and later: a save diffs the wanted
 items against the stored rows, not against what the screen read, so a stale
 screen still removes items it never saw, as the whole list did; merging
 concurrent edits item by item needs that base.
