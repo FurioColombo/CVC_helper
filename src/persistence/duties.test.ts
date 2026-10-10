@@ -529,26 +529,30 @@ describe("duty persistence", () => {
       acknowledgedWarningKeys: "[]",
     }
 
-    it("reads the lists from the rows, in their stored order", async () => {
+    // The lists stay the copy the app reads while 0.3.0 can write them (03 §3):
+    // rows an older tab has not caught up with change nothing.
+    it("reads the stored lists, not the rows beside them", async () => {
       database.getOptional.mockResolvedValue(STORED)
       givenStoredRows({
         items: dutySettingItems("course-1", {
-          fewerDayIds: ["saturday"],
-          extraDayIds: ["sunday", "monday"],
-          stayOverStudentIds: ["student-2", "student-1"],
-          acknowledgedWarningKeys: ["minor-balance:2,0"],
-        }).reverse(),
+          fewerDayIds: ["sunday"],
+          stayOverStudentIds: ["student-2"],
+        }),
       })
 
       const { settings } = await readDutyPlan("course-1")
 
       expect(settings).toMatchObject({
         fewerDayIds: ["saturday"],
-        extraDayIds: ["sunday", "monday"],
-        stayOverStudentIds: ["student-2", "student-1"],
+        extraDayIds: ["monday", "sunday"],
+        stayOverStudentIds: ["student-1"],
         completedDayIds: [],
-        acknowledgedWarningKeys: ["minor-balance:2,0"],
+        acknowledgedWarningKeys: [],
       })
+      expect(database.getAll).not.toHaveBeenCalledWith(
+        expect.stringContaining("dutySettingItems"),
+        expect.anything(),
+      )
     })
 
     it("keeps extra days unchosen while the stored list is null", async () => {
@@ -570,9 +574,9 @@ describe("duty persistence", () => {
         [],
       ],
       [
-        "a row with an unknown day",
-        {},
-        dutySettingItems("course-1", { completedDayIds: ["funday"] }),
+        "an unknown day in a stored list",
+        { completedDayIds: JSON.stringify(["funday"]) },
+        [],
       ],
     ])("refuses %s, as before D2", async (_case, stored, items) => {
       database.getOptional.mockResolvedValue({ ...STORED, ...stored })
@@ -605,10 +609,10 @@ describe("duty persistence", () => {
       await saveDutyPlan("course-1", [], settings)
 
       expect(batchOf("DELETE FROM dutySettingItems")).toEqual([
-        [id("stay-over", "student-1"), "course-1"],
+        [id("stay-over", "student-1")],
       ])
       expect(batchOf("UPDATE dutySettingItems")).toEqual([
-        [0, NOW, id("stay-over", "student-2"), "course-1"],
+        [0, NOW, id("stay-over", "student-2")],
       ])
       expect(
         batchOf("INSERT INTO dutySettingItems")?.map((row) => row.slice(2, 5)),

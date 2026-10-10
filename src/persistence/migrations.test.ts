@@ -148,7 +148,8 @@ describe("prepareDatabase", () => {
       }),
       // No duty settings stored: the duty-setting rows need no repair.
       getAll: vi.fn(async (sql: string) => {
-        if (/FROM dutySettings$/.test(sql.trim())) order.push("items probe")
+        if (/FROM dutySettings WHERE/.test(sql.replace(/\s+/g, " ")))
+          order.push("items probe")
         return []
       }),
       writeTransaction: vi.fn(async (callback: (tx: unknown) => unknown) => {

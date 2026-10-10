@@ -1,0 +1,102 @@
+{
+  "reviewerRole": "domain-prosecutor",
+  "persona": "Il Pubblico Ministero",
+  "milestone": "D2",
+  "round": 1,
+  "commit": "9813d1a",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DP-1",
+      "title": "The stay-over guard on student deletion now reads only the rows. A stay-over that exists only in the JSON list no longer blocks deletion. The existing U02 regression spec fails, and the dangling reference left behind blocks every later duty save.",
+      "evidence": "src/persistence/students.ts:80-86 now queries `dutySettingItems WHERE kind = 'stay-over' AND value = ?`. At d19b51b the guard ran `json_each(dutySettings.stayOverStudentIds)`. The milestone still treats the JSON list as authoritative: the repair lets 'the lists win' (src/persistence/repairs.ts:105-112), and saveDutyPlan unions the list into the completed-day history 'because an older app may have written it since the rows were rebuilt' (src/persistence/duties.ts:230-237). The deletion guard is the one reader of stay-over references that ignores the list. Reproduced four ways. (1) `node scripts/run-e2e.mjs tests/e2e/u02-deletion-integrity.spec.ts --project=pixel-7-chrome` FAILS on 9813d1a in the first run and the retry: `{ expected: \"stay-over\", actual: null }`. The spec and src/test/u02DeletionHarness.ts are unchanged since v0.3.0, whose verify:all passed. (2) Real-engine probe S1, synthetic v0.3.0 fixture: after prepareDatabase, a list-only write adds student-v030-paolo (no other reference) to stayOverStudentIds. The d19b51b guard SQL on the same database returns 1 row (blocked). The new assessStudentDeletion returns {canDelete:true, references:[]}, and deleteUnusedStudent deletes the student while the list still names him. On the next open the repair copies the deleted id back into the rows: readDutyPlan.stayOverStudentIds = [davide, paolo]. Every save through dutySettingsForSave + saveDutyPlan then throws 'Duty student does not belong to course'. In the visible app, Comandate > 'Domenica, 1 assegnati' > 'Segna completata' shows 'Modifica non salvata. Riprova.' No screen can remove the deleted id, because the stay-over picker lists only existing students. (3) Probes S3a/S3b/S3c, with no concurrency involved: an old database whose acknowledgedWarningKeys is '[1]' or '{oops', or whose stayOverStudentIds contains a number, gets 0 item rows after the upgrade, because the repair skips the whole course when any list fails to parse. The d19b51b guard still finds the stay-over (1 row), but the student is deleted now. This is the plan's own adversarial-checklist case 'corrupt JSON in old rows'.",
+      "reproduction": "As a table row: the existing row `{ expected: 'stay-over' }` in src/test/u02DeletionHarness.ts / tests/e2e/u02-deletion-integrity.spec.ts fails. Throwaway real-engine probes (Chromium, own Vite, synthetic v0.3.0 fixture): S1 = seed, prepareDatabase(db), `UPDATE dutySettings SET stayOverStudentIds='[\"student-v030-davide\",\"student-v030-paolo\"]'`, assessStudentDeletion and deleteUnusedStudent, reload, readDutyPlan, then any duty save. S3 = seed with a corrupt sibling list, prepareDatabase, then deleteUnusedStudent(student-v030-paolo). Suggested fix: while the lists are dual-written, have the guard read both copies, i.e. the rows OR json_each over the list, as the save's completed-day check already does.",
+      "specRef": "01_PRODUCT_SPEC.md §3.5 (permanent deletion only when the student was never referenced; any persisted operational reference blocks it); 04_IMPLEMENTATION_PLAN.md D2 ('Behaviour does not change'; checklist: corrupt JSON in old rows, a 0.3.0 app writing only the JSON lists); 03_TECHNICAL_DECISIONS.md §3.1 (apps up to 0.3.0 cannot be kept from writing)"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DP-2",
+      "title": "Completed-day history: the screen reads only the rows, but the save guard uses the rows plus the list. A day completed only in the list shows as open, and every save is refused.",
+      "evidence": "readDutyPlan builds completedDayIds from the rows (src/persistence/duties.ts:65,81). saveDutyPlan's immutability guard uses the union of rows and list (duties.ts:224-247). Probe S2, synthetic v0.3.0: after prepareDatabase, a list-only write sets completedDayIds to [saturday, sunday]. readDutyPlan then returns ['saturday'], and saving the settings it returned throws 'Completed duty history is immutable'. At d19b51b both the read and the guard used the list, so Sunday showed as completed and the save went through. History is protected, but until the next reload the Comandate screen shows Sunday as open and refuses every change. Same root cause as DP-1: reads use only the rows while the code itself expects list-only writes.",
+      "reproduction": "Probe S2: seed v0.3.0 into cvc-helper.db, prepareDatabase(db), `UPDATE dutySettings SET completedDayIds='[\"saturday\",\"sunday\"]'`, readDutyPlan, then saveDutyPlan(course, plan.assignments, plan.settings). Result: readCompleted=['saturday'], save error 'Completed duty history is immutable'.",
+      "specRef": "01_PRODUCT_SPEC.md §6.3 (completed rotations immutable); 04_IMPLEMENTATION_PLAN.md D2 (completed-day history lost; behaviour does not change)"
+    },
+    {
+      "id": "DP-3",
+      "title": "Wildcard: a second dutySettings row for the same course makes the new open-time repair fail, and the whole app refuses to open on every start",
+      "evidence": "dutySettingItemRepairs (src/persistence/repairs.ts:115-138) computes changes for every dutySettings row against the same snapshot of items, and repairDutySettingItems applies them one after another. With two rows for one course, both insert the same item ids. Probe S5 seeds the v0.3.0 fixture plus a copy of its settings row with id 'course-v030-d2-stray'. prepareDatabase rejects with 'UNIQUE constraint failed: ps_data_local__dutySettingItems.id', and the visible app shows 'Archivio non disponibile / Non riesco ad aprire i dati locali' with Riprova, which fails the same way on every open. At d19b51b prepareDatabase had no item repair, and readDutyPlan reads only the row with id = courseId, so the stray row was ignored. No released version writes such a row (since M7 every version writes id = courseId), so this needs a corrupted database. The plan's checklist does name 'duplicates ... in old rows', and the effect is far out of proportion: one bad row now blocks the whole app. Repairing only the canonical row (id = courseId), as the reader does, would remove it.",
+      "reproduction": "Probe S5: tables.dutySettings = [row, {...row, id: 'course-v030-d2-stray'}], seed('0.3.0', 'cvc-helper.db', tables), prepareDatabase(createDatabase('cvc-helper.db')), then load the app at '/'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 adversarial checklist ('duplicates or corrupt JSON in old rows'); 0.4.0 objective (a course created in 0.1-0.3 opens intact)"
+    },
+    {
+      "id": "DP-4",
+      "title": "D2's own browser evidence does not pass on WebKit: the '0.3.0 app drops their table' test closes the WebKit page",
+      "evidence": "`node scripts/run-e2e.mjs tests/e2e/d2-duty-items.spec.ts --project=iphone-13-webkit-core --retries=0`: 4 passed, 1 failed ('rebuilds the rows after a 0.3.0 app drops their table and writes the lists': 'page.evaluate: Target page, context or browser has been closed'). A concurrent run by another agent of the same test (repeat-each, test-results/e2e-report.json started 12:31Z) failed 8/8 on WebKit, with timeouts, page closed and 'worker process exited unexpectedly (code=3221226505)'. My combined d2-duty-items + duties.spec run under load: Chromium all green, duties.spec green on both projects, WebKit 0.1.0/0.2.0 upgrade tests failed and 0.3.0 was flaky. At this commit D1's analogous test ('keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database'), which also has the 0.3.0 schema drop the new table, passes on WebKit (1/1). The crash therefore looks specific to the D2 harness path, not to dropping the table. Cause not established; other browser runs were active on the machine during all my runs.",
+      "reproduction": "Commands above. Artifacts: test-results/d2-duty-items-rebuilds-the-2cd73--table-and-writes-the-lists-iphone-13-webkit-core/error-context.md",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 success predicate (duty browser journeys) and evidence; playwright.config.ts webkitCoreSpecs includes d2-duty-items"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DP-Q1",
+      "title": "The deletion guard hard-codes the kind 'stay-over' in SQL instead of deriving it from DUTY_SETTING_LISTS",
+      "evidence": "src/persistence/students.ts:83 `kind = 'stay-over'`; the canonical kinds are in src/domain/config.ts:152-164. A rename in config would silently disable the guard.",
+      "reproduction": "Code reading.",
+      "specRef": "AGENTS.md §10 (finite enumerations live once in domain configuration)"
+    },
+    {
+      "id": "DP-Q2",
+      "title": "D2 changed the student-deletion guard, but its focused browser specs leave out u02-deletion-integrity.spec.ts, so verify:e2e:focus cannot see DP-1",
+      "evidence": ".milestones/manifest.json D2 e2eSpecs lists d2-duty-items, duties, f3-duty-summary, full-week, u08-duties, ug1-duty-reflow, ug1-upgraded-week and ug2-upgraded-week only.",
+      "reproduction": "node -e on the manifest.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6 (focused close records the affected browser specs)"
+    },
+    {
+      "id": "DP-Q3",
+      "title": "No integrity check covers a stay-over item naming a missing student, rows that differ from their list, or a row of an unknown kind",
+      "evidence": "src/domain/invariants.ts has no stay-over check; src/persistence/rowIntegrity.ts checks only metadata and ownership. The state DP-1 creates (a stay-over row and list entry for a deleted student) passes every checker. The gap predates D2 for the JSON list.",
+      "reproduction": "grep stayOver in src/domain/invariants.ts gives no match.",
+      "specRef": "AGENTS.md §11 (dangling references)"
+    },
+    {
+      "id": "DP-Q4",
+      "title": "A stored stay-over repeat now counts once in the configuration (a small visible change, not recorded as intended)",
+      "evidence": "Rows collapse repeats by id (src/persistence/dutyItems.ts:47). The 'Scegli tra tutti gli allievi' count (DutyManagement.tsx:486, draft.stayOverStudentIds.length) shows 2 instead of 3 for a list like the one runRichListsUpgrade uses. This only affects corrupt data and is arguably a fix, but the milestone says behaviour does not change. Record it as intended.",
+      "reproduction": "Seed stayOverStudentIds with a repeat; compare the d19b51b read (JSON with the repeat) with the rows read (deduplicated).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2"
+    },
+    {
+      "id": "DP-Q5",
+      "title": "A row of a kind this version does not know is deleted by the next save and by the repair",
+      "evidence": "dutySettingItemChanges removes every stored id not in the wanted set (src/persistence/dutyItems.ts:85-87), whatever its kind. That matters only once a later version adds a kind; D3's read-only rule for older apps should cover it. Noted for D3.",
+      "reproduction": "Code reading.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (compatibility window)"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md D2; 01_PRODUCT_SPEC.md §3.5, §6.1-6.3; 03_TECHNICAL_DECISIONS.md §3 (D1, D2 paragraphs) and §3.1; .milestones/manifest.json D2; no earlier D2 reviews exist",
+    "git diff d19b51b..9813d1a: src/domain/config.ts, src/domain/dutySettings.ts, src/features/duties/DutyManagement.tsx, src/persistence/{duties,dutyItems,repairs,migrations,schema,students}.ts, src/test/d2DutyItemsHarness.ts, tests/e2e/d2-duty-items.spec.ts; d19b51b versions of students.ts, duties.ts and DutyManagement.tsx",
+    "npx vitest run src/domain src/persistence src/features/duties: 483/484 passed under load; the failure was a 10 s timeout in the unchanged src/domain/duties.test.ts matrix test, which passes alone (46/46, 10.5 s)",
+    "Differential test (scratch vitest config): the d19b51b screen functions copied against normalizeProposalSettings, defaultDutySettings and dutySettingsForSave over 4,000 generated cases (0-21 active, 0-2 inactive, random completed days, extraDayIds absent / [] / reordered, stale and repeated acknowledged keys) and 0-30 students for defaults: identical except that repeated acknowledged keys are now deduplicated. Lists to rows to lists keeps order and drops only repeats for every kind; applying dutySettingItemChanges to 1,500 random stored/wanted pairs gives exactly the wanted rows with no insert collision",
+    "Real-engine probes (Chromium, own Vite on a free port, synthetic v0.3.0 fixture): S1 (list-only stay-over: deletion, reopen, stuck save, also through the visible Comandate screen), S2 (list-only completed day), S3a-c (corrupt sibling or stay-over list at upgrade), S5 (duplicate settings row)",
+    "node scripts/run-e2e.mjs tests/e2e/u02-deletion-integrity.spec.ts --project=pixel-7-chrome: FAILED (stay-over actual null) in both attempts",
+    "node scripts/run-e2e.mjs tests/e2e/d2-duty-items.spec.ts tests/e2e/duties.spec.ts: 9 passed, 2 failed, 1 flaky (all on WebKit, under concurrent load); d2-duty-items on WebKit alone: 4 passed, 1 failed (older-app test); d1-migration older-app test on WebKit: passed",
+    ".evidence/UG2/verification.json (v0.3.0 verify:all PASS); .evidence/D1/verification.json (focus specs only)"
+  ],
+  "anglesTried": {
+    "seed": 683128132,
+    "lenses": [
+      "5. Manual override survives a later automatic proposal or recalculation (explicit extra-day order kept through the rows; acknowledged keys pruned only when no longer raised; differential test)",
+      "6. History is preserved (lens B drew 5 again, so the next untried lens): completed days read from the rows versus the union in the save guard; stay-over references as deletion history"
+    ],
+    "wildcard": "A duplicate dutySettings row for one course run through the new open-time item repair (item ids colliding across rows), plus row-id collision through JSON-encoded ids (none possible)"
+  },
+  "notTested": [
+    "tests/e2e/full-week.spec.ts and the other focused specs (u08-duties, f3-duty-summary, ug1/ug2 upgraded weeks): not run by me because of their length and another agent running the focused suite at the same time",
+    "Baseline browser run at d19b51b: a scratch export of the tree hung at 'Apertura del corso' and I stopped it rather than share Vite's dependency cache with the other agent's server. Baseline behaviour was shown instead by running the d19b51b guard SQL on the same database state, and by the unchanged U02 spec having passed in v0.3.0's verify:all",
+    "Probes S1-S3 used only the v0.3.0 fixture, not 0.1.0 or 0.2.0",
+    "Real Safari/iPhone and Android devices (owner's checks); whether DP-4 is a product or harness crash",
+    "A live 0.3.0 tab writing beside an open 0.4.0 tab was simulated with list-only SQL writes, not with a real stale bundle (D3 covers two tabs on different versions)"
+  ]
+}

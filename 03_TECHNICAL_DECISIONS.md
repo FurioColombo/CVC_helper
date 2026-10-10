@@ -94,16 +94,24 @@ keeps `meta`.
 
 **Duty settings as rows (D2).** The lists of a course's duty settings (fewer
 and extra days, stay-over students, completed days, acknowledged warnings;
-`DUTY_SETTING_LISTS` in `src/domain/config.ts`) are stored item by item in
+`DUTY_SETTING_LISTS` in `src/domain/config.ts`) are also stored item by item in
 `dutySettingItems`: one row per item, its kind, value and place in the list,
 its id made of the course, the kind and the value, so an item is stored once
-and the same item saved on two phones is the same row. The app reads the rows
-and writes only the items that changed. The JSON list columns of
-`dutySettings` are still written beside them, in the same transaction, while
-0.3.0 can open the database, and a repair rebuilds a course's rows from them
-when they differ; a list that does not parse still makes the settings
-unreadable, as before. A null `extraDayIds` column still means the extra days
-were never chosen; that meaning moves to the rows before the column goes.
+and the same item saved on two phones is the same row. This is the expand step
+of §3.1's two-release rule. While 0.3.0 can open the database, the JSON list
+columns of `dutySettings` stay the copy the app reads (the screens, the
+completed-day history, the stay-over reference that blocks a student's
+deletion), because an older tab writes only them. Every save writes the
+changed items beside the lists in one transaction, and on open a repair makes
+the rows match the lists of the settings row whose id is the course's: rows an
+older app missed are rebuilt, rows of a course without settings go, a list that
+does not parse keeps its rows. The journeys check before every close that the
+rows match the lists. Reads move to the rows, and the lists stop being written,
+once no older app can write them; then a null `extraDayIds` (extra days never
+chosen) needs its own marker. For 0.5.0 and later: a save diffs the wanted
+items against the stored rows, not against what the screen read, so a stale
+screen still removes items it never saw, as the whole list did; merging
+concurrent edits item by item needs that base.
 
 **No deletion markers or record versions yet (D1).** PowerSync uploads a delete
 as a `DELETE` operation, so a hard delete reaches the server and other devices

@@ -105,4 +105,17 @@ describe("duty-setting items", () => {
       ),
     }).toEqual({ added: [], removed: [], moved: [], ...expected })
   })
+
+  it("replace a stored row whose course, kind or value disagrees with its id", () => {
+    const [wanted] = dutySettingItems("course-1", { extraDayIds: ["monday"] })
+    const stored = [{ ...wanted!, value: "friday" }]
+
+    const changes = dutySettingItemChanges(stored, [wanted!])
+
+    expect(changes).toEqual({
+      added: [wanted],
+      removedIds: [wanted!.id],
+      moved: [],
+    })
+  })
 })

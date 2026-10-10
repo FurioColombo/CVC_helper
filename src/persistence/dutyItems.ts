@@ -12,11 +12,12 @@ import { TOUCH } from "@/persistence/stamp"
  * `dutySettingItems`, one row per item and kind, at its place in the list.
  * The id is made of the course, the kind and the value, so one item can be
  * stored only once, and the same item saved twice, or on two phones, is the
- * same row. The JSON lists in `dutySettings` are still written beside the
- * rows while an app that knows only them can open the database (03 §3.1);
- * `repairDutySettingItems` (src/persistence/repairs.ts) rebuilds the rows from
- * them when such an app has written or dropped them. No database import: the
- * repairs and the duty persistence share it.
+ * same row. The JSON lists in `dutySettings` stay the copy the app reads, and
+ * are still written, while an app that knows only them can open the database
+ * (03 §3, §3.1): the rows are written beside them, item by item, and
+ * `repairDutySettingItems` (src/persistence/repairs.ts) keeps them identical
+ * when such an app has written the lists or dropped the rows. No database
+ * import: the repairs and the duty persistence share it.
  */
 
 export interface DutySettingItem {
@@ -72,21 +73,38 @@ export interface DutySettingItemChanges {
   moved: DutySettingItem[]
 }
 
-/** What turns a course's stored rows into the wanted ones, item by item. */
+/** A stored row says what its id says: its course, kind and value. */
+const sameItem = (a: DutySettingItem, b: DutySettingItem) =>
+  a.courseId === b.courseId && a.kind === b.kind && a.value === b.value
+
+/**
+ * What turns the stored rows into the wanted ones, item by item. A row whose
+ * course, kind or value disagrees with its id is replaced, not trusted.
+ */
 export function dutySettingItemChanges(
   stored: readonly DutySettingItem[],
   wanted: readonly DutySettingItem[],
 ): DutySettingItemChanges {
   const storedById = new Map(stored.map((item) => [item.id, item]))
-  const wantedIds = new Set(wanted.map(({ id }) => id))
+  const wantedById = new Map(wanted.map((item) => [item.id, item]))
   return {
-    added: wanted.filter(({ id }) => !storedById.has(id)),
+    added: wanted.filter((item) => {
+      const current = storedById.get(item.id)
+      return !current || !sameItem(current, item)
+    }),
     removedIds: stored
-      .filter(({ id }) => !wantedIds.has(id))
+      .filter((item) => {
+        const target = wantedById.get(item.id)
+        return !target || !sameItem(item, target)
+      })
       .map(({ id }) => id),
     moved: wanted.filter((item) => {
       const current = storedById.get(item.id)
-      return current !== undefined && current.position !== item.position
+      return (
+        current !== undefined &&
+        sameItem(current, item) &&
+        current.position !== item.position
+      )
     }),
   }
 }
@@ -98,24 +116,22 @@ export const hasDutySettingItemChanges = ({
 }: DutySettingItemChanges) =>
   added.length + removedIds.length + moved.length > 0
 
-/** Writes the changes of one course, inside the caller's transaction. */
+/** Writes the changes, inside the caller's transaction; removals first. */
 export async function writeDutySettingItemChanges(
   transaction: Pick<Transaction, "execute" | "executeBatch">,
-  courseId: string,
   { added, removedIds, moved }: DutySettingItemChanges,
   now: string,
 ) {
   if (removedIds.length > 0) {
     await transaction.executeBatch(
-      "DELETE FROM dutySettingItems WHERE id = ? AND courseId = ?",
-      removedIds.map((id) => [id, courseId]),
+      "DELETE FROM dutySettingItems WHERE id = ?",
+      removedIds.map((id) => [id]),
     )
   }
   if (moved.length > 0) {
     await transaction.executeBatch(
-      `UPDATE dutySettingItems SET position = ?, ${TOUCH}
-       WHERE id = ? AND courseId = ?`,
-      moved.map(({ id, position }) => [position, now, id, courseId]),
+      `UPDATE dutySettingItems SET position = ?, ${TOUCH} WHERE id = ?`,
+      moved.map(({ id, position }) => [position, now, id]),
     )
   }
   if (added.length > 0) {
@@ -123,7 +139,7 @@ export async function writeDutySettingItemChanges(
       `INSERT INTO dutySettingItems(
          id, courseId, kind, value, position, createdAt, updatedAt
        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      added.map(({ id, kind, value, position }) => [
+      added.map(({ id, courseId, kind, value, position }) => [
         id,
         courseId,
         kind,

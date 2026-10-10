@@ -291,17 +291,70 @@ describe("repairDutySettingItems", () => {
     ])
   })
 
-  it("leaves a course whose lists do not parse to the settings screen to report", async () => {
-    const { context, settings, items } = dutyDatabase()
-    settings("course-1", {
-      fewerDayIds: "{",
-      stayOverStudentIds: JSON.stringify(["student-1"]),
-    })
-    settings("course-2", { stayOverStudentIds: JSON.stringify([1, 2]) })
+  it("mirrors each list that parses and leaves the rows of one that does not", async () => {
+    const { context, settings, items, run } = dutyDatabase()
+    settings("course-1", { stayOverStudentIds: JSON.stringify(["student-1"]) })
+    await repairDutySettingItems(context as never, NOW)
+    // An older tab writes a list that does not parse, and completes Sunday.
+    run(
+      `UPDATE dutySettings SET stayOverStudentIds = '{', completedDayIds = ?
+       WHERE id = 'course-1'`,
+      [JSON.stringify(["sunday"])],
+    )
 
-    expect(await dutySettingItemsNeedRepair(context as never)).toBe(false)
     await repairDutySettingItems(context as never, NOW)
 
-    expect(items()).toEqual([])
+    expect(items().map(({ kind, value }) => [kind, value])).toEqual([
+      ["completed-day", "sunday"],
+      ["stay-over", "student-1"],
+    ])
+    expect(await dutySettingItemsNeedRepair(context as never)).toBe(false)
+  })
+
+  it("reads only the settings row the app reads, the one whose id is the course's", async () => {
+    const { context, items, run } = dutyDatabase()
+    for (const id of ["course-1", "a-stray-copy"]) {
+      run(
+        `INSERT INTO dutySettings (id, courseId, fewerDayIds, stayOverStudentIds,
+           completedDayIds, acknowledgedWarningKeys)
+         VALUES (?, 'course-1', '[]', ?, '[]', '[]')`,
+        [id, JSON.stringify([id === "course-1" ? "student-1" : "student-9"])],
+      )
+    }
+
+    await repairDutySettingItems(context as never, NOW)
+
+    expect(items().map(({ value }) => value)).toEqual(["student-1"])
+  })
+
+  it("removes rows of a course without settings and rebuilds a row that disagrees with its id", async () => {
+    const { context, settings, items, run } = dutyDatabase()
+    settings("course-1", { extraDayIds: JSON.stringify(["monday"]) })
+    await repairDutySettingItems(context as never, NOW)
+    // A stale 0.3.0 erase of another course left its rows; one row of this
+    // course was rewritten under the wrong value and course.
+    run(
+      `INSERT INTO dutySettingItems (id, courseId, kind, value, position)
+       VALUES (?, 'course-gone', 'stay-over', 'student-1', 0)`,
+      [JSON.stringify(["course-gone", "stay-over", "student-1"])],
+    )
+    run(
+      `UPDATE dutySettingItems SET value = 'friday', courseId = 'course-2'
+       WHERE kind = 'extra-day'`,
+    )
+    expect(await dutySettingItemsNeedRepair(context as never)).toBe(true)
+
+    await repairDutySettingItems(context as never, "2026-10-11T08:00:00.000Z")
+
+    expect(items()).toEqual([
+      {
+        courseId: "course-1",
+        kind: "extra-day",
+        value: "monday",
+        position: 0,
+        createdAt: "2026-10-11T08:00:00.000Z",
+        updatedAt: "2026-10-11T08:00:00.000Z",
+      },
+    ])
   })
 })

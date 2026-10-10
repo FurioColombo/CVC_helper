@@ -1,0 +1,96 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D2",
+  "round": 1,
+  "commit": "9813d1a",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-1",
+      "title": "A stale 0.3.0 tab's stay-over choice is invisible to the 0.4.0 tab's deletion check. The student is deleted while the stored list still names them, the next open rebuilds a stay-over row for a student who no longer exists, and from then on every duty save fails ('Modifica non salvata. Riprova.'). The UI offers no way out.",
+      "evidence": "Real engine, same result on Chromium (Pixel 7) and WebKit (iPhone 13). Harness E1 and E1-UI. Steps: the 0.3.0 fixture is in cvc-helper.db through a v030Schema instance that stays open (a stale 0.3.0 tab). The app opens the same file, and getActiveCourse runs prepareDatabase, which builds 3 rows. The 0.3.0 tab saves with 0.3.0's own INSERT OR REPLACE and adds student-v030-paolo, a never-used student, to stayOverStudentIds. Observed: the stored list is [davide, paolo]; readDutyPlan still returns [davide]; assessStudentDeletion returns {canDelete:true, references:[]}; deleteUnusedStudent deletes paolo. The d19b51b query on the same database (json_each over dutySettings.stayOverStudentIds, git show d19b51b:src/persistence/students.ts:84) finds the reference, so before D2 the deletion was blocked. After a reload, the repair (lists win) creates a stay-over row for the deleted paolo, and readDutyPlan returns [davide, paolo]. saveDutyPlan throws 'Duty student does not belong to course' (src/persistence/duties.ts:208). In the real app, tapping Marta on the Domenica screen and tapping 'Segna completata' both show 'Modifica non salvata. Riprova.', before and after the reload (screenshots e1-ui-*.png). The configure screen draws one checkbox per existing student (DutyManagement.tsx:489-495), so the dead id cannot be unticked. readValidDutyData filters only dangling assignments (ignoreMissingStudentDuties), and validateCourseState has no stay-over check, so the page opens and every save fails. 0.3.0 itself cannot reach this state: its save rejects unknown stay-over ids inside its transaction. Cause: src/persistence/students.ts:80-85 now reads only dutySettingItems, and src/persistence/duties.ts:139-160 reads the lists from the rows. Between opens, both rows sources are older than the lists a 0.3.0 tab writes. The repair treats the lists as the truth, while the reads and the deletion check treat the rows as the truth.",
+      "reproduction": "test-results/d2-review-archivista/review.spec.ts test 'E1 …' and ui.spec.ts test 'E1-UI …' (master copy in the session scratchpad d2s/, which has a node_modules junction). Run from the repo: node node_modules/@playwright/test/cli.js test -c test-results/d2-review-archivista/playwright.config.ts --project=chromium (or --project=webkit) with CVC_E2E_BASE_URL set to a free port. Results: E1-chromium.json, E1-webkit.json, e1-ui-*.png in the same folder.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 success predicate ('every duty behaviour … identical results before and after') and checklist ('a 0.3.0 app … writes only the JSON lists'); 03_TECHNICAL_DECISIONS.md §3.1 ('Apps up to 0.3.0 … cannot be kept from writing'), §3.2 ('deleting a never-used student after checking every reference'); AGENTS.md §11. Suggested fix: while 0.3.0 can open the database the lists are never older than the rows, so apply the repair's 'lists win' rule everywhere. The deletion check should look at both copies, as the completed-history union in saveDutyPlan already does. readDutyPlan and saveDutyPlan should rebuild the course's rows in the transaction (or read the lists) when the two copies differ. Add the stale-tab case to d2-duty-items.spec.ts. Optionally, drop or report dangling stay-over ids on read, as is done for dangling assignments."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-2",
+      "title": "Same root cause as DI-1: after a stale 0.3.0 tab saves, the 0.4.0 read is torn (scalars from the dutySettings row, lists from the stale item rows). The next 0.4.0 save then silently reverts the other tab's list changes. A completed day saved by the older tab is shown as open, and every save fails until a full reload.",
+      "evidence": "Real engine, identical on Chromium and WebKit (harness E2). The 0.3.0 tab saves desiredPerDay 2 with extraDayIds [tuesday] and fewerDayIds [monday]. readDutyPlan in the 0.4.0 tab returns desiredPerDay 2 with extraDayIds [monday] and fewerDayIds [], a combination neither tab ever stored. A 0.4.0 save that changes only the tie breaker leaves the lists at extraDayIds [monday] and fewerDayIds [], so the 0.3.0 change is lost without notice. At d19b51b, readDutyPlan parsed the lists (git show d19b51b:src/persistence/duties.ts:56,123) and would have returned the 0.3.0 values. Next, the 0.3.0 tab completes Sunday. The 0.4.0 read still shows completed [saturday], and its save throws 'Completed duty history is immutable'. That error is the union at duties.ts:232-247 doing its job: the history is safe and the failure is loud. The UI shows a wrong state until reload, though.",
+      "reproduction": "test-results/d2-review-archivista/review.spec.ts test 'E2 …'; E2-chromium.json, E2-webkit.json.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 success predicate; 03_TECHNICAL_DECISIONS.md §3 (D2 paragraph) and §3.1. Fixed by the same change as DI-1."
+    },
+    {
+      "id": "DI-3",
+      "title": "The every-open repair turns one inconsistent duty row into an app that cannot open: two cases make repairDutySettingItems INSERT an id that already exists, so prepareDatabase, and with it getActiveCourse, fails on every open.",
+      "evidence": "Real engine, identical on Chromium and WebKit (harness E3). (a) A second dutySettings row naming the same course (id 'settings-copy') gives 'UNIQUE constraint failed: ps_data_local__dutySettingItems.id' on open and on reopen. Both settings rows produce the same 'added' items, computed against one snapshot (repairs.ts:115-139). Before D2 the app opened and readDutyPlan ignored the copy. (b) An item row whose id names course A while its courseId column names another course gives the same error on every open. The repair groups items by the courseId column (repairs.ts:133), not by the id, so it INSERTs the id again. No current or past writer creates either state: every version writes dutySettings with id = courseId (checked at 5d7cad3, v0.2.0 and v0.3.0). This is therefore not a blocker. It does mean a single corrupt row, from a future sync or import bug, now takes the whole app down instead of one screen.",
+      "reproduction": "test-results/d2-review-archivista/review.spec.ts test 'E3 planted states' (fields duplicateSettings, itemUnderOtherCourse); E3-chromium.json, E3-webkit.json.",
+      "specRef": "AGENTS.md §11; 03_TECHNICAL_DECISIONS.md §3 (repairs on every open). Suggestion: key the diff by id across the whole table, not per course: delete a row whose id matches but whose courseId does not. Settle duplicate settings rows deterministically, for example only the row with id = courseId counts, as readDutyPlan already assumes. Or make a repair failure a reported issue rather than a failed open."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-Q1",
+      "title": "Neither the repair probe nor the stored-row checks see an item whose value or kind column disagrees with its id; the app then reads the wrong value",
+      "evidence": "Harness E3 'valueDiffersFromId', on both engines: the extra-day row for monday has its value set to 'friday'. The stored list is [\"monday\"] and the read gives [friday], yet dutySettingItemsNeedRepair returns false and validateStoredRows returns []. tests/e2e/stored-rows.ts relies on that probe, so the full-week and upgraded-week journeys cannot catch it either. dutySettingItemChanges compares id and position only (dutyItems.ts:76-92). No writer produces this today.",
+      "reproduction": "review.spec.ts E3, field valueDiffersFromId.",
+      "specRef": "AGENTS.md §11. Suggestion: also count a row as differing when kind, value or courseId do not match its id."
+    },
+    {
+      "id": "DI-Q2",
+      "title": "A stale 0.3.0 tab's erase leaves the course's item rows behind; nothing on the open path removes them until the next 0.4.0 erase",
+      "evidence": "Harness E5, Chromium. The 0.3.0 tab runs its erase (its COURSE_DATA_TABLES has no dutySettingItems), and 3 rows remain: monday, the stay-over student id, saturday. dutySettingItemsNeedRepair returns false because the repair only visits courses that still have a settings row. validateStoredRows reports 3 x unknown-course, but only tests run it. The rows hold ids and days, no names. A 0.4.0 erase deletes them (DELETE FROM every table, courses.ts:77-83). Harness E3 'orphanItem' also shows that an orphan stay-over row blocks deleting a student with that id, because the deletion query has no course filter (students.ts:80-85, as before D2).",
+      "reproduction": "review.spec.ts E5 (E5-chromium.json) and E3 orphanItem.",
+      "specRef": "courses.ts erase rationale; AGENTS.md §11 (orphans after a delete). Suggestion: let the item repair delete rows whose course has no settings row or no course row."
+    },
+    {
+      "id": "DI-Q3",
+      "title": "What 0.5.0 inherits: the item diff is taken against the stored rows, not against what the editing tab read, so a stale editor deletes item rows it never saw",
+      "evidence": "Harness E6, Chromium, two 0.4.0 readers of the same plan. Tab B adds a stay-over for student-v030-sara. Tab A, still holding the older read, saves a change to the extra days, and its save deletes sara's stay-over row. Locally this is the same last-writer-wins as the old whole-list overwrite, so it is not a regression. Under per-item sync, though, it uploads a DELETE the user never made, so row granularity alone will not merge concurrent edits.",
+      "reproduction": "review.spec.ts E6 (E6-chromium.json: afterB has sara, afterA does not).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md Rules ('design each change so 0.5.0 can sync it'). Suggestion: record this in 03 §3 for 0.5.0, or diff against the base the screen read."
+    },
+    {
+      "id": "DI-Q4",
+      "title": "The D2 browser spec covers an older app that opens the database fresh (the table is dropped), but not a stale 0.3.0 tab that writes while the rows' table exists, which is the case behind DI-1 and DI-2",
+      "evidence": "src/test/d2DutyItemsHarness.ts runOlderAppDropsItems closes the 0.4.0 instance before the 0.3.0 one initialises, and reopens through prepareDatabase. No test reads or deletes between an older write and the next open.",
+      "reproduction": "Code reading; contrast with review.spec.ts E1 and E2.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D2 adversarial checklist"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-data-integrity.md; AGENTS.md",
+    "04_IMPLEMENTATION_PLAN.md D2; 03_TECHNICAL_DECISIONS.md §3 (D1 and D2 paragraphs), §3.1, §3.2",
+    ".evidence/D1/data-integrity-review.json (DI-R2-1, Q1, Q5, Q6) and data-integrity-review-round-1.json (anglesTried)",
+    "git diff d19b51b..9813d1a: schema.ts, dutyItems.ts, duties.ts, repairs.ts, migrations.ts, students.ts, config.ts, domain/dutySettings.ts, DutyManagement.tsx, the tests, d2DutyItemsHarness.ts, d2-duty-items.spec.ts, stored-rows.ts",
+    "Code at earlier versions: git show d19b51b students.ts and duties.ts; v0.3.0 duties.ts (its save and stay-over check) and courses.ts (erase list); 5d7cad3 and v0.2.0 dutySettings INSERTs (always id = courseId); warning-key formats at 5d7cad3, c25ac48, v0.2.0, v0.3.0 and HEAD (unchanged)",
+    "src/persistence/rowIntegrity.ts, src/domain/invariants.ts (no stay-over check), courses.ts eraseAllCourseData, DutyManagement stay-over controls",
+    "The 0.1.0, 0.2.0 and 0.3.0 fixtures' dutySettings rows: fewerDayIds and acknowledgedWarningKeys are empty in all three",
+    "Ran: npx vitest run src/persistence src/test, 15 files and 175 tests passed",
+    "Ran: node scripts/run-e2e.mjs tests/e2e/d2-duty-items.spec.ts, 10 of 10 passed (Chromium and WebKit)",
+    "Ran: throwaway real-engine harness E1-E6 on Chromium, and E1, E2, E3 on WebKit; E1-UI through the real app on both engines; results and screenshots in test-results/d2-review-archivista/",
+    "E4 (lens 2): the 0.1.0 fixture with lists out of day order (fewer [sunday, monday], completed [sunday, saturday]), two acknowledged keys and a null extraDayIds. The rows keep each list's order, the read has no extraDayIds (never chosen), and nothing is lost or doubled",
+    "Probe cost: dutySettingItemsNeedRepair took 6.8-9.7 ms per call over 20 calls on the upgraded 0.3.0 fixture (Chromium)"
+  ],
+  "anglesTried": {
+    "seed": 619007922,
+    "lenses": [
+      "7. Lists stored as JSON inside one column overwritten as a whole (seed mod 12 = 6): whole-list writes by a stale 0.3.0 tab versus the item diff (DI-2) and by a stale 0.4.0 tab (DI-Q3)",
+      "2. Migration from the 0.1/0.2/0.3 fixtures (floor(seed/12) mod 12 = 1): the official spec on both engines, plus 0.1.0 lists out of day order with extra days never chosen (E4)"
+    ],
+    "wildcard": "Three arbitration rules for the same two copies: the repair says the lists win, readDutyPlan and the deletion check say the rows win, and the completed history takes the union. I searched for a sequence where they disagree observably: a stale 0.3.0 tab writing between opens (DI-1, DI-2). The signature move followed: plant the smallest corrupt row (duplicate settings row, item under a foreign course, value differing from id, orphan item) and see which check notices (DI-3, DI-Q1, DI-Q2)",
+    "alsoCovered": [
+      "checklist: duplicates in old lists (stored once, order kept), corrupt JSON (course skipped, read still refuses), old acknowledged-key format (unchanged since M7; keys are opaque values), completed-day history (protected by the union), erase (0.4.0 clears the rows; a stale 0.3.0 erase does not, DI-Q2), toggle saved twice (no item writes, consistent rows), 0.3.0 opening fresh (official spec), two courses (ids embed the course, repair groups by course), id collisions (the JSON tuple is injective; only the planted courseId mismatch collides), per-open cost",
+      "interruption: saveDutyPlan and the repair are each one write transaction; the probe recomputes inside the repair transaction"
+    ]
+  },
+  "notTested": [
+    "A real 0.3.0 build running in a second browser tab. The stale tab was simulated with a v030Schema PowerSync instance in the same page, issuing 0.3.0's own save statement. Results were identical on Chromium and WebKit.",
+    "E4, E5 and E6 on WebKit: the first WebKit run timed out on them, and my concurrent run cleared its output folder. The logic does not depend on the engine (E1, E2 and E3 matched across engines), but I did not rerun them.",
+    "The deterministic full-week spec and the duty journeys (duties, u08-duties, f3-duty-summary) at 9813d1a. They are left to the orchestrator's verify:all and evidence run.",
+    "Probe cost on WebKit and on a 40-student course with long lists.",
+    "Physical Android or iOS devices."
+  ]
+}

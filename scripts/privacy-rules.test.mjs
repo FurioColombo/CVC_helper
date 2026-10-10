@@ -93,6 +93,21 @@ describe("lineProblems", () => {
     ).not.toEqual([])
   })
 
+  it("treats a quoted exit code as a code, but not a phone after other words", () => {
+    expect(
+      lineProblems(
+        ".evidence/D2/review.json",
+        "'worker process exited unexpectedly (code=3221226505, signal=null)'",
+      ),
+    ).toEqual([])
+    expect(
+      lineProblems(".evidence/D2/review.json", "exit code 3221226505"),
+    ).toEqual([])
+    expect(
+      lineProblems(".evidence/D2/review.json", "call 3221226505 tonight"),
+    ).not.toEqual([])
+  })
+
   it("allows the synthetic fixture numbers and hashes in records", () => {
     for (const line of [
       "test for 'Personale tel. 3331234567' before 'Allievi'",

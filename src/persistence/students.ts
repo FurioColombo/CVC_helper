@@ -77,10 +77,15 @@ async function readDeletionReferences(
     "SELECT dayId AS referenceId FROM dutyAssignments WHERE studentId = ? ORDER BY dayId",
     [studentId],
   )
+  // The list, which the app reads while 0.3.0 can open the database (D2,
+  // 03 §3); the rows beside it are kept identical to it.
   const stayOver = await context.getAll<{ referenceId: string }>(
     `SELECT 'stay-over' AS referenceId
-     FROM dutySettingItems
-     WHERE kind = 'stay-over' AND value = ?
+     FROM dutySettings
+     WHERE EXISTS (
+       SELECT 1 FROM json_each(dutySettings.stayOverStudentIds)
+       WHERE json_each.value = ?
+     )
      LIMIT 1`,
     [studentId],
   )

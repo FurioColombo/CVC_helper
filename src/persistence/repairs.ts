@@ -104,45 +104,53 @@ function storedList(json: string | null): string[] | null {
 }
 
 /**
- * D2: each course's duty-setting rows, made to match the JSON lists in
- * `dutySettings`. The app writes both in one transaction, so they differ only
- * when an app that knows only the lists wrote them, or dropped the rows' table
- * by opening the database with its own schema (03 §3.1); the lists win. A
- * course whose lists do not parse is left alone: reading its settings reports
- * it, as before D2.
+ * D2: the duty-setting rows, made to match the JSON lists of each course's
+ * settings row (the one whose id is the course's, the one the app reads). The
+ * app writes both in one transaction, so they differ only when an app that
+ * knows only the lists wrote them, erased the course, or dropped the rows'
+ * table by opening the database with its own schema (03 §3.1); the lists win.
+ * Rows of a course without a settings row go, and a row whose content
+ * disagrees with its id is rebuilt. A list that does not parse keeps its rows
+ * as they are: reading the settings reports it, as before D2.
  */
-async function dutySettingItemRepairs(
-  context: Pick<Transaction, "getAll">,
-): Promise<Array<[string, ReturnType<typeof dutySettingItemChanges>]>> {
-  const fields = DUTY_SETTING_LISTS.map(({ field }) => field)
-  const [settings, items] = await Promise.all([
+async function dutySettingItemRepairs(context: Pick<Transaction, "getAll">) {
+  const [settings, stored] = await Promise.all([
     context.getAll<StoredDutyLists>(
-      `SELECT courseId, ${fields.join(", ")} FROM dutySettings`,
+      `SELECT courseId, ${DUTY_SETTING_LISTS.map(({ field }) => field).join(", ")}
+       FROM dutySettings WHERE id = courseId`,
     ),
     context.getAll<DutySettingItem>(
       "SELECT id, courseId, kind, value, position FROM dutySettingItems",
     ),
   ])
-  return settings.flatMap((row) => {
+  const wanted: DutySettingItem[] = []
+  const unparsed = new Set<string>()
+  for (const row of settings) {
     const lists: DutySettingLists = {}
-    for (const field of fields) {
+    for (const { field, kind } of DUTY_SETTING_LISTS) {
       const list = storedList(row[field] ?? null)
-      if (!list) return []
-      lists[field] = list
+      if (list) lists[field] = list
+      else unparsed.add(JSON.stringify([row.courseId, kind]))
     }
-    const changes = dutySettingItemChanges(
-      items.filter((item) => item.courseId === row.courseId),
-      dutySettingItems(row.courseId, lists),
+    wanted.push(
+      ...dutySettingItems(row.courseId, lists).filter(
+        ({ kind }) => !unparsed.has(JSON.stringify([row.courseId, kind])),
+      ),
     )
-    return hasDutySettingItemChanges(changes) ? [[row.courseId, changes]] : []
-  })
+  }
+  return dutySettingItemChanges(
+    stored.filter(
+      ({ courseId, kind }) => !unparsed.has(JSON.stringify([courseId, kind])),
+    ),
+    wanted,
+  )
 }
 
-/** Whether a course's duty-setting rows differ from its lists: one read. */
+/** Whether the duty-setting rows differ from the lists: one read. */
 export async function dutySettingItemsNeedRepair(
   database: Pick<PowerSyncDatabase, "getAll">,
 ) {
-  return (await dutySettingItemRepairs(database)).length > 0
+  return hasDutySettingItemChanges(await dutySettingItemRepairs(database))
 }
 
 /** Rebuilds the duty-setting rows that differ, in the caller's transaction. */
@@ -150,7 +158,9 @@ export async function repairDutySettingItems(
   transaction: Pick<Transaction, "getAll" | "execute" | "executeBatch">,
   now: string,
 ) {
-  for (const [courseId, changes] of await dutySettingItemRepairs(transaction)) {
-    await writeDutySettingItemChanges(transaction, courseId, changes, now)
-  }
+  await writeDutySettingItemChanges(
+    transaction,
+    await dutySettingItemRepairs(transaction),
+    now,
+  )
 }

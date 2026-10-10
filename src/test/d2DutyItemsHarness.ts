@@ -31,6 +31,7 @@ const FIXTURES: Record<Version, FixtureTables> = {
 }
 
 const FIELDS = DUTY_SETTING_LISTS.map(({ field }) => field)
+const OLDER_APP_COURSE = String(FIXTURES["0.3.0"].courses![0]!.id)
 
 interface ListsResult {
   courses: number
@@ -167,6 +168,13 @@ export async function runOlderAppDropsItems() {
      WHERE id = ? AND courseId = ?`,
     [JSON.stringify(["saturday", "sunday"]), "[]", course, course],
   )
+  // Read back what the older app stored before it closes, as D1's older-app
+  // scenario does: closing straight after the write crashed WebKit's page
+  // about one run in eight on the development PC.
+  const listsWhileOlder = await older.get<{ completedDayIds: string }>(
+    "SELECT completedDayIds FROM dutySettings WHERE id = ?",
+    [course],
+  )
   await older.close()
 
   const reopened = createDatabase(filename)
@@ -177,6 +185,65 @@ export async function runOlderAppDropsItems() {
     ...result,
     itemsBefore,
     tableDroppedByOlderApp: tableWhileOlder.length === 0,
+    completedWrittenByOlderApp: JSON.parse(listsWhileOlder.completedDayIds),
     course,
+  }
+}
+
+/**
+ * Both reviews of D2's first round: a 0.3.0 tab still open beside the app
+ * saves its duty plan with 0.3.0's own statement, after the app opened the
+ * database and built the rows. The app must see the lists that tab wrote:
+ * Sunday completed, and Paolo staying over, so Paolo cannot be deleted. The
+ * app's database is the real one (cvc-helper.db), seeded before the app's
+ * modules are imported, with the 0.3.0 instance opened first, as a tab that
+ * was already open.
+ */
+export async function runStaleOlderTab() {
+  const course = OLDER_APP_COURSE
+  await seed("0.3.0", "cvc-helper.db")
+  const older = new PowerSyncDatabase({
+    schema: v030Schema,
+    database: { dbFilename: "cvc-helper.db" },
+  })
+  await older.init()
+  const { getActiveCourse } = await import("@/persistence/courses")
+  const { readDutyPlan } = await import("@/persistence/duties")
+  const { assessStudentDeletion } = await import("@/persistence/students")
+  await getActiveCourse()
+  const { db } = await import("@/persistence/db")
+  const rowsBeforeOlderSave = (await itemSnapshot(db)).length
+
+  const stored = FIXTURES["0.3.0"].dutySettings![0]!
+  await older.execute(
+    `INSERT OR REPLACE INTO dutySettings(
+      id, courseId, desiredPerDay, fewerDayIds, extraDayIds, balanceMinors,
+      balanceSex, tieBreaker, stayOverStudentIds, completedDayIds,
+      acknowledgedWarningKeys
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      course,
+      course,
+      stored.desiredPerDay,
+      stored.fewerDayIds,
+      stored.extraDayIds,
+      stored.balanceMinors,
+      stored.balanceSex,
+      stored.tieBreaker,
+      JSON.stringify(["student-v030-davide", "student-v030-paolo"]),
+      JSON.stringify(["saturday", "sunday"]),
+      stored.acknowledgedWarningKeys,
+    ],
+  )
+
+  const plan = await readDutyPlan(course)
+  const deletion = await assessStudentDeletion("student-v030-paolo", course)
+  await older.close()
+  return {
+    rowsBeforeOlderSave,
+    stayOverStudentIds: plan.settings?.stayOverStudentIds,
+    completedDayIds: plan.settings?.completedDayIds,
+    paoloDeletable: deletion.canDelete,
+    paoloReferences: deletion.references.map(({ kind }) => kind),
   }
 }

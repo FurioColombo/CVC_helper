@@ -116,6 +116,7 @@ test("rebuilds the rows after a 0.3.0 app drops their table and writes the lists
     ListsResult & {
       itemsBefore: number
       tableDroppedByOlderApp: boolean
+      completedWrittenByOlderApp: string[]
       course: string
     }
   >(page, "runOlderAppDropsItems")
@@ -124,6 +125,7 @@ test("rebuilds the rows after a 0.3.0 app drops their table and writes the lists
   expect(result.itemsBefore).toBe(3)
   // Why the lists are still written beside the rows (03 §3.1).
   expect(result.tableDroppedByOlderApp).toBe(true)
+  expect(result.completedWrittenByOlderApp).toEqual(["saturday", "sunday"])
   expect(result.differences).toEqual([])
   expect(result.rowIssues).toEqual([])
   expect(result.listsFromRows[result.course]).toMatchObject({
@@ -131,4 +133,27 @@ test("rebuilds the rows after a 0.3.0 app drops their table and writes the lists
     stayOverStudentIds: [],
     extraDayIds: ["monday"],
   })
+})
+
+test("shows a stale 0.3.0 tab's list changes at once and keeps its stay-over student from deletion", async ({
+  page,
+}) => {
+  await openBlankPage(page)
+  const result = await harness<{
+    rowsBeforeOlderSave: number
+    stayOverStudentIds: string[]
+    completedDayIds: string[]
+    paoloDeletable: boolean
+    paoloReferences: string[]
+  }>(page, "runStaleOlderTab")
+  record("stale-older-tab", result)
+
+  expect(result.rowsBeforeOlderSave).toBe(3)
+  expect(result.stayOverStudentIds).toEqual([
+    "student-v030-davide",
+    "student-v030-paolo",
+  ])
+  expect(result.completedDayIds).toEqual(["saturday", "sunday"])
+  expect(result.paoloDeletable).toBe(false)
+  expect(result.paoloReferences).toContain("stay-over")
 })

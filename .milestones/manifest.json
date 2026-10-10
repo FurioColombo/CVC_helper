@@ -780,6 +780,7 @@
         "tests/e2e/full-week.spec.ts",
         "tests/e2e/u08-duties.spec.ts",
         "tests/e2e/ug1-duty-reflow.spec.ts",
+        "tests/e2e/u02-deletion-integrity.spec.ts",
         "tests/e2e/ug1-upgraded-week.spec.ts",
         "tests/e2e/ug2-upgraded-week.spec.ts"
       ]

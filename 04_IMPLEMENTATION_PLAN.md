@@ -53,11 +53,11 @@ findings join as an extra milestone only if the owner picks them (see the end).
 
 The five JSON lists in `dutySettings` become rows of one table: one row per
 item, its kind from canonical configuration (fewer day, extra day, stay over,
-completed day, acknowledged warning), with D1's metadata. A repair fills them
-from the lists, which the app keeps writing while 0.3.0 can still open the
-database (03 §3.1), and they are read and written item by item. Duty
-settings normalisation moves into the domain (UG2-CQ-6). Behaviour does not
-change.
+completed day, acknowledged warning), with D1's metadata, written item by item
+beside the lists. While 0.3.0 can still open the database the app keeps reading
+the lists, and a repair keeps the rows identical to them (03 §3, the expand
+step of §3.1). Duty settings normalisation moves into the domain (UG2-CQ-6).
+Behaviour does not change.
 
 **Success predicate:** every duty behaviour, the deterministic full week and the
 duty browser journeys give identical results before and after. Every list item
@@ -105,8 +105,9 @@ version never writes.
 arriving mid-migration; two tabs on different versions, where the old one writes
 after the new one migrated; an older app re-initialising the schema under an
 open newer one, after which Riprova must reload rather than retry the same
-instance (D1 review DI-R2-Q5); the banner over a nested screen; standalone
-WebKit behaviour.
+instance (D1 review DI-R2-Q5); an older app's save deleting duty-setting rows
+of a kind only a newer version knows (D2 review DP-Q5); the banner over a
+nested screen; standalone WebKit behaviour.
 
 **Evidence:** verification, compatibility table tests, browser evidence, the
 owner's Android check (update without reinstall), data-integrity,
@@ -138,7 +139,8 @@ would break invariants; an identifier collision with the current course; the
 share sheet on WebKit; persistent storage refused; a reset with another tab
 open, including a stale tab's save landing on the erased course (D1 review
 DI-R2-Q6: duty, student and volunteer saves do not check the course exists);
-personal data in the file name or in logs.
+closing the database straight after a write, which crashed WebKit's test page
+in D2; personal data in the file name or in logs.
 
 **Evidence:** verification, round-trip evidence on Chromium and WebKit, browser
 evidence, the owner's phone check (export to another app and import back),

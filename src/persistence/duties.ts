@@ -10,7 +10,6 @@ import { db } from "@/persistence/db"
 import {
   dutySettingItemChanges,
   dutySettingItems,
-  dutySettingListsFrom,
   writeDutySettingItemChanges,
   type DutySettingItem,
 } from "@/persistence/dutyItems"
@@ -51,39 +50,7 @@ function parseStringArray(value: string) {
   return parsed
 }
 
-/**
- * The settings, their lists read from the item rows (D2). The JSON lists are
- * still validated as before: they are the copy an older app reads and writes
- * (03 §3.1), and a corrupt one still makes the settings unreadable. A null
- * `extraDayIds` still means the extra days were never chosen.
- */
-function parseSettings(
-  record: PersistedDutySettings,
-  items: readonly DutySettingItem[],
-): DutySettingsRecord {
-  const settings = parseStoredLists(record)
-  const lists = dutySettingListsFrom(items)
-  const dayLists = [lists.fewerDayIds, lists.extraDayIds, lists.completedDayIds]
-  if (
-    dayLists.some((dayIds) =>
-      dayIds.some((dayId) => !DAY_IDS.includes(dayId as DutyDayId)),
-    )
-  ) {
-    throw new Error("Invalid persisted duty settings")
-  }
-  return {
-    ...settings,
-    fewerDayIds: lists.fewerDayIds as DutyDayId[],
-    ...(settings.extraDayIds
-      ? { extraDayIds: lists.extraDayIds as DutyDayId[] }
-      : {}),
-    stayOverStudentIds: lists.stayOverStudentIds,
-    completedDayIds: lists.completedDayIds as DutyDayId[],
-    acknowledgedWarningKeys: lists.acknowledgedWarningKeys,
-  }
-}
-
-function parseStoredLists(record: PersistedDutySettings): DutySettingsRecord {
+function parseSettings(record: PersistedDutySettings): DutySettingsRecord {
   const fewerDayIds = parseStringArray(record.fewerDayIds)
   const extraDayIds =
     record.extraDayIds == null
@@ -120,7 +87,7 @@ function parseStoredLists(record: PersistedDutySettings): DutySettingsRecord {
 
 export async function readDutyPlan(courseId: string) {
   await db.init()
-  const [assignments, persistedSettings, items] = await Promise.all([
+  const [assignments, persistedSettings] = await Promise.all([
     db.getAll<DutyAssignment>(
       `SELECT dayId, studentId
        FROM dutyAssignments
@@ -136,12 +103,6 @@ export async function readDutyPlan(courseId: string) {
        WHERE id = ? AND courseId = ?`,
       [courseId, courseId],
     ),
-    db.getAll<DutySettingItem>(
-      `SELECT id, courseId, kind, value, position
-       FROM dutySettingItems
-       WHERE courseId = ?`,
-      [courseId],
-    ),
   ])
   const assignmentKeys = assignments.map(
     ({ dayId, studentId }) => `${dayId}:${studentId}`,
@@ -156,9 +117,7 @@ export async function readDutyPlan(courseId: string) {
   }
   return {
     assignments,
-    settings: persistedSettings
-      ? parseSettings(persistedSettings, items)
-      : null,
+    settings: persistedSettings ? parseSettings(persistedSettings) : null,
   }
 }
 
@@ -215,27 +174,13 @@ export async function saveDutyPlan(
       "SELECT completedDayIds FROM dutySettings WHERE id = ? AND courseId = ?",
       [courseId, courseId],
     )
-    const storedItems = await transaction.getAll<DutySettingItem>(
-      `SELECT id, courseId, kind, value, position
-       FROM dutySettingItems
-       WHERE courseId = ?`,
-      [courseId],
-    )
-    const listedCompletedDayIds = persistedSettings
+    const persistedCompletedDayIds = persistedSettings
       ? (parseStringArray(persistedSettings.completedDayIds) as DutyDayId[])
       : []
-    if (hasDuplicates(listedCompletedDayIds)) {
-      throw new Error("Invalid persisted duty settings")
-    }
-    // The history is what either copy holds: the rows, and the list an older
-    // app may have written since they were last rebuilt.
-    const persistedCompletedDayIds = [
-      ...new Set([
-        ...listedCompletedDayIds,
-        ...(dutySettingListsFrom(storedItems).completedDayIds as DutyDayId[]),
-      ]),
-    ]
-    if (persistedCompletedDayIds.some((dayId) => !DAY_IDS.includes(dayId))) {
+    if (
+      persistedCompletedDayIds.some((dayId) => !DAY_IDS.includes(dayId)) ||
+      hasDuplicates(persistedCompletedDayIds)
+    ) {
       throw new Error("Invalid persisted duty settings")
     }
     if (
@@ -343,11 +288,16 @@ export async function saveDutyPlan(
         courseId,
       ],
     )
-    // The same lists, item by item (D2). A course whose extra days were never
-    // chosen is saved with none, as the JSON list above.
+    // The same lists, item by item (D2): only the items that changed. A course
+    // whose extra days were never chosen is saved with none, as the list above.
+    const storedItems = await transaction.getAll<DutySettingItem>(
+      `SELECT id, courseId, kind, value, position
+       FROM dutySettingItems
+       WHERE courseId = ?`,
+      [courseId],
+    )
     await writeDutySettingItemChanges(
       transaction,
-      courseId,
       dutySettingItemChanges(
         storedItems,
         dutySettingItems(courseId, {

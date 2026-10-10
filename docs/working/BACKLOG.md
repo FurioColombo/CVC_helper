@@ -193,3 +193,9 @@ Scan and paste:
   touching a rule, a synthetic column drop);
 - the OCR worker and the speech pipeline stay in memory for the whole session
   (UG2-DAT-8); measure on a low-end phone.
+
+From the D2 reviews (`.evidence/D2/`):
+
+- no integrity check reports a stay-over student who no longer exists, in the
+  list or the rows, and the duty screens then refuse every save (DP-Q3; the
+  state predates D2 for the list).
