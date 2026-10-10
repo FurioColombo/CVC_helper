@@ -1,0 +1,188 @@
+{
+  "reviewerRole": "scope",
+  "persona": "Il Notaio",
+  "milestone": "H1",
+  "commit": "8edc8a1 plus the uncommitted H1 working tree (staged renames, modified files and the six untracked files named in the brief), reviewed 2026-10-09",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SCO-H1-1",
+      "title": "The fold of 1_0_0_NEXT_STEPS.md lost the shared version's open privacy decisions",
+      "evidence": "archive/v0.3.0/1_0_0_NEXT_STEPS.md:3-6 says the findings and follow-ups 'stay open until H1 folds them into docs/working/BACKLOG.md'. Its section 'Decisions the shared version needs (not yet taken)' (lines 59-74) lists who the data controller is, that deletion must hold 'on the server and in backups', and self-hosting the speech model files for a shared deployment. The owner's 2026-10-08 decisions in 02_MVP_SCOPE.md §4 settle the backend, who writes and the release/retention confirmation, but not the data controller or deletion in server backups (0.5.0 says only 'erasing it erases it on the server', 02:109). A grep for 'data controller|titolare|backup|retention|self-host' over 01-04, AGENTS.md and docs/working/BACKLOG.md finds only the 0.5.0 'online backup' wording. .evidence/H1/docs-move.json:133-138 records the NEXT_STEPS open items as going to the BACKLOG ('UG2 findings, owner future work, engineering follow-ups') and leaves this section out.",
+      "reproduction": "Read archive/v0.3.0/1_0_0_NEXT_STEPS.md:59-74, then search docs/working/BACKLOG.md, 02_MVP_SCOPE.md §4 and 03_TECHNICAL_DECISIONS.md for the data-controller and backup-deletion questions. Neither is there.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md H1 item 3 ('the 0.3.0 working documents are folded, open items going to docs/working/BACKLOG.md'); docs/DOCS_SYSTEM.md rule 5"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SCO-H1-2",
+      "title": "When a docs-only push follows a red or cancelled code push, CI goes green and Pages deploys code that never passed verify:all",
+      "evidence": "scripts/ci-scope.mjs:27-36 decides from `git diff before..after` of this push alone. .github/workflows/ci.yml cancels superseded runs (concurrency ci-${{ github.ref }}, cancel-in-progress). deploy-pages.yml:36-39 publishes on any successful push run. Probe: `needsBrowser(['docs/working/BACKLOG.md'])` returns false. 03_TECHNICAL_DECISIONS.md §6 now says 'release gates and CI: verify:all' and 'GitHub Pages publishes main only after CI passes'.",
+      "reproduction": "1) Push commit A to main with a change in src/ that breaks a browser spec; CI for A fails, or is cancelled by step 2. 2) Push commit B that changes only docs/working/BACKLOG.md. ci-scope sees only A..B, so browser=false and the run is `npm run verify`, which passes. 3) deploy-pages builds and publishes B, which contains A's code. Before H1, B's run was verify:all and would have failed. Fix: diff from the last commit whose verify:all passed, or always run verify:all on main.",
+      "specRef": "04 H1 item 4 ('the deploy waits for it') and adversarial checklist ('the Pages deploy no longer waiting for CI on main'); 03 §6"
+    },
+    {
+      "id": "SCO-H1-3",
+      "title": "The AGENTS.md trim turned 'do not prematurely add' native packaging into 'Never add', contradicting 03 and 02",
+      "evidence": "AGENTS.md:239-241 'Never add native packaging, broad backend infrastructure, generic content or document systems, automatic crew generation beyond the approved scope'. The old text was `git show HEAD:AGENTS.md` lines 360-368, 'do not prematurely add'. 03_TECHNICAL_DECISIONS.md:21-22 says 'Capacitor remains a possible later path'. 02_MVP_SCOPE.md:46,57-63 lists native packaging, automatic crew generation and course documents as deferred until the owner changes scope, not as forbidden. .evidence/H1/docs-move.json:197-200 describes the §15 change only as a pointer to 02 §4.",
+      "reproduction": "Compare AGENTS.md:237-241 with HEAD:AGENTS.md:354-368, 03:18-22 and 02:44-63.",
+      "specRef": "04 H1 item 3 ('AGENTS.md is trimmed ..., each removed rule given a home') and adversarial checklist ('a rule lost in the AGENTS.md trim'); AGENTS.md §2"
+    },
+    {
+      "id": "SCO-H1-4",
+      "title": "The 02 rewrite dropped 'every deferred item remains absent or explicitly isolated' from the completion boundary",
+      "evidence": "archive/v0.3.0/02_MVP_SCOPE.md:178 had it as a release-completion condition. The new 02_MVP_SCOPE.md:119-124 defers to AGENTS.md §17 and the plan's gate, and neither AGENTS.md:249-259 nor the UG3 section (04:224-241) contains it. docs-move.json:203-206 does not record its removal.",
+      "reproduction": "Diff archive/v0.3.0/02_MVP_SCOPE.md §6 against 02_MVP_SCOPE.md §5 and AGENTS.md §17.",
+      "specRef": "04 H1 item 3; docs/DOCS_SYSTEM.md rule 1"
+    },
+    {
+      "id": "SCO-H1-5",
+      "title": "DEVICE_CHECKS.md lost the owner-decided summary-image condition and now contradicts the spec",
+      "evidence": "HEAD:docs/post-mvp/UG1_DEVICE_VALIDATION.md:96-99 required the image to have 'no \"Tutti gli allievi assegnati\" note'. docs/DEVICE_CHECKS.md:79-81 now says only 'the image matches the screen, with every crew or day and names inside their cards'. The screen shows that note (01_PRODUCT_SPEC.md:541-543), while the image must leave it out (01:530-533; owner, 2026-10-04, archive/v0.3.0/0_3_0_QUESTIONS.md:16). A literal check therefore passes a wrong image or fails a correct one.",
+      "reproduction": "Read docs/DEVICE_CHECKS.md:77-82 next to 01_PRODUCT_SPEC.md:527-543.",
+      "specRef": "01_PRODUCT_SPEC.md §7.5; 04 H1 item 3 ('UG1_DEVICE_VALIDATION.md becomes the contract docs/DEVICE_CHECKS.md')"
+    },
+    {
+      "id": "SCO-H1-6",
+      "title": "DEVICE_CHECKS.md's 'Not yet run on any device' list leaves out the speech checklist, which was accepted as is and never run",
+      "evidence": "docs/DEVICE_CHECKS.md:17-18 says a check not run 'is listed as not run, with the reason'. Its list at :84-88 names iPhone, icon, scan time, the first offline dictation and erase, but not Speech checks 1-5 (:20-36). .evidence/UG2/physical-device-review.json records speech as 'ACCEPTED_AS_IS ... Not repeated on the exact release candidate'. The old doc said explicitly 'the unreported detailed checks below are not marked PASS' (HEAD UG1_DEVICE_VALIDATION.md:17-21). By omission, a reader now infers the speech checks passed on Android.",
+      "reproduction": "Compare docs/DEVICE_CHECKS.md:84-88 with the 'Speech (dictation)' observation in .evidence/UG2/physical-device-review.json.",
+      "specRef": "AGENTS.md §17 (physical-device evidence belongs to the owner; never a simulated PASS); 03_TECHNICAL_DECISIONS.md §5:156-163"
+    },
+    {
+      "id": "SCO-H1-7",
+      "title": "The QUESTIONS fold says decisions are 'already in the contracts', but two owner decisions have no contract home",
+      "evidence": "docs-move.json:145. (a) 2026-09-28: the empty Allievi page and the menu offer the same methods, scan and assistant included (archive/v0.3.0/0_3_0_QUESTIONS.md:46). This is implemented and tested with three methods, 'Aggiungi allievo', 'Scan allievi', 'Usa un assistente' (src/features/students/StudentManagement.test.tsx:362-400). Yet 01_PRODUCT_SPEC.md:125-128 still lists only Scan and Aggiungi on the empty page, and Add, Scan and Conoscenza as secondary actions. (b) 2026-09-26: 'Volunteers do not count toward size or repeat warnings' (QUESTIONS:62) appears neither in 01 §5 (:309-311) nor in §7.4 (:482-517); only a test comment holds it (src/features/crews/CrewManagement.test.tsx:1324). The surname particles and the 'Forse personale' staff-heading behaviour, which users see, likewise live only in code and tests (docs-move.json says so). DOCS_SYSTEM rule 1 requires a contract home.",
+      "reproduction": "Grep 01_PRODUCT_SPEC.md for 'assistente' in §3.2 and for volunteer exclusion in §7.4.",
+      "specRef": "docs/DOCS_SYSTEM.md rules 1 and 5; AGENTS.md §2 (01 governs user-visible behaviour)"
+    },
+    {
+      "id": "SCO-H1-8",
+      "title": "The D2-D5 override's owner-assigned destination ('the final Claude Code follow-up after the 0.3.0 gate') became an open-ended deferral",
+      "evidence": "Sources: archive/v0.3.0/0_3_0_QUESTIONS.md:173,177-180, 0_3_0_DEVELOPMENT_AUDIT.md:17 ('assigned to the final Claude Code handoff') and archive/v0.3.0/02_MVP_SCOPE.md:124-126. Now: 02_MVP_SCOPE.md:55-56 says 'deferred 2026-09-24', and BACKLOG.md:62 puts it under future work. The plan's 'Waiting for the owner' (04:243-249) does not ask about it, and CHANGELOG 0.3.0 tells users it is 'still to come'.",
+      "reproduction": "Compare the three archived statements with 02:55-56, BACKLOG:62 and 04:243-249.",
+      "specRef": "Persona lens 3 (owner decisions honoured word for word); AGENTS.md §15"
+    },
+    {
+      "id": "SCO-H1-9",
+      "title": "BACKLOG.md says it gathers the UG2 review findings but leaves out UG2-CQ-8 and CQ-11 to CQ-21, some still open",
+      "evidence": "docs/working/BACKLOG.md:5-10. Of the UG2 code-quality IDs, only CQ-1 to 7, 9 and 10 are carried (BACKLOG:71-83). CQ-8 and CQ-11 to CQ-21 (.evidence/UG2/code-quality-review.json) are in neither the BACKLOG, NEXT_STEPS nor the CHANGELOG known limitations. CQ-14 is still open at src/persistence/courses.test.ts:99-110, which takes table names from db.ts with a regex. That bears directly on D1's new appMeta table and D4's full reset. CQ-21 (pixel comparison covers only the first screen) and CQ-10's parked test.fixme (tests/e2e/ug2-hostile-roster.spec.ts:420) are not recorded either. The gap goes back to UG2, but the H1 fold claims completeness.",
+      "reproduction": "Compare the IDs in code-quality-review.json with those in docs/working/BACKLOG.md.",
+      "specRef": "04 H1 item 3; milestone-close skill §5.4 (follow-ups not left only in evidence)"
+    },
+    {
+      "id": "SCO-H1-10",
+      "title": "AGENTS.md §6 orders milestone:complete before the documentation sweep, which the new enforcement now refuses",
+      "evidence": "AGENTS.md:91-95 says '... milestone:complete, the documentation sweep ..., and one descriptive checkpoint commit'. scripts/milestone.mjs:239-265 (assertPlanSwept) refuses completion while the plan still holds the milestone section or lacks its '| <ID> | Complete.' row, so the sweep must come first, as SKILL.md does (§5 before §6). The behaviour changed without the operating contract changing with it.",
+      "reproduction": "Follow AGENTS.md §6 step 9 literally: milestone:complete runs before the sweep and throws 'the plan still holds the <ID> section'.",
+      "specRef": "Persona lens 4; docs/DOCS_SYSTEM.md moments"
+    },
+    {
+      "id": "SCO-H1-11",
+      "title": "Contract text left stale by H1's own changes",
+      "evidence": "(a) docs/DOCS_SYSTEM.md:70-72 still says check:docs 'becomes part of verify:domain at the first 0.4.0 milestone ... until then it reports what that move has to fix'; package.json:39 now does this (the file is identical to HEAD). (b) 01_PRODUCT_SPEC.md:669-676 still says 'The included and deferred 0.2.0 boundary is authoritative in 02_MVP_SCOPE.md' and lists 'backend/sync' among things not added, but the rewritten 02 has no 0.2.0 boundary and §4 schedules the backend. 01 was edited in this diff (paths) but §12 was not.",
+      "reproduction": "Read DOCS_SYSTEM.md:66-72 and 01_PRODUCT_SPEC.md §12 against package.json:39 and 02_MVP_SCOPE.md §2 and §4.",
+      "specRef": "docs/DOCS_SYSTEM.md rule 2 (present tense); persona lens 4"
+    },
+    {
+      "id": "SCO-H1-12",
+      "title": "The new completion refusals have no automated proof",
+      "evidence": "Of the four refusals the brief claims for milestone:complete, scripts/milestone.mjs self-test covers only the unfiled flaky test (:319-379). Nothing tests the plan-section refusal (assertPlanSwept), the check:docs refusal (assertDocsCheck), the e2eSpecs mismatch, run-e2e --focus or the flaky-report parsing, nor check-docs.mjs's rewritten frozen-file rule. The only script tests are scripts/privacy-rules.test.mjs and scripts/ci-scope.test.mjs. milestone:self-test runs in no verify script and not in CI (package.json:36-47).",
+      "reproduction": "Glob scripts/**/*.test.* and grep for assertPlanSwept, e2eSpecs or 'check:docs failed' in tests.",
+      "specRef": "AGENTS.md §3 (a rule that can be tested is verified that way); persona lens 1"
+    },
+    {
+      "id": "SCO-H1-13",
+      "title": "check:docs' frozen-file rule cannot detect a committed edit, locally or in CI",
+      "evidence": "scripts/check-docs.mjs:169-176 diffs only `git diff HEAD`. The pre-commit hook runs only check-staged (privacy). verify:quick, required before every checkpoint commit, does not run check:docs. Once an archive, ledger or completed-evidence edit is committed, the next local run and every CI run see an empty diff and print PASS. A green check:docs in CI therefore claims more than it checks.",
+      "reproduction": "Code path: commit any change to archive/v0.3.0/0_3_0_QUESTIONS.md. check-staged has no frozen rule, and `git diff HEAD -- archive` is then empty, so check-docs reports PASS. Not executed (read-only brief).",
+      "specRef": "docs/DOCS_SYSTEM.md rule 6 and Enforcement; persona lens 9"
+    },
+    {
+      "id": "SCO-H1-14",
+      "title": "Two H1 scope items have no evidence slot",
+      "evidence": "Item 1's owner action (adding the PowerSync docs server to Codex's configuration) and item 2's adoption of the changes the owner picks from the retrospective have no file in the H1 Evidence list (04:91-93) or in requiredEvidence (.milestones/manifest.json H1). Item 5 (install-script allowlist) is likewise unproven in evidence; my own `npm install-scripts ls` printed 'No packages with unreviewed install scripts.' Item 2 is still running and need not be complete yet, but it has nowhere to record its outcome.",
+      "reproduction": "Map each H1 item to the Evidence line and the manifest's requiredEvidence.",
+      "specRef": "AGENTS.md §3; persona signature move (an empty right cell is a finding)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SCO-H1-15",
+      "title": "Twelve iphone-13-viewport screenshot branches are now dead code",
+      "evidence": "tests/e2e/boats.spec.ts:78, crew-copy-read.spec.ts:97 and :155, crew-destinations.spec.ts:124, crew-management-gate.spec.ts:323, crew-warnings.spec.ts:86, crews.spec.ts:52 and :118, duties.spec.ts:185, evaluation-gate.spec.ts:230, evaluation-overview.spec.ts:134 and student-management-gate.spec.ts:177 all branch on project 'iphone-13-viewport', but none of these specs is in that project's testMatch (playwright.config.ts:47-48). The branches only take screenshots and assert nothing. No layout-asserting spec was found outside the list except full-week (Pixel only by design) and v05's y-order check.",
+      "reproduction": "grep 'iphone-13-viewport' tests/e2e and compare with the project's testMatch.",
+      "specRef": "04 H1 adversarial checklist (a geometry check moved off a viewport it needed: none found, dead branches only)"
+    },
+    {
+      "id": "SCO-H1-16",
+      "title": "Config comments cite measurements and an evidence file that do not exist yet",
+      "evidence": "vitest.config.ts:8-9 and :30-31 ('287 s → 100 s ... three runs with no flake (H1)') and playwright.config.ts:43-44 cite .evidence/H1/test-timing.json, which is absent. When the file is recorded, these figures must match it, or the comments should drop them.",
+      "reproduction": "ls .evidence/H1",
+      "specRef": "Persona lens 9; H1 success predicate (30% against the recorded baseline)"
+    },
+    {
+      "id": "SCO-H1-17",
+      "title": "docs-move.json's AGENTS trim map is imprecise",
+      "evidence": "It gives 'before': 427 by split('\\n') but 'after': 299 by wc; the same split gives 300 for the new file. It does not record three rule changes: §7 FOUNDATION from 'not normally required' to 'only when the milestone names one', §7 INTEGRATION_GATE from 'final MVP gate' to 'a release gate', and §10 losing 'standard crew size where defined'. §4 also broadens 'Do not begin a feature milestone' to any milestone, which sits uneasily with §1.7 (a deferred milestone is not eligible).",
+      "reproduction": "Diff HEAD:AGENTS.md against AGENTS.md §§4, 7, 10.",
+      "specRef": "04 H1 item 3 (each removed rule given a home)"
+    },
+    {
+      "id": "SCO-H1-18",
+      "title": "02 §1 reads as exhaustive but understates the warnings",
+      "evidence": "02_MVP_SCOPE.md:36 says 'Warnings: size, repetition, an unavailable boat, an open fault.' 01_PRODUCT_SPEC.md:511-513 adds the missing-student and D1 morning-duty warnings. 02 §2 keeps 'course locking' deferred while §4's 0.7.0 delivers 'past courses kept read-only'. 01:401-403 describes a D2-D5 'Settings-only override' as if it can be enabled; no such code exists in src.",
+      "reproduction": "Read 02:33-40 next to 01 §7.1 and §7.4.",
+      "specRef": "AGENTS.md §2"
+    },
+    {
+      "id": "SCO-H1-19",
+      "title": "The archived 02 is not the file as it stood, and the archive index omits it",
+      "evidence": "archive/v0.3.0/02_MVP_SCOPE.md differs from HEAD:02_MVP_SCOPE.md at line 149, where a path was rewritten to archive/v0.3.0/...; docs-move.json:122 calls it 'the scope as it stood through 0.3.0'. archive/README.md's v0.3.0 row lists the plan, brief, questions, open items, audit and next steps, but not 02_MVP_SCOPE.md.",
+      "reproduction": "git show HEAD:02_MVP_SCOPE.md | diff - archive/v0.3.0/02_MVP_SCOPE.md",
+      "specRef": "docs/DOCS_SYSTEM.md rule 6"
+    },
+    {
+      "id": "SCO-H1-20",
+      "title": "DEVICE_CHECKS dropped some recording fields and the method for the photo-disposal check",
+      "evidence": "Gone are orientation/crop outcome, commit/reload result, source-photo disposal and per-check PASS/FAIL (HEAD UG1 doc:59-61, 37-40). Scan item 3 now states 'The photo and the crop are not kept as course data' without the old 'inspect application storage or repeat after reload' method (docs/DEVICE_CHECKS.md:46).",
+      "reproduction": "Diff the two scan sections.",
+      "specRef": "AGENTS.md §17"
+    },
+    {
+      "id": "SCO-H1-21",
+      "title": "Small extras and loose checks",
+      "evidence": "ci.yml adds `workflow_dispatch`, though the plan says 'CI on push only' (harmless, since the deploy reacts only to push). The flaky-filing check is a substring match, `backlog.includes(test.title)` (scripts/milestone.mjs:107-109), so a short title is 'filed' by any matching word. The plan row 'H1–UG3 | Pending; H1 is next' (04:28) is stale while H1 is IN_PROGRESS. docs/design/07_PAGE_CHANGELOG.md:115 (frozen ledger) still names `0_3_0_OWNER_BRIEF.md` and `brief-0.3.0/...` relative to a folder that no longer holds them. The milestone-close skill §5.4 still says 'the working next-steps document' instead of naming docs/working/BACKLOG.md.",
+      "reproduction": "Read the cited lines.",
+      "specRef": "Persona lens 5 and lens 8"
+    }
+  ],
+  "evidenceInspected": [
+    "Acceptance table (H1 item → proof): 1 merge claude/harness-0.4-prep → `git merge-base --is-ancestor` true; core.hooksPath=scripts/git-hooks | 1 owner adds PowerSync MCP to Codex → NO PROOF | 2 retrospective and adoption → pending, NO EVIDENCE SLOT | 3 06/07/mockups to docs/design → staged renames, docs-move.json | 3 UG1 to DEVICE_CHECKS.md → present, content losses (SCO-H1-5, 6, 20) | 3 working docs folded and archived → archived byte-identical; fold incomplete (SCO-H1-1, 7, 8, 9) | 3 AGENTS ≤ 300 with homes → 300 by check-docs counting; map imprecise (SCO-H1-3, 17) | 3 02 present tense → done; boundary rule lost (SCO-H1-4) | 3 paths updated → no stale docs/post-mvp reference outside archive, evidence and the frozen 07 line; check-docs PASS (138 files); check-repository PASS | 3 check:docs in verify:domain → package.json:39 | 3 check:docs before milestone:complete → milestone.mjs:240 assertDocsCheck, untested (SCO-H1-12) | 4 Vitest node/jsdom split, 4 workers → vitest.config.ts; timing proof pending | 4 iphone-13-viewport limited → playwright.config.ts:47-48; every spec still runs on pixel-7-chrome (no testMatch), so no spec is in no project | 4 two workers if three runs show no new flake → pending (workers: 1) | 4 CI push only, cancel superseded, docs-only skip → ci.yml, ci-scope.mjs and its test; gate hole (SCO-H1-2) | 4 flaky test in evidence and backlog → run-e2e.mjs, record-verification.mjs, milestone.mjs; self-test covers this case | 4 ladder in 03 §6 → 03:202-206 | 5 install-script allowlist → package.json allowScripts; `npm install-scripts ls` clean (my run, not recorded) | success predicate → verify:all and test-timing.json pending",
+    "docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-scope.md (HEAD and working copy)",
+    "04_IMPLEMENTATION_PLAN.md (full), docs/DOCS_SYSTEM.md, AGENTS.md (new) and `git show HEAD:AGENTS.md`, compared section by section",
+    "02_MVP_SCOPE.md (new) against archive/v0.3.0/02_MVP_SCOPE.md and HEAD:02_MVP_SCOPE.md",
+    "archive/v0.3.0/1_0_0_NEXT_STEPS.md, 0_3_0_OPEN_ITEMS.md and 0_3_0_QUESTIONS.md in full; 0_3_0_OWNER_BRIEF.md and 0_3_0_DEVELOPMENT_AUDIT.md scanned for open items; archive/v0.3.0/04_IMPLEMENTATION_PLAN.md (S4, F1, UG2 passages); archive/README.md",
+    "docs/working/BACKLOG.md, docs/DEVICE_CHECKS.md against HEAD:docs/post-mvp/UG1_DEVICE_VALIDATION.md, .evidence/H1/docs-move.json, .evidence/UG2/physical-device-review.json, the UG2 code-quality, functional, field-UX, data-integrity, regression and scope reviews (IDs only, except CQ)",
+    "01_PRODUCT_SPEC.md §§2, 3, 5, 7, 9-12; 03_TECHNICAL_DECISIONS.md diff and §§1, 5, 6; CHANGELOG.md 0.3.0 known limitations; docs/design/07_PAGE_CHANGELOG.md F3/F4 entries",
+    "git diff HEAD for scripts/check-docs.mjs, check-repository.mjs, milestone.mjs, record-verification.mjs, verification-digest.mjs, run-e2e.mjs, ci-scope.mjs (+test), package.json, playwright.config.ts, vitest.config.ts, .github/workflows/ci.yml, deploy-pages.yml, .milestones/manifest.json, src/ and tests/ (comment-only path changes), milestone-close SKILL.md, README, QUICKSTART, LOCAL_DEVELOPMENT, DEPLOY, RETROSPECTIVE_PROMPT",
+    "Ran: node scripts/check-docs.mjs (PASS, 138 Markdown files), node scripts/check-repository.mjs (PASS), node -e needsBrowser probes, npm install-scripts ls (clean), git status/diff/merge-base, greps for stale paths, 02 section references, iphone-13-viewport branches, DOM globals in node-project tests and the UG2 finding IDs"
+  ],
+  "anglesTried": {
+    "seed": 349189509,
+    "lenses": [
+      "10. Physical-device claims without owner-provided evidence (seed mod 10 = 9, zero-indexed)",
+      "1. Every acceptance and evidence item in the milestone section (floor(seed/10) mod 10 = 0)"
+    ],
+    "wildcard": "Does the documentation-only CI skip, combined with cancel-in-progress and a deploy that triggers on any green push run, let code that never passed the browser suite reach Pages? Yes (SCO-H1-2). I also checked whether any e2e spec or app module reads files under docs/ or *.md, which would make the skip unsafe on its own terms; none does."
+  },
+  "notTested": [
+    "No unit, browser, build or verify script was run, per the brief (a timing measurement was running), so verify:all, the 30% time reduction, 'no test lost except duplicates' and the Playwright two-worker trial are unverified and pending.",
+    "milestone:self-test was not run, because it writes and deletes .evidence/__synthetic__ in the tree. The completion refusals were read, not executed.",
+    "The frozen-file bypass (SCO-H1-13) and the CI gate hole (SCO-H1-2) are shown by code path and a needsBrowser probe, not by a real commit or push, since the review was read-only.",
+    "Whether the Node-environment tests still exercise their assertions (speech.test.ts redefines navigator.vendor/userAgent on Node's global navigator) was only read, not run.",
+    "UG2 findings other than the code-quality series were matched by ID only; I relied on the archived UG2 closure note ('every remaining finding is fixed, in the changelog ... or in NEXT_STEPS') for the rest.",
+    "The retrospective's output and the owner's picks did not exist yet.",
+    "Codex's MCP configuration is outside the repository and could not be inspected."
+  ]
+}

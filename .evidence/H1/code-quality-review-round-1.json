@@ -1,0 +1,163 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "H1",
+  "commit": "8edc8a18a97110866a9161845968988ca901017a plus the uncommitted H1 working tree (git diff HEAD, untracked scripts/ci-scope.mjs and scripts/ci-scope.test.mjs)",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "CQ-1",
+      "title": "The docs-only CI scope compares each push only with the push before it. A docs-only push that follows a failed or cancelled code push therefore runs only `verify`, and Pages then deploys code that never passed the browser suite.",
+      "evidence": "scripts/ci-scope.mjs:27-41 lists the changed files from `${before}..${after}`, where before is github.event.before, the tip of the previous push. It never asks whether CI passed on that tip. .github/workflows/ci.yml:9-12 cancels a superseded run (cancel-in-progress), and ci.yml:36-43 runs only `npm run verify` when browser=false. deploy-pages.yml:16-20 and 35-38 deploy whenever a push run ends in success. Running `node scripts/ci-scope.mjs 04bdc51 0bd07d8` prints `browser=false`. 04bdc51 is the Linux-font layout fix, which only CI's browser suite can prove; 0bd07d8 is the evidence-only commit that followed it.",
+      "reproduction": "1) Push code commit A to main (e.g. 04bdc51); CI run A starts verify:all. 2) Before it finishes, push docs-only commit B (e.g. 0bd07d8). The concurrency group cancels run A, so A's conclusion is cancelled and nothing is deployed for it. 3) Run B computes the A..B diff, which holds only .evidence/ and .md files, so browser=false and it runs `verify`, which passes. 4) deploy-pages sees a successful push run and publishes B's tree, which contains A's untested src changes. The same happens without the cancel when run A simply fails in the browser suite: B is green and ships A's broken code. Smallest fix, on main only: `run: node scripts/ci-scope.mjs \"${{ github.ref != 'refs/heads/main' && github.event.before || '' }}\" \"${{ github.sha }}\" >> \"$GITHUB_OUTPUT\"`. An empty before gives an empty file list, which means browser=true, so main always runs verify:all. Branches keep the saving, but a branch can still show a false green after a red run; say so in the ci-scope.mjs header.",
+      "specRef": "docs/DEPLOY.md:46-49 ('A push whose CI fails is not deployed'); 03_TECHNICAL_DECISIONS.md §6 l.229-234 and §6.1 ('only a green CI run means the suite passes'); H1 adversarial checklist: 'the Pages deploy no longer waiting for CI on main'"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "CQ-2",
+      "title": "The pre-commit phone rule fails open under `diff.noprefix=true`, and for a root Markdown file whose name contains a space",
+      "evidence": "scripts/privacy-rules.mjs:141 takes the path with `raw.slice(6)`. That assumes the header reads '+++ b/' and has no trailing TAB. scripts/check-staged.mjs:53-66 does not pin the diff prefixes. With noprefix, '.evidence/X/notes.md' is read as 'idence/X/notes.md', so isRecordPath returns false and the phone rule is skipped. Git writes a header such as `+++ b/Owner Notes.md<TAB>`, which fails the `/^[^/]+\\.md$/` test. check:repository has no content scan, so nothing else catches it before the push.",
+      "reproduction": "In a scratch repository: stage .evidence/X/notes.md containing 'contact 333 123 4567 [example number replaced by the orchestrator with the fixtures' synthetic one: the reviewer's own invented number tripped the privacy hook]' and run `node <repo>/scripts/check-staged.mjs`. Default config: refused, exit 1. After `git config diff.noprefix true`: 'PASS: staged privacy check', exit 0. A staged root file 'Owner Notes.md' with the same line: PASS, exit 0. Fix: add \"--src-prefix=a/\", \"--dst-prefix=b/\" to the diff arguments (checked on this machine: it overrides diff.noprefix on git 2.33). Change addedLines to `raw.slice(6).replace(/\\t$/, \"\")`, and add two cases to privacy-rules.test.mjs.",
+      "specRef": "AGENTS.md §17-18 (privacy hook); H1 adversarial checklist: 'a hook that ... passes ... when it should fail'"
+    },
+    {
+      "id": "CQ-3",
+      "title": "The iphone-13-viewport testMatch leaves 12 iPhone-only screenshot branches in 10 specs that can never run (about 81 lines)",
+      "evidence": "playwright.config.ts:46-47 limits iphone-13-viewport to 22 specs. Each of the following still has `if (testInfo.project.name === \"iphone-13-viewport\") { page.screenshot(...) }`, which no project can now reach: boats.spec.ts:78, crew-copy-read.spec.ts:97 and :155, crew-destinations.spec.ts:124, crew-management-gate.spec.ts:323, crew-warnings.spec.ts:86, crews.spec.ts:52 and :118, duties.spec.ts:185, evaluation-gate.spec.ts:230, evaluation-overview.spec.ts:134, student-management-gate.spec.ts:177. The iphone-13-webkit-core project has a different name, so the branches are dead there too. The iPhone-size review screenshots they wrote are no longer produced.",
+      "reproduction": "grep -rn '\"iphone-13-viewport\"' tests/e2e and remove the 22 specs in the testMatch list: the 12 lines above remain. Smaller diff: delete the 12 blocks (about 81 lines), the `testInfo` parameters they leave unused, and any `mkdirSync`/`path` imports nothing else uses. If the iPhone screenshots are still wanted for review, add those specs to the list instead.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md H1 item 4; AGENTS.md §9 (screenshots where they help review)"
+    },
+    {
+      "id": "CQ-4",
+      "title": "The verification ladder and the flaky-test rule now have two or three homes",
+      "evidence": "03_TECHNICAL_DECISIONS.md:204-214 (the ladder plus the one-retry/flaky rule) is repeated in docs/LOCAL_DEVELOPMENT.md:70-84, and the flaky rule appears a third time in .claude/skills/milestone-close/SKILL.md:34. H1 added or rewrote both copies of the ladder.",
+      "reproduction": "Compare the two sections. Smaller diff: replace docs/LOCAL_DEVELOPMENT.md:70-84 with one line ('The verification ladder and the flaky-test rule: 03_TECHNICAL_DECISIONS.md §6; a single spec runs with `npm run verify:e2e -- tests/e2e/<spec>.spec.ts`'). That removes about 13 lines from a file with a 120-line budget.",
+      "specRef": "docs/DOCS_SYSTEM.md rule 1 ('One home per truth')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "CQ-5",
+      "title": "check-docs frozen-file rule: one git call does the same job",
+      "evidence": "scripts/check-docs.mjs:167-193 adds a second `git diff --name-status` and a Map so that new binaries (numstat '- -') stop counting as edits.",
+      "reproduction": "Keep the old single numstat loop and add `\"--diff-filter=DM\"` to it. Additions are excluded; a deleted text file ('0 N'), a binary ('- -') and a modification that removes lines all have deleted !== '0'. This removes the statusOfPath Map, the second git call and about 8 lines. It loses only the separate 'deleted' wording and the case of an empty file being deleted.",
+      "specRef": "docs/DOCS_SYSTEM.md (frozen archive and ledger)"
+    },
+    {
+      "id": "CQ-6",
+      "title": "Recorder: deleting the old flaky list is simpler than comparing timestamps",
+      "evidence": "scripts/record-verification.mjs:34 and 89-95 use statSync, recordingStarted and an mtime comparison to ignore a stale test-results/e2e-flaky.json.",
+      "reproduction": "Use `rmSync(flakyPath, { force: true })` before the scripts loop, then `existsSync(flakyPath) ? JSON.parse(...) : []`. It drops the statSync import, recordingStarted and the mtime condition, and no longer depends on the filesystem's timestamp resolution.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6 (flaky listed in verification.json)"
+    },
+    {
+      "id": "CQ-7",
+      "title": "The 'flaky test filed' check matches the bare test title as a substring",
+      "evidence": "scripts/milestone.mjs:104-109 uses `backlog.includes(test.title)`. A short title counts as filed if any backlog line contains it, and two specs with the same title share one entry.",
+      "reproduction": "A flaky test titled 'opens the app' would pass if any backlog sentence contains that phrase. Match `${file} › ${title}`, the exact string run-e2e.mjs:113 already prints.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md H1 item 4 ('a flaky test listed in evidence and the backlog as a defect')"
+    },
+    {
+      "id": "CQ-8",
+      "title": "Three of the new completion refusals have no self-test case",
+      "evidence": "The self-test cases at scripts/milestone.mjs:333-381 cover missing, failed, hand-written, partial, stale, flaky and blocked evidence. Nothing exercises the e2eSpecs-mismatch refusal (l.97-103), assertPlanSwept (l.253) or assertDocsCheck (l.267), although 03_TECHNICAL_DECISIONS.md:199-202 lists all three as refusals.",
+      "reproduction": "`npm run -s milestone:self-test` prints 7 cases and none mentions e2eSpecs. A synthetic milestone with verificationScripts ['verify:e2e:focus'] and a verification.json whose e2eSpecs differ is one case of about 8 lines.",
+      "specRef": "AGENTS.md §3 (prefer programmatic evidence)"
+    },
+    {
+      "id": "CQ-9",
+      "title": "The vitest.config.ts comment promises a loud failure that guarded modules never give",
+      "evidence": "vitest.config.ts:8-10 says a DOM test missing from the list 'fails loudly with \"window is not defined\"'. src/features/crews/crewDisplayPreference.ts:4-11 and src/features/students/studentScanNameOrderPreference.ts:20-28 catch that ReferenceError and return their defaults. In Node, a test of the default path that does not touch `window` itself would pass without exercising storage. Today's tests touch `window` in beforeEach, so none is affected yet.",
+      "reproduction": "Static check: in Node, `typeof localStorage === 'undefined'` and `window` is undefined, so the try/catch returns 2 or null. Reword: '...fails with \"window is not defined\" unless the module catches it; tests of modules that fall back on a storage error belong here as well.'",
+      "specRef": "H1 adversarial checklist: 'tests that pass in the Node environment only because their DOM assertions no longer run'"
+    },
+    {
+      "id": "CQ-10",
+      "title": "The header of check-staged.mjs promises a whole-tree check that does not exist",
+      "evidence": "scripts/check-staged.mjs:2-3 says 'the whole-tree checks are check:repository's, which the pre-push hook runs'. scripts/git-hooks/pre-push:3 runs only check-push.mjs (history ancestry), and check:repository has no content or phone scan; it checks only that data/private is untracked and that no absolute paths appear.",
+      "reproduction": "Read pre-push and `grep -n -i 'privacy\\|phone' scripts/check-repository.mjs`. Correct the comment. CQ-2 shows why it matters: the hook is the only phone guard.",
+      "specRef": "AGENTS.md §18 (hooks)"
+    },
+    {
+      "id": "CQ-11",
+      "title": "CVC_DOCS_ALLOW_FROZEN_EDIT suppresses problems without leaving a trace",
+      "evidence": "scripts/check-docs.mjs:167 and 186 skip the report when the variable is set and print nothing. CVC_PRIVACY_OVERRIDE, by contrast, prints its reason (check-staged.mjs:84-87). assertDocsCheck (milestone.mjs:267-280) inherits the environment, so a variable left set in the shell lets milestone:complete accept a frozen-file edit silently.",
+      "reproduction": "Read the code paths. Fix: when the override suppresses a problem, print `Frozen-file rule overridden: <reason>`.",
+      "specRef": "docs/DOCS_SYSTEM.md (archive frozen)"
+    },
+    {
+      "id": "CQ-12",
+      "title": "The Playwright testMatch lists are unanchored, hand-written regex alternations",
+      "evidence": "playwright.config.ts:46-47 and the WebKit list a few lines below. A node check of each regex against tests/e2e/*.spec.ts finds iphone-13-viewport matching 22 files for 22 names, but iphone-13-webkit-core matching 18 files for 17 names: 'duties' also matches u08-duties.spec.ts. That WebKit match predates H1. A mistyped name drops a spec from a project with no warning.",
+      "reproduction": "Smaller and safer: `const layoutSpecs = [\"c1-crew-management\", ...]` and `testMatch: layoutSpecs.map((name) => `**/${name}.spec.ts`)`, which anchors on the filename and makes the list easy to diff.",
+      "specRef": "H1 adversarial checklist: 'a spec that ends up in no project; a geometry check moved off a viewport it needed'"
+    },
+    {
+      "id": "CQ-13",
+      "title": "The frozen-file rule cannot fire in CI, and the hooks never run it",
+      "evidence": "scripts/check-docs.mjs:170 compares with `git diff HEAD`, which is empty on CI's clean checkout. The pre-commit hook runs only the privacy check. An edit to archive/ or to completed evidence in an ordinary commit is caught only if someone runs verify:domain or milestone:complete before committing.",
+      "reproduction": "Commit a one-line deletion in archive/ and run `node scripts/check-docs.mjs`: PASS. Option: accept a base commit (`CVC_DOCS_BASE`; CI passes github.event.before) and diff base..HEAD.",
+      "specRef": "docs/DOCS_SYSTEM.md (archive and ledger frozen)"
+    },
+    {
+      "id": "CQ-14",
+      "title": "A hook blocks the commit with a bare message when `node` is not on PATH",
+      "evidence": "scripts/git-hooks/pre-commit:4 runs `exec node ...`. A Git GUI started without fnm's per-shell PATH cannot commit and gets no pointer to the fix. Refusing the commit is correct; only the message is missing.",
+      "reproduction": "Running `env PATH=/usr/bin:/bin sh scripts/git-hooks/pre-commit` prints 'exec: node: not found' and exits 127. Add `command -v node >/dev/null || { echo 'pre-commit: Node is not on PATH; see docs/LOCAL_DEVELOPMENT.md' >&2; exit 1; }` to both hooks.",
+      "specRef": "H1 adversarial checklist: 'a hook that blocks a legitimate commit'"
+    },
+    {
+      "id": "CQ-15",
+      "title": "The full week's overflow assertion no longer runs at 390 px",
+      "evidence": "tests/e2e/full-week.spec.ts:514-522 asserts no horizontal overflow on the final evaluation screen. full-week is not in the iphone-13-viewport list, so this now runs at Pixel 7's 412 px only.",
+      "reproduction": "Not run. Either confirm that e1-evaluation-history-layout or u10-evaluations cover the same screen at 390 px, or add full-week to the list.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6 (390 × 844 where overflow is material)"
+    },
+    {
+      "id": "CQ-16",
+      "title": "workflow_dispatch shares the push concurrency group",
+      "evidence": "ci.yml:7 and 10-12: a manual dispatch on main cancels an in-progress push run, and that commit never deploys, because deploy-pages.yml:37 requires event == 'push'.",
+      "reproduction": "Reasoned from the workflow files, not observed. Add `${{ github.event_name }}` to the group, or leave as is and note it.",
+      "specRef": "docs/DEPLOY.md:46-50"
+    },
+    {
+      "id": "CQ-17",
+      "title": "A comment in speech.test.ts names the wrong environment",
+      "evidence": "src/capabilities/speech.test.ts:184-189 explains the forced navigator.vendor and userAgent by jsdom's defaults. The file now runs in the node project, where navigator.vendor is undefined. Forcing both values is still right; the stated reason is out of date.",
+      "reproduction": "`node -e \"console.log(navigator.vendor)\"` prints undefined. Reword it to 'the test environment's own navigator'.",
+      "specRef": "none (comment accuracy)"
+    }
+  ],
+  "evidenceInspected": [
+    "Repository root: C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper (branch codex/0.3.0, HEAD 8edc8a1)",
+    "docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-code-quality.md; no earlier H1 reports in .evidence/H1/ (it holds only docs-move.json)",
+    "04_IMPLEMENTATION_PLAN.md H1 section (success predicate and adversarial checklist); 03_TECHNICAL_DECISIONS.md §5-§6.1; docs/LOCAL_DEVELOPMENT.md diff; docs/DOCS_SYSTEM.md rules; docs/DEPLOY.md",
+    "Full diffs of vitest.config.ts, playwright.config.ts, package.json, scripts/run-e2e.mjs, scripts/record-verification.mjs, scripts/verification-digest.mjs, scripts/milestone.mjs, scripts/check-docs.mjs, scripts/check-repository.mjs, .github/workflows/ci.yml, .milestones/manifest.json, .claude/*, README.md, docs/QUICKSTART.md, docs/DEPLOY.md, and the src/ and tests/ comment-path edits",
+    "Read in full: scripts/ci-scope.mjs and its test, scripts/check-staged.mjs, scripts/privacy-rules.mjs, scripts/check-push.mjs, scripts/install-git-hooks.mjs, scripts/git-hooks/*, scripts/agent/claude-session-start.sh, .claude/settings.json, .github/workflows/deploy-pages.yml, src/test/setup.ts, tests/e2e/evidence.ts",
+    "Vitest project membership checked statically: all 59 non-e2e test files match exactly one project (src .ts files minus the 7-file DOM list go to node; src .tsx files and the 7 listed .ts files go to dom; tests/*.test.{ts,js} and scripts/*.test.mjs go to node); all 7 listed DOM files exist; no test file sits outside the new include globs",
+    "Every source module that uses browser globals traced to its tests: speech.test.ts forces both navigator branches explicitly; studentImageCrop.test.ts and studentScanRules.test.ts test only pure functions; the try/catch storage modules are tested only in jsdom",
+    "Node 24 globals checked: localStorage, window and document are undefined; navigator exists without vendor or clipboard",
+    "Both Playwright testMatch regexes checked against all 52 spec files: every iPhone name exists; the WebKit list matches one unintended file",
+    "Ran `node scripts/ci-scope.mjs 04bdc51 0bd07d8` (prints browser=false) and `git diff --name-only 04bdc51..0bd07d8`",
+    "Scratch repositories (since removed) reproduced the check-staged bypasses (diff.noprefix, a root .md file with a space) and confirmed that --src-prefix/--dst-prefix override diff.noprefix on git 2.33",
+    "Ran `env PATH=/usr/bin:/bin sh scripts/git-hooks/pre-commit` (exit 127)",
+    "Ran `node scripts/check-docs.mjs` (PASS, 138 Markdown files), `node scripts/check-repository.mjs` (PASS), `npm run -s milestone:self-test` (7 refusals, PASS), and eslint on the 8 changed scripts and configs (exit 0)",
+    "Lens 6 (types): the diff adds no `any`, cast or non-null assertion; its TypeScript changes are the two config files and comment-path edits; the existing `cameraBox!` in v05-assistant-paste.spec.ts:69 follows a not-null expect"
+  ],
+  "anglesTried": {
+    "seed": 298920654,
+    "lenses": [
+      "5. Error paths: swallowed, logged and ignored, or shown to no one (seed mod 10 = 4, 0-based)",
+      "6. Types: any, unchecked casts, non-null assertions (floor(seed/10) mod 10 = 5, 0-based)"
+    ],
+    "wildcard": "Combine cancel-in-progress with the docs-only CI scope across two consecutive pushes to main, using the real pair 04bdc51 (a CI-only layout fix) followed by 0bd07d8 (evidence only), to see whether Pages can publish code that never passed the browser suite"
+  },
+  "notTested": [
+    "As the brief asked, I ran no unit test, browser test, build or verify script. So I did not check that no test was lost (.evidence/H1/test-timing.json does not exist yet) or that the timings fell by 30% or more.",
+    "GitHub-side behaviour (concurrency cancellation, workflow_run conclusions) is reasoned from the workflow files and GitHub's documented semantics. I did not observe it on a real run.",
+    "I ran `npx vitest list --json` once. Its workers timed out under the browser timing run already in progress and it wrote no JSON. It may have added load to that measurement, and it overwrote the scratch file vlist.out in the shared session scratchpad. Project membership was established statically instead.",
+    "Whether the AGENTS.md trim lost a rule, and the 02_MVP_SCOPE rewrite, are the scope reviewer's to judge; I did not audit them.",
+    "Whether the 390 px overflow coverage of the final evaluation screen survives elsewhere (CQ-15) was not confirmed by a run."
+  ]
+}

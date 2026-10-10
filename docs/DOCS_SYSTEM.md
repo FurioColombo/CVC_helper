@@ -21,7 +21,7 @@ class.
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------ |
 | Contract | `AGENTS.md`, `README.md`, `01`–`04` at the root; `docs/*.md`, `docs/agents/`, `docs/design/`; `.claude/agents/`, `.claude/skills/` | agents at every turn or task          | edited in place, present tense |
 | Working  | `docs/working/`                                                                                                                    | the owner, during one stretch of work | temporary; folded at a moment  |
-| Ledger   | `CHANGELOG.md`, `docs/design/07_PAGE_CHANGELOG.md`, `.evidence/<ID>/`                                                              | reviewers, release notes              | append-only                    |
+| Ledger   | `CHANGELOG.md`, `.evidence/<ID>/`                                                                                                  | reviewers, release notes              | append-only                    |
 | Archive  | `archive/<cycle>/`                                                                                                                 | someone asking why, on request        | frozen                         |
 | Vendored | `.claude/skills/powersync/`                                                                                                        | agents, through the skill             | replaced whole from upstream   |
 
@@ -46,10 +46,14 @@ class.
    folded: decisions go into the contract, open items move to the next working
    document or into the plan, and the file moves to the archive.
 6. **The archive and the ledger are frozen.** Files under `archive/` are never
-   edited or deleted. `CHANGELOG.md`, the page changelog and the evidence of a
-   completed milestone only grow. The one exception is removing personal data,
-   with the owner's approval, recorded in `archive/README.md`
-   (`CVC_DOCS_ALLOW_FROZEN_EDIT=<reason>` lets that one change through).
+   edited or deleted. `CHANGELOG.md` and the evidence of a completed milestone
+   only grow. The one exception is removing personal data, with the owner's
+   approval: the edit is listed, with its date and the file's path, under "The
+   one exception" in `archive/README.md`, in the same commit. A new entry lets
+   that one change through; it approves nothing later. A re-run after
+   completion is a new file, not an edit. The page changelog
+   (`docs/design/07_PAGE_CHANGELOG.md`) is a contract despite its name: it
+   holds each page's current state, amended in place with a date.
 7. **Links resolve.** Every relative link in a contract or working document
    points at a file that exists.
 8. **No private data, ever,** in any class (`AGENTS.md`; the pre-commit hook).
@@ -66,7 +70,8 @@ class.
 ## Enforcement
 
 `npm run check:docs` checks classes, budgets, the plan's open-work rule,
-working-document headers and expiry, frozen files against `HEAD`, and links.
-It becomes part of `verify:domain` at the first 0.4.0 milestone, which also
-moves the current documents into this layout; until then it reports what that
-move has to fix.
+working-document headers and expiry, links, and frozen files. It runs in
+`verify:domain` and before `milestone:complete`. Frozen files are compared
+with `HEAD` locally, with the staged changes in the pre-commit hook, and with
+the previous tip in CI (`CVC_DOCS_BASE`), so a committed edit is caught too;
+for a new branch, which has no previous tip, CI compares with `main`.

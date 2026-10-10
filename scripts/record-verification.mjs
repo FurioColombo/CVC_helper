@@ -1,12 +1,24 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { resolve } from "node:path"
 import { spawn, spawnSync } from "node:child_process"
 
 import { RECORDER_ID, sourceDigest } from "./verification-digest.mjs"
 
-const milestone = process.argv[2]
-if (!milestone) {
-  console.error("Usage: record-verification.mjs <ID>")
+// `--file <name>.json` records a re-run under a new name: a completed
+// milestone's verification.json is frozen (docs/DOCS_SYSTEM.md rule 6), so a
+// fix that CI forces after completion is recorded beside it.
+const [milestone, ...options] = process.argv.slice(2)
+const fileOption = options.indexOf("--file")
+const outputName =
+  fileOption === -1 ? "verification.json" : options[fileOption + 1]
+if (!milestone || !/^[\w.-]+\.json$/.test(outputName ?? "")) {
+  console.error("Usage: record-verification.mjs <ID> [--file <name>.json]")
   process.exit(1)
 }
 
@@ -26,6 +38,10 @@ if (!Array.isArray(scripts) || scripts.length === 0) {
 }
 const checks = []
 const npmCli = process.env.npm_execpath
+// scripts/run-e2e.mjs lists the tests that passed only on a retry; a list left
+// by an earlier run must not be recorded as this one's.
+const flakyPath = resolve(root, "test-results/e2e-flaky.json")
+rmSync(flakyPath, { force: true })
 
 if (!npmCli) {
   throw new Error("Run this recorder through an npm evidence script")
@@ -54,8 +70,10 @@ for (const script of scripts) {
   }
   const result = await new Promise((resolveResult) => {
     let error = null
+    // CVC_MILESTONE tells `verify:e2e:focus` whose e2eSpecs to run.
     const child = spawn(process.execPath, [npmCli, "run", script], {
       cwd: root,
+      env: { ...process.env, CVC_MILESTONE: milestone },
       stdio: ["ignore", "pipe", "pipe"],
     })
     child.stdout.on("data", appendOutput)
@@ -77,6 +95,10 @@ for (const script of scripts) {
   if (result.status !== 0) break
 }
 
+const flakyTests = existsSync(flakyPath)
+  ? JSON.parse(readFileSync(flakyPath, "utf8"))
+  : []
+
 const evidenceDirectory = resolve(root, ".evidence", milestone)
 mkdirSync(evidenceDirectory, { recursive: true })
 const status =
@@ -85,7 +107,7 @@ const status =
     ? "PASS"
     : "FAIL"
 writeFileSync(
-  resolve(evidenceDirectory, "verification.json"),
+  resolve(evidenceDirectory, outputName),
   `${JSON.stringify(
     {
       milestone,
@@ -103,6 +125,10 @@ writeFileSync(
       sourceDigest: source.digest,
       sourceFiles: source.files,
       verificationScripts: scripts,
+      ...(scripts.includes("verify:e2e:focus")
+        ? { e2eSpecs: definition.e2eSpecs ?? [] }
+        : {}),
+      flakyTests,
       checks,
     },
     null,

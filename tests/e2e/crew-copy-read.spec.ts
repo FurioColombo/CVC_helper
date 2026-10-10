@@ -1,6 +1,3 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
 
 async function addStudent(page: Page, firstName: string, surname: string) {
@@ -17,7 +14,7 @@ async function addStudent(page: Page, firstName: string, surname: string) {
 
 test("adapts previous crews, confirms copied boats, and announces a clean persisted view", async ({
   page,
-}, testInfo) => {
+}) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
@@ -94,13 +91,6 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   await expect(report).toContainText("Bea — A terra")
   await expect(report).toContainText("Carlo — non disponibile")
   await expect(report).not.toContainText("Aldo")
-  if (testInfo.project.name === "iphone-13-viewport") {
-    const reportPath = path.resolve(
-      "test-results/screenshots/copy-report-iphone13.png",
-    )
-    mkdirSync(path.dirname(reportPath), { recursive: true })
-    await page.screenshot({ path: reportPath })
-  }
   await report.getByRole("button", { name: "Ho capito" }).click()
 
   await page.getByRole("button", { name: "Apri vista lettura" }).click()
@@ -152,11 +142,6 @@ test("adapts previous crews, confirms copied boats, and announces a clean persis
   await expect(readView).not.toContainText(
     /Allievi sistemati|Barche in uscita|Avvisi/,
   )
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      path: path.resolve("test-results/screenshots/announcement-iphone13.png"),
-    })
-  }
   await readView.getByRole("button", { name: "Chiudi vista lettura" }).click()
 
   await page.reload()

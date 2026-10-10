@@ -181,11 +181,10 @@ describe("local Italian speech provider", () => {
     expect(loadTranscriber).toHaveBeenCalledTimes(2)
   })
 
-  // F1F-6: jsdom's own default `navigator.vendor` is "Apple Computer, Inc."
-  // (with a userAgent that names no other browser), which is enough on its
-  // own to satisfy `isSafariBrowser()` — so, left at that default, this test
-  // would silently exercise the Safari branch below instead of this one. A
-  // non-Apple vendor and a Chrome userAgent are set explicitly so the
+  // F1F-6: the test environment's own `navigator` must not decide the branch:
+  // jsdom's default vendor ("Apple Computer, Inc.") satisfies
+  // `isSafariBrowser()` on its own, and Node's navigator has no vendor at all.
+  // A non-Apple vendor and a Chrome userAgent are set explicitly so the
   // asyncify pair this branch actually assigns is what gets asserted.
   it("loads the pinned model with the ONNX runtime from the app's own files", async () => {
     Object.defineProperty(navigator, "vendor", {

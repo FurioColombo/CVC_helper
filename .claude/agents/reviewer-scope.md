@@ -20,7 +20,7 @@ is a finding.
 ## Attack lenses
 
 1. Every acceptance and evidence item in the milestone section.
-2. Deferred items in `02_MVP_SCOPE.md` §4 appearing in the diff.
+2. Deferred items in `02_MVP_SCOPE.md` §2 appearing in the diff.
 3. Owner decisions in the working documents honoured word for word.
 4. Behaviour changed without the spec text changing with it.
 5. Speculative abstractions, options or settings nobody asked for.

@@ -78,6 +78,21 @@ describe("lineProblems", () => {
     )
   })
 
+  it("treats a bare JSON number as a number, but a phone string as a phone", () => {
+    expect(
+      lineProblems(".evidence/H1/review.json", '    "seed": 349189509,'),
+    ).toEqual([])
+    expect(
+      lineProblems(".evidence/H1/review.json", '"bytes": 3471234567}'),
+    ).toEqual([])
+    expect(
+      lineProblems(".evidence/H1/review.json", '"phone": "347 555 0199",'),
+    ).not.toEqual([])
+    expect(
+      lineProblems(".evidence/H1/review.json", '"note": 3475550199 rows'),
+    ).not.toEqual([])
+  })
+
   it("allows the synthetic fixture numbers and hashes in records", () => {
     for (const line of [
       "test for 'Personale tel. 3331234567' before 'Allievi'",
@@ -107,6 +122,20 @@ describe("lineProblems", () => {
       denylist,
     ).join(" ")
     expect(reasons).not.toMatch(/veldorsky|347/i)
+  })
+})
+
+describe("addedLines with an awkward path", () => {
+  it("drops the TAB git puts after a path with a space, so the record rules apply", () => {
+    const diff = [
+      "--- /dev/null",
+      "+++ b/Owner Notes.md\t",
+      "@@ -0,0 +1 @@",
+      "+contatto 347 555 0199",
+    ].join("\n")
+    const [[path, lines]] = [...addedLines(diff)]
+    expect(path).toBe("Owner Notes.md")
+    expect(lineProblems(path, lines[0].text)).not.toEqual([])
   })
 })
 

@@ -15,7 +15,7 @@ import {
  * then the new "Riepilogo comandate" read view is opened, checked to fit one
  * 390×844 screen and to stay readable (no horizontal overflow, no truncated
  * name) at the 320 px/200% text accessibility stress
- * (`docs/post-mvp/06_DESIGN_RULEBOOK.md` §5), and (F4) the floating "Copia
+ * (`docs/design/06_DESIGN_RULEBOOK.md` §5), and (F4) the floating "Copia
  * immagine" button's image is compared with the screen at all three sizes.
  */
 
@@ -148,7 +148,7 @@ test("shows a readable Comandate summary for a typical week and copies it as an 
   })
 
   // 320 px/200% text: scroll is allowed, horizontal overflow is not
-  // (docs/post-mvp/06_DESIGN_RULEBOOK.md §5's accessibility stress profile).
+  // (docs/design/06_DESIGN_RULEBOOK.md §5's accessibility stress profile).
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
   })

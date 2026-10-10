@@ -117,7 +117,7 @@ test("keeps P14–P16 compact while assigning and unlinking session boats", asyn
     .getByRole("navigation", { name: "Navigazione principale" })
     .evaluate((element) => element.getBoundingClientRect().top)
   // F1 triage (2026-09-26): this assertion is correct, not stale. P14 in
-  // docs/post-mvp/07_PAGE_CHANGELOG.md requires "A terra"/"Volontari" (this
+  // docs/design/07_PAGE_CHANGELOG.md requires "A terra"/"Volontari" (this
   // rail) to stay floating above the fixed app navigation. The rail
   // (aria-label="Accesso rapido equipaggi", CrewManagement.tsx ~line 2982)
   // has no sticky/fixed positioning, and its scroll ancestor

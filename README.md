@@ -21,8 +21,8 @@ historical detail. `docs/LOCAL_DEVELOPMENT.md` contains the runtime and ports.
 `archive/` is human-only design history unless explicitly requested.
 
 For an active UI milestone, read only the relevant page sections in
-`docs/post-mvp/06_DESIGN_RULEBOOK.md` and
-`docs/post-mvp/07_PAGE_CHANGELOG.md`. The frozen r10 mock is linked there. Do not
+`docs/design/06_DESIGN_RULEBOOK.md` and
+`docs/design/07_PAGE_CHANGELOG.md`. The frozen r10 mock is linked there. Do not
 load the design-review history by default.
 
 ## Intended startup prompt
@@ -35,9 +35,10 @@ A prompt can be as short as:
 > requirements.
 
 0.1.0, 0.2.0 and 0.3.0 are released and tagged. The road to a shared database
-is `docs/post-mvp/1_0_0_NEXT_STEPS.md`; use the plan's **Where this cycle
-stands** table and first eligible incomplete milestone. The owner's decisions
-are in `docs/post-mvp/0_3_0_QUESTIONS.md`.
+is `02_MVP_SCOPE.md` §4; use the plan's **Where this cycle stands** table and
+first eligible incomplete milestone. Open requests and findings waiting for a
+milestone are in `docs/working/BACKLOG.md`. How documents are kept current is
+`docs/DOCS_SYSTEM.md`.
 
 ## Third-party assets
 
@@ -48,7 +49,7 @@ License 2.0, with the sunglasses added by this project. The attribution is kept
 in that file; no icon dependency is added for them.
 
 Boat marks under `public/brand/boats/` were supplied by the club and authorised
-for use by the owner on 2026-09-18; see `02_MVP_SCOPE.md` section 5.
+for use by the owner on 2026-09-18; see `02_MVP_SCOPE.md` section 3.
 
 ## Local environment
 

@@ -1,19 +1,35 @@
 name: Deterministic verification
 
+# Push only: the Pages deploy waits for a push run on main, and a pull request
+# from a branch in this repository was a second, identical run (H1).
 on:
   push:
-  pull_request:
+  workflow_dispatch:
 
+# A newer push to the same branch supersedes the run in progress; a manual
+# run has its own group, so it never cancels the push run Pages waits for.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# actions: read lets scripts/ci-scope.mjs ask whether this workflow's push run
+# passed on the previous tip before it skips the browser suite.
 permissions:
   contents: read
+  actions: read
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      # check:docs compares frozen files (archive, changelogs, completed
+      # evidence) against the previous tip, so a committed edit is caught too.
+      CVC_DOCS_BASE: ${{ github.event.before }}
     steps:
       # The whole history, so check:repository can detect a pushed history
       # that brings back commits from before the 0.3.0 history rewrite
-      # (AGENTS.md §13). It reports after the push; it cannot prevent one.
+      # (AGENTS.md §13). It reports after the push; the local pre-push hook
+      # (scripts/check-push.mjs) is what refuses one.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -22,8 +38,29 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run verify:all
+      # A push that touches only documentation, evidence, milestone metadata or
+      # agent definitions, on a previous tip whose CI passed, runs `verify`;
+      # anything else runs `verify:all` (scripts/ci-scope.mjs).
+      - id: scope
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci-scope.mjs "${{ github.event.before }}" "${{ github.sha }}" >> "$GITHUB_OUTPUT"
+      # Anything but an explicit "false", an empty output included, runs
+      # everything.
+      - if: steps.scope.outputs.browser != 'false'
+        run: npx playwright install --with-deps chromium webkit
+      - if: steps.scope.outputs.browser != 'false'
+        run: npm run verify:all
+      - if: steps.scope.outputs.browser == 'false'
+        run: npm run verify
+      # Tests that passed only on a retry: kept even when the run is green.
+      - if: always() && steps.scope.outputs.browser != 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-flaky-${{ github.run_id }}
+          path: test-results/e2e-flaky.json
+          retention-days: 30
+          if-no-files-found: ignore
       # playwright.config.ts already keeps a trace on failure, but nothing ever
       # collected it, so a failure that only happens on this runner could be
       # read solely through the truncated annotation text. That is how the

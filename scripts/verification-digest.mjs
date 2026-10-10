@@ -44,4 +44,4 @@ export function sourceDigest(root) {
   return { digest: hash.digest("hex"), files: files.length }
 }
 
-export const RECORDER_ID = "scripts/record-verification.mjs@2"
+export const RECORDER_ID = "scripts/record-verification.mjs@3"

@@ -165,7 +165,7 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
   })
 
   // 320 px/200% text: scroll is allowed, horizontal overflow is not
-  // (docs/post-mvp/06_DESIGN_RULEBOOK.md §5's accessibility stress profile).
+  // (docs/design/06_DESIGN_RULEBOOK.md §5's accessibility stress profile).
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%"
   })

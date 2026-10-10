@@ -1069,7 +1069,7 @@ function AnnouncementView({
          * 320 CSS px of width upward (2 × 140.8 + the 6px gap = 287.6px, the
          * 288px left after the 16px side padding) — 390×844, the frozen C6
          * target, renders 176px-wide cards — while at the 320 CSS px/200%
-         * text accessibility stress (docs/post-mvp/06_DESIGN_RULEBOOK.md
+         * text accessibility stress (docs/design/06_DESIGN_RULEBOOK.md
          * §5), 8.8rem is 281.6px, wider than the ~256px of content left
          * after padding, so `min(100%, 8.8rem)` collapses to the container's
          * own width and auto-fill places a single full-width column instead

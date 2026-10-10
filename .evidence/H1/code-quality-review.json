@@ -1,0 +1,119 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "H1",
+  "commit": "8edc8a18a97110866a9161845968988ca901017a plus the uncommitted H1 working tree, round 2 (git diff HEAD and the untracked scripts/ci-scope*.mjs, scripts/check-docs.test.mjs, scripts/e2e-report*.mjs, archive/README.md, docs/working/)",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "CQ2-1",
+      "title": "A frozen-edit approval covers its path forever, and the pre-commit hook reads it from the working tree instead of the staged index",
+      "evidence": "scripts/check-docs.mjs:89 skips any frozen path that appears in `allowed`. The set comes from approvedFrozenEdits (l.98-107), read at l.248-251 from the working-tree archive/README.md, even in --cached mode. Nothing ties an entry to one change or one date, and the section split at l.100 runs to the end of the file rather than to the next heading. DOCS_SYSTEM.md rule 6 describes a single approved removal of personal data, not a standing waiver.",
+      "reproduction": "Scratch repository with check-docs.mjs copied into scripts/, a COMPLETE manifest, archive/a.md and an archive/README.md that has an empty '## The one exception' section. (T3) Stage an edit to archive/a.md and append, without staging it, the entry '- 2026-10-09 `archive/a.md`' to the index. `node scripts/check-docs.mjs --cached --frozen-only` prints 'Frozen edit approved…' and 'PASS: frozen documents unchanged' and exits 0, so the commit goes in without its approval and CI then refuses it. (T5) Commit the approval together with the edit. Later, `git rm archive/a.md`: the same check prints 'approved' and PASS and exits 0, so the archived file can be deleted for good. Smaller fix: read the index from the commit being made (`git show :archive/README.md` in --cached mode, the file itself otherwise) and approve only entries that are new against the base, `allowed = new Set([...approvedFrozenEdits(now)].filter((p) => !approvedFrozenEdits(atBase).has(p)))`. Stop the section at the next heading with `.split(/^## /m)[0]`. That is about 5 lines, and each approval then covers exactly one change.",
+      "specRef": "docs/DOCS_SYSTEM.md rule 6; archive/README.md 'The one exception'; H1 adversarial checklist ('a hook that ... passes ... when it should fail')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "CQ2-2",
+      "title": "Cut the 'None so far' sentence from archive/README.md now: once H1 lands it is frozen and becomes false with the first approval",
+      "evidence": "archive/README.md:26-27 ('None so far since the 0.3.0 history rewrite …'). The file is new in H1 (untracked). From the next push on it sits under archive/, where check-docs allows only additions, so after the first approval nobody can remove the sentence.",
+      "reproduction": "Read the frozen predicate at scripts/check-docs.mjs:85, then the sentence. Smaller diff: delete those 2 lines. An empty list says the same thing.",
+      "specRef": "docs/DOCS_SYSTEM.md rules 2 and 6"
+    },
+    {
+      "id": "CQ2-3",
+      "title": "The flaky-entry format exists in two copies and is still matched as a substring; five spec names are suffixes of other spec names",
+      "evidence": "run-e2e.mjs:95 prints `${file} › ${title}`. milestone.mjs:109-111 rebuilds the same string and calls `backlog.includes(entry)`. The suffix pairs in tests/e2e are crews/u09-crews, duties/u08-duties, knowledge/u03-knowledge, persistence/reopen-persistence and students/u02-students. docs/working/BACKLOG.md:5-7 already says entries are written in backticks.",
+      "reproduction": "node: with the backlog line '- `u08-duties.spec.ts › keeps the plan` …', the flaky test {file:'duties.spec.ts', title:'keeps the plan'} counts as filed (true). The title 'opens the app' counts as filed by a line for 'opens the app offline' (true). No two specs share a title today, so this is latent. Smaller diff: export `flakyEntry = (t) => `${t.file} › ${t.title}`` from e2e-report.mjs, use it in both places, and match `` backlog.includes(`\\`${flakyEntry(test)}\\``) ``.",
+      "specRef": "AGENTS.md §10 (derive instead of copy); 04 H1 item 4"
+    },
+    {
+      "id": "CQ2-4",
+      "title": "check-docs states the frozen set three times: classify(), frozenProblems() and the git pathspec",
+      "evidence": "scripts/check-docs.mjs:39-46 (archive/ledger classes), :84-88 (archive/, CHANGELOG.md, PAGE_CHANGELOG, .evidence) and :258-262 (the pathspec).",
+      "reproduction": "Smaller diff: in frozenProblems, `const docClass = classify(file); const frozen = docClass === \"archive\" || (docClass === \"ledger\" && (evidenceOf === undefined || completedAtBase.has(evidenceOf)))`. That replaces 4 lines, and a ledger added to classify() is frozen without a second edit. The pathspec could stay as a pre-filter.",
+      "specRef": "AGENTS.md §10; docs/DOCS_SYSTEM.md rule 1"
+    },
+    {
+      "id": "CQ2-5",
+      "title": "Dead export and wasted work in check-docs' frozen-only mode",
+      "evidence": "`export const PLAN` (check-docs.mjs:16) is imported nowhere; only PAGE_CHANGELOG reaches the test. In --frozen-only mode, lines 125-135 still parse the working-tree manifest and list and stat every Markdown file, though only the full mode uses them. A working-tree manifest left mid-edit therefore crashes the pre-commit hook with a stack trace even when the staged manifest is valid.",
+      "reproduction": "grep shows no importer of PLAN. `node scripts/check-docs.mjs --cached --frozen-only` passes in 0.6 s, so this costs correctness, not time. Smaller diff: drop `export` from PLAN, and move `manifest`, `statusOf` and `markdown` into the `if (!frozenOnly)` block, printing the count from there.",
+      "specRef": "none (dead code)"
+    },
+    {
+      "id": "CQ2-6",
+      "title": "ci.yml fails open when the scope step prints nothing",
+      "evidence": "ci.yml:48-53: verify:all runs only when `browser == 'true'`, and `verify` runs when it is `!= 'true'`, which includes an empty output. ci-scope.mjs:77 prints only behind its main-module guard, and its header says anything unknown runs everything.",
+      "reproduction": "Not reproduced as a misfire: on this machine the guard held under a different-case path and an 8.3 short path (both printed browser=true). One-word fix: `if: steps.scope.outputs.browser != 'false'` for the Playwright install and verify:all, `== 'false'` for verify. Missing output then runs everything.",
+      "specRef": "docs/DEPLOY.md ('A push whose CI fails is not deployed')"
+    },
+    {
+      "id": "CQ2-7",
+      "title": "Any check run named 'verify' on the previous tip vouches for it, whatever its workflow or event; the header overstates what a rewritten range does",
+      "evidence": "ci-scope.mjs:35-40 filters only on name and status. Until H1 the workflow also ran on pull_request. Those runs test refs/pull/N/merge but attach their 'verify' check run to the head SHA, so a passing PR run could stand in for that SHA's failed push run, because the latest completed run wins. The header (l.8) says a rewritten range runs everything, but when the old tip is still fetchable the tree diff decides. That is still safe, because tree equality is what the induction needs.",
+      "reproduction": "Reasoned from the API and the removed `pull_request:` trigger (git diff HEAD -- .github/workflows/ci.yml). This is historical only now. A same-size alternative that pins the event and the workflow: `GET /repos/{repo}/actions/workflows/ci.yml/runs?head_sha=<before>&event=push&status=completed`, taking the newest run's conclusion. Reword l.8 to 'an unknown old tip'.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6.1"
+    },
+    {
+      "id": "CQ2-8",
+      "title": "The contract states the docs-only CI rule without the condition that makes it safe",
+      "evidence": "03_TECHNICAL_DECISIONS.md:231-232 says a documentation-only push 'runs `verify` instead'. It leaves out 'when CI passed on the previous tip' and archive/. §6.1 l.244-245 says 'only a green CI run means the suite passes', but a green docs-only run inherits the previous tip's suite result and does not run the suite itself. .claude/skills/milestone-close/SKILL.md:88-89 says the pre-commit hook 'checks privacy', and it now checks frozen files too.",
+      "reproduction": "Compare these lines with ci-scope.mjs:1-10 and scripts/git-hooks/pre-commit:8-10.",
+      "specRef": "docs/DOCS_SYSTEM.md rules 1-2"
+    },
+    {
+      "id": "CQ2-9",
+      "title": "CI's two Playwright retries are not in the contract, and CI's flakes are recorded nowhere",
+      "evidence": "playwright.config.ts:90 sets `retries: process.env.CI ? 2 : 1`. 03 §6 (l.212-214) allows 'one local retry'. CI is the authority (§6.1), yet a test that passes there on its third attempt is green: its FLAKY line stays in the log, and the artifact upload runs only `if: failure()` (ci.yml:59).",
+      "reproduction": "Read the three lines. Smaller diff: `retries: 1`, one value matching the contract, removes the ternary. Or keep two in CI and upload test-results/e2e-flaky.json with `if: always()`.",
+      "specRef": "04 H1 item 4 ('a flaky test listed in evidence and the backlog as a defect'); 03 §6"
+    },
+    {
+      "id": "CQ2-10",
+      "title": "The page changelog is enforced as append-only, but it holds page states that the design process edits in place",
+      "evidence": "DOCS_SYSTEM.md:24 and 48-50 make docs/design/07_PAGE_CHANGELOG.md a ledger. 06_DESIGN_RULEBOOK.md:99 says the changelist 'defines the states', and 07 line 3 holds 'Stato: FROZEN per l'implementazione 0.2.0' plus dated amendments within each page section. The classification predates H1 (HEAD's DOCS_SYSTEM.md). H1 is what makes the hook and CI enforce it.",
+      "reproduction": "Replay (wildcard): of the last 150 first-parent commits, 11 edited 07 in place, among them 85a7544 'Complete UX1 phone-preview corrections' (15 lines added, 3 removed) and d72501c (1 added, 1 removed). All would now be refused. 0.4.0 plans no page work, so this bites the next UI cycle. Either move the state register into the rulebook (a contract) or say in rule 6 how a state change is appended.",
+      "specRef": "docs/DOCS_SYSTEM.md rule 6; docs/design/06_DESIGN_RULEBOOK.md §99"
+    },
+    {
+      "id": "CQ2-11",
+      "title": "The hook is stricter than CI when the completion commit is amended",
+      "evidence": "In --cached mode, check-docs takes completedAtBase from HEAD (l.234-244). During `git commit --amend` of 'Complete <ID>', HEAD already marks the milestone COMPLETE, so an amend that touches its own evidence is refused. CI's base is the previous pushed tip, and CI would accept it.",
+      "reproduction": "Scratch T4: with X COMPLETE at HEAD, a staged edit to .evidence/X/v.json is refused, exit 1. An amend sees the same HEAD. Workaround: `git reset --soft HEAD~1`, then commit again. Mention it in the skill's step 6, or accept it.",
+      "specRef": "H1 adversarial checklist ('a hook that blocks a legitimate commit')"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-code-quality.md; .evidence/H1/code-quality-review-round-1.json, scope-review-round-1.json, self-review.json",
+    "CQ-1 disposition: scripts/ci-scope.mjs, scripts/ci-scope.test.mjs, .github/workflows/ci.yml (diff against HEAD), deploy-pages.yml. I tried to break the induction with re-runs (the latest completed run decides, and an in-progress re-run gives false), a skipped-browser previous tip (sound, because tree equality chains back to a full run, and pre-H1 CI always ran verify:all), concurrency cancellation of a running or queued tip (cancelled or no completed run gives a full run), docs after docs after a red push (each falls back to a full run until one is green), force-push, new branch, tag and workflow_dispatch (an unknown or empty before gives a full run), paging (100 per SHA, one per suite under the API's default filter) and naming (job id `verify` with no `name:`, deploy jobs are build/deploy). No break found. Residuals: CQ2-6, CQ2-7",
+    "Checked that no browser, full-week or offline check reads a path that ci-scope classifies as documentation: grep of src, tests, scripts and configs for docs/, .evidence, archive/, .claude, mockups and ?raw. The e2e specs read only src/test/fixtures and tests/fixtures; check-v0_1-compatibility reads .evidence/U00 but runs in verify",
+    "CQ-2: in a scratch repository, check-staged refused a staged .evidence note with a non-fixture phone pattern (exit 1) under diff.mnemonicPrefix and under diff.noprefix; the TAB test in privacy-rules.test.mjs was read",
+    "CQ-3: grep finds the remaining iphone-13-viewport branches only in layout specs (f3-crew-summary, student-scan, ug2-hostile-roster); ESLint exit 0 on the 10 edited specs plus ci-scope, check-docs, milestone, e2e-report and both configs",
+    "CQ-4, CQ-5, CQ-6, CQ-9, CQ-10, CQ-14 (pre-commit with node off PATH prints the hint, exit 1), CQ-15 (full-week.spec.ts:203-206 skips every project except Pixel 7), CQ-16 (ci.yml:12), CQ-17: each verified in the diff",
+    "CQ-7 and CQ-8: milestone.mjs diff; `npm run -s milestone:self-test` prints 9 refusals plus 2 sweep cases, PASS, no residue left in .evidence/__synthetic__",
+    "CQ-11 and CQ-13: check-docs.mjs read in full; scratch runs refused a staged archive edit (T1), an archive rename (T2, which --no-renames turns into a deletion) and an edit to completed evidence (T4); T3 and T5 gave CQ2-1",
+    "CQ-12: playwright.config.ts read; specs() throws on a missing name; the WebKit list has 18 entries including u08-duties",
+    "record-verification.mjs, run-e2e.mjs, e2e-report.mjs (+test); in Playwright 1.62.1 the JSON reporter's spec.file is relative to rootDir (testDir), which matches the backlog format",
+    "check-repository.mjs l.110-215: its plan/manifest assertions are consistent with planSweepProblem and with the skill's order (evidence, then sweep, then complete)",
+    "`node scripts/check-docs.mjs` PASS (138 Markdown files); `node scripts/check-repository.mjs` PASS; `node scripts/check-docs.mjs --cached --frozen-only` PASS in 0.6 s",
+    "Wildcard replay over the last 150 first-parent commits: 52 are docs-only under ci-scope's classifier, so the mechanism earns its keep; the frozen rule would refuse 33, most of them overwrites of closed-milestone screenshots, which is what it is meant to stop, plus 11 in-place edits of the page changelog (CQ2-10); the UG2 close step 0bd07d8 would be refused, for which DOCS_SYSTEM.md rule 6 gives the route ('a re-run after completion is a new file')",
+    "All scratch repositories in the OS temp directory were removed"
+  ],
+  "anglesTried": {
+    "seed": 534883618,
+    "lenses": [
+      "9. Canonical domain data copied instead of derived (seed mod 10 = 8, 0-based, as in round 1)",
+      "2. Dead code, unused exports and tested-but-unused helpers (floor(seed/10) mod 10 = 1, 0-based)"
+    ],
+    "wildcard": "Replay the repository's own history through the new guards: run ci-scope's classifier and the frozen-file rule over the last 150 first-parent commits and over the UG2 close sequence (cafe7c2, 04bdc51, 0bd07d8), as if each commit had been pushed alone, to measure what the new rules would have allowed and refused in real use"
+  },
+  "notTested": [
+    "As the brief asked, I ran no unit or browser tests, builds, tsc or verify scripts. The two-worker Playwright trial, test-timing.json, the figures in the config comments and the final recorded verify:all are still pending, so neither the timing claims nor the absence of lost tests is checked here",
+    "GitHub-side behaviour (the check-runs API's default `filter=latest`, the timing of concurrency cancellation, check runs of PR events attached to the head SHA) is reasoned from the documented semantics and the workflow files, not observed on a real run",
+    "The H1 document moves, the AGENTS.md trim, the content of 02_MVP_SCOPE and docs-move.json belong to the scope reviewer and were not audited",
+    "ESLint ran on 16 files only, not on the whole changed set"
+  ]
+}

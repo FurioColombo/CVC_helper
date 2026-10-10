@@ -1,6 +1,3 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
 
 async function addStudent(page: Page, firstName: string, surname: string) {
@@ -29,7 +26,7 @@ async function placeInCrew(page: Page, name: string, crewNumber: number) {
 
 test("shows one worst-severity crew warning with all size and pair details", async ({
   page,
-}, testInfo) => {
+}) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
@@ -82,12 +79,4 @@ test("shows one worst-severity crew warning with all size and pair details", asy
   await expect(detail.getByText(/Taglie (XS \+ S|S \+ XS)/)).toBeVisible()
   await expect(detail.getByText("Coppia nelle ultime 3 sessioni")).toBeVisible()
   await expect(detail.getByText(/ultima Sabato PM/)).toBeVisible()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    const screenshotPath = path.resolve(
-      "test-results/screenshots/crew-warnings-iphone13.png",
-    )
-    mkdirSync(path.dirname(screenshotPath), { recursive: true })
-    await page.screenshot({ path: screenshotPath })
-  }
 })

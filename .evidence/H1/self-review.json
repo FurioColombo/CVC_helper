@@ -1,0 +1,330 @@
+{
+  "reviewerRole": "self-review (orchestrator)",
+  "milestone": "H1",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    ".evidence/H1/scope-review-round-1.json and code-quality-review-round-1.json (both FAIL, one blocker each, the same CI gate hole)",
+    "git diff HEAD and the untracked files of H1",
+    ".evidence/H1/scope-review.json and code-quality-review.json (round 2: PASS_WITH_FINDINGS, no blockers)"
+  ],
+  "itemProofs": {
+    "1 merge claude/harness-0.4-prep": "codex/0.3.0 fast-forwarded to 8edc8a1 on 2026-10-09; core.hooksPath = scripts/git-hooks set by npm ci's prepare script",
+    "1 owner adds the PowerSync docs server to Codex": "the owner reported it done on 2026-10-09 ('4. done'); Codex's configuration is outside the repository and is not inspected",
+    "2 retrospective": "running in the owner's separate session; its picks are recorded in retro-adoption.json",
+    "3 documents": "docs-move.json; check:docs PASS inside verify:domain",
+    "4 faster checks": "test-timing.json",
+    "5 install scripts": "package.json allowScripts: esbuild@0.28.2 approved; onnxruntime-node, protobufjs, tesseract.js denied; `npm install-scripts ls` prints 'No packages with unreviewed install scripts.' Nothing in the app or the tests needed the denied scripts: every suite passed before the decision with none of them run."
+  },
+  "dispositions": [
+    {
+      "id": "SCO-H1-1 / blocker",
+      "disposition": "fixed: the open decisions (data controller, deletion on the server and in backups, self-hosting the speech model) are a backlog section due before the first real roster goes online",
+      "where": "docs/working/BACKLOG.md; docs-move.json"
+    },
+    {
+      "id": "SCO-H1-2 = CQ-1 / blocker",
+      "disposition": "fixed: the browser suite is skipped only for a documentation-only push whose previous tip's CI job 'verify' succeeded (GitHub check runs, checks: read); by induction that tip's code passed verify:all. A failed, cancelled or running previous run, a new branch, a force-push or an unreachable API runs everything",
+      "where": "scripts/ci-scope.mjs (+ tests), .github/workflows/ci.yml"
+    },
+    {
+      "id": "SCO-H1-3",
+      "disposition": "fixed: 'do not prematurely add' kept; deferred items stay deferred, not forbidden",
+      "where": "AGENTS.md §15"
+    },
+    {
+      "id": "SCO-H1-4",
+      "disposition": "fixed",
+      "where": "02_MVP_SCOPE.md §5"
+    },
+    {
+      "id": "SCO-H1-5",
+      "disposition": "fixed",
+      "where": "docs/DEVICE_CHECKS.md Summaries"
+    },
+    {
+      "id": "SCO-H1-6",
+      "disposition": "fixed: speech checks 1–5 listed as never run",
+      "where": "docs/DEVICE_CHECKS.md"
+    },
+    {
+      "id": "SCO-H1-7",
+      "disposition": "fixed: four owner decisions written into the spec",
+      "where": "01_PRODUCT_SPEC.md §3.2, §3.6, §7.4"
+    },
+    {
+      "id": "SCO-H1-8",
+      "disposition": "fixed: the D2–D5 override is a candidate in 'Waiting for the owner's choice'; the plan asks",
+      "where": "docs/working/BACKLOG.md, 04 'Waiting for the owner'"
+    },
+    {
+      "id": "SCO-H1-9",
+      "disposition": "fixed: UG2-CQ-8 and 11–21 carried",
+      "where": "docs/working/BACKLOG.md"
+    },
+    {
+      "id": "SCO-H1-10",
+      "disposition": "fixed: sweep before milestone:complete",
+      "where": "AGENTS.md §6"
+    },
+    {
+      "id": "SCO-H1-11",
+      "disposition": "fixed",
+      "where": "docs/DOCS_SYSTEM.md Enforcement; 01_PRODUCT_SPEC.md §12"
+    },
+    {
+      "id": "SCO-H1-12 = CQ-8",
+      "disposition": "fixed in part: self-test cases for the plan sweep, e2eSpecs mismatch and unfiled flaky tests; unit tests for check-docs (classes, frozen rule, approved edits), the flaky-report parser and ci-scope; milestone:self-test now runs in verify:domain. assertDocsCheck itself only spawns check-docs, which is tested; it is not given its own synthetic case",
+      "where": "scripts/milestone.mjs, scripts/*.test.mjs, package.json"
+    },
+    {
+      "id": "SCO-H1-13 = CQ-13",
+      "disposition": "fixed: frozen files compared with the staged changes in the pre-commit hook and with the previous tip in CI (CVC_DOCS_BASE); completed evidence is frozen only if complete at the base",
+      "where": "scripts/check-docs.mjs, scripts/git-hooks/pre-commit, ci.yml"
+    },
+    {
+      "id": "SCO-H1-14",
+      "disposition": "fixed: item proofs above; retro-adoption.json added to the manifest's required evidence",
+      "where": ".milestones/manifest.json"
+    },
+    {
+      "id": "SCO-H1-15 = CQ-3",
+      "disposition": "fixed: the 12 dead screenshot branches and the imports and parameters they left unused are removed (127 lines)",
+      "where": "tests/e2e/*.spec.ts"
+    },
+    {
+      "id": "SCO-H1-16",
+      "disposition": "fixed at closure: the figures in the config comments are the ones in test-timing.json",
+      "where": "vitest.config.ts, playwright.config.ts"
+    },
+    {
+      "id": "SCO-H1-17",
+      "disposition": "fixed: counts by one method; the §4, §6, §7, §10 and §15 changes recorded; §4 'feature milestone' and §10 'where defined' restored",
+      "where": "docs-move.json, AGENTS.md"
+    },
+    {
+      "id": "SCO-H1-18",
+      "disposition": "fixed: the two missing warnings, course locking beyond 0.7.0's read-only past courses, the spec's D2–D5 text",
+      "where": "02 §1–2, 01 §7.1"
+    },
+    {
+      "id": "SCO-H1-19",
+      "disposition": "fixed: the archived 02 is byte-identical to 8edc8a1's; the archive index names it",
+      "where": "archive/v0.3.0/02_MVP_SCOPE.md, archive/README.md"
+    },
+    {
+      "id": "SCO-H1-20",
+      "disposition": "fixed: recording fields and the photo-disposal method restored",
+      "where": "docs/DEVICE_CHECKS.md"
+    },
+    {
+      "id": "SCO-H1-21",
+      "disposition": "fixed: exact flaky entry match, the plan row, the skill's backlog name. Kept: workflow_dispatch (the deploy reacts only to push runs, and manual runs now have their own concurrency group). Left: docs/design/07_PAGE_CHANGELOG.md line 115 is a frozen ledger entry; its old relative paths are history",
+      "where": "scripts/milestone.mjs, 04, SKILL.md"
+    },
+    {
+      "id": "CQ-2",
+      "disposition": "fixed: diff prefixes pinned; the TAB after a path with a space dropped; a test covers it",
+      "where": "scripts/check-staged.mjs, scripts/privacy-rules.mjs (+ test)"
+    },
+    {
+      "id": "CQ-4",
+      "disposition": "fixed: the ladder lives in 03 §6 only",
+      "where": "docs/LOCAL_DEVELOPMENT.md"
+    },
+    {
+      "id": "CQ-5",
+      "disposition": "fixed: one numstat call with --diff-filter=DM",
+      "where": "scripts/check-docs.mjs"
+    },
+    {
+      "id": "CQ-6",
+      "disposition": "fixed: the recorder deletes the old flaky list before the run",
+      "where": "scripts/record-verification.mjs"
+    },
+    {
+      "id": "CQ-7",
+      "disposition": "fixed: filed means the backlog quotes '<spec file> › <title>'",
+      "where": "scripts/milestone.mjs"
+    },
+    {
+      "id": "CQ-9",
+      "disposition": "fixed: the comment names the modules that catch the error",
+      "where": "vitest.config.ts"
+    },
+    {
+      "id": "CQ-10",
+      "disposition": "fixed",
+      "where": "scripts/check-staged.mjs"
+    },
+    {
+      "id": "CQ-11",
+      "disposition": "fixed: the silent environment override is gone; only an edit listed in archive/README.md's exception section passes, and check:docs prints it",
+      "where": "scripts/check-docs.mjs, docs/DOCS_SYSTEM.md rule 6, archive/README.md"
+    },
+    {
+      "id": "CQ-12",
+      "disposition": "fixed: exact spec-name lists, checked to exist; the WebKit set keeps u08-duties, which the unanchored pattern matched, so WebKit coverage is unchanged (18 specs)",
+      "where": "playwright.config.ts"
+    },
+    {
+      "id": "CQ-14",
+      "disposition": "fixed: both hooks say when Node is not on PATH",
+      "where": "scripts/git-hooks/*"
+    },
+    {
+      "id": "CQ-15",
+      "disposition": "no change needed: full-week.spec.ts skips every project but Pixel 7 (line 204), so its overflow check never ran at 390 px",
+      "where": "tests/e2e/full-week.spec.ts"
+    },
+    {
+      "id": "CQ-16",
+      "disposition": "fixed: manual runs have their own concurrency group",
+      "where": ".github/workflows/ci.yml"
+    },
+    {
+      "id": "CQ-17",
+      "disposition": "fixed",
+      "where": "src/capabilities/speech.test.ts"
+    }
+  ],
+  "roundTwoDispositions": [
+    {
+      "id": "SCO-H1-22",
+      "disposition": "fixed: UG2-DAT-7, DAT-11, DAT-12, SCO-13 and SCO-14 carried",
+      "where": "docs/working/BACKLOG.md"
+    },
+    {
+      "id": "SCO-H1-23",
+      "disposition": "fixed: Condividi, the gallery pick and the photo-disposal check listed as never run on Android",
+      "where": "docs/DEVICE_CHECKS.md"
+    },
+    {
+      "id": "SCO-H1-24 = CQ2-8",
+      "disposition": "fixed: 03 §6 states the condition (the previous tip's push run passed) and that such a run inherits its browser result; the skill names the frozen-file check of the hook",
+      "where": "03_TECHNICAL_DECISIONS.md §6, SKILL.md"
+    },
+    {
+      "id": "SCO-H1-25",
+      "disposition": "fixed: a re-run after completion is recorded under a new name (`npm run evidence -- <ID> --file verification-ci-fix.json`); the skill says CI on the pushed commit is the authority and how a CI-forced fix is recorded. H1's own CI run waits for the owner's permission to push",
+      "where": "scripts/record-verification.mjs, SKILL.md step 6"
+    },
+    {
+      "id": "SCO-H1-26",
+      "disposition": "fixed: the release and retention confirmation is pending, and retention is listed among the open decisions",
+      "where": "docs/working/BACKLOG.md"
+    },
+    {
+      "id": "SCO-H1-27",
+      "disposition": "fixed",
+      "where": "README.md"
+    },
+    {
+      "id": "SCO-H1-28",
+      "disposition": "fixed: §3.6; the D2–D5 placement in docs-move.json",
+      "where": ".evidence/H1/docs-move.json, self-review.json"
+    },
+    {
+      "id": "SCO-H1-29",
+      "disposition": "fixed: the secondary actions offer the same three methods",
+      "where": "01_PRODUCT_SPEC.md §3.2"
+    },
+    {
+      "id": "SCO-H1-30",
+      "disposition": "fixed: 02 §2 records the owner's assignment and calls it a 0.4.0 candidate; the 0.4.0 scope sentence names both kinds of candidate; the history sentence in 01 §7.1 removed",
+      "where": "02_MVP_SCOPE.md, 01_PRODUCT_SPEC.md"
+    },
+    {
+      "id": "SCO-H1-31",
+      "disposition": "fixed: the N1 approval and the owner's preference restored, among the findings to put to the owner",
+      "where": "docs/working/BACKLOG.md"
+    },
+    {
+      "id": "SCO-H1-32",
+      "disposition": "fixed: AGENTS §15 points at 03 §8 for the technical non-goals",
+      "where": "AGENTS.md"
+    },
+    {
+      "id": "SCO-H1-33 = CQ2-1",
+      "disposition": "fixed: an approval counts only when its entry is new against the base, read from the staged index before a commit; the section ends at the next heading",
+      "where": "scripts/check-docs.mjs (+ tests)"
+    },
+    {
+      "id": "SCO-H1-34",
+      "disposition": "fixed: without a usable previous tip, CI compares frozen files with origin/main's merge base",
+      "where": "scripts/check-docs.mjs, docs/DOCS_SYSTEM.md"
+    },
+    {
+      "id": "SCO-H1-35",
+      "disposition": "fixed in text: 03 §6 says CI runs on push and by hand, and that the owner may republish main by hand (the deploy's manual dispatch predates H1 and is deliberate)",
+      "where": "03_TECHNICAL_DECISIONS.md §6"
+    },
+    {
+      "id": "SCO-H1-36",
+      "disposition": "no change needed for H1, wording narrowed: §8 means network calls by the app; ci-scope's request goes from CI to GitHub's API with the job's read-only token and carries no personal data. AGENTS §8 now says 'whose app adds network calls'",
+      "where": "AGENTS.md §8"
+    },
+    {
+      "id": "SCO-H1-37",
+      "disposition": "fixed: the protocol states which fields milestone:complete checks",
+      "where": "docs/agents/REVIEW_PROTOCOL.md"
+    },
+    {
+      "id": "SCO-H1-38 = CQ2-9",
+      "disposition": "fixed: CI keeps two retries, now in 03 §6, and uploads test-results/e2e-flaky.json on every run that ran the browser suite; verify:domain's self-test is in AGENTS §5 and 03 §6",
+      "where": ".github/workflows/ci.yml, 03, AGENTS.md"
+    },
+    {
+      "id": "SCO-H1-39",
+      "disposition": "fixed: test-timing.json leaves out the runs that overlapped reviews and edits, and says so",
+      "where": ".evidence/H1/test-timing.json"
+    },
+    {
+      "id": "CQ2-2",
+      "disposition": "fixed",
+      "where": "archive/README.md"
+    },
+    {
+      "id": "CQ2-3",
+      "disposition": "fixed: one flakyEntry, and a filed entry is quoted in backticks",
+      "where": "scripts/e2e-report.mjs, run-e2e.mjs, milestone.mjs"
+    },
+    {
+      "id": "CQ2-4",
+      "disposition": "fixed: the frozen set derives from classify()",
+      "where": "scripts/check-docs.mjs"
+    },
+    {
+      "id": "CQ2-5",
+      "disposition": "fixed: PLAN is no longer exported; frozen-only mode reads neither the manifest nor the Markdown list",
+      "where": "scripts/check-docs.mjs"
+    },
+    {
+      "id": "CQ2-6",
+      "disposition": "fixed: anything but an explicit 'false' runs everything",
+      "where": ".github/workflows/ci.yml"
+    },
+    {
+      "id": "CQ2-7",
+      "disposition": "fixed: the previous tip is vouched for by this workflow's push runs (Actions API, event=push), not by any check named verify",
+      "where": "scripts/ci-scope.mjs (+ tests), ci.yml permissions actions: read"
+    },
+    {
+      "id": "CQ2-10",
+      "disposition": "fixed: the page changelog is a contract (it holds page states amended in place)",
+      "where": "docs/DOCS_SYSTEM.md, scripts/check-docs.mjs (+ tests)"
+    },
+    {
+      "id": "CQ2-11",
+      "disposition": "accepted and documented: the skill says not to amend the completion commit to change its evidence",
+      "where": "SKILL.md step 6"
+    },
+    {
+      "id": "Hook, first real commit",
+      "disposition": "the pre-commit hook refused the checkpoint twice and was right once: the code-quality report's invented example number (replaced by the fixtures' number, marked in the report) and, a false positive, the scope report's 9-digit seed; a bare JSON number is no longer read as a phone (test added), and the protocol gives reviewers the fixture numbers",
+      "where": "scripts/privacy-rules.mjs (+ test), REVIEW_PROTOCOL.md"
+    }
+  ]
+}

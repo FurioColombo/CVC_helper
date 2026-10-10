@@ -1169,7 +1169,7 @@ function DutySummaryView({
   // then measure their own width against the browser's scrollbar-inclusive
   // viewport instead of `documentElement.clientWidth`, a few CSS px wider
   // than the page — a real R18 violation
-  // (docs/post-mvp/06_DESIGN_RULEBOOK.md §2's "no horizontal scroll",
+  // (docs/design/06_DESIGN_RULEBOOK.md §2's "no horizontal scroll",
   // measured as `scrollWidth <= clientWidth`). Locking the page's own scroll
   // for as long as this reads-everything-at-once overlay is open — the
   // standard modal pattern — removes the underlying scrollbar entirely, so

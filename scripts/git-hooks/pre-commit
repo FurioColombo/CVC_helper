@@ -1,4 +1,10 @@
 #!/bin/sh
 # Shared by every agent and person who commits: npm's prepare script points
 # core.hooksPath here. Never bypass it with --no-verify (scripts/check-staged.mjs).
-exec node scripts/check-staged.mjs
+command -v node >/dev/null 2>&1 || {
+  echo "pre-commit: Node is not on PATH; see docs/LOCAL_DEVELOPMENT.md (Runtime)." >&2
+  exit 1
+}
+node scripts/check-staged.mjs || exit 1
+# Frozen documents (archive, changelogs, completed evidence) only grow.
+exec node scripts/check-docs.mjs --cached --frozen-only

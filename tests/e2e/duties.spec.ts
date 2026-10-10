@@ -1,5 +1,3 @@
-import path from "node:path"
-
 import { expect, type Locator, type Page, test } from "@playwright/test"
 
 async function dutyCardNames(card: Locator) {
@@ -32,7 +30,7 @@ async function addStudent(
 
 test("plans, overrides and recalculates remaining duties without rewriting history", async ({
   page,
-}, testInfo) => {
+}) => {
   test.setTimeout(300_000)
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
@@ -181,10 +179,4 @@ test("plans, overrides and recalculates remaining duties without rewriting histo
     page.getByRole("button", { name: /Sabato, 3 assegnati, completata/ }),
   ).toContainText(completedNames ?? "")
   await assertHealthyFuturePlan()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      path: path.resolve("test-results/screenshots/duties-gate-iphone13.png"),
-    })
-  }
 })

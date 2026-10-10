@@ -8,11 +8,14 @@ import {
 } from "node:fs"
 import { resolve } from "node:path"
 
+import { flakyEntry } from "./e2e-report.mjs"
 import { RECORDER_ID, sourceDigest } from "./verification-digest.mjs"
 
 const root = resolve(import.meta.dirname, "..")
 const manifestPath = resolve(root, ".milestones/manifest.json")
 const planPath = resolve(root, "04_IMPLEMENTATION_PLAN.md")
+// A test that passed only on a retry is a defect and must be filed here.
+const backlogPath = resolve(root, "docs/working/BACKLOG.md")
 
 function readManifest() {
   return JSON.parse(readFileSync(manifestPath, "utf8"))
@@ -91,6 +94,25 @@ function verificationProblem(milestone, { strict }) {
   }
   if (verification.sourceDigest !== sourceDigest(root).digest) {
     return "the source changed after it was recorded; run npm run evidence again"
+  }
+  if (required.includes("verify:e2e:focus")) {
+    const listed = [...(milestone.e2eSpecs ?? [])].sort().join("|")
+    const ran = [...(verification.e2eSpecs ?? [])].sort().join("|")
+    if (!listed || listed !== ran) {
+      return "its focused browser run does not match the manifest's e2eSpecs"
+    }
+  }
+  const backlog = existsSync(backlogPath)
+    ? readFileSync(backlogPath, "utf8")
+    : ""
+  // Filed means the backlog quotes the entry in backticks, exactly as
+  // scripts/run-e2e.mjs prints it after FLAKY:, so neither a phrase of the
+  // title nor a spec whose name ends the same way counts.
+  const unfiled = (verification.flakyTests ?? [])
+    .map(flakyEntry)
+    .filter((entry) => !backlog.includes(`\`${entry}\``))
+  if (unfiled.length > 0) {
+    return `flaky tests are not filed in docs/working/BACKLOG.md: ${unfiled.join("; ")}`
   }
   return null
 }
@@ -216,10 +238,48 @@ function complete(id) {
     throw new Error(`${id} must be IN_PROGRESS before completion`)
   }
   assertEvidenceComplete(milestone)
+  assertPlanSwept(id)
+  assertDocsCheck()
   milestone.status = "COMPLETE"
-  setPlanStatus(id, "COMPLETE")
   writeManifest(manifest)
   console.log(`${id}: COMPLETE`)
+}
+
+/**
+ * docs/DOCS_SYSTEM.md: the plan holds open work only. The milestone-close
+ * sweep moves a closing milestone's section to the archive and leaves its
+ * status row, so completion refuses a plan that still holds the section.
+ * Milestones completed before this rule kept their sections; they are
+ * history and are not completed again.
+ */
+function planSweepProblem(id, plan) {
+  if (plan.includes(`## ${id} —`)) {
+    return `the plan still holds the ${id} section: move it to the archive and leave its status row (milestone-close skill, step 5)`
+  }
+  if (!plan.includes(`| ${id} | Complete.`)) {
+    return `the plan needs a "| ${id} | Complete. …" status row`
+  }
+  return null
+}
+
+function assertPlanSwept(id) {
+  const problem = planSweepProblem(id, readFileSync(planPath, "utf8"))
+  if (problem) throw new Error(`Completion refused; ${problem}`)
+}
+
+function assertDocsCheck() {
+  try {
+    execFileSync(process.execPath, [resolve(root, "scripts/check-docs.mjs")], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: "pipe",
+    })
+  } catch (error) {
+    throw new Error(
+      `Completion refused; check:docs failed:\n${error.stderr ?? ""}${error.stdout ?? ""}`,
+      { cause: error },
+    )
+  }
 }
 
 function selfTest() {
@@ -258,6 +318,23 @@ function selfTest() {
     recorder: RECORDER_ID,
     sourceDigest: sourceDigest(root).digest,
     checks: [passingCheck("verify:quick")],
+  })
+  writeVerification("flaky-verification.json", {
+    recorder: RECORDER_ID,
+    sourceDigest: sourceDigest(root).digest,
+    checks: [passingCheck("verify")],
+    flakyTests: [
+      {
+        file: "synthetic.spec.ts",
+        title: "synthetic flaky test never filed anywhere",
+      },
+    ],
+  })
+  writeVerification("focus-verification.json", {
+    recorder: RECORDER_ID,
+    sourceDigest: sourceDigest(root).digest,
+    checks: [passingCheck("verify:e2e:focus")],
+    e2eSpecs: ["tests/e2e/a-different.spec.ts"],
   })
   writeVerification("stale-verification.json", {
     recorder: RECORDER_ID,
@@ -307,6 +384,24 @@ function selfTest() {
       expected: "Completion refused; verification.json: the source changed",
     },
     {
+      name: "verification with an unfiled flaky test",
+      milestone: {
+        verificationScripts: ["verify"],
+        requiredEvidence: [".evidence/__synthetic__/flaky-verification.json"],
+      },
+      expected: "Completion refused; verification.json: flaky tests",
+    },
+    {
+      name: "focused browser run of other specs than the manifest lists",
+      milestone: {
+        verificationScripts: ["verify:e2e:focus"],
+        e2eSpecs: ["tests/e2e/smoke.spec.ts"],
+        requiredEvidence: [".evidence/__synthetic__/focus-verification.json"],
+      },
+      expected:
+        "Completion refused; verification.json: its focused browser run",
+    },
+    {
       name: "review blocker",
       milestone: {
         requiredEvidence: [".evidence/__synthetic__/review.json"],
@@ -329,18 +424,33 @@ function selfTest() {
     return `PASS: ${name} refused\n${refusal}`
   })
 
+  const sweepCases = [
+    [
+      "a plan that still holds the section",
+      "## X1 — Synthetic\n| X1 | Complete. |",
+      "the plan still holds",
+    ],
+    ["a plan without the status row", "## X2 — Other\n", "the plan needs"],
+  ]
+  for (const [name, plan, expected] of sweepCases) {
+    const problem = planSweepProblem("X1", plan) ?? ""
+    if (!problem.startsWith(expected)) {
+      throw new Error(`Synthetic ${name} case was not refused`)
+    }
+    results.push(`PASS: ${name} refused\n${problem}`)
+  }
+  if (planSweepProblem("X1", "| X1 | Complete. Done. |") !== null) {
+    throw new Error("A swept plan was refused")
+  }
+
   // The synthetic files exist only for this run; leaving them behind dirtied
   // the tree after every self-test.
   rmSync(evidenceDirectory, { recursive: true, force: true })
   const message =
-    "PASS: controller refused missing, failed, hand-written, partial, stale and blocked evidence"
-  const u00EvidenceDirectory = resolve(root, ".evidence/U00")
-  mkdirSync(u00EvidenceDirectory, { recursive: true })
-  writeFileSync(
-    resolve(u00EvidenceDirectory, "controller-refusal.txt"),
-    `${message}\n\n${results.join("\n\n")}\n`,
-  )
-  console.log(message)
+    "PASS: controller refused missing, failed, hand-written, partial, stale, flaky, unfocused and blocked evidence and unswept plans"
+  // U00's controller-refusal.txt is that milestone's closed evidence; the
+  // self-test prints its result instead of rewriting it (docs/DOCS_SYSTEM.md).
+  console.log(`${results.join("\n\n")}\n\n${message}`)
 }
 
 const [operation, id] = process.argv.slice(2)

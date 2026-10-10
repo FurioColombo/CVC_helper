@@ -1,6 +1,7 @@
 // Pre-commit check of what is about to be committed (scripts/git-hooks/
-// pre-commit). It reads only the staged diff so a commit stays fast; the
-// whole-tree checks are check:repository's, which the pre-push hook runs.
+// pre-commit). It reads only the staged diff so a commit stays fast. It is the
+// only content scan for personal data: check:repository checks only that
+// data/private is untracked and that no absolute paths are committed.
 //
 // Never bypass it with --no-verify. A false positive is fixed in
 // scripts/privacy-rules.mjs with a test, or, with the owner's explicit approval
@@ -57,6 +58,10 @@ const diff = git(
     "-U0",
     "--no-color",
     "--no-ext-diff",
+    // Fixed prefixes: diff.noprefix or a custom prefix would otherwise shift
+    // every path and silently skip the phone rule.
+    "--src-prefix=a/",
+    "--dst-prefix=b/",
     "--diff-filter=ACMR",
     "--",
     ".",

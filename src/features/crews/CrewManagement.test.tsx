@@ -1751,7 +1751,7 @@ describe("CrewManagement", () => {
     expect(screen.getByText(/RS Quest 2 resta assegnata/)).toBeVisible()
   })
 
-  // Owner decision 2026-09-28 (0_3_0_QUESTIONS.md question 3): an open fault on
+  // Owner decision 2026-09-28 (archive/v0.3.0/0_3_0_QUESTIONS.md question 3): an open fault on
   // the assigned boat is a yellow crew warning, kept separate from the red
   // unavailable-boat one, and drawn from the same canonical
   // `getBoatCrewWarnings` the domain tests already cover state by state.

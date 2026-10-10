@@ -1,5 +1,3 @@
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
 
 async function addStudent(page: Page, firstName: string, surname: string) {
@@ -16,7 +14,7 @@ async function addStudent(page: Page, firstName: string, surname: string) {
 
 test("composes, swaps and persists session-specific crews and A terra", async ({
   page,
-}, testInfo) => {
+}) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
@@ -49,13 +47,6 @@ test("composes, swaps and persists session-specific crews and A terra", async ({
     name: "Volontari disponibili",
   })
   await studentPool.getByRole("button", { name: "Aldo" }).click()
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      path: path.resolve(
-        "test-results/screenshots/crew-shortcuts-iphone13.png",
-      ),
-    })
-  }
   await page
     .getByRole("button", { name: "Sposta Aldo in equipaggio 1" })
     .click()
@@ -114,11 +105,4 @@ test("composes, swaps and persists session-specific crews and A terra", async ({
   await expect(
     page.getByRole("button", { name: "Dina, A terra" }),
   ).toBeVisible()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      fullPage: true,
-      path: path.resolve("test-results/screenshots/crews-iphone13.png"),
-    })
-  }
 })

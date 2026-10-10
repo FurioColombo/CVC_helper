@@ -1,6 +1,3 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
 
 const STUDENTS = [
@@ -62,7 +59,7 @@ async function assignDestination(
 
 test("verifies the complete crew workflow across students, duties and boats", async ({
   page,
-}, testInfo) => {
+}) => {
   test.setTimeout(360_000)
 
   await page.goto("/")
@@ -320,13 +317,6 @@ test("verifies the complete crew workflow across students, duties and boats", as
   await expect(readView).not.toContainText(
     /Allievi sistemati|Barche in uscita|Avvisi|Taglie/,
   )
-  if (testInfo.project.name === "iphone-13-viewport") {
-    const screenshotPath = path.resolve(
-      "test-results/screenshots/crew-gate-iphone13.png",
-    )
-    mkdirSync(path.dirname(screenshotPath), { recursive: true })
-    await page.screenshot({ path: screenshotPath })
-  }
   await readView.getByRole("button", { name: "Chiudi vista lettura" }).click()
 
   await page.reload()

@@ -1,10 +1,8 @@
-import path from "node:path"
-
 import { expect, test } from "@playwright/test"
 
 test("manages boats and simultaneous faults through detail and global entry", async ({
   page,
-}, testInfo) => {
+}) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
@@ -74,16 +72,6 @@ test("manages boats and simultaneous faults through detail and global entry", as
   await expect(page.getByText("Drizza usurata")).toBeVisible()
   await expect(page.getByText("Timone duro")).toBeVisible()
   await expect(page.getByText("Scotta randa usurata")).toBeVisible()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      fullPage: true,
-      path: path.resolve("test-results/screenshots/boats-iphone13.png"),
-    })
-    await page.screenshot({
-      path: path.resolve("test-results/screenshots/boats-gate-iphone13.png"),
-    })
-  }
 
   await page.getByRole("button", { name: "Home", exact: true }).click()
   await page.getByRole("button", { name: "Barche", exact: true }).click()

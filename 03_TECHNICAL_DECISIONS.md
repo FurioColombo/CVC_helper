@@ -18,7 +18,7 @@ unless the owner changes them explicitly.
 - No native app, backend or sync in 0.4.0. From 0.5.0 the backend is managed
   Supabase (Postgres and Auth) with PowerSync Cloud, both hosted in the EU, with
   separate development and production projects (owner, 2026-10-08;
-  `02_MVP_SCOPE.md` §7). No agent tool connects to production. Capacitor
+  `02_MVP_SCOPE.md` §4). No agent tool connects to production. Capacitor
   remains a possible later path.
 
 ## 2. UI architecture
@@ -40,7 +40,7 @@ This is a component vocabulary, not a large design-system project. Reuse the sam
 person badge, boat identity, session control, warning icon and weekly evaluation
 grid where the product presents the same concept.
 
-The design source is mock r10 in `docs/post-mvp/mockups/` at commit `ee8d4c8`.
+The design source is mock r10 in `docs/design/mockups/` at commit `ee8d4c8`.
 Mock files stay isolated from the application build and never access production
 data. Implement components from the behavior/geometry target; do not import mock
 HTML/CSS/JavaScript into the app.
@@ -179,9 +179,13 @@ and marked.
 Keep the existing harness and command surface:
 
 - `npm run verify:quick`: lint, formatting, typecheck and fast tests;
-- `npm run verify:domain`: repository, canonical-table and invariant checks;
+- `npm run verify:domain`: repository, canonical-table, invariant,
+  compatibility and documentation checks, and the milestone controller's
+  self-test;
 - `npm run verify`: quick + domain + production PWA build;
 - `npm run verify:e2e`: complete Playwright browser suite;
+- `npm run verify:e2e:focus`: the browser specs the milestone being recorded
+  lists as `e2eSpecs` in the manifest;
 - `npm run verify:all`: verify + deterministic full week + offline check of
   the built PWA + E2E;
 - `npm run milestone:start|check|complete -- <ID>`;
@@ -193,8 +197,25 @@ all PASS, a review verdict is FAIL or any blocker exists. Since F1 a new
 completion also requires `verification.json` written by `npm run evidence`,
 with a passing run of every declared script and a source digest equal to the
 current working tree's, so a hand-written file, a partial run or code changed
-after the run cannot close a milestone. Old 0.1.0 milestone
-statuses remain immutable history.
+after the run cannot close a milestone. Since H1 it also refuses a focused run
+that does not match the manifest's `e2eSpecs`, a flaky test not filed in
+`docs/working/BACKLOG.md`, a plan that still holds the milestone's section and
+a failing `check:docs`. Old 0.1.0 milestone statuses remain immutable history.
+
+**Verification ladder** (H1, 2026-10-09):
+
+- while editing: the focused unit test or spec;
+- before every checkpoint commit: `verify:quick`;
+- an ordinary milestone close: `verify` and `verify:e2e:focus`;
+- release gates and CI: `verify:all`.
+
+Unit tests run in Node, and in jsdom only for component tests and the modules
+that read the DOM (`vitest.config.ts`), on four workers. The browser suite
+runs on one worker: two were slower on the 8-thread development machine and
+added flakes (H1). It allows one retry locally and two in CI: a test that
+needs one passed only as a flake. Locally it is listed in `verification.json`
+and is a defect to file and fix; in CI it is printed as `FLAKY:` and kept as
+the `e2e-flaky` artifact.
 
 Evidence under `.evidence/<ID>/` is small and reproducible: machine verification,
 structured reviews, browser/device metadata and selected screenshots. Browser
@@ -204,13 +225,21 @@ domain checks.
 
 For visible milestones, use focused real UI journeys plus the full deterministic
 suite at integration gates. Preserve Pixel 7 Chromium, iPhone viewport Chromium
-and core iPhone WebKit coverage. Test 320 × 664, 390 × 844 and 412 × 915 where
+and core iPhone WebKit coverage. Every spec runs on Pixel 7; the iPhone
+viewport project runs the specs that assert layout, and the WebKit project the
+core journeys (`playwright.config.ts`). Test 320 × 664, 390 × 844 and 412 × 915 where
 density/overflow is material; avoid multiplying every test across every viewport.
 
-CI uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
-failure artifacts where useful. Local checks remain required. GitHub Pages
-publishes `main` only after CI passes on the same commit and after the built app
-is proven to work offline at its subpath.
+CI runs on push (and by hand), cancels a superseded run on the same branch, and
+uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
+failure artifacts where useful. A push that changes only documentation,
+evidence, the archive, milestone metadata or agent definitions runs `verify`
+instead, and only when CI's push run passed on the commit it builds on; any
+doubt runs everything (`scripts/ci-scope.mjs`). Such a green run inherits the
+browser result of that earlier commit. Local checks remain required. GitHub
+Pages publishes `main` only after CI passes on the same commit and after the
+built app is proven to work offline at its subpath, or when the owner
+republishes `main` by hand.
 
 ### 6.1 Platform coverage of the browser suite
 
@@ -250,7 +279,7 @@ Use low-effort semantic versions:
 
 - released baselines: 0.1.0, 0.2.0 and 0.3.0 (declared at UG2 on 2026-10-08);
 - active cycle: 0.4.0, assigned only at its release gate; the versions after
-  it are planned in `02_MVP_SCOPE.md` §7;
+  it are planned in `02_MVP_SCOPE.md` §4;
 - patch numbers for separately released fixes;
 - later minor numbers for recognizable feature/change packages;
 - 1.0.0 only after an explicit stability decision.
@@ -265,5 +294,5 @@ Do not add a custom backend, GraphQL, global state framework, generalized
 repository/provider architecture, custom sync/conflict engine, Supabase/Auth,
 native code, release-management service, large design system, generic content
 system or speculative abstraction during 0.4.0. Supabase, Auth and sync arrive
-with 0.5.0 as planned in `02_MVP_SCOPE.md` §7; a custom sync or conflict engine
+with 0.5.0 as planned in `02_MVP_SCOPE.md` §4; a custom sync or conflict engine
 stays a non-goal.

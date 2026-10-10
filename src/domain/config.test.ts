@@ -144,7 +144,7 @@ describe("canonical domain configuration", () => {
   })
 
   it("gives every boat type a class colour that reads on white (F3 C6)", () => {
-    // R06 (docs/post-mvp/06_DESIGN_RULEBOOK.md): "large text" (the bold
+    // R06 (docs/design/06_DESIGN_RULEBOOK.md): "large text" (the bold
     // ≥20px boat number the crew-summary card puts in this colour) needs at
     // least 3:1 against its background — here the card's white (#ffffff).
     for (const type of BOAT_TYPES) {

@@ -39,7 +39,7 @@ folder>/*.jsonl`, including subagent folders.
 4. `.evidence/*/verification.json` (recorded durations),
    `.evidence/*/self-review.json` and the review rounds.
 5. `archive/v0.3.0-completed-milestones.md`, the archived plans and the owner
-   decision records in `docs/post-mvp/`.
+   decision records in `archive/v0.3.0/`.
 
 ## Method
 

@@ -1,0 +1,163 @@
+{
+  "reviewerRole": "scope",
+  "persona": "Il Notaio",
+  "milestone": "H1",
+  "commit": "8edc8a1 plus the uncommitted H1 working tree (staged renames, modified files and the untracked files listed by git status), round 2, reviewed 2026-10-09",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SCO-H1-22",
+      "title": "BACKLOG.md says it gathers the UG2 review findings, but five open ones from the data-integrity and scope reviews have no home",
+      "evidence": "docs/working/BACKLOG.md:7-10 says it gathers 'the UG2 review findings (.evidence/UG2/*-review.json)'. I compared every finding ID in the UG2 reviews with the BACKLOG and with what was fixed. These are open and in neither: (1) UG2-DAT-7: createFault still checks the boat and inserts in two separate steps, outside a transaction (src/persistence/boats.ts:206-235). D1 rewrites this write path for courseId and the write helper. (2) UG2-DAT-11: the clipboard image left by Copia immagine and stored values inside error messages. The UG2-SCO-4 recheck in commit 20c7e97 says this was recorded only in evidence, and it bears on D4's full reset. (3) UG2-DAT-12: the 'non disponibile' screens still give no cause (src/features/boats/BoatManagement.tsx:663-673). (4) UG2-SCO-13 and (5) UG2-SCO-14 both have recheck status OPEN in .evidence/UG2/scope-review.json. Commit 6db5aea fixed only UG2-DAT-1 to 3, and commit 4a434c9 carried other IDs but not these. Round 1 found the same gap for the code-quality series (SCO-H1-9); the fix carried the CQ IDs only.",
+      "reproduction": "node -e over .evidence/UG2/*-review.json, listing each finding ID that does not appear in docs/working/BACKLOG.md. Then check each against the fix commits 6db5aea, 1ec3e6c and fe3e92f and the recheck fields. DAT-7, DAT-11, DAT-12, SCO-13 and SCO-14 remain.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md H1 item 3 ('open items going to docs/working/BACKLOG.md'); .claude/skills/milestone-close/SKILL.md §5.4 (do not leave a follow-up only in evidence)"
+    },
+    {
+      "id": "SCO-H1-23",
+      "title": "DEVICE_CHECKS.md's 'Not yet run' list still leaves out checks no device run has reported: Condividi, the gallery pick and the photo disposal",
+      "evidence": "docs/DEVICE_CHECKS.md:17-18 says a check that was not run 'is listed as not run'. The list at :89-99 now names speech, which fixes SCO-H1-6. Three checks are still missing. (a) Summaries 2, 'Condividi opens the share sheet' (:87): the owner reported only copying and pasting the images (.evidence/UG2/physical-device-review.json, F4 row). The UG2 scope recheck already noted 'Condividi on Android has no owner report either' (.evidence/UG2/scope-review.json, UG2-SCO-7). (b) Roster scan 1, Scegli da galleria (:41), and (c) Roster scan 3, photo and crop not kept (:47-48): the only owner report is 'Camera scan of a printed roster'. .evidence/UG1/physical-device-review.json:24 lists gallery acquisition and source-photo disposal as never observed. Read as written, the list implies these passed on Android.",
+      "reproduction": "Compare each numbered check in docs/DEVICE_CHECKS.md with the observations in .evidence/UG2/physical-device-review.json and the UG1 record.",
+      "specRef": "docs/DEVICE_CHECKS.md:17-18; AGENTS.md §17 (never record a simulated PASS)"
+    },
+    {
+      "id": "SCO-H1-24",
+      "title": "03 §6 states the documentation-only CI skip without the condition that fixes round 1's blocker",
+      "evidence": "03_TECHNICAL_DECISIONS.md:231-232: 'A push that changes only documentation, evidence, milestone metadata or agent definitions runs `verify` instead (scripts/ci-scope.mjs)', with no condition. The ladder line at :209, 'release gates and CI: verify:all', has no exception either. The guard that closes SCO-H1-2/CQ-1 (the skip applies only when CI's 'verify' job succeeded on the previous tip) exists only in scripts/ci-scope.mjs:5-9 and :27-40 and in a ci.yml comment (:47-50). I checked the fix itself and it holds: needsBrowser(files, false) is true; a failed, cancelled or running previous run, before=000..., or an unknown before all run verify:all; and the deploy publishes only green push runs. But 03 ranks above code (AGENTS.md §2). Anyone who 'aligns' ci-scope with 03 brings the blocker back.",
+      "reproduction": "Read 03_TECHNICAL_DECISIONS.md:204-234 next to scripts/ci-scope.mjs:27-31.",
+      "specRef": "Persona lens 4 (behaviour changed without the spec text); docs/DOCS_SYSTEM.md rule 1; AGENTS.md §2"
+    },
+    {
+      "id": "SCO-H1-25",
+      "title": "The closure relies on a local verify:all, which 03 §6.1 calls advisory, and the frozen-evidence rule leaves no sanctioned way to record a fix CI forces later",
+      "evidence": "03_TECHNICAL_DECISIONS.md:241-246: 'CI is the authority for the browser suite. A local run is advisory ... must not present it as the gate.' The success predicate says 'verify:all passes'. The pending list in the brief (two-worker trial, test-timing.json, final recorded verify:all, retro-adoption, sweep) contains no CI run of the H1 source. The closing order is complete, commit, then push (SKILL.md §6), so CI first sees H1 after it is COMPLETE. H1 changes Playwright project membership and may set workers to 2, neither measured on the Linux runner. UG2 is the precedent: 04bdc51 was a CI-only Linux-font fix after 'Complete UG2', and 0bd07d8 re-recorded the evidence. Under H1's own rules that re-record is now refused. scripts/record-verification.mjs:103-104 always writes .evidence/<ID>/verification.json. The pre-commit hook now runs `check-docs --cached --frozen-only`, and frozenProblems refuses any deletion in the evidence of a milestone that is COMPLETE at HEAD (scripts/check-docs.mjs:78-94).",
+      "reproduction": "Code path, not executed (read-only): after the 'Complete H1' commit, a CI failure is fixed and `npm run evidence -- H1` rewrites .evidence/H1/verification.json, changing existing lines. `git commit` runs scripts/git-hooks/pre-commit, check-docs reports '.evidence/H1/verification.json: frozen file changed', and the commit is refused.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6.1; persona lens 9 (a local run presented as the CI gate); docs/DOCS_SYSTEM.md rule 6. Fix: hold completion until CI passes on the pushed H1 commit, or record the CI run (run id, commit, conclusion) as an added evidence file; give the recorder an output name for runs after completion."
+    },
+    {
+      "id": "SCO-H1-26",
+      "title": "BACKLOG.md calls the owner's pending release and retention confirmation 'settled' and drops retention from the open decisions",
+      "evidence": "docs/working/BACKLOG.md:26-32 says '02_MVP_SCOPE.md §4 settles the backend, who writes, and the release and retention confirmation', and its parenthesis reads '(the owner considers the students' signed release sufficient and confirms it covers this service)'. 02_MVP_SCOPE.md:99-103 says something else: before the first real roster goes online, the owner confirms that the release covers storing the roster in this service and how long it is kept. That confirmation is still to come. The folded source, archive/v0.3.0/1_0_0_NEXT_STEPS.md:67-70, listed 'Legal basis, retention period, deletion at the end of a course, and who is the data controller'. The section 'Decisions due before the first real roster goes online' now lists no retention item. The decision is not lost, because 02 §4 holds it, but the working document a 0.5.0 planner reads describes it as settled.",
+      "reproduction": "Read BACKLOG.md:24-37 next to 02_MVP_SCOPE.md:99-103.",
+      "specRef": "Persona lens 3 (owner decisions word for word); AGENTS.md §17 (personal data of minors)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SCO-H1-27",
+      "title": "README points to the wrong section of the rewritten 02 for the logo authorisation",
+      "evidence": "README.md:51-52 says '... authorised for use by the owner on 2026-09-18; see `02_MVP_SCOPE.md` section 5.' In the new 02, §5 is the Completion boundary; the authorisation is now in §3 (02_MVP_SCOPE.md:80-82). check:docs checks that links resolve, not section numbers. Every other '02_MVP_SCOPE.md §N' reference was updated.",
+      "reproduction": "git grep -n -E \"02_MVP_SCOPE.*(§|section) ?[0-9]\" -- . ':!archive' ':!.evidence'",
+      "specRef": "04 H1 item 3 ('every path ... is updated')"
+    },
+    {
+      "id": "SCO-H1-28",
+      "title": "H1 evidence cites the wrong spec section, and misplaces the D2–D5 override",
+      "evidence": "The particles and staff-heading text was added at 01_PRODUCT_SPEC.md:197-202, which is §3.6 'Scan students' (heading at :179). .evidence/H1/docs-move.json:147 and self-review.json:54 cite §3.4 'Profile and history'. The OPEN_ITEMS fold in docs-move.json files the D2–D5 override under backlog 'future work', but BACKLOG.md:55-56 has it under 'Waiting for the owner's choice'.",
+      "reproduction": "grep -n '^### ' 01_PRODUCT_SPEC.md; grep -n '§3.4' .evidence/H1/*.json",
+      "specRef": "Persona lens 9"
+    },
+    {
+      "id": "SCO-H1-29",
+      "title": "The SCO-H1-7(a) fix updated the empty-page sentence but not the menu's list of methods",
+      "evidence": "01_PRODUCT_SPEC.md:125-129 now gives the empty page three methods, but the next sentence still says 'Secondary actions include Add, Scan and `Conoscenza allievi`'. The menu shows Aggiungi allievo, Scan allievi, Usa un assistente and Conoscenza allievi (src/features/students/StudentManagement.tsx:305-330 and 1590-1607). The owner's decision is that the menu and the empty page offer the same methods (archive/v0.3.0/0_3_0_QUESTIONS.md:46).",
+      "reproduction": "Read 01_PRODUCT_SPEC.md:125-129.",
+      "specRef": "01_PRODUCT_SPEC.md §3.2; persona lens 3"
+    },
+    {
+      "id": "SCO-H1-30",
+      "title": "The owner's destination for the D2–D5 override is only in the working document, and 02 §4 does not cover picking it",
+      "evidence": "02_MVP_SCOPE.md:57-58 says only 'deferred 2026-09-24'. The owner assigned the override to the Claude Code follow-up after the 0.3.0 gate (archive/v0.3.0/0_3_0_QUESTIONS.md:173 and 177-180; 0_3_0_OPEN_ITEMS.md:242-244), but that is recorded only in BACKLOG.md:55-56. DOCS_SYSTEM rule 1 puts an owner decision into the contract. 02:116-117 lets 0.4.0 take 'any UG2 field fixes the owner picks', and candidate 6 is not a UG2 field fix, so picking it also needs 02 §2 and §4 changed. The 01 §7.1 paragraph H1 rewrote still ends in history: 'These are the 0.3.0 rules; 0.2.0 used an even proposal' (01_PRODUCT_SPEC.md:411-413, rule 2).",
+      "reproduction": "Read 02:55-58 and 02:116-119 next to BACKLOG.md:55-56.",
+      "specRef": "docs/DOCS_SYSTEM.md rules 1 and 2; persona lens 3"
+    },
+    {
+      "id": "SCO-H1-31",
+      "title": "The fold dropped an owner approval and turned the item into a defect",
+      "evidence": "archive/v0.3.0/1_0_0_NEXT_STEPS.md: '`Aggiorna` and the phone's Back still discard a half-filled new student form and an assistant answer pasted but not yet read, as N1 approved for the new-student form; guard them if the owner prefers.' BACKLOG.md:132-133 lists it among the engineering follow-ups as a plain defect, without the N1 approval and without the owner's preference it depends on.",
+      "reproduction": "Compare the two passages.",
+      "specRef": "Persona lens 3"
+    },
+    {
+      "id": "SCO-H1-32",
+      "title": "AGENTS §15 attributes to 02 §2 a deferral that 02 §2 does not contain",
+      "evidence": "AGENTS.md:238-239: 'or what §2 defers (native packaging, broad backend infrastructure, generic content systems, ...)'. 02_MVP_SCOPE.md §2 (:46-68) has no backend entry, and §4 schedules a managed backend. The non-goal is 03_TECHNICAL_DECISIONS.md §8:286-290.",
+      "reproduction": "Read AGENTS.md:236-240 next to 02 §2.",
+      "specRef": "AGENTS.md §15; docs/DOCS_SYSTEM.md rule 1"
+    },
+    {
+      "id": "SCO-H1-33",
+      "title": "The frozen-file exception approves a path forever, not one dated edit",
+      "evidence": "approvedFrozenEdits (scripts/check-docs.mjs:98-107) returns every backticked string on a '- ' line of the exception section. frozenProblems (:89) then skips that path for every later edit, and the date is never compared. DOCS_SYSTEM.md:50-53 says 'the edit is listed, with its date'. In the pre-commit hook's --cached mode, the list comes from the working tree's archive/README.md, not the staged one. No path is listed today.",
+      "reproduction": "Code path: list `CHANGELOG.md` once, and every later deletion in CHANGELOG.md prints 'Frozen edit approved' and passes.",
+      "specRef": "docs/DOCS_SYSTEM.md rule 6"
+    },
+    {
+      "id": "SCO-H1-34",
+      "title": "In CI the frozen-file check silently checks nothing when the previous tip is unknown",
+      "evidence": "scripts/check-docs.mjs:222-234 falls back to HEAD when CVC_DOCS_BASE is 000... (a new branch) or the commit is not in the clone, so the diff is empty. DOCS_SYSTEM.md:72-74 says without condition 'so a committed edit is caught too'. A later ordinary push to main does catch it, because it diffs from the old main tip.",
+      "reproduction": "Code path: push a new branch whose commits edit archive/; CI's check:docs passes.",
+      "specRef": "Persona lens 9; docs/DOCS_SYSTEM.md Enforcement"
+    },
+    {
+      "id": "SCO-H1-35",
+      "title": "The CI triggers and the deploy disagree with the contract text",
+      "evidence": "04:71 says 'CI on push only' and 03:229 says 'CI runs on push', but ci.yml:6 adds workflow_dispatch. The disposition kept it without updating the text. deploy-pages.yml:15, 21 and 37 still let a manual dispatch publish main with no CI run. Yet 03:232-234, in a paragraph H1 rewrote, says Pages publishes main 'only after CI passes on the same commit'. The manual path predates H1, but it is exactly the H1 checklist item 'the Pages deploy no longer waiting for CI on main'.",
+      "reproduction": "Read deploy-pages.yml:35-38 next to 03:229-234.",
+      "specRef": "04 H1 item 4 and adversarial checklist; persona lens 4"
+    },
+    {
+      "id": "SCO-H1-36",
+      "title": "Read literally, AGENTS §8 requires a security/privacy review for H1's new network call",
+      "evidence": "AGENTS.md:134-136 requires the security/privacy reviewer 'for any milestone that adds network calls ... keys'. scripts/ci-scope.mjs:58-72 adds a fetch to the GitHub API with the job token, and ci.yml:17-19 widens permissions with checks: read. H1's reviews are self-review, scope and code quality. Nothing personal leaves a device, so the cheap fix is a line in the self-review saying why §8 does not apply to CI tooling, or narrower §8 wording.",
+      "reproduction": "Read the cited lines.",
+      "specRef": "AGENTS.md §8"
+    },
+    {
+      "id": "SCO-H1-37",
+      "title": "REVIEW_PROTOCOL promises a missing-field refusal that milestone:complete does not make",
+      "evidence": "docs/agents/REVIEW_PROTOCOL.md:59 says milestone:complete 'rejects a FAIL, a blocker or a missing field'. reviewPassed (scripts/milestone.mjs:118-130) checks only verdict, blockers, importantFindings, qolFindings and a non-empty evidenceInspected. It does not check anglesTried, which the entropy rule depends on, or notTested, commit and persona. .evidence/H1/self-review.json itself has no commit, anglesTried or notTested.",
+      "reproduction": "Read the function; validate self-review.json against the protocol's field list.",
+      "specRef": "Persona lens 9; docs/agents/REVIEW_PROTOCOL.md Report"
+    },
+    {
+      "id": "SCO-H1-38",
+      "title": "Flaky tests count as defects only in local runs, and verify:domain's new step is undocumented",
+      "evidence": "CI keeps retries: 2 (playwright.config.ts:90). run-e2e prints FLAKY lines there, but nothing fails, records or files them, although 03 §6.1 makes CI the authority. package.json:39 now runs milestone:self-test inside verify:domain. Neither AGENTS.md:73 nor 03_TECHNICAL_DECISIONS.md:182-183 lists that step.",
+      "reproduction": "Read the cited lines.",
+      "specRef": "04 H1 item 4 ('a flaky test listed in evidence and the backlog as a defect'); persona lens 4"
+    },
+    {
+      "id": "SCO-H1-39",
+      "title": "The timing evidence must leave out a run that a reviewer loaded",
+      "evidence": "The round-1 code-quality report says, under notTested, that it ran `npx vitest list --json` while the browser timing run was in progress and that 'It may have added load to that measurement'. 04:66 requires measuring 'on an idle machine'. test-timing.json does not exist yet; it should name its runs and leave that one out.",
+      "reproduction": ".evidence/H1/code-quality-review-round-1.json notTested[2].",
+      "specRef": "04 H1 item 4 and success predicate"
+    }
+  ],
+  "evidenceInspected": [
+    "Acceptance table (H1 item: proof). 1 merge claude/harness-0.4-prep: `git merge-base --is-ancestor` true; core.hooksPath = scripts/git-hooks. | 1 owner adds the PowerSync docs server to Codex: self-review itemProofs (owner's words; outside the repository). | 2 retrospective and adoption: retro-adoption.json is in the plan's Evidence and in the manifest's requiredEvidence; pending. | 3 06, 07 and mockups to docs/design: staged renames; docs-move.json. | 3 DEVICE_CHECKS.md: present; Summaries condition restored; 'not run' list incomplete (SCO-H1-23). | 3 working documents folded and archived: the five archived files and the archived 02 are byte-identical to 8edc8a1 (cmp); fold gaps SCO-H1-22, 26, 31. | 3 AGENTS.md at most 300 lines with homes: 298 by wc. | 3 02 in the present tense: done; README pointer stale (SCO-H1-27). | 3 paths and check:docs: no stale docs/post-mvp path outside the archive, evidence, the frozen 07 line 115 and a synthetic test path; check:docs is in verify:domain (package.json:39) and in milestone:complete (milestone.mjs:240, 266-281). | 4 Vitest split: vitest.config.ts; timing pending. | 4 iphone-13-viewport limited: playwright.config.ts layoutSpecs, every name checked to exist; only the 3 listed layout specs still branch on that project; no expect removed from tests/e2e (grep of removed lines: 0). | 4 two workers: trial pending (workers: 1). | 4 CI push, cancel, docs-only skip: ci.yml and ci-scope.mjs with tests; the 03 text lacks the guard (SCO-H1-24). | 4 flaky as defect: run-e2e.mjs, e2e-report.mjs, record-verification.mjs, milestone.mjs, and a self-test case. | 4 ladder in 03 §6: 03:204-214. | 5 install-script allowlist: package.json allowScripts. | Success predicate: check:docs PASS (ran it); verify:all and test-timing pending; CI not in the plan (SCO-H1-25).",
+    "Round-1 dispositions checked against git diff HEAD and the untracked files. SCO-H1-1 fixed (BACKLOG:24-37; wording issue SCO-H1-26). SCO-H1-2 fixed in code and tests (ci-scope.mjs:27-84, ci.yml:9-50), 03 not updated (SCO-H1-24). SCO-H1-3 fixed (AGENTS:236-240; SCO-H1-32). SCO-H1-4 fixed (02:121-127). SCO-H1-5 fixed (DEVICE_CHECKS:83-86). SCO-H1-6 fixed for speech (:94-95); same gap for other checks (SCO-H1-23). SCO-H1-7 fixed for volunteers, particles and staff headings; menu sentence left (SCO-H1-29). SCO-H1-8 fixed (BACKLOG:55-56, 04:245-248; SCO-H1-30). SCO-H1-9 fixed for the CQ series (BACKLOG:93-123); DAT and SCO gap (SCO-H1-22). SCO-H1-10 fixed (AGENTS:91-95, matching SKILL §5-6 and assertPlanSwept). SCO-H1-11 fixed (DOCS_SYSTEM:70-74; 01:676-680). SCO-H1-12 fixed in part, as disposed (self-test cases for flaky, focus and sweep; check-docs, e2e-report and ci-scope tests; self-test in verify:domain). SCO-H1-13 fixed (pre-commit runs check-docs --cached --frozen-only; CVC_DOCS_BASE in CI; SCO-H1-34). SCO-H1-14 fixed (manifest; self-review itemProofs). SCO-H1-15 fixed. SCO-H1-16 deferred to closure. SCO-H1-17 fixed (298 lines; §4 and §10 restored; changes recorded). SCO-H1-18 fixed (02:36-38, 62-63; 01:407-409). SCO-H1-19 fixed (cmp identical; archive/README.md row). SCO-H1-20 fixed (DEVICE_CHECKS:35-37, 47-53). SCO-H1-21 fixed as disposed; workflow_dispatch kept while the text says push only (SCO-H1-35).",
+    "Code-quality dispositions spot-checked: CQ-2 (fixed diff prefixes, TAB stripped, new test); CQ-3; CQ-4 (LOCAL_DEVELOPMENT:70-75); CQ-5 (--diff-filter=DM); CQ-6 (rmSync before the run); CQ-7 (exact '<file> › <title>'); CQ-9; CQ-10; CQ-11 (environment override removed, replaced by the exception listing, SCO-H1-33); CQ-12 (exact names checked to exist; 18 WebKit specs); CQ-14 (both hooks); CQ-15 (full-week.spec.ts:202-205 skips every project but Pixel 7); CQ-16 (concurrency group includes event_name); CQ-17.",
+    "Read: docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-scope.md, both round-1 reports and self-review.json, 04_IMPLEMENTATION_PLAN.md in full, 02_MVP_SCOPE.md in full, AGENTS.md in full and HEAD:AGENTS.md §§9-18, docs/DEVICE_CHECKS.md, docs/working/BACKLOG.md, docs/DOCS_SYSTEM.md, archive/README.md, archive/v0.3.0/0_3_0_QUESTIONS.md in full, archive/v0.3.0/1_0_0_NEXT_STEPS.md in full, OPEN_ITEMS:235-245, CHANGELOG.md 0.3.0 known limitations, 03 §6 and §6.1, 01 §§3.2, 3.6, 7.1, 7.4, 7.5 and 12, docs/design/07_PAGE_CHANGELOG.md F4 entries.",
+    "Diffs and files read: scripts/ci-scope.mjs and its test, check-docs.mjs and its test, milestone.mjs, record-verification.mjs, run-e2e.mjs, e2e-report.mjs, verification-digest.mjs, check-staged.mjs, privacy-rules.mjs and its test, check-repository.mjs, git-hooks/*, ci.yml, deploy-pages.yml, playwright.config.ts, vitest.config.ts, package.json, .milestones/manifest.json, src/ (comment-only changes), tests/e2e (screenshot branches only), README, QUICKSTART, DEPLOY, LOCAL_DEVELOPMENT, RETROSPECTIVE_PROMPT, SKILL.md.",
+    "UG2 evidence: every finding ID in the seven *-review.json files mapped to the BACKLOG; fix commits 6db5aea, 4a434c9 and 20c7e97 read; scope-review rechecks; physical-device-review.json; UG1 physical-device-review.json:24; F4 self-review.",
+    "Ran: node scripts/check-docs.mjs (PASS, 138 Markdown files), node scripts/check-repository.mjs (PASS), git status/diff/merge-base/config/cmp, greps for section references, stale paths, geometry assertions outside layoutSpecs (only full-week, ug2-upgraded-week, v05: all Pixel-only or not layout checks), and network calls added by the diff (only ci-scope's GitHub API fetch)."
+  ],
+  "anglesTried": {
+    "seed": 702373599,
+    "lenses": [
+      "2. Deferred items in 02_MVP_SCOPE.md §2 appearing in the diff (seed mod 10 = 9 is lens 10, tried in round 1; lens 1 tried; next untried is lens 2). Result: the src changes are comment-only; nothing deferred is implemented; the only deferred-item issue is how the D2–D5 candidate is scoped (SCO-H1-30)",
+      "3. Owner decisions in the working documents honoured word for word (floor(seed/10) mod 10 = 9 repeats lens 10; next untried after lens 2). Result: SCO-H1-26, 29, 30, 31"
+    ],
+    "wildcard": "Cross-references broken by the renumbering and rewrite, in both directions: every '02 §N', '03 §N' and 'AGENTS §N' pointer in contracts and code, and the spec sections H1's own evidence cites (SCO-H1-27, 28). Also: given H1's closing order (complete, commit, push, then CI) and its new frozen-evidence rule plus pre-commit check, is there still a sanctioned way to record a fix that only CI forces, as UG2 needed with 04bdc51 and 0bd07d8? There is not (SCO-H1-25)."
+  },
+  "notTested": [
+    "As the brief asked, I ran no unit test, browser test, build, tsc or verify script. So verify:all, 'no test lost except duplicates', the 30% reductions and the two-worker trial are unverified and pending.",
+    "check-staged.mjs and milestone:self-test were not run, since neither is on the brief's list of allowed commands. Whether the H1 commit passes the pre-commit hook was reasoned from the code, not executed: only additions under the frozen paths, and renames at 100% similarity.",
+    "The frozen-evidence refusal after completion (SCO-H1-25), the permanent exception (SCO-H1-33) and the new-branch fallback (SCO-H1-34) are shown by code path, not by a real commit or push.",
+    "GitHub-side behaviour of the check-runs query (naming, timing under cancel-in-progress) is reasoned from the workflow and GitHub's documented semantics.",
+    "That the size and repetition warnings exclude volunteers was taken from the owner record and the existing test, not re-run.",
+    "The retrospective's output, the owner's picks and test-timing.json do not exist yet."
+  ]
+}

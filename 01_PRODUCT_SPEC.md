@@ -29,8 +29,8 @@ The interface therefore follows these product rules:
 - keep voice as an input method and discard audio after transcription.
 
 Detailed density, touch, typography, viewport and component rules live in
-`docs/post-mvp/06_DESIGN_RULEBOOK.md`. Page composition targets live in
-`docs/post-mvp/07_PAGE_CHANGELOG.md` and mock r10 at commit `ee8d4c8`. They guide
+`docs/design/06_DESIGN_RULEBOOK.md`. Page composition targets live in
+`docs/design/07_PAGE_CHANGELOG.md` and mock r10 at commit `ee8d4c8`. They guide
 presentation and interaction without changing this document's semantics.
 
 ## 2. Course, shell and navigation
@@ -122,10 +122,12 @@ state. Phone, size, notes and detailed history do not appear in the normal list.
 Sort active students by surname and then displayed name. Disabled students remain
 visible after active students, greyed out. Advanced sort controls are deferred.
 
-If the course has no students, show `Scan allievi` and `Aggiungi allievo`
-prominently. `Aggiungi` remains reachable after scrolling as a floating action and
-must not cover the last row or bottom navigation. Secondary actions include Add,
-Scan and `Conoscenza allievi`; Conoscenza is disabled until a student exists.
+If the course has no students, the page offers every way to add them, the same
+methods page the Allievi menu opens (owner decision 2026-09-28): `Aggiungi
+allievo`, `Scan allievi` and `Usa un assistente`. `Aggiungi` remains reachable after scrolling as a floating action and
+must not cover the last row or bottom navigation. Secondary actions include the same
+three methods and `Conoscenza allievi`; Conoscenza is disabled until a student
+exists.
 
 ### 3.3 Add, edit, knowledge and notes
 
@@ -193,7 +195,12 @@ names at both ends of each row; leave an explicit whole-sheet correction. Mixed
 ordering and compound names still need editable per-row fields and
 acknowledgement before insertion. An icon-only per-row swap exchanges given name
 and surname; its accessible name explains the action. The sheet-wide order
-control remains available.
+control remains available. The particles Lo, Li, El, Al, De and Di stay with
+the surname (owner decision 2026-09-26).
+
+A staff heading never drops the rows after it: they are kept and marked
+`Forse personale` until a student heading (owner decision 2026-09-28). A row
+that carries a staff role code (IS, ADV, CT …) is left out on its own.
 
 Extraction attempts first name, surname, a date of birth, printed age and
 phone when present. Age only, in every mode (owner decision 2026-09-28): the
@@ -398,12 +405,11 @@ zero, including while the user replaces a number. Keep separate:
 - boats selected for this outing;
 - exact crew-to-boat assignment.
 
-D2–D5 crews default to two people and remain fixed at two unless a
-Settings-only override is enabled. With that override, add/remove controls on
-the crew card permit manual adjustment. D1 and cabin courses start at four
+D2–D5 crews default to two people and stay fixed at two. A Settings-only
+override that would add add/remove controls on their crew cards is deferred
+(`02_MVP_SCOPE.md` §2). D1 and cabin courses start at four
 people per crew and permit manual adjustment. Crew capacity is independent of
-the two/three-column display setting. These are the 0.3.0 rules; 0.2.0 used an
-even proposal for D1/cabin courses.
+the two/three-column display setting.
 
 ### 7.2 People, A terra and composition
 
@@ -509,7 +515,8 @@ three or more, an identical previous whole crew is red and each internal pair is
 also checked using the same recent/older rule. Do not implement fuzzy similarity.
 
 Other strong warnings include an active student missing from crew/A terra and a
-D1 morning-duty student who is not A terra. A duty assignment alone does not
+D1 morning-duty student who is not A terra. Volunteers count toward no size or
+repetition warning (owner decision 2026-09-26). A duty assignment alone does not
 automatically move a student A terra.
 
 A crew assigned a boat with an open or communicated (unresolved) fault shows a
@@ -628,7 +635,7 @@ Phone and other personal data appear only where operationally relevant, never in
 announcement rows. All app users are assumed to be authorized instructors or
 assistant instructors; that assumption does not justify showing irrelevant data.
 
-The decided progression (owner, 2026-10-08; `02_MVP_SCOPE.md` §7) is an online
+The decided progression (owner, 2026-10-08; `02_MVP_SCOPE.md` §4) is an online
 backup for the owner (0.5.0), read-only sharing with the course team (0.6.0),
 the season's history (0.7.0) and team editing (1.0.0). This specification
 describes the released single-device behaviour; each of those releases
@@ -668,9 +675,6 @@ but representable operational choices and preserve manual override.
 
 ## 12. Scope boundary
 
-The included and deferred 0.2.0 boundary is authoritative in
-`02_MVP_SCOPE.md`; implementation order and evidence live in
-`04_IMPLEMENTATION_PLAN.md`. In particular, 0.2.0 does not add backend/sync,
-automatic crew optimization, dashboards, Instagram imagery, a broad custom icon
-programme, native brightness control, presentation exports, evaluation-band crew
-hints or fixed special-course crew formulas.
+What is in scope, what is deferred and the release that brings the backend,
+sync and sharing are authoritative in `02_MVP_SCOPE.md`; implementation order
+and evidence live in `04_IMPLEMENTATION_PLAN.md`.

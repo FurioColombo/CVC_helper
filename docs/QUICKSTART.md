@@ -22,8 +22,9 @@ release used on a phone, on 2026-10-08; work continues on `codex/0.3.0`.
   verification and milestone tooling, the speech benchmark and the OCR diagnostic.
 - `.evidence/<ID>/` — per-milestone verification, reviews and screenshots for the
   active cycles; the closed 0.1.0 evidence is in `archive/v0.1.0/evidence/`.
-- `docs/post-mvp/` — design rulebook, page changelog, frozen mock, device checklist,
-  and `0_3_0_OWNER_BRIEF.md`, the human decision record driving 0.3.0.
+- `docs/design/` — design rulebook, page changelog and frozen mocks;
+  `docs/DEVICE_CHECKS.md` — the owner's phone checks; `docs/working/` —
+  temporary owner-facing documents; `docs/agents/` — the review protocol.
 
 ## Run it
 

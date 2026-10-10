@@ -24,8 +24,8 @@ const requiredFiles = [
   "scripts/check-runtime.mjs",
   "src/persistence/db.ts",
   "src/test/fixtures/v0.1.0-course.json",
-  "docs/post-mvp/06_DESIGN_RULEBOOK.md",
-  "docs/post-mvp/07_PAGE_CHANGELOG.md",
+  "docs/design/06_DESIGN_RULEBOOK.md",
+  "docs/design/07_PAGE_CHANGELOG.md",
   "public/icons/cvc-helper-180.png",
   "public/icons/cvc-helper-192.png",
   "public/icons/cvc-helper-512.png",
@@ -220,8 +220,8 @@ const activeDesignText = [
   "02_MVP_SCOPE.md",
   "03_TECHNICAL_DECISIONS.md",
   "04_IMPLEMENTATION_PLAN.md",
-  "docs/post-mvp/06_DESIGN_RULEBOOK.md",
-  "docs/post-mvp/07_PAGE_CHANGELOG.md",
+  "docs/design/06_DESIGN_RULEBOOK.md",
+  "docs/design/07_PAGE_CHANGELOG.md",
 ]
   .map((path) => readFileSync(resolve(root, path), "utf8"))
   .join("\n")
@@ -246,7 +246,7 @@ const ABSOLUTE_PATH =
   /(?:[A-Za-z]:[\\/]Users[\\/])|(?:\/Users\/[a-z])|(?:\/home\/[a-z])/
 const ABSOLUTE_PATH_EXEMPT = new Map([
   [
-    "docs/post-mvp/0_3_0_OWNER_BRIEF.md",
+    "archive/v0.3.0/0_3_0_OWNER_BRIEF.md",
     "human decision record; it quotes the defective path as the finding",
   ],
 ])

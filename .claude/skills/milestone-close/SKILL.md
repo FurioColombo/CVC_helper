@@ -24,7 +24,9 @@ forward.
 
 - Focused specs and unit tests for what changed, then the scripts in the
   milestone's `verificationScripts` (`.milestones/manifest.json`), recorded with
-  `npm run evidence -- <ID>`. That records the source digest: any later change
+  `npm run evidence -- <ID>`. `verify:e2e:focus` runs the manifest's
+  `e2eSpecs`: list the milestone's own specs and the journeys of every area it
+  touches. That records the source digest: any later change
   to code (Markdown, evidence and manifest excepted) invalidates it.
 - Run reviews **before** the recorded full run, so their fixes do not force a
   second one.
@@ -63,8 +65,8 @@ forward.
    milestone: decisions to the contract, open items to the next working
    document or the plan, the file to `archive/<cycle>/`.
 4. **Follow-ups.** Each limitation or idea found during the milestone is
-   either scheduled in the plan or added to the working next-steps document. Do
-   not leave it only in evidence.
+   either scheduled in the plan or added to `docs/working/BACKLOG.md`. Do not
+   leave it only in evidence.
 5. **Prepare the next milestone.** Its section exists, has a success predicate
    (one sentence that decides pass or fail) and an adversarial checklist (the
    specific ways it could be wrong), and names its category, reviewers and
@@ -80,12 +82,19 @@ fresh plan replaces it.
 ## 6. Complete and checkpoint
 
 - `npm run milestone:complete -- <ID>`. It refuses missing evidence, a stale
-  or partial `verification.json`, or a failed review; fix the cause, never the
-  check.
+  or partial `verification.json`, a failed review, a plan that still holds the
+  milestone's section or lacks its `| <ID> | Complete. …` row, and a failing
+  `check:docs`; fix the cause, never the check.
 - `npm run verify:quick`, then one commit: `Complete <ID>: <outcome>`. The
-  pre-commit hook checks privacy; never bypass it.
+  pre-commit hook checks privacy and frozen files; never bypass it. From this
+  commit on the milestone's evidence is frozen, so do not amend it to change
+  that evidence: make a new commit.
 - Push and deploy only as the plan and the owner allow (Pages deploys `main`
-  after CI).
+  after CI). CI, not the local run, is the authority for the browser suite
+  (`03_TECHNICAL_DECISIONS.md` §6.1): if it fails on the pushed commit, fix it
+  in a new commit and record the re-run as a new file,
+  `npm run evidence -- <ID> --file verification-ci-fix.json`, since the
+  completed `verification.json` only grows.
 
 Report to the owner: what was delivered, what the evidence shows, what
 remains theirs to check on a device, and the next milestone.

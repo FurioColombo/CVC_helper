@@ -5,7 +5,7 @@ folder of static files over HTTPS. This page says how, how to do it again, and
 how to take it down.
 
 Why it matters: a browser will not give a web page the camera or the microphone
-over plain HTTP, so the phone checks in `UG1_DEVICE_VALIDATION.md` cannot run
+over plain HTTP, so the phone checks in `docs/DEVICE_CHECKS.md` cannot run
 until the app has a trusted HTTPS address. That is what this is for.
 
 ## What was measured before choosing a host

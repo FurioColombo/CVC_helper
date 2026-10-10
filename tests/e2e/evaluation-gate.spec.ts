@@ -1,6 +1,3 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
 
 const STUDENTS = [
@@ -52,7 +49,7 @@ async function setEvaluation(page: Page, name: string, value: string) {
 
 test("verifies the evaluation workflow across an evolving week", async ({
   page,
-}, testInfo) => {
+}) => {
   test.setTimeout(180_000)
 
   await page.goto("/")
@@ -226,12 +223,4 @@ test("verifies the evaluation workflow across an evolving week", async ({
   })
   await expect(weeklyGrid.getByLabel("Sabato PM: +")).toBeVisible()
   await expect(weeklyGrid.getByLabel("Lunedì AM: ++")).toBeVisible()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    const screenshotPath = path.resolve(
-      "test-results/screenshots/evaluation-gate-iphone13.png",
-    )
-    mkdirSync(path.dirname(screenshotPath), { recursive: true })
-    await page.screenshot({ path: screenshotPath, fullPage: true })
-  }
 })

@@ -714,12 +714,13 @@
     {
       "id": "H1",
       "category": "FOUNDATION",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/H1/verification.json",
         ".evidence/H1/test-timing.json",
         ".evidence/H1/docs-move.json",
+        ".evidence/H1/retro-adoption.json",
         ".evidence/H1/self-review.json",
         ".evidence/H1/scope-review.json",
         ".evidence/H1/code-quality-review.json"
@@ -734,7 +735,7 @@
       "id": "D1",
       "category": "FOUNDATION",
       "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D1/verification.json",
         ".evidence/D1/migration-evidence.json",
@@ -744,13 +745,14 @@
       "requiredReviews": [
         ".evidence/D1/self-review.json",
         ".evidence/D1/data-integrity-review.json"
-      ]
+      ],
+      "e2eSpecs": []
     },
     {
       "id": "D2",
       "category": "RULE_HEAVY",
       "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D2/verification.json",
         ".evidence/D2/migration-evidence.json",
@@ -762,13 +764,14 @@
         ".evidence/D2/self-review.json",
         ".evidence/D2/domain-review.json",
         ".evidence/D2/data-integrity-review.json"
-      ]
+      ],
+      "e2eSpecs": []
     },
     {
       "id": "D3",
       "category": "RULE_HEAVY",
       "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D3/verification.json",
         ".evidence/D3/browser-evidence.json",
@@ -783,13 +786,14 @@
         ".evidence/D3/data-integrity-review.json",
         ".evidence/D3/regression-review.json",
         ".evidence/D3/field-ux-review.json"
-      ]
+      ],
+      "e2eSpecs": []
     },
     {
       "id": "D4",
       "category": "FEATURE",
       "status": "PENDING",
-      "verificationScripts": ["verify"],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D4/verification.json",
         ".evidence/D4/round-trip-evidence.json",
@@ -805,7 +809,8 @@
         ".evidence/D4/data-integrity-review.json",
         ".evidence/D4/security-privacy-review.json",
         ".evidence/D4/field-ux-review.json"
-      ]
+      ],
+      "e2eSpecs": []
     },
     {
       "id": "UG3",

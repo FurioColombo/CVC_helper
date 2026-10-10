@@ -6,7 +6,7 @@ const CLEAR_ROSTER = path.resolve("tests/fixtures/ocr-sheet-clear.png")
 
 test("keeps the complete student workflow consistent across reload", async ({
   page,
-}, testInfo) => {
+}) => {
   test.setTimeout(90_000)
   await page.clock.setFixedTime(new Date("2026-08-29T12:00:00+02:00"))
   await page.goto("/")
@@ -173,13 +173,6 @@ test("keeps the complete student workflow consistent across reload", async ({
   await expect(page.getByText("Esperienza Optimist")).toBeVisible()
   await expect(page.getByText("L", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Indietro da Profilo" }).click()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      fullPage: true,
-      path: path.resolve("test-results/screenshots/final-list-iphone13.png"),
-    })
-  }
 })
 
 test("creates, corrects and reloads a declared age without a birth date", async ({

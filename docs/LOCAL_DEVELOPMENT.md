@@ -69,13 +69,10 @@ Do not substitute a manual glance for a required Playwright journey.
 
 ## Verification ladder
 
-- During edits: focused `npm run test -- <file>` or a relevant Playwright spec.
-- Before every checkpoint commit: `npm run verify:quick`.
-- At an ordinary milestone close: the commands required by its manifest entry,
-  usually `npm run verify` plus focused browser evidence.
-- At release gates (UG3) and in CI: `npm run verify:all`, including the full
-  week and the browser matrix. H1 sets the ordinary close to `verify` plus the
-  affected browser specs.
+The ladder (what runs while editing, before a commit, at a close and at a gate)
+and the flaky-test rule are `03_TECHNICAL_DECISIONS.md` §6. One spec runs with
+`npm run verify:e2e -- tests/e2e/<spec>.spec.ts`; `npm run evidence -- <ID>`
+records a milestone's scripts, `verify:e2e:focus` among them.
 
 Do not pipe ESLint through `head` or `tail`; a broken pipe can hide its result.
 OCR and microphone checks on actual phones belong to the owner and are never

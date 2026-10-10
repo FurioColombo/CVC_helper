@@ -108,6 +108,13 @@ export function lineProblems(path, line, denylist = []) {
   }
   if (isRecordPath(path)) {
     for (const match of line.matchAll(PHONE)) {
+      // A bare JSON number (a review's seed, a size) is not a phone: stored
+      // phones are strings.
+      const jsonNumber =
+        /^\d+$/.test(match[0]) &&
+        /"\s*:\s*$/.test(line.slice(0, match.index)) &&
+        /^\s*[,}\]]?\s*$/.test(line.slice(match.index + match[0].length))
+      if (jsonNumber) continue
       const digits = match[0].replace(/\D/g, "").replace(/^39(?=3\d{9}$)/, "")
       if (!SYNTHETIC_PHONES.has(digits)) {
         problems.push(
@@ -138,7 +145,8 @@ export function addedLines(diff) {
     // An added line that itself starts with "++ " also reads "+++ "; only the
     // line right after "--- " is a file header.
     if (header) {
-      current = raw === "+++ /dev/null" ? null : raw.slice(6)
+      // Git ends a header whose path has a space with a TAB.
+      current = raw === "+++ /dev/null" ? null : raw.slice(6).replace(/\t$/, "")
       if (current && !files.has(current)) files.set(current, [])
       continue
     }

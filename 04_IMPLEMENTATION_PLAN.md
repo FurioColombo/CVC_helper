@@ -1,7 +1,7 @@
 # Implementation plan — 0.4.0
 
 Updated 2026-10-08. Read **Where this cycle stands**, then only the active
-milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §7. The 0.3.0 plan
+milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.3.0 plan
 is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
 
@@ -23,9 +23,10 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 
 | Work | State and evidence |
 | --- | --- |
-| 0.3.0 | Released and tagged `v0.3.0` on 2026-10-08. Evidence in `.evidence/UG2/`; known limitations in `CHANGELOG.md`; review findings left for later in `docs/post-mvp/1_0_0_NEXT_STEPS.md`. |
+| 0.3.0 | Released and tagged `v0.3.0` on 2026-10-08. Evidence in `.evidence/UG2/`; known limitations in `CHANGELOG.md`; review findings left for later in `docs/working/BACKLOG.md`. |
 | Harness prep | On branch `claude/harness-0.4-prep`: shared hooks, reviewer personas, skills, `docs/DOCS_SYSTEM.md`, `check:docs`. Merged as H1's first step. |
-| H1–UG3 | Pending; H1 is next. |
+| H1 | In progress: documents reset, faster tests; reviews round 1 answered. |
+| D1–UG3 | Pending. |
 
 ## Execution order
 
@@ -47,7 +48,7 @@ findings join as an extra milestone only if the owner picks them (see the end).
 ## H1 — Harness and documentation reset
 
 **Category:** FOUNDATION
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 1. Merge `claude/harness-0.4-prep`. `npm install` activates the Git hooks; the
    owner adds the PowerSync documentation server to Codex's configuration.
@@ -89,8 +90,9 @@ the `AGENTS.md` trim; tests that pass in the Node environment only because their
 DOM assertions no longer run.
 
 **Evidence:** `verification.json` (`verify:all`), `test-timing.json` (before and
-after), `docs-move.json` (old path → new home), self-review, scope and
-code-quality reviews.
+after), `docs-move.json` (old path → new home), `retro-adoption.json` (the
+owner's picks from the retrospective), self-review, scope and code-quality
+reviews.
 
 ## D1 — Record metadata and course ownership
 
@@ -242,8 +244,5 @@ reviews, the owner's device report.
 
 ## Waiting for the owner
 
-Which UG2 findings (`docs/post-mvp/1_0_0_NEXT_STEPS.md`) matter in the field
-enough to join 0.4.0 as a fix milestone? Candidates: correcting the course start
-date (UG2-DAT-4), two open copies overwriting a session plan (UG2-DAT-9), phone
-Back from the crew destination chooser (UG2-UX-4), names on two lines on crew
-cards (UG2-RS-2), layouts at 115–150% text (UG2-REG-2).
+Which of the six candidates in `docs/working/BACKLOG.md` ("Waiting for the
+owner's choice") join 0.4.0 as a fix milestone?

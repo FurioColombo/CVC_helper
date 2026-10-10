@@ -1,6 +1,3 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-
 import { expect, type Page, test } from "@playwright/test"
 
 async function addStudent(page: Page, firstName: string, surname: string) {
@@ -17,7 +14,7 @@ async function addStudent(page: Page, firstName: string, surname: string) {
 
 test("persists outgoing boats, exact destinations and unavailable-boat warnings", async ({
   page,
-}, testInfo) => {
+}) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
   await page.getByRole("button", { name: "Livello 2" }).click()
@@ -120,12 +117,4 @@ test("persists outgoing boats, exact destinations and unavailable-boat warnings"
   await expect(
     page.getByRole("button", { name: "Assegna equipaggio 1 a RS Quest 2" }),
   ).toBeEnabled()
-
-  if (testInfo.project.name === "iphone-13-viewport") {
-    const screenshotPath = path.resolve(
-      "test-results/screenshots/crew-destinations-iphone13.png",
-    )
-    mkdirSync(path.dirname(screenshotPath), { recursive: true })
-    await page.screenshot({ fullPage: true, path: screenshotPath })
-  }
 })

@@ -1,0 +1,229 @@
+{
+  "milestone": "H1",
+  "recordedAt": "2026-10-09T19:50:53.987Z",
+  "rule": "docs/DOCS_SYSTEM.md: documents describe the present; history is evidence; the archive is frozen.",
+  "moves": [
+    {
+      "from": "docs/post-mvp/0_3_0_DEVELOPMENT_AUDIT.md",
+      "to": "archive/v0.3.0/0_3_0_DEVELOPMENT_AUDIT.md"
+    },
+    {
+      "from": "docs/post-mvp/0_3_0_OPEN_ITEMS.md",
+      "to": "archive/v0.3.0/0_3_0_OPEN_ITEMS.md"
+    },
+    {
+      "from": "docs/post-mvp/0_3_0_OWNER_BRIEF.md",
+      "to": "archive/v0.3.0/0_3_0_OWNER_BRIEF.md"
+    },
+    {
+      "from": "docs/post-mvp/0_3_0_QUESTIONS.md",
+      "to": "archive/v0.3.0/0_3_0_QUESTIONS.md"
+    },
+    {
+      "from": "docs/post-mvp/1_0_0_NEXT_STEPS.md",
+      "to": "archive/v0.3.0/1_0_0_NEXT_STEPS.md"
+    },
+    {
+      "from": "docs/post-mvp/brief-0.3.0/crop-edge-handles-sketch.png",
+      "to": "archive/v0.3.0/brief-0.3.0/crop-edge-handles-sketch.png"
+    },
+    {
+      "from": "docs/post-mvp/brief-0.3.0/dictation-loading-overflow.png",
+      "to": "archive/v0.3.0/brief-0.3.0/dictation-loading-overflow.png"
+    },
+    {
+      "from": "docs/post-mvp/brief-0.3.0/dictation-review-step.png",
+      "to": "archive/v0.3.0/brief-0.3.0/dictation-review-step.png"
+    },
+    {
+      "from": "docs/post-mvp/brief-0.3.0/dictation-stop-overflow.png",
+      "to": "archive/v0.3.0/brief-0.3.0/dictation-stop-overflow.png"
+    },
+    {
+      "from": "docs/post-mvp/brief-0.3.0/first-marks-reference.png",
+      "to": "archive/v0.3.0/brief-0.3.0/first-marks-reference.png"
+    },
+    {
+      "from": "docs/post-mvp/06_DESIGN_RULEBOOK.md",
+      "to": "docs/design/06_DESIGN_RULEBOOK.md"
+    },
+    {
+      "from": "docs/post-mvp/07_PAGE_CHANGELOG.md",
+      "to": "docs/design/07_PAGE_CHANGELOG.md"
+    },
+    {
+      "from": "docs/post-mvp/mockups/README.md",
+      "to": "docs/design/mockups/README.md"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/README.md",
+      "to": "docs/design/mockups/assets/README.md"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/boat-first-25-7.png",
+      "to": "docs/design/mockups/assets/boat-first-25-7.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/boat-first-27.png",
+      "to": "docs/design/mockups/assets/boat-first-27.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/boat-j80.png",
+      "to": "docs/design/mockups/assets/boat-j80.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/boat-laser-vago.png",
+      "to": "docs/design/mockups/assets/boat-laser-vago.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/boat-rs-500.png",
+      "to": "docs/design/mockups/assets/boat-rs-500.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/boat-rs-toura.png",
+      "to": "docs/design/mockups/assets/boat-rs-toura.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/logo-fcvc.avif",
+      "to": "docs/design/mockups/assets/logo-fcvc.avif"
+    },
+    {
+      "from": "docs/post-mvp/mockups/assets/rs-quest-complete.png",
+      "to": "docs/design/mockups/assets/rs-quest-complete.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/f3-crew-summary-c6.html",
+      "to": "docs/design/mockups/f3-crew-summary-c6.html"
+    },
+    {
+      "from": "docs/post-mvp/mockups/f3-crew-summary-c6.png",
+      "to": "docs/design/mockups/f3-crew-summary-c6.png"
+    },
+    {
+      "from": "docs/post-mvp/mockups/index.html",
+      "to": "docs/design/mockups/index.html"
+    },
+    {
+      "from": "docs/post-mvp/mockups/mock.css",
+      "to": "docs/design/mockups/mock.css"
+    },
+    {
+      "from": "docs/post-mvp/mockups/mock.js",
+      "to": "docs/design/mockups/mock.js"
+    },
+    {
+      "from": "docs/post-mvp/mockups/review-checks.json",
+      "to": "docs/design/mockups/review-checks.json"
+    }
+  ],
+  "added": [
+    {
+      "path": "archive/v0.3.0/02_MVP_SCOPE.md",
+      "why": "the scope as it stood through 0.3.0, before the present-tense rewrite"
+    },
+    {
+      "path": "archive/README.md",
+      "why": "index of the archive and the one privacy-redaction exception"
+    },
+    {
+      "path": "docs/working/BACKLOG.md",
+      "why": "working document (fold at UG3) gathering every open item"
+    }
+  ],
+  "folded": [
+    {
+      "from": "archive/v0.3.0/1_0_0_NEXT_STEPS.md",
+      "sequencing": "02_MVP_SCOPE.md §4 (owner, 2026-10-08)",
+      "openItems": "docs/working/BACKLOG.md (UG2 findings, owner future work, engineering follow-ups)",
+      "openDecisions": "'Decisions the shared version needs': backend and roles settled by the owner on 2026-10-08 (02 §4); data controller, deletion on the server and in backups, and self-hosting the speech model moved to docs/working/BACKLOG.md 'Decisions due before the first real roster goes online' (SCO-H1-1)",
+      "codeQuality": "UG2-CQ-1 to 21: CQ-1 to 7, 9 and 10 were in NEXT_STEPS; CQ-8 and 11 to 21 had no home and are now in the backlog's engineering follow-ups (SCO-H1-9)"
+    },
+    {
+      "from": "archive/v0.3.0/0_3_0_OPEN_ITEMS.md",
+      "openItems": "docs/working/BACKLOG.md future work (real-photo regression, product name, evaluation history redesign) and 'Waiting for the owner's choice' (the D2-D5 override, assigned by the owner to the follow-up after the 0.3.0 gate); 02_MVP_SCOPE.md §2 deferrals"
+    },
+    {
+      "from": "archive/v0.3.0/0_3_0_QUESTIONS.md",
+      "decisions": "In the contracts: age on the first course day (01 §3), trusted paste with Sono tutti and Tieni entrambi (01), the open-fault crew warning (01 §7.4), C6 and Copia immagine (01, docs/design/07_PAGE_CHANGELOG.md), erasing the course (01 §2). Added to 01 by H1 after the scope review (SCO-H1-7): the empty Allievi page's three methods (§3.2), volunteers outside size and repetition warnings (§7.4), surname particles and staff headings in the scan (§3.6). The D2–D5 override, assigned by the owner to the follow-up after the 0.3.0 gate, is a candidate fix in the backlog's 'Waiting for the owner's choice' (SCO-H1-8). GitHub Support and the iPhone checks are owner future work in the backlog."
+    },
+    {
+      "from": "archive/v0.3.0/0_3_0_OWNER_BRIEF.md",
+      "decisions": "0.3.0 brief, implemented and released; the deferred product name and real-photo regression are in docs/working/BACKLOG.md"
+    },
+    {
+      "from": "archive/v0.3.0/0_3_0_DEVELOPMENT_AUDIT.md",
+      "decisions": "0.3.0 audit; its follow-ups were completed in 0.3.0 or carried in 1_0_0_NEXT_STEPS.md, now the backlog"
+    },
+    {
+      "from": "docs/post-mvp/UG1_DEVICE_VALIDATION.md",
+      "to": "docs/DEVICE_CHECKS.md",
+      "how": "standing checklist in the present tense; the V03 and UG2 outcomes stay in .evidence/V03 and .evidence/UG2"
+    },
+    {
+      "from": "UG2 data-integrity and scope reviews",
+      "openItems": "UG2-DAT-7, DAT-11, DAT-12, SCO-13 and SCO-14 had no home and are now in the backlog (SCO-H1-22)"
+    }
+  ],
+  "agentsTrim": {
+    "before": 426,
+    "after": 298,
+    "sections": [
+      {
+        "section": "§3",
+        "change": "the list of verifiable forms condensed into one sentence; same rule"
+      },
+      {
+        "section": "§5",
+        "change": "command list kept, one line per command; detail in 03 §6 and docs/LOCAL_DEVELOPMENT.md"
+      },
+      {
+        "section": "§8",
+        "change": "roles kept; the JSON report fields and the FAIL/PASS_WITH_FINDINGS rule kept in one paragraph"
+      },
+      {
+        "section": "§9–§12",
+        "change": "condensed, every rule kept; §12 adds that completed evidence only grows"
+      },
+      {
+        "section": "§13",
+        "change": "kept; adds the pre-push hook"
+      },
+      {
+        "section": "§14",
+        "change": "kept, condensed"
+      },
+      {
+        "section": "§4",
+        "change": "harness list condensed into one paragraph (detail in 03 §6); 'Do not begin a feature milestone while an earlier milestone is incomplete' kept word for word after the scope review (SCO-H1-17)"
+      },
+      {
+        "section": "§6",
+        "change": "step 9 now orders the documentation sweep before milestone:complete, which refuses an unswept plan (SCO-H1-10)"
+      },
+      {
+        "section": "§7",
+        "change": "each category's emphasis kept as one bullet; FOUNDATION 'Independent reviewer is not normally required' became 'only when the milestone names one' (same rule, stated by whom); INTEGRATION_GATE 'The final MVP gate uses multiple specialized reviewers' became 'A release gate uses ...', generalising the MVP gate to every release gate"
+      },
+      {
+        "section": "§10",
+        "change": "condensed; 'standard crew size where defined' kept after the scope review"
+      },
+      {
+        "section": "§15",
+        "change": "'do not prematurely add' kept; the list now names what 02 §4 assigns to later releases and what 02 §2 defers, so native packaging and the rest stay deferred, not forbidden (SCO-H1-3)"
+      }
+    ],
+    "counting": "lines as wc -l counts them (newline-terminated); check:docs counts one more"
+  },
+  "scopeRewrite": {
+    "archived": "archive/v0.3.0/02_MVP_SCOPE.md, byte-identical to 02_MVP_SCOPE.md at 8edc8a1 (SCO-H1-19)",
+    "now": "02 §1 in scope (the released app), §2 deferred (every earlier deferral still open), §3 conditional evidence, §4 the road to a shared database, §5 completion boundary",
+    "completionBoundary": "the release-completion rule 'every deferred item remains absent or explicitly isolated' kept in 02 §5 (SCO-H1-4)"
+  },
+  "reclassified": {
+    "path": "docs/design/07_PAGE_CHANGELOG.md",
+    "from": "ledger",
+    "to": "contract",
+    "why": "it holds each page's current state, amended in place (11 in-place edits in the last 150 commits, CQ2-10)"
+  }
+}

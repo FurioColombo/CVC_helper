@@ -7,7 +7,7 @@ Questa galleria è separata dall'app. Non importa codice o dati applicativi e no
 Dalla cartella del repository:
 
 ```powershell
-python -m http.server 8785 --bind 127.0.0.1 --directory docs/post-mvp/mockups
+python -m http.server 8785 --bind 127.0.0.1 --directory docs/design/mockups
 ```
 
 Poi aprire `http://127.0.0.1:8785/#P01`. Il server espone soltanto questa cartella.
