@@ -84,11 +84,14 @@ test("keeps legacy operational IDs through no-op and unrelated saves", async ({
       // normalizeCrewCapacity), so the first save after upgrading a legacy
       // database backfills each crew's capacity from the pre-capacity
       // legacy null to that standard size. That backfill is intentional
-      // domain behavior, so every OTHER field must still be an exact no-op.
+      // domain behavior, and since D1 a real change also moves the row's
+      // updatedAt, so every OTHER field must still be an exact no-op.
       const stripCapacity = (rows: Array<Record<string, unknown>>) =>
         rows.map((row) =>
           Object.fromEntries(
-            Object.entries(row).filter(([key]) => key !== "capacity"),
+            Object.entries(row).filter(
+              ([key]) => key !== "capacity" && key !== "updatedAt",
+            ),
           ),
         )
       expect(stripCapacity(result.afterNoOp[table]!)).toEqual(
@@ -96,6 +99,7 @@ test("keeps legacy operational IDs through no-op and unrelated saves", async ({
       )
       for (const row of result.afterNoOp[table]!) {
         expect(row.capacity).toBe(2)
+        expect(row.updatedAt).toEqual(expect.any(String))
       }
     } else {
       expect(result.afterNoOp[table]).toEqual(result.before[table])
