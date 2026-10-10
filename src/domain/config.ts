@@ -144,6 +144,25 @@ export const SESSION_SMONTANTE_DUTY_DAY: Readonly<
 export const DUTY_TIE_BREAKERS = ["alphabetical", "similar-age"] as const
 export type DutyTieBreaker = (typeof DUTY_TIE_BREAKERS)[number]
 
+/**
+ * The lists of the duty settings, each stored item by item (D2): one row per
+ * item, of this kind, in the list's order. `days` says whether the items are
+ * duty day ids.
+ */
+export const DUTY_SETTING_LISTS = [
+  { kind: "fewer-day", field: "fewerDayIds", days: true },
+  { kind: "extra-day", field: "extraDayIds", days: true },
+  { kind: "stay-over", field: "stayOverStudentIds", days: false },
+  { kind: "completed-day", field: "completedDayIds", days: true },
+  {
+    kind: "acknowledged-warning",
+    field: "acknowledgedWarningKeys",
+    days: false,
+  },
+] as const
+export type DutySettingListKind = (typeof DUTY_SETTING_LISTS)[number]["kind"]
+export type DutySettingListField = (typeof DUTY_SETTING_LISTS)[number]["field"]
+
 export const STUDENT_SIZES = ["XS", "S", "M", "L", "XL"] as const
 export type StudentSize = (typeof STUDENT_SIZES)[number]
 

@@ -49,7 +49,7 @@ findings join as an extra milestone only if the owner picks them (see the end).
 ## D2 — Duty settings as rows
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 The five JSON lists in `dutySettings` become rows of one table: one row per
 item, its kind from canonical configuration (fewer day, extra day, stay over,

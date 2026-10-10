@@ -79,11 +79,8 @@ async function readDeletionReferences(
   )
   const stayOver = await context.getAll<{ referenceId: string }>(
     `SELECT 'stay-over' AS referenceId
-     FROM dutySettings
-     WHERE EXISTS (
-       SELECT 1 FROM json_each(dutySettings.stayOverStudentIds)
-       WHERE json_each.value = ?
-     )
+     FROM dutySettingItems
+     WHERE kind = 'stay-over' AND value = ?
      LIMIT 1`,
     [studentId],
   )

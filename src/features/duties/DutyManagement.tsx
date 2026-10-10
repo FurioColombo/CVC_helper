@@ -38,15 +38,19 @@ import {
   type DutyStudentDayGroupEntry,
   type DutyWarning,
 } from "@/domain/duties"
+import {
+  defaultDutySettings,
+  dutySettingsForSave,
+  getProposalStudentCount,
+  normalizeProposalSettings,
+  type CanonicalDutySettings,
+  type DutySettings,
+} from "@/domain/dutySettings"
 import { blockingIssues, validateDutyRecords } from "@/domain/invariants"
 import { getStudentDisplayName, isStudentMinor } from "@/domain/student"
 import { makeSummaryFilename } from "@/lib/summaryShare"
 import { useNestedScreen } from "@/navigation/nestedScreen"
-import {
-  readDutyPlan,
-  saveDutyPlan,
-  type DutySettingsRecord,
-} from "@/persistence/duties"
+import { readDutyPlan, saveDutyPlan } from "@/persistence/duties"
 import { listStudents, type StudentRecord } from "@/persistence/students"
 import {
   buildDutySummarySections,
@@ -55,13 +59,6 @@ import {
   type DutySummaryMember,
   type DutySummarySections,
 } from "@/features/duties/dutySummaryModel"
-
-type DutySettingsWithExtras = DutySettingsRecord & {
-  extraDayIds?: DutyDayId[]
-}
-type CanonicalDutySettings = DutySettingsRecord & {
-  extraDayIds: DutyDayId[]
-}
 
 type DutyScreen =
   | { kind: "list" }
@@ -132,100 +129,6 @@ function asDutyStudents(students: StudentRecord[]): DutyStudent[] {
   )
 }
 
-function completedStudentIds(
-  assignments: DutyAssignment[],
-  completedDayIds: readonly DutyDayId[],
-) {
-  const completed = new Set(completedDayIds)
-  return new Set(
-    assignments
-      .filter(({ dayId }) => completed.has(dayId))
-      .map(({ studentId }) => studentId),
-  )
-}
-
-function getProposalStudentCount(
-  students: StudentRecord[],
-  assignments: DutyAssignment[],
-  completedDayIds: readonly DutyDayId[],
-) {
-  const completedIds = completedStudentIds(assignments, completedDayIds)
-  return students.filter(
-    ({ id, active }) => active === 1 && !completedIds.has(id),
-  ).length
-}
-
-function deriveExtraDayIds(
-  studentCount: number,
-  remainingDayIds: DutyDayId[],
-  settings: DutySettingsWithExtras,
-) {
-  const extraDayCount = getDutyDistributionRequirement(
-    studentCount,
-    remainingDayIds,
-  ).extraDayCount
-  const explicit = settings.extraDayIds ?? []
-  const legacy = remainingDayIds.filter(
-    (dayId) => !settings.fewerDayIds.includes(dayId),
-  )
-  const preferred = [...explicit, ...legacy, ...remainingDayIds]
-  return [...new Set(preferred)]
-    .filter((dayId) => remainingDayIds.includes(dayId))
-    .slice(0, extraDayCount)
-}
-
-function normalizeProposalSettings(
-  settings: DutySettingsWithExtras,
-  students: StudentRecord[],
-  assignments: DutyAssignment[],
-): CanonicalDutySettings {
-  const remainingDayIds = DAY_IDS.filter(
-    (dayId) => !settings.completedDayIds.includes(dayId),
-  )
-  const studentCount = getProposalStudentCount(
-    students,
-    assignments,
-    settings.completedDayIds,
-  )
-  const extraDayIds = deriveExtraDayIds(studentCount, remainingDayIds, settings)
-  return {
-    ...settings,
-    desiredPerDay:
-      remainingDayIds.length === 0
-        ? 0
-        : Math.max(0, Math.floor(studentCount / remainingDayIds.length)),
-    extraDayIds,
-    fewerDayIds: remainingDayIds.filter(
-      (dayId) => !extraDayIds.includes(dayId),
-    ),
-  }
-}
-
-function defaultSettings(students: StudentRecord[]): CanonicalDutySettings {
-  const activeCount = students.filter(({ active }) => active === 1).length
-  const extraDayIds = deriveExtraDayIds(activeCount, DAY_IDS, {
-    desiredPerDay: 0,
-    fewerDayIds: [],
-    balanceMinors: true,
-    balanceSex: false,
-    tieBreaker: "alphabetical",
-    stayOverStudentIds: [],
-    completedDayIds: [],
-    acknowledgedWarningKeys: [],
-  })
-  return {
-    desiredPerDay: Math.floor(activeCount / DAY_IDS.length),
-    fewerDayIds: DAY_IDS.filter((dayId) => !extraDayIds.includes(dayId)),
-    extraDayIds,
-    balanceMinors: true,
-    balanceSex: false,
-    tieBreaker: "alphabetical",
-    stayOverStudentIds: [],
-    completedDayIds: [],
-    acknowledgedWarningKeys: [],
-  }
-}
-
 async function readValidDutyData(courseId: string) {
   const [students, storedPlan] = await Promise.all([
     listStudents(courseId),
@@ -234,7 +137,7 @@ async function readValidDutyData(courseId: string) {
   // A duty for a student the course no longer has is dropped from view (and
   // reported) rather than refusing to open the page that could fix the plan.
   const plan = ignoreMissingStudentDuties(students, storedPlan)
-  const settings = plan.settings ?? defaultSettings(students)
+  const settings = plan.settings ?? defaultDutySettings(students)
   if (
     blockingIssues(
       validateDutyRecords(students, plan.assignments, settings.completedDayIds),
@@ -245,7 +148,7 @@ async function readValidDutyData(courseId: string) {
   return {
     students,
     assignments: plan.assignments,
-    settings: settings as DutySettingsWithExtras,
+    settings,
   }
 }
 
@@ -1251,7 +1154,7 @@ export function DutyManagement({
 }) {
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [assignments, setAssignments] = useState<DutyAssignment[]>([])
-  const [settings, setSettings] = useState<DutySettingsWithExtras | null>(null)
+  const [settings, setSettings] = useState<DutySettings | null>(null)
   const [manualMode, setManualMode] = useState(false)
   const [screen, openScreen, closeScreen] = useNestedScreen<DutyScreen>(
     "duties",
@@ -1324,27 +1227,12 @@ export function DutyManagement({
     nextAssignments: DutyAssignment[],
     nextSettings = settings!,
   ) {
-    const canonicalNextSettings: CanonicalDutySettings =
-      nextSettings.extraDayIds
-        ? (nextSettings as CanonicalDutySettings)
-        : normalizeProposalSettings(nextSettings, students, nextAssignments)
-    const activeAdvisoryKeys = new Set(
-      getDutyWarnings(
-        asDutyStudents(students),
-        nextAssignments,
-        { ...canonicalNextSettings, courseStartDate },
-        canonicalNextSettings.completedDayIds,
-      )
-        .filter(({ severity }) => severity === "advisory")
-        .map(({ key }) => key),
+    const normalizedSettings = dutySettingsForSave(
+      nextSettings,
+      asDutyStudents(students),
+      nextAssignments,
+      courseStartDate,
     )
-    const normalizedSettings: DutySettingsWithExtras = {
-      ...canonicalNextSettings,
-      acknowledgedWarningKeys:
-        canonicalNextSettings.acknowledgedWarningKeys.filter((key) =>
-          activeAdvisoryKeys.has(key),
-        ),
-    }
     await saveDutyPlan(courseId, nextAssignments, normalizedSettings)
     setAssignments(nextAssignments)
     setSettings(normalizedSettings)

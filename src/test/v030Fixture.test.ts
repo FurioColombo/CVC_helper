@@ -20,13 +20,13 @@ function columnsByTable(schema: { toJSON: () => unknown }) {
 }
 
 describe("0.3.0 migration fixture", () => {
-  it("is shaped by the frozen 0.3.0 schema, which lacks exactly what D1 added", () => {
+  it("is shaped by the frozen 0.3.0 schema, which lacks exactly what D1 and D2 added", () => {
     const frozen = columnsByTable(v030Schema)
     const current = columnsByTable(AppSchema)
 
-    expect(Object.keys(current).filter((table) => !(table in frozen))).toEqual(
-      [],
-    )
+    expect(Object.keys(current).filter((table) => !(table in frozen))).toEqual([
+      "dutySettingItems",
+    ])
     const added = Object.entries(frozen).flatMap(([table, columns]) =>
       current[table]!.filter((column) => !columns.includes(column)).map(
         (column) => `${table}.${column}`,

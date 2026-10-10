@@ -16,6 +16,7 @@ import {
   saveDutyPlan,
   type DutySettingsRecord,
 } from "@/persistence/duties"
+import { dutySettingItems, type DutySettingItem } from "@/persistence/dutyItems"
 
 const NOW = "2026-09-19T16:40:12.750Z"
 
@@ -31,19 +32,30 @@ const SETTINGS: DutySettingsRecord = {
 }
 
 /**
- * The transaction's reads share one `getAll` mock: tell the course's students
- * apart from the stored duty rows by the table the query names.
+ * The reads share one `getAll` mock: tell the course's students, its stored
+ * duty-setting rows and its duty rows apart by the table the query names.
  */
 function givenStoredRows({
   students = ["student-1", "student-2", "student-3"],
   duties = [],
+  items = [],
 }: {
   students?: string[]
   duties?: Array<{ id?: string; dayId: string; studentId: string }>
+  items?: DutySettingItem[]
 } = {}) {
-  database.getAll.mockImplementation(async (sql: string) =>
-    sql.includes("FROM students") ? students.map((id) => ({ id })) : duties,
-  )
+  database.getAll.mockImplementation(async (sql: string) => {
+    if (sql.includes("FROM students")) return students.map((id) => ({ id }))
+    if (sql.includes("FROM dutySettingItems")) return items
+    return duties
+  })
+}
+
+/** The rows of the one batch whose SQL starts this way. */
+function batchOf(start: string) {
+  return database.executeBatch.mock.calls.find(([sql]) =>
+    String(sql).trimStart().startsWith(start),
+  )?.[1] as unknown[][] | undefined
 }
 
 describe("duty persistence", () => {
@@ -77,9 +89,15 @@ describe("duty persistence", () => {
   })
 
   it("reads and parses the course plan", async () => {
-    database.getAll.mockResolvedValue([
-      { dayId: "saturday", studentId: "student-1" },
-    ])
+    givenStoredRows({
+      duties: [{ dayId: "saturday", studentId: "student-1" }],
+      items: dutySettingItems("course-1", {
+        fewerDayIds: ["saturday"],
+        stayOverStudentIds: ["student-1"],
+        completedDayIds: ["saturday"],
+        acknowledgedWarningKeys: ["warning-1"],
+      }),
+    })
     database.getOptional.mockResolvedValue({
       desiredPerDay: 3,
       fewerDayIds: '["saturday"]',
@@ -102,6 +120,11 @@ describe("duty persistence", () => {
   })
 
   it("reloads explicit extra days and accepts a base count of zero", async () => {
+    givenStoredRows({
+      items: dutySettingItems("course-1", {
+        extraDayIds: ["sunday", "wednesday", "friday"],
+      }),
+    })
     database.getOptional.mockResolvedValue({
       desiredPerDay: 0,
       fewerDayIds: "[]",
@@ -491,5 +514,140 @@ describe("duty persistence", () => {
     await expect(readDutyPlan("course-1")).rejects.toThrow(
       "Invalid persisted duty assignment",
     )
+  })
+
+  describe("the lists, item by item (D2)", () => {
+    const STORED = {
+      desiredPerDay: 1,
+      fewerDayIds: '["saturday"]',
+      extraDayIds: '["monday","sunday"]',
+      balanceMinors: 1,
+      balanceSex: 0,
+      tieBreaker: "alphabetical",
+      stayOverStudentIds: '["student-1"]',
+      completedDayIds: "[]",
+      acknowledgedWarningKeys: "[]",
+    }
+
+    it("reads the lists from the rows, in their stored order", async () => {
+      database.getOptional.mockResolvedValue(STORED)
+      givenStoredRows({
+        items: dutySettingItems("course-1", {
+          fewerDayIds: ["saturday"],
+          extraDayIds: ["sunday", "monday"],
+          stayOverStudentIds: ["student-2", "student-1"],
+          acknowledgedWarningKeys: ["minor-balance:2,0"],
+        }).reverse(),
+      })
+
+      const { settings } = await readDutyPlan("course-1")
+
+      expect(settings).toMatchObject({
+        fewerDayIds: ["saturday"],
+        extraDayIds: ["sunday", "monday"],
+        stayOverStudentIds: ["student-2", "student-1"],
+        completedDayIds: [],
+        acknowledgedWarningKeys: ["minor-balance:2,0"],
+      })
+    })
+
+    it("keeps extra days unchosen while the stored list is null", async () => {
+      database.getOptional.mockResolvedValue({ ...STORED, extraDayIds: null })
+      givenStoredRows({
+        items: dutySettingItems("course-1", { fewerDayIds: ["saturday"] }),
+      })
+
+      const { settings } = await readDutyPlan("course-1")
+
+      expect(settings).not.toHaveProperty("extraDayIds")
+    })
+
+    it.each([
+      ["a corrupt stored list", { stayOverStudentIds: "{" }, []],
+      [
+        "a duplicate in a stored day list",
+        { fewerDayIds: JSON.stringify(["saturday", "saturday"]) },
+        [],
+      ],
+      [
+        "a row with an unknown day",
+        {},
+        dutySettingItems("course-1", { completedDayIds: ["funday"] }),
+      ],
+    ])("refuses %s, as before D2", async (_case, stored, items) => {
+      database.getOptional.mockResolvedValue({ ...STORED, ...stored })
+      givenStoredRows({ items })
+
+      // Unparseable JSON fails with the parser's own error, as it always did;
+      // either way the screen shows that the plan cannot be read.
+      await expect(readDutyPlan("course-1")).rejects.toThrow()
+    })
+
+    it("writes only the items that changed, and nothing for a second identical save", async () => {
+      givenStoredRows({
+        items: dutySettingItems("course-1", {
+          fewerDayIds: ["saturday"],
+          stayOverStudentIds: ["student-1", "student-2"],
+          acknowledgedWarningKeys: ["minor-balance:2,0"],
+        }),
+      })
+      const settings: DutySettingsRecord = {
+        ...SETTINGS,
+        completedDayIds: [],
+        fewerDayIds: ["saturday"],
+        extraDayIds: ["monday"],
+        stayOverStudentIds: ["student-2", "student-3"],
+        acknowledgedWarningKeys: ["minor-balance:2,0"],
+      }
+      const id = (kind: string, value: string) =>
+        JSON.stringify(["course-1", kind, value])
+
+      await saveDutyPlan("course-1", [], settings)
+
+      expect(batchOf("DELETE FROM dutySettingItems")).toEqual([
+        [id("stay-over", "student-1"), "course-1"],
+      ])
+      expect(batchOf("UPDATE dutySettingItems")).toEqual([
+        [0, NOW, id("stay-over", "student-2"), "course-1"],
+      ])
+      expect(
+        batchOf("INSERT INTO dutySettingItems")?.map((row) => row.slice(2, 5)),
+      ).toEqual([
+        ["extra-day", "monday", 0],
+        ["stay-over", "student-3", 1],
+      ])
+
+      database.executeBatch.mockClear()
+      givenStoredRows({ items: dutySettingItems("course-1", settings) })
+      await saveDutyPlan("course-1", [], settings)
+      expect(
+        database.executeBatch.mock.calls.filter(([sql]) =>
+          String(sql).includes("dutySettingItems"),
+        ),
+      ).toEqual([])
+    })
+
+    it("saves a course whose extra days were never chosen with none", async () => {
+      const settings: DutySettingsRecord = { ...SETTINGS, completedDayIds: [] }
+      expect(settings).not.toHaveProperty("extraDayIds")
+
+      await saveDutyPlan("course-1", [], settings)
+
+      expect(
+        batchOf("INSERT INTO dutySettingItems")?.map((row) => row[2]),
+      ).not.toContain("extra-day")
+    })
+
+    it("keeps a completed day that only the stored list holds", async () => {
+      // An older app marked Saturday completed after the rows were rebuilt.
+      database.getOptional.mockResolvedValue({
+        completedDayIds: JSON.stringify(["saturday"]),
+      })
+      givenStoredRows({ items: [] })
+
+      await expect(
+        saveDutyPlan("course-1", [], { ...SETTINGS, completedDayIds: [] }),
+      ).rejects.toThrow("Completed duty history is immutable")
+    })
   })
 })

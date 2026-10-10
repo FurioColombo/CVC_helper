@@ -83,6 +83,17 @@ const dutySettings = Table.createLocalOnly({
   ...metadata,
 })
 
+// D2: the lists of `dutySettings`, item by item (src/persistence/dutyItems.ts).
+// The JSON list columns above stay, still written, while an app that knows only
+// them can open the database (03 §3.1).
+const dutySettingItems = Table.createLocalOnly({
+  courseId: column.text,
+  kind: column.text,
+  value: column.text,
+  position: column.integer,
+  ...metadata,
+})
+
 const crews = Table.createLocalOnly({
   courseId: column.text,
   sessionId: column.text,
@@ -144,6 +155,7 @@ export const AppSchema = new Schema({
   faults,
   dutyAssignments,
   dutySettings,
+  dutySettingItems,
   crews,
   crewMembers,
   landAssignments,
@@ -161,6 +173,7 @@ export const COURSE_TABLES = [
   "faults",
   "dutyAssignments",
   "dutySettings",
+  "dutySettingItems",
   "crews",
   "crewMembers",
   "landAssignments",

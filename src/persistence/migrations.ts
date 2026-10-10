@@ -1,6 +1,11 @@
 import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
-import { needsRepair, repairRows } from "@/persistence/repairs"
+import {
+  dutySettingItemsNeedRepair,
+  needsRepair,
+  repairDutySettingItems,
+  repairRows,
+} from "@/persistence/repairs"
 
 /**
  * Bringing stored data up to date before the app reads it (D1, 03 §3). Schema
@@ -81,6 +86,11 @@ export function prepareDatabase(
       if (await needsRepair(database)) {
         await database.writeTransaction((transaction) =>
           repairRows(transaction, new Date().toISOString()),
+        )
+      }
+      if (await dutySettingItemsNeedRepair(database)) {
+        await database.writeTransaction((transaction) =>
+          repairDutySettingItems(transaction, new Date().toISOString()),
         )
       }
       await runMigrations(database, migrations)

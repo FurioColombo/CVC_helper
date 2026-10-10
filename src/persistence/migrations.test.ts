@@ -146,6 +146,11 @@ describe("prepareDatabase", () => {
         order.push(sql.startsWith("SELECT EXISTS") ? "probe" : sql)
         return { needed: needsRepair ? 1 : 0 }
       }),
+      // No duty settings stored: the duty-setting rows need no repair.
+      getAll: vi.fn(async (sql: string) => {
+        if (/FROM dutySettings$/.test(sql.trim())) order.push("items probe")
+        return []
+      }),
       writeTransaction: vi.fn(async (callback: (tx: unknown) => unknown) => {
         const result = await fake.database.writeTransaction(callback as never)
         order.push(
@@ -165,7 +170,13 @@ describe("prepareDatabase", () => {
     await prepareDatabase(database as never, [step("first")])
     await prepareDatabase(database as never, [step("first")])
 
-    expect(order).toEqual(["init", "probe", "repairs", "migration"])
+    expect(order).toEqual([
+      "init",
+      "probe",
+      "repairs",
+      "items probe",
+      "migration",
+    ])
   })
 
   it("takes no write transaction for repairs when the probe finds nothing to repair", async () => {
@@ -173,7 +184,7 @@ describe("prepareDatabase", () => {
 
     await prepareDatabase(database as never, [])
 
-    expect(order).toEqual(["init", "probe"])
+    expect(order).toEqual(["init", "probe", "items probe"])
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
@@ -186,6 +197,6 @@ describe("prepareDatabase", () => {
     )
     await prepareDatabase(database as never, [])
 
-    expect(order).toEqual(["init", "probe", "repairs"])
+    expect(order).toEqual(["init", "probe", "repairs", "items probe"])
   })
 })

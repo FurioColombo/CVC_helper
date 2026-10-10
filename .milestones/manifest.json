@@ -759,7 +759,7 @@
     {
       "id": "D2",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D2/verification.json",
@@ -774,6 +774,7 @@
         ".evidence/D2/data-integrity-review.json"
       ],
       "e2eSpecs": [
+        "tests/e2e/d2-duty-items.spec.ts",
         "tests/e2e/duties.spec.ts",
         "tests/e2e/f3-duty-summary.spec.ts",
         "tests/e2e/full-week.spec.ts",

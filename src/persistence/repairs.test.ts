@@ -2,7 +2,12 @@ import { DatabaseSync } from "node:sqlite"
 
 import { describe, expect, it } from "vitest"
 
-import { needsRepair, repairRows } from "@/persistence/repairs"
+import {
+  dutySettingItemsNeedRepair,
+  needsRepair,
+  repairDutySettingItems,
+  repairRows,
+} from "@/persistence/repairs"
 import { validateStoredRows, type StoredRow } from "@/persistence/rowIntegrity"
 import { COURSE_TABLES } from "@/persistence/schema"
 
@@ -173,5 +178,130 @@ describe("needsRepair", () => {
     expect(await needsRepair(reader as never)).toBe(true)
     await repairRows(step as never, NOW)
     expect(await needsRepair(reader as never)).toBe(false)
+  })
+})
+
+/**
+ * The D2 rows of the duty-settings lists, rebuilt from the lists an older app
+ * keeps (03 §3.1), on a real SQLite.
+ */
+describe("repairDutySettingItems", () => {
+  function dutyDatabase() {
+    const sqlite = new DatabaseSync(":memory:")
+    sqlite.exec(
+      `CREATE TABLE dutySettings (id TEXT PRIMARY KEY, courseId TEXT,
+         fewerDayIds TEXT, extraDayIds TEXT, stayOverStudentIds TEXT,
+         completedDayIds TEXT, acknowledgedWarningKeys TEXT,
+         createdAt TEXT, updatedAt TEXT);
+       CREATE TABLE dutySettingItems (id TEXT PRIMARY KEY, courseId TEXT,
+         kind TEXT, value TEXT, position INTEGER,
+         createdAt TEXT, updatedAt TEXT)`,
+    )
+    const run = (sql: string, params: unknown[] = []) =>
+      sqlite.prepare(sql).run(...(params as string[]))
+    const context = {
+      getAll: async (sql: string) => sqlite.prepare(sql).all(),
+      execute: async (sql: string, params: unknown[] = []) => run(sql, params),
+      executeBatch: async (sql: string, rows: unknown[][]) => {
+        for (const params of rows) run(sql, params)
+      },
+    }
+    const settings = (courseId: string, lists: Record<string, string | null>) =>
+      run(
+        `INSERT INTO dutySettings (id, courseId, fewerDayIds, extraDayIds,
+           stayOverStudentIds, completedDayIds, acknowledgedWarningKeys)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          courseId,
+          courseId,
+          lists.fewerDayIds ?? "[]",
+          lists.extraDayIds ?? null,
+          lists.stayOverStudentIds ?? "[]",
+          lists.completedDayIds ?? "[]",
+          lists.acknowledgedWarningKeys ?? "[]",
+        ],
+      )
+    const items = () =>
+      sqlite
+        .prepare(
+          `SELECT courseId, kind, value, position, createdAt, updatedAt
+           FROM dutySettingItems ORDER BY courseId, kind, position`,
+        )
+        .all()
+    return { context, settings, items, run }
+  }
+
+  it("builds the rows of every list, in order, once, with their metadata", async () => {
+    const { context, settings, items } = dutyDatabase()
+    settings("course-1", {
+      fewerDayIds: JSON.stringify(["saturday"]),
+      extraDayIds: JSON.stringify(["wednesday", "monday"]),
+      stayOverStudentIds: JSON.stringify(["student-2", "student-1"]),
+      completedDayIds: JSON.stringify(["saturday"]),
+      // 0.3.0 could store an acknowledgement twice; it is one row.
+      acknowledgedWarningKeys: JSON.stringify([
+        "minor-balance:2,0",
+        "minor-balance:2,0",
+      ]),
+    })
+    expect(await dutySettingItemsNeedRepair(context as never)).toBe(true)
+
+    await repairDutySettingItems(context as never, NOW)
+
+    const meta = { courseId: "course-1", createdAt: NOW, updatedAt: NOW }
+    expect(items()).toEqual([
+      {
+        ...meta,
+        kind: "acknowledged-warning",
+        value: "minor-balance:2,0",
+        position: 0,
+      },
+      { ...meta, kind: "completed-day", value: "saturday", position: 0 },
+      { ...meta, kind: "extra-day", value: "wednesday", position: 0 },
+      { ...meta, kind: "extra-day", value: "monday", position: 1 },
+      { ...meta, kind: "fewer-day", value: "saturday", position: 0 },
+      { ...meta, kind: "stay-over", value: "student-2", position: 0 },
+      { ...meta, kind: "stay-over", value: "student-1", position: 1 },
+    ])
+    expect(await dutySettingItemsNeedRepair(context as never)).toBe(false)
+    await repairDutySettingItems(context as never, "2026-10-11T08:00:00.000Z")
+    expect(items().every(({ createdAt }) => createdAt === NOW)).toBe(true)
+  })
+
+  it("follows what an older app wrote to the lists, and leaves other courses alone", async () => {
+    const { context, settings, items, run } = dutyDatabase()
+    settings("course-1", { stayOverStudentIds: JSON.stringify(["student-1"]) })
+    settings("course-2", { completedDayIds: JSON.stringify(["saturday"]) })
+    await repairDutySettingItems(context as never, NOW)
+    // A 0.3.0 tab swaps the stay-over student and completes Sunday.
+    run(
+      `UPDATE dutySettings SET stayOverStudentIds = ?, completedDayIds = ?
+       WHERE id = 'course-1'`,
+      [JSON.stringify(["student-3"]), JSON.stringify(["sunday"])],
+    )
+
+    await repairDutySettingItems(context as never, "2026-10-11T08:00:00.000Z")
+
+    expect(
+      items().map(({ courseId, kind, value }) => [courseId, kind, value]),
+    ).toEqual([
+      ["course-1", "completed-day", "sunday"],
+      ["course-1", "stay-over", "student-3"],
+      ["course-2", "completed-day", "saturday"],
+    ])
+  })
+
+  it("leaves a course whose lists do not parse to the settings screen to report", async () => {
+    const { context, settings, items } = dutyDatabase()
+    settings("course-1", {
+      fewerDayIds: "{",
+      stayOverStudentIds: JSON.stringify(["student-1"]),
+    })
+    settings("course-2", { stayOverStudentIds: JSON.stringify([1, 2]) })
+
+    expect(await dutySettingItemsNeedRepair(context as never)).toBe(false)
+    await repairDutySettingItems(context as never, NOW)
+
+    expect(items()).toEqual([])
   })
 })
