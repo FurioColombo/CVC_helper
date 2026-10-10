@@ -790,7 +790,7 @@
       "id": "D3",
       "category": "RULE_HEAVY",
       "status": "IN_PROGRESS",
-      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "verificationScripts": ["verify", "verify:e2e:focus", "check:update"],
       "requiredEvidence": [
         ".evidence/D3/verification.json",
         ".evidence/D3/browser-evidence.json",
