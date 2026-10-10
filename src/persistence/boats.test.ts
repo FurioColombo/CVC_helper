@@ -28,10 +28,15 @@ import {
   updateFaultDescription,
   updateFaultState,
 } from "@/persistence/boats"
+import { TOUCH } from "@/persistence/stamp"
+
+const NOW = "2026-09-20T08:15:30.250Z"
 
 describe("boat and fault persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     database.execute.mockResolvedValue([{ id: "boat-1" }])
     database.executeBatch.mockResolvedValue(undefined)
@@ -45,6 +50,10 @@ describe("boat and fault persistence", () => {
       async (callback: (context: typeof transaction) => Promise<unknown>) =>
         callback(transaction),
     )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("lists course boats and course fault records separately", async () => {
@@ -116,12 +125,15 @@ describe("boat and fault persistence", () => {
       expect.objectContaining({ number: "2", availability: "available" }),
       expect.objectContaining({ number: "7", availability: "available" }),
     ])
+    // One stamp for the whole batch, as both created and updated time.
     expect(transaction.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO boats"),
-      expect.arrayContaining([
-        expect.arrayContaining(["course-1", "RS Quest", "2", "available"]),
-        expect.arrayContaining(["course-1", "RS Quest", "7", "available"]),
-      ]),
+      expect.stringMatching(
+        /INSERT INTO boats\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        [boats[0]?.id, "course-1", "RS Quest", "2", "available", NOW, NOW],
+        [boats[1]?.id, "course-1", "RS Quest", "7", "available", NOW, NOW],
+      ],
     )
 
     await expect(
@@ -175,8 +187,8 @@ describe("boat and fault persistence", () => {
     await setBoatAvailability("boat-1", "course-1", "unavailable")
 
     expect(database.execute).toHaveBeenCalledWith(
-      expect.stringContaining("UPDATE boats SET availability"),
-      ["unavailable", "boat-1", "course-1"],
+      expect.stringContaining(`UPDATE boats SET availability = ?, ${TOUCH}`),
+      ["unavailable", NOW, "boat-1", "course-1"],
     )
   })
 
@@ -189,32 +201,69 @@ describe("boat and fault persistence", () => {
   })
 
   it("creates independent faults and updates description and state", async () => {
-    database.getOptional.mockResolvedValueOnce({ id: "boat-1" })
+    transaction.getOptional.mockResolvedValueOnce({
+      id: "boat-1",
+      courseId: "course-1",
+    })
     const fault = await createFault("boat-1", "  Scotta usurata  ")
     await updateFaultDescription(fault.id, "Scotta randa usurata")
     await updateFaultState(fault.id, "reported")
 
-    expect(fault).toEqual(
-      expect.objectContaining({
-        boatId: "boat-1",
-        description: "Scotta usurata",
-        state: "open",
-      }),
+    expect(fault).toEqual({
+      id: expect.any(String),
+      boatId: "boat-1",
+      description: "Scotta usurata",
+      state: "open",
+      createdAt: NOW,
+      updatedAt: NOW,
+    })
+    expect(transaction.execute).toHaveBeenCalledOnce()
+    expect(transaction.execute).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /INSERT INTO faults\([^)]*courseId[^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [fault.id, "course-1", "boat-1", "Scotta usurata", "open", NOW, NOW],
     )
     expect(database.execute).toHaveBeenNthCalledWith(
       1,
-      expect.stringContaining("INSERT INTO faults"),
-      expect.arrayContaining([fault.id, "boat-1", "Scotta usurata", "open"]),
+      expect.stringContaining(`UPDATE faults SET description = ?, ${TOUCH}`),
+      ["Scotta randa usurata", NOW, fault.id],
     )
     expect(database.execute).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining("UPDATE faults SET description"),
-      expect.arrayContaining(["Scotta randa usurata", fault.id]),
+      expect.stringContaining(`UPDATE faults SET state = ?, ${TOUCH}`),
+      ["reported", NOW, fault.id],
     )
-    expect(database.execute).toHaveBeenNthCalledWith(
-      3,
-      expect.stringContaining("UPDATE faults SET state"),
-      expect.arrayContaining(["reported", fault.id]),
+  })
+
+  // UG2-DAT-7: the boat used to be looked up and the fault inserted in two
+  // separate steps, so a boat deleted in between left a fault without a boat.
+  it("checks the boat and inserts the fault in one transaction, with the boat's course", async () => {
+    transaction.getOptional.mockResolvedValueOnce({
+      id: "boat-1",
+      courseId: "course-7",
+    })
+
+    await createFault("boat-1", "Timone duro")
+
+    expect(database.writeTransaction).toHaveBeenCalledOnce()
+    expect(database.getOptional).not.toHaveBeenCalled()
+    expect(database.execute).not.toHaveBeenCalled()
+    expect(transaction.getOptional).toHaveBeenCalledWith(
+      "SELECT id, courseId FROM boats WHERE id = ? LIMIT 1",
+      ["boat-1"],
+    )
+    expect(transaction.execute).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO faults"),
+      [
+        expect.any(String),
+        "course-7",
+        "boat-1",
+        "Timone duro",
+        "open",
+        NOW,
+        NOW,
+      ],
     )
   })
 
@@ -225,6 +274,8 @@ describe("boat and fault persistence", () => {
     await expect(updateFaultDescription("fault-1", " ")).rejects.toThrow(
       "Fault description is required",
     )
+    expect(database.writeTransaction).not.toHaveBeenCalled()
+    expect(database.execute).not.toHaveBeenCalled()
   })
 
   it("rejects stale fault updates and runtime-invalid states", async () => {
@@ -243,9 +294,12 @@ describe("boat and fault persistence", () => {
   })
 
   it("refuses to create a fault for a missing boat", async () => {
+    transaction.getOptional.mockResolvedValueOnce(null)
+
     await expect(createFault("missing-boat", "Timone duro")).rejects.toThrow(
       "Fault boat does not exist",
     )
+    expect(transaction.execute).not.toHaveBeenCalled()
     expect(database.execute).not.toHaveBeenCalled()
   })
 
@@ -326,6 +380,7 @@ describe("fault update stamps", () => {
   async function runOnSqlite(
     clock: string,
     update: () => Promise<unknown>,
+    storedUpdatedAt = CREATED_AT,
   ): Promise<{ createdAt: string; updatedAt: string }> {
     vi.useFakeTimers({ toFake: ["Date"] })
     vi.setSystemTime(new Date(clock))
@@ -339,7 +394,7 @@ describe("fault update stamps", () => {
     )
     sqlite
       .prepare("INSERT INTO faults VALUES (?, ?, ?, ?, ?, ?)")
-      .run("fault-1", "boat-1", "Scotta", "open", CREATED_AT, CREATED_AT)
+      .run("fault-1", "boat-1", "Scotta", "open", CREATED_AT, storedUpdatedAt)
     for (const [sql, params] of database.execute.mock.calls as Array<
       [string, Array<string | number>]
     >) {
@@ -378,5 +433,17 @@ describe("fault update stamps", () => {
     const row = await runOnSqlite("2026-09-19T11:30:00.000Z", update)
 
     expect(row.updatedAt).toBe("2026-09-19T11:30:00.000Z")
+  })
+
+  // The stamp moves forward from the fault's last edit, not only from its
+  // creation: an edit made after the clock stepped back keeps the later time.
+  it("never moves a later stored updatedAt backwards", async () => {
+    const row = await runOnSqlite(
+      "2026-09-19T10:15:00.000Z",
+      () => updateFaultState("fault-1", "reported"),
+      "2026-09-19T10:30:00.000Z",
+    )
+
+    expect(row.updatedAt).toBe("2026-09-19T10:30:00.000Z")
   })
 })

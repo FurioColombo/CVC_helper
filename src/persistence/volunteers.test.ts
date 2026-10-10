@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -13,13 +13,22 @@ import {
   listVolunteers,
   updateVolunteer,
 } from "@/persistence/volunteers"
+import { TOUCH } from "@/persistence/stamp"
+
+const NOW = "2026-09-19T12:20:05.625Z"
 
 describe("volunteer persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     database.execute.mockResolvedValue([{ id: "volunteer-1" }])
     database.getAll.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("lists unchanged ADV/IS rows together with CT by name", async () => {
@@ -54,8 +63,10 @@ describe("volunteer persistence", () => {
         }),
       )
       expect(database.execute).toHaveBeenCalledWith(
-        expect.stringContaining("INSERT INTO volunteers"),
-        [volunteer.id, "course-1", "Anna Bianchi", role],
+        expect.stringMatching(
+          /INSERT INTO volunteers\([^)]*createdAt, updatedAt\s*\)/,
+        ),
+        [volunteer.id, "course-1", "Anna Bianchi", role, NOW, NOW],
       )
     },
   )
@@ -67,9 +78,11 @@ describe("volunteer persistence", () => {
     })
     expect(database.execute).toHaveBeenCalledWith(
       expect.stringContaining("WHERE id = ? AND courseId = ?"),
-      ["Anna Neri", "CT", "volunteer-1", "course-1"],
+      ["Anna Neri", "CT", NOW, "volunteer-1", "course-1"],
     )
-    expect(database.execute.mock.calls[0]?.[0]).toContain("RETURNING id")
+    const sql = database.execute.mock.calls[0]?.[0]
+    expect(sql).toContain(`SET name = ?, role = ?, ${TOUCH}`)
+    expect(sql).toContain("RETURNING id")
   })
 
   it("trims names at create and update boundaries", async () => {
@@ -80,7 +93,7 @@ describe("volunteer persistence", () => {
     expect(created.name).toBe("Carla Timoniere")
     expect(database.execute).toHaveBeenLastCalledWith(
       expect.stringContaining("INSERT INTO volunteers"),
-      [created.id, "course-1", "Carla Timoniere", "CT"],
+      [created.id, "course-1", "Carla Timoniere", "CT", NOW, NOW],
     )
 
     await updateVolunteer("volunteer-1", "course-1", {
@@ -89,7 +102,7 @@ describe("volunteer persistence", () => {
     })
     expect(database.execute).toHaveBeenLastCalledWith(
       expect.stringContaining("RETURNING id"),
-      ["Carla T.", "CT", "volunteer-1", "course-1"],
+      ["Carla T.", "CT", NOW, "volunteer-1", "course-1"],
     )
   })
 

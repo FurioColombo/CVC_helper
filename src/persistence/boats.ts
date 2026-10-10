@@ -7,6 +7,7 @@ import {
   type FaultState,
 } from "@/domain/config"
 import { db } from "@/persistence/db"
+import { stamp, TOUCH } from "@/persistence/stamp"
 
 export interface BoatRecord {
   id: string
@@ -115,6 +116,7 @@ export async function createBoats(courseId: string, inputs: BoatInput[]) {
     if (!uniqueInputs.has(identity)) uniqueInputs.set(identity, normalizedInput)
   }
 
+  const now = stamp()
   return db.writeTransaction(async (transaction) => {
     const ownedCourse = await transaction.getOptional<{ id: string }>(
       "SELECT id FROM courses WHERE id = ? LIMIT 1",
@@ -138,13 +140,17 @@ export async function createBoats(courseId: string, inputs: BoatInput[]) {
     }))
     if (boats.length > 0) {
       await transaction.executeBatch(
-        "INSERT INTO boats(id, courseId, type, number, availability) VALUES (?, ?, ?, ?, ?)",
+        `INSERT INTO boats(
+           id, courseId, type, number, availability, createdAt, updatedAt
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         boats.map((boat) => [
           boat.id,
           boat.courseId,
           boat.type,
           boat.number,
           boat.availability,
+          now,
+          now,
         ]),
       )
     }
@@ -164,9 +170,11 @@ export async function setBoatAvailability(
   availability: BoatAvailability,
 ) {
   await db.init()
+  const now = stamp()
   const result = await db.execute<{ id: string }>(
-    "UPDATE boats SET availability = ? WHERE id = ? AND courseId = ? RETURNING id",
-    [availability, boatId, courseId],
+    `UPDATE boats SET availability = ?, ${TOUCH}
+     WHERE id = ? AND courseId = ? RETURNING id`,
+    [availability, now, boatId, courseId],
   )
   if (Array.from(result).length !== 1) {
     throw new Error("Boat does not belong to course")
@@ -207,45 +215,51 @@ export async function createFault(boatId: string, description: string) {
   await db.init()
   const normalizedDescription = description.trim()
   if (!normalizedDescription) throw new Error("Fault description is required")
-  const boat = await db.getOptional<{ id: string }>(
-    "SELECT id FROM boats WHERE id = ? LIMIT 1",
-    [boatId],
-  )
-  if (!boat) throw new Error("Fault boat does not exist")
-  const now = new Date().toISOString()
-  const fault: FaultRecord = {
-    id: crypto.randomUUID(),
-    boatId,
-    description: normalizedDescription,
-    state: "open",
-    createdAt: now,
-    updatedAt: now,
-  }
-  await db.execute(
-    `INSERT INTO faults(id, boatId, description, state, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      fault.id,
-      fault.boatId,
-      fault.description,
-      fault.state,
-      fault.createdAt,
-      fault.updatedAt,
-    ],
-  )
-  return fault
+  const now = stamp()
+  // One transaction: the boat cannot disappear between the check and the
+  // insert, and the fault takes the course of the boat it was found on.
+  return db.writeTransaction(async (transaction) => {
+    const boat = await transaction.getOptional<
+      Pick<BoatRecord, "id" | "courseId">
+    >("SELECT id, courseId FROM boats WHERE id = ? LIMIT 1", [boatId])
+    if (!boat) throw new Error("Fault boat does not exist")
+    const fault: FaultRecord = {
+      id: crypto.randomUUID(),
+      boatId,
+      description: normalizedDescription,
+      state: "open",
+      createdAt: now,
+      updatedAt: now,
+    }
+    await transaction.execute(
+      `INSERT INTO faults(
+         id, courseId, boatId, description, state, createdAt, updatedAt
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        fault.id,
+        boat.courseId,
+        fault.boatId,
+        fault.description,
+        fault.state,
+        fault.createdAt,
+        fault.updatedAt,
+      ],
+    )
+    return fault
+  })
 }
 
 // A fault is never "updated before it was created". The phone's clock can be
-// set back between the two (a manual fix, a network time step), so the new
-// stamp is the later of the clock and the fault's own creation time. Both are
-// UTC ISO strings of one fixed width, which compare as text in time order.
+// set back between the two (a manual fix, a network time step); TOUCH only
+// moves updatedAt forward from the value the fault already has, which is never
+// earlier than its creation.
 export async function updateFaultState(faultId: string, state: FaultState) {
   await db.init()
   if (!FAULT_STATES.includes(state)) throw new Error("Invalid fault state")
+  const now = stamp()
   const result = await db.execute<{ id: string }>(
-    "UPDATE faults SET state = ?, updatedAt = MAX(?, createdAt) WHERE id = ? RETURNING id",
-    [state, new Date().toISOString(), faultId],
+    `UPDATE faults SET state = ?, ${TOUCH} WHERE id = ? RETURNING id`,
+    [state, now, faultId],
   )
   if (Array.from(result).length !== 1) throw new Error("Fault does not exist")
 }
@@ -257,9 +271,10 @@ export async function updateFaultDescription(
   await db.init()
   const normalizedDescription = description.trim()
   if (!normalizedDescription) throw new Error("Fault description is required")
+  const now = stamp()
   const result = await db.execute<{ id: string }>(
-    "UPDATE faults SET description = ?, updatedAt = MAX(?, createdAt) WHERE id = ? RETURNING id",
-    [normalizedDescription, new Date().toISOString(), faultId],
+    `UPDATE faults SET description = ?, ${TOUCH} WHERE id = ? RETURNING id`,
+    [normalizedDescription, now, faultId],
   )
   if (Array.from(result).length !== 1) throw new Error("Fault does not exist")
 }

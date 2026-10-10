@@ -2,6 +2,7 @@ import type { StudentSex, StudentSize } from "@/domain/config"
 import { compareStudentsForList } from "@/domain/student"
 import { normalizeStudentCourseNote } from "@/domain/studentMigration"
 import { db } from "@/persistence/db"
+import { stamp, TOUCH } from "@/persistence/stamp"
 
 export interface StudentRecord {
   id: string
@@ -143,6 +144,7 @@ export async function createStudent(
   input: StudentInput,
 ): Promise<StudentRecord> {
   await db.init()
+  const now = stamp()
   const student: StudentRecord = {
     id: crypto.randomUUID(),
     courseId,
@@ -155,8 +157,9 @@ export async function createStudent(
   }
   await db.execute(
     `INSERT INTO students(
-      id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active,
+      createdAt, updatedAt
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       student.id,
       student.courseId,
@@ -171,6 +174,8 @@ export async function createStudent(
       student.initialNote,
       student.courseNote,
       student.active,
+      now,
+      now,
     ],
   )
   return student
@@ -181,6 +186,7 @@ export async function createStudents(
   inputs: StudentInput[],
 ): Promise<StudentRecord[]> {
   await db.init()
+  const now = stamp()
   const students = inputs.map<StudentRecord>((input) => ({
     id: crypto.randomUUID(),
     courseId,
@@ -195,8 +201,9 @@ export async function createStudents(
 
   await db.executeBatch(
     `INSERT INTO students(
-      id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, courseId, firstName, surname, nickname, dateOfBirth, declaredAgeAtCourseStart, sex, phone, size, initialNote, courseNote, active,
+      createdAt, updatedAt
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     students.map((student) => [
       student.id,
       student.courseId,
@@ -211,6 +218,8 @@ export async function createStudents(
       student.initialNote,
       student.courseNote,
       student.active,
+      now,
+      now,
     ]),
   )
   return students
@@ -222,10 +231,11 @@ export async function updateStudent(
   input: StudentEditInput,
 ) {
   await db.init()
+  const now = stamp()
   await db.execute(
     `UPDATE students
      SET firstName = ?, surname = ?, nickname = ?, dateOfBirth = ?, declaredAgeAtCourseStart = ?, sex = ?, phone = ?,
-         size = ?, initialNote = ?, courseNote = ?
+         size = ?, initialNote = ?, courseNote = ?, ${TOUCH}
      WHERE id = ? AND courseId = ?`,
     [
       input.firstName,
@@ -238,6 +248,7 @@ export async function updateStudent(
       input.size,
       input.initialNote?.trim() || null,
       input.courseNote?.trim() || null,
+      now,
       studentId,
       courseId,
     ],
@@ -250,9 +261,10 @@ export async function setStudentActive(
   active: boolean,
 ) {
   await db.init()
+  const now = stamp()
   await db.execute(
-    "UPDATE students SET active = ? WHERE id = ? AND courseId = ?",
-    [active ? 1 : 0, studentId, courseId],
+    `UPDATE students SET active = ?, ${TOUCH} WHERE id = ? AND courseId = ?`,
+    [active ? 1 : 0, now, studentId, courseId],
   )
 }
 
@@ -262,11 +274,12 @@ export async function updateStudentKnowledge(
   input: StudentKnowledgeInput,
 ) {
   await db.init()
+  const now = stamp()
   await db.execute(
     `UPDATE students
-     SET size = ?, initialNote = ?
+     SET size = ?, initialNote = ?, ${TOUCH}
      WHERE id = ? AND courseId = ?`,
-    [input.size, input.initialNote, studentId, courseId],
+    [input.size, input.initialNote, now, studentId, courseId],
   )
 }
 

@@ -2,6 +2,7 @@ import { VOLUNTEER_ROLES, type VolunteerRole } from "@/domain/config"
 import { validateVolunteerRecords } from "@/domain/invariants"
 import { compareItalianNames } from "@/domain/student"
 import { db } from "@/persistence/db"
+import { stamp, TOUCH } from "@/persistence/stamp"
 
 export interface VolunteerRecord {
   id: string
@@ -57,6 +58,7 @@ export async function createVolunteer(
 ): Promise<VolunteerRecord> {
   await db.init()
   assertVolunteerInput(input)
+  const now = stamp()
   const volunteer = {
     id: crypto.randomUUID(),
     courseId,
@@ -64,8 +66,16 @@ export async function createVolunteer(
     role: input.role,
   }
   await db.execute(
-    "INSERT INTO volunteers(id, courseId, name, role) VALUES (?, ?, ?, ?)",
-    [volunteer.id, volunteer.courseId, volunteer.name, volunteer.role],
+    `INSERT INTO volunteers(id, courseId, name, role, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [
+      volunteer.id,
+      volunteer.courseId,
+      volunteer.name,
+      volunteer.role,
+      now,
+      now,
+    ],
   )
   return volunteer
 }
@@ -77,12 +87,13 @@ export async function updateVolunteer(
 ) {
   await db.init()
   assertVolunteerInput(input)
+  const now = stamp()
   const result = await db.execute<{ id: string }>(
     `UPDATE volunteers
-     SET name = ?, role = ?
+     SET name = ?, role = ?, ${TOUCH}
      WHERE id = ? AND courseId = ?
      RETURNING id`,
-    [input.name.trim(), input.role, volunteerId, courseId],
+    [input.name.trim(), input.role, now, volunteerId, courseId],
   )
   if (Array.from(result).length !== 1) {
     throw new Error("Volunteer does not belong to course")

@@ -66,6 +66,27 @@ monolithic nested course document. Faults, evaluations, assignments, session boa
 selections and availability remain separate records so future replication is not
 made artificially difficult.
 
+**Record metadata and course ownership (D1).** Every course row carries
+`createdAt` and `updatedAt` as UTC ISO text: an insert sets both, an update
+moves `updatedAt` forward only (`src/persistence/stamp.ts`; a structural test
+refuses a write statement without them). Every course-scoped row names its
+course, faults, crew members and evaluations included, so per-course sync needs
+no joins. `src/persistence/rowIntegrity.ts` checks stored rows for both,
+beside `validateCourseState`.
+
+**Data migrations (D1).** Columns need no migration in PowerSync; filling them
+does. `src/persistence/migrations.ts` runs ordered steps before the app's first
+read, each in one write transaction with its row in the `appMeta` ledger, so an
+interrupted step rolls back whole and reruns, and an applied one never runs
+twice. Steps are only appended. Erasing a course keeps the ledger.
+
+**No deletion markers or record versions yet (D1).** PowerSync uploads a delete
+as a `DELETE` operation, so a hard delete reaches the server and other devices
+without a marker. Conflict handling belongs to the backend's upload handler,
+which can compare `updatedAt` or the previous values PowerSync tracks
+(`trackPreviousValues`). With one writer through 0.7.0 neither is needed;
+1.0.0 decides conflict rules and adds what they require.
+
 ### 3.1 Compatibility and migrations
 
 Application version and database compatibility are separate. The anonymous

@@ -1,13 +1,5 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
-// `db.ts` opens a PowerSync database when it is imported; only its schema is
-// wanted here, and the real database needs a browser.
-vi.mock("@powersync/web", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@powersync/web")>()),
-  PowerSyncDatabase: class {},
-}))
-
-import { AppSchema } from "@/persistence/db"
 import {
   DUTY_DAYS,
   SESSION_SEQUENCE,
@@ -19,6 +11,7 @@ import { validateCourseState } from "@/domain/invariants"
 import { calculateStudentAge, isStudentMinor } from "@/domain/student"
 import fixture from "@/test/fixtures/v0.2.0-course.json"
 import { v020Schema } from "@/test/v020Schema"
+import { v030Schema } from "@/test/v030Schema"
 
 type Rows = Array<Record<string, unknown>>
 const tables = fixture.tables as Record<string, Rows>
@@ -36,9 +29,11 @@ function columnsByTable(schema: { toJSON: () => unknown }) {
 }
 
 describe("0.2.0 migration fixture", () => {
-  it("is shaped by the frozen 0.2.0 schema, which lacks exactly the two columns added since", () => {
+  it("is shaped by the frozen 0.2.0 schema, which lacks exactly the two columns 0.3.0 added", () => {
     const frozen = columnsByTable(v020Schema)
-    const current = columnsByTable(AppSchema)
+    // Against the frozen 0.3.0 schema: what D1 and later add to today's schema
+    // is pinned by v030Fixture.test.ts.
+    const current = columnsByTable(v030Schema)
 
     // Same tables; the only differences are the two nullable columns.
     expect(Object.keys(frozen).sort()).toEqual(Object.keys(current).sort())

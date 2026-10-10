@@ -747,6 +747,7 @@
         ".evidence/D1/data-integrity-review.json"
       ],
       "e2eSpecs": [
+        "tests/e2e/d1-migration.spec.ts",
         "tests/e2e/persistence.spec.ts",
         "tests/e2e/reopen-persistence.spec.ts",
         "tests/e2e/u02-migration.spec.ts",

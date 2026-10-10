@@ -1,13 +1,20 @@
 import type { CourseDetails } from "@/domain/course"
 import { db } from "@/persistence/db"
+import { prepareDatabase } from "@/persistence/migrations"
+import { stamp, TOUCH } from "@/persistence/stamp"
 
 export type CourseRecord = CourseDetails & {
   id: string
   active: 1
 }
 
+/**
+ * The app's first read (App's load effect): it brings the data up to date
+ * first, so nothing reads a table a pending migration still has to fill. A
+ * failed migration fails this read, and the app's Riprova runs it again.
+ */
 export async function getActiveCourse() {
-  await db.init()
+  await prepareDatabase()
   return db.getOptional<CourseRecord>(
     `SELECT id, active, family, level, isoWeek, year, startDate, endDate, label
      FROM courses
@@ -20,6 +27,7 @@ export async function saveActiveCourse(
   details: CourseDetails,
 ): Promise<CourseRecord> {
   await db.init()
+  const now = stamp()
   const course: CourseRecord = {
     id: crypto.randomUUID(),
     active: 1,
@@ -27,11 +35,15 @@ export async function saveActiveCourse(
   }
 
   await db.writeTransaction(async (transaction) => {
-    await transaction.execute("UPDATE courses SET active = 0 WHERE active = 1")
+    await transaction.execute(
+      `UPDATE courses SET active = 0, ${TOUCH} WHERE active = 1`,
+      [now],
+    )
     await transaction.execute(
       `INSERT INTO courses(
-        id, active, family, level, isoWeek, year, startDate, endDate, label
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, active, family, level, isoWeek, year, startDate, endDate, label,
+        createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         course.id,
         course.active,
@@ -42,6 +54,8 @@ export async function saveActiveCourse(
         course.startDate,
         course.endDate,
         course.label,
+        now,
+        now,
       ],
     )
   })

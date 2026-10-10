@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -11,6 +11,9 @@ const database = vi.hoisted(() => ({
 }))
 
 vi.mock("@/persistence/db", () => ({ db: database }))
+vi.mock("@/persistence/migrations", () => ({
+  prepareDatabase: vi.fn(async () => {}),
+}))
 
 import type { CourseDetails } from "@/domain/course"
 import {
@@ -19,6 +22,10 @@ import {
   getActiveCourse,
   saveActiveCourse,
 } from "@/persistence/courses"
+import { prepareDatabase } from "@/persistence/migrations"
+import { TOUCH } from "@/persistence/stamp"
+
+const NOW = "2026-08-29T07:30:00.125Z"
 
 const DETAILS: CourseDetails = {
   family: "Deriva",
@@ -33,6 +40,8 @@ const DETAILS: CourseDetails = {
 describe("course persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     database.execute.mockResolvedValue(undefined)
     database.writeTransaction.mockImplementation(
@@ -42,6 +51,10 @@ describe("course persistence", () => {
         }) => Promise<unknown>,
       ) => callback({ execute: database.execute }),
     )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("reads only the active course", async () => {
@@ -54,18 +67,50 @@ describe("course persistence", () => {
     )
   })
 
+  it("reads nothing until the pending migrations have run", async () => {
+    let finishMigrations = () => {}
+    vi.mocked(prepareDatabase).mockImplementationOnce(
+      () => new Promise<void>((resolve) => (finishMigrations = resolve)),
+    )
+    database.getOptional.mockResolvedValue(null)
+
+    const read = getActiveCourse()
+    await Promise.resolve()
+    expect(prepareDatabase).toHaveBeenCalledOnce()
+    expect(database.getOptional).not.toHaveBeenCalled()
+
+    finishMigrations()
+    await read
+    expect(database.getOptional).toHaveBeenCalledOnce()
+  })
+
   it("deactivates an existing course and inserts the new one atomically", async () => {
     const course = await saveActiveCourse(DETAILS)
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
     expect(database.execute).toHaveBeenNthCalledWith(
       1,
-      "UPDATE courses SET active = 0 WHERE active = 1",
+      `UPDATE courses SET active = 0, ${TOUCH} WHERE active = 1`,
+      [NOW],
     )
     expect(database.execute).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining("INSERT INTO courses"),
-      expect.arrayContaining([course.id, 1, "Deriva", 2, "D2 35 2026"]),
+      expect.stringMatching(
+        /INSERT INTO courses\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        course.id,
+        1,
+        "Deriva",
+        2,
+        35,
+        2026,
+        "2026-08-29",
+        "2026-09-05",
+        "D2 35 2026",
+        NOW,
+        NOW,
+      ],
     )
     expect(course).toEqual(expect.objectContaining({ active: 1, ...DETAILS }))
   })
@@ -87,6 +132,10 @@ describe("course persistence", () => {
     expect(transaction.execute.mock.calls.map(([sql]) => sql)).toEqual(
       COURSE_DATA_TABLES.map((table) => `DELETE FROM ${table}`),
     )
+    // The migration ledger describes the schema, not the course: it stays.
+    expect(JSON.stringify(transaction.execute.mock.calls)).not.toContain(
+      "appMeta",
+    )
     expect(
       window.localStorage.getItem("cvc-helper.scan-name-order.course-1"),
     ).toBeNull()
@@ -104,9 +153,12 @@ describe("course persistence", () => {
       .map((name) => name.trim())
       .filter(Boolean)
     expect(tables.length).toBeGreaterThan(10)
-    // `meta` is an empty probe table kept only for schema compatibility.
+    // Two tables are not course data: `meta` is an empty probe table kept only
+    // for schema compatibility, and `appMeta` is the data's own bookkeeping
+    // (the migration ledger), which erasing a course must leave in place.
+    const notCourseData = ["meta", "appMeta"]
     expect(new Set(COURSE_DATA_TABLES)).toEqual(
-      new Set(tables.filter((name) => name !== "meta")),
+      new Set(tables.filter((name) => !notCourseData.includes(name))),
     )
   })
 })

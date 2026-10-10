@@ -176,7 +176,7 @@ for (const id of [
 }
 // The active cycle, 0.4.0. A milestone archived from the plan keeps a status
 // row there (docs/DOCS_SYSTEM.md).
-for (const id of ["H1", "D1", "D2", "D3", "D4", "UG3"]) {
+for (const id of ["H1", "D1", "D2", "D3", "D4", "T1", "UG3"]) {
   const milestone = manifest.milestones.find((item) => item.id === id)
   assert.ok(milestone, `Missing active-cycle milestone: ${id}`)
   assert.ok(

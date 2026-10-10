@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -17,6 +17,9 @@ import {
   readCrewPlan,
   saveCrewPlan,
 } from "@/persistence/crews"
+import { TOUCH } from "@/persistence/stamp"
+
+const NOW = "2026-09-19T14:05:09.500Z"
 
 function existingCourseEntities(sql: string) {
   if (sql.includes("FROM students")) {
@@ -34,6 +37,8 @@ function existingCourseEntities(sql: string) {
 describe("crew persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
     database.getOptional.mockResolvedValue({ family: "Deriva", level: 2 })
@@ -52,6 +57,10 @@ describe("crew persistence", () => {
           getAll: database.transactionGetAll,
         }),
     )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("reads legacy null positions without dropping crews or A terra", async () => {
@@ -176,9 +185,23 @@ describe("crew persistence", () => {
       landStudentIds: [],
       selectedBoatIds: [],
     })
+    // A crew member names its course directly (D1), besides its crew.
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO crewMembers"),
-      [expect.arrayContaining(["crew-1", "student-1", "student", 1])],
+      expect.stringMatching(
+        /INSERT INTO crewMembers\([^)]*courseId[^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        [
+          expect.any(String),
+          "course-1",
+          "crew-1",
+          "student-1",
+          "student",
+          1,
+          NOW,
+          NOW,
+        ],
+      ],
     )
 
     database.getAll.mockReset()
@@ -275,16 +298,38 @@ describe("crew persistence", () => {
     })
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
+    // Every row of the save carries the one stamp taken for it.
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO crews"),
-      expect.arrayContaining([
-        expect.arrayContaining(["crew-1", "course-1", "sat-pm", 0]),
-        expect.arrayContaining(["crew-2", "course-1", "sat-pm", 1]),
-      ]),
+      expect.stringMatching(
+        /INSERT INTO crews\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        ["crew-1", "course-1", "sat-pm", 2, "unassigned", null, 0, NOW, NOW],
+        ["crew-2", "course-1", "sat-pm", 2, "unassigned", null, 1, NOW, NOW],
+      ],
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO landAssignments"),
-      [expect.arrayContaining(["course-1", "sat-pm", "student-2"])],
+      expect.stringMatching(
+        /INSERT INTO crewMembers\([^)]*courseId[^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        [
+          expect.any(String),
+          "course-1",
+          "crew-1",
+          "student-1",
+          "student",
+          0,
+          NOW,
+          NOW,
+        ],
+      ],
+    )
+    expect(database.executeBatch).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /INSERT INTO landAssignments\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [[expect.any(String), "course-1", "sat-pm", "student-2", NOW, NOW]],
     )
     expect(
       database.executeBatch.mock.calls.some(([sql]) =>
@@ -501,15 +546,19 @@ describe("crew persistence", () => {
     })
 
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO crews"),
-      expect.arrayContaining([
-        expect.arrayContaining(["crew-1", "boat", "boat-2"]),
-        expect.arrayContaining(["crew-2", "mezzi", null]),
-      ]),
+      expect.stringMatching(
+        /INSERT INTO crews\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        ["crew-1", "course-1", "sat-pm", 2, "boat", "boat-2", 0, NOW, NOW],
+        ["crew-2", "course-1", "sat-pm", 2, "mezzi", null, 1, NOW, NOW],
+      ],
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO sessionBoats"),
-      [expect.arrayContaining(["course-1", "sat-pm", "boat-2", 0])],
+      expect.stringMatching(
+        /INSERT INTO sessionBoats\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [[expect.any(String), "course-1", "sat-pm", "boat-2", 0, NOW, NOW]],
     )
   })
 
@@ -601,7 +650,19 @@ describe("crew persistence", () => {
     await saveCrewPlan("course-1", "sat-pm", plan)
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO crews"),
-      [expect.arrayContaining(["crew-cabin-1", "course-1", "sat-pm", 6])],
+      [
+        [
+          "crew-cabin-1",
+          "course-1",
+          "sat-pm",
+          6,
+          "unassigned",
+          null,
+          0,
+          NOW,
+          NOW,
+        ],
+      ],
     )
 
     database.getAll.mockReset()
@@ -778,18 +839,21 @@ describe("crew persistence", () => {
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE crews"),
-      [[2, "boat", "boat-2", 0, "crew-1", "course-1", "sat-pm"]],
+      [[2, "boat", "boat-2", 0, NOW, "crew-1", "course-1", "sat-pm"]],
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE sessionBoats"),
-      [[0, "selection-2", "course-1", "sat-pm"]],
+      [[0, NOW, "selection-2", "course-1", "sat-pm"]],
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE crewMembers"),
-      [[0, "member-1", "course-1", "sat-pm"]],
+      [[0, NOW, "member-1", "course-1", "sat-pm"]],
     )
     for (const [sql, rows] of database.executeBatch.mock.calls) {
       expect(sql).toContain("sessionId = ?")
+      // Every update moves updatedAt through TOUCH, its stamp right after the
+      // SET values and before the WHERE ones.
+      if (String(sql).startsWith("UPDATE")) expect(sql).toContain(TOUCH)
       for (const params of rows) {
         expect(params).toEqual(expect.arrayContaining(["course-1", "sat-pm"]))
       }

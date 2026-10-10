@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -28,6 +28,9 @@ import {
   updateStudentKnowledge,
   type StudentInput,
 } from "@/persistence/students"
+import { TOUCH } from "@/persistence/stamp"
+
+const NOW = "2026-09-19T07:45:20.125Z"
 
 const INPUT: StudentInput = {
   firstName: "Mario",
@@ -42,6 +45,8 @@ const INPUT: StudentInput = {
 describe("student persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     database.execute.mockResolvedValue(undefined)
     database.executeBatch.mockResolvedValue(undefined)
@@ -54,6 +59,10 @@ describe("student persistence", () => {
       async (callback: (context: typeof transaction) => Promise<unknown>) =>
         callback(transaction),
     )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("lists current-course students with active students first", async () => {
@@ -79,8 +88,26 @@ describe("student persistence", () => {
       }),
     )
     expect(database.execute).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO students"),
-      expect.arrayContaining([student.id, "course-1", "Mario", "Rossi", 1]),
+      expect.stringMatching(
+        /INSERT INTO students\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        student.id,
+        "course-1",
+        "Mario",
+        "Rossi",
+        null,
+        "2010-01-01",
+        null,
+        "male",
+        "+39 333 1234567",
+        null,
+        null,
+        null,
+        1,
+        NOW,
+        NOW,
+      ],
     )
   })
 
@@ -96,13 +123,21 @@ describe("student persistence", () => {
     ])
 
     expect(students).toHaveLength(2)
+    // One stamp for the whole batch, as both created and updated time.
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO students"),
-      expect.arrayContaining([
+      expect.stringMatching(
+        /INSERT INTO students\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
         expect.arrayContaining(["course-1", "Mario", "Rossi", "male", 1]),
         expect.arrayContaining(["course-1", "Giulia", "Bianchi", "female", 1]),
-      ]),
+      ],
     )
+    for (const [, rows] of database.executeBatch.mock.calls as Array<
+      [string, unknown[][]]
+    >) {
+      for (const params of rows) expect(params.slice(-2)).toEqual([NOW, NOW])
+    }
   })
 
   it("persists a declared course-start age without a birth date", async () => {
@@ -132,15 +167,31 @@ describe("student persistence", () => {
     })
     await setStudentActive("student-1", "course-1", false)
 
-    expect(database.execute).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining("WHERE id = ? AND courseId = ?"),
-      expect.arrayContaining(["student-1", "course-1"]),
-    )
+    const [editSql, editParams] = database.execute.mock.calls[0] as [
+      string,
+      unknown[],
+    ]
+    expect(editSql).toContain(`courseNote = ?, ${TOUCH}`)
+    expect(editSql).toContain("WHERE id = ? AND courseId = ?")
+    expect(editParams).toEqual([
+      "Mario",
+      "Rossi",
+      "Marty",
+      "2010-01-01",
+      null,
+      "male",
+      "+39 333 1234567",
+      null,
+      null,
+      null,
+      NOW,
+      "student-1",
+      "course-1",
+    ])
     expect(database.execute).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining("UPDATE students SET active = ?"),
-      [0, "student-1", "course-1"],
+      expect.stringContaining(`UPDATE students SET active = ?, ${TOUCH}`),
+      [0, NOW, "student-1", "course-1"],
     )
   })
 
@@ -151,8 +202,8 @@ describe("student persistence", () => {
     })
 
     expect(database.execute).toHaveBeenCalledWith(
-      expect.stringContaining("SET size = ?, initialNote = ?"),
-      ["L", "Esperienza Optimist", "student-1", "course-1"],
+      expect.stringContaining(`SET size = ?, initialNote = ?, ${TOUCH}`),
+      ["L", "Esperienza Optimist", NOW, "student-1", "course-1"],
     )
   })
 

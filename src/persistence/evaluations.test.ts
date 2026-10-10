@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -15,16 +15,25 @@ import {
   listStudentEvaluations,
   saveEvaluation,
 } from "@/persistence/evaluations"
+import { TOUCH } from "@/persistence/stamp"
+
+const NOW = "2026-09-20T09:12:45.875Z"
 
 describe("evaluation persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     database.getAll.mockResolvedValue([])
     database.writeTransaction.mockImplementation(
       async (write: (transaction: typeof database) => unknown) =>
         write(database),
     )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("reads the exact course session and normalizes an empty note", async () => {
@@ -58,16 +67,19 @@ describe("evaluation persistence", () => {
       .mockResolvedValueOnce([{ id: "student-1" }])
       .mockResolvedValueOnce([])
 
-    await saveEvaluation("course-1", "student-1", "sun-am", {
+    const record = await saveEvaluation("course-1", "student-1", "sun-am", {
       value: "+",
       note: null,
     })
 
     expect(database.writeTransaction).toHaveBeenCalledOnce()
     expect(database.getAll).toHaveBeenCalledTimes(2)
+    // The row names its course directly (D1) and is stamped once.
     expect(database.execute).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO evaluations"),
-      expect.any(Array),
+      expect.stringMatching(
+        /INSERT INTO evaluations\([^)]*courseId[^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [record?.id, "course-1", "student-1", "sun-am", "+", null, NOW, NOW],
     )
   })
 
@@ -89,8 +101,8 @@ describe("evaluation persistence", () => {
       note: "Buona conduzione",
     })
     expect(database.execute).toHaveBeenCalledWith(
-      "UPDATE evaluations SET value = ?, note = ? WHERE id = ?",
-      ["++", "Buona conduzione", "evaluation-1"],
+      `UPDATE evaluations SET value = ?, note = ?, ${TOUCH} WHERE id = ?`,
+      ["++", "Buona conduzione", NOW, "evaluation-1"],
     )
   })
 

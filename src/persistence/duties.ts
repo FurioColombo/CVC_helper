@@ -6,6 +6,7 @@ import {
 } from "@/domain/config"
 import type { DutyAssignment } from "@/domain/duties"
 import { db } from "@/persistence/db"
+import { stamp } from "@/persistence/stamp"
 
 export interface DutySettingsRecord {
   desiredPerDay: number
@@ -155,6 +156,7 @@ export async function saveDutyPlan(
     if (uniqueKeys.has(key)) throw new Error("Duplicate duty assignment")
     uniqueKeys.add(key)
   }
+  const now = stamp()
   await database.writeTransaction(async (transaction) => {
     // Like a crew or an evaluation save: a second window can still list a
     // student who was deleted meanwhile, and its duty must not be stored.
@@ -244,21 +246,29 @@ export async function saveDutyPlan(
     )
     if (added.length > 0) {
       await transaction.executeBatch(
-        "INSERT INTO dutyAssignments(id, courseId, dayId, studentId) VALUES (?, ?, ?, ?)",
+        `INSERT INTO dutyAssignments(
+           id, courseId, dayId, studentId, createdAt, updatedAt
+         ) VALUES (?, ?, ?, ?, ?, ?)`,
         added.map((assignment) => [
           crypto.randomUUID(),
           courseId,
           assignment.dayId,
           assignment.studentId,
+          now,
+          now,
         ]),
       )
     }
+    // REPLACE writes a whole new row, so the row's own createdAt and its
+    // latest updatedAt are read back into it instead of starting over.
     await transaction.execute(
       `INSERT OR REPLACE INTO dutySettings(
         id, courseId, desiredPerDay, fewerDayIds, extraDayIds, balanceMinors,
         balanceSex, tieBreaker, stayOverStudentIds, completedDayIds,
-        acknowledgedWarningKeys
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        acknowledgedWarningKeys, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        coalesce((SELECT createdAt FROM dutySettings WHERE id = ?), ?),
+        max(?, coalesce((SELECT updatedAt FROM dutySettings WHERE id = ?), '')))`,
       [
         courseId,
         courseId,
@@ -271,6 +281,10 @@ export async function saveDutyPlan(
         JSON.stringify(settings.stayOverStudentIds),
         JSON.stringify(settings.completedDayIds),
         JSON.stringify(settings.acknowledgedWarningKeys),
+        courseId,
+        now,
+        now,
+        courseId,
       ],
     )
   })

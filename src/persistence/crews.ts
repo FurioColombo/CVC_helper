@@ -18,6 +18,7 @@ import {
 } from "@/domain/crews"
 import type { CrewHistoryEntry } from "@/domain/crewWarnings"
 import { db } from "@/persistence/db"
+import { stamp, TOUCH } from "@/persistence/stamp"
 
 interface PersistedCrew {
   id: string
@@ -410,6 +411,7 @@ export async function saveCrewPlan(
       else volunteerIds.add(personId)
     }
   }
+  const now = stamp()
   await database.writeTransaction(async (transaction) => {
     if (studentIds.size > 0) {
       const courseStudents = await transaction.getAll<{ id: string }>(
@@ -530,13 +532,15 @@ export async function saveCrewPlan(
     })
     if (updatedCrews.length > 0) {
       await transaction.executeBatch(
-        `UPDATE crews SET capacity = ?, destination = ?, boatId = ?, position = ?
+        `UPDATE crews SET capacity = ?, destination = ?, boatId = ?, position = ?,
+           ${TOUCH}
          WHERE id = ? AND courseId = ? AND sessionId = ?`,
         updatedCrews.map(({ crew, position }) => [
           crew.capacity,
           crew.destination,
           crew.boatId,
           position,
+          now,
           crew.id,
           courseId,
           sessionId,
@@ -548,8 +552,10 @@ export async function saveCrewPlan(
     )
     if (addedCrews.length > 0) {
       await transaction.executeBatch(
-        `INSERT INTO crews(id, courseId, sessionId, capacity, destination, boatId, position)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO crews(
+           id, courseId, sessionId, capacity, destination, boatId, position,
+           createdAt, updatedAt
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         addedCrews.map(({ crew, position }) => [
           crew.id,
           courseId,
@@ -558,6 +564,8 @@ export async function saveCrewPlan(
           crew.destination,
           crew.boatId,
           position,
+          now,
+          now,
         ]),
       )
     }
@@ -581,10 +589,11 @@ export async function saveCrewPlan(
     )
     if (updatedSessionBoats.length > 0) {
       await transaction.executeBatch(
-        `UPDATE sessionBoats SET position = ?
+        `UPDATE sessionBoats SET position = ?, ${TOUCH}
          WHERE id = ? AND courseId = ? AND sessionId = ?`,
         updatedSessionBoats.map(({ id, position }) => [
           position,
+          now,
           id,
           courseId,
           sessionId,
@@ -597,14 +606,17 @@ export async function saveCrewPlan(
     )
     if (addedSessionBoats.length > 0) {
       await transaction.executeBatch(
-        `INSERT INTO sessionBoats(id, courseId, sessionId, boatId, position)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO sessionBoats(
+           id, courseId, sessionId, boatId, position, createdAt, updatedAt
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         addedSessionBoats.map(({ boatId, position }) => [
           crypto.randomUUID(),
           courseId,
           sessionId,
           boatId,
           position,
+          now,
+          now,
         ]),
       )
     }
@@ -616,10 +628,11 @@ export async function saveCrewPlan(
     })
     if (updatedMembers.length > 0) {
       await transaction.executeBatch(
-        `UPDATE crewMembers SET position = ? WHERE id = ? AND crewId IN
+        `UPDATE crewMembers SET position = ?, ${TOUCH} WHERE id = ? AND crewId IN
          (SELECT id FROM crews WHERE courseId = ? AND sessionId = ?)`,
         updatedMembers.map(({ id, position }) => [
           position,
+          now,
           id,
           courseId,
           sessionId,
@@ -631,14 +644,19 @@ export async function saveCrewPlan(
     )
     if (addedMembers.length > 0) {
       await transaction.executeBatch(
-        `INSERT INTO crewMembers(id, crewId, personId, personType, position)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO crewMembers(
+           id, courseId, crewId, personId, personType, position,
+           createdAt, updatedAt
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         addedMembers.map(({ crewId, personId, personType, position }) => [
           crypto.randomUUID(),
+          courseId,
           crewId,
           personId,
           personType,
           position,
+          now,
+          now,
         ]),
       )
     }
@@ -657,13 +675,16 @@ export async function saveCrewPlan(
     )
     if (addedLand.length > 0) {
       await transaction.executeBatch(
-        `INSERT INTO landAssignments(id, courseId, sessionId, studentId)
-         VALUES (?, ?, ?, ?)`,
+        `INSERT INTO landAssignments(
+           id, courseId, sessionId, studentId, createdAt, updatedAt
+         ) VALUES (?, ?, ?, ?, ?, ?)`,
         addedLand.map((studentId) => [
           crypto.randomUUID(),
           courseId,
           sessionId,
           studentId,
+          now,
+          now,
         ]),
       )
     }

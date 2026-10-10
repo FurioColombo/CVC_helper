@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
   execute: vi.fn(),
@@ -16,6 +16,8 @@ import {
   saveDutyPlan,
   type DutySettingsRecord,
 } from "@/persistence/duties"
+
+const NOW = "2026-09-19T16:40:12.750Z"
 
 const SETTINGS: DutySettingsRecord = {
   desiredPerDay: 3,
@@ -47,6 +49,8 @@ function givenStoredRows({
 describe("duty persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(NOW))
     database.init.mockResolvedValue(undefined)
     givenStoredRows()
     database.getOptional.mockResolvedValue(null)
@@ -66,6 +70,10 @@ describe("duty persistence", () => {
           getOptional: database.getOptional,
         }),
     )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("reads and parses the course plan", async () => {
@@ -128,14 +136,87 @@ describe("duty persistence", () => {
       expect.anything(),
     )
     expect(database.executeBatch).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO dutyAssignments"),
-      [expect.arrayContaining(["course-1", "saturday", "student-1"])],
+      expect.stringMatching(
+        /INSERT INTO dutyAssignments\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [[expect.any(String), "course-1", "saturday", "student-1", NOW, NOW]],
     )
     expect(database.execute).toHaveBeenNthCalledWith(
       1,
-      expect.stringContaining("INSERT OR REPLACE INTO dutySettings"),
-      expect.arrayContaining(["course-1"]),
+      expect.stringMatching(
+        /INSERT OR REPLACE INTO dutySettings\([^)]*createdAt, updatedAt\s*\)/,
+      ),
+      [
+        "course-1",
+        "course-1",
+        3,
+        '["saturday"]',
+        "[]",
+        1,
+        0,
+        "alphabetical",
+        '["student-1"]',
+        '["saturday"]',
+        '["minor-balance:2,0"]',
+        // createdAt keeps the stored row's, else the stamp; updatedAt moves on.
+        "course-1",
+        NOW,
+        NOW,
+        "course-1",
+      ],
     )
+  })
+
+  // REPLACE swaps the whole row, so the statement reads the row's own createdAt
+  // and latest updatedAt back in. The statement the app sends is run here on a
+  // real SQLite, saving three times with the clock going forward, then back.
+  it("keeps a settings row's createdAt and never moves its updatedAt backwards", async () => {
+    const { DatabaseSync } = await import("node:sqlite")
+    const sqlite = new DatabaseSync(":memory:")
+    sqlite.exec(
+      `CREATE TABLE dutySettings (
+         id TEXT PRIMARY KEY, courseId TEXT, desiredPerDay INTEGER,
+         fewerDayIds TEXT, extraDayIds TEXT, balanceMinors INTEGER,
+         balanceSex INTEGER, tieBreaker TEXT, stayOverStudentIds TEXT,
+         completedDayIds TEXT, acknowledgedWarningKeys TEXT,
+         createdAt TEXT, updatedAt TEXT)`,
+    )
+    const saveAt = async (clock: string) => {
+      vi.setSystemTime(new Date(clock))
+      database.execute.mockClear()
+      await saveDutyPlan("course-1", [], SETTINGS)
+      const [sql, params] = database.execute.mock.calls[0] as [
+        string,
+        Array<string | number>,
+      ]
+      sqlite.prepare(sql).run(...params)
+      return sqlite
+        .prepare("SELECT createdAt, updatedAt FROM dutySettings")
+        .all()
+    }
+
+    try {
+      await expect(saveAt("2026-09-19T10:00:00.000Z")).resolves.toEqual([
+        {
+          createdAt: "2026-09-19T10:00:00.000Z",
+          updatedAt: "2026-09-19T10:00:00.000Z",
+        },
+      ])
+      await expect(saveAt("2026-09-19T11:00:00.000Z")).resolves.toEqual([
+        {
+          createdAt: "2026-09-19T10:00:00.000Z",
+          updatedAt: "2026-09-19T11:00:00.000Z",
+        },
+      ])
+      await expect(saveAt("2026-09-19T09:00:00.000Z")).resolves.toEqual([
+        {
+          createdAt: "2026-09-19T10:00:00.000Z",
+          updatedAt: "2026-09-19T11:00:00.000Z",
+        },
+      ])
+    } finally {
+      sqlite.close()
+    }
   })
 
   it("refuses duplicate day/student rows", async () => {

@@ -1,0 +1,114 @@
+{
+  "milestone": "D1",
+  "recordedAt": "2026-10-10T06:30:11.447Z",
+  "source": "tests/e2e/d1-migration.spec.ts through src/test/d1MigrationHarness.ts, real PowerSync engine, CVC_EVIDENCE_REFRESH=D1",
+  "fixtures": "src/test/fixtures/v0.1.0-course.json, v0.2.0-course.json, v0.3.0-course.json (fictitious people only)",
+  "summary": {
+    "pixel-7-chrome": {
+      "upgrades": [
+        {
+          "version": "0.1.0",
+          "fixtureRows": 21,
+          "changedValues": 0,
+          "rowIssues": 0,
+          "ledger": 2,
+          "reopenedIdentical": true
+        },
+        {
+          "version": "0.2.0",
+          "fixtureRows": 44,
+          "changedValues": 0,
+          "rowIssues": 0,
+          "ledger": 2,
+          "reopenedIdentical": true
+        },
+        {
+          "version": "0.3.0",
+          "fixtureRows": 46,
+          "changedValues": 0,
+          "rowIssues": 0,
+          "ledger": 2,
+          "reopenedIdentical": true
+        }
+      ],
+      "interruption": {
+        "rolledBackUntouched": true,
+        "ledgerAfterFailure": [],
+        "ledgerAfterFirstStep": [
+          "migration:2026-10-d1-course-ownership"
+        ],
+        "appliedOnReopen": [
+          "2026-10-d1-record-metadata"
+        ],
+        "rowIssues": [],
+        "changedValues": [],
+        "secondRunApplied": [],
+        "secondRunIdentical": true
+      },
+      "largeUpgrade": {
+        "durationMs": 640,
+        "rows": 606,
+        "rowIssues": []
+      },
+      "appWrites": {
+        "issues": [],
+        "newFaultHasCourse": true,
+        "newEvaluationHasCourse": true,
+        "deactivationMovedUpdatedAt": true
+      }
+    },
+    "iphone-13-webkit-core": {
+      "upgrades": [
+        {
+          "version": "0.1.0",
+          "fixtureRows": 21,
+          "changedValues": 0,
+          "rowIssues": 0,
+          "ledger": 2,
+          "reopenedIdentical": true
+        },
+        {
+          "version": "0.2.0",
+          "fixtureRows": 44,
+          "changedValues": 0,
+          "rowIssues": 0,
+          "ledger": 2,
+          "reopenedIdentical": true
+        },
+        {
+          "version": "0.3.0",
+          "fixtureRows": 46,
+          "changedValues": 0,
+          "rowIssues": 0,
+          "ledger": 2,
+          "reopenedIdentical": true
+        }
+      ],
+      "interruption": {
+        "rolledBackUntouched": true,
+        "ledgerAfterFailure": [],
+        "ledgerAfterFirstStep": [
+          "migration:2026-10-d1-course-ownership"
+        ],
+        "appliedOnReopen": [
+          "2026-10-d1-record-metadata"
+        ],
+        "rowIssues": [],
+        "changedValues": [],
+        "secondRunApplied": [],
+        "secondRunIdentical": true
+      },
+      "largeUpgrade": {
+        "durationMs": 2133,
+        "rows": 606,
+        "rowIssues": []
+      },
+      "appWrites": {
+        "issues": [],
+        "newFaultHasCourse": true,
+        "newEvaluationHasCourse": true,
+        "deactivationMovedUpdatedAt": true
+      }
+    }
+  }
+}

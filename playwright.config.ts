@@ -47,6 +47,8 @@ const layoutSpecs = [
 const webkitCoreSpecs = [
   "boats",
   "crew-management-gate",
+  // Data migrations run on every iPhone, on WebKit's own storage backend.
+  "d1-migration",
   "duties",
   "evaluation-gate",
   "f1-navigation-guards",
