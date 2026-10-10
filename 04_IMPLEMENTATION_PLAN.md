@@ -169,6 +169,14 @@ reviews, the owner's device report.
 
 ## Waiting for the owner
 
+How should D3's Android check run (`docs/DEVICE_CHECKS.md`, "Updates and
+versions")? It needs two deployments of this branch to an HTTPS address, one
+installed and the next published while it is open. Pages deploys only `main`
+(`docs/DEPLOY.md`), so either the owner allows two pre-release deployments of
+`codex/0.4.0` to `main`, or names another HTTPS host for a preview, or runs the
+check through `adb reverse` on a PC. D3 stays open until the check is
+recorded.
+
 Which of the six candidates in `docs/working/BACKLOG.md` ("Waiting for the
 owner's choice") join 0.4.0 as a fix milestone? And which of the
 retrospective's ten proposals ("Retrospective proposals awaiting the owner's

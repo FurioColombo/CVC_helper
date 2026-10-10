@@ -78,6 +78,27 @@ area** to the review, and PASS or FAIL.
 6. Only on a device you can reset: **Impostazioni → Elimina il corso e inizia un
    nuovo corso** asks for confirmation and opens course creation.
 
+## Updates and versions
+
+From 0.4.0 (D3). The check needs two deployments of the same commit's line to
+one HTTPS address: version N installed first, then N+1 published while N is
+open (`docs/DEPLOY.md`).
+
+1. Install N on the home screen. **Impostazioni** shows its **Versione**.
+2. With the app open on Home, publish N+1. Switch to another app or lock the
+   phone for a minute, then come back: within a minute **Nuova versione
+   disponibile** appears, with no reinstall and no reload by hand.
+3. Open a student's edit, type a change, and tap **Aggiorna**: the change is
+   kept, the app reopens, Home says once **CVC Helper è aggiornata alla
+   versione …**, and **Impostazioni** shows the new version.
+4. While the offer is shown, it covers neither the **+** of Allievi nor the
+   floating bar of Equipaggi.
+5. **Impostazioni → Cerca aggiornamenti**: in airplane mode it says the phone
+   is offline; online, with nothing new, **Questa è l’ultima versione**.
+
+Record the URL, both versions, the time from the return to the offer, and
+whether the change survived.
+
 ## Summaries
 
 1. In the crew summary (**Apri vista lettura**) and the Comandate summary, tap
