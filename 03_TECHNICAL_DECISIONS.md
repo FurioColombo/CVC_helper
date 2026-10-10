@@ -157,8 +157,15 @@ rather than added later:
 - an app older than the data's minimum writer version opens read-only and asks
   to update.
 
-D3 writes the contract as a tested domain function; the server enforces the
-same rule from 0.5.0. PowerSync's client keeps rows as JSON behind views, so an
+The contract is one tested domain function, `src/domain/compatibility.ts`; the
+server enforces the same rule from 0.5.0. The data records, in `meta`, the
+newest app version that wrote it and the oldest allowed to write it (the
+previous minor version of the writer; a major release declares its own);
+neither ever goes back. `prepareDatabase` reads that record before anything
+else: an app older than the minimum writer runs no repair or migration, and
+its database refuses every write (`src/persistence/writeGuard.ts`), so it
+reads the course and says `Aggiorna l'app`. The app's version comes from
+`package.json` at build time (`import.meta.env.VITE_APP_VERSION`). PowerSync's client keeps rows as JSON behind views, so an
 older app reads data with columns it does not know, but it does not write
 around them: an update through its views rewrites the row without the newer
 columns, and opening the database with its schema drops every local-only table
@@ -169,7 +176,7 @@ the repair's); any other newer value the older app stripped stays lost, as a
 0.2.0 tab already clears a 0.3.0 declared age or crew capacity. A table that
 only newer versions declare must be rebuildable from data older versions keep,
 so the newer app keeps writing that data too until older writers are stopped.
-From D3 the contract keeps an older app from writing.
+From 0.4.0 the contract keeps an older app from writing.
 
 ### 3.2 Coherent writes
 

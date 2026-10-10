@@ -27,6 +27,7 @@ derivato finale è rinviato.
 - Navigazione persistente esattamente Avarie / Home / Equipaggi, Home centrale. Nessun nuovo dashboard widget.
 - Proporre un set minimo coerente di icone esistenti prima di ICON-01.
 - Dal 2026-09-21 l'icona dell'app e il `theme-color` usano `#2f5fa0`, lo stesso blu di `--primary` e `--accent-blue`, a sua volta misurato sull'inchiostro `#3060a0` del marchio CVC. Il `#063b52` precedente era un terzo blu allineato a nulla. I tre PNG del launcher sono rigenerati dal file SVG, così sorgente e icone non possono più divergere. Il marchio derivato finale resta rinviato: questo è un allineamento di colore, non un marchio nuovo.
+- Dal 2026-10-10 (D3) la Home dice una volta, dopo un aggiornamento, «CVC Helper è aggiornata alla versione …», chiudibile. Se i dati sono di una versione più recente, un avviso giallo nel flusso della pagina, sopra ogni schermata, dice «Solo lettura: aggiorna l’app» e offre «Aggiorna l’app»: non è flottante, quindi non copre nulla (R12). Il banner «Nuova versione disponibile» pubblica la propria altezza, e la barra flottante di Equipaggi e il pulsante + di Allievi salgono sopra di esso (UG2-UX-3).
 
 **Mock:** Home con corso, titolo lungo, viewport stretto; shell con pagina scorsa e safe area. **Accettazione:** tutti gli ingressi trovabili, testo leggibile e nessuna copertura dell'ultima riga; back/focus coerenti. **Baseline da acquisire:** `src/App.tsx`, `src/styles.css`.
 
@@ -38,6 +39,7 @@ derivato finale è rinviato.
 - Mantenere famiglia, livello, etichetta e date derivate secondo `01`; non aggiungere archivio o conclusione corso.
 - Mostrare “Il tuo corso” nel formato `D2 - 35 | 2026`; D/C e livello cambiano con famiglia/livello, settimana ISO e anno derivano automaticamente dal calendario. Nascondere la navigazione inferiore durante la creazione.
 - Impostazioni mantiene i controlli esistenti; eventuale versione visibile è facoltativa e non richiede una nuova pagina.
+- Dal 2026-10-10 (D3) Impostazioni mostra la riga «Versione» con la versione installata e, sotto l'elenco, «Cerca aggiornamenti»: dice l'esito (ultima versione, offline, ricerca non riuscita) e diventa «Aggiorna alla nuova versione» quando una versione è pronta.
 
 **Mock:** primo avvio, form selezionato/errore, Impostazioni. **Accettazione:** creazione e riapertura non regrediscono; tastiera e focus non coperti. **Baseline:** `src/App.tsx`.
 

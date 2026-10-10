@@ -80,3 +80,42 @@ test("opens newer data read-only: it reads, says so, refuses a save and repairs 
     expect(before.version, pass).toBe(9_009_000)
   }
 })
+
+test("turns an open app read-only at its first save after a newer app raised the minimum writer", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Volontari" }).click()
+  await expect(page.getByText(/Solo lettura/)).toHaveCount(0)
+
+  await page.evaluate(async () => {
+    const modulePath = "/src/test/d3Harness.ts"
+    const harness = (await import(/* @vite-ignore */ modulePath)) as {
+      raiseMinimumWriterUnderOpenApp: () => Promise<void>
+    }
+    await harness.raiseMinimumWriterUnderOpenApp()
+  })
+
+  await page.getByRole("button", { name: "Aggiungi volontario" }).click()
+  await page.getByLabel("Nome completo").fill("Rita Prova")
+  await page.getByText("IS", { exact: true }).click()
+  await page.getByRole("button", { name: "Salva volontario" }).click()
+
+  await expect(
+    page.getByText("La modifica non è stata salvata. Riprova."),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "Solo lettura: aggiorna l’app" }),
+  ).toBeVisible()
+  const volunteers = await page.evaluate(async () => {
+    const modulePath = "/src/persistence/db.ts"
+    const { db } = (await import(/* @vite-ignore */ modulePath)) as {
+      db: { get: (sql: string) => Promise<{ count: number }> }
+    }
+    return (await db.get("SELECT count(*) AS count FROM volunteers")).count
+  })
+  expect(volunteers).toBe(0)
+})

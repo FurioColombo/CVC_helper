@@ -34,6 +34,7 @@ import {
   requestLeave,
 } from "@/navigation/browserHistory"
 import { noteInstalledVersion } from "@/navigation/installedVersion"
+import { onReadOnly } from "@/persistence/writeGuard"
 import { NESTED_SCREEN_KEY_PREFIX } from "@/navigation/nestedScreen"
 import {
   COURSE_FAMILIES,
@@ -814,6 +815,10 @@ export function App() {
   const [readOnly, setReadOnly] = useState(false)
   // Read once per start: a new version since the last start is an update.
   const [updatedFrom] = useState(() => noteInstalledVersion(APP_VERSION_TEXT))
+
+  // A newer app on the device may make the data read-only while this one is
+  // open; its first refused write says so (src/persistence/writeGuard.ts).
+  useEffect(() => onReadOnly(() => setReadOnly(true)), [])
 
   useEffect(() => {
     let active = true

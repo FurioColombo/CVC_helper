@@ -26,3 +26,25 @@ export async function markNewerData(filename: string) {
   await database.get("SELECT count(*) AS count FROM meta")
   await database.close()
 }
+
+/**
+ * The same mark, written by another app instance on the app's own database
+ * while the app is open: a newer version on the device raising the minimum
+ * writer under it.
+ */
+export async function raiseMinimumWriterUnderOpenApp() {
+  const { createDatabase } = await import("@/persistence/schema")
+  const other = createDatabase("cvc-helper.db")
+  await other.init()
+  for (const [id, version] of [
+    ["data:version", "9.9.0"],
+    ["data:minimumWriter", "9.8.0"],
+  ] as const) {
+    await other.execute(
+      "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
+      [id, encodeVersion(parseVersion(version))],
+    )
+  }
+  await other.get("SELECT count(*) AS count FROM meta")
+  await other.close()
+}
