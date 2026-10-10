@@ -1,3 +1,5 @@
+import { COURSE_PARENTS, COURSE_TABLES } from "@/persistence/schema"
+
 /**
  * Integrity of stored rows that the domain invariant checker
  * (src/domain/invariants.ts, which works on one course's state) cannot see:
@@ -20,25 +22,9 @@ export interface RowIssue {
     | "course-differs-from-parent"
 }
 
-/** Course-scoped tables and, for children, the parent that owns their course. */
-export const COURSE_OWNERSHIP: Record<
-  string,
-  { parent?: { table: string; key: string } }
-> = {
-  students: {},
-  volunteers: {},
-  boats: {},
-  faults: { parent: { table: "boats", key: "boatId" } },
-  dutyAssignments: {},
-  dutySettings: {},
-  crews: {},
-  crewMembers: { parent: { table: "crews", key: "crewId" } },
-  landAssignments: {},
-  sessionBoats: {},
-  evaluations: { parent: { table: "students", key: "studentId" } },
-}
-
-const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/
+// Exactly `toISOString()`'s shape: the writes compare timestamps as text, and
+// text order is time order only at a fixed width.
+const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
 
 export function validateStoredRows(tables: StoredTables): RowIssue[] {
   const issues: RowIssue[] = []
@@ -68,11 +54,12 @@ export function validateStoredRows(tables: StoredTables): RowIssue[] {
     }
   }
 
-  for (const [table, ownership] of Object.entries(COURSE_OWNERSHIP)) {
-    const parentRows = ownership.parent
-      ? new Map(
-          (tables[ownership.parent.table] ?? []).map((row) => [row.id, row]),
-        )
+  for (const table of COURSE_TABLES) {
+    if (table === "courses") continue
+    const owner: { table: string; key: string } | undefined =
+      COURSE_PARENTS[table as keyof typeof COURSE_PARENTS]
+    const parentRows = owner
+      ? new Map((tables[owner.table] ?? []).map((row) => [row.id, row]))
       : undefined
     for (const row of tables[table] ?? []) {
       const issue = (code: RowIssue["code"]) =>
@@ -82,8 +69,8 @@ export function validateStoredRows(tables: StoredTables): RowIssue[] {
         continue
       }
       if (!courseIds.has(String(row.courseId))) issue("unknown-course")
-      if (ownership.parent && parentRows) {
-        const parent = parentRows.get(String(row[ownership.parent.key]))
+      if (owner && parentRows) {
+        const parent = parentRows.get(String(row[owner.key]))
         // A missing parent is a dangling reference, which the domain
         // invariant checker reports, and a parent without a course is
         // reported on its own row; here only a disagreement counts.

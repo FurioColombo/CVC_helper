@@ -68,24 +68,35 @@ made artificially difficult.
 
 **Record metadata and course ownership (D1).** Every course row carries
 `createdAt` and `updatedAt` as UTC ISO text: an insert sets both, an update
-moves `updatedAt` forward only (`src/persistence/stamp.ts`; a structural test
-refuses a write statement without them). Every course-scoped row names its
+moves `updatedAt` forward only and never below `createdAt`
+(`src/persistence/stamp.ts`; a structural test refuses a write statement
+without them). Every course-scoped row names its
 course, faults, crew members and evaluations included, so per-course sync needs
 no joins. `src/persistence/rowIntegrity.ts` checks stored rows for both,
 beside `validateCourseState`.
 
 **Data migrations (D1).** Columns need no migration in PowerSync; filling them
-does. `src/persistence/migrations.ts` runs ordered steps before the app's first
-read, each in one write transaction with its row in the `appMeta` ledger, so an
-interrupted step rolls back whole and reruns, and an applied one never runs
-twice. Steps are only appended. Erasing a course keeps the ledger.
+does. `src/persistence/migrations.ts` prepares the data before the app's first
+read with two kinds of step. Repairs run on every open, in one write
+transaction, and restore what every row must carry: its course (copied from the
+parent; an orphan takes the device's course when there is only one), its
+metadata, and an `updatedAt` not before `createdAt`. They change nothing on
+sound rows, and they settle the rows an older app strips or inserts (§3.1).
+Migrations run once, each in one write transaction with its row in the ledger,
+so an interrupted step rolls back whole and reruns, and an applied one never
+runs twice; steps are only appended. The ledger lives in the `meta` table,
+which every schema since M0 declares, because an app's schema drops the
+local-only tables it does not declare. Erasing a course keeps `meta`.
 
 **No deletion markers or record versions yet (D1).** PowerSync uploads a delete
 as a `DELETE` operation, so a hard delete reaches the server and other devices
 without a marker. Conflict handling belongs to the backend's upload handler,
 which can compare `updatedAt` or the previous values PowerSync tracks
 (`trackPreviousValues`). With one writer through 0.7.0 neither is needed;
-1.0.0 decides conflict rules and adds what they require.
+1.0.0 decides conflict rules and adds what they require. Two properties of
+`updatedAt` matter to those rules: it never moves back, so one write under a
+clock set ahead leaves it in the future, and a save that changes nothing still
+moves it.
 
 ### 3.1 Compatibility and migrations
 
@@ -121,7 +132,15 @@ rather than added later:
 
 D3 writes the contract as a tested domain function; the server enforces the
 same rule from 0.5.0. PowerSync's client keeps rows as JSON behind views, so an
-older app ignores a column it does not know.
+older app reads data with columns it does not know, but it does not write
+around them: an update through its views rewrites the row without the newer
+columns, and opening the database with its schema drops every local-only table
+that schema does not declare. Apps up to 0.3.0 predate the contract and cannot
+be kept from writing, so the repairs (§3) restore the newer columns on the next
+open of a newer app (a creation time the older app removed becomes the
+repair's), and a table that only newer versions declare must be rebuildable
+from data older versions keep. From D3 the contract keeps an older app from
+writing.
 
 ### 3.2 Coherent writes
 

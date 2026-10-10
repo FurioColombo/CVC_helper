@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test"
 
 import { SESSION_SEQUENCE } from "../../src/domain/config"
 import { evidenceOutputPath } from "./evidence"
+import { storedRowIssues } from "./stored-rows"
 
 // Matching by pathname keeps this independent of the port the suite runs on.
 const isAppRoot = (target: URL) => target.pathname === "/"
@@ -193,6 +194,9 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
       if (table !== "dutySettings") expect(retained).toMatchObject(oldRow)
     }
   }
+  // Every upgraded row and every row the week wrote carries D1's metadata and
+  // its course.
+  expect(await storedRowIssues(reopened, originalRows)).toEqual([])
   expect(originalRows.volunteers).toHaveLength(
     (fixture.tables.volunteers?.length ?? 0) + 1,
   )

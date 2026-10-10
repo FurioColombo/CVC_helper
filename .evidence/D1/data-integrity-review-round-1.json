@@ -1,0 +1,108 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D1",
+  "commit": "562f194",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-1",
+      "title": "TOUCH no longer keeps a fault's updatedAt at or after its createdAt. A 0.1/0.2 fault stamped while the clock was set back still has updatedAt before createdAt after the migration, and still has it after 0.4.0 updates the fault. 0.3.0 repaired this on the next update.",
+      "evidence": "C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper\\src\\persistence\\stamp.ts:14 defines TOUCH = \"updatedAt = max(?, coalesce(updatedAt, ''))\". It replaces 0.3.0's `updatedAt = MAX(?, createdAt)` in updateFaultState and updateFaultDescription (src/persistence/boats.ts:256-280; the removed lines are in `git diff b10eabc..562f194 -- src/persistence/boats.ts`). 0.1 and 0.2 wrote the raw clock (`git show v0.2.0:src/persistence/boats.ts` lines 243 and 257: `updatedAt = ?`), so those versions could store updatedAt < createdAt. src/persistence/migrations.ts:63-73 fills only NULLs and repairs nothing. Real-engine run on Chromium and WebKit: the 0.2.0 fixture with fault-v020-quest-12-reported set to createdAt 2026-09-19T10:00:00.000Z and updatedAt 2026-09-19T09:00:00.000Z. After prepareDatabase, validateStoredRows returned [{table: faults, id: fault-v020-quest-12-reported, code: updated-before-created}]. With the page clock fixed at 09:30, updateFaultState(id, 'resolved') stored updatedAt 2026-09-19T09:30:00.000Z with createdAt 10:00:00.000Z, and the same issue remained. The 0.3.0 statement would have stored 10:00. None of the fixtures contains this state, so the evidence (rowIssues: 0) cannot see it.",
+      "reproduction": "Throwaway harness, test-results/d1-review/harness.ts (sources kept in the session scratchpad d1-review-archivista/), functions seedDisorderedV020, disorderedFaultAfterUpgrade and touchDisorderedFault. Steps: 1) seed cvc-helper.db with v020Schema from v0.2.0-course.json, setting faults[1] to createdAt 10:00 and updatedAt 09:00 (what 0.2.0 wrote when the clock stepped back an hour between creation and a state change); 2) prepareDatabase(db), then validateStoredRows: updated-before-created; 3) page.clock.setFixedTime('2026-09-19T09:30:00Z'), then updateFaultState(faultId, 'resolved'); 4) read the row: updatedAt 09:30 < createdAt 10:00. Expected: updatedAt >= createdAt after the write (0.3.0 behaviour). Observed: the violation persists. Suggested fix: TOUCH = \"updatedAt = max(?, coalesce(updatedAt, ''), coalesce(createdAt, ''))\", plus a node:sqlite test with stored updatedAt < createdAt. Optionally, append a repair step `UPDATE faults SET updatedAt = createdAt WHERE updatedAt < createdAt`; this changes a stored value, so it is the owner's call.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1: the success predicate ('createdAt <= updatedAt holds on every row after every write path') and the adversarial checklist ('a clock that goes backwards')"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-2",
+      "title": "A pre-D1 (0.3.0) app on the same database drops the appMeta ledger and erases the D1 columns from every row it updates. Rows a stale 0.3.0 tab inserts keep null metadata and courseId, and the ledger stops the backfill from ever filling them. The 03 §3.1 statement that 'an older app ignores a column it does not know' is false for writes on this engine.",
+      "evidence": "Real engine, Chromium and WebKit, same results. (a) Old schema initialised after the migration: sqlite_master then has no ps_data_local__appMeta, because powersync_replace_schema drops local-only tables missing from the schema (node_modules/@powersync/shared-internals/lib/client/BasePowerSyncDatabase.js:273). A 0.3.0 `UPDATE students SET active = ?` rewrote student-v030-sara's JSON without createdAt/updatedAt; the untouched student-v030-tommaso kept them. On the next 0.4.0 open, both migrations ran a second time (the ledger was gone) and reset Sara's createdAt from 06:39:15.222Z to 06:39:15.770Z, so the creation time was silently moved forward. (b) Stale tab that never re-initialises: the 0.3.0 statements run through the new views (fault INSERT without courseId, evaluation INSERT, dutySettings INSERT OR REPLACE without metadata). After reopening, the ledger is complete and validateStoredRows reports dutySettings missing-created-at/missing-updated-at, evaluations missing-created-at/missing-updated-at/missing-course and faults missing-course. Nothing repairs these rows and nothing in the app reports them. Text checked: 03_TECHNICAL_DECISIONS.md §3.1, last paragraph; §3 D1 paragraph ('an applied one never runs twice').",
+      "reproduction": "Harness functions oldTabAfterMigration, oldInitRaw and oldStatementsThroughNewViews (test-results/d1-review/harness.ts): seed 0.3.0, run prepareDatabase with AppSchema, close; open the same file with v030Schema (or run the 0.3.0 SQL through the new schema); close; reopen with AppSchema and prepareDatabase; read ps_data_local__students.data, appMeta and validateStoredRows.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (compatibility window); 04_IMPLEMENTATION_PLAN.md D3 checklist ('two tabs on different versions, where the old one writes after the new one migrated'). D3 owns the contract, so this is not a D1 blocker. D1's design is what D3 inherits, though: D3's planned data version in appMeta would be deleted by exactly the older app it is meant to stop. Options: keep the ledger and version in a table every schema since M0 declares (the retained `meta` table) or in PRAGMA user_version; make the NULL-filling steps run on every open; correct the 03 §3.1 sentence now."
+    },
+    {
+      "id": "DI-3",
+      "title": "The structural write test is the only standing guard for 'every write path', and it misses several statement forms. No browser journey that drives the real write paths checks stored rows afterwards.",
+      "evidence": "The regexes in C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper\\src\\persistence\\writeStatements.test.ts:25-31 were copied verbatim into test-results/d1-review/regex-blindspots.mjs. These all return {statements: 0, violations: []}: lowercase `insert into boats(...)`, `INSERT INTO boats VALUES (...)` without a column list, `INSERT INTO \"boats\"(...)` with a quoted table, `UPDATE OR IGNORE boats SET ...` and `INSERT INTO evaluations SELECT ...`. `INSERT OR REPLACE INTO students(id, courseId, createdAt, updatedAt) VALUES (?, ?, ?, ?)` passes even though it resets createdAt on every save, the trap the dutySettings upsert avoids by hand and that D2 is about to rework. A TOUCH bound to null also passes; SQLite max() with a NULL argument returns NULL. The scan reads only the top level of src/persistence (readdirSync at line 68, .ts files only), and no lint rule stops `@/persistence/db` being imported elsewhere. validateStoredRows runs only in src/test/d1MigrationHarness.ts and tests/e2e/d1-migration.spec.ts (four write functions). It is absent from the full-week and upgraded-week journeys. Positive result: my real-engine pass over every persistence write function (createBoats, setBoatAvailability, createFault, updateFaultDescription/State, createStudent(s), updateStudent, updateStudentKnowledge, setStudentActive x2, createVolunteer, updateVolunteer, saveDutyPlan x2, saveCrewPlan on two sessions, saveEvaluation insert/update/legacy update) after a 0.3.0 upgrade found 0 issues on Chromium and WebKit, and dutySettings kept its createdAt while updatedAt advanced.",
+      "reproduction": "node test-results/d1-review/regex-blindspots.mjs; harness function everyWritePath.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 adversarial checklist ('an INSERT or UPDATE that bypasses the helper'); 03_TECHNICAL_DECISIONS.md §3 ('a structural test refuses a write statement without them'). Suggestions: fail when a case-insensitive INSERT/UPDATE/REPLACE inside a string literal is not matched by a pattern; scan recursively and every file that imports the db; flag REPLACE INTO for review; call validateStoredRows at the end of the upgraded-week browser journey."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-Q1",
+      "title": "Orphan children keep courseId NULL forever",
+      "evidence": "src/persistence/migrations.ts:43-56 copies courseId through a correlated subselect, so a fault whose boat is gone (the UG2-DAT-7 race in 0.3.0) or a member whose crew is gone stays NULL. rowIntegrity reports missing-course, but only in tests. listFaults already throws on such a fault (src/persistence/boats.ts:78-85). The success predicate 'every course-scoped row carries its course's id' cannot hold for such a row, and 0.5 per-course sync would skip it.",
+      "reproduction": "Code reading of the SQL semantics; not run on a planted orphan.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 success predicate"
+    },
+    {
+      "id": "DI-Q2",
+      "title": "The row checker accepts timestamps whose text order differs from their time order",
+      "evidence": "src/persistence/rowIntegrity.ts:41 accepts 0-3 fractional digits, but TOUCH and the dutySettings REPLACE compare timestamps as text, where '2026-10-10T10:00:00Z' sorts after '2026-10-10T10:00:00.500Z'. Every writer since the first fault commit (d5383a2) uses toISOString, so real data is fixed-width. Tightening the regex to `\\.\\d{3}Z` would make the checker enforce what the comparison relies on.",
+      "reproduction": "Code reading; git show d5383a2:src/persistence/boats.ts:179.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 (UTC ISO text)"
+    },
+    {
+      "id": "DI-Q3",
+      "title": "updatedAt only moves forward and is bumped by saves that change nothing; both matter for 1.0",
+      "evidence": "With TOUCH, one write under a clock set ahead leaves updatedAt in the future for good. saveEvaluation's update branch and updateStudent run TOUCH even when nothing changed (src/persistence/evaluations.ts:160-163), so replaying a save makes the row look newer. 03 §3 suggests the upload handler 'can compare updatedAt'. Worth recording for the 1.0 conflict rules.",
+      "reproduction": "Code reading.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 (no deletion markers or record versions yet)"
+    },
+    {
+      "id": "DI-Q4",
+      "title": "The browser harness's seed is not a pure 0.3.0 database, and one harness comment overstates the test",
+      "evidence": "src/test/d1MigrationHarness.ts:3 imports src/persistence/db.ts. That module builds `db` on cvc-helper.db, and the PowerSyncDatabase constructor starts initialising at once (BasePowerSyncDatabase.js:125), racing the legacy seed in the app-writes test (tests/e2e/d1-migration.spec.ts:134-150). Today this is harmless because the page navigates away before the app runs. The same pattern without a reload failed in my first attempt with 'no such table: appMeta'. Separately, runInterruption's comment says the step 'fails after its first statement', but it runs the whole step and then throws.",
+      "reproduction": "My first everyWritePath attempt (seed with seed('0.3.0', 'cvc-helper.db') in the same page, then prepareDatabase(db)) threw 'no such table: appMeta'.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 step 3 (open the old fixture through the production boundary)"
+    },
+    {
+      "id": "DI-Q5",
+      "title": "Real-kill interruption runs would strengthen the evidence",
+      "evidence": "The tracked interruption evidence comes from a thrown error. I closed the whole persistent browser context during prepareDatabase on large legacy databases: Chromium, 21,000 rows, kills at 50/200/500/900/1400/2200 ms; WebKit, 2,800 rows, kills at 100/600/1500/3000 ms. Every kill left either nothing applied (empty ledger, every row NULL) or step 1 committed with its ledger row and step 2 untouched. The next open completed with 0 row issues and every row present. This is good evidence, and it could be recorded.",
+      "reproduction": "Harness functions seedBig, startMigration, inspectAfterKill and migrateAndCheck, driven by chromium/webkit.launchPersistentContext and ctx.close() mid-migration.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 item 1"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-data-integrity.md",
+    "04_IMPLEMENTATION_PLAN.md D1 section (scope, success predicate, adversarial checklist)",
+    "03_TECHNICAL_DECISIONS.md §3 (D1 paragraphs), §3.1, §3.2",
+    ".evidence/D1/migration-evidence.json (no earlier D1 reviews exist)",
+    "git diff b10eabc..562f194 (33 files), working tree clean at 562f194",
+    "src/persistence/{db,stamp,migrations,rowIntegrity,courses,boats,crews,duties,evaluations,students,volunteers}.ts and writeStatements.test.ts, migrations.test.ts",
+    "src/test/d1MigrationHarness.ts, u02MigrationHarness.ts, v030Schema.ts, v030Fixture.test.ts; fixtures v0.1.0/v0.2.0/v0.3.0 (tables, columns, fault timestamps)",
+    "git show v0.3.0:src/persistence/db.ts (matches v030Schema.ts), v0.3.0 and v0.2.0 boats.ts fault statements, d5383a2 boats.ts",
+    "node_modules/@powersync/shared-internals BasePowerSyncDatabase.js (constructor auto-initialise, powersync_replace_schema)",
+    "Ran: npx vitest run src/persistence src/test/v030Fixture.test.ts src/test/v020Fixture.test.ts (12 files, 139 tests passed)",
+    "Ran: node scripts/run-e2e.mjs tests/e2e/d1-migration.spec.ts --project=pixel-7-chrome (6 passed)",
+    "Ran throwaway specs (test-results/d1-review, own config) on pixel-7-chrome and iphone-13-webkit-core: E1/E1b/E1c older app after migration; E2 legacy disordered fault; E3 every write path; E4 real context kill mid-migration; E5 three tabs opening an upgraded 0.3.0 course at once (Chromium 3/3 and WebKit 8/9 opened the course, with a single ledger and 0 row issues)",
+    "Ran: test-results/d1-review/regex-blindspots.mjs (regexes copied from writeStatements.test.ts)"
+  ],
+  "anglesTried": {
+    "seed": 830542176,
+    "lenses": [
+      "1. Interruption between two writes (seed mod 12 = 0)",
+      "2. Migration from the 0.1/0.2/0.3 fixtures (second draw also 0, so the next untried lens was taken)"
+    ],
+    "wildcard": "A pre-D1 (0.3.0) PowerSync client on the same database file after the migration: what its schema replacement does to the appMeta ledger, what its UPDATEs do to columns it does not know, and whether the ledger-gated backfill ever repairs rows it inserts",
+    "alsoCovered": [
+      "checklist: write paths that skip the stamps, inside and outside src/persistence; the structural regex's blind spots",
+      "checklist: clock going backwards (legacy disorder), UTC and ISO width",
+      "checklist: a step applied twice; erasing the course keeps appMeta (by decision)",
+      "lens 8: dutySettings INSERT OR REPLACE on the real view keeps createdAt",
+      "lens 12: three tabs on 0.4.0 opening at once",
+      "readers on the new columns: no production SELECT *, readers still join through parents"
+    ]
+  },
+  "notTested": [
+    "A hard SIGKILL of the browser process. I used a context close, which tears down the renderer and workers mid-transaction but is not a power loss.",
+    "Physical Android and iOS devices, and installed-PWA standalone mode (owner's devices).",
+    "Storage quota exhaustion during a migration. Only the error-screen path was read; a large rewrite on a nearly full device was not simulated.",
+    "The real 0.3.0 to 0.4.0 service-worker update with a stale tab kept open (D3). DI-2 reproduces the database side directly.",
+    "One WebKit run of the three-tab experiment (1 of 9) failed after 12.7 s with a tab still showing 'Apertura del corso…'. It did not recur in 6 reruns with crash and console capture, the cause is unknown, and it is not reported as a finding.",
+    "A planted orphan fault or crew member migrated on the real engine (DI-Q1 rests on SQL semantics)."
+  ]
+}

@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
@@ -23,6 +20,7 @@ import {
   saveActiveCourse,
 } from "@/persistence/courses"
 import { prepareDatabase } from "@/persistence/migrations"
+import { AppSchema } from "@/persistence/schema"
 import { TOUCH } from "@/persistence/stamp"
 
 const NOW = "2026-08-29T07:30:00.125Z"
@@ -132,9 +130,9 @@ describe("course persistence", () => {
     expect(transaction.execute.mock.calls.map(([sql]) => sql)).toEqual(
       COURSE_DATA_TABLES.map((table) => `DELETE FROM ${table}`),
     )
-    // The migration ledger describes the schema, not the course: it stays.
-    expect(JSON.stringify(transaction.execute.mock.calls)).not.toContain(
-      "appMeta",
+    // The migration ledger describes the data, not the course: it stays.
+    expect(transaction.execute.mock.calls.map(([sql]) => sql)).not.toContain(
+      "DELETE FROM meta",
     )
     expect(
       window.localStorage.getItem("cvc-helper.scan-name-order.course-1"),
@@ -146,19 +144,12 @@ describe("course persistence", () => {
   })
 
   it("names every table of the local schema that can hold course data", () => {
-    const schema = readFileSync(resolve(import.meta.dirname, "db.ts"), "utf8")
-    const body = /new Schema\(\{([^}]*)\}\)/.exec(schema)?.[1] ?? ""
-    const tables = body
-      .split(",")
-      .map((name) => name.trim())
-      .filter(Boolean)
+    const { tables } = AppSchema.toJSON() as { tables: Array<{ name: string }> }
     expect(tables.length).toBeGreaterThan(10)
-    // Two tables are not course data: `meta` is an empty probe table kept only
-    // for schema compatibility, and `appMeta` is the data's own bookkeeping
-    // (the migration ledger), which erasing a course must leave in place.
-    const notCourseData = ["meta", "appMeta"]
+    // `meta` is not course data: it holds the migration ledger (and from D3
+    // the data version), which erasing a course must leave in place.
     expect(new Set(COURSE_DATA_TABLES)).toEqual(
-      new Set(tables.filter((name) => !notCourseData.includes(name))),
+      new Set(tables.map(({ name }) => name).filter((name) => name !== "meta")),
     )
   })
 })

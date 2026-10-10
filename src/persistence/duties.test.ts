@@ -158,10 +158,12 @@ describe("duty persistence", () => {
         '["student-1"]',
         '["saturday"]',
         '["minor-balance:2,0"]',
-        // createdAt keeps the stored row's, else the stamp; updatedAt moves on.
+        // createdAt keeps the stored row's, else the stamp; updatedAt moves on,
+        // never below the stored updatedAt or createdAt.
         "course-1",
         NOW,
         NOW,
+        "course-1",
         "course-1",
       ],
     )
@@ -212,6 +214,18 @@ describe("duty persistence", () => {
         {
           createdAt: "2026-09-19T10:00:00.000Z",
           updatedAt: "2026-09-19T11:00:00.000Z",
+        },
+      ])
+      // A row an older version left with updatedAt before createdAt is lifted
+      // to its creation time, even by a save made with the clock behind both.
+      sqlite.exec(
+        `UPDATE dutySettings SET createdAt = '2026-09-19T10:00:00.000Z',
+           updatedAt = '2026-09-19T08:00:00.000Z'`,
+      )
+      await expect(saveAt("2026-09-19T07:00:00.000Z")).resolves.toEqual([
+        {
+          createdAt: "2026-09-19T10:00:00.000Z",
+          updatedAt: "2026-09-19T10:00:00.000Z",
         },
       ])
     } finally {

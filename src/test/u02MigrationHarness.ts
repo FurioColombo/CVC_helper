@@ -1,6 +1,6 @@
 import { column, PowerSyncDatabase, Schema, Table } from "@powersync/web"
 
-import { createDatabase } from "@/persistence/db"
+import { createDatabase } from "@/persistence/schema"
 import { saveCrewPlan } from "@/persistence/crews"
 import { saveDutyPlan, type DutySettingsRecord } from "@/persistence/duties"
 import fixture from "@/test/fixtures/v0.1.0-course.json"

@@ -50,10 +50,11 @@ findings join as an extra milestone only if the owner picks them (see the end).
 **Category:** FOUNDATION
 **Status:** IN_PROGRESS
 
-1. A local `appMeta` table and an ordered, idempotent migration runner that
-   records each step and runs before the first read. A migration interrupted
-   by closing the app, turning the screen off or killing the tab completes on
-   the next open, and nothing is applied twice.
+1. An ordered, idempotent migration runner, its ledger in the `meta` table that
+   every schema declares, that records each step and runs before the first
+   read, after repairs that run on every open. A migration interrupted by
+   closing the app, turning the screen off or killing the tab completes on the
+   next open, and nothing is applied twice.
 2. `createdAt` and `updatedAt` (UTC ISO) on every table, set by one write helper
    on every insert and update path. Existing rows are backfilled; faults keep
    their own.
@@ -76,7 +77,7 @@ every write path.
 **Adversarial checklist:** an `INSERT` or `UPDATE` that bypasses the helper; a
 child backfilled before its parent; a step applied twice after an interruption;
 local time instead of UTC, or a clock that goes backwards; erasing the course
-leaves `appMeta` stale; the invariant checker rejecting a valid old fixture;
+leaves the ledger stale; the invariant checker rejecting a valid old fixture;
 migration time on a 40-student course.
 
 **Evidence:** verification (`verify` and focused browser specs),
@@ -101,7 +102,9 @@ is one row, and every fixture's lists migrate with no item lost or duplicated.
 
 **Adversarial checklist:** duplicates or corrupt JSON in old rows; an order the
 old lists implied; completed-day history lost; acknowledged-warning keys in an
-old format; erasing the course leaves rows behind; a toggle written twice.
+old format; erasing the course leaves rows behind; a toggle written twice; a
+0.3.0 app opening the database, which drops the new table and writes only the
+JSON lists (03 §3.1).
 
 **Evidence:** verification, full-week result, migration evidence,
 domain-prosecutor and data-integrity reviews, self-review.
@@ -113,7 +116,7 @@ domain-prosecutor and data-integrity reviews, self-review.
 
 1. **Compatibility contract** (`03_TECHNICAL_DECISIONS.md` §3.1), the rules the
    server will enforce from 0.5.0:
-   - the data records its version in `appMeta`;
+   - the data records its version in `meta`, which every schema declares;
    - schema changes only expand, and a removal or rename takes two releases;
    - an app reads and writes data of its own and the previous minor version;
    - an app older than the data's minimum writer version opens read-only and

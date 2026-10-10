@@ -1,6 +1,7 @@
 import type { CourseDetails } from "@/domain/course"
 import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
+import { COURSE_TABLES } from "@/persistence/schema"
 import { stamp, TOUCH } from "@/persistence/stamp"
 
 export type CourseRecord = CourseDetails & {
@@ -14,7 +15,7 @@ export type CourseRecord = CourseDetails & {
  * failed migration fails this read, and the app's Riprova runs it again.
  */
 export async function getActiveCourse() {
-  await prepareDatabase()
+  await prepareDatabase(db)
   return db.getOptional<CourseRecord>(
     `SELECT id, active, family, level, isoWeek, year, startDate, endDate, label
      FROM courses
@@ -69,20 +70,7 @@ export async function saveActiveCourse(
  * nothing about the previous week's students (minors included) stays behind
  * on the device.
  */
-export const COURSE_DATA_TABLES = [
-  "evaluations",
-  "crewMembers",
-  "crews",
-  "landAssignments",
-  "sessionBoats",
-  "dutyAssignments",
-  "dutySettings",
-  "faults",
-  "boats",
-  "volunteers",
-  "students",
-  "courses",
-] as const
+export const COURSE_DATA_TABLES = [...COURSE_TABLES].reverse()
 
 const COURSE_PREFERENCE_PREFIXES = ["cvc-helper.scan-name-order."]
 

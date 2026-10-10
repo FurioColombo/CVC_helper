@@ -1,13 +1,6 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
-// `db.ts` opens a PowerSync database when it is imported; only its schema is
-// wanted here, and the real database needs a browser.
-vi.mock("@powersync/web", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@powersync/web")>()),
-  PowerSyncDatabase: class {},
-}))
-
-import { AppSchema } from "@/persistence/db"
+import { AppSchema } from "@/persistence/schema"
 import fixture from "@/test/fixtures/v0.3.0-course.json"
 import { v030Schema } from "@/test/v030Schema"
 
@@ -31,9 +24,9 @@ describe("0.3.0 migration fixture", () => {
     const frozen = columnsByTable(v030Schema)
     const current = columnsByTable(AppSchema)
 
-    expect(Object.keys(current).filter((table) => !(table in frozen))).toEqual([
-      "appMeta",
-    ])
+    expect(Object.keys(current).filter((table) => !(table in frozen))).toEqual(
+      [],
+    )
     const added = Object.entries(frozen).flatMap(([table, columns]) =>
       current[table]!.filter((column) => !columns.includes(column)).map(
         (column) => `${table}.${column}`,

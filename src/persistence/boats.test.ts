@@ -446,4 +446,17 @@ describe("fault update stamps", () => {
 
     expect(row.updatedAt).toBe("2026-09-19T10:30:00.000Z")
   })
+
+  // 0.1 and 0.2 stored the raw clock on a fault's update, so a legacy fault
+  // can hold updatedAt before createdAt; an update made with the clock still
+  // behind brings it back to the creation time, as 0.3.0 did (DI-1).
+  it("lifts a legacy updatedAt stored before createdAt to the creation time", async () => {
+    const row = await runOnSqlite(
+      "2026-09-19T09:30:00.000Z",
+      () => updateFaultState("fault-1", "resolved"),
+      "2026-09-19T09:00:00.000Z",
+    )
+
+    expect(row.updatedAt).toBe(CREATED_AT)
+  })
 })

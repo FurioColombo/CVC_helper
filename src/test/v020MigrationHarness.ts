@@ -1,6 +1,6 @@
 import { PowerSyncDatabase } from "@powersync/web"
 
-import { createDatabase } from "@/persistence/db"
+import { createDatabase } from "@/persistence/schema"
 import { calculateStudentAge, isStudentMinor } from "@/domain/student"
 import fixture from "@/test/fixtures/v0.2.0-course.json"
 import {

@@ -43,6 +43,10 @@ describe("validateStoredRows", () => {
     ["missing-updated-at", { updatedAt: undefined }],
     ["invalid-timestamp", { createdAt: "10/10/2026" }],
     ["invalid-timestamp", { updatedAt: "2026-10-10T09:30:00+02:00" }],
+    // Text order is time order only at toISOString's fixed width: this one
+    // sorts after "2026-10-10T09:30:00.500Z" although it is earlier.
+    ["invalid-timestamp", { updatedAt: "2026-10-10T09:30:00Z" }],
+    ["invalid-timestamp", { updatedAt: "2026-10-10T09:30:00.5Z" }],
     ["updated-before-created", { createdAt: T1, updatedAt: T0 }],
   ])("reports %s", (code, fields) => {
     const tables = sound()

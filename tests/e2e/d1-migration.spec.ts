@@ -8,10 +8,11 @@ import { evidenceOutputPath } from "./evidence"
 /**
  * D1 on the real PowerSync engine: courses written by 0.1.0, 0.2.0 and 0.3.0
  * gain record metadata and course ownership without losing a row, an id or a
- * value; a migration interrupted inside its transaction leaves nothing half
- * done; one stopped between steps completes on the next open; a second run
- * changes nothing; and the app itself opens an upgraded course and stamps
- * what it writes.
+ * value; the repairs settle what older versions left (a disordered updatedAt,
+ * an orphan fault) and what an older app on the same database strips, while
+ * the migration ledger survives it; an interruption inside the repairs or a
+ * migration leaves nothing half done; a second run changes nothing; and the
+ * app itself opens an upgraded course and stamps what it writes.
  */
 
 const isAppRoot = (target: URL) => target.pathname === "/"
@@ -32,11 +33,6 @@ const fixtureRows = (version: string) => {
       .map(([table, rows]) => [table, rows.length]),
   )
 }
-
-const LEDGER = [
-  "migration:2026-10-d1-course-ownership",
-  "migration:2026-10-d1-record-metadata",
-]
 
 /**
  * A blank page on the app's origin: the harness opens its own databases, and
@@ -89,28 +85,54 @@ for (const version of ["0.1.0", "0.2.0", "0.3.0"]) {
       counts: Record<string, number>
       changedValues: string[]
       rowIssues: unknown[]
-      ledger: string[]
       reopenedIdentical: boolean
     }>(page, "runUpgrade", version)
     record(`upgrade-${version}`, result)
 
     expect(result.changedValues).toEqual([])
     expect(result.rowIssues).toEqual([])
-    expect(result.ledger).toEqual(LEDGER)
     expect(result.reopenedIdentical).toBe(true)
     expect(result.counts).toMatchObject(fixtureRows(version))
   })
 }
 
-test("rolls an interrupted migration back whole and completes it on the next open, once", async ({
+test("repairs a legacy fault updated with the clock set back and a fault whose boat is gone", async ({
   page,
 }) => {
   await openBlankPage(page)
   const result = await harness<{
-    rolledBackUntouched: boolean
+    rowIssues: unknown[]
+    disorderedFault: Record<string, unknown>
+    orphanFault: Record<string, unknown>
+    courseId: string
+  }>(page, "runLegacyRepairs")
+  record("legacy-repairs", result)
+
+  expect(result.rowIssues).toEqual([])
+  // updatedAt is lifted to the creation time, as 0.3.0 did on the next update.
+  expect(result.disorderedFault).toMatchObject({
+    createdAt: "2026-09-19T10:00:00.000Z",
+    updatedAt: "2026-09-19T10:00:00.000Z",
+    courseId: result.courseId,
+  })
+  expect(result.orphanFault).toMatchObject({
+    courseId: result.courseId,
+    createdAt: "2026-09-19T08:10:00.000Z",
+  })
+})
+
+test("rolls interrupted repairs and an interrupted migration back whole and completes them on the next open, once", async ({
+  page,
+}) => {
+  await openBlankPage(page)
+  const result = await harness<{
+    repairsRolledBack: boolean
+    migrationRolledBack: boolean
     ledgerAfterFailure: string[]
-    ledgerAfterFirstStep: string[]
-    appliedOnReopen: string[]
+    probesAfterFailure: string[]
+    ledgerAfterReopen: string[]
+    ledgerValuesAreTimes: boolean
+    probesAfterReopen: string[]
     rowIssues: unknown[]
     changedValues: string[]
     secondRunApplied: string[]
@@ -118,14 +140,50 @@ test("rolls an interrupted migration back whole and completes it on the next ope
   }>(page, "runInterruption")
   record("interruption", result)
 
-  expect(result.rolledBackUntouched).toBe(true)
-  expect(result.ledgerAfterFailure).toEqual([])
-  expect(result.ledgerAfterFirstStep).toEqual([LEDGER[0]])
-  expect(result.appliedOnReopen).toEqual(["2026-10-d1-record-metadata"])
+  expect(result.repairsRolledBack).toBe(true)
+  expect(result.migrationRolledBack).toBe(true)
+  expect(result.ledgerAfterFailure).toEqual(["migration:test-first"])
+  expect(result.probesAfterFailure).toEqual(["probe:first"])
+  expect(result.ledgerAfterReopen).toEqual([
+    "migration:test-first",
+    "migration:test-second",
+  ])
+  expect(result.ledgerValuesAreTimes).toBe(true)
+  expect(result.probesAfterReopen).toEqual(["probe:first", "probe:second"])
   expect(result.rowIssues).toEqual([])
   expect(result.changedValues).toEqual([])
   expect(result.secondRunApplied).toEqual([])
   expect(result.secondRunIdentical).toBe(true)
+})
+
+test("keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database", async ({
+  page,
+}) => {
+  await openBlankPage(page)
+  const result = await harness<{
+    ledgerKept: boolean
+    probesAfterReopen: string[]
+    strippedByOlderApp: string[]
+    rowIssues: unknown[]
+    olderAppStudent: Record<string, unknown>
+    untouchedStudentKeptCreatedAt: boolean
+    olderAppEvaluation: Record<string, unknown>
+    courseId: string
+  }>(page, "runOlderAppAfterUpgrade")
+  record("older-app", result)
+
+  // What makes the repairs necessary: the older schema strips the new columns
+  // from a row it updates (03 §3.1).
+  expect(result.strippedByOlderApp).toEqual(["createdAt", "updatedAt"])
+  expect(result.ledgerKept).toBe(true)
+  expect(result.probesAfterReopen).toEqual(["probe:once"])
+  expect(result.rowIssues).toEqual([])
+  expect(result.olderAppStudent).toMatchObject({ active: 0 })
+  expect(result.untouchedStudentKeptCreatedAt).toBe(true)
+  expect(result.olderAppEvaluation).toMatchObject({
+    courseId: result.courseId,
+    value: "+",
+  })
 })
 
 test("opens an upgraded 0.3.0 course in the app and stamps what the app writes", async ({
@@ -149,7 +207,7 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
   await expect(page.getByText("0.3.0 course ready")).toBeVisible()
   await page.unroute(isAppRoot)
   await page.goto("/")
-  // The app's first read runs the migrations; the course opens as before.
+  // The app's first read runs the repairs; the course opens as before.
   await expect(
     page.getByRole("heading", { name: "D2 - 38 | 2026" }),
   ).toBeVisible()
@@ -162,7 +220,7 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
     )
     const { saveEvaluation } = await load("/src/persistence/evaluations.ts")
     const { setStudentActive } = await load("/src/persistence/students.ts")
-    const { COURSE_TABLES } = await load("/src/persistence/migrations.ts")
+    const { COURSE_TABLES } = await load("/src/persistence/schema.ts")
     const { validateStoredRows } = await load(
       "/src/persistence/rowIntegrity.ts",
     )
@@ -177,7 +235,7 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
       value: "+",
       note: "Migliorata",
     })
-    // A few milliseconds, so the update's stamp cannot equal the migration's.
+    // A few milliseconds, so the update's stamp cannot equal the repairs'.
     await new Promise((resolve) => setTimeout(resolve, 20))
     await setStudentActive("student-v030-paolo", course.id, false)
 
@@ -217,7 +275,7 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
   })
   expect(result.newEvaluation).toMatchObject({ courseId: result.courseId })
   expect(result.newEvaluation.createdAt).toBe(result.newEvaluation.updatedAt)
-  // The deactivation moved updatedAt past the migration's stamp.
+  // The deactivation moved updatedAt past the repairs' stamp.
   expect(result.paolo.updatedAt > result.paolo.createdAt).toBe(true)
 })
 

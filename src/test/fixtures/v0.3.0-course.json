@@ -1,6 +1,6 @@
 {
   "appVersion": "0.3.0",
-  "schemaContract": "PowerSync local-only tables at tag v0.3.0 (students.declaredAgeAtCourseStart and crews.capacity present; no record metadata outside faults, no courseId on faults, crewMembers or evaluations, no appMeta). Fictitious people only.",
+  "schemaContract": "PowerSync local-only tables at tag v0.3.0 (students.declaredAgeAtCourseStart and crews.capacity present; no record metadata outside faults, no courseId on faults, crewMembers or evaluations). Fictitious people only.",
   "tables": {
     "courses": [
       {

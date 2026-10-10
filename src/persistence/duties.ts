@@ -260,7 +260,8 @@ export async function saveDutyPlan(
       )
     }
     // REPLACE writes a whole new row, so the row's own createdAt and its
-    // latest updatedAt are read back into it instead of starting over.
+    // latest updatedAt are read back into it instead of starting over; as with
+    // TOUCH, updatedAt never goes below either.
     await transaction.execute(
       `INSERT OR REPLACE INTO dutySettings(
         id, courseId, desiredPerDay, fewerDayIds, extraDayIds, balanceMinors,
@@ -268,7 +269,9 @@ export async function saveDutyPlan(
         acknowledgedWarningKeys, createdAt, updatedAt
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         coalesce((SELECT createdAt FROM dutySettings WHERE id = ?), ?),
-        max(?, coalesce((SELECT updatedAt FROM dutySettings WHERE id = ?), '')))`,
+        max(?,
+          coalesce((SELECT updatedAt FROM dutySettings WHERE id = ?), ''),
+          coalesce((SELECT createdAt FROM dutySettings WHERE id = ?), '')))`,
       [
         courseId,
         courseId,
@@ -284,6 +287,7 @@ export async function saveDutyPlan(
         courseId,
         now,
         now,
+        courseId,
         courseId,
       ],
     )

@@ -7,8 +7,8 @@ import { column, Schema, Table } from "@powersync/web"
  * does after the update.
  *
  * Against today's schema it lacks `createdAt` and `updatedAt` on every table
- * but faults, `courseId` on faults, crew members and evaluations, and the
- * `appMeta` ledger, all of which D1's migrations fill.
+ * but faults, and `courseId` on faults, crew members and evaluations, all of
+ * which D1's repairs fill.
  */
 export const v030Schema = new Schema({
   courses: Table.createLocalOnly({
