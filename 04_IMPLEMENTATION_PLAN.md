@@ -191,4 +191,6 @@ reviews, the owner's device report.
 ## Waiting for the owner
 
 Which of the six candidates in `docs/working/BACKLOG.md` ("Waiting for the
-owner's choice") join 0.4.0 as a fix milestone?
+owner's choice") join 0.4.0 as a fix milestone? And which of the
+retrospective's ten proposals ("Retrospective proposals awaiting the owner's
+pick") are adopted?

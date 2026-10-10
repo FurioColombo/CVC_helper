@@ -92,6 +92,19 @@ reason a table that only newer versions declare is filled by a repair, never by
 a ledgered migration: its ledger row would outlive the table. Erasing a course
 keeps `meta`.
 
+**Duty settings as rows (D2).** The lists of a course's duty settings (fewer
+and extra days, stay-over students, completed days, acknowledged warnings;
+`DUTY_SETTING_LISTS` in `src/domain/config.ts`) are stored item by item in
+`dutySettingItems`: one row per item, its kind, value and place in the list,
+its id made of the course, the kind and the value, so an item is stored once
+and the same item saved on two phones is the same row. The app reads the rows
+and writes only the items that changed. The JSON list columns of
+`dutySettings` are still written beside them, in the same transaction, while
+0.3.0 can open the database, and a repair rebuilds a course's rows from them
+when they differ; a list that does not parse still makes the settings
+unreadable, as before. A null `extraDayIds` column still means the extra days
+were never chosen; that meaning moves to the rows before the column goes.
+
 **No deletion markers or record versions yet (D1).** PowerSync uploads a delete
 as a `DELETE` operation, so a hard delete reaches the server and other devices
 without a marker. Conflict handling belongs to the backend's upload handler,
