@@ -19,7 +19,6 @@ next cycle's backlog.
 | A full local reset (owner, 2026-09-28)                              | D4        |
 | A reliable update that reaches an installed app (owner, 2026-10-06) | D3        |
 | The update banner covering floating controls (UG2-UX-3)             | D3        |
-| Duty-settings normalisation in the domain (UG2-CQ-6, in part)       | D2        |
 
 ## Decisions due before the first real roster goes online
 

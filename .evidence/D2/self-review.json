@@ -1,0 +1,50 @@
+{
+  "reviewerRole": "self-review (orchestrator)",
+  "milestone": "D2",
+  "commit": "f169c5e",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "git diff d19b51b..f169c5e, read file by file: src/domain/config.ts (DUTY_SETTING_LISTS), src/domain/dutySettings.ts and its tests (the implementer's move, reviewed against the screen code it replaced), src/features/duties/DutyManagement.tsx, src/persistence/{schema,dutyItems,duties,repairs,migrations,students,courses}.ts and their tests, src/test/d2DutyItemsHarness.ts, tests/e2e/{d2-duty-items.spec.ts,stored-rows.ts}",
+    ".evidence/D2/domain-review-round-1.json and data-integrity-review-round-1.json (both FAIL, one root cause); domain-review.json and data-integrity-review.json (round 2: PASS_WITH_FINDINGS, no blockers)",
+    ".evidence/D2/migration-evidence.json (Chromium and WebKit)",
+    "npm run verify:quick on f169c5e: 68 files, 1,216 unit tests passed"
+  ],
+  "design": "The round-1 reviews showed that reading the new rows while an older tab can write only the lists changes behaviour. D2 is therefore the expand step of 03 §3.1's two-release rule: the lists stay the copy the app reads, every save writes the changed items beside them in one transaction, a repair on open keeps the rows identical to the lists, and reads move to the rows (with the repair retired or turned round) once no older app can write the lists. The plan's wording 'read and written item by item' became 'written item by item beside the lists' (04 D2, 03 §3).",
+  "itemProofs": {
+    "lists become rows of one table, kind from canonical configuration, D1 metadata": "dutySettingItems in schema.ts; DUTY_SETTING_LISTS in config.ts; dutyItems.ts; rows stamped and owned (rowIntegrity, structural write test)",
+    "written item by item, never as a whole list": "saveDutyPlan writes only the changed items (duties.test.ts: changes only, nothing for a second identical save)",
+    "every fixture's lists migrate with no item lost or duplicated": "d2-duty-items.spec.ts on both engines; migration-evidence.json: 0 differences for 0.1, 0.2, 0.3 and the long out-of-order lists; repeats stored once",
+    "normalisation moves into the domain (UG2-CQ-6, in part)": "src/domain/dutySettings.ts with 33 table-driven tests; the domain prosecutor's 6,000-case differential found no difference but the de-duplication of repeated acknowledged keys on save, which no reader sees",
+    "behaviour does not change": "the read paths of duties.ts and students.ts are as at d19b51b; the duty journeys, the full week, the U02 deletion spec and the erase journey are in D2's focused specs"
+  },
+  "adversarialChecklist": {
+    "duplicates or corrupt JSON in old rows": "repeats stored once; a list that does not parse keeps its rows and the settings stay unreadable as before; a duplicate settings row is ignored; rows that disagree with their id are rebuilt (repairs.test.ts, dutyItems.test.ts)",
+    "an order the old lists implied": "position kept per kind; the rich-lists browser test keeps extra days friday, monday, wednesday",
+    "completed-day history lost": "the history guard reads the list as before; the stale-tab test shows a day an older tab completed",
+    "acknowledged-warning keys in an old format": "keys are opaque values, unchanged since M7 (data-integrity review); stored as they are",
+    "erasing the course leaves rows behind": "COURSE_DATA_TABLES derives from COURSE_TABLES; rows of a course without settings go on open; the erase skips a table an older schema dropped (browser test)",
+    "a toggle written twice": "a second identical save writes no item (unit test; data-integrity R1)",
+    "a 0.3.0 app opening the database": "older-app, stale-tab and erase-after-older-schema browser tests on both engines"
+  },
+  "dispositions": [
+    { "id": "DP-1 = DI-1 (round 1 blockers)", "disposition": "fixed: reads and guards back on the lists; FIXED in both round-2 reports" },
+    { "id": "DP-2, DI-2", "disposition": "fixed by the same change; FIXED in round 2" },
+    { "id": "DP-3, DI-3", "disposition": "fixed: canonical settings row only, whole-table diff by id; FIXED in round 2" },
+    { "id": "DP-4", "disposition": "mitigated and filed: reading back before closing reduced the WebKit page loss; it still happens about once per full WebKit run of the spec, so its titles are in the backlog's flaky list for T1" },
+    { "id": "DP-Q1, DP-Q4", "disposition": "resolved by reading the lists" },
+    { "id": "DP-Q2", "disposition": "fixed: u02-deletion-integrity and f1-navigation-guards (erase) joined D2's focused specs" },
+    { "id": "DP-Q3", "disposition": "scheduled: backlog (D2 reviews)" },
+    { "id": "DP-Q5, DI-R2-Q1", "disposition": "scheduled: D3's checklist (the read-only check comes before D1's and D2's repairs); 03 §3 says the lists-win repair goes or turns round when the rows are read or synced" },
+    { "id": "DI-Q1, DI-Q2, DI-Q4", "disposition": "fixed; FIXED in round 2" },
+    { "id": "DI-Q3", "disposition": "recorded in 03 §3 for 0.5.0 (diff against the base the screen read)" },
+    { "id": "DI-R2-1 = DP-R2-2", "disposition": "fixed after round 2: rows chosen by the id's course and kind in the repair, the save reads every row holding a wanted id; unit tests on real SQLite and on the save" },
+    { "id": "DI-R2-Q2", "disposition": "scheduled: backlog (scope the probe or index courseId before 0.7.0)" },
+    { "id": "DP-R2-1", "disposition": "fixed after round 2: the erase skips a dropped table; browser test on both engines" },
+    { "id": "DP-R2-Q1", "disposition": "fixed: 03 names the journeys that check the mirror" },
+    { "id": "DP-R2-Q2", "disposition": "accepted as intended: a repeated acknowledged key is saved once; every reader uses a Set" },
+    { "id": "own: the fixes after round 2 were not re-reviewed", "disposition": "accepted: round 2 had no blocker in either report, and each fix has a test that fails on the reviewed commit's behaviour (the reviewers' W1/W3 and probe D cases)" }
+  ]
+}

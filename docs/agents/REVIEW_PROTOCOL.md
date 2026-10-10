@@ -32,7 +32,9 @@ touches, the diff, and earlier review reports for the same milestone in
   asks for an aggregate measurement, and never quote a real name, phone number
   or raw OCR text, not even in a finding. An example phone number in a report
   is one of the fixtures' (333 123 4567, 333 987 6543, 320 555 0142): the
-  pre-commit hook refuses any other in evidence.
+  pre-commit hook refuses any other in evidence. Paths in a report are
+  repository-relative; name a scratch location ("my scratchpad's r2h/")
+  instead of giving its absolute path, which `check:repository` refuses.
 - **Reproduction or it did not happen.** A finding needs a failing test,
   command output, `file:line` or a browser step list with expected and observed
   results. Without one it is at most a QoL note.

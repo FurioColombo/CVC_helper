@@ -90,3 +90,29 @@ migration time on a 40-student course.
 **Evidence:** verification (`verify` and focused browser specs),
 `migration-evidence.json` (fixture counts before and after, interruption runs),
 data-integrity review, self-review.
+
+## D2 — Duty settings as rows
+
+**Category:** RULE_HEAVY
+**Status:** IN_PROGRESS
+
+The five JSON lists in `dutySettings` become rows of one table: one row per
+item, its kind from canonical configuration (fewer day, extra day, stay over,
+completed day, acknowledged warning), with D1's metadata, written item by item
+beside the lists. While 0.3.0 can still open the database the app keeps reading
+the lists, and a repair keeps the rows identical to them (03 §3, the expand
+step of §3.1). Duty settings normalisation moves into the domain (UG2-CQ-6).
+Behaviour does not change.
+
+**Success predicate:** every duty behaviour, the deterministic full week and the
+duty browser journeys give identical results before and after. Every list item
+is one row, and every fixture's lists migrate with no item lost or duplicated.
+
+**Adversarial checklist:** duplicates or corrupt JSON in old rows; an order the
+old lists implied; completed-day history lost; acknowledged-warning keys in an
+old format; erasing the course leaves rows behind; a toggle written twice; a
+0.3.0 app opening the database, which drops the new table and writes only the
+JSON lists (03 §3.1).
+
+**Evidence:** verification, full-week result, migration evidence,
+domain-prosecutor and data-integrity reviews, self-review.

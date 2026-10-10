@@ -1,0 +1,208 @@
+{
+  "milestone": "D2",
+  "recordedAt": "2026-10-10T17:10:11.344Z",
+  "design": "The duty-settings lists are mirrored as dutySettingItems rows (the expand step of 03 §3.1): the app reads the lists, writes the changed items beside them, and a repair on open rebuilds the rows from the lists.",
+  "source": "tests/e2e/d2-duty-items.spec.ts through src/test/d2DutyItemsHarness.ts, real PowerSync engine, CVC_EVIDENCE_REFRESH=D2",
+  "fixtures": "src/test/fixtures/v0.1.0-course.json, v0.2.0-course.json, v0.3.0-course.json, and a 0.3.0 variant with long lists out of day order and repeats (fictitious people only)",
+  "flaky": "'rebuilds the rows after a 0.3.0 app drops their table and writes the lists' lost the WebKit page once and passed on its retry; filed in docs/working/BACKLOG.md (Flaky browser tests).",
+  "summary": {
+    "pixel-7-chrome": {
+      "upgrades": {
+        "0.1.0": {
+          "courses": 1,
+          "items": 2,
+          "differences": [],
+          "rowIssues": 0,
+          "itemsBehind": false,
+          "reopenedIdentical": true
+        },
+        "0.2.0": {
+          "courses": 1,
+          "items": 3,
+          "differences": [],
+          "rowIssues": 0,
+          "itemsBehind": false,
+          "reopenedIdentical": true
+        },
+        "0.3.0": {
+          "courses": 1,
+          "items": 3,
+          "differences": [],
+          "rowIssues": 0,
+          "itemsBehind": false,
+          "reopenedIdentical": true
+        }
+      },
+      "richLists": {
+        "courses": 1,
+        "items": 11,
+        "differences": [],
+        "rowIssues": 0,
+        "itemsBehind": false,
+        "listsFromRows": {
+          "course-v030-d2": {
+            "fewerDayIds": [
+              "tuesday",
+              "saturday"
+            ],
+            "extraDayIds": [
+              "friday",
+              "monday",
+              "wednesday"
+            ],
+            "stayOverStudentIds": [
+              "student-v030-sara",
+              "student-v030-davide"
+            ],
+            "completedDayIds": [
+              "sunday",
+              "saturday"
+            ],
+            "acknowledgedWarningKeys": [
+              "sex-balance:monday",
+              "minor-balance:2,0"
+            ]
+          }
+        }
+      },
+      "olderAppDropsTable": {
+        "courses": 1,
+        "items": 3,
+        "differences": [],
+        "rowIssues": 0,
+        "itemsBehind": false,
+        "itemsBefore": 3,
+        "tableDroppedByOlderApp": true,
+        "completedWrittenByOlderApp": [
+          "saturday",
+          "sunday"
+        ]
+      },
+      "staleOlderTab": {
+        "rowsBeforeOlderSave": 3,
+        "stayOverStudentIds": [
+          "student-v030-davide",
+          "student-v030-paolo"
+        ],
+        "completedDayIds": [
+          "saturday",
+          "sunday"
+        ],
+        "paoloDeletable": false,
+        "paoloReferences": [
+          "stay-over"
+        ]
+      },
+      "eraseAfterOlderSchema": {
+        "rowsBefore": 3,
+        "tableDroppedByOlderApp": true,
+        "erased": true,
+        "remaining": {
+          "courses": 0,
+          "students": 0,
+          "dutySettings": 0,
+          "evaluations": 0
+        }
+      }
+    },
+    "iphone-13-webkit-core": {
+      "upgrades": {
+        "0.1.0": {
+          "courses": 1,
+          "items": 2,
+          "differences": [],
+          "rowIssues": 0,
+          "itemsBehind": false,
+          "reopenedIdentical": true
+        },
+        "0.2.0": {
+          "courses": 1,
+          "items": 3,
+          "differences": [],
+          "rowIssues": 0,
+          "itemsBehind": false,
+          "reopenedIdentical": true
+        },
+        "0.3.0": {
+          "courses": 1,
+          "items": 3,
+          "differences": [],
+          "rowIssues": 0,
+          "itemsBehind": false,
+          "reopenedIdentical": true
+        }
+      },
+      "richLists": {
+        "courses": 1,
+        "items": 11,
+        "differences": [],
+        "rowIssues": 0,
+        "itemsBehind": false,
+        "listsFromRows": {
+          "course-v030-d2": {
+            "fewerDayIds": [
+              "tuesday",
+              "saturday"
+            ],
+            "extraDayIds": [
+              "friday",
+              "monday",
+              "wednesday"
+            ],
+            "stayOverStudentIds": [
+              "student-v030-sara",
+              "student-v030-davide"
+            ],
+            "completedDayIds": [
+              "sunday",
+              "saturday"
+            ],
+            "acknowledgedWarningKeys": [
+              "sex-balance:monday",
+              "minor-balance:2,0"
+            ]
+          }
+        }
+      },
+      "olderAppDropsTable": {
+        "courses": 1,
+        "items": 3,
+        "differences": [],
+        "rowIssues": 0,
+        "itemsBehind": false,
+        "itemsBefore": 3,
+        "tableDroppedByOlderApp": true,
+        "completedWrittenByOlderApp": [
+          "saturday",
+          "sunday"
+        ]
+      },
+      "staleOlderTab": {
+        "rowsBeforeOlderSave": 3,
+        "stayOverStudentIds": [
+          "student-v030-davide",
+          "student-v030-paolo"
+        ],
+        "completedDayIds": [
+          "saturday",
+          "sunday"
+        ],
+        "paoloDeletable": false,
+        "paoloReferences": [
+          "stay-over"
+        ]
+      },
+      "eraseAfterOlderSchema": {
+        "rowsBefore": 3,
+        "tableDroppedByOlderApp": true,
+        "erased": true,
+        "remaining": {
+          "courses": 0,
+          "students": 0,
+          "dutySettings": 0,
+          "evaluations": 0
+        }
+      }
+    }
+  }
+}

@@ -27,7 +27,8 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | Harness prep | On branch `claude/harness-0.4-prep`: shared hooks, reviewer personas, skills, `docs/DOCS_SYSTEM.md`, `check:docs`. Merged as H1's first step. |
 | H1 | Complete. Documents in the `docs/DOCS_SYSTEM.md` layout; unit tests 287 s to 71 s; browser suite not shown faster (target missed, accepted by the owner); retrospective not delivered. See `.evidence/H1/`. |
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
-| D2–D4, T1, UG3 | Pending; D2 is next. |
+| D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
+| D3, D4, T1, UG3 | Pending; D3 is next. |
 
 ## Execution order
 
@@ -45,32 +46,6 @@ findings join as an extra milestone only if the owner picks them (see the end).
   fixtures are the regression contract.
 - Synthetic data only, everywhere.
 - Close every milestone with the `milestone-close` skill.
-
-## D2 — Duty settings as rows
-
-**Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
-
-The five JSON lists in `dutySettings` become rows of one table: one row per
-item, its kind from canonical configuration (fewer day, extra day, stay over,
-completed day, acknowledged warning), with D1's metadata, written item by item
-beside the lists. While 0.3.0 can still open the database the app keeps reading
-the lists, and a repair keeps the rows identical to them (03 §3, the expand
-step of §3.1). Duty settings normalisation moves into the domain (UG2-CQ-6).
-Behaviour does not change.
-
-**Success predicate:** every duty behaviour, the deterministic full week and the
-duty browser journeys give identical results before and after. Every list item
-is one row, and every fixture's lists migrate with no item lost or duplicated.
-
-**Adversarial checklist:** duplicates or corrupt JSON in old rows; an order the
-old lists implied; completed-day history lost; acknowledged-warning keys in an
-old format; erasing the course leaves rows behind; a toggle written twice; a
-0.3.0 app opening the database, which drops the new table and writes only the
-JSON lists (03 §3.1).
-
-**Evidence:** verification, full-week result, migration evidence,
-domain-prosecutor and data-integrity reviews, self-review.
 
 ## D3 — Versions and reliable updates
 

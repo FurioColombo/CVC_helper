@@ -1,0 +1,47 @@
+{
+  "milestone": "D2",
+  "status": "PASS",
+  "recordedAt": "2026-10-10T17:27:38.573Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "f169c5e9fa25e53d8433eb3dc2b1b3ee0d01115d",
+  "workingTreeClean": false,
+  "sourceDigest": "0aa80af1a7cd259b09f1eda60093316678f21301f0005aeab55539c4455730d3",
+  "sourceFiles": 376,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/d2-duty-items.spec.ts",
+    "tests/e2e/duties.spec.ts",
+    "tests/e2e/f3-duty-summary.spec.ts",
+    "tests/e2e/f1-navigation-guards.spec.ts",
+    "tests/e2e/full-week.spec.ts",
+    "tests/e2e/u08-duties.spec.ts",
+    "tests/e2e/ug1-duty-reflow.spec.ts",
+    "tests/e2e/u02-deletion-integrity.spec.ts",
+    "tests/e2e/ug1-upgraded-week.spec.ts",
+    "tests/e2e/ug2-upgraded-week.spec.ts"
+  ],
+  "flakyTests": [],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-10-10T17:13:05.233Z",
+      "durationMs": 188839,
+      "exitCode": 0,
+      "outputTail": "  - vite-plugin-pwa:build closeBundle (100%, 23.6s, 1 call)\n  - vite:worker-import-meta-url transform (66%, 8.8s, 1 call)\n  - vite-plugin-pwa load (13%, 1.8s, 1 call)\n  - @tailwindcss/vite:generate:build transform (11%, 1.4s, 1 call)\n  - vite:css-post renderChunk (8%, 1.1s, 15 calls)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:asset load (4 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "startedAt": "2026-10-10T17:16:14.074Z",
+      "durationMs": 684494,
+      "exitCode": 0,
+      "outputTail": "[WebServer] 7:27:00 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 7:27:00 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 40 [iphone-13-webkit-core] › tests\\e2e\\u08-duties.spec.ts:33:1 › previews, confirms and edits duties directly from the seven day cards (34.7s)\n[WebServer] 7:27:05 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 7:27:05 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 41 [iphone-13-webkit-core] › tests\\e2e\\u08-duties.spec.ts:184:1 › keeps long-name P13 cards readable and tappable at 320px and 200% text (23.7s)\n[WebServer] 7:27:28 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 7:27:28 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 42 [iphone-13-webkit-core] › tests\\e2e\\u08-duties.spec.ts:254:1 › keeps the P12 controls usable at 320px and 200% text (9.7s)\n\n  2 skipped\n  40 passed (11.4m)"
+    }
+  ]
+}
