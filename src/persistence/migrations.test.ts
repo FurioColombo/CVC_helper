@@ -1,17 +1,13 @@
-import { DatabaseSync } from "node:sqlite"
-
 import { describe, expect, it, vi } from "vitest"
 
 import {
   applyMigration,
   MIGRATIONS,
   prepareDatabase,
-  repairRows,
   runMigrations,
   type Migration,
 } from "@/persistence/migrations"
-import { validateStoredRows, type StoredRow } from "@/persistence/rowIntegrity"
-import { AppSchema, COURSE_TABLES } from "@/persistence/schema"
+import { AppSchema } from "@/persistence/schema"
 
 /**
  * A database double whose write transactions record their SQL and keep the
@@ -139,12 +135,16 @@ describe("runMigrations", () => {
 })
 
 describe("prepareDatabase", () => {
-  function preparable() {
+  function preparable(needsRepair: boolean) {
     const order: string[] = []
     const fake = fakeDatabase()
     const database = {
       init: vi.fn(async () => {
         order.push("init")
+      }),
+      get: vi.fn(async (sql: string) => {
+        order.push(sql.startsWith("SELECT EXISTS") ? "probe" : sql)
+        return { needed: needsRepair ? 1 : 0 }
       }),
       writeTransaction: vi.fn(async (callback: (tx: unknown) => unknown) => {
         const result = await fake.database.writeTransaction(callback as never)
@@ -160,16 +160,25 @@ describe("prepareDatabase", () => {
   }
 
   it("opens the database, repairs the rows, then runs the migrations, once", async () => {
-    const { database, order } = preparable()
+    const { database, order } = preparable(true)
 
     await prepareDatabase(database as never, [step("first")])
     await prepareDatabase(database as never, [step("first")])
 
-    expect(order).toEqual(["init", "repairs", "migration"])
+    expect(order).toEqual(["init", "probe", "repairs", "migration"])
+  })
+
+  it("takes no write transaction for repairs when the probe finds nothing to repair", async () => {
+    const { database, order } = preparable(false)
+
+    await prepareDatabase(database as never, [])
+
+    expect(order).toEqual(["init", "probe"])
+    expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
   it("runs again when asked after a failed run", async () => {
-    const { database, order } = preparable()
+    const { database, order } = preparable(true)
     database.init.mockRejectedValueOnce(new Error("storage unavailable"))
 
     await expect(prepareDatabase(database as never, [])).rejects.toThrow(
@@ -177,141 +186,6 @@ describe("prepareDatabase", () => {
     )
     await prepareDatabase(database as never, [])
 
-    expect(order).toEqual(["init", "repairs"])
-  })
-})
-
-/**
- * The repairs on a real SQLite: the course tables as plain tables with the
- * columns the repairs read, rows in every state an older version or an older
- * app sharing the database can leave behind.
- */
-describe("repairRows", () => {
-  const NOW = "2026-10-10T08:00:00.000Z"
-  const T0 = "2026-09-19T10:00:00.000Z"
-  const T1 = "2026-09-19T11:00:00.000Z"
-
-  function database(courses: string[]) {
-    const sqlite = new DatabaseSync(":memory:")
-    for (const table of COURSE_TABLES) {
-      sqlite.exec(
-        `CREATE TABLE ${table} (id TEXT PRIMARY KEY, courseId TEXT,
-           boatId TEXT, crewId TEXT, studentId TEXT,
-           createdAt TEXT, updatedAt TEXT)`,
-      )
-    }
-    const insert = (table: string, row: Record<string, string | null>) =>
-      sqlite
-        .prepare(
-          `INSERT INTO ${table} (${Object.keys(row).join(", ")})
-           VALUES (${Object.keys(row)
-             .map(() => "?")
-             .join(", ")})`,
-        )
-        .run(...Object.values(row))
-    for (const id of courses) {
-      insert("courses", { id, createdAt: T0, updatedAt: T0 })
-    }
-    const step = {
-      execute: async (sql: string, params: string[] = []) =>
-        sqlite.prepare(sql).run(...params),
-    }
-    const read = () =>
-      Object.fromEntries(
-        COURSE_TABLES.map((table) => [
-          table,
-          sqlite
-            .prepare(`SELECT * FROM ${table} ORDER BY id`)
-            .all()
-            .map((row) =>
-              Object.fromEntries(
-                Object.entries(row).filter(([, value]) => value !== null),
-              ),
-            ) as StoredRow[],
-        ]),
-      )
-    return { sqlite, insert, step, read }
-  }
-
-  it("fills ownership and metadata, lifts a disordered updatedAt, keeps what rows have, and does it once", async () => {
-    const { insert, step, read } = database(["course-1"])
-    const stamped = { createdAt: T0, updatedAt: T1 }
-    insert("boats", { id: "boat-1", courseId: "course-1", ...stamped })
-    insert("crews", { id: "crew-1", courseId: "course-1", ...stamped })
-    // A 0.3.0 student, an older app's update that stripped the metadata, and
-    // a 0.2.0 fault whose update ran with the clock set back.
-    insert("students", { id: "student-1", courseId: "course-1" })
-    insert("students", { id: "student-2", courseId: "course-1", ...stamped })
-    insert("faults", {
-      id: "fault-1",
-      boatId: "boat-1",
-      createdAt: T1,
-      updatedAt: T0,
-    })
-    insert("crewMembers", { id: "member-1", crewId: "crew-1", ...stamped })
-    insert("evaluations", { id: "evaluation-1", studentId: "student-1" })
-    // Children whose parent is gone: the device's one course is theirs.
-    insert("faults", { id: "fault-orphan", boatId: "gone", ...stamped })
-    insert("crewMembers", { id: "member-orphan", crewId: "gone" })
-
-    await repairRows(step as never, NOW)
-    const repaired = read()
-
-    expect(validateStoredRows(repaired)).toEqual([])
-    expect(repaired.students).toEqual([
-      { id: "student-1", courseId: "course-1", createdAt: NOW, updatedAt: NOW },
-      { id: "student-2", courseId: "course-1", ...stamped },
-    ])
-    expect(repaired.faults).toEqual([
-      {
-        id: "fault-1",
-        courseId: "course-1",
-        boatId: "boat-1",
-        createdAt: T1,
-        updatedAt: T1,
-      },
-      {
-        id: "fault-orphan",
-        courseId: "course-1",
-        boatId: "gone",
-        ...stamped,
-      },
-    ])
-    expect(repaired.crewMembers).toContainEqual({
-      id: "member-orphan",
-      courseId: "course-1",
-      crewId: "gone",
-      createdAt: NOW,
-      updatedAt: NOW,
-    })
-    expect(repaired.evaluations).toEqual([
-      {
-        id: "evaluation-1",
-        courseId: "course-1",
-        studentId: "student-1",
-        createdAt: NOW,
-        updatedAt: NOW,
-      },
-    ])
-
-    // Every open runs them again; on repaired rows they change nothing.
-    await repairRows(step as never, "2026-10-11T08:00:00.000Z")
-    expect(read()).toEqual(repaired)
-  })
-
-  it("leaves an orphan without a course when the device holds more than one", async () => {
-    const { insert, step, read } = database(["course-1", "course-2"])
-    insert("faults", {
-      id: "fault-orphan",
-      boatId: "gone",
-      createdAt: T0,
-      updatedAt: T0,
-    })
-
-    await repairRows(step as never, NOW)
-
-    expect(validateStoredRows(read())).toEqual([
-      { table: "faults", id: "fault-orphan", code: "missing-course" },
-    ])
+    expect(order).toEqual(["init", "probe", "repairs"])
   })
 })

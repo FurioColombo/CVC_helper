@@ -91,8 +91,9 @@ data-integrity review, self-review.
 
 The five JSON lists in `dutySettings` become rows of one table: one row per
 item, its kind from canonical configuration (fewer day, extra day, stay over,
-completed day, acknowledged warning), with D1's metadata. They are migrated by
-D1's runner, and read and written item by item, never as a whole list. Duty
+completed day, acknowledged warning), with D1's metadata. A repair fills them
+from the lists, which the app keeps writing while 0.3.0 can still open the
+database (03 §3.1), and they are read and written item by item. Duty
 settings normalisation moves into the domain (UG2-CQ-6). Behaviour does not
 change.
 
@@ -140,8 +141,10 @@ version never writes.
 
 **Adversarial checklist:** an update loop; a check that fails offline; an update
 arriving mid-migration; two tabs on different versions, where the old one writes
-after the new one migrated; the banner over a nested screen; standalone WebKit
-behaviour.
+after the new one migrated; an older app re-initialising the schema under an
+open newer one, after which Riprova must reload rather than retry the same
+instance (D1 review DI-R2-Q5); the banner over a nested screen; standalone
+WebKit behaviour.
 
 **Evidence:** verification, compatibility table tests, browser evidence, the
 owner's Android check (update without reinstall), data-integrity,
@@ -171,7 +174,9 @@ data remains in any browser storage.
 **Adversarial checklist:** import interrupted halfway; a tampered file that
 would break invariants; an identifier collision with the current course; the
 share sheet on WebKit; persistent storage refused; a reset with another tab
-open; personal data in the file name or in logs.
+open, including a stale tab's save landing on the erased course (D1 review
+DI-R2-Q6: duty, student and volunteer saves do not check the course exists);
+personal data in the file name or in logs.
 
 **Evidence:** verification, round-trip evidence on Chromium and WebKit, browser
 evidence, the owner's phone check (export to another app and import back),

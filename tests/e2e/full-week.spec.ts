@@ -13,6 +13,7 @@ import { SESSION_SEQUENCE } from "../../src/domain/config"
 import { formatCourseIdentity, getIsoWeekInfo } from "../../src/domain/course"
 import { buildD2FullWeekScenario } from "../../src/domain/scenarios"
 import { calculateAge } from "../../src/domain/student"
+import { storedRowIssues } from "./stored-rows"
 
 const scenario = buildD2FullWeekScenario()
 const duplicateNames = new Set(
@@ -182,7 +183,14 @@ async function setStudentAvailability(
   await primaryNav.getByRole("button", { name: "Equipaggi" }).click()
 }
 
+// D1: every row the week's write paths stored carries its metadata and
+// course. Checked before each close or reload, whose repairs would fill a gap.
+async function expectStoredRowsSound(page: Page) {
+  expect(await storedRowIssues(page)).toEqual([])
+}
+
 async function reopenPage(context: BrowserContext, page: Page) {
+  await expectStoredRowsSound(page)
   await page.close()
   const reopened = await context.newPage()
   await reopened.goto("/")
@@ -317,6 +325,7 @@ test("runs one deterministic D2 course through a complete sailing week", async (
   // N1: reload restores the same screen (Comandate), so there is no Home
   // "Comandate" card to click here; clicking it would instead hit the
   // screen's own "Indietro da Comandate" Back button.
+  await expectStoredRowsSound(app)
   await app.reload()
   await expect(wednesday).toContainText(replacement)
   await app.getByRole("button", { name: "Indietro da Comandate" }).click()
@@ -521,6 +530,8 @@ test("runs one deterministic D2 course through a complete sailing week", async (
       () => document.documentElement.scrollWidth === window.innerWidth,
     ),
   ).toBe(true)
+
+  await expectStoredRowsSound(app)
 
   const screenshotDirectory = path.resolve("test-results/screenshots")
   mkdirSync(screenshotDirectory, { recursive: true })

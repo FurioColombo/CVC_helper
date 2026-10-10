@@ -76,17 +76,21 @@ no joins. `src/persistence/rowIntegrity.ts` checks stored rows for both,
 beside `validateCourseState`.
 
 **Data migrations (D1).** Columns need no migration in PowerSync; filling them
-does. `src/persistence/migrations.ts` prepares the data before the app's first
-read with two kinds of step. Repairs run on every open, in one write
-transaction, and restore what every row must carry: its course (copied from the
-parent; an orphan takes the device's course when there is only one), its
-metadata, and an `updatedAt` not before `createdAt`. They change nothing on
-sound rows, and they settle the rows an older app strips or inserts (§3.1).
-Migrations run once, each in one write transaction with its row in the ledger,
-so an interrupted step rolls back whole and reruns, and an applied one never
-runs twice; steps are only appended. The ledger lives in the `meta` table,
-which every schema since M0 declares, because an app's schema drops the
-local-only tables it does not declare. Erasing a course keeps `meta`.
+does. `prepareDatabase` (`src/persistence/migrations.ts`) readies the data
+before the app's first read with two kinds of step. Repairs
+(`src/persistence/repairs.ts`) run on every open: one read looks for a row to
+repair, and only when it finds one does a write transaction restore what every
+row must carry: its course (copied from the parent; an orphan takes the
+device's course when there is only one, and stays reported as an orphan), its
+metadata, and an `updatedAt` not before `createdAt`. They settle the rows an
+older app strips or inserts (§3.1). Migrations run once, each in one write
+transaction with its row in the ledger, so an interrupted step rolls back whole
+and reruns, and an applied one never runs twice; steps are only appended. The
+ledger lives in the `meta` table, which every schema since M0 declares, because
+an app's schema drops the local-only tables it does not declare. For the same
+reason a table that only newer versions declare is filled by a repair, never by
+a ledgered migration: its ledger row would outlive the table. Erasing a course
+keeps `meta`.
 
 **No deletion markers or record versions yet (D1).** PowerSync uploads a delete
 as a `DELETE` operation, so a hard delete reaches the server and other devices
@@ -136,11 +140,13 @@ older app reads data with columns it does not know, but it does not write
 around them: an update through its views rewrites the row without the newer
 columns, and opening the database with its schema drops every local-only table
 that schema does not declare. Apps up to 0.3.0 predate the contract and cannot
-be kept from writing, so the repairs (§3) restore the newer columns on the next
-open of a newer app (a creation time the older app removed becomes the
-repair's), and a table that only newer versions declare must be rebuildable
-from data older versions keep. From D3 the contract keeps an older app from
-writing.
+be kept from writing. On the next open of a newer app the repairs (§3) restore
+D1's course and metadata columns (a creation time the older app removed becomes
+the repair's); any other newer value the older app stripped stays lost, as a
+0.2.0 tab already clears a 0.3.0 declared age or crew capacity. A table that
+only newer versions declare must be rebuildable from data older versions keep,
+so the newer app keeps writing that data too until older writers are stopped.
+From D3 the contract keeps an older app from writing.
 
 ### 3.2 Coherent writes
 

@@ -471,6 +471,10 @@ test("runs an upgraded 0.2.0 course through the visible week, closes and reopens
     }),
   ).toBeVisible()
 
+  // Every upgraded row and every row the week wrote carries D1's metadata and
+  // its course, checked before the reopen's repairs could fill a gap.
+  expect(await storedRowIssues(page)).toEqual([])
+
   // --- Close and reopen ----------------------------------------------------
   await page.close()
   const reopened = await context.newPage()
@@ -550,9 +554,6 @@ test("runs an upgraded 0.2.0 course through the visible week, closes and reopens
     "crews:crew-v020-sun-am-1": { capacity: 2 },
   }
   expectOriginalRowsRetained(database, changed)
-  // Every upgraded row and every row the week wrote carries D1's metadata and
-  // its course.
-  expect(await storedRowIssues(reopened, database)).toEqual([])
 
   // Untouched Saturday crews were never rewritten: still no stored capacity.
   for (const id of [

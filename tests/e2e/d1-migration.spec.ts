@@ -108,7 +108,10 @@ test("repairs a legacy fault updated with the clock set back and a fault whose b
   }>(page, "runLegacyRepairs")
   record("legacy-repairs", result)
 
-  expect(result.rowIssues).toEqual([])
+  // The orphan keeps its dangling boat id, and the check still reports it.
+  expect(result.rowIssues).toEqual([
+    { table: "faults", id: "fault-v020-orphan", code: "missing-parent" },
+  ])
   // updatedAt is lifted to the creation time, as 0.3.0 did on the next update.
   expect(result.disorderedFault).toMatchObject({
     createdAt: "2026-09-19T10:00:00.000Z",
@@ -279,21 +282,26 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
   expect(result.paolo.updatedAt > result.paolo.createdAt).toBe(true)
 })
 
-test("upgrades a 40-student course within five seconds", async ({ page }) => {
+test("upgrades and reopens a 40-student course within five seconds each", async ({
+  page,
+}) => {
   await openBlankPage(page)
   const result = await harness<{
     durationMs: number
+    reopenMs: number
     rows: number
     rowIssues: unknown[]
   }>(page, "runLargeUpgrade")
   record("large-upgrade", result)
   test.info().annotations.push({
     type: "migration",
-    description: `${result.rows} rows upgraded in ${result.durationMs} ms`,
+    description: `${result.rows} rows upgraded in ${result.durationMs} ms, reopened in ${result.reopenMs} ms`,
   })
   expect(result.rowIssues).toEqual([])
   expect(result.rows).toBeGreaterThan(560)
-  // A bound against a pathological migration, not a benchmark: 606 rows took
-  // 640 ms on Chromium and 2.1 s on WebKit on the development PC (D1 evidence).
+  // A bound against a pathological upgrade, not a benchmark. On the
+  // development PC 606 rows took 0.7 s on Chromium and 1.3 s on WebKit, and a
+  // later open, init included, 0.5 s and 0.8 s (D1 migration evidence).
   expect(result.durationMs).toBeLessThan(5000)
+  expect(result.reopenMs).toBeLessThan(5000)
 })

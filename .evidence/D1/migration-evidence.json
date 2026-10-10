@@ -1,8 +1,10 @@
 {
   "milestone": "D1",
-  "recordedAt": "2026-10-10T06:30:11.447Z",
+  "recordedAt": "2026-10-10T11:38:38.926Z",
+  "design": "Round 2: the D1 fills are repairs run on every open (one probe read first), the ledger is in `meta`, MIGRATIONS is empty; the interruption and older-app runs use synthetic probe migrations.",
   "source": "tests/e2e/d1-migration.spec.ts through src/test/d1MigrationHarness.ts, real PowerSync engine, CVC_EVIDENCE_REFRESH=D1",
   "fixtures": "src/test/fixtures/v0.1.0-course.json, v0.2.0-course.json, v0.3.0-course.json (fictitious people only)",
+  "realKillRuns": "Not re-run here: the data-integrity reviewer closed the browser context during the repairs (Chromium 12,146 rows at 100/400/800 ms, WebKit 1,861 rows at 150/500/1000 ms); every next open completed with every row present and 0 issues (data-integrity-review.json, roundOneRecheck DI-Q5).",
   "summary": {
     "pixel-7-chrome": {
       "upgrades": [
@@ -11,7 +13,6 @@
           "fixtureRows": 21,
           "changedValues": 0,
           "rowIssues": 0,
-          "ledger": 2,
           "reopenedIdentical": true
         },
         {
@@ -19,7 +20,6 @@
           "fixtureRows": 44,
           "changedValues": 0,
           "rowIssues": 0,
-          "ledger": 2,
           "reopenedIdentical": true
         },
         {
@@ -27,26 +27,59 @@
           "fixtureRows": 46,
           "changedValues": 0,
           "rowIssues": 0,
-          "ledger": 2,
           "reopenedIdentical": true
         }
       ],
-      "interruption": {
-        "rolledBackUntouched": true,
-        "ledgerAfterFailure": [],
-        "ledgerAfterFirstStep": [
-          "migration:2026-10-d1-course-ownership"
+      "legacyRepairs": {
+        "rowIssues": [
+          {
+            "table": "faults",
+            "id": "fault-v020-orphan",
+            "code": "missing-parent"
+          }
         ],
-        "appliedOnReopen": [
-          "2026-10-d1-record-metadata"
+        "disorderedFaultLifted": true,
+        "orphanFaultTookCourse": true
+      },
+      "interruption": {
+        "repairsRolledBack": true,
+        "migrationRolledBack": true,
+        "ledgerAfterFailure": [
+          "migration:test-first"
+        ],
+        "probesAfterFailure": [
+          "probe:first"
+        ],
+        "ledgerAfterReopen": [
+          "migration:test-first",
+          "migration:test-second"
+        ],
+        "ledgerValuesAreTimes": true,
+        "probesAfterReopen": [
+          "probe:first",
+          "probe:second"
         ],
         "rowIssues": [],
         "changedValues": [],
         "secondRunApplied": [],
         "secondRunIdentical": true
       },
+      "olderAppAfterUpgrade": {
+        "strippedByOlderApp": [
+          "createdAt",
+          "updatedAt"
+        ],
+        "ledgerKept": true,
+        "probesAfterReopen": [
+          "probe:once"
+        ],
+        "rowIssues": 0,
+        "untouchedStudentKeptCreatedAt": true,
+        "olderAppEvaluationTookCourse": true
+      },
       "largeUpgrade": {
-        "durationMs": 640,
+        "durationMs": 749,
+        "reopenMs": 539,
         "rows": 606,
         "rowIssues": []
       },
@@ -64,7 +97,6 @@
           "fixtureRows": 21,
           "changedValues": 0,
           "rowIssues": 0,
-          "ledger": 2,
           "reopenedIdentical": true
         },
         {
@@ -72,7 +104,6 @@
           "fixtureRows": 44,
           "changedValues": 0,
           "rowIssues": 0,
-          "ledger": 2,
           "reopenedIdentical": true
         },
         {
@@ -80,26 +111,59 @@
           "fixtureRows": 46,
           "changedValues": 0,
           "rowIssues": 0,
-          "ledger": 2,
           "reopenedIdentical": true
         }
       ],
-      "interruption": {
-        "rolledBackUntouched": true,
-        "ledgerAfterFailure": [],
-        "ledgerAfterFirstStep": [
-          "migration:2026-10-d1-course-ownership"
+      "legacyRepairs": {
+        "rowIssues": [
+          {
+            "table": "faults",
+            "id": "fault-v020-orphan",
+            "code": "missing-parent"
+          }
         ],
-        "appliedOnReopen": [
-          "2026-10-d1-record-metadata"
+        "disorderedFaultLifted": true,
+        "orphanFaultTookCourse": true
+      },
+      "interruption": {
+        "repairsRolledBack": true,
+        "migrationRolledBack": true,
+        "ledgerAfterFailure": [
+          "migration:test-first"
+        ],
+        "probesAfterFailure": [
+          "probe:first"
+        ],
+        "ledgerAfterReopen": [
+          "migration:test-first",
+          "migration:test-second"
+        ],
+        "ledgerValuesAreTimes": true,
+        "probesAfterReopen": [
+          "probe:first",
+          "probe:second"
         ],
         "rowIssues": [],
         "changedValues": [],
         "secondRunApplied": [],
         "secondRunIdentical": true
       },
+      "olderAppAfterUpgrade": {
+        "strippedByOlderApp": [
+          "createdAt",
+          "updatedAt"
+        ],
+        "ledgerKept": true,
+        "probesAfterReopen": [
+          "probe:once"
+        ],
+        "rowIssues": 0,
+        "untouchedStudentKeptCreatedAt": true,
+        "olderAppEvaluationTookCourse": true
+      },
       "largeUpgrade": {
-        "durationMs": 2133,
+        "durationMs": 1285,
+        "reopenMs": 794,
         "rows": 606,
         "rowIssues": []
       },

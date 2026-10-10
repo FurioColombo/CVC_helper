@@ -3,10 +3,7 @@ import { PowerSyncDatabase } from "@powersync/web"
 import { createDatabase } from "@/persistence/schema"
 import { calculateStudentAge, isStudentMinor } from "@/domain/student"
 import fixture from "@/test/fixtures/v0.2.0-course.json"
-import {
-  insertFixtureTables,
-  type FixtureTables,
-} from "@/test/u02MigrationHarness"
+import { insertFixtureTables, type FixtureTables } from "@/test/legacySeed"
 import { v020Schema } from "@/test/v020Schema"
 
 const tables = fixture.tables as FixtureTables

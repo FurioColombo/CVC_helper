@@ -3,10 +3,10 @@ import { PowerSyncDatabase, type Schema } from "@powersync/web"
 import {
   applyMigration,
   prepareDatabase,
-  repairRows,
   runMigrations,
   type Migration,
 } from "@/persistence/migrations"
+import { repairRows } from "@/persistence/repairs"
 import {
   validateStoredRows,
   type RowIssue,
@@ -20,7 +20,7 @@ import {
   insertFixtureTables,
   seedLegacyFixture,
   type FixtureTables,
-} from "@/test/u02MigrationHarness"
+} from "@/test/legacySeed"
 import { v020Schema } from "@/test/v020Schema"
 import { v030Schema } from "@/test/v030Schema"
 
@@ -329,7 +329,8 @@ export interface LegacyRepairResult {
 /**
  * Two states older versions can leave and the repairs settle: a 0.2.0 fault
  * updated with the clock set back (updatedAt before createdAt) and a fault
- * whose boat is gone (UG2-DAT-7's race), which takes the device's one course.
+ * whose boat is gone (UG2-DAT-7's race), which takes the device's one course
+ * and is still reported as an orphan.
  */
 export async function runLegacyRepairs(): Promise<LegacyRepairResult> {
   const filename = `d1-legacy-repairs-${crypto.randomUUID()}.db`
@@ -370,7 +371,8 @@ export async function runLegacyRepairs(): Promise<LegacyRepairResult> {
 /**
  * The checklist's "migration time on a 40-student course": the 0.3.0 fixture
  * plus 40 synthetic students with an evaluation for every session, upgraded
- * through `prepareDatabase` and timed.
+ * through `prepareDatabase` and timed, then opened again and timed, since the
+ * repairs' probe runs on every open.
  */
 export async function runLargeUpgrade() {
   const filename = `d1-large-${crypto.randomUUID()}.db`
@@ -407,12 +409,26 @@ export async function runLargeUpgrade() {
     evaluations: [...base.evaluations!, ...evaluations],
   })
 
-  const upgraded = createDatabase(filename)
-  const started = performance.now()
-  await prepareDatabase(upgraded)
-  const durationMs = Math.round(performance.now() - started)
-  const tables = await readTables(upgraded)
-  await upgraded.close()
-  const rows = Object.values(tables).reduce((sum, list) => sum + list.length, 0)
-  return { durationMs, rows, rowIssues: validateStoredRows(tables) }
+  const timedOpen = async () => {
+    const database = createDatabase(filename)
+    const started = performance.now()
+    await prepareDatabase(database)
+    const durationMs = Math.round(performance.now() - started)
+    const tables = await readTables(database)
+    await database.close()
+    return { durationMs, tables }
+  }
+  const upgrade = await timedOpen()
+  // Every later open probes for rows to repair; sound data costs one read.
+  const reopen = await timedOpen()
+  const rows = Object.values(upgrade.tables).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  return {
+    durationMs: upgrade.durationMs,
+    reopenMs: reopen.durationMs,
+    rows,
+    rowIssues: validateStoredRows(upgrade.tables),
+  }
 }

@@ -18,6 +18,7 @@ export interface RowIssue {
     | "invalid-timestamp"
     | "updated-before-created"
     | "missing-course"
+    | "missing-parent"
     | "unknown-course"
     | "course-differs-from-parent"
 }
@@ -64,23 +65,23 @@ export function validateStoredRows(tables: StoredTables): RowIssue[] {
     for (const row of tables[table] ?? []) {
       const issue = (code: RowIssue["code"]) =>
         issues.push({ table, id: row.id, code })
+      // The domain invariant checker sees only the children the readers reach
+      // through their parent, so an orphan is reported here.
+      const parent = owner ? parentRows?.get(String(row[owner.key])) : undefined
+      if (owner && !parent) issue("missing-parent")
       if (row.courseId == null) {
         issue("missing-course")
         continue
       }
       if (!courseIds.has(String(row.courseId))) issue("unknown-course")
-      if (owner && parentRows) {
-        const parent = parentRows.get(String(row[owner.key]))
-        // A missing parent is a dangling reference, which the domain
-        // invariant checker reports, and a parent without a course is
-        // reported on its own row; here only a disagreement counts.
-        if (
-          parent &&
-          parent.courseId != null &&
-          parent.courseId !== row.courseId
-        ) {
-          issue("course-differs-from-parent")
-        }
+      // A parent without a course is reported on its own row; here only a
+      // disagreement counts.
+      if (
+        parent &&
+        parent.courseId != null &&
+        parent.courseId !== row.courseId
+      ) {
+        issue("course-differs-from-parent")
       }
     }
   }

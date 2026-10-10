@@ -251,8 +251,7 @@ export async function createFault(boatId: string, description: string) {
 
 // A fault is never "updated before it was created". The phone's clock can be
 // set back between the two (a manual fix, a network time step); TOUCH only
-// moves updatedAt forward from the value the fault already has, which is never
-// earlier than its creation.
+// moves updatedAt forward, and never below the fault's creation time.
 export async function updateFaultState(faultId: string, state: FaultState) {
   await db.init()
   if (!FAULT_STATES.includes(state)) throw new Error("Invalid fault state")

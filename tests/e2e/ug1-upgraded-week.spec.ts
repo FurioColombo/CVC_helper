@@ -31,7 +31,7 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
     await route.fulfill({
       contentType: "text/html",
       body: `<html><body>Preparing legacy course<script type="module">
-        import { seedLegacyFixture } from "/src/test/u02MigrationHarness.ts";
+        import { seedLegacyFixture } from "/src/test/legacySeed.ts";
         try {
           await seedLegacyFixture("cvc-helper.db");
           document.body.textContent = "Legacy course ready";
@@ -143,6 +143,9 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
     ).toHaveText("Salvato")
   }
 
+  // Every upgraded row and every row the week wrote carries D1's metadata and
+  // its course, checked before the reopen's repairs could fill a gap.
+  expect(await storedRowIssues(page)).toEqual([])
   await page.close()
   const reopened = await context.newPage()
   await reopened.goto("/")
@@ -194,9 +197,6 @@ test("runs an upgraded 0.1.0 course through the visible week and keeps its histo
       if (table !== "dutySettings") expect(retained).toMatchObject(oldRow)
     }
   }
-  // Every upgraded row and every row the week wrote carries D1's metadata and
-  // its course.
-  expect(await storedRowIssues(reopened, originalRows)).toEqual([])
   expect(originalRows.volunteers).toHaveLength(
     (fixture.tables.volunteers?.length ?? 0) + 1,
   )

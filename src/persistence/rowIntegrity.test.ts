@@ -79,10 +79,17 @@ describe("validateStoredRows", () => {
     ])
   })
 
-  it("leaves a dangling child to the domain invariant checker", () => {
+  // The domain invariant checker is fed what the readers reach through the
+  // parent, so a child whose parent is gone is only visible here.
+  it("reports a child whose parent is gone, with or without its course", () => {
     const tables = sound()
     change(tables, "faults", { boatId: "gone" })
-    expect(validateStoredRows(tables)).toEqual([])
+    change(tables, "crewMembers", { crewId: "gone", courseId: null })
+    expect(validateStoredRows(tables)).toEqual([
+      { table: "faults", id: "f1", code: "missing-parent" },
+      { table: "crewMembers", id: "m1", code: "missing-parent" },
+      { table: "crewMembers", id: "m1", code: "missing-course" },
+    ])
   })
 
   it("accepts equal created and updated times", () => {

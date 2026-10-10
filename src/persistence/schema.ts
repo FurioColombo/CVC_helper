@@ -175,7 +175,7 @@ export const COURSE_PARENTS = {
   evaluations: { table: "students", key: "studentId" },
 } as const
 
-export function createDatabase(dbFilename = "cvc-helper.db") {
+export function createDatabase(dbFilename: string) {
   return new PowerSyncDatabase({
     schema: AppSchema,
     database: { dbFilename },

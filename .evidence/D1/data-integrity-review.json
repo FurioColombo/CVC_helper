@@ -1,0 +1,127 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D1",
+  "round": 2,
+  "commit": "b35d2f8",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-R2-1",
+      "title": "What D2 inherits: the ledger in meta survives an older app, but a table that only newer versions declare does not. A ledgered migration that fills such a table never runs again, so its rows are lost. The plan and the code send D2 down exactly this path.",
+      "evidence": "Real engine, Chromium and WebKit, same result (harness d2Inheritance). Steps: a synthetic newer schema = AppSchema plus a local-only dutyItems table; a ledgered migration copies dutySettings.completedDayIds into rows; the newer app then writes one more item ('sunday') as a row only; the file is opened with v030Schema; the newer app opens it again. Results: itemsAfterMigration = [saturday]; ps_data_local__dutyItems is absent while the 0.3.0 schema is open; ledger = [migration:review-d2-items]; itemsAfterReopen = []. Both the migrated item and the item written later are gone, the migration is never re-run, and completedDayIds still reads [\"saturday\"]. Sources: 04_IMPLEMENTATION_PLAN.md:94-95 says the D2 rows 'are migrated by D1's runner'; src/persistence/migrations.ts:73 says '/** None yet: D2 adds the first. */'; 03_TECHNICAL_DECISIONS.md:139-142 requires a newer-only table to be 'rebuildable from data older versions keep', but the runner has nothing that rebuilds, because its ledger outlives the table. Not a D1 blocker: D1's runner does what its contract says.",
+      "reproduction": "test-results/d1-review2/review.spec.ts test 'E2 D2 inheritance' (harness.ts d2Inheritance). Sources are in the session scratchpad r2/ and were copied to test-results/d1-review2/. Run with: npx playwright test -c test-results/d1-review2/playwright.config.ts -g E2",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (last paragraph) vs 04_IMPLEMENTATION_PLAN.md D2. Suggestion: say in 03 §3 and 04 D2 that rows of a newer-only table are filled by a repair, not by a ledgered migration. The repair rebuilds them when the table is empty or behind the lists older apps keep. Until D3 stops older writers, the newer app must also keep writing those lists. Alternatively, the runner could check that the migration's table exists before trusting the ledger."
+    },
+    {
+      "id": "DI-R2-2",
+      "title": "The stored-row checks added to the upgraded-week journeys (the round-1 DI-3 fix) run after a reopen. The reopen's repairs have already filled any missing createdAt/updatedAt/courseId and lifted any disordered updatedAt, so these checks cannot detect a write path that leaves them out.",
+      "evidence": "tests/e2e/ug2-upgraded-week.spec.ts:475 closes the page, a new page opens the app (getActiveCourse, then prepareDatabase, then repairRows), :540 reads the database from the reopened page, :555 runs storedRowIssues. ug1 does the same: page.close() at :146, snapshot at :162, check at :199. Their comment says 'every row the week wrote carries D1's metadata and its course'. In practice they can only report invalid-timestamp, unknown-course and course-differs-from-parent. Real engine, Chromium and WebKit (harness E9): with the app open, two inserts in a form the structural test accepts (every column listed, NULLs bound: a crew member without courseId/createdAt/updatedAt, an evaluation without courseId and with updatedAt < createdAt). validateStoredRows before the reopen reported 5 issues (missing-created-at, missing-updated-at, missing-course x2, updated-before-created). The same check after closing and reopening, as ug1/ug2 run it, reported []. Mitigations that remain: mocked unit tests assert the bound values of INSERTs (e.g. src/persistence/crews.test.ts:189-205), and d1-migration's app-writes test checks 4 write functions without a reopen.",
+      "reproduction": "test-results/d1-review2/tabs.spec.ts test 'E9 a write path that binds NULL metadata, checked as ug1/ug2 check it (after reopen)'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 success predicate ('createdAt ≤ updatedAt holds on every row after every write path', 'every course-scoped row carries its course's id'). Suggestion: take the snapshot before page.close(); or have repairRows report what it changed (e.g. RETURNING id) and assert that a reopen after a session in which only 0.4.0 wrote repairs nothing."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q1",
+      "title": "Running the repairs on every open has a measurable cost that no evidence or test bounds",
+      "evidence": "repairRows runs about 30 UPDATEs over the JSON views on every open, each one a full scan. On a 40-student course (1,256 rows) on the development PC: Chromium/Pixel 7, 106-111 ms (E3) and 114-204 ms over 8 opens (E3c), against an init of 276-392 ms. WebKit/iPhone 13: 579-732 ms (E3b) and 579-838 ms over 8 opens (E3c), about as long as PowerSync's own init. At 12,146 rows on Chromium: 438-454 ms. page_count did not grow across 8 opens (141). The e2e bound in tests/e2e/d1-migration.spec.ts:282-299 times only the first open.",
+      "reproduction": "Tests E3, E3b and E3c in test-results/d1-review2/review.spec.ts (harness repairCost, seedCost/measureCost, manyOpens).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 checklist ('migration time on a 40-student course'). Suggestion: record the per-open cost in migration evidence. Optionally run one cheap existence probe per table before the UPDATEs."
+    },
+    {
+      "id": "DI-R2-Q2",
+      "title": "Lens 5: once adopted, an orphan evaluation or crew member is invisible to every check",
+      "evidence": "Real engine, both engines (E4): a planted evaluation for 'student-gone' and a crew member of 'crew-gone' in the 0.3.0 fixture. With one course, the repair gives both the course's id. validateStoredRows returns [] and the app's reader join (evaluations.ts:82/97/113) returns 0 rows for it. rowIntegrity.ts:74-76 leaves missing parents to the domain checker, but that checker is only given rows reached through the parent join, so it never sees them. With a second course row, both stay NULL and are reported as missing-course. Reachability today is low: student deletion is blocked by references since U02, and saves check the parent inside their transaction. Orphan faults stay visible because listFaults throws (boats.ts:78-85).",
+      "reproduction": "Test E4 (harness plantedOrphans 'no'/'yes').",
+      "specRef": "AGENTS.md §11 (dangling references, orphans). Suggestion: rowIntegrity already builds the parent map, so it could report a missing parent for the COURSE_PARENTS children."
+    },
+    {
+      "id": "DI-R2-Q3",
+      "title": "Gaps the structural write test still has",
+      "evidence": "The checkWrites logic of src/persistence/writeStatements.test.ts was copied verbatim into a script. These forms give {statements: 0}: 'WITH s AS (...) UPDATE boats SET ...', '/* bulk */ UPDATE boats SET ...', and a line-comment-led INSERT. These pass with no violation: 'UPDATE students SET createdAt = ?, ${TOUCH}' (overwrites createdAt); a template whose ${TOUCH} appears only in the WHERE clause; 'INSERT INTO dutyItems(id, createdAt, updatedAt)', a new table that names its course without courseId, because COURSE_NAMING_TABLES (:25) is a hand list, not derived from the schema; NULL bound to listed columns. NOT_WRITE_PATHS exempts all of migrations.ts (:23), which is where D2's data-moving INSERTs will go. The 'outside persistence' check (:140) matches only the '@/persistence/db' alias, so a relative or dynamic import passes, and so does createDatabase() from schema.ts, whose default filename is the app's database (schema.ts:178). Lowercase, quoted-table, no-column-list, INSERT…SELECT, UPDATE OR IGNORE and REPLACE are now refused, which fixes the round-1 list.",
+      "reproduction": "node <scratchpad>/r2/structural.mjs (prints statements and violations per case).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 checklist ('an INSERT or UPDATE that bypasses the helper')"
+    },
+    {
+      "id": "DI-R2-Q4",
+      "title": "03 §3.1 says the repairs 'restore the newer columns'. They restore only D1's course and metadata, so other newer values an older app strips stay lost.",
+      "evidence": "Real engine, Chromium (E12): a 0.3.0 course is upgraded by 0.4.0, then a 0.2.0 app runs 'UPDATE students SET active = 0' on student-v030-marta and a no-op UPDATE on crew-v030-sat-pm-1. After the next 0.4.0 open, declaredAgeAtCourseStart went from 13 to null and capacity from 2 to null. validateStoredRows returned []. The cause predates D1 (any stale 0.2.0 tab since 0.3.0), but the sentence at 03_TECHNICAL_DECISIONS.md:139-140 claims more than the repairs do.",
+      "reproduction": "Test E12 (harness v020StripsNewerValues).",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1, last paragraph"
+    },
+    {
+      "id": "DI-R2-Q5",
+      "title": "Wildcard: when an older app replaces the views under an open 0.4.0 instance, Riprova cannot recover, because prepareDatabase's retry calls init() on an instance that is already initialised",
+      "evidence": "Real engine, Chromium and WebKit (E5): createDatabase(file).init(), then a v030Schema instance initialises the same file. prepareDatabase fails with 'Error: no such column: courseId'; the retry (what Riprova does, migrations.ts:121-139 and :128) fails the same way; a stamped UPDATE fails with 'no such column: createdAt'; nothing is half-written (the student kept active = 1). A fresh instance, as after a reload, repairs with 0 row issues. The failures are loud and leave nothing partial, which is good. The comment in the working tree's courses.ts ('the app's Riprova runs it again') holds, but the rerun cannot succeed in this state.",
+      "reproduction": "Test E5 (harness olderInitUnderOpenApp).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 (two versions on one device). Suggestion for D3: let the retry re-apply the schema (or reload), or say so on the error screen."
+    },
+    {
+      "id": "DI-R2-Q6",
+      "title": "Lens 3: a stale tab's save after another tab erased the course lands on the erased course, and nothing removes it until the next erase",
+      "evidence": "Real engine, Chromium (E11): course erased (children first) and course-next created; then saveDutyPlan('course-v030-d2', [], settings) succeeded and stored a dutySettings row for the erased course. The repairs leave it (courseId is not NULL); validateStoredRows reports unknown-course, but only in tests. saveDutyPlan never checks that the course exists (duties.ts:127-170). By code reading, createStudent, createStudents (students.ts:142-226) and createVolunteer (volunteers.ts:55-81) also insert with the caller's courseId without a check, so a stale tab could leave names, phones and ages of an erased course on the device. The cause predates D1.",
+      "reproduction": "Test E11 (harness staleDutySave).",
+      "specRef": "courses.ts erase rationale ('nothing about the previous week's students stays behind'); D3 (two tabs) and D4 (wipe)"
+    },
+    {
+      "id": "DI-R2-Q7",
+      "title": "Round-1 DI-Q4 is half fixed: the D1 browser harness still opens the app's database as a side effect",
+      "evidence": "src/test/d1MigrationHarness.ts:19-23 imports u02MigrationHarness, whose lines 4-5 import crews.ts and duties.ts, which import db.ts (createDatabase() on cvc-helper.db). In 'opens an upgraded 0.3.0 course in the app' (d1-migration.spec.ts:189-209), the seed of cvc-helper.db with v030Schema still races an AppSchema init of the same file. It is harmless today, but the seed is not a pure 0.3.0 file. The runInterruption comment is now accurate.",
+      "reproduction": "Code reading of the import chain.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 step 3"
+    },
+    {
+      "id": "DI-R2-Q8",
+      "title": "The tracked migration evidence describes the round-1 design",
+      "evidence": ".evidence/D1/migration-evidence.json (recorded 06:30) still lists two ledgered D1 migrations ('ledger': 2, ledgerAfterFirstStep ['migration:2026-10-d1-course-ownership'], appliedOnReopen ['2026-10-d1-record-metadata']). At b35d2f8 MIGRATIONS is empty and the repairs replace those steps. The file has no results for legacy repairs or for an older app writing after the upgrade.",
+      "reproduction": "Read the file and compare it with src/persistence/migrations.ts:73-74.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D1 Evidence (migration-evidence.json); AGENTS.md §12"
+    }
+  ],
+  "roundOneRecheck": {
+    "DI-1": "FIXED. Real engine, Chromium and WebKit (E6), page clock fixed at 2026-09-19T09:30Z. The legacy fault with createdAt 10:00 and updatedAt 09:00 is lifted to 10:00 on open. Disorder was planted again after the repairs (createdAt 10:00, updatedAt 09:00) on faults, students and dutySettings; updateFaultState, updateFaultDescription, setStudentActive and saveDutyPlan each stored updatedAt 10:00; row issues: 0. tests/e2e/d1-migration.spec.ts 'repairs a legacy fault…' passes on both engines.",
+    "DI-2": "FIXED for D1's columns (E1, Chromium and WebKit). With the 0.1.0, 0.2.0 and 0.3.0 schemas opening an upgraded file, ps_data_local__meta survives, the older app reads the ledger, a probe migration ran exactly once, and after the next 0.4.0 open every stripped or inserted row (student, course, crew, evaluation, fault without courseId, fault updated with a raw clock set back, crew member, dutySettings REPLACE) has metadata and course: 0 row issues. Values outside D1 that an older app strips remain lost (DI-R2-Q4).",
+    "DI-3": "Largely fixed: case-insensitive, recursive, unreadable forms refused, REPLACE flagged, import check, parser-based literals. Residual gaps are in DI-R2-Q3, and the new journey checks are blind by construction (DI-R2-2).",
+    "DI-Q1": "Addressed. Orphans take the single course; with several courses they stay NULL and are reported (E4). See DI-R2-Q2.",
+    "DI-Q2": "Fixed (rowIntegrity.ts:27 requires .\\d{3}Z).",
+    "DI-Q3": "Recorded in 03 §3 as a 1.0 caveat (accepted decision).",
+    "DI-Q4": "Half fixed (DI-R2-Q7).",
+    "DI-Q5": "Re-run on the new design (E10). Persistent context closed during the first open's repairs: Chromium with 12,146 rows at 100/400/800 ms, WebKit with 1,861 rows at 150/500/1000 ms. Each time the next open found nothing applied (12,143 and 1,858 rows still without metadata), completed the repairs, and every row was present with 0 issues."
+  },
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-data-integrity.md; .evidence/D1/data-integrity-review-round-1.json; .evidence/D1/migration-evidence.json",
+    "04_IMPLEMENTATION_PLAN.md D1 (predicate, checklist), D2, D3; 03_TECHNICAL_DECISIONS.md §3 D1 paragraphs and §3.1 (rewritten paragraph)",
+    "git diff a53f1ad..b35d2f8 (26 files): migrations.ts, schema.ts, db.ts, stamp.ts, rowIntegrity.ts, courses.ts, duties.ts, writeStatements.test.ts, migrations.test.ts, d1MigrationHarness.ts, d1-migration.spec.ts, stored-rows.ts, ug1/ug2 upgraded-week specs",
+    "src/persistence/boats.ts, students.ts, volunteers.ts, evaluations.ts, crews.ts (write paths, course checks, readers); src/App.tsx load and Riprova flow; src/domain/invariants.ts (what it is fed)",
+    "v0.2.0 and v0.3.0 tags: meta declared local-only with value integer in both; 0.3.0 erase leaves meta; pre-M14 probe wrote meta with INSERT OR REPLACE",
+    "node_modules/@powersync: Schema constructor, resolveAndValidateOptions (enableMultiTabs is false on Android/iPhone user agents), DBAdapter BEGIN IMMEDIATE",
+    "Ran: npx vitest run src/persistence src/test: 13 files, 147 tests passed",
+    "Ran: node scripts/run-e2e.mjs tests/e2e/d1-migration.spec.ts: 16 passed on pixel-7-chrome and iphone-13-webkit-core (4.7 min)",
+    "Ran a throwaway harness (scratchpad r2/, copied to the ignored test-results/d1-review2/, own config, port 4392) on both projects: E1 older 0.1/0.2/0.3 app after the upgrade; E2 D2 inheritance; E3/E3b/E3c per-open repair cost; E4 planted orphans; E5 older init under an open instance; E6 DI-1 recheck with a fixed clock; E7 three tabs opening at once (6 runs per engine, all opened the course, 0 issues); E8 a tab saving 35 evaluations while a second tab opens and repairs (no errors, no lost write, 0 issues); E9 masking; E10 context kill during repairs; E11 stale duty save after erase (Chromium); E12 0.2.0 app stripping 0.3-era values (Chromium)",
+    "Ran: node <scratchpad>/r2/structural.mjs (verbatim copy of checkWrites)",
+    "Note: the working tree has uncommitted comment-only edits to src/persistence/boats.ts and courses.ts, made at 12:53 by someone else. I did not edit any tracked file. My runs included those comments; they change no behaviour."
+  ],
+  "anglesTried": {
+    "seed": 114062968,
+    "lenses": [
+      "5. Invariant checker blind spots (seed mod 12 = 4)",
+      "3. A late write landing on the wrong record (the draw floor(seed/12) mod 12 = 11 gave lens 12, two tabs, which round 1 had already exercised, so the next untried lens was taken; two-tab work moved to the checklist portion)"
+    ],
+    "wildcard": "An older app re-initialising its schema under a 0.4.0 instance that is already open: do the repairs and stamped writes fail whole and loudly, and can Riprova (prepareDatabase's retry on the cached instance) recover?",
+    "alsoCovered": [
+      "round-1 recheck on both engines (DI-1, DI-2, DI-Q5 with real kills)",
+      "brief: repair cost on every open, concurrent tabs (simultaneous open; one tab writing while another repairs), orphans with one and with two courses, older app schemas vs the meta ledger, what D2 inherits, structural-test gaps",
+      "checklist: clock going backwards, step applied twice, ledger after erase, old fixtures passing the checker, 40-student timing"
+    ]
+  },
+  "notTested": [
+    "Physical Android and iOS devices and installed-PWA standalone mode (owner's devices). All timings are desktop emulation on the development PC.",
+    "Storage quota or eviction during an open. The repairs now write on an open whenever an older app has left rows to fix, so on a full device a needed repair would fail and the course would not open. Not simulated.",
+    "A hard power loss or browser-process SIGKILL. E10 closed the persistent context instead.",
+    "WebKit repair cost above 40 students: my harness page crashed while seeding 150 students in one transaction (seed step, not app code).",
+    "The real 0.3.0 to 0.4.0 service-worker update with a stale tab (D3). DI-R2-Q5 and E1 reproduce the database side directly.",
+    "Lens 3's stale-tab paths for createStudent/createStudents/createVolunteer were read, not run. Only saveDutyPlan was reproduced (E11)."
+  ]
+}

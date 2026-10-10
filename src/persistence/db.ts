@@ -5,4 +5,4 @@ import { createDatabase } from "@/persistence/schema"
  * persistence modules do (src/persistence/writeStatements.test.ts); a test
  * harness that needs a database of its own uses `createDatabase` instead.
  */
-export const db = createDatabase()
+export const db = createDatabase("cvc-helper.db")

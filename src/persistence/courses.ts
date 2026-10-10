@@ -11,8 +11,8 @@ export type CourseRecord = CourseDetails & {
 
 /**
  * The app's first read (App's load effect): it brings the data up to date
- * first, so nothing reads a table a pending migration still has to fill. A
- * failed migration fails this read, and the app's Riprova runs it again.
+ * first, so nothing reads a row the repairs or a pending migration still have
+ * to fill. A failed run fails this read, and the app's Riprova runs it again.
  */
 export async function getActiveCourse() {
   await prepareDatabase(db)
