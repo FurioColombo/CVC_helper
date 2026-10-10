@@ -50,6 +50,7 @@ const webkitCoreSpecs = [
   // Data migrations run on every iPhone, on WebKit's own storage backend.
   "d1-migration",
   "d2-duty-items",
+  "d3-read-only",
   "duties",
   "evaluation-gate",
   "f1-navigation-guards",

@@ -108,16 +108,20 @@ function brandPrecachedManifestEntries() {
 }
 
 // The app shows its version and the compatibility contract compares it with
-// the data's (src/appVersion.ts, src/domain/compatibility.ts).
-const appVersion = (
-  JSON.parse(
-    readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
-  ) as { version: string }
-).version
+// the data's (src/appVersion.ts, src/domain/compatibility.ts). The update
+// journey (scripts/check-update-journey.mjs) builds two versions of the same
+// source with CVC_APP_VERSION; every other build takes package.json's.
+const appVersion =
+  process.env.CVC_APP_VERSION ??
+  (
+    JSON.parse(
+      readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
+    ) as { version: string }
+  ).version
 
 export default defineConfig({
   base,
-  define: { __APP_VERSION__: JSON.stringify(appVersion) },
+  define: { "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion) },
   plugins: [
     react(),
     tailwindcss(),

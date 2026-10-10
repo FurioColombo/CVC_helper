@@ -566,7 +566,7 @@ describe("versions and updates", () => {
     await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
     expect(
       screen.getByText(
-        `CVC Helper è aggiornata alla versione ${__APP_VERSION__}.`,
+        `CVC Helper è aggiornata alla versione ${import.meta.env.VITE_APP_VERSION}.`,
       ),
     ).toBeVisible()
     await user.click(
@@ -575,7 +575,7 @@ describe("versions and updates", () => {
     expect(screen.queryByText(/è aggiornata alla versione/)).toBeNull()
 
     await user.click(screen.getByRole("button", { name: "Impostazioni" }))
-    expect(screen.getByText(__APP_VERSION__)).toBeVisible()
+    expect(screen.getByText(import.meta.env.VITE_APP_VERSION)).toBeVisible()
     expect(
       screen.getByRole("button", { name: "Cerca aggiornamenti" }),
     ).toBeVisible()
