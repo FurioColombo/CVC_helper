@@ -9,7 +9,7 @@ const database = vi.hoisted(() => ({
 
 vi.mock("@/persistence/db", () => ({ db: database }))
 vi.mock("@/persistence/migrations", () => ({
-  prepareDatabase: vi.fn(async () => {}),
+  prepareDatabase: vi.fn(async () => "write"),
 }))
 
 import type { CourseDetails } from "@/domain/course"
@@ -68,7 +68,8 @@ describe("course persistence", () => {
   it("reads nothing until the pending migrations have run", async () => {
     let finishMigrations = () => {}
     vi.mocked(prepareDatabase).mockImplementationOnce(
-      () => new Promise<void>((resolve) => (finishMigrations = resolve)),
+      () =>
+        new Promise((resolve) => (finishMigrations = () => resolve("write"))),
     )
     database.getOptional.mockResolvedValue(null)
 

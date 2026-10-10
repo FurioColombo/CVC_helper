@@ -10,6 +10,7 @@ import {
   Settings,
   UsersRound,
   Wrench,
+  X,
 } from "lucide-react"
 import {
   Component,
@@ -20,7 +21,10 @@ import {
   type ReactNode,
 } from "react"
 
+import { APP_VERSION_TEXT } from "@/appVersion"
+import { ReadOnlyNotice } from "@/components/ReadOnlyNotice"
 import { Button } from "@/components/ui/button"
+import { UpdateCheckButton } from "@/components/UpdateCheckButton"
 import { CourseIdentity } from "@/components/CourseIdentity"
 import { CvcMark } from "@/components/CvcMark"
 import {
@@ -29,6 +33,7 @@ import {
   holdBackNavigation,
   requestLeave,
 } from "@/navigation/browserHistory"
+import { noteInstalledVersion } from "@/navigation/installedVersion"
 import { NESTED_SCREEN_KEY_PREFIX } from "@/navigation/nestedScreen"
 import {
   COURSE_FAMILIES,
@@ -55,6 +60,7 @@ import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
   getActiveCourse,
+  getDataAccess,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
@@ -466,7 +472,14 @@ function SettingsView({
             Locale
           </dd>
         </div>
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-1 py-4">
+          <dt className="shrink-0 text-sm text-muted-foreground">Versione</dt>
+          <dd className="min-w-0 max-w-full break-words text-right text-sm font-bold [overflow-wrap:anywhere]">
+            {APP_VERSION_TEXT}
+          </dd>
+        </div>
       </dl>
+      <UpdateCheckButton className="mt-4" />
       <fieldset className="mt-6 rounded-2xl border bg-card p-4">
         <legend className="px-1 text-sm font-bold text-primary">
           Visualizzazione degli equipaggi
@@ -505,13 +518,40 @@ function SettingsView({
   )
 }
 
+/** D3: said once, on Home, after the app was updated. */
+function UpdatedNote({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="mx-5 mt-2 flex items-center gap-3 rounded-2xl border bg-card px-4 py-2 max-[350px]:mx-[12px]"
+      role="status"
+    >
+      <p className="min-w-0 flex-1 text-sm font-semibold [overflow-wrap:anywhere]">
+        CVC Helper è aggiornata alla versione {APP_VERSION_TEXT}.
+      </p>
+      <Button
+        aria-label="Chiudi l’avviso di aggiornamento"
+        className="size-11 shrink-0 border-0 p-0"
+        onClick={onClose}
+        variant="secondary"
+      >
+        <X aria-hidden="true" className="size-5" />
+      </Button>
+    </div>
+  )
+}
+
 function AppShell({
   course,
   onCourseErased,
+  readOnly,
+  updatedFrom,
 }: {
   course: CourseRecord
   onCourseErased: () => void
+  readOnly: boolean
+  updatedFrom: string | null
 }) {
+  const [updateNoteOpen, setUpdateNoteOpen] = useState(updatedFrom !== null)
   const [initialHistoryEntry] = useState(() =>
     readCourseHistoryEntry(window.history.state, course.id),
   )
@@ -641,6 +681,11 @@ function AppShell({
         </header>
       )}
 
+      {readOnly && <ReadOnlyNotice />}
+      {view === "home" && updateNoteOpen && (
+        <UpdatedNote onClose={() => setUpdateNoteOpen(false)} />
+      )}
+
       <main
         className="px-5 py-3 outline-none max-[350px]:px-[12px]"
         ref={mainRef}
@@ -766,13 +811,16 @@ function AppShell({
 
 export function App() {
   const [appState, setAppState] = useState<AppState>({ status: "loading" })
-  const [loadAttempt, setLoadAttempt] = useState(0)
+  const [readOnly, setReadOnly] = useState(false)
+  // Read once per start: a new version since the last start is an update.
+  const [updatedFrom] = useState(() => noteInstalledVersion(APP_VERSION_TEXT))
 
   useEffect(() => {
     let active = true
-    getActiveCourse()
-      .then((course) => {
+    Promise.all([getActiveCourse(), getDataAccess()])
+      .then(([course, access]) => {
         if (!active) return
+        setReadOnly(access === "read-only")
         setAppState(
           course ? { status: "ready", course } : { status: "no-course" },
         )
@@ -783,30 +831,32 @@ export function App() {
     return () => {
       active = false
     }
-  }, [loadAttempt])
+  }, [])
 
   if (appState.status === "loading") return <LoadingScreen />
   if (appState.status === "error") {
-    return (
-      <ErrorScreen
-        onRetry={() => {
-          setAppState({ status: "loading" })
-          setLoadAttempt((attempt) => attempt + 1)
-        }}
-      />
-    )
+    // Riprova reloads the app rather than retrying the same database: an
+    // older version opened meanwhile may have replaced its schema under this
+    // one, and only a fresh start applies this version's again (D1 review
+    // DI-R2-Q5).
+    return <ErrorScreen onRetry={() => window.location.reload()} />
   }
   if (appState.status === "no-course") {
     return (
-      <CourseCreation
-        onCreated={(course) => setAppState({ status: "ready", course })}
-      />
+      <>
+        {readOnly && <ReadOnlyNotice />}
+        <CourseCreation
+          onCreated={(course) => setAppState({ status: "ready", course })}
+        />
+      </>
     )
   }
   return (
     <ScreenErrorBoundary>
       <AppShell
         course={appState.course}
+        readOnly={readOnly}
+        updatedFrom={updatedFrom}
         onCourseErased={() => {
           // The next course starts from Home, not from the erased course's
           // screens that the browser history still remembers.

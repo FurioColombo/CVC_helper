@@ -2868,7 +2868,7 @@ export function CrewManagement({
                 {destinationCrewId && destinationCrewIndex >= 0 && (
                   <section
                     aria-label={`Destinazione equipaggio ${destinationCrewIndex + 1}`}
-                    className="fixed bottom-24 left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+                    className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-bold">
@@ -2983,7 +2983,7 @@ export function CrewManagement({
                     selected.personType === "volunteer") && (
                     <section
                       aria-label="Destinazione persona selezionata"
-                      className="fixed bottom-24 left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+                      className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
                       ref={personDestinationRef}
                       tabIndex={-1}
                     >

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs"
 import path from "node:path"
 import react from "@vitejs/plugin-react"
 import { configDefaults, defineConfig } from "vitest/config"
@@ -21,7 +22,15 @@ const domTests = [
 ]
 const exclude = [...configDefaults.exclude, "tests/e2e/**", "dist/**"]
 
+const appVersion = (
+  JSON.parse(
+    readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
+  ) as { version: string }
+).version
+
 export default defineConfig({
+  // As vite.config.ts defines it for the app.
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   plugins: [react()],
   resolve: {
     alias: {

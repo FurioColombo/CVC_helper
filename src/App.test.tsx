@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("@/persistence/courses", () => ({
   eraseAllCourseData: vi.fn().mockResolvedValue(undefined),
   getActiveCourse: vi.fn(),
+  getDataAccess: vi.fn(async () => "write"),
   saveActiveCourse: vi.fn(),
 }))
 
@@ -68,6 +69,7 @@ import { App, ScreenErrorBoundary } from "@/App"
 import {
   eraseAllCourseData,
   getActiveCourse,
+  getDataAccess,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
@@ -510,5 +512,79 @@ describe("screen error boundary", () => {
       screen.getByRole("button", { name: "Torna alla Home" }),
     ).toBeVisible()
     consoleError.mockRestore()
+  })
+})
+
+// D3: versions and the data they share.
+describe("versions and updates", () => {
+  beforeEach(() => {
+    window.history.replaceState(null, "", window.location.href)
+    window.localStorage.clear()
+    vi.mocked(getActiveCourse).mockReset().mockResolvedValue(ACTIVE_COURSE)
+    vi.mocked(getDataAccess).mockReset().mockResolvedValue("write")
+  })
+
+  it("says the course is read-only and offers the update when the data is newer", async () => {
+    vi.mocked(getDataAccess).mockResolvedValue("read-only")
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    expect(
+      screen.getByRole("heading", { name: "Solo lettura: aggiorna l’app" }),
+    ).toBeVisible()
+    expect(screen.getByRole("button", { name: "Aggiorna l’app" })).toBeVisible()
+  })
+
+  it("shows no read-only notice when this version may write", async () => {
+    render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    expect(screen.queryByText(/Solo lettura/)).toBeNull()
+  })
+
+  it("reloads the app on Riprova after the archive failed to open", async () => {
+    vi.mocked(getActiveCourse).mockRejectedValue(new Error("no such column"))
+    const reload = vi.fn()
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      ...window.location,
+      reload,
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole("button", { name: "Riprova" }))
+
+    expect(reload).toHaveBeenCalledOnce()
+    vi.restoreAllMocks()
+  })
+
+  it("says once, on Home, that the app was updated, and shows its version in Impostazioni", async () => {
+    window.localStorage.setItem("cvc-helper.installed-version", "0.0.1")
+    const user = userEvent.setup()
+    const { unmount } = render(<App />)
+
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    expect(
+      screen.getByText(
+        `CVC Helper è aggiornata alla versione ${__APP_VERSION__}.`,
+      ),
+    ).toBeVisible()
+    await user.click(
+      screen.getByRole("button", { name: "Chiudi l’avviso di aggiornamento" }),
+    )
+    expect(screen.queryByText(/è aggiornata alla versione/)).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "Impostazioni" }))
+    expect(screen.getByText(__APP_VERSION__)).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: "Cerca aggiornamenti" }),
+    ).toBeVisible()
+    unmount()
+
+    // The next start opens Home again and says nothing more.
+    window.history.replaceState(null, "", window.location.href)
+    render(<App />)
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    expect(screen.queryByText(/è aggiornata alla versione/)).toBeNull()
   })
 })

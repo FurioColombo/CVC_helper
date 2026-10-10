@@ -1629,7 +1629,7 @@ export function StudentManagement({
           />
           <Button
             aria-label="Aggiungi allievo"
-            className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full p-0 shadow-[0_10px_28px_rgb(13_91_166/0.3)]"
+            className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[calc(5.75rem+env(safe-area-inset-bottom)+var(--update-banner-height,0px))] z-30 size-14 rounded-full p-0 shadow-[0_10px_28px_rgb(13_91_166/0.3)]"
             onClick={() => navigateStudentScreen({ kind: "create" })}
           >
             <Plus aria-hidden="true" className="size-6" />

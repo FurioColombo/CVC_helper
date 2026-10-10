@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
+import { encodeVersion, parseVersion } from "@/domain/compatibility"
 import {
   applyMigration,
   MIGRATIONS,
@@ -8,6 +9,7 @@ import {
   type Migration,
 } from "@/persistence/migrations"
 import { AppSchema } from "@/persistence/schema"
+import { isReadOnly } from "@/persistence/writeGuard"
 
 /**
  * A database double whose write transactions record their SQL and keep the
@@ -135,7 +137,13 @@ describe("runMigrations", () => {
 })
 
 describe("prepareDatabase", () => {
-  function preparable(needsRepair: boolean) {
+  const APP = parseVersion("0.5.0")
+
+  /** A database double; `stored` is what the data records, as meta rows. */
+  function preparable(
+    needsRepair: boolean,
+    stored: Array<{ id: string; value: number }> = [],
+  ) {
     const order: string[] = []
     const fake = fakeDatabase()
     const database = {
@@ -148,56 +156,109 @@ describe("prepareDatabase", () => {
       }),
       // No duty settings stored: the duty-setting rows need no repair.
       getAll: vi.fn(async (sql: string) => {
-        if (/FROM dutySettings WHERE/.test(sql.replace(/\s+/g, " ")))
-          order.push("items probe")
+        const text = sql.replace(/\s+/g, " ")
+        if (text.includes("FROM meta WHERE id IN")) {
+          order.push("version")
+          return stored
+        }
+        if (/FROM dutySettings WHERE/.test(text)) order.push("items probe")
         return []
       }),
       writeTransaction: vi.fn(async (callback: (tx: unknown) => unknown) => {
         const result = await fake.database.writeTransaction(callback as never)
+        const statements = fake.transactions.at(-1)!
         order.push(
-          fake.transactions.at(-1)!.some((sql) => sql.includes("meta"))
-            ? "migration"
-            : "repairs",
+          statements.some((sql) =>
+            sql.startsWith("INSERT OR REPLACE INTO meta"),
+          )
+            ? "record"
+            : statements.some((sql) => sql.includes("meta"))
+              ? "migration"
+              : "repairs",
         )
         return result
       }),
     }
-    return { database, order }
+    return { database, order, fake }
   }
 
-  it("opens the database, repairs the rows, then runs the migrations, once", async () => {
+  const record = (version: string, minimumWriter: string) => [
+    { id: "data:version", value: encodeVersion(parseVersion(version)) },
+    {
+      id: "data:minimumWriter",
+      value: encodeVersion(parseVersion(minimumWriter)),
+    },
+  ]
+
+  it("checks the data's version, repairs, migrates and records this version, once", async () => {
     const { database, order } = preparable(true)
 
-    await prepareDatabase(database as never, [step("first")])
-    await prepareDatabase(database as never, [step("first")])
+    await expect(
+      prepareDatabase(database as never, [step("first")], APP),
+    ).resolves.toBe("write")
+    await prepareDatabase(database as never, [step("first")], APP)
 
     expect(order).toEqual([
       "init",
+      "version",
       "probe",
       "repairs",
       "items probe",
       "migration",
+      "record",
     ])
   })
 
-  it("takes no write transaction for repairs when the probe finds nothing to repair", async () => {
-    const { database, order } = preparable(false)
+  it("takes no write transaction when nothing needs repair and the record is current", async () => {
+    const { database, order } = preparable(false, record("0.5.0", "0.4.0"))
 
-    await prepareDatabase(database as never, [])
+    await prepareDatabase(database as never, [], APP)
 
-    expect(order).toEqual(["init", "probe", "items probe"])
+    expect(order).toEqual(["init", "version", "probe", "items probe"])
     expect(database.writeTransaction).not.toHaveBeenCalled()
+  })
+
+  // 03 §3.1: an app older than the data's minimum writer runs no repair or
+  // migration, which all write, and its writes refuse.
+  it("opens read-only, before any repair, data newer than this version may write", async () => {
+    const { database, order } = preparable(true, record("0.7.0", "0.6.0"))
+
+    await expect(
+      prepareDatabase(database as never, [step("first")], APP),
+    ).resolves.toBe("read-only")
+
+    expect(order).toEqual(["init", "version"])
+    expect(database.writeTransaction).not.toHaveBeenCalled()
+    expect(isReadOnly(database as never)).toBe(true)
+  })
+
+  it("writes the data of the next minor version, which records itself as newer", async () => {
+    const { database, order } = preparable(false, record("0.6.0", "0.5.0"))
+
+    await expect(prepareDatabase(database as never, [], APP)).resolves.toBe(
+      "write",
+    )
+
+    // The record already says more than 0.5.0 would: nothing to rewrite.
+    expect(order).toEqual(["init", "version", "probe", "items probe"])
   })
 
   it("runs again when asked after a failed run", async () => {
     const { database, order } = preparable(true)
     database.init.mockRejectedValueOnce(new Error("storage unavailable"))
 
-    await expect(prepareDatabase(database as never, [])).rejects.toThrow(
+    await expect(prepareDatabase(database as never, [], APP)).rejects.toThrow(
       "storage unavailable",
     )
-    await prepareDatabase(database as never, [])
+    await prepareDatabase(database as never, [], APP)
 
-    expect(order).toEqual(["init", "probe", "repairs", "items probe"])
+    expect(order).toEqual([
+      "init",
+      "version",
+      "probe",
+      "repairs",
+      "items probe",
+      "record",
+    ])
   })
 })

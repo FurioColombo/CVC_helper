@@ -71,4 +71,20 @@ describe("UpdateAvailableBanner", () => {
 
     expect(screen.getByRole("status")).toHaveStyle({ bottom: "0px" })
   })
+
+  // UG2-UX-3: the floating controls above the navigation rise by this height.
+  it("publishes its height while shown, and withdraws it when put off", async () => {
+    const height = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ height: 64 } as DOMRect)
+    const user = userEvent.setup()
+    const root = document.documentElement
+    render(<UpdateAvailableBanner onUpdate={vi.fn()} visible />)
+
+    expect(root.style.getPropertyValue("--update-banner-height")).toBe("64px")
+
+    await user.click(screen.getByRole("button", { name: "Più tardi" }))
+    expect(root.style.getPropertyValue("--update-banner-height")).toBe("")
+    height.mockRestore()
+  })
 })

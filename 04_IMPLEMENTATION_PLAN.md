@@ -50,7 +50,7 @@ findings join as an extra milestone only if the owner picks them (see the end).
 ## D3 — Versions and reliable updates
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 1. **Compatibility contract** (`03_TECHNICAL_DECISIONS.md` §3.1), the rules the
    server will enforce from 0.5.0:

@@ -107,8 +107,17 @@ function brandPrecachedManifestEntries() {
   })
 }
 
+// The app shows its version and the compatibility contract compares it with
+// the data's (src/appVersion.ts, src/domain/compatibility.ts).
+const appVersion = (
+  JSON.parse(
+    readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
+  ) as { version: string }
+).version
+
 export default defineConfig({
   base,
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   plugins: [
     react(),
     tailwindcss(),

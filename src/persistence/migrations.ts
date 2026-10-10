@@ -1,11 +1,24 @@
 import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
+import { APP_VERSION } from "@/appVersion"
+import {
+  dataAccess,
+  type DataAccess,
+  type Version,
+} from "@/domain/compatibility"
+import {
+  dataVersionNeedsRecord,
+  readDataVersion,
+  recordDataVersion,
+} from "@/persistence/dataVersion"
+
 import {
   dutySettingItemsNeedRepair,
   needsRepair,
   repairDutySettingItems,
   repairRows,
 } from "@/persistence/repairs"
+import { markReadOnly } from "@/persistence/writeGuard"
 
 /**
  * Bringing stored data up to date before the app reads it (D1, 03 §3). Schema
@@ -67,22 +80,32 @@ export async function runMigrations(
   return applied
 }
 
-const prepared = new WeakMap<PowerSyncDatabase, Promise<void>>()
+const prepared = new WeakMap<PowerSyncDatabase, Promise<DataAccess>>()
 
 /**
  * Opens the database and brings its data up to date before the app reads
- * anything: `getActiveCourse`, the app's first read, waits for it. The repairs
- * come first, so a migration reads rows of this version's shape. One run per
- * database, however often it is asked.
+ * anything: `getActiveCourse`, the app's first read, waits for it. The
+ * compatibility contract (D3, src/domain/compatibility.ts) comes first: an
+ * app older than the data's minimum writer runs no repair or migration, which
+ * all write, and leaves the database read-only. Otherwise the repairs come
+ * next, so a migration reads rows of this version's shape, and the data then
+ * records this version as a writer. One run per database, however often it
+ * is asked.
  */
 export function prepareDatabase(
   database: PowerSyncDatabase,
   migrations: readonly Migration[] = MIGRATIONS,
-) {
+  app: Version = APP_VERSION,
+): Promise<DataAccess> {
   let ready = prepared.get(database)
   if (!ready) {
     ready = (async () => {
       await database.init()
+      const stored = await readDataVersion(database)
+      if (dataAccess(app, stored) === "read-only") {
+        markReadOnly(database)
+        return "read-only"
+      }
       if (await needsRepair(database)) {
         await database.writeTransaction((transaction) =>
           repairRows(transaction, new Date().toISOString()),
@@ -94,6 +117,12 @@ export function prepareDatabase(
         )
       }
       await runMigrations(database, migrations)
+      if (dataVersionNeedsRecord(app, stored)) {
+        await database.writeTransaction((transaction) =>
+          recordDataVersion(transaction, app, stored),
+        )
+      }
+      return "write"
     })()
     prepared.set(database, ready)
     // A failed run may be retried by asking again.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 
@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button"
  * live `<nav>` element rather than hard-coding its height, so it keeps
  * working if that height ever changes and never covers it (rulebook R12).
  * When no `<nav>` is on screen (loading/onboarding), it falls back to the
- * viewport edge.
+ * viewport edge. While shown it publishes its own height as
+ * `--update-banner-height` on the document, and the floating controls above
+ * the navigation (the crew page's bar, the Allievi add button) rise by it, so
+ * it covers neither (UG2-UX-3).
  */
 export function UpdateAvailableBanner({
   visible,
@@ -27,6 +30,25 @@ export function UpdateAvailableBanner({
   // "Più tardi" hides it for this session; the update stays waiting and is
   // applied on the next launch or when the banner is shown again.
   const [dismissed, setDismissed] = useState(false)
+  const banner = useRef<HTMLDivElement>(null)
+  const shown = visible && !dismissed
+
+  useLayoutEffect(() => {
+    const element = banner.current
+    if (!shown || !element) return
+    const root = document.documentElement
+    const publish = () =>
+      root.style.setProperty(
+        "--update-banner-height",
+        `${element.getBoundingClientRect().height}px`,
+      )
+    publish()
+    window.addEventListener("resize", publish)
+    return () => {
+      window.removeEventListener("resize", publish)
+      root.style.removeProperty("--update-banner-height")
+    }
+  }, [shown])
 
   useEffect(() => {
     if (!visible) return
@@ -44,11 +66,12 @@ export function UpdateAvailableBanner({
     return () => window.removeEventListener("resize", measure)
   }, [visible])
 
-  if (!visible || dismissed) return null
+  if (!shown) return null
 
   return (
     <div
       aria-live="polite"
+      ref={banner}
       className="fixed inset-x-0 z-10 mx-auto flex w-full max-w-md items-center justify-between gap-3 border-t border-border bg-card px-4 py-2.5 shadow-[0_-6px_20px_rgb(6_59_82/0.12)]"
       role="status"
       style={{ bottom: navHeight }}
