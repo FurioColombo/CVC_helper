@@ -1,0 +1,102 @@
+{
+  "reviewerRole": "self-review (orchestrator)",
+  "milestone": "D1",
+  "commit": "caf2699",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "git diff b10eabc..caf2699 (the whole milestone), read file by file: every write path in boats, courses, crews, duties, evaluations, students and volunteers; schema, db, stamp, repairs, migrations, rowIntegrity; the harnesses and specs",
+    ".evidence/D1/data-integrity-review-round-1.json (FAIL: DI-1 blocker) and data-integrity-review.json (round 2: PASS_WITH_FINDINGS, no blockers)",
+    ".evidence/D1/migration-evidence.json (rebuilt on caf2699's design, Chromium and WebKit)",
+    "npm run verify:quick on caf2699: lint, format, typecheck, 66 files and 1,157 unit tests passed"
+  ],
+  "itemProofs": {
+    "1 runner, ledger, before the first read, interruption": "src/persistence/migrations.ts (prepareDatabase, applyMigration, runMigrations; ledger in `meta`), called by getActiveCourse before its read (courses.test.ts 'reads nothing until the pending migrations have run'). Interruption: migrations.test.ts (fake) and d1-migration.spec.ts 'rolls interrupted repairs and an interrupted migration back whole' on both engines; real context kills during the repairs by the reviewer (data-integrity-review.json roundOneRecheck DI-Q5). Screen off and app closed are the same event for SQLite: the transaction never commits.",
+    "2 createdAt and updatedAt on every insert and update path": "stamp()/TOUCH in every write path; writeStatements.test.ts refuses a statement without them; node:sqlite tests for TOUCH and the dutySettings upsert, including a clock set back and legacy disorder (boats.test.ts, duties.test.ts); stored rows checked before every close or reload of the full week and both upgraded weeks, and after four app write functions in d1-migration's app-writes test.",
+    "3 courseId on faults, crew members and evaluations": "schema.ts; set by createFault (from the boat, in one transaction), saveCrewPlan and saveEvaluation; filled by repairRows from the parent, orphans taking the single course; rowIntegrity reports missing-course, unknown-course, course-differs-from-parent and missing-parent.",
+    "4 deletion markers and record versions": "decided against until 1.0 in 03 §3 ('No deletion markers or record versions yet'), with the PowerSync reason and the two updatedAt caveats 1.0's conflict rules must weigh.",
+    "5 anonymous 0.3.0 fixture": "src/test/fixtures/v0.3.0-course.json, shaped by the frozen src/test/v030Schema.ts (identical to v0.3.0's db.ts) and checked by v030Fixture.test.ts; the 0.1, 0.2 and 0.3 fixtures upgrade with 0 changed values and 0 row issues on both engines (migration-evidence.json)."
+  },
+  "successPredicate": "Holds: every fixture, also after an interruption, opens with the same records, references, values and counts plus complete metadata (0 changed values, 0 issues); every course-scoped row carries its course id; createdAt ≤ updatedAt after every write path (TOUCH floor, repair of legacy disorder, the journeys' stored-row checks). One documented exception: an orphan on a device with several courses keeps no course and is reported.",
+  "adversarialChecklist": {
+    "an INSERT or UPDATE that bypasses the helper": "writeStatements.test.ts (parser-based, schema-derived; round-2 gaps closed); a value bound null at run time is left to the write paths' unit tests and the journeys' stored-row checks",
+    "a child backfilled before its parent": "repairRows fills parents' metadata independently of ownership; ownership is copied from parents that always had courseId; rowIntegrity compares child and parent",
+    "a step applied twice after an interruption": "ledger in `meta` in the step's own transaction; interruption spec on both engines; the ledger survives an older app's schema (older-app spec)",
+    "local time instead of UTC, or a clock that goes backwards": "stamp() is toISOString(); rowIntegrity requires its exact width; TOUCH never goes back nor below createdAt (node:sqlite tests)",
+    "erasing the course leaves the ledger stale": "erase deletes COURSE_DATA_TABLES only; `meta` stays (courses.test.ts); the ledger describes the data, not the course",
+    "the invariant checker rejecting a valid old fixture": "the three fixtures pass validateStoredRows after the upgrade; v030Fixture.test.ts checks ids and references",
+    "migration time on a 40-student course": "606 rows: upgrade 0.7 s Chromium, 1.3 s WebKit; a later open, init included, 0.5 s and 0.8 s; bounded at 5 s each (d1-migration.spec.ts)"
+  },
+  "dispositions": [
+    {
+      "id": "DI-1 (round 1 blocker)",
+      "disposition": "fixed: TOUCH and the dutySettings upsert never go below createdAt; a repair lifts legacy disordered rows. Rechecked FIXED by the reviewer on both engines."
+    },
+    {
+      "id": "DI-2",
+      "disposition": "fixed: ledger in `meta`; the fills became repairs on every open; 03 §3.1 corrected. Rechecked FIXED for D1's columns."
+    },
+    {
+      "id": "DI-3",
+      "disposition": "fixed in round 1, residual gaps closed after round 2 (DI-R2-Q3)."
+    },
+    {
+      "id": "DI-Q1 / DI-R2-Q2",
+      "disposition": "fixed: orphans take the single course; rowIntegrity now reports missing-parent, which the domain checker could not see."
+    },
+    {
+      "id": "DI-Q2",
+      "disposition": "fixed: exactly three fractional digits."
+    },
+    {
+      "id": "DI-Q3",
+      "disposition": "accepted and recorded in 03 §3 for 1.0's conflict rules."
+    },
+    {
+      "id": "DI-Q4 / DI-R2-Q7",
+      "disposition": "fixed: schema.ts has no side effect; legacy seeding moved to src/test/legacySeed.ts, which imports no persistence module; ug1's in-page seed uses it too."
+    },
+    {
+      "id": "DI-Q5",
+      "disposition": "the reviewer's real-kill runs on the new design are cited in migration-evidence.json (realKillRuns)."
+    },
+    {
+      "id": "DI-R2-1",
+      "disposition": "fixed in the contract: a newer-only table is filled by a repair, the app keeps writing the lists older apps read (03 §3, §3.1; plan D2, whose checklist names the 0.3.0 case)."
+    },
+    {
+      "id": "DI-R2-2",
+      "disposition": "fixed: storedRowIssues runs before page.close() in ug1/ug2 and before every close and reload of the full week; full-week joins D1's focused specs."
+    },
+    {
+      "id": "DI-R2-Q1",
+      "disposition": "fixed: one probe read (needsRepair) decides whether the repair transaction runs; the reopen is timed and bounded."
+    },
+    {
+      "id": "DI-R2-Q3",
+      "disposition": "fixed: writes found after comments or a WITH clause; hand-set timestamps and TOUCH outside SET refused; table names and courseId derived from the schema; migrations.ts checked (only repairs.ts exempt); any import of db or schema outside persistence refused; createDatabase needs a filename. A null bound at run time remains outside a static check, as the test's header says."
+    },
+    {
+      "id": "DI-R2-Q4",
+      "disposition": "fixed: 03 §3.1 says the repairs restore D1's columns only, and what an older app strips otherwise stays lost."
+    },
+    {
+      "id": "DI-R2-Q5",
+      "disposition": "scheduled: D3's checklist (Riprova must reload, not retry the same instance)."
+    },
+    {
+      "id": "DI-R2-Q6",
+      "disposition": "scheduled: D4's checklist (a stale tab's save landing on the erased course)."
+    },
+    {
+      "id": "DI-R2-Q8",
+      "disposition": "fixed: migration-evidence.json rebuilt on the new design."
+    },
+    {
+      "id": "own: the round-2 fixes were not re-reviewed",
+      "disposition": "accepted: round 2 had no blocker, and each fix is covered by tests that would fail on a regression (repairs.test.ts probe table, writeStatements sample, rowIntegrity, d1-migration on both engines, the journeys' checks)."
+    }
+  ]
+}

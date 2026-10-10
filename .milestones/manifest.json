@@ -734,7 +734,7 @@
     {
       "id": "D1",
       "category": "FOUNDATION",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D1/verification.json",
@@ -773,7 +773,15 @@
         ".evidence/D2/domain-review.json",
         ".evidence/D2/data-integrity-review.json"
       ],
-      "e2eSpecs": []
+      "e2eSpecs": [
+        "tests/e2e/duties.spec.ts",
+        "tests/e2e/f3-duty-summary.spec.ts",
+        "tests/e2e/full-week.spec.ts",
+        "tests/e2e/u08-duties.spec.ts",
+        "tests/e2e/ug1-duty-reflow.spec.ts",
+        "tests/e2e/ug1-upgraded-week.spec.ts",
+        "tests/e2e/ug2-upgraded-week.spec.ts"
+      ]
     },
     {
       "id": "D3",

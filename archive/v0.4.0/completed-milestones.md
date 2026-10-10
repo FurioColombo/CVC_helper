@@ -51,3 +51,42 @@ DOM assertions no longer run.
 after), `docs-move.json` (old path → new home), `retro-adoption.json` (the
 owner's picks from the retrospective), self-review, scope and code-quality
 reviews.
+
+## D1 — Record metadata and course ownership
+
+**Category:** FOUNDATION
+**Status:** IN_PROGRESS
+
+1. An ordered, idempotent migration runner, its ledger in the `meta` table that
+   every schema declares, that records each step and runs before the first
+   read, after repairs that run on every open. A migration interrupted by
+   closing the app, turning the screen off or killing the tab completes on the
+   next open, and nothing is applied twice.
+2. `createdAt` and `updatedAt` (UTC ISO) on every table, set by one write helper
+   on every insert and update path. Existing rows are backfilled; faults keep
+   their own.
+3. `courseId` on faults, crew members and evaluations, backfilled through their
+   parents and set on every new write; the invariant checker requires every
+   child to share its parent's course.
+4. Decide, with the PowerSync documentation, whether deletion markers or
+   per-record versions are needed: PowerSync uploads deletes as operations.
+   Record the decision and its reason in `03_TECHNICAL_DECISIONS.md` §3, and
+   build only what 0.5–0.7 need.
+5. An anonymous 0.3.0 fixture beside the 0.1 and 0.2 ones; all three open
+   through the production boundary.
+
+**Success predicate:** opening any of the three fixtures, including after an
+interruption at any migration step, yields the same records, references,
+values and counts as before plus complete metadata. Every course-scoped row
+carries its course's id, and `createdAt ≤ updatedAt` holds on every row after
+every write path.
+
+**Adversarial checklist:** an `INSERT` or `UPDATE` that bypasses the helper; a
+child backfilled before its parent; a step applied twice after an interruption;
+local time instead of UTC, or a clock that goes backwards; erasing the course
+leaves the ledger stale; the invariant checker rejecting a valid old fixture;
+migration time on a 40-student course.
+
+**Evidence:** verification (`verify` and focused browser specs),
+`migration-evidence.json` (fixture counts before and after, interruption runs),
+data-integrity review, self-review.

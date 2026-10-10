@@ -136,8 +136,6 @@ From the UG2 code-quality review, before the shared database
 
 From the UG2 data-integrity and scope reviews:
 
-- `createFault` checks the boat and inserts in two separate steps, outside a
-  transaction (UG2-DAT-7); D1 rewrites this write path;
 - the clipboard image left by Copia immagine and stored values quoted in error
   messages are traces the app cannot erase, and nothing says so (UG2-DAT-11);
   D4's full reset should name them;
