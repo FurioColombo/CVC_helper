@@ -76,6 +76,13 @@ Other UG2 findings, not yet put to the owner:
   half-typed number (UG2-DAT-6), and the wording and layout notes UG2-UX-10
   to 16.
 
+## Flaky browser tests
+
+Each passed only on a retry and is a defect to fix (03 §6).
+
+- `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
+  — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
+
 ## Future work the owner has named
 
 - **Speech:** faster and more accurate, with the model downloaded with the app

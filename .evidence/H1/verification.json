@@ -1,0 +1,32 @@
+{
+  "milestone": "H1",
+  "status": "PASS",
+  "recordedAt": "2026-10-10T00:54:37.984Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "ac2af9465299c0023e5ca97743d1dc59bd50b5f2",
+  "workingTreeClean": false,
+  "sourceDigest": "92f3125a9ddf74928ee4a815f40b5a9359220d20319c22d6fd27de65bab287a4",
+  "sourceFiles": 354,
+  "verificationScripts": [
+    "verify:all"
+  ],
+  "flakyTests": [
+    {
+      "file": "e1-evaluation-history-layout.spec.ts",
+      "title": "opens the selected student session and keeps the Valutazioni note editor usable",
+      "project": "pixel-7-chrome"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-10-10T00:10:37.685Z",
+      "durationMs": 2640295,
+      "exitCode": 0,
+      "outputTail": "    test-results\\e1-evaluation-history-layo-ee549-utazioni-note-editor-usable-pixel-7-chrome\\trace.zip\n    Usage:\n\n        npx playwright show-trace test-results\\e1-evaluation-history-layo-ee549-utazioni-note-editor-usable-pixel-7-chrome\\trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 flaky\n    [pixel-7-chrome] › tests\\e2e\\e1-evaluation-history-layout.spec.ts:258:1 › opens the selected student session and keeps the Valutazioni note editor usable \n  63 skipped\n  200 passed (41.0m)\nFLAKY: e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable [pixel-7-chrome]"
+    }
+  ]
+}

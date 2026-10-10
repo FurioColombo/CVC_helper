@@ -1,0 +1,92 @@
+{
+  "milestone": "H1",
+  "recordedAt": "2026-10-10T00:55:45.199Z",
+  "machine": "the owner's development PC: 8 logical CPUs, 7.8 GB RAM, Windows 11, Node 24.21.0",
+  "method": "Each figure names its run. 'Before' is the 0.3.0 harness, 'after' the H1 harness. Runs that overlapped other work on the machine are listed and excluded from the comparison.",
+  "unitTests": {
+    "before": {
+      "seconds": 287,
+      "tests": 1085,
+      "files": 58,
+      "run": "verify:quick's test step on the 8edc8a1 tree, 2026-10-08, one worker, jsdom for every file"
+    },
+    "steps": [
+      {
+        "seconds": 220,
+        "run": "node and jsdom projects, one worker (same 1085 tests)"
+      },
+      {
+        "seconds": [
+          99,
+          100,
+          100
+        ],
+        "run": "node and jsdom projects, four workers, three runs, no flake"
+      }
+    ],
+    "after": {
+      "seconds": 70.8,
+      "tests": 1114,
+      "files": 61,
+      "run": "the recorded verify:all of H1 (.evidence/H1/verification.json); 1085 tests as before plus 29 harness tests"
+    },
+    "change": "-75% (-65% to -75% across runs)",
+    "notes": "In the first recorded verify:all one CPU-bound eraser test timed out at 10.8 s against the 10 s default; its group has its own 30 s limit (self-review)."
+  },
+  "browserTests": {
+    "before": {
+      "minutes": 36.7,
+      "tests": 311,
+      "passed": 244,
+      "skipped": 67,
+      "run": "UG2's recorded verify:all on 04bdc51, 2026-10-08 05:00, idle machine, one worker; the same browser specs as 8edc8a1"
+    },
+    "after": {
+      "minutes": 41,
+      "tests": 264,
+      "passed": 200,
+      "skipped": 63,
+      "flaky": 1,
+      "run": "H1's recorded verify:all, 2026-10-10, one worker"
+    },
+    "twoWorkerTrial": [
+      {
+        "minutes": 41,
+        "passed": 200,
+        "flaky": 1,
+        "note": "overlapped the round-2 reviews"
+      },
+      {
+        "minutes": 39.5,
+        "passed": 197,
+        "flaky": 4,
+        "note": "partly overlapped the round-2 reviews"
+      },
+      {
+        "minutes": 39.2,
+        "passed": 201,
+        "flaky": 0
+      }
+    ],
+    "excluded": [
+      {
+        "minutes": 64.1,
+        "tests": 311,
+        "run": "old configuration re-run on 8edc8a1 in a separate worktree, 2026-10-09 21:34",
+        "why": "ran while files were edited and while two review sessions worked; one of them ran `vitest list` (code-quality round 1, notTested)"
+      }
+    ],
+    "change": "not reduced: 47 duplicate tests fewer (311 to 264), but the after run took 4.3 minutes longer than UG2's. Runs on this machine vary more between days than the 15% the removed tests are worth, so no saving is shown. Two workers were not faster and added five flaky tests, so the suite stays on one worker."
+  },
+  "verifyAll": {
+    "beforeSeconds": 2545,
+    "afterSeconds": 2640,
+    "note": "UG2 recorded run against H1 recorded run; the unit saving is outweighed by the browser run's variation"
+  },
+  "successPredicate": "Unit tests: met (-75% against 30%). Browser tests: not met on this measurement. Decision for the owner.",
+  "savingsOutsideThePredicate": [
+    "An ordinary milestone close runs `verify` and the milestone's focused specs (`verify:e2e:focus`) instead of `verify:all`: from about 40 minutes to a few minutes plus the affected specs (03 §6).",
+    "CI runs once per push (no pull_request duplicate), cancels superseded runs, and skips the browser suite for a documentation-only push whose previous push run passed; the code-quality reviewer's replay of the last 150 first-parent commits found 52 documentation-only.",
+    "`verify:quick` before each commit: about 378 s to 206 s."
+  ]
+}

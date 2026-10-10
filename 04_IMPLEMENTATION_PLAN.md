@@ -25,7 +25,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | --- | --- |
 | 0.3.0 | Released and tagged `v0.3.0` on 2026-10-08. Evidence in `.evidence/UG2/`; known limitations in `CHANGELOG.md`; review findings left for later in `docs/working/BACKLOG.md`. |
 | Harness prep | On branch `claude/harness-0.4-prep`: shared hooks, reviewer personas, skills, `docs/DOCS_SYSTEM.md`, `check:docs`. Merged as H1's first step. |
-| H1 | In progress: documents reset, faster tests; reviews round 1 answered. |
+| H1 | In progress. Recorded `verify:all` passed; reviews PASS_WITH_FINDINGS. Waiting for the owner: the retrospective's adoption and the browser-time target, missed (`.evidence/H1/test-timing.json`). |
 | D1–UG3 | Pending. |
 
 ## Execution order

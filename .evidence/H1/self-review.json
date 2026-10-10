@@ -325,6 +325,11 @@
       "id": "Hook, first real commit",
       "disposition": "the pre-commit hook refused the checkpoint twice and was right once: the code-quality report's invented example number (replaced by the fixtures' number, marked in the report) and, a false positive, the scope report's 9-digit seed; a bare JSON number is no longer read as a phone (test added), and the protocol gives reviewers the fixture numbers",
       "where": "scripts/privacy-rules.mjs (+ test), REVIEW_PROTOCOL.md"
+    },
+    {
+      "id": "First recorded verify:all (ac2af94)",
+      "disposition": "failed: one unit test, studentScanRules › leaves a dark border along the photo’s own edge alone, timed out at 10.8 s against the 10 s default while four workers shared the CPU (alone about 4 s; 7.7–8.8 s in the earlier 4-worker runs). Classified as a test-harness limit, not a product defect: the eraser cases do whole-sheet pixel work and assert nothing about time. Their describe block now has its own 30 s limit with the reason; the 10 s default and the four workers stay. Re-recorded afterwards.",
+      "where": "src/capabilities/studentScanRules.test.ts"
     }
   ]
 }

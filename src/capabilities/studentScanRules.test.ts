@@ -43,7 +43,11 @@ function ruledSheet() {
   return { width, height, ...page }
 }
 
-describe("eraseVerticalTableRules", () => {
+// Pixel work on whole synthetic sheets: about 4 s per case alone, 8-9 s when
+// the four unit-test workers share the CPU, and once 10.8 s, past the 10 s
+// default (H1). Their own limit leaves room for that load; nothing they assert
+// depends on time.
+describe("eraseVerticalTableRules", { timeout: 30_000 }, () => {
   it("repaints a long, slightly slanted rule with the paper beside it", () => {
     const page = ruledSheet()
     const result = eraseVerticalTableRules(page.pixels, page.width, page.height)
