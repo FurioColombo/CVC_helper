@@ -734,7 +734,7 @@
     {
       "id": "D1",
       "category": "FOUNDATION",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D1/verification.json",
@@ -746,7 +746,13 @@
         ".evidence/D1/self-review.json",
         ".evidence/D1/data-integrity-review.json"
       ],
-      "e2eSpecs": []
+      "e2eSpecs": [
+        "tests/e2e/persistence.spec.ts",
+        "tests/e2e/reopen-persistence.spec.ts",
+        "tests/e2e/u02-migration.spec.ts",
+        "tests/e2e/ug1-upgraded-week.spec.ts",
+        "tests/e2e/ug2-upgraded-week.spec.ts"
+      ]
     },
     {
       "id": "D2",

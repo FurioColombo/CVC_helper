@@ -48,7 +48,7 @@ findings join as an extra milestone only if the owner picks them (see the end).
 ## D1 — Record metadata and course ownership
 
 **Category:** FOUNDATION
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 1. A local `appMeta` table and an ordered, idempotent migration runner that
    records each step and runs before the first read. A migration interrupted
