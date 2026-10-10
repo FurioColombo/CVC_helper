@@ -1,0 +1,9 @@
+{
+  "milestone": "H1",
+  "status": "NOT_DELIVERED",
+  "ownerDecision": "2026-10-10: close H1 without the retrospective.",
+  "what": "The retrospective ran from docs/agents/RETROSPECTIVE_PROMPT.md in a separate session from 2026-10-09; it wrote metrics until 00:59 that day and never produced its report (docs/working/RETRO_0X.md).",
+  "partialData": "Its unfinished metrics stay outside the repository, in the ignored data/private/retro-0x/ of the claude/harness-0.4-prep worktree; nothing from them is adopted or committed.",
+  "next": "The prompt stays in docs/agents/RETROSPECTIVE_PROMPT.md for a later release gate.",
+  "adopted": []
+}

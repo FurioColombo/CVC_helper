@@ -331,5 +331,10 @@
       "disposition": "failed: one unit test, studentScanRules › leaves a dark border along the photo’s own edge alone, timed out at 10.8 s against the 10 s default while four workers shared the CPU (alone about 4 s; 7.7–8.8 s in the earlier 4-worker runs). Classified as a test-harness limit, not a product defect: the eraser cases do whole-sheet pixel work and assert nothing about time. Their describe block now has its own 30 s limit with the reason; the 10 s default and the four workers stay. Re-recorded afterwards.",
       "where": "src/capabilities/studentScanRules.test.ts"
     }
+  ],
+  "ownerDecisions": [
+    "2026-10-10: accept H1 with the browser-time target missed; a later milestone (T1) reorganises the browser suite.",
+    "2026-10-10: close H1 without the retrospective (retro-adoption.json).",
+    "2026-10-10: push codex/0.3.0."
   ]
 }

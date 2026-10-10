@@ -83,7 +83,7 @@
     "afterSeconds": 2640,
     "note": "UG2 recorded run against H1 recorded run; the unit saving is outweighed by the browser run's variation"
   },
-  "successPredicate": "Unit tests: met (-75% against 30%). Browser tests: not met on this measurement. Decision for the owner.",
+  "successPredicate": "Unit tests: met (-75% against 30%). Browser tests: not met on this measurement. The owner accepted H1 with the browser target missed on 2026-10-10 and asked for a later milestone to reorganise the browser suite (T1).",
   "savingsOutsideThePredicate": [
     "An ordinary milestone close runs `verify` and the milestone's focused specs (`verify:e2e:focus`) instead of `verify:all`: from about 40 minutes to a few minutes plus the affected specs (03 §6).",
     "CI runs once per push (no pull_request duplicate), cancels superseded runs, and skips the browser suite for a documentation-only push whose previous push run passed; the code-quality reviewer's replay of the last 150 first-parent commits found 52 documentation-only.",

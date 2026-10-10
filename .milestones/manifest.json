@@ -714,7 +714,7 @@
     {
       "id": "H1",
       "category": "FOUNDATION",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/H1/verification.json",
@@ -811,6 +811,22 @@
         ".evidence/D4/field-ux-review.json"
       ],
       "e2eSpecs": []
+    },
+    {
+      "id": "T1",
+      "category": "FOUNDATION",
+      "status": "PENDING",
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/T1/verification.json",
+        ".evidence/T1/test-timing.json",
+        ".evidence/T1/self-review.json",
+        ".evidence/T1/code-quality-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/T1/self-review.json",
+        ".evidence/T1/code-quality-review.json"
+      ]
     },
     {
       "id": "UG3",
