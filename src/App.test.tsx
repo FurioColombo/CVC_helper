@@ -11,7 +11,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("@/persistence/courses", () => ({
   eraseAllCourseData: vi.fn().mockResolvedValue(undefined),
   getActiveCourse: vi.fn(),
-  getDataAccess: vi.fn(async () => "write"),
   saveActiveCourse: vi.fn(),
 }))
 
@@ -69,7 +68,6 @@ import { App, ScreenErrorBoundary } from "@/App"
 import {
   eraseAllCourseData,
   getActiveCourse,
-  getDataAccess,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
@@ -521,25 +519,6 @@ describe("versions and updates", () => {
     window.history.replaceState(null, "", window.location.href)
     window.localStorage.clear()
     vi.mocked(getActiveCourse).mockReset().mockResolvedValue(ACTIVE_COURSE)
-    vi.mocked(getDataAccess).mockReset().mockResolvedValue("write")
-  })
-
-  it("says the course is read-only and offers the update when the data is newer", async () => {
-    vi.mocked(getDataAccess).mockResolvedValue("read-only")
-    render(<App />)
-
-    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
-    expect(
-      screen.getByRole("heading", { name: "Solo lettura: aggiorna l’app" }),
-    ).toBeVisible()
-    expect(screen.getByRole("button", { name: "Aggiorna l’app" })).toBeVisible()
-  })
-
-  it("shows no read-only notice when this version may write", async () => {
-    render(<App />)
-
-    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
-    expect(screen.queryByText(/Solo lettura/)).toBeNull()
   })
 
   it("reloads the app on Riprova after the archive failed to open", async () => {

@@ -51,7 +51,11 @@ export function Root() {
       <UpdatesProvider value={updates}>
         <App />
       </UpdatesProvider>
-      <UpdateAvailableBanner onUpdate={updates.apply} visible={needRefresh} />
+      <UpdateAvailableBanner
+        onCheck={updates.check}
+        onUpdate={updates.apply}
+        visible={needRefresh}
+      />
     </StrictMode>
   )
 }

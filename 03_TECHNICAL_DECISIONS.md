@@ -161,11 +161,18 @@ The contract is one tested domain function, `src/domain/compatibility.ts`; the
 server enforces the same rule from 0.5.0. The data records, in `meta`, the
 newest app version that wrote it and the oldest allowed to write it (the
 previous minor version of the writer; a major release declares its own);
-neither ever goes back. `prepareDatabase` reads that record before anything
-else: an app older than the minimum writer runs no repair or migration, and
-its database refuses every write (`src/persistence/writeGuard.ts`), so it
-reads the course and says `Aggiorna l'app`. The app's version comes from
-`package.json` at build time (`import.meta.env.VITE_APP_VERSION`). PowerSync's client keeps rows as JSON behind views, so an
+neither ever goes back, and every check reads it the same way, keeping what
+can be read of a damaged record. `prepareDatabase` reads it before anything
+else: an app older than the minimum writer runs no repair or migration, and its
+database refuses every write (`src/persistence/writeGuard.ts`), so it reads the
+course and asks to update. Otherwise the app first claims the data, re-reading
+the record inside that transaction so it never lowers a newer app's, and only
+then repairs and migrates, so an older app is refused from the claim on. The
+guard re-reads the record inside every write's own transaction, so a write in
+flight cannot land after a newer app's claim. The app's version comes from
+`package.json` at build time (`import.meta.env.VITE_APP_VERSION`); an override
+for a test build may change only the patch, because the record keeps the
+newest version for good. PowerSync's client keeps rows as JSON behind views, so an
 older app reads data with columns it does not know, but it does not write
 around them: an update through its views rewrites the row without the newer
 columns, and opening the database with its schema drops every local-only table
@@ -175,8 +182,17 @@ D1's course and metadata columns (a creation time the older app removed becomes
 the repair's); any other newer value the older app stripped stays lost, as a
 0.2.0 tab already clears a 0.3.0 declared age or crew capacity. A table that
 only newer versions declare must be rebuildable from data older versions keep,
-so the newer app keeps writing that data too until older writers are stopped.
-From 0.4.0 the contract keeps an older app from writing.
+so the newer app keeps writing that data too for as long as an older app can
+open the database: PowerSync applies an app's schema when it opens, before any
+record is read, so even a read-only older app drops such a table. From 0.4.0
+the contract keeps an older app from writing.
+
+Two consequences for 0.5.0. Making the course tables synced is not an
+expand-only change: an older app's local-only schema sees none of their rows,
+so the release that does it declares its own minimum writer, as a major
+release does, and an older app then shows an empty, read-only course. And the
+record is local to each device: the server needs the writing app's version
+with every upload to enforce the same rule.
 
 ### 3.2 Coherent writes
 

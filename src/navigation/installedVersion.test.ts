@@ -19,6 +19,14 @@ describe("noteInstalledVersion", () => {
     expect(noteInstalledVersion("0.4.1", device)).toBeNull()
   })
 
+  it("says nothing after a downgrade or over an unreadable stored version", () => {
+    const device = storage()
+    noteInstalledVersion("0.5.0", device)
+    expect(noteInstalledVersion("0.4.0", device)).toBeNull()
+    device.setItem("cvc-helper.installed-version", "nonsense")
+    expect(noteInstalledVersion("0.4.0", device)).toBeNull()
+  })
+
   it("says nothing when storage is unavailable or refuses", () => {
     expect(noteInstalledVersion("0.4.0", undefined)).toBeNull()
     expect(

@@ -24,6 +24,11 @@ function fakeDatabase(initialLedger: string[] = []) {
       const statements: string[] = []
       const pending: Array<[string, number]> = []
       const transaction = {
+        // No data-version record in this double: a claim finds none.
+        getAll: async (sql: string) => {
+          statements.push(sql)
+          return []
+        },
         getOptional: async (sql: string, params: unknown[]) => {
           statements.push(sql)
           return ledger.has(String(params[0])) ? { id: params[0] } : null
@@ -190,7 +195,7 @@ describe("prepareDatabase", () => {
     },
   ]
 
-  it("checks the data's version, repairs, migrates and records this version, once", async () => {
+  it("checks the data's version, claims it, repairs and migrates, once", async () => {
     const { database, order } = preparable(true)
 
     await expect(
@@ -198,14 +203,16 @@ describe("prepareDatabase", () => {
     ).resolves.toBe("write")
     await prepareDatabase(database as never, [step("first")], APP)
 
+    // The claim comes first, so an older app refuses its writes from then on
+    // (D3 review DI-3).
     expect(order).toEqual([
       "init",
       "version",
+      "record",
       "probe",
       "repairs",
       "items probe",
       "migration",
-      "record",
     ])
   })
 
@@ -255,10 +262,10 @@ describe("prepareDatabase", () => {
     expect(order).toEqual([
       "init",
       "version",
+      "record",
       "probe",
       "repairs",
       "items probe",
-      "record",
     ])
   })
 })

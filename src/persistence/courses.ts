@@ -12,16 +12,9 @@ export type CourseRecord = CourseDetails & {
 /**
  * The app's first read (App's load effect): it brings the data up to date
  * first, so nothing reads a row the repairs or a pending migration still have
- * to fill. A failed run fails this read, and the app's Riprova runs it again.
+ * to fill. A failed run fails this read, and the app's Riprova reloads the app
+ * to run it again.
  */
-/**
- * Whether this version may write the data or only read it (D3,
- * src/domain/compatibility.ts), known once the database is prepared.
- */
-export function getDataAccess() {
-  return prepareDatabase(db)
-}
-
 export async function getActiveCourse() {
   await prepareDatabase(db)
   return db.getOptional<CourseRecord>(

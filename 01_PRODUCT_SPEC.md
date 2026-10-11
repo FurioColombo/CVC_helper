@@ -75,16 +75,19 @@ that names the course and an explicit acknowledgement that the data cannot be
 recovered, then opens course creation. A failed erase changes nothing.
 
 The installed app looks for a new version whenever it comes back to the
-foreground and once an hour while it stays open. A new version is offered,
-never applied by itself: `Aggiorna` applies it once the current screen has
-saved or asked about unsaved work, and `Più tardi` hides the offer until the
-next start. The offer covers neither the crew page's floating bar nor the
-Allievi add button. Settings shows the installed version and `Cerca
-aggiornamenti`, and after an update Home says once which version is now
+foreground and once an hour while it stays open. A new version is offered in a
+bar above the bottom navigation, never applied by itself: `Aggiorna` applies it
+once the current screen has saved or asked about the work it holds (an edit, a
+note, a failed save, a scan review), and `Più tardi` hides the offer until the
+next start. As on phone Back, a half-filled form for a new student or
+volunteer is not kept. The bar covers no control: the floating ones (the crew
+page's quick-access rail and destination panels, the Allievi add button) rise
+above it. Settings shows the installed version and `Cerca aggiornamenti`, and
+after an update the app says once, on its first screen, which version is now
 installed. A version older than the one the course data requires
-(`03_TECHNICAL_DECISIONS.md` §3.1) opens the course read-only: everything can
-be consulted, nothing is saved, and a notice above every screen asks to update
-the app.
+(`03_TECHNICAL_DECISIONS.md` §3.1) opens the course read-only: everything can be
+consulted, nothing is saved, no screen holds the user waiting for a save, and
+the same bar stays to ask for the update and to look for it.
 
 A screen with work that cannot be left behind silently (an edit not yet
 saveable, a note being written, a failed save, an unsaved scan review) holds

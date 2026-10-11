@@ -1,9 +1,13 @@
 import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
 import {
+  compareVersions,
+  dataAccess,
   dataVersionAfterWrite,
   decodeVersion,
   encodeVersion,
+  minimumWriterOf,
+  type DataAccess,
   type DataVersion,
   type Version,
 } from "@/domain/compatibility"
@@ -16,25 +20,46 @@ import {
 const VERSION_ID = "data:version"
 const MINIMUM_WRITER_ID = "data:minimumWriter"
 
+type Reader = Pick<PowerSyncDatabase, "getAll">
+
+function decode(value: number | null | undefined): Version | null {
+  if (value == null) return null
+  try {
+    return decodeVersion(value)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The record, read the same way by every check (the open, the claim, the
+ * write guard). Only a record with neither part readable is no record: a
+ * readable part is kept and the other derived from it, never lowered
+ * (D3 review DI-Q1), so a damaged record cannot open the data to older apps.
+ */
 export async function readDataVersion(
-  context: Pick<PowerSyncDatabase, "getAll">,
+  context: Reader,
 ): Promise<DataVersion | null> {
   const rows = await context.getAll<{ id: string; value: number | null }>(
     "SELECT id, value FROM meta WHERE id IN (?, ?)",
     [VERSION_ID, MINIMUM_WRITER_ID],
   )
   const value = (id: string) => rows.find((row) => row.id === id)?.value
-  const version = value(VERSION_ID)
-  const minimumWriter = value(MINIMUM_WRITER_ID)
-  if (version == null || minimumWriter == null) return null
-  try {
+  const version = decode(value(VERSION_ID))
+  const minimumWriter = decode(value(MINIMUM_WRITER_ID))
+  if (!version && !minimumWriter) return null
+  if (version && minimumWriter) {
     return {
-      version: decodeVersion(version),
-      minimumWriter: decodeVersion(minimumWriter),
+      version:
+        compareVersions(version, minimumWriter) >= 0 ? version : minimumWriter,
+      minimumWriter,
     }
-  } catch {
-    // An unreadable record is rewritten by the next app that may write.
-    return null
+  }
+  if (minimumWriter) return { version: minimumWriter, minimumWriter }
+  return {
+    version: version!,
+    minimumWriter:
+      version!.minor > 0 ? minimumWriterOf(version!) : (version as Version),
   }
 }
 
@@ -51,12 +76,20 @@ export function dataVersionNeedsRecord(
   )
 }
 
-/** Records `app` as a writer of the data, in the caller's transaction. */
-export async function recordDataVersion(
-  transaction: Pick<Transaction, "execute">,
+/**
+ * Claims the data for `app` inside the caller's write transaction: the record
+ * is read again there, so a newer app's record committed meanwhile is never
+ * lowered (D3 review DI-2), and if that record now excludes `app` nothing is
+ * written. Runs before any repair or migration, so from its commit an older
+ * app refuses its writes (DI-3).
+ */
+export async function claimDataVersion(
+  transaction: Pick<Transaction, "execute" | "getAll">,
   app: Version,
-  stored: DataVersion | null,
-) {
+): Promise<DataAccess> {
+  const stored = await readDataVersion(transaction)
+  if (dataAccess(app, stored) === "read-only") return "read-only"
+  if (!dataVersionNeedsRecord(app, stored)) return "write"
   const next = dataVersionAfterWrite(app, stored)
   for (const [id, version] of [
     [VERSION_ID, next.version],
@@ -67,4 +100,5 @@ export async function recordDataVersion(
       [id, encodeVersion(version)],
     )
   }
+  return "write"
 }

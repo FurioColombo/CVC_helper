@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { applyUpdateWhenSafe } from "@/navigation/applyUpdate"
 import { useLeaveGuard } from "@/navigation/browserHistory"
+import { markReadOnly } from "@/persistence/writeGuard"
 
 /**
  * F1 review round 3, F1R3-7: the Aggiorna→requestLeave wiring in `main.tsx`
@@ -37,5 +38,18 @@ describe("applyUpdateWhenSafe", () => {
     applyUpdateWhenSafe(update)
 
     expect(update).toHaveBeenCalledOnce()
+  })
+
+  // D3 review RH-1: while the data is read-only nothing saves, so a guard that
+  // waits for a save would hold the user, and this update, for good.
+  it("is not held by a guard once the data is read-only", () => {
+    const update = vi.fn()
+    const { unmount } = renderHook(() => useLeaveGuard(() => true))
+
+    markReadOnly({} as never)
+    applyUpdateWhenSafe(update)
+
+    expect(update).toHaveBeenCalledOnce()
+    unmount()
   })
 })

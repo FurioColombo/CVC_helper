@@ -11,74 +11,110 @@ import {
 
 const APP = parseVersion("0.5.0")
 
-/** A database double whose data asks for `minimumWriter`, or nothing. */
+/**
+ * A database double. Its write transactions and locks hand a context whose
+ * `getAll` answers the `meta` record (`minimumWriter`, or none) and whose
+ * `execute` records what ran inside the lock.
+ */
 function database(minimumWriter: string | null = null) {
-  return {
-    execute: vi.fn<(...args: unknown[]) => Promise<string>>(
-      async () => "executed",
-    ),
-    executeBatch: vi.fn<(...args: unknown[]) => Promise<string>>(
-      async () => "batched",
-    ),
-    writeTransaction: vi.fn<(...args: unknown[]) => Promise<string>>(
-      async () => "written",
-    ),
-    writeLock: vi.fn<(...args: unknown[]) => Promise<string>>(
-      async () => "locked",
-    ),
-    getAll: vi.fn(async () => ["row"]),
-    getOptional: vi.fn(async () =>
+  const ranInside: string[] = []
+  const context = {
+    getAll: vi.fn(async () =>
       minimumWriter
-        ? { value: encodeVersion(parseVersion(minimumWriter)) }
-        : null,
+        ? [
+            {
+              id: "data:minimumWriter",
+              value: encodeVersion(parseVersion(minimumWriter)),
+            },
+          ]
+        : [],
     ),
+    execute: vi.fn(async (sql: string) => {
+      ranInside.push(sql)
+      return "executed"
+    }),
+    executeBatch: vi.fn(async (sql: string) => {
+      ranInside.push(sql)
+      return "batched"
+    }),
+  }
+  const withContext = async (callback: (tx: typeof context) => unknown) =>
+    callback(context)
+  return {
+    ranInside,
+    context,
+    raw: {
+      writeTransaction: vi.fn(withContext),
+      writeLock: vi.fn(withContext),
+      execute: vi.fn(async () => "outside the lock"),
+      executeBatch: vi.fn(async () => "outside the lock"),
+      executeRaw: vi.fn(async () => "raw"),
+      getAll: vi.fn(async () => ["row"]),
+    },
   }
 }
 
-type Fake = ReturnType<typeof database>
+type Methods = Record<string, (...args: unknown[]) => Promise<unknown>>
 
 describe("guardWrites", () => {
-  it("passes every write through while the data may be written", async () => {
-    const raw = database("0.4.0")
-    const write = raw.execute
-    const guarded = guardWrites(raw as never, APP) as unknown as Fake
+  it("runs every write inside a lock, after checking the record there", async () => {
+    const { raw, ranInside, context } = database("0.4.0")
+    const guarded = guardWrites(raw as never, APP) as unknown as Methods
 
-    await expect(guarded.execute("UPDATE x", [1])).resolves.toBe("executed")
-    expect(write).toHaveBeenCalledWith("UPDATE x", [1])
-    await expect(guarded.writeTransaction()).resolves.toBe("written")
+    await expect(guarded.execute!("UPDATE x", [1])).resolves.toBe("executed")
+    await expect(guarded.executeBatch!("INSERT y", [[1]])).resolves.toBe(
+      "batched",
+    )
+    await expect(
+      guarded.writeTransaction!(async () => "written"),
+    ).resolves.toBe("written")
+
+    expect(ranInside).toEqual(["UPDATE x", "INSERT y"])
+    // The record is read through the lock's own context, never beside it.
+    expect(context.getAll).toHaveBeenCalledTimes(3)
+    expect(raw.getAll).not.toHaveBeenCalled()
     expect(isReadOnly(guarded as never)).toBe(false)
   })
 
   it("refuses every write method, and only those, once the data is read-only", async () => {
-    const guarded = guardWrites(database() as never, APP)
+    const { raw } = database()
+    const guarded = guardWrites(raw as never, APP)
     markReadOnly(guarded)
-    const methods = guarded as unknown as Fake
+    const methods = guarded as unknown as Methods
 
-    for (const write of [
-      methods.execute,
-      methods.executeBatch,
-      methods.writeTransaction,
-      methods.writeLock,
+    for (const name of [
+      "execute",
+      "executeBatch",
+      "writeTransaction",
+      "writeLock",
+      "executeRaw",
     ]) {
-      await expect(write()).rejects.toBeInstanceOf(ReadOnlyDataError)
+      await expect(methods[name]!(async () => {})).rejects.toBeInstanceOf(
+        ReadOnlyDataError,
+      )
     }
-    await expect(methods.getAll()).resolves.toEqual(["row"])
+    await expect(methods.getAll!()).resolves.toEqual(["row"])
   })
 
-  // A newer app on the device raised the minimum writer while this one was
-  // open: its next write finds out, refuses, and the app is told.
+  // D3 review DI-1: a newer app raised the minimum writer while this one was
+  // open; its next write finds out inside its own lock, writes nothing, and
+  // the app is told.
   it("turns read-only at the first write after a newer app excluded this version", async () => {
-    const raw = database("0.6.0")
-    const write = raw.writeTransaction
-    const guarded = guardWrites(raw as never, APP) as unknown as Fake
+    const { raw, ranInside } = database("0.6.0")
+    const guarded = guardWrites(raw as never, APP) as unknown as Methods
     const told = vi.fn()
     const stop = onReadOnly(told)
+    const callback = vi.fn(async () => {})
 
-    await expect(guarded.writeTransaction()).rejects.toBeInstanceOf(
+    await expect(guarded.writeTransaction!(callback)).rejects.toBeInstanceOf(
+      ReadOnlyDataError,
+    )
+    await expect(guarded.execute!("UPDATE x")).rejects.toBeInstanceOf(
       ReadOnlyDataError,
     )
 
-    expect(write).not.toHaveBeenCalled()
+    expect(callback).not.toHaveBeenCalled()
+    expect(ranInside).toEqual([])
     expect(isReadOnly(guarded as never)).toBe(true)
     expect(told).toHaveBeenCalledOnce()
     stop()

@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest"
 
 import { encodeVersion, parseVersion } from "@/domain/compatibility"
 import {
+  claimDataVersion,
   dataVersionNeedsRecord,
   readDataVersion,
-  recordDataVersion,
 } from "@/persistence/dataVersion"
 
 function metaDatabase() {
@@ -16,8 +16,11 @@ function metaDatabase() {
   sqlite.exec(
     "INSERT INTO meta VALUES ('schema', 1), ('migration:example', 1760000000000)",
   )
+  const set = (id: string, value: number) =>
+    sqlite.prepare("INSERT OR REPLACE INTO meta VALUES (?, ?)").run(id, value)
   return {
     sqlite,
+    set,
     context: {
       getAll: async (sql: string, params: unknown[] = []) =>
         sqlite.prepare(sql).all(...(params as string[])),
@@ -27,44 +30,91 @@ function metaDatabase() {
   }
 }
 
+const v = parseVersion
+const encoded = (text: string) => encodeVersion(v(text))
+
 describe("the data's version in meta", () => {
   it("is nothing for data written before the contract", async () => {
     const { context } = metaDatabase()
     expect(await readDataVersion(context as never)).toBeNull()
   })
 
-  it("records a writer, reads it back, and keeps the other meta rows", async () => {
+  it("is claimed by a writer, read back, and leaves the other meta rows", async () => {
     const { context, sqlite } = metaDatabase()
-    const app = parseVersion("0.4.0")
 
-    expect(dataVersionNeedsRecord(app, null)).toBe(true)
-    await recordDataVersion(context as never, app, null)
+    expect(dataVersionNeedsRecord(v("0.4.0"), null)).toBe(true)
+    await expect(claimDataVersion(context as never, v("0.4.0"))).resolves.toBe(
+      "write",
+    )
     const stored = await readDataVersion(context as never)
 
-    expect(stored).toEqual({
-      version: parseVersion("0.4.0"),
-      minimumWriter: parseVersion("0.3.0"),
-    })
-    expect(dataVersionNeedsRecord(app, stored)).toBe(false)
-    expect(
-      sqlite.prepare("SELECT id FROM meta ORDER BY id").all(),
-    ).toHaveLength(4)
+    expect(stored).toEqual({ version: v("0.4.0"), minimumWriter: v("0.3.0") })
+    expect(dataVersionNeedsRecord(v("0.4.0"), stored)).toBe(false)
+    expect(sqlite.prepare("SELECT id FROM meta").all()).toHaveLength(4)
 
-    await recordDataVersion(context as never, parseVersion("0.5.1"), stored)
+    await claimDataVersion(context as never, v("0.5.1"))
     expect(await readDataVersion(context as never)).toEqual({
-      version: parseVersion("0.5.1"),
-      minimumWriter: parseVersion("0.4.0"),
+      version: v("0.5.1"),
+      minimumWriter: v("0.4.0"),
     })
   })
 
-  it("treats a half or unreadable record as no record, to be rewritten", async () => {
-    const { context, sqlite } = metaDatabase()
-    sqlite
-      .prepare("INSERT INTO meta VALUES ('data:version', ?)")
-      .run(encodeVersion(parseVersion("0.6.0")))
-    expect(await readDataVersion(context as never)).toBeNull()
+  // D3 review DI-2: the claim reads the record in its own transaction, so a
+  // newer app's record committed after an earlier read is never lowered.
+  it("never lowers a newer app's record, and claims nothing for an excluded app", async () => {
+    const { context, set } = metaDatabase()
+    set("data:version", encoded("0.6.0"))
+    set("data:minimumWriter", encoded("0.5.0"))
 
-    sqlite.exec("INSERT INTO meta VALUES ('data:minimumWriter', -5)")
+    await expect(claimDataVersion(context as never, v("0.5.0"))).resolves.toBe(
+      "write",
+    )
+    expect(await readDataVersion(context as never)).toEqual({
+      version: v("0.6.0"),
+      minimumWriter: v("0.5.0"),
+    })
+    await expect(claimDataVersion(context as never, v("0.4.0"))).resolves.toBe(
+      "read-only",
+    )
+    expect(await readDataVersion(context as never)).toEqual({
+      version: v("0.6.0"),
+      minimumWriter: v("0.5.0"),
+    })
+  })
+
+  // D3 review DI-Q1: a damaged record keeps what can be read and never opens
+  // the data to an app it excluded.
+  it.each([
+    ["only a minimum writer", null, encoded("9.8.0"), "9.8.0", "9.8.0"],
+    ["only a newest writer", encoded("0.6.0"), null, "0.6.0", "0.5.0"],
+    ["only a major release", encoded("1.0.0"), null, "1.0.0", "1.0.0"],
+    ["an unreadable minimum", encoded("9.9.0"), -5, "9.9.0", "9.8.0"],
+    ["an unreadable newest", 1.5, encoded("0.5.0"), "0.5.0", "0.5.0"],
+    [
+      "a minimum above the newest",
+      encoded("0.5.0"),
+      encoded("0.6.0"),
+      "0.6.0",
+      "0.6.0",
+    ],
+  ] as const)(
+    "reads %s conservatively",
+    async (_case, version, minimum, readVersion, readMinimum) => {
+      const { context, set } = metaDatabase()
+      if (version !== null) set("data:version", version)
+      if (minimum !== null) set("data:minimumWriter", minimum)
+
+      expect(await readDataVersion(context as never)).toEqual({
+        version: v(readVersion),
+        minimumWriter: v(readMinimum),
+      })
+    },
+  )
+
+  it("reads a record with neither part readable as no record", async () => {
+    const { context, set } = metaDatabase()
+    set("data:version", -1)
+    set("data:minimumWriter", 2.5)
     expect(await readDataVersion(context as never)).toBeNull()
   })
 })

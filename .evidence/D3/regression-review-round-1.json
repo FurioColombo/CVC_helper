@@ -1,0 +1,125 @@
+{
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "milestone": "D3",
+  "round": 1,
+  "commit": "0aa6699",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "RH-1",
+      "title": "In read-only mode, the student edit form traps the user: its own Back, the bottom navigation, phone Back and the update offer are all refused, and only killing the app gets out",
+      "evidence": "With D3 every write is refused (src/persistence/writeGuard.ts:81-85). The leave guard on an existing student (src/features/students/StudentManagement.tsx:749) always calls exitForm (729), which saves through persistEdit (638-661) even when nothing changed. persistEdit now always fails, so the form stays open. The error at 890-904 offers only Riprova (and Fine), which fails again, and no discard. The update goes through the same guard (src/main.tsx:43 -> src/navigation/applyUpdate.ts:13 requestLeave), so it is never applied. Browser output, the same on Chromium (Pixel 7) and WebKit (iPhone 13): afterOwnBack=true, afterNavHome=true, afterPhoneBack=true (still on 'Modifica allievo' after each), {\"updateApplied\":false,\"stillOnForm\":true}. The final page shows the alert 'Modifiche non salvate. Il testo resta qui.' with only Riprova.",
+      "reproduction": "Throwaway spec in test-results/r1-segugio (copy in my scratchpad's seg/), run with its own config on the dev server. 1) Seed the 0.3.0 fixture and markNewerData (as tests/e2e/d3-read-only.spec.ts does), then open '/'. 2) Allievi > 'Irene, 18 anni, F' > Modifica allievo. Change nothing. 3) Tap 'Indietro da Modifica allievo': expected Allievi, observed still on the form with the save-failed alert. 4) Tap Home in the bottom navigation: still on the form. 5) page.goBack(): still on the form. 6) Import /src/navigation/applyUpdate.ts and call applyUpdateWhenSafe(() => flag = true), the path the banner and Impostazioni use: the flag stays false. The same trap follows the D3 scenario where an open app becomes read-only at its first refused write, if that write is this form's autosave.",
+      "specRef": "01_PRODUCT_SPEC.md §2 (read-only: 'everything can be consulted, nothing is saved, and a notice above every screen asks to update the app'; 'Aggiorna applies it once the current screen has saved or asked about unsaved work'); 04_IMPLEMENTATION_PLAN.md D3 success predicate and checklist"
+    },
+    {
+      "id": "RH-2",
+      "title": "UG2-UX-3 is not fixed for the bar it names: the crew page's quick-access rail (A terra / Collocati / Volontari) still overlaps the update banner by 40 px and now hides the offer's text and the centre of Aggiorna and Più tardi",
+      "evidence": "UG2-UX-3 (.evidence/UG2/field-ux-review.json, finding UG2-UX-3) names the crew page's 'A terra', 'Volontari' and 'Collocati' rail as 'the crew page's floating bar'. D3 raised other elements instead: the 'Destinazione …' panels (CrewManagement.tsx:2871, 2986) and the Allievi + button. The rail (CrewManagement.tsx:3593, z-20, a flex item at the bottom of the h-[calc(100dvh-7rem)] column at 2639) paints above the fixed banner (UpdateAvailableBanner.tsx:75, z-10). Measured with N to N+1 builds on one origin, the update offered after a return to the foreground, on the crew page: at 390x844 the banner is at 704-769 and the rail at 686-744, and elementFromPoint at the banner text centre and at the Aggiorna centre returns the crew rail (Chromium and WebKit). It is the same at 412x915 (banner 775-840, rail 757-815). At 320x568 the rail covers the top of Aggiorna. Only the bottom ~15 px of the button still take a tap. check:update's 'crewFloatingBar' clearance in browser-evidence.json measures the destination panel, not the rail, so it reports the defect as fixed. The P01 amendment in docs/design/07_PAGE_CHANGELOG.md claims the Equipaggi floating bar 'sale sopra' the banner, which is false for this bar.",
+      "reproduction": "In my scratchpad's seg/, journey3.mjs (built on the head of scripts/check-update-journey.mjs): install N, create a course and a student, go to the background, switch the server to N+1, fast-forward 10 min, return to the foreground. The offer appears. Bottom navigation Equipaggi > Crea equipaggi, then probe elementFromPoint over the banner. Visually, at 390x844 the rail is drawn across the banner and only 'N…' and '…disponibile' and the buttons' lower edges show.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 item 2 ('The banner never covers a floating bar or the add button (UG2-UX-3)'); docs/design/06_DESIGN_RULEBOOK.md R12; docs/design/07_PAGE_CHANGELOG.md P01 D3 amendment"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "RH-3",
+      "title": "When a start or reload finds an update already waiting, the banner sits behind the bottom navigation and is invisible, yet it still publishes its height, so the floating controls rise for nothing",
+      "evidence": "UpdateAvailableBanner.tsx:53-67 measures the navigation only when `visible` changes or the window resizes. At start, needRefresh turns true while the LoadingScreen (no <nav>) is up, so navHeight=0, and nothing measures again once the navigation appears. Measured at 320x568 after a reload with the N+1 worker waiting, on Chromium and WebKit: banner style bottom '0px', banner 487-568, nav 493-568, elementFromPoint at the banner text = nav, --update-banner-height '81px'. The screenshot shows Home with no offer. D3 makes this path more common: Riprova now reloads (App.tsx:847), a reload never activates a waiting worker, and 'Più tardi' is specified to last until 'the next start'. Impostazioni's button still offers the update. The measuring code predates D3.",
+      "reproduction": "In my scratchpad's seg/, a journey2-style run: offer N+1 as in check:update, then page.reload() and wait 3 s. registration.waiting=true, and no banner is visible above the navigation.",
+      "specRef": "01_PRODUCT_SPEC.md §2 (a new version is offered); docs/design/06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "RH-4",
+      "title": "Aggiorna discards half-filled new-record forms without asking (new student, new volunteer), against the sentence D3 added to the spec and D3's success predicate",
+      "evidence": "Two-build journey at 390x844 on Chromium. On a new-student form (Nome, Cognome and Nota iniziale typed) and on a new-volunteer form ('Rita Prova' typed), tapping Aggiorna on the banner reloads at once: reloaded=true, dialogs=[], alerts=[]. After the reload the form reopens empty, and nothing is saved (savedInList=0). For the new-student form this is the N1-approved behaviour recorded in docs/working/BACKLOG.md ('Aggiorna and phone Back discard a half-filled new-student form, as N1 approved'). The volunteer form, and by the same code the other unguarded create forms, is not recorded there. useLeaveGuard is used only in StudentManagement (existing students), EvaluationManagement and StudentScan. D3's new sentence in 01 §2 ('Aggiorna applies it once the current screen has saved or asked about unsaved work') and its predicate ('without losing unsaved work') now promise more than the app does. check:update covers only the autosaving edit form.",
+      "reproduction": "My scratchpad's seg/journey4.mjs: install N, offer N+1, Allievi > Aggiungi allievo (or Volontari > Aggiungi volontario), type, tap 'Aggiorna CVC Helper alla nuova versione'.",
+      "specRef": "01_PRODUCT_SPEC.md §2; 04_IMPLEMENTATION_PLAN.md D3 success predicate"
+    },
+    {
+      "id": "RH-5",
+      "title": "While the banner is shown, it covers the last control of a page scrolled to the bottom (Impostazioni at 320 px)",
+      "evidence": "The shell keeps a fixed pb-28 (App.tsx:670) that does not include --update-banner-height. At 320x568 with the offer shown, 'Torna alla Home' at the bottom of Impostazioni ends at y=431 and the banner starts at y=412, so the lower half of the button is under the banner, as the screenshot shows. D3 lengthened Impostazioni (the Versione row and Cerca aggiornamenti), so it now scrolls at this size. D3 publishes the banner's height but uses it only for the two floating controls.",
+      "reproduction": "Two-build journey at 320x568: show the offer, open Impostazioni, scroll to the bottom, and compare the 'Torna alla Home' box with the banner's.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12 ('Ultima riga'); docs/design/07_PAGE_CHANGELOG.md P01 acceptance ('nessuna copertura dell'ultima riga')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "RH-Q1",
+      "title": "db.execute reads meta twice per write",
+      "evidence": "PowerSync's execute calls this.writeLock (node_modules/@powersync/shared-internals/lib/client/BasePowerSyncDatabase.js:389-390), and guardWrites wraps both on the instance. Measured readsPerExecute=2 and readsPerTransaction=1. The cost per write could not be told apart from noise (25-65 ms per write on the dev server, dominated by the commit).",
+      "reproduction": "test-results/r1-segugio guard-cost spec (pixel-7-chrome).",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1"
+    },
+    {
+      "id": "RH-Q2",
+      "title": "Misplaced and stale doc comment in courses.ts",
+      "evidence": "src/persistence/courses.ts:12-20: getActiveCourse's doc now sits above getDataAccess, as two stacked JSDoc blocks, and still says 'the app's Riprova runs it again', but Riprova now reloads.",
+      "reproduction": "Read the file.",
+      "specRef": "docs/DOCS_SYSTEM.md"
+    },
+    {
+      "id": "RH-Q3",
+      "title": "The 'aggiornata alla versione' note can never appear for the first update to 0.4.0, nor between deploys of the same version",
+      "evidence": "src/navigation/installedVersion.ts returns null when no previous version is stored, and 0.3.0 never stored one. package.json is still 0.3.0, so every build from this branch, including any Pages deploy the owner uses for the Android check, is labelled 0.3.0 before and after an update.",
+      "reproduction": "Read noteInstalledVersion; grep '\"version\"' package.json.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('after an update Home says once which version is now installed')"
+    },
+    {
+      "id": "RH-Q4",
+      "title": "After an erase and a new course in the same session, the update note shows again",
+      "evidence": "App keeps updatedFrom for the whole session (App.tsx:817), and a remounted AppShell sets updateNoteOpen from it again (App.tsx:555).",
+      "reproduction": "Code path: update, close the note, Impostazioni > erase > create a course: Home shows the note again.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('says once')"
+    },
+    {
+      "id": "RH-Q5",
+      "title": "On course creation the read-only notice sits outside the app column",
+      "evidence": "App.tsx:850-856: in the no-course branch the notice is outside the max-w-md container, so it spans the full width on a wide screen, and it pushes the min-h-screen creation form below the fold.",
+      "reproduction": "Read the code; not run in a browser.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P02"
+    },
+    {
+      "id": "RH-Q6",
+      "title": "A return within 30 s of the last check makes no check, so an offer can wait for the hourly timer",
+      "evidence": "src/navigation/updateChecks.ts check() skips when now - lastCheck < 30 s. If a deploy lands inside that window and the app is not sent to the background again, the next check is up to an hour later, beyond the predicate's one minute.",
+      "reproduction": "Unit-level reasoning from watchForUpdates; edge timing.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 success predicate"
+    },
+    {
+      "id": "RH-Q7",
+      "title": "'È pronta una nuova versione.' is shown as soon as a worker is merely installing",
+      "evidence": "checkForUpdate returns 'offered' when registration.installing is set. An install that then fails, for example when the connection drops during the precache, still told the user an update was ready.",
+      "reproduction": "Read src/navigation/updateChecks.ts.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P02 D3 amendment"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff --stat d033bbf..0aa6699 and the diffs of src/main.tsx, src/App.tsx, src/components/UpdateAvailableBanner.tsx, ReadOnlyNotice.tsx, UpdateCheckButton.tsx, src/persistence/{db,writeGuard,dataVersion,migrations,courses}.ts, src/domain/compatibility.ts, src/navigation/{updateChecks,updates,installedVersion,applyUpdate}.ts(x), CrewManagement.tsx, StudentManagement.tsx, vite.config.ts, vitest.config.ts, package.json, playwright.config.ts, .milestones/manifest.json",
+    "04_IMPLEMENTATION_PLAN.md D3; 01_PRODUCT_SPEC.md §2; 03_TECHNICAL_DECISIONS.md §3.1; docs/design/07_PAGE_CHANGELOG.md P01/P02 amendments; rulebook R12; .evidence/UG2/field-ux-review.json UG2-UX-3; .evidence/F1 review rounds 3-4 (F1R3-8); docs/working/BACKLOG.md",
+    "Consumers of db (boats, courses, crews, duties, evaluations, students, volunteers, u02DeletionHarness); PowerSync internals for guard bypass (executeRaw, this.database.*: none used by the app)",
+    "Unit tests: 10 D3-related files, 96/96 passed",
+    "tests/e2e/d3-read-only.spec.ts on pixel-7-chrome and iphone-13-webkit-core: 4/4 passed, code=0",
+    "D3 focus specs (c1, d1, d2, f1, n1, persistence, reopen-persistence, smoke, u01, u02) on pixel-7-chrome: 29 expected, 0 unexpected, 0 flaky",
+    "npm run check:update: PASS code=0, chromium 0.21 s and webkit 0.31 s from the return to the offer",
+    "Throwaway probes: read-only trap spec (Chromium and WebKit), guard cost spec, two-build banner geometry at 320x568 / 390x844 / 412x915 on Chromium and WebKit, new-record forms under Aggiorna",
+    ".github/workflows/ci.yml (installs chromium and webkit, runs verify:all, which now includes check:update) and deploy-pages.yml"
+  ],
+  "anglesTried": {
+    "seed": 871830697,
+    "lenses": [
+      "2. A shared component reused on another screen at 320 px (banner, read-only notice, floating controls, Impostazioni)",
+      "11. WebKit-only behaviour (read-only, update journey, banner geometry and trap reproduced on WebKit)"
+    ],
+    "wildcard": "A write refused by the read-only guard looks like a failed save to F1's leave guards: does read-only mode trap the user and block the very update it asks for?"
+  },
+  "notTested": [
+    "Installed PWA on a real Android phone and in standalone iOS Safari (the owner's devices); Playwright WebKit on Windows is not iOS",
+    "env(safe-area-inset-bottom): cannot be emulated here, so how the crew panel and banner clear a home-indicator inset was not measured",
+    "The full verify:all and the full e2e suite: an 8 GB machine with another reviewer's browser runs in parallel",
+    "Two real tabs on different builds sharing one database (PowerSync multi-tab is disabled); only the in-page second instance of the D3 spec",
+    "The hourly timer over a real long session, and a check that goes offline half-way through an install",
+    "Write performance on a phone; dev-server numbers were too noisy to attribute cost to the guard"
+  ]
+}

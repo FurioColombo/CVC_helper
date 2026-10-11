@@ -55,9 +55,12 @@
      focus. Reserving the bar's height as scroll margin is what stops it.
 
      The value tracks the bar: `pt-2` + `min-h-14` + its bottom padding, plus
-     the safe area, so it scales with the text like the bar does. */
+     the safe area, so it scales with the text like the bar does, plus the
+     update bar above it while that is shown (D3 review FU-Q5). */
   :where(a[href], button, input, select, textarea, summary, [tabindex]) {
-    scroll-margin-bottom: calc(5rem + env(safe-area-inset-bottom));
+    scroll-margin-bottom: calc(
+      5rem + env(safe-area-inset-bottom) + var(--update-banner-height, 0px)
+    );
   }
 }
 

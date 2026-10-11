@@ -61,6 +61,7 @@ import {
   type StudentEditInput,
   type StudentRecord,
 } from "@/persistence/students"
+import { dataIsReadOnly } from "@/persistence/writeGuard"
 
 /** A field of the edit form that the profile can open focused. */
 type StudentField =
@@ -733,6 +734,13 @@ function StudentForm({
     }
     if (!student) {
       onCancel()
+      return
+    }
+    // Read-only data (D3): nothing can be saved, so the form lets go rather
+    // than wait for a save that will never succeed (D3 reviews RH-1, FU-2).
+    if (dataIsReadOnly()) {
+      if (leave) leave()
+      else onSaved()
       return
     }
     const firstMissing = missingFields[0]

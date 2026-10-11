@@ -2636,7 +2636,7 @@ export function CrewManagement({
         // A bounded column, so the workspace scrolls inside it and the quick
         // access rail stays above the bottom navigation (P14). On a screen too
         // short for the header and a usable workspace the page scrolls instead.
-        <div className="flex h-[calc(100dvh-7rem)] min-h-[28rem] flex-col">
+        <div className="flex h-[calc(100dvh-7rem-var(--update-banner-height,0px))] min-h-[28rem] flex-col">
           {header}
           <SessionChoice
             disabled={

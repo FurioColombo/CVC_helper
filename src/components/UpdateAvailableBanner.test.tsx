@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner"
+import type { UpdateCheck } from "@/navigation/updateChecks"
+import { markReadOnly } from "@/persistence/writeGuard"
 
 describe("UpdateAvailableBanner", () => {
   it("renders nothing when no update is waiting", () => {
@@ -31,28 +33,14 @@ describe("UpdateAvailableBanner", () => {
     expect(onUpdate).toHaveBeenCalledOnce()
   })
 
-  it("sits just above the live bottom navigation instead of covering it", () => {
-    // Another navigation earlier on the page (the crew quick-access rail)
-    // must not be mistaken for the bottom navigation.
-    const rail = document.createElement("nav")
-    rail.setAttribute("aria-label", "Accesso rapido equipaggi")
-    document.body.appendChild(rail)
-    vi.spyOn(rail, "getBoundingClientRect").mockReturnValue({
-      height: 400,
-    } as DOMRect)
-    const nav = document.createElement("nav")
-    nav.setAttribute("aria-label", "Navigazione principale")
-    document.body.appendChild(nav)
-    vi.spyOn(nav, "getBoundingClientRect").mockReturnValue({
-      height: 72,
-    } as DOMRect)
-
+  // D3 review RH-3: the navigation publishes its height, so the bar sits on
+  // it even when the offer was ready before the navigation was drawn.
+  it("sits on the height the bottom navigation publishes, or on the edge without one", () => {
     render(<UpdateAvailableBanner onUpdate={vi.fn()} visible />)
 
-    expect(screen.getByRole("status")).toHaveStyle({ bottom: "72px" })
-
-    document.body.removeChild(nav)
-    document.body.removeChild(rail)
+    expect(screen.getByRole("status").style.bottom).toBe(
+      "var(--bottom-nav-height, 0px)",
+    )
   })
 
   it("can be put off until later without applying the update", async () => {
@@ -64,12 +52,6 @@ describe("UpdateAvailableBanner", () => {
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument()
     expect(onUpdate).not.toHaveBeenCalled()
-  })
-
-  it("falls back to the viewport edge when no navigation is on screen", () => {
-    render(<UpdateAvailableBanner onUpdate={vi.fn()} visible />)
-
-    expect(screen.getByRole("status")).toHaveStyle({ bottom: "0px" })
   })
 
   // UG2-UX-3: the floating controls above the navigation rise by this height.
@@ -86,5 +68,54 @@ describe("UpdateAvailableBanner", () => {
     await user.click(screen.getByRole("button", { name: "Più tardi" }))
     expect(root.style.getPropertyValue("--update-banner-height")).toBe("")
     height.mockRestore()
+  })
+
+  // D3: the data is newer than this version may write.
+  describe("when the data is read-only", () => {
+    it("stays, cannot be put off, and searches for the update on request", async () => {
+      markReadOnly({} as never)
+      const onCheck = vi.fn<() => Promise<UpdateCheck>>(async () => "none")
+      const user = userEvent.setup()
+      render(
+        <UpdateAvailableBanner
+          onCheck={onCheck}
+          onUpdate={vi.fn()}
+          visible={false}
+        />,
+      )
+
+      const banner = screen.getByRole("status")
+      expect(banner).toHaveTextContent(
+        "Solo lettura: aggiorna l’app per salvare le modifiche.",
+      )
+      expect(
+        screen.queryByRole("button", { name: "Più tardi" }),
+      ).not.toBeInTheDocument()
+
+      await user.click(
+        screen.getByRole("button", { name: "Cerca aggiornamento" }),
+      )
+      expect(onCheck).toHaveBeenCalledOnce()
+      expect(
+        await screen.findByText(
+          "Nessuna versione più recente disponibile ora.",
+        ),
+      ).toBeVisible()
+    })
+
+    it("applies a version that is ready", async () => {
+      markReadOnly({} as never)
+      const onUpdate = vi.fn()
+      const user = userEvent.setup()
+      render(<UpdateAvailableBanner onUpdate={onUpdate} visible />)
+
+      expect(screen.getByRole("status")).toHaveTextContent("Solo lettura")
+      await user.click(
+        screen.getByRole("button", {
+          name: "Aggiorna CVC Helper alla nuova versione",
+        }),
+      )
+      expect(onUpdate).toHaveBeenCalledOnce()
+    })
   })
 })

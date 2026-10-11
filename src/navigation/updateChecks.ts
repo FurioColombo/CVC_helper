@@ -10,7 +10,13 @@ export const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000
 /** Several quick returns to the app make one check, not several. */
 export const UPDATE_CHECK_MIN_GAP_MS = 30 * 1000
 
-export type UpdateCheck = "offered" | "none" | "offline" | "failed"
+/**
+ * `offered`: a new version is installed and waiting, ready to apply;
+ * `downloading`: one is still installing, and may yet fail (a dropped
+ * connection), so it is not called ready (D3 review RH-Q7).
+ */
+export type UpdateCheck =
+  "offered" | "downloading" | "none" | "offline" | "failed"
 
 type Registration = Pick<
   ServiceWorkerRegistration,
@@ -29,7 +35,8 @@ export async function checkForUpdate(
   } catch {
     return online() ? "failed" : "offline"
   }
-  return registration.installing || registration.waiting ? "offered" : "none"
+  if (registration.waiting) return "offered"
+  return registration.installing ? "downloading" : "none"
 }
 
 /** Checks on every return to the foreground and periodically; returns a stop. */
@@ -53,10 +60,19 @@ export function watchForUpdates(
   } = {},
 ) {
   let lastCheck = now()
-  const check = () => {
-    if (now() - lastCheck < minGapMs) return
+  let deferred: ReturnType<typeof setTimeout> | undefined
+  const run = () => {
+    deferred = undefined
     lastCheck = now()
     void checkForUpdate(registration, online)
+  }
+  // A return within the gap is not dropped but checked when the gap ends, so
+  // a deploy that landed just after a check still shows within the minute
+  // (D3 review RH-Q6).
+  const check = () => {
+    const wait = minGapMs - (now() - lastCheck)
+    if (wait <= 0) run()
+    else deferred ??= setTimeout(run, wait)
   }
   const onVisibility = () => {
     if (page.visibilityState === "visible") check()
@@ -66,5 +82,6 @@ export function watchForUpdates(
   return () => {
     page.removeEventListener("visibilitychange", onVisibility)
     clearInterval(timer)
+    clearTimeout(deferred)
   }
 }

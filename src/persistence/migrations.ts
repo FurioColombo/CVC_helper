@@ -7,18 +7,17 @@ import {
   type Version,
 } from "@/domain/compatibility"
 import {
+  claimDataVersion,
   dataVersionNeedsRecord,
   readDataVersion,
-  recordDataVersion,
 } from "@/persistence/dataVersion"
-
 import {
   dutySettingItemsNeedRepair,
   needsRepair,
   repairDutySettingItems,
   repairRows,
 } from "@/persistence/repairs"
-import { markReadOnly } from "@/persistence/writeGuard"
+import { markReadOnly, ReadOnlyDataError } from "@/persistence/writeGuard"
 
 /**
  * Bringing stored data up to date before the app reads it (D1, 03 §3). Schema
@@ -87,10 +86,11 @@ const prepared = new WeakMap<PowerSyncDatabase, Promise<DataAccess>>()
  * anything: `getActiveCourse`, the app's first read, waits for it. The
  * compatibility contract (D3, src/domain/compatibility.ts) comes first: an
  * app older than the data's minimum writer runs no repair or migration, which
- * all write, and leaves the database read-only. Otherwise the repairs come
- * next, so a migration reads rows of this version's shape, and the data then
- * records this version as a writer. One run per database, however often it
- * is asked.
+ * all write, and leaves the database read-only. Otherwise it claims the data
+ * for this version before writing anything else, re-reading the record in that
+ * transaction (D3 review DI-2, DI-3), so from then on an older app refuses its
+ * writes; then the repairs, so a migration reads rows of this version's shape,
+ * and the migrations. One run per database, however often it is asked.
  */
 export function prepareDatabase(
   database: PowerSyncDatabase,
@@ -106,21 +106,32 @@ export function prepareDatabase(
         markReadOnly(database)
         return "read-only"
       }
-      if (await needsRepair(database)) {
-        await database.writeTransaction((transaction) =>
-          repairRows(transaction, new Date().toISOString()),
-        )
-      }
-      if (await dutySettingItemsNeedRepair(database)) {
-        await database.writeTransaction((transaction) =>
-          repairDutySettingItems(transaction, new Date().toISOString()),
-        )
-      }
-      await runMigrations(database, migrations)
-      if (dataVersionNeedsRecord(app, stored)) {
-        await database.writeTransaction((transaction) =>
-          recordDataVersion(transaction, app, stored),
-        )
+      try {
+        if (dataVersionNeedsRecord(app, stored)) {
+          const claimed = await database.writeTransaction((transaction) =>
+            claimDataVersion(transaction, app),
+          )
+          if (claimed === "read-only") {
+            markReadOnly(database)
+            return "read-only"
+          }
+        }
+        if (await needsRepair(database)) {
+          await database.writeTransaction((transaction) =>
+            repairRows(transaction, new Date().toISOString()),
+          )
+        }
+        if (await dutySettingItemsNeedRepair(database)) {
+          await database.writeTransaction((transaction) =>
+            repairDutySettingItems(transaction, new Date().toISOString()),
+          )
+        }
+        await runMigrations(database, migrations)
+      } catch (error) {
+        // A newer app raised the record meanwhile; the guard marked the
+        // database read-only (src/persistence/writeGuard.ts).
+        if (error instanceof ReadOnlyDataError) return "read-only"
+        throw error
       }
       return "write"
     })()

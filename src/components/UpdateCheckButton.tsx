@@ -6,6 +6,8 @@ import { useUpdates } from "@/navigation/updates"
 
 const RESULT: Record<UpdateCheck, string> = {
   offered: "È pronta una nuova versione.",
+  downloading:
+    "Download della nuova versione in corso: tra poco potrai aggiornare.",
   none: "Questa è l’ultima versione.",
   offline: "Sei offline: cerca di nuovo quando c’è rete.",
   failed: "Non riesco a cercare ora. Riprova più tardi.",

@@ -111,13 +111,23 @@ function brandPrecachedManifestEntries() {
 // the data's (src/appVersion.ts, src/domain/compatibility.ts). The update
 // journey (scripts/check-update-journey.mjs) builds two versions of the same
 // source with CVC_APP_VERSION; every other build takes package.json's.
-const appVersion =
-  process.env.CVC_APP_VERSION ??
-  (
-    JSON.parse(
-      readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
-    ) as { version: string }
-  ).version
+const packageVersion = (
+  JSON.parse(
+    readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
+  ) as { version: string }
+).version
+const appVersion = process.env.CVC_APP_VERSION ?? packageVersion
+// The data records the newest version that wrote it, for good: a build that
+// claimed a later minor version would leave real data read-only for the real
+// release, so an override may change only the patch (D3 review DI-Q4).
+if (
+  appVersion.split(".").slice(0, 2).join(".") !==
+  packageVersion.split(".").slice(0, 2).join(".")
+) {
+  throw new Error(
+    `CVC_APP_VERSION ${appVersion} must keep package.json's ${packageVersion} major.minor`,
+  )
+}
 
 export default defineConfig({
   base,

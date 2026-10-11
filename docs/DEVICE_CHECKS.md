@@ -82,7 +82,10 @@ area** to the review, and PASS or FAIL.
 
 From 0.4.0 (D3). The check needs two deployments of the same commit's line to
 one HTTPS address: version N installed first, then N+1 published while N is
-open (`docs/DEPLOY.md`).
+open (`docs/DEPLOY.md`). N+1 differs from N in the patch only (as
+`npm run check:update` does): the data keeps the newest version that opened it
+for good, so a later minor version would leave the phone's course read-only
+for the real release.
 
 1. Install N on the home screen. **Impostazioni** shows its **Versione**.
 2. With the app open on Home, publish N+1. Switch to another app or lock the

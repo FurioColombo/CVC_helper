@@ -15,6 +15,7 @@ import {
 import {
   Component,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -22,7 +23,6 @@ import {
 } from "react"
 
 import { APP_VERSION_TEXT } from "@/appVersion"
-import { ReadOnlyNotice } from "@/components/ReadOnlyNotice"
 import { Button } from "@/components/ui/button"
 import { UpdateCheckButton } from "@/components/UpdateCheckButton"
 import { CourseIdentity } from "@/components/CourseIdentity"
@@ -34,7 +34,6 @@ import {
   requestLeave,
 } from "@/navigation/browserHistory"
 import { noteInstalledVersion } from "@/navigation/installedVersion"
-import { onReadOnly } from "@/persistence/writeGuard"
 import { NESTED_SCREEN_KEY_PREFIX } from "@/navigation/nestedScreen"
 import {
   COURSE_FAMILIES,
@@ -61,7 +60,6 @@ import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
   getActiveCourse,
-  getDataAccess,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
@@ -544,15 +542,38 @@ function UpdatedNote({ onClose }: { onClose: () => void }) {
 function AppShell({
   course,
   onCourseErased,
-  readOnly,
-  updatedFrom,
+  updateNote,
+  onCloseUpdateNote,
 }: {
   course: CourseRecord
   onCourseErased: () => void
-  readOnly: boolean
-  updatedFrom: string | null
+  updateNote: boolean
+  onCloseUpdateNote: () => void
 }) {
-  const [updateNoteOpen, setUpdateNoteOpen] = useState(updatedFrom !== null)
+  const navigation = useRef<HTMLElement>(null)
+
+  // The update bar sits on the navigation (UpdateAvailableBanner), which
+  // publishes its height for it, whatever renders first.
+  useLayoutEffect(() => {
+    const element = navigation.current
+    if (!element) return
+    const root = document.documentElement
+    const publish = () =>
+      root.style.setProperty(
+        "--bottom-nav-height",
+        `${element.getBoundingClientRect().height}px`,
+      )
+    publish()
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish)
+    observer?.observe(element)
+    window.addEventListener("resize", publish)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener("resize", publish)
+      root.style.removeProperty("--bottom-nav-height")
+    }
+  }, [])
   const [initialHistoryEntry] = useState(() =>
     readCourseHistoryEntry(window.history.state, course.id),
   )
@@ -667,7 +688,7 @@ function AppShell({
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-md pb-28">
+    <div className="mx-auto min-h-screen w-full max-w-md pb-[calc(7rem+var(--update-banner-height,0px))]">
       {view === "home" && (
         <header className="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
           <Brand compact />
@@ -682,10 +703,7 @@ function AppShell({
         </header>
       )}
 
-      {readOnly && <ReadOnlyNotice />}
-      {view === "home" && updateNoteOpen && (
-        <UpdatedNote onClose={() => setUpdateNoteOpen(false)} />
-      )}
+      {updateNote && <UpdatedNote onClose={onCloseUpdateNote} />}
 
       <main
         className="px-5 py-3 outline-none max-[350px]:px-[12px]"
@@ -774,6 +792,7 @@ function AppShell({
 
       <nav
         aria-label="Navigazione principale"
+        ref={navigation}
         className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md border-t bg-card/95 px-4 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_35px_rgb(6_59_82/0.1)] backdrop-blur max-[350px]:px-[8px]"
       >
         <div className="grid grid-cols-3 gap-2">
@@ -812,20 +831,17 @@ function AppShell({
 
 export function App() {
   const [appState, setAppState] = useState<AppState>({ status: "loading" })
-  const [readOnly, setReadOnly] = useState(false)
-  // Read once per start: a new version since the last start is an update.
-  const [updatedFrom] = useState(() => noteInstalledVersion(APP_VERSION_TEXT))
-
-  // A newer app on the device may make the data read-only while this one is
-  // open; its first refused write says so (src/persistence/writeGuard.ts).
-  useEffect(() => onReadOnly(() => setReadOnly(true)), [])
+  // Read once per start: a new version since the last start is an update,
+  // said once, whatever screen opens and whatever course follows.
+  const [updateNote, setUpdateNote] = useState(
+    () => noteInstalledVersion(APP_VERSION_TEXT) !== null,
+  )
 
   useEffect(() => {
     let active = true
-    Promise.all([getActiveCourse(), getDataAccess()])
-      .then(([course, access]) => {
+    getActiveCourse()
+      .then((course) => {
         if (!active) return
-        setReadOnly(access === "read-only")
         setAppState(
           course ? { status: "ready", course } : { status: "no-course" },
         )
@@ -848,20 +864,17 @@ export function App() {
   }
   if (appState.status === "no-course") {
     return (
-      <>
-        {readOnly && <ReadOnlyNotice />}
-        <CourseCreation
-          onCreated={(course) => setAppState({ status: "ready", course })}
-        />
-      </>
+      <CourseCreation
+        onCreated={(course) => setAppState({ status: "ready", course })}
+      />
     )
   }
   return (
     <ScreenErrorBoundary>
       <AppShell
         course={appState.course}
-        readOnly={readOnly}
-        updatedFrom={updatedFrom}
+        onCloseUpdateNote={() => setUpdateNote(false)}
+        updateNote={updateNote}
         onCourseErased={() => {
           // The next course starts from Home, not from the erased course's
           // screens that the browser history still remembers.

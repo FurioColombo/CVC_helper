@@ -21,7 +21,7 @@ function registration(found: "installing" | "waiting" | null = null) {
 
 describe("checkForUpdate", () => {
   it.each([
-    ["installing", "offered"],
+    ["installing", "downloading"],
     ["waiting", "offered"],
     [null, "none"],
   ] as const)("reports a version %s as %s", async (found, result) => {
@@ -84,11 +84,16 @@ describe("watchForUpdates", () => {
 
     clock = UPDATE_CHECK_MIN_GAP_MS
     page.show()
-    page.show()
     expect(target.update).toHaveBeenCalledTimes(1)
 
-    clock += UPDATE_CHECK_MIN_GAP_MS
+    // Quick returns within the gap make one check, when the gap ends: not
+    // several, and not none.
     page.show()
+    clock += UPDATE_CHECK_MIN_GAP_MS / 2
+    page.show()
+    expect(target.update).toHaveBeenCalledTimes(1)
+    clock += UPDATE_CHECK_MIN_GAP_MS / 2
+    vi.advanceTimersByTime(UPDATE_CHECK_MIN_GAP_MS)
     expect(target.update).toHaveBeenCalledTimes(2)
   })
 
@@ -108,10 +113,13 @@ describe("watchForUpdates", () => {
     expect(page.listeners.size).toBe(0)
   })
 
-  it("leaves the start's own check alone: no second check at once", () => {
+  it("leaves the start's own check alone: the next one waits for the gap", () => {
     const target = registration()
     watch(target)
     page.show()
     expect(target.update).not.toHaveBeenCalled()
+    clock = UPDATE_CHECK_MIN_GAP_MS
+    vi.advanceTimersByTime(UPDATE_CHECK_MIN_GAP_MS)
+    expect(target.update).toHaveBeenCalledOnce()
   })
 })

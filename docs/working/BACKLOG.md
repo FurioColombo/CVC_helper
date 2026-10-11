@@ -65,9 +65,12 @@ Other UG2 findings, not yet put to the owner:
   pasted answer is lost on Back (UG2-UX-8);
 - a double tap on an in-app Back or close button leaves the area
   (UG2-REG-3);
-- `Aggiorna` and phone Back discard a half-filled new-student form, as N1
-  approved, and an assistant answer pasted but not yet read: guard them only if
-  the owner prefers;
+- `Aggiorna` and phone Back discard a half-filled new-student or new-volunteer
+  form, as N1 approved, and an assistant answer pasted but not yet read: guard
+  them only if the owner prefers (D3 review RH-4 found the volunteer form);
+- after an update the crew page reopens on Sabato PM at the top, not on the
+  session that was open, and a mistaken `Più tardi` leaves the update three
+  taps away in Impostazioni (D3 review FU-Q3, FU-Q6);
 - sex inferred wrongly for some foreign first names (UG2-FUN-5), no warning
   for a missing size (UG2-FUN-10), warning severity by dot colour only in the
   detail (UG2-FUN-11), the C chip hidden while selected (UG2-FUN-12), the

@@ -247,6 +247,36 @@ async function clearanceAboveBanner(page, name, control) {
 }
 
 /**
+ * Whether a tap on the centre of each of the offer's buttons reaches that
+ * button, and not a control drawn over it (D3 reviews RH-2, RH-3, FU-1).
+ */
+async function offerButtonsTappable(page, name) {
+  const banner = page
+    .getByRole("status")
+    .filter({ hasText: "Nuova versione disponibile" })
+  const results = await banner.getByRole("button").evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect()
+      const hit = globalThis.document.elementFromPoint(
+        box.x + box.width / 2,
+        box.y + box.height / 2,
+      )
+      return {
+        button: button.textContent.trim(),
+        reached: Boolean(hit && button.contains(hit)),
+      }
+    }),
+  )
+  const covered = results.filter(({ reached }) => !reached)
+  if (results.length === 0 || covered.length > 0) {
+    throw new Error(
+      `${name}: the offer's buttons are covered: ${JSON.stringify(results)}`,
+    )
+  }
+  return results.map(({ button }) => button)
+}
+
+/**
  * Moves the page between foreground and background the way the browser does:
  * the state the app reads, then the event it listens to.
  */
@@ -386,6 +416,18 @@ async function runJourney(engine, browserType, server, screenshots) {
       .getByRole("button", { name: "Equipaggi" })
       .click()
     await page.getByRole("button", { name: "Crea equipaggi" }).click()
+    // The quick-access rail (A terra, Collocati, Volontari), the bar UG2-UX-3
+    // named, and the offer's buttons tapped over it.
+    const crewRail = page.getByRole("navigation", {
+      name: "Accesso rapido equipaggi",
+    })
+    await crewRail.waitFor()
+    const crewRailClearance = await clearanceAboveBanner(
+      page,
+      "The crew page's quick-access rail",
+      crewRail,
+    )
+    await offerButtonsTappable(page, "Crew page")
     await page
       .getByRole("region", { name: "Allievi disponibili" })
       .getByRole("button", { name: "Mario", exact: true })
@@ -396,7 +438,7 @@ async function runJourney(engine, browserType, server, screenshots) {
     await crewBar.waitFor()
     const crewBarClearance = await clearanceAboveBanner(
       page,
-      "The crew page's floating bar",
+      "The crew page's destination panel",
       crewBar,
     )
     // Allievi list: the round add button.
@@ -409,6 +451,17 @@ async function runJourney(engine, browserType, server, screenshots) {
       "The Allievi add button",
       addStudent,
     )
+    await offerButtonsTappable(page, "Allievi")
+
+    // A start or reload that finds the update already waiting shows the offer
+    // above the navigation, drawn after the offer was known (D3 review RH-3).
+    await page.reload({ waitUntil: "domcontentloaded" })
+    await page
+      .getByRole("status")
+      .filter({ hasText: "Nuova versione disponibile" })
+      .waitFor()
+    await bottomNavigation(page).waitFor()
+    await offerButtonsTappable(page, "After a reload")
 
     // Work typed while the offer is on screen. The clock is stopped so the
     // 500 ms wait before the form saves cannot run out: the note is certainly
@@ -483,8 +536,10 @@ async function runJourney(engine, browserType, server, screenshots) {
       noUpdateOfferedAfterwards: true,
       bannerClearance: {
         addStudentButton: addButtonClearance,
-        crewFloatingBar: crewBarClearance,
+        crewQuickAccessRail: crewRailClearance,
+        crewDestinationPanel: crewBarClearance,
       },
+      offerButtonsTappable: ["crew page", "Allievi", "after a reload"],
     }
   } finally {
     await browser.close()

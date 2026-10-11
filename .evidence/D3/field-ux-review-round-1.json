@@ -1,0 +1,109 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "D3",
+  "round": 1,
+  "commit": "0aa6699",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FU-1",
+      "title": "On the crew page the update offer and the crew page's floating bar still overlap by 40 px. The bar is now drawn on top, so tapping the centre of 'Aggiorna' hits 'Volontari' (UG2-UX-3 not resolved)",
+      "evidence": "UG2-UX-3 (.evidence/UG2/field-ux-review.json) defines the crew page's floating bar as the 'Accesso rapido equipaggi' bar: 'A terra', 'Collocati n/N', 'Volontari' (src/features/crews/CrewManagement.tsx:3593-3595, inside the fixed-height container at :2639). D3 raised only the person-destination panels (:2871, :2986) and the Allievi + button (src/features/students/StudentManagement.tsx:1632) by --update-banner-height. The quick-access bar ignores that height. scripts/check-update-journey.mjs:394 measures 'Destinazione persona selezionata' and records it as crewFloatingBar (:486), so the evidence passes on the wrong element. My test used production builds 0.3.0 (installed, service worker in control) and 0.3.1 (deployed), with the real offer raised through Impostazioni > Cerca aggiornamenti, then Equipaggi with the page at the top. Measured bar vs banner, top to bottom: 412x839 681-739 vs 699-764; 390x844 686-744 vs 704-769; 360x780 622-680 vs 640-705; 320x664 506-564 vs 508-589. At all four sizes, elementFromPoint at the centre of 'Aggiorna' returns the 'Volontari' button, and at the centre of 'Più tardi' it returns the bar's background (or the 'Collocati' counter). WebKit, iPhone 13 at 390x664: bar 506-564 vs banner 524-589, the same result. Playwright's own click on 'Aggiorna' times out because 'Volontari … intercepts pointer events'. Screenshot: only 'N…' and the bottom edges of the two buttons show under the bar.",
+      "reproduction": "Production probe in my scratchpad's fieldux-d3/probeP2.ts (+prodcommon.ts; builds made with CVC_APP_VERSION=0.3.0/0.3.1): 1) open 0.3.0, wait until the service worker controls the page, create a D2 course and one student, then Equipaggi > Crea equipaggi; 2) switch the server to 0.3.1; Home > Impostazioni > Cerca aggiornamenti, and the banner appears; 3) tap Equipaggi. Expected: the offer's two buttons are clear of the bar. Observed: a 40 px overlap, and a tap on the centre of Aggiorna scrolls to Volontari. The dev replica (probeF.ts, probeW.ts) gives the same numbers on Chromium and WebKit.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('The offer covers neither the crew page's floating bar nor the Allievi add button'); 04_IMPLEMENTATION_PLAN.md D3 item 2 ('The banner never covers a floating bar or the add button (UG2-UX-3)'); docs/design/06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "FU-2",
+      "title": "In read-only mode, opening 'Modifica allievo' locks the instructor in: Back, the bottom navigation, the phone's Back, 'Fine' and every 'Aggiorna' do nothing",
+      "evidence": "exitForm (src/features/students/StudentManagement.tsx:729-746) always calls persistEdit for an existing student, and its leave guard (:749-755) holds the leave. updateStudent always executes an UPDATE, which src/persistence/writeGuard.ts refuses in read-only mode, so persistEdit always fails and the leave never happens. Applying an update goes through the same guard: src/main.tsx calls applyUpdateWhenSafe, which calls requestLeave (src/navigation/browserHistory.ts:63-77), which calls the guard, which calls exitForm(leave). Leave is never called, so the app never reloads into the new version. Production test: a 0.5.0 build writes the course and a 0.3.0 build opens it (notice 'Solo lettura: aggiorna l’app'; Impostazioni shows 0.3.0). Allievi > Mario > Modifica allievo, changing nothing, then the header's 'Indietro da Modifica allievo': the form stays open, and 'Modifiche non salvate. Il testo resta qui.' plus 'Riprova' appear below the fold, so nothing visible changes on screen. Bottom 'Home', 'Equipaggi', the phone's Back and 'Fine' all leave the form open. Dev replica with the real App, banner and applyUpdateWhenSafe, on Chromium and WebKit: the banner's 'Aggiorna' and the notice's 'Aggiorna alla nuova versione' do not reload the page (a reload marker survives) and the form stays open. The same happens when the data turns read-only mid-edit (a newer copy raises the minimum writer while a note is being typed), and also after restoring the note to its saved text. The only way out is to kill the app.",
+      "reproduction": "My scratchpad's fieldux-d3/probeP1.ts (production 0.5.0, then 0.3.0, service workers blocked), probeG.ts (read-only from the start, no change made) and probeD.ts (read-only arriving mid-edit), on Chromium Pixel 7 and WebKit iPhone 13. Steps: open read-only data > Allievi > a student > Modifica allievo > tap the back arrow, Home, Fine, phone Back. Expected: back to the profile or list, as in any consultation. Observed: still on the form. Then show the offer and tap Aggiorna. Expected: the app updates (that is the remedy the notice asks for). Observed: no reload, no message.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('Aggiorna applies it once the current screen has saved or asked about unsaved work'; read-only: 'everything can be consulted … a notice above every screen asks to update the app'); 04_IMPLEMENTATION_PLAN.md D3 success predicate ('applies it without losing unsaved work')"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FU-3",
+      "title": "With enlarged text the offer fills the screen: 'Nuova versione disponibile' breaks one letter per line, 'Aggiorna' runs off the right edge, and the raised + jumps to the top of the screen or off it",
+      "evidence": "src/components/UpdateAvailableBanner.tsx:79 puts the text in 'min-w-0 flex-1 [overflow-wrap:anywhere]' beside two shrink-0 buttons. Once the buttons need the whole width, the text gets about 0 px. Banner height measured on Chromium Pixel 7 with the dev replica: 412 px 65; 320 px 81; 320 px at 130% text 287; 412 px at 150% 181; 360 px at 150% 541 of 780; 412 px at 200% 961; 320 px at 200% 1001. Production confirms 320 px at 200%: banner y -487 to 514, and 'Aggiorna' spans x 237-419 in a 320 px viewport, so its centre is off-screen. D3 ties the floating controls to this height. With the + following it: at 360 px and 150% the + sits at y=17, over the first visible student's name; at 320 px and 200% it is at y=-633 (unreachable); at 412 px and 150% it covers the last student card (78 x 73 px overlap at the end of the list). The banner's markup predates D3, but D3 now raises it mid-task at every return to the foreground and makes the controls rise with it.",
+      "reproduction": "My scratchpad's fieldux-d3/probeA.ts and probeH.ts (dev replica, 40-student hostile roster) and probeP2.ts (production 320x664 at 200%). Raise the offer, open Allievi, set html font-size to 130/150/200% and dispatch a resize, then measure the banner, the + button and the last card. Screenshots: A-list-bottom-chromium-320-200.png, H-fab-360-150.png, P2-crew-320-200.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (testo al 200%), R12, R18; 01_PRODUCT_SPEC.md §2 (the offer and the Allievi add button)"
+    },
+    {
+      "id": "FU-4",
+      "title": "When the data turns read-only during work, the failure appears off-screen and the screen's own error loops on 'Riprova'",
+      "evidence": "The notice is inserted in the page flow at the top (src/App.tsx, ReadOnlyNotice before <main>). In the mid-edit case (probeD.ts) the first refused autosave on the student form shows 'Modifiche non salvate. Il testo resta qui. [Riprova]' while the notice sits at y=-659, off-screen. On the crew page, a move made in read-only mode shows 'Modifica non valida o non salvata. Riprova.' (src/features/crews/CrewManagement.tsx:2434, :2710). In read-only mode 'Riprova' can never succeed, and 'non valida' suggests the instructor did something wrong. Nothing at the point of failure says 'solo lettura' or 'aggiorna'. The brief accepts each screen's existing error, but the existing recovery (Riprova) is a dead end in this state.",
+      "reproduction": "probeD.ts: Allievi > a student > Modifica allievo > type in Nota del corso; call raiseMinimumWriterUnderOpenApp; type more. Expected: the screen says the course is read-only and how to get out. Observed: a generic 'not saved, retry' error, with the explanation 659 px above the viewport. probeH.ts gives the crew-page message.",
+      "specRef": "01_PRODUCT_SPEC.md §2 (read-only notice); docs/design/06_DESIGN_RULEBOOK.md R14 (errore e recupero reali)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-Q1",
+      "title": "The read-only notice costs a third to half a screen on every screen, and 1.5 screens at 200% text",
+      "evidence": "src/components/ReadOnlyNotice.tsx: heading, a three-to-four-line paragraph, a full-width button and a reserved result line. Measured 226 px tall on every screen: 31% of the usable height at 412x839 and 40-52% at 320x664. At 320 px and 200% text it is 740 px, 1.49 to 1.75 times the usable height, before any content. On Home with the one-time 'aggiornata' note as well, the first destination starts at 463 px (412) and 1315 px (320 px at 200%). The state is rare and transient, hence QoL.",
+      "reproduction": "My scratchpad's fieldux-d3/probeC.ts and probeE.ts; screenshots C-*-chromium-320-200.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R02"
+    },
+    {
+      "id": "FU-Q2",
+      "title": "The notice's 'Aggiorna l’app' button runs a search, and with nothing found it says 'Questa è l’ultima versione.' under 'Solo lettura: aggiorna l’app'",
+      "evidence": "src/components/UpdateCheckButton.tsx: when no update is offered, the label 'Aggiorna l’app' triggers check(), whose 'none' outcome reads 'Questa è l’ultima versione.'. The two lines contradict each other and leave no next step. This happens when the newer data was written by a copy the server does not offer, for example another build on the same origin. Observed text: 'Solo lettura: aggiorna l’app … Aggiorna l’app Questa è l’ultima versione.' The offline and failed outcomes read clearly.",
+      "reproduction": "probeC.ts with check result 'none'; screenshot C-notice-none-chromium.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13, R14"
+    },
+    {
+      "id": "FU-Q3",
+      "title": "Accepting the update while setting tomorrow's crews lands on today's session at the top, with no confirmation there. The 'aggiornata' note is lost if Home is not visited",
+      "evidence": "After Aggiorna on Equipaggi with session tue-pm selected and the page scrolled, the reload shows Equipaggi with session sat-pm (the default) and scrollY 0. The 'CVC Helper è aggiornata alla versione …' note shows only on Home. noteInstalledVersion (src/navigation/installedVersion.ts) records the new version at the first render, so after one more restart without visiting Home the note never appears (noteOnHomeAtNextStart 0).",
+      "reproduction": "My scratchpad's fieldux-d3/probeE.ts; screenshot E-landing-after-update.png.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('after an update Home says once which version is now installed')"
+    },
+    {
+      "id": "FU-Q4",
+      "title": "The Allievi + button, raised by the banner, overlaps the last student card at 320 px",
+      "evidence": "The list's end padding (pb-24 plus the shell's pb-28) does not grow with --update-banner-height. At 320x664 with ordinary text and the offer up, the + (y 435-491) overlaps the last right-hand card (374-444) by 9 px at the end of the list. Without the offer it is clear. P03 asks for 'senza coprire l’ultima persona'.",
+      "reproduction": "probeA.ts and probeH.ts, profile 320; screenshot A-list-bottom-chromium-320.png.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P03; R12"
+    },
+    {
+      "id": "FU-Q5",
+      "title": "Focus scroll margin ignores the banner",
+      "evidence": "src/styles.css:60 reserves only the bottom navigation (5rem) as scroll margin. With the offer up and a short layout viewport, a focused control comes to rest under the banner: 'Telefono' at 342-390 under the banner at 330-395 (412x470); 'Annulla' in the volunteer form at 360x420 and 320x400. Current Chrome and Safari overlay the on-screen keyboard without resizing the layout viewport, so this mainly affects Tab or 'next' focus in short windows.",
+      "reproduction": "My scratchpad's fieldux-d3/probeB.ts.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12 (tastiera aperta)"
+    },
+    {
+      "id": "FU-Q6",
+      "title": "After a wrong tap on 'Più tardi', the way back to the update is three taps, one of them in a top corner",
+      "evidence": "The offer stays hidden until the next start, as the spec allows. To recover: Home, then the gear at the top right, then 'Aggiorna alla nuova versione' (a primary button right under 'Versione', well away from 'Elimina il corso'). Nothing on Equipaggi or Home hints that an update is waiting.",
+      "reproduction": "Dev replica: offer > Più tardi > Home > Impostazioni; screenshot P2-settings-offer.png (production).",
+      "specRef": "01_PRODUCT_SPEC.md §2"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-field-ux.md; no earlier D3 reports in .evidence/D3/ (none exist); lens-indexing convention taken from .evidence/D2 and .evidence/UG2 reports",
+    "04_IMPLEMENTATION_PLAN.md D3; 01_PRODUCT_SPEC.md §2 (updates, read-only, leave guard); docs/design/06_DESIGN_RULEBOOK.md R02/R05/R12/R13/R14/R18; docs/design/07_PAGE_CHANGELOG.md P01/P02 (2026-10-10) and P03; .evidence/UG2/field-ux-review.json UG2-UX-3",
+    "git diff d033bbf..0aa6699 for src/App.tsx, src/main.tsx, src/components/{ReadOnlyNotice,UpdateAvailableBanner,UpdateCheckButton}.tsx, src/navigation/{updateChecks,updates,installedVersion,applyUpdate,browserHistory}.ts, src/persistence/writeGuard.ts, src/domain/compatibility.ts, CrewManagement.tsx and StudentManagement.tsx changes, src/test/d3Harness.ts, scripts/check-update-journey.mjs, tests/e2e/d3-read-only.spec.ts",
+    "Ran node scripts/run-e2e.mjs tests/e2e/d3-read-only.spec.ts: 4 passed (Pixel 7 and iPhone 13 WebKit). The spec does not open an existing student's edit form",
+    "Inspected test-results/d3-update-journey/ (browser-evidence.json and update-offer-chromium.png from the implementer's check:update run)",
+    "Built 0.3.0, 0.3.1 and 0.5.0 from 0aa6699 (CVC_APP_VERSION) and ran my own production journeys on Chromium Pixel 7: the real service-worker update offer on the crew page (probeP2) and 0.5.0 data opened read-only by 0.3.0 (probeP1)",
+    "Dev-server replica (the real App and UpdateAvailableBanner, the service-worker state replaced by window hooks; the real applyUpdateWhenSafe) with the UG2 40-student hostile roster: probes A-H and W across 412, 390, 360, 320 px and 130/150/175/200% text on Chromium Pixel 7 and WebKit iPhone 13; screenshots and JSON in my scratchpad's shots/; scripts in my scratchpad's fieldux-d3/",
+    "Signature move, one evening on the pier, 18:00, setting tomorrow's (Tuesday PM) crews; the owner deployed at lunch, and the phone spent the afternoon in the pouch: 1) unlock and open CVC Helper; it returns to Equipaggi and the check runs (0.2-0.3 s in the check:update evidence); 2) a grey ghost 'N… versione disponibile' shows behind 'A terra · Collocati · Volontari', with a 15 px blue sliver (re-read 1: what is that?); 3) I tap the blue sliver, and the page jumps to Volontari (re-read 2: why did it scroll?); 4) I scroll the page 24 px to the end, and the buttons come clear; 5) I tap Aggiorna; the app reloads onto Equipaggi but on Sabato PM at the top (re-read 3: where are my crews?); 6) Sessione > Martedì PM (2 taps); 7) nothing says the update worked; that is only on Home. Total: 4 taps plus a scroll, about 15-20 s and 3 re-reads, against 0 for the same routine without the offer. With 150% phone text, step 2 is a screen-high column of single letters instead. In the read-only variant, I open Modifica allievo just to read a phone number and cannot leave until I kill the app"
+  ],
+  "anglesTried": {
+    "seed": 38068400,
+    "lenses": [
+      "9. Recovering from a wrong tap: is it reversible in place? (seed mod 12 = 8). Wrong 'Più tardi': recoverable in 3 taps through Impostazioni (FU-Q6). Wrong 'Aggiorna' with no unsaved work: reloads onto the same screen but loses the session choice and the scroll (FU-Q3). A tap meant for 'Aggiorna' on the crew page lands on 'Volontari' (FU-1). In read-only mode, one 'Modifica allievo' tap made only to look cannot be undone in place, nor escaped by updating (FU-2); a read-only crew move asks for a Riprova that cannot work (FU-4).",
+      "11. Long names, three-part names, ten crews, forty students (floor(seed/12) mod 12 = 10). With the UG2 hostile 40-student, ten-crew roster: the risen + against the last card (FU-Q4, and 73 px at 412 px with 150% text in FU-3); the crew page's destination panel and bar with the offer up (FU-1); no sideways scroll from the D3 surfaces at 320 px (scrollWidth equals clientWidth everywhere I measured, except a crew-page overflow at 412 px with 200% text that exists without the offer and is not D3's)."
+    ],
+    "wildcard": "D3 routes every Aggiorna through the leave guard and at the same time makes every save fail in read-only mode. I searched for a screen whose guard saves before it lets go, where neither leaving nor updating is then possible. Found the student edit form (FU-2). The evaluation screen offers Scarta and the scan review asks before discarding, so the trap is limited to that form."
+  },
+  "notTested": [
+    "Physical Android or iPhone, installed standalone: the owner's device check (docs/DEVICE_CHECKS.md was added after 0aa6699, docs only)",
+    "Real system font scaling and the on-screen keyboard: text size was emulated with the html font-size, as the repository's UG2 stress tests do, and the keyboard with a short viewport (hence FU-Q5 is only QoL)",
+    "npm run check:update was not re-run by me. I inspected its artifacts and code and ran my own production update journey on Chromium only. A WebKit service-worker update in production was not exercised; the WebKit crew-bar overlap comes from the dev replica",
+    "The hourly periodic check (not waited for) and a real offline service-worker check (the offline and failed messages were checked through the replica's check outcomes)",
+    "Glare and contrast, one-thumb reach, and cold-start time: not my drawn lenses beyond incidental notes"
+  ]
+}

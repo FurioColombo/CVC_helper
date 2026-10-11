@@ -1,13 +1,20 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 
 /**
  * D3 on the real engine: a course whose data a newer app wrote, beyond this
  * version's reach (03 §3.1), opens read-only. The course reads as usual, the
- * notice says `Aggiorna l'app`, a save through the screens is refused, and no
- * repair or migration has written anything, also after a reload.
+ * bottom bar says `aggiorna l'app`, a save through the screens is refused, an
+ * edit that waits for a save does not hold the user, and no repair or
+ * migration has written anything, also after a reload.
  */
 
 const isAppRoot = (target: URL) => target.pathname === "/"
+
+/** The bottom bar in its read-only state (UpdateAvailableBanner). */
+const readOnlyBar = (page: Page) =>
+  page.getByRole("status").filter({
+    hasText: "Solo lettura: aggiorna l’app per salvare le modifiche.",
+  })
 
 test("opens newer data read-only: it reads, says so, refuses a save and repairs nothing", async ({
   page,
@@ -58,11 +65,9 @@ test("opens newer data read-only: it reads, says so, refuses a save and repairs 
       page.getByRole("heading", { name: "D2 - 38 | 2026" }),
       pass,
     ).toBeVisible()
+    await expect(readOnlyBar(page)).toBeVisible()
     await expect(
-      page.getByRole("heading", { name: "Solo lettura: aggiorna l’app" }),
-    ).toBeVisible()
-    await expect(
-      page.getByRole("button", { name: "Aggiorna l’app" }),
+      page.getByRole("button", { name: "Cerca aggiornamento" }),
     ).toBeVisible()
     const before = await stored()
 
@@ -73,6 +78,31 @@ test("opens newer data read-only: it reads, says so, refuses a save and repairs 
     await page.getByRole("button", { name: "Salva volontario" }).click()
     await expect(
       page.getByText("La modifica non è stata salvata. Riprova."),
+    ).toBeVisible()
+
+    // D3 reviews RH-1, FU-2: nothing saves, so nothing holds the user on an
+    // edit that waits for a save: its own Back and the navigation leave.
+    await page.getByRole("button", { name: "Annulla" }).click()
+    await page.getByRole("button", { name: "Indietro da Volontari" }).click()
+    await page.getByRole("button", { name: "Allievi" }).click()
+    await page.getByRole("button", { name: /^Irene,/ }).click()
+    await page.getByRole("button", { name: "Modifica allievo" }).click()
+    await expect(
+      page.getByRole("heading", { name: "Modifica allievo" }),
+    ).toBeVisible()
+    await page
+      .getByRole("button", { name: "Indietro da Modifica allievo" })
+      .click()
+    await expect(
+      page.getByRole("heading", { name: "Modifica allievo" }),
+    ).toHaveCount(0)
+    await page.getByRole("button", { name: "Modifica allievo" }).click()
+    await page
+      .getByRole("navigation", { name: "Navigazione principale" })
+      .getByRole("button", { name: "Home" })
+      .click()
+    await expect(
+      page.getByRole("heading", { name: "D2 - 38 | 2026" }),
     ).toBeVisible()
 
     expect(await stored(), pass).toEqual(before)
@@ -89,7 +119,7 @@ test("turns an open app read-only at its first save after a newer app raised the
   await page.getByRole("button", { name: "Livello 2" }).click()
   await page.getByRole("button", { name: "Crea corso" }).click()
   await page.getByRole("button", { name: "Volontari" }).click()
-  await expect(page.getByText(/Solo lettura/)).toHaveCount(0)
+  await expect(readOnlyBar(page)).toHaveCount(0)
 
   await page.evaluate(async () => {
     const modulePath = "/src/test/d3Harness.ts"
@@ -107,9 +137,7 @@ test("turns an open app read-only at its first save after a newer app raised the
   await expect(
     page.getByText("La modifica non è stata salvata. Riprova."),
   ).toBeVisible()
-  await expect(
-    page.getByRole("heading", { name: "Solo lettura: aggiorna l’app" }),
-  ).toBeVisible()
+  await expect(readOnlyBar(page)).toBeVisible()
   const volunteers = await page.evaluate(async () => {
     const modulePath = "/src/persistence/db.ts"
     const { db } = (await import(/* @vite-ignore */ modulePath)) as {

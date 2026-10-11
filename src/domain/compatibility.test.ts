@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { APP_VERSION } from "@/appVersion"
+
 import {
   compareVersions,
   dataAccess,
@@ -63,6 +65,13 @@ describe("the minimum writer of an app's data", () => {
 
   it("must be declared by a major release", () => {
     expect(() => minimumWriterOf(v("1.0.0"))).toThrow("declare")
+  })
+
+  // D3 review DI-Q3: a version whose minimum writer cannot be computed (a
+  // major release) cannot open any database, so the bump that makes one must
+  // first declare it.
+  it("can be computed for this build's own version", () => {
+    expect(() => minimumWriterOf(APP_VERSION)).not.toThrow()
   })
 })
 

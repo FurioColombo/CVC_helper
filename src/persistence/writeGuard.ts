@@ -1,20 +1,22 @@
-import type { PowerSyncDatabase } from "@powersync/web"
+import type { LockContext, PowerSyncDatabase } from "@powersync/web"
 
 import { APP_VERSION } from "@/appVersion"
-import {
-  compareVersions,
-  decodeVersion,
-  type Version,
-} from "@/domain/compatibility"
+import { dataAccess, type Version } from "@/domain/compatibility"
+import { readDataVersion } from "@/persistence/dataVersion"
 
 /**
  * D3: an app older than its data's minimum writer only reads the data
  * (src/domain/compatibility.ts). Every write method of a guarded database
  * then refuses, so no screen, repair or migration of this version writes the
- * newer data; reads go on as usual. The data's minimum writer is read again
- * before each write, because a newer app on the device may raise it while
- * this one stays open (a tab, a phone left on): the first write after that
- * finds out, refuses, and the app is told so it can say why.
+ * newer data; reads go on as usual.
+ *
+ * The record is read again inside every write's own lock, before anything is
+ * written (D3 review DI-1): a newer app on the device may raise it while this
+ * one stays open (a tab, a phone left on), and a check made before taking the
+ * lock would let a save in flight land just after the raise. `execute` and
+ * `executeBatch` therefore run as one-statement write transactions. The first
+ * write refused this way marks the database read-only and tells the app, so
+ * it can say why (src/components/UpdateAvailableBanner.tsx).
  */
 export class ReadOnlyDataError extends Error {
   constructor() {
@@ -23,24 +25,24 @@ export class ReadOnlyDataError extends Error {
   }
 }
 
-const WRITE_METHODS = [
-  "execute",
-  "executeBatch",
-  "writeTransaction",
-  "writeLock",
-] as const
-
 const readOnly = new WeakSet<PowerSyncDatabase>()
 const listeners = new Set<() => void>()
+let anyReadOnly = false
 
 export function markReadOnly(database: PowerSyncDatabase) {
   if (readOnly.has(database)) return
   readOnly.add(database)
+  anyReadOnly = true
   for (const listener of listeners) listener()
 }
 
 export function isReadOnly(database: PowerSyncDatabase) {
   return readOnly.has(database)
+}
+
+/** Whether the app's data is read-only for this version: nothing saves. */
+export function dataIsReadOnly() {
+  return anyReadOnly
 }
 
 /** Calls `listener` when a database becomes read-only; returns a stop. */
@@ -51,40 +53,50 @@ export function onReadOnly(listener: () => void) {
   }
 }
 
-/** Whether the data now asks for a newer writer than `app`. */
-async function excludes(
-  database: Pick<PowerSyncDatabase, "getOptional">,
-  app: Version,
-) {
-  const row = await database.getOptional<{ value: number | null }>(
-    "SELECT value FROM meta WHERE id = 'data:minimumWriter'",
-  )
-  if (row?.value == null) return false
-  try {
-    return compareVersions(app, decodeVersion(row.value)) < 0
-  } catch {
-    return false
-  }
-}
+type Write = (...args: unknown[]) => Promise<unknown>
 
 /** Makes the database's write methods refuse once it is read-only for `app`. */
 export function guardWrites<Database extends PowerSyncDatabase>(
   database: Database,
   app: Version = APP_VERSION,
 ): Database {
-  const methods = database as unknown as Record<
-    (typeof WRITE_METHODS)[number],
-    (...args: unknown[]) => Promise<unknown>
-  >
-  for (const name of WRITE_METHODS) {
-    const write = methods[name].bind(database)
-    methods[name] = async (...args) => {
-      if (!readOnly.has(database) && (await excludes(database, app))) {
-        markReadOnly(database)
-      }
-      if (readOnly.has(database)) throw new ReadOnlyDataError()
-      return write(...args)
+  const methods = database as unknown as Record<string, Write>
+  const writeLock = methods.writeLock!.bind(database)
+  const writeTransaction = methods.writeTransaction!.bind(database)
+  const executeRaw = methods.executeRaw!.bind(database)
+
+  // Inside the lock: refuses before the caller's first statement.
+  const assertWritable = async (context: Pick<LockContext, "getAll">) => {
+    if (readOnly.has(database)) throw new ReadOnlyDataError()
+    if (dataAccess(app, await readDataVersion(context)) === "read-only") {
+      markReadOnly(database)
+      throw new ReadOnlyDataError()
     }
+  }
+  const guarded =
+    (callback: unknown) =>
+    async (context: LockContext): Promise<unknown> => {
+      await assertWritable(context)
+      return (callback as (context: LockContext) => Promise<unknown>)(context)
+    }
+
+  methods.writeLock = (callback, ...rest) =>
+    writeLock(guarded(callback), ...rest)
+  methods.writeTransaction = (callback, ...rest) =>
+    writeTransaction(guarded(callback), ...rest)
+  methods.execute = (sql, parameters) =>
+    methods.writeTransaction!((transaction: LockContext) =>
+      transaction.execute(sql as string, parameters as unknown[]),
+    )
+  methods.executeBatch = (sql, parameters) =>
+    methods.writeTransaction!((transaction: LockContext) =>
+      transaction.executeBatch(sql as string, parameters as unknown[][]),
+    )
+  // No lock context offers raw execution; the app does not use it, and a
+  // read-only database refuses it all the same (D3 review DI-Q5).
+  methods.executeRaw = async (...args) => {
+    if (readOnly.has(database)) throw new ReadOnlyDataError()
+    return executeRaw(...args)
   }
   return database
 }

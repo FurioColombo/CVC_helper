@@ -1,0 +1,120 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D3",
+  "round": 1,
+  "commit": "0aa6699",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-1",
+      "title": "The write guard checks the minimum writer outside the write lock, so a save in flight when a newer app raises the minimum writer runs after the raise",
+      "evidence": "src/persistence/writeGuard.ts:81-86. The wrapper awaits excludes(), which is a separate getOptional on its own connection lease, and only then calls the original method, which asks for the lease again. Another instance's write can commit between the two. Run on Chromium with the real engine and nothing patched: a 0.4.0 instance's INSERT stored the minimum writer it saw at execution. With the raise started 6 ms and 8 ms after the save, the save returned 'wrote' and stored 5000, which is 0.5.0. That was 2 of 6 runs here and 4 of 10 in an earlier sweep. At 2-4 ms the save was refused. At 10-12 ms it stored 4000, which is a legitimate write before the raise. The guard did not even mark A read-only afterwards (readOnlyAfter false).",
+      "reproduction": "Probe inFlightWriteCaptured in my scratchpad's d3-di/harness.ts, run with d3-di/run.sh chromium inFlightWriteCaptured; it copies itself into test-results/d3-di-review/ and runs under its own Playwright config and dev server. Steps in a dev-server page: (1) S = guardWrites(createDatabase(f), 0.5.0); await prepareDatabase(S, [], 0.5.0), which records 0.5.0/0.4.0. (2) A = guardWrites(createDatabase(f), 0.4.0); prepareDatabase gives 'write'. (3) B = createDatabase(f); await B.init(). (4) Without awaiting, start A.execute(\"INSERT OR REPLACE INTO meta(id, value) VALUES ('e4c:in-flight', (SELECT value FROM meta WHERE id = 'data:minimumWriter'))\"). (5) After 6-8 ms, start B.writeTransaction setting data:version and data:minimumWriter to 0.6.0 and 0.5.0, then await both. Expected: A's save is refused, or is stored before the raise (value 4000). Observed: 'wrote' with value 5000. Fix direction: do the check inside the lock. Wrap writeLock and writeTransaction so the callback first reads meta through its own context and throws before running user code. Route executeBatch through writeLock; execute already goes through writeLock.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 success predicate ('An app older than its data's minimum writer version never writes'); 03_TECHNICAL_DECISIONS.md §3.1 ('its database refuses every write')"
+    },
+    {
+      "id": "DI-2",
+      "title": "prepareDatabase records the data version from the read taken before repairs and migrations, so a newer app's record committed meanwhile is overwritten with a lower one and the excluded app can write again",
+      "evidence": "src/persistence/migrations.ts:104 reads `stored` once. src/persistence/migrations.ts:120-123 later records from that same stale value. src/persistence/dataVersion.ts:55-69 writes dataVersionAfterWrite(app, stored) with INSERT OR REPLACE and never re-reads inside its transaction. (a) Deterministic interleaving, Chromium and WebKit: B (0.6.0) prepared between A's read and A's record and wrote 0.6.0/0.5.0. A (0.5.0) then finished with 0.5.0/0.4.0. A fresh 0.4.0 instance C then opened with 'write' and its INSERT succeeded. (b) Nothing patched, Chromium: prepareDatabase(B, 0.6.0) and prepareDatabase(A, 0.5.0) started together on a fresh file ended with record 0.5.0/0.4.0 in 2 of 5, 2 of 10 and 1 of 6 runs. The record's 'newest writer' claim also became false, because 0.6.0 had opened the data.",
+      "reproduction": "Probes staleRecord and concurrentOpens in my scratchpad's d3-di/harness.ts. staleRecord patches A.getAll so that right after the 'FROM meta WHERE id IN' read it awaits prepareDatabase(B, [], 0.6.0); then it runs prepareDatabase(A, [], 0.5.0), then opens C at 0.4.0 and tries an INSERT. concurrentOpens starts both prepares in one tick, with no patch. Expected: the record stays 0.6.0/0.5.0 and C opens read-only. Observed: 0.5.0/0.4.0, C opens with 'write' and writes. Fix direction: read the record inside the record's own write transaction (tx.getAll) and derive the next record and the needs-record decision from that read.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('neither ever goes back'); 04_IMPLEMENTATION_PLAN.md D3 success predicate and checklist item 'two tabs on different versions'"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-3",
+      "title": "A newer app records its minimum writer last, after its repairs and migrations, so an older tab's save still lands after the newer tab migrated",
+      "evidence": "src/persistence/migrations.ts:109-124 runs the repairs, the duty-item repair, each ledgered migration and then the record, each in its own transaction. Older instances re-check only meta, which still admits them until the last of these transactions commits. Chromium and WebKit, nothing patched: a 0.4.0 save started during a 0.6.0 ledgered migration returned 'wrote'. Its row was present after B's prepare, the migration had not seen it (migrationSawOldSave false), and the ledger row migration:e2-reshape was there. Only the save after B's record was refused. MIGRATIONS is empty today, so nothing is damaged yet. The first reshaping migration would leave such a row unmigrated for good, because the ledger says the step is applied.",
+      "reproduction": "Probe oldWriteDuringNewMigration in my scratchpad's d3-di/harness.ts. S records 0.5.0/0.4.0, and A (0.4.0) prepares with 'write'. B (0.6.0) runs prepareDatabase with one migration whose run() starts A's save without awaiting it, waits 50 ms, reads whether A's row exists and writes its own row. Expected per the checklist: refused once the newer app starts changing data. Observed: written after the migration. Fix direction: raise the record first, in its own transaction with DI-2's re-read and before repairs and migrations. DI-1's in-lock check then refuses older tabs from that commit on. An interrupted newer open would leave the record raised, which is the conservative failure.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 adversarial checklist ('two tabs on different versions, where the old one writes after the new one migrated'; 'an update arriving mid-migration')"
+    },
+    {
+      "id": "DI-4",
+      "title": "A read-only older app still destroys data: PowerSync applies its schema when the database opens, before the record is read, and drops every local-only table that schema does not declare",
+      "evidence": "The constructor starts initialize() (node_modules/@powersync/shared-internals/src/client/BasePowerSyncDatabase.ts:197). initialize() runs updateSchema (lines 319-328), which runs powersync_replace_schema in a write transaction directly on the adapter (lines 387-389), not through the guarded methods. src/persistence/db.ts:10 wraps the instance only after construction, and src/persistence/migrations.ts:103-104 runs init before the record read. Chromium and WebKit: newer data recorded 9.9.0/9.8.0 had one row in a local-only table futureNotes. This version opened it as 'read-only', and while it was open ps_data_local__futureNotes was gone. Reopened with the newer schema, the table had 0 rows (before: 1). The record survived because meta is declared. 03 §3.1 says the newer app keeps such a table rebuildable 'until older writers are stopped'. A stopped (read-only) app still drops it, so the rule that 0.5.0 and later inherit is too weak. Today no schema newer than this one exists, so the case is not yet reachable.",
+      "reproduction": "Probe readOnlyOpenDropsNewerTable in my scratchpad's d3-di/harness.ts. (1) Create the newer schema {meta, futureNotes local-only}, insert one row, record 9.9.0/9.8.0 and close. (2) Open with guardWrites(createDatabase(f)) and prepareDatabase, which gives 'read-only'; check sqlite_master; close. (3) Reopen with the newer schema and count the rows.",
+      "specRef": "01_PRODUCT_SPEC.md §2 read-only paragraph ('nothing is saved'); 03_TECHNICAL_DECISIONS.md §3.1 ('until older writers are stopped'); D3 success predicate. Suggested contract text: a table only newer versions declare stays rebuildable for as long as any older app can open the database, read-only included, or it is a synced table (see DI-5)"
+    },
+    {
+      "id": "DI-5",
+      "title": "What 0.5.0 inherits: making course tables synced is not an expand-only change. An older local-only schema sees none of their rows, and the default minimum writer would let 0.4.0 write into tables 0.5.0 no longer reads",
+      "evidence": "Chromium. The newer schema declared meta local-only and both futureNotes and students as synced tables; it inserted one row in each and recorded 9.9.0/9.8.0. This version, which declares students local-only, opened it as 'read-only'. SELECT count(*) FROM students returned 0, and the 2 rows sat in ps_untyped. Reopened with the newer schema: futureNotes 1, students 1, ps_crud 2 before and 2 after. So a newer-only synced table survives an older open, unlike the local-only one in DI-4. But once 0.5.0 makes the course tables synced, 0.4.0 shows an empty course, not a read-only one. With the default minimumWriterOf(0.5.0) = 0.4.0 (src/domain/compatibility.ts:77-84), 0.4.0 would also keep writing local-only rows that 0.5.0 never reads: a silent split.",
+      "reproduction": "Probe syncedTablesAcrossReadOnlyOpen in my scratchpad's d3-di/harness.ts, run with d3-di/run.sh chromium syncedTablesAcrossReadOnlyOpen.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('schema changes only expand'; 'an app reads and writes data of its own and the previous minor version'); 02_MVP_SCOPE.md §4 road to 0.5.0. Suggestion: §3.1 says the sync release declares its own minimum writer, as a major does, and states what 0.4.0 shows then"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-Q1",
+      "title": "The smallest corrupt record is caught by nothing, and the two readers disagree: the result is an error-screen loop, or a record that goes back",
+      "evidence": "src/persistence/dataVersion.ts:27-38 reads a half or unreadable record as no record, which every app may write. src/persistence/writeGuard.ts:59-67 decides from data:minimumWriter alone. Neither validateCourseState nor src/persistence/rowIntegrity.ts looks at meta. Chromium: with only data:minimumWriter = 9008000 present, prepareDatabase rejected with ReadOnlyDataError. In the app, the 0.3.0 fixture plus that row shows 'Non riesco ad aprire i dati locali', and Riprova reloads into the same screen, so the course cannot even be read. With data:version 9.9.0 and data:minimumWriter -5, a 0.4.0 instance opened with 'write', wrote, and replaced the record with 4000/3000. No current write path produces either state, because both rows are written in one transaction. D4's import must merge the record by maximum and refuse a malformed one.",
+      "reproduction": "Probes halfRecord('minimum-only'), halfRecord('negative-minimum') and the UI test 'ui: a half record' in my scratchpad's d3-di/probes.spec.ts.",
+      "specRef": "AGENTS.md §11; 01_PRODUCT_SPEC.md §2 ('everything can be consulted')"
+    },
+    {
+      "id": "DI-Q2",
+      "title": "The 'updated' note also fires on a downgrade",
+      "evidence": "src/navigation/installedVersion.ts:14-19 reports any different previous version. `node --import tsx` over versions 0.5.0, 0.4.0, 0.5.0, 0.4.0 returned updatedFrom null, '0.5.0', '0.4.0', '0.5.0' (code=0). An older tab started after a newer one says 'CVC Helper è aggiornata alla versione 0.4.0', possibly beside the read-only notice. Suggestion: show the note only when the current version compares newer.",
+      "reproduction": "My scratchpad's d3-di run of noteInstalledVersion with an in-memory storage (the copy under test-results/ was removed).",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('after an update Home says once which version is now installed')"
+    },
+    {
+      "id": "DI-Q3",
+      "title": "Any x.0.y build cannot open a database, and no test ties package.json's version to a minimum writer that can be computed",
+      "evidence": "minimumWriterOf throws for minor 0 (src/domain/compatibility.ts:77-84). prepareDatabase reaches it through dataVersionNeedsRecord on every open that needs a record (src/persistence/migrations.ts:120), so 1.0.0 and every 1.0.x show the error screen, and no way to declare a minimum writer exists yet. src/domain/compatibility.test.ts:64-66 tests only the throw. verify:e2e would catch it at the bump, but late; a unit test calling minimumWriterOf(APP_VERSION) would name the cause.",
+      "reproduction": "Code reading; the throw is covered by the existing test.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('a major release declares its own')"
+    },
+    {
+      "id": "DI-Q4",
+      "title": "Whatever version a preview build carries is recorded on the owner's real data for good",
+      "evidence": "The record never goes back (by design, src/domain/compatibility.ts:100-111). vite.config.ts accepts any x.y.z in CVC_APP_VERSION. docs/DEVICE_CHECKS.md 'Updates and versions' does not constrain N and N+1, while 04_IMPLEMENTATION_PLAN.md 'Waiting for the owner' proposes pre-release deployments to main, the production address. A preview labelled with a later minor, or a typo such as 0.30.0, would leave the phone's real course requiring that version, and the real 0.4.0 would stay read-only. Suggestion: the check uses package patch+1, as check:update does, and vite.config.ts refuses a CVC_APP_VERSION whose major.minor differs from package.json's.",
+      "reproduction": "Code and document reading; not run on a device.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1"
+    },
+    {
+      "id": "DI-Q5",
+      "title": "executeRaw, and SQL run through get/getAll, bypass the guard",
+      "evidence": "node_modules/@powersync/shared-internals/src/client/BasePowerSyncDatabase.ts:548-551: executeRaw calls the adapter directly, and WRITE_METHODS in src/persistence/writeGuard.ts:26-31 does not list it. get, getAll and getOptional also run any SQL on the adapter. src/ has no such call today (grep), and src/persistence/writeStatements.test.ts checks statement shapes, not the method used. A future call would write past the guard silently.",
+      "reproduction": "grep for executeRaw|readLock|readTransaction|.database. in src outside tests finds no app use.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('refuses every write')"
+    },
+    {
+      "id": "DI-Q6",
+      "title": "For 0.5.0's server: the record is per device and local-only, and no uploaded row says which app wrote it",
+      "evidence": "src/persistence/schema.ts declares meta with Table.createLocalOnly, and D1 adds no per-row writer version. To enforce the same rule, the upload handler needs the client's version on every upload, for example a header or a token claim. The local record cannot stand in for it, and per DI-2 it can regress.",
+      "reproduction": "Design reading.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('the server enforces the same rule from 0.5.0')"
+    }
+  ],
+  "evidenceInspected": [
+    "04_IMPLEMENTATION_PLAN.md: the D3 section, 'Where this cycle stands', UG3 and 'Waiting for the owner'; 03_TECHNICAL_DECISIONS.md §3 and §3.1; 01_PRODUCT_SPEC.md: the paragraph D3 added on updates and read-only data",
+    "git diff d033bbf..0aa6699: src/domain/compatibility.ts and its test, src/persistence/dataVersion.ts and its test, src/persistence/writeGuard.ts and its test, src/persistence/migrations.ts and the D3 part of its test, src/persistence/db.ts, src/persistence/courses.ts (erase), src/App.tsx, src/main.tsx, src/navigation/updateChecks.ts, src/navigation/installedVersion.ts, src/components/UpdateCheckButton.tsx, src/components/ReadOnlyNotice.tsx, vite.config.ts, vitest.config.ts, src/test/d3Harness.ts, tests/e2e/d3-read-only.spec.ts, the first 200 lines of scripts/check-update-journey.mjs",
+    "PowerSync internals: node_modules/@powersync/shared-internals/src/client/BasePowerSyncDatabase.ts (constructor and initialize, updateSchema, execute, executeRaw, executeBatch, the lock methods) and node_modules/@powersync/web/src/db/adapters/wa-sqlite/ConcurrentConnection.ts (one lease per connection, shared by reads and writes)",
+    "The v0.3.0 tag: how meta is used (never written by the app) and its erase table list",
+    "docs/DEVICE_CHECKS.md 'Updates and versions'; scripts/check-repository.mjs version pin; scripts/run-e2e.mjs; playwright.config.ts",
+    "npx vitest run over compatibility, dataVersion, writeGuard, migrations, installedVersion and updateChecks tests: 6 files, 60 tests passed, code=0",
+    "tests/e2e/d3-read-only.spec.ts on Chromium through a separate Playwright config with its own output folder (so the other agent's run was not disturbed): 2 passed, code=0",
+    "Throwaway probes on the real engine through the dev server (my scratchpad's d3-di/, copied into test-results/d3-di-review/ and removed afterwards). Chromium full run code=0: staleRecord, concurrentOpens, oldWriteDuringNewMigration, inFlightWriteCaptured, readOnlyOpenDropsNewerTable, syncedTablesAcrossReadOnlyOpen, halfRecord x2, and the UI half-record test. WebKit: staleRecord, oldWriteDuringNewMigration and readOnlyOpenDropsNewerTable reproduced the same results, code=0",
+    "Titles in .evidence/D3/regression-review-round-1.json, read only to avoid duplicating its findings",
+    "During the review another agent committed 7481e77 (docs only) and, after my probe runs, edited src/persistence/writeGuard.ts and src/navigation/browserHistory.ts without committing. That edit adds a read-only flag and does not change the check, so the guard logic I exercised is 0aa6699's"
+  ],
+  "anglesTried": {
+    "seed": 755378590,
+    "lenses": [
+      "Storage eviction and quota: what the user sees when the browser drops data (index 10)",
+      "Timestamps, versions and tombstones: set on every write path, never moving backwards (index 7)"
+    ],
+    "wildcard": "The schema steps a later release will take, each opened read-only by this version in between: a new local-only table (DI-4) and course tables that 0.5.0 makes synced (DI-5)"
+  },
+  "notTested": [
+    "Quota: Chromium's CDP Storage.overrideQuotaForOrigin, down to 1 byte, did not make PowerSync's IndexedDB writes fail, so a full device's first open after an update, when the record write is the new D3 write, could not be observed",
+    "Eviction while the app is open, and what the user sees then; persistent storage belongs to D4",
+    "WebKit for concurrentOpens and inFlightWriteCaptured: the WebKit test page closed mid-probe ('Target page, context or browser has been closed'), as in D2's filed WebKit test-page losses",
+    "Two real tabs running two different builds: modelled by two PowerSyncDatabase instances on the same file in one page, which share the connection lease the way tabs do; check:update (two production builds) was not run because another agent's browser suite was running on this 8 GB machine",
+    "A tab killed or reloaded by an update between a newer app's migrations and its record (covered by reasoning plus D1's interruption evidence, not exercised)",
+    "Every screen's behaviour in read-only mode beyond the volunteer save the existing spec covers",
+    "The owner's Android check"
+  ]
+}
