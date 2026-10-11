@@ -537,33 +537,17 @@ describe("versions and updates", () => {
     vi.restoreAllMocks()
   })
 
-  it("says once, on Home, that the app was updated, and shows its version in Impostazioni", async () => {
-    window.localStorage.setItem("cvc-helper.installed-version", "0.0.1")
+  // The note that the app was updated is the bottom bar's
+  // (src/components/UpdateAvailableBanner.test.tsx).
+  it("shows its version in Impostazioni, with a search for a newer one", async () => {
     const user = userEvent.setup()
-    const { unmount } = render(<App />)
+    render(<App />)
 
     await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
-    expect(
-      screen.getByText(
-        `CVC Helper è aggiornata alla versione ${import.meta.env.VITE_APP_VERSION}.`,
-      ),
-    ).toBeVisible()
-    await user.click(
-      screen.getByRole("button", { name: "Chiudi l’avviso di aggiornamento" }),
-    )
-    expect(screen.queryByText(/è aggiornata alla versione/)).toBeNull()
-
     await user.click(screen.getByRole("button", { name: "Impostazioni" }))
     expect(screen.getByText(import.meta.env.VITE_APP_VERSION)).toBeVisible()
     expect(
       screen.getByRole("button", { name: "Cerca aggiornamenti" }),
     ).toBeVisible()
-    unmount()
-
-    // The next start opens Home again and says nothing more.
-    window.history.replaceState(null, "", window.location.href)
-    render(<App />)
-    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
-    expect(screen.queryByText(/è aggiornata alla versione/)).toBeNull()
   })
 })

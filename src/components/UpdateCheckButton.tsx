@@ -1,17 +1,11 @@
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import type { UpdateCheck } from "@/navigation/updateChecks"
+import {
+  UPDATE_CHECK_MESSAGES,
+  type UpdateCheck,
+} from "@/navigation/updateChecks"
 import { useUpdates } from "@/navigation/updates"
-
-const RESULT: Record<UpdateCheck, string> = {
-  offered: "È pronta una nuova versione.",
-  downloading:
-    "Download della nuova versione in corso: tra poco potrai aggiornare.",
-  none: "Questa è l’ultima versione.",
-  offline: "Sei offline: cerca di nuovo quando c’è rete.",
-  failed: "Non riesco a cercare ora. Riprova più tardi.",
-}
 
 /**
  * Looks for a new version on request (D3), and applies one that is ready.
@@ -35,7 +29,7 @@ export function UpdateCheckButton({
           Aggiorna alla nuova versione
         </Button>
         <p className="mt-2 text-sm leading-5 text-muted-foreground">
-          {RESULT.offered}
+          {UPDATE_CHECK_MESSAGES.offered}
         </p>
       </div>
     )
@@ -57,7 +51,7 @@ export function UpdateCheckButton({
         aria-live="polite"
         className="mt-2 min-h-5 text-sm leading-5 text-muted-foreground"
       >
-        {state === "checking" ? "Ricerca in corso…" : state && RESULT[state]}
+        {state && UPDATE_CHECK_MESSAGES[state]}
       </p>
     </div>
   )

@@ -1,7 +1,5 @@
 import { useEffect, useRef } from "react"
 
-import { dataIsReadOnly } from "@/persistence/writeGuard"
-
 /**
  * A screen whose work must not be left behind silently (a failed save, an open
  * note, an edit that cannot be saved yet) registers a leave guard. The screen's
@@ -16,13 +14,6 @@ export type LeaveGuard = (leave: () => void) => boolean
 
 const guards: LeaveGuard[] = []
 
-/**
- * The guard of the current screen. None while the data is read-only (D3):
- * nothing can be saved then, so a guard that waits for a save would hold the
- * user, and the very update they need, on the screen for good.
- */
-const currentGuard = (): LeaveGuard | undefined =>
-  dataIsReadOnly() ? undefined : guards.at(-1)
 let leaving = false
 let passNextPop = false
 // The phone's Back has already moved the history before popstate runs. A held
@@ -83,7 +74,7 @@ export function requestLeave(leave: () => void) {
       leaving = false
     }
   }
-  if (currentGuard()?.(proceed)) return
+  if (guards.at(-1)?.(proceed)) return
   proceed()
 }
 
@@ -140,7 +131,7 @@ function decideBack() {
     return false
   }
   if (closeActiveDialogOnBack()) return true
-  if (!currentGuard()?.(historyBack)) return false
+  if (!guards.at(-1)?.(historyBack)) return false
   restoreCurrentEntry()
   return true
 }

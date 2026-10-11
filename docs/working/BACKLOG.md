@@ -52,7 +52,8 @@ The UG2 field findings and one owner-assigned item; the owner picks which join
    take two lines? (UG2-RS-2, rulebook R05)
 5. **Text at 115–150% on 360–412 px**: the Barche list scrolls sideways, the
    crew header puts text under its buttons, "Volontari" breaks mid-word, and
-   pages drop to one column early (UG2-REG-2, UG2-REG-4).
+   pages drop to one column early (UG2-REG-2, UG2-REG-4; D3 review RH2-Q4
+   saw the Barche list again).
 6. **The D2–D5 crew-size override** in Impostazioni: on 2026-09-24 the owner
    assigned it to the Claude Code follow-up after the 0.3.0 gate, which is now.
 
@@ -71,6 +72,11 @@ Other UG2 findings, not yet put to the owner:
 - after an update the crew page reopens on Sabato PM at the top, not on the
   session that was open, and a mistaken `Più tardi` leaves the update three
   taps away in Impostazioni (D3 review FU-Q3, FU-Q6);
+- with read-only data the screens still offer a `Riprova` that cannot work,
+  and the crew page calls a refused move "non valida"; only the bar gives the
+  reason (D3 review FU-Q7);
+- at 175–200% text on a 320 px phone with the bar up, the end of the Allievi
+  list scrolls into a blank screen (D3 review FU-Q11);
 - sex inferred wrongly for some foreign first names (UG2-FUN-5), no warning
   for a missing size (UG2-FUN-10), warning severity by dot colour only in the
   detail (UG2-FUN-11), the C chip hidden while selected (UG2-FUN-12), the

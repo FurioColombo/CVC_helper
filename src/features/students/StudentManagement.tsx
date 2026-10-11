@@ -13,7 +13,14 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,7 +68,7 @@ import {
   type StudentEditInput,
   type StudentRecord,
 } from "@/persistence/students"
-import { dataIsReadOnly } from "@/persistence/writeGuard"
+import { dataIsReadOnly, onReadOnly } from "@/persistence/writeGuard"
 
 /** A field of the edit form that the profile can open focused. */
 type StudentField =
@@ -469,6 +476,11 @@ function Field({
   )
 }
 
+/** An edit's content, to tell whether two edits differ. */
+function editKey(edit: StudentEditInput) {
+  return JSON.stringify(edit)
+}
+
 function listInItalian(items: string[]) {
   if (items.length < 2) return items.join("")
   return `${items.slice(0, -1).join(", ")} e ${items.at(-1)}`
@@ -544,12 +556,19 @@ function StudentForm({
   const [exitBlockedByMissing, setExitBlockedByMissing] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(false)
-  const initialized = useRef(false)
+  // Each leave held because the data is read-only and work is typed (D3).
+  const [leavesHeld, setLeavesHeld] = useState(0)
   const saveChain = useRef<Promise<void>>(Promise.resolve())
   const saveVersion = useRef(0)
   // The latest valid edit still waiting for its debounce: written at once if
   // the page is hidden or closed, or the form unmounts, before the timer fires.
   const unsavedEdit = useRef<StudentEditInput | null>(null)
+  // The leave that "Esci senza salvare" completes, when one is held (D3).
+  const discardLeave = useRef<(() => void) | null>(null)
+  const discardButton = useRef<HTMLButtonElement>(null)
+  // The edit last written, as its editKey; null while it is the one opened.
+  const storedEdit = useRef<string | null>(null)
+  const readOnly = useSyncExternalStore(onReadOnly, dataIsReadOnly, () => false)
   const formRef = useRef<HTMLFormElement>(null)
   const dictationPending =
     initialNoteDictationPending || courseNoteDictationPending
@@ -635,6 +654,8 @@ function StudentForm({
       ? listInItalian(missingFields.map(({ label }) => label))
       : null
   const savingEdit = inFlight > 0 || (queued && !missingLabels)
+  // The edit as the form opened it.
+  const [openedEdit] = useState(() => editKey(input))
 
   async function persistEdit(draftVersion?: number) {
     setQueued(false)
@@ -651,6 +672,7 @@ function StudentForm({
     saveChain.current = request.catch(() => undefined)
     try {
       await request
+      storedEdit.current = editKey(snapshot)
       if (version === saveVersion.current) setSaved(true)
       return true
     } catch {
@@ -663,10 +685,10 @@ function StudentForm({
 
   useEffect(() => {
     if (!student) return
-    if (!initialized.current) {
-      initialized.current = true
-      return
-    }
+    // Nothing to save until the edit differs from the one opened, also when
+    // React runs this twice on mount in development, or the student's record
+    // is read again unchanged.
+    if (saveVersion.current === 0 && editKey(input) === openedEdit) return
     const draftVersion = ++saveVersion.current
     setSaved(false)
     setQueued(true)
@@ -704,6 +726,10 @@ function StudentForm({
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (student) {
+      if (dataIsReadOnly()) {
+        await exitForm()
+        return
+      }
       if (await persistEdit()) onSaved()
       return
     }
@@ -736,11 +762,18 @@ function StudentForm({
       onCancel()
       return
     }
-    // Read-only data (D3): nothing can be saved, so the form lets go rather
-    // than wait for a save that will never succeed (D3 reviews RH-1, FU-2).
+    // Read-only data (D3): nothing can be saved, so the form never waits for
+    // a save. With nothing typed it lets go; with typed work it says so and
+    // leaves only on "Esci senza salvare" (D3 reviews RH-1, FU-2, FU-6).
     if (dataIsReadOnly()) {
-      if (leave) leave()
-      else onSaved()
+      if (editKey(input) === (storedEdit.current ?? openedEdit)) {
+        if (leave) leave()
+        else onSaved()
+        return
+      }
+      discardLeave.current = leave ?? onSaved
+      setError(true)
+      setLeavesHeld((count) => count + 1)
       return
     }
     const firstMissing = missingFields[0]
@@ -753,6 +786,12 @@ function StudentForm({
     if (leave) leave()
     else onSaved()
   }
+
+  // A held leave brings its reason and "Esci senza salvare" into view, below
+  // the notes the user may be far from (D3 review FU-6).
+  useEffect(() => {
+    if (leavesHeld > 0) discardButton.current?.focus()
+  }, [leavesHeld])
 
   useLeaveGuard(
     student
@@ -895,7 +934,31 @@ function StudentForm({
           />
         </div>
 
-        {error && (
+        {error && readOnly && student && (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3"
+            role="alert"
+          >
+            <p className="min-w-0 flex-1 text-sm font-semibold text-[#a2381b]">
+              Sola lettura: le modifiche non possono essere salvate finché non
+              aggiorni l’app.
+            </p>
+            <Button
+              onClick={() => {
+                const leave = discardLeave.current ?? onSaved
+                discardLeave.current = null
+                unsavedEdit.current = null
+                leave()
+              }}
+              ref={discardButton}
+              type="button"
+              variant="secondary"
+            >
+              Esci senza salvare
+            </Button>
+          </div>
+        )}
+        {error && !(readOnly && student) && (
           <div className="flex items-center justify-between gap-3" role="alert">
             <p className="text-sm font-semibold text-[#a2381b]">
               Modifiche non salvate. Il testo resta qui.

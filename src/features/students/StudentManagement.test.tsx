@@ -9,6 +9,7 @@ import {
   within,
 } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { StrictMode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const speechMocks = vi.hoisted(() => ({
@@ -35,6 +36,15 @@ vi.mock("@/persistence/students", () => ({
   updateStudent: vi.fn(),
   updateStudentKnowledge: vi.fn(),
 }))
+
+// D3: whether the data is read-only for this version, set per test.
+const writeGuardMocks = vi.hoisted(() => ({ readOnly: false }))
+
+vi.mock("@/persistence/writeGuard", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/persistence/writeGuard")>()
+  return { ...actual, dataIsReadOnly: () => writeGuardMocks.readOnly }
+})
 
 vi.mock("@/persistence/evaluations", () => ({
   listCourseEvaluations: vi.fn().mockResolvedValue([]),
@@ -939,6 +949,65 @@ describe("StudentManagement", () => {
       "course-1",
       expect.objectContaining({ firstName: "Marco" }),
     )
+  })
+
+  // D3 reviews RH-1, FU-2, FU-6: with read-only data nothing saves, so the
+  // form never waits for a save, and never drops typed work unseen.
+  describe("when the data is read-only", () => {
+    beforeEach(() => {
+      writeGuardMocks.readOnly = true
+    })
+    afterEach(() => {
+      writeGuardMocks.readOnly = false
+    })
+
+    // Under StrictMode, as in development, where React runs the autosave
+    // effect twice on mount: that is no edit either.
+    it("lets an untouched edit go at once", async () => {
+      getStudents.mockResolvedValue([MARIO])
+      const user = userEvent.setup()
+      render(
+        <StrictMode>
+          <StudentManagement course={COURSE} onHome={vi.fn()} />
+        </StrictMode>,
+      )
+
+      await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+      await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+      await user.click(
+        screen.getByRole("button", { name: "Indietro da Modifica allievo" }),
+      )
+
+      expect(
+        screen.queryByRole("heading", { name: "Modifica allievo" }),
+      ).toBeNull()
+      expect(editStudent).not.toHaveBeenCalled()
+    })
+
+    it("says typed work cannot be saved, and leaves on Esci senza salvare", async () => {
+      getStudents.mockResolvedValue([MARIO])
+      editStudent.mockRejectedValue(new Error("read-only"))
+      const user = userEvent.setup()
+      render(<StudentManagement course={COURSE} onHome={vi.fn()} />)
+
+      await user.click(await screen.findByRole("button", { name: /Mario, 16/ }))
+      await user.click(screen.getByRole("button", { name: "Modifica allievo" }))
+      await user.type(screen.getByLabelText("Nota del corso"), "Non si salva")
+      const leave = vi.fn()
+      act(() => requestLeave(leave))
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Sola lettura: le modifiche non possono essere salvate finché non aggiorni l’app.",
+      )
+      expect(leave).not.toHaveBeenCalled()
+      const discard = screen.getByRole("button", {
+        name: "Esci senza salvare",
+      })
+      // The held leave brings the prompt into view, wherever the user was.
+      await waitFor(() => expect(discard).toHaveFocus())
+      await user.click(discard)
+      expect(leave).toHaveBeenCalledOnce()
+    })
   })
 
   it("does not open the edit form when a long press moved", async () => {

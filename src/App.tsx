@@ -10,7 +10,6 @@ import {
   Settings,
   UsersRound,
   Wrench,
-  X,
 } from "lucide-react"
 import {
   Component,
@@ -33,7 +32,6 @@ import {
   holdBackNavigation,
   requestLeave,
 } from "@/navigation/browserHistory"
-import { noteInstalledVersion } from "@/navigation/installedVersion"
 import { NESTED_SCREEN_KEY_PREFIX } from "@/navigation/nestedScreen"
 import {
   COURSE_FAMILIES,
@@ -302,8 +300,10 @@ function CourseCreation({
     }
   }
 
+  // No navigation here, but the bottom bar can show (an offer, the note after
+  // an update): the page ends above it (D3 review RH2-Q1).
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-5 pt-7 pb-8 sm:pt-10">
+    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-5 pt-7 pb-[calc(2rem+var(--update-banner-height,0px))] sm:pt-10">
       <Brand />
 
       <section className="mt-8 rounded-3xl border bg-card p-5 shadow-[0_18px_50px_rgb(6_59_82/0.08)] sm:p-6">
@@ -517,38 +517,12 @@ function SettingsView({
   )
 }
 
-/** D3: said once, on Home, after the app was updated. */
-function UpdatedNote({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      className="mx-5 mt-2 flex items-center gap-3 rounded-2xl border bg-card px-4 py-2 max-[350px]:mx-[12px]"
-      role="status"
-    >
-      <p className="min-w-0 flex-1 text-sm font-semibold [overflow-wrap:anywhere]">
-        CVC Helper è aggiornata alla versione {APP_VERSION_TEXT}.
-      </p>
-      <Button
-        aria-label="Chiudi l’avviso di aggiornamento"
-        className="size-11 shrink-0 border-0 p-0"
-        onClick={onClose}
-        variant="secondary"
-      >
-        <X aria-hidden="true" className="size-5" />
-      </Button>
-    </div>
-  )
-}
-
 function AppShell({
   course,
   onCourseErased,
-  updateNote,
-  onCloseUpdateNote,
 }: {
   course: CourseRecord
   onCourseErased: () => void
-  updateNote: boolean
-  onCloseUpdateNote: () => void
 }) {
   const navigation = useRef<HTMLElement>(null)
 
@@ -703,8 +677,6 @@ function AppShell({
         </header>
       )}
 
-      {updateNote && <UpdatedNote onClose={onCloseUpdateNote} />}
-
       <main
         className="px-5 py-3 outline-none max-[350px]:px-[12px]"
         ref={mainRef}
@@ -831,11 +803,6 @@ function AppShell({
 
 export function App() {
   const [appState, setAppState] = useState<AppState>({ status: "loading" })
-  // Read once per start: a new version since the last start is an update,
-  // said once, whatever screen opens and whatever course follows.
-  const [updateNote, setUpdateNote] = useState(
-    () => noteInstalledVersion(APP_VERSION_TEXT) !== null,
-  )
 
   useEffect(() => {
     let active = true
@@ -873,8 +840,6 @@ export function App() {
     <ScreenErrorBoundary>
       <AppShell
         course={appState.course}
-        onCloseUpdateNote={() => setUpdateNote(false)}
-        updateNote={updateNote}
         onCourseErased={() => {
           // The next course starts from Home, not from the erased course's
           // screens that the browser history still remembers.

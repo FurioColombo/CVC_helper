@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import { UpdateCheckButton } from "@/components/UpdateCheckButton"
-import type { UpdateCheck } from "@/navigation/updateChecks"
+import {
+  UPDATE_CHECK_MESSAGES,
+  type UpdateCheck,
+} from "@/navigation/updateChecks"
 import { UpdatesProvider } from "@/navigation/updates"
 
 function renderWith(offered: boolean, result: UpdateCheck = "none") {
@@ -21,22 +24,21 @@ function renderWith(offered: boolean, result: UpdateCheck = "none") {
 }
 
 describe("UpdateCheckButton", () => {
-  it.each([
-    ["none", "Questa è l’ultima versione."],
-    ["offline", "Sei offline: cerca di nuovo quando c’è rete."],
-    ["failed", "Non riesco a cercare ora. Riprova più tardi."],
-    ["offered", "È pronta una nuova versione."],
-  ] as const)("says what a check that finds %s means", async (result, text) => {
-    const user = userEvent.setup()
-    const updates = renderWith(false, result)
+  it.each(["none", "offline", "failed", "offered", "downloading"] as const)(
+    "says what a check that finds %s means",
+    async (result) => {
+      const text = UPDATE_CHECK_MESSAGES[result]
+      const user = userEvent.setup()
+      const updates = renderWith(false, result)
 
-    await user.click(
-      screen.getByRole("button", { name: "Cerca aggiornamenti" }),
-    )
+      await user.click(
+        screen.getByRole("button", { name: "Cerca aggiornamenti" }),
+      )
 
-    expect(updates.check).toHaveBeenCalledOnce()
-    expect(await screen.findByText(text)).toBeVisible()
-  })
+      expect(updates.check).toHaveBeenCalledOnce()
+      expect(await screen.findByText(text)).toBeVisible()
+    },
+  )
 
   it("applies a version that is ready instead of looking again", async () => {
     const user = userEvent.setup()

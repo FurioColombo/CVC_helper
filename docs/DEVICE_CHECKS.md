@@ -85,19 +85,23 @@ one HTTPS address: version N installed first, then N+1 published while N is
 open (`docs/DEPLOY.md`). N+1 differs from N in the patch only (as
 `npm run check:update` does): the data keeps the newest version that opened it
 for good, so a later minor version would leave the phone's course read-only
-for the real release.
+for the real release. N is itself 0.4.x: an update from 0.3.0 says nothing
+after it, since 0.3.0 kept no record of its version.
 
 1. Install N on the home screen. **Impostazioni** shows its **Versione**.
 2. With the app open on Home, publish N+1. Switch to another app or lock the
    phone for a minute, then come back: within a minute **Nuova versione
-   disponibile** appears, with no reinstall and no reload by hand.
+   disponibile** appears, with no reinstall and no reload by hand. A tap on
+   the bar in the moment it appears does nothing.
 3. Open a student's edit, type a change, and tap **Aggiorna**: the change is
-   kept, the app reopens, Home says once **CVC Helper è aggiornata alla
+   kept, the app reopens, the bar says once **CVC Helper è aggiornata alla
    versione …**, and **Impostazioni** shows the new version.
 4. While the offer is shown, it covers neither the **+** of Allievi nor the
-   floating bar of Equipaggi.
+   floating bar of Equipaggi, also with a person selected in Equipaggi and
+   with the phone's text size raised.
 5. **Impostazioni → Cerca aggiornamenti**: in airplane mode it says the phone
-   is offline; online, with nothing new, **Questa è l’ultima versione**.
+   is offline; online, with nothing new, **Nessuna versione più recente
+   disponibile ora.**
 
 Record the URL, both versions, the time from the return to the offer, and
 whether the change survived.

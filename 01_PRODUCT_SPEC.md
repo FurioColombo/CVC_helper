@@ -82,12 +82,14 @@ note, a failed save, a scan review), and `Più tardi` hides the offer until the
 next start. As on phone Back, a half-filled form for a new student or
 volunteer is not kept. The bar covers no control: the floating ones (the crew
 page's quick-access rail and destination panels, the Allievi add button) rise
-above it. Settings shows the installed version and `Cerca aggiornamenti`, and
-after an update the app says once, on its first screen, which version is now
-installed. A version older than the one the course data requires
-(`03_TECHNICAL_DECISIONS.md` §3.1) opens the course read-only: everything can be
-consulted, nothing is saved, no screen holds the user waiting for a save, and
-the same bar stays to ask for the update and to look for it.
+above it. A bar that has just appeared takes no tap for a moment. Settings
+shows the installed version and `Cerca aggiornamenti`, and after an update the
+same bar says once which version is now installed. A version older than the one
+the course data requires (`03_TECHNICAL_DECISIONS.md` §3.1) opens the course
+read-only: everything can be consulted, nothing is saved, and the same bar stays
+to ask for the update and to look for it. No screen holds the user waiting for
+a save: an edit with nothing typed closes at once, and one with typed work says
+it cannot be saved and offers `Esci senza salvare`.
 
 A screen with work that cannot be left behind silently (an edit not yet
 saveable, a note being written, a failed save, an unsaved scan review) holds

@@ -1,0 +1,111 @@
+{
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "milestone": "D3",
+  "round": 2,
+  "commit": "57430a5",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "RH2-1",
+      "title": "Every db.execute is now a one-statement write transaction, so SQLite refuses the erase's VACUUM and the erase swallows the error. Names of erased students stay in the database file. Fixed by 56bd22c, which landed during this review.",
+      "evidence": "src/persistence/writeGuard.ts:87-90 routes execute through the guarded writeTransaction. PowerSync opens that with BEGIN IMMEDIATE (node_modules/@powersync/web/node_modules/@powersync/common/lib/db/DBAdapter.js:110). src/persistence/courses.ts:99 then runs db.execute(\"VACUUM\") inside it, and the catch at :100 hides the refusal. Measured in the dev app, through the UI: create a course, add three students whose first names carry a synthetic marker, then Impostazioni > Elimina il corso > Elimina tutto. I scanned IndexedDB 'cvc-helper.db/blocks' for the marker. On 57430a5 (Chromium Pixel 7 and WebKit iPhone 13): blocksWithMarker 1 before the erase and still 1 after it. db.execute('VACUUM') returns 'cannot VACUUM from within a transaction'. db.writeLock(tx => tx.execute('VACUUM')), the path execute used before this round, returns ok and the marker is gone (0). On 0aa6699, served from a copy of that tree: the UI erase leaves 0 blocks with the marker, and db.execute('VACUUM') returns ok. No test covered this: courses.test.ts mocks execute. 56bd22c ('the erase compacts again under the write guard', DI-R2-1) moves VACUUM under writeLock. I re-ran the same probe on 56bd22c: 0 blocks with the marker after the UI erase, on Chromium and WebKit (2 passed, code=0).",
+      "reproduction": "Throwaway spec in my scratchpad's r2/erase.r2.ts (run from test-results/r2-segugio with its own config on a dev server): create a course, add 3 students through the form, erase through Impostazioni, then read every value of IndexedDB cvc-helper.db/blocks and count the blocks that contain the marker bytes. Expected 0 after the erase; observed 1 on 57430a5 and 0 on 0aa6699 and on 56bd22c.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('erases the current course and everything recorded in it from the device'); src/persistence/courses.ts:69-72 ('nothing about the previous week's students (minors included) stays behind on the device'); AGENTS.md §17 privacy"
+    },
+    {
+      "id": "RH-2",
+      "title": "UG2-UX-3 is fixed only at normal text size on screens of 360x640 and larger. On short screens or with larger text, the crew page's quick-access rail is still drawn over the bar where the crew page opens. At 150% text it covers both of the offer's buttons, so a tap on Aggiorna lands on 'Volontari'.",
+      "evidence": "The crew column is h-[calc(100dvh-7rem-var(--update-banner-height))] but keeps min-h-[28rem] (src/features/crews/CrewManagement.tsx:2639). The rail is a flex item with z-20 (:3593), above the bar's z-10 (src/components/UpdateAvailableBanner.tsx:81). When 28rem wins, the rail sits below the bar's top and is painted over it, and it also passes over the bar on every scroll. Offer state, production builds 0.3.0 and 0.3.1 on one origin, offer raised by a return to the foreground, crew page at scrollY 0, elementFromPoint at the button centres. 390x844 at 150% text: banner 592-731, rail 572-690. Più tardi and Aggiorna both hit 'Accesso rapido equipaggi', and the text hits 'Volontari' (Chromium and WebKit). 430x820 (the rulebook's first design profile) at 150%: banner 568-707, rail 597-690. Più tardi hits 'Collocati 0/10' and Aggiorna hits 'Volontari'. At 320x568, 390x664 at 115%, 360x780 at 130% and 412x760 at 130%, the rail covers the banner text (58, 58, 36 and 56 px of overlap); the button centres are still reachable. Read-only bar, dev server, Chromium and WebKit identical: at 430x820 at 150%, 93 px of overlap and 'Cerca aggiornamento' hits the rail (screenshot: only 'iornamento' shows). At 390x844 at 150%, 118 px. Clear at normal text from 360x640 up, which is the case scripts/check-update-journey.mjs measures (viewport 390x844 only, :325). So check:update passes while the defect remains. The rulebook requires text at 200% (R05), and 01 §2 now promises that the rail 'rises above' the bar.",
+      "reproduction": "Production: my scratchpad's r2/offer-tail.mjs (appended to the head of scripts/check-update-journey.mjs). Install N, add students, Crea equipaggi, go to the background, deploy N+1, fast-forward 10 min, come back. Then set the viewport and html font-size, open Equipaggi, scroll to 0, and call elementFromPoint at the banner text and button centres. Dev: r2/rail.r2.ts seeds the 0.3.0 fixture plus markNewerData, opens Equipaggi and runs the same probe at the same profiles. Expected: the bar's buttons reachable at every profile. Observed: as above.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 item 2 ('The banner never covers a floating bar or the add button (UG2-UX-3)'); 01_PRODUCT_SPEC.md §2 ('The bar covers no control: the floating ones (the crew page's quick-access rail …) rise above it'); docs/design/06_DESIGN_RULEBOOK.md R05, R12"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "RH2-3",
+      "title": "The update note now shows on whatever screen opens, and after an update applied from the crew page it pushes the quick-access rail behind the bottom navigation",
+      "evidence": "This round moved the note from Home to every screen (src/App.tsx:706, state at :836). The crew page's fixed-height column (CrewManagement.tsx:2639) does not account for it, so the column, and the rail at its bottom, move about 70 px down. The bottom navigation then paints over the rail, since both are z-20 and the navigation comes later in the DOM. Production builds 0.3.0 and 0.3.1: on the crew page, tap Aggiorna on the offer. The app reloads onto Equipaggi showing 'CVC Helper è aggiornata alla versione 0.3.1.' (note 8-70). Before the update: rail 686-744, navigation 769-844, and 'A terra' and 'Volontari' reachable. After it: rail 756-814 against the navigation at 769-844, with both buttons' centres hitting the navigation's icons. Same at 412x839 (rail 751-809, navigation 764-839), 412x760, 390x664 and 360x640, on Chromium and WebKit. The rail stays hidden until the note is closed or the page is scrolled (94 px). On 0aa6699 the note was shown only on Home. Updating from the crew page is the routine case: the offer arrives when the phone comes back to the foreground, and the reload keeps the view (FU-Q3).",
+      "reproduction": "My scratchpad's r2/note-tail.mjs (production two-build journey): course, student, Crea equipaggi, background, deploy N+1, foreground, tap 'Aggiorna CVC Helper alla nuova versione' on the crew page. After the reload, measure the rail, the navigation and elementFromPoint at the rail's buttons. Screenshot r2/note-crew-chromium.png: the rail is hidden behind Avarie / Home / Equipaggi.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12; docs/design/07_PAGE_CHANGELOG.md P14 (the rail stays above the bottom navigation); 01_PRODUCT_SPEC.md §2 (the note 'once, on its first screen')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "RH2-Q1",
+      "title": "With read-only data and no course, the bar covers the end of course creation: the lower part of 'Crea corso' and the save-failed alert under it",
+      "evidence": "CourseCreation's main keeps pb-8 (src/App.tsx:306) and does not add --update-banner-height. The bar sits at bottom 0 there, because there is no navigation. At 320x568, scrolled to the end: 'Crea corso' 419-467 against the bar at 455-568. Tapping it shows 'Il corso non è stato salvato. Riprova.' below the button, under the bar. This replaces round 1's RH-Q5. The state is rare, since a newer app must have erased the course.",
+      "reproduction": "Dev server: markNewerData on an empty database, open '/', set 320x568, scroll to the end, compare the boxes (my scratchpad's r2 creation probe; screenshot creation-320).",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "RH2-Q2",
+      "title": "The read-only bar keeps an old search result after the update becomes ready, for example 'Nessuna versione più recente disponibile ora.' next to 'Aggiorna'",
+      "evidence": "src/components/UpdateAvailableBanner.tsx:95 renders CHECK_RESULT[check] whenever readOnly && check. The check state is never cleared when `visible` turns true (:112 swaps in Aggiorna). So 'none' or 'downloading' from an earlier 'Cerca aggiornamento' stays beside the Aggiorna button once the hourly check or the return to the foreground brings the version.",
+      "reproduction": "Code reading; not run in a browser, because a read-only course plus a waiting worker needs two builds that also write newer data.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13, R14"
+    },
+    {
+      "id": "RH2-Q3",
+      "title": "When the data turns read-only during an edit, the first Back right after typing is held, and only a second Back leaves",
+      "evidence": "exitForm checks dataIsReadOnly() before saving (src/features/students/StudentManagement.tsx:741). The data is not yet known to be read-only until the save is refused, so the first Back tries the save, fails and stays. Measured: stillOnFormAfterFirstBack 1, stillOnFormAfterSecondBack 0 on Chromium and WebKit; WebKit also shows 'Modifiche non salvate. Il testo resta qui. Riprova'. Not a trap: the second Back leaves.",
+      "reproduction": "My scratchpad's r2/trap.r2.ts, second test: new course and student > Modifica allievo > raiseMinimumWriterUnderOpenApp > type in Nota del corso > tap 'Indietro da Modifica allievo' at once.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('no screen holds the user waiting for a save')"
+    },
+    {
+      "id": "RH-Q3",
+      "title": "Carried over: the first update to 0.4.0 can never say 'aggiornata alla versione', and this is not recorded",
+      "evidence": "src/navigation/installedVersion.ts returns null when no version is stored. 0.3.0 never stored one, and the comparison added this round does not change that. No document records it as a limitation (grep in docs/, 03, 04, CHANGELOG.md).",
+      "reproduction": "Read noteInstalledVersion.",
+      "specRef": "01_PRODUCT_SPEC.md §2"
+    },
+    {
+      "id": "RH2-Q4",
+      "title": "Not D3's: Barche scrolls sideways at 412 px with 150% text, with or without the bar",
+      "evidence": "On the 0.3.0 fixture, writable (no bar) and read-only (bar) alike: innerWidth 484, clientWidth 412, scrollWidth 484. The boat rows ('Disponibile3', 'Da controllare1 avaria7') end at 483. In that zoomed-out state Playwright's tap on the navigation's Home is intercepted. Recorded for the backlog only.",
+      "reproduction": "My scratchpad's r2 overflow probe: seed the 0.3.0 fixture, set 412x915 and html font-size 150%, open Barche, compare scrollWidth and clientWidth.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
+    }
+  ],
+  "roundOneRecheck": {
+    "RH-1": "FIXED. Read-only edit form: own Back and Home leave (d3-read-only.spec.ts), phone Back leaves, and applyUpdateWhenSafe applies at once (afterPhoneBack 0, applied true) on Chromium and WebKit, run on 57430a5. The leftover is RH2-Q3.",
+    "RH-2": "PARTLY FIXED; still a blocker. Clear at 100% text from 360x640 up (390x844: rail 605-663, bar 688-769). Still overlapping at 320x568 and with 115-150% text; see blocker RH-2.",
+    "RH-3": "FIXED. After a reload with the worker waiting, at 320x568: banner 400-493 sits on the navigation (493-568), and both buttons are reachable on Chromium and WebKit. check:update asserts it after a reload.",
+    "RH-4": "RESOLVED BY DECISION. 01_PRODUCT_SPEC.md §2 now says a half-filled new-student or new-volunteer form is not kept, and docs/working/BACKLOG.md lists it for the owner. Extending N1's approval to volunteers is a product choice the owner should confirm.",
+    "RH-5": "FIXED. The shell's end padding includes the bar's height. With the read-only bar, no control is covered at the end of the scroll on 10 screens and nested screens (Allievi, Comandate, Valutazioni, Volontari, profile, Modifica allievo, Nuovo allievo, Nuovo volontario, Equipaggi, a person picked up), each at 320x568, 390x664, 412x760, 412x915 at 150% and 320x664 at 200%. The Allievi + is clear of the last card at the end at all five sizes measured.",
+    "RH-Q1": "FIXED. One record read inside the lock per write (writeGuard.test.ts).",
+    "RH-Q2": "FIXED.",
+    "RH-Q3": "OPEN, not recorded (see qolFindings).",
+    "RH-Q4": "FIXED. The note's state lives in App, and closing it survives an erase.",
+    "RH-Q5": "SUPERSEDED (the notice is gone); see RH2-Q1.",
+    "RH-Q6": "FIXED. A return within the gap is checked when the gap ends (updateChecks.test.ts).",
+    "RH-Q7": "FIXED. An installing worker reports 'downloading'."
+  },
+  "evidenceInspected": [
+    "git diff --stat and full diff 0aa6699..57430a5 (36 files). Consumers of each changed export by grep: db.execute, db.executeBatch and db.writeTransaction in src/persistence/*; dataIsReadOnly, onReadOnly and requestLeave callers; useLeaveGuard users (StudentManagement, EvaluationManagement, StudentScan); --update-banner-height and --bottom-nav-height consumers; fixed-position elements in src/",
+    "PowerSync internals: BasePowerSyncDatabase.execute, writeLock, writeTransaction and executeBatch, the adapter's BEGIN IMMEDIATE in DBAdapter.runWith, and RawSqliteConnection.executeBatch. Inside a lock there is no nested BEGIN; VACUUM is the only statement in src/ that SQLite refuses inside a transaction (no PRAGMA, ATTACH or SAVEPOINT)",
+    "04_IMPLEMENTATION_PLAN.md D3; 01_PRODUCT_SPEC.md §2 as amended this round; docs/design/06_DESIGN_RULEBOOK.md R05, R12, R18 and §5 viewport profiles; 07_PAGE_CHANGELOG.md P01 amendment; docs/working/BACKLOG.md; .evidence/D3 round-1 reports (data-integrity, field-ux, regression)",
+    "Unit tests: the 11 D3 files, 104/104 passed, code=0; src/persistence/ 188/188 passed, code=0. A full `npm run test` gave code=1 for environmental reasons: ENOSPC (the C: drive was full) in repairs.test.ts, and time-outs in the OCR, speech, scan-rules and duty tests under machine contention. repairs.test.ts passed on its own",
+    "npm run lint code=0, typecheck code=0, format:check code=0",
+    "Focused e2e on pixel-7-chrome with a private output folder: d1-migration, d2-duty-items, persistence and reopen-persistence, 17 passed, code=0. d3-read-only, f1-navigation-guards and n1-phone-back on Chromium and WebKit through scripts/run-e2e.mjs: 13 passed and 1 failed. The failure was d3-read-only on iphone-13-webkit-core, both attempts stuck at the seed page 'Preparing' before the app loaded, while other agents' browsers ran. Alone it passed 2/2, code=0",
+    "npm run check:update: PASS, code=0 (chromium 0.19 s, webkit 0.88 s)",
+    "Throwaway probes (my scratchpad's r2/): erase scan of the IndexedDB blocks on 57430a5, on 0aa6699 (a tree copy) and on 56bd22c; read-only bar geometry on 10+ screens at 9 profiles; offer geometry over production builds at 14 profiles on Chromium and WebKit, plus after a reload; the update note on the crew page after an update; the RH-1 trap and the mid-edit case; the Allievi + against the cards; read-only course creation",
+    "Timeline: commit 56bd22c (05:01) and another agent's uncommitted edits to StudentManagement.tsx, browserHistory.ts and applyUpdate.test.ts (05:04) arrived during this review. Every finding above was measured on 57430a5 code, or on 56bd22c where the files concerned are identical. Exception: check:update built while the tree was moving, and 56bd22c does not touch its path. My first run through scripts/run-e2e.mjs cleared test-results/ (Playwright's output folder), which may have removed other reviewers' scratch folders at 04:36. Later runs used a private output folder, and test-results/r2-segugio is removed"
+  ],
+  "anglesTried": {
+    "seed": 943165064,
+    "lenses": [
+      "9. Migrations and the compatibility fixtures (seed mod 12 = 8): claim before repairs, readDataVersion with half records, the 0.1, 0.2 and 0.3 fixtures through d1/d2/persistence/reopen and the persistence unit tests. No regression found",
+      "5. The service worker, precache list and update banner (floor(seed/12) mod 12 = 4): two-build offer geometry at short and enlarged-text profiles, the offer after a reload, the deferred check, the 'downloading' state, the read-only bar's check button, the update note after a real update (RH-2 continued, RH2-3, RH2-Q2)"
+    ],
+    "wildcard": "D3 made every db.execute a one-statement write transaction (BEGIN IMMEDIATE). Which statement does SQLite refuse inside a transaction, and does its caller swallow the refusal? The erase's VACUUM (RH2-1)."
+  },
+  "notTested": [
+    "Physical Android and standalone iOS (the owner's devices). Playwright WebKit on Windows is not iOS",
+    "env(safe-area-inset-bottom), and real system font scaling: text size was emulated with the html font-size, as the repository's UG2 tests do",
+    "The full e2e suite, verify:all and a clean full unit run: the machine was shared with other agents and the C: drive was at 99-100%",
+    "The other agent's uncommitted working-tree edits after 05:04 (StudentManagement, browserHistory, applyUpdate.test), which are not part of 57430a5",
+    "A read-only course with a waiting worker in production (RH2-Q2 comes from code reading), the scan review in read-only mode, and the hourly timer over a real session",
+    "PowerSync's own writeTransaction calls once sync connects (0.5.0); 56bd22c records this as DI-R2-Q3"
+  ]
+}

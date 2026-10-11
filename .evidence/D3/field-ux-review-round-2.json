@@ -1,0 +1,121 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "D3",
+  "round": 2,
+  "commit": "57430a5",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FU-5",
+      "title": "FU-1 is not resolved in the routine crew move: with a person selected, the crew page's quick-access rail is drawn over the update bar, and a tap on 'Aggiorna' hits 'Volontari'. Enlarged text causes the same overlap with no selection",
+      "evidence": "Selecting a person gives the crew workspace pb-[18rem] (src/features/crews/CrewManagement.tsx:2755). A padded scroll box cannot shrink below its padding, so the bounded column (:2639), now shorter by --update-banner-height, overflows. That pushes the rail (:3593, z-20) down onto the bar (src/components/UpdateAvailableBanner.tsx:81, z-10), which is drawn underneath. With enlarged text, min-h-[28rem] does the same. Production builds 0.3.0 to 0.3.1, real service-worker offer after a return to the foreground, session Domenica AM (copy buttons shown), one person selected, 320x664: rail 514-572 over bar 496-589 (58 px). elementFromPoint at the centre of 'Aggiorna' returns 'Volontari' and at 'Più tardi' the 'Collocati' counter. Playwright's trial click on 'Aggiorna' fails with 'Volontari … intercepts pointer events'. Identical on Chromium Pixel 7 and WebKit iPhone 13. In production at 375x647 (iPhone SE standalone) and 360x640 the rail covers 54-58 px of the bar, hiding 'Nuova versione disponibile' and the top of both buttons. With the UG2 40-student roster (dev replica: the real App and the real bar) the button centres are covered at 320x664, 360x640 and 375x647 on both engines: 'Aggiorna' leads to 'Volontari'. The read-only bar's 'Cerca aggiornamento' and 'Aggiorna' are covered the same way. With a selection and 115-130% text it also happens at 412x839 and 390x844 with 130% and at 360x780 with 115%. With no selection it happens at 320 px with 130% text at the top of the page (both buttons hit the rail), and at 412 px with 150% and 320 px with 200% at the end of the page ('Aggiorna' leads to 'Volontari'). At 100% text with no selection, every size tested is clear (412, 390, 360, 320, 390x664, both engines). npm run check:update passes, but it measures only 390x844, with no selection, at the top of the page.",
+      "reproduction": "My scratchpad's fux-r2/probeProd.ts with SESSION=sun-am VIEWPORTS=chromium:320x664,webkit:320x664 (builds in fux-r2/build-0.3.0 and build-0.3.1): install 0.3.0, add three students, Equipaggi > Crea equipaggi, then Domenica AM > Crea equipaggi; hide the page, deploy 0.3.1, show it; the offer appears; tap a student in 'Disponibili'; tap 'Aggiorna'. Expected: the update applies. Observed: the page scrolls to Volontari. Replica: fux-r2/probeSelect.ts and probeRail.ts. Screenshots in shots-r2/: prod-webkit_320x664-selected.png, prod-chromium_375x647-selected.png, panel-chromium-320.png, rail-chromium-320-130-top.png.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('The bar covers no control: the floating ones (the crew page's quick-access rail and destination panels, the Allievi add button) rise above it'); 04_IMPLEMENTATION_PLAN.md D3 item 2 (UG2-UX-3); docs/design/07_PAGE_CHANGELOG.md P01 2026-10-10; docs/design/06_DESIGN_RULEBOOK.md R12, R05"
+    },
+    {
+      "id": "FU-6",
+      "title": "In read-only mode, Aggiorna and leaving discard typed text without asking. The form has just said 'Il testo resta qui', and the bar has said 'aggiorna l’app per salvare le modifiche'",
+      "evidence": "src/navigation/browserHistory.ts:24-25 drops every leave guard while the data is read-only, and src/features/students/StudentManagement.tsx:741-744 lets the form go. Nothing asks before discarding. Both engines, dev replica with the real App, bar and applyUpdateWhenSafe. (1) Read-only from the start: Modifica allievo, then type 'Timone sicuro' in Nota del corso. 'Modifiche non salvate. Il testo resta qui. Riprova' and the bar are on screen together. 'Cerca aggiornamento' then shows 'Nuova versione pronta.' and 'Aggiorna'. Tapping Aggiorna asks nothing (0 dialogs), the page reloads, and the note is gone. (2) Read-only arriving mid-edit: 'Vira bene ' is saved, a newer copy raises the minimum writer, then 'con vento forte' is typed; alert and bar both show; Aggiorna reloads with no question, and the note reads 'Vira bene'. (3) After typing in read-only, the bottom navigation's Home leaves with no dialog, and the text is gone. The instructor does what the bar says to save the changes, and that is what loses them.",
+      "reproduction": "My scratchpad's fux-r2/probeReadOnly.ts (fromStart and midEdit), Chromium Pixel 7 and WebKit iPhone 13. Results in shots-r2/readonly-results.json and readonly-results-webkit.json; screenshots ro-midedit-chromium.png, ro-typing-*.png.",
+      "specRef": "01_PRODUCT_SPEC.md §2: 'Aggiorna applies it once the current screen has saved or asked about the work it holds (an edit, a note, a failed save …)', and a screen holding a failed save 'says why or asks before discarding'. The read-only clause removes only the wait for a save ('no screen holds the user waiting for a save'), not the question. 04_IMPLEMENTATION_PLAN.md D3 success predicate: 'applies it without losing unsaved work'. If the owner decides that edits made in read-only mode are simply lost, §2 must say so, and the bar's and the form's copy must stop promising a save."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FU-7",
+      "title": "The offer arrives under a moving thumb: 0.2-0.9 s after the return to the foreground the bar lifts the rail and the + by 65-93 px, and a tap meant for 'Volontari' or '+' applies the update",
+      "evidence": "Production 0.3.0 to 0.3.1: the offer showed 194-378 ms after the return on Chromium and 850-1567 ms on WebKit (local server; on a phone network it comes after the new precache downloads). The rail jumped from 489-547 to 402-460 at 375x647 and from 686-744 to 621-679 at 390x844. A tap at the old centre of 'Volontari' reaches 'Aggiorna CVC Helper alla nuova versione' at 375x647, 390x844, 390x664, 360x640 and 320x664 (Chromium), and at 375x647 and 320x664 (WebKit). On Allievi, a tap at the old centre of '+' reaches 'Aggiorna' at 412, 390, 360x780 and 320, and at 150/175/200% text (Chromium), and at 320 and 320/200% (WebKit). A tap aimed at 'A terra' lands on the bar's background (harmless). The unintended update reloads Equipaggi on Sabato PM at the top (the backlog's FU-Q3), so tomorrow's session and the selection are lost. 'Più tardi' and 'Aggiorna' are 8 px apart (x 218-297 and 305-396 at 412), so a near-miss on 'Più tardi' also applies.",
+      "reproduction": "My scratchpad's fux-r2/probeProd.ts (thumbInFlightToVolontari, msFromReturnToOffer), fux-r2/probeRail.ts and probeStudents.ts (thumbInFlight). Screenshot shots-r2/prod-chromium_375x647-offer.png.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('never applied by itself'); docs/design/06_DESIGN_RULEBOOK.md R04 ('area attiva non sovrapposta'), R12"
+    },
+    {
+      "id": "FU-8",
+      "title": "Wildcard: after an update, the once-only note sits above the crew page's fixed-height column and pushes the quick-access rail 45 px under the bottom navigation. A tap on 'A terra' opens Avarie",
+      "evidence": "src/App.tsx:706 renders UpdatedNote above <main> on every screen until it is closed (it is still there on Avarie). The crew column's height (src/features/crews/CrewManagement.tsx:2639) subtracts the bar, but not this 62 px note. Production, Aggiorna tapped on Equipaggi: the app reopens on Equipaggi with 'CVC Helper è aggiornata alla versione 0.3.1.'. The rail sits 45 px under the navigation at 375x647, 390x844, 360x640 and 320x664, on Chromium and on WebKit at 375x647. elementFromPoint at 'A terra' gives 'Avarie', and at 'Volontari' gives 'Equipaggi'. The replica gives the same 45 px at 412, 390, 375x647, 360x780 and 320. With an offer also waiting, the rail lies on the bar, and 'Aggiorna' gives 'Volontari' at 412 and 390. To get the rail back the instructor must scroll or reach the note's close button in the top-right corner (y 17-61).",
+      "reproduction": "My scratchpad's fux-r2/probeProd.ts (landing) and fux-r2/probeNote.ts (installed version set to 0.2.9, then reload). Screenshots in shots-r2/: prod-webkit_375x647-landing.png, note-chromium-390-nooffer.png.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P01 2026-10-10 and P14 (the rail stays above the bottom navigation); docs/design/06_DESIGN_RULEBOOK.md R12; 01_PRODUCT_SPEC.md §2 ('says once, on its first screen')"
+    },
+    {
+      "id": "FU-9",
+      "title": "FU-3 residual: at 175-200% text on 320-360 px phones, the bar's main button runs past the right edge and the read-only sentence is clipped",
+      "evidence": "The text has min-w-[10rem] (src/components/UpdateAvailableBanner.tsx:86), which is 320 px at 200%, wider than the bar's content box. The button group is shrink-0 (:101), so its buttons never stack. Measured on Chromium: 'Aggiorna' spans x 205-387 at 320 and 360 px with 200%, and 179-339 at 320 px with 175%. 'Cerca aggiornamento' spans x 32-370 at 320 and 360 px with 200%, and 28-324 at 320 px with 175%. The read-only text spans x 32-352 at 320 px with 200%, so 'aggiorna' is cut at the edge. WebKit at 320 px with 200% gives the same. The page itself does not scroll sideways (scrollWidth equals clientWidth), and the clipped buttons' centres stay on screen. The rest of FU-3 is fixed: the bar is 225 px (offer) or 265 px (read-only) at 320 px with 200%, against 1001 px in round 1.",
+      "reproduction": "My scratchpad's fux-r2/probeStudents.ts (fit). Screenshots in shots-r2/: stu-chromium-readonly-320-200-top.png, stu-chromium-offer-360-200-top.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (testo al 200%), R18; docs/design/07_PAGE_CHANGELOG.md P01 ('con poco spazio o testo grande i pulsanti vanno sotto il testo')"
+    },
+    {
+      "id": "FU-10",
+      "title": "FU-2 residual: in read-only mode, the student form's own 'Fine' still holds the user, even with nothing changed",
+      "evidence": "save() (src/features/students/StudentManagement.tsx:704-708) still calls persistEdit for an existing student, and the read-only branch at :741 covers only exitForm. Read-only data, Modifica allievo, no change, 'Fine': after 2 s the form is still open with 'Modifiche non salvate. Il testo resta qui. Riprova' (both engines). 'Fine' is the full-width bottom button, the one the thumb reaches. The header's Back, the bottom navigation and the phone's Back now leave.",
+      "reproduction": "My scratchpad's fux-r2/probeReadOnly.ts (stillOnFormAfter.fine = true; fineAlerts). Screenshot shots-r2/ro-fine-webkit.png.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('no screen holds the user waiting for a save')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-Q7",
+      "title": "FU-4 residual: the reason is now on screen, but the screens still offer a 'Riprova' that cannot work, and the crew page still says 'non valida'",
+      "evidence": "In read-only mode the form alert (562-606) and the bar (699-764) are on screen together at 412x839, and at 390x664 on WebKit. The form still says 'Riprova'. A crew move still shows 'Modifica non valida o non salvata. Riprova.' (src/features/crews/CrewManagement.tsx:2434, :2710), which reads as the instructor's mistake.",
+      "reproduction": "My scratchpad's fux-r2/probeReadOnly.ts (typing, crewMove). Screenshot shots-r2/ro-crew-move-chromium.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14"
+    },
+    {
+      "id": "FU-Q8",
+      "title": "The same search uses two vocabularies, one in the bar and one in Impostazioni",
+      "evidence": "The bar says 'Cerca aggiornamento' (src/components/UpdateAvailableBanner.tsx:132), while Impostazioni and §2 say 'Cerca aggiornamenti' (src/components/UpdateCheckButton.tsx:22). 'Aggiorna' vs 'Aggiorna alla nuova versione'. The outcomes (UpdateAvailableBanner.tsx:7-14 vs UpdateCheckButton.tsx:7-13): 'Nessuna versione più recente disponibile ora.' vs 'Questa è l’ultima versione.'; 'Ricerca non riuscita: riprova più tardi.' vs 'Non riesco a cercare ora. Riprova più tardi.'; 'Nuova versione in arrivo…' vs 'Download della nuova versione in corso…'; 'Nuova versione pronta.' vs 'È pronta una nuova versione.'.",
+      "reproduction": "Read the two files; my scratchpad's fux-r2/probeReadOnly.ts (searches).",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13"
+    },
+    {
+      "id": "FU-Q9",
+      "title": "A read-only search grows the bar twice under the thumb",
+      "evidence": "The bar grows from 65 to 83 px ('Ricerca di una nuova versione…') and then to 103 px with the result at 412 px, and from 81 to 123 px at 390x664 on WebKit. Each time the rail, the + and the end padding move up with it. The button itself stays in place.",
+      "reproduction": "My scratchpad's fux-r2/probeReadOnly.ts (searches.*.before/during/afterH).",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "FU-Q11",
+      "title": "With 175-200% text and the bar up at 320 px, the end of the Allievi list is a blank screen",
+      "evidence": "The grid's pb-24, the shell's 7rem and the bar's height together exceed the viewport. At the end of the scroll, the last card sits at y -209 to -1 at 320 px with 200% (the offer), and -249 to -41 in read-only mode. Nothing is covered, but the last student is scrolled out of view.",
+      "reproduction": "My scratchpad's fux-r2/probeStudents.ts (end.last). Screenshot shots-r2/stu-chromium-offer-320-200-end.png.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P03; docs/design/06_DESIGN_RULEBOOK.md R02"
+    }
+  ],
+  "roundOneRecheck": {
+    "FU-1": "Partly resolved. At 100% text with no selection the rail rises above the bar, and both buttons are tappable at 412, 390, 360, 320 and 390x664 on Chromium and WebKit (replica), and at 390x844 in check:update on both engines. It is not resolved with a person selected on 320-375 px phones or with 115-200% text: FU-5 (blocker).",
+    "FU-2": "Resolved for the header's Back, the bottom navigation and the phone's Back, on both engines, and Aggiorna now reloads. Residuals: 'Fine' still holds the user (FU-10), and the blanket guard bypass now discards typed text without asking (FU-6).",
+    "FU-3": "Partly resolved. No more one-letter column; the bar takes 34% (offer) and 40% (read-only) of the screen at 320 px with 200%; the + stays on screen, clear of the bar and tappable at every profile. Residuals: buttons and read-only text clipped at 320-360 px with 175-200% (FU-9), and the rail overlap with large text (FU-5).",
+    "FU-4": "Largely resolved: the read-only bar is on screen next to the failed save on both engines, both from the start and mid-edit. The wording residual is FU-Q7.",
+    "FU-Q1": "Resolved: the read-only bar is 65-113 px at 100% text (8-17% of the screen) and 265 px at 320 px with 200%, against 226 px and 740 px before.",
+    "FU-Q2": "Resolved: 'Nessuna versione più recente disponibile ora.' no longer contradicts the bar; the offline, failed and downloading outcomes are clear.",
+    "FU-Q3": "In docs/working/BACKLOG.md. The session reset is confirmed in production (the app reopens on Sabato PM). The note now shows on the first screen, but on the crew page it pushes the rail under the navigation (FU-8).",
+    "FU-Q4": "Resolved: the last card is clear of the + at every profile on both engines (see FU-Q11 for the blank end at 200%).",
+    "FU-Q5": "Resolved on Chromium: the focused field stops above the bar at 412x470, 360x420 and 320x400. On WebKit, Tab focus scrolling ignores scroll-margin entirely, for the navigation too, so this is engine behaviour that predates D3.",
+    "FU-Q6": "In docs/working/BACKLOG.md; not re-tested."
+  },
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-field-ux.md; .evidence/D3/field-ux-review-round-1.json, data-integrity-review-round-1.json, regression-review-round-1.json (listed); 04_IMPLEMENTATION_PLAN.md D3; 01_PRODUCT_SPEC.md §2 (updates, read-only, leave guard); docs/design/06_DESIGN_RULEBOOK.md R02, R04, R05, R12-R14, R18; docs/design/07_PAGE_CHANGELOG.md P01 amendment; docs/working/BACKLOG.md; docs/DEVICE_CHECKS.md 'Updates and versions'",
+    "git diff 0aa6699..57430a5: src/components/UpdateAvailableBanner.tsx, src/App.tsx, src/main.tsx, src/styles.css, src/navigation/browserHistory.ts, installedVersion.ts, updateChecks.ts, src/persistence/writeGuard.ts, migrations.ts, dataVersion.ts, courses.ts, src/features/crews/CrewManagement.tsx, src/features/students/StudentManagement.tsx, scripts/check-update-journey.mjs, tests/e2e/d3-read-only.spec.ts",
+    "npm run check:update at 57430a5: PASS on Chromium (0.20 s) and WebKit (0.36 s), including the new offerButtonsTappable and quick-access-rail clearance checks, all at 390x844; looked at test-results/d3-update-journey/ (browser-evidence.json, update-offer-webkit.png)",
+    "node scripts/run-e2e.mjs tests/e2e/d3-read-only.spec.ts: 4 passed, 1 flaky, and 1 WebKit failure ('opens newer data read-only'). With other agents' browser processes running, that test passed on its own in 1.4 min, so I treat the failure as load-related, not a product failure",
+    "My own production builds of 57430a5 (CVC_APP_VERSION 0.3.0 and 0.3.1, in my scratchpad's fux-r2/), with a real service worker and a return to the foreground: fux-r2/probeProd.ts on Chromium Pixel 7 at 375x647, 390x844, 360x640, 320x664 and 390x664, and WebKit iPhone 13 at 375x647 and 320x664, on Sabato PM and Domenica AM",
+    "Dev replica (the real App, UpdateAvailableBanner and applyUpdateWhenSafe; service-worker state through window hooks; the UG2 40-student roster; read-only via src/test/d3Harness.ts): fux-r2/probeRail.ts, probeSelect.ts, probeStudents.ts, probeReadOnly.ts, probeNote.ts and probeFinal.ts across 412x839, 390x844, 390x664, 375x647, 360x780, 360x640 and 320x664 at 100/115/130/150/175/200% text, on Chromium Pixel 7 and WebKit iPhone 13; JSON and screenshots in my scratchpad's shots-r2/",
+    "Signature move, one morning on the pier, 08:10, setting Domenica AM crews on a 375x647 phone after the owner deployed overnight. 1) Unlock; the app returns to Equipaggi, Domenica AM. 2) I reach for 'Volontari'; 0.3-0.9 s after the return the offer appears, the rail jumps 87 px up, and my thumb lands on 'Aggiorna'. The app reloads (unintended tap 1; re-read 1: why did it restart?). 3) It reopens on Equipaggi, Sabato PM, with 'CVC Helper è aggiornata alla versione 0.3.1.' on top and the rail 45 px under the navigation (re-read 2: where are my Sunday crews?). 4) Sessione > Domenica AM (2 taps). 5) I tap the 'A terra' edge that peeks out, and land on Avarie (re-read 3). 6) Equipaggi again (1 tap); close the note in the top-right corner (1 tap, a two-hand stretch). 7) Select Lucia and tap 'A terra' in the panel (2 taps). Total 8 taps, about 25-30 s and 3 re-reads, against 2 taps for the same move without the update. On a 320 px phone, had I meant to accept the offer while a student was selected, 'Aggiorna' would have scrolled me to Volontari. In read-only mode, opening Modifica allievo just to read a number and tapping 'Fine' says 'Modifiche non salvate. Il testo resta qui.'"
+  ],
+  "anglesTried": {
+    "seed": 750491859,
+    "lenses": [
+      "4. Interruptions (seed mod 12 = 3): the bar arriving 0.2-0.9 s after a return to the foreground moves the rail and the + under a thumb in flight, so 'Volontari' and '+' become 'Aggiorna' (FU-7); read-only arriving mid-edit shows its reason on screen, but Aggiorna then drops the note (FU-6); with the edit form scrolled to the end, 'Fine' stays tappable when the bar arrives; the update lands on Sabato PM with the note pushing the rail under the navigation (FU-8).",
+      "1. One-thumb reach (floor(seed / 12) mod 12 = 0): the bar's actions sit bottom right, in reach on every profile, and the read-only search is in reach too. They are not reachable when the rail lies on them (FU-5). The update note's close button is in the top-right corner and is needed to free the rail (FU-8). The form's bottom 'Fine' is the one exit that does not work in read-only mode (FU-10)."
+    ],
+    "wildcard": "Round 2 moved the once-only 'aggiornata' note from Home to whatever screen opens. I checked where the crew page's fixed-height column, which subtracts only the bar, puts the rail when the note sits above it. The rail goes 45 px under the bottom navigation at every width, so 'A terra' opens Avarie (FU-8)."
+  },
+  "notTested": [
+    "A physical Android or iPhone, installed standalone (the owner's device check in docs/DEVICE_CHECKS.md)",
+    "Real system font scaling and the on-screen keyboard: text size was emulated through the html font-size, as the UG2 stress tests do",
+    "Real network latency: the offer timing came from a local server; on a phone network the bar comes later, after the new precache downloads, which widens the FU-7 window",
+    "Read-only mode in production builds: vite.config.ts now refuses a CVC_APP_VERSION with another minor, so read-only was exercised in the dev replica with src/test/d3Harness.ts",
+    "The scan review and the evaluation screen in read-only mode (their guards are bypassed as well; not exercised)",
+    "The hourly periodic check, and glare and contrast (not drawn lenses); the 'Più tardi' recovery path (FU-Q6, in the backlog)"
+  ]
+}

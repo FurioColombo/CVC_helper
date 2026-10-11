@@ -4,8 +4,9 @@ import { expect, type Page, test } from "@playwright/test"
  * D3 on the real engine: a course whose data a newer app wrote, beyond this
  * version's reach (03 §3.1), opens read-only. The course reads as usual, the
  * bottom bar says `aggiorna l'app`, a save through the screens is refused, an
- * edit that waits for a save does not hold the user, and no repair or
- * migration has written anything, also after a reload.
+ * edit never waits for a save (it leaves, or asks before dropping typed
+ * work), and no repair or migration has written anything, also after a
+ * reload.
  */
 
 const isAppRoot = (target: URL) => target.pathname === "/"
@@ -13,7 +14,7 @@ const isAppRoot = (target: URL) => target.pathname === "/"
 /** The bottom bar in its read-only state (UpdateAvailableBanner). */
 const readOnlyBar = (page: Page) =>
   page.getByRole("status").filter({
-    hasText: "Solo lettura: aggiorna l’app per salvare le modifiche.",
+    hasText: "Sola lettura: aggiorna l’app per salvare le modifiche.",
   })
 
 test("opens newer data read-only: it reads, says so, refuses a save and repairs nothing", async ({
@@ -67,7 +68,7 @@ test("opens newer data read-only: it reads, says so, refuses a save and repairs 
     ).toBeVisible()
     await expect(readOnlyBar(page)).toBeVisible()
     await expect(
-      page.getByRole("button", { name: "Cerca aggiornamento" }),
+      page.getByRole("button", { name: "Cerca aggiornamenti" }),
     ).toBeVisible()
     const before = await stored()
 
@@ -80,27 +81,37 @@ test("opens newer data read-only: it reads, says so, refuses a save and repairs 
       page.getByText("La modifica non è stata salvata. Riprova."),
     ).toBeVisible()
 
-    // D3 reviews RH-1, FU-2: nothing saves, so nothing holds the user on an
-    // edit that waits for a save: its own Back and the navigation leave.
+    // D3 reviews RH-1, FU-2, FU-6: nothing saves, so no edit waits for a
+    // save. With nothing typed its own Back leaves at once; typed work is
+    // not dropped unseen: the form says it cannot be saved, and the
+    // navigation leaves on "Esci senza salvare".
     await page.getByRole("button", { name: "Annulla" }).click()
     await page.getByRole("button", { name: "Indietro da Volontari" }).click()
     await page.getByRole("button", { name: "Allievi" }).click()
     await page.getByRole("button", { name: /^Irene,/ }).click()
     await page.getByRole("button", { name: "Modifica allievo" }).click()
-    await expect(
-      page.getByRole("heading", { name: "Modifica allievo" }),
-    ).toBeVisible()
+    const editHeading = page.getByRole("heading", { name: "Modifica allievo" })
+    await expect(editHeading).toBeVisible()
     await page
       .getByRole("button", { name: "Indietro da Modifica allievo" })
       .click()
-    await expect(
-      page.getByRole("heading", { name: "Modifica allievo" }),
-    ).toHaveCount(0)
+    await expect(editHeading).toHaveCount(0)
+
     await page.getByRole("button", { name: "Modifica allievo" }).click()
+    await page
+      .getByRole("textbox", { name: "Nota del corso" })
+      .fill("Non si salva")
     await page
       .getByRole("navigation", { name: "Navigazione principale" })
       .getByRole("button", { name: "Home" })
       .click()
+    await expect(
+      page.getByText(
+        "Sola lettura: le modifiche non possono essere salvate finché non aggiorni l’app.",
+      ),
+    ).toBeVisible()
+    await expect(editHeading).toBeVisible()
+    await page.getByRole("button", { name: "Esci senza salvare" }).click()
     await expect(
       page.getByRole("heading", { name: "D2 - 38 | 2026" }),
     ).toBeVisible()

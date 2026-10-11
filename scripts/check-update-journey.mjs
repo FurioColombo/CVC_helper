@@ -277,6 +277,75 @@ async function offerButtonsTappable(page, name) {
 }
 
 /**
+ * The screens the reviewers found the crew rail on the bar with (D3 reviews
+ * RH-2, FU-5, FU-9): short, narrow, and with enlarged text, as the root font
+ * size the phone's text setting scales. The measures above run at 390x844.
+ * Each is measured with the page at its top, as a screen opens, except 200%
+ * text on 320 px: there the bar and the navigation leave the page about a
+ * quarter of the screen, so the page scrolls, as the rulebook allows for this
+ * profile ("320 CSS px di larghezza e testo 200%"), and the controls are
+ * measured where that scroll ends.
+ */
+const STRESS_PROFILES = [
+  { width: 320, height: 568, text: 1, at: "top" },
+  { width: 360, height: 640, text: 1.3, at: "top" },
+  { width: 390, height: 844, text: 1.5, at: "top" },
+  { width: 430, height: 820, text: 1.5, at: "top" },
+  { width: 320, height: 664, text: 2, at: "end" },
+]
+
+/** Two frames: the bar republishes its height, the layout follows. */
+const settle = (page) =>
+  page.evaluate(
+    () =>
+      new Promise((done) =>
+        globalThis.requestAnimationFrame(() =>
+          globalThis.requestAnimationFrame(done),
+        ),
+      ),
+  )
+
+/**
+ * On each stress profile: each control clear of the offer, and the offer's
+ * buttons tappable. Returns each control's clearance.
+ */
+async function underStress(page, name, controls) {
+  const measured = []
+  const setText = (size) =>
+    page.evaluate((value) => {
+      globalThis.document.documentElement.style.fontSize = value
+    }, size)
+  for (const { width, height, text, at } of STRESS_PROFILES) {
+    const profile = `${name} at ${width}x${height}, text ${text * 100}%`
+    await page.setViewportSize({ width, height })
+    await setText(`${text * 100}%`)
+    await settle(page)
+    await page.evaluate(
+      (top) =>
+        globalThis.scrollTo(
+          0,
+          top ? 0 : globalThis.document.documentElement.scrollHeight,
+        ),
+      at === "top",
+    )
+    await settle(page)
+    const clearancePx = {}
+    for (const [label, control] of controls) {
+      clearancePx[label] = (
+        await clearanceAboveBanner(page, `${profile}: ${label}`, control)
+      ).clearancePx
+    }
+    await offerButtonsTappable(page, profile)
+    measured.push({ width, height, text, at, clearancePx })
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
+  await setText("")
+  await page.evaluate(() => globalThis.scrollTo(0, 0))
+  await settle(page)
+  return measured
+}
+
+/**
  * Moves the page between foreground and background the way the browser does:
  * the state the app reads, then the event it listens to.
  */
@@ -428,6 +497,9 @@ async function runJourney(engine, browserType, server, screenshots) {
       crewRail,
     )
     await offerButtonsTappable(page, "Crew page")
+    const crewStress = await underStress(page, "Crew page", [
+      ["quick-access rail", crewRail],
+    ])
     await page
       .getByRole("region", { name: "Allievi disponibili" })
       .getByRole("button", { name: "Mario", exact: true })
@@ -441,6 +513,14 @@ async function runJourney(engine, browserType, server, screenshots) {
       "The crew page's destination panel",
       crewBar,
     )
+    const crewSelectedStress = await underStress(
+      page,
+      "Crew page with a person selected",
+      [
+        ["quick-access rail", crewRail],
+        ["destination panel", crewBar],
+      ],
+    )
     // Allievi list: the round add button.
     await goHome(page)
     await page.getByRole("button", { name: "Allievi", exact: true }).click()
@@ -452,6 +532,9 @@ async function runJourney(engine, browserType, server, screenshots) {
       addStudent,
     )
     await offerButtonsTappable(page, "Allievi")
+    const addStudentStress = await underStress(page, "Allievi", [
+      ["add button", addStudent],
+    ])
 
     // A start or reload that finds the update already waiting shows the offer
     // above the navigation, drawn after the offer was known (D3 review RH-3).
@@ -517,7 +600,9 @@ async function runJourney(engine, browserType, server, screenshots) {
       .getByRole("button", { name: "Impostazioni", exact: true })
       .click()
     await page.getByRole("button", { name: "Cerca aggiornamenti" }).click()
-    await page.getByText("Questa è l’ultima versione.").waitFor()
+    await page
+      .getByText("Nessuna versione più recente disponibile ora.")
+      .waitFor()
     if (await page.getByText("Nuova versione disponibile").count()) {
       throw new Error("The app offered an update again after applying it")
     }
@@ -540,6 +625,11 @@ async function runJourney(engine, browserType, server, screenshots) {
         crewDestinationPanel: crewBarClearance,
       },
       offerButtonsTappable: ["crew page", "Allievi", "after a reload"],
+      underStress: {
+        crewPage: crewStress,
+        crewPageWithSelection: crewSelectedStress,
+        addStudentButton: addStudentStress,
+      },
     }
   } finally {
     await browser.close()

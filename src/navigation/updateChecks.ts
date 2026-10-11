@@ -18,6 +18,20 @@ export const UPDATE_CHECK_MIN_GAP_MS = 30 * 1000
 export type UpdateCheck =
   "offered" | "downloading" | "none" | "offline" | "failed"
 
+/**
+ * What a search for a new version found, said the same way wherever it is
+ * asked (the bottom bar, Impostazioni; D3 review FU-Q8).
+ */
+export const UPDATE_CHECK_MESSAGES: Record<UpdateCheck | "checking", string> = {
+  checking: "Ricerca di una nuova versione…",
+  offered: "È pronta una nuova versione.",
+  downloading:
+    "Download della nuova versione in corso: tra poco potrai aggiornare.",
+  none: "Nessuna versione più recente disponibile ora.",
+  offline: "Sei offline: cerca di nuovo quando c’è rete.",
+  failed: "Ricerca non riuscita: riprova più tardi.",
+}
+
 type Registration = Pick<
   ServiceWorkerRegistration,
   "update" | "installing" | "waiting"

@@ -2752,7 +2752,7 @@ export function CrewManagement({
             <>
               <div
                 aria-label="Composizione equipaggi"
-                className={`mt-3 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto pr-1 ${(selected && (selectedLocation.kind === "pool" || selected.personType === "volunteer")) || destinationCrewId ? "pb-[18rem]" : ""}`}
+                className="mt-3 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto pr-1"
                 role="region"
               >
                 <section
@@ -3584,13 +3584,26 @@ export function CrewManagement({
                     automaticamente.
                   </span>
                 </p>
+                {/* Room to scroll the last crew above the destination panel. A
+                    spacer, not padding: a scroll box cannot shrink below its
+                    padding, so padding pushed the quick-access rail out of the
+                    column onto the update bar (D3 review FU-5). */}
+                {((selected &&
+                  (selectedLocation.kind === "pool" ||
+                    selected.personType === "volunteer")) ||
+                  destinationCrewId) && (
+                  <div aria-hidden="true" className="h-[18rem] shrink-0" />
+                )}
               </div>
               {/* Three equal columns; when the text is enlarged until a word of
                   them no longer fits its column (200% at 320 px broke "Collocati"
                   and "Volontari"), the bar wraps: the two buttons share the first
                   row, if they fit, and the count takes the next. The query is on the
-                  bar's width in rem, so it only triggers with enlarged text. */}
-              <div className="@container z-20 mt-2 shrink-0">
+                  bar's width in rem, so it only triggers with enlarged text.
+                  Where the page scrolls instead (a short screen, large text),
+                  the rail sticks above the navigation and the update bar
+                  rather than passing under them (D3 reviews RH-2, FU-5). */}
+              <div className="@container sticky bottom-[calc(var(--bottom-nav-height,0px)+var(--update-banner-height,0px)+0.5rem)] z-20 mt-2 shrink-0">
                 <nav
                   aria-label="Accesso rapido equipaggi"
                   className="grid grid-cols-3 items-center gap-1 rounded-2xl border bg-card/95 p-1.5 shadow-[0_6px_18px_rgb(6_59_82/0.12)] backdrop-blur @max-[14rem]:flex @max-[14rem]:flex-wrap"
