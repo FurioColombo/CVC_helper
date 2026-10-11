@@ -250,6 +250,24 @@ describe("prepareDatabase", () => {
     expect(order).toEqual(["init", "version", "probe", "items probe"])
   })
 
+  // D3 review DI-R2-Q1: the claim comes first and stays when a later step
+  // fails, so an older app stays refused until a fixed version opens the data.
+  it("keeps its claim when a migration after it fails", async () => {
+    const { database, order } = preparable(false)
+    const failing = step(
+      "failing",
+      vi.fn(async () => {
+        throw new Error("synthetic migration failure")
+      }),
+    )
+
+    await expect(
+      prepareDatabase(database as never, [failing], APP),
+    ).rejects.toThrow("synthetic migration failure")
+
+    expect(order).toEqual(["init", "version", "record", "probe", "items probe"])
+  })
+
   it("runs again when asked after a failed run", async () => {
     const { database, order } = preparable(true)
     database.init.mockRejectedValueOnce(new Error("storage unavailable"))

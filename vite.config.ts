@@ -7,6 +7,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
+import { encodeVersion, parseVersion } from "./src/domain/compatibility"
+
 const LOCAL_OCR_ASSETS = {
   "/ocr/worker.min.js": "node_modules/tesseract.js/dist/worker.min.js",
   "/ocr/lang/ita.traineddata.gz":
@@ -119,14 +121,17 @@ const packageVersion = (
 const appVersion = process.env.CVC_APP_VERSION ?? packageVersion
 // The data records the newest version that wrote it, for good: a build that
 // claimed a later minor version would leave real data read-only for the real
-// release, so an override may change only the patch (D3 review DI-Q4).
-if (
-  appVersion.split(".").slice(0, 2).join(".") !==
-  packageVersion.split(".").slice(0, 2).join(".")
-) {
-  throw new Error(
-    `CVC_APP_VERSION ${appVersion} must keep package.json's ${packageVersion} major.minor`,
-  )
+// release, so an override may change only the patch, and must be a version the
+// app can read and store (D3 reviews DI-Q4, DI-R2-Q2).
+{
+  const override = parseVersion(appVersion)
+  const own = parseVersion(packageVersion)
+  encodeVersion(override)
+  if (override.major !== own.major || override.minor !== own.minor) {
+    throw new Error(
+      `CVC_APP_VERSION ${appVersion} must keep package.json's ${packageVersion} major.minor`,
+    )
+  }
 }
 
 export default defineConfig({

@@ -167,9 +167,12 @@ else: an app older than the minimum writer runs no repair or migration, and its
 database refuses every write (`src/persistence/writeGuard.ts`), so it reads the
 course and asks to update. Otherwise the app first claims the data, re-reading
 the record inside that transaction so it never lowers a newer app's, and only
-then repairs and migrates, so an older app is refused from the claim on. The
-guard re-reads the record inside every write's own transaction, so a write in
-flight cannot land after a newer app's claim. The app's version comes from
+then repairs and migrates, so an older app is refused from the claim on; an
+open that fails after its claim keeps it, so older apps stay refused until a
+fixed version opens the data. The guard re-reads the record inside every
+write's own transaction, so a write in flight cannot land after a newer app's
+claim; statements SQLite refuses inside a transaction (the erase's `VACUUM`)
+run under the guarded write lock instead. The app's version comes from
 `package.json` at build time (`import.meta.env.VITE_APP_VERSION`); an override
 for a test build may change only the patch, because the record keeps the
 newest version for good. PowerSync's client keeps rows as JSON behind views, so an
@@ -187,12 +190,17 @@ open the database: PowerSync applies an app's schema when it opens, before any
 record is read, so even a read-only older app drops such a table. From 0.4.0
 the contract keeps an older app from writing.
 
-Two consequences for 0.5.0. Making the course tables synced is not an
-expand-only change: an older app's local-only schema sees none of their rows,
-so the release that does it declares its own minimum writer, as a major
-release does, and an older app then shows an empty, read-only course. And the
-record is local to each device: the server needs the writing app's version
-with every upload to enforce the same rule.
+Three consequences for 0.5.0. Making the course tables synced is not an
+expand-only change. The new version's own first open drops the local-only
+tables its schema no longer declares, before any claim or migration runs, so
+it keeps declaring them (under other view names) until a migration has copied
+their rows, and drops them only in a later release; an older app's local-only
+schema sees none of the synced rows, so that release declares its own minimum
+writer, as a major release does. The record is local to each device: the
+server needs the writing app's version with every upload to enforce the same
+rule. And the guard wraps the database instance, so PowerSync's own writes are
+refused too once the data is read-only, sync-stream subscriptions among them:
+a read-only app that should still download must be allowed those.
 
 ### 3.2 Coherent writes
 

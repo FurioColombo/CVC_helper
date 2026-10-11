@@ -1,0 +1,101 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D3",
+  "round": 2,
+  "commit": "57430a5",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-R2-1",
+      "title": "Elimina il corso no longer compacts the database: its VACUUM now runs inside the guard's write transaction, SQLite refuses it, the error is swallowed, and the erased students stay readable in the browser's storage",
+      "evidence": "src/persistence/writeGuard.ts:87-90 now runs every db.execute as writeTransaction(tx => tx.execute(sql)), and PowerSync opens that transaction with BEGIN IMMEDIATE (node_modules/@powersync/common/src/db/DBAdapter.ts:262). src/persistence/courses.ts:98-102 runs db.execute(\"VACUUM\") inside a try/catch that ignores every error. On the real engine the guarded VACUUM fails with 'cannot VACUUM from within a transaction'. PRAGMA secure_delete is 0 and journal_mode is delete, so the deleted rows stay in free pages. Probe vacuumAfterErase on 57430a5, same result on Chromium and WebKit: 300 synthetic students whose surnames and notes carry a marker. After eraseAllCourseData(), a SELECT returns 0 students, but page_count is still 134, freelist_count is 75, and 76 of 76 IndexedDB blocks still contain the marker. A VACUUM through an unguarded instance afterwards returns ok, leaves 59 pages, 0 free and 0 blocks with the marker. Through the real UI (create the course, add 3 students with marker surnames, Impostazioni → Elimina il corso e inizia un nuovo corso → tick the checkbox → Elimina tutto), on 57430a5 for Chromium and WebKit: 1 block with the marker before the erase, 1 after it and 1 after a reload. The same journey and probe on 0aa6699 (git archive into my scratchpad, Chromium) give 0 blocks after the erase and after the reload, and the guarded VACUUM returned ok, with 59 pages and 0 free. No test notices: src/persistence/courses.test.ts mocks db, and no browser test looks at free pages or storage bytes after the erase.",
+      "reproduction": "My scratchpad's d3-di-r2/: harness.ts vacuumAfterErase and erase-ui.spec.ts ('ui: erased students stay in storage'), run with d3-di-r2/run.sh chromium|webkit 'vacuumAfterErase|erased students' <log>. The runner copies them into test-results/d3-di-r2/ and runs them under their own Playwright config and dev server; the copy was removed afterwards. Expected: after Elimina tutto, no IndexedDB block holds an erased student's surname, as on 0aa6699. Observed: the block is still there after the erase and after a reload. Fix direction: run the compaction outside a transaction but still through the guard, e.g. db.writeLock((context) => context.execute(\"VACUUM\")). The guarded writeLock checks the record inside the lock and opens no transaction. Then add a real-engine test asserting freelist_count 0, or no marker bytes, after the erase. Also check every other db.execute caller for statements SQLite refuses inside a transaction; grep finds none today.",
+      "specRef": "01_PRODUCT_SPEC.md §2 ('erases the current course and everything recorded in it from the device'); src/persistence/courses.ts:68-73 ('nothing about the previous week's students (minors included) stays behind on the device'); AGENTS.md §17 (students' personal data); 04_IMPLEMENTATION_PLAN.md D3 adversarial checklist ('every write path' inside the guard, round-2 brief)"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-R2-2",
+      "title": "What 0.5.0 inherits: declaring a course table synced destroys 0.4.0's local-only rows at the new version's first open, before any claim, repair or migration can copy them. §3.1 describes only what the older app sees",
+      "evidence": "Probe localOnlyToSynced on Chromium. (1) This version (guarded, prepared) stores a synthetic student in its local-only students table and closes. (2) A schema that declares students as a synced Table opens the same file and sees students = 0. The only PowerSync data tables left are ps_data__students and ps_data_local__meta, so ps_data_local__students was dropped, and ps_untyped holds 0 rows. (3) Reopened with this version's schema: students = 0. PowerSync applies the schema in init(), and prepareDatabase calls init() first (src/persistence/migrations.ts:103), so the claim-first order cannot help: the rows are gone before the first claim. 03_TECHNICAL_DECISIONS.md §3.1 'Two consequences for 0.5.0' covers only what an older app sees ('an empty, read-only course'). Its general sentence on undeclared local-only tables implies this, but the paragraph about making course tables synced does not say the upgrade itself erases every course.",
+      "reproduction": "My scratchpad's d3-di-r2/harness.ts localOnlyToSynced, run with d3-di-r2/run.sh chromium localOnlyToSynced <log> (code=0).",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('Two consequences for 0.5.0'; 'schema changes only expand'); 02_MVP_SCOPE.md §4 (0.5.0 online backup). Suggested contract text: the release that makes a course table synced keeps declaring the local-only table (under another view name) until a migration has copied its rows, and drops it only in a later release; what 0.4.0 then shows follows from that design."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q1",
+      "title": "The claim-first order leaves the data claimed by an app whose open then fails, so no app on the device can write until a fix ships. Neither §3.1 nor a test says so",
+      "evidence": "Probe claimThenOpenFails, same result on Chromium and WebKit. S and A open at the app's 0.4.0, and A prepares with 'write'. A 0.6.0 instance prepares with a migration that throws and fails ('synthetic migration failure'), but the record is now 0.6.0/0.5.0. A's next save is refused (ReadOnlyDataError), and a fresh 0.6.0 open fails the same way. No data is damaged, and in round 1 I recommended this as the conservative failure. Before round 2, a failed newer open left an already-open older tab able to save; now it turns read-only, while the newer app shows the error screen. src/persistence/migrations.test.ts checks only the order of a successful run.",
+      "reproduction": "My scratchpad's d3-di-r2/harness.ts claimThenOpenFails.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('the app first claims the data ... an older app is refused from the claim on'). Suggestion: one sentence that a failed open keeps its claim, and a unit test that the claim survives a throwing repair or migration."
+    },
+    {
+      "id": "DI-R2-Q2",
+      "title": "The build check on CVC_APP_VERSION compares only the text of major.minor: it accepts a version the app cannot parse or encode",
+      "evidence": "vite.config.ts loaded with node --import tsx refuses 0.4.0 and 0.30.0 (DI-Q4 fixed) but accepts 0.3.7, 0.3.1000 and 0.3.1-rc1. parseVersion('0.3.1-rc1') throws 'Not a version' when src/appVersion.ts loads, so the app does not start. encodeVersion of 0.3.1000 throws 'Version part out of range', so every open needing a record fails into the error screen. Both fail safe for data.",
+      "reproduction": "My scratchpad's d3-di-r2/vitecfg.mjs run with each CVC_APP_VERSION; node --import tsx over src/domain/compatibility.ts for the parse and encode.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('an override for a test build may change only the patch'). Suggestion: vite.config.ts runs the override through parseVersion and encodeVersion."
+    },
+    {
+      "id": "DI-R2-Q3",
+      "title": "For 0.5.0: the guard wraps the PowerSyncDatabase instance, so PowerSync's own calls to this.writeTransaction are refused too once the data is read-only. One of them subscribes to sync streams",
+      "evidence": "node_modules/@powersync/shared-internals/src/client/BasePowerSyncDatabase.ts:163: rustSubscriptionsCommand runs this.writeTransaction, which is the instance method that src/persistence/writeGuard.ts:85 replaces. If 0.5.0 uses sync streams, a read-only older app may be unable to subscribe and so to download what it should still be able to read. Code reading only; nothing in 0.4.0 calls it.",
+      "reproduction": "Code reading.",
+      "specRef": "01_PRODUCT_SPEC.md §2 (read-only data can still be consulted); 03_TECHNICAL_DECISIONS.md §3.1 (the server enforces the same rule from 0.5.0)"
+    },
+    {
+      "id": "DI-R2-Q4",
+      "title": "DI-Q5 is only partly closed: executeRaw checks only the read-only flag and never reads the record, and get/getAll still run any SQL",
+      "evidence": "src/persistence/writeGuard.ts:97-100. An open app that has not yet met a raise can still write through executeRaw, and through get/getAll. grep finds no app use, so this stays a QoL note.",
+      "reproduction": "Code reading; grep for executeRaw|readLock|readTransaction in src outside tests.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('its database refuses every write')"
+    }
+  ],
+  "roundOneRecheck": [
+    { "id": "DI-1", "status": "fixed", "evidence": "inFlightWriteCaptured, Chromium, 9 runs at delays 0-12 ms: every save stored 0.4.0 (a legitimate write before the raise) and none stored 0.5.0. In round 1, 2 of 6 runs stored 0.5.0. lockHeldAcrossYield, Chromium and WebKit, for writeLock without a transaction and for writeTransaction: a raise started 5 ms into a 40 ms yield inside the lock waited for the lock, the save stored 0.4.0, and the next save was refused. WebKit inFlightWriteCaptured: the test page closed (see notTested)." },
+    { "id": "DI-2", "status": "fixed", "evidence": "staleRecord, Chromium and WebKit: the record stays 0.6.0/0.5.0, and C opens read-only and its write is refused. concurrentOpens, Chromium: 8 of 8 runs end at 0.6.0/0.5.0 (round 1: 0.5.0/0.4.0 in up to 2 of 5). threeClaims (0.5.0, 0.7.0 and 0.6.0 at once): 6 of 6 runs end at 0.7.0/0.6.0 on Chromium, and 6 of 6 on WebKit." },
+    { "id": "DI-3", "status": "fixed", "evidence": "oldWriteDuringNewMigration, Chromium and WebKit: the old save is refused, the row never lands and the later save is refused. claimDuringOlderMigration (0.7.0 claims while an allowed 0.5.0 is inside a migration), Chromium and WebKit: 0.5.0 ends read-only, each of m1, m2 and m3 ran once, the ledger is complete, and the record is 0.7.0/0.6.0." },
+    { "id": "DI-4", "status": "documented, behaviour unchanged by design", "evidence": "§3.1 now says that even a read-only older app drops a table only newer versions declare. readOnlyOpenDropsNewerTable on Chromium still gives 1 row before and 0 after, and the record survives." },
+    { "id": "DI-5", "status": "documented", "evidence": "§3.1 'Two consequences for 0.5.0'. syncedTablesAcrossReadOnlyOpen unchanged: the older app sees 0 students, and both rows come back under the newer schema. A larger gap is filed as DI-R2-2." },
+    { "id": "DI-Q1", "status": "fixed", "evidence": "halfRecord on Chromium and WebKit. Minimum writer only: read-only and the write is refused (round 1: the prepare rejected). Negative minimum: read-only and the write is refused (round 1: write, and the record was lowered). In the app, the 0.3.0 fixture with only a minimum writer of 9.8.0 opens the course with the bottom bar 'Solo lettura: aggiorna l’app per salvare le modifiche.' and no error screen." },
+    { "id": "DI-Q2", "status": "fixed", "evidence": "src/navigation/installedVersion.ts reports only a newer version; a test covers it." },
+    { "id": "DI-Q3", "status": "fixed", "evidence": "src/domain/compatibility.test.ts asserts minimumWriterOf(APP_VERSION) does not throw." },
+    { "id": "DI-Q4", "status": "fixed, with a residual", "evidence": "vite.config.ts refuses 0.4.0 and 0.30.0, and docs/DEVICE_CHECKS.md requires a patch-only N+1. The residual is DI-R2-Q2." },
+    { "id": "DI-Q5", "status": "partly fixed", "evidence": "See DI-R2-Q4." },
+    { "id": "DI-Q6", "status": "documented", "evidence": "§3.1: the server needs the writing app's version with every upload." }
+  ],
+  "evidenceInspected": [
+    "git diff 0aa6699..57430a5: src/persistence/writeGuard.ts and its test, src/persistence/dataVersion.ts and its test, src/persistence/migrations.ts and its test, src/persistence/courses.ts, vite.config.ts, src/main.tsx, src/App.tsx, src/navigation/browserHistory.ts and installedVersion.ts, src/features/students/StudentManagement.tsx (the read-only exit), src/domain/compatibility.test.ts, docs/DEVICE_CHECKS.md, 03_TECHNICAL_DECISIONS.md §3.1",
+    "04_IMPLEMENTATION_PLAN.md D3 section and D4 section; 01_PRODUCT_SPEC.md §2 (the erase paragraph); .evidence/D3/data-integrity-review-round-1.json",
+    "Every write call site in src outside tests (grep for writeTransaction, writeLock, execute, executeBatch, executeRaw): no writeLock use, no nested write, and VACUUM is the only statement SQLite refuses inside a transaction; src/persistence/duties.ts saves the lists, items and assignments in one transaction",
+    "PowerSync internals: BasePowerSyncDatabase.ts (execute, executeRaw, executeBatch, writeLock, writeTransaction, disconnectAndClear, rustSubscriptionsCommand), common/src/db/DBAdapter.ts (BEGIN IMMEDIATE), web adapters ConcurrentConnection.ts and DatabaseClient.ts (lease, navigator lock), wa-sqlite vfs.ts (IDBBatchAtomicVFS with an exclusive lock policy and its IndexedDB layout)",
+    "npx vitest run over src/persistence, src/domain/compatibility.test.ts and the fixture tests: 18 files, 230 tests passed, code=0",
+    "tests/e2e/d1-migration.spec.ts, d2-duty-items.spec.ts and d3-read-only.spec.ts on Chromium, through a separate config and output folder: 17 passed, code=0",
+    "Throwaway probes on the real engine (my scratchpad's d3-di-r2/, copied into test-results/d3-di-r2/ and removed afterwards). Chromium, every probe: 17 passed, code=0. Chromium UI erase: code=0. Chromium lens-1 interruptAfterClaim for 0.1.0, 0.2.0 and 0.3.0: 3 passed, code=0. WebKit vacuum, UI erase, staleRecord, oldWriteDuringNewMigration, halfRecord and lockHeldAcrossYield: 8 passed, code=0. WebKit claimThenOpenFails, claimDuringOlderMigration and threeClaims passed; concurrentOpens and inFlightWriteCaptured lost the page; code=1",
+    "0aa6699 control: git archive into my scratchpad with a junction to node_modules (removed afterwards; the real node_modules is intact). The UI erase and vacuumAfterErase on Chromium passed (2 passed, code=0) after a first attempt failed because of Vite's fs allow list, an environment cause",
+    "writeCost on Chromium: 150 sequential writes took 7310 and 7317 ms guarded against 6542 and 8050 ms unguarded. The one-statement transaction and the in-lock read add no measurable cost",
+    "Lens 1 result: a fixture's first open killed right after the claim leaves the record claimed (3, 6 and 7 student rows still without course or creation time). The next open repairs everything: 21, 44 and 46 fixture rows, 0 changed values, 0 row issues",
+    "vite.config.ts loaded with CVC_APP_VERSION 0.4.0, 0.30.0, 0.3.7, 0.3.1000 and 0.3.1-rc1",
+    "git status clean and HEAD 57430a5 before and after"
+  ],
+  "anglesTried": {
+    "seed": 645433273,
+    "lenses": [
+      "Migration from the 0.1/0.2/0.3 fixtures: counts, references, notes and history all survive (index 1): the claim-first order, with each fixture's open killed between the claim and the repairs, plus the D1, D2 and D3 browser specs",
+      "Lists stored as JSON inside one column overwritten as a whole (index 6): whether a guard refusal can leave a list half written (the duty save is one transaction checked at its start), and the two-row meta record read half or damaged"
+    ],
+    "wildcard": "Every write is now a write transaction: statements SQLite refuses inside one (the erase's VACUUM, DI-R2-1), the lock held across a yield in writeLock without a transaction, three claims at once, a claim during an allowed older app's migration, a claim whose open then fails, the cost per write, and what the guard does to PowerSync's own calls and to the local-only to synced step 0.5.0 must take"
+  },
+  "notTested": [
+    "WebKit concurrentOpens and inFlightWriteCaptured: the test page closed ('Target page, context or browser has been closed'), as in round 1 and D2's filed WebKit test-page losses. lockHeldAcrossYield and threeClaims covered the same window on WebKit",
+    "The 0aa6699 control on WebKit: only the unguarded VACUUM path ran there (ok, 0 blocks with the marker), which is the path 0aa6699's guard passed on",
+    "localOnlyToSynced on WebKit; and whether PowerSync's documented local-only to synced transition pattern keeps rows (that design belongs to 0.5.0)",
+    "check:update (two production builds): not run, to keep the load on this 8 GB machine low while another agent may run browser suites",
+    "Two real tabs running two different builds: modelled by several PowerSyncDatabase instances on one file in one page, which share the connection lease",
+    "Bytes outside IndexedDB, such as the browser's own IndexedDB compaction and files on disk: the check reads the IndexedDB records the app's storage layer keeps",
+    "Read-only behaviour of every screen beyond the student form and the erase",
+    "The owner's Android check"
+  ]
+}

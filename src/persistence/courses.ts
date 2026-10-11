@@ -94,9 +94,12 @@ export async function eraseAllCourseData() {
   })
   // Deleted rows can survive in free database pages until they are reused;
   // compacting rewrites the file without them. Where the storage layer
-  // cannot compact, the rows are still gone from every query.
+  // cannot compact, the rows are still gone from every query. SQLite refuses
+  // VACUUM inside a transaction, and `execute` is one under the write guard,
+  // so it runs under the guarded write lock, which opens none (D3 review
+  // DI-R2-1).
   try {
-    await db.execute("VACUUM")
+    await db.writeLock((context) => context.execute("VACUUM"))
   } catch {
     // Not supported by every browser storage backend.
   }

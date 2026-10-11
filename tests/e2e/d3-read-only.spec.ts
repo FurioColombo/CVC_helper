@@ -147,3 +147,63 @@ test("turns an open app read-only at its first save after a newer app raised the
   })
   expect(volunteers).toBe(0)
 })
+
+// D3 review DI-R2-1: under the write guard the erase still compacts the file,
+// so erased students do not stay behind in free pages.
+test("erasing the course still compacts the database under the write guard", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await expect(page.getByRole("button", { name: "Volontari" })).toBeVisible()
+
+  const result = await page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { db } = await load("/src/persistence/db.ts")
+    const { eraseAllCourseData, getActiveCourse } = await load(
+      "/src/persistence/courses.ts",
+    )
+    const course = await getActiveCourse()
+    const now = new Date().toISOString()
+    await db.writeTransaction(
+      async (transaction: {
+        execute: (sql: string, parameters: unknown[]) => Promise<unknown>
+      }) => {
+        for (let index = 0; index < 300; index++) {
+          await transaction.execute(
+            `INSERT INTO students(
+             id, courseId, firstName, surname, courseNote, active,
+             createdAt, updatedAt
+           ) VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
+            [
+              `student-erase-${index}`,
+              course.id,
+              `Nome${index}`,
+              `Cognomeprova${index}`,
+              "Nota da cancellare ".repeat(20),
+              now,
+              now,
+            ],
+          )
+        }
+      },
+    )
+    const pages = async () =>
+      (await db.get("PRAGMA page_count")).page_count as number
+    const before = await pages()
+    await eraseAllCourseData()
+    return {
+      before,
+      after: await pages(),
+      free: (await db.get("PRAGMA freelist_count")).freelist_count as number,
+      students: (await db.get("SELECT count(*) AS count FROM students"))
+        .count as number,
+    }
+  })
+
+  expect(result.students).toBe(0)
+  expect(result.free).toBe(0)
+  expect(result.after).toBeLessThan(result.before)
+})

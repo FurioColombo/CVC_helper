@@ -4,6 +4,7 @@ const database = vi.hoisted(() => ({
   execute: vi.fn(),
   getOptional: vi.fn(),
   init: vi.fn(),
+  writeLock: vi.fn(),
   writeTransaction: vi.fn(),
 }))
 
@@ -115,6 +116,11 @@ describe("course persistence", () => {
   })
 
   it("erases every course table in one transaction and forgets course preferences", async () => {
+    const lockContext = { execute: vi.fn().mockResolvedValue(undefined) }
+    database.writeLock.mockImplementation(
+      async (lock: (context: typeof lockContext) => unknown) =>
+        lock(lockContext),
+    )
     const transaction = {
       execute: vi.fn().mockResolvedValue(undefined),
       getAll: vi
@@ -138,6 +144,10 @@ describe("course persistence", () => {
     expect(transaction.execute.mock.calls.map(([sql]) => sql)).toEqual(
       COURSE_DATA_TABLES.map((table) => `DELETE FROM ${table}`),
     )
+    // Compacted outside any transaction, which SQLite requires for VACUUM
+    // (D3 review DI-R2-1).
+    expect(lockContext.execute).toHaveBeenCalledWith("VACUUM")
+    expect(transaction.execute).not.toHaveBeenCalledWith("VACUUM")
     // The migration ledger describes the data, not the course: it stays.
     expect(transaction.execute.mock.calls.map(([sql]) => sql)).not.toContain(
       "DELETE FROM meta",

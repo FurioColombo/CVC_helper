@@ -92,10 +92,11 @@ export function guardWrites<Database extends PowerSyncDatabase>(
     methods.writeTransaction!((transaction: LockContext) =>
       transaction.executeBatch(sql as string, parameters as unknown[][]),
     )
-  // No lock context offers raw execution; the app does not use it, and a
-  // read-only database refuses it all the same (D3 review DI-Q5).
+  // No lock context offers raw execution, so the record is read just before
+  // it, not inside its lock; the app does not use it (D3 reviews DI-Q5,
+  // DI-R2-Q4).
   methods.executeRaw = async (...args) => {
-    if (readOnly.has(database)) throw new ReadOnlyDataError()
+    await assertWritable(database as unknown as Pick<LockContext, "getAll">)
     return executeRaw(...args)
   }
   return database
