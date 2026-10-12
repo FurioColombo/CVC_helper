@@ -2,61 +2,51 @@
   "reviewerRole": "regression-hunter",
   "persona": "Il Segugio",
   "milestone": "D3",
-  "round": 3,
-  "commit": "efddf58984ad54898a3a091953c29acbd2edac73",
+  "round": 4,
+  "commit": "aff3051bd060f445fb840740c7dfa83e5f9aca26",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
   "qolFindings": [
     {
+      "id": "RH4-Q1",
+      "title": "Selected-person action labels split inside words at 320 px with 200% text",
+      "evidence": "The final selected-volunteer panel screenshot shows 'Nuovo equipaggio' across several short lines and 'Mezzi' split within the word. CrewManagement.tsx uses overflow-wrap:anywhere inside the destination action buttons. Text remains contained and the enabled controls passed hit and focus checks. Recorded in docs/working/BACKLOG.md:233.",
+      "reproduction": "Open the synthetic hostile course, show the updated-version note, open Equipaggi at 320x664 with 200% text and select an available volunteer. Inspect the destination panel labels.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05; field-operations-ui skill, Density and touch"
+    },
+    {
       "id": "RH2-Q4",
       "title": "Carried over: the Barche list overflows horizontally with enlarged text",
-      "evidence": ".evidence/D3/regression-review-round-2.json reproduced this with writable and read-only data at 412 px and 150% text. It remains recorded in docs/working/BACKLOG.md:53-56.",
-      "reproduction": "Prior round: seed the 0.3.0 fixture, set 412x915 and 150% root text, open Barche and compare scrollWidth with clientWidth. Observed 484 versus 412. Not rerun because the Barche implementation is outside this round's fix scope.",
+      "evidence": "Previously reproduced in regression round 2 and retained in docs/working/BACKLOG.md:53-56. This follow-up changes no Barche implementation.",
+      "reproduction": "Prior round: 0.3.0 fixture, 412x915, 150% root text, Barche; scrollWidth 484 versus clientWidth 412. Not rerun in this restricted follow-up.",
       "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
     }
   ],
-  "blockerResolutions": [
-    {
-      "id": "RH2-1",
-      "status": "fixed",
-      "evidence": "courses.ts runs VACUUM under the guarded writeLock without a transaction. Independently reran the data review's visible erase probe on Chromium and WebKit at the frozen checkpoint: synthetic marker blocks existed before the erase, became zero afterwards, freelist_count was zero, and the marker remained absent after reload. Both tests passed without retries."
-    },
-    {
-      "id": "RH-2",
-      "status": "fixed",
-      "evidence": "The crew rail now sticks above the measured navigation and update-bar heights; the update bar draws above scrolling content. Own read-only browser probes passed on Chromium and WebKit at 320x568/100%, 390x844/150%, 430x820/150%, 360x780/130% and 320x664/200%: rail bottom never crossed bar top and the search button's centre hit the search button. The production 0.4.0-to-0.4.1 test-channel journey also verified reachable offer buttons and clear rail, destination panel and Allievi add button across five stress profiles."
-    },
-    {
-      "id": "RH2-3",
-      "status": "fixed",
-      "evidence": "The updated note is now a state of the measured bottom bar rather than content inserted above the crew column. Directly inspected Chromium and WebKit production screenshots after updating from Equipaggi, including 320 px at 200% text: the rail remains above the note and bottom navigation."
-    }
-  ],
   "evidenceInspected": [
-    "AGENTS.md; reviewer-regression-hunter.md; REVIEW_PROTOCOL.md; startup git status, ci:status, owner:list and milestone:status; latest checkpoint; Node v24.21.0.",
-    "04_IMPLEMENTATION_PLAN.md D3 success predicate and checklist; 01_PRODUCT_SPEC.md §2; relevant 02_MVP_SCOPE.md boundaries; 03_TECHNICAL_DECISIONS.md §3.1; design rulebook R05/R12/R18 and page changelog P01/P14; frozen r10 P14 reference screenshot.",
-    "Repository PowerSync and field-operations-ui skills and relevant PowerSync JavaScript/React guidance.",
-    "Earlier regression rounds 1 and 2; scoped diff 57430a5..efddf589, chiefly 56bd22c and 7901a7f; changed erase/write-lock, banner, crew-rail, student-edit and browser-history consumers. Test-publication changes were left to the security/privacy reviewer.",
-    "Focused Vitest run: courses, writeGuard, browserHistory, updateChecks, UpdateAvailableBanner, UpdateCheckButton and StudentManagement; seven files, 82 tests passed, exit 0.",
-    "Own scratchpad under test-results/d3-rh-round3: writable student and evaluation phone-Back journeys passed on Chromium and WebKit; read-only crew geometry passed both engines at five profiles; read-only evaluation failure, explicit discard, reread and navigation passed both engines.",
-    "Final scratch run independently reused the visible erase marker probe from test-results/d3-di-round3-review: two erase tests and two read-only evaluation tests passed, exit 0, no retries.",
-    "Initial scratch failures were classified and corrected: incorrect evaluation labels, measuring the crew rail before loading completed, and clicking Home before the asynchronous reread following Scarta completed. Earlier reports were retained in the ignored scratch directory; corrected focused probes passed.",
-    "test-results/d3-update-journey/browser-evidence.json: stable test subpath, versions 0.4.0 and 0.4.1; foreground-to-offer 0.40 seconds Chromium and 0.89 seconds WebKit; edit survived, installed version and updated note shown, no subsequent update loop, offer buttons reachable.",
-    "Direct visual inspection of current fux-r3 production offer and updated-note screenshots at narrow and enlarged-text profiles, plus own read-only crew screenshots on both engines.",
-    ".evidence/D3/data-integrity-review-round-3.json for guarded-lock and compatibility evidence; final HEAD remained efddf589. No tracked files or commits were written by this reviewer."
+    "AGENTS.md, reviewer-regression-hunter.md and REVIEW_PROTOCOL.md; startup checkout, CI, owner-queue and milestone status; Node v24.21.0. Prior review reports and blocker IDs were preserved.",
+    "Restricted final diff from 19432c0 through aff3051: CrewManagement container, conditional rail positioning, both destination portals, viewport height limits and action sizing; hostile geometry tests; D1 migration diagnostics and assertions.",
+    "Exact committed crew source blob verified as 13bf76bf8a163daa7482c4d660760724f370d411, matching the source exercised by both independent reviewers.",
+    "Retained CI run 38289011665 images and failure context: the original 320 px/200% rail overlapped operational controls; WebKit reopen exceeded 5000 ms on all three attempts.",
+    "RH-2 and RH2-3 follow-up: inspected the final container-query and portal mechanisms, their focus refs and consumers, current screenshots, independent field results and .evidence/D3/ci-regression-fix.json. Enlarged-text rail returns to document flow; ordinary-text rail remains sticky; destination panels remain viewport-anchored above the update note.",
+    "Independent field mechanism evidence: Chromium and WebKit passed the focused layout, panel anchoring, enabled-control hit/focus and label-containment probes. The WebKit setup retry used explicit Home-to-Equipaggi navigation after reload. No physical-device result was inferred.",
+    "Own ignored scratch probe under test-results/d3-rh-round4: actual Mezzi and RS Toura 4 choices through the body portal, explicit Chiudi destinazioni, and reload persistence. Two tests passed, Chromium 12.3 seconds and WebKit 49.9 seconds, retries 0, exit 0. First choice was exercised at 320 px/200% text with the updated-version note.",
+    "Initial scratch failure was an incorrect automatic-close expectation. The unchanged chooseDestination and existing crew-management gate require explicit picker closure. Corrected the scratch expectation, retained its original report, and reran only the same narrow probe.",
+    "Migration diagnostic correctness: construction and SDK initialization remain inside the unchanged 5000 ms bounds; result reads and close remain outside. Stage measurements expose where time is spent. Ordered table reads support exact reopen equality; reopen row count and structural validity assertions were added. No production persistence change, retry increase or project removal was introduced.",
+    "Root reported lint and corrected typecheck passing. Confirmed exact final commit aff3051 and backlog disposition. This reviewer wrote no tracked files or commits."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Restricted round-3 recheck of RH2-1, RH-2 and the RH2-3 fix",
-      "Resulting regressions in shared navigation guards, read-only evaluation exits, measured update-bar states and crew rail positioning"
+      "Restricted follow-up after round 3 PASS_WITH_FINDINGS: reproduced CI rail regression, portal consumers and resulting interaction regressions",
+      "Diagnostic timing boundaries and preservation of migration-test strength"
     ],
-    "wildcard": "No new entropy draw or whole-milestone hunt."
+    "wildcard": "No new entropy draw or whole-milestone hunt; distinct persisted-choice probe supplemented the field review."
   },
   "notTested": [
-    "Physical Android installation and update acceptance remain the owner's D3-PHONE-UPDATE action; no physical-device PASS is inferred.",
-    "GitHub publication and same-origin channel isolation are covered independently by the security/privacy review.",
-    "The complete browser suite and final milestone evidence commands remain the orchestrator's verification work."
+    "Exact-checkpoint Linux CI performance acceptance remains pending. Correct instrumentation and passing local UI probes do not establish a fix for the prior WebKit reopen failure or a performance PASS.",
+    "The full verification suite and exact-checkpoint green CI remain the orchestrator's required checks before publication or milestone qualification.",
+    "Physical Android installation and update acceptance remain the owner's D3-PHONE-UPDATE action.",
+    "Previously resolved RH2-1 compaction was not rerun because this follow-up changes no production persistence or erase code."
   ]
 }

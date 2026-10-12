@@ -2,65 +2,58 @@
   "reviewerRole": "field-ux",
   "persona": "Il Nostromo",
   "milestone": "D3",
-  "round": 3,
-  "commit": "efddf58984ad54898a3a091953c29acbd2edac73",
+  "round": 4,
+  "commit": "aff3051bd060f445fb840740c7dfa83e5f9aca26",
+  "reviewedRange": "19432c0859d7196c347feeb880a29a091fcc7988..aff3051bd060f445fb840740c7dfa83e5f9aca26",
+  "reviewedCrewBlob": "13bf76bf8a163daa7482c4d660760724f370d411",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
   "qolFindings": [
     {
-      "id": "FU-Q7",
-      "title": "The student form now explains read-only refusal, but the crew error still suggests an ineffective retry",
-      "evidence": "src/features/crews/CrewManagement.tsx:2434 and :2710 still say 'Modifica non valida o non salvata. Riprova.' The repaired student form instead explains that changes cannot be saved until the app is updated.",
-      "reproduction": "Inspect the two crew error branches. This is the previously recorded wording residual; no new whole-milestone hunt was performed.",
-      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14; docs/working/BACKLOG.md FU-Q7"
-    },
-    {
-      "id": "FU-Q11",
-      "title": "The end of the student list remains blank at 320 px with 200% text and an update offer",
-      "evidence": "Current production capture in test-results/fux-r3-production/webkit-Allievi-320-200.png shows the add button and update controls, with the student scrolled above the viewport. StudentManagement.tsx:392 adds pb-24 and App.tsx:665 adds 7rem plus the bar height.",
-      "reproduction": "Run the production update journey, open Allievi, set 320x664 and 200% root text, then scroll to the document end. Scrolling back recovers the student; the add and update buttons remain reachable.",
-      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R02; docs/working/BACKLOG.md FU-Q11"
-    },
-    {
-      "id": "FU-Q12",
-      "title": "At 320 px with 200% text, the selected-person panel requires scrolling and its upper content is partly above the viewport",
-      "evidence": "The production stress capture shows the panel heading and part of its first option above the viewport. The first crew button starts at approximately y=-49.36. However, trial clicks on 'Sposta Mario in equipaggio 1' and 'Sposta Mario A terra' pass on Chromium and WebKit; internal scrolling reaches A terra. Trial clicks on both quick-access rail buttons also pass after page scrolling.",
-      "reproduction": "test-results/probe-field-r3-panel.mjs: offer visible, Equipaggi, select Mario, 320x664, 200% text, document end; inspect panel bounds and run the four trial clicks. No unreachable action was reproduced.",
-      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 and R12; src/features/crews/CrewManagement.tsx:2986 and :3012; docs/working/BACKLOG.md FU-Q12"
+      "id": "RH4-Q1",
+      "title": "Contained destination labels break within words at 320 px with 200% text",
+      "evidence": "Current fux-r4 selected-person captures show 'Nuovo equipaggio' breaking within its words and 'Mezzi' wrapping as 'Mez/zi'. The spans at CrewManagement.tsx:3095, :3107 and :3118 use overflow-wrap:anywhere. Horizontal label bounds and enabled action hit tests pass.",
+      "reproduction": "Open a selected student or volunteer destination panel at 320x664 with 200% root text. Scroll the panel to inspect the direct destination actions. Labels remain contained and actions remain reachable, but their narrow columns reduce legibility.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 and R13; docs/working/BACKLOG.md RH4-Q1",
+      "disposition": "Shared finding with the regression reviewer, already filed in BACKLOG; no additional review round requested."
     }
   ],
-  "roundTwoRecheck": {
-    "FU-5": "Resolved. The quick-access rail and destination panel remain above the update offer with and without a selected person. Both offer buttons receive their correct targets on both engines across all five production stress profiles, including 320 px with 200% text.",
-    "FU-6": "Resolved. From read-only startup and after a minimum-writer change during editing, Fine, header Back, Home, browser Back and Aggiorna retain typed work and explain why it cannot be saved. The update proceeds only after explicit Esci senza salvare.",
-    "FU-7": "Resolved. The existing unit tests pass for the 800 ms tap guard and replacement buttons. A browser pointer tap during the guard was ignored on both engines; the button became actionable afterwards.",
-    "FU-8": "Resolved. The once-only update note now occupies the persistent bottom bar. On the crew page at 375x647 and 320x664 with 200% text, the rail stays above it and both rail button centres receive the correct controls.",
-    "FU-9": "Resolved. Offer buttons wrap inside the viewport, and the read-only sentence and search button fit at 320 px with 200% text on both engines. The constrained layout's scrolling residual is FU-Q12.",
-    "FU-10": "Resolved. Fine immediately closes an unchanged existing-student form in read-only mode on both engines. With typed work it requests explicit discard."
+  "priorFindingDispositions": {
+    "FU-5": "No regression reproduced in the restricted rail/panel checks. The CI-discovered overlap without an update bar is corrected: enlarged-text rail returns to normal flow, while ordinary-text rail remains sticky.",
+    "FU-6": "Not reopened. StudentForm and the leave guard are unchanged by this fix; the round-3 typed-work evidence remains applicable.",
+    "FU-Q12": "Viewport-top clipping is fixed. Both selected-person panels remain inside the viewport above the update note, including at 320x664/200%. Internal vertical scrolling remains necessary and reaches the enabled actions.",
+    "FU-Q7": "Prior wording residual remains recorded; not re-hunted in this follow-up.",
+    "FU-Q11": "Prior student-list end-padding residual remains recorded; outside this follow-up."
   },
   "evidenceInspected": [
-    "AGENTS.md; .claude/agents/reviewer-field-ux.md; docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md D3 predicate and checklist; 01_PRODUCT_SPEC.md §2; relevant scope and technical compatibility sections; docs/LOCAL_DEVELOPMENT.md; docs/OWNER_WORKFLOW.md.",
-    "docs/design/06_DESIGN_RULEBOOK.md; docs/design/07_PAGE_CHANGELOG.md P01, P02 and P14; frozen r10 P14 target, rendered and visually inspected through test-results/fux-r3-readonly/reference-r10-P14-390.png.",
-    ".evidence/D3/field-ux-review-round-2.json, preserving blocker IDs FU-5 and FU-6; fix diff 57430a5..0676730. Confirmed that the relevant UI repair files are unchanged between 0676730 and frozen efddf58.",
-    "Node v24.21.0. Existing focused Vitest run: UpdateAvailableBanner.test.tsx, StudentManagement.test.tsx and browserHistory.test.ts; 3 files and 60 tests passed.",
-    "Scratch production journey and screenshots: test-results/probe-field-r3-production.mjs and fux-r3-production/. Service-worker update, unsaved-note preservation, five stress profiles with and without selection, and updated-note rail hit testing passed on Chromium and WebKit. Captures inspected directly.",
-    "Scratch stress-panel probe: test-results/probe-field-r3-panel.mjs and fux-r3-panel/. At 320x664/200%, both crew destinations and both rail buttons passed trial clicks after their relevant scrolling.",
-    "Corrected read-only browser replica: test-results/probe-field-r3-readonly.mjs, field-r3-entry.jsx and fux-r3-readonly/results.json. Real App, update bar, leave guard and PowerSync data; synthetic fixture setup and update-state hooks. Pixel 7 Chromium at 412x839 and iPhone 13 WebKit at 390x664. All exit/update assertions passed from startup and mid-edit; no page errors. HMR was disabled to prevent concurrent source edits from restarting the scratch entry. Current form and 320px/200% bar captures inspected directly.",
-    "Final canonical production replay on clean efddf58984ad54898a3a091953c29acbd2edac73: CVC_APP_CHANNEL=test, CVC_BASE_PATH=CVC_helper_test, npm run check:update. PASS for 0.4.0→0.4.1 at /CVC_helper_test/: offer after 0.40 s on Chromium and 0.89 s on WebKit, unsaved notes preserved, no update loop, all five stress profiles passed. Evidence and fresh offer captures in test-results/d3-update-journey/; WebKit capture inspected.",
-    "Bounded morning replay: 1) Return to the editing app; offer appears after 0.40/0.89 s. 2) Equipaggi then Crea equipaggi: two taps. 3) Select Mario: one tap. The offer buttons retain their correct targets through the selected-person stress checks. Three taps to the selected workspace, with no wrong-target interception reproduced. Overall task time and physical reading effort were not measured."
+    ".evidence/D3/field-ux-review-round-3.json, preserving the earlier PASS_WITH_FINDINGS and FU-5/FU-6 history; docs/agents/REVIEW_PROTOCOL.md; D3 acceptance; relevant R05/R12/R13 rules and P14 target.",
+    ".evidence/D3/ci-regression-fix.json and preserved CI overlap capture test-results/d3-ci-38289011665-inspect/selected/hostile-compose.png. The second selected image was blank and was not used as visual evidence.",
+    "Final CrewManagement.tsx and ug2-hostile-roster.spec.ts diff: full-column container query, static rail fallback at enlarged text, both destination panels portalled to document.body, viewport height caps with vertical scrolling, and bounded label spans. Existing layout assertions were retained.",
+    "Independent test-results/probe-field-r4.mjs using Node v24.21.0, the real app, hostile synthetic roster and Playwright Chromium/WebKit. Browser plugin was unavailable. Chromium completed all assertions; the combined attempt subsequently timed out during WebKit reload setup. Chromium captures and qualified completion status are preserved in test-results/fux-r4/.",
+    "WebKit-only retry with explicit Home → Equipaggi navigation and loaded hostile crew count: PASS. Evidence is test-results/fux-r4/results-webkit.json. No-bar 320x664/200% audits passed at document top and end.",
+    "Ordinary-text rail at 320x360 remained sticky at three distinct actual scroll positions. WebKit scroll positions were 57, 158 and 245 px; rail bottom stayed at 211.609375 px, 8 px above the update note.",
+    "Student and volunteer panels at 390x844 and 320x664/200% were direct body children, retained identical viewport anchors through document/composition scrolling, and remained above the update note. At the stress size their top was approximately 16.016 px.",
+    "Every enabled selected-person action passed trial clicks, keyboard focus and centre hit tests. Direct label span widths and rendered text ranges fitted their button bounds. Crew-destination portal opening and closing passed on both engines.",
+    "Current no-bar top/end, ordinary sticky-rail and selected-person screenshots were inspected directly. The corrected labels wrap within their buttons; internal panel scrolling remains visible.",
+    "Confirmed committed HEAD aff3051 and unchanged reviewed CrewManagement blob 13bf76bf8a163daa7482c4d660760724f370d411."
+  ],
+  "intermediateRunClassification": [
+    "The first scratch attempt sampled document height before the changed crew session finished loading. Awaiting the visible hostile crew count corrected this synchronization error.",
+    "The combined current-source attempt completed Chromium but timed out finding Sessione after WebKit reload. The retry navigated visibly through Home and Equipaggi, awaited loaded crews, and passed. This was a scratch entry/setup failure; no geometry violation was reproduced from it."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Round 3 restricted recheck: FU-5 overlap, the rail/panel repairs, enlarged text and resulting scroll behaviour.",
-      "Round 3 restricted recheck: FU-6 typed-work protection, unchanged Fine, update application and tap timing."
+      "Restricted follow-up of the CI rail-over-heading regression and ordinary rail stickiness.",
+      "Regressions from container containment and body portals: viewport anchors, scrolling, update-note clearance, label bounds, focus and hit targets."
     ],
-    "wildcard": "No new entropy draw or whole-milestone hunt. Rechecked prior FU-7 through FU-10 and regressions arising from their fixes."
+    "wildcard": "No entropy redraw or whole-milestone hunt. Round 4 follows a round-3 PASS_WITH_FINDINGS, not a third FAIL."
   },
   "notTested": [
-    "Physical Android or iPhone installation and update behaviour. D3-PHONE-UPDATE remains an owner check; this report records no physical-device PASS.",
-    "Real system font scaling, on-screen keyboards, wet hands, glare and network latency. Text scaling used root font size; production journeys used local serving.",
-    "The eventual public HTTPS deployment and exact-checkpoint CI result; the orchestrator must verify these separately.",
-    "Scan and evaluation read-only flows, hourly scheduling and unrelated existing backlog items: outside this restricted round-3 review."
+    "Physical phone installation, real font settings, keyboard, glare or wet-hand use. No physical-device PASS is recorded.",
+    "Persisting a crew-destination choice through the portal; the regression reviewer owns that distinct functional probe.",
+    "The production two-version update journey and exact-checkpoint CI after this fix; the orchestrator must complete those gates.",
+    "Unrelated D1 timing diagnostics and other D3 business-rule flows, outside this restricted follow-up."
   ]
 }
