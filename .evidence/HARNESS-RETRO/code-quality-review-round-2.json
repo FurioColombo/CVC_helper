@@ -1,0 +1,26 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "HARNESS-RETRO",
+  "commit": "7901a7f8b2e4d38ea18fc0e99b7784670d25bbfd",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "CQ-1 re-tested: scripts/ci-status.mjs now matches the workflow path before the @ ref suffix.",
+    "scripts/ci-status.test.mjs covers bare, @main, and @refs/heads/codex/0.4.0 paths; all select the matching successful run and permit reuse.",
+    "Reviewed the added CLI tests for unavailable status, unproven reuse, and rerun attempts.",
+    "Focused CI status and scope tests passed: 24 tests."
+  ],
+  "anglesTried": {
+    "seed": 997061049,
+    "lenses": [
+      "CQ-1 only: re-tested GitHub workflow path selection and exact-commit reuse."
+    ],
+    "wildcard": "Checked fail-closed CLI behavior and rerun handling for regressions from the selector fix; no new review lens drawn."
+  },
+  "notTested": [
+    "Full verification and browser checks were not run, as requested."
+  ]
+}

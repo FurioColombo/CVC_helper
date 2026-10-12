@@ -41,7 +41,8 @@ forward.
   with the milestone ID, the commit and the diff range.
 - Save each JSON report to `.evidence/<ID>/` and add it to the manifest's
   `requiredReviews`. FAIL or any blocker: fix, re-review with a new round
-  number. The protocol's entropy draw keeps rounds from repeating each other.
+  number. Follow the protocol's review-round limit: from round 2 keep the same
+  reviewer and re-check blockers and fixes; a third FAIL goes to the owner.
 - Write `.evidence/<ID>/self-review.json`: every finding and its disposition.
 
 ## 4. Evidence sweep
@@ -95,6 +96,12 @@ fresh plan replaces it.
   in a new commit and record the re-run as a new file,
   `npm run evidence -- <ID> --file verification-ci-fix.json`, since the
   completed `verification.json` only grows.
+- After an authorised push, run `npm run ci:status -- --wait` on the checkpoint.
+  Only a green push run of that exact commit permits the next milestone. A
+  failed run needs a fix and a new checkpoint; pending, missing, timed-out or
+  unavailable CI is not a PASS. If pushing is not authorised, report that this
+  gate remains pending and do not start the next milestone. This adds no push
+  or deployment authorisation. Status covers committed HEAD, not dirty edits.
 
 Report to the owner: what was delivered, what the evidence shows, what
 remains theirs to check on a device, and the next milestone.

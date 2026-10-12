@@ -1,0 +1,26 @@
+{
+  "scope": "Explicit owner-requested retrospective harness follow-up; not a D3 completion or release gate.",
+  "date": "2026-10-12",
+  "baseCommit": "7901a7f8b2e4d38ea18fc0e99b7784670d25bbfd",
+  "nodeVersion": "v24.21.0",
+  "source": {
+    "digest": "ad8ca6eb0e4986e63ad13a4b6d74be6a31ea2f3e06bbd06abaac1f535f0c1813",
+    "files": 395
+  },
+  "checks": [
+    { "command": "npm run verify:domain", "phase": "baseline", "result": "PASS", "nodeVersion": "v24.19.0" },
+    { "command": "npm run verify", "phase": "final source", "result": "PASS", "testFiles": 75, "testsPassed": 1309 },
+    { "command": "npm run test -- scripts/ci-status.test.mjs scripts/ci-scope.test.mjs", "phase": "review follow-up", "result": "PASS", "testsPassed": 24 },
+    { "command": "git diff --check", "result": "PASS" }
+  ],
+  "liveReadOnlyApiChecks": [
+    { "runId": 38028785859, "commit": "a25eba1fa0f2346a0c9cb2d251e1f98bf2d15d1b", "observed": "completed/success, exit 0; exact-commit push reuse true" },
+    { "runId": 37709165789, "commit": "cafe7c2c3c7918fea3bfbd819632ff239eff8b92", "observed": "completed/failure, exit 1; failed verify:all step and Playwright test titles printed" },
+    { "commit": "7901a7f8b2e4d38ea18fc0e99b7784670d25bbfd", "observed": "No push CI run exists; npm ci:status exits 2, with a warning that dirty edits are not covered" }
+  ],
+  "reviews": ["code-quality-review-round-1.json", "code-quality-review-round-2.json", "self-review.json"],
+  "limitations": [
+    "The changed workflow is verified by focused tests, syntax formatting, self-review and independent review, but not yet by a remote Actions run of the new checkpoint.",
+    "No full browser suite or physical-device check is claimed; application behavior is unchanged and D3 remains IN_PROGRESS."
+  ]
+}

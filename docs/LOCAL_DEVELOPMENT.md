@@ -32,6 +32,21 @@ the entire shell, including npm's child processes. A direct call to Node 24
 while npm scripts still resolve an older `node` is insufficient. A version
 manager that reads `.node-version` is also valid.
 
+`fnm default 24` selects an installed version; it does not install Node or
+replace the system PATH. If it says "not found locally", in PowerShell run:
+
+```powershell
+fnm install 24
+fnm default 24
+fnm env --shell powershell | Out-String | Invoke-Expression
+fnm use 24
+node --version
+```
+
+For future PowerShell windows, put the `fnm env` line in `$PROFILE` (see the
+[fnm shell setup](https://github.com/Schniz/fnm#shell-setup)). Uninitialised
+shells still use the system Node; agents keep the runtime preflight above.
+
 ## Git hooks
 
 `npm install` (its `prepare` script) sets `core.hooksPath` to
@@ -73,6 +88,13 @@ The ladder (what runs while editing, before a commit, at a close and at a gate)
 and the flaky-test rule are `03_TECHNICAL_DECISIONS.md` §6. One spec runs with
 `npm run verify:e2e -- tests/e2e/<spec>.spec.ts`; `npm run evidence -- <ID>`
 records a milestone's scripts, `verify:e2e:focus` among them.
+
+`npm run ci:status` reads the latest push run of `ci.yml` for committed HEAD
+and prints failed steps and available test annotations. `-- --wait` polls for
+up to ten minutes. Exit 0 means success, 1 a completed non-success, 2 pending,
+missing, timed-out or unavailable CI. Dirty edits are not covered. Run it at
+session start and after pushing; the closing skill requires green CI before
+the next milestone. It needs no `gh`; `GITHUB_TOKEN` or `GH_TOKEN` is optional.
 
 Do not pipe ESLint through `head` or `tail`; a broken pipe can hide its result.
 OCR and microphone checks on actual phones belong to the owner and are never

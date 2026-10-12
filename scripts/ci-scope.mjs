@@ -12,6 +12,8 @@
 import { execFileSync } from "node:child_process"
 import { pathToFileURL } from "node:url"
 
+import { githubClient } from "./ci-status.mjs"
+
 const NO_BROWSER_IMPACT = [
   /\.md$/,
   /^\.evidence\//,
@@ -56,20 +58,10 @@ function changedFiles(before, after) {
 }
 
 async function previousTipPassed(before) {
-  const { GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_API_URL } = process.env
+  const { GITHUB_TOKEN, GITHUB_REPOSITORY } = process.env
   if (!GITHUB_TOKEN || !GITHUB_REPOSITORY) return false
   try {
-    const response = await fetch(
-      `${GITHUB_API_URL ?? "https://api.github.com"}/repos/${GITHUB_REPOSITORY}/actions/workflows/${WORKFLOW_FILE}/runs?head_sha=${before}&event=push&per_page=100`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-        },
-      },
-    )
-    if (!response.ok) return false
-    return latestRunPassed((await response.json()).workflow_runs ?? [])
+    return latestRunPassed(await githubClient().runs(GITHUB_REPOSITORY, before))
   } catch {
     return false
   }

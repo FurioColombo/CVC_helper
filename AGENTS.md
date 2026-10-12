@@ -9,9 +9,10 @@ operating contract, source of truth, progress tracker and verification harness.
 At the start of a turn, before writing application code:
 
 1. Read this file completely.
-2. Inspect `git status`, the latest checkpoint and milestone state (`npm run
-   milestone:status` gives a compact projection of `.milestones/manifest.json`).
-   Never erase or claim another agent's unfinished work.
+2. Inspect `git status`, `npm run ci:status`, the latest checkpoint and
+   milestone state (`npm run milestone:status` gives a compact projection of
+   `.milestones/manifest.json`). Never erase or claim another agent's
+   unfinished work.
 3. In `04_IMPLEMENTATION_PLAN.md`, read **Where this cycle stands** and the
    active milestone. Read other milestone sections only for a dependency.
 4. Read the relevant sections of `01_PRODUCT_SPEC.md`, `02_MVP_SCOPE.md` and

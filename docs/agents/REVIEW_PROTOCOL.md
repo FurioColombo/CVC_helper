@@ -41,10 +41,33 @@ touches, the diff, and earlier review reports for the same milestone in
 - **Blocker:** a reproduced violation of the spec, the milestone's acceptance,
   privacy or data integrity. Any blocker means FAIL.
 
-## Entropy
+## Review rounds
 
-Reviews of the same milestone must not keep walking the same path; F1 needed
-twelve rounds partly because rounds overlapped. Before you start:
+The orchestrator numbers rounds per milestone and role, starting at 1. Keep
+the same reviewer agent for follow-ups where available; otherwise give the
+same persona its prior reports. Do not restart the round count by replacing
+the agent, renaming the report or changing the commit.
+
+- **Round 1:** review the whole milestone using the entropy draw below.
+- **Rounds 2 and 3:** re-check only the previous blockers, the fix diff and
+  regressions caused by those fixes. The brief includes blocker IDs, their
+  dispositions and the diff since the previous review. Do not draw new lenses
+  or repeat the whole-milestone hunt. Preserve unresolved blocker IDs; record
+  any newly reproduced blocker encountered while checking the fixes. New
+  non-blocking findings go into the report and `docs/working/BACKLOG.md`, not
+  another review round.
+- **Third FAIL:** stop automatic review rounds for this milestone and bring
+  the unresolved blockers and evidence to the owner to split the milestone
+  or decide an explicit scope/acceptance change. Do not launch round 4 or
+  claim completion. Owner acceptance is a recorded decision in the affected
+  contract and plan, never a forged PASS or a bypass of `milestone:complete`.
+
+Passing follow-ups list the blockers they re-tested in `evidenceInspected`
+and their restricted scope in `anglesTried`; keep earlier reports unchanged.
+
+## Entropy (round 1 only)
+
+The first review explores the whole milestone. Before you start:
 
 1. Collect `anglesTried` from earlier reports for this milestone and role.
 2. Draw a seed: `node -e "console.log(Math.floor(Math.random() * 1e9))"`.

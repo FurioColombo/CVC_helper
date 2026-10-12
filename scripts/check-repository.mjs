@@ -22,6 +22,7 @@ const requiredFiles = [
   "scripts/check-v0_1-compatibility.ts",
   "scripts/run-e2e.mjs",
   "scripts/check-runtime.mjs",
+  "scripts/ci-status.mjs",
   "src/persistence/db.ts",
   "src/test/fixtures/v0.1.0-course.json",
   "docs/design/06_DESIGN_RULEBOOK.md",
@@ -108,6 +109,7 @@ for (const script of [
   "milestone:status",
   "milestone:check",
   "milestone:complete",
+  "ci:status",
   "evidence",
 ]) {
   assert.ok(packageJson.scripts[script], `Missing package script: ${script}`)

@@ -289,6 +289,7 @@ Keep the existing harness and command surface:
 - `npm run verify:all`: verify + deterministic full week + offline check of
   the built PWA + E2E;
 - `npm run milestone:start|check|complete -- <ID>`;
+- `npm run ci:status -- [--wait]`: the exact HEAD commit's push verification;
 - `npm run evidence -- <ID>`.
 
 The milestone manifest declares verification scripts, evidence and structured
@@ -330,9 +331,19 @@ viewport project runs the specs that assert layout, and the WebKit project the
 core journeys (`playwright.config.ts`). Test 320 × 664, 390 × 844 and 412 × 915 where
 density/overflow is material; avoid multiplying every test across every viewport.
 
+Agents read `ci:status` at session start and after a checkpoint is pushed. A
+completed milestone's pushed checkpoint must have green CI before the next
+milestone starts; the closing skill handles failures and unavailable results.
+The public API needs no `gh` or token; a token permits higher API limits.
+
 CI runs on push (and by hand), cancels a superseded run on the same branch, and
 uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
-failure artifacts where useful. A push that changes only documentation,
+failure artifacts where useful. A push reuses the newest push run only when
+it succeeded for the same workflow and exact commit across branches, excluding itself;
+manual dispatches and reruns always execute checks. Reuse still checks frozen
+documentation against this branch's previous tip. An unavailable API or any
+unproven result runs checks. Concurrent runs without a completed green result
+both run. A push that changes only documentation,
 evidence, the archive, milestone metadata or agent definitions runs `verify`
 instead, and only when CI's push run passed on the commit it builds on; any
 doubt runs everything (`scripts/ci-scope.mjs`). Such a green run inherits the

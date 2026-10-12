@@ -1,0 +1,46 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "HARNESS-RETRO",
+  "commit": "7901a7f8b2e4d38ea18fc0e99b7784670d25bbfd",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "CQ-1",
+      "title": "Workflow run selection rejects GitHub's documented path format",
+      "evidence": "scripts/ci-status.mjs:25 accepts only `run.path === \".github/workflows/ci.yml\"`. GitHub's [workflow-runs API example](https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2026-03-10) returns a path with a ref suffix, such as `.github/workflows/build.yml@main`. Reproducing with `.github/workflows/ci.yml@main` makes `latestPushRun` return `undefined`. The success fixture in scripts/ci-status.test.mjs:19 uses the bare path, so it misses this API shape.",
+      "reproduction": "Call `latestPushRun` with a completed successful push for the requested SHA and `path: \".github/workflows/ci.yml@main\"`; observed result: `undefined`. `alreadyVerified` therefore declines reuse, and `ciStatus` treats the successful run as missing and returns 2.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6: lines 341–345 require reusing a successful push run for the same workflow and exact commit, and expose CI status."
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "CQ-2",
+      "title": "The Node setup instructions are outside the approved change scope",
+      "evidence": "docs/LOCAL_DEVELOPMENT.md:35–47 adds fnm installation, default-version, and PowerShell profile instructions. The approved retrospective changes are bounded review rounds and CI status/reuse; AGENTS.md §15 limits work to approved scope.",
+      "reproduction": "The added section appears in the diff alongside the CI status documentation but is not needed to document or implement either adopted change.",
+      "specRef": "AGENTS.md §15; owner-approved scope in the review brief."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md; git status; latest checkpoint; Node 24 milestone status (D3 remains IN_PROGRESS).",
+    "04_IMPLEMENTATION_PLAN.md cycle status and D3 section; 03_TECHNICAL_DECISIONS.md CI rules; docs/LOCAL_DEVELOPMENT.md.",
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-code-quality.md; .claude/skills/milestone-close/SKILL.md.",
+    "Diffs for the workflow, ci-scope integration, status script, tests, and related documentation.",
+    "Focused CI status and scope tests: 20 passed; `git diff --check` passed.",
+    "Reproduced the selector mismatch using the documented GitHub workflow-run path shape."
+  ],
+  "anglesTried": {
+    "seed": 997061049,
+    "lenses": [
+      "Hard-to-read control flow that a table or small function would replace.",
+      "Error paths: swallowed, logged and ignored, or shown to no one."
+    ],
+    "wildcard": "Checked that cross-branch reuse still runs frozen-document validation against the receiving branch's previous tip; the workflow runs check-docs when reuse succeeds."
+  },
+  "notTested": [
+    "No successful Actions run for the local HEAD was available for an end-to-end reuse check.",
+    "Full CI and browser verification were not run, as requested."
+  ]
+}

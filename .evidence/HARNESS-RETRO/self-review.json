@@ -1,0 +1,28 @@
+{
+  "scope": "Owner-approved retrospective changes: bounded review rounds and CI visibility/reuse; troubleshooting the owner's fnm default 24 error. Separate harness checkpoint; D3 remains IN_PROGRESS.",
+  "date": "2026-10-12",
+  "verdict": "PASS",
+  "blockers": [],
+  "findings": [
+    {
+      "id": "CQ-1",
+      "disposition": "Fixed workflow path selection to accept GitHub's optional @ref suffix, with coverage for bare and suffixed paths. Same reviewer confirms PASS in round 2."
+    },
+    {
+      "id": "CQ-2",
+      "disposition": "The first review brief omitted the owner's explicit fnm troubleshooting request. Runtime documentation and installation are authorised by that request; clarified to the same reviewer, whose follow-up has no remaining findings."
+    },
+    {
+      "id": "LINT-1",
+      "disposition": "The first full verification stopped on no-constant-condition. Replaced the constant polling-loop condition with the deadline predicate; bounded-wait tests cover timeout without a PASS."
+    }
+  ],
+  "limitations": [
+    "Remote workflow execution of this new checkpoint awaits an authorised push. No CI PASS is claimed for it; public pre-existing runs exercise read-only status and reuse.",
+    "Concurrent runs of the same commit still execute checks if neither has completed successfully at the reuse lookup.",
+    "Test titles come from available GitHub failure annotations; missing annotations point to the run logs.",
+    "Review round limits are process rules in REVIEW_PROTOCOL.md; FAIL still blocks milestone completion.",
+    "The phone-check-before-Complete proposal remains unadopted, awaiting the owner's decision.",
+    "fnm Node 24.21.0 is installed and selected as default. Each shell needs fnm initialization; the system Node installation and shell profiles remain as they are."
+  ]
+}

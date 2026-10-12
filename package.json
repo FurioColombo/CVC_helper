@@ -25,6 +25,7 @@
     "check:repository": "node scripts/check-repository.mjs",
     "check:staged": "node scripts/check-staged.mjs",
     "check:docs": "node scripts/check-docs.mjs",
+    "ci:status": "node scripts/ci-status.mjs",
     "check:pwa": "node scripts/check-built-pwa.mjs",
     "precheck:ocr-offline": "node scripts/check-runtime.mjs",
     "check:ocr-offline": "node scripts/check-ocr-offline.mjs",

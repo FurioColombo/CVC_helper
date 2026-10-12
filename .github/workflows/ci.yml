@@ -12,11 +12,11 @@ concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
-# actions: read lets scripts/ci-scope.mjs ask whether this workflow's push run
-# passed on the previous tip before it skips the browser suite.
+# Read-only API access for scope selection and failed-test annotations.
 permissions:
   contents: read
   actions: read
+  checks: read
 
 jobs:
   verify:
@@ -37,24 +37,36 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      # Reuse a successful push of this exact commit on another branch. An
+      # unknown result, a manual dispatch or a rerun executes all checks.
+      - id: verified
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci-status.mjs --skip-verified >> "$GITHUB_OUTPUT"
+      # Frozen-file enforcement depends on this branch's previous tip, even
+      # when the same commit's code has already passed elsewhere.
+      - if: steps.verified.outputs.verified == 'true'
+        run: node scripts/check-docs.mjs
+      - if: steps.verified.outputs.verified != 'true'
+        run: npm ci
       # A push that touches only documentation, evidence, milestone metadata or
       # agent definitions, on a previous tip whose CI passed, runs `verify`;
       # anything else runs `verify:all` (scripts/ci-scope.mjs).
       - id: scope
+        if: steps.verified.outputs.verified != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/ci-scope.mjs "${{ github.event.before }}" "${{ github.sha }}" >> "$GITHUB_OUTPUT"
       # Anything but an explicit "false", an empty output included, runs
       # everything.
-      - if: steps.scope.outputs.browser != 'false'
+      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
         run: npx playwright install --with-deps chromium webkit
-      - if: steps.scope.outputs.browser != 'false'
+      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
         run: npm run verify:all
-      - if: steps.scope.outputs.browser == 'false'
+      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser == 'false'
         run: npm run verify
       # Tests that passed only on a retry: kept even when the run is green.
-      - if: always() && steps.scope.outputs.browser != 'false'
+      - if: always() && steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
         uses: actions/upload-artifact@v4
         with:
           name: e2e-flaky-${{ github.run_id }}
