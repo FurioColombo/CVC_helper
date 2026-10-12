@@ -14,7 +14,7 @@ evidence. Do not change `engines` to accommodate a host's older default.
 In Claude Code, the SessionStart hook in `.claude/settings.json` puts the fnm
 Node 24 first on the Bash tool's PATH and removes fnm's `cd` alias, whose
 failure used to make `cd dir && cmd` skip `cmd`. Run npm through the Bash
-tool; the PowerShell tool still resolves the system Node.
+tool. Other shells still need their own runtime preflight.
 
 In a Bash shell of your own with `fnm`, initialise it **before any `cd` in that
 Bash call**:
@@ -36,20 +36,27 @@ Prefer an existing Node 24 runtime. Missing Node 24 in fnm does not mean it is
 absent from the machine: Codex's bundle is separate. Do not install another
 runtime merely to fix PATH; use the documented existing runtime first.
 
+The owner's Windows account selects existing fnm Node 24 in Windows PowerShell,
+PowerShell 7 (including Codex), Command Prompt and Git Bash. PowerShell profiles
+initialise fnm; Command Prompt's per-user AutoRun prepends the stable default
+alias, which also appears in user PATH. Shells and npm children need Node 24.
+
 `fnm default 24` selects an installed version; it does not install Node or
-replace the system PATH. If it says "not found locally", in PowerShell run:
+replace the system PATH. If it says "not found locally", locate existing Node
+24 and put its directory first on PATH. With fnm Node 24 already available,
+an existing PowerShell window can refresh its selection:
 
 ```powershell
-fnm install 24
 fnm default 24
 fnm env --shell powershell | Out-String | Invoke-Expression
 fnm use 24
 node --version
 ```
 
-For future PowerShell windows, put the `fnm env` line in `$PROFILE` (see the
-[fnm shell setup](https://github.com/Schniz/fnm#shell-setup)). Uninitialised
-shells still use the system Node; agents keep the runtime preflight above.
+For another account, initialise each shell as described in the
+[fnm shell setup](https://github.com/Schniz/fnm#shell-setup). Windows still has
+an older system Node: shells with profiles or AutoRun disabled can select it.
+Keep the runtime preflight above even after configuring defaults.
 
 ## Git hooks
 
