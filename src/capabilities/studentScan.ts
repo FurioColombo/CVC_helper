@@ -1,6 +1,7 @@
 import type { StudentSex } from "@/domain/config"
 import { calculateAge } from "@/domain/student"
 import { absoluteAssetUrl } from "@/lib/assetPath"
+import { appChannel, appChannelConfig } from "@/runtimeConfig"
 import { proposeStudentNameTripletSplit } from "./studentNameTriplet"
 import { reconstructStudentScanTsvFragments } from "./studentScanRowGeometry"
 import { eraseVerticalTableRulesFromImage } from "./studentScanRules"
@@ -1271,6 +1272,9 @@ async function getWorker() {
           })
         },
         workerPath: assetUrl("/ocr/worker.min.js"),
+        ...(appChannel === "test"
+          ? { cachePath: appChannelConfig.ocrLanguageCachePath }
+          : {}),
       })
       await worker.setParameters({
         tessedit_pageseg_mode: PSM.AUTO,

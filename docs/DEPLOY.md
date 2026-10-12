@@ -86,12 +86,15 @@ not isolate their data.
 
 The test channel (`CVC_APP_CHANNEL=test`) has its own database
 `cvc-helper-test.db`, preference keys, speech-model cache, Workbox cache names,
+and OCR language-cache key `cvc-helper-test-ocr/ita.traineddata`,
 manifest identity and service-worker scope. The regular channel keeps its
 existing names. `npm run check:test-isolation` builds both channels on one origin
 and exercises creation, student edits and course erasure through their UI on
 Chromium and WebKit, checking the regular course, preferences and offline app
-remain intact. Its report is `.evidence/D3/test-isolation.json`. D4's full reset
-must use these same channel boundaries.
+remain intact. Real OCR initializes both library caches; test-key writes and
+deletes preserve the regular model bytes under `./ita.traineddata`. Its report is `.evidence/D3/test-isolation.json`. D4's full reset
+must use these same channel boundaries, deleting only the selected OCR language
+key from Tesseract's shared `keyval-store` rather than deleting that whole store.
 
 The repository package remains the released 0.3.0 until UG3; the isolated test
 channel explicitly uses the 0.4 patch line. D3 uses **0.4.0** first, then

@@ -15,6 +15,7 @@ describe("app channel storage configuration", () => {
       installedVersionKey: "cvc-helper.installed-version",
       workboxCacheId: null,
       ocrRuntimeCacheName: "cvc-ocr-runtime",
+      ocrLanguageCachePath: ".",
       speechRuntimeCacheName: "cvc-speech-runtime",
       speechModelCacheName: "transformers-cache",
       manifestName: "CVC Helper",
@@ -35,6 +36,8 @@ describe("app channel storage configuration", () => {
     expect(test.installedVersionKey).not.toBe(regular.installedVersionKey)
     expect(test.workboxCacheId).toBe("cvc-helper-test")
     expect(test.ocrRuntimeCacheName).not.toBe(regular.ocrRuntimeCacheName)
+    expect(test.ocrLanguageCachePath).toBe("cvc-helper-test-ocr")
+    expect(test.ocrLanguageCachePath).not.toBe(regular.ocrLanguageCachePath)
     expect(test.speechRuntimeCacheName).not.toBe(regular.speechRuntimeCacheName)
     expect(test.speechModelCacheName).not.toBe(regular.speechModelCacheName)
     expect(test.manifestName).toBe("CVC Helper Test")
