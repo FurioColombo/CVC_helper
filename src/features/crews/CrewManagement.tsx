@@ -27,6 +27,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react"
+import { createPortal } from "react-dom"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -2636,7 +2637,9 @@ export function CrewManagement({
         // A bounded column, so the workspace scrolls inside it and the quick
         // access rail stays above the bottom navigation (P14). On a screen too
         // short for the header and a usable workspace the page scrolls instead.
-        <div className="flex h-[calc(100dvh-7rem-var(--update-banner-height,0px))] min-h-[28rem] flex-col">
+        // The rail uses this column's width query; fixed destination panels
+        // below portal to the document so they remain viewport-anchored.
+        <div className="@container flex h-[calc(100dvh-7rem-var(--update-banner-height,0px))] min-h-[28rem] flex-col">
           {header}
           <SessionChoice
             disabled={
@@ -2865,125 +2868,138 @@ export function CrewManagement({
                   </button>
                 </div>
 
-                {destinationCrewId && destinationCrewIndex >= 0 && (
-                  <section
-                    aria-label={`Destinazione equipaggio ${destinationCrewIndex + 1}`}
-                    className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-bold">
-                        Equipaggio {destinationCrewIndex + 1}
-                      </span>
-                      <button
-                        aria-label="Chiudi destinazioni"
-                        className="min-h-11 px-2 text-xs font-bold text-muted-foreground"
-                        onClick={() => setDestinationCrewId(null)}
-                        type="button"
-                      >
-                        Chiudi
-                      </button>
-                    </div>
-                    <div
-                      aria-label="Legenda stato barche"
-                      className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.68rem] font-bold"
-                      role="list"
+                {destinationCrewId &&
+                  destinationCrewIndex >= 0 &&
+                  createPortal(
+                    <section
+                      aria-label={`Destinazione equipaggio ${destinationCrewIndex + 1}`}
+                      className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 max-h-[calc(100dvh-6rem-var(--update-banner-height,0px)-0.5rem)] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
                     >
-                      <span className="flex items-center gap-1" role="listitem">
-                        <span
-                          aria-hidden="true"
-                          className="size-2.5 rounded-full bg-[#8b9aa0]"
-                        />
-                        Non disponibile
-                      </span>
-                      <span className="flex items-center gap-1" role="listitem">
-                        <span
-                          aria-hidden="true"
-                          className="size-2.5 rounded-full bg-[#2f80ed]"
-                        />
-                        Disponibile
-                      </span>
-                      <span className="flex items-center gap-1" role="listitem">
-                        <span
-                          aria-hidden="true"
-                          className="size-2.5 rounded-full bg-[#2f8f46]"
-                        />
-                        Assegnata
-                      </span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <Button
-                        className="h-auto min-h-14 min-w-0 px-2 text-xs"
-                        disabled={busy}
-                        onClick={() =>
-                          chooseDestination({ kind: "unassigned" })
-                        }
-                        variant="secondary"
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold">
+                          Equipaggio {destinationCrewIndex + 1}
+                        </span>
+                        <button
+                          aria-label="Chiudi destinazioni"
+                          className="min-h-11 px-2 text-xs font-bold text-muted-foreground"
+                          onClick={() => setDestinationCrewId(null)}
+                          type="button"
+                        >
+                          Chiudi
+                        </button>
+                      </div>
+                      <div
+                        aria-label="Legenda stato barche"
+                        className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.68rem] font-bold"
+                        role="list"
                       >
-                        Non assegnato
-                      </Button>
-                      {sessionBoatStates
-                        .filter((state) => state.selected)
-                        .map((state) => {
-                          const boatId = state.boatId
-                          const assignedCrewIndex = state.assignedCrewId
-                            ? plan.crews.findIndex(
-                                ({ id }) => id === state.assignedCrewId,
-                              )
-                            : -1
-                          const isOwnBoat =
-                            assignedCrewIndex >= 0 &&
-                            assignedCrewIndex === destinationCrewIndex
-                          const assignedElsewhere =
-                            assignedCrewIndex >= 0 && !isOwnBoat
-                          const unavailableForThisCrew =
-                            state.displayState === "unavailable" && !isOwnBoat
-                          const stateLabel = sessionBoatStateLabel(
-                            state.displayState,
-                            assignedCrewIndex,
-                            state.selected,
-                          )
-                          return (
-                            <Button
-                              aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${state.type} ${state.number}, ${stateLabel}`}
-                              className={`h-auto min-h-14 min-w-0 px-2 text-xs ${state.displayState === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : assignedElsewhere ? "bg-muted text-muted-foreground" : "border-[#2f80ed] bg-[#edf5ff] text-[#1356a2]"}`}
-                              disabled={
-                                busy ||
-                                assignedElsewhere ||
-                                unavailableForThisCrew
-                              }
-                              key={boatId}
-                              onClick={() =>
-                                chooseDestination({ kind: "boat", boatId })
-                              }
-                              variant="secondary"
-                            >
-                              <span className="flex min-w-0 items-center justify-center gap-1">
-                                <BoatMark type={state.type} />
-                                <span className="tabular-nums">
-                                  {state.number}
+                        <span
+                          className="flex items-center gap-1"
+                          role="listitem"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="size-2.5 rounded-full bg-[#8b9aa0]"
+                          />
+                          Non disponibile
+                        </span>
+                        <span
+                          className="flex items-center gap-1"
+                          role="listitem"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="size-2.5 rounded-full bg-[#2f80ed]"
+                          />
+                          Disponibile
+                        </span>
+                        <span
+                          className="flex items-center gap-1"
+                          role="listitem"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="size-2.5 rounded-full bg-[#2f8f46]"
+                          />
+                          Assegnata
+                        </span>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <Button
+                          className="h-auto min-h-14 min-w-0 px-2 text-xs"
+                          disabled={busy}
+                          onClick={() =>
+                            chooseDestination({ kind: "unassigned" })
+                          }
+                          variant="secondary"
+                        >
+                          Non assegnato
+                        </Button>
+                        {sessionBoatStates
+                          .filter((state) => state.selected)
+                          .map((state) => {
+                            const boatId = state.boatId
+                            const assignedCrewIndex = state.assignedCrewId
+                              ? plan.crews.findIndex(
+                                  ({ id }) => id === state.assignedCrewId,
+                                )
+                              : -1
+                            const isOwnBoat =
+                              assignedCrewIndex >= 0 &&
+                              assignedCrewIndex === destinationCrewIndex
+                            const assignedElsewhere =
+                              assignedCrewIndex >= 0 && !isOwnBoat
+                            const unavailableForThisCrew =
+                              state.displayState === "unavailable" && !isOwnBoat
+                            const stateLabel = sessionBoatStateLabel(
+                              state.displayState,
+                              assignedCrewIndex,
+                              state.selected,
+                            )
+                            return (
+                              <Button
+                                aria-label={`Assegna equipaggio ${destinationCrewIndex + 1} a ${state.type} ${state.number}, ${stateLabel}`}
+                                className={`h-auto min-h-14 min-w-0 px-2 text-xs ${state.displayState === "unavailable" ? "border-[#b42318] bg-[#fee4e2] text-[#8f1d15]" : assignedElsewhere ? "bg-muted text-muted-foreground" : "border-[#2f80ed] bg-[#edf5ff] text-[#1356a2]"}`}
+                                disabled={
+                                  busy ||
+                                  assignedElsewhere ||
+                                  unavailableForThisCrew
+                                }
+                                key={boatId}
+                                onClick={() =>
+                                  chooseDestination({ kind: "boat", boatId })
+                                }
+                                variant="secondary"
+                              >
+                                <span className="flex min-w-0 items-center justify-center gap-1">
+                                  <BoatMark type={state.type} />
+                                  <span className="tabular-nums">
+                                    {state.number}
+                                  </span>
                                 </span>
-                              </span>
-                            </Button>
-                          )
-                        })}
-                      <Button
-                        className="h-auto min-h-14 min-w-0 px-2 text-xs"
-                        disabled={busy}
-                        onClick={() => chooseDestination({ kind: "mezzi" })}
-                        variant="secondary"
-                      >
-                        Mezzi
-                      </Button>
-                    </div>
-                  </section>
-                )}
+                              </Button>
+                            )
+                          })}
+                        <Button
+                          className="h-auto min-h-14 min-w-0 px-2 text-xs"
+                          disabled={busy}
+                          onClick={() => chooseDestination({ kind: "mezzi" })}
+                          variant="secondary"
+                        >
+                          Mezzi
+                        </Button>
+                      </div>
+                    </section>,
+                    document.body,
+                  )}
 
                 {selected &&
                   (selectedLocation.kind === "pool" ||
-                    selected.personType === "volunteer") && (
+                    selected.personType === "volunteer") &&
+                  createPortal(
                     <section
                       aria-label="Destinazione persona selezionata"
-                      className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+                      className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 max-h-[calc(100dvh-6rem-var(--update-banner-height,0px)-0.5rem)] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
                       ref={personDestinationRef}
                       tabIndex={-1}
                     >
@@ -3071,34 +3087,41 @@ export function CrewManagement({
                           })
                         })()}
                         <Button
-                          className="h-11 min-w-0 px-2 text-xs"
+                          className="h-auto min-h-11 min-w-0 break-words px-2 text-xs"
                           disabled={busy || plan.crews.length >= maxCrewCount}
                           onClick={() => createCrewForSelected("unassigned")}
                           variant="secondary"
                         >
-                          Nuovo equipaggio
+                          <span className="min-w-0 [overflow-wrap:anywhere]">
+                            Nuovo equipaggio
+                          </span>
                         </Button>
                         {selected.personType === "student" && (
                           <Button
                             aria-label={`Sposta ${personLabel(selected)} A terra`}
-                            className="h-11 min-w-0 px-1 text-xs"
+                            className="h-auto min-h-11 min-w-0 break-words px-1 text-xs"
                             disabled={busy || selectedLocation.kind === "land"}
                             onClick={placeOnLand}
                             variant="secondary"
                           >
-                            A terra
+                            <span className="min-w-0 [overflow-wrap:anywhere]">
+                              A terra
+                            </span>
                           </Button>
                         )}
                         <Button
-                          className="h-11 min-w-0 px-2 text-xs"
+                          className="h-auto min-h-11 min-w-0 break-words px-2 text-xs"
                           disabled={busy || plan.crews.length >= maxCrewCount}
                           onClick={() => createCrewForSelected("mezzi")}
                           variant="secondary"
                         >
-                          Mezzi
+                          <span className="min-w-0 [overflow-wrap:anywhere]">
+                            Mezzi
+                          </span>
                         </Button>
                       </div>
-                    </section>
+                    </section>,
+                    document.body,
                   )}
 
                 <section
@@ -3600,10 +3623,11 @@ export function CrewManagement({
                   and "Volontari"), the bar wraps: the two buttons share the first
                   row, if they fit, and the count takes the next. The query is on the
                   bar's width in rem, so it only triggers with enlarged text.
-                  Where the page scrolls instead (a short screen, large text),
-                  the rail sticks above the navigation and the update bar
-                  rather than passing under them (D3 reviews RH-2, FU-5). */}
-              <div className="@container sticky bottom-[calc(var(--bottom-nav-height,0px)+var(--update-banner-height,0px)+0.5rem)] z-20 mt-2 shrink-0">
+                  When enlarged text makes the fixed header taller than the
+                  viewport, the rail returns to the scroll flow instead of
+                  sticking over that header; scroll padding keeps it clear of
+                  the navigation. */}
+              <div className="sticky bottom-[calc(var(--bottom-nav-height,0px)+var(--update-banner-height,0px)+0.5rem)] z-20 mt-2 shrink-0 @max-[14rem]:static">
                 <nav
                   aria-label="Accesso rapido equipaggi"
                   className="grid grid-cols-3 items-center gap-1 rounded-2xl border bg-card/95 p-1.5 shadow-[0_6px_18px_rgb(6_59_82/0.12)] backdrop-blur @max-[14rem]:flex @max-[14rem]:flex-wrap"

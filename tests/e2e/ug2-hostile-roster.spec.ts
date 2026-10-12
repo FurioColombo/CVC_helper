@@ -55,7 +55,12 @@ const PROFILES = [
   { name: "320", width: 320, height: 664, fontSize: "" },
   { name: "320-200pct", width: 320, height: 664, fontSize: "200%" },
 ] as const
-type Profile = (typeof PROFILES)[number]
+type Profile = {
+  name: string
+  width: number
+  height: number
+  fontSize: string
+}
 
 async function applyProfile(page: Page, profile: Profile) {
   await page.setViewportSize({ width: profile.width, height: profile.height })
@@ -518,10 +523,206 @@ test("keeps the crew page inside the screen at 320 px with 200% text", async ({
   )
   // The bottom bar keeps its labels whole and its buttons 44 px high.
   const bar = page.getByRole("navigation", { name: "Accesso rapido equipaggi" })
+  expect(
+    await bar.evaluate(
+      (element) => getComputedStyle(element.parentElement!).position,
+    ),
+  ).toBe("static")
   for (const name of ["A terra", "Volontari"]) {
     const box = await bar.getByRole("button", { name }).boundingBox()
     expect(box!.height, name).toBeGreaterThanOrEqual(44)
   }
+
+  // At 200% text the quick rail is in the page flow, below the tall header,
+  // rather than sticky over the copy controls. It remains reachable above the
+  // fixed navigation after the page scrolls to its end.
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  )
+  const pageEndAudit = await auditLayout(page.locator("main"), CREW_PAGE_AUDIT)
+  expect(pageEndAudit.issues, "Equipaggi 320-200pct page end").toEqual([])
+  const [railBox, navBox, pageScroll] = await Promise.all([
+    bar.boundingBox(),
+    nav(page).boundingBox(),
+    page.evaluate(() => window.scrollY),
+  ])
+  expect(pageScroll).toBeGreaterThan(0)
+  expect(railBox).not.toBeNull()
+  expect(railBox!.y).toBeGreaterThanOrEqual(0)
+  expect(railBox!.y + railBox!.height).toBeLessThanOrEqual(navBox!.y)
+  await saveScreen(page, testInfo, "crews-320-200pct-page-end")
+})
+
+test("keeps selected-person panels fixed above the update note while scrolling", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "pixel-7-chrome")
+  test.setTimeout(180_000)
+  await openHostileCourse(page)
+
+  const installedVersionKey = await page.evaluate(async () => {
+    const moduleUrl = "/src/runtimeConfig.ts"
+    const { appChannelConfig } = await import(moduleUrl)
+    return appChannelConfig.installedVersionKey
+  })
+  await page.evaluate(
+    (key) => localStorage.setItem(key, "0.2.0"),
+    installedVersionKey,
+  )
+  await page.reload()
+  const updateNote = page
+    .getByRole("status")
+    .filter({ hasText: "CVC Helper è aggiornata alla versione" })
+  await expect(updateNote).toBeVisible()
+
+  await nav(page).getByRole("button", { name: "Equipaggi" }).click()
+  await page
+    .getByRole("combobox", { name: "Sessione" })
+    .selectOption(HOSTILE_SESSION)
+  const composition = page.getByRole("region", {
+    name: "Composizione equipaggi",
+  })
+  const personPanel = page.getByRole("region", {
+    name: "Destinazione persona selezionata",
+  })
+  const mainNavigation = nav(page)
+
+  for (const profile of [PROFILES[0], PROFILES[3]]) {
+    await applyProfile(page, profile)
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await composition.evaluate((element) => element.scrollTo(0, 0))
+
+    for (const regionName of ["Allievi disponibili", "Volontari disponibili"]) {
+      const person = page
+        .getByRole("region", { name: regionName })
+        .getByRole("button")
+        .first()
+      const destinationAction = personPanel.getByRole("button").first()
+      await person.click()
+      await expect(personPanel).toBeVisible()
+      await destinationAction.scrollIntoViewIfNeeded()
+
+      const measurePanel = async () => {
+        const [panelBox, bannerBox, navBox, actionBox] = await Promise.all([
+          personPanel.boundingBox(),
+          updateNote.boundingBox(),
+          mainNavigation.boundingBox(),
+          destinationAction.boundingBox(),
+        ])
+        expect(panelBox).not.toBeNull()
+        expect(bannerBox).not.toBeNull()
+        expect(navBox).not.toBeNull()
+        expect(actionBox).not.toBeNull()
+        expect(panelBox!.x).toBeGreaterThanOrEqual(0)
+        expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(profile.width)
+        expect(panelBox!.y).toBeGreaterThanOrEqual(0)
+        expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(bannerBox!.y)
+        expect(actionBox!.height).toBeGreaterThanOrEqual(44)
+        expect(actionBox!.y).toBeGreaterThanOrEqual(panelBox!.y)
+        expect(actionBox!.y + actionBox!.height).toBeLessThanOrEqual(
+          panelBox!.y + panelBox!.height,
+        )
+        expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(navBox!.y)
+        return panelBox!
+      }
+
+      // Enlarged text must stay inside each destination button; fixed-height
+      // or unbreakable anonymous flex text previously spilled over its border.
+      const actionWidths = await personPanel
+        .getByRole("button")
+        .evaluateAll((buttons) =>
+          buttons.map((button) => ({
+            label: button.textContent?.trim(),
+            scrollWidth: button.scrollWidth,
+            clientWidth: button.clientWidth,
+          })),
+        )
+      for (const action of actionWidths) {
+        expect(action.scrollWidth, action.label).toBeLessThanOrEqual(
+          action.clientWidth + 1,
+        )
+      }
+
+      const beforeScroll = await measurePanel()
+      expect(
+        await personPanel.evaluate(
+          (element) => element.parentElement === document.body,
+        ),
+      ).toBe(true)
+      await page.evaluate(() =>
+        window.scrollTo(0, document.documentElement.scrollHeight),
+      )
+      await composition.evaluate((element) =>
+        element.scrollTo(0, element.scrollHeight),
+      )
+      const afterScroll = await measurePanel()
+      expect(Math.abs(afterScroll.x - beforeScroll.x)).toBeLessThan(1)
+      expect(Math.abs(afterScroll.y - beforeScroll.y)).toBeLessThan(1)
+      await saveScreen(
+        page,
+        testInfo,
+        `crew-panel-${profile.name}-${regionName}`,
+      )
+
+      // Selecting the same pool row again is the app's non-mutating cancel
+      // action. Scroll it clear of the fixed panel, then activate it by its
+      // keyboard behavior so the probe can switch roles without reloading.
+      await page.evaluate(() => window.scrollTo(0, 0))
+      await composition.evaluate((element) => element.scrollTo(0, 0))
+      await person.press("Enter")
+      await expect(personPanel).toBeHidden()
+    }
+  }
+
+  // At ordinary text size a short viewport still keeps the quick rail
+  // sticky above the update note while the outer document scrolls.
+  await applyProfile(page, {
+    name: "320x360-normal",
+    width: 320,
+    height: 360,
+    fontSize: "",
+  })
+  await expect(updateNote).toBeVisible()
+  const normalRail = page.getByRole("navigation", {
+    name: "Accesso rapido equipaggi",
+  })
+  expect(
+    await normalRail.evaluate(
+      (element) => getComputedStyle(element.parentElement!).position,
+    ),
+  ).toBe("sticky")
+  const maxScroll = await page.evaluate(
+    () => document.documentElement.scrollHeight - window.innerHeight,
+  )
+  expect(maxScroll).toBeGreaterThan(20)
+  const samples = [0.2, 0.55, 0.85].map((fraction) =>
+    Math.floor(maxScroll * fraction),
+  )
+  expect(new Set(samples).size).toBe(samples.length)
+  const pinnedBottoms: number[] = []
+  for (const target of samples) {
+    await page.evaluate((top) => {
+      window.scrollTo({ top, behavior: "instant" })
+    }, target)
+    await page.waitForFunction((top) => window.scrollY === top, target)
+    const [railBox, noteBox, navBox, pageScroll] = await Promise.all([
+      normalRail.boundingBox(),
+      updateNote.boundingBox(),
+      mainNavigation.boundingBox(),
+      page.evaluate(() => window.scrollY),
+    ])
+    expect(pageScroll).toBe(target)
+    expect(railBox).not.toBeNull()
+    expect(noteBox).not.toBeNull()
+    expect(navBox).not.toBeNull()
+    expect(railBox!.y + railBox!.height).toBeLessThanOrEqual(noteBox!.y)
+    expect(noteBox!.y + noteBox!.height).toBeLessThanOrEqual(navBox!.y)
+    pinnedBottoms.push(railBox!.y + railBox!.height)
+  }
+  expect(Math.max(...pinnedBottoms) - Math.min(...pinnedBottoms)).toBeLessThan(
+    1,
+  )
+  await saveScreen(page, testInfo, "crew-normal-rail-320x360-page-end")
 })
 
 test("keeps the boat mark and number inside their chip in a crew header at 320 px", async ({

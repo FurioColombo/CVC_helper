@@ -6,7 +6,7 @@ The second deployment waits for an explicit first-install report; both patches
 use the pinned verified source and stable test URL.
 
 Non-blocking review findings are filed in docs/working/BACKLOG.md: DI-R2-Q4,
-FU-Q7, FU-Q11, FU-Q12 and RH2-Q4. Older versions predating the write guard
+FU-Q7, FU-Q11, RH2-Q4 and RH4-Q1. Older versions predating the write guard
 and local-only schema transitions have the documented limits in 03 §3.1.
 
 The same-origin offline isolation check makes its owned origin transport

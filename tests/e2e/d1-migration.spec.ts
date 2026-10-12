@@ -288,20 +288,35 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
   await openBlankPage(page)
   const result = await harness<{
     durationMs: number
+    createDatabaseMs: number
+    initMs: number
+    prepareAfterInitMs: number
+    readTablesMs: number
+    closeMs: number
     reopenMs: number
+    reopenCreateDatabaseMs: number
+    reopenInitMs: number
+    reopenPrepareAfterInitMs: number
+    reopenReadTablesMs: number
+    reopenCloseMs: number
     rows: number
+    reopenRows: number
     rowIssues: unknown[]
+    reopenRowIssues: unknown[]
+    reopenedIdentical: boolean
   }>(page, "runLargeUpgrade")
   record("large-upgrade", result)
   test.info().annotations.push({
     type: "migration",
-    description: `${result.rows} rows upgraded in ${result.durationMs} ms, reopened in ${result.reopenMs} ms`,
+    description: `${result.rows} rows; upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, init ${result.initMs}, prepare after init ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, init ${result.reopenInitMs}, prepare after init ${result.reopenPrepareAfterInitMs}); read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms`,
   })
   expect(result.rowIssues).toEqual([])
+  expect(result.reopenRows).toBe(result.rows)
+  expect(result.reopenRowIssues).toEqual([])
+  expect(result.reopenedIdentical).toBe(true)
   expect(result.rows).toBeGreaterThan(560)
-  // A bound against a pathological upgrade, not a benchmark. On the
-  // development PC 606 rows took 0.7 s on Chromium and 1.3 s on WebKit, and a
-  // later open, init included, 0.5 s and 0.8 s (D1 migration evidence).
+  // The same five-second bound covers construction, SDK init and preparation;
+  // stage timings above help diagnose a slow open without weakening it.
   expect(result.durationMs).toBeLessThan(5000)
   expect(result.reopenMs).toBeLessThan(5000)
 })

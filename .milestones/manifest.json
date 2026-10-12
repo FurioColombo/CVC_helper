@@ -829,7 +829,8 @@
         "tests/e2e/student-scan.spec.ts",
         "tests/e2e/u01-shell.spec.ts",
         "tests/e2e/u02-students.spec.ts",
-        "tests/e2e/u04-scan-ui.spec.ts"
+        "tests/e2e/u04-scan-ui.spec.ts",
+        "tests/e2e/ug2-hostile-roster.spec.ts"
       ]
     },
     {

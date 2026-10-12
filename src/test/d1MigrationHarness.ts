@@ -413,13 +413,35 @@ export async function runLargeUpgrade() {
   })
 
   const timedOpen = async () => {
-    const database = createDatabase(filename)
+    // Start before construction so the five-second bound includes the full
+    // cold-open path. Keep the result reads and close outside that bound.
     const started = performance.now()
+    const constructed = performance.now()
+    const database = createDatabase(filename)
+    const created = performance.now()
+    await database.init()
+    const initialized = performance.now()
     await prepareDatabase(database)
-    const durationMs = Math.round(performance.now() - started)
+    const prepared = performance.now()
+    const durationMs = Math.round(prepared - started)
+    const createDatabaseMs = Math.round(created - constructed)
+    const initMs = Math.round(initialized - created)
+    const prepareAfterInitMs = Math.round(prepared - initialized)
+    const readStarted = performance.now()
     const tables = await readTables(database)
+    const readTablesMs = Math.round(performance.now() - readStarted)
+    const closeStarted = performance.now()
     await database.close()
-    return { durationMs, tables }
+    const closeMs = Math.round(performance.now() - closeStarted)
+    return {
+      durationMs,
+      createDatabaseMs,
+      initMs,
+      prepareAfterInitMs,
+      readTablesMs,
+      closeMs,
+      tables,
+    }
   }
   const upgrade = await timedOpen()
   // Every later open probes for rows to repair; sound data costs one read.
@@ -428,10 +450,28 @@ export async function runLargeUpgrade() {
     (sum, list) => sum + list.length,
     0,
   )
+  const reopenRows = Object.values(reopen.tables).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
   return {
     durationMs: upgrade.durationMs,
+    createDatabaseMs: upgrade.createDatabaseMs,
+    initMs: upgrade.initMs,
+    prepareAfterInitMs: upgrade.prepareAfterInitMs,
+    readTablesMs: upgrade.readTablesMs,
+    closeMs: upgrade.closeMs,
     reopenMs: reopen.durationMs,
+    reopenCreateDatabaseMs: reopen.createDatabaseMs,
+    reopenInitMs: reopen.initMs,
+    reopenPrepareAfterInitMs: reopen.prepareAfterInitMs,
+    reopenReadTablesMs: reopen.readTablesMs,
+    reopenCloseMs: reopen.closeMs,
     rows,
+    reopenRows,
     rowIssues: validateStoredRows(upgrade.tables),
+    reopenRowIssues: validateStoredRows(reopen.tables),
+    reopenedIdentical:
+      JSON.stringify(upgrade.tables) === JSON.stringify(reopen.tables),
   }
 }

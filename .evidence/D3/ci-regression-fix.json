@@ -1,0 +1,110 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "9f9a30335c29f964ee199d1e0e403f21bfe87f34",
+  "ciRun": 38289011665,
+  "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38289011665",
+  "status": "FAILED_CHECKPOINT_NOT_PUBLISHED",
+  "classification": [
+    {
+      "kind": "layout-regression",
+      "titles": [
+        "composes the hostile Tuesday on the crew page at four sizes without overlap or sideways scroll",
+        "keeps the crew page inside the screen at 320 px with 200% text"
+      ],
+      "observed": "At 320 x 664 with 200% text, the crew quick-access rail overlapped heading/copy controls. Reproduced locally with unchanged layout audit.",
+      "disposition": "Fixed: enlarged-text rail returns to page flow; ordinary rail retains direct-parent sticky travel. Full column uses a width container; both fixed destination panels portal to the body, cap to viewport space and scroll internally. Direct labels wrap within 44px-minimum growing controls. Original hostile audits and new geometry/overflow regressions retain their assertions."
+    },
+    {
+      "kind": "unclassified-platform-timing",
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "engine": "WebKit",
+      "upgradeMs": [
+        1530,
+        1652,
+        1558
+      ],
+      "reopenMs": [
+        7788,
+        10294,
+        8768
+      ],
+      "rows": 609,
+      "rowIssues": [],
+      "disposition": "Minimal harness diagnostics separate construction, SDK initialization and remaining preparation. The existing 5000 ms bounds now include construction; reopen also asserts exact ordered-row equality. No production storage change or timing fix is claimed. Await exact-source Linux CI attribution."
+    }
+  ],
+  "publication": "Withheld until a corrected, verified exact checkpoint has green push CI.",
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "localTimingDiagnostic": {
+    "source": "Ignored scratch harness, exact 609-row D1 fixture; constructor excluded here as in the original test.",
+    "engines": [
+      {
+        "engine": "webkit",
+        "device": "iPhone 13",
+        "upgradePrepareMs": 1928,
+        "samePageReopenMs": 1640,
+        "freshDocumentReopenMs": 1083,
+        "samePageInitMs": 1373,
+        "freshDocumentInitMs": 833,
+        "samePageRowProbeMs": 141,
+        "freshDocumentRowProbeMs": 91
+      },
+      {
+        "engine": "chromium",
+        "device": "Pixel 7",
+        "upgradePrepareMs": 757,
+        "samePageReopenMs": 584,
+        "freshDocumentReopenMs": 573,
+        "samePageInitMs": 507,
+        "freshDocumentInitMs": 499,
+        "samePageRowProbeMs": 55,
+        "freshDocumentRowProbeMs": 51
+      }
+    ],
+    "rowCountEachOpen": 609,
+    "exactRowHashMatchedWithinEachEngine": true,
+    "rowIssues": [],
+    "conclusion": "SDK initialization dominated locally; repair scan was small. Local measurements do not establish the Linux CI cause or a fix. No worker/lock leak identified in pinned SDK lifecycle source."
+  },
+  "layoutChecks": {
+    "implementerCombined": {
+      "passed": 3,
+      "failed": 0,
+      "scope": "Two original hostile audits plus selected panels and three nonterminal normal-text sticky scroll positions."
+    },
+    "implementerFinalPanel": {
+      "passed": 1,
+      "failed": 0,
+      "scope": "Final auto-height buttons before the wrapping correction; independent review checks the later span correction."
+    },
+    "independentField": {
+      "chromium": "PASS; assertions and chronological screenshots retained, numeric result lost on subsequent engine setup failure.",
+      "webkit": "PASS in isolated retry after explicit Home-to-Equipaggi reload navigation.",
+      "engines": [
+        "chromium",
+        "webkit"
+      ],
+      "syntheticOnly": true,
+      "scope": "No-bar audits, fixed panel anchors, every enabled trial/focus-centre target, label range bounds and crew destination close."
+    },
+    "selectedScreenshots": [
+      ".evidence/D3/crew-panel-200text-webkit.png",
+      ".evidence/D3/crew-copy-200text-webkit.png"
+    ]
+  },
+  "portalPersistence": {
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "passed": 2,
+    "failed": 0,
+    "retries": 0,
+    "durationsSeconds": [
+      12.3,
+      49.9
+    ],
+    "scope": "Actual Mezzi and enabled boat choices through body portal, explicit close and reload persistence at 320 px/200% text with update note.",
+    "reviewedCrewBlob": "13bf76bf8a163daa7482c4d660760724f370d411"
+  }
+}

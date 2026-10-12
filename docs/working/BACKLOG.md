@@ -230,7 +230,8 @@ From the D2 reviews (`.evidence/D2/`):
   No app caller uses that escape today; `executeRaw` checks compatibility
   before its lease, while `get`/`getAll`/`getOptional` accept arbitrary SQL.
 
-- D3 FU-Q12: at 320 px with 200% text, the selected-person destination panel
-  extends above the viewport. Its crew and A terra controls remain reachable
-  by internal/page scrolling in Chromium and WebKit; improve this stress layout
-  when the owner selects the field-layout follow-ups.
+- D3 RH4-Q1: at 320 px with 200% text, the two-column selected-person
+  destination actions split long words across short lines. They stay inside
+  their buttons and pass focus and hit-target checks, but a later field-layout
+  pass can improve legibility. FU-Q12 viewport-top clipping is fixed by D3
+  viewport caps and internal scrolling; see `.evidence/D3/ci-regression-fix.json`.
