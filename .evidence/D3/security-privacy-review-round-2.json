@@ -1,0 +1,46 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "D3",
+  "round": 2,
+  "commit": "3b7c41bd8df5e6cb65dc3fb392f645a720fd204a",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "blockerResolutions": [
+    {
+      "id": "SP-1",
+      "status": "fixed",
+      "evidence": "The test Tesseract worker receives cachePath 'cvc-helper-test-ocr'; the regular worker retains its existing default. Real OCR initialization produced distinct IndexedDB keys './ita.traineddata' and 'cvc-helper-test-ocr/ita.traineddata' on Chromium and WebKit. Both contained 3,126,172 model bytes. Test-key overwrite and deletion preserved the regular model's SHA-256 hash. Independent adapter probes also confirmed preservation on both engines."
+    }
+  ],
+  "evidenceInspected": [
+    "Restricted fix diff efddf589..3b7c41bd: src/appChannel.ts, src/appChannel.test.ts, src/capabilities/studentScan.ts, scripts/check-test-app-isolation.mjs, associated deployment documentation and focused OCR verification metadata.",
+    "SP-1 in .evidence/D3/security-privacy-review-round-1.json and its original synthetic adapter reproduction.",
+    "Installed Tesseract primary source: resolvePaths leaves cachePath unchanged; language-cache reads, writes and initialization-error deletions all derive their key from that path.",
+    "Independent scratch probe test-results/security-review-r2/isolated-ocr-cache.mjs passed on Chromium and WebKit: writing and deleting the canonical test key preserved the regular key synthetic bytes.",
+    "Focused src/appChannel.test.ts run: three tests passed.",
+    "Completed test-results/test-isolation.json, recorded 2026-10-12T17:57:09.653Z: Chromium 151.0.7922.34 and WebKit 26.5 both passed real OCR initialization, distinct language keys and regular-byte preservation after test-key read/write/delete.",
+    "Both same-origin UI journeys preserved the synthetic regular course, student, note and preferences through test course creation, student changes and erasure; regular and test service-worker scopes and runtime caches remained separate.",
+    "Final offline-proof implementation and report: the owned origin destroys requests and closes connections. Regular reload responses came from its service worker before test installation and after test erasure. Uncached fetches and fresh contexts without service workers failed in both engines. The regular course rendered, and subsequent profile/preference checks passed.",
+    "The final harness uses separate regular/test pages in one browser context, asserts readiness and visible outcomes, and reports no page errors or crashes.",
+    "Deployment documentation now identifies the two OCR keys and requires D4 reset to remove only the selected key from Tesseract shared keyval-store.",
+    "Exact committed fix checkpoint verified; no tracked files were edited by this reviewer."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted recheck of SP-1 cache namespace fix",
+      "Regressions affecting regular OCR cache compatibility, test-key deletion, same-origin course/preferences preservation and regular service-worker availability"
+    ],
+    "wildcard": "No new entropy draw or whole-milestone hunt."
+  },
+  "notTested": [
+    "Live GitHub HTTPS publication and its final smoke check remain the orchestrator work before READY.",
+    "Physical Android installation and update acceptance remain the owner D3-PHONE-UPDATE action; no physical-device PASS is inferred.",
+    "A deliberately corrupted model was not injected into a real OCR worker. The initialization-error deletion path was traced in the installed SDK, and its corrected key was exercised through the actual cache adapter.",
+    "The transport-based offline proof validates service-worker availability with an unreachable origin; it does not claim to validate browser offline indicators.",
+    "D4 full reset has not yet been implemented or reviewed."
+  ]
+}

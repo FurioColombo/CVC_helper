@@ -92,7 +92,11 @@ existing names. `npm run check:test-isolation` builds both channels on one origi
 and exercises creation, student edits and course erasure through their UI on
 Chromium and WebKit, checking the regular course, preferences and offline app
 remain intact. Real OCR initializes both library caches; test-key writes and
-deletes preserve the regular model bytes under `./ita.traineddata`. Its report is `.evidence/D3/test-isolation.json`. D4's full reset
+deletes preserve the regular model bytes under `./ita.traineddata`. The offline proof makes the owned origin unreachable, requires service-worker
+responses and confirms uncached requests fail. It avoids a documented
+[Playwright WebKit offline-emulation issue](https://github.com/microsoft/playwright/issues/42775);
+it does not represent a physical-device test. Its report is
+`.evidence/D3/test-isolation.json`. D4's full reset
 must use these same channel boundaries, deleting only the selected OCR language
 key from Tesseract's shared `keyval-store` rather than deleting that whole store.
 
@@ -108,8 +112,8 @@ recorded D3 evidence and reviews:
 npm run test-site:publish -- --source <full-verified-checkpoint> --version 0.4.0
 ```
 
-The publisher builds an archive of that exact commit, checks its recorded
-clean recorded checkpoint, unchanged source tree and exact-commit CI, and pushes only static build outputs. GitHub
+The publisher builds an archive of that exact commit, checks the recorder’s clean checkpoint, unchanged source tree and exact-commit
+CI, and pushes only static build outputs. GitHub
 Pages publishes the test repository's main branch, with `.nojekyll`.
 `build-info.json` at the test address identifies source, version and CI.
 `.milestones/test-site.json` pins the source, both patch versions and the active

@@ -1,0 +1,111 @@
+{
+  "reviewerRole": "self-review (orchestrator)",
+  "milestone": "D3",
+  "commit": "3b7c41bd8df5e6cb65dc3fb392f645a720fd204a",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "D3-known-qol",
+      "title": "Remaining non-blocking layout, retry wording and unused raw API findings",
+      "evidence": "Canonical R3 reviews and docs/working/BACKLOG.md",
+      "reproduction": "See DI-R2-Q4, FU-Q7/FU-Q11/FU-Q12 and RH2-Q4",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3"
+    }
+  ],
+  "evidenceInspected": [
+    "D3 change since d033bbf: compatibility/dataVersion/writeGuard/migrations, foreground checks, applyUpdate leave guard, measured update bar and navigation forms.",
+    "Channel configuration, Vite scopes/cacheId, DB/preferences/model-cache consumers and Tesseract cachePath wiring.",
+    "All preserved D3 review rounds; data-integrity, regression and field R3 pass with no blockers; security R2 PASS.",
+    "test-results/test-isolation.json: Chromium and WebKit real UI CRUD/erase, real OCR keys, unchanged regular course/preferences/model bytes, service-worker offline reopening with network negative controls.",
+    "Selected .evidence/D3 screenshots visually inspected: read-only edit, updated-note crew and WebKit update offer.",
+    "Publisher policy tests and exact-source archive/green-CI/owner-installation guards; only static dist is published.",
+    "Final mandatory commands are recorded by verification.json on this unchanged source; no owner/device result is inferred."
+  ],
+  "itemProofs": {
+    "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
+    "updates": "Default and test-channel two-patch deployment journeys, under-one-minute foreground offer, preserved typed notes, settings/version note and no loop.",
+    "isolation": "Separate DB, preference/model/Workbox/Tesseract keys and worker/manifest scopes; real same-origin two-engine proof.",
+    "publication": "Permanent static-output repo; source and patch versions pinned; subsequent deployment requires explicit owner installation report."
+  },
+  "dispositions": [
+    {
+      "id": "DI-1, DI-2, DI-3",
+      "disposition": "Fixed: compatibility is checked inside each write lease; the minimum writer is claimed monotonically before repairs/migrations. Concurrency and failed-claim tests plus data R3 verify these paths."
+    },
+    {
+      "id": "DI-4, DI-5, DI-R2-2",
+      "disposition": "Recorded architecture limits in 03 section 3.1: schema initialization predates the guard; older schemas can drop newer local tables; local-to-synced transition needs explicit migration planning in 0.5.0. No sync added."
+    },
+    {
+      "id": "DI-Q1, DI-Q2, DI-Q3, DI-Q4, DI-R2-Q1, DI-R2-Q2",
+      "disposition": "Fixed: strict stored-version validation, downgrade-aware installed notice, validated patch-only channel version overrides and fail-closed claim semantics documented/tested. Test channel isolates version claims from regular data."
+    },
+    {
+      "id": "DI-Q6, DI-R2-Q3",
+      "disposition": "Future sync compatibility remains a documented 0.5.0 concern; no backend or uploads in this cycle."
+    },
+    {
+      "id": "DI-R2-1, RH2-1",
+      "disposition": "Fixed: VACUUM uses a guarded write lock outside a transaction; both engines erase the synthetic marker bytes and freelist."
+    },
+    {
+      "id": "DI-Q5, DI-R2-Q4",
+      "disposition": "Partly fixed; unused raw/read SQL escape remains a non-blocking backlog item. No app mutating caller uses it."
+    },
+    {
+      "id": "FU-1, FU-5, RH-2",
+      "disposition": "Fixed: crew column and rail subtract live banner height, selected destinations remain tappable at all five viewport/text profiles; R3 reports and production screenshots."
+    },
+    {
+      "id": "FU-2, FU-6, FU-10, RH-1, RH-4, RH2-Q3",
+      "disposition": "Fixed: read-only forms permit unchanged leave; typed edits remain until explicit discard confirmation; update application uses the same leave guard. Both browser and component probes."
+    },
+    {
+      "id": "FU-3, FU-9, RH-3, RH-5, RH2-Q1, FU-Q4, FU-Q5",
+      "disposition": "Fixed: wrapped banner controls, root placement, measured shell end/focus clearance and expanded create-course padding."
+    },
+    {
+      "id": "FU-4, FU-Q1, FU-Q2, FU-Q8, FU-Q9, RH2-Q2",
+      "disposition": "Fixed: one persistent action bar explains read-only state; search messages are consistent and stop appearing beside a ready update. Crew retry wording remains FU-Q7."
+    },
+    {
+      "id": "FU-7",
+      "disposition": "Fixed: newly appeared action set ignores taps for 800 ms, tested with advancing timers and hit-target browser checks."
+    },
+    {
+      "id": "FU-8, RH2-3, RH-Q4",
+      "disposition": "Fixed: once-only version note resides inside the same measured bar and does not remount on course erasure/creation."
+    },
+    {
+      "id": "RH-Q1, RH-Q2, RH-Q5, RH-Q6, RH-Q7",
+      "disposition": "Fixed: source comments/guard calls cleaned, shared root bar, deferred foreground check within the minimum gap, installing and waiting statuses distinct."
+    },
+    {
+      "id": "RH-Q3, FU-Q3, FU-Q6",
+      "disposition": "First-ever install cannot identify a prior version; update return keeps existing navigation behavior. Reopen/search navigation improvements remain filed field follow-ups. The explicit 0.4.0 to 0.4.1 test checks the notice."
+    },
+    {
+      "id": "FU-Q7, FU-Q11, FU-Q12, RH2-Q4",
+      "disposition": "Accepted non-blocking findings filed in docs/working/BACKLOG.md: crew retry wording, enlarged-text list/panel geometry and existing boat overflow. R3 permits closure with no blockers."
+    },
+    {
+      "id": "SP-1",
+      "disposition": "Fixed: test OCR cachePath separates the shared IndexedDB language-cache keys; actual worker initialization plus adapter write/delete leaves regular bytes unchanged. Security R2 PASS."
+    },
+    {
+      "id": "CI run 38257214292",
+      "disposition": "Failed because the harness rejected an unused test cache string in the regular bundle. Corrected assertion checks runtime-selected caches and real same-origin behavior; no application workaround."
+    },
+    {
+      "id": "Isolation harness failures",
+      "disposition": "Classified selector/navigation mistakes separately from WebKit offline emulation/page-navigation tooling failures. Exact form selectors and two same-context pages match the UI. Origin-unreachable negative controls replace broken offline emulation, with unchanged assertion/time limits."
+    }
+  ],
+  "notTested": [
+    "Physical Android install/update acceptance: required owner action remains open.",
+    "Live test publication/HTTPS smoke follows green exact-checkpoint CI; READY is withheld until then.",
+    "D4 full reset and future sync are outside this source."
+  ]
+}

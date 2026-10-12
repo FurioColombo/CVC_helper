@@ -1,0 +1,79 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D3",
+  "round": 3,
+  "commit": "efddf58984ad54898a3a091953c29acbd2edac73",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q4",
+      "title": "Unused raw and read APIs remain outside the in-lock write guard",
+      "evidence": "src/persistence/writeGuard.ts:94-100 reads compatibility before executeRaw acquires its write lease. get/getAll/getOptional still accept arbitrary SQL. The application has no mutating calls through these APIs; src/persistence/writeStatements.test.ts checks statement shapes rather than the execution method. This existing finding is recorded in docs/working/BACKLOG.md:222.",
+      "reproduction": "Code inspection of the existing escape paths. The real-engine scratch probe confirms executeRaw now refuses a previously unmarked older instance after a newer claim. Its residual race and mutating SQL through read APIs remain the previously reported limitation.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1; prior findings DI-Q5 and DI-R2-Q4"
+    }
+  ],
+  "roundTwoRecheck": [
+    {
+      "id": "DI-R2-1",
+      "status": "fixed",
+      "evidence": "VACUUM now executes through guarded writeLock without a transaction. The focused compaction test passed on Chromium and WebKit. Visible UI erase probes removed every IndexedDB block containing the synthetic marker, left freelist_count at zero and remained erased after reload. The final bounded WebKit replay passed on the frozen reviewed checkpoint."
+    },
+    {
+      "id": "DI-R2-2",
+      "status": "documented",
+      "evidence": "03_TECHNICAL_DECISIONS.md §3.1 now requires the sync release to retain local-only tables under other view names until migration copies their rows, then remove them in a later release."
+    },
+    {
+      "id": "DI-R2-Q1",
+      "status": "fixed",
+      "evidence": "The contract documents that a failed open retains its claim. Unit coverage checks the failure ordering. Real-engine probes on both engines preserved version 0.7.0/minimum writer 0.6.0 after a throwing migration, wrote no migration ledger entry and refused the next 0.5.0 open's save."
+    },
+    {
+      "id": "DI-R2-Q2",
+      "status": "fixed",
+      "evidence": "The build validator calls parseVersion and encodeVersion. On the frozen checkpoint, regular 0.3.7 and test 0.4.7 were accepted; patch 1000, prerelease strings and different minor versions were refused for both channels."
+    },
+    {
+      "id": "DI-R2-Q3",
+      "status": "documented",
+      "evidence": "03_TECHNICAL_DECISIONS.md §3.1 records that future read-only downloading must allow PowerSync's own subscription writes."
+    },
+    {
+      "id": "DI-R2-Q4",
+      "status": "partly fixed; residual retained as QoL",
+      "evidence": "executeRaw now re-reads compatibility. The remaining unused API escape paths retain the existing finding ID and backlog entry."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md, reviewer-data-integrity.md, REVIEW_PROTOCOL.md, LOCAL_DEVELOPMENT.md and the repository PowerSync skill and relevant SDK guidance.",
+    "04_IMPLEMENTATION_PLAN.md D3 success predicate and checklist; 01_PRODUCT_SPEC.md §2; relevant scope boundaries; 03_TECHNICAL_DECISIONS.md §3.1.",
+    ".evidence/D3/data-integrity-review-round-1.json and data-integrity-review-round-2.json, preserving blocker DI-R2-1.",
+    "Fix diff 57430a5..0676730, then scoped comparison through efddf589: guard, migration and data-version logic unchanged; courses.ts changes only the preference prefix configuration after the reviewed compaction fix.",
+    "Node v24.21.0. Focused Vitest run: courses, writeGuard, migrations, dataVersion and compatibility; five files and 66 tests passed.",
+    "npm run verify:e2e -- tests/e2e/d3-read-only.spec.ts: six tests passed across Chromium and WebKit, with no retries.",
+    "Scratch probes under test-results/d3-di-round3-review: Chromium visible erase and marker removal; Chromium and WebKit lock retention across a yield, later VACUUM/raw refusal and failed-claim persistence.",
+    "The lock probe stored minimum writer 4000 before the waiting newer claim; subsequent guarded VACUUM and raw execution returned ReadOnlyDataError and wrote no raw marker.",
+    "Final frozen-checkpoint WebKit UI erase replay: one test passed, exit 0. The visible confirmation flow removed synthetic marker blocks, left zero free pages and remained erased after reload.",
+    "Frozen-checkpoint version validation probes for regular and test channels; clean working tree and exact HEAD confirmed before the final replay."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 3 restricted to the previous blocker, its fix diff and resulting regressions.",
+      "DI-R2-1 compaction through the guarded lock, persisted marker removal and reload.",
+      "Related guard lease retention, failed-open claims and version override validation."
+    ],
+    "wildcard": "No new entropy draw or whole-milestone hunt."
+  },
+  "notTested": [
+    "Physical Android installation and update acceptance remain owner work; no physical-device PASS is inferred.",
+    "Browser-managed disk remnants beyond the IndexedDB records exposed to the application.",
+    "Test-site isolation and deployment publisher behavior are assigned to a separate security review.",
+    "Full verification, production builds and exact-checkpoint CI remain the orchestrator's closure checks.",
+    "An earlier WebKit UI probe was disrupted while implementation configuration was changing. The required bounded replay passed after the source was frozen."
+  ]
+}

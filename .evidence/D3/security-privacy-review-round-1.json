@@ -1,0 +1,48 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "D3",
+  "round": 1,
+  "commit": "efddf58984ad54898a3a091953c29acbd2edac73",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-1",
+      "title": "Test OCR shares the regular app's Tesseract language cache",
+      "evidence": "src/capabilities/studentScan.ts:1264 creates the Tesseract worker without cachePath or cacheMethod. node_modules/tesseract.js/src/worker-script/index.js:112,181,274 reads, writes and deletes `${cachePath || '.'}/ita.traineddata`. Its browser/cache.js adapter uses idb-keyval, whose default store is IndexedDB keyval-store/keyval. Both channels therefore use './ita.traineddata'. The scratch probe reproduced cross-channel reading and deletion in Chromium and WebKit: the test path read the regular path's synthetic bytes, deleted the key, and the regular path then read undefined.",
+      "reproduction": "Run node test-results/security-review-r1/shared-ocr-cache.mjs. It serves the installed idb-keyval module on one synthetic origin, opens /CVC_helper/ and /CVC_helper_test/ in one browser context, writes the regular channel's default Tesseract key, reads and deletes that key from the test path, and asserts its absence from the regular path. Both engines reproduced the collision. Give the test worker a distinct cachePath while preserving the regular cache namespace; verify actual OCR initialization creates separate keys.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D3 §4, permanent test site: database, preferences, workers and caches must be separate; explicit owner instruction requires separate browser storage on the same GitHub Pages origin."
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "AGENTS.md; reviewer-security-privacy.md; docs/agents/REVIEW_PROTOCOL.md; Node v24.21.0; clean efddf58 checkpoint at review start.",
+    "D3 acceptance and adversarial checklist; relevant persistence/privacy and scope contracts; docs/DEPLOY.md; docs/OWNER_WORKFLOW.md; .milestones/test-site.json.",
+    "Diff 0676730..efddf58, including canonical channel configuration, every production localStorage caller, database selection, course erasure, speech-model cache configuration and Workbox configuration.",
+    "scripts/deploy-test-site.mjs and test-site-contract.mjs: exact-source archive, exact-commit push CI requirement, recorded verification and review gates, static-only publication, credential handling, source pin and explicit installation prerequisite for the second patch.",
+    "Existing regular-site deployment workflow remains unchanged and targets the regular repository.",
+    "Public asset inventory contains application icons and boat/brand marks; new publication metadata contains technical source/version/CI fields. No new personal field, roster upload, analytics or logging was introduced by the reviewed diff.",
+    "Installed PowerSync primary source: dbFilename selects the database identifier and connection; course erase targets only that database and the selected channel's scan preference prefix.",
+    "Installed Transformers primary source: browser model cache opens env.cacheKey, which the test speech path changes before pipeline initialization.",
+    "Installed Tesseract and idb-keyval primary source: the secondary OCR language cache was omitted from channel configuration.",
+    "Focused Vitest run: scripts/test-site-contract.test.mjs and src/appChannel.test.ts, six tests passed.",
+    "Same-origin synthetic Tesseract adapter probe: shared key reading and deletion reproduced on Chromium and WebKit.",
+    "Current guarded VACUUM fix and prior D3 deletion finding; no private data directories were opened and no external mutation was performed."
+  ],
+  "anglesTried": {
+    "seed": 982878850,
+    "lenses": [
+      "Data minimisation: traced new fields, persistent preferences, publication metadata and bundled assets; no new personal data collection or upload.",
+      "Evidence, fixtures and docs leakage: inspected the complete changed-file inventory, synthetic isolation fixtures, generated report fields and static publication boundary."
+    ],
+    "wildcard": "Same-origin collateral deletion or cache takeover: enumerated secondary library caches beyond the explicit Workbox caches and reproduced the missed Tesseract IndexedDB key collision."
+  },
+  "notTested": [
+    "Live GitHub HTTPS publication and headers: publication had not started; the root must verify the deployed identity, persistence and service worker before READY.",
+    "Final complete same-origin UI isolation report: the root's run and harness corrections were still in progress.",
+    "Regular app offline reload after test erasure: the inspected harness retained cache names but did not yet exercise that reload; the root requested an extension.",
+    "Actual OCR initialization against both channel builds: the blocker reproduction exercised the installed cache adapter and confirmed both app workers select its identical default key.",
+    "Physical Android installation and update acceptance remain exclusively the owner's checks."
+  ]
+}
