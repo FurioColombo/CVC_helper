@@ -114,6 +114,12 @@ remaining proposals await the owner's pick:
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
+- `u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live`
+  — Pixel 7 Chrome, D3’s final focused run (2026-10-12): pointermove-to-live
+  transform measured 170.7 ms against the unchanged 120 ms bound, then passed
+  on the configured retry. T1 must fix the measurement/setup or underlying
+  response defect without dropping the assertion or raising its limit.
+
 - `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
   — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
 - `d2-duty-items.spec.ts › opens the 0.3.0 duty lists as rows, item by item, none lost or doubled`

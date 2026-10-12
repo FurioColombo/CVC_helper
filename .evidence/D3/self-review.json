@@ -21,7 +21,9 @@
     "test-results/test-isolation.json: Chromium and WebKit real UI CRUD/erase, real OCR keys, unchanged regular course/preferences/model bytes, service-worker offline reopening with network negative controls.",
     "Selected .evidence/D3 screenshots visually inspected: read-only edit, updated-note crew and WebKit update offer.",
     "Publisher policy tests and exact-source archive/green-CI/owner-installation guards; only static dist is published.",
-    "Final mandatory commands are recorded by verification.json on this unchanged source; no owner/device result is inferred."
+    "Final mandatory commands are recorded by verification.json on this unchanged source; no owner/device result is inferred.",
+    "Final recorder PASS on 9f9a303: verify (1,351 tests), 76 focused cases (70 passed, 4 skipped, 2 passed on retry), both patch journeys and two-engine isolation. Test-channel offers appeared in 0.20 seconds Chromium and 0.34 seconds WebKit; typed edit survived.",
+    "focused-flake-classification.json: both retrying cases independently passed with retries=0. Original recorded flakyTests are preserved and both titles are filed in docs/working/BACKLOG.md for T1."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -101,6 +103,10 @@
     {
       "id": "Isolation harness failures",
       "disposition": "Classified selector/navigation mistakes separately from WebKit offline emulation/page-navigation tooling failures. Exact form selectors and two same-context pages match the UI. Origin-unreachable negative controls replace broken offline emulation, with unchanged assertion/time limits."
+    },
+    {
+      "id": "D3 final focused-run flakes",
+      "disposition": "Known WebKit migration page loss and newly observed crop timing flake passed isolated no-retry runs. Filed for T1; final recorder retains both, and no threshold or retry count was increased."
     }
   ],
   "notTested": [

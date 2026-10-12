@@ -1,0 +1,377 @@
+{
+  "milestone": "D3",
+  "recordedAt": "2026-10-12T18:20:18.813Z",
+  "source": "scripts/check-update-journey.mjs (npm run check:update:test)",
+  "base": "/CVC_helper_test/",
+  "installedVersion": "0.4.0",
+  "deployedVersion": "0.4.1",
+  "limitSeconds": 60,
+  "runs": [
+    {
+      "engine": "chromium",
+      "browserVersion": "151.0.7922.34",
+      "secondsFromForegroundToWorkerRequest": 0.004,
+      "secondsFromForegroundToOffer": 0.2,
+      "editSurvived": true,
+      "versionShownAfterUpdate": "0.4.1",
+      "updatedNoteShown": true,
+      "noUpdateOfferedAfterwards": true,
+      "bannerClearance": {
+        "addStudentButton": {
+          "controlBottom": 687,
+          "bannerTop": 703.61,
+          "clearancePx": 16.61,
+          "overlapsBanner": false
+        },
+        "crewQuickAccessRail": {
+          "controlBottom": 679,
+          "bannerTop": 703.61,
+          "clearancePx": 24.61,
+          "overlapsBanner": false
+        },
+        "crewDestinationPanel": {
+          "controlBottom": 683,
+          "bannerTop": 703.61,
+          "clearancePx": 20.61,
+          "overlapsBanner": false
+        }
+      },
+      "offerButtonsTappable": [
+        "crew page",
+        "Allievi",
+        "after a reload"
+      ],
+      "underStress": {
+        "crewPage": [
+          {
+            "width": 320,
+            "height": 568,
+            "text": 1,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 8
+            }
+          },
+          {
+            "width": 360,
+            "height": 640,
+            "text": 1.3,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 10.39
+            }
+          },
+          {
+            "width": 390,
+            "height": 844,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12
+            }
+          },
+          {
+            "width": 430,
+            "height": 820,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12
+            }
+          },
+          {
+            "width": 320,
+            "height": 664,
+            "text": 2,
+            "at": "end",
+            "clearancePx": {
+              "quick-access rail": 98.2
+            }
+          }
+        ],
+        "crewPageWithSelection": [
+          {
+            "width": 320,
+            "height": 568,
+            "text": 1,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 8,
+              "destination panel": 20.61
+            }
+          },
+          {
+            "width": 360,
+            "height": 640,
+            "text": 1.3,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 10.39,
+              "destination panel": 27.09
+            }
+          },
+          {
+            "width": 390,
+            "height": 844,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12,
+              "destination panel": 31.41
+            }
+          },
+          {
+            "width": 430,
+            "height": 820,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12,
+              "destination panel": 31.41
+            }
+          },
+          {
+            "width": 320,
+            "height": 664,
+            "text": 2,
+            "at": "end",
+            "clearancePx": {
+              "quick-access rail": 98.2,
+              "destination panel": 42.2
+            }
+          }
+        ],
+        "addStudentButton": [
+          {
+            "width": 320,
+            "height": 568,
+            "text": 1,
+            "at": "top",
+            "clearancePx": {
+              "add button": 16.61
+            }
+          },
+          {
+            "width": 360,
+            "height": 640,
+            "text": 1.3,
+            "at": "top",
+            "clearancePx": {
+              "add button": 21.89
+            }
+          },
+          {
+            "width": 390,
+            "height": 844,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "add button": 25.41
+            }
+          },
+          {
+            "width": 430,
+            "height": 820,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "add button": 25.41
+            }
+          },
+          {
+            "width": 320,
+            "height": 664,
+            "text": 2,
+            "at": "end",
+            "clearancePx": {
+              "add button": 34.2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.5",
+      "secondsFromForegroundToWorkerRequest": 0.006,
+      "secondsFromForegroundToOffer": 0.34,
+      "editSurvived": true,
+      "versionShownAfterUpdate": "0.4.1",
+      "updatedNoteShown": true,
+      "noUpdateOfferedAfterwards": true,
+      "bannerClearance": {
+        "addStudentButton": {
+          "controlBottom": 687,
+          "bannerTop": 703.61,
+          "clearancePx": 16.61,
+          "overlapsBanner": false
+        },
+        "crewQuickAccessRail": {
+          "controlBottom": 678.98,
+          "bannerTop": 703.61,
+          "clearancePx": 24.63,
+          "overlapsBanner": false
+        },
+        "crewDestinationPanel": {
+          "controlBottom": 683,
+          "bannerTop": 703.61,
+          "clearancePx": 20.61,
+          "overlapsBanner": false
+        }
+      },
+      "offerButtonsTappable": [
+        "crew page",
+        "Allievi",
+        "after a reload"
+      ],
+      "underStress": {
+        "crewPage": [
+          {
+            "width": 320,
+            "height": 568,
+            "text": 1,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 8
+            }
+          },
+          {
+            "width": 360,
+            "height": 640,
+            "text": 1.3,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 10.39
+            }
+          },
+          {
+            "width": 390,
+            "height": 844,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12
+            }
+          },
+          {
+            "width": 430,
+            "height": 820,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12
+            }
+          },
+          {
+            "width": 320,
+            "height": 664,
+            "text": 2,
+            "at": "end",
+            "clearancePx": {
+              "quick-access rail": 98.2
+            }
+          }
+        ],
+        "crewPageWithSelection": [
+          {
+            "width": 320,
+            "height": 568,
+            "text": 1,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 8,
+              "destination panel": 20.61
+            }
+          },
+          {
+            "width": 360,
+            "height": 640,
+            "text": 1.3,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 10.39,
+              "destination panel": 27.09
+            }
+          },
+          {
+            "width": 390,
+            "height": 844,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12,
+              "destination panel": 31.41
+            }
+          },
+          {
+            "width": 430,
+            "height": 820,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "quick-access rail": 12,
+              "destination panel": 31.41
+            }
+          },
+          {
+            "width": 320,
+            "height": 664,
+            "text": 2,
+            "at": "end",
+            "clearancePx": {
+              "quick-access rail": 98.2,
+              "destination panel": 42.2
+            }
+          }
+        ],
+        "addStudentButton": [
+          {
+            "width": 320,
+            "height": 568,
+            "text": 1,
+            "at": "top",
+            "clearancePx": {
+              "add button": 16.61
+            }
+          },
+          {
+            "width": 360,
+            "height": 640,
+            "text": 1.3,
+            "at": "top",
+            "clearancePx": {
+              "add button": 21.89
+            }
+          },
+          {
+            "width": 390,
+            "height": 844,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "add button": 25.41
+            }
+          },
+          {
+            "width": 430,
+            "height": 820,
+            "text": 1.5,
+            "at": "top",
+            "clearancePx": {
+              "add button": 25.41
+            }
+          },
+          {
+            "width": 320,
+            "height": 664,
+            "text": 2,
+            "at": "end",
+            "clearancePx": {
+              "add button": 34.2
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

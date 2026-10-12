@@ -1,0 +1,88 @@
+{
+  "milestone": "D3",
+  "status": "PASS",
+  "recordedAt": "2026-10-12T18:24:33.220Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "9f9a30335c29f964ee199d1e0e403f21bfe87f34",
+  "workingTreeClean": true,
+  "sourceDigest": "fef38bf137764b142b6c2ac552ee065fbc87bf24acd56a173a6ce97d8309a16f",
+  "sourceFiles": 407,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus",
+    "check:update",
+    "check:update:test",
+    "check:test-isolation"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/c1-crew-management.spec.ts",
+    "tests/e2e/d1-migration.spec.ts",
+    "tests/e2e/d2-duty-items.spec.ts",
+    "tests/e2e/d3-read-only.spec.ts",
+    "tests/e2e/f1-navigation-guards.spec.ts",
+    "tests/e2e/n1-phone-back.spec.ts",
+    "tests/e2e/persistence.spec.ts",
+    "tests/e2e/reopen-persistence.spec.ts",
+    "tests/e2e/smoke.spec.ts",
+    "tests/e2e/student-scan.spec.ts",
+    "tests/e2e/u01-shell.spec.ts",
+    "tests/e2e/u02-students.spec.ts",
+    "tests/e2e/u04-scan-ui.spec.ts"
+  ],
+  "flakyTests": [
+    {
+      "file": "d2-duty-items.spec.ts",
+      "title": "rebuilds the rows after a 0.3.0 app drops their table and writes the lists",
+      "project": "iphone-13-webkit-core"
+    },
+    {
+      "file": "u04-scan-ui.spec.ts",
+      "title": "edge handles work by keyboard and tilt updates the crop image live",
+      "project": "pixel-7-chrome"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-10-12T18:01:53.693Z",
+      "durationMs": 190407,
+      "exitCode": 0,
+      "outputTail": "  dist/workbox-271d3e69.js\n\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 3.3s inside plugin hooks (5.8s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 4.2s, 1 call)\n  - @tailwindcss/vite:generate:build transform (31%, 1.0s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:asset load (4 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "startedAt": "2026-10-12T18:05:04.103Z",
+      "durationMs": 824864,
+      "exitCode": 0,
+      "outputTail": "\n        npx playwright show-trace test-results\\d2-duty-items-rebuilds-the-2cd73--table-and-writes-the-lists-iphone-13-webkit-core\\trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  2 flaky\n    [pixel-7-chrome] › tests\\e2e\\u04-scan-ui.spec.ts:131:1 › edge handles work by keyboard and tilt updates the crop image live \n    [iphone-13-webkit-core] › tests\\e2e\\d2-duty-items.spec.ts:111:1 › rebuilds the rows after a 0.3.0 app drops their table and writes the lists \n  4 skipped\n  70 passed (13.7m)\nFLAKY: d2-duty-items.spec.ts › rebuilds the rows after a 0.3.0 app drops their table and writes the lists [iphone-13-webkit-core]\nFLAKY: u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live [pixel-7-chrome]"
+    },
+    {
+      "command": "npm run check:update",
+      "status": "PASS",
+      "startedAt": "2026-10-12T18:18:48.969Z",
+      "durationMs": 46845,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.3.0 check:update\n> node scripts/check-update-journey.mjs\n\nBuilding 0.3.0 and 0.3.1…\n[chromium] installed 0.3.0, service worker in control\n[chromium] update offered 0.19 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.3.0, service worker in control\n[webkit] update offered 0.85 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.19 s, webkit 0.85 s from the return to the offer (0.3.0 to 0.3.1); the typed notes survived the update"
+    },
+    {
+      "command": "npm run check:update:test",
+      "status": "PASS",
+      "startedAt": "2026-10-12T18:19:35.815Z",
+      "durationMs": 43126,
+      "exitCode": 0,
+      "outputTail": "> cvc-helper@0.3.0 check:update:test\n> node scripts/check-update-journey.mjs --test\n\nBuilding 0.4.0 and 0.4.1…\n[chromium] installed 0.4.0, service worker in control\n[chromium] update offered 0.20 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.4.0, service worker in control\n[webkit] update offered 0.34 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.2 s, webkit 0.34 s from the return to the offer (0.4.0 to 0.4.1); the typed notes survived the update"
+    },
+    {
+      "command": "npm run check:test-isolation",
+      "status": "PASS",
+      "startedAt": "2026-10-12T18:20:18.941Z",
+      "durationMs": 254271,
+      "exitCode": 0,
+      "outputTail": "mode      generateSW\nprecache  36 entries (22434.60 KiB)\nfiles generated\n  ../../../MARCOF~1/AppData/Local/Temp/cvc-helper-isolation-5OVWz8/test/sw.js\n  ../../../MARCOF~1/AppData/Local/Temp/cvc-helper-isolation-5OVWz8/test/workbox-f3280712.js\nOffline availability in Chromium: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:49427/CVC_helper/\",\"controller\":\"http://127.0.0.1:49427/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:49427/CVC_helper/\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:49427/CVC_helper/\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:49427/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nOffline availability in Chromium: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:49427/CVC_helper/\",\"controller\":\"http://127.0.0.1:49427/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:49427/CVC_helper/\",\"cvc-ocr-runtime\",\"cvc-speech-runtime\",\"cvc-helper-test-precache-v2-http://127.0.0.1:49427/CVC_helper_test/\",\"cvc-helper-test-ocr-runtime\",\"cvc-helper-test-speech-runtime\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:49427/CVC_helper/\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:49427/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nPASS: same-origin storage isolation in Chromium\nOffline availability in WebKit: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:49427/CVC_helper/\",\"controller\":\"http://127.0.0.1:49427/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:49427/CVC_helper/\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: Server returned nothing (no headers, no data)\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:49427/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nOffline availability in WebKit: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:49427/CVC_helper/\",\"controller\":\"http://127.0.0.1:49427/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:49427/CVC_helper/\",\"cvc-ocr-runtime\",\"cvc-speech-runtime\",\"cvc-helper-test-precache-v2-http://127.0.0.1:49427/CVC_helper_test/\",\"cvc-helper-test-ocr-runtime\",\"cvc-helper-test-speech-runtime\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: Server returned nothing (no headers, no data)\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:49427/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nPASS: same-origin storage isolation in WebKit\nPASS: cvc-helper regular and test builds stayed isolated on one origin at /CVC_helper/ and /CVC_helper_test/"
+    }
+  ]
+}

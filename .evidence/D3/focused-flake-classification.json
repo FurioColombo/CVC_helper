@@ -1,0 +1,28 @@
+{
+  "milestone": "D3",
+  "recordedAt": "2026-10-12T18:27:39.595Z",
+  "commit": "9f9a30335c29f964ee199d1e0e403f21bfe87f34",
+  "sourceUnchanged": true,
+  "initialRun": ".evidence/D3/verification.json",
+  "tests": [
+    {
+      "file": "u04-scan-ui.spec.ts",
+      "title": "edge handles work by keyboard and tilt updates the crop image live",
+      "project": "pixel-7-chrome",
+      "initialFailure": "170.7 ms versus unchanged 120 ms pointermove-to-transform bound; configured retry passed",
+      "isolatedCommand": "npm run verify:e2e -- tests/e2e/u04-scan-ui.spec.ts --project=pixel-7-chrome --grep 'edge handles work by keyboard and tilt updates the crop image live' --retries=0 --output=test-results/d3-flake-crop",
+      "isolatedResult": "PASS, 1 test, no retries; 24.5 ms",
+      "classification": "Timing flake; filed for T1 without dropping the assertion or raising its limit."
+    },
+    {
+      "file": "d2-duty-items.spec.ts",
+      "title": "rebuilds the rows after a 0.3.0 app drops their table and writes the lists",
+      "project": "iphone-13-webkit-core",
+      "initialFailure": "Target page, context or browser has been closed; configured retry passed",
+      "isolatedCommand": "npm run verify:e2e -- tests/e2e/d2-duty-items.spec.ts --project=iphone-13-webkit-core --grep 'rebuilds the rows after a 0.3.0 app drops their table and writes the lists' --retries=0 --output=test-results/d3-flake-duty",
+      "isolatedResult": "PASS, 1 test, no retries; 25.8 seconds",
+      "classification": "Previously filed WebKit migration page loss; remains assigned to T1."
+    }
+  ],
+  "thresholdsAndRetriesUnchanged": true
+}
