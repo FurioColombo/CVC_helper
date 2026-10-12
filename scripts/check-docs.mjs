@@ -14,6 +14,11 @@ import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
+import {
+  readOwnerChecks,
+  renderOwnerTodo,
+  validateOwnerChecks,
+} from "./owner-checks.mjs"
 
 const PLAN = "04_IMPLEMENTATION_PLAN.md"
 const ARCHIVE_INDEX = "archive/README.md"
@@ -135,6 +140,18 @@ function main() {
 
   if (!frozenOnly) {
     const manifest = JSON.parse(read(".milestones/manifest.json"))
+    try {
+      const ownerChecks = readOwnerChecks(root)
+      for (const problem of validateOwnerChecks(ownerChecks, manifest))
+        report(".milestones/owner-checks.json", problem)
+      if (read("docs/OWNER_TODO.md") !== renderOwnerTodo(ownerChecks))
+        report(
+          "docs/OWNER_TODO.md",
+          "projection is out of date; regenerate it through the owner-check commands",
+        )
+    } catch (error) {
+      report(".milestones/owner-checks.json", error.message)
+    }
     const statusOf = new Map(manifest.milestones.map((m) => [m.id, m.status]))
     const appVersion = JSON.parse(read("package.json")).version
     const markdown = git([

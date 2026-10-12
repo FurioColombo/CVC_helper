@@ -1,0 +1,39 @@
+{
+  "scope": "Owner-approved parallel acceptance workflow; a harness follow-up, not D3 completion or a release gate.",
+  "date": "2026-10-12",
+  "baseCommit": "de496d2a9307eadcc961784a5ad8fcd0a6f9382a",
+  "nodeVersion": "v24.19.0",
+  "runtime": "Existing Codex workspace bundle; no runtime installation for this workflow.",
+  "source": {
+    "digest": "da17072abd0f086f021cae4fd37ce265e0f5779a6208ceb617fa75e187141235",
+    "files": 400
+  },
+  "checks": [
+    { "command": "npm run verify:domain", "phase": "baseline", "result": "PASS" },
+    { "command": "npm run verify", "phase": "final source", "result": "PASS", "testFiles": 78, "testsPassed": 1345 },
+    { "command": "npm run owner:check", "result": "PASS", "items": 1 },
+    { "command": "npm run owner:notice", "result": "PASS", "observed": "No new owner actions after the initial item is acknowledged" },
+    { "command": "git diff --check", "result": "PASS" }
+  ],
+  "acceptance": [
+    "AWAITING_OWNER requires committed verified agent evidence and green exact-commit CI; pending phone checks are never PASS.",
+    "Explicitly permitted dependent work can start while the owner check waits, and unexplained source drift cannot reuse an old acceptance.",
+    "Wrong-build or contradictory owner audit reports, owner-requested fixes and unapproved prerequisite exceptions refuse continuation/completion.",
+    "Integration gates reject both the new awaiting-owner permission and legacy incomplete-predecessor exceptions.",
+    "Resume resets the readiness proof and owner check while preserving prior reports.",
+    "Owner report writes refuse junction/symlink escapes; completed milestones cannot receive new unfinishable owner acceptance requests.",
+    "Reminder acknowledgement rejects a changed snapshot, preventing a concurrent addition from being silently acknowledged."
+  ],
+  "reminder": {
+    "automationId": "cvc-owner-feedback-additions",
+    "kind": "heartbeat",
+    "status": "ACTIVE",
+    "cadence": "Hourly",
+    "policy": "Notify on new or changed outstanding owner actions; quiet while unchanged. Agents also announce additions in their current chat."
+  },
+  "limitations": [
+    "D3 remains IN_PROGRESS: final D3 reviews/verification/CI and an actual Android report are still required before its handoff and completion.",
+    "The first owner item is NEEDS_SETUP, not a ready phone-test build.",
+    "No browser suite, device PASS, deployment or remote CI run for this follow-up checkpoint is claimed."
+  ]
+}

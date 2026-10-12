@@ -1,0 +1,44 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "D3",
+  "commit": "de496d2a9307eadcc961784a5ad8fcd0a6f9382a",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "CQ-1",
+      "title": "A changed D3 source tree can reuse the old phone PASS",
+      "evidence": "scripts/milestone.mjs:262-285 verifies the captured commit, agent evidence and saved verification digest. At completion, :495-501 compares against the captured digest but never checks whether current source changes belong to explicitly permitted independent work. A synthetic probe changed and committed app.mjs after handoff without starting M2; after recording a PASS for the old build, complete(\"M1\") still printed M1: COMPLETE.",
+      "reproduction": "Hand off M1, change and commit app.mjs without starting a dependent milestone, record owner PASS for the captured commit, sweep the plan, then call complete(\"M1\"). It succeeds. The pending milestone’s source changed without resume or a fresh handoff.",
+      "specRef": "docs/OWNER_WORKFLOW.md, Continuing and fixing work; 03_TECHNICAL_DECISIONS.md §6"
+    },
+    {
+      "id": "CQ-2",
+      "title": "Completion accepts an owner evidence file that contradicts its PASS",
+      "evidence": "scripts/milestone.mjs:210 excludes ownerEvidence from the handoff evidence hashes; completion checks required-file presence and ownerCompletionProblems on the queue, but does not validate the report contents against that queue result. A synthetic probe replaced the required physical report with a CHANGES_REQUESTED report after the queue recorded PASS; complete(\"M1\") still printed M1: COMPLETE.",
+      "reproduction": "Hand off M1, record a matching owner PASS, replace its required physical-device-review.json with a contradictory report, sweep the plan, then call complete(\"M1\"). Completion succeeds.",
+      "specRef": "02_MVP_SCOPE.md §3; docs/OWNER_WORKFLOW.md, Owner feedback and Continuing and fixing work"
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "AGENTS.md, docs/agents/REVIEW_PROTOCOL.md and .claude/agents/reviewer-code-quality.md",
+    "04_IMPLEMENTATION_PLAN.md D3 and D4 sections; relevant update and device-evidence rules in 01_PRODUCT_SPEC.md, 02_MVP_SCOPE.md and 03_TECHNICAL_DECISIONS.md",
+    "docs/OWNER_WORKFLOW.md, docs/OWNER_TODO.md, docs/DEVICE_CHECKS.md, current manifest and owner queue",
+    "scripts/milestone.mjs, scripts/owner-checks.mjs, scripts/owner-notices.mjs, scripts/verification-digest.mjs, scripts/check-repository.mjs and focused tests",
+    "Earlier D3 review reports for data integrity, regression and field UX",
+    "Focused owner-workflow suite after current gate and path-containment fixes: 33 tests passed",
+    "Disposable synthetic probes for stale source acceptance and contradictory owner evidence: both reproduced against the current tree",
+    "Rechecked the parent's integration-gate and symlink-containment fixes; their focused tests pass"
+  ],
+  "anglesTried": {
+    "seed": 822584111,
+    "lenses": [
+      "2. Dead code and unused exports: checked the owner queue and notification helpers and their callers; no blocker found.",
+      "3. Single-caller abstractions: reviewed the lifecycle controller and owner-check layers; the reproduced blockers are acceptance gaps rather than abstraction issues."
+    ],
+    "wildcard": "Tested whether an allowed evidence path could escape through a junction. The original implementation wrote outside the repository; the parent's current symlink check and regression test now reject that case."
+  },
+  "notTested": ["Full verification and browser suites", "The owner's physical Android check"]
+}

@@ -37,7 +37,9 @@ class.
    `README.md` ≤ 80, `docs/LOCAL_DEVELOPMENT.md` ≤ 120, any other contract
    document ≤ 700, a working document ≤ 300. A status-table row in the plan is at
    most 60 words and links its evidence.
-4. **The plan holds open work only.** A completed milestone's section leaves
+4. **The plan holds open work only.** AWAITING_OWNER stays open and retains its
+   section; `docs/OWNER_TODO.md` projects the canonical owner-action queue.
+   A completed milestone's section leaves
    the plan at its close and is appended to
    `archive/<cycle>/completed-milestones.md`; the plan keeps its status row.
 5. **Working documents expire.** The first lines carry

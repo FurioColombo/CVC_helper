@@ -289,6 +289,7 @@ Keep the existing harness and command surface:
 - `npm run verify:all`: verify + deterministic full week + offline check of
   the built PWA + E2E;
 - `npm run milestone:start|check|complete -- <ID>`;
+- `npm run milestone:await-owner|resume -- <ID>`; `npm run owner:list|check`;
 - `npm run ci:status -- [--wait]`: the exact HEAD commit's push verification;
 - `npm run evidence -- <ID>`.
 
@@ -297,8 +298,11 @@ review files. Completion is refused when evidence is missing, verification is no
 all PASS, a review verdict is FAIL or any blocker exists. Since F1 a new
 completion also requires `verification.json` written by `npm run evidence`,
 with a passing run of every declared script and a source digest equal to the
-current working tree's, so a hand-written file, a partial run or code changed
-after the run cannot close a milestone. Since H1 it also refuses a focused run
+current working tree's. For an ordinary AWAITING_OWNER milestone, it instead
+matches the preserved verified checkpoint as defined in
+`docs/OWNER_WORKFLOW.md`; release gates still check the current final source.
+A hand-written file, partial run or changed pending implementation cannot
+close a milestone. Since H1 it also refuses a focused run
 that does not match the manifest's `e2eSpecs`, a flaky test not filed in
 `docs/working/BACKLOG.md`, a plan that still holds the milestone's section and
 a failing `check:docs`. Old 0.1.0 milestone statuses remain immutable history.
@@ -332,8 +336,10 @@ core journeys (`playwright.config.ts`). Test 320 × 664, 390 × 844 and 412 × 9
 density/overflow is material; avoid multiplying every test across every viewport.
 
 Agents read `ci:status` at session start and after a checkpoint is pushed. A
-completed milestone's pushed checkpoint must have green CI before the next
-milestone starts; the closing skill handles failures and unavailable results.
+completed milestone's pushed checkpoint must have green CI before dependent
+work starts. AWAITING_OWNER also requires a green verified checkpoint and the
+explicit safe-continuation rules in `docs/OWNER_WORKFLOW.md`; missing owner
+feedback alone does not stop eligible work. The closing skill handles failures.
 The public API needs no `gh` or token; a token permits higher API limits.
 
 CI runs on push (and by hand), cancels a superseded run on the same branch, and

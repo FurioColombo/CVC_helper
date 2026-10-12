@@ -12,3 +12,6 @@ ita.traineddata
 
 # Audio and image corpora supplied for local benchmarking. Never committed.
 data/
+
+# Local acknowledgement cursor for change-only owner reminders.
+.milestones/owner-notices.local.json

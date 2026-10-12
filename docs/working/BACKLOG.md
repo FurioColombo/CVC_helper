@@ -89,25 +89,25 @@ Other UG2 findings, not yet put to the owner:
 The 0.1–0.3 retrospective (`archive/v0.4.0/RETRO_0X.md`, delivered on
 2026-10-10 after H1 closed without it) proposes ten changes, each with its cost,
 root cause and the check that would show it worked. The owner adopts bounded
-review rounds and CI visibility/reuse on 2026-10-12; their rules live in
-`docs/agents/REVIEW_PROTOCOL.md` and `03_TECHNICAL_DECISIONS.md` §6. The
+review rounds, CI visibility/reuse and owner checks before completion with
+safe parallel work on 2026-10-12; their rules live in
+`docs/agents/REVIEW_PROTOCOL.md`, `03_TECHNICAL_DECISIONS.md` §6 and
+`docs/OWNER_WORKFLOW.md`. The
 remaining proposals await the owner's pick:
 
 1. `npm run evidence -- <ID> --from-ci` records a green CI `verify:all` of
    HEAD at a gate instead of a local run (friction 1).
-2. For visible changes, the owner's phone check comes before Complete
-   (`owner-check.json`) (friction 4).
-3. `npm run evidence` exits early when the same source digest already passed
+2. `npm run evidence` exits early when the same source digest already passed
    (friction 5).
-4. `scripts/run-e2e.mjs` takes a machine-wide lock so two browser runs never
+3. `scripts/run-e2e.mjs` takes a machine-wide lock so two browser runs never
    overlap (friction 6).
-5. One quiet runner for the verify scripts, the full log to `test-results/`
+4. One quiet runner for the verify scripts, the full log to `test-results/`
    (friction 7).
-6. Node 24 as the machine default, the Program Files Node 18 removed or
+5. Node 24 as the machine default, the Program Files Node 18 removed or
    demoted: an owner action (friction 8).
-7. Agent transcripts treated as private data: the owner deletes or moves the
+6. Agent transcripts treated as private data: the owner deletes or moves the
    0.x ones offline and sets `cleanupPeriodDays` (friction 9).
-8. `milestone:complete` writes the plan's status row from the manifest
+7. `milestone:complete` writes the plan's status row from the manifest
    (friction 10).
 
 ## Flaky browser tests

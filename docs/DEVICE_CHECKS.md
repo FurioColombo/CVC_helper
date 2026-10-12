@@ -6,6 +6,10 @@ utterances and fictitious rosters only.
 
 ## How a check run works
 
+- [Owner todo](./OWNER_TODO.md) supplies the requests, readiness, exact build
+  and address. AWAITING_OWNER and safe parallel agent work follow
+  [the owner workflow](./OWNER_WORKFLOW.md). Tell the agent which item you ran
+  and what happened; it records your report, never an inferred PASS.
 - A release gate (and any milestone whose plan section asks for it) names the
   checks below that it needs. Use the same commit on every device of the run.
 - Android Chrome and iPhone Safari need a **trusted HTTPS** address: the

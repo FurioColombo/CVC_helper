@@ -9,8 +9,9 @@ description: Close a CVC Helper milestone and prepare the documents for the next
 `docs/DOCS_SYSTEM.md` defines the documentation rules the sweep enforces.
 Codex follows this file directly.
 
-Work in order. A step that fails sends you back to fix and re-run, not
-forward.
+Agent checks run in order; a failure sends you back to fix and re-run.
+Pending owner acceptance follows `docs/OWNER_WORKFLOW.md`: AWAITING_OWNER
+keeps the milestone open while explicitly eligible work continues.
 
 ## 1. Freeze the change
 
@@ -19,6 +20,9 @@ forward.
 - Re-read the milestone's success predicate and adversarial checklist in
   `04_IMPLEMENTATION_PLAN.md`. Each line needs proof (a test, evidence or a
   screenshot) before you go on.
+- For visible work, prepare a required request in `docs/OWNER_TODO.md` and
+  configure its `ownerEvidence` in the manifest. A missing device result is
+  allowed only in the owner-handoff path below.
 
 ## 2. Verify, once, on the final source
 
@@ -45,7 +49,31 @@ forward.
   reviewer and re-check blockers and fixes; a third FAIL goes to the owner.
 - Write `.evidence/<ID>/self-review.json`: every finding and its disposition.
 
-## 4. Evidence sweep
+## 4. Owner handoff, when acceptance needs the owner
+
+- Prepare the check alongside implementation with `owner:add` or `owner:update`
+  and a JSON input file; never edit the generated list. Separate setup needs
+  from a READY test. Announce each new or materially changed action in this
+  chat with its instructions and a link to `docs/OWNER_TODO.md`.
+- When agent evidence and reviews pass, commit the implementation and obtain
+  green push CI for that exact commit. Prepare the address, build, expected
+  results and focused phone steps, with useful narrow-screen/text-size captures.
+  Publish a preview only when authorised. Never manufacture owner PASS or an
+  empty physical report to satisfy missing evidence.
+- While owner acceptance waits, `npm run milestone:await-owner -- <ID>` captures
+  the verified checkpoint. Keep its plan section open as AWAITING_OWNER, update
+  the plan's handoff and commit the metadata. Stop the closure sweep here;
+  continue only work explicitly permitted by the manifest and plan, with intact
+  evidence and green CI. Report pending owner items instead of stopping all work.
+- Record explicit feedback with `owner:feedback`. Before fixing or editing the
+  pending milestone, `milestone:resume` invalidates the previous owner check
+  and readiness proof. Fix, review and verify the new source, then hand over a
+  new build. Pause affected dependents, not independent planned work.
+- With matching owner PASS, finish the sweeps and COMPLETE below. Ordinary
+  closure uses the captured checkpoint; release gates still verify the current
+  final source. Completed device evidence remains frozen.
+
+## 5. Evidence sweep
 
 - `.evidence/<ID>/` holds only what the manifest requires plus what a reviewer
   needs: `verification.json`, reviews, the self-review, selected screenshots,
@@ -53,7 +81,7 @@ forward.
 - Delete scratch output the milestone made (`test-results/` is ignored; other
   stray files are not).
 
-## 5. Documentation sweep (light)
+## 6. Documentation sweep (light)
 
 1. **Plan.** Move the milestone's section, unchanged, to the end of
    `archive/<cycle>/completed-milestones.md`. Leave one status row of at most
@@ -80,7 +108,7 @@ passages in the present tense, write the `CHANGELOG.md` entry, and archive the
 plan as `archive/<version>/04_IMPLEMENTATION_PLAN.md` before the next cycle's
 fresh plan replaces it.
 
-## 6. Complete and checkpoint
+## 7. Complete and checkpoint
 
 - `npm run milestone:complete -- <ID>`. It refuses missing evidence, a stale
   or partial `verification.json`, a failed review, a plan that still holds the
@@ -97,11 +125,12 @@ fresh plan replaces it.
   `npm run evidence -- <ID> --file verification-ci-fix.json`, since the
   completed `verification.json` only grows.
 - After an authorised push, run `npm run ci:status -- --wait` on the checkpoint.
-  Only a green push run of that exact commit permits the next milestone. A
+  Only a green push run of that exact commit permits dependent work. The
+  AWAITING_OWNER path uses `docs/OWNER_WORKFLOW.md`'s explicit permissions. A
   failed run needs a fix and a new checkpoint; pending, missing, timed-out or
   unavailable CI is not a PASS. If pushing is not authorised, report that this
-  gate remains pending and do not start the next milestone. This adds no push
+  gate remains pending; continue only independent eligible work. This adds no push
   or deployment authorisation. Status covers committed HEAD, not dirty edits.
 
 Report to the owner: what was delivered, what the evidence shows, what
-remains theirs to check on a device, and the next milestone.
+is on `docs/OWNER_TODO.md`, what can continue and what actually waits for them.

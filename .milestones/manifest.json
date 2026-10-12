@@ -790,6 +790,7 @@
       "id": "D3",
       "category": "RULE_HEAVY",
       "status": "IN_PROGRESS",
+      "ownerEvidence": [".evidence/D3/physical-device-review.json"],
       "verificationScripts": ["verify", "verify:e2e:focus", "check:update"],
       "requiredEvidence": [
         ".evidence/D3/verification.json",
@@ -824,6 +825,13 @@
       "id": "D4",
       "category": "FEATURE",
       "status": "PENDING",
+      "ownerEvidence": [".evidence/D4/physical-device-review.json"],
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "D3",
+          "reason": "Export and import depend on D3's verified compatibility contract, not on the pending Android installed-update check."
+        }
+      ],
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/D4/verification.json",
@@ -847,6 +855,16 @@
       "id": "T1",
       "category": "FOUNDATION",
       "status": "PENDING",
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "D3",
+          "reason": "Browser-suite improvements can use D3's verified code while the owner tests installed updates."
+        },
+        {
+          "id": "D4",
+          "reason": "Test-speed work depends on D4's verified browser journeys, not the pending phone share-sheet check."
+        }
+      ],
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/T1/verification.json",
@@ -863,6 +881,7 @@
       "id": "UG3",
       "category": "INTEGRATION_GATE",
       "status": "PENDING",
+      "ownerEvidence": [".evidence/UG3/physical-device-review.json"],
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
         ".evidence/UG3/verification.json",

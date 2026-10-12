@@ -9,10 +9,9 @@ operating contract, source of truth, progress tracker and verification harness.
 At the start of a turn, before writing application code:
 
 1. Read this file completely.
-2. Inspect `git status`, `npm run ci:status`, the latest checkpoint and
-   milestone state (`npm run milestone:status` gives a compact projection of
-   `.milestones/manifest.json`). Never erase or claim another agent's
-   unfinished work.
+2. Inspect `git status`, `npm run ci:status`, `npm run owner:list` and
+   `npm run milestone:status`, then the latest checkpoint. Never erase or
+   claim another agent's unfinished work.
 3. In `04_IMPLEMENTATION_PLAN.md`, read **Where this cycle stands** and the
    active milestone. Read other milestone sections only for a dependency.
 4. Read the relevant sections of `01_PRODUCT_SPEC.md`, `02_MVP_SCOPE.md` and
@@ -22,8 +21,8 @@ At the start of a turn, before writing application code:
    `docs/design/06_DESIGN_RULEBOOK.md` and `docs/design/07_PAGE_CHANGELOG.md`,
    then inspect the frozen mock target linked there.
 6. Check Node 24 and follow `docs/LOCAL_DEVELOPMENT.md` for ports/browser tools.
-7. Start from the first eligible incomplete milestone in the active plan; an
-   explicitly deferred milestone is not eligible until the owner lifts it.
+7. Start the first eligible milestone. `docs/OWNER_WORKFLOW.md` defines safe
+   continuation past AWAITING_OWNER; deferred work still needs the owner.
 
 `archive/` holds prior plans and instructions. Read it only for requested
 historical rationale or a specific active dependency. It is not authoritative.
@@ -62,8 +61,8 @@ domain and documentation checks, milestone metadata, evidence and commands, the
 Git hooks, browser smoke tests and CI (`03_TECHNICAL_DECISIONS.md` §6). Extend
 it; do not replace it or reopen its old milestones. Before substantive work,
 confirm the first incomplete milestone and its baseline in
-`04_IMPLEMENTATION_PLAN.md`. Do not begin a feature milestone while an earlier
-milestone is incomplete.
+`04_IMPLEMENTATION_PLAN.md`. An incomplete predecessor permits continuation
+only under the verified AWAITING_OWNER rules in `docs/OWNER_WORKFLOW.md`.
 
 ## 5. Required verification commands
 
@@ -89,12 +88,11 @@ For every milestone:
 6. Add or update automated evidence while implementing.
 7. Exercise user-visible behavior through the browser when required.
 8. Run domain/invariant checks when relevant.
-9. Close it with the `milestone-close` skill
-   (`.claude/skills/milestone-close/SKILL.md`): review the diff, run the
-   required reviewers, fix findings, re-run verification once on the final
-   source, do the documentation sweep of `docs/DOCS_SYSTEM.md`, then
-   `milestone:complete` and one descriptive checkpoint commit.
-10. Only then begin the next milestone.
+9. Follow `.claude/skills/milestone-close/SKILL.md`: reviews, final verification,
+   evidence and documentation; use `milestone:await-owner` if owner acceptance
+   waits, otherwise `milestone:complete`, and one descriptive checkpoint.
+10. Start only eligible work under `docs/OWNER_WORKFLOW.md`; announce new owner
+    actions with a link to `docs/OWNER_TODO.md` and keep that list current.
 
 Do not carry an unexplained dirty working tree from one completed milestone into
 the next.

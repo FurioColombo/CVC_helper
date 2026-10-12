@@ -12,6 +12,9 @@ const requiredFiles = [
   ".node-version",
   ".github/workflows/ci.yml",
   ".milestones/manifest.json",
+  ".milestones/owner-checks.json",
+  "docs/OWNER_TODO.md",
+  "docs/OWNER_WORKFLOW.md",
   "playwright.config.ts",
   "vite.config.ts",
   "vitest.config.ts",
@@ -109,6 +112,10 @@ for (const script of [
   "milestone:status",
   "milestone:check",
   "milestone:complete",
+  "milestone:await-owner",
+  "milestone:resume",
+  "owner:list",
+  "owner:check",
   "ci:status",
   "evidence",
 ]) {
@@ -119,6 +126,41 @@ const manifest = JSON.parse(
   readFileSync(resolve(root, ".milestones/manifest.json"), "utf8"),
 )
 const plan = readFileSync(resolve(root, "04_IMPLEMENTATION_PLAN.md"), "utf8")
+for (const milestone of manifest.milestones) {
+  assert.ok(
+    [
+      "PENDING",
+      "IN_PROGRESS",
+      "AWAITING_OWNER",
+      "BLOCKED",
+      "COMPLETE",
+    ].includes(milestone.status),
+    `Invalid milestone state: ${milestone.id}`,
+  )
+  for (const file of milestone.ownerEvidence ?? []) {
+    assert.ok(
+      milestone.requiredEvidence?.includes(file),
+      `Owner evidence must be required: ${milestone.id}, ${file}`,
+    )
+  }
+  assert.ok(
+    milestone.category !== "INTEGRATION_GATE" ||
+      (!(milestone.allowedAwaitingOwnerPredecessors ?? []).length &&
+        !(milestone.allowedIncompletePredecessors ?? []).length),
+    `Integration gate ${milestone.id} cannot skip pending owner acceptance`,
+  )
+  for (const entry of milestone.allowedAwaitingOwnerPredecessors ?? []) {
+    const predecessor = manifest.milestones.findIndex(
+      (candidate) => candidate.id === entry.id,
+    )
+    assert.ok(
+      predecessor >= 0 &&
+        predecessor < manifest.milestones.indexOf(milestone) &&
+        entry.reason?.trim(),
+      `Invalid awaiting-owner dependency permission: ${milestone.id}`,
+    )
+  }
+}
 const completedBaselineIds = [
   "M0",
   "M1",

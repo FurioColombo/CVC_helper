@@ -32,6 +32,10 @@ the entire shell, including npm's child processes. A direct call to Node 24
 while npm scripts still resolve an older `node` is insufficient. A version
 manager that reads `.node-version` is also valid.
 
+Prefer an existing Node 24 runtime. Missing Node 24 in fnm does not mean it is
+absent from the machine: Codex's bundle is separate. Do not install another
+runtime merely to fix PATH; use the documented existing runtime first.
+
 `fnm default 24` selects an installed version; it does not install Node or
 replace the system PATH. If it says "not found locally", in PowerShell run:
 
@@ -94,7 +98,12 @@ and prints failed steps and available test annotations. `-- --wait` polls for
 up to ten minutes. Exit 0 means success, 1 a completed non-success, 2 pending,
 missing, timed-out or unavailable CI. Dirty edits are not covered. Run it at
 session start and after pushing; the closing skill requires green CI before
-the next milestone. It needs no `gh`; `GITHUB_TOKEN` or `GH_TOKEN` is optional.
+dependent work. It needs no `gh`; `GITHUB_TOKEN` or `GH_TOKEN` is optional.
+
+`npm run owner:list` shows pending human actions; `owner:check` validates the
+queue and its [readable list](./OWNER_TODO.md). `milestone:await-owner` and
+`milestone:resume` follow [the owner workflow](./OWNER_WORKFLOW.md), which lets
+explicitly eligible work continue while phone checks wait.
 
 Do not pipe ESLint through `head` or `tail`; a broken pipe can hide its result.
 OCR and microphone checks on actual phones belong to the owner and are never

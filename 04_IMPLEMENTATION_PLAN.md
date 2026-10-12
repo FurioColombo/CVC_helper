@@ -1,6 +1,6 @@
 # Implementation plan — 0.4.0
 
-Updated 2026-10-10. Read **Where this cycle stands**, then only the active
+Updated 2026-10-12. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.3.0 plan
 is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -28,7 +28,8 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | H1 | Complete. Documents in the `docs/DOCS_SYSTEM.md` layout; unit tests 287 s to 71 s; browser suite not shown faster (target missed, accepted by the owner); retrospective not delivered. See `.evidence/H1/`. |
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
-| D3, D4, T1, UG3 | Pending; D3 is next. |
+| D3 | In progress: review fixes are committed; final verification, reviews and the Android check remain. See `.evidence/D3/` and `docs/OWNER_TODO.md`. |
+| D4, T1, UG3 | Pending. D4 and T1 may continue past explicitly permitted AWAITING_OWNER predecessors; UG3 waits for all required owner acceptance. |
 
 ## Execution order
 
@@ -46,6 +47,9 @@ findings join as an extra milestone only if the owner picks them (see the end).
   fixtures are the regression contract.
 - Synthetic data only, everywhere.
 - Close every milestone with the `milestone-close` skill.
+- Owner checks use `docs/OWNER_WORKFLOW.md` and `docs/OWNER_TODO.md`.
+  D4 may follow verified D3 while its phone check waits; T1 may follow
+  verified D3/D4 while their phone checks wait. UG3 requires COMPLETE predecessors.
 
 ## D3 — Versions and reliable updates
 
@@ -167,17 +171,14 @@ no reviewer blocker and the owner's Android checks recorded.
 **Evidence:** `.evidence/UG3/` verification, browser and migration evidence, six
 reviews, the owner's device report.
 
-## Waiting for the owner
+## Owner feedback
 
-How should D3's Android check run (`docs/DEVICE_CHECKS.md`, "Updates and
-versions")? It needs two deployments of this branch to an HTTPS address, one
-installed and the next published while it is open. Pages deploys only `main`
-(`docs/DEPLOY.md`), so either the owner allows two pre-release deployments of
-`codex/0.4.0` to `main`, or names another HTTPS host for a preview, or runs the
-check through `adb reverse` on a PC. D3 stays open until the check is
-recorded.
+D3's Android update check needs a setup choice; its actionable request is
+`D3-PHONE-UPDATE` in `docs/OWNER_TODO.md`. Its build is not READY until agent
+reviews, final verification and CI pass. D3 then stays AWAITING_OWNER until the
+matching phone report passes, while explicitly permitted agent work continues.
 
 Which of the six candidates in `docs/working/BACKLOG.md` ("Waiting for the
 owner's choice") join 0.4.0 as a fix milestone? And which of the
-retrospective's ten proposals ("Retrospective proposals awaiting the owner's
+retrospective's remaining proposals ("Retrospective proposals awaiting the owner's
 pick") are adopted?
