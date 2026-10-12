@@ -7,6 +7,7 @@ import react from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
+import { getAppChannelConfig, parseAppChannel } from "./src/appChannel"
 import { encodeVersion, parseVersion } from "./src/domain/compatibility"
 
 const LOCAL_OCR_ASSETS = {
@@ -118,29 +119,44 @@ const packageVersion = (
     readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
   ) as { version: string }
 ).version
-const appVersion = process.env.CVC_APP_VERSION ?? packageVersion
+const appChannel = parseAppChannel(process.env.CVC_APP_CHANNEL)
+const appConfig = getAppChannelConfig(appChannel)
+const versionBaseline = appConfig.versionBaseline ?? packageVersion
+const appVersion = process.env.CVC_APP_VERSION ?? versionBaseline
 // The data records the newest version that wrote it, for good: a build that
 // claimed a later minor version would leave real data read-only for the real
 // release, so an override may change only the patch, and must be a version the
 // app can read and store (D3 reviews DI-Q4, DI-R2-Q2).
 {
   const override = parseVersion(appVersion)
-  const own = parseVersion(packageVersion)
+  const own = parseVersion(versionBaseline)
   encodeVersion(override)
   if (override.major !== own.major || override.minor !== own.minor) {
     throw new Error(
-      `CVC_APP_VERSION ${appVersion} must keep package.json's ${packageVersion} major.minor`,
+      `CVC_APP_VERSION ${appVersion} must keep the ${appChannel} channel baseline ${versionBaseline} major.minor`,
     )
   }
 }
 
 export default defineConfig({
   base,
-  define: { "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion) },
+  define: {
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion),
+    "import.meta.env.VITE_APP_CHANNEL": JSON.stringify(appChannel),
+  },
   plugins: [
     react(),
     tailwindcss(),
     localOcrAssets(),
+    {
+      name: "cvc-app-document-title",
+      transformIndexHtml(html) {
+        return html.replace(
+          /<title>[^<]*<\/title>/,
+          `<title>${appConfig.documentTitle}</title>`,
+        )
+      },
+    },
     VitePWA({
       // "autoUpdate" swaps the service worker and reloads the page the moment
       // a new version activates, with no chance for the instructor to finish
@@ -150,8 +166,8 @@ export default defineConfig({
       // instructor taps Aggiorna.
       registerType: "prompt",
       manifest: {
-        name: "CVC Helper",
-        short_name: "CVC Helper",
+        name: appConfig.manifestName,
+        short_name: appConfig.manifestShortName,
         description: "Supporto operativo locale per una settimana CVC Caprera.",
         theme_color: "#2f5fa0",
         // Matches `--background` in src/styles.css — checked by
@@ -180,6 +196,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        ...(appConfig.workboxCacheId
+          ? { cacheId: appConfig.workboxCacheId }
+          : {}),
         // OCR is a first-use capability. Keep every local worker, language
         // model and core variant in the install precache so a newly installed
         // app can scan its first roster without a network round trip.
@@ -196,7 +215,7 @@ export default defineConfig({
             urlPattern: /\/ocr\//,
             handler: "CacheFirst",
             options: {
-              cacheName: "cvc-ocr-runtime",
+              cacheName: appConfig.ocrRuntimeCacheName,
               cacheableResponse: { statuses: [0, 200] },
               expiration: {
                 maxEntries: 5,
@@ -212,7 +231,7 @@ export default defineConfig({
             urlPattern: /\/assets\/ort-wasm-.*\.(?:wasm|mjs)$/,
             handler: "CacheFirst",
             options: {
-              cacheName: "cvc-speech-runtime",
+              cacheName: appConfig.speechRuntimeCacheName,
               cacheableResponse: { statuses: [0, 200] },
               expiration: {
                 maxEntries: 2,

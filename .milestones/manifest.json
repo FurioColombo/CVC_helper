@@ -791,7 +791,13 @@
       "category": "RULE_HEAVY",
       "status": "IN_PROGRESS",
       "ownerEvidence": [".evidence/D3/physical-device-review.json"],
-      "verificationScripts": ["verify", "verify:e2e:focus", "check:update"],
+      "verificationScripts": [
+        "verify",
+        "verify:e2e:focus",
+        "check:update",
+        "check:update:test",
+        "check:test-isolation"
+      ],
       "requiredEvidence": [
         ".evidence/D3/verification.json",
         ".evidence/D3/browser-evidence.json",
@@ -799,13 +805,16 @@
         ".evidence/D3/self-review.json",
         ".evidence/D3/data-integrity-review.json",
         ".evidence/D3/regression-review.json",
-        ".evidence/D3/field-ux-review.json"
+        ".evidence/D3/field-ux-review.json",
+        ".evidence/D3/test-isolation.json",
+        ".evidence/D3/security-privacy-review.json"
       ],
       "requiredReviews": [
         ".evidence/D3/self-review.json",
         ".evidence/D3/data-integrity-review.json",
         ".evidence/D3/regression-review.json",
-        ".evidence/D3/field-ux-review.json"
+        ".evidence/D3/field-ux-review.json",
+        ".evidence/D3/security-privacy-review.json"
       ],
       "e2eSpecs": [
         "tests/e2e/c1-crew-management.spec.ts",

@@ -174,8 +174,11 @@ write's own transaction, so a write in flight cannot land after a newer app's
 claim; statements SQLite refuses inside a transaction (the erase's `VACUUM`)
 run under the guarded write lock instead. The app's version comes from
 `package.json` at build time (`import.meta.env.VITE_APP_VERSION`); an override
-for a test build may change only the patch, because the record keeps the
-newest version for good. PowerSync's client keeps rows as JSON behind views, so an
+for a build may change only the patch of its channel's baseline, because the
+record keeps the newest version for good. The regular channel uses the released
+package version; the isolated phone-test channel explicitly uses 0.4.0 while
+0.4.0 acceptance is pending, with its own database and storage namespaces
+(`src/appChannel.ts`; deployment and pinning are in `docs/DEPLOY.md`). PowerSync's client keeps rows as JSON behind views, so an
 older app reads data with columns it does not know, but it does not write
 around them: an update through its views rewrites the row without the newer
 columns, and opening the database with its schema drops every local-only table

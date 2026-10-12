@@ -1,4 +1,5 @@
 import { compareVersions, parseVersion } from "@/domain/compatibility"
+import { appChannelConfig } from "@/runtimeConfig"
 
 /**
  * D3: after an update the app says so once ("Aggiornata alla versione …").
@@ -6,7 +7,7 @@ import { compareVersions, parseVersion } from "@/domain/compatibility"
  * a newer one now means this start follows an update. The first start on a
  * device, and an unreadable stored version, say nothing.
  */
-const KEY = "cvc-helper.installed-version"
+const KEY = appChannelConfig.installedVersionKey
 
 export function noteInstalledVersion(
   current: string,

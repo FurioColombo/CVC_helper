@@ -76,20 +76,54 @@ Owner phone checks use GitHub-hosted HTTPS and the familiar installed-app update
 flow. Preparing the build and address is agent work; the owner needs no USB,
 local server or hosting choice. Notify the owner when the queue item is READY.
 
-A separate test site gives the owner one stable test address and a home-screen
-app named **CVC Helper Test**. It is not published yet. Preparation belongs to
-D3: publish only verified commits, record the exact build and address, and keep
-the active test build fixed until the owner is ready for N+1. Independent later
-work must not replace that build during the check. Use the patch-only N/N+1
-procedure in `docs/DEVICE_CHECKS.md` and synthetic course data.
+The permanent test address is
+[**CVC Helper Test**](https://furiocolombo.github.io/CVC_helper_test/), published
+from the static-output repository
+[FurioColombo/CVC_helper_test](https://github.com/FurioColombo/CVC_helper_test).
+The regular app stays at its existing address and its main-only deployment
+workflow is unchanged. The two sites share a hostname; the folder alone does
+not isolate their data.
 
-A test folder or another repository on the same `github.io` hostname shares
-browser storage with the regular app. The app currently opens `cvc-helper.db`.
-Before publishing a test copy there, give it separate database and preference
-names, service-worker scope and cache names, and prove that creating, updating
-or resetting a test course leaves the regular course intact. A distinct HTTPS
-hostname provides origin isolation instead. See
-[browser storage isolation](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#how_do_browsers_separate_data_from_different_websites).
+The test channel (`CVC_APP_CHANNEL=test`) has its own database
+`cvc-helper-test.db`, preference keys, speech-model cache, Workbox cache names,
+manifest identity and service-worker scope. The regular channel keeps its
+existing names. `npm run check:test-isolation` builds both channels on one origin
+and exercises creation, student edits and course erasure through their UI on
+Chromium and WebKit, checking the regular course, preferences and offline app
+remain intact. Its report is `.evidence/D3/test-isolation.json`. D4's full reset
+must use these same channel boundaries.
+
+The repository package remains the released 0.3.0 until UG3; the isolated test
+channel explicitly uses the 0.4 patch line. D3 uses **0.4.0** first, then
+**0.4.1**, from exactly the same verified source at the same test address.
+Neither a later minor version nor independent later source is substituted.
+
+Publish deliberately, after the source checkpoint has passed push CI and the
+recorded D3 evidence and reviews:
+
+```text
+npm run test-site:publish -- --source <full-verified-checkpoint> --version 0.4.0
+```
+
+The publisher builds an archive of that exact commit, checks its recorded
+clean recorded checkpoint, unchanged source tree and exact-commit CI, and pushes only static build outputs. GitHub
+Pages publishes the test repository's main branch, with `.nojekyll`.
+`build-info.json` at the test address identifies source, version and CI.
+`.milestones/test-site.json` pins the source, both patch versions and the active
+publication. Ordinary pushes of later work cannot deploy to this repository.
+After publishing, verify the live HTTPS app, its identity, persistence and
+worker before changing `D3-PHONE-UPDATE` to READY with `owner:update`.
+
+**Keep 0.4.0 fixed until the owner reports that it is installed.** Record that
+explicit report in the pin's `ownerInstalled` with `reportedBy: owner`, the report
+source and summary. This is installation coordination, not a physical PASS.
+Only then publish 0.4.1 with the same command and pinned source. The publisher
+refuses a second version without that report and refuses a different source
+while feedback is pending. Announce the second publication and the focused
+steps in `docs/OWNER_TODO.md` through `owner:update`; keep 0.4.1 fixed until the
+check is resolved. The owner installs once and reports the URL, both versions,
+foreground-to-offer time, saved edit and control reachability under
+[Updates and versions](./DEVICE_CHECKS.md#updates-and-versions).
 
 ## Building it yourself
 

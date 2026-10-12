@@ -74,6 +74,11 @@ findings join as an extra milestone only if the owner picks them (see the end).
    guard stays.
 3. **A browser journey:** serve build N, deploy build N+1, bring the app to the
    foreground, see the offer, update without losing unsaved work.
+4. **Permanent test site:** publish the isolated test channel at the stable
+   GitHub HTTPS address in `docs/DEPLOY.md`. Database, preferences, workers and
+   caches are separate from the regular app, with same-origin browser proof.
+   Pin verified source for 0.4.0/0.4.1; the second deployment follows an explicit
+   owner installation report. Later work cannot replace a pending test build.
 
 **Success predicate:** an installed app brought back to the foreground after a
 deploy offers the update within one minute without reinstalling, and applies it
@@ -92,7 +97,7 @@ behaviour.
 
 **Evidence:** verification, compatibility table tests, browser evidence, the
 owner's Android check (update without reinstall), data-integrity,
-regression-hunter and field-UX reviews.
+regression-hunter and field-UX reviews, test isolation proof and a security/privacy review of test publication.
 
 ## D4 — Export, import, persistent storage and full reset
 

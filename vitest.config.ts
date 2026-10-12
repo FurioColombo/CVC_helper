@@ -30,7 +30,10 @@ const appVersion = (
 
 export default defineConfig({
   // As vite.config.ts defines it for the app.
-  define: { "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion) },
+  define: {
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion),
+    "import.meta.env.VITE_APP_CHANNEL": JSON.stringify("regular"),
+  },
   plugins: [react()],
   resolve: {
     alias: {

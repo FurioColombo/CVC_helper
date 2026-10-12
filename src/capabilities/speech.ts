@@ -10,6 +10,7 @@ import ortWasmSimdThreadedMjsUrl from "onnxruntime-web/ort-wasm-simd-threaded.mj
 import ortWasmSimdThreadedWasmUrl from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import ortWasmSimdThreadedAsyncifyMjsUrl from "onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url"
 import ortWasmSimdThreadedAsyncifyWasmUrl from "onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url"
+import { appChannel, appChannelConfig } from "@/runtimeConfig"
 
 export type SpeechTranscriptionPhase = "loading" | "processing"
 
@@ -291,6 +292,9 @@ async function decodeAudio(audio: Blob) {
 
 async function loadWhisperTranscriber(onProgress: ModelProgressListener) {
   const { pipeline, env } = await import("@huggingface/transformers")
+  if (appChannel === "test") {
+    env.cacheKey = appChannelConfig.speechModelCacheName
+  }
   configureLocalOnnxRuntime(env)
   return (await pipeline(
     "automatic-speech-recognition",

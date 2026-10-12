@@ -1,8 +1,9 @@
 import type { StudentNameOrder } from "@/capabilities/studentScan"
+import { appChannelConfig } from "@/runtimeConfig"
 
 type RememberedOrder = Exclude<StudentNameOrder, "unknown">
 
-const STORAGE_PREFIX = "cvc-helper.scan-name-order."
+const STORAGE_PREFIX = appChannelConfig.scanNameOrderPrefix
 
 /**
  * Which way round a course's roster prints its names.

@@ -218,3 +218,13 @@ From the D2 reviews (`.evidence/D2/`):
 - the duty-setting rows' probe reads every row on every open (16 ms for one
   course, 97 ms for 30 on the development PC); before 0.7.0 keeps a season,
   scope it to courses that changed or index `courseId` (DI-R2-Q2).
+
+- Persistence API invariant (D3 DI-R2-Q4 / DI-Q5): forbid mutating SQL through
+  read APIs or raw execution, or route it through the guarded write lock.
+  No app caller uses that escape today; `executeRaw` checks compatibility
+  before its lease, while `get`/`getAll`/`getOptional` accept arbitrary SQL.
+
+- D3 FU-Q12: at 320 px with 200% text, the selected-person destination panel
+  extends above the viewport. Its crew and A terra controls remain reachable
+  by internal/page scrolling in Chromium and WebKit; improve this stress layout
+  when the owner selects the field-layout follow-ups.

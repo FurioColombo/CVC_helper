@@ -1,3 +1,4 @@
+import assert from "node:assert/strict"
 import { spawn } from "node:child_process"
 import { createServer } from "node:http"
 import {
@@ -11,19 +12,20 @@ import {
 } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { dirname, extname, join, resolve, sep } from "node:path"
+import { dirname, extname, join, relative, resolve, sep } from "node:path"
 
 import { chromium, webkit } from "@playwright/test"
+import { getAppChannelConfig, parseAppChannel } from "../src/appChannel.ts"
 
 /**
  * D3's success predicate in a real browser: an installed app brought back to
  * the foreground after a deploy offers the update within one minute, without
  * reinstalling, and applies it without losing unsaved work.
  *
- * Version N (package.json's) and N+1 (its patch plus one) are built from the
- * current source into two temporary folders and served from ONE origin by a
- * small static server whose root is switched from N to N+1: a service worker
- * belongs to an origin, so a second port would be a second app.
+ * Version N (the selected channel's baseline) and N+1 (its patch plus one) are
+ * built from the current source into two temporary folders and served from ONE
+ * origin by a small static server whose root is switched from N to N+1: a
+ * service worker belongs to an origin, so a second port would be a second app.
  */
 
 const root = resolve(import.meta.dirname, "..")
@@ -34,9 +36,15 @@ const OFFER_LIMIT_SECONDS = 60
 const AWAY_MS = 10 * 60 * 1000
 const SERVICE_WORKER_PROBE_MS = 15_000
 
-const installedVersion = JSON.parse(
+const packageVersion = JSON.parse(
   readFileSync(resolve(root, "package.json"), "utf8"),
 ).version
+const testJourney = process.argv.slice(2).includes("--test")
+const appChannel = parseAppChannel(
+  testJourney ? "test" : process.env.CVC_APP_CHANNEL,
+)
+const installedVersion =
+  getAppChannelConfig(appChannel).versionBaseline ?? packageVersion
 const [major, minor, patch] = installedVersion.split(".").map(Number)
 if (![major, minor, patch].every(Number.isInteger)) {
   throw new Error(`package.json version is not x.y.z: ${installedVersion}`)
@@ -47,7 +55,8 @@ const deployedVersion = `${major}.${minor}.${patch + 1}`
 // subdirectory of its host, where its pages and its service worker live.
 const base = (() => {
   const configured = process.env.CVC_BASE_PATH?.trim()
-  if (!configured || configured === "/") return "/"
+  if (!configured) return appChannel === "test" ? "/CVC_helper_test/" : "/"
+  if (configured === "/") return "/"
   return `/${configured.replace(/^\/+|\/+$/g, "")}/`
 })()
 
@@ -88,7 +97,12 @@ function build(version) {
       ],
       {
         cwd: root,
-        env: { ...process.env, CVC_APP_VERSION: version },
+        env: {
+          ...process.env,
+          CVC_APP_CHANNEL: appChannel,
+          CVC_APP_VERSION: version,
+          CVC_BASE_PATH: base,
+        },
         stdio: ["ignore", "pipe", "pipe"],
       },
     )
@@ -667,7 +681,7 @@ try {
   const evidence = {
     milestone: "D3",
     recordedAt: new Date().toISOString(),
-    source: "scripts/check-update-journey.mjs (npm run check:update)",
+    source: `scripts/check-update-journey.mjs (npm run ${testJourney ? "check:update:test" : "check:update"})`,
     base,
     installedVersion,
     deployedVersion,
@@ -698,5 +712,14 @@ try {
   process.exitCode = 1
 } finally {
   await server?.close()
-  rmSync(workspace, { force: true, recursive: true })
+  const allowedTempRoot = resolve(tmpdir())
+  const cleanupTarget = resolve(workspace)
+  const cleanupRelative = relative(allowedTempRoot, cleanupTarget)
+  assert.ok(
+    cleanupRelative &&
+      cleanupRelative !== ".." &&
+      !cleanupRelative.startsWith(`..${sep}`),
+    `Refusing to remove a path outside the temporary directory: ${cleanupTarget}`,
+  )
+  rmSync(cleanupTarget, { force: true, recursive: true })
 }

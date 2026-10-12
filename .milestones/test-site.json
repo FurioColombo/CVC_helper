@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "milestone": "D3",
+  "repository": "FurioColombo/CVC_helper_test",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "basePath": "CVC_helper_test",
+  "firstVersion": "0.4.0",
+  "secondVersion": "0.4.1",
+  "sourceCommit": null,
+  "sourceDigest": null,
+  "activeVersion": null,
+  "phase": "UNPUBLISHED",
+  "ownerInstalled": null
+}

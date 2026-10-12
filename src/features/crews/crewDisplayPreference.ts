@@ -1,4 +1,6 @@
-const STORAGE_KEY = "cvc-helper.crew-display-columns"
+import { appChannelConfig } from "@/runtimeConfig"
+
+const STORAGE_KEY = appChannelConfig.crewDisplayColumnsKey
 
 /** Number of selected student names shown in each row of the crew display. */
 export function getCrewDisplayColumns(): 2 | 3 {

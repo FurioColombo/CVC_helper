@@ -4,4 +4,6 @@
 interface ImportMetaEnv {
   /** package.json's version, defined at build time (vite.config.ts). */
   readonly VITE_APP_VERSION: string
+  /** Storage and PWA namespace selected by CVC_APP_CHANNEL at build time. */
+  readonly VITE_APP_CHANNEL: "regular" | "test"
 }

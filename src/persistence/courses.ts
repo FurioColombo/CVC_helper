@@ -1,4 +1,5 @@
 import type { CourseDetails } from "@/domain/course"
+import { appChannelConfig } from "@/runtimeConfig"
 import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
@@ -73,7 +74,7 @@ export async function saveActiveCourse(
  */
 export const COURSE_DATA_TABLES = [...COURSE_TABLES].reverse()
 
-const COURSE_PREFERENCE_PREFIXES = ["cvc-helper.scan-name-order."]
+const COURSE_PREFERENCE_PREFIXES = [appChannelConfig.scanNameOrderPrefix]
 
 export async function eraseAllCourseData() {
   await db.init()
