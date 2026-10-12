@@ -6,17 +6,18 @@ Tell your agent the item name and what happened. It records your feedback and ke
 
 <a id="d3-phone-update"></a>
 
-## Choose the setup for D3’s Android update check — D3
+## Check Android updates from GitHub HTTPS — D3
 
 **State:** Setup needed · Required
 
 **What to do:**
 
-1. Choose USB/adb reverse on a PC, provide an HTTPS preview, or explicitly authorize two pre-release deployments to main.
-2. The phone check becomes READY after D3 fixes, reviews, CI and final verification pass and the test address is prepared.
-3. When the build is READY, follow docs/DEVICE_CHECKS.md under Updates and versions.
+1. GitHub HTTPS is the chosen setup. Agents prepare a separate, verified test site; you need no USB connection or local server.
+2. Wait for READY and the supplied test link. Install CVC Helper Test once on the Android home screen and use synthetic course data.
+3. Keep that test app installed. Agents publish the next patch of the same verified source at the same address while the first version is open.
+4. Follow docs/DEVICE_CHECKS.md under Updates and versions and report what happened.
 
-No phone-test build is ready. Setup can be chosen now; wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Choosing setup does not mark that work verified.
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
 
 **Expected:** The update offer appears within one minute without reinstalling, an unsaved edit survives the update, and the controls remain reachable.
 

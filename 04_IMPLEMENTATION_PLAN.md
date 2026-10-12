@@ -173,8 +173,9 @@ reviews, the owner's device report.
 
 ## Owner feedback
 
-D3's Android update check needs a setup choice; its actionable request is
-`D3-PHONE-UPDATE` in `docs/OWNER_TODO.md`. Its build is not READY until agent
+D3's Android update check uses GitHub-hosted HTTPS, prepared by agents as
+described in `docs/DEPLOY.md`. The owner has no setup choice left to make.
+Its request is `D3-PHONE-UPDATE` in `docs/OWNER_TODO.md`; it is not READY until agent
 reviews, final verification and CI pass. D3 then stays AWAITING_OWNER until the
 matching phone report passes, while explicitly permitted agent work continues.
 

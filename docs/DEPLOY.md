@@ -70,6 +70,27 @@ Two settings have to be right, and they are the repository owner's to set:
 Until both are true the workflow runs and the deploy step fails. Nothing else
 breaks.
 
+## Preparing the phone-test site
+
+Owner phone checks use GitHub-hosted HTTPS and the familiar installed-app update
+flow. Preparing the build and address is agent work; the owner needs no USB,
+local server or hosting choice. Notify the owner when the queue item is READY.
+
+A separate test site gives the owner one stable test address and a home-screen
+app named **CVC Helper Test**. It is not published yet. Preparation belongs to
+D3: publish only verified commits, record the exact build and address, and keep
+the active test build fixed until the owner is ready for N+1. Independent later
+work must not replace that build during the check. Use the patch-only N/N+1
+procedure in `docs/DEVICE_CHECKS.md` and synthetic course data.
+
+A test folder or another repository on the same `github.io` hostname shares
+browser storage with the regular app. The app currently opens `cvc-helper.db`.
+Before publishing a test copy there, give it separate database and preference
+names, service-worker scope and cache names, and prove that creating, updating
+or resetting a test course leaves the regular course intact. A distinct HTTPS
+hostname provides origin isolation instead. See
+[browser storage isolation](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#how_do_browsers_separate_data_from_different_websites).
+
 ## Building it yourself
 
 ```bash

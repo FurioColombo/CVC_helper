@@ -5,20 +5,21 @@
       "id": "D3-PHONE-UPDATE",
       "milestone": "D3",
       "kind": "DEVICE_CHECK",
-      "title": "Choose the setup for D3’s Android update check",
+      "title": "Check Android updates from GitHub HTTPS",
       "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
-        "Choose USB/adb reverse on a PC, provide an HTTPS preview, or explicitly authorize two pre-release deployments to main.",
-        "The phone check becomes READY after D3 fixes, reviews, CI and final verification pass and the test address is prepared.",
-        "When the build is READY, follow docs/DEVICE_CHECKS.md under Updates and versions."
+        "GitHub HTTPS is the chosen setup. Agents prepare a separate, verified test site; you need no USB connection or local server.",
+        "Wait for READY and the supplied test link. Install CVC Helper Test once on the Android home screen and use synthetic course data.",
+        "Keep that test app installed. Agents publish the next patch of the same verified source at the same address while the first version is open.",
+        "Follow docs/DEVICE_CHECKS.md under Updates and versions and report what happened."
       ],
       "expected": "The update offer appears within one minute without reinstalling, an unsaved edit survives the update, and the controls remain reachable.",
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/D3/physical-device-review.json",
-      "updatedAt": "2026-10-12T09:09:08.285Z"
+      "updatedAt": "2026-10-12T10:37:45.173Z"
     }
   ]
 }

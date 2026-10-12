@@ -407,7 +407,7 @@ function itemAction(item) {
       ? itemInstructions(item)
       : "Choose and record the setup needed for this check."
     if (item.kind === "DEVICE_CHECK" && (!item.testedCommit || !item.testUrl)) {
-      return `${setup}\n\nNo phone-test build is ready. Setup can be chosen now; wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Choosing setup does not mark that work verified.`
+      return `${setup}\n\nNo phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.`
     }
     return setup
   }

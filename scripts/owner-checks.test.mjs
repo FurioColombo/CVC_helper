@@ -307,7 +307,7 @@ describe("owner checklist and completion helpers", () => {
     const markdown = renderOwnerTodo(pending)
     expect(markdown).toContain("No phone-test build is ready")
     expect(markdown).toContain(
-      "Choosing setup does not mark that work verified",
+      "Preparing setup does not mark that work verified",
     )
     expect(markdown).toContain("Updates and versions")
     expect(markdown).toContain("Completion of D3 and the release gate wait")
