@@ -1,0 +1,52 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "D3",
+  "round": 5,
+  "commit": "edc114940081643aefc6d04ce4f2e2df8a950929",
+  "reviewedCrewBlob": "7a73340cddb519d505f62a95dfccdc3441a5a949",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolvedBlockers": [
+    {
+      "id": "FU-11",
+      "title": "The intermediate 10rem fallback made the rail cover copy controls at 320 px with 175% text",
+      "evidence": "Both engines reproduced seven no-bar top audit issues. On Chromium, the sticky rail occupied y388.25–518.8125 while Copia barche occupied y383.5–460.5; the copy-button centre reached Volontari. With the update note, both engines reported four rail/select overlap issues. Original results and screenshots remain in test-results/fux-r5-10rem/.",
+      "reproduction": "Open the hostile Tuesday crew session at 320x664, set root text to175%, and inspect the document top without a bar and with the actual update note.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04 and R12; D3 floating-control acceptance",
+      "disposition": "Fixed by the final13rem position fallback. Both engines now use normal flow at this size, both no-bar copy-button centres reach their own buttons, and all eight bounded top/end audits report zero issues."
+    }
+  ],
+  "priorFindingDispositions": {
+    "FU-5": "The failed390x844/150% production-offer case is covered by the passing final regular and test production journeys.",
+    "FU-6": "Not reopened; the typed-work guards are unchanged.",
+    "RH4-Q1": "Previously recorded label-breaking tradeoff remains in BACKLOG. Label and panel styles are unchanged by this threshold fix."
+  },
+  "evidenceInspected": [
+    ".evidence/D3/field-ux-review-round-4.json and review protocol; restricted follow-up preserves prior reports and round history.",
+    ".evidence/D3/ci-update-banner-regression.json: CI run38299540959 failed the390x844/150% offer clearance check by97.59px. Rem-based page padding left a330px column, below the previous14rem threshold of336px.",
+    "Final diff: position fallback changes from14rem to13rem; navigation wrapping remains14rem and body portals remain unchanged. Existing crew regressions now include175% text without relaxing audit thresholds.",
+    "Independent test-results/probe-field-r5.mjs, Node v24.21.0, Chromium and WebKit, real app and synthetic hostile roster. Intermediate10rem reproduced FU-11; final13rem rerun covered175% text without a bar and with the update note, at document top and end.",
+    "Final test-results/fux-r5-13rem/results.json: all eight audits have zero issues. No-bar top rail starts near y674.44 in normal flow; Copia equipaggi and Copia barche centres reach their own controls. At document end, rail occupies approximately316.44–447 without the note and84.44–215 with it.",
+    "Original10rem failure, corrected13rem no-bar top, and corrected WebKit update-note end screenshots inspected directly. The rail no longer covers header/session/copy controls; enlarged-text access uses document scrolling.",
+    "Root-run final production proof, inspected in .evidence/D3/ci-update-banner-regression.json: regular0.3.0→0.3.1 and isolated test0.4.0→0.4.1 both pass on Chromium/WebKit across all five existing stress profiles. Offers appeared after0.19/0.31s and typed notes survived.",
+    "Root-run focused hostile-crew proof: three tests passed on pixel-7-chrome, zero retries, approximately60s, including the175% regressions.",
+    "scripts/check-update-journey-diagnostic.mjs was untracked, had no tracked history or references in the inspected command/workflow/manifest/test/documentation surfaces, and was subsequently absent on disk. It contributes no required verification surface. This reviewer did not move or delete it."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted inspection of the production150% fallback failure and final five-profile proof.",
+      "Changed-threshold boundary at320px/175%: no-bar and update-note header overlap, computed positioning and copy-button hit targets."
+    ],
+    "wildcard": "No entropy redraw or whole-milestone hunt. FU-11 was preserved and rechecked after its correction."
+  },
+  "notTested": [
+    "Physical phones, real system font settings, keyboards, glare or wet-hand use. No physical-device PASS is recorded.",
+    "Exact-checkpoint full CI and Linux migration timing; these remain separate acceptance gates.",
+    "Live HTTPS publication and owner installation/update feedback.",
+    "Unchanged panels, guards and unrelated domain flows outside this restricted follow-up."
+  ]
+}
