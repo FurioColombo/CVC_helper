@@ -62,6 +62,13 @@ type Profile = {
   fontSize: string
 }
 
+const INTERMEDIATE_TEXT_PROFILE: Profile = {
+  name: "320-175pct",
+  width: 320,
+  height: 664,
+  fontSize: "175%",
+}
+
 async function applyProfile(page: Page, profile: Profile) {
   await page.setViewportSize({ width: profile.width, height: profile.height })
   await page.evaluate((fontSize) => {
@@ -304,7 +311,7 @@ test("lists the hostile roster in Allievi at four sizes without overlap, clippin
   await saveScreen(page, testInfo, "allievi-320-200pct-full", true)
 })
 
-test("composes the hostile Tuesday on the crew page at four sizes without overlap or sideways scroll", async ({
+test("composes the hostile Tuesday on the crew page at five sizes without overlap or sideways scroll", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -349,7 +356,7 @@ test("composes the hostile Tuesday on the crew page at four sizes without overla
   ).toHaveCount(1)
 
   const clipped: Record<string, unknown> = {}
-  for (const profile of PROFILES) {
+  for (const profile of [...PROFILES, INTERMEDIATE_TEXT_PROFILE]) {
     await applyProfile(page, profile)
     const composition = page.getByRole("region", {
       name: "Composizione equipaggi",
@@ -587,10 +594,15 @@ test("keeps selected-person panels fixed above the update note while scrolling",
   })
   const mainNavigation = nav(page)
 
-  for (const profile of [PROFILES[0], PROFILES[3]]) {
+  for (const profile of [PROFILES[0], INTERMEDIATE_TEXT_PROFILE, PROFILES[3]]) {
     await applyProfile(page, profile)
     await page.evaluate(() => window.scrollTo(0, 0))
     await composition.evaluate((element) => element.scrollTo(0, 0))
+
+    if (profile === INTERMEDIATE_TEXT_PROFILE) {
+      const audit = await auditLayout(page.locator("main"), CREW_PAGE_AUDIT)
+      expect(audit.issues, "175% crew controls with update note").toEqual([])
+    }
 
     for (const regionName of ["Allievi disponibili", "Volontari disponibili"]) {
       const person = page

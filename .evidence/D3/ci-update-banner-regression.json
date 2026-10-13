@@ -1,0 +1,92 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "aff3051bd060f445fb840740c7dfa83e5f9aca26",
+  "ciRun": 38299540959,
+  "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38299540959",
+  "status": "FAILED_CHECKPOINT_NOT_PUBLISHED",
+  "failingScript": "check:update",
+  "engine": "chromium",
+  "profile": {
+    "width": 390,
+    "height": 844,
+    "textPercent": 150,
+    "scrollPosition": "top"
+  },
+  "observed": {
+    "controlBottom": 690,
+    "bannerTop": 592.41,
+    "clearancePx": -97.59
+  },
+  "localReproduction": "Same production command reproduces the exact CI geometry.",
+  "disposition": "Refined fallback to 13rem, preserving the prior 175% flow while keeping 390px/150% sticky. Added 175% to existing crew layout/panel regressions. Both production update journeys and three focused crew tests pass; independent field recheck passes in both engines. Full recorded verification and exact CI remain required. No assertions or timing bounds relaxed.",
+  "migrationTiming": "This run stopped before the full browser suite and did not execute the WebKit reopen timing test.",
+  "invalidatedLocalRecorder": {
+    "commit": "0e1b7537cc79b0430b717872049a24d63574f844",
+    "status": "STOPPED_AFTER_NEW_CI_REGRESSION",
+    "accepted": false,
+    "reason": "Owned recorder and descendants stopped before source changes; code checks and partial focused prefix do not constitute final verification."
+  },
+  "publication": "Withheld. Owner queue remains NEEDS_SETUP.",
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "cause": "At 150% root text, rem-based page padding leaves a 330px column; 14rem is 336px, so the normal-flow fallback fires while the rail still needs to stay above the update offer.",
+  "finalCandidate": {
+    "fallback": "13rem",
+    "regularProductionJourney": {
+      "versions": ["0.3.0", "0.3.1"],
+      "engines": ["chromium", "webkit"],
+      "offerSeconds": [0.19, 0.31],
+      "editPreserved": true,
+      "status": "PASS"
+    },
+    "testProductionJourney": {
+      "versions": ["0.4.0", "0.4.1"],
+      "engines": ["chromium", "webkit"],
+      "offerSeconds": [0.19, 0.31],
+      "editPreserved": true,
+      "status": "PASS"
+    },
+    "focusedCrew": {
+      "project": "pixel-7-chrome",
+      "passed": 3,
+      "retries": 0,
+      "elapsedSeconds": 60,
+      "includes175Percent": true
+    },
+    "fieldRecheck": "Both engines, 175% text, no-bar and updated-note top/end: all eight bounded audits report zero issues; FU-11 no longer reproduces.",
+    "physicalDeviceAcceptance": "PENDING_OWNER"
+  },
+  "intermediateCandidate": {
+    "fallback": "10rem",
+    "checkpointed": false,
+    "regularProductionJourney": {
+      "engines": [
+        "chromium",
+        "webkit"
+      ],
+      "stressProfiles": 5,
+      "offerSeconds": [
+        0.19,
+        0.84
+      ],
+      "editPreserved": true,
+      "status": "PASS"
+    },
+    "finding": {
+      "id": "FU-11",
+      "profile": {
+        "width": 320,
+        "height": 664,
+        "textPercent": 175
+      },
+      "engines": [
+        "chromium",
+        "webkit"
+      ],
+      "noBarTopAuditIssues": 7,
+      "updatedNoteTopAuditIssues": 4,
+      "observed": "Sticky rail covers Copia barche and Sessione; the copy-button centre hits Volontari.",
+      "endAudits": "Clean"
+    },
+    "accepted": false
+  }
+}

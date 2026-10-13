@@ -3623,11 +3623,13 @@ export function CrewManagement({
                   and "Volontari"), the bar wraps: the two buttons share the first
                   row, if they fit, and the count takes the next. The query is on the
                   bar's width in rem, so it only triggers with enlarged text.
+                  The position fallback is narrower than the wrapping query:
+                  150% text still needs the rail pinned above the update bar.
                   When enlarged text makes the fixed header taller than the
                   viewport, the rail returns to the scroll flow instead of
                   sticking over that header; scroll padding keeps it clear of
                   the navigation. */}
-              <div className="sticky bottom-[calc(var(--bottom-nav-height,0px)+var(--update-banner-height,0px)+0.5rem)] z-20 mt-2 shrink-0 @max-[14rem]:static">
+              <div className="sticky bottom-[calc(var(--bottom-nav-height,0px)+var(--update-banner-height,0px)+0.5rem)] z-20 mt-2 shrink-0 @max-[13rem]:static">
                 <nav
                   aria-label="Accesso rapido equipaggi"
                   className="grid grid-cols-3 items-center gap-1 rounded-2xl border bg-card/95 p-1.5 shadow-[0_6px_18px_rgb(6_59_82/0.12)] backdrop-blur @max-[14rem]:flex @max-[14rem]:flex-wrap"
