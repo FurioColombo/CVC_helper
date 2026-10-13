@@ -1,0 +1,36 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "D3",
+  "round": 6,
+  "commit": "0a485f68b6e5be50bbe93076ec4ed9afe987d845",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "Restricted diff in scripts/check-update-journey.mjs: settle now waits until measured navigation and update-banner heights match their published CSS variables, before scrolling. Stress checks use instant scrolling and verify the actual document top/end position before the unchanged clearance and hit-target assertions.",
+    ".evidence/D3/ci-layout-readiness.json preserves failed CI run 38440302178 on edc114940081643aefc6d04ce4f2e2df8a950929: WebKit, 320×664, 200% text, selected person; rail bottom 277 versus banner top 177.2.",
+    "Recorded deterministic diagnostic with native ResizeObserver callbacks delayed 250ms reproduced the same rail bottom 277. Scroll position was 643 while the final document required 841; late shell-padding growth was 198px. An ordinary subsequent end scroll produced rail bottom 79 and clearance 98.2px. This supports HARNESS_LAYOUT_READINESS_RACE rather than an application layout regression.",
+    "Independent static inspection of the readiness patch found no relaxed geometry assertions, offer limits or retry limits, and no application-code changes.",
+    "Root-run regular production journey, 0.3.0→0.3.1: Chromium and WebKit PASS; update offers 0.19s and 0.31s; typed edit preserved.",
+    "Root-run isolated test production journey, 0.4.0→0.4.1: Chromium and WebKit PASS; update offers 0.19s and 0.83s; typed edit preserved.",
+    "Root-run strict regular journey with native ResizeObserver delayed 250ms: Chromium and WebKit PASS; update offers 0.19s and 0.31s; all original geometry assertions retained and typed edit preserved.",
+    "Exact reviewed HEAD confirmed. CrewManagement.tsx remains blob 7a73340cddb519d505f62a95dfccdc3441a5a949; prior FU-5, FU-6 and FU-11 dispositions remain supported by preserved earlier reviews. FU-11's original 10rem failure and successful 13rem recheck remain intact. Existing nonblocking RH4-Q1 remains recorded in BACKLOG.",
+    "Lint and formatting PASS recorded for this checkpoint."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted follow-up: distinguish stale footer measurements and incomplete end scrolling from a field-control clearance regression.",
+      "Check that readiness synchronization preserves strict geometry assertions and previous application behavior."
+    ],
+    "wildcard": "Inspect the deterministic 250ms native ResizeObserver-delay reproduction and its passing replay after the harness-only fix; no fresh entropy draw or full-milestone hunt."
+  },
+  "notTested": [
+    "No independent browser or test run in round 6; the root owned the browser slot. This review inspected the diff and recorded deterministic results.",
+    "Exact full CI, recorded milestone verification and Linux migration timing remain pending.",
+    "Live HTTPS publication and physical-phone owner acceptance remain pending; no physical-device PASS is claimed.",
+    "Unchanged UI and domain behavior outside this readiness fix were not reopened."
+  ]
+}

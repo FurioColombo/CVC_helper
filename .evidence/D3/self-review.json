@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review (orchestrator)",
   "milestone": "D3",
-  "commit": "edc114940081643aefc6d04ce4f2e2df8a950929",
+  "commit": "0a485f68b6e5be50bbe93076ec4ed9afe987d845",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -21,11 +21,12 @@
     "test-results/test-isolation.json: Chromium and WebKit real UI CRUD/erase, real OCR keys, unchanged regular course/preferences/model bytes, service-worker offline reopening with network negative controls.",
     "Selected .evidence/D3 screenshots visually inspected: read-only edit, updated-note crew and WebKit update offer.",
     "Publisher policy tests and exact-source archive/green-CI/owner-installation guards; only static dist is published.",
-    "Mandatory recording must be refreshed on the edc1149 source after these reviews; previous verification describes the prior checkpoint.",
+    "Mandatory recording must be refreshed on the 0a485f6 source after these reviews; previous verification describes the prior checkpoint.",
     "Previous recorder PASS on 9f9a303 is retained by Git history; later full CI failed and is classified in ci-regression-fix.json. Current-source verification follows these reviews.",
     "focused-flake-classification.json: both retrying cases independently passed with retries=0. Original recorded flakyTests are preserved and both titles are filed in docs/working/BACKLOG.md for T1.",
     "Restricted field and regression round 4 on aff3051: both engines passed rail/panel anchors, label containment, focus/hit checks and actual destination-choice persistence. That checkpoint subsequently failed a production update-profile check; its recorded review limitations remain intact.",
-    "Restricted field and regression round 5 on edc1149: final 13rem fallback passes the independently checked 175% boundary and both production update journeys; three focused crew tests pass without retries. The rejected 10rem candidate and FU-11 remain recorded. Selected final WebKit copy and rail screenshots were visually inspected and preserved. Full exact-source CI, including Linux reopen timing, remains required."
+    "Restricted field and regression round 5 on edc1149: final 13rem fallback passes the independently checked 175% boundary and both production update journeys; three focused crew tests pass without retries. The rejected 10rem candidate and FU-11 remain recorded. Selected final WebKit copy and rail screenshots were visually inspected and preserved.",
+    "Restricted round 6 reviews inspect only the footer-readiness harness change. The native-observer delay reproduces the CI position and the strict delayed-observer journey passes after synchronization. Application layout remains unchanged. Full exact-source CI, including Linux reopen timing, remains required."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -117,6 +118,10 @@
     {
       "id": "FU-11 and CI 38299540959",
       "disposition": "Fixed on edc1149: 13rem positioning preserves 175% flow while keeping the 150% production rail sticky above the offer. Unchanged 14rem label wrapping and body portals retain their prior proof. All eight independent two-engine boundary audits and both production journeys pass. Canonical R5 reviews have zero blockers; prior failed candidate remains in ci-update-banner-regression.json."
+    },
+    {
+      "id": "CI 38440302178 layout readiness",
+      "disposition": "Fixed on 0a485f6: controlled frames were not proof of native footer publication. A delayed-observer probe reproduced the rail position and page 198px short of its final end. The harness now waits real/published heights and the intended scroll position before the unchanged overlap and tap checks. Both ordinary channel journeys and the strict delayed-observer two-engine journey pass; no application changes or relaxed limits."
     },
     {
       "id": "CI 38289011665 WebKit reopen latency",
