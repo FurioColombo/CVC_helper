@@ -17,6 +17,20 @@ import { evidenceOutputPath } from "./evidence"
 
 const isAppRoot = (target: URL) => target.pathname === "/"
 
+type WorkerStageEvent = {
+  workerId: string
+  stage: string
+  workerElapsedMs?: number
+  pageReceivedAtMs: number
+  durationMs?: number
+  waitMs?: number
+  category?: string
+  messageCount?: number
+  transferSize?: number
+}
+
+type TableDigest = { table: string; sha256: string }
+
 const fixtureRows = (version: string) => {
   const fixture = JSON.parse(
     readFileSync(
@@ -46,6 +60,17 @@ async function openBlankPage(page: Page) {
     }),
   )
   await page.goto("/")
+  await page.unroute(isAppRoot)
+}
+
+async function reloadBlankPage(page: Page) {
+  await page.route(isAppRoot, (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<html><body></body></html>",
+    }),
+  )
+  await page.reload()
   await page.unroute(isAppRoot)
 }
 
@@ -317,7 +342,8 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
 }) => {
   capturePartialWorkerDiagnostics(page)
   await openBlankPage(page)
-  const result = await harness<{
+  const { filename, ...result } = await harness<{
+    filename: string
     durationMs: number
     createDatabaseMs: number
     initMs: number
@@ -341,46 +367,76 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
     expectedInjectedEvaluationRows: number
     injectedEvaluationRows: number
     reopenInjectedEvaluationRows: number
-    workerDiagnostics: Array<{
-      workerId: string
-      stage: string
-      workerElapsedMs?: number
-      pageReceivedAtMs: number
-      durationMs?: number
-      waitMs?: number
-      category?: string
-      messageCount?: number
-    }>
-    reopenWorkerDiagnostics: Array<{
-      workerId: string
-      stage: string
-      workerElapsedMs?: number
-      pageReceivedAtMs: number
-      durationMs?: number
-      waitMs?: number
-      category?: string
-    }>
+    workerDiagnostics: WorkerStageEvent[]
+    reopenWorkerDiagnostics: WorkerStageEvent[]
     rows: number
     reopenRows: number
     rowIssues: unknown[]
     reopenRowIssues: unknown[]
     reopenedIdentical: boolean
+    upgradeTableSha256: TableDigest[]
+    upgradeOrderedTablesSha256: string
+    reopenTableSha256: TableDigest[]
+    reopenOrderedTablesSha256: string
   }>(page, "runLargeUpgrade")
   record("large-upgrade", result)
+  await reloadBlankPage(page)
+  const freshDocument = await harness<{
+    durationMs: number
+    createDatabaseMs: number
+    initMs: number
+    adapterInitMs: number
+    sdkReadyAfterAdapterMs: number
+    prepareAfterInitMs: number
+    readTablesMs: number
+    closeMs: number
+    workerDiagnostics: WorkerStageEvent[]
+    rows: number
+    injectedStudentRows: number
+    injectedEvaluationRows: number
+    rowIssues: unknown[]
+    tableSha256: TableDigest[]
+    orderedTablesSha256: string
+  }>(page, "reopenLargeUpgrade", filename)
+  record("large-upgrade-fresh-document", freshDocument)
+  record("large-upgrade-hash-comparison", {
+    tables: [
+      {
+        phase: "upgrade",
+        orderedTablesSha256: result.upgradeOrderedTablesSha256,
+        tableSha256: result.upgradeTableSha256,
+      },
+      {
+        phase: "same-page-reopen",
+        orderedTablesSha256: result.reopenOrderedTablesSha256,
+        tableSha256: result.reopenTableSha256,
+      },
+      {
+        phase: "fresh-document-reopen",
+        orderedTablesSha256: freshDocument.orderedTablesSha256,
+        tableSha256: freshDocument.tableSha256,
+      },
+    ],
+  })
   test.info().annotations.push({
     type: "migration",
-    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms; worker timing events ${JSON.stringify(result.workerDiagnostics)} / ${JSON.stringify(result.reopenWorkerDiagnostics)}`,
+    description: `${result.rows}/${result.reopenRows}/${freshDocument.rows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); same-page reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); fresh-document reopen ${freshDocument.durationMs} ms (adapter init ${freshDocument.adapterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows}/${freshDocument.injectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows}/${freshDocument.injectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; ordered hashes ${result.upgradeOrderedTablesSha256}/${result.reopenOrderedTablesSha256}/${freshDocument.orderedTablesSha256}; read/close outside bounds ${result.readTablesMs}/${result.closeMs}, ${result.reopenReadTablesMs}/${result.reopenCloseMs}, ${freshDocument.readTablesMs}/${freshDocument.closeMs} ms; worker timing events ${JSON.stringify(result.workerDiagnostics)} / ${JSON.stringify(result.reopenWorkerDiagnostics)} / ${JSON.stringify(freshDocument.workerDiagnostics)}`,
   })
   expect(result.rowIssues).toEqual([])
   expect(result.reopenRows).toBe(result.rows)
   expect(result.reopenRowIssues).toEqual([])
+  expect(freshDocument.rowIssues).toEqual([])
   expect(result.reopenedIdentical).toBe(true)
   expect(result.expectedRows).toBe(609)
   expect(result.rows).toBe(result.expectedRows)
   expect(result.reopenRows).toBe(result.expectedRows)
+  expect(freshDocument.rows).toBe(result.expectedRows)
   expect(result.expectedInjectedStudentRows).toBe(40)
   expect(result.injectedStudentRows).toBe(result.expectedInjectedStudentRows)
   expect(result.reopenInjectedStudentRows).toBe(
+    result.expectedInjectedStudentRows,
+  )
+  expect(freshDocument.injectedStudentRows).toBe(
     result.expectedInjectedStudentRows,
   )
   expect(result.expectedInjectedEvaluationRows).toBe(520)
@@ -390,8 +446,113 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
   expect(result.reopenInjectedEvaluationRows).toBe(
     result.expectedInjectedEvaluationRows,
   )
+  expect(freshDocument.injectedEvaluationRows).toBe(
+    result.expectedInjectedEvaluationRows,
+  )
+  expect(result.upgradeTableSha256).toEqual(result.reopenTableSha256)
+  expect(result.upgradeTableSha256).toEqual(freshDocument.tableSha256)
+  expect(result.upgradeOrderedTablesSha256).toBe(
+    result.reopenOrderedTablesSha256,
+  )
+  expect(result.upgradeOrderedTablesSha256).toBe(
+    freshDocument.orderedTablesSha256,
+  )
   // The same five-second bound covers construction, SDK init and preparation;
   // stage timings above help diagnose a slow open without weakening it.
   expect(result.durationMs).toBeLessThan(5000)
   expect(result.reopenMs).toBeLessThan(5000)
+  expect(freshDocument.durationMs).toBeLessThan(5000)
+})
+
+test("reopens a 40-student upgrade directly from a fresh document within five seconds", async ({
+  page,
+}) => {
+  capturePartialWorkerDiagnostics(page)
+  await openBlankPage(page)
+  const { filename, ...upgrade } = await harness<{
+    filename: string
+    durationMs: number
+    createDatabaseMs: number
+    initMs: number
+    adapterInitMs: number
+    sdkReadyAfterAdapterMs: number
+    prepareAfterInitMs: number
+    readTablesMs: number
+    closeMs: number
+    workerDiagnostics: WorkerStageEvent[]
+    expectedRows: number
+    expectedInjectedStudentRows: number
+    expectedInjectedEvaluationRows: number
+    rows: number
+    injectedStudentRows: number
+    injectedEvaluationRows: number
+    rowIssues: unknown[]
+    tableSha256: TableDigest[]
+    orderedTablesSha256: string
+  }>(page, "runLargeUpgradeFreshDirect")
+  record("large-upgrade-fresh-direct-upgrade", upgrade)
+
+  // This variant intentionally has no same-page reopen between the upgrade
+  // and the actual document reload.
+  await reloadBlankPage(page)
+  const freshDocument = await harness<{
+    durationMs: number
+    createDatabaseMs: number
+    initMs: number
+    adapterInitMs: number
+    sdkReadyAfterAdapterMs: number
+    prepareAfterInitMs: number
+    readTablesMs: number
+    closeMs: number
+    workerDiagnostics: WorkerStageEvent[]
+    rows: number
+    injectedStudentRows: number
+    injectedEvaluationRows: number
+    rowIssues: unknown[]
+    tableSha256: TableDigest[]
+    orderedTablesSha256: string
+  }>(page, "reopenLargeUpgrade", filename)
+  record("large-upgrade-fresh-direct-reopen", freshDocument)
+  record("large-upgrade-fresh-direct-hash-comparison", {
+    upgrade: {
+      rows: upgrade.rows,
+      injectedStudentRows: upgrade.injectedStudentRows,
+      injectedEvaluationRows: upgrade.injectedEvaluationRows,
+      orderedTablesSha256: upgrade.orderedTablesSha256,
+      tableSha256: upgrade.tableSha256,
+    },
+    freshDocument: {
+      rows: freshDocument.rows,
+      injectedStudentRows: freshDocument.injectedStudentRows,
+      injectedEvaluationRows: freshDocument.injectedEvaluationRows,
+      orderedTablesSha256: freshDocument.orderedTablesSha256,
+      tableSha256: freshDocument.tableSha256,
+    },
+  })
+  test.info().annotations.push({
+    type: "migration-fresh-document-direct",
+    description: `Upgrade ${upgrade.durationMs} ms (adapter ${upgrade.adapterInitMs}); direct fresh-document reopen ${freshDocument.durationMs} ms (adapter ${freshDocument.adapterInitMs}); rows ${upgrade.rows}/${freshDocument.rows} of ${upgrade.expectedRows}; students ${upgrade.injectedStudentRows}/${freshDocument.injectedStudentRows} of ${upgrade.expectedInjectedStudentRows}; evaluations ${upgrade.injectedEvaluationRows}/${freshDocument.injectedEvaluationRows} of ${upgrade.expectedInjectedEvaluationRows}; ordered hashes ${upgrade.orderedTablesSha256}/${freshDocument.orderedTablesSha256}; worker timing events ${JSON.stringify(upgrade.workerDiagnostics)} / ${JSON.stringify(freshDocument.workerDiagnostics)}`,
+  })
+
+  expect(upgrade.rowIssues).toEqual([])
+  expect(freshDocument.rowIssues).toEqual([])
+  expect(upgrade.expectedRows).toBe(609)
+  expect(upgrade.rows).toBe(upgrade.expectedRows)
+  expect(freshDocument.rows).toBe(upgrade.expectedRows)
+  expect(upgrade.expectedInjectedStudentRows).toBe(40)
+  expect(upgrade.injectedStudentRows).toBe(upgrade.expectedInjectedStudentRows)
+  expect(freshDocument.injectedStudentRows).toBe(
+    upgrade.expectedInjectedStudentRows,
+  )
+  expect(upgrade.expectedInjectedEvaluationRows).toBe(520)
+  expect(upgrade.injectedEvaluationRows).toBe(
+    upgrade.expectedInjectedEvaluationRows,
+  )
+  expect(freshDocument.injectedEvaluationRows).toBe(
+    upgrade.expectedInjectedEvaluationRows,
+  )
+  expect(upgrade.tableSha256).toEqual(freshDocument.tableSha256)
+  expect(upgrade.orderedTablesSha256).toBe(freshDocument.orderedTablesSha256)
+  expect(upgrade.durationMs).toBeLessThan(5000)
+  expect(freshDocument.durationMs).toBeLessThan(5000)
 })

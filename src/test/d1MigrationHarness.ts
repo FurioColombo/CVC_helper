@@ -96,6 +96,7 @@ interface WorkerInitDiagnostic {
   waitMs?: number
   category?: string
   messageCount?: number
+  transferSize?: number
 }
 
 /**
@@ -192,6 +193,9 @@ function captureWorkerInitDiagnostics() {
       ...(typeof data.messageCount === "number"
         ? { messageCount: data.messageCount }
         : {}),
+      ...(typeof data.transferSize === "number"
+        ? { transferSize: data.transferSize }
+        : {}),
     })
   })
 
@@ -222,6 +226,63 @@ function captureWorkerInitDiagnostics() {
           if (value.startsWith("db-lock-")) return "sqlite-database";
           if (value.startsWith("lock##")) return "sqlite-vfs";
           return "other";
+        };
+
+        try {
+          const originalFetch = globalThis.fetch.bind(globalThis);
+          Object.defineProperty(globalThis, "fetch", {
+            configurable: true,
+            writable: true,
+            value: (...args) => {
+              const started = now();
+              return originalFetch(...args).then((response) => {
+                const contentType = response.headers.get("content-type") || "";
+                let sameOriginWasm = false;
+                try {
+                  sameOriginWasm =
+                    new URL(response.url).origin === globalThis.location.origin &&
+                    contentType.toLowerCase().includes("application/wasm");
+                } catch {
+                  // Opaque or invalid response URLs carry no timing category.
+                }
+                if (sameOriginWasm) {
+                  send("wasm-fetch-response", {
+                    durationMs: elapsed(started),
+                    category: "same-origin-wasm"
+                  });
+                }
+                return response;
+              });
+            }
+          });
+        } catch {
+          send("fetch-instrumentation-unavailable");
+        }
+
+        const reportedWasmResources = new Set();
+        const reportWasmResourceTimings = () => {
+          try {
+            const entries = globalThis.performance.getEntriesByType("resource");
+            for (const entry of entries) {
+              const resource = entry;
+              if (!(resource.responseEnd > 0)) continue;
+              const url = new URL(resource.name, globalThis.location.href);
+              if (
+                url.origin !== globalThis.location.origin ||
+                !url.pathname.toLowerCase().endsWith(".wasm") ||
+                reportedWasmResources.has(resource.name)
+              ) continue;
+              reportedWasmResources.add(resource.name);
+              send("wasm-fetch-body-ready", {
+                durationMs: Math.round((resource.responseEnd - resource.fetchStart) * 100) / 100,
+                waitMs: Math.round((resource.responseEnd - resource.responseStart) * 100) / 100,
+                transferSize: Number.isFinite(resource.transferSize) ? resource.transferSize : undefined,
+                category: "same-origin-wasm"
+              });
+            }
+          } catch {
+            send("wasm-resource-timing-unavailable");
+          }
         };
 
         try {
@@ -304,6 +365,7 @@ function captureWorkerInitDiagnostics() {
                 return Promise.resolve(result).then(
                   (value) => {
                     send("wasm-complete", { category: method, durationMs: elapsed(started) });
+                    if (method === "instantiateStreaming") reportWasmResourceTimings();
                     return value;
                   },
                   (error) => {
@@ -700,7 +762,77 @@ export async function runLegacyRepairs(): Promise<LegacyRepairResult> {
  * through `prepareDatabase` and timed, then opened again and timed, since the
  * repairs' probe runs on every open.
  */
-export async function runLargeUpgrade() {
+async function sha256Json(value: unknown) {
+  const bytes = new TextEncoder().encode(JSON.stringify(value) ?? "")
+  const digest = await crypto.subtle.digest("SHA-256", bytes)
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("")
+}
+
+async function digestTables(tables: StoredTables) {
+  const tableSha256 = await Promise.all(
+    COURSE_TABLES.map(async (table) => ({
+      table,
+      sha256: await sha256Json(tables[table] ?? []),
+    })),
+  )
+  const orderedTablesSha256 = await sha256Json(
+    COURSE_TABLES.map((table) => [table, tables[table] ?? []]),
+  )
+  return { tableSha256, orderedTablesSha256 }
+}
+
+async function timedLargeOpen(filename: string) {
+  // Start before construction so the five-second bound includes the full
+  // cold-open path. Keep the result reads and close outside that bound.
+  const started = performance.now()
+  const workerDiagnostics = captureWorkerInitDiagnostics()
+  const constructed = performance.now()
+  let database: PowerSyncDatabase
+  try {
+    database = createDatabase(filename)
+  } finally {
+    workerDiagnostics.restore()
+  }
+  const created = performance.now()
+  const adapterInitStarted = performance.now()
+  // PowerSync starts this adapter open from its constructor. Awaiting the
+  // same promise used by its normal init path lets the report separate the
+  // WA-SQLite worker/VFS open from the remaining SDK readiness work.
+  const adapter = database.database as unknown as { init: () => Promise<void> }
+  await adapter.init()
+  const adapterReady = performance.now()
+  await database.init()
+  const initialized = performance.now()
+  await prepareDatabase(database)
+  const prepared = performance.now()
+  const durationMs = Math.round(prepared - started)
+  const createDatabaseMs = Math.round(created - constructed)
+  const initMs = Math.round(initialized - created)
+  const prepareAfterInitMs = Math.round(prepared - initialized)
+  const readStarted = performance.now()
+  const tables = await readTables(database)
+  const readTablesMs = Math.round(performance.now() - readStarted)
+  const closeStarted = performance.now()
+  await database.close()
+  const closeMs = Math.round(performance.now() - closeStarted)
+  await workerDiagnostics.finish()
+  return {
+    durationMs,
+    createDatabaseMs,
+    initMs,
+    adapterInitMs: Math.round(adapterReady - adapterInitStarted),
+    sdkReadyAfterAdapterMs: Math.round(initialized - adapterReady),
+    prepareAfterInitMs,
+    readTablesMs,
+    closeMs,
+    workerDiagnostics: workerDiagnostics.events,
+    tables,
+  }
+}
+
+async function seedLargeUpgrade() {
   const filename = `d1-large-${crypto.randomUUID()}.db`
   const base = FIXTURES["0.3.0"]
   const courseId = String(base.courses![0]!.id)
@@ -757,59 +889,21 @@ export async function runLargeUpgrade() {
     evaluations: [...base.evaluations!, ...evaluations],
   })
 
-  const timedOpen = async () => {
-    // Start before construction so the five-second bound includes the full
-    // cold-open path. Keep the result reads and close outside that bound.
-    const started = performance.now()
-    const workerDiagnostics = captureWorkerInitDiagnostics()
-    const constructed = performance.now()
-    let database: PowerSyncDatabase
-    try {
-      database = createDatabase(filename)
-    } finally {
-      workerDiagnostics.restore()
-    }
-    const created = performance.now()
-    const adapterInitStarted = performance.now()
-    // PowerSync starts this adapter open from its constructor. Awaiting the
-    // same promise used by its normal init path lets the report separate the
-    // WA-SQLite worker/VFS open from the remaining SDK readiness work.
-    const adapter = database.database as unknown as {
-      init: () => Promise<void>
-    }
-    await adapter.init()
-    const adapterReady = performance.now()
-    await database.init()
-    const initialized = performance.now()
-    await prepareDatabase(database)
-    const prepared = performance.now()
-    const durationMs = Math.round(prepared - started)
-    const createDatabaseMs = Math.round(created - constructed)
-    const initMs = Math.round(initialized - created)
-    const prepareAfterInitMs = Math.round(prepared - initialized)
-    const readStarted = performance.now()
-    const tables = await readTables(database)
-    const readTablesMs = Math.round(performance.now() - readStarted)
-    const closeStarted = performance.now()
-    await database.close()
-    const closeMs = Math.round(performance.now() - closeStarted)
-    await workerDiagnostics.finish()
-    return {
-      durationMs,
-      createDatabaseMs,
-      initMs,
-      adapterInitMs: Math.round(adapterReady - adapterInitStarted),
-      sdkReadyAfterAdapterMs: Math.round(initialized - adapterReady),
-      prepareAfterInitMs,
-      readTablesMs,
-      closeMs,
-      workerDiagnostics: workerDiagnostics.events,
-      tables,
-    }
+  return {
+    filename,
+    expectedRows,
+    expectedInjectedStudentRows: students.length,
+    expectedInjectedEvaluationRows: evaluations.length,
   }
-  const upgrade = await timedOpen()
+}
+
+export async function runLargeUpgrade() {
+  const seed = await seedLargeUpgrade()
+  const { filename, expectedRows } = seed
+
+  const upgrade = await timedLargeOpen(filename)
   // Every later open probes for rows to repair; sound data costs one read.
-  const reopen = await timedOpen()
+  const reopen = await timedLargeOpen(filename)
   const rows = Object.values(upgrade.tables).reduce(
     (sum, list) => sum + list.length,
     0,
@@ -830,7 +924,12 @@ export async function runLargeUpgrade() {
   const reopenInjectedEvaluationRows = reopen.tables.evaluations!.filter(
     (row) => String(row.id).startsWith("evaluation-load-"),
   ).length
+  const upgradeDigests = await digestTables(upgrade.tables)
+  const reopenDigests = await digestTables(reopen.tables)
   return {
+    // Returned only so the caller can reopen this same synthetic file after a
+    // page reload; the e2e spec omits it from evidence and annotations.
+    filename,
     durationMs: upgrade.durationMs,
     createDatabaseMs: upgrade.createDatabaseMs,
     initMs: upgrade.initMs,
@@ -850,10 +949,10 @@ export async function runLargeUpgrade() {
     workerDiagnostics: upgrade.workerDiagnostics,
     reopenWorkerDiagnostics: reopen.workerDiagnostics,
     expectedRows,
-    expectedInjectedStudentRows: students.length,
+    expectedInjectedStudentRows: seed.expectedInjectedStudentRows,
     injectedStudentRows,
     reopenInjectedStudentRows,
-    expectedInjectedEvaluationRows: evaluations.length,
+    expectedInjectedEvaluationRows: seed.expectedInjectedEvaluationRows,
     injectedEvaluationRows,
     reopenInjectedEvaluationRows,
     rows,
@@ -862,5 +961,81 @@ export async function runLargeUpgrade() {
     reopenRowIssues: validateStoredRows(reopen.tables),
     reopenedIdentical:
       JSON.stringify(upgrade.tables) === JSON.stringify(reopen.tables),
+    upgradeTableSha256: upgradeDigests.tableSha256,
+    upgradeOrderedTablesSha256: upgradeDigests.orderedTablesSha256,
+    reopenTableSha256: reopenDigests.tableSha256,
+    reopenOrderedTablesSha256: reopenDigests.orderedTablesSha256,
+  }
+}
+
+/** Upgrade only, so a later document can reopen the file without a same-page
+ * reopen warming the WebAssembly module first. */
+export async function runLargeUpgradeFreshDirect() {
+  const seed = await seedLargeUpgrade()
+  const upgrade = await timedLargeOpen(seed.filename)
+  const digests = await digestTables(upgrade.tables)
+  const rows = Object.values(upgrade.tables).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  const injectedStudentRows = upgrade.tables.students!.filter((row) =>
+    String(row.id).startsWith("student-load-"),
+  ).length
+  const injectedEvaluationRows = upgrade.tables.evaluations!.filter((row) =>
+    String(row.id).startsWith("evaluation-load-"),
+  ).length
+  return {
+    filename: seed.filename,
+    durationMs: upgrade.durationMs,
+    createDatabaseMs: upgrade.createDatabaseMs,
+    initMs: upgrade.initMs,
+    adapterInitMs: upgrade.adapterInitMs,
+    sdkReadyAfterAdapterMs: upgrade.sdkReadyAfterAdapterMs,
+    prepareAfterInitMs: upgrade.prepareAfterInitMs,
+    readTablesMs: upgrade.readTablesMs,
+    closeMs: upgrade.closeMs,
+    workerDiagnostics: upgrade.workerDiagnostics,
+    expectedRows: seed.expectedRows,
+    expectedInjectedStudentRows: seed.expectedInjectedStudentRows,
+    expectedInjectedEvaluationRows: seed.expectedInjectedEvaluationRows,
+    rows,
+    injectedStudentRows,
+    injectedEvaluationRows,
+    rowIssues: validateStoredRows(upgrade.tables),
+    tableSha256: digests.tableSha256,
+    orderedTablesSha256: digests.orderedTablesSha256,
+  }
+}
+
+/** Reopen the same prepared database from a newly loaded document. */
+export async function reopenLargeUpgrade(filename: string) {
+  const reopened = await timedLargeOpen(filename)
+  const digests = await digestTables(reopened.tables)
+  const rows = Object.values(reopened.tables).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  const injectedStudentRows = reopened.tables.students!.filter((row) =>
+    String(row.id).startsWith("student-load-"),
+  ).length
+  const injectedEvaluationRows = reopened.tables.evaluations!.filter((row) =>
+    String(row.id).startsWith("evaluation-load-"),
+  ).length
+  return {
+    durationMs: reopened.durationMs,
+    createDatabaseMs: reopened.createDatabaseMs,
+    initMs: reopened.initMs,
+    adapterInitMs: reopened.adapterInitMs,
+    sdkReadyAfterAdapterMs: reopened.sdkReadyAfterAdapterMs,
+    prepareAfterInitMs: reopened.prepareAfterInitMs,
+    readTablesMs: reopened.readTablesMs,
+    closeMs: reopened.closeMs,
+    workerDiagnostics: reopened.workerDiagnostics,
+    rows,
+    injectedStudentRows,
+    injectedEvaluationRows,
+    rowIssues: validateStoredRows(reopened.tables),
+    tableSha256: digests.tableSha256,
+    orderedTablesSha256: digests.orderedTablesSha256,
   }
 }
