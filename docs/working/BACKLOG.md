@@ -114,11 +114,25 @@ remaining proposals await the owner's pick:
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
+- `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
+  — iPhone 13 WebKit, D3's recorded focused run (2026-10-13):
+  `page.evaluate: Target page, context or browser has been closed` after
+  13.5 s; the configured retry passed in 20.5 s. T1 must investigate the
+  legacy database close/reopen lifecycle; a retry does not establish its cause.
+
 - `u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live`
   — Pixel 7 Chrome, D3’s final focused run (2026-10-12): pointermove-to-live
   transform measured 170.7 ms against the unchanged 120 ms bound, then passed
   on the configured retry. T1 must fix the measurement/setup or underlying
   response defect without dropping the assertion or raising its limit.
+  D3's focused run on 2026-10-13 also retried on iPhone 13 WebKit: the live
+  transform readiness check exceeded its unchanged 100 ms timeout; the retry
+  passed. Preserve both engines' checks when fixing it.
+
+- `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
+  — iPhone 13 WebKit, D3's focused run (2026-10-13): the first attempt found
+  zero boat logos on the summary after copying; the retry passed. T1 must
+  establish summary readiness and retain the on-screen/image logo assertions.
 
 - `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
   — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
@@ -230,8 +244,13 @@ From the D2 reviews (`.evidence/D2/`):
   No app caller uses that escape today; `executeRaw` checks compatibility
   before its lease, while `get`/`getAll`/`getOptional` accept arbitrary SQL.
 
-- D3 RH4-Q1: at 320 px with 200% text, the two-column selected-person
-  destination actions split long words across short lines. They stay inside
-  their buttons and pass focus and hit-target checks, but a later field-layout
-  pass can improve legibility. FU-Q12 viewport-top clipping is fixed by D3
+- D3 RH4-Q1 is fixed at `73688ef`: narrow destination panels use one column,
+  so action labels wrap between whole words. Both engines pass full action
+  containment and focus/tap checks. FU-Q12 viewport-top clipping is fixed by
   viewport caps and internal scrolling; see `.evidence/D3/ci-regression-fix.json`.
+- D3 FU-Q13: in WebKit at 320 px and 200% text, focusing the crew portal's
+  close button can horizontally shift its scrollable header, clipping the
+  Equipaggio title and Non disponibile legend on the left. Close and every
+  enabled destination action remain contained and reachable. This nonblocking
+  header/legend layout finding is retained in the restricted round-7 field
+  review; a future field-layout pass can let the header shrink or wrap.

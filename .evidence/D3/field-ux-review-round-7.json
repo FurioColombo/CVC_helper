@@ -1,0 +1,49 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "D3",
+  "round": 7,
+  "commit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+  "applicationBlob": "6a881b76688164d8cb74691584c0b6cd51b5d1c7",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "FU-Q13",
+      "title": "Crew-panel title and legend can clip horizontally at 200% text",
+      "evidence": "test-results/fux-r7/webkit-320-200-crew-top.png; recorded in docs/working/BACKLOG.md",
+      "reproduction": "In WebKit at 320×664 with 200% text and the update note visible, open crew 1 destinations, focus and trial-check the controls, then scroll Close into view. The panel shifts horizontally and clips the left edge of the Equipaggio title and Non disponibile legend. Enabled destination actions and Close remain contained, focusable and reachable.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05/R18 large-text stress profile"
+    }
+  ],
+  "resolvedBlockers": [
+    {
+      "id": "FU-12",
+      "disposition": "FIXED",
+      "evidence": "CI run 38442464681 showed the first selected-person action bottom at 217 beyond panel bottom 207, with Nuovo equipaggio fragmented and clipped. Panel-local containers and the one-column fallback now keep the complete action reachable. Both-engine checks passed at normal, 175% and 200% text."
+    }
+  ],
+  "evidenceInspected": [
+    "Exact checkpoint and CrewManagement.tsx blob confirmed. Both destination portals retain their body anchors; labels, actions and handlers are unchanged.",
+    "The two Home navigation clicks in scripts/check-test-app-isolation.mjs match existing history restoration and Product Specification §2. Existing regular-course identity, preferences, student and storage assertions remain intact. .evidence/D3/isolation-navigation-fix.json records corrected Chromium/WebKit PASS.",
+    "Independent Node v24.21.0 probe: Chromium passed nine cases; WebKit passed nine cases using fresh contexts at each target viewport. Cases cover student, volunteer and crew portals at 390×844 normal text, 320×664/175% and 320×664/200%. Consolidated measurements are in test-results/fux-r7/final-results.json.",
+    "Checks retained full button and label containment, minimum 44px height, expected grid columns, zero portal-button scroll margins, enabled-control focus, centre hits, click/tap trials, and unchanged panel anchors through document and composition scrolling. No page errors occurred.",
+    "The original 425px footer scroll margin exceeded the 191px crew-panel viewport and pushed Non assegnato above it during automatic scrolling. Manual scrolling and focus proved reachability. Restoring the identical failed scroll position and changing only the rendered margin to zero restored automatic scrolling and trial hits. The source fix limits zero margins to portal buttons; diagnostic measurements are preserved in scroll-margin-diagnostic.json.",
+    "Probe setup failures were classified and preserved: tsx naming helper, an overly broad grid selector, inappropriate hit expectations for disabled controls, standalone setup timeout, and WebKit retaining fixed-layer positions from its original smaller viewport after resizing. A fresh 390×844 context confirmed correct viewport units and footer anchors; subsequent fresh-context profile checks retained all geometry assertions.",
+    "Directly inspected final Chromium 200%, WebKit 175% and WebKit 200% captures. RH4-Q1 is fixed: direct labels wrap between whole words. FU-11 remains fixed with the unchanged 13rem rail fallback. Earlier review reports remain intact."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted reload-navigation assumption correction.",
+      "Restricted destination-action clipping fix and resulting scrolling, focus, hit-target and anchor behavior."
+    ],
+    "wildcard": "Causal comparisons for oversized nested scroll margins and stale resized-WebKit fixed layers; no new entropy draw or broader hunt."
+  },
+  "notTested": [
+    "Physical-phone acceptance remains with the owner; no physical-device PASS is claimed.",
+    "Final recorded verification, exact green CI and live HTTPS publication remain pending.",
+    "Migration timing changes and unrelated application behavior were outside this restricted field-UX review."
+  ]
+}

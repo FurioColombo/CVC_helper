@@ -1,0 +1,49 @@
+{
+  "milestone": "D3",
+  "recordedCommit": "14f11ebe30ffb5406a021cc0dc631e248cffc843",
+  "originalRecording": "verification-navigation-failure.json",
+  "originalFocusedOutcome": {
+    "passed": 87,
+    "skipped": 25,
+    "flaky": 3,
+    "elapsedMinutes": 16.9
+  },
+  "isolatedRun": {
+    "project": "iphone-13-webkit-core",
+    "retries": 0,
+    "passed": 3,
+    "elapsedMinutes": 1.8,
+    "sourceNote": "Current fix diff changes portal layout and isolation navigation; the legacy/crop/summary implementation and all three cases' assertions remain unchanged."
+  },
+  "cases": [
+    {
+      "file": "d1-migration.spec.ts",
+      "title": "keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database",
+      "firstAttempt": "page.evaluate: Target page, context or browser has been closed",
+      "firstDurationMs": 13495,
+      "retryDurationMs": 20537,
+      "isolatedDurationSeconds": 30,
+      "classification": "WEBKIT_PAGE_LOSS_FLAKE; underlying lifecycle cause remains for T1"
+    },
+    {
+      "file": "u04-scan-ui.spec.ts",
+      "title": "edge handles work by keyboard and tilt updates the crop image live",
+      "firstAttempt": "Live-transform readiness exceeded the unchanged 100 ms wait",
+      "firstDurationMs": 10901,
+      "retryDurationMs": 12543,
+      "isolatedPointerToTransformMs": 37,
+      "classification": "TIMING_FLAKE; existing crop timing defect also affects WebKit"
+    },
+    {
+      "file": "ug2-hostile-roster.spec.ts",
+      "title": "shows and copies the hostile crew summary exactly as the screen has it, at four sizes",
+      "firstAttempt": "Expected on-screen boat logos, received zero after copying",
+      "firstDurationMs": 61371,
+      "retryDurationMs": 54888,
+      "isolatedDurationSeconds": 59.3,
+      "classification": "SUMMARY_READINESS_FLAKE; underlying render/query cause remains for T1"
+    }
+  ],
+  "disposition": "All cases are filed by exact title in docs/working/BACKLOG.md. Original retry flags and failed recording are preserved; no thresholds or retry counts were raised. No retry is treated as a clean first-attempt pass.",
+  "physicalDeviceAcceptance": "PENDING_OWNER"
+}

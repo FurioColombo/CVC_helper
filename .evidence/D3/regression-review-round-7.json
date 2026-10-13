@@ -1,0 +1,57 @@
+{
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "milestone": "D3",
+  "round": 7,
+  "commit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "RH2-Q4",
+      "title": "Carried over: the Barche list overflows horizontally with enlarged text",
+      "evidence": "Preserved round-2 finding and docs/working/BACKLOG.md:53-56. No Barche implementation changed.",
+      "reproduction": "Prior round: 0.3.0 fixture, 412x915, 150% root text, Barche; scrollWidth 484 versus clientWidth 412. Not rerun.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
+    }
+  ],
+  "findingResolutions": [
+    {
+      "id": "RH4-Q1",
+      "status": "fixed",
+      "evidence": "Narrow portal grids now use one column. Final Chromium and WebKit 200% screenshots show Nuovo equipaggio wrapping between whole words. A terra and Mezzi remain whole. Resolution is recorded in docs/working/BACKLOG.md:247."
+    }
+  ],
+  "evidenceInspected": [
+    "Preserved reviewer persona, protocol and rounds 1–6; startup checkout, CI, owner and milestone state. Node v24.21.0. No new entropy draw or broader hunt.",
+    "Exact checkpoint 73688ef8e16d967412a88a76c89bcb86ac1bb18a and crew blob 6a881b76688164d8cb74691584c0b6cd51b5d1c7 confirmed.",
+    "Isolation fix adds two clicks through visible Navigazione principale → exact Home after regular reloads. Existing course identity, C4 absence where previously checked, preference snapshots and student-profile assertions remain intact. No state injection, reset, skip or limit change was introduced.",
+    ".evidence/D3/isolation-navigation-fix.json records corrected isolation passing on Chromium and WebKit, preserving the regular course, preferences, offline app, OCR keys and model bytes.",
+    "Portal CSS diff: each fixed body portal owns its query container; narrow destination grids become one column; Equipaggi pieni spans the actual grid; descendant buttons locally use zero bottom scroll margin. Labels, handlers, assignments and persistence operations are unchanged.",
+    "Preserved scroll-margin diagnostic: the global 425 px margin exceeded the 191 px portal viewport. Manual scrolling showed the action reachable; changing only its margin to zero restored automatic scrolling and click/tap trial hits. Final source applies that scoped correction.",
+    "Consolidated test-results/fux-r7/final-results.json: 18 panel cases passed across Chromium and WebKit, covering normal, 175% and 200% profiles and student, volunteer and crew portals. No page errors. Directly inspected final Chromium/WebKit 200% captures.",
+    "WebKit setup and resized-viewport geometry failures remain preserved. Fresh target-size contexts corrected the demonstrated stale fixed-layer viewport; the consolidated proof records that classification rather than discarding the failures.",
+    "Prior independent persisted Mezzi/boat choice proof remains applicable because functional handlers and storage code are unchanged. Final field checks cover the revised control geometry and focus/hit behavior.",
+    "Pinned SDK inspection: WebPowerSyncDatabase initialization awaits AsyncDbAdapter.init, which only awaits its cached state. The diagnostic timestamp split observes that existing promise rather than reopening the adapter.",
+    "Inclusive timing still starts before construction and ends after preparation. Both 5000 ms assertions remain unchanged. Counts independently derive from fixture tables and distinct canonical D2 list values, then require 609 total rows, 40 injected students and 520 injected evaluations on both opens. Structural validity and exact reopened-table equality remain required.",
+    "Root reported quick verification passing 80 files and 1351 tests, with lint, formatting and typecheck passing. Its local WebKit large-course test passed without retries: upgrade 1864 ms, reopen 905 ms, identical 609 rows and no integrity issues.",
+    "Field residual FU-Q13 is separately recorded in docs/working/BACKLOG.md:251: focused Close can horizontally pan the enlarged crew header/legend while action containment and hits pass.",
+    "This reviewer ran no tests or browsers and made no tracked edits or commits."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted isolation-navigation assumption and retained assertions",
+      "Portal containment, automatic scrolling and prior label finding",
+      "Diagnostic timing boundaries and independent fixture-count strength"
+    ],
+    "wildcard": "No new entropy or whole-milestone review."
+  },
+  "notTested": [
+    "Full recording and exact-checkpoint green CI remain pending. This verdict covers the restricted changes and does not declare D3 ready.",
+    "Linux adapter initialization remains demonstrated and unresolved. Passing local timing and improved diagnostics do not establish a fix or Linux acceptance.",
+    "Physical Android installation/update acceptance and verified GitHub publication remain pending owner and orchestrator gates.",
+    "Compaction, compatibility and unchanged functional persistence paths were not rerun."
+  ]
+}

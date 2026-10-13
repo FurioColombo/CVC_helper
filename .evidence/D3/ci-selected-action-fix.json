@@ -1,0 +1,511 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+  "applicationBlob": "6a881b76688164d8cb74691584c0b6cd51b5d1c7",
+  "ciFailure": {
+    "run": 38442464681,
+    "sourceCommit": "0a485f68b6e5be50bbe93076ec4ed9afe987d845",
+    "actionBottom": 217,
+    "panelBottom": 207,
+    "status": "FAILED_CHECKPOINT_NOT_PUBLISHED"
+  },
+  "fix": "Panel-owned containers use one column for narrow content; complete action labels wrap between words. Zero button scroll margins apply only inside the separately cleared body portals.",
+  "independentReview": "field-ux-review-round-7.json",
+  "measurements": [
+    {
+      "engine": "chromium",
+      "status": "PASS",
+      "pageErrors": [],
+      "panels": [
+        {
+          "name": "chromium-390-normal-student",
+          "initial": {
+            "x": 20,
+            "y": 489,
+            "width": 350,
+            "height": 194,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "after": {
+            "x": 20,
+            "y": 489,
+            "width": 350,
+            "height": 194,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "actionsChecked": 3
+        },
+        {
+          "name": "chromium-390-normal-volunteer",
+          "initial": {
+            "x": 20,
+            "y": 541,
+            "width": 350,
+            "height": 142,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "after": {
+            "x": 20,
+            "y": 541,
+            "width": 350,
+            "height": 142,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "actionsChecked": 2
+        },
+        {
+          "name": "chromium-390-normal-crew",
+          "initial": {
+            "x": 20,
+            "y": 140.6875,
+            "width": 350,
+            "height": 542.3125,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "after": {
+            "x": 20,
+            "y": 140.6875,
+            "width": 350,
+            "height": 542.3125,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "actionsChecked": 15
+        },
+        {
+          "name": "chromium-320-175-student",
+          "initial": {
+            "x": 35,
+            "y": 14,
+            "width": 250,
+            "height": 250,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "after": {
+            "x": 35,
+            "y": 14,
+            "width": 250,
+            "height": 250,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "actionsChecked": 3
+        },
+        {
+          "name": "chromium-320-175-volunteer",
+          "initial": {
+            "x": 35,
+            "y": 14,
+            "width": 250,
+            "height": 250,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "after": {
+            "x": 35,
+            "y": 14,
+            "width": 250,
+            "height": 250,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "actionsChecked": 2
+        },
+        {
+          "name": "chromium-320-175-crew",
+          "initial": {
+            "x": 35,
+            "y": 14,
+            "width": 250,
+            "height": 250,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "after": {
+            "x": 35,
+            "y": 14,
+            "width": 250,
+            "height": 250,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "actionsChecked": 15
+        },
+        {
+          "name": "chromium-320-200-student",
+          "initial": {
+            "x": 40,
+            "y": 16,
+            "width": 240,
+            "height": 191,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "after": {
+            "x": 40,
+            "y": 16,
+            "width": 240,
+            "height": 191,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "actionsChecked": 3
+        },
+        {
+          "name": "chromium-320-200-volunteer",
+          "initial": {
+            "x": 40,
+            "y": 16,
+            "width": 240,
+            "height": 191,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "after": {
+            "x": 40,
+            "y": 16,
+            "width": 240,
+            "height": 191,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "actionsChecked": 2
+        },
+        {
+          "name": "chromium-320-200-crew",
+          "initial": {
+            "x": 40,
+            "y": 16,
+            "width": 240,
+            "height": 191,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "after": {
+            "x": 40,
+            "y": 16,
+            "width": 240,
+            "height": 191,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "actionsChecked": 15
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "status": "PASS",
+      "pageErrors": [],
+      "panels": [
+        {
+          "name": "webkit-390-normal-student",
+          "initial": {
+            "x": 20,
+            "y": 489,
+            "width": 350,
+            "height": 194,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "after": {
+            "x": 20,
+            "y": 489,
+            "width": 350,
+            "height": 194,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "actionsChecked": 3
+        },
+        {
+          "name": "webkit-390-normal-volunteer",
+          "initial": {
+            "x": 20,
+            "y": 541,
+            "width": 350,
+            "height": 142,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "after": {
+            "x": 20,
+            "y": 541,
+            "width": 350,
+            "height": 142,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "actionsChecked": 2
+        },
+        {
+          "name": "webkit-390-normal-crew",
+          "initial": {
+            "x": 20,
+            "y": 140.6875,
+            "width": 350,
+            "height": 542.3125,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "after": {
+            "x": 20,
+            "y": 140.6875,
+            "width": 350,
+            "height": 542.3125,
+            "noteTop": 703.609375,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "158px 158px", "width": 324 }]
+          },
+          "actionsChecked": 15
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "status": "PASS",
+      "pageErrors": [],
+      "panels": [
+        {
+          "name": "webkit-320-175-student",
+          "initial": {
+            "x": 35,
+            "y": 14.015625,
+            "width": 250,
+            "height": 249.984375,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "after": {
+            "x": 35,
+            "y": 14.015625,
+            "width": 250,
+            "height": 249.984375,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "actionsChecked": 3
+        },
+        {
+          "name": "webkit-320-175-volunteer",
+          "initial": {
+            "x": 35,
+            "y": 14.015625,
+            "width": 250,
+            "height": 249.984375,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "after": {
+            "x": 35,
+            "y": 14.015625,
+            "width": 250,
+            "height": 249.984375,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "actionsChecked": 2
+        },
+        {
+          "name": "webkit-320-175-crew",
+          "initial": {
+            "x": 35,
+            "y": 14.015625,
+            "width": 250,
+            "height": 249.984375,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "after": {
+            "x": 35,
+            "y": 14.015625,
+            "width": 250,
+            "height": 249.984375,
+            "noteTop": 300.8125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "206px", "width": 206 }]
+          },
+          "actionsChecked": 15
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "status": "PASS",
+      "pageErrors": [],
+      "panels": [
+        {
+          "name": "webkit-320-200-student",
+          "initial": {
+            "x": 40,
+            "y": 16.015625,
+            "width": 240,
+            "height": 190.984375,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "after": {
+            "x": 40,
+            "y": 16.015625,
+            "width": 240,
+            "height": 190.984375,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "actionsChecked": 3
+        },
+        {
+          "name": "webkit-320-200-volunteer",
+          "initial": {
+            "x": 40,
+            "y": 16.015625,
+            "width": 240,
+            "height": 190.984375,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "after": {
+            "x": 40,
+            "y": 16.015625,
+            "width": 240,
+            "height": 190.984375,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "actionsChecked": 2
+        },
+        {
+          "name": "webkit-320-200-crew",
+          "initial": {
+            "x": 40,
+            "y": 16.015625,
+            "width": 240,
+            "height": 190.984375,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "after": {
+            "x": 40,
+            "y": 16.015625,
+            "width": 240,
+            "height": 190.984375,
+            "noteTop": 249.203125,
+            "bodyPortal": true,
+            "containerType": "inline-size",
+            "grids": [{ "columns": "190px", "width": 190 }]
+          },
+          "actionsChecked": 15
+        }
+      ]
+    }
+  ],
+  "setupClassifications": [
+    "Oversized 425px global footer margin in a 191px nested panel: render-only zero-margin causal comparison restored automatic scrolling and tap trials.",
+    "WebKit context resized from 664 to 844 retained existing fixed footer positions at 664. A fresh target-size context aligned all controls to 844; original failure retained."
+  ],
+  "remaining": [
+    "FU-Q13 header/legend can horizontally pan at 200% text; enabled actions remain contained and reachable.",
+    "Linux initialization fix, final recording and exact green CI remain required before publication."
+  ],
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "focusedRegularProductionJourney": {
+    "sourceCommit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+    "installedVersion": "0.3.0",
+    "deployedVersion": "0.3.1",
+    "limitSeconds": 60,
+    "runs": [
+      {
+        "engine": "chromium",
+        "secondsFromForegroundToOffer": 0.2,
+        "editSurvived": true,
+        "versionShownAfterUpdate": "0.3.1",
+        "updatedNoteShown": true,
+        "noUpdateOfferedAfterwards": true
+      },
+      {
+        "engine": "webkit",
+        "secondsFromForegroundToOffer": 0.37,
+        "editSurvived": true,
+        "versionShownAfterUpdate": "0.3.1",
+        "updatedNoteShown": true,
+        "noUpdateOfferedAfterwards": true
+      }
+    ],
+    "status": "PASS",
+    "finalRecorder": false
+  }
+}

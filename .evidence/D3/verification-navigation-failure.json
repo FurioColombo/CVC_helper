@@ -1,0 +1,94 @@
+{
+  "milestone": "D3",
+  "status": "FAIL",
+  "recordedAt": "2026-10-13T18:23:52.768Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "14f11ebe30ffb5406a021cc0dc631e248cffc843",
+  "workingTreeClean": true,
+  "sourceDigest": "43838f832aa8dee77c2ab0536b4e5535d109ce8a9e5721c09ae71c8729cd7fd4",
+  "sourceFiles": 407,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus",
+    "check:update",
+    "check:update:test",
+    "check:test-isolation"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/c1-crew-management.spec.ts",
+    "tests/e2e/d1-migration.spec.ts",
+    "tests/e2e/d2-duty-items.spec.ts",
+    "tests/e2e/d3-read-only.spec.ts",
+    "tests/e2e/f1-navigation-guards.spec.ts",
+    "tests/e2e/n1-phone-back.spec.ts",
+    "tests/e2e/persistence.spec.ts",
+    "tests/e2e/reopen-persistence.spec.ts",
+    "tests/e2e/smoke.spec.ts",
+    "tests/e2e/student-scan.spec.ts",
+    "tests/e2e/u01-shell.spec.ts",
+    "tests/e2e/u02-students.spec.ts",
+    "tests/e2e/u04-scan-ui.spec.ts",
+    "tests/e2e/ug2-hostile-roster.spec.ts"
+  ],
+  "flakyTests": [
+    {
+      "file": "d1-migration.spec.ts",
+      "title": "keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database",
+      "project": "iphone-13-webkit-core"
+    },
+    {
+      "file": "u04-scan-ui.spec.ts",
+      "title": "edge handles work by keyboard and tilt updates the crop image live",
+      "project": "iphone-13-webkit-core"
+    },
+    {
+      "file": "ug2-hostile-roster.spec.ts",
+      "title": "shows and copies the hostile crew summary exactly as the screen has it, at four sizes",
+      "project": "iphone-13-webkit-core"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-10-13T17:58:15.652Z",
+      "durationMs": 173894,
+      "exitCode": 0,
+      "outputTail": "  dist/sw.js\n  dist/workbox-271d3e69.js\n\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 3.0s inside plugin hooks (6.8s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 5.2s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:asset load (4 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "startedAt": "2026-10-13T18:01:09.549Z",
+      "durationMs": 1014473,
+      "exitCode": 0,
+      "outputTail": "\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  3 flaky\n    [iphone-13-webkit-core] › tests\\e2e\\d1-migration.spec.ts:162:1 › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database \n    [iphone-13-webkit-core] › tests\\e2e\\u04-scan-ui.spec.ts:131:1 › edge handles work by keyboard and tilt updates the crop image live \n    [iphone-13-webkit-core] › tests\\e2e\\ug2-hostile-roster.spec.ts:794:1 › shows and copies the hostile crew summary exactly as the screen has it, at four sizes \n  25 skipped\n  87 passed (16.9m)\nFLAKY: d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database [iphone-13-webkit-core]\nFLAKY: u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live [iphone-13-webkit-core]\nFLAKY: ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes [iphone-13-webkit-core]"
+    },
+    {
+      "command": "npm run check:update",
+      "status": "PASS",
+      "startedAt": "2026-10-13T18:18:04.024Z",
+      "durationMs": 50127,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.3.0 check:update\n> node scripts/check-update-journey.mjs\n\nBuilding 0.3.0 and 0.3.1…\n[chromium] installed 0.3.0, service worker in control\n[chromium] update offered 0.21 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.3.0, service worker in control\n[webkit] update offered 0.33 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.21 s, webkit 0.33 s from the return to the offer (0.3.0 to 0.3.1); the typed notes survived the update"
+    },
+    {
+      "command": "npm run check:update:test",
+      "status": "PASS",
+      "startedAt": "2026-10-13T18:18:54.152Z",
+      "durationMs": 38791,
+      "exitCode": 0,
+      "outputTail": "> cvc-helper@0.3.0 check:update:test\n> node scripts/check-update-journey.mjs --test\n\nBuilding 0.4.0 and 0.4.1…\n[chromium] installed 0.4.0, service worker in control\n[chromium] update offered 0.22 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.4.0, service worker in control\n[webkit] update offered 0.35 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.22 s, webkit 0.35 s from the return to the offer (0.4.0 to 0.4.1); the typed notes survived the update"
+    },
+    {
+      "command": "npm run check:test-isolation",
+      "status": "FAIL",
+      "startedAt": "2026-10-13T18:19:32.943Z",
+      "durationMs": 259818,
+      "exitCode": 1,
+      "outputTail": "      '    - button \"Regolare, 16 anni, Altro, Minorenne\":\\n' +\r\n      '      - text: Regolare 16 anni\\n' +\r\n      '      - img \"Minorenne\": M\\n' +\r\n      '  - button \"Aggiungi allievo\"\\n' +\r\n      '- navigation \"Navigazione principale\":\\n' +\r\n      '  - button \"Avarie\"\\n' +\r\n      '  - button \"Home\"\\n' +\r\n      '  - button \"Equipaggi\"'\r\n  }\r\n}\r\n\r\nNode.js v24.21.0"
+    }
+  ]
+}

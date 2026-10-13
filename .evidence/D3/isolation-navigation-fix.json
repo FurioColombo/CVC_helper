@@ -1,0 +1,18 @@
+{
+  "milestone": "D3",
+  "failedRecording": "verification-navigation-failure.json",
+  "classification": "HARNESS_NAVIGATION_ASSUMPTION",
+  "engine": "webkit",
+  "observed": "Regular reload restored Allievi, showing the synthetic Regolare student and the Home navigation button, while the harness expected the D2 Home heading immediately.",
+  "fix": "After both regular reloads, click the visible exact Home button through Navigazione principale before the existing identity, preferences and student-profile assertions.",
+  "targetedOutcome": {
+    "engines": ["chromium", "webkit"],
+    "status": "PASS",
+    "regularCoursePreferencesAndOfflineAppPreserved": true,
+    "ocrKeysAndRegularModelBytesPreserved": true
+  },
+  "applicationBehaviorChanged": false,
+  "assertionsRemovedOrLimitsRaised": false,
+  "remaining": "Final source recording, reviews and exact green CI are still required.",
+  "physicalDeviceAcceptance": "PENDING_OWNER"
+}

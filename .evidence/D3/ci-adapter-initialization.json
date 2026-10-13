@@ -1,0 +1,86 @@
+{
+  "milestone": "D3",
+  "status": "UNRESOLVED_NOT_ACCEPTANCE",
+  "ci": {
+    "sourceCommit": "0a485f68b6e5be50bbe93076ec4ed9afe987d845",
+    "run": 38442464681,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38442464681",
+    "conclusion": "failure",
+    "browserSuite": { "passed": 236, "skipped": 65, "failed": 2, "flaky": 0 },
+    "webkitLargeCourseAttempts": [
+      {
+        "upgradeMs": 1075,
+        "reopenMs": 9634,
+        "reopenInitMs": 9548,
+        "reopenPrepareMs": 85,
+        "rows": 609
+      },
+      {
+        "upgradeMs": 1173,
+        "reopenMs": 9616,
+        "reopenInitMs": 9533,
+        "reopenPrepareMs": 83,
+        "rows": 609
+      },
+      {
+        "upgradeMs": 1793,
+        "reopenMs": 6009,
+        "reopenInitMs": 5924,
+        "reopenPrepareMs": 84,
+        "rows": 609
+      }
+    ],
+    "integrity": "Every attempt preserved identical tables and all 609 rows, with no row issues. The unchanged five-second reopen bound failed."
+  },
+  "focusedLinuxDiagnostic": {
+    "commit": "b95f2d78a29464972bcc871266962a941e8a0214",
+    "run": 38449400336,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38449400336",
+    "workflow": "D3 initialization diagnostic (not acceptance)",
+    "upgradeMs": 1281,
+    "upgradeAdapterInitMs": 259,
+    "upgradeSdkReadyAfterAdapterMs": 245,
+    "reopenMs": 10325,
+    "reopenInitMs": 10195,
+    "reopenAdapterInitMs": 10109,
+    "reopenSdkReadyAfterAdapterMs": 86,
+    "reopenPrepareMs": 129,
+    "rows": 609,
+    "injectedStudents": 40,
+    "injectedEvaluations": 520,
+    "reopenedIdentical": true,
+    "rowIssues": [],
+    "conclusion": "Failed first on a diagnostic expected-row miscount (606 instead of 609); the measured reopen also exceeds the unchanged 5000-ms limit. Three D2 list-item rows were omitted from the initial independent expected count. That count now derives from canonical list values. This diagnostic workflow cannot qualify as exact-checkpoint CI."
+  },
+  "nextStep": "Localize the adapter delay with timestamp-only worker diagnostics, then fix its demonstrated cause and rerun the unchanged acceptance suite.",
+  "publication": "Withheld; the owner queue remains NEEDS_SETUP.",
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "wrapperDiagnostic": {
+    "commit": "f14a7e288aebcdcc573761b910b9095f19f42c7c",
+    "run": 38477189735,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38477189735",
+    "status": "DIAGNOSTIC_WRAPPER_TIMEOUT",
+    "timeoutMs": 120000,
+    "largeCourseMeasurementsProduced": false,
+    "disposition": "The bootstrap stalled before returning timings. Preserve this tooling failure and repair message queuing before a changed probe; this is not new evidence of the database performance cause."
+  },
+  "localCorrectedCountCheck": {
+    "sourceCommit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+    "project": "iphone-13-webkit-core",
+    "retries": 0,
+    "status": "PASS",
+    "elapsedSeconds": 45.3,
+    "upgradeMs": 1864,
+    "reopenMs": 905,
+    "reopenAdapterInitMs": 280,
+    "reopenSdkReadyAfterAdapterMs": 328,
+    "rows": 609,
+    "reopenRows": 609,
+    "injectedStudents": 40,
+    "injectedEvaluations": 520,
+    "reopenedIdentical": true,
+    "rowIssues": [],
+    "limitsChanged": false,
+    "qualifiesLinuxCI": false
+  }
+}

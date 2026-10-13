@@ -97,7 +97,8 @@ after it, since 0.3.0 kept no record of its version.
    phone for a minute, then come back: within a minute **Nuova versione
    disponibile** appears, with no reinstall and no reload by hand. A tap on
    the bar in the moment it appears does nothing.
-3. Open a student's edit, type a change, and tap **Aggiorna**: the change is
+3. Open a student's edit, type a change, and immediately tap **Aggiorna**, even
+   if **Salvataggio…** is still shown: the change is
    kept, the app reopens, the bar says once **CVC Helper è aggiornata alla
    versione …**, and **Impostazioni** shows the new version.
 4. While the offer is shown, it covers neither the **+** of Allievi nor the
@@ -107,8 +108,9 @@ after it, since 0.3.0 kept no record of its version.
    is offline; online, with nothing new, **Nessuna versione più recente
    disponibile ora.**
 
-Record the URL, both versions, the time from the return to the offer, and
-whether the change survived.
+Record the URL, both versions, the time from the return to the offer, whether
+**Salvataggio…** or **Salvato** was shown when you tapped, and whether the change
+survived.
 
 ## Summaries
 
