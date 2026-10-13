@@ -342,8 +342,7 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
 }) => {
   capturePartialWorkerDiagnostics(page)
   await openBlankPage(page)
-  const { filename, ...result } = await harness<{
-    filename: string
+  const result = await harness<{
     durationMs: number
     createDatabaseMs: number
     initMs: number
@@ -380,25 +379,6 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
     reopenOrderedTablesSha256: string
   }>(page, "runLargeUpgrade")
   record("large-upgrade", result)
-  await reloadBlankPage(page)
-  const freshDocument = await harness<{
-    durationMs: number
-    createDatabaseMs: number
-    initMs: number
-    adapterInitMs: number
-    sdkReadyAfterAdapterMs: number
-    prepareAfterInitMs: number
-    readTablesMs: number
-    closeMs: number
-    workerDiagnostics: WorkerStageEvent[]
-    rows: number
-    injectedStudentRows: number
-    injectedEvaluationRows: number
-    rowIssues: unknown[]
-    tableSha256: TableDigest[]
-    orderedTablesSha256: string
-  }>(page, "reopenLargeUpgrade", filename)
-  record("large-upgrade-fresh-document", freshDocument)
   record("large-upgrade-hash-comparison", {
     tables: [
       {
@@ -411,32 +391,22 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
         orderedTablesSha256: result.reopenOrderedTablesSha256,
         tableSha256: result.reopenTableSha256,
       },
-      {
-        phase: "fresh-document-reopen",
-        orderedTablesSha256: freshDocument.orderedTablesSha256,
-        tableSha256: freshDocument.tableSha256,
-      },
     ],
   })
   test.info().annotations.push({
     type: "migration",
-    description: `${result.rows}/${result.reopenRows}/${freshDocument.rows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); same-page reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); fresh-document reopen ${freshDocument.durationMs} ms (adapter init ${freshDocument.adapterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows}/${freshDocument.injectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows}/${freshDocument.injectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; ordered hashes ${result.upgradeOrderedTablesSha256}/${result.reopenOrderedTablesSha256}/${freshDocument.orderedTablesSha256}; read/close outside bounds ${result.readTablesMs}/${result.closeMs}, ${result.reopenReadTablesMs}/${result.reopenCloseMs}, ${freshDocument.readTablesMs}/${freshDocument.closeMs} ms; worker timing events ${JSON.stringify(result.workerDiagnostics)} / ${JSON.stringify(result.reopenWorkerDiagnostics)} / ${JSON.stringify(freshDocument.workerDiagnostics)}`,
+    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); same-page reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; ordered hashes ${result.upgradeOrderedTablesSha256}/${result.reopenOrderedTablesSha256}; read/close outside bounds ${result.readTablesMs}/${result.closeMs}, ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms; worker timing events ${JSON.stringify(result.workerDiagnostics)} / ${JSON.stringify(result.reopenWorkerDiagnostics)}`,
   })
   expect(result.rowIssues).toEqual([])
   expect(result.reopenRows).toBe(result.rows)
   expect(result.reopenRowIssues).toEqual([])
-  expect(freshDocument.rowIssues).toEqual([])
   expect(result.reopenedIdentical).toBe(true)
   expect(result.expectedRows).toBe(609)
   expect(result.rows).toBe(result.expectedRows)
   expect(result.reopenRows).toBe(result.expectedRows)
-  expect(freshDocument.rows).toBe(result.expectedRows)
   expect(result.expectedInjectedStudentRows).toBe(40)
   expect(result.injectedStudentRows).toBe(result.expectedInjectedStudentRows)
   expect(result.reopenInjectedStudentRows).toBe(
-    result.expectedInjectedStudentRows,
-  )
-  expect(freshDocument.injectedStudentRows).toBe(
     result.expectedInjectedStudentRows,
   )
   expect(result.expectedInjectedEvaluationRows).toBe(520)
@@ -446,22 +416,14 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
   expect(result.reopenInjectedEvaluationRows).toBe(
     result.expectedInjectedEvaluationRows,
   )
-  expect(freshDocument.injectedEvaluationRows).toBe(
-    result.expectedInjectedEvaluationRows,
-  )
   expect(result.upgradeTableSha256).toEqual(result.reopenTableSha256)
-  expect(result.upgradeTableSha256).toEqual(freshDocument.tableSha256)
   expect(result.upgradeOrderedTablesSha256).toBe(
     result.reopenOrderedTablesSha256,
-  )
-  expect(result.upgradeOrderedTablesSha256).toBe(
-    freshDocument.orderedTablesSha256,
   )
   // The same five-second bound covers construction, SDK init and preparation;
   // stage timings above help diagnose a slow open without weakening it.
   expect(result.durationMs).toBeLessThan(5000)
   expect(result.reopenMs).toBeLessThan(5000)
-  expect(freshDocument.durationMs).toBeLessThan(5000)
 })
 
 test("reopens a 40-student upgrade directly from a fresh document within five seconds", async ({

@@ -6,16 +6,14 @@ permissions:
   contents: read
 jobs:
   diagnose:
-    name: Initialize (${{ matrix.variant }})
+    name: Compile (${{ matrix.mode }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - variant: same-page
-            pattern: "upgrades and reopens a 40-student course"
-          - variant: fresh-direct
-            pattern: "reopens a 40-student upgrade directly from a fresh document"
+        mode: [native, buffered-instantiate, buffered-module]
+    env:
+      VITE_D3_WASM_MODE: ${{ matrix.mode }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,11 +25,11 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps webkit
       - name: Measure unchanged five-second acceptance with extra stages
-        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep "${{ matrix.pattern }}" --retries=0
+        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep "reopens a 40-student upgrade directly from a fresh document" --retries=0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-init-stages-${{ matrix.variant }}
+          name: d3-init-stages-${{ matrix.mode }}
           path: |
             test-results/**/migration/large-upgrade-*.json
             test-results/e2e-report.json

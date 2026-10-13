@@ -105,6 +105,20 @@ interface WorkerInitDiagnostic {
  * before importing it and reports timings over an isolated BroadcastChannel.
  */
 function captureWorkerInitDiagnostics() {
+  const configuredWasmMode = (
+    import.meta.env as ImportMetaEnv & {
+      readonly VITE_D3_WASM_MODE?: string
+    }
+  ).VITE_D3_WASM_MODE
+  const wasmMode =
+    configuredWasmMode === undefined || configuredWasmMode === "native"
+      ? "native"
+      : configuredWasmMode === "buffered-instantiate" ||
+          configuredWasmMode === "buffered-module"
+        ? configuredWasmMode
+        : (() => {
+            throw new Error("Unsupported D3 diagnostic WebAssembly mode")
+          })()
   const channelName = `d1-init-${crypto.randomUUID()}`
   const channel = new BroadcastChannel(channelName)
   const events: WorkerInitDiagnostic[] = []
@@ -211,6 +225,7 @@ function captureWorkerInitDiagnostics() {
       const source = `
         const channel = new BroadcastChannel(${JSON.stringify(channelName)});
         const workerId = ${JSON.stringify(workerId)};
+        const wasmMode = ${JSON.stringify(wasmMode)};
         const now = () => performance.now();
         const send = (stage, fields = {}) => channel.postMessage({
           workerId,
@@ -227,6 +242,7 @@ function captureWorkerInitDiagnostics() {
           if (value.startsWith("lock##")) return "sqlite-vfs";
           return "other";
         };
+        send("wasm-mode-selected", { category: wasmMode });
 
         try {
           const originalFetch = globalThis.fetch.bind(globalThis);
@@ -357,7 +373,41 @@ function captureWorkerInitDiagnostics() {
                 const started = now();
                 let result;
                 try {
-                  result = original(...args);
+                  if (method === "instantiateStreaming" && wasmMode !== "native") {
+                    result = Promise.resolve(args[0]).then(async (response) => {
+                      if (!(response instanceof globalThis.Response)) {
+                        throw new TypeError("Expected a WebAssembly Response");
+                      }
+                      const contentType = response.headers.get("content-type") || "";
+                      if (contentType.split(";", 1)[0].trim().toLowerCase() !== "application/wasm") {
+                        throw new TypeError("Expected application/wasm content type");
+                      }
+                      const bodyStarted = now();
+                      const bytes = await response.arrayBuffer();
+                      send("wasm-buffered-body-ready", {
+                        category: wasmMode,
+                        durationMs: elapsed(bodyStarted)
+                      });
+                      if (wasmMode === "buffered-instantiate") {
+                        return wasm.instantiate(bytes, args[1]);
+                      }
+                      const compileStarted = now();
+                      const module = new wasm.Module(bytes);
+                      send("wasm-complete", {
+                        category: "buffered-module-compile",
+                        durationMs: elapsed(compileStarted)
+                      });
+                      const instantiateStarted = now();
+                      const instance = new wasm.Instance(module, args[1]);
+                      send("wasm-complete", {
+                        category: "buffered-module-instantiate",
+                        durationMs: elapsed(instantiateStarted)
+                      });
+                      return { module, instance };
+                    });
+                  } else {
+                    result = original(...args);
+                  }
                 } catch (error) {
                   send("wasm-error", { category: method, durationMs: elapsed(started) });
                   throw error;
@@ -927,9 +977,6 @@ export async function runLargeUpgrade() {
   const upgradeDigests = await digestTables(upgrade.tables)
   const reopenDigests = await digestTables(reopen.tables)
   return {
-    // Returned only so the caller can reopen this same synthetic file after a
-    // page reload; the e2e spec omits it from evidence and annotations.
-    filename,
     durationMs: upgrade.durationMs,
     createDatabaseMs: upgrade.createDatabaseMs,
     initMs: upgrade.initMs,
