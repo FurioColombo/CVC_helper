@@ -853,6 +853,10 @@ async function verifyBrowserIsolation(
 
     await page.reload({ waitUntil: "domcontentloaded" })
     assert.equal(await page.title(), "CVC Helper")
+    await page
+      .getByRole("navigation", { name: "Navigazione principale" })
+      .getByRole("button", { name: "Home", exact: true })
+      .click()
     await expect(page.getByRole("heading", { name: /^D2 - / })).toBeVisible()
     await expect(page.getByRole("heading", { name: /^C4 - / })).toHaveCount(0)
     await page.getByRole("button", { name: "Impostazioni" }).click()
@@ -892,6 +896,10 @@ async function verifyBrowserIsolation(
 
     await page.reload({ waitUntil: "domcontentloaded" })
     assert.equal(await page.title(), "CVC Helper")
+    await page
+      .getByRole("navigation", { name: "Navigazione principale" })
+      .getByRole("button", { name: "Home", exact: true })
+      .click()
     await expect(page.getByRole("heading", { name: /^D2 - / })).toBeVisible()
     await page.getByRole("button", { name: "Impostazioni" }).click()
     await expect(page.getByRole("radio", { name: "3 per riga" })).toBeChecked()

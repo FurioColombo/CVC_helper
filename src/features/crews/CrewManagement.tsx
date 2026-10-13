@@ -2873,7 +2873,7 @@ export function CrewManagement({
                   createPortal(
                     <section
                       aria-label={`Destinazione equipaggio ${destinationCrewIndex + 1}`}
-                      className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 max-h-[calc(100dvh-6rem-var(--update-banner-height,0px)-0.5rem)] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+                      className="@container fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 max-h-[calc(100dvh-6rem-var(--update-banner-height,0px)-0.5rem)] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur [&_button]:scroll-mb-0"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-bold">
@@ -2924,7 +2924,7 @@ export function CrewManagement({
                           Assegnata
                         </span>
                       </div>
-                      <div className="mt-2 grid grid-cols-2 gap-2">
+                      <div className="mt-2 grid grid-cols-2 gap-2 @max-[13rem]:grid-cols-1">
                         <Button
                           className="h-auto min-h-14 min-w-0 px-2 text-xs"
                           disabled={busy}
@@ -2999,7 +2999,7 @@ export function CrewManagement({
                   createPortal(
                     <section
                       aria-label="Destinazione persona selezionata"
-                      className="fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 max-h-[calc(100dvh-6rem-var(--update-banner-height,0px)-0.5rem)] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur"
+                      className="@container fixed bottom-[calc(6rem+var(--update-banner-height,0px))] left-1/2 z-30 max-h-[calc(100dvh-6rem-var(--update-banner-height,0px)-0.5rem)] w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 overflow-y-auto rounded-2xl border border-primary/30 bg-card/95 p-3 shadow-xl backdrop-blur [&_button]:scroll-mb-0"
                       ref={personDestinationRef}
                       tabIndex={-1}
                     >
@@ -3025,7 +3025,7 @@ export function CrewManagement({
                           </Button>
                         )}
                       </div>
-                      <div className="mt-2 grid max-h-[24vh] grid-cols-2 gap-2 overflow-y-auto">
+                      <div className="mt-2 grid max-h-[24vh] grid-cols-2 gap-2 overflow-y-auto @max-[13rem]:grid-cols-1">
                         {(() => {
                           // "Full" is judged over crews this person could
                           // actually move to. The person's own current crew
@@ -3043,7 +3043,7 @@ export function CrewManagement({
                           if (targetCrews.length === 0) {
                             return (
                               <p
-                                className="col-span-2 rounded-xl bg-muted px-3 py-2 text-sm font-bold text-muted-foreground"
+                                className="col-span-full rounded-xl bg-muted px-3 py-2 text-sm font-bold text-muted-foreground"
                                 role="status"
                               >
                                 Equipaggi pieni

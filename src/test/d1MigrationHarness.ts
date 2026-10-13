@@ -1,5 +1,6 @@
 import { PowerSyncDatabase, type Schema } from "@powersync/web"
 
+import { DUTY_SETTING_LISTS, SESSION_SEQUENCE } from "@/domain/config"
 import {
   applyMigration,
   prepareDatabase,
@@ -381,7 +382,6 @@ export async function runLargeUpgrade() {
   const filename = `d1-large-${crypto.randomUUID()}.db`
   const base = FIXTURES["0.3.0"]
   const courseId = String(base.courses![0]!.id)
-  const { SESSION_SEQUENCE } = await import("@/domain/config")
   const students = Array.from({ length: 40 }, (_, index) => ({
     id: `student-load-${index}`,
     courseId,
@@ -406,6 +406,29 @@ export async function runLargeUpgrade() {
       note: null,
     })),
   )
+  const expectedTables: FixtureTables = {
+    ...base,
+    students: [...base.students!, ...students],
+    evaluations: [...base.evaluations!, ...evaluations],
+  }
+  // D2 repairs materialize one row per distinct value in each canonical list.
+  const expectedDutySettingItemRows = (base.dutySettings ?? []).reduce(
+    (total, setting) =>
+      total +
+      DUTY_SETTING_LISTS.reduce((listTotal, { field }) => {
+        const values = JSON.parse(String(setting[field] ?? "[]")) as unknown[]
+        return listTotal + new Set(values).size
+      }, 0),
+    0,
+  )
+  const expectedRows = COURSE_TABLES.reduce(
+    (total, table) =>
+      total +
+      (table === "dutySettingItems"
+        ? expectedDutySettingItemRows
+        : (expectedTables[table]?.length ?? 0)),
+    0,
+  )
   await seed("0.3.0", filename, {
     ...base,
     students: [...base.students!, ...students],
@@ -419,6 +442,15 @@ export async function runLargeUpgrade() {
     const constructed = performance.now()
     const database = createDatabase(filename)
     const created = performance.now()
+    const adapterInitStarted = performance.now()
+    // PowerSync starts this adapter open from its constructor. Awaiting the
+    // same promise used by its normal init path lets the report separate the
+    // WA-SQLite worker/VFS open from the remaining SDK readiness work.
+    const adapter = database.database as unknown as {
+      init: () => Promise<void>
+    }
+    await adapter.init()
+    const adapterReady = performance.now()
     await database.init()
     const initialized = performance.now()
     await prepareDatabase(database)
@@ -437,6 +469,8 @@ export async function runLargeUpgrade() {
       durationMs,
       createDatabaseMs,
       initMs,
+      adapterInitMs: Math.round(adapterReady - adapterInitStarted),
+      sdkReadyAfterAdapterMs: Math.round(initialized - adapterReady),
       prepareAfterInitMs,
       readTablesMs,
       closeMs,
@@ -454,19 +488,42 @@ export async function runLargeUpgrade() {
     (sum, list) => sum + list.length,
     0,
   )
+  const injectedStudentRows = upgrade.tables.students!.filter((row) =>
+    String(row.id).startsWith("student-load-"),
+  ).length
+  const reopenInjectedStudentRows = reopen.tables.students!.filter((row) =>
+    String(row.id).startsWith("student-load-"),
+  ).length
+  const injectedEvaluationRows = upgrade.tables.evaluations!.filter((row) =>
+    String(row.id).startsWith("evaluation-load-"),
+  ).length
+  const reopenInjectedEvaluationRows = reopen.tables.evaluations!.filter(
+    (row) => String(row.id).startsWith("evaluation-load-"),
+  ).length
   return {
     durationMs: upgrade.durationMs,
     createDatabaseMs: upgrade.createDatabaseMs,
     initMs: upgrade.initMs,
+    adapterInitMs: upgrade.adapterInitMs,
+    sdkReadyAfterAdapterMs: upgrade.sdkReadyAfterAdapterMs,
     prepareAfterInitMs: upgrade.prepareAfterInitMs,
     readTablesMs: upgrade.readTablesMs,
     closeMs: upgrade.closeMs,
     reopenMs: reopen.durationMs,
     reopenCreateDatabaseMs: reopen.createDatabaseMs,
     reopenInitMs: reopen.initMs,
+    reopenAdapterInitMs: reopen.adapterInitMs,
+    reopenSdkReadyAfterAdapterMs: reopen.sdkReadyAfterAdapterMs,
     reopenPrepareAfterInitMs: reopen.prepareAfterInitMs,
     reopenReadTablesMs: reopen.readTablesMs,
     reopenCloseMs: reopen.closeMs,
+    expectedRows,
+    expectedInjectedStudentRows: students.length,
+    injectedStudentRows,
+    reopenInjectedStudentRows,
+    expectedInjectedEvaluationRows: evaluations.length,
+    injectedEvaluationRows,
+    reopenInjectedEvaluationRows,
     rows,
     reopenRows,
     rowIssues: validateStoredRows(upgrade.tables),
