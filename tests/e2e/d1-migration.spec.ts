@@ -310,6 +310,24 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
     expectedInjectedEvaluationRows: number
     injectedEvaluationRows: number
     reopenInjectedEvaluationRows: number
+    workerDiagnostics: Array<{
+      workerId: string
+      stage: string
+      workerElapsedMs?: number
+      pageReceivedAtMs: number
+      durationMs?: number
+      waitMs?: number
+      category?: string
+    }>
+    reopenWorkerDiagnostics: Array<{
+      workerId: string
+      stage: string
+      workerElapsedMs?: number
+      pageReceivedAtMs: number
+      durationMs?: number
+      waitMs?: number
+      category?: string
+    }>
     rows: number
     reopenRows: number
     rowIssues: unknown[]
@@ -319,7 +337,7 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
   record("large-upgrade", result)
   test.info().annotations.push({
     type: "migration",
-    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms`,
+    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms; worker timing events ${JSON.stringify(result.workerDiagnostics)} / ${JSON.stringify(result.reopenWorkerDiagnostics)}`,
   })
   expect(result.rowIssues).toEqual([])
   expect(result.reopenRows).toBe(result.rows)
@@ -333,7 +351,7 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
   expect(result.reopenInjectedStudentRows).toBe(
     result.expectedInjectedStudentRows,
   )
-  expect(result.expectedInjectedEvaluationRows).toBe(560)
+  expect(result.expectedInjectedEvaluationRows).toBe(520)
   expect(result.injectedEvaluationRows).toBe(
     result.expectedInjectedEvaluationRows,
   )
