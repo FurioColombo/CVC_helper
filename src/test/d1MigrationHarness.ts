@@ -95,6 +95,7 @@ interface WorkerInitDiagnostic {
   durationMs?: number
   waitMs?: number
   category?: string
+  messageCount?: number
 }
 
 /**
@@ -114,6 +115,16 @@ function captureWorkerInitDiagnostics() {
     "request",
   )
   const originalLockRequest = lockManager.request.bind(lockManager)
+  const recordEvent = (
+    event: Omit<WorkerInitDiagnostic, "pageReceivedAtMs">,
+  ) => {
+    const captured = {
+      ...event,
+      pageReceivedAtMs: Math.round(performance.now()),
+    }
+    events.push(captured)
+    console.info(`D1_INIT_STAGE:${JSON.stringify(captured)}`)
+  }
 
   try {
     Object.defineProperty(lockManager, "request", {
@@ -136,12 +147,11 @@ function captureWorkerInitDiagnostics() {
                   ? "sqlite-vfs"
                   : "other"
           args[callbackIndex] = (lock: Lock | null) => {
-            events.push({
+            recordEvent({
               workerId: "page",
               stage: "page-weblock-granted",
               category,
               waitMs: Math.round((performance.now() - started) * 100) / 100,
-              pageReceivedAtMs: Math.round(performance.now()),
             })
             return Reflect.apply(callback, undefined, [lock])
           }
@@ -150,10 +160,9 @@ function captureWorkerInitDiagnostics() {
       },
     })
   } catch {
-    events.push({
+    recordEvent({
       workerId: "page",
       stage: "page-weblock-instrumentation-unavailable",
-      pageReceivedAtMs: Math.round(performance.now()),
     })
   }
 
@@ -169,7 +178,7 @@ function captureWorkerInitDiagnostics() {
     if (data.stage === "worker-bootstrap-ready") {
       wrapperUrls.get(data.workerId)?.()
     }
-    events.push({
+    recordEvent({
       workerId: data.workerId,
       stage: data.stage,
       ...(typeof data.workerElapsedMs === "number"
@@ -180,7 +189,9 @@ function captureWorkerInitDiagnostics() {
         : {}),
       ...(typeof data.waitMs === "number" ? { waitMs: data.waitMs } : {}),
       ...(typeof data.category === "string" ? { category: data.category } : {}),
-      pageReceivedAtMs: Math.round(performance.now()),
+      ...(typeof data.messageCount === "number"
+        ? { messageCount: data.messageCount }
+        : {}),
     })
   })
 
@@ -189,10 +200,9 @@ function captureWorkerInitDiagnostics() {
       const scriptUrl = String(args[0])
       const options = args[1] as WorkerOptions | undefined
       const workerId = crypto.randomUUID()
-      events.push({
+      recordEvent({
         workerId,
         stage: "worker-created",
-        pageReceivedAtMs: Math.round(performance.now()),
       })
       const source = `
         const channel = new BroadcastChannel(${JSON.stringify(channelName)});
@@ -308,9 +318,42 @@ function captureWorkerInitDiagnostics() {
           send("wasm-instrumentation-unavailable");
         }
 
+        const bufferedMessages = [];
+        const captureEarlyMessage = (event) => {
+          event.stopImmediatePropagation();
+          bufferedMessages.push({
+            data: event.data,
+            ports: Array.from(event.ports),
+            origin: event.origin,
+            lastEventId: event.lastEventId,
+            source: event.source
+          });
+          send("worker-message-buffered", { category: "comlink" });
+        };
+        self.addEventListener("message", captureEarlyMessage, true);
+        let entryImported = false;
         send("worker-bootstrap-ready");
-        await import(${JSON.stringify(scriptUrl)});
-        send("worker-entry-evaluated");
+        try {
+          await import(${JSON.stringify(scriptUrl)});
+          entryImported = true;
+          send("worker-entry-evaluated");
+        } catch (error) {
+          send("worker-entry-import-error", {
+            category: error instanceof Error ? error.name : "unknown"
+          });
+          throw error;
+        } finally {
+          self.removeEventListener("message", captureEarlyMessage, true);
+          if (entryImported) {
+            for (const message of bufferedMessages) {
+              self.dispatchEvent(new MessageEvent("message", message));
+            }
+            send("worker-message-buffer-replayed", {
+              category: "comlink",
+              messageCount: bufferedMessages.length
+            });
+          }
+        }
       `
       const wrapperUrl = URL.createObjectURL(
         new Blob([source], { type: "text/javascript" }),
@@ -330,10 +373,9 @@ function captureWorkerInitDiagnostics() {
       worker.addEventListener("error", revoke, { once: true })
       const terminate = worker.terminate.bind(worker)
       worker.terminate = () => {
-        events.push({
+        recordEvent({
           workerId,
           stage: "worker-terminate-called",
-          pageReceivedAtMs: Math.round(performance.now()),
         })
         revoke()
         terminate()

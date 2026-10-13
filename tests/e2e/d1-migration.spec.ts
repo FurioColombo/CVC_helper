@@ -62,6 +62,36 @@ function record(name: string, result: unknown) {
   writeFileSync(file, `${JSON.stringify(result, null, 2)}\n`)
 }
 
+const partialWorkerDiagnostics = new WeakMap<Page, unknown[]>()
+
+function capturePartialWorkerDiagnostics(page: Page) {
+  const events: unknown[] = []
+  partialWorkerDiagnostics.set(page, events)
+  page.on("console", (message) => {
+    const text = message.text()
+    const prefix = "D1_INIT_STAGE:"
+    if (!text.startsWith(prefix)) return
+    try {
+      events.push(JSON.parse(text.slice(prefix.length)))
+    } catch {
+      // Ignore unrelated or malformed browser-console output.
+    }
+  })
+}
+
+test.afterEach(async ({ page }, testInfo) => {
+  const events = partialWorkerDiagnostics.get(page)
+  if (!events?.length) return
+  const file = evidenceOutputPath(
+    testInfo,
+    "D1",
+    "migration",
+    `large-upgrade-worker-stages-${testInfo.project.name}.json`,
+  )
+  mkdirSync(path.dirname(file), { recursive: true })
+  writeFileSync(file, `${JSON.stringify(events, null, 2)}\n`)
+})
+
 async function harness<T>(page: Page, name: string, argument?: string) {
   return page.evaluate(
     async ([exportName, value]) => {
@@ -285,6 +315,7 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
 test("upgrades and reopens a 40-student course within five seconds each", async ({
   page,
 }) => {
+  capturePartialWorkerDiagnostics(page)
   await openBlankPage(page)
   const result = await harness<{
     durationMs: number
@@ -318,6 +349,7 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
       durationMs?: number
       waitMs?: number
       category?: string
+      messageCount?: number
     }>
     reopenWorkerDiagnostics: Array<{
       workerId: string
