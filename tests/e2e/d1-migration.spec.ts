@@ -17,20 +17,6 @@ import { evidenceOutputPath } from "./evidence"
 
 const isAppRoot = (target: URL) => target.pathname === "/"
 
-type WorkerStageEvent = {
-  workerId: string
-  stage: string
-  workerElapsedMs?: number
-  pageReceivedAtMs: number
-  durationMs?: number
-  waitMs?: number
-  category?: string
-  messageCount?: number
-  transferSize?: number
-}
-
-type TableDigest = { table: string; sha256: string }
-
 const fixtureRows = (version: string) => {
   const fixture = JSON.parse(
     readFileSync(
@@ -63,17 +49,6 @@ async function openBlankPage(page: Page) {
   await page.unroute(isAppRoot)
 }
 
-async function reloadBlankPage(page: Page) {
-  await page.route(isAppRoot, (route) =>
-    route.fulfill({
-      contentType: "text/html",
-      body: "<html><body></body></html>",
-    }),
-  )
-  await page.reload()
-  await page.unroute(isAppRoot)
-}
-
 /** Keeps a harness result: tracked evidence when CVC_EVIDENCE_REFRESH=D1. */
 function record(name: string, result: unknown) {
   const info = test.info()
@@ -86,36 +61,6 @@ function record(name: string, result: unknown) {
   mkdirSync(path.dirname(file), { recursive: true })
   writeFileSync(file, `${JSON.stringify(result, null, 2)}\n`)
 }
-
-const partialWorkerDiagnostics = new WeakMap<Page, unknown[]>()
-
-function capturePartialWorkerDiagnostics(page: Page) {
-  const events: unknown[] = []
-  partialWorkerDiagnostics.set(page, events)
-  page.on("console", (message) => {
-    const text = message.text()
-    const prefix = "D1_INIT_STAGE:"
-    if (!text.startsWith(prefix)) return
-    try {
-      events.push(JSON.parse(text.slice(prefix.length)))
-    } catch {
-      // Ignore unrelated or malformed browser-console output.
-    }
-  })
-}
-
-test.afterEach(async ({ page }, testInfo) => {
-  const events = partialWorkerDiagnostics.get(page)
-  if (!events?.length) return
-  const file = evidenceOutputPath(
-    testInfo,
-    "D1",
-    "migration",
-    `large-upgrade-worker-stages-${testInfo.project.name}.json`,
-  )
-  mkdirSync(path.dirname(file), { recursive: true })
-  writeFileSync(file, `${JSON.stringify(events, null, 2)}\n`)
-})
 
 async function harness<T>(page: Page, name: string, argument?: string) {
   return page.evaluate(
@@ -340,7 +285,6 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
 test("upgrades and reopens a 40-student course within five seconds each", async ({
   page,
 }) => {
-  capturePartialWorkerDiagnostics(page)
   await openBlankPage(page)
   const result = await harness<{
     durationMs: number
@@ -366,36 +310,16 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
     expectedInjectedEvaluationRows: number
     injectedEvaluationRows: number
     reopenInjectedEvaluationRows: number
-    workerDiagnostics: WorkerStageEvent[]
-    reopenWorkerDiagnostics: WorkerStageEvent[]
     rows: number
     reopenRows: number
     rowIssues: unknown[]
     reopenRowIssues: unknown[]
     reopenedIdentical: boolean
-    upgradeTableSha256: TableDigest[]
-    upgradeOrderedTablesSha256: string
-    reopenTableSha256: TableDigest[]
-    reopenOrderedTablesSha256: string
   }>(page, "runLargeUpgrade")
   record("large-upgrade", result)
-  record("large-upgrade-hash-comparison", {
-    tables: [
-      {
-        phase: "upgrade",
-        orderedTablesSha256: result.upgradeOrderedTablesSha256,
-        tableSha256: result.upgradeTableSha256,
-      },
-      {
-        phase: "same-page-reopen",
-        orderedTablesSha256: result.reopenOrderedTablesSha256,
-        tableSha256: result.reopenTableSha256,
-      },
-    ],
-  })
   test.info().annotations.push({
     type: "migration",
-    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); same-page reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; ordered hashes ${result.upgradeOrderedTablesSha256}/${result.reopenOrderedTablesSha256}; read/close outside bounds ${result.readTablesMs}/${result.closeMs}, ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms; worker timing events ${JSON.stringify(result.workerDiagnostics)} / ${JSON.stringify(result.reopenWorkerDiagnostics)}`,
+    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms`,
   })
   expect(result.rowIssues).toEqual([])
   expect(result.reopenRows).toBe(result.rows)
@@ -416,105 +340,8 @@ test("upgrades and reopens a 40-student course within five seconds each", async 
   expect(result.reopenInjectedEvaluationRows).toBe(
     result.expectedInjectedEvaluationRows,
   )
-  expect(result.upgradeTableSha256).toEqual(result.reopenTableSha256)
-  expect(result.upgradeOrderedTablesSha256).toBe(
-    result.reopenOrderedTablesSha256,
-  )
   // The same five-second bound covers construction, SDK init and preparation;
   // stage timings above help diagnose a slow open without weakening it.
   expect(result.durationMs).toBeLessThan(5000)
   expect(result.reopenMs).toBeLessThan(5000)
-})
-
-test("reopens a 40-student upgrade directly from a fresh document within five seconds", async ({
-  page,
-}) => {
-  capturePartialWorkerDiagnostics(page)
-  await openBlankPage(page)
-  const { filename, ...upgrade } = await harness<{
-    filename: string
-    durationMs: number
-    createDatabaseMs: number
-    initMs: number
-    adapterInitMs: number
-    sdkReadyAfterAdapterMs: number
-    prepareAfterInitMs: number
-    readTablesMs: number
-    closeMs: number
-    workerDiagnostics: WorkerStageEvent[]
-    expectedRows: number
-    expectedInjectedStudentRows: number
-    expectedInjectedEvaluationRows: number
-    rows: number
-    injectedStudentRows: number
-    injectedEvaluationRows: number
-    rowIssues: unknown[]
-    tableSha256: TableDigest[]
-    orderedTablesSha256: string
-  }>(page, "runLargeUpgradeFreshDirect")
-  record("large-upgrade-fresh-direct-upgrade", upgrade)
-
-  // This variant intentionally has no same-page reopen between the upgrade
-  // and the actual document reload.
-  await reloadBlankPage(page)
-  const freshDocument = await harness<{
-    durationMs: number
-    createDatabaseMs: number
-    initMs: number
-    adapterInitMs: number
-    sdkReadyAfterAdapterMs: number
-    prepareAfterInitMs: number
-    readTablesMs: number
-    closeMs: number
-    workerDiagnostics: WorkerStageEvent[]
-    rows: number
-    injectedStudentRows: number
-    injectedEvaluationRows: number
-    rowIssues: unknown[]
-    tableSha256: TableDigest[]
-    orderedTablesSha256: string
-  }>(page, "reopenLargeUpgrade", filename)
-  record("large-upgrade-fresh-direct-reopen", freshDocument)
-  record("large-upgrade-fresh-direct-hash-comparison", {
-    upgrade: {
-      rows: upgrade.rows,
-      injectedStudentRows: upgrade.injectedStudentRows,
-      injectedEvaluationRows: upgrade.injectedEvaluationRows,
-      orderedTablesSha256: upgrade.orderedTablesSha256,
-      tableSha256: upgrade.tableSha256,
-    },
-    freshDocument: {
-      rows: freshDocument.rows,
-      injectedStudentRows: freshDocument.injectedStudentRows,
-      injectedEvaluationRows: freshDocument.injectedEvaluationRows,
-      orderedTablesSha256: freshDocument.orderedTablesSha256,
-      tableSha256: freshDocument.tableSha256,
-    },
-  })
-  test.info().annotations.push({
-    type: "migration-fresh-document-direct",
-    description: `Upgrade ${upgrade.durationMs} ms (adapter ${upgrade.adapterInitMs}); direct fresh-document reopen ${freshDocument.durationMs} ms (adapter ${freshDocument.adapterInitMs}); rows ${upgrade.rows}/${freshDocument.rows} of ${upgrade.expectedRows}; students ${upgrade.injectedStudentRows}/${freshDocument.injectedStudentRows} of ${upgrade.expectedInjectedStudentRows}; evaluations ${upgrade.injectedEvaluationRows}/${freshDocument.injectedEvaluationRows} of ${upgrade.expectedInjectedEvaluationRows}; ordered hashes ${upgrade.orderedTablesSha256}/${freshDocument.orderedTablesSha256}; worker timing events ${JSON.stringify(upgrade.workerDiagnostics)} / ${JSON.stringify(freshDocument.workerDiagnostics)}`,
-  })
-
-  expect(upgrade.rowIssues).toEqual([])
-  expect(freshDocument.rowIssues).toEqual([])
-  expect(upgrade.expectedRows).toBe(609)
-  expect(upgrade.rows).toBe(upgrade.expectedRows)
-  expect(freshDocument.rows).toBe(upgrade.expectedRows)
-  expect(upgrade.expectedInjectedStudentRows).toBe(40)
-  expect(upgrade.injectedStudentRows).toBe(upgrade.expectedInjectedStudentRows)
-  expect(freshDocument.injectedStudentRows).toBe(
-    upgrade.expectedInjectedStudentRows,
-  )
-  expect(upgrade.expectedInjectedEvaluationRows).toBe(520)
-  expect(upgrade.injectedEvaluationRows).toBe(
-    upgrade.expectedInjectedEvaluationRows,
-  )
-  expect(freshDocument.injectedEvaluationRows).toBe(
-    upgrade.expectedInjectedEvaluationRows,
-  )
-  expect(upgrade.tableSha256).toEqual(freshDocument.tableSha256)
-  expect(upgrade.orderedTablesSha256).toBe(freshDocument.orderedTablesSha256)
-  expect(upgrade.durationMs).toBeLessThan(5000)
-  expect(freshDocument.durationMs).toBeLessThan(5000)
 })

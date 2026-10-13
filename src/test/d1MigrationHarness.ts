@@ -87,440 +87,6 @@ async function probes(database: PowerSyncDatabase) {
   ).map((row) => row.id)
 }
 
-interface WorkerInitDiagnostic {
-  workerId: string
-  stage: string
-  workerElapsedMs?: number
-  pageReceivedAtMs: number
-  durationMs?: number
-  waitMs?: number
-  category?: string
-  messageCount?: number
-  transferSize?: number
-}
-
-/**
- * Test-only worker shim for locating slow adapter initialization. The SDK's
- * normal worker entry still runs unchanged; the bootstrap wraps browser APIs
- * before importing it and reports timings over an isolated BroadcastChannel.
- */
-function captureWorkerInitDiagnostics() {
-  const configuredWasmMode = (
-    import.meta.env as ImportMetaEnv & {
-      readonly VITE_D3_WASM_MODE?: string
-    }
-  ).VITE_D3_WASM_MODE
-  const wasmMode =
-    configuredWasmMode === undefined || configuredWasmMode === "native"
-      ? "native"
-      : configuredWasmMode === "buffered-instantiate" ||
-          configuredWasmMode === "buffered-module"
-        ? configuredWasmMode
-        : (() => {
-            throw new Error("Unsupported D3 diagnostic WebAssembly mode")
-          })()
-  const channelName = `d1-init-${crypto.randomUUID()}`
-  const channel = new BroadcastChannel(channelName)
-  const events: WorkerInitDiagnostic[] = []
-  const wrapperUrls = new Map<string, () => void>()
-  const originalWorker = globalThis.Worker
-  const lockManager = globalThis.navigator.locks
-  const originalLockDescriptor = Object.getOwnPropertyDescriptor(
-    lockManager,
-    "request",
-  )
-  const originalLockRequest = lockManager.request.bind(lockManager)
-  const recordEvent = (
-    event: Omit<WorkerInitDiagnostic, "pageReceivedAtMs">,
-  ) => {
-    const captured = {
-      ...event,
-      pageReceivedAtMs: Math.round(performance.now()),
-    }
-    events.push(captured)
-    console.info(`D1_INIT_STAGE:${JSON.stringify(captured)}`)
-  }
-
-  try {
-    Object.defineProperty(lockManager, "request", {
-      configurable: true,
-      writable: true,
-      value: (...incoming: unknown[]) => {
-        const started = performance.now()
-        const args = [...incoming]
-        const callbackIndex = typeof args[1] === "function" ? 1 : 2
-        const callback = args[callbackIndex]
-        if (typeof callback === "function") {
-          const name = String(args[0])
-          const category = name.startsWith("tab-close-signal-")
-            ? "tab-close-signal"
-            : name === "open-wasqlite-db"
-              ? "powersync-open"
-              : name.startsWith("db-lock-")
-                ? "sqlite-database"
-                : name.startsWith("lock##")
-                  ? "sqlite-vfs"
-                  : "other"
-          args[callbackIndex] = (lock: Lock | null) => {
-            recordEvent({
-              workerId: "page",
-              stage: "page-weblock-granted",
-              category,
-              waitMs: Math.round((performance.now() - started) * 100) / 100,
-            })
-            return Reflect.apply(callback, undefined, [lock])
-          }
-        }
-        return Reflect.apply(originalLockRequest, lockManager, args)
-      },
-    })
-  } catch {
-    recordEvent({
-      workerId: "page",
-      stage: "page-weblock-instrumentation-unavailable",
-    })
-  }
-
-  channel.addEventListener("message", (event: MessageEvent) => {
-    const data = event.data as Partial<WorkerInitDiagnostic> | undefined
-    if (
-      !data ||
-      typeof data.workerId !== "string" ||
-      typeof data.stage !== "string"
-    ) {
-      return
-    }
-    if (data.stage === "worker-bootstrap-ready") {
-      wrapperUrls.get(data.workerId)?.()
-    }
-    recordEvent({
-      workerId: data.workerId,
-      stage: data.stage,
-      ...(typeof data.workerElapsedMs === "number"
-        ? { workerElapsedMs: data.workerElapsedMs }
-        : {}),
-      ...(typeof data.durationMs === "number"
-        ? { durationMs: data.durationMs }
-        : {}),
-      ...(typeof data.waitMs === "number" ? { waitMs: data.waitMs } : {}),
-      ...(typeof data.category === "string" ? { category: data.category } : {}),
-      ...(typeof data.messageCount === "number"
-        ? { messageCount: data.messageCount }
-        : {}),
-      ...(typeof data.transferSize === "number"
-        ? { transferSize: data.transferSize }
-        : {}),
-    })
-  })
-
-  const diagnosticWorker = new Proxy(originalWorker, {
-    construct(target, args) {
-      const scriptUrl = String(args[0])
-      const options = args[1] as WorkerOptions | undefined
-      const workerId = crypto.randomUUID()
-      recordEvent({
-        workerId,
-        stage: "worker-created",
-      })
-      const source = `
-        const channel = new BroadcastChannel(${JSON.stringify(channelName)});
-        const workerId = ${JSON.stringify(workerId)};
-        const wasmMode = ${JSON.stringify(wasmMode)};
-        const now = () => performance.now();
-        const send = (stage, fields = {}) => channel.postMessage({
-          workerId,
-          stage,
-          workerElapsedMs: Math.round(now() * 100) / 100,
-          ...fields
-        });
-        const elapsed = (started) => Math.round((now() - started) * 100) / 100;
-        const lockCategory = (name) => {
-          const value = String(name);
-          if (value === "open-wasqlite-db") return "powersync-open";
-          if (value.startsWith("tab-close-signal-")) return "tab-close-signal";
-          if (value.startsWith("db-lock-")) return "sqlite-database";
-          if (value.startsWith("lock##")) return "sqlite-vfs";
-          return "other";
-        };
-        send("wasm-mode-selected", { category: wasmMode });
-
-        try {
-          const originalFetch = globalThis.fetch.bind(globalThis);
-          Object.defineProperty(globalThis, "fetch", {
-            configurable: true,
-            writable: true,
-            value: (...args) => {
-              const started = now();
-              return originalFetch(...args).then((response) => {
-                const contentType = response.headers.get("content-type") || "";
-                let sameOriginWasm = false;
-                try {
-                  sameOriginWasm =
-                    new URL(response.url).origin === globalThis.location.origin &&
-                    contentType.toLowerCase().includes("application/wasm");
-                } catch {
-                  // Opaque or invalid response URLs carry no timing category.
-                }
-                if (sameOriginWasm) {
-                  send("wasm-fetch-response", {
-                    durationMs: elapsed(started),
-                    category: "same-origin-wasm"
-                  });
-                }
-                return response;
-              });
-            }
-          });
-        } catch {
-          send("fetch-instrumentation-unavailable");
-        }
-
-        const reportedWasmResources = new Set();
-        const reportWasmResourceTimings = () => {
-          try {
-            const entries = globalThis.performance.getEntriesByType("resource");
-            for (const entry of entries) {
-              const resource = entry;
-              if (!(resource.responseEnd > 0)) continue;
-              const url = new URL(resource.name, globalThis.location.href);
-              if (
-                url.origin !== globalThis.location.origin ||
-                !url.pathname.toLowerCase().endsWith(".wasm") ||
-                reportedWasmResources.has(resource.name)
-              ) continue;
-              reportedWasmResources.add(resource.name);
-              send("wasm-fetch-body-ready", {
-                durationMs: Math.round((resource.responseEnd - resource.fetchStart) * 100) / 100,
-                waitMs: Math.round((resource.responseEnd - resource.responseStart) * 100) / 100,
-                transferSize: Number.isFinite(resource.transferSize) ? resource.transferSize : undefined,
-                category: "same-origin-wasm"
-              });
-            }
-          } catch {
-            send("wasm-resource-timing-unavailable");
-          }
-        };
-
-        try {
-          const idb = globalThis.indexedDB;
-          const originalOpen = idb.open.bind(idb);
-          Object.defineProperty(idb, "open", {
-            configurable: true,
-            writable: true,
-            value: (...args) => {
-              const started = now();
-              const request = originalOpen(...args);
-              request.addEventListener("blocked", () => {
-                send("indexeddb-open-blocked", { waitMs: elapsed(started) });
-              });
-              request.addEventListener("success", () => {
-                send("indexeddb-open-success", { durationMs: elapsed(started) });
-              });
-              request.addEventListener("error", () => {
-                send("indexeddb-open-error", { durationMs: elapsed(started) });
-              });
-              return request;
-            }
-          });
-        } catch {
-          send("indexeddb-instrumentation-unavailable");
-        }
-
-        try {
-          const lockManager = globalThis.navigator.locks;
-          const originalRequest = lockManager.request.bind(lockManager);
-          Object.defineProperty(lockManager, "request", {
-            configurable: true,
-            writable: true,
-            value: (...incoming) => {
-              const started = now();
-              const args = [...incoming];
-              const callbackIndex = typeof args[1] === "function" ? 1 : 2;
-              const callback = args[callbackIndex];
-              if (typeof callback === "function") {
-                const category = lockCategory(args[0]);
-                args[callbackIndex] = (lock) => {
-                  send("weblock-granted", {
-                    category,
-                    waitMs: elapsed(started)
-                  });
-                  return callback(lock);
-                };
-              }
-              const request = originalRequest(...args);
-              return request.catch((error) => {
-                send("weblock-error", {
-                  category: lockCategory(args[0]),
-                  waitMs: elapsed(started)
-                });
-                throw error;
-              });
-            }
-          });
-        } catch {
-          send("weblock-instrumentation-unavailable");
-        }
-
-        try {
-          const wasm = globalThis.WebAssembly;
-          for (const method of ["compile", "compileStreaming", "instantiate", "instantiateStreaming"]) {
-            if (typeof wasm[method] !== "function") continue;
-            const original = wasm[method].bind(wasm);
-            Object.defineProperty(wasm, method, {
-              configurable: true,
-              writable: true,
-              value: (...args) => {
-                const started = now();
-                let result;
-                try {
-                  if (method === "instantiateStreaming" && wasmMode !== "native") {
-                    result = Promise.resolve(args[0]).then(async (response) => {
-                      if (!(response instanceof globalThis.Response)) {
-                        throw new TypeError("Expected a WebAssembly Response");
-                      }
-                      const contentType = response.headers.get("content-type") || "";
-                      if (contentType.split(";", 1)[0].trim().toLowerCase() !== "application/wasm") {
-                        throw new TypeError("Expected application/wasm content type");
-                      }
-                      const bodyStarted = now();
-                      const bytes = await response.arrayBuffer();
-                      send("wasm-buffered-body-ready", {
-                        category: wasmMode,
-                        durationMs: elapsed(bodyStarted)
-                      });
-                      if (wasmMode === "buffered-instantiate") {
-                        return wasm.instantiate(bytes, args[1]);
-                      }
-                      const compileStarted = now();
-                      const module = new wasm.Module(bytes);
-                      send("wasm-complete", {
-                        category: "buffered-module-compile",
-                        durationMs: elapsed(compileStarted)
-                      });
-                      const instantiateStarted = now();
-                      const instance = new wasm.Instance(module, args[1]);
-                      send("wasm-complete", {
-                        category: "buffered-module-instantiate",
-                        durationMs: elapsed(instantiateStarted)
-                      });
-                      return { module, instance };
-                    });
-                  } else {
-                    result = original(...args);
-                  }
-                } catch (error) {
-                  send("wasm-error", { category: method, durationMs: elapsed(started) });
-                  throw error;
-                }
-                return Promise.resolve(result).then(
-                  (value) => {
-                    send("wasm-complete", { category: method, durationMs: elapsed(started) });
-                    if (method === "instantiateStreaming") reportWasmResourceTimings();
-                    return value;
-                  },
-                  (error) => {
-                    send("wasm-error", { category: method, durationMs: elapsed(started) });
-                    throw error;
-                  }
-                );
-              }
-            });
-          }
-        } catch {
-          send("wasm-instrumentation-unavailable");
-        }
-
-        const bufferedMessages = [];
-        const captureEarlyMessage = (event) => {
-          event.stopImmediatePropagation();
-          bufferedMessages.push({
-            data: event.data,
-            ports: Array.from(event.ports),
-            origin: event.origin,
-            lastEventId: event.lastEventId,
-            source: event.source
-          });
-          send("worker-message-buffered", { category: "comlink" });
-        };
-        self.addEventListener("message", captureEarlyMessage, true);
-        let entryImported = false;
-        send("worker-bootstrap-ready");
-        try {
-          await import(${JSON.stringify(scriptUrl)});
-          entryImported = true;
-          send("worker-entry-evaluated");
-        } catch (error) {
-          send("worker-entry-import-error", {
-            category: error instanceof Error ? error.name : "unknown"
-          });
-          throw error;
-        } finally {
-          self.removeEventListener("message", captureEarlyMessage, true);
-          if (entryImported) {
-            for (const message of bufferedMessages) {
-              self.dispatchEvent(new MessageEvent("message", message));
-            }
-            send("worker-message-buffer-replayed", {
-              category: "comlink",
-              messageCount: bufferedMessages.length
-            });
-          }
-        }
-      `
-      const wrapperUrl = URL.createObjectURL(
-        new Blob([source], { type: "text/javascript" }),
-      )
-      const worker = Reflect.construct(
-        target,
-        [wrapperUrl, options],
-        target,
-      ) as Worker
-      const revoke = () => {
-        if (wrapperUrls.has(workerId)) {
-          URL.revokeObjectURL(wrapperUrl)
-          wrapperUrls.delete(workerId)
-        }
-      }
-      wrapperUrls.set(workerId, revoke)
-      worker.addEventListener("error", revoke, { once: true })
-      const terminate = worker.terminate.bind(worker)
-      worker.terminate = () => {
-        recordEvent({
-          workerId,
-          stage: "worker-terminate-called",
-        })
-        revoke()
-        terminate()
-      }
-      return worker
-    },
-  })
-
-  globalThis.Worker = diagnosticWorker
-  return {
-    events,
-    restore() {
-      globalThis.Worker = originalWorker
-      if (originalLockDescriptor) {
-        Object.defineProperty(lockManager, "request", originalLockDescriptor)
-      } else {
-        Reflect.deleteProperty(lockManager, "request")
-      }
-    },
-    async finish() {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-      globalThis.Worker = originalWorker
-      if (originalLockDescriptor) {
-        Object.defineProperty(lockManager, "request", originalLockDescriptor)
-      } else {
-        Reflect.deleteProperty(lockManager, "request")
-      }
-      for (const revoke of wrapperUrls.values()) revoke()
-      channel.close()
-    },
-  }
-}
-
 /**
  * Synthetic migrations: the shipped list is empty until D2, and the ledger is
  * proved on the real engine all the same. Each leaves a `probe:` row in `meta`
@@ -812,77 +378,7 @@ export async function runLegacyRepairs(): Promise<LegacyRepairResult> {
  * through `prepareDatabase` and timed, then opened again and timed, since the
  * repairs' probe runs on every open.
  */
-async function sha256Json(value: unknown) {
-  const bytes = new TextEncoder().encode(JSON.stringify(value) ?? "")
-  const digest = await crypto.subtle.digest("SHA-256", bytes)
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("")
-}
-
-async function digestTables(tables: StoredTables) {
-  const tableSha256 = await Promise.all(
-    COURSE_TABLES.map(async (table) => ({
-      table,
-      sha256: await sha256Json(tables[table] ?? []),
-    })),
-  )
-  const orderedTablesSha256 = await sha256Json(
-    COURSE_TABLES.map((table) => [table, tables[table] ?? []]),
-  )
-  return { tableSha256, orderedTablesSha256 }
-}
-
-async function timedLargeOpen(filename: string) {
-  // Start before construction so the five-second bound includes the full
-  // cold-open path. Keep the result reads and close outside that bound.
-  const started = performance.now()
-  const workerDiagnostics = captureWorkerInitDiagnostics()
-  const constructed = performance.now()
-  let database: PowerSyncDatabase
-  try {
-    database = createDatabase(filename)
-  } finally {
-    workerDiagnostics.restore()
-  }
-  const created = performance.now()
-  const adapterInitStarted = performance.now()
-  // PowerSync starts this adapter open from its constructor. Awaiting the
-  // same promise used by its normal init path lets the report separate the
-  // WA-SQLite worker/VFS open from the remaining SDK readiness work.
-  const adapter = database.database as unknown as { init: () => Promise<void> }
-  await adapter.init()
-  const adapterReady = performance.now()
-  await database.init()
-  const initialized = performance.now()
-  await prepareDatabase(database)
-  const prepared = performance.now()
-  const durationMs = Math.round(prepared - started)
-  const createDatabaseMs = Math.round(created - constructed)
-  const initMs = Math.round(initialized - created)
-  const prepareAfterInitMs = Math.round(prepared - initialized)
-  const readStarted = performance.now()
-  const tables = await readTables(database)
-  const readTablesMs = Math.round(performance.now() - readStarted)
-  const closeStarted = performance.now()
-  await database.close()
-  const closeMs = Math.round(performance.now() - closeStarted)
-  await workerDiagnostics.finish()
-  return {
-    durationMs,
-    createDatabaseMs,
-    initMs,
-    adapterInitMs: Math.round(adapterReady - adapterInitStarted),
-    sdkReadyAfterAdapterMs: Math.round(initialized - adapterReady),
-    prepareAfterInitMs,
-    readTablesMs,
-    closeMs,
-    workerDiagnostics: workerDiagnostics.events,
-    tables,
-  }
-}
-
-async function seedLargeUpgrade() {
+export async function runLargeUpgrade() {
   const filename = `d1-large-${crypto.randomUUID()}.db`
   const base = FIXTURES["0.3.0"]
   const courseId = String(base.courses![0]!.id)
@@ -939,21 +435,51 @@ async function seedLargeUpgrade() {
     evaluations: [...base.evaluations!, ...evaluations],
   })
 
-  return {
-    filename,
-    expectedRows,
-    expectedInjectedStudentRows: students.length,
-    expectedInjectedEvaluationRows: evaluations.length,
+  const timedOpen = async () => {
+    // Start before construction so the five-second bound includes the full
+    // cold-open path. Keep the result reads and close outside that bound.
+    const started = performance.now()
+    const constructed = performance.now()
+    const database = createDatabase(filename)
+    const created = performance.now()
+    const adapterInitStarted = performance.now()
+    // PowerSync starts this adapter open from its constructor. Awaiting the
+    // same promise used by its normal init path lets the report separate the
+    // WA-SQLite worker/VFS open from the remaining SDK readiness work.
+    const adapter = database.database as unknown as {
+      init: () => Promise<void>
+    }
+    await adapter.init()
+    const adapterReady = performance.now()
+    await database.init()
+    const initialized = performance.now()
+    await prepareDatabase(database)
+    const prepared = performance.now()
+    const durationMs = Math.round(prepared - started)
+    const createDatabaseMs = Math.round(created - constructed)
+    const initMs = Math.round(initialized - created)
+    const prepareAfterInitMs = Math.round(prepared - initialized)
+    const readStarted = performance.now()
+    const tables = await readTables(database)
+    const readTablesMs = Math.round(performance.now() - readStarted)
+    const closeStarted = performance.now()
+    await database.close()
+    const closeMs = Math.round(performance.now() - closeStarted)
+    return {
+      durationMs,
+      createDatabaseMs,
+      initMs,
+      adapterInitMs: Math.round(adapterReady - adapterInitStarted),
+      sdkReadyAfterAdapterMs: Math.round(initialized - adapterReady),
+      prepareAfterInitMs,
+      readTablesMs,
+      closeMs,
+      tables,
+    }
   }
-}
-
-export async function runLargeUpgrade() {
-  const seed = await seedLargeUpgrade()
-  const { filename, expectedRows } = seed
-
-  const upgrade = await timedLargeOpen(filename)
+  const upgrade = await timedOpen()
   // Every later open probes for rows to repair; sound data costs one read.
-  const reopen = await timedLargeOpen(filename)
+  const reopen = await timedOpen()
   const rows = Object.values(upgrade.tables).reduce(
     (sum, list) => sum + list.length,
     0,
@@ -974,8 +500,6 @@ export async function runLargeUpgrade() {
   const reopenInjectedEvaluationRows = reopen.tables.evaluations!.filter(
     (row) => String(row.id).startsWith("evaluation-load-"),
   ).length
-  const upgradeDigests = await digestTables(upgrade.tables)
-  const reopenDigests = await digestTables(reopen.tables)
   return {
     durationMs: upgrade.durationMs,
     createDatabaseMs: upgrade.createDatabaseMs,
@@ -993,13 +517,11 @@ export async function runLargeUpgrade() {
     reopenPrepareAfterInitMs: reopen.prepareAfterInitMs,
     reopenReadTablesMs: reopen.readTablesMs,
     reopenCloseMs: reopen.closeMs,
-    workerDiagnostics: upgrade.workerDiagnostics,
-    reopenWorkerDiagnostics: reopen.workerDiagnostics,
     expectedRows,
-    expectedInjectedStudentRows: seed.expectedInjectedStudentRows,
+    expectedInjectedStudentRows: students.length,
     injectedStudentRows,
     reopenInjectedStudentRows,
-    expectedInjectedEvaluationRows: seed.expectedInjectedEvaluationRows,
+    expectedInjectedEvaluationRows: evaluations.length,
     injectedEvaluationRows,
     reopenInjectedEvaluationRows,
     rows,
@@ -1008,81 +530,5 @@ export async function runLargeUpgrade() {
     reopenRowIssues: validateStoredRows(reopen.tables),
     reopenedIdentical:
       JSON.stringify(upgrade.tables) === JSON.stringify(reopen.tables),
-    upgradeTableSha256: upgradeDigests.tableSha256,
-    upgradeOrderedTablesSha256: upgradeDigests.orderedTablesSha256,
-    reopenTableSha256: reopenDigests.tableSha256,
-    reopenOrderedTablesSha256: reopenDigests.orderedTablesSha256,
-  }
-}
-
-/** Upgrade only, so a later document can reopen the file without a same-page
- * reopen warming the WebAssembly module first. */
-export async function runLargeUpgradeFreshDirect() {
-  const seed = await seedLargeUpgrade()
-  const upgrade = await timedLargeOpen(seed.filename)
-  const digests = await digestTables(upgrade.tables)
-  const rows = Object.values(upgrade.tables).reduce(
-    (sum, list) => sum + list.length,
-    0,
-  )
-  const injectedStudentRows = upgrade.tables.students!.filter((row) =>
-    String(row.id).startsWith("student-load-"),
-  ).length
-  const injectedEvaluationRows = upgrade.tables.evaluations!.filter((row) =>
-    String(row.id).startsWith("evaluation-load-"),
-  ).length
-  return {
-    filename: seed.filename,
-    durationMs: upgrade.durationMs,
-    createDatabaseMs: upgrade.createDatabaseMs,
-    initMs: upgrade.initMs,
-    adapterInitMs: upgrade.adapterInitMs,
-    sdkReadyAfterAdapterMs: upgrade.sdkReadyAfterAdapterMs,
-    prepareAfterInitMs: upgrade.prepareAfterInitMs,
-    readTablesMs: upgrade.readTablesMs,
-    closeMs: upgrade.closeMs,
-    workerDiagnostics: upgrade.workerDiagnostics,
-    expectedRows: seed.expectedRows,
-    expectedInjectedStudentRows: seed.expectedInjectedStudentRows,
-    expectedInjectedEvaluationRows: seed.expectedInjectedEvaluationRows,
-    rows,
-    injectedStudentRows,
-    injectedEvaluationRows,
-    rowIssues: validateStoredRows(upgrade.tables),
-    tableSha256: digests.tableSha256,
-    orderedTablesSha256: digests.orderedTablesSha256,
-  }
-}
-
-/** Reopen the same prepared database from a newly loaded document. */
-export async function reopenLargeUpgrade(filename: string) {
-  const reopened = await timedLargeOpen(filename)
-  const digests = await digestTables(reopened.tables)
-  const rows = Object.values(reopened.tables).reduce(
-    (sum, list) => sum + list.length,
-    0,
-  )
-  const injectedStudentRows = reopened.tables.students!.filter((row) =>
-    String(row.id).startsWith("student-load-"),
-  ).length
-  const injectedEvaluationRows = reopened.tables.evaluations!.filter((row) =>
-    String(row.id).startsWith("evaluation-load-"),
-  ).length
-  return {
-    durationMs: reopened.durationMs,
-    createDatabaseMs: reopened.createDatabaseMs,
-    initMs: reopened.initMs,
-    adapterInitMs: reopened.adapterInitMs,
-    sdkReadyAfterAdapterMs: reopened.sdkReadyAfterAdapterMs,
-    prepareAfterInitMs: reopened.prepareAfterInitMs,
-    readTablesMs: reopened.readTablesMs,
-    closeMs: reopened.closeMs,
-    workerDiagnostics: reopened.workerDiagnostics,
-    rows,
-    injectedStudentRows,
-    injectedEvaluationRows,
-    rowIssues: validateStoredRows(reopened.tables),
-    tableSha256: digests.tableSha256,
-    orderedTablesSha256: digests.orderedTablesSha256,
   }
 }

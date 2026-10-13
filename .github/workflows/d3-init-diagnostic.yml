@@ -1,36 +1,43 @@
 name: D3 initialization diagnostic (not acceptance)
-on:
-  push:
-    branches: ["codex/d3-init-probe-*"]
+on: [push, workflow_dispatch]
 permissions:
   contents: read
 jobs:
-  diagnose:
-    name: Compile (${{ matrix.mode }})
-    runs-on: ubuntu-latest
+  platform:
     strategy:
       fail-fast: false
       matrix:
-        mode: [native, buffered-instantiate, buffered-module]
-    env:
-      VITE_D3_WASM_MODE: ${{ matrix.mode }}
+        os: [ubuntu-latest, macos-15]
+        source: [D2, D3]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Select immutable application source and identical acceptance harness
+        env:
+          SOURCE: ${{ matrix.source }}
+          PROBE_SHA: ${{ github.sha }}
+        run: |
+          if [ "$SOURCE" = D2 ]; then
+            git checkout d033bbfe172d80166c280a363841fed3fe1e9476
+          else
+            git checkout 5e6316f45759ab7d706f9633dafe1f3dc64561a4
+          fi
+          git show "$PROBE_SHA:src/test/d1MigrationHarness.ts" > src/test/d1MigrationHarness.ts
+          git show "$PROBE_SHA:tests/e2e/d1-migration.spec.ts" > tests/e2e/d1-migration.spec.ts
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps webkit
-      - name: Measure unchanged five-second acceptance with extra stages
-        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep "reopens a 40-student upgrade directly from a fresh document" --retries=0
+      - name: Same five-second upgrade and reopen acceptance, without worker wrapper
+        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep="upgrades and reopens a 40-student" --retries=0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-init-stages-${{ matrix.mode }}
-          path: |
-            test-results/**/migration/large-upgrade-*.json
-            test-results/e2e-report.json
+          name: d3-platform-${{ matrix.os }}-${{ matrix.source }}
+          path: test-results/
           retention-days: 7
+          if-no-files-found: ignore
