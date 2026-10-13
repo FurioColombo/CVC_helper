@@ -1,0 +1,71 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "edc114940081643aefc6d04ce4f2e2df8a950929",
+  "ciRun": 38440302178,
+  "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38440302178",
+  "status": "FAILED_CHECKPOINT_NOT_PUBLISHED",
+  "classification": "HARNESS_LAYOUT_READINESS_RACE",
+  "failingScript": "check:update",
+  "engine": "webkit",
+  "profile": {
+    "width": 320,
+    "height": 664,
+    "textPercent": 200,
+    "personSelected": true,
+    "intendedPosition": "document end"
+  },
+  "ciObserved": {
+    "controlBottom": 277,
+    "bannerTop": 177.2,
+    "clearancePx": -99.8
+  },
+  "diagnostic": {
+    "source": "Ignored copy of the unchanged production journey with native ResizeObserver callback delivery delayed 250 ms",
+    "observedControlBottom": 277,
+    "observedScrollY": 643,
+    "finalDocumentHeight": 1505,
+    "finalMaximumScrollY": 841,
+    "latePaddingGrowthPx": 198,
+    "afterOrdinaryEndScrollControlBottom": 79,
+    "afterOrdinaryEndScrollClearancePx": 98.2,
+    "interpretation": "The controlled-clock frame callbacks did not establish native footer-measurement readiness. Scrolling against the earlier document height left the page 198 px short of its final end."
+  },
+  "fix": "Wait for published footer heights to match actual measurements before scrolling, use explicit instant profile positioning, and require the real intended scroll position before unchanged overlap and tap assertions.",
+  "applicationCodeChanged": false,
+  "assertionsOrLimitsRelaxed": false,
+  "verification": {
+    "lintAndFormatting": "PASS",
+    "regularProductionJourney": {
+      "versions": ["0.3.0", "0.3.1"],
+      "engines": ["chromium", "webkit"],
+      "offerSeconds": [0.19, 0.31],
+      "typedEditPreserved": true,
+      "status": "PASS"
+    },
+    "testProductionJourney": {
+      "versions": ["0.4.0", "0.4.1"],
+      "engines": ["chromium", "webkit"],
+      "offerSeconds": [0.19, 0.83],
+      "typedEditPreserved": true,
+      "status": "PASS"
+    },
+    "delayedObserverJourney": {
+      "delayMs": 250,
+      "engines": ["chromium", "webkit"],
+      "offerSeconds": [0.19, 0.31],
+      "allOriginalGeometryAssertionsRetained": true,
+      "typedEditPreserved": true,
+      "status": "PASS"
+    },
+    "remaining": "Restricted reviews, recorded verification and exact full CI remain required."
+  },
+  "invalidatedLocalRecorder": {
+    "commit": "50bafa2",
+    "status": "STOPPED_AFTER_NEW_CI_FAILURE",
+    "accepted": false,
+    "reason": "Owned recorder stopped before changing its source. Its completed prefix is not final verification."
+  },
+  "migrationTiming": "This CI run stopped before the browser suite; Linux reopen acceptance remains unproven.",
+  "publication": "Withheld; D3-PHONE-UPDATE remains NEEDS_SETUP.",
+  "physicalDeviceAcceptance": "PENDING_OWNER"
+}

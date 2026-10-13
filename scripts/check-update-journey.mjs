@@ -308,9 +308,31 @@ const STRESS_PROFILES = [
   { width: 320, height: 664, text: 2, at: "end" },
 ]
 
-/** Two frames: the bar republishes its height, the layout follows. */
-const settle = (page) =>
-  page.evaluate(
+/**
+ * The controlled clock's frames do not prove that native ResizeObserver has
+ * published a changed footer height. Wait for those real measurements before
+ * scrolling to the end, otherwise later padding growth leaves us short of it.
+ */
+async function settle(page) {
+  await page.waitForFunction(() => {
+    const root = globalThis.document.documentElement
+    const navigation = globalThis.document.querySelector(
+      'nav[aria-label="Navigazione principale"]',
+    )
+    const banner = globalThis.document.querySelector('[role="status"].fixed')
+    return [
+      [navigation, "--bottom-nav-height"],
+      [banner, "--update-banner-height"],
+    ].every(
+      ([element, property]) =>
+        element &&
+        Math.abs(
+          element.getBoundingClientRect().height -
+            Number.parseFloat(root.style.getPropertyValue(property)),
+        ) < 0.5,
+    )
+  })
+  await page.evaluate(
     () =>
       new Promise((done) =>
         globalThis.requestAnimationFrame(() =>
@@ -318,6 +340,7 @@ const settle = (page) =>
         ),
       ),
   )
+}
 
 /**
  * On each stress profile: each control clear of the offer, and the offer's
@@ -336,13 +359,27 @@ async function underStress(page, name, controls) {
     await settle(page)
     await page.evaluate(
       (top) =>
-        globalThis.scrollTo(
-          0,
-          top ? 0 : globalThis.document.documentElement.scrollHeight,
-        ),
+        globalThis.scrollTo({
+          top: top ? 0 : globalThis.document.documentElement.scrollHeight,
+          behavior: "instant",
+        }),
       at === "top",
     )
     await settle(page)
+    await page.waitForFunction(
+      (top) =>
+        Math.abs(
+          globalThis.scrollY -
+            (top
+              ? 0
+              : Math.max(
+                  0,
+                  globalThis.document.documentElement.scrollHeight -
+                    globalThis.innerHeight,
+                )),
+        ) < 1,
+      at === "top",
+    )
     const clearancePx = {}
     for (const [label, control] of controls) {
       clearancePx[label] = (
