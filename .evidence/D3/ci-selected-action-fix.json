@@ -507,5 +507,31 @@
     ],
     "status": "PASS",
     "finalRecorder": false
+  },
+  "focusedTestProductionJourney": {
+    "sourceCommit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+    "installedVersion": "0.4.0",
+    "deployedVersion": "0.4.1",
+    "limitSeconds": 60,
+    "runs": [
+      {
+        "engine": "chromium",
+        "secondsFromForegroundToOffer": 0.19,
+        "editSurvived": true,
+        "versionShownAfterUpdate": "0.4.1",
+        "updatedNoteShown": true,
+        "noUpdateOfferedAfterwards": true
+      },
+      {
+        "engine": "webkit",
+        "secondsFromForegroundToOffer": 0.31,
+        "editSurvived": true,
+        "versionShownAfterUpdate": "0.4.1",
+        "updatedNoteShown": true,
+        "noUpdateOfferedAfterwards": true
+      }
+    ],
+    "status": "PASS",
+    "finalRecorder": false
   }
 }

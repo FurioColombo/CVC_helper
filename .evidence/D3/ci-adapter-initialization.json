@@ -52,7 +52,7 @@
     "rowIssues": [],
     "conclusion": "Failed first on a diagnostic expected-row miscount (606 instead of 609); the measured reopen also exceeds the unchanged 5000-ms limit. Three D2 list-item rows were omitted from the initial independent expected count. That count now derives from canonical list values. This diagnostic workflow cannot qualify as exact-checkpoint CI."
   },
-  "nextStep": "Localize the adapter delay with timestamp-only worker diagnostics, then fix its demonstrated cause and rerun the unchanged acceptance suite.",
+  "nextStep": "Compare identical unwrapped acceptance on immutable D2/D3 across Linux and macOS before choosing an environment correction or production remedy.",
   "publication": "Withheld; the owner queue remains NEEDS_SETUP.",
   "physicalDeviceAcceptance": "PENDING_OWNER",
   "wrapperDiagnostic": {
@@ -82,5 +82,257 @@
     "rowIssues": [],
     "limitsChanged": false,
     "qualifiesLinuxCI": false
+  },
+  "repairedLinuxWorkerDiagnostic": {
+    "commit": "289d0f76391d3862f4c3fdafb6aabd1ed6dd9704",
+    "run": 38479035502,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38479035502",
+    "status": "FAIL_UNCHANGED_REOPEN_BOUND",
+    "upgradeMs": 1746,
+    "upgradeAdapterInitMs": 513,
+    "reopenMs": 8212,
+    "reopenAdapterInitMs": 7949,
+    "firstWasmInstantiateStreamingMs": 98,
+    "reopenWasmInstantiateStreamingMs": 7765,
+    "maxReopenLockWaitMs": 11,
+    "rows": 609,
+    "reopenRows": 609,
+    "reopenedIdentical": true,
+    "rowIssues": [],
+    "earlyWorkerMessagesBufferedAndReplayed": true,
+    "indexedDbOpenEventsCaptured": false,
+    "interpretation": "Most of the adapter delay lies within instantiateStreaming, which still includes waiting for its fetched input. Short observed lock waits do not explain the delay. Fetch/compilation attribution and a faithful fresh-document comparison remain pending; no production fix is established."
+  },
+  "independentReloadComparison": {
+    "commit": "d053ed0af15b875fcf5f585e6ebed4e8db561736",
+    "run": 38480946921,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38480946921",
+    "separateLinuxJobs": true,
+    "samePage": {
+      "upgradeMs": 1763,
+      "reopenMs": 8254,
+      "reopenWasmInstantiateStreamingMs": 7843,
+      "wasmResponseMs": 5,
+      "wasmBodyReadyMs": 33,
+      "wasmTransferSize": 2282065,
+      "rows": 609,
+      "reopenRows": 609
+    },
+    "freshDirect": {
+      "upgradeMs": 1733,
+      "reopenMs": 7477,
+      "reopenAdapterInitMs": 7182,
+      "reopenWasmInstantiateStreamingMs": 6808,
+      "wasmResponseMs": 5,
+      "wasmBodyReadyMs": 15,
+      "wasmTransferSize": 2282065,
+      "rows": 609,
+      "reopenRows": 609
+    },
+    "dataProof": "Both variants retain all 13 ordered table hashes, 40 injected students and 520 injected evaluations with no row issues.",
+    "conclusion": "Direct reload alone does not fix the delay. Most time lies in WebAssembly instantiation after fast response/body delivery. The sequential third open was650ms after the slow same-page compile had completed; that warm result cannot establish a lifecycle fix.",
+    "limitsChanged": false,
+    "productionFixEstablished": false
+  },
+  "compilerComparison": {
+    "sourceCommit": "78adf0433b7027bd4528a351878fbf9d9547ccc8",
+    "run": 38483235325,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38483235325",
+    "status": "ALL_THREE_MODES_FAIL_UNCHANGED_BOUND",
+    "separateJobs": true,
+    "modes": [
+      {
+        "mode": "native",
+        "upgradeMs": 1872,
+        "reopenMs": 7958,
+        "reopenAdapterInitMs": 7676,
+        "wasmStages": [
+          {
+            "stage": "wasm-fetch-response",
+            "category": "same-origin-wasm",
+            "durationMs": 5
+          },
+          {
+            "stage": "wasm-complete",
+            "category": "instantiateStreaming",
+            "durationMs": 7283
+          },
+          {
+            "stage": "wasm-fetch-body-ready",
+            "category": "same-origin-wasm",
+            "durationMs": 32,
+            "waitMs": 29,
+            "transferSize": 2282065
+          }
+        ],
+        "rows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "issues": [],
+        "allTableHashesMatch": true,
+        "orderedHashMatches": true
+      },
+      {
+        "mode": "buffered-module",
+        "upgradeMs": 1159,
+        "reopenMs": 7513,
+        "reopenAdapterInitMs": 7349,
+        "wasmStages": [
+          {
+            "stage": "wasm-fetch-response",
+            "category": "same-origin-wasm",
+            "durationMs": 20
+          },
+          {
+            "stage": "wasm-buffered-body-ready",
+            "category": "buffered-module",
+            "durationMs": 18
+          },
+          {
+            "stage": "wasm-complete",
+            "category": "buffered-module-compile",
+            "durationMs": 7060
+          },
+          {
+            "stage": "wasm-complete",
+            "category": "buffered-module-instantiate",
+            "durationMs": 1
+          },
+          {
+            "stage": "wasm-complete",
+            "category": "instantiateStreaming",
+            "durationMs": 7098
+          },
+          {
+            "stage": "wasm-fetch-body-ready",
+            "category": "same-origin-wasm",
+            "durationMs": 28,
+            "waitMs": 19,
+            "transferSize": 2282065
+          }
+        ],
+        "rows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "issues": [],
+        "allTableHashesMatch": true,
+        "orderedHashMatches": true
+      },
+      {
+        "mode": "buffered-instantiate",
+        "upgradeMs": 1225,
+        "reopenMs": 6741,
+        "reopenAdapterInitMs": 6575,
+        "wasmStages": [
+          {
+            "stage": "wasm-fetch-response",
+            "category": "same-origin-wasm",
+            "durationMs": 9
+          },
+          {
+            "stage": "wasm-buffered-body-ready",
+            "category": "buffered-instantiate",
+            "durationMs": 29
+          },
+          {
+            "stage": "wasm-complete",
+            "category": "instantiate",
+            "durationMs": 6263
+          },
+          {
+            "stage": "wasm-complete",
+            "category": "instantiateStreaming",
+            "durationMs": 6297
+          },
+          {
+            "stage": "wasm-fetch-body-ready",
+            "category": "same-origin-wasm",
+            "durationMs": 32,
+            "waitMs": 24,
+            "transferSize": 2282065
+          }
+        ],
+        "rows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "issues": [],
+        "allTableHashesMatch": true,
+        "orderedHashMatches": true
+      }
+    ],
+    "conclusion": "Buffered asynchronous and synchronous compilation both retain the delay. Synchronous compilation accounts for 7060 ms while instantiation is 1 ms, isolating compilation from network and instance startup. No production loader change is justified by these results.",
+    "productionChanged": false,
+    "limitsChanged": false
+  },
+  "immutablePlatformComparison": {
+    "unwrappedIdenticalHarness": true,
+    "limitsMs": { "upgrade": 5000, "reopen": 5000 },
+    "baseline": {
+      "sourceCommit": "d033bbfe172d80166c280a363841fed3fe1e9476",
+      "run": 38484348210,
+      "linux": {
+        "upgradeMs": 953,
+        "reopenMs": 9047,
+        "upgradeAdapterInitMs": 183,
+        "reopenAdapterInitMs": 8906,
+        "rows": 609,
+        "reopenRows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "reopenedIdentical": true,
+        "rowIssues": [],
+        "status": "FAIL"
+      },
+      "mac": {
+        "upgradeMs": 1183,
+        "reopenMs": 399,
+        "upgradeAdapterInitMs": 265,
+        "reopenAdapterInitMs": 194,
+        "rows": 609,
+        "reopenRows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "reopenedIdentical": true,
+        "rowIssues": [],
+        "status": "PASS"
+      }
+    },
+    "D3": {
+      "sourceCommit": "0a485f68b6e5be50bbe93076ec4ed9afe987d845",
+      "persistenceIdenticalToCurrentSource": true,
+      "run": 38484502498,
+      "linux": {
+        "upgradeMs": 1470,
+        "reopenMs": 11062,
+        "upgradeAdapterInitMs": 281,
+        "reopenAdapterInitMs": 10914,
+        "rows": 609,
+        "reopenRows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "reopenedIdentical": true,
+        "rowIssues": [],
+        "status": "FAIL"
+      },
+      "mac": {
+        "upgradeMs": 5494,
+        "reopenMs": 1237,
+        "upgradeAdapterInitMs": 4453,
+        "reopenAdapterInitMs": 1106,
+        "rows": 609,
+        "reopenRows": 609,
+        "students": 40,
+        "evaluations": 520,
+        "reopenedIdentical": true,
+        "rowIssues": [],
+        "status": "FAIL"
+      }
+    },
+    "setupFailure": {
+      "run": 38484348210,
+      "affected": "D3 jobs only",
+      "reason": "The original diagnostic named an unpublished local commit. Corrected to the published commit whose persistence blobs are identical, preserving the independently completed D2 jobs."
+    },
+    "conclusion": "The same slow Linux reopen exists on the immutable accepted D2 source. macOS D2 passes and D3 reopens within the bound, but D3 first open exceeds it once. This establishes a platform-sensitive runtime defect, not guaranteed macOS timing. All failures and exact checks remain preserved."
   }
 }

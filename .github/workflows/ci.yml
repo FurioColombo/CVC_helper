@@ -20,7 +20,14 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # Linux keeps its Chromium geometry coverage. The complete suite also runs
+    # on macOS, the closest Playwright WebKit platform to Safari. The immutable
+    # D2 baseline reproduces the Linux WASM compilation delay (D3 evidence).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
     env:
       # check:docs compares frozen files (archive, changelogs, completed
       # evidence) against the previous tip, so a committed edit is caught too.
@@ -59,17 +66,27 @@ jobs:
         run: node scripts/ci-scope.mjs "${{ github.event.before }}" "${{ github.sha }}" >> "$GITHUB_OUTPUT"
       # Anything but an explicit "false", an empty output included, runs
       # everything.
-      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
+      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'macos-15'
         run: npx playwright install --with-deps chromium webkit
-      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
+      - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
+        run: npx playwright install --with-deps chromium
+      - name: Complete deterministic suite, including all three browser projects
+        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'macos-15'
         run: npm run verify:all
+      - name: Linux deterministic checks and both Chromium browser projects
+        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
+        run: |
+          npm run verify
+          npm run check:full-week
+          npm run check:ocr-offline
+          npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser == 'false'
         run: npm run verify
       # Tests that passed only on a retry: kept even when the run is green.
       - if: always() && steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-flaky-${{ github.run_id }}
+          name: e2e-flaky-${{ matrix.os }}-${{ github.run_id }}
           path: test-results/e2e-flaky.json
           retention-days: 30
           if-no-files-found: ignore
@@ -81,7 +98,7 @@ jobs:
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-failure-${{ github.run_id }}
+          name: playwright-failure-${{ matrix.os }}-${{ github.run_id }}
           path: |
             test-results/
             playwright-report/

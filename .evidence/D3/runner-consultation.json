@@ -1,0 +1,19 @@
+{
+  "milestone": "D3",
+  "type": "BOUNDED_CONSULTATION_NOT_A_REVIEW_ROUND",
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "status": "DEFENSIBLE_PROPOSAL_NOT_ACCEPTANCE",
+  "proposal": "macOS 15 runs unchanged verify:all with all three projects; Linux retains deterministic, full-week, offline and both Chromium projects; both jobs are required.",
+  "requirements": [
+    "Keep both inherited 5000 ms assertions, all project coverage and retry counts.",
+    "No continue-on-error; exact-commit reuse requires complete workflow success.",
+    "Name matrix artifacts distinctly and document runner responsibilities.",
+    "Preserve the D3 macOS first-open failure at 5494 ms.",
+    "Any retry-only success remains a recorded defect. Runner selection alone proves neither readiness nor physical acceptance."
+  ],
+  "source": "Same reviewer's bounded read-only consultation in the current task, following rounds 1 through 7; no new entropy or full-milestone review.",
+  "primaryGuidance": "https://playwright.dev/docs/browsers#webkit",
+  "productionFixEstablished": false,
+  "physicalDeviceAcceptance": "PENDING_OWNER"
+}

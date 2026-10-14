@@ -1,0 +1,55 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-14",
+  "state": "IN_PROGRESS",
+  "checkpoint": "5e6316f45759ab7d706f9633dafe1f3dc64561a4",
+  "sourceCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+  "completed": [
+    "Panel fixes and independent field/regression round 7 reports are retained; 18 two-engine cases pass with zero blockers.",
+    "Inclusive local WebKit timing passes with exact 609 rows, 40 injected students and 520 evaluations; all bounds and integrity checks remain intact.",
+    "Focused regular and test-channel production update journeys pass.",
+    "Compiler diagnostics rule out response delivery and the proposed buffered loaders; no production loader or SDK lifecycle change was made.",
+    "Immutable D2 and D3 platform comparisons are preserved in ci-adapter-initialization.json."
+  ],
+  "uncommittedWork": [
+    ".evidence/D3/ci-adapter-initialization.json and ci-selected-action-fix.json: additional diagnostic and focused update results.",
+    ".github/workflows/ci.yml: proposed required Linux/macOS matrix, unverified and uncommitted.",
+    "03_TECHNICAL_DECISIONS.md, 04_IMPLEMENTATION_PLAN.md and docs/LOCAL_DEVELOPMENT.md: current proposal and blocker documentation.",
+    "This handoff and runner-consultation.json: retained status, not acceptance."
+  ],
+  "currentBlocker": null,
+  "remainingAcceptance": [
+    "macOS D3 first open failed once at 5494 ms. Preserve the failure; the runner proposal is not an established performance fix.",
+    "Format, inspect the full diff and pass verify:quick before committing the proposed CI change.",
+    "Obtain independent restricted review of the actual CI diff, then refresh self-review and run the final D3 recorder on clean committed source.",
+    "Obtain complete green push CI for the exact checkpoint; preserve and classify every failure or retry-only result.",
+    "Only then publish the pinned 0.4.0 test build and verify live HTTPS identity, persistence, worker scope and regular-app isolation in both engines.",
+    "Use owner:update to make D3-PHONE-UPDATE READY with the tested commit, usable HTTPS address, patch versions and focused steps.",
+    "Use milestone:await-owner and leave a verified descriptive checkpoint; only then start eligible D4, followed by T1 under the explicit exceptions."
+  ],
+  "ownerActions": {
+    "queueItem": "D3-PHONE-UPDATE",
+    "state": "NEEDS_SETUP",
+    "testSite": "https://furiocolombo.github.io/CVC_helper_test/",
+    "siteLiveVerified": false,
+    "firstVersion": "0.4.0",
+    "secondVersion": "0.4.1",
+    "instruction": "No owner test is ready. After verified first publication, wait for the explicit owner installation report before publishing the second patch from the same source and address.",
+    "physicalPassRecorded": false
+  },
+  "preservation": {
+    "diagnosticBranch": "codex/d3-init-probe-dbc048c3e8",
+    "latestDiagnosticCommit": "cd14dbb (resolve full SHA from the branch before reuse)",
+    "temporaryLocationPointer": "OS temporary directory: cvc-d3-linux-probe-location.json",
+    "warning": "The previous temporary diagnostic clone has missing Git objects. Preserve its artifacts; use the fresh clone named by the pointer. The shared checkout remains healthy.",
+    "preparedFiles": "OS temporary directory: cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md; these drafts are not proof or owner readiness."
+  },
+  "previousToolingBlocker": {
+    "kind": "TOOLING_USAGE_LIMIT",
+    "action": "Formatting documents and npm run verify:quick before the CI checkpoint",
+    "reason": "Automatic approval review could not complete because the account usage limit was reached. The command was not executed; the rejection was not an unsafe-action determination.",
+    "restriction": "Do not bypass the approval review. Resume verification when it is available."
+  },
+  "resumedAt": "2026-10-14",
+  "currentWork": "Verification resumed; review and clean-source checkpoint of the runner matrix remain pending. No publication or owner readiness is claimed."
+}

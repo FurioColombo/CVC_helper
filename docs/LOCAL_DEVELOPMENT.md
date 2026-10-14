@@ -100,12 +100,12 @@ and the flaky-test rule are `03_TECHNICAL_DECISIONS.md` §6. One spec runs with
 `npm run verify:e2e -- tests/e2e/<spec>.spec.ts`; `npm run evidence -- <ID>`
 records a milestone's scripts, `verify:e2e:focus` among them.
 
-`npm run ci:status` reads the latest push run of `ci.yml` for committed HEAD
-and prints failed steps and available test annotations. `-- --wait` polls for
-up to ten minutes. Exit 0 means success, 1 a completed non-success, 2 pending,
-missing, timed-out or unavailable CI. Dirty edits are not covered. Run it at
-session start and after pushing; the closing skill requires green CI before
-dependent work. It needs no `gh`; `GITHUB_TOKEN` or `GH_TOKEN` is optional.
+`npm run ci:status` reads HEAD's latest `ci.yml` push run and failures; dirty edits are excluded.
+Run it at startup and after pushing. `-- --wait` polls ten minutes: exit 0 is success,
+1 completed non-success, 2 unknown or pending. Dependent work needs exact green CI; tokens are optional, no `gh` needed.
+The prepared matrix keeps unchanged `verify:all` and all three browser projects on macOS 15;
+Linux keeps deterministic, offline and both Chromium checks. Both jobs must pass; assertions and retries are unchanged.
+The matrix awaits exact CI; baseline and cold-open failures are in `.evidence/D3/ci-adapter-initialization.json`.
 
 `npm run owner:list` shows pending human actions; `owner:check` validates the
 queue and its [readable list](./OWNER_TODO.md). `milestone:await-owner` and

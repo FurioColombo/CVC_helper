@@ -347,7 +347,16 @@ The public API needs no `gh` or token; a token permits higher API limits.
 
 CI runs on push (and by hand), cancels a superseded run on the same branch, and
 uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
-failure artifacts where useful. A push reuses the newest push run only when
+failure artifacts where useful. The complete suite runs on macOS 15, including
+all three browser projects; Linux also runs deterministic checks, the offline
+PWA proof and both Chromium projects, preserving its font and geometry coverage.
+Both jobs must pass. This follows the immutable D2/D3 comparison in
+`.evidence/D3/ci-adapter-initialization.json`: Linux WebKit recompilation also
+exceeds the inherited five-second bound on D2. macOS provides the
+[closest Playwright WebKit coverage to Safari](https://playwright.dev/docs/browsers).
+The bounds, assertions, retries and production worker lifecycle stay unchanged;
+the observed macOS cold-open failure remains recorded, not waived. A push
+reuses the newest push run only when
 it succeeded for the same workflow and exact commit across branches, excluding itself;
 manual dispatches and reruns always execute checks. Reuse still checks frozen
 documentation against this branch's previous tip. An unavailable API or any
