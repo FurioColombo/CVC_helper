@@ -1,59 +1,65 @@
-name: D3 Mac comparison diagnostic (not acceptance)
+name: D3 targeted cause diagnostic (not acceptance)
 on: [push, workflow_dispatch]
 permissions:
   contents: read
 jobs:
-  platform:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-15, macos-15-intel]
-        mode: [isolated, prefix]
-    runs-on: ${{ matrix.os }}
+  fresh-browser:
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Select immutable failed source without overlays
-        run: git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
+      - name: Select immutable source with only diagnostic test isolation
+        run: |
+          probe_sha=$(git rev-parse HEAD)
+          git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
+          git show "$probe_sha:tests/e2e/d1-migration.spec.ts" > tests/e2e/d1-migration.spec.ts
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - name: Record runtime and architecture
-        run: |
-          node --version
-          uname -m
-          sysctl -n hw.memsize
-          git rev-parse HEAD
       - run: npm ci
       - run: npx playwright install --with-deps webkit
-      - name: Original migration acceptance, isolated or with its exact preceding specs
-        env:
-          MODE: ${{ matrix.mode }}
-        run: |
-          task_status=0
-          if [ "$MODE" = isolated ]; then
-            npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep="upgrades and reopens a 40-student" --retries=0 --output=test-results/migration-cases || task_status=$?
-          else
-            npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --retries=0 --output=test-results/migration-cases || task_status=$?
-          fi
-          if [ -f test-results/e2e-report.json ]; then cp test-results/e2e-report.json test-results/migration-report.json; fi
-          if [ -f test-results/e2e-flaky.json ]; then cp test-results/e2e-flaky.json test-results/migration-flaky.json; fi
-          exit "$task_status"
-      - name: Original enlarged-text image comparison, with actual PNG and screen pairs
-        if: always()
-        env:
-          CVC_REVIEW_DIR: test-results/f3-image-pairs
-        run: |
-          task_status=0
-          npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts --project=iphone-13-webkit-core --grep="copies double names, a crew with no boat and every badge" --retries=0 --output=test-results/image-cases || task_status=$?
-          if [ -f test-results/e2e-report.json ]; then cp test-results/e2e-report.json test-results/image-report.json; fi
-          exit "$task_status"
+      - name: Original migration prefix with unchanged bounds and fresh final browser
+        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --retries=0 --output=test-results/migration-cases
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-mac-${{ matrix.os }}-${{ matrix.mode }}-${{ github.run_id }}
+          name: d3-fresh-browser-${{ github.run_id }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: error
+  raster:
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [source, dom-auto, connected-canvas]
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Select immutable source with bounded diagnostic instrumentation
+        run: |
+          probe_sha=$(git rev-parse HEAD)
+          git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
+          git show "$probe_sha:tests/e2e/d3-raster-diagnostic.spec.ts" > tests/e2e/d3-raster-diagnostic.spec.ts
+          git show "$probe_sha:playwright.raster-probe.config.ts" > playwright.raster-probe.config.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - name: Original image assertions with controlled raster mode
+        env:
+          CVC_FONT_DIAGNOSTIC: ${{ matrix.mode }}
+          CVC_REVIEW_DIR: test-results/f3-image-pairs
+        run: npm run verify:e2e -- --config=playwright.raster-probe.config.ts --project=iphone-13-webkit-core --grep="copies double names, a crew with no boat and every badge" --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d3-raster-${{ matrix.mode }}-${{ github.run_id }}
           path: test-results/
           retention-days: 7
           if-no-files-found: error
