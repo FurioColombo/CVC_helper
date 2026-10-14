@@ -119,6 +119,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   `page.evaluate: Target page, context or browser has been closed` after
   13.5 s; the configured retry passed in 20.5 s. T1 must investigate the
   legacy database close/reopen lifecycle; a retry does not establish its cause.
+  On 2026-10-14 the same page-closure failure took 18.6 s, then passed on
+  retry in 26.7 s and separately with retries disabled in 20.4 s. The final
+  D3 recorder retains this flake; see its dated classification evidence.
 
 - `u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live`
   — Pixel 7 Chrome, D3’s final focused run (2026-10-12): pointermove-to-live

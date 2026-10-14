@@ -1,13 +1,13 @@
 {
   "milestone": "D3",
-  "status": "FAIL",
-  "recordedAt": "2026-10-13T18:23:52.768Z",
+  "status": "PASS",
+  "recordedAt": "2026-10-14T06:58:16.274Z",
   "nodeVersion": "v24.21.0",
   "appVersion": "0.3.0",
   "recorder": "scripts/record-verification.mjs@3",
-  "gitCommit": "14f11ebe30ffb5406a021cc0dc631e248cffc843",
+  "gitCommit": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
   "workingTreeClean": true,
-  "sourceDigest": "43838f832aa8dee77c2ab0536b4e5535d109ce8a9e5721c09ae71c8729cd7fd4",
+  "sourceDigest": "6e378954c68d59bf1ea863723c71784def1e0b079a646fccaac326eb2b44891c",
   "sourceFiles": 407,
   "verificationScripts": [
     "verify",
@@ -37,58 +37,48 @@
       "file": "d1-migration.spec.ts",
       "title": "keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database",
       "project": "iphone-13-webkit-core"
-    },
-    {
-      "file": "u04-scan-ui.spec.ts",
-      "title": "edge handles work by keyboard and tilt updates the crop image live",
-      "project": "iphone-13-webkit-core"
-    },
-    {
-      "file": "ug2-hostile-roster.spec.ts",
-      "title": "shows and copies the hostile crew summary exactly as the screen has it, at four sizes",
-      "project": "iphone-13-webkit-core"
     }
   ],
   "checks": [
     {
       "command": "npm run verify",
       "status": "PASS",
-      "startedAt": "2026-10-13T17:58:15.652Z",
-      "durationMs": 173894,
+      "startedAt": "2026-10-14T06:33:10.606Z",
+      "durationMs": 189741,
       "exitCode": 0,
-      "outputTail": "  dist/sw.js\n  dist/workbox-271d3e69.js\n\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 3.0s inside plugin hooks (6.8s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 5.2s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:asset load (4 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+      "outputTail": "\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 12.8s inside plugin hooks (40.4s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 29.1s, 1 call)\n  - vite:worker-import-meta-url transform (66%, 8.5s, 1 call)\n  - @tailwindcss/vite:generate:build transform (9%, 1.1s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (4 calls)\n  - vite:asset-import-meta-url transform (5 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
     },
     {
       "command": "npm run verify:e2e:focus",
       "status": "PASS",
-      "startedAt": "2026-10-13T18:01:09.549Z",
-      "durationMs": 1014473,
+      "startedAt": "2026-10-14T06:36:20.350Z",
+      "durationMs": 987622,
       "exitCode": 0,
-      "outputTail": "\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  3 flaky\n    [iphone-13-webkit-core] › tests\\e2e\\d1-migration.spec.ts:162:1 › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database \n    [iphone-13-webkit-core] › tests\\e2e\\u04-scan-ui.spec.ts:131:1 › edge handles work by keyboard and tilt updates the crop image live \n    [iphone-13-webkit-core] › tests\\e2e\\ug2-hostile-roster.spec.ts:794:1 › shows and copies the hostile crew summary exactly as the screen has it, at four sizes \n  25 skipped\n  87 passed (16.9m)\nFLAKY: d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database [iphone-13-webkit-core]\nFLAKY: u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live [iphone-13-webkit-core]\nFLAKY: ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes [iphone-13-webkit-core]"
+      "outputTail": "    test-results\\d1-migration-keeps-the-led-d5511-es-to-the-upgraded-database-iphone-13-webkit-core\\trace.zip\n    Usage:\n\n        npx playwright show-trace test-results\\d1-migration-keeps-the-led-d5511-es-to-the-upgraded-database-iphone-13-webkit-core\\trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 flaky\n    [iphone-13-webkit-core] › tests\\e2e\\d1-migration.spec.ts:162:1 › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database \n  25 skipped\n  89 passed (16.4m)\nFLAKY: d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database [iphone-13-webkit-core]"
     },
     {
       "command": "npm run check:update",
       "status": "PASS",
-      "startedAt": "2026-10-13T18:18:04.024Z",
-      "durationMs": 50127,
+      "startedAt": "2026-10-14T06:52:47.975Z",
+      "durationMs": 49190,
       "exitCode": 0,
-      "outputTail": "\n> cvc-helper@0.3.0 check:update\n> node scripts/check-update-journey.mjs\n\nBuilding 0.3.0 and 0.3.1…\n[chromium] installed 0.3.0, service worker in control\n[chromium] update offered 0.21 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.3.0, service worker in control\n[webkit] update offered 0.33 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.21 s, webkit 0.33 s from the return to the offer (0.3.0 to 0.3.1); the typed notes survived the update"
+      "outputTail": "\n> cvc-helper@0.3.0 check:update\n> node scripts/check-update-journey.mjs\n\nBuilding 0.3.0 and 0.3.1…\n[chromium] installed 0.3.0, service worker in control\n[chromium] update offered 0.21 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.3.0, service worker in control\n[webkit] update offered 0.31 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.21 s, webkit 0.31 s from the return to the offer (0.3.0 to 0.3.1); the typed notes survived the update"
     },
     {
       "command": "npm run check:update:test",
       "status": "PASS",
-      "startedAt": "2026-10-13T18:18:54.152Z",
-      "durationMs": 38791,
+      "startedAt": "2026-10-14T06:53:37.166Z",
+      "durationMs": 35321,
       "exitCode": 0,
-      "outputTail": "> cvc-helper@0.3.0 check:update:test\n> node scripts/check-update-journey.mjs --test\n\nBuilding 0.4.0 and 0.4.1…\n[chromium] installed 0.4.0, service worker in control\n[chromium] update offered 0.22 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.4.0, service worker in control\n[webkit] update offered 0.35 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.22 s, webkit 0.35 s from the return to the offer (0.4.0 to 0.4.1); the typed notes survived the update"
+      "outputTail": "> cvc-helper@0.3.0 check:update:test\n> node scripts/check-update-journey.mjs --test\n\nBuilding 0.4.0 and 0.4.1…\n[chromium] installed 0.4.0, service worker in control\n[chromium] update offered 0.19 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.4.0, service worker in control\n[webkit] update offered 0.31 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.19 s, webkit 0.31 s from the return to the offer (0.4.0 to 0.4.1); the typed notes survived the update"
     },
     {
       "command": "npm run check:test-isolation",
-      "status": "FAIL",
-      "startedAt": "2026-10-13T18:19:32.943Z",
-      "durationMs": 259818,
-      "exitCode": 1,
-      "outputTail": "      '    - button \"Regolare, 16 anni, Altro, Minorenne\":\\n' +\r\n      '      - text: Regolare 16 anni\\n' +\r\n      '      - img \"Minorenne\": M\\n' +\r\n      '  - button \"Aggiungi allievo\"\\n' +\r\n      '- navigation \"Navigazione principale\":\\n' +\r\n      '  - button \"Avarie\"\\n' +\r\n      '  - button \"Home\"\\n' +\r\n      '  - button \"Equipaggi\"'\r\n  }\r\n}\r\n\r\nNode.js v24.21.0"
+      "status": "PASS",
+      "startedAt": "2026-10-14T06:54:12.486Z",
+      "durationMs": 243779,
+      "exitCode": 0,
+      "outputTail": "mode      generateSW\nprecache  36 entries (22435.60 KiB)\nfiles generated\n  ../../../MARCOF~1/AppData/Local/Temp/cvc-helper-isolation-rNZyzO/test/sw.js\n  ../../../MARCOF~1/AppData/Local/Temp/cvc-helper-isolation-rNZyzO/test/workbox-f3280712.js\nOffline availability in Chromium: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:54784/CVC_helper/\",\"controller\":\"http://127.0.0.1:54784/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:54784/CVC_helper/\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:54784/CVC_helper/\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:54784/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nOffline availability in Chromium: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:54784/CVC_helper/\",\"controller\":\"http://127.0.0.1:54784/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:54784/CVC_helper/\",\"cvc-ocr-runtime\",\"cvc-speech-runtime\",\"cvc-helper-test-precache-v2-http://127.0.0.1:54784/CVC_helper_test/\",\"cvc-helper-test-ocr-runtime\",\"cvc-helper-test-speech-runtime\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:54784/CVC_helper/\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:54784/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nPASS: same-origin storage isolation in Chromium\nOffline availability in WebKit: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:54784/CVC_helper/\",\"controller\":\"http://127.0.0.1:54784/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:54784/CVC_helper/\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: Server returned nothing (no headers, no data)\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:54784/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nOffline availability in WebKit: {\"method\":\"origin-unreachable/server-transport\",\"preflight\":{\"url\":\"http://127.0.0.1:54784/CVC_helper/\",\"controller\":\"http://127.0.0.1:54784/CVC_helper/sw.js\",\"activeWorkerState\":\"activated\",\"documentReadyState\":\"complete\",\"cacheNames\":[\"workbox-precache-v2-http://127.0.0.1:54784/CVC_helper/\",\"cvc-ocr-runtime\",\"cvc-speech-runtime\",\"cvc-helper-test-precache-v2-http://127.0.0.1:54784/CVC_helper_test/\",\"cvc-helper-test-ocr-runtime\",\"cvc-helper-test-speech-runtime\"]},\"cachedResponseFromServiceWorker\":true,\"reloadResponseFromServiceWorker\":true,\"uncachedRequestFailed\":true,\"freshContextWithoutServiceWorkersFailed\":true,\"freshContextFailure\":\"Error: page.goto: Server returned nothing (no headers, no data)\\nCall log:\\n\\u001b[2m  - navigating to \\\"http://127.0.0.1:54784/CVC_helper/\\\", waiting until \\\"domcontentloaded\\\"\\u001b[22m\\n\"}\nPASS: same-origin storage isolation in WebKit\nPASS: cvc-helper regular and test builds stayed isolated on one origin at /CVC_helper/ and /CVC_helper_test/"
     }
   ]
 }

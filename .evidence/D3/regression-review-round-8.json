@@ -1,0 +1,65 @@
+{
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "milestone": "D3",
+  "round": 8,
+  "commit": "5e6316f45759ab7d706f9633dafe1f3dc64561a4",
+  "reviewedWorkingTree": {
+    "workflowBlob": "c5fd6a4cd528c2ac4c2423d4c279918e817a2df0",
+    "technicalDecisionsBlob": "28fd153fc13f559a75e194b9c84e8564b52901a7",
+    "localDevelopmentBlob": "b4aac0d3ba6918699fb6de7bf9dad75b44cecaa5",
+    "implementationPlanBlob": "a3b2fd740b395ff0633e6986a7c0f0b3a87edd9e"
+  },
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "RH2-Q4",
+      "title": "Carried over: the Barche list overflows horizontally with enlarged text",
+      "evidence": "Preserved round-2 finding, round-7 report and docs/working/BACKLOG.md. No Barche implementation changed.",
+      "reproduction": "Prior round: 0.3.0 fixture, 412x915, 150% root text, Barche; scrollWidth 484 versus clientWidth 412. Not rerun.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
+    }
+  ],
+  "reviewContinuity": {
+    "priorRoundsPreserved": [1, 2, 3, 4, 5, 6, 7],
+    "priorFailRounds": [1, 2],
+    "newEntropyDraw": false,
+    "scope": "Actual runner diff and its coverage, failure propagation, reuse and publication consumers."
+  },
+  "evidenceInspected": [
+    "AGENTS.md, reviewer persona, REVIEW_PROTOCOL.md, active D3 acceptance, relevant product/platform requirements and Technical Decisions §6–6.1. Node v24.21.0.",
+    "Startup checks: committed HEAD has no push CI run; D3 remains IN_PROGRESS; D3-PHONE-UPDATE remains NEEDS_SETUP. Dirty edits are outside committed-HEAD CI coverage.",
+    ".github/workflows/ci.yml adds ubuntu-latest and macos-15 with fail-fast false. Neither job uses continue-on-error. Both job failures contribute to the workflow result.",
+    "macOS runs unchanged npm run verify:all, including verification, full-week, offline, regular and test update journeys, test isolation and all three configured Playwright projects.",
+    "Linux retains verification, full-week, offline and every spec belonging to both existing Chromium projects. The runner forwards both --project arguments unchanged. Full-week is a domain script; the offline check uses Chromium, matching Linux's browser installation.",
+    "playwright.config.ts and package.json are unchanged: no project membership, assertion, timing bound, timeout or retry count changes. Application, persistence, SDK and production worker lifecycle files are unchanged.",
+    "Matrix artifact names include the operating system, preventing collisions. Flaky results remain uploaded through always(); failure traces and reports retain their existing failure condition.",
+    "scripts/ci-scope.mjs treats the changed workflow file as browser-impacting. Missing, failed or unknown predecessor verification runs browser checks. Documentation-only inheritance remains conditional on a successful previous workflow.",
+    "scripts/ci-status.mjs exact-commit reuse requires a completed successful push run of ci.yml, excludes the current run and does not reuse manual dispatches or reruns. It evaluates the whole workflow, without selecting one successful matrix job.",
+    "scripts/milestone.mjs and scripts/deploy-test-site.mjs still require whole-workflow success for the exact checkpoint. The test publisher additionally retains recorded clean-source verification, mandatory checks and review evidence.",
+    ".github/workflows/deploy-pages.yml remains unchanged: automatic publication waits for successful push workflow completion on main and checks out that workflow's exact SHA. The runner diff does not introduce an automatic publication bypass.",
+    "Technical Decisions, implementation plan and local-development guide describe runner responsibilities, require both jobs, preserve observed failures and leave exact CI and publication pending.",
+    ".evidence/D3/ci-adapter-initialization.json preserves immutable D2 Linux reopen failure at 9047 ms and D3 Linux reopen failure at 11062 ms. It also preserves D3 macOS first-open failure at 5494 ms against the unchanged 5000 ms bound. All comparisons retain identical 609 rows, 40 students and 520 evaluations.",
+    "Earlier RH2-1, RH-2 and RH2-3 resolutions remain supported by retained reports. R7 portal geometry, persistence proof and RH4-Q1 resolution were not altered or rerun. Field residual FU-Q13 remains separately recorded.",
+    "Root reported verify:quick passing 80 files and 1351 tests, with lint, formatting, typecheck, check:docs and check:repository passing.",
+    "This reviewer made no tracked edits or commits and ran no browser or test suite."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Coverage and failure propagation through the CI matrix",
+      "Exact-checkpoint reuse and documentation-only scope inheritance",
+      "Milestone and publication gates consuming the workflow result"
+    ],
+    "wildcard": "Restricted follow-up only; no new whole-milestone hunt."
+  },
+  "notTested": [
+    "The reviewed working diff is uncommitted and has not passed exact-checkpoint CI. This verdict does not establish D3 readiness.",
+    "Runner selection is not a production performance fix. Linux compilation failures and the macOS 5494 ms first-open failure remain unresolved observations; macOS timing acceptance still needs the required run.",
+    "Any retry-only success must remain classified and recorded under the existing flaky-test policy.",
+    "Final recorder verification, verified GitHub test publication and physical Android installation/update acceptance remain pending. No physical-device PASS is inferred.",
+    "GitHub repository branch-protection configuration was not inspected; repository gates inspected here consume the complete workflow conclusion."
+  ]
+}

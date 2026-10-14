@@ -1,0 +1,26 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
+  "date": "2026-10-14",
+  "nodeVersion": "v24.21.0",
+  "focusedStats": { "passed": 89, "skipped": 25, "flaky": 1, "failed": 0 },
+  "originalFailure": {
+    "file": "d1-migration.spec.ts",
+    "title": "keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database",
+    "project": "iphone-13-webkit-core",
+    "error": "page.evaluate: Target page, context or browser has been closed",
+    "firstAttemptMs": 18595,
+    "configuredRetryMs": 26670,
+    "retryStatus": "PASS"
+  },
+  "isolated": {
+    "command": "npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep=\"keeps the ledger and repairs\" --retries=0 --output=test-results/d3-ledger-current-classification",
+    "testDurationMs": 20351,
+    "elapsedMs": 24747,
+    "status": "PASS",
+    "retries": 0
+  },
+  "classification": "KNOWN_WEBKIT_PAGE_CLOSURE_FLAKE",
+  "disposition": "Retained in verification.json.flakyTests and filed for T1 in docs/working/BACKLOG.md. No assertion, timeout, limit or retry count changed.",
+  "physicalDeviceAcceptance": "PENDING_OWNER"
+}

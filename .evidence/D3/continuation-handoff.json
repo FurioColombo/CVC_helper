@@ -2,20 +2,20 @@
   "milestone": "D3",
   "date": "2026-10-14",
   "state": "IN_PROGRESS",
-  "checkpoint": "5e6316f45759ab7d706f9633dafe1f3dc64561a4",
-  "sourceCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+  "checkpoint": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
+  "sourceCheckpoint": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
   "completed": [
     "Panel fixes and independent field/regression round 7 reports are retained; 18 two-engine cases pass with zero blockers.",
     "Inclusive local WebKit timing passes with exact 609 rows, 40 injected students and 520 evaluations; all bounds and integrity checks remain intact.",
     "Focused regular and test-channel production update journeys pass.",
     "Compiler diagnostics rule out response delivery and the proposed buffered loaders; no production loader or SDK lifecycle change was made.",
-    "Immutable D2 and D3 platform comparisons are preserved in ci-adapter-initialization.json."
+    "Immutable D2 and D3 platform comparisons are preserved in ci-adapter-initialization.json.",
+    "Runner checkpoint verify:quick passes80files/1351tests; required R8 review passes with zero blockers, and all four reviewed file blobs match the committed checkpoint.",
+    "Current recorder migration checks preserve609rows; Chromium upgrade727/reopen503ms and WebKit1606/1020ms pass both unchanged5000ms bounds. The legacy-app repair test passes on its configured retry and remains filed as a T1 defect.",
+    "All five required D3 recorder commands PASS on clean4b375b5source; both update journeys and both-engine storage isolation pass. The sole known flake passes independently without retries and remains filed for T1."
   ],
   "uncommittedWork": [
-    ".evidence/D3/ci-adapter-initialization.json and ci-selected-action-fix.json: additional diagnostic and focused update results.",
-    ".github/workflows/ci.yml: proposed required Linux/macOS matrix, unverified and uncommitted.",
-    "03_TECHNICAL_DECISIONS.md, 04_IMPLEMENTATION_PLAN.md and docs/LOCAL_DEVELOPMENT.md: current proposal and blocker documentation.",
-    "This handoff and runner-consultation.json: retained status, not acceptance."
+    "Canonical R8 regression review, preserved round8 report, this handoff and recorder-generated D3 evidence. No implementation changes."
   ],
   "currentBlocker": null,
   "remainingAcceptance": [
@@ -51,5 +51,11 @@
     "restriction": "Do not bypass the approval review. Resume verification when it is available."
   },
   "resumedAt": "2026-10-14",
-  "currentWork": "Verification resumed; review and clean-source checkpoint of the runner matrix remain pending. No publication or owner readiness is claimed."
+  "currentWork": "Final D3 recorder PASS and isolated retry-free flake classification complete. Exact two-job push CI remains pending; do not publish or mark owner READY before it and live HTTPS proof pass.",
+  "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
+  "ci": {
+    "run": 38522538304,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38522538304",
+    "status": "PENDING"
+  }
 }

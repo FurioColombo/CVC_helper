@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review (orchestrator)",
   "milestone": "D3",
-  "commit": "5e6316f45759ab7d706f9633dafe1f3dc64561a4",
+  "commit": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -30,7 +30,11 @@
     "Round 7 field/regression reviews on exact source73688ef: 18 two-engine panel cases, scoped zero scroll margin, one-column portal grid and corrected visible Home navigation after isolation reloads. No application, test or script source changed since that checkpoint.",
     "Immutable D2/D3 and compiler diagnostics retained in ci-adapter-initialization.json: both buffered loaders fail; D2 Linux reopen9047ms reproduces the platform issue. D3 macOS first open5494ms remains a failure, not a waived result.",
     "Required CI matrix retains full unmodified verify:all/all three projects on macOS15 and all Linux Chromium projects with deterministic/full-week/offline checks. fail-fast:false, no continue-on-error, unique artifacts, original exact-workflow success gates.",
-    "Current verify:quick PASS: 80 files/1351 tests with Node v24.21.0, lint, formatting and typecheck. Current check:docs and repository checks pass. Final recorded D3 scripts and exact checkpoint CI still remain required."
+    "Current verify:quick PASS: 80 files/1351 tests with Node v24.21.0, lint, formatting and typecheck. Current check:docs and repository checks pass. Final recorded D3 scripts and exact checkpoint CI still remain required.",
+    "Final repository recorder PASS on clean checkpoint4b375b5, sourceDigest6e378954c68d59bf1ea863723c71784def1e0b079a646fccaac326eb2b44891c: all five declared verification scripts pass. Focused suite89passed/25skipped/1flaky/0failed; the original WebKit page-closure retry remains intact.",
+    "Dated2026-10-14 classification: the sole flake passes independently with retries0 in20.4seconds. Existing T1 backlog entry extended with this observation; no threshold or retry change.",
+    "Current production journeys: regular0.3.0→0.3.1 offers in0.21/0.31seconds; isolatedtest0.4.0→0.4.1 offers chromium:0.19seconds, webkit:0.31seconds. Both engines preserve typed notes; final browser-evidence.json identifies the test patch line.",
+    "Final same-origin isolation passes both engines, preserving the regular course, preferences, cached OCR bytes and offline app through test CRUD/erase."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -144,8 +148,8 @@
     "Physical Android install/update acceptance: required owner action remains open.",
     "Live test publication/HTTPS smoke follows green exact-checkpoint CI; READY is withheld until then.",
     "D4 full reset and future sync are outside this source.",
-    "The new CI matrix and final recorder have not yet passed; no publication, owner readiness or AWAITING_OWNER is claimed."
+    "Final recorder passes; exact push CI, live publication, owner readiness and physical acceptance remain pending."
   ],
-  "workingTreeDelta": [".github/workflows/ci.yml"],
+  "workingTreeDelta": [],
   "workflowBlob": "c5fd6a4cd528c2ac4c2423d4c279918e817a2df0"
 }
