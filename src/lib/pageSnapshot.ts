@@ -160,6 +160,8 @@ type TextItem = {
   fontFamily: string
   textRendering: string
   letterSpacing: number
+  /** The live DOM's baseline position within its Range line box, when measurable. */
+  baselineFraction: number | null
   tabular: boolean
   words: Word[]
 }
@@ -355,12 +357,104 @@ const visibleRects = (range: Range) =>
     (rect) => rect.width > 0 && rect.height > 0,
   )
 
+const BASELINE_STYLE_PROPERTIES = [
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "font-variant",
+  "font-variant-caps",
+  "font-variant-ligatures",
+  "font-variant-numeric",
+  "font-variant-east-asian",
+  "font-stretch",
+  "font-feature-settings",
+  "font-variation-settings",
+  "font-kerning",
+  "font-optical-sizing",
+  "font-size-adjust",
+  "font-synthesis",
+  "font-language-override",
+  "letter-spacing",
+  "line-height",
+  "text-rendering",
+  "direction",
+  "writing-mode",
+  "text-orientation",
+] as const
+
+/**
+ * Measure where this browser places an alphabetic baseline inside the DOM's
+ * own line box. Canvas font metrics describe a font; this probe describes the
+ * live CSS line box that the captured Range rectangles came from.
+ */
+function measureDomBaselineFraction(
+  ownerDocument: Document,
+  style: CSSStyleDeclaration,
+): number | null {
+  const view = ownerDocument.defaultView
+  if (!ownerDocument.body || !view) return null
+  if (
+    style.getPropertyValue("writing-mode") &&
+    style.getPropertyValue("writing-mode") !== "horizontal-tb"
+  ) {
+    return null
+  }
+
+  const host = ownerDocument.createElement("div")
+  host.style.cssText =
+    "position:fixed;left:-10000px;top:0;display:block;visibility:hidden;white-space:nowrap;pointer-events:none;contain:layout style;"
+  const text = ownerDocument.createElement("span")
+  text.setAttribute("data-page-snapshot-baseline-probe", "")
+  text.style.setProperty("display", "inline")
+  text.style.setProperty("white-space", "nowrap")
+  for (const property of BASELINE_STYLE_PROPERTIES) {
+    const value = style.getPropertyValue(property)
+    if (value) text.style.setProperty(property, value)
+  }
+  const sample = ownerDocument.createTextNode("Hg")
+  const baselineMarker = ownerDocument.createElement("span")
+  baselineMarker.setAttribute("data-page-snapshot-baseline-marker", "")
+  baselineMarker.style.cssText =
+    "display:inline-block;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;vertical-align:baseline;"
+  text.append(sample, baselineMarker)
+  host.append(text)
+
+  try {
+    ownerDocument.body.append(host)
+    const range = ownerDocument.createRange()
+    range.selectNodeContents(sample)
+    const rects = visibleRects(range)
+    if (rects.length === 0) return null
+    const top = Math.min(...rects.map((rect) => rect.top))
+    const bottom = Math.max(...rects.map((rect) => rect.bottom))
+    const height = bottom - top
+    if (!Number.isFinite(height) || height <= 0) return null
+    const baseline = baselineMarker.getBoundingClientRect().top
+    const fraction = (baseline - top) / height
+    return Number.isFinite(fraction) && fraction >= 0 && fraction <= 1
+      ? fraction
+      : null
+  } catch {
+    return null
+  } finally {
+    host.remove()
+  }
+}
+
+function baselineStyleKey(style: CSSStyleDeclaration) {
+  return BASELINE_STYLE_PROPERTIES.map((property) =>
+    style.getPropertyValue(property),
+  ).join("\u0000")
+}
+
 /** What the root's box adds up to when the subtree is read: the item list, in
  *  paint order, and how far down it reaches. Every coordinate is read from the
  *  live layout in this one synchronous pass, so scrolling and later changes to
  *  the page do not matter. */
 class Recorder {
   private readonly items: Item[] = []
+  private readonly baselineFractions = new Map<string, number | null>()
   private readonly width: number
   private readonly originX: number
   private readonly originY: number
@@ -401,6 +495,23 @@ class Recorder {
    *  out (the note at the end, the floating button) leaves no blank space. */
   private reach(rect: Rect) {
     this.lowest = Math.max(this.lowest, rect.y + rect.height)
+  }
+
+  private baselineFraction(
+    ownerDocument: Document,
+    style: CSSStyleDeclaration,
+  ) {
+    const key = baselineStyleKey(style)
+    if (this.baselineFractions.has(key)) {
+      return this.baselineFractions.get(key) ?? null
+    }
+    const fraction = measureDomBaselineFraction(ownerDocument, style)
+    if (this.baselineFractions.size >= 64) {
+      const oldest = this.baselineFractions.keys().next().value
+      if (oldest !== undefined) this.baselineFractions.delete(oldest)
+    }
+    this.baselineFractions.set(key, fraction)
+    return fraction
   }
 
   private visit(element: Element, parentAlpha: number) {
@@ -570,6 +681,7 @@ class Recorder {
       fontFamily: style.fontFamily,
       textRendering: style.textRendering,
       letterSpacing: px(style.letterSpacing),
+      baselineFraction: this.baselineFraction(node.ownerDocument, style),
       tabular,
       words,
     })
@@ -960,13 +1072,15 @@ function paintText(ctx: CanvasRenderingContext2D, item: TextItem) {
   setFont(ctx, item, size)
   const native = setLetterSpacing(ctx, spacing)
   const { ascent, descent } = fontExtent(ctx, size)
+  const canvasBaselineFraction = ascent / (ascent + descent)
+  const baselineFraction = item.baselineFraction ?? canvasBaselineFraction
 
   for (const word of item.words) {
     for (const piece of word.pieces) {
       const { rect, text } = piece
-      // The baseline sits where the font's ascent and descent divide the
-      // line's box on screen.
-      const baseline = rect.y + (rect.height * ascent) / (ascent + descent)
+      // Use the DOM's own line-box baseline when it can be measured; otherwise
+      // retain the font-metric split used before this probe was available.
+      const baseline = rect.y + rect.height * baselineFraction
       let x = rect.x
       if (item.tabular) {
         // Digits that share a width are centred in their column.

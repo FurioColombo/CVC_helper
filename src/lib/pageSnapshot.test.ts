@@ -456,6 +456,45 @@ describe("renderElementToPng", () => {
       expect(ops("fillText")[0]!.state.fillStyle).toBe("rgb(16, 47, 59)")
     })
 
+    it("uses a measured DOM baseline fraction once per computed font style", async () => {
+      let probeCount = 0
+      const originalGetClientRects = Range.prototype.getClientRects
+      Object.defineProperty(Range.prototype, "getClientRects", {
+        configurable: true,
+        writable: true,
+        value(this: Range) {
+          const owner = this.startContainer.parentElement!
+          if (owner.hasAttribute("data-page-snapshot-baseline-probe")) {
+            probeCount += 1
+            return [toRect("0,120,10,24")]
+          }
+          return Reflect.apply(originalGetClientRects, this, [])
+        },
+      })
+      vi.spyOn(
+        HTMLElement.prototype,
+        "getBoundingClientRect",
+      ).mockImplementation(function (this: HTMLElement) {
+        if (this.hasAttribute("data-page-snapshot-baseline-marker")) {
+          return toRect("0,134.4,0,0")
+        }
+        return toRect(this.getAttribute("data-rect"))
+      })
+
+      await renderElementToPng(
+        build(`
+          <h1 data-rect="66,120,358,24">
+            <span data-rect="66,120,60,24" data-words='{"Sabato":[[66,120,60,24]]}' style="font-size: 20px; line-height: 24px">Sabato</span>
+            <span data-rect="136,120,20,24" data-words='{"PM":[[136,120,20,24]]}' style="font-size: 20px; line-height: 24px">PM</span>
+          </h1>`),
+      )
+
+      for (const text of texts()) {
+        expect(text.y).toBeCloseTo(30.4, 5)
+      }
+      expect(probeCount).toBe(1)
+    })
+
     it("keeps the computed size when the words measure within 3% of their width on screen", async () => {
       // 6 × 10 = 60 against 61: 1.7% off.
       await renderElementToPng(
