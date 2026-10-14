@@ -28,8 +28,8 @@ const isolatedTest = test.extend({
     ) => {
       const browser = await playwright[browserName].launch({
         ...launchOptions,
-        headless,
-        channel,
+        ...(headless !== undefined ? { headless } : {}),
+        ...(channel !== undefined ? { channel } : {}),
       })
       try {
         await use(browser)

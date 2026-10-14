@@ -1,4 +1,4 @@
-name: D3 startup module reuse diagnostic (not acceptance)
+name: D3 combined cause diagnostics (not acceptance)
 on: [push, workflow_dispatch]
 permissions:
   contents: read
@@ -9,11 +9,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Immutable source with bounded startup and cold-proof overlays
+      - name: Immutable source with startup reuse and fresh timing browser
         run: |
           probe_sha=$(git rev-parse HEAD)
           git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
-          for file in src/persistence/schema.ts src/persistence/engineModuleBroker.ts src/persistence/engineModuleWorker.ts src/persistence/waSqliteFactory.ts src/test/d1MigrationHarness.ts tests/e2e/d3-startup-diagnostic.spec.ts vite.startup-probe.config.ts playwright.startup-probe.config.ts playwright.startup-regression.config.ts; do
+          for file in src/persistence/schema.ts src/persistence/engineModuleBroker.ts src/persistence/engineModuleWorker.ts src/persistence/waSqliteFactory.ts src/test/d1MigrationHarness.ts tests/e2e/d1-migration.spec.ts tests/e2e/d3-startup-diagnostic.spec.ts vite.startup-probe.config.ts playwright.startup-probe.config.ts playwright.startup-regression.config.ts; do
             git show "$probe_sha:$file" > "$file"
           done
       - uses: actions/setup-node@v4
@@ -23,15 +23,71 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npx playwright install --with-deps chromium webkit
-      - name: Genuinely cold compile, reopen, real prewarm rejection and storage lifecycle
+      - name: Strict cold and lifecycle controls
         run: npm run verify:e2e -- --config=playwright.startup-probe.config.ts
-      - name: Original migration prefix and read-only guards with unchanged assertions
+      - name: Original migration prefix and read-only guards with fresh final timing process
         if: always()
         run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts tests/e2e/d3-read-only.spec.ts --config=playwright.startup-regression.config.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --retries=0
+      - name: Validate large-case cold module telemetry without accepting fallback
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const root='test-results/startup-regression/artifacts';
+          const files=fs.readdirSync(root,{recursive:true}).filter(f=>f.includes('large-upgrade')&&f.endsWith('.json'));
+          if(files.length!==2)throw new Error('Both original large-case records required');
+          for(const file of files){
+            const r=JSON.parse(fs.readFileSync(path.join(root,file),'utf8'));
+            const types=r.engineEvents?.map(e=>e.type).join(',');
+            if(r.priorEventCount!==0||types!=='cache-miss,compile-start,compile-complete,instance-created,cache-hit,instance-created')throw new Error('Cold telemetry mismatch: '+file+' '+types);
+            const instances=r.engineEvents.filter(e=>e.type==='instance-created');
+            if(new Set(instances.map(e=>e.workerId)).size!==2||new Set(instances.map(e=>e.instanceId)).size!==2)throw new Error('Fresh workers and instances required');
+            console.log(file,JSON.stringify({upgradeMs:r.durationMs,reopenMs:r.reopenMs,events:r.engineEvents}));
+          }
+          JS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-startup-module-reuse-${{ github.run_id }}
+          name: d3-startup-combined-${{ github.run_id }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: error
+  copy-status:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Immutable failed source with only live status containment
+        run: |
+          probe_sha=$(git rev-parse HEAD)
+          git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
+          for file in src/components/SummaryImageButton.tsx tests/e2e/d3-copy-status-diagnostic.spec.ts playwright.copy-status-diagnostic.config.ts; do
+            git show "$probe_sha:$file" > "$file"
+          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Original image comparisons and negative controls with unchanged renderer and masks
+        env:
+          CVC_REVIEW_DIR: test-results/image-pairs
+        run: |
+          task_status=0
+          npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts tests/e2e/ug2-hostile-roster.spec.ts tests/e2e/f3-duty-summary.spec.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --grep="copies double names|shows and copies the hostile|copies the 13-crew summary|shows a readable Comandate summary" --retries=0 --output=test-results/image-cases || task_status=$?
+          if [ -f test-results/e2e-report.json ]; then cp test-results/e2e-report.json test-results/image-comparison-report.json; fi
+          exit "$task_status"
+      - name: Visible forced-native-share containment and hit testing
+        if: always()
+        run: npm run verify:e2e -- --config=playwright.copy-status-diagnostic.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d3-copy-status-${{ github.run_id }}
           path: test-results/
           retention-days: 7
           if-no-files-found: error

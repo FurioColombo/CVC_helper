@@ -45,6 +45,26 @@ const SCHEMAS: Partial<Record<Version, Schema>> = {
   "0.2.0": v020Schema,
   "0.3.0": v030Schema,
 }
+type EngineEvent = {
+  type:
+    | "cache-miss"
+    | "cache-hit"
+    | "compile-start"
+    | "compile-complete"
+    | "instance-created"
+    | "fallback"
+    | "error"
+  workerId: string
+  moduleKey: string
+  instanceId?: string
+  elapsedMs?: number
+}
+
+function pageEngineEvents() {
+  if (typeof window === "undefined") return undefined
+  return (window as Window & { __CVC_ENGINE_DIAGNOSTIC__?: EngineEvent[] })
+    .__CVC_ENGINE_DIAGNOSTIC__
+}
 
 /** Write a fixture with its own version's schema, then close the file. */
 export async function seed(
@@ -447,8 +467,10 @@ export async function seedLargeUpgrade() {
 export async function measureLargeUpgrade(
   filename: string,
   firstStartedAt?: number,
+  suppliedEngineEvents?: EngineEvent[],
 ) {
   const { students, evaluations, expectedRows } = largeUpgradeFixture()
+  const engineEvents = suppliedEngineEvents ?? pageEngineEvents()
   const timedOpen = async () => {
     // Start before construction so the five-second bound includes the full
     // cold-open path. Keep the result reads and close outside that bound.
@@ -492,6 +514,7 @@ export async function measureLargeUpgrade(
       tables,
     }
   }
+  const priorEventCount = engineEvents?.length ?? 0
   const upgrade = await timedOpen()
   // Every later open probes for rows to repair; sound data costs one read.
   const reopen = await timedOpen()
@@ -545,13 +568,15 @@ export async function measureLargeUpgrade(
     reopenRowIssues: validateStoredRows(reopen.tables),
     reopenedIdentical:
       JSON.stringify(upgrade.tables) === JSON.stringify(reopen.tables),
+    engineEvents: engineEvents ? [...engineEvents] : undefined,
+    priorEventCount: engineEvents ? priorEventCount : undefined,
   }
 }
 
 /** Preserve the existing D1 harness entry point and its timing boundaries. */
-export async function runLargeUpgrade() {
+export async function runLargeUpgrade(engineEvents?: EngineEvent[]) {
   const filename = await seedLargeUpgrade()
-  return measureLargeUpgrade(filename)
+  return measureLargeUpgrade(filename, undefined, engineEvents)
 }
 
 /** Exercise close, an independent write, reopen, and reset on one IDB name. */
