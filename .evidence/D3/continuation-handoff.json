@@ -3,7 +3,7 @@
   "date": "2026-10-14",
   "state": "IN_PROGRESS",
   "checkpoint": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
-  "sourceCheckpoint": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "sourceCheckpoint": "926ee8d6c158916b53cb2c19b78970175f65cd63",
   "completed": [
     "Panel fixes and independent field/regression round 7 reports are retained; 18 two-engine cases pass with zero blockers.",
     "Inclusive local WebKit timing passes with exact 609 rows, 40 injected students and 520 evaluations; all bounds and integrity checks remain intact.",
@@ -17,19 +17,17 @@
     "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
   ],
   "uncommittedWork": [
-    "scripts/check-test-app-isolation.mjs: reviewed481a5d8 readinesswait",
-    "Retained33acFAILrecorder, targetedpositiveproof, R10report, selfreview/plan/backlog/handoff"
+    "ci-macos-comparison.json and precisehandoff/plan for newCIclassification"
   ],
   "currentBlocker": {
-    "kind": "VERIFICATION_GATE_PENDING",
-    "reason": "Changed helper requires fresh full recording and exact complete green CI. Local interrupted shutdown probes are not command PASS."
+    "kind": "CI_GATE_FAILURE_DIAGNOSIS_IN_PROGRESS",
+    "reason": "MacCI33ac: three deterministic enlarged-text image differences and allthree large-course upgrade timings fail. Needs new evidence, not unchanged fullrerun."
   },
   "remainingAcceptance": [
-    "Commitreviewed correctedsource with passingquickverification",
-    "Run allfiveD3recordercommands onnewcleancheckpoint; retain priorFAIL and allhistoricalflakes",
-    "PreservepreviousCI result, pushnewsource, and obtaincompletegreenCI for exactfinalcheckpoint",
-    "Publishpinned0.4.0 onlyafter allagent gates; verifyliveHTTPS inbothengines",
-    "Useowner:update READY, milestone:await-owner, thencontinue eligibleD4andT1; secondpatchonlyafter explicitinstallationreport"
+    "Inspect immutableMac imagepairs and runtime comparisons; make only evidence-supported fixes withinapprovedstack",
+    "Restrictedreview of anynewsourcefix, cleancheckpoint and allfiveD3recordercommands",
+    "Completegreen exactpushCI beforepinned0.4.0 publication and bothengine liveHTTPSverification",
+    "owner:updateREADY, milestone:await-owner, theneligibleD4andT1;0.4.1onlyafterexplicitinstallationreport"
   ],
   "ownerActions": {
     "queueItem": "D3-PHONE-UPDATE",
@@ -43,7 +41,7 @@
   },
   "preservation": {
     "diagnosticBranch": "codex/d3-init-probe-dbc048c3e8",
-    "latestDiagnosticCommit": "cd14dbb (resolve full SHA from the branch before reuse)",
+    "latestDiagnosticCommit": "3bbb0eef49486aacd93c29127b9f10499aa00ec4",
     "temporaryLocationPointer": "OS temporary directory: cvc-d3-linux-probe-location.json",
     "warning": "The previous temporary diagnostic clone has missing Git objects. Preserve its artifacts; use the fresh clone named by the pointer. The shared checkout remains healthy.",
     "preparedFiles": "OS temporary directory: cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md; these drafts are not proof or owner readiness."
@@ -55,15 +53,26 @@
     "restriction": "Do not bypass the approval review. Resume verification when it is available."
   },
   "resumedAt": "2026-10-14",
-  "currentWork": "Corrected481a5d8 harness verified inbothengines, restrictedR10zeroBlockers and quickPASS80files/1351tests83.91seconds. Checkpoint thenfreshfullrecorder; retain oldCIresult before newpush.",
+  "currentWork": "CorrectedBacksource926ee8d reviewed R10 and quick/targetedproofPASS; notpushed. Newfullrecorder stopped early after completed33acCIrevealed further failures. Bounded immutable Mac architecture/prefix and actualimagepair diagnostic next.",
   "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
   "ci": {
+    "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
     "run": 38532131686,
     "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38532131686",
-    "status": "IN_PROGRESS",
+    "status": "FAIL",
     "linux": "PASS",
-    "macos": "PENDING",
-    "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06"
+    "macos": "FAIL"
   },
-  "latestCheckpoint": "33ac7c927d602d9f322c55ab83e981f0a7651b06"
+  "latestCheckpoint": "926ee8d6c158916b53cb2c19b78970175f65cd63",
+  "diagnostic": {
+    "run": 38538939134,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38538939134",
+    "diagnosticCommit": "3bbb0eef49486aacd93c29127b9f10499aa00ec4",
+    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+    "runners": ["macos-15", "macos-15-intel"],
+    "modes": ["isolated", "prefix"],
+    "reference": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
+    "purpose": "Capture original image/screen pairs and classify nativeinit architecture/preceding-test effects, with originalassertions and no production workaround",
+    "acceptance": false
+  }
 }

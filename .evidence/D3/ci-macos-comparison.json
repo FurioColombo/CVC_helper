@@ -1,0 +1,219 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "run": 38532131686,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38532131686",
+  "status": "FAIL_DIAGNOSIS_PENDING",
+  "linux": "PASS",
+  "macStats": {
+    "startTime": "2026-10-14T08:08:48.839Z",
+    "duration": 2052637.035,
+    "expected": 234,
+    "skipped": 65,
+    "unexpected": 4,
+    "flaky": 0
+  },
+  "timings": [
+    {
+      "attempt": 0,
+      "upgradeMs": 6302,
+      "adapterInitMs": 5511,
+      "prepareMs": 656,
+      "reopenMs": 2551,
+      "rows": 609,
+      "reopenRows": 609,
+      "identical": true,
+      "issues": [],
+      "reopenIssues": []
+    },
+    {
+      "attempt": 1,
+      "upgradeMs": 6393,
+      "adapterInitMs": 5412,
+      "prepareMs": 808,
+      "reopenMs": 1867,
+      "rows": 609,
+      "reopenRows": 609,
+      "identical": true,
+      "issues": [],
+      "reopenIssues": []
+    },
+    {
+      "attempt": 2,
+      "upgradeMs": 6106,
+      "adapterInitMs": 5345,
+      "prepareMs": 668,
+      "reopenMs": 2414,
+      "rows": 609,
+      "reopenRows": 609,
+      "identical": true,
+      "issues": [],
+      "reopenIssues": []
+    }
+  ],
+  "imageFailures": [
+    {
+      "title": "copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text",
+      "project": "iphone-13-webkit-core",
+      "annotations": [
+        {
+          "type": "difference",
+          "description": "{\"mean\":1.254250212662535,\"share\":0.0037246323976181796,\"colour\":1.31991341991342}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":0.8286615210843373,\"share\":0.0023108057228915665,\"colour\":0.8888888888888888}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":2.420968364197531,\"share\":0.012770061728395062,\"colour\":2.7551440329218106}"
+        }
+      ],
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "error": "Error: mean 2.420968364197531, share 0.012770061728395062\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.012770061728395062"
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "error": "Error: mean 2.420968364197531, share 0.012770061728395062\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.012770061728395062"
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "error": "Error: mean 2.420968364197531, share 0.012770061728395062\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.012770061728395062"
+        }
+      ]
+    },
+    {
+      "title": "shows and copies the hostile crew summary exactly as the screen has it, at four sizes",
+      "project": "iphone-13-webkit-core",
+      "annotations": [
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"crew-summary 390x844\",\"truncated\":0,\"words\":83,\"controls\":0,\"smallestControl\":null,\"documentWidth\":390,\"viewportWidth\":390}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":1.0846518410499453,\"share\":0.00368817596305748,\"colour\":1.1744588744588744}"
+        },
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"crew-summary 360x780\",\"truncated\":0,\"words\":69,\"controls\":0,\"smallestControl\":null,\"documentWidth\":360,\"viewportWidth\":360}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":0.8545156695156695,\"share\":0.00266025641025641,\"colour\":0.9574358974358974}"
+        },
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"crew-summary 320\",\"truncated\":0,\"words\":58,\"controls\":0,\"smallestControl\":null,\"documentWidth\":320,\"viewportWidth\":320}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":0.860316265060241,\"share\":0.003200301204819277,\"colour\":0.9178451178451178}"
+        },
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"crew-summary 320-200pct\",\"truncated\":0,\"words\":23,\"controls\":0,\"smallestControl\":null,\"documentWidth\":320,\"viewportWidth\":320}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":2.373312114197531,\"share\":0.012210648148148148,\"colour\":2.7105624142661178}"
+        }
+      ],
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "error": "Error: mean 2.373312114197531, share 0.012210648148148148\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.012210648148148148"
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "error": "Error: mean 2.373312114197531, share 0.012210648148148148\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.012210648148148148"
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "error": "Error: mean 2.373312114197531, share 0.012210648148148148\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.012210648148148148"
+        }
+      ]
+    },
+    {
+      "title": "shows and copies the hostile Comandate summary exactly as the screen has it, at four sizes",
+      "project": "iphone-13-webkit-core",
+      "annotations": [
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"duty-summary 390x844\",\"truncated\":0,\"words\":76,\"controls\":0,\"smallestControl\":null,\"documentWidth\":390,\"viewportWidth\":390}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":1.2032370500741967,\"share\":0.0036477206059978605,\"colour\":1.406158357771261}"
+        },
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"duty-summary 360x780\",\"truncated\":0,\"words\":78,\"controls\":0,\"smallestControl\":null,\"documentWidth\":360,\"viewportWidth\":360}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":0.9722720797720797,\"share\":0.0036574074074074074,\"colour\":1.0958974358974358}"
+        },
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"duty-summary 320\",\"truncated\":0,\"words\":64,\"controls\":0,\"smallestControl\":null,\"documentWidth\":320,\"viewportWidth\":320}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":0.8912179969879518,\"share\":0.004348644578313253,\"colour\":0.868013468013468}"
+        },
+        {
+          "type": "layout-audit",
+          "description": "{\"where\":\"duty-summary 320-200pct\",\"truncated\":0,\"words\":17,\"controls\":0,\"smallestControl\":null,\"documentWidth\":320,\"viewportWidth\":320}"
+        },
+        {
+          "type": "difference",
+          "description": "{\"mean\":2.410812114197531,\"share\":0.013913001543209876,\"colour\":2.7482853223593966}"
+        }
+      ],
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "error": "Error: mean 2.410812114197531, share 0.013913001543209876\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.013913001543209876"
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "error": "Error: mean 2.410812114197531, share 0.013913001543209876\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.013913001543209876"
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "error": "Error: mean 2.410812114197531, share 0.013913001543209876\n\nexpect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 0.012\nReceived:    0.013913001543209876"
+        }
+      ]
+    }
+  ],
+  "diagnosis": "Allthreeimagefailures occur at320x664/200percent text and repeat deterministically. Firstsimplelogoimage and smaller-font profiles pass. ActualPNG/screenpairs were not retained by existingfailureartifact, so benignrasterization versus productionglyph/baseline defect is unproven. Allthreeupgradefailures are adapter-init dominated with609identicalrows; no timing waiver or production workaround.",
+  "nextProbe": "Immutable33ac source on standardmacos-15 andmacos-15-intel, isolated versus D1prefix, originalassertions/retries0, existingCVC_REVIEW_DIR captures PNG/screenpairs. Diagnostic only, neveracceptance orpublication.",
+  "preservation": "Completefailurezip, reports,traces andlogs in OS-temp cvc-d3-ci-38532131686-*",
+  "correctedCheckpoint": "926ee8d6c158916b53cb2c19b78970175f65cd63",
+  "recorder": "926ee8d fullrecorder interrupted early in owned session85503; log preserved. No PASS inferred.",
+  "publication": "WITHHELD",
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "probe": {
+    "run": 38538939134,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38538939134",
+    "diagnosticCommit": "3bbb0eef49486aacd93c29127b9f10499aa00ec4",
+    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+    "runners": ["macos-15", "macos-15-intel"],
+    "modes": ["isolated", "prefix"],
+    "reference": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
+    "purpose": "Capture original image/screen pairs and classify nativeinit architecture/preceding-test effects, with originalassertions and no production workaround",
+    "acceptance": false
+  }
+}
