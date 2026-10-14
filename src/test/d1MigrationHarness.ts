@@ -61,9 +61,18 @@ type EngineEvent = {
 }
 
 function pageEngineEvents() {
-  if (typeof window === "undefined") return undefined
-  return (window as Window & { __CVC_ENGINE_DIAGNOSTIC__?: EngineEvent[] })
-    .__CVC_ENGINE_DIAGNOSTIC__
+  if (
+    typeof window === "undefined" ||
+    import.meta.env.VITE_CVC_ENGINE_STARTUP_PROBE !== "true"
+  ) {
+    return undefined
+  }
+  // Allocate the recorder before the first worker request. This records no
+  // engine event and performs no fetch, compile, construction or prewarming.
+  const diagnosticWindow = window as Window & {
+    __CVC_ENGINE_DIAGNOSTIC__?: EngineEvent[]
+  }
+  return (diagnosticWindow.__CVC_ENGINE_DIAGNOSTIC__ ??= [])
 }
 
 /** Write a fixture with its own version's schema, then close the file. */
