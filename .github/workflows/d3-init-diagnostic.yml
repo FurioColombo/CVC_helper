@@ -1,49 +1,20 @@
-name: D3 targeted cause diagnostic (not acceptance)
+name: D3 exact-mask image diagnostic (not acceptance)
 on: [push, workflow_dispatch]
 permissions:
   contents: read
 jobs:
-  fresh-browser:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Select immutable source with only diagnostic test isolation
-        run: |
-          probe_sha=$(git rev-parse HEAD)
-          git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
-          git show "$probe_sha:tests/e2e/d1-migration.spec.ts" > tests/e2e/d1-migration.spec.ts
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps webkit
-      - name: Original migration prefix with unchanged bounds and fresh final browser
-        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --retries=0 --output=test-results/migration-cases
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: d3-fresh-browser-${{ github.run_id }}
-          path: test-results/
-          retention-days: 7
-          if-no-files-found: error
   raster:
-    strategy:
-      fail-fast: false
-      matrix:
-        mode: [source, dom-auto, connected-canvas]
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Select immutable source with bounded diagnostic instrumentation
+      - name: Select immutable source with observational image instrumentation
         run: |
           probe_sha=$(git rev-parse HEAD)
           git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
           git show "$probe_sha:tests/e2e/d3-raster-diagnostic.spec.ts" > tests/e2e/d3-raster-diagnostic.spec.ts
+          git show "$probe_sha:tests/e2e/d3-raster-region-metrics.ts" > tests/e2e/d3-raster-region-metrics.ts
           git show "$probe_sha:playwright.raster-probe.config.ts" > playwright.raster-probe.config.ts
       - uses: actions/setup-node@v4
         with:
@@ -51,15 +22,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps webkit
-      - name: Original image assertions with controlled raster mode
+      - name: Original image assertions plus exact-mask regional and font observations
         env:
-          CVC_FONT_DIAGNOSTIC: ${{ matrix.mode }}
+          CVC_FONT_DIAGNOSTIC: source
           CVC_REVIEW_DIR: test-results/f3-image-pairs
         run: npm run verify:e2e -- --config=playwright.raster-probe.config.ts --project=iphone-13-webkit-core --grep="copies double names, a crew with no boat and every badge" --retries=0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-raster-${{ matrix.mode }}-${{ github.run_id }}
+          name: d3-raster-exact-mask-${{ github.run_id }}
           path: test-results/
           retention-days: 7
           if-no-files-found: error
