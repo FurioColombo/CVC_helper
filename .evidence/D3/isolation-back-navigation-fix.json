@@ -1,0 +1,64 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "date": "2026-10-14",
+  "status": "FIX_VERIFIED_REVIEWED_RECORDING_PENDING",
+  "recorder": {
+    "status": "FAIL",
+    "checks": [
+      { "command": "npm run verify", "status": "PASS", "exitCode": 0 },
+      {
+        "command": "npm run verify:e2e:focus",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      { "command": "npm run check:update", "status": "PASS", "exitCode": 0 },
+      {
+        "command": "npm run check:update:test",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run check:test-isolation",
+        "status": "FAIL",
+        "exitCode": 1
+      }
+    ]
+  },
+  "focused": {
+    "passed": 105,
+    "skipped": 47,
+    "flaky": 0,
+    "failed": 0,
+    "durationMs": 1062064,
+    "commandExit": 0,
+    "serverShutdown": "Terminating08:21:17.802Z; terminated08:21:18.180Z; no manual cleanup or workaround"
+  },
+  "failure": {
+    "engine": "WebKit",
+    "file": "scripts/check-test-app-isolation.mjs:876",
+    "expected": "C4 Home heading visible after returning from saved student profile",
+    "actual": "Allievi list with Home navigation; timeout30000ms",
+    "candidate": "returnToHomeFromStudent checks studentsBack.isVisible immediately after asynchronous profile history.back and may skip the second Back. Not yet final diagnosis.",
+    "cause": "Profile Back completes asynchronously through popstate; the immediate visibility query can skip the second Back. The helper now waits for the real student-list Back control before retaining the original second click."
+  },
+  "preserved": "OS temp cvc-d3-recorder-33ac7c9.log and cvc-d3-focus-report-33ac7c9.json; retained full recorder failure in verification-isolation-back-navigation-failure.json",
+  "publication": "WITHHELD",
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "fix": {
+    "file": "scripts/check-test-app-isolation.mjs",
+    "blob": "481a5d8650b2c5eb2d18e64d3319cbcb508574d9",
+    "change": "Wait for Indietro da Allievi after clicking Indietro da Profilo",
+    "retained": "Both visible Back clicks and everycourse/preference/student/erasure/cache/OCR/offline assertion; no app,timeout,retry or integrity change"
+  },
+  "targetedVerification": {
+    "command": "npm run check:test-isolation",
+    "status": "PASS",
+    "exitCode": 0,
+    "engines": ["Chromium", "WebKit"],
+    "report": "test-results/test-isolation.json",
+    "log": "OS temp cvc-d3-isolation-back-classification.log",
+    "limitations": "Changed source still needs clean committed recorder and exact full green CI; no physical device PASS."
+  },
+  "review": "Restricted regression round10 PASS_WITH_FINDINGS, zero blockers"
+}

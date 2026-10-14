@@ -1,0 +1,61 @@
+{
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "milestone": "D3",
+  "round": 10,
+  "commit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "reviewedWorkingTree": {
+    "isolationScriptBlob": "481a5d8650b2c5eb2d18e64d3319cbcb508574d9",
+    "unchangedSummaryHelperBlob": "bf618719800876f3c30352498f8e15ed7e93778d",
+    "unchangedMilestoneManifestBlob": "11621c46810f55705dd55e0d6ff8ed52dc40f4a2"
+  },
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "RH2-Q4",
+      "title": "Carried over: the Barche list overflows horizontally with enlarged text",
+      "evidence": "Preserved round-2 finding, subsequent reports and docs/working/BACKLOG.md. No Barche implementation changed.",
+      "reproduction": "Prior round: 0.3.0 fixture, 412x915, 150% root text, Barche; scrollWidth 484 versus clientWidth 412. Not rerun.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
+    }
+  ],
+  "reviewContinuity": {
+    "priorRoundsPreserved": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "priorFailRounds": [1, 2],
+    "newEntropyDraw": false,
+    "scope": "Navigation readiness in returnToHomeFromStudent and retained same-origin isolation assertions."
+  },
+  "evidenceInspected": [
+    "AGENTS.md, reviewer persona, REVIEW_PROTOCOL.md, active D3 acceptance, deployment isolation contract and owner-continuation rules. Node v24.21.0.",
+    "Startup checks: CI 38532131686 for committed HEAD was in progress; D3 remains IN_PROGRESS and D3-PHONE-UPDATE remains NEEDS_SETUP.",
+    "The only implementation diff is scripts/check-test-app-isolation.mjs. After clicking the visible profile Back button, the helper now awaits the Allievi Back button before its unchanged second click.",
+    "StudentManagement calls historyBack for profile navigation. browserHistory.ts explicitly documents asynchronous completion through popstate. Waiting for the intermediate visible control matches that mechanism.",
+    "The new assertion uses the script's existing 30000 ms expectation timeout. No application code, retry, assertion allowance, storage operation or other timeout changed.",
+    "Inspected affected helper callers from saved profiles, verified profiles, the visible student list and course erasure. Existing D2/C4 identity, student values, preferences, cache, worker, OCR and offline assertions remain unchanged.",
+    ".evidence/D3/verification-isolation-back-navigation-failure.json preserves the clean-source recorder FAIL at 33ac7c9: WebKit remained on Allievi while the script expected the C4 Home heading.",
+    "The same failed recorder preserves four successful checks: verify, focused browser coverage and both production update journeys. Focus completed with 105 passed, 47 skipped and zero flakes; the managed server terminated normally in approximately 0.38 seconds.",
+    "Directly inspected test-results/test-isolation.json recorded at 2026-10-14T08:35:51.294Z and the retained OS-temp cvc-d3-isolation-back-classification.log. The corrected full same-origin journey passed Chromium and WebKit; root reported command exit 0.",
+    "Both engines preserve the regular D2 course, edited student and note after test creation, update and UI erasure. Regular preference snapshots remain unchanged, with separate database names and preference prefixes.",
+    "Both engines initialize real OCR workers. Regular language-model bytes retain the same length and SHA256 after test-key read, write and deletion. Separate service-worker scopes and cache namespaces remain verified.",
+    "Before test installation and after test erasure, the regular app reloads from its service worker with the origin unreachable. Uncached requests and fresh contexts without service workers fail, preserving the offline negative controls.",
+    "Earlier RH2-1, RH-2 and RH2-3 resolutions, R7 portal persistence and geometry proofs, RH4-Q1 resolution and R9 helper review remain applicable to unchanged application source. Separate field residual FU-Q13 remains recorded.",
+    "This reviewer made no tracked edits or commits and launched no browser or test suite."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Asynchronous Back completion and the intermediate visible route",
+      "Every caller of the changed navigation helper",
+      "Retained isolation assertions and complete-command proof"
+    ],
+    "wildcard": "Restricted follow-up only; no new whole-milestone hunt."
+  },
+  "notTested": [
+    "The reviewed script working diff still needs a committed checkpoint, fresh clean-source recorder and exact full green CI. The isolated command PASS does not replace those gates.",
+    "The original recorder FAIL remains preserved; successful earlier checks cannot turn that recording into PASS.",
+    "Historical runtime flakes and local teardown interruptions remain recorded. This navigation fix does not establish their resolution.",
+    "GitHub test publication and physical Android installation/update acceptance remain pending. No physical-device PASS is inferred."
+  ]
+}

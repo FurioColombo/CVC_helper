@@ -1,0 +1,81 @@
+{
+  "milestone": "D3",
+  "status": "FAIL",
+  "recordedAt": "2026-10-14T08:27:20.129Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "workingTreeClean": true,
+  "sourceDigest": "e2f93b23cd99e9c9595f1250b6f2b265609e00c33764f51bd7d768e80c3b29c1",
+  "sourceFiles": 407,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus",
+    "check:update",
+    "check:update:test",
+    "check:test-isolation"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/c1-crew-management.spec.ts",
+    "tests/e2e/d1-migration.spec.ts",
+    "tests/e2e/d2-duty-items.spec.ts",
+    "tests/e2e/d3-read-only.spec.ts",
+    "tests/e2e/f1-navigation-guards.spec.ts",
+    "tests/e2e/n1-phone-back.spec.ts",
+    "tests/e2e/persistence.spec.ts",
+    "tests/e2e/reopen-persistence.spec.ts",
+    "tests/e2e/smoke.spec.ts",
+    "tests/e2e/student-scan.spec.ts",
+    "tests/e2e/u01-shell.spec.ts",
+    "tests/e2e/u02-students.spec.ts",
+    "tests/e2e/u04-scan-ui.spec.ts",
+    "tests/e2e/ug2-hostile-roster.spec.ts",
+    "tests/e2e/f3-crew-summary.spec.ts",
+    "tests/e2e/f3-duty-summary.spec.ts",
+    "tests/e2e/ug2-upgraded-week.spec.ts"
+  ],
+  "flakyTests": [],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-10-14T08:01:04.013Z",
+      "durationMs": 150705,
+      "exitCode": 0,
+      "outputTail": "Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 6.4s, 1 call)\n  - vite:worker-import-meta-url transform (56%, 3.5s, 1 call)\n  - vite-plugin-pwa load (22%, 1.4s, 1 call)\n  - @tailwindcss/vite:generate:build transform (18%, 1.1s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:asset load (4 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "startedAt": "2026-10-14T08:03:34.721Z",
+      "durationMs": 1064738,
+      "exitCode": 0,
+      "outputTail": "[WebServer] 10:20:43 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:20:43 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n[WebServer] 10:20:49 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:20:49 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 150 [iphone-13-webkit-core] › tests\\e2e\\ug2-hostile-roster.spec.ts:860:1 › shows and copies the hostile Comandate summary exactly as the screen has it, at four sizes (34.8s)\n  -  151 [iphone-13-webkit-core] › tests\\e2e\\ug2-hostile-roster.spec.ts:909:1 › shows the hostile Comandate page at 390, 360 and 320 px without overlap or sideways scroll\n  -  152 [iphone-13-webkit-core] › tests\\e2e\\ug2-hostile-roster.spec.ts:936:1 › keeps the populated Comandate page inside the screen at 320 px with 200% text\n2026-10-14T08:21:17.802Z pw:webserver Terminating the WebServer\n2026-10-14T08:21:18.180Z pw:webserver Terminated the WebServer\n\n  47 skipped\n  105 passed (17.7m)"
+    },
+    {
+      "command": "npm run check:update",
+      "status": "PASS",
+      "startedAt": "2026-10-14T08:21:19.463Z",
+      "durationMs": 51602,
+      "exitCode": 0,
+      "outputTail": "\n> cvc-helper@0.3.0 check:update\n> node scripts/check-update-journey.mjs\n\nBuilding 0.3.0 and 0.3.1…\n[chromium] installed 0.3.0, service worker in control\n[chromium] update offered 0.19 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.3.0, service worker in control\n[webkit] update offered 0.33 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.19 s, webkit 0.33 s from the return to the offer (0.3.0 to 0.3.1); the typed notes survived the update"
+    },
+    {
+      "command": "npm run check:update:test",
+      "status": "PASS",
+      "startedAt": "2026-10-14T08:22:11.065Z",
+      "durationMs": 38828,
+      "exitCode": 0,
+      "outputTail": "> cvc-helper@0.3.0 check:update:test\n> node scripts/check-update-journey.mjs --test\n\nBuilding 0.4.0 and 0.4.1…\n[chromium] installed 0.4.0, service worker in control\n[chromium] update offered 0.19 s after the return\n[chromium] page reloaded into the new version\n[webkit] installed 0.4.0, service worker in control\n[webkit] update offered 0.34 s after the return\n[webkit] page reloaded into the new version\nPASS: chromium 0.19 s, webkit 0.34 s from the return to the offer (0.4.0 to 0.4.1); the typed notes survived the update"
+    },
+    {
+      "command": "npm run check:test-isolation",
+      "status": "FAIL",
+      "startedAt": "2026-10-14T08:22:49.892Z",
+      "durationMs": 270229,
+      "exitCode": 1,
+      "outputTail": "      '    - button \"Prova, 16 anni, Altro, Minorenne\":\\n' +\r\n      '      - text: Prova 16 anni\\n' +\r\n      '      - img \"Minorenne\": M\\n' +\r\n      '  - button \"Aggiungi allievo\"\\n' +\r\n      '- navigation \"Navigazione principale\":\\n' +\r\n      '  - button \"Avarie\"\\n' +\r\n      '  - button \"Home\"\\n' +\r\n      '  - button \"Equipaggi\"'\r\n  }\r\n}\r\n\r\nNode.js v24.21.0"
+    }
+  ]
+}

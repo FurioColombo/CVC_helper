@@ -2,11 +2,12 @@
   "reviewerRole": "regression-hunter",
   "persona": "Il Segugio",
   "milestone": "D3",
-  "round": 9,
-  "commit": "8ba84f19af93ad309332d45674b4609045965fd7",
+  "round": 10,
+  "commit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "reviewedWorkingTree": {
-    "summaryHelperBlob": "bf618719800876f3c30352498f8e15ed7e93778d",
-    "milestoneManifestBlob": "11621c46810f55705dd55e0d6ff8ed52dc40f4a2"
+    "isolationScriptBlob": "481a5d8650b2c5eb2d18e64d3319cbcb508574d9",
+    "unchangedSummaryHelperBlob": "bf618719800876f3c30352498f8e15ed7e93778d",
+    "unchangedMilestoneManifestBlob": "11621c46810f55705dd55e0d6ff8ed52dc40f4a2"
   },
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
@@ -21,40 +22,40 @@
     }
   ],
   "reviewContinuity": {
-    "priorRoundsPreserved": [1, 2, 3, 4, 5, 6, 7, 8],
+    "priorRoundsPreserved": [1, 2, 3, 4, 5, 6, 7, 8, 9],
     "priorFailRounds": [1, 2],
     "newEntropyDraw": false,
-    "scope": "Summary-message assertion, its four consumer specs and additive D3 focus coverage."
+    "scope": "Navigation readiness in returnToHomeFromStudent and retained same-origin isolation assertions."
   },
   "evidenceInspected": [
-    "AGENTS.md, reviewer persona, REVIEW_PROTOCOL.md, current D3 plan, approved summary-copy/share behavior and verification policy. Node v24.21.0.",
-    "Startup checks: HEAD has no push CI run; D3 remains IN_PROGRESS and D3-PHONE-UPDATE remains NEEDS_SETUP.",
-    "The helper retains the anchored copied-message expectation and applies it to the actual status paragraph, adding visibility. It separately permits at most one exact Condividi action and checks visibility and enabled state when present.",
-    "SummaryImageButton renders the paragraph and capability-dependent button together. Native file sharing is already approved in 01_PRODUCT_SPEC.md and 02_MVP_SCOPE.md; application and capability code are unchanged.",
-    "PNG format, density, dimensions, margins, screenshot comparison thresholds, omitted controls and text-layout assertions are unchanged. Consumer clipboard, logo, icon, badge and long-name checks remain intact.",
-    "All helper consumers are covered by D3 focus: f3-crew-summary, f3-duty-summary, ug2-upgraded-week and the already-present ug2-hostile-roster. Manifest changes add three entries and remove none.",
-    ".evidence/D3/ci-native-share-fix.json preserves CI 38522538304: Linux passed; macOS had four failed WebKit copy cases and two retry-only successes. The migration attempts at 6229 and 5827 ms remain failures against the unchanged 5000 ms bound; the later 4244 ms retry is recorded as a flake.",
-    "Inspected the controlled-capability scratch spec and config. It overrides only navigator.canShare/share, requires Condividi to have rendered, reuses the original WebKit logo/icon case and uses zero retries.",
-    "Directly read the preserved forced-share log: the original case printed ok at 16.8 seconds, including its forced-action assertion and unchanged image checks. No final summary, report or successful whole-command exit was established.",
-    "Directly read the preserved standard-runner log: the same original case printed ok at 19.0 seconds, but the command stalled and was interrupted. Earlier default probes printed individual passes; these are not whole-command PASS evidence.",
-    "The owned-Vite attempt remains recorded as three passes and one Copy-button timeout before the changed assertion. Its cause remains unclassified. Setup failures and teardown hangs are preserved separately.",
-    "Previous RH2-1, RH-2 and RH2-3 resolutions remain supported by retained reports. R7 portal persistence and geometry proofs, RH4-Q1 resolution and separate field residual FU-Q13 were not changed or rerun.",
-    "Root reported check:docs and check:repository passing. This reviewer made no tracked edits or commits and launched no browser or test suite."
+    "AGENTS.md, reviewer persona, REVIEW_PROTOCOL.md, active D3 acceptance, deployment isolation contract and owner-continuation rules. Node v24.21.0.",
+    "Startup checks: CI 38532131686 for committed HEAD was in progress; D3 remains IN_PROGRESS and D3-PHONE-UPDATE remains NEEDS_SETUP.",
+    "The only implementation diff is scripts/check-test-app-isolation.mjs. After clicking the visible profile Back button, the helper now awaits the Allievi Back button before its unchanged second click.",
+    "StudentManagement calls historyBack for profile navigation. browserHistory.ts explicitly documents asynchronous completion through popstate. Waiting for the intermediate visible control matches that mechanism.",
+    "The new assertion uses the script's existing 30000 ms expectation timeout. No application code, retry, assertion allowance, storage operation or other timeout changed.",
+    "Inspected affected helper callers from saved profiles, verified profiles, the visible student list and course erasure. Existing D2/C4 identity, student values, preferences, cache, worker, OCR and offline assertions remain unchanged.",
+    ".evidence/D3/verification-isolation-back-navigation-failure.json preserves the clean-source recorder FAIL at 33ac7c9: WebKit remained on Allievi while the script expected the C4 Home heading.",
+    "The same failed recorder preserves four successful checks: verify, focused browser coverage and both production update journeys. Focus completed with 105 passed, 47 skipped and zero flakes; the managed server terminated normally in approximately 0.38 seconds.",
+    "Directly inspected test-results/test-isolation.json recorded at 2026-10-14T08:35:51.294Z and the retained OS-temp cvc-d3-isolation-back-classification.log. The corrected full same-origin journey passed Chromium and WebKit; root reported command exit 0.",
+    "Both engines preserve the regular D2 course, edited student and note after test creation, update and UI erasure. Regular preference snapshots remain unchanged, with separate database names and preference prefixes.",
+    "Both engines initialize real OCR workers. Regular language-model bytes retain the same length and SHA256 after test-key read, write and deletion. Separate service-worker scopes and cache namespaces remain verified.",
+    "Before test installation and after test erasure, the regular app reloads from its service worker with the origin unreachable. Uncached requests and fresh contexts without service workers fail, preserving the offline negative controls.",
+    "Earlier RH2-1, RH-2 and RH2-3 resolutions, R7 portal persistence and geometry proofs, RH4-Q1 resolution and R9 helper review remain applicable to unchanged application source. Separate field residual FU-Q13 remains recorded.",
+    "This reviewer made no tracked edits or commits and launched no browser or test suite."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Exact message semantics versus capability-dependent status controls",
-      "Every caller of the changed helper and retained image assertions",
-      "Focused coverage and incomplete-command evidence classification"
+      "Asynchronous Back completion and the intermediate visible route",
+      "Every caller of the changed navigation helper",
+      "Retained isolation assertions and complete-command proof"
     ],
     "wildcard": "Restricted follow-up only; no new whole-milestone hunt."
   },
   "notTested": [
-    "The passing test output does not establish successful local command completion. Teardown hangs and the unclassified Copy-button timeout remain limitations.",
-    "The helper and manifest working diff still require a committed checkpoint, fresh recorder evidence and exact full green CI. Earlier recorder PASS does not verify this changed source.",
-    "Cold adapter initialization remains a recorded runtime flake; this helper fix does not address it or change either timing bound.",
-    "GitHub test publication and physical Android installation/update acceptance remain pending. No physical-device PASS is inferred.",
-    "Native operating-system share-sheet delivery was not verified by the controlled API probe."
+    "The reviewed script working diff still needs a committed checkpoint, fresh clean-source recorder and exact full green CI. The isolated command PASS does not replace those gates.",
+    "The original recorder FAIL remains preserved; successful earlier checks cannot turn that recording into PASS.",
+    "Historical runtime flakes and local teardown interruptions remain recorded. This navigation fix does not establish their resolution.",
+    "GitHub test publication and physical Android installation/update acceptance remain pending. No physical-device PASS is inferred."
   ]
 }

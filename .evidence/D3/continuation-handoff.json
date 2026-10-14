@@ -3,7 +3,7 @@
   "date": "2026-10-14",
   "state": "IN_PROGRESS",
   "checkpoint": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
-  "sourceCheckpoint": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
+  "sourceCheckpoint": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "completed": [
     "Panel fixes and independent field/regression round 7 reports are retained; 18 two-engine cases pass with zero blockers.",
     "Inclusive local WebKit timing passes with exact 609 rows, 40 injected students and 520 evaluations; all bounds and integrity checks remain intact.",
@@ -13,24 +13,23 @@
     "Runner checkpoint verify:quick passes80files/1351tests; required R8 review passes with zero blockers, and all four reviewed file blobs match the committed checkpoint.",
     "Current recorder migration checks preserve609rows; Chromium upgrade727/reopen503ms and WebKit1606/1020ms pass both unchanged5000ms bounds. The legacy-app repair test passes on its configured retry and remains filed as a T1 defect.",
     "All five required D3 recorder commands PASS on clean4b375b5source; both update journeys and both-engine storage isolation pass. The sole known flake passes independently without retries and remains filed for T1.",
-    "Restricted R9 helper/coverage review PASS_WITH_FINDINGS zero blockers; Node24.21.0 verify:quick passes80files/1351tests81.87seconds after owned scratch cleanup."
+    "Restricted R9 helper/coverage review PASS_WITH_FINDINGS zero blockers; Node24.21.0 verify:quick passes80files/1351tests81.87seconds after owned scratch cleanup.",
+    "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
   ],
   "uncommittedWork": [
-    "Reviewed summary-image helper, additive focus coverage, R9 report and retained CI/probe classifications",
-    "Plan/backlog/self-review/handoff metadata for this checkpoint"
+    "scripts/check-test-app-isolation.mjs: reviewed481a5d8 readinesswait",
+    "Retained33acFAILrecorder, targetedpositiveproof, R10report, selfreview/plan/backlog/handoff"
   ],
   "currentBlocker": {
     "kind": "VERIFICATION_GATE_PENDING",
     "reason": "Changed helper requires fresh full recording and exact complete green CI. Local interrupted shutdown probes are not command PASS."
   },
   "remainingAcceptance": [
-    "Retain observed Linux compilation and macOS cold-open failures and retry-only results; runner selection does not establish a performance fix.",
-    "Finish default and forced native-share capability checks, distinguish assertion results from process teardown, and obtain restricted regression round9 on the helper and expanded focus.",
-    "Pass verify:quick, commit the narrow harness fix and refresh final D3 recorder on clean committed source with all17 focused specs.",
-    "Obtain complete green push CI for the exact checkpoint; preserve and classify every failure or retry-only result.",
-    "Only then publish pinned0.4.0 and verify live HTTPS identity, persistence, worker scope and regular-app isolation in both engines.",
-    "Use owner:update to make D3-PHONE-UPDATE READY with the tested commit, usable HTTPS address, both patch versions and concise phone steps.",
-    "Use milestone:await-owner with exact green checkpoint; then start eligible D4, followed by T1 under explicit dependency permissions."
+    "Commitreviewed correctedsource with passingquickverification",
+    "Run allfiveD3recordercommands onnewcleancheckpoint; retain priorFAIL and allhistoricalflakes",
+    "PreservepreviousCI result, pushnewsource, and obtaincompletegreenCI for exactfinalcheckpoint",
+    "Publishpinned0.4.0 onlyafter allagent gates; verifyliveHTTPS inbothengines",
+    "Useowner:update READY, milestone:await-owner, thencontinue eligibleD4andT1; secondpatchonlyafter explicitinstallationreport"
   ],
   "ownerActions": {
     "queueItem": "D3-PHONE-UPDATE",
@@ -56,13 +55,15 @@
     "restriction": "Do not bypass the approval review. Resume verification when it is available."
   },
   "resumedAt": "2026-10-14",
-  "currentWork": "Narrow source fix ready for descriptive checkpoint and full remote CI. Both controlled-share and standard single-case assertions pass, but local shutdown was interrupted before command completion; final new-source recorder remains required.",
+  "currentWork": "Corrected481a5d8 harness verified inbothengines, restrictedR10zeroBlockers and quickPASS80files/1351tests83.91seconds. Checkpoint thenfreshfullrecorder; retain oldCIresult before newpush.",
   "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
   "ci": {
-    "run": 38522538304,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38522538304",
-    "status": "FAIL",
-    "conclusion": "failure"
+    "run": 38532131686,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38532131686",
+    "status": "IN_PROGRESS",
+    "linux": "PASS",
+    "macos": "PENDING",
+    "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06"
   },
-  "latestCheckpoint": "8ba84f19af93ad309332d45674b4609045965fd7"
+  "latestCheckpoint": "33ac7c927d602d9f322c55ab83e981f0a7651b06"
 }

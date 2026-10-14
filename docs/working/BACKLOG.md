@@ -118,6 +118,9 @@ the final report and command exit. Those attempts were interrupted and are
 not command PASS evidence. One manually served attempt also timed out before
 opening the copy action; its cause is unclassified. Preserve the probe logs
 identified in `.evidence/D3/ci-native-share-fix.json`; do not raise time limits.
+The later clean-source recorder at `33ac7c9` completed all 105 focused cases
+without retries and shut down normally; the interrupted scratch attempts do
+not establish a persistent shutdown defect.
 
 Each passed only on a retry and is a defect to fix (03 §6).
 

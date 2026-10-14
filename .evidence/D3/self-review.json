@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review (orchestrator)",
   "milestone": "D3",
-  "commit": "8ba84f19af93ad309332d45674b4609045965fd7",
+  "commit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -38,7 +38,9 @@
     "Full push CI38522538304 on4b375b5: Linux PASS; macOS four unexpected copy-message failures and two retry-only successes. All attempts retained in ci-native-share-fix.json; publication withheld.",
     "Current helper checks the anchored exact visible paragraph; the separate native Condividi action may occur at most once and must be visible/enabled when present. Production app, image/byte/logo/geometry checks, timeout,5000ms bounds and retries remain unchanged.",
     "D3 focus now lists all four summary-image helper consumer specs by three additive entries. Current documentation143files and repository checks pass. Independent native-share proof and restricted R9 review remain pending.",
-    "Restricted regression round9 PASS_WITH_FINDINGS zero blockers on exact helperbf618719 and additive focusmanifest11621c46. Controlled native-share and original WebKit case assertions pass16.8/19.0seconds, but both interrupted shutdowns exit1; full recorder remains required."
+    "Restricted regression round9 PASS_WITH_FINDINGS zero blockers on exact helperbf618719 and additive focusmanifest11621c46. Controlled native-share and original WebKit case assertions pass16.8/19.0seconds, but both interrupted shutdowns exit1; full recorder remains required.",
+    "Clean33ac focused browser commandPASS:105passed47skipped0flakes, managed server shutdown0.38seconds, no manual cleanup or workaround. Regular0.3.0→0.3.1 offers0.19/0.33seconds; test0.4.0→0.4.1 offers0.19/0.34seconds. Both preserve notes.",
+    "Clean33ac recorder fails finalWebKitisolation navigation: immediate studentsBack query can skip secondBack after profile asynchronouspopstate. Failure preserved; adding existing-timeout visiblecontrol wait retains both UIclicks and all isolation assertions. Corrected isolatedcommandPASS bothengines; restrictedR10zeroBlockers."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -154,6 +156,10 @@
     {
       "id": "CI38522538304 retry-only results",
       "disposition": "Retained and filed for T1:40-student macOS cold upgrade6229/5827ms failed before4244ms retryPASS; reopen and609rows/40students/520evaluations remain intact. Selected-student evaluation timeout passed retry; no timing or retry adjustments."
+    },
+    {
+      "id": "Isolation Back readiness at33ac7c9",
+      "disposition": "Harness fix verified and reviewed: await intermediate AllieviBack before originalsecondclick. Allregularcourse,prefs,student,OCRkeybytes,worker/cache/offline negativecontrols remain intact. Newsource fullrecord and exactCI required."
     }
   ],
   "notTested": [
@@ -169,9 +175,10 @@
   ],
   "workflowBlob": "c5fd6a4cd528c2ac4c2423d4c279918e817a2df0",
   "reviewedWorkingTree": {
-    "scope": "Native-share copy-message test helper and additive D3 focus coverage",
-    "sourceChanged": ["tests/e2e/summary-image-checks.ts"],
-    "recording": "Prior clean4b375b5 recorder PASS is historical and stale for this helper change; refresh required.",
-    "review": "R9 PASS_WITH_FINDINGS zero blockers"
+    "scope": "Asynchronous student profile Back readiness in same-origin isolation harness",
+    "sourceChanged": ["scripts/check-test-app-isolation.mjs"],
+    "blob": "481a5d8650b2c5eb2d18e64d3319cbcb508574d9",
+    "review": "R10 PASS_WITH_FINDINGS zero blockers",
+    "recording": "Clean33ac recorder FAIL retained: four checksPASS, isolationFAIL. New corrected source must receive full clean recording."
   }
 }

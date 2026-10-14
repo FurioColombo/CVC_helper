@@ -618,9 +618,12 @@ async function verifyStudentProfile(
 
 async function returnToHomeFromStudent(page) {
   const profileBack = page.getByRole("button", { name: "Indietro da Profilo" })
-  if (await profileBack.isVisible().catch(() => false))
-    await profileBack.click()
   const studentsBack = page.getByRole("button", { name: "Indietro da Allievi" })
+  const isProfileVisible = await profileBack.isVisible().catch(() => false)
+  if (isProfileVisible) {
+    await profileBack.click()
+    await expect(studentsBack).toBeVisible()
+  }
   if (await studentsBack.isVisible().catch(() => false))
     await studentsBack.click()
 }
