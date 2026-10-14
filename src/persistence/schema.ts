@@ -1,4 +1,5 @@
 import { column, PowerSyncDatabase, Schema, Table } from "@powersync/web"
+import { createEngineStartupWorker } from "./engineModuleBroker"
 
 // Every course table carries `createdAt` and `updatedAt` (UTC ISO, set through
 // src/persistence/stamp.ts) and, from D1, every course-scoped row carries its
@@ -189,8 +190,30 @@ export const COURSE_PARENTS = {
 } as const
 
 export function createDatabase(dbFilename: string) {
+  const startupProbe = import.meta.env.VITE_CVC_ENGINE_STARTUP_PROBE === "true"
+
   return new PowerSyncDatabase({
     schema: AppSchema,
-    database: { dbFilename },
+    database: {
+      dbFilename,
+      ...(startupProbe
+        ? {
+            worker: (options) => {
+              // This experiment is deliberately limited to the default,
+              // unencrypted IDB worker path. The production path stays SDK-owned.
+              if (
+                options.vfs !== "IDBBatchAtomicVFS" ||
+                options.encryptionKey ||
+                !options.useWebWorker
+              ) {
+                throw new Error(
+                  "The engine startup probe requires the default unencrypted IDB worker",
+                )
+              }
+              return createEngineStartupWorker(options)
+            },
+          }
+        : {}),
+    },
   })
 }

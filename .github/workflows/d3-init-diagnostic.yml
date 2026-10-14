@@ -1,36 +1,37 @@
-name: D3 DOM baseline candidate (not acceptance)
+name: D3 startup module reuse diagnostic (not acceptance)
 on: [push, workflow_dispatch]
 permissions:
   contents: read
 jobs:
-  image:
+  startup:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Immutable failed source with only DOM-baseline candidate
+      - name: Immutable source with bounded startup and cold-proof overlays
         run: |
           probe_sha=$(git rev-parse HEAD)
           git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
-          git show "$probe_sha:src/lib/pageSnapshot.ts" > src/lib/pageSnapshot.ts
-          git show "$probe_sha:src/lib/pageSnapshot.test.ts" > src/lib/pageSnapshot.test.ts
+          for file in src/persistence/schema.ts src/persistence/engineModuleBroker.ts src/persistence/engineModuleWorker.ts src/persistence/waSqliteFactory.ts src/test/d1MigrationHarness.ts tests/e2e/d3-startup-diagnostic.spec.ts vite.startup-probe.config.ts playwright.startup-probe.config.ts playwright.startup-regression.config.ts; do
+            git show "$probe_sha:$file" > "$file"
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npx vitest run src/lib/pageSnapshot.test.ts
       - run: npx playwright install --with-deps chromium webkit
-      - name: Original enlarged-text comparisons and image negative controls
-        env:
-          CVC_REVIEW_DIR: test-results/image-pairs
-        run: npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts tests/e2e/ug2-hostile-roster.spec.ts tests/e2e/f3-duty-summary.spec.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --grep="copies double names|shows and copies the hostile|copies the 13-crew summary|shows a readable Comandate summary" --retries=0 --output=test-results/image-cases
+      - name: Genuinely cold compile, reopen, real prewarm rejection and storage lifecycle
+        run: npm run verify:e2e -- --config=playwright.startup-probe.config.ts
+      - name: Original migration prefix and read-only guards with unchanged assertions
+        if: always()
+        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts tests/e2e/d3-read-only.spec.ts --config=playwright.startup-regression.config.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --retries=0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-dom-baseline-${{ github.run_id }}
+          name: d3-startup-module-reuse-${{ github.run_id }}
           path: test-results/
           retention-days: 7
           if-no-files-found: error

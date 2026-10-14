@@ -13,7 +13,7 @@ import {
   type RowIssue,
   type StoredTables,
 } from "@/persistence/rowIntegrity"
-import { COURSE_TABLES, createDatabase } from "@/persistence/schema"
+import { AppSchema, COURSE_TABLES, createDatabase } from "@/persistence/schema"
 import v010 from "@/test/fixtures/v0.1.0-course.json"
 import v020 from "@/test/fixtures/v0.2.0-course.json"
 import v030 from "@/test/fixtures/v0.3.0-course.json"
@@ -372,14 +372,7 @@ export async function runLegacyRepairs(): Promise<LegacyRepairResult> {
   }
 }
 
-/**
- * The checklist's "migration time on a 40-student course": the 0.3.0 fixture
- * plus 40 synthetic students with an evaluation for every session, upgraded
- * through `prepareDatabase` and timed, then opened again and timed, since the
- * repairs' probe runs on every open.
- */
-export async function runLargeUpgrade() {
-  const filename = `d1-large-${crypto.randomUUID()}.db`
+function largeUpgradeFixture() {
   const base = FIXTURES["0.3.0"]
   const courseId = String(base.courses![0]!.id)
   const students = Array.from({ length: 40 }, (_, index) => ({
@@ -429,16 +422,38 @@ export async function runLargeUpgrade() {
         : (expectedTables[table]?.length ?? 0)),
     0,
   )
+  return { base, students, evaluations, expectedTables, expectedRows }
+}
+
+/** Seed the large legacy database without constructing the candidate app DB. */
+export async function seedLargeUpgrade() {
+  const filename = `d1-large-${crypto.randomUUID()}.db`
+  const { base, students, evaluations } = largeUpgradeFixture()
   await seed("0.3.0", filename, {
     ...base,
     students: [...base.students!, ...students],
     evaluations: [...base.evaluations!, ...evaluations],
   })
+  return filename
+}
 
+/**
+ * The checklist's "migration time on a 40-student course": the 0.3.0 fixture
+ * plus 40 synthetic students with an evaluation for every session, upgraded
+ * through `prepareDatabase` and timed, then opened again and timed, since the
+ * repairs' probe runs on every open. `firstStartedAt` lets a cold-start probe
+ * include the dynamic import of this harness in the first construction bound.
+ */
+export async function measureLargeUpgrade(
+  filename: string,
+  firstStartedAt?: number,
+) {
+  const { students, evaluations, expectedRows } = largeUpgradeFixture()
   const timedOpen = async () => {
     // Start before construction so the five-second bound includes the full
     // cold-open path. Keep the result reads and close outside that bound.
-    const started = performance.now()
+    const started = firstStartedAt ?? performance.now()
+    firstStartedAt = undefined
     const constructed = performance.now()
     const database = createDatabase(filename)
     const created = performance.now()
@@ -531,4 +546,101 @@ export async function runLargeUpgrade() {
     reopenedIdentical:
       JSON.stringify(upgrade.tables) === JSON.stringify(reopen.tables),
   }
+}
+
+/** Preserve the existing D1 harness entry point and its timing boundaries. */
+export async function runLargeUpgrade() {
+  const filename = await seedLargeUpgrade()
+  return measureLargeUpgrade(filename)
+}
+
+/** Exercise close, an independent write, reopen, and reset on one IDB name. */
+export async function verifyLargeUpgradeLifecycle(filename: string) {
+  const markerId = "probe:d3-startup-marker"
+  const independent = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: { dbFilename: filename },
+  })
+  await independent.init()
+  await independent.execute(
+    "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
+    [markerId, 73],
+  )
+  await independent.get("SELECT count(*) AS count FROM meta WHERE id = ?", [
+    markerId,
+  ])
+  await independent.close()
+
+  const reopened = createDatabase(filename)
+  await prepareDatabase(reopened)
+  const marker = await reopened.get<{ value: number }>(
+    "SELECT value FROM meta WHERE id = ?",
+    [markerId],
+  )
+  const reopenedTables = await readTables(reopened)
+  await reopened.close()
+
+  await deleteIndexedDb(filename)
+  const reset = createDatabase(filename)
+  await reset.init()
+  const oldTablesAfterReset = await readTables(reset)
+  const oldRowsAfterReset = Object.values(oldTablesAfterReset).reduce(
+    (sum, rows) => sum + rows.length,
+    0,
+  )
+  await reset.execute("INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)", [
+    "probe:d3-startup-reset",
+    97,
+  ])
+  await reset.get("SELECT count(*) AS count FROM meta")
+  await reset.close()
+
+  const resetReopened = createDatabase(filename)
+  await resetReopened.init()
+  const resetMarker = await resetReopened.get<{ value: number }>(
+    "SELECT value FROM meta WHERE id = ?",
+    ["probe:d3-startup-reset"],
+  )
+  const resetTables = await readTables(resetReopened)
+  const resetRows = Object.values(resetTables).reduce(
+    (sum, rows) => sum + rows.length,
+    0,
+  )
+  await resetReopened.close()
+  await deleteIndexedDb(filename)
+
+  return {
+    markerObservedAfterIndependentWrite: marker?.value === 73,
+    reopenedRows: Object.values(reopenedTables).reduce(
+      (sum, rows) => sum + rows.length,
+      0,
+    ),
+    reopenedRowIssues: validateStoredRows(reopenedTables),
+    oldRowsAfterReset,
+    resetMarkerObserved: resetMarker?.value === 97,
+    resetRows,
+    indexedDbDeleteUnblocked: true,
+  }
+}
+
+function deleteIndexedDb(name: string) {
+  return new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name)
+    const timeout = setTimeout(
+      () => reject(new Error(`Timed out deleting IndexedDB database ${name}`)),
+      5_000,
+    )
+    request.onsuccess = () => {
+      clearTimeout(timeout)
+      resolve()
+    }
+    request.onerror = () => {
+      clearTimeout(timeout)
+      reject(request.error ?? new Error(`Could not delete IndexedDB ${name}`))
+    }
+    request.onblocked = () => {
+      clearTimeout(timeout)
+      reject(new Error(`IndexedDB database ${name} remained open after close`))
+    }
+  })
 }
