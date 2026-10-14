@@ -112,7 +112,20 @@ remaining proposals await the owner's pick:
 
 ## Flaky browser tests
 
+Local Windows verification also needs a shutdown diagnosis: D3's default and
+forced-native-share WebKit cases printed passing results, then stalled before
+the final report and command exit. Those attempts were interrupted and are
+not command PASS evidence. One manually served attempt also timed out before
+opening the copy action; its cause is unclassified. Preserve the probe logs
+identified in `.evidence/D3/ci-native-share-fix.json`; do not raise time limits.
+
 Each passed only on a retry and is a defect to fix (03 §6).
+
+- `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
+  — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,
+  then passed at 4244 ms on the second configured retry. All 609 rows remained
+  identical; adapter initialization dominated. T1 must address the runtime
+  or faithful fixture setup without raising either 5000 ms bound.
 
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
   — iPhone 13 WebKit, D3's recorded focused run (2026-10-13):
@@ -139,6 +152,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
 
 - `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
   — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
+  CI 38522538304 on macOS also timed out waiting for the student control, then
+  passed its first configured retry. Keep both observations in T1's diagnosis.
 - `d2-duty-items.spec.ts › opens the 0.3.0 duty lists as rows, item by item, none lost or doubled`
   and `d2-duty-items.spec.ts › rebuilds the rows after a 0.3.0 app drops their table and writes the lists`
   — iPhone 13 WebKit: the page closes ("Target page, context or browser has

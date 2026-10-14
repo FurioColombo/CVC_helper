@@ -1,0 +1,231 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
+  "run": 38522538304,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38522538304",
+  "status": "FIX_REVIEWED_VERIFY_PENDING",
+  "linux": "PASS",
+  "macStats": {
+    "startTime": "2026-10-14T06:37:39.231Z",
+    "duration": 2371113.678,
+    "expected": 232,
+    "skipped": 65,
+    "unexpected": 4,
+    "flaky": 2
+  },
+  "failures": [
+    {
+      "file": "f3-crew-summary.spec.ts",
+      "title": "makes the image in WebKit too, with the boat logos and icons",
+      "project": "iphone-13-webkit-core",
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "durationMs": 52170,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "durationMs": 52134,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "durationMs": 50032,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        }
+      ]
+    },
+    {
+      "file": "f3-crew-summary.spec.ts",
+      "title": "copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text",
+      "project": "iphone-13-webkit-core",
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "durationMs": 54090,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "durationMs": 54927,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "durationMs": 54111,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        }
+      ]
+    },
+    {
+      "file": "ug2-hostile-roster.spec.ts",
+      "title": "shows and copies the hostile crew summary exactly as the screen has it, at four sizes",
+      "project": "iphone-13-webkit-core",
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "durationMs": 56057,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "durationMs": 59570,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "durationMs": 59372,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura equipaggi' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        }
+      ]
+    },
+    {
+      "file": "ug2-hostile-roster.spec.ts",
+      "title": "shows and copies the hostile Comandate summary exactly as the screen has it, at four sizes",
+      "project": "iphone-13-webkit-core",
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "durationMs": 48583,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura comandate' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "durationMs": 48701,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura comandate' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        },
+        {
+          "retry": 2,
+          "status": "failed",
+          "durationMs": 47794,
+          "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator: getByRole('dialog', { name: 'Vista lettura comandate' }).getByRole('status')\nExpected pattern: /^Immagine copiata\\. Incollala su WhatsApp\\.$/\nReceived string:  \"\"\nTimeout: 30000ms\n\nCall log",
+          "migration": []
+        }
+      ]
+    }
+  ],
+  "flakes": [
+    {
+      "file": "d1-migration.spec.ts",
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "project": "iphone-13-webkit-core",
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "failed",
+          "durationMs": 17617,
+          "error": "Error: expect(received).toBeLessThan(expected)\n\nExpected: < 5000\nReceived:   6229",
+          "migration": [
+            "609/609 rows (expected 609); upgrade 6229 ms (create 0, adapter init 5562, SDK ready after adapter 90, total init 5652, prepare 577); reopen 2190 ms (create 1, adapter init 2085, SDK ready after adapter 48, total init 2133, prepare 56); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 223/15 ms and 114/4 ms"
+          ]
+        },
+        {
+          "retry": 1,
+          "status": "failed",
+          "durationMs": 20281,
+          "error": "Error: expect(received).toBeLessThan(expected)\n\nExpected: < 5000\nReceived:   5827",
+          "migration": [
+            "609/609 rows (expected 609); upgrade 5827 ms (create 2, adapter init 5117, SDK ready after adapter 122, total init 5239, prepare 586); reopen 2535 ms (create 1, adapter init 2388, SDK ready after adapter 75, total init 2463, prepare 71); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 162/10 ms and 127/16 ms"
+          ]
+        },
+        {
+          "retry": 2,
+          "status": "passed",
+          "durationMs": 18608,
+          "migration": [
+            "609/609 rows (expected 609); upgrade 4244 ms (create 2, adapter init 3671, SDK ready after adapter 110, total init 3781, prepare 461); reopen 2346 ms (create 1, adapter init 2212, SDK ready after adapter 64, total init 2276, prepare 69); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 212/10 ms and 123/5 ms"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "e1-evaluation-history-layout.spec.ts",
+      "title": "opens the selected student session and keeps the Valutazioni note editor usable",
+      "project": "pixel-7-chrome",
+      "attempts": [
+        {
+          "retry": 0,
+          "status": "timedOut",
+          "durationMs": 120518,
+          "error": "Test timeout of 120000ms exceeded.",
+          "migration": []
+        },
+        { "retry": 1, "status": "passed", "durationMs": 4227, "migration": [] }
+      ]
+    }
+  ],
+  "cause": "macOS WebKit exposes the existing native Condividi action. The whole status includes that button text; the exact copied-message assertion belongs to its visible paragraph.",
+  "fix": "Harness only: exact paragraph text and visibility; separately permit at most one visible enabled Condividi button. PNG/visual/byte/logo/badge checks and timing stay unchanged.",
+  "focusAdded": ["f3-crew-summary", "f3-duty-summary", "ug2-upgraded-week"],
+  "publication": "WITHHELD",
+  "physicalDeviceAcceptance": "PENDING_OWNER",
+  "localProbeHistory": [
+    {
+      "attempt": "Managed temporary-config default WebKit probes",
+      "result": "Four original assertions printed ok in two attempts; processes stalled before final summaries/reports and were stopped. No whole-command PASS.",
+      "logs": "OS temp: cvc-f3-copy-default-iphone-13-webkit-core-1791963067667.log; cvc-f3-copy-default-webkit-direct.log"
+    },
+    {
+      "attempt": "Manually owned Vite with webServer disabled",
+      "result": "FAIL:3passed/1failed; first logo/icon case timed out120seconds waiting for the copy button, with read dialog closed. Cause not established; not attributed to the new message assertion.",
+      "log": "OS temp: cvc-f3-copy-default-webkit-owned-vite.log",
+      "artifacts": "Ignored test-results/f3-copy-image-proof/default-artifacts"
+    },
+    {
+      "attempt": "Early forced capability scratch",
+      "result": "Setup-only report0expected/4skipped; no native-share behavior verified."
+    },
+    {
+      "attempt": "Unmodified repository runner, single original WebKit logo/icon case, retries0",
+      "result": "AssertionPASS19.0seconds; no final report/summary/exit after about60seconds. Owned session interrupted, exit1; whole-command notPASS.",
+      "log": "OS temp: cvc-d3-f3-standard-webkit-owned.log"
+    },
+    {
+      "attempt": "Nested temporary managed-server forced probe",
+      "result": "SETUP_FAIL before browser launch: inherited relative Vite command resolved from nested config directory. Next bounded attempt changes only server cwd to repository root and retains original command/timings."
+    }
+  ],
+  "remaining": "Standard repository runner original case and controlled native-share proof, restricted R9 review, new clean-source recorder and exact full green CI.",
+  "review": "regression-hunter round9 PASS_WITH_FINDINGS, zero blockers",
+  "controlledCapability": {
+    "assertions": "PASS16.8seconds, original WebKit logo/icon case plus forced Condividi-rendered check; unchanged helper visibility/enabled and image assertions",
+    "command": "INTERRUPTED exit1 after shutdown stall; no successful command or final report claimed",
+    "preserved": "OS temporary directory cvc-d3-f3-forced-share-owned; cvc-d3-f3-forced-share-webkit-redirect.log",
+    "capabilityOverrides": [
+      "navigator.canShare => true",
+      "navigator.share => resolved Promise"
+    ],
+    "configuration": "Original timeout,expect timeout,workers,use,project names and managed server; target single originalcase,retries0,outputredirect,explicit servercwd restores originalcommand workingdirectory"
+  },
+  "scratchCleanup": "Owned .codex/f3-copy-proof output preserved to OS temp. Default sandbox cleanup denied; bounded escalated removal of that exact owned path succeeded. First quick verification failed on scratch formatting; clean rerun follows.",
+  "quickVerification": {
+    "status": "PASS",
+    "node": "v24.21.0",
+    "testFiles": 80,
+    "tests": 1351,
+    "durationSeconds": 81.87
+  }
+}

@@ -622,7 +622,23 @@ export async function copyAndCheckSummaryImage(
   const expectedNote =
     options.expectedNote === undefined ? COPIED_NOTE : options.expectedNote
   if (expectedNote) {
-    await expect(view.getByRole("status")).toHaveText(expectedNote)
+    const status = view.getByRole("status")
+    const copyMessage = status.locator("p")
+    await expect(copyMessage).toHaveText(expectedNote)
+    await expect(copyMessage).toBeVisible()
+
+    // Some WebKit environments also expose the native file-share capability.
+    // Keep the copied message exact while accepting that separate action.
+    const shareButton = status.getByRole("button", {
+      name: "Condividi",
+      exact: true,
+    })
+    const shareButtonCount = await shareButton.count()
+    expect(shareButtonCount).toBeLessThanOrEqual(1)
+    if (shareButtonCount === 1) {
+      await expect(shareButton).toBeVisible()
+      await expect(shareButton).toBeEnabled()
+    }
   }
   const metadata = await sharp(png).metadata()
   expect(metadata.format).toBe("png")
