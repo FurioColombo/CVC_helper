@@ -16,10 +16,12 @@
     "Restricted R9 helper/coverage review PASS_WITH_FINDINGS zero blockers; Node24.21.0 verify:quick passes80files/1351tests81.87seconds after owned scratch cleanup.",
     "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
   ],
-  "uncommittedWork": [],
+  "uncommittedWork": [
+    "Owner authorisation in technical decisions, plan, backlog and D3 evidence."
+  ],
   "currentBlocker": {
-    "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
-    "reason": "Fresh-process reopen takes 9897 ms against the unchanged 5000 ms limit; 9693 ms is adapter initialization, with all 609 rows identical. No supported current-SDK startup fix found. Unsupported worker/module reuse needs an explicit architecture decision. Image failures remain separate.",
+    "kind": "CI_FAILURE_UNDER_AUTHORIZED_INVESTIGATION",
+    "reason": "Owner authorised the bounded startup-integration investigation. Timing and image failures remain unresolved; no gate or architecture candidate is accepted.",
     "evidence": "runtime-blocker-assessment.json",
     "decision": "Authorize a bounded investigation of PowerSync worker/module startup reuse within the chosen engine and persistent database, preserving all timing and integrity requirements."
   },
@@ -53,7 +55,7 @@
     "restriction": "Do not bypass the approval review. Resume verification when it is available."
   },
   "resumedAt": "2026-10-14",
-  "currentWork": "Stopped at the owner-decision blocker requested by the user. Failed diagnostics and source/runtime assessment are preserved; no unsupported engine/lifecycle workaround or image-threshold change adopted. Main application source and owner readiness remain unchanged.",
+  "currentWork": "Concrete compiled-module/startup lifecycle design and exact-mask image diagnostics proceed in parallel. Shared application source unchanged.",
   "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
   "ci": {
     "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",

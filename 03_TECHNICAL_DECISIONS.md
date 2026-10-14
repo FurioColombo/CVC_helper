@@ -61,6 +61,15 @@ browser spike succeeded, so PowerSync local-only is the decided implementation;
 Dexie is no longer an automatic fallback. The app does not call `connect()` in
 0.2.0 and contains no sync connector, upload queue, Auth or conflict UI.
 
+**D3 startup investigation (owner, 2026-10-14).** A bounded investigation of
+PowerSync worker/module startup reuse is authorised. PowerSync, the persistent
+database, schema compatibility and both construction-inclusive five-second
+upgrade/reopen bounds remain required. This permits a reviewed integration
+candidate; it does not authorise a different engine, VFS, in-memory persistence,
+extra retries or warming outside the measured path. Adoption requires evidence
+for cold startup, close/reopen, interruption recovery, multi-tab guards and
+test-channel isolation, then D3 reviews and exact green CI.
+
 Use granular records with stable collision-resistant client IDs rather than a
 monolithic nested course document. Faults, evaluations, assignments, session boat
 selections and availability remain separate records so future replication is not

@@ -2,7 +2,7 @@
   "milestone": "D3",
   "date": "2026-10-14",
   "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
-  "status": "OWNER_DECISION_REQUIRED",
+  "status": "AUTHORIZED_INVESTIGATION",
   "formalReview": false,
   "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "diagnostic": {
@@ -75,5 +75,24 @@
     "Resolve the image mismatch with exact helper masks and per-region font/baseline diagnostics.",
     "Required restricted reviews, clean D3 recorder, complete exact green push CI, then immutable 0.4.0 publication and live HTTPS proof.",
     "Use owner:update READY and milestone:await-owner; continue eligible D4/T1. Publish 0.4.1 only after explicit owner installation report."
-  ]
+  ],
+  "ownerAuthorization": {
+    "date": "2026-10-14",
+    "reportedBy": "owner",
+    "source": "Current chat: explicit yes to the startup-integration investigation request following checkpoint 07e1e29.",
+    "scope": "Authorize a bounded investigation of PowerSync worker/module startup reuse within the chosen engine and persistent database, preserving all timing and integrity requirements.",
+    "acceptedCandidate": false,
+    "acceptanceChanged": false
+  },
+  "authorizationBaseline": {
+    "date": "2026-10-14",
+    "commit": "07e1e29bd8f51186e985c9c0addef06e5244c975",
+    "sourceUnchanged": true,
+    "runtime": "v24.21.0",
+    "command": "npm run verify:quick",
+    "status": "PASS",
+    "files": 80,
+    "tests": 1351,
+    "vitestDurationSeconds": 129.12
+  }
 }

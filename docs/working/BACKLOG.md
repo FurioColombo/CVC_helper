@@ -126,10 +126,10 @@ mismatch. None of those candidates is adopted. Preserve both five-second
 bounds, image limits, negative controls and data-integrity checks while
 investigating public SDK startup options and text placement.
 
-No supported SDK startup fix was found. Proposed worker/module startup reuse
-needs an architecture decision under AGENTS.md §14. Its scope, unchanged
-acceptance limits and verification conditions are in
-`.evidence/D3/runtime-blocker-assessment.json`; no decision is inferred.
+The owner authorises bounded worker/module startup investigation on 2026-10-14
+(03 §3). No supported SDK startup fix was found. The unchanged acceptance
+limits and verification conditions are in
+`.evidence/D3/runtime-blocker-assessment.json`; no candidate is adopted yet.
 
 ## Flaky browser tests
 
