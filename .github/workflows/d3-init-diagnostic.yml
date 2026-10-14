@@ -1,4 +1,4 @@
-name: D3 initialization diagnostic (not acceptance)
+name: D3 Mac comparison diagnostic (not acceptance)
 on: [push, workflow_dispatch]
 permissions:
   contents: read
@@ -7,37 +7,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15]
-        source: [D3]
+        os: [macos-15, macos-15-intel]
+        mode: [isolated, prefix]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Select immutable application source and identical acceptance harness
-        env:
-          SOURCE: ${{ matrix.source }}
-          PROBE_SHA: ${{ github.sha }}
-        run: |
-          if [ "$SOURCE" = D2 ]; then
-            git checkout d033bbfe172d80166c280a363841fed3fe1e9476
-          else
-            git checkout 0a485f68b6e5be50bbe93076ec4ed9afe987d845
-          fi
-          git show "$PROBE_SHA:src/test/d1MigrationHarness.ts" > src/test/d1MigrationHarness.ts
-          git show "$PROBE_SHA:tests/e2e/d1-migration.spec.ts" > tests/e2e/d1-migration.spec.ts
+      - name: Select immutable failed source without overlays
+        run: git checkout 33ac7c927d602d9f322c55ab83e981f0a7651b06
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+      - name: Record runtime and architecture
+        run: |
+          node --version
+          uname -m
+          sysctl -n hw.memsize
+          git rev-parse HEAD
       - run: npm ci
       - run: npx playwright install --with-deps webkit
-      - name: Same five-second upgrade and reopen acceptance, without worker wrapper
-        run: npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep="upgrades and reopens a 40-student" --retries=0
+      - name: Original migration acceptance, isolated or with its exact preceding specs
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          task_status=0
+          if [ "$MODE" = isolated ]; then
+            npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --grep="upgrades and reopens a 40-student" --retries=0 --output=test-results/migration-cases || task_status=$?
+          else
+            npm run verify:e2e -- tests/e2e/d1-migration.spec.ts --project=iphone-13-webkit-core --retries=0 --output=test-results/migration-cases || task_status=$?
+          fi
+          if [ -f test-results/e2e-report.json ]; then cp test-results/e2e-report.json test-results/migration-report.json; fi
+          if [ -f test-results/e2e-flaky.json ]; then cp test-results/e2e-flaky.json test-results/migration-flaky.json; fi
+          exit "$task_status"
+      - name: Original enlarged-text image comparison, with actual PNG and screen pairs
+        if: always()
+        env:
+          CVC_REVIEW_DIR: test-results/f3-image-pairs
+        run: |
+          task_status=0
+          npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts --project=iphone-13-webkit-core --grep="copies double names, a crew with no boat and every badge" --retries=0 --output=test-results/image-cases || task_status=$?
+          if [ -f test-results/e2e-report.json ]; then cp test-results/e2e-report.json test-results/image-report.json; fi
+          exit "$task_status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: d3-platform-${{ matrix.os }}-${{ matrix.source }}
+          name: d3-mac-${{ matrix.os }}-${{ matrix.mode }}-${{ github.run_id }}
           path: test-results/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: error
