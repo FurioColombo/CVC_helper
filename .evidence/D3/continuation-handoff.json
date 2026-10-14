@@ -16,9 +16,7 @@
     "Restricted R9 helper/coverage review PASS_WITH_FINDINGS zero blockers; Node24.21.0 verify:quick passes80files/1351tests81.87seconds after owned scratch cleanup.",
     "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
   ],
-  "uncommittedWork": [
-    "Owned D3 diagnostic evidence, blocker assessment, plan and backlog updates. All are included in the next descriptive metadata checkpoint."
-  ],
+  "uncommittedWork": [],
   "currentBlocker": {
     "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
     "reason": "Fresh-process reopen takes 9897 ms against the unchanged 5000 ms limit; 9693 ms is adapter initialization, with all 609 rows identical. No supported current-SDK startup fix found. Unsupported worker/module reuse needs an explicit architecture decision. Image failures remain separate.",
@@ -65,7 +63,7 @@
     "linux": "PASS",
     "macos": "FAIL"
   },
-  "latestCheckpoint": "9a029c340e3a0a70a81c06bd39b26b8e710b1c47",
+  "latestCheckpoint": "f09c9dc00c7d964167b9ce732a6530e43aae0473",
   "diagnostic": {
     "run": 38538939134,
     "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38538939134",
@@ -100,5 +98,6 @@
   "mayContinue": [
     "Read-only upstream/browser fix investigation and exact-mask text-placement diagnostics are within the existing scope.",
     "D4 and T1 implementation must wait for verified D3 AWAITING_OWNER; phone pending alone will then not stop them."
-  ]
+  ],
+  "checkpointNote": "f09c9dc preserves the complete diagnostic and architecture assessment. A following metadata correction keeps the backlog within its documentation budget. Neither checkpoint claims green CI or verified phone readiness."
 }

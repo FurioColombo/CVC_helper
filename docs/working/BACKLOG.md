@@ -126,11 +126,9 @@ mismatch. None of those candidates is adopted. Preserve both five-second
 bounds, image limits, negative controls and data-integrity checks while
 investigating public SDK startup options and text placement.
 
-The public SDK inspection found no supported startup-cache option or documented
-fix. The next proposed path is a bounded investigation of PowerSync worker/module
-startup reuse, keeping the persistent database and all acceptance limits. It
-changes engine integration and needs an explicit architecture decision under
-AGENTS.md §14. The scope and verification conditions are recorded in
+No supported SDK startup fix was found. Proposed worker/module startup reuse
+needs an architecture decision under AGENTS.md §14. Its scope, unchanged
+acceptance limits and verification conditions are in
 `.evidence/D3/runtime-blocker-assessment.json`; no decision is inferred.
 
 ## Flaky browser tests
