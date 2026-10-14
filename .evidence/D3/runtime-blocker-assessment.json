@@ -1,0 +1,79 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-14",
+  "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
+  "status": "OWNER_DECISION_REQUIRED",
+  "formalReview": false,
+  "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "diagnostic": {
+    "commit": "9ea353e7e772d8c835f6636c3fdb147f16e7f3f4",
+    "run": 38543947337,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38543947337",
+    "upgradeMs": 1396,
+    "reopenMs": 9897,
+    "reopenAdapterInitMs": 9693,
+    "reopenPreparationMs": 99,
+    "rows": 609,
+    "students": 40,
+    "evaluations": 520,
+    "reopenedIdentical": true,
+    "rowIssues": [],
+    "reopenRowIssues": []
+  },
+  "packageInspection": {
+    "pinnedPowerSync": "2.2.0",
+    "pinnedWaSqlite": "2.0.3",
+    "configuration": "PowerSyncDatabase with schema and database.dbFilename; default worker and IDBBatchAtomicVFS.",
+    "stage": "The module factory is invoked during each adapter open; close releases the worker connection.",
+    "supportedFixFound": false,
+    "limits": "Inspection found no compiled-module injection/cache option or documented startup fix. This is not proof that every possible upstream or browser fix is impossible."
+  },
+  "evidenceInspected": [
+    "src/persistence/schema.ts:191-196",
+    "node_modules/@powersync/web/src/db/adapters/wa-sqlite/vfs.ts:45-60,112",
+    "node_modules/@powersync/web/src/db/adapters/wa-sqlite/WASQLiteOpenFactory.ts:97-137",
+    "ci-adapter-initialization.json: immutable baseline and compiler probes",
+    "ci-macos-comparison.json: immutable Mac comparison and targetedCauseProbe"
+  ],
+  "primarySources": [
+    {
+      "url": "https://github.com/powersync-ja/powersync-js/blob/main/packages/web/CHANGELOG.md",
+      "finding": "Release notes through 2.4.2 contain no documented fix for this initialization delay."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/powersync-ja/powersync-js/main/pnpm-workspace.yaml",
+      "finding": "Current upstream still pins WA-SQLite 2.0.3 for SQLite-core compatibility."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/powersync-ja/powersync-js/main/packages/web/src/db/adapters/wa-sqlite/vfs.ts",
+      "finding": "Current upstream still invokes the per-open module factory."
+    }
+  ],
+  "inference": "The measured delay precedes course repairs. A repair/index optimization or routine package bump has no evidence-backed route to fix this case.",
+  "decisionNeeded": {
+    "recommended": "Authorize a bounded investigation of PowerSync worker/module startup reuse within the chosen engine and persistent database, preserving all timing and integrity requirements.",
+    "reason": "Implementing reuse without a supported SDK option changes the engine integration and worker lifetime. AGENTS.md section14 requires escalation for a material change to the chosen stack; no fallback is adopted automatically.",
+    "guardrails": [
+      "Do not change engines, switch to in-memory persistence, or change VFS without a separately reviewed decision.",
+      "Do not raise either 5000 ms bound, skip the case, prewarm outside timing, or add retries.",
+      "A candidate must prove close/reopen, cross-tab writes and guards, interruption recovery, isolated test storage, and later full reset before adoption.",
+      "An upstream/browser runtime fix remains a possible alternative.",
+      "No issue or message is sent to maintainers without explicit authorization."
+    ]
+  },
+  "otherBlocker": "Three enlarged-text image comparisons remain unresolved. Smoothing and connected-canvas variants failed; no image threshold or production font change adopted.",
+  "statePreserved": {
+    "d3": "IN_PROGRESS",
+    "d4": "PENDING",
+    "t1": "PENDING",
+    "ownerQueue": "D3-PHONE-UPDATE NEEDS_SETUP",
+    "testSite": "UNPUBLISHED",
+    "physicalPass": false
+  },
+  "nextIfAuthorized": [
+    "Develop a reviewable lifecycle design before app changes.",
+    "Resolve the image mismatch with exact helper masks and per-region font/baseline diagnostics.",
+    "Required restricted reviews, clean D3 recorder, complete exact green push CI, then immutable 0.4.0 publication and live HTTPS proof.",
+    "Use owner:update READY and milestone:await-owner; continue eligible D4/T1. Publish 0.4.1 only after explicit owner installation report."
+  ]
+}

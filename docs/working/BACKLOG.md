@@ -110,6 +110,29 @@ remaining proposals await the owner's pick:
 7. `milestone:complete` writes the plan's status row from the manifest
    (friction 10).
 
+## D3 CI blockers under investigation
+
+Full CI on `33ac7c9` fails three summary-image comparisons at 320 px and
+200% text, with identical results across retries. The large-course upgrade
+also fails all three attempts (6302–6393 ms); all 609 rows remain identical.
+These failures block D3 publication and readiness, rather than being deferred
+to T1. See `.evidence/D3/ci-macos-comparison.json`.
+
+Immutable comparisons reproduce the image mismatch on both Mac architectures.
+The isolated M1 timing case passes, but its original preceding tests trigger
+an upgrade failure; a fresh browser process instead fails reopen at 9897 ms.
+Controlled body smoothing and connected-canvas probes retain the image
+mismatch. None of those candidates is adopted. Preserve both five-second
+bounds, image limits, negative controls and data-integrity checks while
+investigating public SDK startup options and text placement.
+
+The public SDK inspection found no supported startup-cache option or documented
+fix. The next proposed path is a bounded investigation of PowerSync worker/module
+startup reuse, keeping the persistent database and all acceptance limits. It
+changes engine integration and needs an explicit architecture decision under
+AGENTS.md §14. The scope and verification conditions are recorded in
+`.evidence/D3/runtime-blocker-assessment.json`; no decision is inferred.
+
 ## Flaky browser tests
 
 Local Windows verification also needs a shutdown diagnosis: D3's default and

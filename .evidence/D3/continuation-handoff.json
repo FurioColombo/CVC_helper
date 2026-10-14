@@ -17,11 +17,13 @@
     "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
   ],
   "uncommittedWork": [
-    "ci-macos-comparison.json and precisehandoff/plan for newCIclassification"
+    "Owned D3 diagnostic evidence, blocker assessment, plan and backlog updates. All are included in the next descriptive metadata checkpoint."
   ],
   "currentBlocker": {
-    "kind": "CI_GATE_FAILURE_DIAGNOSIS_IN_PROGRESS",
-    "reason": "MacCI33ac: three deterministic enlarged-text image differences and allthree large-course upgrade timings fail. Needs new evidence, not unchanged fullrerun."
+    "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
+    "reason": "Fresh-process reopen takes 9897 ms against the unchanged 5000 ms limit; 9693 ms is adapter initialization, with all 609 rows identical. No supported current-SDK startup fix found. Unsupported worker/module reuse needs an explicit architecture decision. Image failures remain separate.",
+    "evidence": "runtime-blocker-assessment.json",
+    "decision": "Authorize a bounded investigation of PowerSync worker/module startup reuse within the chosen engine and persistent database, preserving all timing and integrity requirements."
   },
   "remainingAcceptance": [
     "Inspect immutableMac imagepairs and runtime comparisons; make only evidence-supported fixes withinapprovedstack",
@@ -41,7 +43,7 @@
   },
   "preservation": {
     "diagnosticBranch": "codex/d3-init-probe-dbc048c3e8",
-    "latestDiagnosticCommit": "3bbb0eef49486aacd93c29127b9f10499aa00ec4",
+    "latestDiagnosticCommit": "9ea353e7e772d8c835f6636c3fdb147f16e7f3f4",
     "temporaryLocationPointer": "OS temporary directory: cvc-d3-linux-probe-location.json",
     "warning": "The previous temporary diagnostic clone has missing Git objects. Preserve its artifacts; use the fresh clone named by the pointer. The shared checkout remains healthy.",
     "preparedFiles": "OS temporary directory: cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md; these drafts are not proof or owner readiness."
@@ -53,7 +55,7 @@
     "restriction": "Do not bypass the approval review. Resume verification when it is available."
   },
   "resumedAt": "2026-10-14",
-  "currentWork": "CorrectedBacksource926ee8d reviewed R10 and quick/targetedproofPASS; notpushed. Newfullrecorder stopped early after completed33acCIrevealed further failures. Bounded immutable Mac architecture/prefix and actualimagepair diagnostic next.",
+  "currentWork": "Stopped at the owner-decision blocker requested by the user. Failed diagnostics and source/runtime assessment are preserved; no unsupported engine/lifecycle workaround or image-threshold change adopted. Main application source and owner readiness remain unchanged.",
   "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
   "ci": {
     "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
@@ -63,7 +65,7 @@
     "linux": "PASS",
     "macos": "FAIL"
   },
-  "latestCheckpoint": "926ee8d6c158916b53cb2c19b78970175f65cd63",
+  "latestCheckpoint": "9a029c340e3a0a70a81c06bd39b26b8e710b1c47",
   "diagnostic": {
     "run": 38538939134,
     "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38538939134",
@@ -74,5 +76,29 @@
     "reference": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
     "purpose": "Capture original image/screen pairs and classify nativeinit architecture/preceding-test effects, with originalassertions and no production workaround",
     "acceptance": false
-  }
+  },
+  "targetedDiagnostic": {
+    "run": 38543947337,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38543947337",
+    "diagnosticCommit": "9ea353e7e772d8c835f6636c3fdb147f16e7f3f4",
+    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+    "acceptance": false,
+    "status": "FAIL",
+    "cases": [
+      "Complete original D1 prefix with fresh browser process for largest case",
+      "Original double-name image case: source control, body smoothing auto, connected canvas"
+    ],
+    "preflight": {
+      "node": "v24.21.0",
+      "applicationTypecheck": "PASS",
+      "nodeTypecheck": "PASS",
+      "largestTestBodyAST": "UNCHANGED"
+    },
+    "limits": "Original timing, image, data-integrity and layout assertions remain unchanged. No production workaround or owner PASS is inferred.",
+    "resultReference": "ci-macos-comparison.json#targetedCauseProbe"
+  },
+  "mayContinue": [
+    "Read-only upstream/browser fix investigation and exact-mask text-placement diagnostics are within the existing scope.",
+    "D4 and T1 implementation must wait for verified D3 AWAITING_OWNER; phone pending alone will then not stop them."
+  ]
 }

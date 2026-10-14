@@ -214,6 +214,108 @@
     "modes": ["isolated", "prefix"],
     "reference": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
     "purpose": "Capture original image/screen pairs and classify nativeinit architecture/preceding-test effects, with originalassertions and no production workaround",
-    "acceptance": false
+    "acceptance": false,
+    "results": [
+      {
+        "runner": "macos-15",
+        "mode": "isolated",
+        "upgradeMs": 1122,
+        "reopenMs": 603,
+        "status": "PASS",
+        "rows": 609,
+        "identical": true
+      },
+      {
+        "runner": "macos-15",
+        "mode": "prefix",
+        "upgradeMs": 6686,
+        "adapterInitMs": 5852,
+        "reopenMs": 2036,
+        "status": "FAIL",
+        "rows": 609,
+        "identical": true
+      },
+      {
+        "runner": "macos-15-intel",
+        "mode": "isolated",
+        "upgradeMs": 2539,
+        "reopenMs": 21595,
+        "status": "FAIL",
+        "rows": 609,
+        "identical": true
+      },
+      {
+        "runner": "macos-15-intel",
+        "mode": "prefix",
+        "upgradeMs": 1807,
+        "reopenMs": 18599,
+        "status": "FAIL",
+        "rows": 609,
+        "identical": true
+      }
+    ],
+    "imageConclusion": "Botharchitectures andmodes reproduce the200percent comparisonfailure; switchingrunner isnotasupportedfix. SavedPNG/screen pairs show matchingflatpalette/wrapping, minor glyph-edge/weight differences; benignAA versus genuinefontstyle mismatch remainsunproven.",
+    "next": "Controlledfreshbenchmarkbrowserfixture underfullD1prefix andsource/DOM-smoothing/connectedCanvas styleprobes. Diagnostic only; no productionchange,thresholdchange or acceptance inferred."
+  },
+  "targetedCauseProbe": {
+    "run": 38543947337,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38543947337",
+    "diagnosticCommit": "9ea353e7e772d8c835f6636c3fdb147f16e7f3f4",
+    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+    "acceptance": false,
+    "status": "FAIL",
+    "preflight": {
+      "runtime": "v24.21.0",
+      "appAndNodeTypecheck": "PASS",
+      "largestTestCallbackAST": "Identical to original"
+    },
+    "timing": {
+      "prefixPassed": 7,
+      "caseStatus": "FAIL",
+      "durationMs": 1396,
+      "adapterInitMs": 270,
+      "reopenMs": 9897,
+      "reopenAdapterInitMs": 9693,
+      "rows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "reopenedIdentical": true,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "limitsMs": { "upgrade": 5000, "reopen": 5000 },
+      "finding": "A separate worker/browser fixes neither timing guarantee nor underlying adapter delay; no isolation candidate adopted."
+    },
+    "raster": [
+      {
+        "mode": "source",
+        "mean": 2.420968364197531,
+        "share": 0.012770061728395062,
+        "status": "FAIL"
+      },
+      {
+        "mode": "dom-auto",
+        "mean": 2.406934799382716,
+        "share": 0.013406635802469136,
+        "status": "FAIL"
+      },
+      {
+        "mode": "connected-canvas",
+        "mean": 2.405888310185185,
+        "share": 0.013382523148148149,
+        "status": "FAIL"
+      }
+    ],
+    "finding": "Both controlled raster variants retain the mismatch; no production font-smoothing/canvas attachment change adopted. Original limits and negative controls remain unchanged.",
+    "artifacts": "OS temporary directory: d3-fresh-browser-38543947337 and d3-raster-{source,dom-auto,connected-canvas}-38543947337; reports, traces, PNG/screen pairs and bounded computed style/native-font observations preserved.",
+    "rasterFollowup": {
+      "cause": "UNPROVEN",
+      "inspection": "40 px/900 heading, fixed 13.5 px/700 crew names and 11 px/900 labels use the Inter/system family stack. Accepted canvas family strings do not identify the resolved face.",
+      "limitations": [
+        "The 256-entry font-assignment cap captures the first copy only, so enlarged-copy fonts are not established.",
+        "Raw saved screen PNGs retain excluded copy controls. An unmasked regional diff is invalid and is not acceptance or causal evidence."
+      ],
+      "next": "Capture exact helper exclusion masks, unchanged comparison method and text/edge regions, deduplicate enlarged-copy fonts, then compare native canvas metrics and DOM baseline probes if text dominates.",
+      "productionChanged": false
+    }
   }
 }
