@@ -40,7 +40,8 @@
     "D3 focus now lists all four summary-image helper consumer specs by three additive entries. Current documentation143files and repository checks pass. Independent native-share proof and restricted R9 review remain pending.",
     "Restricted regression round9 PASS_WITH_FINDINGS zero blockers on exact helperbf618719 and additive focusmanifest11621c46. Controlled native-share and original WebKit case assertions pass16.8/19.0seconds, but both interrupted shutdowns exit1; full recorder remains required.",
     "Clean33ac focused browser commandPASS:105passed47skipped0flakes, managed server shutdown0.38seconds, no manual cleanup or workaround. Regular0.3.0→0.3.1 offers0.19/0.33seconds; test0.4.0→0.4.1 offers0.19/0.34seconds. Both preserve notes.",
-    "Clean33ac recorder fails finalWebKitisolation navigation: immediate studentsBack query can skip secondBack after profile asynchronouspopstate. Failure preserved; adding existing-timeout visiblecontrol wait retains both UIclicks and all isolation assertions. Corrected isolatedcommandPASS bothengines; restrictedR10zeroBlockers."
+    "Clean33ac recorder fails finalWebKitisolation navigation: immediate studentsBack query can skip secondBack after profile asynchronouspopstate. Failure preserved; adding existing-timeout visiblecontrol wait retains both UIclicks and all isolation assertions. Corrected isolatedcommandPASS bothengines; restrictedR10zeroBlockers.",
+    "Mobile copy/share containment: four class strings only, original renderer/masks/limits unchanged; Mac original image checks 8 PASS/1 original skip, final three-profile long-message/native-control audit PASS with no retries. Independent field round8 and regression round11 have zero blockers."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -180,5 +181,20 @@
     "blob": "481a5d8650b2c5eb2d18e64d3319cbcb508574d9",
     "review": "R10 PASS_WITH_FINDINGS zero blockers",
     "recording": "Clean33ac recorder FAIL retained: four checksPASS, isolationFAIL. New corrected source must receive full clean recording."
+  },
+  "findings": [
+    {
+      "id": "Native-share status overflow at 320px / 200% text",
+      "disposition": "FIXED: constrain the live wrapper children; no renderer or threshold change. The new audit first exposed missing Chromium clipboard permission, preserved as a test-setup failure, then passed with the same permissions as existing F3 tests."
+    }
+  ],
+  "currentSourceReview": {
+    "scope": "SummaryImageButton containment and durable browser coverage",
+    "reference": "summary-status-containment.json",
+    "reviews": [
+      "field-ux-review-round-8.json",
+      "regression-review-round-11.json"
+    ],
+    "remaining": "Startup production candidate remains outside the shared source. Final full recorder and exact full green push CI remain required."
   }
 }

@@ -168,7 +168,7 @@ export function SummaryImageButton({
 
   return (
     <div
-      className="pointer-events-none fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-10 flex max-w-[calc(100%-2rem)] flex-col items-end gap-2"
+      className="pointer-events-none fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-10 flex min-w-0 max-w-[calc(100%-2rem)] flex-col items-end gap-2"
       data-snapshot-exclude="true"
     >
       {/* Always in the page, so a screen reader that watches it hears what
@@ -177,7 +177,7 @@ export function SummaryImageButton({
         aria-live="polite"
         className={
           status
-            ? "pointer-events-auto rounded-2xl bg-[#102f3b] px-3.5 py-2.5 text-sm leading-5 font-bold text-white shadow-lg"
+            ? "pointer-events-auto min-w-0 max-w-full rounded-2xl bg-[#102f3b] px-3.5 py-2.5 text-sm leading-5 font-bold text-white shadow-lg"
             : ""
         }
         onBlur={(event) => {
@@ -193,7 +193,7 @@ export function SummaryImageButton({
             <p>{status.text}</p>
             {status.canShare && (
               <button
-                className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-3.5 text-sm font-black text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-white/60"
+                className="mt-2 inline-flex min-h-11 min-w-0 max-w-full flex-wrap items-center gap-2 rounded-xl bg-white px-3.5 text-sm font-black text-[#0b526b] outline-none focus-visible:ring-3 focus-visible:ring-white/60"
                 onClick={() => void share()}
                 type="button"
               >
@@ -215,7 +215,7 @@ export function SummaryImageButton({
       <button
         aria-busy={busy}
         aria-label={busy ? undefined : "Copia immagine riepilogo"}
-        className="pointer-events-auto inline-flex min-h-12 items-center justify-center gap-[8px] rounded-full bg-[#0b526b] px-[18px] py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]"
+        className="pointer-events-auto inline-flex min-h-12 min-w-0 max-w-full flex-wrap items-center justify-center gap-[8px] rounded-full bg-[#0b526b] px-[18px] py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]"
         onClick={() => void copy()}
         type="button"
       >

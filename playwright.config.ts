@@ -20,6 +20,7 @@ const { hostname, port } = new URL(baseURL)
 // measures layout belongs in this list.
 const layoutSpecs = [
   "c1-crew-management",
+  "d3-summary-controls",
   "e1-evaluation-history-layout",
   "f3-crew-summary",
   "f3-duty-summary",
@@ -51,6 +52,7 @@ const webkitCoreSpecs = [
   "d1-migration",
   "d2-duty-items",
   "d3-read-only",
+  "d3-summary-controls",
   "duties",
   "evaluation-gate",
   "f1-navigation-guards",

@@ -61,7 +61,7 @@
       "No issue or message is sent to maintainers without explicit authorization."
     ]
   },
-  "otherBlocker": "Three enlarged-text image comparisons remain unresolved. Smoothing and connected-canvas variants failed; no image threshold or production font change adopted.",
+  "otherBlocker": "Image mismatch resolved provisionally by actual live status containment. Unchanged renderer/masks/limits pass eight original cases in Mac CI, and the final durable long-message/control audit passes all three local projects. Restricted review and final exact-source gates remain required.",
   "statePreserved": {
     "d3": "IN_PROGRESS",
     "d4": "PENDING",
@@ -94,5 +94,20 @@
     "files": 80,
     "tests": 1351,
     "vitestDurationSeconds": 129.12
+  },
+  "authorizedProgress": {
+    "diagnosticRun": 38632601491,
+    "commit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
+    "status": "PASS",
+    "sourceAccepted": false,
+    "coldCasesPassed": 4,
+    "migrationReadOnlyCasesPassed": 22,
+    "webkit": { "upgradeMs": 1256, "reopenMs": 427 },
+    "chromium": { "upgradeMs": 553, "reopenMs": 245 },
+    "rows": 609,
+    "priorEventCount": 0,
+    "compileCount": 1,
+    "freshWorkersAndInstances": 2,
+    "remaining": "Production failure handling, interruption, stock SharedWorker/two-tab and isolated build proofs; restricted reviews, full recorder and exact full green push CI."
   }
 }

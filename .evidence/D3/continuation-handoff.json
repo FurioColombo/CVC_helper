@@ -17,16 +17,17 @@
     "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
   ],
   "uncommittedWork": [
-    "Owner authorisation in technical decisions, plan, backlog and D3 evidence."
+    "Root-owned verified UI fix, durable test/coverage and evidence metadata ready for a descriptive checkpoint.",
+    "Separate unadopted startup candidate in temporary clone; preserve the unrelated unadopted pageSnapshot calibration scratch."
   ],
   "currentBlocker": {
     "kind": "CI_FAILURE_UNDER_AUTHORIZED_INVESTIGATION",
-    "reason": "Owner authorised the bounded startup-integration investigation. Timing and image failures remain unresolved; no gate or architecture candidate is accepted.",
+    "reason": "Final production startup safety/integration, restricted reviews, fresh full D3 recorder and exact full green push CI are unfinished. No phone build is READY.",
     "evidence": "runtime-blocker-assessment.json",
     "decision": "Authorize a bounded investigation of PowerSync worker/module startup reuse within the chosen engine and persistent database, preserving all timing and integrity requirements."
   },
   "remainingAcceptance": [
-    "Inspect immutableMac imagepairs and runtime comparisons; make only evidence-supported fixes withinapprovedstack",
+    "Finish startup cold telemetry and production safety proof; review and verify the accepted source without weakening bounds",
     "Restrictedreview of anynewsourcefix, cleancheckpoint and allfiveD3recordercommands",
     "Completegreen exactpushCI beforepinned0.4.0 publication and bothengine liveHTTPSverification",
     "owner:updateREADY, milestone:await-owner, theneligibleD4andT1;0.4.1onlyafterexplicitinstallationreport"
@@ -43,7 +44,7 @@
   },
   "preservation": {
     "diagnosticBranch": "codex/d3-init-probe-dbc048c3e8",
-    "latestDiagnosticCommit": "9ea353e7e772d8c835f6636c3fdb147f16e7f3f4",
+    "latestDiagnosticCommit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
     "temporaryLocationPointer": "OS temporary directory: cvc-d3-linux-probe-location.json",
     "warning": "The previous temporary diagnostic clone has missing Git objects. Preserve its artifacts; use the fresh clone named by the pointer. The shared checkout remains healthy.",
     "preparedFiles": "OS temporary directory: cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md; these drafts are not proof or owner readiness."
@@ -54,8 +55,8 @@
     "reason": "Automatic approval review could not complete because the account usage limit was reached. The command was not executed; the rejection was not an unsafe-action determination.",
     "restriction": "Do not bypass the approval review. Resume verification when it is available."
   },
-  "resumedAt": "2026-10-14",
-  "currentWork": "Concrete compiled-module/startup lifecycle design and exact-mask image diagnostics proceed in parallel. Shared application source unchanged.",
+  "resumedAt": "2026-10-15",
+  "currentWork": "UI containment is verified and independently reviewed with zero blockers. Production startup core and new recovery/multitab specs remain unadopted in the temporary clone, requiring final cleanup and safety verification.",
   "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
   "ci": {
     "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
@@ -65,7 +66,7 @@
     "linux": "PASS",
     "macos": "FAIL"
   },
-  "latestCheckpoint": "f09c9dc00c7d964167b9ce732a6530e43aae0473",
+  "latestCheckpoint": "6c305df",
   "diagnostic": {
     "run": 38538939134,
     "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38538939134",
@@ -98,8 +99,15 @@
     "resultReference": "ci-macos-comparison.json#targetedCauseProbe"
   },
   "mayContinue": [
-    "Read-only upstream/browser fix investigation and exact-mask text-placement diagnostics are within the existing scope.",
+    "Bounded owner-authorised startup integration investigation and image containment verification/reviews; D3 remains IN_PROGRESS.",
     "D4 and T1 implementation must wait for verified D3 AWAITING_OWNER; phone pending alone will then not stop them."
   ],
-  "checkpointNote": "f09c9dc preserves the complete diagnostic and architecture assessment. A following metadata correction keeps the backlog within its documentation budget. Neither checkpoint claims green CI or verified phone readiness."
+  "checkpointNote": "f09c9dc preserves the complete diagnostic and architecture assessment. A following metadata correction keeps the backlog within its documentation budget. Neither checkpoint claims green CI or verified phone readiness.",
+  "correctedRecorderDiagnostic": {
+    "run": 38632601491,
+    "commit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
+    "status": "PASS",
+    "acceptance": false,
+    "resultReference": "ci-macos-comparison.json#correctedRecorderProbe"
+  }
 }

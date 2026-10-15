@@ -2,9 +2,18 @@
   "reviewerRole": "field-ux",
   "persona": "Il Nostromo",
   "milestone": "D3",
-  "round": 7,
-  "commit": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
-  "applicationBlob": "6a881b76688164d8cb74691584c0b6cd51b5d1c7",
+  "round": 8,
+  "commit": "6c305dfefc389464d04037aea0430927f5a63fab",
+  "reviewedWorkingTree": true,
+  "sourceBlobs": {
+    "src/components/SummaryImageButton.tsx": "9bd8da0084c69e7bf43ad486873eada1c6a91eeb",
+    "tests/e2e/d3-summary-controls.spec.ts": "0cf75776f62dbb8f82ebc6bd3fe123303a74a44c",
+    "playwright.config.ts": "7590c2c342b03ea466d38f807ce6143cfd4a4189",
+    ".milestones/manifest.json": "14475a6086eca0592e6992b0ddad7794a3733504",
+    "src/features/crews/CrewManagement.tsx": "6a881b76688164d8cb74691584c0b6cd51b5d1c7",
+    "src/lib/pageSnapshot.ts": "82dc043d2748b7d4495a22a3f60f65ef995a8c3d",
+    "tests/e2e/summary-image-checks.ts": "bf618719800876f3c30352498f8e15ed7e93778d"
+  },
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -12,38 +21,46 @@
     {
       "id": "FU-Q13",
       "title": "Crew-panel title and legend can clip horizontally at 200% text",
-      "evidence": "test-results/fux-r7/webkit-320-200-crew-top.png; recorded in docs/working/BACKLOG.md",
-      "reproduction": "In WebKit at 320×664 with 200% text and the update note visible, open crew 1 destinations, focus and trial-check the controls, then scroll Close into view. The panel shifts horizontally and clips the left edge of the Equipaggio title and Non disponibile legend. Enabled destination actions and Close remain contained, focusable and reachable.",
-      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05/R18 large-text stress profile"
+      "evidence": ".evidence/D3/field-ux-review-round-7.json; docs/working/BACKLOG.md",
+      "reproduction": "Prior round 7 reproduced horizontal clipping of the Equipaggio title and Non disponibile legend in WebKit at 320×664 with 200% text and an update note. Enabled destination actions and Close remained contained, focusable and reachable. The portal source is unchanged in this review.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05/R18",
+      "disposition": "Retained prior nonblocking finding; outside this restricted copy/status fix."
     }
   ],
-  "resolvedBlockers": [
-    {
-      "id": "FU-12",
-      "disposition": "FIXED",
-      "evidence": "CI run 38442464681 showed the first selected-person action bottom at 217 beyond panel bottom 207, with Nuovo equipaggio fragmented and clipped. Panel-local containers and the one-column fallback now keep the complete action reachable. Both-engine checks passed at normal, 175% and 200% text."
-    }
-  ],
+  "priorReviewContinuity": {
+    "reportsPreserved": "Canonical field-UX review and rounds 1–7 remain unchanged.",
+    "priorFailRounds": [
+      1,
+      2
+    ],
+    "priorPortalFix": "FU-12 remains covered by round 7; the reviewed CrewManagement.tsx blob is unchanged.",
+    "newEntropyDraw": false
+  },
   "evidenceInspected": [
-    "Exact checkpoint and CrewManagement.tsx blob confirmed. Both destination portals retain their body anchors; labels, actions and handlers are unchanged.",
-    "The two Home navigation clicks in scripts/check-test-app-isolation.mjs match existing history restoration and Product Specification §2. Existing regular-course identity, preferences, student and storage assertions remain intact. .evidence/D3/isolation-navigation-fix.json records corrected Chromium/WebKit PASS.",
-    "Independent Node v24.21.0 probe: Chromium passed nine cases; WebKit passed nine cases using fresh contexts at each target viewport. Cases cover student, volunteer and crew portals at 390×844 normal text, 320×664/175% and 320×664/200%. Consolidated measurements are in test-results/fux-r7/final-results.json.",
-    "Checks retained full button and label containment, minimum 44px height, expected grid columns, zero portal-button scroll margins, enabled-control focus, centre hits, click/tap trials, and unchanged panel anchors through document and composition scrolling. No page errors occurred.",
-    "The original 425px footer scroll margin exceeded the 191px crew-panel viewport and pushed Non assegnato above it during automatic scrolling. Manual scrolling and focus proved reachability. Restoring the identical failed scroll position and changing only the rendered margin to zero restored automatic scrolling and trial hits. The source fix limits zero margins to portal buttons; diagnostic measurements are preserved in scroll-margin-diagnostic.json.",
-    "Probe setup failures were classified and preserved: tsx naming helper, an overly broad grid selector, inappropriate hit expectations for disabled controls, standalone setup timeout, and WebKit retaining fixed-layer positions from its original smaller viewport after resizing. A fresh 390×844 context confirmed correct viewport units and footer anchors; subsequent fresh-context profile checks retained all geometry assertions.",
-    "Directly inspected final Chromium 200%, WebKit 175% and WebKit 200% captures. RH4-Q1 is fixed: direct labels wrap between whole words. FU-11 remains fixed with the unchanged 13rem rail fallback. Earlier review reports remain intact."
+    "AGENTS.md, reviewer-field-ux persona, REVIEW_PROTOCOL, active D3 predicate, Product Specification §7.5, Scope §1, design rules R04/R05/R12/R18, and summary changelog. Directly inspected the frozen C6 reference and relevant current image captures.",
+    "The application diff changes four class strings only: wrapper/status width containment and wrapping on Copy/Share controls. Text, font classes, minimum target heights, status lifetime, live-region semantics and handlers remain unchanged. The production component blob exactly matches the passing diagnostic candidate.",
+    "Read all prior round verdicts, blockers and findings. This round restricts its investigation to the copy/status containment correction and regressions caused by it.",
+    "Mac diagnostic run 38631356366, commit 7af26c144311f0423aaeb7d95c2efe97d8045c71: inspected image-comparison-report.json in the d3-copy-status artifact. Eight original image cases passed, one original WebKit case was skipped, and there were zero unexpected or flaky results. Renderer, masks and comparison limits remained unchanged.",
+    "Mac WebKit 320px/200% image differences were mean 0.404909/share 0.003274/colour 0.421125 for double names; 0.357851/0.002715/0.375857 for hostile crews; and 0.393306/0.003723/0.396433 for hostile duties. All remain below unchanged limits of 2.5/0.012/2.5. Inspected generated crew/duty PNGs and corresponding comparison captures.",
+    "Identified a durable-test coverage gap: a shorter Copia non riuscita status could satisfy the initial containment checks. The exact canonical copied-message assertion now closes that gap. Its first rerun reproduced missing Chromium clipboard permission; the failure is preserved in the scratch report cvc-d3-status-missing-permission-failure.json and test-results/d3-summary-controls-review. Setup now grants Chromium the same clipboard permissions used by existing summary tests, without replacing rendering or clipboard code.",
+    "Inspected the final test-results/e2e-report.json: three projects passed, with zero skips, retries, unexpected results or flakes; total duration 48.852 seconds. Pixel 7 Chromium, iPhone Chromium viewport and iPhone WebKit all exercised the exact long copied message.",
+    "Final recorded bounds agree across all three projects at 320×664/200% text: wrapper x32–288/y209–632; status x32–288/y209–513; Share x60–260/y405–493; Copy x32–288/y529–632. Share is 88px high, Copy is 103px high, and the status-to-Copy gap is 16px. Both button centres receive their own targets. Share accepts focus, the actual Share-button click reaches the synthetic native-share handler, and the status clears afterwards.",
+    "Directly inspected all three final unmasked copy-status.png captures under test-results/d3-summary-controls-final. The copied message and both button captions remain readable within their surfaces; no native-share control escapes the wrapper or viewport.",
+    "Bounded pier routine: 1) Open the chosen session’s read view: one tap. 2) Copy its image: one tap. 3) Optionally tap Condividi: one tap. The fix introduces no additional action. Overall task time and physical reading effort were not measured."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Restricted reload-navigation assumption correction.",
-      "Restricted destination-action clipping fix and resulting scrolling, focus, hit-target and anchor behavior."
+      "Restricted native-share/status containment at 320px and 200% text.",
+      "Regressions in target height, spacing, readable captions, focus and pointer reachability.",
+      "Preservation of the original summary-image renderer, exclusion masks and fidelity limits."
     ],
-    "wildcard": "Causal comparisons for oversized nested scroll margins and stale resized-WebKit fixed layers; no new entropy draw or broader hunt."
+    "wildcard": "Require the full copied-message state so a shorter clipboard-failure status cannot falsely validate the overflow correction; no new whole-milestone hunt."
   },
   "notTested": [
-    "Physical-phone acceptance remains with the owner; no physical-device PASS is claimed.",
-    "Final recorded verification, exact green CI and live HTTPS publication remain pending.",
-    "Migration timing changes and unrelated application behavior were outside this restricted field-UX review."
+    "Physical Android/iPhone installation, system share sheets, real font scaling, wet hands and glare. No physical-device PASS is claimed.",
+    "Final complete D3 evidence, exact checkpoint full CI and usable public HTTPS deployment remain separate requirements.",
+    "The database startup prototype and its timing, lifecycle or adoption were outside this UI review.",
+    "Earlier nonblocking portal findings and unrelated application paths were not reopened."
   ]
 }

@@ -317,5 +317,261 @@
       "next": "Capture exact helper exclusion masks, unchanged comparison method and text/edge regions, deduplicate enlarged-copy fonts, then compare native canvas metrics and DOM baseline probes if text dominates.",
       "productionChanged": false
     }
+  },
+  "exactMaskProbe": {
+    "run": 38624400453,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38624400453",
+    "diagnosticCommit": "15c4c641359b9e458f73377e9994a84bf0c022b1",
+    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+    "acceptance": false,
+    "status": "FAIL",
+    "regionalResultsUsable": true,
+    "comparison": [
+      {
+        "name": "heading-40px",
+        "boxes": 1,
+        "pixels": 14400,
+        "mean": 4.792777777777777,
+        "share": 0.043333333333333335,
+        "colour": 5.03125
+      },
+      {
+        "name": "other-text-40px",
+        "boxes": 6,
+        "pixels": 2444,
+        "mean": 0,
+        "share": 0,
+        "colour": 0
+      },
+      {
+        "name": "text-13.5px",
+        "boxes": 48,
+        "pixels": 10997,
+        "mean": 0.18668727834864055,
+        "share": 0.000181867782122397,
+        "colour": 0.18947368421052632
+      },
+      {
+        "name": "text-11px",
+        "boxes": 7,
+        "pixels": 2808,
+        "mean": 8.573005698005698,
+        "share": 0.04024216524216524,
+        "colour": 3.25
+      },
+      {
+        "name": "text-9px",
+        "boxes": 14,
+        "pixels": 132,
+        "mean": 4.174242424242424,
+        "share": 0,
+        "colour": 0
+      },
+      {
+        "name": "card-and-section-edges",
+        "boxes": 41,
+        "pixels": 4496,
+        "mean": 0.22953736654804271,
+        "share": 0,
+        "colour": 0.06349206349206349
+      },
+      {
+        "name": "full-frame-visible",
+        "boxes": 1,
+        "pixels": 207360,
+        "mean": 2.420968364197531,
+        "share": 0.012770061728395062,
+        "colour": 2.7551440329218106
+      }
+    ],
+    "baselineProbes": [
+      {
+        "name": "heading",
+        "fontSize": "40px",
+        "fontWeight": "900",
+        "domRangeHeight": 47.109375,
+        "domBaselineOffset": 38.6640625,
+        "currentFormulaOffset": 39.0907579787234,
+        "formulaDeltaFromDomBaseline": 0.42669547872340274
+      },
+      {
+        "name": "text-40px-other",
+        "fontSize": "40px",
+        "fontWeight": "900",
+        "domRangeHeight": 47.109375,
+        "domBaselineOffset": 38.671875,
+        "currentFormulaOffset": 39.0907579787234,
+        "formulaDeltaFromDomBaseline": 0.41888297872340274
+      },
+      {
+        "name": "text-13.5px",
+        "fontSize": "13.5px",
+        "fontWeight": "700",
+        "domRangeHeight": 15.8994140625,
+        "domBaselineOffset": 13.0517578125,
+        "currentFormulaOffset": 12.91827392578125,
+        "formulaDeltaFromDomBaseline": -0.13348388671875
+      },
+      {
+        "name": "text-11px",
+        "fontSize": "11px",
+        "fontWeight": "900",
+        "domRangeHeight": 12.955078125,
+        "domBaselineOffset": 10.634765625,
+        "currentFormulaOffset": 10.961989182692308,
+        "formulaDeltaFromDomBaseline": 0.3272235576923084
+      },
+      {
+        "name": "text-9px",
+        "fontSize": "9px",
+        "fontWeight": "700",
+        "domRangeHeight": 10.599609375,
+        "domBaselineOffset": 8.701171875,
+        "currentFormulaOffset": 8.672407670454545,
+        "formulaDeltaFromDomBaseline": -0.02876420454545503
+      }
+    ],
+    "finding": "Full-frame diagnostics exactly match the original helper. Heading and 11px label regions differ more than 13.5px crew names or card edges. Canvas integer-metric baseline estimates differ from synthetic DOM baselines. A DOM-baseline candidate is under diagnostic evaluation; cause and final fix remain unproved.",
+    "limitations": [
+      "Regions are selected styles, not a disjoint partition of all pixels.",
+      "Synthetic DOM baselines are estimates for the captured styles and need a production-image comparison."
+    ],
+    "artifacts": "OS temporary directory: d3-raster-exact-mask-38624400453 and cvc-d3-exact-mask-payload.json"
+  },
+  "domBaselineProbe": {
+    "run": 38626161858,
+    "commit": "6712db6248869ed7c8ca8fedd126c5c98878991c",
+    "conclusion": "FAIL",
+    "acceptance": false,
+    "result": "Baseline placement improved selected image errors, but all three WebKit colour checks still failed. Candidate remains unadopted.",
+    "supersededExplanation": "The original live copy/share status extended beyond its excluded wrapper. Containing that actual UI fixes the original image comparisons without renderer, mask or threshold changes."
+  },
+  "startupReuseProbe": {
+    "run": 38627904978,
+    "commit": "3b9cff84d4c6c980585ec486e51c9bbb6cd8677d",
+    "conclusion": "FAIL",
+    "acceptance": false,
+    "strictColdCasesPassed": 4,
+    "originalPrefix": {
+      "passed": 21,
+      "failed": 1,
+      "webkitUpgradeMs": 6983,
+      "webkitReopenMs": 340
+    },
+    "result": "Reuse fixes reopening but not a cold first open after earlier tests in the same browser process."
+  },
+  "combinedCauseProbe": {
+    "run": 38631356366,
+    "commit": "7af26c144311f0423aaeb7d95c2efe97d8045c71",
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38631356366",
+    "conclusion": "FAIL",
+    "acceptance": false,
+    "images": {
+      "passed": 8,
+      "skipped": 1,
+      "failed": 0,
+      "flaky": 0,
+      "nativeContainmentPassed": 2,
+      "renderer": "unchanged",
+      "masks": "unchanged",
+      "limits": "unchanged",
+      "webkitStress": [
+        {
+          "case": "double names",
+          "mean": 0.4049093364197531,
+          "share": 0.0032744984567901233,
+          "colour": 0.42112482853223593
+        },
+        {
+          "case": "hostile crew",
+          "mean": 0.3578510802469136,
+          "share": 0.00271508487654321,
+          "colour": 0.37585733882030176
+        },
+        {
+          "case": "hostile duty",
+          "mean": 0.39330632716049385,
+          "share": 0.0037229938271604937,
+          "colour": 0.39643347050754457
+        }
+      ]
+    },
+    "startup": {
+      "strictColdPassed": 4,
+      "originalPrefixPassed": 22,
+      "failed": 0,
+      "flaky": 0,
+      "chromium": { "upgradeMs": 583, "reopenMs": 229 },
+      "webkit": { "upgradeMs": 3048, "reopenMs": 357 },
+      "rows": 609,
+      "injectedStudents": 40,
+      "injectedEvaluations": 520,
+      "identical": true,
+      "issues": [],
+      "telemetry": "FAIL: recorder captured undefined before broker allocated the first event array. No cold telemetry PASS is inferred."
+    },
+    "artifacts": "OS temporary directory: d3-copy-status-38631356366 and d3-startup-combined-38631356366"
+  },
+  "correctedRecorderProbe": {
+    "run": 38632601491,
+    "commit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38632601491",
+    "status": "PASS",
+    "acceptance": false,
+    "change": "Diagnostic-only event array allocation before timed startup; no engine event, fetch, compile or prewarming. Original largest test body and all acceptance limits remain unchanged.",
+    "strictColdCasesPassed": 4,
+    "originalMigrationAndReadOnlyCasesPassed": 22,
+    "flaky": 0,
+    "skipped": 0,
+    "records": [
+      {
+        "project": "webkit",
+        "upgradeMs": 1256,
+        "reopenMs": 427,
+        "adapterInitMs": 254,
+        "reopenAdapterInitMs": 229,
+        "rows": 609,
+        "reopenRows": 609,
+        "identical": true,
+        "issues": [],
+        "reopenIssues": [],
+        "priorEventCount": 0,
+        "eventTypes": [
+          "cache-miss",
+          "compile-start",
+          "compile-complete",
+          "instance-created",
+          "cache-hit",
+          "instance-created"
+        ],
+        "workerIds": ["worker-1", "worker-2"],
+        "instanceIds": ["worker-1-instance-1", "worker-2-instance-1"]
+      },
+      {
+        "project": "chromium",
+        "upgradeMs": 553,
+        "reopenMs": 245,
+        "adapterInitMs": 277,
+        "reopenAdapterInitMs": 211,
+        "rows": 609,
+        "reopenRows": 609,
+        "identical": true,
+        "issues": [],
+        "reopenIssues": [],
+        "priorEventCount": 0,
+        "eventTypes": [
+          "cache-miss",
+          "compile-start",
+          "compile-complete",
+          "instance-created",
+          "cache-hit",
+          "instance-created"
+        ],
+        "workerIds": ["worker-1", "worker-2"],
+        "instanceIds": ["worker-1-instance-1", "worker-2-instance-1"]
+      }
+    ],
+    "artifacts": "OS temporary directory: d3-startup-combined-38632601491",
+    "remaining": "Production integration, injected startup-failure recovery, abrupt interruption, stock SharedWorker/two-tab proof, independent reviews, final recorder and exact full push CI."
   }
 }

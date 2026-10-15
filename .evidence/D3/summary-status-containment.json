@@ -1,0 +1,72 @@
+{
+  "milestone": "D3",
+  "kind": "FOCUSED_FIX_EVIDENCE",
+  "status": "PASS",
+  "reviewedWorkingTree": true,
+  "componentBlob": "9bd8da0084c69e7bf43ad486873eada1c6a91eeb",
+  "cause": "The native-share control forces the live status beyond its fixed wrapper at 320 px / 200% text. The original image mask correctly excludes the wrapper, exposing the protruding UI.",
+  "change": "Constrain the actual status/copy/share children to their wrapper and allow controls to wrap; preserve fonts, labels, min-heights, handlers and snapshot renderer.",
+  "ciDiagnostic": {
+    "run": 38631356366,
+    "commit": "7af26c144311f0423aaeb7d95c2efe97d8045c71",
+    "imagesPassed": 8,
+    "originalSkips": 1,
+    "nativeAuditPassed": 2,
+    "flaky": 0,
+    "originalRendererMasksAndLimitsUnchanged": true
+  },
+  "local": {
+    "node": "v24.21.0",
+    "quick": {
+      "unitFiles": 80,
+      "tests": 1351,
+      "vitestDurationSeconds": 111.43,
+      "status": "PASS"
+    },
+    "durableAudit": {
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-14T20:38:03.714Z",
+        "duration": 48852.047,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-viewport",
+        "iphone-13-webkit-core"
+      ],
+      "retries": 0,
+      "assertions": [
+        "Exact long copied message",
+        "Native share and copy parent/viewport containment",
+        "44/48px touch minimums and separated controls",
+        "Keyboard focus and pointer hit targets",
+        "Real share-control activation reaches a no-send stub and clears the note"
+      ]
+    },
+    "setupFailure": {
+      "status": "FAIL_PRESERVED",
+      "classification": "The new Chromium audit lacked the clipboard permissions already used by the existing F3 journeys. It correctly failed after the copied-message assertion was added; granting those permissions fixes setup. No production change or retry was used.",
+      "artifact": "OS temporary directory: cvc-d3-status-missing-permission-failure.json; ignored test-results/d3-summary-controls-review"
+    }
+  },
+  "limitations": [
+    "This focused diagnostic and local test do not replace the final D3 recorder, required reviews or exact full green push CI.",
+    "No physical-device or live-publication PASS is inferred."
+  ],
+  "captures": "Ignored test-results/d3-summary-controls-final/*/copy-status.png",
+  "baselineCheckpoint": "6c305dfefc389464d04037aea0430927f5a63fab",
+  "sourceBlobs": {
+    "component": "9bd8da0084c69e7bf43ad486873eada1c6a91eeb",
+    "spec": "0cf75776f62dbb8f82ebc6bd3fe123303a74a44c",
+    "renderer": "82dc043d2748b7d4495a22a3f60f65ef995a8c3d",
+    "comparisonHelper": "bf618719800876f3c30352498f8e15ed7e93778d"
+  },
+  "reviews": {
+    "fieldUx": "field-ux-review-round-8.json: PASS_WITH_FINDINGS, zero blockers",
+    "regression": "regression-review-round-11.json: PASS_WITH_FINDINGS, zero blockers"
+  }
+}
