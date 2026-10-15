@@ -176,11 +176,27 @@
       "notAcceptance": "Final full recorder and exact full CI remain required."
     }
   },
-  "finalSource": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+  "finalSource": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
   "finalReviews": [
     "data-integrity-review-round-5.json",
-    "regression-review-round-13.json",
+    "regression-review-round-14.json",
+    "field-ux-review-round-9.json",
     "security-privacy-review-round-4.json",
     "sync-chaos-review-round-2.json"
-  ]
+  ],
+  "finalFocusedProof": "final-source-focused-proof.json",
+  "finalRecorder": {
+    "status": "PASS",
+    "sourceCommit": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+    "sourceDigest": "74221ac46e5d5ced216ba0cf7611534209e463af1a6927ba6ea1843250c208fb",
+    "checks": [
+      { "command": "npm run verify", "status": "PASS" },
+      { "command": "npm run verify:e2e:focus", "status": "PASS" },
+      { "command": "npm run check:update", "status": "PASS" },
+      { "command": "npm run check:update:test", "status": "PASS" },
+      { "command": "npm run check:test-isolation", "status": "PASS" }
+    ],
+    "flakyTests": [],
+    "workingTreeClean": true
+  }
 }

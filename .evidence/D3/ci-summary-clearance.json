@@ -23,7 +23,7 @@
     },
     "log": "OS-temp cvc-d3-42ce5d8-linux-ci.log",
     "artifact": 12009457639,
-    "macos": "IN_PROGRESS at first inspection"
+    "macos": "CANCELLED by corrected source push; original source had Linux FAIL, no Mac PASS inferred"
   },
   "cause": "The anonymous copy label and icon wrap onto separate flex lines with wider Linux glyphs. Three content lines plus padding make the control138px tall, exceeding the5rem summary clearance after its1rem bottom inset.",
   "fix": "Keep icon and a min-width0 text span on one flex line, letting only the label wrap. No padding allowance, geometry/image threshold, retry, renderer or mask change.",
@@ -138,5 +138,37 @@
     "command": "npm run verify:domain",
     "status": "PASS",
     "log": "Ignored test-results/d3-summary-final-domain.log"
-  }
+  },
+  "fullGate": {
+    "source": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+    "run": 38816257215,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38816257215",
+    "status": "FAIL_MACOS_COLD_COMPILATION_LINUX_AND_LOCAL_PASS",
+    "recordedCommands": "All-five recorder running on committed reviewed source, refreshD3 enabled",
+    "linux": {
+      "job": 116701787891,
+      "status": "PASS",
+      "passed": 196,
+      "originalSkips": 47,
+      "flaky": 0,
+      "unitFiles": 81,
+      "unitTests": 1362,
+      "log": "OS-temp cvc-d3-fd5657b-linux-ci.log",
+      "sha256": "f229c8cbfda77a7f47ae90f87aef4f44334e607aacce3af25f775097477cfa7e"
+    },
+    "failureEvidence": "ci-cold-compilation-failure.json"
+  },
+  "currentRecorderCapture": {
+    "source": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+    "file": ".evidence/D3/copy-controls-320-200-chromium.png",
+    "sha256": "e791070c4b0b68b5b5b7c0a327905958a461d5f1a15066a5efde596d885088ae",
+    "case": "d3-summary-controls, pixel-7-chrome, PASS in currently running full recorder; not a whole-run PASS",
+    "physicalPass": false,
+    "webkit": {
+      "file": ".evidence/D3/copy-controls-320-200-webkit.png",
+      "sha256": "e1ff851c05a1cefcda352623eb09f5908b80e0317b5e0d87a4958e92852a1f9b",
+      "case": "d3-summary-controls, iphone-13-webkit-core, PASS16.8s, retry0; no physical-device PASS"
+    }
+  },
+  "scratchRetention": "Earlier ignored focused reports/captures were inspected and hashed in the recorded reviews before the standard browser runner cleared its output directory. Their compact proof/reproduction remains here and in the independent reviews; the current recorder capture is retained in evidence."
 }

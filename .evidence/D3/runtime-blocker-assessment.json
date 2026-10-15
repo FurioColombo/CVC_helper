@@ -2,7 +2,7 @@
   "milestone": "D3",
   "date": "2026-10-16",
   "kind": "AUTHORIZED_STARTUP_INTEGRATION_PROGRESS",
-  "status": "INTEGRATED_CANDIDATE_REVIEWED_FULL_SOURCE_GATES_PENDING",
+  "status": "MACOS_COLD_COMPILATION_FAILURE_UNDER_DIAGNOSIS",
   "formalReview": false,
   "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "diagnostic": {
@@ -117,7 +117,8 @@
     "reviews": "DI5, regression14, field9, security4 and sync-chaos2 zero blockers; previous formal FAIL reports/counts retained.",
     "quick": "81 files/1362tests PASS Node24.21.0",
     "sourceAccepted": false,
-    "remaining": "Fresh all-five recorder and exact full green source CI; immutable test publication and live HTTPS readiness. No owner input is needed for these steps.",
-    "packagingFix": "ci-startup-update-failure.json"
+    "remaining": "Resolve source fd5657b Mac original first-open compilation failures; local recorderPASS does not waive failedCI. No threshold increase, prewarming or workload reduction.",
+    "packagingFix": "ci-startup-update-failure.json",
+    "finalRecorder": "PASS all five at fd5657b, source digest matches; final-source-focused-proof.json"
   }
 }

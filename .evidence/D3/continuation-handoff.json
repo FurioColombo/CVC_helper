@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "runtime": "v24.21.0",
   "branch": "codex/0.4.0",
-  "latestCheckpoint": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+  "latestCheckpoint": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
   "status": "IN_PROGRESS",
   "completed": [
     "Mobile copy/share wrapper containment at7062d4c; image renderer/masks/limits unchanged; independent field8 and regression11 zero blockers.",
@@ -15,19 +15,22 @@
     "Confirmed and corrected ES worker packaging regression: Mac observe shows registration reevaluation resets broker state; restoring stock single-file worker packaging passes original two-engine production update diagnostic. Shared corrected build and81files/1362tests PASS.",
     "Same original reviewers resumed after current account status allowed normal usage. DI5, regression13, security4 and sync-chaos2 have zero blockers on42ce5d8; no failed or missing review is treated as PASS.",
     "Focused exact-source production test updatePASS0.4.0→0.4.1 in0.19/0.31s with typed notes intact; same-origin isolationPASS Chromium/WebKit, regular course/preferences/OCR bytes/offline app preserved. packaging-focused-verification.json records these, not a substitute for full recorder.",
-    "Wider Linux font caused floating copy control overlap; faithful negative control and two-line label correction pass3mobile profiles, original4Pixel cases and Linux/Mac bounded diagnostic38815080734. Field9/regression14 zero blockers."
+    "Wider Linux font caused floating copy control overlap; faithful negative control and two-line label correction pass3mobile profiles, original4Pixel cases and Linux/Mac bounded diagnostic38815080734. Field9/regression14 zero blockers.",
+    "fd5657b descriptive source checkpoint; current verify:quick81files/1362tests PASS112.46s, verify:domainPASS, all six canonical reviews zero blockers. Full source gates are running; no acceptance inferred.",
+    "Final clean fd5657b all-five recorderPASS; focus127PASS47originalskips0flakes; production regular/testpatch notes preserved; same-origin two-engine isolationPASS, source digest matches. Raw report/log copied to OS-temp outside browser output cleanup."
   ],
   "uncommittedWork": [
-    "Root-owned reviewed SummaryImageButton label grouping and durable wider-font audit; related review/CI metadata. All other engine/packaging changes remain committed42ce5d8."
+    "Root-owned final local PASS recorder and updated browser/isolation evidence, current CI failure/diagnostic assessment and selected synthetic captures. App/test source unchanged fromfd5657b.",
+    "Scratch-only compiler experiment is committed/pushed oncodex/d3-cold-compiler-probe in OS-temp, not adopted. All prior diagnostic clones/renderer scratch preserved."
   ],
   "currentBlocker": {
-    "kind": "FINAL_SOURCE_VERIFICATION_PENDING",
-    "reason": "Corrected copy label has local/platform proof and restricted reviews. Complete new clean source recorder/full exact push CI before publication.",
-    "evidence": "ci-summary-clearance.json",
+    "kind": "MACOS_COLD_COMPILATION_EXCEEDS_BOUND",
+    "reason": "Original 40-student first opens fail all3attempts due5–6.7s compile; reopen and allrows intact. Investigate against faster new cold control; no test limit/scope/retry change.",
+    "evidence": "ci-cold-compilation-failure.json",
     "ownerInputNeeded": false
   },
   "remainingAcceptance": [
-    "Checkpoint reviewed correction, run fresh all-five recorder and full exact push CI.",
+    "Resolve current Mac cold compiler regression, restricted reviews if source changes, fresh all-five recorder and full exact green CI before publication.",
     "Wait for exact full green source CI before pushing metadata-only evidence checkpoint; obtain its exact green CI.",
     "Publish0.4.0 only from that verified checkpoint; prove live HTTPS identity/persistence/worker on both engines.",
     "Use owner:update READY and milestone:await-owner, checkpoint readiness then continue eligible D4 and T1.",
@@ -51,25 +54,18 @@
     "preparedFiles": "OS-temp cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md are drafts, not acceptance proof."
   },
   "ci": {
-    "source": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
-    "run": 38811456861,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38811456861",
-    "status": "LINUX_FAIL_MACOS_PENDING"
+    "source": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+    "run": 38816257215,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38816257215",
+    "status": "FAIL_MACOS_1_CASE_LINUX_PASS"
   },
   "diagnostic": {
-    "run": 38698033211,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38698033211",
-    "diagnosticCommit": "e12be3a509f487134d987aaa26482cd119c73d02",
-    "status": "PASS",
-    "change": "Remove worker.format es override, restoring stock Vite single-file worker packaging. Keep original worker registration and every update assertion.",
-    "engines": ["chromium", "webkit"],
-    "qualification": "Diagnostic logging/capture overlay remains; current final clean source still requires all reviews, full recorder and exact full push CI.",
-    "secondsFromForegroundToOffer": { "chromium": 0.19, "webkit": 0.33 },
-    "typedNotesSurvived": true,
-    "log": {
-      "location": "OS-temp cvc-d3-inline-worker-ci.log",
-      "sha256": "a83b44943770d057cb9ae46a4d59e94ff0d05eb907535066611576bf20f7f229"
-    }
+    "run": 38823234859,
+    "commit": "2b85ab7a693eb28eda2a6e6b2d7138619f8e267f",
+    "status": "IN_PROGRESS",
+    "evidence": "ci-cold-compilation-failure.json",
+    "locationPointer": "OS-temp cvc-d3-cold-compiler-probe-location.txt",
+    "sourceChanged": false
   },
   "mayContinue": [
     "Complete D3 verification/CI and permanent test publication now.",
@@ -78,11 +74,23 @@
   ],
   "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS.",
   "finalRecorder": {
-    "source": "Next descriptive source checkpoint",
-    "status": "NOT_STARTED",
+    "source": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+    "status": "PASS",
     "command": "npm run evidence -- D3",
     "canonicalOutput": ".evidence/D3/verification.json",
     "refreshes": "CVC_EVIDENCE_REFRESH=D3; start after reviews on committed source, no implementation edits during run.",
-    "previousInterruptedLog": "Ignored test-results/d3-42ce5d8-recorder.log"
+    "previousInterruptedLog": "Ignored test-results/d3-42ce5d8-recorder.log",
+    "log": "Ignored test-results/d3-fd5657b-recorder.log",
+    "sourceDigest": "74221ac46e5d5ced216ba0cf7611534209e463af1a6927ba6ea1843250c208fb",
+    "workingTreeClean": true,
+    "checks": [
+      { "command": "npm run verify", "status": "PASS" },
+      { "command": "npm run verify:e2e:focus", "status": "PASS" },
+      { "command": "npm run check:update", "status": "PASS" },
+      { "command": "npm run check:update:test", "status": "PASS" },
+      { "command": "npm run check:test-isolation", "status": "PASS" }
+    ],
+    "flakyTests": [],
+    "rawProofs": "OS-temp directory named by cvc-d3-fd5657b-verification-location.txt"
   }
 }

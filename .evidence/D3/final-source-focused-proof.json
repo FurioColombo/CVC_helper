@@ -1,0 +1,125 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+  "runtime": "v24.21.0",
+  "command": "npm run verify:e2e:focus (within final all-five recorder)",
+  "status": "PASS",
+  "stats": {
+    "startTime": "2026-10-15T22:22:41.521Z",
+    "duration": 1535790.011,
+    "expected": 127,
+    "skipped": 47,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "flaky": [],
+  "report": {
+    "location": "OS-temp directory named by cvc-d3-fd5657b-verification-location.txt / e2e-report.json",
+    "sha256": "922b54a13029437c373981f9b5a461b7f1e3a33f57dcfae774858d4876b558cb"
+  },
+  "cold": [
+    {
+      "project": "pixel-7-chrome",
+      "result": "passed",
+      "retry": 0,
+      "upgradeMs": 1091,
+      "reopenMs": 365,
+      "priorEventCount": 0,
+      "rows": 609,
+      "reopenRows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "reopenedIdentical": true,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "compileCount": 1,
+      "freshWorkers": 2,
+      "freshInstances": 2,
+      "lifecycle": {
+        "markerObservedAfterIndependentWrite": true,
+        "reopenedRows": 609,
+        "reopenedRowIssues": [],
+        "oldRowsAfterReset": 0,
+        "resetMarkerObserved": true,
+        "resetRows": 0,
+        "indexedDbDeleteUnblocked": true
+      }
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "result": "passed",
+      "retry": 0,
+      "upgradeMs": 2204,
+      "reopenMs": 843,
+      "priorEventCount": 0,
+      "rows": 609,
+      "reopenRows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "reopenedIdentical": true,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "compileCount": 1,
+      "freshWorkers": 2,
+      "freshInstances": 2,
+      "lifecycle": {
+        "markerObservedAfterIndependentWrite": true,
+        "reopenedRows": 609,
+        "reopenedRowIssues": [],
+        "oldRowsAfterReset": 0,
+        "resetMarkerObserved": true,
+        "resetRows": 0,
+        "indexedDbDeleteUnblocked": true
+      }
+    }
+  ],
+  "cases": [
+    {
+      "project": "pixel-7-chrome",
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "result": "passed",
+      "retry": 0,
+      "annotations": [
+        {
+          "type": "migration",
+          "description": "609/609 rows (expected 609); upgrade 772 ms (create 3, adapter init 379, SDK ready after adapter 127, total init 506, prepare 264); reopen 372 ms (create 1, adapter init 310, SDK ready after adapter 26, total init 335, prepare 36); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 70/3 ms and 66/2 ms"
+        }
+      ]
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "result": "passed",
+      "retry": 0,
+      "annotations": [
+        {
+          "type": "migration",
+          "description": "609/609 rows (expected 609); upgrade 1552 ms (create 2, adapter init 222, SDK ready after adapter 333, total init 555, prepare 995); reopen 727 ms (create 1, adapter init 214, SDK ready after adapter 279, total init 493, prepare 233); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 622/16 ms and 669/32 ms"
+        }
+      ]
+    },
+    {
+      "project": "pixel-7-chrome",
+      "title": "a real same-page prewarm cannot be reported as a cold pass",
+      "result": "passed",
+      "retry": 0,
+      "annotations": []
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "title": "a real same-page prewarm cannot be reported as a cold pass",
+      "result": "passed",
+      "retry": 0,
+      "annotations": []
+    },
+    {
+      "project": "desktop-chrome-storage",
+      "title": "stock desktop SharedWorker survives one tab closing and preserves cross-tab write guards",
+      "result": "passed",
+      "retry": 0,
+      "annotations": []
+    }
+  ],
+  "physicalPass": false,
+  "qualification": "Local all-five recorderPASS, but exact full macOS CI FAIL original first-open compiler bound. New cold control is not used to waive it; publication withheld."
+}
