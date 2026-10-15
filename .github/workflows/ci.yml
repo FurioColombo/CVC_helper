@@ -3,7 +3,6 @@ name: Deterministic verification
 # Push only: the Pages deploy waits for a push run on main, and a pull request
 # from a branch in this repository was a second, identical run (H1).
 on:
-  push:
   workflow_dispatch:
 
 # A newer push to the same branch supersedes the run in progress; a manual

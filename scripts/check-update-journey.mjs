@@ -450,6 +450,37 @@ async function runJourney(engine, browserType, server, screenshots) {
     await context.clock.install({ time: new Date() })
     const page = await context.newPage()
     page.setDefaultTimeout(30_000)
+    const startupDiagnostic = {
+      console: [],
+      pageErrors: [],
+      failedRequests: [],
+      responses: [],
+      workers: [],
+    }
+    page.on("console", (message) =>
+      startupDiagnostic.console.push({
+        type: message.type(),
+        text: message.text(),
+      }),
+    )
+    page.on("pageerror", (error) =>
+      startupDiagnostic.pageErrors.push(error.message),
+    )
+    page.on("requestfailed", (request) =>
+      startupDiagnostic.failedRequests.push({
+        url: request.url(),
+        error: request.failure()?.errorText,
+      }),
+    )
+    page.on("response", (response) => {
+      if (response.url().includes(".wasm") || response.status() >= 400)
+        startupDiagnostic.responses.push({
+          url: response.url(),
+          status: response.status(),
+          fromServiceWorker: response.fromServiceWorker(),
+        })
+    })
+    page.on("worker", (worker) => startupDiagnostic.workers.push(worker.url()))
 
     if (!(await openInstalledApp(page, server.url))) {
       return {
@@ -461,7 +492,38 @@ async function runJourney(engine, browserType, server, screenshots) {
     const browserVersion = browser.version()
     stage(engine, `installed ${installedVersion}, service worker in control`)
 
-    await createCourseAndStudent(page)
+    try {
+      await createCourseAndStudent(page)
+    } catch (error) {
+      const state = await page
+        .evaluate(async () => ({
+          url: location.href,
+          body: document.body.innerText,
+          sharedWorker: typeof SharedWorker,
+          controller: navigator.serviceWorker.controller?.scriptURL,
+          registrations: (await navigator.serviceWorker.getRegistrations()).map(
+            (reg) => ({ scope: reg.scope, active: reg.active?.scriptURL }),
+          ),
+          now: Date.now(),
+          performance: performance.now(),
+        }))
+        .catch((error) => ({ probeError: String(error) }))
+      writeFileSync(
+        resolve(screenshots, "startup-failure-" + engine + ".json"),
+        JSON.stringify(
+          { engine, error: String(error), state, startupDiagnostic },
+          null,
+          2,
+        ) + "\n",
+      )
+      await page
+        .screenshot({
+          path: resolve(screenshots, "startup-failure-" + engine + ".png"),
+          fullPage: true,
+        })
+        .catch(() => {})
+      throw error
+    }
     const shownBefore = await versionInSettings(page)
     if (shownBefore !== installedVersion) {
       throw new Error(

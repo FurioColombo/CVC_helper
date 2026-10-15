@@ -1,0 +1,36 @@
+name: D3 update-startup diagnostic
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  update:
+    strategy:
+      fail-fast: false
+      matrix:
+        source:
+          - a4ff839965e428712b1d819538bf0b74b8efa2e3
+          - 33ac7c927d602d9f322c55ab83e981f0a7651b06
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ matrix.source }}
+      - name: Overlay diagnostic observations only
+        env:
+          PROBE_COMMIT: ${{ github.sha }}
+        run: git show "$PROBE_COMMIT:scripts/check-update-journey.mjs" > scripts/check-update-journey.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run check:update
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-startup-${{ matrix.source }}-${{ github.run_id }}
+          path: test-results/
+          retention-days: 14
