@@ -2,35 +2,19 @@
   "reviewerRole": "regression-hunter",
   "persona": "Il Segugio",
   "milestone": "D3",
-  "round": 12,
-  "commit": "7062d4cb914cd40038cb05e5b92523dadf56f808",
+  "round": 14,
+  "commit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
   "reviewedWorkingTree": {
-    "baseCommit": "7062d4cb914cd40038cb05e5b92523dadf56f808",
+    "baseCommit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
     "blobs": {
-      ".github/workflows/ci.yml": "0190ba84f184268cda2da363546bc2fe355b6220",
-      ".milestones/manifest.json": "c92e4014770db1cfe54a0d1df841192dbb0c915a",
-      "playwright.config.ts": "e6975febc0e4866101de06f4fd8002de6ee3ca7c",
-      "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
-      "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
-      "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
-      "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
-      "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
-      "src/test/d1MigrationHarness.ts": "de257c68855ae5229a88e6e98a51d51f6620b275",
-      "tests/e2e/cold-browser.ts": "e3261ada0d3108e2955d89bb0687b19128ab32ff",
-      "tests/e2e/d1-migration.spec.ts": "12373965ac347f783cdfda5eefb466aa78376d65",
-      "tests/e2e/d3-engine-startup.spec.ts": "6bc3c30848e7fcf60bc1d812ba265cd84df31b09",
-      "tests/e2e/d3-startup-recovery.spec.ts": "e0b4eeca5c6309626dc46458c435f10b48656d91",
-      "tests/e2e/d3-startup-multitab.spec.ts": "9bc1d6a491e508343da7962c906f09beb6634e65",
-      "tests/engine-startup.test.ts": "03ab4a1dde50dd9bac0cc17e30654940c5b7de24",
-      "vite.config.ts": "77c12a1b656982fde1de5444be83a462703e7936",
-      "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
-      "src/features/evaluations/StudentEvaluationHistory.test.tsx": "911ec7af5aeac290d3a5fe5407dbb9a7cbe78bdc"
+      "src/components/SummaryImageButton.tsx": "d61c24b856bea4234a3a3f61abd53d98c70e2b75",
+      "tests/e2e/d3-summary-controls.spec.ts": "74a261a33cd21a0fe7262eb8a77d1e8c865be213"
     },
     "unchangedBlobs": {
-      "src/components/SummaryImageButton.tsx": "9bd8da0084c69e7bf43ad486873eada1c6a91eeb",
+      "tests/e2e/summary-image-checks.ts": "bf618719800876f3c30352498f8e15ed7e93778d",
       "src/lib/pageSnapshot.ts": "82dc043d2748b7d4495a22a3f60f65ef995a8c3d",
       "src/lib/summaryShare.ts": "dce6518c9e92c5b5fee65d6f36c1bcba342c96fa",
-      "tests/e2e/summary-image-checks.ts": "bf618719800876f3c30352498f8e15ed7e93778d"
+      "vite.config.ts": "de90a83917c310c29ff048a680866ab83fb81cf6"
     }
   },
   "verdict": "PASS_WITH_FINDINGS",
@@ -40,7 +24,7 @@
     {
       "id": "RH2-Q4",
       "title": "Carried over: the Barche list overflows horizontally with enlarged text",
-      "evidence": "Preserved regression round-2 finding, subsequent reports and docs/working/BACKLOG.md. This diff changes no Barche implementation.",
+      "evidence": "Preserved regression round-2 finding, subsequent reports and docs/working/BACKLOG.md. The reviewed copy-control diff changes no Barche implementation.",
       "reproduction": "Prior round: 0.3.0 fixture, 412x915, 150% root text, Barche; scrollWidth 484 versus clientWidth 412. Not rerun.",
       "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
     }
@@ -57,50 +41,45 @@
       8,
       9,
       10,
-      11
+      11,
+      12,
+      13
     ],
     "priorFailRounds": [
       1,
       2
     ],
     "newEntropyDraw": false,
-    "scope": "Restricted startup integration diff from 7062d4c and caused regressions, cold measurement fidelity, lifecycle/error handling, suite coverage, and the classified evaluation-history test-readiness correction. No new whole-milestone hunt."
+    "scope": "Restricted review of COPY_CONTROL_CLEARANCE_REGRESSION, the bounded icon/label layout correction and caused regressions. R13 packaging verdict remains preserved; no new whole-milestone hunt."
   },
   "evidenceInspected": [
-    "Read AGENTS.md, REVIEW_PROTOCOL.md, regression-hunter persona, active D3 plan and success predicate, relevant Product Specification and MVP scope, Technical Decisions sections 3 and 3.1, local runtime guidance, repository PowerSync skill and JavaScript/React references. Runtime is Node v24.21.0.",
-    "Startup checks found D3 IN_PROGRESS and D3-PHONE-UPDATE NEEDS_SETUP. ci:status could not fetch the committed HEAD result; it explicitly excludes this dirty working diff. Read all regression reports 1–11, preserving FAIL rounds 1/2, prior RH-1/RH-2/RH2-1/RH2-3 dispositions and RH2-Q4. Unchanged UI fixes were not rerun.",
-    "Inspected all changed startup exports and their consumers in db.ts, migrations.ts and legacy migration harnesses; compared the worker seam with installed PowerSync 2.2.0 worker/client/options/open-factory/VFS sources and wa-sqlite 2.0.3. Seven source hashes and both package-version guards passed a direct read-only invocation.",
-    "The broker stores only promises for compiled WebAssembly.Module code, keyed by the exact same-origin WASM URL. Every dedicated open constructs a new Worker, MessageChannel and WebAssembly.Instance through a fresh stock Emscripten factory. The pinned IDBBatchAtomicVFS and SDK connection/lifetime behavior remain in place; no database, memory, connection or course state is cached.",
-    "The custom entry evaluates private worker registration before installing the stock SDK handler, and stops only the private registration message. Desktop multi-tab selection retains the SDK worker entry, module-worker mode and shared-powersync-<filename> naming. The wrapper uses the stock factory when that private worker state is absent.",
-    "Reviewed initialization memoization, error/messageerror observation, worker termination on failed initialization, compile and broker-request timeouts, rejection-cache removal and explicit reopen after failure. Successful init releases the startup watchdog. Ordered one-way DEV event and release messages drain separately from SDK readiness; diagnostics add no awaited init round trip.",
-    "Own TypeScript semantic-AST comparison proves all existing D1 spec content identical to 7062d4c after excluding only the cold-browser import and outer isolatedTest call name. The 40-student callback hash is unchanged: eb3ae347f6da6be9bddf176eb94fb40429c047b2b6947e0619040b8c496a3065. Fixture-generating statements are also AST-identical, and fixture data files are unchanged. Both 5000 ms assertions remain unchanged.",
-    "The cold-browser fixture launches the selected browser with launchOptions, headless and channel preserved, while retaining Playwright's standard context/page fixtures. The added positive case seeds the legacy file in a separate page, starts the first clock before the harness import, and requires a cache miss, compile events, two distinct workers/instances, exact 609-row equality, 40 injected students, 520 evaluations and both original bounds. No broker fetch, compile or engine construction precedes that measured import on the measured page.",
-    "The real prewarm negative control opens and closes a database before measurement, clears only telemetry, observes cache-hit rather than cache-miss, and requires the cold-evidence validator to reject it. Both controls check independent writes, close/reopen, IDB deletion and reset without retaining old rows.",
-    "Read corrected prototype CI evidence for ca889d3 / run 38632601491: four strict cold/control cases and 22 original migration/read-only cases passed with zero flakes/skips; WebKit measured 1256/427 ms, identical 609 rows and cold-miss/fresh-instance telemetry. It is explicitly diagnostic evidence, not exact production-integration acceptance.",
-    "Read the preserved broad-route failure report: four initial failures faulted Vite's WASM URL-module response before binary compilation. The corrected route targets only the engine binary and requires cache-miss/compile-start before interruption. The failed report remains preserved; it was not relabeled PASS.",
-    "Read the OS-temp startup-safety recovery report (SHA256 89453f585f22ac66c7acad8cfd42bc4cd9a047fd303b2f59d33eae65c1a23dc0): 12 first-attempt passes, zero unexpected/skipped/flaky results. Chromium and WebKit cover blocked-fetch page closure, held-write rollback, corrupt compile plus explicit reopen, structured-clone fallback excluded from cold evidence, lost broker port and crashed worker. Recovery preserves identical 609 rows and permits later IDB deletion.",
-    "Read the OS-temp startup-safety multitab report (SHA256 2d0d350ea3ae18cb9fc68d52ea1cfaf4e6510c60801fb311658b9c2c000b3b5a): one real desktop Chromium two-page test passed, retries 0. The surviving page writes after another closes; a newer claim blocks an already-open older writer; a newly opened older app remains read-only and leaves needed repairs unapplied; final IDB deletion succeeds.",
-    "Compared scratch sources with this working tree. Startup broker, entry, registration, schema, harness and multitab spec match. The factory differs only in replacing the initialized timeout variable/conditional clear with a const assigned before postMessage; all cleanup callers run after that assignment. The recovery-spec difference is formatting. The reports are not claimed to be exact full-source CI.",
-    "Directly read test-results/d3-ready-deadline/report.json, SHA256 486320943ed03f721b38179de8527b1c7658ce31f704cb1795216eab75b68212. The current integration's real 31-second readiness-watchdog crossing passed on Pixel Chromium (38009 ms) and iPhone WebKit (39421 ms), retries 0, with post-deadline write, close, fresh reopen and deletion. Repeated init creates only one instance.",
-    "Normal coverage adds desktop-chrome-storage for the new SharedWorker test; Pixel excludes only that new desktop-specific spec. WebKit gains startup and recovery specs, the D3 focus manifest adds all three new specs, and Linux CI includes desktop storage. Existing project membership, assertion bounds, retries and skips are unchanged. The runner forwards project arguments and manifest focus entries.",
-    "The quick run's 1361/1362 result is preserved in .evidence/D3/evaluation-history-readiness.json. Persistence is mocked in the one failed history case; the named region exists during its loader. The unchanged test file passed 3/3 in classification. Reviewed exactly three getByRole-to-awaited-findByRole changes for the existing first loaded button, heading and error. All original assertions and default waits remain; application evaluation source is unchanged. Fresh final verification is pending.",
-    "Confirmed summary component, image renderer, share implementation and summary-image assertion helper are unchanged from 7062d4c. git diff --check passed. Root reported the shared production build passing. This reviewer launched no browser or test suite, made no tracked edits and saved this report as OS-temp cvc-d3-regression-round12.json."
+    "Read the operating contract, current D3 plan and status, relevant summary product/scope clauses, design rules R05/R12/R18 and the F3/F4 amendments. Applied repository field-operations-ui guidance and inspected the frozen C6 screenshot plus current screenshots. Node v24.21.0. D3 remains IN_PROGRESS and D3-PHONE-UPDATE NEEDS_SETUP; committed-HEAD CI could not be fetched by ci:status.",
+    "Read .evidence/D3/ci-summary-clearance.json and the preserved Linux CI 38811456861 log. Four original journeys deterministically fail all three attempts: a 138px copy button starts at 494px while final content reaches 503.5–504px. The original failures remain preserved, as does interruption of the obsolete 42ce5d8 recorder; no full PASS is inferred.",
+    "The only application/test-source diff is SummaryImageButton plus its durable control audit. The copy button loses flex-wrap and wraps its unchanged text in a min-w-0 span. Icon size/shrink behavior, padding, minimum height, colors, text, accessible names, click handlers, busy behavior, status/share code and timing are unchanged.",
+    "Followed both shared-component consumers in CrewManagement and DutyManagement. The button remains outside captureRef and marked data-snapshot-exclude. Only its text can wrap inside its flex item; the icon remains beside it, removing the third flex line without changing summary content or bottom padding.",
+    "Directly read test-results/d3-summary-clearance-before/report.json, SHA256 ad1817da598f2df5208b600e69b665984e282ec34a2e1afa39061e424d8e4d59. The added button-only 0.03em spacing pressure reproduces the original geometry before the fix: top 494, height 138, contentBottom 503.75, and the unchanged contentBottom<=buttonTop assertion fails with retries 0.",
+    "Directly read test-results/d3-summary-clearance-after/report.json, SHA256 5a830aeb8d6b7fefca29f8ad511b42cf6f6a6371f3487f59271a9bdea859a207. All three mobile projects pass on their first attempts, no skips/flakes, duration 64.535537 s. The existing layout helper checks final-content clearance before copy and restores the top position before status/share interaction checks.",
+    "Own TypeScript semantic-AST comparison confirms every original expect assertion call remains identical and in order: 46 before and 46 after, hash 9bbf914a72f12614860d6d5aaa37fc9e1cd7155ef7f2a2e7d3105a46f35416b7. The change adds the existing expectCopyButtonLayout helper without weakening any prior assertion.",
+    "Read all three attached copy-status bounds. Each records copy top 522/bottom 632/height 110, status bottom 506, a 16px separation, and successful share/copy pointer reception. Existing 44/48px targets, exact copied note, focus, wrapper/viewport containment, native-share-stub activation and status clearing remain required. The stub does not prove delivery through a native system share sheet.",
+    "Directly inspected unmasked current WebKit and Pixel copy-status screenshots: icon and two-line copy label stay together; status, share and copy are visible and contained. Screenshots show the post-copy state at the top, not the separate end-scroll clearance step; that step is evidenced by the retained helper assertions.",
+    "Directly read test-results/d3-summary-clearance-originals/report.json, SHA256 fb7500d259f069e8ea38186bde5d1f1f7609b03b7c65f44deac825ef525d6c23. All four original Pixel journeys pass without retries, skips or flakes in 67.375205 s: F3 crew clearance, F3 Comandate image and both hostile-summary image journeys.",
+    "Byte comparisons against 42ce5d8 confirm summary-image-checks, pageSnapshot, summaryShare, original F3/hostile specs, Playwright coverage, Vite packaging and engine guards unchanged. No image threshold, density, mask, rendering path, retry or skip was changed. The retained R13 single-file-worker fix and all persistence/engine source remain unchanged.",
+    "git diff --check passed. This reviewer launched no browser/test suite and made no tracked edits. The report is saved in OS-temp cvc-d3-regression-round14.json."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Restricted startup diff outward to production and compatibility-harness consumers",
-      "Cold fixture and import-inclusive clock fidelity without weakened D1 data or timing assertions",
-      "Failure cleanup, fresh instance lifetime, stock desktop sharing and expanded normal/focused CI coverage",
-      "Classified asynchronous unit-test readiness fix without changed assertions"
+      "Restricted reproduced-clearance failure and faithful negative control",
+      "Shared summary-button consumers, icon/label flex behavior and busy/accessibility semantics",
+      "Preserved image assertions, original journeys and durable interaction coverage"
     ],
-    "wildcard": "No new entropy draw or whole-milestone hunt; preserved the prior two FAIL rounds."
+    "wildcard": "No new entropy draw or whole-milestone hunt. Historical FAIL rounds 1/2 and R13 packaging review remain preserved."
   },
   "notTested": [
-    "The current integration and final test-readiness change still require final recorded verification and exact full green push CI. Prototype CI, local safety reports and a reported build PASS do not replace those gates.",
-    "Production regular/test update journeys and same-origin channel isolation must be rerun for this changed startup integration; final test-site preparation/publication remains pending.",
-    "The twelve-case recovery report predates the reviewed timeout-binding simplification; the current two-engine ready-after-deadline check does not rerun every fault case. No independent browser/test run was launched by this reviewer.",
-    "Physical Android installation/update acceptance remains the owner's required check. No physical-device PASS, standalone iOS result or native share-sheet delivery is inferred.",
-    "The carried RH2-Q4 Barche overflow and unchanged earlier UI blocker fixes were not rerun outside this restricted scope."
+    "The Linux/macOS diagnostic at 22e42ac was running when this report was frozen. Local first-attempt passes do not establish its result or exact full CI.",
+    "The reviewed component/audit working diff still needs its source checkpoint, fresh all-five recorder and exact full green push CI. The failed 42ce5d8 CI and interrupted recorder remain failed/incomplete evidence.",
+    "No independent browser run was launched by this reviewer; browser conclusions use directly inspected saved reports, bounds and screenshots.",
+    "Publication, live HTTPS verification and required physical Android installation/update acceptance remain pending. No physical-device PASS or native share-sheet delivery is inferred.",
+    "RH2-Q4 and unchanged earlier UI fixes were not rerun outside this restricted copy-clearance scope."
   ]
 }

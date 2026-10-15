@@ -215,12 +215,12 @@ export function SummaryImageButton({
       <button
         aria-busy={busy}
         aria-label={busy ? undefined : "Copia immagine riepilogo"}
-        className="pointer-events-auto inline-flex min-h-12 min-w-0 max-w-full flex-wrap items-center justify-center gap-[8px] rounded-full bg-[#0b526b] px-[18px] py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]"
+        className="pointer-events-auto inline-flex min-h-12 min-w-0 max-w-full items-center justify-center gap-[8px] rounded-full bg-[#0b526b] px-[18px] py-2.5 text-center text-sm leading-tight font-bold text-white shadow-[0_6px_18px_rgba(11,82,107,0.4)] outline-none focus-visible:ring-4 focus-visible:ring-[#0b526b]"
         onClick={() => void copy()}
         type="button"
       >
         <Copy aria-hidden="true" className="size-[20px] shrink-0" />
-        {busy ? "Preparo…" : "Copia immagine"}
+        <span className="min-w-0">{busy ? "Preparo…" : "Copia immagine"}</span>
       </button>
     </div>
   )

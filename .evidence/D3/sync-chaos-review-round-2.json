@@ -1,0 +1,71 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "D3",
+  "round": 2,
+  "commit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q4",
+      "title": "Carried limitation: unused raw and read APIs are outside the in-lock write guard",
+      "evidence": "src/persistence/writeGuard.ts:95-102 checks compatibility before executeRaw obtains its lease; get/getAll/getOptional can accept mutating SQL. This is the same residual recorded by data-integrity round 3 and round 4 and docs/working/BACKLOG.md. No mutating application caller is added by the startup integration.",
+      "reproduction": "Source inspection of the guarded database and its callers; the normal execute, executeBatch, writeTransaction and writeLock paths re-read the version under their own write lock. No new bypass reproduction is claimed.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1; existing DI-Q5 / DI-R2-Q4"
+    }
+  ],
+  "priorRoundDisposition": [
+    {
+      "id": "DI-R2-Q4",
+      "status": "unchanged carried limitation",
+      "evidence": "The guarded persistence implementation and its callers are unchanged from round 1. The one-line worker-packaging correction adds no raw/read mutation route."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md and prior .evidence/D3/sync-chaos-review-round-1.json / sync-chaos-review.json. Restricted round-2 follow-up of worker packaging and directly resulting lifecycle/stale-writer implications; no new entropy draw or whole-milestone hunt.",
+    "git status is clean; HEAD is 42ce5d887ccbc981b6688447a5fdd5f54b664355. Source comparison from a4ff839965e428712b1d819538bf0b74b8efa2e3 shows exactly one application/configuration change: removal of worker.format es from vite.config.ts. Other changed files record evidence, handoff or the present technical contract.",
+    "Independently compared all round-1 reviewed blob hashes: compatibility, dataVersion, writeGuard, migrations, schema, broker, worker entry, registration, factory, source pin guard, migration harness and multitab/recovery/read-only tests are identical. Only vite.config.ts differs. PowerSync/wa-sqlite dependencies, schema, VFS, clocks, retry settings, guard ordering and ownership logic are unchanged.",
+    "Current engineModuleBroker.ts retains the stock SDK SharedWorker entry and shared-powersync-<dbFilename> name; it returns before dedicated scope registration. Owned-worker termination applies only to dedicated workers in that scope. Read-only writes and open-time repairs still use the previously reviewed same-lock claim/guard paths.",
+    "Inspected .evidence/D3/ci-startup-update-failure.json and raw OS-temp cvc-d3-registration-observe-yFqX88/d3-update-journey/startup-failure-webkit.json. The failed ES-build observation records registration empty, broker received, registration reevaluation with one broker, then factory observing zero brokers and archive unavailable. This remains a recorded production packaging regression, not a passing full verification.",
+    "Independently parsed corrected dist/assets/engineModuleWorker-_-fycvIC.js and dist/assets/worker-BjWXu86u.js with the TypeScript JavaScript AST. Each standalone IIFE has zero static imports, zero exports and zero dynamic imports. The dedicated bundle contains exactly one assignment to globalThis.__CVC_ENGINE_WORKER_STATE__ and one broker-registration tag; the stock worker contains no state assignment or private registration tag. Thus the previously observed VFS back-import route cannot reevaluate the entry in these outputs.",
+    "Corrected dedicated worker is 489452 bytes, SHA-256 f7684db4ac6d83a9e8bc67986b80ff839ab0040c859da9e070feab378565e704; stock worker is 489124 bytes, SHA-256 84c9347f4ecc82c85444ba985e4bcc7077a476d85afd135b7f42c967a62a27ec. Both contain none of the temporary registration/factory/broker diagnostic logging strings.",
+    "Read OS-temp cvc-d3-inline-worker-ci.log for diagnostic 38698033211: original built update journey passes Chromium/WebKit, offers at 0.19/0.33 seconds and retains typed notes. This is diagnostic evidence for the packaging correction, not exact final-source push CI.",
+    "Round-1 independent browser evidence remains retained: three retry-zero passes covering Chromium/WebKit interrupted transaction rollback, 609 identical rows, independent reopen/write/reset/deletion, and the actual desktop separate-page stock SharedWorker survivor/newer-claim/stale-write/late-join repair refusal scenario. The unchanged source evidence is maintained; no new browser replay was run in this follow-up.",
+    "Root reported corrected shared production build, verify:quick (81 files / 1362 tests / 82.65 seconds), verify:domain and actual test-channel 0.4.0 to 0.4.1 update journey PASS. These are attributed orchestrator results. Full exact source CI 38811456861 and final recorder were still pending at the brief.",
+    "Node v24.21.0. No tracked file was edited, no browser was launched, and no backend, private roster or external deployment was accessed during this review."
+  ],
+  "anglesTried": {
+    "seed": 831672488,
+    "lenses": [
+      "Lens 9 (zero-based index 8): a third device joining mid-week with a full download, adapted to a new same-origin local page joining the stored course after a newer claim. No download/server exists in 0.4.0.",
+      "Lens 5 (zero-based index 4): app killed or suspended mid-upload, adapted to killing a page while a real local write transaction is pending and verifying rollback/persistence on a fresh page."
+    ],
+    "wildcard": "Per-database startup cleanup must not own or terminate the stock cross-page SharedWorker, retain a rejected module cache entry, or authorize an already-open stale writer. Attacked through source ownership inspection, the independent close-one-page/survive/raise/refuse/late-join scenario, and the existing failure/reopen/deadline evidence.",
+    "followupScope": "Round 2 retains round 1 seed/lenses/wildcard without a new draw. Rechecked only the one-line production worker-packaging fix and its direct SharedWorker ownership, startup registration and stale-writer implications."
+  },
+  "reviewedBlobs": {
+    "src/domain/compatibility.ts": "643bcbafe27ede4c1b457ab6698deebf1541aac1",
+    "src/persistence/dataVersion.ts": "80074f936bfecce634869c4e13a511a76b6df473",
+    "src/persistence/writeGuard.ts": "51d440c0c98ebeffbc002e26a1eb72225ba3c4d8",
+    "src/persistence/migrations.ts": "6b9653f9ccc5c147ece4ed11c0f78c0e0394fc04",
+    "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
+    "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
+    "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
+    "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
+    "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
+    "vite.config.ts": "de90a83917c310c29ff048a680866ab83fb81cf6",
+    "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
+    "tests/e2e/d3-startup-multitab.spec.ts": "9bc1d6a491e508343da7962c906f09beb6634e65",
+    "tests/e2e/d3-startup-recovery.spec.ts": "e0b4eeca5c6309626dc46458c435f10b48656d91",
+    "tests/e2e/d3-read-only.spec.ts": "9f5fb0f1cbdd9a04d794d552b9f86030e031e3ff",
+    "src/test/d1MigrationHarness.ts": "de257c68855ae5229a88e6e98a51d51f6620b275"
+  },
+  "notTested": [
+    "No additional browser workload or independent two-page replay was started while the root was running the same-origin isolation check. The prior independent round-1 interleavings are retained; production output shape and unchanged source were inspected.",
+    "Final five-command D3 recorder, exact checkpoint full green push CI, same-origin isolation completion, permanent HTTPS publication and owner queue readiness remain separate required gates. The diagnostic update PASS and root-reported focused test update do not replace those gates.",
+    "The owner’s installation report must precede the second deployed patch at the fixed test address; physical Android acceptance remains unverified. No device PASS, D3 completion or release acceptance is inferred.",
+    "Sync server convergence, upload queues, authentication/account switching and physical cross-device replication remain outside local-only 0.4.0 scope and were not introduced or tested."
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review (orchestrator)",
   "milestone": "D3",
-  "commit": "7062d4cb914cd40038cb05e5b92523dadf56f808 plus reviewed working startup source",
+  "commit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -43,7 +43,10 @@
     "Clean33ac recorder fails finalWebKitisolation navigation: immediate studentsBack query can skip secondBack after profile asynchronouspopstate. Failure preserved; adding existing-timeout visiblecontrol wait retains both UIclicks and all isolation assertions. Corrected isolatedcommandPASS bothengines; restrictedR10zeroBlockers.",
     "Mobile copy/share containment: four class strings only, original renderer/masks/limits unchanged; Mac original image checks 8 PASS/1 original skip, final three-profile long-message/native-control audit PASS with no retries. Independent field round8 and regression round11 have zero blockers.",
     "startup-integration.json: production safety recovery12PASS, actual SharedWorker1PASS, exact shared ready-deadline2PASS, no retries. Required data round4 and security round3 have zero blockers. Source pins and build pass; final recorder/CI remain pending.",
-    "Required schema-version sync-chaos round1 PASS_WITH_FINDINGS, zero blockers; independent exact current-source rollback and desktop late-join/stale-writer3PASS0retry. Only already filed DI-R2-Q4 retained."
+    "Required schema-version sync-chaos round1 PASS_WITH_FINDINGS, zero blockers; independent exact current-source rollback and desktop late-join/stale-writer3PASS0retry. Only already filed DI-R2-Q4 retained.",
+    "Source42ce5d8 restores stock single-file IIFE worker packaging after Mac production observe proves ES VFS back-import replays registration. Independent DI5/RH13/security4 have zero blockers, preserve previous findings and inspect final no-import worker graphs. Exact-source quick81files/1362tests and build/domainPASS. Original source failure/interrupted recorder preserved; final recorder/CI not inferred.",
+    "Restricted sync-chaos round2 on42ce5d8 PASS_WITH_FINDINGS zero blockers; exact final IIFE production graph inspected, previous actual interleaving/rollback proof retained. All required follow-up reviews now pass; final verification still pending.",
+    "Linux42 CI four original clearance failures reproduced exactly by a button-only wider-font negative control. Two-line label/icon correction passes original4Pixel cases, all3mobile pressure audits, and bounded Linux/Mac diagnostics with original skips/zero retries. No renderer/helper/mask/threshold change. Restricted field9 and regression14 zero new blockers. ci-summary-clearance.json preserves failed source and interrupted recorder."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -171,6 +174,10 @@
     {
       "id": "Unit history-loader readiness race",
       "disposition": "Isolated unchanged spec passes; exact loaded content is now awaited at the first existing assertion in each asynchronous test. No application change, assertion loss, timeout or retry increase; evaluation-history-readiness.json preserves classification."
+    },
+    {
+      "id": "Production worker-entry reevaluation",
+      "disposition": "FIXED by removing worker.format es override; no registration-state/logging workaround adopted. Original production update diagnosticPASS bothengines; no imported worker-entry cycle in finalIIFE graph. Required current-source recorder/CI remain."
     }
   ],
   "notTested": [
@@ -197,17 +204,22 @@
     {
       "id": "Native-share status overflow at 320px / 200% text",
       "disposition": "FIXED: constrain the live wrapper children; no renderer or threshold change. The new audit first exposed missing Chromium clipboard permission, preserved as a test-setup failure, then passed with the same permissions as existing F3 tests."
+    },
+    {
+      "id": "Linux summary copy-button overlap at320px/200%text",
+      "disposition": "FIXED: keep icon beside min-width0 wrapping label; 138px failed control becomes110px, fitting existing clearance. Added original helper to faithful wider-font audit. No content padding/threshold/retry change."
     }
   ],
   "currentSourceReview": {
-    "scope": "Production startup integration and fault evidence",
-    "reference": "startup-integration.json",
+    "scope": "Copy control clearance correction on reviewed42 packaging/engine source",
+    "reference": "ci-summary-clearance.json",
     "reviews": [
-      "data-integrity-review-round-4.json",
-      "security-privacy-review-round-3.json",
-      "regression-review-round-12.json",
-      "sync-chaos-review-round-1.json"
+      "data-integrity-review-round-5.json",
+      "regression-review-round-14.json",
+      "field-ux-review-round-9.json",
+      "security-privacy-review-round-4.json",
+      "sync-chaos-review-round-2.json"
     ],
-    "remaining": "All five final clean-source recorder commands, exact full green push CI, final isolation/update and live publication."
+    "remaining": "All-five clean-source recorder and exact full green push CI, final live publication."
   }
 }

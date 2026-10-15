@@ -102,13 +102,15 @@
     "durationSeconds": 82.65
   },
   "reviewFollowup": {
-    "status": "TOOL_USAGE_LIMIT",
-    "roles": [
-      "data-integrity round5",
-      "regression round13",
-      "security/privacy round4"
+    "status": "PASS_ZERO_BLOCKERS",
+    "reports": [
+      "data-integrity-review-round-5.json",
+      "regression-review-round-13.json",
+      "security-privacy-review-round-4.json",
+      "sync-chaos-review-round-2.json"
     ],
-    "observed": "All three reviewer turns failed with account usage-limit message; retry time shown1:16PM. No report exists and no reviewer PASS is inferred.",
-    "pending": "Required restricted reviews before final full recorder/readiness; sync-chaos packaging follow-up also pending."
+    "blockers": 0,
+    "previousToolingError": "The earlier usage-limit errors are preserved as tooling history; current ordinary usage is allowed and the same reviewer agents completed their follow-ups.",
+    "notAcceptance": "Final full recorder and exact full CI remain required."
   }
 }

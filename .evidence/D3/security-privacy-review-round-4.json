@@ -1,0 +1,67 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "D3",
+  "round": 4,
+  "commit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+  "reviewedDiff": "Restricted follow-up of a4ff839965e428712b1d819538bf0b74b8efa2e3..42ce5d887ccbc981b6688447a5fdd5f54b664355. The only application/build-code change removes worker.format='es' from vite.config.ts, restoring the installed Vite default single-file IIFE worker packaging.",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "blockerResolutions": [
+    {
+      "id": "SP-1",
+      "status": "fixed",
+      "evidence": "Round-2 OCR namespace fix remains preserved. src/appChannel.ts and src/capabilities/studentScan.ts exactly match their round-3 reviewed blobs; the regular '.' and test 'cvc-helper-test-ocr' cache paths are unchanged. No new OCR result or physical-device acceptance is inferred."
+    }
+  ],
+  "sourceBlobs": {
+    "vite.config.ts": "de90a83917c310c29ff048a680866ab83fb81cf6",
+    "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
+    "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
+    "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
+    "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
+    "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
+    "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
+    "src/appChannel.ts": "0aa52d3a2250846178bc5b2b05c718a421f01763",
+    "src/capabilities/studentScan.ts": "5b3f9ef9361cb5373e1a1005fb7aecd90cbbb31b"
+  },
+  "artifactSha256": {
+    "dist/assets/engineModuleWorker-_-fycvIC.js": "f7684db4ac6d83a9e8bc67986b80ff839ab0040c859da9e070feab378565e704",
+    "dist/assets/worker-BjWXu86u.js": "84c9347f4ecc82c85444ba985e4bcc7077a476d85afd135b7f42c967a62a27ec",
+    "dist/assets/index-CE_3pPK3.js": "c698941077ca5c5a59257713f414aae311f340c55a316b54fb57004214f08909",
+    "dist/assets/waSqliteFactory-CoOijB62.js": "089c349179d59f74801fd413633e31ed85d48235109c808e810a03fb8d667c16",
+    "dist/assets/wa-sqlite-async-DCIP8kAx.wasm": "de7105eb124a6d6a90bcea9b569433af50cb90eba6f1e8c3f210be6dfde7d013",
+    ".evidence/D3/ci-startup-update-failure.json": "d3a57d837118a3468bff0308404d9852993e35885cdf46a34c18836d3ca86d57",
+    "OS-temp cvc-d3-security-worker-graph.json": "860264e5838bced8905ca5f8244ceb469f458bf3aa609981af0f16e4e5dbc6fd"
+  },
+  "evidenceInspected": [
+    "Followed the existing AGENTS.md/reviewer protocol and preserved security rounds 1-3. Current startup preflight: Node v24.21.0; D3 IN_PROGRESS; owner phone action NEEDS_SETUP. ci:status was unavailable from this environment, not green.",
+    "Inspected the exact code diff against a4ff839. No broker, registration, schema, factory, package pin, database filename, channel, fetch, logging or persistence change accompanies the worker-format removal.",
+    "Compared every previously recorded round-3 source blob except vite.config.ts with current files; all matched, including the SP-1 fix, startup ownership cleanup, fresh WASM instances, private MessageChannel protocol and pinned source guard.",
+    "Installed Vite primary source node_modules/vite/dist/node/chunks/node.js selects config.worker?.format || 'iife'. The root confirmed successful shared production build 83870 on the corrected source and no subsequent application change.",
+    "Independent AST inspection of final production workers, saved as OS-temp cvc-d3-security-worker-graph.mjs/json: dedicated engineModuleWorker-_-fycvIC.js is 489452 bytes and stock worker-BjWXu86u.js is 489124 bytes. Both start with a single IIFE, contain zero static/dynamic module imports and zero importScripts calls. Thus no emitted VFS chunk can back-import either worker entry. The dedicated worker contains one assignment to globalThis.__CVC_ENGINE_WORKER_STATE__; the stock SharedWorker contains none.",
+    "Scanned every final dist/assets JavaScript file for __CVC_ENGINE_DIAGNOSTIC__, instance-created, cache-miss, compile-complete and the temporary registration/broker/factory log markers. No matches. The diagnostic overlay and idempotent-registration experiment were not adopted.",
+    "Inspected emitted page worker constructors and WASM URL contexts. Worker URLs resolve against import.meta.url; the async engine asset resolves against self.location.href on the same origin. The WASM bytes still match the pinned de7105eb SHA-256. Packaging does not introduce a remote executable, third-party request, record payload or new persistent cache.",
+    "The unchanged source retains channel-specific dbFilename worker names, canonical channel preferences/caches, a page-local immutable compiled-module map and private transferred broker ports. The format change does not alter worker ownership or allow failed dedicated startup to terminate a SharedWorker.",
+    "Read .evidence/D3/ci-startup-update-failure.json and the OS-temp observe capture startup-failure-webkit.json. The original production WebKit failure occurred before course creation: registration received worker-1, entry reevaluation reset its broker list, and the factory saw zero brokers. The recorded immutable comparison reproduced the candidate failure while the previous source passed.",
+    "The recorded single-file packaging experiment, run 38698033211 at diagnostic source e12be3a, passed the original production update assertions on Chromium and WebKit. It provides fix evidence, not final exact-source full-CI approval; diagnostic logging remained confined to that experiment.",
+    "No tracked files were edited, no private-data directory was opened, no browser run was started concurrently with the orchestrator, and no production connection or external mutation was performed."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted check of the one-line production worker packaging fix and regressions it could cause in executable URLs, startup-state ownership and channel boundaries.",
+      "Final IIFE dependency graph, diagnostic stripping and preservation of the round-3 source and SP-1 cache fix."
+    ],
+    "wildcard": "No new entropy draw or whole-milestone hunt. Used an independent AST probe to test whether the corrected worker graph still contains a path capable of importing and reevaluating its entry."
+  },
+  "notTested": [
+    "Final full verification recorder and exact-source full push CI for 42ce5d8 remain pending. The obsolete recorder was interrupted after a confirmed production regression and is not a full PASS.",
+    "Final focused test-channel update and complete same-origin regular/test isolation results are still pending; this restricted static review does not replace those gates.",
+    "Live GitHub HTTPS publication, deployed identity, installed worker and persistence smoke checks remain pending.",
+    "Physical Android installation/update acceptance remains the owner's D3-PHONE-UPDATE action. No emulator, diagnostic run or security-review PASS is a physical-device PASS.",
+    "The reviewer did not rerun production browsers; the root's bounded production fix experiment was inspected as recorded evidence, while the exact final output graph was inspected independently."
+  ]
+}

@@ -1,9 +1,9 @@
 {
   "milestone": "D3",
-  "date": "2026-10-15",
+  "date": "2026-10-16",
   "runtime": "v24.21.0",
   "branch": "codex/0.4.0",
-  "latestCheckpoint": "a4ff839965e428712b1d819538bf0b74b8efa2e3",
+  "latestCheckpoint": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
   "status": "IN_PROGRESS",
   "completed": [
     "Mobile copy/share wrapper containment at7062d4c; image renderer/masks/limits unchanged; independent field8 and regression11 zero blockers.",
@@ -12,20 +12,22 @@
     "Current verify:quick PASS81files/1362tests93.73s and verify:domain PASS; production buildPASS. Prior isolated unchanged mocked-loader testPASS3 classified and fixed; original failed broad quick result retained.",
     "Required data4/regression12/security3 reviews zero blockers; historical FAIL reports retained and no count reset.",
     "Required schema-version sync-chaos review PASS_WITH_FINDINGS with zero blockers; independent current-source Chromium/WebKit rollback and desktop stale-writer/late-join proof3PASS0retry.",
-    "Confirmed and corrected ES worker packaging regression: Mac observe shows registration reevaluation resets broker state; restoring stock single-file worker packaging passes original two-engine production update diagnostic. Shared corrected build and81files/1362tests PASS."
+    "Confirmed and corrected ES worker packaging regression: Mac observe shows registration reevaluation resets broker state; restoring stock single-file worker packaging passes original two-engine production update diagnostic. Shared corrected build and81files/1362tests PASS.",
+    "Same original reviewers resumed after current account status allowed normal usage. DI5, regression13, security4 and sync-chaos2 have zero blockers on42ce5d8; no failed or missing review is treated as PASS.",
+    "Focused exact-source production test updatePASS0.4.0→0.4.1 in0.19/0.31s with typed notes intact; same-origin isolationPASS Chromium/WebKit, regular course/preferences/OCR bytes/offline app preserved. packaging-focused-verification.json records these, not a substitute for full recorder.",
+    "Wider Linux font caused floating copy control overlap; faithful negative control and two-line label correction pass3mobile profiles, original4Pixel cases and Linux/Mac bounded diagnostic38815080734. Field9/regression14 zero blockers."
   ],
   "uncommittedWork": [
-    "Root-owned one-line Vite worker packaging correction and CI/handoff metadata; descriptive fix checkpoint and exact full CI are next.",
-    "Prior temporary candidates and renderer scratch remain preserved; update diagnostic clone named by OS-temp cvc-d3-update-probe-location.txt."
+    "Root-owned reviewed SummaryImageButton label grouping and durable wider-font audit; related review/CI metadata. All other engine/packaging changes remain committed42ce5d8."
   ],
   "currentBlocker": {
-    "kind": "INDEPENDENT_REVIEW_TOOL_USAGE_LIMIT",
-    "reason": "The one-line production packaging fix has passed diagnostic Mac updates, shared build and quick checks; required follow-up reviewer turns hit an account usage limit. No follow-up reports or PASS are inferred.",
-    "evidence": "ci-startup-update-failure.json",
+    "kind": "FINAL_SOURCE_VERIFICATION_PENDING",
+    "reason": "Corrected copy label has local/platform proof and restricted reviews. Complete new clean source recorder/full exact push CI before publication.",
+    "evidence": "ci-summary-clearance.json",
     "ownerInputNeeded": false
   },
   "remainingAcceptance": [
-    "Checkpoint corrected source and obtain exact full green push CI; run focused test-channel update/isolation checks. Resume required follow-up reviews when tooling is available, then clean-source all-five D3 recorder.",
+    "Checkpoint reviewed correction, run fresh all-five recorder and full exact push CI.",
     "Wait for exact full green source CI before pushing metadata-only evidence checkpoint; obtain its exact green CI.",
     "Publish0.4.0 only from that verified checkpoint; prove live HTTPS identity/persistence/worker on both engines.",
     "Use owner:update READY and milestone:await-owner, checkpoint readiness then continue eligible D4 and T1.",
@@ -49,29 +51,10 @@
     "preparedFiles": "OS-temp cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md are drafts, not acceptance proof."
   },
   "ci": {
-    "run": 38696008092,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38696008092",
-    "macosJob": 116292615500,
-    "status": "MACOS_FAILED_LINUX_PENDING",
-    "macos": {
-      "deterministic": "PASS",
-      "offlineOCR": "PASS3of3",
-      "updateChromium": "PASS",
-      "updateWebKit": "FAIL before course creation",
-      "failure": "locator.click timed out30000ms waiting for Deriva after installed0.3.0 service-worker control",
-      "location": "scripts/check-update-journey.mjs:209,464",
-      "mainBrowserSuite": "NOT_RUN because verify:all stops at update failure"
-    },
-    "log": {
-      "location": "OS-temp cvc-d3-a4ff839-macos-ci.log",
-      "sha256": "0ff1d730bdcb1acef309c4bcd0c3520f6a1f295380223bcecbd40089a902bef1"
-    },
-    "artifact": {
-      "id": 11953739967,
-      "contents": ["test-results/d3-update-journey/update-offer-chromium.png"],
-      "limitation": "Original harness did not capture failing page state or WebKit screenshot."
-    },
-    "source": "a4ff839965e428712b1d819538bf0b74b8efa2e3"
+    "source": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+    "run": 38811456861,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38811456861",
+    "status": "LINUX_FAIL_MACOS_PENDING"
   },
   "diagnostic": {
     "run": 38698033211,
@@ -89,9 +72,17 @@
     }
   },
   "mayContinue": [
-    "Checkpoint the corrected D3 source, exact full CI and focused production update/isolation verification while review tools are unavailable.",
-    "Final all-five recorder, publication and AWAITING_OWNER require completed follow-up reviews; no phone build is READY.",
-    "D4/T1 implementation still waits verified D3 AWAITING_OWNER; UG3 waits required owner acceptance."
+    "Complete D3 verification/CI and permanent test publication now.",
+    "Once D3 qualifies for AWAITING_OWNER, continue eligible D4 then T1 while keeping the D3 test source fixed.",
+    "UG3 waits all required owner acceptance; no physical PASS inferred."
   ],
-  "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS."
+  "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS.",
+  "finalRecorder": {
+    "source": "Next descriptive source checkpoint",
+    "status": "NOT_STARTED",
+    "command": "npm run evidence -- D3",
+    "canonicalOutput": ".evidence/D3/verification.json",
+    "refreshes": "CVC_EVIDENCE_REFRESH=D3; start after reviews on committed source, no implementation edits during run.",
+    "previousInterruptedLog": "Ignored test-results/d3-42ce5d8-recorder.log"
+  }
 }

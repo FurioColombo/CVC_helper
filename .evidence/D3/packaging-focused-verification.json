@@ -1,0 +1,102 @@
+{
+  "milestone": "D3",
+  "source": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+  "runtime": "v24.21.0",
+  "kind": "FOCUSED_PRODUCTION_PROOFS_NOT_FULL_RECORDER",
+  "status": "PASS",
+  "update": {
+    "command": "npm run check:update:test",
+    "installed": "0.4.0",
+    "deployed": "0.4.1",
+    "base": "/CVC_helper_test/",
+    "sha256": "4f511f8c1add5a1b0e030f9106d0135ec792517ff65f60b220425863ffdeef90",
+    "runs": [
+      {
+        "engine": "chromium",
+        "secondsFromForegroundToOffer": 0.19,
+        "editSurvived": true,
+        "versionShownAfterUpdate": "0.4.1"
+      },
+      {
+        "engine": "webkit",
+        "secondsFromForegroundToOffer": 0.31,
+        "editSurvived": true,
+        "versionShownAfterUpdate": "0.4.1"
+      }
+    ]
+  },
+  "isolation": {
+    "command": "npm run check:test-isolation",
+    "sha256": "095af3ea82070e5f34d5d5fbe322044585eeb98b6126d0a36d030de2ffa4383d",
+    "runs": [
+      {
+        "engine": "Chromium",
+        "regularDatabase": {
+          "course": "D2",
+          "student": "Regolare Stabile",
+          "courseNote": "Nota regolare invariata",
+          "unchangedAfterTestCreationUpdateAndErasure": true
+        },
+        "ocrLanguageCache": {
+          "regularKey": "./ita.traineddata",
+          "testKey": "cvc-helper-test-ocr/ita.traineddata",
+          "regularBytes": {
+            "byteLength": 3126172,
+            "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+          },
+          "testBytesCreatedByRealWorker": {
+            "byteLength": 3126172,
+            "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+          },
+          "regularBytesUnchangedAfterTestReadWriteDelete": true,
+          "testKeyDeletedByTestAdapter": true
+        },
+        "regularAppReopenedOffline": true,
+        "preferences": {
+          "regularPrefix": "cvc-helper.",
+          "testPrefix": "cvc-helper-test.",
+          "regularSnapshotUnchangedAfterEachTestOperation": true,
+          "regularCrewDisplayColumns": "3",
+          "testCrewDisplayColumns": "2"
+        },
+        "scopes": ["/CVC_helper/", "/CVC_helper_test/"],
+        "separateCacheNamespaces": true
+      },
+      {
+        "engine": "WebKit",
+        "regularDatabase": {
+          "course": "D2",
+          "student": "Regolare Stabile",
+          "courseNote": "Nota regolare invariata",
+          "unchangedAfterTestCreationUpdateAndErasure": true
+        },
+        "ocrLanguageCache": {
+          "regularKey": "./ita.traineddata",
+          "testKey": "cvc-helper-test-ocr/ita.traineddata",
+          "regularBytes": {
+            "byteLength": 3126172,
+            "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+          },
+          "testBytesCreatedByRealWorker": {
+            "byteLength": 3126172,
+            "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+          },
+          "regularBytesUnchangedAfterTestReadWriteDelete": true,
+          "testKeyDeletedByTestAdapter": true
+        },
+        "regularAppReopenedOffline": true,
+        "preferences": {
+          "regularPrefix": "cvc-helper.",
+          "testPrefix": "cvc-helper-test.",
+          "regularSnapshotUnchangedAfterEachTestOperation": true,
+          "regularCrewDisplayColumns": "3",
+          "testCrewDisplayColumns": "2"
+        },
+        "scopes": ["/CVC_helper/", "/CVC_helper_test/"],
+        "separateCacheNamespaces": true
+      }
+    ]
+  },
+  "limitation": "These focused commands support review and final recording; they do not substitute for all five recorder commands, exact green CI, usable live test address or owner acceptance.",
+  "physicalPass": false
+}

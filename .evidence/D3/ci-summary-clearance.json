@@ -1,0 +1,142 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-16",
+  "baseline": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
+  "kind": "COPY_CONTROL_CLEARANCE_REGRESSION",
+  "status": "FOCUSED_LOCAL_AND_PLATFORM_PASS_FULL_GATE_PENDING",
+  "ci": {
+    "run": 38811456861,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38811456861",
+    "linuxJob": 116685438465,
+    "linux": "FAIL",
+    "failed": 4,
+    "passed": 192,
+    "originalSkips": 47,
+    "retries": "All three attempts reproduce each failure.",
+    "failure": {
+      "width": 320,
+      "text": "200%",
+      "buttonTop": 494,
+      "buttonHeight": 138,
+      "contentBottom": [504, 503.5, 503.75, 503.5],
+      "overflowPx": [10, 9.5, 9.75, 9.5]
+    },
+    "log": "OS-temp cvc-d3-42ce5d8-linux-ci.log",
+    "artifact": 12009457639,
+    "macos": "IN_PROGRESS at first inspection"
+  },
+  "cause": "The anonymous copy label and icon wrap onto separate flex lines with wider Linux glyphs. Three content lines plus padding make the control138px tall, exceeding the5rem summary clearance after its1rem bottom inset.",
+  "fix": "Keep icon and a min-width0 text span on one flex line, letting only the label wrap. No padding allowance, geometry/image threshold, retry, renderer or mask change.",
+  "negativeControl": {
+    "sha256": "ad1817da598f2df5208b600e69b665984e282ec34a2e1afa39061e424d8e4d59",
+    "stats": {
+      "startTime": "2026-10-15T22:04:43.097Z",
+      "duration": 27244.732,
+      "expected": 0,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    },
+    "command": "d3-summary-controls Pixel --retries=0 before component fix",
+    "pressure": "0.03em extra spacing on copy label only, leaving captured summary typography unchanged",
+    "observed": {
+      "buttonTop": 494,
+      "buttonHeight": 138,
+      "contentBottom": 503.75
+    },
+    "log": "Ignored test-results/d3-summary-clearance-before.log"
+  },
+  "positiveControl": {
+    "sha256": "5a830aeb8d6b7fefca29f8ad511b42cf6f6a6371f3487f59271a9bdea859a207",
+    "stats": {
+      "startTime": "2026-10-15T22:05:53.072Z",
+      "duration": 64535.537000000004,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "command": "d3-summary-controls all three mobile projects --retries=0",
+    "originalLayoutAssertion": "expectCopyButtonLayout retains its original contentBottom<=buttonTop,48px minimum and viewport assertions",
+    "additionalAssertions": "All prior exact copied note, native share activation,44/48px target,focus/hit,parent and viewport containment checks remain.",
+    "captures": "Ignored test-results/d3-summary-clearance-after/*/copy-status.png"
+  },
+  "originalFailureReplay": {
+    "status": "PASS",
+    "log": "Ignored test-results/d3-summary-clearance-originals.log",
+    "cases": [
+      "f3-crew-summary:699",
+      "f3-duty-summary:62",
+      "ug2-hostile-roster:794",
+      "ug2-hostile-roster:860"
+    ],
+    "retries": 0,
+    "report": "Ignored test-results/d3-summary-clearance-originals/report.json",
+    "sha256": "fb7500d259f069e8ea38186bde5d1f1f7609b03b7c65f44deac825ef525d6c23",
+    "stats": {
+      "startTime": "2026-10-15T22:07:53.198Z",
+      "duration": 67375.205,
+      "expected": 4,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "platformDiagnostic": {
+    "branch": "codex/d3-update-startup-probe",
+    "commit": "22e42ac1a97dac84b646e87e71d6f55c77d0e30a",
+    "status": "PASS",
+    "source": "Immutable42ce5d8 plus only component and durable audit overlays",
+    "platforms": ["ubuntu-latest", "macos-15"],
+    "assertions": "Four original failing cases and new pressure audit, no retries or threshold changes",
+    "acceptance": false,
+    "run": 38815080734,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38815080734",
+    "jobs": [
+      {
+        "id": 116697599723,
+        "platform": "ubuntu-latest",
+        "passed": 6,
+        "originalSkips": 4,
+        "retries": 0,
+        "log": "OS-temp cvc-d3-summary-116697599723.log",
+        "sha256": "b8f72d0e6558b583b8c00101d181e07416f062759b6041e37ddc26d5e23e593d"
+      },
+      {
+        "id": 116697599962,
+        "platform": "macos-15",
+        "passed": 9,
+        "originalSkips": 5,
+        "retries": 0,
+        "log": "OS-temp cvc-d3-summary-116697599962.log",
+        "sha256": "413e198ab62dc754bed0bcbe0d36e3aaf52c97c994a0748e93628f2cbbfdb4f8"
+      }
+    ]
+  },
+  "obsoleteRecorder": {
+    "source": "42ce5d8",
+    "status": "INTERRUPTED_AFTER_LINUX_CI_FAILURE_CONFIRMED",
+    "log": "Ignored test-results/d3-42ce5d8-recorder.log",
+    "fullPass": false
+  },
+  "reviewStatus": "Field9 and regression14 zero new blockers; historical findings and FAIL rounds retained. Full exact-source gates still pending.",
+  "sourceBlobs": {
+    "src/components/SummaryImageButton.tsx": "d61c24b856bea4234a3a3f61abd53d98c70e2b75",
+    "tests/e2e/d3-summary-controls.spec.ts": "74a261a33cd21a0fe7262eb8a77d1e8c865be213"
+  },
+  "physicalPass": false,
+  "finalQuick": {
+    "command": "npm run verify:quick",
+    "status": "PASS",
+    "runtime": "v24.21.0",
+    "files": 81,
+    "tests": 1362,
+    "durationSeconds": 112.46,
+    "log": "Ignored test-results/d3-summary-final-quick.log"
+  },
+  "finalDomain": {
+    "command": "npm run verify:domain",
+    "status": "PASS",
+    "log": "Ignored test-results/d3-summary-final-domain.log"
+  }
+}

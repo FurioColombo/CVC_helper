@@ -1,8 +1,8 @@
 {
   "milestone": "D3",
-  "date": "2026-10-15",
-  "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
-  "status": "PRODUCTION_PACKAGING_FIXED_FOLLOWUP_REVIEW_BLOCKED",
+  "date": "2026-10-16",
+  "kind": "AUTHORIZED_STARTUP_INTEGRATION_PROGRESS",
+  "status": "INTEGRATED_CANDIDATE_REVIEWED_FULL_SOURCE_GATES_PENDING",
   "formalReview": false,
   "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "diagnostic": {
@@ -61,7 +61,7 @@
       "No issue or message is sent to maintainers without explicit authorization."
     ]
   },
-  "otherBlocker": "Image mismatch resolved provisionally by actual live status containment. Unchanged renderer/masks/limits pass eight original cases in Mac CI, and the final durable long-message/control audit passes all three local projects. Restricted review and final exact-source gates remain required.",
+  "otherBlocker": "Wider-font copy clearance corrected with exact negative reproduction, original assertions and Linux/Mac diagnostic PASS. ci-summary-clearance.json; final full gates remain.",
   "statePreserved": {
     "d3": "IN_PROGRESS",
     "d4": "PENDING",
@@ -114,10 +114,10 @@
     "location": "Shared working checkout after7062d4c",
     "proof": "startup-integration.json",
     "safety": "12 recovery +1 real SharedWorker +2 exact ready-deadline PASS without retries",
-    "reviews": "Data4, regression12 and security3 zero blockers; schema-version sync-chaos pending",
+    "reviews": "DI5, regression14, field9, security4 and sync-chaos2 zero blockers; previous formal FAIL reports/counts retained.",
     "quick": "81 files/1362tests PASS Node24.21.0",
     "sourceAccepted": false,
-    "remaining": "One-line packaging fix reviews blocked by account usage limit; exact full CI, all-five recorder and isolation/update/HTTPS readiness remain required.",
+    "remaining": "Fresh all-five recorder and exact full green source CI; immutable test publication and live HTTPS readiness. No owner input is needed for these steps.",
     "packagingFix": "ci-startup-update-failure.json"
   }
 }

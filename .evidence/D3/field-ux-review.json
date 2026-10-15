@@ -2,17 +2,15 @@
   "reviewerRole": "field-ux",
   "persona": "Il Nostromo",
   "milestone": "D3",
-  "round": 8,
-  "commit": "6c305dfefc389464d04037aea0430927f5a63fab",
+  "round": 9,
+  "commit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
   "reviewedWorkingTree": true,
   "sourceBlobs": {
-    "src/components/SummaryImageButton.tsx": "9bd8da0084c69e7bf43ad486873eada1c6a91eeb",
-    "tests/e2e/d3-summary-controls.spec.ts": "0cf75776f62dbb8f82ebc6bd3fe123303a74a44c",
-    "playwright.config.ts": "7590c2c342b03ea466d38f807ce6143cfd4a4189",
-    ".milestones/manifest.json": "14475a6086eca0592e6992b0ddad7794a3733504",
-    "src/features/crews/CrewManagement.tsx": "6a881b76688164d8cb74691584c0b6cd51b5d1c7",
+    "src/components/SummaryImageButton.tsx": "d61c24b856bea4234a3a3f61abd53d98c70e2b75",
+    "tests/e2e/d3-summary-controls.spec.ts": "74a261a33cd21a0fe7262eb8a77d1e8c865be213",
     "src/lib/pageSnapshot.ts": "82dc043d2748b7d4495a22a3f60f65ef995a8c3d",
-    "tests/e2e/summary-image-checks.ts": "bf618719800876f3c30352498f8e15ed7e93778d"
+    "tests/e2e/summary-image-checks.ts": "bf618719800876f3c30352498f8e15ed7e93778d",
+    "src/features/crews/CrewManagement.tsx": "6a881b76688164d8cb74691584c0b6cd51b5d1c7"
   },
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
@@ -21,46 +19,76 @@
     {
       "id": "FU-Q13",
       "title": "Crew-panel title and legend can clip horizontally at 200% text",
-      "evidence": ".evidence/D3/field-ux-review-round-7.json; docs/working/BACKLOG.md",
-      "reproduction": "Prior round 7 reproduced horizontal clipping of the Equipaggio title and Non disponibile legend in WebKit at 320×664 with 200% text and an update note. Enabled destination actions and Close remained contained, focusable and reachable. The portal source is unchanged in this review.",
+      "evidence": ".evidence/D3/field-ux-review-round-7.json; .evidence/D3/field-ux-review-round-8.json; docs/working/BACKLOG.md",
+      "reproduction": "Prior round 7 reproduced horizontal clipping of the Equipaggio title and Non disponibile legend in WebKit at 320×664 with 200% text and an update note. Enabled destination actions and Close remained contained, focusable and reachable. The portal source is unchanged.",
       "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05/R18",
-      "disposition": "Retained prior nonblocking finding; outside this restricted copy/status fix."
+      "disposition": "Retained prior nonblocking finding; outside this restricted summary-control fix."
     }
   ],
   "priorReviewContinuity": {
-    "reportsPreserved": "Canonical field-UX review and rounds 1–7 remain unchanged.",
+    "reportsPreserved": "Canonical field-UX report and rounds 1–8 remain unchanged.",
     "priorFailRounds": [
       1,
       2
     ],
-    "priorPortalFix": "FU-12 remains covered by round 7; the reviewed CrewManagement.tsx blob is unchanged.",
+    "priorPortalFix": "FU-12 remains covered by round 7; CrewManagement.tsx is unchanged.",
     "newEntropyDraw": false
   },
+  "resolvedRegressions": [
+    {
+      "id": "COPY_CONTROL_CLEARANCE_REGRESSION",
+      "disposition": "Fixed in the reviewed working-tree candidate, with passing local and bounded Linux/macOS diagnostics; final recorded verification and exact-checkpoint full CI remain separate gates.",
+      "evidence": "The negative control reproduces a 138 px copy button at top 494 covering content ending at 503.75. The corrected candidate passes the unchanged original clearance assertion under the same wider label pressure."
+    }
+  ],
   "evidenceInspected": [
-    "AGENTS.md, reviewer-field-ux persona, REVIEW_PROTOCOL, active D3 predicate, Product Specification §7.5, Scope §1, design rules R04/R05/R12/R18, and summary changelog. Directly inspected the frozen C6 reference and relevant current image captures.",
-    "The application diff changes four class strings only: wrapper/status width containment and wrapping on Copy/Share controls. Text, font classes, minimum target heights, status lifetime, live-region semantics and handlers remain unchanged. The production component blob exactly matches the passing diagnostic candidate.",
-    "Read all prior round verdicts, blockers and findings. This round restricts its investigation to the copy/status containment correction and regressions caused by it.",
-    "Mac diagnostic run 38631356366, commit 7af26c144311f0423aaeb7d95c2efe97d8045c71: inspected image-comparison-report.json in the d3-copy-status artifact. Eight original image cases passed, one original WebKit case was skipped, and there were zero unexpected or flaky results. Renderer, masks and comparison limits remained unchanged.",
-    "Mac WebKit 320px/200% image differences were mean 0.404909/share 0.003274/colour 0.421125 for double names; 0.357851/0.002715/0.375857 for hostile crews; and 0.393306/0.003723/0.396433 for hostile duties. All remain below unchanged limits of 2.5/0.012/2.5. Inspected generated crew/duty PNGs and corresponding comparison captures.",
-    "Identified a durable-test coverage gap: a shorter Copia non riuscita status could satisfy the initial containment checks. The exact canonical copied-message assertion now closes that gap. Its first rerun reproduced missing Chromium clipboard permission; the failure is preserved in the scratch report cvc-d3-status-missing-permission-failure.json and test-results/d3-summary-controls-review. Setup now grants Chromium the same clipboard permissions used by existing summary tests, without replacing rendering or clipboard code.",
-    "Inspected the final test-results/e2e-report.json: three projects passed, with zero skips, retries, unexpected results or flakes; total duration 48.852 seconds. Pixel 7 Chromium, iPhone Chromium viewport and iPhone WebKit all exercised the exact long copied message.",
-    "Final recorded bounds agree across all three projects at 320×664/200% text: wrapper x32–288/y209–632; status x32–288/y209–513; Share x60–260/y405–493; Copy x32–288/y529–632. Share is 88px high, Copy is 103px high, and the status-to-Copy gap is 16px. Both button centres receive their own targets. Share accepts focus, the actual Share-button click reaches the synthetic native-share handler, and the status clears afterwards.",
-    "Directly inspected all three final unmasked copy-status.png captures under test-results/d3-summary-controls-final. The copied message and both button captions remain readable within their surfaces; no native-share control escapes the wrapper or viewport.",
-    "Bounded pier routine: 1) Open the chosen session’s read view: one tap. 2) Copy its image: one tap. 3) Optionally tap Condividi: one tap. The fix introduces no additional action. Overall task time and physical reading effort were not measured."
+    "Read AGENTS.md, reviewer persona/protocol, round8, active D3 acceptance, Product Specification §7.5, Scope §1, Technical Decisions §6, design R04/R05/R12/R18 and summary changelog. Inspected the frozen C6 image with its documented later copy-control amendments. Node v24.21.0 confirmed; D3 remains IN_PROGRESS and the owner check remains NEEDS_SETUP.",
+    "Only SummaryImageButton.tsx and d3-summary-controls.spec.ts differ in application/test source from 42ce5d8. Production removes copy-button flex-wrap and places its caption in a min-w-0 span. Text, font classes, padding, target minimums, busy state, handlers, status lifetime and live-region semantics are unchanged.",
+    "Inspected .evidence/D3/ci-summary-clearance.json and the exact retained Linux failure screenshot. Run 38811456861 reproduced all four summary failures on all three attempts: copy top 494 / height 138 overlapped final content by 9.5–10 px. The icon visibly occupied a separate flex line.",
+    "Inspected test-results/d3-summary-clearance-before/report.json and its screenshot: adding 0.03em spacing to the excluded copy control reproduces top 494 / height 138/contentBottom 503.75; one expected negative-control failure, retry 0. Captured-summary typography is unchanged.",
+    "Inspected test-results/d3-summary-clearance-after/report.json: all three mobile projects passed, zero skips/retries/flakes,64.535 s total. The durable test adds the unchanged expectCopyButtonLayout assertion under wider-label pressure and retains the exact copied message, native-share activation, focus, pointer-hit, containment and44/48px target checks.",
+    "All three final reports agree at 320×664 / 200% text: wrapper x32–288 / y202–632; status y202–506; Share x60–260 / y398–486; Copy x32–288 / y522–632. Share height 88, Copy height 110, status-to-Copy gap 16. Both centres hit their own controls; Share accepts focus and its actual click reaches the synthetic native-share handler before clearing the status.",
+    "Directly inspected all three final unmasked copy-status.png captures. The icon stays beside the two-line Copia immagine caption; copy/share captions and the full copied message remain readable within their surfaces.",
+    "Inspected test-results/d3-summary-clearance-originals/report.json: all four original Pixel 7 cases passed, zero skips/retries/flakes,67.375 s total: regular crew clearance, duty summary, hostile crew summary and hostile duty summary. Original image/geometry helpers, renderer, masks and fidelity thresholds are unchanged.",
+    "Bounded pier routine remains: 1) tap Apri vista lettura; 2) tap Copia immagine; 3) optionally tap Condividi. No additional action is introduced. Overall task time and physical reading effort were not measured. This reviewer inspected the root-run records and captures and did not launch a competing local browser.",
+    "Independently verified completed successful Linux and macOS diagnostic jobs 116697599723/116697599962 in run 38815080734, head 22e42ac1a97dac84b646e87e71d6f55c77d0e30a. This is bounded platform proof for the immutable baseline plus two reviewed overlays, not the final milestone CI run.",
+    "Confirmed the original four-case replay report SHA-256 fb7500d259f069e8ea38186bde5d1f1f7609b03b7c65f44deac825ef525d6c23."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Restricted native-share/status containment at 320px and 200% text.",
-      "Regressions in target height, spacing, readable captions, focus and pointer reachability.",
-      "Preservation of the original summary-image renderer, exclusion masks and fidelity limits."
+      "Restricted regression from copy/status containment: wider glyphs moving the icon onto an extra flex line and covering final summary content.",
+      "Preservation of readable captions, copied-message/native-share behavior, touch targets, focus and pointer reachability.",
+      "Preservation of original screenshot rendering, exclusion masks, clearance assertions and image-comparison limits."
     ],
-    "wildcard": "Require the full copied-message state so a shorter clipboard-failure status cannot falsely validate the overflow correction; no new whole-milestone hunt."
+    "wildcard": "Compare the retained exact negative control against the same pressure audit and original failed cases after the narrow flex-label correction; no new whole-milestone hunt."
   },
   "notTested": [
-    "Physical Android/iPhone installation, system share sheets, real font scaling, wet hands and glare. No physical-device PASS is claimed.",
-    "Final complete D3 evidence, exact checkpoint full CI and usable public HTTPS deployment remain separate requirements.",
-    "The database startup prototype and its timing, lifecycle or adoption were outside this UI review.",
-    "Earlier nonblocking portal findings and unrelated application paths were not reopened."
-  ]
+    "Final complete D3 recorded verification and exact-checkpoint full CI remain pending. The successful bounded Linux/macOS diagnostic is not a substitute for those gates.",
+    "Physical Android/iPhone installation, real font scaling, operating-system share sheets, wet hands and glare were not tested. No physical-device PASS is claimed.",
+    "Public HTTPS publication and owner acceptance remain pending.",
+    "Database startup, engine packaging, privacy/data behavior and unrelated UI paths were outside this restricted follow-up; their prior reviews are retained."
+  ],
+  "platformDiagnostic": {
+    "run": 38815080734,
+    "commit": "22e42ac1a97dac84b646e87e71d6f55c77d0e30a",
+    "source": "Immutable 42ce5d8 plus the two reviewed overlays",
+    "status": "PASS",
+    "jobs": [
+      {
+        "id": 116697599723,
+        "platform": "ubuntu-latest",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116697599962,
+        "platform": "macos-15",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "verification": "Independently read both completed job results through the public GitHub Actions API.",
+    "fullMilestoneAcceptance": false
+  }
 }

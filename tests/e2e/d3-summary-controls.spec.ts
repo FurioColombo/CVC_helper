@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 import { DOUBLE_NAME_SESSION, seedDoubleNameCourse } from "./summary-helpers"
-import { COPIED_NOTE } from "./summary-image-checks"
+import { COPIED_NOTE, expectCopyButtonLayout } from "./summary-image-checks"
 
 test("contains the copy status and native share control at 320 px / 200% text", async ({
   page,
@@ -47,6 +47,15 @@ test("contains the copy status and native share control at 320 px / 200% text", 
   const copy = page.getByRole("button", {
     name: "Copia immagine riepilogo",
   })
+  // Linux's wider font sends the icon onto its own flex line at this width.
+  // Reproduce that pressure without changing the captured summary typography.
+  await copy.evaluate((button) => {
+    button.style.letterSpacing = "0.03em"
+  })
+  await expectCopyButtonLayout(
+    page.getByRole("dialog", { name: "Vista lettura equipaggi" }),
+    "copy controls at 320 px / 200% text with wider label metrics",
+  )
   await copy.click()
   const status = page.getByRole("status")
   const share = status.getByRole("button", { name: "Condividi" })
