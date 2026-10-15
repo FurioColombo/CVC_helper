@@ -2,7 +2,7 @@
   "milestone": "D3",
   "date": "2026-10-15",
   "kind": "STORAGE_RUNTIME_GATE_NO_SUPPORTED_FIX_FOUND",
-  "status": "CANDIDATE_REVIEWED_FINAL_GATES_PENDING",
+  "status": "PRODUCTION_PACKAGING_FIXED_FOLLOWUP_REVIEW_BLOCKED",
   "formalReview": false,
   "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "diagnostic": {
@@ -117,6 +117,7 @@
     "reviews": "Data4, regression12 and security3 zero blockers; schema-version sync-chaos pending",
     "quick": "81 files/1362tests PASS Node24.21.0",
     "sourceAccepted": false,
-    "remaining": "Final clean-source recorder, same-origin isolation/update and exact full green push CI before publication/adoption."
+    "remaining": "One-line packaging fix reviews blocked by account usage limit; exact full CI, all-five recorder and isolation/update/HTTPS readiness remain required.",
+    "packagingFix": "ci-startup-update-failure.json"
   }
 }

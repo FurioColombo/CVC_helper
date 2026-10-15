@@ -2,7 +2,7 @@
   "milestone": "D3",
   "date": "2026-10-15",
   "runtime": "v24.21.0",
-  "status": "FOCUSED_PROOFS_PASS_FINAL_GATES_PENDING",
+  "status": "PRODUCTION_PACKAGING_FIXED_REVIEW_AND_FINAL_GATES_PENDING",
   "source": {
     "baseline": "7062d4cb914cd40038cb05e5b92523dadf56f808",
     "workingIntegration": true,
@@ -135,5 +135,43 @@
     "wholeSpec": "UNCHANGED except fixture import and outer isolatedTest identifier",
     "largeCallbackSha256": "eb3ae347f6da6be9bddf176eb94fb40429c047b2b6947e0619040b8c496a3065",
     "fixtureGeneration": "UNCHANGED"
+  },
+  "packagingFix": {
+    "reference": "ci-startup-update-failure.json",
+    "change": "Remove worker.format es override; restore SDK stock single-file worker packaging.",
+    "sharedBuild": "PASS",
+    "quick": {
+      "command": "npm run verify:quick",
+      "status": "PASS",
+      "runtime": "v24.21.0",
+      "files": 81,
+      "tests": 1362,
+      "durationSeconds": 82.65
+    },
+    "macDiagnostic": {
+      "run": 38698033211,
+      "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38698033211",
+      "diagnosticCommit": "e12be3a509f487134d987aaa26482cd119c73d02",
+      "status": "PASS",
+      "change": "Remove worker.format es override, restoring stock Vite single-file worker packaging. Keep original worker registration and every update assertion.",
+      "engines": ["chromium", "webkit"],
+      "qualification": "Diagnostic logging/capture overlay remains; current final clean source still requires all reviews, full recorder and exact full push CI.",
+      "secondsFromForegroundToOffer": { "chromium": 0.19, "webkit": 0.33 },
+      "typedNotesSurvived": true,
+      "log": {
+        "location": "OS-temp cvc-d3-inline-worker-ci.log",
+        "sha256": "a83b44943770d057cb9ae46a4d59e94ff0d05eb907535066611576bf20f7f229"
+      }
+    },
+    "followupReviews": {
+      "status": "TOOL_USAGE_LIMIT",
+      "roles": [
+        "data-integrity round5",
+        "regression round13",
+        "security/privacy round4"
+      ],
+      "observed": "All three reviewer turns failed with account usage-limit message; retry time shown1:16PM. No report exists and no reviewer PASS is inferred.",
+      "pending": "Required restricted reviews before final full recorder/readiness; sync-chaos packaging follow-up also pending."
+    }
   }
 }

@@ -3,7 +3,7 @@
   "date": "2026-10-15",
   "runtime": "v24.21.0",
   "branch": "codex/0.4.0",
-  "latestCheckpoint": "7062d4cb914cd40038cb05e5b92523dadf56f808",
+  "latestCheckpoint": "a4ff839965e428712b1d819538bf0b74b8efa2e3",
   "status": "IN_PROGRESS",
   "completed": [
     "Mobile copy/share wrapper containment at7062d4c; image renderer/masks/limits unchanged; independent field8 and regression11 zero blockers.",
@@ -11,19 +11,21 @@
     "Recovery12PASS, real two-tab1PASS and exact ready-after-deadline2PASS, all no retry; startup-integration.json names report hashes and source qualifications.",
     "Current verify:quick PASS81files/1362tests93.73s and verify:domain PASS; production buildPASS. Prior isolated unchanged mocked-loader testPASS3 classified and fixed; original failed broad quick result retained.",
     "Required data4/regression12/security3 reviews zero blockers; historical FAIL reports retained and no count reset.",
-    "Required schema-version sync-chaos review PASS_WITH_FINDINGS with zero blockers; independent current-source Chromium/WebKit rollback and desktop stale-writer/late-join proof3PASS0retry."
+    "Required schema-version sync-chaos review PASS_WITH_FINDINGS with zero blockers; independent current-source Chromium/WebKit rollback and desktop stale-writer/late-join proof3PASS0retry.",
+    "Confirmed and corrected ES worker packaging regression: Mac observe shows registration reevaluation resets broker state; restoring stock single-file worker packaging passes original two-engine production update diagnostic. Shared corrected build and81files/1362tests PASS."
   ],
   "uncommittedWork": [
-    "Root-owned reviewed startup integration/source guards/tests/coverage, classified unit readiness fix and related evidence/docs; ready for descriptive source checkpoint.",
-    "Separate temporary diagnostic clone and unadopted pageSnapshot scratch remain preserved; do not copy its renderer into shared checkout."
+    "Root-owned one-line Vite worker packaging correction and CI/handoff metadata; descriptive fix checkpoint and exact full CI are next.",
+    "Prior temporary candidates and renderer scratch remain preserved; update diagnostic clone named by OS-temp cvc-d3-update-probe-location.txt."
   ],
   "currentBlocker": {
-    "kind": "FINAL_VERIFICATION_PENDING",
-    "reason": "All required reviews now have zero blockers. Create clean source checkpoint, run all five D3 recorder commands and obtain exact full green push CI; owner input is not needed.",
-    "evidence": "startup-integration.json"
+    "kind": "INDEPENDENT_REVIEW_TOOL_USAGE_LIMIT",
+    "reason": "The one-line production packaging fix has passed diagnostic Mac updates, shared build and quick checks; required follow-up reviewer turns hit an account usage limit. No follow-up reports or PASS are inferred.",
+    "evidence": "ci-startup-update-failure.json",
+    "ownerInputNeeded": false
   },
   "remainingAcceptance": [
-    "Create descriptive clean source checkpoint; push full CI and record npm run evidence -- D3 against that clean source.",
+    "Checkpoint corrected source and obtain exact full green push CI; run focused test-channel update/isolation checks. Resume required follow-up reviews when tooling is available, then clean-source all-five D3 recorder.",
     "Wait for exact full green source CI before pushing metadata-only evidence checkpoint; obtain its exact green CI.",
     "Publish0.4.0 only from that verified checkpoint; prove live HTTPS identity/persistence/worker on both engines.",
     "Use owner:update READY and milestone:await-owner, checkpoint readiness then continue eligible D4 and T1.",
@@ -47,25 +49,49 @@
     "preparedFiles": "OS-temp cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md are drafts, not acceptance proof."
   },
   "ci": {
-    "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
-    "run": 38532131686,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38532131686",
-    "status": "FAIL",
-    "linux": "PASS",
-    "macos": "FAIL",
-    "currentCheckpoint": "Not yet pushed"
+    "run": 38696008092,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38696008092",
+    "macosJob": 116292615500,
+    "status": "MACOS_FAILED_LINUX_PENDING",
+    "macos": {
+      "deterministic": "PASS",
+      "offlineOCR": "PASS3of3",
+      "updateChromium": "PASS",
+      "updateWebKit": "FAIL before course creation",
+      "failure": "locator.click timed out30000ms waiting for Deriva after installed0.3.0 service-worker control",
+      "location": "scripts/check-update-journey.mjs:209,464",
+      "mainBrowserSuite": "NOT_RUN because verify:all stops at update failure"
+    },
+    "log": {
+      "location": "OS-temp cvc-d3-a4ff839-macos-ci.log",
+      "sha256": "0ff1d730bdcb1acef309c4bcd0c3520f6a1f295380223bcecbd40089a902bef1"
+    },
+    "artifact": {
+      "id": 11953739967,
+      "contents": ["test-results/d3-update-journey/update-offer-chromium.png"],
+      "limitation": "Original harness did not capture failing page state or WebKit screenshot."
+    },
+    "source": "a4ff839965e428712b1d819538bf0b74b8efa2e3"
   },
   "diagnostic": {
-    "source": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
-    "run": 38632601491,
+    "run": 38698033211,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38698033211",
+    "diagnosticCommit": "e12be3a509f487134d987aaa26482cd119c73d02",
     "status": "PASS",
-    "acceptance": false,
-    "reference": "ci-macos-comparison.json#correctedRecorderProbe"
+    "change": "Remove worker.format es override, restoring stock Vite single-file worker packaging. Keep original worker registration and every update assertion.",
+    "engines": ["chromium", "webkit"],
+    "qualification": "Diagnostic logging/capture overlay remains; current final clean source still requires all reviews, full recorder and exact full push CI.",
+    "secondsFromForegroundToOffer": { "chromium": 0.19, "webkit": 0.33 },
+    "typedNotesSurvived": true,
+    "log": {
+      "location": "OS-temp cvc-d3-inline-worker-ci.log",
+      "sha256": "a83b44943770d057cb9ae46a4d59e94ff0d05eb907535066611576bf20f7f229"
+    }
   },
   "mayContinue": [
-    "Finish D3 agent review/verification/CI/publication now.",
-    "D4/T1 implementation requires verified D3 AWAITING_OWNER; phone pending alone will then not stop eligible work.",
-    "UG3 waits every required owner acceptance."
+    "Checkpoint the corrected D3 source, exact full CI and focused production update/isolation verification while review tools are unavailable.",
+    "Final all-five recorder, publication and AWAITING_OWNER require completed follow-up reviews; no phone build is READY.",
+    "D4/T1 implementation still waits verified D3 AWAITING_OWNER; UG3 waits required owner acceptance."
   ],
   "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS."
 }

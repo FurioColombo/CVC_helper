@@ -1,0 +1,114 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-15",
+  "source": "a4ff839965e428712b1d819538bf0b74b8efa2e3",
+  "ci": {
+    "run": 38696008092,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38696008092",
+    "macosJob": 116292615500,
+    "status": "MACOS_FAILED_LINUX_PENDING",
+    "macos": {
+      "deterministic": "PASS",
+      "offlineOCR": "PASS3of3",
+      "updateChromium": "PASS",
+      "updateWebKit": "FAIL before course creation",
+      "failure": "locator.click timed out30000ms waiting for Deriva after installed0.3.0 service-worker control",
+      "location": "scripts/check-update-journey.mjs:209,464",
+      "mainBrowserSuite": "NOT_RUN because verify:all stops at update failure"
+    },
+    "log": {
+      "location": "OS-temp cvc-d3-a4ff839-macos-ci.log",
+      "sha256": "0ff1d730bdcb1acef309c4bcd0c3520f6a1f295380223bcecbd40089a902bef1"
+    },
+    "artifact": {
+      "id": 11953739967,
+      "contents": ["test-results/d3-update-journey/update-offer-chromium.png"],
+      "limitation": "Original harness did not capture failing page state or WebKit screenshot."
+    }
+  },
+  "classification": "PRODUCTION_WORKER_PACKAGING_REGRESSION",
+  "diagnostic": {
+    "branch": "codex/d3-update-startup-probe",
+    "commit": "f7b31ca07ad23eaa318e02cdd2225be0e553e9d4",
+    "run": 38697149790,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38697149790",
+    "sources": [
+      "a4ff839965e428712b1d819538bf0b74b8efa2e3",
+      "33ac7c927d602d9f322c55ab83e981f0a7651b06"
+    ],
+    "changes": "Failure-only page body/screenshot, console/pageerror/failed-request/WASM response observations; original update assertions unchanged; app source unchanged.",
+    "status": "IN_PROGRESS",
+    "acceptance": false,
+    "tooling": "Manual dispatch404 because the new workflow was not registered; a branch-specific push trigger starts only this diagnostic. No main or deployed app change."
+  },
+  "localRecorder": {
+    "source": "a4ff839965e428712b1d819538bf0b74b8efa2e3",
+    "status": "INTERRUPTED_AFTER_CI_REGRESSION_CONFIRMED",
+    "reason": "The source already fails mandatory macOS production update. Stop this obsolete run before applying the packaging correction; never claim full PASS.",
+    "log": "Ignored test-results/d3-final-recorder.log"
+  },
+  "ownerReady": false,
+  "physicalPass": false,
+  "immutableComparison": {
+    "run": 38697149790,
+    "diagnosticCommit": "f7b31ca07ad23eaa318e02cdd2225be0e553e9d4",
+    "candidate": "FAIL reproduced on a4ff839",
+    "previousSource": "PASS33ac7c9",
+    "observation": "Archive unavailable; private startup broker missing before factory. Original assertions unchanged."
+  },
+  "registrationExperiment": {
+    "run": 38697800765,
+    "diagnosticCommit": "01064618e913c9699fbb900c3cb253d14aa25fbe",
+    "observe": "FAIL",
+    "idempotent": "PASS, diagnostic only; not adopted",
+    "sequence": [
+      "registration evaluation false/undefined",
+      "broker received worker-1 with0 existing brokers",
+      "registration evaluation true/1 broker",
+      "factory sees true/0 brokers"
+    ],
+    "capture": "OS-temp cvc-d3-registration-observe-yFqX88/d3-update-journey/startup-failure-webkit.json",
+    "inference": "Production ES worker code splitting gives the dynamically loaded VFS a back-import of its worker entry. WebKit reevaluates that entry and resets the private broker state."
+  },
+  "fixExperiment": {
+    "run": 38698033211,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38698033211",
+    "diagnosticCommit": "e12be3a509f487134d987aaa26482cd119c73d02",
+    "status": "PASS",
+    "change": "Remove worker.format es override, restoring stock Vite single-file worker packaging. Keep original worker registration and every update assertion.",
+    "engines": ["chromium", "webkit"],
+    "qualification": "Diagnostic logging/capture overlay remains; current final clean source still requires all reviews, full recorder and exact full push CI.",
+    "secondsFromForegroundToOffer": { "chromium": 0.19, "webkit": 0.33 },
+    "typedNotesSurvived": true,
+    "log": {
+      "location": "OS-temp cvc-d3-inline-worker-ci.log",
+      "sha256": "a83b44943770d057cb9ae46a4d59e94ff0d05eb907535066611576bf20f7f229"
+    }
+  },
+  "correctedSharedBuild": {
+    "command": "npm run build",
+    "status": "PASS",
+    "worker": "dist/assets/engineModuleWorker-_-fycvIC.js",
+    "stockWorker": "dist/assets/worker-BjWXu86u.js",
+    "shape": "Standalone single-file IIFE; no worker VFS back-import chunks",
+    "diagnosticLoggingAdopted": false
+  },
+  "correctedQuick": {
+    "command": "npm run verify:quick",
+    "status": "PASS",
+    "runtime": "v24.21.0",
+    "files": 81,
+    "tests": 1362,
+    "durationSeconds": 82.65
+  },
+  "reviewFollowup": {
+    "status": "TOOL_USAGE_LIMIT",
+    "roles": [
+      "data-integrity round5",
+      "regression round13",
+      "security/privacy round4"
+    ],
+    "observed": "All three reviewer turns failed with account usage-limit message; retry time shown1:16PM. No report exists and no reviewer PASS is inferred.",
+    "pending": "Required restricted reviews before final full recorder/readiness; sync-chaos packaging follow-up also pending."
+  }
+}

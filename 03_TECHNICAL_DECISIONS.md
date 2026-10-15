@@ -80,6 +80,8 @@ stock SDK entry and database-specific name. Build-time version and source-hash
 guards pin this private integration to PowerSync 2.2.0 and wa-sqlite 2.0.3;
 updating either requires a new reviewed integration. Development-only events
 prove cold compilation and distinct instances; production strips their producer.
+Workers keep Vite's default single-file packaging, so a VFS chunk cannot import
+the worker entry and replay its startup registration in WebKit.
 
 Use granular records with stable collision-resistant client IDs rather than a
 monolithic nested course document. Faults, evaluations, assignments, session boat
