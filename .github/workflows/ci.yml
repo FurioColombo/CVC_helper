@@ -4,6 +4,7 @@ name: Deterministic verification
 # from a branch in this repository was a second, identical run (H1).
 on:
   push:
+    branches-ignore: [codex/d3-cold-compiler-probe]
   workflow_dispatch:
 
 # A newer push to the same branch supersedes the run in progress; a manual

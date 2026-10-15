@@ -333,3 +333,30 @@ test("a real same-page prewarm cannot be reported as a cold pass", async ({
   expect(lifecycle.resetRows).toBe(0)
   expect(lifecycle.indexedDbDeleteUnblocked).toBe(true)
 })
+
+// Read-only diagnostic after each original case; never warms the measured open.
+test.afterEach(async ({ page }, info) => {
+  const observation = await page
+    .evaluate(() => ({
+      events:
+        (window as Window & { __CVC_ENGINE_DIAGNOSTIC__?: unknown[] })
+          .__CVC_ENGINE_DIAGNOSTIC__ ?? [],
+      wasmResources: performance
+        .getEntriesByType("resource")
+        .filter((entry) => entry.name.endsWith(".wasm"))
+        .map((entry) => entry.toJSON()),
+    }))
+    .catch((error) => ({ observationError: String(error) }))
+  console.log(
+    "D3_COMPILE_PROBE " +
+      JSON.stringify({
+        mode: process.env.VITE_D3_COMPILE_MODE,
+        title: info.title,
+        project: info.project.name,
+        retry: info.retry,
+        status: info.status,
+        annotations: info.annotations,
+        observation,
+      }),
+  )
+})

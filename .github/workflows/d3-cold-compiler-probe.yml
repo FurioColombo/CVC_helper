@@ -1,0 +1,50 @@
+name: D3 cold compiler diagnostic
+on:
+  push:
+    branches: [codex/d3-cold-compiler-probe]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compiler:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: streaming
+            spec: d1-migration
+            seed: same
+          - mode: buffered
+            spec: d1-migration
+            seed: same
+          - mode: synchronous
+            spec: d1-migration
+            seed: same
+          - mode: streaming
+            spec: d1-migration
+            seed: sibling
+    runs-on: macos-15
+    env:
+      VITE_D3_COMPILE_MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - name: Sibling-page seed control only
+        if: matrix.seed == 'sibling'
+        run: node scripts/d3-sibling-seed-diagnostic.mjs
+      - name: Original unchanged assertions, no retries
+        run: npm run verify:e2e -- tests/e2e/${{ matrix.spec }}.spec.ts --project=iphone-13-webkit-core --retries=0
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cold-${{ matrix.mode }}-${{ matrix.seed }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: error

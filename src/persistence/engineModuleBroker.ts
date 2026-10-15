@@ -70,9 +70,17 @@ async function compileModule(url: string) {
   const controller = new AbortController()
   let timeout: number | undefined
 
-  const compilePromise = WebAssembly.compileStreaming(
-    fetch(url, { signal: controller.signal }),
-  )
+  // Diagnostic branch only; the shipped integration remains unchanged.
+  const mode = import.meta.env.VITE_D3_COMPILE_MODE ?? "streaming"
+  const compilePromise =
+    mode === "streaming"
+      ? WebAssembly.compileStreaming(fetch(url, { signal: controller.signal }))
+      : fetch(url, { signal: controller.signal }).then(async (response) => {
+          const bytes = await response.arrayBuffer()
+          return mode === "buffered"
+            ? WebAssembly.compile(bytes)
+            : new WebAssembly.Module(bytes)
+        })
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeout = window.setTimeout(() => {
       controller.abort()
