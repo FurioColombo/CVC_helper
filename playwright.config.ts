@@ -52,6 +52,8 @@ const webkitCoreSpecs = [
   "d1-migration",
   "d2-duty-items",
   "d3-read-only",
+  "d3-engine-startup",
+  "d3-startup-recovery",
   "d3-summary-controls",
   "duties",
   "evaluation-gate",
@@ -114,7 +116,13 @@ export default defineConfig({
   projects: [
     {
       name: "pixel-7-chrome",
+      testIgnore: specs(["d3-startup-multitab"]),
       use: { ...devices["Pixel 7"], locale: "it-IT" },
+    },
+    {
+      name: "desktop-chrome-storage",
+      testMatch: specs(["d3-startup-multitab"]),
+      use: { ...devices["Desktop Chrome"], locale: "it-IT" },
     },
     {
       name: "iphone-13-viewport",

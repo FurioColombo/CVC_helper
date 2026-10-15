@@ -70,6 +70,17 @@ extra retries or warming outside the measured path. Adoption requires evidence
 for cold startup, close/reopen, interruption recovery, multi-tab guards and
 test-channel isolation, then D3 reviews and exact green CI.
 
+The integration caches only the compiled, immutable WASM module in its page,
+keyed by its exact same-origin asset URL. Each dedicated database worker gets
+a fresh engine instance, memory and VFS; the normal SDK owns its connection
+and close. Compilation begins on the first real open, inside the measured
+startup path. A private transferred port supplies the module; a failed startup
+releases only its owned workers and ports. The desktop SharedWorker keeps the
+stock SDK entry and database-specific name. Build-time version and source-hash
+guards pin this private integration to PowerSync 2.2.0 and wa-sqlite 2.0.3;
+updating either requires a new reviewed integration. Development-only events
+prove cold compilation and distinct instances; production strips their producer.
+
 Use granular records with stable collision-resistant client IDs rather than a
 monolithic nested course document. Faults, evaluations, assignments, session boat
 selections and availability remain separate records so future replication is not
@@ -357,14 +368,15 @@ The public API needs no `gh` or token; a token permits higher API limits.
 CI runs on push (and by hand), cancels a superseded run on the same branch, and
 uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
 failure artifacts where useful. The complete suite runs on macOS 15, including
-all three browser projects; Linux also runs deterministic checks, the offline
-PWA proof and both Chromium projects, preserving its font and geometry coverage.
+all four browser projects; Linux also runs deterministic checks, the offline
+PWA proof and all three Chromium projects, preserving its font and geometry coverage.
 Both jobs must pass. This follows the immutable D2/D3 comparison in
 `.evidence/D3/ci-adapter-initialization.json`: Linux WebKit recompilation also
 exceeds the inherited five-second bound on D2. macOS provides the
 [closest Playwright WebKit coverage to Safari](https://playwright.dev/docs/browsers).
-The bounds, assertions, retries and production worker lifecycle stay unchanged;
-the observed macOS cold-open failure remains recorded, not waived. A push
+Both construction-inclusive five-second bounds, assertions and retries remain;
+the startup integration above retains fresh database instances and SDK close.
+Earlier cold-open failures remain recorded, not waived. A push
 reuses the newest push run only when
 it succeeded for the same workflow and exact commit across branches, excluding itself;
 manual dispatches and reruns always execute checks. Reuse still checks frozen

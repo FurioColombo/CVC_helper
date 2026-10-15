@@ -130,6 +130,7 @@ The owner authorises bounded worker/module startup investigation on 2026-10-14
 (03 §3). No supported SDK startup fix was found. The unchanged acceptance
 limits and verification conditions are in
 `.evidence/D3/runtime-blocker-assessment.json`; no candidate is adopted yet.
+The production candidate now passes focused lifecycle checks; full D3 verification and exact green CI still gate adoption. The unrelated unit history-loader race is fixed by waiting for loaded content; see `.evidence/D3/evaluation-history-readiness.json`.
 
 ## Flaky browser tests
 

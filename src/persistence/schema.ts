@@ -1,4 +1,5 @@
 import { column, PowerSyncDatabase, Schema, Table } from "@powersync/web"
+import { createEngineStartupWorkerScope } from "./engineModuleBroker"
 
 // Every course table carries `createdAt` and `updatedAt` (UTC ISO, set through
 // src/persistence/stamp.ts) and, from D1, every course-scoped row carries its
@@ -189,8 +190,27 @@ export const COURSE_PARENTS = {
 } as const
 
 export function createDatabase(dbFilename: string) {
-  return new PowerSyncDatabase({
+  const startup = createEngineStartupWorkerScope()
+  const database = new PowerSyncDatabase({
     schema: AppSchema,
-    database: { dbFilename },
+    database: { dbFilename, worker: startup.createWorker },
   })
+  const initialize = database.init.bind(database)
+  let initialized: Promise<void> | undefined
+  database.init = () => {
+    initialized ??= Promise.race([
+      initialize(),
+      startup.failure.then((error) => {
+        throw error
+      }),
+    ]).then(
+      () => startup.release(),
+      (error: unknown) => {
+        startup.cleanupFailedInitialization()
+        throw error
+      },
+    )
+    return initialized
+  }
+  return database
 }

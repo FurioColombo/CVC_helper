@@ -2,8 +2,9 @@
   "reviewerRole": "security-privacy",
   "persona": "Il Garante",
   "milestone": "D3",
-  "round": 2,
-  "commit": "3b7c41bd8df5e6cb65dc3fb392f645a720fd204a",
+  "round": 3,
+  "commit": "7062d4cb914cd40038cb05e5b92523dadf56f808",
+  "reviewedDiff": "Restricted startup integration from 7062d4c to the working-tree source blobs recorded below; this is not a claim that the uncommitted integration is already in HEAD.",
   "verdict": "PASS",
   "blockers": [],
   "importantFindings": [],
@@ -12,35 +13,61 @@
     {
       "id": "SP-1",
       "status": "fixed",
-      "evidence": "The test Tesseract worker receives cachePath 'cvc-helper-test-ocr'; the regular worker retains its existing default. Real OCR initialization produced distinct IndexedDB keys './ita.traineddata' and 'cvc-helper-test-ocr/ita.traineddata' on Chromium and WebKit. Both contained 3,126,172 model bytes. Test-key overwrite and deletion preserved the regular model's SHA-256 hash. Independent adapter probes also confirmed preservation on both engines."
+      "evidence": "Preserved the round-2 disposition. src/appChannel.ts retains regular OCR path '.' and test path 'cvc-helper-test-ocr'; src/capabilities/studentScan.ts still supplies the test-only cachePath. The startup integration changes neither Tesseract's keys nor channel preferences, model cache names, database filenames or Workbox namespace configuration. Earlier Chromium/WebKit real-OCR preservation evidence remains the SP-1 proof; this round did not rerun OCR."
     }
   ],
+  "sourceBlobs": {
+    "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
+    "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
+    "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
+    "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
+    "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
+    "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
+    "vite.config.ts": "77c12a1b656982fde1de5444be83a462703e7936",
+    "src/appChannel.ts": "0aa52d3a2250846178bc5b2b05c718a421f01763",
+    "src/capabilities/studentScan.ts": "5b3f9ef9361cb5373e1a1005fb7aecd90cbbb31b",
+    "tests/engine-startup.test.ts": "03ab4a1dde50dd9bac0cc17e30654940c5b7de24",
+    "tests/e2e/d3-startup-recovery.spec.ts": "e0b4eeca5c6309626dc46458c435f10b48656d91",
+    "tests/e2e/d3-startup-multitab.spec.ts": "9bc1d6a491e508343da7962c906f09beb6634e65"
+  },
+  "artifactSha256": {
+    "dist/assets/index-J_cSyjXi.js": "50f1df8337bd6118658091257dc01976c919ab358184db2356edc1dd6f79fb30",
+    "dist/assets/engineModuleWorker--Ii5qXjA.js": "b7bc14a471a4e5451a6dc036dec11182243224cc00c71876feab4e912e7fa47e",
+    "dist/assets/worker-DaU0mQo1.js": "762282f81189043b1652232ccfb27f852276ebb91572ab791a433982d789ec67",
+    "dist/assets/waSqliteFactory-CoOijB62.js": "089c349179d59f74801fd413633e31ed85d48235109c808e810a03fb8d667c16",
+    "dist/assets/waSqliteFactory-Db-zFd_x.js": "977c3f698d0296bbacff01a504c6906a7d7a4b5227fcff91f4ceaf3c2974ae9d",
+    "test-results/e2e-report.json": "486320943ed03f721b38179de8527b1c7658ce31f704cb1795216eab75b68212",
+    "OS temporary healthy clone startup-safety/recovery-report.json": "89453f585f22ac66c7acad8cfd42bc4cd9a047fd303b2f59d33eae65c1a23dc0",
+    "OS temporary healthy clone startup-safety/multitab-report.json": "2d0d350ea3ae18cb9fc68d52ea1cfaf4e6510c60801fb311658b9c2c000b3b5a"
+  },
   "evidenceInspected": [
-    "Restricted fix diff efddf589..3b7c41bd: src/appChannel.ts, src/appChannel.test.ts, src/capabilities/studentScan.ts, scripts/check-test-app-isolation.mjs, associated deployment documentation and focused OCR verification metadata.",
-    "SP-1 in .evidence/D3/security-privacy-review-round-1.json and its original synthetic adapter reproduction.",
-    "Installed Tesseract primary source: resolvePaths leaves cachePath unchanged; language-cache reads, writes and initialization-error deletions all derive their key from that path.",
-    "Independent scratch probe test-results/security-review-r2/isolated-ocr-cache.mjs passed on Chromium and WebKit: writing and deleting the canonical test key preserved the regular key's synthetic bytes.",
-    "Focused src/appChannel.test.ts run: three tests passed.",
-    "Completed test-results/test-isolation.json, recorded 2026-10-12T17:57:09.653Z: Chromium 151.0.7922.34 and WebKit 26.5 both passed real OCR initialization, distinct language keys and regular-byte preservation after test-key read/write/delete.",
-    "Both same-origin UI journeys preserved the synthetic regular course, student, note and preferences through test course creation, student changes and erasure; regular and test service-worker scopes and runtime caches remained separate.",
-    "Final offline-proof implementation and report: the owned origin destroys requests and closes connections. Regular reload responses came from its service worker before test installation and after test erasure. Uncached fetches and fresh contexts without service workers failed in both engines. The regular course rendered, and subsequent profile/preference checks passed.",
-    "The final harness uses separate regular/test pages in one browser context, asserts readiness and visible outcomes, and reports no page errors or crashes.",
-    "Deployment documentation now identifies the two OCR keys and requires D4 reset to remove only the selected key from Tesseract's shared keyval-store.",
-    "Exact committed fix checkpoint verified; no tracked files were edited by this reviewer."
+    "AGENTS.md; docs/agents/REVIEW_PROTOCOL.md; reviewer-security-privacy.md; D3 plan and startup authorisation in 03_TECHNICAL_DECISIONS.md section 3; compatibility section 3.1; product section 10; scope section 4; docs/DEPLOY.md and OWNER_WORKFLOW.md. Runtime Node v24.21.0. D3 remains IN_PROGRESS, test publication UNPUBLISHED and D3-PHONE-UPDATE NEEDS_SETUP.",
+    "Security reports round 1 FAIL/SP-1 and round 2 PASS/fixed. No new entropy draw or unrelated whole-milestone hunt.",
+    "Reviewed the bounded integration diff, production schema factory, private registration and module broker, fresh-instance factory, exact async-factory alias, build source guards, new lifecycle and multi-tab specs, cold-browser fixture and CI project inclusion.",
+    "The worker requests the Vite-emitted WASM URL as its full module key. The page requires the parsed URL to equal that key and be same-origin before fetch/compileStreaming. The transferred MessageChannel is held only by the creating page and its dedicated worker; no window message, BroadcastChannel, localStorage bus, backend, auth, upload or export is introduced.",
+    "compiledModules retains promises for immutable WebAssembly.Module code only. waSqliteFactory instantiates a fresh WebAssembly.Instance with each Emscripten factory's imports; no database handle, memory, course row or personal record is cached or sent through the startup broker.",
+    "Installed PowerSync 2.2.0 sources resolve IDBBatchAtomicVFS and existing platform SharedWorker defaults. The custom creation callback preserves the stock SharedWorker entry and shared-powersync-<dbFilename> name. Cleanup observes/terminates only dedicated workers in the failed scope; SharedWorkers are never enrolled or terminated.",
+    "Verified all seven installed source/WASM SHA-256 values and both package versions against vite.engine-startup.ts. The guard runs from the normal Vite config, and the anchored alias leaves ?cvc-original bound to the pinned stock factory.",
+    "Independent OS-temp cvc-d3-security-broker-probe.mjs/json: five synthetic VM checks passed. Cross-origin and mismatched-key messages produced module-error before any fetch; failure cleanup affected only the owning dedicated worker/port; ready release removed the startup watchdog and drained ports without terminating the worker; SharedWorker retained stock entry and channel-specific naming; DEV diagnostics retained at most 128 events and used the owning worker identity. This probe used fake ports/workers, no browser, real database or network.",
+    "Inspected the root's successful exact shared production build output. Scanning all dist/assets JavaScript found no __CVC_ENGINE_DIAGNOSTIC__, instance-created, cache-miss or compile-complete producers. A record-event dispatch string remains inert; the recording function and worker diagnostic producers are stripped. No production diagnostic acknowledgement or waiting protocol is present.",
+    "Inspected the OS-temp healthy clone startup-safety/recovery-report.json: 12 expected passes, zero unexpected/flaky/skipped, retries 0, covering blocked startup/page close, transaction rollback, corrupt compile recovery, structured-clone fallback exclusion, lost broker and worker crash on Chromium and WebKit. Its broker/schema blobs match current source; its factory uses an earlier optional timeout variable. The final factory delta only makes that already-initialised timer const and was reviewed separately.",
+    "Inspected startup-safety/multitab-report.json: one real desktop Chromium SharedWorker pass with retries 0. It verifies surviving-tab writes after another tab closes, minimum-writer refusal, read-only open before repairs, and final unblocked IndexedDB deletion.",
+    "Inspected exact shared-source test-results/e2e-report.json: ready-after-deadline case passed twice with retries 0, Pixel Chromium 38009 ms and WebKit 39421 ms. It exercises concurrent init calls, waits 31 seconds after readiness, writes/reads, closes and reopens/deletes the database.",
+    "Current db.ts still selects the canonical channel database filename through guardWrites. No tracked files were modified by this reviewer, no private-data directory was opened, and no external mutation or production connection occurred."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Restricted recheck of SP-1's cache namespace fix",
-      "Regressions affecting regular OCR cache compatibility, test-key deletion, same-origin course/preferences preservation and regular service-worker availability"
+      "Restricted recheck of SP-1 preservation and isolation/privacy regressions caused by the newly authorised startup module-reuse integration.",
+      "New fetch URL trust, private broker transport, immutable-code versus data retention, worker ownership/lifecycle, DEV-only diagnostics, pinned SDK seam and normal/test channel compatibility."
     ],
-    "wildcard": "No new entropy draw or whole-milestone hunt."
+    "wildcard": "No new entropy draw or whole-milestone hunt. Independently falsified cross-origin request rejection and cleanup ownership with bounded synthetic VM probes."
   },
   "notTested": [
-    "Live GitHub HTTPS publication and its final smoke check remain the orchestrator's work before READY.",
-    "Physical Android installation and update acceptance remain the owner's D3-PHONE-UPDATE action; no physical-device PASS is inferred.",
-    "A deliberately corrupted model was not injected into a real OCR worker. The initialization-error deletion path was traced in the installed SDK, and its corrected key was exercised through the actual cache adapter.",
-    "The transport-based offline proof validates service-worker availability with an unreachable origin; it does not claim to validate browser offline indicators.",
-    "D4 full reset has not yet been implemented or reviewed."
+    "Final complete same-origin regular/test UI isolation and real OCR rerun on the final integration remain the orchestrator's required gate; prior round-2 proof is preserved but does not stand in for that final run.",
+    "Final full verification recorder and exact-source CI are pending. The prototype CI result predates the final safety refinements and is not treated as final integration approval.",
+    "Live GitHub HTTPS publication, deployed identity/headers, installed service-worker and persistence smoke checks remain pending; the test channel is still UNPUBLISHED.",
+    "Physical Android installation/update acceptance belongs to the owner's D3-PHONE-UPDATE action. Neither desktop/mobile emulation nor this PASS is a physical-device PASS.",
+    "The independent VM probe checks broker logic with synthetic objects. Actual browser lifecycle evidence was inspected from the bounded reports rather than rerun concurrently with the root's tests."
   ]
 }

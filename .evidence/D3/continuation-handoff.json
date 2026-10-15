@@ -1,36 +1,33 @@
 {
   "milestone": "D3",
-  "date": "2026-10-14",
-  "state": "IN_PROGRESS",
-  "checkpoint": "4b375b5a61a05bbdf1611ae2a912c8dd8339fd73",
-  "sourceCheckpoint": "926ee8d6c158916b53cb2c19b78970175f65cd63",
+  "date": "2026-10-15",
+  "runtime": "v24.21.0",
+  "branch": "codex/0.4.0",
+  "latestCheckpoint": "7062d4cb914cd40038cb05e5b92523dadf56f808",
+  "status": "IN_PROGRESS",
   "completed": [
-    "Panel fixes and independent field/regression round 7 reports are retained; 18 two-engine cases pass with zero blockers.",
-    "Inclusive local WebKit timing passes with exact 609 rows, 40 injected students and 520 evaluations; all bounds and integrity checks remain intact.",
-    "Focused regular and test-channel production update journeys pass.",
-    "Compiler diagnostics rule out response delivery and the proposed buffered loaders; no production loader or SDK lifecycle change was made.",
-    "Immutable D2 and D3 platform comparisons are preserved in ci-adapter-initialization.json.",
-    "Runner checkpoint verify:quick passes80files/1351tests; required R8 review passes with zero blockers, and all four reviewed file blobs match the committed checkpoint.",
-    "Current recorder migration checks preserve609rows; Chromium upgrade727/reopen503ms and WebKit1606/1020ms pass both unchanged5000ms bounds. The legacy-app repair test passes on its configured retry and remains filed as a T1 defect.",
-    "All five required D3 recorder commands PASS on clean4b375b5source; both update journeys and both-engine storage isolation pass. The sole known flake passes independently without retries and remains filed for T1.",
-    "Restricted R9 helper/coverage review PASS_WITH_FINDINGS zero blockers; Node24.21.0 verify:quick passes80files/1351tests81.87seconds after owned scratch cleanup.",
-    "CorrectedBackreadiness isolatedcommandPASSbothengines; R10zeroBlockers; verify:quick80files/1351testsPASS83.91seconds. Original33acFAILretained."
+    "Mobile copy/share wrapper containment at7062d4c; image renderer/masks/limits unchanged; independent field8 and regression11 zero blockers.",
+    "Pinned startup integration copied from preserved temporary candidate into shared checkout; only immutable compiled module reused, fresh worker/engine/memory/VFS per dedicated open; stock desktop SharedWorker remains.",
+    "Recovery12PASS, real two-tab1PASS and exact ready-after-deadline2PASS, all no retry; startup-integration.json names report hashes and source qualifications.",
+    "Current verify:quick PASS81files/1362tests93.73s and verify:domain PASS; production buildPASS. Prior isolated unchanged mocked-loader testPASS3 classified and fixed; original failed broad quick result retained.",
+    "Required data4/regression12/security3 reviews zero blockers; historical FAIL reports retained and no count reset.",
+    "Required schema-version sync-chaos review PASS_WITH_FINDINGS with zero blockers; independent current-source Chromium/WebKit rollback and desktop stale-writer/late-join proof3PASS0retry."
   ],
   "uncommittedWork": [
-    "Root-owned verified UI fix, durable test/coverage and evidence metadata ready for a descriptive checkpoint.",
-    "Separate unadopted startup candidate in temporary clone; preserve the unrelated unadopted pageSnapshot calibration scratch."
+    "Root-owned reviewed startup integration/source guards/tests/coverage, classified unit readiness fix and related evidence/docs; ready for descriptive source checkpoint.",
+    "Separate temporary diagnostic clone and unadopted pageSnapshot scratch remain preserved; do not copy its renderer into shared checkout."
   ],
   "currentBlocker": {
-    "kind": "CI_FAILURE_UNDER_AUTHORIZED_INVESTIGATION",
-    "reason": "Final production startup safety/integration, restricted reviews, fresh full D3 recorder and exact full green push CI are unfinished. No phone build is READY.",
-    "evidence": "runtime-blocker-assessment.json",
-    "decision": "Authorize a bounded investigation of PowerSync worker/module startup reuse within the chosen engine and persistent database, preserving all timing and integrity requirements."
+    "kind": "FINAL_VERIFICATION_PENDING",
+    "reason": "All required reviews now have zero blockers. Create clean source checkpoint, run all five D3 recorder commands and obtain exact full green push CI; owner input is not needed.",
+    "evidence": "startup-integration.json"
   },
   "remainingAcceptance": [
-    "Finish startup cold telemetry and production safety proof; review and verify the accepted source without weakening bounds",
-    "Restrictedreview of anynewsourcefix, cleancheckpoint and allfiveD3recordercommands",
-    "Completegreen exactpushCI beforepinned0.4.0 publication and bothengine liveHTTPSverification",
-    "owner:updateREADY, milestone:await-owner, theneligibleD4andT1;0.4.1onlyafterexplicitinstallationreport"
+    "Create descriptive clean source checkpoint; push full CI and record npm run evidence -- D3 against that clean source.",
+    "Wait for exact full green source CI before pushing metadata-only evidence checkpoint; obtain its exact green CI.",
+    "Publish0.4.0 only from that verified checkpoint; prove live HTTPS identity/persistence/worker on both engines.",
+    "Use owner:update READY and milestone:await-owner, checkpoint readiness then continue eligible D4 and T1.",
+    "After explicit owner0.4.0 installation report, publish0.4.1 from same pinned source/address; never infer physical PASS."
   ],
   "ownerActions": {
     "queueItem": "D3-PHONE-UPDATE",
@@ -39,75 +36,36 @@
     "siteLiveVerified": false,
     "firstVersion": "0.4.0",
     "secondVersion": "0.4.1",
-    "instruction": "No owner test is ready. After verified first publication, wait for the explicit owner installation report before publishing the second patch from the same source and address.",
+    "instruction": "No owner action is ready; agents finish verification/publication first. Keep0.4.0 fixed pending explicit installation report, then0.4.1 fixed pending results.",
     "physicalPassRecorded": false
   },
   "preservation": {
     "diagnosticBranch": "codex/d3-init-probe-dbc048c3e8",
     "latestDiagnosticCommit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
     "temporaryLocationPointer": "OS temporary directory: cvc-d3-linux-probe-location.json",
-    "warning": "The previous temporary diagnostic clone has missing Git objects. Preserve its artifacts; use the fresh clone named by the pointer. The shared checkout remains healthy.",
-    "preparedFiles": "OS temporary directory: cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md; these drafts are not proof or owner readiness."
+    "warning": "Older temporary clone has missing Git objects; preserve its artifacts, use healthy clone named by pointer. Unadopted pageSnapshot calibration scratch is not production.",
+    "preparedFiles": "OS-temp cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md are drafts, not acceptance proof."
   },
-  "previousToolingBlocker": {
-    "kind": "TOOLING_USAGE_LIMIT",
-    "action": "Formatting documents and npm run verify:quick before the CI checkpoint",
-    "reason": "Automatic approval review could not complete because the account usage limit was reached. The command was not executed; the rejection was not an unsafe-action determination.",
-    "restriction": "Do not bypass the approval review. Resume verification when it is available."
-  },
-  "resumedAt": "2026-10-15",
-  "currentWork": "UI containment is verified and independently reviewed with zero blockers. Production startup core and new recovery/multitab specs remain unadopted in the temporary clone, requiring final cleanup and safety verification.",
-  "applicationCheckpoint": "73688ef8e16d967412a88a76c89bcb86ac1bb18a",
   "ci": {
     "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
     "run": 38532131686,
     "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38532131686",
     "status": "FAIL",
     "linux": "PASS",
-    "macos": "FAIL"
+    "macos": "FAIL",
+    "currentCheckpoint": "Not yet pushed"
   },
-  "latestCheckpoint": "6c305df",
   "diagnostic": {
-    "run": 38538939134,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38538939134",
-    "diagnosticCommit": "3bbb0eef49486aacd93c29127b9f10499aa00ec4",
-    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
-    "runners": ["macos-15", "macos-15-intel"],
-    "modes": ["isolated", "prefix"],
-    "reference": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
-    "purpose": "Capture original image/screen pairs and classify nativeinit architecture/preceding-test effects, with originalassertions and no production workaround",
-    "acceptance": false
-  },
-  "targetedDiagnostic": {
-    "run": 38543947337,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38543947337",
-    "diagnosticCommit": "9ea353e7e772d8c835f6636c3fdb147f16e7f3f4",
-    "immutableSource": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
-    "acceptance": false,
-    "status": "FAIL",
-    "cases": [
-      "Complete original D1 prefix with fresh browser process for largest case",
-      "Original double-name image case: source control, body smoothing auto, connected canvas"
-    ],
-    "preflight": {
-      "node": "v24.21.0",
-      "applicationTypecheck": "PASS",
-      "nodeTypecheck": "PASS",
-      "largestTestBodyAST": "UNCHANGED"
-    },
-    "limits": "Original timing, image, data-integrity and layout assertions remain unchanged. No production workaround or owner PASS is inferred.",
-    "resultReference": "ci-macos-comparison.json#targetedCauseProbe"
-  },
-  "mayContinue": [
-    "Bounded owner-authorised startup integration investigation and image containment verification/reviews; D3 remains IN_PROGRESS.",
-    "D4 and T1 implementation must wait for verified D3 AWAITING_OWNER; phone pending alone will then not stop them."
-  ],
-  "checkpointNote": "f09c9dc preserves the complete diagnostic and architecture assessment. A following metadata correction keeps the backlog within its documentation budget. Neither checkpoint claims green CI or verified phone readiness.",
-  "correctedRecorderDiagnostic": {
+    "source": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
     "run": 38632601491,
-    "commit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
     "status": "PASS",
     "acceptance": false,
-    "resultReference": "ci-macos-comparison.json#correctedRecorderProbe"
-  }
+    "reference": "ci-macos-comparison.json#correctedRecorderProbe"
+  },
+  "mayContinue": [
+    "Finish D3 agent review/verification/CI/publication now.",
+    "D4/T1 implementation requires verified D3 AWAITING_OWNER; phone pending alone will then not stop eligible work.",
+    "UG3 waits every required owner acceptance."
+  ],
+  "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS."
 }

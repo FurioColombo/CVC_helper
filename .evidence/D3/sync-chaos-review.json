@@ -1,0 +1,67 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "D3",
+  "round": 1,
+  "commit": "7062d4cb914cd40038cb05e5b92523dadf56f808 plus the working-tree blobs listed in reviewedBlobs",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q4",
+      "title": "Carried limitation: unused raw and read APIs are outside the in-lock write guard",
+      "evidence": "src/persistence/writeGuard.ts:95-102 checks compatibility before executeRaw obtains its lease; get/getAll/getOptional can accept mutating SQL. This is the same residual recorded by data-integrity round 3 and round 4 and docs/working/BACKLOG.md. No mutating application caller is added by the startup integration.",
+      "reproduction": "Source inspection of the guarded database and its callers; the normal execute, executeBatch, writeTransaction and writeLock paths re-read the version under their own write lock. No new bypass reproduction is claimed.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1; existing DI-Q5 / DI-R2-Q4"
+    }
+  ],
+  "evidenceInspected": [
+    "Read AGENTS.md, docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-sync-chaos.md, docs/LOCAL_DEVELOPMENT.md, the repository PowerSync skill and JS/React guidance. Runtime Node v24.21.0.",
+    "Startup checks: git status and latest checkpoint inspected; owner:list shows D3-PHONE-UPDATE NEEDS_SETUP and milestone:status shows D3 IN_PROGRESS. ci:status could not fetch and covers only committed HEAD, so it was not counted as green CI.",
+    "04_IMPLEMENTATION_PLAN.md current state, D3 success predicate and adversarial checklist; 01_PRODUCT_SPEC.md updates/read-only behavior; 02_MVP_SCOPE.md 0.4.0 local-only boundary; 03_TECHNICAL_DECISIONS.md §3/§3.1 including the owner-authorized startup investigation.",
+    "No prior D3 sync-chaos report exists. Read the earlier data-integrity, regression, field-UX and security/privacy verdicts and blocker dispositions. Their original FAIL reports and counts remain intact. DI-1/DI-2/DI-3 fixes remain in the same guarded claim/write implementation; this role does not reset another role’s rounds.",
+    "src/domain/compatibility.ts and tests: previous-minor minimum writer, patch compatibility, monotonically retained newest/minimum writer and damaged-record handling. src/persistence/dataVersion.ts: claim re-reads within the transaction and cannot lower a newer claim. src/persistence/migrations.ts: check/claim precede repairs and migrations; a refused older app repairs nothing.",
+    "src/persistence/writeGuard.ts: the normal transaction/lock/execute/batch routes check under the same write lock before the callback. The cached prepared result cannot authorize later stale writes because each write re-checks the record; read-only notification is retained. The prior raw/read API residual is carried above.",
+    "Current schema.ts and startup files, plus pinned SDK WASQLiteOpenFactory/client/VFS paths: compiledModules caches only a same-origin URL-keyed WebAssembly.Module promise; each dedicated worker creates a new WASM instance and stock factory/VFS state. Failed module promises are evicted. Dedicated cleanup terminates only the scope’s owned workers; the unchanged stock SharedWorker entry/name is returned without ownership registration. Successful init releases its deadline and error listeners.",
+    "Independently ran the unchanged existing interruption and multitab tests on the current shared source with retries disabled, a fresh OS-assigned local server, and a review-only output config. test-results/d3-sync-chaos-review/report.json: 3 expected, 0 skipped, 0 unexpected, 0 flaky, no report errors; every result retry 0. Report SHA-256 0a7e191bb58a6e8ff7a1071a8fb970481c7fb487d8019ac9354aa05da7289db5.",
+    "Pixel Chromium and iPhone WebKit abrupt held-write interruption both passed. The actual transaction writes a probe then remains pending; its page closes before commit. A fresh page sees no uncommitted note, 609 equal rows on upgrade/reopen, 40 injected students, 520 evaluations, no stored-row issues, an independent-write marker, and unblocked IndexedDB deletion/reset. Observed recovery upgrade/reopen times were 835/390 ms and 2028/1039 ms respectively; these are recovery observations, not final full-suite timing acceptance.",
+    "Desktop Chromium stock SharedWorker test independently passed: separate same-origin pages use the SDK worker URL/name, no dedicated broker diagnostics occur, closing one connection/page leaves the survivor able to read/write, a later page claims a higher minimum writer, the existing older page refuses its next write, and a subsequently joining older page reads but neither repairs null metadata nor writes. All database connections close and IndexedDB deletion succeeds.",
+    "The first review-only config attempt failed before any test ran because its nested location changed the server working directory. test-results/d3-sync-chaos-review/setup-failure-report.json is preserved. Setting only the scratch config webServer.cwd to the repository root resolved that setup error; application source, assertions, timeouts and retries were unchanged.",
+    "Inspected current recovery tests for blocked WASM fetch, compile failure without automatic retry, lost broker port, worker crash, and structured-clone fallback excluded from cold evidence. Inspected test-results/d3-ready-deadline/report.json: 2 expected, 0 skipped/unexpected/flaky; the ready database remains writable after crossing the real 30-second startup deadline.",
+    "Root reported final verify:quick PASS (81 files, 1362 tests, 93.73 seconds), verify:domain PASS including documentation/controller checks, pin guards/typecheck and shared production build PASS. This report distinguishes those orchestrator results from its independent 3-case browser run.",
+    "No tracked files were edited and no backend, private roster data or external deployment was accessed. Separate scratch config/artifacts are under test-results/d3-sync-chaos-review; no review browser remains running."
+  ],
+  "anglesTried": {
+    "seed": 831672488,
+    "lenses": [
+      "Lens 9 (zero-based index 8): a third device joining mid-week with a full download, adapted to a new same-origin local page joining the stored course after a newer claim. No download/server exists in 0.4.0.",
+      "Lens 5 (zero-based index 4): app killed or suspended mid-upload, adapted to killing a page while a real local write transaction is pending and verifying rollback/persistence on a fresh page."
+    ],
+    "wildcard": "Per-database startup cleanup must not own or terminate the stock cross-page SharedWorker, retain a rejected module cache entry, or authorize an already-open stale writer. Attacked through source ownership inspection, the independent close-one-page/survive/raise/refuse/late-join scenario, and the existing failure/reopen/deadline evidence."
+  },
+  "reviewedBlobs": {
+    "src/domain/compatibility.ts": "643bcbafe27ede4c1b457ab6698deebf1541aac1",
+    "src/persistence/dataVersion.ts": "80074f936bfecce634869c4e13a511a76b6df473",
+    "src/persistence/writeGuard.ts": "51d440c0c98ebeffbc002e26a1eb72225ba3c4d8",
+    "src/persistence/migrations.ts": "6b9653f9ccc5c147ece4ed11c0f78c0e0394fc04",
+    "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
+    "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
+    "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
+    "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
+    "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
+    "vite.config.ts": "77c12a1b656982fde1de5444be83a462703e7936",
+    "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
+    "tests/e2e/d3-startup-multitab.spec.ts": "9bc1d6a491e508343da7962c906f09beb6634e65",
+    "tests/e2e/d3-startup-recovery.spec.ts": "e0b4eeca5c6309626dc46458c435f10b48656d91",
+    "tests/e2e/d3-read-only.spec.ts": "9f5fb0f1cbdd9a04d794d552b9f86030e031e3ff",
+    "src/test/d1MigrationHarness.ts": "de257c68855ae5229a88e6e98a51d51f6620b275"
+  },
+  "notTested": [
+    "0.4.0 has no sync server, auth, upload queue or cross-device replication. Offline conflict convergence, server invariants, sign-out, queued-upload order, clock-skew replication and two separate physical phones are not applicable and are not claimed. Separate browser contexts would have independent local storage, so the applicable local-course interleaving uses distinct pages in one browser context.",
+    "The independent run exercises persistence/guard boundaries, not visible save controls; the existing d3-read-only UI journeys were inspected but not rerun by this reviewer. Final focused verification remains required.",
+    "No new independent concurrent different-filename failure injection or all-engine fault-matrix run was added; ownership was inspected and the existing recovery scenarios/evidence were read. The bounded independent run was deliberately limited to the drawn interruption/late-join cases.",
+    "Final five-command D3 recorder, strict-cold/full regression replay and exact checkpoint push CI are outstanding orchestrator acceptance gates. The earlier ca889d3 diagnostic green is not treated as final-source green CI.",
+    "Built-PWA update and same-origin regular/test isolation verification, permanent live HTTPS publication, owner READY transition, patch-two coordination after an installation report and physical Android acceptance remain separate required gates. This report grants no device PASS, milestone completion or release acceptance."
+  ]
+}

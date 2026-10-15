@@ -1,0 +1,139 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-15",
+  "runtime": "v24.21.0",
+  "status": "FOCUSED_PROOFS_PASS_FINAL_GATES_PENDING",
+  "source": {
+    "baseline": "7062d4cb914cd40038cb05e5b92523dadf56f808",
+    "workingIntegration": true,
+    "productionStorage": "PowerSync 2.2.0 / wa-sqlite 2.0.3 / persistent IDBBatchAtomicVFS",
+    "unchanged": "Schema tables/columns, compatibility/write guard, D1 609-row fixture, both construction-inclusive 5000ms bounds, image renderer/masks/limits, normal SDK close and stock SharedWorker entry/name."
+  },
+  "reports": {
+    "recovery": {
+      "sha256": "89453f585f22ac66c7acad8cfd42bc4cd9a047fd303b2f59d33eae65c1a23dc0",
+      "stats": {
+        "startTime": "2026-10-15T06:31:22.844Z",
+        "duration": 206923.835,
+        "expected": 12,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "retries": 0,
+      "location": "OS-temp healthy diagnostic clone: test-results/startup-safety/recovery-report.json",
+      "sourceQualification": "Same broker/schema/worker/registration/harness and config; final timeout const, Error.cause and formatting refinements reviewed separately. The seventh ready-deadline case was added after this report.",
+      "cases": [
+        "Close page during held actual WASM request; intact reopen",
+        "Kill page with an uncommitted write; rollback and intact reopen",
+        "Invalid compiled module; one failed attempt and explicit recovery",
+        "DataCloneError stock fallback works but is rejected as cold timing proof",
+        "Lost private port bounded failure and explicit recovery",
+        "Actual uncaught dedicated-worker error and explicit recovery"
+      ],
+      "invariants": "609 identical rows, 40 injected students, 520 evaluations, zero stored-row issues; independent write/read/close/reopen/delete/reset marker checks."
+    },
+    "multitab": {
+      "sha256": "2d0d350ea3ae18cb9fc68d52ea1cfaf4e6510c60801fb311658b9c2c000b3b5a",
+      "stats": {
+        "startTime": "2026-10-15T06:35:46.876Z",
+        "duration": 6927.001,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "retries": 0,
+      "location": "OS-temp healthy diagnostic clone: test-results/startup-safety/multitab-report.json",
+      "cases": [
+        "Actual stock desktop SharedWorker identity",
+        "One tab closing preserves survivor writes",
+        "Newer minimum writer refuses old save and fresh old repair",
+        "All pages close and IndexedDB deletion is unblocked"
+      ]
+    },
+    "readyDeadline": {
+      "sha256": "486320943ed03f721b38179de8527b1c7658ce31f704cb1795216eab75b68212",
+      "stats": {
+        "startTime": "2026-10-15T06:45:18.890Z",
+        "duration": 90636.662,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "retries": 0,
+      "location": "Ignored test-results/d3-ready-deadline/report.json",
+      "sourceQualification": "Exact shared final integration source",
+      "cases": [
+        "Two init callers share one instance",
+        "Wait31s after ready, crossing startup30s deadline, then successful write/read/close/reopen/delete"
+      ]
+    },
+    "independentFinalInterleaving": {
+      "location": "Ignored test-results/d3-sync-chaos-review/report.json",
+      "sha256": "0a7e191bb58a6e8ff7a1071a8fb970481c7fb487d8019ac9354aa05da7289db5",
+      "stats": {
+        "startTime": "2026-10-15T06:57:30.465Z",
+        "duration": 80137.63200000001,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "retries": 0,
+      "sourceQualification": "Independent exact shared current-source run of Chromium/WebKit held-transaction rollback and desktop late-join/guard scenario."
+    }
+  },
+  "failureEvidence": {
+    "binaryRoute": "OS-temp cvc-d3-recovery-broad-route-failure.json: draft route intercepted Vite URL wrapper before actual module request; fixed binary-only predicate and cache-miss/compile-start precondition. Failed attempts retained.",
+    "unit": "evaluation-history-readiness.json: unrelated mocked-loader race classified and corrected with existing named controls; no timeout or retry increase."
+  },
+  "build": {
+    "command": "npm run build",
+    "status": "PASS",
+    "diagnostics": "Production event producers stripped; security round3 records asset hashes."
+  },
+  "coldTiming": {
+    "reference": "ci-macos-comparison.json#correctedRecorderProbe",
+    "acceptance": false,
+    "prototypeCommit": "ca889d3cca4618fe1cf39a9c84e7abb7c94c19f0",
+    "strictCases": 4,
+    "originalMigrationReadOnlyCases": 22,
+    "webkitMs": [1256, 427],
+    "chromiumMs": [553, 245],
+    "qualification": "Prototype diagnostic only. Final-source recorder and exact full push CI remain required."
+  },
+  "reviews": [
+    "data-integrity-review-round-4.json",
+    "security-privacy-review-round-3.json",
+    "regression-review-round-12.json",
+    "sync-chaos-review-round-1.json"
+  ],
+  "remaining": [
+    "Clean source checkpoint and all five D3 recorder commands",
+    "Exact full green push CI",
+    "Pin and publish0.4.0, live HTTPS smoke, owner:updateREADY, milestone:await-owner",
+    "Publish0.4.1 from same source only after explicit owner installation report"
+  ],
+  "physicalPass": false,
+  "quickVerification": {
+    "command": "npm run verify:quick",
+    "status": "PASS",
+    "runtime": "v24.21.0",
+    "files": 81,
+    "tests": 1362,
+    "durationSeconds": 93.73
+  },
+  "domainVerification": {
+    "command": "npm run verify:domain",
+    "status": "PASS",
+    "docs": 143
+  },
+  "d1SemanticProof": {
+    "review": "regression-review-round-12.json",
+    "wholeSpec": "UNCHANGED except fixture import and outer isolatedTest identifier",
+    "largeCallbackSha256": "eb3ae347f6da6be9bddf176eb94fb40429c047b2b6947e0619040b8c496a3065",
+    "fixtureGeneration": "UNCHANGED"
+  }
+}

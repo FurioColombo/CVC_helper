@@ -9,6 +9,9 @@ import { VitePWA } from "vite-plugin-pwa"
 
 import { getAppChannelConfig, parseAppChannel } from "./src/appChannel"
 import { encodeVersion, parseVersion } from "./src/domain/compatibility"
+import { assertPinnedEngineSources } from "./vite.engine-startup"
+
+assertPinnedEngineSources(import.meta.dirname)
 
 const LOCAL_OCR_ASSETS = {
   "/ocr/worker.min.js": "node_modules/tesseract.js/dist/worker.min.js",
@@ -244,8 +247,17 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(import.meta.dirname, "src") },
+      {
+        find: /^@journeyapps\/wa-sqlite\/dist\/wa-sqlite-async\.mjs$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          "src/persistence/waSqliteFactory.ts",
+        ),
+      },
+    ],
   },
+  optimizeDeps: { exclude: ["@powersync/web", "@journeyapps/wa-sqlite"] },
+  worker: { format: "es" },
 })

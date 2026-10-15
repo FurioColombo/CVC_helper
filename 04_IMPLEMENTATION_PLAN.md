@@ -1,6 +1,6 @@
 # Implementation plan — 0.4.0
 
-Updated 2026-10-14. Read **Where this cycle stands**, then only the active
+Updated 2026-10-15. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.3.0 plan
 is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -28,7 +28,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | H1 | Complete. Documents in the `docs/DOCS_SYSTEM.md` layout; unit tests 287 s to 71 s; browser suite not shown faster (target missed, accepted by the owner); retrospective not delivered. See `.evidence/H1/`. |
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
-| D3 | In progress: mobile copy/share containment passes unchanged image checks and restricted review. Cold module-reuse diagnostics pass both timing limits with complete data. Production startup safety, final reviews/verification, exact green CI and test publication remain pending. See `.evidence/D3/summary-status-containment.json`, `.evidence/D3/ci-macos-comparison.json` and `docs/OWNER_TODO.md`. |
+| D3 | In progress: copy/share containment is verified. The startup integration passes interruption, rollback, recovery, two-tab and ready-deadline checks. Final reviews, recorded verification, exact green CI and test publication remain required. See `.evidence/D3/startup-integration.json`, `.evidence/D3/summary-status-containment.json` and `docs/OWNER_TODO.md`. |
 | D4, T1, UG3 | Pending. D4 and T1 may continue past explicitly permitted AWAITING_OWNER predecessors; UG3 waits for all required owner acceptance. |
 
 ## Execution order
@@ -97,7 +97,7 @@ behaviour.
 
 **Evidence:** verification, compatibility table tests, browser evidence, the
 owner's Android check (update without reinstall), data-integrity,
-regression-hunter and field-UX reviews, test isolation proof and a security/privacy review of test publication.
+regression-hunter, field-UX and schema-version sync-chaos reviews, test isolation proof and a security/privacy review of test publication.
 
 ## D4 — Export, import, persistent storage and full reset
 

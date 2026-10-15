@@ -46,7 +46,7 @@ describe("StudentEvaluationHistory", () => {
       name: "Storico valutazioni",
     })
     expect(
-      within(history).getByRole("button", {
+      await within(history).findByRole("button", {
         name: "Apri Valutazioni di Sabato PM; valutazione +",
       }),
     ).toBeVisible()
@@ -101,7 +101,7 @@ describe("StudentEvaluationHistory", () => {
       name: "Storico valutazioni",
     })
     expect(
-      within(history).getByRole("heading", { name: "Mario Rossi" }),
+      await within(history).findByRole("heading", { name: "Mario Rossi" }),
     ).toBeVisible()
     const chronology = within(history).getByLabelText("Cronologia per giorno")
     expect(within(chronology).getAllByRole("region")).toHaveLength(7)
@@ -147,7 +147,7 @@ describe("StudentEvaluationHistory", () => {
     const history = await screen.findByRole("region", {
       name: "Storico valutazioni",
     })
-    expect(within(history).getByRole("alert")).toHaveTextContent(
+    expect(await within(history).findByRole("alert")).toHaveTextContent(
       "Valutazioni non disponibili.",
     )
     getHistory.mockResolvedValueOnce([])

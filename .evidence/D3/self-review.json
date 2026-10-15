@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review (orchestrator)",
   "milestone": "D3",
-  "commit": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
+  "commit": "7062d4cb914cd40038cb05e5b92523dadf56f808 plus reviewed working startup source",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -41,7 +41,9 @@
     "Restricted regression round9 PASS_WITH_FINDINGS zero blockers on exact helperbf618719 and additive focusmanifest11621c46. Controlled native-share and original WebKit case assertions pass16.8/19.0seconds, but both interrupted shutdowns exit1; full recorder remains required.",
     "Clean33ac focused browser commandPASS:105passed47skipped0flakes, managed server shutdown0.38seconds, no manual cleanup or workaround. Regular0.3.0→0.3.1 offers0.19/0.33seconds; test0.4.0→0.4.1 offers0.19/0.34seconds. Both preserve notes.",
     "Clean33ac recorder fails finalWebKitisolation navigation: immediate studentsBack query can skip secondBack after profile asynchronouspopstate. Failure preserved; adding existing-timeout visiblecontrol wait retains both UIclicks and all isolation assertions. Corrected isolatedcommandPASS bothengines; restrictedR10zeroBlockers.",
-    "Mobile copy/share containment: four class strings only, original renderer/masks/limits unchanged; Mac original image checks 8 PASS/1 original skip, final three-profile long-message/native-control audit PASS with no retries. Independent field round8 and regression round11 have zero blockers."
+    "Mobile copy/share containment: four class strings only, original renderer/masks/limits unchanged; Mac original image checks 8 PASS/1 original skip, final three-profile long-message/native-control audit PASS with no retries. Independent field round8 and regression round11 have zero blockers.",
+    "startup-integration.json: production safety recovery12PASS, actual SharedWorker1PASS, exact shared ready-deadline2PASS, no retries. Required data round4 and security round3 have zero blockers. Source pins and build pass; final recorder/CI remain pending.",
+    "Required schema-version sync-chaos round1 PASS_WITH_FINDINGS, zero blockers; independent exact current-source rollback and desktop late-join/stale-writer3PASS0retry. Only already filed DI-R2-Q4 retained."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -161,6 +163,14 @@
     {
       "id": "Isolation Back readiness at33ac7c9",
       "disposition": "Harness fix verified and reviewed: await intermediate AllieviBack before originalsecondclick. Allregularcourse,prefs,student,OCRkeybytes,worker/cache/offline negativecontrols remain intact. Newsource fullrecord and exactCI required."
+    },
+    {
+      "id": "Authorized startup integration",
+      "disposition": "Bounded private pinned seam; only immutable module cached. Fresh dedicated worker/instance/memory/VFS, stock desktop SharedWorker. Prototype cold timing passes, production recovery proofs pass. Final source full verification/CI and channel isolation still gate adoption."
+    },
+    {
+      "id": "Unit history-loader readiness race",
+      "disposition": "Isolated unchanged spec passes; exact loaded content is now awaited at the first existing assertion in each asynchronous test. No application change, assertion loss, timeout or retry increase; evaluation-history-readiness.json preserves classification."
     }
   ],
   "notTested": [
@@ -170,9 +180,10 @@
     "D4 implementation and future sync remain outside the current source."
   ],
   "workingTreeDelta": [
-    "tests/e2e/summary-image-checks.ts: precise message/action assertion",
-    "manifest: three additional focused consumers",
-    "CI failure, backlog, review and handoff metadata"
+    "Dedicated-worker immutable WASM code reuse with fresh instances, per-scope startup failure cleanup and unchanged stock SharedWorker path",
+    "Build-time private SDK source guards, strict cold/lifecycle/recovery/two-tab specs, additive mobile and desktop coverage",
+    "StudentEvaluationHistory mocked-load readiness waits preserve every original assertion; unchanged isolated test PASS3",
+    "Evidence, review, plan and architecture updates"
   ],
   "workflowBlob": "c5fd6a4cd528c2ac4c2423d4c279918e817a2df0",
   "reviewedWorkingTree": {
@@ -189,12 +200,14 @@
     }
   ],
   "currentSourceReview": {
-    "scope": "SummaryImageButton containment and durable browser coverage",
-    "reference": "summary-status-containment.json",
+    "scope": "Production startup integration and fault evidence",
+    "reference": "startup-integration.json",
     "reviews": [
-      "field-ux-review-round-8.json",
-      "regression-review-round-11.json"
+      "data-integrity-review-round-4.json",
+      "security-privacy-review-round-3.json",
+      "regression-review-round-12.json",
+      "sync-chaos-review-round-1.json"
     ],
-    "remaining": "Startup production candidate remains outside the shared source. Final full recorder and exact full green push CI remain required."
+    "remaining": "All five final clean-source recorder commands, exact full green push CI, final isolation/update and live publication."
   }
 }

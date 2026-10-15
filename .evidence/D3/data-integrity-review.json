@@ -2,8 +2,8 @@
   "reviewerRole": "data-integrity",
   "persona": "L'Archivista",
   "milestone": "D3",
-  "round": 3,
-  "commit": "efddf58984ad54898a3a091953c29acbd2edac73",
+  "round": 4,
+  "commit": "7062d4cb914cd40038cb05e5b92523dadf56f808 plus the working-tree blobs listed in reviewedBlobs",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
@@ -11,69 +11,83 @@
     {
       "id": "DI-R2-Q4",
       "title": "Unused raw and read APIs remain outside the in-lock write guard",
-      "evidence": "src/persistence/writeGuard.ts:94-100 reads compatibility before executeRaw acquires its write lease. get/getAll/getOptional still accept arbitrary SQL. The application has no mutating calls through these APIs; src/persistence/writeStatements.test.ts checks statement shapes rather than the execution method. This existing finding is recorded in docs/working/BACKLOG.md:222.",
-      "reproduction": "Code inspection of the existing escape paths. The real-engine scratch probe confirms executeRaw now refuses a previously unmarked older instance after a newer claim. Its residual race and mutating SQL through read APIs remain the previously reported limitation.",
-      "specRef": "03_TECHNICAL_DECISIONS.md §3.1; prior findings DI-Q5 and DI-R2-Q4"
+      "evidence": "src/persistence/writeGuard.ts:94-100 still checks compatibility before executeRaw obtains its lease; get/getAll/getOptional accept arbitrary SQL. These APIs have no mutating application callers. The guard is unchanged from passing round 3; the limitation remains in docs/working/BACKLOG.md:284.",
+      "reproduction": "Restricted source comparison from efddf589 through 7062d4c and the working tree. The startup seam does not add a raw/read mutation caller or alter the existing in-lock guarded paths.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1; prior DI-Q5 and DI-R2-Q4"
     }
   ],
-  "roundTwoRecheck": [
+  "priorRoundDisposition": [
+    {
+      "id": "DI-1 / DI-2 / DI-3",
+      "status": "prior fixes retained",
+      "evidence": "writeGuard.ts, dataVersion.ts and migrations.ts are unchanged from the passing round-3 implementation. The new real-two-page desktop SharedWorker test passes: a newer minimum writer refuses an already-open older page's save and a fresh older page's repair, while ordinary writes survive another page closing."
+    },
     {
       "id": "DI-R2-1",
-      "status": "fixed",
-      "evidence": "VACUUM now executes through guarded writeLock without a transaction. The focused compaction test passed on Chromium and WebKit. Visible UI erase probes removed every IndexedDB block containing the synthetic marker, left freelist_count at zero and remained erased after reload. The final bounded WebKit replay passed on the frozen reviewed checkpoint."
+      "status": "prior fix retained",
+      "evidence": "courses.ts still runs VACUUM through guarded writeLock outside a transaction; the startup diff changes neither erase nor guard semantics. The round-3 Chromium/WebKit compaction and persisted-marker evidence remains preserved. No new compaction run was claimed in this follow-up."
     },
     {
-      "id": "DI-R2-2",
-      "status": "documented",
-      "evidence": "03_TECHNICAL_DECISIONS.md §3.1 now requires the sync release to retain local-only tables under other view names until migration copies their rows, then remove them in a later release."
-    },
-    {
-      "id": "DI-R2-Q1",
-      "status": "fixed",
-      "evidence": "The contract documents that a failed open retains its claim. Unit coverage checks the failure ordering. Real-engine probes on both engines preserved version 0.7.0/minimum writer 0.6.0 after a throwing migration, wrote no migration ledger entry and refused the next 0.5.0 open's save."
-    },
-    {
-      "id": "DI-R2-Q2",
-      "status": "fixed",
-      "evidence": "The build validator calls parseVersion and encodeVersion. On the frozen checkpoint, regular 0.3.7 and test 0.4.7 were accepted; patch 1000, prerelease strings and different minor versions were refused for both channels."
-    },
-    {
-      "id": "DI-R2-Q3",
-      "status": "documented",
-      "evidence": "03_TECHNICAL_DECISIONS.md §3.1 records that future read-only downloading must allow PowerSync's own subscription writes."
-    },
-    {
-      "id": "DI-R2-Q4",
-      "status": "partly fixed; residual retained as QoL",
-      "evidence": "executeRaw now re-reads compatibility. The remaining unused API escape paths retain the existing finding ID and backlog entry."
+      "id": "DI-R2-2 / DI-R2-Q1 / DI-R2-Q2 / DI-R2-Q3",
+      "status": "prior dispositions retained",
+      "evidence": "The compatibility contract, claim-first failure behavior and build-version validator are unchanged. No schema table or column, data-version policy, VFS selection or engine package was replaced."
     }
   ],
   "evidenceInspected": [
-    "AGENTS.md, reviewer-data-integrity.md, REVIEW_PROTOCOL.md, LOCAL_DEVELOPMENT.md and the repository PowerSync skill and relevant SDK guidance.",
-    "04_IMPLEMENTATION_PLAN.md D3 success predicate and checklist; 01_PRODUCT_SPEC.md §2; relevant scope boundaries; 03_TECHNICAL_DECISIONS.md §3.1.",
-    ".evidence/D3/data-integrity-review-round-1.json and data-integrity-review-round-2.json, preserving blocker DI-R2-1.",
-    "Fix diff 57430a5..0676730, then scoped comparison through efddf589: guard, migration and data-version logic unchanged; courses.ts changes only the preference prefix configuration after the reviewed compaction fix.",
-    "Node v24.21.0. Focused Vitest run: courses, writeGuard, migrations, dataVersion and compatibility; five files and 66 tests passed.",
-    "npm run verify:e2e -- tests/e2e/d3-read-only.spec.ts: six tests passed across Chromium and WebKit, with no retries.",
-    "Scratch probes under test-results/d3-di-round3-review: Chromium visible erase and marker removal; Chromium and WebKit lock retention across a yield, later VACUUM/raw refusal and failed-claim persistence.",
-    "The lock probe stored minimum writer 4000 before the waiting newer claim; subsequent guarded VACUUM and raw execution returned ReadOnlyDataError and wrote no raw marker.",
-    "Final frozen-checkpoint WebKit UI erase replay: one test passed, exit 0. The visible confirmation flow removed synthetic marker blocks, left zero free pages and remained erased after reload.",
-    "Frozen-checkpoint version validation probes for regular and test channels; clean working tree and exact HEAD confirmed before the final replay."
+    "AGENTS.md; docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-data-integrity.md; docs/LOCAL_DEVELOPMENT.md; the repository PowerSync skill and its JS/React guidance.",
+    "04_IMPLEMENTATION_PLAN.md Where this cycle stands and D3 success predicate/checklist; 03_TECHNICAL_DECISIONS.md §3/§3.1, including the owner-authorized startup investigation; 01_PRODUCT_SPEC.md §2 read-only behavior and relevant 0.4.0 scope boundaries.",
+    ".evidence/D3/data-integrity-review-round-1.json and round-2.json retain FAIL. Round-3.json and data-integrity-review.json retain PASS_WITH_FINDINGS. No round count reset or new entropy draw.",
+    "Startup working diff against 7062d4c: schema.ts, engineModuleBroker.ts, engineModuleWorker.ts, engineWorkerRegistration.ts, waSqliteFactory.ts, vite.config.ts and vite.engine-startup.ts. The page cache contains only Promise<WebAssembly.Module> by exact same-origin resolved asset URL. Each dedicated open constructs a new Worker and invokes the stock factory with a fresh WebAssembly.Instance; no database connection, VFS object, linear memory or course row is cached.",
+    "Pinned SDK worker/client, option resolution, WASQLiteOpenFactory, VFS loader, MultiDatabaseServer and BasePowerSyncDatabase readiness/close paths. SharedWorker retains the pinned SDK entry and shared-powersync-<dbFilename> name; failure cleanup owns only dedicated workers in its scope. Successful init clears the startup deadline and removes worker error listeners; broker ports drain ordered events/release independently.",
+    "Node v24.21.0. Independently executed assertPinnedEngineSources against the current installation: PowerSync 2.2.0, wa-sqlite 2.0.3 and all seven source/WASM SHA-256 guards passed, exit 0.",
+    "D1 harness refactor and cold-browser fixture: the 609-row/40-student/520-evaluation expectations, row equality/integrity checks and both construction-inclusive five-second bounds remain. The new strict cold positive checks cache miss/compile/fresh-worker identity; the real same-page prewarm negative rejects a cache hit as cold evidence. Layout/renderer code is unchanged from 7062d4c.",
+    "Normal-suite and D3 manifest coverage includes d3-engine-startup and d3-startup-recovery on mobile Chromium/WebKit, plus a dedicated desktop SharedWorker project. Source-guard tests exercise seven changed files, both wrong versions and a missing file.",
+    "OS-temp scratchpad cvc-d3-linux-probe-21fc1d02f08e4e3580e967c931d037fe/test-results/startup-safety/recovery-report.json: 12 passed, 0 unexpected, 0 flaky, all retry 0, on mobile Chromium and WebKit. Inspected blocked-fetch cache-miss/compile-start evidence, abrupt held-write rollback, compile failure with one request before explicit reopen, structured-clone fallback excluded from cold evidence, lost-port timeout and worker-crash rejection.",
+    "The recovery annotations retain 609 identical rows, 40 injected students, 520 injected evaluations and zero stored-row issues. The held uncommitted note is absent after reopening. Independent write/reopen sees its marker; IDB deletion is unblocked; reset has zero old course rows and retains only the new marker through another open.",
+    "The same scratchpad's startup-safety/multitab-report.json: 1 passed, retry 0, desktop Chromium with actual separate pages. Inspected its SharedWorker entry/name checks, one page closing, survivor read/write, newer minimum-writer claim, older save refusal, older open-time repair refusal, orderly close and unblocked IDB deletion.",
+    "Scratch evidence uses the normal Vite integration, with only an explicit filesystem allow-list for the shared node_modules. Schema, broker, worker entry, registration, harness, Vite config, strict cold spec and multitab spec match current bytes. Inspected small differences: factory timeout variable initialization, Error.cause, test formatting and fixture callback rename. The newly added ready-after-deadline case is absent from the 12-test recovery report.",
+    "OS-temp cvc-d3-recovery-broad-route-failure.json is preserved: four draft failures occurred before actual broker compilation events. The corrected route matches the binary only, excludes Vite import/url wrappers and asserts actual cache miss plus compile start before fault injection. It is not treated as a passing run.",
+    "git status and latest checkpoint inspected; ci:status was unavailable because fetch failed, and covers committed HEAD only. D3 remains IN_PROGRESS and D3-PHONE-UPDATE remains NEEDS_SETUP. This reviewer made no tracked changes and ran no browser suite into shared normal output paths.",
+    "Current shared test-results/e2e-report.json inspected: ready-after-startup-deadline test passed on Pixel Chromium (38,009 ms) and iPhone WebKit (39,421 ms), retry 0 for each, 2 expected and zero unexpected/flaky/errors. The test crosses the real 30-second deadline, writes/reads marker 43, closes, then reopens and deletes successfully. Relevant reviewed blobs remain unchanged.",
+    "Orchestrator-reported shared checks: production build passed; source-guard unit tests 11 passed; lint, formatting and typecheck passed. verify:quick had 1,361/1,362 unit tests pass, with an unchanged StudentEvaluationHistory mocked-loader test under separate classification. This is not reported as a green full verification."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Round 3 restricted to the previous blocker, its fix diff and resulting regressions.",
-      "DI-R2-1 compaction through the guarded lock, persisted marker removal and reload.",
-      "Related guard lease retention, failed-open claims and version override validation."
+      "Round 4 restricted follow-up after passing round 3: new startup integration diff, directly resulting regressions and retention of prior blocker fixes.",
+      "Compiled code reuse versus fresh database engine/worker/memory ownership; exact asset key and unchanged storage/schema.",
+      "Initialization interruption/failure cleanup, transaction rollback, explicit recovery and cross-page minimum-writer/repair refusal.",
+      "Cold versus prewarmed evidence and unchanged D1 construction-inclusive timing boundaries."
     ],
-    "wildcard": "No new entropy draw or whole-milestone hunt."
+    "wildcard": "No new entropy draw and no whole-milestone hunt. A third FAIL would require owner escalation; this review found no new blocker."
+  },
+  "reviewedBlobs": {
+    "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
+    "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
+    "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
+    "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
+    "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
+    "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
+    "vite.config.ts": "77c12a1b656982fde1de5444be83a462703e7936",
+    "src/test/d1MigrationHarness.ts": "de257c68855ae5229a88e6e98a51d51f6620b275",
+    "tests/engine-startup.test.ts": "03ab4a1dde50dd9bac0cc17e30654940c5b7de24",
+    "tests/e2e/cold-browser.ts": "e3261ada0d3108e2955d89bb0687b19128ab32ff",
+    "tests/e2e/d1-migration.spec.ts": "12373965ac347f783cdfda5eefb466aa78376d65",
+    "tests/e2e/d3-engine-startup.spec.ts": "6bc3c30848e7fcf60bc1d812ba265cd84df31b09",
+    "tests/e2e/d3-startup-recovery.spec.ts": "e0b4eeca5c6309626dc46458c435f10b48656d91",
+    "tests/e2e/d3-startup-multitab.spec.ts": "9bc1d6a491e508343da7962c906f09beb6634e65",
+    "playwright.config.ts": "e6975febc0e4866101de06f4fd8002de6ee3ca7c",
+    ".github/workflows/ci.yml": "0190ba84f184268cda2da363546bc2fe355b6220",
+    ".milestones/manifest.json": "c92e4014770db1cfe54a0d1df841192dbb0c915a",
+    "src/persistence/writeGuard.ts": "51d440c0c98ebeffbc002e26a1eb72225ba3c4d8",
+    "src/persistence/migrations.ts": "6b9653f9ccc5c147ece4ed11c0f78c0e0394fc04",
+    "src/persistence/dataVersion.ts": "80074f936bfecce634869c4e13a511a76b6df473",
+    "src/persistence/courses.ts": "963e4ac457bac00e97c10d058c85812340d3ce97"
   },
   "notTested": [
-    "Physical Android installation and update acceptance remain owner work; no physical-device PASS is inferred.",
-    "Browser-managed disk remnants beyond the IndexedDB records exposed to the application.",
-    "Test-site isolation and deployment publisher behavior are assigned to a separate security review.",
-    "Full verification, production builds and exact-checkpoint CI remain the orchestrator's closure checks.",
-    "An earlier WebKit UI probe was disrupted while implementation configuration was changing. The required bounded replay passed after the source was frozen."
+    "No independent browser rerun in this follow-up; the bounded scratch recovery/multitab records were inspected and their source differences traced. No physical-device PASS is inferred.",
+    "Final-source full verification, original D1/read-only replay, final strict-cold recorder proof and exact green CI remain orchestrator closure gates. The unchanged unit-loader failure still requires classification/resolution before full verification can be green. Earlier prototype diagnostic CI is not final-source verification.",
+    "Built-PWA update journey, same-origin regular/test-channel isolation, HTTPS publication/security acceptance and the owner's Android installation/update check remain separate required gates.",
+    "Browser-managed disk remnants beyond IndexedDB records, arbitrary future raw/read SQL callers and future sync-release migration design remain the prior documented limits."
   ]
 }

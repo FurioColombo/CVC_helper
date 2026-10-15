@@ -4,6 +4,7 @@ import path from "node:path"
 import { expect, type Page, test } from "@playwright/test"
 
 import { evidenceOutputPath } from "./evidence"
+import { isolatedTest } from "./cold-browser"
 
 /**
  * D1 on the real PowerSync engine: courses written by 0.1.0, 0.2.0 and 0.3.0
@@ -16,7 +17,6 @@ import { evidenceOutputPath } from "./evidence"
  */
 
 const isAppRoot = (target: URL) => target.pathname === "/"
-
 const fixtureRows = (version: string) => {
   const fixture = JSON.parse(
     readFileSync(
@@ -282,66 +282,67 @@ test("opens an upgraded 0.3.0 course in the app and stamps what the app writes",
   expect(result.paolo.updatedAt > result.paolo.createdAt).toBe(true)
 })
 
-test("upgrades and reopens a 40-student course within five seconds each", async ({
-  page,
-}) => {
-  await openBlankPage(page)
-  const result = await harness<{
-    durationMs: number
-    createDatabaseMs: number
-    initMs: number
-    adapterInitMs: number
-    sdkReadyAfterAdapterMs: number
-    prepareAfterInitMs: number
-    readTablesMs: number
-    closeMs: number
-    reopenMs: number
-    reopenCreateDatabaseMs: number
-    reopenInitMs: number
-    reopenAdapterInitMs: number
-    reopenSdkReadyAfterAdapterMs: number
-    reopenPrepareAfterInitMs: number
-    reopenReadTablesMs: number
-    reopenCloseMs: number
-    expectedRows: number
-    expectedInjectedStudentRows: number
-    injectedStudentRows: number
-    reopenInjectedStudentRows: number
-    expectedInjectedEvaluationRows: number
-    injectedEvaluationRows: number
-    reopenInjectedEvaluationRows: number
-    rows: number
-    reopenRows: number
-    rowIssues: unknown[]
-    reopenRowIssues: unknown[]
-    reopenedIdentical: boolean
-  }>(page, "runLargeUpgrade")
-  record("large-upgrade", result)
-  test.info().annotations.push({
-    type: "migration",
-    description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms`,
-  })
-  expect(result.rowIssues).toEqual([])
-  expect(result.reopenRows).toBe(result.rows)
-  expect(result.reopenRowIssues).toEqual([])
-  expect(result.reopenedIdentical).toBe(true)
-  expect(result.expectedRows).toBe(609)
-  expect(result.rows).toBe(result.expectedRows)
-  expect(result.reopenRows).toBe(result.expectedRows)
-  expect(result.expectedInjectedStudentRows).toBe(40)
-  expect(result.injectedStudentRows).toBe(result.expectedInjectedStudentRows)
-  expect(result.reopenInjectedStudentRows).toBe(
-    result.expectedInjectedStudentRows,
-  )
-  expect(result.expectedInjectedEvaluationRows).toBe(520)
-  expect(result.injectedEvaluationRows).toBe(
-    result.expectedInjectedEvaluationRows,
-  )
-  expect(result.reopenInjectedEvaluationRows).toBe(
-    result.expectedInjectedEvaluationRows,
-  )
-  // The same five-second bound covers construction, SDK init and preparation;
-  // stage timings above help diagnose a slow open without weakening it.
-  expect(result.durationMs).toBeLessThan(5000)
-  expect(result.reopenMs).toBeLessThan(5000)
-})
+isolatedTest(
+  "upgrades and reopens a 40-student course within five seconds each",
+  async ({ page }) => {
+    await openBlankPage(page)
+    const result = await harness<{
+      durationMs: number
+      createDatabaseMs: number
+      initMs: number
+      adapterInitMs: number
+      sdkReadyAfterAdapterMs: number
+      prepareAfterInitMs: number
+      readTablesMs: number
+      closeMs: number
+      reopenMs: number
+      reopenCreateDatabaseMs: number
+      reopenInitMs: number
+      reopenAdapterInitMs: number
+      reopenSdkReadyAfterAdapterMs: number
+      reopenPrepareAfterInitMs: number
+      reopenReadTablesMs: number
+      reopenCloseMs: number
+      expectedRows: number
+      expectedInjectedStudentRows: number
+      injectedStudentRows: number
+      reopenInjectedStudentRows: number
+      expectedInjectedEvaluationRows: number
+      injectedEvaluationRows: number
+      reopenInjectedEvaluationRows: number
+      rows: number
+      reopenRows: number
+      rowIssues: unknown[]
+      reopenRowIssues: unknown[]
+      reopenedIdentical: boolean
+    }>(page, "runLargeUpgrade")
+    record("large-upgrade", result)
+    test.info().annotations.push({
+      type: "migration",
+      description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms`,
+    })
+    expect(result.rowIssues).toEqual([])
+    expect(result.reopenRows).toBe(result.rows)
+    expect(result.reopenRowIssues).toEqual([])
+    expect(result.reopenedIdentical).toBe(true)
+    expect(result.expectedRows).toBe(609)
+    expect(result.rows).toBe(result.expectedRows)
+    expect(result.reopenRows).toBe(result.expectedRows)
+    expect(result.expectedInjectedStudentRows).toBe(40)
+    expect(result.injectedStudentRows).toBe(result.expectedInjectedStudentRows)
+    expect(result.reopenInjectedStudentRows).toBe(
+      result.expectedInjectedStudentRows,
+    )
+    expect(result.expectedInjectedEvaluationRows).toBe(520)
+    expect(result.injectedEvaluationRows).toBe(
+      result.expectedInjectedEvaluationRows,
+    )
+    expect(result.reopenInjectedEvaluationRows).toBe(
+      result.expectedInjectedEvaluationRows,
+    )
+    // The same five-second bound covers construction, SDK init and preparation;
+    // stage timings above help diagnose a slow open without weakening it.
+    expect(result.durationMs).toBeLessThan(5000)
+    expect(result.reopenMs).toBeLessThan(5000)
+  },
+)

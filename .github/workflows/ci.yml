@@ -70,16 +70,16 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
         run: npx playwright install --with-deps chromium
-      - name: Complete deterministic suite, including all three browser projects
+      - name: Complete deterministic suite, including all browser projects
         if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'macos-15'
         run: npm run verify:all
-      - name: Linux deterministic checks and both Chromium browser projects
+      - name: Linux deterministic checks and Chromium layout and storage projects
         if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
         run: |
           npm run verify
           npm run check:full-week
           npm run check:ocr-offline
-          npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport
+          npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport --project=desktop-chrome-storage
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser == 'false'
         run: npm run verify
       # Tests that passed only on a retry: kept even when the run is green.

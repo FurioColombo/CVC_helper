@@ -1,0 +1,40 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-15",
+  "runtime": "v24.21.0",
+  "classification": "TEST_READINESS_RACE",
+  "command": "npm run verify:quick",
+  "result": {
+    "status": "FAIL",
+    "files": 81,
+    "tests": 1362,
+    "passed": 1361,
+    "failed": 1,
+    "durationSeconds": 155.02,
+    "lint": "PASS",
+    "format": "PASS",
+    "typecheck": "PASS"
+  },
+  "failure": {
+    "spec": "src/features/evaluations/StudentEvaluationHistory.test.tsx",
+    "test": "shows the exact chronological session, symbol and associated note",
+    "observed": "The named region exists while Apertura valutazioni… is displayed; the immediate getByRole for the loaded Saturday button fails.",
+    "persistence": "Mocked; no database startup path involved."
+  },
+  "unchangedClassification": {
+    "command": "npx vitest run src/features/evaluations/StudentEvaluationHistory.test.tsx",
+    "status": "PASS",
+    "tests": 3,
+    "durationSeconds": 2.68,
+    "retries": 0
+  },
+  "fix": "Await the existing first loaded control/heading/error in each async case; retain all assertions and default timeouts. No application evaluation code changed.",
+  "finalVerification": {
+    "command": "npm run verify:quick",
+    "status": "PASS",
+    "runtime": "v24.21.0",
+    "files": 81,
+    "tests": 1362,
+    "durationSeconds": 93.73
+  }
+}

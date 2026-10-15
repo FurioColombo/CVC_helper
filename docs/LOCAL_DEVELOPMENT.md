@@ -103,9 +103,9 @@ records a milestone's scripts, `verify:e2e:focus` among them.
 `npm run ci:status` reads HEAD's latest `ci.yml` push run and failures; dirty edits are excluded.
 Run it at startup and after pushing. `-- --wait` polls ten minutes: exit 0 is success,
 1 completed non-success, 2 unknown or pending. Dependent work needs exact green CI; tokens are optional, no `gh` needed.
-The prepared matrix keeps unchanged `verify:all` and all three browser projects on macOS 15;
-Linux keeps deterministic, offline and both Chromium checks. Both jobs must pass; assertions and retries are unchanged.
-The matrix awaits exact CI; baseline and cold-open failures are in `.evidence/D3/ci-adapter-initialization.json`.
+The matrix runs `verify:all` and all four browser projects on macOS 15;
+Linux keeps deterministic, offline and all three Chromium projects, including the desktop SharedWorker check.
+Both jobs must pass; assertions and retries are unchanged. Baseline and cold-open failures remain in `.evidence/D3/ci-adapter-initialization.json`.
 
 `npm run owner:list` shows pending human actions; `owner:check` validates the
 queue and its [readable list](./OWNER_TODO.md). `milestone:await-owner` and
