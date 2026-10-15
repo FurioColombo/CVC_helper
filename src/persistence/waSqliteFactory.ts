@@ -128,6 +128,11 @@ function discardBroker(broker: WorkerBroker) {
 }
 
 export default async function createWaSqliteModule(): Promise<unknown> {
+  console.info(
+    "D3 factory state",
+    Boolean(globalThis.__CVC_ENGINE_WORKER_STATE__),
+    globalThis.__CVC_ENGINE_WORKER_STATE__?.brokers.length,
+  )
   const state = globalThis.__CVC_ENGINE_WORKER_STATE__
   if (!state) return factory()
 
