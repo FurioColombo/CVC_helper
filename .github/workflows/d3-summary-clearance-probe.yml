@@ -1,0 +1,44 @@
+name: D3 summary-clearance diagnostic
+on:
+  push:
+    branches: [codex/d3-update-startup-probe]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  summary:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: 42ce5d887ccbc981b6688447a5fdd5f54b664355
+      - name: Overlay bounded copy-label correction and regression audit
+        env:
+          PROBE_COMMIT: ${{ github.sha }}
+        run: |
+          git show "$PROBE_COMMIT:src/components/SummaryImageButton.tsx" > src/components/SummaryImageButton.tsx
+          git show "$PROBE_COMMIT:tests/e2e/d3-summary-controls.spec.ts" > tests/e2e/d3-summary-controls.spec.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - if: matrix.os == 'ubuntu-latest'
+        run: npx playwright install --with-deps chromium
+      - if: matrix.os == 'macos-15'
+        run: npx playwright install --with-deps chromium webkit
+      - if: matrix.os == 'ubuntu-latest'
+        run: npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts:699 tests/e2e/f3-duty-summary.spec.ts:62 tests/e2e/ug2-hostile-roster.spec.ts:794 tests/e2e/ug2-hostile-roster.spec.ts:860 tests/e2e/d3-summary-controls.spec.ts --project=pixel-7-chrome --project=iphone-13-viewport --retries=0
+      - if: matrix.os == 'macos-15'
+        run: npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts:699 tests/e2e/f3-duty-summary.spec.ts:62 tests/e2e/ug2-hostile-roster.spec.ts:794 tests/e2e/ug2-hostile-roster.spec.ts:860 tests/e2e/d3-summary-controls.spec.ts --retries=0
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: summary-clearance-${{ matrix.os }}-${{ github.run_id }}
+          path: test-results/
+          retention-days: 14

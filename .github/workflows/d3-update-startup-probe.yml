@@ -1,7 +1,5 @@
 name: D3 update-startup diagnostic
 on:
-  push:
-    branches: [codex/d3-update-startup-probe]
   workflow_dispatch:
 permissions:
   contents: read
