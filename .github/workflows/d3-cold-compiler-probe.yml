@@ -11,18 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - mode: streaming
+          - mode: worker
             spec: d1-migration
             seed: same
-          - mode: buffered
-            spec: d1-migration
-            seed: same
-          - mode: synchronous
-            spec: d1-migration
-            seed: same
-          - mode: streaming
-            spec: d1-migration
-            seed: sibling
     runs-on: macos-15
     env:
       VITE_D3_COMPILE_MODE: ${{ matrix.mode }}
@@ -40,7 +31,7 @@ jobs:
         if: matrix.seed == 'sibling'
         run: node scripts/d3-sibling-seed-diagnostic.mjs
       - name: Original unchanged assertions, no retries
-        run: npm run verify:e2e -- tests/e2e/${{ matrix.spec }}.spec.ts --project=iphone-13-webkit-core --retries=0
+        run: npm run verify:e2e -- tests/e2e/${{ matrix.spec }}.spec.ts --project=iphone-13-webkit-core --retries=0 --repeat-each=2
       - if: always()
         uses: actions/upload-artifact@v4
         with:

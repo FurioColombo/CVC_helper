@@ -72,15 +72,46 @@ async function compileModule(url: string) {
 
   // Diagnostic branch only; the shipped integration remains unchanged.
   const mode = import.meta.env.VITE_D3_COMPILE_MODE ?? "streaming"
+  let compilerWorker: Worker | undefined
+  const workerCompile = () =>
+    new Promise<WebAssembly.Module>((resolve, reject) => {
+      compilerWorker = new Worker(
+        new URL("./engineCompileProbeWorker.ts", import.meta.url),
+        { type: "module" },
+      )
+      compilerWorker.onmessage = (
+        event: MessageEvent<{
+          type: string
+          module?: WebAssembly.Module
+          message?: string
+        }>,
+      ) => {
+        if (
+          event.data.type === "compiled" &&
+          event.data.module instanceof WebAssembly.Module
+        )
+          resolve(event.data.module)
+        else reject(new Error(event.data.message ?? "Invalid compiler result"))
+      }
+      compilerWorker.onerror = (event) =>
+        reject(new Error(event.message || "Compiler worker failed"))
+      compilerWorker.onmessageerror = () =>
+        reject(new Error("Compiler result clone failed"))
+      compilerWorker.postMessage({ moduleUrl: url })
+    })
   const compilePromise =
-    mode === "streaming"
-      ? WebAssembly.compileStreaming(fetch(url, { signal: controller.signal }))
-      : fetch(url, { signal: controller.signal }).then(async (response) => {
-          const bytes = await response.arrayBuffer()
-          return mode === "buffered"
-            ? WebAssembly.compile(bytes)
-            : new WebAssembly.Module(bytes)
-        })
+    mode === "worker"
+      ? workerCompile()
+      : mode === "streaming"
+        ? WebAssembly.compileStreaming(
+            fetch(url, { signal: controller.signal }),
+          )
+        : fetch(url, { signal: controller.signal }).then(async (response) => {
+            const bytes = await response.arrayBuffer()
+            return mode === "buffered"
+              ? WebAssembly.compile(bytes)
+              : new WebAssembly.Module(bytes)
+          })
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeout = window.setTimeout(() => {
       controller.abort()
@@ -92,6 +123,7 @@ async function compileModule(url: string) {
     return await Promise.race([compilePromise, timeoutPromise])
   } finally {
     if (timeout !== undefined) window.clearTimeout(timeout)
+    compilerWorker?.terminate()
   }
 }
 
