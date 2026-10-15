@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [observe, idempotent]
+        mode: [inline]
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,17 @@ jobs:
         run: |
           git show "$PROBE_COMMIT:scripts/check-update-journey.mjs" > scripts/check-update-journey.mjs
           git show "$PROBE_COMMIT:src/persistence/waSqliteFactory.ts" > src/persistence/waSqliteFactory.ts
-          git show "$PROBE_COMMIT:.github/diagnostics/engineWorkerRegistration.$MODE.ts" > src/persistence/engineWorkerRegistration.ts
+          git show "$PROBE_COMMIT:.github/diagnostics/engineWorkerRegistration.observe.ts" > src/persistence/engineWorkerRegistration.ts
+      - name: Restore the stock single-file worker build
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const p='vite.config.ts'
+          const s=fs.readFileSync(p,'utf8')
+          const marker='  worker: { format: "es" },'
+          if(!s.includes(marker)) throw Error('Worker format marker missing')
+          fs.writeFileSync(p,s.replace(marker,''))
+          NODE
       - uses: actions/setup-node@v4
         with:
           node-version: 24
