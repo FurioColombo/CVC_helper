@@ -2,7 +2,7 @@
   "milestone": "D3",
   "date": "2026-10-16",
   "kind": "AUTHORIZED_STARTUP_INTEGRATION_PROGRESS",
-  "status": "MACOS_COLD_COMPILATION_FAILURE_UNDER_DIAGNOSIS",
+  "status": "CODE_ONLY_COMPILER_FIX_UNDER_VERIFICATION",
   "formalReview": false,
   "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "diagnostic": {
@@ -102,8 +102,14 @@
     "sourceAccepted": false,
     "coldCasesPassed": 4,
     "migrationReadOnlyCasesPassed": 22,
-    "webkit": { "upgradeMs": 1256, "reopenMs": 427 },
-    "chromium": { "upgradeMs": 553, "reopenMs": 245 },
+    "webkit": {
+      "upgradeMs": 1256,
+      "reopenMs": 427
+    },
+    "chromium": {
+      "upgradeMs": 553,
+      "reopenMs": 245
+    },
     "rows": 609,
     "priorEventCount": 0,
     "compileCount": 1,
@@ -117,8 +123,18 @@
     "reviews": "DI5, regression14, field9, security4 and sync-chaos2 zero blockers; previous formal FAIL reports/counts retained.",
     "quick": "81 files/1362tests PASS Node24.21.0",
     "sourceAccepted": false,
-    "remaining": "Resolve source fd5657b Mac original first-open compilation failures; local recorderPASS does not waive failedCI. No threshold increase, prewarming or workload reduction.",
+    "remaining": "Clean compiler-worker fix needs final recorder, required restricted reviews and exact full green CI. Prior fd5657b local PASS does not waive macOS failure. Timing bounds, original fixtures and retries unchanged.",
     "packagingFix": "ci-startup-update-failure.json",
     "finalRecorder": "PASS all five at fd5657b, source digest matches; final-source-focused-proof.json"
+  },
+  "compilerWorkerFix": {
+    "baseline": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
+    "diagnostic": "ci-cold-compilation-failure.json",
+    "safety": "worker-compiler-safety.json",
+    "qualification": "35 original browser assertions pass; sandbox-denied server termination was rescued, not unattended verification. Final recorder runs with needed process permissions.",
+    "unitTests": 11,
+    "typecheck": "PASS after correcting test-only Node/DOM listener and tuple types",
+    "review": "data-integrity round6 zero blockers; other follow-ups pending",
+    "accepted": false
   }
 }

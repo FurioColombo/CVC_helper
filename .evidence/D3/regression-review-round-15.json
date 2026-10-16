@@ -1,0 +1,113 @@
+{
+  "reviewerRole": "regression-hunter",
+  "persona": "Il Segugio",
+  "milestone": "D3",
+  "round": 15,
+  "commit": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
+  "reviewedWorkingTree": {
+    "baseCommit": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
+    "blobs": {
+      "src/persistence/engineModuleBroker.ts": "1ae7a3d7cf70e1670aa76723f1ffe30abb71e980",
+      "src/persistence/engineModuleCompiler.ts": "344f7542cf0c5eb4f00803b65c7e952ac36a3462",
+      "src/persistence/engineModuleBroker.test.ts": "470287d77274c727a684e26e3c7f73a5a20f08a0",
+      "03_TECHNICAL_DECISIONS.md": "9953af91f167e6efd8044ca3bebe2c67b48a7662"
+    }
+  },
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "RH2-Q4",
+      "title": "Carried over: the Barche list overflows horizontally with enlarged text",
+      "evidence": "Preserved regression round-2 finding, rounds 3–14 and docs/working/BACKLOG.md. The compiler change touches no Barche implementation.",
+      "reproduction": "Prior round: 0.3.0 fixture, 412x915, 150% root text, Barche; scrollWidth 484 versus clientWidth 412. Not rerun.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18"
+    }
+  ],
+  "reviewContinuity": {
+    "priorRoundsPreserved": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "priorFailRounds": [
+      1,
+      2
+    ],
+    "newEntropyDraw": false,
+    "scope": "Restricted cold-compilation fix and caused startup, lifecycle, production/offline regressions. Prior R13 packaging and R14 summary dispositions remain preserved; no whole-milestone hunt."
+  },
+  "evidenceInspected": [
+    "Retained AGENTS.md, reviewer persona, REVIEW_PROTOCOL.md and PowerSync skill guidance. Rechecked current D3 plan, Technical Decisions section 3, runtime/status and owner queue. Node v24.21.0; D3 IN_PROGRESS; D3-PHONE-UPDATE NEEDS_SETUP. ci:status could not fetch committed-HEAD CI and excludes the working diff.",
+    "Read ci-cold-compilation-failure.json. Exact prior macOS CI 38816257215 retains three original first-open failures at 5813/7527/6472 ms against 5000 ms, with identical 609 rows, 40 students and 520 evaluations. The earlier local full recorder and successful sibling-seed control do not override that failure.",
+    "Read the preserved compiler investigation and diagnostic log SHA256 59f9b4b3bbcb4a41830da537dc7c73958822438e3aa1c59760eff1faf94797ad. Worker-only diagnostic 38823234859 repeats the unchanged original same-page D1 prefix twice: 16 passes, retries 0; large opens 1334/504 ms and 1459/306 ms. Other unbounded prefix opens compile more slowly; no universal native-cold-cache or full-CI performance claim follows.",
+    "Reviewed the complete broker diff and new compiler source. Only compilation moves into a short-lived worker started on the first real cache miss, inside existing measured startup. It calls compileStreaming on the exact same-origin URL and returns immutable compiled code. It imports no SDK and creates no WebAssembly.Instance, engine memory, VFS, database or connection.",
+    "The compilation producer belongs to the page module-cache promise, not an individual startup scope. Consumer cleanup still terminates only its own SDK workers and ports. The compiler's settled guard removes all three listeners, clears its timer and terminates on success, error reply, worker error, messageerror, malformed result, send/constructor exception or its unchanged 30-second deadline. A rejected cache entry is removed so a later explicit open can retry; no automatic retry was added.",
+    "Verified broker request key/origin checks and the compiler's own request/origin validation. A direct isolated Node probe imported the actual compiler module: same-origin minimal WASM compiled, cross-origin and malformed requests returned error with zero fetches, and the registration remained one-shot. This module probe is not browser/offline evidence.",
+    "Independently ran the current broker unit file: success true, 11 passed, 0 failed/pending. OS-temp cvc-d3-regression-r15-units.json SHA256 e73cacf653af4ac7531db5656a40aa149a515956a8a6d07a50af1b26681e03d4. Tests cover shared producer/fresh SDK workers, separate failed and surviving scopes, six failure boundaries, timeout plus later explicit retry, same-origin/key checks, termination, listener cleanup and cleared timers. Current test blob includes only the reported Node listener and tuple typing corrections.",
+    "Directly read the 35-case report named by cvc-d3-compiler-safety-location.txt, SHA256 b2e97d3939e738fa30a7beb02039171df206a751a00e1356b835e195e038c242. Every result is passed with retry 0; zero unexpected/skipped/flaky results and no report errors. It exercises unchanged D1 migration, cold/prewarm control, interruption/rollback/recovery/deadline cases on Chromium/WebKit and stock desktop SharedWorker guards.",
+    "The original large D1 cases report Chromium 612/282 ms and WebKit 1567/666 ms. Import-inclusive cold cases report 827/283 ms and 2026/669 ms, with cold miss, compile then two fresh instance identities, identical 609 rows, 40 students, 520 evaluations and no row issues. Both original 5000 ms bounds remain enforced.",
+    "Read the safety qualification: sandbox taskkill denial was separately reproduced; browser workers exited but the owned Vite server remained. Root stopped the verified owned server, after which the runner exited 0 and wrote the report. Its aggregate duration includes stalled teardown. This establishes passed assertions, not unattended command completion or a final recorder PASS.",
+    "Byte-compared schema, factory, SDK worker/registration, D1 fixture harness/spec, cold/recovery/multitab specs, summary component/audit, build config, source guards, Playwright config, package and lockfile against HEAD: unchanged. SDK/VFS/schema/compatibility, original fixture workload, timing thresholds, retries and R13/R14 fixes are preserved.",
+    "Inspected the current production build directly. The new compiler asset is a 566-byte single IIFE with zero static/dynamic imports and zero instance constructions, a one-shot listener, and no SDK or VFS code. It and both SDK worker assets are in dist/sw.js precache. Dedicated and stock SDK worker hashes are byte-for-byte identical to R13; the previous packaging regression remains fixed.",
+    "Read cvc-d3-integrated-compiler-verify-final.log, SHA256 70b3eae263c43a4a4fa21b7beebb519fb5278c731b065d1736a9b99aee05f1c1. It records 82 files/1373 tests passing in 118.16 seconds, repository/domain/docs/controller checks, production build, 40-entry precache and built-PWA checks. Root reports npm run verify exit 0. This is not the all-five final recorder or exact push CI.",
+    "git diff --check passed. No tracked files were edited and no browser/full suite was launched by this reviewer. The independently run small unit file and module probe are identified above. Identical final reports are saved in OS-temp cvc-d3-regression-round15.json and cvc-d3-regression-review-round15-final.json."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted original cold-compilation failure, unchanged measured workload and first-open clock",
+      "Producer ownership versus failed consumers, error boundaries and cleanup",
+      "Compiler code-only boundary, URL validation and preserved production/offline packaging contract"
+    ],
+    "wildcard": "No new entropy draw or whole-milestone hunt. Prior FAIL rounds 1/2 and previous restricted verdicts remain preserved."
+  },
+  "notTested": [
+    "Actual production compiler startup, regular/test update journeys and offline/channel isolation under the current source remain final recorded gates. Static precache membership and a passing build do not prove offline startup.",
+    "The 35-case report required manual server cleanup after sandbox denial; it is not an unattended verification PASS. Current source still requires final all-five recorded verification and exact full green CI.",
+    "Browser-native compilation cache state is not established by page-local telemetry. No diagnostic control or faster local run waives either original five-second assertion.",
+    "Real simultaneous compiler consumers are covered by source reasoning and mocked-worker unit tests; final sync-chaos follow-up and required release gates remain separate.",
+    "Live test publication, HTTPS proof and physical Android installation/update acceptance remain pending. No physical-device or standalone iOS PASS is inferred.",
+    "Carried RH2-Q4 and unchanged earlier UI fixes were not rerun outside this compiler scope."
+  ],
+  "artifactInspection": {
+    "dist/assets/engineModuleCompiler-YDsboZOq.js": {
+      "bytes": 566,
+      "sha256": "ffb3e14202c96ebda1fc87a1e22beed1a39a135b0b008eea27de34a5a13a721f",
+      "format": "single-file IIFE",
+      "staticImports": 0,
+      "dynamicImports": 0,
+      "instanceConstructions": 0,
+      "precached": true,
+      "containsSDK": false,
+      "containsVFS": false,
+      "oneShotMessageListener": true
+    },
+    "dist/assets/engineModuleWorker-_-fycvIC.js": {
+      "sha256": "f7684db4ac6d83a9e8bc67986b80ff839ab0040c859da9e070feab378565e704",
+      "unchangedFromR13": true,
+      "staticImports": 0,
+      "dynamicImports": 0,
+      "precached": true
+    },
+    "dist/assets/worker-BjWXu86u.js": {
+      "sha256": "84c9347f4ecc82c85444ba985e4bcc7077a476d85afd135b7f42c967a62a27ec",
+      "unchangedFromR13": true,
+      "staticImports": 0,
+      "dynamicImports": 0,
+      "precached": true
+    }
+  }
+}

@@ -10,7 +10,7 @@
       "evidence": "ci-cold-compilation-failure.json; full source CI38816257215",
       "reproduction": "All3attempts5813/7527/6472ms, dominated by native compile5020/6724/5539ms. Reopen<=649ms, all609rows/40students/520evaluations intact.",
       "specRef": "04_IMPLEMENTATION_PLAN.md D3/D1 inherited performance gate",
-      "disposition": "Under bounded compiler/seed-control diagnosis; publication withheld."
+      "disposition": "Clean code-only worker fix independently reviewed and local original workload assertions pass. New exact full source CI remains required; old source failure is preserved."
     }
   ],
   "importantFindings": [],
@@ -56,7 +56,8 @@
     "Source42ce5d8 restores stock single-file IIFE worker packaging after Mac production observe proves ES VFS back-import replays registration. Independent DI5/RH13/security4 have zero blockers, preserve previous findings and inspect final no-import worker graphs. Exact-source quick81files/1362tests and build/domainPASS. Original source failure/interrupted recorder preserved; final recorder/CI not inferred.",
     "Restricted sync-chaos round2 on42ce5d8 PASS_WITH_FINDINGS zero blockers; exact final IIFE production graph inspected, previous actual interleaving/rollback proof retained. All required follow-up reviews now pass; final verification still pending.",
     "Linux42 CI four original clearance failures reproduced exactly by a button-only wider-font negative control. Two-line label/icon correction passes original4Pixel cases, all3mobile pressure audits, and bounded Linux/Mac diagnostics with original skips/zero retries. No renderer/helper/mask/threshold change. Restricted field9 and regression14 zero new blockers. ci-summary-clearance.json preserves failed source and interrupted recorder.",
-    "Final clean fd5657b repository recorder PASS all five scripts on Node24.21.0; source digest matches current checkout. Focus127PASS47originalskips0flakes/0failed, both strict5000ms cold and original large-upgrade cases PASS0retry. Regular and test production updates preserve typed notes in both engines; same-origin CRUD/erase preserves regular course/preferences/OCR bytes/offline app. final-source-focused-proof.json retains measurements; exactfull macOS CI and live publication remain pending."
+    "Final clean fd5657b repository recorder PASS all five scripts on Node24.21.0; source digest matches current checkout. Focus127PASS47originalskips0flakes/0failed, both strict5000ms cold and original large-upgrade cases PASS0retry. Regular and test production updates preserve typed notes in both engines; same-origin CRUD/erase preserves regular course/preferences/OCR bytes/offline app. final-source-focused-proof.json retains measurements; exactfull macOS CI and live publication remain pending.",
+    "Compiler-worker candidate reviewed for URL validation, immutable-only cache ownership, fresh SDK instances, bounded cleanup, explicit retry and shared-consumer lifetime. Required restricted DI6/RH15/security5/sync3 have zero blockers; UI unchanged from field9. FullverifyPASS, finalrecordedall5/exactCI pending."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -204,7 +205,9 @@
   "workflowBlob": "c5fd6a4cd528c2ac4c2423d4c279918e817a2df0",
   "reviewedWorkingTree": {
     "scope": "Asynchronous student profile Back readiness in same-origin isolation harness",
-    "sourceChanged": ["scripts/check-test-app-isolation.mjs"],
+    "sourceChanged": [
+      "scripts/check-test-app-isolation.mjs"
+    ],
     "blob": "481a5d8650b2c5eb2d18e64d3319cbcb508574d9",
     "review": "R10 PASS_WITH_FINDINGS zero blockers",
     "recording": "Clean33ac recorder FAIL retained: four checksPASS, isolationFAIL. New corrected source must receive full clean recording."
@@ -220,16 +223,22 @@
     }
   ],
   "currentSourceReview": {
-    "scope": "Copy control clearance correction on reviewed42 packaging/engine source",
-    "reference": "ci-summary-clearance.json",
+    "scope": "Code-only compiler worker and broker lifecycle integration on unchanged fd5657b UI/compatibility/SDK source",
+    "base": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
+    "blobs": {
+      "broker": "1ae7a3d7cf70e1670aa76723f1ffe30abb71e980",
+      "compiler": "344f7542cf0c5eb4f00803b65c7e952ac36a3462",
+      "unitTests": "470287d77274c727a684e26e3c7f73a5a20f08a0"
+    },
     "reviews": [
-      "data-integrity-review-round-5.json",
-      "regression-review-round-14.json",
+      "data-integrity-review-round-6.json",
+      "regression-review-round-15.json",
       "field-ux-review-round-9.json",
-      "security-privacy-review-round-4.json",
-      "sync-chaos-review-round-2.json"
+      "security-privacy-review-round-5.json",
+      "sync-chaos-review-round-3.json"
     ],
-    "remaining": "Resolve Mac native first-compilation failure with original assertions and workload, review any source fix, then fresh all-five recorder/full exactgreenCI/livepublication."
+    "proof": "worker-compiler-safety.json; all35browserassertions pass with explicit environment teardown qualification. Fullverify82files1373tests and currentbuiltPWA pass.",
+    "remaining": "Fresh clean all-five recorder and exact full green new-source CI; prior self-review FAIL retained until that CI-COLD-COMPILE gate is actually resolved. Livepublication/ownerhandoff remain later gates."
   },
   "acceptanceStatus": "BLOCKED_BY_EXACT_SOURCE_CI"
 }

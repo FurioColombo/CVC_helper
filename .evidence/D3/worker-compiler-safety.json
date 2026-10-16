@@ -1,0 +1,140 @@
+{
+  "milestone": "D3",
+  "date": "2026-10-16",
+  "runtime": "v24.21.0",
+  "status": "ASSERTIONS_PASS_ENVIRONMENT_TEARDOWN_RESCUED",
+  "source": {
+    "base": "382fe7434cb8",
+    "broker": "1ae7a3d7cf70e1670aa76723f1ffe30abb71e980",
+    "compiler": "344f7542cf0c5eb4f00803b65c7e952ac36a3462"
+  },
+  "command": "npm run verify:e2e -- tests/e2e/d1-migration.spec.ts tests/e2e/d3-engine-startup.spec.ts tests/e2e/d3-startup-recovery.spec.ts tests/e2e/d3-startup-multitab.spec.ts --retries=0",
+  "stats": {
+    "startTime": "2026-10-15T23:35:00.716Z",
+    "duration": 19126435.452999998,
+    "expected": 35,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "caseCount": 35,
+  "failed": [],
+  "proof": {
+    "location": "OS-temp directory named by cvc-d3-compiler-safety-location.txt",
+    "reportSha256": "b2e97d3939e738fa30a7beb02039171df206a751a00e1356b835e195e038c242"
+  },
+  "qualification": "All35cases passed assertions with zero retries. Windows sandbox denied Playwright taskkill (independent disposable-process reproduction:ERROR Access denied); browser workers had exited, only owned Vite server remained. Root stopped only verified owned Vite PID22496/port51262, then runner exited0 and produced report. This is assertion proof, not an unattended verification PASS or final recorder. Required final recorder will run outside that sandbox.",
+  "physicalPass": false,
+  "largeCases": [
+    {
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "project": "pixel-7-chrome",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "retry": 0,
+          "annotations": [
+            {
+              "type": "migration",
+              "description": "609/609 rows (expected 609); upgrade 612 ms (create 3, adapter init 306, SDK ready after adapter 108, total init 414, prepare 196); reopen 282 ms (create 1, adapter init 234, SDK ready after adapter 21, total init 254, prepare 27); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 47/2 ms and 51/1 ms"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "project": "iphone-13-webkit-core",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "retry": 0,
+          "annotations": [
+            {
+              "type": "migration",
+              "description": "609/609 rows (expected 609); upgrade 1567 ms (create 2, adapter init 244, SDK ready after adapter 332, total init 576, prepare 989); reopen 666 ms (create 1, adapter init 170, SDK ready after adapter 247, total init 417, prepare 248); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 655/29 ms and 627/26 ms"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "coldCases": [
+    {
+      "project": "pixel-7-chrome",
+      "status": "expected",
+      "retry": 0,
+      "upgradeMs": 827,
+      "reopenMs": 283,
+      "rows": 609,
+      "reopenRows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "identical": true,
+      "compileCount": 1,
+      "compileMs": 34,
+      "distinctSdkWorkers": 2,
+      "distinctInstances": 2,
+      "lifecycle": {
+        "markerObservedAfterIndependentWrite": true,
+        "reopenedRows": 609,
+        "reopenedRowIssues": [],
+        "oldRowsAfterReset": 0,
+        "resetMarkerObserved": true,
+        "resetRows": 0,
+        "indexedDbDeleteUnblocked": true
+      }
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "status": "expected",
+      "retry": 0,
+      "upgradeMs": 2026,
+      "reopenMs": 669,
+      "rows": 609,
+      "reopenRows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "identical": true,
+      "compileCount": 1,
+      "compileMs": 64,
+      "distinctSdkWorkers": 2,
+      "distinctInstances": 2,
+      "lifecycle": {
+        "markerObservedAfterIndependentWrite": true,
+        "reopenedRows": 609,
+        "reopenedRowIssues": [],
+        "oldRowsAfterReset": 0,
+        "resetMarkerObserved": true,
+        "resetRows": 0,
+        "indexedDbDeleteUnblocked": true
+      }
+    }
+  ],
+  "unitTests": {
+    "command": "npx vitest run src/persistence/engineModuleBroker.test.ts",
+    "passed": 11,
+    "failed": 0,
+    "sourceBlob": "470287d77274c727a684e26e3c7f73a5a20f08a0",
+    "coverage": "Concurrent opens, independent failed scope/surviving scope, six compiler error boundaries, timeout/retry and mismatched/cross-origin rejection."
+  },
+  "finalSourceVerify": {
+    "command": "npm run verify",
+    "status": "PASS",
+    "exitCode": 0,
+    "runtime": "v24.21.0",
+    "unitFiles": 82,
+    "unitTests": 1373,
+    "unitDurationSeconds": 118.16,
+    "log": "OS-temp cvc-d3-integrated-compiler-verify-final.log",
+    "logSha256": "70b3eae263c43a4a4fa21b7beebb519fb5278c731b065d1736a9b99aee05f1c1",
+    "qualification": "Unrecorded focused pre-check. Final clean all-five recorder and exact full CI remain required.",
+    "priorTestTypeFailure": "OS-temp cvc-d3-integrated-compiler-verify-test-types-failure.log; only partial unit-test Node/DOM callback and tuple typing, corrected without production/assertion change."
+  }
+}

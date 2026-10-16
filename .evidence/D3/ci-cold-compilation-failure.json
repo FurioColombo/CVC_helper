@@ -113,7 +113,9 @@
         "status": "failed",
         "annotation": "609/609 rows (expected 609); upgrade 6525 ms (create 2, adapter init 6079, SDK ready after adapter 68, total init 6147, prepare 376); reopen 313 ms (create 1, adapter init 155, SDK ready after adapter 48, total init 203, prepare 109); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 169/4 ms and 179/4 ms",
         "compileMs": 5967,
-        "networkMs": [22],
+        "networkMs": [
+          22
+        ],
         "log": "OS-temp cvc-d3-compiler-116721874731.log"
       },
       {
@@ -123,7 +125,9 @@
         "status": "failed",
         "annotation": "609/609 rows (expected 609); upgrade 6417 ms (create 2, adapter init 5497, SDK ready after adapter 176, total init 5673, prepare 742); reopen 655 ms (create 2, adapter init 247, SDK ready after adapter 133, total init 380, prepare 273); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 340/22 ms and 342/4 ms",
         "compileMs": 5324,
-        "networkMs": [29],
+        "networkMs": [
+          29
+        ],
         "log": "OS-temp cvc-d3-compiler-116721877356.log"
       },
       {
@@ -133,7 +137,9 @@
         "status": "passed",
         "annotation": "609/609 rows (expected 609); upgrade 926 ms (create 4, adapter init 320, SDK ready after adapter 92, total init 412, prepare 510); reopen 436 ms (create 3, adapter init 155, SDK ready after adapter 79, total init 234, prepare 199); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 140/29 ms and 287/8 ms",
         "compileMs": 51,
-        "networkMs": [44],
+        "networkMs": [
+          44
+        ],
         "log": "OS-temp cvc-d3-compiler-116721878508.log"
       },
       {
@@ -143,7 +149,9 @@
         "status": "failed",
         "annotation": "609/609 rows (expected 609); upgrade 6554 ms (create 4, adapter init 6107, SDK ready after adapter 80, total init 6187, prepare 363); reopen 310 ms (create 1, adapter init 118, SDK ready after adapter 46, total init 164, prepare 145); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 220/9 ms and 140/8 ms",
         "compileMs": 5912,
-        "networkMs": [40],
+        "networkMs": [
+          40
+        ],
         "log": "OS-temp cvc-d3-compiler-116721880739.log"
       }
     ],
@@ -152,15 +160,49 @@
   "inspection": {
     "formalReview": false,
     "trackedEdits": false,
-    "workerIndices": { "originalAttempts": [5, 6, 7], "newColdControl": 8 },
+    "workerIndices": {
+      "originalAttempts": [
+        5,
+        6,
+        7
+      ],
+      "newColdControl": 8
+    },
     "finding": "New cold control did not inherit D1 worker process in this artifact; its own sibling seed constructs a legacy SDK instance. Page-local event count/module-map miss cannot prove native compiler cache cold. Sibling placement remains an unproved cause until the A/B completes."
   },
   "workerCompileProbe": {
     "run": 38823234859,
     "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38823234859",
     "commit": "2b85ab7a693eb28eda2a6e6b2d7138619f8e267f",
-    "status": "IN_PROGRESS",
+    "status": "PASS_DIAGNOSTIC_ONLY",
     "scope": "Compile immutable WASM in a fresh short-lived worker inside the measured open; no SDK/DB/instance/VFS there. OriginalD1prefix repeated2times, retries0, limits/workloadunchanged.",
-    "acceptance": false
+    "acceptance": false,
+    "job": 116724573521,
+    "passed": 16,
+    "failed": 0,
+    "flaky": 0,
+    "retries": 0,
+    "results": [
+      {
+        "upgradeMs": 1334,
+        "reopenMs": 504,
+        "compileMs": 59,
+        "rows": 609,
+        "students": 40,
+        "evaluations": 520
+      },
+      {
+        "upgradeMs": 1459,
+        "reopenMs": 306,
+        "compileMs": 72,
+        "rows": 609,
+        "students": 40,
+        "evaluations": 520
+      }
+    ],
+    "log": "OS-temp cvc-d3-compiler-worker-116724573521.log",
+    "logSha256": "59f9b4b3bbcb4a41830da537dc7c73958822438e3aa1c59760eff1faf94797ad",
+    "qualification": "Original same-page fixture, assertions and limits retained. Short-lived compiler creates no SDK, database, instance or VFS. Other unbounded prefix opens compile more slowly; full source verification remains required. No diagnostic flags, sibling-seed helper or temporary workflow adopted.",
+    "adoption": "Clean production integration and safety verification in progress; acceptance not yet recorded."
   }
 }

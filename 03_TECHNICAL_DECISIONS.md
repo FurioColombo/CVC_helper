@@ -74,7 +74,11 @@ The integration caches only the compiled, immutable WASM module in its page,
 keyed by its exact same-origin asset URL. Each dedicated database worker gets
 a fresh engine instance, memory and VFS; the normal SDK owns its connection
 and close. Compilation begins on the first real open, inside the measured
-startup path. A private transferred port supplies the module; a failed startup
+startup path, in a short-lived code-only compiler worker. That compiler creates
+no engine instance or database, and is terminated on success, error or its
+30-second deadline. Concurrent opens share its promise; a failed consumer does
+not cancel the other consumer's compilation. A private transferred port supplies
+the resulting module; a failed startup
 releases only its owned workers and ports. The desktop SharedWorker keeps the
 stock SDK entry and database-specific name. Build-time version and source-hash
 guards pin this private integration to PowerSync 2.2.0 and wa-sqlite 2.0.3;

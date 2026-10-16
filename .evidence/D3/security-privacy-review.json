@@ -2,9 +2,9 @@
   "reviewerRole": "security-privacy",
   "persona": "Il Garante",
   "milestone": "D3",
-  "round": 4,
-  "commit": "42ce5d887ccbc981b6688447a5fdd5f54b664355",
-  "reviewedDiff": "Restricted follow-up of a4ff839965e428712b1d819538bf0b74b8efa2e3..42ce5d887ccbc981b6688447a5fdd5f54b664355. The only application/build-code change removes worker.format='es' from vite.config.ts, restoring the installed Vite default single-file IIFE worker packaging.",
+  "round": 5,
+  "commit": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
+  "reviewedDiff": "Restricted follow-up of the working-tree compiler integration against 382fe7434cb8036e94be79b02eb7c2571acf9e67, whose production startup source matches fd5657b. Production changes are engineModuleBroker.ts and new engineModuleCompiler.ts; the technical contract and focused broker tests accompany them. Exact reviewed blobs are recorded below. Prior security rounds 1-4 are preserved.",
   "verdict": "PASS",
   "blockers": [],
   "importantFindings": [],
@@ -13,55 +13,62 @@
     {
       "id": "SP-1",
       "status": "fixed",
-      "evidence": "Round-2 OCR namespace fix remains preserved. src/appChannel.ts and src/capabilities/studentScan.ts exactly match their round-3 reviewed blobs; the regular '.' and test 'cvc-helper-test-ocr' cache paths are unchanged. No new OCR result or physical-device acceptance is inferred."
+      "evidence": "The round-2 OCR namespace fix remains intact. src/appChannel.ts and src/capabilities/studentScan.ts match their prior reviewed blobs. The regular ./ita.traineddata key and test cvc-helper-test-ocr/ita.traineddata key remain separate. This restricted follow-up introduces no cache, deletion or OCR change and does not replace the final same-origin isolation rerun."
     }
   ],
   "sourceBlobs": {
-    "vite.config.ts": "de90a83917c310c29ff048a680866ab83fb81cf6",
-    "src/persistence/engineModuleBroker.ts": "3a0a78a0aa279399aa4e10b6fe00a09815dcaac4",
+    "03_TECHNICAL_DECISIONS.md": "9953af91f167e6efd8044ca3bebe2c67b48a7662",
+    "src/persistence/engineModuleBroker.ts": "1ae7a3d7cf70e1670aa76723f1ffe30abb71e980",
+    "src/persistence/engineModuleCompiler.ts": "344f7542cf0c5eb4f00803b65c7e952ac36a3462",
+    "src/persistence/engineModuleBroker.test.ts": "470287d77274c727a684e26e3c7f73a5a20f08a0",
     "src/persistence/engineModuleWorker.ts": "4236ce9c470b27bc2462e0cd69d57e8925c57837",
     "src/persistence/engineWorkerRegistration.ts": "79b84370241ff341f1df7bf39626a81c9d648f2d",
     "src/persistence/waSqliteFactory.ts": "6c1744bfa95e7310d13a9ea5ad8f1c76ace730b6",
     "src/persistence/schema.ts": "c84fce8d7b0932e549ad8b046b288e1136072493",
+    "src/persistence/db.ts": "eda0e0d61deaa565720aa7df73d9d52b59a7435c",
     "vite.engine-startup.ts": "5721b72c618adaf40cefb7ea38751898a36a9dc9",
+    "vite.config.ts": "de90a83917c310c29ff048a680866ab83fb81cf6",
     "src/appChannel.ts": "0aa52d3a2250846178bc5b2b05c718a421f01763",
     "src/capabilities/studentScan.ts": "5b3f9ef9361cb5373e1a1005fb7aecd90cbbb31b"
   },
   "artifactSha256": {
+    "dist/assets/engineModuleCompiler-YDsboZOq.js": "ffb3e14202c96ebda1fc87a1e22beed1a39a135b0b008eea27de34a5a13a721f",
     "dist/assets/engineModuleWorker-_-fycvIC.js": "f7684db4ac6d83a9e8bc67986b80ff839ab0040c859da9e070feab378565e704",
     "dist/assets/worker-BjWXu86u.js": "84c9347f4ecc82c85444ba985e4bcc7077a476d85afd135b7f42c967a62a27ec",
-    "dist/assets/index-CE_3pPK3.js": "c698941077ca5c5a59257713f414aae311f340c55a316b54fb57004214f08909",
-    "dist/assets/waSqliteFactory-CoOijB62.js": "089c349179d59f74801fd413633e31ed85d48235109c808e810a03fb8d667c16",
+    "dist/assets/index-CC15Q-o0.js": "f2492bfbaa9baf356bbd02b5506007e0ef11dcc1f158808117a34499c76290c7",
     "dist/assets/wa-sqlite-async-DCIP8kAx.wasm": "de7105eb124a6d6a90bcea9b569433af50cb90eba6f1e8c3f210be6dfde7d013",
-    ".evidence/D3/ci-startup-update-failure.json": "d3a57d837118a3468bff0308404d9852993e35885cdf46a34c18836d3ca86d57",
-    "OS-temp cvc-d3-security-worker-graph.json": "860264e5838bced8905ca5f8244ceb469f458bf3aa609981af0f16e4e5dbc6fd"
+    "OS-temp cvc-d3-security-compiler-probe.json": "6a66680c883dc36f533dc6843f5f3c0cd1998a7fd30633f2cc07fe4ea70f6806",
+    "OS-temp cvc-d3-security-compiler-graph.json": "1811669c2fb7619f7400313d7fdedb9d9a0793ecd786bc73efd236843f5c46dd",
+    "OS-temp cvc-d3-integrated-compiler-verify-final.log": "70b3eae263c43a4a4fa21b7beebb519fb5278c731b065d1736a9b99aee05f1c1"
   },
   "evidenceInspected": [
-    "Followed the existing AGENTS.md/reviewer protocol and preserved security rounds 1-3. Current startup preflight: Node v24.21.0; D3 IN_PROGRESS; owner phone action NEEDS_SETUP. ci:status was unavailable from this environment, not green.",
-    "Inspected the exact code diff against a4ff839. No broker, registration, schema, factory, package pin, database filename, channel, fetch, logging or persistence change accompanies the worker-format removal.",
-    "Compared every previously recorded round-3 source blob except vite.config.ts with current files; all matched, including the SP-1 fix, startup ownership cleanup, fresh WASM instances, private MessageChannel protocol and pinned source guard.",
-    "Installed Vite primary source node_modules/vite/dist/node/chunks/node.js selects config.worker?.format || 'iife'. The root confirmed successful shared production build 83870 on the corrected source and no subsequent application change.",
-    "Independent AST inspection of final production workers, saved as OS-temp cvc-d3-security-worker-graph.mjs/json: dedicated engineModuleWorker-_-fycvIC.js is 489452 bytes and stock worker-BjWXu86u.js is 489124 bytes. Both start with a single IIFE, contain zero static/dynamic module imports and zero importScripts calls. Thus no emitted VFS chunk can back-import either worker entry. The dedicated worker contains one assignment to globalThis.__CVC_ENGINE_WORKER_STATE__; the stock SharedWorker contains none.",
-    "Scanned every final dist/assets JavaScript file for __CVC_ENGINE_DIAGNOSTIC__, instance-created, cache-miss, compile-complete and the temporary registration/broker/factory log markers. No matches. The diagnostic overlay and idempotent-registration experiment were not adopted.",
-    "Inspected emitted page worker constructors and WASM URL contexts. Worker URLs resolve against import.meta.url; the async engine asset resolves against self.location.href on the same origin. The WASM bytes still match the pinned de7105eb SHA-256. Packaging does not introduce a remote executable, third-party request, record payload or new persistent cache.",
-    "The unchanged source retains channel-specific dbFilename worker names, canonical channel preferences/caches, a page-local immutable compiled-module map and private transferred broker ports. The format change does not alter worker ownership or allow failed dedicated startup to terminate a SharedWorker.",
-    "Read .evidence/D3/ci-startup-update-failure.json and the OS-temp observe capture startup-failure-webkit.json. The original production WebKit failure occurred before course creation: registration received worker-1, entry reevaluation reset its broker list, and the factory saw zero brokers. The recorded immutable comparison reproduced the candidate failure while the previous source passed.",
-    "The recorded single-file packaging experiment, run 38698033211 at diagnostic source e12be3a, passed the original production update assertions on Chromium and WebKit. It provides fix evidence, not final exact-source full-CI approval; diagnostic logging remained confined to that experiment.",
-    "No tracked files were edited, no private-data directory was opened, no browser run was started concurrently with the orchestrator, and no production connection or external mutation was performed."
+    "Read AGENTS.md, reviewer-security-privacy.md, REVIEW_PROTOCOL.md, the D3 success predicate and startup authorisation, product section 10, scope section 4, deployment and owner workflows, and all four prior security reports. This is the existing role round 5, with no new entropy draw or whole-milestone hunt.",
+    "Runtime Node v24.21.0. Startup status: D3 IN_PROGRESS; D4/T1/UG3 PENDING; D3-PHONE-UPDATE NEEDS_SETUP; test pin UNPUBLISHED. ci:status returned fetch failed and is not a green result.",
+    "Inspected the complete production diff and compared prior recorded blobs. The factory, registration, SDK entry, schema, selected database, package/source guards, Vite packaging and both OCR/channel files are unchanged. The compiler imports no module and creates no WebAssembly.Instance, memory, database, VFS, persistent cache, record, backend or export.",
+    "Parent broker validation still requires the resolved asset URL to equal its module key and have the page origin before a compiler is constructed. The child validates request type, URL string, absolute URL syntax and its own origin before its only fetch. Messages carry an asset URL, immutable compiled code or a technical error; no course data enters the compiler.",
+    "Independent OS-temp compiler VM probe passed six synthetic cases: success, cross-origin rejection with zero fetches, malformed request rejection with zero fetches, invalid URL rejection with zero fetches, compilation rejection, and compiled-module postMessage DataCloneError converted into one error reply. The one-shot message registration was checked. This was a logic probe with mocked fetch/compilation, not browser evidence.",
+    "Reviewed parent settlement paths: valid module, error reply, malformed response, worker error, messageerror, constructor/postMessage failure and 30-second timeout all settle once. Completion removes listeners, clears the timer and terminates the code-only compiler. A rejected compile promise is evicted for explicit retry. Shared compilation belongs to the page code cache, so one failed SDK scope cannot cancel another consumer; no shared database instance or VFS is retained.",
+    "Inspected the final 11-case broker unit suite, including separate failed/surviving scope cleanup, concurrent sharing, all error paths, timeout retry, mismatched key and cross-origin rejection. The root reported 11 passes; the completed full verify log records 82 files and 1373 passing tests, lint, formatting, typecheck, repository/domain/docs checks, controller self-tests and successful production/PWA build.",
+    "Independently ran the OS-temp final production AST/precache probe. The 566-byte compiler, dedicated engine worker and stock SharedWorker are single IIFEs with zero static imports, dynamic imports or importScripts calls. The compiler has one fetch, no instance/memory creation, no storage identifiers and no engine-registration assignment. The dedicated worker has one registration assignment and the stock SharedWorker has zero. Both engine worker hashes exactly match round 4.",
+    "The final service-worker precache includes the new compiler asset and pinned async WASM. The WASM SHA-256 remains de7105eb124a6d6a90bcea9b569433af50cb90eba6f1e8c3f210be6dfde7d013. Scanning all emitted asset JavaScript found no DEV diagnostic markers. The page bundle references the emitted local compiler asset. Static inclusion supports offline delivery but does not replace a browser offline check.",
+    "The original private transferred engine MessageChannel, dedicated worker ownership and stock SharedWorker database-specific name are unchanged. New compilation uses a separate dedicated Worker, with no public window/BroadcastChannel bus and no origin-wide persistent namespace. Test/regular database, preference, OCR, speech, Workbox and service-worker configuration remains unchanged.",
+    "Inspected .evidence/D3/worker-compiler-safety.json and the bounded run log: all 35 actual browser cases passed assertions with zero retries, including original 609-row migrations, interruption/error recovery and desktop SharedWorker behavior. Chromium original upgrade/reopen was 612/282 ms; WebKit was 1567/666 ms. The runner required manual termination of its verified owned Vite server after an independently reproduced sandbox taskkill denial; this is assertion evidence, not an unattended verification PASS or final recorder.",
+    "The diagnostic macOS worker-compilation run passed the unchanged original D1 prefix, 16 cases with zero retries. It is diagnostic evidence only, not exact-source full-CI acceptance.",
+    "No tracked file was modified by this reviewer, no browser or competing build was started, no private-data directory was opened, and no production connection or external mutation was performed."
   ],
   "anglesTried": {
     "seed": null,
     "lenses": [
-      "Restricted check of the one-line production worker packaging fix and regressions it could cause in executable URLs, startup-state ownership and channel boundaries.",
-      "Final IIFE dependency graph, diagnostic stripping and preservation of the round-3 source and SP-1 cache fix."
+      "Restricted preservation of SP-1 and review of privacy/isolation regressions caused by moving immutable-code compilation into a dedicated worker.",
+      "Same-origin validation on both ends; code-only payloads and retention; malformed/error/clone settlement; private engine ports and cleanup ownership; unchanged stock SharedWorker; emitted IIFE graph, precache inclusion and diagnostic stripping."
     ],
-    "wildcard": "No new entropy draw or whole-milestone hunt. Used an independent AST probe to test whether the corrected worker graph still contains a path capable of importing and reevaluating its entry."
+    "wildcard": "No new entropy draw or whole-milestone hunt. Independently probed child protocol failures and inspected the exact generated compiler/engine worker graph."
   },
   "notTested": [
-    "Final full verification recorder and exact-source full push CI for 42ce5d8 remain pending. The obsolete recorder was interrupted after a confirmed production regression and is not a full PASS.",
-    "Final focused test-channel update and complete same-origin regular/test isolation results are still pending; this restricted static review does not replace those gates.",
-    "Live GitHub HTTPS publication, deployed identity, installed worker and persistence smoke checks remain pending.",
-    "Physical Android installation/update acceptance remains the owner's D3-PHONE-UPDATE action. No emulator, diagnostic run or security-review PASS is a physical-device PASS.",
-    "The reviewer did not rerun production browsers; the root's bounded production fix experiment was inspected as recorded evidence, while the exact final output graph was inspected independently."
+    "The final all-five D3 evidence recorder on a clean source checkpoint remains pending, including production regular/test updates and full same-origin isolation on this exact integration. Previous source results and static namespace preservation do not substitute for those gates.",
+    "Exact-source full push CI, including the macOS original first-open bound, remains pending. The prior source failed that gate; the bounded diagnostic PASS is not a waiver.",
+    "Live GitHub HTTPS publication, final test identity/headers, installed service-worker and persistence smoke checks remain pending. The test pin is still UNPUBLISHED, and the queue must not become READY until those requirements are met.",
+    "Physical Android installation/update acceptance remains the owner D3-PHONE-UPDATE action. No desktop, emulated, synthetic-probe or reviewer PASS is a physical-device PASS.",
+    "The reviewer ran only read-only source/artifact inspections and VM probes. Actual browser evidence was inspected from the root run rather than rerun concurrently. Compiler-to-page clone failure was simulated; modern target browser execution is covered by the bounded browser cases, not a claim about every browser runtime."
   ]
 }

@@ -28,7 +28,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | H1 | Complete. Documents in the `docs/DOCS_SYSTEM.md` layout; unit tests 287 s to 71 s; browser suite not shown faster (target missed, accepted by the owner); retrospective not delivered. See `.evidence/H1/`. |
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
-| D3 | In progress: local all-five recorder and full Linux CI pass on `fd5657b`; full macOS CI fails the original first-open timing bound. Compilation diagnosis continues with limits and rows unchanged. Publication is withheld. See `.evidence/D3/ci-cold-compilation-failure.json` and `docs/OWNER_TODO.md`. |
+| D3 | In progress: the code-only compiler worker passes original startup and recovery assertions; final checks, restricted reviews and exact CI remain. The prior macOS failure is preserved; rescued sandbox teardown is not final verification. Publication remains withheld. See `.evidence/D3/worker-compiler-safety.json` and `docs/OWNER_TODO.md`. |
 | D4, T1, UG3 | Pending. D4 and T1 may continue past explicitly permitted AWAITING_OWNER predecessors; UG3 waits for all required owner acceptance. |
 
 ## Execution order

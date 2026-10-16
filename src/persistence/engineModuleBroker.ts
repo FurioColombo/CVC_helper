@@ -66,25 +66,74 @@ function isDataCloneError(error: unknown) {
   )
 }
 
-async function compileModule(url: string) {
-  const controller = new AbortController()
-  let timeout: number | undefined
+function compileModule(url: string): Promise<WebAssembly.Module> {
+  // This producer belongs to the page's immutable-code cache. One database
+  // consumer failing must not cancel compilation for another pending open.
+  return new Promise((resolve, reject) => {
+    let worker: Worker | undefined
+    let timeout: number | undefined
+    let settled = false
 
-  const compilePromise = WebAssembly.compileStreaming(
-    fetch(url, { signal: controller.signal }),
-  )
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeout = window.setTimeout(() => {
-      controller.abort()
-      reject(new Error("Timed out compiling the PowerSync WASM module"))
-    }, MODULE_COMPILE_TIMEOUT_MS)
+    const finish = (error?: Error, module?: WebAssembly.Module) => {
+      if (settled) return
+      settled = true
+      if (timeout !== undefined) window.clearTimeout(timeout)
+      worker?.removeEventListener("message", onMessage)
+      worker?.removeEventListener("error", onError)
+      worker?.removeEventListener("messageerror", onMessageError)
+      worker?.terminate()
+      if (module) resolve(module)
+      else reject(error ?? new Error("Invalid PowerSync compiler result"))
+    }
+    const onMessage = (event: MessageEvent<unknown>) => {
+      const result = event.data
+      if (typeof result === "object" && result !== null) {
+        if (
+          "type" in result &&
+          result.type === "compiled" &&
+          "module" in result &&
+          result.module instanceof WebAssembly.Module
+        ) {
+          finish(undefined, result.module)
+          return
+        }
+        if (
+          "type" in result &&
+          result.type === "error" &&
+          "message" in result &&
+          typeof result.message === "string"
+        ) {
+          finish(new Error(result.message))
+          return
+        }
+      }
+      finish(new Error("PowerSync compiler sent an invalid result"))
+    }
+    const onError = (event: ErrorEvent) => {
+      finish(new Error(event.message || "PowerSync compiler worker failed"))
+    }
+    const onMessageError = () => {
+      finish(new Error("Could not receive the compiled PowerSync module"))
+    }
+
+    try {
+      worker = new Worker(
+        new URL("./engineModuleCompiler.ts", import.meta.url),
+        {
+          type: "module",
+        },
+      )
+      worker.addEventListener("message", onMessage)
+      worker.addEventListener("error", onError)
+      worker.addEventListener("messageerror", onMessageError)
+      timeout = window.setTimeout(() => {
+        finish(new Error("Timed out compiling the PowerSync WASM module"))
+      }, MODULE_COMPILE_TIMEOUT_MS)
+      worker.postMessage({ type: "compile-module", moduleUrl: url })
+    } catch (error) {
+      finish(error instanceof Error ? error : new Error(String(error)))
+    }
   })
-
-  try {
-    return await Promise.race([compilePromise, timeoutPromise])
-  } finally {
-    if (timeout !== undefined) window.clearTimeout(timeout)
-  }
 }
 
 async function answerModuleRequest(
