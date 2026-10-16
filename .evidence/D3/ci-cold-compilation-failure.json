@@ -203,6 +203,24 @@
     "log": "OS-temp cvc-d3-compiler-worker-116724573521.log",
     "logSha256": "59f9b4b3bbcb4a41830da537dc7c73958822438e3aa1c59760eff1faf94797ad",
     "qualification": "Original same-page fixture, assertions and limits retained. Short-lived compiler creates no SDK, database, instance or VFS. Other unbounded prefix opens compile more slowly; full source verification remains required. No diagnostic flags, sibling-seed helper or temporary workflow adopted.",
-    "adoption": "Clean production integration and safety verification in progress; acceptance not yet recorded."
+    "adoption": "Clean production worker integration accepted on0fffc1f after required restricted reviews, clean all-five recorder and exact full CI."
+  },
+  "resolvedBy": {
+    "sourceCommit": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
+    "run": 38853717970,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38853717970",
+    "status": "PASS",
+    "linux": {
+      "passed": 196,
+      "originalSkips": 47,
+      "flakyTests": []
+    },
+    "macos": {
+      "passed": 260,
+      "originalSkips": 65,
+      "flakyTests": []
+    },
+    "proof": "ci-compiler-worker-fix.json",
+    "qualification": "Historical failure and diagnostic arms remain unchanged; new clean production integration passes required gates."
   }
 }

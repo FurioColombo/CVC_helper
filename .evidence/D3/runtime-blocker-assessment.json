@@ -2,7 +2,7 @@
   "milestone": "D3",
   "date": "2026-10-16",
   "kind": "AUTHORIZED_STARTUP_INTEGRATION_PROGRESS",
-  "status": "CODE_ONLY_COMPILER_FIX_UNDER_VERIFICATION",
+  "status": "SOURCE_FIX_VERIFIED_PUBLICATION_PENDING",
   "formalReview": false,
   "source": "33ac7c927d602d9f322c55ab83e981f0a7651b06",
   "diagnostic": {
@@ -120,12 +120,12 @@
     "location": "Shared working checkout after7062d4c",
     "proof": "startup-integration.json",
     "safety": "12 recovery +1 real SharedWorker +2 exact ready-deadline PASS without retries",
-    "reviews": "DI5, regression14, field9, security4 and sync-chaos2 zero blockers; previous formal FAIL reports/counts retained.",
-    "quick": "81 files/1362tests PASS Node24.21.0",
-    "sourceAccepted": false,
-    "remaining": "Clean compiler-worker fix needs final recorder, required restricted reviews and exact full green CI. Prior fd5657b local PASS does not waive macOS failure. Timing bounds, original fixtures and retries unchanged.",
+    "reviews": "DI6/RH15/security5/sync3 zero blockers; unchanged field9 retained; all previous formal FAIL reports/counts preserved.",
+    "quick": "82files/1373tests PASS; final all-five recorderPASS on clean0fffc1f Node24.21.0",
+    "sourceAccepted": true,
+    "remaining": "Final evidence checkpoint exactgreenCI; publish0.4.0 and verify liveHTTPS; ownerREADY/AWAITING_OWNER; eligible D4/T1 then continue.",
     "packagingFix": "ci-startup-update-failure.json",
-    "finalRecorder": "PASS all five at fd5657b, source digest matches; final-source-focused-proof.json"
+    "finalRecorder": "PASS all five on0fffc1f; current digest and fullCI match"
   },
   "compilerWorkerFix": {
     "baseline": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
@@ -134,7 +134,23 @@
     "qualification": "35 original browser assertions pass; sandbox-denied server termination was rescued, not unattended verification. Final recorder runs with needed process permissions.",
     "unitTests": 11,
     "typecheck": "PASS after correcting test-only Node/DOM listener and tuple types",
-    "review": "data-integrity round6 zero blockers; other follow-ups pending",
-    "accepted": false
+    "review": "DI6/RH15/security5/sync3 zero blockers; unchanged field9",
+    "accepted": true,
+    "ci": {
+      "sourceCommit": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
+      "run": 38853717970,
+      "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38853717970",
+      "status": "PASS",
+      "linux": {
+        "passed": 196,
+        "originalSkips": 47,
+        "flakyTests": []
+      },
+      "macos": {
+        "passed": 260,
+        "originalSkips": 65,
+        "flakyTests": []
+      }
+    }
   }
 }

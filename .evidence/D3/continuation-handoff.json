@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "runtime": "v24.21.0",
   "branch": "codex/0.4.0",
-  "latestCheckpoint": "382fe7434cb8036e94be79b02eb7c2571acf9e67",
+  "latestCheckpoint": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
   "status": "IN_PROGRESS",
   "completed": [
     "Mobile copy/share wrapper containment at7062d4c; image renderer/masks/limits unchanged; independent field8 and regression11 zero blockers.",
@@ -19,24 +19,24 @@
     "fd5657b descriptive source checkpoint; current verify:quick81files/1362tests PASS112.46s, verify:domainPASS, all six canonical reviews zero blockers. Full source gates are running; no acceptance inferred.",
     "Final clean fd5657b all-five recorderPASS; focus127PASS47originalskips0flakes; production regular/testpatch notes preserved; same-origin two-engine isolationPASS, source digest matches. Raw report/log copied to OS-temp outside browser output cleanup.",
     "Clean code-only compiler worker integration: same-origin immutable code only; bounded30s/terminate allpaths; independent compiler promise survives one failed database consumer. New11-unit proof and82files1373tests fullverifyPASS. Original35browserassertions pass but sandbox-rescued teardown is not finalrecordedPASS; worker-compiler-safety.json preserves qualification.",
-    "Required restricted compiler follow-ups: DI6/RH15/security5/sync3 zero blockers; unchanged field9 retained. Prior FAIL history/counts and current self-review exact-CI blocker retained truthfully."
+    "Required restricted compiler follow-ups: DI6/RH15/security5/sync3 zero blockers; unchanged field9 retained. Prior FAIL history/counts and current self-review exact-CI blocker retained truthfully.",
+    "Final clean0fffc1f all-five recorderPASS, sourceDigestc6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d. Focus127PASS47originalskips0flakes and normal unattended shutdown; both production patch updates preserve notes; both-engine same-origin isolationPASS. LinuxfullCI196PASS47skips; macOS remains pending.",
+    "ExactfullsourceCI38853717970 PASS on0fffc1f: Linux196PASS47originalskips and Mac260PASS65originalskips; both downloaded flaky artifacts empty. CI-COLD-COMPILE self-review blocker resolved from actual evidence."
   ],
   "uncommittedWork": [
-    "Root-owned clean compiler worker integration, broker lifecycle cleanup and technical decision clarification; focused safety tests running. Test-only unit file delegated to the existing bounded implementer. No other unfinished work erased.",
-    "All temporary diagnostic clones and prior raw proofs preserved. No temporary compiler mode, seeding helper or diagnostic CI workflow adopted."
+    "Only current recorder evidence and this live handoff; application/test source is committed and pushed as0fffc1f. Do not push metadata until that source full CI passes.",
+    "All scratch clones, raw browser/CI logs and renderer diagnostics remain preserved outside tracked source."
   ],
   "currentBlocker": {
-    "kind": "FINAL_RECORDER_AND_EXACT_CI_PENDING",
-    "reason": "Clean compiler fix and required independent reviews pass; fresh all-five recorder and exact full new-source CI remain before publication. No owner input is needed for these agent gates.",
-    "evidence": "ci-cold-compilation-failure.json",
+    "kind": "FINAL_EVIDENCE_CHECKPOINT_AND_PUBLICATION_PENDING",
+    "reason": "All required source checks/reviews and full exact Linux/macOS CI now pass. Prepare final metadata checkpoint, obtain exact green CI, publish verified0.4.0 and prove liveHTTPS before READY.",
     "ownerInputNeeded": false
   },
   "remainingAcceptance": [
-    "Resolve current Mac cold compiler regression, restricted reviews if source changes, fresh all-five recorder and full exact green CI before publication.",
-    "Wait for exact full green source CI before pushing metadata-only evidence checkpoint; obtain its exact green CI.",
-    "Publish0.4.0 only from that verified checkpoint; prove live HTTPS identity/persistence/worker on both engines.",
-    "Use owner:update READY and milestone:await-owner, checkpoint readiness then continue eligible D4 and T1.",
-    "After explicit owner0.4.0 installation report, publish0.4.1 from same pinned source/address; never infer physical PASS."
+    "Commit current verified evidence and obtain exact green metadata-checkpoint CI without replacing tested application source.",
+    "Publish0.4.0 from that exact verified checkpoint and prove liveHTTPS identity/persistence/serviceworker on both engines.",
+    "Use owner:update READY, announce link/versions/phone steps and milestone:await-owner; checkpoint readiness with exact green CI, then continue eligible D4 and T1.",
+    "Publish0.4.1 only after explicit owner0.4.0installation report, from same pinned source/address; no physicalPASS inferred."
   ],
   "ownerActions": {
     "queueItem": "D3-PHONE-UPDATE",
@@ -56,10 +56,25 @@
     "preparedFiles": "OS-temp cvc-d3-live-https-smoke.mjs, cvc-d3-owner-ready.json and cvc-d4-preparation.md are drafts, not acceptance proof."
   },
   "ci": {
-    "source": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
-    "run": 38816257215,
-    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38816257215",
-    "status": "FAIL_MACOS_1_CASE_LINUX_PASS"
+    "sourceCommit": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
+    "run": 38853717970,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38853717970",
+    "status": "PASS",
+    "linux": {
+      "passed": 196,
+      "originalSkips": 47,
+      "flakyTests": []
+    },
+    "macos": {
+      "passed": 260,
+      "originalSkips": 65,
+      "flakyTests": []
+    },
+    "jobs": {
+      "linux": 116820391430,
+      "macos": 116820391650
+    },
+    "proof": "ci-compiler-worker-fix.json"
   },
   "diagnostic": {
     "run": 38823234859,
@@ -76,39 +91,43 @@
   ],
   "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS.",
   "finalRecorder": {
-    "source": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+    "source": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
     "status": "PASS",
-    "command": "npm run evidence -- D3",
+    "command": "CVC_EVIDENCE_REFRESH=D3; npm run evidence -- D3",
     "canonicalOutput": ".evidence/D3/verification.json",
-    "refreshes": "CVC_EVIDENCE_REFRESH=D3; start after reviews on committed source, no implementation edits during run.",
-    "previousInterruptedLog": "Ignored test-results/d3-42ce5d8-recorder.log",
-    "log": "Ignored test-results/d3-fd5657b-recorder.log",
-    "sourceDigest": "74221ac46e5d5ced216ba0cf7611534209e463af1a6927ba6ea1843250c208fb",
-    "workingTreeClean": true,
+    "log": "OS-temp cvc-d3-0fffc1f-recorder.log",
+    "processPermissions": "Escalated so Playwright can cleanly terminate its own server; no manual intervention in this final run.",
+    "sourcePolicy": "No source edits during recording. Prior fd5657b all-five PASS remains in Git and final-source-focused-proof.json, not acceptance for this compiler fix.",
     "checks": [
       {
         "command": "npm run verify",
-        "status": "PASS"
+        "status": "PASS",
+        "durationMs": 143915
       },
       {
         "command": "npm run verify:e2e:focus",
-        "status": "PASS"
+        "status": "PASS",
+        "durationMs": 1438230
       },
       {
         "command": "npm run check:update",
-        "status": "PASS"
+        "status": "PASS",
+        "durationMs": 51474
       },
       {
         "command": "npm run check:update:test",
-        "status": "PASS"
+        "status": "PASS",
+        "durationMs": 37418
       },
       {
         "command": "npm run check:test-isolation",
-        "status": "PASS"
+        "status": "PASS",
+        "durationMs": 241666
       }
     ],
+    "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+    "workingTreeClean": true,
     "flakyTests": [],
-    "rawProofs": "OS-temp directory named by cvc-d3-fd5657b-verification-location.txt",
-    "sourceQualification": "The stored all-five PASS still describes fd5657b, not the new compiler-worker fix; must refresh after current reviews on committed source."
+    "rawProofs": "OS-temp directory named by cvc-d3-0fffc1f-verification-location.txt"
   }
 }

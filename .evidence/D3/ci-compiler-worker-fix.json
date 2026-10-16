@@ -1,0 +1,66 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
+  "run": 38853717970,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38853717970",
+  "status": "PASS",
+  "completedAt": "2026-10-16T05:40:17Z",
+  "jobs": [
+    {
+      "id": 116820391430,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-16T05:02:42Z",
+      "completedAt": "2026-10-16T05:18:31Z"
+    },
+    {
+      "id": 116820391650,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-16T05:02:47Z",
+      "completedAt": "2026-10-16T05:40:16Z"
+    }
+  ],
+  "linux": {
+    "passed": 196,
+    "originalSkips": 47,
+    "flakyTests": [],
+    "log": "OS-temp cvc-d3-0fffc1f-linux-ci.log",
+    "logSha256": "e2da04453e2b7b8faccaaad297b04f6002a0758c32f8f2a0de18903797856f96"
+  },
+  "macos": {
+    "summary": [
+      "2026-10-16T05:40:04.4027740Z   65 skipped",
+      "2026-10-16T05:40:04.4028840Z   260 passed (29.7m)",
+      "2026-10-16T05:40:04.4225690Z ##[notice]  65 skipped",
+      "  260 passed (29.7m)"
+    ],
+    "flakyTests": [],
+    "log": "OS-temp cvc-d3-0fffc1f-macos-ci.log",
+    "logSha256": "27ae8f55c6eb6b253da161cc6fbfc509bb267a684022f9eed4c5a5888345325a",
+    "passed": 260,
+    "originalSkips": 65
+  },
+  "flakyArtifacts": [
+    {
+      "name": "e2e-flaky-macos-15-38853717970",
+      "id": 12027646634,
+      "sha256": "8600a8b01955b675995442ee906f32b3dfe3b08170b4aa67ad3820d10ff2b6d8",
+      "flakyTests": []
+    },
+    {
+      "name": "e2e-flaky-ubuntu-latest-38853717970",
+      "id": 12027136881,
+      "sha256": "538db20063fda5353a64083873661a1f64458d165344a65bc3dcd27e6ce3d7d0",
+      "flakyTests": []
+    }
+  ],
+  "rawArtifacts": "OS-temp directory named by cvc-d3-0fffc1f-ci-location.txt",
+  "unchanged": "Both original5000ms bounds, all609rows/40students/520evaluations, original browser workload/retries/skips, SDK/VFS/schema and private integration pins.",
+  "priorFailure": "ci-cold-compilation-failure.json preserves failedfd5657b and compiler controls.",
+  "localRecorder": "verification.json PASS allfive on same source",
+  "publication": "PENDING_FINAL_EVIDENCE_CHECKPOINT_AND_LIVE_HTTPS",
+  "physicalPass": false
+}

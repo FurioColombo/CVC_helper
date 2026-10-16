@@ -1,6 +1,6 @@
 {
   "milestone": "D3",
-  "recordedAt": "2026-10-15T22:49:48.286Z",
+  "recordedAt": "2026-10-16T05:30:49.869Z",
   "source": "scripts/check-update-journey.mjs (npm run check:update:test)",
   "base": "/CVC_helper_test/",
   "installedVersion": "0.4.0",
@@ -11,7 +11,7 @@
       "engine": "chromium",
       "browserVersion": "151.0.7922.34",
       "secondsFromForegroundToWorkerRequest": 0.004,
-      "secondsFromForegroundToOffer": 0.2,
+      "secondsFromForegroundToOffer": 0.19,
       "editSurvived": true,
       "versionShownAfterUpdate": "0.4.1",
       "updatedNoteShown": true,
@@ -193,7 +193,7 @@
     {
       "engine": "webkit",
       "browserVersion": "26.5",
-      "secondsFromForegroundToWorkerRequest": 0.006,
+      "secondsFromForegroundToWorkerRequest": 0.008,
       "secondsFromForegroundToOffer": 0.33,
       "editSurvived": true,
       "versionShownAfterUpdate": "0.4.1",

@@ -1,40 +1,87 @@
 {
   "milestone": "D3",
-  "sourceCommit": "fd5657bcdbfa3b810382f495af4eca7dccb91414",
+  "sourceCommit": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
+  "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
   "runtime": "v24.21.0",
-  "command": "npm run verify:e2e:focus (within final all-five recorder)",
-  "status": "PASS",
-  "stats": {
-    "startTime": "2026-10-15T22:22:41.521Z",
-    "duration": 1535790.011,
-    "expected": 127,
-    "skipped": 47,
-    "unexpected": 0,
-    "flaky": 0
+  "status": "FINAL_RECORDER_AND_EXACT_FULL_CI_PASS",
+  "recorder": {
+    "command": "npm run evidence -- D3",
+    "allFivePassed": true,
+    "workingTreeClean": true,
+    "checks": [
+      {
+        "command": "npm run verify",
+        "status": "PASS",
+        "durationMs": 143915
+      },
+      {
+        "command": "npm run verify:e2e:focus",
+        "status": "PASS",
+        "durationMs": 1438230
+      },
+      {
+        "command": "npm run check:update",
+        "status": "PASS",
+        "durationMs": 51474
+      },
+      {
+        "command": "npm run check:update:test",
+        "status": "PASS",
+        "durationMs": 37418
+      },
+      {
+        "command": "npm run check:test-isolation",
+        "status": "PASS",
+        "durationMs": 241666
+      }
+    ],
+    "flakyTests": []
   },
-  "flaky": [],
-  "report": {
-    "location": "OS-temp directory named by cvc-d3-fd5657b-verification-location.txt / e2e-report.json",
-    "sha256": "922b54a13029437c373981f9b5a461b7f1e3a33f57dcfae774858d4876b558cb"
+  "focused": {
+    "stats": {
+      "startTime": "2026-10-16T05:05:24.026Z",
+      "duration": 1436940.7540000002,
+      "expected": 127,
+      "skipped": 47,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "reportSha256": "c5a271a5017ef16d0d2ac71915e21747bf12c813da5a91a0d3be78ad0ee2fe3d",
+    "normalUnattendedShutdown": true
   },
-  "cold": [
+  "measurements": [
     {
       "project": "pixel-7-chrome",
-      "result": "passed",
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "status": "passed",
       "retry": 0,
-      "upgradeMs": 1091,
-      "reopenMs": 365,
-      "priorEventCount": 0,
+      "migration": "609/609 rows (expected 609); upgrade 791 ms (create 2, adapter init 395, SDK ready after adapter 135, total init 529, prepare 261); reopen 417 ms (create 1, adapter init 356, SDK ready after adapter 25, total init 381, prepare 36); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 66/3 ms and 64/2 ms"
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "title": "upgrades and reopens a 40-student course within five seconds each",
+      "status": "passed",
+      "retry": 0,
+      "migration": "609/609 rows (expected 609); upgrade 1591 ms (create 2, adapter init 240, SDK ready after adapter 357, total init 597, prepare 992); reopen 697 ms (create 1, adapter init 201, SDK ready after adapter 261, total init 462, prepare 234); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 610/15 ms and 686/19 ms"
+    },
+    {
+      "project": "pixel-7-chrome",
+      "title": "cold upgrade, close/reopen, and IDB reset preserve engine lifecycle",
+      "status": "passed",
+      "retry": 0,
+      "upgradeMs": 1071,
+      "reopenMs": 362,
       "rows": 609,
       "reopenRows": 609,
-      "students": 40,
-      "evaluations": 520,
-      "reopenedIdentical": true,
+      "injectedStudents": 40,
+      "injectedEvaluations": 520,
+      "identical": true,
       "rowIssues": [],
       "reopenRowIssues": [],
+      "compileMs": 43,
       "compileCount": 1,
-      "freshWorkers": 2,
-      "freshInstances": 2,
+      "distinctSdkWorkers": 2,
+      "distinctInstances": 2,
       "lifecycle": {
         "markerObservedAfterIndependentWrite": true,
         "reopenedRows": 609,
@@ -47,21 +94,22 @@
     },
     {
       "project": "iphone-13-webkit-core",
-      "result": "passed",
+      "title": "cold upgrade, close/reopen, and IDB reset preserve engine lifecycle",
+      "status": "passed",
       "retry": 0,
-      "upgradeMs": 2204,
-      "reopenMs": 843,
-      "priorEventCount": 0,
+      "upgradeMs": 2209,
+      "reopenMs": 868,
       "rows": 609,
       "reopenRows": 609,
-      "students": 40,
-      "evaluations": 520,
-      "reopenedIdentical": true,
+      "injectedStudents": 40,
+      "injectedEvaluations": 520,
+      "identical": true,
       "rowIssues": [],
       "reopenRowIssues": [],
+      "compileMs": 59,
       "compileCount": 1,
-      "freshWorkers": 2,
-      "freshInstances": 2,
+      "distinctSdkWorkers": 2,
+      "distinctInstances": 2,
       "lifecycle": {
         "markerObservedAfterIndependentWrite": true,
         "reopenedRows": 609,
@@ -73,53 +121,37 @@
       }
     }
   ],
-  "cases": [
-    {
-      "project": "pixel-7-chrome",
-      "title": "upgrades and reopens a 40-student course within five seconds each",
-      "result": "passed",
-      "retry": 0,
-      "annotations": [
-        {
-          "type": "migration",
-          "description": "609/609 rows (expected 609); upgrade 772 ms (create 3, adapter init 379, SDK ready after adapter 127, total init 506, prepare 264); reopen 372 ms (create 1, adapter init 310, SDK ready after adapter 26, total init 335, prepare 36); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 70/3 ms and 66/2 ms"
-        }
-      ]
+  "productionUpdates": {
+    "regular": "0.3.0→0.3.1 offers0.19/0.34s, typed notes retained",
+    "test": "0.4.0→0.4.1 offers0.19/0.33s, typed notes retained",
+    "report": ".evidence/D3/browser-evidence.json"
+  },
+  "isolation": {
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "status": "PASS",
+    "report": ".evidence/D3/test-isolation.json",
+    "proof": "Same origin; actual UI CRUD/erase, regular course/preferences/model-cache bytes preserved, real OCR key writes/deletes and offline reopening with negative controls."
+  },
+  "rawProofs": "OS-temp directory named by cvc-d3-0fffc1f-verification-location.txt",
+  "ci": {
+    "sourceCommit": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
+    "run": 38853717970,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38853717970",
+    "status": "PASS",
+    "linux": {
+      "passed": 196,
+      "originalSkips": 47,
+      "flakyTests": []
     },
-    {
-      "project": "iphone-13-webkit-core",
-      "title": "upgrades and reopens a 40-student course within five seconds each",
-      "result": "passed",
-      "retry": 0,
-      "annotations": [
-        {
-          "type": "migration",
-          "description": "609/609 rows (expected 609); upgrade 1552 ms (create 2, adapter init 222, SDK ready after adapter 333, total init 555, prepare 995); reopen 727 ms (create 1, adapter init 214, SDK ready after adapter 279, total init 493, prepare 233); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 622/16 ms and 669/32 ms"
-        }
-      ]
-    },
-    {
-      "project": "pixel-7-chrome",
-      "title": "a real same-page prewarm cannot be reported as a cold pass",
-      "result": "passed",
-      "retry": 0,
-      "annotations": []
-    },
-    {
-      "project": "iphone-13-webkit-core",
-      "title": "a real same-page prewarm cannot be reported as a cold pass",
-      "result": "passed",
-      "retry": 0,
-      "annotations": []
-    },
-    {
-      "project": "desktop-chrome-storage",
-      "title": "stock desktop SharedWorker survives one tab closing and preserves cross-tab write guards",
-      "result": "passed",
-      "retry": 0,
-      "annotations": []
+    "macos": {
+      "passed": 260,
+      "originalSkips": 65,
+      "flakyTests": []
     }
-  ],
-  "physicalPass": false,
-  "qualification": "Local all-five recorderPASS, but exact full macOS CI FAIL original first-open compiler bound. New cold control is not used to waive it; publication withheld."
+  },
+  "publication": "PENDING_FINAL_EVIDENCE_CHECKPOINT_AND_LIVE_HTTPS",
+  "physicalPass": false
 }
