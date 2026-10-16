@@ -50,7 +50,8 @@
     "Final clean fd5657b repository recorder PASS all five scripts on Node24.21.0; source digest matches current checkout. Focus127PASS47originalskips0flakes/0failed, both strict5000ms cold and original large-upgrade cases PASS0retry. Regular and test production updates preserve typed notes in both engines; same-origin CRUD/erase preserves regular course/preferences/OCR bytes/offline app. final-source-focused-proof.json retains measurements; exactfull macOS CI and live publication remain pending.",
     "Compiler-worker candidate reviewed for URL validation, immutable-only cache ownership, fresh SDK instances, bounded cleanup, explicit retry and shared-consumer lifetime. Required restricted DI6/RH15/security5/sync3 have zero blockers; UI unchanged from field9. FullverifyPASS, finalrecordedall5/exactCI pending.",
     "Final clean0fffc1f all-five recorderPASS on Node24.21.0; digestc6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d. Focus127PASS47originalskips0flakes with normal unattendedshutdown. Production regular/test updates retain typednotes; two-engine actualsame-origin CRUD/erase/OCR-key/offline isolationPASS.",
-    "ExactfullCI38853717970 PASS: Linux196PASS47originalskips; macOS260PASS65originalskips. Both downloaded flaky artifacts are empty. OriginalMacfirstopenfailure and unadopted controls remain in ci-cold-compilation-failure.json."
+    "ExactfullCI38853717970 PASS: Linux196PASS47originalskips; macOS260PASS65originalskips. Both downloaded flaky artifacts are empty. OriginalMacfirstopenfailure and unadopted controls remain in ci-cold-compilation-failure.json.",
+    "Permanent CVC Helper Test0.4.0 published from exact green761530f. LiveHTTPS/build-info/manifest200 match pinnedsource/version/scope/id. ActualChromium/WebKit UI course/student/settings persistence and reloadPASS; regular app stays available and separate;0pageerrors. Both live-settings captures inspected:Versione0.4.0 and reachableupdate/displaycontrols. No physicalPASS."
   ],
   "itemProofs": {
     "compatibility": "Canonical version table and in-lock guard tests; d3-read-only and migration journeys.",
@@ -231,9 +232,9 @@
       "sync-chaos-review-round-3.json"
     ],
     "proof": "worker-compiler-safety.json; all35browserassertions pass with explicit environment teardown qualification. Fullverify82files1373tests and currentbuiltPWA pass.",
-    "remaining": "Final evidence checkpoint exact CI, permanent0.4.0publication and liveHTTPSproof, then ownerqueueREADY/AWAITING_OWNER. Physicalphonecheck remains open."
+    "remaining": "Required owner installation/update report; lifecycleawait-owner capture and readinessmetadataCI. Active0.4.0staysfixed;0.4.1waits explicit owner installreport fromsame source/address."
   },
-  "acceptanceStatus": "AGENT_CHECKS_PASS_PUBLICATION_AND_OWNER_PENDING",
+  "acceptanceStatus": "AGENT_CHECKS_AND_LIVE_HTTPS_PASS_OWNER_PENDING",
   "resolvedRuntimeGate": {
     "id": "CI-COLD-COMPILE",
     "title": "Original Mac 40-student first open exceeds the unchanged5000ms bound",
@@ -244,5 +245,16 @@
     "status": "FIXED_AND_VERIFIED",
     "resolvedSource": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
     "proof": "ci-compiler-worker-fix.json; final-source-focused-proof.json"
+  },
+  "publication": {
+    "status": "PASS",
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "version": "0.4.0",
+    "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+    "publishedCommit": "4ea4c098cbab7b6dcfbf6442e349d7a4503a14ed",
+    "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
+    "proof": "deployment-evidence.json; publication-recovery.json",
+    "sourcePinned": true,
+    "ownerInstalled": false
   }
 }

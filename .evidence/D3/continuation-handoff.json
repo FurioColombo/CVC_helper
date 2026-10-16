@@ -3,8 +3,8 @@
   "date": "2026-10-16",
   "runtime": "v24.21.0",
   "branch": "codex/0.4.0",
-  "latestCheckpoint": "0fffc1f18e038de095f37bc79ffcea4eca5ea377",
-  "status": "IN_PROGRESS",
+  "latestCheckpoint": "761530f820908db8355e1bcdd661bc8c6f495385",
+  "status": "AWAITING_OWNER",
   "completed": [
     "Mobile copy/share wrapper containment at7062d4c; image renderer/masks/limits unchanged; independent field8 and regression11 zero blockers.",
     "Pinned startup integration copied from preserved temporary candidate into shared checkout; only immutable compiled module reused, fresh worker/engine/memory/VFS per dedicated open; stock desktop SharedWorker remains.",
@@ -21,32 +21,34 @@
     "Clean code-only compiler worker integration: same-origin immutable code only; bounded30s/terminate allpaths; independent compiler promise survives one failed database consumer. New11-unit proof and82files1373tests fullverifyPASS. Original35browserassertions pass but sandbox-rescued teardown is not finalrecordedPASS; worker-compiler-safety.json preserves qualification.",
     "Required restricted compiler follow-ups: DI6/RH15/security5/sync3 zero blockers; unchanged field9 retained. Prior FAIL history/counts and current self-review exact-CI blocker retained truthfully.",
     "Final clean0fffc1f all-five recorderPASS, sourceDigestc6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d. Focus127PASS47originalskips0flakes and normal unattended shutdown; both production patch updates preserve notes; both-engine same-origin isolationPASS. LinuxfullCI196PASS47skips; macOS remains pending.",
-    "ExactfullsourceCI38853717970 PASS on0fffc1f: Linux196PASS47originalskips and Mac260PASS65originalskips; both downloaded flaky artifacts empty. CI-COLD-COMPILE self-review blocker resolved from actual evidence."
+    "ExactfullsourceCI38853717970 PASS on0fffc1f: Linux196PASS47originalskips and Mac260PASS65originalskips; both downloaded flaky artifacts empty. CI-COLD-COMPILE self-review blocker resolved from actual evidence.",
+    "Permanent CVC Helper Test0.4.0 published from exact green761530f; build-info/manifest/scope and actual liveChromium/WebKit UI persistence/regularapp separationPASS. Two initial network aborts before external mutation preserved; official publisher succeeded with GitHub-only fresh connections. PinAWAITING_INSTALL; no physicalPASS."
   ],
   "uncommittedWork": [
-    "Only current recorder evidence and this live handoff; application/test source is committed and pushed as0fffc1f. Do not push metadata until that source full CI passes.",
-    "All scratch clones, raw browser/CI logs and renderer diagnostics remain preserved outside tracked source."
+    "Root-owned verifiedpublication/ownerREADY/agentReady metadata, useful live screenshots and transportrecovery record; no app/test source changes since0fffc1f.",
+    "All earlier agents scratch/diagnostic clones andrawproofs preserved; no private roster data accessed/published."
   ],
   "currentBlocker": {
-    "kind": "FINAL_EVIDENCE_CHECKPOINT_AND_PUBLICATION_PENDING",
-    "reason": "All required source checks/reviews and full exact Linux/macOS CI now pass. Prepare final metadata checkpoint, obtain exact green CI, publish verified0.4.0 and prove liveHTTPS before READY.",
+    "kind": "READINESS_METADATA_CHECKPOINT_CI_PENDING",
+    "reason": "D3 AWAITING_OWNER captured at verified761530f. Live0.4.0 ownercheckREADY and announced; save readinessmetadata and obtain exact greenCI, thenstarteligibleD4. Ownerphoneacceptance blocksD3completion/UG3, not permittedD4/T1work.",
     "ownerInputNeeded": false
   },
   "remainingAcceptance": [
-    "Commit current verified evidence and obtain exact green metadata-checkpoint CI without replacing tested application source.",
-    "Publish0.4.0 from that exact verified checkpoint and prove liveHTTPS identity/persistence/serviceworker on both engines.",
-    "Use owner:update READY, announce link/versions/phone steps and milestone:await-owner; checkpoint readiness with exact green CI, then continue eligible D4 and T1.",
-    "Publish0.4.1 only after explicit owner0.4.0installation report, from same pinned source/address; no physicalPASS inferred."
+    "Commit readiness/publication metadata and get exact greenCI; keep all captured D3 required evidence hashes intact.",
+    "Start eligible D4 then T1 while ownerphonecheck waits. Do not replace pinned0.4.0testbuild.",
+    "After explicit owner0.4.0installation report, publish0.4.1fromsame761530fsource/address and updateownerinstructions throughqueuecommands.",
+    "RequiredphysicalAndroidupdateacceptance remains pending; never inferPASS or release0.4.0beforeallowneracceptance."
   ],
   "ownerActions": {
     "queueItem": "D3-PHONE-UPDATE",
-    "state": "NEEDS_SETUP",
+    "state": "READY",
     "testSite": "https://furiocolombo.github.io/CVC_helper_test/",
-    "siteLiveVerified": false,
+    "siteLiveVerified": true,
     "firstVersion": "0.4.0",
     "secondVersion": "0.4.1",
-    "instruction": "No owner action is ready; agents finish verification/publication first. Keep0.4.0 fixed pending explicit installation report, then0.4.1 fixed pending results.",
-    "physicalPassRecorded": false
+    "instruction": "Install0.4.0once from permanentHTTPSlink and explicitlyreport installation/device/browser/Android. Then agent publishes0.4.1fromsame pinnedsource/address; physicalacceptance remainsopen.",
+    "physicalPassRecorded": false,
+    "revision": 5
   },
   "preservation": {
     "diagnosticBranch": "codex/d3-init-probe-dbc048c3e8",
@@ -85,9 +87,9 @@
     "sourceChanged": true
   },
   "mayContinue": [
-    "Complete D3 verification/CI and permanent test publication now.",
-    "Once D3 qualifies for AWAITING_OWNER, continue eligible D4 then T1 while keeping the D3 test source fixed.",
-    "UG3 waits all required owner acceptance; no physical PASS inferred."
+    "D4 may start after clean readinesscheckpoint/greenCI using D3 verifiedcompatibility contract; Androidcheck remainsopen.",
+    "T1 may follow verifiedD4 underexplicit AWAITING_OWNER permissions.",
+    "UG3 requires all predecessor/owneracceptance COMPLETE."
   ],
   "history": "Prior handoff/investigation history remains in Git through7062d4c and unchanged diagnostic/review evidence; original failures have not been relabelled PASS.",
   "finalRecorder": {
@@ -129,5 +131,35 @@
     "workingTreeClean": true,
     "flakyTests": [],
     "rawProofs": "OS-temp directory named by cvc-d3-0fffc1f-verification-location.txt"
+  },
+  "publicationCheckpoint": {
+    "commit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ciRun": 38857263745,
+    "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
+    "status": "PASS",
+    "sourceQualification": "Metadata-only descendant of full-green0fffc1f, same recorded source digest."
+  },
+  "publication": {
+    "status": "PASS",
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "version": "0.4.0",
+    "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+    "publishedCommit": "4ea4c098cbab7b6dcfbf6442e349d7a4503a14ed",
+    "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
+    "proof": "deployment-evidence.json; publication-recovery.json",
+    "sourcePinned": true,
+    "ownerInstalled": false,
+    "phase": "AWAITING_INSTALL",
+    "firstVersion": "0.4.0",
+    "secondVersion": "0.4.1",
+    "transportRecovery": "publication-recovery.json"
+  },
+  "handoffProofNormalization": {
+    "file": ".evidence/D3/field-ux-review.json",
+    "reason": "One trailing CRLF in working review file differed from repository LF; no JSON value or review finding changed.",
+    "beforeSha256": "712e070eff18f038f536924be1df254fb238fcacb51555acc505a22567f4f55c",
+    "afterSha256": "d165e43d6bb687fac2e5a28d8906b92eacdbb43c2a179aa33997abcaffb7244a",
+    "scope": "Metadata only; same staged Git review blob, source digest, verified761530f and live0.4.0. Resume/ownerupdate/await-owner recapture readiness through canonical commands.",
+    "result": "Canonical resume/owner:update/await-owner completed; same source/version/address. Captured evidence now uses repository-stable LF bytes."
   }
 }

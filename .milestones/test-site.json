@@ -6,9 +6,13 @@
   "basePath": "CVC_helper_test",
   "firstVersion": "0.4.0",
   "secondVersion": "0.4.1",
-  "sourceCommit": null,
-  "sourceDigest": null,
-  "activeVersion": null,
-  "phase": "UNPUBLISHED",
-  "ownerInstalled": null
+  "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+  "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+  "activeVersion": "0.4.0",
+  "phase": "AWAITING_INSTALL",
+  "ownerInstalled": null,
+  "gitSourceDigest": "fe6def9061a3693fc084b46b1deb8d2126ec904ea2d68ee67fb0e1c6af230e9f",
+  "publishedCommit": "4ea4c098cbab7b6dcfbf6442e349d7a4503a14ed",
+  "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
+  "publishedAt": "2026-10-16T05:59:08.447Z"
 }

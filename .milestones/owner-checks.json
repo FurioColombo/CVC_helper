@@ -5,21 +5,21 @@
       "id": "D3-PHONE-UPDATE",
       "milestone": "D3",
       "kind": "DEVICE_CHECK",
-      "title": "Check Android updates from GitHub HTTPS",
-      "status": "NEEDS_SETUP",
+      "title": "Install CVC Helper Test and check Android updates",
+      "status": "READY",
       "required": true,
-      "revision": 2,
+      "revision": 5,
       "instructions": [
-        "GitHub HTTPS is the chosen setup. Agents prepare a separate, verified test site; you need no USB connection or local server.",
-        "Wait for READY and the supplied test link. Install CVC Helper Test once on the Android home screen and use synthetic course data.",
-        "Keep that test app installed. Agents publish the next patch of the same verified source at the same address while the first version is open.",
-        "Follow docs/DEVICE_CHECKS.md under Updates and versions and report what happened."
+        "Open the supplied link in Android Chrome and install CVC Helper Test once. Check Impostazioni shows 0.4.0. Create a synthetic course and fictitious student.",
+        "Reply “D3-PHONE-UPDATE: installed 0.4.0” with your device, browser and Android version. Keep this installation. The agent then publishes 0.4.1 from the same verified source at this same address and tells you when it is ready.",
+        "After that notice, switch away from the test app, return and time the update offer. Type a student-note change and immediately tap Aggiorna; note whether Salvataggio… or Salvato was shown. Check the edit survives and Impostazioni shows 0.4.1. Do not reinstall.",
+        "With enlarged text, check Allievi + and the Equipaggi controls with a person selected. Try Cerca aggiornamenti in airplane mode. Report the link, versions, offer time, saved edit and reachable controls; follow Updates and versions in docs/DEVICE_CHECKS.md."
       ],
-      "expected": "The update offer appears within one minute without reinstalling, an unsaved edit survives the update, and the controls remain reachable.",
-      "testedCommit": null,
-      "testUrl": null,
+      "expected": "The 0.4.0 → 0.4.1 update appears within one minute of returning, without reinstalling; the typed edit survives and controls remain reachable. Only your actual phone observations can pass this check.",
+      "testedCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/D3/physical-device-review.json",
-      "updatedAt": "2026-10-12T10:37:45.173Z"
+      "updatedAt": "2026-10-16T06:09:00.750Z"
     }
   ]
 }

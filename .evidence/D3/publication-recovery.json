@@ -1,0 +1,60 @@
+{
+  "milestone": "D3",
+  "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+  "version": "0.4.0",
+  "firstAttempt": {
+    "status": "FAILED_BEFORE_EXTERNAL_MUTATION",
+    "build": "PASS builtPWA and pinnedsourcechecks",
+    "error": "Node fetch failed: write ECONNABORTED after the build, before repository upload",
+    "localPin": "UNPUBLISHED"
+  },
+  "readOnlyRecoveryCheck": {
+    "recordedAt": "2026-10-16T05:50:32.457Z",
+    "repository": "FurioColombo/CVC_helper_test",
+    "public": true,
+    "admin": true,
+    "size": 0,
+    "commitsHttpStatus": 409,
+    "commitsMessage": "Git Repository is empty.",
+    "pagesHttpStatus": 404,
+    "buildInfoHttpStatus": 404,
+    "network": "All four fresh GitHub API reads succeeded; no existing deployment to replace."
+  },
+  "next": "Keep0.4.0fixed awaiting explicit owner installation report;0.4.1only from this same pinned source/address.",
+  "ownerQueue": "NEEDS_SETUP until liveHTTPS verified",
+  "physicalPass": false,
+  "secondAttempt": {
+    "status": "FAILED_SAME_POST_BUILD_CONNECTION_ABORT",
+    "log": "OS-temp cvc-d3-761530f-publish-retry.log",
+    "logSha256": "01864a79159b1e113655e0a8bb1c4ed3a2ca6267e8e28bf3f2f25512dae847b9",
+    "localPin": "UNPUBLISHED"
+  },
+  "changedApproach": {
+    "classification": "Environment/HTTP transport; both builds and all source/publication guards passed before the repeated GitHub connection abort.",
+    "inference": "Failure after a long dependency/build interval may involve an idle HTTP connection; not asserted as a proven Node defect.",
+    "helper": "OS-temp cvc-d3-close-github-connections.mjs",
+    "scope": "Only api.github.com fetches add Connection:close. Original endpoint/method/body/auth/signal/error/status behavior and every publisher guard remain. No retry/exception is hidden, no application or publisher source changed.",
+    "probe": "Two sequential GitHub repoGET requests returned200 with Connection:close; repository still empty (size0). No headers/tokens stored or printed.",
+    "helperSha256": "c9d5dcd40d5c6c85d5c34acc05841dd2a7d1e18cbb09c517158af592deaad32f"
+  },
+  "thirdAttempt": {
+    "status": "PASS",
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "version": "0.4.0",
+    "publishedCommit": "4ea4c098cbab7b6dcfbf6442e349d7a4503a14ed",
+    "pagesCreatedHttpStatus": 201,
+    "log": "OS-temp cvc-d3-761530f-publish-fresh-connections.log",
+    "logSha256": "b7f63a6a486ccff3bcee7eaf93c8f01cd5abefafc62f6410acaf8cd66cdba592",
+    "qualification": "Official publisher and every archive/CI/review/source guard unchanged; fresh GitHub connections got past the repeated post-build network abort."
+  },
+  "liveVerification": {
+    "status": "PASS",
+    "report": "deployment-evidence.json",
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "regularAppAvailable": true,
+    "physicalAcceptance": "PENDING_OWNER"
+  }
+}
