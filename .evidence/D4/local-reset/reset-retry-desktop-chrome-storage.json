@@ -1,0 +1,9 @@
+{
+  "failureWasReportedAsPartial": true,
+  "cacheRemainingAfterRetry": false,
+  "appDatabasePresent": false,
+  "events": {
+    "pageErrors": 0,
+    "crashes": 0
+  }
+}

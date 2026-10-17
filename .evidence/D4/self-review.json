@@ -1,25 +1,33 @@
 {
   "reviewerRole": "self-review",
   "milestone": "D4",
-  "commit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
   "verdict": "FAIL",
   "blockers": [
     {
       "id": "D4-CI",
-      "title": "Current checkpoint CI is red",
-      "evidence": ".evidence/D4/ci-checkpoint-be1fa27.json",
-      "reproduction": "Linux layout and fixture failures have candidate fixes; Mac cold-open worker round trip remains unresolved.",
-      "specRef": "04_IMPLEMENTATION_PLAN.md D4 / AGENTS.md 6"
+      "title": "Exact Mac CI fails the unchanged first-open bound",
+      "evidence": "ci-checkpoint-193a250.json; CI run 39078243541",
+      "reproduction": "Mac first open takes6557/6058/6974ms versus5000ms; all609rows remain intact and reopen390/432/354ms. Worker startup and return are fast; compileStreaming API interval consumes5925/5120/6368ms. Linux217cases and local99cases pass. This failure is not waived.",
+      "specRef": "AGENTS.md 6 / docs/OWNER_WORKFLOW.md"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-R1-I1",
+      "title": "Compatible pre-D4 writers do not understand generation invalidation",
+      "evidence": "sync-chaos-review.json; 03_TECHNICAL_DECISIONS.md 3.2; visible import preview",
+      "reproduction": "Exact historical D3 guard with current browser engine can overwrite an imported same-ID note. This is a documented nonblocking compatibility boundary; close other old app tabs before import. No writer-floor change.",
+      "specRef": "03_TECHNICAL_DECISIONS.md 3.1"
     },
     {
       "id": "D4-WEBKIT-OPEN",
-      "title": "Fresh-recipient opening has an unexplained intermittent failure",
-      "evidence": ".evidence/D4/development-checks.json",
-      "reproduction": "The 22-case fix run had 21 passes and a fresh WebKit opening timeout; isolated case then passed. No retry is accepted as a fix.",
-      "specRef": "04_IMPLEMENTATION_PLAN.md D4 success predicate"
+      "title": "Earlier fresh-recipient opening failure remains a filed test intermittence",
+      "evidence": "development-checks.json; docs/working/BACKLOG.md; browser-evidence.json",
+      "reproduction": "Earlier Windows fresh recipient failed before import, then isolated retest passed. The committed checkpoint passed the complete 99-case recorder without retries and both production isolation engines. Cause remains unproven; no archive-write failure was observed. Keep the filed defect for T1 under its explicit flaky-test scope after the exact CI gate passes.",
+      "specRef": "milestone-close verification rule / 04_IMPLEMENTATION_PLAN.md T1"
     }
   ],
-  "importantFindings": [],
   "qolFindings": [
     {
       "id": "DI-R2-Q4",
@@ -37,7 +45,11 @@
     "Selected cleanup includes older exact-scope Workbox names and only the selected OCR language key. It does not delete Tesseract's shared database or sibling app storage.",
     "Reproduced desktop reset blocking after SDK close: stock jClose retains the VFS IndexedDB handle in a surviving SharedWorker. A source-hash-guarded subclass releases that existing handle only after the last successful SQLite file close. Stock storage, locks, worker entry and names remain unchanged. Closing only the worker's outer port was insufficient.",
     "Corrected test setup assumptions: scoped student menu navigation, static legacy-IDB blocker page, recipient device identity, and a valid stale student save. The held callback may remain pending after dedicated-worker termination; deletion proof never depends on that callback settling.",
-    "Corrected the reset evidence boolean to record absence rather than presence; the assertion always required the database to be absent. Current final browser evidence still needs the required recorder."
+    "Corrected the reset evidence boolean to record absence rather than presence; the assertion always required the database to be absent. Current final browser evidence still needs the required recorder.",
+    "DI-1 rejects NUL, unpaired surrogates and leading BOM in every ID/TEXT before init or writes. Independent restricted real-driver review passes unsafe and supported Unicode cases.",
+    "FU-R1-B1 and Q1 are fixed: reset text wraps at 320px/200%, radio options stack, and first-start import says Importa il corso. Both-engine independent field recheck passes blocked/partial/retry/done and cancel.",
+    "U02 fixture adopts the owner through real course creation and makes foreign references inactive; all original deletion assertions remain.",
+    "DEV-only phase measurements distinguish worker bootstrap, streaming compilation and module return. Production bundles omit those fields; no engine, VFS, worker count, warm-up, retry or bound change."
   ],
   "evidenceInspected": [
     "D4 success predicate/adversarial checklist, relevant product/scope/data-version contracts, PowerSync JavaScript/React references, field-operations rulebook, frozen P02 settings target and current P02 amendment.",
@@ -47,10 +59,15 @@
     "Focused desktop browser run: all seven course-file/reset journeys PASS, no retries, 50.6 seconds. Raw proof: OS temporary cvc-d4-desktop-fixed-proof. The later evidence-field name correction changes no assertion or app behavior.",
     "Actual production same-origin reset journey PASS on Chromium 151.0.7922.34 and WebKit 26.5: test DB/preferences/cache/SW/OCR key removed; regular full course export, preferences, cache bytes and model bytes identical; regular offline reopening uses its service worker with server transport unavailable. Raw proof: OS temporary cvc-d4-production-reset-isolation-fixed.json and .log.",
     "Visually inspected .evidence/D4/screenshots/course-files-390.png and course-files-320-200.png, plus the desktop reset-complete capture. Controls remain legible; enlarged text intentionally requires vertical scrolling.",
-    "Rechecked all nine D3 agentReady evidence hashes and unchanged test-site pin before checkpoint. Neither published app was redeployed. D3-PHONE-UPDATE remains READY awaiting explicit installation; D4-PHONE-TRANSFER is NEEDS_SETUP through the owner queue."
+    "Rechecked all nine D3 agentReady evidence hashes and unchanged test-site pin before checkpoint. Neither published app was redeployed. D3-PHONE-UPDATE remains READY awaiting explicit installation; D4-PHONE-TRANSFER is NEEDS_SETUP through the owner queue.",
+    "Exact source 193a250 required recorder PASS: verify, 99 focused cases with one original skip and zero flakes, plus full same-origin reset isolation in Chromium and WebKit. verification.json records clean source digest 9c8b1eaa480ff79ea668d68cd2f730f217cc7ad3639645b5e66a1850bcc715b0.",
+    "Final independent data-integrity R2 PASS, security/privacy R2 PASS, field-UX R2 PASS and sync-chaos R1 PASS_WITH_FINDINGS, all bound to 193a250 with zero blockers.",
+    "Visually inspected current normal-size course files, WebKit 320px/200% replacement controls, full-reset completion, first-import label and partial-reset captures. Large text intentionally requires vertical scrolling and long headings may wrap within a word.",
+    "Linux CI 39078243541 passed 217 browser cases and 47 original skips; 1428 unit tests pass. Raw log retained in OS temporary cvc-d4-ci-117529750345.log. Exact Mac result remains pending.",
+    "Rechecked all nine D3 agentReady evidence hashes after the recorder. The test-site pin remains 0.4.0 / AWAITING_INSTALL at 761530f; no publication or physical PASS."
   ],
   "notTested": [
-    "Interim self-review; independent restricted fix reviews, final recorder and exact green source CI are still required.",
+    "D4 remains IN_PROGRESS: the Mac cold-open failure requires a changed compilation-path probe, fixes if verified, affected reviews, a new recorder and exact green CI. T1 remains ineligible.",
     "Actual phone Web Share receiving-app behavior, save/import transfer, persistence permission and full-reset acceptance remain owner checks. No simulated or inferred physical PASS.",
     "Cross-device sync, accounts, backend deletion and upload conflicts are outside 0.4.0."
   ]

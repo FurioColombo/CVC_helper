@@ -1,0 +1,26 @@
+{
+  "tabs": 2,
+  "writeHeldUntilResetStarted": true,
+  "databaseAbsentBeforeHeldCallbackReleased": true,
+  "heldSaveOutcome": {
+    "status": "pending"
+  },
+  "databaseStillAbsentAfterHeldCallback": true,
+  "staleSaveOutcome": {
+    "status": "rejected",
+    "errorName": "CourseReplacedError"
+  },
+  "storage": {
+    "appDatabasePresent": false,
+    "selectedCachesRemaining": [],
+    "otherChannelCacheMarkersPreserved": true,
+    "selectedPreferencesRemaining": [],
+    "otherChannelPreferencesPreserved": true,
+    "unrelatedPreferencePreserved": true,
+    "ocrModelKeyPresent": false
+  },
+  "events": {
+    "pageErrors": 0,
+    "crashes": 0
+  }
+}

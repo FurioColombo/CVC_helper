@@ -1,0 +1,50 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D4",
+  "round": 2,
+  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "baselineCommit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "reviewedFileHashes": {
+    "src/persistence/courseArchiveFormat.ts": "512171dbe0cb8e628519c834f51bbb4113ab913b9e13f8d92e87616e8a5dde48",
+    "src/persistence/courseArchiveFormat.test.ts": "f3fbc217b39c227e2b93a278137f618e33bd7dbf1803fb6cb62e8c14d518da0e",
+    "src/test/u02DeletionHarness.ts": "414622acaf6204186466e11614a8dcd8af9bf1bf019fecc83710b64923736e07",
+    "tests/e2e/u02-deletion-integrity.spec.ts": "5515cf4fca72b297cf086037003d39cf37337b5c317c2506699ab1f378474513"
+  },
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolvedBlockers": [
+    "DI-1"
+  ],
+  "evidenceInspected": [
+    "Re-tested DI-1 from the unchanged round 1 FAIL report preserved in OS temporary cvc-d4-data-integrity-review-round1.json. Round 1 reproduced silent text changes through production importCourseArchive and the installed WA-SQLite WASM/API.",
+    "Reviewed the fix diff against be1fa27: courseArchiveFormat.ts checks every ID and TEXT column before copying rows, rejecting embedded NUL, unpaired UTF-16 surrogates and leading U+FEFF. Paired surrogates and embedded U+FEFF remain allowed. No driver, SQL, transaction or storage behavior was changed by this fix.",
+    "During the requested supported-Unicode recheck, the initial NUL/surrogate fix still accepted leading U+FEFF, which the real driver drops on read. The committed fix includes refusal of that remaining DI-1 case before writes.",
+    "Independent restricted scratch verification passed 10 tests on Node v24.21.0: npx vitest run --config test-results/d4-data-review/vitest.round2.config.ts. The unsafe-input test exercises 1,344 field/boundary combinations across every ID/TEXT field, alternating decoded-object and JSON-text imports. Every import rejects with CourseArchiveError invalid-data before database init, readTransaction or writeTransaction; all original course rows and metadata remain identical.",
+    "Nine positive scratch tests use production importCourseArchive and the actual pinned WA-SQLite WASM/API over an in-memory schema. All 13 course tables remain exact after import for multilingual text, paired surrogates including U+10000/U+10FFFF, U+FFFD and noncharacters, control whitespace, embedded BOM, literal backslash-u sequences, combining marks and parameter-bound markup.",
+    "Focused regression verification passed: npx vitest run src/persistence/courseArchiveFormat.test.ts src/persistence/courseArchive.test.ts — 2 files, 30 tests. This includes row-for-row import/export, rollback, same-ID stale-write refusal and version merging.",
+    "The passing scratch-run log is preserved in OS temporary cvc-d4-data-integrity-round2-checks.log. Scratch source/configuration are preserved in OS temporary cvc-d4-data-review; the subsequent browser runner cleared their original test-results location.",
+    "Reviewed the U02 fixture repair diff: it awaits the empty-course screen, creates/adopts the owner course through production saveActiveCourse and makes the deliberately foreign-reference course inactive. All five reference-class assertions and unused-student deletion assertion remain present; the production session guard is unchanged.",
+    "Root reported verify:quick PASS with 88 files and 1,426 tests in 95.6 seconds, plus verify:domain PASS, on the current fixes. These are reported root results, not independent executions by this reviewer.",
+    "Bound this same round 2 review to committed checkpoint 193a2506c7770bb11ee7f128ce2686b1d1e8b1a4. The working tree was clean at binding; all four recorded SHA-256 file hashes match, and their diff against that commit is empty. No new whole-milestone review was performed.",
+    "Inspected only the adjacent development compiler-timing delta in engineModuleBroker.ts and engineModuleCompiler.ts for direct data-integrity regressions. Optional finite timestamps accompany compilation results; the immutable module cache still forwards the WebAssembly.Module itself. Production fetching/compilation, database instances, database identity, VFS, writes and transactions are unchanged. Independent focused verification passed: npx vitest run src/persistence/engineModuleBroker.test.ts — 1 file, 13 tests."
+  ],
+  "anglesTried": {
+    "seed": 112018452,
+    "lenses": [
+      "1. Interruption between two writes: tab killed, screen off, app backgrounded or battery dead.",
+      "12. Two tabs of the app writing the same course."
+    ],
+    "wildcard": "Recovery boundaries where database deletion and course-generation removal interact with same-ID reuse, plus pinned VFS final-file closure.",
+    "restrictedScope": "No new entropy draw or whole-milestone hunt. Rechecked DI-1, the fix diff and regressions caused by the fix; inspected the adjacent U02 fixture repair without weakening its assertions. At checkpoint binding, inspected the adjacent DEV compiler-timing delta only for direct data-integrity regressions."
+  },
+  "notTested": [
+    "No browser was started during this restricted review because other agents owned the browser slot. The real-driver scratch adapter uses an in-memory schema rather than the browser IndexedDB VFS.",
+    "The U02 fixture repair was inspected but its browser journey was not independently executed by this reviewer.",
+    "No browser timing benchmark was executed by this reviewer. The final recorder and exact green CI remain root work; ci:status could not fetch in this review shell, and this report makes no CI-green claim.",
+    "Actual Android sharing/import, storage permission and reset acceptance remain owner checks; no physical-device PASS was inferred.",
+    "Git Bash launch was unavailable in this environment; checks used the existing PowerShell Node v24.21.0 runtime. No backend or production service was accessed."
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "reviewerRole": "field-UX",
+  "persona": "Il Nostromo",
+  "milestone": "D4",
+  "round": 2,
+  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolvedFindings": [
+    {
+      "id": "FU-R1-B1",
+      "disposition": "Verified fixed on Pixel 7 Chromium and iPhone 13 WebKit. At 320 px/200% text, blocked, partial and completed reset screens each have page width 320 and heading content width 240 equal to the heading width. Ordinary visible retry and reopen both succeed."
+    },
+    {
+      "id": "FU-R1-Q1",
+      "disposition": "Verified fixed on both engines. First-start preview offers Importa il corso, disabled until acknowledgement; Annulla removes the preview and retains the empty first-start screen."
+    }
+  ],
+  "evidenceInspected": [
+    ".evidence/D4/field-ux-review-round-1.json and original FU-R1-B1 reproduction; restricted fix diff be1fa27df7db183645cfe8b7f0a58743685ea977..193a2506c7770bb11ee7f128ce2686b1d1e8b1a4, particularly src/App.tsx, src/features/settings/CourseFiles.tsx and enlarged reset/pressure assertions.",
+    "Node v24.21.0; clean tracked source at the exact review commit before and after testing. Other reviewers' untracked JSON files were not changed.",
+    "Independent scratch command: npm run verify:e2e -- --config <OS temporary cvc-d4-field-round2/playwright.field-r2.config.mjs> --retries=0. Own isolated server; Pixel 7 Chromium and iPhone 13 WebKit. Two complete restricted journeys PASS, zero retries/flakes, 53.344 seconds; individual tests 12.2 and 31.3 seconds. Standard 120-second test and 30-second expectation limits retained.",
+    "FU-R1-B1 reproduced setup rerun through real visible controls: create synthetic course, export its file, hold a legacy IndexedDB connection, inject one selected-cache deletion failure, enlarge text, confirm full reset, observe blocked state, close the held connection, observe partial failure, tap ordinary Riprova la cancellazione, observe completion, verify database absence and tap Riapri l’app.",
+    "Both engines' metrics.json record page 320/viewport 320 and heading content 240/width 240 in blocked, partial and complete states. Retry target 240x88 CSS px; every displayed reset action remains within the viewport with unclipped text. Both result.json files record database absence, successful ordinary retry, zero page errors and zero crashes.",
+    "Direct settings reflow regression on both engines at 320/200: radio options stack vertically, each target measures 204x114 CSS px, labels fit and page width stays 320 with platform fonts and forced Arial. Both 3 per riga and 2 per riga remain selectable through visible labels. Forced Arial is additional Windows coverage, not a Linux execution claim.",
+    "FU-R1-Q1 rechecked after reset: valid archive selected, Importa il corso label visible, Sostituisci il corso absent, acknowledgement enables import, cancellation returns to first-start without importing. New close-other-tabs guidance remains visible.",
+    "Visually inspected current blocked, partial, complete, settings-radio and first-start-import screenshots from both engines. Long headings intentionally wrap at enlarged text; no clipping or horizontal scrolling observed.",
+    "Raw report, metrics, screenshots and result JSON preserved in OS temporary cvc-d4-field-round2. Earlier runner reports copied there before execution. Own browser/server process cleanup confirmed before releasing the shared slot. No tracked files edited or deployments performed."
+  ],
+  "anglesTried": {
+    "seed": 578023799,
+    "scope": "Restricted round 2: previous FU-R1-B1, its fix, Q1 correction and direct wrapping/reflow regressions only. No entropy redraw or whole-milestone hunt.",
+    "lenses": [
+      "Prior lens 2: 320 px with 200% text, restricted to changed reset/settings surfaces.",
+      "Prior lens 12: consistent language, restricted to the corrected first-start import action."
+    ],
+    "wildcard": "No new wildcard drawn; the round-1 prepared-export replacement hunt was not repeated."
+  },
+  "notTested": [
+    "Real phone save/share-sheet transfer, receiving applications, persistence permission and installed-device reset isolation remain pending owner evidence; no physical PASS is inferred.",
+    "This restricted follow-up does not rerun all D4 acceptance, production isolation or exact CI. Earlier full-scope round-1 evidence remains applicable outside the fixes.",
+    "Intermittent fresh-recipient WebKit startup and Mac cold-open timing remain separate orchestrator CI gate work. This successful restricted run does not establish their cause or resolution.",
+    "The root orchestrator still owns final milestone recording and owner handoff; this PASS resolves the field-review findings only."
+  ]
+}

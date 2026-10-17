@@ -1,0 +1,270 @@
+{
+  "milestone": "D4",
+  "recordedAt": "2026-10-17T23:42:16.869Z",
+  "source": "scripts/check-test-app-isolation.mjs (npm run check:test-isolation)",
+  "origin": "http://127.0.0.1:56743",
+  "basePaths": {
+    "regular": "/CVC_helper/",
+    "test": "/CVC_helper_test/"
+  },
+  "builds": {
+    "regular": {
+      "manifestName": "CVC Helper",
+      "database": "cvc-helper.db"
+    },
+    "test": {
+      "manifestName": "CVC Helper Test",
+      "database": "cvc-helper-test.db"
+    }
+  },
+  "runs": [
+    {
+      "engine": "Chromium",
+      "browserVersion": "151.0.7922.34",
+      "appStartup": {
+        "readinessHeading": "Crea il corso",
+        "test": {
+          "elapsedMs": 1897,
+          "visibleStatusAtReadinessWait": "Apertura del corso…"
+        },
+        "pageErrors": [],
+        "pageCrashes": []
+      },
+      "regularDatabase": {
+        "course": "D2",
+        "student": "Regolare Stabile",
+        "courseNote": "Nota regolare invariata",
+        "unchangedAfterTestCreationUpdateAndErasure": true
+      },
+      "ocrLanguageCache": {
+        "regularKey": "./ita.traineddata",
+        "testKey": "cvc-helper-test-ocr/ita.traineddata",
+        "regularBytes": {
+          "byteLength": 3126172,
+          "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+        },
+        "testBytesCreatedByRealWorker": {
+          "byteLength": 3126172,
+          "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+        },
+        "regularBytesUnchangedAfterTestReadWriteDelete": true,
+        "testKeyDeletedByTestAdapter": true
+      },
+      "testDatabase": {
+        "course": "C4",
+        "student": "Prova Aggiornato",
+        "courseNote": "Nota test aggiornata",
+        "erasedThroughUi": true
+      },
+      "regularAppReopenedOffline": true,
+      "offlineAvailability": {
+        "beforeTestInstallation": {
+          "method": "origin-unreachable/server-transport",
+          "preflight": {
+            "url": "http://127.0.0.1:56743/CVC_helper/",
+            "controller": "http://127.0.0.1:56743/CVC_helper/sw.js",
+            "activeWorkerState": "activated",
+            "documentReadyState": "complete",
+            "cacheNames": [
+              "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/"
+            ]
+          },
+          "cachedResponseFromServiceWorker": true,
+          "reloadResponseFromServiceWorker": true,
+          "uncachedRequestFailed": true,
+          "freshContextWithoutServiceWorkersFailed": true,
+          "freshContextFailure": "Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:56743/CVC_helper/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:56743/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+        },
+        "afterTestErasure": {
+          "method": "origin-unreachable/server-transport",
+          "preflight": {
+            "url": "http://127.0.0.1:56743/CVC_helper/",
+            "controller": "http://127.0.0.1:56743/CVC_helper/sw.js",
+            "activeWorkerState": "activated",
+            "documentReadyState": "complete",
+            "cacheNames": [
+              "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/",
+              "cvc-ocr-runtime",
+              "cvc-speech-runtime",
+              "cvc-helper-test-precache-v2-http://127.0.0.1:56743/CVC_helper_test/",
+              "cvc-helper-test-ocr-runtime",
+              "cvc-helper-test-speech-runtime"
+            ]
+          },
+          "cachedResponseFromServiceWorker": true,
+          "reloadResponseFromServiceWorker": true,
+          "uncachedRequestFailed": true,
+          "freshContextWithoutServiceWorkersFailed": true,
+          "freshContextFailure": "Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:56743/CVC_helper/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:56743/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+        }
+      },
+      "preferences": {
+        "regularPrefix": "cvc-helper.",
+        "testPrefix": "cvc-helper-test.",
+        "regularSnapshotUnchangedAfterEachTestOperation": true,
+        "regularCrewDisplayColumns": "3",
+        "testCrewDisplayColumns": "2"
+      },
+      "scopes": [
+        "/CVC_helper/",
+        "/CVC_helper_test/"
+      ],
+      "cacheNames": [
+        "cvc-helper-test-ocr-runtime",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:56743/CVC_helper_test/",
+        "cvc-helper-test-speech-runtime",
+        "cvc-ocr-runtime",
+        "cvc-speech-runtime",
+        "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/"
+      ],
+      "testOwnedCacheNames": [
+        "cvc-helper-test-ocr-runtime",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:56743/CVC_helper_test/",
+        "cvc-helper-test-speech-runtime"
+      ],
+      "regularCachesPresentBeforeTest": [
+        "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/",
+        "cvc-ocr-runtime",
+        "cvc-speech-runtime"
+      ],
+      "separateCacheNamespaces": true,
+      "fullReset": {
+        "milestone": "D4",
+        "resetThroughVisibleUi": true,
+        "testDatabaseDeleted": true,
+        "testPreferencesCachesWorkerAndOcrKeyDeleted": true,
+        "regularCourseRowsIdentical": true,
+        "regularPreferencesUnchanged": true,
+        "regularCacheBytesIdentical": true,
+        "regularOcrBytesIdentical": true,
+        "regularReopenedOffline": true,
+        "pageErrors": [],
+        "pageCrashes": []
+      }
+    },
+    {
+      "engine": "WebKit",
+      "browserVersion": "26.5",
+      "appStartup": {
+        "readinessHeading": "Crea il corso",
+        "test": {
+          "elapsedMs": 3209,
+          "visibleStatusAtReadinessWait": "Apertura del corso…"
+        },
+        "pageErrors": [],
+        "pageCrashes": []
+      },
+      "regularDatabase": {
+        "course": "D2",
+        "student": "Regolare Stabile",
+        "courseNote": "Nota regolare invariata",
+        "unchangedAfterTestCreationUpdateAndErasure": true
+      },
+      "ocrLanguageCache": {
+        "regularKey": "./ita.traineddata",
+        "testKey": "cvc-helper-test-ocr/ita.traineddata",
+        "regularBytes": {
+          "byteLength": 3126172,
+          "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+        },
+        "testBytesCreatedByRealWorker": {
+          "byteLength": 3126172,
+          "sha256": "36ec897f5f1f489b257801881286167a79b99a16040c6fbc7e3e30f03821b10b"
+        },
+        "regularBytesUnchangedAfterTestReadWriteDelete": true,
+        "testKeyDeletedByTestAdapter": true
+      },
+      "testDatabase": {
+        "course": "C4",
+        "student": "Prova Aggiornato",
+        "courseNote": "Nota test aggiornata",
+        "erasedThroughUi": true
+      },
+      "regularAppReopenedOffline": true,
+      "offlineAvailability": {
+        "beforeTestInstallation": {
+          "method": "origin-unreachable/server-transport",
+          "preflight": {
+            "url": "http://127.0.0.1:56743/CVC_helper/",
+            "controller": "http://127.0.0.1:56743/CVC_helper/sw.js",
+            "activeWorkerState": "activated",
+            "documentReadyState": "complete",
+            "cacheNames": [
+              "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/"
+            ]
+          },
+          "cachedResponseFromServiceWorker": true,
+          "reloadResponseFromServiceWorker": true,
+          "uncachedRequestFailed": true,
+          "freshContextWithoutServiceWorkersFailed": true,
+          "freshContextFailure": "Error: page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:56743/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+        },
+        "afterTestErasure": {
+          "method": "origin-unreachable/server-transport",
+          "preflight": {
+            "url": "http://127.0.0.1:56743/CVC_helper/",
+            "controller": "http://127.0.0.1:56743/CVC_helper/sw.js",
+            "activeWorkerState": "activated",
+            "documentReadyState": "complete",
+            "cacheNames": [
+              "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/",
+              "cvc-ocr-runtime",
+              "cvc-speech-runtime",
+              "cvc-helper-test-precache-v2-http://127.0.0.1:56743/CVC_helper_test/",
+              "cvc-helper-test-ocr-runtime",
+              "cvc-helper-test-speech-runtime"
+            ]
+          },
+          "cachedResponseFromServiceWorker": true,
+          "reloadResponseFromServiceWorker": true,
+          "uncachedRequestFailed": true,
+          "freshContextWithoutServiceWorkersFailed": true,
+          "freshContextFailure": "Error: page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:56743/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+        }
+      },
+      "preferences": {
+        "regularPrefix": "cvc-helper.",
+        "testPrefix": "cvc-helper-test.",
+        "regularSnapshotUnchangedAfterEachTestOperation": true,
+        "regularCrewDisplayColumns": "3",
+        "testCrewDisplayColumns": "2"
+      },
+      "scopes": [
+        "/CVC_helper/",
+        "/CVC_helper_test/"
+      ],
+      "cacheNames": [
+        "cvc-helper-test-ocr-runtime",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:56743/CVC_helper_test/",
+        "cvc-helper-test-speech-runtime",
+        "cvc-ocr-runtime",
+        "cvc-speech-runtime",
+        "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/"
+      ],
+      "testOwnedCacheNames": [
+        "cvc-helper-test-ocr-runtime",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:56743/CVC_helper_test/",
+        "cvc-helper-test-speech-runtime"
+      ],
+      "regularCachesPresentBeforeTest": [
+        "workbox-precache-v2-http://127.0.0.1:56743/CVC_helper/",
+        "cvc-ocr-runtime",
+        "cvc-speech-runtime"
+      ],
+      "separateCacheNamespaces": true,
+      "fullReset": {
+        "milestone": "D4",
+        "resetThroughVisibleUi": true,
+        "testDatabaseDeleted": true,
+        "testPreferencesCachesWorkerAndOcrKeyDeleted": true,
+        "regularCourseRowsIdentical": true,
+        "regularPreferencesUnchanged": true,
+        "regularCacheBytesIdentical": true,
+        "regularOcrBytesIdentical": true,
+        "regularReopenedOffline": true,
+        "pageErrors": [],
+        "pageCrashes": []
+      }
+    }
+  ]
+}

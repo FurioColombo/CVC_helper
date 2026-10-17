@@ -113,9 +113,9 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 CI fails on a stale-session fixture, enlarged-text settings and Mac cold
-compilation. These remain D4 gate work. Preserve both five-second bounds,
-assertions, retries and projects (`.evidence/D4/ci-checkpoint-be1fa27.json`).
+D4's initial CI failure is in `.evidence/D4/ci-checkpoint-be1fa27.json`.
+At `193a250`, local/Linux pass; Mac still fails the cold-open bound on all tries.
+Preserve both five-second bounds, assertions, retries and projects.
 
 ## Flaky browser tests
 
@@ -134,8 +134,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   It recurred on 2026-10-17 in a 22-case fix run (21 passed); the isolated
   diagnostic run then passed in 49.9 s without retries. Failure-only read
   diagnostics now retain each page's engine events, locks and resource timings.
-  The cause remains unproven and is D4 gate work; T1 must retain this
-  classification. See `.evidence/D4/development-checks.json`.
+  The `193a250` recorder passed 99 cases without retries and both production
+  isolation engines. Cause unproven; T1 must investigate this filed defect
+  after D4's CI gate. See `.evidence/D4/development-checks.json`.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,

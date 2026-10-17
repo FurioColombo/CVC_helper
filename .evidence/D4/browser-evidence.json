@@ -1,0 +1,109 @@
+{
+  "milestone": "D4",
+  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "sourceDigest": "9c8b1eaa480ff79ea668d68cd2f730f217cc7ad3639645b5e66a1850bcc715b0",
+  "nodeVersion": "v24.21.0",
+  "status": "PASS",
+  "qualification": "Passing local agent browser evidence for193a250. Exact Mac CI fails the cold-open gate; this evidence does not waive that failure or establish physical-device acceptance.",
+  "verification": "verification.json",
+  "suite": {
+    "passed": 99,
+    "originalSkips": 1,
+    "failures": 0,
+    "flaky": 0,
+    "durationMs": 1218045,
+    "cases": 100
+  },
+  "projectResults": [
+    {
+      "project": "pixel-7-chrome",
+      "passed": 43,
+      "originalSkips": 0,
+      "retries": 0
+    },
+    {
+      "project": "desktop-chrome-storage",
+      "passed": 8,
+      "originalSkips": 0,
+      "retries": 0
+    },
+    {
+      "project": "iphone-13-viewport",
+      "passed": 7,
+      "originalSkips": 1,
+      "retries": 0
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "passed": 41,
+      "originalSkips": 0,
+      "retries": 0
+    }
+  ],
+  "coverage": [
+    "All 28 D4 course-file/reset cases across four configurations",
+    "Legacy upgrades, interruption recovery, version refusal, desktop surviving-client lifecycle, first stale UI save, persistence/navigation and U02 reference deletion",
+    "Narrow/large-text control containment, visible reset blocked/partial/retry/completion states",
+    "Production same-origin regular/test isolation, including actual service-worker offline reopening with origin transport unavailable"
+  ],
+  "resetProof": [
+    {
+      "project": "pixel-7-chrome",
+      "full": "local-reset/full-reset-pixel-7-chrome.json",
+      "blocked": "local-reset/blocked-reset-pixel-7-chrome.json",
+      "retry": "local-reset/reset-retry-pixel-7-chrome.json",
+      "heldCallback": "pending",
+      "qualification": "The held callback may remain pending after worker close; database absence and a separate valid stale-save refusal are the assertions."
+    },
+    {
+      "project": "desktop-chrome-storage",
+      "full": "local-reset/full-reset-desktop-chrome-storage.json",
+      "blocked": "local-reset/blocked-reset-desktop-chrome-storage.json",
+      "retry": "local-reset/reset-retry-desktop-chrome-storage.json",
+      "heldCallback": "rejected",
+      "qualification": "The held callback may remain pending after worker close; database absence and a separate valid stale-save refusal are the assertions."
+    },
+    {
+      "project": "iphone-13-viewport",
+      "full": "local-reset/full-reset-iphone-13-viewport.json",
+      "blocked": "local-reset/blocked-reset-iphone-13-viewport.json",
+      "retry": "local-reset/reset-retry-iphone-13-viewport.json",
+      "heldCallback": "pending",
+      "qualification": "The held callback may remain pending after worker close; database absence and a separate valid stale-save refusal are the assertions."
+    },
+    {
+      "project": "iphone-13-webkit-core",
+      "full": "local-reset/full-reset-iphone-13-webkit-core.json",
+      "blocked": "local-reset/blocked-reset-iphone-13-webkit-core.json",
+      "retry": "local-reset/reset-retry-iphone-13-webkit-core.json",
+      "heldCallback": "pending",
+      "qualification": "The held callback may remain pending after worker close; database absence and a separate valid stale-save refusal are the assertions."
+    }
+  ],
+  "productionIsolation": "test-isolation.json",
+  "coldOpenWindowsWebKit": {
+    "upgradeMs": 1772,
+    "reopenMs": 840,
+    "priorModuleEvents": 0,
+    "compilerRoundTripMs": 69,
+    "workerBootstrapMs": 23,
+    "compileStreamingIntervalMs": 43,
+    "responseHeadersMs": 3,
+    "moduleReturnMs": 1,
+    "qualification": "Diagnostic intervals include scheduling/stream consumption; this Windows result is not proof of the Mac failure cause. Original 5000ms bounds and cold-evidence checks unchanged."
+  },
+  "reviews": [
+    "data-integrity-review.json",
+    "security-privacy-review.json",
+    "field-ux-review.json",
+    "sync-chaos-review.json"
+  ],
+  "knownLimitations": [
+    "Pre-D4 compatible writers cannot observe generation; close other old app tabs before import. See SC-R1-I1, Technical Decisions and the visible instruction.",
+    "Earlier fresh-recipient Windows WebKit opening failures are preserved in development-checks.json and BACKLOG. The complete checkpoint suite passed first attempt; no causal fix is claimed.",
+    "Mac CI39078243541 fails only D1 cold-open timing on all three attempts; see ci-checkpoint-193a250.json. A changed compilation-path probe is required before D4 can hand over.",
+    "Actual share receiving-app behavior, persistence permission and installed Android acceptance belong to the owner."
+  ],
+  "rawProof": "OS temporary cvc-d4-193a250-recorder-proof: full browser report, empty flaky list, and large-upgrade JSON. Additional review probes remain at the locations in their reports.",
+  "d3EvidenceIntact": 9
+}

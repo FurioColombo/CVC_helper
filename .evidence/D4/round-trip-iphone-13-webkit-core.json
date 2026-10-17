@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "sourceFixture": "0.3.0",
+  "rowsIdentical": true,
+  "immediateClose": true,
+  "freshBrowserProcess": true,
+  "destinationDeviceIdentityPreserved": true,
+  "counts": {
+    "courses": 1,
+    "students": 7,
+    "volunteers": 3,
+    "boats": 4,
+    "faults": 3,
+    "dutyAssignments": 5,
+    "dutySettings": 1,
+    "dutySettingItems": 3,
+    "crews": 4,
+    "crewMembers": 7,
+    "landAssignments": 2,
+    "sessionBoats": 3,
+    "evaluations": 6
+  },
+  "pageErrors": [],
+  "physicalDevice": "PENDING_OWNER"
+}

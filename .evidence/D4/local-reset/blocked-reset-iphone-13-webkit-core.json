@@ -1,0 +1,10 @@
+{
+  "connectionVersion": 6,
+  "blockedMessageVisible": true,
+  "completedAfterLegacyConnectionClosed": true,
+  "appDatabasePresent": false,
+  "events": {
+    "pageErrors": 0,
+    "crashes": 0
+  }
+}

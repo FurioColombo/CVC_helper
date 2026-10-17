@@ -1,0 +1,104 @@
+{
+  "milestone": "D4",
+  "sourceCommit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "run": 39078243541,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39078243541",
+  "status": "FAIL_NOT_ACCEPTANCE",
+  "completedAt": "2026-10-17T23:54:58Z",
+  "jobs": [
+    {
+      "id": 117529750345,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-17T23:14:28Z",
+      "completedAt": "2026-10-17T23:31:31Z",
+      "browserSummary": [
+        "2026-10-17T23:31:28.3186365Z   47 skipped",
+        "2026-10-17T23:31:28.3187970Z   217 passed (15.4m)",
+        "2026-10-17T23:31:28.3207172Z ##[notice]  47 skipped",
+        "  217 passed (15.4m)"
+      ],
+      "rawLog": "OS temporary cvc-d4-ci-39078243541/cvc-d4-ci-117529750345.log",
+      "logSha256": "73685421c6c817adb756b677b163dc6b66a0b139b7e28c7023ce677c916074dc"
+    },
+    {
+      "id": 117529750545,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-10-17T23:14:33Z",
+      "completedAt": "2026-10-17T23:54:58Z",
+      "browserSummary": [
+        "2026-10-17T23:54:51.4948720Z   1 failed",
+        "2026-10-17T23:54:51.4951450Z   65 skipped",
+        "2026-10-17T23:54:51.4951690Z   287 passed (35.2m)",
+        "2026-10-17T23:54:51.4968100Z ##[notice]  1 failed",
+        "  65 skipped",
+        "  287 passed (35.2m)"
+      ],
+      "rawLog": "OS temporary cvc-d4-ci-39078243541/cvc-d4-ci-117529750545.log",
+      "logSha256": "21f624f4e51d0993ce56f48c69c82eee00cbe000b3859ca38c5db494f35db918"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12118867031,
+      "name": "e2e-flaky-macos-15-39078243541",
+      "sha256": "1119600759afbe8656294290ca6c0b3af114ace976932c1bc7d4448e2c19296e",
+      "rawZip": "OS temporary cvc-d4-ci-39078243541/12118867031.zip"
+    },
+    {
+      "id": 12118730164,
+      "name": "e2e-flaky-ubuntu-latest-39078243541",
+      "sha256": "176b9eb42cb4e1409e2381d560164f84de9fefd5966c081fce78b75cef3d671c",
+      "rawZip": "OS temporary cvc-d4-ci-39078243541/12118730164.zip"
+    },
+    {
+      "id": 12118707717,
+      "name": "playwright-failure-macos-15-39078243541",
+      "sha256": "aaf2da514c378dbe22d6af8dc3d1f2a17bbdf19ff01834d572ff51eb471a4518",
+      "rawZip": "OS temporary cvc-d4-ci-39078243541/12118707717.zip"
+    }
+  ],
+  "qualification": "Exact push CI. Original thresholds, retries, assertions, skips and browser projects remain. Physical acceptance is not inferred.",
+  "macColdOpenAttempts": [
+    {
+      "attempt": 0,
+      "upgradeMs": 6557,
+      "reopenMs": 390,
+      "rows": 609,
+      "priorModuleEvents": 0,
+      "compilerRoundTripMs": 5948,
+      "workerBootstrapMs": 20,
+      "responseHeadersMs": 11,
+      "compileStreamingIntervalMs": 5925,
+      "moduleReturnMs": 1
+    },
+    {
+      "attempt": 1,
+      "upgradeMs": 6058,
+      "reopenMs": 432,
+      "rows": 609,
+      "priorModuleEvents": 0,
+      "compilerRoundTripMs": 5139,
+      "workerBootstrapMs": 16,
+      "responseHeadersMs": 5,
+      "compileStreamingIntervalMs": 5120,
+      "moduleReturnMs": 2
+    },
+    {
+      "attempt": 2,
+      "upgradeMs": 6974,
+      "reopenMs": 354,
+      "rows": 609,
+      "priorModuleEvents": 0,
+      "compilerRoundTripMs": 6398,
+      "workerBootstrapMs": 27,
+      "responseHeadersMs": 4,
+      "compileStreamingIntervalMs": 6368,
+      "moduleReturnMs": 2
+    }
+  ],
+  "diagnosis": "All three attempts exceed the unchanged 5000ms first-open bound. Worker bootstrap and module return are fast; 5.1-6.4 seconds are inside compileStreaming invocation-to-resolution. This interval includes native queueing/compilation and stream consumption; it is not a pure CPU measurement. Same rows and all other cases pass. A changed compilation-path probe is needed; no blind rerun or acceptance waiver."
+}
