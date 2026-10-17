@@ -21,6 +21,7 @@ const root = resolve(import.meta.dirname, "..")
 const packageJson = JSON.parse(
   readFileSync(resolve(root, "package.json"), "utf8"),
 )
+const verifyFullReset = process.argv.includes("--full-reset")
 const basePaths = {
   regular: "/CVC_helper/",
   test: "/CVC_helper_test/",
@@ -234,7 +235,8 @@ async function createCourse(
   })
   const loadingSurface = await page
     .getByRole("status")
-    .innerText()
+    .allTextContents()
+    .then((messages) => messages.join(" ") || null)
     .catch(() => null)
   const appReady = await Promise.any([
     creationHeading
@@ -510,7 +512,14 @@ async function exerciseTestOcrKey(page, adapterUrl) {
 
 async function scanRosterWithoutSaving(page) {
   await page.getByRole("button", { name: "Allievi", exact: true }).click()
-  await page.getByRole("button", { name: "Scan allievi", exact: true }).click()
+  await expect(
+    page.getByRole("heading", { name: "Allievi", exact: true }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Menu allievi", exact: true }).click()
+  await page
+    .getByLabel("Azioni allievi", { exact: true })
+    .getByRole("button", { name: "Scan allievi", exact: true })
+    .click()
   await page
     .getByLabel("Scegli foto dell’elenco allievi dalla galleria", {
       exact: true,
@@ -645,6 +654,56 @@ async function eraseTestCourse(page) {
   await expect(
     page.getByRole("heading", { name: "Crea il corso" }),
   ).toBeVisible()
+}
+
+async function downloadCourseFile(page) {
+  await page.getByRole("button", { name: "Impostazioni", exact: true }).click()
+  await page.getByRole("button", { name: "Prepara il file del corso" }).click()
+  const download = page.waitForEvent("download")
+  await page.getByRole("button", { name: "Salva file", exact: true }).click()
+  const file = await download
+  const archive = JSON.parse(readFileSync(await file.path(), "utf8"))
+  await page.getByRole("button", { name: "Torna alla Home" }).click()
+  return archive
+}
+
+async function regularCacheBytes(page, origin) {
+  return page.evaluate(
+    async ({ regular, scope }) => {
+      const selected = new Set([
+        regular.ocrRuntimeCacheName,
+        regular.speechRuntimeCacheName,
+        regular.speechModelCacheName,
+        `workbox-precache-v2-${scope}`,
+      ])
+      const result = {}
+      for (const name of (await globalThis.caches.keys())
+        .filter((name) => selected.has(name))
+        .sort()) {
+        const cache = await globalThis.caches.open(name)
+        result[name] = []
+        for (const request of (await cache.keys()).sort((a, b) =>
+          a.url.localeCompare(b.url),
+        )) {
+          const response = await cache.match(request)
+          const bytes = await response.arrayBuffer()
+          const digest = await crypto.subtle.digest("SHA-256", bytes)
+          result[name].push({
+            url: request.url,
+            bytes: bytes.byteLength,
+            sha256: [...new Uint8Array(digest)]
+              .map((byte) => byte.toString(16).padStart(2, "0"))
+              .join(""),
+          })
+        }
+      }
+      return result
+    },
+    {
+      regular: getAppChannelConfig("regular"),
+      scope: `${origin}${basePaths.regular}`,
+    },
+  )
 }
 
 async function verifyBrowserIsolation(
@@ -995,6 +1054,150 @@ async function verifyBrowserIsolation(
     )
     assert.deepEqual(pageErrors, [])
     assert.deepEqual(pageCrashes, [])
+    let fullReset = null
+    if (verifyFullReset) {
+      console.log(
+        `D4 reset in ${browserName}: snapshot regular course and cache bytes`,
+      )
+      await returnToHomeFromStudent(page)
+      const regularFileBefore = await downloadCourseFile(page)
+      const cacheBytesBefore = await regularCacheBytes(page, origin)
+      assert.ok(Object.keys(cacheBytesBefore).length > 0)
+      console.log(
+        `D4 reset in ${browserName}: create test course and populate its OCR key`,
+      )
+      await createCourse(
+        testPage,
+        "Cabinato",
+        4,
+        "C4",
+        performance.now(),
+        pageErrors,
+        pageCrashes,
+      )
+      await createAndUpdateStudent(testPage, testStudent)
+      await returnToHomeFromStudent(testPage)
+      await scanRosterWithoutSaving(testPage)
+      assert.ok(
+        await readOcrLanguageCache(
+          testPage,
+          `${origin}/_isolation/idb-keyval.js`,
+          testOcrKey,
+        ),
+      )
+      const databaseNamesBefore = await testPage.evaluate(async () =>
+        (await globalThis.indexedDB.databases()).map(({ name }) => name),
+      )
+      assert.ok(
+        databaseNamesBefore.includes(
+          getAppChannelConfig("test").databaseFilename,
+        ),
+        `Test database not found in ${JSON.stringify(databaseNamesBefore)}`,
+      )
+      console.log(
+        `D4 reset in ${browserName}: confirm full reset through the UI`,
+      )
+      await testPage
+        .getByRole("button", { name: "Impostazioni", exact: true })
+        .click()
+      await testPage
+        .getByRole("button", {
+          name: "Azzera tutti i dati locali",
+          exact: true,
+        })
+        .click()
+      await testPage
+        .getByRole("checkbox", {
+          name: "Ho capito: corso, preferenze e file offline saranno cancellati",
+        })
+        .check()
+      await testPage
+        .getByRole("button", { name: "Azzera i dati", exact: true })
+        .click()
+      await expect(
+        testPage.getByRole("heading", { name: "Dati locali cancellati" }),
+      ).toBeVisible()
+      const afterReset = await testPage.evaluate(async () => ({
+        databaseNames: (await globalThis.indexedDB.databases()).map(
+          ({ name }) => name,
+        ),
+        cacheNames: await globalThis.caches.keys(),
+        workerScopes: (await navigator.serviceWorker.getRegistrations()).map(
+          ({ scope }) => new URL(scope).pathname,
+        ),
+      }))
+      assert.ok(
+        !afterReset.databaseNames.includes(
+          getAppChannelConfig("test").databaseFilename,
+        ),
+      )
+      assert.ok(
+        afterReset.databaseNames.includes(
+          getAppChannelConfig("regular").databaseFilename,
+        ),
+      )
+      assert.ok(
+        !afterReset.cacheNames.some((name) =>
+          name.startsWith("cvc-helper-test-"),
+        ),
+      )
+      assert.deepEqual(afterReset.workerScopes, [basePaths.regular])
+      await assertRegularStorageUnchanged(
+        testPage,
+        regularStorageBefore,
+        "full test-app reset",
+      )
+      assert.deepEqual(
+        storageWithPrefix(await readLocalStorage(testPage), testStoragePrefix),
+        {},
+      )
+      assert.equal(
+        await readOcrLanguageCache(
+          testPage,
+          `${origin}/_isolation/idb-keyval.js`,
+          testOcrKey,
+        ),
+        null,
+      )
+      assert.deepEqual(
+        await readOcrLanguageCache(
+          page,
+          `${origin}/_isolation/idb-keyval.js`,
+          regularOcrKey,
+        ),
+        regularOcrBytes,
+      )
+      assert.deepEqual(await regularCacheBytes(page, origin), cacheBytesBefore)
+      console.log(
+        `D4 reset in ${browserName}: verify regular course and offline reopen`,
+      )
+      // The regular app is still live; compare every exported course row and
+      // then reopen it with its own service worker while transport is down.
+      assert.deepEqual(await downloadCourseFile(page), regularFileBefore)
+      await verifyOfflineAvailability(
+        page,
+        browser,
+        staticServer,
+        basePaths.regular,
+        browserName,
+        page.getByRole("heading", { name: /^D2 - / }),
+      )
+      assert.deepEqual(pageErrors, [])
+      assert.deepEqual(pageCrashes, [])
+      fullReset = {
+        milestone: "D4",
+        resetThroughVisibleUi: true,
+        testDatabaseDeleted: true,
+        testPreferencesCachesWorkerAndOcrKeyDeleted: true,
+        regularCourseRowsIdentical: true,
+        regularPreferencesUnchanged: true,
+        regularCacheBytesIdentical: true,
+        regularOcrBytesIdentical: true,
+        regularReopenedOffline: true,
+        pageErrors,
+        pageCrashes,
+      }
+    }
     console.log(`PASS: same-origin storage isolation in ${browserName}`)
     return {
       engine: browserName,
@@ -1045,6 +1248,7 @@ async function verifyBrowserIsolation(
       testOwnedCacheNames,
       regularCachesPresentBeforeTest: regularCacheNamesBefore,
       separateCacheNamespaces: true,
+      fullReset,
     }
   } finally {
     await testPage?.close()
@@ -1087,7 +1291,7 @@ try {
     ),
   )
   const report = {
-    milestone: "D3",
+    milestone: verifyFullReset ? "D4" : "D3",
     recordedAt: new Date().toISOString(),
     source:
       "scripts/check-test-app-isolation.mjs (npm run check:test-isolation)",
@@ -1100,9 +1304,15 @@ try {
     runs,
   }
   const reportPath =
-    process.env.CVC_EVIDENCE_REFRESH === "D3"
-      ? resolve(root, ".evidence/D3/test-isolation.json")
-      : resolve(root, "test-results/test-isolation.json")
+    process.env.CVC_EVIDENCE_REFRESH === (verifyFullReset ? "D4" : "D3")
+      ? resolve(
+          root,
+          `.evidence/${verifyFullReset ? "D4" : "D3"}/test-isolation.json`,
+        )
+      : resolve(
+          root,
+          `test-results/${verifyFullReset ? "test-reset-isolation" : "test-isolation"}.json`,
+        )
   mkdirSync(resolve(reportPath, ".."), { recursive: true })
   writeFileSync(resolve(reportPath), `${JSON.stringify(report, null, 2)}\n`)
   console.log(

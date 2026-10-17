@@ -20,6 +20,27 @@
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/D3/physical-device-review.json",
       "updatedAt": "2026-10-16T06:09:00.750Z"
+    },
+    {
+      "id": "D4-PHONE-TRANSFER",
+      "milestone": "D4",
+      "kind": "DEVICE_CHECK",
+      "title": "Check course files, persistent storage and full reset on Android",
+      "status": "NEEDS_SETUP",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "This check is not ready yet. Complete D3-PHONE-UPDATE first; the agent keeps that pinned build fixed and will provide D4 through the same permanent CVC Helper Test installation afterwards.",
+        "Once this item is READY, use fictitious people only. In Impostazioni read Conservazione dei dati, prepare the course file, save it and share it to another app. Check its availability and that its filename contains no personal name.",
+        "Import that saved file: check the course preview, cancel once, then explicitly confirm replacement. Reopen the course and check students, notes, duties and crews; close and reopen the app again.",
+        "With synthetic data only, confirm Azzera tutti i dati locali and check the app reopens without a course. Confirm the regular CVC Helper app retains its own course. Follow Course files and full local reset in docs/DEVICE_CHECKS.md.",
+        "Report D4-PHONE-TRANSFER with the supplied build/address, device, browser and Android version and the actual observed results, including the receiving app and persistent-storage status."
+      ],
+      "expected": "The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/D4/physical-device-review.json",
+      "updatedAt": "2026-10-17T00:19:07.550Z"
     }
   ]
 }

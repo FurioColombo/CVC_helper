@@ -28,3 +28,27 @@ Use the test address below and the linked device instructions.
 **Guide:** [Updates and versions](./DEVICE_CHECKS.md#updates-and-versions)
 
 **Work affected:** Completion of D3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+<a id="d4-phone-transfer"></a>
+
+## Check course files, persistent storage and full reset on Android — D4
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. This check is not ready yet. Complete D3-PHONE-UPDATE first; the agent keeps that pinned build fixed and will provide D4 through the same permanent CVC Helper Test installation afterwards.
+2. Once this item is READY, use fictitious people only. In Impostazioni read Conservazione dei dati, prepare the course file, save it and share it to another app. Check its availability and that its filename contains no personal name.
+3. Import that saved file: check the course preview, cancel once, then explicitly confirm replacement. Reopen the course and check students, notes, duties and crews; close and reopen the app again.
+4. With synthetic data only, confirm Azzera tutti i dati locali and check the app reopens without a course. Confirm the regular CVC Helper app retains its own course. Follow Course files and full local reset in docs/DEVICE_CHECKS.md.
+5. Report D4-PHONE-TRANSFER with the supplied build/address, device, browser and Android version and the actual observed results, including the receiving app and persistent-storage status.
+
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+
+**Expected:** The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.
+
+**Build:** No test build is assigned yet.
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of D4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.

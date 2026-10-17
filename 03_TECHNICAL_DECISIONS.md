@@ -188,8 +188,8 @@ server enforces the same rule from 0.5.0. The data records, in `meta`, the
 newest app version that wrote it and the oldest allowed to write it (the
 previous minor version of the writer; a major release declares its own);
 neither ever goes back, and every check reads it the same way, keeping what
-can be read of a damaged record. `prepareDatabase` reads it before anything
-else: an app older than the minimum writer runs no repair or migration, and its
+can be read of a damaged record. `prepareDatabase` reads it before any repair
+or migration: an app older than the minimum writer runs neither, and its
 database refuses every write (`src/persistence/writeGuard.ts`), so it reads the
 course and asks to update. Otherwise the app first claims the data, re-reading
 the record inside that transaction so it never lowers a newer app's, and only
@@ -243,6 +243,38 @@ Use a single database transaction when an operation must remain consistent:
 The UI shows saving only while work is pending, success only after commit, and an
 in-context retry after failure. Do not let a stale selected session/person apply a
 late write to the wrong record.
+
+### 3.2 Course files and local reset
+
+The course file has its own format version and the D3 data-version record.
+It contains the active course's schema-whitelisted rows with identifiers,
+timestamps and values intact. Migration bookkeeping and the device's local
+course generation stay out of the file. Import validates the entire file,
+the compatibility contract, stored-row integrity, domain invariants and D2's
+paired representations before writing, then replaces the course in one
+transaction. Version claims remain monotonic; an interrupted replacement
+rolls back its rows, version record and generation together.
+
+Every prepared database instance binds its course ID and local generation
+before the first screen. The write guard checks them inside each acquired
+write lock; a replaced or closed instance also rejects before contacting its
+worker. Import advances the generation atomically, permanently invalidates
+the old instance and requires a fresh app open, even when imported IDs match.
+Course erasure also prevents an old screen from writing dangling records.
+
+Full reset invalidates the instance, asks other same-channel tabs to close,
+closes PowerSync and waits for actual IndexedDB deletion. An unresponsive
+older tab keeps deletion pending. A source-hash-guarded adapter releases the
+pinned IDBBatchAtomicVFS's existing IndexedDB handle only after its last
+SQLite file closes successfully. It retains the stock SDK worker entry,
+database-specific name, VFS, locking and write behavior; a surviving desktop
+SharedWorker cannot retain a closed course's browser database handle.
+It clears only this channel's preferences,
+runtime/model caches, exact-scope Workbox caches and worker registration, and
+its language-model key in Tesseract's shared store. Cleanup failure reports a
+partial reset and permits retry. Exported files outside the app remain with
+their recipient. The regular and test channels remain separate on one origin
+(`docs/DEPLOY.md`); persistence permission itself is browser/origin-wide.
 
 ## 4. Canonical domain implementation
 

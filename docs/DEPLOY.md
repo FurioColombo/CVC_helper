@@ -99,6 +99,12 @@ it does not represent a physical-device test. Its report is
 `.evidence/D3/test-isolation.json`. D4's full reset
 must use these same channel boundaries, deleting only the selected OCR language
 key from Tesseract's shared `keyval-store` rather than deleting that whole store.
+`npm run check:test-reset-isolation` extends that production journey with full
+test-app reset. It requires the test database, preferences, caches, worker and
+OCR key to disappear while the regular course, preferences, cache/model bytes
+and offline reopening stay intact. Its D4 report is
+`.evidence/D4/test-isolation.json` when deliberately refreshed; ordinary runs
+write to ignored `test-results/`.
 
 The repository package remains the released 0.3.0 until UG3; the isolated test
 channel explicitly uses the 0.4 patch line. D3 uses **0.4.0** first, then

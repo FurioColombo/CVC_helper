@@ -1,6 +1,6 @@
 # Implementation plan — 0.4.0
 
-Updated 2026-10-16. Read **Where this cycle stands**, then only the active
+Updated 2026-10-17. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.3.0 plan
 is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -29,7 +29,8 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
 | D3 | Awaiting owner. Agent verification, reviews, full source CI and live HTTPS pass. CVC Helper Test 0.4.0 is pinned to `761530f`; 0.4.1 waits for an explicit installation report. D4/T1 may continue under dependency permissions; release waits. See `docs/OWNER_TODO.md` and `.evidence/D3/deployment-evidence.json`. |
-| D4, T1, UG3 | Pending. D4 and T1 may continue past explicitly permitted AWAITING_OWNER predecessors; UG3 waits for all required owner acceptance. |
+| D4 | In progress. Course files, storage status and full reset are implemented; reviews, final verification and exact CI remain. D3's published test build stays fixed. D4's future phone check is NEEDS_SETUP in `docs/OWNER_TODO.md`. |
+| T1, UG3 | Pending. T1 may follow verified D3/D4 under the explicit AWAITING_OWNER permissions; UG3 waits for all required owner acceptance. |
 
 ## Execution order
 
@@ -102,7 +103,7 @@ regression-hunter, field-UX and schema-version sync-chaos reviews, test isolatio
 ## D4 — Export, import, persistent storage and full reset
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 1. Ask the browser to keep the data (`navigator.storage.persist()`) when a
    course is created, and show in Impostazioni whether it agreed.
@@ -130,7 +131,9 @@ in D2; personal data in the file name or in logs.
 
 **Evidence:** verification, round-trip evidence on Chromium and WebKit, browser
 evidence, the owner's phone check (export to another app and import back),
-data-integrity, security/privacy and field-UX reviews.
+data-integrity, security/privacy, field-UX and version/lifecycle sync-chaos
+reviews. Same-origin production reset proof checks that the regular app's
+course, preferences, cache bytes and offline support remain intact.
 
 ## T1 — A faster browser suite
 

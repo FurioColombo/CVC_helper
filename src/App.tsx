@@ -54,6 +54,17 @@ import {
   type EvaluationView,
 } from "@/features/evaluations/EvaluationManagement"
 import { CourseErase } from "@/features/settings/CourseErase"
+import {
+  CourseFiles,
+  FullReset,
+  StorageStatus,
+} from "@/features/settings/CourseFiles"
+import { requestPersistentStorage } from "@/persistence/browserStorage"
+import {
+  resetAllLocalData,
+  watchLocalData,
+  type LocalDataState,
+} from "@/persistence/localDataOperations"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
@@ -66,6 +77,7 @@ type AppState =
   | { status: "loading" }
   | { status: "no-course" }
   | { status: "ready"; course: CourseRecord }
+  | { status: "closed"; operation: LocalDataState }
   | { status: "error" }
 
 type ShellView =
@@ -293,7 +305,9 @@ function CourseCreation({
     setSubmitting(true)
     setError(false)
     try {
-      onCreated(await saveActiveCourse(details))
+      const course = await saveActiveCourse(details)
+      void requestPersistentStorage()
+      onCreated(course)
     } catch {
       setError(true)
       setSubmitting(false)
@@ -389,6 +403,9 @@ function CourseCreation({
         </Button>
       </section>
 
+      <CourseFiles hasCourse={false} />
+      <FullReset courseLabel="tutti i dati locali di CVC Helper" />
+
       <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">
         I dati operativi restano su questo dispositivo.
       </p>
@@ -479,6 +496,8 @@ function SettingsView({
         </div>
       </dl>
       <UpdateCheckButton className="mt-4" />
+      <StorageStatus />
+      <CourseFiles hasCourse />
       <fieldset className="mt-6 rounded-2xl border bg-card p-4">
         <legend className="px-1 text-sm font-bold text-primary">
           Visualizzazione degli equipaggi
@@ -509,6 +528,7 @@ function SettingsView({
         </div>
       </fieldset>
       <CourseErase course={course} onErased={onCourseErased} />
+      <FullReset courseLabel={course.label} />
       <Button className="mt-7" onClick={onHome} variant="secondary">
         <ChevronLeft aria-hidden="true" className="size-4" />
         Torna alla Home
@@ -806,22 +826,84 @@ export function App() {
 
   useEffect(() => {
     let active = true
+    const stop = watchLocalData((operation) => {
+      if (active) setAppState({ status: "closed", operation })
+    })
     getActiveCourse()
       .then((course) => {
         if (!active) return
-        setAppState(
-          course ? { status: "ready", course } : { status: "no-course" },
+        setAppState((current) =>
+          current.status === "closed"
+            ? current
+            : course
+              ? { status: "ready", course }
+              : { status: "no-course" },
         )
       })
       .catch(() => {
-        if (active) setAppState({ status: "error" })
+        if (active)
+          setAppState((current) =>
+            current.status === "closed" ? current : { status: "error" },
+          )
       })
     return () => {
       active = false
+      stop()
     }
   }, [])
 
   if (appState.status === "loading") return <LoadingScreen />
+  if (appState.status === "closed") {
+    const operation = appState.operation
+    const finished = operation === "reset-complete"
+    const failed = operation === "reset-failed"
+    const changed = operation === "changed"
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 pt-8 pb-[calc(2rem+var(--update-banner-height,0px))]">
+        <Brand />
+        <section className="mt-8 space-y-4" role={failed ? "alert" : "status"}>
+          <h1 className="text-2xl font-bold">
+            {finished
+              ? "Dati locali cancellati"
+              : failed
+                ? "Cancellazione non completata"
+                : changed
+                  ? "Il corso è cambiato"
+                  : "Cancellazione dei dati locali…"}
+          </h1>
+          <p className="text-sm leading-6">
+            {finished
+              ? "Il corso, le preferenze e i file offline di questa app sono stati eliminati. I file esportati in altre app restano dove li hai salvati. Per riaprire l’app serve una connessione."
+              : failed
+                ? "Alcuni dati potrebbero essere già stati eliminati. Riprova per completare la cancellazione."
+                : changed
+                  ? "Il corso è stato sostituito o eliminato. Riapri l’app per continuare: le vecchie schermate non possono più salvare modifiche."
+                  : operation === "blocked"
+                    ? "Chiudi le altre schede o finestre di questa app, comprese quelle di una vecchia versione. La cancellazione continuerà appena saranno chiuse."
+                    : "Attendi la conferma prima di riaprire l’app."}
+          </p>
+          {failed && (
+            <Button
+              className="h-auto min-h-11 whitespace-normal"
+              onClick={() => void resetAllLocalData()}
+            >
+              Riprova la cancellazione
+            </Button>
+          )}
+          {(finished || changed) && (
+            <Button
+              onClick={() => {
+                window.history.replaceState(null, "", window.location.href)
+                window.location.reload()
+              }}
+            >
+              Riapri l’app
+            </Button>
+          )}
+        </section>
+      </main>
+    )
+  }
   if (appState.status === "error") {
     // Riprova reloads the app rather than retrying the same database: an
     // older version opened meanwhile may have replaced its schema under this
@@ -844,7 +926,7 @@ export function App() {
           // The next course starts from Home, not from the erased course's
           // screens that the browser history still remembers.
           window.history.replaceState(null, "", window.location.href)
-          setAppState({ status: "no-course" })
+          window.location.reload()
         }}
       />
     </ScreenErrorBoundary>

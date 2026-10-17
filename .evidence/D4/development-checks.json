@@ -1,0 +1,152 @@
+{
+  "milestone": "D4",
+  "status": "IN_PROGRESS",
+  "recordedAt": "2026-10-17T00:48:01.937Z",
+  "source": {
+    "digest": "ca1dfc1993b81ad82d68eef51ad5c855bc63fbd0b80d15a016c6b77b543e6d8d",
+    "files": 435
+  },
+  "baselineCommit": "e493e675f05e5c4769f638a185f7062e4848e7cc",
+  "qualification": "Development checks, not the required final recorder, independent reviews or exact CI. Physical acceptance is pending; active D3 site stays fixed.",
+  "checks": [
+    {
+      "area": "archive codec",
+      "result": "PASS",
+      "tests": 19
+    },
+    {
+      "area": "real SQLite import/export/rollback/version merge",
+      "result": "PASS",
+      "tests": 5
+    },
+    {
+      "area": "channel-specific browser storage",
+      "result": "PASS",
+      "tests": 7
+    },
+    {
+      "area": "course session and closed-worker guard",
+      "result": "PASS",
+      "tests": 8,
+      "note": "Includes existing write-guard cases"
+    },
+    {
+      "area": "file UI, share activation, confirmation, denied storage",
+      "result": "PASS",
+      "tests": 6
+    },
+    {
+      "area": "combined new browser journeys",
+      "result": "13 PASS, 1 FAIL",
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-webkit-core"
+      ],
+      "retries": 0,
+      "reportStats": {
+        "startTime": "2026-10-17T00:17:26.183Z",
+        "duration": 194078.473,
+        "expected": 13,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "note": "The only failure was the fresh WebKit destination stuck at opening before import. The source and every import assertion remain intact."
+    },
+    {
+      "area": "corrected WebKit recipient-browser setup",
+      "result": "PASS",
+      "tests": 1,
+      "durationSeconds": 54.1,
+      "retries": 0,
+      "note": "An independent browser process now retains the project user agent and device scale; same rows, UI confirmation, immediate close/reopen and identity assertion. This changed test setup, not an app fix or proven cause of the earlier startup hang."
+    },
+    {
+      "area": "strict persisted crew reference",
+      "result": "PASS",
+      "tests": 20,
+      "note": "Codec tests include non-boat empty-string boatId reproduction and refusal."
+    },
+    {
+      "area": "pinned VFS close lifecycle and source guards",
+      "result": "PASS",
+      "tests": 16,
+      "note": "3 lifecycle cases and 13 tamper/version/missing-source guard cases."
+    },
+    {
+      "area": "desktop full reset before lifecycle fix",
+      "result": "3 FAIL",
+      "projects": [
+        "desktop-chrome-storage"
+      ],
+      "retries": 0,
+      "note": "All three correctly remained blocked because a surviving stock SharedWorker retained the VFS IndexedDB handle. Raw report retained in OS temporary cvc-d4-desktop-reset-blocked-proof."
+    },
+    {
+      "area": "desktop export/import/reset after lifecycle fix",
+      "result": "PASS",
+      "tests": 7,
+      "durationSeconds": 50.6,
+      "projects": [
+        "desktop-chrome-storage"
+      ],
+      "retries": 0,
+      "note": "Includes row-for-row immediate-close round trip, invalid files, same-ID stale UI save, pressure layouts, held transaction reset, legacy blocker and partial cleanup retry."
+    },
+    {
+      "area": "production same-origin full reset isolation",
+      "result": "PASS",
+      "engines": [
+        "Chromium",
+        "WebKit"
+      ],
+      "script": "npm run check:test-reset-isolation",
+      "note": "Both genuine production apps on one origin: test DB/preferences/cache/SW/OCR cleared through UI; regular course export, preferences, cache bytes and OCR bytes identical; actual regular offline reopen succeeds with server transport disabled. No deployment or phone proof."
+    },
+    {
+      "area": "pre-review checkpoint verification",
+      "result": "PASS",
+      "scripts": [
+        "verify:quick",
+        "verify:domain"
+      ],
+      "nodeVersion": "v24.21.0",
+      "unitTestFiles": 88,
+      "unitTests": 1421,
+      "unitDurationSeconds": 92.48,
+      "note": "Final D4 recorder and independent reviews remain pending."
+    }
+  ],
+  "fixedDuringDevelopment": [
+    "SQLite placeholder count corrected before integration proof",
+    "Old closed worker rejected before lock acquisition as well as inside the lock",
+    "390px/200% button overflow reproduced, then fixed with wrapping and stacked phone actions",
+    "Reset test incorrectly required a held callback to drain; SDK close can abandon that promise while actual IndexedDB deletion succeeds. Test now asserts database absence and a separate valid stale save rejecting CourseReplacedError.",
+    "Legacy-IDB blocker test uses a static origin page instead of unintentionally starting a third full app",
+    "Removed an unapproved archive-size restriction; included old exact-scope Workbox cache versions in selected cleanup while preserving other scopes",
+    "Production isolation scanner helper now opens the visible student menu and scopes Scan allievi to Azioni allievi; fixes both populated-list navigation and duplicate empty-state/menu controls.",
+    "SharedWorker retained VFS IndexedDB handle after SQLite close. Narrow pinned VFS subclass calls its existing close only after successful last-file jClose; no storage, locking, worker entry/name or stack switch. Closing only the outer SharedWorker port was experimentally insufficient.",
+    "Source guard fixture list extended to the two newly guarded inputs; a quick run during this addition failed 9 guard cases because its old fixture omitted them. The corrected focused 16-test run passes.",
+    "Reset evidence boolean now records the inverse of database presence, matching its absent field name; the assertion always required database presence false."
+  ],
+  "rawProofLocations": [
+    "OS temporary directory: cvc-d4-first-dual-location.txt",
+    "OS temporary directory: cvc-d4-reset-pixel-location.txt",
+    "OS temporary directory: cvc-d4-pressure-before-location.txt",
+    "OS temporary directory: cvc-d4-production-reset-isolation-menu-failure.log",
+    "OS temporary directory: cvc-d4-production-reset-isolation-blocked.log",
+    "OS temporary directory: cvc-d4-desktop-reset-blocked-proof",
+    "OS temporary directory: cvc-d4-desktop-fixed-proof",
+    "OS temporary directory: cvc-d4-production-reset-isolation-fixed.log"
+  ],
+  "remaining": [
+    "Final recorder and current mobile browser verification remain pending",
+    "Required independent reviews",
+    "Final recorded verification and exact green CI",
+    "Required actual Android acceptance; no physical PASS exists"
+  ],
+  "owner": {
+    "D3": "READY, 0.4.0 awaiting explicit installation report",
+    "D4": "NEEDS_SETUP; no deployment over pending D3"
+  }
+}

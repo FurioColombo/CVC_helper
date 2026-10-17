@@ -152,6 +152,9 @@ describe("prepareDatabase", () => {
     const order: string[] = []
     const fake = fakeDatabase()
     const database = {
+      readTransaction: async (
+        callback: (tx: { getAll: () => Promise<unknown[]> }) => unknown,
+      ) => callback({ getAll: async () => [] }),
       init: vi.fn(async () => {
         order.push("init")
       }),

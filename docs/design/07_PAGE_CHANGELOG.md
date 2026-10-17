@@ -40,6 +40,7 @@ derivato finale è rinviato.
 - Mostrare “Il tuo corso” nel formato `D2 - 35 | 2026`; D/C e livello cambiano con famiglia/livello, settimana ISO e anno derivano automaticamente dal calendario. Nascondere la navigazione inferiore durante la creazione.
 - Impostazioni mantiene i controlli esistenti; eventuale versione visibile è facoltativa e non richiede una nuova pagina.
 - Dal 2026-10-10 (D3) Impostazioni mostra la riga «Versione» con la versione installata e, sotto l'elenco, «Cerca aggiornamenti»: dice l'esito (ultima versione, offline, ricerca non riuscita) e diventa «Aggiorna alla nuova versione» quando una versione è pronta.
+- Dal 2026-10-17 (D4) Impostazioni mostra la conservazione dei dati e «Copia del corso»: avviso sui dati personali, preparazione del file, poi «Salva file» e, se supportato, «Condividi» con un nuovo tocco. Importazione disponibile anche al primo avvio, anteprima e conferma esplicita prima di sostituire il corso. «Azzera tutti i dati locali» resta distinta da «Nuovo corso», con conferma e stati di attesa, errore parziale e completamento. I pulsanti si dispongono in colonna sul telefono e crescono con il testo ingrandito. Una vecchia schermata invalidata lascia riaprire l'app senza poter salvare sul corso sostituito.
 
 **Mock:** primo avvio, form selezionato/errore, Impostazioni. **Accettazione:** creazione e riapertura non regrediscono; tastiera e focus non coperti. **Baseline:** `src/App.tsx`.
 

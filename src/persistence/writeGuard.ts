@@ -3,6 +3,10 @@ import type { LockContext, PowerSyncDatabase } from "@powersync/web"
 import { APP_VERSION } from "@/appVersion"
 import { dataAccess, type Version } from "@/domain/compatibility"
 import { readDataVersion } from "@/persistence/dataVersion"
+import {
+  assertCourseSession,
+  assertCourseSessionOpen,
+} from "@/persistence/courseSession"
 
 /**
  * D3: an app older than its data's minimum writer only reads the data
@@ -26,6 +30,7 @@ export class ReadOnlyDataError extends Error {
 }
 
 const readOnly = new WeakSet<PowerSyncDatabase>()
+const compactors = new WeakMap<PowerSyncDatabase, () => Promise<unknown>>()
 const listeners = new Set<() => void>()
 let anyReadOnly = false
 
@@ -53,6 +58,13 @@ export function onReadOnly(listener: () => void) {
   }
 }
 
+/** VACUUM after course erasure, without letting old course callbacks save. */
+export async function compactEmptyCourseDatabase(database: PowerSyncDatabase) {
+  const compact = compactors.get(database)
+  if (compact) return compact()
+  return database.writeLock((context) => context.execute("VACUUM"))
+}
+
 type Write = (...args: unknown[]) => Promise<unknown>
 
 /** Makes the database's write methods refuse once it is read-only for `app`. */
@@ -66,13 +78,25 @@ export function guardWrites<Database extends PowerSyncDatabase>(
   const executeRaw = methods.executeRaw!.bind(database)
 
   // Inside the lock: refuses before the caller's first statement.
-  const assertWritable = async (context: Pick<LockContext, "getAll">) => {
+  const assertWritable = async (
+    context: Pick<LockContext, "getAll">,
+    checkSession = true,
+  ) => {
+    if (checkSession) await assertCourseSession(database, context)
     if (readOnly.has(database)) throw new ReadOnlyDataError()
     if (dataAccess(app, await readDataVersion(context)) === "read-only") {
       markReadOnly(database)
       throw new ReadOnlyDataError()
     }
   }
+  compactors.set(database, () =>
+    writeLock(async (context: LockContext) => {
+      await assertWritable(context, false)
+      const courses = await context.getAll("SELECT id FROM courses LIMIT 1")
+      if (courses.length) throw new Error("Il corso è ancora presente.")
+      return context.execute("VACUUM")
+    }),
+  )
   const guarded =
     (callback: unknown) =>
     async (context: LockContext): Promise<unknown> => {
@@ -80,10 +104,14 @@ export function guardWrites<Database extends PowerSyncDatabase>(
       return (callback as (context: LockContext) => Promise<unknown>)(context)
     }
 
-  methods.writeLock = (callback, ...rest) =>
-    writeLock(guarded(callback), ...rest)
-  methods.writeTransaction = (callback, ...rest) =>
-    writeTransaction(guarded(callback), ...rest)
+  methods.writeLock = async (callback, ...rest) => {
+    assertCourseSessionOpen(database)
+    return writeLock(guarded(callback), ...rest)
+  }
+  methods.writeTransaction = async (callback, ...rest) => {
+    assertCourseSessionOpen(database)
+    return writeTransaction(guarded(callback), ...rest)
+  }
   methods.execute = (sql, parameters) =>
     methods.writeTransaction!((transaction: LockContext) =>
       transaction.execute(sql as string, parameters as unknown[]),

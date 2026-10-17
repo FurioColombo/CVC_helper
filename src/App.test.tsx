@@ -14,6 +14,16 @@ vi.mock("@/persistence/courses", () => ({
   saveActiveCourse: vi.fn(),
 }))
 
+vi.mock("@/persistence/localDataOperations", () => ({
+  watchLocalData: vi.fn(() => () => {}),
+  resetAllLocalData: vi.fn(),
+  announceCourseReplacement: vi.fn(),
+}))
+vi.mock("@/persistence/courseArchive", () => ({
+  exportCourseArchive: vi.fn(),
+  importCourseArchive: vi.fn(),
+}))
+
 vi.mock("@/persistence/students", () => ({
   createStudent: vi.fn(),
   createStudents: vi.fn(),
@@ -433,7 +443,12 @@ describe("starting a new course from Settings", () => {
     vi.mocked(eraseAllCourseData).mockClear()
   })
 
-  it("erases the course only after an explicit confirmation, then opens course creation", async () => {
+  it("erases the course only after an explicit confirmation, then reloads with a fresh database session", async () => {
+    const reload = vi.fn()
+    vi.spyOn(window, "location", "get").mockReturnValue({
+      ...window.location,
+      reload,
+    } as Location)
     const user = userEvent.setup()
     render(<App />)
 
@@ -461,9 +476,7 @@ describe("starting a new course from Settings", () => {
     )
     await user.click(screen.getByRole("button", { name: "Elimina tutto" }))
 
-    expect(
-      await screen.findByRole("heading", { name: "Crea il corso" }),
-    ).toBeVisible()
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce())
     expect(eraseAllCourseData).toHaveBeenCalledOnce()
     expect(window.history.state).toBeNull()
   })

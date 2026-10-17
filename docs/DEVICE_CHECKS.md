@@ -112,6 +112,26 @@ Record the URL, both versions, the time from the return to the offer, whether
 **Salvataggio…** or **Salvato** was shown when you tapped, and whether the change
 survived.
 
+## Course files and full local reset
+
+Run this only when `D4-PHONE-TRANSFER` is READY in [Owner todo](./OWNER_TODO.md).
+The agent supplies the build through the permanent CVC Helper Test installation
+after D3's update check; keep that installation and use fictitious people only.
+
+1. In Impostazioni, read Conservazione dei dati and report whether the browser
+   agreed. Refusal is a supported result; the app must explain it honestly.
+2. Prepare the course file. Save it and use Condividi to send it to another app.
+   Check that the file is available there and its name has no person's name.
+3. Choose that saved file for import. Check the preview, cancel once, then
+   explicitly confirm replacement. Reopen the course and check its students,
+   notes, duties and crews; close and reopen the app again.
+4. With synthetic data only, use Azzera tutti i dati locali. Check that it asks
+   for confirmation, finishes, and opens without a course afterwards. Check
+   the regular CVC Helper app still has its own course.
+5. Report the item ID, build, address, device/browser/OS, what the receiving app
+   did, and every observed result. Actual sharing and device behaviour remain
+   pending until this owner report; browser simulation cannot pass them.
+
 ## Summaries
 
 1. In the crew summary (**Apri vista lettura**) and the Comandate summary, tap

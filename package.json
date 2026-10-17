@@ -54,7 +54,7 @@
     "preverify:e2e:v05": "node scripts/check-runtime.mjs",
     "verify:e2e:v05": "node scripts/run-e2e.mjs tests/e2e/v05-assistant-paste.spec.ts",
     "verify": "npm run verify:quick && npm run verify:domain && npm run build",
-    "verify:all": "npm run verify && npm run check:full-week && npm run check:ocr-offline && npm run check:update && npm run check:update:test && npm run check:test-isolation && npm run verify:e2e",
+    "verify:all": "npm run verify && npm run check:full-week && npm run check:ocr-offline && npm run check:update && npm run check:update:test && npm run check:test-isolation -- --full-reset && npm run verify:e2e",
     "milestone:start": "node scripts/milestone.mjs start",
     "milestone:status": "node scripts/milestone.mjs status",
     "milestone:check": "node scripts/milestone.mjs check",
@@ -65,7 +65,8 @@
     "preevidence": "node scripts/check-runtime.mjs",
     "evidence": "node scripts/record-verification.mjs",
     "test-site:publish": "node scripts/deploy-test-site.mjs",
-    "check:test-isolation": "node scripts/check-test-app-isolation.mjs"
+    "check:test-isolation": "node scripts/check-test-app-isolation.mjs",
+    "check:test-reset-isolation": "node scripts/check-test-app-isolation.mjs --full-reset"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

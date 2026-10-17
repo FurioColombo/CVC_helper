@@ -18,6 +18,7 @@ import {
   repairRows,
 } from "@/persistence/repairs"
 import { markReadOnly, ReadOnlyDataError } from "@/persistence/writeGuard"
+import { bindCourseSession } from "@/persistence/courseSession"
 
 /**
  * Bringing stored data up to date before the app reads it (D1, 03 §3). Schema
@@ -101,6 +102,7 @@ export function prepareDatabase(
   if (!ready) {
     ready = (async () => {
       await database.init()
+      await bindCourseSession(database)
       const stored = await readDataVersion(database)
       if (dataAccess(app, stored) === "read-only") {
         markReadOnly(database)

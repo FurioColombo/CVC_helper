@@ -862,7 +862,7 @@
     {
       "id": "D4",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "ownerEvidence": [".evidence/D4/physical-device-review.json"],
       "allowedAwaitingOwnerPredecessors": [
         {
@@ -870,24 +870,55 @@
           "reason": "Export and import depend on D3's verified compatibility contract, not on the pending Android installed-update check."
         }
       ],
-      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "verificationScripts": [
+        "verify",
+        "verify:e2e:focus",
+        "check:test-reset-isolation"
+      ],
       "requiredEvidence": [
         ".evidence/D4/verification.json",
+        ".evidence/D4/test-isolation.json",
         ".evidence/D4/round-trip-evidence.json",
         ".evidence/D4/browser-evidence.json",
         ".evidence/D4/physical-device-review.json",
         ".evidence/D4/self-review.json",
         ".evidence/D4/data-integrity-review.json",
         ".evidence/D4/security-privacy-review.json",
-        ".evidence/D4/field-ux-review.json"
+        ".evidence/D4/field-ux-review.json",
+        ".evidence/D4/sync-chaos-review.json"
       ],
       "requiredReviews": [
         ".evidence/D4/self-review.json",
         ".evidence/D4/data-integrity-review.json",
         ".evidence/D4/security-privacy-review.json",
-        ".evidence/D4/field-ux-review.json"
+        ".evidence/D4/field-ux-review.json",
+        ".evidence/D4/sync-chaos-review.json"
       ],
-      "e2eSpecs": []
+      "e2eSpecs": [
+        "tests/e2e/d4-course-files.spec.ts",
+        "tests/e2e/d4-local-reset.spec.ts",
+        "tests/e2e/d1-migration.spec.ts",
+        "tests/e2e/d2-duty-items.spec.ts",
+        "tests/e2e/d3-read-only.spec.ts",
+        "tests/e2e/d3-engine-startup.spec.ts",
+        "tests/e2e/d3-startup-recovery.spec.ts",
+        "tests/e2e/d3-startup-multitab.spec.ts",
+        "tests/e2e/persistence.spec.ts",
+        "tests/e2e/reopen-persistence.spec.ts",
+        "tests/e2e/u01-shell.spec.ts",
+        "tests/e2e/f1-navigation-guards.spec.ts",
+        "tests/e2e/knowledge.spec.ts"
+      ],
+      "startedFrom": {
+        "commit": "e493e675f05e5c4769f638a185f7062e4848e7cc",
+        "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+        "ownerPrerequisites": [
+          {
+            "id": "D3",
+            "commit": "761530f820908db8355e1bcdd661bc8c6f495385"
+          }
+        ]
+      }
     },
     {
       "id": "T1",

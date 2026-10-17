@@ -256,6 +256,13 @@ export default defineConfig({
           "src/persistence/waSqliteFactory.ts",
         ),
       },
+      {
+        find: /^@journeyapps\/wa-sqlite\/src\/examples\/IDBBatchAtomicVFS\.js$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          "src/persistence/idbBatchAtomicVfs.ts",
+        ),
+      },
     ],
   },
   optimizeDeps: { exclude: ["@powersync/web", "@journeyapps/wa-sqlite"] },

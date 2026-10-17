@@ -4,6 +4,8 @@ import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 import { stamp, TOUCH } from "@/persistence/stamp"
+import { adoptCreatedCourse } from "@/persistence/courseSession"
+import { compactEmptyCourseDatabase } from "@/persistence/writeGuard"
 
 export type CourseRecord = CourseDetails & {
   id: string
@@ -63,6 +65,7 @@ export async function saveActiveCourse(
     )
   })
 
+  adoptCreatedCourse(db, course.id)
   return course
 }
 
@@ -100,7 +103,7 @@ export async function eraseAllCourseData() {
   // so it runs under the guarded write lock, which opens none (D3 review
   // DI-R2-1).
   try {
-    await db.writeLock((context) => context.execute("VACUUM"))
+    await compactEmptyCourseDatabase(db)
   } catch {
     // Not supported by every browser storage backend.
   }

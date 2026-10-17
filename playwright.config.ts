@@ -19,6 +19,8 @@ const { hostname, port } = new URL(baseURL)
 // iPhone WebKit too (H1, .evidence/H1/test-timing.json). A new spec that
 // measures layout belongs in this list.
 const layoutSpecs = [
+  "d4-course-files",
+  "d4-local-reset",
   "c1-crew-management",
   "d3-summary-controls",
   "e1-evaluation-history-layout",
@@ -46,6 +48,8 @@ const layoutSpecs = [
 // Core journeys on the WebKit engine. u08-duties joined through an unanchored
 // "duties" pattern before H1 and stays, so H1 removes no WebKit coverage.
 const webkitCoreSpecs = [
+  "d4-course-files",
+  "d4-local-reset",
   "boats",
   "crew-management-gate",
   // Data migrations run on every iPhone, on WebKit's own storage backend.
@@ -121,7 +125,11 @@ export default defineConfig({
     },
     {
       name: "desktop-chrome-storage",
-      testMatch: specs(["d3-startup-multitab"]),
+      testMatch: specs([
+        "d3-startup-multitab",
+        "d4-course-files",
+        "d4-local-reset",
+      ]),
       use: { ...devices["Desktop Chrome"], locale: "it-IT" },
     },
     {

@@ -20,6 +20,8 @@ import { afterEach, describe, expect, it } from "vitest"
 import { assertPinnedEngineSources } from "../vite.engine-startup"
 
 const engineFiles = [
+  "@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js",
+  "@powersync/web/lib/db/adapters/wa-sqlite/RawSqliteConnection.js",
   "@powersync/web/lib/worker/worker.js",
   "@powersync/web/lib/worker/client.js",
   "@powersync/web/lib/db/adapters/resolveAndValidateOptions.js",

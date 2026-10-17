@@ -4,6 +4,14 @@ import path from "node:path"
 
 const pinnedEngineFiles = [
   [
+    "@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js",
+    "809018e8976a8001bfac6062b1faa2a75333bd004885c8918f926c9e596e9cc6",
+  ],
+  [
+    "@powersync/web/lib/db/adapters/wa-sqlite/RawSqliteConnection.js",
+    "3579d112ac08acff0c0e5253a20f9229b14c7e0812d87f7f8e016cfa0dac9155",
+  ],
+  [
     "@powersync/web/lib/worker/worker.js",
     "f9154d972df907eb5b174b7a221a5436fec58ca20e8875e688c36c6cabc6f3b2",
   ],
