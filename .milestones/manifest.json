@@ -907,7 +907,8 @@
         "tests/e2e/reopen-persistence.spec.ts",
         "tests/e2e/u01-shell.spec.ts",
         "tests/e2e/f1-navigation-guards.spec.ts",
-        "tests/e2e/knowledge.spec.ts"
+        "tests/e2e/knowledge.spec.ts",
+        "tests/e2e/u02-deletion-integrity.spec.ts"
       ],
       "startedFrom": {
         "commit": "e493e675f05e5c4769f638a185f7062e4848e7cc",

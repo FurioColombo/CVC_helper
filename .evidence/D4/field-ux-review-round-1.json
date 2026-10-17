@@ -1,0 +1,61 @@
+{
+  "reviewerRole": "field-UX",
+  "persona": "Il Nostromo",
+  "milestone": "D4",
+  "round": 1,
+  "commit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FU-R1-B1",
+      "title": "Reset progress and partial-failure titles overflow at 320 px with 200% text",
+      "evidence": "src/App.tsx:865; scratch cvc-d4-field-round1/results/field-reset-blocked-partia-49cba-tates-at-320px-and-200-text-pixel-7-chrome/error-context.md and reset-blocked-320-200.png / reset-partial-320-200.png. Both assertions recorded document.clientWidth 320 and document.scrollWidth 348. Trace records h1 width 240 and scrollWidth 308.",
+      "reproduction": "On Pixel 7 Chromium, create a synthetic Deriva level 2 course and open Impostazioni. Hold a synthetic legacy IndexedDB connection and arrange one selected-cache deletion to fail. Set viewport 320x844 and root font-size 200%. Use Azzera tutti i dati locali, acknowledge and tap Azzera i dati. The blocked screen displays Cancellazione dei dati locali… beyond the right edge. Close the held connection: Cancellazione non completata overflows identically. Expected all text within the viewport without horizontal scrolling; observed page width 348. The subsequent ordinary retry click timed out with the alert section intercepting pointer events; that is retained as corroborating browser output, not a separately proven device defect.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05/R14/R18; docs/design/07_PAGE_CHANGELOG.md P02 D4 amendment; 04_IMPLEMENTATION_PLAN.md D4 browser evidence"
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "FU-R1-Q1",
+      "title": "The first-start import action says replace when no course exists",
+      "evidence": "src/features/settings/CourseFiles.tsx:355,369,402; scratch cvc-d4-field-round1/results/field-morning-course-copy--ebafc-port-and-first-start-labels-pixel-7-chrome/first-start-preview.png.",
+      "reproduction": "Start without a course and select a valid synthetic archive. Preview says Importare aggiunge questo corso al dispositivo and the checkbox says Confermo di importare questo corso sul dispositivo, but the final disabled/enabled action says Sostituisci il corso. Use an import label in the empty state so a hurried user does not have to reconcile the wording. Confirmation still protects the data; this is non-blocking.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13; docs/design/07_PAGE_CHANGELOG.md P02"
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md, reviewer-field-ux persona, REVIEW_PROTOCOL, repository field-operations-ui skill, LOCAL_DEVELOPMENT, active D4 success predicate/adversarial checklist, relevant product/scope and Technical Decisions section 3.2.",
+    "Diff e493e675f05e5c4769f638a185f7062e4848e7cc..be1fa27df7db183645cfe8b7f0a58743685ea977; P02 frozen mock source and rendered reference; P02 D4 amendment and design rules; development-checks.json and self-review.json qualifications.",
+    "Node v24.21.0. Required read-only npm run verify:e2e -- tests/e2e/d4-course-files.spec.ts tests/e2e/d4-local-reset.spec.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --retries=0: 14 PASS, 0 unexpected, 0 flaky, 284.482 seconds, report parsed before the later scratch runner. Covers fresh-browser row-for-row round trip, immediate close/reopen, invalid files, real stale UI save, narrow/enlarged controls, held-write reset, legacy blocker and partial cleanup retry. Original report preserved by the orchestrator in OS temporary cvc-d4-field-dual-report.json.",
+    "Visually inspected current Pixel and WebKit 390 and 320/200 controls, blocked-reset, partial/retry and complete screenshots. Normal states explain unsupported/refused storage, personal-data export, unavailable sharing, pending legacy tabs, partial cleanup and external exported files.",
+    "Read Chromium/WebKit round-trip JSON: all 13 course tables unchanged; WebKit pageErrors empty. Read blocked-reset and retry JSON: database absent after success, no page errors or crashes.",
+    "Independent scratch Pixel morning journey PASS in 15.3 seconds, 19 counted button/checkbox taps across the complete adversarial sequence. Home to prepared export took 2 taps and 300 ms of automated interaction; saving adds a third tap. Share capability shim confirmed fresh user activation and cancellation recovery; it does not prove a native share sheet.",
+    "Scratch wildcard: prepare a file in one tab, import the same-ID course through visible controls in another. Old tab showed Il corso è cambiato, removed Salva file and Condividi, and Riapri l’app restored the real course. Import preview cancellation and reset cancellation preserved usable settings.",
+    "Scratch reset-stress run reproduced FU-R1-B1 on Pixel. Soft assertions and screenshots captured blocked and partial states before its retry click timed out. The orchestrator requested early termination during the WebKit custom sequence; no completed WebKit custom result is claimed. Own server/worker process check confirmed cleanup.",
+    "Inspected Linux CI pressure screenshot and 0-trace.trace from scratch cvc-d4-ci-linux-pressure-trace.zip: 320/200 document scrollWidth 348 while every new course-file/reset button width was within its container. This separate settings overflow remains for orchestrator diagnosis; its cause is not attributed to FU-R1-B1.",
+    "D3 published 0.4.0 pin was not changed. Owner D4-PHONE-TRANSFER remains NEEDS_SETUP; no deployment, private data or tracked-file edits by this reviewer."
+  ],
+  "anglesTried": {
+    "seed": 578023799,
+    "lenses": [
+      "12. The same concept looks the same on every screen it appears on.",
+      "2. 320 px at 200% text: no horizontal scroll, clipped name or covered control."
+    ],
+    "wildcard": "A prepared export is visible when a second tab imports a same-ID course: the old surface must lose transfer/write controls and offer a real reopen path."
+  },
+  "morningPath": [
+    "1. On the pier, open the existing course and tap Impostazioni. Context and storage status remain labeled; no destructive action occurs.",
+    "2. Tap Prepara il file del corso, then Salva file. Three taps from Home produce the course copy; preparation itself measured 300 ms for the first two automated taps. Native save/share and human reading time were not timed. The previous checkpoint had no equivalent course-export action.",
+    "3. Cancel the share shim: the file remains ready. Select a course file, read the counts and consequence, then Annulla. Cancel full reset separately; both return to the current course.",
+    "4. A second tab replaces the course. The first tab stops offering its prepared file and gives one Riapri l’app action.",
+    "5. On first-start import I had to read twice: the preview says add/import while the action says replace. At 320/200 during a blocked or partial reset the title requires horizontal recovery, producing FU-R1-B1."
+  ],
+  "notTested": [
+    "Real Android/iPhone operating-system share sheet, receiving-app save/import transfer, installed-device persistence permission, wet hands, sun glare and physical-device reset isolation. Required owner evidence remains pending.",
+    "Custom WebKit morning and reset-stress probes were interrupted after the Pixel blocker, at the orchestrator's request. The earlier required 14-case dual-engine suite did complete successfully.",
+    "The separate Linux settings overflow culprit was not yet reproduced with a live element inventory; scratch inventory.spec.mjs is prepared but unrun.",
+    "Final exact-checkpoint CI and final milestone evidence recorder are the orchestrator's remaining work. This review does not close D4 or infer physical acceptance.",
+    "Cross-device sync, accounts, production backends and team editing are outside D4 scope."
+  ]
+}

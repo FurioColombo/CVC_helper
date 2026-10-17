@@ -4,6 +4,9 @@ test("blocks every real reference class and deletes only an unused student", asy
   page,
 }) => {
   await page.goto("/")
+  await expect(
+    page.getByRole("heading", { name: "Crea il corso" }),
+  ).toBeVisible()
   const result = await page.evaluate(async () => {
     const modulePath = "/src/test/u02DeletionHarness.ts"
     const harness = (await import(/* @vite-ignore */ modulePath)) as {

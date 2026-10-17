@@ -76,6 +76,28 @@ async function confirmFullReset(page: Page) {
   await page.getByRole("button", { name: "Azzera i dati" }).click()
 }
 
+async function enlargeResetText(page: Page) {
+  await page.setViewportSize({ width: 320, height: 844 })
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+}
+
+async function expectResetTextFits(page: Page) {
+  const layout = await page.evaluate(() => {
+    const title = document.querySelector("h1")!
+    return {
+      page: document.documentElement.scrollWidth,
+      viewport: document.documentElement.clientWidth,
+      titleWidth: title.clientWidth,
+      titleContent: title.scrollWidth,
+    }
+  })
+  expect(layout.viewport).toBe(320)
+  expect(layout.page).toBeLessThanOrEqual(layout.viewport)
+  expect(layout.titleContent).toBeLessThanOrEqual(layout.titleWidth + 1)
+}
+
 async function seedAppAndOtherChannelStorage(page: Page) {
   return page.evaluate(
     async ({ selected, other }) => {
@@ -474,10 +496,12 @@ test("keeps reset visibly blocked until a legacy database connection closes", as
     channel.databaseFilename,
   )
 
+  await enlargeResetText(page)
   await confirmFullReset(page)
   await expect(
     page.getByText(/Chiudi le altre schede o finestre/),
   ).toBeVisible()
+  await expectResetTextFits(page)
   await expect(
     page.getByRole("heading", { name: "Dati locali cancellati" }),
   ).not.toBeVisible()
@@ -509,6 +533,7 @@ test("keeps reset visibly blocked until a legacy database connection closes", as
     channel.databaseFilename,
   )
   expect(connectionVersion).toBeGreaterThan(0)
+  await expectResetTextFits(page)
   expect(appDatabasePresent).toBe(false)
   expect(events).toEqual({ pageErrors: 0, crashes: 0 })
   record(testInfo, "blocked-reset", {
@@ -549,6 +574,7 @@ test("reports partial cleanup honestly and retries through the reset screen", as
     })
   }, failingCache)
 
+  await enlargeResetText(page)
   await confirmFullReset(page)
   await expect(
     page.getByRole("heading", { name: "Cancellazione non completata" }),
@@ -556,6 +582,7 @@ test("reports partial cleanup honestly and retries through the reset screen", as
   await expect(
     page.getByText(/Alcuni dati potrebbero essere già stati eliminati/),
   ).toBeVisible()
+  await expectResetTextFits(page)
   await expect(
     page.getByRole("button", { name: "Riprova la cancellazione" }),
   ).toBeVisible()
@@ -577,6 +604,7 @@ test("reports partial cleanup honestly and retries through the reset screen", as
     page.getByRole("heading", { name: "Dati locali cancellati" }),
   ).toBeVisible()
   const remainingCacheNames = await page.evaluate(async () => caches.keys())
+  await expectResetTextFits(page)
   const appDatabasePresent = await page.evaluate(
     async (name) =>
       (await indexedDB.databases()).some((database) => database.name === name),

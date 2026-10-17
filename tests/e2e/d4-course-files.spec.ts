@@ -73,7 +73,7 @@ async function confirmImport(page: Page, hasCourse: boolean) {
     page.getByRole("heading", { name: "Corso trovato" }),
   ).toBeVisible()
   const confirm = page.getByRole("button", {
-    name: "Sostituisci il corso",
+    name: hasCourse ? "Sostituisci il corso" : "Importa il corso",
     exact: true,
   })
   await expect(confirm).toBeDisabled()
@@ -117,12 +117,61 @@ test("exports the upgraded course and imports it through the fresh app, every ro
   })
   try {
     const imported = await fresh.newPage()
+    const openingEvents: unknown[] = []
+    imported.on("crash", () => openingEvents.push({ type: "crash" }))
+    imported.on("framenavigated", (frame) => {
+      if (frame === imported.mainFrame())
+        openingEvents.push({ type: "navigation", url: frame.url() })
+    })
+    imported.on("websocket", (socket) => {
+      socket.on("framereceived", ({ payload }) => {
+        if (typeof payload === "string" && /full-reload|update/.test(payload))
+          openingEvents.push({ type: "dev-server-message", payload })
+      })
+    })
     imported.on("pageerror", (error) => errors.push(error.message))
     await imported.goto("/")
     expect(await imported.evaluate(() => navigator.userAgent)).toBe(userAgent)
-    await expect(
-      imported.getByRole("heading", { name: "Crea il corso" }),
-    ).toBeVisible()
+    try {
+      await expect(
+        imported.getByRole("heading", { name: "Crea il corso" }),
+      ).toBeVisible()
+    } catch (error) {
+      await info.attach("fresh-open-events.json", {
+        contentType: "application/json",
+        body: Buffer.from(JSON.stringify(openingEvents, null, 2)),
+      })
+      // Read-only failure context: distinguish compilation, adapter opening
+      // and a pending database lock without changing readiness or its limit.
+      for (const [name, diagnosticPage] of [
+        ["source", page],
+        ["recipient", imported],
+      ] as const) {
+        const diagnostic = await Promise.race([
+          diagnosticPage.evaluate(async () => ({
+            userAgent: navigator.userAgent,
+            body: document.body.innerText,
+            engine: Reflect.get(window, "__CVC_ENGINE_DIAGNOSTIC__"),
+            locks: await navigator.locks.query(),
+            resources: performance
+              .getEntriesByType("resource")
+              .filter((entry) => /wasm|engineModuleCompiler/.test(entry.name))
+              .map((entry) => entry.toJSON()),
+          })),
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve({ unavailable: "diagnostic timeout" }),
+              2000,
+            ),
+          ),
+        ]).catch(() => ({ unavailable: "page closed" }))
+        await info.attach(`fresh-open-${name}.json`, {
+          contentType: "application/json",
+          body: Buffer.from(JSON.stringify(diagnostic, null, 2)),
+        })
+      }
+      throw error
+    }
     await chooseArchive(imported, archive)
     expect((await rows(imported)).courses).toEqual([])
     await confirmImport(imported, false)
@@ -264,7 +313,7 @@ test("course-file and reset controls remain usable at narrow widths and enlarged
         page: document.documentElement.scrollWidth,
         controls: [
           ...document.querySelectorAll<HTMLElement>(
-            '[aria-labelledby="course-files-title"] button, [aria-labelledby="full-reset-title"] button',
+            '[aria-labelledby="course-files-title"] button, [aria-labelledby="full-reset-title"] button, fieldset:has(input[name="crew-display-columns"]) label',
           ),
         ]
           .filter((button) => button.getClientRects().length > 0)

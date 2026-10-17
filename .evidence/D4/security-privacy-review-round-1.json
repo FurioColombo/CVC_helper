@@ -1,0 +1,37 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "D4",
+  "round": 1,
+  "commit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "AGENTS.md, .claude/agents/reviewer-security-privacy.md and docs/agents/REVIEW_PROTOCOL.md; no earlier D4 security/privacy report existed.",
+    "04_IMPLEMENTATION_PLAN.md D4 predicate/checklist; 01_PRODUCT_SPEC.md §§10–11; 02_MVP_SCOPE.md §4; 03_TECHNICAL_DECISIONS.md §§3–3.2; docs/LOCAL_DEVELOPMENT.md and vendored PowerSync skill with JavaScript/React references.",
+    "Exact diff e493e675f05e5c4769f638a185f7062e4848e7cc..be1fa27df7db183645cfe8b7f0a58743685ea977, including archive codec/persistence, CourseFiles, session/write guards, reset/storage cleanup, VFS adapter and pinned-source guard additions.",
+    "src/appChannel.ts, src/runtimeConfig.ts, src/persistence/schema.ts and pinned wa-sqlite/PowerSync close implementation: selected database, preferences, Workbox scope, runtime/model caches and Tesseract language key remain channel-specific; no backend, credentials, authentication or new network call was introduced.",
+    "Independent Node v24.21.0 focused run: 46 tests passed across courseArchive, courseArchiveFormat, browserStorage, courseSession, idbBatchAtomicVfs and CourseFiles test files.",
+    "Four independent probes passed in scratchpad test-results/d4-security-review: hostile SQL/HTML names and notes remain bound text; own __proto__/constructor/raw OCR/photo fields are rejected before writes; inactive foreign-course rows and device meta/generation are excluded from export; invalid rows expose no synthetic sentinel in errors or console output.",
+    ".evidence/D4/baseline.json and development-checks.json; both committed course-file screenshots show the personal-data warning/explicit replacement acknowledgement without private roster content.",
+    "Inspected, but did not independently rerun, scratchpad cvc-d4-production-reset-isolation-fixed.json and .log: Chromium and WebKit production builds on one origin delete test storage while preserving regular course rows, preferences, cache/model bytes and actual offline reopening.",
+    "Additionally inspected the uncommitted u02 harness/spec delta: active-course setup uses saveActiveCourse, the foreign course is inactive, and the browser test waits for visible readiness. No security/privacy regression found in that delta.",
+    "Startup git status was clean at be1fa27. ci:status could not fetch from this environment; no CI success was inferred. Later root communication reported that exact push CI had failed and fixes were underway."
+  ],
+  "anglesTried": {
+    "seed": 142837471,
+    "lenses": [
+      "Lens 8, invitation/revocation: D4 has no accounts or invitations. Examined the local revocation analogue instead: old course instances, same-ID imports, closed workers and reset/erasure callbacks; focused tests reject stale writes before worker access and inside the write lock.",
+      "Lens 11, data minimisation: inspected all 13 whitelisted course tables, required export contents, aggregate import preview, generic errors, filename generation and user-driven save/share. Independently proved foreign-course rows, migration bookkeeping, local generation and unexpected OCR/photo fields cannot enter the archive."
+    ],
+    "wildcard": "Treat a course archive as hostile input and the shared regular/test origin as a deletion trap: probe SQL/HTML text and prototype keys, then inspect exact cache/service-worker/OCR namespace selection and the production isolation proof."
+  },
+  "notTested": [
+    "Actual Android/iOS share-sheet delivery into a receiving app, phone import and persistent-storage behavior; these remain required owner checks, with no simulated physical PASS.",
+    "Did not run an independent browser session because the field reviewer owned the browser slot. Reviewed source, tests, screenshots and the recorded production isolation proof instead.",
+    "Remote role/account row-access, invitation/revocation and server retention are outside D4: no backend, accounts or sync connector exists in this scope.",
+    "The codec fix for the separately reported data-integrity blocker was not reviewed. This security/privacy PASS applies to the exact commit and expressly inspected u02 working delta above; it does not close the milestone or override other reviewers."
+  ]
+}

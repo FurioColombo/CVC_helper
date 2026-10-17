@@ -1,4 +1,6 @@
 import { db } from "@/persistence/db"
+import { buildCourseDetails } from "@/domain/course"
+import { saveActiveCourse } from "@/persistence/courses"
 import {
   deleteUnusedStudent,
   StudentDeletionBlockedError,
@@ -8,7 +10,7 @@ import {
 async function addCourse(id: string) {
   await db.execute(
     `INSERT INTO courses(id, active, family, level, isoWeek, year, startDate, endDate, label)
-     VALUES (?, 1, 'Deriva', 2, 35, 2026, '2026-08-29', '2026-09-05', 'D2 35 2026')`,
+     VALUES (?, 0, 'Deriva', 2, 35, 2026, '2026-08-29', '2026-09-05', 'D2 35 2026')`,
     [id],
   )
 }
@@ -38,9 +40,14 @@ async function blockedKind(studentId: string, courseId: string) {
 export async function runU02DeletionHarness() {
   await db.init()
   const token = crypto.randomUUID()
-  const ownerCourse = `u02-owner-${token}`
+  // Adopt the active course through the real creation path. The second,
+  // inactive course supplies deliberately foreign references for this gate.
+  const ownerCourse = (
+    await saveActiveCourse(
+      buildCourseDetails("Deriva", 2, new Date("2026-08-29T12:00:00")),
+    )
+  ).id
   const otherCourse = `u02-other-${token}`
-  await addCourse(ownerCourse)
   await addCourse(otherCourse)
 
   const results: Array<{

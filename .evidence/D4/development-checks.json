@@ -115,6 +115,32 @@
       "unitTests": 1421,
       "unitDurationSeconds": 92.48,
       "note": "Final D4 recorder and independent reviews remain pending."
+    },
+    {
+      "name": "review-fix verification, 2026-10-17",
+      "status": "PARTIAL_NOT_ACCEPTANCE",
+      "unitTestFiles": 88,
+      "unitTests": 1426,
+      "unitDurationSeconds": 95.6,
+      "domainChecks": "PASS",
+      "browserFixRun": "21 PASS / 1 FAIL, no retries, 314.81 seconds",
+      "browserFailure": "Fresh WebKit recipient remains at opening before import. Trace shows both pages reconnecting/navigating mid-wait; cause unproven.",
+      "isolatedDiagnostic": "Same case PASS without retries in 49.9 seconds. Failure-only engine/lock/resource and navigation/dev-server diagnostics added; this is not a proven fix.",
+      "rawProof": "OS temporary cvc-d4-fixes-22-proof and cvc-d4-fresh-open-diagnostic-1"
+    },
+    {
+      "area": "review-fix checkpoint checks, 2026-10-18",
+      "source": "working-tree review fixes above be1fa27, including DEV phase timing instrumentation",
+      "result": "PASS_NOT_FINAL_RECORDER",
+      "nodeVersion": "v24.21.0",
+      "unitTestFiles": 88,
+      "unitTests": 1428,
+      "unitDurationSeconds": 127.41,
+      "quick": "PASS lint, format, typecheck and unit suites",
+      "domain": "PASS repository/domain/compatibility/docs/controller self-test",
+      "productionBuild": "PASS; compiler and app chunks omit new timing fields; compiler retains direct fetch -> compileStreaming path",
+      "rawProof": "OS temporary cvc-d4-review-fixes-quick.log",
+      "note": "Required independent fix reviews, final recorder, unresolved browser opening diagnosis and exact source CI remain pending."
     }
   ],
   "fixedDuringDevelopment": [
@@ -127,7 +153,10 @@
     "Production isolation scanner helper now opens the visible student menu and scopes Scan allievi to Azioni allievi; fixes both populated-list navigation and duplicate empty-state/menu controls.",
     "SharedWorker retained VFS IndexedDB handle after SQLite close. Narrow pinned VFS subclass calls its existing close only after successful last-file jClose; no storage, locking, worker entry/name or stack switch. Closing only the outer SharedWorker port was experimentally insufficient.",
     "Source guard fixture list extended to the two newly guarded inputs; a quick run during this addition failed 9 guard cases because its old fixture omitted them. The corrected focused 16-test run passes.",
-    "Reset evidence boolean now records the inverse of database presence, matching its absent field name; the assertion always required database presence false."
+    "Reset evidence boolean now records the inverse of database presence, matching its absent field name; the assertion always required database presence false.",
+    "DI-1: reject embedded NUL, unpaired surrogate and leading BOM in every ID/TEXT before database preparation; valid Unicode and embedded BOM stay intact. Independent restricted round-2 real-driver checks pass; formal report waits for checkpoint.",
+    "FU-R1-B1: reset text wraps at 320px/200%; settings fieldset and radio options can shrink/stack. First-start import action says Importa il corso. Independent fix review remains pending.",
+    "U02 fixture creates/adopts its owner through the production course-creation path and keeps the foreign course inactive; deletion guards unchanged."
   ],
   "rawProofLocations": [
     "OS temporary directory: cvc-d4-first-dual-location.txt",

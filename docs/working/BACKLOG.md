@@ -110,41 +110,32 @@ remaining proposals await the owner's pick:
 7. `milestone:complete` writes the plan's status row from the manifest
    (friction 10).
 
-## D3 CI blockers under investigation
+## Current CI gate
 
-Full CI on `33ac7c9` fails three summary-image comparisons at 320 px and
-200% text, with identical results across retries. The large-course upgrade
-also fails all three attempts (6302–6393 ms); all 609 rows remain identical.
-These failures block D3 publication and readiness, rather than being deferred
-to T1. See `.evidence/D3/ci-macos-comparison.json`.
-
-Immutable comparisons reproduce the image mismatch on both Mac architectures.
-The isolated M1 timing case passes, but its original preceding tests trigger
-an upgrade failure; a fresh browser process instead fails reopen at 9897 ms.
-Controlled body smoothing and connected-canvas probes retain the image
-mismatch. None of those candidates is adopted. Preserve both five-second
-bounds, image limits, negative controls and data-integrity checks while
-investigating public SDK startup options and text placement.
-
-The owner authorises bounded worker/module startup investigation on 2026-10-14
-(03 §3). No supported SDK startup fix was found. The unchanged acceptance
-limits and verification conditions are in
-`.evidence/D3/runtime-blocker-assessment.json`; no candidate is adopted yet.
-The production candidate now passes focused lifecycle checks; full D3 verification and exact green CI still gate adoption. The unrelated unit history-loader race is fixed by waiting for loaded content; see `.evidence/D3/evaluation-history-readiness.json`.
+D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
+D4 CI fails on a stale-session fixture, enlarged-text settings and Mac cold
+compilation. These remain D4 gate work. Preserve both five-second bounds,
+assertions, retries and projects (`.evidence/D4/ci-checkpoint-be1fa27.json`).
 
 ## Flaky browser tests
 
-Local Windows verification also needs a shutdown diagnosis: D3's default and
-forced-native-share WebKit cases printed passing results, then stalled before
-the final report and command exit. Those attempts were interrupted and are
-not command PASS evidence. One manually served attempt also timed out before
-opening the copy action; its cause is unclassified. Preserve the probe logs
-identified in `.evidence/D3/ci-native-share-fix.json`; do not raise time limits.
-The later clean-source recorder at `33ac7c9` completed all 105 focused cases
-without retries and shut down normally; the interrupted scratch attempts do
-not establish a persistent shutdown defect.
+Windows D3 share probes printed passing cases but stalled before report/exit;
+interrupted attempts are not command PASS. A manually served attempt timed out
+before copying, cause unclassified. Logs: `.evidence/D3/ci-native-share-fix.json`.
+The later clean-source recorder at `33ac7c9` passed all 105 focused cases with
+no retries and normal exit. Preserve those observations and unchanged limits.
 
 Each passed only on a retry and is a defect to fix (03 §6).
+
+- `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
+  — the first development dual-engine run stalled opening the fresh WebKit
+  recipient before import. An independent recipient process with the correct
+  device identity then passed, followed by all 14 phone cases without retries.
+  It recurred on 2026-10-17 in a 22-case fix run (21 passed); the isolated
+  diagnostic run then passed in 49.9 s without retries. Failure-only read
+  diagnostics now retain each page's engine events, locks and resource timings.
+  The cause remains unproven and is D4 gate work; T1 must retain this
+  classification. See `.evidence/D4/development-checks.json`.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,
@@ -205,6 +196,14 @@ Each passed only on a retry and is a defect to fix (03 §6).
   repetitive presentation).
 
 ## Engineering follow-ups
+
+- D4 import invalidates current app instances by a local generation. Older
+  compatible writers permitted by 03 §3.1 cannot read that generation: a D3
+  guard with the current engine can overwrite imported values after a same-ID
+  replacement. The import preview asks users to close other old tabs. Future
+  compatibility/lifecycle planning must address this boundary without silently
+  changing the approved writer window. D4's sync-chaos review retains the probe;
+  it exercises the old guard, not the whole historical application.
 
 From the UG2 code-quality review, before the shared database
 (`.evidence/UG2/code-quality-review.json`):

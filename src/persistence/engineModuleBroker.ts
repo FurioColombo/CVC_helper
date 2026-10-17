@@ -15,6 +15,31 @@ type EngineEvent = {
   moduleKey: string
   instanceId?: string
   elapsedMs?: number
+  timings?: CompileTimings
+}
+
+type CompilerTimings = {
+  workerModuleEnteredAt: number
+  workerRequestReceivedAt: number
+  workerFetchStartedAt: number
+  workerResponseHeadersAt: number
+  workerCompileCalledAt: number
+  workerCompiledAt: number
+  workerReplySentAt: number
+}
+
+type CompileTimings = CompilerTimings & {
+  parentCompileStartedAt: number
+  parentWorkerCreateStartedAt: number
+  parentWorkerCreatedAt: number
+  parentRequestSentAt: number
+  parentReplyReceivedAt: number
+  parentModuleReturnedAt: number
+}
+
+type CompiledModule = {
+  module: WebAssembly.Module
+  timings?: CompileTimings
 }
 
 declare global {
@@ -36,8 +61,30 @@ const STARTUP_FAILURE_TIMEOUT_MS = 30_000
 const MODULE_COMPILE_TIMEOUT_MS = 30_000
 const MAX_DIAGNOSTIC_EVENTS = 128
 
-const compiledModules = new Map<string, Promise<WebAssembly.Module>>()
+const compiledModules = new Map<string, Promise<CompiledModule>>()
 let workerSequence = 0
+
+const COMPILER_TIMING_KEYS = [
+  "workerModuleEnteredAt",
+  "workerRequestReceivedAt",
+  "workerFetchStartedAt",
+  "workerResponseHeadersAt",
+  "workerCompileCalledAt",
+  "workerCompiledAt",
+  "workerReplySentAt",
+] as const satisfies readonly (keyof CompilerTimings)[]
+
+function isCompilerTimings(value: unknown): value is CompilerTimings {
+  if (typeof value !== "object" || value === null) return false
+  const record = value as Record<string, unknown>
+  return COMPILER_TIMING_KEYS.every(
+    (key) => typeof record[key] === "number" && Number.isFinite(record[key]),
+  )
+}
+
+function absoluteTimestamp() {
+  return performance.timeOrigin + performance.now()
+}
 
 function appendEvent(event: EngineEvent) {
   if (!import.meta.env.DEV) return
@@ -66,7 +113,10 @@ function isDataCloneError(error: unknown) {
   )
 }
 
-function compileModule(url: string): Promise<WebAssembly.Module> {
+function compileModule(
+  url: string,
+  parentCompileStartedAt: number | undefined,
+): Promise<CompiledModule> {
   // This producer belongs to the page's immutable-code cache. One database
   // consumer failing must not cancel compilation for another pending open.
   return new Promise((resolve, reject) => {
@@ -74,7 +124,7 @@ function compileModule(url: string): Promise<WebAssembly.Module> {
     let timeout: number | undefined
     let settled = false
 
-    const finish = (error?: Error, module?: WebAssembly.Module) => {
+    const finish = (error?: Error, module?: CompiledModule) => {
       if (settled) return
       settled = true
       if (timeout !== undefined) window.clearTimeout(timeout)
@@ -94,7 +144,37 @@ function compileModule(url: string): Promise<WebAssembly.Module> {
           "module" in result &&
           result.module instanceof WebAssembly.Module
         ) {
-          finish(undefined, result.module)
+          const parentReplyReceivedAt = import.meta.env.DEV
+            ? absoluteTimestamp()
+            : undefined
+          const workerTimings =
+            import.meta.env.DEV &&
+            "timings" in result &&
+            isCompilerTimings(result.timings)
+              ? result.timings
+              : undefined
+          const timings: CompileTimings | undefined =
+            import.meta.env.DEV &&
+            parentCompileStartedAt !== undefined &&
+            parentWorkerCreateStartedAt !== undefined &&
+            parentWorkerCreatedAt !== undefined &&
+            parentRequestSentAt !== undefined &&
+            parentReplyReceivedAt !== undefined &&
+            workerTimings
+              ? {
+                  ...workerTimings,
+                  parentCompileStartedAt,
+                  parentWorkerCreateStartedAt,
+                  parentWorkerCreatedAt,
+                  parentRequestSentAt,
+                  parentReplyReceivedAt,
+                  parentModuleReturnedAt: absoluteTimestamp(),
+                }
+              : undefined
+          finish(undefined, {
+            module: result.module,
+            ...(timings ? { timings } : {}),
+          })
           return
         }
         if (
@@ -116,19 +196,30 @@ function compileModule(url: string): Promise<WebAssembly.Module> {
       finish(new Error("Could not receive the compiled PowerSync module"))
     }
 
+    let parentWorkerCreateStartedAt: number | undefined
+    let parentWorkerCreatedAt: number | undefined
+    let parentRequestSentAt: number | undefined
+
     try {
+      if (import.meta.env.DEV) {
+        parentWorkerCreateStartedAt = absoluteTimestamp()
+      }
       worker = new Worker(
         new URL("./engineModuleCompiler.ts", import.meta.url),
         {
           type: "module",
         },
       )
+      if (import.meta.env.DEV) {
+        parentWorkerCreatedAt = absoluteTimestamp()
+      }
       worker.addEventListener("message", onMessage)
       worker.addEventListener("error", onError)
       worker.addEventListener("messageerror", onMessageError)
       timeout = window.setTimeout(() => {
         finish(new Error("Timed out compiling the PowerSync WASM module"))
       }, MODULE_COMPILE_TIMEOUT_MS)
+      if (import.meta.env.DEV) parentRequestSentAt = absoluteTimestamp()
       worker.postMessage({ type: "compile-module", moduleUrl: url })
     } catch (error) {
       finish(error instanceof Error ? error : new Error(String(error)))
@@ -144,7 +235,7 @@ async function answerModuleRequest(
   const { moduleKey, moduleUrl, requestId } = message
   if (!moduleKey || !moduleUrl || !requestId) return
 
-  let modulePromise: Promise<WebAssembly.Module> | undefined
+  let modulePromise: Promise<CompiledModule> | undefined
   try {
     const parsedUrl = new URL(moduleUrl, window.location.href)
     if (
@@ -157,7 +248,7 @@ async function answerModuleRequest(
     }
 
     modulePromise = compiledModules.get(moduleKey)
-    let compiledModule: WebAssembly.Module
+    let compiledModule: CompiledModule
     if (modulePromise) {
       compiledModule = await modulePromise
       appendEvent({ type: "cache-hit", workerId: ownerWorkerId, moduleKey })
@@ -165,7 +256,10 @@ async function answerModuleRequest(
       appendEvent({ type: "cache-miss", workerId: ownerWorkerId, moduleKey })
       appendEvent({ type: "compile-start", workerId: ownerWorkerId, moduleKey })
       const compileStarted = performance.now()
-      modulePromise = compileModule(parsedUrl.href)
+      const parentCompileStartedAt = import.meta.env.DEV
+        ? absoluteTimestamp()
+        : undefined
+      modulePromise = compileModule(parsedUrl.href, parentCompileStartedAt)
       compiledModules.set(moduleKey, modulePromise)
       compiledModule = await modulePromise
       appendEvent({
@@ -173,6 +267,7 @@ async function answerModuleRequest(
         workerId: ownerWorkerId,
         moduleKey,
         elapsedMs: Math.round(performance.now() - compileStarted),
+        ...(compiledModule.timings ? { timings: compiledModule.timings } : {}),
       })
     }
 
@@ -180,7 +275,7 @@ async function answerModuleRequest(
       port.postMessage({
         type: "compiled-module",
         requestId,
-        module: compiledModule,
+        module: compiledModule.module,
       })
     } catch (error) {
       if (!isDataCloneError(error)) throw error

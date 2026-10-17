@@ -1,0 +1,81 @@
+{
+  "milestone": "D4",
+  "sourceCommit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "run": 38988038882,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/38988038882",
+  "status": "FAIL_NOT_ACCEPTANCE",
+  "jobs": [
+    {
+      "os": "ubuntu-latest",
+      "job": 117263969986,
+      "browserResults": {
+        "passed": 213,
+        "originalSkips": 47,
+        "failed": 4,
+        "flaky": 0
+      },
+      "failures": [
+        "D4 settings pressure at 320px/200%: document width 348 versus viewport 320 on Pixel, iPhone Chromium viewport and desktop; all retries fail.",
+        "U02 deletion fixture inserts active courses after App binds an empty course; the next fixture write correctly rejects CourseReplacedError."
+      ]
+    },
+    {
+      "os": "macos-15",
+      "job": 117263969832,
+      "browserResults": {
+        "passed": 286,
+        "originalSkips": 65,
+        "failed": 2,
+        "flaky": 0
+      },
+      "failures": [
+        "U02 deletion fixture: same course-session refusal as Linux.",
+        "D1 40-student construction-inclusive first open exceeds the unchanged 5000ms bound."
+      ],
+      "largeUpgradeAttempts": [
+        {
+          "upgradeMs": 6491,
+          "adapterInitMs": 5869,
+          "reopenMs": 366,
+          "rows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "identical": true
+        },
+        {
+          "upgradeMs": 5493,
+          "adapterInitMs": 4963,
+          "reopenMs": 273,
+          "rows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "identical": true
+        },
+        {
+          "upgradeMs": 6696,
+          "adapterInitMs": 5828,
+          "reopenMs": 531,
+          "rows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "identical": true
+        }
+      ],
+      "firstAttemptTrace": {
+        "priorModuleEvents": 0,
+        "firstEvent": "cache-miss",
+        "compileWorkerElapsedMs": 5754,
+        "wasmNetworkMs": 35.922,
+        "newSdkWorkerAndInstanceForReopen": true,
+        "interpretation": "The compiler-worker round trip dominates, rather than network or course rows. It includes worker bootstrap, native compilation and module transport; internal phases were not timed. This is a failed gate, not waived by intact data."
+      }
+    }
+  ],
+  "rawProof": [
+    "OS temporary cvc-d4-ci-117263969986.log and cvc-d4-ci-117263969832.log",
+    "OS temporary cvc-d4-ci-linux.zip / cvc-d4-ci-macos.zip and extracted reports",
+    "OS temporary cvc-d4-ci-linux-pressure.png / cvc-d4-ci-linux-pressure-trace.zip",
+    "OS temporary cvc-d4-ci-macos-timing-trace.zip and cvc-d4-mac-0-trace.trace/.network"
+  ],
+  "qualification": "Preserves the first D4 CI failure. No assertion, timeout, retry count, original skip or project coverage is reduced. Fixes and re-verification remain required; no test-site deployment or physical PASS."
+}

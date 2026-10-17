@@ -1,0 +1,57 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "D4",
+  "commit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "D4-CI",
+      "title": "Current checkpoint CI is red",
+      "evidence": ".evidence/D4/ci-checkpoint-be1fa27.json",
+      "reproduction": "Linux layout and fixture failures have candidate fixes; Mac cold-open worker round trip remains unresolved.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D4 / AGENTS.md 6"
+    },
+    {
+      "id": "D4-WEBKIT-OPEN",
+      "title": "Fresh-recipient opening has an unexplained intermittent failure",
+      "evidence": ".evidence/D4/development-checks.json",
+      "reproduction": "The 22-case fix run had 21 passes and a fresh WebKit opening timeout; isolated case then passed. No retry is accepted as a fix.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D4 success predicate"
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-R2-Q4",
+      "title": "Existing unused raw/read SQL escape surface remains outside the guarded mutation API",
+      "evidence": "src/persistence/writeGuard.ts; carried D3 sync-chaos and data-integrity reviews; docs/working/BACKLOG.md",
+      "reproduction": "Source inspection found no new mutating application caller through executeRaw or read APIs. Normal execute, executeBatch, writeLock and writeTransaction check the course session and compatibility under the acquired write lock.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1"
+    }
+  ],
+  "fixedFindings": [
+    "Corrected faults INSERT binding count before SQLite integration proof; all 13 tables round-trip with original IDs, timestamps and values.",
+    "A closed worker cannot acquire a lock for the in-lock stale-session check. Permanently invalid instances now reject before acquiring it, while the second check still runs under the actual write lock.",
+    "Missing legacy age and nullable crew positions remain recoverable. A non-boat crew with empty-string boatId is refused, matching the persisted reader's stricter SQL NULL rule.",
+    "Reproduced enlarged-text phone button overflow and fixed wrapping/stacking without reducing the text. Removed an unapproved archive-size limit.",
+    "Selected cleanup includes older exact-scope Workbox names and only the selected OCR language key. It does not delete Tesseract's shared database or sibling app storage.",
+    "Reproduced desktop reset blocking after SDK close: stock jClose retains the VFS IndexedDB handle in a surviving SharedWorker. A source-hash-guarded subclass releases that existing handle only after the last successful SQLite file close. Stock storage, locks, worker entry and names remain unchanged. Closing only the worker's outer port was insufficient.",
+    "Corrected test setup assumptions: scoped student menu navigation, static legacy-IDB blocker page, recipient device identity, and a valid stale student save. The held callback may remain pending after dedicated-worker termination; deletion proof never depends on that callback settling.",
+    "Corrected the reset evidence boolean to record absence rather than presence; the assertion always required the database to be absent. Current final browser evidence still needs the required recorder."
+  ],
+  "evidenceInspected": [
+    "D4 success predicate/adversarial checklist, relevant product/scope/data-version contracts, PowerSync JavaScript/React references, field-operations rulebook, frozen P02 settings target and current P02 amendment.",
+    "Reviewed all implementation and test changes from e493e67 through be1fa27, including strict archive shape/primitive/ownership/version/domain checks; parameter-bound SQL; one read snapshot and one replacement transaction; rollback of rows/version/generation; permanent invalidation and first-write stale rejection.",
+    "Native share is invoked on a fresh visible tap before awaiting; file name contains only a generic prefix and ISO year/week; generic errors never include archive row values. Preview/cancel and explicit checkbox precede replacement.",
+    "Before review checkpoint: verify:quick PASS, Node v24.21.0, 88 files / 1421 tests; verify:domain PASS. Raw quick log: OS temporary cvc-d4-quick-review-checkpoint.log.",
+    "Focused desktop browser run: all seven course-file/reset journeys PASS, no retries, 50.6 seconds. Raw proof: OS temporary cvc-d4-desktop-fixed-proof. The later evidence-field name correction changes no assertion or app behavior.",
+    "Actual production same-origin reset journey PASS on Chromium 151.0.7922.34 and WebKit 26.5: test DB/preferences/cache/SW/OCR key removed; regular full course export, preferences, cache bytes and model bytes identical; regular offline reopening uses its service worker with server transport unavailable. Raw proof: OS temporary cvc-d4-production-reset-isolation-fixed.json and .log.",
+    "Visually inspected .evidence/D4/screenshots/course-files-390.png and course-files-320-200.png, plus the desktop reset-complete capture. Controls remain legible; enlarged text intentionally requires vertical scrolling.",
+    "Rechecked all nine D3 agentReady evidence hashes and unchanged test-site pin before checkpoint. Neither published app was redeployed. D3-PHONE-UPDATE remains READY awaiting explicit installation; D4-PHONE-TRANSFER is NEEDS_SETUP through the owner queue."
+  ],
+  "notTested": [
+    "Interim self-review; independent restricted fix reviews, final recorder and exact green source CI are still required.",
+    "Actual phone Web Share receiving-app behavior, save/import transfer, persistence permission and full-reset acceptance remain owner checks. No simulated or inferred physical PASS.",
+    "Cross-device sync, accounts, backend deletion and upload conflicts are outside 0.4.0."
+  ]
+}

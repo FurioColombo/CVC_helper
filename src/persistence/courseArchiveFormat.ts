@@ -145,6 +145,17 @@ function hasExactKeys(
   }
 }
 
+function isSafeBoundString(value: string) {
+  // The production UTF-8 read bridge strips a leading BOM. SQLite text
+  // binding also truncates NUL and replaces lone surrogates. Keep embedded
+  // BOMs and all other text exactly as supplied.
+  return (
+    !value.startsWith("\uFEFF") &&
+    !value.includes("\0") &&
+    !/[\uD800-\uDFFF]/u.test(value)
+  )
+}
+
 function parseVersion(value: unknown): Version {
   if (!isRecord(value)) fail("invalid-data")
   hasExactKeys(value, ["major", "minor", "patch"])
@@ -207,7 +218,11 @@ function validateRowsShape(value: unknown): CourseArchiveTables {
     for (const item of rows) {
       if (!isRecord(item)) fail("invalid-data")
       hasExactKeys(item, rowKeys, "unsupported-format")
-      if (typeof item.id !== "string" || item.id.trim().length === 0) {
+      if (
+        typeof item.id !== "string" ||
+        item.id.trim().length === 0 ||
+        !isSafeBoundString(item.id)
+      ) {
         fail("invalid-data")
       }
 
@@ -218,7 +233,9 @@ function validateRowsShape(value: unknown): CourseArchiveTables {
           continue
         }
         if (sqlType === "TEXT") {
-          if (typeof cell !== "string") fail("invalid-data")
+          if (typeof cell !== "string" || !isSafeBoundString(cell)) {
+            fail("invalid-data")
+          }
         } else if (sqlType === "INTEGER") {
           if (typeof cell !== "number" || !Number.isSafeInteger(cell)) {
             fail("invalid-data")

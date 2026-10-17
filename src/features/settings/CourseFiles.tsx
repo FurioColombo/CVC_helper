@@ -354,6 +354,10 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                 ? "Importare sostituisce tutti i dati del corso attuale. I corsi non vengono uniti."
                 : "Importare aggiunge questo corso al dispositivo. L’archivio non viene unito ad altri dati."}
             </p>
+            <p className="mt-2 text-sm leading-5">
+              Prima di importare chiudi le altre schede dell’app, soprattutto
+              quelle di una vecchia versione.
+            </p>
             <label className="mt-2 flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold">
               <input
                 checked={replacementConfirmed}
@@ -399,7 +403,11 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                     className="size-4 animate-spin"
                   />
                 )}
-                {importing ? "Importazione…" : "Sostituisci il corso"}
+                {importing
+                  ? "Importazione…"
+                  : hasCourse
+                    ? "Sostituisci il corso"
+                    : "Importa il corso"}
               </Button>
             </div>
           </div>

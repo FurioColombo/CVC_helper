@@ -498,14 +498,14 @@ function SettingsView({
       <UpdateCheckButton className="mt-4" />
       <StorageStatus />
       <CourseFiles hasCourse />
-      <fieldset className="mt-6 rounded-2xl border bg-card p-4">
-        <legend className="px-1 text-sm font-bold text-primary">
+      <fieldset className="mt-6 min-w-0 rounded-2xl border bg-card p-4">
+        <legend className="max-w-full break-words px-1 text-sm font-bold text-primary [overflow-wrap:anywhere]">
           Visualizzazione degli equipaggi
         </legend>
         <p className="text-sm leading-5 text-muted-foreground">
           Scegli quanti nomi degli allievi selezionati mostrare per riga.
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {([2, 3] as const).map((columns) => (
             <label
               className="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2 text-sm font-semibold has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:text-primary focus-within:ring-3 focus-within:ring-ring"
@@ -861,8 +861,11 @@ export function App() {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 pt-8 pb-[calc(2rem+var(--update-banner-height,0px))]">
         <Brand />
-        <section className="mt-8 space-y-4" role={failed ? "alert" : "status"}>
-          <h1 className="text-2xl font-bold">
+        <section
+          className="mt-8 min-w-0 space-y-4"
+          role={failed ? "alert" : "status"}
+        >
+          <h1 className="break-words text-2xl font-bold [overflow-wrap:anywhere]">
             {finished
               ? "Dati locali cancellati"
               : failed
@@ -871,7 +874,7 @@ export function App() {
                   ? "Il corso è cambiato"
                   : "Cancellazione dei dati locali…"}
           </h1>
-          <p className="text-sm leading-6">
+          <p className="break-words text-sm leading-6 [overflow-wrap:anywhere]">
             {finished
               ? "Il corso, le preferenze e i file offline di questa app sono stati eliminati. I file esportati in altre app restano dove li hai salvati. Per riaprire l’app serve una connessione."
               : failed

@@ -17,6 +17,15 @@ type CompilerMode =
 
 type StartupScope = ReturnType<typeof createEngineStartupWorkerScope>
 type CompiledReply = { type: string; module: WebAssembly.Module }
+type CompilerTimings = {
+  workerModuleEnteredAt: number
+  workerRequestReceivedAt: number
+  workerFetchStartedAt: number
+  workerResponseHeadersAt: number
+  workerCompileCalledAt: number
+  workerCompiledAt: number
+  workerReplySentAt: number
+}
 
 type StartupMessage = {
   type?: string
@@ -152,10 +161,12 @@ class FakeWorker {
     }
   }
 
-  publishModule(module: WebAssembly.Module) {
+  publishModule(module: WebAssembly.Module, timings?: unknown) {
     this.emit(
       "message",
-      new MessageEvent("message", { data: { type: "compiled", module } }),
+      new MessageEvent("message", {
+        data: { type: "compiled", module, ...(timings ? { timings } : {}) },
+      }),
     )
   }
 
@@ -233,6 +244,19 @@ function validModule() {
   return new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]))
 }
 
+function validCompilerTimings(): CompilerTimings {
+  const start = performance.timeOrigin + performance.now()
+  return {
+    workerModuleEnteredAt: start,
+    workerRequestReceivedAt: start + 1,
+    workerFetchStartedAt: start + 2,
+    workerResponseHeadersAt: start + 3,
+    workerCompileCalledAt: start + 4,
+    workerCompiledAt: start + 5,
+    workerReplySentAt: start + 6,
+  }
+}
+
 beforeEach(() => {
   compilerModes = []
   compilerAttempts = 0
@@ -292,6 +316,58 @@ describe("PowerSync engine module broker", () => {
       releaseBrokerPort(firstWorker),
       releaseBrokerPort(secondWorker),
     ])
+    scope.release()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it("attaches finite worker and parent phase timestamps to the compile event", async () => {
+    const scope = makeScope()
+    const worker = makeSdkWorker(scope)
+    const reply = requestModule(worker, moduleAsset())
+    const compiler = await waitForCompiler(0)
+    const workerTimings = validCompilerTimings()
+
+    compiler.publishModule(validModule(), workerTimings)
+    expect(((await reply) as CompiledReply).type).toBe("compiled-module")
+
+    const compileEvent = window.__CVC_ENGINE_DIAGNOSTIC__?.find(
+      (event) => event.type === "compile-complete",
+    )
+    expect(compileEvent?.timings).toMatchObject(workerTimings)
+    expect(compileEvent?.timings).toMatchObject({
+      parentCompileStartedAt: expect.any(Number),
+      parentWorkerCreateStartedAt: expect.any(Number),
+      parentWorkerCreatedAt: expect.any(Number),
+      parentRequestSentAt: expect.any(Number),
+      parentReplyReceivedAt: expect.any(Number),
+      parentModuleReturnedAt: expect.any(Number),
+    })
+
+    await releaseBrokerPort(worker)
+    scope.release()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it("omits malformed worker timing metadata while preserving the compiled module", async () => {
+    const scope = makeScope()
+    const worker = makeSdkWorker(scope)
+    const reply = requestModule(worker, moduleAsset())
+    const compiler = await waitForCompiler(0)
+
+    compiler.publishModule(validModule(), {
+      ...validCompilerTimings(),
+      workerCompiledAt: Number.NaN,
+    })
+
+    const result = (await reply) as CompiledReply
+    expect(result.type).toBe("compiled-module")
+    expect(result.module).toBeInstanceOf(WebAssembly.Module)
+    const compileEvent = window.__CVC_ENGINE_DIAGNOSTIC__?.find(
+      (event) => event.type === "compile-complete",
+    )
+    expect(compileEvent).not.toHaveProperty("timings")
+
+    await releaseBrokerPort(worker)
     scope.release()
     expect(vi.getTimerCount()).toBe(0)
   })

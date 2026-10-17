@@ -255,12 +255,16 @@ paired representations before writing, then replaces the course in one
 transaction. Version claims remain monotonic; an interrupted replacement
 rolls back its rows, version record and generation together.
 
-Every prepared database instance binds its course ID and local generation
+Every current database instance binds its course ID and local generation
 before the first screen. The write guard checks them inside each acquired
 write lock; a replaced or closed instance also rejects before contacting its
 worker. Import advances the generation atomically, permanently invalidates
 the old instance and requires a fresh app open, even when imported IDs match.
 Course erasure also prevents an old screen from writing dangling records.
+These session guards apply to D4 and later instances. An older compatible
+writer allowed by §3.1 does not understand the generation and can still save
+over imported rows; users must close other old app tabs before importing.
+The compatibility window and minimum writer are not raised to hide that limit.
 
 Full reset invalidates the instance, asks other same-channel tabs to close,
 closes PowerSync and waits for actual IndexedDB deletion. An unresponsive

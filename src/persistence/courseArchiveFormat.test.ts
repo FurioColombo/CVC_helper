@@ -407,6 +407,38 @@ describe("course archive format", () => {
     )
   })
 
+  it.each([
+    { kind: "embedded NUL", value: "bad\0text" },
+    { kind: "lone high surrogate", value: "bad\uD800text" },
+    { kind: "lone low surrogate", value: "bad\uDC00text" },
+    { kind: "leading BOM", value: "\uFEFFtext" },
+  ])("rejects $kind in both IDs and text columns", ({ value }) => {
+    const invalidId = sampleTables()
+    invalidId.dutyAssignments[0]!.id = value
+    expectArchiveError(() => createCourseArchive(invalidId, DATA_VERSION, APP))
+
+    const invalidText = sampleTables()
+    invalidText.students[0]!.firstName = value
+    expectArchiveError(() =>
+      createCourseArchive(invalidText, DATA_VERSION, APP),
+    )
+  })
+
+  it("preserves paired Unicode, control whitespace, replacement characters, and bound markup", () => {
+    const tables = sampleTables()
+    const firstName =
+      "Ada \u{1F6F6}\t\n\uFFFD embedded\uFEFFbom <b>safe</b> ' OR 1=1 --"
+    const dutyId = "duty-\uFEFF-\u{1F6F6}"
+    tables.students[0]!.firstName = firstName
+    tables.dutyAssignments[0]!.id = dutyId
+
+    const archive = createCourseArchive(tables, DATA_VERSION, APP)
+    const parsed = parseCourseArchive(JSON.stringify(archive), APP)
+
+    expect(parsed.tables.students[0]!.firstName).toBe(firstName)
+    expect(parsed.tables.dutyAssignments[0]!.id).toBe(dutyId)
+  })
+
   it("rejects malformed and impossible UTC timestamps", () => {
     const malformed = sampleTables()
     malformed.faults[0]!.updatedAt = "yesterday"

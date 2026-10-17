@@ -1,0 +1,49 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D4",
+  "round": 1,
+  "commit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-1",
+      "title": "Import silently changes accepted text containing NUL or unpaired Unicode surrogates",
+      "evidence": "src/persistence/courseArchiveFormat.ts:210 and :220 accept arbitrary nonempty string IDs and arbitrary TEXT strings. src/persistence/courseArchive.ts:113 commits these values through parameter binding. The pinned node_modules/@journeyapps/wa-sqlite/src/sqlite-api.js:239–247 binds text with length -1. Independent tests using production importCourseArchive and the installed WA-SQLite WASM/API demonstrate successful imports whose stored values differ from the validated archive.",
+      "reproduction": "Run npx vitest run --config test-results/d4-data-review/vitest.config.ts -t unrepresentable. Both identity assertions fail at test-results/d4-data-review/review.test.ts:552. A valid synthetic archive with courseNote 'before\\u0000after' passes createCourseArchive and importCourseArchive resolves, but querying the committed row returns 'before'. With 'before\\ud800after', the committed value becomes 'before\\ufffdafter'. The scratch adapter uses the real pinned WA-SQLite driver with an in-memory schema and production import logic. The independent wa-text.mjs probe separately confirms the driver's conversion. Scratch files were also preserved in the OS temporary cvc-d4-data-review directory.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md D4 success predicate and tampered-file checklist; 03_TECHNICAL_DECISIONS.md §3.2 Course files and local reset requires identifiers, timestamps and values intact and full validation before writing"
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "AGENTS.md, reviewer-data-integrity.md, REVIEW_PROTOCOL.md, D4 acceptance and adversarial checklist, relevant product/scope/technical contracts, OWNER_WORKFLOW.md, LOCAL_DEVELOPMENT.md and vendored PowerSync JavaScript/React guidance.",
+    "Clean initial checkout at be1fa27; Node v24.21.0. Startup owner and milestone commands confirmed D3 AWAITING_OWNER and D4 IN_PROGRESS. ci:status could not fetch in this review shell.",
+    "Implementation range e493e675f05e5c4769f638a185f7062e4848e7cc..be1fa27: archive codec, consistent export snapshot, all 13 table inserts, atomic replacement, monotonic version merge, course generation, stale-write guards, reset lifecycle and scoped browser cleanup.",
+    "Focused persistence verification: courseArchiveFormat, courseArchive, courseSession, browserStorage, idbBatchAtomicVfs and writeGuard suites passed: 6 files, 43 tests.",
+    "Independent temporary interruption audit passed 2 tests: replacement rollback after every individual delete, inserted row, version write and generation write; complete rollback when generation advancement exceeds the safe integer range.",
+    "DI-1 real-driver reproduction failed both expected identity assertions after correcting two initial scratch-harness setup errors. The production archive validator accepted both inputs and production import completed before the differing stored values were read.",
+    "Reviewed .evidence/D4/baseline.json and development-checks.json as explicitly partial development evidence, not final verification.",
+    "Inspected the OS temporary cvc-d4-production-reset-isolation-fixed.json: Chromium and WebKit recorded test database/preferences/cache/worker/OCR cleanup, identical regular course rows and cache/model bytes, and actual regular offline reopening.",
+    "Inspected same-ID stale-tab browser journey and reset journeys covering held writes, legacy IndexedDB blockers and partial-cleanup retry. Reviewed the pinned VFS source and its lifecycle tests.",
+    "Investigated reported CI U02 failure: u02DeletionHarness inserts active courses directly into the production singleton after App startup binds its empty-course snapshot. Its next write is correctly refused as a course replacement; the fixture also attempts two active courses. This source analysis does not establish a valid student-deletion regression.",
+    "Root reported exact be1fa27 CI run 38988038882 failed, including the U02 fixture failure and a WebKit large-upgrade timing failure. No green CI was inferred."
+  ],
+  "anglesTried": {
+    "seed": 112018452,
+    "lenses": [
+      "1. Interruption between two writes: tab killed, screen off, app backgrounded or battery dead.",
+      "12. Two tabs of the app writing the same course."
+    ],
+    "wildcard": "Recovery boundaries where database deletion and course-generation removal interact with same-ID reuse, plus pinned VFS final-file closure."
+  },
+  "notTested": [
+    "No independent browser run was started; the field reviewer and then root owned the shared browser slot. Browser evidence was inspected rather than reproduced in this review.",
+    "DI-1 was reproduced with the real pinned WA-SQLite WASM/API and production import logic over an in-memory schema, without a browser IndexedDB VFS.",
+    "The reported WebKit large-upgrade CI failure was not independently reproduced; root was collecting diagnostics.",
+    "Final recorded verification, final browser evidence and exact green CI remain pending. This report reviews be1fa27, not root's subsequent fixture or DI-1 fixes.",
+    "Actual Android file sharing/import, persistence permission and reset acceptance remain owner checks; no physical-device PASS was inferred.",
+    "Git Bash launch returned Access is denied. Verification used the existing PowerShell Node v24.21.0 runtime.",
+    "Backend synchronization and production services are outside 0.4.0 and were not accessed."
+  ]
+}
