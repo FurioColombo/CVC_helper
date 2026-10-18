@@ -1,0 +1,79 @@
+{
+  "milestone": "D4",
+  "status": "TARGETED_FIX_VERIFIED_NOT_MILESTONE_ACCEPTANCE",
+  "recordedAt": "2026-10-18T07:49:23.020Z",
+  "nodeVersion": "v24.21.0",
+  "baseCheckpoint": "90b85c93ead4a8d15fd0c2d059fce310e11a9687",
+  "digest": "79ba4bd6351b50a1efb74305aead88b728b2097ae79b63fcca7afaf3bfae7933",
+  "files": 437,
+  "issue": "An earlier successful evaluation-note save unconditionally cleared the shared current editor, discarding a different student’s new typed draft.",
+  "scope": "Necessary D4 verification support after the exact CI evaluation-note timeout; T1 remains PENDING. No suite speed reorganization, storage/schema/network or visual layout change.",
+  "reproduction": {
+    "source": "OS temporary cvc-d4-evaluation-note-race-probe",
+    "observed": "Hold the first synthetic student’s save; open and type the second student’s note; resolve the first save. The second textarea disappears. Rejection control preserves the draft.",
+    "componentBeforeFix": "FAIL, reproduced against old unconditional close; raw OS temporary cvc-d4-note-race-before-fix.log",
+    "beforeLogSha256": "c581b82a96a6d361ab221044424783dab75ffe6234509ea9aa66ab4792f4ffab",
+    "qualification": "Proves a real component-state race, not the sole cause of the remote Mac timeout."
+  },
+  "fix": "Close the editor after a successful save only when its current student ID still equals the saved student ID.",
+  "verification": {
+    "quick": {
+      "status": "PASS",
+      "files": 89,
+      "tests": 1436,
+      "rawLog": "OS temporary cvc-d4-note-race-verify-quick-final.log",
+      "sha256": "dbb66739bbbb830f3a231b0577051ce228f3c80270662e3f55f512e071b52719"
+    },
+    "browser": {
+      "status": "PASS",
+      "command": "npm run verify:e2e -- tests/e2e/d4-evaluation-note-save.spec.ts tests/e2e/u10-evaluations.spec.ts --grep \"keeps the next|shows the evaluation note itself\" --retries=0",
+      "stats": {
+        "startTime": "2026-10-18T07:45:01.900Z",
+        "duration": 94178.219,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "5aae339c44e65328fe9e5592e6a46f23b70c92f08753fcf373d67abb3c956ec2",
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-viewport",
+        "iphone-13-webkit-core"
+      ],
+      "observed": "A real first SQL transaction is held after its writes. Both notes are entered and saved through visible controls; the second draft survives first-save completion, its own editor closes on save, and both exact notes survive reload in the selected session. Original note-preview/clamp checks pass on both original projects.",
+      "raw": "OS temporary cvc-d4-note-race-browser-proof",
+      "browserRouting": "Browser plugin not available; repository Playwright fallback.",
+      "visualInspection": "Root viewed current WebKit next-draft screenshot and iPhone viewport 320px/200% original preview; note identity, draft, save state and controls remain visible. No layout change."
+    },
+    "domain": {
+      "status": "PASS",
+      "command": "npm run verify:domain",
+      "docsFiles": 143
+    },
+    "build": {
+      "status": "PASS",
+      "command": "npm run build",
+      "pwa": "Manifest/icons/service worker, five OCR assets, eight brand images and no test hook validated."
+    }
+  },
+  "sourceHashes": {
+    "src/features/evaluations/EvaluationManagement.tsx": "3414d076aa40ceb0ae6589d8d54d9e6731192114a4fad13df9e46739a1e83421",
+    "src/features/evaluations/EvaluationManagement.test.tsx": "995cab42dab015e752ad77185540867b37534edde2d55aaa7b195378974a219a",
+    "tests/e2e/d4-evaluation-note-save.spec.ts": "4ffa3a6b9a68be27d349bf937b712d0e11fe10b33575a4754d99d8e74bb06d25",
+    "playwright.config.ts": "60ef21f3a696057a0c5703d6c6bffcb3a43f6b1415fddc673572ca1b2bec101f"
+  },
+  "gates": {
+    "D4": "IN_PROGRESS; restricted affected reviews, fresh required recorder and exact normal green CI remain.",
+    "T1": "PENDING; no verified D4 prerequisite yet.",
+    "coldCompilation": "Unchanged startup source is being diagnosed by isolated full-context run39108099189 at50603a2; not acceptance."
+  },
+  "publication": {
+    "changed": false,
+    "testVersion": "0.4.0",
+    "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "phase": "AWAITING_INSTALL",
+    "d3EvidenceHashesVerified": 9,
+    "physicalPass": false
+  }
+}

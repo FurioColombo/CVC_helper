@@ -29,9 +29,9 @@
     },
     {
       "id": "T1-EVALUATION-NOTE",
-      "title": "New CI evaluation-note test intermittence is filed for T1",
-      "evidence": "ci-checkpoint-ac0c255.json; docs/working/BACKLOG.md",
-      "reproduction": "Mac iPhone viewport first attempt times out after 120552 ms waiting for Bea’s note textbox, then passes on retry in 3387 ms. No causal compiler relationship or data-loss finding is established.",
+      "title": "The CI note timeout led to a reproduced draft-loss race",
+      "evidence": "ci-checkpoint-ac0c255.json; note-save-race.json; docs/working/BACKLOG.md",
+      "reproduction": "The historical Mac attempt times out waiting for Bea’s editor then passes on retry. A deferred-success component probe reproduces another student’s save closing Bea’s typed draft; a failure control retains it. The guarded completion and both original/student-switch browser journeys now pass. This is a real repaired bug, without claiming the sole remote timeout cause or final CI acceptance.",
       "specRef": "03_TECHNICAL_DECISIONS.md 6 / 04_IMPLEMENTATION_PLAN.md T1"
     }
   ],
@@ -56,7 +56,8 @@
     "DI-1 rejects NUL, unpaired surrogates and leading BOM in every ID/TEXT before init or writes. Independent restricted real-driver review passes unsafe and supported Unicode cases.",
     "FU-R1-B1 and Q1 are fixed: reset text wraps at 320px/200%, radio options stack, and first-start import says Importa il corso. Both-engine independent field recheck passes blocked/partial/retry/done and cancel.",
     "U02 fixture adopts the owner through real course creation and makes foreign references inactive; all original deletion assertions remain.",
-    "DEV-only phase measurements distinguish worker bootstrap, streaming compilation and module return. Production bundles omit those fields; no engine, VFS, worker count, warm-up, retry or bound change."
+    "DEV-only phase measurements distinguish worker bootstrap, streaming compilation and module return. Production bundles omit those fields; no engine, VFS, worker count, warm-up, retry or bound change.",
+    "A successful earlier evaluation-note save now closes only its own matching editor. Another student’s visible draft survives delayed completion; both notes persist after reload in the exact session on Chromium and WebKit. See note-save-race.json."
   ],
   "evidenceInspected": [
     "D4 success predicate/adversarial checklist, relevant product/scope/data-version contracts, PowerSync JavaScript/React references, field-operations rulebook, frozen P02 settings target and current P02 amendment.",
@@ -78,7 +79,7 @@
     "Live HTTPS recheck at 2026-10-18T06:50:18Z: CVC Helper Test remains pinned 0.4.0 at 761530f; regular app returns HTTP 200. D3 evidence hashes remain intact. No deployment or physical-device PASS occurred."
   ],
   "notTested": [
-    "D4 remains IN_PROGRESS: the full Mac native-compilation timing failure requires investigation of run context/resources rather than another unproved API substitution. T1 remains ineligible until D4 has an exact green checkpoint and verified AWAITING_OWNER handoff.",
+    "D4 remains IN_PROGRESS: after the note fix, the previous ac0 recorder is historical and a fresh final recorder/restricted affected reviews are required. Exact Mac cold compilation is still unresolved; T1 is not eligible.",
     "Actual phone Web Share receiving-app behavior, save/import transfer, persistence permission and full-reset acceptance remain owner checks. No simulated or inferred physical PASS.",
     "Cross-device sync, accounts, backend deletion and upload conflicts are outside 0.4.0."
   ]

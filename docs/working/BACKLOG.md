@@ -113,8 +113,7 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 Mac CI at `ac0c255` still fails the native-compilation cold-open bound; see
-`.evidence/D4/ci-checkpoint-ac0c255.json`. Preserve both bounds and coverage.
+D4 Mac CI at `ac0c255` still fails cold opening; preserve both bounds and coverage. See `.evidence/D4/ci-checkpoint-ac0c255.json`.
 
 ## Flaky browser tests
 
@@ -135,8 +134,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   after D4's CI gate. See `.evidence/D4/development-checks.json`.
 
 - `u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is`
-  — Mac CI 39103308907, iPhone viewport: Bea’s note input timed out, then
-  passed on retry. See `.evidence/D4/ci-checkpoint-ac0c255.json`; fix in T1.
+  — Mac CI 39103308907: Bea’s input timed out, then passed on retry.
+  D4 fixed a proven pending-save callback race; five browser checks pass.
+  See `.evidence/D4/note-save-race.json`; final recorder and CI still required.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,

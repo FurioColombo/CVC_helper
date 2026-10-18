@@ -20,6 +20,7 @@ const { hostname, port } = new URL(baseURL)
 // measures layout belongs in this list.
 const layoutSpecs = [
   "d4-course-files",
+  "d4-evaluation-note-save",
   "d4-local-reset",
   "c1-crew-management",
   "d3-summary-controls",
@@ -49,6 +50,7 @@ const layoutSpecs = [
 // "duties" pattern before H1 and stays, so H1 removes no WebKit coverage.
 const webkitCoreSpecs = [
   "d4-course-files",
+  "d4-evaluation-note-save",
   "d4-local-reset",
   "boats",
   "crew-management-gate",

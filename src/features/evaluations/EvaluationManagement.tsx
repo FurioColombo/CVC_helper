@@ -521,7 +521,11 @@ export function EvaluationManagement({
             value: evaluation.value,
             note,
           })
-          if (saved) setNoteStudentId(null)
+          if (saved) {
+            setNoteStudentId((current) =>
+              current === student.id ? null : current,
+            )
+          }
         }}
         onValue={(value) =>
           void persistStudent(student.id, { value, note: evaluation.note })

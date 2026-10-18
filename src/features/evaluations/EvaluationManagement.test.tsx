@@ -580,6 +580,80 @@ describe("evaluation management", () => {
     await waitFor(() => expect(leave).toHaveBeenCalledTimes(1))
   })
 
+  it("keeps another student's note draft open when a pending save succeeds", async () => {
+    let resolveAldoSave!: () => void
+    save.mockImplementationOnce(
+      (_courseId, studentId, sessionId, input) =>
+        new Promise((resolve) => {
+          resolveAldoSave = () =>
+            resolve({
+              id: `evaluation-${studentId}-${sessionId}`,
+              studentId,
+              sessionId,
+              ...input,
+            })
+        }),
+    )
+    const user = userEvent.setup()
+    renderScreen()
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Aggiungi nota valutazione di Aldo",
+      }),
+    )
+    await user.type(
+      screen.getByRole("textbox", { name: "Nota valutazione di Aldo" }),
+      "Nota di Aldo già salvata",
+    )
+    await user.click(screen.getByRole("button", { name: "Salva nota" }))
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith("course-1", "student-1", "sat-pm", {
+        value: null,
+        note: "Nota di Aldo già salvata",
+      }),
+    )
+    expect(
+      screen.getByText("Nota di Aldo già salvata", { selector: "span" }),
+    ).toBeVisible()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Aggiungi nota valutazione di Bea",
+      }),
+    )
+    const beaNote = screen.getByRole("textbox", {
+      name: "Nota valutazione di Bea",
+    })
+    await user.type(beaNote, "Bozza di Bea da conservare")
+
+    await act(async () => resolveAldoSave())
+
+    expect(
+      screen.getByRole("textbox", { name: "Nota valutazione di Bea" }),
+    ).toHaveValue("Bozza di Bea da conservare")
+    expect(
+      screen.getByText("Nota di Aldo già salvata", { selector: "span" }),
+    ).toBeVisible()
+    expect(
+      screen.getByLabelText("Stato salvataggio valutazione di Aldo"),
+    ).toHaveTextContent("Salvato")
+
+    await user.click(screen.getByRole("button", { name: "Salva nota" }))
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith("course-1", "student-2", "sat-pm", {
+        value: null,
+        note: "Bozza di Bea da conservare",
+      }),
+    )
+    expect(
+      screen.queryByRole("textbox", { name: "Nota valutazione di Bea" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText("Bozza di Bea da conservare", { selector: "span" }),
+    ).toBeVisible()
+  })
+
   it("keeps the latest note and exact session visible when saving fails, then retries", async () => {
     save.mockRejectedValueOnce(new Error("write failed"))
     const user = userEvent.setup()
