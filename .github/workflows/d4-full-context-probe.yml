@@ -27,7 +27,7 @@ jobs:
       - name: Refuse application, fixture, or test differences from the failed source
         run: |
           git show 90b85c93ead4a8d15fd0c2d059fce310e11a9687:.github/workflows/ci.yml > .github/workflows/ci.yml
-          git diff --exit-code 90b85c93ead4a8d15fd0c2d059fce310e11a9687 -- .github/workflows/ci.yml
+          git show 90b85c93ead4a8d15fd0c2d059fce310e11a9687:.github/workflows/ci.yml | cmp - .github/workflows/ci.yml
           git diff --exit-code 90b85c93ead4a8d15fd0c2d059fce310e11a9687 -- src tests public scripts package.json package-lock.json playwright.config.ts vite.config.ts 'tsconfig*' ':!scripts/d4-full-context-probe.mjs'
           node scripts/d4-full-context-probe.mjs --self-check
           npx playwright --version
