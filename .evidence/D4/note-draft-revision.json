@@ -1,7 +1,7 @@
 {
   "milestone": "D4",
   "blocker": "DI-R4-1",
-  "status": "IMPLEMENTED_TARGETED_PASS_AWAITING_INDEPENDENT_RECHECK",
+  "status": "INDEPENDENT_RECHECK_PASS_ADJACENT_DICTATION_FIX_PENDING",
   "recordedAt": "2026-10-18T08:05:14.163Z",
   "baseCheckpoint": "3598ce5d245e94bda58b0f006a74e6282058dd70",
   "nodeVersion": "v24.21.0",
@@ -59,12 +59,17 @@
     "src/features/evaluations/EvaluationManagement.test.tsx": "263c26e7d70df0f48b4184cc29729525a6161bd90eec419a833b800dda5f38fe",
     "tests/e2e/d4-evaluation-note-save.spec.ts": "801ca92005f3192aa4e9194627cf025aae5aec9fbe2f8eb2b3fe1994675f800b"
   },
-  "gates": "Independent DI-R4-1 recheck is pending; keep canonical review FAIL and blocker open until it passes. Fresh final recorder and exact normal green CI are still required. Diagnostic Mac run39108099189 at50603a2 still concerns unchanged startup source and is not acceptance for this fix.",
+  "gates": "DI-R4-1 independently passes. Adjacent pending-dictation FU-R4-B1 has a targeted fix awaiting its field recheck; see note-dictation-revision.json. Fresh final recorder and exact normal green CI remain required.",
   "publication": {
     "changed": false,
     "testVersion": "0.4.0",
     "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
     "ownerInstalled": null,
     "physicalPass": false
+  },
+  "independentRecheck": {
+    "review": "data-integrity-review-round-5.json",
+    "verdict": "PASS",
+    "reviewedCheckpoint": "1216cbf44231d5b901b580fcc7d0076adaae0d56"
   }
 }

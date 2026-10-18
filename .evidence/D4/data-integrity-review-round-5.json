@@ -1,0 +1,76 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D4",
+  "round": 5,
+  "commit": "1216cbf44231d5b901b580fcc7d0076adaae0d56",
+  "baselineCommit": "3598ce5d245e94bda58b0f006a74e6282058dd70",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolvedBlockers": [
+    "DI-R4-1"
+  ],
+  "priorRoundRecheck": [
+    {
+      "id": "DI-R4-1",
+      "disposition": "Fixed and independently reproduced as passing",
+      "evidence": "The unchanged round-4 scratch test now passes: type more into Bea's enabled textarea after its captured submission starts, resolve that older save, and the exact newer text remains in the editor. Its exact course/student/sat-pm save-argument assertion still passes. Original failing source and log remain preserved."
+    },
+    {
+      "id": "DI-1",
+      "disposition": "Earlier fix retained unchanged",
+      "evidence": "Archive validator, validator tests, U02 fixture and U02 browser-spec hashes still match passing rounds 2/3 and round 4. No new archive/Unicode audit was performed."
+    },
+    {
+      "id": "SC-R1-I1",
+      "disposition": "Prior documented limitation unchanged",
+      "evidence": "Compatible pre-D4 writers still cannot observe generation invalidation after import; the known non-blocking limitation remains in the technical contract and sync-chaos report. This UI-only change does not modify it."
+    },
+    {
+      "id": "review continuity",
+      "disposition": "Preserved",
+      "evidence": "Rounds 1 and 4 remain the two historical D4 data-integrity FAIL reports; passing rounds 2 and 3 remain preserved. This restricted round 5 passes the second FAIL's fix and does not reset counts, redraw entropy or claim milestone acceptance."
+    }
+  ],
+  "reviewedFileHashes": {
+    "src/features/evaluations/EvaluationManagement.tsx": "87b7bbb8f71108fef58e848af2aa4f6c412e41170660a415661da9afa6a523c8",
+    "src/features/evaluations/EvaluationManagement.test.tsx": "263c26e7d70df0f48b4184cc29729525a6161bd90eec419a833b800dda5f38fe",
+    "tests/e2e/d4-evaluation-note-save.spec.ts": "801ca92005f3192aa4e9194627cf025aae5aec9fbe2f8eb2b3fe1994675f800b",
+    "src/persistence/courseArchiveFormat.ts": "512171dbe0cb8e628519c834f51bbb4113ab913b9e13f8d92e87616e8a5dde48",
+    "src/persistence/courseArchiveFormat.test.ts": "f3fbc217b39c227e2b93a278137f618e33bd7dbf1803fb6cb62e8c14d518da0e",
+    "src/test/u02DeletionHarness.ts": "414622acaf6204186466e11614a8dcd8af9bf1bf019fecc83710b64923736e07",
+    "tests/e2e/u02-deletion-integrity.spec.ts": "5515cf4fca72b297cf086037003d39cf37337b5c317c2506699ab1f378474513",
+    "src/persistence/engineModuleCompiler.ts": "c5b628330806dc3c49eae14be76c875a53b33b9f5c981e8253a6d83b91277d96",
+    "src/persistence/engineModuleCompiler.test.ts": "84087a1bb47215584ddf64d9db86be8f9c44dfd0cbc987793c60fb4cf4e39c7b"
+  },
+  "evidenceInspected": [
+    "AGENTS.md, reviewer-data-integrity persona, REVIEW_PROTOCOL.md and relevant D4/product/coherent-write contracts retained from round 4; reread the preserved DI-R4-1 FAIL, fix diff and current note-draft-revision evidence. Scope remains only DI-R4-1 and directly affected completion/failure behavior.",
+    "Clean checkout at 1216cbf; Node v24.21.0. Startup commands show D3 AWAITING_OWNER, D4 IN_PROGRESS, D3 owner check READY and D4 owner check NEEDS_SETUP. ci:status could not fetch; no exact green CI is inferred.",
+    "3598ce5..1216cbf application diff: the editor increments a local ref revision on textarea updates and dictation onDraft, captures that revision at submission and closes only after a true persistence result with unchanged revision. Parent onSaveNote returns the existing persistence boolean; its close callback independently checks the current student ID. No input disabling, schema, storage, network, SDK or domain change.",
+    "Inspected unchanged useDictation flow: completed transcription uses onDraft, so its returned text passes through the same revision-advancing updateNote path. No real microphone/device claim is made.",
+    "Independent exact round-4 scratch replay: node node_modules/vitest/vitest.mjs run --config <scratch>/vitest.workspace.config.ts --maxWorkers=1 -t review:. Two tests PASS, 14 original tests intentionally filtered, exit 0, 5.47 seconds. The original DI-R4-1 source is unchanged at SHA-256 e004b068c9120d842c4c7655c183cd5c50cdd52781cab6dee48a22916a350b58.",
+    "That replay also passes the prior-save rejection/next-student control: Bea's draft stays visible, Aldo reports Non salvato, session switching stays disabled and leaving remains blocked. Passing log is OS temporary cvc-d4-di-r4-note-QnOISR/round5-recheck.log, SHA-256 6a9217dc029540720fb53bf15d17cf193aa502fb8470f00e4cd1084a617cdd32. Original failure log remains unchanged at d1c8e468eceffec8d62b12ff4c45df220c9803f92f20b290d97d7a75477fac44.",
+    "Independent current component-suite run: node node_modules/vitest/vitest.mjs run src/features/evaluations/EvaluationManagement.test.tsx --maxWorkers=1. One file, 15 tests PASS, exit 0, 8.75 seconds. Includes exact student/session writes, next-student completion, newer own draft, explicit final save and closure, ordinary successful unchanged save, failure/retry and leave guards. Log is OS temporary cvc-d4-di-r5-component.log, SHA-256 7bef77065ca2a965ec474bed961c70ed290dbd3648c13fb80554e041331b594b.",
+    ".evidence/D4/note-draft-revision.json and raw OS temporary cvc-d4-note-draft-guard-browser-proof/e2e-report.json independently parsed. Report hash 9266adfa8ce4f18daabd95ea56cb63889de68b4d29345cdb04ee806b6233d707 matches. Five cases PASS with retry 0, no skipped/unexpected/flaky/errors.",
+    "The extended real-transaction browser case retains the earlier different-student assertions, then holds Bea's own transaction completion, enters newer text into her enabled editor, releases the older snapshot, asserts the latest draft remains, explicitly saves it and verifies both exact notes after reload in sat-pm. Pixel Chromium, iPhone viewport and WebKit pass; both original note-preview/clamp cases also pass. This reviewer inspected the script/report without starting a browser.",
+    "Root reports quick verification PASS with 89 files/1437 tests and domain/build PASS. These are root-reported checks, separate from this reviewer's focused runs. The old-source Mac diagnostic and prior recorder do not establish current candidate acceptance.",
+    "Independent hashes and report summaries saved as OS temporary cvc-d4-di-r5-independent-proof.json. No tracked edits, commits, application changes, competing browser run or deployment were performed."
+  ],
+  "anglesTried": {
+    "seed": 112018452,
+    "lenses": [
+      "1. Interruption between two writes: tab killed, screen off, app backgrounded or battery dead.",
+      "12. Two tabs of the app writing the same course."
+    ],
+    "wildcard": "Recovery boundaries where database deletion and course-generation removal interact with same-ID reuse, plus pinned VFS final-file closure.",
+    "restrictedScope": "No new entropy draw or whole-milestone hunt. Retested DI-R4-1 using its unchanged reproducer, reviewed only the local draft-revision fix and direct exact-student/session, successful/failed completion and next-student regressions."
+  },
+  "notTested": [
+    "No independent browser or microphone run; field UX owns the browser slot. The inspected real-transaction browser record supplements independent mocked-persistence component tests.",
+    "No repeat of prior archive/Unicode, reset, schema, VFS, compiler or legacy-writer audits; their relevant reviewed hashes remain unchanged.",
+    "Fresh required recorder and exact normal green CI remain root acceptance gates. This report does not claim milestone completion or a causal explanation for the unresolved Mac native-compilation timing issue.",
+    "Physical Android sharing/import, storage permission and reset remain owner checks. The pinned D3 test source/version is unchanged; no physical-device PASS or deployment is inferred."
+  ]
+}

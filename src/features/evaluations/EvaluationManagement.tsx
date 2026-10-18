@@ -87,6 +87,13 @@ function EvaluationNoteEditor({
     transcribe,
     prepare: prepareSpeech,
   })
+  const guardedDictation = {
+    ...dictation,
+    start: () => {
+      draftVersion.current += 1
+      return dictation.start()
+    },
+  }
   const dictationNaming: DictationNaming = {
     start: `Detta nota valutazione di ${name}`,
     subject: `valutazione di ${name}`,
@@ -112,7 +119,10 @@ function EvaluationNoteEditor({
         >
           Nota di {fullName} · {session?.day} {session?.period}
         </label>
-        <DictationTrigger dictation={dictation} naming={dictationNaming} />
+        <DictationTrigger
+          dictation={guardedDictation}
+          naming={dictationNaming}
+        />
       </div>
       <textarea
         aria-label={`Nota valutazione di ${name}`}
@@ -128,7 +138,7 @@ function EvaluationNoteEditor({
       />
       <DictationPanels
         className="mt-2"
-        dictation={dictation}
+        dictation={guardedDictation}
         naming={dictationNaming}
       />
       <div className="mt-3 grid grid-cols-2 gap-2">

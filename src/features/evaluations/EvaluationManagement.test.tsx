@@ -720,6 +720,132 @@ describe("evaluation management", () => {
     ).toBeVisible()
   })
 
+  it.each(["processing", "completed"] as const)(
+    "preserves a dictated draft when an earlier note save finishes during %s",
+    async (stage) => {
+      let finishSave!: () => void
+      save.mockImplementationOnce(
+        (_courseId, studentId, sessionId, input) =>
+          new Promise((resolve) => {
+            finishSave = () =>
+              resolve({
+                id: `evaluation-${studentId}-${sessionId}`,
+                studentId,
+                sessionId,
+                ...input,
+              })
+          }),
+      )
+      const stopTrack = vi.fn()
+      class FakeMediaRecorder {
+        state = "inactive"
+        mimeType = "audio/webm"
+        ondataavailable: ((event: { data: Blob }) => void) | null = null
+        onstop: (() => void) | null = null
+
+        start() {
+          this.state = "recording"
+        }
+
+        stop() {
+          this.state = "inactive"
+          this.ondataavailable?.({ data: new Blob(["synthetic audio"]) })
+          this.onstop?.()
+        }
+      }
+      vi.stubGlobal("MediaRecorder", FakeMediaRecorder)
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: vi.fn().mockResolvedValue({
+            getTracks: () => [{ stop: stopTrack }],
+          }),
+        },
+      })
+      let finishTranscript!: (transcript: string) => void
+      const transcribe = vi
+        .fn()
+        .mockImplementation(
+          () => new Promise<string>((resolve) => (finishTranscript = resolve)),
+        )
+      const user = userEvent.setup()
+      renderScreen({ transcribe })
+
+      await user.click(
+        await screen.findByRole("button", {
+          name: "Aggiungi nota valutazione di Bea",
+        }),
+      )
+      const editor = screen.getByRole("textbox", {
+        name: "Nota valutazione di Bea",
+      })
+      await user.type(editor, "Testo inviato")
+      await user.click(screen.getByRole("button", { name: "Salva nota" }))
+      await waitFor(() =>
+        expect(save).toHaveBeenCalledWith("course-1", "student-2", "sat-pm", {
+          value: null,
+          note: "Testo inviato",
+        }),
+      )
+
+      await user.click(
+        screen.getByRole("button", {
+          name: "Detta nota valutazione di Bea",
+        }),
+      )
+      await user.click(
+        await screen.findByRole("button", {
+          name: "Termina dettatura valutazione di Bea",
+        }),
+      )
+      await waitFor(() => expect(transcribe).toHaveBeenCalledOnce())
+      expect(screen.getByText("Elaborazione locale dell’audio…")).toBeVisible()
+
+      if (stage === "completed") {
+        await act(async () => finishTranscript("Nuova osservazione dettata"))
+        expect(editor).toHaveValue("Testo inviato Nuova osservazione dettata")
+      }
+
+      await act(async () => finishSave())
+
+      const currentEditor = screen.getByRole("textbox", {
+        name: "Nota valutazione di Bea",
+      })
+      expect(currentEditor).toBeVisible()
+      if (stage === "processing") {
+        expect(
+          screen.getByText("Elaborazione locale dell’audio…"),
+        ).toBeVisible()
+        await act(async () => finishTranscript("Nuova osservazione dettata"))
+      }
+      expect(currentEditor).toHaveValue(
+        "Testo inviato Nuova osservazione dettata",
+      )
+      expect(stopTrack).toHaveBeenCalledOnce()
+
+      await user.click(screen.getByRole("button", { name: "Salva nota" }))
+      await waitFor(() =>
+        expect(save).toHaveBeenLastCalledWith(
+          "course-1",
+          "student-2",
+          "sat-pm",
+          {
+            value: null,
+            note: "Testo inviato Nuova osservazione dettata",
+          },
+        ),
+      )
+      expect(
+        screen.queryByRole("textbox", { name: "Nota valutazione di Bea" }),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.getByText("Testo inviato Nuova osservazione dettata", {
+          selector: "span",
+        }),
+      ).toBeVisible()
+    },
+  )
+
   it("keeps the latest note and exact session visible when saving fails, then retries", async () => {
     save.mockRejectedValueOnce(new Error("write failed"))
     const user = userEvent.setup()

@@ -118,7 +118,7 @@ D4 Mac CI at `ac0c255` still fails cold opening; preserve both bounds and covera
 ## Flaky browser tests
 
 Windows D3 share probes stalled before exit; a manual attempt also timed out. Neither is PASS; cause unclassified.
-Later `33ac7c9` passed 105 cases without retries. A D4 field recheck needed its owned Vite server stopped after test bodies passed; see `.evidence/D4/field-ux-review-round-3.json`.
+Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their owned Vite server stopped after test bodies passed; see `.evidence/D4/field-ux-review-round-4.json`.
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
@@ -135,8 +135,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
 
 - `u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is`
   — Mac CI 39103308907: Bea’s input timed out, then passed on retry.
-  D4 guards both next-student and newer same-note drafts; DI-R4-1 recheck pending.
-  See `.evidence/D4/note-draft-revision.json`; final recorder and CI still required.
+  D4 typed-draft fixes pass independent recheck; pending dictation fix awaits field review.
+  See `.evidence/D4/note-dictation-revision.json`; final recorder and CI still required.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,

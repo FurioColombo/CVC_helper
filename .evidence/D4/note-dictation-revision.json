@@ -1,0 +1,70 @@
+{
+  "milestone": "D4",
+  "blocker": "FU-R4-B1",
+  "status": "IMPLEMENTED_TARGETED_PASS_AWAITING_INDEPENDENT_RECHECK",
+  "recordedAt": "2026-10-18T08:17:35.674Z",
+  "baseCheckpoint": "1216cbf44231d5b901b580fcc7d0076adaae0d56",
+  "nodeVersion": "v24.21.0",
+  "sourceDigest": "39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc",
+  "sourceFiles": 437,
+  "problem": "New dictation can still be processing when an earlier note submission succeeds. A guard advanced only by completed text lets that old save unmount the editor and discard the pending result.",
+  "fix": "Starting or retrying dictation advances the same local draft revision before useDictation.start. Both shared trigger and panels receive the guarded object. Typed and completed-transcript revision updates and exact-student close checks remain. No shared speech, persistence, schema or layout changes.",
+  "before": {
+    "status": "FAIL_REPRODUCED",
+    "review": "field-ux-review-round-4.json",
+    "scope": "Second historical field-UX FAIL; pending transcription fails while completed transcription and rejected-save controls pass."
+  },
+  "after": {
+    "component": {
+      "status": "PASS",
+      "tests": 17,
+      "scope": "Both pending and completed transcription retain the editor after the earlier save, append editable text and explicitly save that exact course/student/session; prior note regressions retained."
+    },
+    "quick": {
+      "status": "PASS",
+      "files": 89,
+      "tests": 1439
+    },
+    "domain": {
+      "status": "PASS"
+    },
+    "productionBuild": {
+      "status": "PASS",
+      "pwaValidation": "PASS"
+    }
+  },
+  "logs": {
+    "before-fix": {
+      "raw": "OS temporary cvc-d4-note-dictation-guard-before-fix.log",
+      "sha256": "afd7e56ae062556206e2f4307697ffcbbaacd115d63c51f057f04f8164a331f2"
+    },
+    "focused-pass": {
+      "raw": "OS temporary cvc-d4-note-dictation-guard-focused-pass.log",
+      "sha256": "588e84234526aec9e1d5a9d57253520a06505d69c061d2322891f85bf45ce3a2"
+    },
+    "verify-quick-final": {
+      "raw": "OS temporary cvc-d4-note-dictation-guard-verify-quick-final.log",
+      "sha256": "b4079ae60e2afaf5f5ffb324c141ff1f5a97609fecfcd0e4e1ee464ed5fef200"
+    },
+    "domain": {
+      "raw": "OS temporary cvc-d4-note-dictation-guard-domain.log",
+      "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+    },
+    "build": {
+      "raw": "OS temporary cvc-d4-note-dictation-guard-build.log",
+      "sha256": "ef19b27fbd46cbbea56c041f8d6563c6bc74eee082c654b366ab5764ee415d80"
+    }
+  },
+  "sourceHashes": {
+    "src/features/evaluations/EvaluationManagement.tsx": "71dc951823a08c290c12f4485add304e7732ef4dc2308656167f59fa792c6a70",
+    "src/features/evaluations/EvaluationManagement.test.tsx": "7cf7f197cc3f54838b8d8908fd8aa3767ccda02d6d6e0e7aa31c9872a809702a"
+  },
+  "gates": "Restricted field-UX round 5 recheck is pending. The fresh final recorder and exact normal green CI remain required; diagnostic run39108099189 uses earlier source and is not acceptance.",
+  "publication": {
+    "changed": false,
+    "testVersion": "0.4.0",
+    "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstalled": null,
+    "physicalPass": false
+  }
+}
