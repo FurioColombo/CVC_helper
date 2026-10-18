@@ -52,6 +52,13 @@ export async function loadDuties() {
   )) as typeof import("../../src/persistence/duties")
 }
 
+export async function loadEvaluations() {
+  const modulePath = "/src/persistence/evaluations.ts"
+  return (await import(
+    /* @vite-ignore */ modulePath
+  )) as typeof import("../../src/persistence/evaluations")
+}
+
 export async function createActiveCourse(
   family: CourseFamily,
   level: CourseLevel,

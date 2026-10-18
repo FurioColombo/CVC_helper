@@ -12,7 +12,12 @@ import {
   HOSTILE_STUDENTS,
   HOSTILE_VOLUNTEERS,
   seedHostileRoster,
-} from "./ug2-hostile-roster-data"
+} from "./fixtures/hostile-roster"
+import {
+  REVIEW_NAMES,
+  seedProfilesAndEvaluations,
+  seedReviewNames,
+} from "./fixtures/field-ux"
 import { bootstrapCourse } from "./seed"
 
 /**
@@ -73,76 +78,6 @@ const LONG_WORDS = new Set(
 )
 
 // ---------------------------------------------------------------- UG2-UX-1
-
-/** Fictitious ordinary course: the names the review saw cut to initials. */
-const REVIEW_NAMES = [
-  ["Marta", "Bruno", "female", 24],
-  ["Federico", "Conti", "male", 31],
-  ["Chiara", "De Luca", "female", 17],
-  ["Matteo Maria", "Ferrari", "male", 29],
-  ["Anna Lisa", "Gallo", "female", 45],
-  ["Edoardo", "Greco", "male", 22],
-  ["Giorgia", "Lombardi", "female", 27],
-  ["Alessandro", "Marino", "male", 35],
-  ["Valentina", "Barbieri", "female", 26],
-  ["Davide", "Rinaldi", "male", 19],
-  ["Elena", "Sala", "female", 33],
-  ["Giulia", "Bianchi", "female", 16],
-] as const
-
-/** Seeds the names above through the app's persistence, one duty day each. */
-async function seedReviewNames(page: Page) {
-  await page.evaluate(async (people) => {
-    const load = (path: string) => import(/* @vite-ignore */ path)
-    const { getActiveCourse } = await load("/src/persistence/courses.ts")
-    const { createStudents } = await load("/src/persistence/students.ts")
-    const { saveDutyPlan } = await load("/src/persistence/duties.ts")
-    const course = await getActiveCourse()
-    const created = await createStudents(
-      course.id,
-      people.map(([firstName, surname, sex, age]) => ({
-        firstName,
-        surname,
-        nickname: null,
-        dateOfBirth: "",
-        declaredAgeAtCourseStart: age,
-        sex,
-        phone: null,
-        size: "M",
-        initialNote: null,
-        courseNote: null,
-      })),
-    )
-    const days = [
-      "saturday",
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-    ]
-    await saveDutyPlan(
-      course.id,
-      created.map((student: { id: string }, index: number) => ({
-        dayId: days[index % 7],
-        studentId: student.id,
-      })),
-      {
-        desiredPerDay: 2,
-        fewerDayIds: [],
-        extraDayIds: ["sunday", "monday", "tuesday", "wednesday", "thursday"],
-        balanceMinors: false,
-        balanceSex: false,
-        tieBreaker: "alphabetical",
-        stayOverStudentIds: [],
-        completedDayIds: [],
-        acknowledgedWarningKeys: [],
-      },
-    )
-  }, REVIEW_NAMES)
-  await page.reload()
-}
 
 async function openDay(page: Page, label: RegExp) {
   await area(page, "Comandate").click()
@@ -810,49 +745,6 @@ test("UG2-UX-9: the paste review names its fields by row number and visible lett
 })
 
 // ---------------------------------------------------------------- UG2-UX-5
-
-/**
- * The hostile course with what Volontari, Valutazioni and the student profile
- * need to show something: a rating on most sessions of the first days (some
- * with a long note), and a phone and two notes on every student.
- */
-async function seedProfilesAndEvaluations(page: Page) {
-  await page.evaluate(async () => {
-    const load = (path: string) => import(/* @vite-ignore */ path)
-    const { getActiveCourse } = await load("/src/persistence/courses.ts")
-    const { listStudents, updateStudent } = await load(
-      "/src/persistence/students.ts",
-    )
-    const { saveEvaluation } = await load("/src/persistence/evaluations.ts")
-    const course = await getActiveCourse()
-    const students = await listStudents(course.id)
-    const sessions = ["sat-pm", "sun-am", "sun-pm", "mon-am", "tue-pm"]
-    const values = ["++", "+", "=", "-", "--"]
-    for (let i = 0; i < students.length; i += 1) {
-      const student = students[i]
-      await updateStudent(student.id, course.id, {
-        firstName: student.firstName,
-        surname: student.surname,
-        nickname: student.nickname,
-        dateOfBirth: student.dateOfBirth,
-        declaredAgeAtCourseStart: student.declaredAgeAtCourseStart,
-        sex: student.sex,
-        phone: "+39 333 123 4567",
-        size: student.size,
-        initialNote: "Esperienza di derive su laser in lago e vela leggera",
-        courseNote: "Migliora nelle virate ma deve tenere la randa più chiusa",
-      })
-      for (let s = 0; s < sessions.length; s += 1) {
-        if ((i + s) % 3 === 2) continue
-        await saveEvaluation(course.id, student.id, sessions[s], {
-          value: values[(i * 2 + s) % 5],
-          note: (i + s) % 4 === 0 ? "Buona partenza e virata pulita" : null,
-        })
-      }
-    }
-  })
-  await page.reload()
-}
 
 const EVALUATION_AUDIT = {
   // The rating buttons and the name that opens the note are a dense group

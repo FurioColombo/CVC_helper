@@ -38,7 +38,7 @@ export async function seedThirteenCrewCourse(page: Page) {
       const seedModulePath = "/tests/e2e/seed.ts"
       const seedApi = (await import(
         /* @vite-ignore */ seedModulePath
-      )) as typeof import("./seed")
+      )) as typeof import("../seed")
       const courseApi = await seedApi.loadCourses()
       const studentApi = await seedApi.loadStudents()
       const boatApi = await seedApi.loadBoats()
@@ -159,7 +159,7 @@ export async function seedTenCrewCourseD1(
       const seedModulePath = "/tests/e2e/seed.ts"
       const seedApi = (await import(
         /* @vite-ignore */ seedModulePath
-      )) as typeof import("./seed")
+      )) as typeof import("../seed")
       const courseApi = await seedApi.loadCourses()
       const studentApi = await seedApi.loadStudents()
       const boatApi = await seedApi.loadBoats()
@@ -278,7 +278,7 @@ export async function seedDoubleNameCourse(page: Page) {
       const seedModulePath = "/tests/e2e/seed.ts"
       const seedApi = (await import(
         /* @vite-ignore */ seedModulePath
-      )) as typeof import("./seed")
+      )) as typeof import("../seed")
       const courseApi = await seedApi.loadCourses()
       const studentApi = await seedApi.loadStudents()
       const volunteerApi = await seedApi.loadVolunteers()

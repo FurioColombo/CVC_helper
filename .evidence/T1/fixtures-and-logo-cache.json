@@ -1,0 +1,107 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_VERIFICATION_PASS_MILESTONE_IN_PROGRESS",
+  "recordedAt": "2026-10-18T19:30:51.565Z",
+  "parentCheckpoint": "76eccba17d5b03d28e50122513d723163464bf78",
+  "nodeVersion": "v24.21.0",
+  "scope": [
+    "Field fixtures use real typed persistence APIs and canonical duty/session/evaluation values; all values, loops and sequential writes remain.",
+    "Crew-summary, hostile-roster and field fixtures now live together under tests/e2e/fixtures. Existing spec paths and project selectors stay fixed.",
+    "Summary PNG cache keys include image readiness and natural dimensions, so a logo arriving after the bounded image wait invalidates a previously prepared PNG.",
+    "Hostile crew-summary setup requires the four fixture model logos to be loaded before capture; all original on-screen and copied-image checks remain."
+  ],
+  "source": {
+    "digest": "6f0d26578044c2b3c88e75bd7e23581d0b3e19f831239fe651c3f5edf7ff74d0",
+    "files": 441
+  },
+  "sourceHashes": {
+    "src/components/SummaryImageButton.tsx": "21711ce989284d541f5a573fc8a453752ce958100f6a860ed228240d4d494b0d",
+    "src/components/SummaryImageButton.test.tsx": "631f8001c7920056f9beb0d3e8180f37626ee08304a5eb0cdf6b8bd0302c5fc7",
+    "tests/e2e/seed.ts": "c91a2e00c346facedb9db4d9d4a0842eba8579cd1103ee61cf454dc2c2fdd26f",
+    "tests/e2e/fixtures/field-ux.ts": "183c77ea46d9a63072e39cc8ad258560192fae3d32d17a4bebac59eea25c9fb6",
+    "tests/e2e/fixtures/crew-summary.ts": "ade4ac7546a633241ae878dbd5acf1a0230bb2915c7847af028da26f90205209",
+    "tests/e2e/fixtures/hostile-roster.ts": "a325079c49780aa81bd31cecb412e20002585964f315d1bb7a85b3a4b1388613",
+    "tests/e2e/d3-summary-controls.spec.ts": "a2333dc48ad4f203d241fa435bf35b27491c6d224bc8fe4deef92580795c986a",
+    "tests/e2e/f3-crew-summary.spec.ts": "0e7dbee96cdeaccb20991d613faf443f9100bcd495ede2e581c21b18be28fb33",
+    "tests/e2e/ug2-field-ux-fixes.spec.ts": "8337341205c34c4756ba0952e59746b1b0dbd778597c8bfd9f3e96115d1e3157",
+    "tests/e2e/ug2-hostile-roster.spec.ts": "907474f586c78797910caff2b07e7e1fce198f60435f1e89b5b4088d632f6e1f"
+  },
+  "coverage": {
+    "cases": 356,
+    "exactFileTitleProjectSequenceUnchanged": true,
+    "raw": "OS temporary cvc-t1-coverage-after-fixtures.json",
+    "sha256": "f8b47e688c22cf979f41ee551c3edcbf71e8238abaaa124dfcdb22430cd8b375"
+  },
+  "assertionPreservation": {
+    "base": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
+    "files": 62,
+    "beforeExpectCallNodes": 3522,
+    "afterExpectCallNodes": 3526,
+    "missing": 0,
+    "method": "TypeScript AST printer removes comments, normalizes formatting and inventories every call rooted in expect (including matcher chains) in every existing spec. Current per-file multisets must contain every baseline expression. This supplements title/project preservation and human review; it does not prove runtime behavior or helper semantics.",
+    "raw": "OS temporary cvc-t1-assertion-preservation.json",
+    "sha256": "071236b74b111f1d35245812a7a72b679b9914a2ecc10a6e82b6c52a5642d477"
+  },
+  "helperMoves": {
+    "status": "PASS",
+    "scope": "Moved feature helpers only; TypeScript transpilation removes types/comments and yields identical runtime JavaScript before and after their move. This does not substitute for browser verification.",
+    "rows": [
+      {
+        "oldFile": "tests/e2e/summary-helpers.ts",
+        "newFile": "tests/e2e/fixtures/crew-summary.ts",
+        "runtimeJavaScriptSha256": "dc16d1013786f70c331458e43dae576213cb0f3d4f2f8399f1cf6e3229a6f0d7",
+        "emittedJavaScriptUnchanged": true
+      },
+      {
+        "oldFile": "tests/e2e/ug2-hostile-roster-data.ts",
+        "newFile": "tests/e2e/fixtures/hostile-roster.ts",
+        "runtimeJavaScriptSha256": "05de71414ab77b0c38a80fe00a359eb207e87434fcf3a5e7db2c42a08ae0d5af",
+        "emittedJavaScriptUnchanged": true
+      }
+    ]
+  },
+  "lateLogoRegression": {
+    "red": "Unchanged component fails: expected second render after a late load, got cached first render.",
+    "redLog": "OS temporary cvc-t1-summary-late-logo-red.log",
+    "redSha256": "16d61f9ade32f4da0886d2a346b34f3342fa4f23f8af13b12fbffd19cc607023",
+    "green": "SummaryImageButton and pageSnapshot: 50PASS.",
+    "greenLog": "OS temporary cvc-t1-summary-late-logo-green.log",
+    "greenSha256": "dd2bd7599ae1cc7cb3c56748d84cb4fdfc6f0d7311b07054094976ffa68fbd58",
+    "qualification": "A deterministic cache defect is reproduced and fixed. The historical WebKit failure reported zero on-screen images, so that event is not conclusively attributed to this cache defect."
+  },
+  "verify": {
+    "command": "npm run verify",
+    "status": "PASS",
+    "exitCode": 0,
+    "unitFiles": 89,
+    "unitTests": 1440,
+    "productionPwa": "PASS",
+    "raw": "OS temporary cvc-t1-fixtures-summary-verify.log",
+    "sha256": "f83a31ccf305de40d1a7d04a3af3cef29e93c8f35f88784476ddf80755768b3e"
+  },
+  "browser": {
+    "command": "npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts tests/e2e/ug2-hostile-roster.spec.ts tests/e2e/ug2-field-ux-fixes.spec.ts tests/e2e/d3-summary-controls.spec.ts --retries=0",
+    "status": "PASS",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-18T19:15:54.136Z",
+      "duration": 608431.6799999999,
+      "expected": 45,
+      "skipped": 50,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "raw": "OS temporary cvc-t1-fixtures-summary-browser-proof/e2e-report.json",
+    "sha256": "eb8ed515c82b58ada1628b69b46ebab3679bed749a4feb2ab8b24389a2e06d04",
+    "scope": "All original matching projects:45PASS,50originalconditionalskips,0flakes. Includes WebKit hostile crew/duty screenshots, offline logos, viewport/text profiles, actual Back/paste, and shared copy/share controls."
+  },
+  "predecessorEvidenceHashesVerified": 18,
+  "publicationChanged": false,
+  "remaining": "No suite speed gain is claimed. First-batch Mac CI, remaining filed flake fixes, same-idle-machine H1/T1 measurements, independent final review and verify:all remain. D3/D4 owner acceptance is still pending.",
+  "checkpointSource": {
+    "digest": "07db2b63513ca80c78afbeceda66c3f0dd94920ad6d240d231265f60cb3031e7",
+    "files": 439
+  },
+  "sourceInventoryNote": "Verification preceded staging of the two helper moves; its source digest includes their deleted-path placeholders. Staging removes only those placeholders from the Git inventory. All recorded runtime source hashes and verified file bytes stay unchanged; checkpoint push CI is still pending."
+}

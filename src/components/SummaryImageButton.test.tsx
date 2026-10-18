@@ -99,6 +99,37 @@ describe("SummaryImageButton", () => {
     expect(browser.clipboardWrite).toHaveBeenCalledOnce()
   })
 
+  it("refreshes an image prepared while a logo was pending once it loads", async () => {
+    render(<Harness />)
+    const root = screen.getByRole("heading").parentElement!
+    const logo = document.createElement("img")
+    logo.src = "/boat-logo.png"
+    logo.alt = "Boat logo"
+    Object.defineProperties(logo, {
+      complete: { configurable: true, value: false },
+      naturalWidth: { configurable: true, value: 0 },
+      naturalHeight: { configurable: true, value: 0 },
+    })
+    root.append(logo)
+    await vi.waitFor(() => expect(renderElementToPng).toHaveBeenCalledOnce())
+
+    // The bounded image wait can finish before the asset. Loading changes no
+    // markup, but the next copy must include the logo now visible on screen.
+    const markup = root.innerHTML
+    Object.defineProperties(logo, {
+      complete: { configurable: true, value: true },
+      naturalWidth: { configurable: true, value: 256 },
+      naturalHeight: { configurable: true, value: 72 },
+    })
+    fireEvent.load(logo)
+    expect(root.innerHTML).toBe(markup)
+    fireEvent.click(copyButton())
+    await statusWith(/Immagine copiata/)
+
+    expect(renderElementToPng).toHaveBeenCalledTimes(2)
+    expect(browser.clipboardWrite).toHaveBeenCalledOnce()
+  })
+
   it("renders on the tap when it has not been rendered ahead, and shows it is busy meanwhile", async () => {
     let finish: (blob: Blob) => void = () => undefined
     vi.mocked(renderElementToPng).mockReturnValue(

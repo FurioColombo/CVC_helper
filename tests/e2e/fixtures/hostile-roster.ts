@@ -12,7 +12,7 @@ import type { DutyDayId } from "@/domain/config"
  * two identical names that need an ordinal), nicknames, minors (age-only and
  * from a stored birth date), a 17-year-old who turns 18 on the fourth day,
  * and an 18-year-old on the first. Seeded through the app's own persistence
- * like `summary-helpers.ts`.
+ * like `crew-summary.ts`.
  */
 
 export type HostileStudent = {
@@ -534,7 +534,7 @@ export async function seedHostileRoster(page: Page) {
       const seedModulePath = "/tests/e2e/seed.ts"
       const seedApi = (await import(
         /* @vite-ignore */ seedModulePath
-      )) as typeof import("./seed")
+      )) as typeof import("../seed")
       const courseApi = await seedApi.loadCourses()
       const studentApi = await seedApi.loadStudents()
       const volunteerApi = await seedApi.loadVolunteers()
@@ -672,7 +672,7 @@ async function hostileBirthDates(page: Page): Promise<Array<string | null>> {
     const seedModulePath = "/tests/e2e/seed.ts"
     const seedApi = (await import(
       /* @vite-ignore */ seedModulePath
-    )) as typeof import("./seed")
+    )) as typeof import("../seed")
     const courseApi = await seedApi.loadCourses()
     const course = await courseApi.getActiveCourse()
     if (!course) throw new Error("The hostile roster needs an active course")

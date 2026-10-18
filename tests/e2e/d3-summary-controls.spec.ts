@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test"
 
-import { DOUBLE_NAME_SESSION, seedDoubleNameCourse } from "./summary-helpers"
+import {
+  DOUBLE_NAME_SESSION,
+  seedDoubleNameCourse,
+} from "./fixtures/crew-summary"
 import { COPIED_NOTE, expectCopyButtonLayout } from "./summary-image-checks"
 
 test("contains the copy status and native share control at 320 px / 200% text", async ({

@@ -20,6 +20,7 @@ import {
 } from "./layout-audit"
 import {
   HOSTILE_AVAILABLE,
+  HOSTILE_BOATS,
   HOSTILE_CREWS,
   HOSTILE_DUTIES,
   HOSTILE_LAND,
@@ -29,7 +30,7 @@ import {
   birthDateFor,
   seedHostileRoster,
   summarizeHostileRoster,
-} from "./ug2-hostile-roster-data"
+} from "./fixtures/hostile-roster"
 import {
   copyAndCheckSummaryImage,
   expectClipboardImage,
@@ -778,6 +779,22 @@ async function openCrewSummary(page: Page) {
   await page.getByRole("button", { name: "Apri vista lettura" }).click()
   const view = page.getByRole("dialog", { name: "Vista lettura equipaggi" })
   await expect(view.getByRole("listitem")).toHaveCount(HOSTILE_CREWS.length)
+  for (const type of new Set(HOSTILE_BOATS.map(([type]) => type))) {
+    const logo = view.getByRole("img", { name: type, exact: true })
+    await expect(logo).toHaveCount(1)
+    await expect
+      .poll(
+        () =>
+          logo.evaluate(
+            (image) =>
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth > 0,
+          ),
+        { message: `${type} logo is loaded before the summary is copied` },
+      )
+      .toBe(true)
+  }
   return view
 }
 

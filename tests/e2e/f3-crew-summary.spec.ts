@@ -10,7 +10,7 @@ import {
   seedDoubleNameCourse,
   seedTenCrewCourseD1,
   seedThirteenCrewCourse,
-} from "./summary-helpers"
+} from "./fixtures/crew-summary"
 import {
   MAX_COLOUR_DIFFERENCE,
   MAX_DIFFERENT_SHARE,

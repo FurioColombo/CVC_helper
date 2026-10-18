@@ -43,14 +43,22 @@ function noteFor(result: SummaryCopyResult): Note {
   }
 }
 
-/** What the picture depends on: the width and density it is drawn at and the
- *  content itself. A picture made for another key is made again. */
+/** What the picture depends on: its geometry, content and loaded images.
+ * A logo loading after the bounded wait must invalidate the earlier picture. */
 function snapshotKey(root: HTMLElement) {
   return [
     root.getBoundingClientRect().width,
     window.devicePixelRatio,
     getComputedStyle(document.documentElement).fontSize,
     root.innerHTML,
+    JSON.stringify(
+      Array.from(root.querySelectorAll("img"), (image) => [
+        image.currentSrc,
+        image.complete,
+        image.naturalWidth,
+        image.naturalHeight,
+      ]),
+    ),
   ].join("|")
 }
 
