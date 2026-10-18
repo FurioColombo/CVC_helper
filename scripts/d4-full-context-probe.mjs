@@ -466,7 +466,7 @@ async function readSampleHelp() {
 async function runSampleCommand(
   pid,
   file,
-  timeout = 3000,
+  timeout = 15000,
   includeProgress = false,
 ) {
   const startedEpochMs = Date.now()

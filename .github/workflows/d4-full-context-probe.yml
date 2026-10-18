@@ -38,8 +38,6 @@ jobs:
           if-no-files-found: warn
 
   full-context:
-    # Tooling-only follow-up: inspect sample latency/help before a full run.
-    if: ${{ false }}
     name: Original full suite with external host sampling (not acceptance)
     needs: stack-preflight
     runs-on: macos-15
