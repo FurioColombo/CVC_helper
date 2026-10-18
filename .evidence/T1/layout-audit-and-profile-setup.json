@@ -1,0 +1,134 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_VERIFICATION_PASS_MILESTONE_IN_PROGRESS",
+  "recordedAt": "2026-10-18T23:40:04.557Z",
+  "parentCheckpoint": "cccfd2c48a2eecda348d728dcce068ec7063d9ed",
+  "nodeVersion": "v24.21.0",
+  "source": {
+    "digest": "19f8861886e43a7181917454e7d77d71dabd7dd91892d55dbfdbb1220baec5d1",
+    "files": 439
+  },
+  "scope": [
+    "Layout audit uses computed-style, element-rectangle and layer snapshots only during one synchronous, read-only callback. Each later scroll, viewport or invocation starts fresh; every comparison, threshold and result order remains.",
+    "Field multi-view and student-profile layout cases open each view/student once, then resize through all five original profiles. Original readiness assertions still run on every profile, as do all layout, truncation and broken-word assertions."
+  ],
+  "sourceHashes": {
+    "tests/e2e/layout-audit.ts": "979c6f68b7e7907a527895f52955636fa49fac3bfdc010ac29e0743b49385737",
+    "tests/e2e/ug2-field-ux-fixes.spec.ts": "70d088eb590a093aa122951a856444f6a146dc3058270387f56c04dfa1212678"
+  },
+  "coverage": {
+    "cases": 356,
+    "exactFileTitleProjectSequenceUnchanged": true,
+    "raw": "OS temporary cvc-t1-layout-coverage.json",
+    "sha256": "d42a4eb8318b91ed3c18e11a1d506fcb6d4fc68457a97f2c726cc0e6d502d268"
+  },
+  "assertionPreservation": {
+    "base": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
+    "files": 62,
+    "beforeExpectCallNodes": 3522,
+    "afterExpectCallNodes": 3528,
+    "missing": 0,
+    "method": "TypeScript AST comment-free expression multisets, including expect-rooted matcher chains. Human review separately checks per-profile invocation preservation.",
+    "raw": "OS temporary cvc-t1-layout-assertion-preservation.json"
+  },
+  "equivalence": {
+    "comparisons": 11,
+    "scenarios": [
+      "initial intentional-defect fixture",
+      "floating top",
+      "floating top with control filters",
+      "floating skip",
+      "floating skip with control filters",
+      "floating only",
+      "floating only with control filters",
+      "after control-size mutation",
+      "after nested scroll",
+      "after viewport resize",
+      "after enlarged text"
+    ],
+    "exactOldNewFullOutputsEqual": true,
+    "raw": "OS temporary cvc-t1-layout-cache-equivalence.json",
+    "qualification": "Synthetic static/mutated/scroll/viewport/font fixtures, exact old/new full output equality. No real UI, physical-device or speed acceptance claim."
+  },
+  "browser": {
+    "command": "npm run verify:e2e -- tests/e2e/ug2-field-ux-fixes.spec.ts tests/e2e/ug2-hostile-roster.spec.ts --retries=0",
+    "startTime": "2026-10-18T23:27:39.416Z",
+    "duration": 350689.983,
+    "expected": 30,
+    "skipped": 29,
+    "unexpected": 0,
+    "flaky": 0,
+    "flakyArtifact": [],
+    "runnerExit": 0,
+    "manualCleanup": false,
+    "raw": "OS temporary cvc-t1-layout-cache-ui-proof/e2e-report.json",
+    "sha256": "a5dd18267aac54a5077534361c4399a074f9166c2bcce73fd26d6eb78b7fa43e",
+    "formattingAfterRun": {
+      "canonicalEmittedJavaScriptEqual": true,
+      "sha256": "876aa246c39088d4655677184cabdfba89b0504bfa1532c3b6ac9b853ec9feef",
+      "method": "TypeScript ESNext emitted JavaScript with comments removed, then Prettier Babel formatting normalization. Initial raw emit comparison differed only by retained input line breaks; raw byte equality is not claimed."
+    }
+  },
+  "verification": {
+    "quick": {
+      "status": "PASS",
+      "tests": 1440,
+      "files": 89,
+      "raw": "OS temporary cvc-t1-layout-cache-quick-fixed.log",
+      "sha256": "b2e9377550cfa010b37b21bf6df29b5bb8daa8f54e8f208122b44007ecf9a7c7",
+      "initialAttempt": "Stopped at formatting check; corrected only layout-audit formatting before this passing full quick run."
+    },
+    "domain": {
+      "status": "PASS",
+      "raw": "OS temporary cvc-t1-layout-cache-domain.log",
+      "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+    }
+  },
+  "diagnosticTiming": {
+    "qualification": "Two separate local single-case traced observations, not a back-to-back H1/T1 acceptance measurement. No suite speed gain claimed.",
+    "beforeCaseSeconds": 54.3,
+    "afterCaseSeconds": 45.7,
+    "auditCallsBefore": 202,
+    "auditCallsAfter": 202,
+    "profileApplicationsBefore": 40,
+    "profileApplicationsAfter": 24,
+    "viewOpenCountBefore": 20,
+    "viewOpenCountAfter": 4,
+    "afterRunTooling": "Case passed; runner waited for its preview server during shutdown. Root identity-checked and closed only that task server tree. The later full affected-suite run exited normally without manual cleanup.",
+    "rawBefore": "OS temporary cvc-t1-field-audit-profile-proof",
+    "rawAfter": "OS temporary cvc-t1-layout-cache-profile-proof"
+  },
+  "preservedHandoff": {
+    "D3AndD4EvidenceHashesVerified": 18,
+    "testVersion": "0.4.0",
+    "source": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstalled": null,
+    "physicalPass": false
+  },
+  "remaining": [
+    "Exact new-checkpoint CI.",
+    "The final back-to-back unchanged H1/final T1 idle-machine speed comparison and full verification.",
+    "Filed intermittent cold-constructor, crop timing and legacy-page lifecycle defects; a later green run alone does not resolve their cause.",
+    "Final required self-review and independent code-quality review."
+  ],
+  "checkpointVerification": {
+    "source": {
+      "digest": "f30e00cd92bc650debf8c5f86f97dadacaa15fbd7cd036eafaa1602144357b5f",
+      "files": 439
+    },
+    "quick": {
+      "status": "PASS",
+      "tests": 1441,
+      "files": 89,
+      "raw": "OS temporary cvc-t1-layout-privacy-quick.log",
+      "sha256": "8a3ef459803ed1e6601a37b3c5156bcfda3f2634570b5e35248c3721c4aed05c"
+    },
+    "domain": {
+      "status": "PASS",
+      "raw": "OS temporary cvc-t1-layout-privacy-domain.log",
+      "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+    },
+    "supportingCorrection": ".evidence/T1/privacy-fractional-metric.json",
+    "qualification": "Earlier source and verification fields above preserve the pre-privacy-correction UI phase. This final checkpoint adds only the separately tested staged-data privacy fix; both browser-source files still match their recorded hashes."
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "milestone": "T1",
+  "checkpoint": "cccfd2c48a2eecda348d728dcce068ec7063d9ed",
+  "run": 39160157893,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39160157893",
+  "status": "PASS_EXACT_CHECKPOINT_NOT_MILESTONE_CLOSURE",
+  "collectedAt": "2026-10-18T23:22:40.163Z",
+  "jobs": [
+    {
+      "id": 117771595448,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T19:44:50Z",
+      "completedAt": "2026-10-18T20:08:43Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39160157893/job-117771595448.log",
+      "sha256": "6f62041504fe0d901d8882e02db5d637ba89c8507f2ca6e0129bb2b45d6cdbe6",
+      "browserSummary": [
+        "2026-10-18T20:08:37.7986741Z   47 skipped",
+        "2026-10-18T20:08:37.7987160Z   219 passed (21.3m)",
+        "2026-10-18T20:08:37.8014863Z ##[notice]  47 skipped",
+        "  219 passed (21.3m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-18T19:47:18.580Z",
+        "duration": 1279216.674,
+        "expected": 219,
+        "skipped": 47,
+        "unexpected": 0,
+        "flaky": 0,
+        "cases": 266,
+        "retried": 0,
+        "flakyArtifact": [],
+        "coldUpgrade": [
+          {
+            "project": "pixel-7-chrome",
+            "attempts": [
+              {
+                "status": "passed",
+                "retry": 0
+              }
+            ],
+            "annotation": "609/609 rows (expected 609); upgrade 619 ms (create 1, adapter init 331, SDK ready after adapter 92, total init 423, prepare 196); reopen 315 ms (create 1, adapter init 266, SDK ready after adapter 18, total init 284, prepare 30); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 62/3 ms and 44/1 ms"
+          }
+        ]
+      }
+    },
+    {
+      "id": 117771595714,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T19:44:55Z",
+      "completedAt": "2026-10-18T20:30:07Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39160157893/job-117771595714.log",
+      "sha256": "babda3cac0a0d7ca43aa8039e0cee69bae2e154318167dea176e635496903211",
+      "browserSummary": [
+        "2026-10-18T20:29:57.0511220Z   65 skipped",
+        "2026-10-18T20:29:57.0615740Z   291 passed (39.3m)",
+        "2026-10-18T20:29:57.0992750Z ##[notice]  65 skipped",
+        "  291 passed (39.3m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-18T19:50:38.924Z",
+        "duration": 2358114.952,
+        "expected": 291,
+        "skipped": 65,
+        "unexpected": 0,
+        "flaky": 0,
+        "cases": 356,
+        "retried": 0,
+        "flakyArtifact": [],
+        "coldUpgrade": [
+          {
+            "project": "pixel-7-chrome",
+            "attempts": [
+              {
+                "status": "passed",
+                "retry": 0
+              }
+            ],
+            "annotation": "609/609 rows (expected 609); upgrade 641 ms (create 3, adapter init 279, SDK ready after adapter 200, total init 479, prepare 159); reopen 175 ms (create 1, adapter init 141, SDK ready after adapter 13, total init 154, prepare 21); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 39/2 ms and 43/1 ms"
+          },
+          {
+            "project": "iphone-13-webkit-core",
+            "attempts": [
+              {
+                "status": "passed",
+                "retry": 0
+              }
+            ],
+            "annotation": "609/609 rows (expected 609); upgrade 963 ms (create 2, adapter init 201, SDK ready after adapter 128, total init 329, prepare 632); reopen 370 ms (create 0, adapter init 169, SDK ready after adapter 67, total init 236, prepare 134); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 264/11 ms and 133/2 ms"
+          }
+        ]
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12149926722,
+      "name": "e2e-report-macos-15-39160157893",
+      "sha256": "5e02202c8af3aa8a34278d3d1177c4e9bc7ffd019cacc6e841c190eda473cb8a",
+      "rawZip": "OS temporary cvc-t1-ci-39160157893/12149926722.zip"
+    },
+    {
+      "id": 12149727450,
+      "name": "e2e-flaky-macos-15-39160157893",
+      "sha256": "cc00739a410fd3163d5d6fed628188c0b0e05059e9e1d7da9fdfe542b040dc6f",
+      "rawZip": "OS temporary cvc-t1-ci-39160157893/12149727450.zip"
+    },
+    {
+      "id": 12148629650,
+      "name": "e2e-report-ubuntu-latest-39160157893",
+      "sha256": "1226bb0ed6ada37c07559bd57b91160a185febdb007f86c494941c52db27d536",
+      "rawZip": "OS temporary cvc-t1-ci-39160157893/12148629650.zip"
+    },
+    {
+      "id": 12148559971,
+      "name": "e2e-flaky-ubuntu-latest-39160157893",
+      "sha256": "179592d1edf848c6aa1716483f2613035b09a4533af5196b0e420c36a2f53a40",
+      "rawZip": "OS temporary cvc-t1-ci-39160157893/12148559971.zip"
+    }
+  ],
+  "qualification": "Exact cccfd2c combined T1 source passes full canonical Mac/Linux CI without retries. Includes typed fixtures, blank-page bootstrap, late-logo cache and note-history readiness. Later layout-audit/profile edits are excluded. A later green run does not explain or resolve the prior cold-upgrade failure. No H1 speed comparison, physical-device acceptance or T1 closure."
+}

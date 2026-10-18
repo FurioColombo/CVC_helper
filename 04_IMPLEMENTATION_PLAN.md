@@ -1,6 +1,6 @@
 # Implementation plan — 0.4.0
 
-Updated 2026-10-18. Read **Where this cycle stands**, then only the active
+Updated 2026-10-19. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.3.0 plan
 is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -30,7 +30,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
 | D3 | Awaiting owner. Agent verification, reviews, full source CI and live HTTPS pass. CVC Helper Test 0.4.0 is pinned to `761530f`; 0.4.1 waits for an explicit installation report. D4/T1 may continue under dependency permissions; release waits. See `docs/OWNER_TODO.md` and `.evidence/D3/deployment-evidence.json`. |
 | D4 | Agent gates pass at `fde1fe1`: 1,439 unit tests, 108 focused browser checks and both production reset-isolation engines; exact full Mac/Linux CI is green without retries. Awaiting owner. The test site stays pinned to D3; D4 phone setup follows that check. Evidence: `.evidence/D4/`. |
-| T1 | In progress. Typed feature fixtures, late-logo cache repair and evaluation-note readiness pass focused browser checks and 1,440 unit tests. All 356 cases and existing assertions remain. Mac CI fails the unchanged cold-upgrade bound; native diagnosis, remaining flakes and the H1 speed comparison continue. Evidence: `.evidence/T1/`. |
+| T1 | In progress. Typed fixtures, late-logo cache and note-history readiness pass exact `cccfd2c` Mac/Linux CI without retries. Layout-audit and profile setup improvements pass 30 browser checks and 1,441 unit tests; all 356 cases remain. Prior cold-upgrade failures, remaining flakes and the H1 speed comparison stay open. Evidence: `.evidence/T1/`. |
 | UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
 
 ## Execution order

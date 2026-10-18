@@ -82,6 +82,66 @@ export async function auditLayout(
       /** The height the thing has before an ancestor clips it. */
       fullHeight?: number
     }
+    type StyleSnapshot = Pick<
+      CSSStyleDeclaration,
+      | "display"
+      | "visibility"
+      | "textOverflow"
+      | "overflowX"
+      | "overflowY"
+      | "transform"
+      | "scale"
+      | "position"
+      | "containerType"
+      | "paddingLeft"
+      | "paddingRight"
+    >
+    type RectSnapshot = Pick<
+      DOMRect,
+      "left" | "top" | "right" | "bottom" | "width" | "height"
+    >
+    type Layer = "fixed" | "sticky" | "flow"
+
+    // This callback is synchronous and read-only. Reuse plain snapshots within
+    // this one measured state; a later scroll or viewport gets a fresh audit.
+    const styles = new WeakMap<Element, StyleSnapshot>()
+    const styleOf = (node: Element): StyleSnapshot => {
+      const cached = styles.get(node)
+      if (cached) return cached
+      const computed = getComputedStyle(node)
+      const snapshot: StyleSnapshot = {
+        display: computed.display,
+        visibility: computed.visibility,
+        textOverflow: computed.textOverflow,
+        overflowX: computed.overflowX,
+        overflowY: computed.overflowY,
+        transform: computed.transform,
+        scale: computed.scale,
+        position: computed.position,
+        containerType: computed.containerType,
+        paddingLeft: computed.paddingLeft,
+        paddingRight: computed.paddingRight,
+      }
+      styles.set(node, snapshot)
+      return snapshot
+    }
+    const rects = new WeakMap<Element, RectSnapshot>()
+    const rectOf = (node: Element): RectSnapshot => {
+      const cached = rects.get(node)
+      if (cached) return cached
+      const rect = node.getBoundingClientRect()
+      const snapshot: RectSnapshot = {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+      }
+      rects.set(node, snapshot)
+      return snapshot
+    }
+    const positions = new WeakMap<Element, Layer>()
 
     const documentWidth = document.documentElement.scrollWidth
     const viewportWidth = document.documentElement.clientWidth
@@ -101,7 +161,7 @@ export async function auditLayout(
       if (item.closest("details:not([open])") && !item.closest("summary")) {
         continue
       }
-      const style = getComputedStyle(item)
+      const style = styleOf(item)
       if (style.display === "none" || style.display === "inline") continue
       if (item.clientWidth === 0) continue
       if (item.scrollWidth > item.clientWidth + 1) {
@@ -119,8 +179,8 @@ export async function auditLayout(
           style.overflowX === "hidden" &&
           Array.from(item.children).some(
             (child) =>
-              getComputedStyle(child).transform !== "none" ||
-              getComputedStyle(child).scale !== "none",
+              styleOf(child).transform !== "none" ||
+              styleOf(child).scale !== "none",
           )
         ) {
           continue
@@ -139,11 +199,11 @@ export async function auditLayout(
         ancestor && ancestor !== document.body;
         ancestor = ancestor.parentElement
       ) {
-        const clip = getComputedStyle(ancestor)
+        const clip = styleOf(ancestor)
         if (clip.overflowX === "visible" && clip.overflowY === "visible") {
           continue
         }
-        const edge = ancestor.getBoundingClientRect()
+        const edge = rectOf(ancestor)
         if (clip.overflowX !== "visible") {
           left = Math.max(left, edge.left)
           right = Math.min(right, edge.right)
@@ -158,18 +218,25 @@ export async function auditLayout(
         : null
     }
 
-    const positionOf = (control: Element) => {
+    const positionOf = (control: Element): Layer => {
+      const cached = positions.get(control)
+      if (cached) return cached
       let sticky = false
       for (
         let node: Element | null = control;
         node && node !== document.documentElement;
         node = node.parentElement
       ) {
-        const position = getComputedStyle(node).position
-        if (position === "fixed") return "fixed"
+        const position = styleOf(node).position
+        if (position === "fixed") {
+          positions.set(control, "fixed")
+          return "fixed"
+        }
         if (position === "sticky") sticky = true
       }
-      return sticky ? "sticky" : "flow"
+      const layer = sticky ? "sticky" : "flow"
+      positions.set(control, layer)
+      return layer
     }
     const mode = settings.floating ?? "top"
 
@@ -181,7 +248,7 @@ export async function auditLayout(
       const text = node as Text
       const parent = text.parentElement
       if (!parent || ignored(parent)) continue
-      const style = getComputedStyle(parent)
+      const style = styleOf(parent)
       if (style.display === "none" || style.visibility === "hidden") continue
       if (parent.closest("[hidden], .sr-only")) continue
       // What a closed <details> holds is not drawn (its summary is).
@@ -206,13 +273,10 @@ export async function auditLayout(
         ) {
           const wordWidth = rects.reduce((sum, rect) => sum + rect.width, 0)
           let container: HTMLElement | null = parent
-          while (
-            container &&
-            getComputedStyle(container).containerType === "normal"
-          ) {
+          while (container && styleOf(container).containerType === "normal") {
             container = container.parentElement
           }
-          const containerStyle = container ? getComputedStyle(container) : null
+          const containerStyle = container ? styleOf(container) : null
           const containerWidth =
             container && containerStyle
               ? container.clientWidth -
@@ -283,14 +347,14 @@ export async function auditLayout(
       let boundary = word.node.parentElement?.closest(
         "button, li, article, [role=dialog], [role=region], section",
       )
-      while (boundary && getComputedStyle(boundary).overflowY !== "visible") {
+      while (boundary && styleOf(boundary).overflowY !== "visible") {
         boundary =
           boundary.parentElement?.closest(
             "button, li, article, [role=dialog], [role=region], section",
           ) ?? null
       }
       if (!boundary) continue
-      const box = boundary.getBoundingClientRect()
+      const box = rectOf(boundary)
       if (
         word.left < box.left - 1 ||
         word.right > box.right + 1 ||
@@ -311,8 +375,8 @@ export async function auditLayout(
       if (settings.ignoreControls && control.matches(settings.ignoreControls)) {
         return false
       }
-      const style = getComputedStyle(control)
-      const box = control.getBoundingClientRect()
+      const style = styleOf(control)
+      const box = rectOf(control)
       return (
         style.display !== "none" &&
         style.visibility !== "hidden" &&
@@ -324,7 +388,7 @@ export async function auditLayout(
     let smallest: LayoutAudit["stats"]["smallestControl"] = null
     for (const control of controls) {
       const position = positionOf(control)
-      const box = control.getBoundingClientRect()
+      const box = rectOf(control)
       const dense = Boolean(
         settings.denseControls && control.matches(settings.denseControls),
       )

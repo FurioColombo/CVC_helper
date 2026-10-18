@@ -108,10 +108,10 @@ export function lineProblems(path, line, denylist = []) {
   }
   if (isRecordPath(path)) {
     for (const match of line.matchAll(PHONE)) {
-      // A bare JSON number (a review's seed, a size) is not a phone: stored
-      // phones are strings.
+      // A bare JSON number (a review's seed, a size or a fractional timing)
+      // is not a phone: stored phones are strings.
       const jsonNumber =
-        /^\d+$/.test(match[0]) &&
+        /^\d+(?:\.\d+)?$/.test(match[0]) &&
         /"\s*:\s*$/.test(line.slice(0, match.index)) &&
         /^\s*[,}\]]?\s*$/.test(line.slice(match.index + match[0].length))
       if (jsonNumber) continue

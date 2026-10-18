@@ -1,0 +1,209 @@
+{
+  "milestone": "T1",
+  "status": "DIAGNOSTIC_SUPPORT_NOT_ACCEPTANCE_OR_CAUSAL_FIX",
+  "recordedAt": "2026-10-18T23:30:45.899Z",
+  "run": 39160674882,
+  "attempt": 1,
+  "source": "bbaf8ea87701b79de2642aeb8e209d9e284808cf",
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39160674882",
+  "sourceScope": "Separate diagnostic branch preserves its original app/tests/configuration; bounded native stack/reporting tooling only. Not the current T1 combined source.",
+  "collection": {
+    "jobs": [
+      {
+        "id": 117773125037,
+        "name": "Isolated WebKit stack permission preflight",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T19:51:46Z",
+        "completedAt": "2026-10-18T19:52:26Z",
+        "current": [],
+        "logSha256": "468396019fccbcf1c8b845c91cc095e759b04618082eb48bff20cb4ff3b3634e"
+      },
+      {
+        "id": 117773296067,
+        "name": "Original full suite with external host sampling (not acceptance)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T19:52:32Z",
+        "completedAt": "2026-10-18T20:26:04Z",
+        "current": [],
+        "logSha256": "0aa7fed52b1bd5f95fecef4605c24d658be272b4068a0181324efbf7d84a1713"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12150125447,
+        "name": "d4-full-context-host-39160674882",
+        "sha256": "9e59a78ab5b63771a7c0d34fc221da925e3123acf7e54c4b619f58cf1fb6b295"
+      },
+      {
+        "id": 12149165330,
+        "name": "d4-stack-preflight-39160674882",
+        "sha256": "87df0e63bc6347b12ce45edca1e7314c26b0b8a4b1f9673083aa6da870701698"
+      }
+    ],
+    "rawFolder": "OS temporary cvc-d4-full-context-39160674882"
+  },
+  "case": {
+    "status": "passed",
+    "retry": 0,
+    "upgradeMs": 884,
+    "reopenMs": 351,
+    "rows": 609,
+    "rowsIdentical": true,
+    "injectedStudents": 40,
+    "injectedEvaluations": 520,
+    "priorEngineEvents": 0,
+    "compileTimings": {
+      "workerModuleEnteredAt": 1792355111753,
+      "workerRequestReceivedAt": 1792355111754,
+      "workerFetchStartedAt": 1792355111754,
+      "workerResponseHeadersAt": 1792355111757,
+      "workerCompileCalledAt": 1792355111766,
+      "workerCompiledAt": 1792355111795,
+      "workerReplySentAt": 1792355111795,
+      "parentCompileStartedAt": 1792355111747,
+      "parentWorkerCreateStartedAt": 1792355111747,
+      "parentWorkerCreatedAt": 1792355111747,
+      "parentRequestSentAt": 1792355111747,
+      "parentReplyReceivedAt": 1792355111796,
+      "parentModuleReturnedAt": 1792355111796
+    }
+  },
+  "samples": [
+    {
+      "sample": 0,
+      "status": "captured",
+      "pid": 86932,
+      "uid": 501,
+      "startIdentity": "Sun Oct 18 20:24:57 2026",
+      "selectionReason": "case_recent_start",
+      "startedEpochMs": 1792355098814,
+      "endedEpochMs": 1792355105494,
+      "toolDurationMs": 6680,
+      "outputBytes": 110562,
+      "truncated": false,
+      "sha256": "af27b90e8abfe7bf0fdbfaf3e5a011b09e850ff64f627c2fd7fa3a1ded4c0cd0",
+      "file": "run-1792353190233-2755-retry-0-sample-0.txt",
+      "threadCount": 16,
+      "omgWorkSymbols": 2,
+      "ipIntCompileSymbols": 0
+    },
+    {
+      "sample": 1,
+      "status": "captured",
+      "pid": 86932,
+      "uid": 501,
+      "startIdentity": "Sun Oct 18 20:24:57 2026",
+      "selectionReason": "case_recent_start",
+      "startedEpochMs": 1792355106832,
+      "endedEpochMs": 1792355108216,
+      "toolDurationMs": 1384,
+      "outputBytes": 116692,
+      "truncated": false,
+      "sha256": "03d13876ee6748f7b472dae0dd3f23e13fae77528fda31855d2bb04cde247bb7",
+      "file": "run-1792353190233-2755-retry-0-sample-1.txt",
+      "threadCount": 15,
+      "omgWorkSymbols": 2,
+      "ipIntCompileSymbols": 0
+    },
+    {
+      "sample": 2,
+      "status": "captured",
+      "pid": 86932,
+      "uid": 501,
+      "startIdentity": "Sun Oct 18 20:24:57 2026",
+      "selectionReason": "case_recent_start",
+      "startedEpochMs": 1792355108735,
+      "endedEpochMs": 1792355110201,
+      "toolDurationMs": 1466,
+      "outputBytes": 117154,
+      "truncated": false,
+      "sha256": "a8c56199e7bec57b31a6d620d82d23fa562515ed1fb1731fd5c5f2b33d5cad3b",
+      "file": "run-1792353190233-2755-retry-0-sample-2.txt",
+      "threadCount": 15,
+      "omgWorkSymbols": 2,
+      "ipIntCompileSymbols": 0
+    },
+    {
+      "sample": 3,
+      "status": "captured",
+      "pid": 86932,
+      "uid": 501,
+      "startIdentity": "Sun Oct 18 20:24:57 2026",
+      "selectionReason": "case_recent_start",
+      "startedEpochMs": 1792355110729,
+      "endedEpochMs": 1792355112149,
+      "toolDurationMs": 1420,
+      "outputBytes": 239267,
+      "truncated": false,
+      "sha256": "4df05aac88837069c4f77a93391c68f598f0b2d733da608b44e87cce3181db06",
+      "file": "run-1792353190233-2755-retry-0-sample-3.txt",
+      "threadCount": 18,
+      "omgWorkSymbols": 3,
+      "ipIntCompileSymbols": 1
+    },
+    {
+      "sample": 4,
+      "status": "captured",
+      "pid": 86932,
+      "uid": 501,
+      "startIdentity": "Sun Oct 18 20:24:57 2026",
+      "selectionReason": "case_recent_start",
+      "startedEpochMs": 1792355112771,
+      "endedEpochMs": 1792355113759,
+      "toolDurationMs": 988,
+      "outputBytes": 92027,
+      "truncated": false,
+      "sha256": "026e679aeed98714d1b3f6e2355e19ab081eca8ba4d96ceaccd5e9c49967f5bb",
+      "file": "run-1792353190233-2755-retry-0-sample-4.txt",
+      "threadCount": 0,
+      "omgWorkSymbols": 0,
+      "ipIntCompileSymbols": 0
+    }
+  ],
+  "observations": [
+    "Five tool requests produced files without truncation; the final file has no thread call graph and is not useful stack coverage.",
+    "The first three useful files show two Wasm worklist threads running OMGPlan::work/parseAndCompileOMG during legacy fixture setup. A later file also contains IPIntPlan::compileFunction. These are symbol observations, not CPU percentages or proof of the earlier failure.",
+    "The current-module constructor in this passing diagnostic took 29 ms. No failed constructor was captured. Earlier 5.8–6.9 s bound failures remain open.",
+    "The first native request took 6,680 ms including analysis/report work despite requesting one second of collection. Sampling can perturb scheduling; this run proves no acceptance speed gain or causal fix.",
+    "A second diagnostic attempt on this source was requested separately; canonical acceptance CI is untouched."
+  ],
+  "telemetryErrors": [
+    {
+      "sample": 86,
+      "error": {
+        "source": "ps",
+        "kind": "timeout"
+      }
+    },
+    {
+      "sample": 87,
+      "error": {
+        "source": "ps",
+        "kind": "timeout"
+      }
+    },
+    {
+      "sample": 737,
+      "error": {
+        "source": "ps",
+        "kind": "timeout"
+      }
+    },
+    {
+      "sample": 738,
+      "error": {
+        "source": "ps",
+        "kind": "timeout"
+      }
+    },
+    {
+      "sample": 739,
+      "error": {
+        "source": "ps",
+        "kind": "timeout"
+      }
+    }
+  ]
+}

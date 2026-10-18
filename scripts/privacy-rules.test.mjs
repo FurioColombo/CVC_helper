@@ -93,6 +93,19 @@ describe("lineProblems", () => {
     ).not.toEqual([])
   })
 
+  it("allows fractional JSON metrics while refusing phone strings and prose", () => {
+    expect(
+      lineProblems(".evidence/T1/timing.json", '"duration": 350689.983,'),
+    ).toEqual([])
+    for (const line of [
+      '"phone": "350689.983",',
+      '"note": 350689.983 ms',
+      '"phone": 347.555.0199,',
+    ]) {
+      expect(lineProblems(".evidence/T1/timing.json", line)).not.toEqual([])
+    }
+  })
+
   it("treats a quoted exit code as a code, but not a phone after other words", () => {
     expect(
       lineProblems(

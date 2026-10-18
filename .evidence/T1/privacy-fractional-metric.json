@@ -1,0 +1,43 @@
+{
+  "milestone": "T1",
+  "status": "PASS_FOCUSED_REGRESSION_AND_FINAL_CHECKPOINT_VERIFICATION",
+  "recordedAt": "2026-10-18T23:50:03.893Z",
+  "source": {
+    "digest": "f30e00cd92bc650debf8c5f86f97dadacaa15fbd7cd036eafaa1602144357b5f",
+    "files": 439
+  },
+  "nodeVersion": "v24.21.0",
+  "problem": "The staged-data privacy hook misclassified a bare fractional JSON duration as a roster phone number. No commit was created or check bypassed.",
+  "change": "Recognize a fractional JSON number only when the same colon/value/line boundaries already used for integer metrics match. Quoted phone values, malformed dotted numbers and prose remain refused; secret and private denylist checks are unchanged.",
+  "sourceHashes": {
+    "scripts/privacy-rules.mjs": "8c5dedefd689c7fb06b1c8c43a7a4d9d6723f9caca6c1a2857925d335eb1b142",
+    "scripts/privacy-rules.test.mjs": "6d3d86deb4d119db0aa456dce09c0f60210ac63c3ed2dbabc569a91bd2e808e2"
+  },
+  "regression": {
+    "before": {
+      "status": "FAIL_EXPECTED",
+      "failed": 1,
+      "raw": "OS temporary cvc-t1-privacy-fractional-red.log",
+      "sha256": "34fcd27fc3d0219c6402cfc009e159217a9f7d2cb348459caddfd9ac0731c375"
+    },
+    "after": {
+      "status": "PASS",
+      "tests": 27,
+      "raw": "OS temporary cvc-t1-privacy-fractional-green.log",
+      "sha256": "3fffab1605a70e542ff5e6e6d9b2fd300da6afef76b63cddea48d94387783c40"
+    }
+  },
+  "quick": {
+    "status": "PASS",
+    "tests": 1441,
+    "files": 89,
+    "raw": "OS temporary cvc-t1-layout-privacy-quick.log",
+    "sha256": "8a3ef459803ed1e6601a37b3c5156bcfda3f2634570b5e35248c3721c4aed05c"
+  },
+  "domain": {
+    "status": "PASS",
+    "raw": "OS temporary cvc-t1-layout-privacy-domain.log",
+    "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+  },
+  "browserScope": "Only the staged-data privacy script and its regression changed after the layout browser proof; neither runs in the app or browser journeys. Exact new-checkpoint canonical CI remains required."
+}

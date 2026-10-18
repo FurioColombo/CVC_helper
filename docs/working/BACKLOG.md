@@ -113,7 +113,7 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 exact `fde1fe1` CI passes without retries. T1 `aa8473a` Mac CI fails all three cold-upgrade attempts (5.8–6.9 s); preserve bounds/coverage. See `.evidence/T1/ci-checkpoint-aa8473a.json`.
+D4 exact `fde1fe1` and T1 `cccfd2c` CI pass without retries. T1's prior `aa8473a` cold-upgrade failures (5.8–6.9 s) remain unexplained; preserve bounds/coverage. See `.evidence/T1/ci-checkpoint-cccfd2c.json`.
 
 ## Flaky browser tests
 
@@ -170,7 +170,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
   — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
   CI 38522538304 on macOS also timed out waiting for the student control, then
-  passed its first configured retry. T1 now waits for editor closure; the held-save probe and original journey pass. Combined CI is pending; see `.evidence/T1/evaluation-history-readiness.json`.
+  passed its first configured retry. T1 now waits for editor closure; the held-save probe, original journey and exact `cccfd2c` CI pass without retries. See `.evidence/T1/evaluation-history-readiness.json`.
 - `d2-duty-items.spec.ts › opens the 0.3.0 duty lists as rows, item by item, none lost or doubled`
   and `d2-duty-items.spec.ts › rebuilds the rows after a 0.3.0 app drops their table and writes the lists`
   — iPhone 13 WebKit: the page closes ("Target page, context or browser has

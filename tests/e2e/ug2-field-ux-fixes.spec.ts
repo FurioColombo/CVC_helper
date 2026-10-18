@@ -783,6 +783,7 @@ async function expectCleanEvaluationPage(page: Page, where: string) {
 type UxPage = {
   name: string
   open: (page: Page) => Promise<void>
+  expectReady: (page: Page) => Promise<void>
   /** When the names must be whole (no ellipsis, no word broken in the middle):
    *  at every size, or only when text is enlarged to 200% (a Valutazioni row
    *  keeps its name and five marks on one line at ordinary text, and a long
@@ -795,6 +796,8 @@ const UX5_PAGES: UxPage[] = [
     name: "Volontari",
     open: async (page) => {
       await area(page, "Volontari").click()
+    },
+    expectReady: async (page) => {
       await expect(
         page.getByRole("heading", { name: "Volontari", level: 1 }),
       ).toBeVisible()
@@ -806,6 +809,8 @@ const UX5_PAGES: UxPage[] = [
     open: async (page) => {
       await area(page, "Valutazioni").click()
       await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
+    },
+    expectReady: async (page) => {
       await expect(
         page.getByRole("button", { name: /^Valutazione di .*: \+\+$/ }).first(),
       ).toBeVisible()
@@ -823,6 +828,8 @@ const UX5_PAGES: UxPage[] = [
         .getByRole("group", { name: "Vista valutazioni" })
         .getByRole("button", { name: "Equipaggi" })
         .click()
+    },
+    expectReady: async (page) => {
       await expect(
         page.getByRole("button", { name: /^Valutazione di .*: \+\+$/ }).first(),
       ).toBeVisible()
@@ -837,6 +844,8 @@ const UX5_PAGES: UxPage[] = [
         .getByRole("group", { name: "Vista valutazioni" })
         .getByRole("button", { name: "Riepilogo" })
         .click()
+    },
+    expectReady: async (page) => {
       await expect(
         page.getByRole("heading", { name: "Riepilogo del corso" }),
       ).toBeVisible()
@@ -856,11 +865,12 @@ test("UG2-UX-5: Volontari and Valutazioni (Allievi, Equipaggi, Riepilogo) fit th
   await openHostileCourse(page)
   await seedProfilesAndEvaluations(page)
   for (const uxPage of UX5_PAGES) {
+    await applyProfile(page, PROFILES[0])
+    await nav(page).getByRole("button", { name: "Home", exact: true }).click()
+    await uxPage.open(page)
     for (const profile of PROFILES) {
-      await applyProfile(page, { ...profile, fontSize: "" })
-      await nav(page).getByRole("button", { name: "Home", exact: true }).click()
-      await uxPage.open(page)
       await applyProfile(page, profile)
+      await uxPage.expectReady(page)
       const where = `${uxPage.name}, ${profile.name}`
       await expectNoSidewaysScroll(page, where)
       const audit = uxPage.name.startsWith("Valutazioni")
@@ -894,19 +904,19 @@ test("UG2-UX-5: the student profile fits the screen at 412, 390, 360 and 320 px 
   // A long single first name, a triple first name, a name with an apostrophe
   // and an ordinary one.
   for (const index of [0, 4, 21, 36]) {
+    await applyProfile(page, PROFILES[0])
+    await nav(page).getByRole("button", { name: "Home", exact: true }).click()
+    await area(page, "Allievi").click()
+    await page
+      .getByRole("region", { name: "Elenco allievi" })
+      .getByRole("button")
+      .nth(index)
+      .click()
     for (const profile of PROFILES) {
-      await applyProfile(page, { ...profile, fontSize: "" })
-      await nav(page).getByRole("button", { name: "Home", exact: true }).click()
-      await area(page, "Allievi").click()
-      await page
-        .getByRole("region", { name: "Elenco allievi" })
-        .getByRole("button")
-        .nth(index)
-        .click()
+      await applyProfile(page, profile)
       await expect(
         page.getByRole("region", { name: "Storico valutazioni" }),
       ).toBeVisible()
-      await applyProfile(page, profile)
       const where = `profile ${index}, ${profile.name}`
       await expectNoSidewaysScroll(page, where)
       const audit = await expectCleanEvaluationPage(page, where)
