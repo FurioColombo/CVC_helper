@@ -176,6 +176,29 @@ function sampleErrorKind(error) {
   return errorKind(error)
 }
 
+function boundedToolText(text, limit) {
+  const bytes = Buffer.from(text)
+  return {
+    text: bytes.subarray(0, limit).toString("utf8"),
+    outputBytes: bytes.length,
+    truncated: bytes.length > limit,
+  }
+}
+
+function sampleToolProgress(output) {
+  return {
+    samplingStarted: /\bsampling(?:\s+process|\s+started|\s+for)\b/i.test(
+      output,
+    ),
+    analysisStarted:
+      /\bprocessing symbols\b|\banalysis\b|\banaly[sz]ing\b/i.test(output),
+    reportWritten:
+      /(?:\b(?:wrote|written|saved|created|writing)\b.{0,100}\b(?:sample|report|output|file)\b|\b(?:sample|report|output|file)\b.{0,100}\b(?:written|saved|created)\b)/i.test(
+        output,
+      ),
+  }
+}
+
 function classifyStackCapture(capture, file) {
   if (capture.kind) return capture.kind
   if (file.error && file.error !== "ENOENT")
@@ -405,7 +428,47 @@ function activeCase(state) {
     .sort((a, b) => b.epochMs - a.epochMs)[0]
 }
 
-async function runSampleCommand(pid, file, timeout = 3000) {
+async function readSampleHelp() {
+  const startedEpochMs = Date.now()
+  let result
+  let error
+  try {
+    result = await execFile("/usr/bin/sample", ["-h"], {
+      timeout: 1000,
+      maxBuffer: 16 * 1024,
+      encoding: "utf8",
+    })
+  } catch (caught) {
+    error = caught
+  }
+  const raw = [result?.stdout, result?.stderr, error?.stdout, error?.stderr]
+    .filter(Boolean)
+    .join("\n")
+  const bounded = boundedToolText(raw, 8 * 1024)
+  const status = error
+    ? error.killed || error.code === "ETIMEDOUT"
+      ? "timeout"
+      : error.code === "ENOENT"
+        ? "unavailable"
+        : "nonzero_exit"
+    : raw
+      ? "available"
+      : "empty_output"
+  return {
+    status,
+    text: bounded.text,
+    outputBytes: bounded.outputBytes,
+    truncated: bounded.truncated,
+    durationMs: Date.now() - startedEpochMs,
+  }
+}
+
+async function runSampleCommand(
+  pid,
+  file,
+  timeout = 3000,
+  includeProgress = false,
+) {
   const startedEpochMs = Date.now()
   try {
     const result = await execFile(
@@ -413,20 +476,23 @@ async function runSampleCommand(pid, file, timeout = 3000) {
       [String(pid), "1", "10", "-file", file],
       { timeout, maxBuffer: 16 * 1024, encoding: "utf8" },
     )
-    const kind = sampleOutputErrorKind(
-      String(result.stdout || "") + " " + String(result.stderr || ""),
-    )
+    const output =
+      String(result.stdout || "") + " " + String(result.stderr || "")
+    const kind = sampleOutputErrorKind(output)
     return {
       ok: !kind,
       ...(kind ? { kind } : {}),
+      ...(includeProgress ? { progress: sampleToolProgress(output) } : {}),
       startedEpochMs,
       endedEpochMs: Date.now(),
       durationMs: Date.now() - startedEpochMs,
     }
   } catch (error) {
+    const output = String(error.stdout || "") + " " + String(error.stderr || "")
     return {
       ok: false,
       kind: sampleErrorKind(error),
+      ...(includeProgress ? { progress: sampleToolProgress(output) } : {}),
       startedEpochMs,
       endedEpochMs: Date.now(),
       durationMs: Date.now() - startedEpochMs,
@@ -455,12 +521,14 @@ async function stackPermissionPreflight() {
     status: "failed",
     classification: "not_completed",
     browserClosed: null,
+    sampleHelp: null,
     target: null,
     capture: null,
   }
   let browser
 
   try {
+    report.sampleHelp = await readSampleHelp()
     await mkdir(path.dirname(PREFLIGHT_STACK_PATH), { recursive: true })
     await mkdir(path.dirname(PREFLIGHT_REPORT_PATH), { recursive: true })
     try {
@@ -529,6 +597,8 @@ async function stackPermissionPreflight() {
           const capture = await runSampleCommand(
             target.pid,
             PREFLIGHT_STACK_PATH,
+            15_000,
+            true,
           )
           const file = await boundedFileSize(
             PREFLIGHT_STACK_PATH,
@@ -547,6 +617,8 @@ async function stackPermissionPreflight() {
             durationMs: capture.durationMs,
             requestedDurationSeconds: 1,
             requestedIntervalMs: 10,
+            commandTimeoutMs: 15_000,
+            progress: capture.progress,
             maxOutputBytes: MAX_STACK_FILE_BYTES,
             outputBytes: file.size,
             outputTruncated: file.truncated || false,
@@ -1206,6 +1278,16 @@ async function selfCheck() {
     sampleOutputErrorKind("Operation not permitted while sampling"),
     "permission_denied",
   )
+  assert.deepEqual(
+    sampleToolProgress(
+      "Sampling process for one second; processing symbols; output written to file",
+    ),
+    { samplingStarted: true, analysisStarted: true, reportWritten: true },
+  )
+  const boundedHelp = boundedToolText("h".repeat(9000), 8192)
+  assert.equal(Buffer.byteLength(boundedHelp.text), 8192)
+  assert.equal(boundedHelp.outputBytes, 9000)
+  assert.equal(boundedHelp.truncated, true)
   assert.deepEqual(
     parseThermal(
       [
