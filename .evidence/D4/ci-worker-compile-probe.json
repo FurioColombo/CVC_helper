@@ -1,0 +1,228 @@
+{
+  "milestone": "D4",
+  "status": "PROMISING_DIAGNOSTIC_ONLY",
+  "notAcceptance": true,
+  "date": "2026-10-18",
+  "baseCheckpoint": "df6faad79d49c9f26495ea7d34fd50cbe357b1f2",
+  "baseImplementation": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "probeCommit": "f833076ed62fd1da1ae8032b31353a46b82d23bb",
+  "branch": "codex/d4-worker-compile-probe",
+  "run": 39082247802,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39082247802",
+  "scope": "Four independent macos-15 jobs, streaming x2 and worker-sync x2. Entire original D1 spec, same-page seed and original construction-inclusive 5000ms bounds; retries=0. No warming, assertion, project or storage changes.",
+  "guards": [
+    "Compiler source hash",
+    "D1 migration spec hash",
+    "D1 harness and seed placement hash",
+    "Cold-browser fixture hash",
+    "Playwright configuration hash",
+    "Pinned SDK and WASM startup guard"
+  ],
+  "results": [
+    {
+      "artifact": "d4-worker-compile-streaming-2-39082247802",
+      "proof": "large-upgrade-iphone-13-webkit-core.json",
+      "stats": {
+        "startTime": "2026-10-18T00:18:44.027Z",
+        "duration": 161594.789,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "upgradeMs": 4789,
+      "adapterInitMs": 4004,
+      "reopenMs": 438,
+      "rows": 609,
+      "reopenRows": 609,
+      "expectedRows": 609,
+      "students": 40,
+      "reopenStudents": 40,
+      "evaluations": 520,
+      "reopenEvaluations": 520,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "reopenedIdentical": true,
+      "priorEventCount": 0,
+      "compilerRoundTripMs": 3828,
+      "bootstrapMs": 18,
+      "headersMs": 5,
+      "compileApiMs": 3809,
+      "moduleReturnMs": 1,
+      "fallbacks": 0
+    },
+    {
+      "artifact": "d4-worker-compile-worker-sync-1-39082247802",
+      "proof": "large-upgrade-iphone-13-webkit-core.json",
+      "stats": {
+        "startTime": "2026-10-18T00:18:51.341Z",
+        "duration": 183291.817,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "upgradeMs": 1394,
+      "adapterInitMs": 294,
+      "reopenMs": 766,
+      "rows": 609,
+      "reopenRows": 609,
+      "expectedRows": 609,
+      "students": 40,
+      "reopenStudents": 40,
+      "evaluations": 520,
+      "reopenEvaluations": 520,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "reopenedIdentical": true,
+      "priorEventCount": 0,
+      "compilerRoundTripMs": 103,
+      "bootstrapMs": 21,
+      "headersMs": 6,
+      "compileApiMs": 42,
+      "moduleReturnMs": 0,
+      "fallbacks": 0
+    },
+    {
+      "artifact": "d4-worker-compile-streaming-1-39082247802",
+      "proof": "large-upgrade-iphone-13-webkit-core.json",
+      "stats": {
+        "startTime": "2026-10-18T00:18:46.196Z",
+        "duration": 163969.786,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "upgradeMs": 1313,
+      "adapterInitMs": 287,
+      "reopenMs": 694,
+      "rows": 609,
+      "reopenRows": 609,
+      "expectedRows": 609,
+      "students": 40,
+      "reopenStudents": 40,
+      "evaluations": 520,
+      "reopenEvaluations": 520,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "reopenedIdentical": true,
+      "priorEventCount": 0,
+      "compilerRoundTripMs": 71,
+      "bootstrapMs": 14,
+      "headersMs": 10,
+      "compileApiMs": 56,
+      "moduleReturnMs": 1,
+      "fallbacks": 0
+    },
+    {
+      "artifact": "d4-worker-compile-worker-sync-2-39082247802",
+      "proof": "large-upgrade-iphone-13-webkit-core.json",
+      "stats": {
+        "startTime": "2026-10-18T00:18:51.099Z",
+        "duration": 152664.048,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "upgradeMs": 1118,
+      "adapterInitMs": 196,
+      "reopenMs": 411,
+      "rows": 609,
+      "reopenRows": 609,
+      "expectedRows": 609,
+      "students": 40,
+      "reopenStudents": 40,
+      "evaluations": 520,
+      "reopenEvaluations": 520,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "reopenedIdentical": true,
+      "priorEventCount": 0,
+      "compilerRoundTripMs": 65,
+      "bootstrapMs": 8,
+      "headersMs": 4,
+      "compileApiMs": 37,
+      "moduleReturnMs": 1,
+      "fallbacks": 0
+    }
+  ],
+  "jobs": [
+    {
+      "id": 117541430298,
+      "name": "worker-sync cold D1 run 2 (not acceptance)",
+      "conclusion": "success",
+      "rawLog": "117541430298.log",
+      "sha256": "3fee3c30c539aadfe32a690754deb73c575dc20322b72c89721cec0e8a3dcb6a",
+      "browserSummary": [
+        "2026-10-18T00:21:23.7825130Z   8 passed (2.5m)",
+        "2026-10-18T00:21:23.8059790Z ##[notice]  8 passed (2.5m)"
+      ]
+    },
+    {
+      "id": 117541430398,
+      "name": "streaming cold D1 run 2 (not acceptance)",
+      "conclusion": "success",
+      "rawLog": "117541430398.log",
+      "sha256": "5640de3c4ed7a83ad8156f28c1ae3dbd553789d23971affec3269fb7690ae554",
+      "browserSummary": [
+        "2026-10-18T00:21:25.6265670Z   8 passed (2.7m)",
+        "2026-10-18T00:21:25.6347170Z ##[notice]  8 passed (2.7m)"
+      ]
+    },
+    {
+      "id": 117541430415,
+      "name": "streaming cold D1 run 1 (not acceptance)",
+      "conclusion": "success",
+      "rawLog": "117541430415.log",
+      "sha256": "e08f2dad77c5d0e52c99e7eeca784e18537b4aa1e68c16bce71618da44fd293a",
+      "browserSummary": [
+        "2026-10-18T00:21:30.1681850Z   8 passed (2.7m)",
+        "2026-10-18T00:21:30.1769250Z ##[notice]  8 passed (2.7m)"
+      ]
+    },
+    {
+      "id": 117541430425,
+      "name": "worker-sync cold D1 run 1 (not acceptance)",
+      "conclusion": "success",
+      "rawLog": "117541430425.log",
+      "sha256": "aa24e11f08ea661a6862673de48eee0bbf1b24dc4c3ba1c0fd4eac47a1bedafd",
+      "browserSummary": [
+        "2026-10-18T00:21:54.6532950Z   8 passed (3.1m)",
+        "2026-10-18T00:21:54.6868400Z ##[notice]  8 passed (3.1m)"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12119591810,
+      "name": "d4-worker-compile-streaming-2-39082247802",
+      "rawZip": "12119591810.zip",
+      "sha256": "8f7f089d09061b181e6487437c601b385d0b54a5bc7fd6bedf214cd346602bb0"
+    },
+    {
+      "id": 12119551038,
+      "name": "d4-worker-compile-worker-sync-1-39082247802",
+      "rawZip": "12119551038.zip",
+      "sha256": "ed34fb95937ef8119d9ff7000b1744761de51086d58cb2230c90c8481a5c3504"
+    },
+    {
+      "id": 12119307728,
+      "name": "d4-worker-compile-streaming-1-39082247802",
+      "rawZip": "12119307728.zip",
+      "sha256": "0a9602c0a66ee31153f5e32715671aabb4ad70bd933027b424e4f106c69e6319"
+    },
+    {
+      "id": 12118529571,
+      "name": "d4-worker-compile-worker-sync-2-39082247802",
+      "rawZip": "12118529571.zip",
+      "sha256": "9de9681655891bdd03aa7f28d5ad20c5c6868ac2d7d40868cad6fcc34761f058"
+    }
+  ],
+  "rawProofLocation": "OS temporary cvc-d4-worker-compile-probe-39082247802",
+  "interpretation": "All 32 cases pass without retries. Both sync-worker opens take 1.1–1.4 seconds and preserve 609 rows, 40 injected students, 520 evaluations, identical reopen and no row issues or fallback. Streaming varies from 1.3 to 4.8 seconds: one API interval takes 3.8 seconds while the other takes 56 ms. This reproduces intermittent compilation delay but not the 5000 ms failure in the isolated spec. It supports a candidate for full-source review and CI; it does not prove a causal fix or waive the current red canonical CI.",
+  "candidate": "Adopt only the tested compiler-body change into the normal source, retain broker/cache/worker lifecycle and response validation, add boundary tests, run affected restricted independent reviews, final recorder and exact normal push CI. Diagnostic workflow/deletion/script never enter the normal branch.",
+  "publication": "No deployment. D3 remains pinned to 0.4.0 at 761530f awaiting explicit owner installation; the regular site is unchanged.",
+  "physicalPass": false
+}

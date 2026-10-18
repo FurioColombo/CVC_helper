@@ -114,8 +114,8 @@ remaining proposals await the owner's pick:
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
 D4's initial CI failure is in `.evidence/D4/ci-checkpoint-be1fa27.json`.
-At `193a250`, local/Linux pass; Mac still fails the cold-open bound on all tries.
-Preserve both five-second bounds, assertions, retries and projects.
+At `193a250`, local/Linux pass; Mac fails cold open. The four-run worker-sync
+probe supports a candidate, pending full CI; preserve both bounds and coverage.
 
 ## Flaky browser tests
 

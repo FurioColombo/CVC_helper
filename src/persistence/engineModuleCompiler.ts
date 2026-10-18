@@ -66,19 +66,37 @@ self.addEventListener(
               workerFetchStartedAt: performance.timeOrigin + performance.now(),
             }
           : undefined
-      const response = timings
-        ? fetch(url.href).then((result) => {
-            // fetch resolves once status and response headers are available.
-            timings.workerResponseHeadersAt =
-              performance.timeOrigin + performance.now()
-            return result
-          })
-        : fetch(url.href)
+      const response = await fetch(url.href)
+      if (timings) {
+        timings.workerResponseHeadersAt =
+          performance.timeOrigin + performance.now()
+      }
+      const mimeType = response.headers
+        .get("Content-Type")
+        ?.replace(/^[\t ]+|[\t ]+$/g, "")
+      const expectedMimeType = "application/wasm"
+      const hasExpectedMimeType =
+        mimeType !== undefined &&
+        mimeType.length === expectedMimeType.length &&
+        [...mimeType].every((character, index) => {
+          const code = character.charCodeAt(0)
+          const asciiLowercase =
+            code >= 65 && code <= 90
+              ? String.fromCharCode(code + 32)
+              : character
+          return asciiLowercase === expectedMimeType[index]
+        })
+      if (!response.ok || !hasExpectedMimeType) {
+        throw new Error(
+          "PowerSync WASM response does not meet compileStreaming requirements",
+        )
+      }
+      const buffer = await response.arrayBuffer()
       if (timings) {
         timings.workerCompileCalledAt =
           performance.timeOrigin + performance.now()
       }
-      const module = await WebAssembly.compileStreaming(response)
+      const module = new WebAssembly.Module(buffer)
       if (timings) {
         timings.workerCompiledAt = performance.timeOrigin + performance.now()
         timings.workerReplySentAt = performance.timeOrigin + performance.now()
