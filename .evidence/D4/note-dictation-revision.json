@@ -1,7 +1,7 @@
 {
   "milestone": "D4",
   "blocker": "FU-R4-B1",
-  "status": "IMPLEMENTED_TARGETED_PASS_AWAITING_INDEPENDENT_RECHECK",
+  "status": "INDEPENDENT_RECHECK_AND_BROWSER_PASS",
   "recordedAt": "2026-10-18T08:17:35.674Z",
   "baseCheckpoint": "1216cbf44231d5b901b580fcc7d0076adaae0d56",
   "nodeVersion": "v24.21.0",
@@ -31,6 +31,20 @@
     "productionBuild": {
       "status": "PASS",
       "pwaValidation": "PASS"
+    },
+    "browser": {
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-18T08:18:19.567Z",
+        "duration": 103453.31599999999,
+        "expected": 7,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "a3404ce78359c8118614fecf7155b8e04da6f4d4d47644ef8f6f46a4e3a1108b",
+      "raw": "OS temporary cvc-d4-note-dictation-browser-proof/e2e-report.json",
+      "scope": "Next-student and newer same-note real-transaction browser journey passes Chromium Pixel, Chromium iPhone viewport and WebKit; original note-preview and denied-microphone recovery each pass both Chromium viewports. Zero retries or skips; unattended runner exits normally. Pending-transcript boundary is independently covered with synthetic component recorder/transcription, not a physical microphone."
     }
   },
   "logs": {
@@ -59,12 +73,17 @@
     "src/features/evaluations/EvaluationManagement.tsx": "71dc951823a08c290c12f4485add304e7732ef4dc2308656167f59fa792c6a70",
     "src/features/evaluations/EvaluationManagement.test.tsx": "7cf7f197cc3f54838b8d8908fd8aa3767ccda02d6d6e0e7aa31c9872a809702a"
   },
-  "gates": "Restricted field-UX round 5 recheck is pending. The fresh final recorder and exact normal green CI remain required; diagnostic run39108099189 uses earlier source and is not acceptance.",
+  "gates": "Affected note reviews and targeted checks pass. Fresh required recorder and exact normal green CI remain required. No publication or physical acceptance.",
   "publication": {
     "changed": false,
     "testVersion": "0.4.0",
     "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
     "ownerInstalled": null,
     "physicalPass": false
+  },
+  "independentRecheck": {
+    "review": "field-ux-review-round-5.json",
+    "verdict": "PASS",
+    "reviewedCheckpoint": "c1d67459121fdafef591b341c4141f62b1f6fda3"
   }
 }

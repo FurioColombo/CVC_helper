@@ -7,16 +7,9 @@
     {
       "id": "D4-CI",
       "title": "Exact full Mac CI still fails the original first-open bound",
-      "evidence": "ci-checkpoint-ac0c255.json; CI run 39103308907",
+      "evidence": "ci-checkpoint-ac0c255.json; ci-full-context-host-probe.json; exact primary CI after note fixes remains pending",
       "reproduction": "With buffered synchronous compilation in the existing code-only worker, upgrades take 7699/6166/6010 ms against 5000 ms. Native Module construction takes 6645/5429/5094 ms, while network/bootstrap/return are fast. All 609 rows remain intact and reopen takes 891/360/352 ms. Linux and the local recorder pass. The full-context timing hypothesis remains unresolved.",
       "specRef": "AGENTS.md 6 / docs/OWNER_WORKFLOW.md / 03_TECHNICAL_DECISIONS.md 3"
-    },
-    {
-      "id": "FU-R4-B1",
-      "title": "An earlier successful note save closes the panel and discards newer dictation still being processed",
-      "evidence": "src/features/evaluations/EvaluationManagement.tsx:79 advances the revision only when text updates; :103 closes an unchanged revision after save; :115 leaves dictation available during that save. src/features/speech/useDictation.ts:128 ignores transcription results after the editor unmounts, and :253 invalidates its pending attempt. Independent scratch test-results/field-ux-r4-probe/review.test.tsx:797 fails because Bea's textbox is removed immediately after the old save succeeds, following an assertion that Elaborazione locale dell’audio… is visible and transcribe has been called. OS temporary cvc-d4-field-ux-round4/dictation-probe-with-controls.log: 1 failed, 2 passed, 15 original tests skipped.",
-      "reproduction": "At 1216cbf, open Bea's Sabato PM note, type Testo inviato and tap Salva nota while holding that persistence promise. The enabled Detta button remains usable: tap it, record the next observation, then tap Termina and hold transcription processing. Confirm the in-panel processing message. Resolve the earlier successful note save. Observed: the whole note editor and processing panel disappear, leaving only the earlier Testo inviato preview; the pending transcript is discarded by unmount cleanup without save or explicit cancellation. Expected: the ongoing dictation remains available to finish and become an editable draft, or the user explicitly cancels it. Controls PASS when transcription finishes before the old save, and when the earlier save rejects instead of succeeding.",
-      "specRef": "01_PRODUCT_SPEC.md sections 1/2/8/9; docs/design/07_PAGE_CHANGELOG.md P17 acceptance: no note loss and in-panel speech states; 03_TECHNICAL_DECISIONS.md section 3.2"
     }
   ],
   "importantFindings": [
@@ -65,7 +58,8 @@
     "U02 fixture adopts the owner through real course creation and makes foreign references inactive; all original deletion assertions remain.",
     "DEV-only phase measurements distinguish worker bootstrap, streaming compilation and module return. Production bundles omit those fields; no engine, VFS, worker count, warm-up, retry or bound change.",
     "A successful earlier evaluation-note save now closes only its own matching editor. Another student’s visible draft survives delayed completion; both notes persist after reload in the exact session on Chromium and WebKit. See note-save-race.json.",
-    "DI-R4-1: successful older own-note submission preserves later typing until its own explicit save. Data-integrity round 5 independently passes the unchanged reproducer and direct completion/failure controls; earlier FAIL preserved."
+    "DI-R4-1: successful older own-note submission preserves later typing until its own explicit save. Data-integrity round 5 independently passes the unchanged reproducer and direct completion/failure controls; earlier FAIL preserved.",
+    "FU-R4-B1: start/retry advances the draft revision before dictation begins. Independent field-UX round5 passes the unchanged pending/completed/rejected-save probe; seven targeted browser cases pass without retries and unattended teardown succeeds."
   ],
   "evidenceInspected": [
     "D4 success predicate/adversarial checklist, relevant product/scope/data-version contracts, PowerSync JavaScript/React references, field-operations rulebook, frozen P02 settings target and current P02 amendment.",
@@ -85,7 +79,8 @@
     "Restricted data-integrity R3 PASS, security/privacy R3 PASS and sync-chaos R2 PASS_WITH_FINDINGS bind ac0c255 with no blockers. Real pinned-WASM engine isolation/rollback, 14 production response boundaries and six production interruption/order probes pass. Field-UX R2 still covers unchanged UI, and current refreshed screenshots were visually inspected.",
     "Exact full normal push CI 39103308907: Linux 217 PASS/47 original skips; Mac 286 PASS/65 original skips, one failed original D1 timing case and one filed u10-evaluations flaky case. The synchronous constructor still consumes 5.1–6.6 seconds only in the full-run context. The changed API is not a verified timing remedy; current green local evidence is not acceptance.",
     "Live HTTPS recheck at 2026-10-18T06:50:18Z: CVC Helper Test remains pinned 0.4.0 at 761530f; regular app returns HTTP 200. D3 evidence hashes remain intact. No deployment or physical-device PASS occurred.",
-    "Note dictation fix: 17 focused component tests and 1439 unit tests/89 files pass; domain and production build pass. Pending-transcription repro fails before the local start/retry revision guard. Field-UX round 4 FAIL is preserved; restricted round 5 is pending. No owner-device or CI acceptance inferred."
+    "Note dictation fix: 17 focused component tests and 1439 unit tests/89 files pass; domain and production build pass. Pending-transcription repro fails before the local start/retry revision guard. Field-UX round 4 FAIL is preserved; restricted round 5 is pending. No owner-device or CI acceptance inferred.",
+    "Full-context diagnostic39108099189 is green with one original cold-open flake:8608ms first attempt,2549ms retry. Host samples show CPU-active WebContent, not a proven idle callback stall. Original limits/coverage retained. Per-thread attribution remains required; this does not prove a native compilation fix or exact primary CI."
   ],
   "notTested": [
     "D4 remains IN_PROGRESS: after the note fix, the previous ac0 recorder is historical and a fresh final recorder/restricted affected reviews are required. Exact Mac cold compilation is still unresolved; T1 is not eligible.",

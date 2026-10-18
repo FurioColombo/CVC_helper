@@ -113,7 +113,7 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 Mac CI at `ac0c255` still fails cold opening; preserve both bounds and coverage. See `.evidence/D4/ci-checkpoint-ac0c255.json`.
+D4 exact CI remains pending; full-context probe retries an 8.6 s cold open. Preserve bounds/coverage; see `.evidence/D4/ci-full-context-host-probe.json`.
 
 ## Flaky browser tests
 
@@ -135,7 +135,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
 
 - `u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is`
   — Mac CI 39103308907: Bea’s input timed out, then passed on retry.
-  D4 typed-draft fixes pass independent recheck; pending dictation fix awaits field review.
+  D4 typed/dictated draft fixes pass independent reviews and seven browser cases.
   See `.evidence/D4/note-dictation-revision.json`; final recorder and CI still required.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`

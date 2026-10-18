@@ -1,0 +1,615 @@
+{
+  "milestone": "D4",
+  "status": "DIAGNOSTIC_COMPLETE_COLD_OPEN_FLAKE_UNRESOLVED",
+  "recordedAt": "2026-10-18T08:24:19.958Z",
+  "notAcceptance": true,
+  "run": 39108099189,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39108099189",
+  "probeSource": "50603a205dcf4854f393c68a1a7059843115f15c",
+  "applicationSource": "ac0c25508d39ac70c2d556db45285203bad5859a",
+  "baseCheckpoint": "90b85c93ead4a8d15fd0c2d059fce310e11a9687",
+  "conclusion": "success",
+  "fidelity": "Exact original full npm run verify:all, all projects/order/fixtures/seed/retries/assertions/bounds retained; only external bounded host sampler. Canonical ci.yml absent in probe commit to avoid duplicate jobs, exact baseline bytes restored and compared before repository checks. Two preceding setup failures are retained, not tests: runner context unsupported in job env (39107863996), then an untracked-restored-file Git comparison error (39107947907). Probe success is not canonical primary acceptance.",
+  "raw": {
+    "folder": "OS temporary cvc-d4-full-context-39108099189",
+    "jobLogSha256": "73c9dd7b5c54171e2a14059c6f7595e57d54c02247cb731ee7944cc14857ae32",
+    "artifact": {
+      "id": 12130785402,
+      "name": "d4-full-context-host-39108099189",
+      "sha256": "e8a042d6b78df4bff8ee9f18bf426658b8580af2a11f4458cf5bba6a5564c2b5"
+    },
+    "browserReportStats": {
+      "startTime": "2026-10-18T07:39:03.515Z",
+      "duration": 2465813.301,
+      "expected": 287,
+      "skipped": 65,
+      "unexpected": 0,
+      "flaky": 1
+    },
+    "analysisSha256": "bb157b0b427f0eb50c741de5177813d9e857a6bb848643cb714d7d6f5b3edb4b"
+  },
+  "host": {
+    "sha256": "1caac8bf28ae84aa2be65d95516f2f94930097df60fd2dc74eca759ee96755a9",
+    "records": 1371,
+    "samples": 1369,
+    "firstAt": "2026-10-18T07:34:07.767Z",
+    "lastAt": "2026-10-18T08:20:08.713Z",
+    "runStart": {
+      "type": "run_start",
+      "timestamp": "2026-10-18T07:34:07.764Z",
+      "epochMs": 1792308847765,
+      "host": {
+        "swVers": {
+          "ProductName": "macOS",
+          "ProductVersion": "15.7.9",
+          "BuildVersion": "24G830"
+        },
+        "uname": "Darwin iad20-eo1213-8bb051b3-42ff-4611-bdbe-91c3719ef901-925DA621DE70.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64",
+        "cpuCount": 3,
+        "memoryBytes": 7516192768,
+        "runnerImage": {
+          "ImageOS": "macos15",
+          "ImageVersion": "20260907.0337.1"
+        }
+      },
+      "telemetryErrors": []
+    },
+    "runEnd": {
+      "type": "run_end",
+      "timestamp": "2026-10-18T08:20:09.589Z",
+      "epochMs": 1792311609589,
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "elapsedMs": 2761822,
+      "sampleCount": 1369,
+      "forwardedSignals": [],
+      "telemetryErrors": {
+        "ps:timeout": 28
+      },
+      "log": {
+        "bytes": 3244273,
+        "truncated": false,
+        "writeFailure": null
+      }
+    },
+    "truncations": [],
+    "sampleErrorCount": 0,
+    "maxSampleDurationMs": 7756.960583,
+    "maxLoad": 53.47998046875,
+    "minFreeMemoryBytes": 65437696,
+    "qualification": "Only descendants plus node/playwright/webkit/minibrowser names retained, not a census of all host CPU consumers. Each ps record is PID plus start identity; process CPU is cumulative delta, not instantaneous percentage. Samples bracket constructor with extra setup/after-work; 2-second cadence and up to 1-second command timeout limit attribution. No path/argv/env/course data captured."
+  },
+  "attempts": [
+    {
+      "proof": "CVC_helper/CVC_helper/test-results/d1-migration-upgrades-and--3332a-se-within-five-seconds-each-iphone-13-webkit-core/migration/large-upgrade-iphone-13-webkit-core.json",
+      "sha256": "fa4512b415d82e6fa283183fba086413473df998b48f61ff7267418cd2c7de09",
+      "upgradeMs": 8608,
+      "reopenMs": 577,
+      "compileApiMs": 7642,
+      "compilerRoundTripMs": 7694,
+      "rows": 609,
+      "reopenRows": 609,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "reopenedIdentical": true,
+      "priorEventCount": 0,
+      "compileStartAt": "2026-10-18T08:18:45.045Z",
+      "compileEndAt": "2026-10-18T08:18:52.687Z",
+      "hostWindow": {
+        "startAt": "2026-10-18T08:18:44.534Z",
+        "endAt": "2026-10-18T08:18:54.559Z",
+        "durationMs": 10025,
+        "processCpuDeltas": [
+          {
+            "pid": 8411,
+            "name": "com.apple.WebKit.WebContent.Development",
+            "startIdentity": "Sun Oct 18 08:18:38 2026",
+            "rssBeforeKb": 1551984,
+            "rssAfterKb": 1677712,
+            "elapsed": "00:16",
+            "cpuSecondsDelta": 21.99,
+            "presentBefore": true
+          },
+          {
+            "pid": 8410,
+            "name": "com.apple.WebKit.Networking.Development",
+            "startIdentity": "Sun Oct 18 08:18:38 2026",
+            "rssBeforeKb": 55424,
+            "rssAfterKb": 55968,
+            "elapsed": "00:16",
+            "cpuSecondsDelta": 0.3,
+            "presentBefore": true
+          },
+          {
+            "pid": 8409,
+            "name": "Playwright",
+            "startIdentity": "Sun Oct 18 08:18:37 2026",
+            "rssBeforeKb": 129696,
+            "rssAfterKb": 129824,
+            "elapsed": "00:17",
+            "cpuSecondsDelta": 0.17,
+            "presentBefore": true
+          },
+          {
+            "pid": 8396,
+            "name": "node",
+            "startIdentity": "Sun Oct 18 08:18:37 2026",
+            "rssBeforeKb": 211040,
+            "rssAfterKb": 228464,
+            "elapsed": "00:17",
+            "cpuSecondsDelta": 0.05,
+            "presentBefore": true
+          },
+          {
+            "pid": 3927,
+            "name": "node",
+            "startIdentity": "Sun Oct 18 07:34:07 2026",
+            "rssBeforeKb": 65136,
+            "rssAfterKb": 65136,
+            "elapsed": "44:47",
+            "cpuSecondsDelta": 0.03,
+            "presentBefore": true
+          },
+          {
+            "pid": 22175,
+            "name": "node",
+            "startIdentity": "Sun Oct 18 07:39:03 2026",
+            "rssBeforeKb": 279168,
+            "rssAfterKb": 279168,
+            "elapsed": "39:51",
+            "cpuSecondsDelta": 0.03,
+            "presentBefore": true
+          }
+        ],
+        "points": [
+          {
+            "at": "2026-10-18T08:18:44.534Z",
+            "host": {
+              "loadavg": [
+                12.9013671875,
+                22.84033203125,
+                22.66943359375
+              ],
+              "freeMemoryBytes": 643383296,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          },
+          {
+            "at": "2026-10-18T08:18:46.536Z",
+            "host": {
+              "loadavg": [
+                12.9013671875,
+                22.84033203125,
+                22.66943359375
+              ],
+              "freeMemoryBytes": 596148224,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          },
+          {
+            "at": "2026-10-18T08:18:48.540Z",
+            "host": {
+              "loadavg": [
+                13.3896484375,
+                22.7763671875,
+                22.6474609375
+              ],
+              "freeMemoryBytes": 580567040,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          },
+          {
+            "at": "2026-10-18T08:18:50.542Z",
+            "host": {
+              "loadavg": [
+                13.3896484375,
+                22.7763671875,
+                22.6474609375
+              ],
+              "freeMemoryBytes": 581206016,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          },
+          {
+            "at": "2026-10-18T08:18:52.544Z",
+            "host": {
+              "loadavg": [
+                13.3896484375,
+                22.7763671875,
+                22.6474609375
+              ],
+              "freeMemoryBytes": 534249472,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          },
+          {
+            "at": "2026-10-18T08:18:54.559Z",
+            "host": {
+              "loadavg": [
+                13.5986328125,
+                22.66357421875,
+                22.6083984375
+              ],
+              "freeMemoryBytes": 482983936,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          }
+        ],
+        "extendedBefore": {
+          "at": "2026-10-18T08:18:38.527Z",
+          "host": {
+            "loadavg": [
+              13.93603515625,
+              23.37841796875,
+              22.85498046875
+            ],
+            "freeMemoryBytes": 2101231616,
+            "totalMemoryBytes": 7516192768
+          },
+          "swap": {
+            "total": "0.00M",
+            "used": "0.00M",
+            "free": "0.00M"
+          },
+          "thermal": {
+            "thermalWarningRecorded": false,
+            "performanceWarningRecorded": false
+          },
+          "vmStat": {
+            "pageSizeBytes": 16384,
+            "pages": {
+              "Pages free": 126672,
+              "Pages active": 99954,
+              "Pages inactive": 112095,
+              "Pages speculative": 1485,
+              "Pages throttled": 0,
+              "Pages wired down": 66265,
+              "Pages purgeable": 566,
+              "\"Translation faults\"": 78187888,
+              "Pages copy-on-write": 8727239,
+              "Pages zero filled": 41149753,
+              "Pages reactivated": 960252,
+              "Pages purged": 25403,
+              "File-backed pages": 116950,
+              "Anonymous pages": 96584,
+              "Pages stored in compressor": 151903,
+              "Pages occupied by compressor": 51333,
+              "Decompressions": 211190,
+              "Compressions": 472836,
+              "Pageins": 743295,
+              "Pageouts": 12648,
+              "Swapins": 0,
+              "Swapouts": 0
+            }
+          },
+          "telemetryErrors": []
+        },
+        "extendedAfter": {
+          "at": "2026-10-18T08:18:58.564Z",
+          "host": {
+            "loadavg": [
+              13.95068359375,
+              22.5859375,
+              22.5810546875
+            ],
+            "freeMemoryBytes": 2035728384,
+            "totalMemoryBytes": 7516192768
+          },
+          "swap": {
+            "total": "0.00M",
+            "used": "0.00M",
+            "free": "0.00M"
+          },
+          "thermal": {
+            "thermalWarningRecorded": false,
+            "performanceWarningRecorded": false
+          },
+          "vmStat": {
+            "pageSizeBytes": 16384,
+            "pages": {
+              "Pages free": 123239,
+              "Pages active": 108356,
+              "Pages inactive": 110248,
+              "Pages speculative": 1427,
+              "Pages throttled": 0,
+              "Pages wired down": 62968,
+              "Pages purgeable": 633,
+              "\"Translation faults\"": 78577925,
+              "Pages copy-on-write": 8766076,
+              "Pages zero filled": 41379731,
+              "Pages reactivated": 960410,
+              "Pages purged": 25403,
+              "File-backed pages": 117591,
+              "Anonymous pages": 102440,
+              "Pages stored in compressor": 151627,
+              "Pages occupied by compressor": 51224,
+              "Decompressions": 211450,
+              "Compressions": 472836,
+              "Pageins": 744381,
+              "Pageouts": 12648,
+              "Swapins": 0,
+              "Swapouts": 0
+            }
+          },
+          "telemetryErrors": []
+        }
+      }
+    },
+    {
+      "proof": "CVC_helper/CVC_helper/test-results/d1-migration-upgrades-and--3332a-se-within-five-seconds-each-iphone-13-webkit-core-retry1/migration/large-upgrade-iphone-13-webkit-core.json",
+      "sha256": "61e611b846be2b198082c3efff729b69c829cfb198d25969a81aadb216f8fd37",
+      "upgradeMs": 2549,
+      "reopenMs": 482,
+      "compileApiMs": 944,
+      "compilerRoundTripMs": 1091,
+      "rows": 609,
+      "reopenRows": 609,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "reopenedIdentical": true,
+      "priorEventCount": 0,
+      "compileStartAt": "2026-10-18T08:19:15.168Z",
+      "compileEndAt": "2026-10-18T08:19:16.112Z",
+      "hostWindow": {
+        "startAt": "2026-10-18T08:19:14.610Z",
+        "endAt": "2026-10-18T08:19:16.626Z",
+        "durationMs": 2016,
+        "processCpuDeltas": [
+          {
+            "pid": 8952,
+            "name": "com.apple.WebKit.WebContent.Development",
+            "startIdentity": "Sun Oct 18 08:18:56 2026",
+            "rssBeforeKb": 1640016,
+            "rssAfterKb": 1706816,
+            "elapsed": "00:21",
+            "cpuSecondsDelta": 6.06,
+            "presentBefore": true
+          },
+          {
+            "pid": 8951,
+            "name": "com.apple.WebKit.Networking.Development",
+            "startIdentity": "Sun Oct 18 08:18:56 2026",
+            "rssBeforeKb": 55424,
+            "rssAfterKb": 55760,
+            "elapsed": "00:21",
+            "cpuSecondsDelta": 0.13,
+            "presentBefore": true
+          },
+          {
+            "pid": 8931,
+            "name": "Playwright",
+            "startIdentity": "Sun Oct 18 08:18:56 2026",
+            "rssBeforeKb": 125152,
+            "rssAfterKb": 125248,
+            "elapsed": "00:21",
+            "cpuSecondsDelta": 0.08,
+            "presentBefore": true
+          },
+          {
+            "pid": 8919,
+            "name": "node",
+            "startIdentity": "Sun Oct 18 08:18:55 2026",
+            "rssBeforeKb": 205792,
+            "rssAfterKb": 219888,
+            "elapsed": "00:22",
+            "cpuSecondsDelta": 0.06,
+            "presentBefore": true
+          },
+          {
+            "pid": 22175,
+            "name": "node",
+            "startIdentity": "Sun Oct 18 07:39:03 2026",
+            "rssBeforeKb": 279392,
+            "rssAfterKb": 279392,
+            "elapsed": "40:14",
+            "cpuSecondsDelta": 0.03,
+            "presentBefore": true
+          }
+        ],
+        "points": [
+          {
+            "at": "2026-10-18T08:19:14.610Z",
+            "host": {
+              "loadavg": [
+                13.39599609375,
+                22.04833984375,
+                22.3896484375
+              ],
+              "freeMemoryBytes": 512049152,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          },
+          {
+            "at": "2026-10-18T08:19:16.626Z",
+            "host": {
+              "loadavg": [
+                13.39599609375,
+                22.04833984375,
+                22.3896484375
+              ],
+              "freeMemoryBytes": 443957248,
+              "totalMemoryBytes": 7516192768
+            },
+            "telemetryErrors": []
+          }
+        ],
+        "extendedBefore": {
+          "at": "2026-10-18T08:19:08.600Z",
+          "host": {
+            "loadavg": [
+              13.77880859375,
+              22.26904296875,
+              22.46875
+            ],
+            "freeMemoryBytes": 532004864,
+            "totalMemoryBytes": 7516192768
+          },
+          "swap": {
+            "total": "0.00M",
+            "used": "0.00M",
+            "free": "0.00M"
+          },
+          "thermal": {
+            "thermalWarningRecorded": false,
+            "performanceWarningRecorded": false
+          },
+          "vmStat": {
+            "pageSizeBytes": 16384,
+            "pages": {
+              "Pages free": 29912,
+              "Pages active": 157399,
+              "Pages inactive": 155384,
+              "Pages speculative": 1870,
+              "Pages throttled": 0,
+              "Pages wired down": 61844,
+              "Pages purgeable": 745,
+              "\"Translation faults\"": 78809740,
+              "Pages copy-on-write": 8802281,
+              "Pages zero filled": 41498968,
+              "Pages reactivated": 960410,
+              "Pages purged": 25403,
+              "File-backed pages": 118062,
+              "Anonymous pages": 196591,
+              "Pages stored in compressor": 151612,
+              "Pages occupied by compressor": 51218,
+              "Decompressions": 211465,
+              "Compressions": 472836,
+              "Pageins": 744684,
+              "Pageouts": 12648,
+              "Swapins": 0,
+              "Swapouts": 0
+            }
+          },
+          "telemetryErrors": []
+        },
+        "extendedAfter": {
+          "at": "2026-10-18T08:19:18.633Z",
+          "host": {
+            "loadavg": [
+              13.2041015625,
+              21.86474609375,
+              22.32275390625
+            ],
+            "freeMemoryBytes": 2122072064,
+            "totalMemoryBytes": 7516192768
+          },
+          "swap": {
+            "total": "0.00M",
+            "used": "0.00M",
+            "free": "0.00M"
+          },
+          "thermal": {
+            "thermalWarningRecorded": false,
+            "performanceWarningRecorded": false
+          },
+          "vmStat": {
+            "pageSizeBytes": 16384,
+            "pages": {
+              "Pages free": 23578,
+              "Pages active": 161062,
+              "Pages inactive": 158816,
+              "Pages speculative": 1929,
+              "Pages throttled": 0,
+              "Pages wired down": 61453,
+              "Pages purgeable": 745,
+              "\"Translation faults\"": 78981207,
+              "Pages copy-on-write": 8844359,
+              "Pages zero filled": 41538580,
+              "Pages reactivated": 960410,
+              "Pages purged": 25403,
+              "File-backed pages": 118114,
+              "Anonymous pages": 203693,
+              "Pages stored in compressor": 151438,
+              "Pages occupied by compressor": 51147,
+              "Decompressions": 211639,
+              "Compressions": 472836,
+              "Pageins": 745078,
+              "Pageouts": 12648,
+              "Swapins": 0,
+              "Swapouts": 0
+            }
+          },
+          "telemetryErrors": []
+        }
+      }
+    }
+  ],
+  "interpretation": "Original cold upgrade still fails first attempt: 8608 ms, with 7642 ms inside native Module construction. Retry passes at2549/944 ms. All609 rows/40students/520evaluations remain identical. Failed-window WebContent consumes21.99 CPU seconds over10.025 seconds on3-core host; retry6.06 CPU seconds over2.016 seconds. Vite consumes~0.03 seconds in both windows. This supports CPU-active WebKit work rather than an idle callback/network wait. No swap or thermal warning is recorded. Aggregate process CPU cannot distinguish the current IPInt validation from background JSC/Wasm work; high host load alone does not identify another consumer. Root cause remains unproven, no timing remedy claimed.",
+  "pinnedWebKitSource": {
+    "playwright": "1.62.1",
+    "webkit": "26.5 / revision2336",
+    "baseCommit": "343e13bf22dca9d0ec227801419aab0f9001a32f",
+    "configurationUrl": "https://github.com/microsoft/playwright/blob/v1.62.1/browser_patches/webkit/UPSTREAM_CONFIG.sh",
+    "qualification": "Pinned upstream base files, not proof of the exact shipped binary; Playwright v1.62.1 applies its WebKit bootstrap patchset.",
+    "files": [
+      {
+        "path": "wasm/js/WebAssemblyModuleConstructor.cpp",
+        "status": 200,
+        "bytes": 18115,
+        "lines": 374,
+        "sha256": "51ccc11e8b8d4338bd92ea48e3d8ecfe698eef6cfe503fdd6e47c3a6403fde32",
+        "url": "https://github.com/WebKit/WebKit/blob/343e13bf22dca9d0ec227801419aab0f9001a32f/Source/JavaScriptCore/wasm/js/WebAssemblyModuleConstructor.cpp",
+        "fact": "Constructor copies source buffer then createModule calls Wasm::Module::validateSync.",
+        "inspectedLines": "290-310,320-344"
+      },
+      {
+        "path": "wasm/WasmModule.cpp",
+        "status": 200,
+        "bytes": 6801,
+        "lines": 182,
+        "sha256": "c42d1757528317eea204251d0e1a61798d01ab48be903ada5cc1c5bcf9246806",
+        "url": "https://github.com/WebKit/WebKit/blob/343e13bf22dca9d0ec227801419aab0f9001a32f/Source/JavaScriptCore/wasm/WasmModule.cpp",
+        "fact": "validateSync constructs IPIntPlan, enqueues it, then blocks in waitForCompletion.",
+        "inspectedLines": "83-89"
+      },
+      {
+        "path": "wasm/WasmIPIntPlan.cpp",
+        "status": 200,
+        "bytes": 12029,
+        "lines": 299,
+        "sha256": "8504ab4dabbe57dd310a9d0975aa51033ee63217e1e4d26c6266bb64ae5030de",
+        "url": "https://github.com/WebKit/WebKit/blob/343e13bf22dca9d0ec227801419aab0f9001a32f/Source/JavaScriptCore/wasm/WasmIPIntPlan.cpp",
+        "fact": "IPIntPlan constructor calls parseAndValidateModule and prepare synchronously before validateSync enqueues; work() in Prepared state runs compileFunctions; per-function parseAndCompileMetadata runs in compileFunction; Validation mode skips entrypoint generation and didCompleteCompilation returns after stubs/tail-call setup.",
+        "inspectedLines": "51-56,94-105,159-168,181-194,245-255"
+      },
+      {
+        "path": "wasm/WasmWorklist.cpp",
+        "status": 200,
+        "bytes": 8330,
+        "lines": 258,
+        "sha256": "b3397fd91c8824cccc06c721c900de39e58a7d0bdfa53cdfbb589bd8e31c3a81",
+        "url": "https://github.com/WebKit/WebKit/blob/343e13bf22dca9d0ec227801419aab0f9001a32f/Source/JavaScriptCore/wasm/WasmWorklist.cpp",
+        "fact": "Worklist helper is ThreadType::Compiler; poll comments identify single-thread validate/prepare for queued plans; enqueue sets priority according to multiThreaded(); worklist size uses concurrent-JIT option/thread count. Inline constructor parsing/preparation has already occurred before this path.",
+        "inspectedLines": "64-66,71-93,96-126,155-171,223-227"
+      },
+      {
+        "path": "wasm/WasmPlan.cpp",
+        "status": 200,
+        "bytes": 5655,
+        "lines": 170,
+        "sha256": "6bff520dc2c272e12641f4137ac02bf7df4ef64905f2691b8ab8ca06269679bf",
+        "url": "https://github.com/WebKit/WebKit/blob/343e13bf22dca9d0ec227801419aab0f9001a32f/Source/JavaScriptCore/wasm/WasmPlan.cpp",
+        "fact": "waitForCompletion blocks on completion condition variable.",
+        "inspectedLines": "77-83"
+      }
+    ],
+    "interpretation": "A high process CPU-time delta during the exact constructor interval means CPU-active work but cannot distinguish inline parse/validation/preparation from Worklist per-function metadata compilation; low process CPU-time delta over a long wall interval supports waiting/descheduling/resource stalls. If aggregate high and phase attribution matters, a per-thread sample aligned to the same unchanged full D1 constructor distinguishes caller thread versus Wasm helper. Do not infer specific root cause from CPU aggregate alone."
+  },
+  "next": "Keep original constraints. Obtain bounded per-thread native stacks aligned with the same full-context cold attempt to distinguish inline parse/preparation, Wasm helper work and background JSC activity. Do not make another API or fixture change from aggregate timing alone. Final local recorder and exact primary CI are required for current note fixes.",
+  "publication": {
+    "changed": false,
+    "d3EvidenceHashesVerified": 9,
+    "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "testVersion": "0.4.0",
+    "ownerInstalled": null,
+    "physicalPass": false
+  }
+}
