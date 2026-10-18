@@ -2,15 +2,9 @@
   "reviewerRole": "data-integrity",
   "persona": "L'Archivista",
   "milestone": "D4",
-  "round": 2,
-  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
-  "baselineCommit": "be1fa27df7db183645cfe8b7f0a58743685ea977",
-  "reviewedFileHashes": {
-    "src/persistence/courseArchiveFormat.ts": "512171dbe0cb8e628519c834f51bbb4113ab913b9e13f8d92e87616e8a5dde48",
-    "src/persistence/courseArchiveFormat.test.ts": "f3fbc217b39c227e2b93a278137f618e33bd7dbf1803fb6cb62e8c14d518da0e",
-    "src/test/u02DeletionHarness.ts": "414622acaf6204186466e11614a8dcd8af9bf1bf019fecc83710b64923736e07",
-    "tests/e2e/u02-deletion-integrity.spec.ts": "5515cf4fca72b297cf086037003d39cf37337b5c317c2506699ab1f378474513"
-  },
+  "round": 3,
+  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
+  "baselineCommit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
   "verdict": "PASS",
   "blockers": [],
   "importantFindings": [],
@@ -18,18 +12,36 @@
   "resolvedBlockers": [
     "DI-1"
   ],
+  "priorRoundRecheck": [
+    {
+      "id": "DI-1",
+      "disposition": "Round-2 fix retained unchanged",
+      "evidence": "All four SHA-256 entries in the preserved round-2 report match the current validator, validator tests, U02 fixture and U02 browser spec. The compiler delta changes neither archive validation nor SQL binding. The round-1 FAIL remains preserved; the round-2 PASS is not overwritten. No new Unicode hunt or repetition of the 1,344-case audit was performed."
+    }
+  ],
+  "reviewedFileHashes": {
+    "src/persistence/engineModuleCompiler.ts": "c5b628330806dc3c49eae14be76c875a53b33b9f5c981e8253a6d83b91277d96",
+    "src/persistence/engineModuleCompiler.test.ts": "84087a1bb47215584ddf64d9db86be8f9c44dfd0cbc987793c60fb4cf4e39c7b",
+    "src/persistence/courseArchiveFormat.ts": "512171dbe0cb8e628519c834f51bbb4113ab913b9e13f8d92e87616e8a5dde48",
+    "src/persistence/courseArchiveFormat.test.ts": "f3fbc217b39c227e2b93a278137f618e33bd7dbf1803fb6cb62e8c14d518da0e",
+    "src/test/u02DeletionHarness.ts": "414622acaf6204186466e11614a8dcd8af9bf1bf019fecc83710b64923736e07",
+    "tests/e2e/u02-deletion-integrity.spec.ts": "5515cf4fca72b297cf086037003d39cf37337b5c317c2506699ab1f378474513"
+  },
   "evidenceInspected": [
-    "Re-tested DI-1 from the unchanged round 1 FAIL report preserved in OS temporary cvc-d4-data-integrity-review-round1.json. Round 1 reproduced silent text changes through production importCourseArchive and the installed WA-SQLite WASM/API.",
-    "Reviewed the fix diff against be1fa27: courseArchiveFormat.ts checks every ID and TEXT column before copying rows, rejecting embedded NUL, unpaired UTF-16 surrogates and leading U+FEFF. Paired surrogates and embedded U+FEFF remain allowed. No driver, SQL, transaction or storage behavior was changed by this fix.",
-    "During the requested supported-Unicode recheck, the initial NUL/surrogate fix still accepted leading U+FEFF, which the real driver drops on read. The committed fix includes refusal of that remaining DI-1 case before writes.",
-    "Independent restricted scratch verification passed 10 tests on Node v24.21.0: npx vitest run --config test-results/d4-data-review/vitest.round2.config.ts. The unsafe-input test exercises 1,344 field/boundary combinations across every ID/TEXT field, alternating decoded-object and JSON-text imports. Every import rejects with CourseArchiveError invalid-data before database init, readTransaction or writeTransaction; all original course rows and metadata remain identical.",
-    "Nine positive scratch tests use production importCourseArchive and the actual pinned WA-SQLite WASM/API over an in-memory schema. All 13 course tables remain exact after import for multilingual text, paired surrogates including U+10000/U+10FFFF, U+FFFD and noncharacters, control whitespace, embedded BOM, literal backslash-u sequences, combining marks and parameter-bound markup.",
-    "Focused regression verification passed: npx vitest run src/persistence/courseArchiveFormat.test.ts src/persistence/courseArchive.test.ts — 2 files, 30 tests. This includes row-for-row import/export, rollback, same-ID stale-write refusal and version merging.",
-    "The passing scratch-run log is preserved in OS temporary cvc-d4-data-integrity-round2-checks.log. Scratch source/configuration are preserved in OS temporary cvc-d4-data-review; the subsequent browser runner cleared their original test-results location.",
-    "Reviewed the U02 fixture repair diff: it awaits the empty-course screen, creates/adopts the owner course through production saveActiveCourse and makes the deliberately foreign-reference course inactive. All five reference-class assertions and unused-student deletion assertion remain present; the production session guard is unchanged.",
-    "Root reported verify:quick PASS with 88 files and 1,426 tests in 95.6 seconds, plus verify:domain PASS, on the current fixes. These are reported root results, not independent executions by this reviewer.",
-    "Bound this same round 2 review to committed checkpoint 193a2506c7770bb11ee7f128ce2686b1d1e8b1a4. The working tree was clean at binding; all four recorded SHA-256 file hashes match, and their diff against that commit is empty. No new whole-milestone review was performed.",
-    "Inspected only the adjacent development compiler-timing delta in engineModuleBroker.ts and engineModuleCompiler.ts for direct data-integrity regressions. Optional finite timestamps accompany compilation results; the immutable module cache still forwards the WebAssembly.Module itself. Production fetching/compilation, database instances, database identity, VFS, writes and transactions are unchanged. Independent focused verification passed: npx vitest run src/persistence/engineModuleBroker.test.ts — 1 file, 13 tests."
+    "AGENTS.md, docs/agents/REVIEW_PROTOCOL.md, reviewer-data-integrity persona, docs/LOCAL_DEVELOPMENT.md and the local PowerSync skill. Refreshed D4 acceptance, current cycle state, relevant product/scope boundaries and Technical Decisions §3/§3.1/§3.2.",
+    "Clean primary checkout at ac0c255; Node v24.21.0. Startup commands confirm D3 AWAITING_OWNER, D4 IN_PROGRESS, D3 owner action READY and D4 owner action NEEDS_SETUP. ci:status could not fetch; no exact green CI is inferred.",
+    ".evidence/D4/data-integrity-review-round-1.json preserves the DI-1 FAIL. The current data-integrity-review.json preserves round-2 PASS at 193a250 with seed 112018452, its exact four-file hashes and prior real-driver evidence.",
+    "Restricted application diff 193a250..ac0c255: engineModuleCompiler.ts awaits the same-origin response, checks HTTP success and the exact ASCII-case-insensitive application/wasm content type, buffers its body, then calls new WebAssembly.Module inside the existing code-only compiler worker. Its new unit file is the only other application/test delta.",
+    "The compiler creates no WebAssembly.Instance, VFS or database and runs no SQL. Its success/error reply protocol and optional finite DEV timings remain. The unchanged broker validates the returned module, shares only its immutable-code promise, terminates the compiler on success/error/deadline, evicts failed promises and leaves concurrent consumers independent. The unchanged stock-factory path creates fresh engine instances.",
+    "Compared broker/cache, worker registration, SDK entry, factory, schema, VFS, archive import, course-session and write-guard paths against 193a250: no changes. Independently reran assertPinnedEngineSources successfully; PowerSync 2.2.0, wa-sqlite 2.0.3 and guarded engine/WASM inputs remain pinned.",
+    "Independent targeted verification: node node_modules/vitest/vitest.mjs run src/persistence/engineModuleCompiler.test.ts src/persistence/engineModuleBroker.test.ts --maxWorkers=1. Two files and 20 tests passed, exit 0, 866 ms. Log preserved as OS-temp cvc-d4-di-r3-targeted-tests.log.",
+    "The focused tests cover valid module production, finite timing metadata, non-success HTTP, wrong/missing/parameterized MIME, external-origin refusal before fetch, invalid WASM, shared concurrent compilation, consumer failure, producer errors, deadline termination and retry after failure.",
+    "Independent OS-temp cvc-d4-di-r3-actual-engine probe executes the production compiler handler with DEV=false against the actual pinned 2281765-byte async WASM; compileStreaming is forced to throw if called. One fetch yields one compiled reply without DEV timings. The module structured-clones successfully and instantiates twice through the stock factory with distinct linear memory. Parameter-bound synthetic text remains identical; the second engine has none of the first engine's table; an update rolls back intact.",
+    "That probe passed with compiler source SHA-256 c5b628330806dc3c49eae14be76c875a53b33b9f5c981e8253a6d83b91277d96 and pinned WASM SHA-256 de7105eb124a6d6a90bcea9b569433af50cb90eba6f1e8c3f210be6dfde7d013. Source and result.json are preserved in its OS-temp scratch directory. The SQLite smoke instances are explicitly in memory and make no browser-persistence claim.",
+    ".evidence/D4/ci-worker-compile-probe.json and raw OS-temp cvc-d4-worker-compile-probe-39082247802 analysis/proof, four artifact ZIP hashes, e2e reports and large-upgrade JSON inspected. All ZIP hashes match. Each fresh Mac job has 8 PASS, retry 0 throughout, zero unexpected/flaky results: 32 cases total.",
+    "All four diagnostic large upgrades/reopens retain 609 rows, 40 injected students, 520 evaluations, no row issues and identical reopen. Buffered-worker upgrades take 1118/1394 ms; streaming upgrades take 1313/4789 ms. The original same-page seed, D1 assertions and construction-inclusive five-second bounds remain unchanged.",
+    "Both diagnostic variants pass, including the slower streaming sample. These records support data preservation and investigation only; they do not reproduce a five-second failure, prove a causal timing fix, or substitute for final candidate CI.",
+    "Root reports current verify:quick PASS with 89 files/1435 tests and verify:domain/build PASS. Those are root-reported results, separate from this reviewer's focused executions. No browser or heavy suite was launched, no tracked file or canonical review report was edited, and no backend/private data was accessed."
   ],
   "anglesTried": {
     "seed": 112018452,
@@ -38,13 +50,12 @@
       "12. Two tabs of the app writing the same course."
     ],
     "wildcard": "Recovery boundaries where database deletion and course-generation removal interact with same-ID reuse, plus pinned VFS final-file closure.",
-    "restrictedScope": "No new entropy draw or whole-milestone hunt. Rechecked DI-1, the fix diff and regressions caused by the fix; inspected the adjacent U02 fixture repair without weakening its assertions. At checkpoint binding, inspected the adjacent DEV compiler-timing delta only for direct data-integrity regressions."
+    "restrictedScope": "Retained the original seed and lenses without a new entropy draw or whole-milestone hunt. Round 3 rechecks DI-1 by unchanged recorded hashes and reviews only the compiler-body/unit delta for actual-module-path and direct data-integrity regressions."
   },
   "notTested": [
-    "No browser was started during this restricted review because other agents owned the browser slot. The real-driver scratch adapter uses an in-memory schema rather than the browser IndexedDB VFS.",
-    "The U02 fixture repair was inspected but its browser journey was not independently executed by this reviewer.",
-    "No browser timing benchmark was executed by this reviewer. The final recorder and exact green CI remain root work; ci:status could not fetch in this review shell, and this report makes no CI-green claim.",
-    "Actual Android sharing/import, storage permission and reset acceptance remain owner checks; no physical-device PASS was inferred.",
-    "Git Bash launch was unavailable in this environment; checks used the existing PowerShell Node v24.21.0 runtime. No backend or production service was accessed."
+    "No browser or IndexedDB-VFS replay was run because root owns browser/recorder verification. The independent actual-engine probe uses the pinned driver with two in-memory smoke databases.",
+    "No repeat of the prior Unicode hunt, full archive replacement/reset audit or U02 browser journey; their reviewed implementation and four recorded hashes are unchanged.",
+    "Final recorder, exact full candidate CI and deterministic timing acceptance remain root gates. The diagnostic matrix proves no causal timing fix and this report makes no CI-green or release-completion claim.",
+    "Actual Android sharing/import, persistence permission and reset acceptance remain owner checks. No physical-device PASS or deployment is inferred; the pinned D3 phone build is unchanged."
   ]
 }

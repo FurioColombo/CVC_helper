@@ -1,15 +1,15 @@
 {
   "reviewerRole": "self-review",
   "milestone": "D4",
-  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
   "verdict": "FAIL",
   "blockers": [
     {
       "id": "D4-CI",
-      "title": "Exact Mac CI fails the unchanged first-open bound",
-      "evidence": "ci-checkpoint-193a250.json; CI run 39078243541",
-      "reproduction": "Mac first open takes6557/6058/6974ms versus5000ms; all609rows remain intact and reopen390/432/354ms. Worker startup and return are fast; compileStreaming API interval consumes5925/5120/6368ms. Linux217cases and local99cases pass. This failure is not waived.",
-      "specRef": "AGENTS.md 6 / docs/OWNER_WORKFLOW.md"
+      "title": "Exact full Mac CI still fails the original first-open bound",
+      "evidence": "ci-checkpoint-ac0c255.json; CI run 39103308907",
+      "reproduction": "With buffered synchronous compilation in the existing code-only worker, upgrades take 7699/6166/6010 ms against 5000 ms. Native Module construction takes 6645/5429/5094 ms, while network/bootstrap/return are fast. All 609 rows remain intact and reopen takes 891/360/352 ms. Linux and the local recorder pass. The full-context timing hypothesis remains unresolved.",
+      "specRef": "AGENTS.md 6 / docs/OWNER_WORKFLOW.md / 03_TECHNICAL_DECISIONS.md 3"
     }
   ],
   "importantFindings": [
@@ -26,6 +26,13 @@
       "evidence": "development-checks.json; docs/working/BACKLOG.md; browser-evidence.json",
       "reproduction": "Earlier Windows fresh recipient failed before import, then isolated retest passed. The committed checkpoint passed the complete 99-case recorder without retries and both production isolation engines. Cause remains unproven; no archive-write failure was observed. Keep the filed defect for T1 under its explicit flaky-test scope after the exact CI gate passes.",
       "specRef": "milestone-close verification rule / 04_IMPLEMENTATION_PLAN.md T1"
+    },
+    {
+      "id": "T1-EVALUATION-NOTE",
+      "title": "New CI evaluation-note test intermittence is filed for T1",
+      "evidence": "ci-checkpoint-ac0c255.json; docs/working/BACKLOG.md",
+      "reproduction": "Mac iPhone viewport first attempt times out after 120552 ms waiting for Bea’s note textbox, then passes on retry in 3387 ms. No causal compiler relationship or data-loss finding is established.",
+      "specRef": "03_TECHNICAL_DECISIONS.md 6 / 04_IMPLEMENTATION_PLAN.md T1"
     }
   ],
   "qolFindings": [
@@ -64,10 +71,14 @@
     "Final independent data-integrity R2 PASS, security/privacy R2 PASS, field-UX R2 PASS and sync-chaos R1 PASS_WITH_FINDINGS, all bound to 193a250 with zero blockers.",
     "Visually inspected current normal-size course files, WebKit 320px/200% replacement controls, full-reset completion, first-import label and partial-reset captures. Large text intentionally requires vertical scrolling and long headings may wrap within a word.",
     "Linux CI 39078243541 passed 217 browser cases and 47 original skips; 1428 unit tests pass. Raw log retained in OS temporary cvc-d4-ci-117529750345.log. Exact Mac result remains pending.",
-    "Rechecked all nine D3 agentReady evidence hashes after the recorder. The test-site pin remains 0.4.0 / AWAITING_INSTALL at 761530f; no publication or physical PASS."
+    "Rechecked all nine D3 agentReady evidence hashes after the recorder. The test-site pin remains 0.4.0 / AWAITING_INSTALL at 761530f; no publication or physical PASS.",
+    "At ac0c255, the required recorder passes all three declared scripts on clean source digest c77a3ae092adc9c338a60f3aa1729e84f8808d2a34f8b00fb716cc664679c071: 89 unit files/1435 tests, 99 focused browser cases with one original skip and zero retries/flakes, plus same-origin production reset isolation on Chromium and WebKit. WebKit upgrade/reopen are 1714/820 ms; every row remains identical.",
+    "Restricted data-integrity R3 PASS, security/privacy R3 PASS and sync-chaos R2 PASS_WITH_FINDINGS bind ac0c255 with no blockers. Real pinned-WASM engine isolation/rollback, 14 production response boundaries and six production interruption/order probes pass. Field-UX R2 still covers unchanged UI, and current refreshed screenshots were visually inspected.",
+    "Exact full normal push CI 39103308907: Linux 217 PASS/47 original skips; Mac 286 PASS/65 original skips, one failed original D1 timing case and one filed u10-evaluations flaky case. The synchronous constructor still consumes 5.1–6.6 seconds only in the full-run context. The changed API is not a verified timing remedy; current green local evidence is not acceptance.",
+    "Live HTTPS recheck at 2026-10-18T06:50:18Z: CVC Helper Test remains pinned 0.4.0 at 761530f; regular app returns HTTP 200. D3 evidence hashes remain intact. No deployment or physical-device PASS occurred."
   ],
   "notTested": [
-    "D4 remains IN_PROGRESS: the Mac cold-open failure requires a changed compilation-path probe, fixes if verified, affected reviews, a new recorder and exact green CI. T1 remains ineligible.",
+    "D4 remains IN_PROGRESS: the full Mac native-compilation timing failure requires investigation of run context/resources rather than another unproved API substitution. T1 remains ineligible until D4 has an exact green checkpoint and verified AWAITING_OWNER handoff.",
     "Actual phone Web Share receiving-app behavior, save/import transfer, persistence permission and full-reset acceptance remain owner checks. No simulated or inferred physical PASS.",
     "Cross-device sync, accounts, backend deletion and upload conflicts are outside 0.4.0."
   ]

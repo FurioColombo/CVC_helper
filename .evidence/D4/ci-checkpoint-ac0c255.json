@@ -1,0 +1,148 @@
+{
+  "milestone": "D4",
+  "sourceCommit": "ac0c25508d39ac70c2d556db45285203bad5859a",
+  "run": 39103308907,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39103308907",
+  "status": "FAIL_NOT_ACCEPTANCE",
+  "completedAt": "2026-10-18T07:02:49Z",
+  "jobs": [
+    {
+      "id": 117603843451,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T06:14:03Z",
+      "completedAt": "2026-10-18T06:37:39Z",
+      "browserSummary": [
+        "2026-10-18T06:37:36.1647668Z   47 skipped",
+        "2026-10-18T06:37:36.1648081Z   217 passed (21.2m)",
+        "2026-10-18T06:37:36.1679907Z ##[notice]  47 skipped",
+        "  217 passed (21.2m)"
+      ],
+      "rawLog": "OS temporary cvc-d4-ci-39103308907/cvc-d4-ci-117603843451.log",
+      "logSha256": "33b7c40dc86b0bce2e319b3103cf129ef8229dc61fd04ea6cd88a5a87ad237f9"
+    },
+    {
+      "id": 117603843581,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-10-18T06:14:08Z",
+      "completedAt": "2026-10-18T07:02:48Z",
+      "browserSummary": [
+        "2026-10-18T07:02:39.2675100Z   1 failed",
+        "2026-10-18T07:02:39.2676770Z   1 flaky",
+        "2026-10-18T07:02:39.2678080Z   65 skipped",
+        "2026-10-18T07:02:39.2678360Z   286 passed (43.3m)",
+        "2026-10-18T07:02:39.2763250Z ##[notice]  1 failed",
+        "  1 flaky",
+        "  65 skipped",
+        "  286 passed (43.3m)",
+        "2026-10-18T07:02:39.3678480Z FLAKY: u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is [iphone-13-viewport]"
+      ],
+      "rawLog": "OS temporary cvc-d4-ci-39103308907/cvc-d4-ci-117603843581.log",
+      "logSha256": "474a63173c4532c84d5c78f017f2b01a8f2ca1b6249746d1f9ef0403eba9de78"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12128800867,
+      "name": "e2e-flaky-macos-15-39103308907",
+      "sha256": "21ecd8ae30191e8c26c313d03fd0acbd3022b225cdd8177745b1eb7536230751",
+      "rawZip": "OS temporary cvc-d4-ci-39103308907/12128800867.zip"
+    },
+    {
+      "id": 12127982975,
+      "name": "playwright-failure-macos-15-39103308907",
+      "sha256": "648d8a31de1df2e431bd9a23e1a3f7210afd2001271eb587e2c8ff82b928dd27",
+      "rawZip": "OS temporary cvc-d4-ci-39103308907/12127982975.zip"
+    },
+    {
+      "id": 12127654278,
+      "name": "e2e-flaky-ubuntu-latest-39103308907",
+      "sha256": "b1e5c0af573a553be87d4327a8d3d4cee3b5405c14e03a98ea1d240cacd03de5",
+      "rawZip": "OS temporary cvc-d4-ci-39103308907/12127654278.zip"
+    }
+  ],
+  "qualification": "Exact push CI. Original thresholds, retries, assertions, skips and browser projects remain. Physical acceptance is not inferred.",
+  "macColdOpenAttempts": [
+    {
+      "attempt": 0,
+      "upgradeMs": 7699,
+      "adapterInitMs": 6887,
+      "prepareMs": 720,
+      "reopenMs": 891,
+      "rows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "reopenedIdentical": true,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "priorModuleEvents": 0,
+      "compilerRoundTripMs": 6711,
+      "workerBootstrapMs": 15,
+      "responseHeadersMs": 5,
+      "responseBufferMs": 44,
+      "synchronousModuleIntervalMs": 6645,
+      "moduleReturnMs": 2
+    },
+    {
+      "attempt": 1,
+      "upgradeMs": 6166,
+      "adapterInitMs": 5673,
+      "prepareMs": 399,
+      "reopenMs": 360,
+      "rows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "reopenedIdentical": true,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "priorModuleEvents": 0,
+      "compilerRoundTripMs": 5537,
+      "workerBootstrapMs": 25,
+      "responseHeadersMs": 14,
+      "responseBufferMs": 67,
+      "synchronousModuleIntervalMs": 5429,
+      "moduleReturnMs": 2
+    },
+    {
+      "attempt": 2,
+      "upgradeMs": 6010,
+      "adapterInitMs": 5306,
+      "prepareMs": 576,
+      "reopenMs": 352,
+      "rows": 609,
+      "students": 40,
+      "evaluations": 520,
+      "reopenedIdentical": true,
+      "rowIssues": [],
+      "reopenRowIssues": [],
+      "priorModuleEvents": 0,
+      "compilerRoundTripMs": 5148,
+      "workerBootstrapMs": 24,
+      "responseHeadersMs": 5,
+      "responseBufferMs": 23,
+      "synchronousModuleIntervalMs": 5094,
+      "moduleReturnMs": 1
+    }
+  ],
+  "macFlakyTests": [
+    {
+      "case": "u10-evaluations.spec.ts > shows the evaluation note itself, clamped to two lines however long it is",
+      "project": "iphone-13-viewport",
+      "firstAttempt": {
+        "status": "timedOut",
+        "durationMs": 120552,
+        "detail": "Waiting for Nota valutazione di Bea textbox"
+      },
+      "retry": {
+        "index": 1,
+        "status": "passed",
+        "durationMs": 3387
+      },
+      "disposition": "Filed in BACKLOG for T1; no causal relation to the compiler delta is established."
+    }
+  ],
+  "diagnosis": "The full-suite context still fails the original 5000 ms cold-open bound with buffered synchronous compilation. The native Module constructor consumes 5094–6645 ms; bootstrap, response headers/body and return are fast. All rows and reopen values remain intact. Changing native API did not remedy the full-context failure. The isolated original D1 jobs passed, so investigation now targets the full-run process/resource/server context. No blind rerun, seed move, warming, threshold, retry or project change is accepted as a fix."
+}

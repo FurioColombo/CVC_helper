@@ -113,17 +113,13 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4's initial CI failure is in `.evidence/D4/ci-checkpoint-be1fa27.json`.
-At `193a250`, local/Linux pass; Mac fails cold open. The four-run worker-sync
-probe supports a candidate, pending full CI; preserve both bounds and coverage.
+D4 Mac CI at `ac0c255` still fails the native-compilation cold-open bound; see
+`.evidence/D4/ci-checkpoint-ac0c255.json`. Preserve both bounds and coverage.
 
 ## Flaky browser tests
 
-Windows D3 share probes printed passing cases but stalled before report/exit;
-interrupted attempts are not command PASS. A manually served attempt timed out
-before copying, cause unclassified. Logs: `.evidence/D3/ci-native-share-fix.json`.
-The later clean-source recorder at `33ac7c9` passed all 105 focused cases with
-no retries and normal exit. Preserve those observations and unchanged limits.
+Windows D3 share probes stalled before exit; a manual attempt also timed out. Neither is PASS; cause unclassified.
+Later `33ac7c9` passed all 105 cases without retries. See `.evidence/D3/ci-native-share-fix.json`.
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
@@ -137,6 +133,10 @@ Each passed only on a retry and is a defect to fix (03 §6).
   The `193a250` recorder passed 99 cases without retries and both production
   isolation engines. Cause unproven; T1 must investigate this filed defect
   after D4's CI gate. See `.evidence/D4/development-checks.json`.
+
+- `u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is`
+  — Mac CI 39103308907, iPhone viewport: Bea’s note input timed out, then
+  passed on retry. See `.evidence/D4/ci-checkpoint-ac0c255.json`; fix in T1.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,

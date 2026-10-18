@@ -2,36 +2,35 @@
   "reviewerRole": "security-privacy",
   "persona": "Il Garante",
   "milestone": "D4",
-  "round": 2,
-  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "round": 3,
+  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
   "verdict": "PASS",
   "blockers": [],
   "importantFindings": [],
   "qolFindings": [],
   "evidenceInspected": [
-    "Retained .evidence/D4/security-privacy-review-round-1.json (PASS, no blockers) and read the exact be1fa27df7db183645cfe8b7f0a58743685ea977..193a2506c7770bb11ee7f128ce2686b1d1e8b1a4 fix diff. No new whole-milestone hunt or entropy draw.",
-    "courseArchiveFormat rejects NUL, unpaired surrogates and leading BOM in IDs and TEXT columns while retaining paired Unicode, embedded BOM and ordinary markup. Existing generic CourseArchiveError messages remain unchanged.",
-    "Independent Node v24.21.0 focused run: 44 tests passed across courseArchiveFormat, engineModuleBroker and CourseFiles.",
-    "Two independent restricted probes passed in test-results/d4-security-review-r2: eight lossy ID/text mutations reject before database.init or any write transaction, leave rows unchanged and reveal no synthetic sentinel; supported Unicode and hostile-looking markup remain exact bound text.",
-    "Read DEV-only compiler/broker phase timestamp changes, finite-value validation, bounded existing diagnostic collection and unchanged same-origin asset checks. No course fields, roster values, credentials, network destination or database state were added to compiler messages.",
-    "Independently scanned all 24 JavaScript files in the existing production dist output: none contained any of the 13 new phase timestamp keys. No additional build or browser was run.",
-    "Read failure-only browser diagnostics in d4-course-files.spec.ts: attachments collect the synthetic source/fresh-recipient pages, startup events, locks and compilation resources only after the existing readiness assertion fails. They do not alter readiness limits or send app data to an added endpoint.",
-    "Read reset text wrapping, fresh-import label, explicit old-tab warning and related tests. Confirmation and reset cleanup semantics remain unchanged.",
-    "Rechecked U02 fixture changes: real course creation adopts the current session; the deliberately foreign course is inactive; visible readiness precedes setup.",
-    "Confirmed HEAD 193a250; other reviewers' untracked evidence was left untouched. Startup owner/milestone commands retain D3 AWAITING_OWNER and D4 IN_PROGRESS. Local ci:status fetch failed; root reported exact CI 39078243541 in progress, with no PASS inferred."
+    "Re-read AGENTS.md, REVIEW_PROTOCOL.md and reviewer-security-privacy.md; retained R1/R2 PASS reports with no prior security/privacy blockers. Reviewed only 193a2506c7770bb11ee7f128ce2686b1d1e8b1a4..ac0c25508d39ac70c2d556db45285203bad5859a compiler changes and direct regressions.",
+    "Confirmed clean initial working tree and exact candidate HEAD; Node v24.21.0. Owner/milestone status still shows D3 AWAITING_OWNER, D4 IN_PROGRESS and D4 phone setup pending. Local ci:status fetch failed; no green CI inferred.",
+    "Read engineModuleCompiler.ts and its new producer tests. Fetch still uses the same validated same-origin asset URL; HTTP/MIME validation precedes body consumption. Buffered bytes compile into a Module inside the existing code-only compiler worker, without instantiation, database access, roster inputs or an added network destination.",
+    "Independent focused run passed 20 tests across engineModuleCompiler and engineModuleBroker, covering valid compilation, invalid HTTP/MIME/bytes, external-URL refusal and existing broker lifecycle behavior.",
+    "Independent production-mode boundary probe passed 14 cases: exact MIME, ASCII case and HTTP whitespace, success statuses, missing/parameterized/multiple/non-ASCII MIME values and failed statuses. Rejected responses were not consumed or constructed; each case fetched once and emitted no development timings. Proof is in test-results/d4-security-review-r3/compiler-boundaries.json.",
+    "An initial comparison against Node's native compileStreaming found that Node 24 rejects uppercase APPLICATION/WASM. Checked the [WebAssembly Web API §2](https://webassembly.github.io/spec/web-api/#streaming-modules): its rule accepts ASCII case variation after HTTP whitespace trimming and rejects parameters. The candidate matches that rule; the corrected probe records Node's deviation rather than treating it as an application defect.",
+    "Independently inspected all 24 JavaScript files in the existing candidate dist. The emitted engineModuleCompiler-YB6wr5Ny.js buffers the response and constructs WebAssembly.Module, contains no compileStreaming call, and all 13 development phase timestamp keys are absent from emitted JavaScript.",
+    "Confirmed no diff in parent broker, database/schema/VFS integration or canonical ci.yml; both reviewed checkpoints use workflow blob 0190ba84f184268cda2da363546bc2fe355b6220.",
+    "Read .evidence/D4/ci-worker-compile-probe.json. Its four diagnostic Mac runs report 32 passes without retries, preserved rows and no fallback. The record explicitly remains diagnostic evidence, not causal proof or final acceptance."
   ],
   "anglesTried": {
     "seed": 142837471,
     "lenses": [
-      "Restricted follow-up only: prior security/privacy review had no blockers. Rechecked the lossy-string fix and direct privacy regressions in diagnostic, fixture and UI changes.",
-      "Retained R1 invitation/revocation and data-minimisation context; verified that the old-tab limitation is now explicit and diagnostics introduce no roster fields or new external destination."
+      "Restricted R3 follow-up: inspect the changed response/compilation boundary for relaxed validation, extra requests, sensitive inputs or diagnostic leakage.",
+      "Check direct regressions in the unchanged worker/broker isolation contract and inspect emitted production code."
     ],
-    "wildcard": "No new wildcard drawn. Reused only the relevant hostile-archive boundary from R1 to test Unicode rejection before initialization/writes and safe error handling."
+    "wildcard": "No new entropy or wildcard. Prior whole-milestone findings were not reopened; probes were limited to the changed compiler boundary."
   },
   "notTested": [
-    "No browser run or heavy suite; the field reviewer owned the browser slot. UI changes were inspected and focused component tests passed.",
-    "The independent Unicode import probes use the existing real node:sqlite test adapter. The separate data-integrity reviewer owns confirmation against the pinned WA-SQLite driver and closure of DI-1.",
-    "Production output was inspected in place rather than rebuilt independently.",
-    "Exact green CI, final milestone recorder and physical-device sharing/import/reset acceptance remain pending. This security/privacy PASS does not complete D4 or override other review results."
+    "No browser, heavy suite or rebuild was run. Production output was inspected in place; the root owns subsequent browser verification and the recorder.",
+    "Synthetic VM/Node boundary probes do not establish browser-specific CSP, WebKit performance or physical-device behavior.",
+    "The diagnostic comparison does not prove the compilation change causes reliable cold startup. Exact full-source CI and required acceptance remain pending.",
+    "No deployment, backend, private data or physical-device check was accessed. This security/privacy PASS does not complete D4 or override other reviewers."
   ]
 }

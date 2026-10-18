@@ -2,11 +2,11 @@
   "reviewerRole": "sync-chaos",
   "persona": "Gemma e Gino",
   "milestone": "D4",
-  "round": 1,
-  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
-  "reportState": "BOUND_TO_REVIEWED_CHECKPOINT",
-  "qualification": "Same round-one version/lifecycle review, now bound to exact checkpoint 193a2506c7770bb11ee7f128ce2686b1d1e8b1a4 after restricted final-delta inspection. This role verdict does not establish final CI, milestone completion or physical-device acceptance.",
+  "round": 2,
+  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
+  "baselineCommit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
   "verdict": "PASS_WITH_FINDINGS",
+  "qualification": "Restricted second-round review of the buffered compiler producer and directly affected startup/error lifecycle. No new entropy draw, whole-milestone hunt or browser run. This verdict does not establish exact normal CI, final recorder success, milestone completion or physical-device acceptance.",
   "blockers": [],
   "importantFindings": [
     {
@@ -15,40 +15,34 @@
       "evidence": "The exact e493e675f05e5c4769f638a185f7062e4848e7cc:src/persistence/writeGuard.ts checks only the D3 data-version contract, without a generation check or the D4 local-data broadcast listener. Canonical source SHA256: 4695499e0244c2db421adf23123ed46096c98ef2f4734df3e80abe6d7ae066a9; extracted probe copy SHA256 after line-ending normalization: 5e56a74e696d59d67583b01b6eaa19a44e135a3f803bd7d241ad6055ed01d78c. Scratchpad cvc-d4-sync-review-scratch/d4-sync-review contains the source, test, legacy-import-outcome.json and browser report.",
       "reproduction": "With synthetic rows, open the real current desktop database in a second page wrapped in that historical D3 guard with writer version 0.4.0. Import a same-ID course through the visible D4 preview, acknowledgement and replacement button, setting the selected student's initial note to 'imported replacement note'. The historical guard then successfully writes 'late D3 note' to that same ID; querying the real engine returns the late value. The 5.1-second audit test asserts this observed boundary, not successful stale-writer protection. It uses the exact historical guard with the current pinned real browser engine, not a complete historical application build.",
       "specRef": "03_TECHNICAL_DECISIONS.md §3.1 approved minimum-writer window and monotonic claims; §3.2 Course files and local reset; 04_IMPLEMENTATION_PLAN.md D4 identifier-collision checklist",
-      "disposition": "Non-blocking under the approved compatibility contract: already-installed compatible code cannot retroactively read D4 generation. Checkpoint 193a250 explicitly limits session guards to D4 and later instances, adds a visible instruction to close other old app tabs before import, and records the lifecycle boundary in docs/working/BACKLOG.md. The writer window and minimum writer remain unchanged."
+      "disposition": "Carried unchanged from round 1 as a non-blocking compatibility limitation. At ac0c255, 03_TECHNICAL_DECISIONS.md §3.2, the import-preview warning and docs/working/BACKLOG.md still document the pre-D4 compatible-writer boundary. No writer floor or compatibility window changed. The historical-writer probe was not rerun in this restricted follow-up."
     }
   ],
   "qolFindings": [],
   "evidenceInspected": [
-    "AGENTS.md, reviewer-sync-chaos persona, docs/agents/REVIEW_PROTOCOL.md, active D4 predicate/checklist, relevant product persistence rules, 0.4 local-only scope, Technical Decisions §§3–3.2, LOCAL_DEVELOPMENT.md, and vendored PowerSync skill/AGENTS with JavaScript and React references. No earlier D4 sync-chaos report existed.",
-    "Startup git status and latest checkpoints, owner:list and milestone:status: D3 AWAITING_OWNER, D4 IN_PROGRESS; Node v24.21.0. ci:status could not fetch here. The root supplied exact be1fa27 CI failure evidence; no green CI was inferred.",
-    "Implementation range e493e675f05e5c4769f638a185f7062e4848e7cc..be1fa27df7db183645cfe8b7f0a58743685ea977: atomic import/generation/version merge, prepared-session binding, pre-worker and in-lock write checks, reset broadcasts, actual IndexedDB deletion, scoped storage cleanup, source-pinned VFS final-file close and stock worker naming.",
-    "Independent focused Node run: courseSession, courseArchive, idbBatchAtomicVfs and browserStorage; 4 files, 20 tests PASS.",
-    "Five independent scratch probes PASS: a same-ID generation replacement winning between preflight and acquired lock; reset invalidation in that interval; all five wrapped write entrances refusing before closed-worker access; newer minimum-writer claim winning the queue; erased-course late write rejection. Production session and guard functions ran over Node's real SQLite. Scratch source preserved in OS temporary cvc-d4-sync-review-scratch/d4-sync-review.",
-    "Independent desktop real-browser run without retries: stock SharedWorker surviving one client's close, subsequent minimum-writer refusal and final IDB deletion; same-ID import refusing an unnotified tab's first real UI save; reset remaining blocked until a legacy IDB connection closes; partial cleanup failure and visible retry. Four expected, zero unexpected, zero flaky; 51.2 seconds including teardown. Blocked/partial reset checks also exercised 320 px and 200% text. Raw report preserved in OS temporary cvc-d4-sync-review-browser-proof.",
-    "Independent historical-guard audit reproduced SC-R1-I1 on the real desktop engine with visible current import. One test passed its explicit observed-boundary assertion in 5.1 seconds. A first custom-config setup failed because the nested config changed the server working directory; it was corrected before the probe. Both browser runners ended exit 0 after only their own idle Vite server was stopped during Windows teardown; browser workers had already exited.",
-    "Pinned SDK source: DatabaseServer retains its underlying SQLite connection while another client is active; RawSqliteConnection closes SQLite; stock VFS jClose awaits synchronization before SQLITE_OK; the new subclass closes only its own IDB handle after the last successful file close. The independent stock-desktop test exercised the surviving-client and final-delete boundary.",
-    "Inspected, without rerunning, OS temporary cvc-d4-production-reset-isolation-fixed.json and its script: genuine Chromium/WebKit production builds on one origin, test storage removed, regular course/preferences/cache/model bytes unchanged, regular app reopening from its service worker with origin transport unavailable.",
-    "Read D4 data-integrity, field-UX and security/privacy round-one reports. Inspected final committed codec text-representability restrictions, u02 real-course adoption/inactive foreign fixture, import empty-state label, narrow-text fixes and explicit legacy-writer warning/contract/backlog clarification.",
-    "Root reported the earlier 22-case fix run as 21 PASS/1 FAIL because a fresh WebKit recipient remained on opening before import. The be1fa27 CI failure and its cold-open timing violation are preserved in .evidence/D4/ci-checkpoint-be1fa27.json. CI for 193a250 had just started at binding; no green result or final recorder was inferred.",
-    "Final binding inspected the complete be1fa27..193a250 delta and clean git status. No new whole-milestone hunt or browser run occurred. Session/generation guards, VFS ownership and reset mutation behavior are unchanged by this delta.",
-    "Reviewed DEV-only compiler phase timing implementation and tests: same-origin fetch and compileStreaming remain, compiled module caching/transfer unwraps the same module, malformed timing metadata is omitted without rejecting the module, and owned compiler cleanup/fallback paths are preserved. No extra engine, database, warm-up, retry or relaxed timing bound was introduced. Root production-build evidence records timing-field removal; that build was inspected as recorded evidence rather than independently rerun.",
-    "Reviewed failure-only fresh-recipient diagnostics: engine events, locks, resource timing and development navigation messages are read and attached only after the original readiness assertion fails; the same error is rethrown. No assertion, original timeout, retry count or browser project was weakened."
+    "Re-read AGENTS.md, REVIEW_PROTOCOL.md, reviewer-sync-chaos persona and the canonical round-one report. Round 1 had no blockers to re-test. The only carried finding is SC-R1-I1; its current contract/warning/backlog disposition was checked without rerunning the historical-writer probe.",
+    "Clean primary checkout at ac0c255 and Node v24.21.0. owner:list and milestone:status retain D3 AWAITING_OWNER, D4 IN_PROGRESS and D4-PHONE-TRANSFER NEEDS_SETUP. ci:status could not fetch here; no green exact CI was inferred.",
+    "Read the current D4 predicate, 0.4 local-only scope and Technical Decisions startup/lifecycle contract. The 193a250..ac0c255 application delta is confined to engineModuleCompiler.ts and its new producer tests; broker, cache promise sharing, deadlines, termination, SDK/VFS, database/schema, write guard and course generation are unchanged.",
+    "Inspected the new producer: validate the same-origin request, perform one fetch, require HTTP ok and exact ASCII case-insensitive application/wasm MIME with HTTP whitespace trimming, await the complete ArrayBuffer, then construct one immutable WebAssembly.Module inside the existing code-only worker. Fetch/body/constructor exceptions retain the existing error reply. No WebAssembly.Instance, database, backend, extra retry or warm-up is added.",
+    "Independent targeted verification: npx vitest run src/persistence/engineModuleCompiler.test.ts src/persistence/engineModuleBroker.test.ts --maxWorkers=1; 2 files, 20 tests PASS. Includes concurrent opens sharing compilation, fresh SDK worker ownership, one failed consumer preserving the surviving compilation, compile failures, timeout termination/retry, response rejection and malformed diagnostic metadata.",
+    "Six independent production-mode producer probes PASS in Node VM with real WebAssembly.Module and synthetic minimal WASM: exactly one immutable module with no Instance or diagnostic clock reads; fetch interruption reported once without retry; body interruption before compilation; unresolved body unable to construct or announce a module; failed HTTP status rejected before body access; non-ASCII MIME lookalike rejected. Source was TypeScript-transpiled with DEV=false. Initial scratch assertions incorrectly assumed same-realm object/error prototypes; only that probe harness was corrected. Scratch script/results are OS temporary cvc-d4-sync-review-round2-producer.mjs and cvc-d4-sync-review-round2-producer-results.json.",
+    "Inspected .evidence/D4/ci-worker-compile-probe.json as diagnostic evidence only: four fresh macOS jobs, 32 original D1 cases PASS without retries; worker-sync opens 1118/1394 ms and streaming opens 1313/4789 ms; 609 rows, 40 injected students, 520 evaluations and identical reopening retained. This comparison does not establish a causal fix or replace exact canonical CI.",
+    "Confirmed SC-R1-I1 remains explicitly documented at 03_TECHNICAL_DECISIONS.md:264, CourseFiles.tsx:358 and docs/working/BACKLOG.md:201. The compiler-only change does not alter that contract or its limitation."
   ],
   "anglesTried": {
     "seed": 893514550,
+    "scope": "Restricted round 2: previous disposition, compiler fix diff and direct startup/error regressions only; no new draw or new whole-milestone hunt.",
     "lenses": [
-      "11. Network flapping during first sync, adapted to the approved local-only scope: interrupted opening/replacement/reset, generation rollback, cleanup failure and retry, and actual database deletion rather than a successful-looking notification.",
-      "2. One device deletes what the other edits, adapted to same-origin tabs sharing one local course: queued callbacks, course erasure, reset, missed broadcasts, compatible older writers and surviving database clients."
+      "Retained round-one lens 11, adapted to local-only behavior: rechecked fetch/body interruption and compiler error handling only.",
+      "Retained round-one lens 2: rechecked unchanged shared-producer ownership, consumer-failure isolation and timeout cleanup; no repeat of the broader tab/reset hunt."
     ],
-    "wildcard": "Same-ID ABA course replacement while an old callback or historical compatible writer remains alive, combined with final-file VFS closure that must release the erased database without closing a different active client."
+    "wildcard": "No new wildcard. The round-one same-ID legacy-writer boundary is carried forward unchanged; this follow-up only checks whether the new compiler producer disturbs the existing startup/lifecycle contract."
   },
   "notTested": [
-    "Final checkpoint binding used source/diff inspection only as requested; no additional unit or browser run was started while the field reviewer owned the browser slot. Exact 193a250 CI and the final evidence recorder remain pending.",
-    "Actual Android/iOS share-sheet delivery, installed-device import, persistence permission and physical reset isolation remain required owner checks. No physical-device PASS was inferred.",
-    "The historical-writer reproduction used the exact D3 guard with the current pinned engine/schema, not the complete published D3 application. Independent current-browser checks were desktop Chromium; mobile/WebKit evidence was inspected rather than independently rerun in this review.",
-    "A second optional unit batch for writeGuard/migrations/courses/source guards stalled after Vitest RUN without assertion results and was cancelled to return an uncontended browser slot. It is not counted as PASS or FAIL.",
-    "Backend sync, uploads, server convergence, reconnect ordering and production services are outside the explicitly local-only 0.4 scope and were neither introduced nor accessed. Clock skew does not order the integer course generation."
-  ],
-  "baselineCommit": "be1fa27df7db183645cfe8b7f0a58743685ea977"
+    "No browser or heavy verification suite was run: root owned the browser/recorder slot. The independent producer probe is a Node VM check with synthetic minimal WASM, not a browser or actual SQLite compilation benchmark.",
+    "Exact normal CI and the final recorder remain acceptance gates; root-supplied quick/domain/build and four-job Mac diagnostics were not treated as independent acceptance proof.",
+    "Actual Android/iOS installed-app transfer, persistence and reset checks remain with the owner. No physical-device PASS, publication or deployment occurred; the D3 phone pin was not changed.",
+    "The full historical D3 application and the old-guard overwrite reproduction were not rerun. SC-R1-I1 retains its round-one evidence and documented non-blocking disposition.",
+    "Backend synchronization, upload queues, server convergence and production services are outside the explicitly local-only 0.4 scope and were not accessed."
+  ]
 }

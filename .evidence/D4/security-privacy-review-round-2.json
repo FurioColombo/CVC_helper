@@ -1,0 +1,37 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "D4",
+  "round": 2,
+  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "Retained .evidence/D4/security-privacy-review-round-1.json (PASS, no blockers) and read the exact be1fa27df7db183645cfe8b7f0a58743685ea977..193a2506c7770bb11ee7f128ce2686b1d1e8b1a4 fix diff. No new whole-milestone hunt or entropy draw.",
+    "courseArchiveFormat rejects NUL, unpaired surrogates and leading BOM in IDs and TEXT columns while retaining paired Unicode, embedded BOM and ordinary markup. Existing generic CourseArchiveError messages remain unchanged.",
+    "Independent Node v24.21.0 focused run: 44 tests passed across courseArchiveFormat, engineModuleBroker and CourseFiles.",
+    "Two independent restricted probes passed in test-results/d4-security-review-r2: eight lossy ID/text mutations reject before database.init or any write transaction, leave rows unchanged and reveal no synthetic sentinel; supported Unicode and hostile-looking markup remain exact bound text.",
+    "Read DEV-only compiler/broker phase timestamp changes, finite-value validation, bounded existing diagnostic collection and unchanged same-origin asset checks. No course fields, roster values, credentials, network destination or database state were added to compiler messages.",
+    "Independently scanned all 24 JavaScript files in the existing production dist output: none contained any of the 13 new phase timestamp keys. No additional build or browser was run.",
+    "Read failure-only browser diagnostics in d4-course-files.spec.ts: attachments collect the synthetic source/fresh-recipient pages, startup events, locks and compilation resources only after the existing readiness assertion fails. They do not alter readiness limits or send app data to an added endpoint.",
+    "Read reset text wrapping, fresh-import label, explicit old-tab warning and related tests. Confirmation and reset cleanup semantics remain unchanged.",
+    "Rechecked U02 fixture changes: real course creation adopts the current session; the deliberately foreign course is inactive; visible readiness precedes setup.",
+    "Confirmed HEAD 193a250; other reviewers' untracked evidence was left untouched. Startup owner/milestone commands retain D3 AWAITING_OWNER and D4 IN_PROGRESS. Local ci:status fetch failed; root reported exact CI 39078243541 in progress, with no PASS inferred."
+  ],
+  "anglesTried": {
+    "seed": 142837471,
+    "lenses": [
+      "Restricted follow-up only: prior security/privacy review had no blockers. Rechecked the lossy-string fix and direct privacy regressions in diagnostic, fixture and UI changes.",
+      "Retained R1 invitation/revocation and data-minimisation context; verified that the old-tab limitation is now explicit and diagnostics introduce no roster fields or new external destination."
+    ],
+    "wildcard": "No new wildcard drawn. Reused only the relevant hostile-archive boundary from R1 to test Unicode rejection before initialization/writes and safe error handling."
+  },
+  "notTested": [
+    "No browser run or heavy suite; the field reviewer owned the browser slot. UI changes were inspected and focused component tests passed.",
+    "The independent Unicode import probes use the existing real node:sqlite test adapter. The separate data-integrity reviewer owns confirmation against the pinned WA-SQLite driver and closure of DI-1.",
+    "Production output was inspected in place rather than rebuilt independently.",
+    "Exact green CI, final milestone recorder and physical-device sharing/import/reset acceptance remain pending. This security/privacy PASS does not complete D4 or override other review results."
+  ]
+}

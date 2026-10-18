@@ -1,17 +1,17 @@
 {
   "milestone": "D4",
-  "commit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
-  "sourceDigest": "9c8b1eaa480ff79ea668d68cd2f730f217cc7ad3639645b5e66a1850bcc715b0",
+  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
+  "sourceDigest": "c77a3ae092adc9c338a60f3aa1729e84f8808d2a34f8b00fb716cc664679c071",
   "nodeVersion": "v24.21.0",
   "status": "PASS",
-  "qualification": "Passing local agent browser evidence for193a250. Exact Mac CI fails the cold-open gate; this evidence does not waive that failure or establish physical-device acceptance.",
+  "qualification": "Recorded agent browser evidence only. Exact Mac CI and required owner acceptance remain separate gates; no physical-device PASS.",
   "verification": "verification.json",
   "suite": {
     "passed": 99,
     "originalSkips": 1,
     "failures": 0,
     "flaky": 0,
-    "durationMs": 1218045,
+    "durationMs": 1164797,
     "cases": 100
   },
   "projectResults": [
@@ -82,15 +82,15 @@
   ],
   "productionIsolation": "test-isolation.json",
   "coldOpenWindowsWebKit": {
-    "upgradeMs": 1772,
-    "reopenMs": 840,
+    "upgradeMs": 1714,
+    "reopenMs": 820,
     "priorModuleEvents": 0,
-    "compilerRoundTripMs": 69,
-    "workerBootstrapMs": 23,
-    "compileStreamingIntervalMs": 43,
-    "responseHeadersMs": 3,
-    "moduleReturnMs": 1,
-    "qualification": "Diagnostic intervals include scheduling/stream consumption; this Windows result is not proof of the Mac failure cause. Original 5000ms bounds and cold-evidence checks unchanged."
+    "compilerRoundTripMs": 58,
+    "workerBootstrapMs": 20,
+    "compileApiIntervalMs": 21,
+    "responseHeadersMs": 4,
+    "moduleReturnMs": 0,
+    "qualification": "Buffered synchronous compilation runs in the short-lived code-only worker; the API interval excludes response buffering. Compiler round trip and full open include it. This Windows result does not establish the Mac failure cause. Original 5000ms bounds and cold-evidence checks unchanged."
   },
   "reviews": [
     "data-integrity-review.json",
@@ -101,9 +101,10 @@
   "knownLimitations": [
     "Pre-D4 compatible writers cannot observe generation; close other old app tabs before import. See SC-R1-I1, Technical Decisions and the visible instruction.",
     "Earlier fresh-recipient Windows WebKit opening failures are preserved in development-checks.json and BACKLOG. The complete checkpoint suite passed first attempt; no causal fix is claimed.",
-    "Mac CI39078243541 fails only D1 cold-open timing on all three attempts; see ci-checkpoint-193a250.json. A changed compilation-path probe is required before D4 can hand over.",
+    "Historical Mac failures are preserved at be1fa27 and 193a250; exact ac0c255 full CI still fails native compilation. See ci-checkpoint-ac0c255.json.",
     "Actual share receiving-app behavior, persistence permission and installed Android acceptance belong to the owner."
   ],
-  "rawProof": "OS temporary cvc-d4-193a250-recorder-proof: full browser report, empty flaky list, and large-upgrade JSON. Additional review probes remain at the locations in their reports.",
-  "d3EvidenceIntact": 9
+  "rawProof": "OS temporary cvc-d4-ac0c255-recorder-proof: full browser report, empty flaky list, and large-upgrade JSON. Additional review probes remain at the locations in their reports.",
+  "d3EvidenceIntact": 9,
+  "ciQualification": "Exact full Mac CI fails at ac0c255; see ci-checkpoint-ac0c255.json. Local PASS does not permit owner handoff."
 }
