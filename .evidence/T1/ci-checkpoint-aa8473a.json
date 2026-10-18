@@ -1,0 +1,213 @@
+{
+  "milestone": "T1",
+  "status": "FAIL_COLD_UPGRADE_BOUND_NOT_ACCEPTANCE",
+  "recordedAt": "2026-10-18T19:43:57.336Z",
+  "checkpoint": "aa8473a7abf97166dae8c301d482a4011a3fae84",
+  "run": 39156098193,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39156098193",
+  "jobs": [
+    {
+      "id": 117759522392,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-10-18T18:51:52Z",
+      "completedAt": "2026-10-18T19:35:24Z",
+      "currentSteps": [
+        {
+          "name": "Complete deterministic suite, including all browser projects",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "rawLog": "OS temporary cvc-t1-ci-39156098193/job-117759522392.log",
+      "sha256": "8851844d081bf7043b65382cbf3089899cf9a278c612ef4bef5a9ad66fd014a8",
+      "browserSummary": [
+        "2026-10-18T19:35:13.9140700Z   1 failed",
+        "2026-10-18T19:35:13.9153230Z   65 skipped",
+        "2026-10-18T19:35:13.9154240Z   290 passed (37.8m)",
+        "2026-10-18T19:35:13.9178990Z ##[notice]  1 failed",
+        "  65 skipped",
+        "  290 passed (37.8m)"
+      ]
+    },
+    {
+      "id": 117759522537,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T18:51:43Z",
+      "completedAt": "2026-10-18T19:11:50Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39156098193/job-117759522537.log",
+      "sha256": "11fd7f284c2f0543d982eaf7342ba1edf60f26f14dc4651a674b1f0c2218a524",
+      "browserSummary": [
+        "2026-10-18T19:11:45.6838080Z   47 skipped",
+        "2026-10-18T19:11:45.6838381Z   219 passed (18.0m)",
+        "2026-10-18T19:11:45.6863094Z ##[notice]  47 skipped",
+        "  219 passed (18.0m)"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12148545757,
+      "name": "e2e-report-macos-15-39156098193",
+      "sha256": "28624c8f1706bc12113306efce43ff2d19eede869746368c089b62290f3d76c9",
+      "rawZip": "OS temporary cvc-t1-ci-39156098193/12148545757.zip"
+    },
+    {
+      "id": 12148035366,
+      "name": "e2e-flaky-ubuntu-latest-39156098193",
+      "sha256": "766d37238ccd4f8feaaac2a83930faf3e70ad7cdedfb9eac2f52615f6c58c24f",
+      "rawZip": "OS temporary cvc-t1-ci-39156098193/12148035366.zip"
+    },
+    {
+      "id": 12147844149,
+      "name": "e2e-flaky-macos-15-39156098193",
+      "sha256": "70d9b84c98ab4dce71f5b439264139cfd0fe05c6a31b145418bf1478f9403894",
+      "rawZip": "OS temporary cvc-t1-ci-39156098193/12147844149.zip"
+    },
+    {
+      "id": 12147811370,
+      "name": "e2e-report-ubuntu-latest-39156098193",
+      "sha256": "54867d4f7620ad203fbf70f6607366b6fd75095ccf76a2d5dd57da898abaa183",
+      "rawZip": "OS temporary cvc-t1-ci-39156098193/12147811370.zip"
+    }
+  ],
+  "flakyLists": {
+    "mac": [],
+    "linux": []
+  },
+  "failure": {
+    "file": "d1-migration.spec.ts",
+    "title": "upgrades and reopens a 40-student course within five seconds each",
+    "project": "iphone-13-webkit-core",
+    "upgradeMilliseconds": [
+      6936,
+      5849,
+      6943
+    ],
+    "boundMilliseconds": 5000,
+    "lastMigrationAnnotation": [
+      {
+        "type": "migration",
+        "description": "609/609 rows (expected 609); upgrade 6943 ms (create 2, adapter init 6441, SDK ready after adapter 89, total init 6530, prepare 411); reopen 313 ms (create 1, adapter init 149, SDK ready after adapter 51, total init 200, prepare 112); injected students 40/40 of 40, evaluations 520/520 of 520; read/close outside bound 168/3 ms and 259/14 ms"
+      }
+    ],
+    "qualification": "All three configured attempts fail the unchanged upgrade bound; row/invariant/equality assertions before that bound pass. The final annotation retains 609 identical rows, 40 students, 520 evaluations and a 313 ms reopen. This is a failure, not a flaky PASS."
+  },
+  "profiling": [
+    {
+      "platform": "linux",
+      "stats": {
+        "startTime": "2026-10-18T18:53:44.950Z",
+        "duration": 1080732.599,
+        "expected": 219,
+        "skipped": 47,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "topFiles": [
+        {
+          "file": "full-week.spec.ts",
+          "durationMs": 104082,
+          "cases": 1
+        },
+        {
+          "file": "ug2-field-ux-fixes.spec.ts",
+          "durationMs": 82946,
+          "cases": 20
+        },
+        {
+          "file": "d3-startup-recovery.spec.ts",
+          "durationMs": 79899,
+          "cases": 7
+        },
+        {
+          "file": "ug2-hostile-roster.spec.ts",
+          "durationMs": 63559,
+          "cases": 26
+        },
+        {
+          "file": "u05-boats-ui.spec.ts",
+          "durationMs": 54043,
+          "cases": 24
+        },
+        {
+          "file": "f3-crew-summary.spec.ts",
+          "durationMs": 53151,
+          "cases": 22
+        },
+        {
+          "file": "d4-course-files.spec.ts",
+          "durationMs": 51740,
+          "cases": 12
+        },
+        {
+          "file": "u10-evaluations.spec.ts",
+          "durationMs": 36607,
+          "cases": 6
+        }
+      ],
+      "raw": "OS temporary cvc-t1-ci-39156098193/linux-profile.json",
+      "sha256": "30deb683e05cffcd20faf2e4775ddf44982b047b4c6c0ed019a8910715fa0bea"
+    },
+    {
+      "platform": "mac",
+      "stats": {
+        "startTime": "2026-10-18T18:57:24.794Z",
+        "duration": 2269090.123,
+        "expected": 290,
+        "skipped": 65,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "topFiles": [
+        {
+          "file": "d3-startup-recovery.spec.ts",
+          "durationMs": 199966,
+          "cases": 14
+        },
+        {
+          "file": "d1-migration.spec.ts",
+          "durationMs": 197511,
+          "cases": 18
+        },
+        {
+          "file": "d4-course-files.spec.ts",
+          "durationMs": 155525,
+          "cases": 16
+        },
+        {
+          "file": "d2-duty-items.spec.ts",
+          "durationMs": 140899,
+          "cases": 14
+        },
+        {
+          "file": "ug2-hostile-roster.spec.ts",
+          "durationMs": 115775,
+          "cases": 39
+        },
+        {
+          "file": "f3-crew-summary.spec.ts",
+          "durationMs": 102353,
+          "cases": 33
+        },
+        {
+          "file": "full-week.spec.ts",
+          "durationMs": 101547,
+          "cases": 1
+        },
+        {
+          "file": "ug2-field-ux-fixes.spec.ts",
+          "durationMs": 82482,
+          "cases": 20
+        }
+      ],
+      "raw": "OS temporary cvc-t1-ci-39156098193/mac-profile.json",
+      "sha256": "b8dfc293a8082a1e443ebb0c9d75e823074740921d4852032c5ce85c5224f7f2"
+    }
+  ],
+  "qualification": "First typed-fixture/report-retention checkpoint only; excludes later bootstrap, fixture moves, logo fix and E1 wait. Both platforms preserve original assertions/projects/skips/retries. Raw passing and failing reports are retained. Cross-platform totals are not the required same-idle-machine H1/T1 comparison; captured D3/D4 readiness proofs and live phone build are unchanged."
+}

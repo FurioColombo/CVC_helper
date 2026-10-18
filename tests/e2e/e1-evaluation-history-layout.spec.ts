@@ -362,6 +362,9 @@ test("opens the selected student session and keeps the Valutazioni note editor u
   await expect(
     page.getByRole("button", { name: "Modifica nota valutazione di Aldo" }),
   ).toBeVisible()
+  // The row label updates before the async save closes the editor. Leaving
+  // then would hit the note guard instead of opening the student list.
+  await expect(note).toHaveCount(0)
   await page
     .getByRole("navigation", { name: "Navigazione principale" })
     .getByRole("button", { name: "Home", exact: true })

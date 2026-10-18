@@ -1,0 +1,64 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_FIX_PASS_MILESTONE_IN_PROGRESS",
+  "recordedAt": "2026-10-18T19:43:57.187Z",
+  "nodeVersion": "v24.21.0",
+  "parentCheckpoint": "dba5b52",
+  "source": {
+    "digest": "2457d3b045f65299028898a1dee7c0f04e070c162be0ba918ad2117336516534",
+    "files": 439
+  },
+  "file": "tests/e2e/e1-evaluation-history-layout.spec.ts",
+  "fileSha256": "4885a81bb57a1e2a8ab890fbe2863c016db856cebb45d85f4d674f944f3b557d",
+  "change": "Wait for the note textbox to disappear after saving, before Home. The optimistically updated Modifica label does not prove the async editor has closed. Existing geometry, note-content and exact-session history assertions remain.",
+  "historicalFailure": {
+    "run": 38522538304,
+    "artifact": 11876317041,
+    "location": "e1-evaluation-history-layout.spec.ts:370",
+    "cause": "Home was clicked while the note editor remained open; the note-first leave guard held it. The next generic Allievi click hit the evaluation view; the expected student profile was never opened.",
+    "raw": "OS temporary cvc-t1-e1-original-failure-analysis.json",
+    "sha256": "c9e6fe9ec1fea969af6e36531d7fcf26e44b1bf34156aa7d64382413090da6b1",
+    "rootInspected": "Retained failure screenshot still shows Valutazioni and Aldo; current note-first guard and optimistic label inspected. The full trace analysis is retained in the temporary report."
+  },
+  "controlled": {
+    "status": "PASS",
+    "stats": {
+      "startTime": "2026-10-18T19:36:39.018Z",
+      "duration": 10098.368999999999,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "method": "An ignored copy of the original journey holds the next real writeTransaction before commit, as the existing D4 barrier does. It proves Modifica and the textbox coexist, clicks Home and observes the real note guard, releases the original transaction, then the new textbox-close wait and original history journey pass. No saved result is fabricated.",
+    "raw": "OS temporary cvc-t1-e1-controlled-proof/probe/test-results/e2e-report.json",
+    "sha256": "c96870a43781b22591710ca7deae6061c061bd6923da5e964de2bd28119f38e4",
+    "probe": "OS temporary cvc-t1-e1-controlled-proof/probe/e1-delayed.probe.spec.ts",
+    "probeSha256": "3f3d1dd9f72e9b617fa58e593f27c6bc9cdf641ed1846053ca15583292023fb2",
+    "qualification": "Controlled diagnostic under the same Pixel device descriptor; not additional canonical coverage or physical-device evidence. The reporter wrote alongside its temporary config; the canonical runner flaky file alone was not used as proof."
+  },
+  "originalJourney": {
+    "status": "PASS",
+    "stats": {
+      "startTime": "2026-10-18T19:37:27.499Z",
+      "duration": 10112.692,
+      "expected": 1,
+      "skipped": 1,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "raw": "OS temporary cvc-t1-e1-browser-proof/e2e-report.json",
+    "sha256": "0d22a8b6a844f4c499d201bc5fb298b63d14e07cee76bf019779079da8f4eb65",
+    "command": "npm run verify:e2e -- tests/e2e/e1-evaluation-history-layout.spec.ts --grep \"opens the selected student session\" --retries=0"
+  },
+  "quick": {
+    "status": "PASS",
+    "files": 89,
+    "tests": 1440,
+    "raw": "OS temporary cvc-t1-e1-quick.log",
+    "sha256": "853fc539ace2fa5573d854eeb006e52c44d2404b2ae613cf0deccb23cde4df1f"
+  },
+  "limitations": "No timing improvement or T1 completion is claimed. The known Mac cold-upgrade bound still blocks canonical CI. D3/D4 phone checks and test-site pin remain unchanged."
+}
