@@ -1,0 +1,91 @@
+{
+  "task": "T1 read-only browser-cost inventory",
+  "inspectedAtWorkspaceHead": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
+  "runs": [
+    {
+      "runId": "39111591566",
+      "jobId": "117628711357",
+      "platform": "macOS 15 arm64",
+      "log": "OS temporary cvc-d4-ci-39111591566/cvc-d4-ci-117628711357.log",
+      "projects": "All four Playwright projects via default verify:e2e config",
+      "testCount": 356,
+      "passed": 291,
+      "skipped": 65,
+      "flaky": 0,
+      "playwrightDuration": "35.3m",
+      "runningLogTimestamp": "2026-10-18T08:33:52.0310690Z",
+      "finalSummaryTimestamp": "2026-10-18T09:09:06.0057660Z",
+      "logTimestampIntervalMilliseconds": 2113975
+    },
+    {
+      "runId": "39111591566",
+      "jobId": "117628711526",
+      "platform": "Ubuntu 24.04",
+      "log": "OS temporary cvc-d4-ci-39111591566/cvc-d4-ci-117628711526.log",
+      "projects": "Three explicit Chromium projects: pixel-7-chrome, iphone-13-viewport, desktop-chrome-storage",
+      "testCount": 266,
+      "passed": 219,
+      "skipped": 47,
+      "flaky": 0,
+      "playwrightDuration": "17.8m",
+      "runningLogTimestamp": "2026-10-18T08:30:56.8326403Z",
+      "finalSummaryTimestamp": "2026-10-18T08:48:44.8199466Z",
+      "logTimestampIntervalMilliseconds": 1067987
+    }
+  ],
+  "durationMethod": "Read Playwright Running N tests using 1 worker and final passed (Xm) lines; separately subtracted their UTC log timestamps. The timestamp intervals are exact to log precision; the displayed Playwright durations are rounded to 0.1 minute.",
+  "unavailable": [
+    "Per-case and per-project durations: these CI logs use the GitHub reporter, which outputs batched pass/skip dots without case names, spec names, project boundaries, or durations.",
+    "The 90-case Mac/Linux difference is consistent with Mac running the fourth WebKit project; it is not a timing comparison because the runners and project sets differ."
+  ],
+  "sourceCostAssessment": [
+    {
+      "spec": "tests/e2e/full-week.spec.ts",
+      "recommendation": "Keep as the end-to-end anchor. The visible operations and persistence checks are the behavior under test, so no safe fixture substitution is established from source.",
+      "assertionsToRetain": [
+        "visible week state and day assignments",
+        "boat fault and availability behavior",
+        "crew and duty outcomes",
+        "persisted rows and reopened course identity"
+      ]
+    },
+    {
+      "spec": "tests/e2e/ug2-hostile-roster.spec.ts",
+      "recommendation": "Use a typed per-test hostile-course seed to replace only the repeated onboarding wizard/bootstrap; retain fresh isolated state, one required hydration reload, all page navigation, every viewport audit and existing project skips.",
+      "assertionsToRetain": [
+        "fixture roster truth and DOB boundary checks",
+        "name disambiguation and minor labels",
+        "overlap/clipping/sideways-scroll audits at all profiles",
+        "Tuesday crew assignment and summary copy assertions"
+      ]
+    },
+    {
+      "spec": "tests/e2e/ug2-field-ux-fixes.spec.ts",
+      "recommendation": "Share typed per-test starting fixtures and bypass only unasserted course onboarding; keep actual Back and paste/save UI actions and all profile loops.",
+      "assertionsToRetain": [
+        "all-name visibility and contrast at tested sizes",
+        "focus-ring contrast",
+        "Back returns to crew composition",
+        "paste row/field labeling and refused-save alert"
+      ]
+    },
+    {
+      "spec": "tests/e2e/f3-crew-summary.spec.ts",
+      "recommendation": "Use typed per-test summary fixtures to remove only the repeated course wizard/setup; retain UI navigation/open-read-view, each original test and project skip, screenshot/image comparison, clipboard, logo/icon, offline and viewport assertions.",
+      "assertionsToRetain": [
+        "all model groups and the existing all-students-assigned closing-note rules",
+        "faithful screenshot plus rejection of blank/6px-shift/grayscale images",
+        "clipboard image and status-note expiry",
+        "logos/icons online and offline",
+        "double-name/no-boat/badge layout at 390, 320 and 320 at 200%"
+      ]
+    }
+  ],
+  "limitations": [
+    "Source structure identifies repeated setup but does not establish which spec or project consumed the most time.",
+    "The current local Playwright report was not used as a substitute for the requested D4 CI logs.",
+    "Do not claim a speed gain from cross-platform CI totals. Final speed comparison still requires original final H1a25eba1 and final T1, back to back on the same idle Windows PC with one worker.",
+    "This inventory is not a test run, entropy draw, review verdict, or physical-device evidence; permanent phone test 040 remains pinned at 761530f."
+  ],
+  "scope": "Source-based opportunities only; structural test-count estimates omitted. The 356-case canonical project expansion is recorded in start-baseline.json; use that inventory for preservation checks."
+}

@@ -1,0 +1,66 @@
+{
+  "milestone": "T1",
+  "status": "START_BASELINE_VERIFIED_IMPLEMENTATION_IN_PROGRESS",
+  "recordedAt": "2026-10-18T18:31:10.353Z",
+  "checkpoint": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
+  "nodeVersion": "v24.21.0",
+  "baseline": "Verified D4 source 39b26907: 1,439 unit tests, 108 focused browser cases, one original skip and zero flakes; production reset isolation passes on both engines. Exact canonical CI 39111591566 passes full Mac/Linux coverage with empty flaky artifacts. Metadata CI 39154067008 passes and inherits that browser source. Source is unchanged at T1 start.",
+  "predecessors": [
+    {
+      "id": "D3",
+      "checkpoint": "761530f820908db8355e1bcdd661bc8c6f495385",
+      "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+      "evidenceHashesVerified": 9,
+      "ciRun": 38857263745
+    },
+    {
+      "id": "D4",
+      "checkpoint": "fde1fe14787333536fb250ef2357793be3870be8",
+      "sourceDigest": "39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc",
+      "evidenceHashesVerified": 9,
+      "ciRun": 39111591566
+    }
+  ],
+  "inventory": {
+    "cases": 356,
+    "byProject": [
+      {
+        "project": "pixel-7-chrome",
+        "cases": 166,
+        "titleDigest": "39bd7e14640b52748ff64b1521b8aaedad44b9c16f95e7abf3eab22bb161689e"
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "cases": 90,
+        "titleDigest": "645b29de0f25a3f0406ffd359d04526787c9ed91c41c81e8444ff4813771f82e"
+      },
+      {
+        "project": "iphone-13-viewport",
+        "cases": 92,
+        "titleDigest": "a06cd298c37b6e163aae2bb2803f3ac7908e1b33de8879ca54efb05afdfe4af9"
+      },
+      {
+        "project": "desktop-chrome-storage",
+        "cases": 8,
+        "titleDigest": "b555cea110d81a48ca9de766396a45f92a3d3e56bb52f412f2d21d2b921ecfc5"
+      }
+    ],
+    "raw": "OS temporary cvc-t1-coverage-before.json",
+    "rawSha256": "9cda9e08366c9ceca8a7ecafd40d5575f8fcfc5af27219f83f40b3773e89711a",
+    "qualification": "Test list only; original project expansions include their existing conditional skips. This is a coverage baseline, not a browser or timing PASS."
+  },
+  "timing": {
+    "baselineRef": "a25eba1fa0f2346a0c9cb2d251e1f98bf2d15d1b",
+    "baselineReason": "Completed H1 harness; its recorded verification started at an earlier dirty checkpoint, so use its final committed implementation for reproducibility.",
+    "method": "Measure the unchanged final H1 suite and final T1 suite back to back on this same idle machine, one worker, retaining assertions and current project coverage. Historical41minutes is context only; no current speed claim.",
+    "baselineWorktree": "attached managed t1-h1-baseline worktree, separate from other agents’ harness work",
+    "dependencyFidelity": "H1 and the current checkout use the identical package-lock.json; the isolated H1 install succeeds under Node v24.21.0. No dependency or browser update is included in the comparison."
+  },
+  "publication": {
+    "changed": false,
+    "D3": "0.4.0 remains pinned at761530f; ownerInstalled:null",
+    "D4Phone": "NEEDS_SETUP until D3 phone sequence is resolved",
+    "physicalPass": false
+  },
+  "preservedUnfinishedWork": "Five unpublished native-stack diagnostic files in owned d4-worker-compile-probe worktree at50603a2 are retained. Their syntax/config/selfchecks pass; real Mac ps/sample permissions remain unverified. They are not accepted as diagnostic evidence until a deliberate run."
+}

@@ -136,7 +136,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is`
   — Mac CI 39103308907: Bea’s input timed out, then passed on retry.
   D4 typed/dictated draft fixes pass independent reviews and seven browser cases.
-  See `.evidence/D4/note-dictation-revision.json`; final recorder and CI still required.
+  See `.evidence/D4/note-dictation-revision.json`; final recorder and exact CI pass.
 
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,

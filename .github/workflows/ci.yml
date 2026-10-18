@@ -82,6 +82,15 @@ jobs:
           npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport --project=desktop-chrome-storage
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser == 'false'
         run: npm run verify
+      # Keep per-case timings and project coverage even when every test passes.
+      - name: Keep browser timing and coverage report
+        if: always() && steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-${{ matrix.os }}-${{ github.run_id }}
+          path: test-results/e2e-report.json
+          retention-days: 14
+          if-no-files-found: ignore
       # Tests that passed only on a retry: kept even when the run is green.
       - if: always() && steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false'
         uses: actions/upload-artifact@v4

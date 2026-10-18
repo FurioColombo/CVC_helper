@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test"
+import type { DutyDayId } from "@/domain/config"
 
 /**
  * UG2's hostile fictitious roster: a D2 course of 40 students (plus five
@@ -382,7 +383,7 @@ export const HOSTILE_VOLUNTEERS = [
 
 /** The session whose crews are composed: Tuesday PM, where Monday's duty
  *  students are "smontanti" (SM) and Tuesday's are "in comandata" (C). */
-export const HOSTILE_SESSION = "tue-pm"
+export const HOSTILE_SESSION = "tue-pm" as const
 
 type CrewSpec = {
   boat: string | "mezzi" | "none"
@@ -429,7 +430,7 @@ export const HOSTILE_LAND = [27, 28, 29, 30, 31, 32, 33, 34]
 export const HOSTILE_AVAILABLE = [35, 36, 37, 38, 39, 40]
 
 /** Duty days: 38 students on duty, the two "Anna Maria" off. */
-export const HOSTILE_DUTIES: Record<string, number[]> = {
+export const HOSTILE_DUTIES = {
   saturday: [1, 2, 3, 4, 5],
   sunday: [11, 12, 13, 14, 15, 16],
   monday: [17, 18, 19, 20, 21, 22, 23],
@@ -437,7 +438,7 @@ export const HOSTILE_DUTIES: Record<string, number[]> = {
   wednesday: [29, 30, 31, 32, 33],
   thursday: [34, 35, 36, 37, 38],
   friday: [39, 40, 6, 7, 8],
-}
+} satisfies Record<DutyDayId, number[]>
 
 export function summarizeHostileRoster() {
   const count = (tag: string) =>
@@ -530,62 +531,16 @@ export async function seedHostileRoster(page: Page) {
       sessionId,
       birthDates,
     }) => {
-      const courseModulePath = "/src/persistence/courses.ts"
-      const studentsModulePath = "/src/persistence/students.ts"
-      const volunteersModulePath = "/src/persistence/volunteers.ts"
-      const boatsModulePath = "/src/persistence/boats.ts"
-      const crewsModulePath = "/src/persistence/crews.ts"
-      const dutiesModulePath = "/src/persistence/duties.ts"
-      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-        getActiveCourse: () => Promise<{
-          id: string
-          startDate: string
-          family: string
-          level: number
-        } | null>
-      }
-      const studentApi = (await import(
-        /* @vite-ignore */ studentsModulePath
-      )) as {
-        createStudents: (
-          courseId: string,
-          entries: Array<Record<string, unknown>>,
-        ) => Promise<Array<{ id: string }>>
-      }
-      const volunteerApi = (await import(
-        /* @vite-ignore */ volunteersModulePath
-      )) as {
-        createVolunteer: (
-          courseId: string,
-          input: { name: string; role: string },
-        ) => Promise<{ id: string }>
-      }
-      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
-        createBoats: (
-          courseId: string,
-          inputs: Array<{ type: string; number: string }>,
-        ) => Promise<Array<{ id: string; type: string; number: string }>>
-        setBoatAvailability: (
-          boatId: string,
-          courseId: string,
-          availability: string,
-        ) => Promise<void>
-        createFault: (boatId: string, description: string) => Promise<unknown>
-      }
-      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
-        saveCrewPlan: (
-          courseId: string,
-          sessionId: string,
-          plan: Record<string, unknown>,
-        ) => Promise<unknown>
-      }
-      const dutyApi = (await import(/* @vite-ignore */ dutiesModulePath)) as {
-        saveDutyPlan: (
-          courseId: string,
-          assignments: Array<{ dayId: string; studentId: string }>,
-          settings: Record<string, unknown>,
-        ) => Promise<unknown>
-      }
+      const seedModulePath = "/tests/e2e/seed.ts"
+      const seedApi = (await import(
+        /* @vite-ignore */ seedModulePath
+      )) as typeof import("./seed")
+      const courseApi = await seedApi.loadCourses()
+      const studentApi = await seedApi.loadStudents()
+      const volunteerApi = await seedApi.loadVolunteers()
+      const boatApi = await seedApi.loadBoats()
+      const crewApi = await seedApi.loadCrews()
+      const dutyApi = await seedApi.loadDuties()
 
       const course = await courseApi.getActiveCourse()
       if (!course || course.family !== "Deriva" || course.level !== 2) {
@@ -643,16 +598,22 @@ export async function seedHostileRoster(page: Page) {
           sessionId,
           members: crew.members.map((member) =>
             typeof member === "number"
-              ? { personId: studentId(member), personType: "student" }
-              : { personId: volunteerId(member), personType: "volunteer" },
+              ? {
+                  personId: studentId(member),
+                  personType: "student" as const,
+                }
+              : {
+                  personId: volunteerId(member),
+                  personType: "volunteer" as const,
+                },
           ),
           capacity: 2,
           destination:
             crew.boat === "mezzi"
-              ? "mezzi"
+              ? ("mezzi" as const)
               : crew.boat === "none"
-                ? "unassigned"
-                : "boat",
+                ? ("unassigned" as const)
+                : ("boat" as const),
           boatId:
             crew.boat === "mezzi" || crew.boat === "none"
               ? null
@@ -666,7 +627,10 @@ export async function seedHostileRoster(page: Page) {
       await dutyApi.saveDutyPlan(
         course.id,
         Object.entries(duties).flatMap(([dayId, numbers]) =>
-          numbers.map((number) => ({ dayId, studentId: studentId(number) })),
+          numbers.map((number) => ({
+            dayId: dayId as DutyDayId,
+            studentId: studentId(number),
+          })),
         ),
         {
           desiredPerDay: 5,
@@ -705,10 +669,11 @@ export async function seedHostileRoster(page: Page) {
 /** Stored birth dates for the students that have one, by index (else null). */
 async function hostileBirthDates(page: Page): Promise<Array<string | null>> {
   const courseStart = await page.evaluate(async () => {
-    const courseModulePath = "/src/persistence/courses.ts"
-    const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-      getActiveCourse: () => Promise<{ startDate: string } | null>
-    }
+    const seedModulePath = "/tests/e2e/seed.ts"
+    const seedApi = (await import(
+      /* @vite-ignore */ seedModulePath
+    )) as typeof import("./seed")
+    const courseApi = await seedApi.loadCourses()
     const course = await courseApi.getActiveCourse()
     if (!course) throw new Error("The hostile roster needs an active course")
     return course.startDate

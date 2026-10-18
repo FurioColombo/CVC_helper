@@ -943,7 +943,7 @@
     {
       "id": "T1",
       "category": "FOUNDATION",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "D3",
@@ -964,7 +964,21 @@
       "requiredReviews": [
         ".evidence/T1/self-review.json",
         ".evidence/T1/code-quality-review.json"
-      ]
+      ],
+      "startedFrom": {
+        "commit": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
+        "sourceDigest": "39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc",
+        "ownerPrerequisites": [
+          {
+            "id": "D3",
+            "commit": "761530f820908db8355e1bcdd661bc8c6f495385"
+          },
+          {
+            "id": "D4",
+            "commit": "fde1fe14787333536fb250ef2357793be3870be8"
+          }
+        ]
+      }
     },
     {
       "id": "UG3",

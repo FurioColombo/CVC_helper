@@ -387,6 +387,9 @@ needs one passed only as a flake. Locally it is listed in `verification.json`
 and is a defect to file and fix; in CI it is printed as `FLAKY:` and kept as
 the `e2e-flaky` artifact.
 
+CI also retains the JSON browser report on passing runs for 14 days, including
+per-case durations and project coverage (`e2e-report` artifacts).
+
 Evidence under `.evidence/<ID>/` is small and reproducible: machine verification,
 structured reviews, browser/device metadata and selected screenshots. Browser
 evidence identifies the frozen target revision, tested commit, viewport, scenario

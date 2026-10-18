@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test"
+import type { BoatType } from "@/domain/config"
 
 /**
  * Synthetic courses for the summary specs (F3, F4), seeded through the app's
@@ -6,12 +7,12 @@ import type { Page } from "@playwright/test"
  * is invented.
  */
 
-export const BOATS_BY_TYPE: Record<string, string[]> = {
+export const BOATS_BY_TYPE = {
   "RS Toura": ["4", "7", "9"],
   "RS Quest": ["12", "15", "18", "21"],
   "Laser Vago": ["3", "6"],
   "RS 500": ["2", "5"],
-}
+} as const satisfies Partial<Record<BoatType, readonly string[]>>
 export const TOTAL_BOATS = Object.values(BOATS_BY_TYPE).flat().length // 11
 export const MEZZI_CREW_COUNT = 2
 export const TOTAL_CREWS = TOTAL_BOATS + MEZZI_CREW_COUNT // 13
@@ -25,7 +26,7 @@ export async function seedThirteenCrewCourse(page: Page) {
     nickname: null,
     dateOfBirth: "2000-01-01",
     declaredAgeAtCourseStart: null,
-    sex: "male",
+    sex: "male" as const,
     phone: null,
     size: null,
     initialNote: null,
@@ -34,50 +35,14 @@ export async function seedThirteenCrewCourse(page: Page) {
 
   await page.evaluate(
     async ({ students, boatsByType, membersPerCrew, mezziCrewCount }) => {
-      // Each path goes through a variable rather than an inline string
-      // literal: `import(<literal>)` is statically resolved by `tsc -b`
-      // (which does not see the Vite-only ignore comment) and fails to find
-      // these absolute dev-server paths, exactly as the 40-student stress
-      // seed in c1-crew-management.spec.ts already works around.
-      const courseModulePath = "/src/persistence/courses.ts"
-      const studentsModulePath = "/src/persistence/students.ts"
-      const boatsModulePath = "/src/persistence/boats.ts"
-      const crewsModulePath = "/src/persistence/crews.ts"
-      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-        getActiveCourse: () => Promise<{ id: string } | null>
-      }
-      const studentApi = (await import(
-        /* @vite-ignore */ studentsModulePath
-      )) as {
-        createStudents: (
-          courseId: string,
-          entries: Array<Record<string, unknown>>,
-        ) => Promise<Array<{ id: string }>>
-      }
-      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
-        createBoats: (
-          courseId: string,
-          inputs: Array<{ type: string; number: string }>,
-        ) => Promise<Array<{ id: string; type: string; number: string }>>
-      }
-      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
-        saveCrewPlan: (
-          courseId: string,
-          sessionId: string,
-          plan: {
-            crews: Array<{
-              id: string
-              sessionId: string
-              members: Array<{ personId: string; personType: string }>
-              capacity: number
-              destination: string
-              boatId: string | null
-            }>
-            landStudentIds: string[]
-            selectedBoatIds: string[]
-          },
-        ) => Promise<unknown>
-      }
+      const seedModulePath = "/tests/e2e/seed.ts"
+      const seedApi = (await import(
+        /* @vite-ignore */ seedModulePath
+      )) as typeof import("./seed")
+      const courseApi = await seedApi.loadCourses()
+      const studentApi = await seedApi.loadStudents()
+      const boatApi = await seedApi.loadBoats()
+      const crewApi = await seedApi.loadCrews()
       const course = await courseApi.getActiveCourse()
       if (!course) {
         throw new Error("Synthetic 13-crew course requires an active course")
@@ -87,7 +52,10 @@ export async function seedThirteenCrewCourse(page: Page) {
         students,
       )
       const createdBoats: Array<{ id: string }> = []
-      for (const [type, numbers] of Object.entries(boatsByType)) {
+      for (const [type, numbers] of Object.entries(boatsByType) as [
+        BoatType,
+        readonly string[],
+      ][]) {
         const boats = await boatApi.createBoats(
           course.id,
           numbers.map((number) => ({ type, number })),
@@ -99,7 +67,7 @@ export async function seedThirteenCrewCourse(page: Page) {
       function nextMembers() {
         const members = Array.from({ length: membersPerCrew }, () => ({
           personId: createdStudents[studentIndex++]!.id,
-          personType: "student",
+          personType: "student" as const,
         }))
         return members
       }
@@ -107,18 +75,18 @@ export async function seedThirteenCrewCourse(page: Page) {
       const crews = [
         ...createdBoats.map((boat) => ({
           id: crypto.randomUUID(),
-          sessionId: "sat-pm",
+          sessionId: "sat-pm" as const,
           members: nextMembers(),
           capacity: membersPerCrew,
-          destination: "boat",
+          destination: "boat" as const,
           boatId: boat.id,
         })),
         ...Array.from({ length: mezziCrewCount }, () => ({
           id: crypto.randomUUID(),
-          sessionId: "sat-pm",
+          sessionId: "sat-pm" as const,
           members: nextMembers(),
           capacity: membersPerCrew,
-          destination: "mezzi",
+          destination: "mezzi" as const,
           boatId: null,
         })),
       ]
@@ -138,7 +106,7 @@ export async function seedThirteenCrewCourse(page: Page) {
   )
 }
 
-export const D1_BOAT_TYPE = "RS Toura"
+export const D1_BOAT_TYPE: BoatType = "RS Toura"
 export const D1_BOAT_COUNT = 10
 export const D1_MEMBERS_PER_CREW = 4
 
@@ -168,7 +136,7 @@ export async function seedTenCrewCourseD1(
       nickname: null,
       dateOfBirth: "2000-01-01",
       declaredAgeAtCourseStart: null,
-      sex: "male",
+      sex: "male" as const,
       phone: null,
       size: null,
       initialNote: null,
@@ -177,50 +145,25 @@ export async function seedTenCrewCourseD1(
   )
 
   await page.evaluate(
-    async ({ students, boatType, numbers, membersPerCrew }) => {
-      // Same absolute-path-via-variable workaround as the 13-crew seed above:
-      // `import(<literal>)` is statically resolved by `tsc -b`, which does
-      // not see the Vite-only ignore comment, and fails to find these
-      // dev-server-only paths.
-      const studentsModulePath = "/src/persistence/students.ts"
-      const boatsModulePath = "/src/persistence/boats.ts"
-      const crewsModulePath = "/src/persistence/crews.ts"
-      const courseModulePath = "/src/persistence/courses.ts"
-      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-        getActiveCourse: () => Promise<{ id: string } | null>
-      }
-      const studentApi = (await import(
-        /* @vite-ignore */ studentsModulePath
-      )) as {
-        createStudents: (
-          courseId: string,
-          entries: Array<Record<string, unknown>>,
-        ) => Promise<Array<{ id: string }>>
-      }
-      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
-        createBoats: (
-          courseId: string,
-          inputs: Array<{ type: string; number: string }>,
-        ) => Promise<Array<{ id: string; type: string; number: string }>>
-      }
-      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
-        saveCrewPlan: (
-          courseId: string,
-          sessionId: string,
-          plan: {
-            crews: Array<{
-              id: string
-              sessionId: string
-              members: Array<{ personId: string; personType: string }>
-              capacity: number
-              destination: string
-              boatId: string | null
-            }>
-            landStudentIds: string[]
-            selectedBoatIds: string[]
-          },
-        ) => Promise<unknown>
-      }
+    async ({
+      students,
+      boatType,
+      numbers,
+      membersPerCrew,
+    }: {
+      students: typeof seededStudents
+      boatType: BoatType
+      numbers: string[]
+      membersPerCrew: number
+    }) => {
+      const seedModulePath = "/tests/e2e/seed.ts"
+      const seedApi = (await import(
+        /* @vite-ignore */ seedModulePath
+      )) as typeof import("./seed")
+      const courseApi = await seedApi.loadCourses()
+      const studentApi = await seedApi.loadStudents()
+      const boatApi = await seedApi.loadBoats()
+      const crewApi = await seedApi.loadCrews()
       const course = await courseApi.getActiveCourse()
       if (!course) {
         throw new Error("Synthetic 10-crew D1 course requires an active course")
@@ -237,13 +180,13 @@ export async function seedTenCrewCourseD1(
       let studentIndex = 0
       const crews = createdBoats.map((boat) => ({
         id: crypto.randomUUID(),
-        sessionId: "sat-pm",
+        sessionId: "sat-pm" as const,
         members: Array.from({ length: membersPerCrew }, () => ({
           personId: createdStudents[studentIndex++]!.id,
-          personType: "student",
+          personType: "student" as const,
         })),
         capacity: membersPerCrew,
-        destination: "boat",
+        destination: "boat" as const,
         boatId: boat.id,
       }))
 
@@ -309,7 +252,7 @@ export const DOUBLE_NAME_AVAILABLE = [
   "Carlo Alberto Dalla Torre",
   "Ugo",
 ] as const
-export const DOUBLE_NAME_SESSION = "sun-pm"
+export const DOUBLE_NAME_SESSION = "sun-pm" as const
 
 /**
  * A "Domenica PM" with the shapes that stress the summary: double first names
@@ -321,57 +264,27 @@ export const DOUBLE_NAME_SESSION = "sun-pm"
  */
 export async function seedDoubleNameCourse(page: Page) {
   await page.evaluate(
-    async ({ crews, land, available, sessionId }) => {
-      const courseModulePath = "/src/persistence/courses.ts"
-      const studentsModulePath = "/src/persistence/students.ts"
-      const volunteersModulePath = "/src/persistence/volunteers.ts"
-      const boatsModulePath = "/src/persistence/boats.ts"
-      const crewsModulePath = "/src/persistence/crews.ts"
-      const dutiesModulePath = "/src/persistence/duties.ts"
-      const courseApi = (await import(/* @vite-ignore */ courseModulePath)) as {
-        getActiveCourse: () => Promise<{ id: string } | null>
-      }
-      const studentApi = (await import(
-        /* @vite-ignore */ studentsModulePath
-      )) as {
-        createStudents: (
-          courseId: string,
-          entries: Array<Record<string, unknown>>,
-        ) => Promise<Array<{ id: string }>>
-      }
-      const volunteerApi = (await import(
-        /* @vite-ignore */ volunteersModulePath
-      )) as {
-        createVolunteer: (
-          courseId: string,
-          input: { name: string; role: string },
-        ) => Promise<{ id: string }>
-      }
-      const boatApi = (await import(/* @vite-ignore */ boatsModulePath)) as {
-        createBoats: (
-          courseId: string,
-          inputs: Array<{ type: string; number: string }>,
-        ) => Promise<Array<{ id: string; type: string; number: string }>>
-        setBoatAvailability: (
-          boatId: string,
-          courseId: string,
-          availability: string,
-        ) => Promise<void>
-      }
-      const crewApi = (await import(/* @vite-ignore */ crewsModulePath)) as {
-        saveCrewPlan: (
-          courseId: string,
-          sessionId: string,
-          plan: Record<string, unknown>,
-        ) => Promise<unknown>
-      }
-      const dutyApi = (await import(/* @vite-ignore */ dutiesModulePath)) as {
-        saveDutyPlan: (
-          courseId: string,
-          assignments: Array<{ dayId: string; studentId: string }>,
-          settings: Record<string, unknown>,
-        ) => Promise<unknown>
-      }
+    async ({
+      crews,
+      land,
+      available,
+      sessionId,
+    }: {
+      crews: typeof DOUBLE_NAME_CREWS
+      land: typeof DOUBLE_NAME_LAND
+      available: typeof DOUBLE_NAME_AVAILABLE
+      sessionId: typeof DOUBLE_NAME_SESSION
+    }) => {
+      const seedModulePath = "/tests/e2e/seed.ts"
+      const seedApi = (await import(
+        /* @vite-ignore */ seedModulePath
+      )) as typeof import("./seed")
+      const courseApi = await seedApi.loadCourses()
+      const studentApi = await seedApi.loadStudents()
+      const volunteerApi = await seedApi.loadVolunteers()
+      const boatApi = await seedApi.loadBoats()
+      const crewApi = await seedApi.loadCrews()
+      const dutyApi = await seedApi.loadDuties()
       const course = await courseApi.getActiveCourse()
       if (!course) throw new Error("The double-name course needs a course")
 
@@ -392,7 +305,7 @@ export async function seedDoubleNameCourse(page: Page) {
           nickname: label,
           dateOfBirth: minors.has(label) ? "2015-05-05" : "2000-01-01",
           declaredAgeAtCourseStart: null,
-          sex: "male",
+          sex: "male" as const,
           phone: null,
           size: null,
           initialNote: null,
@@ -438,10 +351,10 @@ export async function seedDoubleNameCourse(page: Page) {
         const members = [
           ...labels.map((label) => ({
             personId: idOf(label),
-            personType: "student",
+            personType: "student" as const,
           })),
           ...(volunteer
-            ? [{ personId: volunteer.id, personType: "volunteer" }]
+            ? [{ personId: volunteer.id, personType: "volunteer" as const }]
             : []),
         ]
         return {
@@ -451,10 +364,10 @@ export async function seedDoubleNameCourse(page: Page) {
           capacity: members.length,
           destination:
             name === "Mezzi"
-              ? "mezzi"
+              ? ("mezzi" as const)
               : name === "Senza barca"
-                ? "unassigned"
-                : "boat",
+                ? ("unassigned" as const)
+                : ("boat" as const),
           boatId: boatOf(name)?.id ?? null,
         }
       })

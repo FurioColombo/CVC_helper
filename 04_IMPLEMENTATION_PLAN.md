@@ -30,7 +30,8 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
 | D3 | Awaiting owner. Agent verification, reviews, full source CI and live HTTPS pass. CVC Helper Test 0.4.0 is pinned to `761530f`; 0.4.1 waits for an explicit installation report. D4/T1 may continue under dependency permissions; release waits. See `docs/OWNER_TODO.md` and `.evidence/D3/deployment-evidence.json`. |
 | D4 | Agent gates pass at `fde1fe1`: 1,439 unit tests, 108 focused browser checks and both production reset-isolation engines; exact full Mac/Linux CI is green without retries. Awaiting owner. The test site stays pinned to D3; D4 phone setup follows that check. Evidence: `.evidence/D4/`. |
-| T1, UG3 | Pending. T1 may follow verified D3/D4 under the explicit AWAITING_OWNER permissions; UG3 waits for all required owner acceptance. |
+| T1 | In progress. Shared summary/hostile seeds use real API types; six browser cases and 1,439 unit tests pass, with all 356 project cases retained. CI will retain detailed timing reports. H1 comparison checkout is ready; speed work and flaky-test diagnosis continue. Evidence: `.evidence/T1/`. |
+| UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
 
 ## Execution order
 
@@ -138,7 +139,7 @@ course, preferences, cache bytes and offline support remain intact.
 ## T1 — A faster browser suite
 
 **Category:** FOUNDATION
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Asked by the owner on 2026-10-10, when H1's browser-time target was missed
 (`.evidence/H1/test-timing.json`). Reorganise the e2e suite by feature with

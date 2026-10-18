@@ -1,0 +1,56 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_VERIFICATION_PASS_MILESTONE_IN_PROGRESS",
+  "recordedAt": "2026-10-18T18:42:44.285Z",
+  "scope": "Three shared seed files only. Real typeof-import API signatures and lazy per-module loading replace hand-redeclared shapes; fixtures, import/write order and every existing spec remain unchanged. A separate CI workflow change retains full JSON reports on successful browser runs.",
+  "typecheck": "PASS (implementer npx tsc -b --pretty false)",
+  "lintAndFormat": "PASS (implementer targeted ESLint, Prettier and diff check)",
+  "coverage": {
+    "status": "PASS",
+    "cases": 356,
+    "exactTitleProjectSequenceUnchanged": true,
+    "specFilesChanged": [],
+    "beforeRaw": "OS temporary cvc-t1-coverage-before.json",
+    "afterRaw": "OS temporary cvc-t1-coverage-after-seed-typing.json",
+    "beforeSha256": "9cda9e08366c9ceca8a7ecafd40d5575f8fcfc5af27219f83f40b3773e89711a",
+    "afterSha256": "3f507515390fe946e5b99bfea2bc08f4c4b6a4a080b22bf950cd1007dfef3e70"
+  },
+  "sourceHashes": {
+    "tests/e2e/seed.ts": "9c7ca8e7d6f66a9dd726f320d3ea7bca309cd9188ba0dcba393c12ef18da3288",
+    "tests/e2e/summary-helpers.ts": "d6d0c86172561f440d4017ebddd711e82f7e5f210390bbebceb9a2cd4f625e87",
+    "tests/e2e/ug2-hostile-roster-data.ts": "3414ccb3005edfb477fb164b2ce3ba1020d827ce4f238ad4096436f33a3e3733"
+  },
+  "limitations": "No speed measurement or milestone acceptance. CI JSON retention is implemented but awaits its first canonical run. Remaining fixture acceleration, feature organization, flaky-test fixes, independent code-quality review and final full verification remain. D3/D4 evidence and published0.4.0 test build are unchanged.",
+  "source": {
+    "digest": "4ecfcb4ba7e59b67d5c5fb676479408e2b030be52f33e27ece5bdc918a896f4b",
+    "files": 438
+  },
+  "quick": {
+    "status": "PASS",
+    "files": 89,
+    "tests": 1439,
+    "raw": "OS temporary cvc-t1-seed-typing-quick.log",
+    "sha256": "5b36c2311c8f42dfe65754946664c540a0b49b45d163a5c2f0b0d32703495f69"
+  },
+  "domain": {
+    "status": "PASS",
+    "raw": "OS temporary cvc-t1-seed-typing-domain.log",
+    "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+  },
+  "browser": {
+    "status": "PASS",
+    "stats": {
+      "startTime": "2026-10-18T18:42:51.199Z",
+      "duration": 187146.58500000002,
+      "expected": 6,
+      "skipped": 4,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "raw": "OS temporary cvc-t1-seed-typing-browser-proof/e2e-report.json",
+    "sha256": "43c736822eb61f4cc55d9d86674ca60363684204333983472caccf87450e6671",
+    "scope": "Existing Pixel13-crew,10-crew,double-name/boatless/badge and hostileTuesday journeys pass; WebKit image and double-name cases pass. Four original project skips remain; no assertion or viewport change."
+  },
+  "predecessorEvidenceHashesVerified": 18
+}
