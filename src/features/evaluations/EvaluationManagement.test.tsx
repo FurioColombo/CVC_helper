@@ -654,6 +654,72 @@ describe("evaluation management", () => {
     ).toBeVisible()
   })
 
+  it("preserves text typed after a note submission until that newer draft is saved", async () => {
+    let resolveBeaSave!: () => void
+    save.mockImplementationOnce(
+      (_courseId, studentId, sessionId, input) =>
+        new Promise((resolve) => {
+          resolveBeaSave = () =>
+            resolve({
+              id: `evaluation-${studentId}-${sessionId}`,
+              studentId,
+              sessionId,
+              ...input,
+            })
+        }),
+    )
+    const user = userEvent.setup()
+    renderScreen()
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Aggiungi nota valutazione di Bea",
+      }),
+    )
+    const editor = screen.getByRole("textbox", {
+      name: "Nota valutazione di Bea",
+    })
+    await user.type(editor, "Testo inviato")
+    await user.click(screen.getByRole("button", { name: "Salva nota" }))
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith("course-1", "student-2", "sat-pm", {
+        value: null,
+        note: "Testo inviato",
+      }),
+    )
+    expect(
+      screen.getByLabelText("Stato salvataggio valutazione di Bea"),
+    ).toHaveTextContent("Salvataggio")
+    expect(editor).toBeEnabled()
+
+    await user.type(editor, " più nuovo testo")
+    expect(editor).toHaveValue("Testo inviato più nuovo testo")
+
+    await act(async () => resolveBeaSave())
+
+    const currentEditor = screen.getByRole("textbox", {
+      name: "Nota valutazione di Bea",
+    })
+    expect(currentEditor).toHaveValue("Testo inviato più nuovo testo")
+    expect(
+      screen.getByText("Testo inviato", { selector: "span" }),
+    ).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "Salva nota" }))
+    await waitFor(() =>
+      expect(save).toHaveBeenLastCalledWith("course-1", "student-2", "sat-pm", {
+        value: null,
+        note: "Testo inviato più nuovo testo",
+      }),
+    )
+    expect(
+      screen.queryByRole("textbox", { name: "Nota valutazione di Bea" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText("Testo inviato più nuovo testo", { selector: "span" }),
+    ).toBeVisible()
+  })
+
   it("keeps the latest note and exact session visible when saving fails, then retries", async () => {
     save.mockRejectedValueOnce(new Error("write failed"))
     const user = userEvent.setup()

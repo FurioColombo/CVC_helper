@@ -2,46 +2,63 @@
   "reviewerRole": "data-integrity",
   "persona": "L'Archivista",
   "milestone": "D4",
-  "round": 3,
-  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
-  "baselineCommit": "193a2506c7770bb11ee7f128ce2686b1d1e8b1a4",
-  "verdict": "PASS",
-  "blockers": [],
+  "round": 4,
+  "commit": "3598ce5d245e94bda58b0f006a74e6282058dd70",
+  "baselineCommit": "90b85c93ead4a8d15fd0c2d059fce310e11a9687",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-R4-1",
+      "title": "A successful note save still discards newer text typed into that same student's enabled editor",
+      "evidence": "src/features/evaluations/EvaluationManagement.tsx:107-119 leaves the textarea editable while saving; :523-528 closes the current editor when its student ID matches the completed save, without checking whether its draft changed after submission. Independent scratch review.test.tsx:710 fails because the expected Bea textbox has been unmounted. The immediately preceding assertion confirms saveEvaluation received only the earlier captured text for course-1/student-2/sat-pm.",
+      "reproduction": "On 3598ce5, defer Bea's save, open her evaluation note and type 'Testo inviato'. Tap Salva nota. While Salvataggio… is shown, the same enabled textbox accepts ' più nuovo testo', and an assertion confirms its value is 'Testo inviato più nuovo testo'. Resolve the first successful save. Observed: the editor disappears, the saved record/preview contains only 'Testo inviato', and the additional text has no save or explicit discard. Expected: preserve the newer typed draft and keep it available for its own save or explicit cancellation; completion may close an editor only when the current draft still corresponds to that completed submission. Scratch command: node node_modules/vitest/vitest.mjs run --config <scratch>/vitest.workspace.config.ts --maxWorkers=1 -t review:. Result: 1 failed, 1 passed, 14 original tests skipped. Source/config/log are preserved in OS temporary cvc-d4-di-r4-note-QnOISR; the pointer is cvc-d4-di-r4-note-location.txt.",
+      "specRef": "01_PRODUCT_SPEC.md §1 honest saving/no silent work loss, §2 leave guard and §8 exact evaluation notes; docs/design/07_PAGE_CHANGELOG.md P17 acceptance: no note loss; 03_TECHNICAL_DECISIONS.md §3.2 Coherent writes"
+    }
+  ],
   "importantFindings": [],
   "qolFindings": [],
-  "resolvedBlockers": [
-    "DI-1"
-  ],
   "priorRoundRecheck": [
     {
       "id": "DI-1",
       "disposition": "Round-2 fix retained unchanged",
-      "evidence": "All four SHA-256 entries in the preserved round-2 report match the current validator, validator tests, U02 fixture and U02 browser spec. The compiler delta changes neither archive validation nor SQL binding. The round-1 FAIL remains preserved; the round-2 PASS is not overwritten. No new Unicode hunt or repetition of the 1,344-case audit was performed."
+      "evidence": "The archive validator, validator test, U02 fixture and U02 browser-spec SHA-256 values match the preserved passing round-2 and round-3 reports. No new Unicode hunt or repetition of their audit was performed."
+    },
+    {
+      "id": "SC-R1-I1",
+      "disposition": "Existing non-blocking limitation unchanged",
+      "evidence": "The compatible pre-D4 writer's missing generation invalidation remains documented in Technical Decisions and the sync-chaos review. The note-completion change alters no compatibility, generation, storage or legacy-writer behavior."
+    },
+    {
+      "id": "review continuity",
+      "disposition": "Preserved",
+      "evidence": "D4 round 1 FAIL, round 2 PASS and canonical round 3 PASS were read. This restricted round 4 identifies the second D4 data-integrity FAIL, not a third FAIL. The original seed and lenses remain; no report or round count is reset."
     }
   ],
   "reviewedFileHashes": {
-    "src/persistence/engineModuleCompiler.ts": "c5b628330806dc3c49eae14be76c875a53b33b9f5c981e8253a6d83b91277d96",
-    "src/persistence/engineModuleCompiler.test.ts": "84087a1bb47215584ddf64d9db86be8f9c44dfd0cbc987793c60fb4cf4e39c7b",
+    "src/features/evaluations/EvaluationManagement.tsx": "3414d076aa40ceb0ae6589d8d54d9e6731192114a4fad13df9e46739a1e83421",
+    "src/features/evaluations/EvaluationManagement.test.tsx": "995cab42dab015e752ad77185540867b37534edde2d55aaa7b195378974a219a",
+    "tests/e2e/d4-evaluation-note-save.spec.ts": "4ffa3a6b9a68be27d349bf937b712d0e11fe10b33575a4754d99d8e74bb06d25",
+    "playwright.config.ts": "60ef21f3a696057a0c5703d6c6bffcb3a43f6b1415fddc673572ca1b2bec101f",
+    ".milestones/manifest.json": "3ec0a930ff7a58d505c8bb5a075cb14c257855f8c18ede23eac3521ea1d8ef18",
     "src/persistence/courseArchiveFormat.ts": "512171dbe0cb8e628519c834f51bbb4113ab913b9e13f8d92e87616e8a5dde48",
     "src/persistence/courseArchiveFormat.test.ts": "f3fbc217b39c227e2b93a278137f618e33bd7dbf1803fb6cb62e8c14d518da0e",
     "src/test/u02DeletionHarness.ts": "414622acaf6204186466e11614a8dcd8af9bf1bf019fecc83710b64923736e07",
-    "tests/e2e/u02-deletion-integrity.spec.ts": "5515cf4fca72b297cf086037003d39cf37337b5c317c2506699ab1f378474513"
+    "tests/e2e/u02-deletion-integrity.spec.ts": "5515cf4fca72b297cf086037003d39cf37337b5c317c2506699ab1f378474513",
+    "src/persistence/engineModuleCompiler.ts": "c5b628330806dc3c49eae14be76c875a53b33b9f5c981e8253a6d83b91277d96",
+    "src/persistence/engineModuleCompiler.test.ts": "84087a1bb47215584ddf64d9db86be8f9c44dfd0cbc987793c60fb4cf4e39c7b"
   },
   "evidenceInspected": [
-    "AGENTS.md, docs/agents/REVIEW_PROTOCOL.md, reviewer-data-integrity persona, docs/LOCAL_DEVELOPMENT.md and the local PowerSync skill. Refreshed D4 acceptance, current cycle state, relevant product/scope boundaries and Technical Decisions §3/§3.1/§3.2.",
-    "Clean primary checkout at ac0c255; Node v24.21.0. Startup commands confirm D3 AWAITING_OWNER, D4 IN_PROGRESS, D3 owner action READY and D4 owner action NEEDS_SETUP. ci:status could not fetch; no exact green CI is inferred.",
-    ".evidence/D4/data-integrity-review-round-1.json preserves the DI-1 FAIL. The current data-integrity-review.json preserves round-2 PASS at 193a250 with seed 112018452, its exact four-file hashes and prior real-driver evidence.",
-    "Restricted application diff 193a250..ac0c255: engineModuleCompiler.ts awaits the same-origin response, checks HTTP success and the exact ASCII-case-insensitive application/wasm content type, buffers its body, then calls new WebAssembly.Module inside the existing code-only compiler worker. Its new unit file is the only other application/test delta.",
-    "The compiler creates no WebAssembly.Instance, VFS or database and runs no SQL. Its success/error reply protocol and optional finite DEV timings remain. The unchanged broker validates the returned module, shares only its immutable-code promise, terminates the compiler on success/error/deadline, evicts failed promises and leaves concurrent consumers independent. The unchanged stock-factory path creates fresh engine instances.",
-    "Compared broker/cache, worker registration, SDK entry, factory, schema, VFS, archive import, course-session and write-guard paths against 193a250: no changes. Independently reran assertPinnedEngineSources successfully; PowerSync 2.2.0, wa-sqlite 2.0.3 and guarded engine/WASM inputs remain pinned.",
-    "Independent targeted verification: node node_modules/vitest/vitest.mjs run src/persistence/engineModuleCompiler.test.ts src/persistence/engineModuleBroker.test.ts --maxWorkers=1. Two files and 20 tests passed, exit 0, 866 ms. Log preserved as OS-temp cvc-d4-di-r3-targeted-tests.log.",
-    "The focused tests cover valid module production, finite timing metadata, non-success HTTP, wrong/missing/parameterized MIME, external-origin refusal before fetch, invalid WASM, shared concurrent compilation, consumer failure, producer errors, deadline termination and retry after failure.",
-    "Independent OS-temp cvc-d4-di-r3-actual-engine probe executes the production compiler handler with DEV=false against the actual pinned 2281765-byte async WASM; compileStreaming is forced to throw if called. One fetch yields one compiled reply without DEV timings. The module structured-clones successfully and instantiates twice through the stock factory with distinct linear memory. Parameter-bound synthetic text remains identical; the second engine has none of the first engine's table; an update rolls back intact.",
-    "That probe passed with compiler source SHA-256 c5b628330806dc3c49eae14be76c875a53b33b9f5c981e8253a6d83b91277d96 and pinned WASM SHA-256 de7105eb124a6d6a90bcea9b569433af50cb90eba6f1e8c3f210be6dfde7d013. Source and result.json are preserved in its OS-temp scratch directory. The SQLite smoke instances are explicitly in memory and make no browser-persistence claim.",
-    ".evidence/D4/ci-worker-compile-probe.json and raw OS-temp cvc-d4-worker-compile-probe-39082247802 analysis/proof, four artifact ZIP hashes, e2e reports and large-upgrade JSON inspected. All ZIP hashes match. Each fresh Mac job has 8 PASS, retry 0 throughout, zero unexpected/flaky results: 32 cases total.",
-    "All four diagnostic large upgrades/reopens retain 609 rows, 40 injected students, 520 evaluations, no row issues and identical reopen. Buffered-worker upgrades take 1118/1394 ms; streaming upgrades take 1313/4789 ms. The original same-page seed, D1 assertions and construction-inclusive five-second bounds remain unchanged.",
-    "Both diagnostic variants pass, including the slower streaming sample. These records support data preservation and investigation only; they do not reproduce a five-second failure, prove a causal timing fix, or substitute for final candidate CI.",
-    "Root reports current verify:quick PASS with 89 files/1435 tests and verify:domain/build PASS. Those are root-reported results, separate from this reviewer's focused executions. No browser or heavy suite was launched, no tracked file or canonical review report was edited, and no backend/private data was accessed."
+    "AGENTS.md, reviewer-data-integrity persona, REVIEW_PROTOCOL.md, active D4 plan, relevant Product Specification §1/§2/§8, scope, Technical Decisions coherent-write/course-file contracts and local runtime guidance. Prior PowerSync guidance remains applicable; no backend was accessed.",
+    "Clean initial checkout at 3598ce5, Node v24.21.0. Startup commands show D3 AWAITING_OWNER, D4 IN_PROGRESS, D3-PHONE-UPDATE READY and D4-PHONE-TRANSFER NEEDS_SETUP. ci:status could not fetch; no green CI is inferred.",
+    "Restricted 90b85c9..3598ce5 diff: the only production application change is the functional current-student-ID check after successful note persistence. Component/browser coverage and project/milestone lists are additive. No schema, persistence, network, SDK or compiler change.",
+    "The new Aldo/Bea component regression correctly exercises a delayed first save, a second student's draft, successful first completion, exact second save arguments and normal editor closure. Existing failure/retry and exact-session tests remain.",
+    "Independent original component suite execution: node node_modules/vitest/vitest.mjs run src/features/evaluations/EvaluationManagement.test.tsx --maxWorkers=1. One file, 14 tests PASS, exit 0, 7.86 seconds.",
+    "Independent adjacent completion probe: 1 FAIL reproducing DI-R4-1 and 1 PASS confirming that rejection of the previous student's save preserves the next draft, reports Non salvato, disables session switching and blocks leaving. Both use visible React Testing Library interactions and the production component; persistence is mocked and held explicitly.",
+    "Scratch test SHA-256 e004b068c9120d842c4c7655c183cd5c50cdd52781cab6dee48a22916a350b58; failing-run log SHA-256 d1c8e468eceffec8d62b12ff4c45df220c9803f92f20b290d97d7a75477fac44. Two earlier scratch-config setup failures found no tests or could not load the outside-root setup module; both logs are preserved and are not application findings. The executed probe uses an ignored workspace copy of the OS-temp-preserved source.",
+    ".evidence/D4/note-save-race.json and OS temporary cvc-d4-note-race-browser-proof/e2e-report.json inspected. Report SHA-256 5aae339c44e65328fe9e5592e6a46f23b70c92f08753fcf373d67abb3c956ec2 matches. Five cases PASS, retry 0, no skipped/unexpected/flaky/errors: the different-student race on three projects, plus original note-preview checks on two projects.",
+    "The new browser case holds the first real transaction after its writes, edits/saves through visible controls, confirms the second student's draft survives first completion, then verifies both exact notes after reload in sat-pm. It does not type additional text into the saving student's own editor, so its PASS does not contradict DI-R4-1.",
+    "Root reports quick verification PASS with 89 files/1436 tests and domain/build PASS. These reported results do not remove the independently reproduced blocker. The previous recorder is historical after the note fix; diagnostic Mac run 39108099189 uses older source and is not acceptance for 3598ce5.",
+    "No tracked edits, application changes, commit, browser run or deployment by this reviewer. Existing agents' work and prior reports were preserved."
   ],
   "anglesTried": {
     "seed": 112018452,
@@ -50,12 +67,12 @@
       "12. Two tabs of the app writing the same course."
     ],
     "wildcard": "Recovery boundaries where database deletion and course-generation removal interact with same-ID reuse, plus pinned VFS final-file closure.",
-    "restrictedScope": "Retained the original seed and lenses without a new entropy draw or whole-milestone hunt. Round 3 rechecks DI-1 by unchanged recorded hashes and reviews only the compiler-body/unit delta for actual-module-path and direct data-integrity regressions."
+    "restrictedScope": "No new entropy draw or whole-milestone hunt. Retained prior DI-1 disposition by hashes and reviewed only the bounded note-completion fix, its exact student/session/success/failure behavior and directly adjacent newer typing during a pending save."
   },
   "notTested": [
-    "No browser or IndexedDB-VFS replay was run because root owns browser/recorder verification. The independent actual-engine probe uses the pinned driver with two in-memory smoke databases.",
-    "No repeat of the prior Unicode hunt, full archive replacement/reset audit or U02 browser journey; their reviewed implementation and four recorded hashes are unchanged.",
-    "Final recorder, exact full candidate CI and deterministic timing acceptance remain root gates. The diagnostic matrix proves no causal timing fix and this report makes no CI-green or release-completion claim.",
-    "Actual Android sharing/import, persistence permission and reset acceptance remain owner checks. No physical-device PASS or deployment is inferred; the pinned D3 phone build is unchanged."
+    "No browser run: the field-UX reviewer owns that slot. The independent reproduction is a component interaction test with mocked deferred persistence; the existing real-transaction browser evidence was inspected.",
+    "No new archive/Unicode, reset, schema, VFS or compiler audit; prior reviewed implementation and recorded hashes remain unchanged.",
+    "Exact normal CI and a fresh required recorder remain root gates. No current milestone-completion, causal remote-timeout explanation or CI-green claim is made.",
+    "Actual Android share/import, storage permission and reset acceptance remain owner work. The pinned D3 test build remains fixed; no physical-device PASS or deployment is inferred."
   ]
 }

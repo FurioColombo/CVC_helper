@@ -44,12 +44,21 @@ test("keeps the next student's draft when a previous note save finishes", async 
     }
     const original = writable.writeTransaction.bind(db)
     let release: (() => void) | undefined
-    const held = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    const state = { reached: false, release: () => release?.() }
+    let held: Promise<void>
+    let holdNext = false
+    const state = {
+      reached: false,
+      release: () => release?.(),
+      arm: () => {
+        held = new Promise<void>((resolve) => {
+          release = resolve
+        })
+        state.reached = false
+        holdNext = true
+      },
+    }
+    state.arm()
     Object.assign(window, { __D4_NOTE_SAVE__: state })
-    let holdNext = true
     writable.writeTransaction = (callback, ...args) => {
       if (!holdNext) return original(callback, ...args)
       holdNext = false
@@ -107,6 +116,47 @@ test("keeps the next student's draft when a previous note save finishes", async 
   )
   mkdirSync(path.dirname(screenshot), { recursive: true })
   await page.screenshot({ path: screenshot })
+
+  // A second submission stays editable while its real transaction is pending.
+  // Its completion must retain text typed after that submission, too.
+  await page.evaluate(() => {
+    const state = (
+      window as Window & { __D4_NOTE_SAVE__?: { arm: () => void } }
+    ).__D4_NOTE_SAVE__
+    if (!state) throw new Error("Missing synthetic note-save barrier")
+    state.arm()
+  })
+  await page.getByRole("button", { name: "Salva nota" }).click()
+  await expect(
+    page.getByLabel("Stato salvataggio valutazione di Bea"),
+  ).toHaveText("Salvataggio…")
+  await page.waitForFunction(
+    () =>
+      (window as Window & { __D4_NOTE_SAVE__?: { reached: boolean } })
+        .__D4_NOTE_SAVE__?.reached === true,
+  )
+  const latestNote = "Bozza di Bea aggiornata durante il salvataggio"
+  await expect(nextNote).toBeEnabled()
+  await nextNote.fill(latestNote)
+  await page.evaluate(() => {
+    const state = (
+      window as Window & { __D4_NOTE_SAVE__?: { release: () => void } }
+    ).__D4_NOTE_SAVE__
+    if (!state) throw new Error("Missing synthetic note-save barrier")
+    state.release()
+  })
+  await expect(
+    page.getByLabel("Stato salvataggio valutazione di Bea"),
+  ).toHaveText("Salvato")
+  await expect(nextNote).toBeVisible()
+  await expect(nextNote).toHaveValue(latestNote)
+  await page.screenshot({
+    path: evidenceOutputPath(
+      testInfo,
+      "D4",
+      `latest-note-preserved-${testInfo.project.name}.png`,
+    ),
+  })
   await page.getByRole("button", { name: "Salva nota" }).click()
   await expect(
     page.getByLabel("Stato salvataggio valutazione di Bea"),
@@ -117,7 +167,7 @@ test("keeps the next student's draft when a previous note save finishes", async 
   await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
   for (const [name, note] of [
     ["Aldo", "Nota di Aldo, prima scrittura"],
-    ["Bea", "Bozza di Bea da conservare"],
+    ["Bea", latestNote],
   ] as const) {
     await page
       .getByRole("button", { name: `Modifica nota valutazione di ${name}` })

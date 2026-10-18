@@ -65,7 +65,7 @@ function EvaluationNoteEditor({
   sessionId: SessionId
   saving: boolean
   onCancel: () => void
-  onSave: (note: string | null) => Promise<void>
+  onSave: (note: string | null) => Promise<boolean>
   transcribe: SpeechTranscribe
   prepareSpeech?: SpeechPrepare
 }) {
@@ -73,9 +73,16 @@ function EvaluationNoteEditor({
   const fullName = `${student.firstName} ${student.surname}`.trim()
   const session = SESSION_SEQUENCE.find(({ id }) => id === sessionId)
   const [note, setNote] = useState(initialNote ?? "")
+  const draftVersion = useRef(0)
+
+  function updateNote(nextNote: string) {
+    draftVersion.current += 1
+    setNote(nextNote)
+  }
+
   const dictation = useDictation({
     value: note,
-    onDraft: setNote,
+    onDraft: updateNote,
     onTranscript: () => undefined,
     transcribe,
     prepare: prepareSpeech,
@@ -88,6 +95,12 @@ function EvaluationNoteEditor({
   function cancelNote() {
     if (dictation.status !== "idle") dictation.cancel()
     onCancel()
+  }
+
+  async function saveNote(submittedNote: string | null) {
+    const submittedVersion = draftVersion.current
+    const saved = await onSave(submittedNote)
+    if (saved && draftVersion.current === submittedVersion) onCancel()
   }
 
   return (
@@ -108,7 +121,7 @@ function EvaluationNoteEditor({
         id={`evaluation-note-${student.id}`}
         onChange={(event) => {
           dictation.syncValue(event.target.value)
-          setNote(event.target.value)
+          updateNote(event.target.value)
         }}
         placeholder="Nota facoltativa per questa sessione"
         value={note}
@@ -135,7 +148,7 @@ function EvaluationNoteEditor({
             dictation.status === "loading" ||
             dictation.status === "processing"
           }
-          onClick={() => void onSave(note.trim() || null)}
+          onClick={() => void saveNote(note.trim() || null)}
           type="button"
         >
           {saving && (
@@ -178,7 +191,7 @@ function EvaluationCard({
   onValue: (value: EvaluationSymbol | null) => void
   onOpenNote: () => void
   onCloseNote: () => void
-  onSaveNote: (note: string | null) => Promise<void>
+  onSaveNote: (note: string | null) => Promise<boolean>
   transcribe: SpeechTranscribe
   prepareSpeech?: SpeechPrepare
   onRetry: () => void
@@ -511,22 +524,21 @@ export function EvaluationManagement({
         isLand={landIds.has(student.id)}
         key={student.id}
         noteOpen={noteStudentId === student.id}
-        onCloseNote={() => setNoteStudentId(null)}
+        onCloseNote={() =>
+          setNoteStudentId((current) =>
+            current === student.id ? null : current,
+          )
+        }
         onOpenNote={() => {
           setHeldLeave(null)
           setNoteStudentId(student.id)
         }}
-        onSaveNote={async (note) => {
-          const saved = await persistStudent(student.id, {
+        onSaveNote={(note) =>
+          persistStudent(student.id, {
             value: evaluation.value,
             note,
           })
-          if (saved) {
-            setNoteStudentId((current) =>
-              current === student.id ? null : current,
-            )
-          }
-        }}
+        }
         onValue={(value) =>
           void persistStudent(student.id, { value, note: evaluation.note })
         }

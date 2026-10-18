@@ -10,6 +10,13 @@
       "evidence": "ci-checkpoint-ac0c255.json; CI run 39103308907",
       "reproduction": "With buffered synchronous compilation in the existing code-only worker, upgrades take 7699/6166/6010 ms against 5000 ms. Native Module construction takes 6645/5429/5094 ms, while network/bootstrap/return are fast. All 609 rows remain intact and reopen takes 891/360/352 ms. Linux and the local recorder pass. The full-context timing hypothesis remains unresolved.",
       "specRef": "AGENTS.md 6 / docs/OWNER_WORKFLOW.md / 03_TECHNICAL_DECISIONS.md 3"
+    },
+    {
+      "id": "DI-R4-1",
+      "title": "A successful note save still discards newer text typed into that same student's enabled editor",
+      "evidence": "src/features/evaluations/EvaluationManagement.tsx:107-119 leaves the textarea editable while saving; :523-528 closes the current editor when its student ID matches the completed save, without checking whether its draft changed after submission. Independent scratch review.test.tsx:710 fails because the expected Bea textbox has been unmounted. The immediately preceding assertion confirms saveEvaluation received only the earlier captured text for course-1/student-2/sat-pm.",
+      "reproduction": "On 3598ce5, defer Bea's save, open her evaluation note and type 'Testo inviato'. Tap Salva nota. While Salvataggio… is shown, the same enabled textbox accepts ' più nuovo testo', and an assertion confirms its value is 'Testo inviato più nuovo testo'. Resolve the first successful save. Observed: the editor disappears, the saved record/preview contains only 'Testo inviato', and the additional text has no save or explicit discard. Expected: preserve the newer typed draft and keep it available for its own save or explicit cancellation; completion may close an editor only when the current draft still corresponds to that completed submission. Scratch command: node node_modules/vitest/vitest.mjs run --config <scratch>/vitest.workspace.config.ts --maxWorkers=1 -t review:. Result: 1 failed, 1 passed, 14 original tests skipped. Source/config/log are preserved in OS temporary cvc-d4-di-r4-note-QnOISR; the pointer is cvc-d4-di-r4-note-location.txt.",
+      "specRef": "01_PRODUCT_SPEC.md §1 honest saving/no silent work loss, §2 leave guard and §8 exact evaluation notes; docs/design/07_PAGE_CHANGELOG.md P17 acceptance: no note loss; 03_TECHNICAL_DECISIONS.md §3.2 Coherent writes"
     }
   ],
   "importantFindings": [

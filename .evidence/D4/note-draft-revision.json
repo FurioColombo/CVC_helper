@@ -1,0 +1,70 @@
+{
+  "milestone": "D4",
+  "blocker": "DI-R4-1",
+  "status": "IMPLEMENTED_TARGETED_PASS_AWAITING_INDEPENDENT_RECHECK",
+  "recordedAt": "2026-10-18T08:05:14.163Z",
+  "baseCheckpoint": "3598ce5d245e94bda58b0f006a74e6282058dd70",
+  "nodeVersion": "v24.21.0",
+  "sourceDigest": "c3a628f07efa30e771619ba4ab0e935fb17d07a57a72f302bbebbc7cbff15433",
+  "sourceFiles": 437,
+  "problem": "While its own captured submission was pending, the enabled editor accepted newer text that successful completion then discarded.",
+  "fix": "Each typing or dictation draft update advances a local revision. A successful submission closes only an unchanged revision; the parent close callback also checks the exact current student ID. Failed submissions retain the editor. Persistence now returns its existing success boolean to the editor, without storage/domain changes.",
+  "before": {
+    "status": "FAIL_REPRODUCED",
+    "raw": "OS temporary cvc-d4-note-draft-guard-before-fix.log",
+    "sha256": "e2c671816cd5553127294483f90d51615bd1edae47a24750e7034609ec21f6e5",
+    "independentReview": "data-integrity-review-round-4.json; second data-integrity FAIL preserved."
+  },
+  "after": {
+    "component": {
+      "status": "PASS",
+      "tests": 15,
+      "raw": "OS temporary cvc-d4-note-draft-guard-focused-pass-final.log",
+      "sha256": "69a8c3e020246d43504cc5805eda417b59a380ac8c98a24e2af610a201cfe416"
+    },
+    "quick": {
+      "status": "PASS",
+      "files": 89,
+      "tests": 1437,
+      "raw": "OS temporary cvc-d4-note-draft-guard-verify-quick.log",
+      "sha256": "ff810569817acc851eb6cc0c5674c9b3ca62413e0d603268707895ff9daf5bf4"
+    },
+    "browser": {
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-18T08:02:46.127Z",
+        "duration": 59513.85799999999,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "9266adfa8ce4f18daabd95ea56cb63889de68b4d29345cdb04ee806b6233d707",
+      "raw": "OS temporary cvc-d4-note-draft-guard-browser-proof",
+      "scope": "The previous different-student case now also holds the next real transaction, types newer text into that same enabled editor, releases the older submission, preserves the newer draft, explicitly saves it, then reloads both exact final notes in sat-pm. Chromium Pixel/iPhone viewport and WebKit pass, plus both original u10 preview/clamp cases; zero retries. Unattended runner exits normally.",
+      "visual": "Root inspected current WebKit newer-draft screenshot: saved prior snapshot and latest editable text, exact student/session and save/cancel controls remain visible."
+    },
+    "domain": {
+      "status": "PASS",
+      "command": "npm run verify:domain"
+    },
+    "build": {
+      "status": "PASS",
+      "command": "npm run build",
+      "pwa": "Manifest/icons/service worker and offline assets validated; no test hook."
+    }
+  },
+  "sourceHashes": {
+    "src/features/evaluations/EvaluationManagement.tsx": "87b7bbb8f71108fef58e848af2aa4f6c412e41170660a415661da9afa6a523c8",
+    "src/features/evaluations/EvaluationManagement.test.tsx": "263c26e7d70df0f48b4184cc29729525a6161bd90eec419a833b800dda5f38fe",
+    "tests/e2e/d4-evaluation-note-save.spec.ts": "801ca92005f3192aa4e9194627cf025aae5aec9fbe2f8eb2b3fe1994675f800b"
+  },
+  "gates": "Independent DI-R4-1 recheck is pending; keep canonical review FAIL and blocker open until it passes. Fresh final recorder and exact normal green CI are still required. Diagnostic Mac run39108099189 at50603a2 still concerns unchanged startup source and is not acceptance for this fix.",
+  "publication": {
+    "changed": false,
+    "testVersion": "0.4.0",
+    "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstalled": null,
+    "physicalPass": false
+  }
+}

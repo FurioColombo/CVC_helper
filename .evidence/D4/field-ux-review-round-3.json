@@ -1,0 +1,60 @@
+{
+  "reviewerRole": "field-UX",
+  "persona": "Il Nostromo",
+  "milestone": "D4",
+  "round": 3,
+  "commit": "3598ce5d245e94bda58b0f006a74e6282058dd70",
+  "diffRange": "90b85c93ead4a8d15fd0c2d059fce310e11a9687..3598ce5d245e94bda58b0f006a74e6282058dd70",
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolvedFindings": [
+    {
+      "id": "FU-R1-B1",
+      "disposition": "Carry forward the round-2 verified fix for reset wrapping and reachable retry/reopen at 320 px and 200% text on Chromium and WebKit. Those surfaces are unchanged by this diff and were not retested in round 3."
+    },
+    {
+      "id": "FU-R1-Q1",
+      "disposition": "Carry forward the round-2 verified first-start Importa il corso correction and cancellation behavior. Import labels are unchanged by this diff and were not retested in round 3."
+    }
+  ],
+  "evidenceInspected": [
+    "AGENTS.md, reviewer-field-ux persona, REVIEW_PROTOCOL, repository field-operations-ui skill, frontend-testing-debugging skill, LOCAL_DEVELOPMENT, active D4 predicate and adversarial checklist, Product Specification section 8, Scope section 1 and Technical Decisions section 3.2. Read P17 and its frozen r10 mock source; no layout change is present.",
+    "Prior field-ux-review-round-1.json and canonical round-2 PASS at 193a2506c7770bb11ee7f128ce2686b1d1e8b1a4. Same persona, prior seed and restricted follow-up policy retained.",
+    "Full restricted diff 90b85c9..3598ce5, note-save-race.json, component regression, new browser spec, additive manifest/project coverage, self-review and limitation updates. Original u10-evaluations.spec.ts is unchanged, including the note-preview, clamp and 320/200 assertions; existing project coverage was not removed.",
+    "EvaluationManagement.tsx:524 uses a functional state update to close only the current editor matching the saved student. Failure returns false without closing a draft. The current student cannot reopen its disabled name control while its save is pending; session and view controls stay disabled while an editor or write is active. The save call captures the exact session.",
+    "Read the original OS-temporary cvc-d4-evaluation-note-race-probe source and raw result: deferred success removed the next student's textarea before the fix, while deferred rejection retained it. Read cvc-d4-note-race-before-fix.log showing the new component regression failing against the old implementation. These are historical reproduction evidence, not independently rerun pre-fix results.",
+    "Independent Node v24.21.0 run: npm run test -- src/features/evaluations/EvaluationManagement.test.tsx. All 14 tests PASS in 7.66 seconds, including deferred success, ordinary own-editor closure, exact-session failure/retry and navigation recovery. The known jsdom canvas-not-implemented diagnostic does not fail this suite.",
+    "Independent real-browser command: npm run verify:e2e -- tests/e2e/d4-evaluation-note-save.spec.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --retries=0 --output <OS temporary cvc-d4-field-ux-round3/results>. Browser plugin not available; repository Playwright fallback used. Runner chose its own isolated local server. Final exit 0; JSON records 2 expected, 0 unexpected, 0 flaky, no errors and retry 0. Pixel test 6141 ms; WebKit test 24659 ms.",
+    "Inspected the browser barrier: it holds only the first original writeTransaction callback after its SQL work. It does not inject a note, replace a persistence result or directly change React state. Student creation, session choice, both note edits and saves, reload and reopening both exact notes use visible UI controls.",
+    "Both engines independently prove Aldo's Salvataggio… then Salvato, Bea's still-visible exact draft after that completion, Bea's own editor closing after her successful save, and both exact notes surviving reload in sat-pm.",
+    "Visually inspected both newly generated mobile screenshots and tracked screenshots/next-note-preserved-webkit.png. They show a meaningful Valutazioni screen, Sabato PM context, Aldo's separate saved note/status, Bea's full name and exact draft, and readable Annulla/Salva nota controls without a framework overlay or visible overlap. WebKit explains unavailable dictation while typing remains usable.",
+    "Observed browser/server logs contain expected unsupported-multitab PowerSync warnings and existing Vite development warnings, with no logged application error. No dedicated console/pageerror listener was added to the unchanged spec.",
+    "Runner teardown lingered after both tests printed PASS. Stopped only its verified own Vite PID 32152; the runner then emitted its final 2-passed summary and JSON. Total duration 155954 ms therefore includes manual server cleanup and is not an unattended lifecycle or performance result. All four identified own runner/server PIDs were absent afterwards; browser slot released.",
+    "Own raw log, report and screenshots preserved in OS temporary cvc-d4-field-ux-round3. Report SHA256 4e60f042fa29f7dae09169d8a0018688cd568595ef78b27530ad7d26d259b41c. Tracked working tree was clean at the exact requested commit before and after this review; no tracked evidence, source, dependency, mock, private data or deployment changed."
+  ],
+  "anglesTried": {
+    "seed": 578023799,
+    "scope": "Restricted round 3 after round-2 PASS: the new note-save completion fix and direct regressions only. Prior finding dispositions carried forward without repeating the whole milestone or drawing new lenses.",
+    "lenses": [
+      "Prior lens 12: consistent student/session identity and honest save labels, restricted to the changed note completion path.",
+      "Prior lens 2: existing mobile note surface and reachable controls inspected on current Pixel and WebKit captures; unchanged 320/200 assertions inspected, not rerun."
+    ],
+    "wildcard": "No new wildcard drawn. Restricted regression attack: move to the next student's typed draft before the preceding real save completes, then save and reopen both notes. The round-1 prepared-export replacement hunt was not repeated."
+  },
+  "morningPath": [
+    "1. On the selected Sabato PM evaluation screen, tap Aldo's name, type his note and tap Salva nota. His row honestly says Salvataggio… while the transaction is held.",
+    "2. Before that completion, tap Bea's name and type her observation. Her full name and Sabato PM remain in the open panel. Aldo's later Salvato leaves her exact draft and save/cancel controls intact; no recovery or retyping tap is required.",
+    "3. Tap Salva nota for Bea. Her own editor closes and her row says Salvato. These two note entries take four button taps from the already selected evaluation screen, excluding typing and session selection; the fix adds no tap.",
+    "4. Reload, select Sabato PM and reopen each note through its name control. Both exact texts remain attached to their own student. Whole automated test durations were 6.141 seconds on Pixel and 24.659 seconds on WebKit, including course/student setup and reload; these are not human field timings."
+  ],
+  "notTested": [
+    "This PASS covers the restricted field-UX fix only. It does not rerun all D4 acceptance, original u10 clamp cases, full verification, production isolation or final milestone recording; the root's separate original-case evidence and earlier reviews remain applicable outside this diff.",
+    "The independently run browser assertions passed, but server teardown required the manual cleanup described above. This review does not establish normal unattended runner shutdown or a cause for that tooling delay.",
+    "No dedicated browser console/pageerror assertion or physical keyboard/virtual-keyboard test was added. Current screenshots and the runner's visible logs were inspected; screenshot success is not an accessibility or real-device acceptance claim.",
+    "Actual phone save/share transfer, receiving applications, persistence permission, installed-device reset isolation, glare and wet-hand operation remain owner evidence. D4-PHONE-TRANSFER is still NEEDS_SETUP; no physical PASS or publication is inferred.",
+    "Exact normal CI is not established here: ci:status returned fetch failed in this environment. The older Mac full-context compilation diagnosis and the fresh required recorder remain the orchestrator's gates; D4 remains IN_PROGRESS.",
+    "Cross-device sync, accounts, production backends and team editing remain outside D4 scope."
+  ]
+}
