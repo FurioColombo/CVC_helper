@@ -1,0 +1,56 @@
+name: D4 full-context host probe (diagnostic only)
+
+on:
+  push:
+    branches:
+      - codex/d4-full-context-probe
+
+permissions:
+  contents: read
+
+jobs:
+  full-context:
+    name: Original full suite with external host sampling (not acceptance)
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      CVC_DOCS_BASE: 90b85c93ead4a8d15fd0c2d059fce310e11a9687
+      CVC_D4_HOST_OUTPUT: ${{ runner.temp }}/cvc-d4-full-context-host.jsonl
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Refuse application, fixture, or test differences from the failed source
+        run: |
+          git show 90b85c93ead4a8d15fd0c2d059fce310e11a9687:.github/workflows/ci.yml > .github/workflows/ci.yml
+          git diff --exit-code 90b85c93ead4a8d15fd0c2d059fce310e11a9687 -- .github/workflows/ci.yml
+          git diff --exit-code 90b85c93ead4a8d15fd0c2d059fce310e11a9687 -- src tests public scripts package.json package-lock.json playwright.config.ts vite.config.ts 'tsconfig*' ':!scripts/d4-full-context-probe.mjs'
+          node scripts/d4-full-context-probe.mjs --self-check
+          npx playwright --version
+      - run: npx playwright install --with-deps chromium webkit
+      # Keep the canonical Mac command, every original project, retry, assertion,
+      # seed and timeout. Only the external host sampler is added. ci.yml is
+      # absent in this branch commit to avoid a duplicate run; the original
+      # file is restored before verification for repository harness checks.
+      - name: Original complete verification with bounded external telemetry
+        run: node scripts/d4-full-context-probe.mjs
+      - name: Preserve host samples, browser report, and failure traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d4-full-context-host-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/cvc-d4-full-context-host.jsonl
+            test-results/e2e-report.json
+            test-results/e2e-flaky.json
+            test-results/**/migration/*.json
+            test-results/**/trace.zip
+            test-results/**/error-context.md
+            test-results/**/test-failed-*.png
+          retention-days: 7
+          if-no-files-found: warn
