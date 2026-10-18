@@ -1,0 +1,67 @@
+name: D4 worker-sync compilation probe (diagnostic only)
+
+on:
+  push:
+    branches:
+      - codex/d4-worker-compile-probe
+
+permissions:
+  contents: read
+
+jobs:
+  cold-d1:
+    name: ${{ matrix.mode }} cold D1 run ${{ matrix.repeat }} (not acceptance)
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: streaming
+            repeat: 1
+          - mode: streaming
+            repeat: 2
+          - mode: worker-sync
+            repeat: 1
+          - mode: worker-sync
+            repeat: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Record runner and pinned WebKit metadata
+        run: |
+          sw_vers
+          uname -a
+          node --version
+          npx playwright --version
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const { browsers } = JSON.parse(readFileSync("node_modules/playwright-core/browsers.json", "utf8"));
+            const webkit = browsers.find(({ name }) => name === "webkit");
+            console.log(`Playwright WebKit: revision=${webkit.revision}, browserVersion=${webkit.browserVersion}`);
+          '
+      - name: Verify the probe base and unchanged D1 test
+        run: node scripts/d4-worker-compile-probe.mjs --check
+      - name: Swap only the compiler body for synchronous worker compilation
+        if: matrix.mode == 'worker-sync'
+        run: node scripts/d4-worker-compile-probe.mjs worker-sync
+      - run: npx playwright install --with-deps webkit
+      - name: Run the complete original D1 migration spec once
+        run: >-
+          npm run verify:e2e -- tests/e2e/d1-migration.spec.ts
+          --project=iphone-13-webkit-core
+          --retries=0
+      - name: Preserve timings, report, and failure trace for diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d4-worker-compile-${{ matrix.mode }}-${{ matrix.repeat }}-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
