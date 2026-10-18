@@ -25,6 +25,7 @@ import {
   layoutProblems,
   type SummaryImageResult,
 } from "./summary-image-checks"
+import { bootstrapCourse } from "./seed"
 
 /**
  * F3 C6 target: a realistic 13-crew course (owner, 2026-09-28) grouped by
@@ -66,11 +67,7 @@ test("fits a realistic 13-crew course on one 390×844 screen, grouped by boat mo
   )
   test.setTimeout(60_000)
 
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
-
+  await bootstrapCourse(page, "Deriva", 1)
   await seedThirteenCrewCourse(page)
   await page.reload()
   await page
@@ -255,11 +252,7 @@ test("fits ten 4-student D1 crews, single boat model, on one 390×844 screen", a
   test.setTimeout(60_000)
   await context.grantPermissions(["clipboard-read", "clipboard-write"])
 
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
-
+  await bootstrapCourse(page, "Deriva", 1)
   await seedTenCrewCourseD1(page)
   await page.reload()
   await page
@@ -324,11 +317,7 @@ test("keeps boat numbers of three or four characters clear of the first name, on
     )
   })
 
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
-
+  await bootstrapCourse(page, "Deriva", 1)
   await seedTenCrewCourseD1(page, { numbers, membersPerCrew: 2 })
   await page.reload()
   await page
@@ -450,11 +439,7 @@ test("keeps showing the boat-model logo in the read view after it was loaded onc
   )
   test.setTimeout(60_000)
 
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
-
+  await bootstrapCourse(page, "Deriva", 1)
   await seedTenCrewCourseD1(page)
   await page.reload()
   await page
@@ -505,10 +490,7 @@ test("keeps showing the boat-model logo in the read view after it was loaded onc
  * downloaded.
  */
 async function openThirteenCrewSummary(page: Page) {
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
+  await bootstrapCourse(page, "Deriva", 1)
   await seedThirteenCrewCourse(page)
   await page.reload()
   await page
@@ -523,10 +505,7 @@ async function openThirteenCrewSummary(page: Page) {
 
 /** The double-name course, on its "Domenica PM", with the read view open. */
 async function openDoubleNameSummary(page: Page) {
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
+  await bootstrapCourse(page, "Deriva", 1)
   await seedDoubleNameCourse(page)
   await page.reload()
   await page

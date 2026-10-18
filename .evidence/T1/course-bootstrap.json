@@ -1,0 +1,65 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_VERIFICATION_PASS_MILESTONE_IN_PROGRESS",
+  "recordedAt": "2026-10-18T19:05:45.328Z",
+  "parentCheckpoint": "aa8473a7abf97166dae8c301d482a4011a3fae84",
+  "nodeVersion": "v24.21.0",
+  "scope": "Typed blank-page bootstrap replaces only repeated unasserted course creation in fixture-and-reload paths. It calls getActiveCourse (including production preparation), refuses an existing course, builds canonical details using browser Date, saves with the production API and requests persistent storage. Callers seed on that same blank document before the original reload mounts the app once. Explicit creation/Back/paste flows and all original assertions, titles, skips and profile loops remain.",
+  "source": {
+    "digest": "f1cb4b6eb6824e4d4038e5ff14fcd69ec9a128b728f01f84dbb04662bbc4ab83",
+    "files": 438
+  },
+  "sourceHashes": {
+    "tests/e2e/seed.ts": "5733df926465fc370832f5a02674c776d1cd726c44aced69353fd5f0476bdb75",
+    "tests/e2e/f3-crew-summary.spec.ts": "98795316dfd5421a38e6184842530f5b87813ac5440fbb68bc57acefcb6afbe3",
+    "tests/e2e/ug2-hostile-roster.spec.ts": "73fd1ad5f2dff87c92044ba721e60a13019d95c4db3d9d5b97a336ab02504d1f",
+    "tests/e2e/ug2-field-ux-fixes.spec.ts": "d54c61a19bc3332ee6495c4b5d5e054be8fc389ee06c859c4538bf1ac577a0a5"
+  },
+  "coverage": {
+    "status": "PASS",
+    "cases": 356,
+    "exactFileTitleProjectSequenceUnchanged": true,
+    "beforeRaw": "OS temporary cvc-t1-coverage-before.json",
+    "afterRaw": "OS temporary cvc-t1-coverage-after-bootstrap.json",
+    "beforeSha256": "9cda9e08366c9ceca8a7ecafd40d5575f8fcfc5af27219f83f40b3773e89711a",
+    "afterSha256": "45b8f7def5b3f681effbc265d9f98876d91eef1392dcdbb0f9116a74a7285eb0"
+  },
+  "quick": {
+    "status": "PASS",
+    "files": 89,
+    "tests": 1439,
+    "raw": "OS temporary cvc-t1-bootstrap-quick.log",
+    "sha256": "c885e9614a31914b60f1fac6933146a0ffab53cab0905ab5726627c9e41440a5"
+  },
+  "domain": {
+    "status": "PASS",
+    "raw": "OS temporary cvc-t1-bootstrap-domain.log",
+    "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+  },
+  "browser": {
+    "status": "PASS",
+    "stats": {
+      "startTime": "2026-10-18T18:59:16.944Z",
+      "duration": 171710.836,
+      "expected": 10,
+      "skipped": 4,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "raw": "OS temporary cvc-t1-bootstrap-browser-proof/e2e-report.json",
+    "sha256": "aff585dca4269813bc32897f492f62ff2084236fa460cc5f5642ebc6340b611a",
+    "log": "OS temporary cvc-t1-bootstrap-browser.log",
+    "logSha256": "998b59197bdff6902809daea9775baeb8c9a5b0ddb5caff792dda7153723944f",
+    "command": "npm run verify:e2e -- tests/e2e/f3-crew-summary.spec.ts tests/e2e/ug2-hostile-roster.spec.ts tests/e2e/ug2-field-ux-fixes.spec.ts tests/e2e/u04-scan-ui.spec.ts --project=pixel-7-chrome --project=iphone-13-webkit-core --grep \"fits a realistic 13-crew|fits ten 4-student|copies double names, a crew|composes the hostile Tuesday|makes the image in WebKit|UG2-UX-1: the day-edit page of Comandate|UG2-UX-4: the phone|edge handles work by keyboard\" --retries=0",
+    "scope": "Summary layouts and copies, hostile Tuesday, review-name day page and the real phone Back path. Original crop check also passes unchanged: Pixel26ms and WebKit24ms; these isolated passes do not resolve the filed intermittent timing defect. Four original project skips remain."
+  },
+  "predecessorEvidenceHashesVerified": 18,
+  "publication": {
+    "changed": false,
+    "activeTestVersion": "0.4.0",
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstalled": null
+  },
+  "limitations": "No speed gain or milestone completion is claimed. Per-case CI timing collection, further feature-based fixture organization, filed flakes, independent code-quality review, same-idle-machine H1/T1 timing and final verify:all remain."
+}

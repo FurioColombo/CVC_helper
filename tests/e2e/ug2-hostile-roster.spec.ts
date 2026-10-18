@@ -39,6 +39,7 @@ import {
   saveReviewFile,
   type SummaryImageResult,
 } from "./summary-image-checks"
+import { bootstrapCourse } from "./seed"
 
 /**
  * UG2: a hostile fictitious 40-student D2 course (see
@@ -77,10 +78,7 @@ async function applyProfile(page: Page, profile: Profile) {
 }
 
 async function openHostileCourse(page: Page) {
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 2" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
+  await bootstrapCourse(page, "Deriva", 2)
   await seedHostileRoster(page)
   await page.reload()
 }

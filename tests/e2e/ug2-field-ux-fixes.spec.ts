@@ -13,6 +13,7 @@ import {
   HOSTILE_VOLUNTEERS,
   seedHostileRoster,
 } from "./ug2-hostile-roster-data"
+import { bootstrapCourse } from "./seed"
 
 /**
  * UG2 field-UX review fixes (UG2-UX-1, -4, -5, -7, -9), through the visible
@@ -47,7 +48,7 @@ async function createCourse(page: Page) {
 }
 
 async function openHostileCourse(page: Page) {
-  await createCourse(page)
+  await bootstrapCourse(page, "Deriva", 2)
   await seedHostileRoster(page)
   await page.reload()
 }
@@ -252,7 +253,7 @@ test("UG2-UX-1: the day-edit page of Comandate shows every name whole at 412, 39
     "The page layout is the same in every engine; one run measures it",
   )
   test.setTimeout(240_000)
-  await createCourse(page)
+  await bootstrapCourse(page, "Deriva", 2)
   await seedReviewNames(page)
   await openDay(page, /Sabato/)
   // The two sections the review measured: this day's own list (a card whose

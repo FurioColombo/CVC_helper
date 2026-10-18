@@ -30,7 +30,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
 | D3 | Awaiting owner. Agent verification, reviews, full source CI and live HTTPS pass. CVC Helper Test 0.4.0 is pinned to `761530f`; 0.4.1 waits for an explicit installation report. D4/T1 may continue under dependency permissions; release waits. See `docs/OWNER_TODO.md` and `.evidence/D3/deployment-evidence.json`. |
 | D4 | Agent gates pass at `fde1fe1`: 1,439 unit tests, 108 focused browser checks and both production reset-isolation engines; exact full Mac/Linux CI is green without retries. Awaiting owner. The test site stays pinned to D3; D4 phone setup follows that check. Evidence: `.evidence/D4/`. |
-| T1 | In progress. Shared summary/hostile seeds use real API types; six browser cases and 1,439 unit tests pass, with all 356 project cases retained. CI will retain detailed timing reports. H1 comparison checkout is ready; speed work and flaky-test diagnosis continue. Evidence: `.evidence/T1/`. |
+| T1 | In progress. Typed summary/hostile seeds and blank-page course setup pass ten selected browser checks and 1,439 unit tests; all 356 project cases remain. CI timing collection, fixture organization and flaky-test fixes continue. H1 comparison checkout is ready. Evidence: `.evidence/T1/`. |
 | UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
 
 ## Execution order
