@@ -9,8 +9,37 @@ permissions:
   contents: read
 
 jobs:
+  stack-preflight:
+    name: Isolated WebKit stack permission preflight
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install webkit
+      - name: Sample only the owned blank WebKit process
+        env:
+          CVC_D4_PREFLIGHT_REPORT_PATH: ${{ runner.temp }}/cvc-d4-stack-preflight.json
+          CVC_D4_PREFLIGHT_STACK_PATH: ${{ runner.temp }}/cvc-d4-stack-preflight.sample
+        run: node scripts/d4-full-context-probe.mjs --stack-preflight
+      - name: Preserve isolated permission preflight artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d4-stack-preflight-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/cvc-d4-stack-preflight.json
+            ${{ runner.temp }}/cvc-d4-stack-preflight.sample
+          retention-days: 7
+          if-no-files-found: warn
+
   full-context:
     name: Original full suite with external host sampling (not acceptance)
+    needs: stack-preflight
     runs-on: macos-15
     timeout-minutes: 90
     env:
@@ -28,7 +57,8 @@ jobs:
         run: |
           git show 90b85c93ead4a8d15fd0c2d059fce310e11a9687:.github/workflows/ci.yml > .github/workflows/ci.yml
           git show 90b85c93ead4a8d15fd0c2d059fce310e11a9687:.github/workflows/ci.yml | cmp - .github/workflows/ci.yml
-          git diff --exit-code 90b85c93ead4a8d15fd0c2d059fce310e11a9687 -- src tests public scripts package.json package-lock.json playwright.config.ts vite.config.ts 'tsconfig*' ':!scripts/d4-full-context-probe.mjs'
+          # Only the external sampler, its marker reporter/config, and the runner's explicit probe-only config switch may differ.
+          git diff --exit-code 90b85c93ead4a8d15fd0c2d059fce310e11a9687 -- src tests public scripts package.json package-lock.json playwright.config.ts playwright.d4-full-context-probe.config.ts vite.config.ts 'tsconfig*' ':!scripts/d4-full-context-probe.mjs' ':!scripts/d4-full-context-case-reporter.mjs' ':!scripts/run-e2e.mjs' ':!playwright.d4-full-context-probe.config.ts'
           node scripts/d4-full-context-probe.mjs --self-check
           npx playwright --version
       - run: npx playwright install --with-deps chromium webkit
@@ -39,6 +69,9 @@ jobs:
       - name: Original complete verification with bounded external telemetry
         env:
           CVC_D4_HOST_OUTPUT: ${{ runner.temp }}/cvc-d4-full-context-host.jsonl
+          CVC_D4_CASE_MARKER_OUTPUT: ${{ runner.temp }}/cvc-d4-full-context-case-markers.jsonl
+          CVC_D4_STACK_DIR: ${{ runner.temp }}/cvc-d4-full-context-stacks
+          CVC_D4_PROBE_CONFIG: "1"
         run: node scripts/d4-full-context-probe.mjs
       - name: Preserve host samples, browser report, and failure traces
         if: always()
@@ -47,6 +80,8 @@ jobs:
           name: d4-full-context-host-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/cvc-d4-full-context-host.jsonl
+            ${{ runner.temp }}/cvc-d4-full-context-case-markers.jsonl
+            ${{ runner.temp }}/cvc-d4-full-context-stacks/
             test-results/e2e-report.json
             test-results/e2e-flaky.json
             test-results/**/migration/*.json

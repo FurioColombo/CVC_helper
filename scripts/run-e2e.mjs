@@ -68,12 +68,16 @@ const playwrightCli = resolve(
   "test",
   "cli.js",
 )
+const probeConfigArgs =
+  process.env.CVC_D4_PROBE_CONFIG === "1"
+    ? ["--config", resolve(root, "playwright.d4-full-context-probe.config.ts")]
+    : []
 rmSync(reportPath, { force: true })
 rmSync(flakyPath, { force: true })
 const status = await new Promise((resolveStatus, reject) => {
   const child = spawn(
     process.execPath,
-    [playwrightCli, "test", ...playwrightArgs],
+    [playwrightCli, "test", ...probeConfigArgs, ...playwrightArgs],
     {
       cwd: root,
       env: { ...process.env, CVC_E2E_BASE_URL: baseURL },
