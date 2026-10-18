@@ -1,8 +1,8 @@
 {
   "milestone": "D4",
-  "recordedAt": "2026-10-18T06:43:40.179Z",
+  "recordedAt": "2026-10-18T08:53:25.464Z",
   "source": "scripts/check-test-app-isolation.mjs (npm run check:test-isolation)",
-  "origin": "http://127.0.0.1:62372",
+  "origin": "http://127.0.0.1:51075",
   "basePaths": {
     "regular": "/CVC_helper/",
     "test": "/CVC_helper_test/"
@@ -24,7 +24,7 @@
       "appStartup": {
         "readinessHeading": "Crea il corso",
         "test": {
-          "elapsedMs": 1376,
+          "elapsedMs": 1345,
           "visibleStatusAtReadinessWait": "Apertura del corso…"
         },
         "pageErrors": [],
@@ -61,32 +61,32 @@
         "beforeTestInstallation": {
           "method": "origin-unreachable/server-transport",
           "preflight": {
-            "url": "http://127.0.0.1:62372/CVC_helper/",
-            "controller": "http://127.0.0.1:62372/CVC_helper/sw.js",
+            "url": "http://127.0.0.1:51075/CVC_helper/",
+            "controller": "http://127.0.0.1:51075/CVC_helper/sw.js",
             "activeWorkerState": "activated",
             "documentReadyState": "complete",
             "cacheNames": [
-              "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/"
+              "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/"
             ]
           },
           "cachedResponseFromServiceWorker": true,
           "reloadResponseFromServiceWorker": true,
           "uncachedRequestFailed": true,
           "freshContextWithoutServiceWorkersFailed": true,
-          "freshContextFailure": "Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:62372/CVC_helper/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:62372/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+          "freshContextFailure": "Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:51075/CVC_helper/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:51075/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
         },
         "afterTestErasure": {
           "method": "origin-unreachable/server-transport",
           "preflight": {
-            "url": "http://127.0.0.1:62372/CVC_helper/",
-            "controller": "http://127.0.0.1:62372/CVC_helper/sw.js",
+            "url": "http://127.0.0.1:51075/CVC_helper/",
+            "controller": "http://127.0.0.1:51075/CVC_helper/sw.js",
             "activeWorkerState": "activated",
             "documentReadyState": "complete",
             "cacheNames": [
-              "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/",
+              "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/",
               "cvc-ocr-runtime",
               "cvc-speech-runtime",
-              "cvc-helper-test-precache-v2-http://127.0.0.1:62372/CVC_helper_test/",
+              "cvc-helper-test-precache-v2-http://127.0.0.1:51075/CVC_helper_test/",
               "cvc-helper-test-ocr-runtime",
               "cvc-helper-test-speech-runtime"
             ]
@@ -95,7 +95,7 @@
           "reloadResponseFromServiceWorker": true,
           "uncachedRequestFailed": true,
           "freshContextWithoutServiceWorkersFailed": true,
-          "freshContextFailure": "Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:62372/CVC_helper/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:62372/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+          "freshContextFailure": "Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:51075/CVC_helper/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:51075/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
         }
       },
       "preferences": {
@@ -111,19 +111,19 @@
       ],
       "cacheNames": [
         "cvc-helper-test-ocr-runtime",
-        "cvc-helper-test-precache-v2-http://127.0.0.1:62372/CVC_helper_test/",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:51075/CVC_helper_test/",
         "cvc-helper-test-speech-runtime",
         "cvc-ocr-runtime",
         "cvc-speech-runtime",
-        "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/"
+        "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/"
       ],
       "testOwnedCacheNames": [
         "cvc-helper-test-ocr-runtime",
-        "cvc-helper-test-precache-v2-http://127.0.0.1:62372/CVC_helper_test/",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:51075/CVC_helper_test/",
         "cvc-helper-test-speech-runtime"
       ],
       "regularCachesPresentBeforeTest": [
-        "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/",
+        "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/",
         "cvc-ocr-runtime",
         "cvc-speech-runtime"
       ],
@@ -148,7 +148,7 @@
       "appStartup": {
         "readinessHeading": "Crea il corso",
         "test": {
-          "elapsedMs": 3123,
+          "elapsedMs": 3161,
           "visibleStatusAtReadinessWait": "Apertura del corso…"
         },
         "pageErrors": [],
@@ -185,32 +185,32 @@
         "beforeTestInstallation": {
           "method": "origin-unreachable/server-transport",
           "preflight": {
-            "url": "http://127.0.0.1:62372/CVC_helper/",
-            "controller": "http://127.0.0.1:62372/CVC_helper/sw.js",
+            "url": "http://127.0.0.1:51075/CVC_helper/",
+            "controller": "http://127.0.0.1:51075/CVC_helper/sw.js",
             "activeWorkerState": "activated",
             "documentReadyState": "complete",
             "cacheNames": [
-              "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/"
+              "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/"
             ]
           },
           "cachedResponseFromServiceWorker": true,
           "reloadResponseFromServiceWorker": true,
           "uncachedRequestFailed": true,
           "freshContextWithoutServiceWorkersFailed": true,
-          "freshContextFailure": "Error: page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:62372/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+          "freshContextFailure": "Error: page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:51075/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
         },
         "afterTestErasure": {
           "method": "origin-unreachable/server-transport",
           "preflight": {
-            "url": "http://127.0.0.1:62372/CVC_helper/",
-            "controller": "http://127.0.0.1:62372/CVC_helper/sw.js",
+            "url": "http://127.0.0.1:51075/CVC_helper/",
+            "controller": "http://127.0.0.1:51075/CVC_helper/sw.js",
             "activeWorkerState": "activated",
             "documentReadyState": "complete",
             "cacheNames": [
-              "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/",
+              "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/",
               "cvc-ocr-runtime",
               "cvc-speech-runtime",
-              "cvc-helper-test-precache-v2-http://127.0.0.1:62372/CVC_helper_test/",
+              "cvc-helper-test-precache-v2-http://127.0.0.1:51075/CVC_helper_test/",
               "cvc-helper-test-ocr-runtime",
               "cvc-helper-test-speech-runtime"
             ]
@@ -219,7 +219,7 @@
           "reloadResponseFromServiceWorker": true,
           "uncachedRequestFailed": true,
           "freshContextWithoutServiceWorkersFailed": true,
-          "freshContextFailure": "Error: page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:62372/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+          "freshContextFailure": "Error: page.goto: Server returned nothing (no headers, no data)\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:51075/CVC_helper/\", waiting until \"domcontentloaded\"\u001b[22m\n"
         }
       },
       "preferences": {
@@ -235,19 +235,19 @@
       ],
       "cacheNames": [
         "cvc-helper-test-ocr-runtime",
-        "cvc-helper-test-precache-v2-http://127.0.0.1:62372/CVC_helper_test/",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:51075/CVC_helper_test/",
         "cvc-helper-test-speech-runtime",
         "cvc-ocr-runtime",
         "cvc-speech-runtime",
-        "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/"
+        "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/"
       ],
       "testOwnedCacheNames": [
         "cvc-helper-test-ocr-runtime",
-        "cvc-helper-test-precache-v2-http://127.0.0.1:62372/CVC_helper_test/",
+        "cvc-helper-test-precache-v2-http://127.0.0.1:51075/CVC_helper_test/",
         "cvc-helper-test-speech-runtime"
       ],
       "regularCachesPresentBeforeTest": [
-        "workbox-precache-v2-http://127.0.0.1:62372/CVC_helper/",
+        "workbox-precache-v2-http://127.0.0.1:51075/CVC_helper/",
         "cvc-ocr-runtime",
         "cvc-speech-runtime"
       ],

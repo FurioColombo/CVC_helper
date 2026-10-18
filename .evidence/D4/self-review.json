@@ -1,17 +1,9 @@
 {
   "reviewerRole": "self-review",
   "milestone": "D4",
-  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
-  "verdict": "FAIL",
-  "blockers": [
-    {
-      "id": "D4-CI",
-      "title": "Exact full Mac CI still fails the original first-open bound",
-      "evidence": "ci-checkpoint-ac0c255.json; ci-full-context-host-probe.json; exact primary CI after note fixes remains pending",
-      "reproduction": "With buffered synchronous compilation in the existing code-only worker, upgrades take 7699/6166/6010 ms against 5000 ms. Native Module construction takes 6645/5429/5094 ms, while network/bootstrap/return are fast. All 609 rows remain intact and reopen takes 891/360/352 ms. Linux and the local recorder pass. The full-context timing hypothesis remains unresolved.",
-      "specRef": "AGENTS.md 6 / docs/OWNER_WORKFLOW.md / 03_TECHNICAL_DECISIONS.md 3"
-    }
-  ],
+  "commit": "fde1fe14787333536fb250ef2357793be3870be8",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
   "importantFindings": [
     {
       "id": "SC-R1-I1",
@@ -33,6 +25,13 @@
       "evidence": "ci-checkpoint-ac0c255.json; note-save-race.json; docs/working/BACKLOG.md",
       "reproduction": "The historical Mac attempt times out waiting for Bea’s editor then passes on retry. A deferred-success component probe reproduces another student’s save closing Bea’s typed draft; a failure control retains it. The guarded completion and both original/student-switch browser journeys now pass. This is a real repaired bug, without claiming the sole remote timeout cause or final CI acceptance.",
       "specRef": "03_TECHNICAL_DECISIONS.md 6 / 04_IMPLEMENTATION_PLAN.md T1"
+    },
+    {
+      "id": "T1-COLD-COMPILATION",
+      "title": "Intermittent CPU-active Mac cold compilation remains a required T1 reliability item",
+      "evidence": "ci-checkpoint-ac0c255.json; ci-full-context-host-probe.json; docs/working/BACKLOG.md",
+      "reproduction": "Prior full-context attempts exceed original5000ms; external host probe measures8608ms then2549ms retry with unchanged609rows. Aggregate WebContentCPU is active; no specific native-stack cause is proven. The exact finalD4 CI passes all original cases first attempt. Retain the defect and finish its cause/fix in T1, whose acceptance requires no remaining flaky tests. No bound, assertion, retry or coverage changes.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md T1; 03_TECHNICAL_DECISIONS.md 6.1"
     }
   ],
   "qolFindings": [
@@ -59,7 +58,8 @@
     "DEV-only phase measurements distinguish worker bootstrap, streaming compilation and module return. Production bundles omit those fields; no engine, VFS, worker count, warm-up, retry or bound change.",
     "A successful earlier evaluation-note save now closes only its own matching editor. Another student’s visible draft survives delayed completion; both notes persist after reload in the exact session on Chromium and WebKit. See note-save-race.json.",
     "DI-R4-1: successful older own-note submission preserves later typing until its own explicit save. Data-integrity round 5 independently passes the unchanged reproducer and direct completion/failure controls; earlier FAIL preserved.",
-    "FU-R4-B1: start/retry advances the draft revision before dictation begins. Independent field-UX round5 passes the unchanged pending/completed/rejected-save probe; seven targeted browser cases pass without retries and unattended teardown succeeds."
+    "FU-R4-B1: start/retry advances the draft revision before dictation begins. Independent field-UX round5 passes the unchanged pending/completed/rejected-save probe; seven targeted browser cases pass without retries and unattended teardown succeeds.",
+    "D4-CI: exact reviewed source fde1fe1 passes canonical full Mac and Linux jobs with zero flaky entries. Required local recorder also passes108focused cases/1originalskip, all1439units and production reset isolation in bothengines."
   ],
   "evidenceInspected": [
     "D4 success predicate/adversarial checklist, relevant product/scope/data-version contracts, PowerSync JavaScript/React references, field-operations rulebook, frozen P02 settings target and current P02 amendment.",
@@ -80,11 +80,20 @@
     "Exact full normal push CI 39103308907: Linux 217 PASS/47 original skips; Mac 286 PASS/65 original skips, one failed original D1 timing case and one filed u10-evaluations flaky case. The synchronous constructor still consumes 5.1–6.6 seconds only in the full-run context. The changed API is not a verified timing remedy; current green local evidence is not acceptance.",
     "Live HTTPS recheck at 2026-10-18T06:50:18Z: CVC Helper Test remains pinned 0.4.0 at 761530f; regular app returns HTTP 200. D3 evidence hashes remain intact. No deployment or physical-device PASS occurred.",
     "Note dictation fix: 17 focused component tests and 1439 unit tests/89 files pass; domain and production build pass. Pending-transcription repro fails before the local start/retry revision guard. Field-UX round 4 FAIL is preserved; restricted round 5 is pending. No owner-device or CI acceptance inferred.",
-    "Full-context diagnostic39108099189 is green with one original cold-open flake:8608ms first attempt,2549ms retry. Host samples show CPU-active WebContent, not a proven idle callback stall. Original limits/coverage retained. Per-thread attribution remains required; this does not prove a native compilation fix or exact primary CI."
+    "Full-context diagnostic39108099189 is green with one original cold-open flake:8608ms first attempt,2549ms retry. Host samples show CPU-active WebContent, not a proven idle callback stall. Original limits/coverage retained. Per-thread attribution remains required; this does not prove a native compilation fix or exact primary CI.",
+    "Fresh required recorder at fde1fe1 PASS on source 39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc: 1439 unit tests / 89 files, 108focused browser cases/1original skips/0flakes, plus production full-reset isolation in both engines. All 13 tables / 49 rows round-trip identically in 4 configurations. D3 test pin remains unchanged; exact primary CI 39111591566 pending.",
+    "Final evidence reconciliation: verification.json matches unchanged source39b26907 and cleanfde1fe1; all13tables/49rows round-trip identically in4configurations; all9D3 readiness hashes intact. Both canonical flaky artifacts are independently extracted empty arrays. CurrentWebKit320px/200% replacement controls and desktop reset-complete screenshots visually inspected; no changed layout. Earlier pending/FAIL statements above describe preserved historical checkpoints, superseded by this final exact-source acceptance."
   ],
   "notTested": [
-    "D4 remains IN_PROGRESS: after the note fix, the previous ac0 recorder is historical and a fresh final recorder/restricted affected reviews are required. Exact Mac cold compilation is still unresolved; T1 is not eligible.",
+    "D4 agent gates pass. Phone transfer/storage/reset remains NEEDS_SETUP because the D3 fixed0.4.0 installation/update sequence owns the permanent test slot. D4 may be handed over AWAITING_OWNER; T1 may then proceed under explicit dependency permissions. The release still needs owner acceptance.",
     "Actual phone Web Share receiving-app behavior, save/import transfer, persistence permission and full-reset acceptance remain owner checks. No simulated or inferred physical PASS.",
     "Cross-device sync, accounts, backend deletion and upload conflicts are outside 0.4.0."
+  ],
+  "sourceDigest": "39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc",
+  "resolvedBlockers": [
+    {
+      "id": "D4-CI",
+      "disposition": "Exact canonical pushCI39111591566 now passes at the current reviewed source, both full original jobs with zero flakes; see ci-checkpoint-fde1fe1.json. This resolves the missing/red-checkpoint gate, without claiming native timing causality."
+    }
   ]
 }

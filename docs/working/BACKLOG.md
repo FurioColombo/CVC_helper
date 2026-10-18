@@ -113,7 +113,7 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 exact CI remains pending; full-context probe retries an 8.6 s cold open. Preserve bounds/coverage; see `.evidence/D4/ci-full-context-host-probe.json`.
+D4 exact `fde1fe1` CI passes without retries. Prior Mac cold-open flake remains for T1; preserve bounds/coverage. See `.evidence/D4/ci-full-context-host-probe.json`.
 
 ## Flaky browser tests
 

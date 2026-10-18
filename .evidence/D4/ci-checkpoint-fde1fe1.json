@@ -1,0 +1,71 @@
+{
+  "milestone": "D4",
+  "sourceCommit": "fde1fe14787333536fb250ef2357793be3870be8",
+  "run": 39111591566,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39111591566",
+  "status": "PASS",
+  "completedAt": "2026-10-18T09:09:15Z",
+  "jobs": [
+    {
+      "id": 117628711357,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T08:28:51Z",
+      "completedAt": "2026-10-18T09:09:15Z",
+      "browserSummary": [
+        "2026-10-18T09:09:05.9956030Z   65 skipped",
+        "2026-10-18T09:09:06.0057660Z   291 passed (35.3m)",
+        "2026-10-18T09:09:06.0355470Z ##[notice]  65 skipped",
+        "  291 passed (35.3m)"
+      ],
+      "rawLog": "OS temporary cvc-d4-ci-39111591566/cvc-d4-ci-117628711357.log",
+      "logSha256": "6cf639b2d7688e47d733462a106335dfc2fed95cc295a62ebb5acbc785c2d073"
+    },
+    {
+      "id": 117628711526,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T08:28:48Z",
+      "completedAt": "2026-10-18T08:48:47Z",
+      "browserSummary": [
+        "2026-10-18T08:48:44.8199170Z   47 skipped",
+        "2026-10-18T08:48:44.8199466Z   219 passed (17.8m)",
+        "2026-10-18T08:48:44.8223903Z ##[notice]  47 skipped",
+        "  219 passed (17.8m)"
+      ],
+      "rawLog": "OS temporary cvc-d4-ci-39111591566/cvc-d4-ci-117628711526.log",
+      "logSha256": "3db0cd59407cd21ec43c28d57ba878941f7e8266001d4e5fb070dfedf62674e2"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12131139478,
+      "name": "e2e-flaky-macos-15-39111591566",
+      "sha256": "e615491ae50d8f81f7fde59adc41831007a3d4c8eaba63c9d5a658e841f50d5b",
+      "rawZip": "OS temporary cvc-d4-ci-39111591566/12131139478.zip"
+    },
+    {
+      "id": 12130699862,
+      "name": "e2e-flaky-ubuntu-latest-39111591566",
+      "sha256": "8d9bf89b223f40761ac6fcc6ad87108660f354689c5f41f5859ec4bd39411cfb",
+      "rawZip": "OS temporary cvc-d4-ci-39111591566/12130699862.zip"
+    }
+  ],
+  "qualification": "Exact push CI. Original thresholds, retries, assertions, skips and browser projects remain. Physical acceptance is not inferred.",
+  "flakyArtifacts": [
+    {
+      "artifactId": 12131139478,
+      "entries": 0,
+      "reportSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "artifactId": 12130699862,
+      "entries": 0,
+      "reportSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    }
+  ],
+  "flaky": 0,
+  "note": "Both original full jobs pass first attempts with empty flaky reports: Mac291/browser65originalskips; Linux219/browser47originalskips. Prior native-compilation intermittence remains filed for T1; no causal timing fix is inferred."
+}
