@@ -15,7 +15,6 @@ jobs:
     timeout-minutes: 90
     env:
       CVC_DOCS_BASE: 90b85c93ead4a8d15fd0c2d059fce310e11a9687
-      CVC_D4_HOST_OUTPUT: ${{ runner.temp }}/cvc-d4-full-context-host.jsonl
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,6 +37,8 @@ jobs:
       # absent in this branch commit to avoid a duplicate run; the original
       # file is restored before verification for repository harness checks.
       - name: Original complete verification with bounded external telemetry
+        env:
+          CVC_D4_HOST_OUTPUT: ${{ runner.temp }}/cvc-d4-full-context-host.jsonl
         run: node scripts/d4-full-context-probe.mjs
       - name: Preserve host samples, browser report, and failure traces
         if: always()
