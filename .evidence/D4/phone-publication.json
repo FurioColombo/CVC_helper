@@ -40,5 +40,29 @@
       "screenshots/live-settings-0.4.2-webkit.png"
     ]
   },
-  "physicalAcceptance": "PENDING_OWNER"
+  "physicalAcceptance": "PENDING_OWNER",
+  "ownerFixPublication": {
+    "recordedAt": "2026-10-19T22:39:28.791Z",
+    "version": "0.4.3",
+    "source": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
+    "verifiedCheckpoint": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
+    "ci": "https://github.com/FurioColombo/CVC_helper/actions/runs/39329618525",
+    "replaces": {
+      "milestone": "D4",
+      "version": "0.4.2",
+      "ownerCheckStatus": "NEEDS_SETUP after CHANGES_REQUESTED"
+    },
+    "publisherCommit": "a7c6e5c",
+    "log": "OS-temp cvc-d4-publish-043.log",
+    "logSha256": "\u0001931be5db05f9a90119f851daa4bc01aa76bd6dc8f72c6114288a959e03934b7",
+    "liveVerification": {
+      "status": "PASS",
+      "report": "deployment-evidence-0.4.3.json",
+      "engines": [
+        "chromium",
+        "webkit"
+      ]
+    },
+    "physicalAcceptance": "PENDING_OWNER"
+  }
 }

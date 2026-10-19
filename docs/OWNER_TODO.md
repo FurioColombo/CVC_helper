@@ -28,21 +28,23 @@ The owner reported: Accepted by the owner with two steps not observed. Observed 
 
 ## Check course files, persistent storage and full reset on Android — D4
 
-**State:** Setup needed · Required
+**State:** Ready for owner check · Required
 
 **What to do:**
 
-1. Open your installed CVC Helper Test (do not reinstall). Switch away and return until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.4.2. Use fictitious people only.
-2. In Impostazioni read Conservazione dei dati and note whether the browser agreed to keep the data. Prepare the course file, save it and share it to another app. Check it is available there and its filename contains no personal name.
-3. Import that saved file: check the course preview, cancel once, then explicitly confirm replacement. Reopen the course and check students, notes, duties and crews; close and reopen the app again.
-4. Confirm Azzera tutti i dati locali and check the app reopens without a course. Confirm the regular CVC Helper app still has its own course. Follow Course files and full local reset in docs/DEVICE_CHECKS.md.
-5. Report D4-PHONE-TRANSFER with your device, browser and Android version and what you actually observed, including the receiving app and the persistent-storage answer.
+1. Open your installed CVC Helper Test (do not reinstall). Switch away and return until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.4.3. Use fictitious people only.
+2. In Impostazioni tap Prepara il file del corso: the check mark and File del corso pronto should appear at once, with Salva file and Condividi in view. Tap Salva file, then Condividi and send the file to another app (it arrives as a .txt). Report the receiving app; any error should show with a red triangle above the bottom bar.
+3. Import the shared or saved file: check the preview, cancel once, then confirm replacement. Reopen and check students, notes, duties and crews.
+4. Confirm Azzera tutti i dati locali. If it takes long, you may close the app: reopening should finish the reset (with a hint after a few seconds) and then open without a course. Confirm the regular CVC Helper app still has its own course.
+5. Report D4-PHONE-TRANSFER with your device, browser and Android version and what you actually saw, including the receiving app and the Conservazione dei dati answer.
 
-No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+Use the test address below and the linked device instructions.
 
 **Expected:** The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.
 
-**Build:** No test build is assigned yet.
+**Build:** `7ac55d8210e9c08c36dd676e80bc018d2cd216b4`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
