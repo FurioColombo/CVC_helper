@@ -5,8 +5,7 @@ const first = "a".repeat(40)
 const later = "b".repeat(40)
 const pin = {
   milestone: "D3",
-  firstVersion: "0.4.0",
-  secondVersion: "0.4.1",
+  versions: ["0.4.0", "0.4.1"],
   sourceCommit: first,
   activeVersion: "0.4.0",
   ownerInstalled: null,
@@ -66,7 +65,71 @@ describe("phone test publication stays pinned", () => {
       ),
     ).toThrow(/downgrade/)
     expect(() => assertTestPublicationAllowed(pin, first, "0.5.0")).toThrow(
-      /two pinned patch/,
+      /pinned patch/,
     )
+  })
+})
+
+describe("a later milestone replaces the installed build only after its owner check", () => {
+  const replacing = {
+    milestone: "D4",
+    versions: ["0.4.2"],
+    sourceCommit: later,
+    activeVersion: "0.4.1",
+    ownerInstalled: null,
+    replaces: {
+      milestone: "D3",
+      ownerCheck: "D3-PHONE-UPDATE",
+      activeVersion: "0.4.1",
+    },
+  }
+  const queue = (status) => ({
+    items: [{ id: "D3-PHONE-UPDATE", status }],
+  })
+
+  it("publishes the next patch once the replaced check has passed", () => {
+    expect(() =>
+      assertTestPublicationAllowed(replacing, later, "0.4.2", queue("PASSED")),
+    ).not.toThrow()
+  })
+  it("keeps the installed build while its check is pending or failed", () => {
+    for (const status of ["READY", "NEEDS_SETUP", "CHANGES_REQUESTED"])
+      expect(() =>
+        assertTestPublicationAllowed(replacing, later, "0.4.2", queue(status)),
+      ).toThrow(/stays until its owner check passes/)
+    expect(() =>
+      assertTestPublicationAllowed(replacing, later, "0.4.2", { items: [] }),
+    ).toThrow(/stays until/)
+  })
+  it("refuses the earlier source, a version that would not update and a downgrade", () => {
+    expect(() =>
+      assertTestPublicationAllowed(replacing, first, "0.4.2", queue("PASSED")),
+    ).toThrow(/later work/)
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, versions: ["0.4.1"] },
+        later,
+        "0.4.1",
+        queue("PASSED"),
+      ),
+    ).toThrow(/must update the installed one/)
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, versions: ["0.4.0"] },
+        later,
+        "0.4.0",
+        queue("PASSED"),
+      ),
+    ).toThrow(/downgrade/)
+  })
+  it("republishes its own active version without consulting the replaced check", () => {
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, activeVersion: "0.4.2" },
+        later,
+        "0.4.2",
+        queue("READY"),
+      ),
+    ).not.toThrow()
   })
 })

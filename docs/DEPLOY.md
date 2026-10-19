@@ -107,36 +107,40 @@ and offline reopening stay intact. Its D4 report is
 write to ignored `test-results/`.
 
 The repository package remains the released 0.3.0 until UG3; the isolated test
-channel explicitly uses the 0.4 patch line. D3 uses **0.4.0** first, then
-**0.4.1**, from exactly the same verified source at the same test address.
-Neither a later minor version nor independent later source is substituted.
+channel explicitly uses the 0.4 patch line, so the owner's one installation
+takes every later build as an ordinary update. D3 used **0.4.0** then **0.4.1**
+from one verified source; D4 uses **0.4.2** from its own verified checkpoint.
+A later minor version is never substituted: the data keeps the newest version
+that opened it.
 
-Publish deliberately, after the source checkpoint has passed push CI and the
-recorded D3 evidence and reviews:
+`.milestones/test-site.json` pins one milestone's verified source, its planned
+patch versions, the active publication and the build it replaces. Publish
+deliberately, after that checkpoint has passed push CI and the milestone's
+recorded evidence and reviews:
 
 ```text
-npm run test-site:publish -- --source <full-verified-checkpoint> --version 0.4.0
+npm run test-site:publish -- --source <full-verified-checkpoint> --version <pinned patch>
 ```
 
-The publisher builds an archive of that exact commit, checks the recorder’s clean checkpoint, unchanged source tree and exact-commit
-CI, and pushes only static build outputs. GitHub
-Pages publishes the test repository's main branch, with `.nojekyll`.
-`build-info.json` at the test address identifies source, version and CI.
-`.milestones/test-site.json` pins the source, both patch versions and the active
-publication. Ordinary pushes of later work cannot deploy to this repository.
+The publisher builds an archive of that exact commit, checks the recorder’s
+clean checkpoint, unchanged source tree and exact-commit CI, and pushes only
+static build outputs. GitHub Pages publishes the test repository's main branch,
+with `.nojekyll`. `build-info.json` at the test address identifies source,
+version and CI. Ordinary pushes of later work cannot deploy to this repository.
 After publishing, verify the live HTTPS app, its identity, persistence and
-worker before changing `D3-PHONE-UPDATE` to READY with `owner:update`.
+worker before changing the milestone's owner check to READY with
+`owner:update`.
 
-**Keep 0.4.0 fixed until the owner reports that it is installed.** Record that
-explicit report in the pin's `ownerInstalled` with `reportedBy: owner`, the report
-source and summary. This is installation coordination, not a physical PASS.
-Only then publish 0.4.1 with the same command and pinned source. The publisher
-refuses a second version without that report and refuses a different source
-while feedback is pending. Announce the second publication and the focused
-steps in `docs/OWNER_TODO.md` through `owner:update`; keep 0.4.1 fixed until the
-check is resolved. The owner installs once and reports the URL, both versions,
-foreground-to-offer time, saved edit and control reachability under
-[Updates and versions](./DEVICE_CHECKS.md#updates-and-versions).
+**The installed build stays fixed until its owner check is resolved.**
+`scripts/test-site-contract.mjs` refuses any source but the pinned one, any
+unplanned or lower version, a pin's second version without the owner's
+installation report (recorded in `ownerInstalled` with `reportedBy: owner`,
+its source and summary; coordination, not a physical PASS), and a pin that
+replaces another milestone's build before that build's owner check has PASSED
+or without a higher patch. Announce each publication and its focused steps in
+`docs/OWNER_TODO.md` through `owner:update`. The device steps are in
+[Updates and versions](./DEVICE_CHECKS.md#updates-and-versions) and
+[Course files and full local reset](./DEVICE_CHECKS.md#course-files-and-full-local-reset).
 
 ## Building it yourself
 

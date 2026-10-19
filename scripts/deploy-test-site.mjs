@@ -33,7 +33,10 @@ assert(
 assert(args.length === 4, "Only --source and --version are accepted")
 const source = argument("--source")
 const version = argument("--version")
-assertTestPublicationAllowed(pin, source, version)
+const ownerChecks = JSON.parse(
+  readFileSync(join(root, ".milestones/owner-checks.json"), "utf8"),
+)
+assertTestPublicationAllowed(pin, source, version, ownerChecks)
 const git = (parameters, cwd = root) =>
   execFileSync("git", parameters, {
     cwd,
@@ -123,9 +126,14 @@ try {
   const manifest = JSON.parse(
     readFileSync(join(snapshot, ".milestones/manifest.json"), "utf8"),
   )
-  const milestone = manifest.milestones.find((entry) => entry.id === "D3")
+  const milestone = manifest.milestones.find(
+    (entry) => entry.id === pin.milestone,
+  )
   const evidence = JSON.parse(
-    readFileSync(join(snapshot, ".evidence/D3/verification.json"), "utf8"),
+    readFileSync(
+      join(snapshot, `.evidence/${pin.milestone}/verification.json`),
+      "utf8",
+    ),
   )
   // Git's LF archive can differ from a verified Windows CRLF checkout.
   // Require the recorder's clean commit and unchanged source tree, and keep
@@ -160,7 +168,7 @@ try {
   ])
   assert(
     evidence.checks.every((check) => check.status === "PASS"),
-    "D3 verification must all pass",
+    `${pin.milestone} verification must all pass`,
   )
   for (const script of milestone.verificationScripts) {
     assert(
@@ -261,7 +269,7 @@ try {
     [
       "commit",
       "-m",
-      `CVC Helper Test ${version}: verified D3 ${source.slice(0, 12)}`,
+      `CVC Helper Test ${version}: verified ${pin.milestone} ${source.slice(0, 12)}`,
     ],
     output,
   )
@@ -286,7 +294,9 @@ try {
     publishedCommit,
     ciUrl: run.html_url,
     phase:
-      version === pin.firstVersion ? "AWAITING_INSTALL" : "AWAITING_FEEDBACK",
+      pin.versions.indexOf(version) < pin.versions.length - 1
+        ? "AWAITING_INSTALL"
+        : "AWAITING_FEEDBACK",
     publishedAt: new Date().toISOString(),
   })
   writeFileSync(pinPath, `${JSON.stringify(pin, null, 2)}\n`)

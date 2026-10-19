@@ -1,23 +1,36 @@
 {
-  "schemaVersion": 1,
-  "milestone": "D3",
+  "schemaVersion": 2,
+  "milestone": "D4",
+  "ownerCheck": "D4-PHONE-TRANSFER",
   "repository": "FurioColombo/CVC_helper_test",
   "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
   "basePath": "CVC_helper_test",
-  "firstVersion": "0.4.0",
-  "secondVersion": "0.4.1",
-  "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
-  "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+  "versions": ["0.4.2"],
+  "sourceCommit": "fde1fe14787333536fb250ef2357793be3870be8",
+  "sourceDigest": null,
+  "gitSourceDigest": null,
   "activeVersion": "0.4.1",
-  "phase": "AWAITING_FEEDBACK",
-  "ownerInstalled": {
-    "reportedBy": "owner",
-    "reportedAt": "2026-10-19T12:02:11.030Z",
-    "source": "Owner chat report \"D3-PHONE-UPDATE: installed 0.4.0\" (Claude Code session, 2026-10-19)",
-    "summary": "Owner reports CVC Helper Test 0.4.0 installed from the test address. Device, browser and Android version not yet stated."
+  "phase": "AWAITING_PUBLICATION",
+  "ownerInstalled": null,
+  "replaces": {
+    "milestone": "D3",
+    "ownerCheck": "D3-PHONE-UPDATE",
+    "versions": ["0.4.0", "0.4.1"],
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+    "gitSourceDigest": "fe6def9061a3693fc084b46b1deb8d2126ec904ea2d68ee67fb0e1c6af230e9f",
+    "activeVersion": "0.4.1",
+    "ownerInstalled": {
+      "reportedBy": "owner",
+      "reportedAt": "2026-10-19T12:02:11.030Z",
+      "source": "Owner chat report \"D3-PHONE-UPDATE: installed 0.4.0\" (Claude Code session, 2026-10-19)",
+      "summary": "Owner reports CVC Helper Test 0.4.0 installed from the test address. Device, browser and Android version not yet stated."
+    },
+    "publishedCommit": "43b93febdc8cbae187076dccd95580280cea2fd3",
+    "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
+    "publishedAt": "2026-10-19T12:16:53.334Z"
   },
-  "gitSourceDigest": "fe6def9061a3693fc084b46b1deb8d2126ec904ea2d68ee67fb0e1c6af230e9f",
   "publishedCommit": "43b93febdc8cbae187076dccd95580280cea2fd3",
-  "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
-  "publishedAt": "2026-10-19T12:16:53.334Z"
+  "ciUrl": null,
+  "publishedAt": null
 }
