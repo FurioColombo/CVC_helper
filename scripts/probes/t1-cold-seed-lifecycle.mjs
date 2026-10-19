@@ -49,10 +49,18 @@ const pairOrder = shuffle(
   Array.from({ length: 8 }, (_, i) => i + 1),
   random,
 )
+const variantOrders = shuffle(
+  Array.from({ length: 8 }, (_, index) =>
+    index < 4
+      ? ["same-page", "sibling-page-close"]
+      : ["sibling-page-close", "same-page"],
+  ),
+  random,
+)
 const plan = []
-for (const pairId of pairOrder) {
-  const variants = ["same-page", "sibling-page-close"]
-  if (random() < 0.5) variants.reverse()
+for (let pairIndex = 0; pairIndex < pairOrder.length; pairIndex += 1) {
+  const pairId = pairOrder[pairIndex]
+  const variants = variantOrders[pairIndex]
   for (const variant of variants)
     plan.push({ pairId, variant, order: plan.length + 1 })
 }
@@ -65,6 +73,8 @@ const report = {
   playwrightVersion: req("@playwright/test/package.json").version,
   seed,
   pairOrder,
+  orderDesign:
+    "Randomized pairs; exactly four same-page-first and four sibling-first pairs",
   plan,
   environment: {
     browser: "fresh Playwright WebKit launch per case; default headless mode",
