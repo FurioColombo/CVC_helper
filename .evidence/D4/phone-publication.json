@@ -1,0 +1,44 @@
+{
+  "milestone": "D4",
+  "recordedAt": "2026-10-19T16:49:58.338Z",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "version": "0.4.2",
+  "verifiedCheckpoint": "fde1fe14787333536fb250ef2357793be3870be8",
+  "publishedSource": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
+  "sourceRelation": "1d7cd9f is the D4 handoff commit: app code identical to fde1fe1 (git diff excluding .evidence, .milestones and Markdown is empty) and it carries verification.json recorded at fde1fe1. The publisher checks that relation and 1d7cd9f exact push CI 39154067008 success.",
+  "replaces": {
+    "milestone": "D3",
+    "version": "0.4.1",
+    "ownerCheck": "D3-PHONE-UPDATE",
+    "ownerCheckStatus": "PASSED"
+  },
+  "publisherChange": "988dcf3 generalises the test-site contract (unit tested, CI 39280875216 green): a pin replacing another milestone build publishes only after that build owner check PASSED and only as a higher patch.",
+  "attempts": [
+    {
+      "source": "fde1fe1",
+      "status": "REFUSED_BEFORE_EXTERNAL_MUTATION",
+      "reason": "The fde1fe1 archive carries the earlier verification.json recorded at ac0c255; the publisher guard found app changes between them."
+    },
+    {
+      "source": "1d7cd9f",
+      "status": "PASS",
+      "shell": "PowerShell, fnm Node 24, Windows tar",
+      "transport": "D3 recorded fresh-connection helper (sha256 c9d5dcd40d5c6c85d5c34acc05841dd2a7d1e18cbb09c517158af592deaad32f)",
+      "log": "OS-temp cvc-d4-publish-042.log",
+      "logSha256": "a1cbed0d9a5214a20b627d4d9c6567eefe3d061f311e0d58b461c7742da990cb"
+    }
+  ],
+  "liveVerification": {
+    "status": "PASS",
+    "report": "deployment-evidence-0.4.2.json",
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "screenshots": [
+      "screenshots/live-settings-0.4.2-chromium.png",
+      "screenshots/live-settings-0.4.2-webkit.png"
+    ]
+  },
+  "physicalAcceptance": "PENDING_OWNER"
+}
