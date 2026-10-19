@@ -1,0 +1,51 @@
+{
+  "milestone": "T1",
+  "checkpoint": "d0a1ef1db027eada8f6794138d927a44e8e108e6",
+  "run": 39232381948,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39232381948",
+  "status": "FAIL_DOCUMENT_FORMATTING",
+  "conclusion": "failure",
+  "collectedAt": "2026-10-19T09:48:28.452Z",
+  "jobs": [
+    {
+      "id": 117993186021,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-10-19T09:45:06Z",
+      "completedAt": "2026-10-19T09:45:59Z",
+      "currentSteps": [
+        {
+          "name": "Run npm run verify",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "rawLog": "OS temporary cvc-t1-ci-39232381948/job-117993186021.log",
+      "sha256": "3dfe53fc8b1ddf0f3afb27332033a74340de6818a97a34b58e5620f039ddffca",
+      "browserSummary": []
+    },
+    {
+      "id": 117993186410,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-10-19T09:44:59Z",
+      "completedAt": "2026-10-19T09:45:47Z",
+      "currentSteps": [
+        {
+          "name": "Run npm run verify",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "rawLog": "OS temporary cvc-t1-ci-39232381948/job-117993186410.log",
+      "sha256": "ec6d4457f2f26e7d7cb7637515a410d54f302b95396a61db669344403b037988",
+      "browserSummary": []
+    }
+  ],
+  "artifacts": [],
+  "qualification": "Exact named T1 checkpoint only. No timing comparison or milestone closure.",
+  "cause": "Both verify jobs stopped at Prettier: BACKLOG.md lacked the required blank before a bullet list. Unit/build/browser stages did not run. The prior b8 source CI remains a distinct green checkpoint, not a PASS for this commit.",
+  "repair": "Restore the Markdown list separator and shorten the introduction by one line to retain the 300-line budget. Recheck formatting and documentation before publishing the correction."
+}

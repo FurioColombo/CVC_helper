@@ -5,9 +5,8 @@
 Everything open that no milestone owns yet. A flaky browser test is filed
 here as `<spec file> › <test title>`, printed after `FLAKY:`. It gathers the
 0.3.0 working documents archived in `archive/v0.3.0/` and the
-UG2 review findings (`.evidence/UG2/*-review.json`). An item leaves this list
-when a milestone takes it or the owner drops it. At UG3 the rest moves to the
-next cycle's backlog.
+UG2 review findings (`.evidence/UG2/*-review.json`). Items leave when scheduled
+or dropped by the owner; at UG3 the rest moves to the next cycle's backlog.
 
 ## Taken by 0.4.0 milestones
 
@@ -119,6 +118,7 @@ Windows D3 share probes stalled before exit; a manual attempt also timed out. Ne
 Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their owned Vite server stopped after test bodies passed; see `.evidence/D4/field-ux-review-round-4.json`.
 
 Each passed only on a retry and is a defect to fix (03 §6).
+
 - `d4-local-reset.spec.ts › reports partial cleanup honestly and retries through the reset screen`
   — T1's unchanged `b8eda01` local timing run: WebKit showed success instead of the simulated partial failure (39.5 s); retry passed (9.8 s). Cause open; original trace/context retained. See `.evidence/T1/test-timing.json`.
 
