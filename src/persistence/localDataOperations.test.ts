@@ -81,21 +81,29 @@ describe("a full reset that the app may not live to finish", () => {
     expect(states).toEqual(["resetting", "reset-complete"])
   })
 
-  it("keeps the mark when deletion or cleanup fails, so the next open resumes it", async () => {
+  it("keeps the mark while the course database survives, so the next open resumes it", async () => {
     vi.stubGlobal("indexedDB", deletingIndexedDb("error"))
     const first = await load()
     await first.resetAllLocalData()
     expect(first.isResetPending()).toBe(true)
 
     vi.stubGlobal("indexedDB", deletingIndexedDb("success"))
-    mocks.clearAppBrowserStorage.mockRejectedValueOnce(new Error("cache"))
     const second = await load()
     await second.resetAllLocalData()
-    expect(second.isResetPending()).toBe(true)
+    expect(second.isResetPending()).toBe(false)
+  })
 
-    const third = await load()
-    await third.resetAllLocalData()
-    expect(third.isResetPending()).toBe(false)
+  it("drops the mark once the database is gone, even if a cache then fails to clear (DI-R6-1)", async () => {
+    vi.stubGlobal("indexedDB", deletingIndexedDb("success"))
+    mocks.clearAppBrowserStorage.mockRejectedValue(new Error("cache"))
+    const { isResetPending, resetAllLocalData, watchLocalData } = await load()
+    const states: string[] = []
+    watchLocalData((state) => states.push(state))
+
+    await resetAllLocalData()
+
+    expect(states.at(-1)).toBe("reset-failed")
+    expect(isResetPending()).toBe(false)
   })
 
   it("keeps the mark while the deletion is still waiting, as when the app is closed midway", async () => {

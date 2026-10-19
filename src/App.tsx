@@ -217,6 +217,26 @@ function LoadingScreen() {
   )
 }
 
+// A deletion can wait on a window that never answers, and a resumed one gets
+// no "blocked" event when it queues behind an earlier request (D4 review
+// DI-R6-Q1): after a while, say what to close instead of only "wait".
+const SLOW_RESET_HINT_MS = 8_000
+
+function SlowResetHint() {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), SLOW_RESET_HINT_MS)
+    return () => window.clearTimeout(timer)
+  }, [])
+  if (!slow) return null
+  return (
+    <p className="break-words text-sm leading-6 font-semibold [overflow-wrap:anywhere]">
+      Ci vuole più del solito. Chiudi tutte le altre finestre e schede di questa
+      app, anche quelle aperte nel browser: la cancellazione continuerà.
+    </p>
+  )
+}
+
 function ErrorScreen({ onRetry }: { onRetry: () => void }) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-8">
@@ -894,6 +914,7 @@ export function App() {
                     ? "Chiudi le altre schede o finestre di questa app, comprese quelle di una vecchia versione. La cancellazione continuerà appena saranno chiuse."
                     : "Attendi la conferma. Se chiudi l’app prima, la cancellazione riprenderà alla prossima apertura."}
           </p>
+          {operation === "resetting" && <SlowResetHint />}
           {failed && (
             <Button
               className="h-auto min-h-11 whitespace-normal"

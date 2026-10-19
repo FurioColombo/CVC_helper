@@ -120,7 +120,51 @@ describe("a later milestone replaces the installed build only after its owner ch
         "0.4.0",
         queue("PASSED"),
       ),
-    ).toThrow(/downgrade/)
+    ).toThrow(/must update the installed one/)
+  })
+  it("refuses inconsistent pins that would swap the build under a pending check (SP-R4-1)", () => {
+    const pending = {
+      items: [
+        { id: "D3-PHONE-UPDATE", status: "READY" },
+        { id: "D4-PHONE-TRANSFER", status: "NEEDS_SETUP" },
+      ],
+    }
+    // A later pin that does not declare the live build it replaces.
+    expect(() =>
+      assertTestPublicationAllowed(
+        {
+          milestone: "D5",
+          versions: ["0.4.3"],
+          sourceCommit: later,
+          activeVersion: "0.4.2",
+        },
+        later,
+        "0.4.3",
+        pending,
+      ),
+    ).toThrow(/declare the build this pin replaces/)
+    // A replacing pin that has forgotten which build is live.
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, activeVersion: null },
+        later,
+        "0.4.2",
+        pending,
+      ),
+    ).toThrow(/this pin's or the one it replaces/)
+    // A stale live version that is not the replaced build.
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, activeVersion: "0.4.0" },
+        later,
+        "0.4.2",
+        pending,
+      ),
+    ).toThrow(/this pin's or the one it replaces/)
+    // The consistent pin still waits for the replaced check.
+    expect(() =>
+      assertTestPublicationAllowed(replacing, later, "0.4.2", pending),
+    ).toThrow(/stays until its owner check passes/)
   })
   it("republishes its own active version without consulting the replaced check", () => {
     expect(() =>

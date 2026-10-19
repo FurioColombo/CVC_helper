@@ -30,6 +30,27 @@ export function assertTestPublicationAllowed(
     Array.isArray(pin.versions) && pin.versions.includes(version),
     "Use one of the pinned patch versions",
   )
+  // The live build is this pin's own, or exactly the one it declares it
+  // replaces; anything else would swap a build under the owner's check
+  // unnoticed (D4 security review SP-R4-1).
+  if (pin.replaces) {
+    assert(
+      pin.versions.every(
+        (planned) => patchOf(planned) > patchOf(pin.replaces.activeVersion),
+      ),
+      "The new build must update the installed one",
+    )
+    assert(
+      pin.activeVersion === pin.replaces.activeVersion ||
+        pin.versions.includes(pin.activeVersion),
+      "The live build must be this pin's or the one it replaces",
+    )
+  } else if (pin.activeVersion) {
+    assert(
+      pin.versions.includes(pin.activeVersion),
+      "Another build is live: declare the build this pin replaces",
+    )
+  }
   if (pin.activeVersion)
     assert(
       patchOf(version) >= patchOf(pin.activeVersion),
@@ -60,10 +81,6 @@ export function assertTestPublicationAllowed(
       check?.status,
       "PASSED",
       `The installed ${pin.replaces.milestone} build stays until its owner check passes`,
-    )
-    assert(
-      patchOf(version) > patchOf(pin.replaces.activeVersion),
-      "The new build must update the installed one",
     )
   }
 }

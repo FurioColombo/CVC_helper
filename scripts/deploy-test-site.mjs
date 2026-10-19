@@ -23,7 +23,21 @@ import { assertTestPublicationAllowed } from "./test-site-contract.mjs"
 // Deliberate publication only. This does not run on ordinary source pushes.
 const root = resolve(import.meta.dirname, "..")
 const pinPath = join(root, ".milestones/test-site.json")
-const pin = JSON.parse(readFileSync(pinPath, "utf8"))
+const git = (parameters, cwd = root) =>
+  execFileSync("git", parameters, {
+    cwd,
+    encoding: "utf8",
+    stdio: ["pipe", "pipe", "pipe"],
+  }).trim()
+// The pin and the owner results that permit publication are the committed
+// ones, never an uncommitted local edit (D4 security review SP-R4-2).
+assert.equal(
+  git(["status", "--porcelain", "--", ".milestones"]),
+  "",
+  "Commit the pin and owner checks before publishing",
+)
+const committed = (path) => JSON.parse(git(["show", `HEAD:${path}`]))
+const pin = committed(".milestones/test-site.json")
 const args = process.argv.slice(2)
 const argument = (name) => args[args.indexOf(name) + 1]
 assert(
@@ -33,16 +47,8 @@ assert(
 assert(args.length === 4, "Only --source and --version are accepted")
 const source = argument("--source")
 const version = argument("--version")
-const ownerChecks = JSON.parse(
-  readFileSync(join(root, ".milestones/owner-checks.json"), "utf8"),
-)
+const ownerChecks = committed(".milestones/owner-checks.json")
 assertTestPublicationAllowed(pin, source, version, ownerChecks)
-const git = (parameters, cwd = root) =>
-  execFileSync("git", parameters, {
-    cwd,
-    encoding: "utf8",
-    stdio: ["pipe", "pipe", "pipe"],
-  }).trim()
 git(["merge-base", "--is-ancestor", source, "HEAD"])
 const sourceRepository = repositoryFromRemote(
   git(["remote", "get-url", "origin"]),
@@ -240,6 +246,16 @@ try {
       remote.clone_url,
       output,
     ])
+    // The build on the site must be the one the pin says is live, or the
+    // owner's installed build could change unnoticed (SP-R4-1).
+    const live = JSON.parse(
+      readFileSync(join(output, "build-info.json"), "utf8"),
+    )
+    assert.equal(
+      live.version,
+      pin.activeVersion,
+      "The live test build differs from the pin's active version",
+    )
     // Only this freshly cloned scratch checkout is cleared; source is untouched.
     assert.equal(dirname(resolve(output)), resolve(workspace))
     git(["rm", "-r", "--ignore-unmatch", "."], output)

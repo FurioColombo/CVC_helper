@@ -56,8 +56,18 @@
 
      The value tracks the bar: `pt-2` + `min-h-14` + its bottom padding, plus
      the safe area, so it scales with the text like the bar does, plus the
-     update bar above it while that is shown (D3 review FU-Q5). */
-  :where(a[href], button, input, select, textarea, summary, [tabindex]) {
+     update bar above it while that is shown (D3 review FU-Q5). Feedback the
+     app reveals itself (data-reveal) keeps the same clearance (D4 FU-R6-B1). */
+  :where(
+    a[href],
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex],
+    [data-reveal]
+  ) {
     scroll-margin-bottom: calc(
       5rem + env(safe-area-inset-bottom) + var(--update-banner-height, 0px)
     );

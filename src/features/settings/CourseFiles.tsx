@@ -82,6 +82,11 @@ function ErrorNotice({ children }: { children: ReactNode }) {
   )
 }
 
+/** Bring new feedback fully into view, clear of the fixed bottom bar. */
+function reveal(element: HTMLElement | null) {
+  element?.scrollIntoView?.({ block: "nearest" })
+}
+
 function supportsFileSharing(file: File): boolean {
   if (typeof navigator === "undefined") return false
   const fileNavigator = navigator as FileShareNavigator
@@ -108,6 +113,9 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   const [shareMessage, setShareMessage] = useState<string | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const saveButton = useRef<HTMLButtonElement>(null)
+  const preparedBlock = useRef<HTMLDivElement>(null)
+  const exportFeedback = useRef<HTMLDivElement>(null)
+  const importFeedback = useRef<HTMLDivElement>(null)
   const [readingFile, setReadingFile] = useState(false)
   const [preview, setPreview] = useState<ArchivePreview | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
@@ -116,10 +124,25 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   const [imported, setImported] = useState(false)
 
   // The prepared file replaces the button that was tapped; focus follows it
-  // so the second step is unmistakable (owner phone check, 2026-10-19).
+  // so the second step is unmistakable (owner phone check, 2026-10-19). The
+  // whole block, status included, is revealed instead of letting the focus
+  // scroll centre the button and push the status off screen (FU-R6-I1).
   useEffect(() => {
-    if (preparedExport) saveButton.current?.focus()
+    if (!preparedExport) return
+    saveButton.current?.focus({ preventScroll: true })
+    reveal(preparedBlock.current)
   }, [preparedExport])
+
+  // Each result of Salva file, Condividi or preparation lands below the
+  // buttons, where the bottom bar could hide it (FU-R6-B1).
+  useEffect(() => {
+    if (exportError || shareError || shareMessage)
+      reveal(exportFeedback.current)
+  }, [exportError, shareError, shareMessage])
+
+  useEffect(() => {
+    if (importError) reveal(importFeedback.current)
+  }, [importError])
 
   async function prepareExport() {
     setExporting(true)
@@ -288,9 +311,10 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                 {exporting ? "Preparazione…" : "Prepara il file del corso"}
               </Button>
             ) : (
-              <div className="mt-3">
+              <div className="mt-3" data-reveal ref={preparedBlock}>
                 <p
                   className="flex items-start gap-2 text-sm leading-5 font-semibold text-primary"
+                  id="prepared-file-status"
                   role="status"
                 >
                   <CircleCheck
@@ -304,6 +328,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                 </p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <Button
+                    aria-describedby="prepared-file-status"
                     className="h-auto min-h-11 whitespace-normal"
                     onClick={downloadExport}
                     ref={saveButton}
@@ -323,6 +348,12 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                     </Button>
                   )}
                 </div>
+                {preparedExport.shareable && (
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                    Condividi invia lo stesso corso come file .txt: si importa
+                    come il file salvato.
+                  </p>
+                )}
                 {!preparedExport.shareable && (
                   <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     La condivisione di file non è disponibile in questo browser.
@@ -331,13 +362,15 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                 )}
               </div>
             )}
-            {exportError && <ErrorNotice>{exportError}</ErrorNotice>}
-            {shareError && <ErrorNotice>{shareError}</ErrorNotice>}
-            {shareMessage && (
-              <p className="mt-2 text-sm text-muted-foreground" role="status">
-                {shareMessage}
-              </p>
-            )}
+            <div data-reveal ref={exportFeedback}>
+              {exportError && <ErrorNotice>{exportError}</ErrorNotice>}
+              {shareError && <ErrorNotice>{shareError}</ErrorNotice>}
+              {shareMessage && (
+                <p className="mt-2 text-sm text-muted-foreground" role="status">
+                  {shareMessage}
+                </p>
+              )}
+            </div>
           </>
         ) : (
           <p className="mt-1 text-sm leading-5 text-muted-foreground">
@@ -379,7 +412,9 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
           )}
           {readingFile ? "Controllo del file…" : "Scegli il file del corso"}
         </Button>
-        {importError && <ErrorNotice>{importError}</ErrorNotice>}
+        <div data-reveal ref={importFeedback}>
+          {importError && <ErrorNotice>{importError}</ErrorNotice>}
+        </div>
 
         {preview && (
           <div

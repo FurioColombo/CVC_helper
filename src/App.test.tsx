@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -86,6 +87,8 @@ import { readCrewPlan } from "@/persistence/crews"
 import {
   isResetPending,
   resetAllLocalData,
+  watchLocalData,
+  type LocalDataState,
 } from "@/persistence/localDataOperations"
 import { saveEvaluation } from "@/persistence/evaluations"
 import { listStudents } from "@/persistence/students"
@@ -580,5 +583,34 @@ describe("a full reset interrupted by closing the app", () => {
 
     await waitFor(() => expect(resetAllLocalData).toHaveBeenCalledOnce())
     expect(getActiveCourse).not.toHaveBeenCalled()
+  })
+})
+
+describe("a reset that takes longer than usual", () => {
+  it("says what to close after a while instead of only asking to wait", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      vi.mocked(watchLocalData).mockImplementationOnce(
+        (listener: (state: LocalDataState) => void) => {
+          listener("resetting")
+          return () => {}
+        },
+      )
+      render(<App />)
+      expect(
+        await screen.findByRole("heading", {
+          name: "Cancellazione dei dati locali…",
+        }),
+      ).toBeVisible()
+      expect(screen.queryByText(/Ci vuole più del solito/)).toBeNull()
+
+      await act(async () => {
+        vi.advanceTimersByTime(8_000)
+      })
+
+      expect(screen.getByText(/Ci vuole più del solito/)).toBeVisible()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

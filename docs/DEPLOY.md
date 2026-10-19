@@ -122,8 +122,9 @@ recorded evidence and reviews:
 npm run test-site:publish -- --source <full-verified-checkpoint> --version <pinned patch>
 ```
 
-The publisher builds an archive of that exact commit, checks the recorder’s
-clean checkpoint, unchanged source tree and exact-commit CI, and pushes only
+The publisher reads the pin and the owner checks from the committed `HEAD` and
+refuses uncommitted changes under `.milestones`. It builds an archive of that
+exact commit, checks the recorder’s clean checkpoint, unchanged source tree and exact-commit CI, and pushes only
 static build outputs. GitHub Pages publishes the test repository's main branch,
 with `.nojekyll`. `build-info.json` at the test address identifies source,
 version and CI. Ordinary pushes of later work cannot deploy to this repository.
@@ -137,7 +138,8 @@ unplanned or lower version, a pin's second version without the owner's
 installation report (recorded in `ownerInstalled` with `reportedBy: owner`,
 its source and summary; coordination, not a physical PASS), and a pin that
 replaces another milestone's build before that build's owner check has PASSED
-or without a higher patch. Announce each publication and its focused steps in
+or without a higher patch. The live `build-info.json` must match the pin's
+active version before it is replaced. Announce each publication and its focused steps in
 `docs/OWNER_TODO.md` through `owner:update`. The device steps are in
 [Updates and versions](./DEVICE_CHECKS.md#updates-and-versions) and
 [Course files and full local reset](./DEVICE_CHECKS.md#course-files-and-full-local-reset).

@@ -600,6 +600,13 @@ test("resumes a reset interrupted by closing the app on the next open", async ({
       name: "Non riesco ad aprire i dati locali",
     }),
   ).not.toBeVisible()
+  // Whether or not the resumed deletion gets a "blocked" event (WebKit does,
+  // Chromium queues it silently), the screen says what to close (DI-R6-Q1).
+  await expect(
+    reopened.getByText(
+      /Ci vuole più del solito|Chiudi le altre schede o finestre/,
+    ),
+  ).toBeVisible({ timeout: 15_000 })
 
   await holder.evaluate(() => {
     ;(

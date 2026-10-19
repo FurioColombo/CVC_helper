@@ -1,0 +1,86 @@
+{
+  "reviewerRole": "field-UX",
+  "persona": "Il Nostromo",
+  "milestone": "D4",
+  "round": 6,
+  "commit": "18267f0",
+  "diffRange": "1061d63..18267f0",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FU-R6-B1",
+      "title": "The new share error, and the save confirmation, appear under the fixed bottom navigation, so the owner's complaint 'the error is easy to miss' still reproduces",
+      "evidence": "src/features/settings/CourseFiles.tsx:334-340 renders ErrorNotice and the shareMessage status below the Salva file / Condividi grid. Nothing scrolls them into view, and they get no space above the fixed nav. The styles.css scroll-margin-bottom only protects the focused element. Measured with the throwaway spec (my scratchpad's r6/r6.spec.ts), Prepara il file del corso scrolled to sit just above the nav (the point where one thumb stops scrolling as soon as the button shows). Pixel 7 at 412 px and default text: after Prepara, focus scroll leaves Salva file at 715-759 and Condividi at 767-811, with the nav top at 764, so Condividi is already under the bar. After Salva file, 'Salvataggio avviato…' renders at 819-859 (under the nav). After Condividi, the alert 'Condivisione non riuscita. Puoi salvare il file con Salva file.' renders at 767-807 (fully under the nav). iPhone 13 WebKit at 390 px: the alert is at 592-632 with the nav top at 589, so it is entirely under the bar. In test-results/field-ux-r6/iphone-13-webkit-device-4-share-error.png it shows only as a ghost through the translucent bar. Pixel 7 at 320 px and 200% text: the alert spans 404-564 with the nav top at 490, so only 'Condivisione non riuscita. Puoi' is visible (pixel-7-chrome-320-200-4-share-error.png). role=alert does announce it to a screen reader. A sighted user sees no reaction to the tap, which is exactly the 'Condivisione non riuscita whose text was easy to miss' and 'seemed to work silently' in .evidence/D4/physical-device-review.json.",
+      "reproduction": "Playwright, pixel-7-chrome or iPhone 13 WebKit project, navigator.share mocked to reject with NotAllowedError. 1) Create a Deriva Livello 2 course. 2) Home > Impostazioni. 3) Scroll until Prepara il file del corso sits just above the bottom bar, then tap it. 4) Tap Salva file. Expected: a visible confirmation. Observed: the status renders under the bar. 5) Tap Condividi. Expected: an error with a triangle that can be seen without scrolling (R06, R12, R14). Observed: the alert's bounding box is behind the fixed nav (hiddenUnderNav=true in pixel-7-chrome-device.json and iphone-13-webkit-device.json in test-results/field-ux-r6/). When Prepara starts mid-screen the feedback fits, so the defect depends on scroll position, but the bottom position is the one the one-thumb rule pushes users towards.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12 (sticky/floating elements must not cover elements), R06/R14 and the Avviso row; owner CHANGES_REQUESTED item in .evidence/D4/physical-device-review.json (D4 evidence requires the owner's phone check)"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FU-R6-I1",
+      "title": "At 320 px and 200% text, moving focus to Salva file jumps the page about 495 px and scrolls the check icon and 'File del corso pronto' off the top",
+      "evidence": "CourseFiles.tsx:118-122 calls saveButton.current?.focus() without preventScroll and without bringing the status into view. Chromium and WebKit centre the focused button's scroll-margin box. Pixel 7 at 320/200%: scrollY goes from 1546 to 2040 after one tap. The status paragraph ends up at top -100 / bottom 180, offscreen=true, so the CircleCheck icon and the words 'File del corso pronto:' are above the viewport. The user lands mid-sentence on 'salvalo o condividilo. Il nome non contiene dati personali.' iPhone 13 WebKit is the same (scrollY 1505 to 2000, status top -100). At device width and default text the jump is only 45 px (Pixel) or 65 px (iPhone), and the status stays visible.",
+      "reproduction": "test-results/field-ux-r6/pixel-7-chrome-320-200-1-before-prepare.png against -2-after-prepare.png. The JSON next to them records 'before' and 'after' scrollY. Suggested direction: keep the status and both buttons in view together (for example, scroll the status's container into view with block 'start' clear of the nav), or give Salva file aria-describedby pointing to the status.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05/R18 (200% text, no loss of content), R12 (focus return)"
+    },
+    {
+      "id": "FU-R6-I2",
+      "title": "Screen-reader confirmation of the prepared file is not guaranteed: a status region inserted already populated and immediately followed by a focus move",
+      "evidence": "CourseFiles.tsx:292-304 mounts a new <p role=status> with its text in the same render that replaces the Prepara button, and the effect at :118-122 then moves focus to Salva file. Many screen readers do not announce a live region inserted already populated, and the focus announcement 'Salva file, pulsante' can preempt a polite region. The ARIA snapshot shows the status present, but nothing ties it to the focused button. Not verified with TalkBack or VoiceOver.",
+      "reproduction": "Read the code; ariaSnapshot in test-results/field-ux-r6/*-device.json. A low-cost hardening is aria-describedby on Salva file pointing at the status text.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-R6-Q1",
+      "title": "The shared copy is a .txt while the saved copy is a .json; the screen does not say so",
+      "evidence": "The share mock received name cvc-helper-corso-2026-W43.txt with type text/plain. The download is cvc-helper-corso-2026-W43.json. Import accepts both (accept='.json,.txt,application/json,text/plain', CourseFiles.tsx:356). A tired instructor who finds two files with different extensions in the chat and in Download may wonder which one is real. One line of copy would settle it.",
+      "reproduction": "pixel-7-chrome-device.json: shared[0] and downloadName.",
+      "specRef": "01_PRODUCT_SPEC.md export/import (D4 items 2-3)"
+    },
+    {
+      "id": "FU-R6-Q2",
+      "title": "The 'cancellazione riprenderà' promise is unconditional, but the resume needs localStorage",
+      "evidence": "localDataOperations.ts setResetPending swallows storage failures ('it just cannot resume'), while App.tsx:895 always promises a resume. It is truthful in every normal browser I exercised. Wording such as 'di norma riprenderà' is not needed unless storage-less contexts matter.",
+      "reproduction": "Code reading only.",
+      "specRef": "D4 item 4"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md, AGENTS.md, the D4 section and success predicate in 04_IMPLEMENTATION_PLAN.md, and rulebook R05/R06/R12/R14/R18 and the Avviso row in docs/design/06_DESIGN_RULEBOOK.md.",
+    ".evidence/D4/field-ux-review-round-5.json (PASS) and the latest owner report in .evidence/D4/physical-device-review.json (CHANGES_REQUESTED, 2026-10-19).",
+    "The diff 1061d63..18267f0 for src/features/settings/CourseFiles.tsx, src/App.tsx, src/appChannel.ts and src/persistence/localDataOperations.ts. Also read the new e2e case in tests/e2e/d4-local-reset.spec.ts and the focus, .txt and Chiudi assertions in CourseFiles.test.tsx.",
+    "Node v24.21.0. My own Playwright run used a throwaway config and spec in my scratchpad's r6/, with its own Vite server on port 4191, on Pixel 7 (Chromium) and iPhone 13 (WebKit): 6/6 passed, about 1 minute. The share mock rejects with NotAllowedError, and the import test uses an invalid .txt file.",
+    "Measured: the export two-step (the Chiudi button is gone, the status has a CircleCheck and font-weight 600, focus lands on 'Salva file' with :focus-visible false, so no stray ring on touch). Error and status contrast against the white card: error text #a2381b at 6.74:1, triangle icon at 6.57:1, ready status at 6.43:1, muted status at 5.89:1, all at least 4.5:1. The error is role=alert, the SVG is aria-hidden=true, and the triangle plus bold text means colour is not the only cue. scrollWidth equals clientWidth at 320/200%. Element positions relative to the fixed nav.",
+    "Reset wording: deletion stubbed to hang, then the page closed and reopened. On reopen the first heading is 'Cancellazione dei dati locali…', not 'Apertura del corso…'. The reset completes in 0.8 s on Pixel and 2.3-2.7 s on WebKit, followed by 'Dati locali cancellati' and Riapri l'app, which leads to Crea il corso. Text at 320/200% fits (scrollWidth 320). The wording is truthful in the exercised paths.",
+    "Screenshots: 36 files in test-results/field-ux-r6/ (also in my scratchpad's r6/shots/, because a concurrent suite run wipes test-results/). Viewed: pixel-7-chrome-device-4-share-error.png, pixel-7-chrome-320-200-2-after-prepare.png, pixel-7-chrome-320-200-4-share-error.png, iphone-13-webkit-device-4-share-error.png.",
+    "Housekeeping: a failed shell 'cd' in one of my commands left an empty untracked r6.spec.ts at the repository root. I deleted it. No tracked file was edited. The uncommitted scripts/* changes and security-privacy-review-round-4.json in the working tree are not mine."
+  ],
+  "anglesTried": {
+    "seed": 578023799,
+    "scope": "Restricted round 6: the owner-requested fixes in 1061d63..18267f0 (export two-step feedback, removal of Chiudi, ErrorNotice for export/share/import, .txt share copy, focus to Salva file, reset wording and resume on reopen) and regressions they cause. No new entropy draw.",
+    "lenses": [
+      "Lens 1 one-thumb reach plus R12: where feedback lands relative to the fixed bottom nav when the action sits in the bottom half",
+      "Lens 2 320 px at 200% text: focus-driven scroll jump and clipped confirmation",
+      "Lens 3 glare/contrast: measured contrast and non-colour cue of the error and status",
+      "Lens 5 tap count: export is Impostazioni, Prepara, Salva file (3 taps, the same as before; Chiudi removed)"
+    ],
+    "wildcard": "Scroll the export button to the natural thumb stopping point just above the nav, then follow the feedback of each step. Also hang the reset, close the app and time the resumed open.",
+    "morningPath": [
+      "1. 06:10, pier, phone in the splash pouch. Home, then the Impostazioni gear in the top corner (pre-existing, out of scope): 1 tap.",
+      "2. A thumb scroll until 'Prepara il file del corso' shows above the bottom bar, then tap: 1 tap, about 0.1 s on Pixel and 0.7 s on WebKit for a synthetic course.",
+      "3. At default text the blue check and 'File del corso pronto' sit right there: clear. At 200% the page jumps half a screen and I land on 'salvalo o condividilo…' without the check (read twice).",
+      "4. Tap Salva file (1 tap). The 'Salvataggio avviato' line is under the bottom bar: nothing seems to happen (read twice, scroll to look).",
+      "5. Tap Condividi. It fails, and the red triangle and text are behind the bar: again nothing seems to happen (read twice, scroll).",
+      "Count: 3 taps to a saved file, 3 to an attempted share. Under 1 s of app work. Three moments of reading twice, two of them because the feedback is under the nav."
+    ]
+  },
+  "notTested": [
+    "Real Android share sheet acceptance of the .txt copy, real download UI and real TalkBack or VoiceOver announcements. Shares were mocked, and screen-reader behaviour is inferred from the code and the ARIA snapshot.",
+    "Export failure (exportError) was not forced. It uses the same ErrorNotice in the same position, so FU-R6-B1 applies to it too.",
+    "Import error placement after a real tap on 'Scegli il file del corso' near the bottom bar. My file was set programmatically without scrolling, so its offscreen measurement is not representative. The notice sits below that button, as with share.",
+    "Why the owner's phone reset hung in the first place (a connection held by a worker or another tab) was not reproduced; only the resume-on-reopen path and its wording were exercised. Physical-device acceptance remains the owner's.",
+    "Unit, domain and full e2e suites were not rerun by this reviewer; the orchestrator owns them."
+  ]
+}

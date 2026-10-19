@@ -1,0 +1,61 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "D4",
+  "round": 6,
+  "commit": "18267f0",
+  "diffRange": "1061d63..18267f0",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-R6-1",
+      "title": "A cleanup failure that keeps recurring leaves the pending-reset mark in place forever and locks the app out on every open, even after the course database has been deleted",
+      "evidence": "src/persistence/localDataOperations.ts:106-113: setResetPending(false) runs only after clearAppBrowserStorage() resolves. clearAppBrowserStorage (src/persistence/browserStorage.ts:63-72, 114-120) throws on any single failure: Cache Storage missing or rejecting, a service-worker unregister rejecting, or the Tesseract keyval-store failing to open. src/App.tsx:833-840 then resumes the reset on every open and never reads the course, so CourseCreation cannot be reached. At 1061d63 the same failure was recoverable: after a reload, getActiveCourse found no course and the app showed 'Crea il corso'. Throwaway probe output, desktop Chrome on the dev server: S2 {\"dbsAfterFirst\":[],\"results\":[\"Cancellazione non completata\",\"after-riprova:Cancellazione non completata\",\"Cancellazione non completata\",\"Cancellazione non completata\"],\"mark\":\"1\",\"creation\":false}. iPhone 13 WebKit: S2 {\"results\":[\"Cancellazione non completata\",\"Cancellazione dei dati locali…\"],\"mark\":\"1\",\"creation\":false}. No data is corrupted or restored: the course database is already gone after the first attempt (dbsAfterFirst is empty). The cost is availability. The device shows the owner's reported symptom (Riprova does not help, only clearing site data or reinstalling recovers), caused here by an auxiliary cache such as a corrupt OCR keyval-store or an unavailable Cache Storage. The spec text 'Cleanup failure reports a partial reset and permits retry' (03_TECHNICAL_DECISIONS.md §3.2) is still literally met, so this is not filed as a blocker.",
+      "reproduction": "Throwaway Playwright spec (scratchpad r6di/reset.r6.ts, test 'S2 persistent cleanup failure'). Create a course through the UI. Call page.addInitScript(() => { CacheStorage.prototype.keys = () => Promise.reject(new DOMException('synthetic','SecurityError')) }) and reload. Confirm Azzera tutti i dati locali: the app shows 'Cancellazione non completata'. Reload three times and tap Riprova once. Expected (as at 1061d63 once the course database is deleted): the app eventually opens 'Crea il corso'. Observed: every open shows the reset-failed screen, localStorage cvc-helper.reset-pending stays '1', and 'Crea il corso' never appears. Suggested direction, not prescribed: split the mark by phase. Clear or downgrade it once deleteDatabase has succeeded, or offer a way into the empty app from the failed screen once the database deletion is confirmed, so that only the integrity-relevant step blocks startup.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.2 (full reset; cleanup failure permits retry)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-R6-Q1",
+      "title": "A resumed reset that is still blocked by a connection that never closes tells the user to wait and says closing will resume, not to close the other window",
+      "evidence": "Throwaway probe S3, desktop Chrome. A holder page opens the course database and never closes it. Page A confirms the reset ('Chiudi le altre schede…' is visible), then page A is closed and the app is reopened. After 8 s the reopened app shows: 'Cancellazione dei dati locali…\\n\\nAttendi la conferma. Se chiudi l’app prima, la cancellazione riprenderà alla prossima apertura.' The 'blocked' hint never appears, because the reopened delete request queues behind the first one and gets no onblocked event (src/persistence/localDataOperations.ts:76; src/App.tsx:893-895). If the owner's phone kept a connection open after the app closed, which is one candidate root cause of the reported hang, every reopen would show this wait message and loop, and nothing would tell the user what to close. The committed e2e journey always releases its holder, so it does not cover this case.",
+      "reproduction": "As tests/e2e/d4-local-reset.spec.ts 'resumes a reset interrupted by closing the app on the next open', but without releasing the holder. Read the main text of the reopened page after 8 s.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.2 (an unresponsive older tab keeps deletion pending)"
+    }
+  ],
+  "resolvedBlockers": [],
+  "priorRoundRecheck": "Round 5 had no open blockers. This round checks only the 18267f0 fix diff and the regressions it could cause.",
+  "evidenceInspected": [
+    "git diff 1061d63 18267f0 for src/, tests/, 03_TECHNICAL_DECISIONS.md and the owner-check metadata",
+    "src/persistence/localDataOperations.ts (mark set at :103 before notify and close, removed at :110 only after deletion and cleanup; resetting guard makes resume idempotent)",
+    "src/App.tsx:828-862: watchLocalData subscribes before isResetPending, so a tab opened before a mark exists still gets the 'reset' broadcast; the resume path skips getActiveCourse",
+    "src/persistence/browserStorage.ts: clearSelectedLocalStorage deletes only crewDisplayColumns, installedVersion and the scan-name-order prefix, so it never deletes the mark; src/persistence/courses.ts:111-113 removes only COURSE_PREFERENCE_PREFIXES",
+    "src/appChannel.ts: per-channel keys cvc-helper.reset-pending and cvc-helper-test.reset-pending; neither is a prefix of the other's or of any other channel key that gets cleared",
+    "src/persistence/db.ts: the database opens at import, and the resumed close and delete on a fresh open completed with no self-block (probe S1: desktop Chrome 551 ms, WebKit 2566 ms, mark null afterwards, then 'Crea il corso')",
+    "src/features/settings/CourseFiles.tsx:214-233: import calls parseCourseArchive(await file.text()) with no branch on name or MIME type, so a .txt file is validated exactly like a .json one; prepareExport builds the .json and the shared .txt from the same text string",
+    "src/persistence/courseArchiveFormat.ts:683-697 parseCourseArchive",
+    "node scripts/run-e2e.mjs d4-local-reset -g \"resumes a reset interrupted\" --retries=0: 4 passed (pixel-7-chrome, desktop-chrome-storage, iphone-13-viewport, iphone-13-webkit-core)",
+    "npx vitest run src/persistence/localDataOperations.test.ts src/App.test.tsx src/appChannel.test.ts: 25 passed",
+    "Throwaway probes in test-results (deleted afterwards): S1 planted mark with a live course; S2 persistent cleanup failure (Chrome and WebKit); S3 holder never released",
+    "Production preview build into a scratch outDir: service worker, caches and database checked after a user-started and after a resumed reset, immediately and after 8 s. Both cases ended with no registrations, no caches and no databases, so registerSW does not re-register after a resumed reset when a worker was already installed",
+    ".evidence/D4/physical-device-review.json (owner report D4-PHONE-TRANSFER), .evidence/D4/data-integrity-review-round-5.json"
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": [
+      "1. Interruption between two writes (close between mark set, close, delete, cleanup and mark removal)",
+      "12. Two tabs of the app writing the same course (resume while another tab holds or is resetting)"
+    ],
+    "wildcard": "A stale pending-reset mark that outlives the reset and blocks or erases later work: a cleanup failure that keeps recurring, a resume on a fresh open where db.ts has just opened the database, a resume racing service-worker registration in a production build, and isolation between the regular and test channels.",
+    "restrictedScope": "Follow-up round: no entropy draw and no whole-milestone hunt (seed 0 means none drawn). Reviewed only the 18267f0 fix (pending-reset mark, App resume path, appChannel keys, .txt share copy and import accept list) and the regressions it could cause."
+  },
+  "notTested": [
+    "The root cause of the owner's Android hang is not established in the evidence. The fix assumes the app was reading a half-deleted course. If the cause was a connection that never closes or a stuck delete request, the resume path waits instead (see DI-R6-Q1); only the owner's phone can confirm.",
+    "Mixed-version case: an older instance without the mark logic (a pre-fix 0.4.2 window) creates or imports a course while a mark from a newer instance is pending, and the next new-version open erases it. Not reproduced; it needs two deployed versions open at once.",
+    "Test channel on a shared origin was not exercised in a browser; key separation was checked only by code and src/appChannel.test.ts.",
+    "Firefox and real insecure-context behaviour (Cache Storage absent or rejecting) were not run; S2 simulates them with an init script.",
+    "The preview build and the dev-server runs included another agent's concurrent, uncommitted working-tree edits (src/features/settings/CourseFiles.tsx, src/styles.css, scripts/deploy-test-site.mjs, tests/e2e/d4-course-files.spec.ts). The reset-related files (App.tsx, localDataOperations.ts, browserStorage.ts, appChannel.ts, db.ts) were unmodified and matched 18267f0. .txt import parsing was judged from the committed code at 18267f0."
+  ]
+}

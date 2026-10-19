@@ -79,7 +79,9 @@ function deleteCourseDatabase() {
 
 // A reset survives the app being closed midway: the next open resumes it
 // before using the course (owner phone check, 2026-10-19). The marker is
-// outside the preferences the reset clears and goes only once it completes.
+// outside the preferences the reset clears and goes once the course database
+// is deleted: a cache that keeps failing to clear must not lock the app out
+// for good (D4 reviews DI-R6-1, SP-R4-Q1); its retry stays on the screen.
 function setResetPending(pending: boolean) {
   try {
     if (pending) localStorage.setItem(appChannelConfig.resetPendingKey, "1")
@@ -106,8 +108,8 @@ export function resetAllLocalData() {
   resetting = (async () => {
     await closeCourse()
     await deleteCourseDatabase()
-    await clearAppBrowserStorage()
     setResetPending(false)
+    await clearAppBrowserStorage()
     notify("reset-complete")
     channel?.postMessage("reset-complete")
   })()

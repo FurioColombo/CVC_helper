@@ -375,3 +375,108 @@ test("course-file and reset controls remain usable at narrow widths and enlarged
     }
   }
 })
+
+// Owner phone check and D4 review FU-R6-B1: the result of each export step
+// must be visible above the fixed bottom bar, even when the button was tapped
+// right above it, as one thumb leaves it.
+async function expectAboveNav(page: Page, text: RegExp) {
+  const { box, navTop, viewport } = await page.evaluate((source) => {
+    const pattern = new RegExp(source)
+    const element = [
+      ...document.querySelectorAll<HTMLElement>("[role=status], [role=alert]"),
+    ].find((candidate) => pattern.test(candidate.textContent ?? ""))
+    const nav = document.querySelector('[aria-label="Navigazione principale"]')
+    const rect = element?.getBoundingClientRect()
+    return {
+      box: rect ? { top: rect.top, bottom: rect.bottom } : null,
+      navTop: nav?.getBoundingClientRect().top ?? window.innerHeight,
+      viewport: window.innerHeight,
+    }
+  }, text.source)
+  expect(box, `${text} is shown`).not.toBeNull()
+  expect(box!.top).toBeGreaterThanOrEqual(0)
+  expect(box!.bottom).toBeLessThanOrEqual(Math.min(navTop, viewport) + 0.5)
+  return { ...box!, navTop }
+}
+
+for (const size of [
+  { name: "device", width: null, fontSize: null },
+  { name: "320-200", width: 320, fontSize: "200%" },
+] as const) {
+  test(`export feedback stays above the bottom bar (${size.name})`, async ({
+    page,
+  }, testInfo) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "canShare", {
+        configurable: true,
+        value: () => true,
+      })
+      Object.defineProperty(navigator, "share", {
+        configurable: true,
+        value: () =>
+          Promise.reject(
+            new DOMException("Permission denied", "NotAllowedError"),
+          ),
+      })
+    })
+    await page.goto("/")
+    await page.getByRole("button", { name: "Deriva" }).click()
+    await page.getByRole("button", { name: "Livello 2" }).click()
+    await page.getByRole("button", { name: "Crea corso" }).click()
+    await page.getByRole("button", { name: "Impostazioni" }).click()
+    if (size.width) {
+      await page.setViewportSize({ width: size.width, height: 844 })
+      await page.evaluate((fontSize) => {
+        document.documentElement.style.fontSize = fontSize
+      }, size.fontSize)
+    }
+
+    const prepare = page.getByRole("button", {
+      name: "Prepara il file del corso",
+    })
+    // Leave the button just above the bar, where a thumb stops scrolling.
+    await prepare.evaluate((button) => {
+      const nav = document.querySelector(
+        '[aria-label="Navigazione principale"]',
+      )
+      const navTop = nav?.getBoundingClientRect().top ?? window.innerHeight
+      window.scrollBy(0, button.getBoundingClientRect().bottom - navTop + 4)
+    })
+    await prepare.click()
+
+    const save = page.getByRole("button", { name: "Salva file" })
+    await expect(save).toBeFocused()
+    const ready = await expectAboveNav(page, /File del corso pronto/)
+    const saveBox = (await save.boundingBox())!
+    expect(saveBox.y + saveBox.height).toBeLessThanOrEqual(ready.navTop + 0.5)
+    await expect(save).toHaveAccessibleDescription(/File del corso pronto/)
+
+    const download = page.waitForEvent("download")
+    await save.click()
+    await download
+    const saved = await expectAboveNav(page, /Salvataggio avviato/)
+
+    await page.getByRole("button", { name: "Condividi" }).click()
+    const failed = await expectAboveNav(page, /Condivisione non riuscita/)
+
+    await page.screenshot({
+      path: evidenceOutputPath(
+        testInfo,
+        "D4",
+        "screenshots",
+        `export-feedback-${size.name}-${testInfo.project.name}.png`,
+      ),
+    })
+    const file = evidenceOutputPath(
+      testInfo,
+      "D4",
+      "export-feedback",
+      `${size.name}-${testInfo.project.name}.json`,
+    )
+    mkdirSync(path.dirname(file), { recursive: true })
+    writeFileSync(
+      file,
+      `${JSON.stringify({ ready, saved, failed }, null, 2)}\n`,
+    )
+  })
+}
