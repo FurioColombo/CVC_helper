@@ -113,7 +113,7 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 exact `fde1fe1` and T1 `cccfd2c` CI pass without retries. T1's prior `aa8473a` cold-upgrade failures (5.8–6.9 s) remain unexplained; preserve bounds/coverage. See `.evidence/T1/ci-checkpoint-cccfd2c.json`.
+D4 exact `fde1fe1` and T1 `442bf19` CI pass without retries. T1's closed-sibling cold fixture passes 16/16 controlled cases versus 5/16 same-page failures; its new checkpoint still needs exact CI. See `.evidence/T1/cold-seed-lifecycle.json`.
 
 ## Flaky browser tests
 
@@ -141,8 +141,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,
   then passed at 4244 ms on the second configured retry. All 609 rows remained
-  identical; adapter initialization dominated. T1 must address the runtime
-  or faithful fixture setup without raising either 5000 ms bound.
+  identical; adapter initialization dominated. T1 now closes the legacy seed
+  page before measuring; both 5000 ms bounds and cold checks remain. Exact new CI pending.
 
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
   — iPhone 13 WebKit, D3's recorded focused run (2026-10-13):
@@ -159,8 +159,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
   on the configured retry. T1 must fix the measurement/setup or underlying
   response defect without dropping the assertion or raising its limit.
   D3's focused run on 2026-10-13 also retried on iPhone 13 WebKit: the live
-  transform readiness check exceeded its unchanged 100 ms timeout; the retry
-  passed. Preserve both engines' checks when fixing it.
+  transform readiness check exceeded its unchanged 100 ms timeout. T1 now commits
+  image/crop and ARIA during the event; 12 browser checks pass both original limits. New CI pending.
 
 - `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
   — iPhone 13 WebKit, D3's focused run (2026-10-13): the first attempt found

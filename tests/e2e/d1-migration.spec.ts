@@ -3,8 +3,16 @@ import path from "node:path"
 
 import { expect, type Page, test } from "@playwright/test"
 
+import type { measureLargeUpgrade } from "../../src/test/d1MigrationHarness"
+
 import { evidenceOutputPath } from "./evidence"
 import { isolatedTest } from "./cold-browser"
+import {
+  coldEvidenceIssue,
+  collectEngineDiagnostics,
+  openBlankPage,
+  seedLargeUpgradeFromSeparatePage,
+} from "./fixtures/migration"
 
 /**
  * D1 on the real PowerSync engine: courses written by 0.1.0, 0.2.0 and 0.3.0
@@ -32,21 +40,6 @@ const fixtureRows = (version: string) => {
       .filter(([table]) => table !== "meta")
       .map(([table, rows]) => [table, rows.length]),
   )
-}
-
-/**
- * A blank page on the app's origin: the harness opens its own databases, and
- * the app opening cvc-helper.db beside them is not what these tests measure.
- */
-async function openBlankPage(page: Page) {
-  await page.route(isAppRoot, (route) =>
-    route.fulfill({
-      contentType: "text/html",
-      body: "<html><body></body></html>",
-    }),
-  )
-  await page.goto("/")
-  await page.unroute(isAppRoot)
 }
 
 /** Keeps a harness result: tracked evidence when CVC_EVIDENCE_REFRESH=D1. */
@@ -286,41 +279,29 @@ isolatedTest(
   "upgrades and reopens a 40-student course within five seconds each",
   async ({ page }) => {
     await openBlankPage(page)
-    const result = await harness<{
-      durationMs: number
-      createDatabaseMs: number
-      initMs: number
-      adapterInitMs: number
-      sdkReadyAfterAdapterMs: number
-      prepareAfterInitMs: number
-      readTablesMs: number
-      closeMs: number
-      reopenMs: number
-      reopenCreateDatabaseMs: number
-      reopenInitMs: number
-      reopenAdapterInitMs: number
-      reopenSdkReadyAfterAdapterMs: number
-      reopenPrepareAfterInitMs: number
-      reopenReadTablesMs: number
-      reopenCloseMs: number
-      expectedRows: number
-      expectedInjectedStudentRows: number
-      injectedStudentRows: number
-      reopenInjectedStudentRows: number
-      expectedInjectedEvaluationRows: number
-      injectedEvaluationRows: number
-      reopenInjectedEvaluationRows: number
-      rows: number
-      reopenRows: number
-      rowIssues: unknown[]
-      reopenRowIssues: unknown[]
-      reopenedIdentical: boolean
-    }>(page, "runLargeUpgrade")
-    record("large-upgrade", result)
+    // The legacy writer belongs to the old page. Close it before measuring the
+    // current app's cold constructor, as a real navigation between versions does.
+    const filename = await seedLargeUpgradeFromSeparatePage(page)
+    const result = await harness<
+      Awaited<ReturnType<typeof measureLargeUpgrade>>
+    >(page, "measureLargeUpgrade", filename)
+    const { diagnosticReady, events } = await collectEngineDiagnostics(page)
+    record("large-upgrade", {
+      ...result,
+      diagnosticReady,
+      engineEvents: events,
+    })
+    test.info().annotations.push({
+      type: "startup-measurement",
+      description: JSON.stringify({ ...result, diagnosticReady, events }),
+    })
     test.info().annotations.push({
       type: "migration",
       description: `${result.rows}/${result.reopenRows} rows (expected ${result.expectedRows}); upgrade ${result.durationMs} ms (create ${result.createDatabaseMs}, adapter init ${result.adapterInitMs}, SDK ready after adapter ${result.sdkReadyAfterAdapterMs}, total init ${result.initMs}, prepare ${result.prepareAfterInitMs}); reopen ${result.reopenMs} ms (create ${result.reopenCreateDatabaseMs}, adapter init ${result.reopenAdapterInitMs}, SDK ready after adapter ${result.reopenSdkReadyAfterAdapterMs}, total init ${result.reopenInitMs}, prepare ${result.reopenPrepareAfterInitMs}); injected students ${result.injectedStudentRows}/${result.reopenInjectedStudentRows} of ${result.expectedInjectedStudentRows}, evaluations ${result.injectedEvaluationRows}/${result.reopenInjectedEvaluationRows} of ${result.expectedInjectedEvaluationRows}; read/close outside bound ${result.readTablesMs}/${result.closeMs} ms and ${result.reopenReadTablesMs}/${result.reopenCloseMs} ms`,
     })
+    expect(result.priorEventCount).toBe(0)
+    expect(diagnosticReady).toBe(true)
+    expect(coldEvidenceIssue(events)).toBeNull()
     expect(result.rowIssues).toEqual([])
     expect(result.reopenRows).toBe(result.rows)
     expect(result.reopenRowIssues).toEqual([])

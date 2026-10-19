@@ -4,18 +4,7 @@ import path from "node:path"
 import { expect, type Page, test } from "@playwright/test"
 
 import { expectNoSidewaysScroll } from "./layout-audit"
-
-async function addStudent(page: Page, firstName: string, surname: string) {
-  await page.getByRole("button", { name: "Aggiungi allievo" }).click()
-  await page.getByLabel("Nome", { exact: true }).fill(firstName)
-  await page.getByLabel("Cognome", { exact: true }).fill(surname)
-  await page.getByLabel("Età compiuta il primo giorno del corso").fill("26")
-  await page
-    .getByRole("group", { name: "Sesso" })
-    .getByText("M", { exact: true })
-    .click()
-  await page.getByRole("button", { name: "Salva allievo" }).click()
-}
+import { seedBoatAssignmentCourse } from "./fixtures/boat-assignments"
 
 async function assertNoHorizontalOverflow(page: Page) {
   const widths = await page.evaluate(() => ({
@@ -58,19 +47,8 @@ async function assertNoHorizontalOverflow(page: Page) {
 test("keeps P14–P16 compact while assigning and unlinking session boats", async ({
   page,
 }, testInfo) => {
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 2" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
-  await page.getByRole("button", { name: "Barche" }).click()
-  await page.getByRole("button", { name: "Configura barche" }).click()
-  await page.getByLabel("Numeri barca").fill("1 2 3 4 5 6 7 8 9 10")
-  await page.getByRole("button", { name: "Configura", exact: true }).click()
-  await page.getByRole("button", { name: "Home", exact: true }).click()
-  await page.getByRole("button", { name: "Allievi" }).click()
-  await addStudent(page, "Aldo", "Rossi")
-  await addStudent(page, "Bea", "Verdi")
-  await page.getByRole("button", { name: "Indietro da Allievi" }).click()
+  await seedBoatAssignmentCourse(page)
+  await page.reload()
   await page
     .getByRole("navigation", { name: "Navigazione principale" })
     .getByRole("button", { name: "Equipaggi" })

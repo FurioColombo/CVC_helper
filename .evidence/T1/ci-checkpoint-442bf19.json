@@ -1,0 +1,94 @@
+{
+  "milestone": "T1",
+  "checkpoint": "442bf1960f532a1e7b5616848f1ebbbefaa1a0cc",
+  "run": 39178157540,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39178157540",
+  "status": "PASS_EXACT_CHECKPOINT_NOT_MILESTONE_CLOSURE",
+  "conclusion": "success",
+  "collectedAt": "2026-10-19T07:28:23.507Z",
+  "jobs": [
+    {
+      "id": 117825040918,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T23:50:17Z",
+      "completedAt": "2026-10-19T00:09:37Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39178157540/job-117825040918.log",
+      "sha256": "8a5da5b0d572e274115a8265ec17a4041fc91398f14ee7ed6b8c0d1c9b218ca9",
+      "browserSummary": [
+        "2026-10-19T00:09:32.6369633Z   47 skipped",
+        "2026-10-19T00:09:32.6370559Z   219 passed (17.3m)",
+        "2026-10-19T00:09:32.6400247Z ##[notice]  47 skipped",
+        "  219 passed (17.3m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-18T23:52:13.345Z",
+        "duration": 1039290.9800000001,
+        "expected": 219,
+        "skipped": 47,
+        "unexpected": 0,
+        "flaky": 0,
+        "cases": 266,
+        "retried": 0,
+        "flakyArtifact": []
+      }
+    },
+    {
+      "id": 117825041050,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T23:50:21Z",
+      "completedAt": "2026-10-19T00:32:32Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39178157540/job-117825041050.log",
+      "sha256": "f085ce7cccfa44988b8d45769304160dbb3d1975e4905874af85e0487eea05c1",
+      "browserSummary": [
+        "2026-10-19T00:32:19.4856270Z   65 skipped",
+        "2026-10-19T00:32:19.4857010Z   291 passed (37.5m)",
+        "2026-10-19T00:32:19.5350880Z ##[notice]  65 skipped",
+        "  291 passed (37.5m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-18T23:54:48.599Z",
+        "duration": 2250481.9740000004,
+        "expected": 291,
+        "skipped": 65,
+        "unexpected": 0,
+        "flaky": 0,
+        "cases": 356,
+        "retried": 0,
+        "flakyArtifact": []
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12156461400,
+      "name": "e2e-report-macos-15-39178157540",
+      "sha256": "201e610a08d733bff6da4be920b360b7fe55bcda8d9aff9712be37b37a5fdbfc",
+      "rawZip": "OS temporary cvc-t1-ci-39178157540/12156461400.zip"
+    },
+    {
+      "id": 12156232286,
+      "name": "e2e-flaky-macos-15-39178157540",
+      "sha256": "2e2f25643cf367d29c2c84d893e6826aee9a2f7e130ede38c84485cb36ef1f18",
+      "rawZip": "OS temporary cvc-t1-ci-39178157540/12156232286.zip"
+    },
+    {
+      "id": 12155856053,
+      "name": "e2e-flaky-ubuntu-latest-39178157540",
+      "sha256": "3f3ce3df5f1cb733742e72314a54fd53d9705241f35a8902adf638651e9d2322",
+      "rawZip": "OS temporary cvc-t1-ci-39178157540/12155856053.zip"
+    },
+    {
+      "id": 12155816208,
+      "name": "e2e-report-ubuntu-latest-39178157540",
+      "sha256": "984c37036d8bd1d027b3ccdfa7b7675b6870e136e565c28fb2736fa7cf00f894",
+      "rawZip": "OS temporary cvc-t1-ci-39178157540/12155816208.zip"
+    }
+  ],
+  "qualification": "Exact named T1 checkpoint only. No timing comparison or milestone closure."
+}

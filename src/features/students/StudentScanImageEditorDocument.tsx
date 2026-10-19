@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
 } from "react"
+import { flushSync } from "react-dom"
 
 import {
   createStudentScanPreview,
@@ -489,11 +490,12 @@ export function StudentScanImageEditorDocument({
     const ruler = rulerPointerRef.current
     if (!ruler || ruler.pointerId !== event.pointerId) return
     // Dragging left reveals larger angles, as the dial under a thumb would.
-    setTilt(
-      clampTilt(
-        ruler.tilt - (event.clientX - ruler.startX) / PIXELS_PER_DEGREE,
-      ),
+    const nextTilt = clampTilt(
+      ruler.tilt - (event.clientX - ruler.startX) / PIXELS_PER_DEGREE,
     )
+    // Commit the live picture and accessible angle during this gesture event;
+    // the high-resolution preview still waits until the drag has finished.
+    flushSync(() => setTilt(nextTilt))
   }
 
   function finishRuler(event: ReactPointerEvent<HTMLDivElement>) {

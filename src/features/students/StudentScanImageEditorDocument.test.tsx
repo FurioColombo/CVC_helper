@@ -292,6 +292,52 @@ describe("StudentScanImageEditorDocument", () => {
     expect(tiltValue()).toBeCloseTo(3)
   })
 
+  it("updates the live crop and accessible angle during the drag event", async () => {
+    await openEditor()
+    const dial = screen.getByRole("slider", { name: "Inclinazione in gradi" })
+    const preview = screen.getByTestId("student-scan-live-preview")
+    const observed: Array<{
+      angle: string | null
+      description: string | null
+      readout: string | null
+      transform: string
+    }> = []
+
+    fireEvent.pointerDown(dial, {
+      pointerId: 8,
+      clientX: 200,
+      clientY: 20,
+    })
+    // Observe after React's delegated event handler, before act can flush a
+    // deferred render. The picture and accessible angle must move together.
+    document.body.addEventListener(
+      "pointermove",
+      () => {
+        observed.push({
+          angle: dial.getAttribute("aria-valuenow"),
+          description: dial.getAttribute("aria-valuetext"),
+          readout: dial.querySelector("output")?.textContent ?? null,
+          transform: preview.style.transform,
+        })
+      },
+      { once: true },
+    )
+    fireEvent.pointerMove(dial, {
+      pointerId: 8,
+      clientX: 182,
+      clientY: 20,
+    })
+
+    expect(observed).toEqual([
+      {
+        angle: "3",
+        description: "3,0 gradi",
+        readout: "3,0°",
+        transform: "rotate(3deg)",
+      },
+    ])
+  })
+
   it("rotates the image and crop together while deferring preview rendering until release", async () => {
     await openEditor()
     const previewCalls = createPreview.mock.calls.length

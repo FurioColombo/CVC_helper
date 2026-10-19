@@ -1,0 +1,96 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_AND_COMBINED_VERIFY_PASS_NEW_CI_PENDING",
+  "recordedAt": "2026-10-19T07:54:14.909Z",
+  "parentCheckpoint": "442bf1960f532a1e7b5616848f1ebbbefaa1a0cc",
+  "nodeVersion": "v24.21.0",
+  "source": {
+    "digest": "4d09e6a2e729c129e32cb33eb21a1c1b6e67cb620dade93b98205d52718e4740",
+    "files": 442
+  },
+  "sourceHashes": {
+    "tests/e2e/d1-migration.spec.ts": "d39b4938cb10c85dd404e5f6d0160a1ef9572d994f8b999695c7e85e7a5b93a1",
+    "tests/e2e/d3-engine-startup.spec.ts": "61f04dad2828e6fabb40fff98affe294643242d182df950e4df257eca3a12722",
+    "tests/e2e/fixtures/migration.ts": "bc0a3d71b10f9e56003e88eefbe6777403ff7f9459d57d1e02687bf1801c8a30",
+    "tests/e2e/duties.spec.ts": "43ad5c489a33e836c22ba1298cac347e1e132531a1e95b6041d577e88c8ff6ad",
+    "tests/e2e/fixtures/duty-planner.ts": "bce0438793e187d85a440c13f520663f2fddbb33ccd01f01efcd3c4cf02a5766",
+    "tests/e2e/u09-crews.spec.ts": "fea91650eff6760598161b60a2378ec0ee0dced795828cb0cf7a6fe2d046d505",
+    "tests/e2e/fixtures/boat-assignments.ts": "43de4097553ab657115f66abe8d5bc9e3b0c5d100bdb28b8f8c68fd785d0764d",
+    "tests/e2e/d3-summary-controls.spec.ts": "72201253f465d36d283efd6316c2581b900585280764fbec2ff3dbcb14db1253"
+  },
+  "scope": [
+    "D1 uses D3 existing separate legacy writer page; close it before unchanged timed current construction. All data assertions and strict five-second first/reopen bounds remain; D1 now also requires cold lifecycle evidence.",
+    "Existing D3 blank-page, seed and diagnostic logic is shared without changing its earlier import-inclusive timing boundary or negative prewarm control.",
+    "Duty planning seeds the exact21-row roster through real typed APIs. Boat assignment seeds RS Quest1–10 and the exact two students; tested UI proposals, assignments, overrides, gestures, persistence and every assertion remain.",
+    "Summary control test bootstraps the same Deriva/L1 course before its existing fixture; native-share/copy/layout/focus checks remain."
+  ],
+  "fixtureFidelity": {
+    "students": "Inputs match StudentManagement.tsx submit normalization and persistence constructors: DOB empty with declared age; optional fields null; exact names/ages/sex/order.",
+    "boats": "Same D2 RS Quest default, numbers1–10, createBoats API and available state.",
+    "intentionalDifference": "Bulk student creation uses one transaction timestamp rather than separate per-student timestamps. All names are distinct; affected sorting/tie-breakers and assertions do not depend on those timestamps.",
+    "course": "Same buildCourseDetails family/level/current-date builder as the UI."
+  },
+  "browser": {
+    "command": "npm run verify:e2e -- tests/e2e/d1-migration.spec.ts tests/e2e/d3-engine-startup.spec.ts tests/e2e/duties.spec.ts tests/e2e/u09-crews.spec.ts tests/e2e/d3-summary-controls.spec.ts --retries=0",
+    "startTime": "2026-10-19T00:19:55.237Z",
+    "duration": 485186.505,
+    "expected": 29,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "retried": 0,
+    "flakyArtifact": [],
+    "runnerExitCode": 0,
+    "manualCleanup": false,
+    "raw": "OS temporary cvc-t1-lifecycle-and-seed-browser-proof/e2e-report.json",
+    "sha256": "fafa8d5cbb2df2838f29c96fa0ab31555527e2838bb233a2a3c10450d0c711cc"
+  },
+  "coverage": {
+    "cases": 356,
+    "exactFileTitleProjectSequenceUnchanged": true,
+    "beforeExpectCallNodes": 3522,
+    "afterExpectCallNodes": 3534,
+    "missing": 0,
+    "raw": "OS temporary cvc-t1-lifecycle-assertion-preservation.json",
+    "qualification": "AST multisets supplement runtime review; counts include matcher chains, not distinct assertions."
+  },
+  "initialAttempt": {
+    "stats": {
+      "startTime": "2026-10-19T00:12:46.471Z",
+      "duration": 340086.593,
+      "expected": 18,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    "classification": "Implementation error in extraction: isAppRoot matcher was also used by the upgraded-app test. Restored the original matcher; typecheck and the whole29-case affected run pass. This is not an intermittent platform failure.",
+    "raw": "OS temporary cvc-t1-cold-fixture-browser-proof",
+    "log": "OS temporary cvc-t1-cold-fixture-browser.log"
+  },
+  "limits": [
+    "No H1/T1 speed comparison or milestone closure yet.",
+    "Full combined verification, exact checkpoint CI and remaining filed lifecycle flakes are still required.",
+    "D3/D4 captured handoffs and phone040 source761530f remain unchanged."
+  ],
+  "combinedVerification": {
+    "command": "npm run verify",
+    "status": "PASS",
+    "exitCode": 0,
+    "nodeVersion": "v24.21.0",
+    "unitTests": 1442,
+    "unitFiles": 89,
+    "productionPwa": "PASS",
+    "source": {
+      "digest": "4d09e6a2e729c129e32cb33eb21a1c1b6e67cb620dade93b98205d52718e4740",
+      "files": 442
+    },
+    "raw": "OS temporary cvc-t1-lifecycle-batch-verify.log",
+    "sha256": "38f7f73a78120246947ab16ce157c2e9557e0c4c3d182be43b33183eb8240030"
+  },
+  "preservedHandoff": {
+    "frozenEvidenceHashesVerified": 18,
+    "testVersion": "0.4.0",
+    "source": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstalled": null
+  }
+}

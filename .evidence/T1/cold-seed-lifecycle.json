@@ -1,0 +1,616 @@
+{
+  "milestone": "T1",
+  "status": "DIAGNOSTIC_SUPPORT_FOR_FAITHFUL_FIXTURE_CORRECTION_NOT_MILESTONE_CLOSURE",
+  "recordedAt": "2026-10-19T00:26:21.431Z",
+  "sourceFidelity": "Diagnostic branch preserves the same persistence engine, original legacy writer, harness and Vite engine instrumentation as current source; checked against bbaf8ea. No warm-up, waiting period, retry, platform flag, threshold or data change.",
+  "method": "Eight sequential pairs on one Mac job, fresh WebKit process/context per case. A seeds and measures on one blank page. B runs the same seed in a sibling page, awaits its close, then measures the untouched page. Both use the unchanged D1 create/init/prepare timer and five-second first/reopen bounds.",
+  "experiments": [
+    {
+      "run": 39179036569,
+      "source": "5f45ad254dd5a260afdf40a7b57891dc132a8a36",
+      "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39179036569",
+      "workflowConclusion": "failure",
+      "node": "24.20.0",
+      "playwright": "1.62.1",
+      "seed": 3520310024,
+      "orderDesign": "Randomized but unbalanced realized order",
+      "samePageFirst": 1,
+      "siblingFirst": 7,
+      "summary": {
+        "same-page": {
+          "passed": 4,
+          "cases": 8,
+          "firstRangeMs": [
+            1023,
+            6866
+          ],
+          "constructorRangeMs": [
+            29,
+            5904
+          ]
+        },
+        "sibling-page-close": {
+          "passed": 8,
+          "cases": 8,
+          "firstRangeMs": [
+            951,
+            2079
+          ],
+          "constructorRangeMs": [
+            18,
+            23
+          ]
+        }
+      },
+      "rows": [
+        {
+          "pair": 1,
+          "order": 1,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1359,
+          "reopenMs": 603,
+          "adapterMs": 418,
+          "brokerCompileElapsedMs": 80,
+          "nativeConstructorMs": 19,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 1,
+          "order": 2,
+          "variant": "same-page",
+          "firstOpenMs": 5940,
+          "reopenMs": 544,
+          "adapterMs": 5071,
+          "brokerCompileElapsedMs": 4919,
+          "nativeConstructorMs": 4871,
+          "firstBoundPassed": false,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 6,
+          "order": 3,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1089,
+          "reopenMs": 660,
+          "adapterMs": 269,
+          "brokerCompileElapsedMs": 45,
+          "nativeConstructorMs": 18,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 6,
+          "order": 4,
+          "variant": "same-page",
+          "firstOpenMs": 6866,
+          "reopenMs": 638,
+          "adapterMs": 5918,
+          "brokerCompileElapsedMs": 5768,
+          "nativeConstructorMs": 5726,
+          "firstBoundPassed": false,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 8,
+          "order": 5,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1428,
+          "reopenMs": 597,
+          "adapterMs": 384,
+          "brokerCompileElapsedMs": 77,
+          "nativeConstructorMs": 22,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 8,
+          "order": 6,
+          "variant": "same-page",
+          "firstOpenMs": 1245,
+          "reopenMs": 475,
+          "adapterMs": 180,
+          "brokerCompileElapsedMs": 58,
+          "nativeConstructorMs": 29,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 3,
+          "order": 7,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1097,
+          "reopenMs": 630,
+          "adapterMs": 334,
+          "brokerCompileElapsedMs": 43,
+          "nativeConstructorMs": 20,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 3,
+          "order": 8,
+          "variant": "same-page",
+          "firstOpenMs": 1023,
+          "reopenMs": 596,
+          "adapterMs": 145,
+          "brokerCompileElapsedMs": 51,
+          "nativeConstructorMs": 30,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 4,
+          "order": 9,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 2079,
+          "reopenMs": 632,
+          "adapterMs": 420,
+          "brokerCompileElapsedMs": 55,
+          "nativeConstructorMs": 22,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 4,
+          "order": 10,
+          "variant": "same-page",
+          "firstOpenMs": 3801,
+          "reopenMs": 397,
+          "adapterMs": 3118,
+          "brokerCompileElapsedMs": 2958,
+          "nativeConstructorMs": 2866,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 7,
+          "order": 11,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1382,
+          "reopenMs": 443,
+          "adapterMs": 428,
+          "brokerCompileElapsedMs": 63,
+          "nativeConstructorMs": 23,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 7,
+          "order": 12,
+          "variant": "same-page",
+          "firstOpenMs": 3531,
+          "reopenMs": 326,
+          "adapterMs": 2925,
+          "brokerCompileElapsedMs": 2800,
+          "nativeConstructorMs": 2751,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 5,
+          "order": 13,
+          "variant": "same-page",
+          "firstOpenMs": 6862,
+          "reopenMs": 465,
+          "adapterMs": 5796,
+          "brokerCompileElapsedMs": 5654,
+          "nativeConstructorMs": 5611,
+          "firstBoundPassed": false,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 5,
+          "order": 14,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 951,
+          "reopenMs": 542,
+          "adapterMs": 305,
+          "brokerCompileElapsedMs": 44,
+          "nativeConstructorMs": 22,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 2,
+          "order": 15,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1023,
+          "reopenMs": 449,
+          "adapterMs": 391,
+          "brokerCompileElapsedMs": 50,
+          "nativeConstructorMs": 23,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 2,
+          "order": 16,
+          "variant": "same-page",
+          "firstOpenMs": 6676,
+          "reopenMs": 372,
+          "adapterMs": 6088,
+          "brokerCompileElapsedMs": 5955,
+          "nativeConstructorMs": 5904,
+          "firstBoundPassed": false,
+          "otherChecksPassed": true
+        }
+      ],
+      "raw": "OS temporary cvc-t1-cold-seed-ab-39179036569-attempt1",
+      "resultsSha256": "762f085f66c5eee3f76f84fd7e140b819fb15a3878051a230be6fd48dbdf5dc1",
+      "artifacts": [
+        {
+          "id": 12155516954,
+          "name": "t1-cold-seed-lifecycle-39179036569-1",
+          "sha256": "fbc7e3bbe55c77c0a8f117365a7f76131ad5c9b310318de6924326e9c82c81b0"
+        }
+      ]
+    },
+    {
+      "run": 39180196808,
+      "source": "2ce241030384ef0e7e2617bce254fd32cbfc7578",
+      "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39180196808",
+      "workflowConclusion": "failure",
+      "node": "24.20.0",
+      "playwright": "1.62.1",
+      "seed": 3520310024,
+      "orderDesign": "Randomized pairs; exactly four same-page-first and four sibling-first pairs",
+      "samePageFirst": 4,
+      "siblingFirst": 4,
+      "summary": {
+        "same-page": {
+          "passed": 7,
+          "cases": 8,
+          "firstRangeMs": [
+            1199,
+            5009
+          ],
+          "constructorRangeMs": [
+            29,
+            3456
+          ]
+        },
+        "sibling-page-close": {
+          "passed": 8,
+          "cases": 8,
+          "firstRangeMs": [
+            1221,
+            1736
+          ],
+          "constructorRangeMs": [
+            21,
+            38
+          ]
+        }
+      },
+      "rows": [
+        {
+          "pair": 1,
+          "order": 1,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1430,
+          "reopenMs": 655,
+          "adapterMs": 474,
+          "brokerCompileElapsedMs": 95,
+          "nativeConstructorMs": 31,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 1,
+          "order": 2,
+          "variant": "same-page",
+          "firstOpenMs": 1214,
+          "reopenMs": 332,
+          "adapterMs": 249,
+          "brokerCompileElapsedMs": 79,
+          "nativeConstructorMs": 41,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 6,
+          "order": 3,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1310,
+          "reopenMs": 651,
+          "adapterMs": 423,
+          "brokerCompileElapsedMs": 94,
+          "nativeConstructorMs": 21,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 6,
+          "order": 4,
+          "variant": "same-page",
+          "firstOpenMs": 3512,
+          "reopenMs": 411,
+          "adapterMs": 2789,
+          "brokerCompileElapsedMs": 2634,
+          "nativeConstructorMs": 2555,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 8,
+          "order": 5,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1221,
+          "reopenMs": 513,
+          "adapterMs": 378,
+          "brokerCompileElapsedMs": 50,
+          "nativeConstructorMs": 21,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 8,
+          "order": 6,
+          "variant": "same-page",
+          "firstOpenMs": 5009,
+          "reopenMs": 616,
+          "adapterMs": 3745,
+          "brokerCompileElapsedMs": 3524,
+          "nativeConstructorMs": 3456,
+          "firstBoundPassed": false,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 3,
+          "order": 7,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1497,
+          "reopenMs": 624,
+          "adapterMs": 494,
+          "brokerCompileElapsedMs": 113,
+          "nativeConstructorMs": 27,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 3,
+          "order": 8,
+          "variant": "same-page",
+          "firstOpenMs": 1615,
+          "reopenMs": 541,
+          "adapterMs": 685,
+          "brokerCompileElapsedMs": 526,
+          "nativeConstructorMs": 451,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 4,
+          "order": 9,
+          "variant": "same-page",
+          "firstOpenMs": 1390,
+          "reopenMs": 700,
+          "adapterMs": 284,
+          "brokerCompileElapsedMs": 67,
+          "nativeConstructorMs": 37,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 4,
+          "order": 10,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1736,
+          "reopenMs": 498,
+          "adapterMs": 442,
+          "brokerCompileElapsedMs": 86,
+          "nativeConstructorMs": 24,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 7,
+          "order": 11,
+          "variant": "same-page",
+          "firstOpenMs": 1376,
+          "reopenMs": 597,
+          "adapterMs": 204,
+          "brokerCompileElapsedMs": 66,
+          "nativeConstructorMs": 29,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 7,
+          "order": 12,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1379,
+          "reopenMs": 699,
+          "adapterMs": 411,
+          "brokerCompileElapsedMs": 54,
+          "nativeConstructorMs": 25,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 5,
+          "order": 13,
+          "variant": "same-page",
+          "firstOpenMs": 1686,
+          "reopenMs": 686,
+          "adapterMs": 635,
+          "brokerCompileElapsedMs": 415,
+          "nativeConstructorMs": 348,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 5,
+          "order": 14,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1721,
+          "reopenMs": 934,
+          "adapterMs": 469,
+          "brokerCompileElapsedMs": 98,
+          "nativeConstructorMs": 32,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 2,
+          "order": 15,
+          "variant": "same-page",
+          "firstOpenMs": 1199,
+          "reopenMs": 392,
+          "adapterMs": 296,
+          "brokerCompileElapsedMs": 100,
+          "nativeConstructorMs": 42,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        },
+        {
+          "pair": 2,
+          "order": 16,
+          "variant": "sibling-page-close",
+          "firstOpenMs": 1480,
+          "reopenMs": 751,
+          "adapterMs": 416,
+          "brokerCompileElapsedMs": 72,
+          "nativeConstructorMs": 38,
+          "firstBoundPassed": true,
+          "otherChecksPassed": true
+        }
+      ],
+      "raw": "OS temporary cvc-t1-cold-seed-ab-39180196808-attempt1",
+      "resultsSha256": "cfa3e0d05a9726a57231db46a13e10c80a629fa6dc34b142f13b965e72d35381",
+      "artifacts": [
+        {
+          "id": 12156525219,
+          "name": "t1-cold-seed-lifecycle-39180196808-1",
+          "sha256": "48ea3109ab1aacd5afa56fc74928643d966b91e3413e4b960cf3d93fc110a81e"
+        }
+      ]
+    }
+  ],
+  "nativeSupport": {
+    "run": 39160674882,
+    "attempt": 2,
+    "source": "bbaf8ea87701b79de2642aeb8e209d9e284808cf",
+    "notAcceptance": true,
+    "stats": {
+      "startTime": "2026-10-18T23:34:51.074Z",
+      "duration": 2291052.8079999997,
+      "expected": 288,
+      "skipped": 65,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "case": {
+      "firstOpenMs": 4630,
+      "reopenMs": 741,
+      "firstBoundPassed": true,
+      "rows": 609,
+      "injectedStudents": 40,
+      "injectedEvaluations": 520,
+      "reopenedIdentical": true,
+      "constructorStartedEpochMs": 1792368724316,
+      "constructorEndedEpochMs": 1792368727803,
+      "constructorMs": 3487
+    },
+    "artifacts": [
+      {
+        "id": 12154874106,
+        "name": "d4-full-context-host-39160674882",
+        "sha256": "d21a4bf659c45ed8f3559d57112b1ab26beeccca1a7f106d084765c3c559f74d"
+      },
+      {
+        "id": 12154024963,
+        "name": "d4-stack-preflight-39160674882",
+        "sha256": "a6e892064474a595bed63112bd216dd479cecc456395cf640c2980c5b1bcbc5b"
+      }
+    ],
+    "raw": "OS temporary cvc-d4-full-context-39160674882-attempt2",
+    "samples": [
+      {
+        "type": "stack_sample",
+        "timestamp": "2026-10-19T00:12:04.487Z",
+        "epochMs": 1792368724487,
+        "endedEpochMs": 1792368725897,
+        "durationMs": 1410,
+        "retry": 0,
+        "sample": 2,
+        "totalSample": 4,
+        "status": "captured",
+        "failureKind": null,
+        "pid": 4554,
+        "ppid": 1,
+        "uid": 501,
+        "processName": "com.apple.WebKit.WebContent.Development",
+        "startIdentity": "Mon Oct 19 00:11:49 2026",
+        "selectionReason": "case_recent_start",
+        "candidateCount": 1,
+        "browserPid": 4552,
+        "browserStartIdentity": "Mon Oct 19 00:11:49 2026",
+        "browserStartGapMs": 0,
+        "outputFile": "run-1792366231975-3384-retry-0-sample-2.txt",
+        "outputBytes": 120440,
+        "outputTruncated": false,
+        "totalOutputBytes": 369697,
+        "sha256": "d3041fb4d04124f1ac4ce44fd5adde4b2970b31d1de17cf86cf0dd67e9dd5b49",
+        "validationThread": "210792 WebCore: Worker",
+        "mainThread": "209997 in normal CFRunLoop/mach_msg",
+        "observed": "77 worker-thread samples in WebAssembly module validation wait; two Wasm worklist helpers in OMG code generation",
+        "samplingIntervalMs": 10,
+        "requestedCollectionSeconds": 1,
+        "qualification": "Tool/report envelope is within constructor; elapsed report time is not continuous sampled coverage."
+      },
+      {
+        "type": "stack_sample",
+        "timestamp": "2026-10-19T00:12:06.147Z",
+        "epochMs": 1792368726147,
+        "endedEpochMs": 1792368727514,
+        "durationMs": 1367,
+        "retry": 0,
+        "sample": 3,
+        "totalSample": 5,
+        "status": "captured",
+        "failureKind": null,
+        "pid": 4554,
+        "ppid": 1,
+        "uid": 501,
+        "processName": "com.apple.WebKit.WebContent.Development",
+        "startIdentity": "Mon Oct 19 00:11:49 2026",
+        "selectionReason": "case_recent_start",
+        "candidateCount": 1,
+        "browserPid": 4552,
+        "browserStartIdentity": "Mon Oct 19 00:11:49 2026",
+        "browserStartGapMs": 0,
+        "outputFile": "run-1792366231975-3384-retry-0-sample-3.txt",
+        "outputBytes": 172025,
+        "outputTruncated": false,
+        "totalOutputBytes": 541722,
+        "sha256": "74551c726f7c9f6efb9f710a8611eb41149756e22662ccd94bae626a95734486",
+        "validationThread": "210792 WebCore: Worker",
+        "mainThread": "209997 in normal CFRunLoop/mach_msg",
+        "observed": "77 worker-thread samples in WebAssembly module validation wait; two Wasm worklist helpers in OMG code generation",
+        "samplingIntervalMs": 10,
+        "requestedCollectionSeconds": 1,
+        "qualification": "Tool/report envelope is within constructor; elapsed report time is not continuous sampled coverage."
+      }
+    ],
+    "hostAtOverlappingSample": {
+      "logicalCpuCount": 3,
+      "freeMemoryBytes": 284082176,
+      "loadAverage": [
+        15.9228515625,
+        24.25048828125,
+        21.3525390625
+      ]
+    },
+    "interpretation": "The dedicated worker waits during validation while same-process Wasm optimization helpers are active. Main UI thread is not blocked in validation. Stacks do not identify which module each helper is compiling, or prove the sole cause of historical failed runs."
+  },
+  "limitations": [
+    "The first experiment was unbalanced; the follow-up uses four same-page-first and four sibling-first pairs. Both complete reports, including control failures, are retained.",
+    "Runner load and memory pressure vary; no idle-machine suite speed claim or universal failure-rate estimate.",
+    "Zero prior candidate events does not observe the legacy seed worker; native scheduling attribution remains limited.",
+    "Native sampled case passes below five seconds; this is not a native capture of the original failed constructor.",
+    "The canonical fixture correction still requires full affected verification and exact new-checkpoint CI.",
+    "Published phone site remains the fixed 0.4.0 source761530f; no physical PASS."
+  ]
+}

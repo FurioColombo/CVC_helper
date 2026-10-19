@@ -4,6 +4,7 @@ import {
   DOUBLE_NAME_SESSION,
   seedDoubleNameCourse,
 } from "./fixtures/crew-summary"
+import { bootstrapCourse } from "./seed"
 import { COPIED_NOTE, expectCopyButtonLayout } from "./summary-image-checks"
 
 test("contains the copy status and native share control at 320 px / 200% text", async ({
@@ -27,10 +28,7 @@ test("contains the copy status and native share control at 320 px / 200% text", 
     })
   })
 
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 1" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
+  await bootstrapCourse(page, "Deriva", 1)
   await seedDoubleNameCourse(page)
   await page.reload()
   await page

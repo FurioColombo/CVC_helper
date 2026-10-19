@@ -1,4 +1,6 @@
-import { expect, type Locator, type Page, test } from "@playwright/test"
+import { expect, type Locator, test } from "@playwright/test"
+
+import { seedDutyPlannerCourse } from "./fixtures/duty-planner"
 
 async function dutyCardNames(card: Locator) {
   return card
@@ -10,42 +12,12 @@ async function dutyCardNames(card: Locator) {
     )
 }
 
-async function addStudent(
-  page: Page,
-  index: number,
-  options: { minor?: boolean; female?: boolean } = {},
-) {
-  await page.getByRole("button", { name: "Aggiungi allievo" }).click()
-  await page.getByLabel("Nome", { exact: true }).fill(`Nome${index}`)
-  await page.getByLabel("Cognome", { exact: true }).fill(`Cognome${index}`)
-  await page
-    .getByLabel("Età compiuta il primo giorno del corso")
-    .fill(options.minor ? "16" : "26")
-  await page
-    .getByRole("group", { name: "Sesso" })
-    .getByText(options.female ? "F" : "M", { exact: true })
-    .click()
-  await page.getByRole("button", { name: "Salva allievo" }).click()
-}
-
 test("plans, overrides and recalculates remaining duties without rewriting history", async ({
   page,
 }) => {
   test.setTimeout(300_000)
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva" }).click()
-  await page.getByRole("button", { name: "Livello 2" }).click()
-  await page.getByRole("button", { name: "Crea corso" }).click()
-  await page.getByRole("button", { name: "Allievi" }).click()
-
-  for (let index = 1; index <= 21; index += 1) {
-    await addStudent(page, index, {
-      minor: index === 1 || index === 5,
-      female: index % 2 === 1,
-    })
-  }
-
-  await page.getByRole("button", { name: "Indietro da Allievi" }).click()
+  await seedDutyPlannerCourse(page)
+  await page.reload()
   await page.getByRole("button", { name: "Comandate" }).click()
   await page.getByRole("button", { name: "Proponi comandate" }).click()
   await page.getByText("Scegli tra tutti gli allievi").click()

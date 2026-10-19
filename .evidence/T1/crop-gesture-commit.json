@@ -1,0 +1,104 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_PASS_MILESTONE_IN_PROGRESS",
+  "recordedAt": "2026-10-19T00:10:47.817Z",
+  "parentCheckpoint": "442bf1960f532a1e7b5616848f1ebbbefaa1a0cc",
+  "nodeVersion": "v24.21.0",
+  "source": {
+    "digest": "7dd784d27e91920baa9e32d4f2c2856bea1e5a4372d48c5a80e255ffe922b15a",
+    "files": 439
+  },
+  "sourceHashes": {
+    "src/features/students/StudentScanImageEditorDocument.tsx": "151c6d65bca6581ee3aa550130a336c640f0f6ff5db8de8cb5fe21ac5fb88656",
+    "src/features/students/StudentScanImageEditorDocument.test.tsx": "b37dd48ebcf0c60fb2c1095e3c269f5f2d4ff9948fbce614624d9e8a40f739e0",
+    "tests/e2e/u04-scan-ui.spec.ts": "cefcb9ae08dcf2e992479182d4cebe914c2597a058732a2f6921a31c34addf30"
+  },
+  "change": "Only the active ruler pointermove setter commits synchronously. The live picture, crop frame, angle readout and ARIA stay in one React render; the high-resolution raster still waits for release.",
+  "regression": {
+    "observation": "A native body bubble listener reads the live transform and all three angle fields after React handles pointermove, before act can flush deferred work.",
+    "red": "Before the fix, all four fields still show zero during the drag event.",
+    "redLog": {
+      "raw": "OS temporary cvc-t1-crop-sync-red.log",
+      "sha256": "2c1be5191c89ef935ee68a44d38f7ad34b702b5b53afa9551b26d61542d877b4"
+    },
+    "green": "All 11 editor component tests pass, including the synchronized snapshot and existing deferred-raster/release assertions.",
+    "greenLog": {
+      "raw": "OS temporary cvc-t1-crop-sync-green.log",
+      "sha256": "9c2899f28c25ea170e9067828af4f74ade6e6ab80e6843609bf0eceedd247312"
+    }
+  },
+  "browser": {
+    "command": "npm run verify:e2e -- tests/e2e/u04-scan-ui.spec.ts --retries=0",
+    "startTime": "2026-10-19T00:04:45.267Z",
+    "duration": 117125.382,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "retried": 0,
+    "flakyArtifact": [],
+    "originalSpecUnchanged": true,
+    "readinessTimeoutMs": 100,
+    "strictResponseBoundMs": 120,
+    "metrics": [
+      {
+        "project": "pixel-7-chrome",
+        "responseMs": 34.799999952316284,
+        "frameMoved": true
+      },
+      {
+        "project": "iphone-13-viewport",
+        "responseMs": 28.30000001192093,
+        "frameMoved": true
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "responseMs": 10,
+        "frameMoved": true
+      }
+    ],
+    "runnerExitCode": 0,
+    "manualCleanup": false,
+    "report": {
+      "raw": "OS temporary cvc-t1-crop-sync-browser-proof/e2e-report.json",
+      "sha256": "34866d7a70f9b462e1a3fee31efac792158beba9cb3fa7873b11a0ecc5ad53d0"
+    },
+    "log": {
+      "raw": "OS temporary cvc-t1-crop-sync-browser.log",
+      "sha256": "0498cb78d9ae64360af0479c61acce116c43e09203b47331cc3b82cbc2597564"
+    },
+    "screenshot": {
+      "raw": "OS temporary cvc-t1-crop-sync-browser-proof/editor-mid-drag.png",
+      "sha256": "cdbb819ca03a85f1233d7c78c08815e0def56976d1eb642e4c1f39dcc7aefa2f",
+      "inspected": true,
+      "observation": "Synthetic sheet and crop frame share the held -15 degree rotation; all controls remain visible."
+    }
+  },
+  "checks": {
+    "quick": {
+      "status": "PASS",
+      "tests": 1442,
+      "files": 89,
+      "raw": "OS temporary cvc-t1-crop-sync-quick.log",
+      "sha256": "8473f706f8962750600291487a028bcca48c7088ca1fa1bc825b621f661e4b9b"
+    },
+    "domain": {
+      "status": "PASS",
+      "raw": "OS temporary cvc-t1-crop-sync-domain.log",
+      "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+    }
+  },
+  "tradeoff": "Synchronous rendering bypasses continuous-event batching for this one active gesture and may add main-thread work. Original three-browser timing checks remain; do not generalize this to other handlers.",
+  "references": [
+    "01_PRODUCT_SPEC.md section 3.6: rotation follows the gesture smoothly",
+    "docs/design/07_PAGE_CHANGELOG.md V04: image and crop frame rotate together immediately; raster settles after the gesture",
+    "Installed react-dom 19.2.8 continuous pointermove event priority and flushSync implementation",
+    "https://react.dev/reference/react-dom/flushSync"
+  ],
+  "limits": [
+    "The deterministic test proves deferred-commit behavior and its removal; it cannot establish the cause of the historical 170.7 ms or WebKit timeout reports.",
+    "No H1/T1 suite speed gain is claimed from these individual timings.",
+    "Exact new-checkpoint CI and final milestone verification/reviews remain.",
+    "The published phone test stays 0.4.0 at source 761530f; no physical-device PASS or second deployment."
+  ]
+}
