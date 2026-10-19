@@ -3,10 +3,8 @@
 > Working document · Owner: the owner · Fold at: UG3
 
 Everything open that no milestone owns yet. A flaky browser test is filed
-here as `<spec file> › <test title>`, the line `npm run verify:e2e` prints
-after `FLAKY:`. It gathers the 0.3.0 working
-documents, now archived in `archive/v0.3.0/` with their full detail
-(`1_0_0_NEXT_STEPS.md`, `0_3_0_OPEN_ITEMS.md`, `0_3_0_QUESTIONS.md`), and the
+here as `<spec file> › <test title>`, printed after `FLAKY:`. It gathers the
+0.3.0 working documents archived in `archive/v0.3.0/` and the
 UG2 review findings (`.evidence/UG2/*-review.json`). An item leaves this list
 when a milestone takes it or the owner drops it. At UG3 the rest moves to the
 next cycle's backlog.
@@ -113,7 +111,7 @@ remaining proposals await the owner's pick:
 ## Current CI gate
 
 D3's source/publication CI is green (`.evidence/D3/ci-compiler-worker-fix.json`).
-D4 exact `fde1fe1` and T1 `442bf19` CI pass without retries. T1's closed-sibling cold fixture passes 16/16 controlled cases versus 5/16 same-page failures; its new checkpoint still needs exact CI. See `.evidence/T1/cold-seed-lifecycle.json`.
+D4 exact `fde1fe1` and T1 `b8eda01` CI pass without retries. The later local H1/T1 pair misses the speed target and finds a partial-reset flake; see `.evidence/T1/test-timing.json`. Closed-sibling cold seeding passes 16/16 controlled cases versus 5/16 same-page failures (`.evidence/T1/cold-seed-lifecycle.json`).
 
 ## Flaky browser tests
 
@@ -121,6 +119,8 @@ Windows D3 share probes stalled before exit; a manual attempt also timed out. Ne
 Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their owned Vite server stopped after test bodies passed; see `.evidence/D4/field-ux-review-round-4.json`.
 
 Each passed only on a retry and is a defect to fix (03 §6).
+- `d4-local-reset.spec.ts › reports partial cleanup honestly and retries through the reset screen`
+  — T1's unchanged `b8eda01` local timing run: WebKit showed success instead of the simulated partial failure (39.5 s); retry passed (9.8 s). Cause open; original trace/context retained. See `.evidence/T1/test-timing.json`.
 
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — the first development dual-engine run stalled opening the fresh WebKit
@@ -142,7 +142,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,
   then passed at 4244 ms on the second configured retry. All 609 rows remained
   identical; adapter initialization dominated. T1 now closes the legacy seed
-  page before measuring; both 5000 ms bounds and cold checks remain. Exact new CI pending.
+  page before measuring; both 5000 ms bounds and cold checks remain. Exact `b8eda01` CI passes without retries.
 
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
   — iPhone 13 WebKit, D3's recorded focused run (2026-10-13):

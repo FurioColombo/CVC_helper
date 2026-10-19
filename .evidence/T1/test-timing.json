@@ -1,0 +1,279 @@
+{
+  "milestone": "T1",
+  "status": "TARGET_MISSED_AND_ONE_OPEN_FLAKE",
+  "recordedAt": "2026-10-19T09:42:43.770Z",
+  "acceptance": {
+    "minimumReductionPercent": 30,
+    "requiredFlakyTests": 0,
+    "met": false,
+    "reason": "Current full suite is slower and the WebKit partial-reset scenario passes only on retry. No milestone closure."
+  },
+  "method": {
+    "command": "npm run verify:e2e",
+    "node": "v24.21.0",
+    "playwright": "1.62.1",
+    "machine": {
+      "hostname": "Huawei-Furio",
+      "platform": "win32",
+      "release": "10.0.22000",
+      "logicalCpus": 8,
+      "totalMemoryBytes": 8425017344
+    },
+    "workers": 1,
+    "localRetries": 1,
+    "ciEnvironment": false,
+    "order": [
+      "H1 final unchanged",
+      "T1 b8eda01 unchanged"
+    ],
+    "sameLockSha256": "4992efe8e5dbf59d295438266359be5512828064fdf1b2f02b9e2072fc66debc",
+    "idlePreflight": {
+      "at": "2026-10-19T08:06:23.270Z",
+      "phase": "idle",
+      "busyPercent": 8.654321551878152,
+      "freeMemoryBytes": 2216169472
+    },
+    "gapBetweenRunsMs": 9195,
+    "workloadQualification": "No application/test edits or other local test/reviewer jobs during either run. Light status reads, a few small source-file reads and GitHub status checks occurred; telemetry includes the test workload itself and cannot attribute external load. Independent analysis starts only after both runs finish.",
+    "manualCleanup": false
+  },
+  "comparison": {
+    "baseline": {
+      "label": "baseline",
+      "root": "C:\\Users\\Marco Furio Colombo\\.codex\\worktrees\\t1-h1-baseline\\CVC_helper",
+      "startedAt": "2026-10-19T08:06:23.486Z",
+      "endedAt": "2026-10-19T08:40:22.431Z",
+      "wallDurationMs": 2038927.4797,
+      "exitCode": 0,
+      "signal": null,
+      "stats": {
+        "startTime": "2026-10-19T08:06:24.589Z",
+        "duration": 2037611.886,
+        "expected": 201,
+        "skipped": 63,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "config": {
+        "workers": 1,
+        "retries": [
+          {
+            "name": "pixel-7-chrome",
+            "retries": 1
+          },
+          {
+            "name": "iphone-13-viewport",
+            "retries": 1
+          },
+          {
+            "name": "iphone-13-webkit-core",
+            "retries": 1
+          }
+        ],
+        "projects": [
+          "pixel-7-chrome",
+          "iphone-13-viewport",
+          "iphone-13-webkit-core"
+        ]
+      },
+      "exceptionalAttempts": [],
+      "after": {
+        "commit": "a25eba1fa0f2346a0c9cb2d251e1f98bf2d15d1b",
+        "status": "",
+        "source": {
+          "digest": "25b08eb5b19e470723ad4df75d6d95f682346c6056aa349b9d75c505e9cb5cd9",
+          "files": 354
+        },
+        "lockSha256": "4992efe8e5dbf59d295438266359be5512828064fdf1b2f02b9e2072fc66debc",
+        "playwright": "1.62.1"
+      }
+    },
+    "current": {
+      "label": "current",
+      "root": "C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper",
+      "startedAt": "2026-10-19T08:40:31.626Z",
+      "endedAt": "2026-10-19T09:40:41.405Z",
+      "wallDurationMs": 3609759.4141,
+      "exitCode": 0,
+      "signal": null,
+      "stats": {
+        "startTime": "2026-10-19T08:40:46.919Z",
+        "duration": 3594109.581,
+        "expected": 290,
+        "skipped": 65,
+        "unexpected": 0,
+        "flaky": 1
+      },
+      "config": {
+        "workers": 1,
+        "retries": [
+          {
+            "name": "pixel-7-chrome",
+            "retries": 1
+          },
+          {
+            "name": "desktop-chrome-storage",
+            "retries": 1
+          },
+          {
+            "name": "iphone-13-viewport",
+            "retries": 1
+          },
+          {
+            "name": "iphone-13-webkit-core",
+            "retries": 1
+          }
+        ],
+        "projects": [
+          "pixel-7-chrome",
+          "desktop-chrome-storage",
+          "iphone-13-viewport",
+          "iphone-13-webkit-core"
+        ]
+      },
+      "exceptionalAttempts": [
+        {
+          "file": "d4-local-reset.spec.ts",
+          "line": 548,
+          "title": "reports partial cleanup honestly and retries through the reset screen",
+          "project": "iphone-13-webkit-core",
+          "outcome": "flaky",
+          "retry": 0,
+          "status": "failed",
+          "duration": 39527
+        },
+        {
+          "file": "d4-local-reset.spec.ts",
+          "line": 548,
+          "title": "reports partial cleanup honestly and retries through the reset screen",
+          "project": "iphone-13-webkit-core",
+          "outcome": "flaky",
+          "retry": 1,
+          "status": "passed",
+          "duration": 9778
+        }
+      ],
+      "after": {
+        "commit": "b8eda0196233f0109a6ebc2d0f2ccb3b4f2b8d85",
+        "status": "",
+        "source": {
+          "digest": "4d09e6a2e729c129e32cb33eb21a1c1b6e67cb620dade93b98205d52718e4740",
+          "files": 442
+        },
+        "lockSha256": "4992efe8e5dbf59d295438266359be5512828064fdf1b2f02b9e2072fc66debc",
+        "playwright": "1.62.1"
+      }
+    },
+    "wallReductionPercent": -77.04206991369435,
+    "playwrightReductionPercent": -76.38833016701395,
+    "retryAttemptsRetained": true,
+    "qualification": "The current suite includes the added 0.4 cases. None are subtracted to improve the result. Historical H1 41-minute timing is not used as the baseline."
+  },
+  "coverage": {
+    "h1Cases": 264,
+    "currentCases": 356,
+    "missingH1FileTitleProjectCases": [],
+    "renamedCases": [
+      {
+        "before": {
+          "file": "ug2-hostile-roster.spec.ts",
+          "title": "composes the hostile Tuesday on the crew page at four sizes without overlap or sideways scroll",
+          "project": "pixel-7-chrome",
+          "status": "skipped",
+          "results": []
+        },
+        "after": {
+          "file": "ug2-hostile-roster.spec.ts",
+          "title": "composes the hostile Tuesday on the crew page at five sizes without overlap or sideways scroll",
+          "project": "pixel-7-chrome",
+          "status": "skipped",
+          "results": []
+        }
+      },
+      {
+        "before": {
+          "file": "ug2-hostile-roster.spec.ts",
+          "title": "composes the hostile Tuesday on the crew page at four sizes without overlap or sideways scroll",
+          "project": "iphone-13-viewport",
+          "status": "skipped",
+          "results": []
+        },
+        "after": {
+          "file": "ug2-hostile-roster.spec.ts",
+          "title": "composes the hostile Tuesday on the crew page at five sizes without overlap or sideways scroll",
+          "project": "iphone-13-viewport",
+          "status": "skipped",
+          "results": []
+        }
+      },
+      {
+        "before": {
+          "file": "ug2-hostile-roster.spec.ts",
+          "title": "composes the hostile Tuesday on the crew page at four sizes without overlap or sideways scroll",
+          "project": "iphone-13-webkit-core",
+          "status": "skipped",
+          "results": []
+        },
+        "after": {
+          "file": "ug2-hostile-roster.spec.ts",
+          "title": "composes the hostile Tuesday on the crew page at five sizes without overlap or sideways scroll",
+          "project": "iphone-13-webkit-core",
+          "status": "skipped",
+          "results": []
+        }
+      }
+    ],
+    "qualification": "The four-size hostile Tuesday test now checks those original profiles plus a fifth. Assertion preservation within T1 is recorded separately in lifecycle-and-starting-fixtures.json; the name inventory alone is not an assertion proof."
+  },
+  "openFlake": {
+    "file": "d4-local-reset.spec.ts",
+    "title": "reports partial cleanup honestly and retries through the reset screen",
+    "project": "iphone-13-webkit-core",
+    "failedAttemptDurationMs": 39527,
+    "retryDurationMs": 9778,
+    "observed": "Expected Cancellazione non completata after a simulated cache deletion failure; UI instead showed Dati locali cancellati. Cause not yet established.",
+    "raw": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/reset-failure-original"
+  },
+  "raw": [
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/pair.json",
+      "sha256": "bd6befa1344266bb4f84270a02d0c23f9b7ec213a95074015a0cada1f64555c7"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/baseline-report.json",
+      "sha256": "8fcc8ed079fb79211302a8e40c4af7c6d2c08033bf5cfccb8d70bf7d670a7b2f"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/current-report.json",
+      "sha256": "01402056915b6303ef65c599bb2d774d1eb2416b513e4c82acd53264e84c0136"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/baseline-flaky.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/current-flaky.json",
+      "sha256": "c260ed00ef0c3360f241fe3a6868b7520e5efa573acc0ce542df8b7ffbc2e8b6"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/baseline-inventory.json",
+      "sha256": "1a1e331c522af4b9cdd59eee3d96be28e5b049bce99d8d7d0b5f16552726b24d"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/current-inventory.json",
+      "sha256": "dde129ab7332213d276507362cddd34e5520feb74562ef1fcd8cd585852ac342"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/host.json",
+      "sha256": "a5ba344e4873a774a171e7939aa57425f499a952d91c5ef59bf75c7d5fc4d56d"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/baseline.log",
+      "sha256": "1dbd519f89e517dcc02f8241344744eaee14b4d8b6b301c5a96a34055dfdd5e5"
+    },
+    {
+      "file": "OS temporary cvc-t1-timing-pair-2026-10-19T08-05-39-987Z/current.log",
+      "sha256": "678e406dfe596a81ba0e2a7f19e62438e524c9eec85dd26f5d1660774889a1c7"
+    }
+  ]
+}

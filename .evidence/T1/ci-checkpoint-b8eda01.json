@@ -1,0 +1,95 @@
+{
+  "milestone": "T1",
+  "checkpoint": "b8eda0196233f0109a6ebc2d0f2ccb3b4f2b8d85",
+  "run": 39219730588,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39219730588",
+  "status": "PASS_EXACT_CHECKPOINT_NOT_MILESTONE_CLOSURE",
+  "conclusion": "success",
+  "collectedAt": "2026-10-19T09:41:37.769Z",
+  "jobs": [
+    {
+      "id": 117951956408,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T08:00:39Z",
+      "completedAt": "2026-10-19T08:23:48Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39219730588/job-117951956408.log",
+      "sha256": "82cdf164c54ae83de006d6b1c80ab4ec71ef8e3fb2bcd8b8ffca5e8d20ef5802",
+      "browserSummary": [
+        "2026-10-19T08:23:45.1247727Z   47 skipped",
+        "2026-10-19T08:23:45.1248141Z   219 passed (20.8m)",
+        "2026-10-19T08:23:45.1276579Z ##[notice]  47 skipped",
+        "  219 passed (20.8m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-19T08:02:59.941Z",
+        "duration": 1245182.531,
+        "expected": 219,
+        "skipped": 47,
+        "unexpected": 0,
+        "flaky": [],
+        "cases": 266,
+        "retried": 0,
+        "reportSha256": "cbbdc1a6e0ef14f2cfbfd522b28fe364dc80eea274f7b40af8e73485b11af03c"
+      }
+    },
+    {
+      "id": 117951956908,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T08:00:45Z",
+      "completedAt": "2026-10-19T08:45:07Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39219730588/job-117951956908.log",
+      "sha256": "6ebae8c026e8e2996b1ae3187f0187f6fccb2f0dcfa532b1a6c32ede90b0936f",
+      "browserSummary": [
+        "2026-10-19T08:44:55.6618640Z   65 skipped",
+        "2026-10-19T08:44:55.6620120Z   291 passed (38.4m)",
+        "2026-10-19T08:44:55.6954420Z ##[notice]  65 skipped",
+        "  291 passed (38.4m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-19T08:06:30.890Z",
+        "duration": 2304663.5799999996,
+        "expected": 291,
+        "skipped": 65,
+        "unexpected": 0,
+        "flaky": [],
+        "cases": 356,
+        "retried": 0,
+        "reportSha256": "feaa51b1ac18eba4ae95c265c488afa25444bd2a3b0cd47f5464e85b0319e8cf"
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12173551203,
+      "name": "e2e-report-macos-15-39219730588",
+      "sha256": "bbc01d2cc5b7eac796d55601fd0f3b65ba8899de72e7d23ec390e216b4f3ac78",
+      "rawZip": "OS temporary cvc-t1-ci-39219730588/12173551203.zip"
+    },
+    {
+      "id": 12173302416,
+      "name": "e2e-flaky-macos-15-39219730588",
+      "sha256": "47b491ce33cd7c9792491a4ddffbf662788f484bc4622c7fa364f74b5bd96a58",
+      "rawZip": "OS temporary cvc-t1-ci-39219730588/12173302416.zip"
+    },
+    {
+      "id": 12172326655,
+      "name": "e2e-flaky-ubuntu-latest-39219730588",
+      "sha256": "fa646fd873e4402b425075272effb15aef27ab7abe2d3df65ca20ea8ed4900cc",
+      "rawZip": "OS temporary cvc-t1-ci-39219730588/12172326655.zip"
+    },
+    {
+      "id": 12171803258,
+      "name": "e2e-report-ubuntu-latest-39219730588",
+      "sha256": "8a65ff73fdb16de8bc6684893eff91e3782a8e66eb0563894cf8e135d42a418e",
+      "rawZip": "OS temporary cvc-t1-ci-39219730588/12171803258.zip"
+    }
+  ],
+  "qualification": "Exact named T1 checkpoint only. No timing comparison or milestone closure.",
+  "localCounterEvidence": "test-timing.json retains a later local flake and failed speed target for the same source."
+}
