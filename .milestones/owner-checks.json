@@ -6,9 +6,9 @@
       "milestone": "D3",
       "kind": "DEVICE_CHECK",
       "title": "Install CVC Helper Test and check Android updates",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 6,
+      "revision": 7,
       "instructions": [
         "Done: you reported CVC Helper Test 0.4.0 installed. Keep that installation and do not reinstall. 0.4.1 is now published at the same address from the same verified source.",
         "Switch away from the test app (or lock the phone) for a minute, return and time how long until Nuova versione disponibile appears. Type a student-note change and immediately tap Aggiorna; note whether Salvataggio… or Salvato was shown. Check the edit survives and Impostazioni shows 0.4.1.",
@@ -19,7 +19,16 @@
       "testedCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/D3/physical-device-review.json",
-      "updatedAt": "2026-10-19T12:18:37.379Z"
+      "updatedAt": "2026-10-19T14:35:28.752Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Owner chat reports in the Claude Code session of 2026-10-19, ending with the explicit instruction to record D3-PHONE-UPDATE as accepted with the note-edit and larger-text steps listed as not observed.",
+        "summary": "Accepted by the owner with two steps not observed. Observed on the phone: 0.4.0 installed from the test address and kept, no reinstall; after other use, Nuova versione disponibile with Più tardi and Aggiorna appeared within a few seconds of returning (not timed precisely); after Aggiorna the bar said once CVC Helper è aggiornata alla versione 0.4.1, Impostazioni Versione shows 0.4.1, and previously registered students remained. Cerca aggiornamenti said offline in airplane mode and Nessuna versione più recente disponibile ora online. NOT OBSERVED: typing a student-note change and tapping Aggiorna immediately (Salvataggio…/Salvato state and survival of that edit); reachability of Allievi + and Equipaggi controls with enlarged text while the offer showed (owner did not check; said it looked ok).",
+        "testedCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+        "device": "Motorola Edge 60",
+        "browser": "Not stated by the owner",
+        "osVersion": "Android, version not stated by the owner"
+      }
     },
     {
       "id": "D4-PHONE-TRANSFER",

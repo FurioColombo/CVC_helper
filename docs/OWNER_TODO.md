@@ -8,16 +8,11 @@ Tell your agent the item name and what happened. It records your feedback and ke
 
 ## Install CVC Helper Test and check Android updates — D3
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Done: you reported CVC Helper Test 0.4.0 installed. Keep that installation and do not reinstall. 0.4.1 is now published at the same address from the same verified source.
-2. Switch away from the test app (or lock the phone) for a minute, return and time how long until Nuova versione disponibile appears. Type a student-note change and immediately tap Aggiorna; note whether Salvataggio… or Salvato was shown. Check the edit survives and Impostazioni shows 0.4.1.
-3. With enlarged text, check Allievi + and the Equipaggi controls with a person selected while the offer shows. Try Cerca aggiornamenti in airplane mode, then online.
-4. Report D3-PHONE-UPDATE with your device, browser and Android version, both versions, the offer time, the saved edit and reachable controls; follow Updates and versions in docs/DEVICE_CHECKS.md.
-
-Use the test address below and the linked device instructions.
+The owner reported: Accepted by the owner with two steps not observed. Observed on the phone: 0.4.0 installed from the test address and kept, no reinstall; after other use, Nuova versione disponibile with Più tardi and Aggiorna appeared within a few seconds of returning (not timed precisely); after Aggiorna the bar said once CVC Helper è aggiornata alla versione 0.4.1, Impostazioni Versione shows 0.4.1, and previously registered students remained. Cerca aggiornamenti said offline in airplane mode and Nessuna versione più recente disponibile ora online. NOT OBSERVED: typing a student-note change and tapping Aggiorna immediately (Salvataggio…/Salvato state and survival of that edit); reachability of Allievi + and Equipaggi controls with enlarged text while the offer showed (owner did not check; said it looked ok).
 
 **Expected:** The 0.4.0 → 0.4.1 update appears within one minute of returning, without reinstalling; the typed edit survives and controls remain reachable. Only your actual phone observations can pass this check.
 
@@ -27,7 +22,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Updates and versions](./DEVICE_CHECKS.md#updates-and-versions)
 
-**Work affected:** Completion of D3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="d4-phone-transfer"></a>
 
