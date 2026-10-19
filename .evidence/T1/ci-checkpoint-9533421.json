@@ -1,0 +1,89 @@
+{
+  "milestone": "T1",
+  "checkpoint": "95334214ccdff60f9c819c1ee1902c1d91a971d3",
+  "run": 39248249199,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39248249199",
+  "status": "GREEN_CI_WITHOUT_RETRIES_NOT_T1_CLOSURE",
+  "conclusion": "success",
+  "collectedAt": "2026-10-19T12:45:22.338Z",
+  "jobs": [
+    {
+      "id": 118045366206,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T11:56:16Z",
+      "completedAt": "2026-10-19T12:18:38Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39248249199/job-118045366206.log",
+      "sha256": "5daf1b59277b64b7054c63d64faa02fc39fa82fe015fdbbfe4ff864370350cea",
+      "browserSummary": [
+        "2026-10-19T12:18:35.4363746Z   47 skipped",
+        "2026-10-19T12:18:35.4370326Z   219 passed (20.0m)",
+        "2026-10-19T12:18:35.4398915Z ##[notice]  47 skipped",
+        "  219 passed (20.0m)"
+      ]
+    },
+    {
+      "id": 118045366597,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T11:56:22Z",
+      "completedAt": "2026-10-19T12:44:26Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39248249199/job-118045366597.log",
+      "sha256": "039c038d3c491eb7cb7ddec23be25c1ee6e481b1ee4b3992df9e194ed6dcacb5",
+      "browserSummary": [
+        "2026-10-19T12:44:11.4239180Z   65 skipped",
+        "2026-10-19T12:44:11.4346370Z   291 passed (41.5m)",
+        "2026-10-19T12:44:11.4965310Z ##[notice]  65 skipped",
+        "  291 passed (41.5m)"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12186771742,
+      "name": "e2e-report-macos-15-39248249199",
+      "sha256": "9936f4af7b1574e62c30f42393385d6659b305beed1948564ae96751aea98625",
+      "rawZip": "OS temporary cvc-t1-ci-39248249199/12186771742.zip"
+    },
+    {
+      "id": 12186437429,
+      "name": "e2e-flaky-macos-15-39248249199",
+      "sha256": "b45fb3d7254e9ac067fa0226d6ec747d98c562ba6ff33628e6dae5a947218c05",
+      "rawZip": "OS temporary cvc-t1-ci-39248249199/12186437429.zip"
+    },
+    {
+      "id": 12186040497,
+      "name": "e2e-flaky-ubuntu-latest-39248249199",
+      "sha256": "f54bf1a4b90496f692c25732606ec36ecbf760db11c899eeb567678869757d01",
+      "rawZip": "OS temporary cvc-t1-ci-39248249199/12186040497.zip"
+    },
+    {
+      "id": 12185716677,
+      "name": "e2e-report-ubuntu-latest-39248249199",
+      "sha256": "d4e2d2dfced261164689c4ec335a049a82b88cadf4b42133d080c396e08e3db6",
+      "rawZip": "OS temporary cvc-t1-ci-39248249199/12185716677.zip"
+    }
+  ],
+  "qualification": "Exact checkpoint CI succeeds on Linux and Mac with zero flaky tests. One green run does not fix the filed flakes (434cdcc student reactivation included); T1 zero-flake and timing predicates remain unmet.",
+  "reports": {
+    "ubuntu-latest": {
+      "expected": 219,
+      "skipped": 47,
+      "unexpected": 0,
+      "flaky": 0,
+      "durationMs": 1201868
+    },
+    "macos-15": {
+      "expected": 291,
+      "skipped": 65,
+      "unexpected": 0,
+      "flaky": 0,
+      "durationMs": 2488544
+    },
+    "flakyFiles": "Both e2e-flaky.json artifacts are empty arrays."
+  }
+}
