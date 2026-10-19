@@ -120,7 +120,7 @@ Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their
 Each passed only on a retry and is a defect to fix (03 §6).
 
 - `d4-local-reset.spec.ts › reports partial cleanup honestly and retries through the reset screen`
-  — T1's unchanged `b8eda01` local timing run: WebKit showed success instead of the simulated partial failure (39.5 s); retry passed (9.8 s). Cause open; original trace/context retained. See `.evidence/T1/test-timing.json`.
+  — `b8eda01` showed success instead of the simulated partial failure. A later probe found the cache mock gone with zero calls; retaining its browser handle and verifying both calls passes 32 cases without retries. A separate document reload remains unclassified. See `.evidence/T1/reset-cache-injection.json`.
 
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — the first development dual-engine run stalled opening the fresh WebKit

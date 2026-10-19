@@ -15,6 +15,10 @@ const channel = APP_CHANNEL_CONFIG.regular
 const otherChannel = APP_CHANNEL_CONFIG.test
 
 type BrowserEvents = { pageErrors: number; crashes: number }
+type CacheFailureProbe = {
+  deleteCalls: string[]
+  interruptions: number
+}
 
 function observeBrowserEvents(page: Page, events: BrowserEvents) {
   page.on("pageerror", () => {
@@ -554,69 +558,117 @@ test("reports partial cleanup honestly and retries through the reset screen", as
   await showSettings(page)
 
   const failingCache = channel.ocrRuntimeCacheName
-  await page.evaluate(async (name) => {
-    const cache = await caches.open(name)
+  // Keep a strong browser handle until both attempts finish. WebKit can lose
+  // an own-method mock on an otherwise unretained CacheStorage wrapper.
+  const cacheFailure = await page.evaluateHandle(async (name) => {
+    const storage = caches
+    const cache = await storage.open(name)
     await cache.put(
       new URL("/d4-retry-marker", location.origin).href,
       new Response("synthetic"),
     )
-    const originalDelete = caches.delete.bind(caches)
+    const originalDelete = storage.delete.bind(storage)
     let failOnce = true
-    Object.defineProperty(caches, "delete", {
+    const probe: CacheFailureProbe = { deleteCalls: [], interruptions: 0 }
+    Object.defineProperty(storage, "delete", {
       configurable: true,
       value: async (cacheName: string) => {
+        probe.deleteCalls.push(cacheName)
         if (cacheName === name && failOnce) {
           failOnce = false
+          probe.interruptions += 1
           throw new Error("synthetic deletion interruption")
         }
         return originalDelete(cacheName)
       },
     })
+    return { storage, probe }
   }, failingCache)
 
-  await enlargeResetText(page)
-  await confirmFullReset(page)
-  await expect(
-    page.getByRole("heading", { name: "Cancellazione non completata" }),
-  ).toBeVisible()
-  await expect(
-    page.getByText(/Alcuni dati potrebbero essere già stati eliminati/),
-  ).toBeVisible()
-  await expectResetTextFits(page)
-  await expect(
-    page.getByRole("button", { name: "Riprova la cancellazione" }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole("heading", { name: "Dati locali cancellati" }),
-  ).not.toBeVisible()
-  await page.screenshot({
-    path: evidenceOutputPath(
-      testInfo,
-      "D4",
-      "local-reset",
-      "reset-retry-needed.png",
-    ),
-    fullPage: true,
-  })
+  try {
+    await enlargeResetText(page)
+    await confirmFullReset(page)
+    await expect(
+      page.getByRole("heading", { name: "Cancellazione non completata" }),
+    ).toBeVisible()
+    expect(
+      await cacheFailure.evaluate(({ storage, probe }) => ({
+        ...probe,
+        sameStorage: storage === caches,
+      })),
+    ).toEqual({
+      deleteCalls: [failingCache],
+      interruptions: 1,
+      sameStorage: true,
+    })
+    expect(await page.evaluate(async () => caches.keys())).toContain(
+      failingCache,
+    )
+    await expect(
+      page.getByText(/Alcuni dati potrebbero essere già stati eliminati/),
+    ).toBeVisible()
+    await expectResetTextFits(page)
+    await expect(
+      page.getByRole("button", { name: "Riprova la cancellazione" }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Dati locali cancellati" }),
+    ).not.toBeVisible()
+    await page.screenshot({
+      path: evidenceOutputPath(
+        testInfo,
+        "D4",
+        "local-reset",
+        "reset-retry-needed.png",
+      ),
+      fullPage: true,
+    })
 
-  await page.getByRole("button", { name: "Riprova la cancellazione" }).click()
-  await expect(
-    page.getByRole("heading", { name: "Dati locali cancellati" }),
-  ).toBeVisible()
-  const remainingCacheNames = await page.evaluate(async () => caches.keys())
-  await expectResetTextFits(page)
-  const appDatabasePresent = await page.evaluate(
-    async (name) =>
-      (await indexedDB.databases()).some((database) => database.name === name),
-    channel.databaseFilename,
-  )
-  expect(remainingCacheNames).not.toContain(failingCache)
-  expect(appDatabasePresent).toBe(false)
-  expect(events).toEqual({ pageErrors: 0, crashes: 0 })
-  record(testInfo, "reset-retry", {
-    failureWasReportedAsPartial: true,
-    cacheRemainingAfterRetry: remainingCacheNames.includes(failingCache),
-    appDatabasePresent,
-    events,
-  })
+    await page.getByRole("button", { name: "Riprova la cancellazione" }).click()
+    await expect(
+      page.getByRole("heading", { name: "Dati locali cancellati" }),
+    ).toBeVisible()
+    const remainingCacheNames = await page.evaluate(async () => caches.keys())
+    await expectResetTextFits(page)
+    const appDatabasePresent = await page.evaluate(
+      async (name) =>
+        (await indexedDB.databases()).some(
+          (database) => database.name === name,
+        ),
+      channel.databaseFilename,
+    )
+    expect(remainingCacheNames).not.toContain(failingCache)
+    expect(
+      await cacheFailure.evaluate(({ storage, probe }) => ({
+        ...probe,
+        sameStorage: storage === caches,
+      })),
+    ).toEqual({
+      deleteCalls: [failingCache, failingCache],
+      interruptions: 1,
+      sameStorage: true,
+    })
+    expect(appDatabasePresent).toBe(false)
+    expect(events).toEqual({ pageErrors: 0, crashes: 0 })
+    record(testInfo, "reset-retry", {
+      failureWasReportedAsPartial: true,
+      cacheRemainingAfterRetry: remainingCacheNames.includes(failingCache),
+      appDatabasePresent,
+      events,
+    })
+  } finally {
+    const observation = await cacheFailure
+      .evaluate(async ({ storage, probe }) => ({
+        probe,
+        sameStorage: storage === caches,
+        hasOwnDelete: Object.hasOwn(storage, "delete"),
+        remainingCaches: await storage.keys(),
+      }))
+      .catch(() => ({ unavailable: true }))
+    await testInfo.attach("cache-failure-injection", {
+      body: JSON.stringify(observation),
+      contentType: "application/json",
+    })
+    await cacheFailure.dispose()
+  }
 })

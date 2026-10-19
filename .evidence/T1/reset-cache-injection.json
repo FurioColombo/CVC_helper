@@ -1,0 +1,205 @@
+{
+  "milestone": "T1",
+  "status": "TARGETED_CACHE_INJECTION_FIX_PASS_NOT_T1_CLOSURE",
+  "recordedAt": "2026-10-19T10:06:00.799Z",
+  "parentCheckpoint": "885a9c5b0657023638ddaa64388b090c618ef75d",
+  "node": "v24.21.0",
+  "source": {
+    "digest": "4dc1146e0e8a42b6b6350067b9d6d68bd95491c4e95447e03e8a5b6fd5d48393",
+    "files": 442
+  },
+  "changedFile": "tests/e2e/d4-local-reset.spec.ts",
+  "changedFileSha256": "d0babc98e95aff1532c5e33ae865284b48d034b51b041b17ad396ccbfaaf045f",
+  "problem": "The unretained own-method cache mock disappeared in a WebKit attempt. With zero intercepted calls and no injected interruption, the real app completed cleanup; the test incorrectly waited for its simulated error.",
+  "fix": "Retain the exact CacheStorage object and counters in a Playwright JSHandle until the UI retry completes, dispose in finally. Require the same object, exactly one simulated interruption, the retained cache before retry, and the successful second deletion. Every original UI/layout/storage assertion remains.",
+  "productionAppChanged": false,
+  "diagnosticBefore": {
+    "command": "node scripts/run-e2e.mjs tests/e2e/d4-local-reset.spec.ts --project=iphone-13-webkit-core --grep \"reports partial cleanup honestly\" --repeat-each=8 --retries=0",
+    "stats": {
+      "startTime": "2026-10-19T09:47:41.955Z",
+      "duration": 173437.34100000001,
+      "expected": 6,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    "observations": [
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "passed",
+        "retry": 0,
+        "durationMs": 11289,
+        "witness": {
+          "probe": {
+            "deleteCalls": [
+              "cvc-ocr-runtime",
+              "cvc-ocr-runtime"
+            ],
+            "interruptions": 1
+          },
+          "hasOwnDelete": true,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "failed",
+        "retry": 0,
+        "durationMs": 40263,
+        "witness": {
+          "probe": {
+            "deleteCalls": [],
+            "interruptions": 0
+          },
+          "hasOwnDelete": false,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "failed",
+        "retry": 0,
+        "durationMs": 38567,
+        "witness": {
+          "hasOwnDelete": false,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "passed",
+        "retry": 0,
+        "durationMs": 10061,
+        "witness": {
+          "probe": {
+            "deleteCalls": [
+              "cvc-ocr-runtime"
+            ],
+            "interruptions": 1
+          },
+          "hasOwnDelete": false,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "passed",
+        "retry": 0,
+        "durationMs": 12777,
+        "witness": {
+          "probe": {
+            "deleteCalls": [
+              "cvc-ocr-runtime"
+            ],
+            "interruptions": 1
+          },
+          "hasOwnDelete": false,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "passed",
+        "retry": 0,
+        "durationMs": 12631,
+        "witness": {
+          "probe": {
+            "deleteCalls": [
+              "cvc-ocr-runtime",
+              "cvc-ocr-runtime"
+            ],
+            "interruptions": 1
+          },
+          "hasOwnDelete": true,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "passed",
+        "retry": 0,
+        "durationMs": 11967,
+        "witness": {
+          "probe": {
+            "deleteCalls": [
+              "cvc-ocr-runtime"
+            ],
+            "interruptions": 1
+          },
+          "hasOwnDelete": false,
+          "remainingCaches": []
+        }
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "status": "passed",
+        "retry": 0,
+        "durationMs": 11782,
+        "witness": {
+          "probe": {
+            "deleteCalls": [
+              "cvc-ocr-runtime",
+              "cvc-ocr-runtime"
+            ],
+            "interruptions": 1
+          },
+          "hasOwnDelete": true,
+          "remainingCaches": []
+        }
+      }
+    ],
+    "qualification": "One failed observation retains counters but has no own delete method and zero calls. A second failure lost its document and showed Crea il corso with a second root GET/Vite connection; that distinct reload is not attributed to wrapper lifetime. Documentation edits occurred during this diagnostic; the reload cause was not captured."
+  },
+  "verificationAfter": {
+    "command": "node scripts/run-e2e.mjs tests/e2e/d4-local-reset.spec.ts --grep \"reports partial cleanup honestly\" --repeat-each=8 --retries=0",
+    "stats": {
+      "startTime": "2026-10-19T09:55:32.955Z",
+      "duration": 223145.206,
+      "expected": 32,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "projects": {
+      "pixel-7-chrome": 8,
+      "desktop-chrome-storage": 8,
+      "iphone-13-viewport": 8,
+      "iphone-13-webkit-core": 8
+    },
+    "verifiedWitnesses": 32,
+    "retries": 0,
+    "runnerExitCode": 0,
+    "manualCleanup": false,
+    "qualification": "Application-served files remained fixed for all32 cases. No separate browser job ran locally."
+  },
+  "quickVerification": {
+    "command": "npm run verify:quick",
+    "exitCode": 0,
+    "unitFiles": 89,
+    "unitTests": 1442,
+    "raw": "OS temporary cvc-t1-reset-cache-fix-quick.log",
+    "sha256": "0d2da37017616666eb8160664f1339d7684c3e531dd0e5c1076fe45689ebacb0"
+  },
+  "raw": [
+    {
+      "file": "OS temporary cvc-t1-reset-injector-observation-proof/e2e-report.json",
+      "sha256": "2f4296409754a69307ccad442b9b94cdc173eef807f5ee2c6f5d9bf12b01ca1a"
+    },
+    {
+      "file": "OS temporary cvc-t1-reset-injector-pinned-proof/e2e-report.json",
+      "sha256": "3cb9dc2417960ed2a4117400d7f3bd70e0fcc6539602b26694aa34e414b0b3fe"
+    }
+  ],
+  "preserved": {
+    "frozenEvidenceHashes": 18,
+    "testBuild": "0.4.0",
+    "testSource": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstalled": null
+  },
+  "limits": [
+    "Original b8 timing-run failure was not instrumented; the later controlled run reproduced a matching missing-error symptom and identified this test-fixture mechanism.",
+    "Garbage collection itself was not directly observed. No specific WebKit collector defect is claimed.",
+    "The separate unexpected document reload and older lifecycle failures still need classification; this proof addresses the cache-injection defect.",
+    "T1 speed target, final verify:all and final independent review remain open."
+  ]
+}
