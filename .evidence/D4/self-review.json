@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review",
   "milestone": "D4",
-  "commit": "pending: the D4 owner-fix checkpoint recorded by verification.json",
+  "commit": "ab0dbc499ffecaede1ac82921b89664611e319fb",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [
