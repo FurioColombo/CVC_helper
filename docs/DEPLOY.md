@@ -138,8 +138,10 @@ unplanned or lower version, a pin's second version without the owner's
 installation report (recorded in `ownerInstalled` with `reportedBy: owner`,
 its source and summary; coordination, not a physical PASS), and a pin that
 replaces another milestone's build before that build's owner check has PASSED
-or without a higher patch. The live `build-info.json` must match the pin's
-active version before it is replaced. Announce each publication and its focused steps in
+or without a higher patch. A milestone's fixed build replaces its own earlier
+one only while that check is not READY, so never under an owner's test. The
+live `build-info.json` must match the pin's active version before it is
+replaced. Announce each publication and its focused steps in
 `docs/OWNER_TODO.md` through `owner:update`. The device steps are in
 [Updates and versions](./DEVICE_CHECKS.md#updates-and-versions) and
 [Course files and full local reset](./DEVICE_CHECKS.md#course-files-and-full-local-reset).

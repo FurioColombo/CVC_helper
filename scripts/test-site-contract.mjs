@@ -12,7 +12,8 @@ function patchOf(version) {
  * The installed phone build stays fixed until explicit owner coordination.
  * A pin names one milestone's verified source and its planned patch versions.
  * A later version of the same pin needs the owner's installation report; a pin
- * that replaces an earlier milestone's build needs that build's owner PASS.
+ * that replaces an earlier milestone's build needs that build's owner PASS,
+ * and one that replaces its own milestone's build needs no check in progress.
  */
 export function assertTestPublicationAllowed(
   pin,
@@ -77,9 +78,15 @@ export function assertTestPublicationAllowed(
     const check = ownerChecks?.items?.find(
       (item) => item.id === pin.replaces.ownerCheck,
     )
-    assert.equal(
-      check?.status,
-      "PASSED",
+    // A milestone may replace its own build once nobody is testing it: the
+    // owner asked for changes, or the check was reset for a new build.
+    // Another milestone's build stays until its check has passed.
+    const free =
+      pin.replaces.milestone === pin.milestone
+        ? ["PASSED", "CHANGES_REQUESTED", "NEEDS_SETUP"]
+        : ["PASSED"]
+    assert(
+      free.includes(check?.status),
       `The installed ${pin.replaces.milestone} build stays until its owner check passes`,
     )
   }

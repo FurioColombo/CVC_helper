@@ -177,3 +177,34 @@ describe("a later milestone replaces the installed build only after its owner ch
     ).not.toThrow()
   })
 })
+
+describe("a milestone replaces its own build after the owner asked for changes", () => {
+  const first = "a".repeat(40)
+  const fixed = "c".repeat(40)
+  const own = {
+    milestone: "D4",
+    versions: ["0.4.3"],
+    sourceCommit: fixed,
+    activeVersion: "0.4.2",
+    ownerInstalled: null,
+    replaces: {
+      milestone: "D4",
+      ownerCheck: "D4-PHONE-TRANSFER",
+      activeVersion: "0.4.2",
+      sourceCommit: first,
+    },
+  }
+  const queue = (status) => ({ items: [{ id: "D4-PHONE-TRANSFER", status }] })
+
+  it("publishes the fix once nobody is testing the old build", () => {
+    for (const status of ["CHANGES_REQUESTED", "NEEDS_SETUP", "PASSED"])
+      expect(() =>
+        assertTestPublicationAllowed(own, fixed, "0.4.3", queue(status)),
+      ).not.toThrow()
+  })
+  it("keeps the old build while its check is ready for the owner", () => {
+    expect(() =>
+      assertTestPublicationAllowed(own, fixed, "0.4.3", queue("READY")),
+    ).toThrow(/stays until its owner check passes/)
+  })
+})

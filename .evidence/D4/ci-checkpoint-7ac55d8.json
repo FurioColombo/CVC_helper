@@ -1,0 +1,87 @@
+{
+  "milestone": "D4",
+  "checkpoint": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
+  "run": 39329618525,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39329618525",
+  "status": "GREEN_CI_WITHOUT_RETRIES",
+  "conclusion": "success",
+  "collectedAt": "2026-10-19T22:32:38.916Z",
+  "jobs": [
+    {
+      "id": 118324218261,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T21:42:55Z",
+      "completedAt": "2026-10-19T22:32:18Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39329618525/job-118324218261.log",
+      "sha256": "0cf8d9f842f34bc5c40a5c6192890d02487524197c98ad668c33c3943271face",
+      "browserSummary": [
+        "2026-10-19T22:32:06.9032770Z   68 skipped",
+        "2026-10-19T22:32:06.9035460Z   304 passed (42.9m)",
+        "2026-10-19T22:32:06.9464940Z ##[notice]  68 skipped",
+        "  304 passed (42.9m)"
+      ]
+    },
+    {
+      "id": 118324218493,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T21:42:48Z",
+      "completedAt": "2026-10-19T22:01:37Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39329618525/job-118324218493.log",
+      "sha256": "917b1093a939499f66dfd8df30a76900ddfaeafd45b2a2fb3c176d30c0155541",
+      "browserSummary": [
+        "2026-10-19T22:01:33.0244027Z   49 skipped",
+        "2026-10-19T22:01:33.0244175Z   229 passed (16.9m)",
+        "2026-10-19T22:01:33.0267543Z ##[notice]  49 skipped",
+        "  229 passed (16.9m)"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12225484413,
+      "name": "e2e-flaky-macos-15-39329618525",
+      "sha256": "2bf00af2c62a342a884e8020c1d30928d99eaf2347c64e441b10c77373a5551b",
+      "rawZip": "OS temporary cvc-t1-ci-39329618525/12225484413.zip"
+    },
+    {
+      "id": 12225384764,
+      "name": "e2e-report-macos-15-39329618525",
+      "sha256": "0350ef3b6e2b1a90cadc14e0f9ee6f9c00d449c646126278236d2232e000e7a9",
+      "rawZip": "OS temporary cvc-t1-ci-39329618525/12225384764.zip"
+    },
+    {
+      "id": 12225001415,
+      "name": "e2e-flaky-ubuntu-latest-39329618525",
+      "sha256": "067e928e2e984b054834bccfe3225793919b6fa3623d0ade8f0d0e161a55be0f",
+      "rawZip": "OS temporary cvc-t1-ci-39329618525/12225001415.zip"
+    },
+    {
+      "id": 12224737534,
+      "name": "e2e-report-ubuntu-latest-39329618525",
+      "sha256": "5c55b33e58f9d2dd795b96f4cfb34766eebd563d331380b145e38dbfa0c73a14",
+      "rawZip": "OS temporary cvc-t1-ci-39329618525/12224737534.zip"
+    }
+  ],
+  "qualification": "Exact D4 owner-fix checkpoint 7ac55d8 (verification recorded at ab0dbc4, code identical). Basis of the D4 owner handoff.",
+  "reports": {
+    "ubuntu-latest": {
+      "expected": 229,
+      "skipped": 49,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "macos-15": {
+      "expected": 304,
+      "skipped": 68,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "flakyFiles": "Both e2e-flaky.json artifacts are empty arrays."
+  }
+}
