@@ -12,10 +12,10 @@ Tell your agent the item name and what happened. It records your feedback and ke
 
 **What to do:**
 
-1. Open the supplied link in Android Chrome and install CVC Helper Test once. Check Impostazioni shows 0.4.0. Create a synthetic course and fictitious student.
-2. Reply “D3-PHONE-UPDATE: installed 0.4.0” with your device, browser and Android version. Keep this installation. The agent then publishes 0.4.1 from the same verified source at this same address and tells you when it is ready.
-3. After that notice, switch away from the test app, return and time the update offer. Type a student-note change and immediately tap Aggiorna; note whether Salvataggio… or Salvato was shown. Check the edit survives and Impostazioni shows 0.4.1. Do not reinstall.
-4. With enlarged text, check Allievi + and the Equipaggi controls with a person selected. Try Cerca aggiornamenti in airplane mode. Report the link, versions, offer time, saved edit and reachable controls; follow Updates and versions in docs/DEVICE_CHECKS.md.
+1. Done: you reported CVC Helper Test 0.4.0 installed. Keep that installation and do not reinstall. 0.4.1 is now published at the same address from the same verified source.
+2. Switch away from the test app (or lock the phone) for a minute, return and time how long until Nuova versione disponibile appears. Type a student-note change and immediately tap Aggiorna; note whether Salvataggio… or Salvato was shown. Check the edit survives and Impostazioni shows 0.4.1.
+3. With enlarged text, check Allievi + and the Equipaggi controls with a person selected while the offer shows. Try Cerca aggiornamenti in airplane mode, then online.
+4. Report D3-PHONE-UPDATE with your device, browser and Android version, both versions, the offer time, the saved edit and reachable controls; follow Updates and versions in docs/DEVICE_CHECKS.md.
 
 Use the test address below and the linked device instructions.
 

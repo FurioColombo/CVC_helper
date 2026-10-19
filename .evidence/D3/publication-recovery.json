@@ -56,5 +56,42 @@
     ],
     "regularAppAvailable": true,
     "physicalAcceptance": "PENDING_OWNER"
+  },
+  "secondVersionPublication": {
+    "version": "0.4.1",
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "ownerInstallationReport": "Owner chat: \"D3-PHONE-UPDATE: installed 0.4.0\" (2026-10-19), recorded in .milestones/test-site.json ownerInstalled; device, browser and Android version not stated.",
+    "attempts": [
+      {
+        "shell": "Git Bash",
+        "status": "FAILED_BEFORE_EXTERNAL_MUTATION",
+        "error": "GNU tar read the C: archive path as a remote host"
+      },
+      {
+        "shell": "PowerShell, Windows tar",
+        "status": "FAILED_BEFORE_EXTERNAL_MUTATION",
+        "error": "Node fetch failed: write ECONNABORTED on the first GitHub API call after the build, same as D3 0.4.0 attempts 1-2",
+        "log": "OS-temp cvc-d3-publish-041.log",
+        "logSha256": "\u00078d6525cc5a029b15d8e511439cb5a17f2fbeaa8a98d2eca4dadfe7320d6d64f",
+        "remoteMainUnchanged": "4ea4c098cbab7b6dcfbf6442e349d7a4503a14ed"
+      },
+      {
+        "shell": "PowerShell, fnm Node 24, Windows tar",
+        "status": "PASS",
+        "transport": "Same recorded helper (sha256 c9d5dcd40d5c6c85d5c34acc05841dd2a7d1e18cbb09c517158af592deaad32f) via NODE_OPTIONS --import; publisher and every guard unchanged",
+        "publishedCommit": "43b93febdc8cbae187076dccd95580280cea2fd3",
+        "log": "OS-temp cvc-d3-publish-041-fresh-connections.log",
+        "logSha256": "a4c3338d52597060469400460db112e4d543acbf6cdbb38514d8bccee6fa4d36"
+      }
+    ],
+    "liveVerification": {
+      "status": "PASS",
+      "report": "deployment-evidence-0.4.1.json",
+      "engines": [
+        "chromium",
+        "webkit"
+      ],
+      "physicalAcceptance": "PENDING_OWNER"
+    }
   }
 }

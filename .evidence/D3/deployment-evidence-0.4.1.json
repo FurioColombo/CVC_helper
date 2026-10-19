@@ -1,0 +1,92 @@
+{
+  "milestone": "D3",
+  "recordedAt": "2026-10-19T12:18:18.430Z",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "regularUrl": "https://furiocolombo.github.io/CVC_helper/",
+  "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+  "version": "0.4.1",
+  "buildInfo": {
+    "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
+    "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
+    "gitSourceDigest": "fe6def9061a3693fc084b46b1deb8d2126ec904ea2d68ee67fb0e1c6af230e9f",
+    "version": "0.4.1",
+    "channel": "test",
+    "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+    "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745",
+    "builtAt": "2026-10-19T12:16:49.031Z"
+  },
+  "manifest": {
+    "name": "CVC Helper Test",
+    "short_name": "CVC Helper Test",
+    "description": "Supporto operativo locale per una settimana CVC Caprera.",
+    "start_url": "/CVC_helper_test/",
+    "display": "standalone",
+    "background_color": "#f2f6fb",
+    "theme_color": "#2f5fa0",
+    "lang": "it",
+    "scope": "/CVC_helper_test/",
+    "id": "/CVC_helper_test/",
+    "icons": [
+      {
+        "src": "/CVC_helper_test/icons/cvc-helper-192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/CVC_helper_test/icons/cvc-helper-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "engine": "chromium",
+      "browserVersion": "151.0.7922.34",
+      "title": "CVC Helper Test",
+      "version": "0.4.1",
+      "realUiCourseAndStudentPersisted": true,
+      "sameOriginRegularAppRemainedEmpty": true,
+      "storage": {
+        "testVersion": "0.4.1",
+        "testColumns": "3",
+        "regularColumns": null,
+        "workers": [
+          {
+            "scope": "https://furiocolombo.github.io/CVC_helper_test/",
+            "script": "https://furiocolombo.github.io/CVC_helper_test/sw.js"
+          }
+        ],
+        "caches": [
+          "cvc-helper-test-precache-v2-https://furiocolombo.github.io/CVC_helper_test/"
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.5",
+      "title": "CVC Helper Test",
+      "version": "0.4.1",
+      "realUiCourseAndStudentPersisted": true,
+      "sameOriginRegularAppRemainedEmpty": true,
+      "storage": {
+        "testVersion": "0.4.1",
+        "testColumns": "3",
+        "regularColumns": null,
+        "workers": [
+          {
+            "scope": "https://furiocolombo.github.io/CVC_helper_test/",
+            "script": "https://furiocolombo.github.io/CVC_helper_test/sw.js"
+          }
+        ],
+        "caches": [
+          "cvc-helper-test-precache-v2-https://furiocolombo.github.io/CVC_helper_test/"
+        ]
+      },
+      "pageErrors": []
+    }
+  ],
+  "physicalDeviceAcceptance": "PENDING_OWNER"
+}
