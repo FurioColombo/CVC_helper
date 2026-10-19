@@ -56,7 +56,7 @@ findings join as an extra milestone only if the owner picks them (see the end).
 ## D4 — Export, import, persistent storage and full reset
 
 **Category:** FEATURE
-**Status:** AWAITING_OWNER
+**Status:** IN_PROGRESS
 
 1. Ask the browser to keep the data (`navigator.storage.persist()`) when a
    course is created, and show in Impostazioni whether it agreed.

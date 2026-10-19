@@ -35,9 +35,9 @@
       "milestone": "D4",
       "kind": "DEVICE_CHECK",
       "title": "Check course files, persistent storage and full reset on Android",
-      "status": "CHANGES_REQUESTED",
+      "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 3,
+      "revision": 4,
       "instructions": [
         "Open your installed CVC Helper Test (do not reinstall). Switch away and return until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.4.2. Use fictitious people only.",
         "In Impostazioni read Conservazione dei dati and note whether the browser agreed to keep the data. Prepare the course file, save it and share it to another app. Check it is available there and its filename contains no personal name.",
@@ -46,19 +46,26 @@
         "Report D4-PHONE-TRANSFER with your device, browser and Android version and what you actually observed, including the receiving app and the persistent-storage answer."
       ],
       "expected": "The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.",
-      "testedCommit": "fde1fe14787333536fb250ef2357793be3870be8",
-      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "testedCommit": null,
+      "testUrl": null,
       "evidencePath": ".evidence/D4/physical-device-review.json",
-      "updatedAt": "2026-10-19T19:28:15.662Z",
-      "result": {
-        "reportedBy": "owner",
-        "source": "Owner chat report \"D4-PHONE-TRANSFER\" in the Claude Code session of 2026-10-19.",
-        "summary": "Update 0.4.1 to 0.4.2 worked; a student note typed before the update was kept. Conservazione dei dati said the browser does not guarantee keeping data when space is low and to export regularly. Export: the button needed two taps before anything visible happened (possibly working silently), then it worked and offered to download the file again. Condividi failed with Condivisione non riuscita; the error text is hard to notice (no icon, colour or emphasis). The owner asks to remove the Chiudi il file pronto button. Import preview, cancel, replacement and reopen showed no issue. PROBLEM: Azzera tutti i dati locali took very long or got stuck; after closing and reopening, the app stayed on Apertura del corso… then showed Non riesco ad aprire i dati locali, and Riprova did not fix it; only uninstalling and reinstalling the app recovered it. After reinstalling, importing the saved file worked. Not reported: whether the regular CVC Helper app kept its course. Owner question: importing a different course should replace the current one or say it is not compatible.",
-        "testedCommit": "fde1fe14787333536fb250ef2357793be3870be8",
-        "device": "Motorola Edge 60",
-        "browser": "Not stated by the owner",
-        "osVersion": "Android, version not stated by the owner"
-      }
+      "updatedAt": "2026-10-19T20:08:05.775Z",
+      "history": [
+        {
+          "status": "CHANGES_REQUESTED",
+          "result": {
+            "reportedBy": "owner",
+            "source": "Owner chat report \"D4-PHONE-TRANSFER\" in the Claude Code session of 2026-10-19.",
+            "summary": "Update 0.4.1 to 0.4.2 worked; a student note typed before the update was kept. Conservazione dei dati said the browser does not guarantee keeping data when space is low and to export regularly. Export: the button needed two taps before anything visible happened (possibly working silently), then it worked and offered to download the file again. Condividi failed with Condivisione non riuscita; the error text is hard to notice (no icon, colour or emphasis). The owner asks to remove the Chiudi il file pronto button. Import preview, cancel, replacement and reopen showed no issue. PROBLEM: Azzera tutti i dati locali took very long or got stuck; after closing and reopening, the app stayed on Apertura del corso… then showed Non riesco ad aprire i dati locali, and Riprova did not fix it; only uninstalling and reinstalling the app recovered it. After reinstalling, importing the saved file worked. Not reported: whether the regular CVC Helper app kept its course. Owner question: importing a different course should replace the current one or say it is not compatible.",
+            "testedCommit": "fde1fe14787333536fb250ef2357793be3870be8",
+            "device": "Motorola Edge 60",
+            "browser": "Not stated by the owner",
+            "osVersion": "Android, version not stated by the owner"
+          },
+          "testedCommit": "fde1fe14787333536fb250ef2357793be3870be8",
+          "invalidatedAt": "2026-10-19T20:08:05.775Z"
+        }
+      ]
     }
   ]
 }

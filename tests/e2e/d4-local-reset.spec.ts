@@ -549,6 +549,93 @@ test("keeps reset visibly blocked until a legacy database connection closes", as
   })
 })
 
+// Owner phone check, 2026-10-19: a long reset was abandoned by closing the
+// app, and every later open hung on "Apertura del corso…" until reinstalling.
+test("resumes a reset interrupted by closing the app on the next open", async ({
+  page,
+  context,
+}, testInfo) => {
+  const events: BrowserEvents = { pageErrors: 0, crashes: 0 }
+  observeBrowserEvents(page, events)
+  await createCourse(page)
+  await addSyntheticStudent(page)
+  await showSettings(page)
+
+  // Hold the deletion open, as a connection the phone could not release did.
+  const holder = await context.newPage()
+  observeBrowserEvents(holder, events)
+  await holder.goto("/icons/cvc-helper.svg")
+  await holder.evaluate(
+    (databaseName) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open(databaseName)
+        request.onsuccess = () => {
+          Object.assign(window, { __D4_HELD_CONNECTION__: request.result })
+          resolve()
+        }
+        request.onerror = () => reject(request.error)
+      }),
+    channel.databaseFilename,
+  )
+
+  await confirmFullReset(page)
+  await expect(
+    page.getByText(/Chiudi le altre schede o finestre/),
+  ).toBeVisible()
+  const pendingBeforeClose = await page.evaluate(
+    (key) => localStorage.getItem(key),
+    channel.resetPendingKey,
+  )
+  await page.close()
+
+  const reopened = await context.newPage()
+  observeBrowserEvents(reopened, events)
+  await reopened.goto("/")
+  await expect(
+    reopened.getByRole("heading", { name: "Cancellazione dei dati locali…" }),
+  ).toBeVisible()
+  await expect(reopened.getByText("Apertura del corso…")).not.toBeVisible()
+  await expect(
+    reopened.getByRole("heading", {
+      name: "Non riesco ad aprire i dati locali",
+    }),
+  ).not.toBeVisible()
+
+  await holder.evaluate(() => {
+    ;(
+      window as Window & { __D4_HELD_CONNECTION__?: IDBDatabase }
+    ).__D4_HELD_CONNECTION__?.close()
+  })
+  await expect(
+    reopened.getByRole("heading", { name: "Dati locali cancellati" }),
+  ).toBeVisible({ timeout: 40_000 })
+  const pendingAfterReset = await reopened.evaluate(
+    (key) => localStorage.getItem(key),
+    channel.resetPendingKey,
+  )
+
+  await reopened.getByRole("button", { name: "Riapri l’app" }).click()
+  await expect(
+    reopened.getByRole("heading", { name: "Crea il corso" }),
+  ).toBeVisible()
+  const studentsAfterReopen = await reopened.evaluate(async (name) => {
+    const databases = await indexedDB.databases()
+    return databases.some((database) => database.name === name)
+  }, channel.databaseFilename)
+
+  expect(pendingBeforeClose).toBe("1")
+  expect(pendingAfterReset).toBeNull()
+  expect(events).toEqual({ pageErrors: 0, crashes: 0 })
+  record(testInfo, "interrupted-reset", {
+    pendingBeforeClose,
+    resumedOnReopen: true,
+    pendingAfterReset,
+    reopenedWithoutCourse: true,
+    databasePresentAfterReopen: studentsAfterReopen,
+    events,
+  })
+})
+
 test("reports partial cleanup honestly and retries through the reset screen", async ({
   page,
 }, testInfo) => {

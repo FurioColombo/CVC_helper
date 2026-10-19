@@ -134,9 +134,11 @@ describe("CourseFiles", () => {
 
       expect(share).toHaveBeenCalledOnce()
       expect(share).toHaveBeenCalledWith({ files: [expect.any(File)] })
-      expect(share.mock.calls[0]?.[0].files[0].name).toMatch(
-        /^cvc-helper-corso-\d{4}-W\d{2}\.json$/,
-      )
+      // Android Chrome refuses to share JSON files: the shared copy is text.
+      const shared = share.mock.calls[0]?.[0].files[0] as File
+      expect(shared.name).toMatch(/^cvc-helper-corso-\d{4}-W\d{2}\.txt$/)
+      expect(shared.type).toBe("text/plain")
+      expect(canShare).toHaveBeenCalledWith({ files: [shared] })
     } finally {
       if (oldShare) Object.defineProperty(navigator, "share", oldShare)
       else Reflect.deleteProperty(navigator, "share")
@@ -225,5 +227,72 @@ describe("CourseFiles", () => {
     expect(
       await screen.findByText(/Il browser non garantisce la conservazione/),
     ).toBeVisible()
+  })
+})
+
+describe("the prepared course file after the owner's phone check", () => {
+  it("moves focus to Salva file, offers no close button and shows a failed share as an error", async () => {
+    const share = vi
+      .fn()
+      .mockRejectedValue(
+        new DOMException("Permission denied", "NotAllowedError"),
+      )
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: share,
+    })
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: vi.fn().mockReturnValue(true),
+    })
+    try {
+      const user = userEvent.setup()
+      render(<CourseFiles hasCourse />)
+
+      await user.click(
+        screen.getByRole("button", { name: "Prepara il file del corso" }),
+      )
+
+      const save = await screen.findByRole("button", { name: "Salva file" })
+      expect(save).toHaveFocus()
+      expect(
+        screen.getByText(/File del corso pronto: ora salvalo o condividilo/),
+      ).toBeVisible()
+      expect(
+        screen.queryByRole("button", { name: "Chiudi il file pronto" }),
+      ).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole("button", { name: "Condividi" }))
+
+      const alert = await screen.findByRole("alert")
+      expect(alert).toHaveTextContent(
+        "Condivisione non riuscita. Puoi salvare il file con Salva file.",
+      )
+      expect(alert.querySelector("svg")).not.toBeNull()
+    } finally {
+      Reflect.deleteProperty(navigator, "share")
+      Reflect.deleteProperty(navigator, "canShare")
+    }
+  })
+
+  it("accepts the shared text copy when importing", () => {
+    const { container } = render(<CourseFiles hasCourse />)
+    const accept = uploadTarget(container).getAttribute("accept") ?? ""
+    expect(accept.split(",")).toEqual(
+      expect.arrayContaining([".json", ".txt", "text/plain"]),
+    )
+  })
+
+  it("marks an import error with the warning triangle", async () => {
+    const user = userEvent.setup()
+    const { container } = render(<CourseFiles hasCourse />)
+    mocks.parseCourseArchive.mockImplementation(() => {
+      throw new CourseArchiveError("invalid-format")
+    })
+
+    await user.upload(uploadTarget(container), mockArchiveFile("x"))
+
+    const alert = await screen.findByRole("alert")
+    expect(alert.querySelector("svg[aria-hidden='true']")).not.toBeNull()
   })
 })

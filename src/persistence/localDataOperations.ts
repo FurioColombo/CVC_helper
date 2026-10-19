@@ -77,15 +77,37 @@ function deleteCourseDatabase() {
   })
 }
 
+// A reset survives the app being closed midway: the next open resumes it
+// before using the course (owner phone check, 2026-10-19). The marker is
+// outside the preferences the reset clears and goes only once it completes.
+function setResetPending(pending: boolean) {
+  try {
+    if (pending) localStorage.setItem(appChannelConfig.resetPendingKey, "1")
+    else localStorage.removeItem(appChannelConfig.resetPendingKey)
+  } catch {
+    // Without storage the reset still runs; it just cannot resume.
+  }
+}
+
+export function isResetPending() {
+  try {
+    return localStorage.getItem(appChannelConfig.resetPendingKey) !== null
+  } catch {
+    return false
+  }
+}
+
 /** Permanently invalidate old callbacks before closing; retry is idempotent. */
 export function resetAllLocalData() {
   if (resetting) return resetting
+  setResetPending(true)
   notify("resetting")
   channel?.postMessage("reset")
   resetting = (async () => {
     await closeCourse()
     await deleteCourseDatabase()
     await clearAppBrowserStorage()
+    setResetPending(false)
     notify("reset-complete")
     channel?.postMessage("reset-complete")
   })()

@@ -120,7 +120,8 @@ after D3's update check; keep that installation and use fictitious people only.
 
 1. In Impostazioni, read Conservazione dei dati and report whether the browser
    agreed. Refusal is a supported result; the app must explain it honestly.
-2. Prepare the course file. Save it and use Condividi to send it to another app.
+2. Prepare the course file. Save it and use Condividi to send it to another app
+   (the shared copy is the same course as a .txt file, which Android accepts).
    Check that the file is available there and its name has no person's name.
 3. Choose that saved file for import. Check the preview, cancel once, then
    explicitly confirm replacement. Reopen the course and check its students,

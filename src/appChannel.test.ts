@@ -13,6 +13,7 @@ describe("app channel storage configuration", () => {
       crewDisplayColumnsKey: "cvc-helper.crew-display-columns",
       scanNameOrderPrefix: "cvc-helper.scan-name-order.",
       installedVersionKey: "cvc-helper.installed-version",
+      resetPendingKey: "cvc-helper.reset-pending",
       workboxCacheId: null,
       ocrRuntimeCacheName: "cvc-ocr-runtime",
       ocrLanguageCachePath: ".",
@@ -34,6 +35,7 @@ describe("app channel storage configuration", () => {
     expect(test.crewDisplayColumnsKey).not.toBe(regular.crewDisplayColumnsKey)
     expect(test.scanNameOrderPrefix).not.toBe(regular.scanNameOrderPrefix)
     expect(test.installedVersionKey).not.toBe(regular.installedVersionKey)
+    expect(test.resetPendingKey).not.toBe(regular.resetPendingKey)
     expect(test.workboxCacheId).toBe("cvc-helper-test")
     expect(test.ocrRuntimeCacheName).not.toBe(regular.ocrRuntimeCacheName)
     expect(test.ocrLanguageCachePath).toBe("cvc-helper-test-ocr")

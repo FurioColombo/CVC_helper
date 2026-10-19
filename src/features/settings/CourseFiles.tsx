@@ -1,12 +1,14 @@
 import {
+  CircleCheck,
   Download,
   FileUp,
   LoaderCircle,
   Share2,
   ShieldCheck,
   Trash2,
+  TriangleAlert,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { getIsoWeekInfo } from "@/domain/course"
@@ -31,6 +33,7 @@ import {
 
 type PreparedExport = {
   file: File
+  shareFile: File
   shareable: boolean
 }
 
@@ -50,6 +53,33 @@ type FileShareNavigator = Navigator & {
 function archiveFileName(date = new Date()): string {
   const { year, isoWeek } = getIsoWeekInfo(date)
   return `cvc-helper-corso-${year}-W${String(isoWeek).padStart(2, "0")}.json`
+}
+
+/**
+ * Chrome on Android shares only allow-listed file types, and JSON is not one:
+ * sharing the .json file fails (owner phone check, 2026-10-19). The shared
+ * copy is the same text as plain text; import accepts both names.
+ */
+function shareCopy(file: File, text: string): File {
+  return new File([text], file.name.replace(/\.json$/, ".txt"), {
+    type: "text/plain",
+  })
+}
+
+/** Rulebook R06/R14: an error carries the warning triangle, not colour alone. */
+function ErrorNotice({ children }: { children: ReactNode }) {
+  return (
+    <p
+      className="mt-2 flex items-start gap-2 text-sm leading-5 font-semibold text-[#a2381b]"
+      role="alert"
+    >
+      <TriangleAlert
+        aria-hidden="true"
+        className="mt-0.5 size-4 shrink-0 text-[#b42318]"
+      />
+      <span className="min-w-0">{children}</span>
+    </p>
+  )
 }
 
 function supportsFileSharing(file: File): boolean {
@@ -76,6 +106,8 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   )
   const [exportError, setExportError] = useState<string | null>(null)
   const [shareMessage, setShareMessage] = useState<string | null>(null)
+  const [shareError, setShareError] = useState<string | null>(null)
+  const saveButton = useRef<HTMLButtonElement>(null)
   const [readingFile, setReadingFile] = useState(false)
   const [preview, setPreview] = useState<ArchivePreview | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
@@ -83,19 +115,30 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   const [importing, setImporting] = useState(false)
   const [imported, setImported] = useState(false)
 
+  // The prepared file replaces the button that was tapped; focus follows it
+  // so the second step is unmistakable (owner phone check, 2026-10-19).
+  useEffect(() => {
+    if (preparedExport) saveButton.current?.focus()
+  }, [preparedExport])
+
   async function prepareExport() {
     setExporting(true)
     setExportError(null)
     setShareMessage(null)
+    setShareError(null)
     setPreparedExport(null)
     try {
       const archive = await exportCourseArchive()
-      const file = new File(
-        [JSON.stringify(archive, null, 2)],
-        archiveFileName(),
-        { type: "application/json" },
-      )
-      setPreparedExport({ file, shareable: supportsFileSharing(file) })
+      const text = JSON.stringify(archive, null, 2)
+      const file = new File([text], archiveFileName(), {
+        type: "application/json",
+      })
+      const shareFile = shareCopy(file, text)
+      setPreparedExport({
+        file,
+        shareFile,
+        shareable: supportsFileSharing(shareFile),
+      })
     } catch {
       setExportError(
         "Non è stato possibile preparare il file. Il corso non è stato modificato; riprova.",
@@ -118,7 +161,10 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
       link.click()
       link.remove()
       window.setTimeout(() => URL.revokeObjectURL(url), 1_000)
-      setShareMessage("Il file è pronto. Conservalo in un luogo sicuro.")
+      setShareError(null)
+      setShareMessage(
+        "Salvataggio avviato. Conserva il file in un luogo sicuro.",
+      )
     } catch {
       setExportError("Il browser non è riuscito a salvare il file. Riprova.")
     }
@@ -127,12 +173,14 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   async function shareExport() {
     if (!preparedExport) return
     const fileNavigator = navigator as FileShareNavigator
+    setShareMessage(null)
+    setShareError(null)
     if (
       !preparedExport.shareable ||
       typeof fileNavigator.share !== "function" ||
       typeof fileNavigator.canShare !== "function"
     ) {
-      setShareMessage(
+      setShareError(
         "La condivisione di file non è disponibile. Puoi salvare il file.",
       )
       return
@@ -142,19 +190,24 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
       // Call share during this tap, before awaiting anything, to preserve the
       // browser's user-activation requirement for the native share sheet.
       const sharePromise = fileNavigator.share.call(navigator, {
-        files: [preparedExport.file],
+        files: [preparedExport.shareFile],
       })
       await sharePromise
       setShareMessage("Condivisione completata.")
     } catch (error) {
-      setShareMessage(
+      if (
         typeof error === "object" &&
-          error !== null &&
-          "name" in error &&
-          error.name === "AbortError"
-          ? "Condivisione annullata. Il file è ancora pronto da salvare."
-          : "Condivisione non riuscita. Puoi salvare il file.",
+        error !== null &&
+        "name" in error &&
+        error.name === "AbortError"
       )
+        setShareMessage(
+          "Condivisione annullata. Il file è ancora pronto da salvare.",
+        )
+      else
+        setShareError(
+          "Condivisione non riuscita. Puoi salvare il file con Salva file.",
+        )
     }
   }
 
@@ -236,13 +289,24 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
               </Button>
             ) : (
               <div className="mt-3">
-                <p className="text-sm leading-5" role="status">
-                  File pronto. Il nome non contiene dati personali.
+                <p
+                  className="flex items-start gap-2 text-sm leading-5 font-semibold text-primary"
+                  role="status"
+                >
+                  <CircleCheck
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                  <span className="min-w-0">
+                    File del corso pronto: ora salvalo o condividilo. Il nome
+                    non contiene dati personali.
+                  </span>
                 </p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <Button
                     className="h-auto min-h-11 whitespace-normal"
                     onClick={downloadExport}
+                    ref={saveButton}
                     variant="secondary"
                   >
                     <Download aria-hidden="true" className="size-4 shrink-0" />
@@ -265,23 +329,10 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                     Puoi salvare il file.
                   </p>
                 )}
-                <Button
-                  className="mt-2 w-full h-auto min-h-11 whitespace-normal"
-                  onClick={() => {
-                    setPreparedExport(null)
-                    setShareMessage(null)
-                  }}
-                  variant="secondary"
-                >
-                  Chiudi il file pronto
-                </Button>
               </div>
             )}
-            {exportError && (
-              <p className="mt-2 text-sm text-[#a2381b]" role="alert">
-                {exportError}
-              </p>
-            )}
+            {exportError && <ErrorNotice>{exportError}</ErrorNotice>}
+            {shareError && <ErrorNotice>{shareError}</ErrorNotice>}
             {shareMessage && (
               <p className="mt-2 text-sm text-muted-foreground" role="status">
                 {shareMessage}
@@ -302,7 +353,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
           di chiederti conferma.
         </p>
         <input
-          accept=".json,application/json"
+          accept=".json,.txt,application/json,text/plain"
           aria-hidden="true"
           className="sr-only"
           disabled={readingFile || importing}
@@ -328,11 +379,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
           )}
           {readingFile ? "Controllo del file…" : "Scegli il file del corso"}
         </Button>
-        {importError && (
-          <p className="mt-2 text-sm text-[#a2381b]" role="alert">
-            {importError}
-          </p>
-        )}
+        {importError && <ErrorNotice>{importError}</ErrorNotice>}
 
         {preview && (
           <div

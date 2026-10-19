@@ -61,6 +61,7 @@ import {
 } from "@/features/settings/CourseFiles"
 import { requestPersistentStorage } from "@/persistence/browserStorage"
 import {
+  isResetPending,
   resetAllLocalData,
   watchLocalData,
   type LocalDataState,
@@ -829,6 +830,14 @@ export function App() {
     const stop = watchLocalData((operation) => {
       if (active) setAppState({ status: "closed", operation })
     })
+    if (isResetPending()) {
+      // The app was closed during a reset: finish it before any course opens.
+      void resetAllLocalData()
+      return () => {
+        active = false
+        stop()
+      }
+    }
     getActiveCourse()
       .then((course) => {
         if (!active) return
@@ -883,7 +892,7 @@ export function App() {
                   ? "Il corso è stato sostituito o eliminato. Riapri l’app per continuare: le vecchie schermate non possono più salvare modifiche."
                   : operation === "blocked"
                     ? "Chiudi le altre schede o finestre di questa app, comprese quelle di una vecchia versione. La cancellazione continuerà appena saranno chiuse."
-                    : "Attendi la conferma prima di riaprire l’app."}
+                    : "Attendi la conferma. Se chiudi l’app prima, la cancellazione riprenderà alla prossima apertura."}
           </p>
           {failed && (
             <Button

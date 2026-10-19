@@ -15,6 +15,7 @@ vi.mock("@/persistence/courses", () => ({
 }))
 
 vi.mock("@/persistence/localDataOperations", () => ({
+  isResetPending: vi.fn(() => false),
   watchLocalData: vi.fn(() => () => {}),
   resetAllLocalData: vi.fn(),
   announceCourseReplacement: vi.fn(),
@@ -82,6 +83,10 @@ import {
   type CourseRecord,
 } from "@/persistence/courses"
 import { readCrewPlan } from "@/persistence/crews"
+import {
+  isResetPending,
+  resetAllLocalData,
+} from "@/persistence/localDataOperations"
 import { saveEvaluation } from "@/persistence/evaluations"
 import { listStudents } from "@/persistence/students"
 
@@ -562,5 +567,18 @@ describe("versions and updates", () => {
     expect(
       screen.getByRole("button", { name: "Cerca aggiornamenti" }),
     ).toBeVisible()
+  })
+})
+
+describe("a full reset interrupted by closing the app", () => {
+  it("resumes the reset on the next open before any course is read", async () => {
+    vi.mocked(isResetPending).mockReturnValueOnce(true)
+    vi.mocked(resetAllLocalData).mockClear()
+    vi.mocked(getActiveCourse).mockClear()
+
+    render(<App />)
+
+    await waitFor(() => expect(resetAllLocalData).toHaveBeenCalledOnce())
+    expect(getActiveCourse).not.toHaveBeenCalled()
   })
 })
