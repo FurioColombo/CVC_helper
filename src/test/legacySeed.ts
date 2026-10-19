@@ -104,13 +104,58 @@ export async function insertFixtureTables(
   database: PowerSyncDatabase,
   tables: FixtureTables,
 ) {
-  for (const [tableName, rows] of Object.entries(tables)) {
-    for (const row of rows) {
-      const columns = Object.keys(row)
-      await database.execute(
-        `INSERT INTO ${tableName}(${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
-        columns.map((name) => row[name]),
-      )
+  await database.writeTransaction(async (transaction) => {
+    for (const [tableName, rows] of Object.entries(tables)) {
+      let pendingSql: string | undefined
+      let pendingParameters: unknown[][] = []
+
+      const flush = async () => {
+        if (pendingSql === undefined) return
+        await transaction.executeBatch(pendingSql, pendingParameters)
+        pendingSql = undefined
+        pendingParameters = []
+      }
+
+      for (const row of rows) {
+        const columns = Object.keys(row)
+        const sql = `INSERT INTO ${tableName}(${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`
+        if (sql !== pendingSql) {
+          await flush()
+          pendingSql = sql
+        }
+        pendingParameters.push(columns.map((name) => row[name]))
+      }
+      await flush()
+    }
+  })
+
+  for (const [tableName, expectedRows] of Object.entries(tables)) {
+    const actualRows = await database.getAll<Record<string, unknown>>(
+      `SELECT * FROM ${tableName} ORDER BY id`,
+    )
+    if (actualRows.length !== expectedRows.length) {
+      throw new Error(`Fixture row count mismatch in ${tableName}`)
+    }
+
+    const actualById = new Map(actualRows.map((row) => [row.id, row]))
+
+    for (const expectedRow of expectedRows) {
+      const actualRow = actualById.get(expectedRow.id)
+      if (actualRow === undefined) {
+        throw new Error(`Fixture row mismatch in ${tableName}.id`)
+      }
+
+      for (const [column, value] of Object.entries(expectedRow)) {
+        if (actualRow[column] !== value) {
+          throw new Error(`Fixture value mismatch in ${tableName}.${column}`)
+        }
+      }
+
+      actualById.delete(actualRow.id)
+    }
+
+    if (actualById.size > 0) {
+      throw new Error(`Fixture row mismatch in ${tableName}`)
     }
   }
 }

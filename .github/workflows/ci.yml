@@ -104,7 +104,8 @@ jobs:
       # read solely through the truncated annotation text. That is how the
       # ug1-duty-reflow click failure stayed undiagnosed. Keep the trace and the
       # report so the next one can be opened instead of guessed at.
-      - if: failure()
+      # A passed retry must not discard the first attempt's retained trace.
+      - if: failure() || hashFiles('test-results/**/trace.zip') != ''
         uses: actions/upload-artifact@v4
         with:
           name: playwright-failure-${{ matrix.os }}-${{ github.run_id }}

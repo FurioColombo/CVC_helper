@@ -1,0 +1,363 @@
+{
+  "milestone": "T1",
+  "status": "PHASE_PASS_REGRESSION_RERUN_PASS_EARLIER_PAGE_CLOSURE_UNRESOLVED",
+  "recordedAt": "2026-10-19T10:22:00.769Z",
+  "parentCheckpoint": "434cdccb44fded0a614954ac9c50ed95242f2e49",
+  "node": "v24.21.0",
+  "playwright": "1.62.1",
+  "source": {
+    "digest": "fec86d70a943d4f5cd2d980016ca5b2da8d1c86501342ea78fa8fce76f5dbbba",
+    "files": 442
+  },
+  "scope": "Test-only legacy fixture insertion through the unchanged old-version schemas; application writes and production adapters unchanged.",
+  "method": {
+    "order": [
+      "original-autocommit",
+      "single-transaction",
+      "sdk-batch-with-fidelity-readback"
+    ],
+    "workers": 1,
+    "samplesPerEnginePerPhase": 2,
+    "sourceFrozenWithinEachPhase": true,
+    "concurrentLocalBrowserJobs": false,
+    "temporaryInstrumentation": "Three timing-only lines in d1MigrationHarness, identical in all phase runs; removed before permanent-source regression.",
+    "qualification": "Helper phase comparison, not the H1/full-suite acceptance measurement. The last phase additionally validates every supplied fixture cell, making its measured workload larger."
+  },
+  "fidelity": [
+    "Original parameterized INSERT text, table order, row order, columns and values retained; contiguous equal SQL statements batched through pinned SDK executeBatch inside one transaction.",
+    "Every supplied table read back: exact row count, identifiers and supplied cell values, including null; missing or duplicate expected IDs fail.",
+    "All fixed fixture rows and generated large rows have explicit IDs; no inferred missing-ID fallback.",
+    "Original real-engine migration assertions and strict first/reopen <5000ms unchanged."
+  ],
+  "phases": [
+    {
+      "phase": "original-autocommit",
+      "startedAt": "2026-10-19T10:08:04.121Z",
+      "completedAt": "2026-10-19T10:09:29.054Z",
+      "source": {
+        "digest": "3c38048cc180bdc11a9439ce9b48458746d44f4a3abda1f2600d107763955fb4",
+        "files": 442
+      },
+      "sourceHashes": {
+        "src/test/legacySeed.ts": "f98e7085e2da4bb61310744b993e3c410233e3da32806da3af7620a6d6d8d414",
+        "src/test/d1MigrationHarness.ts": "477f51ffa1b308805c46c1193327ccac0bb84f9e5d8670f922806cdf8a0c4f5d",
+        "package-lock.json": "4992efe8e5dbf59d295438266359be5512828064fdf1b2f02b9e2072fc66debc"
+      },
+      "exitCode": 0,
+      "manualCleanup": false,
+      "raw": "OS temporary cvc-t1-legacy-seed-phase-before/results.json",
+      "sha256": "207c506d8c22ec247664eef9c3bf743548aa1b69d95e43cdd372b40286a41539",
+      "samples": [
+        {
+          "engine": "chromium",
+          "profile": "Pixel 7",
+          "sample": 1,
+          "insertDurationMs": 3541.400000035763,
+          "seedTotalMs": 5526,
+          "currentOpenMs": 590,
+          "reopenMs": 225,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "chromium",
+          "profile": "Pixel 7",
+          "sample": 2,
+          "insertDurationMs": 3914.100000023842,
+          "seedTotalMs": 4546,
+          "currentOpenMs": 551,
+          "reopenMs": 221,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "webkit",
+          "profile": "iPhone 13",
+          "sample": 1,
+          "insertDurationMs": 27844,
+          "seedTotalMs": 29020,
+          "currentOpenMs": 1866,
+          "reopenMs": 766,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "webkit",
+          "profile": "iPhone 13",
+          "sample": 2,
+          "insertDurationMs": 28458,
+          "seedTotalMs": 29586,
+          "currentOpenMs": 1825,
+          "reopenMs": 752,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        }
+      ]
+    },
+    {
+      "phase": "single-transaction",
+      "startedAt": "2026-10-19T10:09:46.194Z",
+      "completedAt": "2026-10-19T10:10:25.332Z",
+      "source": {
+        "digest": "41bb67b6c15b02d5332188538cf9d06a960f2b48a1675ac4302967db02832eeb",
+        "files": 442
+      },
+      "sourceHashes": {
+        "src/test/legacySeed.ts": "f5ccf53ff7bdda0707b0426de00dab9a16da4fa4462b0bc0c20fbad0cca25057",
+        "src/test/d1MigrationHarness.ts": "477f51ffa1b308805c46c1193327ccac0bb84f9e5d8670f922806cdf8a0c4f5d",
+        "package-lock.json": "4992efe8e5dbf59d295438266359be5512828064fdf1b2f02b9e2072fc66debc"
+      },
+      "exitCode": 0,
+      "manualCleanup": false,
+      "raw": "OS temporary cvc-t1-legacy-seed-phase-after/results.json",
+      "sha256": "17aa4ab24361787a2138a525f52310d093fc47f95bfe2d12b464572f0519e734",
+      "samples": [
+        {
+          "engine": "chromium",
+          "profile": "Pixel 7",
+          "sample": 1,
+          "insertDurationMs": 272.60000002384186,
+          "seedTotalMs": 2217,
+          "currentOpenMs": 601,
+          "reopenMs": 218,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "chromium",
+          "profile": "Pixel 7",
+          "sample": 2,
+          "insertDurationMs": 298.69999998807907,
+          "seedTotalMs": 924,
+          "currentOpenMs": 526,
+          "reopenMs": 217,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "webkit",
+          "profile": "iPhone 13",
+          "sample": 1,
+          "insertDurationMs": 9213,
+          "seedTotalMs": 10409,
+          "currentOpenMs": 1816,
+          "reopenMs": 768,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "webkit",
+          "profile": "iPhone 13",
+          "sample": 2,
+          "insertDurationMs": 9240,
+          "seedTotalMs": 10364,
+          "currentOpenMs": 1805,
+          "reopenMs": 766,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        }
+      ]
+    },
+    {
+      "phase": "sdk-batch-with-fidelity-readback",
+      "startedAt": "2026-10-19T10:18:44.800Z",
+      "completedAt": "2026-10-19T10:19:11.829Z",
+      "source": {
+        "digest": "5e369ec2095525d999a266549db6f6863e265a19b9f3ca05d270d657d20a3729",
+        "files": 442
+      },
+      "sourceHashes": {
+        "src/test/legacySeed.ts": "8adc03457719949cbcf654e2635afa6adab7042d12757bc6dc1f91224f3ed7bb",
+        "src/test/d1MigrationHarness.ts": "477f51ffa1b308805c46c1193327ccac0bb84f9e5d8670f922806cdf8a0c4f5d",
+        "package-lock.json": "4992efe8e5dbf59d295438266359be5512828064fdf1b2f02b9e2072fc66debc"
+      },
+      "exitCode": 0,
+      "manualCleanup": false,
+      "raw": "OS temporary cvc-t1-legacy-seed-phase-batch/results.json",
+      "sha256": "04009dab7accaee50e94152dedfdefcec50905bcc99419fa580fa91bbdd0eae4",
+      "samples": [
+        {
+          "engine": "chromium",
+          "profile": "Pixel 7",
+          "sample": 1,
+          "insertDurationMs": 170.39999997615814,
+          "seedTotalMs": 969,
+          "currentOpenMs": 569,
+          "reopenMs": 220,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "chromium",
+          "profile": "Pixel 7",
+          "sample": 2,
+          "insertDurationMs": 154,
+          "seedTotalMs": 919,
+          "currentOpenMs": 566,
+          "reopenMs": 215,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "webkit",
+          "profile": "iPhone 13",
+          "sample": 1,
+          "insertDurationMs": 931,
+          "seedTotalMs": 2309,
+          "currentOpenMs": 1993,
+          "reopenMs": 836,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        },
+        {
+          "engine": "webkit",
+          "profile": "iPhone 13",
+          "sample": 2,
+          "insertDurationMs": 962,
+          "seedTotalMs": 2188,
+          "currentOpenMs": 2089,
+          "reopenMs": 836,
+          "rows": 609,
+          "reopenRows": 609,
+          "injectedStudents": 40,
+          "injectedEvaluations": 520,
+          "rowIssues": [],
+          "reopenRowIssues": [],
+          "reopenedIdentical": true,
+          "coldLifecycleChecks": "PASS"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "This does not establish >=30% overall speedup or complete T1.",
+    "Broader regression, final verification, independent review and exact checkpoint CI remain required.",
+    "Pinned owner phone040 build and captured D3/D4 evidence remain untouched."
+  ],
+  "regression": {
+    "command": "node scripts/run-e2e.mjs d1-migration u02-migration ug1-upgraded-week ug2-upgraded-week ug2-review-fixes d3-read-only --retries=0",
+    "stats": {
+      "startTime": "2026-10-19T10:19:30.942Z",
+      "duration": 534035.306,
+      "expected": 32,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    },
+    "exitCode": 1,
+    "retries": 0,
+    "manualCleanup": true,
+    "teardown": "After all33cases, no test/browser worker remained but ownedVite57233 remained. After>100seconds root verifiedPID32972 and parent27556/runner30196, stoppedonlyVite; runner emittedreportandexit1. Not a successful teardown.",
+    "failure": {
+      "project": "iphone-13-webkit-core",
+      "test": "upgrades a 0.1.0 course with every row, id and value intact and complete metadata",
+      "message": "page.evaluate: Target page, context or browser has been closed",
+      "classification": "Recurrence of filed legacy/current same-page lifecycle class; exact stage/rootcause stillunproven. Originaltrace has onlyone rootGET; no HMR re-navigation seen. Diagnostic phase capture next."
+    },
+    "raw": "OS temporary cvc-t1-batch-regression-proof/e2e-report.json",
+    "sha256": "f64bc8bbdea48bf6dc7fe62a717382300b9af9c80438333525862ae3f3864086"
+  },
+  "checks": {
+    "quick": {
+      "command": "npm run verify:quick",
+      "exitCode": 0,
+      "unitFiles": 89,
+      "unitTests": 1442,
+      "unitDurationMs": 95560,
+      "raw": "OS temporary cvc-t1-legacy-batch-quick.log",
+      "sha256": "82e5741be2f0f4d53464115d41a09582f8150e292ea431bbba07d472736a2049"
+    },
+    "domain": {
+      "command": "npm run verify:domain",
+      "exitCode": 0,
+      "raw": "OS temporary cvc-t1-legacy-batch-domain.log",
+      "sha256": "3815b46fc80712b4c5b8af14aca91db778f33cb7d9f400623ee4c42fbe4d918d"
+    }
+  },
+  "regressionRerun": {
+    "recordedAt": "2026-10-19T11:34:48.461Z",
+    "command": "node scripts/run-e2e.mjs d1-migration u02-migration ug1-upgraded-week ug2-upgraded-week ug2-review-fixes d3-read-only --retries=0",
+    "sourceUnchangedFromRegression": true,
+    "stats": {
+      "startTime": "2026-10-19T11:29:26.590Z",
+      "duration": 304999.995,
+      "expected": 33,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "exitCode": 0,
+    "retries": 0,
+    "manualCleanup": false,
+    "normalServerTeardown": true,
+    "raw": "OS temporary cvc-t1-batch-regression-rerun/e2e-report.json",
+    "sha256": "e187c07c0b249954b88515a9422dafa6dcbeada9f87185252a68ce908eff56ea",
+    "qualification": "One clean rerun does not classify the earlier iPhone 13 WebKit 0.1.0 page closure; it stays filed in docs/working/BACKLOG.md and needs a cause before T1 closes."
+  }
+}

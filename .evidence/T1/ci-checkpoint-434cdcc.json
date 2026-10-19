@@ -1,0 +1,116 @@
+{
+  "milestone": "T1",
+  "checkpoint": "434cdccb44fded0a614954ac9c50ed95242f2e49",
+  "run": 39235069108,
+  "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/39235069108",
+  "status": "GREEN_CI_WITH_ONE_OPEN_FLAKE_NOT_T1_CLOSURE",
+  "conclusion": "success",
+  "collectedAt": "2026-10-19T10:59:27.452Z",
+  "jobs": [
+    {
+      "id": 118002402628,
+      "name": "verify (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T10:07:50Z",
+      "completedAt": "2026-10-19T10:58:45Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39235069108/job-118002402628.log",
+      "sha256": "165f781989c92417feae6dca4bd97c8b6ef922dbce0f4f81d5f36b5e56fab59d",
+      "browserSummary": [
+        "2026-10-19T10:58:34.3561350Z   1 flaky",
+        "2026-10-19T10:58:34.3562880Z   65 skipped",
+        "2026-10-19T10:58:34.3563180Z   290 passed (43.9m)",
+        "2026-10-19T10:58:34.3627800Z ##[notice]  1 flaky",
+        "  65 skipped",
+        "  290 passed (43.9m)",
+        "2026-10-19T10:58:34.3926780Z FLAKY: student-management-gate.spec.ts › keeps the complete student workflow consistent across reload [iphone-13-webkit-core]"
+      ],
+      "browser": {
+        "startTime": "2026-10-19T10:14:39.959Z",
+        "duration": 2634254.415,
+        "expected": 290,
+        "skipped": 65,
+        "unexpected": 0,
+        "flaky": 1,
+        "cases": 356,
+        "retried": 1,
+        "flakyTests": [
+          {
+            "file": "student-management-gate.spec.ts",
+            "title": "keeps the complete student workflow consistent across reload",
+            "project": "iphone-13-webkit-core"
+          }
+        ],
+        "reportSha256": "fab5a6e450f52f92e0754e6a09f942cc319c8d0fe4da7dd1b77242c934cdb702"
+      }
+    },
+    {
+      "id": 118002403001,
+      "name": "verify (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-19T10:07:43Z",
+      "completedAt": "2026-10-19T10:24:54Z",
+      "currentSteps": [],
+      "rawLog": "OS temporary cvc-t1-ci-39235069108/job-118002403001.log",
+      "sha256": "a447629fbcb54e91f5058657e89261c60a5ab668639bc2bec08d29281a5c4a1d",
+      "browserSummary": [
+        "2026-10-19T10:24:50.3637885Z   47 skipped",
+        "2026-10-19T10:24:50.3638133Z   219 passed (15.3m)",
+        "2026-10-19T10:24:50.3670885Z ##[notice]  47 skipped",
+        "  219 passed (15.3m)"
+      ],
+      "browser": {
+        "startTime": "2026-10-19T10:09:35.355Z",
+        "duration": 915007.179,
+        "expected": 219,
+        "skipped": 47,
+        "unexpected": 0,
+        "flaky": 0,
+        "cases": 266,
+        "retried": 0,
+        "flakyTests": [],
+        "reportSha256": "fbc6698a879dd4ee62cb3629e03f555e16114215ef043668c9ba72cce391316a"
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12181865712,
+      "name": "e2e-report-macos-15-39235069108",
+      "sha256": "0846b546730697f1c3af27fd431713e1434c8ecb42e7a763ce148a55dc59df3b",
+      "rawZip": "OS temporary cvc-t1-ci-39235069108/12181865712.zip"
+    },
+    {
+      "id": 12181786035,
+      "name": "e2e-flaky-macos-15-39235069108",
+      "sha256": "16a3db1d4c8d740ae0dd4291651e988205d43751737c2e211f2108951d5543c5",
+      "rawZip": "OS temporary cvc-t1-ci-39235069108/12181786035.zip"
+    },
+    {
+      "id": 12179553012,
+      "name": "e2e-report-ubuntu-latest-39235069108",
+      "sha256": "99105d41b5aad2ed37822d2ae86ccb2f736d38c22f0f6a028380cba3f7ec720f",
+      "rawZip": "OS temporary cvc-t1-ci-39235069108/12179553012.zip"
+    },
+    {
+      "id": 12179507909,
+      "name": "e2e-flaky-ubuntu-latest-39235069108",
+      "sha256": "ad2c69f9b6eba089ef3102ff4a41641f48302cced87effe29a47e4b7b414b93c",
+      "rawZip": "OS temporary cvc-t1-ci-39235069108/12179507909.zip"
+    }
+  ],
+  "qualification": "Exact checkpoint CI succeeds; Mac requires one student-workflow retry. T1 zero-flake and timing predicates remain unmet.",
+  "openFinding": {
+    "spec": "tests/e2e/student-management-gate.spec.ts",
+    "title": "keeps the complete student workflow consistent across reload",
+    "project": "iphone-13-webkit-core",
+    "line": 145,
+    "expected": "Disabilita allievo visible after reactivation",
+    "firstAttemptMs": 55538,
+    "retryMs": 26788,
+    "classification": "Cause unproven; recorded as a defect, not a clean T1 pass.",
+    "traceLimitation": "Existing workflow uploaded retained trace only when the job failed. This green retry therefore preserved report/flake metadata but no downloadable first-failure screenshot/context/trace."
+  }
+}

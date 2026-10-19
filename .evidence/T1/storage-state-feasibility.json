@@ -1,0 +1,93 @@
+{
+  "milestone": "T1",
+  "status": "FEASIBILITY_PASS_NOT_YET_USED_BY_THE_SUITE",
+  "recordedAt": "2026-10-19T10:46:56.535Z",
+  "source": {
+    "digest": "fec86d70a943d4f5cd2d980016ca5b2da8d1c86501342ea78fa8fce76f5dbbba",
+    "files": 442
+  },
+  "node": "v24.21.0",
+  "playwright": "1.62.1",
+  "browser": {
+    "stats": {
+      "startTime": "2026-10-19T10:44:54.949Z",
+      "duration": 52451.335,
+      "expected": 2,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "workers": 1,
+    "retries": 0,
+    "runnerExitCode": 0,
+    "manualCleanup": false,
+    "timings": [
+      {
+        "project": "pixel-7-chrome",
+        "seedMs": 3822,
+        "captureMs": 29,
+        "cloneAMs": 3910,
+        "cloneBMs": 3179
+      },
+      {
+        "project": "iphone-13-webkit-core",
+        "seedMs": 9594,
+        "captureMs": 1055,
+        "cloneAMs": 11668,
+        "cloneBMs": 9014
+      }
+    ],
+    "raw": "OS temporary cvc-t1-storage-state-probe-20261019/storage-run5-report.json",
+    "sha256": "9582ddb4be8aa83ec222207fdac8615ee9dcdd0c31b054d52d811eb726a2c59e",
+    "log": "OS temporary cvc-t1-storage-state-probe-run5.log"
+  },
+  "fidelity": [
+    "Real bootstrapCourse and seedThirteenCrewCourse create the fixture through production typed persistence APIs.",
+    "Capture includes the actual SQLite IDBBatchAtomicVFS blocks/metadata stores via Playwright storageState({indexedDB:true}); no schema or storage substitution.",
+    "Two fresh browser contexts restore the same in-memory snapshot. Clone A changes one initial note through the visible UI and retains valid structure; clone B restores every course-table/meta row with exact IDs, values and timestamps before any editing action.",
+    "Both clones display the roster and 13-crew summary; clone B shows the original note. Stored-row and domain invariants are empty.",
+    "JSON serialization of the supplied snapshot object is unchanged after both clones."
+  ],
+  "toolingCorrections": [
+    {
+      "attempt": "initial",
+      "problem": "Temporary UI journey sought Allievi in bottom navigation rather than Aree del corso; timed out. Raw cvc-t1-storage-state-probe.log."
+    },
+    {
+      "attempt": "run2",
+      "problem": "Temporary roster assertion expected full surname where app deliberately displays the unique first name; corrected to actual accessible student button. Raw cvc-t1-storage-state-probe-run2.log."
+    },
+    {
+      "attempt": "run3",
+      "problem": "Full row comparison ran after opening/closing an unchanged note editor, which performs a legitimate save and updates that record timestamp. Compare restored rows before that UI operation; no column is omitted from equality. Raw cvc-t1-storage-state-probe-run3.log."
+    },
+    {
+      "attempt": "run4",
+      "problem": "First recorder reordering did not apply because of mixed line endings; same diagnostic failed. Guarded exact-once Node replacement now verifies ordering before running. Raw cvc-t1-storage-state-probe-run4.log."
+    }
+  ],
+  "limits": [
+    "This validates the pinned Playwright/runtime combination, not every platform or release.",
+    "No cache/reuse implementation is yet in the suite; any later use is restricted to setup for repeated layout fixtures, retaining cold/migration/reopen/reset/update behavior unchanged.",
+    "Timings include UI proof and are diagnostic only; they do not establish the >=30% T1 acceptance target.",
+    "No explicit storage-state file is written or committed. Framework diagnostic traces remain in OS temporary folders and can contain synthetic records."
+  ],
+  "setStorageStateProof": {
+    "method": "Restore a structuredClone into a standard fresh context with its only page still about:blank, then normal app mount; both clones compare every table/meta row before UI actions and retain all earlier isolation/UI assertions.",
+    "stats": {
+      "startTime": "2026-10-19T11:00:04.159Z",
+      "duration": 68739.24900000001,
+      "expected": 2,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "workers": 1,
+    "retries": 0,
+    "exitCode": 0,
+    "manualCleanup": false,
+    "raw": "OS temporary cvc-t1-layout-cache-probe/storage-state-set-api-report.json",
+    "sha256": "ababf58c7471b0698284624a91a154ad272f5bade6b878210fa910a86b0ebd35",
+    "log": "OS temporary cvc-t1-set-storage-api.log"
+  }
+}

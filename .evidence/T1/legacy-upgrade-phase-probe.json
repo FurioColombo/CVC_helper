@@ -1,0 +1,127 @@
+{
+  "milestone": "T1",
+  "status": "OPEN_DEFECT_NOT_REPRODUCED_IN_EIGHT_INSTRUMENTED_RUNS",
+  "recordedAt": "2026-10-19T10:40:55.812Z",
+  "source": {
+    "digest": "fec86d70a943d4f5cd2d980016ca5b2da8d1c86501342ea78fa8fce76f5dbbba",
+    "files": 442
+  },
+  "method": "Real runUpgrade(0.1.0) on iPhone13 WebKit; same engine, data and migration assertions. Vite-served function bodies receive guarded synchronous console phase markers only; no new waits, retries or strong database references. One worker, fresh browser per repeat, zero retries.",
+  "browser": {
+    "stats": {
+      "startTime": "2026-10-19T10:35:48.395Z",
+      "duration": 99767.818,
+      "expected": 8,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "exitCode": 0,
+    "normalServerTeardown": true,
+    "manualCleanup": false,
+    "samples": [
+      {
+        "repeat": 0,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 1,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 2,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 3,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 4,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 5,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 6,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      },
+      {
+        "repeat": 7,
+        "phaseMarkers": 28,
+        "lastPhase": "reopen.close.after",
+        "hostEvents": [],
+        "changedValues": [],
+        "rowIssues": [],
+        "reopenedIdentical": true
+      }
+    ],
+    "raw": "OS temporary cvc-t1-storage-state-probe-20261019/d1-run4-report.json",
+    "sha256": "00506a1a78c7cc9784e37c439eab5f48c7cab3c1235a0b26d103cd099400638b",
+    "log": "OS temporary cvc-t1-d1-lifecycle-phase-run4.log"
+  },
+  "toolingFailures": [
+    {
+      "attempt": "initial",
+      "problem": "External TypeScript spec used file URL imports, which its CommonJS loader could not resolve. Corrected to absolute Windows module paths.",
+      "raw": "OS temporary cvc-t1-d1-lifecycle-phase.log"
+    },
+    {
+      "attempt": "run1",
+      "problem": "Temporary recorder referenced nonexistent TestInfo.startTime; eight diagnostic cases failed in the recorder, not an app assertion. Replaced with an actual host start timestamp.",
+      "raw": "OS temporary cvc-t1-d1-lifecycle-phase-run1.log"
+    },
+    {
+      "attempt": "run2",
+      "problem": "The served constructor omitted an optional trailing comma. Guard refused the rewrite and aborted import; corrected only the guarded source matcher.",
+      "raw": "OS temporary cvc-t1-d1-lifecycle-phase-run2.log"
+    },
+    {
+      "attempt": "run3",
+      "result": "Single diagnostic case passes with complete phase sequence and normal exit before eight-run probe.",
+      "raw": "OS temporary cvc-t1-d1-lifecycle-phase-run3.log"
+    }
+  ],
+  "limits": [
+    "The original 0.1.0 TargetClosed failure in legacy-fixture-batching.json remains unexplained. These passes do not establish a cause or a fix.",
+    "Instrumented probe durations are not the full-suite acceptance measurement.",
+    "Elevated local process access permits normal server shutdown here; the earlier sandboxed teardown failure remains recorded separately."
+  ]
+}

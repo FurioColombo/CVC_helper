@@ -1,0 +1,223 @@
+{
+  "milestone": "T1",
+  "status": "NO_USEFUL_GAIN_CONFIGURATION_UNCHANGED",
+  "recordedAt": "2026-10-19T11:04:03.491Z",
+  "source": {
+    "digest": "fec86d70a943d4f5cd2d980016ca5b2da8d1c86501342ea78fa8fce76f5dbbba",
+    "files": 442
+  },
+  "scope": "Focused diagnostic only; three exact test titles across configured matching projects, not a full-suite timing claim.",
+  "sourceFreeze": {
+    "baseline": {
+      "head": "434cdccb44fded0a614954ac9c50ed95242f2e49",
+      "sha256": "9684b24c35639aef4c375e0b4eb9583c3ac60d8fe29453e7fbe25c2e8094edde",
+      "fileCount": 1094
+    },
+    "final": {
+      "head": "434cdccb44fded0a614954ac9c50ed95242f2e49",
+      "sha256": "9684b24c35639aef4c375e0b4eb9583c3ac60d8fe29453e7fbe25c2e8094edde",
+      "fileCount": 1094
+    },
+    "unchanged": true,
+    "fingerprintMethod": "SHA-256 of bytes and paths for every tracked and non-ignored untracked Git file, plus HEAD.",
+    "lastCheckedAfter": "reduced"
+  },
+  "execution": {
+    "workerCount": 1,
+    "retries": 0,
+    "projects": "No --project filter; each exact test runs in every configured project whose testMatch/testIgnore includes its spec.",
+    "selectedFiles": [
+      "tests/e2e/full-week.spec.ts",
+      "tests/e2e/ug2-hostile-roster.spec.ts",
+      "tests/e2e/f3-crew-summary.spec.ts"
+    ],
+    "expectedProjectMatches": [
+      "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: iphone-13-viewport",
+      "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: iphone-13-webkit-core",
+      "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: pixel-7-chrome",
+      "full-week.spec.ts :: runs one deterministic D2 course through a complete sailing week :: pixel-7-chrome",
+      "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: iphone-13-viewport",
+      "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: iphone-13-webkit-core",
+      "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: pixel-7-chrome"
+    ],
+    "testActionsAndAssertions": "Unchanged repository specs; only exact-title filtering is applied.",
+    "sourceCacheOrder": "Original first, reduced second; no cache-clearing between arms.",
+    "ordinaryFailureScreenshot": "screenshot: only-on-failure in both arms.",
+    "trace": {
+      "original": "Inherited trace: retain-on-failure (Playwright defaults: screenshots, snapshots, sources, attachments enabled).",
+      "reduced": {
+        "mode": "retain-on-failure",
+        "screenshots": false,
+        "snapshots": true,
+        "sources": true,
+        "attachments": true
+      },
+      "onlyChangedTraceSetting": "screenshots",
+      "preserved": "snapshots/network data, sources, attachments, test-authored screenshots, and ordinary only-on-failure PNGs."
+    },
+    "timing": "Wall duration runs through normal scripts/run-e2e.mjs process exit, including fresh server startup and Playwright teardown; test duration is summed from the JSON report. Compare only after both arms exit 0, pass exact project-match validation, and source fingerprint remains unchanged."
+  },
+  "arms": [
+    {
+      "variant": "original",
+      "normalRunnerExit0": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 307925,
+      "stats": {
+        "startTime": "2026-10-19T10:47:14.390Z",
+        "duration": 307049.196,
+        "expected": 5,
+        "skipped": 2,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "matches": [
+        {
+          "key": "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: iphone-13-viewport",
+          "status": "skipped",
+          "resultCount": 1,
+          "durationsMs": [
+            446
+          ]
+        },
+        {
+          "key": "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: iphone-13-webkit-core",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            49450
+          ]
+        },
+        {
+          "key": "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: pixel-7-chrome",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            11642
+          ]
+        },
+        {
+          "key": "full-week.spec.ts :: runs one deterministic D2 course through a complete sailing week :: pixel-7-chrome",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            161433
+          ]
+        },
+        {
+          "key": "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: iphone-13-viewport",
+          "status": "skipped",
+          "resultCount": 1,
+          "durationsMs": [
+            180
+          ]
+        },
+        {
+          "key": "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: iphone-13-webkit-core",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            57055
+          ]
+        },
+        {
+          "key": "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: pixel-7-chrome",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            18849
+          ]
+        }
+      ],
+      "raw": "OS temporary cvc-t1-trace-ab-probe-20261019/runs/2026-10-19T10-47-13.209Z-33040/reports/original-e2e-report.json",
+      "reportSha256": "09cd366f07c05724a4ffed3886709771a33c6d2daa5a9504214af72891d34db7"
+    },
+    {
+      "variant": "reduced",
+      "normalRunnerExit0": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 308764,
+      "stats": {
+        "startTime": "2026-10-19T10:52:23.231Z",
+        "duration": 307632.804,
+        "expected": 5,
+        "skipped": 2,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "matches": [
+        {
+          "key": "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: iphone-13-viewport",
+          "status": "skipped",
+          "resultCount": 1,
+          "durationsMs": [
+            445
+          ]
+        },
+        {
+          "key": "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: iphone-13-webkit-core",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            45249
+          ]
+        },
+        {
+          "key": "f3-crew-summary.spec.ts :: copies double names, a crew with no boat and every badge exactly as the screen has them, at 390×844, 320 px and 320 px with 200% text :: pixel-7-chrome",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            18248
+          ]
+        },
+        {
+          "key": "full-week.spec.ts :: runs one deterministic D2 course through a complete sailing week :: pixel-7-chrome",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            144873
+          ]
+        },
+        {
+          "key": "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: iphone-13-viewport",
+          "status": "skipped",
+          "resultCount": 1,
+          "durationsMs": [
+            217
+          ]
+        },
+        {
+          "key": "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: iphone-13-webkit-core",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            67025
+          ]
+        },
+        {
+          "key": "ug2-hostile-roster.spec.ts :: shows and copies the hostile crew summary exactly as the screen has it, at four sizes :: pixel-7-chrome",
+          "status": "expected",
+          "resultCount": 1,
+          "durationsMs": [
+            21973
+          ]
+        }
+      ],
+      "raw": "OS temporary cvc-t1-trace-ab-probe-20261019/runs/2026-10-19T10-47-13.209Z-33040/reports/reduced-e2e-report.json",
+      "reportSha256": "7ee273d5afebaae5f8e86dc664427efd68d52708ee6f451d39d58a41c42e6bdd"
+    }
+  ],
+  "comparison": {
+    "originalWallMs": 307925,
+    "reducedWallMs": 308764,
+    "wallChangePercent": 0.27,
+    "originalTestMs": 299055,
+    "reducedTestMs": 298030,
+    "testChangePercent": -0.34,
+    "scopeNote": "Three-title focused result only; do not extrapolate as the full-suite runtime reduction."
+  },
+  "decision": "Keep existing full trace detail; changing only screenshots gives no useful improvement in this pair.",
+  "qualification": "Fixed original-then-reduced order; no cache clearing. Light status/source reads and TEMP-only agent preparation occurred, no other local browser/test job or repository edits. Focused diagnostic only, not the full H1 acceptance measurement."
+}

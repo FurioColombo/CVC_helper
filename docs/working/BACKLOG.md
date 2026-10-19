@@ -119,6 +119,9 @@ Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
+- `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
+  — Mac WebKit CI `39235069108`: Disabilita allievo was absent after reactivation; the retry passed. Cause unproven. See `.evidence/T1/ci-checkpoint-434cdcc.json`; T1 also retains traces when a retry makes CI green.
+
 - `d4-local-reset.spec.ts › reports partial cleanup honestly and retries through the reset screen`
   — `b8eda01` showed success instead of the simulated partial failure. A later probe found the cache mock gone with zero calls; retaining its browser handle and verifying both calls passes 32 cases without retries. A separate document reload remains unclassified. See `.evidence/T1/reset-cache-injection.json`.
 
@@ -151,16 +154,13 @@ Each passed only on a retry and is a defect to fix (03 §6).
   legacy database close/reopen lifecycle; a retry does not establish its cause.
   On 2026-10-14 the same page-closure failure took 18.6 s, then passed on
   retry in 26.7 s and separately with retries disabled in 20.4 s. The final
-  D3 recorder retains this flake; see its dated classification evidence.
+  D3 recorder retains this flake. T1's 2026-10-19 run also closed during the 0.1.0 upgrade; see `.evidence/T1/legacy-fixture-batching.json`.
 
 - `u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live`
-  — Pixel 7 Chrome, D3’s final focused run (2026-10-12): pointermove-to-live
-  transform measured 170.7 ms against the unchanged 120 ms bound, then passed
-  on the configured retry. T1 must fix the measurement/setup or underlying
-  response defect without dropping the assertion or raising its limit.
-  D3's focused run on 2026-10-13 also retried on iPhone 13 WebKit: the live
-  transform readiness check exceeded its unchanged 100 ms timeout. T1 now commits
-  image/crop and ARIA during the event; 12 browser checks pass both original limits. New CI pending.
+  — D3 measured 170.7 ms against the 120 ms bound on Chromium and exceeded the
+  100 ms readiness check on WebKit. T1 commits image/crop and ARIA during the
+  event; 12 browser checks and exact `b8eda01` CI pass without retries, retaining
+  both limits. See `.evidence/T1/crop-gesture-commit.json`.
 
 - `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
   — iPhone 13 WebKit, D3's focused run (2026-10-13): the first attempt found
