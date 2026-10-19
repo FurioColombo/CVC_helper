@@ -28,17 +28,11 @@ The owner reported: Accepted by the owner with two steps not observed. Observed 
 
 ## Check course files, persistent storage and full reset on Android — D4
 
-**State:** Ready for owner check · Required
+**State:** Owner requested changes · Required
 
 **What to do:**
 
-1. Open your installed CVC Helper Test (do not reinstall). Switch away and return until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.4.2. Use fictitious people only.
-2. In Impostazioni read Conservazione dei dati and note whether the browser agreed to keep the data. Prepare the course file, save it and share it to another app. Check it is available there and its filename contains no personal name.
-3. Import that saved file: check the course preview, cancel once, then explicitly confirm replacement. Reopen the course and check students, notes, duties and crews; close and reopen the app again.
-4. Confirm Azzera tutti i dati locali and check the app reopens without a course. Confirm the regular CVC Helper app still has its own course. Follow Course files and full local reset in docs/DEVICE_CHECKS.md.
-5. Report D4-PHONE-TRANSFER with your device, browser and Android version and what you actually observed, including the receiving app and the persistent-storage answer.
-
-Use the test address below and the linked device instructions.
+The owner reported: Update 0.4.1 to 0.4.2 worked; a student note typed before the update was kept. Conservazione dei dati said the browser does not guarantee keeping data when space is low and to export regularly. Export: the button needed two taps before anything visible happened (possibly working silently), then it worked and offered to download the file again. Condividi failed with Condivisione non riuscita; the error text is hard to notice (no icon, colour or emphasis). The owner asks to remove the Chiudi il file pronto button. Import preview, cancel, replacement and reopen showed no issue. PROBLEM: Azzera tutti i dati locali took very long or got stuck; after closing and reopening, the app stayed on Apertura del corso… then showed Non riesco ad aprire i dati locali, and Riprova did not fix it; only uninstalling and reinstalling the app recovered it. After reinstalling, importing the saved file worked. Not reported: whether the regular CVC Helper app kept its course. Owner question: importing a different course should replace the current one or say it is not compatible. Agent fixes are needed before this check can be ready again.
 
 **Expected:** The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.
 
@@ -48,4 +42,6 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of D4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** Completion of D4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions. Work depending on the reported problem pauses for fixes.
+
+**Latest owner report:** Update 0.4.1 to 0.4.2 worked; a student note typed before the update was kept. Conservazione dei dati said the browser does not guarantee keeping data when space is low and to export regularly. Export: the button needed two taps before anything visible happened (possibly working silently), then it worked and offered to download the file again. Condividi failed with Condivisione non riuscita; the error text is hard to notice (no icon, colour or emphasis). The owner asks to remove the Chiudi il file pronto button. Import preview, cancel, replacement and reopen showed no issue. PROBLEM: Azzera tutti i dati locali took very long or got stuck; after closing and reopening, the app stayed on Apertura del corso… then showed Non riesco ad aprire i dati locali, and Riprova did not fix it; only uninstalling and reinstalling the app recovered it. After reinstalling, importing the saved file worked. Not reported: whether the regular CVC Helper app kept its course. Owner question: importing a different course should replace the current one or say it is not compatible.

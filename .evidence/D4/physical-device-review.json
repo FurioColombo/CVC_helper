@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "D4",
+  "ownerReports": [
+    {
+      "id": "D4-PHONE-TRANSFER",
+      "check": "Check course files, persistent storage and full reset on Android",
+      "result": "CHANGES_REQUESTED",
+      "reportedBy": "owner",
+      "source": "Owner chat report \"D4-PHONE-TRANSFER\" in the Claude Code session of 2026-10-19.",
+      "summary": "Update 0.4.1 to 0.4.2 worked; a student note typed before the update was kept. Conservazione dei dati said the browser does not guarantee keeping data when space is low and to export regularly. Export: the button needed two taps before anything visible happened (possibly working silently), then it worked and offered to download the file again. Condividi failed with Condivisione non riuscita; the error text is hard to notice (no icon, colour or emphasis). The owner asks to remove the Chiudi il file pronto button. Import preview, cancel, replacement and reopen showed no issue. PROBLEM: Azzera tutti i dati locali took very long or got stuck; after closing and reopening, the app stayed on Apertura del corso… then showed Non riesco ad aprire i dati locali, and Riprova did not fix it; only uninstalling and reinstalling the app recovered it. After reinstalling, importing the saved file worked. Not reported: whether the regular CVC Helper app kept its course. Owner question: importing a different course should replace the current one or say it is not compatible.",
+      "testedCommit": "fde1fe14787333536fb250ef2357793be3870be8",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60",
+      "browser": "Not stated by the owner",
+      "osVersion": "Android, version not stated by the owner",
+      "reportedAt": "2026-10-19T19:28:15.662Z"
+    }
+  ]
+}
