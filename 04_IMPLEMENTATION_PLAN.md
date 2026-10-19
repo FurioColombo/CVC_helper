@@ -28,8 +28,8 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | H1 | Complete. Documents in the `docs/DOCS_SYSTEM.md` layout; unit tests 287 s to 71 s; browser suite not shown faster (target missed, accepted by the owner); retrospective not delivered. See `.evidence/H1/`. |
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
-| D3 | Awaiting closure. Agent verification, reviews, CI and live HTTPS pass. The owner accepted the 0.4.0 → 0.4.1 phone update on 2026-10-19; the note-edit and enlarged-text steps were not observed. Closure with `milestone-close` remains. See `.evidence/D3/physical-device-review.json`. |
-| D4 | Agent gates pass at `fde1fe1`: 1,439 unit tests, 108 focused browser checks and both production reset-isolation engines; exact full Mac/Linux CI is green without retries. Awaiting owner. The test site stays pinned to D3; D4 phone setup follows that check. Evidence: `.evidence/D4/`. |
+| D3 | Complete. The data records its version; older apps open newer data read-only; installed apps find updates on return and keep unsaved work. The owner accepted the Android update on 2026-10-19; the note-edit and enlarged-text phone steps were not observed and move to UG3. See `.evidence/D3/` and its `limitations.md`. |
+| D4 | Agent gates pass at `fde1fe1`: 1,439 unit tests, 108 focused browser checks and both production reset-isolation engines; exact full Mac/Linux CI is green without retries. Awaiting owner. D3's phone check passed; D4 phone setup on the test site is next. Evidence: `.evidence/D4/`. |
 | T1 | In progress. H1/current misses the target: 33:59 versus 60:10. Large WebKit fixture setup drops from 28 s to 1 s intact; one regression run closed a WebKit page, a rerun passes 33 cases. Exact `9533421` CI is green without retries. Trace reduction gives no gain; fixture restoration passes both engines. Final verification/reviews remain open. Evidence: `.evidence/T1/`. |
 | UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
 
@@ -52,54 +52,6 @@ findings join as an extra milestone only if the owner picks them (see the end).
 - Owner checks use `docs/OWNER_WORKFLOW.md` and `docs/OWNER_TODO.md`.
   D4 may follow verified D3 while its phone check waits; T1 may follow
   verified D3/D4 while their phone checks wait. UG3 requires COMPLETE predecessors.
-
-## D3 — Versions and reliable updates
-
-**Category:** RULE_HEAVY
-**Status:** AWAITING_OWNER
-
-1. **Compatibility contract** (`03_TECHNICAL_DECISIONS.md` §3.1), the rules the
-   server will enforce from 0.5.0:
-   - the data records its version in `meta`, which every schema declares;
-   - schema changes only expand, and a removal or rename takes two releases;
-   - an app reads and writes data of its own and the previous minor version;
-   - an app older than the data's minimum writer version opens read-only and
-     says `Aggiorna l'app`.
-
-   One domain function with table-driven tests over version pairs implements
-   the contract.
-2. **Updates reach installed apps.** Look for a new version when the app returns
-   to the foreground and periodically while it is open, which today happens
-   only at start. The banner never covers a floating bar or the add button
-   (UG2-UX-3). Impostazioni shows the installed version and `Cerca
-   aggiornamenti`, and a short note confirms the update afterwards. The leave
-   guard stays.
-3. **A browser journey:** serve build N, deploy build N+1, bring the app to the
-   foreground, see the offer, update without losing unsaved work.
-4. **Permanent test site:** publish the isolated test channel at the stable
-   GitHub HTTPS address in `docs/DEPLOY.md`. Database, preferences, workers and
-   caches are separate from the regular app, with same-origin browser proof.
-   Pin verified source for 0.4.0/0.4.1; the second deployment follows an explicit
-   owner installation report. Later work cannot replace a pending test build.
-
-**Success predicate:** an installed app brought back to the foreground after a
-deploy offers the update within one minute without reinstalling, and applies it
-without losing unsaved work. An app older than its data's minimum writer
-version never writes.
-
-**Adversarial checklist:** an update loop; a check that fails offline; an update
-arriving mid-migration; two tabs on different versions, where the old one writes
-after the new one migrated; an older app re-initialising the schema under an
-open newer one, after which Riprova must reload rather than retry the same
-instance (D1 review DI-R2-Q5); an older app's save or open-time repair
-deleting duty-setting rows of a kind only a newer version knows, so the
-read-only check comes before D1's and D2's repairs, which write (D2 reviews
-DP-Q5, DI-R2-Q1); the banner over a nested screen; standalone WebKit
-behaviour.
-
-**Evidence:** verification, compatibility table tests, browser evidence, the
-owner's Android check (update without reinstall), data-integrity,
-regression-hunter, field-UX and schema-version sync-chaos reviews, test isolation proof and a security/privacy review of test publication.
 
 ## D4 — Export, import, persistent storage and full reset
 
@@ -170,9 +122,10 @@ self-review, code-quality review.
 through the visible UI, an export/import round trip across Chromium and WebKit,
 and the update journey. Reviewers: data integrity, regression, scope, code
 quality, field UX, security/privacy. The owner checks on Android: an update
-without reinstalling, export and import on the phone, persistent storage. Then
-the release-gate documentation sweep, the changelog, version 0.4.0 and the
-tag.
+without reinstalling, with a note typed just before Aggiorna and the controls
+at enlarged text (not observed in D3), export and import on the phone,
+persistent storage. Then the release-gate documentation sweep, the changelog,
+version 0.4.0 and the tag.
 
 **Success predicate:** the 0.4.0 objective above holds on the tagged commit, with
 no reviewer blocker and the owner's Android checks recorded.

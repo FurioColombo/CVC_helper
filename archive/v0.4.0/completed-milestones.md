@@ -116,3 +116,51 @@ JSON lists (03 §3.1).
 
 **Evidence:** verification, full-week result, migration evidence,
 domain-prosecutor and data-integrity reviews, self-review.
+
+## D3 — Versions and reliable updates
+
+**Category:** RULE_HEAVY
+**Status:** AWAITING_OWNER
+
+1. **Compatibility contract** (`03_TECHNICAL_DECISIONS.md` §3.1), the rules the
+   server will enforce from 0.5.0:
+   - the data records its version in `meta`, which every schema declares;
+   - schema changes only expand, and a removal or rename takes two releases;
+   - an app reads and writes data of its own and the previous minor version;
+   - an app older than the data's minimum writer version opens read-only and
+     says `Aggiorna l'app`.
+
+   One domain function with table-driven tests over version pairs implements
+   the contract.
+2. **Updates reach installed apps.** Look for a new version when the app returns
+   to the foreground and periodically while it is open, which today happens
+   only at start. The banner never covers a floating bar or the add button
+   (UG2-UX-3). Impostazioni shows the installed version and `Cerca
+   aggiornamenti`, and a short note confirms the update afterwards. The leave
+   guard stays.
+3. **A browser journey:** serve build N, deploy build N+1, bring the app to the
+   foreground, see the offer, update without losing unsaved work.
+4. **Permanent test site:** publish the isolated test channel at the stable
+   GitHub HTTPS address in `docs/DEPLOY.md`. Database, preferences, workers and
+   caches are separate from the regular app, with same-origin browser proof.
+   Pin verified source for 0.4.0/0.4.1; the second deployment follows an explicit
+   owner installation report. Later work cannot replace a pending test build.
+
+**Success predicate:** an installed app brought back to the foreground after a
+deploy offers the update within one minute without reinstalling, and applies it
+without losing unsaved work. An app older than its data's minimum writer
+version never writes.
+
+**Adversarial checklist:** an update loop; a check that fails offline; an update
+arriving mid-migration; two tabs on different versions, where the old one writes
+after the new one migrated; an older app re-initialising the schema under an
+open newer one, after which Riprova must reload rather than retry the same
+instance (D1 review DI-R2-Q5); an older app's save or open-time repair
+deleting duty-setting rows of a kind only a newer version knows, so the
+read-only check comes before D1's and D2's repairs, which write (D2 reviews
+DP-Q5, DI-R2-Q1); the banner over a nested screen; standalone WebKit
+behaviour.
+
+**Evidence:** verification, compatibility table tests, browser evidence, the
+owner's Android check (update without reinstall), data-integrity,
+regression-hunter, field-UX and schema-version sync-chaos reviews, test isolation proof and a security/privacy review of test publication.

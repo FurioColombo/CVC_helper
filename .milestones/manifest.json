@@ -789,7 +789,7 @@
     {
       "id": "D3",
       "category": "RULE_HEAVY",
-      "status": "AWAITING_OWNER",
+      "status": "COMPLETE",
       "ownerEvidence": [".evidence/D3/physical-device-review.json"],
       "verificationScripts": [
         "verify",
@@ -857,7 +857,8 @@
         },
         "ciRunId": 38857263745,
         "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/38857263745"
-      }
+      },
+      "verifiedSourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d"
     },
     {
       "id": "D4",

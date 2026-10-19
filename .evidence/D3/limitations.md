@@ -6,7 +6,7 @@ within seconds of returning without a reinstall, the updated version and kept
 students, and Cerca aggiornamenti offline and online. Two steps were not
 observed on the phone: typing a note and tapping Aggiorna at once, and the
 Allievi and Equipaggi controls with enlarged text while the offer shows. Both
-rest on the browser suite only. See physical-device-review.json.
+rest on the browser suite only and are scheduled in UG3's owner check. See physical-device-review.json.
 
 Non-blocking review findings are filed in docs/working/BACKLOG.md: DI-R2-Q4,
 FU-Q7, FU-Q11, RH2-Q4 and RH4-Q1. Older versions predating the write guard
