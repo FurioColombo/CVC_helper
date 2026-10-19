@@ -2,10 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   close: vi.fn(),
+  init: vi.fn(),
   clearAppBrowserStorage: vi.fn(),
 }))
 
-vi.mock("@/persistence/db", () => ({ db: { close: mocks.close } }))
+vi.mock("@/persistence/db", () => ({
+  db: { close: mocks.close, init: mocks.init },
+}))
 vi.mock("@/persistence/browserStorage", () => ({
   clearAppBrowserStorage: mocks.clearAppBrowserStorage,
 }))
@@ -56,6 +59,7 @@ describe("a full reset that the app may not live to finish", () => {
     storage = memoryStorage()
     vi.stubGlobal("localStorage", storage)
     mocks.close.mockReset().mockResolvedValue(undefined)
+    mocks.init.mockReset().mockResolvedValue(undefined)
     mocks.clearAppBrowserStorage.mockReset().mockResolvedValue(undefined)
   })
 
@@ -114,6 +118,21 @@ describe("a full reset that the app may not live to finish", () => {
     await vi.waitFor(() => expect(mocks.close).toHaveBeenCalled())
 
     expect(isResetPending()).toBe(true)
+  })
+
+  it("goes on to the deletion when the engine never started and close never returns (SC-R3-I1)", async () => {
+    vi.stubGlobal("indexedDB", deletingIndexedDb("success"))
+    mocks.close.mockReturnValue(new Promise(() => {}))
+    mocks.init.mockRejectedValue(new Error("engine startup deadline"))
+    const { isResetPending, resetAllLocalData, watchLocalData } = await load()
+    const states: string[] = []
+    watchLocalData((state) => states.push(state))
+
+    await resetAllLocalData()
+
+    expect(indexedDB.deleteDatabase).toHaveBeenCalledOnce()
+    expect(states.at(-1)).toBe("reset-complete")
+    expect(isResetPending()).toBe(false)
   })
 
   it("still resets without storage, only without the ability to resume", async () => {

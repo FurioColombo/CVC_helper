@@ -1,7 +1,7 @@
 {
   "reviewerRole": "self-review",
   "milestone": "D4",
-  "commit": "fde1fe14787333536fb250ef2357793be3870be8",
+  "commit": "pending: the D4 owner-fix checkpoint recorded by verification.json",
   "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [
@@ -85,15 +85,90 @@
     "Final evidence reconciliation: verification.json matches unchanged source39b26907 and cleanfde1fe1; all13tables/49rows round-trip identically in4configurations; all9D3 readiness hashes intact. Both canonical flaky artifacts are independently extracted empty arrays. CurrentWebKit320px/200% replacement controls and desktop reset-complete screenshots visually inspected; no changed layout. Earlier pending/FAIL statements above describe preserved historical checkpoints, superseded by this final exact-source acceptance."
   ],
   "notTested": [
-    "D4 agent gates pass. Phone transfer/storage/reset remains NEEDS_SETUP because the D3 fixed0.4.0 installation/update sequence owns the permanent test slot. D4 may be handed over AWAITING_OWNER; T1 may then proceed under explicit dependency permissions. The release still needs owner acceptance.",
+    "Physical Android: the .txt share to real receiving apps, the resumed reset on the Motorola Edge 60, real TalkBack announcements. These are the owner's new D4-PHONE-TRANSFER check on the 0.4.3 test build; no simulated PASS.",
     "Actual phone Web Share receiving-app behavior, save/import transfer, persistence permission and full-reset acceptance remain owner checks. No simulated or inferred physical PASS.",
     "Cross-device sync, accounts, backend deletion and upload conflicts are outside 0.4.0."
   ],
-  "sourceDigest": "39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc",
   "resolvedBlockers": [
     {
       "id": "D4-CI",
       "disposition": "Exact canonical pushCI39111591566 now passes at the current reviewed source, both full original jobs with zero flakes; see ci-checkpoint-fde1fe1.json. This resolves the missing/red-checkpoint gate, without claiming native timing causality."
     }
-  ]
+  ],
+  "ownerFixRound": {
+    "trigger": "D4-PHONE-TRANSFER CHANGES_REQUESTED on 2026-10-19 (physical-device-review.json): full reset left the app unopenable until reinstall; Condividi failed; export gave no visible first-tap feedback; error text easy to miss; owner asked to remove Chiudi il file pronto.",
+    "reviews": [
+      "field-ux-review-round-6.json (FAIL, FU-R6-B1) -> field-ux-review-round-7.json (PASS_WITH_FINDINGS)",
+      "data-integrity-review-round-6.json (PASS_WITH_FINDINGS)",
+      "security-privacy-review-round-4.json (PASS_WITH_FINDINGS)",
+      "sync-chaos-review-round-3.json (PASS_WITH_FINDINGS)"
+    ],
+    "dispositions": [
+      {
+        "id": "FU-R6-B1",
+        "disposition": "Fixed: [data-reveal] scroll margin and scrollIntoView reveal each export/share/import result above the fixed bar; e2e \"export feedback stays above the bottom bar\" on four projects at device size and 320 px/200%; verified in round 7."
+      },
+      {
+        "id": "FU-R6-I1",
+        "disposition": "Fixed: focus moves with preventScroll and the prepared block is revealed; verified in round 7."
+      },
+      {
+        "id": "FU-R6-I2",
+        "disposition": "Fixed: Salva file aria-describedby the ready status; asserted in e2e."
+      },
+      {
+        "id": "FU-R6-Q1",
+        "disposition": "Fixed: one line explains the .txt shared copy."
+      },
+      {
+        "id": "FU-R6-Q2",
+        "disposition": "Accepted: the installed PWA always has Local Storage; without it the reset still runs, only without resume."
+      },
+      {
+        "id": "FU-R7-Q1",
+        "disposition": "Fixed after round 7: the .txt line moved between the status and the buttons, inside the revealed block."
+      },
+      {
+        "id": "FU-R7-Q2",
+        "disposition": "Fixed after round 7: a tap counter re-reveals identical repeated feedback."
+      },
+      {
+        "id": "FU-R7-Q3",
+        "disposition": "Not changed (outside this diff, unchanged since earlier rounds): at 320 px/200% the reset heading breaks inside a word. docs/working/BACKLOG.md is at its line budget; carried here for UG3 field review."
+      },
+      {
+        "id": "DI-R6-1",
+        "disposition": "Fixed: the mark clears once the database is deleted, so a persistently failing cache keeps only the Riprova screen, not a lockout; unit test."
+      },
+      {
+        "id": "DI-R6-Q1",
+        "disposition": "Fixed: after 8 s a resetting screen says what to close (SlowResetHint); WebKit already shows the blocked text. Unit test and e2e."
+      },
+      {
+        "id": "SP-R4-1",
+        "disposition": "Fixed: the contract refuses a pin whose live build is neither its own nor the declared replaced one, a replacing pin without a live version, and lower patches; the publisher checks the live build-info version. Four reviewer cases are unit tests."
+      },
+      {
+        "id": "SP-R4-2",
+        "disposition": "Fixed: the publisher reads the pin and owner checks from committed HEAD and refuses uncommitted .milestones changes."
+      },
+      {
+        "id": "SP-R4-Q1",
+        "disposition": "Same as DI-R6-1, fixed."
+      },
+      {
+        "id": "SC-R3-I1",
+        "disposition": "Fixed: closing races the SDK close against the wrapped startup failure, so a resumed reset reaches the deletion after the 30 s engine deadline. Unit test and pixel-7 e2e holding the database 36 s; both fail with the race removed."
+      },
+      {
+        "id": "SC-R3-I2",
+        "disposition": "Documented limit in 03_TECHNICAL_DECISIONS.md §3.2: the mark names no course, so a pre-mark build (0.4.2 and earlier) creating a course after an abandoned reset loses it at the next current open; same older-writer boundary as SC-R1-I1."
+      },
+      {
+        "id": "SC-R3-Q1",
+        "disposition": "No change: offline Riapri after reset needs a connection, as the screen says."
+      }
+    ],
+    "rootCause": "Not proven on the device. The reviewed mechanism matching the owner symptom is the 30 s engine startup deadline while the deletion stays held (SC-R3-I1); what held it on a single-window phone is unknown. The fix makes the reset resumable, bounded and explained rather than claiming the cause."
+  }
 }

@@ -643,6 +643,71 @@ test("resumes a reset interrupted by closing the app on the next open", async ({
   })
 })
 
+// D4 review SC-R3-I1: on a phone the engine gives up after its 30 s startup
+// deadline when the database stays held, and the SDK's close then never
+// returns. A resumed reset must still reach the deletion once the hold ends.
+test("finishes a resumed reset even when the engine cannot start in time", async ({
+  page,
+  context,
+}, testInfo) => {
+  // Only the phone's dedicated-worker engine has the startup deadline.
+  test.skip(testInfo.project.name !== "pixel-7-chrome", "phone engine path")
+  test.setTimeout(150_000)
+  const events: BrowserEvents = { pageErrors: 0, crashes: 0 }
+  observeBrowserEvents(page, events)
+  await createCourse(page)
+  await showSettings(page)
+
+  const holder = await context.newPage()
+  await holder.goto("/icons/cvc-helper.svg")
+  await holder.evaluate(
+    (databaseName) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open(databaseName)
+        request.onsuccess = () => {
+          Object.assign(window, { __D4_HELD_CONNECTION__: request.result })
+          resolve()
+        }
+        request.onerror = () => reject(request.error)
+      }),
+    channel.databaseFilename,
+  )
+  await confirmFullReset(page)
+  await expect(
+    page.getByText(/Chiudi le altre schede o finestre/),
+  ).toBeVisible()
+  await page.close()
+
+  const reopened = await context.newPage()
+  observeBrowserEvents(reopened, events)
+  await reopened.goto("/")
+  await expect(
+    reopened.getByRole("heading", { name: "Cancellazione dei dati locali…" }),
+  ).toBeVisible()
+  // Hold past the engine's 30 s startup deadline, then let go.
+  await reopened.waitForTimeout(36_000)
+  await holder.evaluate(() => {
+    ;(
+      window as Window & { __D4_HELD_CONNECTION__?: IDBDatabase }
+    ).__D4_HELD_CONNECTION__?.close()
+  })
+  await expect(
+    reopened.getByRole("heading", { name: "Dati locali cancellati" }),
+  ).toBeVisible({ timeout: 30_000 })
+  const pendingAfterReset = await reopened.evaluate(
+    (key) => localStorage.getItem(key),
+    channel.resetPendingKey,
+  )
+  expect(pendingAfterReset).toBeNull()
+  expect(events.crashes).toBe(0)
+  record(testInfo, "resumed-reset-past-engine-deadline", {
+    heldForMs: 36_000,
+    completedAfterRelease: true,
+    pendingAfterReset,
+    events,
+  })
+})
+
 test("reports partial cleanup honestly and retries through the reset screen", async ({
   page,
 }, testInfo) => {

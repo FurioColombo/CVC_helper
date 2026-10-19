@@ -2,35 +2,61 @@
   "reviewerRole": "security-privacy",
   "persona": "Il Garante",
   "milestone": "D4",
-  "round": 3,
-  "commit": "ac0c25508d39ac70c2d556db45285203bad5859a",
-  "verdict": "PASS",
+  "round": 4,
+  "commit": "18267f0",
+  "diffRange": "988dcf3^..18267f0 (publisher 988dcf3, app 1061d63..18267f0)",
+  "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
-  "importantFindings": [],
-  "qolFindings": [],
+  "importantFindings": [
+    {
+      "id": "SP-R4-1",
+      "title": "The 'replaced build stays until its owner check PASSED' gate is opt-in and fails open, so a pin can overwrite a build whose owner check is still pending, or ship a lower patch",
+      "evidence": "scripts/test-site-contract.mjs:54 only consults owner-checks.json when the pin declares `replaces` AND pin.activeVersion === pin.replaces.activeVersion. scripts/test-site-contract.mjs:33 skips the downgrade check when activeVersion is null. Nothing checks that pin.activeVersion belongs to pin.versions or to replaces.versions, and nothing compares it with the live build-info.json in the test repository that the publisher already clones. docs/DEPLOY.md:134 says 'The installed build stays fixed until its owner check is resolved' and that the contract refuses a replacement before the PASS. The code does not enforce that.",
+      "reproduction": "In my scratchpad's r4/probe.mjs I called assertTestPublicationAllowed with an owner-check queue in which D4-PHONE-TRANSFER is NEEDS_SETUP and D3-PHONE-UPDATE is READY. All four calls returned ALLOWED: (1) a D5 pin with versions ['0.4.3'], activeVersion '0.4.2' and no `replaces` field, which overwrites the pending D4 build; (2) a D4 pin that declares replaces D3 (activeVersion '0.4.1') but has activeVersion null; (3) the same pin with versions ['0.4.0'], which publishes 0.4.0 over a live 0.4.1, a downgrade; (4) a pin with a stale activeVersion '0.4.0' that does not match replaces.activeVersion '0.4.1'. Expected: every call refused. Not a blocker: each case needs someone writing an inconsistent pin, and source verification (exact commit, green CI, clean recorded evidence, reviews) still applies, so no unverified code can ship. The cost is the owner's evidence: the build under check can change without anyone noticing. Fix: if pin.activeVersion is set and is not one of pin.versions, require pin.replaces with replaces.activeVersion === pin.activeVersion and a PASSED check whenever replaces.milestone differs from pin.milestone. Refuse a null activeVersion once a pin has replaces. Assert that the cloned output's build-info.json version equals pin.activeVersion. Add each of the four cases above as a test in scripts/test-site-contract.test.mjs.",
+      "specRef": "docs/DEPLOY.md (phone-test publication); AGENTS.md §17 (physical-device evidence belongs to the owner)"
+    },
+    {
+      "id": "SP-R4-2",
+      "title": "The publication gate trusts uncommitted working-tree copies of the pin and the owner-check queue",
+      "evidence": "scripts/deploy-test-site.mjs:26 and :37 read .milestones/test-site.json and .milestones/owner-checks.json from the working tree. The only Git check on the root is `merge-base --is-ancestor source HEAD` (:46). No clean-tree check exists, and nothing requires the PASSED status the gate depends on to be committed.",
+      "reproduction": "Code reading: an uncommitted local edit that sets D4-PHONE-TRANSFER to PASSED satisfies the gate at test-site-contract.mjs:54-63 and leaves no committed trace until after publication. Fix: read both files with `git show HEAD:<path>` and require `git status --porcelain -- .milestones` to be empty before publishing.",
+      "specRef": "AGENTS.md §8 and §17: owner acceptance is a recorded decision, never forged"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-R4-Q1",
+      "title": "A cleanup step that fails every time now locks the app on the reset screen at every open",
+      "evidence": "src/App.tsx:833-840 always resumes the reset while the mark exists. src/persistence/localDataOperations.ts:110-113 removes the mark only after clearAppBrowserStorage succeeds. On failure the only control is 'Riprova la cancellazione' (src/App.tsx:897-903).",
+      "reproduction": "Code reading, plus the unit test 'keeps the mark when deletion or cleanup fails'. If caches.keys(), a service-worker unregister or the Tesseract transaction rejects on every attempt, the app never reaches course creation until the user clears site data by hand. This fails closed, which is right for privacy (no half-deleted course opens), but there is no way out. Better suited to a field-UX or data-integrity backlog note than to a privacy fix.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 (full local reset)"
+    }
+  ],
   "evidenceInspected": [
-    "Re-read AGENTS.md, REVIEW_PROTOCOL.md and reviewer-security-privacy.md; retained R1/R2 PASS reports with no prior security/privacy blockers. Reviewed only 193a2506c7770bb11ee7f128ce2686b1d1e8b1a4..ac0c25508d39ac70c2d556db45285203bad5859a compiler changes and direct regressions.",
-    "Confirmed clean initial working tree and exact candidate HEAD; Node v24.21.0. Owner/milestone status still shows D3 AWAITING_OWNER, D4 IN_PROGRESS and D4 phone setup pending. Local ci:status fetch failed; no green CI inferred.",
-    "Read engineModuleCompiler.ts and its new producer tests. Fetch still uses the same validated same-origin asset URL; HTTP/MIME validation precedes body consumption. Buffered bytes compile into a Module inside the existing code-only compiler worker, without instantiation, database access, roster inputs or an added network destination.",
-    "Independent focused run passed 20 tests across engineModuleCompiler and engineModuleBroker, covering valid compilation, invalid HTTP/MIME/bytes, external-URL refusal and existing broker lifecycle behavior.",
-    "Independent production-mode boundary probe passed 14 cases: exact MIME, ASCII case and HTTP whitespace, success statuses, missing/parameterized/multiple/non-ASCII MIME values and failed statuses. Rejected responses were not consumed or constructed; each case fetched once and emitted no development timings. Proof is in test-results/d4-security-review-r3/compiler-boundaries.json.",
-    "An initial comparison against Node's native compileStreaming found that Node 24 rejects uppercase APPLICATION/WASM. Checked the [WebAssembly Web API §2](https://webassembly.github.io/spec/web-api/#streaming-modules): its rule accepts ASCII case variation after HTTP whitespace trimming and rejects parameters. The candidate matches that rule; the corrected probe records Node's deviation rather than treating it as an application defect.",
-    "Independently inspected all 24 JavaScript files in the existing candidate dist. The emitted engineModuleCompiler-YB6wr5Ny.js buffers the response and constructs WebAssembly.Module, contains no compileStreaming call, and all 13 development phase timestamp keys are absent from emitted JavaScript.",
-    "Confirmed no diff in parent broker, database/schema/VFS integration or canonical ci.yml; both reviewed checkpoints use workflow blob 0190ba84f184268cda2da363546bc2fe355b6220.",
-    "Read .evidence/D4/ci-worker-compile-probe.json. Its four diagnostic Mac runs report 32 passes without retries, preserved rows and no fallback. The record explicitly remains diagnostic evidence, not causal proof or final acceptance."
+    "docs/agents/REVIEW_PROTOCOL.md; .evidence/D4/security-privacy-review.json (round 3 PASS, no open blockers to re-test)",
+    "git diff 1061d63..18267f0 -- src/ tests/ (App.tsx, appChannel.ts, CourseFiles.tsx, localDataOperations.ts and their tests, tests/e2e/d4-local-reset.spec.ts)",
+    "git show 988dcf3 (scripts/test-site-contract.mjs, scripts/deploy-test-site.mjs, .milestones/test-site.json, docs/DEPLOY.md), the full current scripts/deploy-test-site.mjs, and the current .milestones/test-site.json (D4 0.4.2 published from 1d7cd9f, verifiedCheckpoint fde1fe1)",
+    "src/persistence/browserStorage.ts clearSelectedLocalStorage: removes only this channel's keys and never touches resetPendingKey or the other channel's keys",
+    "src/persistence/courseArchiveFormat.ts parseCourseArchive and CourseArchiveError: import ignores file.type and file.name, validates content only, and shows fixed error messages that never echo the file's text. Adding .txt/text/plain to `accept` changes only the picker hint, not what import trusts",
+    "CourseFiles.tsx shareCopy: the shared name is archiveFileName() with .json replaced by .txt (cvc-helper-corso-YYYY-Www.txt), the content is the same JSON text, and no console logging or new egress exists. Removing 'Chiudi il file pronto' does not keep the file longer, because SettingsView is rendered conditionally (App.tsx:706) and leaving Settings discards it",
+    ".milestones/owner-checks.json and docs/OWNER_TODO.md diffs: the owner report names only a device model, with no personal data; owner-check statuses D3-PHONE-UPDATE PASSED, D4-PHONE-TRANSFER NEEDS_SETUP",
+    "Ran (Node v24.21.0) `npx vitest run` on localDataOperations.test.ts, CourseFiles.test.tsx, appChannel.test.ts, App.test.tsx and scripts/test-site-contract.test.mjs: 41/41 passed",
+    "Ran `npx playwright test tests/e2e/d4-local-reset.spec.ts -g \"resumes a reset\"`: 4/4 projects passed",
+    "Scratch probe in my scratchpad's r4/probe.mjs against assertTestPublicationAllowed: four fail-open cases (SP-R4-1)",
+    "git status after the runs: no tracked file changed. An untracked root file r6.spec.ts exists that this review did not create"
   ],
   "anglesTried": {
-    "seed": 142837471,
+    "seed": 0,
     "lenses": [
-      "Restricted R3 follow-up: inspect the changed response/compilation boundary for relaxed validation, extra requests, sensitive inputs or diagnostic leakage.",
-      "Check direct regressions in the unchanged worker/broker isolation contract and inspect emitted production code."
+      "Restricted R4 follow-up, no entropy draw. Export files (lens 9): the name, type and content of the .txt share copy, and whether accepting text/plain widens what import trusts",
+      "Deletion (lens 5) and channel isolation: setting, clearing and scope of the pending-reset mark per channel on one origin; whether it can be abused; whether the resumed reset runs before any course is read",
+      "Publisher contract (988dcf3): can a pin publish an unverified or older source, or replace a build whose owner check is pending?"
     ],
-    "wildcard": "No new entropy or wildcard. Prior whole-milestone findings were not reopened; probes were limited to the changed compiler boundary."
+    "wildcard": "No new wildcard; the brief restricted scope to these diffs. Same-origin abuse of the mark was considered: any script on the furiocolombo.github.io origin could set it and force a wipe on next open, but such a script can already delete or read the IndexedDB directly. The documented shared-origin limitation exists already, so this adds no new door."
   },
   "notTested": [
-    "No browser, heavy suite or rebuild was run. Production output was inspected in place; the root owns subsequent browser verification and the recorder.",
-    "Synthetic VM/Node boundary probes do not establish browser-specific CSP, WebKit performance or physical-device behavior.",
-    "The diagnostic comparison does not prove the compilation change causes reliable cold startup. Exact full-source CI and required acceptance remain pending.",
-    "No deployment, backend, private data or physical-device check was accessed. This security/privacy PASS does not complete D4 or override other reviewers."
+    "Android Chrome share sheet and receiving apps: whether a text/plain file share shows a content preview, or is turned into inline text or a synced note by some targets (for example notes or messaging apps). No physical device; this belongs to the owner's D4-PHONE-TRANSFER check",
+    "Whether the resumed reset actually completes on the owner's Motorola Edge 60, where the original deletion stayed blocked. The root cause of that blocked connection on a single-window phone was not identified in this diff; Playwright simulates it with a second page holding the database",
+    "The live test site was not republished or probed; the publisher was exercised only through its pure contract function, never against GitHub"
   ]
 }

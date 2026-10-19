@@ -2,58 +2,85 @@
   "reviewerRole": "field-UX",
   "persona": "Il Nostromo",
   "milestone": "D4",
-  "round": 5,
-  "commit": "c1d67459121fdafef591b341c4141f62b1f6fda3",
-  "diffRange": "1216cbf44231d5b901b580fcc7d0076adaae0d56..c1d67459121fdafef591b341c4141f62b1f6fda3",
-  "verdict": "PASS",
+  "round": 7,
+  "commit": "df1b9d0",
+  "diffRange": "18267f0..df1b9d0",
+  "verdict": "PASS_WITH_FINDINGS",
   "blockers": [],
   "importantFindings": [],
-  "qolFindings": [],
+  "qolFindings": [
+    {
+      "id": "FU-R7-Q1",
+      "title": "At 320 px and 200% text, the new '.txt' explanation line sits under the bottom bar after preparing",
+      "evidence": "CourseFiles.tsx reveals the prepared block with block 'nearest'. At 200% the block is taller than the space above the bar, so the browser aligns its top: the status with its check icon is at y=0 and Condividi ends at 488 with the bar top at 490. The muted line 'Condividi invia lo stesso corso come file .txt: si importa come il file salvato.' is left behind the translucent bar (test-results/field-ux-r7/iphone-13-webkit-320-200-2-after-prepare.png). The line is secondary information and one scroll shows it, so this is not a blocker.",
+      "reproduction": "My scratchpad's r6/r7.spec.ts, '320-200' variant: prepare with the button just above the bar, then look at screenshot -2-after-prepare.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "FU-R7-Q2",
+      "title": "Identical repeated feedback is not revealed again",
+      "evidence": "CourseFiles.tsx: the reveal effect depends on [exportError, shareError, shareMessage]. A second tap on Salva file calls setShareMessage with the same string, so the state does not change, the effect does not re-run, and a user who scrolled away gets no visible reaction. Found by reading the code; not driven in the browser.",
+      "reproduction": "Code reading: downloadExport sets shareError to null and shareMessage to the unchanged 'Salvataggio avviato…'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14"
+    },
+    {
+      "id": "FU-R7-Q3",
+      "title": "Outside this diff (no regression): at 320/200% the reset heading breaks inside a word, 'Cancellazi / one'",
+      "evidence": "App.tsx h1 uses [overflow-wrap:anywhere]. test-results/field-ux-r7/pixel-7-chrome-reset-1-resetting.png. The heading is unchanged since earlier rounds; recorded for the backlog only.",
+      "reproduction": "Reset screen at 320 px with root font-size 200%.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05"
+    }
+  ],
   "resolvedFindings": [
     {
-      "id": "FU-R4-B1",
-      "disposition": "Fixed and independently rechecked with the unchanged round-4 probe. Earlier successful persistence no longer unmounts dictation still processing; the eventual transcript remains editable. Completed-transcript and rejected-save controls continue to pass. The guard advances synchronously before starting dictation and is shared by the main trigger and error-panel retry action."
+      "id": "FU-R6-B1",
+      "disposition": "Fixed and checked independently by re-running my unchanged round-6 probe against df1b9d0, with Prepara scrolled to 8 px above the bar. Pixel 7 at 412 px: the save status is at 719-759 and the share alert at 719-759, with the bar top at 764. The import error after 'Scegli il file del corso' just above the bar is at 739-759. iPhone 13 WebKit at 390 px: save status and alert at 544-584, bar top 589. At 320/200% on both engines: save status 360-480, alert 320-480, import error 360-480, bar top 490. hiddenUnderNav is false and the elements are on screen in every case. In pixel-7-chrome-device-4-share-error.png the red triangle and text are fully readable above the bar."
     },
     {
-      "id": "FU-R1-B1",
-      "disposition": "Carry forward round-2 verified reset wrapping/recovery; unchanged and not retested in round 5."
+      "id": "FU-R6-I1",
+      "disposition": "Fixed. At 320/200% the jump after Prepara is now about 395 px instead of 494 px, and the status lands with its top at the viewport top: the CircleCheck and 'File del corso pronto:' are visible (iphone-13-webkit-320-200-2-after-prepare.png). Salva file at 296-384 and Condividi at 400-488 are both clear of the bar. Focus is on Salva file and :focus-visible is false, so no stray ring after a touch. At device width everything stays visible: Pixel status 567-607 and Salva 615-659; iPhone status 372-432 and Salva 440-484."
     },
     {
-      "id": "FU-R1-Q1",
-      "disposition": "Carry forward round-2 verified first-start import correction; unchanged and not retested in round 5."
+      "id": "FU-R6-I2",
+      "disposition": "Fixed. Salva file has aria-describedby='prepared-file-status', which I measured on both engines. The new e2e test asserts toHaveAccessibleDescription(/File del corso pronto/). Real TalkBack and VoiceOver output was not observed."
+    },
+    {
+      "id": "FU-R6-Q1",
+      "disposition": "Addressed by the muted line under the buttons (wording is clear; see FU-R7-Q1 for its placement at 200%)."
+    },
+    {
+      "id": "FU-R6-Q2",
+      "disposition": "Accepted without change by the orchestrator; no objection."
     }
   ],
   "evidenceInspected": [
-    "Retained AGENTS.md, Il Nostromo persona, REVIEW_PROTOCOL, relevant UI/testing skills and authoritative evaluation/speech/P17/coherent-write rules from the previous rounds. Re-read preserved field round-4 FAIL and the restricted fix diff. Same seed, persona and prior lenses; historical FAIL/PASS reports remain intact.",
-    "Clean tracked checkout at exact c1d67459121fdafef591b341c4141f62b1f6fda3 before and after review; Node v24.21.0. No tracked edits, commit, browser process, production access or deployment by this reviewer.",
-    "EvaluationManagement.tsx guardedDictation.start increments the same draftVersion before calling original dictation.start, protecting loading/permission/recording/processing work before any transcript text exists. Both DictationTrigger and DictationPanels receive this guarded object. DictationControls.tsx retry invokes its provided dictation.start, so retry takes the same guard. Typed/completed-transcript updates, exact-current-student close guard, explicit save, in-panel errors and leave protections are retained.",
-    "Inspected new table-driven component regression for pending/completed transcription: both retain the editable combined text after the earlier save, then explicitly save that text to course-1/student-2/sat-pm and close the unchanged editor. Root reports 17 focused component cases, 1439 quick cases across 89 files, domain and build PASS in note-dictation-revision.json; those broad checks were not repeated by this reviewer.",
-    "Independent unchanged round-4 probe replay: node node_modules/vitest/vitest.mjs run --config <OS temporary cvc-d4-field-ux-round4/vitest.config.ts> --maxWorkers=1 -t field review:. Three cases PASS, 15 original copied tests intentionally filtered, exit 0, 10.56 seconds. Processing, completed-transcript and rejected-save cases all retain the editor and eventual exact combined draft. This is the previously failing reproduction, not a rewritten passing assertion.",
-    "Before execution, restored the probe byte-for-byte from OS temporary cvc-d4-field-ux-round4/dictation-review.test.tsx and verified both copies match SHA256 b8809f71d9a179f698da476226bedbeceaa45db7c6f633d6c7512021653572f4. Passing replay log: OS temporary cvc-d4-field-ux-round5/dictation-probe-recheck-restored.log, SHA256 72ef7b30c89e9e49aa1f859b4d1df50470a2205dbdf2a5408e4143be1ce02e98.",
-    "An initial invocation found no tests because the root's already-starting Playwright run cleared its ignored test-results output directory. Classified as scratch setup/tool coordination, not an application failure. Its no-test log is preserved; the subsequent replay restored the unchanged OS-temp copy and passed. Known jsdom canvas and temporary-config module diagnostics do not fail the executed cases.",
-    "Read note-dictation-revision.json and the preserved data-integrity round-5 PASS for the prior typed-draft issue. Inspected existing raw cvc-d4-note-draft-guard-browser-proof/e2e-report.json: hash 9266adfa8ce4f18daabd95ea56cb63889de68b4d29345cdb04ee806b6233d707, five expected, no skipped/unexpected/flaky cases. This is earlier typed-draft/browser evidence, not a new dictation or exact-current-checkpoint browser result.",
-    "No fresh browser was needed for this local activity guard: DOM, layout, labels, controls and persistence are unchanged; round-4 mobile visual evidence remains applicable to those surfaces. The root owns the current permission/typed-note browser regression. Earlier field runner manual-teardown limitations remain qualified; they are not relabeled as unattended passes."
+    "The fix diff 18267f0..df1b9d0 for src/styles.css ([data-reveal] added to the scroll-margin-bottom rule), src/features/settings/CourseFiles.tsx (reveal(), focus with preventScroll, aria-describedby, data-reveal containers, the .txt line) and src/App.tsx (SlowResetHint after 8 s). Also the new 'export feedback stays above the bottom bar (device|320-200)' assertions in tests/e2e/d4-course-files.spec.ts: status, focus, accessible description, save status and share alert must sit within the viewport above the bar.",
+    "Node v24.21.0, HEAD df1b9d0. My scratch Playwright run (my scratchpad's r6/r7.spec.ts and r7.config.ts, its own Vite server on port 4191) on Pixel 7 Chromium and iPhone 13 WebKit: 6/6 passed in 1.1 min. It runs the same journeys as round 6, with the import step now tapped from just above the bar and the reset screen held for 9 s.",
+    "Measured contrast is unchanged: error text 6.74:1, triangle 6.57:1, ready status 6.43:1, muted status 5.89:1. The error has role=alert and an aria-hidden SVG. scrollWidth equals clientWidth at 412, 390 and 320.",
+    "Slow-reset hint: deletion was stubbed to hang. After 8 s the bold line 'Ci vuole più del solito. Chiudi tutte le altre finestre e schede di questa app, anche quelle aperte nel browser: la cancellazione continuerà.' appears under the existing wording, inside the role=status section, with no horizontal overflow at 320/200%. It does not contradict 'se chiudi l'app prima, la cancellazione riprenderà alla prossima apertura'. Closing and reopening still resumes straight into 'Cancellazione dei dati locali…' and completes: 0.8 s on Pixel, 1.9 s on WebKit, then Riapri l'app leads to Crea il corso.",
+    "Screenshots: 36 files in test-results/field-ux-r7/ (copies in my scratchpad's r6/shots7/). Viewed: iphone-13-webkit-320-200-2-after-prepare.png, pixel-7-chrome-device-4-share-error.png, pixel-7-chrome-reset-1-resetting.png.",
+    "The working tree is clean after my run, and nothing is left at the repository root."
   ],
   "anglesTried": {
     "seed": 578023799,
-    "scope": "Restricted round 5: FU-R4-B1, the guarded dictation-start fix and direct processing/completion/failure/retry regressions only. No entropy redraw or whole-milestone hunt.",
+    "scope": "Restricted round 7: FU-R6-B1, FU-R6-I1 and FU-R6-I2 re-tested against df1b9d0, plus regressions from those fixes and the wording and placement of SlowResetHint. No new entropy draw and no whole-milestone hunt.",
     "lenses": [
-      "Prior lens 12: exact student/session identity and coherent in-panel draft/recovery behavior.",
-      "Prior lens 2: prior mobile visual evidence retained because no rendered layout changes; stress surfaces not rerun."
+      "Lens 1 one-thumb reach plus R12: feedback position relative to the fixed bar with the action at the thumb's stopping point",
+      "Lens 2 320 px at 200% text: reveal of a block taller than the space above the bar",
+      "Lens 3 glare/contrast: re-measured, unchanged"
     ],
-    "wildcard": "No new wildcard drawn. Replay the same pending-dictation completion boundary and its two existing controls."
+    "wildcard": "The same scroll-to-the-bar attack as round 6, now on import too, and the reset screen held past the 8 s hint threshold.",
+    "morningPath": [
+      "1. Home, Impostazioni, then a thumb scroll until 'Prepara il file del corso' sits just above the bar. Tap it: 1 tap, about 0.1 s on Pixel.",
+      "2. The page lifts a little: the blue check, 'File del corso pronto', Salva file and Condividi are all in view, nothing under the bar.",
+      "3. Tap Salva file (1 tap): 'Salvataggio avviato' shows just above the bar.",
+      "4. Tap Condividi; it fails: the red triangle and 'Condivisione non riuscita…' are readable above the bar.",
+      "Count: 3 taps to a saved file. No reading twice at default text. At 200%, one scroll to read the .txt note."
+    ]
   },
-  "morningPath": [
-    "1. Open Bea's Sabato PM note, type an observation and tap Salva nota.",
-    "2. While that submission is pending, tap Detta and Termina for the next observation. Starting dictation now marks the panel as newer work immediately; no extra user tap is added.",
-    "3. Earlier save completion leaves processing and the editor visible. The eventual transcript becomes the expected combined editable text rather than disappearing.",
-    "4. The inspected production regression then uses ordinary Salva nota to persist the combined text for the exact student/session and closes only the unchanged editor. Independent replay takes 10.56 seconds including setup and three synthetic cases; this is not human or microphone timing."
-  ],
   "notTested": [
-    "This independent replay uses the real React component with a synthetic MediaRecorder and deferred mocked transcription/persistence. It does not prove physical microphone, speech-model accuracy, native permission dialogs or real-device performance.",
-    "No new browser run by this reviewer; root owns the current focused browser checks. No new screenshot, physical-device or unattended runner-shutdown claim is made.",
-    "No whole-D4, reset/import, stress-layout, production-isolation, schema, VFS or compiler re-audit. The two historical field-UX FAIL rounds remain preserved; this PASS resolves FU-R4-B1 without resetting that history.",
-    "Exact normal CI, fresh final recorder and the old-source Mac full-context diagnostic remain orchestrator gates. This is restricted field-review acceptance only; D4 remains IN_PROGRESS until its required gates are satisfied.",
-    "D3 publication remains pinned and D4 physical transfer/reset acceptance remains owner work. No deployment, production/private data or physical-device PASS."
+    "Real Android share sheet and download UI, and real TalkBack or VoiceOver announcements; shares were mocked.",
+    "The official e2e spec was not re-run by me. The orchestrator reports it passing locally on all four projects; my independent probe covers the same geometry on Pixel 7 and iPhone 13 WebKit.",
+    "The reset-mark ordering change in localDataOperations.ts was outside my role apart from the visible resume behaviour, which still works. Physical-device acceptance remains the owner's."
   ]
 }

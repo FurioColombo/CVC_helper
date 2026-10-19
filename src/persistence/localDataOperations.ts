@@ -21,7 +21,16 @@ function notify(next: LocalDataState) {
 
 function closeCourse() {
   invalidateCourseSession(db)
-  closing ??= db.close()
+  // The SDK's close first waits for its own startup, which never ends when the
+  // engine fails to start (the 30 s worker deadline on phones, D4 review
+  // SC-R3-I1): a reset resumed then would never delete anything. The app's
+  // init settles with that failure, and an engine that never started holds no
+  // connection, so the reset goes on to the deletion.
+  const startupFailed = db.init().then(
+    () => new Promise<void>(() => {}),
+    () => undefined,
+  )
+  closing ??= Promise.race([db.close(), startupFailed])
   closing.catch(() => {
     closing = undefined
   })

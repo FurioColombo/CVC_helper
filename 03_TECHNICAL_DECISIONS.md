@@ -277,11 +277,16 @@ It clears only this channel's preferences,
 runtime/model caches, exact-scope Workbox caches and worker registration, and
 its language-model key in Tesseract's shared store. Cleanup failure reports a
 partial reset and permits retry. A per-channel pending-reset mark, set before
-the instance closes and removed only after cleanup succeeds, makes the next
+the instance closes and removed once the database is deleted, makes the next
 open resume the reset before any course is read, so closing the app midway
-cannot leave it opening a half-deleted course. Exported files outside the app
-remain with their recipient. The regular and test channels remain separate
-on one origin (`docs/DEPLOY.md`); persistence permission itself is browser/origin-wide.
+cannot leave it opening a half-deleted course; a cache that keeps failing to
+clear cannot lock the app out. Closing an instance whose engine never started
+does not wait for it. The mark names no course: a build without it (0.4.2 and
+earlier) that creates a course after an abandoned reset loses that course at
+the next open of a current build, the same older-writer limit as import's.
+Exported files outside the app remain with their recipient. The regular and
+test channels remain separate on one origin (`docs/DEPLOY.md`); persistence
+permission itself is browser/origin-wide.
 
 ## 4. Canonical domain implementation
 

@@ -115,6 +115,9 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   const saveButton = useRef<HTMLButtonElement>(null)
   const preparedBlock = useRef<HTMLDivElement>(null)
   const exportFeedback = useRef<HTMLDivElement>(null)
+  // Counts taps that produce feedback, so a repeated identical message is
+  // revealed again (FU-R7-Q2).
+  const [feedbackTap, setFeedbackTap] = useState(0)
   const importFeedback = useRef<HTMLDivElement>(null)
   const [readingFile, setReadingFile] = useState(false)
   const [preview, setPreview] = useState<ArchivePreview | null>(null)
@@ -138,7 +141,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   useEffect(() => {
     if (exportError || shareError || shareMessage)
       reveal(exportFeedback.current)
-  }, [exportError, shareError, shareMessage])
+  }, [exportError, shareError, shareMessage, feedbackTap])
 
   useEffect(() => {
     if (importError) reveal(importFeedback.current)
@@ -173,6 +176,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
 
   function downloadExport() {
     if (!preparedExport) return
+    setFeedbackTap((count) => count + 1)
     let url: string
     try {
       url = URL.createObjectURL(preparedExport.file)
@@ -196,6 +200,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
   async function shareExport() {
     if (!preparedExport) return
     const fileNavigator = navigator as FileShareNavigator
+    setFeedbackTap((count) => count + 1)
     setShareMessage(null)
     setShareError(null)
     if (
@@ -326,6 +331,12 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                     non contiene dati personali.
                   </span>
                 </p>
+                {preparedExport.shareable && (
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                    Condividi invia lo stesso corso come file .txt: si importa
+                    come il file salvato.
+                  </p>
+                )}
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <Button
                     aria-describedby="prepared-file-status"
@@ -348,12 +359,6 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
                     </Button>
                   )}
                 </div>
-                {preparedExport.shareable && (
-                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
-                    Condividi invia lo stesso corso come file .txt: si importa
-                    come il file salvato.
-                  </p>
-                )}
                 {!preparedExport.shareable && (
                   <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     La condivisione di file non è disponibile in questo browser.
