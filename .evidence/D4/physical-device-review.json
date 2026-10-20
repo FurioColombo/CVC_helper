@@ -15,6 +15,20 @@
       "browser": "Not stated by the owner",
       "osVersion": "Android, version not stated by the owner",
       "reportedAt": "2026-10-19T19:28:15.662Z"
+    },
+    {
+      "id": "D4-PHONE-TRANSFER",
+      "check": "Check course files, persistent storage and full reset on Android",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Owner chat reports in the Claude Code session of 2026-10-20 on CVC Helper Test 0.4.3.",
+      "summary": "Update 0.4.2 to 0.4.3 offered within about 5 seconds of starting the app; Impostazioni shows 0.4.3. Conservazione dei dati: the browser agreed to keep the app data even when space is low. Prepara then Salva file worked on the first tap. Condividi sent the course file to WhatsApp as a .txt file. Import of the shared or saved file: preview, cancel, then confirmed replacement worked; students, notes, duties and crews checked. Azzera tutti i dati locali finished on its own and the app reopened without a course (import and reset sections shown, which the owner questioned but accepted). Regular app: the owner did not open an installed regular CVC Helper app; opening the regular CVC Helper in Chrome, its data stayed separate from the test app.",
+      "testedCommit": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60",
+      "browser": "Chrome",
+      "osVersion": "Android 15",
+      "reportedAt": "2026-10-20T21:00:36.957Z"
     }
   ]
 }

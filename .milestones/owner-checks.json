@@ -35,9 +35,9 @@
       "milestone": "D4",
       "kind": "DEVICE_CHECK",
       "title": "Check course files, persistent storage and full reset on Android",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 5,
+      "revision": 6,
       "instructions": [
         "Open your installed CVC Helper Test (do not reinstall). Switch away and return until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.4.3. Use fictitious people only.",
         "In Impostazioni tap Prepara il file del corso: the check mark and File del corso pronto should appear at once, with Salva file and Condividi in view. Tap Salva file, then Condividi and send the file to another app (it arrives as a .txt). Report the receiving app; any error should show with a red triangle above the bottom bar.",
@@ -49,7 +49,16 @@
       "testedCommit": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/D4/physical-device-review.json",
-      "updatedAt": "2026-10-19T22:39:29.967Z",
+      "updatedAt": "2026-10-20T21:00:36.957Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Owner chat reports in the Claude Code session of 2026-10-20 on CVC Helper Test 0.4.3.",
+        "summary": "Update 0.4.2 to 0.4.3 offered within about 5 seconds of starting the app; Impostazioni shows 0.4.3. Conservazione dei dati: the browser agreed to keep the app data even when space is low. Prepara then Salva file worked on the first tap. Condividi sent the course file to WhatsApp as a .txt file. Import of the shared or saved file: preview, cancel, then confirmed replacement worked; students, notes, duties and crews checked. Azzera tutti i dati locali finished on its own and the app reopened without a course (import and reset sections shown, which the owner questioned but accepted). Regular app: the owner did not open an installed regular CVC Helper app; opening the regular CVC Helper in Chrome, its data stayed separate from the test app.",
+        "testedCommit": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
+        "device": "Motorola Edge 60",
+        "browser": "Chrome",
+        "osVersion": "Android 15"
+      },
       "history": [
         {
           "status": "CHANGES_REQUESTED",

@@ -28,17 +28,11 @@ The owner reported: Accepted by the owner with two steps not observed. Observed 
 
 ## Check course files, persistent storage and full reset on Android — D4
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Open your installed CVC Helper Test (do not reinstall). Switch away and return until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.4.3. Use fictitious people only.
-2. In Impostazioni tap Prepara il file del corso: the check mark and File del corso pronto should appear at once, with Salva file and Condividi in view. Tap Salva file, then Condividi and send the file to another app (it arrives as a .txt). Report the receiving app; any error should show with a red triangle above the bottom bar.
-3. Import the shared or saved file: check the preview, cancel once, then confirm replacement. Reopen and check students, notes, duties and crews.
-4. Confirm Azzera tutti i dati locali. If it takes long, you may close the app: reopening should finish the reset (with a hint after a few seconds) and then open without a course. Confirm the regular CVC Helper app still has its own course.
-5. Report D4-PHONE-TRANSFER with your device, browser and Android version and what you actually saw, including the receiving app and the Conservazione dei dati answer.
-
-Use the test address below and the linked device instructions.
+The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of starting the app; Impostazioni shows 0.4.3. Conservazione dei dati: the browser agreed to keep the app data even when space is low. Prepara then Salva file worked on the first tap. Condividi sent the course file to WhatsApp as a .txt file. Import of the shared or saved file: preview, cancel, then confirmed replacement worked; students, notes, duties and crews checked. Azzera tutti i dati locali finished on its own and the app reopened without a course (import and reset sections shown, which the owner questioned but accepted). Regular app: the owner did not open an installed regular CVC Helper app; opening the regular CVC Helper in Chrome, its data stayed separate from the test app.
 
 **Expected:** The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.
 
@@ -48,4 +42,4 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of D4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
