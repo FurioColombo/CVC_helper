@@ -8,15 +8,6 @@ here as `<spec file> › <test title>`, printed after `FLAKY:`. It gathers the
 UG2 review findings (`.evidence/UG2/*-review.json`). Items leave when scheduled
 or dropped by the owner; at UG3 the rest moves to the next cycle's backlog.
 
-## Taken by 0.4.0 milestones
-
-| Item                                                                | Milestone |
-| ------------------------------------------------------------------- | --------- |
-| Persistent storage, export and import (UG2-DAT-5)                   | D4        |
-| A full local reset (owner, 2026-09-28)                              | D4        |
-| A reliable update that reaches an installed app (owner, 2026-10-06) | D3        |
-| The update banner covering floating controls (UG2-UX-3)             | D3        |
-
 ## Decisions due before the first real roster goes online
 
 From the 0.3.0 next steps, still open after the owner's 2026-10-08 decisions
@@ -197,6 +188,12 @@ Each passed only on a retry and is a defect to fix (03 §6).
   repetitive presentation).
 
 ## Engineering follow-ups
+
+- D4 owner check (2026-10-20): with no course, the start screen still offers
+  Azzera i dati di questo dispositivo. It clears offline files, models and
+  preferences, but after a full reset it is redundant; the owner may hide it
+  when nothing remains. Review FU-R7-Q3: at 320 px/200% text the reset
+  heading "Cancellazione dei dati locali…" breaks inside a word.
 
 - D4 import invalidates current app instances by a local generation. Older
   compatible writers permitted by 03 §3.1 cannot read that generation: a D3

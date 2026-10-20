@@ -164,3 +164,38 @@ behaviour.
 **Evidence:** verification, compatibility table tests, browser evidence, the
 owner's Android check (update without reinstall), data-integrity,
 regression-hunter, field-UX and schema-version sync-chaos reviews, test isolation proof and a security/privacy review of test publication.
+
+## D4 — Export, import, persistent storage and full reset
+
+**Category:** FEATURE
+**Status:** AWAITING_OWNER
+
+1. Ask the browser to keep the data (`navigator.storage.persist()`) when a
+   course is created, and show in Impostazioni whether it agreed.
+2. **Export** the course as one versioned file with identifiers kept, saved or
+   sent through the share sheet. The file name holds no personal name, and the
+   screen says the file contains students' personal data.
+3. **Import** checks the format, the D3 version window and `validateCourseState`
+   before writing anything, and shows what it found. It replaces the current
+   course only after a confirmation; anything invalid changes nothing.
+4. **Full local reset:** closes and deletes the database and the app's caches
+   so no course data remains in the browser (owner, 2026-09-28).
+
+**Success predicate:** a course exported from one browser and imported into a
+fresh one is identical row for row. A corrupt, invalid or too-new file is
+refused with a reason and changes nothing, and after the full reset no course
+data remains in any browser storage.
+
+**Adversarial checklist:** import interrupted halfway; a tampered file that
+would break invariants; an identifier collision with the current course; the
+share sheet on WebKit; persistent storage refused; a reset with another tab
+open, including a stale tab's save landing on the erased course (D1 review
+DI-R2-Q6: duty, student and volunteer saves do not check the course exists);
+closing the database straight after a write, which crashed WebKit's test page
+in D2; personal data in the file name or in logs.
+
+**Evidence:** verification, round-trip evidence on Chromium and WebKit, browser
+evidence, the owner's phone check (export to another app and import back),
+data-integrity, security/privacy, field-UX and version/lifecycle sync-chaos
+reviews. Same-origin production reset proof checks that the regular app's
+course, preferences, cache bytes and offline support remain intact.

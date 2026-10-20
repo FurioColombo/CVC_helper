@@ -29,7 +29,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D1 | Complete. Every record carries `createdAt`, `updatedAt` and its course; repairs on every open settle what older versions and older apps leave; a migration ledger in `meta`. The 0.1–0.3 fixtures upgrade intact on Chromium and WebKit. See `.evidence/D1/`; what an older app strips beyond D1's columns stays lost (03 §3.1). |
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
 | D3 | Complete. The data records its version; older apps open newer data read-only; installed apps find updates on return and keep unsaved work. The owner accepted the Android update on 2026-10-19; the note-edit and enlarged-text phone steps were not observed and move to UG3. See `.evidence/D3/` and its `limitations.md`. |
-| D4 | Awaiting owner again. The owner's phone check (2026-10-19) found full reset could leave the app unopenable, sharing failing and feedback easy to miss. Fixed and reviewed: resumable, bounded reset; text share copy; visible feedback. Exact CI at `7ac55d8` is green without retries; The owner accepted 0.4.3 on Android on 2026-10-20; closure remains. Evidence: `.evidence/D4/`. |
+| D4 | Complete. Courses export to a file, share as text, import back after a preview, and reset fully; an interrupted reset resumes on the next open. Accepted on Android on 2026-10-20 after one round of owner fixes. See `.evidence/D4/`; known limits in 03 §3.2 and `docs/working/BACKLOG.md`. |
 | T1 | In progress. H1/current misses the target: 33:59 versus 60:10. Large WebKit fixture setup drops from 28 s to 1 s intact; one regression run closed a WebKit page, a rerun passes 33 cases. Exact `9533421` CI is green without retries. Trace reduction gives no gain; fixture restoration passes both engines. Final verification/reviews remain open. Evidence: `.evidence/T1/`. |
 | UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
 
@@ -52,41 +52,6 @@ findings join as an extra milestone only if the owner picks them (see the end).
 - Owner checks use `docs/OWNER_WORKFLOW.md` and `docs/OWNER_TODO.md`.
   D4 may follow verified D3 while its phone check waits; T1 may follow
   verified D3/D4 while their phone checks wait. UG3 requires COMPLETE predecessors.
-
-## D4 — Export, import, persistent storage and full reset
-
-**Category:** FEATURE
-**Status:** AWAITING_OWNER
-
-1. Ask the browser to keep the data (`navigator.storage.persist()`) when a
-   course is created, and show in Impostazioni whether it agreed.
-2. **Export** the course as one versioned file with identifiers kept, saved or
-   sent through the share sheet. The file name holds no personal name, and the
-   screen says the file contains students' personal data.
-3. **Import** checks the format, the D3 version window and `validateCourseState`
-   before writing anything, and shows what it found. It replaces the current
-   course only after a confirmation; anything invalid changes nothing.
-4. **Full local reset:** closes and deletes the database and the app's caches
-   so no course data remains in the browser (owner, 2026-09-28).
-
-**Success predicate:** a course exported from one browser and imported into a
-fresh one is identical row for row. A corrupt, invalid or too-new file is
-refused with a reason and changes nothing, and after the full reset no course
-data remains in any browser storage.
-
-**Adversarial checklist:** import interrupted halfway; a tampered file that
-would break invariants; an identifier collision with the current course; the
-share sheet on WebKit; persistent storage refused; a reset with another tab
-open, including a stale tab's save landing on the erased course (D1 review
-DI-R2-Q6: duty, student and volunteer saves do not check the course exists);
-closing the database straight after a write, which crashed WebKit's test page
-in D2; personal data in the file name or in logs.
-
-**Evidence:** verification, round-trip evidence on Chromium and WebKit, browser
-evidence, the owner's phone check (export to another app and import back),
-data-integrity, security/privacy, field-UX and version/lifecycle sync-chaos
-reviews. Same-origin production reset proof checks that the regular app's
-course, preferences, cache bytes and offline support remain intact.
 
 ## T1 — A faster browser suite
 
