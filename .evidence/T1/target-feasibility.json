@@ -1,0 +1,87 @@
+{
+  "milestone": "T1",
+  "status": "TARGET_INFEASIBLE_WITHOUT_OWNER_DECISION",
+  "recordedAt": "2026-10-20T22:22:55.497Z",
+  "source": {
+    "commit": "02fcaf43bbc7",
+    "node": "v24.21.0",
+    "machine": "owner Windows laptop, 8 logical CPUs"
+  },
+  "question": "Can the T1 success predicate (one worker, >=30% less than the H1 suite, no coverage lost) be met?",
+  "likeForLike": {
+    "method": "Same file|title|project cases in the 2026-10-19 back-to-back pair (test-timing.json raw reports)",
+    "matchedCases": 261,
+    "h1Minutes": 33.1,
+    "currentMinutes": 37.9,
+    "changePercent": 15,
+    "newCasesSince": "92 cases, 21.0 min (D1-D4 and T1 additions)"
+  },
+  "target": {
+    "h1Minutes": 33.98,
+    "requiredMaxMinutes": 23.8,
+    "currentMinutes": 60.2,
+    "requiredReductionFromCurrentPercent": 60
+  },
+  "appOpenProbe": {
+    "method": "Fresh context, goto / until Crea il corso (cold) and reload with a course (reload); 5 samples per engine; Pixel 7 Chromium, iPhone 13 WebKit",
+    "devServer": {
+      "h1": {
+        "chromiumCold": 1300,
+        "chromiumReload": 1100,
+        "webkitCold": 2200,
+        "webkitReload": 1950
+      },
+      "current": {
+        "chromiumCold": 1600,
+        "chromiumReload": 1180,
+        "webkitCold": 3400,
+        "webkitReload": 2600
+      }
+    },
+    "productionPreview": {
+      "h1": {
+        "chromiumCold": 980,
+        "chromiumReload": 400,
+        "webkitCold": 1600,
+        "webkitReload": 1060
+      },
+      "current": {
+        "chromiumCold": 990,
+        "chromiumReload": 380,
+        "webkitCold": 2600,
+        "webkitReload": 1650
+      }
+    },
+    "units": "ms, medians rounded; WebKit runs varied by up to 1 s between batches"
+  },
+  "phaseProbe": {
+    "method": "Temporary performance marks in prepareDatabase on the dev server, reverted; not committed",
+    "webkit": {
+      "engineInitMs": "900-1400",
+      "afterInitPreparationMs": "~450 (session bind, version read, claim, two repair checks)"
+    },
+    "chromium": {
+      "engineInitMs": "450-550",
+      "afterInitPreparationMs": "~40"
+    },
+    "engineCompileMs": "~100 on both engines (not the cause)"
+  },
+  "levers": [
+    {
+      "lever": "Serve a production build instead of the Vite dev server",
+      "estimate": "about 0.5-0.8 s per page load, ~6 min",
+      "cost": "22 specs import /src modules for seeding; needs a test seeding entry in the build"
+    },
+    {
+      "lever": "Restore WebKit app-open time to H1 (product performance)",
+      "estimate": "~1 s per WebKit open; real iPhone benefit",
+      "cost": "investigate engine init and batch the post-init preparation reads"
+    },
+    {
+      "lever": "Parallel Playwright workers",
+      "estimate": "wall time roughly divides by workers (2 -> ~30 min, 3 -> ~22 min)",
+      "cost": "contradicts the one-worker predicate; needs per-worker server/port isolation checks and flake watch"
+    }
+  ],
+  "conclusion": "No combination of single-worker levers found reaches 23.8 min without removing cases or projects. The owner must choose a revised target or accept the miss."
+}
