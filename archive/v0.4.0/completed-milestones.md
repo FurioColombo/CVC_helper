@@ -199,3 +199,43 @@ evidence, the owner's phone check (export to another app and import back),
 data-integrity, security/privacy, field-UX and version/lifecycle sync-chaos
 reviews. Same-origin production reset proof checks that the regular app's
 course, preferences, cache bytes and offline support remain intact.
+
+## T1 — A faster browser suite
+
+**Category:** FOUNDATION
+**Status:** IN_PROGRESS
+
+Asked by the owner on 2026-10-10, when H1's browser-time target was missed
+(`.evidence/H1/test-timing.json`). Reorganise the e2e suite by feature with
+typed seeding (UG2-CQ-10): a spec reaches its starting state through a seeding
+helper unless that path is the behaviour under test, and the heaviest journeys
+(full week, hostile roster, field-UX fixes, crew summary) are split or
+trimmed to what they assert. Fix the flaky tests filed in
+`docs/working/BACKLOG.md`. Measure before and after back to back on the same
+idle machine.
+
+On 2026-10-21 the owner revised the target after
+`.evidence/T1/target-feasibility.json` showed the one-worker goal out of reach:
+three workers, unnecessary tests removed and necessary ones kept, and the
+WebKit app-open time checked against H1. Three workers proved slower on the
+development machine, so on 2026-10-22 the owner accepted T1 as delivered:
+the cases recorded as unnecessary removed, the full suite run only when it
+counts (tiered CI, `03_TECHNICAL_DECISIONS.md` §6), and a clean one-worker
+suite of 41:30 against H1's 30:21 (60:10 before the removals).
+
+**Success predicate:** every removed case is recorded with the kept case that
+covers its requirement; ordinary pushes run the quick tier and handoffs,
+closures, publication and `main` the full one, with a quick run never
+standing in for a full one; a back-to-back pair on the same idle machine and
+the recorded `verify:all` run with no failure and no retry; WebKit app open
+in production is within H1's time; and each flake still filed has a recorded
+classification or retained-trace plan.
+
+**Adversarial checklist:** a seeding helper that creates a state the UI cannot;
+a journey shortened past the step it was meant to prove; a case removed whose
+requirement no kept case proves, or proves only on another engine; parallel
+workers sharing state or hiding a flake; a measurement taken while the machine
+was busy; a flake hidden by the retry instead of fixed.
+
+**Evidence:** verification (`verify:all`), `test-timing.json` (before and after),
+self-review, code-quality review.

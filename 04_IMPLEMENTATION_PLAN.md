@@ -30,7 +30,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D2 | Complete. The duty-settings lists are also stored item by item, written beside the lists the app still reads while 0.3.0 can open the database; a repair keeps them identical. Normalisation moved into the domain. Behaviour unchanged. See `.evidence/D2/`; WebKit test-page losses are filed as flaky tests. |
 | D3 | Complete. The data records its version; older apps open newer data read-only; installed apps find updates on return and keep unsaved work. The owner accepted the Android update on 2026-10-19; the note-edit and enlarged-text phone steps were not observed and move to UG3. See `.evidence/D3/` and its `limitations.md`. |
 | D4 | Complete. Courses export to a file, share as text, import back after a preview, and reset fully; an interrupted reset resumes on the next open. Accepted on Android on 2026-10-20 after one round of owner fixes. See `.evidence/D4/`; known limits in 03 §3.2 and `docs/working/BACKLOG.md`. |
-| T1 | In progress. Unnecessary cases removed, full suite now run only when it counts. Clean one-worker pair: 41:30 against H1 30:21 (was 60:10), no flaky test. Three workers do not help on this machine; the time target awaits the owner. Evidence: `.evidence/T1/`; decisions: `docs/working/OWNER_DECISIONS.md`. |
+| T1 | Complete. Unnecessary browser cases removed with their coverage recorded; the full suite runs only when it counts (tiered CI). Clean one-worker suite 41:30 against H1 30:21, no flaky test; the owner accepted this target on 2026-10-22. See `.evidence/T1/`; open flakes in `docs/working/BACKLOG.md`. |
 | UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
 
 ## Execution order
@@ -52,46 +52,6 @@ findings join as an extra milestone only if the owner picks them (see the end).
 - Owner checks use `docs/OWNER_WORKFLOW.md` and `docs/OWNER_TODO.md`.
   D4 may follow verified D3 while its phone check waits; T1 may follow
   verified D3/D4 while their phone checks wait. UG3 requires COMPLETE predecessors.
-
-## T1 — A faster browser suite
-
-**Category:** FOUNDATION
-**Status:** IN_PROGRESS
-
-Asked by the owner on 2026-10-10, when H1's browser-time target was missed
-(`.evidence/H1/test-timing.json`). Reorganise the e2e suite by feature with
-typed seeding (UG2-CQ-10): a spec reaches its starting state through a seeding
-helper unless that path is the behaviour under test, and the heaviest journeys
-(full week, hostile roster, field-UX fixes, crew summary) are split or
-trimmed to what they assert. Fix the flaky tests filed in
-`docs/working/BACKLOG.md`. Measure before and after back to back on the same
-idle machine.
-
-On 2026-10-21 the owner revised the target after
-`.evidence/T1/target-feasibility.json` showed the one-worker goal out of reach:
-three workers, unnecessary tests removed and necessary ones kept, and the
-WebKit app-open time checked against H1. Three workers proved slower on the
-development machine, so on 2026-10-22 the owner accepted T1 as delivered:
-the cases recorded as unnecessary removed, the full suite run only when it
-counts (tiered CI, `03_TECHNICAL_DECISIONS.md` §6), and a clean one-worker
-suite of 41:30 against H1's 30:21 (60:10 before the removals).
-
-**Success predicate:** every removed case is recorded with the kept case that
-covers its requirement; ordinary pushes run the quick tier and handoffs,
-closures, publication and `main` the full one, with a quick run never
-standing in for a full one; a back-to-back pair on the same idle machine and
-the recorded `verify:all` run with no failure and no retry; WebKit app open
-in production is within H1's time; and each flake still filed has a recorded
-classification or retained-trace plan.
-
-**Adversarial checklist:** a seeding helper that creates a state the UI cannot;
-a journey shortened past the step it was meant to prove; a case removed whose
-requirement no kept case proves, or proves only on another engine; parallel
-workers sharing state or hiding a flake; a measurement taken while the machine
-was busy; a flake hidden by the retry instead of fixed.
-
-**Evidence:** verification (`verify:all`), `test-timing.json` (before and after),
-self-review, code-quality review.
 
 ## UG3 — 0.4.0 integration and release gate
 

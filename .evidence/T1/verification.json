@@ -1,0 +1,26 @@
+{
+  "milestone": "T1",
+  "status": "PASS",
+  "recordedAt": "2026-10-21T19:48:45.090Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.3.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "9eb4812129fee2033aefad8ae7d63a89604e9058",
+  "workingTreeClean": true,
+  "sourceDigest": "ee2177ceb28c7cda4c7d3a185779aef90514b471e7d80c1ea641da95d303b6f9",
+  "sourceFiles": 444,
+  "verificationScripts": [
+    "verify:all"
+  ],
+  "flakyTests": [],
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "PASS",
+      "startedAt": "2026-10-21T18:57:03.965Z",
+      "durationMs": 3101118,
+      "exitCode": 0,
+      "outputTail": "[WebServer] 9:47:44 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:47:44 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 256 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (8.6s)\n[WebServer] 9:47:53 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:47:53 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 257 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (7.3s)\n  ok 258 [iphone-13-webkit-core] › tests\\e2e\\d1-migration.spec.ts:278:1 › upgrades and reopens a 40-student course within five seconds each (10.0s)\n  ok 259 [iphone-13-webkit-core] › tests\\e2e\\d3-engine-startup.spec.ts:12:1 › cold upgrade, close/reopen, and IDB reset preserve engine lifecycle (14.0s)\n  ok 260 [iphone-13-webkit-core] › tests\\e2e\\d3-engine-startup.spec.ts:108:1 › a real same-page prewarm cannot be reported as a cold pass (18.0s)\n\n  21 skipped\n  239 passed (45.5m)"
+    }
+  ]
+}

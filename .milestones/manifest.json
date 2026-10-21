@@ -945,7 +945,7 @@
     {
       "id": "T1",
       "category": "FOUNDATION",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "D3",
@@ -980,7 +980,8 @@
             "commit": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4"
           }
         ]
-      }
+      },
+      "verifiedSourceDigest": "ee2177ceb28c7cda4c7d3a185779aef90514b471e7d80c1ea641da95d303b6f9"
     },
     {
       "id": "UG3",
