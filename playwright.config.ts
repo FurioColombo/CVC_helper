@@ -18,34 +18,12 @@ const { hostname, port } = new URL(baseURL)
 // 22 px from Pixel 7's; they now run on Pixel 7 only, and the core ones on
 // iPhone WebKit too (H1, .evidence/H1/test-timing.json). A new spec that
 // measures layout belongs in this list.
-const layoutSpecs = [
-  "d4-course-files",
-  "d4-evaluation-note-save",
-  "d4-local-reset",
-  "c1-crew-management",
-  "d3-summary-controls",
-  "e1-evaluation-history-layout",
-  "f3-crew-summary",
-  "f3-duty-summary",
-  "student-scan",
-  "u01-shell",
-  "u02-students",
-  "u03-knowledge",
-  "u04-scan-ui",
-  "u05-boats-ui",
-  "u06-fault-ui",
-  "u07-volunteers",
-  "u08-duties",
-  "u09-crews",
-  "u10-evaluations",
-  "ug1-boat-mark-fit",
-  "ug1-compact-rows",
-  "ug1-duty-reflow",
-  "ug2-field-ux-fixes",
-  "ug2-hostile-roster",
-  "ux2-crew-interactions",
-  "v02-dictation-layout",
-]
+// T1 (owner, 2026-10-21): unnecessary cases are removed, necessary kept.
+// Chromium at 390×844 adds nothing where a spec sets its own narrow widths;
+// it keeps only the cases measured at the iPhone size itself. Removals and
+// the kept case covering each: .evidence/T1/removed-cases.json.
+const iphoneViewportCases =
+  /pages outgoing boats|export feedback stays above the bottom bar (device)/
 // Core journeys on the WebKit engine. u08-duties joined through an unanchored
 // "duties" pattern before H1 and stays, so H1 removes no WebKit coverage.
 const webkitCoreSpecs = [
@@ -65,8 +43,6 @@ const webkitCoreSpecs = [
   "evaluation-gate",
   "f1-navigation-guards",
   "f3-crew-summary",
-  "knowledge",
-  "persistence",
   "reopen-persistence",
   "s4-ruled-roster-scan",
   "smoke",
@@ -123,6 +99,8 @@ export default defineConfig({
     {
       name: "pixel-7-chrome",
       testIgnore: specs(["d3-startup-multitab"]),
+      // Boats and faults stay on WebKit; u05/u06 cover them here.
+      grepInvert: /manages boats and simultaneous faults/,
       use: { ...devices["Pixel 7"], locale: "it-IT" },
     },
     {
@@ -132,11 +110,15 @@ export default defineConfig({
         "d4-course-files",
         "d4-local-reset",
       ]),
+      // Neither involves a second tab or the SharedWorker path.
+      grepInvert:
+        /remain usable at narrow widths|refuses corrupt, invalid and too-new/,
       use: { ...devices["Desktop Chrome"], locale: "it-IT" },
     },
     {
       name: "iphone-13-viewport",
-      testMatch: specs(layoutSpecs),
+      testMatch: specs(["ux2-crew-interactions", "d4-course-files"]),
+      grep: iphoneViewportCases,
       use: {
         ...devices["iPhone 13"],
         browserName: "chromium",
@@ -146,6 +128,8 @@ export default defineConfig({
     {
       name: "iphone-13-webkit-core",
       testMatch: specs(webkitCoreSpecs),
+      // ug2-hostile-roster's crew summary proves the same image on WebKit.
+      grepInvert: /copies double names, a crew with no boat/,
       use: { ...devices["iPhone 13"], locale: "it-IT" },
     },
   ],

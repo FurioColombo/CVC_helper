@@ -89,7 +89,12 @@ async function expectInsideViewport(page: Page, locator: Locator) {
   expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height)
 }
 
-for (const [family, level, defaultType] of CANONICAL_DEFAULTS) {
+// The whole table is proven by src/domain/boat.test.ts and its wiring by
+// BoatManagement.test.tsx; one course here shows the UI applies it (T1, owner
+// 2026-10-21: unnecessary browser cases removed).
+for (const [family, level, defaultType] of CANONICAL_DEFAULTS.filter(
+  ([family, level]) => family === "Cabinato" && level === 1,
+)) {
   test(`keeps the canonical default for ${family} ${level}`, async ({
     page,
   }) => {

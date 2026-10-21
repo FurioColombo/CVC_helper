@@ -1,0 +1,112 @@
+{
+  "milestone": "T1",
+  "recordedAt": "2026-10-21T06:47:32.068Z",
+  "decision": "Owner 2026-10-21: remove unnecessary tests, keep necessary ones. A case is removed only when a kept case (or a unit test, for pure logic) proves the same requirement on the same engine.",
+  "analysis": "Independent read-only analysis of all 62 specs (2026-10-21), checked by the orchestrator against src/domain/boat.test.ts, ug2-hostile-roster crew summary on WebKit and v02 dictation denial.",
+  "basisForViewportProject": "iphone-13-viewport and pixel-7-chrome are both Chromium with phone user agents (same dedicated-worker storage path, isSafariBrowser false on both); an iPhone-viewport run adds only layout at 390×844, which these specs assert themselves at explicit widths (320/390/412, 200% text).",
+  "removed": [
+    {
+      "spec": "d3-summary-controls, d4-course-files (4), d4-evaluation-note-save, d4-local-reset (3), student-scan, u02-students, u03-knowledge (2), u04-scan-ui (4), u05-boats-ui (12), u06-fault-ui (3), u07-volunteers (2), u08-duties (3), u09-crews (2), u10-evaluations (3), ug2-field-ux-fixes UX-4 and UX-9",
+      "cases": "every case on the project",
+      "projects": [
+        "iphone-13-viewport"
+      ],
+      "keptBy": "The same cases on pixel-7-chrome (and WebKit where listed); each sets its own narrow widths where layout is asserted",
+      "confidence": "high"
+    },
+    {
+      "spec": "u05-boats-ui",
+      "cases": "keeps the canonical default for … (7 of 8; Cabinato 1 kept)",
+      "projects": [
+        "pixel-7-chrome"
+      ],
+      "keptBy": "src/domain/boat.test.ts:13 (all 8), src/features/boats/BoatManagement.test.tsx UI wiring, u05 Cabinato 1 in the browser",
+      "confidence": "high"
+    },
+    {
+      "spec": "f3-crew-summary",
+      "cases": "makes the image in WebKit too, with the boat logos and icons",
+      "projects": [
+        "iphone-13-webkit-core"
+      ],
+      "keptBy": "ug2-hostile-roster › shows and copies the hostile crew summary… on WebKit: logos, icons, devicePixelRatio",
+      "confidence": "high"
+    },
+    {
+      "spec": "f3-crew-summary",
+      "cases": "copies double names, a crew with no boat and every badge…",
+      "projects": [
+        "iphone-13-webkit-core"
+      ],
+      "keptBy": "ug2-hostile-roster crew summary on WebKit at four sizes (no-boat crew, double names, badges, layout problems); kept on pixel-7-chrome",
+      "confidence": "medium"
+    },
+    {
+      "spec": "d4-course-files",
+      "cases": "controls remain usable at narrow widths; refuses corrupt, invalid and too-new files",
+      "projects": [
+        "desktop-chrome-storage"
+      ],
+      "keptBy": "Same cases on pixel-7-chrome and WebKit; neither involves a second tab or the SharedWorker path",
+      "confidence": "high/medium"
+    },
+    {
+      "spec": "persistence",
+      "cases": "creates and restores the active course with the required shell",
+      "projects": [
+        "iphone-13-webkit-core"
+      ],
+      "keptBy": "student-management-gate (reload on WebKit), crew-management-gate navigation; kept on pixel-7-chrome",
+      "confidence": "medium"
+    },
+    {
+      "spec": "knowledge",
+      "cases": "autosaves and restores student knowledge",
+      "projects": [
+        "iphone-13-webkit-core"
+      ],
+      "keptBy": "student-management-gate size and note saved and shown after reload on WebKit; kept on pixel-7-chrome",
+      "confidence": "medium"
+    },
+    {
+      "spec": "u10-evaluations",
+      "cases": "keeps a typed evaluation note recoverable when microphone permission is denied",
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-viewport"
+      ],
+      "keptBy": "v02-dictation-layout › real student create, P05 and P17 note hosts preserve typed text on denial; d4-evaluation-note-save",
+      "confidence": "medium"
+    },
+    {
+      "spec": "v05-assistant-paste",
+      "cases": "reads an answer whose line breaks were all turned into spaces",
+      "projects": [
+        "pixel-7-chrome",
+        "iphone-13-webkit-core"
+      ],
+      "keptBy": "rosterPaste corpus unit tests (joined lines); v05 main case for the UI path",
+      "confidence": "medium"
+    },
+    {
+      "spec": "boats",
+      "cases": "manages boats and simultaneous faults through detail and global entry",
+      "projects": [
+        "pixel-7-chrome"
+      ],
+      "keptBy": "u05/u06 boat and fault cases and ug1-boat-mark-fit on Chromium; kept on WebKit",
+      "confidence": "medium"
+    }
+  ],
+  "keptAgainstAnalysis": [
+    {
+      "spec": "reopen-persistence",
+      "reason": "Only proof that ordinary UI saves survive a real page close; the proposed d4 import round trip covers an import write only."
+    }
+  ],
+  "listedCases": {
+    "before": 355,
+    "after": 259,
+    "note": "npx playwright test --list, skipped cases included"
+  }
+}

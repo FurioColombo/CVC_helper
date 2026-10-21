@@ -699,26 +699,6 @@ test("keeps the floating copy button clear of the last card, the close button an
   await captureCopyButtonWithNote(page, view, "f4-crew-summary")
 })
 
-test("makes the image in WebKit too, with the boat logos and icons", async ({
-  page,
-}, testInfo) => {
-  test.skip(
-    testInfo.project.name !== "iphone-13-webkit-core",
-    "WebKit draws text and SVG differently from Chromium; checked there",
-  )
-  test.setTimeout(120_000)
-  const view = await openThirteenCrewSummary(page)
-  // Playwright's WebKit is not an iPhone and its clipboard cannot be read, so
-  // the image is taken from the page's test hook; the note says whether the
-  // copy itself worked.
-  const result = await copyAndCheckSummaryImage(page, view, testInfo, {
-    name: "f4-crew-summary-13-crews-webkit",
-  })
-  await expectLogosInImage(view, result)
-  await expectIconsInImage(view, result)
-  expect(result.ratio).toBe(3)
-})
-
 /**
  * The owner's phone drew the old image's names wrapped after seven letters,
  * the wrapped line over the next name, double names and surnames broken, the

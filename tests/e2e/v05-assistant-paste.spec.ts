@@ -296,49 +296,6 @@ test("reads an answer pasted with U+2028 line separators", async ({ page }) => {
   watch.assertNone(ownOrigin, ["Bianchi", "Verdi", "Sara", "Luca"])
 })
 
-// F2: a phone or chat app can turn every line break into a plain space,
-// joining the header, every row and FINE into one paragraph that still
-// looks unchanged in a textarea. The parser rebuilds the rows from the
-// fixed five-field structure instead of refusing the whole answer.
-test("reads an answer whose line breaks were all turned into spaces", async ({
-  page,
-}) => {
-  const ownOrigin = await openAssistantSection(page)
-  const watch = watchForNetworkLeaks(page)
-
-  const answer = [
-    ROSTER_PASTE_BEGIN,
-    ROSTER_PASTE_HEADER,
-    "Bianchi;Sara;12/04/2011;15;",
-    "De Luca;Elsa;13/03/2010;14;",
-    ROSTER_PASTE_END,
-  ].join(" ")
-  await page.getByLabel("Risposta dell’assistente").fill(answer)
-  await page.getByRole("button", { name: "Leggi risposta" }).click()
-
-  await expect(
-    page.getByRole("heading", { name: "Controlla prima di salvare" }),
-  ).toBeVisible()
-  await expect(page.getByText(/non è nel formato richiesto/)).toHaveCount(0)
-  expect(await inputValues(page.getByLabel(/^Cognome riga/))).toEqual([
-    "Bianchi",
-    "De Luca",
-  ])
-  expect(await inputValues(page.getByLabel(/^Nome riga/))).toEqual([
-    "Sara",
-    "Elsa",
-  ])
-  await expect(page.getByLabel(/^Età riga/).nth(1)).toHaveValue("14")
-
-  await page.getByRole("button", { name: "Sono tutti" }).click()
-  await page.getByRole("button", { name: "Aggiungi 2 allievi" }).click()
-  await expect(page.getByRole("heading", { name: "Allievi" })).toBeVisible()
-  await expect(page.getByRole("button", { name: /^Sara,/ })).toBeVisible()
-  await expect(page.getByRole("button", { name: /^Elsa,/ })).toBeVisible()
-
-  watch.assertNone(ownOrigin, ["Bianchi", "De Luca", "Sara", "Elsa"])
-})
-
 // Task 4 (owner, 2026-09-28): the three-dot menu and the empty Allievi page
 // used to open a different pair of methods; both now list the same three
 // (manual, scan, assistant), in the same order, and the empty page's own
