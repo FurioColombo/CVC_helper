@@ -5,7 +5,7 @@ import {
   RotateCcw,
   UsersRound,
 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { transcribeAudio } from "@/capabilities/speech"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
   type SessionId,
 } from "@/domain/config"
 import { getDefaultEvaluationSession } from "@/domain/evaluations"
+import { dataIsReadOnly } from "@/persistence/writeGuard"
 import { getStudentDisplayName } from "@/domain/student"
 import { EvaluationOverview } from "@/features/evaluations/EvaluationOverview"
 import {
@@ -58,6 +59,7 @@ function EvaluationNoteEditor({
   onSave,
   transcribe,
   prepareSpeech,
+  onDirtyChange,
 }: {
   student: StudentRecord
   students: StudentRecord[]
@@ -68,6 +70,7 @@ function EvaluationNoteEditor({
   onSave: (note: string | null) => Promise<boolean>
   transcribe: SpeechTranscribe
   prepareSpeech?: SpeechPrepare
+  onDirtyChange?: (dirty: boolean) => void
 }) {
   const name = displayName(student, students)
   const fullName = `${student.firstName} ${student.surname}`.trim()
@@ -94,6 +97,12 @@ function EvaluationNoteEditor({
       return dictation.start()
     },
   }
+  const dirty = note !== (initialNote ?? "") || dictation.status !== "idle"
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+    return () => onDirtyChange?.(false)
+  }, [dirty, onDirtyChange])
+
   const dictationNaming: DictationNaming = {
     start: `Detta nota valutazione di ${name}`,
     subject: `valutazione di ${name}`,
@@ -188,6 +197,7 @@ function EvaluationCard({
   transcribe,
   prepareSpeech,
   onRetry,
+  onNoteDirtyChange,
 }: {
   student: StudentRecord
   students: StudentRecord[]
@@ -205,6 +215,7 @@ function EvaluationCard({
   transcribe: SpeechTranscribe
   prepareSpeech?: SpeechPrepare
   onRetry: () => void
+  onNoteDirtyChange?: (dirty: boolean) => void
 }) {
   const name = displayName(student, students)
   const fullName = `${student.firstName} ${student.surname}`.trim()
@@ -337,6 +348,7 @@ function EvaluationCard({
           students={students}
           transcribe={transcribe}
           prepareSpeech={prepareSpeech}
+          onDirtyChange={onNoteDirtyChange}
         />
       )}
     </article>
@@ -407,8 +419,16 @@ export function EvaluationManagement({
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [saveErrors, setSaveErrors] = useState<Set<string>>(new Set())
   const [noteStudentId, setNoteStudentId] = useState<string | null>(null)
-  const [heldLeave, setHeldLeave] = useState<"note" | "saving" | null>(null)
+  const [heldLeave, setHeldLeave] = useState<
+    "note" | "note-read-only" | "saving" | null
+  >(null)
+  // Whether the open note differs from what is stored (UG3 review RH-1).
+  const noteDirty = useRef(false)
+  const reportNoteDirty = useCallback((dirty: boolean) => {
+    noteDirty.current = dirty
+  }, [])
   const pendingLeave = useRef<(() => void) | null>(null)
+  const readOnlyLeave = useRef<(() => void) | null>(null)
   const saveErrorAlert = useRef<HTMLDivElement>(null)
 
   // Leaving by the screen's Back, the bottom navigation or the phone's Back
@@ -417,6 +437,17 @@ export function EvaluationManagement({
   // completes before the screen is left.
   useLeaveGuard((leave) => {
     if (noteStudentId !== null) {
+      // Data of a newer version cannot be saved here: an untouched note
+      // closes at once, a typed one says so and offers to leave without it.
+      if (dataIsReadOnly()) {
+        if (!noteDirty.current) {
+          setNoteStudentId(null)
+          return false
+        }
+        readOnlyLeave.current = leave
+        setHeldLeave("note-read-only")
+        return true
+      }
       setHeldLeave("note")
       return true
     }
@@ -534,6 +565,7 @@ export function EvaluationManagement({
         isLand={landIds.has(student.id)}
         key={student.id}
         noteOpen={noteStudentId === student.id}
+        onNoteDirtyChange={reportNoteDirty}
         onCloseNote={() =>
           setNoteStudentId((current) =>
             current === student.id ? null : current,
@@ -712,6 +744,27 @@ export function EvaluationManagement({
               Scarta
             </Button>
           </div>
+        </div>
+      )}
+      {heldLeave === "note-read-only" && noteStudentId !== null && (
+        <div className="mt-3" role="alert">
+          <p className="text-sm font-semibold text-[#9a3412]">
+            La nota non può essere salvata: i dati sono di una versione più
+            recente dell’app.
+          </p>
+          <Button
+            className="mt-2"
+            onClick={() => {
+              const leave = readOnlyLeave.current
+              readOnlyLeave.current = null
+              setHeldLeave(null)
+              setNoteStudentId(null)
+              leave?.()
+            }}
+            variant="secondary"
+          >
+            Esci senza salvare
+          </Button>
         </div>
       )}
       {heldLeave === "note" && noteStudentId !== null && (

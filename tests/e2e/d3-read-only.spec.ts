@@ -218,3 +218,63 @@ test("erasing the course still compacts the database under the write guard", asy
   expect(result.free).toBe(0)
   expect(result.after).toBeLessThan(result.before)
 })
+
+// UG3 review RH-1: with newer data the evaluation note, like every edit, never
+// holds the user for a save that cannot happen (01 §2).
+test("a read-only evaluation note closes at once untouched and offers to leave when typed", async ({
+  page,
+}) => {
+  await page.route(isAppRoot, (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: `<html><body>Preparing<script type="module">
+        import { seed } from "/src/test/d1MigrationHarness.ts";
+        import { markNewerData } from "/src/test/d3Harness.ts";
+        try {
+          await seed("0.3.0", "cvc-helper.db");
+          await markNewerData("cvc-helper.db");
+          document.body.textContent = "newer data ready";
+        } catch (error) {
+          document.body.textContent = "seed failed: " + error;
+        }
+      </script></body></html>`,
+    }),
+  )
+  await page.goto("/")
+  await expect(page.getByText("newer data ready")).toBeVisible()
+  await page.unroute(isAppRoot)
+  await page.reload()
+  await expect(readOnlyBar(page)).toBeVisible()
+
+  const openNote = async () => {
+    await page.getByRole("button", { name: "Valutazioni", exact: true }).click()
+    await page
+      .getByRole("button", {
+        name: /^(Aggiungi|Modifica) nota valutazione di /,
+      })
+      .first()
+      .click()
+    await expect(page.getByRole("button", { name: "Salva nota" })).toBeVisible()
+  }
+
+  await openNote()
+  await page.goBack()
+  await expect(
+    page.getByRole("heading", { name: "Valutazioni", level: 1 }),
+  ).not.toBeVisible()
+  await expect(page.getByText("Salva o annulla la nota")).not.toBeVisible()
+
+  await openNote()
+  await page
+    .getByRole("textbox")
+    .first()
+    .fill("Nota che non può essere salvata")
+  await page.goBack()
+  await expect(
+    page.getByText("La nota non può essere salvata", { exact: false }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Esci senza salvare" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Valutazioni", level: 1 }),
+  ).not.toBeVisible()
+})
