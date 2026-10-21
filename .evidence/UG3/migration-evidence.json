@@ -1,0 +1,75 @@
+{
+  "milestone": "UG3",
+  "status": "PASS",
+  "recordedAt": "2026-10-21T21:52:01.277Z",
+  "recordedBy": "Orchestrator, from the UG3 data-integrity review (round 1, commit 880a178) and the recorded suites; the final verify:all run is in verification.json",
+  "sources": [
+    {
+      "sourceVersion": "0.1.0",
+      "fixture": "src/test/fixtures/v0.1.0-course.json",
+      "checks": [
+        {
+          "name": "upgrade on app open, edit, export, import into a fresh browser, replay import, full reset, re-import, export",
+          "status": "PASS",
+          "evidence": "data-integrity-review.json evidenceInspected[0]: all course tables identical to the source at every stage; second and third exports byte-identical; integrity_check ok; 0 row issues; version record unchanged"
+        },
+        {
+          "name": "real interruption of the final open sequence (version claim, D1 repairs, D2 duty items; before and after each commit)",
+          "status": "PASS",
+          "evidence": "data-integrity-review.json evidenceInspected[1]: 6 kills per fixture on a persistent Chromium profile, every value intact on the next open, repairs complete, integrity ok, export valid"
+        },
+        {
+          "name": "browser upgrade suites",
+          "status": "PASS at the recorded verify:all",
+          "evidence": "tests/e2e/d1-migration.spec.ts (Chromium and WebKit), u02-migration, ug1-upgraded-week (0.1.0 UI week), ug2-upgraded-week (0.2.0 UI week), d1-migration 0.3.0 app open"
+        }
+      ]
+    },
+    {
+      "sourceVersion": "0.2.0",
+      "fixture": "src/test/fixtures/v0.2.0-course.json",
+      "checks": [
+        {
+          "name": "upgrade on app open, edit, export, import into a fresh browser, replay import, full reset, re-import, export",
+          "status": "PASS",
+          "evidence": "data-integrity-review.json evidenceInspected[0]: all course tables identical to the source at every stage; second and third exports byte-identical; integrity_check ok; 0 row issues; version record unchanged"
+        },
+        {
+          "name": "real interruption of the final open sequence (version claim, D1 repairs, D2 duty items; before and after each commit)",
+          "status": "PASS",
+          "evidence": "data-integrity-review.json evidenceInspected[1]: 6 kills per fixture on a persistent Chromium profile, every value intact on the next open, repairs complete, integrity ok, export valid"
+        },
+        {
+          "name": "browser upgrade suites",
+          "status": "PASS at the recorded verify:all",
+          "evidence": "tests/e2e/d1-migration.spec.ts (Chromium and WebKit), u02-migration, ug1-upgraded-week (0.1.0 UI week), ug2-upgraded-week (0.2.0 UI week), d1-migration 0.3.0 app open"
+        }
+      ]
+    },
+    {
+      "sourceVersion": "0.3.0",
+      "fixture": "src/test/fixtures/v0.3.0-course.json",
+      "checks": [
+        {
+          "name": "upgrade on app open, edit, export, import into a fresh browser, replay import, full reset, re-import, export",
+          "status": "PASS",
+          "evidence": "data-integrity-review.json evidenceInspected[0]: all course tables identical to the source at every stage; second and third exports byte-identical; integrity_check ok; 0 row issues; version record unchanged"
+        },
+        {
+          "name": "real interruption of the final open sequence (version claim, D1 repairs, D2 duty items; before and after each commit)",
+          "status": "PASS",
+          "evidence": "data-integrity-review.json evidenceInspected[1]: 6 kills per fixture on a persistent Chromium profile, every value intact on the next open, repairs complete, integrity ok, export valid"
+        },
+        {
+          "name": "browser upgrade suites",
+          "status": "PASS at the recorded verify:all",
+          "evidence": "tests/e2e/d1-migration.spec.ts (Chromium and WebKit), u02-migration, ug1-upgraded-week (0.1.0 UI week), ug2-upgraded-week (0.2.0 UI week), d1-migration 0.3.0 app open"
+        }
+      ]
+    }
+  ],
+  "qualification": "The 18 real interruptions ran on Chromium only; WebKit covers the same upgrades without interruption plus the synthetic-migration rollback (d1-migration.spec.ts:120) and the abrupt close during a held write (d3-startup-recovery.spec.ts:331). The browser runs recorded the development version (0.3.0 package) rather than 0.4.0; the logic is the same. 0.4.0 defines no ledgered migration (MIGRATIONS is empty).",
+  "answers": [
+    "UG3 scope review SC-8"
+  ]
+}
