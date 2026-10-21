@@ -986,7 +986,7 @@
     {
       "id": "UG3",
       "category": "INTEGRATION_GATE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "ownerEvidence": [".evidence/UG3/physical-device-review.json"],
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
@@ -1008,7 +1008,12 @@
         ".evidence/UG3/code-quality-review.json",
         ".evidence/UG3/field-ux-review.json",
         ".evidence/UG3/security-privacy-review.json"
-      ]
+      ],
+      "startedFrom": {
+        "commit": "620cebb79a5604d652381837142c6be9025cb859",
+        "sourceDigest": "ee2177ceb28c7cda4c7d3a185779aef90514b471e7d80c1ea641da95d303b6f9",
+        "ownerPrerequisites": []
+      }
     }
   ]
 }
