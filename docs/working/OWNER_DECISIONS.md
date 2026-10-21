@@ -29,7 +29,9 @@ change. Accepted entries move into the contract they touch.
    here; T1 instead cuts per-test cost (removed cases, the WebKit open
    regression) and runs the full suite less often (entry 2). **Owner:** a
    faster machine or CI runners with more cores would make workers pay;
-   otherwise the time target needs restating.
+   otherwise the time target needs restating. Clean pair on 2026-10-21, one
+   worker: 41:30 against H1 30:21 (60:10 before the removals), no flaky test
+   and no retry (`.evidence/T1/test-timing.json`).
 4. **WebKit open "regression" (measured: none in production).** Production
    builds of H1, D1, D2, D3, D4 and now open WebKit at the same speed within
    a wide spread (`.evidence/T1/webkit-open-bisect.json`). The slowdown is in
