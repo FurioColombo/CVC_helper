@@ -1,0 +1,35 @@
+{
+  "milestone": "T1",
+  "recordedAt": "2026-10-21T07:30:53.306Z",
+  "question": "Did WebKit app open regress between H1 and now (target-feasibility.json suggested about 1 s)?",
+  "method": "Production builds (vite build + vite preview) of each checkpoint from git worktrees sharing the unchanged lockfile; iPhone 13 WebKit; 6 fresh contexts in one browser: goto / until Crea il corso (cold), then create a course and reload until Allievi (reload). Idle machine (8% CPU, 3 GB free).",
+  "medianMs": {
+    "a25eba1 H1": {
+      "cold": 2841,
+      "reload": 1662
+    },
+    "d19b51b D1": {
+      "cold": 2781,
+      "reload": 1643
+    },
+    "d033bbf D2": {
+      "cold": 2816,
+      "reload": 1710
+    },
+    "761530f D3": {
+      "cold": 2833,
+      "reload": 1630
+    },
+    "1d7cd9f D4 first handoff": {
+      "cold": 3307,
+      "reload": 1788
+    },
+    "3584f42 current": {
+      "cold": 3313,
+      "reload": 1640
+    }
+  },
+  "pattern": "Every build, H1 included, opens in about 1.55-1.65 s on its first context and mostly 2.0-3.3 s afterwards; a fresh browser per sample gives 2.05-2.10 s steadily on the current build. The distribution is bimodal (about 1.55 s or 2.05 s, with 2.6-3.7 s outliers).",
+  "conclusion": "No reproducible WebKit open regression between H1 and the current production build; the earlier 1 s gap came from this variance and from the dev server, which loads more modules since D3/D4. D4 checkpoints show at most ~0.4 s more on cold median, within the spread. Not pursued further in T1 without a reproducible signal.",
+  "devServerNote": "Dev-server WebKit cold opens measured 2.2 s at H1 and 3.3-3.8 s now (target-feasibility.json); the browser suite runs on the dev server, so this is a test-harness cost, not a user cost."
+}

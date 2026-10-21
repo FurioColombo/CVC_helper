@@ -73,13 +73,16 @@ On 2026-10-21 the owner revised the target after
 H1). The suite may run on three workers. Unnecessary tests are removed and
 necessary ones kept: a case goes only when another kept case proves the same
 requirement on the same engine at least as strongly, recorded case by case.
-The WebKit app-open regression is fixed in the app.
+The WebKit app-open time is checked against H1 and fixed in the app if it
+regressed (`.evidence/T1/webkit-open-bisect.json`: it did not in production
+builds).
 
 **Success predicate:** the full browser suite on three workers takes at least
 30% less time than the H1 suite (33:59, so at most 23:47), measured back to
 back on the same idle machine; every removed case is recorded with the kept
-case that covers its requirement; WebKit app open is back within H1's time;
-and no flaky test remains.
+case that covers its requirement; WebKit app open is within H1's time; and
+no flaky test remains. Decisions taken without the owner are in
+`docs/working/OWNER_DECISIONS.md`.
 
 **Adversarial checklist:** a seeding helper that creates a state the UI cannot;
 a journey shortened past the step it was meant to prove; a case removed whose

@@ -19,14 +19,25 @@ change. Accepted entries move into the contract they touch.
    `verify` and a browser smoke set; the full suite runs for milestone
    handoffs and closures, release gates, `main`, a nightly run and manual
    runs. Review: which journeys belong in the smoke set.
-3. **Worker count (pending measurement).** The owner chose three workers;
-   H1 found two workers slower on this machine. The trial result decides
-   whether three workers, a mixed split (Chromium parallel, WebKit serial) or
-   fewer is faster; the choice is recorded here with the numbers.
+3. **Worker count (measured; one worker kept locally).** The full suite on
+   three workers took 59.8 min against about 60 on one, with 7 failures and
+   14 flaky cases (WebKit cases ran 1–2 min each). A Chromium-only subset
+   went from 188 s to 154 s. This 8 GB, 8-thread machine is saturated, as H1
+   found. The revised target (three workers, at most 23:47) cannot be met
+   here; T1 instead cuts per-test cost (removed cases, the WebKit open
+   regression) and runs the full suite less often (entry 2). **Owner:** a
+   faster machine or CI runners with more cores would make workers pay;
+   otherwise the time target needs restating.
+4. **WebKit open "regression" (measured: none in production).** Production
+   builds of H1, D1, D2, D3, D4 and now open WebKit at the same speed within
+   a wide spread (`.evidence/T1/webkit-open-bisect.json`). The slowdown is in
+   the dev server the tests use (more modules since D3/D4). T1 therefore
+   treats it as a harness cost; serving the tests a production build is the
+   remaining lever and needs a build-time seeding entry for 22 specs.
 
 ## D4 follow-ups
 
-4. **Reset section on an empty start (postponed).** Kept as is; hiding it
+6. **Reset section on an empty start (postponed).** Kept as is; hiding it
    when nothing remains is in `docs/working/BACKLOG.md`.
-5. **Reset mark names no course (accepted limit).** 03 §3.2 records it; a
+7. **Reset mark names no course (accepted limit).** 03 §3.2 records it; a
    course-bound mark is possible later if older windows matter.
