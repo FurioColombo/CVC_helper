@@ -43,3 +43,27 @@ The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of star
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
 **Work affected:** The owner report is recorded.
+
+<a id="ug3-phone-release"></a>
+
+## Check the 0.4.0 release build on Android — UG3
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. This check is not ready yet. The agent publishes the final 0.4.0 source to CVC Helper Test as 0.4.4 after the release reviews and the final verification pass, and tells you when it is ready.
+2. Once READY, keep your installed CVC Helper Test and use fictitious people only. Before switching away, open a student and type a note but do not leave the screen. Switch away and back until Nuova versione disponibile appears, then tap Aggiorna at once: the typed note must survive, and Impostazioni must show 0.4.4.
+3. With the phone text size raised, check that the update offer covers neither the + of Allievi nor the Equipaggi controls with a person selected.
+4. Export the course (Salva file and Condividi), import it back after the preview and confirmation, and read Conservazione dei dati.
+5. Report UG3-PHONE-RELEASE with your device, browser and Android version and what you saw.
+
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+
+**Expected:** The update arrives without reinstalling and keeps the typed note; controls stay reachable at enlarged text; export, share and import round-trip the synthetic course; storage persistence is reported honestly. Only actual phone observations pass.
+
+**Build:** No test build is assigned yet.
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of UG3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.

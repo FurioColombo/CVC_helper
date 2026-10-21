@@ -75,6 +75,27 @@
           "invalidatedAt": "2026-10-19T20:08:05.775Z"
         }
       ]
+    },
+    {
+      "id": "UG3-PHONE-RELEASE",
+      "milestone": "UG3",
+      "kind": "DEVICE_CHECK",
+      "title": "Check the 0.4.0 release build on Android",
+      "status": "NEEDS_SETUP",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "This check is not ready yet. The agent publishes the final 0.4.0 source to CVC Helper Test as 0.4.4 after the release reviews and the final verification pass, and tells you when it is ready.",
+        "Once READY, keep your installed CVC Helper Test and use fictitious people only. Before switching away, open a student and type a note but do not leave the screen. Switch away and back until Nuova versione disponibile appears, then tap Aggiorna at once: the typed note must survive, and Impostazioni must show 0.4.4.",
+        "With the phone text size raised, check that the update offer covers neither the + of Allievi nor the Equipaggi controls with a person selected.",
+        "Export the course (Salva file and Condividi), import it back after the preview and confirmation, and read Conservazione dei dati.",
+        "Report UG3-PHONE-RELEASE with your device, browser and Android version and what you saw."
+      ],
+      "expected": "The update arrives without reinstalling and keeps the typed note; controls stay reachable at enlarged text; export, share and import round-trip the synthetic course; storage persistence is reported honestly. Only actual phone observations pass.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/UG3/physical-device-review.json",
+      "updatedAt": "2026-10-21T20:56:27.162Z"
     }
   ]
 }

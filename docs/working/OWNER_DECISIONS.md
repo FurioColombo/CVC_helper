@@ -17,9 +17,21 @@ Still open for review:
    `verify:e2e:smoke`, and whether the 02:17 UTC nightly full run on `main`
    is wanted (review CQ-9: it repeats `main`'s already-full push run).
 
+## UG3 — 0.4.0 release
+
+4. **Release mechanics (taken; final step held).** The release check
+   (`UG3-PHONE-RELEASE`) runs on CVC Helper Test as 0.4.4 from the final
+   source. The package version becomes 0.4.0 and the changelog entry is
+   written on the branch. Merging to `main`, which redeploys the regular app
+   you use with real courses, and the `v0.4.0` tag wait for your explicit go
+   after the phone check passes.
+5. **No fix milestone for 0.4.0 (postponed).** The plan's open questions (which
+   UG2 field findings join 0.4.0, which retrospective proposals are adopted)
+   move to 0.5.0 planning; 0.4.0 ships without a fix milestone.
+
 ## D4 follow-ups
 
-2. **Reset section on an empty start (postponed).** Kept as is; hiding it
+6. **Reset section on an empty start (postponed).** Kept as is; hiding it
    when nothing remains is in `docs/working/BACKLOG.md`.
-3. **Reset mark names no course (accepted limit).** 03 §3.2 records it; a
+7. **Reset mark names no course (accepted limit).** 03 §3.2 records it; a
    course-bound mark is possible later if older windows matter.
