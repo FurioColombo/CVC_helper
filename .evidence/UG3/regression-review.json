@@ -1,0 +1,66 @@
+{
+  "reviewerRole": "regression",
+  "persona": "Il Segugio",
+  "milestone": "UG3",
+  "round": 1,
+  "commit": "bc44c10b55ff1fa761c75b02cca6375a3493adb9",
+  "diffRange": "v0.3.0..bc44c10",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "RH-1",
+      "title": "With read-only data, an evaluation note opened with nothing typed holds Back and Aggiorna",
+      "evidence": "EvaluationManagement.tsx:418-422 leave guard ignores dataIsReadOnly(); probe on the 0.3.0 fixture marked newer",
+      "reproduction": "Valutazioni > open a note > phone Back: note stays, Salva o annulla la nota prima di uscire.",
+      "specRef": "01 §2 read-only"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "RH-Q1",
+      "title": "After a same-tab import and Riapri, the phone Back walks through the replaced course's old screens",
+      "evidence": "App.tsx Riapri replaces only the current history entry",
+      "reproduction": "",
+      "specRef": "01 §2"
+    },
+    {
+      "id": "RH-Q2",
+      "title": "T1 left no browser case that saves and reloads an evaluation note after a denied dictation",
+      "evidence": "removed-cases.json u10 medium confidence; restored case passes at HEAD",
+      "reproduction": "",
+      "specRef": "AGENTS.md §9"
+    },
+    {
+      "id": "RH-Q3",
+      "title": "Uncommitted change to src/persistence/migrations.test.ts during the review",
+      "evidence": "git status",
+      "reproduction": "",
+      "specRef": "AGENTS.md §6"
+    }
+  ],
+  "evidenceInspected": [
+    "v0.3.0..HEAD diff of shell, navigation, persistence, evaluations, students, duties, crews; T1 removals; playwright --list; n1-phone-back, f1-navigation-guards, d1-migration, d4-course-files on pixel; vitest 70 passed; probes for Back after import and read-only notes; restored u10 and v05 cases pass"
+  ],
+  "anglesTried": {
+    "seed": 625926591,
+    "lenses": [
+      "Navigation stack and leave guards",
+      "Tests deleted or loosened"
+    ],
+    "wildcard": "New App states and D4 controls against history and guards"
+  },
+  "notTested": [
+    "WebKit runs",
+    "verify:all checks",
+    "Physical devices",
+    "RH-1 with a real waiting service worker"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report.",
+  "dispositions": {
+    "RH-1": "fixed in acd6f32 with a browser test (d3-read-only)",
+    "RH-Q1": "docs/working/BACKLOG.md",
+    "RH-Q2": "case restored in tests/e2e/u10-evaluations.spec.ts",
+    "RH-Q3": "the orchestrator's own in-progress test fix, committed in b285fb4"
+  }
+}

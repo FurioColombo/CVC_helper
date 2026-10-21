@@ -4,6 +4,10 @@ import path from "node:path"
 import { expect, type Page, test } from "@playwright/test"
 
 import { evidenceOutputPath } from "./evidence"
+import {
+  DICTATION_JOURNEY_TIMEOUT,
+  FIRST_DICTATION_TIMEOUT,
+} from "./speech-download"
 
 const SESSIONS = [
   "sat-pm",
@@ -239,6 +243,71 @@ test("edits thirteen sessions through one compact row and reads the same week in
       `p17-stress-${testInfo.project.name}.png`,
     ),
   })
+})
+
+// Restored at UG3 (review RH-Q2): the only browser case that saves and
+// reloads an evaluation note after a denied dictation.
+test("keeps a typed evaluation note recoverable when microphone permission is denied", async ({
+  page,
+}) => {
+  test.setTimeout(DICTATION_JOURNEY_TIMEOUT)
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "MediaRecorder", {
+      configurable: true,
+      value: class {},
+    })
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: () =>
+          Promise.reject(new DOMException("Denied", "NotAllowedError")),
+      },
+    })
+  })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Allievi" }).click()
+  await addStudent(page, "Aldo", "Rossi")
+  await page.getByRole("button", { name: "Indietro da Allievi" }).click()
+  await page.getByRole("button", { name: "Valutazioni" }).click()
+  await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
+  await page
+    .getByRole("button", { name: "Aggiungi nota valutazione di Aldo" })
+    .click()
+  const note = page.getByRole("textbox", { name: "Nota valutazione di Aldo" })
+  await note.fill("Testo scritto prima della dettatura")
+  await page
+    .getByRole("button", { name: "Detta nota valutazione di Aldo" })
+    .click()
+  await expect(page.getByRole("alert")).toContainText(
+    "Permesso microfono non concesso",
+    { timeout: FIRST_DICTATION_TIMEOUT },
+  )
+  await expect(note).toHaveValue("Testo scritto prima della dettatura")
+  await page
+    .getByRole("button", { name: "Riprovare dettatura valutazione di Aldo" })
+    .click()
+  await expect(page.getByRole("alert")).toContainText(
+    "Permesso microfono non concesso",
+  )
+  await note.fill("Testo corretto e salvato")
+  await page.getByRole("button", { name: "Salva nota" }).click()
+  await expect(
+    page.getByLabel("Stato salvataggio valutazione di Aldo"),
+  ).toHaveText("Salvato")
+  await expect(
+    page.getByRole("button", { name: "Modifica nota valutazione di Aldo" }),
+  ).toBeVisible()
+  // N1: reload restores the same screen (Valutazioni), so there is no Home
+  // "Valutazioni" card to click here.
+  await page.reload()
+  await page.getByLabel("Sessione valutazioni").selectOption("sat-pm")
+  await page
+    .getByRole("button", { name: "Modifica nota valutazione di Aldo" })
+    .click()
+  await expect(note).toHaveValue("Testo corretto e salvato")
 })
 
 test("shows the evaluation note itself, clamped to two lines however long it is", async ({

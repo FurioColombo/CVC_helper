@@ -155,6 +155,10 @@ left at T1's close (2026-10-21); see `.evidence/T1/self-review.json`.
 
 ## Engineering follow-ups
 
+- UG3 review RH-Q1: after an import in the same tab and Riapri l’app, the
+  phone Back walks through the replaced course's earlier screens; clear the
+  shell history entries on reopen.
+
 - UG3 review DI-UG3-2 (for 0.5.0's first migration): an import keeps the
   device's migration ledger, so a file from before a ledgered migration is
   imported unmigrated (03 §3.3). DI-UG3-Q3: a hand-edited file can raise the
