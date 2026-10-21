@@ -17,7 +17,12 @@ import {
   repairDutySettingItems,
   repairRows,
 } from "@/persistence/repairs"
-import { markReadOnly, ReadOnlyDataError } from "@/persistence/writeGuard"
+import {
+  compactCourseDatabase,
+  compactionPending,
+  markReadOnly,
+  ReadOnlyDataError,
+} from "@/persistence/writeGuard"
 import { bindCourseSession } from "@/persistence/courseSession"
 
 /**
@@ -129,6 +134,9 @@ export function prepareDatabase(
           )
         }
         await runMigrations(database, migrations)
+        // An import's compaction cut short by closing the app (UG3 DI-UG3-1).
+        if (await compactionPending(database))
+          await compactCourseDatabase(database).catch(() => {})
       } catch (error) {
         // A newer app raised the record meanwhile; the guard marked the
         // database read-only (src/persistence/writeGuard.ts).

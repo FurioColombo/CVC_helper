@@ -1,0 +1,66 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "UG3",
+  "commit": "376b5ad",
+  "diffRange": "v0.3.0..376b5ad",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SP-UG3-1",
+      "title": "Importing a course over the current one leaves the replaced students readable in the stored database pages",
+      "evidence": "courseArchive.ts:110-137 deletes and inserts in one transaction and never compacts; Chromium probe: 305 marker hits in cvc-helper.db blocks after import and after reload; secure_delete 0.",
+      "reproduction": "Create course, export empty, add 300 marked students, import the empty export, count markers in IndexedDB blocks.",
+      "specRef": "D4 item 3; 03 §3.2; D3 DI-R2-1"
+    },
+    {
+      "id": "SP-UG3-2",
+      "title": "The pre-commit phone rule catches fewer formats than the roster pattern and skips .milestones/ prose",
+      "evidence": "scripts/privacy-rules.mjs:43-44 vs src/capabilities/studentScan.ts:192; isRecordPath excludes .milestones/",
+      "reproduction": "lineProblems on (3NN) NNNNNNN, 3NN/NNNNNNN, 3-2-2-3 groupings returns []",
+      "specRef": "AGENTS.md §17, §18"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-UG3-Q1",
+      "title": "No Content-Security-Policy or Referrer-Policy",
+      "evidence": "index.html",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "SP-UG3-Q2",
+      "title": "Import does not clear the replaced course per-course preference keys",
+      "evidence": "courses.ts:110-114 vs courseArchive.ts",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "SP-UG3-Q3",
+      "title": "Retained-trace CI artifact uploads the whole test-results/ directory",
+      "evidence": "ci.yml last step",
+      "reproduction": "",
+      "specRef": "AGENTS.md §17"
+    }
+  ],
+  "evidenceInspected": [
+    "Network, diagnostics, export/share, deletion, channel isolation, history/title wildcard, publisher, CI, hooks, repo phone scan, images; vitest 58 passed; one Chromium probe"
+  ],
+  "anglesTried": {
+    "seed": 644987289,
+    "lenses": [
+      "Headers, CSP and third-party downloads",
+      "Deletion"
+    ],
+    "wildcard": "Personal data in URL, history or title"
+  },
+  "notTested": [
+    "Physical devices",
+    "Live response headers",
+    "Full browser suite"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report."
+}

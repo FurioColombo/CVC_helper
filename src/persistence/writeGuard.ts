@@ -68,6 +68,22 @@ export async function compactEmptyCourseDatabase(database: PowerSyncDatabase) {
   return database.writeLock((context) => context.execute("VACUUM"))
 }
 
+/**
+ * An import records that its replaced rows still sit in free pages; each
+ * compaction clears the mark, and every open finishes one left pending
+ * (UG3 review DI-UG3-1: an app closed during the compaction).
+ */
+export const COMPACTION_PENDING_ID = "local:compaction-pending"
+
+export async function compactionPending(
+  context: Pick<PowerSyncDatabase, "getAll">,
+) {
+  const rows = await context.getAll("SELECT id FROM meta WHERE id = ?", [
+    COMPACTION_PENDING_ID,
+  ])
+  return rows.length > 0
+}
+
 /** After an import: the same guarded compaction, the new course kept. */
 export async function compactCourseDatabase(database: PowerSyncDatabase) {
   const compact = compactors.get(database)
@@ -106,7 +122,10 @@ export function guardWrites<Database extends PowerSyncDatabase>(
         const courses = await context.getAll("SELECT id FROM courses LIMIT 1")
         if (courses.length) throw new Error("Il corso è ancora presente.")
       }
-      return context.execute("VACUUM")
+      await context.execute("VACUUM")
+      return context.execute("DELETE FROM meta WHERE id = ?", [
+        COMPACTION_PENDING_ID,
+      ])
     }),
   )
   const guarded =

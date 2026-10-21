@@ -15,7 +15,10 @@ import {
 import { db } from "@/persistence/db"
 import { readDataVersion, writeDataVersion } from "@/persistence/dataVersion"
 import { clearCoursePreferences } from "@/persistence/courses"
-import { compactCourseDatabase } from "@/persistence/writeGuard"
+import {
+  COMPACTION_PENDING_ID,
+  compactCourseDatabase,
+} from "@/persistence/writeGuard"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 
@@ -121,10 +124,15 @@ export async function importCourseArchive(
     }
     await mergeImportedVersion(transaction, archive)
     await advanceCourseGeneration(transaction)
+    await transaction.execute(
+      "INSERT OR REPLACE INTO meta(id, value) VALUES (?, 1)",
+      [COMPACTION_PENDING_ID],
+    )
   })
   // The replaced course's rows must not stay readable in free database pages
   // (UG3 review SP-UG3-1), as after an erase. The import is already whole; a
-  // failed compaction leaves its data correct and is retried by the next one.
+  // compaction that fails or is cut short stays marked pending, and the next
+  // open finishes it (prepareDatabase).
   await compactCourseDatabase(database).catch(() => {})
   clearCoursePreferences()
   // Never rebind this instance: a delayed callback from the old course could

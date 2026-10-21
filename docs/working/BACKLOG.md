@@ -155,6 +155,11 @@ left at T1's close (2026-10-21); see `.evidence/T1/self-review.json`.
 
 ## Engineering follow-ups
 
+- UG3 review DI-UG3-2 (for 0.5.0's first migration): an import keeps the
+  device's migration ledger, so a file from before a ledgered migration is
+  imported unmigrated (03 §3.3). DI-UG3-Q3: a hand-edited file can raise the
+  recorded newest version; validate it against `minimumWriterOf` then.
+
 - D4 owner check (2026-10-19): what held the Android full reset (app left
   unopenable until reinstalling on 0.4.2) is unproven. 0.4.3 bounds and
   resumes the reset and passed on the phone; the cause is not established.

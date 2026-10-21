@@ -228,6 +228,33 @@ describe("prepareDatabase", () => {
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
+  // UG3 review DI-UG3-1: an import's compaction cut short is finished at the
+  // next open, and an open with nothing pending compacts nothing.
+  it("finishes a compaction an import left pending, and only then", async () => {
+    for (const pending of [true, false]) {
+      const { database } = preparable(false, record("0.5.0", "0.4.0"))
+      const statements: string[] = []
+      const getAll = database.getAll
+      Object.assign(database, {
+        getAll: vi.fn(async (sql: string, params?: unknown[]) =>
+          sql.includes("FROM meta WHERE id = ?") && pending
+            ? [{ id: "local:compaction-pending" }]
+            : getAll(sql, params as never),
+        ),
+        writeLock: vi.fn(
+          async (callback: (context: unknown) => Promise<unknown>) =>
+            callback({
+              execute: async (sql: string) => void statements.push(sql),
+            }),
+        ),
+      })
+
+      await prepareDatabase(database as never, [], APP)
+
+      expect(statements).toEqual(pending ? ["VACUUM"] : [])
+    }
+  })
+
   // 03 §3.1: an app older than the data's minimum writer runs no repair or
   // migration, which all write, and its writes refuse.
   it("opens read-only, before any repair, data newer than this version may write", async () => {

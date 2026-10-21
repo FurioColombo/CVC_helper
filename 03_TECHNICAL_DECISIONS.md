@@ -253,7 +253,14 @@ course generation stay out of the file. Import validates the entire file,
 the compatibility contract, stored-row integrity, domain invariants and D2's
 paired representations before writing, then replaces the course in one
 transaction. Version claims remain monotonic; an interrupted replacement
-rolls back its rows, version record and generation together.
+rolls back its rows, version record and generation together. The same
+transaction marks a compaction pending; the import then compacts (VACUUM
+under the guarded write lock) so the replaced course leaves nothing in free
+pages, and clears the per-course preferences. A compaction that fails or is
+cut short stays marked, and the next open finishes it. The device's migration
+ledger is kept, so an imported file from before a ledgered migration is not
+migrated: 0.4.0 has none, and the first real migration (0.5.0) must record
+its state in the file or re-run on import.
 
 Every current database instance binds its course ID and local generation
 before the first screen. The write guard checks them inside each acquired

@@ -1,0 +1,77 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "UG3",
+  "commit": "880a178",
+  "diffRange": "v0.3.0..880a178",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-UG3-1",
+      "title": "If the app is killed during the post-import compaction, the replaced students stay readable and nothing retries it",
+      "evidence": "courseArchive.ts:125-128; kill at 0-50 ms after commit left 9054 marker hits, 100-400 ms left 0; integrity intact in all 8 runs",
+      "reproduction": "Persistent Chromium profile, 1000 marker students, UI import, close N ms after commit, count markers before reopening",
+      "specRef": "03 §3.3; SP-UG3-1"
+    },
+    {
+      "id": "DI-UG3-2",
+      "title": "An import keeps the migration ledger and the archive records no migration state, so older-shape rows are imported unmigrated",
+      "evidence": "courseArchive.ts:106-124 keeps meta; stand-in migration proof: 0 of 7 imported students migrated",
+      "reproduction": "Scratch ledger probe with a stand-in migration",
+      "specRef": "03 §3, §3.3"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-UG3-Q1",
+      "title": "No unit test exercises post-import compaction and the catch hides failure",
+      "evidence": "",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "DI-UG3-Q2",
+      "title": "03 §3.3 does not describe post-import compaction or preference clearing",
+      "evidence": "",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "DI-UG3-Q3",
+      "title": "A hand-edited archive version record can raise the recorded newest writer",
+      "evidence": "courseArchiveFormat.ts:182-189",
+      "reproduction": "",
+      "specRef": "03 §3.1"
+    }
+  ],
+  "evidenceInspected": [
+    "Round trips for 0.1.0, 0.2.0 and 0.3.0 fixtures (upgrade, edit, export, fresh import, replay, reset, re-import): all tables identical, exports byte-identical, integrity ok",
+    "Real interruption of the final open sequence: 18 kills (claim, D1 repairs, D2 duty items, before and after commit, three fixtures), all recovered intact",
+    "Two-tab import and compaction on Chromium dedicated worker, SharedWorker and WebKit",
+    "Double-tap import",
+    "vitest 45 passed"
+  ],
+  "anglesTried": {
+    "seed": 402859415,
+    "lenses": [
+      "Two tabs writing the same course",
+      "Replaying an operation twice"
+    ],
+    "wildcard": "Kill inside the post-import VACUUM"
+  },
+  "notTested": [
+    "0.1.0/0.2.0 round trips and interruptions on WebKit",
+    "Records under the release version number",
+    "Hard process kill; real phones"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report.",
+  "dispositions": {
+    "DI-UG3-1": "fixed: the import marks a compaction pending in its transaction; each compaction clears it; prepareDatabase finishes a pending one (unit test)",
+    "DI-UG3-2": "documented in 03 §3.3 and BACKLOG for 0.5.0",
+    "DI-UG3-Q1": "unit test of the pending compaction added",
+    "DI-UG3-Q2": "03 §3.3 updated",
+    "DI-UG3-Q3": "BACKLOG for 0.5.0"
+  }
+}
