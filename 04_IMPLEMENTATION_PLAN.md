@@ -67,13 +67,25 @@ trimmed to what they assert. Fix the flaky tests filed in
 `docs/working/BACKLOG.md`. Measure before and after back to back on the same
 idle machine.
 
-**Success predicate:** with no assertion and no project coverage lost, the
-browser suite on one worker takes at least 30% less time than the H1 suite,
-measured back to back on the same idle machine, and no flaky test remains.
+On 2026-10-21 the owner revised the target after
+`.evidence/T1/target-feasibility.json` showed the one-worker goal out of reach
+(the 0.4 cases add 21 minutes and WebKit opens regressed about a second since
+H1). The suite may run on three workers. Unnecessary tests are removed and
+necessary ones kept: a case goes only when another kept case proves the same
+requirement on the same engine at least as strongly, recorded case by case.
+The WebKit app-open regression is fixed in the app.
+
+**Success predicate:** the full browser suite on three workers takes at least
+30% less time than the H1 suite (33:59, so at most 23:47), measured back to
+back on the same idle machine; every removed case is recorded with the kept
+case that covers its requirement; WebKit app open is back within H1's time;
+and no flaky test remains.
 
 **Adversarial checklist:** a seeding helper that creates a state the UI cannot;
-a journey shortened past the step it was meant to prove; a measurement taken
-while the machine was busy; a flake hidden by the retry instead of fixed.
+a journey shortened past the step it was meant to prove; a case removed whose
+requirement no kept case proves, or proves only on another engine; parallel
+workers sharing state or hiding a flake; a measurement taken while the machine
+was busy; a flake hidden by the retry instead of fixed.
 
 **Evidence:** verification (`verify:all`), `test-timing.json` (before and after),
 self-review, code-quality review.
