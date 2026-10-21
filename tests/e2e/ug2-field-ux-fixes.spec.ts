@@ -877,8 +877,7 @@ test("UG2-UX-5: Volontari and Valutazioni (Allievi, Equipaggi, Riepilogo) fit th
           .getByRole("button", { name: "Home", exact: true })
           .click()
         await uxPage.open(page)
-      }
-      await applyProfile(page, profile)
+      } else await applyProfile(page, profile)
       await uxPage.expectReady(page)
       const where = `${uxPage.name}, ${profile.name}`
       await expectNoSidewaysScroll(page, where)
@@ -933,8 +932,7 @@ test("UG2-UX-5: the student profile fits the screen at 412, 390, 360 and 320 px 
           .getByRole("button")
           .nth(index)
           .click()
-      }
-      await applyProfile(page, profile)
+      } else await applyProfile(page, profile)
       await expect(
         page.getByRole("region", { name: "Storico valutazioni" }),
       ).toBeVisible()

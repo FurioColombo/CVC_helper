@@ -178,6 +178,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
 
 ## Engineering follow-ups
 
+- T1 review CQ-6: each e2e seeding fixture re-reads the course that
+  `bootstrapCourse` just created; return its id instead (refactor only).
+
 - D4 owner check (2026-10-20): with no course, the start screen still offers
   Azzera i dati di questo dispositivo. It clears offline files, models and
   preferences, but after a full reset it is redundant; the owner may hide it

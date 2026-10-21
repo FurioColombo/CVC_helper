@@ -1,0 +1,72 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "T1",
+  "commit": "51fa127",
+  "diffRange": "a535987..51fa127",
+  "round": 2,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "CQ-5",
+      "title": "One dead project branch is still in f3-crew-summary",
+      "evidence": "tests/e2e/f3-crew-summary.spec.ts:716-718: the case runs only on pixel-7-chrome, so the pixel-7-chrome condition is always true.",
+      "reproduction": "Grant the clipboard permissions unconditionally and drop the if.",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-3",
+      "title": "The fresh 320 reopen calls applyProfile twice",
+      "evidence": "tests/e2e/ug2-field-ux-fixes.spec.ts:874-881 and :925-936",
+      "reproduction": "Move the unconditional applyProfile into an else branch.",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-6",
+      "title": "Deferred by the orchestrator: course re-lookup boilerplate in the seeding fixtures",
+      "evidence": "Unchanged from round 1; belongs in docs/working/BACKLOG.md.",
+      "reproduction": "grep -rn \"getActiveCourse()\" tests/e2e/fixtures",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-9",
+      "title": "The nightly run is left to the owner",
+      "evidence": "docs/working/OWNER_DECISIONS.md T1 entry 2",
+      "reproduction": "n/a",
+      "specRef": ""
+    }
+  ],
+  "evidenceInspected": [
+    "git diff a535987..51fa127 (12 files)",
+    "CQ-1 re-tested: latestRunPassed requires isFullRun; ci-scope test covers a quick parent and a docs-only child",
+    "CQ-2 re-tested: escaped regex; scoping test asserts the iPhone-viewport project runs exactly two titles",
+    "CQ-8: scoping test via playwright --list; included in verify:quick",
+    "CQ-4: tier-expression equality test and controller rejection of a Quick verification run",
+    "CQ-5: no iphone-13-viewport branches left in specs; stale comment removed",
+    "CQ-7: ORDER BY and unreachable check removed; delete retained for repeated ids",
+    "vitest: 4 files, 47 tests passed",
+    "UG2-UX-5 on pixel-7-chrome: 2 passed"
+  ],
+  "anglesTried": {
+    "scope": "Round 2, restricted to blockers CQ-1 and CQ-2, the fixes for CQ-3/4/5/7/8, and regressions from them.",
+    "seed": 918187141,
+    "lenses": [
+      "Dead code, unused exports and tested-but-unused helpers",
+      "Error paths: swallowed, logged and ignored, or shown to no one"
+    ],
+    "wildcard": "Checked the fixes are not no-ops."
+  },
+  "notTested": [
+    "No live GitHub Actions run of the tiered workflow",
+    "UX-5 cases not run on WebKit or the iPhone viewport (they run on Pixel only)",
+    "Full browser suite and timing not re-run"
+  ],
+  "dispositionsAfterReview": {
+    "CQ-5": "fixed: clipboard granted unconditionally",
+    "CQ-3": "fixed: applyProfile in an else branch",
+    "CQ-6": "filed in docs/working/BACKLOG.md",
+    "CQ-9": "with the owner"
+  }
+}
