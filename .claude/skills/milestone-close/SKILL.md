@@ -56,7 +56,7 @@ keeps the milestone open while explicitly eligible work continues.
   from a READY test. Announce each new or materially changed action in this
   chat with its instructions and a link to `docs/OWNER_TODO.md`.
 - When agent evidence and reviews pass, commit the implementation and obtain
-  green push CI for that exact commit. Prepare the address, build, expected
+  green full push CI for that exact commit (its message says `[full-ci]`). Prepare the address, build, expected
   results and focused phone steps, with useful narrow-screen/text-size captures.
   Publish a preview only when authorised. Never manufacture owner PASS or an
   empty physical report to satisfy missing evidence.
@@ -125,7 +125,9 @@ fresh plan replaces it.
   `npm run evidence -- <ID> --file verification-ci-fix.json`, since the
   completed `verification.json` only grows.
 - After an authorised push, run `npm run ci:status -- --wait` on the checkpoint.
-  Only a green push run of that exact commit permits dependent work. The
+  Only a green full push run of that exact commit permits dependent work;
+  the checkpoint commit's message says `[full-ci]` so push CI runs the full
+  tier. The
   AWAITING_OWNER path uses `docs/OWNER_WORKFLOW.md`'s explicit permissions. A
   failed run needs a fix and a new checkpoint; pending, missing, timed-out or
   unavailable CI is not a PASS. If pushing is not authorised, report that this

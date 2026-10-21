@@ -1,10 +1,19 @@
 name: Deterministic verification
 
+# Tiers (T1, owner 2026-10-21: run the full suite less often). main, manual
+# runs, the nightly run and any push whose head commit says [full-ci] run
+# the full suite; other pushes run `verify` and the browser smoke set. The
+# run name says which, and scripts/ci-status.mjs reads it: milestone handoffs,
+# closures and test-site publication require a full run of their commit.
+run-name: "${{ (github.event_name != 'push' || github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[full-ci]')) && 'Full verification' || 'Quick verification' }} · ${{ github.sha }}"
+
 # Push only: the Pages deploy waits for a push run on main, and a pull request
 # from a branch in this repository was a second, identical run (H1).
 on:
   push:
   workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
 
 # A newer push to the same branch supersedes the run in progress; a manual
 # run has its own group, so it never cancels the push run Pages waits for.
@@ -29,6 +38,7 @@ jobs:
         os: [ubuntu-latest, macos-15]
     runs-on: ${{ matrix.os }}
     env:
+      CI_TIER: ${{ (github.event_name != 'push' || github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[full-ci]')) && 'full' || 'quick' }}
       # check:docs compares frozen files (archive, changelogs, completed
       # evidence) against the previous tip, so a committed edit is caught too.
       CVC_DOCS_BASE: ${{ github.event.before }}
@@ -71,15 +81,24 @@ jobs:
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
         run: npx playwright install --with-deps chromium
       - name: Complete deterministic suite, including all browser projects
-        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'macos-15'
+        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'macos-15' && env.CI_TIER == 'full'
         run: npm run verify:all
       - name: Linux deterministic checks and Chromium layout and storage projects
-        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
+        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest' && env.CI_TIER == 'full'
         run: |
           npm run verify
           npm run check:full-week
           npm run check:ocr-offline
           npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport --project=desktop-chrome-storage
+      - name: Quick tier, deterministic checks and the browser smoke set
+        if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && env.CI_TIER == 'quick'
+        run: |
+          npm run verify
+          if [ "${{ matrix.os }}" = "macos-15" ]; then
+            npm run verify:e2e:smoke -- --project=pixel-7-chrome --project=iphone-13-webkit-core
+          else
+            npm run verify:e2e:smoke -- --project=pixel-7-chrome
+          fi
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser == 'false'
         run: npm run verify
       # Keep per-case timings and project coverage even when every test passes.

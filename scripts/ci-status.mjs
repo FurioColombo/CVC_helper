@@ -7,6 +7,18 @@ import { pathToFileURL } from "node:url"
 const WORKFLOW_PATH = ".github/workflows/ci.yml"
 const root = new URL("../", import.meta.url)
 
+/**
+ * CI tiers (T1, owner 2026-10-21: run the full suite less often). A quick run
+ * is named so by the workflow's run-name; any other run, including every run
+ * from before the tiers, ran the full suite. Milestone handoffs, closures and
+ * test-site publication require a full run of their exact commit.
+ */
+export const QUICK_RUN_TITLE = "Quick verification"
+
+export function isFullRun(run) {
+  return !String(run?.display_title ?? "").startsWith(QUICK_RUN_TITLE)
+}
+
 export function repositoryFromRemote(remote) {
   const match =
     /^(?:https:\/\/github\.com\/|git@github\.com:)([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/.exec(
@@ -86,6 +98,8 @@ export async function alreadyVerified(client, repo, sha, env = process.env) {
     sha,
     env.GITHUB_RUN_ID,
   )
+  // A quick run never stands in for a full one.
+  if (env.CI_TIER !== "quick" && !isFullRun(run)) return false
   return run?.status === "completed" && run.conclusion === "success"
 }
 
@@ -147,7 +161,8 @@ export async function ciStatus({
     const state = run
       ? `${run.status}/${run.conclusion ?? "pending"}`
       : "missing"
-    const summary = `CI ${sha.slice(0, 12)}: ${state}${run ? ` — ${run.html_url}` : " (push this commit to start CI)"}`
+    const tier = run ? (isFullRun(run) ? " (full)" : " (quick)") : ""
+    const summary = `CI ${sha.slice(0, 12)}: ${state}${tier}${run ? ` — ${run.html_url}` : " (push this commit to start CI)"}`
     if (summary !== previous) write(summary)
     previous = summary
     if (run?.status === "completed") {

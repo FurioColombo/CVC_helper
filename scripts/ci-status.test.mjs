@@ -7,6 +7,7 @@ import {
   ciStatus,
   failedDetails,
   githubClient,
+  isFullRun,
   latestPushRun,
   repositoryFromRemote,
 } from "./ci-status.mjs"
@@ -338,5 +339,44 @@ describe("status and failed-test diagnostics", () => {
       write: () => {},
     })
     expect(code).toBe(1)
+  })
+})
+
+describe("CI tiers", () => {
+  const quick = (extra = {}) =>
+    run({ display_title: "Quick verification · abc", ...extra })
+
+  it("treats only runs named quick as quick, so older runs stay full", () => {
+    expect(isFullRun(quick())).toBe(false)
+    expect(isFullRun(run({ display_title: "Full verification · abc" }))).toBe(
+      true,
+    )
+    expect(isFullRun(run({ display_title: "D4: hand over" }))).toBe(true)
+    expect(isFullRun(run())).toBe(true)
+  })
+
+  it("never lets a quick run stand in for a full one", async () => {
+    const client = { runs: async () => [quick({ head_branch: "other" })] }
+    expect(
+      await alreadyVerified(client, repo, sha, { ...pushEnv, CI_TIER: "full" }),
+    ).toBe(false)
+    expect(await alreadyVerified(client, repo, sha, pushEnv)).toBe(false)
+    expect(
+      await alreadyVerified(client, repo, sha, {
+        ...pushEnv,
+        CI_TIER: "quick",
+      }),
+    ).toBe(true)
+  })
+
+  it("says which tier a status line reports", async () => {
+    const lines = []
+    await ciStatus({
+      client: { runs: async () => [quick()] },
+      repo,
+      sha,
+      write: (line) => lines.push(line),
+    })
+    expect(lines[0]).toContain("(quick)")
   })
 })

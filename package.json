@@ -51,6 +51,7 @@
     "verify:e2e": "node scripts/run-e2e.mjs",
     "preverify:e2e:focus": "node scripts/check-runtime.mjs",
     "verify:e2e:focus": "node scripts/run-e2e.mjs --focus",
+    "verify:e2e:smoke": "node scripts/run-e2e.mjs tests/e2e/smoke.spec.ts tests/e2e/persistence.spec.ts tests/e2e/reopen-persistence.spec.ts tests/e2e/student-management-gate.spec.ts tests/e2e/evaluation-gate.spec.ts tests/e2e/d4-course-files.spec.ts",
     "preverify:e2e:v05": "node scripts/check-runtime.mjs",
     "verify:e2e:v05": "node scripts/run-e2e.mjs tests/e2e/v05-assistant-paste.spec.ts",
     "verify": "npm run verify:quick && npm run verify:domain && npm run build",

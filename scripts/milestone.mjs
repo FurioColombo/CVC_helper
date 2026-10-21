@@ -12,6 +12,7 @@ import { pathToFileURL } from "node:url"
 
 import {
   githubClient,
+  isFullRun,
   latestPushRun,
   repositoryFromRemote,
 } from "./ci-status.mjs"
@@ -255,6 +256,11 @@ export function createMilestoneController(
     if (run?.status !== "completed" || run.conclusion !== "success") {
       throw new Error(
         `Checkpoint ${commit.slice(0, 12)} needs green push CI; ${run?.status ?? "missing"}/${run?.conclusion ?? "unknown"} is not a PASS`,
+      )
+    }
+    if (!isFullRun(run)) {
+      throw new Error(
+        `Checkpoint ${commit.slice(0, 12)} passed only quick CI; commit it with [full-ci] in the message so push CI runs the full suite`,
       )
     }
     return run

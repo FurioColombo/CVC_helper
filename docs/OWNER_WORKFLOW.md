@@ -15,7 +15,7 @@ independent agent work.
 
 `milestone:await-owner` does not lower the acceptance standard. It checks every
 agent-required file, reviewer verdict, recorded source digest and exact-commit
-push CI. The manifest's `ownerEvidence` names the physical-device files that
+full push CI (a `[full-ci]` commit). The manifest's `ownerEvidence` names the physical-device files that
 may still be missing. A required queue item must name each such file. A missing
 review, stale verification, dirty implementation or unknown/red CI refuses
 the handoff.

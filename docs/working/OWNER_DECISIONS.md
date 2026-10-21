@@ -18,7 +18,9 @@ change. Accepted entries move into the contract they touch.
 2. **Tiered CI (taken, from the owner's suggestion).** Ordinary pushes run
    `verify` and a browser smoke set; the full suite runs for milestone
    handoffs and closures, release gates, `main`, a nightly run and manual
-   runs. Review: which journeys belong in the smoke set.
+   runs. Implemented: run names carry the tier, handoff and publication
+   commits say `[full-ci]`. Review: which journeys belong in the smoke set
+   (`verify:e2e:smoke`) and whether the 02:17 UTC nightly run is wanted.
 3. **Worker count (measured; one worker kept locally).** The full suite on
    three workers took 59.8 min against about 60 on one, with 7 failures and
    14 flaky cases (WebKit cases ran 1–2 min each). A Chromium-only subset

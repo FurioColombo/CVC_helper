@@ -418,9 +418,15 @@ explicit safe-continuation rules in `docs/OWNER_WORKFLOW.md`; missing owner
 feedback alone does not stop eligible work. The closing skill handles failures.
 The public API needs no `gh` or token; a token permits higher API limits.
 
-CI runs on push (and by hand), cancels a superseded run on the same branch, and
-uses Node 24, locked dependencies, deterministic `verify:all` and uploaded
-failure artifacts where useful. The complete suite runs on macOS 15, including
+CI runs on push, by hand and nightly, cancels a superseded run on the same
+branch, and uses Node 24, locked dependencies and uploaded failure artifacts
+where useful. It has two tiers (owner, 2026-10-21). The full tier runs
+`verify:all` on `main`, by hand, nightly and for a push whose head commit
+says `[full-ci]`; milestone handoffs, closures and test-site publication
+require a full green run of their exact commit, so those commits say
+`[full-ci]`. Other pushes run the quick tier: `verify` and
+`verify:e2e:smoke` (Pixel on Linux, Pixel and WebKit on macOS). The run's
+name records its tier, and a quick run never stands in for a full one. In the full tier the complete suite runs on macOS 15, including
 all four browser projects; Linux also runs deterministic checks, the offline
 PWA proof and all three Chromium projects, preserving its font and geometry coverage.
 Both jobs must pass. This follows the immutable D2/D3 comparison in

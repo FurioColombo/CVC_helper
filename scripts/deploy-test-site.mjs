@@ -14,6 +14,7 @@ import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import {
   githubClient,
+  isFullRun,
   latestPushRun,
   repositoryFromRemote,
 } from "./ci-status.mjs"
@@ -77,6 +78,7 @@ assert(
   run?.status === "completed" && run.conclusion === "success",
   "Only green push CI for the exact source commit permits publication",
 )
+assert(isFullRun(run), "The source commit needs a full CI run, not a quick one")
 
 async function api(route, method = "GET", body) {
   const response = await fetch(`https://api.github.com${route}`, {
