@@ -711,11 +711,8 @@ test("copies double names, a crew with no boat and every badge exactly as the sc
   page,
   context,
 }, testInfo) => {
-  // Chromium (Android) and WebKit (iPhone), the two engines the phones use.
-  test.skip(
-    testInfo.project.name === "iphone-13-viewport",
-    "The same engine as the Pixel 7 project; one journey is sufficient",
-  )
+  // Chromium only: ug2-hostile-roster's crew summary proves the same image
+  // on WebKit (T1, .evidence/T1/removed-cases.json).
   test.setTimeout(180_000)
   if (testInfo.project.name === "pixel-7-chrome") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])

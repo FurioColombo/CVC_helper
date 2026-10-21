@@ -7,7 +7,7 @@ const BLURRED_ROSTER = path.resolve("tests/fixtures/ocr-sheet-blurred.png")
 
 test("warns on a bad image and commits only reviewed OCR rows", async ({
   page,
-}, testInfo) => {
+}) => {
   test.setTimeout(90_000)
   await page.goto("/")
   await page.getByRole("button", { name: "Deriva" }).click()
@@ -147,12 +147,6 @@ test("warns on a bad image and commits only reviewed OCR rows", async ({
     focusClearance.counterBottom,
   )
   await enlargedText.evaluate((element) => (element as HTMLElement).remove())
-  if (testInfo.project.name === "iphone-13-viewport") {
-    await page.screenshot({
-      fullPage: true,
-      path: path.resolve("test-results/age-review-iphone13.png"),
-    })
-  }
 
   const thirdName = page.getByLabel(/^Nome riga/).nth(2)
   const thirdSurname = page.getByLabel(/^Cognome riga/).nth(2)

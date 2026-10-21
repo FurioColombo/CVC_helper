@@ -77,3 +77,28 @@ describe("latestRunPassed", () => {
     expect(latestRunPassed([])).toBe(false)
   })
 })
+
+describe("a quick run vouches for nothing (T1 review CQ-1)", () => {
+  const green = (title) => ({
+    event: "push",
+    status: "completed",
+    conclusion: "success",
+    updated_at: "2026-10-21T10:00:00Z",
+    display_title: title,
+  })
+  it("lets only a green full parent spare a documentation-only push the browser suite", () => {
+    const docsOnly = [
+      ".evidence/T1/verification.json",
+      ".milestones/manifest.json",
+    ]
+    expect(
+      needsBrowser(docsOnly, latestRunPassed([green("Full verification · a")])),
+    ).toBe(false)
+    expect(
+      needsBrowser(
+        docsOnly,
+        latestRunPassed([green("Quick verification · a")]),
+      ),
+    ).toBe(true)
+  })
+})

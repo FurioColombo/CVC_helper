@@ -13,17 +13,12 @@ const { hostname, port } = new URL(baseURL)
 // Spec names, matched exactly (`specs()` below), so a mistyped or renamed
 // spec fails the run instead of silently leaving a project.
 //
-// The iPhone size in Chromium is for the specs that assert layout (overflow,
-// fit, positions). Behaviour-only journeys ran there a second time at a width
-// 22 px from Pixel 7's; they now run on Pixel 7 only, and the core ones on
-// iPhone WebKit too (H1, .evidence/H1/test-timing.json). A new spec that
-// measures layout belongs in this list.
 // T1 (owner, 2026-10-21): unnecessary cases are removed, necessary kept.
 // Chromium at 390×844 adds nothing where a spec sets its own narrow widths;
 // it keeps only the cases measured at the iPhone size itself. Removals and
 // the kept case covering each: .evidence/T1/removed-cases.json.
 const iphoneViewportCases =
-  /pages outgoing boats|export feedback stays above the bottom bar (device)/
+  /pages outgoing boats|export feedback stays above the bottom bar \(device\)/
 // Core journeys on the WebKit engine. u08-duties joined through an unanchored
 // "duties" pattern before H1 and stays, so H1 removes no WebKit coverage.
 const webkitCoreSpecs = [

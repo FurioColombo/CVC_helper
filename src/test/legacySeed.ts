@@ -131,7 +131,7 @@ export async function insertFixtureTables(
 
   for (const [tableName, expectedRows] of Object.entries(tables)) {
     const actualRows = await database.getAll<Record<string, unknown>>(
-      `SELECT * FROM ${tableName} ORDER BY id`,
+      `SELECT * FROM ${tableName}`,
     )
     if (actualRows.length !== expectedRows.length) {
       throw new Error(`Fixture row count mismatch in ${tableName}`)
@@ -142,20 +142,20 @@ export async function insertFixtureTables(
     for (const expectedRow of expectedRows) {
       const actualRow = actualById.get(expectedRow.id)
       if (actualRow === undefined) {
-        throw new Error(`Fixture row mismatch in ${tableName}.id`)
+        throw new Error(
+          `Fixture row ${String(expectedRow.id)} missing in ${tableName}`,
+        )
       }
 
       for (const [column, value] of Object.entries(expectedRow)) {
         if (actualRow[column] !== value) {
-          throw new Error(`Fixture value mismatch in ${tableName}.${column}`)
+          throw new Error(
+            `Fixture value mismatch in ${tableName}.${column} of row ${String(expectedRow.id)}`,
+          )
         }
       }
-
+      // A repeated expected id then fails at the lookup above.
       actualById.delete(actualRow.id)
-    }
-
-    if (actualById.size > 0) {
-      throw new Error(`Fixture row mismatch in ${tableName}`)
     }
   }
 }

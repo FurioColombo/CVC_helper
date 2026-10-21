@@ -869,6 +869,15 @@ test("UG2-UX-5: Volontari and Valutazioni (Allievi, Equipaggi, Riepilogo) fit th
     await nav(page).getByRole("button", { name: "Home", exact: true }).click()
     await uxPage.open(page)
     for (const profile of PROFILES) {
+      // A phone mounts each screen at its own width: the narrowest is opened
+      // fresh rather than reached by resizing (T1 review CQ-3).
+      if (profile.name === "320") {
+        await applyProfile(page, profile)
+        await nav(page)
+          .getByRole("button", { name: "Home", exact: true })
+          .click()
+        await uxPage.open(page)
+      }
       await applyProfile(page, profile)
       await uxPage.expectReady(page)
       const where = `${uxPage.name}, ${profile.name}`
@@ -913,6 +922,18 @@ test("UG2-UX-5: the student profile fits the screen at 412, 390, 360 and 320 px 
       .nth(index)
       .click()
     for (const profile of PROFILES) {
+      if (profile.name === "320") {
+        await applyProfile(page, profile)
+        await nav(page)
+          .getByRole("button", { name: "Home", exact: true })
+          .click()
+        await area(page, "Allievi").click()
+        await page
+          .getByRole("region", { name: "Elenco allievi" })
+          .getByRole("button")
+          .nth(index)
+          .click()
+      }
       await applyProfile(page, profile)
       await expect(
         page.getByRole("region", { name: "Storico valutazioni" }),

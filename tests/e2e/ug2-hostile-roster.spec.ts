@@ -810,10 +810,6 @@ test("shows and copies the hostile crew summary exactly as the screen has it, at
   page,
   context,
 }, testInfo) => {
-  test.skip(
-    testInfo.project.name === "iphone-13-viewport",
-    "Chromium (Android) and WebKit (iPhone) are the two engines the phones use",
-  )
   test.setTimeout(420_000)
   if (testInfo.project.name === "pixel-7-chrome") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
@@ -876,10 +872,6 @@ test("shows and copies the hostile Comandate summary exactly as the screen has i
   page,
   context,
 }, testInfo) => {
-  test.skip(
-    testInfo.project.name === "iphone-13-viewport",
-    "Chromium (Android) and WebKit (iPhone) are the two engines the phones use",
-  )
   test.setTimeout(420_000)
   if (testInfo.project.name === "pixel-7-chrome") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])

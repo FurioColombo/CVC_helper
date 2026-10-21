@@ -3,8 +3,10 @@
 // browser suite exercises, so a push that touches only them runs `verify`
 // (lint, types, unit, domain and documentation checks, build) instead of
 // `verify:all` — but only when this workflow's push run passed on the commit
-// it builds on. By induction that commit's code passed the browser suite,
-// either in its own run or in the run of the commit it built on. A failed,
+// it builds on and that run was full (T1 tiers): by induction that commit's
+// code passed the browser suite, in its own run or in the run of the commit it
+// built on. A quick run only ran the smoke set, so it vouches for nothing here
+// (T1 review CQ-1). A failed,
 // cancelled or running previous run, an unknown old tip (a new branch, a
 // force-push to a commit not in this clone), an unreachable GitHub API or any
 // other changed file runs everything. Prints `browser=true|false` for
@@ -12,7 +14,7 @@
 import { execFileSync } from "node:child_process"
 import { pathToFileURL } from "node:url"
 
-import { githubClient } from "./ci-status.mjs"
+import { githubClient, isFullRun } from "./ci-status.mjs"
 
 const NO_BROWSER_IMPACT = [
   /\.md$/,
@@ -34,12 +36,12 @@ export function needsBrowser(changedFiles, previousTipPassed) {
   )
 }
 
-/** The newest completed push run of this workflow on that commit succeeded. */
+/** The newest completed push run of this workflow on that commit was a green full run. */
 export function latestRunPassed(workflowRuns) {
   const completed = workflowRuns
     .filter((run) => run.event === "push" && run.status === "completed")
     .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
-  return completed[0]?.conclusion === "success"
+  return completed[0]?.conclusion === "success" && isFullRun(completed[0])
 }
 
 function changedFiles(before, after) {

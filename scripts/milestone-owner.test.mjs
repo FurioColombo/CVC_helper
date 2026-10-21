@@ -253,6 +253,16 @@ describe("owner handoff and safe continuation", () => {
     )
   })
 
+  it("refuses a handoff whose commit passed only quick CI (T1 review CQ-4)", async () => {
+    const f = fixture()
+    f.ci.display_title = "Quick verification · abc"
+    await expect(f.controller.awaitOwner("M1")).rejects.toThrow(
+      "passed only quick CI",
+    )
+    f.ci.display_title = "Full verification · abc"
+    await f.controller.awaitOwner("M1")
+  })
+
   it("refuses changed review evidence after handoff", async () => {
     const f = fixture()
     await f.controller.awaitOwner("M1")

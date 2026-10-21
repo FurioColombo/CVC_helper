@@ -1,0 +1,101 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "T1",
+  "commit": "a535987",
+  "diffRange": "1d7cd9f..a535987",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "CQ-1",
+      "title": "A quick CI run still vouches for a full one: ci-scope's induction ignores the new tier, so a docs-only [full-ci] commit on top of a quick-green code commit gets a 'Full verification' run with no browser suite, and the milestone and test-site gates accept it",
+      "evidence": "scripts/ci-scope.mjs:37-43 latestRunPassed accepts any successful push run of the parent; its header comment (lines 5-7) still says 'By induction that commit's code passed the browser suite', which stopped being true when db64706 added the quick tier. ci.yml then skips every browser step, but run-name still says 'Full verification', so isFullRun in scripts/milestone.mjs:261 and scripts/deploy-test-site.mjs:81 passes.",
+      "reproduction": "Node: a quick parent run makes needsBrowser([.evidence/..., .milestones/...], latestRunPassed(p)) return false. Fix: latestRunPassed requires isFullRun.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md T1 (tiered CI); docs/working/OWNER_DECISIONS.md T1 entry 2"
+    },
+    {
+      "id": "CQ-2",
+      "title": "The iPhone-viewport grep silently drops 'export feedback stays above the bottom bar (device)': the parentheses are a regex group",
+      "evidence": "playwright.config.ts:25-26; tests/e2e/d4-course-files.spec.ts:406",
+      "reproduction": "npx playwright test --list --project=iphone-13-viewport prints 1 test. Fix: escape, or build the regex from escaped literal titles and fail when an entry matches nothing.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md T1 success predicate"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "CQ-3",
+      "title": "The UG2-UX-5 layout journeys now mount each view once at 412 px and resize, so they no longer prove the first render at 390/360/320 px",
+      "evidence": "Commit 442bf19, tests/e2e/ug2-field-ux-fixes.spec.ts UX5_PAGES and student-profile loops",
+      "reproduction": "git show 442bf19 -- tests/e2e/ug2-field-ux-fixes.spec.ts; restore a per-profile reopen for the narrowest profile, or record the equivalence.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md T1 adversarial checklist"
+    },
+    {
+      "id": "CQ-4",
+      "title": "The tier expression is duplicated in ci.yml, and nothing tests that the copies agree or that the milestone and deploy gates reject a quick run",
+      "evidence": ".github/workflows/ci.yml run-name and env CI_TIER; no test of milestone.mjs or deploy-test-site.mjs rejecting a Quick verification run",
+      "reproduction": "grep -rn 'Quick verification' scripts/*.test.mjs",
+      "specRef": "AGENTS.md §3"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "CQ-5",
+      "title": "Dead project branches and a false comment left by the removals",
+      "evidence": "f3-crew-summary.spec.ts:715-722, ug2-hostile-roster.spec.ts:813-815 and :879-881, student-scan.spec.ts:150-155, playwright.config.ts:15-20",
+      "reproduction": "grep -rn iphone-13-viewport tests/e2e",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-6",
+      "title": "Each seeding fixture re-looks-up the course that bootstrapCourse just created",
+      "evidence": "tests/e2e/seed.ts:84-113 and nine fixture sites",
+      "reproduction": "grep -rn 'getActiveCourse()' tests/e2e/fixtures",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-7",
+      "title": "insertFixtureTables read-back has an unreachable final check and an unused ORDER BY",
+      "evidence": "src/test/legacySeed.ts read-back",
+      "reproduction": "Read the loop; remove the last if and the ORDER BY, include expectedRow.id in messages.",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-8",
+      "title": "Title-regex scoping is unguarded, unlike spec names",
+      "evidence": "playwright.config.ts grepInvert patterns; u05-boats-ui.spec.ts:95 Cabinato 1 filter",
+      "reproduction": "A config-time or unit check that each pattern matches the intended titles.",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-9",
+      "title": "The nightly run re-runs main's already-full commit and feeds no gate",
+      "evidence": "ci.yml schedule; gates read only event=push runs",
+      "reproduction": "Read ci.yml and scripts/ci-status.mjs runs route.",
+      "specRef": ""
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md T1; docs/working/OWNER_DECISIONS.md",
+    ".evidence/T1/removed-cases.json, legacy-fixture-batching.json, layout-audit-and-profile-setup.json",
+    "T1 commits aa8473a..db64706 and their diffs",
+    "scripts/ci-scope.mjs, scripts/run-e2e.mjs",
+    "npx playwright test --list and per-project listings",
+    "Node reproduction of the ci-scope/isFullRun interaction",
+    "Spot-checks of four removed cases"
+  ],
+  "anglesTried": {
+    "seed": 918187141,
+    "lenses": [
+      "Dead code, unused exports and tested-but-unused helpers",
+      "Error paths: swallowed, logged and ignored, or shown to no one"
+    ],
+    "wildcard": "Treat every Playwright grep/grepInvert title as a regex and check the new CI tier against older scripts' assumptions"
+  },
+  "notTested": [
+    "No browser suite run",
+    "No live GitHub Actions run",
+    "Six of ten removed-case entries not inspected",
+    "D4 application changes excluded"
+  ]
+}

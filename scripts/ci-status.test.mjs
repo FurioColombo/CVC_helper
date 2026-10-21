@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { spawnSync } from "node:child_process"
+import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import {
@@ -378,5 +379,19 @@ describe("CI tiers", () => {
       write: (line) => lines.push(line),
     })
     expect(lines[0]).toContain("(quick)")
+  })
+})
+
+describe("the workflow's two tier expressions (T1 review CQ-4)", () => {
+  it("names a run full exactly when its steps run the full tier", () => {
+    const workflow = readFileSync(
+      fileURLToPath(new URL("../.github/workflows/ci.yml", import.meta.url)),
+      "utf8",
+    )
+    const condition = (pattern) => workflow.match(pattern)?.[1]
+    const name = condition(/run-name: "\$\{\{ \((.+?)\) && 'Full verification'/)
+    const tier = condition(/CI_TIER: \$\{\{ \((.+?)\) && 'full'/)
+    expect(name).toBeTruthy()
+    expect(tier).toBe(name)
   })
 })
