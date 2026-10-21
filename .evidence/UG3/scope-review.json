@@ -1,0 +1,79 @@
+{
+  "reviewerRole": "scope",
+  "persona": "Il Notaio",
+  "milestone": "UG3",
+  "round": 2,
+  "commit": "880a178",
+  "diffRange": "376b5ad..880a178",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SC-R2-1",
+      "title": "The SC-3 fix leaves 02 §2 and the plan disagreeing about the D2-D5 override and fix candidates",
+      "evidence": "02_MVP_SCOPE.md:57-59; 04 Owner feedback",
+      "reproduction": "",
+      "specRef": "docs/DOCS_SYSTEM.md"
+    },
+    {
+      "id": "SC-6",
+      "title": "D4 field-UX round 7 after the third FAIL still to be recorded in the UG3 self-review",
+      "evidence": ".evidence/UG3",
+      "reproduction": "",
+      "specRef": "REVIEW_PROTOCOL"
+    },
+    {
+      "id": "SC-8",
+      "title": "Interrupted-upgrade qualification not yet in UG3 migration evidence",
+      "evidence": ".evidence/UG3",
+      "reproduction": "",
+      "specRef": "Plan UG3"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-R2-Q1",
+      "title": "OWNER_DECISIONS numbering broken",
+      "evidence": "",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "SC-R2-Q2",
+      "title": "Erratum appended to a frozen archive file; belongs in UG3 evidence",
+      "evidence": "archive/v0.4.0/completed-milestones.md:243-246",
+      "reproduction": "",
+      "specRef": "DOCS_SYSTEM rule 6"
+    },
+    {
+      "id": "SC-R2-Q3",
+      "title": "01 §2 says Settings offers \"the way\"",
+      "evidence": "01:69",
+      "reproduction": "",
+      "specRef": ""
+    }
+  ],
+  "resolvedBlockers": [
+    {
+      "id": "SC-1",
+      "disposition": "RESOLVED"
+    },
+    {
+      "id": "SC-2",
+      "disposition": "RESOLVED as far as the repository can show"
+    }
+  ],
+  "evidenceInspected": [
+    "diff 376b5ad..880a178; vitest src/App.test.tsx 21 passed; check:docs PASS"
+  ],
+  "anglesTried": {
+    "scope": "Restricted round 2"
+  },
+  "notTested": [
+    "Browser specs",
+    "The chat message itself",
+    "SC-6, SC-8 evidence not yet written",
+    "Release sweep"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report."
+}

@@ -66,7 +66,7 @@ screen when there is one, rather than closing the app from a nested screen.
 Course locking, read-only closure and rich historical-course browsing are not
 required. Existing course data remains editable.
 
-Settings offers the way to start the next course (owner decision,
+Settings offers the in-course way to start the next course (owner decision,
 2026-09-26): `Elimina il corso e inizia un nuovo corso` erases the current
 course and everything recorded in it from the device, after a confirmation
 that names the course and an explicit acknowledgement that the data cannot be

@@ -75,13 +75,8 @@ reviews, the owner's device report.
 
 ## Owner feedback
 
-D3's Android update check uses GitHub-hosted HTTPS, prepared by agents as
-described in `docs/DEPLOY.md`. The owner has no setup choice left to make.
-Its request is `D3-PHONE-UPDATE` in `docs/OWNER_TODO.md`; it is not READY until agent
-reviews, final verification and CI pass. D3 then stays AWAITING_OWNER until the
-matching phone report passes, while explicitly permitted agent work continues.
-
-Which of the six candidates in `docs/working/BACKLOG.md` ("Waiting for the
-owner's choice") join 0.4.0 as a fix milestone? And which of the
-retrospective's remaining proposals ("Retrospective proposals awaiting the owner's
-pick") are adopted?
+Owner phone checks follow `docs/OWNER_WORKFLOW.md`; the release check is
+`UG3-PHONE-RELEASE` in `docs/OWNER_TODO.md`. The open choices (UG2 fix
+candidates, remaining retrospective proposals, the D2–D5 size override) were
+not taken up in 0.4.0 and move to 0.5.0 planning
+(`docs/working/OWNER_DECISIONS.md`).

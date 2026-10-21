@@ -56,7 +56,8 @@ Out of scope until the owner changes it and the plan is updated first:
 - evaluation-band hints in crew cards;
 - special crew-size formulas beyond the D1/Cabinato start of four, and the
   D2–D5 size override in Impostazioni (deferred on 2026-09-24 and assigned by
-  the owner to the follow-up after the 0.3.0 gate: a 0.4.0 candidate);
+  the owner to the follow-up after the 0.3.0 gate; not picked for 0.4.0, a
+  0.5.0 planning candidate);
 - automatic crew generation or optimisation;
 - dashboards, course documents, PDFs and reference-material systems;
 - image exports other than the crew and Comandate summaries;
