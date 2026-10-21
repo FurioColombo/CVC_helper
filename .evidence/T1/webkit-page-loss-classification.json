@@ -1,0 +1,28 @@
+{
+  "milestone": "T1",
+  "recordedAt": "2026-10-21T07:52:58.579Z",
+  "question": "What causes the filed WebKit \"Target page, context or browser has been closed\" / page-crash flakes (d1-migration, d2-duty-items, d3 startup recovery)?",
+  "observations": [
+    {
+      "run": "Full suite, 3 workers (2026-10-21 trial)",
+      "result": "WebKit pages crashed or closed across seven unrelated specs (crew-management-gate \"Page crashed\", d1, d2, d3-startup-recovery, u08-duties); Chromium projects showed only one timing bound miss.",
+      "raw": "OS temporary cvc-t1-w3-trial-report.keep.json"
+    },
+    {
+      "run": "d1-migration + d2-duty-items, WebKit, 3 repeats, retries 0, one worker, idle machine",
+      "result": "45 of 45 passed",
+      "raw": "OS temporary claude-flake-d1d2.log"
+    },
+    {
+      "run": "d1-migration + d3-startup-recovery, WebKit, one worker, process sampling every 0.8 s",
+      "result": "One WebKitWebProcess peaked at 2,087 MB; free memory fell to 736 MB of 8,035 MB; 15 of 15 passed"
+    },
+    {
+      "run": "App alone in WebKit (production build), empty course and one course",
+      "result": "~665-685 MB on both H1 (a25eba1) and now: engine/WASM baseline of Playwright WebKit on Windows, not a regression"
+    }
+  ],
+  "classification": "Environmental memory pressure: tests that hold legacy, current and reopened database instances in one WebKit page reach ~2 GB; with a second browser competing on this 8 GB machine the WebKit content process is killed. Single-worker idle runs are clean. Not reproduced as an app defect.",
+  "consequence": "The local browser suite stays on one worker (OWNER_DECISIONS.md entry 3). CI retains traces even when a retry turns the run green, so a recurrence on CI can be read rather than guessed.",
+  "notDone": "Lowering per-test peak memory (closing each database instance before opening the next inside the harnesses) would make WebKit tolerate parallel runs; left as a T1 follow-up if the owner wants workers on a bigger machine."
+}

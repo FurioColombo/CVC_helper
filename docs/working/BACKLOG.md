@@ -139,13 +139,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   page before measuring; both 5000 ms bounds and cold checks remain. Exact `b8eda01` CI passes without retries.
 
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
-  — iPhone 13 WebKit, D3's recorded focused run (2026-10-13):
-  `page.evaluate: Target page, context or browser has been closed` after
-  13.5 s; the configured retry passed in 20.5 s. T1 must investigate the
-  legacy database close/reopen lifecycle; a retry does not establish its cause.
-  On 2026-10-14 the same page-closure failure took 18.6 s, then passed on
-  retry in 26.7 s and separately with retries disabled in 20.4 s. The final
-  D3 recorder retains this flake. T1's 2026-10-19 run also closed during the 0.1.0 upgrade; see `.evidence/T1/legacy-fixture-batching.json`.
+  — WebKit page closure; classified on 2026-10-21 as memory pressure (a WebKit
+  page peaks near 2 GB in these specs; clean 45/45 on one idle worker). See
+  `.evidence/T1/webkit-page-loss-classification.json`.
 
 - `u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live`
   — D3 measured 170.7 ms against the 120 ms bound on Chromium and exceeded the
@@ -162,16 +158,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
   CI 38522538304 on macOS also timed out waiting for the student control, then
   passed its first configured retry. T1 now waits for editor closure; the held-save probe, original journey and exact `cccfd2c` CI pass without retries. See `.evidence/T1/evaluation-history-readiness.json`.
-- `d2-duty-items.spec.ts › opens the 0.3.0 duty lists as rows, item by item, none lost or doubled`
-  and `d2-duty-items.spec.ts › rebuilds the rows after a 0.3.0 app drops their table and writes the lists`
-  — iPhone 13 WebKit: the page closes ("Target page, context or browser has
-  been closed"), 2 of 18 runs in D2's round-2 review while other browser runs
-  loaded the machine. Reading back before closing the 0.3.0 instance and the
-  seed (D2) gave 22 of 22 clean runs of the second on an idle machine; the
-  cause inside WebKit is not established (D2 review DP-4).
-- `d2-duty-items.spec.ts › shows a stale 0.3.0 tab's list changes at once and keeps its stay-over student from deletion`
-  — iPhone 13 WebKit, the same page loss, once in D2's pre-check run under
-  the same load.
+- `d2-duty-items.spec.ts` (0.3.0 lists, rebuilt rows, stale 0.3.0 tab)
+  — the same WebKit page closure under load; same classification and
+  evidence as above.
 
 ## Future work the owner has named
 
