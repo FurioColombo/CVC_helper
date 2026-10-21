@@ -114,9 +114,10 @@ phone without a network.
 | 0.7.0   | Season history: several courses per account, past courses kept read-only, a new course started without erasing the last.                                                        | the owner             |
 | 1.0.0   | Team editing: the owner and the team read and write, with conflict rules, a record of who changed what, roles, and an explicit stability decision.                                | the owner and the team |
 
-**0.4.0 scope:** the milestones H1, D1–D4 and UG3 in
-`04_IMPLEMENTATION_PLAN.md`, plus whichever candidates the owner picks from
-`docs/working/BACKLOG.md` (the UG2 field fixes and the D2–D5 size override).
+**0.4.0 scope:** the milestones H1, D1–D4, T1 (added by the owner on
+2026-10-10) and UG3 in `04_IMPLEMENTATION_PLAN.md`. No UG2 field fix or the
+D2–D5 size override was picked for 0.4.0; they stay in
+`docs/working/BACKLOG.md` for 0.5.0 planning.
 Server, account and synchronisation code, multiple courses per device, and
 conflict handling stay out of 0.4.0.
 

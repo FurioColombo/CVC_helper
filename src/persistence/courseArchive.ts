@@ -1,11 +1,7 @@
 import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
 import { APP_VERSION } from "@/appVersion"
-import {
-  compareVersions,
-  dataVersionAfterWrite,
-  encodeVersion,
-} from "@/domain/compatibility"
+import { dataVersionAfterWrite, newer } from "@/domain/compatibility"
 import {
   createCourseArchive,
   parseCourseArchive,
@@ -17,7 +13,9 @@ import {
   invalidateCourseSession,
 } from "@/persistence/courseSession"
 import { db } from "@/persistence/db"
-import { readDataVersion } from "@/persistence/dataVersion"
+import { readDataVersion, writeDataVersion } from "@/persistence/dataVersion"
+import { clearCoursePreferences } from "@/persistence/courses"
+import { compactCourseDatabase } from "@/persistence/writeGuard"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 
@@ -83,27 +81,19 @@ async function mergeImportedVersion(
   archive: CourseArchive,
 ) {
   const current = await readDataVersion(transaction)
-  const maximum = (a: typeof archive.dataVersion.version, b: typeof a) =>
-    compareVersions(a, b) >= 0 ? a : b
   const merged = current
     ? {
-        version: maximum(current.version, archive.dataVersion.version),
-        minimumWriter: maximum(
+        version: newer(current.version, archive.dataVersion.version),
+        minimumWriter: newer(
           current.minimumWriter,
           archive.dataVersion.minimumWriter,
         ),
       }
     : archive.dataVersion
-  const next = dataVersionAfterWrite(APP_VERSION, merged)
-  for (const [id, value] of [
-    ["data:version", next.version],
-    ["data:minimumWriter", next.minimumWriter],
-  ] as const) {
-    await transaction.execute(
-      "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
-      [id, encodeVersion(value)],
-    )
-  }
+  await writeDataVersion(
+    transaction,
+    dataVersionAfterWrite(APP_VERSION, merged),
+  )
 }
 
 /** Validation precedes every write. Replacement and invalidation commit whole. */
@@ -132,6 +122,11 @@ export async function importCourseArchive(
     await mergeImportedVersion(transaction, archive)
     await advanceCourseGeneration(transaction)
   })
+  // The replaced course's rows must not stay readable in free database pages
+  // (UG3 review SP-UG3-1), as after an erase. The import is already whole; a
+  // failed compaction leaves its data correct and is retried by the next one.
+  await compactCourseDatabase(database).catch(() => {})
+  clearCoursePreferences()
   // Never rebind this instance: a delayed callback from the old course could
   // otherwise save into an imported course with the very same identifiers.
   invalidateCourseSession(database)

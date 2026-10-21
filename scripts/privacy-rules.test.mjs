@@ -202,3 +202,28 @@ describe("addedLines", () => {
     ])
   })
 })
+
+describe("phone formats the roster reader accepts (UG3 review SP-UG3-2)", () => {
+  const unknown = [
+    "(347) 1234567",
+    "347/1234567",
+    "347 12 34 567",
+    "347-123-4567",
+  ]
+  it("refuses each grouping of an unknown number in evidence and owner records", () => {
+    for (const phone of unknown) {
+      expect(
+        lineProblems(".evidence/X/a.json", `"phone": "${phone}"`),
+      ).not.toEqual([])
+      expect(
+        lineProblems(".milestones/owner-checks.json", `call ${phone}`),
+      ).not.toEqual([])
+    }
+  })
+  it("keeps viewport width lists and the synthetic fixtures allowed", () => {
+    expect(lineProblems(".evidence/X/a.json", "at 390/360/320 px")).toEqual([])
+    expect(
+      lineProblems(".evidence/X/a.json", '"phone": "333 123 4567"'),
+    ).toEqual([])
+  })
+})

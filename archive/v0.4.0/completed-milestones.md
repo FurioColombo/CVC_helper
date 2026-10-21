@@ -239,3 +239,8 @@ was busy; a flake hidden by the retry instead of fixed.
 
 **Evidence:** verification (`verify:all`), `test-timing.json` (before and after),
 self-review, code-quality review.
+
+**Erratum (UG3 scope review SC-2):** the owner accepted T1 as delivered on
+2026-10-21, in the Claude Code session chat ("Accept T1 as delivered: tiered
+CI, removals, zero flakes, 41:30 on one worker"), not on 2026-10-22 as
+written above and in `.evidence/T1/self-review.json`.

@@ -1,0 +1,124 @@
+{
+  "reviewerRole": "scope",
+  "persona": "Il Notaio",
+  "milestone": "UG3",
+  "round": 1,
+  "commit": "376b5ad",
+  "diffRange": "v0.3.0..376b5ad",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SC-1",
+      "title": "D4's user-visible behaviour is missing from 01_PRODUCT_SPEC.md, and 01 §2 now contradicts the code",
+      "evidence": "01_PRODUCT_SPEC.md:71-74 says Settings offers the only way to start the next course; import replaces the course (CourseFiles.tsx:441) and Azzera tutti i dati locali resets it (CourseFiles.tsx:583); the no-course screen shows import and reset (App.tsx:427-428) while 01 §2:38 says the app goes directly to Crea corso. 01 has nothing on export, share as .txt, import preview and confirmation, persistent-storage status, the personal-data notice or full reset; 01's title still says released 0.3.0 behaviour.",
+      "reproduction": "grep -niE 'esport|export|import|Conservazione|Azzera|dati locali' 01_PRODUCT_SPEC.md returns no D4 match.",
+      "specRef": "AGENTS.md §2; docs/DOCS_SYSTEM.md rules 1-2"
+    },
+    {
+      "id": "SC-2",
+      "title": "The owner's acceptance of T1's missed target is dated after the commit that records it, and no source is cited",
+      "evidence": "Commit 9eb4812 (2026-10-21 20:56 +0200) writes 'accepted on 2026-10-22' into the plan, archive, OWNER_DECISIONS, BACKLOG and .evidence/T1/self-review.json, citing no source, inside a file defined as the agent's own decisions.",
+      "reproduction": "git log --format='%h %ad' --date=iso -1 9eb4812; grep -rn 2026-10-22",
+      "specRef": "docs/agents/REVIEW_PROTOCOL.md; AGENTS.md §17"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-3",
+      "title": "02_MVP_SCOPE.md §4 lists 0.4.0 scope without T1",
+      "evidence": "02_MVP_SCOPE.md:117-119",
+      "reproduction": "sed -n 117,120p 02_MVP_SCOPE.md",
+      "specRef": "docs/DOCS_SYSTEM.md"
+    },
+    {
+      "id": "SC-4",
+      "title": "No device check covers an installed regular 0.3.0 app updating to 0.4.0 with its 0.3.0 course",
+      "evidence": "All owner checks run on CVC Helper Test, installed fresh at 0.4.0; D4 report: the regular installed app was not opened.",
+      "reproduction": "Read .evidence/D4/physical-device-review.json and UG3-PHONE-RELEASE steps.",
+      "specRef": "AGENTS.md §17; 02 §5"
+    },
+    {
+      "id": "SC-5",
+      "title": "Upgraded and imported courses never ask for persistent storage",
+      "evidence": "src/App.tsx:330 createCourse is the only caller of requestPersistentStorage().",
+      "reproduction": "grep -rn requestPersistentStorage src",
+      "specRef": "Plan objective; D4 item 1"
+    },
+    {
+      "id": "SC-6",
+      "title": "D4 launched field-UX round 7 after the third FAIL, against the bounded-rounds rule",
+      "evidence": "D4 field-UX FAIL at rounds 1, 4 and 6; round 7 followed without owner escalation.",
+      "reproduction": "Verdicts of .evidence/D4/field-ux-review-round-*.json",
+      "specRef": "docs/agents/REVIEW_PROTOCOL.md Review rounds"
+    },
+    {
+      "id": "SC-7",
+      "title": "The unproven cause of D4's Android reset hang is recorded only in evidence",
+      "evidence": ".evidence/D4/self-review.json rootCause; not in BACKLOG or 03.",
+      "reproduction": "grep -n -i 'not proven|unproven' docs/working/BACKLOG.md 03_TECHNICAL_DECISIONS.md",
+      "specRef": "AGENTS.md §17"
+    },
+    {
+      "id": "SC-8",
+      "title": "'Survives an interrupted upgrade' rests on synthetic probe migrations and a D1-era manual kill",
+      "evidence": "d1-migration.spec.ts:120 synthetic migrations; real kills predate D2-D4 open-path steps; d3-startup-recovery covers one abrupt close.",
+      "reproduction": "Read .evidence/D1/migration-evidence.json realKillRuns",
+      "specRef": "Plan: 0.4.0 is done when"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-Q1",
+      "title": "03_TECHNICAL_DECISIONS.md has two sections numbered §3.2",
+      "evidence": "lines 234 and 247",
+      "reproduction": "grep -n '^### 3.2'",
+      "specRef": ""
+    },
+    {
+      "id": "SC-Q2",
+      "title": "Test-channel patch numbers leak into contracts",
+      "evidence": "03 §3.2 'a build without it (0.4.2 and earlier)'",
+      "reproduction": "",
+      "specRef": "03 §7"
+    },
+    {
+      "id": "SC-Q3",
+      "title": "Plan H1 row says the retrospective was not delivered; the backlog says delivered and partly adopted",
+      "evidence": "04 line 27 vs BACKLOG 76-82",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "SC-Q4",
+      "title": "The nightly full CI run is a setting nobody asked for",
+      "evidence": "ci.yml cron '17 2 * * *'",
+      "reproduction": "",
+      "specRef": "AGENTS.md §15"
+    },
+    {
+      "id": "SC-Q5",
+      "title": "UG3 owner steps do not ask to time the offer against the one-minute predicate",
+      "evidence": "UG3-PHONE-RELEASE step 2",
+      "reproduction": "",
+      "specRef": "D3 predicate"
+    }
+  ],
+  "evidenceInspected": [
+    "Plan, archive H1-T1, 01/02/03 diffs, OWNER_DECISIONS, BACKLOG, OWNER_TODO, DEPLOY, D1/D3/D4/H1/T1 evidence, review verdicts, specs, src grep, git log; check:docs and milestone:status run"
+  ],
+  "anglesTried": {
+    "seed": 855359232,
+    "lenses": [
+      "Owner decisions honoured word for word",
+      "Behaviour changed without the spec text changing"
+    ],
+    "wildcard": "Version and channel identity: regular 0.3.0 install to 0.4.0"
+  },
+  "notTested": [
+    "No browser spec run",
+    "verify:all not run",
+    "Whether the owner gave the T1 acceptance",
+    "Physical devices"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report; acceptance table and unscheduled-promise lists are reflected in the UG3 self-review."
+}

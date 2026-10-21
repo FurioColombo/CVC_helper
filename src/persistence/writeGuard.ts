@@ -30,7 +30,10 @@ export class ReadOnlyDataError extends Error {
 }
 
 const readOnly = new WeakSet<PowerSyncDatabase>()
-const compactors = new WeakMap<PowerSyncDatabase, () => Promise<unknown>>()
+const compactors = new WeakMap<
+  PowerSyncDatabase,
+  (requireEmpty: boolean) => Promise<unknown>
+>()
 const listeners = new Set<() => void>()
 let anyReadOnly = false
 
@@ -61,7 +64,14 @@ export function onReadOnly(listener: () => void) {
 /** VACUUM after course erasure, without letting old course callbacks save. */
 export async function compactEmptyCourseDatabase(database: PowerSyncDatabase) {
   const compact = compactors.get(database)
-  if (compact) return compact()
+  if (compact) return compact(true)
+  return database.writeLock((context) => context.execute("VACUUM"))
+}
+
+/** After an import: the same guarded compaction, the new course kept. */
+export async function compactCourseDatabase(database: PowerSyncDatabase) {
+  const compact = compactors.get(database)
+  if (compact) return compact(false)
   return database.writeLock((context) => context.execute("VACUUM"))
 }
 
@@ -89,11 +99,13 @@ export function guardWrites<Database extends PowerSyncDatabase>(
       throw new ReadOnlyDataError()
     }
   }
-  compactors.set(database, () =>
+  compactors.set(database, (requireEmpty) =>
     writeLock(async (context: LockContext) => {
       await assertWritable(context, false)
-      const courses = await context.getAll("SELECT id FROM courses LIMIT 1")
-      if (courses.length) throw new Error("Il corso è ancora presente.")
+      if (requireEmpty) {
+        const courses = await context.getAll("SELECT id FROM courses LIMIT 1")
+        if (courses.length) throw new Error("Il corso è ancora presente.")
+      }
       return context.execute("VACUUM")
     }),
   )

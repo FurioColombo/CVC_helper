@@ -861,6 +861,9 @@ export function App() {
     getActiveCourse()
       .then((course) => {
         if (!active) return
+        // An upgraded or imported course asks too, not only a new one
+        // (UG3 review SC-5); the browser answers at once when it already has.
+        if (course) void requestPersistentStorage()
         setAppState((current) =>
           current.status === "closed"
             ? current

@@ -1,0 +1,114 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "UG3",
+  "commit": "376b5ad",
+  "diffRange": "v0.3.0..376b5ad",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "CQ-1",
+      "title": "D4's import writes the data-version record with its own copy of D3's write",
+      "evidence": "src/persistence/courseArchive.ts:81-107 writes data:version and data:minimumWriter as literals, duplicating claimDataVersion (dataVersion.ts:94-102) and compatibility newer().",
+      "reproduction": "Read the three locations",
+      "specRef": "03 §3.1; AGENTS.md §10"
+    },
+    {
+      "id": "CQ-2",
+      "title": "The engine-startup message protocol is declared separately on each side of every postMessage",
+      "evidence": "engineModuleBroker.ts/engineModuleCompiler.ts timings types; engineWorkerRegistration.ts/waSqliteFactory.ts worker state; untyped message strings",
+      "reproduction": "grep the type declarations",
+      "specRef": "AGENTS.md §15"
+    },
+    {
+      "id": "CQ-3",
+      "title": "Seven hand-written node:sqlite adapters in six test files, each copying schema columns",
+      "evidence": "courseSession, dataVersion, repairs, courseArchive, boats, duties tests",
+      "reproduction": "grep -n \"new DatabaseSync\" src/persistence/*.test.ts",
+      "specRef": "AGENTS.md §10"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "CQ-4",
+      "title": "three JSON string-array parsers",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-5",
+      "title": "archive timestamp check duplicates rowIntegrity",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-6",
+      "title": "hand-rolled ASCII lowercase",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-7",
+      "title": "two newest-push-run selectors; unused WORKFLOW_FILE",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-8",
+      "title": "export test asserts exactly 14 queries",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-9",
+      "title": "engine guard test copies the pinned list",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-10",
+      "title": "channel data hard-coded in harness scripts",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-11",
+      "title": "test-only isReadOnly export; duplicated reversed table order",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    },
+    {
+      "id": "CQ-12",
+      "title": "two parseVersion functions with different contracts",
+      "evidence": "see reviewer report",
+      "reproduction": "",
+      "specRef": ""
+    }
+  ],
+  "evidenceInspected": [
+    "v0.3.0..376b5ad diff; persistence, engine and script modules; earlier code-quality reports; vitest 6 files 51 passed"
+  ],
+  "anglesTried": {
+    "seed": 284991967,
+    "lenses": [
+      "New dependency or bundle growth",
+      "Tests asserting implementation details"
+    ],
+    "wildcard": "Cross-milestone seams"
+  },
+  "notTested": [
+    "Browser suite",
+    "Precache growth vs v0.3.0"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report."
+}

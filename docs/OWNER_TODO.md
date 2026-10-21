@@ -53,7 +53,7 @@ The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of star
 **What to do:**
 
 1. This check is not ready yet. The agent publishes the final 0.4.0 source to CVC Helper Test as 0.4.4 after the release reviews and the final verification pass, and tells you when it is ready.
-2. Once READY, keep your installed CVC Helper Test and use fictitious people only. Before switching away, open a student and type a note but do not leave the screen. Switch away and back until Nuova versione disponibile appears, then tap Aggiorna at once: the typed note must survive, and Impostazioni must show 0.4.4.
+2. Once READY, keep your installed CVC Helper Test and use fictitious people only. Open a student and type a note without leaving the screen. Switch away for a minute and come back: time how long Nuova versione disponibile takes to appear (it should be within a minute), then tap Aggiorna at once: the typed note must survive, and Impostazioni must show 0.4.4.
 3. With the phone text size raised, check that the update offer covers neither the + of Allievi nor the Equipaggi controls with a person selected.
 4. Export the course (Salva file and Condividi), import it back after the preview and confirmation, and read Conservazione dei dati.
 5. Report UG3-PHONE-RELEASE with your device, browser and Android version and what you saw.

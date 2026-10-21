@@ -480,3 +480,71 @@ for (const size of [
     )
   })
 }
+
+// UG3 review SP-UG3-1: the course an import replaces must not stay readable in
+// the database's free pages, as after an erase (D3 review DI-R2-1).
+test("an import leaves no trace of the replaced course's students in the stored pages", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "pixel-7-chrome",
+    "Storage-level check; the VFS is the same on every engine",
+  )
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva" }).click()
+  await page.getByRole("button", { name: "Livello 2" }).click()
+  await page.getByRole("button", { name: "Crea corso" }).click()
+  await page.getByRole("button", { name: "Allievi" }).waitFor()
+
+  const marker = "Zzresiduomarcatore"
+  const counted = await page.evaluate(async (marker) => {
+    const load = (file: string) => import(/* @vite-ignore */ file)
+    const { exportCourseArchive, importCourseArchive } = await load(
+      "/src/persistence/courseArchive.ts",
+    )
+    const { getActiveCourse } = await load("/src/persistence/courses.ts")
+    const { createStudents } = await load("/src/persistence/students.ts")
+    const empty = await exportCourseArchive()
+    const course = await getActiveCourse()
+    await createStudents(
+      course.id,
+      Array.from({ length: 200 }, (_, index) => ({
+        firstName: "Prova",
+        surname: `${marker}${index}`,
+        nickname: null,
+        dateOfBirth: "",
+        declaredAgeAtCourseStart: 15,
+        sex: "F",
+        phone: "333 123 4567",
+        courseNote: `${marker} nota`,
+      })),
+    )
+    const count = () =>
+      new Promise<number>((resolve, reject) => {
+        const request = indexedDB.open("cvc-helper.db")
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const database = request.result
+          const read = database
+            .transaction("blocks", "readonly")
+            .objectStore("blocks")
+            .getAll()
+          read.onerror = () => reject(read.error)
+          read.onsuccess = () => {
+            const decoder = new TextDecoder("latin1")
+            let hits = 0
+            for (const block of read.result as Array<{ data: Uint8Array }>)
+              hits += decoder.decode(block.data).split(marker).length - 1
+            database.close()
+            resolve(hits)
+          }
+        }
+      })
+    const before = await count()
+    await importCourseArchive(empty)
+    return { before, after: await count() }
+  }, marker)
+
+  expect(counted.before).toBeGreaterThan(0)
+  expect(counted.after).toBe(0)
+})

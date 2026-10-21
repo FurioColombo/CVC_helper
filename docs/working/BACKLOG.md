@@ -109,7 +109,7 @@ Windows D3 share probes stalled before exit; a manual attempt also timed out. Ne
 Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their owned Vite server stopped after test bodies passed; see `.evidence/D4/field-ux-review-round-4.json`.
 
 Each passed only on a retry and is a defect to fix (03 §6). Fixed entries
-left at T1's close (2026-10-22); see `.evidence/T1/self-review.json`.
+left at T1's close (2026-10-21); see `.evidence/T1/self-review.json`.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI `39235069108`: Disabilita allievo was absent after reactivation; the retry passed. Cause unproven. See `.evidence/T1/ci-checkpoint-434cdcc.json`; T1 also retains traces when a retry makes CI green.
@@ -154,6 +154,10 @@ left at T1's close (2026-10-22); see `.evidence/T1/self-review.json`.
   repetitive presentation).
 
 ## Engineering follow-ups
+
+- D4 owner check (2026-10-19): what held the Android full reset (app left
+  unopenable until reinstalling on 0.4.2) is unproven. 0.4.3 bounds and
+  resumes the reset and passed on the phone; the cause is not established.
 
 - T1 review CQ-6: each e2e seeding fixture re-reads the course that
   `bootstrapCourse` just created; return its id instead (refactor only).

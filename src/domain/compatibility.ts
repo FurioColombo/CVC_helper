@@ -44,7 +44,8 @@ export function compareVersions(a: Version, b: Version) {
   return a.major - b.major || a.minor - b.minor || a.patch - b.patch
 }
 
-const newer = (a: Version, b: Version) => (compareVersions(a, b) >= 0 ? a : b)
+export const newer = (a: Version, b: Version) =>
+  compareVersions(a, b) >= 0 ? a : b
 
 // The `meta` table stores integers (src/persistence/schema.ts).
 const PART = 1000

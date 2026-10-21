@@ -1,7 +1,7 @@
 name: Deterministic verification
 
 # Tiers (T1, owner 2026-10-21: run the full suite less often). main, manual
-# runs, the nightly run and any push whose head commit says [full-ci] run
+# runs and any push whose head commit says [full-ci] run
 # the full suite; other pushes run `verify` and the browser smoke set. The
 # run name says which, and scripts/ci-status.mjs reads it: milestone handoffs,
 # closures and test-site publication require a full run of their commit.
@@ -12,8 +12,6 @@ run-name: "${{ (github.event_name != 'push' || github.ref == 'refs/heads/main' |
 on:
   push:
   workflow_dispatch:
-  schedule:
-    - cron: "17 2 * * *"
 
 # A newer push to the same branch supersedes the run in progress; a manual
 # run has its own group, so it never cancels the push run Pages waits for.
@@ -128,8 +126,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-failure-${{ matrix.os }}-${{ github.run_id }}
+          # Traces, screenshots and failure context only: a public repository
+          # must not publish whatever else a run writes (UG3 review SP-UG3-Q3).
           path: |
-            test-results/
+            test-results/**/trace.zip
+            test-results/**/*.png
+            test-results/**/error-context.md
             playwright-report/
           retention-days: 14
           if-no-files-found: ignore

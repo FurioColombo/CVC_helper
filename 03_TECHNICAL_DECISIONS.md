@@ -244,7 +244,7 @@ The UI shows saving only while work is pending, success only after commit, and a
 in-context retry after failure. Do not let a stale selected session/person apply a
 late write to the wrong record.
 
-### 3.2 Course files and local reset
+### 3.3 Course files and local reset
 
 The course file has its own format version and the D3 data-version record.
 It contains the active course's schema-whitelisted rows with identifiers,
@@ -281,8 +281,8 @@ the instance closes and removed once the database is deleted, makes the next
 open resume the reset before any course is read, so closing the app midway
 cannot leave it opening a half-deleted course; a cache that keeps failing to
 clear cannot lock the app out. Closing an instance whose engine never started
-does not wait for it. The mark names no course: a build without it (0.4.2 and
-earlier) that creates a course after an abandoned reset loses that course at
+does not wait for it. The mark names no course: a build without it (0.3.0 and
+earlier; test builds before 0.4.3) that creates a course after an abandoned reset loses that course at
 the next open of a current build, the same older-writer limit as import's.
 Exported files outside the app remain with their recipient. The regular and
 test channels remain separate on one origin (`docs/DEPLOY.md`); persistence
@@ -418,10 +418,10 @@ explicit safe-continuation rules in `docs/OWNER_WORKFLOW.md`; missing owner
 feedback alone does not stop eligible work. The closing skill handles failures.
 The public API needs no `gh` or token; a token permits higher API limits.
 
-CI runs on push, by hand and nightly, cancels a superseded run on the same
+CI runs on push and by hand, cancels a superseded run on the same
 branch, and uses Node 24, locked dependencies and uploaded failure artifacts
 where useful. It has two tiers (owner, 2026-10-21). The full tier runs
-`verify:all` on `main`, by hand, nightly and for a push whose head commit
+`verify:all` on `main`, by hand and for a push whose head commit
 says `[full-ci]`; milestone handoffs, closures and test-site publication
 require a full green run of their exact commit, so those commits say
 `[full-ci]`. Other pushes run the quick tier: `verify` and

@@ -90,7 +90,15 @@ export async function claimDataVersion(
   const stored = await readDataVersion(transaction)
   if (dataAccess(app, stored) === "read-only") return "read-only"
   if (!dataVersionNeedsRecord(app, stored)) return "write"
-  const next = dataVersionAfterWrite(app, stored)
+  await writeDataVersion(transaction, dataVersionAfterWrite(app, stored))
+  return "write"
+}
+
+/** The one writer of the record; its `meta` keys exist only in this module. */
+export async function writeDataVersion(
+  transaction: Pick<Transaction, "execute">,
+  next: DataVersion,
+) {
   for (const [id, version] of [
     [VERSION_ID, next.version],
     [MINIMUM_WRITER_ID, next.minimumWriter],
@@ -100,5 +108,4 @@ export async function claimDataVersion(
       [id, encodeVersion(version)],
     )
   }
-  return "write"
 }

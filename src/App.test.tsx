@@ -15,6 +15,11 @@ vi.mock("@/persistence/courses", () => ({
   saveActiveCourse: vi.fn(),
 }))
 
+vi.mock("@/persistence/browserStorage", async (original) => ({
+  ...(await original<typeof import("@/persistence/browserStorage")>()),
+  requestPersistentStorage: vi.fn().mockResolvedValue("granted"),
+}))
+
 vi.mock("@/persistence/localDataOperations", () => ({
   isResetPending: vi.fn(() => false),
   watchLocalData: vi.fn(() => () => {}),
@@ -83,6 +88,7 @@ import {
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
+import { requestPersistentStorage } from "@/persistence/browserStorage"
 import { readCrewPlan } from "@/persistence/crews"
 import {
   isResetPending,
@@ -612,5 +618,23 @@ describe("a reset that takes longer than usual", () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe("persistent storage for every course on the device (UG3 review SC-5)", () => {
+  it("asks when an existing, upgraded or imported course opens, not only at creation", async () => {
+    vi.mocked(requestPersistentStorage).mockClear()
+    vi.mocked(getActiveCourse).mockResolvedValue(ACTIVE_COURSE)
+    render(<App />)
+    await screen.findByRole("heading", { name: "D2 - 35 | 2026" })
+    expect(requestPersistentStorage).toHaveBeenCalledOnce()
+  })
+
+  it("does not ask when there is no course", async () => {
+    vi.mocked(requestPersistentStorage).mockClear()
+    vi.mocked(getActiveCourse).mockResolvedValue(null)
+    render(<App />)
+    await screen.findByRole("heading", { name: "Crea il corso" })
+    expect(requestPersistentStorage).not.toHaveBeenCalled()
   })
 })

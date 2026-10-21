@@ -37,11 +37,14 @@ export const SECRET_PATTERNS = [
 ]
 
 /**
- * Italian mobile numbers, the phone format of the centre's rosters. Hex runs
- * (hashes, commit ids) are excluded by the boundaries.
+ * Italian mobile numbers, the phone format of the centre's rosters, in any
+ * grouping the roster reader accepts (separators between any digits, as
+ * src/capabilities/studentScan.ts PHONE_PATTERN), a slash or a bracketed
+ * prefix (UG3 review SP-UG3-2). Hex runs (hashes, commit ids) are excluded by
+ * the boundaries.
  */
 const PHONE =
-  /(?<![0-9A-Fa-f.])(?:\+39[\s.-]?)?3\d{2}[\s.-]?\d{3}[\s.-]?\d{3,4}(?![0-9A-Fa-f.])/g
+  /(?<![0-9A-Fa-f.])(?:\+39[\s./-]?)?\(?3\d{2}\)?[\s./-]?\d(?:[\s.-]?\d){5,6}(?![0-9A-Fa-f.])/g
 
 /** The invented numbers the synthetic fixtures use; anything else is suspect. */
 export const SYNTHETIC_PHONES = new Set([
@@ -57,6 +60,7 @@ export const SYNTHETIC_PHONES = new Set([
 export function isRecordPath(path) {
   return (
     path.startsWith(".evidence/") ||
+    path.startsWith(".milestones/") ||
     path.startsWith("docs/") ||
     path.startsWith("archive/") ||
     /^[^/]+\.md$/.test(path)

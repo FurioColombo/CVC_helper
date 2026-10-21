@@ -107,6 +107,11 @@ export async function eraseAllCourseData() {
   } catch {
     // Not supported by every browser storage backend.
   }
+  clearCoursePreferences()
+}
+
+/** Per-course interface preferences, cleared when the course goes away. */
+export function clearCoursePreferences() {
   try {
     for (const key of Object.keys(window.localStorage)) {
       if (COURSE_PREFERENCE_PREFIXES.some((prefix) => key.startsWith(prefix))) {

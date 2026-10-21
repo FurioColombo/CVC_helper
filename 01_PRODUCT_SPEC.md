@@ -1,8 +1,7 @@
-# Product Specification — released 0.3.0 behaviour
+# Product Specification — 0.4.0 behaviour
 
-This is the authoritative source for user-visible behavior and business rules. It
-contains the complete 0.1.0 baseline plus the approved 0.2.0 and 0.3.0 changes. Historical
-documents and mock behavior never override it.
+The authoritative source for user-visible behavior and business rules: the
+0.1.0 baseline plus the approved 0.2.0-0.4.0 changes. Nothing older overrides it.
 
 ## 1. Product and operating context
 
@@ -35,8 +34,8 @@ presentation and interaction without changing this document's semantics.
 
 ## 2. Course, shell and navigation
 
-If no active course exists, opening the app goes directly to `Crea corso`. Bottom
-navigation is hidden during this flow.
+If no active course exists, opening the app goes directly to `Crea corso`, which
+also offers the course import and reset below; no bottom navigation.
 
 The user chooses:
 
@@ -59,8 +58,7 @@ functional cards:
 - Volontari.
 
 The persistent bottom navigation has exactly `Avarie`, `Home`, `Equipaggi`, with
-Home central. Settings is secondary. Home is not an operational dashboard in
-0.2.0.
+Home central. Settings is secondary. Home is not an operational dashboard.
 
 On an installed phone, browser Back/swipe-back returns to the preceding in-app
 screen when there is one, rather than closing the app from a nested screen.
@@ -68,11 +66,22 @@ screen when there is one, rather than closing the app from a nested screen.
 Course locking, read-only closure and rich historical-course browsing are not
 required. Existing course data remains editable.
 
-Settings offers the only way to start the next course (owner decision,
+Settings offers the way to start the next course (owner decision,
 2026-09-26): `Elimina il corso e inizia un nuovo corso` erases the current
 course and everything recorded in it from the device, after a confirmation
 that names the course and an explicit acknowledgement that the data cannot be
 recovered, then opens course creation. A failed erase changes nothing.
+
+Course files (0.4.0, Settings): `Conservazione dei dati` says whether the
+browser keeps the data when space is low (asked at creation, import and open),
+else advises regular export. `Prepara il file del corso` warns of the students'
+personal data and makes one versioned file, no personal name in its name, saved
+as `.json` or shared as `.txt`. `Importa un corso` checks either file fully,
+shows the course and replaces the current one only after confirmation, never
+merging; an invalid or too-new file changes nothing. `Azzera tutti i dati
+locali` (owner, 2026-09-28) deletes course, preferences and offline files after
+confirmation, finishing at the next open if interrupted. Results show beside
+the action above the bottom bar, errors with the warning triangle.
 
 The installed app looks for a new version whenever it comes back to the
 foreground and once an hour while it stays open. A new version is offered in a
@@ -83,8 +92,7 @@ next start. As on phone Back, a half-filled form for a new student or
 volunteer is not kept. The bar covers no control: the floating ones (the crew
 page's quick-access rail and destination panels, the Allievi add button) rise
 above it. A bar that has just appeared takes no tap for a moment. Settings
-shows the installed version and `Cerca aggiornamenti`, and after an update the
-same bar says once which version is now installed. A version older than the one
+shows the version and `Cerca aggiornamenti`; after an update the bar names it. A version older than the one
 the course data requires (`03_TECHNICAL_DECISIONS.md` §3.1) opens the course
 read-only: everything can be consulted, nothing is saved, and the same bar stays
 to ask for the update and to look for it. No screen holds the user waiting for
@@ -555,8 +563,7 @@ phone can share files; nothing is downloaded. The PNG is a screenshot of the
 summary's content as the screen lays it out — every group, without the phone's
 status bar, the page's controls or the closing `Tutti gli allievi assegnati`
 note (owner, 2026-10-03 and 2026-10-04; the Comandate summary does the same).
-Volunteers who are not in a crew are not listed. It
-starts with remaining available students, then occupied sailing crews, Mezzi,
+Volunteers who are not in a crew are not listed. It starts with remaining available students, then occupied sailing crews, Mezzi,
 A terra as a crew-like group with its own icon, and empty boats/crews last. The
 occupied crews follow the owner's C6 layout (2026-09-28): grouped by boat model
 under the class logo, two columns, each card with a 4px class-colour edge and
@@ -564,8 +571,7 @@ the boat number in a left column as wide as the group's widest number. A crew
 with people and no boat, in a session whose boats are all one model, is listed
 in that model's group as `<model> · Senza barca` with a muted mark. If
 no students remain available, a small centered CVC-blue `Tutti gli allievi
-assegnati` note appears at the bottom. If Copy is offered, it copies that image,
-never plain text. All groups must fit in the image; above twelve crews two
+assegnati` note appears at the bottom. All groups must fit in the image; above twelve crews two
 columns are allowed. The Comandate summary (owner, 2026-09-28) lists each
 day's students in the same card style, two columns, and is copied as an image
 the same way. Preserve readable names by reducing vertical spacing
@@ -640,8 +646,8 @@ alone, controls commit.
 ## 10. Persistence, privacy and future sharing
 
 All operational reads and writes use the local database and survive page/app
-closure. Data created by 0.1.0 must remain readable without losing people, duties,
-crews, A-terra placements, boats, faults, evaluations or notes. Schema changes
+closure. Data created by 0.1.0-0.3.0 must remain readable without losing people,
+duties, crews, A-terra placements, boats, faults, evaluations or notes. Schema changes
 require a tested migration and must preserve stable IDs/references.
 
 Only true technical invalidity blocks storage. Routine recoverable errors stay in
@@ -652,11 +658,8 @@ Phone and other personal data appear only where operationally relevant, never in
 announcement rows. All app users are assumed to be authorized instructors or
 assistant instructors; that assumption does not justify showing irrelevant data.
 
-The decided progression (owner, 2026-10-08; `02_MVP_SCOPE.md` §4) is an online
-backup for the owner (0.5.0), read-only sharing with the course team (0.6.0),
-the season's history (0.7.0) and team editing (1.0.0). This specification
-describes the released single-device behaviour; each of those releases
-rewrites the sections it changes, starting with §1 at 0.5.0.
+Next (owner, 2026-10-08; 02 §4): online backup (0.5.0), team read-only sharing
+(0.6.0), season history (0.7.0), team editing (1.0.0), each rewriting this.
 
 ## 11. Canonical domain truth and invariants
 
@@ -692,6 +695,5 @@ but representable operational choices and preserve manual override.
 
 ## 12. Scope boundary
 
-What is in scope, what is deferred and the release that brings the backend,
-sync and sharing are authoritative in `02_MVP_SCOPE.md`; implementation order
-and evidence live in `04_IMPLEMENTATION_PLAN.md`.
+Scope, deferrals and the release of backend, sync and sharing: `02_MVP_SCOPE.md`;
+order and evidence: `04_IMPLEMENTATION_PLAN.md`.
