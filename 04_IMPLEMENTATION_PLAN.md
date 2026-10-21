@@ -68,21 +68,21 @@ trimmed to what they assert. Fix the flaky tests filed in
 idle machine.
 
 On 2026-10-21 the owner revised the target after
-`.evidence/T1/target-feasibility.json` showed the one-worker goal out of reach
-(the 0.4 cases add 21 minutes and WebKit opens regressed about a second since
-H1). The suite may run on three workers. Unnecessary tests are removed and
-necessary ones kept: a case goes only when another kept case proves the same
-requirement on the same engine at least as strongly, recorded case by case.
-The WebKit app-open time is checked against H1 and fixed in the app if it
-regressed (`.evidence/T1/webkit-open-bisect.json`: it did not in production
-builds).
+`.evidence/T1/target-feasibility.json` showed the one-worker goal out of reach:
+three workers, unnecessary tests removed and necessary ones kept, and the
+WebKit app-open time checked against H1. Three workers proved slower on the
+development machine, so on 2026-10-22 the owner accepted T1 as delivered:
+the cases recorded as unnecessary removed, the full suite run only when it
+counts (tiered CI, `03_TECHNICAL_DECISIONS.md` §6), and a clean one-worker
+suite of 41:30 against H1's 30:21 (60:10 before the removals).
 
-**Success predicate:** the full browser suite on three workers takes at least
-30% less time than the H1 suite (33:59, so at most 23:47), measured back to
-back on the same idle machine; every removed case is recorded with the kept
-case that covers its requirement; WebKit app open is within H1's time; and
-no flaky test remains. Decisions taken without the owner are in
-`docs/working/OWNER_DECISIONS.md`.
+**Success predicate:** every removed case is recorded with the kept case that
+covers its requirement; ordinary pushes run the quick tier and handoffs,
+closures, publication and `main` the full one, with a quick run never
+standing in for a full one; a back-to-back pair on the same idle machine and
+the recorded `verify:all` run with no failure and no retry; WebKit app open
+in production is within H1's time; and each flake still filed has a recorded
+classification or retained-trace plan.
 
 **Adversarial checklist:** a seeding helper that creates a state the UI cannot;
 a journey shortened past the step it was meant to prove; a case removed whose

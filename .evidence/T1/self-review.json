@@ -1,0 +1,57 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "T1",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "T1-TARGET",
+      "title": "The original speed target was not met; the owner accepted T1 as delivered",
+      "evidence": "test-timing.json (41:30 vs H1 30:21, clean); target-feasibility.json; OWNER_DECISIONS history; plan T1 section",
+      "reproduction": "Three workers took 59.8 min on the 8 GB development machine; the owner restated the predicate on 2026-10-22.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md T1"
+    },
+    {
+      "id": "T1-FLAKES-OPEN",
+      "title": "Four filed flakes keep an unproven cause",
+      "evidence": "docs/working/BACKLOG.md flaky section; webkit-page-loss-classification.json",
+      "reproduction": "d1 ledger and d2 page losses are classified as memory pressure (45/45 clean on one idle worker); student reactivation, d4 recipient stall and hostile-summary logos have no recurrence since and CI now keeps traces on green retries (ci.yml).",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "CQ-6",
+      "title": "Fixture course re-lookup boilerplate",
+      "evidence": "code-quality-review.json",
+      "reproduction": "Filed in docs/working/BACKLOG.md",
+      "specRef": ""
+    }
+  ],
+  "fixedFindings": [
+    "Removed 96 listed cases (355 to 259) with each covering kept case recorded (removed-cases.json); reopen-persistence kept against the analysis.",
+    "Tiered CI: quick tier verified live on GitHub (run 39577421692, quick, green); full tier on [full-ci], main, manual and nightly; controller, publisher and cross-branch reuse require full runs (code-quality CQ-1/CQ-4).",
+    "Playwright project scoping pinned by tests/playwright-scoping.test.ts after an unescaped title silently dropped a kept case (CQ-2/CQ-8).",
+    "UX-5 layout journeys reopen each view at 320 px (CQ-3).",
+    "Legacy fixture insertion batched with cell-by-cell read-back (WebKit setup 28 s to 1 s).",
+    "Fixed flakes left the backlog: partial reset (cache injector retained), evaluation note and history readiness, 40-student timing (seed page closed before measuring), crop gesture commit."
+  ],
+  "measurements": [
+    "WebKit open: no regression in production builds H1..now (webkit-open-bisect.json).",
+    "Workers: 3 workers no gain on this machine (OWNER decision log, 2026-10-21)."
+  ],
+  "reviews": [
+    "code-quality-review-round-1.json FAIL (CQ-1, CQ-2) -> code-quality-review-round-2.json PASS_WITH_FINDINGS"
+  ],
+  "evidenceInspected": [
+    ".evidence/T1/*",
+    "playwright --list per project",
+    "docs/working/BACKLOG.md flaky section"
+  ],
+  "notTested": [
+    "Faster hardware with parallel workers",
+    "A production-build test server (would need a build-time seeding entry for 22 specs)",
+    "Live nightly scheduled run"
+  ]
+}

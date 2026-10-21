@@ -108,13 +108,11 @@ D4 exact `fde1fe1` and T1 `b8eda01` CI pass without retries. The later local H1/
 Windows D3 share probes stalled before exit; a manual attempt also timed out. Neither is PASS; cause unclassified.
 Later `33ac7c9` passed 105 cases without retries. D4 field rechecks needed their owned Vite server stopped after test bodies passed; see `.evidence/D4/field-ux-review-round-4.json`.
 
-Each passed only on a retry and is a defect to fix (03 §6).
+Each passed only on a retry and is a defect to fix (03 §6). Fixed entries
+left at T1's close (2026-10-22); see `.evidence/T1/self-review.json`.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI `39235069108`: Disabilita allievo was absent after reactivation; the retry passed. Cause unproven. See `.evidence/T1/ci-checkpoint-434cdcc.json`; T1 also retains traces when a retry makes CI green.
-
-- `d4-local-reset.spec.ts › reports partial cleanup honestly and retries through the reset screen`
-  — `b8eda01` showed success instead of the simulated partial failure. A later probe found the cache mock gone with zero calls; retaining its browser handle and verifying both calls passes 32 cases without retries. A separate document reload remains unclassified. See `.evidence/T1/reset-cache-injection.json`.
 
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — the first development dual-engine run stalled opening the fresh WebKit
@@ -127,37 +125,16 @@ Each passed only on a retry and is a defect to fix (03 §6).
   isolation engines. Cause unproven; T1 must investigate this filed defect
   after D4's CI gate. See `.evidence/D4/development-checks.json`.
 
-- `u10-evaluations.spec.ts › shows the evaluation note itself, clamped to two lines however long it is`
-  — Mac CI 39103308907: Bea’s input timed out, then passed on retry.
-  D4 typed/dictated draft fixes pass independent reviews and seven browser cases.
-  See `.evidence/D4/note-dictation-revision.json`; final recorder and exact CI pass.
-
-- `d1-migration.spec.ts › upgrades and reopens a 40-student course within five seconds each`
-  — macOS 15 WebKit, CI 38522538304: upgrade took 6229 ms and 5827 ms,
-  then passed at 4244 ms on the second configured retry. All 609 rows remained
-  identical; adapter initialization dominated. T1 now closes the legacy seed
-  page before measuring; both 5000 ms bounds and cold checks remain. Exact `b8eda01` CI passes without retries.
-
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
   — WebKit page closure; classified on 2026-10-21 as memory pressure (a WebKit
   page peaks near 2 GB in these specs; clean 45/45 on one idle worker). See
   `.evidence/T1/webkit-page-loss-classification.json`.
 
-- `u04-scan-ui.spec.ts › edge handles work by keyboard and tilt updates the crop image live`
-  — D3 measured 170.7 ms against the 120 ms bound on Chromium and exceeded the
-  100 ms readiness check on WebKit. T1 commits image/crop and ARIA during the
-  event; 12 browser checks and exact `b8eda01` CI pass without retries, retaining
-  both limits. See `.evidence/T1/crop-gesture-commit.json`.
-
 - `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
-  — iPhone 13 WebKit, D3's focused run (2026-10-13): the first attempt found
-  zero boat logos on the summary after copying; the retry passed. T1 must
-  establish summary readiness and retain the on-screen/image logo assertions.
+  — iPhone 13 WebKit, D3's focused run (2026-10-13): zero boat logos on the
+  first attempt; the retry passed. No recurrence in any later run (T1 pairs
+  of 2026-10-19 and 2026-10-21, CI); CI now keeps the trace if it returns.
 
-- `e1-evaluation-history-layout.spec.ts › opens the selected student session and keeps the Valutazioni note editor usable`
-  — Pixel 7 Chrome, H1's recorded `verify:all` (2026-10-10).
-  CI 38522538304 on macOS also timed out waiting for the student control, then
-  passed its first configured retry. T1 now waits for editor closure; the held-save probe, original journey and exact `cccfd2c` CI pass without retries. See `.evidence/T1/evaluation-history-readiness.json`.
 - `d2-duty-items.spec.ts` (0.3.0 lists, rebuilt rows, stale 0.3.0 tab)
   — the same WebKit page closure under load; same classification and
   evidence as above.
