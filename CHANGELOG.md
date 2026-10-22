@@ -51,6 +51,12 @@ The test channel used for the owner's phone checks (CVC Helper Test, 0.4.0 to
 - **The update from an installed 0.3.0 app was not checked on a phone.** Every
   phone check ran on CVC Helper Test. The 0.3.0 app's own banner, which is not
   always prompt, brings 0.4.0; export the course right after updating.
+  The owner then checked it once on their Android phone with a real course
+  (2026-10-22): it updated without reinstalling.
+- **CVC Helper Test and CVC Helper installed on one phone** keep their data
+  apart, but installing both is unreliable: once, Chrome said the test app was
+  installed when no icon remained. Only the owner’s phone checks use the test
+  app.
 - **No iPhone has been tried.** iPhone/Safari is covered by browser tests on the
   WebKit engine only.
 - **One full reset on 0.4.2 left the test app unable to open** until it was

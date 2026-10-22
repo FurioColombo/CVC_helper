@@ -161,13 +161,15 @@ Each passed only on a retry and is a defect to fix (03 §6).
   address it without silently changing the writer window.
 - **The Android reset hang on 0.4.2** (D4 owner check, 2026-10-19): unproven
   cause. 0.4.3 bounds and resumes the reset and passed on the phone.
-- **Test and regular app updates interfere** (owner, 2026-10-22, about D4):
-  updating CVC Helper Test and the regular app on the same phone seemed to
-  conflict, although their data stayed separate (a note added in one did not
-  appear in the other). Not blocking, judged a testing issue; both are on one
-  origin (`docs/DEPLOY.md`), so the likely shared piece is the update check or
-  the service-worker lifecycle. Ask the owner what they saw before changing
-  anything.
+- **Test and regular app installed together** (owner, 2026-10-22, D4 and
+  UG3): their data stays separate, but installing both on one phone is
+  unreliable. Updating them seemed to conflict; it worked once, then after
+  reinstalling the regular app, Chrome says CVC Helper Test is already
+  installed although no icon exists (a failed uninstall, or the two apps on one
+  origin, `docs/DEPLOY.md`; a reboot may clear it). Not blocking. Before the
+  next phone check: reproduce it, then consider giving the test channel its
+  own origin, which would also end the shared origin-wide persistence
+  permission (03 §3.3).
 - UG3 RH-Q1: after an import and Riapri l’app, phone Back walks through the
   replaced course's earlier screens; clear the shell history on reopen.
 - T1 CQ-6: each e2e seeding fixture re-reads the course that

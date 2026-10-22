@@ -81,9 +81,9 @@
       "milestone": "UG3",
       "kind": "DEVICE_CHECK",
       "title": "Check the 0.4.0 release build on Android",
-      "status": "READY",
-      "required": true,
-      "revision": 3,
+      "status": "PASSED",
+      "required": false,
+      "revision": 4,
       "instructions": [
         "Keep your installed CVC Helper Test (do not reinstall) and use fictitious people only. Open a student and type a note without leaving the screen. Switch away for a minute and come back: time how long Nuova versione disponibile takes to appear (it should be within a minute), then tap Aggiorna at once: the typed note must survive, and Impostazioni must show 0.4.4.",
         "With the phone text size raised, check that the update offer covers neither the + of Allievi nor the Equipaggi controls with a person selected.",
@@ -94,7 +94,16 @@
       "testedCommit": "c56ffe77c81427a25d237adf11995ae4c44092a9",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/UG3/physical-device-review.json",
-      "updatedAt": "2026-10-22T06:18:40.199Z"
+      "updatedAt": "2026-10-22T21:53:31.868Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Owner chat recap in the Claude Code session of 2026-10-22 (\"i observed everything and all good except\" the installation issue below), after OWNER_TODO annotations the same day.",
+        "summary": "The owner reports observing every step and all good: the update arriving without reinstalling with a typed note kept after Aggiorna, the controls reachable at enlarged text (also seen on the earlier 0.4.2 update), export, share and import, and Conservazione dei dati. Individual values (offer time, version shown) were not restated. Exception, not blocking by the owner's judgement: having CVC Helper Test and the regular app installed together is problematic; it worked once, then after problems and reinstalling the regular app, installing the test app says it is already installed although it is not visible (perhaps a failed uninstall or a conflict with the regular app; a phone reboot may fix it). Their data stayed separate.",
+        "testedCommit": "c56ffe77c81427a25d237adf11995ae4c44092a9",
+        "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+        "browser": "Not restated (Chrome in earlier reports)",
+        "osVersion": "Not restated (Android 15 in earlier reports)"
+      }
     },
     {
       "id": "UG3-REGULAR-UPDATE",
@@ -125,6 +134,23 @@
         "browser": "Not restated (Chrome in earlier reports)",
         "osVersion": "Not restated (Android 15 in earlier reports)"
       }
+    },
+    {
+      "id": "UG3-FINAL-BUILD",
+      "milestone": "UG3",
+      "kind": "DEVICE_CHECK",
+      "title": "Confirm the final 0.4.0 build on your regular app",
+      "status": "NEEDS_SETUP",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "Not ready yet: the agent moves main to the final 0.4.0 commit and tells you when it is live."
+      ],
+      "expected": "The regular app runs the final 0.4.0 build with the course intact. Only actual phone observations pass.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/UG3/physical-device-review.json",
+      "updatedAt": "2026-10-22T22:01:16.853Z"
     }
   ]
 }

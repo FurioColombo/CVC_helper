@@ -36,6 +36,16 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
 5. **Reset mark names no course (accepted limit).** 03 §3.3 records it; a
    course-bound mark is possible later if older windows matter.
 
+6. **Which check closes UG3 (taken, 2026-10-23).** The controller binds a
+   required device check to the exact commit handed off, and a release gate
+   bumps the version after its phone check, so the 0.4.4 check (`c56ffe7`)
+   cannot close the final 0.4.0 source. Your passed results stay as recorded;
+   `UG3-PHONE-RELEASE` and `UG3-REGULAR-UPDATE` were made optional by hand
+   (their results untouched), and a short required `UG3-FINAL-BUILD` asks you
+   to confirm the final commit on your regular app. Next release: bump the
+   version before publishing the phone-test build, so one check covers the
+   final source.
+
 ## 0.5.0 preparation
 
 6. **Draft 0.5.0 plan (open).** Written while UG3 waits, in

@@ -15,6 +15,20 @@
       "browser": "Not restated (Chrome in earlier reports)",
       "osVersion": "Not restated (Android 15 in earlier reports)",
       "reportedAt": "2026-10-22T21:39:15.135Z"
+    },
+    {
+      "id": "UG3-PHONE-RELEASE",
+      "check": "Check the 0.4.0 release build on Android",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Owner chat recap in the Claude Code session of 2026-10-22 (\"i observed everything and all good except\" the installation issue below), after OWNER_TODO annotations the same day.",
+      "summary": "The owner reports observing every step and all good: the update arriving without reinstalling with a typed note kept after Aggiorna, the controls reachable at enlarged text (also seen on the earlier 0.4.2 update), export, share and import, and Conservazione dei dati. Individual values (offer time, version shown) were not restated. Exception, not blocking by the owner's judgement: having CVC Helper Test and the regular app installed together is problematic; it worked once, then after problems and reinstalling the regular app, installing the test app says it is already installed although it is not visible (perhaps a failed uninstall or a conflict with the regular app; a phone reboot may fix it). Their data stayed separate.",
+      "testedCommit": "c56ffe77c81427a25d237adf11995ae4c44092a9",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-10-22T21:53:31.868Z"
     }
   ]
 }

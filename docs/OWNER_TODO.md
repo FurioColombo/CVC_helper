@@ -44,20 +44,35 @@ The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of star
 
 **Work affected:** The owner report is recorded.
 
+<a id="ug3-final-build"></a>
+
+## Confirm the final 0.4.0 build on your regular app — UG3
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. Not ready yet: the agent moves main to the final 0.4.0 commit and tells you when it is live.
+
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+
+**Expected:** The regular app runs the final 0.4.0 build with the course intact. Only actual phone observations pass.
+
+**Build:** No test build is assigned yet.
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of UG3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="ug3-phone-release"></a>
 
 ## Check the 0.4.0 release build on Android — UG3
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Optional
 
 **What to do:**
 
-1. Keep your installed CVC Helper Test (do not reinstall) and use fictitious people only. Open a student and type a note without leaving the screen. Switch away for a minute and come back: time how long Nuova versione disponibile takes to appear (it should be within a minute), then tap Aggiorna at once: the typed note must survive, and Impostazioni must show 0.4.4.
-2. With the phone text size raised, check that the update offer covers neither the + of Allievi nor the Equipaggi controls with a person selected.
-3. Export the course (Salva file and Condividi), import it back after the preview and confirmation, and read Conservazione dei dati.
-4. Report UG3-PHONE-RELEASE with your device, browser and Android version and what you saw.
-
-Use the test address below and the linked device instructions.
+The owner reported: The owner reports observing every step and all good: the update arriving without reinstalling with a typed note kept after Aggiorna, the controls reachable at enlarged text (also seen on the earlier 0.4.2 update), export, share and import, and Conservazione dei dati. Individual values (offer time, version shown) were not restated. Exception, not blocking by the owner's judgement: having CVC Helper Test and the regular app installed together is problematic; it worked once, then after problems and reinstalling the regular app, installing the test app says it is already installed although it is not visible (perhaps a failed uninstall or a conflict with the regular app; a phone reboot may fix it). Their data stayed separate.
 
 **Expected:** The update arrives without reinstalling and keeps the typed note; controls stay reachable at enlarged text; export, share and import round-trip the synthetic course; storage persistence is reported honestly. Only actual phone observations pass.
 
@@ -67,7 +82,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of UG3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="ug3-regular-update"></a>
 
