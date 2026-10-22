@@ -39,13 +39,14 @@ first real roster:
 Actions only the owner can take (agents may not create accounts or handle
 keys, `AGENTS.md` §17): create the EU development projects on Supabase and
 PowerSync Cloud, and later the separate production ones; choose the sign-in
-method (proposed: email magic link, no password to remember on the boat).
+method (proposed: email magic link, no password to remember on the boat);
+install Docker on the development PC if L1 should run locally (below).
 
 ## Proposed milestones
 
 | ID  | Category         | What it delivers                                                                                                                                                                                                                                                                                                                                |
 | --- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L1  | FOUNDATION       | Local backend for development and CI: Supabase CLI and self-hosted PowerSync in Docker, synthetic seed, no agent tool ever pointed at production. Postgres schema mirroring the course tables with `courseId`, `ownerId`, the D1 metadata and RLS by owner.                                                                                     |
+| L1  | FOUNDATION       | Local backend for development and CI (see "Development backend"): Postgres and self-hosted PowerSync in Docker, synthetic seed, no agent tool ever pointed at production. Postgres schema mirroring the course tables with `courseId`, `ownerId`, the D1 metadata and RLS by owner.                                                             |
 | S1  | RULE_HEAVY       | The synced schema. The course tables become synced through 03 §3.1's path: the new version keeps declaring the local-only tables (under other view names) until a ledgered migration has copied their rows, declares its own minimum writer, and drops them only in a later release. Course files carry the migration state (BACKLOG DI-UG3-2). |
 | A1  | FEATURE          | Sign-in and sign-out in Impostazioni; signed out, the app works as 0.4.0. Sign-in copies the local course into the upload queue; sign-out keeps the course on the device unless asked (`disconnectAndClear` only on explicit request).                                                                                                          |
 | U1  | RULE_HEAVY       | The upload handler: writes rows through the owner's session, sends the app version with every upload and refuses writers below the minimum (03 §3.1), and reports a refused or failed upload in Impostazioni without losing the queue.                                                                                                          |
@@ -55,6 +56,24 @@ method (proposed: email magic link, no password to remember on the boat).
 
 Order: L1 → S1 → A1 → U1 → R1 → E1 → UG4. S1 and L1 can overlap; every
 later milestone needs both.
+
+## Development backend (checked 2026-10-22)
+
+The development PC has 8 GB of RAM and no Docker (neither on Windows nor in
+its WSL2 Debian), so L1 cannot run locally until the owner installs Docker
+Engine in WSL2 or Docker Desktop: a system change only the owner makes.
+GitHub's Linux runners have Docker, so CI can run L1's tests either way.
+
+The lightest stack the PowerSync documentation supports is one Postgres 14+
+server holding both the course tables and PowerSync's bucket storage
+(separate schemas), plus the PowerSync service (its examples cap Node at
+1 GB), set up by the PowerSync CLI (`powersync docker configure --database
+postgres --storage postgres`). Sign-in can be stood in for by a static
+development key (`client_auth.jwks`) issuing tokens shaped like Supabase's, so
+the full Supabase stack (about ten containers) is not needed locally; the
+Supabase development project, or the Supabase CLI in CI, exercises real
+sign-in and row-level security. Running the stack beside the browser suite on
+this PC is untested: WebKit already loses pages under memory pressure here.
 
 ## Adversarial checklist for the whole cycle
 
