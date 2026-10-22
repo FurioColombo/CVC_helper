@@ -95,6 +95,27 @@
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/UG3/physical-device-review.json",
       "updatedAt": "2026-10-22T06:18:40.199Z"
+    },
+    {
+      "id": "UG3-REGULAR-UPDATE",
+      "milestone": "UG3",
+      "kind": "DEVICE_CHECK",
+      "title": "Update your regular CVC Helper from 0.3.0 to 0.4.0",
+      "status": "READY",
+      "required": false,
+      "revision": 1,
+      "instructions": [
+        "This is your real app with a real course: do not reset or import anything, and report no personal data, only counts and what you saw.",
+        "Open the installed regular CVC Helper (not CVC Helper Test). Wait for the 0.3.0 update banner, or close the app completely and reopen it once or twice; note roughly how long the offer took. Apply the update.",
+        "Check that the course opens with the same number of students, the duties and today's crews as before, and that Impostazioni shows 0.4.0.",
+        "In Impostazioni tap Prepara il file del corso and Salva file to keep a first backup of the real course on the phone. Read Conservazione dei dati.",
+        "Report UG3-REGULAR-UPDATE with your device, browser and Android version and what you saw."
+      ],
+      "expected": "The installed 0.3.0 app takes 0.4.0 without reinstalling, the real course opens unchanged, Impostazioni shows 0.4.0 and the course can be saved to a file. Only actual phone observations pass.",
+      "testedCommit": "92b0d94bbc7f5fa521e0a3f5c32a1a36f023c505",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper/",
+      "evidencePath": ".evidence/UG3/physical-device-review.json",
+      "updatedAt": "2026-10-22T08:40:24.506Z"
     }
   ]
 }

@@ -68,3 +68,29 @@ Use the test address below and the linked device instructions.
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
 **Work affected:** Completion of UG3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+<a id="ug3-regular-update"></a>
+
+## Update your regular CVC Helper from 0.3.0 to 0.4.0 — UG3
+
+**State:** Ready for owner check · Optional
+
+**What to do:**
+
+1. This is your real app with a real course: do not reset or import anything, and report no personal data, only counts and what you saw.
+2. Open the installed regular CVC Helper (not CVC Helper Test). Wait for the 0.3.0 update banner, or close the app completely and reopen it once or twice; note roughly how long the offer took. Apply the update.
+3. Check that the course opens with the same number of students, the duties and today's crews as before, and that Impostazioni shows 0.4.0.
+4. In Impostazioni tap Prepara il file del corso and Salva file to keep a first backup of the real course on the phone. Read Conservazione dei dati.
+5. Report UG3-REGULAR-UPDATE with your device, browser and Android version and what you saw.
+
+Use the test address below and the linked device instructions.
+
+**Expected:** The installed 0.3.0 app takes 0.4.0 without reinstalling, the real course opens unchanged, Impostazioni shows 0.4.0 and the course can be saved to a file. Only actual phone observations pass.
+
+**Build:** `92b0d94bbc7f5fa521e0a3f5c32a1a36f023c505`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper/
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** No required milestone completion is blocked.

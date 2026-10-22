@@ -31,7 +31,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D3 | Complete. The data records its version; older apps open newer data read-only; installed apps find updates on return and keep unsaved work. The owner accepted the Android update on 2026-10-19; the note-edit and enlarged-text phone steps were not observed and move to UG3. See `.evidence/D3/` and its `limitations.md`. |
 | D4 | Complete. Courses export to a file, share as text, import back after a preview, and reset fully; an interrupted reset resumes on the next open. Accepted on Android on 2026-10-20 after one round of owner fixes. See `.evidence/D4/`; known limits in 03 §3.3 and `docs/working/BACKLOG.md`. |
 | T1 | Complete. Unnecessary browser cases removed with their coverage recorded; the full suite runs only when it counts (tiered CI). Clean one-worker suite 41:30 against H1 30:21, no flaky test; the owner accepted this target in chat on 2026-10-21. See `.evidence/T1/`; open flakes in `docs/working/BACKLOG.md`. |
-| UG3 | In progress. Six reviews pass; `verify:all` and full CI pass on `c56ffe7`, published as CVC Helper Test 0.4.4 for `UG3-PHONE-RELEASE`. Version 0.4.0, changelog and the heavy sweep are on the branch; the plan is archived at closure. Merge and tag wait for the owner's go. |
+| UG3 | In progress. Six reviews pass; `verify:all` and full CI pass on `c56ffe7`, published as CVC Helper Test 0.4.4 for `UG3-PHONE-RELEASE`. Version 0.4.0, changelog and the heavy sweep are on the branch; the plan is archived at closure. Merged to `main` and deployed on 2026-10-22 on the owner's go; the tag waits for the phone check. |
 
 ## Execution order
 

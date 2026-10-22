@@ -27,8 +27,9 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
 3. **Regular-app update after the merge (scheduled, owner).** No check has
    covered an installed regular 0.3.0 app updating to 0.4.0 with its course
    (review SC-4). It can only happen once `main` deploys 0.4.0; the changelog
-   records it as not device-checked, and a post-release owner check is
-   proposed then.
+   records it as not device-checked. `main` deployed 0.4.0 on 2026-10-22, and
+   the optional owner check `UG3-REGULAR-UPDATE` asks for it; optional, so
+   UG3 does not wait for it.
 4. **No fix milestone for 0.4.0 (postponed).** The UG2 field findings and the
    remaining retrospective proposals are 0.5.0 planning candidates
    (`docs/working/BACKLOG.md`).
