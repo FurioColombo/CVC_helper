@@ -125,6 +125,12 @@ Each passed only on a retry and is a defect to fix (03 §6).
   first attempt; the retry passed. No recurrence since; CI keeps the trace if
   it returns.
 
+- `scripts/check-test-app-isolation.mjs --full-reset` (WebKit, test app's
+  first open) — in UG3's `verify:all` on `3b5d400` (2026-10-22) the page
+  crashed 2.8 s after opening ("Target crashed"); the check alone then passed
+  on both engines. Not a Playwright case, so no retry hides it; the same
+  WebKit page loss under load as below.
+
 - `d2-duty-items.spec.ts` (0.3.0 lists, rebuilt rows, stale 0.3.0 tab)
   — the same WebKit page closure under load; same classification and
   evidence as above.

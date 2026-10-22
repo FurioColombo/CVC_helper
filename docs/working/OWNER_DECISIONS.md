@@ -18,10 +18,12 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
    source `c56ffe7`. The package version became 0.4.0 and the changelog entry
    was written on the branch afterwards; only the version string and
    documents differ from the checked build, and the final source is verified
-   again before the tag. Merging to `main`, which redeploys the regular app
-   you use with real courses, and the `v0.4.0` tag wait for your explicit go
-   after the phone check passes. The changelog date is the day the entry was
-   written and moves to the tag's day if that is later.
+   again before the tag. You gave the go to merge to `main` on 2026-10-22
+   ("go on merge, we delay the manual check to this evening"); it redeploys
+   the regular app you use. The `v0.4.0` tag still waits for the phone check
+   to pass, since a tag cannot stand for an outstanding required check. The
+   changelog date is the day the entry was written and moves to the tag's
+   day if that is later.
 3. **Regular-app update after the merge (scheduled, owner).** No check has
    covered an installed regular 0.3.0 app updating to 0.4.0 with its course
    (review SC-4). It can only happen once `main` deploys 0.4.0; the changelog
