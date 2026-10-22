@@ -429,6 +429,14 @@ export function EvaluationManagement({
   }, [])
   const pendingLeave = useRef<(() => void) | null>(null)
   const readOnlyLeave = useRef<(() => void) | null>(null)
+  // A held leave says why where the user is, not above the viewport (UG3
+  // review FU-UG3-I2).
+  const heldNoteAlert = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (heldLeave !== "note" && heldLeave !== "note-read-only") return
+    heldNoteAlert.current?.scrollIntoView?.({ block: "center" })
+    heldNoteAlert.current?.focus({ preventScroll: true })
+  }, [heldLeave])
   const saveErrorAlert = useRef<HTMLDivElement>(null)
 
   // Leaving by the screen's Back, the bottom navigation or the phone's Back
@@ -747,7 +755,13 @@ export function EvaluationManagement({
         </div>
       )}
       {heldLeave === "note-read-only" && noteStudentId !== null && (
-        <div className="mt-3" role="alert">
+        <div
+          className="mt-3"
+          data-reveal
+          ref={heldNoteAlert}
+          role="alert"
+          tabIndex={-1}
+        >
           <p className="text-sm font-semibold text-[#9a3412]">
             La nota non può essere salvata: i dati sono di una versione più
             recente dell’app.
@@ -768,7 +782,13 @@ export function EvaluationManagement({
         </div>
       )}
       {heldLeave === "note" && noteStudentId !== null && (
-        <p className="mt-3 text-sm font-semibold text-[#9a3412]" role="alert">
+        <p
+          className="mt-3 text-sm font-semibold text-[#9a3412]"
+          data-reveal
+          ref={heldNoteAlert}
+          role="alert"
+          tabIndex={-1}
+        >
           Salva o annulla la nota prima di uscire.
         </p>
       )}

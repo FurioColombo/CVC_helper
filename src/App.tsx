@@ -40,7 +40,7 @@ import {
   type CourseLevel,
   type SessionId,
 } from "@/domain/config"
-import { buildCourseDetails } from "@/domain/course"
+import { buildCourseDetails, formatCourseIdentity } from "@/domain/course"
 import { BoatManagement } from "@/features/boats/BoatManagement"
 import { FaultManagement } from "@/features/boats/FaultManagement"
 import { CrewManagement } from "@/features/crews/CrewManagement"
@@ -425,7 +425,7 @@ function CourseCreation({
       </section>
 
       <CourseFiles hasCourse={false} />
-      <FullReset courseLabel="tutti i dati locali di CVC Helper" />
+      <FullReset courseLabel={null} />
 
       <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">
         I dati operativi restano su questo dispositivo.
@@ -549,7 +549,7 @@ function SettingsView({
         </div>
       </fieldset>
       <CourseErase course={course} onErased={onCourseErased} />
-      <FullReset courseLabel={course.label} />
+      <FullReset courseLabel={formatCourseIdentity(course)} />
       <Button className="mt-7" onClick={onHome} variant="secondary">
         <ChevronLeft aria-hidden="true" className="size-4" />
         Torna alla Home

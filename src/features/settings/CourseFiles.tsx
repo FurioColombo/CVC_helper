@@ -289,7 +289,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
       <h2 className="text-base font-bold text-primary" id="course-files-title">
         Copia del corso
       </h2>
-      <div className="mt-4">
+      <div className={hasCourse ? "mt-4" : "hidden"}>
         <h3 className="text-sm font-bold">Esporta</h3>
         {hasCourse ? (
           <>
@@ -556,7 +556,8 @@ export function StorageStatus() {
   )
 }
 
-export function FullReset({ courseLabel }: { courseLabel: string }) {
+/** `courseLabel` is the course's visible identity, or null with no course. */
+export function FullReset({ courseLabel }: { courseLabel: string | null }) {
   const [confirming, setConfirming] = useState(false)
   const [understood, setUnderstood] = useState(false)
   const [resetting, setResetting] = useState(false)
@@ -572,6 +573,8 @@ export function FullReset({ courseLabel }: { courseLabel: string }) {
       <p className="mt-1 text-sm leading-5 text-muted-foreground">
         Elimina corso, preferenze locali e file offline dell’app salvati in
         questo browser. È un’operazione definitiva.
+        {courseLabel &&
+          " Per iniziare il prossimo corso basta Nuovo corso, qui sopra."}
       </p>
       {!confirming ? (
         <Button
@@ -589,11 +592,15 @@ export function FullReset({ courseLabel }: { courseLabel: string }) {
           aria-labelledby="full-reset-question"
         >
           <p className="text-sm font-bold" id="full-reset-question">
-            Cancellare {courseLabel} da questo dispositivo?
+            {courseLabel
+              ? `Cancellare ${courseLabel} da questo dispositivo?`
+              : "Cancellare preferenze e file offline da questo dispositivo?"}
           </p>
           <p className="mt-1 text-sm leading-5">
-            Se vuoi conservare il corso, esportalo prima. I file già salvati
-            fuori dall’app resteranno dove li hai messi.
+            {courseLabel
+              ? "Se vuoi conservare il corso, esportalo prima. I file già salvati fuori dall’app resteranno dove li hai messi."
+              : "Non c’è un corso da cancellare: restano solo preferenze e file offline."}{" "}
+            Dopo l’azzeramento, per riaprire l’app serve una connessione.
           </p>
           <label className="mt-2 flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold">
             <input

@@ -1,0 +1,74 @@
+{
+  "reviewerRole": "field-UX",
+  "persona": "Il Nostromo",
+  "milestone": "UG3",
+  "round": 1,
+  "commit": "acd6f32c3b3b5da543bdb654e6ede1acb22eedf2",
+  "diffRange": "v0.3.0..acd6f32",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "FU-UG3-I1",
+      "title": "The full-reset confirmation does not say the app needs a connection to reopen; offline Riapri opens a blank page",
+      "evidence": "CourseFiles.tsx:590-606; App.tsx:911; built PWA probe offline",
+      "reproduction": "Offline full reset then Riapri l’app",
+      "specRef": "01 §2; rulebook R11, R14"
+    },
+    {
+      "id": "FU-UG3-I2",
+      "title": "At 320 px/200% the read-only note alert and Esci senza salvare appear far above the viewport",
+      "evidence": "EvaluationManagement.tsx:749-768; alert top -1007 at 320x664/200%",
+      "reproduction": "Read-only data, 320/200, open the last note, type, tap Home",
+      "specRef": "01 §2; rulebook R08, R12"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-UG3-Q1",
+      "title": "No-course start: inert Esporta block and a reset confirmation asking to export a course that does not exist",
+      "evidence": "App.tsx:427-428",
+      "reproduction": "",
+      "specRef": "OWNER_DECISIONS"
+    },
+    {
+      "id": "FU-UG3-Q2",
+      "title": "The course is named three ways on destructive and transfer screens",
+      "evidence": "CourseErase uses D2 - 43 | 2026; FullReset used D2 43 2026",
+      "reproduction": "",
+      "specRef": "01 §2; R13"
+    },
+    {
+      "id": "FU-UG3-Q3",
+      "title": "Two red destructive sections back to back in Impostazioni",
+      "evidence": "App.tsx:550-551",
+      "reproduction": "",
+      "specRef": "R11, R13"
+    }
+  ],
+  "evidenceInspected": [
+    "Built PWA offline probes, update wildcard (rebuild while open), morning path (21 taps, no regression), start screen on Pixel and WebKit, read-only note probe, screenshots"
+  ],
+  "anglesTried": {
+    "seed": 218440625,
+    "lenses": [
+      "Offline on the water",
+      "Time to the first useful screen"
+    ],
+    "wildcard": "Update offer still showing during a full reset: Aggiorna reloads to a working start"
+  },
+  "notTested": [
+    "WebKit offline (Playwright WebKit on Windows)",
+    "True airplane-mode update check",
+    "Physical devices",
+    "Comandate/Valutazioni flows on the built PWA end to end"
+  ],
+  "note": "Condensed by the orchestrator from the reviewer report.",
+  "dispositions": {
+    "FU-UG3-I1": "fixed: the confirmation says a connection is needed to reopen",
+    "FU-UG3-I2": "fixed: held note alerts scroll into view and take focus; d3-read-only asserts both in viewport at 320/200",
+    "FU-UG3-Q1": "fixed: no Esporta block without a course; empty-device reset copy",
+    "FU-UG3-Q2": "fixed: FullReset shows formatCourseIdentity",
+    "FU-UG3-Q3": "fixed: the reset text points to Nuovo corso for the next course"
+  }
+}

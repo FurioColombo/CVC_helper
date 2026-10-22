@@ -264,6 +264,11 @@ test("a read-only evaluation note closes at once untouched and offers to leave w
   ).not.toBeVisible()
   await expect(page.getByText("Salva o annulla la nota")).not.toBeVisible()
 
+  // At 320 px and 200% text the reason shows where the user is (FU-UG3-I2).
+  await page.setViewportSize({ width: 320, height: 664 })
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
   await openNote()
   await page
     .getByRole("textbox")
@@ -272,7 +277,10 @@ test("a read-only evaluation note closes at once untouched and offers to leave w
   await page.goBack()
   await expect(
     page.getByText("La nota non può essere salvata", { exact: false }),
-  ).toBeVisible()
+  ).toBeInViewport()
+  await expect(
+    page.getByRole("button", { name: "Esci senza salvare" }),
+  ).toBeInViewport()
   await page.getByRole("button", { name: "Esci senza salvare" }).click()
   await expect(
     page.getByRole("heading", { name: "Valutazioni", level: 1 }),
