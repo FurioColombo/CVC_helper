@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-sync-rules@latest/schema/sync_config.json
+
+config:
+  edition: 3
+
+# 0.5.0 online backup: the signed-in owner downloads every course they own,
+# and nothing else; the team reads nothing until 0.6.0 (02_MVP_SCOPE.md §4).
+# Column names are the app's own (src/persistence/schema.ts), so neither
+# direction needs a mapping. `meta` stays local to each device.
+streams:
+  owned_courses:
+    auto_subscribe: true
+    with:
+      owned: SELECT id FROM courses WHERE "ownerId" = auth.user_id()
+    queries:
+      - SELECT * FROM courses WHERE id IN owned
+      - SELECT * FROM students WHERE "courseId" IN owned
+      - SELECT * FROM volunteers WHERE "courseId" IN owned
+      - SELECT * FROM boats WHERE "courseId" IN owned
+      - SELECT * FROM faults WHERE "courseId" IN owned
+      - SELECT * FROM "dutyAssignments" WHERE "courseId" IN owned
+      - SELECT * FROM "dutySettings" WHERE "courseId" IN owned
+      - SELECT * FROM "dutySettingItems" WHERE "courseId" IN owned
+      - SELECT * FROM crews WHERE "courseId" IN owned
+      - SELECT * FROM "crewMembers" WHERE "courseId" IN owned
+      - SELECT * FROM "landAssignments" WHERE "courseId" IN owned
+      - SELECT * FROM "sessionBoats" WHERE "courseId" IN owned
+      - SELECT * FROM evaluations WHERE "courseId" IN owned

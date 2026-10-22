@@ -15,3 +15,8 @@ data/
 
 # Local acknowledgement cursor for change-only owner reminders.
 .milestones/owner-notices.local.json
+
+# Backend credentials (0.5.0): owner-created, never committed.
+.env
+.env.*
+!.env.example

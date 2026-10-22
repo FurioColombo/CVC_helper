@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/cli-schemas@latest/json-schema/service-config.json
+
+# CVC Helper's PowerSync Cloud development instance (0.5.0, docs/working/
+# BACKEND_SETUP_0.5.0.md). Production gets its own instance and directory;
+# no agent tool is ever linked to it (AGENTS.md §17). Credentials come from
+# the ignored `.env`, never from this file.
+_type: cloud
+
+name: cvc-helper-dev
+
+# EU, as the owner decided on 2026-10-08 (02_MVP_SCOPE.md §4). It cannot be
+# changed after the first deployment.
+region: eu
+
+replication:
+  connections:
+    - type: postgresql
+      # The dedicated `powersync_role`, never the `postgres` superuser.
+      uri: !env PS_DATABASE_URI
+      sslmode: verify-full
+
+client_auth:
+  # Supabase Auth with the new (asymmetric) signing keys: PowerSync finds the
+  # project's JWKS from the connection, so no secret is configured here.
+  supabase: true
