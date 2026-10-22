@@ -3,6 +3,7 @@ import type { PowerSyncDatabase } from "@powersync/web"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { DataVersion } from "@/domain/compatibility"
+import { APP_VERSION as RUNNING_APP_VERSION } from "@/appVersion"
 import { encodeVersion, parseVersion } from "@/domain/compatibility"
 import { dutySettingItems } from "@/persistence/dutyItems"
 import {
@@ -514,10 +515,13 @@ describe("course archive persistence", () => {
     const corrupt = structuredClone(archive)
     corrupt.tables.students[0]!.phone = 555
     const tooNew = structuredClone(archive)
-    tooNew.dataVersion = {
-      version: parseVersion("0.4.0"),
-      minimumWriter: parseVersion("0.4.0"),
+    // Written by a minor version after the running app (src/appVersion.ts).
+    const nextMinor = {
+      ...RUNNING_APP_VERSION,
+      minor: RUNNING_APP_VERSION.minor + 1,
+      patch: 0,
     }
+    tooNew.dataVersion = { version: nextMinor, minimumWriter: nextMinor }
 
     const cases: Array<[unknown, CourseArchiveError["code"]]> = [
       [{ ...archive, format: "other" }, "unsupported-format"],

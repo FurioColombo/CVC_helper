@@ -2,8 +2,8 @@
 
 This document is authoritative for architecture, technology, persistence and
 verification. Product behavior belongs in `01_PRODUCT_SPEC.md` and scope in
-`02_MVP_SCOPE.md`. The released 0.3.0 decisions remain in force during 0.4.0
-unless the owner changes them explicitly.
+`02_MVP_SCOPE.md`. These are the decisions of the released 0.4.0; they stay in
+force until the owner changes them explicitly.
 
 ## 1. Runtime and stack
 
@@ -15,7 +15,7 @@ unless the owner changes them explicitly.
 - Primary target: recent Chrome/Chromium on Android.
 - Core flows also run on iPhone/WebKit without disproportionate platform-specific
   engineering.
-- No native app, backend or sync in 0.4.0. From 0.5.0 the backend is managed
+- No native app, backend or sync in the released app. From 0.5.0 the backend is managed
   Supabase (Postgres and Auth) with PowerSync Cloud, both hosted in the EU, with
   separate development and production projects (owner, 2026-10-08;
   `02_MVP_SCOPE.md` §4). No agent tool connects to production. Capacitor
@@ -58,17 +58,17 @@ demonstrably insufficient.
 
 All operational reads and writes target the local PowerSync database. The M0
 browser spike succeeded, so PowerSync local-only is the decided implementation;
-Dexie is no longer an automatic fallback. The app does not call `connect()` in
-0.2.0 and contains no sync connector, upload queue, Auth or conflict UI.
+Dexie is no longer an automatic fallback. The app does not call `connect()`
+and contains no sync connector, upload queue, Auth or conflict UI.
 
-**D3 startup investigation (owner, 2026-10-14).** A bounded investigation of
-PowerSync worker/module startup reuse is authorised. PowerSync, the persistent
-database, schema compatibility and both construction-inclusive five-second
-upgrade/reopen bounds remain required. This permits a reviewed integration
-candidate; it does not authorise a different engine, VFS, in-memory persistence,
-extra retries or warming outside the measured path. Adoption requires evidence
+**Startup integration (owner, 2026-10-14; adopted in D3).** The startup
+integration below came from a bounded investigation of PowerSync
+worker/module startup reuse. PowerSync, the persistent database, schema
+compatibility and both construction-inclusive five-second upgrade/reopen bounds
+remain required. It permits no different engine, VFS, in-memory persistence,
+extra retries or warming outside the measured path; changing it needs evidence
 for cold startup, close/reopen, interruption recovery, multi-tab guards and
-test-channel isolation, then D3 reviews and exact green CI.
+test-channel isolation, reviews and exact green CI.
 
 The integration caches only the compiled, immutable WASM module in its page,
 keyed by its exact same-origin asset URL. Each dedicated database worker gets
@@ -169,8 +169,7 @@ Additive optional fields receive explicit defaults. New CT role support is an en
 extension and must leave ADV/IS rows untouched. Destructive/cascading migrations
 need explicit human approval because they change product semantics.
 
-The fixtures of 0.2.0 and, from D1, 0.3.0 join the 0.1.0 one under the same
-rules.
+The 0.2.0 and 0.3.0 fixtures join the 0.1.0 one under the same rules.
 
 **Compatibility window (owner, 2026-10-06).** Once data is shared, phones run
 different app versions for days, so compatibility is designed in from 0.4.0
@@ -202,8 +201,9 @@ run under the guarded write lock instead. The app's version comes from
 `package.json` at build time (`import.meta.env.VITE_APP_VERSION`); an override
 for a build may change only the patch of its channel's baseline, because the
 record keeps the newest version for good. The regular channel uses the released
-package version; the isolated phone-test channel explicitly uses 0.4.0 while
-0.4.0 acceptance is pending, with its own database and storage namespaces
+package version; the isolated phone-test channel uses its own baseline
+(`versionBaseline`, now 0.4.0) with a patch per published build, and its own
+database and storage namespaces
 (`src/appChannel.ts`; deployment and pinning are in `docs/DEPLOY.md`). PowerSync's client keeps rows as JSON behind views, so an
 older app reads data with columns it does not know, but it does not write
 around them: an update through its views rewrites the row without the newer
@@ -268,7 +268,7 @@ write lock; a replaced or closed instance also rejects before contacting its
 worker. Import advances the generation atomically, permanently invalidates
 the old instance and requires a fresh app open, even when imported IDs match.
 Course erasure also prevents an old screen from writing dangling records.
-These session guards apply to D4 and later instances. An older compatible
+These session guards apply to instances from 0.4.0 on. An older compatible
 writer allowed by §3.1 does not understand the generation and can still save
 over imported rows; users must close other old app tabs before importing.
 The compatibility window and minimum writer are not raised to hide that limit.
@@ -493,9 +493,10 @@ log.
 
 Use low-effort semantic versions:
 
-- released baselines: 0.1.0, 0.2.0 and 0.3.0 (declared at UG2 on 2026-10-08);
-- active cycle: 0.4.0, assigned only at its release gate; the versions after
-  it are planned in `02_MVP_SCOPE.md` §4;
+- released baselines: 0.1.0, 0.2.0, 0.3.0 (declared at UG2 on 2026-10-08) and
+  0.4.0 (declared at UG3);
+- next cycle: 0.5.0, assigned only at its release gate; the versions after it
+  are planned in `02_MVP_SCOPE.md` §4;
 - patch numbers for separately released fixes;
 - later minor numbers for recognizable feature/change packages;
 - 1.0.0 only after an explicit stability decision.
@@ -509,6 +510,6 @@ Git tag only when the release is actually declared.
 Do not add a custom backend, GraphQL, global state framework, generalized
 repository/provider architecture, custom sync/conflict engine, Supabase/Auth,
 native code, release-management service, large design system, generic content
-system or speculative abstraction during 0.4.0. Supabase, Auth and sync arrive
-with 0.5.0 as planned in `02_MVP_SCOPE.md` §4; a custom sync or conflict engine
-stays a non-goal.
+system or speculative abstraction. Supabase, Auth and sync arrive with 0.5.0
+as planned in `02_MVP_SCOPE.md` §4; a custom sync or conflict engine stays a
+non-goal.

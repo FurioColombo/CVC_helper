@@ -7,13 +7,23 @@ history, is archived at `archive/v0.3.0/02_MVP_SCOPE.md`.
 
 ## 1. In scope: the released app
 
-The released app (0.3.0) supports one course on one phone. It is local-first,
+The released app (0.4.0) supports one course on one phone. It is local-first,
 installable and used by the owner during a CVC Caprera week.
 
 - **Course and shell.** Dynamic course identity (D/C level, week, year); the CVC
   symbol and six Home cards; the installed icon (the Home CVC mark with
-  `HELPER`) and launch colour; phone Back through every area; an update banner;
-  erasing the course from Impostazioni to start a new one.
+  `HELPER`) and launch colour; phone Back through every area; erasing the
+  course from Impostazioni to start a new one.
+- **Updates and versions.** The installed app looks for a new version on
+  return and hourly, offers it in a bar and applies it only after open work is
+  saved; Impostazioni shows the version and `Cerca aggiornamenti`. The data
+  records the newest version that wrote it, and an older app opens newer data
+  read-only.
+- **Course files and local data.** Export of the whole course to one file,
+  saved or shared; import after a full check, a preview and confirmation,
+  replacing the current course; the persistent-storage answer in
+  Impostazioni; a full reset of everything the app keeps in the browser.
+  Every record carries its creation and change time and its course.
 - **Students.** A compact list and a profile with size, notes and the weekly
   evaluation grid; safe deletion of never-used students. Students are added by:
   - manual entry;
@@ -115,12 +125,12 @@ phone without a network.
 | 0.7.0   | Season history: several courses per account, past courses kept read-only, a new course started without erasing the last.                                                        | the owner             |
 | 1.0.0   | Team editing: the owner and the team read and write, with conflict rules, a record of who changed what, roles, and an explicit stability decision.                                | the owner and the team |
 
-**0.4.0 scope:** the milestones H1, D1–D4, T1 (added by the owner on
-2026-10-10) and UG3 in `04_IMPLEMENTATION_PLAN.md`. No UG2 field fix or the
-D2–D5 size override was picked for 0.4.0; they stay in
-`docs/working/BACKLOG.md` for 0.5.0 planning.
-Server, account and synchronisation code, multiple courses per device, and
-conflict handling stay out of 0.4.0.
+**0.4.0** was delivered by the milestones H1, D1–D4, T1 (added by the owner
+on 2026-10-10) and UG3 (`archive/v0.4.0/`). No UG2 field fix or the D2–D5
+size override was picked for it; they are 0.5.0 planning candidates in
+`docs/working/BACKLOG.md`. Server, account and synchronisation code, multiple
+courses per device and conflict handling remain out until the release §4
+assigns them.
 
 ## 5. Completion boundary
 

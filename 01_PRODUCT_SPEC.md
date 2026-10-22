@@ -72,7 +72,7 @@ course and everything recorded in it from the device, after a confirmation
 that names the course and an explicit acknowledgement that the data cannot be
 recovered, then opens course creation. A failed erase changes nothing.
 
-Course files (0.4.0, Settings): `Conservazione dei dati` says whether the
+Course files (Settings): `Conservazione dei dati` says whether the
 browser keeps the data when space is low (asked at creation, import and open),
 else advises regular export. `Prepara il file del corso` warns of the students'
 personal data and makes one versioned file, no personal name in its name, saved
@@ -556,7 +556,7 @@ It supports exact boat, model without number, no boat and Mezzi. A permitted mod
 asset is optional; the same-size text fallback is required. Screen wake lock is
 allowed when straightforward; native brightness control is deferred.
 
-The 0.3.0 crew summary shows `IS`, `ADV`, `CT`, Comandata and minor markers. A
+The crew summary shows `IS`, `ADV`, `CT`, Comandata and minor markers. A
 floating button at the bottom right copies one complete PNG of it to the
 clipboard, so it can be pasted into a chat, and offers to share it where the
 phone can share files; nothing is downloaded. The PNG is a screenshot of the

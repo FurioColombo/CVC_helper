@@ -1,5 +1,71 @@
 # Changelog
 
+## 0.4.0 — 2026-10-22
+
+0.4.0 makes the course on the phone safe before anything goes online: it can
+be saved to a file and brought back, the app knows which version wrote the
+data, and an installed app takes each new version without reinstalling. No
+server, account or synchronisation is part of it. What follows is what
+changed since 0.3.0.
+
+- **A copy of the course in your hands.** Impostazioni prepares one file with
+  the whole course, after reminding that it holds the students' personal data;
+  its name has no personal name. **Salva file** keeps it on the phone,
+  **Condividi** sends it (as a `.txt` file, which Android accepts) to WhatsApp,
+  Drive or mail. **Importa un corso** reads either file, checks it completely,
+  shows which course it found and replaces the current one only after you
+  confirm; a damaged, invalid or too-new file changes nothing. The replaced
+  course leaves no readable trace in the phone's storage.
+- **The browser is asked to keep the data.** Impostazioni says whether it
+  agreed; when it has not, it advises exporting regularly.
+- **Starting from nothing.** **Azzera tutti i dati locali** removes the course,
+  the preferences and the offline files of the app from this browser. If the
+  app is closed before it finishes, the next open completes it instead of
+  getting stuck.
+- **Updates arrive by themselves.** The installed app looks for a new version
+  each time it returns to the foreground and every hour; the offer appears
+  within seconds, waits for anything being typed to be saved, never covers a
+  control, and after the update says which version is installed. Impostazioni
+  shows the version and **Cerca aggiornamenti**. An older app that meets
+  data written by a newer one opens it read-only and asks for the update.
+- **Every record is ready for the online backup.** Each row now records when it
+  was created and changed and which course it belongs to; the Comandate
+  settings are stored item by item. Behaviour is unchanged.
+- **A faster, steadier test harness.** Unnecessary browser tests were removed,
+  the full suite runs only for checkpoints and releases, and the remaining
+  suite runs without a flaky test.
+
+### Migration
+
+A course created by 0.1.0, 0.2.0 or 0.3.0 opens unchanged: every record,
+reference, note and identifier is kept, and the missing dates and course
+links are filled in once. An upgrade interrupted by closing the app is rolled
+back whole and completed on the next open. From now on the data records the
+newest version that wrote it, so an older copy of the app cannot overwrite it.
+
+The test channel used for the owner's phone checks (CVC Helper Test, 0.4.0 to
+0.4.4) is a separate app with its own data; its numbers are not releases.
+
+### Known limitations
+
+- **The update from an installed 0.3.0 app was not checked on a phone.** Every
+  phone check ran on CVC Helper Test. The 0.3.0 app's own banner, which is not
+  always prompt, brings 0.4.0; export the course right after updating.
+- **No iPhone has been tried.** iPhone/Safari is covered by browser tests on the
+  WebKit engine only.
+- **One full reset on 0.4.2 left the test app unable to open** until it was
+  reinstalled; 0.4.3 completes an interrupted reset and passed on the phone,
+  but the original cause is not established.
+- **An older app still open in another window** can save over an imported
+  course, and one that creates a course after an abandoned reset loses it at
+  the next open. Close other app windows before importing or resetting.
+- **The browser suite takes about 41 minutes on one worker**, longer than in
+  0.3.0, because 0.4.0 added its own data tests; parallel workers do not help on
+  the development machine.
+- Unchanged from 0.3.0: scanning needs a look at every row, dictation is slow
+  and imprecise, the course dates come from the day it is created, D2–D5 crews
+  stay at two people, and long names on crew cards are cut with "…".
+
 ## 0.3.0 — 2026-10-08
 
 0.3.0 is the first version used on a real phone: the app is published over

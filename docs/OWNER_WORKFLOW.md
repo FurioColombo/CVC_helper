@@ -34,9 +34,9 @@ an intact verified checkpoint, green CI and no owner-requested fixes for every
 such predecessor. A reason is an actual dependency judgment, not a blanket
 permission. An IN_PROGRESS, BLOCKED or unverified predecessor still blocks.
 
-For 0.4.0, D4 may use D3's verified version contract while the Android update
-check waits. T1 may use D3 and D4's verified journeys while their phone checks
-wait. The integration gate accepts no AWAITING_OWNER predecessor. Neither a
+In 0.4.0, for example, D4 used D3's verified version contract while the
+Android update check waited, and T1 used D3 and D4's verified journeys while
+their phone checks waited. The integration gate accepts no AWAITING_OWNER predecessor. Neither a
 release nor a tag can represent outstanding required device checks as PASS.
 
 Record negative feedback as CHANGES_REQUESTED. Before editing that pending

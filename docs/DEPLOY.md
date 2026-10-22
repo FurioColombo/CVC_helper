@@ -106,11 +106,12 @@ and offline reopening stay intact. Its D4 report is
 `.evidence/D4/test-isolation.json` when deliberately refreshed; ordinary runs
 write to ignored `test-results/`.
 
-The repository package remains the released 0.3.0 until UG3; the isolated test
-channel explicitly uses the 0.4 patch line, so the owner's one installation
-takes every later build as an ordinary update. D3 used **0.4.0** then **0.4.1**
-from one verified source; D4 uses **0.4.2** from its own verified checkpoint.
-A later minor version is never substituted: the data keeps the newest version
+The repository package is the released version (0.4.0); the isolated test
+channel uses its own patch line (`versionBaseline` in `src/appChannel.ts`), so
+the owner's one installation takes every later build as an ordinary update. In
+the 0.4.0 cycle D3 published **0.4.0** and **0.4.1**, D4 **0.4.2** and
+**0.4.3**, and UG3 **0.4.4**, each from a verified source. A later minor
+version is never substituted within a cycle: the data keeps the newest version
 that opened it.
 
 `.milestones/test-site.json` pins one milestone's verified source, its planned

@@ -1,6 +1,6 @@
 # Implementation plan — 0.4.0
 
-Updated 2026-10-19. Read **Where this cycle stands**, then only the active
+Updated 2026-10-22. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.3.0 plan
 is archived at `archive/v0.3.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -31,7 +31,7 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D3 | Complete. The data records its version; older apps open newer data read-only; installed apps find updates on return and keep unsaved work. The owner accepted the Android update on 2026-10-19; the note-edit and enlarged-text phone steps were not observed and move to UG3. See `.evidence/D3/` and its `limitations.md`. |
 | D4 | Complete. Courses export to a file, share as text, import back after a preview, and reset fully; an interrupted reset resumes on the next open. Accepted on Android on 2026-10-20 after one round of owner fixes. See `.evidence/D4/`; known limits in 03 §3.3 and `docs/working/BACKLOG.md`. |
 | T1 | Complete. Unnecessary browser cases removed with their coverage recorded; the full suite runs only when it counts (tiered CI). Clean one-worker suite 41:30 against H1 30:21, no flaky test; the owner accepted this target in chat on 2026-10-21. See `.evidence/T1/`; open flakes in `docs/working/BACKLOG.md`. |
-| UG3 | Pending. The release gate waits for all required owner acceptance and completed T1 verification. |
+| UG3 | In progress. Six reviews pass; `verify:all` and full CI pass on `c56ffe7`, published as CVC Helper Test 0.4.4 for `UG3-PHONE-RELEASE`. Version 0.4.0, changelog and the heavy sweep are on the branch; the plan is archived at closure. Merge and tag wait for the owner's go. |
 
 ## Execution order
 
