@@ -35,3 +35,11 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
    (`docs/working/BACKLOG.md`).
 5. **Reset mark names no course (accepted limit).** 03 §3.3 records it; a
    course-bound mark is possible later if older windows matter.
+
+## 0.5.0 preparation
+
+6. **Draft 0.5.0 plan (open).** Written while UG3 waits, in
+   `docs/working/PLAN_0.5.0_DRAFT.md`: seven milestones from a local
+   development backend to the release gate, and the account and key actions
+   only you can take. It proposes email magic-link sign-in. It becomes the
+   plan only after UG3 completes and you review it.
