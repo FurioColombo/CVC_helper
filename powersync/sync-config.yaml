@@ -5,24 +5,26 @@ config:
 
 # 0.5.0 online backup: the signed-in owner downloads every course they own,
 # and nothing else; the team reads nothing until 0.6.0 (02_MVP_SCOPE.md §4).
-# Column names are the app's own (src/persistence/schema.ts), so neither
-# direction needs a mapping. `meta` stays local to each device.
+# Column names are the app's own (src/persistence/schema.ts). Each table
+# reaches the phone as `synced_<table>`, behind the app's own view name,
+# because 0.4.0's local-only tables keep the plain names on every device
+# (docs/working/PLAN_0.5.0_DRAFT.md, S1 spike). `meta` stays local.
 streams:
   owned_courses:
     auto_subscribe: true
     with:
       owned: SELECT id FROM courses WHERE "ownerId" = auth.user_id()
     queries:
-      - SELECT * FROM courses WHERE id IN owned
-      - SELECT * FROM students WHERE "courseId" IN owned
-      - SELECT * FROM volunteers WHERE "courseId" IN owned
-      - SELECT * FROM boats WHERE "courseId" IN owned
-      - SELECT * FROM faults WHERE "courseId" IN owned
-      - SELECT * FROM "dutyAssignments" WHERE "courseId" IN owned
-      - SELECT * FROM "dutySettings" WHERE "courseId" IN owned
-      - SELECT * FROM "dutySettingItems" WHERE "courseId" IN owned
-      - SELECT * FROM crews WHERE "courseId" IN owned
-      - SELECT * FROM "crewMembers" WHERE "courseId" IN owned
-      - SELECT * FROM "landAssignments" WHERE "courseId" IN owned
-      - SELECT * FROM "sessionBoats" WHERE "courseId" IN owned
-      - SELECT * FROM evaluations WHERE "courseId" IN owned
+      - SELECT * FROM courses AS synced_courses WHERE id IN owned
+      - SELECT * FROM students AS synced_students WHERE "courseId" IN owned
+      - SELECT * FROM volunteers AS synced_volunteers WHERE "courseId" IN owned
+      - SELECT * FROM boats AS synced_boats WHERE "courseId" IN owned
+      - SELECT * FROM faults AS synced_faults WHERE "courseId" IN owned
+      - SELECT * FROM "dutyAssignments" AS "synced_dutyAssignments" WHERE "courseId" IN owned
+      - SELECT * FROM "dutySettings" AS "synced_dutySettings" WHERE "courseId" IN owned
+      - SELECT * FROM "dutySettingItems" AS "synced_dutySettingItems" WHERE "courseId" IN owned
+      - SELECT * FROM crews AS synced_crews WHERE "courseId" IN owned
+      - SELECT * FROM "crewMembers" AS "synced_crewMembers" WHERE "courseId" IN owned
+      - SELECT * FROM "landAssignments" AS "synced_landAssignments" WHERE "courseId" IN owned
+      - SELECT * FROM "sessionBoats" AS "synced_sessionBoats" WHERE "courseId" IN owned
+      - SELECT * FROM evaluations AS synced_evaluations WHERE "courseId" IN owned

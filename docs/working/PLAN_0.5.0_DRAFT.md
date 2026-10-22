@@ -44,15 +44,15 @@ install Docker on the development PC if L1 should run locally (below).
 
 ## Proposed milestones
 
-| ID  | Category         | What it delivers                                                                                                                                                                                                                                                                                                                                                  |
-| --- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L1  | FOUNDATION       | Development backend: the owner’s hosted Supabase and PowerSync Cloud development projects (`docs/working/BACKEND_SETUP_0.5.0.md`; prepared on branch `claude/0.5.0-prep`: tables mirroring the course tables with `ownerId` and RLS by owner, publication, sync streams, a parity test), deployed and checked before app code; Docker for CI or local runs later. |
-| S1  | RULE_HEAVY       | The synced schema. The course tables become synced through 03 §3.1's path: the new version keeps declaring the local-only tables (under other view names) until a ledgered migration has copied their rows, declares its own minimum writer, and drops them only in a later release. Course files carry the migration state (BACKLOG DI-UG3-2).                   |
-| A1  | FEATURE          | Sign-in and sign-out in Impostazioni; signed out, the app works as 0.4.0. Sign-in copies the local course into the upload queue; sign-out keeps the course on the device unless asked (`disconnectAndClear` only on explicit request).                                                                                                                            |
-| U1  | RULE_HEAVY       | The upload handler: writes rows through the owner's session, sends the app version with every upload and refuses writers below the minimum (03 §3.1), and reports a refused or failed upload in Impostazioni without losing the queue.                                                                                                                            |
-| R1  | FEATURE          | Restore on a new device: after sign-in on an empty device the course downloads and opens; on a device with another course the app asks, as import does.                                                                                                                                                                                                           |
-| E1  | FEATURE          | Erase on the server: the existing erase and full reset also delete the server copy when signed in, offline erasure completing on reconnect; what the provider's backups keep is stated (owner decision 3).                                                                                                                                                        |
-| UG4 | INTEGRATION_GATE | 0.5.0 release gate: the done-when above, with the security/privacy, sync-chaos ("two phones offline", even with one writer), data-integrity, regression, scope and field-UX reviewers; the owner's Android check on the test channel.                                                                                                                             |
+| ID  | Category         | What it delivers                                                                                                                                                                                                                                                                                                                                                     |
+| --- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L1  | FOUNDATION       | Development backend: the owner’s hosted Supabase and PowerSync Cloud development projects (`docs/working/BACKEND_SETUP_0.5.0.md`; prepared on branch `claude/0.5.0-prep`: tables mirroring the course tables with `ownerId` and RLS by owner, publication, sync streams, a parity test), deployed and checked before app code; Docker for CI or local runs later.    |
+| S1  | RULE_HEAVY       | The synced schema (spike result below). The course tables become synced through 03 §3.1's path: the new version keeps declaring the local-only tables (under other view names) until a ledgered migration has copied their rows, declares its own minimum writer, and drops them only in a later release. Course files carry the migration state (BACKLOG DI-UG3-2). |
+| A1  | FEATURE          | Sign-in and sign-out in Impostazioni; signed out, the app works as 0.4.0. Sign-in copies the local course into the upload queue; sign-out keeps the course on the device unless asked (`disconnectAndClear` only on explicit request).                                                                                                                               |
+| U1  | RULE_HEAVY       | The upload handler: writes rows through the owner's session, sends the app version with every upload and refuses writers below the minimum (03 §3.1), and reports a refused or failed upload in Impostazioni without losing the queue.                                                                                                                               |
+| R1  | FEATURE          | Restore on a new device: after sign-in on an empty device the course downloads and opens; on a device with another course the app asks, as import does.                                                                                                                                                                                                              |
+| E1  | FEATURE          | Erase on the server: the existing erase and full reset also delete the server copy when signed in, offline erasure completing on reconnect; what the provider's backups keep is stated (owner decision 3).                                                                                                                                                           |
+| UG4 | INTEGRATION_GATE | 0.5.0 release gate: the done-when above, with the security/privacy, sync-chaos ("two phones offline", even with one writer), data-integrity, regression, scope and field-UX reviewers; the owner's Android check on the test channel.                                                                                                                                |
 
 Order: L1 → S1 → A1 → U1 → R1 → E1 → UG4. S1 and L1 can overlap; every
 later milestone needs both.
@@ -74,6 +74,30 @@ the full Supabase stack (about ten containers) is not needed locally; the
 Supabase development project, or the Supabase CLI in CI, exercises real
 sign-in and row-level security. Running the stack beside the browser suite on
 this PC is untested: WebKit already loses pages under memory pressure here.
+
+## S1 schema switch (spike, 2026-10-23)
+
+`tests/e2e/s1-schema-probe.spec.ts` (run on request, `S1_PROBE=1`) opens one
+database with 0.4.0's schema, then with a candidate 0.5.0 schema, then with
+0.4.0's again and with 0.5.0's once more, on PowerSync 2.2.0 in Chromium and
+WebKit, with no backend. The candidate keeps 0.4.0's local-only tables
+declared under `inactive_local_<table>` views and adds synced tables
+`synced_<table>` behind the app's view names; the sync config aliases the
+server tables to those names (`SELECT * FROM courses AS synced_courses`).
+
+- Switching keeps 0.4.0's rows, and one write transaction copies them into the
+  synced views, each copy entering the upload queue as `synced_<table>` (the
+  upload handler strips the prefix).
+- A 0.4.0 app opening the switched database sees its own local copy; the
+  synced rows wait in `ps_untyped` and the upload queue stays whole.
+- The new version reopening it finds the synced rows and the queue intact.
+
+So an older app cannot destroy synced data or pending uploads, but it sees the
+local copy as it was at the switch. 0.5.0 therefore declares its own minimum
+writer (03 §3.1), so an older app opens read-only, and keeps the local copy
+rather than emptying it: a read-only older app then shows a stale course with
+the update bar instead of an empty device inviting a new course. The local
+tables are dropped only in a later release.
 
 ## Adversarial checklist for the whole cycle
 

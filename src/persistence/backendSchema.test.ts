@@ -87,13 +87,16 @@ describe("backend schema", () => {
     expect(problems.map((problem) => problem.message)).toEqual([])
   })
 
-  it("publishes and syncs every course table, scoped to the owner", () => {
+  it("publishes and syncs every course table as synced_<table>, scoped to the owner", () => {
+    const quote = (name: string) => (/[A-Z]/.test(name) ? `"${name}"` : name)
     for (const table of COURSE_TABLES) {
-      const quoted = /[A-Z]/.test(table) ? `"${table}"` : table
-      expect(migration).toContain(`public.${quoted}`)
+      expect(migration).toContain(`public.${quote(table)}`)
       const scope =
         table === "courses" ? "WHERE id IN owned" : `WHERE "courseId" IN owned`
-      expect(syncConfig).toContain(`SELECT * FROM ${quoted} ${scope}`)
+      // The plain names stay 0.4.0's local-only tables on every device.
+      expect(syncConfig).toContain(
+        `SELECT * FROM ${quote(table)} AS ${quote(`synced_${table}`)} ${scope}`,
+      )
     }
     expect(syncConfig).toContain(
       `owned: SELECT id FROM courses WHERE "ownerId" = auth.user_id()`,
