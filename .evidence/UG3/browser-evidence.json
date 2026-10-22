@@ -1,0 +1,26 @@
+{
+  "milestone": "UG3",
+  "recordedBy": "npm run evidence -- UG3 (verify:all, including the full browser suite on all four projects); summarised from that run",
+  "gitCommit": "a4a0fc19bdc52d8224cd3ead2b28dff4fc87748c",
+  "runtime": "v24.21.0",
+  "command": "npm run verify:e2e (one worker)",
+  "fullSuite": {
+    "startTime": "2026-10-22T00:09:23.315Z",
+    "duration": 2555966.613,
+    "expected": 243,
+    "skipped": 23,
+    "unexpected": 0,
+    "flaky": 0,
+    "flakyTests": []
+  },
+  "journeys": [
+    "Upgrade journeys through the UI: ug1-upgraded-week (0.1.0), ug2-upgraded-week (0.2.0), d1-migration 0.3.0 app open (Chromium and WebKit)",
+    "Export/import round trip: d4-course-files on pixel-7-chrome, desktop-chrome-storage and iphone-13-webkit-core, including an upgraded course and immediate close",
+    "Import leaves no trace of the replaced course (pixel-7-chrome)",
+    "Update journey: check:update and check:update:test in verify:all",
+    "Full reset, interrupted reset resume, engine-deadline reset: d4-local-reset",
+    "Read-only data: d3-read-only, including the evaluation note at 320 px/200%",
+    "Full week: check:full-week"
+  ],
+  "physicalDevice": "UG3-PHONE-RELEASE pending (owner)"
+}
