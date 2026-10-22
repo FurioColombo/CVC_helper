@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
+import { SqlSyncRules } from "@powersync/service-sync-rules"
 import { describe, expect, it, vi } from "vitest"
 
 import { AppSchema, COURSE_TABLES } from "@/persistence/schema"
@@ -75,6 +76,15 @@ describe("backend schema", () => {
       ...migration.matchAll(/create table public\."?(\w+)"?/g),
     ].map((match) => match[1])
     expect(serverTables).toEqual([...COURSE_TABLES])
+  })
+
+  it("is a sync config the PowerSync service accepts", () => {
+    // The service's own parser (pinned in package.json), so quoting and the
+    // shared `owned` query fail here rather than at deployment.
+    const problems = SqlSyncRules.validate(syncConfig, {
+      defaultSchema: "public",
+    })
+    expect(problems.map((problem) => problem.message)).toEqual([])
   })
 
   it("publishes and syncs every course table, scoped to the owner", () => {
