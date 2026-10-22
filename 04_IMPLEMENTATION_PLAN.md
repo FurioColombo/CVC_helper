@@ -56,7 +56,7 @@ findings join as an extra milestone only if the owner picks them (see the end).
 ## UG3 — 0.4.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 `verify:all` on the final source. Upgrade journeys from 0.1, 0.2 and 0.3 data
 through the visible UI, an export/import round trip across Chromium and WebKit,

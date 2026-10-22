@@ -140,17 +140,20 @@
       "milestone": "UG3",
       "kind": "DEVICE_CHECK",
       "title": "Confirm the final 0.4.0 build on your regular app",
-      "status": "NEEDS_SETUP",
+      "status": "READY",
       "required": true,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
-        "Not ready yet: the agent moves main to the final 0.4.0 commit and tells you when it is live."
+        "A one-minute look at your real app: change nothing, and report no personal data.",
+        "Close the regular CVC Helper completely and open it again (if an update bar appears, tap Aggiorna).",
+        "Check that Impostazioni shows version 0.4.0 and that your course opens with its students as before.",
+        "Report UG3-FINAL-BUILD with what you saw."
       ],
       "expected": "The regular app runs the final 0.4.0 build with the course intact. Only actual phone observations pass.",
-      "testedCommit": null,
-      "testUrl": null,
+      "testedCommit": "ed83223c9a4b5455b736109f062b798ae5324262",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper/",
       "evidencePath": ".evidence/UG3/physical-device-review.json",
-      "updatedAt": "2026-10-22T22:01:16.853Z"
+      "updatedAt": "2026-10-22T22:58:35.399Z"
     }
   ]
 }

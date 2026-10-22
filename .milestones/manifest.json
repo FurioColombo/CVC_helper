@@ -986,7 +986,7 @@
     {
       "id": "UG3",
       "category": "INTEGRATION_GATE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "ownerEvidence": [".evidence/UG3/physical-device-review.json"],
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
@@ -1013,6 +1013,23 @@
         "commit": "620cebb79a5604d652381837142c6be9025cb859",
         "sourceDigest": "ee2177ceb28c7cda4c7d3a185779aef90514b471e7d80c1ea641da95d303b6f9",
         "ownerPrerequisites": []
+      },
+      "agentReady": {
+        "commit": "ed83223c9a4b5455b736109f062b798ae5324262",
+        "sourceDigest": "46d4163f9fa6e048755fb205278192b6b3e711fe91b75b038bfc8e95e9026b29",
+        "evidenceHashes": {
+          ".evidence/UG3/verification.json": "b5bb782e929fdc933421d8f8a2160b67f1c29393e0feb998a6db4e075e2ebb85",
+          ".evidence/UG3/browser-evidence.json": "d37f25f9760358f80e29430eded8943cabf5055aaa6c9e354b9f01c8d916171f",
+          ".evidence/UG3/migration-evidence.json": "e83f239793b9875898c67ac4b48289cb7feda3c0ad22024cc0a8fbbe63e078fe",
+          ".evidence/UG3/data-integrity-review.json": "a3f209ae89da90d7e46c10a3e53178edc0bfe6afd59205eda0fff51d87e8d0b8",
+          ".evidence/UG3/regression-review.json": "162562342197624c34a22b95e0e4b1f99a96cda1125eb6d340e6ec3dd1f87b9f",
+          ".evidence/UG3/scope-review.json": "1cd6051ada0aa42c8eb2723d485e39be29aad87ded349bbf8a363dbf4588f39e",
+          ".evidence/UG3/code-quality-review.json": "cd61aba44b263c7f779fb2af2dadacbbc085e761878cc9af88c85b9c8b99c264",
+          ".evidence/UG3/field-ux-review.json": "204ff4ebb27c7916a9e3ef684e9be97591db2ca4b08e9c779cc96b4b5a276e01",
+          ".evidence/UG3/security-privacy-review.json": "56359df968e14115bacb2bdaa8a4873b47224f27e48d47fc58d1355686b2dbef"
+        },
+        "ciRunId": 39861945139,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/39861945139"
       }
     }
   ]
