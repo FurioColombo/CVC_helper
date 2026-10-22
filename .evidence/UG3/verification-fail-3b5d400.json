@@ -20,7 +20,7 @@
       "startedAt": "2026-10-22T06:31:21.420Z",
       "durationMs": 338373,
       "exitCode": 1,
-      "outputTail": "          at createCourse (C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper\\scripts\\check-test-app-isolation.mjs:246:8)\r\n          at async verifyBrowserIsolation (C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper\\scripts\\check-test-app-isolation.mjs:811:28)\r\n          at async file:///C:/Users/Marco%20Furio%20Colombo/Desktop/CVC_helper/scripts/check-test-app-isolation.mjs:1285:5 {\r\n        log: [\r\n          \"  - waiting for getByRole('heading', { name: 'Non riesco ad aprire i dati locali' }) to be visible\"\r\n        ]\r\n      }\r\n    ]\r\n  }\r\n}\r\n\r\nNode.js v24.21.0"
+      "outputTail": "          at createCourse (scripts\\check-test-app-isolation.mjs:246:8)\r\n          at async verifyBrowserIsolation (scripts\\check-test-app-isolation.mjs:811:28)\r\n          at async scripts/check-test-app-isolation.mjs:1285:5 {\r\n        log: [\r\n          \"  - waiting for getByRole('heading', { name: 'Non riesco ad aprire i dati locali' }) to be visible\"\r\n        ]\r\n      }\r\n    ]\r\n  }\r\n}\r\n\r\nNode.js v24.21.0"
     }
   ]
 }
