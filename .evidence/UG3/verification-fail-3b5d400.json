@@ -1,0 +1,26 @@
+{
+  "milestone": "UG3",
+  "status": "FAIL",
+  "recordedAt": "2026-10-22T06:36:59.796Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.4.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "3b5d4007ca527106044ec50620354a1d7b994ef1",
+  "workingTreeClean": true,
+  "sourceDigest": "46d4163f9fa6e048755fb205278192b6b3e711fe91b75b038bfc8e95e9026b29",
+  "sourceFiles": 444,
+  "verificationScripts": [
+    "verify:all"
+  ],
+  "flakyTests": [],
+  "checks": [
+    {
+      "command": "npm run verify:all",
+      "status": "FAIL",
+      "startedAt": "2026-10-22T06:31:21.420Z",
+      "durationMs": 338373,
+      "exitCode": 1,
+      "outputTail": "          at createCourse (C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper\\scripts\\check-test-app-isolation.mjs:246:8)\r\n          at async verifyBrowserIsolation (C:\\Users\\Marco Furio Colombo\\Desktop\\CVC_helper\\scripts\\check-test-app-isolation.mjs:811:28)\r\n          at async file:///C:/Users/Marco%20Furio%20Colombo/Desktop/CVC_helper/scripts/check-test-app-isolation.mjs:1285:5 {\r\n        log: [\r\n          \"  - waiting for getByRole('heading', { name: 'Non riesco ad aprire i dati locali' }) to be visible\"\r\n        ]\r\n      }\r\n    ]\r\n  }\r\n}\r\n\r\nNode.js v24.21.0"
+    }
+  ]
+}

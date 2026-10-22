@@ -1,13 +1,13 @@
 {
   "milestone": "UG3",
   "status": "PASS",
-  "recordedAt": "2026-10-22T00:51:59.501Z",
+  "recordedAt": "2026-10-22T07:31:48.066Z",
   "nodeVersion": "v24.21.0",
-  "appVersion": "0.3.0",
+  "appVersion": "0.4.0",
   "recorder": "scripts/record-verification.mjs@3",
-  "gitCommit": "a4a0fc19bdc52d8224cd3ead2b28dff4fc87748c",
+  "gitCommit": "3fa5bb36abefd367e6839a205099ae793d5b3b7b",
   "workingTreeClean": true,
-  "sourceDigest": "94a62036f2861eb7d615c97cacfcf763a82b31083426342f5a06a54d1f2eaa5a",
+  "sourceDigest": "46d4163f9fa6e048755fb205278192b6b3e711fe91b75b038bfc8e95e9026b29",
   "sourceFiles": 444,
   "verificationScripts": [
     "verify:all"
@@ -17,10 +17,10 @@
     {
       "command": "npm run verify:all",
       "status": "PASS",
-      "startedAt": "2026-10-22T00:03:00.168Z",
-      "durationMs": 2939328,
+      "startedAt": "2026-10-22T06:40:31.738Z",
+      "durationMs": 3076322,
       "exitCode": 0,
-      "outputTail": "[WebServer] 2:50:59 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:50:59 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 262 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (9.4s)\n[WebServer] 2:51:09 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:51:09 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 263 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (8.8s)\n  ok 264 [iphone-13-webkit-core] › tests\\e2e\\d1-migration.spec.ts:278:1 › upgrades and reopens a 40-student course within five seconds each (10.2s)\n  ok 265 [iphone-13-webkit-core] › tests\\e2e\\d3-engine-startup.spec.ts:12:1 › cold upgrade, close/reopen, and IDB reset preserve engine lifecycle (14.9s)\n  ok 266 [iphone-13-webkit-core] › tests\\e2e\\d3-engine-startup.spec.ts:108:1 › a real same-page prewarm cannot be reported as a cold pass (15.4s)\n\n  23 skipped\n  243 passed (42.6m)"
+      "outputTail": "[WebServer] 9:30:48 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:30:48 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 262 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:265:1 › reads an answer pasted with U+2028 line separators (9.0s)\n[WebServer] 9:30:57 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 9:30:57 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 263 [iphone-13-webkit-core] › tests\\e2e\\v05-assistant-paste.spec.ts:303:1 › offers the same methods from the empty Allievi page and the menu, and opens the right screen for each (8.1s)\n  ok 264 [iphone-13-webkit-core] › tests\\e2e\\d1-migration.spec.ts:278:1 › upgrades and reopens a 40-student course within five seconds each (11.0s)\n  ok 265 [iphone-13-webkit-core] › tests\\e2e\\d3-engine-startup.spec.ts:12:1 › cold upgrade, close/reopen, and IDB reset preserve engine lifecycle (15.0s)\n  ok 266 [iphone-13-webkit-core] › tests\\e2e\\d3-engine-startup.spec.ts:108:1 › a real same-page prewarm cannot be reported as a cold pass (15.7s)\n\n  23 skipped\n  243 passed (45.0m)"
     }
   ]
 }
