@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "UG3",
+  "ownerReports": [
+    {
+      "id": "UG3-REGULAR-UPDATE",
+      "check": "Update your regular CVC Helper from 0.3.0 to 0.4.0",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Owner chat report in the Claude Code session of 2026-10-22, annotating the UG3-REGULAR-UPDATE item of docs/OWNER_TODO.md.",
+      "summary": "Owner: done and passed, no issue to signal. The installed regular app took 0.4.0 from 0.3.0 without reinstalling and the real course opened; no further detail (offer timing, counts, Conservazione answer, saved file) was given.",
+      "testedCommit": "92b0d94bbc7f5fa521e0a3f5c32a1a36f023c505",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper/",
+      "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-10-22T21:39:15.135Z"
+    }
+  ]
+}

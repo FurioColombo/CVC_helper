@@ -101,9 +101,9 @@
       "milestone": "UG3",
       "kind": "DEVICE_CHECK",
       "title": "Update your regular CVC Helper from 0.3.0 to 0.4.0",
-      "status": "READY",
+      "status": "PASSED",
       "required": false,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
         "This is your real app with a real course: do not reset or import anything, and report no personal data, only counts and what you saw.",
         "Open the installed regular CVC Helper (not CVC Helper Test). Wait for the 0.3.0 update banner, or close the app completely and reopen it once or twice; note roughly how long the offer took. Apply the update.",
@@ -115,7 +115,16 @@
       "testedCommit": "92b0d94bbc7f5fa521e0a3f5c32a1a36f023c505",
       "testUrl": "https://furiocolombo.github.io/CVC_helper/",
       "evidencePath": ".evidence/UG3/physical-device-review.json",
-      "updatedAt": "2026-10-22T08:40:24.506Z"
+      "updatedAt": "2026-10-22T21:39:15.135Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Owner chat report in the Claude Code session of 2026-10-22, annotating the UG3-REGULAR-UPDATE item of docs/OWNER_TODO.md.",
+        "summary": "Owner: done and passed, no issue to signal. The installed regular app took 0.4.0 from 0.3.0 without reinstalling and the real course opened; no further detail (offer timing, counts, Conservazione answer, saved file) was given.",
+        "testedCommit": "92b0d94bbc7f5fa521e0a3f5c32a1a36f023c505",
+        "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+        "browser": "Not restated (Chrome in earlier reports)",
+        "osVersion": "Not restated (Android 15 in earlier reports)"
+      }
     }
   ]
 }
