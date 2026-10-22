@@ -1,0 +1,66 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "UG3",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SC-6",
+      "title": "Process deviation: D4 field-UX round 7 ran after the third FAIL without owner escalation",
+      "evidence": ".evidence/D4/field-ux-review-round-{1,4,6}.json FAIL, round 7 PASS; REVIEW_PROTOCOL Review rounds",
+      "reproduction": "The orchestrator relaunched round 7 automatically on 2026-10-19 instead of bringing the blockers to the owner. The owner later accepted D4 on the phone (2026-10-20). Recorded here; from now on a third FAIL stops and goes to the owner.",
+      "specRef": "docs/agents/REVIEW_PROTOCOL.md"
+    },
+    {
+      "id": "SC-2-ERRATUM",
+      "title": "T1 acceptance date",
+      "evidence": "archive/v0.4.0/completed-milestones.md erratum; .evidence/T1/self-review.json (frozen) says 2026-10-22",
+      "reproduction": "The owner accepted T1 on 2026-10-21 in the session chat (\"Accept T1 as delivered: tiered CI, removals, zero flakes, 41:30 on one worker\").",
+      "specRef": "Scope review SC-2"
+    },
+    {
+      "id": "OWNER-PENDING",
+      "title": "Owner acceptance and release actions still open",
+      "evidence": "docs/OWNER_TODO.md UG3-PHONE-RELEASE; docs/working/OWNER_DECISIONS.md",
+      "reproduction": "The release phone check on 0.4.4, then the owner's go for merging to main and tagging v0.4.0. The regular 0.3.0-to-0.4.0 update on a phone is a post-release check (changelog limitation).",
+      "specRef": "Plan UG3"
+    }
+  ],
+  "qolFindings": [],
+  "reviews": {
+    "scope": "round 1 FAIL (SC-1, SC-2) -> round 2 PASS_WITH_FINDINGS",
+    "code-quality": "round 1 PASS_WITH_FINDINGS",
+    "security-privacy": "round 1 PASS_WITH_FINDINGS",
+    "data-integrity": "round 1 PASS_WITH_FINDINGS",
+    "regression": "round 1 PASS_WITH_FINDINGS",
+    "field-ux": "round 1 PASS_WITH_FINDINGS"
+  },
+  "fixedFindings": [
+    "SC-1 01 describes 0.4.0",
+    "SC-2 T1 date and source",
+    "SC-3 02 lists T1",
+    "SC-5 persistent storage asked on every open with a course",
+    "SP-UG3-1/DI-UG3-1 import compaction, retried at next open",
+    "SP-UG3-2 privacy hook formats and owner records",
+    "SP-UG3-Q3 narrowed CI artifact",
+    "CQ-1 one data-version writer",
+    "RH-1 read-only note never holds",
+    "RH-Q2 denied-dictation note case restored",
+    "FU-UG3-I1/I2/Q1/Q2/Q3 reset copy, alert placement, empty start, course naming",
+    "SC-Q1..Q5 numbering, wording, H1 row, nightly removed, timed owner step"
+  ],
+  "deferred": [
+    "CQ-2 engine protocol types, CQ-3 shared sqlite test adapter and CQ-4..CQ-12 QoL: code-quality-review.json, next cycle",
+    "DI-UG3-2/Q3 migration ledger on import and version validation: BACKLOG for 0.5.0",
+    "RH-Q1 Back after import: BACKLOG",
+    "SP-UG3-Q1 CSP, SP-UG3-Q2 handled by preference clearing"
+  ],
+  "evidenceInspected": [
+    "All six UG3 reviews; migration-evidence.json; OWNER_DECISIONS.md; BACKLOG.md"
+  ],
+  "notTested": [
+    "Physical devices beyond D3/D4 owner checks until UG3-PHONE-RELEASE",
+    "The installed regular 0.3.0 app updating to 0.4.0"
+  ]
+}
