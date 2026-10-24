@@ -6,7 +6,13 @@ import { readDataVersion } from "@/persistence/dataVersion"
 import {
   assertCourseSession,
   assertCourseSessionOpen,
+  CourseReplacedError,
+  invalidateCourseSession,
 } from "@/persistence/courseSession"
+import {
+  expectsSyncedTables,
+  syncedTablesPresent,
+} from "@/persistence/openedSchema"
 
 /**
  * D3: an app older than its data's minimum writer only reads the data
@@ -109,6 +115,16 @@ export function guardWrites<Database extends PowerSyncDatabase>(
     checkSession = true,
   ) => {
     if (checkSession) await assertCourseSession(database, context)
+    // An older app put its schema back under this synced instance (B1): the
+    // views read the emptied local tables, so nothing may be written there;
+    // reopening restores the synced tables (src/persistence/syncMode.ts).
+    if (
+      expectsSyncedTables(database) &&
+      !(await syncedTablesPresent(context))
+    ) {
+      invalidateCourseSession(database)
+      throw new CourseReplacedError()
+    }
     if (readOnly.has(database)) throw new ReadOnlyDataError()
     if (dataAccess(app, await readDataVersion(context)) === "read-only") {
       markReadOnly(database)

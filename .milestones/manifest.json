@@ -1057,7 +1057,19 @@
         "commit": "37ee6b443d56fbcd0d536c8d81b431c827acb27e",
         "sourceDigest": "5994f2e2b80cc4781f0adb87d7100e5c53446a6aa470e1d10b0ae0c85e835744",
         "ownerPrerequisites": []
-      }
+      },
+      "e2eSpecs": [
+        "tests/e2e/b1-sync-mode.spec.ts",
+        "tests/e2e/d1-migration.spec.ts",
+        "tests/e2e/d2-duty-items.spec.ts",
+        "tests/e2e/d3-read-only.spec.ts",
+        "tests/e2e/d4-course-files.spec.ts",
+        "tests/e2e/d4-local-reset.spec.ts",
+        "tests/e2e/persistence.spec.ts",
+        "tests/e2e/reopen-persistence.spec.ts",
+        "tests/e2e/f1-navigation-guards.spec.ts",
+        "tests/e2e/student-management-gate.spec.ts"
+      ]
     },
     {
       "id": "B2",

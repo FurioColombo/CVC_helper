@@ -11,6 +11,7 @@ import {
   invalidateCourseSession,
 } from "@/persistence/courseSession"
 import { readDataVersion, writeDataVersion } from "@/persistence/dataVersion"
+import { noteSyncedSchema } from "@/persistence/openedSchema"
 import { AppSchema, COURSE_TABLES } from "@/persistence/schema"
 import {
   COMPACTION_PENDING_ID,
@@ -142,6 +143,7 @@ const applied = new WeakMap<PowerSyncDatabase, Schema>()
 /** Records the schema a database was opened with (src/persistence/schema.ts). */
 export function noteOpenedSchema(database: PowerSyncDatabase, schema: Schema) {
   applied.set(database, schema)
+  noteSyncedSchema(database, schema === SyncedSchema)
 }
 
 async function applySchema(database: PowerSyncDatabase, schema: Schema) {
@@ -149,6 +151,7 @@ async function applySchema(database: PowerSyncDatabase, schema: Schema) {
   if ((applied.get(database) ?? AppSchema) === schema) return
   await database.updateSchema(schema)
   applied.set(database, schema)
+  noteSyncedSchema(database, schema === SyncedSchema)
 }
 
 /**

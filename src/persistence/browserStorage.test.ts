@@ -240,9 +240,11 @@ describe("browser storage helpers", () => {
       const local = new MemoryStorage()
       local.setItem(selected.crewDisplayColumnsKey, "3")
       local.setItem(selected.installedVersionKey, "0.4.0")
+      local.setItem(selected.syncModeKey, "synced")
       local.setItem(`${selected.scanNameOrderPrefix}first`, "surname-first")
       local.setItem(other.crewDisplayColumnsKey, "2")
       local.setItem(other.installedVersionKey, "0.4.0")
+      local.setItem(other.syncModeKey, "synced")
       local.setItem(`${other.scanNameOrderPrefix}first`, "given-first")
       local.setItem("unrelated.preference", "keep")
 
@@ -293,6 +295,7 @@ describe("browser storage helpers", () => {
         new Map([
           [other.crewDisplayColumnsKey, "2"],
           [other.installedVersionKey, "0.4.0"],
+          [other.syncModeKey, "synced"],
           [`${other.scanNameOrderPrefix}first`, "given-first"],
           ["unrelated.preference", "keep"],
         ]),

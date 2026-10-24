@@ -27,7 +27,9 @@ const webkitCoreSpecs = [
   "d4-local-reset",
   "boats",
   "crew-management-gate",
-  // Data migrations run on every iPhone, on WebKit's own storage backend.
+  // Data migrations and the switch to synced tables run on every iPhone, on
+  // WebKit's own storage backend.
+  "b1-sync-mode",
   "d1-migration",
   "d2-duty-items",
   "d3-read-only",

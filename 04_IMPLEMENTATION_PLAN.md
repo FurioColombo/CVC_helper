@@ -64,25 +64,31 @@ to remember on the boat).
 **Category:** RULE_HEAVY
 **Status:** IN_PROGRESS
 
-The app opens its database in one of two modes, persisted on the device:
-local (0.4.0's schema, the default) and synced. The synced schema keeps
-0.4.0's local-only course tables under `inactive_local_<table>` views and puts
-synced tables `synced_<table>` behind the app's own view names, as the spike
-records (`tests/e2e/b1-schema-probe.spec.ts`, run with `B1_PROBE=1`). One
-function switches a device to synced mode: it records the new minimum writer,
-applies the schema and copies every course row into the synced views in one
-write transaction, so each row enters the upload queue; it is idempotent and
-an interrupted switch completes on the next open. Nothing connects yet; B3
-calls the switch at sign-in. Course files carry the state of ledgered
-migrations (BACKLOG DI-UG3-2).
+The app opens its database in one of two modes, recorded in `meta`: local
+(0.4.0's schema, the default) and synced (`src/persistence/syncMode.ts`). The
+synced schema keeps 0.4.0's local-only course tables under
+`inactive_local_<table>` views and puts synced tables `synced_<table>` behind
+the app's own view names. One transaction switches a device: it raises the
+minimum writer to 0.5.0 (`SYNCED_SINCE`), copies every course row into the
+synced tables, so each row enters the upload queue, empties and compacts the
+local copy, records the mode and advances the course generation, so open
+screens stop and the app reopens, as after an import. It is idempotent; cut
+short, it rolls back whole and its caller retries it. Every open applies the
+recorded mode before the first read, and the write guard refuses a write in
+synced mode while an older app has put its own schema back. Nothing connects
+yet; B3 calls the switch at sign-in. The switch is not a ledgered migration,
+so course files need no migration state yet (BACKLOG DI-UG3-2 stays with the
+first one). The branch builds 0.5.0, the first version allowed to write
+synced data.
 
-**Spike (2026-10-23, PowerSync 2.2.0, Chromium and WebKit, no backend).**
-Switching keeps 0.4.0's rows and queues their copies as `synced_<table>`. A
-0.4.0 app opening the switched database sees its own local copy; the synced
-rows wait in `ps_untyped` and the queue stays whole. The new version
-reopening it finds both intact. So 0.5.0 keeps the local copy rather than
-emptying it, and its minimum writer makes an older app read-only: it shows a
-stale course with the update bar, not an empty device inviting a new course.
+**Spike (2026-10-23, PowerSync 2.2.0, Chromium and WebKit, no backend;
+`tests/e2e/b1-schema-probe.spec.ts`, `B1_PROBE=1`).** Switching keeps 0.4.0's
+rows and queues their copies as `synced_<table>`. A 0.4.0 app opening the
+switched database sees only the local copy; the synced rows wait in
+`ps_untyped` and the queue stays whole, and the new version reopening it
+finds both. The local copy is emptied rather than kept: kept, it would hold
+students and notes deleted later in synced mode, out of every 0.5.0 screen.
+An older app therefore opens an empty device read-only, with the update bar.
 
 **Success predicate:** a 0.1, 0.2, 0.3 or 0.4 course switched to synced mode
 reads back identically through every screen, every row is queued exactly once,
