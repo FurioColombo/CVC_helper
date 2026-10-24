@@ -48,21 +48,21 @@ The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of star
 
 ## Confirm the final 0.4.0 build on your regular app — UG3
 
-**State:** Setup needed · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Not ready yet: the agent moves main to the final 0.4.0 commit and tells you when it is live.
-
-No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+The owner reported: Closed and reopened the regular CVC Helper; Impostazioni shows 0.4.0 and the course opened with its students as before.
 
 **Expected:** The regular app runs the final 0.4.0 build with the course intact. Only actual phone observations pass.
 
-**Build:** No test build is assigned yet.
+**Build:** `ed83223c9a4b5455b736109f062b798ae5324262`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper/
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of UG3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="ug3-phone-release"></a>
 

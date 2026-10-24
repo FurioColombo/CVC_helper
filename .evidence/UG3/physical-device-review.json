@@ -29,6 +29,20 @@
       "browser": "Not restated (Chrome in earlier reports)",
       "osVersion": "Not restated (Android 15 in earlier reports)",
       "reportedAt": "2026-10-22T21:53:31.868Z"
+    },
+    {
+      "id": "UG3-FINAL-BUILD",
+      "check": "Confirm the final 0.4.0 build on your regular app",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Owner chat report \"UG3-FINAL-BUILD\" in the Claude Code session of 2026-10-24.",
+      "summary": "Closed and reopened the regular CVC Helper; Impostazioni shows 0.4.0 and the course opened with its students as before.",
+      "testedCommit": "ed83223c9a4b5455b736109f062b798ae5324262",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper/",
+      "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-10-24T03:15:03.458Z"
     }
   ]
 }

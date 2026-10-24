@@ -244,3 +244,23 @@ self-review, code-quality review.
 2026-10-21, in the Claude Code session chat ("Accept T1 as delivered: tiered
 CI, removals, zero flakes, 41:30 on one worker"), not on 2026-10-22 as
 written above and in `.evidence/T1/self-review.json`.
+
+## UG3 — 0.4.0 integration and release gate
+
+**Category:** INTEGRATION_GATE
+**Status:** AWAITING_OWNER
+
+`verify:all` on the final source. Upgrade journeys from 0.1, 0.2 and 0.3 data
+through the visible UI, an export/import round trip across Chromium and WebKit,
+and the update journey. Reviewers: data integrity, regression, scope, code
+quality, field UX, security/privacy. The owner checks on Android: an update
+without reinstalling, with a note typed just before Aggiorna and the controls
+at enlarged text (not observed in D3), export and import on the phone,
+persistent storage. Then the release-gate documentation sweep, the changelog,
+version 0.4.0 and the tag.
+
+**Success predicate:** the 0.4.0 objective above holds on the tagged commit, with
+no reviewer blocker and the owner's Android checks recorded.
+
+**Evidence:** `.evidence/UG3/` verification, browser and migration evidence, six
+reviews, the owner's device report.
