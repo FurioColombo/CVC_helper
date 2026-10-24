@@ -110,3 +110,31 @@ export function dataVersionAfterWrite(
       }
     : { version: app, minimumWriter }
 }
+
+/**
+ * B1: the first version that reads synced course tables. An app older than
+ * this, given a switched database, sees only its emptied local copy, so the
+ * switch makes such apps read-only whatever the switching app's own version.
+ */
+export const SYNCED_SINCE: Version = { major: 0, minor: 5, patch: 0 }
+
+/**
+ * What the data records once `app` has switched it to synced tables: as after
+ * a write, with the minimum writer raised to at least {@link SYNCED_SINCE}. An
+ * app older than that cannot switch, since the switch would lock it out.
+ */
+export function dataVersionAfterSyncSwitch(
+  app: Version,
+  stored: DataVersion | null,
+): DataVersion {
+  if (compareVersions(app, SYNCED_SINCE) < 0) {
+    throw new Error(
+      `${formatVersion(app)} predates synced tables (${formatVersion(SYNCED_SINCE)})`,
+    )
+  }
+  const after = dataVersionAfterWrite(app, stored)
+  return {
+    version: after.version,
+    minimumWriter: newer(after.minimumWriter, SYNCED_SINCE),
+  }
+}

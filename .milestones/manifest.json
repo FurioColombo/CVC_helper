@@ -1036,7 +1036,7 @@
     {
       "id": "B1",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B1/verification.json",
@@ -1052,7 +1052,12 @@
         ".evidence/B1/domain-prosecutor-review.json",
         ".evidence/B1/data-integrity-review.json",
         ".evidence/B1/sync-chaos-review.json"
-      ]
+      ],
+      "startedFrom": {
+        "commit": "37ee6b443d56fbcd0d536c8d81b431c827acb27e",
+        "sourceDigest": "5994f2e2b80cc4781f0adb87d7100e5c53446a6aa470e1d10b0ae0c85e835744",
+        "ownerPrerequisites": []
+      }
     },
     {
       "id": "B2",

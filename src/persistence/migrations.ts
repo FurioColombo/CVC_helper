@@ -24,6 +24,8 @@ import {
   ReadOnlyDataError,
 } from "@/persistence/writeGuard"
 import { bindCourseSession } from "@/persistence/courseSession"
+import { applyRecordedSyncMode } from "@/persistence/syncMode"
+import { appChannelConfig } from "@/runtimeConfig"
 
 /**
  * Bringing stored data up to date before the app reads it (D1, 03 §3). Schema
@@ -97,16 +99,20 @@ const prepared = new WeakMap<PowerSyncDatabase, Promise<DataAccess>>()
  * transaction (D3 review DI-2, DI-3), so from then on an older app refuses its
  * writes; then the repairs, so a migration reads rows of this version's shape,
  * and the migrations. One run per database, however often it is asked.
+ * First of all the database takes the schema of the mode its data records
+ * (B1, src/persistence/syncMode.ts), so every read sees the right tables.
  */
 export function prepareDatabase(
   database: PowerSyncDatabase,
   migrations: readonly Migration[] = MIGRATIONS,
   app: Version = APP_VERSION,
+  syncModeKey: string = appChannelConfig.syncModeKey,
 ): Promise<DataAccess> {
   let ready = prepared.get(database)
   if (!ready) {
     ready = (async () => {
       await database.init()
+      await applyRecordedSyncMode(database, syncModeKey)
       await bindCourseSession(database)
       const stored = await readDataVersion(database)
       if (dataAccess(app, stored) === "read-only") {

@@ -1,6 +1,6 @@
 # Backlog — open requests and findings
 
-> Working document · Owner: the owner · Fold at: 0.5.0
+> Working document · Owner: the owner · Fold at: UG4
 
 Everything open that no milestone owns yet. A flaky browser test is filed
 here as `<spec file> › <test title>`, printed after `FLAKY:`. It carries over

@@ -24,9 +24,10 @@ import { TOUCH } from "@/persistence/stamp"
  * browser journeys check the stored rows before the app is reopened.
  */
 
-// The repairs fill metadata themselves, on rows of any table; the ledger lives
-// in `meta`, the data's own bookkeeping, not a record of a course.
-const NOT_WRITE_PATHS = ["repairs.ts"]
+// The repairs fill metadata themselves, on rows of any table; the switch to
+// synced tables copies rows verbatim, their metadata included (B1); the ledger
+// lives in `meta`, the data's own bookkeeping, not a record of a course.
+const NOT_WRITE_PATHS = ["repairs.ts", "syncMode.ts"]
 const UNSTAMPED_TABLES = ["meta"]
 const REPLACE_EXEMPTIONS: Record<string, string> = {
   dutySettings:

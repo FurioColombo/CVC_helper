@@ -189,10 +189,10 @@ export const COURSE_PARENTS = {
   evaluations: { table: "students", key: "studentId" },
 } as const
 
-export function createDatabase(dbFilename: string) {
+export function createDatabase(dbFilename: string, schema: Schema = AppSchema) {
   const startup = createEngineStartupWorkerScope()
   const database = new PowerSyncDatabase({
-    schema: AppSchema,
+    schema,
     database: { dbFilename, worker: startup.createWorker },
   })
   const initialize = database.init.bind(database)

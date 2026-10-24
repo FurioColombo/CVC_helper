@@ -4,7 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { DataVersion } from "@/domain/compatibility"
 import { APP_VERSION as RUNNING_APP_VERSION } from "@/appVersion"
-import { encodeVersion, parseVersion } from "@/domain/compatibility"
+import {
+  dataVersionAfterWrite,
+  encodeVersion,
+  parseVersion,
+} from "@/domain/compatibility"
 import { dutySettingItems } from "@/persistence/dutyItems"
 import {
   CourseArchiveError,
@@ -26,15 +30,16 @@ vi.mock("@/persistence/db", () => ({ db: {} }))
 
 const CREATED_AT = "2026-09-01T12:00:00.000Z"
 const UPDATED_AT = "2026-09-02T12:34:56.789Z"
-const APP_VERSION = parseVersion("0.3.0")
+const APP_VERSION = RUNNING_APP_VERSION
 const PREVIOUS_DATA_VERSION: DataVersion = {
   version: parseVersion("0.3.0"),
   minimumWriter: parseVersion("0.2.0"),
 }
-const NEWER_DATA_VERSION: DataVersion = {
-  version: parseVersion("0.4.0"),
-  minimumWriter: parseVersion("0.3.0"),
-}
+// What the running app (src/appVersion.ts) records when it writes the data.
+const NEWER_DATA_VERSION: DataVersion = dataVersionAfterWrite(
+  RUNNING_APP_VERSION,
+  PREVIOUS_DATA_VERSION,
+)
 const APP_SCHEMA = (
   AppSchema as unknown as {
     toJSON: () => {

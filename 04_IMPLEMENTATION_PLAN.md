@@ -62,7 +62,7 @@ to remember on the boat).
 ## B1 — The synced schema
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 The app opens its database in one of two modes, persisted on the device:
 local (0.4.0's schema, the default) and synced. The synced schema keeps

@@ -5,6 +5,7 @@ import { APP_VERSION } from "@/appVersion"
 import {
   compareVersions,
   dataAccess,
+  dataVersionAfterSyncSwitch,
   dataVersionAfterWrite,
   decodeVersion,
   encodeVersion,
@@ -133,5 +134,43 @@ describe("dataVersionAfterWrite", () => {
         }
       }
     }
+  })
+})
+
+describe("dataVersionAfterSyncSwitch", () => {
+  it.each([
+    // app, stored newest, stored minimum, recorded newest, recorded minimum
+    ["0.5.0", null, null, "0.5.0", "0.5.0"],
+    ["0.5.0", "0.4.0", "0.3.0", "0.5.0", "0.5.0"],
+    ["0.5.3", "0.5.1", "0.4.0", "0.5.3", "0.5.0"],
+    // A later version switching keeps its own, higher minimum.
+    ["0.7.0", "0.6.0", "0.5.0", "0.7.0", "0.6.0"],
+    // A newer writer's record is never lowered.
+    ["0.5.0", "0.6.2", "0.5.0", "0.6.2", "0.5.0"],
+  ] as const)(
+    "%s switching data of %s (minimum %s) records %s and %s",
+    (app, version, minimum, recorded, recordedMinimum) => {
+      const stored = version && minimum ? data(version, minimum) : null
+      expect(dataVersionAfterSyncSwitch(v(app), stored)).toEqual(
+        data(recorded, recordedMinimum),
+      )
+    },
+  )
+
+  it("leaves every app before synced tables read-only", () => {
+    for (const app of ["0.5.0", "0.6.1"]) {
+      for (const stored of [null, data("0.4.0", "0.3.0")]) {
+        const after = dataVersionAfterSyncSwitch(v(app), stored)
+        for (const older of ["0.1.0", "0.3.0", "0.4.0", "0.4.9"]) {
+          expect(dataAccess(v(older), after)).toBe("read-only")
+        }
+      }
+    }
+  })
+
+  it("is refused to an app that predates synced tables", () => {
+    expect(() => dataVersionAfterSyncSwitch(v("0.4.9"), null)).toThrow(
+      "0.4.9 predates synced tables (0.5.0)",
+    )
   })
 })

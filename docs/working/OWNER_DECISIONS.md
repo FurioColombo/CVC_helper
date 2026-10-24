@@ -1,6 +1,6 @@
 # Owner decisions — taken provisionally, for review
 
-> Working document · Owner: the owner · Fold at: 0.5.0
+> Working document · Owner: the owner · Fold at: UG4
 
 The owner asked (2026-10-21) that agents keep working instead of stopping for
 questions. Each entry is a decision the agent took or postponed on the owner's
@@ -55,3 +55,8 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
    backend, so work continues while the development projects wait for you.
    Review the plan at any time; sign-in by email magic link is proposed, not
    settled.
+9. **The branch builds 0.5.0 (taken, 2026-10-24).** Synced data locks out
+   every app older than 0.5.0 (B1), so the 0.5.0 branch's package version is
+   0.5.0 from now on and CVC Helper Test's builds move to the 0.5.x line. Your
+   regular app stays on 0.4.0: `main` deploys only released versions. The
+   working documents now fold at UG4 rather than at "0.5.0".

@@ -14,6 +14,7 @@ describe("app channel storage configuration", () => {
       scanNameOrderPrefix: "cvc-helper.scan-name-order.",
       installedVersionKey: "cvc-helper.installed-version",
       resetPendingKey: "cvc-helper.reset-pending",
+      syncModeKey: "cvc-helper.sync-mode",
       workboxCacheId: null,
       ocrRuntimeCacheName: "cvc-ocr-runtime",
       ocrLanguageCachePath: ".",
@@ -30,12 +31,13 @@ describe("app channel storage configuration", () => {
     const test = getAppChannelConfig("test")
 
     expect(regular.versionBaseline).toBeNull()
-    expect(test.versionBaseline).toBe("0.4.0")
+    expect(test.versionBaseline).toBe("0.5.0")
     expect(test.databaseFilename).not.toBe(regular.databaseFilename)
     expect(test.crewDisplayColumnsKey).not.toBe(regular.crewDisplayColumnsKey)
     expect(test.scanNameOrderPrefix).not.toBe(regular.scanNameOrderPrefix)
     expect(test.installedVersionKey).not.toBe(regular.installedVersionKey)
     expect(test.resetPendingKey).not.toBe(regular.resetPendingKey)
+    expect(test.syncModeKey).not.toBe(regular.syncModeKey)
     expect(test.workboxCacheId).toBe("cvc-helper-test")
     expect(test.ocrRuntimeCacheName).not.toBe(regular.ocrRuntimeCacheName)
     expect(test.ocrLanguageCachePath).toBe("cvc-helper-test-ocr")

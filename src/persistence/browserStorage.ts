@@ -145,6 +145,7 @@ function clearSelectedLocalStorage(): void {
     if (
       key === appChannelConfig.crewDisplayColumnsKey ||
       key === appChannelConfig.installedVersionKey ||
+      key === appChannelConfig.syncModeKey ||
       (key !== null && key.startsWith(appChannelConfig.scanNameOrderPrefix))
     ) {
       localStorage.removeItem(key)
