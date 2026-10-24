@@ -4,6 +4,24 @@ This is the current owner checklist, regenerated from `.milestones/owner-checks.
 
 Tell your agent the item name and what happened. It records your feedback and keeps this list current. [How pending checks affect agent work](./OWNER_WORKFLOW.md).
 
+<a id="b2-backend-setup"></a>
+
+## Create the 0.5.0 development backend projects — B2
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. Follow docs/working/BACKEND_SETUP_0.5.0.md: a Supabase project cvc-helper-dev in West EU (Ireland), its tables and access rules, the replication role, and a PowerSync Cloud project with a CLI token.
+2. Put each value in the ignored .env file, copied from .env.example; never paste a value into the chat.
+3. Report B2-BACKEND-SETUP with "backend ready", and say whether you prefer the email magic link or another sign-in method.
+
+**Expected:** Development projects only, in the EU, with synthetic data; credentials stay in .env. The agent then links, deploys and checks the instance before any app code connects.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of B2 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3

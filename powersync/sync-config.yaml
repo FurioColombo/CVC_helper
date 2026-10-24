@@ -8,7 +8,7 @@ config:
 # Column names are the app's own (src/persistence/schema.ts). Each table
 # reaches the phone as `synced_<table>`, behind the app's own view name,
 # because 0.4.0's local-only tables keep the plain names on every device
-# (docs/working/PLAN_0.5.0_DRAFT.md, S1 spike). `meta` stays local.
+# (04_IMPLEMENTATION_PLAN.md, B1 spike). `meta` stays local.
 streams:
   owned_courses:
     auto_subscribe: true

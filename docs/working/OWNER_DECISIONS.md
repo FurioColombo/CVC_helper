@@ -47,8 +47,11 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
 
 ## 0.5.0 preparation
 
-6. **Draft 0.5.0 plan (open).** Written while UG3 waits, in
-   `docs/working/PLAN_0.5.0_DRAFT.md`: seven milestones from a local
-   development backend to the release gate, and the account and key actions
-   only you can take. It proposes email magic-link sign-in. It becomes the
-   plan only after UG3 completes and you review it.
+8. **0.5.0 cycle started (taken, 2026-10-24).** You asked to work on 0.5.0
+   after the release, so the draft became `04_IMPLEMENTATION_PLAN.md` (the
+   draft is archived at `archive/v0.4.0/PLAN_0.5.0_DRAFT.md`). Two changes
+   from it: the milestones are B1 to B6 and UG4, because S1, R1 and E1 were
+   0.3.0 milestones; and the synced schema (B1) comes first, since it needs no
+   backend, so work continues while the development projects wait for you.
+   Review the plan at any time; sign-in by email magic link is proposed, not
+   settled.

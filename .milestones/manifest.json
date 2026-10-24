@@ -1032,6 +1032,151 @@
         "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/39861945139"
       },
       "verifiedSourceDigest": "46d4163f9fa6e048755fb205278192b6b3e711fe91b75b038bfc8e95e9026b29"
+    },
+    {
+      "id": "B1",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/B1/verification.json",
+        ".evidence/B1/migration-evidence.json",
+        ".evidence/B1/browser-evidence.json",
+        ".evidence/B1/self-review.json",
+        ".evidence/B1/domain-prosecutor-review.json",
+        ".evidence/B1/data-integrity-review.json",
+        ".evidence/B1/sync-chaos-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B1/self-review.json",
+        ".evidence/B1/domain-prosecutor-review.json",
+        ".evidence/B1/data-integrity-review.json",
+        ".evidence/B1/sync-chaos-review.json"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "FOUNDATION",
+      "status": "PENDING",
+      "verificationScripts": ["verify"],
+      "requiredEvidence": [
+        ".evidence/B2/verification.json",
+        ".evidence/B2/backend-readiness.json",
+        ".evidence/B2/self-review.json",
+        ".evidence/B2/security-privacy-review.json",
+        ".evidence/B2/owner-setup.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B2/self-review.json",
+        ".evidence/B2/security-privacy-review.json"
+      ],
+      "ownerEvidence": [".evidence/B2/owner-setup.json"]
+    },
+    {
+      "id": "B3",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "ownerEvidence": [".evidence/B3/physical-device-review.json"],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/B3/verification.json",
+        ".evidence/B3/browser-evidence.json",
+        ".evidence/B3/physical-device-review.json",
+        ".evidence/B3/self-review.json",
+        ".evidence/B3/security-privacy-review.json",
+        ".evidence/B3/field-ux-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B3/self-review.json",
+        ".evidence/B3/security-privacy-review.json",
+        ".evidence/B3/field-ux-review.json"
+      ]
+    },
+    {
+      "id": "B4",
+      "category": "RULE_HEAVY",
+      "status": "PENDING",
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/B4/verification.json",
+        ".evidence/B4/browser-evidence.json",
+        ".evidence/B4/self-review.json",
+        ".evidence/B4/sync-chaos-review.json",
+        ".evidence/B4/data-integrity-review.json",
+        ".evidence/B4/security-privacy-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B4/self-review.json",
+        ".evidence/B4/sync-chaos-review.json",
+        ".evidence/B4/data-integrity-review.json",
+        ".evidence/B4/security-privacy-review.json"
+      ]
+    },
+    {
+      "id": "B5",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "ownerEvidence": [".evidence/B5/physical-device-review.json"],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/B5/verification.json",
+        ".evidence/B5/browser-evidence.json",
+        ".evidence/B5/physical-device-review.json",
+        ".evidence/B5/self-review.json",
+        ".evidence/B5/data-integrity-review.json",
+        ".evidence/B5/sync-chaos-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B5/self-review.json",
+        ".evidence/B5/data-integrity-review.json",
+        ".evidence/B5/sync-chaos-review.json"
+      ]
+    },
+    {
+      "id": "B6",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/B6/verification.json",
+        ".evidence/B6/self-review.json",
+        ".evidence/B6/security-privacy-review.json",
+        ".evidence/B6/data-integrity-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B6/self-review.json",
+        ".evidence/B6/security-privacy-review.json",
+        ".evidence/B6/data-integrity-review.json"
+      ]
+    },
+    {
+      "id": "UG4",
+      "category": "INTEGRATION_GATE",
+      "status": "PENDING",
+      "ownerEvidence": [".evidence/UG4/physical-device-review.json"],
+      "verificationScripts": ["verify:all"],
+      "requiredEvidence": [
+        ".evidence/UG4/verification.json",
+        ".evidence/UG4/browser-evidence.json",
+        ".evidence/UG4/backend-evidence.json",
+        ".evidence/UG4/physical-device-review.json",
+        ".evidence/UG4/security-privacy-review.json",
+        ".evidence/UG4/sync-chaos-review.json",
+        ".evidence/UG4/data-integrity-review.json",
+        ".evidence/UG4/regression-review.json",
+        ".evidence/UG4/scope-review.json",
+        ".evidence/UG4/field-ux-review.json",
+        ".evidence/UG4/code-quality-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/UG4/security-privacy-review.json",
+        ".evidence/UG4/sync-chaos-review.json",
+        ".evidence/UG4/data-integrity-review.json",
+        ".evidence/UG4/regression-review.json",
+        ".evidence/UG4/scope-review.json",
+        ".evidence/UG4/field-ux-review.json",
+        ".evidence/UG4/code-quality-review.json"
+      ]
     }
   ]
 }

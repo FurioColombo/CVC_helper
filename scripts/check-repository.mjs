@@ -218,9 +218,17 @@ for (const id of [
     `Released 0.3.0 milestone changed state: ${id}`,
   )
 }
-// The active cycle, 0.4.0. A milestone archived from the plan keeps a status
-// row there (docs/DOCS_SYSTEM.md).
+// 0.4.0 was released at UG3 and tagged on 2026-10-24.
 for (const id of ["H1", "D1", "D2", "D3", "D4", "T1", "UG3"]) {
+  assert.equal(
+    manifest.milestones.find((milestone) => milestone.id === id)?.status,
+    "COMPLETE",
+    `Released 0.4.0 milestone changed state: ${id}`,
+  )
+}
+// The active cycle, 0.5.0. A milestone archived from the plan keeps a status
+// row there (docs/DOCS_SYSTEM.md).
+for (const id of ["B1", "B2", "B3", "B4", "B5", "B6", "UG4"]) {
   const milestone = manifest.milestones.find((item) => item.id === id)
   assert.ok(milestone, `Missing active-cycle milestone: ${id}`)
   assert.ok(

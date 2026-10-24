@@ -163,6 +163,25 @@
         "browser": "Not restated (Chrome in earlier reports)",
         "osVersion": "Not restated (Android 15 in earlier reports)"
       }
+    },
+    {
+      "id": "B2-BACKEND-SETUP",
+      "milestone": "B2",
+      "kind": "DECISION",
+      "title": "Create the 0.5.0 development backend projects",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "Follow docs/working/BACKEND_SETUP_0.5.0.md: a Supabase project cvc-helper-dev in West EU (Ireland), its tables and access rules, the replication role, and a PowerSync Cloud project with a CLI token.",
+        "Put each value in the ignored .env file, copied from .env.example; never paste a value into the chat.",
+        "Report B2-BACKEND-SETUP with \"backend ready\", and say whether you prefer the email magic link or another sign-in method."
+      ],
+      "expected": "Development projects only, in the EU, with synthetic data; credentials stay in .env. The agent then links, deploys and checks the instance before any app code connects.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/B2/owner-setup.json",
+      "updatedAt": "2026-10-24T03:25:17.384Z"
     }
   ]
 }

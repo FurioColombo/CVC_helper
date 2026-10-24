@@ -3,7 +3,7 @@ import { column, PowerSyncDatabase, Schema, Table } from "@powersync/web"
 import { AppSchema } from "@/persistence/schema"
 
 /**
- * S1 spike (0.5.0, not app code): what PowerSync does to a database that an
+ * B1 spike (0.5.0, not app code): what PowerSync does to a database that an
  * app switches from 0.4.0's local-only course tables to synced ones, and then
  * an older 0.4.0 app opens again. Runs in the browser with no backend:
  * nothing here connects.

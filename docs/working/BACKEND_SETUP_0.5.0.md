@@ -66,3 +66,15 @@ with yours, and put the result in `PS_DATABASE_URI`.
 Say "backend ready". The agent then links and deploys the development
 instance (`powersync link cloud --create`, `powersync deploy`), records its
 address in `POWERSYNC_URL`, and checks it before writing any app code.
+
+## Optional: running the backend locally
+
+Not needed for the steps above. The development PC (8 GB, checked
+2026-10-22) has no Docker, on Windows or in its WSL2 Debian; installing it is
+a system change only you make. The lightest local stack PowerSync supports is
+one Postgres 14+ server for both the course tables and PowerSync's storage
+plus the PowerSync service, set up by the CLI (`powersync docker configure
+--database postgres --storage postgres`), with a static development key in
+place of Supabase sign-in. Whether it fits beside the browser suite in 8 GB
+is untested: WebKit already loses pages under memory pressure here. GitHub's
+Linux runners have Docker, so CI can run such a stack either way.
