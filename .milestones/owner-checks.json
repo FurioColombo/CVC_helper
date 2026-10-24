@@ -140,9 +140,9 @@
       "milestone": "UG3",
       "kind": "DEVICE_CHECK",
       "title": "Confirm the final 0.4.0 build on your regular app",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 2,
+      "revision": 3,
       "instructions": [
         "A one-minute look at your real app: change nothing, and report no personal data.",
         "Close the regular CVC Helper completely and open it again (if an update bar appears, tap Aggiorna).",
@@ -153,7 +153,16 @@
       "testedCommit": "ed83223c9a4b5455b736109f062b798ae5324262",
       "testUrl": "https://furiocolombo.github.io/CVC_helper/",
       "evidencePath": ".evidence/UG3/physical-device-review.json",
-      "updatedAt": "2026-10-22T22:58:35.399Z"
+      "updatedAt": "2026-10-24T03:15:03.458Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Owner chat report \"UG3-FINAL-BUILD\" in the Claude Code session of 2026-10-24.",
+        "summary": "Closed and reopened the regular CVC Helper; Impostazioni shows 0.4.0 and the course opened with its students as before.",
+        "testedCommit": "ed83223c9a4b5455b736109f062b798ae5324262",
+        "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+        "browser": "Not restated (Chrome in earlier reports)",
+        "osVersion": "Not restated (Android 15 in earlier reports)"
+      }
     }
   ]
 }

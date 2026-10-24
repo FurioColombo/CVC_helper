@@ -13,17 +13,16 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
 1. **Smoke set (open).** Which journeys belong in `verify:e2e:smoke`
    (`package.json`; 03 §6) is yours to review. The nightly full run was
    removed at UG3: nobody asked for it and it repeated `main`'s full push run.
-2. **Release mechanics (taken; final step held).** The release check
+2. **Release mechanics (done, 2026-10-24).** The release check
    (`UG3-PHONE-RELEASE`) runs on CVC Helper Test as 0.4.4 from the verified
    source `c56ffe7`. The package version became 0.4.0 and the changelog entry
    was written on the branch afterwards; only the version string and
    documents differ from the checked build, and the final source is verified
    again before the tag. You gave the go to merge to `main` on 2026-10-22
    ("go on merge, we delay the manual check to this evening"); it redeploys
-   the regular app you use. The `v0.4.0` tag still waits for the phone check
-   to pass, since a tag cannot stand for an outstanding required check. The
-   changelog date is the day the entry was written and moves to the tag's
-   day if that is later.
+   the regular app you use. The tag followed the final-build check
+   (entry on which check closes UG3) on 2026-10-24. The changelog keeps 2026-10-22, the day 0.4.0
+   reached `main`: `CHANGELOG.md` only grows, so its date is not moved.
 3. **Regular-app update after the merge (scheduled, owner).** No check has
    covered an installed regular 0.3.0 app updating to 0.4.0 with its course
    (review SC-4). It can only happen once `main` deploys 0.4.0; the changelog

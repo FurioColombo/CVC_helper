@@ -986,7 +986,7 @@
     {
       "id": "UG3",
       "category": "INTEGRATION_GATE",
-      "status": "AWAITING_OWNER",
+      "status": "COMPLETE",
       "ownerEvidence": [".evidence/UG3/physical-device-review.json"],
       "verificationScripts": ["verify:all"],
       "requiredEvidence": [
@@ -1030,7 +1030,8 @@
         },
         "ciRunId": 39861945139,
         "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/39861945139"
-      }
+      },
+      "verifiedSourceDigest": "46d4163f9fa6e048755fb205278192b6b3e711fe91b75b038bfc8e95e9026b29"
     }
   ]
 }

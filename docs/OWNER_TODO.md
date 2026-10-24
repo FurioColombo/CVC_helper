@@ -48,16 +48,11 @@ The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of star
 
 ## Confirm the final 0.4.0 build on your regular app — UG3
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. A one-minute look at your real app: change nothing, and report no personal data.
-2. Close the regular CVC Helper completely and open it again (if an update bar appears, tap Aggiorna).
-3. Check that Impostazioni shows version 0.4.0 and that your course opens with its students as before.
-4. Report UG3-FINAL-BUILD with what you saw.
-
-Use the test address below and the linked device instructions.
+The owner reported: Closed and reopened the regular CVC Helper; Impostazioni shows 0.4.0 and the course opened with its students as before.
 
 **Expected:** The regular app runs the final 0.4.0 build with the course intact. Only actual phone observations pass.
 
@@ -67,7 +62,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of UG3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="ug3-phone-release"></a>
 

@@ -31,11 +31,11 @@ installed 0.4.0 app takes the next update without reinstalling — all proven by
 | D3 | Complete. The data records its version; older apps open newer data read-only; installed apps find updates on return and keep unsaved work. The owner accepted the Android update on 2026-10-19; the note-edit and enlarged-text phone steps were not observed and move to UG3. See `.evidence/D3/` and its `limitations.md`. |
 | D4 | Complete. Courses export to a file, share as text, import back after a preview, and reset fully; an interrupted reset resumes on the next open. Accepted on Android on 2026-10-20 after one round of owner fixes. See `.evidence/D4/`; known limits in 03 §3.3 and `docs/working/BACKLOG.md`. |
 | T1 | Complete. Unnecessary browser cases removed with their coverage recorded; the full suite runs only when it counts (tiered CI). Clean one-worker suite 41:30 against H1 30:21, no flaky test; the owner accepted this target in chat on 2026-10-21. See `.evidence/T1/`; open flakes in `docs/working/BACKLOG.md`. |
-| UG3 | In progress. Six reviews pass; `verify:all` and full CI pass on `c56ffe7`, published as CVC Helper Test 0.4.4 for `UG3-PHONE-RELEASE`. Version 0.4.0, changelog and the heavy sweep are on the branch; the plan is archived at closure. Merged to `main` and deployed on 2026-10-22 on the owner's go; the tag waits for the phone check. |
+| UG3 | Complete. 0.4.0 released: six reviews pass, `verify:all` and full CI green on the final source; the owner passed the 0.4.4 release check, the 0.3.0 update and the final build on the regular app. On `main` since 2026-10-22, tagged `v0.4.0` on 2026-10-24. See `.evidence/UG3/`; limits in `CHANGELOG.md`. |
 
 ## Execution order
 
-**H1** → **D1** → **D2** → **D3** → **D4** → **T1** → **UG3**. Field fixes from the UG2
+**H1** → **D1** → **D2** → **D3** → **D4** → **T1** → **UG3**, all complete. Field fixes from the UG2
 findings join as an extra milestone only if the owner picks them (see the end).
 
 ## Rules for this cycle
@@ -53,30 +53,9 @@ findings join as an extra milestone only if the owner picks them (see the end).
   D4 may follow verified D3 while its phone check waits; T1 may follow
   verified D3/D4 while their phone checks wait. UG3 requires COMPLETE predecessors.
 
-## UG3 — 0.4.0 integration and release gate
-
-**Category:** INTEGRATION_GATE
-**Status:** AWAITING_OWNER
-
-`verify:all` on the final source. Upgrade journeys from 0.1, 0.2 and 0.3 data
-through the visible UI, an export/import round trip across Chromium and WebKit,
-and the update journey. Reviewers: data integrity, regression, scope, code
-quality, field UX, security/privacy. The owner checks on Android: an update
-without reinstalling, with a note typed just before Aggiorna and the controls
-at enlarged text (not observed in D3), export and import on the phone,
-persistent storage. Then the release-gate documentation sweep, the changelog,
-version 0.4.0 and the tag.
-
-**Success predicate:** the 0.4.0 objective above holds on the tagged commit, with
-no reviewer blocker and the owner's Android checks recorded.
-
-**Evidence:** `.evidence/UG3/` verification, browser and migration evidence, six
-reviews, the owner's device report.
-
 ## Owner feedback
 
-Owner phone checks follow `docs/OWNER_WORKFLOW.md`; the release check is
-`UG3-PHONE-RELEASE` in `docs/OWNER_TODO.md`. The open choices (UG2 fix
+Owner phone checks follow `docs/OWNER_WORKFLOW.md`. The open choices (UG2 fix
 candidates, remaining retrospective proposals, the D2–D5 size override) were
-not taken up in 0.4.0 and move to 0.5.0 planning
-(`docs/working/OWNER_DECISIONS.md`).
+not taken up in 0.4.0 and move to 0.5.0 planning, drafted in
+`docs/working/PLAN_0.5.0_DRAFT.md` (`docs/working/OWNER_DECISIONS.md`).
