@@ -5,6 +5,7 @@ import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 import { stamp, TOUCH } from "@/persistence/stamp"
 import { adoptCreatedCourse } from "@/persistence/courseSession"
+import { emptyInactiveLocalCopy } from "@/persistence/syncMode"
 import { compactEmptyCourseDatabase } from "@/persistence/writeGuard"
 
 export type CourseRecord = CourseDetails & {
@@ -95,6 +96,7 @@ export async function eraseAllCourseData() {
     for (const table of COURSE_DATA_TABLES) {
       if (present.has(table)) await transaction.execute(`DELETE FROM ${table}`)
     }
+    await emptyInactiveLocalCopy(transaction)
   })
   // Deleted rows can survive in free database pages until they are reused;
   // compacting rewrites the file without them. Where the storage layer

@@ -233,3 +233,25 @@ export async function switchToSyncedTables(
   await compactCourseDatabase(database).catch(() => {})
   return "switched"
 }
+
+/**
+ * In synced mode the erase and the import also empty 0.4.0's local copy:
+ * an app from before the contract (0.1.0–0.3.0) cannot be kept from writing
+ * there after the switch (03 §3.1), and those rows are in no 0.5.0 screen
+ * (B1 reviews DP-B1-1, DI-B1-2, SC-B1-4). Only views the schema declares.
+ */
+export async function emptyInactiveLocalCopy(
+  transaction: Pick<Transaction, "getAll" | "execute">,
+) {
+  const present = new Set(
+    (
+      await transaction.getAll<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type = 'view'",
+      )
+    ).map(({ name }) => name),
+  )
+  for (const table of [...COURSE_TABLES].reverse()) {
+    const view = inactiveLocalView(table)
+    if (present.has(view)) await transaction.execute(`DELETE FROM "${view}"`)
+  }
+}

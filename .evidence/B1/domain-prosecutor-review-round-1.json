@@ -1,0 +1,99 @@
+{
+  "reviewerRole": "domain-prosecutor",
+  "persona": "Il Pubblico Ministero",
+  "milestone": "B1",
+  "commit": "bde4f7b",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DP-B1-1",
+      "title": "A pre-contract app (0.1.0-0.3.0) still open after the switch writes into the emptied local tables. 0.5.0 never shows that course, and its erase in synced mode leaves it, personal data included, on the device",
+      "evidence": "src/persistence/courses.ts:78 and :88-97: the erase deletes only the COURSE_TABLES view names, which in synced mode point at the synced tables; the inactive_local_<table> views are listed in sqlite_master but are never deleted. 03 §3.1 (\"Apps up to 0.3.0 predate the contract and cannot be kept from writing\") makes the precondition reachable. B1's own reason for emptying the local copy (04 B1: \"kept, it would hold students and notes deleted later in synced mode, out of every 0.5.0 screen\") applies equally to rows written there after the switch. Observed result (reviewer scratchpad pm/wildcard-precontract-erase.json): before the erase localCourses 1, localStudents 1, localPhones 1 (fixture phone), visibleCourses 1 (the synced course only). After 'Elimina tutto': visibleCourses 0, syncedStudents 0, but localCourses 1, localStudents 1, localPhones 1.",
+      "reproduction": "Pixel 7 Chrome. 1) seedAndSwitchAppDatabase() from src/test/b1SyncModeHarness.ts. 2) Open a PowerSyncDatabase with src/test/v030Schema.ts on appChannelConfig.databaseFilename. It sees 0 courses; insert one course and one student (synthetic phone) through its views, then close. 3) page.goto('/'). The heading 'D2 - 38 | 2026' shows, and the 0.3.0 course appears nowhere. 4) Impostazioni > 'Elimina il corso e inizia un nuovo corso' > tick the acknowledgement > 'Elimina tutto'. 'Crea il corso' appears. 5) Count ps_data_local__courses and ps_data_local__students. Expected 0 and 0; observed 1 and 1. Suggested fix: in synced mode the erase also deletes the inactive_local_<table> views, and the stranded-write limit for pre-contract apps is written down beside 03 §3.1's other older-writer limits.",
+      "specRef": "01_PRODUCT_SPEC.md §2 (erase removes the course and everything recorded in it from the device); 03_TECHNICAL_DECISIONS.md §3.1; 04_IMPLEMENTATION_PLAN.md B1"
+    },
+    {
+      "id": "DP-B1-2",
+      "title": "On a switched device a damaged record lowers the minimum writer to 0.4.0: the derivation and 0.5.0's next claim ignore the recorded sync mode",
+      "evidence": "src/persistence/dataVersion.ts:58-63: when only data:version is readable, the minimum is derived as minimumWriterOf(version), which is 0.4.0 for any 0.5.x. src/persistence/migrations.ts:123-131 then claims with claimDataVersion, i.e. dataVersionAfterWrite, not dataVersionAfterSyncSwitch, and writes 0.4.0 explicitly even though meta holds local:sync-mode = 1. Signature-move rows for src/persistence/dataVersion.test.ts 'reads %s conservatively', run from the reviewer's scratchpad vt/damaged.test.ts: [\"only a newest writer 0.5.0\", encoded(\"0.5.0\"), null], [\"only a newest writer 0.5.4\", encoded(\"0.5.4\"), null] and [\"an unreadable minimum\", encoded(\"0.5.0\"), -5], each with SYNC_MODE_ID = 1, then claimDataVersion(v(\"0.5.0\")). All 3 fail: 'expected { major: 0, minor: 4, patch: 0 } to deeply equal { major: 0, minor: 5, patch: 0 }', and dataAccess(0.4.0) is 'write'.",
+      "reproduction": "npx vitest run --config <scratchpad>/vt/vitest.config.mjs (3 failed). The precondition is a damaged meta row, the case D3 DI-Q1 already covered (filed there as QoL). In synced mode the result is worse: a 0.4.0 app becomes a writer, puts its schema back, sees an empty device and saves into the local tables. Suggested fix: when the mode row says synced, floor the derived and the claimed minimum at SYNCED_SINCE.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (neither part of the record ever goes back; every check keeps what can be read of a damaged record)"
+    },
+    {
+      "id": "DP-B1-3",
+      "title": "A 0.4.0 app on a switched device can consult nothing, contrary to 01 §2. B1 reversed the cycle plan's keep-the-copy mitigation without recording an owner decision",
+      "evidence": "01_PRODUCT_SPEC.md:95-98: an app older than the data requires 'opens the course read-only: everything can be consulted'. tests/e2e/b1-sync-mode.spec.ts:71 asserts olderSees: 0. The plan at 37ee6b4 said '0.5.0 keeps the local copy rather than emptying it ... it shows a stale course with the update bar, not an empty device inviting a new course'. B1 rewrote this to 'opens an empty device read-only, with the update bar' (04 B1 spike paragraph), and docs/working/OWNER_DECISIONS.md has no entry for the change (decision 9 covers only the version). 03 §3.1, prepared before B1, already says an older app sees none of the synced rows, so this is not a blocker. It is still a user-visible change for older apps.",
+      "reproduction": "Run tests/e2e/b1-sync-mode.spec.ts on pixel-7-chrome (10/10 pass): olderSees is 0 for every origin. Remedy: record a provisional owner decision with the trade-off (a stale but consultable copy versus deleted students lingering locally), and mark 01 §2's sentence for the 0.5.0 rewrite and CHANGELOG.",
+      "specRef": "01_PRODUCT_SPEC.md §2; AGENTS.md §2 and §14 (do not silently change UX semantics); 03_TECHNICAL_DECISIONS.md §3.1"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DP-B1-Q1",
+      "title": "The '0.4.0 course' browser case is the 0.3.0 case run again",
+      "evidence": "src/test/b1SyncModeHarness.ts:69 seeds '0.3.0' for origin '0.4.0', and :72 opens both through openApp with APP_VERSION. Both cases therefore switch identical data with the record {0.5.0, 0.4.0}, and the 0.4.0 evidence file adds no coverage. The record path is covered only by the table row in src/domain/compatibility.test.ts.",
+      "reproduction": "Read runSwitch. Seed a real 0.4.0 state first (prepareDatabase(db, MIGRATIONS, parseVersion('0.4.0'), hint)), then open with the running version and switch.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B1 success predicate ('a 0.1, 0.2, 0.3 or 0.4 course')"
+    },
+    {
+      "id": "DP-B1-Q2",
+      "title": "SYNCED_SINCE leaks into course files: a 0.4.0 import refuses a file made after the switch, although the file format is unchanged",
+      "evidence": "src/persistence/courseArchive.ts:75-78 exports the device's record unchanged, and src/persistence/courseArchiveFormat.ts:191-195 refuses with 'incompatible-version'. Rows run from the reviewer's scratchpad vt/file.test.ts: a file with dataVersionAfterWrite(0.5.0) passes 0.4.0's compatibility check; a file with dataVersionAfterSyncSwitch(0.5.0) gets 'incompatible-version'. Importing such a file on a local-mode device also records minimum 0.5.0 there for good.",
+      "reproduction": "npx vitest run --config <scratchpad>/vt/vitest.config.mjs file: 1 failed ('Received: incompatible-version'). Decide whether files should carry the table-layout floor, and document the choice.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (an app reads and writes data of its own and the previous minor version), §3.3"
+    },
+    {
+      "id": "DP-B1-Q3",
+      "title": "The write guard checks that the synced table exists, not where the app's views point",
+      "evidence": "src/persistence/openedSchema.ts:26-33 looks only for ps_data__synced_courses. The switching layout (syncMode.ts:97 and :208) keeps that table while the plain views read the local tables, so a synced instance writing during another tab's switch window would pass the check and save into a local table. Reachable only in a concurrent double switch (two tabs reacting to one sign-in). Not reproduced.",
+      "reproduction": "Code reading. A stricter check would compare the sql of the 'courses' view in sqlite_master with ps_data__synced_courses.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B1 adversarial checklist (both copies writable)"
+    },
+    {
+      "id": "DP-B1-Q4",
+      "title": "readSyncMode reads every mode value except 1 as local",
+      "evidence": "src/persistence/syncMode.ts:138. A damaged mode row opens a switched device in local mode: the course is parked in ps_untyped and the empty local tables are writable by 0.5.0. readDataVersion, by contrast, reads damage conservatively. Not reproduced.",
+      "reproduction": "Code reading.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1"
+    },
+    {
+      "id": "DP-B1-Q5",
+      "title": "The switch reports 'switched' and invalidates the session when its in-transaction re-check finds the device already synced",
+      "evidence": "src/persistence/syncMode.ts:211 returns from the callback, then :232-234 still invalidate the session, compact and return 'switched'. B3 may rely on the return value.",
+      "reproduction": "Code reading. Two concurrent switches on one local device.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B1 (idempotent)"
+    },
+    {
+      "id": "DP-B1-Q6",
+      "title": "Handoff to B6: an erase in synced mode leaves the erased rows' PUT payloads readable in ps_crud until upload",
+      "evidence": "tests/e2e/b1-sync-mode.spec.ts:214-218 asserts newCourse 2: the erased course's PUT stays queued beside its DELETE. Its students' PUT entries also stay. B6's predicate ('nothing of the course remains readable on ... the device, including after an offline erase') owns this. Keep it in B6 or BACKLOG.",
+      "reproduction": "The existing B1 erase test.",
+      "specRef": "01_PRODUCT_SPEC.md §2; 04_IMPLEMENTATION_PLAN.md B6"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-domain-prosecutor.md; no earlier B1 reports exist (.evidence/B1 absent)",
+    "04_IMPLEMENTATION_PLAN.md B1-B6 and the B1 text at 37ee6b4; 03_TECHNICAL_DECISIONS.md §3, §3.1, §3.3; 01_PRODUCT_SPEC.md §2, §10, §11; 02_MVP_SCOPE.md §3-§4; docs/working/OWNER_DECISIONS.md",
+    "git diff 37ee6b4..bde4f7b: src/persistence/syncMode.ts, openedSchema.ts, writeGuard.ts, migrations.ts, db.ts, schema.ts, dataVersion.ts, courseSession.ts, courses.ts, courseArchive.ts, courseArchiveFormat.ts, browserStorage.ts, src/appChannel.ts, src/domain/compatibility.ts and its tests, src/test/b1SyncModeHarness.ts, tests/e2e/b1-sync-mode.spec.ts, scripts/check-repository.mjs, playwright.config.ts, .milestones/manifest.json; v0.3.0's courses.ts and src/test/v030Schema.ts",
+    "npx vitest run src/domain/compatibility.test.ts: 41 passed",
+    "npx playwright test tests/e2e/b1-sync-mode.spec.ts --project=pixel-7-chrome --workers=1: 10 passed",
+    "Scratch Playwright probes on pixel-7-chrome: probeOpenScreensStop (after the switch, writes from both the switching instance and another local tab are refused with CourseReplacedError; compaction mark cleared; queue unchanged at 49; nothing stray), probeOlderTabDuringSwitch (a 0.4.0-guarded instance's in-flight write is serialized before the switch and copied; its later update and insert are refused; nothing local; minimum 0.5.0), probeReadOnlySwitch (on data with minimum 0.6.0 the switch is refused with ReadOnlyDataError; mode, hint and views stay local; queue 0), probeMidweekSynced (in synced mode, adding and deleting an unused student, the reference block on a used one, deactivation, adding and deleting a boat, a fault and its state change, and a CT volunteer all queue the right PUT/PATCH/DELETE on synced_* tables; exportCourseArchive passes with 51 rows; the local copy stays 0)",
+    "Scratch vitest rows: damaged.test.ts (3 failed, DP-B1-2) and file.test.ts (1 failed, DP-B1-Q2)"
+  ],
+  "anglesTried": {
+    "seed": 544378459,
+    "lenses": [
+      "8. Midweek changes: a student, boat or volunteer added or removed on day 4 (exercised in synced mode with references, faults and the full archive validation)",
+      "12. A spec sentence with no test at all ('so open screens stop and the app reopens'; 'empties and compacts the local copy'; 01 §2 'everything can be consulted' for an older app)"
+    ],
+    "wildcard": "An app from before the contract (0.3.0) still open on the origin after the switch: it reads the emptied local tables as an empty device, writes a course there, and then the 0.5.0 erase runs"
+  },
+  "notTested": [
+    "The reviewer's probes ran on Chromium only (another review ran WebKit at the same time; the 8 GB machine allows one browser project).",
+    "The real 0.4.0 build's UI (update bar on an empty switched device). The harness models 0.4.0 with the current guard at version 0.4.0, without the 0.4.0 bundle.",
+    "The concurrent double-switch race behind DP-B1-Q3, the desktop SharedWorker path (desktop-chrome-storage project), and B3's sign-in call of the switch, which does not exist yet.",
+    "The end-to-end browser version of DP-B1-Q2: it was covered at unit level through parseCourseArchive, not run in the browser."
+  ]
+}

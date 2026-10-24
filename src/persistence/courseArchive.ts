@@ -21,6 +21,7 @@ import {
 } from "@/persistence/writeGuard"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
+import { emptyInactiveLocalCopy } from "@/persistence/syncMode"
 
 // Explicit columns keep the metadata write harness useful. The archive codec
 // accepts exactly the schema's columns; these bind their original values.
@@ -109,6 +110,7 @@ export async function importCourseArchive(
   await database.writeTransaction(async (transaction) => {
     for (const table of [...COURSE_TABLES].reverse())
       await transaction.execute(`DELETE FROM ${table}`)
+    await emptyInactiveLocalCopy(transaction)
     for (const table of COURSE_TABLES) {
       const sql = INSERTS[table]
       const columns = sql

@@ -1,0 +1,122 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B1",
+  "commit": "bde4f7b",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SC-B1-1",
+      "title": "[Decide before B3 uploads; implement in B4/B5, prove at UG4] Two of the owner's devices that make the same crew edit offline produce duplicate rows. After they converge, the Equipaggi area and the course export fail on both devices, and no documented rule resolves it",
+      "evidence": "Seeded two-device scenario (reviewer scratchpad sc/e-two-devices.spec.ts, pixel-7-chrome, seed 505534286+3). Both contexts hold the 0.3.0 course switched to synced tables, as after a restore. Offline, both put the same unplaced student on land in sat-pm. One device also puts a second student on land, the other puts that student in crew-v030-sat-pm-2. Each device's queued ops are then applied to the other, which is what the server plus a download would leave. Result on both devices: landAssignments for sat-pm holds the first student twice, and the second student is both on land and in a crew. readCrewPlan throws 'Invalid persisted crew plan: duplicate student' (src/persistence/crews.ts:262). The UI shows 'Equipaggi non disponibili / Non riesco a leggere l'archivio locale' for the whole Equipaggi area (src/features/crews/CrewManagement.tsx:2289). exportCourseArchive throws CourseArchiveError 'Il file contiene dati del corso non validi.' Root cause: placement rows take random ids (crews.ts:613 sessionBoats, crews.ts:652 crewMembers, crews.ts:682 landAssignments, evaluations.ts:168, duties.ts:250), and the persisted-duplicate checks refuse the result (crews.ts:494-503, evaluations.ts:147). D2 already gave dutySettingItems deterministic ids for this reason (dutyItems.ts:48). The server schema has no natural-key uniqueness (supabase/migrations/20261023000000_course_backup.sql).",
+      "reproduction": "Reviewer scratchpad sc/e-two-devices.spec.ts, test 'E: two devices put the same student on land offline, then converge'. Outputs: results/E-two-devices-pixel-7-chrome.json and results/E-crews-ui.png. The server is simulated because B2's development backend does not exist yet.",
+      "specRef": "02_MVP_SCOPE.md §4 (0.5.0: 'kept up to date from the owner's devices'; conflict handling deferred to 1.0.0); 03_TECHNICAL_DECISIONS.md §3 ('With one writer through 0.7.0 neither is needed': one writer is not one device); 04 UG4 'a realistic week offline and online across two devices'"
+    },
+    {
+      "id": "SC-B1-2",
+      "title": "[B3/B5] Switching at sign-in queues the local course whatever the account already holds. On a device holding another course, the account then has two courses, and every device that downloads both stops opening",
+      "evidence": "bindCourseSession throws CourseReplacedError when more than one course is active (src/persistence/courseSession.ts:37). The reviewer inserted a second active course row into the synced tables of a switched device, as a download of the other device's uploaded course would. After reload the app shows 'Archivio non disponibile. Non riesco ad aprire i dati locali ... Riprova', and retrying cannot help. Planned order: B3 'switches to synced mode (B1) and connects', and its predicate is 'sign-in on a device with a course queues and uploads the whole course'. B5's 'asks first ... never merges' only arrives afterwards. switchToSyncedTables copies every local row into the queue unconditionally (src/persistence/syncMode.ts:171-184).",
+      "reproduction": "Reviewer scratchpad sc/h-second-course.spec.ts (pixel-7-chrome), results/H-second-course-pixel-7-chrome.json",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 and B5 ('on a device holding another course the app asks first, as import does, and never merges')"
+    },
+    {
+      "id": "SC-B1-3",
+      "title": "[B6; B1's test locks it in as expected] In synced mode, an erase leaves the erased course's personal data readable in the upload queue. Nothing drains the queue offline, and nothing drains it signed out (B3 keeps synced mode at sign-out)",
+      "evidence": "After 'Elimina tutto' on a switched device, ps_crud holds 98 entries: 49 PUTs with full row data plus 49 DELETEs. All 7 fixture students' names, the fixture phone number and 4 course notes are still readable. Same result on desktop Chrome and WebKit. The VACUUM in eraseAllCourseData (src/persistence/courses.ts:99-109) does not touch live ps_crud rows. The import replacement leaves the replaced course's PUTs in the same way. tests/e2e/b1-sync-mode.spec.ts:214-224 asserts this state as correct. The data-integrity review (DI-B1-1) reports the same independently.",
+      "reproduction": "Reviewer scratchpad sc/c-erase.spec.ts 'C1', results/C1-erase-queue-{desktop-chrome,webkit}.json",
+      "specRef": "04 B6 success predicate and checklist ('an erase offline and never reconnected'); src/persistence/courses.ts:73-77 ('nothing about the previous week's students (minors included) stays behind on the device')"
+    },
+    {
+      "id": "SC-B1-4",
+      "title": "[B1 now, cheap] The erase and import in synced mode never empty inactive_local_<table>. Rows that a pre-contract app writes there after the switch stay on the device, in no 0.5.0 screen, never uploaded and never erased",
+      "evidence": "On a switched device, an unguarded 0.3.0-schema instance (src/test/v030Schema.ts) sees no course (the local copy was emptied), then inserts a course and a student into its local tables. 0.5.0 reopens and erases through the UI. Afterwards ps_data_local__students still holds that student and ps_data_local__courses still holds that course (desktop Chrome and WebKit). eraseAllCourseData deletes only the app's view names (src/persistence/courses.ts:88-97), and so does the import (src/persistence/courseArchive.ts:110-111). In synced mode those names are the synced tables. B1's own text gives the reason for emptying the local copy: kept, it would hold students and notes 'out of every 0.5.0 screen'. Suggested fix: the erase and import transactions also run DELETE FROM inactive_local_<table> when the mode is synced. DP-B1-1 and DI-B1-2 report the same.",
+      "reproduction": "Reviewer scratchpad sc/c-erase.spec.ts 'C2', results/C2-erase-inactive-local-{desktop-chrome,webkit}.json",
+      "specRef": "04 B1 checklist ('an import or full reset in synced mode; the erase leaving synced rows'); 03 §3.1 (older writers)"
+    },
+    {
+      "id": "SC-B1-5",
+      "title": "[Decide in B1, before B3 wires the switch] The switch's minimum writer is a fact about one device's storage, but it travels in course files. 0.4.0 refuses a file whose tables it could read and write, and a local-mode device that imports the file is raised to 0.5.0",
+      "evidence": "Wildcard. Export before the switch records minimumWriter 0.4.0; export after records 0.5.0 with identical tables (sameTables true). parseCourseArchive with app 0.4.0 accepts the first file and refuses the second ('Aggiorna l'app per importare questo file.'; src/persistence/courseArchiveFormat.ts:191-196). A 0.5.0 device still in local mode imports the second file: its record goes from 0.4.0 to 0.5.0 while its tables stay 0.4.0's, so a 0.4.0 app on it becomes read-only. Cause: export copies the device record (src/persistence/courseArchive.ts:75-78), and the import merge never lowers it (courseArchive.ts:86-99). In 0.5.0 the team reads nothing online (02 §4, 0.6.0), so files remain the way a course reaches a colleague's phone. Options: keep SYNCED_SINCE as a separate device-local floor, not exported, that the guard and prepareDatabase combine with the data record; or record in 03 §3.3 that files from a signed-in device need 0.5.0. DI-B1-4 reports the same.",
+      "reproduction": "Reviewer scratchpad sc/g-file-leak.spec.ts (pixel-7-chrome), results/G-file-leak-pixel-7-chrome.json",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (compatibility window: phones run different versions for days) and §3.3 (course files carry the D3 record)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B1-Q1",
+      "title": "[B1] The new write-guard check tests whether the synced tables exist, not whether the views point at them. B1's own switching schema passes it with views on the local tables",
+      "evidence": "syncedTablesPresent only looks for ps_data__synced_courses (src/persistence/openedSchema.ts:26-33). SwitchingSchema declares the synced tables under their own names and leaves the app's view names on the local tables (src/persistence/syncMode.ts:70-97). switchToSyncedTables reads the mode outside any lock and then applies SwitchingSchema (syncMode.ts:204-208). A local-mode tab that read 'local' just before another tab's commit, or that was frozen between those two awaits, can therefore re-point the views after the switch. While a course exists, the course-session check refuses writes, because 'courses' then reads the empty local copy (src/persistence/courseSession.ts:85-92). On an empty synced device (after an erase), a course created in that window would land in inactive_local_courses. Not run. Cheap fix: check that the view SQL of 'courses' targets ps_data__synced_courses.",
+      "reproduction": "Static, from the file:line chain above.",
+      "specRef": "04 B1 ('the write guard refuses a write in synced mode while an older app has put its own schema back')"
+    },
+    {
+      "id": "SC-B1-Q2",
+      "title": "[B3] Two tabs switching at once keep the data whole, but the slower caller gets CourseReplacedError, not 'already'",
+      "evidence": "8 seeded rounds (4 desktop Chrome, 4 WebKit), two app tabs on one device calling switchToSyncedTables on the app db with seeded 0-30 ms offsets. Every round: 49 rows queued once in one transaction, all 13 views on the synced tables, local copy 0, ps_untyped 0, minimum writer 0.5.0, both tabs show 'Il corso è cambiato'. One caller returned 'switched', the other threw CourseReplacedError. A retry returns 'already', because the first check is an unguarded read. B3's sign-in handler, which other tabs may also run through the auth broadcast, must treat this error as 'switched elsewhere'.",
+      "reproduction": "Reviewer scratchpad sc/a-two-tabs.spec.ts, results/A-two-tabs-switch-{desktop-chrome,webkit}.json",
+      "specRef": "04 B1 ('It is idempotent')"
+    },
+    {
+      "id": "SC-B1-Q3",
+      "title": "[B4] What the queue holds for an upload handler, and how saves slow down as it grows over days offline",
+      "evidence": "Lens 10, on the 40-student course from D1 (seedLargeUpgrade). The switch queues 609 PUTs (~162 KB of JSON) as ONE transaction (getNextCrudTransaction returns all 609), in parent-first order (synced_courses first, synced_evaluations last), with type names synced_<camelCase table> that B4 must strip and quote for Postgres. Each later save adds one PATCH (changed columns plus updatedAt) and its own tx; nothing coalesces them. Measured on Chromium (Pixel 7 profile, desktop CPU), 140 saves per simulated day over 10 days: synced mode 1823 ms on day 1 to 5503 ms on day 10, with the queue growing from 749 to 2009 entries (about 13 to 39 ms per save); local mode 902 to 1557 ms. Phones will be slower. B4 should batch the first transaction and record per-save latency on the owner's phone after days offline.",
+      "reproduction": "Reviewer scratchpad sc/d-flood.spec.ts and sc/d2-flood.spec.ts, results/D-flood-*.json and D2-flood-{local,synced}-*.json",
+      "specRef": "04 B4 ('every local change reaches the server exactly once across reloads, offline periods and app closes')"
+    },
+    {
+      "id": "SC-B1-Q4",
+      "title": "[B4] The server migration's comment says upload order cannot matter, but child-table RLS requires the course row to exist first",
+      "evidence": "supabase/migrations/20261023000000_course_backup.sql:12-14 says 'There are no foreign keys, so an upload never fails on the order in which a transaction's rows arrive'. The child policies' WITH CHECK requires an owned course row with that id (lines 187-193). A child uploaded before its course, or a locally tolerated orphan or null courseId row ('courseId' is NOT NULL on the server), is refused. B1's queue order is parent-first, so B4 must upload in queue order and handle refusals row by row.",
+      "reproduction": "Static: the comment against the policy text.",
+      "specRef": "04 B4 ('a refused change is kept and reported in Impostazioni, never skipped silently')"
+    },
+    {
+      "id": "SC-B1-Q5",
+      "title": "[B3/B5] PowerSync constraints the switch leaves for the next milestones",
+      "evidence": "updateSchema throws 'Cannot update schema while connected' (node_modules/@powersync/shared-internals/src/client/BasePowerSyncDatabase.ts:366-368). The switch and any schema correction must therefore happen before connect(). An older app that re-points the views while the instance is connected cannot be repaired without disconnecting. applySchema trusts a per-instance cache (src/persistence/syncMode.ts:151), so the 'already' path does not repair views that another app changed on the same instance; the guard forces a reopen instead. On restore (B5), rows arrive outside the app's writes into a session bound to no course, so the first save raises CourseReplacedError (courseSession.ts:85-92); B5 should reopen after the download. The powersync skill's sign-out rule (keep data: disconnect(); another account: never keep the first account's data) applies to B3's second-account case: the queue would upload account 1's rows under account 2's session.",
+      "reproduction": "Static, from the file:line references above.",
+      "specRef": "04 B3 checklist ('a second account on the same device'); B5"
+    },
+    {
+      "id": "SC-B1-Q6",
+      "title": "After an older app opens beside a synced tab, the refused save calls the course 'replaced or deleted', and the typed student is lost on reopen",
+      "evidence": "Scenario B (desktop Chrome): a synced app tab stays on Allievi, still showing the 7 students, while a 0.4.0-schema instance opens the same database and sees 0 students. Saving a new student in the synced tab shows 'Il corso è stato sostituito o eliminato...' (src/App.tsx:915). After 'Riapri l'app' the form comes back empty: the draft is lost. Nothing reaches the local tables or the queue, and the 49 rows and the queue come back intact. Data integrity holds; the message is misleading.",
+      "reproduction": "Reviewer scratchpad sc/b-older-beside.spec.ts, results/B-older-beside-desktop-chrome.json, B-after-older-*.png, B-after-save-*.png",
+      "specRef": "04 B1 checklist ('a 0.4.0 tab open during the switch')"
+    },
+    {
+      "id": "SC-B1-Q7",
+      "title": "[B1 close sweep] 03 does not describe the synced mode yet",
+      "evidence": "03 §3 still says the app 'contains no sync connector, upload queue, Auth or conflict UI'. After B1, synced mode fills ps_crud. The mode record, the per-channel hint key, the inactive_local_<table> views and the new guard check have no 03 entry; the diff 37ee6b4..bde4f7b does not touch 03.",
+      "reproduction": "git diff --stat 37ee6b4..bde4f7b; 03_TECHNICAL_DECISIONS.md §3, line 61-62",
+      "specRef": "docs/DOCS_SYSTEM.md (contracts describe the present)"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md, .claude/agents/reviewer-sync-chaos.md, AGENTS.md; earlier sync-chaos reports (.evidence/D3, .evidence/D4) for the zero-based lens convention; no earlier B1 sync-chaos report; titles in .evidence/B1/data-integrity-review-round-1.json and domain-prosecutor-review-round-1.json, to cross-reference overlapping findings",
+    "04_IMPLEMENTATION_PLAN.md (B1-B6, UG4), 03_TECHNICAL_DECISIONS.md §3, §3.1, §3.3, 02_MVP_SCOPE.md §4",
+    "Diff 37ee6b4..bde4f7b: src/persistence/syncMode.ts, openedSchema.ts, writeGuard.ts, migrations.ts, db.ts, schema.ts, browserStorage.ts, src/domain/compatibility.ts (+tests), src/appChannel.ts, tests/e2e/b1-sync-mode.spec.ts, src/test/b1SyncModeHarness.ts, tests/e2e/b1-schema-probe.spec.ts, playwright.config.ts, scripts/check-repository.mjs",
+    "Related code: src/persistence/courseSession.ts, localDataOperations.ts, courses.ts, courseArchive.ts, courseArchiveFormat.ts, crews.ts, evaluations.ts, src/App.tsx, powersync/sync-config.yaml, supabase/migrations/20261023000000_course_backup.sql, PowerSync BasePowerSyncDatabase.updateSchema, .claude/skills/powersync/SKILL.md",
+    "Ran tests/e2e/b1-sync-mode.spec.ts on pixel-7-chrome (--workers=1, own port and output dir): 10/10 passed",
+    "Throwaway specs with their own config (own port, own outputDir, test-results untouched): A two tabs switching at once (desktop Chrome and WebKit, 8 rounds, all whole); B older app beside an open synced UI (desktop Chrome); C1/C2 erase residue (desktop Chrome and WebKit); D/D2 flood and week offline (pixel-7-chrome); E two-device convergence (pixel-7-chrome); F reopen timing, 40 students, hinted 267-272 ms, lost hint 419-424 ms, no rows lost (pixel-7-chrome, 4x CPU throttle that probably does not reach the database worker); G course-file leak (pixel-7-chrome); H second active course (pixel-7-chrome); I tab closed mid-switch at seeded moments 3-109 ms (12 rounds, Chromium and WebKit): every round all or nothing; after a close past the commit the device reopened synced with 49 queued once and the hint missing, and corrected itself; every interrupted round's retry switched cleanly with the local copy emptied and ps_untyped 0",
+    "Hint divergence observed in three ways (close after commit, lost localStorage, a local-mode tab's applyRecordedSyncMode removing the key): each corrected at the next open, before the first read, with the queue whole and ps_untyped empty"
+  ],
+  "anglesTried": {
+    "seed": 505534286,
+    "lenses": [
+      "3. The same student placed in two crews of the same session on two devices (zero-based index 2). Adapted without a backend: two browser contexts hold the same switched course, make seeded offline placements, and each applies the other's queued ops as the server and a download would (signature scenario, seed 505534286+3); invariants checked on both devices",
+      "10. Days offline, then a flood of queued changes (zero-based index 9): the switch's single 609-entry transaction for a 40-student course, then 10 simulated days of saves in local and synced mode, with queue contents, order, op types and per-save latency"
+    ],
+    "wildcard": "The switch's minimum writer is a property of one device's storage but rides in the D3 record that course files carry: export after the switch, import by 0.4.0 and by a local-mode 0.5.0 device. Also attacked: two 0.5.0 tabs switching at once, an older app reopening beside an open synced UI tab, tabs closed mid-switch at seeded moments (seed 505534286+7), hint/data divergence, a merged second course, and the guard's table-presence check against B1's own switching schema"
+  },
+  "notTested": [
+    "No development sync backend exists yet (B2 pending), so there was no real upload, download, server-state or RLS check. Two-device convergence was simulated by applying one device's ps_crud ops to the other's synced tables",
+    "A real 0.4.0 build in a second tab: the older app was simulated, as in B1's harness, by AppSchema and v030Schema instances. The UI of the released 0.4.0 on a switched device was not exercised",
+    "The SwitchingSchema race in SC-B1-Q1 was not run (static only)",
+    "Lens 4 (the same boat on two devices) only by reading the code: sessionBoats random ids, crews.ts:500 and the duplicate-session-boat invariant",
+    "Physical Android and iPhone devices, real Android Chrome multi-tab behaviour, and phone-speed save latency; the CPU throttle probably did not reach the database worker",
+    "Sign-out, account switch and an expired session (B3 surfaces that B1 does not wire)"
+  ]
+}
