@@ -125,6 +125,8 @@ two phones edited offline converge on the latest edit instead of duplicates
 that break Equipaggi, and the app says when that happened (SC-B1-1). Uploads
 keep the queue's parent-first order and batch the switch's first transaction;
 save latency after days offline is measured on the phone (SC-B1-Q3, Q4).
+A course id already taken by another account (a shared file signed in
+first) is reported, not retried forever (SP-B2-Q5).
 
 **Success predicate:** every local change reaches the server exactly once
 across reloads, offline periods and app closes, and a refused change is

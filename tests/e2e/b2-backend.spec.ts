@@ -36,6 +36,20 @@ test.skip(
   "B2 needs the development credentials in the ignored .env",
 )
 
+// Fail closed if .env points anywhere but the linked development instance
+// (B2 review SP-B2-Q1), and keep no trace: it would hold a live token (Q2).
+const linkedInstance = /instance_id:\s*(\S+)/.exec(
+  readFileSync(path.resolve("powersync/cli.yaml"), "utf8"),
+)?.[1]
+test.use({ trace: "off", screenshot: "off", video: "off" })
+test.beforeAll(() => {
+  if (!env.POWERSYNC_URL) return
+  expect(
+    linkedInstance && env.POWERSYNC_URL.includes(linkedInstance),
+    ".env must point at the PowerSync development instance in powersync/cli.yaml",
+  ).toBe(true)
+})
+
 const base = () => env.SUPABASE_URL!.replace(/\/$/, "")
 const anonHeaders = () => ({ apikey: env.SUPABASE_ANON_KEY! })
 
@@ -232,7 +246,11 @@ test("one account's course is closed to another account and to the anonymous key
     await rest(first, "DELETE", `students?courseId=eq.${courseId}`)
     await rest(first, "DELETE", `courses?id=eq.${courseId}`)
     result.cleanedUp =
-      count((await rest(first, "GET", `courses?id=eq.${courseId}`)).rows) === 0
+      count((await rest(first, "GET", `courses?id=eq.${courseId}`)).rows) ===
+        0 &&
+      count(
+        (await rest(first, "GET", `students?courseId=eq.${courseId}`)).rows,
+      ) === 0
     record("access-check", { checkedAt: now, ...result })
   }
 

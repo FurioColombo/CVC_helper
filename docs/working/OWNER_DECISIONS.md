@@ -73,3 +73,8 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
     clash between two phones edited offline settles on the latest edit
     instead of breaking Equipaggi, and the app says when two phones edited
     offline. Team editing stays 1.0.0 (review SC-B1-1; B4 and B5).
+13. **Production lives where no agent token reaches (taken, B2).** The
+    PowerSync token in `.env` belongs to an account, not to one instance, so
+    the production backend (UG4) is created under a separate PowerSync account
+    and a separate Supabase project whose credentials never enter this
+    repository or any agent tool (review SP-B2-4, `AGENTS.md` §17).

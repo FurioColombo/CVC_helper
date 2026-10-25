@@ -103,3 +103,46 @@ describe("backend schema", () => {
     )
   })
 })
+
+// B2 review SP-B2-2: a course table left out of the access rules, the
+// publication or the cascade would pass the column checks above, and ship
+// readable by every signed-in account, unreplicated or orphaned.
+describe("backend access, publication and cascade", () => {
+  const hardening = readFileSync(
+    resolve(root, "supabase/migrations/20261025000000_hardening.sql"),
+    "utf8",
+  )
+  const arrayIn = (sql: string) => {
+    const match = /foreach child in array array\[([\s\S]*?)\]/.exec(sql)
+    if (!match) throw new Error("No table array")
+    return [...match[1]!.matchAll(/'(\w+)'/g)].map((item) => item[1])
+  }
+  const children = COURSE_TABLES.filter((table) => table !== "courses")
+
+  it("puts row-level security, its policy and the grants on every child table", () => {
+    expect(arrayIn(migration).sort()).toEqual([...children].sort())
+    expect(migration).toContain(
+      "alter table public.courses enable row level security",
+    )
+  })
+
+  it("publishes every course table to PowerSync", () => {
+    const match = /create publication powersync for table([\s\S]*?);/.exec(
+      migration,
+    )
+    const published = [...match![1]!.matchAll(/public\."?(\w+)"?/g)].map(
+      (item) => item[1],
+    )
+    expect(published.sort()).toEqual([...COURSE_TABLES].sort())
+  })
+
+  it("deletes every child table's rows with their course", () => {
+    expect(arrayIn(hardening).sort()).toEqual([...children].sort())
+    expect(hardening).toContain(
+      "references public.courses(id) on delete cascade",
+    )
+    expect(hardening).toContain(
+      "revoke all on all tables in schema public from anon",
+    )
+  })
+})

@@ -35,6 +35,11 @@ SQL Editor → New query: paste the whole of
 the thirteen course tables, lets each signed-in user reach only their own
 courses, and publishes the tables to PowerSync.
 
+Then, in a new query, run the whole of
+`supabase/migrations/20261025000000_hardening.sql` too: it removes the
+anonymous role's table grants and makes a course's rows go with it on the
+server (B2 security review).
+
 ## 3. The replication role for PowerSync
 
 In a new SQL Editor query, run the following with a long random password of
@@ -80,3 +85,9 @@ plus the PowerSync service, set up by the CLI (`powersync docker configure
 place of Supabase sign-in. Whether it fits beside the browser suite in 8 GB
 is untested: WebKit already loses pages under memory pressure here. GitHub's
 Linux runners have Docker, so CI can run such a stack either way.
+
+## Production, later
+
+Production gets its own Supabase project and its own PowerSync account, not
+a second instance beside Development: the CLI token in `.env` is tied to an
+account, and no agent tool may ever reach production (owner decision 13).
