@@ -71,7 +71,7 @@ async function rest(
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   const text = await response.text()
-  let rows: unknown = null
+  let rows: unknown
   try {
     rows = JSON.parse(text)
   } catch {
