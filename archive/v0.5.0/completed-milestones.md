@@ -47,3 +47,27 @@ rows.
 
 **Evidence:** verification, migration and browser evidence, the spike, self,
 domain-prosecutor, data-integrity and sync-chaos reviews.
+
+## B2 — The development backend
+
+**Category:** FOUNDATION
+**Status:** AWAITING_OWNER
+
+The owner's Supabase and PowerSync Cloud development projects (EU) run the
+prepared migration, replication role and sync streams; the agent links and
+deploys the instance with the PowerSync CLI and records its address in the
+ignored `.env`. A readiness check proves the instance, the publication, the
+sync config and Supabase sign-in, and that a token for one synthetic user
+sees only that user's course. Tests that need the backend run against it or a
+local stack in CI, never against production.
+
+**Success predicate:** the readiness check passes against the development
+instance, and the access test proves one user cannot read or write another's
+course.
+
+**Adversarial checklist:** the `postgres` superuser used for replication; a
+secret committed; RLS missing on a table; a table missing from the
+publication; the anonymous role granted access; the instance outside the EU.
+
+**Evidence:** verification, backend readiness, self and security/privacy
+reviews.

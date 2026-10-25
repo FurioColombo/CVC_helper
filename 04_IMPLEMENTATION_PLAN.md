@@ -26,7 +26,8 @@ by `verify:all`, the reviews below and the owner's Android check.
 | 0.4.0 | Released and tagged `v0.4.0` on 2026-10-24. Evidence in `.evidence/UG3/`; known limitations in `CHANGELOG.md`; open findings in `docs/working/BACKLOG.md`. |
 | Preparation | Server tables, access rules, sync streams and the schema-switch spike, prepared on branch `claude/0.5.0-prep`. The owner's account steps: `docs/working/BACKEND_SETUP_0.5.0.md`. |
 | B1 | Complete. A device switches once from 0.4.0's local tables to synced ones, every row identical and queued once, older apps read-only; erase, import, reset and older apps are covered on Chromium and WebKit. Three reviews passed with findings, fixed or handed to B3–B6. See `.evidence/B1/`. |
-| B2 | Next. The owner's development projects exist (2026-10-25) and PowerSync Development (EU) replicates the 13 tables; the access and readiness checks remain. |
+| B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
+| B3 | Next: sign-in by email magic link. |
 
 ## Execution order
 
@@ -59,30 +60,6 @@ to remember on the boat).
   synthetic data only.
 - Every milestone has a success predicate and an adversarial checklist; close
   each with the `milestone-close` skill.
-
-## B2 — The development backend
-
-**Category:** FOUNDATION
-**Status:** IN_PROGRESS
-
-The owner's Supabase and PowerSync Cloud development projects (EU) run the
-prepared migration, replication role and sync streams; the agent links and
-deploys the instance with the PowerSync CLI and records its address in the
-ignored `.env`. A readiness check proves the instance, the publication, the
-sync config and Supabase sign-in, and that a token for one synthetic user
-sees only that user's course. Tests that need the backend run against it or a
-local stack in CI, never against production.
-
-**Success predicate:** the readiness check passes against the development
-instance, and the access test proves one user cannot read or write another's
-course.
-
-**Adversarial checklist:** the `postgres` superuser used for replication; a
-secret committed; RLS missing on a table; a table missing from the
-publication; the anonymous role granted access; the instance outside the EU.
-
-**Evidence:** verification, backend readiness, self and security/privacy
-reviews.
 
 ## B3 — Sign-in and sign-out
 
