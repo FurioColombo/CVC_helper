@@ -1036,7 +1036,7 @@
     {
       "id": "B1",
       "category": "RULE_HEAVY",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B1/verification.json",
@@ -1069,7 +1069,8 @@
         "tests/e2e/reopen-persistence.spec.ts",
         "tests/e2e/f1-navigation-guards.spec.ts",
         "tests/e2e/student-management-gate.spec.ts"
-      ]
+      ],
+      "verifiedSourceDigest": "46b4474e5dfbb12f02caa4982fcf4f090aa39401b5c7a7daed0ac6f725f0c37c"
     },
     {
       "id": "B2",
