@@ -47,9 +47,11 @@ grant select on all tables in schema public to powersync_role;
 alter default privileges in schema public grant select on tables to powersync_role;
 ```
 
-Then Connect (top of the project page) → connection string, **Session
-pooler** or direct: replace the user with `powersync_role` and the password
-with yours, and put the result in `PS_DATABASE_URI`.
+Then put the **direct** connection in `PS_DATABASE_URI`, not a pooler one
+(PowerSync replicates, and Supabase's pooler cannot):
+user `powersync_role`, host `db.<project-ref>.supabase.co`, port 5432, database `postgres`,
+with letters and digits only in the password. Done on 2026-10-25; the
+Development instance (EU) is linked in `powersync/cli.yaml`.
 
 ## 4. PowerSync Cloud project
 
