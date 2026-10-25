@@ -1,0 +1,36 @@
+{
+  "milestone": "B2",
+  "recordedAt": "2026-10-25T22:05:33.143Z",
+  "instance": {
+    "project": "CVC Helper",
+    "name": "Development",
+    "region": "eu",
+    "id": "6ade3fc294ccb018750a012f"
+  },
+  "connection": {
+    "status": "connected",
+    "role": "powersync_role (direct connection; the pooler cannot replicate)",
+    "initialReplicationDone": true,
+    "replicationLagZero": true
+  },
+  "replicatedTables": [
+    "courses",
+    "students",
+    "volunteers",
+    "boats",
+    "faults",
+    "dutyAssignments",
+    "dutySettings",
+    "dutySettingItems",
+    "crews",
+    "crewMembers",
+    "landAssignments",
+    "sessionBoats",
+    "evaluations"
+  ],
+  "tablesUsedForReplication": 13,
+  "validation": "powersync validate: configuration schema, connections and sync config passed; deploy completed 2026-10-25",
+  "clientAuth": "Supabase Auth (new signing keys); both synthetic test accounts sign in",
+  "accessCheck": ".evidence/B2/access-check.json (tests/e2e/b2-backend.spec.ts)",
+  "secrets": "none recorded: credentials stay in the ignored .env"
+}

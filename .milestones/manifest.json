@@ -1075,7 +1075,7 @@
     {
       "id": "B2",
       "category": "FOUNDATION",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify"],
       "requiredEvidence": [
         ".evidence/B2/verification.json",
@@ -1088,7 +1088,12 @@
         ".evidence/B2/self-review.json",
         ".evidence/B2/security-privacy-review.json"
       ],
-      "ownerEvidence": [".evidence/B2/owner-setup.json"]
+      "ownerEvidence": [".evidence/B2/owner-setup.json"],
+      "startedFrom": {
+        "commit": "ba3b860cb18aa4ef8ef72b6aa9d9949d7cc5e71c",
+        "sourceDigest": "46b4474e5dfbb12f02caa4982fcf4f090aa39401b5c7a7daed0ac6f725f0c37c",
+        "ownerPrerequisites": []
+      }
     },
     {
       "id": "B3",

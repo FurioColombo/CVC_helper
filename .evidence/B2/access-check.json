@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-25T22:05:12.961Z",
+  "owner": {
+    "createCourse": 201,
+    "createStudent": 201,
+    "readsOwn": 1
+  },
+  "otherAccount": {
+    "reads": 0,
+    "readsStudents": 0,
+    "updates": 0,
+    "addsStudent": 403,
+    "deletes": 0,
+    "takesOver": 409,
+    "upserts": "refused"
+  },
+  "anonymousRead": 0,
+  "ownerStillReads": 1,
+  "sync": {
+    "ownerReceivesCourse": true,
+    "ownerReceivesStudent": true,
+    "otherReceivesCourse": false,
+    "otherReceivesStudent": false
+  },
+  "cleanedUp": true
+}

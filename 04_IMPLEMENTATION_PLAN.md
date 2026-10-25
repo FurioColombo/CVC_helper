@@ -63,7 +63,7 @@ to remember on the boat).
 ## B2 — The development backend
 
 **Category:** FOUNDATION
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 The owner's Supabase and PowerSync Cloud development projects (EU) run the
 prepared migration, replication role and sync streams; the agent links and
