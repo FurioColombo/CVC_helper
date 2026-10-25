@@ -58,8 +58,11 @@ demonstrably insufficient.
 
 All operational reads and writes target the local PowerSync database. The M0
 browser spike succeeded, so PowerSync local-only is the decided implementation;
-Dexie is no longer an automatic fallback. The app does not call `connect()`
-and contains no sync connector, upload queue, Auth or conflict UI.
+Dexie is no longer an automatic fallback. A device starts in local mode
+(local-only course tables, 0.4.0's schema) and moves once to synced mode
+(§3.1, from 0.5.0): synced course tables whose writes PowerSync queues for
+upload. The app does not call `connect()` yet and has no sync connector, Auth
+or conflict UI; 0.5.0 adds them (`04_IMPLEMENTATION_PLAN.md`).
 
 **Startup integration (owner, 2026-10-14; adopted in D3).** The startup
 integration below came from a bounded investigation of PowerSync
@@ -219,17 +222,33 @@ open the database: PowerSync applies an app's schema when it opens, before any
 record is read, so even a read-only older app drops such a table. From 0.4.0
 the contract keeps an older app from writing.
 
-Three consequences for 0.5.0. Making the course tables synced is not an
-expand-only change. The new version's own first open drops the local-only
-tables its schema no longer declares, before any claim or migration runs, so
-it keeps declaring them (under other view names) until a migration has copied
-their rows, and drops them only in a later release; an older app's local-only
-schema sees none of the synced rows, so that release declares its own minimum
-writer, as a major release does. The record is local to each device: the
-server needs the writing app's version with every upload to enforce the same
-rule. And the guard wraps the database instance, so PowerSync's own writes are
-refused too once the data is read-only, sync-stream subscriptions among them:
-a read-only app that should still download must be allowed those.
+**Synced mode (B1, `src/persistence/syncMode.ts`).** Making the course tables
+synced is not an expand-only change, so the synced schema keeps 0.4.0's
+local-only tables declared under `inactive_local_<table>` views and puts
+synced tables `synced_<table>` behind the app's own view names; the sync
+config delivers the server tables under those names. One transaction switches
+a device: it raises the minimum writer to at least `SYNCED_SINCE` (0.5.0),
+copies every course row into the synced tables (each enters the upload queue),
+empties and compacts the local copy, records the mode in `meta` and advances
+the course generation, so open screens stop and the app reopens. Cut short, it
+rolls back whole. The mode record fails closed: a present but unreadable row,
+or synced rows found without it, mean synced. Every open applies the recorded
+mode before the first read (a per-channel hint only picks the first schema),
+and on a switched device the open's claim never lowers the minimum below
+`SYNCED_SINCE`. An older app opening the database replaces the schema for the
+open instances too: its synced rows wait in `ps_untyped` and the queue stays
+whole, while the guard refuses every write of a synced instance whose
+`courses` view no longer reads the synced table, until a reopen restores it.
+An older app therefore opens a switched device read-only and empty. Apps up
+to 0.3.0 can still write into the emptied local copy; 0.5.0 never shows those
+rows, and its erase and import remove them. The switch needs a prepared,
+disconnected database: PowerSync changes no schema while connected.
+
+The record is local to each device: the server needs the writing app's version
+with every upload to enforce the same rule. The guard wraps the database
+instance, so PowerSync's own writes are refused too once the data is
+read-only, sync-stream subscriptions among them: a read-only app that should
+still download must be allowed those.
 
 ### 3.2 Coherent writes
 
@@ -246,8 +265,12 @@ late write to the wrong record.
 
 ### 3.3 Course files and local reset
 
-The course file has its own format version and the D3 data-version record.
-It contains the active course's schema-whitelisted rows with identifiers,
+The course file has its own format version and the D3 data-version record;
+from a switched device the record carries the data's own minimum (the previous
+minor of its newest writer), not the device's `SYNCED_SINCE` floor, so the
+previous minor version still imports it. In synced mode the erase and the
+import also empty the local copy (§3.1), and their deletions join the upload
+queue. It contains the active course's schema-whitelisted rows with identifiers,
 timestamps and values intact. Migration bookkeeping and the device's local
 course generation stay out of the file. Import validates the entire file,
 the compatibility contract, stored-row integrity, domain invariants and D2's

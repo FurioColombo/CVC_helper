@@ -1,0 +1,12 @@
+{
+  "failure": "Error: cut short",
+  "mode": "local",
+  "identical": true,
+  "queue": 0,
+  "minimumWriter": {
+    "major": 0,
+    "minor": 4,
+    "patch": 0
+  },
+  "hint": "local"
+}

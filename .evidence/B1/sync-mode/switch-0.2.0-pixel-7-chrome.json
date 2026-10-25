@@ -1,0 +1,26 @@
+{
+  "origin": "0.2.0",
+  "originRecord": null,
+  "rows": 47,
+  "switched": "switched",
+  "identical": true,
+  "queuedOnce": true,
+  "queued": 47,
+  "onlyPuts": true,
+  "localAfter": 0,
+  "minimumWriter": {
+    "major": 0,
+    "minor": 5,
+    "patch": 0
+  },
+  "hint": "synced",
+  "again": "already",
+  "queueAgain": 47,
+  "reopenedMode": "synced",
+  "reopenedIdentical": true,
+  "olderAccess": "read-only",
+  "olderSees": 0,
+  "olderWrite": "refused",
+  "afterOlderIdentical": true,
+  "queueAfterOlder": 47
+}

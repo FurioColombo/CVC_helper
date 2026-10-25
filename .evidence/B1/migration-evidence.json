@@ -1,0 +1,231 @@
+{
+  "milestone": "B1",
+  "recordedAt": "2026-10-25T19:08:13.259Z",
+  "commit": "8bd2a323d34eee6668e9adb3a460f48aaf291108",
+  "spec": "tests/e2e/b1-sync-mode.spec.ts",
+  "harness": "src/test/b1SyncModeHarness.ts",
+  "engines": [
+    "pixel-7-chrome",
+    "iphone-13-webkit-core"
+  ],
+  "switches": [
+    {
+      "origin": "0.1.0",
+      "engine": "pixel-7-chrome",
+      "originRecord": null,
+      "rows": 23,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 23,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 23
+    },
+    {
+      "origin": "0.1.0",
+      "engine": "iphone-13-webkit-core",
+      "originRecord": null,
+      "rows": 23,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 23,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 23
+    },
+    {
+      "origin": "0.2.0",
+      "engine": "pixel-7-chrome",
+      "originRecord": null,
+      "rows": 47,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 47,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 47
+    },
+    {
+      "origin": "0.2.0",
+      "engine": "iphone-13-webkit-core",
+      "originRecord": null,
+      "rows": 47,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 47,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 47
+    },
+    {
+      "origin": "0.3.0",
+      "engine": "pixel-7-chrome",
+      "originRecord": null,
+      "rows": 49,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 49,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 49
+    },
+    {
+      "origin": "0.3.0",
+      "engine": "iphone-13-webkit-core",
+      "originRecord": null,
+      "rows": 49,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 49,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 49
+    },
+    {
+      "origin": "0.4.0",
+      "engine": "pixel-7-chrome",
+      "originRecord": {
+        "version": {
+          "major": 0,
+          "minor": 4,
+          "patch": 0
+        },
+        "minimumWriter": {
+          "major": 0,
+          "minor": 3,
+          "patch": 0
+        }
+      },
+      "rows": 49,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 49,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 49
+    },
+    {
+      "origin": "0.4.0",
+      "engine": "iphone-13-webkit-core",
+      "originRecord": {
+        "version": {
+          "major": 0,
+          "minor": 4,
+          "patch": 0
+        },
+        "minimumWriter": {
+          "major": 0,
+          "minor": 3,
+          "patch": 0
+        }
+      },
+      "rows": 49,
+      "identical": true,
+      "queuedOnce": true,
+      "queued": 49,
+      "localAfter": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 5,
+        "patch": 0
+      },
+      "again": "already",
+      "reopenedIdentical": true,
+      "olderAccess": "read-only",
+      "olderWrite": "refused",
+      "afterOlderIdentical": true,
+      "queueAfterOlder": 49
+    }
+  ],
+  "interrupted": [
+    {
+      "engine": "pixel-7-chrome",
+      "failure": "Error: cut short",
+      "mode": "local",
+      "identical": true,
+      "queue": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 4,
+        "patch": 0
+      },
+      "hint": "local"
+    },
+    {
+      "engine": "iphone-13-webkit-core",
+      "failure": "Error: cut short",
+      "mode": "local",
+      "identical": true,
+      "queue": 0,
+      "minimumWriter": {
+        "major": 0,
+        "minor": 4,
+        "patch": 0
+      },
+      "hint": "local"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "identical": true,
+  "mode": "synced",
+  "localRows": 0,
+  "deletes": 47,
+  "puts": 49,
+  "replaced": 47,
+  "rows": 49,
+  "fileMinimumWriter": {
+    "major": 0,
+    "minor": 4,
+    "patch": 0
+  },
+  "olderImport": "accepted",
+  "targetMinimumWriter": {
+    "major": 0,
+    "minor": 5,
+    "patch": 0
+  }
+}

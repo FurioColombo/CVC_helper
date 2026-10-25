@@ -1,0 +1,56 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B1",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B1-1",
+      "title": "Process note: the reviews ran on bde4f7b before the round-1 fixes; no second round was needed because none reported a blocker",
+      "evidence": ".evidence/B1/*-review-round-1.json, all PASS_WITH_FINDINGS with empty blockers",
+      "reproduction": "docs/agents/REVIEW_PROTOCOL.md: from round 2 a reviewer re-checks blockers and fixes; with no blockers the fixes are verified here, by the tests listed below.",
+      "specRef": "docs/agents/REVIEW_PROTOCOL.md"
+    }
+  ],
+  "qolFindings": [],
+  "reviews": [
+    ".evidence/B1/domain-prosecutor-review.json (PASS_WITH_FINDINGS, round 1)",
+    ".evidence/B1/data-integrity-review.json (PASS_WITH_FINDINGS, round 1)",
+    ".evidence/B1/sync-chaos-review.json (PASS_WITH_FINDINGS, round 1)"
+  ],
+  "fixedFindings": [
+    { "ids": ["DP-B1-1", "DI-B1-2", "SC-B1-4"], "fix": "In synced mode the erase and the import also empty inactive_local_<table> (emptyInactiveLocalCopy); limit for pre-contract writers recorded in 03 §3.1", "proof": "f43891b; tests/e2e/b1-sync-mode.spec.ts erase and import cases" },
+    { "ids": ["DP-B1-2"], "fix": "On a switched device the open's claim uses dataVersionAfterSyncSwitch, so a damaged record never lowers the minimum below 0.5.0", "proof": "69819bc; src/persistence/dataVersion.test.ts 'the claim on a device switched to synced tables'" },
+    { "ids": ["DP-B1-3"], "fix": "Recorded as owner decision 10 (an older app opens a switched device empty and read-only); 01 §2's sentence is rewritten for 0.5.0 at UG4", "proof": "docs/working/OWNER_DECISIONS.md entry 10" },
+    { "ids": ["DI-B1-3", "DP-B1-Q4"], "fix": "readSyncMode fails closed: a present mode row, synced rows parked in ps_untyped, or rows behind the synced views mean synced", "proof": "69819bc, 8bd2a32" },
+    { "ids": ["DI-B1-4", "SC-B1-5", "DP-B1-Q2"], "fix": "Exports from a switched device carry fileDataVersionOfSyncedDevice (the data's own minimum), so 0.4.0 still imports them; the importing switched device keeps its floor", "proof": "src/domain/compatibility.test.ts 'fileDataVersionOfSyncedDevice'; b1-sync-mode import case asserts file minimum 0.4.0, 0.4.0 parse accepted, target minimum 0.5.0" },
+    { "ids": ["DI-B1-5", "DP-B1-Q1"], "fix": "A real 0.4.0 starting record (prepared by 0.4.0) and a walk through every area of a switched course", "proof": "b1-sync-mode 'switches a 0.4.0 course' asserts originRecord 0.4.0/0.3.0; 'every area of a switched course opens and reads its data'" },
+    { "ids": ["DP-B1-Q3", "DI-B1-Q1", "SC-B1-Q1"], "fix": "The write guard checks that the courses view reads ps_data__synced_courses, not only that the table exists", "proof": "8bd2a32; b1-sync-mode older-app-beside cases (the empty-device case fails with the check disabled, verified during B1)" },
+    { "ids": ["DP-B1-Q5", "DI-B1-Q2"], "fix": "A switch that finds the device already switched inside its lock returns 'already' without invalidating or compacting", "proof": "69819bc" },
+    { "ids": ["DI-B1-Q3", "SC-B1-Q5 (connect)"], "fix": "The switch refuses while connected; B3 switches after prepareDatabase and before connect()", "proof": "69819bc; 04 B3" },
+    { "ids": ["DI-B1-Q5"], "fix": "Unit test pins SyncedSchema against AppSchema; the builder refuses unmapped column types", "proof": "src/persistence/syncMode.test.ts" },
+    { "ids": ["DI-B1-Q6"], "fix": "Browser test of a full reset in synced mode: database deleted, mode hint cleared", "proof": "b1-sync-mode 'a full reset in synced mode'" },
+    { "ids": ["SC-B1-Q4"], "fix": "The server migration's comment states the parent-first upload order the access rules require", "proof": "supabase/migrations/20261023000000_course_backup.sql (comment only; the applied schema is unchanged)" },
+    { "ids": ["SC-B1-Q7"], "fix": "03 §3 and §3.1 describe synced mode; §3.3 the file record and the local copy", "proof": "03_TECHNICAL_DECISIONS.md" }
+  ],
+  "deferred": [
+    { "ids": ["SC-B1-1"], "to": "B4 (owner decision 12: one writing phone at a time, natural-key ids for placement rows)" },
+    { "ids": ["SC-B1-2", "SC-B1-Q2", "DI-B1-Q4", "SC-B1-Q5 (second account)"], "to": "B3 (ask the account first, other tabs, CourseReplacedError, second account)" },
+    { "ids": ["DI-B1-1", "SC-B1-3", "DP-B1-Q6"], "to": "B6 (extended to import replacements and the queue's pending payloads)" },
+    { "ids": ["SC-B1-Q3"], "to": "B4 (batching the first transaction, latency after days offline)" },
+    { "ids": ["SC-B1-Q5 (restore)"], "to": "B5 (reopen after the download)" },
+    { "ids": ["SC-B1-Q6"], "to": "docs/working/BACKLOG.md (misleading message and lost draft)" }
+  ],
+  "evidenceInspected": [
+    "tests/e2e/b1-sync-mode.spec.ts: 12 cases, pixel-7-chrome and iphone-13-webkit-core",
+    "src/domain/compatibility.test.ts, src/persistence/dataVersion.test.ts, syncMode.test.ts, writeStatements.test.ts, courseArchive.test.ts, migrations.test.ts, browserStorage.test.ts",
+    "tests/e2e/b1-schema-probe.spec.ts (spike, run on request)"
+  ],
+  "notTested": [
+    "Real v0.3.0 and v0.4.0 builds: older apps are modelled by their schemas with the guard at their version",
+    "The desktop SharedWorker path for the switch (desktop-chrome-storage project)",
+    "Physical devices: B1 has no visible change and no owner check; B3 and B5 carry the phone checks",
+    "Upload, download and server behaviour: B2 onwards"
+  ]
+}

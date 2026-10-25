@@ -170,6 +170,10 @@ Each passed only on a retry and is a defect to fix (03 §6).
   next phone check: reproduce it, then consider giving the test channel its
   own origin, which would also end the shared origin-wide persistence
   permission (03 §3.3).
+- B1 SC-B1-Q6: when an older app reopens beside an open synced tab, the
+  refused save says the course was "sostituito o eliminato" and the typed
+  student is lost on reopen; data is intact, the message and the draft are
+  not. Say an older version opened the data, and keep the draft.
 - UG3 RH-Q1: after an import and Riapri l’app, phone Back walks through the
   replaced course's earlier screens; clear the shell history on reopen.
 - T1 CQ-6: each e2e seeding fixture re-reads the course that

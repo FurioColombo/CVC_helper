@@ -1,0 +1,141 @@
+{
+  "milestone": "B1",
+  "recordedAt": "2026-10-25T19:08:13.259Z",
+  "commit": "8bd2a323d34eee6668e9adb3a460f48aaf291108",
+  "spec": "tests/e2e/b1-sync-mode.spec.ts",
+  "engines": [
+    "pixel-7-chrome",
+    "iphone-13-webkit-core"
+  ],
+  "result": "24 passed, 0 flaky (12 cases x 2 engines, --retries=0)",
+  "cases": {
+    "appJourney": [
+      {
+        "engine": "pixel-7-chrome",
+        "queuedAtSwitch": 49,
+        "queue": 50,
+        "synced": 1,
+        "local": 0
+      },
+      {
+        "engine": "iphone-13-webkit-core",
+        "queuedAtSwitch": 49,
+        "queue": 50,
+        "synced": 1,
+        "local": 0
+      }
+    ],
+    "appErase": [
+      {
+        "engine": "pixel-7-chrome",
+        "queuedAtSwitch": 49,
+        "deletes": 49,
+        "newCourse": 2,
+        "syncedCourses": 1,
+        "syncedStudents": 0,
+        "localRows": 0,
+        "mode": 1
+      },
+      {
+        "engine": "iphone-13-webkit-core",
+        "queuedAtSwitch": 49,
+        "deletes": 49,
+        "newCourse": 2,
+        "syncedCourses": 1,
+        "syncedStudents": 0,
+        "localRows": 0,
+        "mode": 1
+      }
+    ],
+    "syncedImport": [
+      {
+        "engine": "pixel-7-chrome",
+        "identical": true,
+        "mode": "synced",
+        "localRows": 0,
+        "deletes": 47,
+        "puts": 49,
+        "replaced": 47,
+        "rows": 49,
+        "fileMinimumWriter": {
+          "major": 0,
+          "minor": 4,
+          "patch": 0
+        },
+        "olderImport": "accepted",
+        "targetMinimumWriter": {
+          "major": 0,
+          "minor": 5,
+          "patch": 0
+        }
+      },
+      {
+        "engine": "iphone-13-webkit-core",
+        "identical": true,
+        "mode": "synced",
+        "localRows": 0,
+        "deletes": 47,
+        "puts": 49,
+        "replaced": 47,
+        "rows": 49,
+        "fileMinimumWriter": {
+          "major": 0,
+          "minor": 4,
+          "patch": 0
+        },
+        "olderImport": "accepted",
+        "targetMinimumWriter": {
+          "major": 0,
+          "minor": 5,
+          "patch": 0
+        }
+      }
+    ],
+    "olderBesideCourse": [
+      {
+        "engine": "pixel-7-chrome",
+        "save": "CourseReplacedError",
+        "stranded": 0,
+        "restored": true,
+        "rows": 49
+      },
+      {
+        "engine": "iphone-13-webkit-core",
+        "save": "CourseReplacedError",
+        "stranded": 0,
+        "restored": true,
+        "rows": 49
+      }
+    ],
+    "olderBesideEmpty": [
+      {
+        "engine": "pixel-7-chrome",
+        "save": "CourseReplacedError",
+        "stranded": 0,
+        "restored": true,
+        "rows": 0
+      },
+      {
+        "engine": "iphone-13-webkit-core",
+        "save": "CourseReplacedError",
+        "stranded": 0,
+        "restored": true,
+        "rows": 0
+      }
+    ],
+    "fullReset": [
+      {
+        "engine": "pixel-7-chrome",
+        "database": false,
+        "hint": null
+      },
+      {
+        "engine": "iphone-13-webkit-core",
+        "database": false,
+        "hint": null
+      }
+    ]
+  },
+  "screenWalk": "every area of a switched course (Allievi, Barche, Comandate, Equipaggi, Valutazioni, Volontari, Avarie) opened without a read failure on both engines",
+  "spike": "tests/e2e/b1-schema-probe.spec.ts (B1_PROBE=1), Chromium and WebKit, 2026-10-23"
+}

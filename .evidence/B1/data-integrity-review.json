@@ -1,0 +1,116 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B1",
+  "commit": "bde4f7beb9089b1caa1d451e3b43b4f5e08184ac",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-B1-1",
+      "title": "In synced mode, the erase and the import leave the removed course's personal data readable on the device, in the upload queue",
+      "evidence": "Throwaway spec (Pixel 7 Chromium). Synced mode: the 0.3.0 fixture is switched, 50 students carrying a marker are added with createStudents, then eraseAllCourseData runs. Marker hits in the IndexedDB blocks go from 208 to 100 after the erase, and 50 ps_crud rows still contain the marker (PUT payloads with name, phone and note). The same flow in local mode goes from 108 to 0. Import (importCourseArchive of an earlier export): synced mode goes from 208 to 100 with 50 ps_crud rows still holding the marker; local mode goes from 108 to 0, which is the property tests/e2e/d4-course-files.spec.ts:486 asserts for UG3 SP-UG3-1. tests/e2e/b1-sync-mode.spec.ts:214-218 itself asserts that the erased course's PUT stays queued (newCourse: 2). The erased or replaced rows are uploaded as PUT before their DELETE, so an offline erase before the first upload still sends the course to the server.",
+      "reproduction": "Seed and switch the app database (src/test/b1SyncModeHarness.ts seedAndSwitchAppDatabase), open db, run getActiveCourse and createStudents(50 marker rows), count the marker in IndexedDB 'blocks', then run eraseAllCourseData (or importCourseArchive of an export taken before the students were added) and count again. Expected 0 hits, as in local mode. Observed 100 hits.",
+      "specRef": "01_PRODUCT_SPEC.md (Settings: the erase removes 'everything recorded in it from the device'); 03_TECHNICAL_DECISIONS.md §3.3 (import compaction, SP-UG3-1); 04_IMPLEMENTATION_PLAN.md B6 success predicate covers the erase but not the import. Not a blocker at this commit because no production path calls switchToSyncedTables (only the test harness does). It must be owned before B3 enables the switch: extend B6 to the import and to queued payloads, and record it in docs/working/BACKLOG.md. Overlaps DP-B1-Q6."
+    },
+    {
+      "id": "DI-B1-2",
+      "title": "A pre-contract (0.3.0) app opening a switched device writes rows that 0.5.0 never shows, never uploads and never erases, and that no check reports",
+      "evidence": "Throwaway spec: the app database is switched, then opened with src/test/v030Schema.ts. That app sees 0 courses and is writable; it inserts a course and a student and both inserts succeed. 0.5.0 then opens and shows the 7 synced students, while the inactive_local_* tables hold 2 rows. After 'Elimina il corso' (eraseAllCourseData), the synced views hold 0 students but the inactive local tables still hold 2 rows, and the marker surname remains readable in storage (1 hit). eraseAllCourseData (src/persistence/courses.ts:82-111) deletes only the app's view names. The erase-completeness test (src/persistence/courses.test.ts:190-198) compares against AppSchema only, so SyncedSchema's inactive_local_* tables fall outside it. validateStoredRows and validateCourseState read through the view names, and so does export. Under 0.4.0 the writes of an older pre-contract app were at least visible and erasable. B1 turns them into silent loss plus undeletable data, and 03 §3.1 does not record this.",
+      "reproduction": "seedAndSwitchAppDatabase; open createDatabase(appChannelConfig.databaseFilename, v030Schema) and INSERT a course and a student; close; import /src/persistence/db.ts and run getActiveCourse; count the inactive_local_<table> rows (2); run eraseAllCourseData; count again (still 2).",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 (apps up to 0.3.0 cannot be kept from writing; the documented loss covers stripped columns only); 01_PRODUCT_SPEC.md erase rule. Suggested fix: in synced mode the erase and the import also empty inactive_local_<table>, and an open in synced mode reports or clears rows found there. Overlaps DP-B1-1."
+    },
+    {
+      "id": "DI-B1-3",
+      "title": "A damaged sync-mode record silently reopens a switched device as an empty, writable local device; a later switch then leaves two active courses and the app no longer opens",
+      "evidence": "Throwaway spec, run with the 'local:sync-mode' value set to NULL and to 2 on a switched 0.3.0 device. prepareDatabase returns 'write' and readSyncMode returns 'local'. The courses view is empty, 49 rows sit in ps_untyped and 49 uploads are queued. An INSERT into courses succeeds, as 'Crea il corso' would. The next switchToSyncedTables returns 'switched'. Every following open then throws CourseReplacedError (src/persistence/courseSession.ts:37, more than one active course), and the courses are [course-new, course-v030-d2]. readSyncMode (src/persistence/syncMode.ts:133-139) reads every value other than 1 as local. Nothing compares that answer with the synced rows in ps_untyped or the synced_* entries in ps_crud, and the switch does not refuse when the synced tables already hold a course. D3 makes a damaged version record fail closed; this record fails open. No shipped path writes another value (0.3.0's erase keeps meta), so this needs external damage.",
+      "reproduction": "Switch a seeded database, reopen it, UPDATE meta SET value = NULL WHERE id = 'local:sync-mode', reopen: the course is gone from the views and the device is writable. Insert a course, reopen, switch again, reopen: prepareDatabase rejects with CourseReplacedError.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 ('keeping what can be read of a damaged record'); 04_IMPLEMENTATION_PLAN.md B1 ('the switch ... is idempotent'). Overlaps DP-B1-Q4; this report reproduces the consequence."
+    },
+    {
+      "id": "DI-B1-4",
+      "title": "Course files carry the switch's minimum writer: 0.4.0 refuses a file exported after the switch, and importing that file raises a local 0.5.0 device's minimum writer to 0.5.0",
+      "evidence": "Throwaway import spec. An export from a switched device records dataVersion {0.5.0, 0.5.0}, and parseCourseArchive(file, 0.4.0) fails with 'incompatible-version'. The same course exported in local mode records {0.5.0, 0.4.0} and is accepted by 0.4.0. mergeImportedVersion (src/persistence/courseArchive.ts:86-99) takes the newer minimum, so a never-switched local device that imports such a file locks 0.4.0 out of tables 0.4.0 reads and writes. SYNCED_SINCE exists because older apps cannot see synced tables (src/domain/compatibility.ts:114-140), and that reason does not apply to a file. Under 03 §3.1 the record is local to each device.",
+      "reproduction": "seedAndSwitchAppDatabase, exportCourseArchive, parseCourseArchive(structuredClone(archive), {major:0,minor:4,patch:0}) throws incompatible-version. Without the switch the same call accepts the file.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.1 and §3.3; 01_PRODUCT_SPEC.md course files. Decide, then document it in 03 §3.3 and the CHANGELOG, or export the shape minimum (dataVersionAfterWrite). Overlaps DP-B1-Q2."
+    },
+    {
+      "id": "DI-B1-5",
+      "title": "The success predicate's 'through every screen' and its '0.4.0 app' are only partly proved",
+      "evidence": "tests/e2e/b1-sync-mode.spec.ts proves byte-identical SELECT * output for all 13 course tables through the views (passes on pixel-7-chrome and iphone-13-webkit-core, re-run 10/10 each). The one screen journey opens Home and Allievi only. Equipaggi, Comandate, Valutazioni, Avarie and Volontari are never opened on a switched course, and the full week and the upgraded weeks do not run in synced mode. The '0.4.0 course' case is the 0.3.0 fixture opened once by 0.5.0 in local mode (src/test/b1SyncModeHarness.ts:69), and the '0.4.0 app' is today's AppSchema with guardWrites at 0.4.0 (b1SyncModeHarness.ts:96-103), not the v0.4.0 build.",
+      "reproduction": "Read tests/e2e/b1-sync-mode.spec.ts:96-150 and src/test/b1SyncModeHarness.ts:66-147.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B1 success predicate. Either add a screen walk on a switched fixture or record the limitation in the evidence."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B1-Q1",
+      "title": "The write guard checks that the synced table exists, not that the app's views point at it",
+      "evidence": "src/persistence/openedSchema.ts:26-33 looks only for ps_data__synced_courses. In the SwitchingSchema state (src/persistence/syncMode.ts:208) the synced tables exist while the app's views read the local tables. A synced instance would pass the guard and write into the inactive copy if another instance applied SwitchingSchema after a committed switch. The reviewer's concurrent run did not reach that state: the second switch was refused by its course session first.",
+      "reproduction": "Not reproduced; reasoned from code. Checking the view definition in sqlite_master would close it.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B1 (the write guard). Overlaps DP-B1-Q3."
+    },
+    {
+      "id": "DI-B1-Q2",
+      "title": "Under concurrency the switch reports CourseReplacedError rather than 'already', and its in-transaction early return reports 'switched'",
+      "evidence": "Two instances switching at once give [rejected CourseReplacedError, 'switched']; the end state is correct (49 rows identical, 49 queued, all unique, local copy 0). When the re-check at src/persistence/syncMode.ts:211 finds the device already synced, the function falls through to invalidate, compact and return 'switched' (lines 232-234).",
+      "reproduction": "Promise.allSettled([switchToSyncedTables(a), switchToSyncedTables(b)]) on two prepared instances of one file.",
+      "specRef": "B3 must treat CourseReplacedError from the switch as 'switched elsewhere, reopen'. Overlaps DP-B1-Q5."
+    },
+    {
+      "id": "DI-B1-Q3",
+      "title": "The switch neither requires a prepared database nor works while connected",
+      "evidence": "With an unbound session the in-lock session check is skipped (src/persistence/courseSession.ts:79-90). Without prepareDatabase no repair runs, so un-repaired rows would be queued and then re-queued by the next open's repairs. PowerSync refuses updateSchema while connected (node_modules/@powersync/shared-internals/lib/client/BasePowerSyncDatabase.js:253-256), and both applySchema and applyRecordedSyncMode call it.",
+      "reproduction": "Not reproduced; read from code.",
+      "specRef": "For B3: switch after prepareDatabase and before connect()."
+    },
+    {
+      "id": "DI-B1-Q4",
+      "title": "The switch does not tell other tabs, unlike the import",
+      "evidence": "The import's UI calls announceCourseReplacement (src/features/settings/CourseFiles.tsx:279). switchToSyncedTables only advances the generation, so another 0.5.0 tab finds out at its next save, which fails with CourseReplacedError.",
+      "reproduction": "Read from code.",
+      "specRef": "For B3's caller."
+    },
+    {
+      "id": "DI-B1-Q5",
+      "title": "Two silent footguns in the synced schema builder",
+      "evidence": "src/persistence/writeStatements.test.ts:30 exempts all of syncMode.ts from the stamp check, and columnsOf (src/persistence/syncMode.ts:58-64) maps every non-integer column type to text. A later real column, or a new course write in that file, would pass unnoticed. No unit test pins SyncedSchema against AppSchema.",
+      "reproduction": "Read from code.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 (record metadata, structural write test)."
+    },
+    {
+      "id": "DI-B1-Q6",
+      "title": "No browser test covers a full reset in synced mode",
+      "evidence": "Only the unit test that the hint key is cleared exists (src/persistence/browserStorage.test.ts:240-298). The code path deletes the IndexedDB database, so the queue and the synced rows go with it, and a hint left behind is corrected at the next open.",
+      "reproduction": "Read from code.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B1 adversarial checklist ('an import or full reset in synced mode')."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md B1 to B6; 03_TECHNICAL_DECISIONS.md §3, §3.1, §3.2, §3.3; 01_PRODUCT_SPEC.md (Settings: erase, course files); archive/v0.4.0/PLAN_0.5.0_DRAFT.md spike section",
+    "git diff 37ee6b4..bde4f7b: src/persistence/syncMode.ts, openedSchema.ts, writeGuard.ts, migrations.ts, db.ts, schema.ts, browserStorage.ts, src/domain/compatibility.ts and its tests, src/appChannel.ts, playwright.config.ts, scripts/check-repository.mjs, manifest",
+    "src/persistence/courseSession.ts, dataVersion.ts, courseArchive.ts, courseArchiveFormat.ts, courses.ts and courses.test.ts, duties.ts, dutyItems.ts, localDataOperations.ts; src/test/b1SyncModeHarness.ts, b1SchemaProbe.ts, d1MigrationHarness.ts, v030Schema.ts; fixtures 0.1.0, 0.2.0, 0.3.0 (row counts and duty lists); powersync/sync-config.yaml; v0.3.0:src/persistence/courses.ts (its erase keeps meta); PowerSync updateSchema and init source",
+    "Ran tests/e2e/b1-sync-mode.spec.ts --project=pixel-7-chrome --workers=1: 10 passed",
+    "Ran tests/e2e/b1-sync-mode.spec.ts --project=iphone-13-webkit-core --workers=1: 10 passed (5.7 min)",
+    "Ran vitest on src/domain/compatibility.test.ts, src/persistence/writeStatements.test.ts, courseArchive.test.ts and courses.test.ts: 55 passed",
+    "Throwaway Playwright specs (Pixel 7 Chromium, removed afterwards), 11 cases: erase trace synced/local, import trace and file version synced/local, 0.3.0 writer after the switch, 0.4.0 instance open during the switch, a retry after an interrupted switch, two instances switching at once, damaged mode record (NULL and 2), duty settings save in synced mode",
+    ".evidence/B1/domain-prosecutor-review-round-1.json (titles only, for cross-reference)"
+  ],
+  "anglesTried": {
+    "seed": 484226589,
+    "lenses": [
+      "Replaying an operation twice: idempotent or visibly refused (a second switch returns 'already' with the queue unchanged; a switch retried after a failure at DELETE FROM \"crews\" switches with 49 rows identical and 49 queued once; two instances at once: one switches, the other is refused, end state whole; reopening never re-queues)",
+      "Timestamps, versions and tombstones (the copy keeps createdAt/updatedAt verbatim; the minimum writer is raised in the same transaction before the copy and never lowered; an import on a switched device keeps minimumWriter 0.5.0; the generation advances once; a duty save in synced mode keeps createdAt, moves updatedAt forward and queues PUT dutySettings plus DELETE/PUT dutySettingItems, with the rows matching the lists; the local deletes produce no tombstones; the erase produces one DELETE per row)"
+    ],
+    "wildcard": "Plant the smallest damage the switch allows, one unreadable 'local:sync-mode' value or one 0.3.0 write into the emptied local copy, and follow it through open, erase, import and a second switch (DI-B1-2, DI-B1-3)"
+  },
+  "notTested": [
+    "Real v0.3.0 and v0.4.0 builds: simulated with the frozen v030Schema and with today's AppSchema guarded at 0.4.0",
+    "The desktop SharedWorker path: b1-sync-mode runs on the pixel-7-chrome and iphone-13-webkit-core projects only; the throwaway specs ran on Chromium only",
+    "A tab killed between the switch's commit and its finally: reasoned only; the next open corrects the schema from meta through ps_untyped, as the reopen-with-another-hint case shows",
+    "The guard race in DI-B1-Q1: not reached deterministically",
+    "Physical devices and storage eviction or quota: belong to the owner and the later gates",
+    "Upload, restore and server-side behaviour (B2 to B6): no backend in B1"
+  ]
+}

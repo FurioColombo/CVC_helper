@@ -134,8 +134,12 @@ reviews.
 **Category:** FEATURE
 **Status:** PENDING
 
-Impostazioni offers sign-in by email; signed in, it shows the account and the
-backup state, and the app switches to synced mode (B1) and connects. Sign-out
+Impostazioni offers sign-in by email magic link (owner, 2026-10-25); signed
+in, it shows the account and the backup state, and the app switches to synced
+mode (B1) and connects: after `prepareDatabase`, before `connect()`, asking
+the account first when it already holds a course (B1 review SC-B1-2), telling
+other tabs, and treating `CourseReplacedError` from the switch as "switched
+elsewhere" (SC-B1-Q2). Sign-out
 disconnects and keeps the course on the device; clearing it is a separate,
 confirmed action. Signed out, everything works as in 0.4.0.
 
@@ -144,8 +148,9 @@ the whole course, sign-out keeps it usable offline, and nothing connects or
 leaves the device before sign-in.
 
 **Adversarial checklist:** sign-in offline or interrupted; a second account
-on the same device; an expired session; the magic link opened in another
-browser; personal data in URLs or logs.
+on the same device, whose queue must never upload the first account's rows
+(SC-B1-Q5); an expired session; the magic link opened in another browser;
+personal data in URLs or logs.
 
 **Evidence:** verification, browser evidence, the owner's Android check, self,
 security/privacy and field-UX reviews.
@@ -159,6 +164,12 @@ The upload handler writes each queued change through the owner's session to
 the table without its `synced_` prefix and sends the app version; the server
 refuses writers below the minimum (03 §3.1). A transient failure retries; a
 refused change is kept and reported in Impostazioni, never skipped silently.
+One phone writes at a time (owner, 2026-10-25): placement rows (crew members,
+land, session boats, duties, evaluations) get ids from their natural keys, so
+two phones edited offline converge on the latest edit instead of duplicates
+that break Equipaggi, and the app says when that happened (SC-B1-1). Uploads
+keep the queue's parent-first order and batch the switch's first transaction;
+save latency after days offline is measured on the phone (SC-B1-Q3, Q4).
 
 **Success predicate:** every local change reaches the server exactly once
 across reloads, offline periods and app closes, and a refused change is
@@ -176,9 +187,9 @@ data-integrity and security/privacy reviews.
 **Category:** FEATURE
 **Status:** PENDING
 
-Signing in on a device without a course downloads it and opens it; on a
-device holding another course the app asks first, as import does, and never
-merges.
+Signing in on a device without a course downloads it and opens it, then
+reopens so the session binds the restored course (SC-B1-Q5); on a device
+holding another course the app asks first, as import does, and never merges.
 
 **Success predicate:** a course restored on an empty device equals the
 original row for row, and a device with another course changes nothing until
@@ -200,8 +211,10 @@ Erasing the course and the full reset also delete the server copy when
 signed in; offline, the deletion completes on reconnect. Impostazioni states
 what the provider's backups keep and for how long (owner decision).
 
-**Success predicate:** after an erase nothing of the course remains readable
-on the server or the device, including after an offline erase and reconnect.
+**Success predicate:** after an erase or an import replacement nothing of the
+removed course remains readable on the server or the device, the upload
+queue's pending payloads included (B1 reviews DI-B1-1, SC-B1-3), also after
+an offline erase and reconnect.
 
 **Adversarial checklist:** an erase offline and never reconnected; an erase
 racing a restore on another device; partial deletion leaving orphan rows.
