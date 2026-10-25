@@ -3,6 +3,7 @@ import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 import {
   compareVersions,
   dataAccess,
+  dataVersionAfterSyncSwitch,
   dataVersionAfterWrite,
   decodeVersion,
   encodeVersion,
@@ -63,12 +64,28 @@ export async function readDataVersion(
   }
 }
 
+/**
+ * What `app` writing the data records. On a device switched to synced tables
+ * the minimum writer never drops below the switch's floor, even from a
+ * damaged record (B1 review DP-B1-2).
+ */
+function nextDataVersion(
+  app: Version,
+  stored: DataVersion | null,
+  synced: boolean,
+) {
+  return synced
+    ? dataVersionAfterSyncSwitch(app, stored)
+    : dataVersionAfterWrite(app, stored)
+}
+
 /** Whether the record does not yet say what `app` writing the data means. */
 export function dataVersionNeedsRecord(
   app: Version,
   stored: DataVersion | null,
+  synced = false,
 ) {
-  const next = dataVersionAfterWrite(app, stored)
+  const next = nextDataVersion(app, stored, synced)
   return (
     !stored ||
     encodeVersion(stored.version) !== encodeVersion(next.version) ||
@@ -86,11 +103,12 @@ export function dataVersionNeedsRecord(
 export async function claimDataVersion(
   transaction: Pick<Transaction, "execute" | "getAll">,
   app: Version,
+  synced = false,
 ): Promise<DataAccess> {
   const stored = await readDataVersion(transaction)
   if (dataAccess(app, stored) === "read-only") return "read-only"
-  if (!dataVersionNeedsRecord(app, stored)) return "write"
-  await writeDataVersion(transaction, dataVersionAfterWrite(app, stored))
+  if (!dataVersionNeedsRecord(app, stored, synced)) return "write"
+  await writeDataVersion(transaction, nextDataVersion(app, stored, synced))
   return "write"
 }
 

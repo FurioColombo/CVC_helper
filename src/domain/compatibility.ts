@@ -138,3 +138,25 @@ export function dataVersionAfterSyncSwitch(
     minimumWriter: newer(after.minimumWriter, SYNCED_SINCE),
   }
 }
+
+/**
+ * The record a course file carries when it comes from a device switched to
+ * synced tables. {@link SYNCED_SINCE} is a fact about that device's storage,
+ * not about the rows, which any app of the previous minor version reads and
+ * writes; a file therefore carries the data's own minimum, the previous minor
+ * of its newest writer (B1 reviews DI-B1-4, SC-B1-5, DP-B1-Q2). A major
+ * release, which declares its own minimum, keeps the stored one.
+ */
+export function fileDataVersionOfSyncedDevice(
+  stored: DataVersion,
+): DataVersion {
+  if (stored.version.minor === 0) return stored
+  const own = minimumWriterOf(stored.version)
+  return {
+    version: stored.version,
+    minimumWriter:
+      compareVersions(own, stored.minimumWriter) < 0
+        ? own
+        : stored.minimumWriter,
+  }
+}

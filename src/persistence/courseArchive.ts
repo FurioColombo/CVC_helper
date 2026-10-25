@@ -1,7 +1,11 @@
 import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
 import { APP_VERSION } from "@/appVersion"
-import { dataVersionAfterWrite, newer } from "@/domain/compatibility"
+import {
+  dataVersionAfterWrite,
+  fileDataVersionOfSyncedDevice,
+  newer,
+} from "@/domain/compatibility"
 import {
   createCourseArchive,
   parseCourseArchive,
@@ -21,7 +25,7 @@ import {
 } from "@/persistence/writeGuard"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
-import { emptyInactiveLocalCopy } from "@/persistence/syncMode"
+import { emptyInactiveLocalCopy, readSyncMode } from "@/persistence/syncMode"
 
 // Explicit columns keep the metadata write harness useful. The archive codec
 // accepts exactly the schema's columns; these bind their original values.
@@ -76,7 +80,11 @@ export async function exportCourseArchive(
     const version = await readDataVersion(transaction)
     if (!version)
       throw new Error("Versione dei dati non disponibile. Riapri l’app.")
-    return createCourseArchive(tables, version)
+    const synced = (await readSyncMode(transaction)) === "synced"
+    return createCourseArchive(
+      tables,
+      synced ? fileDataVersionOfSyncedDevice(version) : version,
+    )
   })
 }
 

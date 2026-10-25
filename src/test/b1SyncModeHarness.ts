@@ -217,10 +217,22 @@ export async function runSyncedImport() {
   await seed("0.3.0", source)
   await seed("0.2.0", target)
 
+  // The file comes from a switched device too (B1 reviews DI-B1-4, SC-B1-5).
   let database = await openApp(source, hintKey)
+  await switchToSyncedTables(database, hintKey)
+  await database.close()
+  database = await openApp(source, hintKey)
   const archive = await exportCourseArchive(database)
   const expected = await readTables(database)
   await database.close()
+  const { parseCourseArchive } =
+    await import("@/persistence/courseArchiveFormat")
+  let olderImport = "accepted"
+  try {
+    parseCourseArchive(structuredClone(archive), parseVersion("0.4.0"))
+  } catch (error) {
+    olderImport = String(error)
+  }
 
   database = await openApp(target, hintKey)
   await switchToSyncedTables(database, hintKey)
@@ -242,6 +254,9 @@ export async function runSyncedImport() {
     puts: queue.filter((entry) => entry.op === "PUT").length,
     replaced,
     rows: count(expected),
+    fileMinimumWriter: archive.dataVersion.minimumWriter,
+    olderImport,
+    targetMinimumWriter: (await readDataVersion(database))?.minimumWriter,
   }
   await database.close()
   return result

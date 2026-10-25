@@ -60,3 +60,16 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
    0.5.0 from now on and CVC Helper Test's builds move to the 0.5.x line. Your
    regular app stays on 0.4.0: `main` deploys only released versions. The
    working documents now fold at UG4 rather than at "0.5.0".
+10. **An older app sees an empty device after the switch (taken, B1).** The
+    switch empties 0.4.0's local copy instead of keeping it, so a 0.4.0 app
+    on a switched phone opens read-only with nothing to consult and asks for
+    the update. Kept, the copy would hold students and notes deleted later,
+    out of every 0.5.0 screen. 01 §2's "everything can be consulted" is
+    rewritten for 0.5.0 at UG4 (review DP-B1-3).
+11. **Sign-in by email magic link (yours, 2026-10-25).** No password to
+    remember on the boat; B3 builds it.
+12. **One writing phone at a time (yours, 2026-10-25).** In 0.5.0 one phone
+    writes at a time; placement rows get ids that cannot duplicate, so a
+    clash between two phones edited offline settles on the latest edit
+    instead of breaking Equipaggi, and the app says when two phones edited
+    offline. Team editing stays 1.0.0 (review SC-B1-1; B4 and B5).

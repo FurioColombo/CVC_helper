@@ -129,13 +129,31 @@ function setSyncModeHint(key: string, mode: SyncMode, storage = hintStorage()) {
 
 type Reader = Pick<PowerSyncDatabase, "getAll">
 
-/** The mode the data records; `meta` is declared in both schemas. */
+/**
+ * The mode the data records; `meta` is declared in both schemas. It fails
+ * closed, as the version record does (B1 reviews DI-B1-3, DP-B1-Q4): only the
+ * switch writes the row, so a row that is present but unreadable still means
+ * synced, and so do synced rows found without it, parked by an older schema
+ * (`ps_untyped`) or behind the synced views.
+ */
 export async function readSyncMode(context: Reader): Promise<SyncMode> {
   const rows = await context.getAll<{ value: number | null }>(
     "SELECT value FROM meta WHERE id = ?",
     [SYNC_MODE_ID],
   )
-  return rows[0]?.value === SYNCED ? "synced" : "local"
+  if (rows.length > 0) return "synced"
+  const parked = await context.getAll(
+    "SELECT 1 FROM ps_untyped WHERE substr(type, 1, 7) = 'synced_' LIMIT 1",
+  )
+  if (parked.length > 0) return "synced"
+  const tables = await context.getAll(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ps_data__synced_courses'",
+  )
+  if (tables.length === 0) return "local"
+  const synced = await context.getAll(
+    "SELECT 1 FROM ps_data__synced_courses LIMIT 1",
+  )
+  return synced.length > 0 ? "synced" : "local"
 }
 
 const applied = new WeakMap<PowerSyncDatabase, Schema>()
@@ -201,14 +219,23 @@ export async function switchToSyncedTables(
   hintKey: string,
   app: Version = APP_VERSION,
 ): Promise<"switched" | "already"> {
+  // PowerSync refuses a schema change while connected (B1 reviews DI-B1-Q3,
+  // SC-B1-Q5): B3 switches after prepareDatabase and before connect().
+  if (database.connected)
+    throw new Error("Disconnect before switching to synced tables")
   if ((await readSyncMode(database)) === "synced") {
     await applyRecordedSyncMode(database, hintKey)
     return "already"
   }
   await applySchema(database, SwitchingSchema)
+  let already = false
   try {
     await database.writeTransaction(async (transaction) => {
-      if ((await readSyncMode(transaction)) === "synced") return
+      // Another tab switched between the check above and this lock.
+      if ((await readSyncMode(transaction)) === "synced") {
+        already = true
+        return
+      }
       const stored = await readDataVersion(transaction)
       await writeDataVersion(
         transaction,
@@ -229,6 +256,7 @@ export async function switchToSyncedTables(
     // Whatever happened, the schema follows what the data records.
     await applyRecordedSyncMode(database, hintKey)
   }
+  if (already) return "already"
   invalidateCourseSession(database)
   await compactCourseDatabase(database).catch(() => {})
   return "switched"

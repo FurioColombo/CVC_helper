@@ -118,3 +118,33 @@ describe("the data's version in meta", () => {
     expect(await readDataVersion(context as never)).toBeNull()
   })
 })
+
+// B1 review DP-B1-2: on a device switched to synced tables, a damaged record
+// whose minimum is derived or unreadable is claimed back at the switch's
+// floor, never at the previous minor version.
+describe("the claim on a device switched to synced tables", () => {
+  it.each([
+    ["only a newest writer 0.5.0", encoded("0.5.0"), null],
+    ["only a newest writer 0.5.4", encoded("0.5.4"), null],
+    ["an unreadable minimum", encoded("0.5.0"), -5],
+  ] as const)("keeps the floor with %s", async (_label, version, minimum) => {
+    const { context, set } = metaDatabase()
+    set("data:version", version)
+    if (minimum !== null) set("data:minimumWriter", minimum)
+
+    await expect(
+      claimDataVersion(context as never, v("0.5.0"), true),
+    ).resolves.toBe("write")
+    const stored = await readDataVersion(context as never)
+    expect(stored?.minimumWriter).toEqual(v("0.5.0"))
+  })
+
+  it("still records the previous minor in local mode", async () => {
+    const { context, set } = metaDatabase()
+    set("data:version", encoded("0.5.0"))
+    await claimDataVersion(context as never, v("0.5.0"))
+    expect((await readDataVersion(context as never))?.minimumWriter).toEqual(
+      v("0.4.0"),
+    )
+  })
+})

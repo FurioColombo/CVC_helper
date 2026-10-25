@@ -112,7 +112,8 @@ export function prepareDatabase(
   if (!ready) {
     ready = (async () => {
       await database.init()
-      await applyRecordedSyncMode(database, syncModeKey)
+      const synced =
+        (await applyRecordedSyncMode(database, syncModeKey)) === "synced"
       await bindCourseSession(database)
       const stored = await readDataVersion(database)
       if (dataAccess(app, stored) === "read-only") {
@@ -120,9 +121,9 @@ export function prepareDatabase(
         return "read-only"
       }
       try {
-        if (dataVersionNeedsRecord(app, stored)) {
+        if (dataVersionNeedsRecord(app, stored, synced)) {
           const claimed = await database.writeTransaction((transaction) =>
-            claimDataVersion(transaction, app),
+            claimDataVersion(transaction, app, synced),
           )
           if (claimed === "read-only") {
             markReadOnly(database)

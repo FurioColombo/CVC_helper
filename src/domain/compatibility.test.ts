@@ -6,6 +6,7 @@ import {
   compareVersions,
   dataAccess,
   dataVersionAfterSyncSwitch,
+  fileDataVersionOfSyncedDevice,
   dataVersionAfterWrite,
   decodeVersion,
   encodeVersion,
@@ -171,6 +172,37 @@ describe("dataVersionAfterSyncSwitch", () => {
   it("is refused to an app that predates synced tables", () => {
     expect(() => dataVersionAfterSyncSwitch(v("0.4.9"), null)).toThrow(
       "0.4.9 predates synced tables (0.5.0)",
+    )
+  })
+})
+
+describe("fileDataVersionOfSyncedDevice", () => {
+  it.each([
+    // stored newest, stored minimum, file newest, file minimum
+    ["0.5.0", "0.5.0", "0.5.0", "0.4.0"],
+    ["0.5.3", "0.5.0", "0.5.3", "0.4.0"],
+    ["0.6.1", "0.5.0", "0.6.1", "0.5.0"],
+    // Never above what the device recorded.
+    ["0.5.0", "0.3.0", "0.5.0", "0.3.0"],
+    // A major release keeps the minimum it declared.
+    ["1.0.0", "1.0.0", "1.0.0", "1.0.0"],
+  ] as const)(
+    "a synced device recording %s (minimum %s) exports %s with minimum %s",
+    (version, minimum, fileVersion, fileMinimum) => {
+      expect(fileDataVersionOfSyncedDevice(data(version, minimum))).toEqual(
+        data(fileVersion, fileMinimum),
+      )
+    },
+  )
+
+  it("lets the previous minor version import a file from a switched device", () => {
+    const device = dataVersionAfterSyncSwitch(
+      v("0.5.0"),
+      data("0.4.0", "0.3.0"),
+    )
+    expect(dataAccess(v("0.4.0"), device)).toBe("read-only")
+    expect(dataAccess(v("0.4.0"), fileDataVersionOfSyncedDevice(device))).toBe(
+      "write",
     )
   })
 })

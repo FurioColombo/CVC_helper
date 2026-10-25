@@ -238,6 +238,11 @@ test("a course file imported on a switched device lands in the synced tables", a
     localRows: 0,
     deletes: result.replaced,
     puts: result.rows,
+    // The file carries the data's minimum, so 0.4.0 can still import it; the
+    // switched target keeps its own floor.
+    fileMinimumWriter: { major: 0, minor: 4, patch: 0 },
+    olderImport: "accepted",
+    targetMinimumWriter: { major: 0, minor: 5, patch: 0 },
   })
 })
 
