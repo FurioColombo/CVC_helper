@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-25T22:05:12.961Z",
+  "checkedAt": "2026-10-25T22:26:12.730Z",
   "owner": {
     "createCourse": 201,
     "createStudent": 201,
@@ -14,7 +14,7 @@
     "takesOver": 409,
     "upserts": "refused"
   },
-  "anonymousRead": 0,
+  "anonymousRead": "refused",
   "ownerStillReads": 1,
   "sync": {
     "ownerReceivesCourse": true,
@@ -22,5 +22,6 @@
     "otherReceivesCourse": false,
     "otherReceivesStudent": false
   },
+  "cascade": "no orphan",
   "cleanedUp": true
 }

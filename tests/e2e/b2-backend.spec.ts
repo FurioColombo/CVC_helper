@@ -243,7 +243,23 @@ test("one account's course is closed to another account and to the anonymous key
       otherReceivesStudent: otherSync.students.includes(studentId),
     }
   } finally {
-    await rest(first, "DELETE", `students?courseId=eq.${courseId}`)
+    // Only the course: its student must go with it (the hardening's cascade,
+    // B2 review SP-B2-3). Row-level security hides a child whose course is
+    // gone, so the proof recreates the course under the same id: an orphaned
+    // student would reappear with it.
+    await rest(first, "DELETE", `courses?id=eq.${courseId}`)
+    await rest(first, "POST", "courses", {
+      id: courseId,
+      label: "B2 cascade probe",
+      createdAt: now,
+      updatedAt: now,
+    })
+    result.cascade =
+      count(
+        (await rest(first, "GET", `students?courseId=eq.${courseId}`)).rows,
+      ) === 0
+        ? "no orphan"
+        : "orphan reappeared"
     await rest(first, "DELETE", `courses?id=eq.${courseId}`)
     result.cleanedUp =
       count((await rest(first, "GET", `courses?id=eq.${courseId}`)).rows) ===
@@ -272,7 +288,8 @@ test("one account's course is closed to another account and to the anonymous key
   expect(
     (result.otherAccount as { takesOver: number }).takesOver,
   ).toBeGreaterThanOrEqual(400)
-  expect([0, "refused"]).toContain(result.anonymousRead)
+  // The hardening removed the anonymous role's grants (SP-B2-1).
+  expect(result.anonymousRead).toBe("refused")
   expect([0, "refused"]).toContain(
     (result.otherAccount as { upserts: unknown }).upserts,
   )
@@ -283,5 +300,6 @@ test("one account's course is closed to another account and to the anonymous key
     otherReceivesCourse: false,
     otherReceivesStudent: false,
   })
+  expect(result.cascade).toBe("no orphan")
   expect(result.cleanedUp).toBe(true)
 })

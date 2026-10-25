@@ -1,0 +1,109 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B2",
+  "commit": "e0863d4",
+  "round": 1,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SP-B2-1",
+      "title": "The anonymous role still holds table privileges on the live development backend: the revoke migration is not applied and no owner action asks for it",
+      "evidence": "A read-only anonymous GET with the publishable key on rest/v1/courses, students and evaluations returned HTTP 200 with 0 rows. That means anon has SELECT through Supabase's default grants, and only RLS keeps rows away (no policy targets anon). supabase/migrations/20261025000000_revoke_anon.sql is unapplied. Neither docs/OWNER_TODO.md nor docs/working/BACKEND_SETUP_0.5.0.md asks the owner to run it. tests/e2e/b2-backend.spec.ts:184-189 and :257 accept both 0 rows and a refusal, so the spec cannot tell whether the revoke is in place or has regressed.",
+      "reproduction": "An anonymous GET with the publishable key on rest/v1/courses?select=id&limit=1 returns 200 [] where a revoked grant would return 401/403 (permission denied).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B2 adversarial checklist: the anonymous role granted access"
+    },
+    {
+      "id": "SP-B2-2",
+      "title": "The static backend test does not check RLS or publication membership, so a table left out of either passes",
+      "evidence": "src/persistence/backendSchema.test.ts:93 asserts migration.toContain(`public.<table>`). The `create table public.<table>` line alone satisfies that. RLS, the policy and the grants are applied only to the tables listed in the DO-block array at supabase/migrations/20261023000000_course_backup.sql:182-186, and the publication lists tables separately at :209-213. Today all 12 children and courses appear in both lists (checked by reading). A future course table added to COURSE_TABLES and created in the SQL but left out of the array would ship with no RLS. Supabase's default privileges still give authenticated, and anon until SP-B2-1 is fixed, full access to it, so every signed-in account could read every row. The test would stay green.",
+      "reproduction": "Remove 'evaluations' from the array at the course_backup.sql:182-186 line in a scratch copy. Every assertion in backendSchema.test.ts still holds, because :93 matches line 157.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B2 adversarial checklist: RLS missing on a table; a table missing from the publication"
+    },
+    {
+      "id": "SP-B2-3",
+      "title": "No server-side cascade: a child deleted after its course row matches 0 rows under RLS, reports success and leaves orphaned personal data that can reappear for another account",
+      "evidence": "course_backup.sql:12-16 deliberately has no foreign keys. The child policy (:189-194) makes a child visible, updatable and deletable only while its course row exists and is owned by the caller. If the course row is deleted first (an out-of-order upload, or a child delete that was refused and retried later), PostgREST's DELETE on the child matches 0 rows and returns success. The students, phones, evaluations and notes then stay in the table, and no client path can read or delete them. The sync stream scopes children by \"courseId\" IN owned (powersync/sync-config.yaml:51-65), so any account that later inserts a course row with the same id receives those orphans. The course id travels inside exported course files (03_TECHNICAL_DECISIONS.md §3.3). The spec's own cleanup relies on children-first order (tests/e2e/b2-backend.spec.ts:232-233), and cleanedUp (:234-235) checks only the course row. RLS already demands that the course row exists first, so the stated reason against foreign keys does not apply: references public.courses(id) on delete cascade (or deferrable) would change nothing on insert and would make the server erase atomic.",
+      "reproduction": "Reasoned from the SQL. Not executed, because writing beyond the permitted spec was out of bounds. As account 1: insert a course and a student, DELETE the course, then DELETE students?courseId=eq.<id>. The expected result is an empty 200/204, with the student row still present in the table.",
+      "specRef": "02_MVP_SCOPE.md §4 (0.5.0: erasing it erases it on the server); B6 adversarial checklist: partial deletion leaving orphan rows"
+    },
+    {
+      "id": "SP-B2-4",
+      "title": "The agent-readable PowerSync admin token is account-scoped, and production is planned as another instance in the same project",
+      "evidence": ".env holds PS_ADMIN_TOKEN, a PowerSync personal access token created under Account → Access Tokens (docs/working/BACKEND_SETUP_0.5.0.md:63-64). powersync/service.yaml:14-15 says 'Production gets its own instance and directory', and the setup doc puts every instance in the one project 'CVC Helper'. A personal access token is tied to the account, not to the Development instance. If the production instance is created under the same account, an agent tool holding this token can deploy, stop or destroy production and read its config. AGENTS.md §17 forbids exactly that.",
+      "reproduction": "Configuration inspection. The setup doc and service.yaml describe no account or organisation separation for production.",
+      "specRef": "AGENTS.md §17 (no agent tool is ever connected to a production backend)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B2-Q1",
+      "title": "Nothing in the backend spec checks that .env points at the development instance",
+      "evidence": "tests/e2e/b2-backend.spec.ts:17-37 trusts whatever .env holds and writes a synthetic course there. A one-line guard that POWERSYNC_URL contains the instance_id in powersync/cli.yaml:2 would make a production .env fail closed. The reviewer checked, without printing values, that the current .env does point at that instance.",
+      "reproduction": "Read the spec.",
+      "specRef": "AGENTS.md §17"
+    },
+    {
+      "id": "SP-B2-Q2",
+      "title": "When the test fails, its trace keeps a live Supabase access token",
+      "evidence": "playwright.config.ts:92 sets trace: 'retain-on-failure'. tests/e2e/b2-backend.spec.ts:204-214 passes the JWT as a page.evaluate argument, and the PowerSync request carries it too, so both end up in test-results/ trace.zip. The JWT payload includes the test account's email and the project ref. test-results/ is ignored and the spec never runs in CI, so the exposure is local and lasts about 1h.",
+      "reproduction": "Make the spec fail and inspect the trace's action parameters.",
+      "specRef": "Lens: logs and errors"
+    },
+    {
+      "id": "SP-B2-Q3",
+      "title": ".env.example and the setup document do not mention the four TEST_USER_* keys the spec requires",
+      "evidence": ".env.example lists six keys. tests/e2e/b2-backend.spec.ts:25-33 requires TEST_USER_1/2_EMAIL/PASSWORD. Both test passwords are under 16 characters. The accounts use reserved test domains, so the data is synthetic.",
+      "reproduction": "Compare the two files.",
+      "specRef": "docs/working/BACKEND_SETUP_0.5.0.md"
+    },
+    {
+      "id": "SP-B2-Q4",
+      "title": "The revoke migration leaves the other Supabase default grants in place",
+      "evidence": "20261025000000_revoke_anon.sql:9-10 covers anon tables only. Supabase's defaults also give authenticated TRUNCATE, REFERENCES and TRIGGER (TRUNCATE ignores RLS), and give anon EXECUTE on future functions. `alter default privileges` without `for role` changes only the defaults of the role that runs it. None of this is reachable through PostgREST today. Assumed from Supabase defaults, not introspected.",
+      "reproduction": "Read the migration.",
+      "specRef": "Defence in depth"
+    },
+    {
+      "id": "SP-B2-Q5",
+      "title": "Primary keys are global across accounts, so a recipient of an exported course file can claim the course id first",
+      "evidence": "course_backup.sql:19 makes `id text primary key` with no owner in the key. The spec shows another account's insert under an existing id gets 409 (access-check.json takesOver: 409). Someone who imports a shared course file and signs in before the owner would make the owner's course upload fail with 409 and every child insert fail with 403. That blocks the backup without leaking anything. B3/B4 should report it clearly.",
+      "reproduction": "Reasoned from the migration and the spec's takesOver result.",
+      "specRef": "B4 adversarial checklist (refusals visible)"
+    },
+    {
+      "id": "SP-B2-Q6",
+      "title": "The instance, org and project ids are public in the repository",
+      "evidence": "powersync/cli.yaml:2-4 and .evidence/B2/backend-readiness.json make the development sync endpoint derivable. These are identifiers, not credentials, and the client bundle will expose the endpoint anyway. Recorded so production's equivalents are a deliberate choice.",
+      "reproduction": "Read the files.",
+      "specRef": "Lens: keys in the client bundle"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md B2, B5, B6; AGENTS.md §17; 03_TECHNICAL_DECISIONS.md §3 and §3.3; 02_MVP_SCOPE.md §4 row 0.5.0",
+    "git diff --stat ba3b860..e0863d4 and the diffs of docs/OWNER_TODO.md, .milestones/owner-checks.json and 04_IMPLEMENTATION_PLAN.md",
+    "Read in full: both migrations, powersync/service.yaml, sync-config.yaml, cli.yaml, .env.example, .gitignore, docs/working/BACKEND_SETUP_0.5.0.md, tests/e2e/b2-backend.spec.ts, src/test/b2SyncHarness.ts, src/persistence/backendSchema.test.ts, .evidence/B2/*.json, tests/e2e/evidence.ts, playwright.config.ts trace settings, src/persistence/courses.ts",
+    "Derived booleans from .env, no values printed: replication user powersync_role on the direct host of SUPABASE_URL's project; publishable key only; no secret or service_role value; POWERSYNC_URL contains cli.yaml's instance_id; test accounts on reserved test domains",
+    "Secret scan of git history: no secret value present anywhere in history or the tracked tree; only documentation placeholders",
+    "Read-only requests with the publishable key: anonymous GET on courses/students/evaluations 200 with 0 rows; meta 404; OpenAPI root 401; pg_graphql not enabled; signup enabled with email confirmation, anonymous sign-ins and phone disabled",
+    "Ran npx playwright test tests/e2e/b2-backend.spec.ts --project=pixel-7-chrome --workers=1: 1 passed; its access-check.json matches the committed evidence and contains no secrets",
+    "npm run -s check:repository: PASS"
+  ],
+  "anglesTried": {
+    "seed": 478176041,
+    "lenses": [
+      "6. Logs, errors and analytics that contain names, phones or OCR text",
+      "12. Retention: what stays after the course ends, and who can still see it"
+    ],
+    "wildcard": "Pointing the tooling at the wrong backend and keeping agent reach out of production: whether the spec or the CLI token could touch a production project, and whether a course id reused through an exported file could make another account's orphaned rows sync to a new owner"
+  },
+  "notTested": [
+    "RLS enabled and policies present on all 13 live tables: no SQL client; checked by reading the migration and by the spec's behaviour on courses and students only",
+    "That the SQL the owner pasted matches the committed migration exactly",
+    "Live publication membership: relied on backend-readiness.json",
+    "Supabase region: West EU is owner-reported only",
+    "The orphan-after-course-delete behaviour (SP-B2-3) and anonymous write refusals: reasoned from the SQL, not executed",
+    "Whether a PowerSync personal access token can be scoped to one instance"
+  ]
+}

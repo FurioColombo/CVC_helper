@@ -1,0 +1,49 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B2",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B2-1",
+      "title": "Process: the setup guide first told the owner to use Supabase's pooler, which cannot replicate; the agent switched .env to the direct address and corrected the guide",
+      "evidence": "powersync validate: 'Supavisor does not support logical replication'; docs/working/BACKEND_SETUP_0.5.0.md step 3 corrected (8131ee8)",
+      "reproduction": "Resolved; the readiness record shows the direct connection connected with zero lag.",
+      "specRef": "docs/working/BACKEND_SETUP_0.5.0.md"
+    },
+    {
+      "id": "SELF-B2-2",
+      "title": "Process: during the first .env check the agent printed the database connection string, password included, into the conversation; the owner changed that password",
+      "evidence": "Session of 2026-10-25; later checks print only derived booleans; the reviewer confirmed no secret value exists anywhere in the repository history",
+      "reproduction": "Resolved by rotation; checks now parse .env inside a script that never echoes values.",
+      "specRef": "AGENTS.md §17"
+    }
+  ],
+  "qolFindings": [],
+  "reviews": [
+    ".evidence/B2/security-privacy-review.json (PASS_WITH_FINDINGS, round 1)"
+  ],
+  "fixedFindings": [
+    { "ids": ["SP-B2-1", "SP-B2-Q4"], "fix": "supabase/migrations/20261025000000_hardening.sql revokes anon's table grants and authenticated's TRUNCATE/REFERENCES/TRIGGER; run by the owner on 2026-10-25", "proof": ".evidence/B2/access-check.json anonymousRead 'refused'; the spec now requires it" },
+    { "ids": ["SP-B2-3"], "fix": "Cascading foreign keys from every child table to courses (same migration)", "proof": "access-check.json cascade 'no orphan': the course recreated under the same id shows no student" },
+    { "ids": ["SP-B2-2"], "fix": "src/persistence/backendSchema.test.ts pins the RLS table list, the publication and the cascade list against COURSE_TABLES", "proof": "19 tests pass" },
+    { "ids": ["SP-B2-Q1", "SP-B2-Q2"], "fix": "The spec refuses any instance but the one in powersync/cli.yaml and keeps no trace, screenshot or video", "proof": "tests/e2e/b2-backend.spec.ts" },
+    { "ids": ["SP-B2-Q3"], "fix": ".env.example lists the four test-account keys", "proof": ".env.example" },
+    { "ids": ["SP-B2-4"], "fix": "Owner decision 13: production under a separate PowerSync account and Supabase project whose credentials never reach an agent tool", "proof": "docs/working/OWNER_DECISIONS.md, docs/working/BACKEND_SETUP_0.5.0.md" }
+  ],
+  "deferred": [
+    { "ids": ["SP-B2-Q5"], "to": "B4 (a course id already taken by another account is reported, not retried forever)" },
+    { "ids": ["SP-B2-Q6"], "to": "UG4 (production identifiers are a deliberate choice; development ids are public by design)" }
+  ],
+  "evidenceInspected": [
+    ".evidence/B2/access-check.json, backend-readiness.json, owner-setup.json",
+    "tests/e2e/b2-backend.spec.ts on pixel-7-chrome against the Development instance: 1 passed",
+    "src/persistence/backendSchema.test.ts: 19 passed"
+  ],
+  "notTested": [
+    "Row-level security on all 13 live tables by behaviour: the spec exercises courses and students; the others are pinned statically and applied by the same loop",
+    "Production: does not exist yet (UG4)",
+    "The spec in CI: it needs the owner's development credentials and runs on this PC only"
+  ]
+}
