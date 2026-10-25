@@ -22,12 +22,18 @@ export function expectsSyncedTables(database: PowerSyncDatabase) {
   return synced.has(database)
 }
 
-/** Whether the synced course tables are still in place, inside a lock. */
+/**
+ * Whether the app's views still read the synced tables, inside a lock: the
+ * `courses` view must exist and read `ps_data__synced_courses`. Checking only
+ * that the table exists would pass during another tab's switch, whose
+ * schema keeps the synced tables but points the views at the local ones
+ * (B1 reviews DP-B1-Q3, DI-B1-Q1, SC-B1-Q1).
+ */
 export async function syncedTablesPresent(
   context: Pick<LockContext, "getAll">,
 ) {
-  const rows = await context.getAll(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'ps_data__synced_courses'",
+  const rows = await context.getAll<{ sql: string | null }>(
+    "SELECT sql FROM sqlite_master WHERE type = 'view' AND name = 'courses'",
   )
-  return rows.length > 0
+  return rows[0]?.sql?.includes("ps_data__synced_courses") ?? false
 }

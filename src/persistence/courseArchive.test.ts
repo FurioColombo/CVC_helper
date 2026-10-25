@@ -484,7 +484,8 @@ describe("course archive persistence", () => {
       updatedAt: UPDATED_AT,
       phone: "555-0101",
     })
-    expect(source.readTransactionQueries.at(-1)).toHaveLength(14)
+    // One snapshot: 13 tables, the version record and the sync mode (B1).
+    expect(source.readTransactionQueries.at(-1)).toHaveLength(16)
 
     const current = structuredClone(tables)
     current.students[0]!.courseNote = "Existing local note"

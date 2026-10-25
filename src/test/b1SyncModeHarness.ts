@@ -67,6 +67,20 @@ export async function runSwitch(origin: Origin) {
   const filename = `b1-${origin}-${crypto.randomUUID()}.db`
   const hintKey = `b1-hint-${crypto.randomUUID()}`
   await seed(origin === "0.4.0" ? "0.3.0" : origin, filename)
+  if (origin === "0.4.0") {
+    // A real 0.4.0 device: the 0.3.0 course upgraded and claimed by 0.4.0
+    // itself, so its record says 0.4.0 / 0.3.0 (B1 review DP-B1-Q1).
+    const older = guardWrites(createDatabase(filename), parseVersion("0.4.0"))
+    await prepareDatabase(older, MIGRATIONS, parseVersion("0.4.0"), hintKey)
+    await older.close()
+  }
+  const originRecord = await (async () => {
+    const reader = createDatabase(filename)
+    await reader.init()
+    const record = await readDataVersion(reader)
+    await reader.close()
+    return record
+  })()
 
   // The device before the switch, opened by this version in local mode.
   let database = await openApp(filename, hintKey)
@@ -122,6 +136,7 @@ export async function runSwitch(origin: Origin) {
 
   return {
     origin,
+    originRecord,
     rows: count(before),
     switched,
     identical: JSON.stringify(after) === JSON.stringify(before),

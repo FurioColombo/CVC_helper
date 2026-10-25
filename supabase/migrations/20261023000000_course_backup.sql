@@ -9,8 +9,10 @@
 --
 -- Only the owner reads or writes: `courses."ownerId"` is set from the
 -- signed-in user on insert, and every other table is reached through its
--- course. There are no foreign keys, so an upload never fails on the order
--- in which a transaction's rows arrive; the integrity checks stay on the
+-- course. There are no foreign keys, so rows of one transaction may arrive
+-- in any order between children; but a child is accepted only once its
+-- course row exists (the access rules below), so uploads keep the queue's
+-- parent-first order (B1 review SC-B1-Q4). The integrity checks stay on the
 -- device (src/domain/invariants.ts) as in 0.4.0.
 
 create table public.courses (

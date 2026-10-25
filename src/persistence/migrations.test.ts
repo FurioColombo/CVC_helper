@@ -234,12 +234,17 @@ describe("prepareDatabase", () => {
     for (const pending of [true, false]) {
       const { database } = preparable(false, record("0.5.0", "0.4.0"))
       const statements: string[] = []
-      const getAll = database.getAll
+      const getAll = database.getAll as (
+        sql: string,
+        parameters?: unknown[],
+      ) => Promise<unknown[]>
       Object.assign(database, {
-        getAll: vi.fn(async (sql: string) =>
-          sql.includes("FROM meta WHERE id = ?") && pending
+        getAll: vi.fn(async (sql: string, parameters?: unknown[]) =>
+          sql.includes("FROM meta WHERE id = ?") &&
+          parameters?.[0] === "local:compaction-pending" &&
+          pending
             ? [{ id: "local:compaction-pending" }]
-            : getAll(sql),
+            : getAll(sql, parameters),
         ),
         writeLock: vi.fn(
           async (callback: (context: unknown) => Promise<unknown>) =>

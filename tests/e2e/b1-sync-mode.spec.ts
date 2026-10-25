@@ -53,6 +53,17 @@ for (const origin of ["0.1.0", "0.2.0", "0.3.0", "0.4.0"]) {
     )
     record(`switch-${origin}`, result)
 
+    // Courses before the contract record nothing; a 0.4.0 device records
+    // what 0.4.0 wrote (B1 review DP-B1-Q1).
+    expect(result.originRecord).toEqual(
+      origin === "0.4.0"
+        ? {
+            version: { major: 0, minor: 4, patch: 0 },
+            minimumWriter: { major: 0, minor: 3, patch: 0 },
+          }
+        : null,
+    )
+
     expect(result.rows).toBeGreaterThan(0)
     expect(result).toMatchObject({
       switched: "switched",
@@ -266,3 +277,80 @@ for (const withCourse of [true, false]) {
     })
   })
 }
+
+test("every area of a switched course opens and reads its data", async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  await openBlankPage(page)
+  await harness<number>(page, "seedAndSwitchAppDatabase")
+  await page.goto("/")
+  await expect(
+    page.getByRole("heading", { name: "D2 - 38 | 2026" }),
+  ).toBeVisible()
+  const navigation = page.getByRole("navigation", {
+    name: "Navigazione principale",
+  })
+  // The six Home cards and Avarie, each read from the synced tables
+  // (B1 review DI-B1-5); a failed read says "Non riesco a leggere" (for the
+  // whole archive, "Non riesco ad aprire").
+  for (const area of [
+    "Allievi",
+    "Barche",
+    "Comandate",
+    "Equipaggi",
+    "Valutazioni",
+    "Volontari",
+    "Avarie",
+  ]) {
+    await navigation.getByRole("button", { name: "Home", exact: true }).click()
+    const card =
+      area === "Avarie"
+        ? navigation.getByRole("button", { name: "Avarie", exact: true })
+        : page.getByRole("button", { name: area, exact: true }).first()
+    await card.click()
+    await expect(
+      page.getByRole("heading", { name: area }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByText(/Non riesco a leggere|Non riesco ad aprire/),
+    ).toHaveCount(0)
+  }
+})
+
+test("a full reset in synced mode removes the switched course and the mode", async ({
+  page,
+}) => {
+  await openBlankPage(page)
+  await harness<number>(page, "seedAndSwitchAppDatabase")
+  await page.goto("/")
+  await expect(
+    page.getByRole("heading", { name: "D2 - 38 | 2026" }),
+  ).toBeVisible()
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Home", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Impostazioni" }).click()
+  await page.getByRole("button", { name: "Azzera tutti i dati locali" }).click()
+  await page
+    .getByRole("checkbox", {
+      name: "Ho capito: corso, preferenze e file offline saranno cancellati",
+    })
+    .check()
+  await page.getByRole("button", { name: "Azzera i dati" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Dati locali cancellati" }),
+  ).toBeVisible()
+
+  const after = await page.evaluate(async () => ({
+    database: (await indexedDB.databases()).some(
+      ({ name }) => name === "cvc-helper.db",
+    ),
+    hint: localStorage.getItem("cvc-helper.sync-mode"),
+  }))
+  record("full-reset", after)
+  // The database itself is deleted, synced rows, queue and mode with it, and
+  // the mode hint is cleared with the other preferences.
+  expect(after).toEqual({ database: false, hint: null })
+})

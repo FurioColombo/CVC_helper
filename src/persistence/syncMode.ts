@@ -55,11 +55,19 @@ function tableColumns(name: string) {
   return table.columns
 }
 
+/** The app uses text and integer columns only; anything else is refused. */
+function columnType(table: string, column_: string, type: string) {
+  const lower = type.toLowerCase()
+  if (lower === "integer") return column.integer
+  if (lower === "text") return column.text
+  throw new Error(`${table}.${column_}: no synced mapping for ${type}`)
+}
+
 function columnsOf(name: string) {
   return Object.fromEntries(
     tableColumns(name).map(({ name: columnName, type }) => [
       columnName,
-      type.toLowerCase() === "integer" ? column.integer : column.text,
+      columnType(name, columnName, type),
     ]),
   )
 }
@@ -142,14 +150,17 @@ export async function readSyncMode(context: Reader): Promise<SyncMode> {
     [SYNC_MODE_ID],
   )
   if (rows.length > 0) return "synced"
-  const parked = await context.getAll(
-    "SELECT 1 FROM ps_untyped WHERE substr(type, 1, 7) = 'synced_' LIMIT 1",
+  const internal = await context.getAll<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('ps_untyped', 'ps_data__synced_courses')",
   )
+  const has = (name: string) => internal.some((row) => row.name === name)
+  const parked = !has("ps_untyped")
+    ? []
+    : await context.getAll(
+        "SELECT 1 FROM ps_untyped WHERE substr(type, 1, 7) = 'synced_' LIMIT 1",
+      )
   if (parked.length > 0) return "synced"
-  const tables = await context.getAll(
-    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ps_data__synced_courses'",
-  )
-  if (tables.length === 0) return "local"
+  if (!has("ps_data__synced_courses")) return "local"
   const synced = await context.getAll(
     "SELECT 1 FROM ps_data__synced_courses LIMIT 1",
   )
