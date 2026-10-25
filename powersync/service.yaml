@@ -6,7 +6,7 @@
 # the ignored `.env`, never from this file.
 _type: cloud
 
-name: cvc-helper-dev
+name: Development
 
 # EU, as the owner decided on 2026-10-08 (02_MVP_SCOPE.md §4). It cannot be
 # changed after the first deployment.
