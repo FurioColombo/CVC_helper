@@ -1,0 +1,58 @@
+{
+  "milestone": "B1",
+  "status": "FAIL",
+  "recordedAt": "2026-10-25T20:37:16.913Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.5.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "5bc23314101bebe524d8d445ad744da0ef5ad9d6",
+  "workingTreeClean": true,
+  "sourceDigest": "46b4474e5dfbb12f02caa4982fcf4f090aa39401b5c7a7daed0ac6f725f0c37c",
+  "sourceFiles": 457,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/b1-sync-mode.spec.ts",
+    "tests/e2e/d1-migration.spec.ts",
+    "tests/e2e/d2-duty-items.spec.ts",
+    "tests/e2e/d3-read-only.spec.ts",
+    "tests/e2e/d4-course-files.spec.ts",
+    "tests/e2e/d4-local-reset.spec.ts",
+    "tests/e2e/persistence.spec.ts",
+    "tests/e2e/reopen-persistence.spec.ts",
+    "tests/e2e/f1-navigation-guards.spec.ts",
+    "tests/e2e/student-management-gate.spec.ts"
+  ],
+  "flakyTests": [
+    {
+      "file": "d4-course-files.spec.ts",
+      "title": "exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close",
+      "project": "desktop-chrome-storage"
+    },
+    {
+      "file": "student-management-gate.spec.ts",
+      "title": "creates, corrects and reloads a declared age without a birth date",
+      "project": "iphone-13-webkit-core"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-10-25T19:08:56.124Z",
+      "durationMs": 408526,
+      "exitCode": 0,
+      "outputTail": "  - vite-plugin-pwa:build closeBundle (100%, 61.6s, 1 call)\n  - vite:css-post renderChunk (12%, 3.1s, 15 calls)\n  - vite-plugin-pwa load (8%, 2.0s, 1 call)\n  - @tailwindcss/vite:generate:build transform (7%, 1.7s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "FAIL",
+      "startedAt": "2026-10-25T19:15:44.660Z",
+      "durationMs": 4895046,
+      "exitCode": 1,
+      "outputTail": "  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel\n  3 failed\n    [iphone-13-webkit-core] › tests\\e2e\\f1-navigation-guards.spec.ts:113:1 › Settings erases the course only after confirmation and starts a new one \n    [iphone-13-webkit-core] › tests\\e2e\\reopen-persistence.spec.ts:3:1 › restores confirmed local data after closing and reopening the page \n    [iphone-13-webkit-core] › tests\\e2e\\student-management-gate.spec.ts:7:1 › keeps the complete student workflow consistent across reload \n  2 flaky\n    [desktop-chrome-storage] › tests\\e2e\\d4-course-files.spec.ts:93:1 › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close \n    [iphone-13-webkit-core] › tests\\e2e\\student-management-gate.spec.ts:178:1 › creates, corrects and reloads a declared age without a birth date \n  4 skipped\n  103 passed (1.4h)\nFLAKY: d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close [desktop-chrome-storage]\nFLAKY: student-management-gate.spec.ts › creates, corrects and reloads a declared age without a birth date [iphone-13-webkit-core]"
+    }
+  ]
+}

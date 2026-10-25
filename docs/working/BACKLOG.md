@@ -109,6 +109,12 @@ Each passed only on a retry and is a defect to fix (03 §6).
   `.evidence/T1/ci-checkpoint-434cdcc.json`; CI retains traces when a retry
   makes it green.
 
+- `student-management-gate.spec.ts › creates, corrects and reloads a declared age without a birth date`
+  — WebKit, B1's recorded run (2026-10-25, 1.4 h): the first attempt failed with
+  "page.goto: Could not connect to server", as did three other WebKit cases
+  late in the same run; the dev server stopped answering. Rerun alone, all
+  pass. Environment (long run on the 8 GB PC), not the app.
+
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — stalled twice opening the fresh WebKit recipient before import (D4,
   2026-10-17); isolated reruns and every later run passed without retries.
