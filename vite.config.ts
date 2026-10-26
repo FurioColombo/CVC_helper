@@ -148,7 +148,10 @@ const appVersion = process.env.CVC_APP_VERSION ?? versionBaseline
 // page, src/backup/config.ts).
 function backupEnv(): Record<string, string> {
   const empty = { SUPABASE_URL: "", SUPABASE_ANON_KEY: "", POWERSYNC_URL: "" }
-  const file = path.resolve(import.meta.dirname, ".env")
+  // The test-site publisher builds a clean snapshot and points here at the
+  // working copy's file; only the three public values are read from it.
+  const file =
+    process.env.CVC_BACKUP_ENV_FILE ?? path.resolve(import.meta.dirname, ".env")
   if (appChannel !== "test" || !process.argv.includes("build")) return empty
   if (!existsSync(file)) return empty
   const values: Record<string, string> = { ...empty }

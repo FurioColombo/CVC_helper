@@ -211,11 +211,33 @@ try {
       stdio: "inherit",
     })
   npm(["ci", "--ignore-scripts"])
+  // From 0.5.0 the test app carries the development backup (B3): its three
+  // public values come from this working copy's .env, never committed.
+  const backupEnvFile = join(root, ".env")
+  const withBackup = !version.startsWith("0.4.")
+  if (withBackup)
+    assert(existsSync(backupEnvFile), "The test build needs .env (B3)")
   npm(["run", "build"], {
     CVC_APP_CHANNEL: "test",
     CVC_BASE_PATH: pin.basePath,
     CVC_APP_VERSION: version,
+    ...(withBackup ? { CVC_BACKUP_ENV_FILE: backupEnvFile } : {}),
   })
+  if (withBackup) {
+    const supabaseUrl = /^SUPABASE_URL=(.*)$/m
+      .exec(readFileSync(backupEnvFile, "utf8"))?.[1]
+      ?.trim()
+    assert(supabaseUrl, "The test build needs SUPABASE_URL in .env")
+    const bundles = execFileSync(
+      "git",
+      ["grep", "-l", "--no-index", "-F", supabaseUrl, "--", "dist/assets"],
+      {
+        cwd: snapshot,
+        encoding: "utf8",
+      },
+    )
+    assert(bundles.trim(), "The test build lacks the backup configuration")
+  }
   const builtManifest = JSON.parse(
     readFileSync(join(snapshot, "dist/manifest.webmanifest"), "utf8"),
   )
