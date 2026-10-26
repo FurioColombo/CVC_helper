@@ -71,3 +71,29 @@ publication; the anonymous role granted access; the instance outside the EU.
 
 **Evidence:** verification, backend readiness, self and security/privacy
 reviews.
+
+## B3 — Sign-in and sign-out
+
+**Category:** FEATURE
+**Status:** AWAITING_OWNER
+
+Impostazioni offers sign-in by email magic link (owner, 2026-10-25); signed
+in, it shows the account and the backup state, and the app switches to synced
+mode (B1) and connects: after `prepareDatabase`, before `connect()`, asking
+the account first when it already holds a course (B1 review SC-B1-2), telling
+other tabs, and treating `CourseReplacedError` from the switch as "switched
+elsewhere" (SC-B1-Q2). Sign-out
+disconnects and keeps the course on the device; clearing it is a separate,
+confirmed action. Signed out, everything works as in 0.4.0.
+
+**Success predicate:** sign-in on a device with a course queues and uploads
+the whole course, sign-out keeps it usable offline, and nothing connects or
+leaves the device before sign-in.
+
+**Adversarial checklist:** sign-in offline or interrupted; a second account
+on the same device, whose queue must never upload the first account's rows
+(SC-B1-Q5); an expired session; the magic link opened in another browser;
+personal data in URLs or logs.
+
+**Evidence:** verification, browser evidence, the owner's Android check, self,
+security/privacy and field-UX reviews.

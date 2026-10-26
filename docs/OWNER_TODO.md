@@ -42,19 +42,11 @@ The owner reported: The owner created the Supabase development project cvc-helpe
 
 ## Sign in to the online backup on Android and use it offline — B3
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Open your installed CVC Helper Test (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.0. Use invented people only: this backup is a development one.
-2. Make sure the test app has a course with two or three invented students. In Impostazioni &gt; Backup online type the email of a test account and tap Invia il link di accesso. Supabase's built-in sender only delivers to the addresses of your Supabase team (your own account email) and a few emails an hour: if your test accounts use other addresses, add a user with your own address in Authentication &gt; Users &gt; Add user. Note whether Link inviato is still there if you close and reopen the app.
-3. On the phone, open the email and tap the link. Note which app opens it (the installed CVC Helper Test, Chrome, or Gmail's own browser) and what Impostazioni then shows. The code field cannot be used yet (B3-EMAIL-CODE).
-4. Once it shows Accesso: &lt;your email&gt;, wait for Copia online aggiornata. While the app reloads once after signing in, try typing a student: report whether anything you typed was lost.
-5. Turn on airplane mode, add a student, close the app completely, reopen it: Impostazioni should show your account and 'In attesa di connessione: 1 modifica da inviare'. Turn airplane mode off and check it reaches Copia online aggiornata without reopening.
-6. With airplane mode on again, change a student, then tap Esci: read the question (it should mention 1 change not yet online), tap Resta collegato, then Esci and Esci. The course must stay on the phone. Optionally the next morning, with airplane mode on, open the app and note what Impostazioni says.
-7. Report B3-PHONE-SIGNIN with your device, browser and Android version and what you actually saw at each step, including which app opened the link and whether the status was readable outdoors.
-
-Use the test address below and the linked device instructions.
+The owner reported: Passed with steps not observed. Observed on the phone: the emailed sign-in link opened CVC Helper Test from the mail app (not the installed app nor the browser) and signed in; Copia online aggiornata appeared almost at once; notes and students added, closing and reopening kept them. Airplane mode: 'Tutto inviato. Ora senza connessione.', then after a note 'In attesa di connessione: 2 modifiche da inviare' (still 2 after adding a student), and with signal back the count went 3, 2, 1 to 'Copia online aggiornata' without reopening; closing and reopening worked as expected. The Esci question about unsent changes appeared as expected and the course remained on the phone. Signing in from the mail link and from Chrome showed no difference. Sign-in is fast. NOT OBSERVED: typing a student during the one reload after sign-in (the owner reports sign-in is fast); the installed CVC Helper Test app (the owner used Chrome because the test app cannot be installed beside the regular one, BACKLOG).
 
 **Expected:** Sign-in by the link (or the code) works on the phone and the backup reaches 'Copia online aggiornata'; offline the account stays signed in and the backup resumes with signal; nothing typed is lost around the one reload; Esci warns about unsent changes and keeps the course. Only your actual phone observations can pass this check.
 
@@ -64,7 +56,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of B3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="d3-phone-update"></a>
 

@@ -61,8 +61,23 @@ browser spike succeeded, so PowerSync local-only is the decided implementation;
 Dexie is no longer an automatic fallback. A device starts in local mode
 (local-only course tables, 0.4.0's schema) and moves once to synced mode
 (§3.1, from 0.5.0): synced course tables whose writes PowerSync queues for
-upload. The app does not call `connect()` yet and has no sync connector, Auth
-or conflict UI; 0.5.0 adds them (`04_IMPLEMENTATION_PLAN.md`).
+upload.
+
+**Online backup (0.5.0).** Signed out, nothing connects. Sign-in is by a link
+emailed by Supabase Auth (PKCE, so it signs in only in the browser that asked
+for it); the app never creates accounts, and the email's one-time code becomes
+a second way in once a custom email sender exists. Signed in, the device
+switches once to synced mode and belongs to that account: another account's
+session neither uploads its queue nor receives its course. Uploads
+(`src/backup/connector.ts`) send every change as the whole row, with the app's
+version; the server refuses versions below its minimum writer and keeps the
+latest edit of a row (`supabase/migrations/`), and a delete removes only a row
+nobody edited after the device last saw it. A change the server refuses is
+kept on the device and listed in Impostazioni, never dropped in silence.
+Placement rows take their ids from their natural keys, and the readers and the
+export settle what two phones edited offline on the latest edit. Known gap
+until team editing: a delete leaves no tombstone, so an older edit uploaded
+after it brings the row back (`docs/working/BACKLOG.md`).
 
 **Startup integration (owner, 2026-10-14; adopted in D3).** The startup
 integration below came from a bounded investigation of PowerSync

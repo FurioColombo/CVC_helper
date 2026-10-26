@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "B3",
+  "ownerReports": [
+    {
+      "id": "B3-PHONE-SIGNIN",
+      "check": "Sign in to the online backup on Android and use it offline",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Owner chat reports in the Claude Code session of 2026-10-26 on CVC Helper Test 0.5.0 (B3-PHONE-SIGNIN steps 3-7, then 'the Esci question about unsent changes were observed as expected, sign in is fast').",
+      "summary": "Passed with steps not observed. Observed on the phone: the emailed sign-in link opened CVC Helper Test from the mail app (not the installed app nor the browser) and signed in; Copia online aggiornata appeared almost at once; notes and students added, closing and reopening kept them. Airplane mode: 'Tutto inviato. Ora senza connessione.', then after a note 'In attesa di connessione: 2 modifiche da inviare' (still 2 after adding a student), and with signal back the count went 3, 2, 1 to 'Copia online aggiornata' without reopening; closing and reopening worked as expected. The Esci question about unsent changes appeared as expected and the course remained on the phone. Signing in from the mail link and from Chrome showed no difference. Sign-in is fast. NOT OBSERVED: typing a student during the one reload after sign-in (the owner reports sign-in is fast); the installed CVC Helper Test app (the owner used Chrome because the test app cannot be installed beside the regular one, BACKLOG).",
+      "testedCommit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60",
+      "browser": "Chrome (and the mail app's link handling)",
+      "osVersion": "Android, version reported as '1.' (likely 15, as on 2026-10-20)",
+      "reportedAt": "2026-10-26T14:37:25.074Z"
+    }
+  ]
+}
