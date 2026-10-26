@@ -394,12 +394,15 @@ assert.ok(
   "PowerSync must remain after the successful local-only browser spike",
 )
 
-for (const forbidden of [
-  "dexie",
-  "@supabase/supabase-js",
-  "redux",
-  "zustand",
-]) {
+// Supabase Auth arrives with 0.5.0's online backup (02_MVP_SCOPE.md §4, B3);
+// its client stays pinned and loads only where backup is configured.
+assert.equal(
+  packageJson.dependencies?.["@supabase/supabase-js"],
+  "2.117.3",
+  "The Supabase client must stay pinned to the reviewed version",
+)
+
+for (const forbidden of ["dexie", "redux", "zustand"]) {
   assert.ok(
     !packageJson.dependencies?.[forbidden] &&
       !packageJson.devDependencies?.[forbidden],

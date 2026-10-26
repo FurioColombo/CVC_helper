@@ -64,7 +64,7 @@ to remember on the boat).
 ## B3 — Sign-in and sign-out
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Impostazioni offers sign-in by email magic link (owner, 2026-10-25); signed
 in, it shows the account and the backup state, and the app switches to synced

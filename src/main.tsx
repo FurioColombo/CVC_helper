@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 import { useRegisterSW } from "virtual:pwa-register/react"
 
 import { App } from "@/App"
+import { backupConfig } from "@/backup/config"
 import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner"
 import { applyUpdateWhenSafe } from "@/navigation/applyUpdate"
 import { checkForUpdate, watchForUpdates } from "@/navigation/updateChecks"
@@ -61,3 +62,10 @@ export function Root() {
 }
 
 createRoot(document.getElementById("root")!).render(<Root />)
+
+// B3: a build with online backup checks it at launch, where a sign-in link
+// lands; others never load it.
+if (backupConfig())
+  void import("@/backup/session").then(({ startBackupAtLaunch }) =>
+    startBackupAtLaunch(),
+  )

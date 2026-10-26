@@ -59,6 +59,7 @@ import {
   FullReset,
   StorageStatus,
 } from "@/features/settings/CourseFiles"
+import { OnlineBackup } from "@/features/settings/OnlineBackup"
 import { requestPersistentStorage } from "@/persistence/browserStorage"
 import {
   isResetPending,
@@ -518,6 +519,7 @@ function SettingsView({
       </dl>
       <UpdateCheckButton className="mt-4" />
       <StorageStatus />
+      <OnlineBackup />
       <CourseFiles hasCourse />
       <fieldset className="mt-6 min-w-0 rounded-2xl border bg-card p-4">
         <legend className="max-w-full break-words px-1 text-sm font-bold text-primary [overflow-wrap:anywhere]">

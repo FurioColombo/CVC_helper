@@ -163,14 +163,16 @@ for (const asset of BRAND_PRECACHED_IMAGES) {
 // The summary image hands its PNG to a test hook only in development
 // (src/lib/summaryShare.ts, guarded by import.meta.env.DEV); a production
 // build that still mentions it would expose course data to any page script.
+// The same holds for B3's backup override (src/backup/config.ts): a production
+// build that read it would let a page script point the backup elsewhere.
 for (const file of readdirSync(resolve(root, "dist", "assets"))) {
   if (!file.endsWith(".js")) continue
-  assert.ok(
-    !readFileSync(resolve(root, "dist", "assets", file), "utf8").includes(
-      "__CVC_TEST__",
-    ),
-    `Built script ${file} still contains the development-only test hook`,
-  )
+  const script = readFileSync(resolve(root, "dist", "assets", file), "utf8")
+  for (const hook of ["__CVC_TEST__", "__cvcBackupConfig"])
+    assert.ok(
+      !script.includes(hook),
+      `Built script ${file} still contains the development-only hook ${hook}`,
+    )
 }
 
 console.log(

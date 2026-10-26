@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
@@ -141,11 +141,41 @@ const appVersion = process.env.CVC_APP_VERSION ?? versionBaseline
   }
 }
 
+// B3: online backup's public addresses (project URL, publishable key, sync
+// endpoint) from the ignored `.env`, for CVC Helper Test builds only: the
+// regular app gets none until production exists (owner decision 13), and the
+// dev server none, so local and CI test runs stay alike (tests set them per
+// page, src/backup/config.ts).
+function backupEnv(): Record<string, string> {
+  const empty = { SUPABASE_URL: "", SUPABASE_ANON_KEY: "", POWERSYNC_URL: "" }
+  const file = path.resolve(import.meta.dirname, ".env")
+  if (appChannel !== "test" || !process.argv.includes("build")) return empty
+  if (!existsSync(file)) return empty
+  const values: Record<string, string> = { ...empty }
+  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+    const match = /^(SUPABASE_URL|SUPABASE_ANON_KEY|POWERSYNC_URL)=(.*)$/.exec(
+      line.trim(),
+    )
+    if (match) values[match[1]!] = match[2]!.trim()
+  }
+  return values
+}
+const backup = backupEnv()
+
 export default defineConfig({
   base,
   define: {
     "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion),
     "import.meta.env.VITE_APP_CHANNEL": JSON.stringify(appChannel),
+    "import.meta.env.VITE_BACKUP_SUPABASE_URL": JSON.stringify(
+      backup.SUPABASE_URL,
+    ),
+    "import.meta.env.VITE_BACKUP_SUPABASE_KEY": JSON.stringify(
+      backup.SUPABASE_ANON_KEY,
+    ),
+    "import.meta.env.VITE_BACKUP_POWERSYNC_URL": JSON.stringify(
+      backup.POWERSYNC_URL,
+    ),
   },
   plugins: [
     react(),

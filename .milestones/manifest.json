@@ -1111,7 +1111,7 @@
     {
       "id": "B3",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "ownerEvidence": [".evidence/B3/physical-device-review.json"],
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
@@ -1126,7 +1126,12 @@
         ".evidence/B3/self-review.json",
         ".evidence/B3/security-privacy-review.json",
         ".evidence/B3/field-ux-review.json"
-      ]
+      ],
+      "startedFrom": {
+        "commit": "4c7c7a52bbebbb06f9976e310043eadbcefd2a6e",
+        "sourceDigest": "b7adcf3c06b547858ba0f8df994915a430b985a991a3cca13609b18878e42c44",
+        "ownerPrerequisites": []
+      }
     },
     {
       "id": "B4",

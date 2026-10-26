@@ -9,6 +9,16 @@ import {
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+vi.mock("@/persistence/backupLink", () => ({
+  connectDatabase: vi.fn(),
+  databaseConnected: () => false,
+  deviceCourseId: vi.fn(async () => null),
+  deviceSyncMode: vi.fn(async () => "local"),
+  disconnectDatabase: vi.fn(),
+  onDatabaseStatus: () => () => {},
+  pendingUploads: vi.fn(async () => 0),
+  switchDeviceToSyncedTables: vi.fn(),
+}))
 vi.mock("@/persistence/courses", () => ({
   eraseAllCourseData: vi.fn().mockResolvedValue(undefined),
   getActiveCourse: vi.fn(),

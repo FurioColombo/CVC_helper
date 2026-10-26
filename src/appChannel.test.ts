@@ -15,6 +15,7 @@ describe("app channel storage configuration", () => {
       installedVersionKey: "cvc-helper.installed-version",
       resetPendingKey: "cvc-helper.reset-pending",
       syncModeKey: "cvc-helper.sync-mode",
+      backupAuthKey: "cvc-helper.backup-auth",
       workboxCacheId: null,
       ocrRuntimeCacheName: "cvc-ocr-runtime",
       ocrLanguageCachePath: ".",
@@ -38,6 +39,7 @@ describe("app channel storage configuration", () => {
     expect(test.installedVersionKey).not.toBe(regular.installedVersionKey)
     expect(test.resetPendingKey).not.toBe(regular.resetPendingKey)
     expect(test.syncModeKey).not.toBe(regular.syncModeKey)
+    expect(test.backupAuthKey).not.toBe(regular.backupAuthKey)
     expect(test.workboxCacheId).toBe("cvc-helper-test")
     expect(test.ocrRuntimeCacheName).not.toBe(regular.ocrRuntimeCacheName)
     expect(test.ocrLanguageCachePath).toBe("cvc-helper-test-ocr")
