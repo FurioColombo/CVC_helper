@@ -465,3 +465,45 @@ test("a refusal arriving after the course was erased is not kept", async ({
   })
   expect(kept).not.toContain("Ottavia")
 })
+
+// Review DI-B4-3, round 2: a delete still waiting to upload wins over
+// Riprova; the student is not brought back.
+test("Riprova does not bring back a student whose delete has not uploaded yet", async ({
+  page,
+}) => {
+  let mode: "refusing" | "unreachable" = "refusing"
+  const { server } = await withBackend(page, (write) =>
+    mode === "unreachable"
+      ? "unreachable"
+      : write.table === "students" &&
+          write.rows.some((row) => row.firstName === "Eva")
+        ? { status: 400, code: "23514" }
+        : null,
+  )
+  await courseWithStudents(page, ["Ada", "Eva"])
+  await signIn(page)
+  let section = await backupSection(page)
+  await expect(section.getByRole("alert")).toContainText(
+    "Il backup ha rifiutato 1 modifica",
+    { timeout: 30_000 },
+  )
+  mode = "unreachable"
+  await openStudent(page, "Eva")
+  await page
+    .getByRole("button", { name: "Disponibilità ed eliminazione" })
+    .click()
+  await page.getByRole("button", { name: "Elimina definitivamente" }).click()
+  await page.getByRole("button", { name: "Conferma" }).click()
+  section = await backupSection(page)
+  await section.getByRole("button", { name: "Riprova l’invio" }).click()
+  await expect(section.getByRole("alert")).toContainText(
+    "1 modifica non si può reinviare da qui.",
+  )
+  await page
+    .getByRole("navigation", { name: "Navigazione principale" })
+    .getByRole("button", { name: "Home", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Allievi", exact: true }).click()
+  await expect(page.getByRole("button", { name: /^Eva,/ })).toHaveCount(0)
+  expect(serverStudent(server, "Eva")).toBeUndefined()
+})

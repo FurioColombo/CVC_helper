@@ -189,48 +189,30 @@ Each passed only on a retry and is a defect to fix (03 §6).
   next phone check: reproduce it, then consider giving the test channel its
   own origin, which would also end the shared origin-wide persistence
   permission (03 §3.3).
-- **Sign-in tokens on a shared origin** (B3 SP-B3-5): the backup session and
-  its refresh token sit in localStorage on `furiocolombo.github.io`, shared
-  with every other Pages site of the owner, and `index.html` has no
-  Content-Security-Policy. Before production (UG4): a CSP and an origin of
-  the app's own (the same move as the test channel's origin above).
-- **Full reset does not revoke the backup session** (B3 SP-B3-7): it removes
-  the stored session but never signs out on the server, so the refresh token
-  stays valid until it expires. Sign out first when online. Likewise Esci
-  (B3 SP-B3-12): a refresh the library was already retrying may still
-  exchange the old refresh token when signal returns; the result is
-  discarded on the phone, but the server issued it. Revoke on the server
-  (global sign-out when online) before production.
+- **Before production (UG4), sign-in hardening** (B3 SP-B3-5, -7, -12): the
+  session and refresh token sit in localStorage on the shared
+  `furiocolombo.github.io` origin with no Content-Security-Policy; add a CSP
+  and an origin of the app's own. Full reset and Esci forget the session
+  only locally (a refresh already retrying may still exchange it); revoke it
+  on the server when online.
 - **A custom email sender before production** (B3, 2026-10-26): Supabase's
   built-in sender only delivers to the project's team, a few emails an hour,
   and its templates cannot be edited, so the sign-in email carries no code
   and Impostazioni's "Codice dell’email" field leads nowhere until the owner
   sets up SMTP (owner action B3-EMAIL-CODE). Before UG4: the sender, the code
   in the template, or hide the field while the email has no code.
-- B4 review follow-ups (`.evidence/B4/`):
-  - DI-B4-Q1: crew history counts a member that Equipaggi dropped as the
-    earliest surplus edit, until that session is next saved;
-  - DI-B4-Q2: an older app opening the database drops `uploadRefusals` with
-    its schema (03 §3); the same-origin downgrade is unlikely, but say so
-    where refused changes are explained;
-  - SC-B4-Q1: an upload failure the policy does not recognise retries
-    forever and the status line never says uploads are stuck; show the time
-    since the last accepted upload;
-  - **A delete leaves no tombstone** (B4 convergence harness, the one
-    expected failure in `src/persistence/placementConvergence.test.ts`):
-    phone B deletes a row after phone A edited it offline; if B uploads
-    first, A's older whole-row edit brings the row back, although B's delete
-    is the latest edit. The upload queue does not carry the delete's time,
-    so the server cannot tell. Before team editing (1.0.0): record the
-    deletion time on the device and keep tombstones on the server;
-  - SP-B4-3: a delete, of a student or of a course at erase, loses to an
-    edit with a later device time, so a phone with its clock ahead keeps a
-    deleted student online (owner decision 12 applied to deletes). Decide at
-    B6 whether deleting people's data should always win;
-  - SP-B4-Q3: after a network failure with the sync service also out of
-    reach, uploads waited until the app reopened (one 20 s observation);
-  - SC-B4-Q2: only inserts are batched; a week of offline edits uploads one
-    request per change. Measure on the owner's phone first (SC-B1-Q3).
+- B4 review follow-ups (`.evidence/B4/`; SP-B4-3 is in the plan's B6):
+  - a delete leaves no tombstone: an older whole-row edit uploaded after a
+    later delete of the same row brings it back (the expected failure in
+    `placementConvergence.test.ts`, SC-B4-8). Record deletion times on the
+    device and keep tombstones on the server before team editing (1.0.0);
+  - DI-B4-Q1: crew history counts a member Equipaggi dropped, until saved;
+  - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
+  - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
+    show the time since the last accepted upload;
+  - SP-B4-Q3: with the sync service also unreachable, uploads waited for
+    the app to reopen once (20 s observation);
+  - SC-B4-Q2: only inserts are batched; measure offline edits first.
 - B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
   slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
   Home shows nothing. Consider a one-line notice on Home.

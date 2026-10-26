@@ -48,17 +48,25 @@ interface PersistedMember {
   position: number | null
 }
 
-interface PersistedMemberWithId extends PersistedMember, StampedRow {
+/**
+ * 0 when the row names a person or boat the course no longer has (another
+ * phone deleted it); a missing column counts as present.
+ */
+interface Presence {
+  present?: number
+}
+
+interface PersistedMemberWithId extends PersistedMember, StampedRow, Presence {
   id: string
 }
 
-interface PersistedLandAssignment extends StampedRow {
+interface PersistedLandAssignment extends StampedRow, Presence {
   id: string
   sessionId: string
   studentId: string
 }
 
-interface PersistedSessionBoat extends StampedRow {
+interface PersistedSessionBoat extends StampedRow, Presence {
   id: string
   sessionId: string
   boatId: string
@@ -154,7 +162,11 @@ export async function readCrewPlan(
     ),
     db.getAll<PersistedMemberWithId>(
       `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position,
-              cm.updatedAt
+              cm.updatedAt,
+              CASE WHEN cm.personType = 'volunteer'
+                THEN EXISTS (SELECT 1 FROM volunteers v WHERE v.id = cm.personId)
+                ELSE EXISTS (SELECT 1 FROM students s WHERE s.id = cm.personId)
+              END AS present
        FROM crewMembers cm
        JOIN crews c ON c.id = cm.crewId
        WHERE c.courseId = ? AND c.sessionId = ?
@@ -162,14 +174,16 @@ export async function readCrewPlan(
       [courseId, sessionId],
     ),
     db.getAll<PersistedLandAssignment>(
-      `SELECT id, sessionId, studentId, updatedAt
+      `SELECT id, sessionId, studentId, updatedAt,
+              EXISTS (SELECT 1 FROM students s WHERE s.id = studentId) AS present
        FROM landAssignments
        WHERE courseId = ? AND sessionId = ?
        ORDER BY id`,
       [courseId, sessionId],
     ),
     db.getAll<PersistedSessionBoat>(
-      `SELECT id, sessionId, boatId, position, updatedAt
+      `SELECT id, sessionId, boatId, position, updatedAt,
+              EXISTS (SELECT 1 FROM boats b WHERE b.id = sessionBoats.boatId) AS present
        FROM sessionBoats
        WHERE courseId = ? AND sessionId = ?
        ORDER BY position, id`,
@@ -184,12 +198,20 @@ export async function readCrewPlan(
     ),
   ])
   // Two phones can leave the same person or boat twice: the latest edit stays.
-  const people = resolvePeople(
-    allMemberRows,
-    allLandAssignments,
-    () => sessionId,
-  )
-  const boats = resolveByKey(allSessionBoats, ({ boatId }) => boatId)
+  // A person or boat another phone deleted is not shown; the next save removes
+  // the row.
+  const living = <T extends Presence>(rows: T[]) =>
+    rows.filter(({ present }) => present !== 0)
+  const livingMembers = living(allMemberRows)
+  const livingLand = living(allLandAssignments)
+  const livingBoats = living(allSessionBoats)
+  const orphans =
+    allMemberRows.length -
+    livingMembers.length +
+    (allLandAssignments.length - livingLand.length) +
+    (allSessionBoats.length - livingBoats.length)
+  const people = resolvePeople(livingMembers, livingLand, () => sessionId)
+  const boats = resolveByKey(livingBoats, ({ boatId }) => boatId)
   // Crews two phones created offline: order, boats and slots are settled in
   // memory, and the next save writes them (owner decision 12).
   const settled = resolveCrews(storedCrewRows, people.members, {
@@ -201,6 +223,7 @@ export async function readCrewPlan(
   const landAssignments = people.land
   const sessionBoats = boats.kept
   const resolvedConflicts =
+    orphans +
     people.droppedMembers.length +
     people.droppedLand.length +
     boats.dropped.length +
@@ -776,7 +799,11 @@ export async function readCrewHistory(
     ),
     db.getAll<PersistedMemberWithId>(
       `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position,
-              cm.updatedAt
+              cm.updatedAt,
+              CASE WHEN cm.personType = 'volunteer'
+                THEN EXISTS (SELECT 1 FROM volunteers v WHERE v.id = cm.personId)
+                ELSE EXISTS (SELECT 1 FROM students s WHERE s.id = cm.personId)
+              END AS present
        FROM crewMembers cm
        JOIN crews c ON c.id = cm.crewId
        WHERE c.courseId = ?
@@ -786,8 +813,10 @@ export async function readCrewHistory(
   ])
   // The same person placed twice by two phones counts once, as on the screen.
   const sessionByCrew = new Map(crewRows.map((row) => [row.id, row.sessionId]))
-  const memberRows = resolvePeople(allMemberRows, [], (crewId) =>
-    sessionByCrew.get(crewId),
+  const memberRows = resolvePeople(
+    allMemberRows.filter(({ present }) => present !== 0),
+    [],
+    (crewId) => sessionByCrew.get(crewId),
   ).members
   // Only who sailed with whom matters here, so the crew order and the slots
   // two phones may have filled twice are not checked (the screens settle them).

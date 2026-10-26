@@ -8,7 +8,12 @@ import { exportCourseArchive } from "@/persistence/courseArchive"
 import { readCrewPlan, saveCrewPlan } from "@/persistence/crews"
 import { dutySettingItems } from "@/persistence/dutyItems"
 import { readDutyPlan, saveDutyPlan } from "@/persistence/duties"
-import { listEvaluations, saveEvaluation } from "@/persistence/evaluations"
+import {
+  listCourseEvaluations,
+  listEvaluations,
+  saveEvaluation,
+} from "@/persistence/evaluations"
+import { deleteUnusedStudent } from "@/persistence/students"
 import {
   crewMemberId,
   dutyAssignmentId,
@@ -37,6 +42,7 @@ vi.mock("@/persistence/db", () => ({
 
 const CREATED_AT = "2026-09-01T12:00:00.000Z"
 const PLACEMENT_TABLES = [
+  "students",
   "crews",
   "crewMembers",
   "landAssignments",
@@ -218,7 +224,9 @@ function handleOf(sqlite: DatabaseSync) {
     getOptional: async (sql: string, parameters?: unknown[]) =>
       readAll(sql, parameters)[0] ?? null,
     execute: async (sql: string, parameters: unknown[] = []) =>
-      sqlite.prepare(sql).run(...(parameters as Params)),
+      /\bRETURNING\b/i.test(sql)
+        ? sqlite.prepare(sql).all(...(parameters as Params))
+        : sqlite.prepare(sql).run(...(parameters as Params)),
     executeBatch: async (sql: string, batch: unknown[][]) => {
       for (const parameters of batch) {
         sqlite.prepare(sql).run(...(parameters as Params))
@@ -1278,3 +1286,123 @@ describe("a seeded fuzz of evaluation and land saves on two phones", () => {
     () => fuzz(true),
   )
 })
+
+// Review SC-B4-7: what one phone deleted, the other phone still used.
+describe.each([false, true])(
+  "rows of something another phone deleted, upload order reversed: %s",
+  (reversed) => {
+    beforeEach(() => {
+      reversedUpload = reversed
+    })
+
+    const pointAt = (device: Device) => {
+      current.database = device.database as unknown as typeof current.database
+    }
+    const at = (time: string) => vi.setSystemTime(new Date(time))
+
+    /** Every screen's reader, and the export, on a phone after the sync. */
+    async function expectUsable(device: Device) {
+      pointAt(device)
+      const crews = await readCrewPlan("course-1", "sat-pm")
+      await readDutyPlan("course-1")
+      await listEvaluations("course-1", "sat-pm")
+      await listCourseEvaluations("course-1")
+      const archive = await exportCourseArchive(device.database)
+      // The next save works and leaves nothing to settle.
+      await saveCrewPlan("course-1", "sat-pm", crews, device.database)
+      expect((await readCrewPlan("course-1", "sat-pm")).resolvedConflicts).toBe(
+        0,
+      )
+      return { crews, archive }
+    }
+
+    it("O1: a crew one phone removed after the other put a student in it", async () => {
+      const phoneA = createDevice()
+      const phoneB = createDevice()
+      at("2026-09-20T09:00:00.000Z")
+      await saveCrewPlan(
+        "course-1",
+        "sat-pm",
+        plan({ "crew-2": ["student-3"] }, []),
+        phoneB.database,
+      )
+      at("2026-09-20T10:00:00.000Z")
+      await saveCrewPlan(
+        "course-1",
+        "sat-pm",
+        { ...plan({}, []), crews: plan({}, []).crews.slice(0, 1) },
+        phoneA.database,
+      )
+
+      sync([phoneA, phoneB], [phoneB, phoneA])
+
+      for (const phone of [phoneA, phoneB]) {
+        // The member row outlives its crew on the server.
+        expect(count(phone, "crews")).toBe(1)
+        expect(count(phone, "crewMembers")).toBe(1)
+        const { crews, archive } = await expectUsable(phone)
+        expect(crews.crews.map(({ id }) => id)).toEqual(["crew-1"])
+        expect(archive.tables.crews.map(({ id }) => id)).toEqual(["crew-1"])
+        expect(archive.tables.crewMembers).toEqual([])
+      }
+    })
+
+    it("O2: a student one phone deleted after the other evaluated and placed them", async () => {
+      const phoneA = createDevice()
+      const phoneB = createDevice()
+      pointAt(phoneB)
+      const stored = await readDutyPlan("course-1")
+      at("2026-09-20T09:00:00.000Z")
+      await saveEvaluation("course-1", "student-3", "sat-pm", {
+        value: "+",
+        note: null,
+      })
+      await saveDutyPlan(
+        "course-1",
+        [{ dayId: "saturday", studentId: "student-3" }],
+        stored.settings ?? {
+          desiredPerDay: 0,
+          fewerDayIds: [],
+          balanceMinors: true,
+          balanceSex: false,
+          tieBreaker: "alphabetical" as const,
+          stayOverStudentIds: [],
+          completedDayIds: [],
+          acknowledgedWarningKeys: [],
+        },
+        phoneB.database,
+      )
+      await saveCrewPlan(
+        "course-1",
+        "sat-pm",
+        plan({ "crew-1": ["student-1"] }, ["student-3"]),
+        phoneB.database,
+      )
+      at("2026-09-20T10:00:00.000Z")
+      pointAt(phoneA)
+      await deleteUnusedStudent("student-3", "course-1")
+
+      sync([phoneA, phoneB], [phoneB, phoneA])
+
+      for (const phone of [phoneA, phoneB]) {
+        expect(count(phone, "students")).toBe(2)
+        // The deleted student's rows are still on the server.
+        expect(count(phone, "evaluations")).toBe(1)
+        expect(count(phone, "landAssignments")).toBe(1)
+        const { crews, archive } = await expectUsable(phone)
+        expect(crews.landStudentIds).toEqual([])
+        expect(crews.crews[0]!.members.map(({ personId }) => personId)).toEqual(
+          ["student-1"],
+        )
+        expect(await listCourseEvaluations("course-1")).toEqual([])
+        for (const table of [
+          "landAssignments",
+          "dutyAssignments",
+          "evaluations",
+        ] as const) {
+          expect(archive.tables[table]).toEqual([])
+        }
+      }
+    })
+  },
+)

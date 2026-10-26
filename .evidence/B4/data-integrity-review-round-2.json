@@ -1,0 +1,45 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B4",
+  "commit": "ea1b310",
+  "round": 2,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-B4-3",
+      "title": "Still open in a narrower form: 'Riprova l’invio' brings back a placement the owner removed after the refusal while its delete is still queued, and the re-created row can name a student deleted since, so the export refuses the course",
+      "evidence": "The three round-1 reproductions pass. Remaining: retryUploadRefusals writes the folded whole PUT back when the row is not on the device; parentsPresent checks only the course and COURSE_PARENTS, not landAssignments.studentId, crewMembers.personId, dutyAssignments.studentId, sessionBoats.boatId or crews.boatId; and before the delete uploads, the row's absence looks like 'never written'. Scratch run on node:sqlite: student-3 put on land at 09:00 (PUT refused), taken off land and deleted at 10:00 with both deletes queued, retry returns 0 kept: landAssignments back to 1 row naming no student, exportCourseArchive throws, and the re-created row is queued after the deletes. Same for a refused crewMembers PUT whose student was deleted, and a refused students PUT whose deletion is still queued (the student comes back).",
+      "reproduction": "Reviewer scratch coverage/b4di/r2b.test.ts and r2.test.ts on the placementConvergence harness.",
+      "specRef": "04 B4 success predicate; AGENTS.md §11; the fix's claim 'never re-creates a course or an orphan'"
+    }
+  ],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-B4-Q3",
+      "title": "One known convergence failure is kept as an expected failure rather than listed in the backlog",
+      "evidence": "placementConvergence.test.ts it.fails('ends every round on the latest edit with deletes (known server gap)'); not found in docs/working/BACKLOG.md by the reviewer.",
+      "reproduction": "npx vitest run --project node src/persistence/placementConvergence.test.ts",
+      "specRef": "AGENTS.md §12"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff a627810..ea1b310 (placementConflicts, uploadRefusals, connector, syncMode, upload_rules.sql, OnlineBackup, BACKLOG)",
+    "DI-B4-1 re-test both directions: PASS; DI-B4-2 browser re-test: PASS; DI-B4-3 round-1 reproductions: PASS; DI-B4-4 read; DI-B4-5 re-test: PASS",
+    "7 repository files: 154 passed, 1 expected fail"
+  ],
+  "anglesTried": {
+    "seed": 507743953,
+    "lenses": [
+      "Round 2: DI-B4-1..5 reproductions",
+      "Regressions: Riprova while cancelling deletes are queued; references outside COURSE_PARENTS"
+    ],
+    "wildcard": "Not drawn (round 2)"
+  },
+  "notTested": [
+    "The live keep_latest_edit trigger and conditioned delete",
+    "Reaching Riprova while deletes are queued in a browser (from code)",
+    "'Togli dall’elenco' re-run"
+  ]
+}

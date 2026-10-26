@@ -1,0 +1,68 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "round": 2,
+  "commit": "ea1b310",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SC-B4-7",
+      "title": "A delete on one phone and an insert under the deleted parent on the other leave an orphan row; the course export then fails on both phones, whichever uploads first",
+      "evidence": "The server has no foreign keys; a device deletes only the children it knows, and a new child has its own key-based id, so neither the conditioned delete nor keep_latest_edit can catch it. Scratch runs on ea1b310 with the milestone's own server model, both orders: O1 phone B at 09:00 puts student-3 in crew-2, phone A at 10:00 removes crew-2: both phones have crews ['crew-1'] and crewMembers [{crewId: 'crew-2', personId: 'student-3'}]; readCrewPlan succeeds with resolvedConflicts 0 and student-3 silently drops out; exportCourseArchive throws on both phones. O2 phone B evaluates student-3, phone A deletes student-3: an evaluation of a missing student on both phones, export throws in both orders. No notice.",
+      "reproduction": "Reviewer scratch orph.test.ts (placementConvergence harness plus 'orphans, reversed %s').",
+      "specRef": "Owner decision 12; SC-B1-1; AGENTS.md §11"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-B4-8",
+      "title": "The remaining gap of SC-B4-2: a later delete loses to an earlier whole-row edit uploaded after it, and the row comes back with no notice; recorded only in the backlog, it needs the owner's acceptance or tombstones",
+      "evidence": "Round-1 fuzz (seed 360423565) re-run with the round-2 rules: 3 of 200 rounds wrong (was 42), all this case (rounds 51, 108, 141). With whole-row edits, an edit made before another phone's delete brings back a deleted student, crew or evaluation; a re-insert is not counted as superseded.",
+      "reproduction": "Reviewer scratch fuzz2.test.ts: 'FUZZ2 seed 360423565: 3/200'.",
+      "specRef": "Owner decision 12; 04 B4; AGENTS.md §2"
+    },
+    {
+      "id": "SC-B4-9",
+      "title": "One run of 'a refusal arriving after the course was erased is not kept' failed",
+      "evidence": "Full run of b4-uploads.spec.ts: 7 passed, 1 failed (toBeVisible); alone twice it passed. The working tree was changing during the run; file it if it repeats on a clean tree.",
+      "reproduction": "Full b4-uploads.spec.ts on pixel-7-chrome, retries 0.",
+      "specRef": "03 §6"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B4-Q3",
+      "title": "Equal timestamps go to whichever phone uploads last",
+      "evidence": "keep_latest_edit skips only when new < old; TOUCH is max(now, stored), so two phones editing a row last written by a phone whose clock is ahead write the same future stamp.",
+      "reproduction": "Static.",
+      "specRef": "Owner decision 12"
+    }
+  ],
+  "resolvedBlockers": {
+    "SC-B4-1": "Resolved (R1b, R2b with the server-rule fake backend).",
+    "SC-B4-2": "Resolved for edits (fuzz 42 -> 3 of 200, none an edit); the delete case remains as SC-B4-8.",
+    "SC-B4-3": "Resolved: every column sent, no round left on another phone's note.",
+    "SC-B4-4": "Resolved: no duplicate id in a run; R3b's later student reached the server.",
+    "SC-B4-5": "Resolved as designed."
+  },
+  "evidenceInspected": [
+    "Diff a627810..ea1b310 (connector, uploadRefusals, syncMode, upload_rules.sql read only, BACKLOG, b4-uploads.spec fake backend, placementConvergence server model)",
+    "PowerSync CrudEntry.previousValues and Table.trackPrevious exist in the pinned version",
+    "vitest 98 passed, 1 expected fail; Playwright b4-uploads 7 passed, 1 failed once then passed twice alone",
+    "Scratch r2.spec.ts (R1b-R3b), orph.test.ts (O1, O2), fuzz2.test.ts; files deleted after"
+  ],
+  "anglesTried": {
+    "seed": 360423565,
+    "lenses": [
+      "2: one device deletes what the other is editing",
+      "6: a stale app version"
+    ],
+    "wildcard": "A parent deleted on one phone while the other adds a child under it"
+  },
+  "notTested": [
+    "keep_latest_edit and the minimum-writer check live (migration not run)",
+    "The conditioned delete's lte parameter from real PowerSync previousValues end to end in a browser",
+    "A two-context live cycle (needs B5), WebKit, the owner's phone"
+  ]
+}

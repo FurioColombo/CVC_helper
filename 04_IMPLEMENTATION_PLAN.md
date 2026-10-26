@@ -151,7 +151,9 @@ queue's pending payloads included (B1 reviews DI-B1-1, SC-B1-3), also after
 an offline erase and reconnect.
 
 **Adversarial checklist:** an erase offline and never reconnected; an erase
-racing a restore on another device; partial deletion leaving orphan rows.
+racing a restore on another device; partial deletion leaving orphan rows; a
+delete of people's data losing to another phone's later or clock-ahead edit
+under the B4 upload rules (B4 review SP-B4-3).
 
 **Evidence:** verification, self, security/privacy and data-integrity
 reviews.

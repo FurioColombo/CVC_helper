@@ -189,6 +189,45 @@ async function writeWhole(
   )
 }
 
+/** The rows a placement names besides its parent (src/domain/invariants.ts). */
+const REFERENCES: Record<
+  string,
+  Array<{ column: string; target: (row: Row) => string }>
+> = {
+  landAssignments: [{ column: "studentId", target: () => "students" }],
+  dutyAssignments: [{ column: "studentId", target: () => "students" }],
+  sessionBoats: [{ column: "boatId", target: () => "boats" }],
+  crews: [{ column: "boatId", target: () => "boats" }],
+  crewMembers: [
+    {
+      column: "personId",
+      target: (row) =>
+        row.personType === "volunteer" ? "volunteers" : "students",
+    },
+  ],
+}
+
+/**
+ * Whether the device deleted the row and that delete still waits to upload:
+ * absent from the device, the row would look never written (review DI-B4-3,
+ * round 2). Its delete cancels the refusal once it uploads.
+ */
+async function deletePending(
+  transaction: Transaction,
+  table: string,
+  rowId: string,
+) {
+  const queued = await transaction.getAll(
+    `SELECT 1 FROM ps_crud
+     WHERE json_extract(data, '$.op') = 'DELETE'
+       AND json_extract(data, '$.type') = ?
+       AND json_extract(data, '$.id') = ?
+     LIMIT 1`,
+    [`synced_${table}`, rowId],
+  )
+  return queued.length > 0
+}
+
 /** Whether the row's course and parent are on the device (no orphan). */
 async function parentsPresent(
   transaction: Transaction,
@@ -203,6 +242,13 @@ async function parentsPresent(
   )
   const parent = COURSE_PARENTS[table as keyof typeof COURSE_PARENTS]
   if (parent) checks.push([parent.table, row[parent.key]])
+  // Every other row it names must be here too, or the course would hold a
+  // dangling reference the export refuses (review DI-B4-3, round 2).
+  for (const { column, target } of REFERENCES[table] ?? []) {
+    const value = row[column]
+    if (value === null || value === undefined) continue
+    checks.push([target(row), value])
+  }
   for (const [parentTable, id] of checks) {
     if (typeof id !== "string") return false
     const found = await transaction.getAll(
@@ -275,6 +321,10 @@ export async function retryUploadRefusals() {
           folded = { ...(folded ?? {}), ...refusal.data, id: rowId }
           removed = false
         }
+      }
+      if (!current && (await deletePending(transaction, tableName, rowId))) {
+        kept += group.length
+        continue
       }
       let row: Row | null = null
       if (current && (current.updatedAt ?? "") > lastEdit) row = current

@@ -296,13 +296,77 @@ interface CourseRows {
   sessionBoats: ReadonlyArray<Record<string, unknown>>
   dutyAssignments: ReadonlyArray<Record<string, unknown>>
   evaluations: ReadonlyArray<Record<string, unknown>>
+  students?: ReadonlyArray<Record<string, unknown>>
+  volunteers?: ReadonlyArray<Record<string, unknown>>
+  boats?: ReadonlyArray<Record<string, unknown>>
+  faults?: ReadonlyArray<Record<string, unknown>>
+}
+
+type Rows = ReadonlyArray<Record<string, unknown>>
+
+/**
+ * Rows naming a row the course no longer has: one phone deleted a crew, a
+ * student or a boat while the other placed someone or something under it
+ * offline (review SC-B4-7). Neither upload can see the other, so the course
+ * settles here: such a placement goes, a crew keeps its people without the
+ * boat, and each counts as a resolved conflict. Tables not given are not
+ * checked.
+ */
+function withoutOrphans<T extends CourseRows>(tables: T) {
+  const ids = (rows?: Rows) =>
+    rows ? new Set(rows.map(({ id }) => id as string)) : null
+  const students = ids(tables.students)
+  const volunteers = ids(tables.volunteers)
+  const boats = ids(tables.boats)
+  const crews = ids(tables.crews)!
+  const has = (set: Set<string> | null, id: unknown) =>
+    !set || set.has(id as string)
+  let dropped = 0
+  const keep = (
+    rows: Rows,
+    present: (row: Record<string, unknown>) => boolean,
+  ) =>
+    rows.filter((row) => {
+      if (present(row)) return true
+      dropped += 1
+      return false
+    })
+  const ofStudent = (row: Record<string, unknown>) =>
+    has(students, row.studentId)
+  const settled = {
+    ...tables,
+    crews: tables.crews.map((crew) => {
+      if (crew.boatId == null || has(boats, crew.boatId)) return crew
+      dropped += 1
+      return { ...crew, boatId: null, destination: "unassigned" }
+    }),
+    crewMembers: keep(
+      tables.crewMembers,
+      (row) =>
+        crews.has(row.crewId as string) &&
+        has(
+          row.personType === "volunteer" ? volunteers : students,
+          row.personId,
+        ),
+    ),
+    landAssignments: keep(tables.landAssignments, ofStudent),
+    dutyAssignments: keep(tables.dutyAssignments, ofStudent),
+    evaluations: keep(tables.evaluations, ofStudent),
+    sessionBoats: keep(tables.sessionBoats, (row) => has(boats, row.boatId)),
+    ...(tables.faults
+      ? { faults: keep(tables.faults, (row) => has(boats, row.boatId)) }
+      : {}),
+  } as T
+  return { tables: settled, dropped }
 }
 
 /**
  * A course's placement tables with each placement once, for the export: the
  * file holds the resolved state, which is also what every screen shows.
  */
-export function resolveCoursePlacements<T extends CourseRows>(tables: T) {
+export function resolveCoursePlacements<T extends CourseRows>(given: T) {
+  const orphans = withoutOrphans(given)
+  const tables = orphans.tables
   const sessionByCrew = new Map(
     tables.crews.map(({ id, sessionId }) => [
       id as string,
@@ -399,6 +463,7 @@ export function resolveCoursePlacements<T extends CourseRows>(tables: T) {
   return {
     tables: resolved,
     conflicts:
+      orphans.dropped +
       people.droppedMembers.length +
       people.droppedLand.length +
       boats.dropped.length +

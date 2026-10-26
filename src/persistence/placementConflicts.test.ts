@@ -166,3 +166,182 @@ describe("resolveCoursePlacements", () => {
     expect(resolved.crewMembers).toHaveLength(1)
   })
 })
+
+describe("resolveCoursePlacements: rows of something that is gone", () => {
+  const whole = () => ({
+    courses: [{ family: "Deriva", level: 2 }],
+    students: [{ id: "s1" }],
+    volunteers: [{ id: "v1" }],
+    boats: [{ id: "boat" }],
+    faults: [{ id: "f1", boatId: "boat" }],
+    crews: [
+      {
+        id: "c1",
+        sessionId: "sat-pm",
+        boatId: null as string | null,
+        destination: "unassigned",
+      },
+    ],
+    crewMembers: [member("m1", "c1", "s1", early)],
+    landAssignments: [] as ReturnType<typeof land>[],
+    sessionBoats: [
+      { id: "b1", sessionId: "sat-pm", boatId: "boat", updatedAt: early },
+    ],
+    dutyAssignments: [
+      { id: "d1", dayId: "saturday", studentId: "s1", updatedAt: early },
+    ],
+    evaluations: [
+      { id: "e1", sessionId: "sat-pm", studentId: "s1", updatedAt: early },
+    ],
+  })
+  type Whole = ReturnType<typeof whole>
+
+  it("leaves a course whose rows all exist alone", () => {
+    const { conflicts, tables } = resolveCoursePlacements(whole())
+    expect(conflicts).toBe(0)
+    expect(tables.crewMembers).toHaveLength(1)
+    expect(tables.faults).toHaveLength(1)
+  })
+
+  it.each([
+    [
+      "a member of a crew that is gone",
+      (t: Whole) => ({
+        ...t,
+        crewMembers: [member("m2", "ghost", "s1", early)],
+      }),
+      (r: Whole) => expect(r.crewMembers).toEqual([]),
+    ],
+    [
+      "a student member whose student is gone",
+      (t: Whole) => ({ ...t, crewMembers: [member("m2", "c1", "s9", early)] }),
+      (r: Whole) => expect(r.crewMembers).toEqual([]),
+    ],
+    [
+      "a volunteer member whose volunteer is gone, even if a student has that id",
+      (t: Whole) => ({
+        ...t,
+        crewMembers: [member("m2", "c1", "s1", early, "volunteer")],
+      }),
+      (r: Whole) => expect(r.crewMembers).toEqual([]),
+    ],
+    [
+      "a land row of a student who is gone",
+      (t: Whole) => ({ ...t, landAssignments: [land("l1", "s9", early)] }),
+      (r: Whole) => expect(r.landAssignments).toEqual([]),
+    ],
+    [
+      "a duty of a student who is gone",
+      (t: Whole) => ({
+        ...t,
+        dutyAssignments: [
+          { id: "d2", dayId: "sunday", studentId: "s9", updatedAt: early },
+        ],
+      }),
+      (r: Whole) => expect(r.dutyAssignments).toEqual([]),
+    ],
+    [
+      "an evaluation of a student who is gone",
+      (t: Whole) => ({
+        ...t,
+        evaluations: [
+          { id: "e2", sessionId: "sat-pm", studentId: "s9", updatedAt: early },
+        ],
+      }),
+      (r: Whole) => expect(r.evaluations).toEqual([]),
+    ],
+    [
+      "a session boat whose boat is gone",
+      (t: Whole) => ({
+        ...t,
+        sessionBoats: [
+          { id: "b2", sessionId: "sat-pm", boatId: "gone", updatedAt: early },
+        ],
+      }),
+      (r: Whole) => expect(r.sessionBoats).toEqual([]),
+    ],
+    [
+      "a fault of a boat that is gone",
+      (t: Whole) => ({ ...t, faults: [{ id: "f2", boatId: "gone" }] }),
+      (r: Whole) => expect(r.faults).toEqual([]),
+    ],
+    [
+      "a crew whose boat is gone keeps its people without the boat",
+      (t: Whole) => ({
+        ...t,
+        crews: [
+          {
+            id: "c1",
+            sessionId: "sat-pm",
+            boatId: "gone",
+            destination: "boat",
+          },
+        ],
+      }),
+      (r: Whole) => {
+        expect(r.crews).toEqual([
+          {
+            id: "c1",
+            sessionId: "sat-pm",
+            boatId: null,
+            destination: "unassigned",
+          },
+        ])
+        expect(r.crewMembers).toHaveLength(1)
+      },
+    ],
+  ])("drops %s and counts it once", (_name, make, check) => {
+    const { conflicts, tables } = resolveCoursePlacements(make(whole()))
+    expect(conflicts).toBe(1)
+    check(tables)
+  })
+
+  it("counts every orphan row", () => {
+    const t = whole()
+    const { conflicts } = resolveCoursePlacements({
+      ...t,
+      landAssignments: [land("l1", "s9", early), land("l2", "s8", early)],
+      crewMembers: [member("m2", "ghost", "s1", early), ...t.crewMembers],
+    })
+    expect(conflicts).toBe(3)
+  })
+
+  it("does not check against a table that is not given", () => {
+    const { students, volunteers, boats, faults, ...rest } = whole()
+    void students
+    void volunteers
+    void boats
+    void faults
+    const { conflicts, tables } = resolveCoursePlacements({
+      ...rest,
+      landAssignments: [land("l1", "s9", early)],
+      crewMembers: [
+        member("m1", "c1", "s7", early),
+        member("m2", "c1", "v9", early, "volunteer"),
+      ],
+      sessionBoats: [
+        { id: "b2", sessionId: "sat-pm", boatId: "gone", updatedAt: early },
+      ],
+      crews: [
+        { id: "c1", sessionId: "sat-pm", boatId: "gone", destination: "boat" },
+      ],
+    })
+    expect(tables.landAssignments).toHaveLength(1)
+    expect(tables.crewMembers).toHaveLength(2)
+    expect(tables.sessionBoats).toHaveLength(1)
+    expect(conflicts).toBe(0)
+  })
+
+  it("still drops a member of a crew that is gone when no other table is given", () => {
+    const { students, volunteers, boats, faults, ...rest } = whole()
+    void students
+    void volunteers
+    void boats
+    void faults
+    const { conflicts } = resolveCoursePlacements({
+      ...rest,
+      crewMembers: [member("m2", "ghost", "s1", early)],
+    })
+    expect(conflicts).toBe(1)
+  })
+})

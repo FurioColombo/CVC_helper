@@ -1,0 +1,53 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B4",
+  "round": 2,
+  "commit": "ea1b310",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SP-B4-3",
+      "title": "Deletes of minors' data lose to device clocks (still open; moved to B6 in docs/working/BACKLOG.md)",
+      "evidence": "Unchanged at ea1b310: DELETE only where updatedAt <= the previous value the device saw, and keep_latest_edit skips an update older than the row; both compare device-set times. The disposition is a deferral to B6, acceptable only if B6's acceptance includes it.",
+      "reproduction": "By construction; the migration is still not applied on the development backend (a write without the header and one with 0.0.1 still answer 204).",
+      "specRef": "Owner decision 12; 04_IMPLEMENTATION_PLAN.md B6"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B4-Q1",
+      "title": "The version header is client-asserted: the migration comment now says so (accepted)",
+      "evidence": "app_minimum_writer answers 404 PGRST205 and rpc/refuse_outdated_writer 404 PGRST202 through the API.",
+      "reproduction": "Reviewer probe.mjs.",
+      "specRef": "03 §3.1"
+    },
+    {
+      "id": "SP-B4-Q3",
+      "title": "Upload retry stalls while the sync stream is also unreachable, until the app is reopened (deferred to the backlog)",
+      "evidence": "Seen again on ea1b310: 'pending 4' with no write for 20 s after the fake backend came back; the writes went out on reload.",
+      "reproduction": "garante-erase.spec.ts diagnostic loop.",
+      "specRef": "04 B4 'a transient failure retries'"
+    }
+  ],
+  "evidenceInspected": [
+    "SP-B4-1 re-tested on a snapshot of ea1b310 with the round-1 scratch specs: with the erase's deletes uploaded and with them held, 'refusals after erase+refuse: 0' and no student data kept; both specs now fail only on their own assertion that a leak exists",
+    "The SP-B4-1 fix: uploadRefusals.ts keep rule (a delete always; an insert or edit only when its course is on the device) and parentsPresent requiring the course row itself",
+    "SP-B4-2: an edit whose row is on the device goes as a whole-row upsert limited to the schema's columns; a PATCH remains only for a row no longer on the device",
+    "Live cross-account matrix with the two synthetic accounts: the other account's whole-row upserts of the course, an existing student and a new student all 403/42501; the owner's student unchanged; bare PATCH and DELETE still 204 with 0 rows, but the app no longer sends a bare PATCH for a row on the device and a DELETE carries no personal data; 0 rows left",
+    "No personal data in client console output during the runs"
+  ],
+  "anglesTried": {
+    "seed": 209252056,
+    "lenses": [
+      "Round 2: re-test SP-B4-1 (deletes uploaded and held) and SP-B4-2 on ea1b310; check the dispositions of SP-B4-3, Q1 and Q3"
+    ],
+    "wildcard": "Whether the keep rule's course-on-device test can be fooled: course id from the refused data vs the device row, DELETE refusals kept unconditionally, the PATCH-to-missing-row path"
+  },
+  "notTested": [
+    "The repository's b4-uploads.spec.ts on the snapshot (not finished at report time)",
+    "keep_latest_edit and refuse_outdated_writer live (migration not applied)",
+    "WebKit and a physical phone"
+  ]
+}
