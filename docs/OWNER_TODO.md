@@ -48,12 +48,10 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 **What to do:**
 
-1. Open CVC Helper Test in Chrome as before (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.1 and still Accesso: &lt;your email&gt; with Copia online aggiornata. Use invented people only.
-2. Only after that: in the Supabase dashboard of cvc-helper-dev open SQL Editor, paste the whole file supabase/migrations/20261026000000_upload_rules.sql and run it once (it should report success with no rows). Tell me 'rules run' in the chat: I then run the live checks of the two server rules against the backend.
-3. Back in the app, add a student and change a note: Impostazioni should return to Copia online aggiornata within a few seconds (the new rules accept 0.5.1).
-4. Then a day of ordinary use offline: turn on airplane mode, make many edits over the day (students, notes, crews, duties, evaluations). Note whether saving ever feels slower than usual, and roughly how many changes Impostazioni says are waiting.
-5. Turn airplane mode off: note how long it takes to reach Copia online aggiornata, and whether any 'Il backup ha rifiutato' message or a note about another phone appears (none is expected with one phone).
-6. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
+1. Done (2026-10-27): CVC Helper Test updated to 0.5.1, the upload-rules migration run (verified live: .evidence/B4/live-server-rules.json), and a student or note change reached Copia online aggiornata with no issue.
+2. Then a day of ordinary use offline: turn on airplane mode, make many edits over the day (students, notes, crews, duties, evaluations). Note whether saving ever feels slower than usual, and roughly how many changes Impostazioni says are waiting.
+3. Turn airplane mode off: note how long it takes to reach Copia online aggiornata, and whether any 'Il backup ha rifiutato' message or a note about another phone appears (none is expected with one phone).
+4. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
 
 Use the test address below and the linked device instructions.
 
