@@ -1,0 +1,42 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B3",
+  "commit": "12d9171 (4dd7977 landed during the run and was served for the later tests)",
+  "round": 4,
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "FUX-B3-R4-Q1",
+      "title": "Unconfirmed: on Playwright WebKit, the app sometimes stays on 'Apertura del corso…' after the launch switch reloads it",
+      "evidence": "iphone project: createCourse, store a session, page.reload(), wait for the second load, open Impostazioni. In 2 of 4 runs of a two-tab scratch spec the page showed only 'Apertura del corso…' and Impostazioni never appeared within 20 s; the other 2 runs and every Pixel run passed. Vite dev server on Windows with another agent committing at the same time: possibly an environment flake, not tied to a field-UX change. Worth one run of the repo's iphone-13-webkit-core project around the switch reload before the owner's iPhone check.",
+      "reproduction": "Scratch spec r4b 'two tabs' on project iphone, --repeat-each=4.",
+      "specRef": "01_PRODUCT_SPEC.md §1 (iPhone/WebKit target)"
+    }
+  ],
+  "roundThreeRecheck": {
+    "FUX-B3-R3-1": "RESOLVED. One tap during a 3 s launch check: 'Backup pronto. Riapri l'app per attivarlo.', no reload (loads 1). 'Riapri l'app' plus a hurried tap 1 s later: one reload, then 'Accesso: istruttore@example.test | In attesa di connessione: 1 modifica da inviare.' (loads 2).",
+    "FUX-B3-R3-Q1": "RESOLVED. Token refresh slowed to 6 s: 'Verifica dell'accesso…' at 0.5 s and 2 s, 'Accesso: …' at 8 s. Offline next morning: 'Verifica dell'accesso…' for about 3-4 s, then 'Accesso: … In attesa di connessione: 1 modifica da inviare.'",
+    "regressions": "None in the field path. New student with a Sesso tap during the launch check: no reload, form kept (Pixel and iPhone). Open evaluation note, tap outside: no alert, no reload (both). Code plus Enter: one reload, signed in (both). Esci in tab A signs tab B out (Pixel). Offline Esci 3.6 s (Pixel), 4.0 s (iPhone).",
+    "switchedHere reload": "A tab that ran the switch reloads even if touched during it; the window is about a second for a small course and the tab can no longer save anyway. No data loss observed."
+  },
+  "fieldWalkthrough": "Slow pier morning: tap at once, the switch waits, Impostazioni says 'Backup pronto', one tap on 'Riapri l'app', one reload, 'Accesso … 1 modifica da inviare'. Nothing typed is lost. Offline 'Verifica dell'accesso…' for about 3 s, then the honest waiting line. Nothing read twice.",
+  "evidenceInspected": [
+    "git diff 6e435d5..12d9171: src/backup/session.ts, src/features/settings/OnlineBackup.tsx",
+    "Round-3 report .evidence/B3/field-ux-review-round-3.json",
+    "Scratch specs r3a, r3b, r4a, r4b on Pixel 7 and iPhone 13 WebKit with a fake backend and synthetic accounts",
+    "@supabase/auth-js _refreshAccessToken back-off"
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": ["Round 4 confirmation after a round-3 PASS_WITH_FINDINGS: FUX-B3-R3-1, R3-Q1 and regressions from 12d9171"],
+    "wildcard": "Whether 'switched here always reloads' or the auth.initialize await could reintroduce a reload under typing or a long 'Verifica' offline"
+  },
+  "notTested": [
+    "The sign-in link path with a real emailed link (exchange covered by the security reviewer)",
+    "Real devices, installed PWA, sunlight",
+    "The intermittent WebKit 'Apertura del corso…' hang beyond 4 scratch runs"
+  ]
+}
