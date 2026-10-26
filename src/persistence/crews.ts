@@ -18,6 +18,16 @@ import {
 } from "@/domain/crews"
 import type { CrewHistoryEntry } from "@/domain/crewWarnings"
 import { db } from "@/persistence/db"
+import {
+  resolveByKey,
+  resolvePeople,
+  type StampedRow,
+} from "@/persistence/placementConflicts"
+import {
+  crewMemberId,
+  landAssignmentId,
+  sessionBoatId,
+} from "@/persistence/placementIds"
 import { stamp, TOUCH } from "@/persistence/stamp"
 
 interface PersistedCrew {
@@ -36,17 +46,17 @@ interface PersistedMember {
   position: number | null
 }
 
-interface PersistedMemberWithId extends PersistedMember {
+interface PersistedMemberWithId extends PersistedMember, StampedRow {
   id: string
 }
 
-interface PersistedLandAssignment {
+interface PersistedLandAssignment extends StampedRow {
   id: string
   sessionId: string
   studentId: string
 }
 
-interface PersistedSessionBoat {
+interface PersistedSessionBoat extends StampedRow {
   id: string
   sessionId: string
   boatId: string
@@ -67,6 +77,11 @@ interface PersistedStudentNameKey {
 
 export interface CrewPlanRecord extends CrewPlan {
   landAssignments: PersistedLandAssignment[]
+  /**
+   * Rows dropped because two phones placed the same person (or boat) twice
+   * offline; the latest edit stays (SC-B1-1). The next save deletes them.
+   */
+  resolvedConflicts?: number
 }
 
 const SESSION_IDS = SESSION_SEQUENCE.map(({ id }) => id)
@@ -120,56 +135,78 @@ export async function readCrewPlan(
     [courseId],
   )
   if (!course) throw new Error("Crew course does not exist")
-  const [crewRows, memberRows, landAssignments, sessionBoats, studentNameRows] =
-    await Promise.all([
-      db.getAll<PersistedCrew>(
-        `SELECT id, sessionId, capacity, destination, boatId, position
+  const [
+    crewRows,
+    allMemberRows,
+    allLandAssignments,
+    allSessionBoats,
+    studentNameRows,
+  ] = await Promise.all([
+    db.getAll<PersistedCrew>(
+      `SELECT id, sessionId, capacity, destination, boatId, position
        FROM crews
        WHERE courseId = ? AND sessionId = ?
        ORDER BY position`,
-        [courseId, sessionId],
-      ),
-      db.getAll<PersistedMember>(
-        `SELECT cm.crewId, cm.personId, cm.personType, cm.position
+      [courseId, sessionId],
+    ),
+    db.getAll<PersistedMemberWithId>(
+      `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position,
+              cm.updatedAt
        FROM crewMembers cm
        JOIN crews c ON c.id = cm.crewId
        WHERE c.courseId = ? AND c.sessionId = ?
-       ORDER BY cm.crewId, cm.position`,
-        [courseId, sessionId],
-      ),
-      db.getAll<PersistedLandAssignment>(
-        `SELECT id, sessionId, studentId
+       ORDER BY cm.crewId, cm.position, cm.id`,
+      [courseId, sessionId],
+    ),
+    db.getAll<PersistedLandAssignment>(
+      `SELECT id, sessionId, studentId, updatedAt
        FROM landAssignments
        WHERE courseId = ? AND sessionId = ?
        ORDER BY id`,
-        [courseId, sessionId],
-      ),
-      db.getAll<PersistedSessionBoat>(
-        `SELECT id, sessionId, boatId, position
+      [courseId, sessionId],
+    ),
+    db.getAll<PersistedSessionBoat>(
+      `SELECT id, sessionId, boatId, position, updatedAt
        FROM sessionBoats
        WHERE courseId = ? AND sessionId = ?
-       ORDER BY position`,
-        [courseId, sessionId],
-      ),
-      // Only used to give A terra a stable, name-based order (see
-      // compareLandStudents); the actual land assignment rows above still
-      // come back in whatever order SQLite returns them.
-      db.getAll<PersistedStudentNameKey>(
-        `SELECT id, surname, nickname, firstName FROM students WHERE courseId = ?`,
-        [courseId],
-      ),
-    ])
+       ORDER BY position, id`,
+      [courseId, sessionId],
+    ),
+    // Only used to give A terra a stable, name-based order (see
+    // compareLandStudents); the actual land assignment rows above still
+    // come back in whatever order SQLite returns them.
+    db.getAll<PersistedStudentNameKey>(
+      `SELECT id, surname, nickname, firstName FROM students WHERE courseId = ?`,
+      [courseId],
+    ),
+  ])
+  // Two phones can leave the same person or boat twice: the latest edit stays.
+  const people = resolvePeople(
+    allMemberRows,
+    allLandAssignments,
+    () => sessionId,
+  )
+  const boats = resolveByKey(allSessionBoats, ({ boatId }) => boatId)
+  const memberRows = people.members
+  const landAssignments = people.land
+  const sessionBoats = boats.kept
+  const resolvedConflicts =
+    people.droppedMembers.length +
+    people.droppedLand.length +
+    boats.dropped.length
   const selectedBoatIds = new Set(sessionBoats.map(({ boatId }) => boatId))
   const assignedBoatIds = new Set<string>()
   const persistedCrewIds = new Set(crewRows.map(({ id }) => id))
   const seenCrewIds = new Set<string>()
   if (
     sessionBoats.some(
-      ({ sessionId: value, boatId, position }, index) =>
+      ({ sessionId: value, boatId, position }) =>
         value !== sessionId ||
         !boatId ||
         selectedBoatIds.size !== sessionBoats.length ||
-        (position !== null && position !== index),
+        // Two phones can add boats at the same position, or one can remove
+        // the boat between: the order only has to be a number.
+        (position !== null && (!Number.isInteger(position) || position < 0)),
     ) ||
     memberRows.some(
       ({ crewId, personId, personType, position }) =>
@@ -306,6 +343,7 @@ export async function readCrewPlan(
     landStudentIds: orderedLandAssignments.map(({ studentId }) => studentId),
     selectedBoatIds: sessionBoats.map(({ boatId }) => boatId),
     landAssignments: orderedLandAssignments,
+    resolvedConflicts,
   }
 }
 
@@ -448,22 +486,34 @@ export async function saveCrewPlan(
        FROM crews WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
-    const existingMembers = await transaction.getAll<PersistedMemberWithId>(
-      `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position
+    const storedMembers = await transaction.getAll<PersistedMemberWithId>(
+      `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position,
+              cm.updatedAt
        FROM crewMembers cm JOIN crews c ON c.id = cm.crewId
        WHERE c.courseId = ? AND c.sessionId = ?`,
       [courseId, sessionId],
     )
-    const existingLand = await transaction.getAll<PersistedLandAssignment>(
-      `SELECT id, sessionId, studentId FROM landAssignments
+    const storedLand = await transaction.getAll<PersistedLandAssignment>(
+      `SELECT id, sessionId, studentId, updatedAt FROM landAssignments
        WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
-    const existingSessionBoats = await transaction.getAll<PersistedSessionBoat>(
-      `SELECT id, sessionId, boatId, position FROM sessionBoats
+    const storedSessionBoats = await transaction.getAll<PersistedSessionBoat>(
+      `SELECT id, sessionId, boatId, position, updatedAt FROM sessionBoats
        WHERE courseId = ? AND sessionId = ?`,
       [courseId, sessionId],
     )
+    // What the screen showed: a placement two phones made twice keeps its
+    // latest row, and the losing rows are deleted below with this save.
+    const storedPeople = resolvePeople(
+      storedMembers,
+      storedLand,
+      () => sessionId,
+    )
+    const storedBoats = resolveByKey(storedSessionBoats, ({ boatId }) => boatId)
+    const existingMembers = storedPeople.members
+    const existingLand = storedPeople.land
+    const existingSessionBoats = storedBoats.kept
     const memberKey = ({ crewId, personType, personId }: PersistedMember) =>
       JSON.stringify([crewId, personType, personId])
     const nextMembers = plan.crews.flatMap((crew) =>
@@ -503,9 +553,12 @@ export async function saveCrewPlan(
     }
     const nextCrewIds = new Set(plan.crews.map(({ id }) => id))
     const nextMemberKeys = new Set(nextMembers.map(memberKey))
-    const removedMembers = existingMembers.filter(
-      (member) => !nextMemberKeys.has(memberKey(member)),
-    )
+    const removedMembers = [
+      ...storedPeople.droppedMembers,
+      ...existingMembers.filter(
+        (member) => !nextMemberKeys.has(memberKey(member)),
+      ),
+    ]
     if (removedMembers.length > 0) {
       await transaction.executeBatch(
         `DELETE FROM crewMembers WHERE id = ? AND crewId IN
@@ -570,9 +623,10 @@ export async function saveCrewPlan(
       )
     }
     const nextBoatIds = new Set(plan.selectedBoatIds)
-    const removedSessionBoats = existingSessionBoats.filter(
-      ({ boatId }) => !nextBoatIds.has(boatId),
-    )
+    const removedSessionBoats = [
+      ...storedBoats.dropped,
+      ...existingSessionBoats.filter(({ boatId }) => !nextBoatIds.has(boatId)),
+    ]
     if (removedSessionBoats.length > 0) {
       await transaction.executeBatch(
         "DELETE FROM sessionBoats WHERE id = ? AND courseId = ? AND sessionId = ?",
@@ -610,7 +664,7 @@ export async function saveCrewPlan(
            id, courseId, sessionId, boatId, position, createdAt, updatedAt
          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         addedSessionBoats.map(({ boatId, position }) => [
-          crypto.randomUUID(),
+          sessionBoatId(sessionId, boatId),
           courseId,
           sessionId,
           boatId,
@@ -649,7 +703,7 @@ export async function saveCrewPlan(
            createdAt, updatedAt
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         addedMembers.map(({ crewId, personId, personType, position }) => [
-          crypto.randomUUID(),
+          crewMemberId(crewId, personType, personId),
           courseId,
           crewId,
           personId,
@@ -661,9 +715,10 @@ export async function saveCrewPlan(
       )
     }
     const nextLandIds = new Set(plan.landStudentIds)
-    const removedLand = existingLand.filter(
-      ({ studentId }) => !nextLandIds.has(studentId),
-    )
+    const removedLand = [
+      ...storedPeople.droppedLand,
+      ...existingLand.filter(({ studentId }) => !nextLandIds.has(studentId)),
+    ]
     if (removedLand.length > 0) {
       await transaction.executeBatch(
         "DELETE FROM landAssignments WHERE id = ? AND courseId = ? AND sessionId = ?",
@@ -679,7 +734,7 @@ export async function saveCrewPlan(
            id, courseId, sessionId, studentId, createdAt, updatedAt
          ) VALUES (?, ?, ?, ?, ?, ?)`,
         addedLand.map((studentId) => [
-          crypto.randomUUID(),
+          landAssignmentId(sessionId, studentId),
           courseId,
           sessionId,
           studentId,
@@ -700,7 +755,7 @@ export async function readCrewHistory(
     [courseId],
   )
   if (!course) throw new Error("Crew course does not exist")
-  const [crewRows, memberRows] = await Promise.all([
+  const [crewRows, allMemberRows] = await Promise.all([
     db.getAll<PersistedCrew>(
       `SELECT id, sessionId, capacity, destination, boatId, position
        FROM crews
@@ -708,15 +763,21 @@ export async function readCrewHistory(
        ORDER BY sessionId, position`,
       [courseId],
     ),
-    db.getAll<PersistedMember>(
-      `SELECT cm.crewId, cm.personId, cm.personType, cm.position
+    db.getAll<PersistedMemberWithId>(
+      `SELECT cm.id, cm.crewId, cm.personId, cm.personType, cm.position,
+              cm.updatedAt
        FROM crewMembers cm
        JOIN crews c ON c.id = cm.crewId
        WHERE c.courseId = ?
-       ORDER BY cm.crewId, cm.position`,
+       ORDER BY cm.crewId, cm.position, cm.id`,
       [courseId],
     ),
   ])
+  // The same person placed twice by two phones counts once, as on the screen.
+  const sessionByCrew = new Map(crewRows.map((row) => [row.id, row.sessionId]))
+  const memberRows = resolvePeople(allMemberRows, [], (crewId) =>
+    sessionByCrew.get(crewId),
+  ).members
   const nextCrewPosition = new Map<string, number>()
   if (
     crewRows.some(({ sessionId, destination, position }) => {

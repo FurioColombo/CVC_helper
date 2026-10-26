@@ -148,6 +148,20 @@ const meta = Table.createLocalOnly({
   value: column.integer,
 })
 
+// B4: changes the online backup refused for good, kept on the device so the
+// owner sees them and can send them again (src/persistence/backupLink.ts).
+// Course data: the erase and the import empty it with the course. `id` is
+// "refusal:<queue entry>", so a refusal recorded twice stays one; `data` is
+// the change's columns as JSON.
+const uploadRefusals = Table.createLocalOnly({
+  tableName: column.text,
+  rowId: column.text,
+  op: column.text,
+  data: column.text,
+  reason: column.text,
+  refusedAt: column.text,
+})
+
 export const AppSchema = new Schema({
   courses,
   students,
@@ -163,6 +177,7 @@ export const AppSchema = new Schema({
   sessionBoats,
   evaluations,
   meta,
+  uploadRefusals,
 })
 
 /** Course tables, parents before children; all but `courses` name their course. */

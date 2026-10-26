@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { backupConfig, type BackupConfig } from "@/backup/config"
 import { createConnector } from "@/backup/connector"
+import { APP_VERSION_HEADER } from "@/backup/uploadPolicy"
+import { APP_VERSION_TEXT } from "@/appVersion"
 import {
   claimDeviceForAccount,
   connectDatabase,
@@ -9,6 +11,7 @@ import {
   deviceSyncMode,
   disconnectDatabase,
   openedWithSyncedTables,
+  recordUploadRefusals,
   switchDeviceToSyncedTables,
 } from "@/persistence/backupLink"
 import { CourseReplacedError } from "@/persistence/courseSession"
@@ -31,17 +34,21 @@ export type BackupState =
   | { kind: "reopen" }
   | { kind: "other-course" }
   | { kind: "other-account" }
-  | { kind: "connected"; email: string }
+  | { kind: "connected"; email: string; outdated?: boolean }
   | { kind: "error"; message: string }
 
 const UNREACHABLE = "Backup non raggiungibile. Riprova con la connessione."
 
 let client: Promise<SupabaseClient> | null = null
+/** The server last answered that this app is below its minimum writer. */
+let uploadsOutdated = false
 let connected = false
 
 async function supabase(config: BackupConfig) {
   client ??= import("@supabase/supabase-js").then(({ createClient }) => {
     const created = createClient(config.supabaseUrl, config.supabaseKey, {
+      // The server refuses writers older than its minimum (B4, 03 §3.1).
+      global: { headers: { [APP_VERSION_HEADER]: APP_VERSION_TEXT } },
       auth: {
         storageKey: appChannelConfig.backupAuthKey,
         persistSession: true,
@@ -229,9 +236,19 @@ export async function startBackup(
     return { kind: "other-account" }
   if (!connected) {
     connected = true
-    await connectDatabase(createConnector(client, config, session.user.id))
+    await connectDatabase(
+      createConnector(client, config, session.user.id, {
+        recordRefusals: recordUploadRefusals,
+        onOutdated: (outdated) => {
+          // The first upload can answer before the state says connected.
+          uploadsOutdated = outdated
+          if (current.kind === "connected" && !!current.outdated !== outdated)
+            setBackupState({ ...current, outdated })
+        },
+      }),
+    )
   }
-  return { kind: "connected", email }
+  return { kind: "connected", email, outdated: uploadsOutdated }
 }
 
 /**

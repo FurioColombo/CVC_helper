@@ -24,6 +24,7 @@ import {
   compactCourseDatabase,
 } from "@/persistence/writeGuard"
 import { prepareDatabase } from "@/persistence/migrations"
+import { resolveCoursePlacements } from "@/persistence/placementConflicts"
 import { COURSE_TABLES } from "@/persistence/schema"
 import { emptyInactiveLocalCopy, readSyncMode } from "@/persistence/syncMode"
 
@@ -81,8 +82,10 @@ export async function exportCourseArchive(
     if (!version)
       throw new Error("Versione dei dati non disponibile. Riapri l’app.")
     const synced = (await readSyncMode(transaction)) === "synced"
+    // Placements two phones made twice offline are exported as the screens
+    // show them: the latest edit (SC-B1-1). The file never holds the clash.
     return createCourseArchive(
-      tables,
+      resolveCoursePlacements(tables).tables,
       synced ? fileDataVersionOfSyncedDevice(version) : version,
     )
   })
@@ -119,6 +122,8 @@ export async function importCourseArchive(
     for (const table of [...COURSE_TABLES].reverse())
       await transaction.execute(`DELETE FROM ${table}`)
     await emptyInactiveLocalCopy(transaction)
+    // The backup's refused changes belonged to the course replaced (B4).
+    await transaction.execute("DELETE FROM uploadRefusals")
     for (const table of COURSE_TABLES) {
       const sql = INSERTS[table]
       const columns = sql

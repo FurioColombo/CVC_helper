@@ -7,6 +7,8 @@ import {
 import type { DutyAssignment } from "@/domain/duties"
 import type { DutySettings } from "@/domain/dutySettings"
 import { db } from "@/persistence/db"
+import { resolveByKey } from "@/persistence/placementConflicts"
+import { dutyAssignmentId } from "@/persistence/placementIds"
 import {
   dutySettingItemChanges,
   dutySettingItems,
@@ -19,6 +21,17 @@ export type DutySettingsRecord = DutySettings
 
 interface PersistedDutyAssignment extends DutyAssignment {
   id: string
+  updatedAt: string | null
+}
+
+/**
+ * A duty two phones saved twice offline keeps its latest row (SC-B1-1); the
+ * next save deletes the others.
+ */
+function resolveDutyRows(rows: PersistedDutyAssignment[]) {
+  return resolveByKey(rows, ({ dayId, studentId }) =>
+    JSON.stringify([dayId, studentId]),
+  )
 }
 
 interface PersistedDutySettings {
@@ -85,14 +98,18 @@ function parseSettings(record: PersistedDutySettings): DutySettingsRecord {
   }
 }
 
-export async function readDutyPlan(courseId: string) {
+export async function readDutyPlan(courseId: string): Promise<{
+  assignments: DutyAssignment[]
+  resolvedConflicts?: number
+  settings: DutySettingsRecord | null
+}> {
   await db.init()
-  const [assignments, persistedSettings] = await Promise.all([
-    db.getAll<DutyAssignment>(
-      `SELECT dayId, studentId
+  const [storedAssignments, persistedSettings] = await Promise.all([
+    db.getAll<PersistedDutyAssignment>(
+      `SELECT id, dayId, studentId, updatedAt
        FROM dutyAssignments
        WHERE courseId = ?
-       ORDER BY dayId, studentId`,
+       ORDER BY dayId, studentId, id`,
       [courseId],
     ),
     db.getOptional<PersistedDutySettings>(
@@ -104,19 +121,21 @@ export async function readDutyPlan(courseId: string) {
       [courseId, courseId],
     ),
   ])
-  const assignmentKeys = assignments.map(
-    ({ dayId, studentId }) => `${dayId}:${studentId}`,
-  )
+  const resolved = resolveDutyRows(storedAssignments)
+  const assignments = resolved.kept.map(({ dayId, studentId }) => ({
+    dayId,
+    studentId,
+  }))
   if (
     assignments.some(
       ({ dayId, studentId }) => !DAY_IDS.includes(dayId) || !studentId,
-    ) ||
-    hasDuplicates(assignmentKeys)
+    )
   ) {
     throw new Error("Invalid persisted duty assignment")
   }
   return {
     assignments,
+    resolvedConflicts: resolved.dropped.length,
     settings: persistedSettings ? parseSettings(persistedSettings) : null,
   }
 }
@@ -190,11 +209,13 @@ export async function saveDutyPlan(
     ) {
       throw new Error("Completed duty history is immutable")
     }
-    const persistedAssignments =
-      await transaction.getAll<PersistedDutyAssignment>(
-        `SELECT id, dayId, studentId FROM dutyAssignments WHERE courseId = ?`,
-        [courseId],
-      )
+    const storedAssignments = await transaction.getAll<PersistedDutyAssignment>(
+      `SELECT id, dayId, studentId, updatedAt FROM dutyAssignments
+       WHERE courseId = ?`,
+      [courseId],
+    )
+    const resolvedStored = resolveDutyRows(storedAssignments)
+    const persistedAssignments = resolvedStored.kept
     if (persistedCompletedDayIds.length > 0) {
       const completed = new Set(persistedCompletedDayIds)
       // A stored duty for a student the course no longer has is not history
@@ -229,9 +250,12 @@ export async function saveDutyPlan(
       throw new Error("Duplicate persisted duty assignment")
     }
     const nextKeys = new Set(assignments.map(keyOf))
-    const removed = persistedAssignments.filter(
-      (assignment) => !nextKeys.has(keyOf(assignment)),
-    )
+    const removed = [
+      ...resolvedStored.dropped,
+      ...persistedAssignments.filter(
+        (assignment) => !nextKeys.has(keyOf(assignment)),
+      ),
+    ]
     if (removed.length > 0) {
       await transaction.executeBatch(
         "DELETE FROM dutyAssignments WHERE id = ? AND courseId = ?",
@@ -247,7 +271,7 @@ export async function saveDutyPlan(
            id, courseId, dayId, studentId, createdAt, updatedAt
          ) VALUES (?, ?, ?, ?, ?, ?)`,
         added.map((assignment) => [
-          crypto.randomUUID(),
+          dutyAssignmentId(assignment.dayId, assignment.studentId),
           courseId,
           assignment.dayId,
           assignment.studentId,

@@ -111,6 +111,7 @@ describe("duty persistence", () => {
 
     await expect(readDutyPlan("course-1")).resolves.toEqual({
       assignments: [{ dayId: "saturday", studentId: "student-1" }],
+      resolvedConflicts: 0,
       settings: expect.objectContaining({
         completedDayIds: ["saturday"],
         balanceMinors: true,
@@ -139,6 +140,7 @@ describe("duty persistence", () => {
 
     await expect(readDutyPlan("course-1")).resolves.toEqual({
       assignments: [],
+      resolvedConflicts: 0,
       settings: expect.objectContaining({
         desiredPerDay: 0,
         extraDayIds: ["sunday", "wednesday", "friday"],
@@ -499,15 +501,28 @@ describe("duty persistence", () => {
     )
   })
 
-  it("rejects invalid or duplicate persisted assignment rows", async () => {
+  it("settles a duty stored twice on the latest row and reports it", async () => {
     database.getAll.mockResolvedValue([
-      { dayId: "saturday", studentId: "student-1" },
-      { dayId: "saturday", studentId: "student-1" },
+      {
+        id: "old",
+        dayId: "saturday",
+        studentId: "student-1",
+        updatedAt: "2026-09-20T09:00:00.000Z",
+      },
+      {
+        id: "new",
+        dayId: "saturday",
+        studentId: "student-1",
+        updatedAt: "2026-09-20T10:00:00.000Z",
+      },
     ])
-    await expect(readDutyPlan("course-1")).rejects.toThrow(
-      "Invalid persisted duty assignment",
-    )
+    await expect(readDutyPlan("course-1")).resolves.toMatchObject({
+      assignments: [{ dayId: "saturday", studentId: "student-1" }],
+      resolvedConflicts: 1,
+    })
+  })
 
+  it("rejects invalid persisted assignment rows", async () => {
     database.getAll.mockResolvedValue([
       { dayId: "not-a-day", studentId: "student-1" },
     ])

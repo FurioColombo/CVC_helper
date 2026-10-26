@@ -26,6 +26,9 @@ import {
   databaseConnected,
   onDatabaseStatus,
   pendingUploads,
+  retryUploadRefusals,
+  type UploadRefusal,
+  uploadRefusals,
 } from "@/persistence/backupLink"
 
 /**
@@ -178,6 +181,7 @@ export function OnlineBackup() {
           busy={busy}
           email={state.email}
           onSignOut={() => void run(signOutOfBackup)}
+          outdated={state.kind === "connected" && !!state.outdated}
         />
       )}
       {state.kind === "reopen" && (
@@ -273,20 +277,34 @@ const STATUS_ICONS = {
   waiting: CloudOff,
 }
 
+/** Why the backup refused changes, in the owner's words (B4). */
+const REFUSAL_TEXT: Record<string, string> = {
+  "other-account":
+    "Il corso risulta già di un altro account online, quindi il backup non lo accetta da questo.",
+  access: "Riguardano un corso che il backup non attribuisce a questo account.",
+  data: "Contengono dati che il backup non accetta.",
+}
+
 function Connected({
   email,
   busy,
   onSignOut,
+  outdated,
 }: {
   email: string
   busy: boolean
   onSignOut: () => void
+  outdated: boolean
 }) {
   const [status, setStatus] = useState<Status>({
     icon: "sending",
     text: "Verifica della copia online…",
   })
   const [waiting, setWaiting] = useState(0)
+  const [refused, setRefused] = useState<UploadRefusal[]>([])
+  const [unsendable, setUnsendable] = useState(0)
+  const [retrying, setRetrying] = useState(false)
+  const [round, setRound] = useState(0)
   const [confirming, setConfirming] = useState(false)
   const question = useRef<HTMLDivElement>(null)
 
@@ -298,10 +316,14 @@ function Connected({
   useEffect(() => {
     let active = true
     const refresh = async () => {
-      const pending = await pendingUploads()
+      const [pending, refusals] = await Promise.all([
+        pendingUploads(),
+        uploadRefusals(),
+      ])
       const connected = databaseConnected()
       if (!active) return
       setWaiting(pending)
+      setRefused(refusals)
       setStatus(
         !connected
           ? pending > 0
@@ -311,13 +333,23 @@ function Connected({
               }
             : // Every change was accepted: nothing is missing online
               // (review FUX-B3-Q5).
-              { icon: "waiting", text: "Tutto inviato. Ora senza connessione." }
+              refusals.length > 0
+              ? { icon: "waiting", text: "Ora senza connessione." }
+              : {
+                  icon: "waiting",
+                  text: "Tutto inviato. Ora senza connessione.",
+                }
           : pending > 0
             ? {
                 icon: "sending",
                 text: `Invio in corso: ${changes(pending)} da inviare.`,
               }
-            : { icon: "done", text: "Copia online aggiornata." },
+            : refusals.length > 0
+              ? {
+                  icon: "waiting",
+                  text: `Copia online aggiornata, tranne ${changes(refusals.length)} ${refusals.length === 1 ? "rifiutata" : "rifiutate"}.`,
+                }
+              : { icon: "done", text: "Copia online aggiornata." },
       )
     }
     void refresh()
@@ -328,7 +360,20 @@ function Connected({
       stop()
       window.clearInterval(timer)
     }
-  }, [])
+  }, [round])
+
+  // Applied again, the changes queue for upload; what cannot be rebuilt
+  // here stays listed (src/persistence/backupLink.ts).
+  const retry = async () => {
+    setRetrying(true)
+    try {
+      setUnsendable(await retryUploadRefusals())
+    } finally {
+      setRetrying(false)
+      setRound((value) => value + 1)
+    }
+  }
+  const reasons = [...new Set(refused.map(({ reason }) => reason))]
 
   const Icon = STATUS_ICONS[status.icon]
   return (
@@ -347,6 +392,40 @@ function Connected({
         />
         <span className="min-w-0">{status.text}</span>
       </p>
+      {outdated && (
+        <Notice>
+          Questa versione dell’app non può più inviare modifiche al backup.
+          Aggiorna l’app: intanto le modifiche restano su questo telefono.
+        </Notice>
+      )}
+      {refused.length > 0 && (
+        // A refused change is never dropped in silence (04 B4): it stays on
+        // this phone, listed here, until it is sent again.
+        <Notice>
+          Il backup ha rifiutato {changes(refused.length)}: restano su questo
+          telefono.
+          <ul className="mt-1 list-disc pl-5">
+            {reasons.map((reason) => (
+              <li key={reason}>{REFUSAL_TEXT[reason] ?? REFUSAL_TEXT.data}</li>
+            ))}
+          </ul>
+          {unsendable > 0 && (
+            <p className="mt-1">
+              {unsendable === 1
+                ? "1 modifica non si può reinviare da qui."
+                : `${unsendable} modifiche non si possono reinviare da qui.`}
+            </p>
+          )}
+          <Button
+            className="mt-3"
+            disabled={retrying}
+            onClick={() => void retry()}
+            variant="secondary"
+          >
+            Riprova l’invio
+          </Button>
+        </Notice>
+      )}
       {confirming ? (
         // A wrong tap on Esci costs a new link and signal to undo (review
         // FUX-B3-6): it asks first, saying what stays behind.

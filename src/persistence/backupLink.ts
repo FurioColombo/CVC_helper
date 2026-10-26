@@ -74,6 +74,13 @@ export function disconnectDatabase() {
   return db.disconnect()
 }
 
+export {
+  recordUploadRefusals,
+  retryUploadRefusals,
+  type UploadRefusal,
+  uploadRefusals,
+} from "@/persistence/uploadRefusals"
+
 /** Changes still waiting in the upload queue. */
 export async function pendingUploads() {
   const [row] = await db.getAll<{ n: number }>(

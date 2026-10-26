@@ -248,6 +248,48 @@ describe("CrewManagement", () => {
     expect(remove).toHaveClass("absolute", "size-[44px]")
   })
 
+  it("says when two phones edited the session offline and the latest edit stayed", async () => {
+    getPlan.mockResolvedValue({
+      ...stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+      }),
+      resolvedConflicts: 1,
+    })
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    expect(
+      await screen.findByText(
+        "Due telefoni hanno cambiato questa sessione senza connessione: resta l’ultima modifica.",
+      ),
+    ).toHaveAttribute("role", "status")
+  })
+
+  it("shows no such note when nothing was settled", async () => {
+    getPlan.mockResolvedValue(
+      stored({
+        crews: [{ id: "crew-1", sessionId: "sat-pm", members: [] }],
+        landStudentIds: [],
+      }),
+    )
+    render(
+      <CrewManagement
+        course={COURSE}
+        onHome={vi.fn()}
+        onOpenStudent={vi.fn()}
+      />,
+    )
+
+    await screen.findByRole("button", { name: "Aldo" })
+    expect(screen.queryByText(/Due telefoni/)).not.toBeInTheDocument()
+  })
+
   it("explains the one-empty-crew limit when nobody is available", async () => {
     getStudents.mockResolvedValue([])
     getVolunteers.mockResolvedValue([])

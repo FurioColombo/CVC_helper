@@ -76,7 +76,11 @@ export async function saveActiveCourse(
  * nothing about the previous week's students (minors included) stays behind
  * on the device.
  */
-export const COURSE_DATA_TABLES = [...COURSE_TABLES].reverse()
+export const COURSE_DATA_TABLES = [
+  ...[...COURSE_TABLES].reverse(),
+  // The backup's refused changes hold course data too (B4).
+  "uploadRefusals",
+]
 
 const COURSE_PREFERENCE_PREFIXES = [appChannelConfig.scanNameOrderPrefix]
 

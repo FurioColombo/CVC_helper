@@ -123,7 +123,7 @@ describe("evaluation persistence", () => {
     )
   })
 
-  it("rejects foreign students and corrupt duplicate records", async () => {
+  it("rejects foreign students and settles a duplicate record on the latest", async () => {
     await expect(
       saveEvaluation("course-1", "student-2", "sat-pm", {
         value: "=",
@@ -133,13 +133,25 @@ describe("evaluation persistence", () => {
 
     database.getAll
       .mockResolvedValueOnce([{ id: "student-1" }])
-      .mockResolvedValueOnce([{ id: "one" }, { id: "two" }])
+      .mockResolvedValueOnce([
+        { id: "one", updatedAt: "2026-09-20T10:00:00.000Z" },
+        { id: "two", updatedAt: "2026-09-20T09:00:00.000Z" },
+      ])
     await expect(
       saveEvaluation("course-1", "student-1", "sat-pm", {
         value: "+",
         note: null,
       }),
-    ).rejects.toThrow("Duplicate")
+    ).resolves.toMatchObject({ id: "one", value: "+" })
+    // The losing row goes with this save; the latest one is updated.
+    expect(database.execute).toHaveBeenCalledWith(
+      "DELETE FROM evaluations WHERE id = ?",
+      ["two"],
+    )
+    expect(database.execute).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE evaluations SET"),
+      ["+", null, NOW, "one"],
+    )
   })
 
   it.each([
@@ -167,21 +179,36 @@ describe("evaluation persistence", () => {
         },
       ],
     },
-    {
-      label: "duplicate student",
-      rows: ["one", "two"].map((id) => ({
-        id,
-        studentId: "student-1",
-        sessionId: "sat-pm",
-        value: "+",
-        note: null,
-      })),
-    },
   ])("rejects a corrupt read with $label", async ({ rows }) => {
     database.getAll.mockResolvedValueOnce(rows)
     await expect(listEvaluations("course-1", "sat-pm")).rejects.toThrow(
       "Invalid persisted evaluation",
     )
+  })
+
+  it("shows an evaluation stored twice once, on its latest row", async () => {
+    database.getAll.mockResolvedValueOnce(
+      [
+        ["one", "2026-09-20T09:00:00.000Z", "-"],
+        ["two", "2026-09-20T10:00:00.000Z", "+"],
+      ].map(([id, updatedAt, value]) => ({
+        id,
+        updatedAt,
+        studentId: "student-1",
+        sessionId: "sat-pm",
+        value,
+        note: null,
+      })),
+    )
+    await expect(listEvaluations("course-1", "sat-pm")).resolves.toEqual([
+      {
+        id: "two",
+        studentId: "student-1",
+        sessionId: "sat-pm",
+        value: "+",
+        note: null,
+      },
+    ])
   })
 
   it("loads the whole course and exact chronological student history", async () => {

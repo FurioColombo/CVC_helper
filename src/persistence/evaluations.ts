@@ -5,6 +5,8 @@ import {
 } from "@/domain/config"
 import { isEvaluationSymbol } from "@/domain/evaluations"
 import { db } from "@/persistence/db"
+import { resolveByKey } from "@/persistence/placementConflicts"
+import { evaluationId } from "@/persistence/placementIds"
 import { stamp, TOUCH } from "@/persistence/stamp"
 
 export interface EvaluationRecord {
@@ -24,6 +26,7 @@ const SESSION_IDS = new Set<SessionId>(SESSION_SEQUENCE.map(({ id }) => id))
 
 interface PersistedEvaluation {
   id: string
+  updatedAt: string | null
   studentId: string
   sessionId: string
   value: string | null
@@ -46,19 +49,20 @@ function validateRows(
   rows: PersistedEvaluation[],
   expected?: { sessionId?: SessionId; studentId?: string },
 ): EvaluationRecord[] {
-  const keys = new Set<string>()
-  return rows.map((row) => {
-    const key = `${row.studentId}:${row.sessionId}`
+  // An evaluation two phones saved twice offline keeps its latest row
+  // (SC-B1-1); the next save of it deletes the others.
+  const { kept } = resolveByKey(rows, (row) =>
+    JSON.stringify([row.studentId, row.sessionId]),
+  )
+  return kept.map((row) => {
     if (
       !SESSION_IDS.has(row.sessionId as SessionId) ||
       (expected?.sessionId && row.sessionId !== expected.sessionId) ||
       (expected?.studentId && row.studentId !== expected.studentId) ||
-      (row.value !== null && !isEvaluationSymbol(row.value)) ||
-      keys.has(key)
+      (row.value !== null && !isEvaluationSymbol(row.value))
     ) {
       throw new Error("Invalid persisted evaluation")
     }
-    keys.add(key)
     return {
       id: row.id,
       studentId: row.studentId,
@@ -76,7 +80,7 @@ export async function listEvaluations(
   await db.init()
   if (!SESSION_IDS.has(sessionId)) throw new Error("Invalid evaluation session")
   const rows = await db.getAll<PersistedEvaluation>(
-    `SELECT e.id, e.studentId, e.sessionId, e.value, e.note
+    `SELECT e.id, e.updatedAt, e.studentId, e.sessionId, e.value, e.note
      FROM evaluations e
      JOIN students s ON s.id = e.studentId
      WHERE s.courseId = ? AND e.sessionId = ?
@@ -91,7 +95,7 @@ export async function listCourseEvaluations(
 ): Promise<EvaluationRecord[]> {
   await db.init()
   const rows = await db.getAll<PersistedEvaluation>(
-    `SELECT e.id, e.studentId, e.sessionId, e.value, e.note
+    `SELECT e.id, e.updatedAt, e.studentId, e.sessionId, e.value, e.note
      FROM evaluations e
      JOIN students s ON s.id = e.studentId
      WHERE s.courseId = ?
@@ -107,7 +111,7 @@ export async function listStudentEvaluations(
 ): Promise<EvaluationRecord[]> {
   await db.init()
   const rows = await db.getAll<PersistedEvaluation>(
-    `SELECT e.id, e.studentId, e.sessionId, e.value, e.note
+    `SELECT e.id, e.updatedAt, e.studentId, e.sessionId, e.value, e.note
      FROM evaluations e
      JOIN students s ON s.id = e.studentId
      WHERE s.courseId = ? AND s.id = ?
@@ -140,11 +144,17 @@ export async function saveEvaluation(
     if (students.length !== 1) {
       throw new Error("Evaluation student does not belong to course")
     }
-    const existing = await transaction.getAll<{ id: string }>(
-      "SELECT id FROM evaluations WHERE studentId = ? AND sessionId = ?",
+    const stored = await transaction.getAll<PersistedEvaluation>(
+      `SELECT id, updatedAt, studentId, sessionId, value, note
+       FROM evaluations WHERE studentId = ? AND sessionId = ?`,
       [studentId, sessionId],
     )
-    if (existing.length > 1) throw new Error("Duplicate persisted evaluation")
+    // Two phones can have saved it offline: the latest row stays, and this
+    // save deletes the others.
+    const { kept: existing, dropped } = resolveByKey(stored, () => "")
+    for (const { id } of dropped) {
+      await transaction.execute("DELETE FROM evaluations WHERE id = ?", [id])
+    }
     const normalized: EvaluationInput = {
       value: input.value,
       note: normalizeNote(input.note),
@@ -165,7 +175,7 @@ export async function saveEvaluation(
       return { id: existing[0].id, studentId, sessionId, ...normalized }
     }
     const record: EvaluationRecord = {
-      id: crypto.randomUUID(),
+      id: evaluationId(studentId, sessionId),
       studentId,
       sessionId,
       ...normalized,

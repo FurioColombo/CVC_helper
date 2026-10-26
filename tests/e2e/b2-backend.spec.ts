@@ -79,6 +79,8 @@ async function rest(
     headers: {
       ...anonHeaders(),
       ...(token ? { authorization: `Bearer ${token}` } : {}),
+      // The server's writer check (B4) refuses app writes without a version.
+      "x-cvc-app-version": "0.5.0",
       "content-type": "application/json",
       prefer: ["return=representation", extraPrefer].filter(Boolean).join(","),
     },

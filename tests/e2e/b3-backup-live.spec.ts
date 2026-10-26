@@ -72,6 +72,8 @@ async function clearAccount(access: string) {
     headers: {
       apikey: env.SUPABASE_ANON_KEY!,
       authorization: `Bearer ${access}`,
+      // The server's writer check (B4) refuses app writes without a version.
+      "x-cvc-app-version": "0.5.0",
     },
   })
 }

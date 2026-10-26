@@ -29,6 +29,7 @@ import {
 } from "react"
 import { createPortal } from "react-dom"
 
+import { ConflictNotice } from "@/components/ConflictNotice"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SummaryImageButton } from "@/components/SummaryImageButton"
@@ -1313,6 +1314,9 @@ export function CrewManagement({
   const [saving, setSaving] = useState(false)
   const [copying, setCopying] = useState(false)
   const [saveError, setSaveError] = useState(false)
+  // Rows two phones placed twice offline, settled on the latest edit; the
+  // next save deletes them (SC-B1-1).
+  const [resolvedConflicts, setResolvedConflicts] = useState(0)
   const saveInFlight = useRef(false)
   const boatCopyDialogRef = useDialogFocus<HTMLElement>(
     boatCopySelection !== null,
@@ -1333,6 +1337,7 @@ export function CrewManagement({
         selectedBoatIds: data.stored.selectedBoatIds,
       })
       setHistory(data.history)
+      setResolvedConflicts(data.stored.resolvedConflicts ?? 0)
       setDutyAssignments(data.dutyPlan.assignments)
       setCrewCountDraft(String(Math.max(1, data.stored.crews.length)))
       setSelected(null)
@@ -1698,6 +1703,7 @@ export function CrewManagement({
     try {
       await saveCrewPlan(course.id, sessionId, next)
       setPlan(next)
+      setResolvedConflicts(0)
       setHistory((current) => [
         ...current.filter((entry) => entry.sessionId !== sessionId),
         ...next.crews.map((crew) => ({
@@ -2435,6 +2441,11 @@ export function CrewManagement({
               Modifica non valida o non salvata. Riprova.
             </p>
           )}
+          {resolvedConflicts > 0 && (
+            <div className="mb-3">
+              <ConflictNotice />
+            </div>
+          )}
           <section
             aria-label="Barche della sessione"
             className="sticky top-0 z-20 -mx-[20px] border-y bg-background/95 px-[20px] py-2 shadow-[0_6px_16px_rgb(6_59_82/0.08)] backdrop-blur max-[350px]:-mx-[12px] max-[350px]:px-[12px]"
@@ -2712,6 +2723,11 @@ export function CrewManagement({
             >
               Modifica non valida o non salvata. Riprova.
             </p>
+          )}
+          {resolvedConflicts > 0 && (
+            <div className="mt-3">
+              <ConflictNotice />
+            </div>
           )}
 
           {plan.crews.length === 0 ? (

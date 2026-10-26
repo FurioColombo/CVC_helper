@@ -3,6 +3,8 @@ import { resolve } from "node:path"
 import { SqlSyncRules } from "@powersync/service-sync-rules"
 import { describe, expect, it, vi } from "vitest"
 
+import { APP_VERSION_HEADER, OUTDATED_WRITER_CODE } from "@/backup/uploadPolicy"
+import { SYNCED_SINCE } from "@/domain/compatibility"
 import { AppSchema, COURSE_TABLES } from "@/persistence/schema"
 
 vi.mock("@/persistence/db", () => ({ db: {} }))
@@ -144,5 +146,34 @@ describe("backend access, publication and cascade", () => {
     expect(hardening).toContain(
       "revoke all on all tables in schema public from anon",
     )
+  })
+})
+
+// B4: the server's writer check covers every course table and asks for the
+// same minimum as the device's switch (03 §3.1).
+describe("the server's minimum writer", () => {
+  const check = readFileSync(
+    resolve(root, "supabase/migrations/20261026000000_minimum_writer.sql"),
+    "utf8",
+  )
+
+  it("guards every course table", () => {
+    const match = /foreach course_table in array array\[([\s\S]*?)\]/.exec(
+      check,
+    )
+    const tables = [...match![1]!.matchAll(/'(\w+)'/g)].map((item) => item[1])
+    expect(tables.sort()).toEqual([...COURSE_TABLES].sort())
+  })
+
+  it("starts at the version that switches devices to synced tables", () => {
+    const { major, minor, patch } = SYNCED_SINCE
+    expect(check).toContain(
+      `insert into public.app_minimum_writer (version) values ('${major}.${minor}.${patch}')`,
+    )
+  })
+
+  it("reads the header the app sends, with the code the app recognises", () => {
+    expect(check).toContain(`headers ->> '${APP_VERSION_HEADER}'`)
+    expect(check).toContain(`errcode = '${OUTDATED_WRITER_CODE}'`)
   })
 })
