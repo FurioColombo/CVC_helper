@@ -42,17 +42,27 @@ export async function uploadEntry(
   if (result.error) throw result.error
 }
 
+/**
+ * The connector belongs to the account that opened it: once another account
+ * is signed in, it neither fetches a token nor uploads, even if it outlives
+ * a sign-out (B3 reviews SP-B3-1, FUX-B3-1).
+ */
 export function createConnector(
   client: Client,
   config: BackupConfig,
+  account: string,
 ): PowerSyncBackendConnector {
+  const sessionOf = async () => {
+    const {
+      data: { session },
+      error,
+    } = await client.auth.getSession()
+    if (error) throw error
+    return session?.user.id === account ? session : null
+  }
   return {
     async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-      const {
-        data: { session },
-        error,
-      } = await client.auth.getSession()
-      if (error) throw error
+      const session = await sessionOf()
       if (!session) return null
       return {
         endpoint: config.powersyncUrl,
@@ -63,6 +73,8 @@ export function createConnector(
       }
     },
     async uploadData(database: AbstractPowerSyncDatabase) {
+      if (!(await sessionOf()))
+        throw new Error("Not signed in as this device's account")
       const transaction = await database.getNextCrudTransaction()
       if (!transaction) return
       for (const entry of transaction.crud) await uploadEntry(client, entry)

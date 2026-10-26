@@ -35,6 +35,31 @@ import {
 export type SyncMode = "local" | "synced"
 
 export const SYNC_MODE_ID = "local:sync-mode"
+
+/**
+ * B3 (review SP-B3-1): the account a synced device belongs to, so no other
+ * account ever uploads its queue or receives its course. `meta` stores
+ * integers and passes them through JSON with 15 significant digits, so the
+ * mark is the first 44 bits of the account's id (at most 14 digits).
+ */
+export const BACKUP_ACCOUNT_ID = "local:backup-account"
+
+export function accountMark(userId: string) {
+  const hex = userId.replace(/[^0-9a-f]/gi, "").slice(0, 11)
+  if (hex.length < 11) throw new Error("Not an account id")
+  return Number.parseInt(hex, 16)
+}
+
+export async function readAccountMark(
+  context: Pick<PowerSyncDatabase, "getAll">,
+) {
+  const rows = await context.getAll<{ value: number | null }>(
+    "SELECT value FROM meta WHERE id = ?",
+    [BACKUP_ACCOUNT_ID],
+  )
+  const value = rows[0]?.value
+  return value === null || value === undefined ? null : Number(value)
+}
 const SYNCED = 1
 
 type SchemaJson = {
@@ -229,6 +254,7 @@ export async function switchToSyncedTables(
   database: PowerSyncDatabase,
   hintKey: string,
   app: Version = APP_VERSION,
+  account?: string,
 ): Promise<"switched" | "already"> {
   // PowerSync refuses a schema change while connected (B1 reviews DI-B1-Q3,
   // SC-B1-Q5): B3 switches after prepareDatabase and before connect().
@@ -261,6 +287,11 @@ export async function switchToSyncedTables(
         "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
         [SYNC_MODE_ID, SYNCED],
       )
+      if (account)
+        await transaction.execute(
+          "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
+          [BACKUP_ACCOUNT_ID, accountMark(account)],
+        )
       await advanceCourseGeneration(transaction)
     })
   } finally {

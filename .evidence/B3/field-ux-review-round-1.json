@@ -1,0 +1,79 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B3",
+  "commit": "34de169",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FUX-B3-1",
+      "title": "A second account signed in on the same phone uploads the first account's queued rows, and Esci gives no warning that changes are still unsent",
+      "evidence": "src/persistence/backupLink.ts:29 calls switchToSyncedTables(db, key) without the account argument, so the device's backup-account mark is never written. src/backup/session.ts:95-98 connects any session on a device that is already synced and never compares accounts. signOutOfBackup leaves ps_crud as it is. Scratch spec with the fake backend: primo@example.test signed in, REST writes refused, status 'In attesa di connessione: 2 modifiche da inviare.' After one tap on Esci the section shows the sign-in form, with no dialog and no mention of the 2 unsent changes. A session for secondo@example.test is then stored and the page reloaded: the captured writes are 'POST courses as secondo@example.test' and 'POST students as secondo@example.test'.",
+      "reproduction": "Throwaway spec (fake backend): create a course and a student; store a fake session for primo@ and reload; abort /rest/v1 writes, tap Esci; store a session for secondo@, reload and log the non-GET /rest/v1 requests.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 adversarial checklist: 'a second account on the same device, whose queue must never upload the first account's rows (SC-B1-Q5)'"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FUX-B3-2",
+      "title": "Offline cold start the next morning (access token expired) shows the sign-in form although the session is still stored, and the backup does not resume when signal returns",
+      "evidence": "session.ts maps a null session to 'signed-out' and ignores getSession's error. auth-js 2.117.3 __loadSession keeps the stored session after a retryable refresh failure but returns session:null with an error. Scratch run: expired session stored, every request aborted, reload: Impostazioni shows the sign-in form while localStorage still holds the session. No onAuthStateChange or online listener calls startBackup again before a relaunch.",
+      "reproduction": "Scratch test 'switch, connected, then offline cold start with expired token' (pixel-7-chrome).",
+      "specRef": "01_PRODUCT_SPEC.md §1 'show honest save, error and retry state'; 06_DESIGN_RULEBOOK R14"
+    },
+    {
+      "id": "FUX-B3-3",
+      "title": "The launch-time switch reloads the app without asking and throws away what the instructor is typing",
+      "evidence": "startBackupAtLaunch reloads as soon as startBackup returns 'reopen', after a network round trip. The update reload is protected by applyUpdateWhenSafe; this one is not. Scratch run with the courses response delayed 6 s: typed Nome 'Bravo' and Cognome 'Digitato' in a new student, one reload, the form empty.",
+      "reproduction": "Scratch test 'wildcard: slow launch switch while typing' (pixel-7-chrome).",
+      "specRef": "06_DESIGN_RULEBOOK R10; 01_PRODUCT_SPEC.md §1"
+    },
+    {
+      "id": "FUX-B3-4",
+      "title": "A link that is expired or opened in another browser lands silently on the sign-in form, and the copy does not warn about the browser",
+      "evidence": "'/?code=<uuid>' with no verifier, and '#error=access_denied&error_code=otp_expired' or the same as a query string: the plain sign-in form with no message, the code or error kept in the address bar. With PKCE the link must open in the same browser storage that asked; on iPhone a home-screen app does not share storage with Safari, so sign-in from the installed app most likely cannot succeed; on Android, Gmail can open links in an in-app tab. The working tree's ?code message does not cover the #error / ?error forms.",
+      "reproduction": "Scratch test 'link opened elsewhere or expired' (pixel-7-chrome).",
+      "specRef": "06_DESIGN_RULEBOOK R14; 01_PRODUCT_SPEC.md §1 (iPhone/WebKit target)"
+    },
+    {
+      "id": "FUX-B3-5",
+      "title": "The app that asked for the link is not told when sign-in completes in another tab",
+      "evidence": "Page A shows 'Link inviato'; page B in the same context stores the session, switches and reloads; 14 s later page A still reads 'Link inviato … Aprilo su questo telefono per accedere.' No auth-state or storage listener exists in src/backup/.",
+      "reproduction": "Scratch test 'link opened in a second tab while the app waits'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 ('telling other tabs'); 01_PRODUCT_SPEC.md §1"
+    },
+    {
+      "id": "FUX-B3-6",
+      "title": "A wrong tap on Esci cannot be undone in place: getting back in needs signal, the mail app and a new link",
+      "evidence": "'Esci' is one secondary button with no confirmation; the reassurance 'Il corso resta su questo telefono.' says nothing about changes that never reached the copy.",
+      "reproduction": "Connected state, tap Esci: the sign-in form appears immediately.",
+      "specRef": "06_DESIGN_RULEBOOK R11"
+    }
+  ],
+  "qolFindings": [
+    { "id": "FUX-B3-Q1", "title": "'Riprova' after a failed send does not resend; the error does not say the phone is offline", "evidence": "OnlineBackup.tsx runs startBackup, not sendSignInLink; offline the copy gives no cause and a retry takes 2 taps.", "reproduction": "Scratch test 'send offline'.", "specRef": "06_DESIGN_RULEBOOK R14" },
+    { "id": "FUX-B3-Q2", "title": "'Link inviato' lives only in memory: after Android kills the PWA the screen shows the blank form", "evidence": "linkSentAfterReload shows the sign-in form, inviting a second send.", "reproduction": "Send link, reload, open Impostazioni.", "specRef": "01_PRODUCT_SPEC.md §1" },
+    { "id": "FUX-B3-Q3", "title": "The Impostazioni summary still says 'Archivio: Locale' while the backup is connected", "evidence": "src/App.tsx hard-codes it, directly above 'Backup online … Accesso: …'.", "reproduction": "Connected state.", "specRef": "06_DESIGN_RULEBOOK R13" },
+    { "id": "FUX-B3-Q4", "title": "The backup state is small grey text with no icon", "evidence": "14 px muted text; the three states look identical apart from the words, hard to read in glare.", "reproduction": "Measured with the scratch spec.", "specRef": "06_DESIGN_RULEBOOK R05, R06, R08" },
+    { "id": "FUX-B3-Q5", "title": "'In attesa di connessione.' with zero pending changes reads as 'not backed up'", "evidence": "With every upload accepted and the sync stream aborted the line read 'In attesa di connessione.' with the queue at 0.", "reproduction": "Connected test with the sync URL aborted.", "specRef": "01_PRODUCT_SPEC.md §1" }
+  ],
+  "fieldWalkthrough": "Evening sign-in then the morning on the pier: about 16 taps and two relaunches; three moments read twice ('Link inviato' after signing in, 'In attesa di connessione' with nothing to send, 'Archivio: Locale' next to the backup). Morning without signal: the sign-in form, the email typed again, 'Invio non riuscito. Riprova.', the form again. The course itself worked throughout and nothing scrolled sideways.",
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md B3; 01_PRODUCT_SPEC.md §1-2; docs/design/06_DESIGN_RULEBOOK.md §2 and §5",
+    "git diff 4c7c7a5..34de169 (OnlineBackup.tsx, session.ts, connector.ts, config.ts, backupLink.ts, main.tsx, App.tsx SettingsView, appChannel.ts, vite.config.ts, check-built-pwa.mjs, b3-backup-ui.spec.ts)",
+    "@supabase/auth-js 2.117.3 __loadSession and _callRefreshToken",
+    "Throwaway specs with a fake backend at 390x844, 320x664 and 320 px with 200 % text; layout: no horizontal overflow in any state; controls 44-48 px (88-96 px at 200 %); long emails wrap"
+  ],
+  "anglesTried": {
+    "seed": 679864868,
+    "lenses": ["9. Recovering from a wrong tap", "10. Time to the first useful screen after a cold start"],
+    "wildcard": "The launch-time switch racing a slow pier connection while typing, and the magic link completing in a second browsing context"
+  },
+  "notTested": [
+    "A real emailed magic link, installed PWA and real devices. The owner's phone check should verify: (a) Android, link tapped in Gmail: which context opens and whether the installed app then shows the account without a manual relaunch; (b) iPhone home-screen app: whether sign-in can succeed at all; (c) airplane mode the morning after: what Impostazioni says and whether the backup resumes with signal; (d) Esci with changes still to send; (e) the one-time reload after switching while typing; (f) status legibility in sunlight",
+    "Connected state on WebKit",
+    "Cold-start timings are from the dev server",
+    "Uncommitted fixes appeared during the run; findings are tied to 34de169"
+  ]
+}

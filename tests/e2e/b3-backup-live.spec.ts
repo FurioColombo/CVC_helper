@@ -36,7 +36,7 @@ test.use({ trace: "off", screenshot: "off", video: "off" })
 
 const base = () => env.SUPABASE_URL!.replace(/\/$/, "")
 
-async function token() {
+async function token(n: 1 | 2 = 1) {
   const response = await fetch(`${base()}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: {
@@ -44,8 +44,8 @@ async function token() {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      email: env.TEST_USER_1_EMAIL,
-      password: env.TEST_USER_1_PASSWORD,
+      email: env[`TEST_USER_${n}_EMAIL`],
+      password: env[`TEST_USER_${n}_PASSWORD`],
     }),
   })
   expect(response.status).toBe(200)
@@ -203,5 +203,182 @@ test("a course made offline is signed in, uploaded whole and kept after sign-out
     pendingAfterUpload: 0,
     keptAfterSignOut: 1,
     serverClearedAfter: 0,
+  })
+})
+
+async function offlineCourse(page: import("@playwright/test").Page) {
+  await page.addInitScript(
+    (config) => {
+      window.__cvcBackupConfig = config
+    },
+    {
+      supabaseUrl: env.SUPABASE_URL!,
+      supabaseKey: env.SUPABASE_ANON_KEY!,
+      powersyncUrl: env.POWERSYNC_URL!,
+    },
+  )
+  await page.goto("/")
+  await page.getByRole("button", { name: "Deriva", exact: true }).click()
+  await page.getByRole("button", { name: "Livello 2", exact: true }).click()
+  await page.getByRole("button", { name: "Crea corso", exact: true }).click()
+  await expect(
+    page.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
+  ).toBeVisible()
+}
+
+async function call<T>(
+  page: import("@playwright/test").Page,
+  target: string,
+  name: string,
+  ...args: string[]
+) {
+  return page.evaluate(
+    async ([module, exported, values]) => {
+      const loader = (path: string) => import(/* @vite-ignore */ path)
+      const loaded = (await loader(module)) as Record<
+        string,
+        (...input: string[]) => unknown
+      >
+      return loaded[exported]!(...values)
+    },
+    [target, name, args] as const,
+  ) as Promise<T>
+}
+
+// B3 review SP-B3-1, -3: a second account never uploads the first account's
+// queue nor receives its course.
+test("a second account on the same phone neither uploads nor takes the first account's course", async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  test.skip(!env.TEST_USER_2_EMAIL, "needs test account 2")
+  const [first, second] = [await token(1), await token(2)]
+  await clearAccount(first)
+  await clearAccount(second)
+  await offlineCourse(page)
+  // Writes cannot reach the server: the course stays queued.
+  await page.route(`${base()}/rest/v1/**`, (route) =>
+    route.request().method() === "GET" ? route.continue() : route.abort(),
+  )
+  await call(
+    page,
+    "/src/backup/session.ts",
+    "signInForTests",
+    env.TEST_USER_1_EMAIL!,
+    env.TEST_USER_1_PASSWORD!,
+  )
+  expect(
+    await call<{ kind: string }>(page, "/src/backup/session.ts", "startBackup"),
+  ).toEqual({ kind: "reopen" })
+  await page.reload()
+  await expect
+    .poll(() =>
+      call<number>(page, "/src/persistence/backupLink.ts", "pendingUploads"),
+    )
+    .toBeGreaterThan(0)
+  const queued = await call<number>(
+    page,
+    "/src/persistence/backupLink.ts",
+    "pendingUploads",
+  )
+  await call(page, "/src/backup/session.ts", "signOutOfBackup")
+  await page.unroute(`${base()}/rest/v1/**`)
+
+  await call(
+    page,
+    "/src/backup/session.ts",
+    "signInForTests",
+    env.TEST_USER_2_EMAIL!,
+    env.TEST_USER_2_PASSWORD!,
+  )
+  const second2 = await call<{ kind: string }>(
+    page,
+    "/src/backup/session.ts",
+    "startBackup",
+  )
+  await page.waitForTimeout(5_000)
+  const result = {
+    secondAccount: second2.kind,
+    queuedBefore: queued,
+    queuedAfter: await call<number>(
+      page,
+      "/src/persistence/backupLink.ts",
+      "pendingUploads",
+    ),
+    courseStillOnPhone:
+      (await call<string | null>(
+        page,
+        "/src/persistence/backupLink.ts",
+        "deviceCourseId",
+      )) !== null,
+    firstAccountCourses: (await serverRows("courses", first)).length,
+    secondAccountCourses: (await serverRows("courses", second)).length,
+  }
+  await clearAccount(first)
+  await clearAccount(second)
+  expect(result).toEqual({
+    secondAccount: "other-account",
+    queuedBefore: queued,
+    queuedAfter: queued,
+    courseStillOnPhone: true,
+    firstAccountCourses: 0,
+    secondAccountCourses: 0,
+  })
+})
+
+// B3 review SP-B3-2: sign-out offline with an expired session really forgets
+// it; the next online launch stays signed out.
+test("signing out offline with an expired session stays signed out", async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(240_000)
+  const access = await token(1)
+  await clearAccount(access)
+  await offlineCourse(page)
+  await call(
+    page,
+    "/src/backup/session.ts",
+    "signInForTests",
+    env.TEST_USER_1_EMAIL!,
+    env.TEST_USER_1_PASSWORD!,
+  )
+  await call(page, "/src/backup/session.ts", "startBackup")
+  await page.reload()
+  await expect
+    .poll(
+      () =>
+        call<number>(page, "/src/persistence/backupLink.ts", "pendingUploads"),
+      { timeout: 90_000 },
+    )
+    .toBe(0)
+  await context.setOffline(true)
+  await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((name) =>
+      name.endsWith(".backup-auth"),
+    )!
+    const session = JSON.parse(localStorage.getItem(key)!)
+    session.expires_at = Math.floor(Date.now() / 1000) - 600
+    localStorage.setItem(key, JSON.stringify(session))
+  })
+  await call(page, "/src/backup/session.ts", "signOutOfBackup")
+  const storedAfterSignOut = await page.evaluate(() =>
+    Object.keys(localStorage).some((name) => name.includes(".backup-auth")),
+  )
+  await context.setOffline(false)
+  await page.reload()
+  await expect(page.getByRole("heading").first()).toBeVisible()
+  const stateAfterReload = await call<{ kind: string }>(
+    page,
+    "/src/backup/session.ts",
+    "startBackup",
+  )
+  await clearAccount(access)
+  expect({
+    storedAfterSignOut,
+    stateAfterReload: stateAfterReload.kind,
+  }).toEqual({
+    storedAfterSignOut: false,
+    stateAfterReload: "signed-out",
   })
 })

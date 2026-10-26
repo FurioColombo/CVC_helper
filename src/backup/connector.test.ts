@@ -28,6 +28,7 @@ function fakeClient(error: unknown = null) {
   const session = {
     access_token: "token-1",
     expires_at: 1_900_000_000,
+    user: { id: "user-1" },
   }
   return {
     calls,
@@ -82,11 +83,15 @@ describe("the backup connector", () => {
           complete,
         }),
       } as never
-      const connector = createConnector(client, {
-        supabaseUrl: "https://example.supabase.co",
-        supabaseKey: "sb_publishable_example",
-        powersyncUrl: "https://example.powersync.journeyapps.com",
-      })
+      const connector = createConnector(
+        client,
+        {
+          supabaseUrl: "https://example.supabase.co",
+          supabaseKey: "sb_publishable_example",
+          powersyncUrl: "https://example.powersync.journeyapps.com",
+        },
+        "user-1",
+      )
       const upload = connector.uploadData(database)
       if (completed) await upload
       else await expect(upload).rejects.toEqual({ code: "42501" })
@@ -96,15 +101,46 @@ describe("the backup connector", () => {
 
   it("asks for the current session's token at every request", async () => {
     const { client } = fakeClient()
-    const connector = createConnector(client, {
-      supabaseUrl: "https://example.supabase.co",
-      supabaseKey: "sb_publishable_example",
-      powersyncUrl: "https://example.powersync.journeyapps.com",
-    })
+    const connector = createConnector(
+      client,
+      {
+        supabaseUrl: "https://example.supabase.co",
+        supabaseKey: "sb_publishable_example",
+        powersyncUrl: "https://example.powersync.journeyapps.com",
+      },
+      "user-1",
+    )
     await expect(connector.fetchCredentials()).resolves.toEqual({
       endpoint: "https://example.powersync.journeyapps.com",
       token: "token-1",
       expiresAt: new Date(1_900_000_000 * 1000),
     })
+  })
+})
+
+describe("a connector that outlives its account", () => {
+  it("fetches no token and uploads nothing for another account", async () => {
+    const { client, calls } = fakeClient()
+    const connector = createConnector(
+      client,
+      {
+        supabaseUrl: "https://example.supabase.co",
+        supabaseKey: "sb_publishable_example",
+        powersyncUrl: "https://example.powersync.journeyapps.com",
+      },
+      "user-2",
+    )
+    await expect(connector.fetchCredentials()).resolves.toBeNull()
+    const complete = vi.fn(async () => {})
+    await expect(
+      connector.uploadData({
+        getNextCrudTransaction: async () => ({
+          crud: [entry(UpdateType.PUT, { firstName: "Ada" })],
+          complete,
+        }),
+      } as never),
+    ).rejects.toThrow("Not signed in as this device's account")
+    expect(calls).toEqual([])
+    expect(complete).not.toHaveBeenCalled()
   })
 })

@@ -12,6 +12,7 @@ import {
   startBackup,
 } from "@/backup/session"
 import { Button } from "@/components/ui/button"
+import { appChannel } from "@/runtimeConfig"
 import {
   databaseConnected,
   onDatabaseStatus,
@@ -71,6 +72,12 @@ export function OnlineBackup() {
             un altro telefono. Senza accesso l’app funziona come sempre, solo su
             questo telefono.
           </p>
+          {appChannel === "test" && (
+            <p className="mt-2 text-sm font-semibold leading-5 text-[#9a3412]">
+              App di prova con un backup di sviluppo: usa solo persone
+              inventate.
+            </p>
+          )}
           <label
             className="mt-3 block text-sm font-semibold"
             htmlFor="backup-email"
@@ -131,6 +138,20 @@ export function OnlineBackup() {
         <Notice>
           Questo account ha già un altro corso online. Il corso di questo
           telefono resta solo qui.
+          <Button
+            className="mt-3"
+            disabled={busy}
+            onClick={() => void run(signOutOfBackup)}
+            variant="secondary"
+          >
+            Esci dall’account
+          </Button>
+        </Notice>
+      )}
+      {state.kind === "other-account" && (
+        <Notice>
+          Questo telefono è collegato a un altro account. Esci e accedi con
+          quello: il corso e le modifiche da inviare restano suoi.
           <Button
             className="mt-3"
             disabled={busy}

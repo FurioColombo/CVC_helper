@@ -2,7 +2,14 @@ import type { PowerSyncBackendConnector } from "@powersync/web"
 
 import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
-import { readSyncMode, switchToSyncedTables } from "@/persistence/syncMode"
+import {
+  accountMark,
+  BACKUP_ACCOUNT_ID,
+  readAccountMark,
+  readSyncMode,
+  switchToSyncedTables,
+} from "@/persistence/syncMode"
+import { APP_VERSION } from "@/appVersion"
 import { appChannelConfig } from "@/runtimeConfig"
 
 /**
@@ -23,10 +30,34 @@ export async function deviceCourseId() {
   return course?.id ?? null
 }
 
-/** Moves this device to synced tables (B1); the app then reopens. */
-export async function switchDeviceToSyncedTables() {
+/**
+ * Moves this device to synced tables (B1) for `account`, which it then
+ * belongs to; the app reopens.
+ */
+export async function switchDeviceToSyncedTables(account: string) {
   await prepareDatabase(db)
-  return switchToSyncedTables(db, appChannelConfig.syncModeKey)
+  return switchToSyncedTables(
+    db,
+    appChannelConfig.syncModeKey,
+    APP_VERSION,
+    account,
+  )
+}
+
+/**
+ * Whether `account` may connect this synced device: the account it belongs
+ * to, or any account when none is recorded yet (then it becomes that one).
+ */
+export async function claimDeviceForAccount(account: string) {
+  await prepareDatabase(db)
+  const mark = accountMark(account)
+  const recorded = await readAccountMark(db)
+  if (recorded !== null) return recorded === mark
+  await db.execute("INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)", [
+    BACKUP_ACCOUNT_ID,
+    mark,
+  ])
+  return true
 }
 
 export function connectDatabase(connector: PowerSyncBackendConnector) {

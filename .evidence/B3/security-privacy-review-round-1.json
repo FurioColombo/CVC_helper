@@ -1,0 +1,86 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B3",
+  "commit": "34de169",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-B3-1",
+      "title": "A second account signed in on the same phone uploads the first account's queued course under its own ownership",
+      "evidence": "src/backup/session.ts:79 runs the 'other course' check only while the device is still local. Once it is synced, startBackup goes straight to line 95 and connects with whichever session is signed in. signOutOfBackup (lines 106-108) disconnects but leaves ps_crud intact, and nothing records which account queued the rows. connector.ts:65 then uploads the whole queue with the new session. On the server, courses.\"ownerId\" defaults to auth.uid() (supabase/migrations/20261023000000_course_backup.sql:20), so account 2 becomes the owner. Live run against the development backend: {\"queuedAs1\":2,\"queuedAfterSignOut\":2,\"second\":\"connected\",\"queuedAfter2\":0,\"account1Courses\":0,\"account2Courses\":1,\"account2HasAccount1Student\":1}. Both accounts were cleaned up afterwards.",
+      "reproduction": "Throwaway spec (pixel-7-chrome, synthetic student). 1) Create a course and a student. 2) Abort every non-GET request to /rest/v1, standing in for no connection on the water. 3) Sign in test account 1 with signInForTests, call startBackup (returns reopen) and reload, so 2 transactions stay queued. 4) Tap Esci in Impostazioni. 5) Restore the network, sign in test account 2 and call startBackup (returns connected). Expected: account 1's rows are never sent with account 2's session. Observed: the course and student exist on the server under account 2, and account 1 has none.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 adversarial checklist ('a second account on the same device, whose queue must never upload the first account's rows', SC-B1-Q5); AGENTS.md §17"
+    },
+    {
+      "id": "SP-B3-2",
+      "title": "Sign-out while offline with an expired access token says 'signed out' but keeps the session, and the app silently signs back in at the next online launch",
+      "evidence": "src/backup/session.ts:108 ignores the result of auth.signOut. In auth-js 2.117.3, _signOut returns the session error early when __loadSession cannot refresh an expired token because of a retryable network failure, and never calls _removeSession (node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:3430-3433). _callRefreshToken keeps the stored session on retryable errors. signOutOfBackup still returns {kind:'signed-out'}, so the email field reappears. Live run: {\"sessionStoredAfterSignOut\":true,\"signedInAgainAfterReload\":true}. After the reload, Impostazioni showed the account and 'Copia online aggiornata.' with the database connected again.",
+      "reproduction": "Throwaway spec. 1) Sign in test account 1, switch, reload and wait until 0 changes are pending. 2) context.setOffline(true). 3) Set expires_at in the stored session to 10 minutes in the past, standing in for about an hour offline. 4) Tap Esci; the email field appears. 5) The session key is still in localStorage. 6) Go back online and reload. Expected: still signed out. Observed: signed in and connected as account 1.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 ('Sign-out disconnects'; adversarial checklist: an expired session, sign-in offline)"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-B3-3",
+      "title": "Signing in a different account silently removes the previous account's course from the device",
+      "evidence": "Live run: account 1's course fully uploaded, then Esci, then account 2 signed in and connected: {\"courseOnDeviceBeforeReload\":false,\"courseOnDeviceAsAccount2\":false,\"account1Courses\":1,\"account2Courses\":0}. PowerSync drops the rows of buckets the new account does not hold. Privacy holds: account 2 cannot see account 1's course. But 'Il corso resta su questo telefono' is not true across an account switch, and the user gets no warning or choice.",
+      "reproduction": "Throwaway spec without write blocking; deviceCourseId() returns null about 20 s after account 2 connects.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 ('Sign-out ... keeps the course on the device'); SC-B1-2"
+    },
+    {
+      "id": "SP-B3-4",
+      "title": "The public CVC Helper Test site will offer sign-up to the development backend with no 'synthetic data only' notice",
+      "evidence": "vite.config.ts backupEnv embeds the development project's URL, publishable key and sync URL in every test-channel build made on this PC; scripts/deploy-test-site.mjs publishes it. sendSignInLink sets shouldCreateUser: true, so anyone with the public URL can create an account and store data. The test app has the roster scan, and nothing in OnlineBackup.tsx tells the user this is a development backend for invented data only. Not yet published at 34de169.",
+      "reproduction": "CVC_APP_CHANNEL=test npm run -s build; a scan of dist/ found only the 3 public values, no database URI, admin token, project id or test credentials.",
+      "specRef": "AGENTS.md §17; owner decision 13"
+    },
+    {
+      "id": "SP-B3-5",
+      "title": "Session and refresh token sit in localStorage on the shared furiocolombo.github.io origin with no CSP",
+      "evidence": "createClient persists the session in localStorage; the regular and test sites share the hostname with every other Pages site of the owner; index.html has no Content-Security-Policy. Any script on any of the owner's github.io pages can read the refresh token and the PKCE verifier. BACKLOG already proposes a separate origin for the test channel.",
+      "reproduction": "Inspection of index.html and docs/DEPLOY.md.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.3"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B3-6",
+      "title": "A magic link opened in another browser fails silently and leaves ?code= in the URL",
+      "evidence": "Visiting '/?code=<uuid>' without a code verifier sends no request but shows no explanation, and the URL keeps the code.",
+      "reproduction": "Throwaway spec with a fake backend.",
+      "specRef": "B3 adversarial checklist (the magic link opened in another browser)"
+    },
+    {
+      "id": "SP-B3-7",
+      "title": "Full reset removes the session locally without revoking it on the server",
+      "evidence": "src/persistence/browserStorage.ts clears the backup-auth keys but never calls auth.signOut; the refresh token stays valid server-side until it expires.",
+      "reproduction": "Inspection.",
+      "specRef": "persona lens 4"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md B3; AGENTS.md §17; docs/working/OWNER_DECISIONS.md 11-13; docs/working/BACKLOG.md; docs/DEPLOY.md; .github/workflows/deploy-pages.yml",
+    "git diff 4c7c7a5..34de169 (src/backup/*, src/persistence/backupLink.ts, browserStorage.ts, OnlineBackup.tsx, main.tsx, appChannel.ts, vite.config.ts, check-built-pwa.mjs, check-repository.mjs, b3 specs)",
+    "supabase migrations; @supabase/auth-js GoTrueClient _signOut, __loadSession, _callRefreshToken",
+    "CVC_APP_CHANNEL=test build: passes check-built-pwa; only the 3 public values embedded; no override or test helper",
+    "b3-backup-ui: 3 passed; connector.test: 4 passed",
+    "Throwaway live specs against the development backend with synthetic test accounts 1 and 2; both cleared afterwards",
+    "Signed-out network capture with a fake backend: zero external requests"
+  ],
+  "anglesTried": {
+    "seed": 455576424,
+    "lenses": [
+      "1 Network: every request, to which host, carrying what",
+      "3 Keys in the client bundle"
+    ],
+    "wildcard": "Sign-out under field conditions (offline plus an expired token) and an account switch across a still-queued synced device"
+  },
+  "notTested": [
+    "The real emailed magic link end to end (needs the owner's mailbox and dashboard)",
+    "Multi-tab announcement of the switch",
+    "Whether constraint errors with student names reach the console through PowerSync's upload error logging",
+    "WebKit/iPhone"
+  ]
+}

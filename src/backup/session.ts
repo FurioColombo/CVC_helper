@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { backupConfig, type BackupConfig } from "@/backup/config"
 import { createConnector } from "@/backup/connector"
 import {
+  claimDeviceForAccount,
   connectDatabase,
   deviceCourseId,
   deviceSyncMode,
@@ -25,6 +26,7 @@ export type BackupState =
   | { kind: "link-sent"; email: string }
   | { kind: "reopen" }
   | { kind: "other-course" }
+  | { kind: "other-account" }
   | { kind: "connected"; email: string }
   | { kind: "error"; message: string }
 
@@ -89,14 +91,37 @@ export async function startBackup(): Promise<BackupState> {
       }
     const elsewhere = (owned ?? []).some(({ id }) => id !== device)
     if (elsewhere) return { kind: "other-course" }
-    await switchDeviceToSyncedTables()
+    await switchDeviceToSyncedTables(session.user.id)
     return { kind: "reopen" }
   }
+  // A synced device belongs to the account that switched it: another account
+  // never uploads its queue nor receives its course (review SP-B3-1, -3).
+  if (!(await claimDeviceForAccount(session.user.id)))
+    return { kind: "other-account" }
   if (!connected) {
     connected = true
-    await connectDatabase(createConnector(client, config))
+    await connectDatabase(createConnector(client, config, session.user.id))
   }
   return { kind: "connected", email }
+}
+
+/**
+ * Removes the stored session whatever the library managed: offline with an
+ * expired token its sign-out returns early and keeps it, and the next online
+ * launch would sign the old account back in (review SP-B3-2).
+ */
+function forgetStoredSession() {
+  try {
+    for (const key of Object.keys(window.localStorage))
+      if (
+        key === appChannelConfig.backupAuthKey ||
+        key.startsWith(`${appChannelConfig.backupAuthKey}-`)
+      )
+        window.localStorage.removeItem(key)
+  } catch {
+    // Storage unavailable: nothing was stored either.
+  }
+  client = null
 }
 
 /** Disconnects and signs out; the course stays on the device. */
@@ -105,7 +130,11 @@ export async function signOutOfBackup(): Promise<BackupState> {
   if (!config) return { kind: "unavailable" }
   await disconnectDatabase()
   connected = false
-  await (await supabase(config)).auth.signOut({ scope: "local" })
+  try {
+    await (await supabase(config)).auth.signOut({ scope: "local" })
+  } finally {
+    forgetStoredSession()
+  }
   return { kind: "signed-out" }
 }
 
@@ -138,8 +167,23 @@ export async function startBackupAtLaunch(
   reload = () => window.location.reload(),
 ) {
   if (!backupConfig()) return setBackupState({ kind: "unavailable" })
+  const fromLink = new URL(window.location.href).searchParams.has("code")
   try {
     const state = await startBackup()
+    if (fromLink) {
+      // The code is spent or useless either way; keep it out of the address.
+      const url = new URL(window.location.href)
+      url.searchParams.delete("code")
+      window.history.replaceState(window.history.state, "", url)
+      // A link opened elsewhere than the phone that asked for it, or expired
+      // (review SP-B3-6).
+      if (state.kind === "signed-out")
+        return setBackupState({
+          kind: "error",
+          message:
+            "Il link non è valido su questo telefono o è scaduto. Richiedine uno nuovo da qui.",
+        })
+    }
     setBackupState(state)
     if (state.kind === "reopen") reload()
   } catch {
