@@ -204,10 +204,15 @@ try {
     assert.equal(digest, pin.gitSourceDigest, "Pinned source digest changed")
   const npmCli = process.env.npm_execpath
   assert(npmCli, "Run through npm run test-site:publish")
+  // npm run hands package.json's allowScripts to its children as
+  // npm_config_allow_scripts, which npm 11's own install then refuses as a
+  // command-line flag; the snapshot's package.json carries the same list.
+  const inherited = { ...process.env }
+  delete inherited.npm_config_allow_scripts
   const npm = (parameters, env = {}) =>
     execFileSync(process.execPath, [npmCli, ...parameters], {
       cwd: snapshot,
-      env: { ...process.env, ...env },
+      env: { ...inherited, ...env },
       stdio: "inherit",
     })
   npm(["ci", "--ignore-scripts"])
