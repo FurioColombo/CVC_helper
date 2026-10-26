@@ -81,16 +81,27 @@ assert(
 assert(isFullRun(run), "The source commit needs a full CI run, not a quick one")
 
 async function api(route, method = "GET", body) {
-  const response = await fetch(`https://api.github.com${route}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(30_000),
+  const send = () =>
+    fetch(`https://api.github.com${route}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(30_000),
+    })
+  // The connection kept from before the minutes-long build can be gone; a
+  // request that failed while being written never reached GitHub, so it is
+  // sent once more on a new one.
+  const unsent = (error) =>
+    ["ECONNABORTED", "ECONNRESET", "EPIPE"].includes(error?.cause?.code) &&
+    error?.cause?.syscall === "write"
+  const response = await send().catch((error) => {
+    if (!unsent(error)) throw error
+    return send()
   })
   if (response.status === 404 && method === "GET") return null
   assert(response.ok, `GitHub ${method} ${route}: HTTP ${response.status}`)
