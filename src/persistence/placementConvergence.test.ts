@@ -43,6 +43,8 @@ vi.mock("@/persistence/db", () => ({
 const CREATED_AT = "2026-09-01T12:00:00.000Z"
 const PLACEMENT_TABLES = [
   "students",
+  "dutySettings",
+  "dutySettingItems",
   "crews",
   "crewMembers",
   "landAssignments",
@@ -1402,6 +1404,67 @@ describe.each([false, true])(
         ] as const) {
           expect(archive.tables[table]).toEqual([])
         }
+      }
+    })
+
+    it("O3: a student one phone deleted after the other made them stay over", async () => {
+      const phoneA = createDevice()
+      const phoneB = createDevice()
+      pointAt(phoneB)
+      const stored = (await readDutyPlan("course-1")).settings ?? {
+        desiredPerDay: 0,
+        fewerDayIds: [],
+        balanceMinors: true,
+        balanceSex: false,
+        tieBreaker: "alphabetical" as const,
+        stayOverStudentIds: [],
+        completedDayIds: [],
+        acknowledgedWarningKeys: [],
+      }
+      at("2026-09-20T09:00:00.000Z")
+      await saveDutyPlan(
+        "course-1",
+        [],
+        { ...stored, stayOverStudentIds: ["student-3"] },
+        phoneB.database,
+      )
+      at("2026-09-20T10:00:00.000Z")
+      pointAt(phoneA)
+      await deleteUnusedStudent("student-3", "course-1")
+
+      sync([phoneA, phoneB], [phoneB, phoneA])
+
+      for (const phone of [phoneA, phoneB]) {
+        pointAt(phone)
+        expect(count(phone, "students")).toBe(2)
+        const read = await readDutyPlan("course-1")
+        expect(read.settings!.stayOverStudentIds).toEqual([])
+        expect(read.resolvedConflicts).toBeGreaterThan(0)
+        const archive = await exportCourseArchive(phone.database)
+        expect(
+          archive.tables.dutySettingItems.filter(
+            ({ value }) => value === "student-3",
+          ),
+        ).toEqual([])
+        expect(archive.tables.dutySettings[0]!.stayOverStudentIds).toBe("[]")
+
+        at("2026-09-20T11:00:00.000Z")
+        await saveDutyPlan(
+          "course-1",
+          read.assignments,
+          read.settings!,
+          phone.database,
+        )
+        const after = await readDutyPlan("course-1")
+        expect(after.resolvedConflicts).toBe(0)
+        expect(after.settings!.stayOverStudentIds).toEqual([])
+        expect(
+          phone.sqlite
+            .prepare(
+              'SELECT COUNT(*) AS n FROM "dutySettingItems" WHERE value = ?',
+            )
+            .get("student-3"),
+        ).toMatchObject({ n: 0 })
       }
     })
   },

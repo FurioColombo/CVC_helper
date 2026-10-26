@@ -1,4 +1,8 @@
-import type { CourseFamily, CourseLevel } from "@/domain/config"
+import {
+  type CourseFamily,
+  type CourseLevel,
+  DUTY_SETTING_LISTS,
+} from "@/domain/config"
 import { getStandardCrewSize } from "@/domain/crews"
 
 /**
@@ -297,12 +301,64 @@ interface CourseRows {
   dutyAssignments: ReadonlyArray<Record<string, unknown>>
   evaluations: ReadonlyArray<Record<string, unknown>>
   students?: ReadonlyArray<Record<string, unknown>>
+  dutySettings?: ReadonlyArray<Record<string, unknown>>
+  dutySettingItems?: ReadonlyArray<Record<string, unknown>>
   volunteers?: ReadonlyArray<Record<string, unknown>>
   boats?: ReadonlyArray<Record<string, unknown>>
   faults?: ReadonlyArray<Record<string, unknown>>
 }
 
 type Rows = ReadonlyArray<Record<string, unknown>>
+
+const STAY_OVER_KIND = DUTY_SETTING_LISTS.find(
+  ({ field }) => field === "stayOverStudentIds",
+)!.kind
+
+/**
+ * The stay-over list without students the course no longer has, and its
+ * items renumbered to match (src/persistence/dutyItems.ts): the export's
+ * validator requires both (B4 review SC-B4-7, round 3).
+ */
+function withoutOrphanStayOvers(
+  tables: CourseRows,
+  students: Set<string> | null,
+  onDropped: () => void,
+) {
+  if (!students || !tables.dutySettings) return {}
+  const dutySettings = tables.dutySettings.map((settings) => {
+    let list: unknown
+    try {
+      list = JSON.parse(String(settings.stayOverStudentIds ?? "[]"))
+    } catch {
+      return settings
+    }
+    if (!Array.isArray(list)) return settings
+    const kept = list.filter((id) => students.has(id as string))
+    for (let index = kept.length; index < list.length; index += 1) onDropped()
+    return kept.length === list.length
+      ? settings
+      : { ...settings, stayOverStudentIds: JSON.stringify(kept) }
+  })
+  if (!tables.dutySettingItems) return { dutySettings }
+  // The remaining stay-over items keep their order, renumbered from 0.
+  const positions = new Map(
+    tables.dutySettingItems
+      .filter(
+        (item) =>
+          item.kind === STAY_OVER_KIND && students.has(item.value as string),
+      )
+      .sort((a, b) => Number(a.position) - Number(b.position))
+      .map((item, position) => [item, position]),
+  )
+  const dutySettingItems = tables.dutySettingItems.flatMap((item) =>
+    item.kind !== STAY_OVER_KIND
+      ? [item]
+      : positions.has(item)
+        ? [{ ...item, position: positions.get(item) }]
+        : [],
+  )
+  return { dutySettings, dutySettingItems }
+}
 
 /**
  * Rows naming a row the course no longer has: one phone deleted a crew, a
@@ -356,6 +412,7 @@ function withoutOrphans<T extends CourseRows>(tables: T) {
     ...(tables.faults
       ? { faults: keep(tables.faults, (row) => has(boats, row.boatId)) }
       : {}),
+    ...withoutOrphanStayOvers(tables, students, () => (dropped += 1)),
   } as T
   return { tables: settled, dropped }
 }

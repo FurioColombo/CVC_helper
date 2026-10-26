@@ -120,6 +120,25 @@ describe("duty persistence", () => {
     })
   })
 
+  it("drops a stay-over student the course no longer has and counts it", async () => {
+    givenStoredRows({ students: ["student-1", "student-2"] })
+    database.getOptional.mockResolvedValue({
+      desiredPerDay: 3,
+      fewerDayIds: "[]",
+      balanceMinors: 1,
+      balanceSex: 0,
+      tieBreaker: "alphabetical",
+      stayOverStudentIds: '["student-3","student-1"]',
+      completedDayIds: "[]",
+      acknowledgedWarningKeys: "[]",
+    })
+
+    await expect(readDutyPlan("course-1")).resolves.toMatchObject({
+      resolvedConflicts: 1,
+      settings: { stayOverStudentIds: ["student-1"] },
+    })
+  })
+
   it("reloads explicit extra days and accepts a base count of zero", async () => {
     givenStoredRows({
       items: dutySettingItems("course-1", {

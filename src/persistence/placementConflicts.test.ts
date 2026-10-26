@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { dutySettingItems } from "@/persistence/dutyItems"
 import {
   resolveByKey,
   resolveCoursePlacements,
@@ -343,5 +344,134 @@ describe("resolveCoursePlacements: rows of something that is gone", () => {
       crewMembers: [member("m2", "ghost", "s1", early)],
     })
     expect(conflicts).toBe(1)
+  })
+})
+
+describe("resolveCoursePlacements: stay-over students that are gone", () => {
+  type Loose = Record<string, Array<Record<string, unknown>>>
+  type Out = Loose & {
+    dutySettings: Array<Record<string, unknown>>
+    dutySettingItems: Array<Record<string, unknown>>
+  }
+  const resolve = (given: Loose) => {
+    const result = resolveCoursePlacements(
+      given as unknown as Parameters<typeof resolveCoursePlacements>[0],
+    )
+    return {
+      conflicts: result.conflicts,
+      tables: result.tables as unknown as Out,
+    }
+  }
+  const settings = (stayOver: string[]) => ({
+    id: "course-1",
+    courseId: "course-1",
+    stayOverStudentIds: JSON.stringify(stayOver),
+    fewerDayIds: "[]",
+  })
+  const itemsOf = (lists: Parameters<typeof dutySettingItems>[1]) =>
+    dutySettingItems("course-1", lists).map((item) => ({ ...item }))
+  const course = (present: string[], extra: Loose): Loose => ({
+    courses: [{ family: "Deriva", level: 2 }],
+    students: present.map((id) => ({ id })),
+    crews: [],
+    crewMembers: [],
+    landAssignments: [],
+    sessionBoats: [],
+    dutyAssignments: [],
+    evaluations: [],
+    ...extra,
+  })
+  const stayOverItems = (rows: Array<Record<string, unknown>>) =>
+    rows
+      .filter(({ kind }) => kind === "stay-over")
+      .map(({ value, position }) => [value, position])
+
+  it("drops one missing student among several, keeping order and renumbering", () => {
+    const items = itemsOf({
+      stayOverStudentIds: ["s1", "s2", "s3"],
+      fewerDayIds: ["saturday", "sunday"],
+    })
+    const { tables, conflicts } = resolve(
+      course(["s1", "s3"], {
+        dutySettings: [settings(["s1", "s2", "s3"])],
+        dutySettingItems: items,
+      }),
+    )
+    expect(conflicts).toBe(1)
+    expect(tables.dutySettings[0]!.stayOverStudentIds).toBe('["s1","s3"]')
+    expect(stayOverItems(tables.dutySettingItems)).toEqual([
+      ["s1", 0],
+      ["s3", 1],
+    ])
+  })
+
+  it("counts every missing student and leaves the rest from position 0", () => {
+    const { tables, conflicts } = resolve(
+      course(["s3"], {
+        dutySettings: [settings(["s1", "s2", "s3"])],
+        dutySettingItems: itemsOf({ stayOverStudentIds: ["s1", "s2", "s3"] }),
+      }),
+    )
+    expect(conflicts).toBe(2)
+    expect(tables.dutySettings[0]!.stayOverStudentIds).toBe('["s3"]')
+    expect(stayOverItems(tables.dutySettingItems)).toEqual([["s3", 0]])
+  })
+
+  it("changes nothing when every student exists", () => {
+    const given = course(["s1", "s2"], {
+      dutySettings: [settings(["s1", "s2"])],
+      dutySettingItems: itemsOf({ stayOverStudentIds: ["s1", "s2"] }),
+    })
+    const { tables, conflicts } = resolve(given)
+    expect(conflicts).toBe(0)
+    expect(tables.dutySettings).toEqual(given.dutySettings)
+    expect(tables.dutySettingItems).toEqual(given.dutySettingItems)
+  })
+
+  it("leaves the items of other kinds alone, whatever their value", () => {
+    const items = itemsOf({
+      stayOverStudentIds: ["s2"],
+      fewerDayIds: ["saturday"],
+      acknowledgedWarningKeys: ["s2", "w1"],
+    })
+    const { tables } = resolve(
+      course(["s1"], {
+        dutySettings: [settings(["s2"])],
+        dutySettingItems: items,
+      }),
+    )
+    const stayOver = items.find(
+      (item) => item.value === "s2" && item.kind !== "acknowledged-warning",
+    )
+    expect(tables.dutySettingItems).toHaveLength(items.length - 1)
+    expect(tables.dutySettingItems).not.toContainEqual(stayOver)
+    expect(
+      tables.dutySettingItems.filter(({ value }) => value === "s2"),
+    ).toHaveLength(items.filter(({ value }) => value === "s2").length - 1)
+    for (const item of tables.dutySettingItems) {
+      const before = items.find(({ id }) => id === item.id)
+      expect(item).toEqual(before)
+    }
+  })
+
+  it("trims the list when the item table is not given", () => {
+    const { tables, conflicts } = resolve(
+      course(["s1"], { dutySettings: [settings(["s1", "s2"])] }),
+    )
+    expect(conflicts).toBe(1)
+    expect(tables.dutySettings[0]!.stayOverStudentIds).toBe('["s1"]')
+    expect(tables).not.toHaveProperty("dutySettingItems")
+  })
+
+  it("does nothing when the students table is not given", () => {
+    const { students, ...rest } = course([], {
+      dutySettings: [settings(["s9"])],
+      dutySettingItems: itemsOf({ stayOverStudentIds: ["s9"] }),
+    })
+    void students
+    const { tables, conflicts } = resolve(rest)
+    expect(conflicts).toBe(0)
+    expect(tables.dutySettings[0]!.stayOverStudentIds).toBe('["s9"]')
+    expect(tables.dutySettingItems).toHaveLength(1)
   })
 })

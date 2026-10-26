@@ -1,0 +1,31 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B4",
+  "commit": "c3bd9d5",
+  "round": 3,
+  "verdict": "PASS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "DI-B4-3 re-test: git diff ea1b310..c3bd9d5 for src/persistence/uploadRefusals.ts (deletePending reads ps_crud for a queued DELETE of synced_<table>; REFERENCES checks landAssignments/dutyAssignments.studentId, sessionBoats/crews.boatId and crewMembers.personId by personType), src/persistence/crews.ts (present flag in readCrewPlan and readCrewHistory) and src/persistence/placementConflicts.ts (withoutOrphans)",
+    "Round-2 scratch reproductions re-run against HEAD on node:sqlite with a ps_crud table (coverage/b4di/r3.test.ts): 8 of 8 pass. Land placement refused then removed and the student deleted: with deletes queued Riprova keeps the refusal unapplied, with deletes no longer queued the reference check keeps it; 0 land rows and the export succeeds. Land removal with its delete queued: not brought back. Crew member of a deleted student: not re-created, export succeeds. Student whose delete is queued: not re-created. Volunteer member of an absent volunteer: not re-created. Earlier fixes hold (stale PUT leaves '++', stale DELETE leaves the placement made again, deleted-crew member not re-created, unknown column kept without throwing)",
+    "The same land, member and student scenarios failed at ea1b310, so the tests distinguish the fix",
+    "tests/e2e/b4-uploads.spec.ts at HEAD on pixel-7-chrome: 9 of 9, including 'Riprova does not bring back a student whose delete has not uploaded yet' (the ps_crud query against PowerSync's real queue format)",
+    "npx vitest run --project node src/persistence src/backup: 29 files, 432 passed, 1 expected fail (the tombstone gap, listed in docs/working/BACKLOG.md)",
+    "The orphan settlement read for damage: readCrewPlan hides rows naming a deleted person or boat and saveCrewPlan's diff then deletes them; exported orphans could never pass the importer; listEvaluations joins students. No new damage found"
+  ],
+  "anglesTried": {
+    "seed": 507743953,
+    "lenses": [
+      "Round 3: DI-B4-3 only (Riprova while deletes are queued; references outside COURSE_PARENTS)",
+      "Regressions of the round-2 fix: orphan settlement on read and export, and the round-1 retry reproductions"
+    ],
+    "wildcard": "Not drawn (round 3)"
+  },
+  "notTested": [
+    "The live Supabase backend (fake backend and node:sqlite harness only)",
+    "Failure without the fix for the e2e case confirmed only through the round-2 runs at ea1b310"
+  ]
+}

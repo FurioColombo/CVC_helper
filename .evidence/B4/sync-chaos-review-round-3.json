@@ -1,0 +1,50 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "round": 3,
+  "commit": "c3bd9d5",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SC-B4-7",
+      "title": "(Partly fixed, still open) A student deleted on one phone while the other marks them as staying over leaves a stay-over reference to a missing student; the course export then fails on both phones, whichever uploads first",
+      "evidence": "O1 and O2 now export fine on both phones in both orders. withoutOrphans settles crewMembers, landAssignments, dutyAssignments, evaluations, sessionBoats, faults and crew boats, but not dutySettings.stayOverStudentIds or its dutySettingItems, and the export's validator rejects a stay-over id with no student (courseArchiveFormat.ts:414-420). Scratch O3 on HEAD, both orders: phone B at 09:00 saves the duty plan with stayOverStudentIds ['student-3']; phone A at 10:00 deletes student-3 (no references on A). After the sync both phones hold B's settings and no student-3; readDutyPlan succeeds with resolvedConflicts 0; exportCourseArchive throws 'Il file contiene dati del corso non validi.' on both phones in both orders. Suggested fix: drop missing student ids from the stay-over list and its items in withoutOrphans and readDutyPlan, count them as resolved, add O3.",
+      "reproduction": "Reviewer scratch orph3.test.ts (HEAD harness plus 'orphans, reversed %s' O1, O2, O3).",
+      "specRef": "Owner decision 12; SC-B1-1; AGENTS.md §11"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-B4-8",
+      "title": "(Unchanged by design) A later delete loses to an older whole-row edit uploaded after it; acceptable once the owner's decision is recorded before closure",
+      "evidence": "Fuzz2 (seed 360423565) on HEAD: 3 of 200 wrong rounds, all this delete case (rounds 51, 108, 141); the milestone's fuzz keeps it as its one expected failure. The milestone should not close until the answer is in docs/working/OWNER_DECISIONS.md next to decision 12, or in the B4 section of the plan; today it is only in the backlog, and the B6 checklist line covers SP-B4-3, not this case.",
+      "reproduction": "Reviewer scratch fuzz2.test.ts: 'FUZZ2 seed 360423565: 3/200'.",
+      "specRef": "Owner decision 12; AGENTS.md §2"
+    }
+  ],
+  "qolFindings": [],
+  "resolvedBlockers": {
+    "SC-B4-7 (crew members and evaluations)": "Resolved: O1 and O2 export fine in both orders; placementConvergence, placementConflicts, crewConflicts and src/backup: 128 passed, 1 expected fail.",
+    "SC-B4-9": "Resolved: b4-uploads.spec.ts in full on a clean c3bd9d5, 9 passed, no retries, the erased-course test included."
+  },
+  "evidenceInspected": [
+    "Diff ea1b310..c3bd9d5: placementConflicts.ts (withoutOrphans), crews.ts (present flags), placementConvergence and placementConflicts tests, uploadRefusals.ts (skimmed), the plan's B6 checklist, BACKLOG",
+    "courseArchive.ts (export through resolveCoursePlacements) and courseArchiveFormat.ts:414-420 (stay-over validation)",
+    "Clean c3bd9d5: vitest 128 passed, 1 expected fail; Playwright b4-uploads 9 passed; scratch orph3 and fuzz2 deleted after; git status clean"
+  ],
+  "anglesTried": {
+    "seed": 360423565,
+    "lenses": [
+      "2: one device deletes what the other is editing (carried)",
+      "6: a stale app version (carried; untouched by this diff)"
+    ],
+    "wildcard": "The one student reference outside the placement tables: dutySettings.stayOverStudentIds and its dutySettingItems"
+  },
+  "notTested": [
+    "Volunteer and boat references outside the tables withoutOrphans covers (e.g. acknowledged warning keys): the export validator was not audited for every id field",
+    "The upload-rules migration live",
+    "A two-context live cycle (needs B5), WebKit, the owner's phone"
+  ],
+  "note": "Third FAIL for this role: under the protocol SC-B4-7 (the stay-over case) and the recording of SC-B4-8 go to the owner; there is no round 4."
+}

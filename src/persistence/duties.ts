@@ -104,24 +104,44 @@ export async function readDutyPlan(courseId: string): Promise<{
   settings: DutySettingsRecord | null
 }> {
   await db.init()
-  const [storedAssignments, persistedSettings] = await Promise.all([
-    db.getAll<PersistedDutyAssignment>(
-      `SELECT id, dayId, studentId, updatedAt
+  const [storedAssignments, persistedSettings, courseStudents] =
+    await Promise.all([
+      db.getAll<PersistedDutyAssignment>(
+        `SELECT id, dayId, studentId, updatedAt
        FROM dutyAssignments
        WHERE courseId = ?
        ORDER BY dayId, studentId, id`,
-      [courseId],
-    ),
-    db.getOptional<PersistedDutySettings>(
-      `SELECT desiredPerDay, fewerDayIds, balanceMinors, balanceSex,
+        [courseId],
+      ),
+      db.getOptional<PersistedDutySettings>(
+        `SELECT desiredPerDay, fewerDayIds, balanceMinors, balanceSex,
               extraDayIds, tieBreaker, stayOverStudentIds, completedDayIds,
               acknowledgedWarningKeys
        FROM dutySettings
        WHERE id = ? AND courseId = ?`,
-      [courseId, courseId],
-    ),
-  ])
+        [courseId, courseId],
+      ),
+      db.getAll<{ id: string }>("SELECT id FROM students WHERE courseId = ?", [
+        courseId,
+      ]),
+    ])
   const resolved = resolveDutyRows(storedAssignments)
+  // A student deleted on another phone while this one kept them staying
+  // over (B4 review SC-B4-7): the list keeps only students the course has,
+  // or the next save would refuse it.
+  const parsedSettings = persistedSettings
+    ? parseSettings(persistedSettings)
+    : null
+  const known = new Set(courseStudents.map(({ id }) => id))
+  const stayOver = parsedSettings?.stayOverStudentIds.filter((id) =>
+    known.has(id),
+  )
+  const settings =
+    parsedSettings && stayOver
+      ? { ...parsedSettings, stayOverStudentIds: stayOver }
+      : parsedSettings
+  const orphanStayOvers =
+    (parsedSettings?.stayOverStudentIds.length ?? 0) - (stayOver?.length ?? 0)
   const assignments = resolved.kept.map(({ dayId, studentId }) => ({
     dayId,
     studentId,
@@ -135,8 +155,8 @@ export async function readDutyPlan(courseId: string): Promise<{
   }
   return {
     assignments,
-    resolvedConflicts: resolved.dropped.length,
-    settings: persistedSettings ? parseSettings(persistedSettings) : null,
+    resolvedConflicts: resolved.dropped.length + orphanStayOvers,
+    settings,
   }
 }
 

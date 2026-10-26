@@ -73,6 +73,7 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
     clash between two phones edited offline settles on the latest edit
     instead of breaking Equipaggi, and the app says when two phones edited
     offline. Team editing stays 1.0.0 (review SC-B1-1; B4 and B5).
+    Decision 16 bounds it for deletes.
 13. **Production lives where no agent token reaches (taken, B2).** The
     PowerSync token in `.env` belongs to an account, not to one instance, so
     the production backend (UG4) is created under a separate PowerSync account
@@ -90,3 +91,10 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
     It needs one change in Supabase's email template, which Supabase allows
     only with a custom email sender (SMTP); until then the email has the link
     alone (`docs/OWNER_TODO.md`, B3-EMAIL-CODE).
+16. **A delete may lose to an older edit, in 0.5.0 (yours, 2026-10-26).**
+    Decision 12's "the latest edit wins" holds for edits; for deletes one
+    case stays open: phone A edits a row offline, later phone B deletes it,
+    and if B uploads first, A's older edit brings the row back (B4 review
+    SC-B4-8, the expected failure in `placementConvergence.test.ts`). It is
+    accepted for 0.5.0 under the one-writing-phone rule; deletion times and
+    server tombstones come before team editing (1.0.0).
