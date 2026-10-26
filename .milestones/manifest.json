@@ -1224,6 +1224,12 @@
       "id": "B5",
       "category": "FEATURE",
       "status": "PENDING",
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "B4",
+          "reason": "Restore downloads through the sign-in and connector verified in B3 and B4 (fake-backend and live tests, the server rules verified live on 2026-10-27); the pending offline day measures save latency and a long offline upload on the owner's phone, which restore does not depend on."
+        }
+      ],
       "ownerEvidence": [".evidence/B5/physical-device-review.json"],
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
