@@ -1159,7 +1159,7 @@
     {
       "id": "B4",
       "category": "RULE_HEAVY",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "B3",
@@ -1180,7 +1180,17 @@
         ".evidence/B4/sync-chaos-review.json",
         ".evidence/B4/data-integrity-review.json",
         ".evidence/B4/security-privacy-review.json"
-      ]
+      ],
+      "startedFrom": {
+        "commit": "bc707e6d03c002d07996608e3543685cd409100d",
+        "sourceDigest": "600f8ea16275ae041374611a664e94d70b818792f9d7fb14a275eeee5945e34c",
+        "ownerPrerequisites": [
+          {
+            "id": "B3",
+            "commit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1"
+          }
+        ]
+      }
     },
     {
       "id": "B5",

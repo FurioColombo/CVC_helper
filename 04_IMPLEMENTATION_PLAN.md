@@ -90,7 +90,7 @@ security/privacy and field-UX reviews.
 ## B4 — Uploads
 
 **Category:** RULE_HEAVY
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 The upload handler writes each queued change through the owner's session to
 the table without its `synced_` prefix and sends the app version; the server
