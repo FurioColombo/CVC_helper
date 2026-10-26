@@ -193,20 +193,19 @@
       "milestone": "B3",
       "kind": "DECISION",
       "title": "Add the sign-in code to the development backend's email",
-      "status": "READY",
-      "required": true,
-      "revision": 1,
+      "status": "NEEDS_SETUP",
+      "required": false,
+      "revision": 2,
       "instructions": [
-        "In the Supabase dashboard of cvc-helper-dev open Authentication, then Emails (Templates), then Magic link.",
-        "In the message body, below the existing link, add this line exactly: <p>Codice: {{ .Token }}</p> and save. Leave the subject and the link as they are.",
-        "Optional, also there: in Authentication > Sign In / Providers you may turn off \"Allow new users to sign up\"; the app already never creates accounts.",
-        "Report B3-EMAIL-CODE with \"code added\". Nothing to paste: the code is per email and the template holds no secret."
+        "Not possible yet: Supabase lets you edit the email only after you set up your own email sender (Authentication > Emails > Set up SMTP). With its built-in sender the email carries just the link.",
+        "Nothing to do for the Android check: on Android the link opens in Chrome, which shares the installed app's storage.",
+        "Before production (UG4) a custom sender is needed anyway (the built-in one only delivers to your Supabase team and a few emails an hour); add <p>Codice: {{ .Token }}</p> to the Magic link template then. Report B3-EMAIL-CODE with \"code added\" if you do it earlier."
       ],
-      "expected": "Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app, a mail app's own browser).",
+      "expected": "Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app). Deferred until a custom email sender exists.",
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/B3/owner-setup.json",
-      "updatedAt": "2026-10-26T03:07:53.412Z"
+      "updatedAt": "2026-10-26T09:08:18.590Z"
     },
     {
       "id": "B3-PHONE-SIGNIN",
@@ -215,11 +214,11 @@
       "title": "Sign in to the online backup on Android and use it offline",
       "status": "READY",
       "required": true,
-      "revision": 2,
+      "revision": 3,
       "instructions": [
         "Open your installed CVC Helper Test (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.0. Use invented people only: this backup is a development one.",
-        "Make sure the test app has a course with two or three invented students. In Impostazioni > Backup online type the email of one of your two test accounts and tap Invia il link di accesso. Note whether 'Link inviato' is still there if you close and reopen the app.",
-        "On the phone, open the email and tap the link. Note which app opens it (the installed CVC Helper Test, Chrome, or Gmail's own browser) and what Impostazioni then shows. If the link opens elsewhere, type the email's code in Codice dell'email instead (needs B3-EMAIL-CODE).",
+        "Make sure the test app has a course with two or three invented students. In Impostazioni > Backup online type the email of a test account and tap Invia il link di accesso. Supabase's built-in sender only delivers to the addresses of your Supabase team (your own account email) and a few emails an hour: if your test accounts use other addresses, add a user with your own address in Authentication > Users > Add user. Note whether Link inviato is still there if you close and reopen the app.",
+        "On the phone, open the email and tap the link. Note which app opens it (the installed CVC Helper Test, Chrome, or Gmail's own browser) and what Impostazioni then shows. The code field cannot be used yet (B3-EMAIL-CODE).",
         "Once it shows Accesso: <your email>, wait for Copia online aggiornata. While the app reloads once after signing in, try typing a student: report whether anything you typed was lost.",
         "Turn on airplane mode, add a student, close the app completely, reopen it: Impostazioni should show your account and 'In attesa di connessione: 1 modifica da inviare'. Turn airplane mode off and check it reaches Copia online aggiornata without reopening.",
         "With airplane mode on again, change a student, then tap Esci: read the question (it should mention 1 change not yet online), tap Resta collegato, then Esci and Esci. The course must stay on the phone. Optionally the next morning, with airplane mode on, open the app and note what Impostazioni says.",
@@ -229,7 +228,7 @@
       "testedCommit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B3/physical-device-review.json",
-      "updatedAt": "2026-10-26T08:33:03.894Z"
+      "updatedAt": "2026-10-26T09:08:19.765Z"
     }
   ]
 }

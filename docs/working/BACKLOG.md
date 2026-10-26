@@ -201,6 +201,12 @@ Each passed only on a retry and is a defect to fix (03 §6).
   exchange the old refresh token when signal returns; the result is
   discarded on the phone, but the server issued it. Revoke on the server
   (global sign-out when online) before production.
+- **A custom email sender before production** (B3, 2026-10-26): Supabase's
+  built-in sender only delivers to the project's team, a few emails an hour,
+  and its templates cannot be edited, so the sign-in email carries no code
+  and Impostazioni's "Codice dell’email" field leads nowhere until the owner
+  sets up SMTP (owner action B3-EMAIL-CODE). Before UG4: the sender, the code
+  in the template, or hide the field while the email has no code.
 - B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
   slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
   Home shows nothing. Consider a one-line notice on Home.

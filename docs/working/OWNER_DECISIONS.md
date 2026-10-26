@@ -87,4 +87,6 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
     in the browser that asked for it: an iPhone home-screen app, or a link
     Gmail opens in its own browser, would never sign in. Impostazioni
     therefore also accepts the code from the same email (review FUX-B3-4).
-    It needs one change in Supabase's email template (`docs/OWNER_TODO.md`).
+    It needs one change in Supabase's email template, which Supabase allows
+    only with a custom email sender (SMTP); until then the email has the link
+    alone (`docs/OWNER_TODO.md`, B3-EMAIL-CODE).
