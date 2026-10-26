@@ -175,8 +175,8 @@ export async function signInWithCode(
 
 /**
  * Where the backup stands, acting on it: switches a signed-in local device
- * (the app then reopens) or connects a switched one. `beforeSwitch` waits
- * until the switch may reload the app.
+ * (the app then reopens) or connects a switched one. `beforeSwitch` throws
+ * when the switch may not reload the app now.
  */
 export async function startBackup(
   beforeSwitch: () => Promise<void> = async () => {},

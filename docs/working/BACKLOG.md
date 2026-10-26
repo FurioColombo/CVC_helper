@@ -103,6 +103,13 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
+- B3 field-UX FUX-B3-R4-Q1 (unconfirmed): in a reviewer's two-tab scratch
+  spec on Playwright WebKit, 2 of 4 runs stayed on "Apertura del corso…"
+  after the launch switch reloaded the app (Windows dev server, another agent
+  committing at the same time). The repository's `b3-backup-ui.spec.ts`
+  passed 16/16 on `iphone-13-webkit-core`. Watch the owner's iPhone check;
+  add a two-tab WebKit case if it recurs.
+
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI `39235069108`: Disabilita allievo was absent after
   reactivation; the retry passed. Cause unproven. See
@@ -188,6 +195,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   exchange the old refresh token when signal returns; the result is
   discarded on the phone, but the server issued it. Revoke on the server
   (global sign-out when online) before production.
+- B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
+  slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
+  Home shows nothing. Consider a one-line notice on Home.
 - B1 SC-B1-Q6: when an older app reopens beside an open synced tab, the
   refused save says the course was "sostituito o eliminato" and the typed
   student is lost on reopen; data is intact, the message and the draft are

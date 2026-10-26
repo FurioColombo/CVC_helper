@@ -1,0 +1,68 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B3",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B3-1",
+      "title": "Process: a fix for one review finding broke the magic link itself, and no test opened a real sign-in link",
+      "evidence": "Cleaning ?code from the address (SP-B3-6/FUX-B3-4) ran before the auth client read it, so a valid link signed nobody in; found by the security reviewer (SP-B3-8, round 2). Fixed in 12d9171; b3-backup-ui now opens '/?code=' after sending the link from the same browser and asserts the PKCE exchange.",
+      "reproduction": "Resolved; the new spec case fails without the fix.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 success predicate"
+    },
+    {
+      "id": "SELF-B3-2",
+      "title": "Process: two commits were made while verify:quick was failing",
+      "evidence": "f3a6a3f (a lint error, fixed next commit) and 4dd7977 (timeouts under load while a reviewer drove browsers; the next quiet run passed 1529/1529 with no change). The exit code must be checked before every commit.",
+      "reproduction": "Resolved; recorded verification is on the final source.",
+      "specRef": "AGENTS.md §13"
+    },
+    {
+      "id": "SELF-B3-3",
+      "title": "The first deferred-reopen design guessed at 'not typing' from focus, which lost a new student on a radio tap and raised a leave guard unasked",
+      "evidence": "FUX-B3-3 (round 2) and FUX-B3-R2-1. Replaced by a rule that needs no guess: the switch reloads by itself only before the first tap after launch or when asked; otherwise Impostazioni offers Riapri l'app. A tab that performed the switch always reloads, since it can no longer save.",
+      "reproduction": "b3-backup-ui 'a sign-in finishing while the app is in use never reloads it under the user' (Chromium and WebKit).",
+      "specRef": "06_DESIGN_RULEBOOK R10"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SELF-B3-Q1",
+      "title": "A signed-in phone whose link was deferred shows 'Backup pronto' only in Impostazioni; Home says nothing",
+      "evidence": "Seen by the field-UX reviewer in round 3. The case needs a tap during the launch check on a slow connection; the next launch or Riapri l'app completes it.",
+      "reproduction": "b3-backup-ui deferred case.",
+      "specRef": "01_PRODUCT_SPEC.md §1"
+    }
+  ],
+  "reviews": [
+    ".evidence/B3/security-privacy-review.json (PASS_WITH_FINDINGS, round 3; rounds 1 and 2 FAIL)",
+    ".evidence/B3/field-ux-review.json (PASS, round 4; round 1 FAIL, rounds 2 and 3 PASS_WITH_FINDINGS)"
+  ],
+  "fixedFindings": [
+    { "ids": ["SP-B3-1", "FUX-B3-1"], "fix": "The switch records the account (meta local:backup-account, 44-bit mark); another account gets other-account; the connector is bound to its account", "proof": "b3-backup-live 'a second account on the same phone neither uploads nor takes the first account's course' against the development backend" },
+    { "ids": ["SP-B3-2", "SP-B3-11"], "fix": "Sign-out always removes the stored session keys and waits at most 3 s for the library", "proof": "b3-backup-live 'signing out offline with an expired session stays signed out'" },
+    { "ids": ["SP-B3-3"], "fix": "Follows from SP-B3-1: another account never connects, so it never takes the course off the device", "proof": "same live case: the course stays on the phone" },
+    { "ids": ["SP-B3-4"], "fix": "shouldCreateUser false (owner decision 14) and a synthetic-data notice on the test channel", "proof": "b3-backup-ui asserts create_user false" },
+    { "ids": ["SP-B3-6", "FUX-B3-4", "SP-B3-8"], "fix": "?code, #error and ?error explained and removed after the client's own exchange; the email's code signs in (owner decision 15, owner action B3-EMAIL-CODE)", "proof": "b3-backup-ui link, foreign-link and code cases" },
+    { "ids": ["SP-B3-9"], "fix": "Each write carries the access token its transaction started with", "proof": "src/backup/connector.test.ts" },
+    { "ids": ["SP-B3-10"], "fix": "An expired link-sent address is removed", "proof": "src/backup/session.ts linkSentTo" },
+    { "ids": ["SP-B3-13", "FUX-B3-2", "FUX-B3-R3-Q1"], "fix": "'Verifica dell'accesso…' during the launch check; a kept session shows as waiting within 3 s offline; signal resumes the backup", "proof": "b3-backup-ui 'offline the morning after…' (6 s bound)" },
+    { "ids": ["FUX-B3-3", "FUX-B3-R2-1", "FUX-B3-R2-Q2", "FUX-B3-R3-1"], "fix": "The touch-or-ask reopen rule; Riapri l'app performs a deferred switch", "proof": "b3-backup-ui in-use case" },
+    { "ids": ["FUX-B3-5", "FUX-B3-R2-Q3"], "fix": "onAuthStateChange: SIGNED_IN resumes, SIGNED_OUT signs other tabs out; a tab on local tables reopens instead of connecting", "proof": "field-UX rounds 3-4 two-tab runs" },
+    { "ids": ["FUX-B3-6", "FUX-B3-R2-Q4"], "fix": "Esci asks first with the unsent count; the question scrolls into view", "proof": "b3-backup-ui code case" },
+    { "ids": ["FUX-B3-Q1", "FUX-B3-Q2", "FUX-B3-Q3", "FUX-B3-Q4", "FUX-B3-Q5", "FUX-B3-R2-Q1"], "fix": "Send errors keep the form with a cause; link-sent survives a restart; Archivio 'Locale, con backup online'; status icon and 16 px; 'Tutto inviato. Ora senza connessione.'; '1 modifica'", "proof": "b3-backup-ui and field-UX round 2-4 rechecks" },
+    { "ids": ["FUX-B3-R2-2"], "fix": "Owner action B3-EMAIL-CODE", "proof": "docs/OWNER_TODO.md#b3-email-code" }
+  ],
+  "deferredFindings": [
+    { "ids": ["SP-B3-5"], "to": "docs/working/BACKLOG.md (sign-in tokens on a shared origin, before production)" },
+    { "ids": ["SP-B3-7", "SP-B3-12"], "to": "docs/working/BACKLOG.md (revoke the session on the server)" },
+    { "ids": ["FUX-B3-R4-Q1"], "to": "Unconfirmed WebKit hang after the switch reload in a two-tab scratch spec; b3-backup-ui passed 16/16 on iphone-13-webkit-core (--repeat-each=2, retries 0). Recorded in docs/working/BACKLOG.md flaky tests" },
+    { "ids": ["SELF-B3-Q1"], "to": "docs/working/BACKLOG.md" }
+  ],
+  "limitations": [
+    "The real emailed link and code, the installed Android app and airplane mode are the owner's device check (B3-PHONE-SIGNIN); no simulated device PASS is recorded",
+    "The code fallback needs the owner's email-template change (B3-EMAIL-CODE)"
+  ]
+}
