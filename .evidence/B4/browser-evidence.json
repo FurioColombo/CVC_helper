@@ -1,0 +1,35 @@
+{
+  "milestone": "B4",
+  "recordedAt": "2026-10-26",
+  "specs": {
+    "tests/e2e/b4-uploads.spec.ts": {
+      "backend": "fake, modelling the server's upload rules (whole rows, latest edit, conditioned deletes; no request leaves the test)",
+      "result": "9 cases, recorded by verification.json (Chromium); each refusal case was shown to fail without its fix",
+      "cases": [
+        "the switch uploads the course in batches, each write naming the app version",
+        "a refused change is kept and listed, the rest goes through, and Riprova sends it again",
+        "an app below the server's minimum writer is told to update and keeps its changes",
+        "Riprova sends a refused student with the edit made after the refusal (SC-B4-1, DI-B4-2)",
+        "a student deleted after a refusal stays deleted and leaves the list (SC-B4-1)",
+        "a refused edit is sent whole on Riprova, never as an empty change (DI-B4-2)",
+        "refusals that cannot be sent can be taken off the list, the course unchanged (DI-B4-4)",
+        "a refusal arriving after the course was erased is not kept (SP-B4-1)",
+        "Riprova does not bring back a student whose delete has not uploaded yet (DI-B4-3)"
+      ]
+    },
+    "tests/e2e/b4-uploads-live.spec.ts": {
+      "backend": "the owner's development backend, synthetic test accounts; skipped without .env",
+      "cases": [
+        "a course id held by another account is refused, kept and reported, not retried forever: passes",
+        "the server refuses writers below the minimum version: skips until the owner runs the upload-rules migration",
+        "the server keeps the latest edit of a row, uploaded in either order: skips until the migration (its skip confirmed the server merged rows before it)"
+      ]
+    },
+    "regression": "B3's specs and the crew, duty, evaluation and course-file journeys listed in the manifest's e2eSpecs, on Chromium and WebKit: 74 passed, 4 skipped, 0 flaky (verification.json)"
+  },
+  "unitHarness": "src/persistence/placementConvergence.test.ts replays two phones' queued operations through a model of the server's rules in both upload orders, with a seeded fuzz; the one expected failure is owner decision 16",
+  "notCovered": [
+    "The server rules live until the owner runs the migration (B4-PHONE-UPLOADS)",
+    "Save latency after a day offline on the owner's phone (SC-B1-Q3)"
+  ]
+}
