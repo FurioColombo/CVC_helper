@@ -1,0 +1,16 @@
+{
+  "milestone": "B4",
+  "checkedAt": "2026-10-26",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "buildInfo": {
+    "sourceCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
+    "version": "0.5.1",
+    "channel": "test"
+  },
+  "checks": [
+    "build-info.json at the test address names the pinned source and 0.5.1",
+    "A browser profile with 0.5.0 installed was offered the update; Aggiorna applied it in place, the course was kept, and Impostazioni shows Versione 0.5.1 with the Backup online section and the development-backup notice",
+    "Signed out, no request went to Supabase (browser network log)"
+  ],
+  "notChecked": "Sign-in, uploads and the server rules on the live site: the owner's B4-PHONE-UPLOADS, then the live tests once the migration runs"
+}

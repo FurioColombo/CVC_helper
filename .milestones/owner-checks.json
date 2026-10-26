@@ -244,9 +244,9 @@
       "milestone": "B4",
       "kind": "DEVICE_CHECK",
       "title": "Install the B4 build, switch on the server rules, and use the backup offline for a day",
-      "status": "NEEDS_SETUP",
+      "status": "READY",
       "required": true,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
         "Open CVC Helper Test in Chrome as before (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.1 and still Accesso: <your email> with Copia online aggiornata. Use invented people only.",
         "Only after that: in the Supabase dashboard of cvc-helper-dev open SQL Editor, paste the whole file supabase/migrations/20261026000000_upload_rules.sql and run it once (it should report success with no rows). Tell me 'rules run' in the chat: I then run the live checks of the two server rules against the backend.",
@@ -259,7 +259,7 @@
       "testedCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B4/physical-device-review.json",
-      "updatedAt": "2026-10-26T16:31:59.189Z"
+      "updatedAt": "2026-10-26T16:39:02.466Z"
     }
   ]
 }
