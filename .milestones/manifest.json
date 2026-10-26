@@ -1190,7 +1190,22 @@
             "commit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1"
           }
         ]
-      }
+      },
+      "e2eSpecs": [
+        "tests/e2e/b4-uploads.spec.ts",
+        "tests/e2e/b4-uploads-live.spec.ts",
+        "tests/e2e/b3-backup-ui.spec.ts",
+        "tests/e2e/b3-backup-live.spec.ts",
+        "tests/e2e/c1-crew-management.spec.ts",
+        "tests/e2e/crew-management-gate.spec.ts",
+        "tests/e2e/duties.spec.ts",
+        "tests/e2e/evaluation-gate.spec.ts",
+        "tests/e2e/d4-course-files.spec.ts",
+        "tests/e2e/crews.spec.ts",
+        "tests/e2e/crew-destinations.spec.ts",
+        "tests/e2e/d2-duty-items.spec.ts",
+        "tests/e2e/d4-evaluation-note-save.spec.ts"
+      ]
     },
     {
       "id": "B5",
