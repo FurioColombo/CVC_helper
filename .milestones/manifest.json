@@ -1131,7 +1131,13 @@
         "commit": "4c7c7a52bbebbb06f9976e310043eadbcefd2a6e",
         "sourceDigest": "b7adcf3c06b547858ba0f8df994915a430b985a991a3cca13609b18878e42c44",
         "ownerPrerequisites": []
-      }
+      },
+      "e2eSpecs": [
+        "tests/e2e/b3-backup-ui.spec.ts",
+        "tests/e2e/b3-backup-live.spec.ts",
+        "tests/e2e/b1-sync-mode.spec.ts",
+        "tests/e2e/f1-navigation-guards.spec.ts"
+      ]
     },
     {
       "id": "B4",
