@@ -15,6 +15,10 @@ function fakeClient(error: unknown = null) {
             calls.push({ table, op: "eq", args: eqArgs })
             return Promise.resolve({ error })
           },
+          setHeader: (...headerArgs: unknown[]) => {
+            calls.push({ table, op: "header", args: headerArgs })
+            return chain
+          },
           then: (resolve: (value: unknown) => void) => resolve({ error }),
         }
         return chain
@@ -54,18 +58,35 @@ describe("the backup connector", () => {
 
   it("upserts a PUT, updates a PATCH and deletes a DELETE by id", async () => {
     const { client, calls } = fakeClient()
-    await uploadEntry(client, entry(UpdateType.PUT, { firstName: "Ada" }))
-    await uploadEntry(client, entry(UpdateType.PATCH, { firstName: "Eva" }))
-    await uploadEntry(client, entry(UpdateType.DELETE))
+    await uploadEntry(
+      client,
+      entry(UpdateType.PUT, { firstName: "Ada" }),
+      "token-1",
+    )
+    await uploadEntry(
+      client,
+      entry(UpdateType.PATCH, { firstName: "Eva" }),
+      "token-1",
+    )
+    await uploadEntry(client, entry(UpdateType.DELETE), "token-1")
+    // Each write carries the token its transaction started with (SP-B3-9).
+    const header = {
+      table: "students",
+      op: "header",
+      args: ["Authorization", "Bearer token-1"],
+    }
     expect(calls).toEqual([
       {
         table: "students",
         op: "upsert",
         args: [{ firstName: "Ada", id: "student-1" }],
       },
+      header,
       { table: "students", op: "update", args: [{ firstName: "Eva" }] },
+      header,
       { table: "students", op: "eq", args: ["id", "student-1"] },
       { table: "students", op: "delete", args: [] },
+      header,
       { table: "students", op: "eq", args: ["id", "student-1"] },
     ])
   })

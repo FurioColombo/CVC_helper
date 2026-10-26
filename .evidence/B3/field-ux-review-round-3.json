@@ -1,0 +1,53 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B3",
+  "commit": "6e435d5",
+  "round": 3,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "FUX-B3-R3-1",
+      "title": "'Riapri l'app' is a plain reload: one tap during the slow check after it defers the switch again, and the hands-off path costs two reloads",
+      "evidence": "The reopen state's button calls window.location.reload(), not resumeBackup(true); after the reload watchFirstTouch starts again. Scratch spec on pixel-7, courses GET delayed 3 s: a tap at 0.3 s defers ('Backup pronto…', loads 1); 'Riapri l'app' then a tap 1 s after the load: still deferred (loads 2); hands off: connected after two more loads (loads 4). 'Backup pronto' shows only in Impostazioni.",
+      "reproduction": "Scratch spec r3a 'R3 the reopen race' (pixel). Expected: after 'Riapri l'app' the switch completes. Observed: deferred again by the first tap, or two reloads when hands off.",
+      "specRef": "01_PRODUCT_SPEC.md §1; 04_IMPLEMENTATION_PLAN.md B3 success predicate"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FUX-B3-R3-Q1",
+      "title": "During the launch check a signed-in phone shows the sign-in form",
+      "evidence": "current starts as { kind: 'signed-out' } until resumeBackup resolves; with a token refresh slowed to 6 s Impostazioni shows the email form at 0.5 s and 2 s, the account at 8 s. Pre-existing, not a regression.",
+      "reproduction": "Scratch spec r3b, both projects.",
+      "specRef": "06_DESIGN_RULEBOOK R14 (loading state)"
+    }
+  ],
+  "roundTwoRecheck": {
+    "FUX-B3-3": "RESOLVED on pixel-7 and iPhone 13 WebKit (Sesso tapped, heading tapped: no reload, form kept)",
+    "FUX-B3-R2-1": "RESOLVED on both projects (no unprompted note alert, no reload); requestLeave no longer called by the backup",
+    "FUX-B3-R2-2": "RESOLVED (B3-EMAIL-CODE in docs/OWNER_TODO.md and owner-checks.json)",
+    "FUX-B3-R2-Q1": "RESOLVED ('1 modifica')",
+    "FUX-B3-R2-Q2": "RESOLVED (Enter on the code field: one reload, connected, both engines)",
+    "FUX-B3-R2-Q3": "RESOLVED (Esci in tab A signs tab B out within 6 s, both projects)",
+    "FUX-B3-R2-Q4": "Fixed in code (scrollIntoView); not re-measured at 320 px / 200 %"
+  },
+  "fieldWalkthrough": "Evening: about 6 taps, one reload, connected. Morning: the app never reloads under my thumb any more. On a slow pier link with an immediate tap, the switch waits, and 'Riapri l'app' only helps with hands off for the whole check, then reloads twice. Read twice: the sign-in form shown for a few seconds on a signed-in phone.",
+  "evidenceInspected": [
+    "git diff 4f80486..6e435d5: session.ts, OnlineBackup.tsx, b3-backup-ui.spec.ts, docs/OWNER_TODO.md",
+    "Round-2 report",
+    "Scratch specs r3a and r3b (fake backend, synthetic accounts) on Pixel 7 and iPhone 13 WebKit, 12 runs"
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": ["Round 3: re-check of round-2 findings and regressions from 6e435d5"],
+    "wildcard": "Whether the deferred reopen can never come: a tap during the post-Riapri check, the reload count, what Impostazioni shows during the launch check"
+  },
+  "notTested": [
+    "The scan-review case in a browser (by reading: requestLeave no longer called)",
+    "A tab left on local tables after another tab switched while in use (B1 backlog SC-B1-Q6)",
+    "Real devices, a real email code, the installed PWA, sunlight",
+    "320 px / 200 % re-measurement of the scrolled sign-out question"
+  ]
+}

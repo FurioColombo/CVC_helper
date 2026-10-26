@@ -171,6 +171,11 @@ async function withSigningInBackup(page: Page, coursesDelay = 0) {
         body: JSON.stringify(body),
       })
     if (path === "/auth/v1/verify") return json(sessionFor(3600))
+    if (
+      path === "/auth/v1/token" &&
+      new URL(request.url()).searchParams.get("grant_type") === "pkce"
+    )
+      return json(sessionFor(3600))
     if (path === "/auth/v1/otp") return json({})
     if (path === "/auth/v1/logout") return route.fulfill({ status: 204 })
     if (path === "/rest/v1/courses" && request.method() === "GET") {
@@ -233,6 +238,32 @@ test("the code in the email signs in; the course waits to be sent, and Esci asks
   await expect(
     page.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
   ).toBeVisible()
+})
+
+test("the emailed link, opened in the browser that asked, signs in and leaves the address clean", async ({
+  page,
+}) => {
+  const requests = await withSigningInBackup(page)
+  await createCourse(page)
+  const section = page.getByRole("region", { name: "Backup online" })
+  await section.getByLabel("Email").fill("istruttore@example.test")
+  await section
+    .getByRole("button", { name: "Invia il link di accesso" })
+    .click()
+  await expect(section.getByRole("status").first()).toContainText(
+    "Link inviato",
+  )
+  // The link opens the app afresh with its code (review SP-B3-8).
+  await page.goto("about:blank")
+  await page.goto("/?code=fake-link-code")
+  await expect
+    .poll(() => requests.some(({ url }) => url.includes("grant_type=pkce")))
+    .toBe(true)
+  await expect.poll(() => new URL(page.url()).search).toBe("")
+  await openSettings(page)
+  await expect(section).toContainText("Accesso: istruttore@example.test", {
+    timeout: 30_000,
+  })
 })
 
 test("a sign-in finishing while the app is in use never reloads it under the user", async ({

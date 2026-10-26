@@ -24,6 +24,7 @@ import { appChannelConfig } from "@/runtimeConfig"
  */
 export type BackupState =
   | { kind: "unavailable" }
+  | { kind: "checking" }
   | { kind: "signed-out"; notice?: string }
   | { kind: "link-sent"; email: string; notice?: string }
   | { kind: "offline"; email: string }
@@ -95,6 +96,9 @@ function linkSentTo(): string | null {
   } catch {
     // Unreadable: as if none was sent.
   }
+  // Expired or unreadable: the address is not kept longer than the link
+  // (review SP-B3-10).
+  rememberLinkSent(null)
   return null
 }
 
@@ -256,6 +260,8 @@ async function signedOutElsewhere() {
   setBackupState({ kind: "signed-out" })
 }
 
+const SIGN_OUT_WAIT_MS = 3_000
+
 /** Disconnects and signs out; the course stays on the device. */
 export async function signOutOfBackup(): Promise<BackupState> {
   const config = backupConfig()
@@ -263,7 +269,13 @@ export async function signOutOfBackup(): Promise<BackupState> {
   await disconnectDatabase()
   connected = false
   try {
-    await (await supabase(config)).auth.signOut({ scope: "local" })
+    // Offline with an expired token the library retries for about 30 s
+    // before giving up; the stored session goes either way (SP-B3-11).
+    const auth = (await supabase(config)).auth
+    await Promise.race([
+      auth.signOut({ scope: "local" }),
+      new Promise((resolve) => window.setTimeout(resolve, SIGN_OUT_WAIT_MS)),
+    ])
   } finally {
     forgetStoredSession()
   }
@@ -276,7 +288,9 @@ export function forgetLinkSent(): BackupState {
   return { kind: "signed-out" }
 }
 
-let current: BackupState = { kind: "signed-out" }
+// Until the launch check answers, a signed-in phone must not show the
+// sign-in form (review FUX-B3-R3-Q1).
+let current: BackupState = { kind: "checking" }
 const listeners = new Set<(state: BackupState) => void>()
 
 /** The latest state, for screens that show it. */
@@ -313,6 +327,8 @@ function watchFirstTouch() {
 }
 
 class SwitchDeferred extends Error {}
+/** The switch waits for "Riapri l’app"; nothing changed on the device yet. */
+let switchDeferred = false
 
 /**
  * Brings the backup up to date and reopens the app when it switched. The
@@ -323,18 +339,24 @@ class SwitchDeferred extends Error {}
  * FUX-B3-3, FUX-B3-R2-1).
  */
 export function resumeBackup(asked = false) {
-  // Waiting for "Riapri l’app": nothing to do until the app reopens.
-  if (current.kind === "reopen") return Promise.resolve()
+  // Waiting for "Riapri l’app": nothing to do until the app reopens, unless
+  // it is the user asking for the deferred switch.
+  if (current.kind === "reopen" && !(asked && switchDeferred))
+    return Promise.resolve()
   resuming ??= (async () => {
     const mayReopen = () => asked || !touched
+    let switchedHere = false
     try {
       const state = await startBackup(async () => {
         if (!mayReopen()) throw new SwitchDeferred()
+        switchedHere = true
       })
       if (state.kind === "reopen") {
         setBackupState(state)
-        // Switched here, or by another tab while this one is in use.
-        if (mayReopen()) reload()
+        // Switched here: this tab's screens can no longer save, so it reopens
+        // at once. Switched by another tab while this one is in use: it waits
+        // for "Riapri l’app".
+        if (switchedHere || mayReopen()) reload()
         return
       }
       // A message on the form stays until something changes.
@@ -346,6 +368,7 @@ export function resumeBackup(asked = false) {
         return
       setBackupState(state)
     } catch (error) {
+      switchDeferred = error instanceof SwitchDeferred
       setBackupState(
         error instanceof SwitchDeferred
           ? { kind: "reopen" }
@@ -356,6 +379,16 @@ export function resumeBackup(asked = false) {
     }
   })()
   return resuming
+}
+
+/**
+ * "Riapri l’app": a deferred switch happens now, as asked, and reopens once;
+ * a done one only reopens (review FUX-B3-R3-1).
+ */
+export function reopenApp() {
+  if (switchDeferred) return resumeBackup(true)
+  reload()
+  return Promise.resolve()
 }
 
 /** Whether the address carries a sign-in link's answer; removes it. */
@@ -386,6 +419,9 @@ export async function startBackupAtLaunch(
   if (!backupConfig()) return setBackupState({ kind: "unavailable" })
   reload = reloadApp
   watchFirstTouch()
+  // The library exchanges a sign-in link's code when it starts, reading the
+  // address: only then may the address be cleaned (review SP-B3-8).
+  await (await supabase(backupConfig()!)).auth.initialize()
   const link = takeLinkFromAddress()
   window.addEventListener("online", () => {
     if (current.kind === "offline" || current.kind === "error")

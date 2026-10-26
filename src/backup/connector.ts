@@ -28,17 +28,32 @@ export function serverTable(type: string) {
 
 type Client = Pick<SupabaseClient, "auth" | "from">
 
+/**
+ * Writes one queued change with `token`, the access token its transaction
+ * started with: a sign-in of another account while the upload runs cannot
+ * lend it its own (B3 review SP-B3-9).
+ */
 export async function uploadEntry(
   client: Client,
   entry: Pick<CrudEntry, "op" | "table" | "id" | "opData">,
+  token: string,
 ) {
   const table = client.from(serverTable(entry.table))
+  const authorization = `Bearer ${token}`
   const result =
     entry.op === UpdateType.PUT
-      ? await table.upsert({ ...entry.opData, id: entry.id })
+      ? await table
+          .upsert({ ...entry.opData, id: entry.id })
+          .setHeader("Authorization", authorization)
       : entry.op === UpdateType.PATCH
-        ? await table.update(entry.opData ?? {}).eq("id", entry.id)
-        : await table.delete().eq("id", entry.id)
+        ? await table
+            .update(entry.opData ?? {})
+            .setHeader("Authorization", authorization)
+            .eq("id", entry.id)
+        : await table
+            .delete()
+            .setHeader("Authorization", authorization)
+            .eq("id", entry.id)
   if (result.error) throw result.error
 }
 
@@ -73,11 +88,12 @@ export function createConnector(
       }
     },
     async uploadData(database: AbstractPowerSyncDatabase) {
-      if (!(await sessionOf()))
-        throw new Error("Not signed in as this device's account")
+      const session = await sessionOf()
+      if (!session) throw new Error("Not signed in as this device's account")
       const transaction = await database.getNextCrudTransaction()
       if (!transaction) return
-      for (const entry of transaction.crud) await uploadEntry(client, entry)
+      for (const entry of transaction.crud)
+        await uploadEntry(client, entry, session.access_token)
       await transaction.complete()
     },
   }

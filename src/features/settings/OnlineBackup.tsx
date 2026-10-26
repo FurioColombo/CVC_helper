@@ -13,6 +13,7 @@ import {
   type BackupState,
   forgetLinkSent,
   onBackupState,
+  reopenApp,
   resumeBackup,
   sendSignInLink,
   setBackupState,
@@ -79,6 +80,14 @@ export function OnlineBackup() {
         <CloudUpload aria-hidden="true" className="size-4 shrink-0" />
         Backup online
       </h2>
+      {state.kind === "checking" && (
+        <p
+          className="mt-2 text-sm leading-5 text-muted-foreground"
+          role="status"
+        >
+          Verifica dell’accesso…
+        </p>
+      )}
       {state.kind === "signed-out" && (
         <form className="mt-2" onSubmit={send}>
           <p className="text-sm leading-5 text-muted-foreground">
@@ -176,7 +185,13 @@ export function OnlineBackup() {
           <p className="text-sm leading-5">
             Backup pronto. Riapri l’app per attivarlo.
           </p>
-          <Button className="mt-3" onClick={() => window.location.reload()}>
+          <Button
+            className="mt-3"
+            disabled={busy}
+            onClick={() =>
+              void run(async () => (await reopenApp(), backupState()))
+            }
+          >
             Riapri l’app
           </Button>
         </div>

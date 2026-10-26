@@ -1,0 +1,50 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B3",
+  "round": 2,
+  "commit": "6e435d5 (brief: b702eee + e065f24 + manifest; every finding re-run on 6e435d5)",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-B3-8",
+      "title": "The magic link never signs in: the address is stripped of ?code before the Supabase client reads it",
+      "evidence": "src/backup/session.ts startBackupAtLaunch calls takeLinkFromAddress() (strips code/error, history.replaceState) before resumeBackup(), the first caller of supabase(); auth-js _initialize then reads window.location.href without the code (GoTrueClient.js:389-403). No PKCE exchange; the app shows 'Il link è scaduto, già usato o aperto in un altro browser' for a valid same-browser link. Scratch run with a fake backend, as shipped: requests [POST /auth/v1/otp] only, no session. Control with the strip disabled: [POST /auth/v1/otp, POST /auth/v1/token?grant_type=pkce, GET /rest/v1/courses, POST /rest/v1/courses], session stored. Regression from the SP-B3-6/FUX-B3-4 fix; no spec opened a ?code= link with a real verifier.",
+      "reproduction": "Scratch pkce.spec.ts (pixel-7-chrome, fake backend, synthetic address): create a course, send the link from Impostazioni (stores the verifier), goto about:blank then '/?code=<uuid>', wait 10 s. Expected: token?grant_type=pkce and a signed-in device. Observed: no token request, 'link scaduto' notice.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 (sign-in by magic link)"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-B3-9",
+      "title": "An upload already in flight sends the first account's remaining rows with the second account's token (check-then-use in the connector)",
+      "evidence": "src/backup/connector.ts uploadData checks the session's account once, then each request reads the current stored session. With Esci and another account's sign-in finishing during a held write (2 tabs, fake backend, synthetic students): WRITES [POST /rest/v1/courses Bearer tok-1, POST /rest/v1/students Bearer tok-2 x3]; after a plain sign-out a write went with the publishable key only. On the real backend the child-table policies refuse these rows (account 2 does not own the course, which is always the first entry), but the row contents reach the server under the wrong identity. Fix: pin the transaction's access token.",
+      "reproduction": "Scratch race.spec.ts '(2 tab)'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 adversarial checklist (SC-B1-Q5)"
+    }
+  ],
+  "qolFindings": [
+    { "id": "SP-B3-10", "title": "The persisted sign-in address outlives its one-hour validity", "evidence": "linkSentTo ignores an expired entry but never removes it; the address stays in localStorage on a shared phone if sign-in is never completed.", "reproduction": "Inspection of session.ts at 6e435d5.", "specRef": "persona lens 11/12 (minimisation, retention)" },
+    { "id": "SP-B3-11", "title": "Esci offline with an expired token takes about 30 s before it completes", "evidence": "auth-js retries the refresh inside signOut; forgetStoredSession runs in finally. Correct result, but the screen may look stuck.", "reproduction": "Live spec 'signing out offline with an expired session stays signed out' takes 30.5 s.", "specRef": "04_IMPLEMENTATION_PLAN.md B3 (Sign-out disconnects)" }
+  ],
+  "evidenceInspected": [
+    "SP-B3-1 re-tested: RESOLVED (live spec: other-account, queue intact, 0 server courses for either account, course still on the phone; claimDeviceForAccount/accountMark, account-bound connector, mark written in the switch transaction)",
+    "SP-B3-2 re-tested: RESOLVED (live spec: storedAfterSignOut false, signed-out after the online reload; regular and test keys are not prefixes of each other)",
+    "git diff 34de169..b702eee, git show e065f24, git diff b702eee..6e435d5 -- src/backup/session.ts",
+    "e065f24: backupEnv reads only the three public values for test-channel builds; the publisher's bundle check prints file names, not values",
+    "auth-js _initialize/_isPKCECallback/_exchangeCodeForSession; RLS policies in supabase/migrations",
+    "b3-backup-live (3 passed) and b3-backup-ui (7 passed) on pixel-7-chrome at b702eee",
+    "Scratch specs on 6e435d5 with a fake backend and synthetic data; tab B now signs out on SIGNED_OUT",
+    ".env used only by the repository's live spec, never printed; no rows created on the development backend"
+  ],
+  "anglesTried": {
+    "seed": 455576424,
+    "lenses": ["Round 2: re-test SP-B3-1 and SP-B3-2; the fix diff 34de169..6e435d5"],
+    "wildcard": "URL stripping vs the auth client's own URL detection; check-then-use across tabs; the persisted address's lifetime; cross-channel key prefixes on the shared origin"
+  },
+  "notTested": [
+    "A real emailed link end to end",
+    "SP-B3-9 against the real backend (refusal inferred from RLS)",
+    "WebKit/iPhone"
+  ]
+}
