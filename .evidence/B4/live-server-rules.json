@@ -1,0 +1,13 @@
+{
+  "milestone": "B4",
+  "checkedAt": "2026-10-27",
+  "context": "The owner ran supabase/migrations/20261026000000_upload_rules.sql on the development backend after updating CVC Helper Test to 0.5.1 (chat: 'rules run').",
+  "run": "tests/e2e/b4-uploads-live.spec.ts, b3-backup-live.spec.ts and b2-backend.spec.ts on pixel-7-chrome against the development backend, synthetic test accounts, --retries=0: 7 passed, 0 skipped",
+  "results": [
+    "the server refuses writers below the minimum version: a write naming 0.4.9 and one naming no version answer 400 CVOLD; 0.5.0 is accepted (201)",
+    "the server keeps the latest edit of a row: an older insert, an older edit and a delete conditioned on an older updatedAt change no row; the newer value, its cleared note and its time stand",
+    "a course id held by another account is refused, kept and reported",
+    "B2's access checks and B3's live sign-in, upload, second-account and offline sign-out checks still pass with the rules on"
+  ],
+  "cleanup": "Each test clears both synthetic accounts' courses"
+}
