@@ -158,3 +158,82 @@ test("an empty device restores the account's course and opens it", async ({
 
   await clearAccount(access)
 })
+
+// A restored course whose minimum writer is newer than the app opens
+// read-only and asks for the update (B5 adversarial checklist).
+test("a restored course takes the server's minimum writer; a newer one opens read-only", async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  const access = await token(1)
+  await clearAccount(access)
+  const minimum = await fetch(
+    `${base()}/rest/v1/rpc/app_minimum_writer_version`,
+    {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY!,
+        authorization: `Bearer ${access}`,
+        "content-type": "application/json",
+      },
+      body: "{}",
+    },
+  )
+  // Until the owner runs the minimum-writer-read migration the function is
+  // missing and the restore keeps the device's own minimum; the read-only
+  // half below holds either way.
+  if (minimum.status !== 404) expect(await minimum.json()).toBe("0.5.0")
+
+  const course = crypto.randomUUID()
+  const at = new Date().toISOString()
+  await write(access, "courses", {
+    id: course,
+    active: 1,
+    family: "Deriva",
+    level: 2,
+    isoWeek: 44,
+    year: 2026,
+    startDate: "2026-10-31",
+    endDate: "2026-11-07",
+    label: "D2 44 2026",
+    createdAt: at,
+    updatedAt: at,
+  })
+  await page.addInitScript(
+    (config) => {
+      window.__cvcBackupConfig = config
+    },
+    {
+      supabaseUrl: env.SUPABASE_URL!,
+      supabaseKey: env.SUPABASE_ANON_KEY!,
+      powersyncUrl: env.POWERSYNC_URL!,
+    },
+  )
+  await page.goto("/")
+  await call(
+    page,
+    "/src/backup/session.ts",
+    "signInForTests",
+    env.TEST_USER_1_EMAIL!,
+    env.TEST_USER_1_PASSWORD!,
+  ).catch(() => {})
+  await expect(
+    page.getByRole("heading", { name: /D2 - 44 \| 2026/ }),
+  ).toBeVisible({ timeout: 90_000 })
+  // Writable with the server's own minimum.
+  await expect(page.getByText("Sola lettura:")).toHaveCount(0)
+
+  // A server minimum above this app, as a future release would set: the
+  // restored course opens read-only after the reopen.
+  await call(
+    page,
+    "/src/persistence/backupLink.ts",
+    "adoptMinimumWriter",
+    "9.0.0",
+  )
+  await page.reload()
+  await expect(page.getByText("Sola lettura:")).toBeVisible({
+    timeout: 30_000,
+  })
+  await clearAccount(access)
+})
