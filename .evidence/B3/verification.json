@@ -1,0 +1,33 @@
+{
+  "milestone": "B3",
+  "status": "FAIL",
+  "recordedAt": "2026-10-26T04:05:31.899Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.5.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "abbdc4ffe46bf623efdfa7d2d398dd91be170ee9",
+  "workingTreeClean": true,
+  "sourceDigest": "a9b60f16af8d3c2bc1032b6685150d0816978fc7ea0f70c018118d1f58e3cb73",
+  "sourceFiles": 468,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/b3-backup-ui.spec.ts",
+    "tests/e2e/b3-backup-live.spec.ts",
+    "tests/e2e/b1-sync-mode.spec.ts",
+    "tests/e2e/f1-navigation-guards.spec.ts"
+  ],
+  "flakyTests": [],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "FAIL",
+      "startedAt": "2026-10-26T04:05:11.418Z",
+      "durationMs": 20479,
+      "exitCode": 3221225794,
+      "outputTail": "\n\n> cvc-helper@0.5.0 preverify:quick\n> node scripts/check-runtime.mjs\n\n\n> cvc-helper@0.5.0 verify:quick\n> npm run lint && npm run format:check && npm run typecheck && npm run test\n\n\n> cvc-helper@0.5.0 lint\n> eslint . --max-warnings 0"
+    }
+  ]
+}

@@ -178,6 +178,46 @@ describe("a later milestone replaces the installed build only after its owner ch
   })
 })
 
+describe("the 0.5.0 cycle's first test build replaces 0.4.4", () => {
+  const replacing = {
+    milestone: "B3",
+    versions: ["0.5.0"],
+    sourceCommit: later,
+    activeVersion: "0.4.4",
+    ownerInstalled: null,
+    replaces: {
+      milestone: "UG3",
+      ownerCheck: "UG3-PHONE-RELEASE",
+      activeVersion: "0.4.4",
+    },
+  }
+  const queue = (status) => ({
+    items: [{ id: "UG3-PHONE-RELEASE", status }],
+  })
+
+  it("orders a new minor line after the old patches", () => {
+    expect(() =>
+      assertTestPublicationAllowed(replacing, later, "0.5.0", queue("PASSED")),
+    ).not.toThrow()
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, versions: ["0.3.9"] },
+        later,
+        "0.3.9",
+        queue("PASSED"),
+      ),
+    ).toThrow(/must update the installed one/)
+    expect(() =>
+      assertTestPublicationAllowed(
+        { ...replacing, versions: ["1.0"] },
+        later,
+        "1.0",
+        queue("PASSED"),
+      ),
+    ).toThrow(/Not a 0.x.y test version/)
+  })
+})
+
 describe("a milestone replaces its own build after the owner asked for changes", () => {
   const first = "a".repeat(40)
   const fixed = "c".repeat(40)

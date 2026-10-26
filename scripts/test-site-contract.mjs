@@ -1,11 +1,15 @@
 import assert from "node:assert/strict"
 
-const patchVersion = /^0\.4\.(\d+)$/
+const testVersion = /^0\.(\d+)\.(\d+)$/
 
+/**
+ * A test build's place in the order of builds: 0.4.x until 0.4.0's
+ * release, the 0.5.x line from the 0.5.0 cycle (src/appChannel.ts).
+ */
 function patchOf(version) {
-  const match = patchVersion.exec(version)
-  assert(match, `Not a 0.4 patch version: ${version}`)
-  return Number(match[1])
+  const match = testVersion.exec(version)
+  assert(match, `Not a 0.x.y test version: ${version}`)
+  return Number(match[1]) * 1_000 + Number(match[2])
 }
 
 /**
