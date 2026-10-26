@@ -122,3 +122,43 @@ test("a course id held by another account is refused, kept and reported, not ret
     secondAccountStudents: 0,
   })
 })
+
+// The server's writer check (supabase/migrations/20261026000000), once the
+// owner has run it: an app below 0.5.0, or one that names no version, may
+// not write; 0.5.0 may.
+test("the server refuses writers below the minimum version", async () => {
+  const access = await token(1)
+  await clearAccount(access)
+  const write = (version: string | null) =>
+    fetch(`${base()}/rest/v1/courses`, {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY!,
+        authorization: `Bearer ${access}`,
+        "content-type": "application/json",
+        ...(version ? { "x-cvc-app-version": version } : {}),
+      },
+      body: JSON.stringify({ id: `writer-check-${version}`, level: 2 }),
+    }).then(async (response) => ({
+      status: response.status,
+      code: response.ok
+        ? null
+        : ((await response.json()) as { code?: string }).code,
+    }))
+  const old = await write("0.4.9")
+  if (old.status === 201) {
+    await clearAccount(access)
+    test.skip(true, "The owner has not run the writer-check migration yet")
+  }
+  const result = {
+    old,
+    unnamed: await write(null),
+    current: (await write("0.5.0")).status,
+  }
+  await clearAccount(await token(1))
+  expect(result).toEqual({
+    old: { status: 400, code: "CVOLD" },
+    unnamed: { status: 400, code: "CVOLD" },
+    current: 201,
+  })
+})
