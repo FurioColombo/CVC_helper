@@ -1,0 +1,18 @@
+{
+  "milestone": "B3",
+  "checkedAt": "2026-10-26",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "buildInfo": {
+    "sourceCommit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
+    "version": "0.5.0",
+    "channel": "test",
+    "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/40268836916"
+  },
+  "checks": [
+    "build-info.json at the test address names the pinned source, 0.5.0 and the test channel",
+    "The app opened over HTTPS in a fresh browser profile, created a synthetic course; Impostazioni shows Versione 0.5.0, Archivio Locale, the Backup online section with the email form and 'App di prova con un backup di sviluppo: usa solo persone inventate.'",
+    "Signed out, no request went to Supabase or PowerSync (browser network log)",
+    "The publisher confirmed the bundle carries the development backup's URL (backup configuration present)"
+  ],
+  "notChecked": "Sign-in on the live site and the installed PWA: the owner's B3-PHONE-SIGNIN"
+}

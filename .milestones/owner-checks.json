@@ -213,9 +213,9 @@
       "milestone": "B3",
       "kind": "DEVICE_CHECK",
       "title": "Sign in to the online backup on Android and use it offline",
-      "status": "NEEDS_SETUP",
+      "status": "READY",
       "required": true,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
         "Open your installed CVC Helper Test (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.0. Use invented people only: this backup is a development one.",
         "Make sure the test app has a course with two or three invented students. In Impostazioni > Backup online type the email of one of your two test accounts and tap Invia il link di accesso. Note whether 'Link inviato' is still there if you close and reopen the app.",
@@ -229,7 +229,7 @@
       "testedCommit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B3/physical-device-review.json",
-      "updatedAt": "2026-10-26T05:31:03.050Z"
+      "updatedAt": "2026-10-26T08:33:03.894Z"
     }
   ]
 }

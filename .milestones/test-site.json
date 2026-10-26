@@ -9,8 +9,8 @@
   "sourceCommit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
   "verifiedCheckpoint": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
   "sourceDigest": "600f8ea16275ae041374611a664e94d70b818792f9d7fb14a275eeee5945e34c",
-  "activeVersion": "0.4.4",
-  "phase": "AWAITING_PUBLICATION",
+  "activeVersion": "0.5.0",
+  "phase": "AWAITING_FEEDBACK",
   "ownerInstalled": null,
   "replaces": {
     "milestone": "UG3",
@@ -71,5 +71,9 @@
     "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/39702335327",
     "publishedAt": "2026-10-22T06:14:18.581Z",
     "ownerResult": "PASSED 2026-10-22"
-  }
+  },
+  "gitSourceDigest": "9d9696cfc8927b1f35b328c44abef2160bf8a1c55842737d5366505699e48000",
+  "publishedCommit": "0a48bf3c9ab52b40e60db0cc51536b5008005035",
+  "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/40268836916",
+  "publishedAt": "2026-10-26T08:31:20.115Z"
 }

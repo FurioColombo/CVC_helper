@@ -43,7 +43,7 @@ The owner reported: The owner created the Supabase development project cvc-helpe
 
 ## Sign in to the online backup on Android and use it offline — B3
 
-**State:** Setup needed · Required
+**State:** Ready for owner check · Required
 
 **What to do:**
 
@@ -54,6 +54,8 @@ The owner reported: The owner created the Supabase development project cvc-helpe
 5. Turn on airplane mode, add a student, close the app completely, reopen it: Impostazioni should show your account and 'In attesa di connessione: 1 modifica da inviare'. Turn airplane mode off and check it reaches Copia online aggiornata without reopening.
 6. With airplane mode on again, change a student, then tap Esci: read the question (it should mention 1 change not yet online), tap Resta collegato, then Esci and Esci. The course must stay on the phone. Optionally the next morning, with airplane mode on, open the app and note what Impostazioni says.
 7. Report B3-PHONE-SIGNIN with your device, browser and Android version and what you actually saw at each step, including which app opened the link and whether the status was readable outdoors.
+
+Use the test address below and the linked device instructions.
 
 **Expected:** Sign-in by the link (or the code) works on the phone and the backup reaches 'Copia online aggiornata'; offline the account stays signed in and the backup resumes with signal; nothing typed is lost around the one reload; Esci warns about unsent changes and keeps the course. Only your actual phone observations can pass this check.
 
