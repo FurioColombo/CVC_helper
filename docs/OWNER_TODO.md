@@ -65,6 +65,24 @@ Use the test address below and the linked device instructions.
 
 **Work affected:** Completion of B4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
+<a id="b5-minimum-read"></a>
+
+## Let the app read the server's minimum app version — B5
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
+2. Paste the whole file supabase/migrations/20261027000000_minimum_writer_read.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: only the coming 0.5.2 build calls it.
+3. Write 'minimum read run' in the chat; I then run the live check that a restored course reads the minimum.
+
+**Expected:** A signed-in account can read the minimum writer version and nothing else; a restored course adopts it, so an app older than it opens the course read-only.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of B5 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3

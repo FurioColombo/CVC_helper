@@ -258,6 +258,25 @@
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B4/physical-device-review.json",
       "updatedAt": "2026-10-26T23:32:30.450Z"
+    },
+    {
+      "id": "B5-MINIMUM-READ",
+      "milestone": "B5",
+      "kind": "DECISION",
+      "title": "Let the app read the server's minimum app version",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.",
+        "Paste the whole file supabase/migrations/20261027000000_minimum_writer_read.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: only the coming 0.5.2 build calls it.",
+        "Write 'minimum read run' in the chat; I then run the live check that a restored course reads the minimum."
+      ],
+      "expected": "A signed-in account can read the minimum writer version and nothing else; a restored course adopts it, so an app older than it opens the course read-only.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/B5/physical-device-review.json",
+      "updatedAt": "2026-10-26T23:48:57.792Z"
     }
   ]
 }
