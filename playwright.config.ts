@@ -30,6 +30,8 @@ const webkitCoreSpecs = [
   // Data migrations and the switch to synced tables run on every iPhone, on
   // WebKit's own storage backend.
   "b1-sync-mode",
+  // Sign-in, the switch it starts and its reload, on the iPhone engine (B3).
+  "b3-backup-ui",
   "d1-migration",
   "d2-duty-items",
   "d3-read-only",
