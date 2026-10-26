@@ -1,9 +1,20 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
 import { expect, test } from "@playwright/test"
 
 import { evidenceOutputPath } from "./evidence"
+import {
+  base,
+  call,
+  clearAccount,
+  env,
+  keys,
+  linkedInstance,
+  offlineCourse,
+  serverRows,
+  token,
+} from "./liveBackend"
 
 /**
  * B3 end to end against the owner's development backend, on this PC only
@@ -12,71 +23,11 @@ import { evidenceOutputPath } from "./evidence"
  * Test account 1 signs in by password (tests cannot open an emailed link;
  * the link itself is the owner's phone check). Nothing secret is recorded.
  */
-const env: Record<string, string> = {}
-if (existsSync(".env"))
-  for (const line of readFileSync(".env", "utf8").split(/\r?\n/)) {
-    const match = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim())
-    if (match) env[match[1]!] = match[2]!.trim()
-  }
-const keys = [
-  "SUPABASE_URL",
-  "SUPABASE_ANON_KEY",
-  "POWERSYNC_URL",
-  "TEST_USER_1_EMAIL",
-  "TEST_USER_1_PASSWORD",
-]
 test.skip(
   keys.some((key) => !env[key]),
   "B3's live check needs the development credentials in the ignored .env",
 )
-const linkedInstance = /instance_id:\s*(\S+)/.exec(
-  readFileSync("powersync/cli.yaml", "utf8"),
-)?.[1]
 test.use({ trace: "off", screenshot: "off", video: "off" })
-
-const base = () => env.SUPABASE_URL!.replace(/\/$/, "")
-
-async function token(n: 1 | 2 = 1) {
-  const response = await fetch(`${base()}/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: {
-      apikey: env.SUPABASE_ANON_KEY!,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      email: env[`TEST_USER_${n}_EMAIL`],
-      password: env[`TEST_USER_${n}_PASSWORD`],
-    }),
-  })
-  expect(response.status).toBe(200)
-  return ((await response.json()) as { access_token: string }).access_token
-}
-
-async function serverRows(table: string, access: string, filter = "") {
-  const response = await fetch(
-    `${base()}/rest/v1/${table}?select=id${filter}`,
-    {
-      headers: {
-        apikey: env.SUPABASE_ANON_KEY!,
-        authorization: `Bearer ${access}`,
-      },
-    },
-  )
-  return (await response.json()) as Array<{ id: string }>
-}
-
-async function clearAccount(access: string) {
-  // The cascade (B2 hardening) takes every child with its course.
-  await fetch(`${base()}/rest/v1/courses?id=neq.none`, {
-    method: "DELETE",
-    headers: {
-      apikey: env.SUPABASE_ANON_KEY!,
-      authorization: `Bearer ${access}`,
-      // The server's writer check (B4) refuses app writes without a version.
-      "x-cvc-app-version": "0.5.0",
-    },
-  })
-}
 
 test("a course made offline is signed in, uploaded whole and kept after sign-out", async ({
   page,
@@ -212,47 +163,6 @@ test("a course made offline is signed in, uploaded whole and kept after sign-out
   })
 })
 
-async function offlineCourse(page: import("@playwright/test").Page) {
-  await page.addInitScript(
-    (config) => {
-      window.__cvcBackupConfig = config
-    },
-    {
-      supabaseUrl: env.SUPABASE_URL!,
-      supabaseKey: env.SUPABASE_ANON_KEY!,
-      powersyncUrl: env.POWERSYNC_URL!,
-    },
-  )
-  await page.goto("/")
-  await page.getByRole("button", { name: "Deriva", exact: true }).click()
-  await page.getByRole("button", { name: "Livello 2", exact: true }).click()
-  await page.getByRole("button", { name: "Crea corso", exact: true }).click()
-  await expect(
-    page.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
-  ).toBeVisible()
-}
-
-async function call<T>(
-  page: import("@playwright/test").Page,
-  target: string,
-  name: string,
-  ...args: string[]
-) {
-  return page.evaluate(
-    async ([module, exported, values]) => {
-      const loader = (path: string) => import(/* @vite-ignore */ path)
-      const loaded = (await loader(module)) as Record<
-        string,
-        (...input: string[]) => unknown
-      >
-      return loaded[exported]!(...values)
-    },
-    [target, name, args] as const,
-  ) as Promise<T>
-}
-
-// B3 review SP-B3-1, -3: a second account never uploads the first account's
-// queue nor receives its course.
 test("a second account on the same phone neither uploads nor takes the first account's course", async ({
   page,
 }) => {
