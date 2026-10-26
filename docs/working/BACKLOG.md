@@ -103,6 +103,12 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
+- `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
+  — WebKit, B3's recorded run (2026-10-26, 12 min): the course heading did
+  not appear within 30 s on the first attempt; the retry passed, and 5
+  isolated runs (`--repeat-each=5`, no retries) passed. Cause unproven; B3
+  does not touch navigation and the spec runs without a backup.
+
 - B3 field-UX FUX-B3-R4-Q1 (unconfirmed): in a reviewer's two-tab scratch
   spec on Playwright WebKit, 2 of 4 runs stayed on "Apertura del corso…"
   after the launch switch reloaded the app (Windows dev server, another agent

@@ -1,13 +1,13 @@
 {
   "milestone": "B3",
-  "status": "FAIL",
-  "recordedAt": "2026-10-26T04:05:31.899Z",
+  "status": "PASS",
+  "recordedAt": "2026-10-26T04:21:20.162Z",
   "nodeVersion": "v24.21.0",
   "appVersion": "0.5.0",
   "recorder": "scripts/record-verification.mjs@3",
-  "gitCommit": "abbdc4ffe46bf623efdfa7d2d398dd91be170ee9",
+  "gitCommit": "d166b9bcf227c1266e2d3e64f59b8ceabb2d6d2a",
   "workingTreeClean": true,
-  "sourceDigest": "a9b60f16af8d3c2bc1032b6685150d0816978fc7ea0f70c018118d1f58e3cb73",
+  "sourceDigest": "600f8ea16275ae041374611a664e94d70b818792f9d7fb14a275eeee5945e34c",
   "sourceFiles": 468,
   "verificationScripts": [
     "verify",
@@ -19,15 +19,29 @@
     "tests/e2e/b1-sync-mode.spec.ts",
     "tests/e2e/f1-navigation-guards.spec.ts"
   ],
-  "flakyTests": [],
+  "flakyTests": [
+    {
+      "file": "f1-navigation-guards.spec.ts",
+      "title": "phone Back holds Valutazioni while a note is open",
+      "project": "iphone-13-webkit-core"
+    }
+  ],
   "checks": [
     {
       "command": "npm run verify",
-      "status": "FAIL",
-      "startedAt": "2026-10-26T04:05:11.418Z",
-      "durationMs": 20479,
-      "exitCode": 3221225794,
-      "outputTail": "\n\n> cvc-helper@0.5.0 preverify:quick\n> node scripts/check-runtime.mjs\n\n\n> cvc-helper@0.5.0 verify:quick\n> npm run lint && npm run format:check && npm run typecheck && npm run test\n\n\n> cvc-helper@0.5.0 lint\n> eslint . --max-warnings 0"
+      "status": "PASS",
+      "startedAt": "2026-10-26T04:06:04.745Z",
+      "durationMs": 187951,
+      "exitCode": 0,
+      "outputTail": "  - vite-plugin-pwa:build closeBundle (100%, 21.0s, 1 call)\n  - vite-plugin-pwa load (14%, 1.8s, 1 call)\n  - @tailwindcss/vite:generate:build transform (12%, 1.5s, 1 call)\n  - vite:css-post renderChunk (12%, 1.5s, 16 calls)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "startedAt": "2026-10-26T04:09:12.697Z",
+      "durationMs": 727456,
+      "exitCode": 0,
+      "outputTail": "    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────\n    test-results\\f1-navigation-guards-phone-4fbea-azioni-while-a-note-is-open-iphone-13-webkit-core\\trace.zip\n    Usage:\n\n        npx playwright show-trace test-results\\f1-navigation-guards-phone-4fbea-azioni-while-a-note-is-open-iphone-13-webkit-core\\trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 flaky\n    [iphone-13-webkit-core] › tests\\e2e\\f1-navigation-guards.spec.ts:54:1 › phone Back holds Valutazioni while a note is open \n  50 passed (12.1m)\nFLAKY: f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open [iphone-13-webkit-core]"
     }
   ]
 }

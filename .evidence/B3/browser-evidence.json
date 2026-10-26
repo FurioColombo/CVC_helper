@@ -1,0 +1,36 @@
+{
+  "milestone": "B3",
+  "recordedAt": "2026-10-26",
+  "specs": {
+    "tests/e2e/b3-backup-ui.spec.ts": {
+      "backend": "fake (no request leaves the test)",
+      "engines": ["pixel-7-chrome", "iphone-13-webkit-core"],
+      "result": "8 cases; Chromium 8/8 and WebKit 16/16 (--repeat-each=2), --retries=0, on 75f0ea1; recorded again by verification.json",
+      "cases": [
+        "a build without backup shows no backup section",
+        "sends the sign-in link (create_user false) and the link-sent state survives a restart",
+        "a failed send keeps the form filled and says why",
+        "the email's code signs in; the course waits to be sent; Esci asks first with the unsent count, Resta collegato undoes it, sign-out removes every stored key and keeps the course",
+        "the emailed link opened in the browser that asked signs in through the PKCE exchange and leaves the address clean (SP-B3-8)",
+        "a sign-in finishing while a student is typed (a radio tapped) never reloads the app; Riapri l'app completes the switch",
+        "an expired or foreign #error link explains itself and is removed from the address",
+        "offline the morning after with an expired token: the account shows as waiting within 6 s, never the sign-in form"
+      ]
+    },
+    "tests/e2e/b3-backup-live.spec.ts": {
+      "backend": "the owner's development Supabase and PowerSync Cloud (EU), synthetic test accounts 1 and 2; skipped without .env (CI)",
+      "engines": ["pixel-7-chrome"],
+      "result": "3/3, --retries=0, on 12d9171; recorded again by verification.json",
+      "cases": [
+        "a course made offline is signed in, uploaded whole (pending uploads reach 0, rows on the server) and kept after Esci",
+        "a second account on the same phone gets 'collegato a un altro account': queue unchanged, nothing on the server, the course stays (SP-B3-1)",
+        "Esci offline with an expired session stays signed out after going back online (SP-B3-2)"
+      ]
+    }
+  },
+  "reviewerRuns": "The security/privacy and field-UX reviewers ran their own scratch specs (fake backend, Pixel 7 and iPhone 13 WebKit) in every round; see their reports.",
+  "notCovered": [
+    "A real emailed link or code, the installed PWA and real phones: owner check B3-PHONE-SIGNIN",
+    "An unconfirmed WebKit hang in a reviewer's two-tab scratch spec (FUX-B3-R4-Q1, docs/working/BACKLOG.md)"
+  ]
+}
