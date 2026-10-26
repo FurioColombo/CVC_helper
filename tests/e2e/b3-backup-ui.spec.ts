@@ -341,7 +341,10 @@ test("offline the morning after, an expired session stays signed in and says so"
   await page.route(`${fakeBackend}/auth/v1/token**`, (route) => route.abort())
   await page.reload()
   await openSettings(page)
-  await expect(section).toContainText("Accesso: istruttore@example.test")
+  // Within seconds, not after the library's half-minute of retries (SP-B3-13).
+  await expect(section).toContainText("Accesso: istruttore@example.test", {
+    timeout: 6_000,
+  })
   await expect(section.getByRole("status")).toContainText(
     "In attesa di connessione",
   )

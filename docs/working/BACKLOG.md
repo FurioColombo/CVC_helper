@@ -183,7 +183,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
   the app's own (the same move as the test channel's origin above).
 - **Full reset does not revoke the backup session** (B3 SP-B3-7): it removes
   the stored session but never signs out on the server, so the refresh token
-  stays valid until it expires. Sign out first when online.
+  stays valid until it expires. Sign out first when online. Likewise Esci
+  (B3 SP-B3-12): a refresh the library was already retrying may still
+  exchange the old refresh token when signal returns; the result is
+  discarded on the phone, but the server issued it. Revoke on the server
+  (global sign-out when online) before production.
 - B1 SC-B1-Q6: when an older app reopens beside an open synced tab, the
   refused save says the course was "sostituito o eliminato" and the typed
   student is lost on reopen; data is intact, the message and the draft are

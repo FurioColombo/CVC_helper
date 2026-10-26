@@ -1,0 +1,48 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B3",
+  "round": 3,
+  "commit": "12d9171",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "SP-B3-12",
+      "title": "After Esci, a refresh that was already retrying still exchanges account 1's refresh token once the signal returns",
+      "evidence": "Scratch run on 12d9171 (late2.spec.ts, fake backend, synthetic uno@example.test). Offline with an expired token, Esci tapped as the auto-refresh ticker began a retry series, token endpoint answering from +5 s. Log: '0.1 TOKEN aborted', '0.5', '1.4', '3.0', '3.6 FORM_SHOWN stored=false', '5.0 SIGNAL_BACK', '6.2 TOKEN ok'. Sampled each second for 30 s: the stored session stayed absent and the UI stayed on the form; after a reload still signed out. The device is not affected and SP-B3-2 holds, but the server issues a fresh session for a phone that just signed out, which adds to BACKLOG SP-B3-7 (local sign-out never revokes on the server).",
+      "reproduction": "late2.spec.ts: sign in, switch, expire the token and abort /auth/v1/token, reload, wait for the launch retries to stop, tap Esci at the next ticker TOKEN request, open /auth/v1/token at +5 s, sample localStorage and the UI for 30 s, reload.",
+      "specRef": "persona lens 4 (tokens, sign-out on a shared phone); BACKLOG SP-B3-7"
+    },
+    {
+      "id": "SP-B3-13",
+      "title": "Offline with an expired token, the launch stays 'checking' for about 25 s",
+      "evidence": "startBackupAtLaunch awaits auth.initialize(); with an expired stored session and no signal, initialize runs auth-js's refresh retry series (about 26 s) before the state leaves 'checking'. b3-backup-ui 'offline the morning after' took 40.8 s. No privacy impact; 'checking' hides the sign-in form. Passed on to field UX.",
+      "reproduction": "late.spec.ts log, launch phase before Esci.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 adversarial checklist (an expired session, sign-in offline)"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff 6e435d5..12d9171 -- src/backup src/persistence (connector.ts, connector.test.ts, session.ts), plus the new b3-backup-ui case",
+    "SP-B3-1: still resolved; the live spec 'a second account on the same phone…' passes on 12d9171 against the development backend",
+    "SP-B3-2: still resolved; the live spec passes (12.6 s instead of 30.5 s); scratch late.spec.ts (logout ok and network-error variants) and late2.spec.ts: the session is never written back, signed out after a reload",
+    "SP-B3-8: RESOLVED. Scratch pkce.spec.ts as shipped: [POST /auth/v1/otp, POST /auth/v1/token?grant_type=pkce, GET /rest/v1/courses, POST /rest/v1/courses], session stored, final URL clean; the new b3-backup-ui case passes",
+    "SP-B3-9: RESOLVED. Scratch race.spec.ts (2 tabs, first write held 20 s, Esci then a second-account code sign-in): WRITES [courses Bearer tok-1, students Bearer tok-1 x3], no tok-2 write; the unit test asserts the Authorization header on every entry",
+    "SP-B3-10: RESOLVED (linkSentTo removes an expired or unreadable entry)",
+    "SP-B3-11: RESOLVED (signOut raced against 3 s; forgetStoredSession always runs; form at +3.6 s with a pending refresh, +0.1 s otherwise)",
+    "New code attacked: reopenApp/switchDeferred (a deferred switch reruns startBackup with the current session, including the other-course check; no path connects a tab on stale tables); the 'checking' state shows no form; initialize() at launch sends no request when signed out and no code is present",
+    "Ran: vitest src/backup (5 passed); b3-backup-ui + b3-backup-live on pixel-7-chrome (11 passed, retries 0)",
+    ".env used only by the repository's live spec and never printed; no backend rows created; repository tree untouched"
+  ],
+  "anglesTried": {
+    "seed": 455576424,
+    "lenses": ["Round 3: re-test SP-B3-8 to SP-B3-11, and SP-B3-1 and SP-B3-2 for regressions, on 12d9171"],
+    "wildcard": "Whether the 3 s sign-out cap reopens SP-B3-2 (a refresh completing after the session was forgotten, with succeeding and failing logouts); a deferred switch run by a different account than the one that deferred it"
+  },
+  "notTested": [
+    "A real emailed link end to end (the owner's mailbox)",
+    "SP-B3-9 against the real development backend",
+    "WebKit/iPhone"
+  ]
+}

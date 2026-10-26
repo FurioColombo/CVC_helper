@@ -409,6 +409,9 @@ function takeLinkFromAddress() {
   return failed ? "failed" : "code"
 }
 
+/** How long the launch check may run before a kept session shows. */
+const CHECK_PATIENCE_MS = 3_000
+
 /**
  * At app start: a sign-in link lands on the app's home page, so the backup is
  * checked here, not only in Impostazioni. Signal coming back resumes it.
@@ -419,15 +422,23 @@ export async function startBackupAtLaunch(
   if (!backupConfig()) return setBackupState({ kind: "unavailable" })
   reload = reloadApp
   watchFirstTouch()
-  // The library exchanges a sign-in link's code when it starts, reading the
-  // address: only then may the address be cleaned (review SP-B3-8).
-  await (await supabase(backupConfig()!)).auth.initialize()
-  const link = takeLinkFromAddress()
   window.addEventListener("online", () => {
     if (current.kind === "offline" || current.kind === "error")
       void resumeBackup()
   })
+  // Offline with an expired token the library retries for about 25 s before
+  // answering: a kept session shows as waiting meanwhile (SP-B3-13).
+  const provisional = window.setTimeout(() => {
+    const kept = storedSessionEmail()
+    if (current.kind === "checking" && kept)
+      setBackupState({ kind: "offline", email: kept })
+  }, CHECK_PATIENCE_MS)
+  // The library exchanges a sign-in link's code when it starts, reading the
+  // address: only then may the address be cleaned (review SP-B3-8).
+  await (await supabase(backupConfig()!)).auth.initialize()
+  const link = takeLinkFromAddress()
   await resumeBackup()
+  window.clearTimeout(provisional)
   // A link opened elsewhere than the browser that asked for it, expired or
   // already used (reviews SP-B3-6, FUX-B3-4).
   if (link && (current.kind === "signed-out" || current.kind === "link-sent"))
