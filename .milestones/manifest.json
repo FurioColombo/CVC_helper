@@ -1160,6 +1160,12 @@
       "id": "B4",
       "category": "RULE_HEAVY",
       "status": "PENDING",
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "B3",
+          "reason": "Uploads build on B3's verified sign-in, account binding and connector (browser- and live-tested against the development backend), not on how an emailed link opens on the owner's Android phone, which the pending check covers."
+        }
+      ],
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B4/verification.json",
