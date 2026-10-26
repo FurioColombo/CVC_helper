@@ -37,6 +37,7 @@ vi.mock("@/persistence/db", () => ({
 
 const CREATED_AT = "2026-09-01T12:00:00.000Z"
 const PLACEMENT_TABLES = [
+  "crews",
   "crewMembers",
   "landAssignments",
   "sessionBoats",
@@ -138,6 +139,17 @@ function baseRows(): Record<string, Row[]> {
       createdAt: CREATED_AT,
       updatedAt: CREATED_AT,
     })),
+    boats: [
+      {
+        id: "boat-1",
+        courseId: "course-1",
+        type: "RS Quest",
+        number: "17",
+        availability: "available",
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+      },
+    ],
     crews: [crew("crew-1", 0), crew("crew-2", 1)],
   }
 }
@@ -495,5 +507,263 @@ describe("two phones edit the same placements offline (SC-B1-1)", () => {
     )
     expect(count(phoneA, "evaluations")).toBe(1)
     expect(count(phoneA, "dutyAssignments")).toBe(1)
+  })
+})
+
+describe("two phones create crews in one session offline (owner decision 12)", () => {
+  const draft = (
+    id: string,
+    studentIds: string[],
+    boatId: string | null,
+  ): CrewPlan["crews"][number] => ({
+    id,
+    sessionId: "sat-pm",
+    members: studentIds.map((personId) => ({
+      personId,
+      personType: "student" as const,
+    })),
+    capacity: 2,
+    destination: boatId ? ("boat" as const) : ("unassigned" as const),
+    boatId,
+  })
+
+  it("orders the crews, gives the boat to the later edit and cleans up on save", async () => {
+    const phoneA = createDevice()
+    const phoneB = createDevice()
+    for (const phone of [phoneA, phoneB]) {
+      phone.sqlite.exec('DELETE FROM "crews"')
+    }
+    vi.setSystemTime(new Date(EARLIER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [draft("crew-a", ["student-1"], "boat-1")],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-1"],
+      },
+      phoneA.database,
+    )
+    vi.setSystemTime(new Date(LATER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [draft("crew-b", ["student-2"], "boat-1")],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-1"],
+      },
+      phoneB.database,
+    )
+
+    sync([phoneA, phoneB])
+
+    for (const phone of [phoneA, phoneB]) {
+      current.database = phone.database as unknown as typeof current.database
+      expect(count(phone, "crews")).toBe(2)
+      const read = await readCrewPlan("course-1", "sat-pm")
+      // Renumbered once, and the boat settled once.
+      expect(read.resolvedConflicts).toBe(2)
+      expect(read.crews.map(({ id, boatId }) => [id, boatId])).toEqual([
+        ["crew-a", null],
+        ["crew-b", "boat-1"],
+      ])
+      expect(read.crews[0]).toMatchObject({
+        destination: "unassigned",
+        members: [{ personId: "student-1" }],
+      })
+
+      const archive = await exportCourseArchive(phone.database)
+      expect(archive.tables.crews.map(({ position }) => position)).toEqual([
+        0, 1,
+      ])
+
+      await saveCrewPlan("course-1", "sat-pm", read, phone.database)
+      const after = await readCrewPlan("course-1", "sat-pm")
+      expect(after.resolvedConflicts).toBe(0)
+      expect(after.crews.map(({ id, boatId }) => [id, boatId])).toEqual([
+        ["crew-a", null],
+        ["crew-b", "boat-1"],
+      ])
+    }
+  })
+
+  it("keeps the later edit in a slot both phones filled and appends the other", async () => {
+    const phoneA = createDevice()
+    const phoneB = createDevice()
+    vi.setSystemTime(new Date(EARLIER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-1"], null),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+      phoneA.database,
+    )
+    vi.setSystemTime(new Date(LATER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-2"], null),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+      phoneB.database,
+    )
+
+    sync([phoneA, phoneB])
+
+    for (const phone of [phoneA, phoneB]) {
+      current.database = phone.database as unknown as typeof current.database
+      const read = await readCrewPlan("course-1", "sat-pm")
+      expect(read.resolvedConflicts).toBe(1)
+      expect(read.crews[0]!.members.map(({ personId }) => personId)).toEqual([
+        "student-2",
+        "student-1",
+      ])
+      await exportCourseArchive(phone.database)
+      await saveCrewPlan("course-1", "sat-pm", read, phone.database)
+      const after = await readCrewPlan("course-1", "sat-pm")
+      expect(after.resolvedConflicts).toBe(0)
+      expect(after.crews[0]!.members.map(({ personId }) => personId)).toEqual([
+        "student-2",
+        "student-1",
+      ])
+    }
+  })
+
+  it("drops the earliest surplus member of a crew both phones filled", async () => {
+    const phoneA = createDevice()
+    const phoneB = createDevice()
+    vi.setSystemTime(new Date(EARLIER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-1", "student-3"], null),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+      phoneA.database,
+    )
+    vi.setSystemTime(new Date(LATER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-2"], null),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+      phoneB.database,
+    )
+
+    sync([phoneA, phoneB])
+
+    for (const phone of [phoneA, phoneB]) {
+      current.database = phone.database as unknown as typeof current.database
+      expect(count(phone, "crewMembers")).toBe(3)
+      const read = await readCrewPlan("course-1", "sat-pm")
+      expect(read.resolvedConflicts).toBe(1)
+      expect(read.crews[0]!.members.map(({ personId }) => personId)).toEqual([
+        "student-2",
+        "student-3",
+      ])
+      // Unplaced, and not put on land.
+      expect(read.landStudentIds).toEqual([])
+      await exportCourseArchive(phone.database)
+      await saveCrewPlan("course-1", "sat-pm", read, phone.database)
+      expect(count(phone, "crewMembers")).toBe(2)
+      expect((await readCrewPlan("course-1", "sat-pm")).resolvedConflicts).toBe(
+        0,
+      )
+      expect(count(phone, "landAssignments")).toBe(0)
+    }
+  })
+
+  it("takes a boat off the crew when one phone removed it from the session", async () => {
+    const phoneA = createDevice()
+    const phoneB = createDevice()
+    vi.setSystemTime(new Date(EARLIER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-1"], null),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-1"],
+      },
+      phoneA.database,
+    )
+    sync([phoneA, phoneB])
+    vi.setSystemTime(new Date(LATER))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-1"], "boat-1"),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: ["boat-1"],
+      },
+      phoneA.database,
+    )
+    vi.setSystemTime(new Date("2026-09-20T10:30:00.000Z"))
+    await saveCrewPlan(
+      "course-1",
+      "sat-pm",
+      {
+        crews: [
+          draft("crew-1", ["student-1"], null),
+          draft("crew-2", [], null),
+        ],
+        landStudentIds: [],
+        selectedBoatIds: [],
+      },
+      phoneB.database,
+    )
+    // The server applies the removal of the boat and the assignment, in that
+    // order; the assignment is the crew's last write.
+    sync([phoneA, phoneB], [phoneB, phoneA])
+    for (const phone of [phoneA, phoneB]) {
+      phone.sqlite.exec('DELETE FROM "sessionBoats"')
+    }
+
+    for (const phone of [phoneA, phoneB]) {
+      current.database = phone.database as unknown as typeof current.database
+      const read = await readCrewPlan("course-1", "sat-pm")
+      expect(read.resolvedConflicts).toBe(1)
+      expect(read.crews[0]).toMatchObject({
+        id: "crew-1",
+        boatId: null,
+        destination: "unassigned",
+        members: [{ personId: "student-1" }],
+      })
+      await exportCourseArchive(phone.database)
+      await saveCrewPlan("course-1", "sat-pm", read, phone.database)
+      expect((await readCrewPlan("course-1", "sat-pm")).resolvedConflicts).toBe(
+        0,
+      )
+    }
   })
 })

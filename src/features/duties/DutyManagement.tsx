@@ -18,6 +18,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react"
 
+import { ConflictNotice } from "@/components/ConflictNotice"
 import { Button } from "@/components/ui/button"
 import { MinorBadge } from "@/components/PersonBadges"
 import { SummaryImageButton } from "@/components/SummaryImageButton"
@@ -148,6 +149,7 @@ async function readValidDutyData(courseId: string) {
   return {
     students,
     assignments: plan.assignments,
+    resolvedConflicts: storedPlan.resolvedConflicts ?? 0,
     settings,
   }
 }
@@ -1170,8 +1172,13 @@ export function DutyManagement({
   // closed by its own X/Escape rather than the app's Back navigation.
   const [showSummary, setShowSummary] = useState(false)
 
+  // Duties two phones saved twice offline, settled on the latest edit; the
+  // next save deletes the losing rows (SC-B1-1).
+  const [resolvedConflicts, setResolvedConflicts] = useState(0)
+
   const applyLoaded = useCallback(
     (data: Awaited<ReturnType<typeof readValidDutyData>>) => {
+      setResolvedConflicts(data.resolvedConflicts)
       setStudents(data.students)
       setAssignments(data.assignments)
       setSettings(data.settings)
@@ -1234,6 +1241,7 @@ export function DutyManagement({
       courseStartDate,
     )
     await saveDutyPlan(courseId, nextAssignments, normalizedSettings)
+    setResolvedConflicts(0)
     setAssignments(nextAssignments)
     setSettings(normalizedSettings)
   }
@@ -1378,6 +1386,11 @@ export function DutyManagement({
         onBack={onHome}
         title="Comandate"
       />
+      {resolvedConflicts > 0 && (
+        <div className="mb-3">
+          <ConflictNotice what="queste comandate" />
+        </div>
+      )}
       {students.length === 0 ? (
         <section className="rounded-3xl border bg-card p-5 text-center max-[350px]:p-[12px]">
           <ClipboardCheck

@@ -140,6 +140,7 @@ describe("resolvePeople", () => {
 describe("resolveCoursePlacements", () => {
   it("resolves every placement table and counts the dropped rows", () => {
     const tables = {
+      courses: [{ family: "Deriva", level: 2 }],
       crews: [{ id: "c1", sessionId: "sat-pm" }],
       crewMembers: [member("m1", "c1", "s1", late)],
       landAssignments: [land("l1", "s1", early), land("l2", "s2", early)],

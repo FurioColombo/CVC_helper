@@ -1,3 +1,6 @@
+import type { CourseFamily, CourseLevel } from "@/domain/config"
+import { getStandardCrewSize } from "@/domain/crews"
+
 /**
  * Placement rows that two phones edited offline can leave the same placement
  * twice (SC-B1-1, owner decision 12): rows written before the ids became
@@ -99,7 +102,176 @@ export function resolvePeople<M extends MemberRow, L extends LandRow>(
   }
 }
 
+export interface CrewRow extends StampedRow {
+  position: number | null
+  destination: string
+  boatId: string | null
+  createdAt?: string | null
+}
+
+export interface SlotMemberRow extends StampedRow {
+  crewId: string
+  position: number | null
+}
+
+const positionOf = (row: { position: number | null }) =>
+  row.position ?? Number.POSITIVE_INFINITY
+
+/**
+ * One session's crews after two phones created crews offline (owner decision
+ * 12), each fix counted once:
+ *
+ * - positions that are not 0..n-1 in order are renumbered in memory, crews
+ *   sorted by (position, createdAt, id);
+ * - a boat that is not in the session's selection (one phone removed it, the
+ *   other assigned it) is taken off the crew, which keeps its people and
+ *   becomes `unassigned`;
+ * - a boat claimed by two crews stays on the crew with the later edit; the
+ *   other is treated the same;
+ * - a member slot taken by two people stays with the later edit; the other
+ *   moves to the next free slot after it, or to the lowest free one when none
+ *   above is within the crew's fixed size; when no slot is free the
+ *   earliest-edited surplus members lose their place
+ *   (unplaced for the session: no land row is invented). One fix each.
+ *
+ * Rows come back changed only where something was fixed. A member that moved
+ * gets an explicit position, as do all members of its crew, so reading them
+ * back needs no guess. The next save writes this state.
+ */
+export function resolveCrews<C extends CrewRow, M extends SlotMemberRow>(
+  crews: readonly C[],
+  members: readonly M[],
+  options: {
+    /** The session's selected boats; omitted, a boat is never unselected. */
+    selectedBoatIds?: ReadonlySet<string>
+    /** The course's fixed crew size, null or omitted for flexible crews. */
+    standardCrewSize?: number | null
+  } = {},
+) {
+  let conflicts = 0
+  let ordered = [...crews]
+  if (
+    ordered.some(
+      ({ position }, index) => position != null && position !== index,
+    )
+  ) {
+    ordered.sort(
+      (left, right) =>
+        (positionOf(left) === positionOf(right)
+          ? 0
+          : positionOf(left) < positionOf(right)
+            ? -1
+            : 1) ||
+        (left.createdAt ?? "").localeCompare(right.createdAt ?? "") ||
+        left.id.localeCompare(right.id),
+    )
+    ordered = ordered.map((crew, position) => ({ ...crew, position }))
+    conflicts += 1
+  }
+
+  const unselected = new Set<string>()
+  const claims = new Map<string, C[]>()
+  for (const crew of ordered) {
+    if (crew.destination === "boat" && crew.boatId) {
+      if (
+        options.selectedBoatIds &&
+        !options.selectedBoatIds.has(crew.boatId)
+      ) {
+        unselected.add(crew.id)
+        continue
+      }
+      claims.set(crew.boatId, [...(claims.get(crew.boatId) ?? []), crew])
+    }
+  }
+  const boatLosers = new Set<string>(unselected)
+  for (const claimants of claims.values()) {
+    if (claimants.length < 2) continue
+    const winner = claimants.reduce((best, crew) =>
+      isLaterEdit(crew, best) ? crew : best,
+    )
+    for (const { id } of claimants) if (id !== winner.id) boatLosers.add(id)
+  }
+  conflicts += boatLosers.size
+  const resolvedCrews = ordered.map((crew) =>
+    boatLosers.has(crew.id)
+      ? { ...crew, boatId: null, destination: "unassigned" }
+      : crew,
+  ) as C[]
+
+  const byCrew = new Map<string, Array<{ row: M; slot: number }>>()
+  const nextSlot = new Map<string, number>()
+  for (const row of members) {
+    const expected = nextSlot.get(row.crewId) ?? 0
+    const slot = row.position ?? expected
+    nextSlot.set(row.crewId, Math.max(expected, slot + 1))
+    byCrew.set(row.crewId, [...(byCrew.get(row.crewId) ?? []), { row, slot }])
+  }
+  const resolvedMembers: M[] = []
+  for (const [, entries] of byCrew) {
+    const used = new Set(entries.map(({ slot }) => slot))
+    const bySlot = new Map<number, Array<{ row: M; slot: number }>>()
+    for (const entry of entries) {
+      bySlot.set(entry.slot, [...(bySlot.get(entry.slot) ?? []), entry])
+    }
+    for (const group of bySlot.values()) {
+      group.sort((left, right) => (isLaterEdit(left.row, right.row) ? -1 : 1))
+    }
+    if (![...bySlot.values()].some((group) => group.length > 1)) {
+      resolvedMembers.push(...entries.map(({ row }) => row))
+      continue
+    }
+    const placed: Array<{ row: M; slot: number }> = []
+    const displaced: Array<{ row: M; slot: number }> = []
+    for (const slot of [...bySlot.keys()].sort((a, b) => a - b)) {
+      const [winner, ...losers] = bySlot.get(slot)!
+      placed.push(winner!)
+      displaced.push(...losers)
+    }
+    // The later edits find a place first; what does not fit is the earliest.
+    displaced.sort((left, right) => (isLaterEdit(left.row, right.row) ? -1 : 1))
+    for (const loser of displaced) {
+      conflicts += 1
+      let free = loser.slot + 1
+      while (used.has(free)) free += 1
+      const size = options.standardCrewSize
+      if (size != null && free >= size) {
+        // No seat above: the lowest free one, before anyone loses a place.
+        free = 0
+        while (used.has(free)) free += 1
+        if (free >= size) continue
+      }
+      used.add(free)
+      placed.push({ row: loser.row, slot: free })
+    }
+    placed.sort((left, right) => left.slot - right.slot)
+    resolvedMembers.push(
+      ...placed.map(({ row, slot }) => ({ ...row, position: slot })),
+    )
+  }
+  return { crews: resolvedCrews, members: resolvedMembers, conflicts }
+}
+
+/** Rows of one session sorted by (position, id) and numbered 0..n-1. */
+function renumbered<T extends StampedRow & { position: number | null }>(
+  rows: readonly T[],
+) {
+  const sorted = [...rows].sort(
+    (left, right) =>
+      (positionOf(left) === positionOf(right)
+        ? 0
+        : positionOf(left) < positionOf(right)
+          ? -1
+          : 1) || left.id.localeCompare(right.id),
+  )
+  return sorted.some(
+    ({ position }, index) => position != null && position !== index,
+  )
+    ? sorted.map((row, position) => ({ ...row, position }))
+    : [...rows]
+}
+
 interface CourseRows {
+  courses: ReadonlyArray<Record<string, unknown>>
   crews: ReadonlyArray<Record<string, unknown>>
   crewMembers: ReadonlyArray<Record<string, unknown>>
   landAssignments: ReadonlyArray<Record<string, unknown>>
@@ -142,11 +314,67 @@ export function resolveCoursePlacements<T extends CourseRows>(tables: T) {
     >,
     ({ sessionId, studentId }) => JSON.stringify([studentId, sessionId]),
   )
+  // Crews and their members, one session at a time.
+  const crewRows = tables.crews as unknown as Array<
+    CrewRow & { sessionId: string }
+  >
+  const sessionBoatRows = boats.kept as unknown as Array<
+    StampedRow & { sessionId: string; boatId: string; position: number | null }
+  >
+  const course = tables.courses[0]
+  const standardCrewSize = course
+    ? getStandardCrewSize(
+        course.family as CourseFamily,
+        course.level as CourseLevel,
+      )
+    : null
+  let crewConflicts = 0
+  const crewsOut = new Map<string, CrewRow & { sessionId: string }>()
+  const membersOut: MemberRow[] = []
+  const sessions = [...new Set(crewRows.map(({ sessionId }) => sessionId))]
+  const placedMembers = people.members as unknown as Array<
+    MemberRow & SlotMemberRow
+  >
+  for (const sessionId of sessions) {
+    const sessionCrews = crewRows.filter((crew) => crew.sessionId === sessionId)
+    const ids = new Set(sessionCrews.map(({ id }) => id))
+    const result = resolveCrews(
+      sessionCrews,
+      placedMembers.filter(({ crewId }) => ids.has(crewId)),
+      {
+        standardCrewSize,
+        selectedBoatIds: new Set(
+          sessionBoatRows
+            .filter((row) => row.sessionId === sessionId)
+            .map(({ boatId }) => boatId),
+        ),
+      },
+    )
+    crewConflicts += result.conflicts
+    for (const crew of result.crews) crewsOut.set(crew.id, crew)
+    membersOut.push(...result.members)
+  }
   const resolved = {
     ...tables,
-    crewMembers: people.members,
+    crews: crewRows.map((crew) => crewsOut.get(crew.id) ?? crew),
+    crewMembers: [
+      ...membersOut,
+      // Members of a crew the table does not have are left for the validators.
+      ...placedMembers.filter(({ crewId }) => !sessionByCrew.has(crewId)),
+    ],
     landAssignments: people.land,
-    sessionBoats: boats.kept,
+    sessionBoats: sessions
+      .concat(
+        sessionBoatRows
+          .map(({ sessionId }) => sessionId)
+          .filter((id) => !sessions.includes(id)),
+      )
+      .filter((id, index, all) => all.indexOf(id) === index)
+      .flatMap((sessionId) =>
+        renumbered(
+          sessionBoatRows.filter((row) => row.sessionId === sessionId),
+        ),
+      ),
     dutyAssignments: duties.kept,
     evaluations: evaluations.kept,
   } as unknown as T
@@ -156,6 +384,7 @@ export function resolveCoursePlacements<T extends CourseRows>(tables: T) {
       people.droppedMembers.length +
       people.droppedLand.length +
       boats.dropped.length +
+      crewConflicts +
       duties.dropped.length +
       evaluations.dropped.length,
   }

@@ -20,6 +20,7 @@ import type { CrewHistoryEntry } from "@/domain/crewWarnings"
 import { db } from "@/persistence/db"
 import {
   resolveByKey,
+  resolveCrews,
   resolvePeople,
   type StampedRow,
 } from "@/persistence/placementConflicts"
@@ -30,7 +31,8 @@ import {
 } from "@/persistence/placementIds"
 import { stamp, TOUCH } from "@/persistence/stamp"
 
-interface PersistedCrew {
+interface PersistedCrew extends StampedRow {
+  createdAt?: string | null
   id: string
   sessionId: string
   capacity: number | null
@@ -136,14 +138,15 @@ export async function readCrewPlan(
   )
   if (!course) throw new Error("Crew course does not exist")
   const [
-    crewRows,
+    storedCrewRows,
     allMemberRows,
     allLandAssignments,
     allSessionBoats,
     studentNameRows,
   ] = await Promise.all([
     db.getAll<PersistedCrew>(
-      `SELECT id, sessionId, capacity, destination, boatId, position
+      `SELECT id, sessionId, capacity, destination, boatId, position,
+              createdAt, updatedAt
        FROM crews
        WHERE courseId = ? AND sessionId = ?
        ORDER BY position`,
@@ -187,13 +190,21 @@ export async function readCrewPlan(
     () => sessionId,
   )
   const boats = resolveByKey(allSessionBoats, ({ boatId }) => boatId)
-  const memberRows = people.members
+  // Crews two phones created offline: order, boats and slots are settled in
+  // memory, and the next save writes them (owner decision 12).
+  const settled = resolveCrews(storedCrewRows, people.members, {
+    selectedBoatIds: new Set(boats.kept.map(({ boatId }) => boatId)),
+    standardCrewSize: getStandardCrewSize(course.family, course.level),
+  })
+  const crewRows = settled.crews
+  const memberRows = settled.members
   const landAssignments = people.land
   const sessionBoats = boats.kept
   const resolvedConflicts =
     people.droppedMembers.length +
     people.droppedLand.length +
-    boats.dropped.length
+    boats.dropped.length +
+    settled.conflicts
   const selectedBoatIds = new Set(sessionBoats.map(({ boatId }) => boatId))
   const assignedBoatIds = new Set<string>()
   const persistedCrewIds = new Set(crewRows.map(({ id }) => id))
@@ -778,17 +789,14 @@ export async function readCrewHistory(
   const memberRows = resolvePeople(allMemberRows, [], (crewId) =>
     sessionByCrew.get(crewId),
   ).members
-  const nextCrewPosition = new Map<string, number>()
+  // Only who sailed with whom matters here, so the crew order and the slots
+  // two phones may have filled twice are not checked (the screens settle them).
   if (
-    crewRows.some(({ sessionId, destination, position }) => {
-      const expected = nextCrewPosition.get(sessionId) ?? 0
-      nextCrewPosition.set(sessionId, expected + 1)
-      return (
+    crewRows.some(
+      ({ sessionId, destination }) =>
         !SESSION_IDS.includes(sessionId as SessionId) ||
-        !CREW_DESTINATIONS.includes(destination as CrewDestination) ||
-        (position !== null && position !== expected)
-      )
-    })
+        !CREW_DESTINATIONS.includes(destination as CrewDestination),
+    )
   ) {
     throw new Error("Invalid persisted crew history")
   }
@@ -807,25 +815,17 @@ export async function readCrewHistory(
       ),
     ]),
   )
-  const nextMemberPosition = new Map<string, number>()
-  const occupiedMemberPositions = new Map<string, Set<number>>()
   for (const { crewId, personId, personType, position } of memberRows) {
-    const expected = nextMemberPosition.get(crewId) ?? 0
-    const slotIndex = position ?? expected
-    const occupied = occupiedMemberPositions.get(crewId) ?? new Set()
     if (
       !isPersonType(personType) ||
       !personId ||
-      !Number.isInteger(slotIndex) ||
-      slotIndex < 0 ||
-      slotIndex >= (capacityByCrew.get(crewId) ?? 0) ||
-      occupied.has(slotIndex)
+      (position !== null &&
+        (!Number.isInteger(position) ||
+          position < 0 ||
+          position >= (capacityByCrew.get(crewId) ?? 0)))
     ) {
       throw new Error("Invalid persisted crew history members")
     }
-    occupied.add(slotIndex)
-    occupiedMemberPositions.set(crewId, occupied)
-    nextMemberPosition.set(crewId, Math.max(expected, slotIndex + 1))
   }
   const studentsByCrew = new Map<string, string[]>()
   memberRows.forEach(({ crewId, personId, personType }) => {

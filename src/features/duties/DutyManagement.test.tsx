@@ -1022,6 +1022,21 @@ describe("DutyManagement proposal screen wording", () => {
     )
   })
 
+  it("says when two phones saved the duties offline and the latest stayed", async () => {
+    getPlan.mockResolvedValue({
+      assignments: [],
+      resolvedConflicts: 1,
+      settings: null,
+    })
+    renderDuties()
+
+    expect(
+      await screen.findByText(
+        "Due telefoni hanno cambiato queste comandate senza connessione: resta l’ultima modifica.",
+      ),
+    ).toHaveAttribute("role", "status")
+  })
+
   it("says 1 giorno when a single day remains", async () => {
     getStudents.mockResolvedValue(manyStudents(3))
     getPlan.mockResolvedValue({

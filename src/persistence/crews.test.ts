@@ -467,7 +467,7 @@ describe("crew persistence", () => {
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
-  it("refuses duplicate or gapped persisted positions", async () => {
+  it("renumbers a gapped crew position in memory and counts it", async () => {
     database.getAll
       .mockResolvedValueOnce([
         {
@@ -482,9 +482,10 @@ describe("crew persistence", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
 
-    await expect(readCrewPlan("course-1", "sat-pm")).rejects.toThrow(
-      "Invalid persisted crew plan",
-    )
+    await expect(readCrewPlan("course-1", "sat-pm")).resolves.toMatchObject({
+      crews: [{ id: "crew-1" }],
+      resolvedConflicts: 1,
+    })
   })
 
   it("reads a selected boat and its exact crew destination", async () => {
@@ -1019,7 +1020,7 @@ describe("crew persistence", () => {
     expect(database.getAll.mock.calls[0]![0]).not.toContain("landAssignments")
   })
 
-  it("includes member-position gaps in pair history but still rejects duplicates", async () => {
+  it("includes member-position gaps in pair history and counts a slot taken twice once each", async () => {
     database.getAll
       .mockResolvedValueOnce([
         {
@@ -1069,9 +1070,13 @@ describe("crew persistence", () => {
         },
       ])
 
-    await expect(readCrewHistory("course-1")).rejects.toThrow(
-      "Invalid persisted crew history members",
-    )
+    await expect(readCrewHistory("course-1")).resolves.toEqual([
+      {
+        crewId: "crew-1",
+        sessionId: "sat-pm",
+        studentIds: ["student-1", "student-2"],
+      },
+    ])
   })
 
   it("accepts legacy null positions and rejects member slots beyond crew capacity", async () => {
