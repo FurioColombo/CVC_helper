@@ -1,15 +1,23 @@
-import { CloudUpload, TriangleAlert } from "lucide-react"
+import {
+  CircleCheck,
+  CloudOff,
+  CloudUpload,
+  RefreshCw,
+  TriangleAlert,
+} from "lucide-react"
 import { type FormEvent, useEffect, useState } from "react"
 
 import { backupConfig } from "@/backup/config"
 import {
   backupState,
   type BackupState,
+  forgetLinkSent,
   onBackupState,
+  resumeBackup,
   sendSignInLink,
   setBackupState,
+  signInWithCode,
   signOutOfBackup,
-  startBackup,
 } from "@/backup/session"
 import { Button } from "@/components/ui/button"
 import { appChannel } from "@/runtimeConfig"
@@ -29,6 +37,7 @@ export function OnlineBackup() {
   const configured = backupConfig() !== null
   const [state, setState] = useState<BackupState>(backupState)
   const [email, setEmail] = useState("")
+  const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
 
   useEffect(() => onBackupState(setState), [])
@@ -51,6 +60,11 @@ export function OnlineBackup() {
   const send = (event: FormEvent) => {
     event.preventDefault()
     if (email.trim()) void run(() => sendSignInLink(email.trim()))
+  }
+
+  const retry = async () => {
+    await resumeBackup()
+    return backupState()
   }
 
   return (
@@ -97,27 +111,60 @@ export function OnlineBackup() {
           <Button className="mt-3" disabled={busy} type="submit">
             Invia il link di accesso
           </Button>
+          {state.notice && <Notice>{state.notice}</Notice>}
         </form>
       )}
       {state.kind === "link-sent" && (
-        <div className="mt-2" role="status">
-          <p className="text-sm leading-5">
+        <form
+          className="mt-2"
+          onSubmit={(event) => {
+            event.preventDefault()
+            const typed = code.replace(/\s/g, "")
+            if (typed) void run(() => signInWithCode(state.email, typed))
+          }}
+        >
+          <p className="text-sm leading-5" role="status">
             Link inviato a{" "}
             <span className="font-bold [overflow-wrap:anywhere]">
               {state.email}
             </span>
-            . Aprilo su questo telefono per accedere.
+            . Aprilo su questo telefono, nel browser di questa app. Se si apre
+            altrove, scrivi qui il codice dell’email.
           </p>
-          <Button
-            className="mt-3"
-            onClick={() => setBackupState({ kind: "signed-out" })}
-            variant="secondary"
+          <label
+            className="mt-3 block text-sm font-semibold"
+            htmlFor="backup-code"
           >
-            Usa un’altra email
-          </Button>
-        </div>
+            Codice dell’email
+          </label>
+          <input
+            autoComplete="one-time-code"
+            className="mt-1 min-h-12 w-full rounded-xl border bg-background px-3 text-base tracking-widest"
+            id="backup-code"
+            inputMode="numeric"
+            maxLength={12}
+            onChange={(event) => setCode(event.target.value)}
+            value={code}
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button disabled={busy || !code.trim()} type="submit">
+              Accedi con il codice
+            </Button>
+            <Button
+              onClick={() => {
+                setCode("")
+                setBackupState(forgetLinkSent())
+              }}
+              type="button"
+              variant="secondary"
+            >
+              Usa un’altra email
+            </Button>
+          </div>
+          {state.notice && <Notice>{state.notice}</Notice>}
+        </form>
       )}
-      {state.kind === "connected" && (
+      {(state.kind === "connected" || state.kind === "offline") && (
         <Connected
           busy={busy}
           email={state.email}
@@ -127,7 +174,7 @@ export function OnlineBackup() {
       {state.kind === "reopen" && (
         <div className="mt-2" role="status">
           <p className="text-sm leading-5">
-            Backup attivato. Riapri l’app per continuare.
+            Backup pronto. Riapri l’app per attivarlo.
           </p>
           <Button className="mt-3" onClick={() => window.location.reload()}>
             Riapri l’app
@@ -168,7 +215,7 @@ export function OnlineBackup() {
           <Button
             className="mt-3"
             disabled={busy}
-            onClick={() => void run(startBackup)}
+            onClick={() => void run(retry)}
             variant="secondary"
           >
             Riprova
@@ -177,6 +224,15 @@ export function OnlineBackup() {
       )}
     </section>
   )
+}
+
+/** Where the course is kept, for the Impostazioni summary (FUX-B3-Q3). */
+export function ArchiveSummary() {
+  const [state, setState] = useState<BackupState>(backupState)
+  useEffect(() => onBackupState(setState), [])
+  return state.kind === "connected" || state.kind === "offline"
+    ? "Locale, con backup online"
+    : "Locale"
 }
 
 function Notice({ children }: { children: React.ReactNode }) {
@@ -191,6 +247,14 @@ function Notice({ children }: { children: React.ReactNode }) {
   )
 }
 
+type Status = { icon: "done" | "sending" | "waiting"; text: string }
+
+const STATUS_ICONS = {
+  done: CircleCheck,
+  sending: RefreshCw,
+  waiting: CloudOff,
+}
+
 function Connected({
   email,
   busy,
@@ -200,22 +264,36 @@ function Connected({
   busy: boolean
   onSignOut: () => void
 }) {
-  const [line, setLine] = useState("Verifica della copia online…")
+  const [status, setStatus] = useState<Status>({
+    icon: "sending",
+    text: "Verifica della copia online…",
+  })
+  const [waiting, setWaiting] = useState(0)
+  const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
     let active = true
     const refresh = async () => {
-      const waiting = await pendingUploads()
+      const pending = await pendingUploads()
       const connected = databaseConnected()
       if (!active) return
-      setLine(
+      setWaiting(pending)
+      setStatus(
         !connected
-          ? waiting > 0
-            ? `In attesa di connessione: ${waiting} modifiche da inviare.`
-            : "In attesa di connessione."
-          : waiting > 0
-            ? `Invio in corso: ${waiting} modifiche da inviare.`
-            : "Copia online aggiornata.",
+          ? pending > 0
+            ? {
+                icon: "waiting",
+                text: `In attesa di connessione: ${pending} modifiche da inviare.`,
+              }
+            : // Every change was accepted: nothing is missing online
+              // (review FUX-B3-Q5).
+              { icon: "waiting", text: "Tutto inviato. Ora senza connessione." }
+          : pending > 0
+            ? {
+                icon: "sending",
+                text: `Invio in corso: ${pending} modifiche da inviare.`,
+              }
+            : { icon: "done", text: "Copia online aggiornata." },
       )
     }
     void refresh()
@@ -228,26 +306,56 @@ function Connected({
     }
   }, [])
 
+  const Icon = STATUS_ICONS[status.icon]
   return (
     <div className="mt-2">
       <p className="text-sm leading-5">
         Accesso:{" "}
         <span className="font-bold [overflow-wrap:anywhere]">{email}</span>
       </p>
-      <p className="mt-1 text-sm leading-5 text-muted-foreground" role="status">
-        {line}
-      </p>
-      <Button
-        className="mt-3"
-        disabled={busy}
-        onClick={onSignOut}
-        variant="secondary"
+      <p
+        className="mt-2 flex items-start gap-2 text-base font-semibold leading-6"
+        role="status"
       >
-        Esci
-      </Button>
-      <p className="mt-1 text-xs leading-4 text-muted-foreground">
-        Il corso resta su questo telefono.
+        <Icon
+          aria-hidden="true"
+          className={`mt-1 size-4 shrink-0 ${status.icon === "done" ? "text-[#15803d]" : "text-[#b45309]"}`}
+        />
+        <span className="min-w-0">{status.text}</span>
       </p>
+      {confirming ? (
+        // A wrong tap on Esci costs a new link and signal to undo (review
+        // FUX-B3-6): it asks first, saying what stays behind.
+        <div className="mt-3" role="alertdialog" aria-labelledby="sign-out-q">
+          <p className="text-sm leading-5" id="sign-out-q">
+            {waiting > 0
+              ? `Uscire? ${waiting} modifiche non sono ancora online: restano su questo telefono e partono quando rientri con questo account.`
+              : "Uscire dal backup? Il corso resta su questo telefono."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button disabled={busy} onClick={onSignOut} variant="secondary">
+              Esci
+            </Button>
+            <Button onClick={() => setConfirming(false)}>
+              Resta collegato
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <Button
+            className="mt-3"
+            disabled={busy}
+            onClick={() => setConfirming(true)}
+            variant="secondary"
+          >
+            Esci
+          </Button>
+          <p className="mt-1 text-xs leading-4 text-muted-foreground">
+            Il corso resta su questo telefono.
+          </p>
+        </>
+      )}
     </div>
   )
 }

@@ -170,6 +170,10 @@ test("a course made offline is signed in, uploaded whole and kept after sign-out
     },
   )
   await section.getByRole("button", { name: "Esci", exact: true }).click()
+  await section
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Esci", exact: true })
+    .click()
   await expect(section.getByLabel("Email")).toBeVisible()
   // Signed out, the app reopens where it was (Impostazioni), course intact.
   await page.reload()

@@ -78,3 +78,13 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
     the production backend (UG4) is created under a separate PowerSync account
     and a separate Supabase project whose credentials never enter this
     repository or any agent tool (review SP-B2-4, `AGENTS.md` §17).
+14. **No sign-up from the app (taken, B3).** Only the accounts you create in
+    Supabase's dashboard can sign in: the app asks for a link with
+    `shouldCreateUser: false`, so nobody who finds the public CVC Helper Test
+    site can create an account on the development backend (review SP-B3-4).
+    Production sign-up is decided at UG4.
+15. **The email also carries a code (taken, B3).** A sign-in link only works
+    in the browser that asked for it: an iPhone home-screen app, or a link
+    Gmail opens in its own browser, would never sign in. Impostazioni
+    therefore also accepts the code from the same email (review FUX-B3-4).
+    It needs one change in Supabase's email template (`docs/OWNER_TODO.md`).

@@ -59,7 +59,7 @@ import {
   FullReset,
   StorageStatus,
 } from "@/features/settings/CourseFiles"
-import { OnlineBackup } from "@/features/settings/OnlineBackup"
+import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
 import { requestPersistentStorage } from "@/persistence/browserStorage"
 import {
   isResetPending,
@@ -507,7 +507,7 @@ function SettingsView({
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-1 py-4">
           <dt className="shrink-0 text-sm text-muted-foreground">Archivio</dt>
           <dd className="min-w-0 max-w-full break-words text-right text-sm font-bold [overflow-wrap:anywhere]">
-            Locale
+            <ArchiveSummary />
           </dd>
         </div>
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-1 py-4">

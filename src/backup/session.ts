@@ -2,14 +2,17 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { backupConfig, type BackupConfig } from "@/backup/config"
 import { createConnector } from "@/backup/connector"
+import { requestLeave } from "@/navigation/browserHistory"
 import {
   claimDeviceForAccount,
   connectDatabase,
   deviceCourseId,
   deviceSyncMode,
   disconnectDatabase,
+  openedWithSyncedTables,
   switchDeviceToSyncedTables,
 } from "@/persistence/backupLink"
+import { CourseReplacedError } from "@/persistence/courseSession"
 import { appChannelConfig } from "@/runtimeConfig"
 
 /**
@@ -22,20 +25,23 @@ import { appChannelConfig } from "@/runtimeConfig"
  */
 export type BackupState =
   | { kind: "unavailable" }
-  | { kind: "signed-out" }
-  | { kind: "link-sent"; email: string }
+  | { kind: "signed-out"; notice?: string }
+  | { kind: "link-sent"; email: string; notice?: string }
+  | { kind: "offline"; email: string }
   | { kind: "reopen" }
   | { kind: "other-course" }
   | { kind: "other-account" }
   | { kind: "connected"; email: string }
   | { kind: "error"; message: string }
 
+const UNREACHABLE = "Backup non raggiungibile. Riprova con la connessione."
+
 let client: Promise<SupabaseClient> | null = null
 let connected = false
 
 async function supabase(config: BackupConfig) {
-  client ??= import("@supabase/supabase-js").then(({ createClient }) =>
-    createClient(config.supabaseUrl, config.supabaseKey, {
+  client ??= import("@supabase/supabase-js").then(({ createClient }) => {
+    const created = createClient(config.supabaseUrl, config.supabaseKey, {
       auth: {
         storageKey: appChannelConfig.backupAuthKey,
         persistSession: true,
@@ -43,10 +49,66 @@ async function supabase(config: BackupConfig) {
         detectSessionInUrl: true,
         flowType: "pkce",
       },
-    }),
-  )
+    })
+    // A sign-in completed in another tab of this app reaches this one too
+    // (review FUX-B3-5). Outside the callback: the library holds its lock.
+    created.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")
+        window.setTimeout(resumeBackup, 0)
+    })
+    return created
+  })
   return client
 }
+
+const linkSentKey = () => `${appChannelConfig.backupAuthKey}-link-sent`
+/** A link is valid for an hour (Supabase's default). */
+const LINK_LIFETIME_MS = 60 * 60 * 1000
+
+function rememberLinkSent(email: string | null) {
+  try {
+    if (email)
+      window.localStorage.setItem(
+        linkSentKey(),
+        JSON.stringify({ email, at: Date.now() }),
+      )
+    else window.localStorage.removeItem(linkSentKey())
+  } catch {
+    // Only spares typing the address again after the app was closed.
+  }
+}
+
+/** The address a still valid link went to, if the app was closed since. */
+function linkSentTo(): string | null {
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(linkSentKey()) ?? "null",
+    ) as { email?: unknown; at?: unknown } | null
+    if (
+      typeof stored?.email === "string" &&
+      typeof stored.at === "number" &&
+      Date.now() - stored.at < LINK_LIFETIME_MS
+    )
+      return stored.email
+  } catch {
+    // Unreadable: as if none was sent.
+  }
+  return null
+}
+
+/** The account of a session the library keeps but could not refresh. */
+function storedSessionEmail(): string | null {
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(appChannelConfig.backupAuthKey) ?? "null",
+    ) as { user?: { email?: unknown } } | null
+    return typeof stored?.user?.email === "string" ? stored.user.email : null
+  } catch {
+    return null
+  }
+}
+
+const offline = () => !window.navigator.onLine
 
 /** Sends the sign-in link to `email`; the link returns to this app. */
 export async function sendSignInLink(email: string): Promise<BackupState> {
@@ -57,26 +119,80 @@ export async function sendSignInLink(email: string): Promise<BackupState> {
     email,
     options: {
       emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
-      shouldCreateUser: true,
+      // Only the accounts made in the backend's dashboard sign in: nobody
+      // creates one from the public test app (review SP-B3-4).
+      shouldCreateUser: false,
     },
   })
-  return error
-    ? { kind: "error", message: "Invio non riuscito. Riprova." }
-    : { kind: "link-sent", email }
+  if (!error) {
+    rememberLinkSent(email)
+    return { kind: "link-sent", email }
+  }
+  // The form stays filled, so its button is the retry (review FUX-B3-Q1).
+  return {
+    kind: "signed-out",
+    notice: offline()
+      ? "Nessuna connessione: il link non è partito. Riprova quando c’è campo."
+      : error.status === 429
+        ? "Troppe richieste. Aspetta un minuto e riprova."
+        : error.status === 422 || error.status === 400
+          ? "Questa email non ha un accesso al backup."
+          : "Invio non riuscito. Riprova.",
+  }
+}
+
+/**
+ * Signs in with the code in the email, for a link that opens in another
+ * browser than this app's (an iPhone home-screen app, a mail app's own
+ * browser; review FUX-B3-4).
+ */
+export async function signInWithCode(
+  email: string,
+  code: string,
+): Promise<BackupState> {
+  const config = backupConfig()
+  if (!config) return { kind: "unavailable" }
+  const { error } = await (
+    await supabase(config)
+  ).auth.verifyOtp({ email, token: code, type: "email" })
+  if (error)
+    return {
+      kind: "link-sent",
+      email,
+      notice: offline()
+        ? "Nessuna connessione. Riprova quando c’è campo."
+        : "Codice non valido o scaduto. Controlla l’ultima email o richiedine una nuova.",
+    }
+  await resumeBackup()
+  return current
 }
 
 /**
  * Where the backup stands, acting on it: switches a signed-in local device
- * (the app then reopens) or connects a switched one.
+ * (the app then reopens) or connects a switched one. `beforeSwitch` waits
+ * until the switch may reload the app.
  */
-export async function startBackup(): Promise<BackupState> {
+export async function startBackup(
+  beforeSwitch: () => Promise<void> = async () => {},
+): Promise<BackupState> {
   const config = backupConfig()
   if (!config) return { kind: "unavailable" }
   const client = await supabase(config)
   const {
     data: { session },
+    error: sessionError,
   } = await client.auth.getSession()
-  if (!session) return { kind: "signed-out" }
+  if (!session) {
+    // Offline with an expired token the library keeps the session: the
+    // backup resumes with signal, nobody is signed out (review FUX-B3-2).
+    const kept = sessionError ? storedSessionEmail() : null
+    if (kept) return { kind: "offline", email: kept }
+    const sentTo = linkSentTo()
+    return sentTo
+      ? { kind: "link-sent", email: sentTo }
+      : { kind: "signed-out" }
+  }
+  rememberLinkSent(null)
   const email = session.user.email ?? ""
   if ((await deviceSyncMode()) === "local") {
     const device = await deviceCourseId()
@@ -85,15 +201,22 @@ export async function startBackup(): Promise<BackupState> {
       .select("id")
       .limit(2)
     if (error)
-      return {
-        kind: "error",
-        message: "Backup non raggiungibile. Riprova con la connessione.",
-      }
+      return offline()
+        ? { kind: "offline", email }
+        : { kind: "error", message: UNREACHABLE }
     const elsewhere = (owned ?? []).some(({ id }) => id !== device)
     if (elsewhere) return { kind: "other-course" }
-    await switchDeviceToSyncedTables(session.user.id)
+    await beforeSwitch()
+    try {
+      await switchDeviceToSyncedTables(session.user.id)
+    } catch (error) {
+      // Another tab switched first (B1 review SC-B1-Q2).
+      if (!(error instanceof CourseReplacedError)) throw error
+    }
     return { kind: "reopen" }
   }
+  // Another tab switched while this one still reads the local tables.
+  if (!openedWithSyncedTables()) return { kind: "reopen" }
   // A synced device belongs to the account that switched it: another account
   // never uploads its queue nor receives its course (review SP-B3-1, -3).
   if (!(await claimDeviceForAccount(session.user.id)))
@@ -138,6 +261,12 @@ export async function signOutOfBackup(): Promise<BackupState> {
   return { kind: "signed-out" }
 }
 
+/** Forgets the link sent, to type another address. */
+export function forgetLinkSent(): BackupState {
+  rememberLinkSent(null)
+  return { kind: "signed-out" }
+}
+
 let current: BackupState = { kind: "signed-out" }
 const listeners = new Set<(state: BackupState) => void>()
 
@@ -158,40 +287,123 @@ export function setBackupState(state: BackupState) {
   for (const listener of listeners) listener(state)
 }
 
+let reload = () => window.location.reload()
+let resuming: Promise<void> | null = null
+
+const EDITING =
+  'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]'
+/** How long no field must have focus before the app may reopen. */
+const TYPING_PAUSE_MS = 1_500
+
+/**
+ * Resolves once no field has had focus for a moment: a form the leave guard
+ * does not cover, such as a new student not yet saved, is not lost either.
+ */
+function whenNotTyping() {
+  return new Promise<void>((resolve) => {
+    let timer = 0
+    const editing = () => document.activeElement?.matches(EDITING) ?? false
+    const check = () => {
+      window.clearTimeout(timer)
+      if (editing()) return
+      timer = window.setTimeout(() => {
+        if (editing()) return
+        document.removeEventListener("focusin", check)
+        document.removeEventListener("focusout", later)
+        resolve()
+      }, TYPING_PAUSE_MS)
+    }
+    const later = () => window.setTimeout(check, 0)
+    document.addEventListener("focusin", check)
+    document.addEventListener("focusout", later)
+    check()
+  })
+}
+
+/** Waits until the screen on show lets the app reopen, as an update does. */
+async function whenSafeToReopen() {
+  await whenNotTyping()
+  await new Promise<void>((resolve) => requestLeave(resolve))
+}
+
+/**
+ * Brings the backup up to date and reopens the app when it switched. The
+ * switch and the reload wait until nothing typed would be lost (review
+ * FUX-B3-3).
+ */
+export function resumeBackup() {
+  // Switched: only the reload, already asked for, is left.
+  if (current.kind === "reopen") return Promise.resolve()
+  resuming ??= (async () => {
+    try {
+      const state = await startBackup(() => {
+        setBackupState({ kind: "reopen" })
+        return whenSafeToReopen()
+      })
+      if (state.kind === "reopen") {
+        setBackupState(state)
+        await whenSafeToReopen()
+        reload()
+        return
+      }
+      // A message on the form stays until something changes.
+      if (
+        state.kind === "signed-out" &&
+        current.kind === "signed-out" &&
+        current.notice
+      )
+        return
+      setBackupState(state)
+    } catch {
+      setBackupState({ kind: "error", message: UNREACHABLE })
+    } finally {
+      resuming = null
+    }
+  })()
+  return resuming
+}
+
+/** Whether the address carries a sign-in link's answer; removes it. */
+function takeLinkFromAddress() {
+  const url = new URL(window.location.href)
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ""))
+  const failed = ["error", "error_code", "error_description"].some(
+    (name) => url.searchParams.has(name) || hash.has(name),
+  )
+  const code = url.searchParams.has("code")
+  if (!failed && !code) return null
+  // The code is spent or useless either way, and an error description may
+  // repeat the address: keep both out of the address bar and the history.
+  for (const name of ["code", "error", "error_code", "error_description"])
+    url.searchParams.delete(name)
+  if (failed) url.hash = ""
+  window.history.replaceState(window.history.state, "", url)
+  return failed ? "failed" : "code"
+}
+
 /**
  * At app start: a sign-in link lands on the app's home page, so the backup is
- * checked here, not only in Impostazioni. A device just switched reopens at
- * once, before anything could be typed.
+ * checked here, not only in Impostazioni. Signal coming back resumes it.
  */
 export async function startBackupAtLaunch(
-  reload = () => window.location.reload(),
+  reloadApp = () => window.location.reload(),
 ) {
   if (!backupConfig()) return setBackupState({ kind: "unavailable" })
-  const fromLink = new URL(window.location.href).searchParams.has("code")
-  try {
-    const state = await startBackup()
-    if (fromLink) {
-      // The code is spent or useless either way; keep it out of the address.
-      const url = new URL(window.location.href)
-      url.searchParams.delete("code")
-      window.history.replaceState(window.history.state, "", url)
-      // A link opened elsewhere than the phone that asked for it, or expired
-      // (review SP-B3-6).
-      if (state.kind === "signed-out")
-        return setBackupState({
-          kind: "error",
-          message:
-            "Il link non è valido su questo telefono o è scaduto. Richiedine uno nuovo da qui.",
-        })
-    }
-    setBackupState(state)
-    if (state.kind === "reopen") reload()
-  } catch {
+  reload = reloadApp
+  const link = takeLinkFromAddress()
+  window.addEventListener("online", () => {
+    if (current.kind === "offline" || current.kind === "error")
+      void resumeBackup()
+  })
+  await resumeBackup()
+  // A link opened elsewhere than the browser that asked for it, expired or
+  // already used (reviews SP-B3-6, FUX-B3-4).
+  if (link && (current.kind === "signed-out" || current.kind === "link-sent"))
     setBackupState({
-      kind: "error",
-      message: "Backup non raggiungibile. Riprova con la connessione.",
+      kind: "signed-out",
+      notice:
+        "Il link è scaduto, già usato o aperto in un altro browser. Richiedine uno nuovo da qui, oppure usa il codice dell’email.",
     })
-  }
 }
 
 /**

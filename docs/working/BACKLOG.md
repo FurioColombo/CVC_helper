@@ -176,6 +176,14 @@ Each passed only on a retry and is a defect to fix (03 §6).
   next phone check: reproduce it, then consider giving the test channel its
   own origin, which would also end the shared origin-wide persistence
   permission (03 §3.3).
+- **Sign-in tokens on a shared origin** (B3 SP-B3-5): the backup session and
+  its refresh token sit in localStorage on `furiocolombo.github.io`, shared
+  with every other Pages site of the owner, and `index.html` has no
+  Content-Security-Policy. Before production (UG4): a CSP and an origin of
+  the app's own (the same move as the test channel's origin above).
+- **Full reset does not revoke the backup session** (B3 SP-B3-7): it removes
+  the stored session but never signs out on the server, so the refresh token
+  stays valid until it expires. Sign out first when online.
 - B1 SC-B1-Q6: when an older app reopens beside an open synced tab, the
   refused save says the course was "sostituito o eliminato" and the typed
   student is lost on reopen; data is intact, the message and the draft are

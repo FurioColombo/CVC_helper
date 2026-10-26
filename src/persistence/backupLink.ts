@@ -1,6 +1,7 @@
 import type { PowerSyncBackendConnector } from "@powersync/web"
 
 import { db } from "@/persistence/db"
+import { expectsSyncedTables } from "@/persistence/openedSchema"
 import { prepareDatabase } from "@/persistence/migrations"
 import {
   accountMark,
@@ -42,6 +43,11 @@ export async function switchDeviceToSyncedTables(account: string) {
     APP_VERSION,
     account,
   )
+}
+
+/** Whether this tab reads the synced tables, not only the device's data. */
+export function openedWithSyncedTables() {
+  return expectsSyncedTables(db)
 }
 
 /**
