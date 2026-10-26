@@ -18,6 +18,7 @@ import {
   sendSignInLink,
   setBackupState,
   signInWithCode,
+  replaceWithOnlineCourse,
   signOutOfBackup,
 } from "@/backup/session"
 import { Button } from "@/components/ui/button"
@@ -40,7 +41,12 @@ import {
  * one action; signed in, the account, what is still to send, and sign-out,
  * which keeps the course on the device.
  */
-export function OnlineBackup() {
+export function OnlineBackup({
+  restore = false,
+}: {
+  /** On the empty device's screen: the section offers to restore. */
+  restore?: boolean
+}) {
   const configured = backupConfig() !== null
   const [state, setState] = useState<BackupState>(backupState)
   const [email, setEmail] = useState("")
@@ -84,7 +90,7 @@ export function OnlineBackup() {
         id="online-backup-title"
       >
         <CloudUpload aria-hidden="true" className="size-4 shrink-0" />
-        Backup online
+        {restore ? "Ripristina dal backup online" : "Backup online"}
       </h2>
       {state.kind === "checking" && (
         <p
@@ -97,9 +103,9 @@ export function OnlineBackup() {
       {state.kind === "signed-out" && (
         <form className="mt-2" onSubmit={send}>
           <p className="text-sm leading-5 text-muted-foreground">
-            Accedi con la tua email per copiare il corso online e ritrovarlo su
-            un altro telefono. Senza accesso l’app funziona come sempre, solo su
-            questo telefono.
+            {restore
+              ? "Hai già un corso nel backup online? Accedi con la tua email per ripristinarlo su questo telefono."
+              : "Accedi con la tua email per copiare il corso online e ritrovarlo su un altro telefono. Senza accesso l’app funziona come sempre, solo su questo telefono."}
           </p>
           {appChannel === "test" && (
             <p className="mt-2 text-sm font-semibold leading-5 text-[#9a3412]">
@@ -203,19 +209,23 @@ export function OnlineBackup() {
           </Button>
         </div>
       )}
-      {state.kind === "other-course" && (
-        <Notice>
-          Questo account ha già un altro corso online. Il corso di questo
-          telefono resta solo qui.
-          <Button
-            className="mt-3"
-            disabled={busy}
-            onClick={() => void run(signOutOfBackup)}
-            variant="secondary"
-          >
-            Esci dall’account
-          </Button>
-        </Notice>
+      {state.kind === "replace-course" && (
+        <ReplaceCourse
+          busy={busy}
+          online={state.online}
+          onCancel={() => void run(signOutOfBackup)}
+          onReplace={() => void run(replaceWithOnlineCourse)}
+        />
+      )}
+      {state.kind === "restoring" && (
+        <p className="mt-2 text-sm leading-5" role="status">
+          Accesso:{" "}
+          <span className="font-bold [overflow-wrap:anywhere]">
+            {state.email}
+          </span>
+          . Ripristino del corso dal backup online… Serve la connessione: l’app
+          si riapre con il corso appena è scaricato.
+        </p>
       )}
       {state.kind === "other-account" && (
         <Notice>
@@ -245,6 +255,66 @@ export function OnlineBackup() {
         </Notice>
       )}
     </section>
+  )
+}
+
+/**
+ * B5: the account holds another course than this device. Replacing erases
+ * the course here, as "Elimina il corso" does, and asks the same way: an
+ * explicit acknowledgement first. Nothing is merged.
+ */
+function ReplaceCourse({
+  online,
+  busy,
+  onReplace,
+  onCancel,
+}: {
+  online: string
+  busy: boolean
+  onReplace: () => void
+  onCancel: () => void
+}) {
+  const [understood, setUnderstood] = useState(false)
+  return (
+    <div
+      className="mt-2 text-sm leading-5"
+      role="alertdialog"
+      aria-labelledby="replace-q"
+    >
+      <p id="replace-q">
+        Questo account ha già un corso online
+        {online ? (
+          <>
+            :{" "}
+            <span className="font-bold [overflow-wrap:anywhere]">{online}</span>
+          </>
+        ) : null}
+        . Puoi sostituire il corso di questo telefono con quello online: il
+        corso di questo telefono verrà eliminato. Se vuoi conservarne una copia,
+        esportalo prima.
+      </p>
+      <label className="mt-3 flex min-h-11 items-start gap-2">
+        <input
+          checked={understood}
+          className="mt-1 size-4"
+          onChange={(event) => setUnderstood(event.target.checked)}
+          type="checkbox"
+        />
+        <span>Ho capito: il corso di questo telefono sarà eliminato</span>
+      </label>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          disabled={busy || !understood}
+          onClick={onReplace}
+          variant="secondary"
+        >
+          Sostituisci con il corso online
+        </Button>
+        <Button disabled={busy} onClick={onCancel}>
+          Annulla ed esci
+        </Button>
+      </div>
+    </div>
   )
 }
 

@@ -60,6 +60,7 @@ import {
   StorageStatus,
 } from "@/features/settings/CourseFiles"
 import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
+import { useBackupState } from "@/backup/useBackupState"
 import { requestPersistentStorage } from "@/persistence/browserStorage"
 import {
   isResetPending,
@@ -316,6 +317,10 @@ function CourseCreation({
   const [level, setLevel] = useState<CourseLevel | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(false)
+  // B5: while the account's course downloads, none is created here, so the
+  // app can reopen on the restored course with nothing lost.
+  const backup = useBackupState()
+  const restoring = backup.kind === "restoring" || backup.kind === "reopen"
   const today = useMemo(() => new Date(), [])
   const details = useMemo(
     () => (family && level ? buildCourseDetails(family, level, today) : null),
@@ -412,9 +417,15 @@ function CourseCreation({
           </p>
         )}
 
+        {restoring && (
+          <p className="mt-4 text-sm font-semibold leading-5" role="status">
+            Ripristino del corso dal backup online in corso: per crearne uno
+            nuovo attendi la fine.
+          </p>
+        )}
         <Button
           className="mt-5 w-full"
-          disabled={!details || submitting}
+          disabled={!details || submitting || restoring}
           onClick={createCourse}
           size="lg"
         >
@@ -425,6 +436,7 @@ function CourseCreation({
         </Button>
       </section>
 
+      <OnlineBackup restore />
       <CourseFiles hasCourse={false} />
       <FullReset courseLabel={null} />
 

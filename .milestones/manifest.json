@@ -1223,7 +1223,7 @@
     {
       "id": "B5",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "B4",
@@ -1244,7 +1244,17 @@
         ".evidence/B5/self-review.json",
         ".evidence/B5/data-integrity-review.json",
         ".evidence/B5/sync-chaos-review.json"
-      ]
+      ],
+      "startedFrom": {
+        "commit": "7c98b0b376d5feb60eead289414090693fc4a0fa",
+        "sourceDigest": "68bbcc64f522543ba9f4e6acdae7870d87a05c62265b0e49ba0fec06445ba015",
+        "ownerPrerequisites": [
+          {
+            "id": "B4",
+            "commit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983"
+          }
+        ]
+      }
     },
     {
       "id": "B6",

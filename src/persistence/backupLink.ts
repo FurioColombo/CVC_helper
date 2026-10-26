@@ -11,6 +11,8 @@ import {
   switchToSyncedTables,
 } from "@/persistence/syncMode"
 import { APP_VERSION } from "@/appVersion"
+import { newer, parseVersion } from "@/domain/compatibility"
+import { readDataVersion, writeDataVersion } from "@/persistence/dataVersion"
 import { appChannelConfig } from "@/runtimeConfig"
 
 /**
@@ -64,6 +66,37 @@ export async function claimDeviceForAccount(account: string) {
     mark,
   ])
   return true
+}
+
+/**
+ * B5: a restored course takes the server's minimum writer
+ * (supabase/migrations/20261027000000_minimum_writer_read.sql). The data
+ * version only ever rises: an app older than the minimum then opens the
+ * course read-only and asks for the update (03 §3.1). Returns whether it
+ * rose.
+ */
+export async function adoptMinimumWriter(versionText: string) {
+  const minimum = parseVersion(versionText)
+  return db.writeTransaction(async (transaction) => {
+    const stored = await readDataVersion(transaction)
+    const next = {
+      version: newer(stored?.version ?? minimum, minimum),
+      minimumWriter: newer(stored?.minimumWriter ?? minimum, minimum),
+    }
+    if (
+      stored &&
+      next.version === stored.version &&
+      next.minimumWriter === stored.minimumWriter
+    )
+      return false
+    await writeDataVersion(transaction, next)
+    return true
+  })
+}
+
+/** Resolves once the device holds a complete download of the backup. */
+export function firstSync() {
+  return db.waitForFirstSync()
 }
 
 export function connectDatabase(connector: PowerSyncBackendConnector) {

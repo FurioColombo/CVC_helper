@@ -94,7 +94,7 @@ data-integrity and security/privacy reviews.
 ## B5 — Restore on a new device
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Signing in on a device without a course downloads it and opens it, then
 reopens so the session binds the restored course (SC-B1-Q5); on a device

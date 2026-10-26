@@ -5,9 +5,7 @@
   "repository": "FurioColombo/CVC_helper_test",
   "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
   "basePath": "CVC_helper_test",
-  "versions": [
-    "0.5.1"
-  ],
+  "versions": ["0.5.1"],
   "sourceCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
   "verifiedCheckpoint": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
   "sourceDigest": "68bbcc64f522543ba9f4e6acdae7870d87a05c62265b0e49ba0fec06445ba015",
@@ -17,9 +15,7 @@
   "replaces": {
     "milestone": "B3",
     "ownerCheck": "B3-PHONE-SIGNIN",
-    "versions": [
-      "0.5.0"
-    ],
+    "versions": ["0.5.0"],
     "sourceCommit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
     "verifiedCheckpoint": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
     "sourceDigest": "600f8ea16275ae041374611a664e94d70b818792f9d7fb14a275eeee5945e34c",
@@ -27,9 +23,7 @@
     "replaces": {
       "milestone": "UG3",
       "ownerCheck": "UG3-PHONE-RELEASE",
-      "versions": [
-        "0.4.4"
-      ],
+      "versions": ["0.4.4"],
       "sourceCommit": "c56ffe77c81427a25d237adf11995ae4c44092a9",
       "verifiedCheckpoint": "c56ffe77c81427a25d237adf11995ae4c44092a9",
       "sourceDigest": "94a62036f2861eb7d615c97cacfcf763a82b31083426342f5a06a54d1f2eaa5a",
@@ -38,9 +32,7 @@
       "replaces": {
         "milestone": "D4",
         "ownerCheck": "D4-PHONE-TRANSFER",
-        "versions": [
-          "0.4.3"
-        ],
+        "versions": ["0.4.3"],
         "sourceCommit": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
         "verifiedCheckpoint": "7ac55d8210e9c08c36dd676e80bc018d2cd216b4",
         "sourceDigest": "84cb6ec5deb3196788d8ccf6f6dcea19d5525f0c87c258d162271209edd05a6e",
@@ -53,9 +45,7 @@
         "replaces": {
           "milestone": "D4",
           "ownerCheck": "D4-PHONE-TRANSFER",
-          "versions": [
-            "0.4.2"
-          ],
+          "versions": ["0.4.2"],
           "sourceCommit": "1d7cd9fc88615a45da0f3c8abc9e92393ec45e38",
           "verifiedCheckpoint": "fde1fe14787333536fb250ef2357793be3870be8",
           "sourceDigest": "39b26907f038f91ff974e7f4917fe25d5e9ab820e191eb355ea8e991809679dc",
@@ -68,10 +58,7 @@
           "replaces": {
             "milestone": "D3",
             "ownerCheck": "D3-PHONE-UPDATE",
-            "versions": [
-              "0.4.0",
-              "0.4.1"
-            ],
+            "versions": ["0.4.0", "0.4.1"],
             "sourceCommit": "761530f820908db8355e1bcdd661bc8c6f495385",
             "sourceDigest": "c6df27927a48127054f6d624424d28c19370b5776c26554351981a6660e1216d",
             "gitSourceDigest": "fe6def9061a3693fc084b46b1deb8d2126ec904ea2d68ee67fb0e1c6af230e9f",

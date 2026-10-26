@@ -10,12 +10,15 @@ import {
   deviceCourseId,
   deviceSyncMode,
   disconnectDatabase,
+  adoptMinimumWriter,
+  firstSync,
   openedWithSyncedTables,
   courseTableColumns,
   recordUploadOutcome,
   switchDeviceToSyncedTables,
 } from "@/persistence/backupLink"
 import { CourseReplacedError } from "@/persistence/courseSession"
+import { eraseAllCourseData } from "@/persistence/courses"
 import { appChannelConfig } from "@/runtimeConfig"
 
 /**
@@ -33,7 +36,8 @@ export type BackupState =
   | { kind: "link-sent"; email: string; notice?: string }
   | { kind: "offline"; email: string }
   | { kind: "reopen" }
-  | { kind: "other-course" }
+  | { kind: "replace-course"; online: string }
+  | { kind: "restoring"; email: string }
   | { kind: "other-account" }
   | { kind: "connected"; email: string; outdated?: boolean }
   | { kind: "error"; message: string }
@@ -212,14 +216,18 @@ export async function startBackup(
     const device = await deviceCourseId()
     const { data: owned, error } = await client
       .from("courses")
-      .select("id")
+      .select("id, label")
       .limit(2)
     if (error)
       return offline()
         ? { kind: "offline", email }
         : { kind: "error", message: UNREACHABLE }
-    const elsewhere = (owned ?? []).some(({ id }) => id !== device)
-    if (elsewhere) return { kind: "other-course" }
+    // B5: a device holding another course asks before it is replaced, and
+    // never merges the two (as an import); an empty device switches and
+    // restores the account's course.
+    const online = (owned ?? []).find(({ id }) => id !== device)
+    if (online && device)
+      return { kind: "replace-course", online: String(online.label ?? "") }
     await beforeSwitch()
     try {
       await switchDeviceToSyncedTables(session.user.id)
@@ -237,6 +245,7 @@ export async function startBackup(
     return { kind: "other-account" }
   if (!connected) {
     connected = true
+    restoring = !(await deviceCourseId())
     await connectDatabase(
       createConnector(client, config, session.user.id, {
         columnsOf: courseTableColumns,
@@ -250,7 +259,53 @@ export async function startBackup(
       }),
     )
   }
+  if (restoring) {
+    void finishRestore(client, email)
+    return { kind: "restoring", email }
+  }
   return { kind: "connected", email, outdated: uploadsOutdated }
+}
+
+/** A device that switched without a course waits for the account's. */
+let restoring = false
+let finishing: Promise<void> | null = null
+
+/**
+ * B5: once the first complete download is in, the restored course takes the
+ * server's minimum writer, so an app older than it opens the course
+ * read-only (supabase/migrations/20261027000000_minimum_writer_read.sql),
+ * and the app reopens so its session binds the restored course (B1 review
+ * SC-B1-Q5). Nothing can be lost by that reload: while restoring, the
+ * empty device's screen offers no course to create. An account without a
+ * course leaves the device empty and connected.
+ */
+function finishRestore(client: SupabaseClient, email: string) {
+  finishing ??= (async () => {
+    await firstSync()
+    const { data: minimum, error } = await client.rpc(
+      "app_minimum_writer_version",
+    )
+    // Not installed yet: the server's own writer check still refuses an
+    // older app's uploads.
+    if (!error && typeof minimum === "string") await adoptMinimumWriter(minimum)
+    restoring = false
+    if (await deviceCourseId()) reload()
+    else setBackupState({ kind: "connected", email, outdated: uploadsOutdated })
+  })().finally(() => {
+    finishing = null
+  })
+  return finishing
+}
+
+/**
+ * B5: the owner confirmed replacing this device's course with the
+ * account's: the course here is erased, as "Elimina il corso" does, and the
+ * empty device then restores the online one. Nothing is merged.
+ */
+export async function replaceWithOnlineCourse(): Promise<BackupState> {
+  await eraseAllCourseData()
+  await resumeBackup(true)
+  return current
 }
 
 /**
