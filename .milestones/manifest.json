@@ -1111,7 +1111,7 @@
     {
       "id": "B3",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "ownerEvidence": [
         ".evidence/B3/physical-device-review.json",
         ".evidence/B3/owner-setup.json"
@@ -1141,7 +1141,20 @@
         "tests/e2e/b3-backup-live.spec.ts",
         "tests/e2e/b1-sync-mode.spec.ts",
         "tests/e2e/f1-navigation-guards.spec.ts"
-      ]
+      ],
+      "agentReady": {
+        "commit": "b8de760f1c7f8e398b8abcf58818ad8c3a8822c1",
+        "sourceDigest": "600f8ea16275ae041374611a664e94d70b818792f9d7fb14a275eeee5945e34c",
+        "evidenceHashes": {
+          ".evidence/B3/verification.json": "b14927bec10f61ccbfd5b10debf35bfb7c9cf11ca032d5c59f8935ea686ef31d",
+          ".evidence/B3/browser-evidence.json": "244d30d8c66332d2449c8c7a6ba68cdb2ce6430ce745023e2f5b09069ffa298e",
+          ".evidence/B3/self-review.json": "f9278471c05568148c3dd2f017a25bcd8b6e2761c784bdc1e6e2a4e15ca05fe8",
+          ".evidence/B3/security-privacy-review.json": "ad3db1f59825d63af27f271b6255069fd59e87e43ef1ee0891ec12c8fdb8e291",
+          ".evidence/B3/field-ux-review.json": "8437be27ec94add66bcc3ad185cfec2a26e762317af5ffd2a844d5706b9baf93"
+        },
+        "ciRunId": 40268836916,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/40268836916"
+      }
     },
     {
       "id": "B4",

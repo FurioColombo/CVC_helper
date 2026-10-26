@@ -39,6 +39,32 @@ The owner reported: The owner created the Supabase development project cvc-helpe
 
 **Work affected:** Completion of B3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
+<a id="b3-phone-signin"></a>
+
+## Sign in to the online backup on Android and use it offline — B3
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. Open your installed CVC Helper Test (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.0. Use invented people only: this backup is a development one.
+2. Make sure the test app has a course with two or three invented students. In Impostazioni &gt; Backup online type the email of one of your two test accounts and tap Invia il link di accesso. Note whether 'Link inviato' is still there if you close and reopen the app.
+3. On the phone, open the email and tap the link. Note which app opens it (the installed CVC Helper Test, Chrome, or Gmail's own browser) and what Impostazioni then shows. If the link opens elsewhere, type the email's code in Codice dell'email instead (needs B3-EMAIL-CODE).
+4. Once it shows Accesso: &lt;your email&gt;, wait for Copia online aggiornata. While the app reloads once after signing in, try typing a student: report whether anything you typed was lost.
+5. Turn on airplane mode, add a student, close the app completely, reopen it: Impostazioni should show your account and 'In attesa di connessione: 1 modifica da inviare'. Turn airplane mode off and check it reaches Copia online aggiornata without reopening.
+6. With airplane mode on again, change a student, then tap Esci: read the question (it should mention 1 change not yet online), tap Resta collegato, then Esci and Esci. The course must stay on the phone. Optionally the next morning, with airplane mode on, open the app and note what Impostazioni says.
+7. Report B3-PHONE-SIGNIN with your device, browser and Android version and what you actually saw at each step, including which app opened the link and whether the status was readable outdoors.
+
+**Expected:** Sign-in by the link (or the code) works on the phone and the backup reaches 'Copia online aggiornata'; offline the account stays signed in and the backup resumes with signal; nothing typed is lost around the one reload; Esci warns about unsent changes and keeps the course. Only your actual phone observations can pass this check.
+
+**Build:** `b8de760f1c7f8e398b8abcf58818ad8c3a8822c1`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of B3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3

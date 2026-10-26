@@ -27,7 +27,7 @@ by `verify:all`, the reviews below and the owner's Android check.
 | Preparation | Server tables, access rules, sync streams and the schema-switch spike, prepared on branch `claude/0.5.0-prep`. The owner's account steps: `docs/working/BACKEND_SETUP_0.5.0.md`. |
 | B1 | Complete. A device switches once from 0.4.0's local tables to synced ones, every row identical and queued once, older apps read-only; erase, import, reset and older apps are covered on Chromium and WebKit. Three reviews passed with findings, fixed or handed to B3–B6. See `.evidence/B1/`. |
 | B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
-| B3 | Next: sign-in by email magic link. |
+| B3 | Awaiting the owner: sign-in by link or code, sign-out and the switch are verified at `b8de760` (reviews passed, CI green); CVC Helper Test 0.5.0 carries it. Owner actions B3-EMAIL-CODE and B3-PHONE-SIGNIN. See `.evidence/B3/`. |
 
 ## Execution order
 
@@ -64,7 +64,7 @@ to remember on the boat).
 ## B3 — Sign-in and sign-out
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 Impostazioni offers sign-in by email magic link (owner, 2026-10-25); signed
 in, it shows the account and the backup state, and the app switches to synced
