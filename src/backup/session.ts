@@ -11,7 +11,8 @@ import {
   deviceSyncMode,
   disconnectDatabase,
   openedWithSyncedTables,
-  recordUploadRefusals,
+  courseTableColumns,
+  recordUploadOutcome,
   switchDeviceToSyncedTables,
 } from "@/persistence/backupLink"
 import { CourseReplacedError } from "@/persistence/courseSession"
@@ -238,7 +239,8 @@ export async function startBackup(
     connected = true
     await connectDatabase(
       createConnector(client, config, session.user.id, {
-        recordRefusals: recordUploadRefusals,
+        columnsOf: courseTableColumns,
+        recordOutcome: recordUploadOutcome,
         onOutdated: (outdated) => {
           // The first upload can answer before the state says connected.
           uploadsOutdated = outdated

@@ -123,7 +123,7 @@ test("a course id held by another account is refused, kept and reported, not ret
   })
 })
 
-// The server's writer check (supabase/migrations/20261026000000), once the
+// The server's writer check (supabase/migrations/20261026000000_upload_rules.sql), once the
 // owner has run it: an app below 0.5.0, or one that names no version, may
 // not write; 0.5.0 may.
 test("the server refuses writers below the minimum version", async () => {
@@ -160,5 +160,83 @@ test("the server refuses writers below the minimum version", async () => {
     old: { status: 400, code: "CVOLD" },
     unnamed: { status: 400, code: "CVOLD" },
     current: 201,
+  })
+})
+
+// The server keeps the latest edit whatever order two phones upload in
+// (owner decision 12, reviews SC-B4-2, -3), once the owner has run the
+// upload-rules migration.
+test("the server keeps the latest edit of a row, uploaded in either order", async () => {
+  const access = await token(1)
+  await clearAccount(access)
+  const request = (method: string, target: string, body?: unknown) =>
+    fetch(`${base()}/rest/v1/${target}`, {
+      method,
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY!,
+        authorization: `Bearer ${access}`,
+        "content-type": "application/json",
+        // As supabase-js upserts: an insert of an existing id updates it.
+        prefer: "return=representation,resolution=merge-duplicates",
+        "x-cvc-app-version": "0.5.0",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }).then(async (response) => ({
+      status: response.status,
+      rows: (await response.json().catch(() => [])) as Array<
+        Record<string, unknown>
+      >,
+    }))
+  const course = `latest-edit-${Date.now()}`
+  const at = (hour: string) => `2026-09-19T${hour}:00:00.000Z`
+  await request("POST", "courses", {
+    id: course,
+    level: 2,
+    updatedAt: at("08"),
+  })
+  // The later phone uploads first; the earlier one's insert must not win.
+  await request("POST", "evaluations?on_conflict=id", {
+    id: `${course}-e`,
+    courseId: course,
+    value: "++",
+    note: null,
+    updatedAt: at("10"),
+  })
+  const older = await request("POST", "evaluations?on_conflict=id", {
+    id: `${course}-e`,
+    courseId: course,
+    value: "+",
+    note: "A",
+    updatedAt: at("09"),
+  })
+  expect(older.status).toBeLessThan(300)
+  if (older.rows.length > 0) {
+    await clearAccount(access)
+    test.skip(true, "The owner has not run the upload-rules migration yet")
+  }
+  const olderEdit = await request(
+    "PATCH",
+    `evaluations?id=eq.${encodeURIComponent(`${course}-e`)}`,
+    { value: "-", updatedAt: at("09") },
+  )
+  const staleDelete = await request(
+    "DELETE",
+    `evaluations?id=eq.${encodeURIComponent(`${course}-e`)}&updatedAt=lte.${at("09")}`,
+  )
+  const stored = await request(
+    "GET",
+    `evaluations?id=eq.${encodeURIComponent(`${course}-e`)}&select=value,note,updatedAt`,
+  )
+  await clearAccount(access)
+  expect({
+    olderInsert: older.rows.length,
+    olderEdit: olderEdit.rows.length,
+    staleDelete: staleDelete.rows.length,
+    stored: stored.rows,
+  }).toEqual({
+    olderInsert: 0,
+    olderEdit: 0,
+    staleDelete: 0,
+    stored: [{ value: "++", note: null, updatedAt: at("10") }],
   })
 })

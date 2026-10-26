@@ -337,3 +337,50 @@ describe("resolveCrews: member slots", () => {
     expect(result.conflicts).toBe(1)
   })
 })
+
+// Review DI-B4-1: a flexible crew's seats are its own capacity, and more
+// people than seats lose the earliest edits, whichever seats they held.
+describe("resolveCrews: a flexible crew's capacity", () => {
+  const flexible = (members: ReturnType<typeof member>[], capacity: number) => {
+    const result = resolveCrews([{ ...crew("c", 0), capacity }], members)
+    return {
+      kept: result.members.map(({ id }) => id).sort(),
+      positions: result.members.map(({ position }) => position),
+      conflicts: result.conflicts,
+    }
+  }
+
+  it.each([
+    [
+      "two phones filled the last seat: the later edit takes it",
+      [
+        // The member both phones kept carries the later phone's edit.
+        member("m1", "c", 0, late),
+        member("m2", "c", 1, early),
+        member("m3", "c", 1, late),
+      ],
+      2,
+      ["m1", "m3"],
+    ],
+    [
+      "over capacity without a clash: the earliest edit loses its seat",
+      [
+        member("m1", "c", 0, early),
+        member("m2", "c", 1, late),
+        member("m3", "c", 2, late),
+      ],
+      2,
+      ["m2", "m3"],
+    ],
+    [
+      "within capacity nothing changes",
+      [member("m1", "c", 0, early), member("m2", "c", 1, late)],
+      3,
+      ["m1", "m2"],
+    ],
+  ] as const)("%s", (_name, members, capacity, kept) => {
+    const result = flexible([...members], capacity)
+    expect(result.kept).toEqual(kept)
+    expect(result.positions.every((slot) => slot! < capacity)).toBe(true)
+  })
+})

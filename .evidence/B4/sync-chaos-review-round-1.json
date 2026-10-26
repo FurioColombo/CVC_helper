@@ -1,0 +1,93 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "commit": "a627810",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SC-B4-1",
+      "title": "\"Riprova l'invio\" writes the old refused data over later edits of the same row, and brings back rows deleted since; both changes then upload",
+      "evidence": "uploadRefusals.ts replays a refused PUT as INSERT OR REPLACE of refusal.data and a refused PATCH as UPDATE of refusal.data, never comparing with the row now and replaying a PUT even after the row was deleted. A PATCH sent after its PUT was refused never becomes a refusal: on the development server a PATCH of a row it does not hold answers 204, so the connector counts it as sent. Browser runs (fake backend, Pixel 7): R1, Eva's insert refused, age edited 15->16 (PATCH accepted), Riprova: '15 anni · dichiarata' and the last upload a POST with the old data. R2, Eva's insert refused, Eva deleted, Riprova: Eva back in Allievi and uploaded.",
+      "reproduction": "Reviewer scratch sc.spec.ts 'SC-R1' and 'SC-R2'.",
+      "specRef": "04 B4 success predicate; AGENTS.md §17"
+    },
+    {
+      "id": "SC-B4-2",
+      "title": "Rows that share a key-based id settle on whichever phone uploads last, not on the latest edit, and the app says nothing",
+      "evidence": "With natural-key ids both phones write the same server row; the connector upserts every PUT and deletes every DELETE by id with no updatedAt comparison, and the readers can only choose between different rows. Live check: B's later '++' (10:00) upserted first, then A's '+' (09:00): the server keeps '+'. Unit run with a server that applies deletes: (a) evaluation saved on two phones, B first: both read '+', no conflict; (b) A's earlier DELETE of a crew member removes B's later row: both phones end with land [student-1], crew-1 empty, resolvedConflicts 0. Seeded fuzz (seed 360423565, 200 rounds): 42 rounds end not on the latest edit. placementConvergence's sync() ignores DELETEs and uploads the later phone last.",
+      "reproduction": "Reviewer scratch conv.test.ts, fuzz.test.ts, live.mjs.",
+      "specRef": "Owner decision 12; 04 B4; 03 §3 D1"
+    },
+    {
+      "id": "SC-B4-3",
+      "title": "The server merges a PUT into an existing row instead of replacing it, so two phones' placements end as a row neither wrote",
+      "evidence": "PowerSync's PUT carries only non-null columns; supabase-js upsert sends the keys given, so a column one phone left empty keeps the other phone's value. Live: A at 09:00 saves evaluation '+' with a note; B at 10:00 saves '++' with no note; uploaded A then B: the server holds '++', note 'nota sintetica A', updatedAt 10:00. 22 of the 42 wrong fuzz rounds are this kind.",
+      "reproduction": "Reviewer scratch live2.mjs (synthetic course, deleted after).",
+      "specRef": "Owner decision 12; 04 B4; AGENTS.md §11"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-B4-4",
+      "title": "A batch holding one row id twice is answered 500/21000 and retried forever, holding every later change back with no refusal shown",
+      "evidence": "uploadRuns puts consecutive PUTs of one table into one upsert; two PUTs of one id (e.g. two refusals of one row sent again) get 500 code 21000 ('ON CONFLICT DO UPDATE command cannot affect row a second time', live). The policy retries it, so the per-row fallback is never reached. Browser run R3: a student added afterwards never uploaded in 45 s; status 'Verifica della copia online…'.",
+      "reproduction": "Reviewer scratch sc2.spec.ts 'SC-R3'.",
+      "specRef": "04 B4 adversarial checklist"
+    },
+    {
+      "id": "SC-B4-5",
+      "title": "An edit to a row the server no longer holds is dropped with no refusal and no notice",
+      "evidence": "A PATCH or DELETE that matches no server row answers 204 (live); the connector completes the transaction. Phone A deletes a student, phone B edits the note offline: B's PATCH changes nothing and the download removes the student from B. Same for a PATCH sent after its PUT was refused.",
+      "reproduction": "Reviewer scratch live.mjs; connector.ts upload path.",
+      "specRef": "04 B4 ('never skipped silently')"
+    },
+    {
+      "id": "SC-B4-6",
+      "title": "The convergence tests' server never applies deletes and always uploads the later phone last",
+      "evidence": "placementConvergence.test.ts sync() copies rows in uploadOrder; a DELETE never removes the other phone's row and the default order puts the later edit last; SC-B4-2 and -3 pass through unseen.",
+      "reproduction": "Read placementConvergence.test.ts sync().",
+      "specRef": "AGENTS.md §7 RULE_HEAVY"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B4-Q1",
+      "title": "A failure the policy does not recognise is retried forever and shown only as 'Verifica della copia online…' or 'da inviare'",
+      "evidence": "uploadPolicy.ts: unknown codes and statuses retry; the status line never says uploads are stuck.",
+      "reproduction": "SC-R3.",
+      "specRef": "04 B4"
+    },
+    {
+      "id": "SC-B4-Q2",
+      "title": "Only PUTs are batched: a flood of offline PATCHes still goes one request each",
+      "evidence": "uploadRuns batches only PUT; most saves after days offline are PATCHes (SC-B1-Q3).",
+      "reproduction": "Static.",
+      "specRef": "B1 review SC-B1-Q3"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04 B4; OWNER_DECISIONS 12; SC-B1-1, Q3, Q4, Q5; 03 §3",
+    "Diff 40e3f24..a627810 (backup, persistence placement and refusals, migration, e2e specs, convergence test)",
+    "vitest 6 files 88 passed; Playwright b4-uploads and b4-uploads-live: 4 passed, 1 skipped",
+    "Scratch browser runs R1-R3 (fake backend); scratch vitest conv and fuzz (seed 360423565)",
+    "Live development backend, test account 1, synthetic courses deleted after (0 rows left): reverse-order upsert, PATCH of a missing row, merge-upsert of omitted columns, duplicate-id batch",
+    "PowerSync CrudEntry PUT semantics"
+  ],
+  "anglesTried": {
+    "seed": 360423565,
+    "lenses": [
+      "2: one device deletes what the other is editing",
+      "6: a device several app versions behind"
+    ],
+    "wildcard": "Retry of refusals racing newer edits and deletes; duplicate ids in one upsert batch",
+    "signatureMove": "Seeded two-phone interleaving, 200 rounds, against a server model with PowerSync semantics, checked live for the upsert behaviour: 42 of 200 rounds do not settle on the latest edit"
+  },
+  "notTested": [
+    "A full two-context browser cycle on the live backend (needs B5 restore)",
+    "The server's minimum-writer check (migration not run)",
+    "WebKit, the owner's phone, save latency after days offline",
+    "Clock skew between phones; sign-out with refusals stored; the app closed between recordRefusals and complete (reviewed statically)"
+  ]
+}

@@ -207,6 +207,30 @@ Each passed only on a retry and is a defect to fix (03 §6).
   and Impostazioni's "Codice dell’email" field leads nowhere until the owner
   sets up SMTP (owner action B3-EMAIL-CODE). Before UG4: the sender, the code
   in the template, or hide the field while the email has no code.
+- B4 review follow-ups (`.evidence/B4/`):
+  - DI-B4-Q1: crew history counts a member that Equipaggi dropped as the
+    earliest surplus edit, until that session is next saved;
+  - DI-B4-Q2: an older app opening the database drops `uploadRefusals` with
+    its schema (03 §3); the same-origin downgrade is unlikely, but say so
+    where refused changes are explained;
+  - SC-B4-Q1: an upload failure the policy does not recognise retries
+    forever and the status line never says uploads are stuck; show the time
+    since the last accepted upload;
+  - **A delete leaves no tombstone** (B4 convergence harness, the one
+    expected failure in `src/persistence/placementConvergence.test.ts`):
+    phone B deletes a row after phone A edited it offline; if B uploads
+    first, A's older whole-row edit brings the row back, although B's delete
+    is the latest edit. The upload queue does not carry the delete's time,
+    so the server cannot tell. Before team editing (1.0.0): record the
+    deletion time on the device and keep tombstones on the server;
+  - SP-B4-3: a delete, of a student or of a course at erase, loses to an
+    edit with a later device time, so a phone with its clock ahead keeps a
+    deleted student online (owner decision 12 applied to deletes). Decide at
+    B6 whether deleting people's data should always win;
+  - SP-B4-Q3: after a network failure with the sync service also out of
+    reach, uploads waited until the app reopened (one 20 s observation);
+  - SC-B4-Q2: only inserts are batched; a week of offline edits uploads one
+    request per change. Measure on the owner's phone first (SC-B1-Q3).
 - B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
   slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
   Home shows nothing. Consider a one-line notice on Home.

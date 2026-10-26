@@ -153,16 +153,27 @@ describe("backend access, publication and cascade", () => {
 // same minimum as the device's switch (03 §3.1).
 describe("the server's minimum writer", () => {
   const check = readFileSync(
-    resolve(root, "supabase/migrations/20261026000000_minimum_writer.sql"),
+    resolve(root, "supabase/migrations/20261026000000_upload_rules.sql"),
     "utf8",
   )
 
-  it("guards every course table", () => {
-    const match = /foreach course_table in array array\[([\s\S]*?)\]/.exec(
-      check,
+  it("puts both rules on every course table", () => {
+    const lists = [
+      ...check.matchAll(/foreach course_table in array array\[([\s\S]*?)\]/g),
+    ].map((match) =>
+      [...match[1]!.matchAll(/'(\w+)'/g)].map((item) => item[1]).sort(),
     )
-    const tables = [...match![1]!.matchAll(/'(\w+)'/g)].map((item) => item[1])
-    expect(tables.sort()).toEqual([...COURSE_TABLES].sort())
+    expect(lists).toEqual([
+      [...COURSE_TABLES].sort(),
+      [...COURSE_TABLES].sort(),
+    ])
+    expect(check).toContain("execute function public.refuse_outdated_writer()")
+    expect(check).toContain("execute function public.keep_latest_edit()")
+  })
+
+  it("skips an update older than the row it would replace", () => {
+    expect(check).toContain('new."updatedAt" < old."updatedAt"')
+    expect(check).toContain("before update on public.%I")
   })
 
   it("starts at the version that switches devices to synced tables", () => {

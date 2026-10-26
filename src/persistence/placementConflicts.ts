@@ -104,6 +104,8 @@ export function resolvePeople<M extends MemberRow, L extends LandRow>(
 
 export interface CrewRow extends StampedRow {
   position: number | null
+  /** A flexible crew's seats; a fixed-size course's crews use the size. */
+  capacity?: number | null
   destination: string
   boatId: string | null
   createdAt?: string | null
@@ -206,39 +208,55 @@ export function resolveCrews<C extends CrewRow, M extends SlotMemberRow>(
     nextSlot.set(row.crewId, Math.max(expected, slot + 1))
     byCrew.set(row.crewId, [...(byCrew.get(row.crewId) ?? []), { row, slot }])
   }
+  // Seats per crew: the course's fixed size, else the crew's own capacity
+  // (a flexible crew, review DI-B4-1).
+  const seatsOf = new Map(
+    resolvedCrews.map((crew) => [
+      crew.id,
+      options.standardCrewSize ??
+        (typeof crew.capacity === "number" ? crew.capacity : null),
+    ]),
+  )
   const resolvedMembers: M[] = []
-  for (const [, entries] of byCrew) {
-    const used = new Set(entries.map(({ slot }) => slot))
-    const bySlot = new Map<number, Array<{ row: M; slot: number }>>()
-    for (const entry of entries) {
-      bySlot.set(entry.slot, [...(bySlot.get(entry.slot) ?? []), entry])
-    }
-    for (const group of bySlot.values()) {
-      group.sort((left, right) => (isLaterEdit(left.row, right.row) ? -1 : 1))
-    }
-    if (![...bySlot.values()].some((group) => group.length > 1)) {
+  for (const [crewId, entries] of byCrew) {
+    const seats = seatsOf.get(crewId) ?? null
+    const clash =
+      new Set(entries.map(({ slot }) => slot)).size !== entries.length
+    const overflow = seats != null && entries.some(({ slot }) => slot >= seats)
+    if (!clash && !overflow) {
       resolvedMembers.push(...entries.map(({ row }) => row))
       continue
     }
+    // More people than seats: the earliest edits lose their place
+    // (unplaced for the session: no land row is invented).
+    const latestFirst = [...entries].sort((left, right) =>
+      isLaterEdit(left.row, right.row) ? -1 : 1,
+    )
+    const kept =
+      seats != null && latestFirst.length > seats
+        ? latestFirst.slice(0, seats)
+        : latestFirst
+    conflicts += latestFirst.length - kept.length
+    // Each seat goes to its latest claimant within the seats; the others
+    // take a free seat, above their own first, else the lowest.
+    const used = new Set<number>()
     const placed: Array<{ row: M; slot: number }> = []
     const displaced: Array<{ row: M; slot: number }> = []
-    for (const slot of [...bySlot.keys()].sort((a, b) => a - b)) {
-      const [winner, ...losers] = bySlot.get(slot)!
-      placed.push(winner!)
-      displaced.push(...losers)
+    for (const entry of kept) {
+      if (used.has(entry.slot) || (seats != null && entry.slot >= seats))
+        displaced.push(entry)
+      else {
+        used.add(entry.slot)
+        placed.push(entry)
+      }
     }
-    // The later edits find a place first; what does not fit is the earliest.
-    displaced.sort((left, right) => (isLaterEdit(left.row, right.row) ? -1 : 1))
     for (const loser of displaced) {
       conflicts += 1
       let free = loser.slot + 1
       while (used.has(free)) free += 1
-      const size = options.standardCrewSize
-      if (size != null && free >= size) {
-        // No seat above: the lowest free one, before anyone loses a place.
+      if (seats != null && free >= seats) {
         free = 0
         while (used.has(free)) free += 1
-        if (free >= size) continue
       }
       used.add(free)
       placed.push({ row: loser.row, slot: free })

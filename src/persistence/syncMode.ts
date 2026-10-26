@@ -111,10 +111,14 @@ function buildSchema(syncedViews: boolean) {
       localOnly: true,
       ...(syncedViews ? { viewName: inactiveLocalView(name) } : {}),
     })
-    tables[syncedTableName(name)] = new Table(
-      columnsOf(name),
-      syncedViews ? { viewName: name } : {},
-    )
+    tables[syncedTableName(name)] = new Table(columnsOf(name), {
+      ...(syncedViews ? { viewName: name } : {}),
+      // B4: a delete carries the updatedAt this device last saw, so the
+      // server keeps a later edit made elsewhere (review SC-B4-2); an update
+      // that changes nothing queues nothing (DI-B4-2).
+      trackPrevious: { columns: ["updatedAt"] },
+      ignoreEmptyUpdates: true,
+    })
   }
   return new Schema(tables)
 }

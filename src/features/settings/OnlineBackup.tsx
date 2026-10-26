@@ -26,7 +26,10 @@ import {
   databaseConnected,
   onDatabaseStatus,
   pendingUploads,
+  discardUploadRefusals,
+  forgetSupersededEdits,
   retryUploadRefusals,
+  supersededEdits,
   type UploadRefusal,
   uploadRefusals,
 } from "@/persistence/backupLink"
@@ -283,6 +286,8 @@ const REFUSAL_TEXT: Record<string, string> = {
     "Il corso risulta già di un altro account online, quindi il backup non lo accetta da questo.",
   access: "Riguardano un corso che il backup non attribuisce a questo account.",
   data: "Contengono dati che il backup non accetta.",
+  missing:
+    "Modificano dati che il backup non ha più, forse eliminati da un altro telefono.",
 }
 
 function Connected({
@@ -303,6 +308,8 @@ function Connected({
   const [waiting, setWaiting] = useState(0)
   const [refused, setRefused] = useState<UploadRefusal[]>([])
   const [unsendable, setUnsendable] = useState(0)
+  const [superseded, setSuperseded] = useState(0)
+  const [discarding, setDiscarding] = useState(false)
   const [retrying, setRetrying] = useState(false)
   const [round, setRound] = useState(0)
   const [confirming, setConfirming] = useState(false)
@@ -316,14 +323,16 @@ function Connected({
   useEffect(() => {
     let active = true
     const refresh = async () => {
-      const [pending, refusals] = await Promise.all([
+      const [pending, refusals, overtaken] = await Promise.all([
         pendingUploads(),
         uploadRefusals(),
+        supersededEdits(),
       ])
       const connected = databaseConnected()
       if (!active) return
       setWaiting(pending)
       setRefused(refusals)
+      setSuperseded(overtaken)
       setStatus(
         !connected
           ? pending > 0
@@ -374,6 +383,16 @@ function Connected({
     }
   }
   const reasons = [...new Set(refused.map(({ reason }) => reason))]
+  const discard = async () => {
+    await discardUploadRefusals()
+    setDiscarding(false)
+    setUnsendable(0)
+    setRound((value) => value + 1)
+  }
+  const acknowledge = async () => {
+    await forgetSupersededEdits()
+    setRound((value) => value + 1)
+  }
 
   const Icon = STATUS_ICONS[status.icon]
   return (
@@ -416,15 +435,52 @@ function Connected({
                 : `${unsendable} modifiche non si possono reinviare da qui.`}
             </p>
           )}
+          {discarding ? (
+            <div className="mt-3">
+              <p>
+                Le modifiche tolte non arriveranno alla copia online. Il corso
+                su questo telefono non cambia.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button onClick={() => void discard()} variant="secondary">
+                  Togli
+                </Button>
+                <Button onClick={() => setDiscarding(false)}>Annulla</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                disabled={retrying}
+                onClick={() => void retry()}
+                variant="secondary"
+              >
+                Riprova l’invio
+              </Button>
+              <Button onClick={() => setDiscarding(true)} variant="secondary">
+                Togli dall’elenco
+              </Button>
+            </div>
+          )}
+        </Notice>
+      )}
+      {superseded > 0 && (
+        // Owner decision 12: two phones edited offline, the latest edit
+        // stands, and the app says so.
+        <div className="mt-3 text-sm leading-5" role="status">
+          <p>
+            {superseded === 1
+              ? "1 modifica fatta senza connessione era già superata da una più recente di un altro telefono: resta l’ultima."
+              : `${superseded} modifiche fatte senza connessione erano già superate da altre più recenti di un altro telefono: restano le ultime.`}
+          </p>
           <Button
-            className="mt-3"
-            disabled={retrying}
-            onClick={() => void retry()}
+            className="mt-2"
+            onClick={() => void acknowledge()}
             variant="secondary"
           >
-            Riprova l’invio
+            Ho capito
           </Button>
-        </Notice>
+        </div>
       )}
       {confirming ? (
         // A wrong tap on Esci costs a new link and signal to undo (review

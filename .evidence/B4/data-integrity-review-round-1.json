@@ -1,0 +1,85 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B4",
+  "commit": "a627810",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-B4-1",
+      "title": "On a flexible-crew course (D1, C1, C2, C3), two phones that fill the last seat of the same crew offline still break Equipaggi and the export",
+      "evidence": "placementConflicts.ts resolveCrews: with standardCrewSize null a displaced member moves to loser.slot + 1 with no upper bound; the crew's stored capacity is never considered. readCrewPlan then calls normalizeCrewCapacity(capacity=2, memberCount=3) (src/domain/crews.ts:252-257), which throws; resolveCoursePlacements produces the same state and createCourseArchive refuses it. The unit case 'a flexible crew keeps everyone' never checks against a capacity; every placementConvergence scenario uses D2. Scratch output: 'readCrewPlan: Error: Invalid persisted crew capacity', 'export: CourseArchiveError: Il file contiene dati del corso non validi.'",
+      "reproduction": "placementConvergence harness on real node:sqlite with the course at level 1 (D1). Phone A at 09:00 saves crew-1 (capacity 2) = [student-1, student-2]; phone B at 10:00 saves crew-1 = [student-1, student-3]; sync([A, B]). readCrewPlan and exportCourseArchive throw on both phones; Equipaggi shows its read-error state.",
+      "specRef": "04 B4; OWNER_DECISIONS 12; SC-B1-1"
+    },
+    {
+      "id": "DI-B4-2",
+      "title": "'Riprova l'invio' loses a refused PATCH without notice: it re-queues an empty diff, deletes the refusal record and reports 'Tutto inviato'",
+      "evidence": "uploadRefusals.ts retryUploadRefusals runs UPDATE ... SET <stored columns> = <stored values> on a row that already holds them, then deletes the record; the tables do not set ignoreEmptyUpdates, so PowerSync queues a PATCH with diff {}. Browser run (fake backend, pixel-7-chrome): refused PATCH body [{\"declaredAgeAtCourseStart\":16,\"updatedAt\":\"...\"}]; after Riprova the only write is PATCH students [{}]; the alert disappears and the line says 'Tutto inviato'. The only retry test covers a refused PUT.",
+      "reproduction": "Accept everything, create D2 with Ada and Eva, sign in, wait for 'Tutto inviato'; refuse PATCH on students (400, 23514); edit Eva's age 15 -> 16; Impostazioni lists 1 refusal; stop refusing and tap Riprova: one PATCH with body {}, the record gone, 'Tutto inviato', the server keeps 15.",
+      "specRef": "04 B4 success predicate; 'never skipped silently'"
+    },
+    {
+      "id": "DI-B4-3",
+      "title": "'Riprova l'invio' replays an old snapshot over newer local state: with natural-key ids it overwrites a later evaluation (updatedAt moves back), deletes a later placement, and brings back an orphan that blocks the export",
+      "evidence": "uploadRefusals.ts replays PUT as INSERT OR REPLACE with the queued columns verbatim (timestamps included) and DELETE as DELETE ... WHERE id = ?, without checking the row's current updatedAt or its parent. Scratch tests on node:sqlite: (a) refused PUT of evaluation '-' at 09:00, owner saves '++' at 10:00, retry: '-', updatedAt 09:00; (b) refused DELETE of landAssignmentId('sat-pm','student-1'), owner puts student-1 on land again (same id), retry: landAssignments 1 -> 0; (c) refused PUT of crewMemberId('crew-gone',...), retry returns 0 kept and exportCourseArchive throws.",
+      "reproduction": "Scratch vitest from the placementConvergence harness: recordUploadRefusals, then a later saveEvaluation or saveCrewPlan, then retryUploadRefusals and inspect rows or export.",
+      "specRef": "04 B4 success predicate; 03 §3 (updatedAt never moves back); AGENTS.md §11"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-B4-4",
+      "title": "A refused PATCH of a row no longer on the device stays listed forever, and Impostazioni never again says the online copy is complete",
+      "evidence": "retryUploadRefusals keeps such records with no way to discard them; 'Copia online aggiornata, tranne N rifiutate' and the alert stay until the course is erased or replaced; the 'non si può reinviare' count is component state and resets on remount.",
+      "reproduction": "Record a PATCH refusal for an absent rowId; retryUploadRefusals returns 1 and the record stays.",
+      "specRef": "04 B4 adversarial checklist ('a refusal blocking the queue forever')"
+    },
+    {
+      "id": "DI-B4-5",
+      "title": "One refusal with an unknown table or column makes every retry throw and roll back",
+      "evidence": "checkedColumns throws inside the single writeTransaction; OnlineBackup.tsx retry() has try/finally without catch, so the error goes unhandled and nothing changes. Such a record would come from a build with a different schema.",
+      "reproduction": "Code reading.",
+      "specRef": "04 B4 ('still recoverable')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B4-Q1",
+      "title": "Crew history counts a member that the Equipaggi screen dropped",
+      "evidence": "readCrewHistory applies resolvePeople but not resolveCrews; on a fixed-size course the earliest surplus member readCrewPlan drops still counts in the history until the next save of that session.",
+      "reproduction": "Code reading; same setup as 'drops the earliest surplus member', then readCrewHistory before the save.",
+      "specRef": "owner decision 12"
+    },
+    {
+      "id": "DI-B4-Q2",
+      "title": "Older app versions drop uploadRefusals",
+      "evidence": "An app's schema drops local-only tables it does not declare (03 §3); a 0.4.x build opening a synced database still applies its schema at init. Same-origin downgrade is unlikely; document it.",
+      "reproduction": "Reasoned, not reproduced.",
+      "specRef": "03 §3.1"
+    }
+  ],
+  "evidenceInspected": [
+    "04_IMPLEMENTATION_PLAN.md B4; OWNER_DECISIONS 12; SC-B1-1; 03 §3 and §3.1",
+    "git diff 40e3f24..a627810 (placement, crews, duties, evaluations, courseArchive, courses, schema, uploadRefusals, backupLink, connector, uploadPolicy, session, OnlineBackup, ConflictNotice, test diffs)",
+    "src/domain/crews.ts normalizeCrewCapacity, getStandardCrewSize; src/domain/config.ts COURSE_CONFIG; src/domain/invariants.ts",
+    "vitest on 10 files, 156 tests pass",
+    "Scratch node:sqlite tests (DI-B4-1, DI-B4-3) and a scratch Playwright spec (DI-B4-2)",
+    "wa-sqlite: ps_crud is AUTOINCREMENT; an empty-diff PATCH is filtered only with ignoreEmptyUpdates, which the schema never sets"
+  ],
+  "anglesTried": {
+    "seed": 507743953,
+    "lenses": [
+      "2: Migration from the 0.1/0.2/0.3 fixtures",
+      "9: Export then import"
+    ],
+    "wildcard": "Replaying 'Riprova l'invio' against natural-key ids"
+  },
+  "notTested": [
+    "Full import of a resolved export into a fresh device",
+    "The live backend's answer to an empty PATCH or a zero-row update",
+    "The two-tab and older-app schema drop of uploadRefusals",
+    "Side effect: a scratch run emptied the ignored test-results/; scratch now lives in the ignored coverage/b4di/; git status clean"
+  ]
+}

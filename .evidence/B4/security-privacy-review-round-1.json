@@ -1,0 +1,81 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B4",
+  "round": 1,
+  "commit": "a627810 (plus the uncommitted working tree as of the review: whole-row inserts with select, conditioned deletes, recordUploadOutcome, folded Riprova, 'Togli dall’elenco', supabase/migrations/20261026000000_upload_rules.sql)",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-B4-1",
+      "title": "After 'Elimina il corso', the erased course's students come back: a refusal of a queued upload is recorded after the erase, listed under the next course, and 'Riprova l’invio' restores the erased course and student and queues them again",
+      "evidence": "The erase empties uploadRefusals, but the queue still holds the earlier transaction with full student rows; refused after the erase, they are written back into uploadRefusals with their personal data. At a627810 retryUploadRefusals re-inserts them unchecked; in the working tree, with the erase's deletes held up, the course refusal passes parentsPresent (courses has no parent check), then the student passes too. Observed: 'refusals after erase+refuse: 2 PUT:courses:other-account,PUT:students:access'; 'student first names kept after erase: [\"Ottavia\"]'; after Riprova 'device after retry: {\"courses\":2,\"oldBack\":true,\"active\":2,\"students\":[\"Ottavia\"]}'.",
+      "reproduction": "Scratch Playwright specs (fake backend of tests/e2e/b4-uploads.spec.ts): backend unreachable, create D2 with synthetic 'Ottavia Sintetico', sign in and let the switch queue; erase the course; the backend comes back refusing the old inserts with 403/42501 (deletes still failing in the working-tree variant); create a new course and open Impostazioni: the alert counts the old rows, uploadRefusals holds the student, Riprova restores the erased course.",
+      "specRef": "04 B4; src/persistence/courses.ts erase contract; AGENTS.md §17"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-B4-2",
+      "title": "An edit or delete of a row in another account's course is not refused: the server answers 204 with zero rows, so at a627810 it counts as uploaded",
+      "evidence": "Live, two test accounts, synthetic course (cleaned up): account 1 PATCHing account 2's course or student: 204, 0 rows; DELETE: 204, 0 rows; upsert: 403/42501. At a627810 uploadEntries does not read back the affected rows. The working tree adds select and serverHasRow; whether that lists such a PATCH as a refusal was not checked.",
+      "reproduction": "Reviewer probe.mjs (reads .env, prints no values).",
+      "specRef": "04 B4 ('never skipped silently', SP-B2-Q5)"
+    },
+    {
+      "id": "SP-B4-3",
+      "title": "Deletes of minors' data lose to device clocks: a conditioned delete and keep_latest_edit let a later updatedAt keep a deleted student or course on the server",
+      "evidence": "DELETE ... WHERE updatedAt <= previous updatedAt, and keep_latest_edit skipping older updates, compare device-set times; a deletion on a phone whose clock is behind another phone's last edit is skipped, counted only as superseded, and the data comes back on sync. The erase's course delete is conditioned the same way. Follows owner decision 12, but no rule says a delete of personal data should lose.",
+      "reproduction": "By construction (the trigger is not yet on the development backend).",
+      "specRef": "Owner decision 12 vs deletion; 04 B6"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B4-Q1",
+      "title": "The minimum writer is a compatibility gate, not an access control: x-cvc-app-version is client-asserted",
+      "evidence": "Any client can send 999.0.0; acceptable since RLS bounds every write. Setup sound: search_path '', EXECUTE revoked, RLS on app_minimum_writer with no policy; live: app_minimum_writer 404 PGRST205, rpc 404 PGRST202. A future server-side writer through the Data API (B6) must send the header. The migration should say it is not a security boundary.",
+      "reproduction": "Read the migration; probe.",
+      "specRef": "03 §3.1"
+    },
+    {
+      "id": "SP-B4-Q2",
+      "title": "A version over int range raises 22003, classified as 'data' instead of 'outdated'",
+      "evidence": "string_to_array(sent,'.')::int[]; only a malformed client can send it.",
+      "reproduction": "Code reading.",
+      "specRef": "-"
+    },
+    {
+      "id": "SP-B4-Q3",
+      "title": "After a network failure, uploads did not retry for 20 s while the sync stream was also unreachable, until the app reopened",
+      "evidence": "Scratch log: 't 0..3 pending 4 refusals 0 writes []' over 20 s with the fake backend back; writes went out after the reload.",
+      "reproduction": "Reviewer garante-erase.spec.ts diagnostic loop.",
+      "specRef": "04 B4 'a transient failure retries'"
+    }
+  ],
+  "evidenceInspected": [
+    "04 B4; AGENTS.md §17; .evidence/B3 security reports",
+    "git diff 40e3f24..a627810 (backup, persistence refusals and courses, settings screen, migration, e2e specs)",
+    "The working tree as described: uploadRefusals.ts, connector.ts, syncMode.ts trackPrevious, upload_rules.sql",
+    "Scratch Playwright runs on snapshots of a627810 and of the working tree (fake backend)",
+    "Live development backend, two synthetic accounts: cross-account PATCH/DELETE/upsert matrix; minimum writer not yet applied; app_minimum_writer and the trigger function unreachable over the API; 0 rows left",
+    "Client console during uploads: only PowerSync fetch errors and multi-tab warnings; no student name or row data; UploadPending names no row",
+    "uploadRefusals lifetime: emptied by erase, import and full reset; kept at sign-out with the course; 'Togli dall’elenco' deletes every refusal and leaves the course unchanged",
+    "Dynamic SQL in retryUploadRefusals: tables and columns checked against the schema, values bound; no injection path",
+    "Per-request Authorization: every run, retry and lookup uses the transaction's token (SP-B3-9 holds)"
+  ],
+  "anglesTried": {
+    "seed": 209252056,
+    "lenses": [
+      "5 Deletion: course erase locally, on the server and in policy",
+      "4 Tokens: storage, expiry, refresh, sign-out on a shared phone"
+    ],
+    "wildcard": "The refusal store as a resurrection channel after an erase; the cross-account write matrix under conditioned and unconditioned PATCH/DELETE"
+  },
+  "notTested": [
+    "keep_latest_edit and refuse_outdated_writer live (migration not run)",
+    "Whether the working tree lists another account's PATCH as a refusal or as superseded",
+    "WebKit and a physical phone",
+    "The working tree kept changing during the review"
+  ]
+}

@@ -75,8 +75,12 @@ export function disconnectDatabase() {
 }
 
 export {
-  recordUploadRefusals,
+  courseTableColumns,
+  discardUploadRefusals,
+  forgetSupersededEdits,
+  recordUploadOutcome,
   retryUploadRefusals,
+  supersededEdits,
   type UploadRefusal,
   uploadRefusals,
 } from "@/persistence/uploadRefusals"
