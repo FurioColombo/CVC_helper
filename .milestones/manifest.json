@@ -1112,12 +1112,16 @@
       "id": "B3",
       "category": "FEATURE",
       "status": "IN_PROGRESS",
-      "ownerEvidence": [".evidence/B3/physical-device-review.json"],
+      "ownerEvidence": [
+        ".evidence/B3/physical-device-review.json",
+        ".evidence/B3/owner-setup.json"
+      ],
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B3/verification.json",
         ".evidence/B3/browser-evidence.json",
         ".evidence/B3/physical-device-review.json",
+        ".evidence/B3/owner-setup.json",
         ".evidence/B3/self-review.json",
         ".evidence/B3/security-privacy-review.json",
         ".evidence/B3/field-ux-review.json"

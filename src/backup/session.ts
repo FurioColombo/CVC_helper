@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { backupConfig, type BackupConfig } from "@/backup/config"
 import { createConnector } from "@/backup/connector"
-import { requestLeave } from "@/navigation/browserHistory"
 import {
   claimDeviceForAccount,
   connectDatabase,
@@ -54,7 +53,10 @@ async function supabase(config: BackupConfig) {
     // (review FUX-B3-5). Outside the callback: the library holds its lock.
     created.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")
-        window.setTimeout(resumeBackup, 0)
+        window.setTimeout(() => void resumeBackup(), 0)
+      // Esci in another tab signs this one out too (review FUX-B3-R2-Q3).
+      if (event === "SIGNED_OUT")
+        window.setTimeout(() => void signedOutElsewhere(), 0)
     })
     return created
   })
@@ -163,7 +165,7 @@ export async function signInWithCode(
         ? "Nessuna connessione. Riprova quando c’è campo."
         : "Codice non valido o scaduto. Controlla l’ultima email o richiedine una nuova.",
     }
-  await resumeBackup()
+  await resumeBackup(true)
   return current
 }
 
@@ -247,6 +249,13 @@ function forgetStoredSession() {
   client = null
 }
 
+async function signedOutElsewhere() {
+  if (current.kind !== "connected" && current.kind !== "offline") return
+  await disconnectDatabase()
+  connected = false
+  setBackupState({ kind: "signed-out" })
+}
+
 /** Disconnects and signs out; the course stays on the device. */
 export async function signOutOfBackup(): Promise<BackupState> {
   const config = backupConfig()
@@ -290,60 +299,42 @@ export function setBackupState(state: BackupState) {
 let reload = () => window.location.reload()
 let resuming: Promise<void> | null = null
 
-const EDITING =
-  'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]'
-/** How long no field must have focus before the app may reopen. */
-const TYPING_PAUSE_MS = 1_500
+/** Set at the first tap or key after launch. */
+let touched = false
 
-/**
- * Resolves once no field has had focus for a moment: a form the leave guard
- * does not cover, such as a new student not yet saved, is not lost either.
- */
-function whenNotTyping() {
-  return new Promise<void>((resolve) => {
-    let timer = 0
-    const editing = () => document.activeElement?.matches(EDITING) ?? false
-    const check = () => {
-      window.clearTimeout(timer)
-      if (editing()) return
-      timer = window.setTimeout(() => {
-        if (editing()) return
-        document.removeEventListener("focusin", check)
-        document.removeEventListener("focusout", later)
-        resolve()
-      }, TYPING_PAUSE_MS)
-    }
-    const later = () => window.setTimeout(check, 0)
-    document.addEventListener("focusin", check)
-    document.addEventListener("focusout", later)
-    check()
-  })
+function watchFirstTouch() {
+  const touch = () => {
+    touched = true
+    window.removeEventListener("pointerdown", touch, true)
+    window.removeEventListener("keydown", touch, true)
+  }
+  window.addEventListener("pointerdown", touch, true)
+  window.addEventListener("keydown", touch, true)
 }
 
-/** Waits until the screen on show lets the app reopen, as an update does. */
-async function whenSafeToReopen() {
-  await whenNotTyping()
-  await new Promise<void>((resolve) => requestLeave(resolve))
-}
+class SwitchDeferred extends Error {}
 
 /**
  * Brings the backup up to date and reopens the app when it switched. The
- * switch and the reload wait until nothing typed would be lost (review
- * FUX-B3-3).
+ * switch reloads the app, so it happens by itself only while nothing on
+ * screen could be lost: before the first tap after launch, or when the user
+ * asked for it from Impostazioni (`asked`). Otherwise Impostazioni offers
+ * "Riapri l’app", and no screen is interrupted or asked to let go (reviews
+ * FUX-B3-3, FUX-B3-R2-1).
  */
-export function resumeBackup() {
-  // Switched: only the reload, already asked for, is left.
+export function resumeBackup(asked = false) {
+  // Waiting for "Riapri l’app": nothing to do until the app reopens.
   if (current.kind === "reopen") return Promise.resolve()
   resuming ??= (async () => {
+    const mayReopen = () => asked || !touched
     try {
-      const state = await startBackup(() => {
-        setBackupState({ kind: "reopen" })
-        return whenSafeToReopen()
+      const state = await startBackup(async () => {
+        if (!mayReopen()) throw new SwitchDeferred()
       })
       if (state.kind === "reopen") {
         setBackupState(state)
-        await whenSafeToReopen()
-        reload()
+        // Switched here, or by another tab while this one is in use.
+        if (mayReopen()) reload()
         return
       }
       // A message on the form stays until something changes.
@@ -354,8 +345,12 @@ export function resumeBackup() {
       )
         return
       setBackupState(state)
-    } catch {
-      setBackupState({ kind: "error", message: UNREACHABLE })
+    } catch (error) {
+      setBackupState(
+        error instanceof SwitchDeferred
+          ? { kind: "reopen" }
+          : { kind: "error", message: UNREACHABLE },
+      )
     } finally {
       resuming = null
     }
@@ -390,6 +385,7 @@ export async function startBackupAtLaunch(
 ) {
   if (!backupConfig()) return setBackupState({ kind: "unavailable" })
   reload = reloadApp
+  watchFirstTouch()
   const link = takeLinkFromAddress()
   window.addEventListener("online", () => {
     if (current.kind === "offline" || current.kind === "error")

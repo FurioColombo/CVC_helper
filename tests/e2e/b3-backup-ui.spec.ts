@@ -204,14 +204,14 @@ test("the code in the email signs in; the course waits to be sent, and Esci asks
   await openSettings(page)
   await expect(section).toContainText("Accesso: istruttore@example.test")
   await expect(section.getByRole("status")).toContainText(
-    /In attesa di connessione: \d+ modifiche da inviare\./,
+    /In attesa di connessione: \d+ modific[ah]e? da inviare\./,
   )
   await expect(page.getByText("Locale, con backup online")).toBeVisible()
 
   // A wrong tap on Esci is undone in place (FUX-B3-6).
   await section.getByRole("button", { name: "Esci" }).click()
   await expect(section.getByRole("alertdialog")).toContainText(
-    /modifiche non sono ancora online: restano su questo telefono/,
+    /non (è|sono) ancora online: resta(no)? su questo telefono/,
   )
   await section.getByRole("button", { name: "Resta collegato" }).click()
   await expect(section).toContainText("Accesso: istruttore@example.test")
@@ -235,12 +235,14 @@ test("the code in the email signs in; the course waits to be sent, and Esci asks
   ).toBeVisible()
 })
 
-test("a sign-in finishing while a student is typed waits until the form is left", async ({
+test("a sign-in finishing while the app is in use never reloads it under the user", async ({
   page,
 }) => {
   await withSigningInBackup(page, 2_500)
   await createCourse(page)
   await storeSession(page, 3600)
+  let loads = 0
+  page.on("load", () => loads++)
   await page.reload()
   await page.getByRole("button", { name: "Torna alla Home" }).click()
   await page.getByRole("button", { name: "Allievi", exact: true }).click()
@@ -248,20 +250,24 @@ test("a sign-in finishing while a student is typed waits until the form is left"
   const firstName = page.getByLabel("Nome", { exact: true })
   await firstName.fill("Bravo")
   await page.getByLabel("Cognome", { exact: true }).fill("Digitato")
+  // A tap away from the text fields, as on a Sesso option (FUX-B3-3).
+  await page.getByRole("radio", { name: "Altro" }).check()
 
-  // Well past the slow launch check: nothing reloaded under the typing.
+  // Well past the slow launch check: nothing reloaded under the form.
   await page.waitForTimeout(5_000)
   await expect(firstName).toHaveValue("Bravo")
+  expect(loads).toBe(1)
 
-  // Leaving the form lets the app reopen, now backed up.
-  const reopened = page.waitForEvent("load")
+  // The switch waits for "Riapri l’app" in Impostazioni.
   await page.getByRole("button", { name: "Annulla" }).click()
-  await reopened
   await page.getByRole("button", { name: "Home", exact: true }).click()
   await openSettings(page)
-  await expect(
-    page.getByRole("region", { name: "Backup online" }),
-  ).toContainText("Accesso: istruttore@example.test")
+  const section = page.getByRole("region", { name: "Backup online" })
+  await expect(section).toContainText("Backup pronto. Riapri l’app")
+  await section.getByRole("button", { name: "Riapri l’app" }).click()
+  await expect(section).toContainText("Accesso: istruttore@example.test", {
+    timeout: 30_000,
+  })
 })
 
 test("an expired or foreign link says so and leaves the address clean", async ({

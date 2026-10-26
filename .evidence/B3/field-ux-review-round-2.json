@@ -1,0 +1,63 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B3",
+  "commit": "b702eee (app code unchanged at 4f80486; later commits touch only the test-site publisher and manifest)",
+  "round": 2,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "FUX-B3-3",
+      "title": "Still open: the deferred reopen still throws away a new student being typed when the instructor taps a Sesso option or taps the page to close the keyboard",
+      "evidence": "src/backup/session.ts whenNotTyping: the EDITING selector excludes radio and checkbox, and a blur counts as 'not typing'. The new-student form (src/features/students/StudentManagement.tsx) has no leave guard when student is null, so requestLeave passes straight through. Scratch spec on pixel-7: with the courses GET delayed 2.5 s, I filled Nome 'Bravo', Cognome 'Digitato' and Età '12', then tapped the first Sesso option. activeElement became INPUT/radio, the page navigated at about 5.7 s, the window marker was gone and Nome was empty. A second run, which filled the names and then tapped the 'Nuovo allievo' heading to close the keyboard, also reloaded once with an empty form. The repo test passes only because it keeps focus in a text field and then taps Annulla.",
+      "reproduction": "Store a session on a local device with a course, reload with /rest/v1/courses delayed 2.5 s, go to Allievi > Aggiungi allievo, fill Nome, Cognome and Età, tap a Sesso option (or tap blank page) and wait 6 s. Expected: the form is kept, or the switch waits for the form to be saved or cancelled. Observed: the app reloads and the typed student is lost.",
+      "specRef": "06_DESIGN_RULEBOOK R10 ('Non perdere l'ultimo carattere'); 01_PRODUCT_SPEC.md §1"
+    },
+    {
+      "id": "FUX-B3-R2-1",
+      "title": "The deferred reopen raises 'Salva o annulla la nota prima di uscire.' on its own, and after that the reopen never happens",
+      "evidence": "whenSafeToReopen calls requestLeave once nothing has had focus for 1.5 s. The Valutazioni guard (src/features/evaluations/EvaluationManagement.tsx:446-460) answers an open note with setHeldLeave('note') and keeps no leave callback. Scratch spec on pixel-7: student Aldo, session stored, courses GET delayed 4 s. I opened Aldo's note, typed 'Timone sicuro' and tapped an empty part of the page. After 8 s the red alert 'Salva o annulla la nota prima di uscire.' was visible and focused, although nobody had tried to leave. After Salva nota, the page still had not reloaded 5 s later (window marker intact). The resume promise stays pending, so later resumeBackup calls return early ('reopen').",
+      "reproduction": "Open Valutazioni with an open note while the launch switch is pending, then tap outside the textarea and wait. Expected: no leave message, and the reopen waits silently until the note is closed. Observed: an unprompted 'before leaving' alert, and no reopen afterwards.",
+      "specRef": "06_DESIGN_RULEBOOK R10, R14; 01_PRODUCT_SPEC.md §1"
+    },
+    {
+      "id": "FUX-B3-R2-2",
+      "title": "The screen asks for 'il codice dell'email', but no owner action exists to put a code in the email",
+      "evidence": "OnlineBackup.tsx (link-sent state) says 'Se si apre altrove, scrivi qui il codice dell'email'. docs/working/OWNER_DECISIONS.md item 15 says the code 'needs one change in Supabase's email template (docs/OWNER_TODO.md)'. Neither docs/OWNER_TODO.md, .milestones/owner-checks.json nor docs/working/BACKEND_SETUP_0.5.0.md mentions the template, {{ .Token }} or a code. Until that change is made, an iPhone home-screen user or a Gmail in-app tab gets the expired-link notice, which points to a code the email does not contain.",
+      "reproduction": "grep -i 'token }}\\|template' docs/OWNER_TODO.md .milestones/owner-checks.json docs/working/BACKEND_SETUP_0.5.0.md returns nothing.",
+      "specRef": "AGENTS.md §6 step 10; 06_DESIGN_RULEBOOK R14"
+    }
+  ],
+  "qolFindings": [
+    { "id": "FUX-B3-R2-Q1", "title": "'1 modifiche da inviare' and 'Uscire? 1 modifiche non sono ancora online'", "evidence": "OnlineBackup.tsx builds the plural for every count.", "reproduction": "Connected state with one pending change.", "specRef": "06_DESIGN_RULEBOOK R13" },
+    { "id": "FUX-B3-R2-Q2", "title": "On WebKit, submitting the code with the keyboard's Enter leaves the app on 'Backup pronto. Riapri l'app per attivarlo.' and the switch has not happened yet", "evidence": "The focused input is unmounted without a focusout, and whenNotTyping's first check saw it focused, so no timer ever starts. Tapping the button works. The copy says 'pronto' while beforeSwitch is still waiting.", "reproduction": "Scratch spec 'code typed then Enter' on project iphone.", "specRef": "06_DESIGN_RULEBOOK R14" },
+    { "id": "FUX-B3-R2-Q3", "title": "A second tab keeps showing 'Accesso: …' and 'Locale, con backup online' after Esci in the first", "evidence": "onAuthStateChange handles SIGNED_IN and TOKEN_REFRESHED only. No data risk: the connector checks the session before uploading.", "reproduction": "Two pages in one context, both connected; Esci in tab A; tab B unchanged 8 s later.", "specRef": "04_IMPLEMENTATION_PLAN.md B3 ('telling other tabs')" },
+    { "id": "FUX-B3-R2-Q4", "title": "At 320 px with 200 % text, the sign-out question opens below the fold", "evidence": "Esci trigger at page y 2004 in a 664 px viewport; the confirm buttons at y 2308 and 2412 are not scrolled into view. No overflow, targets 88 px, the wet double tap is safe.", "reproduction": "Layout 320 px, 200 % text, tap Esci.", "specRef": "06_DESIGN_RULEBOOK R12" }
+  ],
+  "fieldWalkthrough": "Evening, Android, code path: 6 taps and about 60 s, mostly in the mail app. The morning without signal shows the account and 'In attesa di connessione' in 16 px semibold with an icon, one look. Read twice: '1 modifiche'; on iPhone after Enter, 'Backup pronto. Riapri l'app' when nothing had happened yet. The bad moment is adding a student while the slow pier link finishes the switch: tap Sesso and the form is gone.",
+  "evidenceInspected": [
+    "Round-1 report; docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md B3; 06_DESIGN_RULEBOOK R10-R14",
+    "git diff 34de169..b702eee: src/backup/session.ts, connector.ts, OnlineBackup.tsx, backupLink.ts, syncMode.ts, App.tsx, b3-backup-ui.spec.ts",
+    "Leave guards: browserHistory.ts, EvaluationManagement.tsx:430-480, StudentManagement.tsx:780-830, StudentScan.tsx:930-960",
+    "FUX-B3-1 re-tested on Pixel 7 and iPhone 13: other-account notice, 0 non-GET /rest/v1 requests. RESOLVED",
+    "FUX-B3-2: repo test and code reading. RESOLVED (not on a real device)",
+    "FUX-B3-3: reproduced again. NOT RESOLVED",
+    "FUX-B3-4: notice and address cleanup covered; code field works by tap on both engines; Enter stalls on WebKit; owner template action missing. PARTIAL",
+    "FUX-B3-5: resolved for sign-in; sign-out not propagated (Q3)",
+    "FUX-B3-6: RESOLVED. Q1-Q5: RESOLVED",
+    "Scratch Playwright specs on Pixel 7 and iPhone 13 (WebKit) with a fake backend",
+    "Layout at 390x844/100 % and 320x664/200 %: no horizontal overflow; code field 96 px and buttons 88 px at 200 %"
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": ["Round 2: re-check of FUX-B3-1 to -6 and Q1-Q5, plus regressions from the fixes"],
+    "wildcard": "Code field (tap vs Enter, both engines), confirm block (wet double tap, 200 % text), the deferred reopen against each leave guard, two tabs signing out, 320 px at 200 %"
+  },
+  "notTested": [
+    "Real emailed link or code, installed PWA, physical phones: the owner's Android check",
+    "The StudentScan discard dialog during the deferred reopen (by reading, its guard would raise 'discard?' on its own)",
+    "iPhone runs of the new-student cases were inconclusive",
+    "Sunlight legibility"
+  ]
+}

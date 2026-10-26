@@ -20,6 +20,25 @@ The owner reported: The owner created the Supabase development project cvc-helpe
 
 **Work affected:** The owner report is recorded.
 
+<a id="b3-email-code"></a>
+
+## Add the sign-in code to the development backend's email — B3
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. In the Supabase dashboard of cvc-helper-dev open Authentication, then Emails (Templates), then Magic link.
+2. In the message body, below the existing link, add this line exactly: &lt;p&gt;Codice: {{ .Token }}&lt;/p&gt; and save. Leave the subject and the link as they are.
+3. Optional, also there: in Authentication &gt; Sign In / Providers you may turn off "Allow new users to sign up"; the app already never creates accounts.
+4. Report B3-EMAIL-CODE with "code added". Nothing to paste: the code is per email and the template holds no secret.
+
+**Expected:** Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app, a mail app's own browser).
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of B3 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3

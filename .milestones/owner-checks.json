@@ -187,6 +187,26 @@
         "source": "Owner chat reports in the Claude Code session of 2026-10-25 (\"backend should be ready\", \"yes we also have the tables now!\", test accounts \"done\" and \"should be fixed now\").",
         "summary": "The owner created the Supabase development project cvc-helper-dev (West EU), ran the course-backup migration (13 tables with row-level security), created powersync_role, created the PowerSync Cloud project CVC Helper with a CLI token, and two synthetic test accounts; all values are in the ignored .env. Chose email magic-link sign-in. The agent verified each value's shape without printing it, linked and deployed the Development instance (EU), and confirmed replication of all 13 tables and both test sign-ins."
       }
+    },
+    {
+      "id": "B3-EMAIL-CODE",
+      "milestone": "B3",
+      "kind": "DECISION",
+      "title": "Add the sign-in code to the development backend's email",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "In the Supabase dashboard of cvc-helper-dev open Authentication, then Emails (Templates), then Magic link.",
+        "In the message body, below the existing link, add this line exactly: <p>Codice: {{ .Token }}</p> and save. Leave the subject and the link as they are.",
+        "Optional, also there: in Authentication > Sign In / Providers you may turn off \"Allow new users to sign up\"; the app already never creates accounts.",
+        "Report B3-EMAIL-CODE with \"code added\". Nothing to paste: the code is per email and the template holds no secret."
+      ],
+      "expected": "Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app, a mail app's own browser).",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/B3/owner-setup.json",
+      "updatedAt": "2026-10-26T03:07:53.412Z"
     }
   ]
 }

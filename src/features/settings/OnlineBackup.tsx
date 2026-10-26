@@ -5,7 +5,7 @@ import {
   RefreshCw,
   TriangleAlert,
 } from "lucide-react"
-import { type FormEvent, useEffect, useState } from "react"
+import { type FormEvent, useEffect, useRef, useState } from "react"
 
 import { backupConfig } from "@/backup/config"
 import {
@@ -63,7 +63,7 @@ export function OnlineBackup() {
   }
 
   const retry = async () => {
-    await resumeBackup()
+    await resumeBackup(true)
     return backupState()
   }
 
@@ -247,6 +247,9 @@ function Notice({ children }: { children: React.ReactNode }) {
   )
 }
 
+const changes = (count: number) =>
+  count === 1 ? "1 modifica" : `${count} modifiche`
+
 type Status = { icon: "done" | "sending" | "waiting"; text: string }
 
 const STATUS_ICONS = {
@@ -270,6 +273,12 @@ function Connected({
   })
   const [waiting, setWaiting] = useState(0)
   const [confirming, setConfirming] = useState(false)
+  const question = useRef<HTMLDivElement>(null)
+
+  // At large text sizes the question opens below the fold (FUX-B3-R2-Q4).
+  useEffect(() => {
+    if (confirming) question.current?.scrollIntoView({ block: "nearest" })
+  }, [confirming])
 
   useEffect(() => {
     let active = true
@@ -283,7 +292,7 @@ function Connected({
           ? pending > 0
             ? {
                 icon: "waiting",
-                text: `In attesa di connessione: ${pending} modifiche da inviare.`,
+                text: `In attesa di connessione: ${changes(pending)} da inviare.`,
               }
             : // Every change was accepted: nothing is missing online
               // (review FUX-B3-Q5).
@@ -291,7 +300,7 @@ function Connected({
           : pending > 0
             ? {
                 icon: "sending",
-                text: `Invio in corso: ${pending} modifiche da inviare.`,
+                text: `Invio in corso: ${changes(pending)} da inviare.`,
               }
             : { icon: "done", text: "Copia online aggiornata." },
       )
@@ -326,10 +335,15 @@ function Connected({
       {confirming ? (
         // A wrong tap on Esci costs a new link and signal to undo (review
         // FUX-B3-6): it asks first, saying what stays behind.
-        <div className="mt-3" role="alertdialog" aria-labelledby="sign-out-q">
+        <div
+          aria-labelledby="sign-out-q"
+          className="mt-3"
+          ref={question}
+          role="alertdialog"
+        >
           <p className="text-sm leading-5" id="sign-out-q">
             {waiting > 0
-              ? `Uscire? ${waiting} modifiche non sono ancora online: restano su questo telefono e partono quando rientri con questo account.`
+              ? `Uscire? ${changes(waiting)} ${waiting === 1 ? "non è ancora online: resta" : "non sono ancora online: restano"} su questo telefono e ${waiting === 1 ? "parte" : "partono"} quando rientri con questo account.`
               : "Uscire dal backup? Il corso resta su questo telefono."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
