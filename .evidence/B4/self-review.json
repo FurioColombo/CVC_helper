@@ -1,0 +1,51 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B4",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B4-1",
+      "title": "Process: the first design treated 'latest edit wins' as a reader concern; the server applied whichever phone uploaded last",
+      "evidence": "Round 1 sync-chaos (SC-B4-2, -3): natural-key ids made two phones write one server row, and plain upserts plus partial PATCHes kept the last upload, merged by column. Fixed by whole-row uploads, the keep_latest_edit trigger and conditioned deletes; the convergence harness now models the server and runs both upload orders with a seeded fuzz.",
+      "reproduction": "Resolved; src/persistence/placementConvergence.test.ts.",
+      "specRef": "Owner decision 12"
+    },
+    {
+      "id": "SELF-B4-2",
+      "title": "Process: 'Riprova l’invio' was designed as a replay of the refused data, which went back on later edits, deletes and erases",
+      "evidence": "DI-B4-2, -3, SC-B4-1, SP-B4-1 across rounds 1-2. Riprova now folds a row's refusals, prefers a later local edit, skips a row whose delete is queued, checks every reference, never re-creates a course, and refusals of an erased course are not kept.",
+      "reproduction": "tests/e2e/b4-uploads.spec.ts (9 cases, each refusal case shown to fail without its fix).",
+      "specRef": "04 B4 success predicate"
+    },
+    {
+      "id": "SELF-B4-3",
+      "title": "Process: a commit was made while a repository check failed, hidden by a pipe",
+      "evidence": "3c9bfbf (Complete B3) went in with check:repository failing behind '| tail -1'; corrected in dbe5414. Later chains use set -o pipefail.",
+      "reproduction": "Resolved.",
+      "specRef": "AGENTS.md §13"
+    }
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "git diff 40e3f24..e61cd08 (src/backup, src/persistence placement and refusals, crews, duties, evaluations, courseArchive, schema, syncMode, settings screen, supabase migration, e2e specs)",
+    "All review rounds in .evidence/B4/",
+    "verify:quick 1678 passed plus 1 expected fail; B4 browser specs on Chromium 44 passed, 2 skipped (live server-rule tests until the migration runs)",
+    "Live development backend: the course id held by another account is refused, kept and reported"
+  ],
+  "reviews": [
+    ".evidence/B4/security-privacy-review.json (PASS_WITH_FINDINGS, round 2)",
+    ".evidence/B4/data-integrity-review.json (PASS, round 3)",
+    ".evidence/B4/sync-chaos-review.json (owner-authorised round 4)"
+  ],
+  "deferredFindings": [
+    { "ids": ["SC-B4-8"], "to": "Owner decision 16: accepted for 0.5.0; tombstones before 1.0.0" },
+    { "ids": ["SP-B4-3"], "to": "04_IMPLEMENTATION_PLAN.md B6 adversarial checklist" },
+    { "ids": ["DI-B4-Q1", "DI-B4-Q2", "SC-B4-Q1", "SC-B4-Q2", "SP-B4-Q3"], "to": "docs/working/BACKLOG.md (B4 review follow-ups)" }
+  ],
+  "limitations": [
+    "The upload-rules migration (minimum writer and latest edit) is not yet on the development backend: the owner runs it once the B4 test build is installed; its two live tests skip until then",
+    "Save latency after days offline is the owner's phone measurement (SC-B1-Q3)"
+  ]
+}

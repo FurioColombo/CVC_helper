@@ -1,0 +1,40 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "round": 4,
+  "commit": "e61cd08",
+  "verdict": "PASS_WITH_FINDINGS",
+  "ownerAuthorisation": "Round 4 authorised by the owner in chat on 2026-10-26: 'allow one confirmation round by the sync-chaos reviewer, limited to the stay-over fix and anything it breaks.'",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "SC-B4-Q4",
+      "title": "(Outside this round's scope; noted only) A member of a crew deleted on the other phone drops out of Equipaggi without the conflict notice",
+      "evidence": "Scratch O1 on e61cd08, both orders: readCrewPlan returns resolvedConflicts 0 on both phones; the member row naming the deleted crew-2 never reaches the presence count because readCrewPlan joins crewMembers to crews, so student-3 is silently unplaced for the session. The export is fine (withoutOrphans settles and counts it). Predates the stay-over fix.",
+      "reproduction": "Reviewer scratch orph4.test.ts case O1: 'readCrewPlan: ok conflicts=0'.",
+      "specRef": "Owner decision 12"
+    }
+  ],
+  "resolvedBlockers": {
+    "SC-B4-7 (stay-over case)": "Resolved. O3 in both orders: readDutyPlan reports resolvedConflicts 1 and exportCourseArchive succeeds on both phones (in round 3 it threw). O4 variants with stay-over lists [s3], [s1, s3, s2] and [s3, s1], the other duty lists filled and a duty assignment, both orders, both phones: the export works before any save; readDutyPlan drops only the missing student and counts 1; saveDutyPlan with what readDutyPlan returned does not throw; afterwards the count is 0, the other three lists are unchanged, the stay-over items renumbered from 0 in list order, and the export still works. O1 and O2 still export fine.",
+    "SC-B4-8": "Disposition acceptable: owner decision 16 accepts the delete case for 0.5.0 under the one-writing-phone rule and defers deletion times and tombstones to 1.0.0; decision 12 points to it."
+  },
+  "evidenceInspected": [
+    "Diff c3bd9d5..e61cd08 limited to placementConflicts.ts (withoutOrphanStayOvers), duties.ts (readDutyPlan), the new tests, and OWNER_DECISIONS 12 and 16",
+    "vitest on src/persistence, src/features/duties and src/backup: 32 files, 486 passed, 1 expected fail (the documented delete case); scratch orph4.test.ts (O1-O3 plus O4 variants), deleted after",
+    "Commits closing B3 and the untracked self-review were outside scope"
+  ],
+  "anglesTried": {
+    "seed": 360423565,
+    "scope": "Round 4, limited to the stay-over fix and anything it breaks: O3 in both orders; the missing student first, middle and alone; renumbering; other duty lists intact; the duty save after the read; the export validator before and after the save",
+    "lenses": ["2: one device deletes what the other is editing (carried)"],
+    "wildcard": "The duty screen saving what readDutyPlan settled, then exporting"
+  },
+  "notTested": [
+    "The duty screen's save in the browser (harness only)",
+    "Two phones editing the stay-over list differently offline (outside scope)",
+    "The server migration live, WebKit, the owner's phone"
+  ]
+}

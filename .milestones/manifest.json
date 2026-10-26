@@ -1167,6 +1167,7 @@
       "requiredEvidence": [
         ".evidence/B4/verification.json",
         ".evidence/B4/browser-evidence.json",
+        ".evidence/B4/physical-device-review.json",
         ".evidence/B4/self-review.json",
         ".evidence/B4/sync-chaos-review.json",
         ".evidence/B4/data-integrity-review.json",
@@ -1202,7 +1203,8 @@
         "tests/e2e/crew-destinations.spec.ts",
         "tests/e2e/d2-duty-items.spec.ts",
         "tests/e2e/d4-evaluation-note-save.spec.ts"
-      ]
+      ],
+      "ownerEvidence": [".evidence/B4/physical-device-review.json"]
     },
     {
       "id": "B5",
