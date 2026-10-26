@@ -190,12 +190,12 @@
     },
     {
       "id": "B3-EMAIL-CODE",
-      "milestone": "B3",
+      "milestone": "UG4",
       "kind": "DECISION",
-      "title": "Add the sign-in code to the development backend's email",
+      "title": "Add the sign-in code to the backend email, with a custom email sender",
       "status": "NEEDS_SETUP",
       "required": false,
-      "revision": 2,
+      "revision": 3,
       "instructions": [
         "Not possible yet: Supabase lets you edit the email only after you set up your own email sender (Authentication > Emails > Set up SMTP). With its built-in sender the email carries just the link.",
         "Nothing to do for the Android check: on Android the link opens in Chrome, which shares the installed app's storage.",
@@ -204,8 +204,8 @@
       "expected": "Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app). Deferred until a custom email sender exists.",
       "testedCommit": null,
       "testUrl": null,
-      "evidencePath": ".evidence/B3/owner-setup.json",
-      "updatedAt": "2026-10-26T09:08:18.590Z"
+      "evidencePath": ".evidence/UG4/physical-device-review.json",
+      "updatedAt": "2026-10-26T14:39:05.346Z"
     },
     {
       "id": "B3-PHONE-SIGNIN",

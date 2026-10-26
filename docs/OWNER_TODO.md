@@ -20,24 +20,6 @@ The owner reported: The owner created the Supabase development project cvc-helpe
 
 **Work affected:** The owner report is recorded.
 
-<a id="b3-email-code"></a>
-
-## Add the sign-in code to the development backend's email — B3
-
-**State:** Setup needed · Optional
-
-**What to do:**
-
-1. Not possible yet: Supabase lets you edit the email only after you set up your own email sender (Authentication &gt; Emails &gt; Set up SMTP). With its built-in sender the email carries just the link.
-2. Nothing to do for the Android check: on Android the link opens in Chrome, which shares the installed app's storage.
-3. Before production (UG4) a custom sender is needed anyway (the built-in one only delivers to your Supabase team and a few emails an hour); add &lt;p&gt;Codice: {{ .Token }}&lt;/p&gt; to the Magic link template then. Report B3-EMAIL-CODE with "code added" if you do it earlier.
-
-**Expected:** Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app). Deferred until a custom email sender exists.
-
-**Build:** No test build is assigned yet.
-
-**Work affected:** No required milestone completion is blocked.
-
 <a id="b3-phone-signin"></a>
 
 ## Sign in to the online backup on Android and use it offline — B3
@@ -157,3 +139,21 @@ The owner reported: Owner: done and passed, no issue to signal. The installed re
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
 **Work affected:** The owner report is recorded.
+
+<a id="b3-email-code"></a>
+
+## Add the sign-in code to the backend email, with a custom email sender — UG4
+
+**State:** Setup needed · Optional
+
+**What to do:**
+
+1. Not possible yet: Supabase lets you edit the email only after you set up your own email sender (Authentication &gt; Emails &gt; Set up SMTP). With its built-in sender the email carries just the link.
+2. Nothing to do for the Android check: on Android the link opens in Chrome, which shares the installed app's storage.
+3. Before production (UG4) a custom sender is needed anyway (the built-in one only delivers to your Supabase team and a few emails an hour); add &lt;p&gt;Codice: {{ .Token }}&lt;/p&gt; to the Magic link template then. Report B3-EMAIL-CODE with "code added" if you do it earlier.
+
+**Expected:** Each sign-in email carries both the link and a numeric code, so Impostazioni can sign in where the link opens in another browser (an iPhone home-screen app). Deferred until a custom email sender exists.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** No required milestone completion is blocked.
