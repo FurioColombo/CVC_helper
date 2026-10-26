@@ -40,6 +40,31 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 **Work affected:** The owner report is recorded.
 
+<a id="b4-phone-uploads"></a>
+
+## Install the B4 build, switch on the server rules, and use the backup offline for a day — B4
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. Open CVC Helper Test in Chrome as before (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.1 and still Accesso: &lt;your email&gt; with Copia online aggiornata. Use invented people only.
+2. Only after that: in the Supabase dashboard of cvc-helper-dev open SQL Editor, paste the whole file supabase/migrations/20261026000000_upload_rules.sql and run it once (it should report success with no rows). Tell me 'rules run' in the chat: I then run the live checks of the two server rules against the backend.
+3. Back in the app, add a student and change a note: Impostazioni should return to Copia online aggiornata within a few seconds (the new rules accept 0.5.1).
+4. Then a day of ordinary use offline: turn on airplane mode, make many edits over the day (students, notes, crews, duties, evaluations). Note whether saving ever feels slower than usual, and roughly how many changes Impostazioni says are waiting.
+5. Turn airplane mode off: note how long it takes to reach Copia online aggiornata, and whether any 'Il backup ha rifiutato' message or a note about another phone appears (none is expected with one phone).
+6. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
+
+**Expected:** 0.5.1 updates in place and keeps the backup; after the migration the app's writes are accepted; a day of offline edits saves without noticeable slowdown and uploads in full when signal returns, with no refusal. Only your actual phone observations can pass this check.
+
+**Build:** `5e09c8f4c097393475f6d9a2fbdabcc506bb2983`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of B4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3
