@@ -1,0 +1,37 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B5",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B5-1",
+      "title": "Process: the empty screen's guard covered the button I built, not every door to a second course",
+      "evidence": "DI-B5-1 found the import still open while restoring, and DI-B5-3 states other than 'restoring'. The guard is now a fact of the device (meta 'local:awaiting-account-course', set by the switch itself when it copies no course), not a screen state.",
+      "reproduction": "tests/e2e/b5-restore.spec.ts checks both doors.",
+      "specRef": "04 B5 ('never merges')"
+    },
+    {
+      "id": "SELF-B5-2",
+      "title": "Process: the live minimum-writer test exercised a shortcut, not the restore",
+      "evidence": "SC-B5-1/-3: the minimum was adopted after the download, where the write guard refuses it, and the test hid that by calling adoptMinimumWriter after the reopen while the real function was absent. The test now routes the function's answer through the real restore, and fails without the fix.",
+      "reproduction": "tests/e2e/b5-restore-live.spec.ts, the 0.5.0 and 9.0.0 cases.",
+      "specRef": "AGENTS.md §9"
+    }
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "git diff of B5 (src/backup/session.ts, src/persistence/backupLink.ts, syncMode.ts, src/App.tsx, CourseFiles.tsx, OnlineBackup.tsx, useBackupState.ts, supabase/migrations/20261027000000_minimum_writer_read.sql, tests/e2e/b5-*.spec.ts)",
+    "All review rounds in .evidence/B5/",
+    "Live development backend: an empty browser restores a course with crews, a member, land and an evaluation, equal to the server table by table through the export's validation; routed minimum 0.5.0 writable, 9.0.0 read-only"
+  ],
+  "deferredFindings": [
+    { "ids": ["SC-B5-6"], "to": "docs/working/BACKLOG.md (same course id merged unasked)" },
+    { "ids": ["SC-B5-R2-2"], "to": "Accepted: the awaiting mark stays on a read-only device until the update; harmless while the course is present" }
+  ],
+  "limitations": [
+    "The server function that reports the minimum writer is not yet installed on the development backend (owner action B5-MINIMUM-READ); its live answer is checked once it is",
+    "The owner's Android restore check (B5-PHONE-RESTORE)"
+  ]
+}

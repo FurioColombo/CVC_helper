@@ -1,0 +1,55 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B5",
+  "commit": "b08545b (also read ce2c807)",
+  "round": 2,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-B5-4",
+      "title": "Still open, now non-blocking: no invariant check catches two active courses on one device",
+      "evidence": "validateCourseState checks one course snapshot and does not run on downloaded rows. The two-course state can no longer be reached through the UI paths tested (the awaiting mark blocks creating and importing); if it arose another way only bindCourseSession's generic open failure would notice. The live restore now carries crews, a member, land and an evaluation and compares every exported table row for row.",
+      "reproduction": "Read src/domain/invariants.ts and src/persistence/courseSession.ts.",
+      "specRef": "AGENTS.md §11"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B5-R2-Q1",
+      "title": "An emptied device that signed out while waiting cannot create or import a course without the account or a full reset",
+      "evidence": "Fake backend: restoring, 'Esci dall’account', reload: signed-out, both buttons disabled, the mark kept; the screen explains why; the only way out without signing in is 'Azzera tutti i dati locali'. Safe by design.",
+      "reproduction": "Throwaway fake spec.",
+      "specRef": "none"
+    },
+    {
+      "id": "DI-B5-R2-Q2",
+      "title": "A device switched empty before b08545b has no awaiting mark",
+      "evidence": "The mark is written only inside the switch; a test device that switched empty on the round-1 build may still create a course while the account's is on its way; the App's reopen on arrival cannot undo it. Test devices of the round-1 build only.",
+      "reproduction": "Read session.ts and syncMode.ts.",
+      "specRef": "none"
+    }
+  ],
+  "resolvedBlockers": [
+    { "id": "DI-B5-1", "disposition": "FIXED", "evidence": "Fake backend: while restoring, 'Scegli il file del corso' and the file input are disabled; a forced file still shows the preview but 'Importa il corso' stays disabled; ps_crud 0; the mark present." },
+    { "id": "DI-B5-2", "disposition": "FIXED", "evidence": "Failing check before the erase: error state, the course 'D2 44 2026' kept, Riprova offered; the repository's test passes." },
+    { "id": "DI-B5-3", "disposition": "FIXED", "evidence": "Creating and importing blocked while the mark is set, in any backup state, including signed out after restoring." },
+    { "id": "DI-B5-5", "disposition": "FIXED in code; the real server function awaits the owner", "evidence": "The minimum is adopted before the download and at every connection; the routed 0.5.0 and 9.0.0 live cases pass through the real restore." }
+  ],
+  "evidenceInspected": [
+    "git diff 806a7dc..b08545b and b08545b..ce2c807 -- src",
+    "Throwaway fake-backend specs: import while restoring; replace with a failing check; sign-out after restoring",
+    "pixel-7-chrome, retries 0: b5-restore-live (3, development backend, synthetic account) and b5-restore (4): 7 passed"
+  ],
+  "anglesTried": {
+    "seed": 160227127,
+    "lenses": ["Round 2: DI-B5-1, -2, -3, -5 and the fix diff for regressions"],
+    "wildcard": "Forced a file into the disabled input; signed out mid-restore and reloaded"
+  },
+  "notTested": [
+    "The real app_minimum_writer_version function (owner action B5-MINIMUM-READ)",
+    "The live end state of an import while restoring (now refused before any write)",
+    "WebKit and the owner's Android check"
+  ]
+}

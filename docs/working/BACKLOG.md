@@ -180,15 +180,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
   address it without silently changing the writer window.
 - **The Android reset hang on 0.4.2** (D4 owner check, 2026-10-19): unproven
   cause. 0.4.3 bounds and resumes the reset and passed on the phone.
-- **Test and regular app installed together** (owner, 2026-10-22, D4 and
-  UG3): their data stays separate, but installing both on one phone is
-  unreliable. Updating them seemed to conflict; it worked once, then after
-  reinstalling the regular app, Chrome says CVC Helper Test is already
-  installed although no icon exists (a failed uninstall, or the two apps on one
-  origin, `docs/DEPLOY.md`; a reboot may clear it). Not blocking. Before the
-  next phone check: reproduce it, then consider giving the test channel its
-  own origin, which would also end the shared origin-wide persistence
-  permission (03 §3.3).
+- **Test and regular app installed together** (owner, D4 and UG3): their
+  data stays separate, but installing both on one phone is unreliable (Chrome
+  reports the test app installed with no icon; the two share one origin,
+  `docs/DEPLOY.md`). Give the test channel its own origin, which also ends
+  the shared persistence permission (03 §3.3).
 - **Before production (UG4), sign-in hardening** (B3 SP-B3-5, -7, -12): the
   session and refresh token sit in localStorage on the shared
   `furiocolombo.github.io` origin with no Content-Security-Policy; add a CSP
@@ -208,7 +204,10 @@ Each passed only on a retry and is a defect to fix (03 §6).
     device and keep tombstones on the server before team editing (1.0.0);
   - DI-B4-Q1: crew history counts a member Equipaggi dropped, until saved;
   - SC-B4-Q4: a member of a crew deleted elsewhere leaves without a notice;
-  - SC-B5-6: a device importing the account's own course id merges unasked;
+  - B5 (`.evidence/B5/`): SC-B5-6, a device importing the account's own
+    course id merges unasked; DI-B5-4, no invariant sees two active courses
+    on a device; DI-B5-R2-Q1, a device that signed out while awaiting the
+    account's course needs the account or a full reset to make one;
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;
