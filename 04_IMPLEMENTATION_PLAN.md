@@ -115,7 +115,7 @@ data-integrity and sync-chaos reviews.
 ## B6 — Erase on the server
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Erasing the course and the full reset also delete the server copy when
 signed in; offline, the deletion completes on reconnect. Impostazioni states
@@ -137,7 +137,7 @@ reviews.
 ## UG4 — 0.5.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 `verify:all` on the final source, with the version bumped before the phone
 build is published so one owner check covers the final source (owner

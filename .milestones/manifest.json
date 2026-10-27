@@ -1284,7 +1284,7 @@
     {
       "id": "B6",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B6/verification.json",
@@ -1296,7 +1296,43 @@
         ".evidence/B6/self-review.json",
         ".evidence/B6/security-privacy-review.json",
         ".evidence/B6/data-integrity-review.json"
-      ]
+      ],
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "B4",
+          "reason": "The erase deletes through the signed-in connection and upload rules verified in B3 and B4 (fake-backend and live tests; the server rules verified live on 2026-10-27); the pending offline day measures save latency and a long offline upload on the owner’s phone, which the erase does not depend on."
+        },
+        {
+          "id": "B5",
+          "reason": "The erase runs on a device that already holds its course; the pending restore check and the minimum-writer function concern a device that receives a course, and the erase only must not trigger a restore, which B6’s own tests check."
+        }
+      ],
+      "e2eSpecs": [
+        "tests/e2e/b6-erase.spec.ts",
+        "tests/e2e/b6-erase-live.spec.ts",
+        "tests/e2e/b5-restore.spec.ts",
+        "tests/e2e/b5-restore-live.spec.ts",
+        "tests/e2e/b3-backup-ui.spec.ts",
+        "tests/e2e/b4-uploads.spec.ts",
+        "tests/e2e/b1-sync-mode.spec.ts",
+        "tests/e2e/d4-course-files.spec.ts",
+        "tests/e2e/d4-local-reset.spec.ts",
+        "tests/e2e/d3-read-only.spec.ts"
+      ],
+      "startedFrom": {
+        "commit": "d3ab9a95bbb24e74568734b7f6cb473c8cb9080f",
+        "sourceDigest": "9977ee9372f3343c3284813691292cd814466d1799810b453d082222c8b6cd47",
+        "ownerPrerequisites": [
+          {
+            "id": "B4",
+            "commit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983"
+          },
+          {
+            "id": "B5",
+            "commit": "b06d8e1d68b1755aee59b25f5c87644414ef8075"
+          }
+        ]
+      }
     },
     {
       "id": "UG4",
