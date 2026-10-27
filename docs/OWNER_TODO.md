@@ -44,7 +44,7 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 ## Install the B4 build, switch on the server rules, and use the backup offline for a day — B4
 
-**State:** Ready for owner check · Required
+**State:** Setup needed · Required
 
 **What to do:**
 
@@ -53,13 +53,11 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 3. Turn airplane mode off: note how long it takes to reach Copia online aggiornata, and whether any 'Il backup ha rifiutato' message or a note about another phone appears (none is expected with one phone).
 4. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
 
-Use the test address below and the linked device instructions.
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
 
 **Expected:** 0.5.1 updates in place and keeps the backup; after the migration the app's writes are accepted; a day of offline edits saves without noticeable slowdown and uploads in full when signal returns, with no refusal. Only your actual phone observations can pass this check.
 
-**Build:** `5e09c8f4c097393475f6d9a2fbdabcc506bb2983`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
+**Build:** No test build is assigned yet.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 

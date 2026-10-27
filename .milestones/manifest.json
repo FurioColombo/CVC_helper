@@ -1156,7 +1156,7 @@
     {
       "id": "B4",
       "category": "RULE_HEAVY",
-      "status": "AWAITING_OWNER",
+      "status": "IN_PROGRESS",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "B3",
@@ -1204,21 +1204,7 @@
         "tests/e2e/d2-duty-items.spec.ts",
         "tests/e2e/d4-evaluation-note-save.spec.ts"
       ],
-      "ownerEvidence": [".evidence/B4/physical-device-review.json"],
-      "agentReady": {
-        "commit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
-        "sourceDigest": "68bbcc64f522543ba9f4e6acdae7870d87a05c62265b0e49ba0fec06445ba015",
-        "evidenceHashes": {
-          ".evidence/B4/verification.json": "5a297a83c58f5f1ded94fb21d94249c93f09c2df9ed7a4d613d77b8f67cdd869",
-          ".evidence/B4/browser-evidence.json": "fae6196f5dd192880fda217a9750ec6d4868174294371dfdba8b60e8e8465eb3",
-          ".evidence/B4/self-review.json": "dd3239bb52d3eba3c5c406918e75022c4024339ce98437f6485b9ff60982ea04",
-          ".evidence/B4/sync-chaos-review.json": "580bd56f99692ff7c0d28b5a22129a2e8c1533d2567ff5060b02c06e5e33073a",
-          ".evidence/B4/data-integrity-review.json": "38a7791e1ba2e0fa7072fa22668145c68f1fa7028ee5c2401a96471e47338cad",
-          ".evidence/B4/security-privacy-review.json": "a1fb4211b3375c9e06f4c63934e2af5bfc8dc238cd6829c565ad89632e4a98ae"
-        },
-        "ciRunId": 40349274097,
-        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/40349274097"
-      }
+      "ownerEvidence": [".evidence/B4/physical-device-review.json"]
     },
     {
       "id": "B5",

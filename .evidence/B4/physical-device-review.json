@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "B4",
+  "ownerReports": [
+    {
+      "id": "B4-PHONE-UPLOADS",
+      "check": "Install the B4 build, switch on the server rules, and use the backup offline for a day",
+      "result": "CHANGES_REQUESTED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-10-28",
+      "summary": "Offline day on 0.5.1: saving as fast as usual with about 150 changes waiting. Airplane mode off: just under 10 s before sending started, about 45 s to send them all, the count decreasing at a steady rate. Throughout and after, Impostazioni showed 'Ora senza connessione' with the warning icon, ending on 'Tutto inviato. Ora senza connessione', although the phone was online and everything was sent; closing and reopening the app showed 'Copia online aggiornata'. Only one copy of the app was open.",
+      "testedCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60",
+      "browser": "Chrome (installed app)",
+      "osVersion": "Android",
+      "reportedAt": "2026-10-27T23:30:53.160Z"
+    }
+  ]
+}

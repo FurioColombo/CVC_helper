@@ -244,9 +244,9 @@
       "milestone": "B4",
       "kind": "DEVICE_CHECK",
       "title": "Install the B4 build, switch on the server rules, and use the backup offline for a day",
-      "status": "READY",
+      "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 3,
+      "revision": 5,
       "instructions": [
         "Done (2026-10-27): CVC Helper Test updated to 0.5.1, the upload-rules migration run (verified live: .evidence/B4/live-server-rules.json), and a student or note change reached Copia online aggiornata with no issue.",
         "Then a day of ordinary use offline: turn on airplane mode, make many edits over the day (students, notes, crews, duties, evaluations). Note whether saving ever feels slower than usual, and roughly how many changes Impostazioni says are waiting.",
@@ -254,10 +254,26 @@
         "Report B4-PHONE-UPLOADS with your device and what you saw at each step."
       ],
       "expected": "0.5.1 updates in place and keeps the backup; after the migration the app's writes are accepted; a day of offline edits saves without noticeable slowdown and uploads in full when signal returns, with no refusal. Only your actual phone observations can pass this check.",
-      "testedCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
-      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "testedCommit": null,
+      "testUrl": null,
       "evidencePath": ".evidence/B4/physical-device-review.json",
-      "updatedAt": "2026-10-26T23:32:30.450Z"
+      "updatedAt": "2026-10-27T23:30:59.914Z",
+      "history": [
+        {
+          "status": "CHANGES_REQUESTED",
+          "result": {
+            "reportedBy": "owner",
+            "source": "Chat, 2026-10-28",
+            "summary": "Offline day on 0.5.1: saving as fast as usual with about 150 changes waiting. Airplane mode off: just under 10 s before sending started, about 45 s to send them all, the count decreasing at a steady rate. Throughout and after, Impostazioni showed 'Ora senza connessione' with the warning icon, ending on 'Tutto inviato. Ora senza connessione', although the phone was online and everything was sent; closing and reopening the app showed 'Copia online aggiornata'. Only one copy of the app was open.",
+            "testedCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
+            "device": "Motorola Edge 60",
+            "browser": "Chrome (installed app)",
+            "osVersion": "Android"
+          },
+          "testedCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
+          "invalidatedAt": "2026-10-27T23:30:59.914Z"
+        }
+      ]
     },
     {
       "id": "B5-MINIMUM-READ",
