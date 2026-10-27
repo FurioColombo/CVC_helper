@@ -103,6 +103,10 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 
 Each passed only on a retry and is a defect to fix (03 §6).
 
+- `b1-sync-mode.spec.ts › a course file imported on a switched device lands in the synced tables`
+  — WebKit, B5 runs (2026-10-28): page closed ~6 s in; alone 10/11 (B4's
+  source 5/5); touches no B5 code, likely a WebKit crash under load.
+
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
   — WebKit, B3's recorded run (2026-10-26, 12 min): the course heading did
   not appear within 30 s on the first attempt; the retry passed, and 5
@@ -123,11 +127,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
   makes it green.
 
 - `student-management-gate.spec.ts › creates, corrects and reloads a declared age without a birth date`
-  — WebKit, B1's recorded run (2026-10-25, 1.4 h): the first attempt failed with
-  "page.goto: Could not connect to server", as did three other WebKit cases
-  late in the same run; the dev server stopped answering. Rerun alone, all
-  pass. Environment (long run on the 8 GB PC), not the app.
-
+  — WebKit, B1 recorded run: the dev server stopped answering late in a 1.4 h
+  run (environment); alone it passes.
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — stalled twice opening the fresh WebKit recipient before import (D4,
   2026-10-17); isolated reruns and every later run passed without retries.
