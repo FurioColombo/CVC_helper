@@ -1288,6 +1288,7 @@
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B6/verification.json",
+        ".evidence/B6/physical-device-review.json",
         ".evidence/B6/self-review.json",
         ".evidence/B6/security-privacy-review.json",
         ".evidence/B6/data-integrity-review.json"
@@ -1332,7 +1333,8 @@
             "commit": "b06d8e1d68b1755aee59b25f5c87644414ef8075"
           }
         ]
-      }
+      },
+      "ownerEvidence": [".evidence/B6/physical-device-review.json"]
     },
     {
       "id": "UG4",

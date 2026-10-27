@@ -144,6 +144,17 @@ export function prepareDatabase(
         // An import's compaction cut short by closing the app (UG3 DI-UG3-1).
         if (await compactionPending(database))
           await compactCourseDatabase(database).catch(() => {})
+        // B6: a course erased on another phone left with its rows; the
+        // changes the backup refused for it go too (they hold its data).
+        if (synced) {
+          const orphaned = await database.getAll(
+            "SELECT 1 FROM uploadRefusals WHERE NOT EXISTS (SELECT 1 FROM courses) LIMIT 1",
+          )
+          if (orphaned.length)
+            await database.writeTransaction((transaction) =>
+              transaction.execute("DELETE FROM uploadRefusals"),
+            )
+        }
       } catch (error) {
         // A newer app raised the record meanwhile; the guard marked the
         // database read-only (src/persistence/writeGuard.ts).

@@ -131,6 +131,12 @@ export function disconnectDatabase() {
 }
 
 export {
+  forgetServerErasures,
+  pendingServerErasures,
+  type ServerErasures,
+} from "@/persistence/serverErasures"
+
+export {
   courseTableColumns,
   discardUploadRefusals,
   forgetSupersededEdits,

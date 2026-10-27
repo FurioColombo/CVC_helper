@@ -28,6 +28,8 @@ describe("0.3.0 migration fixture", () => {
       "dutySettingItems",
       // The backup's refused changes (B4), local to the device.
       "uploadRefusals",
+      // Courses the server must still erase (B6), local to the device.
+      "serverErasures",
     ])
     const added = Object.entries(frozen).flatMap(([table, columns]) =>
       current[table]!.filter((column) => !columns.includes(column)).map(

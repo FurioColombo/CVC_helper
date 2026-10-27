@@ -65,6 +65,7 @@ import {
   awaitingAccountCourse,
   deviceCourseId,
   deviceSyncMode,
+  databaseConnected,
   onDatabaseStatus,
 } from "@/persistence/backupLink"
 import { requestPersistentStorage } from "@/persistence/browserStorage"
@@ -936,6 +937,20 @@ export function App() {
       stop()
     }
   }, [])
+
+  // B6: a course erased on another phone leaves this one when the backup
+  // removes its rows; the app then reopens without it rather than keep
+  // screens that can no longer save. Only a connected backup removes it.
+  const ready = appState.status === "ready"
+  useEffect(() => {
+    if (!ready) return
+    return onDatabaseStatus(() => {
+      if (!databaseConnected()) return
+      void deviceCourseId().then((course) => {
+        if (!course) window.location.reload()
+      })
+    })
+  }, [ready])
 
   if (appState.status === "loading") return <LoadingScreen />
   if (appState.status === "closed") {

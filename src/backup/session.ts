@@ -12,7 +12,9 @@ import {
   disconnectDatabase,
   adoptMinimumWriter,
   firstSync,
+  forgetServerErasures,
   openedWithSyncedTables,
+  pendingServerErasures,
   awaitingAccountCourse,
   courseTableColumns,
   recordUploadOutcome,
@@ -246,6 +248,13 @@ export async function startBackup(
   if (!(await claimDeviceForAccount(session.user.id)))
     return { kind: "other-account" }
   if (!connected) {
+    // B6: a course erased here is erased on the server before anything
+    // connects, so it is never downloaded again; offline, the backup waits
+    // for signal and the erase completes then.
+    if (!(await settleServerErasures(client)))
+      return offline()
+        ? { kind: "offline", email }
+        : { kind: "error", message: UNREACHABLE }
     connected = true
     // Restoring means waiting for the account's course: a device switched
     // empty. One whose own course was erased here makes a new one freely.
@@ -278,6 +287,87 @@ export async function startBackup(
   // Reopened on the restored course: nothing is awaited any more.
   void stopAwaitingAccountCourse().catch(() => {})
   return { kind: "connected", email, outdated: uploadsOutdated }
+}
+
+/** PostgREST's answer for a table the server does not have yet. */
+const NOT_INSTALLED = new Set(["PGRST205", "42P01"])
+
+/**
+ * B6: erases on the server the courses erased or replaced on this device
+ * (and `also`), and accepts again a course file's course imported under an
+ * erased id. The course row's delete takes every row of the course with it
+ * and depends on no device's clock (B4 review SP-B4-3); the erased id is
+ * recorded first, so another phone's later upload cannot create the course
+ * again (supabase/migrations/20261028000000_course_erase.sql). Each step
+ * can be repeated: a failure leaves the record for the next connection.
+ * Before the owner installs that migration, the delete alone runs.
+ */
+async function settleServerErasures(
+  client: SupabaseClient,
+  also: string[] = [],
+) {
+  try {
+    const pending = await pendingServerErasures()
+    const erase = [...new Set([...pending.erase, ...also])]
+    if (!erase.length && !pending.keep.length) return true
+    const recorded = erase.filter((id) => !pending.keep.includes(id))
+    let installed = true
+    if (recorded.length) {
+      const { error } = await client.from("erased_courses").upsert(
+        recorded.map((id) => ({ id })),
+        { onConflict: "ownerId,id", ignoreDuplicates: true },
+      )
+      if (error && NOT_INSTALLED.has(error.code)) installed = false
+      else if (error) return false
+    }
+    if (erase.length) {
+      const { error } = await client.from("courses").delete().in("id", erase)
+      if (error) return false
+    }
+    if (pending.keep.length && installed) {
+      const { error } = await client
+        .from("erased_courses")
+        .delete()
+        .in("id", pending.keep)
+      if (error && !NOT_INSTALLED.has(error.code)) return false
+    }
+    // A read-only device cannot forget the record: it is settled again,
+    // harmlessly, at the next connection.
+    await forgetServerErasures(pending.rows).catch(() => {})
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * B6: before "Azzera tutti i dati locali" on a device signed in to the
+ * backup, its course is erased on the server too; the answer says why not
+ * when that failed, and the reset then waits. Signed out, or on another
+ * account's device, the online copy stays: the confirmation says so.
+ */
+export async function eraseOnlineCopyBeforeReset(): Promise<string | null> {
+  const config = backupConfig()
+  if (!config || (await deviceSyncMode()) !== "synced") return null
+  if (
+    current.kind !== "connected" &&
+    current.kind !== "offline" &&
+    current.kind !== "restoring" &&
+    current.kind !== "error"
+  )
+    return null
+  const client = await supabase(config)
+  const {
+    data: { session },
+  } = await client.auth.getSession()
+  const course = await deviceCourseId()
+  if (
+    session &&
+    (await claimDeviceForAccount(session.user.id)) &&
+    (await settleServerErasures(client, course ? [course] : []))
+  )
+    return null
+  return "Il corso non è stato eliminato dal backup online, quindi nulla è stato azzerato. Riprova con la connessione, oppure esci dal backup online prima di azzerare: la copia online resta."
 }
 
 /** A device that switched without a course waits for the account's. */

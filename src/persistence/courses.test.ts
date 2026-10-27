@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const database = vi.hoisted(() => ({
+  connected: false,
+  connecting: false,
+  disconnect: vi.fn(),
   execute: vi.fn(),
+  // No sync-mode record and no synced table: a local device.
+  getAll: vi.fn(async (): Promise<unknown[]> => []),
   getOptional: vi.fn(),
   init: vi.fn(),
   writeLock: vi.fn(),
@@ -193,7 +198,45 @@ describe("course persistence", () => {
     // `meta` is not course data: it holds the migration ledger (and from D3
     // the data version), which erasing a course must leave in place.
     expect(new Set(COURSE_DATA_TABLES)).toEqual(
-      new Set(tables.map(({ name }) => name).filter((name) => name !== "meta")),
+      new Set(
+        tables
+          .map(({ name }) => name)
+          // B6: course ids the server must still erase, no course data.
+          .filter((name) => name !== "meta" && name !== "serverErasures"),
+      ),
     )
+  })
+
+  // B6: on a synced device the erase forgets the whole synced copy, the
+  // upload queue's pending changes included, and records the course for the
+  // server, in the same transaction.
+  it("forgets a synced device's copy and records the course for the server", async () => {
+    database.connected = true
+    database.getAll.mockResolvedValueOnce([{ value: 1 }])
+    const transaction = {
+      execute: vi.fn().mockResolvedValue(undefined),
+      getAll: vi.fn(async (sql: string) =>
+        sql === "SELECT id FROM courses"
+          ? [{ id: "course-1" }]
+          : sql.startsWith("SELECT erase")
+            ? []
+            : COURSE_DATA_TABLES.map((name) => ({ name })),
+      ),
+    }
+    database.writeTransaction.mockImplementation(
+      async (write: (tx: typeof transaction) => unknown) => write(transaction),
+    )
+
+    await eraseAllCourseData()
+
+    expect(database.disconnect).toHaveBeenCalledOnce()
+    const statements = transaction.execute.mock.calls.map(([sql]) => sql)
+    expect(statements[0]).toBe("SELECT powersync_clear(0)")
+    expect(transaction.execute).toHaveBeenCalledWith(
+      "INSERT OR REPLACE INTO serverErasures(id, erase, keep) VALUES (?, ?, ?)",
+      ["course-1", 1, 0],
+    )
+    expect(statements).toContain("DELETE FROM uploadRefusals")
+    database.connected = false
   })
 })

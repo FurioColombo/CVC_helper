@@ -108,6 +108,44 @@ Use the test address below and the linked device instructions.
 
 **Work affected:** Completion of B5 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
+<a id="b6-erase-rules"></a>
+
+## Let the server keep an erased course erased — B6
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
+2. Paste the whole file supabase/migrations/20261028000000_course_erase.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: the installed builds never touch it, and the B6 build erases courses with or without it.
+3. Write 'erase rules run' in the chat; I then run the live check that an erased course refuses a later upload from another phone.
+
+**Expected:** The server records the ids of erased courses (no course data, readable only by their owner) and refuses that course from any phone afterwards.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+<a id="b6-phone-erase"></a>
+
+## Erase your course on the phone, once offline, and see it gone from the backup — B6
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. Only after B4-PHONE-UPLOADS and B5-PHONE-RESTORE are reported: they need the course on the backup. The build, its address and the exact steps follow here when it is published.
+
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+
+**Expected:** Erasing the course on the phone erases it from the backup, also when the erase was made offline and the phone reconnected later; the erased course never comes back. Only your actual observations can pass this check.
+
+**Build:** No test build is assigned yet.
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3

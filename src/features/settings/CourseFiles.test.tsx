@@ -40,6 +40,16 @@ vi.mock("@/persistence/localDataOperations", () => ({
   resetAllLocalData: mocks.resetAllLocalData,
 }))
 
+// B6: the reset asks the backup first; signed out here, a local device.
+vi.mock("@/backup/session", () => ({
+  backupState: () => ({ kind: "signed-out" }),
+  eraseOnlineCopyBeforeReset: async () => null,
+  onBackupState: () => () => {},
+}))
+vi.mock("@/persistence/backupLink", () => ({
+  deviceSyncMode: async () => "local",
+}))
+
 import {
   CourseFiles,
   FullReset,
@@ -219,6 +229,35 @@ describe("CourseFiles", () => {
     await user.click(resetButton)
 
     expect(mocks.resetAllLocalData).toHaveBeenCalledOnce()
+  })
+
+  // B6: signed in, the backup's copy goes first; a failure resets nothing.
+  it("resets nothing when the backup's copy could not be erased", async () => {
+    const user = userEvent.setup()
+    const eraseOnline = vi
+      .fn()
+      .mockResolvedValueOnce(
+        "Il corso non è stato eliminato dal backup online.",
+      )
+      .mockResolvedValueOnce(null)
+    render(<FullReset courseLabel="D2 - 35 | 2026" eraseOnline={eraseOnline} />)
+    await user.click(
+      screen.getByRole("button", { name: "Azzera tutti i dati locali" }),
+    )
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: /corso, preferenze e file offline/,
+      }),
+    )
+    await user.click(screen.getByRole("button", { name: "Azzera i dati" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Il corso non è stato eliminato dal backup online.",
+    )
+    expect(mocks.resetAllLocalData).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole("button", { name: "Azzera i dati" }))
+    await waitFor(() => expect(mocks.resetAllLocalData).toHaveBeenCalledOnce())
   })
 
   it("reports when the browser declined persistent storage", async () => {

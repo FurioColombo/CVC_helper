@@ -423,14 +423,17 @@ test("refusals that cannot be sent can be taken off the list, the course unchang
 
 // Review SP-B4-1: a refusal that arrives after its course was erased holds
 // the erased people's data; it is not kept, and nothing can bring them back.
+// B6: the erase forgets the queue, so the held upload is never even sent.
 test("a refusal arriving after the course was erased is not kept", async ({
   page,
 }) => {
-  let mode: "unreachable" | "refusing" = "unreachable"
-  await withBackend(page, (write) =>
-    mode === "unreachable" || write.method === "DELETE"
+  let reachable = false
+  const { writes } = await withBackend(page, (write) =>
+    !reachable
       ? "unreachable"
-      : { status: 403, code: "42501" },
+      : hasStudent(write, "Ottavia")
+        ? { status: 403, code: "42501" }
+        : null,
   )
   await courseWithStudents(page, ["Ottavia"])
   await signIn(page)
@@ -447,14 +450,22 @@ test("a refusal arriving after the course was erased is not kept", async ({
   await expect(
     page.getByRole("heading", { name: "Crea il corso" }),
   ).toBeVisible()
-  mode = "refusing"
+  reachable = true
+  const sentBefore = writes.length
   await page.getByRole("button", { name: "Deriva", exact: true }).click()
   await page.getByRole("button", { name: "Livello 2", exact: true }).click()
   await page.getByRole("button", { name: "Crea corso", exact: true }).click()
-  // Long enough for the held upload to be sent and refused.
-  await page.waitForTimeout(8_000)
   const section = await backupSection(page)
-  await expect(section).toContainText("Accesso: istruttore@example.test")
+  // The pending server erase completes at the next connection attempt.
+  const retry = section.getByRole("button", { name: "Riprova", exact: true })
+  await expect(async () => {
+    if (await retry.isVisible()) await retry.click()
+    await expect(section).toContainText("Accesso: istruttore@example.test", {
+      timeout: 2_000,
+    })
+  }).toPass({ timeout: 30_000 })
+  // Long enough for any held upload to be sent and refused.
+  await page.waitForTimeout(8_000)
   await expect(section.getByText("Il backup ha rifiutato")).toHaveCount(0)
   const kept = await page.evaluate(async () => {
     const load = (path: string) => import(/* @vite-ignore */ path)
@@ -464,6 +475,9 @@ test("a refusal arriving after the course was erased is not kept", async ({
     return JSON.stringify(await uploadRefusals())
   })
   expect(kept).not.toContain("Ottavia")
+  expect(
+    writes.slice(sentBefore).filter((write) => hasStudent(write, "Ottavia")),
+  ).toEqual([])
 })
 
 // Review DI-B4-3, round 2: a delete still waiting to upload wins over

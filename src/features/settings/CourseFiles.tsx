@@ -10,8 +10,11 @@ import {
 } from "lucide-react"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 
+import { eraseOnlineCopyBeforeReset } from "@/backup/session"
+import { useBackupState } from "@/backup/useBackupState"
 import { Button } from "@/components/ui/button"
 import { getIsoWeekInfo } from "@/domain/course"
+import { deviceSyncMode } from "@/persistence/backupLink"
 import {
   exportCourseArchive,
   importCourseArchive,
@@ -572,10 +575,50 @@ export function StorageStatus() {
 }
 
 /** `courseLabel` is the course's visible identity, or null with no course. */
-export function FullReset({ courseLabel }: { courseLabel: string | null }) {
+export function FullReset({
+  courseLabel,
+  eraseOnline = eraseOnlineCopyBeforeReset,
+}: {
+  courseLabel: string | null
+  eraseOnline?: () => Promise<string | null>
+}) {
   const [confirming, setConfirming] = useState(false)
   const [understood, setUnderstood] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [onlineError, setOnlineError] = useState<string | null>(null)
+  const backup = useBackupState()
+  const signedIn =
+    backup.kind === "connected" ||
+    backup.kind === "offline" ||
+    backup.kind === "restoring"
+  const [synced, setSynced] = useState(false)
+  useEffect(() => {
+    let current = true
+    void deviceSyncMode()
+      .then((mode) => {
+        if (current) setSynced(mode === "synced")
+      })
+      .catch(() => {})
+    return () => {
+      current = false
+    }
+  }, [])
+
+  async function reset() {
+    setResetting(true)
+    setOnlineError(null)
+    // B6: signed in, the course goes from the backup first; a failure
+    // resets nothing.
+    const refused = await eraseOnline().catch(
+      () => "Il corso non è stato eliminato dal backup online: riprova.",
+    )
+    if (refused) {
+      setOnlineError(refused)
+      setResetting(false)
+      return
+    }
+    void resetAllLocalData()
+  }
 
   return (
     <section
@@ -617,6 +660,13 @@ export function FullReset({ courseLabel }: { courseLabel: string | null }) {
               : "Non c’è un corso da cancellare: restano solo preferenze e file offline."}{" "}
             Dopo l’azzeramento, per riaprire l’app serve una connessione.
           </p>
+          {synced && (
+            <p className="mt-1 text-sm leading-5">
+              {signedIn
+                ? "Il corso sarà eliminato anche dal backup online: senza connessione non si azzera nulla."
+                : "La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso."}
+            </p>
+          )}
           <label className="mt-2 flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold">
             <input
               checked={understood}
@@ -627,12 +677,21 @@ export function FullReset({ courseLabel }: { courseLabel: string | null }) {
             />
             Ho capito: corso, preferenze e file offline saranno cancellati
           </label>
+          {onlineError && (
+            <p
+              className="mt-2 text-sm font-semibold text-[#a2381b]"
+              role="alert"
+            >
+              {onlineError}
+            </p>
+          )}
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <Button
               disabled={resetting}
               onClick={() => {
                 setConfirming(false)
                 setUnderstood(false)
+                setOnlineError(null)
               }}
               variant="secondary"
             >
@@ -641,10 +700,7 @@ export function FullReset({ courseLabel }: { courseLabel: string | null }) {
             <Button
               className="h-auto min-h-11 whitespace-normal bg-[#b42318] text-white hover:bg-[#9a1f14]"
               disabled={!understood || resetting}
-              onClick={() => {
-                setResetting(true)
-                void resetAllLocalData()
-              }}
+              onClick={() => void reset()}
             >
               {resetting && (
                 <LoaderCircle

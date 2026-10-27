@@ -162,6 +162,15 @@ const uploadRefusals = Table.createLocalOnly({
   refusedAt: column.text,
 })
 
+// B6: courses erased or replaced on this synced device that the server must
+// still erase (`erase`) or accept again under the same id, a course file
+// imported (`keep`). `id` is the course id; no course data. Settled before
+// the backup connects (src/backup/session.ts).
+const serverErasures = Table.createLocalOnly({
+  erase: column.integer,
+  keep: column.integer,
+})
+
 export const AppSchema = new Schema({
   courses,
   students,
@@ -178,6 +187,7 @@ export const AppSchema = new Schema({
   evaluations,
   meta,
   uploadRefusals,
+  serverErasures,
 })
 
 /** Course tables, parents before children; all but `courses` name their course. */

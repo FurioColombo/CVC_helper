@@ -70,7 +70,7 @@ Settings offers the in-course way to start the next course (owner decision,
 2026-09-26): `Elimina il corso e inizia un nuovo corso` erases the current
 course and everything recorded in it from the device, after a confirmation
 that names the course and an explicit acknowledgement that the data cannot be
-recovered, then opens course creation. A failed erase changes nothing.
+recovered (backup copy too), then opens course creation. Failure changes nothing.
 
 Course files (Settings): `Conservazione dei dati` says whether the
 browser keeps the data when space is low (asked at creation, import and open),
@@ -80,8 +80,8 @@ as `.json` or shared as `.txt`. `Importa un corso` checks either file fully,
 shows the course and replaces the current one only after confirmation, never
 merging; an invalid or too-new file changes nothing. `Azzera tutti i dati
 locali` (owner, 2026-09-28) deletes course, preferences and offline files after
-confirmation, finishing at the next open if interrupted. Results show beside
-the action above the bottom bar, errors with the warning triangle.
+confirmation (signed in, the backup's copy first), finishing at the next open if
+interrupted. Results show beside the action above the bottom bar, errors with the warning triangle.
 
 The installed app looks for a new version whenever it comes back to the
 foreground and once an hour while it stays open. A new version is offered in a

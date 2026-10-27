@@ -219,14 +219,20 @@ test("the app erases a switched course, queues the deletion and keeps a new cour
       mode: await count(
         "SELECT value AS n FROM meta WHERE id = 'local:sync-mode'",
       ),
+      serverErasures: await count(
+        "SELECT count(*) AS n FROM serverErasures WHERE erase = 1",
+      ),
     }
   })
   record("app-erase", { queuedAtSwitch, ...stored })
-  // Every row of the erased course is queued for deletion on the server (B6
-  // sends it); the queue holds two course uploads, the switched course and
-  // the new one, which is a synced row; nothing is local.
-  expect(stored.deletes).toBe(queuedAtSwitch)
-  expect(stored.newCourse).toBe(2)
+  // B6: the erase forgot the synced copy and its queue, the switched
+  // course's pending uploads included (reviews DI-B1-1, SC-B1-3), and
+  // recorded the course for the server's erase; the queue holds the new
+  // course alone, a synced row; nothing is local.
+  expect(queuedAtSwitch).toBeGreaterThan(0)
+  expect(stored.deletes).toBe(0)
+  expect(stored.newCourse).toBe(1)
+  expect(stored.serverErasures).toBe(1)
   expect(stored).toMatchObject({
     syncedCourses: 1,
     syncedStudents: 0,
@@ -241,14 +247,20 @@ test("a course file imported on a switched device lands in the synced tables", a
   await openBlankPage(page)
   const result = await harness<Record<string, unknown>>(page, "runSyncedImport")
   record("synced-import", result)
-  // The replaced course is queued for deletion and the imported one for
-  // upload, row for row; nothing reaches the emptied local copy.
+  // The replaced course leaves the queue (B6: the server erases it before
+  // the upload) and the imported one is queued row for row; nothing reaches
+  // the emptied local copy.
+  expect(result.queuedBefore).toBeGreaterThan(0)
   expect(result).toMatchObject({
     identical: true,
     mode: "synced",
     localRows: 0,
-    deletes: result.replaced,
+    deletes: 0,
     puts: result.rows,
+    erasures: [
+      { erase: 1, keep: 0 },
+      { erase: 0, keep: 1 },
+    ],
     // The file carries the data's minimum, so 0.4.0 can still import it; the
     // switched target keeps its own floor.
     fileMinimumWriter: { major: 0, minor: 4, patch: 0 },

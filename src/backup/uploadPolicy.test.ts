@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   classifyUploadFailure,
+  ERASED_COURSE_CODE,
   OUTDATED_WRITER_CODE,
   type UploadOutcome,
 } from "@/backup/uploadPolicy"
@@ -26,6 +27,12 @@ describe("what a failed upload means", () => {
       { status: 400, code: OUTDATED_WRITER_CODE },
       "students",
       { kind: "outdated" },
+    ],
+    [
+      "course erased from the backup on another device",
+      { status: 400, code: ERASED_COURSE_CODE },
+      "courses",
+      refused("erased"),
     ],
     [
       "course id of another account, updated",

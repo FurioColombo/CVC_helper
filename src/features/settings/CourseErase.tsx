@@ -1,8 +1,10 @@
 import { LoaderCircle, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CourseIdentity } from "@/components/CourseIdentity"
+import { ERASURE_RETENTION_TEXT } from "@/backup/erasure"
 import { Button } from "@/components/ui/button"
+import { deviceSyncMode } from "@/persistence/backupLink"
 import { eraseAllCourseData, type CourseRecord } from "@/persistence/courses"
 
 /**
@@ -24,6 +26,19 @@ export function CourseErase({
   const [understood, setUnderstood] = useState(false)
   const [erasing, setErasing] = useState(false)
   const [failed, setFailed] = useState(false)
+  // B6: a synced device erases the course from the backup too.
+  const [synced, setSynced] = useState(false)
+  useEffect(() => {
+    let current = true
+    void deviceSyncMode()
+      .then((mode) => {
+        if (current) setSynced(mode === "synced")
+      })
+      .catch(() => {})
+    return () => {
+      current = false
+    }
+  }, [])
 
   async function eraseCourse() {
     setErasing(true)
@@ -74,9 +89,13 @@ export function CourseErase({
           </p>
           <p className="mt-1 text-sm leading-5">
             Allievi, barche, avarie, volontari, comandate, equipaggi e
-            valutazioni vengono cancellati da questo dispositivo e non si
+            valutazioni vengono cancellati da questo dispositivo
+            {synced && " e dal backup online, appena c’è connessione,"} e non si
             possono recuperare.
           </p>
+          {synced && (
+            <p className="mt-1 text-sm leading-5">{ERASURE_RETENTION_TEXT}</p>
+          )}
           <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold">
             <input
               checked={understood}

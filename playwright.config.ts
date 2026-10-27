@@ -32,6 +32,8 @@ const webkitCoreSpecs = [
   "b1-sync-mode",
   // Sign-in, the switch it starts and its reload, on the iPhone engine (B3).
   "b3-backup-ui",
+  // The erase forgets the synced copy on WebKit's own storage backend (B6).
+  "b6-erase",
   "d1-migration",
   "d2-duty-items",
   "d3-read-only",

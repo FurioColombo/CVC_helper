@@ -26,6 +26,10 @@ import {
 import { prepareDatabase } from "@/persistence/migrations"
 import { resolveCoursePlacements } from "@/persistence/placementConflicts"
 import { COURSE_TABLES } from "@/persistence/schema"
+import {
+  disconnectForErase,
+  eraseSyncedCopy,
+} from "@/persistence/serverErasures"
 import { emptyInactiveLocalCopy, readSyncMode } from "@/persistence/syncMode"
 
 // Explicit columns keep the metadata write harness useful. The archive codec
@@ -118,7 +122,14 @@ export async function importCourseArchive(
 ) {
   const archive = parseCourseArchive(structuredClone(value))
   await prepareDatabase(database)
+  const synced = (await readSyncMode(database)) === "synced"
+  if (synced) await disconnectForErase(database)
   await database.writeTransaction(async (transaction) => {
+    // B6: the replaced course leaves nothing in the synced copy or the
+    // upload queue, and the server erases it before the imported course is
+    // uploaded; nothing is merged. A failure rolls the clearing back too.
+    if (synced)
+      await eraseSyncedCopy(transaction, String(archive.tables.courses[0]!.id))
     for (const table of [...COURSE_TABLES].reverse())
       await transaction.execute(`DELETE FROM ${table}`)
     await emptyInactiveLocalCopy(transaction)

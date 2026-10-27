@@ -43,7 +43,11 @@ describe("the synced schema", () => {
     const others = app.filter(
       ({ name }) => !(COURSE_TABLES as readonly string[]).includes(name),
     )
-    expect(others.map(({ name }) => name)).toEqual(["meta", "uploadRefusals"])
+    expect(others.map(({ name }) => name)).toEqual([
+      "meta",
+      "uploadRefusals",
+      "serverErasures",
+    ])
     for (const table of others)
       expect(synced.find(({ name }) => name === table.name)).toEqual(table)
     expect(synced).toHaveLength(COURSE_TABLES.length * 2 + others.length)

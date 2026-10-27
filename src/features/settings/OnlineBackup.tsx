@@ -8,6 +8,7 @@ import {
 import { type FormEvent, useEffect, useRef, useState } from "react"
 
 import { backupConfig } from "@/backup/config"
+import { ERASURE_RETENTION_TEXT } from "@/backup/erasure"
 import {
   backupState,
   type BackupState,
@@ -369,6 +370,8 @@ const REFUSAL_TEXT: Record<string, string> = {
   data: "Contengono dati che il backup non accetta.",
   missing:
     "Modificano dati che il backup non ha più, forse eliminati da un altro telefono.",
+  erased:
+    "Riguardano un corso eliminato dal backup online da un altro telefono.",
 }
 
 function Connected({
@@ -601,6 +604,9 @@ function Connected({
           </p>
         </>
       )}
+      <p className="mt-3 text-sm leading-5 text-muted-foreground">
+        {ERASURE_RETENTION_TEXT}
+      </p>
     </div>
   )
 }

@@ -28,9 +28,10 @@ import { TOUCH } from "@/persistence/stamp"
 // synced tables copies rows verbatim, their metadata included (B1); the ledger
 // lives in `meta`, the data's own bookkeeping, not a record of a course; the
 // backup's refused changes are kept and sent again verbatim, their metadata
-// included (B4).
+// included (B4). `serverErasures` holds course ids the server must still
+// erase, bookkeeping as `meta` is (B6).
 const NOT_WRITE_PATHS = ["repairs.ts", "syncMode.ts", "uploadRefusals.ts"]
-const UNSTAMPED_TABLES = ["meta"]
+const UNSTAMPED_TABLES = ["meta", "serverErasures"]
 const REPLACE_EXEMPTIONS: Record<string, string> = {
   dutySettings:
     "one row per course; its INSERT OR REPLACE reads the row's own createdAt and updatedAt back in (duties.ts)",

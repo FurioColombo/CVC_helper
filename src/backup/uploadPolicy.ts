@@ -14,9 +14,10 @@ export type UploadOutcome =
  * Why the server refused a change, as Impostazioni says it:
  * `other-account`, the course id is another account's online (B2 review
  * SP-B2-Q5); `access`, the row's course is not this account's (most often
- * because its course was refused first); `data`, the row itself breaks a rule.
+ * because its course was refused first); `data`, the row itself breaks a rule;
+ * `erased`, its course was erased from the backup on another device (B6).
  */
-export type RefusalReason = "other-account" | "access" | "data"
+export type RefusalReason = "other-account" | "access" | "data" | "erased"
 
 export type UploadFailure = {
   /** The PostgREST or Postgres code, empty for a network failure. */
@@ -30,6 +31,9 @@ export const APP_VERSION_HEADER = "x-cvc-app-version"
 
 /** Raised by the server's writer check (supabase/migrations, B4). */
 export const OUTDATED_WRITER_CODE = "CVOLD"
+
+/** Raised for a course erased from the backup (supabase/migrations, B6). */
+export const ERASED_COURSE_CODE = "CVERA"
 
 const RETRY_STATUSES = new Set([0, 401, 408, 425, 429])
 const RETRY_CODES = new Set([
@@ -56,6 +60,7 @@ export function classifyUploadFailure(
   const code = failure.code ?? ""
   const status = failure.status ?? 0
   if (code === OUTDATED_WRITER_CODE) return { kind: "outdated" }
+  if (code === ERASED_COURSE_CODE) return { kind: "refused", reason: "erased" }
   if (RETRY_CODES.has(code)) return { kind: "retry" }
   const access = ACCESS_CODES.has(code) || ACCESS_STATUSES.has(status)
   // A course id taken by another account: its insert conflicts, and the

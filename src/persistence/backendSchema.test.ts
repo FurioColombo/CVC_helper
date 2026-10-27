@@ -3,7 +3,11 @@ import { resolve } from "node:path"
 import { SqlSyncRules } from "@powersync/service-sync-rules"
 import { describe, expect, it, vi } from "vitest"
 
-import { APP_VERSION_HEADER, OUTDATED_WRITER_CODE } from "@/backup/uploadPolicy"
+import {
+  APP_VERSION_HEADER,
+  ERASED_COURSE_CODE,
+  OUTDATED_WRITER_CODE,
+} from "@/backup/uploadPolicy"
 import { SYNCED_SINCE } from "@/domain/compatibility"
 import { AppSchema, COURSE_TABLES } from "@/persistence/schema"
 
@@ -186,5 +190,34 @@ describe("the server's minimum writer", () => {
   it("reads the header the app sends, with the code the app recognises", () => {
     expect(check).toContain(`headers ->> '${APP_VERSION_HEADER}'`)
     expect(check).toContain(`errcode = '${OUTDATED_WRITER_CODE}'`)
+  })
+})
+
+// B6: an erased course stays erased on the server: a course id the owner
+// erased refuses its course row, with the code the app recognises, and the
+// record of it reaches no other account.
+describe("the server's erased courses", () => {
+  const erase = readFileSync(
+    resolve(root, "supabase/migrations/20261028000000_course_erase.sql"),
+    "utf8",
+  )
+
+  it("refuses the course row of an erased course id, with the app's code", () => {
+    expect(erase).toContain("before insert or update on public.courses")
+    expect(erase).toContain(`errcode = '${ERASED_COURSE_CODE}'`)
+    expect(erase).toContain('e.id = new.id and e."ownerId" = new."ownerId"')
+  })
+
+  it("keeps the record to its owner, with no course data", () => {
+    expect(erase).toContain(
+      "alter table public.erased_courses enable row level security",
+    )
+    expect(erase).toContain('using ("ownerId" = auth.uid())')
+    const columns = /create table public\.erased_courses \(([\s\S]*?)\n\);/
+      .exec(erase)![1]!
+      .split("\n")
+      .map((line) => line.trim().split(" ")[0])
+      .filter((name) => name && name !== "primary")
+    expect(columns).toEqual(['"ownerId"', "id", '"erasedAt"'])
   })
 })

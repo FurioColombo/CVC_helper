@@ -75,7 +75,17 @@ latest edit of a row (`supabase/migrations/`), and a delete removes only a row
 nobody edited after the device last saw it. A change the server refuses is
 kept on the device and listed in Impostazioni, never dropped in silence.
 Placement rows take their ids from their natural keys, and the readers and the
-export settle what two phones edited offline on the latest edit. Known gap
+export settle what two phones edited offline on the latest edit. Erasing the
+course, a course file's replacement and the full reset take the course off the
+server too: on a synced device the erase or import transaction forgets the
+whole synced copy (PowerSync's own clear, upload queue and downloaded history
+included) and records the course ids in the local-only `serverErasures`; the
+backup deletes those courses (their rows cascade, no clock involved) before it
+connects, so an offline erase completes with signal and nothing erased is
+downloaded again. The server keeps erased ids and refuses that course
+afterwards (SQLSTATE `CVERA`); a course file imported under such an id is
+accepted again. The full reset, which leaves no account to finish later,
+erases online first and resets nothing without signal. Known gap
 until team editing: a delete leaves no tombstone, so an older edit uploaded
 after it brings the row back (`docs/working/BACKLOG.md`).
 
@@ -284,8 +294,8 @@ The course file has its own format version and the D3 data-version record;
 from a switched device the record carries the data's own minimum (the previous
 minor of its newest writer), not the device's `SYNCED_SINCE` floor, so the
 previous minor version still imports it. In synced mode the erase and the
-import also empty the local copy (§3.1), and their deletions join the upload
-queue. It contains the active course's schema-whitelisted rows with identifiers,
+import also empty the local copy (§3.1) and forget the synced copy, its upload
+queue included; the server's erase follows (§3 Online backup). It contains the active course's schema-whitelisted rows with identifiers,
 timestamps and values intact. Migration bookkeeping and the device's local
 course generation stay out of the file. Import validates the entire file,
 the compatibility contract, stored-row integrity, domain invariants and D2's

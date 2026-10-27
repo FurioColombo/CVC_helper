@@ -5,7 +5,11 @@ import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 import { stamp, TOUCH } from "@/persistence/stamp"
 import { adoptCreatedCourse } from "@/persistence/courseSession"
-import { emptyInactiveLocalCopy } from "@/persistence/syncMode"
+import {
+  disconnectForErase,
+  eraseSyncedCopy,
+} from "@/persistence/serverErasures"
+import { emptyInactiveLocalCopy, readSyncMode } from "@/persistence/syncMode"
 import { compactEmptyCourseDatabase } from "@/persistence/writeGuard"
 
 export type CourseRecord = CourseDetails & {
@@ -85,8 +89,13 @@ export const COURSE_DATA_TABLES = [
 const COURSE_PREFERENCE_PREFIXES = [appChannelConfig.scanNameOrderPrefix]
 
 export async function eraseAllCourseData() {
-  await db.init()
+  await prepareDatabase(db)
+  const synced = (await readSyncMode(db)) === "synced"
+  if (synced) await disconnectForErase(db)
   await db.writeTransaction(async (transaction) => {
+    // B6: the synced copy goes whole, the upload queue's pending changes
+    // included, and the server erases the course once the backup connects.
+    if (synced) await eraseSyncedCopy(transaction)
     // An older app that opened the database meanwhile dropped the tables only
     // newer versions declare, their rows with them (03 §3.1); the erase skips
     // what is gone instead of failing on it (D2 review DP-R2-1).

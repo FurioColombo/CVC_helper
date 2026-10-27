@@ -260,8 +260,17 @@ export async function runSyncedImport() {
 
   database = await openApp(target, hintKey)
   const imported = await readTables(database)
-  const queue = (await queued(database)).slice(queuedBefore)
+  // B6: the import forgot the replaced course's queue; the queue holds the
+  // imported course alone.
+  const queue = await queued(database)
+  const erasures = await database.getAll<{
+    id: string
+    erase: number
+    keep: number
+  }>("SELECT id, erase, keep FROM serverErasures ORDER BY erase DESC")
   const result = {
+    queuedBefore,
+    erasures: erasures.map(({ erase, keep }) => ({ erase, keep })),
     identical: JSON.stringify(imported) === JSON.stringify(expected),
     mode: await readSyncMode(database),
     localRows: await localCopyRows(database),
