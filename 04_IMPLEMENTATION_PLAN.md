@@ -137,7 +137,7 @@ reviews.
 ## UG4 — 0.5.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
-**Status:** IN_PROGRESS
+**Status:** PENDING
 
 `verify:all` on the final source, with the version bumped before the phone
 build is published so one owner check covers the final source (owner
