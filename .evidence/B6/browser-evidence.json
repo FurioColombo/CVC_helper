@@ -11,7 +11,8 @@
         "a full reset erases the backup's copy first; without signal it resets nothing",
         "before the server records erased ids, the erase still deletes the course",
         "an erase made before the server records erased ids is not repeated later (DI-B6-R2-1)",
-        "signing in with a course whose id was erased elsewhere uploads it, accepted again (DI-B6-R2-2)"
+        "signing in with a course whose id was erased elsewhere uploads it, accepted again (DI-B6-R2-2)",
+        "accepting an erased id again waits for the server without holding the backup back: the refused upload is kept for Riprova, and sent once the id is accepted"
       ]
     },
     "tests/e2e/b6-erase-live.spec.ts": {

@@ -206,9 +206,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
     course id merges unasked; DI-B5-4, no invariant sees two active courses
     on a device; DI-B5-R2-Q1, a device that signed out while awaiting the
     account's course needs the account or a full reset to make one;
-  - B6 (`.evidence/B6/`): DI-B6-R2-Q2, another tab shows an erased course
-    until reopened; DI-B6-Q2, a read-only device repeats a pending erase;
-    SP-B6-Q5, an empty synced device compacts at each open;
+  - B6: DI-B6-R2-Q2, another tab shows an erased course until reopened;
+    DI-B6-Q2, a read-only device repeats a pending erase; SP-B6-Q5, compaction
+    at each empty open; FLAKY under load, b4-uploads › the switch uploads…;
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;

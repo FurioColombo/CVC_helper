@@ -440,7 +440,11 @@ test("a refusal arriving after the course was erased is not kept", async ({
   )
   await courseWithStudents(page, ["Ottavia"])
   await signIn(page)
-  await backupSection(page)
+  // The switch's own reopen comes after the sign-in's: tap only once the
+  // backup shows the account, or the reopen wipes the question.
+  await expect(await backupSection(page)).toContainText(
+    "Accesso: istruttore@example.test",
+  )
   await page
     .getByRole("button", { name: "Elimina il corso e inizia un nuovo corso" })
     .click()

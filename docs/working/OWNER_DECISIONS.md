@@ -116,11 +116,15 @@ tutti i dati locali` erases the course from the backup first; without
     and importing a course file work offline: the server's erase completes
     with signal, and only this account on this phone can complete it (Esci
     says so).
-19. **An erased course stays erased (taken, B6).** The server keeps the
+19. **An erased course stays erased (taken, B6; yours, 2026-10-28, for
+    0.5.0).** The server keeps the
     erased course's id (no course data) and refuses that course from any
     phone afterwards, so another phone's late upload cannot bring it back.
     Importing that course's file, or signing in on a phone that holds it and
-    never used the backup, is your explicit choice and is accepted again.
+    never used the backup, is your explicit choice and is accepted again,
+    without a question (review SP-B6-R3-1). You chose the least problematic
+    way for now: later versions keep old courses on the server, and this
+    rule changes with them.
     Until you run the server's part (B6-ERASE-RULES) the erase deletes the
     course without keeping its id. Single deletes inside a course stay under
     decision 16.

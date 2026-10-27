@@ -1,0 +1,63 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B6",
+  "round": 2,
+  "commit": "822cb50",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SP-B6-3",
+      "title": "Single deletes of a person's data still depend on device clocks (accepted)",
+      "evidence": "Unchanged at 822cb50. The whole-course erase is unconditional. A single-row delete still follows the B4 rule, as decisions 16 and 19 record until 1.0.0.",
+      "reproduction": "By construction; see placementConvergence.test.ts.",
+      "specRef": "Owner decisions 16 and 19"
+    },
+    {
+      "id": "SP-B6-4",
+      "title": "The server tombstone still waits for the owner's migration (B6-ERASE-RULES)",
+      "evidence": "The live run skipped the CVERA branch again because erased_courses is not installed. The fix keeps such ids locally with erase = 2 and repeats the delete at each connection until the server can record them (session.ts settleServerErasures, serverErasures.ts markDeletedOnServer). Until the migration runs, another phone's late upsert of the course row can recreate the course. Each later connection of the erasing phone then deletes it again; the phone where it was erased does not download it back, because it deletes before it connects. A signed-out full reset in that window drops the erase = 2 record, so that id never gets a tombstone.",
+      "reproduction": "tests/e2e/b6-erase-live.spec.ts: 3 passed, CVERA branch not run.",
+      "specRef": "Owner decision 19"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B6-Q4",
+      "title": "Under another account, the erase confirmation's 'questo account' is ambiguous",
+      "evidence": "CourseErase.tsx: signedIn leaves out 'other-account', so the text reads 'quando rientri con questo account da questo telefono' while a different account is signed in. The erase completes only under the device's own account.",
+      "reproduction": "Code reading of CourseErase.tsx signedIn and the conditional text.",
+      "specRef": "Review SP-B6-2"
+    },
+    {
+      "id": "SP-B6-Q5",
+      "title": "An empty synced device runs VACUUM at every open",
+      "evidence": "migrations.ts prepareDatabase calls compactEmptyCourseDatabase whenever courseLeftThisDevice is true, which includes a device that is simply empty or restoring, not only one whose course just left. That is cheap on an empty database, but it runs inside the measured startup path.",
+      "reproduction": "Code reading of migrations.ts courseLeftThisDevice and its call in prepareDatabase.",
+      "specRef": "03 startup integration (five-second bounds)"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff b6f6715..822cb50: App.tsx, migrations.ts (courseLeftThisDevice and compaction at open), backupLink.ts, serverErasures.ts (read-only refusal before disconnect, markDeletedOnServer, awaitingServerErase), session.ts (Settled result, OUTDATED_ERASE, stray records, full reset with 'also', reconnectBackup), CourseErase.tsx, CourseFiles.tsx, OnlineBackup.tsx, erasure.ts",
+    "SP-B6-1 re-tested: the new live test 'the account's other phone drops the erased course, and its storage keeps nothing of it' passes against the development backend. It first asserts the synthetic name is in the second phone's raw IndexedDB (positive control), then that it is gone after the erase and reopen. This is the same method as my round-1 probe, which had found the name on that phone.",
+    "SP-B6-2 re-checked by code: the Esci question adds the pending-erase line, Impostazioni shows a status line, the signed-out reset says the erased course stays online and how to remove it, and the erase confirmation is conditional on being signed in. The fake spec covers the status and Esci lines.",
+    "SP-B6-Q1 (reset includes 'error'), SP-B6-Q2 (other phones named; the 7 days is owner decision 17) and SP-B6-Q3 (CVOLD answers 'outdated' with its own message) re-checked by code",
+    "Ran tests/e2e/b6-erase.spec.ts and b6-erase-live.spec.ts on pixel-7-chrome, port 4235: 8 passed",
+    "Vitest: serverErasures, App, CourseFiles, migrations: 51 passed",
+    "Development account 1 empty afterwards (courses 0, students 0); working tree clean"
+  ],
+  "anglesTried": {
+    "seed": 444509512,
+    "lenses": [
+      "Round 2: re-test SP-B6-1 on the other phone's raw storage; check the SP-B6-2 to SP-B6-4 and Q1 to Q3 dispositions and the regressions from the fix (stray-record dropping, erase = 2 repetition, reload condition, compaction at open, reconnect after a failed erase or import)"
+    ],
+    "wildcard": "Round 2: not drawn"
+  },
+  "notTested": [
+    "CVERA and the erased_courses RLS live: the migration has still not been run on the development backend",
+    "A control run with the compaction disabled (the orchestrator reports one; I did not repeat it)",
+    "WebKit/iPhone storage and a physical Android phone",
+    "Startup timing with the compaction at open"
+  ]
+}

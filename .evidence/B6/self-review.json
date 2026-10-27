@@ -24,21 +24,62 @@
   "resolvedFindings": {
     "SP-B6-1": "FIXED (compaction at the open after a course leaves; live two-phone raw-storage test)",
     "SP-B6-2": "FIXED (Impostazioni, Esci, reset and erase confirmation say when an offline erase has not reached the backup)",
-    "SP-B6-Q1": "FIXED", "SP-B6-Q2": "FIXED (other phones named; 7 days stays decision 17)", "SP-B6-Q3": "FIXED", "SP-B6-Q4": "FIXED",
-    "DI-B6-1": "FIXED", "DI-B6-2": "FIXED (read-only refuses before disconnecting; failed erase/import reconnects)", "DI-B6-3": "FIXED",
-    "DI-B6-Q1": "FIXED", "DI-B6-Q3": "FIXED (a record erasing the open course is dropped)", "DI-B6-Q4": "FIXED (warnings)",
-    "DI-B6-R2-1": "FIXED", "DI-B6-R2-2": "FIXED (the switch lifts its course's erased id)"
+    "SP-B6-Q1": "FIXED",
+    "SP-B6-Q2": "FIXED (other phones named; 7 days stays decision 17)",
+    "SP-B6-Q3": "FIXED",
+    "SP-B6-Q4": "FIXED",
+    "DI-B6-1": "FIXED",
+    "DI-B6-2": "FIXED (read-only refuses before disconnecting; failed erase/import reconnects)",
+    "DI-B6-3": "FIXED",
+    "DI-B6-Q1": "FIXED",
+    "DI-B6-Q3": "FIXED (a record erasing the open course is dropped)",
+    "DI-B6-Q4": "FIXED (warnings)",
+    "DI-B6-R2-1": "FIXED",
+    "DI-B6-R2-2": "FIXED (the switch lifts its course's erased id)",
+    "post-review regression": "FIXED in ab995d2 (a failed lift no longer blocks the first connection), checked by the security/privacy round 3"
   },
   "deferredFindings": [
-    { "ids": ["SP-B6-3"], "to": "Accepted: owner decisions 16 and 19 (single deletes until 1.0.0)" },
-    { "ids": ["SP-B6-4", "DI-B6-4"], "to": "Owner action B6-ERASE-RULES (the server's erased-id record); its live check runs after 'erase rules run'" },
-    { "ids": ["DI-B6-R2-Q2", "DI-B6-Q2", "SP-B6-Q5", "DI-B6-R2-Q1"], "to": "docs/working/BACKLOG.md (B6 line)" },
-    { "ids": ["DI-B6-R3-Q1"], "to": "Owner decision 19 (a phone that never used the backup brings its course back at sign-in), to confirm at the owner check" }
+    {
+      "ids": [
+        "SP-B6-3"
+      ],
+      "to": "Accepted: owner decisions 16 and 19 (single deletes until 1.0.0)"
+    },
+    {
+      "ids": [
+        "SP-B6-4",
+        "DI-B6-4"
+      ],
+      "to": "Owner action B6-ERASE-RULES (the server's erased-id record); its live check runs after 'erase rules run'"
+    },
+    {
+      "ids": [
+        "DI-B6-R2-Q2",
+        "DI-B6-Q2",
+        "SP-B6-Q5",
+        "DI-B6-R2-Q1"
+      ],
+      "to": "docs/working/BACKLOG.md (B6 line)"
+    },
+    {
+      "ids": [
+        "DI-B6-R3-Q1",
+        "SP-B6-R3-1",
+        "SP-B6-R3-Q1"
+      ],
+      "to": "Owner decision 19 (owner, 2026-10-28): the course comes back without a question in 0.5.0; later versions keep old courses on the server and revisit it"
+    },
+    {
+      "ids": [
+        "SP-B6-R3-Q2"
+      ],
+      "to": "FIXED: the test tapped before the switch's own reopen; it now waits for the account (5 of 5 green). docs/working/BACKLOG.md files the switch-batches case flaky under load"
+    }
   ],
   "evidenceInspected": [
     "git diff 1477f91..HEAD of B6 (serverErasures.ts, courses.ts, courseArchive.ts, syncMode.ts, migrations.ts, backupLink.ts, session.ts, uploadPolicy.ts, erasure.ts, CourseErase.tsx, CourseFiles.tsx, OnlineBackup.tsx, App.tsx, the migration, specs)",
     "All review rounds in .evidence/B6/",
-    "tests/e2e/b6-erase.spec.ts (7, fake backend) and b6-erase-live.spec.ts (3, development backend, synthetic account)"
+    "tests/e2e/b6-erase.spec.ts (8, fake backend) and b6-erase-live.spec.ts (3, development backend, synthetic account)"
   ],
   "limitations": [
     "The server's erased-id record and its CVERA refusal are verified on the fake backend only until the owner runs supabase/migrations/20261028000000_course_erase.sql (B6-ERASE-RULES)",
