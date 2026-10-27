@@ -347,14 +347,16 @@ function CourseCreation({
   // uploaded it later): the app reopens on it instead of offering a course
   // that could only be refused (reviews SC-B5-4, DI-B5-Q2). A course made
   // here leaves the screen first; a reopen then shows it too.
+  const connected = backup.kind === "connected"
   useEffect(() => {
-    if (!synced) return
+    // Only a connected backup brings a course in from elsewhere.
+    if (!synced || !connected) return
     return onDatabaseStatus(() => {
       void deviceCourseId().then((course) => {
         if (course) window.location.reload()
       })
     })
-  }, [synced])
+  }, [synced, connected])
   const restoring =
     backup.kind === "restoring" || backup.kind === "reopen" || awaiting
   const today = useMemo(() => new Date(), [])
