@@ -356,6 +356,13 @@ try {
     publishedAt: new Date().toISOString(),
   })
   writeFileSync(pinPath, `${JSON.stringify(pin, null, 2)}\n`)
+  // In the repository's own format, or the next commit fails the format
+  // check in CI (seen after the 0.5.1 publication).
+  execFileSync(
+    process.execPath,
+    [join(root, "node_modules/prettier/bin/prettier.cjs"), "--write", pinPath],
+    { cwd: root, stdio: "ignore" },
+  )
   console.log(
     `Published ${version} from ${source} to ${pin.testUrl}; wait for HTTPS smoke verification before READY.`,
   )
