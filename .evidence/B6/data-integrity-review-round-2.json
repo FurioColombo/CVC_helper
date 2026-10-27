@@ -1,0 +1,65 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B6",
+  "round": 2,
+  "commit": "822cb50",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-B6-R2-1",
+      "title": "The fix for DI-B6-4 keeps deleted-but-unrecorded ids as erase = 2 and deletes them on the server again at every connection. That includes a course the owner re-imported and uploaded from another phone.",
+      "evidence": "src/backup/session.ts:342-344 counts every row with a truthy `erase` (1 or 2) as an erase, so `DELETE courses id=in.(...)` runs at each settle. Lines 389-399 keep erase = 2 rows ('awaitingRecord') for as long as erased_courses is not installed, and src/persistence/serverErasures.ts:663-675 sets the value. Nothing ever retires an erase = 2 row except the migration being installed. Once it is installed, the next settle also upserts the id into erased_courses, so the course stays refused (CVERA) from then on. Decision 19 says 'Importing that course's file is your explicit choice and is accepted again'; this violates it, and it adds a new data-loss path that round 1 did not have, because b6f6715 forgot the record after the delete. Fake-backend run (installed: false): erase course X, and the record becomes {erase:2, keep:0}. Another phone puts X and its student back on the server. This phone is reopened with no user action. Output: writes ['DELETE courses <X>', 'POST rpc/app_minimum_writer_version'], then 'server courses: 0 students: 0', with the record still erase:2. The phone holding the import then loses its local copy through the download, where courseLeftThisDevice treats it as erased elsewhere and reloads. This is reachable now on the development backend, where the owner's phone checks run (B6-ERASE-RULES not yet run), and on any backend where a device erased before the migration was installed.",
+      "reproduction": "Throwaway spec built on the tests/e2e/b6-erase.spec.ts helpers: withBackend(page,{installed:false}); courseWithStudent; signIn; waitUntilSent; eraseCourse; wait for erasures == [{erase:2}]; backend.table('courses').set(X, course) and the same for its student; page.reload(); wait 8 s. Expected: the re-imported course stays. Observed: it is deleted again.",
+      "specRef": "docs/working/OWNER_DECISIONS.md 19; 04_IMPLEMENTATION_PLAN.md B6 success predicate"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-B6-R2-2",
+      "title": "Carried from DI-B6-1: a never-synced device that imported a course whose id is in erased_courses, then signs in, still loses that course without notice.",
+      "evidence": "src/persistence/migrations.ts:498-507 treats a refused course row with reason 'erased' as 'left with the backup'. A local device that imports X records no keep (the device is not synced, src/persistence/courseArchive.ts:125). When it switches, X's course row is refused with CVERA, PowerSync reverts the rows, and courseLeftThisDevice then returns true. App.tsx reloads and prepareDatabase deletes the refusals, which held the only copy. This is the explicit import that decision 19 says is accepted again. Not run live, because the CVERA migration is not installed on the development backend.",
+      "reproduction": "Code path; it needs the migration to run live.",
+      "specRef": "OWNER_DECISIONS 19; 03_TECHNICAL_DECISIONS.md §3 ('never dropped in silence')"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B6-R2-Q1",
+      "title": "Every open of an empty synced device runs a write transaction and a VACUUM.",
+      "evidence": "migrations.ts:524-533: courseLeftThisDevice is true whenever there is no course and no non-erased course refusal, which includes a device awaiting restore and a device after an erase. Each launch then runs DELETE FROM uploadRefusals followed by compactEmptyCourseDatabase. This is harmless but repeated work at startup.",
+      "reproduction": "Code reading.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3"
+    },
+    {
+      "id": "DI-B6-R2-Q2",
+      "title": "A second tab keeps showing the erased course after the erase.",
+      "evidence": "Live two-tab run: 15 s after tab 1 erased, tab 2 still showed its heading 'D2 - 44 | 2026' (its backup state was 'checking', not connected). The erase does not broadcast to other tabs. The behaviour predates B6 and also happens on local devices.",
+      "reproduction": "Throwaway live spec: backedUpCourse in page 1, open page 2 in the same context, erase in page 1.",
+      "specRef": "Lens 12"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff b6f6715..822cb50 (src/, tests/e2e/b6-erase*.spec.ts, b4-uploads-live.spec.ts)",
+    "DI-B6-1 re-tested on the live backend with the round-1 other-account probe: refusals stay at 2 through checkpoint and reopen ('after reopen: courses=0 students=0 refusals=2'), no reload loop (3 loads, all from the test). FIXED for non-erased refusals; the 'erased' reason is carried as DI-B6-R2-2.",
+    "DI-B6-2 re-tested live through the UI: a failed import (simulated quota at the inserts) shows 'Il corso non è stato sostituito', then {connected:true, state:'connected'}, and a student added afterwards reached the server. The read-only erase is checked by the code (disconnectForErase throws before disconnecting) and its unit test. FIXED.",
+    "DI-B6-3 re-tested (fake backend, error state planted): the confirmation now reads 'Il corso sarà eliminato anche dal backup online: senza connessione non si azzera nulla.' FIXED.",
+    "DI-B6-4: owner action; its interim fix (erase = 2) causes DI-B6-R2-1.",
+    "DI-B6-Q1 and Q3 checked against the code (session.ts:335-152 region: `also` excluded from keep; stray rows dropped). Q4 texts read in CourseFiles.tsx, OnlineBackup.tsx and CourseErase.tsx.",
+    "Ran vitest serverErasures.test.ts, courses.test.ts, CourseFiles.test.tsx: 23 passed",
+    "Ran b6-erase.spec.ts, b6-erase-live.spec.ts and b4-uploads-live.spec.ts on pixel-7-chrome with retries 0: 11 passed",
+    "All throwaway specs deleted; test accounts 1 and 2 cleared in finally blocks; nothing committed"
+  ],
+  "anglesTried": {
+    "seed": 804010443,
+    "lenses": [
+      "Round 2 (restricted): re-check of DI-B6-1..4 and Q1..Q4 and regressions from the fix diff"
+    ],
+    "wildcard": "Does the erase = 2 'awaiting record' state from the DI-B6-4 fix turn the delete into a standing order that hits a later legitimate re-import?"
+  },
+  "notTested": [
+    "The CVERA trigger and erased_courses on the real backend: migration not installed.",
+    "The stray-record rule (DI-B6-Q3) under a second tab's SharedWorker re-download: in the two-tab run tab 2 never connected.",
+    "WebKit runs of the probes."
+  ]
+}

@@ -427,9 +427,67 @@ test("before the server records erased ids, the erase still deletes the course",
 
   await expect.poll(() => backend.table("courses").size).toBe(0)
   expect(backend.table("students").size).toBe(0)
-  // Deleted, and kept as such until the server can record the id
-  // (review SP-B6-4); no longer an erase still to make.
-  await expect
-    .poll(async () => (await stored(page, [])).erasures)
-    .toEqual([{ id: expect.any(String), erase: 2, keep: 0 }])
+  // Forgotten all the same: a repeated delete could erase a later import
+  // of the course (review DI-B6-R2-1).
+  await expect.poll(async () => (await stored(page, [])).erasures).toEqual([])
+})
+
+// Review DI-B6-R2-1: before the server records erased ids, an erase is not
+// repeated at later connections, so a later import of the course elsewhere
+// stays.
+test("an erase made before the server records erased ids is not repeated later", async ({
+  page,
+}) => {
+  const backend = await withBackend(page, { installed: false })
+  await courseWithStudent(page, "Ginevra")
+  await signIn(page)
+  await waitUntilSent(page, backend)
+  const course = [...backend.table("courses").values()][0]!
+  const student = [...backend.table("students").values()][0]!
+
+  await eraseCourse(page)
+  await expect.poll(() => backend.table("courses").size).toBe(0)
+
+  // Another phone imports the course's file and uploads it again.
+  backend.table("courses").set(course.id, course)
+  backend.table("students").set(student.id, student)
+  backend.writes.length = 0
+  const reopened = page.waitForEvent("load")
+  await page.reload()
+  await reopened
+  await page.waitForTimeout(5_000)
+  expect(backend.writes.filter((write) => write.method === "DELETE")).toEqual(
+    [],
+  )
+  expect(backend.table("courses").size).toBe(1)
+  expect(backend.table("students").size).toBe(1)
+})
+
+// Review DI-B6-R2-2: a phone that never used the backup brings in a course
+// whose id was erased on another phone (its file imported here): signing in
+// is the owner's choice, so the id is accepted again before the upload.
+test("signing in with a course whose id was erased elsewhere uploads it, accepted again", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await courseWithStudent(page, "Ginevra")
+  const courseId = await page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { deviceCourseId } = (await load(
+      "/src/persistence/backupLink.ts",
+    )) as typeof import("../../src/persistence/backupLink")
+    return deviceCourseId()
+  })
+  backend.table("erased_courses").set(courseId!, { id: courseId! })
+
+  await signIn(page)
+  await waitUntilSent(page, backend)
+
+  expect(backend.table("erased_courses").size).toBe(0)
+  expect([...backend.table("courses").keys()]).toEqual([courseId])
+  const order = backend.writes.map((write) => `${write.method} ${write.table}`)
+  expect(order.indexOf("DELETE erased_courses")).toBeLessThan(
+    order.indexOf("POST courses"),
+  )
+  expect((await stored(page, ["Ginevra"])).found).toEqual(["Ginevra"])
 })

@@ -109,25 +109,6 @@ export async function forgetServerErasures(
   })
 }
 
-/**
- * The server deleted these courses but could not yet record their ids (its
- * migration not run): `erase = 2` keeps them for the record, and they no
- * longer count as an erase still to make (`awaitingServerErase`).
- */
-export async function markDeletedOnServer(
-  ids: string[],
-  database: PowerSyncDatabase = db,
-) {
-  if (!ids.length) return
-  await database.writeTransaction(async (transaction) => {
-    for (const id of ids)
-      await transaction.execute(
-        "UPDATE serverErasures SET erase = 2 WHERE id = ? AND erase = 1 AND coalesce(keep, 0) = 0",
-        [id],
-      )
-  })
-}
-
 /** Whether a course erased here is still on the server (not yet erased). */
 export async function awaitingServerErase(database: PowerSyncDatabase = db) {
   await prepareDatabase(database)

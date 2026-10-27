@@ -167,9 +167,15 @@ export function prepareDatabase(
         // (review SP-B6-1). A course whose own row the backup refused is
         // kept for Riprova instead (review DI-B6-1).
         if (synced && (await courseLeftThisDevice(database))) {
-          await database.writeTransaction((transaction) =>
-            transaction.execute("DELETE FROM uploadRefusals"),
+          const [refused] = await database.getAll(
+            "SELECT 1 FROM uploadRefusals LIMIT 1",
           )
+          if (refused)
+            await database.writeTransaction((transaction) =>
+              transaction.execute("DELETE FROM uploadRefusals"),
+            )
+          // Cheap on an empty database, also when nothing left just now
+          // (reviews SP-B6-Q5, DI-B6-R2-Q1).
           await compactEmptyCourseDatabase(database).catch(() => {})
         }
       } catch (error) {

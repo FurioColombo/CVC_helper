@@ -308,6 +308,17 @@ export async function switchToSyncedTables(
             "INSERT OR REPLACE INTO meta(id, value) VALUES (?, 1)",
             [AWAITING_ACCOUNT_COURSE_ID],
           )
+        // B6: the course this device brings into the backup is the owner's
+        // explicit choice, as an import is: a record of its id erased on
+        // another phone is lifted before it uploads, so the server does not
+        // refuse it and the device does not drop it (review DI-B6-R2-2).
+        for (const { id } of await transaction.getAll<{ id: string }>(
+          `SELECT id FROM "${syncedTableName("courses")}"`,
+        ))
+          await transaction.execute(
+            "INSERT OR REPLACE INTO serverErasures(id, erase, keep) VALUES (?, 0, 1)",
+            [id],
+          )
       }
       await advanceCourseGeneration(transaction)
     })

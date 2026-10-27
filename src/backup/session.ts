@@ -14,7 +14,6 @@ import {
   adoptMinimumWriter,
   firstSync,
   forgetServerErasures,
-  markDeletedOnServer,
   openedWithSyncedTables,
   pendingServerErasures,
   awaitingAccountCourse,
@@ -308,8 +307,7 @@ type Settled = "done" | "failed" | "outdated"
  * create the course again (supabase/migrations/20261028000000_course_erase.sql).
  * Each step can be repeated: a failure leaves the record for the next
  * connection. Before the owner installs that migration the delete alone
- * runs, and the erased ids stay recorded here until it can record them too
- * (review SP-B6-4).
+ * runs (review SP-B6-4).
  */
 async function settleServerErasures(
   client: SupabaseClient,
@@ -362,20 +360,12 @@ async function settleServerErasures(
         .in("id", keep)
       if (error && !NOT_INSTALLED.has(error.code)) return refused(error.code)
     }
-    // Without the record on the server, a course erased for good stays
-    // recorded here as deleted: its delete repeats, harmlessly, at each
-    // connection until the server can record it. A read-only device cannot
-    // forget at all; it erases nothing new (review DI-B6-Q2).
-    const awaitingRecord = installed
-      ? []
-      : rows.filter((row) => row.erase && !row.keep)
-    await forgetServerErasures([
-      ...stray,
-      ...rows.filter((row) => !awaitingRecord.includes(row)),
-    ]).catch(() => {})
-    await markDeletedOnServer(awaitingRecord.map(({ id }) => id)).catch(
-      () => {},
-    )
+    // Without the record on the server (its migration not run), the delete
+    // alone happened: the record is forgotten all the same, since repeating
+    // the delete could erase the owner's later import of that course
+    // (review DI-B6-R2-1). A read-only device cannot forget at all; it makes
+    // no new erase (review DI-B6-Q2).
+    await forgetServerErasures([...stray, ...rows]).catch(() => {})
     return "done"
   } catch {
     return "failed"

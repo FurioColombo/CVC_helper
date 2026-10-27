@@ -103,7 +103,9 @@ export function CourseErase({
             {synced &&
               (signedIn
                 ? " e dal backup online, appena c’è connessione,"
-                : " e dal backup online quando rientri con questo account da questo telefono,")}{" "}
+                : backup.kind === "other-account"
+                  ? " e dal backup online quando rientri, da questo telefono, con l’account che lo ha salvato,"
+                  : " e dal backup online quando rientri con questo account da questo telefono,")}{" "}
             e non si possono recuperare.
           </p>
           {synced && (
