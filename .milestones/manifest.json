@@ -1223,7 +1223,7 @@
     {
       "id": "B5",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "B4",
@@ -1266,7 +1266,20 @@
         "tests/e2e/d4-course-files.spec.ts",
         "tests/e2e/d4-local-reset.spec.ts",
         "tests/e2e/d3-read-only.spec.ts"
-      ]
+      ],
+      "agentReady": {
+        "commit": "b06d8e1d68b1755aee59b25f5c87644414ef8075",
+        "sourceDigest": "9977ee9372f3343c3284813691292cd814466d1799810b453d082222c8b6cd47",
+        "evidenceHashes": {
+          ".evidence/B5/verification.json": "a354498306a39beddf710981d17ce10f38f34277154b1c0b96d0c79b4e5a16a0",
+          ".evidence/B5/browser-evidence.json": "5304ff13ee0c73da12a8f652ba3e8191f72d2194c52c341be2c15e4f0cb81bbc",
+          ".evidence/B5/self-review.json": "0b2e4877d51ca030a3290aafc2cc2e2deb7e5fe0caf8ead754a6b26dc01748c3",
+          ".evidence/B5/data-integrity-review.json": "bb50885af058a02e73ddfe289a34044e4fd38738adb630b25e229e456d518cff",
+          ".evidence/B5/sync-chaos-review.json": "aaae09cf60af8925b3d9ba07cb98cc7ba21bf330f8d313b6bd1da0f2034671fb"
+        },
+        "ciRunId": 40439035700,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/40439035700"
+      }
     },
     {
       "id": "B6",

@@ -29,6 +29,7 @@ by `verify:all`, the reviews below and the owner's Android check.
 | B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
 | B4 | Awaiting the owner: refused changes are kept and reported, uploads go as whole rows with the app version, the server keeps the latest edit, and two phones edited offline converge (decision 16 bounds deletes). Reviews passed, CI green at `5e09c8f`; CVC Helper Test 0.5.1. Owner check B4-PHONE-UPLOADS. See `.evidence/B4/`. |
+| B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reviews passed, CI green at `b06d8e1`. CVC Helper Test 0.5.2 follows the B4 check. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 
 ## Execution order
 
@@ -94,7 +95,7 @@ data-integrity and security/privacy reviews.
 ## B5 — Restore on a new device
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 Signing in on a device without a course downloads it and opens it, then
 reopens so the session binds the restored course (SC-B1-Q5); on a device

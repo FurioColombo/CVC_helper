@@ -277,6 +277,28 @@
       "testUrl": null,
       "evidencePath": ".evidence/B5/physical-device-review.json",
       "updatedAt": "2026-10-26T23:48:57.792Z"
+    },
+    {
+      "id": "B5-PHONE-RESTORE",
+      "milestone": "B5",
+      "kind": "DEVICE_CHECK",
+      "title": "Restore your course on an emptied phone, and see the question for another course",
+      "status": "NEEDS_SETUP",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.2 and Copia online aggiornata. Note how many students and notes your invented course has.",
+        "Impostazioni > Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.",
+        "On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.",
+        "Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.",
+        "Optional, on the PC: open the test address in Chrome, create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.",
+        "Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped."
+      ],
+      "expected": "An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.",
+      "testedCommit": "b06d8e1d68b1755aee59b25f5c87644414ef8075",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "evidencePath": ".evidence/B5/physical-device-review.json",
+      "updatedAt": "2026-10-27T03:50:22.552Z"
     }
   ]
 }

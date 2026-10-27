@@ -83,6 +83,31 @@ Use the test address below and the linked device instructions.
 
 **Work affected:** Completion of B5 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
+<a id="b5-phone-restore"></a>
+
+## Restore your course on an emptied phone, and see the question for another course — B5
+
+**State:** Setup needed · Required
+
+**What to do:**
+
+1. Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.2 and Copia online aggiornata. Note how many students and notes your invented course has.
+2. Impostazioni &gt; Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.
+3. On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.
+4. Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.
+5. Optional, on the PC: open the test address in Chrome, create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
+6. Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped.
+
+**Expected:** An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.
+
+**Build:** `b06d8e1d68b1755aee59b25f5c87644414ef8075`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
+
+**Work affected:** Completion of B5 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3
