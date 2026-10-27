@@ -1,0 +1,28 @@
+{
+  "milestone": "B5",
+  "recordedAt": "2026-10-28",
+  "specs": {
+    "tests/e2e/b5-restore.spec.ts": {
+      "backend": "fake (the account holds a course; the sync service out of reach)",
+      "cases": [
+        "an empty device offers the restore and creates nothing while it runs: 'Crea corso' and the course-file import disabled (DI-B5-1)",
+        "a device holding another course asks first, naming the online course, and Annulla keeps it",
+        "replacing erases this device's course, merges nothing, and restores",
+        "a replace whose server check fails erases nothing (DI-B5-2)"
+      ]
+    },
+    "tests/e2e/b5-restore-live.spec.ts": {
+      "backend": "the owner's development backend, synthetic test account 1; skipped without .env",
+      "cases": [
+        "an empty device restores the account's course (two students, a crew with a member, a student on land, an evaluation) and reopens on it; every exported table equals the server's rows (the export validates the course)",
+        "a restore with the server minimum 0.5.0 opens the course writable (the function's answer routed through the real restore)",
+        "a restore with the server minimum 9.0.0 opens the course read-only (fails without the SC-B5-1 fix)"
+      ]
+    },
+    "regression": "B1's switch, B3's and B4's backup specs, course files, local reset and read-only journeys on Chromium and WebKit: 101 passed, 4 skipped (live tests needing the owner's migrations or .env), 0 failed, 0 flaky (verification.json)"
+  },
+  "notCovered": [
+    "The real app_minimum_writer_version function: the owner's B5-MINIMUM-READ",
+    "A restore on the owner's phone: B5-PHONE-RESTORE"
+  ]
+}
