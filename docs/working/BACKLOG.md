@@ -104,7 +104,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
 
 - `b1-sync-mode.spec.ts › a course file imported on a switched device lands in the synced tables`
   — WebKit, B5 runs (2026-10-28): page closed ~6 s in; alone 10/11 (B4's
-  source 5/5); touches no B5 code, likely a WebKit crash under load.
+  source 5/5); touches no B5 code, likely a WebKit crash under load. B6's
+  run (2026-10-28): the same "page closed" in `› switches a 0.1.0 course…`.
 
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
   — WebKit, B3's recorded run (2026-10-26, 12 min): the course heading did
@@ -208,7 +209,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
     account's course needs the account or a full reset to make one;
   - B6: DI-B6-R2-Q2, another tab shows an erased course until reopened;
     DI-B6-Q2, a read-only device repeats a pending erase; SP-B6-Q5, compaction
-    at each empty open; FLAKY under load, b4-uploads › the switch uploads…;
+    at each empty open; b4-uploads › the switch uploads… flaky under load;
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;

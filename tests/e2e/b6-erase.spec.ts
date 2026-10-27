@@ -517,6 +517,19 @@ test("accepting an erased id again waits for the server without holding the back
   backend.state.liftRefused = true
 
   await signIn(page)
+  // Untouched until the switch and its first connection ran, as after the
+  // emailed link; a tap earlier would only defer the switch (B3).
+  await expect
+    .poll(
+      // The switch reopens the app meanwhile: a read cut short reads again.
+      () =>
+        stored(page, []).then(
+          ({ erasures }) => erasures,
+          () => null,
+        ),
+      { timeout: 30_000 },
+    )
+    .toEqual([{ id: courseId, erase: 0, keep: 1 }])
   await settings(page)
   const section = page.getByRole("region", { name: "Backup online" })
   await expect(section).toContainText("Accesso: istruttore@example.test")
@@ -524,9 +537,6 @@ test("accepting an erased id again waits for the server without holding the back
     "Riguardano un corso eliminato dal backup online da un altro telefono.",
     { timeout: 30_000 },
   )
-  expect(await stored(page, [])).toMatchObject({
-    erasures: [{ id: courseId, erase: 0, keep: 1 }],
-  })
 
   backend.state.liftRefused = false
   const reopened = page.waitForEvent("load")
