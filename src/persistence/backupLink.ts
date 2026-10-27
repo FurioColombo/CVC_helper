@@ -133,6 +133,7 @@ export function disconnectDatabase() {
 export {
   awaitingServerErase,
   forgetServerErasures,
+  keepForLater,
   pendingServerErasures,
   type ServerErasures,
 } from "@/persistence/serverErasures"

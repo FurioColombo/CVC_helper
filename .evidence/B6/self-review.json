@@ -1,0 +1,48 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B6",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B6-1",
+      "title": "Process: I checked the erasing phone's storage, not the account's other phone",
+      "evidence": "SP-B6-1 found the erased course in the raw storage of a second phone that lost it through the download. The erase path compacted; the download path did not. The open after a course leaves now compacts, and a live two-phone test scans the second phone's raw IndexedDB, with a control run (compaction disabled) that fails.",
+      "reproduction": "tests/e2e/b6-erase-live.spec.ts, 'the account's other phone drops the erased course, and its storage keeps nothing of it'.",
+      "specRef": "04 B6 success predicate"
+    },
+    {
+      "id": "SELF-B6-2",
+      "title": "Process: a cleanup keyed on 'no course' was broader than the case it served, twice",
+      "evidence": "DI-B6-1: dropping refusals whenever no course is left also dropped a course whose own row the server refused. DI-B6-R2-1: my interim fix for the missing migration turned one delete into a standing order. Both were reproduced by the reviewer and are now covered: courseLeftThisDevice keeps a refused own course; the record is forgotten once its delete ran (fake test 'not repeated later').",
+      "reproduction": "tests/e2e/b4-uploads-live.spec.ts (other-account case), tests/e2e/b6-erase.spec.ts.",
+      "specRef": "03 §3 Online backup ('never dropped in silence')"
+    }
+  ],
+  "qolFindings": [],
+  "resolvedFindings": {
+    "SP-B6-1": "FIXED (compaction at the open after a course leaves; live two-phone raw-storage test)",
+    "SP-B6-2": "FIXED (Impostazioni, Esci, reset and erase confirmation say when an offline erase has not reached the backup)",
+    "SP-B6-Q1": "FIXED", "SP-B6-Q2": "FIXED (other phones named; 7 days stays decision 17)", "SP-B6-Q3": "FIXED", "SP-B6-Q4": "FIXED",
+    "DI-B6-1": "FIXED", "DI-B6-2": "FIXED (read-only refuses before disconnecting; failed erase/import reconnects)", "DI-B6-3": "FIXED",
+    "DI-B6-Q1": "FIXED", "DI-B6-Q3": "FIXED (a record erasing the open course is dropped)", "DI-B6-Q4": "FIXED (warnings)",
+    "DI-B6-R2-1": "FIXED", "DI-B6-R2-2": "FIXED (the switch lifts its course's erased id)"
+  },
+  "deferredFindings": [
+    { "ids": ["SP-B6-3"], "to": "Accepted: owner decisions 16 and 19 (single deletes until 1.0.0)" },
+    { "ids": ["SP-B6-4", "DI-B6-4"], "to": "Owner action B6-ERASE-RULES (the server's erased-id record); its live check runs after 'erase rules run'" },
+    { "ids": ["DI-B6-R2-Q2", "DI-B6-Q2", "SP-B6-Q5", "DI-B6-R2-Q1"], "to": "docs/working/BACKLOG.md (B6 line)" },
+    { "ids": ["DI-B6-R3-Q1"], "to": "Owner decision 19 (a phone that never used the backup brings its course back at sign-in), to confirm at the owner check" }
+  ],
+  "evidenceInspected": [
+    "git diff 1477f91..HEAD of B6 (serverErasures.ts, courses.ts, courseArchive.ts, syncMode.ts, migrations.ts, backupLink.ts, session.ts, uploadPolicy.ts, erasure.ts, CourseErase.tsx, CourseFiles.tsx, OnlineBackup.tsx, App.tsx, the migration, specs)",
+    "All review rounds in .evidence/B6/",
+    "tests/e2e/b6-erase.spec.ts (7, fake backend) and b6-erase-live.spec.ts (3, development backend, synthetic account)"
+  ],
+  "limitations": [
+    "The server's erased-id record and its CVERA refusal are verified on the fake backend only until the owner runs supabase/migrations/20261028000000_course_erase.sql (B6-ERASE-RULES)",
+    "The owner's phone check (B6-PHONE-ERASE) follows the B4 and B5 checks",
+    "The provider backup retention (7 days) is the owner's decision 17 for the production plan"
+  ]
+}

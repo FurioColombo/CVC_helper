@@ -1,0 +1,39 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B6",
+  "round": 3,
+  "commit": "d528fad",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-B6-R3-Q1",
+      "title": "A phone that never used the backup and still holds an erased course brings that course back when it signs in. This is now intended (decision 19), not an accident.",
+      "evidence": "src/persistence/syncMode.ts:311-321 records keep = 1 for every course copied at the switch. The first settle then lifts the server's erased_courses record and the course uploads. That covers DI-B6-R2-2 (the owner imported the course's file on a fresh phone). It also covers a second 0.4-mode phone that simply kept the old course: its first sign-in after the erase restores the course online, and the owner is not asked. docs/working/OWNER_DECISIONS.md 19 now says so explicitly ('signing in on a phone that holds it and never used the backup ... is accepted again'), so this is a recorded owner trade-off rather than a defect. It is worth confirming with the owner at the B6 or UG4 owner check.",
+      "reproduction": "Code reading; the fake test 'signing in with a course whose id was erased elsewhere uploads it, accepted again' passes and shows the behaviour.",
+      "specRef": "OWNER_DECISIONS 19"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff 822cb50..d528fad (session.ts, serverErasures.ts, syncMode.ts, migrations.ts, CourseErase.tsx, backupLink.ts, OWNER_DECISIONS.md, tests/e2e/b6-erase.spec.ts)",
+    "DI-B6-R2-1 re-tested: markDeletedOnServer and the erase = 2 state are removed, and settleServerErasures now forgets every record once its delete has run (session.ts:363-368). The new fake test 'an erase made before the server records erased ids is not repeated later' runs my round-2 reproduction (the course is re-added on the server and the phone reopened) and asserts no DELETE and the course and its student kept. Passed. FIXED.",
+    "DI-B6-R2-2 re-tested: the switch records keep = 1 for the copied courses (syncMode.ts:311-321). Keep rows are never treated as stray in settle, and the first settle runs DELETE erased_courses before the upload. The new fake test 'signing in with a course whose id was erased elsewhere uploads it, accepted again' checks that order, the course on the server and the local data kept. Passed. FIXED; the remaining policy question is QoL DI-B6-R3-Q1.",
+    "DI-B6-R2-Q1: migrations.ts:170-179 now deletes refusals only when there are any; the VACUUM stays, which the coordinator accepted. DI-B6-R2-Q2 goes to the backlog.",
+    "Regressions: vitest src/persistence: 421 passed, 1 expected fail.",
+    "Playwright pixel-7-chrome, retries 0: b6-erase.spec.ts (7), b6-erase-live.spec.ts (3, live development backend) and b1-sync-mode.spec.ts (12, the switch path that now writes serverErasures): 22 passed.",
+    "No throwaway specs were needed this round; nothing committed; the live specs clear test account data themselves."
+  ],
+  "anglesTried": {
+    "seed": 804010443,
+    "lenses": [
+      "Round 3 (restricted): re-check of DI-B6-R2-1 and DI-B6-R2-2 and regressions from the fix diff"
+    ],
+    "wildcard": "Does keep = 1 written at the switch interact with the stray-record rule or with the other-account case? It does not: keep rows are never stray, and lifting another account's id is a no-op under RLS."
+  },
+  "notTested": [
+    "The CVERA trigger and erased_courses on the real backend: migration B6-ERASE-RULES still not installed, so DELETE erased_courses before upload was checked only on the fake backend.",
+    "WebKit runs of the fix tests."
+  ]
+}

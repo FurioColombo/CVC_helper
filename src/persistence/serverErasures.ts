@@ -109,6 +109,25 @@ export async function forgetServerErasures(
   })
 }
 
+/**
+ * Courses whose old rows the server erased but which it could not yet
+ * accept again: only the acceptance is asked again, never the erase, which
+ * would now remove the course uploaded since (review DI-B6-R2-1).
+ */
+export async function keepForLater(
+  rows: ServerErasures["rows"],
+  database: PowerSyncDatabase = db,
+) {
+  if (!rows.length) return
+  await database.writeTransaction(async (transaction) => {
+    for (const { id } of rows)
+      await transaction.execute(
+        "UPDATE serverErasures SET erase = 0 WHERE id = ? AND keep = 1",
+        [id],
+      )
+  })
+}
+
 /** Whether a course erased here is still on the server (not yet erased). */
 export async function awaitingServerErase(database: PowerSyncDatabase = db) {
   await prepareDatabase(database)

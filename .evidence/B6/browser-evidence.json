@@ -1,0 +1,31 @@
+{
+  "milestone": "B6",
+  "recordedAt": "2026-10-28",
+  "specs": {
+    "tests/e2e/b6-erase.spec.ts": {
+      "backend": "fake, with the server's rules (cascade, erased ids refused with CVERA); Chromium and WebKit",
+      "cases": [
+        "an erase takes the course off the server (unconditional delete, app version sent, id recorded) and leaves nothing of it in ps_crud, ps_oplog, ps_untyped, uploadRefusals or the views",
+        "offline, an erase leaves nothing here, unsent changes included; Impostazioni and Esci say the erase is still to reach the backup; with signal it completes, before the new course uploads",
+        "a course file of the same course replaces it on the server: old rows erased, the id accepted again, then the file's course uploaded",
+        "a full reset erases the backup's copy first; without signal it resets nothing",
+        "before the server records erased ids, the erase still deletes the course",
+        "an erase made before the server records erased ids is not repeated later (DI-B6-R2-1)",
+        "signing in with a course whose id was erased elsewhere uploads it, accepted again (DI-B6-R2-2)"
+      ]
+    },
+    "tests/e2e/b6-erase-live.spec.ts": {
+      "backend": "the owner's development backend, synthetic test account 1; skipped without .env",
+      "cases": [
+        "an erase takes the course and its rows off the server; the empty device stays empty once connected (the CVERA branch runs once the owner's migration is in)",
+        "an erase made with the backend out of reach leaves the server copy until Riprova, then erases it",
+        "the account's other phone drops the erased course, and its raw IndexedDB keeps nothing of it (fails with the compaction disabled: control run)"
+      ]
+    },
+    "regression": "B1's switch, B3's, B4's and B5's backup specs (fake and live), course files, local reset and read-only journeys on Chromium and WebKit: see verification.json"
+  },
+  "notCovered": [
+    "The server's erased-id record live: owner action B6-ERASE-RULES",
+    "An erase on the owner's phone: B6-PHONE-ERASE"
+  ]
+}

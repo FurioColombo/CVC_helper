@@ -19,9 +19,8 @@ leaves a device:
   legal basis: the owner considers the students' signed release sufficient
   and is still to confirm that it covers this service;
 - **the retention period**: how long a course stays online after it ends;
-- **deletion on the server and in its backups**: erasing a course must also
-  remove it from the provider's backups within a stated time, not only from
-  the live tables;
+- **the provider's backups**: B6 states they keep an erased course "at most
+  7 days" (decision 17); confirm it for the production plan;
 - **the speech model files**: today each device downloads them once from
   Hugging Face (pinned revision); a shared deployment may serve them itself.
 
@@ -193,12 +192,10 @@ Each passed only on a retry and is a defect to fix (03 §6).
   only locally (a refresh already retrying may still exchange it); revoke it
   on the server when online.
 - **A custom email sender before production** (B3, 2026-10-26): Supabase's
-  built-in sender only delivers to the project's team, a few emails an hour,
-  and its templates cannot be edited, so the sign-in email carries no code
-  and Impostazioni's "Codice dell’email" field leads nowhere until the owner
-  sets up SMTP (owner action B3-EMAIL-CODE). Before UG4: the sender, the code
-  in the template, or hide the field while the email has no code.
-- B4 review follow-ups (`.evidence/B4/`; SP-B4-3 is in the plan's B6):
+  sender reaches only the team, a few emails an hour, with fixed templates:
+  no code in the email, so "Codice dell’email" leads nowhere until SMTP
+  (B3-EMAIL-CODE). Before UG4: the sender and code, or hide the field.
+- B4 review follow-ups (`.evidence/B4/`; SP-B4-3: decisions 16 and 19):
   - a delete leaves no tombstone: an older whole-row edit uploaded after a
     later delete of the same row brings it back (the expected failure in
     `placementConvergence.test.ts`, SC-B4-8). Record deletion times on the
@@ -209,6 +206,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
     course id merges unasked; DI-B5-4, no invariant sees two active courses
     on a device; DI-B5-R2-Q1, a device that signed out while awaiting the
     account's course needs the account or a full reset to make one;
+  - B6 (`.evidence/B6/`): DI-B6-R2-Q2, another tab shows an erased course
+    until reopened; DI-B6-Q2, a read-only device repeats a pending erase;
+    SP-B6-Q5, an empty synced device compacts at each open;
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;

@@ -197,7 +197,10 @@ test("the switch uploads the course in batches, each write naming the app versio
     .poll(() => writes.filter(({ table }) => table === "students").length)
     .toBeGreaterThan(0)
   // Parents first, the students in one request, every write with a version.
-  expect(writes[0]?.table).toBe("courses")
+  // B6: before them, the switch's course may lift an erased-id record.
+  expect(writes.find(({ table }) => table !== "erased_courses")?.table).toBe(
+    "courses",
+  )
   const students = writes.filter(({ table }) => table === "students")
   expect(students).toHaveLength(1)
   expect(students[0]!.rows.map((row) => row.firstName).sort()).toEqual([

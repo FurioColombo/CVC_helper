@@ -106,7 +106,8 @@ const prepared = new WeakMap<PowerSyncDatabase, Promise<DataAccess>>()
 /**
  * B6: no course on this synced device, and no refused course row other than
  * an erased one: the course, if there was one, left with the backup (erased
- * on another phone), not refused from this one.
+ * on another phone), not refused from this one. A course this device brings
+ * back under an erased id, not yet accepted again, is refused, not left.
  */
 export async function courseLeftThisDevice(
   database: Pick<PowerSyncDatabase, "getAll">,
@@ -114,7 +115,10 @@ export async function courseLeftThisDevice(
   const [course] = await database.getAll("SELECT 1 FROM courses LIMIT 1")
   if (course) return false
   const kept = await database.getAll(
-    "SELECT 1 FROM uploadRefusals WHERE tableName = 'courses' AND coalesce(reason, '') <> 'erased' LIMIT 1",
+    `SELECT 1 FROM uploadRefusals r WHERE r.tableName = 'courses' AND (
+       coalesce(r.reason, '') <> 'erased'
+       OR EXISTS (SELECT 1 FROM serverErasures e WHERE e.id = r.rowId AND e.keep = 1)
+     ) LIMIT 1`,
   )
   return kept.length === 0
 }

@@ -54,7 +54,7 @@ async function withBackend(page: Page, { installed = true } = {}) {
     if (!server.has(name)) server.set(name, new Map())
     return server.get(name)!
   }
-  const state = { reachable: true }
+  const state = { reachable: true, liftRefused: false }
   await page.addInitScript((url) => {
     window.__cvcBackupConfig = {
       supabaseUrl: url,
@@ -77,6 +77,12 @@ async function withBackend(page: Page, { installed = true } = {}) {
     const name = url.pathname.slice("/rest/v1/".length)
     if (name === "erased_courses" && !installed)
       return json({ code: "PGRST205", message: "not found" }, 404)
+    if (
+      name === "erased_courses" &&
+      request.method() === "DELETE" &&
+      state.liftRefused
+    )
+      return json({ message: "unavailable" }, 503)
     const rows = table(name)
     const ids = idsOf(url.searchParams.get("id"))
     if (request.method() === "GET")
@@ -490,4 +496,46 @@ test("signing in with a course whose id was erased elsewhere uploads it, accepte
     order.indexOf("POST courses"),
   )
   expect((await stored(page, ["Ginevra"])).found).toEqual(["Ginevra"])
+})
+
+// A course accepted again never holds the backup back: refused once, the
+// acceptance is asked again at the next connection, and the course's refused
+// upload is kept for Riprova meanwhile, not dropped.
+test("accepting an erased id again waits for the server without holding the backup back", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await courseWithStudent(page, "Ginevra")
+  const courseId = await page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { deviceCourseId } = (await load(
+      "/src/persistence/backupLink.ts",
+    )) as typeof import("../../src/persistence/backupLink")
+    return deviceCourseId()
+  })
+  backend.table("erased_courses").set(courseId!, { id: courseId! })
+  backend.state.liftRefused = true
+
+  await signIn(page)
+  await settings(page)
+  const section = page.getByRole("region", { name: "Backup online" })
+  await expect(section).toContainText("Accesso: istruttore@example.test")
+  await expect(section.getByRole("alert")).toContainText(
+    "Riguardano un corso eliminato dal backup online da un altro telefono.",
+    { timeout: 30_000 },
+  )
+  expect(await stored(page, [])).toMatchObject({
+    erasures: [{ id: courseId, erase: 0, keep: 1 }],
+  })
+
+  backend.state.liftRefused = false
+  const reopened = page.waitForEvent("load")
+  await page.reload()
+  await reopened
+  await expect.poll(() => backend.table("erased_courses").size).toBe(0)
+  await settings(page)
+  await section.getByRole("button", { name: "Riprova l’invio" }).click()
+  await expect.poll(() => backend.table("courses").size).toBe(1)
+  await expect.poll(() => backend.table("students").size).toBe(1)
+  expect((await stored(page, [])).erasures).toEqual([])
 })

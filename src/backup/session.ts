@@ -14,6 +14,7 @@ import {
   adoptMinimumWriter,
   firstSync,
   forgetServerErasures,
+  keepForLater,
   openedWithSyncedTables,
   pendingServerErasures,
   awaitingAccountCourse,
@@ -353,19 +354,29 @@ async function settleServerErasures(
       const { error } = await client.from("courses").delete().in("id", erase)
       if (error) return refused(error.code)
     }
+    // Accepting a course again never holds the backup back: a server out of
+    // reach or refusing it now is asked again at the next connection, and
+    // meanwhile a refusal of that course is kept for Riprova, not dropped
+    // (src/persistence/migrations.ts courseLeftThisDevice).
+    let lifted = true
     if (keep.length && installed) {
       const { error } = await client
         .from("erased_courses")
         .delete()
         .in("id", keep)
-      if (error && !NOT_INSTALLED.has(error.code)) return refused(error.code)
+      if (error && !NOT_INSTALLED.has(error.code)) lifted = false
     }
     // Without the record on the server (its migration not run), the delete
     // alone happened: the record is forgotten all the same, since repeating
     // the delete could erase the owner's later import of that course
     // (review DI-B6-R2-1). A read-only device cannot forget at all; it makes
     // no new erase (review DI-B6-Q2).
-    await forgetServerErasures([...stray, ...rows]).catch(() => {})
+    await forgetServerErasures([
+      ...stray,
+      ...rows.filter((row) => lifted || !row.keep),
+    ]).catch(() => {})
+    if (!lifted)
+      await keepForLater(rows.filter((row) => row.keep)).catch(() => {})
     return "done"
   } catch {
     return "failed"
