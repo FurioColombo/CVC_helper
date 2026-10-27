@@ -103,9 +103,8 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 Each passed only on a retry and is a defect to fix (03 §6).
 
 - `b1-sync-mode.spec.ts › a course file imported on a switched device lands in the synced tables`
-  — WebKit, B5 runs (2026-10-28): page closed ~6 s in; alone 10/11 (B4's
-  source 5/5); touches no B5 code, likely a WebKit crash under load. B6's
-  run (2026-10-28): the same "page closed" in `› switches a 0.1.0 course…`.
+  — WebKit, B5 and B6 runs: page closed ~6 s in, alone 10/11; also once in
+  `› switches a 0.1.0 course…` (B6). Likely a WebKit crash under load.
 
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
   — WebKit, B3's recorded run (2026-10-26, 12 min): the course heading did
