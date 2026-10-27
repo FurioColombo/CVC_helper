@@ -297,6 +297,8 @@ test("offline, an erase leaves nothing here, unsent changes included, and comple
   })
   expect(backend.table("courses").size).toBe(1)
   // A new course made meanwhile waits too, and goes up after the erase.
+  // Impostazioni says the erase is still to make, and Esci warns that only
+  // this account on this phone can finish it (review SP-B6-2).
   await page.getByRole("button", { name: "Deriva", exact: true }).click()
   await page.getByRole("button", { name: "Livello 2", exact: true }).click()
   await page.getByRole("button", { name: "Crea corso", exact: true }).click()
@@ -304,10 +306,23 @@ test("offline, an erase leaves nothing here, unsent changes included, and comple
     page.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
   ).toBeVisible()
 
-  backend.state.reachable = true
   await settings(page)
   const section = page.getByRole("region", { name: "Backup online" })
+  // The phone offline: the backup waits, saying what is still to erase.
+  await page.context().setOffline(true)
   await section.getByRole("button", { name: "Riprova", exact: true }).click()
+  await expect(section).toContainText(
+    "il corso eliminato qui è ancora nel backup online",
+  )
+  await section.getByRole("button", { name: "Esci", exact: true }).click()
+  await expect(section.getByRole("alertdialog")).toContainText(
+    "sarà tolto solo quando rientri con questo account da questo telefono",
+  )
+  await section.getByRole("button", { name: "Resta collegato" }).click()
+
+  // Signal back: the erase completes by itself.
+  backend.state.reachable = true
+  await page.context().setOffline(false)
   await expect(section).toContainText("Accesso: istruttore@example.test")
   await expect.poll(() => backend.table("erased_courses").size).toBe(1)
   await expect
@@ -412,5 +427,9 @@ test("before the server records erased ids, the erase still deletes the course",
 
   await expect.poll(() => backend.table("courses").size).toBe(0)
   expect(backend.table("students").size).toBe(0)
-  await expect.poll(async () => (await stored(page, [])).erasures).toEqual([])
+  // Deleted, and kept as such until the server can record the id
+  // (review SP-B6-4); no longer an erase still to make.
+  await expect
+    .poll(async () => (await stored(page, [])).erasures)
+    .toEqual([{ id: expect.any(String), erase: 2, keep: 0 }])
 })

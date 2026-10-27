@@ -85,7 +85,10 @@ connects, so an offline erase completes with signal and nothing erased is
 downloaded again. The server keeps erased ids and refuses that course
 afterwards (SQLSTATE `CVERA`); a course file imported under such an id is
 accepted again. The full reset, which leaves no account to finish later,
-erases online first and resets nothing without signal. Known gap
+erases online first and resets nothing without signal. Another phone of the
+account loses the course with the download, reopens without it and compacts
+its database at that open; a course whose own row the server refused stays
+there, with its refused changes, for Riprova. Known gap
 until team editing: a delete leaves no tombstone, so an older edit uploaded
 after it brings the row back (`docs/working/BACKLOG.md`).
 

@@ -2,7 +2,7 @@ import type { PowerSyncBackendConnector } from "@powersync/web"
 
 import { db } from "@/persistence/db"
 import { expectsSyncedTables } from "@/persistence/openedSchema"
-import { prepareDatabase } from "@/persistence/migrations"
+import { courseLeftThisDevice, prepareDatabase } from "@/persistence/migrations"
 import {
   accountMark,
   AWAITING_ACCOUNT_COURSE_ID,
@@ -131,7 +131,9 @@ export function disconnectDatabase() {
 }
 
 export {
+  awaitingServerErase,
   forgetServerErasures,
+  markDeletedOnServer,
   pendingServerErasures,
   type ServerErasures,
 } from "@/persistence/serverErasures"
@@ -153,6 +155,16 @@ export async function pendingUploads() {
     "SELECT count(*) AS n FROM ps_crud",
   )
   return row?.n ?? 0
+}
+
+/**
+ * B6: the course erased on another phone left this one with the backup's
+ * download; the app then reopens without it (src/App.tsx). A course whose
+ * own row the backup refused is not that: it stays for Riprova.
+ */
+export async function courseLeftWithBackup() {
+  await prepareDatabase(db)
+  return courseLeftThisDevice(db)
 }
 
 export function databaseConnected() {

@@ -1,0 +1,97 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B6",
+  "commit": "b6f6715",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-B6-1",
+      "title": "The open-time sweep deletes every upload refusal whenever the device has no course row. That includes a course whose own row the server refused, so the course's only remaining copy is destroyed without notice.",
+      "evidence": "src/persistence/migrations.ts:144-157 deletes all uploadRefusals when `NOT EXISTS (SELECT 1 FROM courses)`. src/App.tsx:941-953 reloads the app as soon as the backup is connected and no active course is found, so the sweep runs within seconds. The condition is broader than the stated case ('a course erased on another phone'). When the server refuses a course row ('other-account', 'data', or 'erased' with SQLSTATE CVERA), PowerSync reverts the locally created rows at the next checkpoint, so `courses` is empty and the refused changes in uploadRefusals hold the only copy of the course. B6 then deletes them. This contradicts 03_TECHNICAL_DECISIONS.md §3 Online backup: 'A change the server refuses is kept on the device and listed in Impostazioni, never dropped in silence.' Live run (development backend, synthetic accounts 1 and 2, cleared afterwards), probe copied from the B4 other-account scenario. HEAD output: '0s courses=1 students=1 refusals=2' then '5s courses=0 students=0 refusals=0', and after reopening 'courses=0 refusals=0'; the device shows 'Crea il corso'. Control: the same probe with only the migrations.ts `DELETE FROM uploadRefusals` swapped for `SELECT 1` through a Playwright route. Output: 'courses=0 refusals=2' throughout and after reopening. So the course is still reverted, but its data survive and can be sent again (retryUploadRefusals). The existing regression test tests/e2e/b4-uploads-live.spec.ts 'a course id held by another account is refused, kept and reported' failed in 3 of 4 runs at HEAD: once on the official spec ('Il corso risulta già di un altro account online': element not found) and twice on an identical copy. Its outcome depends on timing, so it is not a clean attribution on its own; the probe/control pair is the evidence. The same loss follows for a never-synced device that imported or kept a course whose id is in public.erased_courses and then signs in: CVERA refusal, revert, reload, sweep. That path was not run live, because the CVERA migration is not installed on the development backend.",
+      "reproduction": "Throwaway live spec (deleted after the run): account 2 POSTs a course with the device's course id. The device (account 1) signs in, switches and reloads. Poll uploadRefusals until it is not empty, then sample `SELECT count(*)` from courses, students and uploadRefusals every 5 s, then reload. Expected: the refused changes are still on the device and listed in Impostazioni. Observed: refusals=0 within 5 s and no course data left anywhere on the device.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3 Online backup ('never dropped in silence'); 04_IMPLEMENTATION_PLAN.md B6 success predicate (erase/replace only the removed course)"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-B6-2",
+      "title": "When an erase or import fails after disconnectForErase, the backup stays disconnected while it still reports connected. Nothing is uploaded or downloaded until the app is reopened.",
+      "evidence": "src/persistence/courseArchive.ts:125-126 and src/persistence/courses.ts:93-94 disconnect before the write transaction, and nothing reconnects when the transaction throws. src/backup/session.ts:250 skips settling and connecting while the module flag `connected` is still true, and the 'online' listener (session.ts:644-647) acts only from the offline or error states. Two live runs. (a) Import with one simulated QuotaExceededError at the inserts: before the import the database reported connected:true; afterwards connected:false, while backupState() still returned 'connected'. A student added through the UI afterwards was still not on the server 30 s later (server students 1, pending 1). Impostazioni showed 'In attesa di connessione: 1 modifica da inviare' with the device online, and offered no Riprova. The import error message says 'Nessun dato è cambiato; riprova'. (b) The same on a read-only device (markReadOnly): 'Elimina il corso' stays offered, the erase is refused inside the guarded transaction, and the result is connected:false, state 'connected', with no download for 20 s. Lens 11 applies: a full disk during an import silently stops the backup.",
+      "reproduction": "Throwaway live specs: backedUpCourse, then either wrap db.writeTransaction once so that executeBatch throws and call importCourseArchive(exportCourseArchive()), or call markReadOnly(db) and tap Elimina il corso → Elimina tutto. Then add a student via the UI and poll the server.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 adversarial checklist (interruption); 01_PRODUCT_SPEC.md ('Failure changes nothing')"
+    },
+    {
+      "id": "DI-B6-3",
+      "title": "In the backup's 'error' state the full reset tells the user the online copy stays, then erases it.",
+      "evidence": "src/features/settings/CourseFiles.tsx:367-371 treats only connected, offline and restoring as signed in, so in the error state it shows 'La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso.' src/backup/session.ts:352-358 does include 'error' and runs settleServerErasures(client, [course]). The fake-backend run had the error state planted through setBackupState, which is reachable through resumeBackup's catch and a failed settle while online. The confirmation showed the 'resta' sentence; after 'Azzera i dati' the server had courses: 0, students: 0. The user is left with no local copy and no online copy after being told one would remain.",
+      "reproduction": "Throwaway spec built on b6-erase.spec helpers: course, signIn, waitUntilSent, setBackupState({kind:'error'}), Impostazioni → Azzera tutti i dati locali; read the text, confirm, then check backend.table('courses').size.",
+      "specRef": "01_PRODUCT_SPEC.md Course files ('signed in, the backup's copy first'); OWNER_DECISIONS 18"
+    },
+    {
+      "id": "DI-B6-4",
+      "title": "The success predicate's 'erased stays erased' half is not yet true on the real backend. Until the migration runs, another phone's later course-row upload recreates the erased course (SP-B4-3).",
+      "evidence": "supabase/migrations/20261028000000_course_erase.sql has not been run on the development backend. In b6-erase-live.spec.ts the `installed` branch only adds a 'not run' annotation. Under the fallback (session.ts:320 `installed = false`), the course delete alone runs. A PUT of the course row from a phone that still holds it re-inserts the row, and its child rows are then accepted again by the course-exists RLS rule. This is tracked as owner action B6-ERASE-RULES, but B6 should not close on the predicate until that live check has run.",
+      "reproduction": "Read session.ts:305-341 and the migration header; both b6-erase-live tests passed, with the CVERA assertion skipped.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 adversarial checklist (SP-B4-3)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B6-Q1",
+      "title": "A full reset of an imported, not-yet-connected course does not record the course id as erased.",
+      "evidence": "session.ts:311-313: with `also=[X]` and pending keep X, `recorded` leaves X out and session.ts:327-333 then deletes any erased_courses row for X. Another phone that still holds X can recreate it afterwards.",
+      "reproduction": "Code path only.",
+      "specRef": "OWNER_DECISIONS 19"
+    },
+    {
+      "id": "DI-B6-Q2",
+      "title": "On a read-only device, settleServerErasures cannot forget its records, so it erases them again on the server at every connection. The code comment calls this harmless, but it would delete a later re-import of the same id made on another phone.",
+      "evidence": "session.ts:334-336 (forgetServerErasures(...).catch(() => {})); the guarded writeTransaction refuses on read-only devices (writeGuard.ts:112-135).",
+      "reproduction": "Code path; reaching a read-only state with pending records is rare.",
+      "specRef": "OWNER_DECISIONS 19"
+    },
+    {
+      "id": "DI-B6-Q3",
+      "title": "The invariant checker and the open-time checks never look at serverErasures.",
+      "evidence": "A planted row (id = active course, erase=1, keep=0) passes validateCourseState (src/domain/invariants.ts does not read it). The next connection then deletes the live course on the server and on the device. Not reachable through a single tab's normal flows; a second tab's shared sync worker re-downloading after the clear was not tested.",
+      "reproduction": "grep: no reference to serverErasures in src/domain or scripts.",
+      "specRef": "AGENTS.md §11"
+    },
+    {
+      "id": "DI-B6-Q4",
+      "title": "Pending erasures are lost silently on storage eviction, or on a full reset while signed out or on another account.",
+      "evidence": "Signed out, the reset text only says the online copy stays; it does not say that an erase already confirmed on this device will never reach the server. After eviction, signing in again restores the erased course ('Ripristina dal backup online').",
+      "reproduction": "Code path (CourseFiles.tsx:407-412; session.ts:352-358 returns null for signed-out and other-account).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 checklist (offline erase never reconnected)"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff 1477f91..b6f6715 (src/, supabase/, docs, plan, specs)",
+    "04_IMPLEMENTATION_PLAN.md B6; 03_TECHNICAL_DECISIONS.md Online backup diff; 01_PRODUCT_SPEC.md diff; OWNER_DECISIONS 17-19; OWNER_TODO B6 items",
+    "src/backup/session.ts (whole file), src/persistence/backupLink.ts, serverErasures.ts, courses.ts, courseArchive.ts, migrations.ts B6 block, uploadRefusals.ts, writeGuard.ts, localDataOperations.ts, CourseFiles.tsx, CourseErase.tsx, App.tsx B6 effect",
+    "Ran tests/e2e/b6-erase.spec.ts and b6-erase-live.spec.ts on pixel-7-chrome: 7 passed (live CVERA branch not run, migration absent)",
+    "Ran tests/e2e/b4-uploads-live.spec.ts other-account test at HEAD: failed (refusal alert never shown); identical copy failed 2 of 3 more runs",
+    "Throwaway live probe: refused course row → refusals 2→0 within 5 s at HEAD; control with only the migrations.ts DELETE neutralised keeps refusals=2",
+    "Throwaway live probes: failed import (simulated quota) and read-only erase leave db.connected=false with backupState 'connected', no uploads",
+    "Throwaway fake-backend probe: reset in error state shows 'La copia nel backup online resta' and then erases the server copy",
+    "All throwaway specs and configs deleted; test accounts 1 and 2 cleared in finally blocks; nothing committed"
+  ],
+  "anglesTried": {
+    "seed": 804010443,
+    "lenses": [
+      "4. Duplicate IDs, dangling references, orphans after a delete",
+      "11. Storage eviction and quota"
+    ],
+    "wildcard": "Does the new open-time 'refusals with no course' sweep fire for a course whose own row the server refused, rather than one erased on another phone, and so destroy the only copy?"
+  },
+  "notTested": [
+    "CVERA trigger and erased_courses upsert/RLS on the real backend: the migration has not been run on the development backend.",
+    "WebKit runs of the probes: Chromium only.",
+    "Two tabs sharing the PowerSync SharedWorker during an erase (whether tab 1's disconnect stops tab 2's stream before powersync_clear(0)).",
+    "An erase racing a restore on a second live device: no second browser context was driven against the live backend.",
+    "Real storage eviction and quota exhaustion: simulated only, by throwing inside the transaction.",
+    "Pre-B6 commit run end to end: an old-tree checkout with node_modules was blocked; attribution rests on the route-neutralised control."
+  ]
+}

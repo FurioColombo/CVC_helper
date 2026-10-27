@@ -28,6 +28,7 @@ import {
   databaseConnected,
   onDatabaseStatus,
   pendingUploads,
+  awaitingServerErase,
   discardUploadRefusals,
   forgetSupersededEdits,
   retryUploadRefusals,
@@ -397,6 +398,7 @@ function Connected({
   const [retrying, setRetrying] = useState(false)
   const [round, setRound] = useState(0)
   const [confirming, setConfirming] = useState(false)
+  const [erasePending, setErasePending] = useState(false)
   const question = useRef<HTMLDivElement>(null)
 
   // At large text sizes the question opens below the fold (FUX-B3-R2-Q4).
@@ -407,14 +409,24 @@ function Connected({
   useEffect(() => {
     let active = true
     const refresh = async () => {
-      const [pending, refusals, overtaken] = await Promise.all([
+      const [pending, refusals, overtaken, erasing] = await Promise.all([
         pendingUploads(),
         uploadRefusals(),
         supersededEdits(),
+        awaitingServerErase(),
       ])
       const connected = databaseConnected()
       if (!active) return
       setWaiting(pending)
+      setErasePending(erasing)
+      // B6: a course erased here offline is still online (review SP-B6-2).
+      if (erasing) {
+        setStatus({
+          icon: "waiting",
+          text: "In attesa di connessione: il corso eliminato qui è ancora nel backup online.",
+        })
+        return
+      }
       setRefused(refusals)
       setSuperseded(overtaken)
       setStatus(
@@ -580,6 +592,12 @@ function Connected({
               ? `Uscire? ${changes(waiting)} ${waiting === 1 ? "non è ancora online: resta" : "non sono ancora online: restano"} su questo telefono e ${waiting === 1 ? "parte" : "partono"} quando rientri con questo account.`
               : "Uscire dal backup? Il corso resta su questo telefono."}
           </p>
+          {erasePending && (
+            <p className="mt-1 text-sm font-semibold leading-5">
+              Il corso eliminato qui è ancora nel backup online: sarà tolto solo
+              quando rientri con questo account da questo telefono.
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             <Button disabled={busy} onClick={onSignOut} variant="secondary">
               Esci

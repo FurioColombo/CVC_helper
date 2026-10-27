@@ -10,11 +10,11 @@ import {
 } from "lucide-react"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 
-import { eraseOnlineCopyBeforeReset } from "@/backup/session"
+import { eraseOnlineCopyBeforeReset, reconnectBackup } from "@/backup/session"
 import { useBackupState } from "@/backup/useBackupState"
 import { Button } from "@/components/ui/button"
 import { getIsoWeekInfo } from "@/domain/course"
-import { deviceSyncMode } from "@/persistence/backupLink"
+import { awaitingServerErase, deviceSyncMode } from "@/persistence/backupLink"
 import {
   exportCourseArchive,
   importCourseArchive,
@@ -286,6 +286,7 @@ export function CourseFiles({
           : "Il corso non è stato sostituito. Nessun dato è cambiato; riprova.",
       )
       setImporting(false)
+      void reconnectBackup().catch(() => {})
       return
     }
 
@@ -587,16 +588,21 @@ export function FullReset({
   const [resetting, setResetting] = useState(false)
   const [onlineError, setOnlineError] = useState<string | null>(null)
   const backup = useBackupState()
+  // As the reset's online erase decides (review DI-B6-3).
   const signedIn =
     backup.kind === "connected" ||
     backup.kind === "offline" ||
-    backup.kind === "restoring"
+    backup.kind === "restoring" ||
+    backup.kind === "error"
   const [synced, setSynced] = useState(false)
+  const [erasePending, setErasePending] = useState(false)
   useEffect(() => {
     let current = true
-    void deviceSyncMode()
-      .then((mode) => {
-        if (current) setSynced(mode === "synced")
+    void Promise.all([deviceSyncMode(), awaitingServerErase()])
+      .then(([mode, erasing]) => {
+        if (!current) return
+        setSynced(mode === "synced")
+        setErasePending(erasing)
       })
       .catch(() => {})
     return () => {
@@ -664,7 +670,9 @@ export function FullReset({
             <p className="mt-1 text-sm leading-5">
               {signedIn
                 ? "Il corso sarà eliminato anche dal backup online: senza connessione non si azzera nulla."
-                : "La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso."}
+                : erasePending
+                  ? "Un corso eliminato qui è ancora nel backup online e, dopo l’azzeramento, ci resterà: per toglierlo, prima accedi al backup."
+                  : "La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso."}
             </p>
           )}
           <label className="mt-2 flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold">

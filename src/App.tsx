@@ -63,6 +63,7 @@ import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
 import { useBackupState } from "@/backup/useBackupState"
 import {
   awaitingAccountCourse,
+  courseLeftWithBackup,
   deviceCourseId,
   deviceSyncMode,
   databaseConnected,
@@ -940,14 +941,16 @@ export function App() {
 
   // B6: a course erased on another phone leaves this one when the backup
   // removes its rows; the app then reopens without it rather than keep
-  // screens that can no longer save. Only a connected backup removes it.
+  // screens that can no longer save, and the reopen compacts the database
+  // (src/persistence/migrations.ts). Only a connected backup removes it; a
+  // course whose own row the backup refused stays on screen (DI-B6-1).
   const ready = appState.status === "ready"
   useEffect(() => {
     if (!ready) return
     return onDatabaseStatus(() => {
       if (!databaseConnected()) return
-      void deviceCourseId().then((course) => {
-        if (!course) window.location.reload()
+      void courseLeftWithBackup().then((left) => {
+        if (left) window.location.reload()
       })
     })
   }, [ready])

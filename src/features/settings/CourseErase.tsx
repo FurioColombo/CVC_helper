@@ -3,6 +3,8 @@ import { useEffect, useState } from "react"
 
 import { CourseIdentity } from "@/components/CourseIdentity"
 import { ERASURE_RETENTION_TEXT } from "@/backup/erasure"
+import { reconnectBackup } from "@/backup/session"
+import { useBackupState } from "@/backup/useBackupState"
 import { Button } from "@/components/ui/button"
 import { deviceSyncMode } from "@/persistence/backupLink"
 import { eraseAllCourseData, type CourseRecord } from "@/persistence/courses"
@@ -26,7 +28,14 @@ export function CourseErase({
   const [understood, setUnderstood] = useState(false)
   const [erasing, setErasing] = useState(false)
   const [failed, setFailed] = useState(false)
-  // B6: a synced device erases the course from the backup too.
+  // B6: a synced device erases the course from the backup too; signed out,
+  // only at the next sign-in on this device (review SP-B6-2).
+  const backup = useBackupState()
+  const signedIn =
+    backup.kind === "connected" ||
+    backup.kind === "offline" ||
+    backup.kind === "restoring" ||
+    backup.kind === "error"
   const [synced, setSynced] = useState(false)
   useEffect(() => {
     let current = true
@@ -48,6 +57,7 @@ export function CourseErase({
     } catch {
       setErasing(false)
       setFailed(true)
+      void reconnectBackup().catch(() => {})
       return
     }
     onErased()
@@ -90,8 +100,11 @@ export function CourseErase({
           <p className="mt-1 text-sm leading-5">
             Allievi, barche, avarie, volontari, comandate, equipaggi e
             valutazioni vengono cancellati da questo dispositivo
-            {synced && " e dal backup online, appena c’è connessione,"} e non si
-            possono recuperare.
+            {synced &&
+              (signedIn
+                ? " e dal backup online, appena c’è connessione,"
+                : " e dal backup online quando rientri con questo account da questo telefono,")}{" "}
+            e non si possono recuperare.
           </p>
           {synced && (
             <p className="mt-1 text-sm leading-5">{ERASURE_RETENTION_TEXT}</p>

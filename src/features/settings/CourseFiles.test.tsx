@@ -45,8 +45,10 @@ vi.mock("@/backup/session", () => ({
   backupState: () => ({ kind: "signed-out" }),
   eraseOnlineCopyBeforeReset: async () => null,
   onBackupState: () => () => {},
+  reconnectBackup: async () => {},
 }))
 vi.mock("@/persistence/backupLink", () => ({
+  awaitingServerErase: async () => false,
   deviceSyncMode: async () => "local",
 }))
 

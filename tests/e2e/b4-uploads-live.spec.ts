@@ -70,7 +70,9 @@ test("a course id held by another account is refused, kept and reported, not ret
   expect(
     await call<{ kind: string }>(page, "/src/backup/session.ts", "startBackup"),
   ).toEqual({ kind: "reopen" })
-  await page.reload()
+  // The sign-in itself may already reopen the app (nothing touched yet):
+  // either reload lands on the switched course.
+  await page.reload().catch(() => page.waitForLoadState("load"))
 
   // Refused, recorded, and out of the queue: nothing waits for ever.
   await expect

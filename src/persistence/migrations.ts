@@ -19,6 +19,7 @@ import {
 } from "@/persistence/repairs"
 import {
   compactCourseDatabase,
+  compactEmptyCourseDatabase,
   compactionPending,
   markReadOnly,
   ReadOnlyDataError,
@@ -102,6 +103,22 @@ const prepared = new WeakMap<PowerSyncDatabase, Promise<DataAccess>>()
  * First of all the database takes the schema of the mode its data records
  * (B1, src/persistence/syncMode.ts), so every read sees the right tables.
  */
+/**
+ * B6: no course on this synced device, and no refused course row other than
+ * an erased one: the course, if there was one, left with the backup (erased
+ * on another phone), not refused from this one.
+ */
+export async function courseLeftThisDevice(
+  database: Pick<PowerSyncDatabase, "getAll">,
+) {
+  const [course] = await database.getAll("SELECT 1 FROM courses LIMIT 1")
+  if (course) return false
+  const kept = await database.getAll(
+    "SELECT 1 FROM uploadRefusals WHERE tableName = 'courses' AND coalesce(reason, '') <> 'erased' LIMIT 1",
+  )
+  return kept.length === 0
+}
+
 export function prepareDatabase(
   database: PowerSyncDatabase,
   migrations: readonly Migration[] = MIGRATIONS,
@@ -145,15 +162,15 @@ export function prepareDatabase(
         if (await compactionPending(database))
           await compactCourseDatabase(database).catch(() => {})
         // B6: a course erased on another phone left with its rows; the
-        // changes the backup refused for it go too (they hold its data).
-        if (synced) {
-          const orphaned = await database.getAll(
-            "SELECT 1 FROM uploadRefusals WHERE NOT EXISTS (SELECT 1 FROM courses) LIMIT 1",
+        // changes the backup refused for it go too (they hold its data),
+        // and the database is compacted so nothing of it stays in its pages
+        // (review SP-B6-1). A course whose own row the backup refused is
+        // kept for Riprova instead (review DI-B6-1).
+        if (synced && (await courseLeftThisDevice(database))) {
+          await database.writeTransaction((transaction) =>
+            transaction.execute("DELETE FROM uploadRefusals"),
           )
-          if (orphaned.length)
-            await database.writeTransaction((transaction) =>
-              transaction.execute("DELETE FROM uploadRefusals"),
-            )
+          await compactEmptyCourseDatabase(database).catch(() => {})
         }
       } catch (error) {
         // A newer app raised the record meanwhile; the guard marked the

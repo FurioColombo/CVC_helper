@@ -103,16 +103,19 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md`.
     the erase confirmation say the provider's automatic copies keep it "for
     at most 7 days" (`src/backup/erasure.ts`): Supabase's Pro plan keeps 7
     days of daily backups, and PowerSync Cloud drops an erased row's history
-    at its daily compaction. The Free plan publishes no retention, and
+    at its daily compaction; the account's other phones drop their copy
+    when they next connect. The Free plan publishes no retention, and
     production's plan is decided at UG4: correct the number, or the wording,
     if the production plan differs.
 18. **The full reset waits for the backup (taken, B6).** Signed in, `Azzera
 tutti i dati locali` erases the course from the backup first; without
     signal it resets nothing and says so, because after a reset no account
     is left to finish the erase. Signed out, it resets the device and says
-    the backup's copy stays. Erasing the course (`Elimina il corso`) and
-    importing a course file work offline: the server's erase completes with
-    signal.
+    the backup's copy stays, and warns when a course erased here offline
+    has not reached the backup yet. Erasing the course (`Elimina il corso`)
+    and importing a course file work offline: the server's erase completes
+    with signal, and only this account on this phone can complete it (Esci
+    says so).
 19. **An erased course stays erased (taken, B6).** The server keeps the
     erased course's id (no course data) and refuses that course from any
     phone afterwards, so another phone's late upload cannot bring it back.

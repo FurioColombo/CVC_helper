@@ -2,6 +2,7 @@ import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
 import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
+import { isReadOnly, ReadOnlyDataError } from "@/persistence/writeGuard"
 
 /**
  * B6: on a synced device, erasing the course or replacing it with a course
@@ -43,8 +44,14 @@ async function record(
   )
 }
 
-/** Disconnects a synced database before its copy is forgotten. */
+/**
+ * Disconnects a synced database before its copy is forgotten. A read-only
+ * database refuses first, so the backup is not stopped for an erase that
+ * cannot happen (review DI-B6-2); a failure after this point reconnects
+ * through the backup (src/backup/session.ts `reconnectBackup`).
+ */
 export async function disconnectForErase(database: PowerSyncDatabase) {
+  if (isReadOnly(database)) throw new ReadOnlyDataError()
   if (database.connected || database.connecting) await database.disconnect()
 }
 
@@ -100,4 +107,32 @@ export async function forgetServerErasures(
         [id, erase, keep],
       )
   })
+}
+
+/**
+ * The server deleted these courses but could not yet record their ids (its
+ * migration not run): `erase = 2` keeps them for the record, and they no
+ * longer count as an erase still to make (`awaitingServerErase`).
+ */
+export async function markDeletedOnServer(
+  ids: string[],
+  database: PowerSyncDatabase = db,
+) {
+  if (!ids.length) return
+  await database.writeTransaction(async (transaction) => {
+    for (const id of ids)
+      await transaction.execute(
+        "UPDATE serverErasures SET erase = 2 WHERE id = ? AND erase = 1 AND coalesce(keep, 0) = 0",
+        [id],
+      )
+  })
+}
+
+/** Whether a course erased here is still on the server (not yet erased). */
+export async function awaitingServerErase(database: PowerSyncDatabase = db) {
+  await prepareDatabase(database)
+  const rows = await database.getAll(
+    "SELECT 1 FROM serverErasures WHERE erase = 1 LIMIT 1",
+  )
+  return rows.length > 0
 }

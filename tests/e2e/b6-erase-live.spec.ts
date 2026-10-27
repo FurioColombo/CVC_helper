@@ -120,6 +120,14 @@ const erasures = (page: Page) =>
     "pendingServerErasures",
   ).then(({ erase }) => erase)
 
+/** No erase made here is still to reach the server. */
+const erasedOnline = (page: Page) =>
+  call<boolean>(
+    page,
+    "/src/persistence/backupLink.ts",
+    "awaitingServerErase",
+  ).then((awaiting) => !awaiting)
+
 test("an erase takes the course and its rows off the server, for good", async ({
   page,
 }) => {
@@ -143,7 +151,7 @@ test("an erase takes the course and its rows off the server, for good", async ({
     `&courseId=eq.${courseId}`,
   )
   expect(students).toEqual([])
-  await expect.poll(() => erasures(page)).toEqual([])
+  await expect.poll(() => erasedOnline(page)).toBe(true)
   // Connected again on the empty account: nothing comes back.
   await page.waitForTimeout(5_000)
   await expect(
@@ -198,11 +206,115 @@ test("an erase made offline leaves the server's copy until signal, then erases i
       timeout: 90_000,
     })
     .toBe(0)
-  await expect.poll(() => erasures(page)).toEqual([])
+  await expect.poll(() => erasedOnline(page)).toBe(true)
   await page.waitForTimeout(5_000)
   await expect(
     page.getByRole("heading", { name: "Crea il corso" }),
   ).toBeVisible()
   if (await erasedIdsInstalled(access)) await forgetErasedIds(access)
   await clearAccount(access)
+})
+
+/** Whether `name` appears anywhere in this page's raw IndexedDB storage. */
+function rawStorageHolds(page: Page, name: string) {
+  return page.evaluate(async (needle) => {
+    const decoder = new TextDecoder("latin1")
+    const text = (value: unknown): string => {
+      if (value instanceof ArrayBuffer) return decoder.decode(value)
+      if (ArrayBuffer.isView(value))
+        return decoder.decode(
+          new Uint8Array(value.buffer, value.byteOffset, value.byteLength),
+        )
+      if (value && typeof value === "object")
+        return Object.values(value).map(text).join(" ")
+      return String(value)
+    }
+    for (const { name: dbName } of await indexedDB.databases()) {
+      if (!dbName) continue
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(dbName)
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+      })
+      for (const store of Array.from(database.objectStoreNames)) {
+        const values = await new Promise<unknown[]>((resolve, reject) => {
+          const request = database
+            .transaction(store, "readonly")
+            .objectStore(store)
+            .getAll()
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+        if (values.some((value) => text(value).includes(needle))) {
+          database.close()
+          return true
+        }
+      }
+      database.close()
+    }
+    return false
+  }, name)
+}
+
+// Review SP-B6-1: the account's other phone loses the course through the
+// download, and nothing of it stays in its storage afterwards.
+test("the account's other phone drops the erased course, and its storage keeps nothing of it", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(300_000)
+  const access = await token(1)
+  await clearAccount(access)
+  if (await erasedIdsInstalled(access)) await forgetErasedIds(access)
+  await backedUpCourse(page, access)
+
+  const other = await browser.newContext()
+  try {
+    const phone = await other.newPage()
+    await phone.addInitScript(
+      (config) => {
+        window.__cvcBackupConfig = config
+      },
+      {
+        supabaseUrl: env.SUPABASE_URL!,
+        supabaseKey: env.SUPABASE_ANON_KEY!,
+        powersyncUrl: env.POWERSYNC_URL!,
+      },
+    )
+    await phone.goto("/")
+    await expect(
+      phone.getByRole("heading", { name: "Crea il corso" }),
+    ).toBeVisible()
+    await call(
+      phone,
+      "/src/backup/session.ts",
+      "signInForTests",
+      env.TEST_USER_1_EMAIL!,
+      env.TEST_USER_1_PASSWORD!,
+    )
+    // Signed in before any tap, the empty phone switches, reopens and
+    // restores the course by itself (B5).
+    await expect(
+      phone.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
+    ).toBeVisible({ timeout: 90_000 })
+    expect(await rawStorageHolds(phone, "Cancellando")).toBe(true)
+
+    await eraseCourse(page)
+    await expect
+      .poll(async () => (await serverRows("courses", access)).length, {
+        timeout: 60_000,
+      })
+      .toBe(0)
+    // The other phone reopens without the course by itself.
+    await expect(
+      phone.getByRole("heading", { name: "Crea il corso" }),
+    ).toBeVisible({ timeout: 90_000 })
+    await expect
+      .poll(() => rawStorageHolds(phone, "Cancellando"), { timeout: 30_000 })
+      .toBe(false)
+  } finally {
+    await other.close()
+    if (await erasedIdsInstalled(access)) await forgetErasedIds(access)
+    await clearAccount(access)
+  }
 })

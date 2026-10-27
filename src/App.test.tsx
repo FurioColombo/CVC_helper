@@ -11,7 +11,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/backupLink", () => ({
   awaitingAccountCourse: vi.fn(async () => false),
+  awaitingServerErase: vi.fn(async () => false),
   connectDatabase: vi.fn(),
+  courseLeftWithBackup: vi.fn(async () => false),
   databaseConnected: () => false,
   deviceCourseId: vi.fn(async () => null),
   deviceSyncMode: vi.fn(async () => "local"),

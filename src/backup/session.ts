@@ -2,17 +2,19 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { backupConfig, type BackupConfig } from "@/backup/config"
 import { createConnector } from "@/backup/connector"
-import { APP_VERSION_HEADER } from "@/backup/uploadPolicy"
+import { APP_VERSION_HEADER, OUTDATED_WRITER_CODE } from "@/backup/uploadPolicy"
 import { APP_VERSION_TEXT } from "@/appVersion"
 import {
   claimDeviceForAccount,
   connectDatabase,
+  databaseConnected,
   deviceCourseId,
   deviceSyncMode,
   disconnectDatabase,
   adoptMinimumWriter,
   firstSync,
   forgetServerErasures,
+  markDeletedOnServer,
   openedWithSyncedTables,
   pendingServerErasures,
   awaitingAccountCourse,
@@ -251,7 +253,10 @@ export async function startBackup(
     // B6: a course erased here is erased on the server before anything
     // connects, so it is never downloaded again; offline, the backup waits
     // for signal and the erase completes then.
-    if (!(await settleServerErasures(client)))
+    const settled = await settleServerErasures(client)
+    if (settled === "outdated")
+      return { kind: "error", message: OUTDATED_ERASE }
+    if (settled === "failed")
       return offline()
         ? { kind: "offline", email }
         : { kind: "error", message: UNREACHABLE }
@@ -292,25 +297,51 @@ export async function startBackup(
 /** PostgREST's answer for a table the server does not have yet. */
 const NOT_INSTALLED = new Set(["PGRST205", "42P01"])
 
+type Settled = "done" | "failed" | "outdated"
+
 /**
  * B6: erases on the server the courses erased or replaced on this device
- * (and `also`), and accepts again a course file's course imported under an
- * erased id. The course row's delete takes every row of the course with it
- * and depends on no device's clock (B4 review SP-B4-3); the erased id is
- * recorded first, so another phone's later upload cannot create the course
- * again (supabase/migrations/20261028000000_course_erase.sql). Each step
- * can be repeated: a failure leaves the record for the next connection.
- * Before the owner installs that migration, the delete alone runs.
+ * (and `also`, the full reset's), and accepts again a course file's course
+ * imported under an erased id. The course row's delete takes every row of
+ * the course with it and depends on no device's clock (B4 review SP-B4-3);
+ * the erased id is recorded first, so another phone's later upload cannot
+ * create the course again (supabase/migrations/20261028000000_course_erase.sql).
+ * Each step can be repeated: a failure leaves the record for the next
+ * connection. Before the owner installs that migration the delete alone
+ * runs, and the erased ids stay recorded here until it can record them too
+ * (review SP-B6-4).
  */
 async function settleServerErasures(
   client: SupabaseClient,
   also: string[] = [],
-) {
+): Promise<Settled> {
   try {
     const pending = await pendingServerErasures()
-    const erase = [...new Set([...pending.erase, ...also])]
-    if (!erase.length && !pending.keep.length) return true
-    const recorded = erase.filter((id) => !pending.keep.includes(id))
+    // A record that would erase the course open here, never imported again,
+    // is no state the app makes; it is dropped, not obeyed (review DI-B6-Q3).
+    const open = await deviceCourseId()
+    const stray = pending.rows.filter(
+      ({ id, keep }) => id === open && !keep && !also.includes(id),
+    )
+    const rows = pending.rows.filter((row) => !stray.includes(row))
+    const erase = [
+      ...new Set([
+        ...rows.filter((row) => row.erase).map(({ id }) => id),
+        ...also,
+      ]),
+    ]
+    // The full reset's course is erased for good, even one imported here
+    // and not yet uploaded (review DI-B6-Q1).
+    const keep = rows
+      .filter((row) => row.keep && !also.includes(row.id))
+      .map(({ id }) => id)
+    if (!erase.length && !keep.length) {
+      await forgetServerErasures(stray).catch(() => {})
+      return "done"
+    }
+    const refused = (code: string | undefined): Settled =>
+      code === OUTDATED_WRITER_CODE ? "outdated" : "failed"
+    const recorded = erase.filter((id) => !keep.includes(id))
     let installed = true
     if (recorded.length) {
       const { error } = await client.from("erased_courses").upsert(
@@ -318,27 +349,41 @@ async function settleServerErasures(
         { onConflict: "ownerId,id", ignoreDuplicates: true },
       )
       if (error && NOT_INSTALLED.has(error.code)) installed = false
-      else if (error) return false
+      else if (error) return refused(error.code)
     }
     if (erase.length) {
       const { error } = await client.from("courses").delete().in("id", erase)
-      if (error) return false
+      if (error) return refused(error.code)
     }
-    if (pending.keep.length && installed) {
+    if (keep.length && installed) {
       const { error } = await client
         .from("erased_courses")
         .delete()
-        .in("id", pending.keep)
-      if (error && !NOT_INSTALLED.has(error.code)) return false
+        .in("id", keep)
+      if (error && !NOT_INSTALLED.has(error.code)) return refused(error.code)
     }
-    // A read-only device cannot forget the record: it is settled again,
-    // harmlessly, at the next connection.
-    await forgetServerErasures(pending.rows).catch(() => {})
-    return true
+    // Without the record on the server, a course erased for good stays
+    // recorded here as deleted: its delete repeats, harmlessly, at each
+    // connection until the server can record it. A read-only device cannot
+    // forget at all; it erases nothing new (review DI-B6-Q2).
+    const awaitingRecord = installed
+      ? []
+      : rows.filter((row) => row.erase && !row.keep)
+    await forgetServerErasures([
+      ...stray,
+      ...rows.filter((row) => !awaitingRecord.includes(row)),
+    ]).catch(() => {})
+    await markDeletedOnServer(awaitingRecord.map(({ id }) => id)).catch(
+      () => {},
+    )
+    return "done"
   } catch {
-    return false
+    return "failed"
   }
 }
+
+const OUTDATED_ERASE =
+  "Questa versione dell’app non può più eliminare il corso dal backup online: aggiorna l’app."
 
 /**
  * B6: before "Azzera tutti i dati locali" on a device signed in to the
@@ -361,13 +406,24 @@ export async function eraseOnlineCopyBeforeReset(): Promise<string | null> {
     data: { session },
   } = await client.auth.getSession()
   const course = await deviceCourseId()
-  if (
-    session &&
-    (await claimDeviceForAccount(session.user.id)) &&
-    (await settleServerErasures(client, course ? [course] : []))
-  )
-    return null
+  const settled =
+    session && (await claimDeviceForAccount(session.user.id))
+      ? await settleServerErasures(client, course ? [course] : [])
+      : "failed"
+  if (settled === "done") return null
+  if (settled === "outdated") return `${OUTDATED_ERASE} Nulla è stato azzerato.`
   return "Il corso non è stato eliminato dal backup online, quindi nulla è stato azzerato. Riprova con la connessione, oppure esci dal backup online prima di azzerare: la copia online resta."
+}
+
+/**
+ * B6: an erase or import disconnects the backup before it forgets the synced
+ * copy; one that failed reconnects it here, so the backup does not stay
+ * stopped while saying it is up to date (review DI-B6-2).
+ */
+export function reconnectBackup() {
+  if (!connected || databaseConnected()) return Promise.resolve()
+  connected = false
+  return resumeBackup()
 }
 
 /** A device that switched without a course waits for the account's. */

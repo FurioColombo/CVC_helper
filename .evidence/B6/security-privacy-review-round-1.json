@@ -1,0 +1,89 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B6",
+  "round": 1,
+  "commit": "b6f6715",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-B6-1",
+      "title": "On the account's other phone, an erased course's personal data stays in the raw database storage after the server erase reaches it",
+      "evidence": "The device that runs the erase compacts afterwards (courses.ts eraseAllCourseData -> compactEmptyCourseDatabase), and its raw IndexedDB blocks hold no trace of the course. A second phone loses the course through the sync stream instead: src/App.tsx:941-953 reloads it, and src/persistence/migrations.ts:147-157 drops only uploadRefusals. Neither path runs VACUUM or marks a compaction as pending. Live run against the development backend with two browser contexts on test account 1 and a synthetic student 'Zebedeo'. Phone B's queries come back empty: students 0, ps_oplog 0, ps_untyped 0, uploadRefusals 0, ps_crud 0, PRAGMA freelist_count 0. A raw scan of phone B's IndexedDB ('cvc-helper.db') still finds 'Zebedeo' after the removal, and again after a further reopen. The same scan on phone A finds nothing. The deleted bytes sit as unused space inside live pages, which only a VACUUM rewrites. The repository's own standard (UG3 SP-UG3-1, the erase's compaction) treats this as readable data.",
+      "reproduction": "Throwaway spec in my scratchpad, run twice with the same result. (1) Context A: create an offline course, add student 'Zebedeo', signInForTests(user 1), startBackup, reload, and poll the server until the student is there. (2) Context B: empty device, signInForTests(user 1), startBackup -> reopen, reload, and wait for the course heading. B's raw IndexedDB scan finds 'Zebedeo'. (3) A erases through Impostazioni > Elimina il corso; the server's course count reaches 0. (4) B reloads itself to 'Crea il corso'. B's raw scan still finds 'Zebedeo', also after another reload. The account was cleared afterwards (courses 0, students 0).",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 success predicate ('nothing of the removed course remains readable on the server or the device'); AGENTS.md §17"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-B6-2",
+      "title": "After an offline erase, Esci and a signed-out full reset silently discard the only pending server erase; the erase confirmation promises it unconditionally",
+      "evidence": "CourseErase.tsx:93 adds 'e dal backup online, appena c’è connessione' whenever the device is synced, including after Esci or under another account; the erase actually completes only when this account signs in again on this device. After an offline erase, the ps_crud-based Esci question (OnlineBackup.tsx:579-581) mentions only ordinary pending changes and says nothing about the pending course erase. Once signed out, the full reset (CourseFiles.tsx:667) says 'La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso', although the course is no longer on the device to erase. The reset then deletes serverErasures.",
+      "reproduction": "Fake-backend scratch spec: back up a course with a synthetic student, take the backend offline (navigator.onLine false, routes aborted), Elimina il corso, create a new course, then Esci. The question read 'Uscire? 1 modifica non è ancora online…' (the new course's insert). serverErasures still held the erased id. Azzera tutti i dati locali showed the 'copia … resta' text and reset. The fake server still held the erased course and its student (courses 1, students 1), and nothing remained on the device to finish the erase.",
+      "specRef": "01_PRODUCT_SPEC.md §Settings (erase 'backup copy too'); owner decision 18; B6 checklist 'an erase offline and never reconnected'"
+    },
+    {
+      "id": "SP-B6-3",
+      "title": "SP-B4-3 is resolved only for the whole-course erase; deleting one person's data still depends on device clocks",
+      "evidence": "settleServerErasures (session.ts) deletes the course row unconditionally and lets the cascade remove its rows, so no clock is involved; the code confirms this and b6-erase.spec.ts confirms the request carries only an id filter. A single student delete still goes through the B4 rule (DELETE where updatedAt <= the value the device saw), and an older or clock-ahead edit from another phone can bring the row back. Decision 19 and 03 §3 record this as decision 16's accepted gap until 1.0.0.",
+      "reproduction": "By construction; see placementConvergence.test.ts, the expected failure cited in decision 16.",
+      "specRef": "04 B6 adversarial checklist (SP-B4-3); owner decisions 16 and 19"
+    },
+    {
+      "id": "SP-B6-4",
+      "title": "The tombstone that refuses another phone's late upload is not installed on the development backend",
+      "evidence": "erased_courses answers 404 (the live spec's 'installed' branch did not run). Until supabase/migrations/20261028000000_course_erase.sql runs, the fallback is the delete alone, and another phone's whole-row upsert of the course row recreates it. The CVERA refusal is proven only against the fake backend. Records settled before the migration are forgotten (forgetServerErasures runs when installed=false), so the courses they cover never get a tombstone.",
+      "reproduction": "Live spec run: 2 passed, with the CVERA assertion skipped because erased_courses answers 404.",
+      "specRef": "Owner decision 19; B6 checklist 'clock-ahead edit'"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B6-Q1",
+      "title": "In the backup's 'error' state the full reset text contradicts what the reset then does",
+      "evidence": "FullReset's signedIn (CourseFiles.tsx:590-593) leaves out 'error', so it shows 'La copia nel backup online resta…'. eraseOnlineCopyBeforeReset (session.ts:356) includes 'error', tries the online erase, fails and refuses the reset.",
+      "reproduction": "Fake backend unreachable with navigator.onLine true: the confirmation shows 'La copia … resta', and the reset is then refused with the 'nulla è stato azzerato' alert.",
+      "specRef": "Owner decision 18"
+    },
+    {
+      "id": "SP-B6-Q2",
+      "title": "The retention text claims more than is verified and leaves out some places that keep data",
+      "evidence": "erasure.ts states a flat 'al massimo 7 giorni'. The development backend runs on Supabase's Free plan, which publishes no retention (decision 17 says so), and PowerSync Cloud's daily compaction is asserted without a cited source. The text does not mention that the account's other phones keep their copy until they connect (and, per SP-B6-1, raw remnants afterwards), or that Postgres/API logs may keep refused rows' error details.",
+      "reproduction": "Read src/backup/erasure.ts and docs/working/OWNER_DECISIONS.md decision 17.",
+      "specRef": "04 B6 'states what the provider's backups keep and for how long'"
+    },
+    {
+      "id": "SP-B6-Q3",
+      "title": "An app below the server's minimum writer cannot erase online, and the message blames the connection",
+      "evidence": "refuse_outdated_writer is a statement-level BEFORE DELETE trigger, so the course delete answers CVOLD. settleServerErasures returns false, and the backup then reports 'Backup non raggiungibile' and the reset says 'Riprova con la connessione'.",
+      "reproduction": "By reading 20261026000000_upload_rules.sql:66-67 and session.ts settleServerErasures.",
+      "specRef": "03 §3.1 minimum writer"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md B6; 03 §3 'Online backup'; owner decisions 16-19; .evidence/B4/security-privacy-review-round-2.json (SP-B4-3)",
+    "git diff 1477f91..b6f6715: serverErasures.ts, courses.ts, courseArchive.ts, migrations.ts, schema.ts, session.ts (settleServerErasures, eraseOnlineCopyBeforeReset, the only connectDatabase call is gated by the settle), uploadPolicy.ts, CourseErase.tsx, CourseFiles.tsx, OnlineBackup.tsx, App.tsx, erasure.ts, 20261028000000_course_erase.sql",
+    "SDK: BasePowerSyncDatabase.disconnectAndClear runs powersync_clear(0|1) the same way, and multi-tab is disabled in this app",
+    "Server: courses and child RLS (child rows require their course row), the cascade FK, anon revoked by hardening, erased_courses grants and RLS (ownerId default auth.uid(), with check), the publication lists tables explicitly (erased_courses not synced), refuse_outdated_writer on DELETE",
+    "Ran tests/e2e/b6-erase.spec.ts (pixel-7-chrome, port 4235): 5 passed",
+    "Ran tests/e2e/b6-erase-live.spec.ts on the development backend: 2 passed, CVERA branch skipped (migration not run)",
+    "Vitest: courses, uploadPolicy, CourseFiles, backendSchema tests: 63 passed",
+    "Scratch probes (deleted): raw IndexedDB and localStorage scan after a synced offline erase on the erasing device: names gone, 108 blocks scanned; Esci and signed-out reset after an offline erase; live two-phone erase with raw scans of both phones",
+    "Development account 1 confirmed empty afterwards (courses 0, students 0); working tree clean"
+  ],
+  "anglesTried": {
+    "seed": 444509512,
+    "lenses": [
+      "5 Deletion (local, server, other phones, raw storage, backups text)",
+      "8 Invite and revoke, read as: the account's other phone, and a device signed out or under another account, after the erase"
+    ],
+    "wildcard": "The erase promise outliving the account link: offline erase, then Esci, then signed-out full reset, checking whether the serverErasures record and the user's understanding survive"
+  },
+  "notTested": [
+    "CVERA, erased_courses RLS and the tombstone's exposure live: the migration has not been run on the development backend (erased_courses answers 404)",
+    "A clock-ahead course-row upsert from another phone after the erase, live (needs the migration)",
+    "Two tabs of the app on one device during an erase (multi-tab disabled; a second tab's own connection could re-download before the reload)",
+    "WebKit/iPhone storage and a physical Android phone",
+    "Supabase and PowerSync Cloud backup and compaction retention (provider facts, not observable from here)"
+  ]
+}
