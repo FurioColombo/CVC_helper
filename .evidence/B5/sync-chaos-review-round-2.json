@@ -1,0 +1,51 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B5",
+  "commit": "b08545b",
+  "round": 2,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "SC-B5-R2-1",
+      "title": "On an empty account whose server minimum is above the app, the backup reports 'Backup non raggiungibile' for good instead of an update problem",
+      "evidence": "startBackup adopts the minimum before connecting, so the device turns read-only; finishRestore then calls stopAwaitingAccountCourse, which the write guard refuses, and the catch set the unreachable error; the awaiting flag stays, also after a relaunch. The read-only banner does show. Nothing is lost.",
+      "reproduction": "Live, test account 1 cleared, RPC routed to '9.0.0', sign in on an empty device, wait 20 s: state error, meta awaiting=1 and data version 9000000.",
+      "specRef": "03 §3.1"
+    },
+    {
+      "id": "SC-B5-R2-2",
+      "title": "After a restore, a read-only device keeps the awaiting flag",
+      "evidence": "stopAwaitingAccountCourse at connection is refused by the read-only guard and swallowed; harmless while the course is present (deviceCourseId gates restoring); cleared at the first connection after the update.",
+      "reproduction": "Routed 9.0.0 restore; read meta after the reopen.",
+      "specRef": "none (tidiness)"
+    }
+  ],
+  "resolved": {
+    "SC-B5-1": "Fixed: live, RPC routed to 0.5.0 the restore reopens writable (meta 5000/5000, state connected, no pageerror); routed to 9.0.0 it reopens read-only (meta 9000000/9000000).",
+    "SC-B5-2": "Fixed: with the first RPC aborted the restore still reopens; the connection after it reads the minimum again and adopts 9.0.0; read-only from the next launch.",
+    "SC-B5-3": "Fixed: the spec routes 0.5.0 and 9.0.0 through the real restore; b5-restore-live (3) and b5-restore (4): 7 passed.",
+    "SC-B5-4": "Fixed: live, two devices: B on the empty account reopens by itself on A's course; the server holds one course.",
+    "SC-B5-5": "Fixed: with the PowerSync host blocked, restoring persists through a reload, 'Esci dall’account' is offered and import disabled; signing in again unblocked restores the course with the matching id."
+  },
+  "evidenceInspected": [
+    "git diff 31de645..b08545b (session, backupLink, syncMode, App, CourseFiles, OnlineBackup, b5 specs)",
+    "Live runs against the development backend as listed under 'resolved' (synthetic accounts, cleared)",
+    "The real app_minimum_writer_version still answers 404: owner action B5-MINIMUM-READ"
+  ],
+  "anglesTried": {
+    "seed": 33116603,
+    "lenses": [
+      "Round 2: re-check of SC-B5-1..5 and the fix diff",
+      "Regressions: an empty account with a server minimum above the app; the awaiting flag on a read-only device; Esci leaving creation blocked"
+    ],
+    "wildcard": "none (round 2)"
+  },
+  "notTested": [
+    "The installed server function (404 until the owner runs the migration)",
+    "SC-B5-6 (deferred to the backlog)",
+    "WebKit, several tabs, the owner's Android check"
+  ]
+}

@@ -313,8 +313,11 @@ function finishRestore(email: string) {
       restoring = false
       if (await deviceCourseId()) reload()
       else {
-        // The account has no course: one can be made here now.
-        await stopAwaitingAccountCourse()
+        // The account has no course: one can be made here now. A device
+        // read-only for an app older than the server's minimum keeps the
+        // mark until the update; its banner already asks for it, so that is
+        // no backup error (review SC-B5-R2-1).
+        await stopAwaitingAccountCourse().catch(() => {})
         setBackupState({ kind: "connected", email, outdated: uploadsOutdated })
       }
     } catch {
