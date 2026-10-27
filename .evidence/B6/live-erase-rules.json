@@ -1,0 +1,13 @@
+{
+  "milestone": "B6",
+  "checkedAt": "2026-10-28",
+  "context": "The owner ran supabase/migrations/20261028000000_course_erase.sql on the development backend (chat: 'erase rules run'). Closes the live part of SP-B6-4 and DI-B6-4.",
+  "run": "tests/e2e/b6-erase-live.spec.ts (its erased-id branch now runs), with b2-backend, b3-backup-live, b4-uploads-live and b5-restore-live, on pixel-7-chrome against the development backend, synthetic test accounts, --retries=0: 13 passed, 0 skipped; plus direct Data API calls",
+  "results": [
+    "an erase records the course id; a later upload of that course by the owner's account is refused: 400, CVERA, and the server keeps no course",
+    "the record is readable only by its owner: the second test account sees none of account 1's ids; the anonymous key is refused (401)",
+    "another account's courses are unaffected (201)",
+    "the offline erase completing on reconnect and the other phone dropping the course still pass with the rules on"
+  ],
+  "cleanup": "The tests and the direct calls removed every course and erased-id record they made"
+}

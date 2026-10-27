@@ -69,19 +69,17 @@ Use the test address below and the linked device instructions.
 
 ## Let the app read the server's minimum app version — B5
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
-2. Paste the whole file supabase/migrations/20261027000000_minimum_writer_read.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: only the coming 0.5.2 build calls it.
-3. Write 'minimum read run' in the chat; I then run the live check that a restored course reads the minimum.
+The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-dev; the agent's live checks afterwards are in the milestone's evidence.
 
 **Expected:** A signed-in account can read the minimum writer version and nothing else; a restored course adopts it, so an app older than it opens the course read-only.
 
 **Build:** No test build is assigned yet.
 
-**Work affected:** Completion of B5 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b5-phone-restore"></a>
 
@@ -112,19 +110,17 @@ Use the test address below and the linked device instructions.
 
 ## Let the server keep an erased course erased — B6
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
-2. Paste the whole file supabase/migrations/20261028000000_course_erase.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: the installed builds never touch it, and the B6 build erases courses with or without it.
-3. Write 'erase rules run' in the chat; I then run the live check that an erased course refuses a later upload from another phone.
+The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-dev; the agent's live checks afterwards are in the milestone's evidence.
 
 **Expected:** The server records the ids of erased courses (no course data, readable only by their owner) and refuses that course from any phone afterwards.
 
 **Build:** No test build is assigned yet.
 
-**Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b6-phone-erase"></a>
 

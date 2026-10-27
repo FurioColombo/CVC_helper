@@ -1,0 +1,12 @@
+{
+  "milestone": "B5",
+  "checkedAt": "2026-10-28",
+  "context": "The owner ran supabase/migrations/20261027000000_minimum_writer_read.sql on the development backend (chat: 'minimum read run').",
+  "run": "tests/e2e/b5-restore-live.spec.ts with b2-backend, b3-backup-live, b4-uploads-live and b6-erase-live on pixel-7-chrome against the development backend, synthetic test accounts, --retries=0: 13 passed, 0 skipped; plus direct Data API calls",
+  "results": [
+    "a signed-in account reads the minimum writer through rpc app_minimum_writer_version: 200, '0.5.0'",
+    "the anonymous key is refused: 401, 42501",
+    "a restore with the real function reopens the course writable (0.5.0 is the app's own minimum); the routed 0.5.0 and 9.0.0 cases still pass"
+  ],
+  "cleanup": "Each test clears the synthetic accounts' courses"
+}
