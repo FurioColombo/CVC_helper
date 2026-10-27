@@ -5,6 +5,7 @@ import { expectsSyncedTables } from "@/persistence/openedSchema"
 import { prepareDatabase } from "@/persistence/migrations"
 import {
   accountMark,
+  AWAITING_ACCOUNT_COURSE_ID,
   BACKUP_ACCOUNT_ID,
   readAccountMark,
   readSyncMode,
@@ -92,6 +93,28 @@ export async function adoptMinimumWriter(versionText: string) {
     await writeDataVersion(transaction, next)
     return true
   })
+}
+
+/**
+ * B5: whether this device switched without a course and still awaits the
+ * account's: no course is created or imported here meanwhile.
+ */
+export async function awaitingAccountCourse() {
+  await prepareDatabase(db)
+  const rows = await db.getAll("SELECT 1 FROM meta WHERE id = ?", [
+    AWAITING_ACCOUNT_COURSE_ID,
+  ])
+  return rows.length > 0
+}
+
+/** The account's course is here, or the account was found to have none. */
+export async function stopAwaitingAccountCourse() {
+  if (!(await awaitingAccountCourse())) return
+  await db.writeTransaction((transaction) =>
+    transaction.execute("DELETE FROM meta WHERE id = ?", [
+      AWAITING_ACCOUNT_COURSE_ID,
+    ]),
+  )
 }
 
 /** Resolves once the device holds a complete download of the backup. */

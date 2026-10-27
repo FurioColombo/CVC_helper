@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/persistence/backupLink", () => ({
+  awaitingAccountCourse: vi.fn(async () => false),
   connectDatabase: vi.fn(),
   databaseConnected: () => false,
   deviceCourseId: vi.fn(async () => null),

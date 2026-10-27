@@ -1,0 +1,83 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B5",
+  "commit": "806a7dc (code at 31de645)",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-B5-1",
+      "title": "Importing a course file while a restore is still running leaves two active courses on the device and on the server, and the app stops opening on that device",
+      "evidence": "While the backup is 'restoring', only 'Crea corso' was disabled; CourseFiles still offered 'Scegli il file del corso' and 'Importa il corso'. On the synced empty device the import writes the synced tables and queues the rows for an account that already holds a course; nothing on the server enforces one course per account. Fake backend: after the import, still restoring, ps_crud held a synced_courses PUT. Live (synthetic account, cleared): DEVICE two active courses, SERVER_COURSES 2, the reopened app showed 'Non riesco ad aprire i dati locali' (bindCourseSession throws on more than one active course); every device restoring that account would fail the same way.",
+      "reproduction": "Course A on the server; in a page without backup, export a D1 course; block the PowerSync host, sign in, wait for 'Ripristino del corso dal backup online…'; import the file and confirm; unblock, reload, wait, reload.",
+      "specRef": "04 B5 ('never merges'); AGENTS.md §11; session.ts's own claim that the empty screen offers no course to create"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-B5-2",
+      "title": "Replace erases first, then asks the server again; if that fails, the erased course stays on screen as if it existed and nothing is restored",
+      "evidence": "replaceWithOnlineCourse ran eraseAllCourseData() then resumeBackup(true); the erase neither advances the course generation nor invalidates the session. Fake backend with GET /rest/v1/courses failing after the question: after ~25 s state error, courses [] in local mode, and Home still showing the erased course; writes there fail with CourseReplacedError.",
+      "reproduction": "Fake backend spec as described.",
+      "specRef": "04 B5 checklist 'a restore interrupted halfway'"
+    },
+    {
+      "id": "DI-B5-3",
+      "title": "'Crea corso' was blocked only for 'restoring' and 'reopen'; a synced empty device in 'checking', 'offline' or 'error' could still create a course later merged with the account's",
+      "evidence": "App.tsx checked only restoring/reopen; startBackup returns offline for an expired token offline, and 'checking' lasts up to 3 s.",
+      "reproduction": "Code reading.",
+      "specRef": "04 B5"
+    },
+    {
+      "id": "DI-B5-4",
+      "title": "No invariant check or test sees a device with two active courses, and nothing validates a restored course",
+      "evidence": "validateCourseState runs on file imports only; the live row-for-row test covered one course with one student.",
+      "reproduction": "Same live run as DI-B5-1.",
+      "specRef": "AGENTS.md §11"
+    },
+    {
+      "id": "DI-B5-5",
+      "title": "Nothing has tested the server's minimum writer reaching a restored device",
+      "evidence": "The migration is not run; the live test accepted a 404 and proved read-only by calling adoptMinimumWriter directly; adoption ran only in finishRestore; if it threw, the state stayed 'restoring'.",
+      "reproduction": "Code reading.",
+      "specRef": "04 B5 checklist; 03 §3.1"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B5-Q1",
+      "title": "The replace question stays active for several seconds while the client retries",
+      "evidence": "Three failed GETs; four seconds after the tap the state was still replace-course with the course already erased.",
+      "reproduction": "As DI-B5-2.",
+      "specRef": "none"
+    },
+    {
+      "id": "DI-B5-Q2",
+      "title": "An empty device connected to an account without a course takes in a course uploaded later by another device while showing the creation screen",
+      "evidence": "finishRestore reloaded only once, after the first sync.",
+      "reproduction": "Code reading.",
+      "specRef": "none"
+    }
+  ],
+  "evidenceInspected": [
+    "04 B5; docs/agents/REVIEW_PROTOCOL.md",
+    "git diff 202aede..HEAD (session, useBackupState, backupLink, OnlineBackup, App, migration, b5 specs)",
+    "syncMode, courses erase, courseArchive import, courseSession, CourseFiles, CourseErase, the B2/B4 migrations",
+    "Throwaway fake-backend and live specs (synthetic account cleared); screenshot inspected"
+  ],
+  "anglesTried": {
+    "seed": 160227127,
+    "lenses": [
+      "8. Timestamps, versions and tombstones",
+      "5. Invariant checker blind spots"
+    ],
+    "wildcard": "Import a course file while the restore is still downloading"
+  },
+  "notTested": [
+    "The server minimum through the rpc (migration not run)",
+    "A restore while another device still uploads (by reading)",
+    "Two tabs during a replace; a tab kill between erase and switch",
+    "WebKit; the owner's Android check"
+  ]
+}

@@ -43,6 +43,8 @@ export const SYNC_MODE_ID = "local:sync-mode"
  * mark is the first 44 bits of the account's id (at most 14 digits).
  */
 export const BACKUP_ACCOUNT_ID = "local:backup-account"
+/** B5: set while a device switched without a course awaits the account's. */
+export const AWAITING_ACCOUNT_COURSE_ID = "local:awaiting-account-course"
 
 export function accountMark(userId: string) {
   const hex = userId.replace(/[^0-9a-f]/gi, "").slice(0, 11)
@@ -291,11 +293,22 @@ export async function switchToSyncedTables(
         "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
         [SYNC_MODE_ID, SYNCED],
       )
-      if (account)
+      if (account) {
         await transaction.execute(
           "INSERT OR REPLACE INTO meta(id, value) VALUES (?, ?)",
           [BACKUP_ACCOUNT_ID, accountMark(account)],
         )
+        // B5: a device switched without a course waits for the account's;
+        // until its first download no course is made here (DI-B5-1, -3).
+        const copied = await transaction.getAll(
+          `SELECT 1 FROM "${syncedTableName("courses")}" LIMIT 1`,
+        )
+        if (copied.length === 0)
+          await transaction.execute(
+            "INSERT OR REPLACE INTO meta(id, value) VALUES (?, 1)",
+            [AWAITING_ACCOUNT_COURSE_ID],
+          )
+      }
       await advanceCourseGeneration(transaction)
     })
   } finally {

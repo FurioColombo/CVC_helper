@@ -218,14 +218,25 @@ export function OnlineBackup({
         />
       )}
       {state.kind === "restoring" && (
-        <p className="mt-2 text-sm leading-5" role="status">
-          Accesso:{" "}
-          <span className="font-bold [overflow-wrap:anywhere]">
-            {state.email}
-          </span>
-          . Ripristino del corso dal backup online… Serve la connessione: l’app
-          si riapre con il corso appena è scaricato.
-        </p>
+        <div className="mt-2" role="status">
+          <p className="text-sm leading-5">
+            Accesso:{" "}
+            <span className="font-bold [overflow-wrap:anywhere]">
+              {state.email}
+            </span>
+            . Ripristino del corso dal backup online… Serve la connessione:
+            l’app si riapre con il corso appena è scaricato.
+          </p>
+          {/* A way out of a restore that cannot download (SC-B5-5). */}
+          <Button
+            className="mt-3"
+            disabled={busy}
+            onClick={() => void run(signOutOfBackup)}
+            variant="secondary"
+          >
+            Esci dall’account
+          </Button>
+        </div>
       )}
       {state.kind === "other-account" && (
         <Notice>

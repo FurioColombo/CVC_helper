@@ -61,6 +61,12 @@ import {
 } from "@/features/settings/CourseFiles"
 import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
 import { useBackupState } from "@/backup/useBackupState"
+import {
+  awaitingAccountCourse,
+  deviceCourseId,
+  deviceSyncMode,
+  onDatabaseStatus,
+} from "@/persistence/backupLink"
 import { requestPersistentStorage } from "@/persistence/browserStorage"
 import {
   isResetPending,
@@ -317,10 +323,40 @@ function CourseCreation({
   const [level, setLevel] = useState<CourseLevel | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(false)
-  // B5: while the account's course downloads, none is created here, so the
-  // app can reopen on the restored course with nothing lost.
+  // B5: a device switched to the backup holds the account's course or none;
+  // until the first download has shown the account has none, no course is
+  // created or imported here, or the device would end with two (reviews
+  // DI-B5-1, -3). The app reopens on a restored course with nothing lost.
   const backup = useBackupState()
-  const restoring = backup.kind === "restoring" || backup.kind === "reopen"
+  const [synced, setSynced] = useState(false)
+  const [awaiting, setAwaiting] = useState(false)
+  useEffect(() => {
+    let active = true
+    void Promise.all([deviceSyncMode(), awaitingAccountCourse()]).then(
+      ([mode, waits]) => {
+        if (!active) return
+        setSynced(mode === "synced")
+        setAwaiting(waits)
+      },
+    )
+    return () => {
+      active = false
+    }
+  }, [backup.kind])
+  // The account's course can arrive after this screen opened (another phone
+  // uploaded it later): the app reopens on it instead of offering a course
+  // that could only be refused (reviews SC-B5-4, DI-B5-Q2). A course made
+  // here leaves the screen first; a reopen then shows it too.
+  useEffect(() => {
+    if (!synced) return
+    return onDatabaseStatus(() => {
+      void deviceCourseId().then((course) => {
+        if (course) window.location.reload()
+      })
+    })
+  }, [synced])
+  const restoring =
+    backup.kind === "restoring" || backup.kind === "reopen" || awaiting
   const today = useMemo(() => new Date(), [])
   const details = useMemo(
     () => (family && level ? buildCourseDetails(family, level, today) : null),
@@ -419,8 +455,9 @@ function CourseCreation({
 
         {restoring && (
           <p className="mt-4 text-sm font-semibold leading-5" role="status">
-            Ripristino del corso dal backup online in corso: per crearne uno
-            nuovo attendi la fine.
+            {backup.kind === "restoring" || backup.kind === "reopen"
+              ? "Ripristino del corso dal backup online in corso: per crearne o importarne uno nuovo attendi la fine."
+              : "Questo telefono aspetta il corso dell’account dal backup online: per crearne o importarne uno servono l’accesso e la connessione, così l’app controlla prima se l’account ne ha già uno."}
           </p>
         )}
         <Button
@@ -437,7 +474,7 @@ function CourseCreation({
       </section>
 
       <OnlineBackup restore />
-      <CourseFiles hasCourse={false} />
+      <CourseFiles hasCourse={false} importBlocked={restoring} />
       <FullReset courseLabel={null} />
 
       <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">

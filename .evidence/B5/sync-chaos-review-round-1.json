@@ -1,0 +1,77 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B5",
+  "commit": "31de645",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SC-B5-1",
+      "title": "Once app_minimum_writer_version is installed, every restore stalls before its reload; the minimum writer is never adopted, so an app below the server minimum opens the restored course writable",
+      "evidence": "finishRestore called adoptMinimumWriter after firstSync, before the reload; adoptMinimumWriter opens a guarded write transaction whose assertCourseSession throws CourseReplacedError because the tab's session is bound to 'no course' while the downloaded course is active. Live, with the RPC fulfilled by page.route ('0.5.0' and '9.0.0'): pageerror 'CourseReplacedError', screen 'Il corso è cambiato', state stays 'restoring', meta unchanged; after 'Riapri l'app' the course opens writable even at 9.0.0. Today's 404 is the only reason the restore reloads; the live read-only test called adoptMinimumWriter after the reload.",
+      "reproduction": "Throwaway spec: one course for test account 1; route the RPC to '0.5.0' or '9.0.0'; goto '/', signInForTests, wait 25 s.",
+      "specRef": "04 B5; 03 §3.1"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-B5-2",
+      "title": "The minimum writer is read only once; any failure of that request skips it for good",
+      "evidence": "Any RPC error was treated as 'not installed'; on later launches restoring is false and finishRestore never runs. Live: first RPC aborted, later 9.0.0: meta unchanged after a relaunch, rpc calls 1, not read-only.",
+      "reproduction": "Live, as described.",
+      "specRef": "04 B5 checklist"
+    },
+    {
+      "id": "SC-B5-3",
+      "title": "The live minimum-writer test does not cover what it claims",
+      "evidence": "It accepted a 404 and called adoptMinimumWriter directly after the restore had reloaded; routed through the restore, SC-B5-1 shows.",
+      "reproduction": "Read the spec; route the RPC.",
+      "specRef": "AGENTS.md §3, §9"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B5-4",
+      "title": "When the account's course arrives after B signed in to an empty account, B keeps offering 'Crea corso'; tapping it gives a misleading 'sostituito o eliminato' screen",
+      "evidence": "Live, two contexts: B empty and connected; A uploads its course; B's database holds it but B still shows creation; the course-session guard refuses the creation; after a reopen both show A's course.",
+      "reproduction": "Throwaway spec, seeded interleaving 33116603.",
+      "specRef": "04 B5"
+    },
+    {
+      "id": "SC-B5-5",
+      "title": "A restore that cannot download has no way out on the screen",
+      "evidence": "With the PowerSync host blocked, the restore section had no button; signedOutElsewhere ignored 'restoring'. The interrupted restore itself recovered after a reload and signal.",
+      "reproduction": "Block the PowerSync host, sign in, inspect, reload, unblock.",
+      "specRef": "01_PRODUCT_SPEC.md field use offline"
+    },
+    {
+      "id": "SC-B5-6",
+      "title": "A local device holding the same course id as the account switches without asking and merges row by row",
+      "evidence": "The question is asked only for a different id; an import keeps ids, so a device with the other phone's export would merge under keep_latest_edit and rows it deleted come back. By reading.",
+      "reproduction": "Not reproduced.",
+      "specRef": "04 B5 ('never merges')"
+    }
+  ],
+  "evidenceInspected": [
+    "REVIEW_PROTOCOL; 04 B5; OWNER_DECISIONS 12 and 16",
+    "git diff 202aede..31de645",
+    "writeGuard, courseSession, dataVersion, syncMode, courses; upload_rules migration; sync-config (meta local)",
+    "b5-restore-live on pixel-7-chrome: 2 passed (RPC 404 on the backend)",
+    "Throwaway two-device live specs (synthetic, account cleared): course arriving later; RPC routed 0.5.0 and 9.0.0; RPC aborted once; PowerSync blocked plus a reload mid-restore; restore while the other phone had a queued offline upload (B restored without it, then received it)"
+  ],
+  "anglesTried": {
+    "seed": 33116603,
+    "lenses": [
+      "12. A read-only device trying to write anyway",
+      "5. The app killed or suspended mid-restore"
+    ],
+    "wildcard": "The account's course arrives after an empty phone signed in to an empty account, then B taps 'Crea corso'"
+  },
+  "notTested": [
+    "The migration on the development backend (simulated with page.route)",
+    "replaceWithOnlineCourse live with a network failure",
+    "Importing a file while a restore waits",
+    "Several tabs racing a sign-in during a restore; WebKit; the owner's check"
+  ]
+}

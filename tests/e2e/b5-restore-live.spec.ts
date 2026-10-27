@@ -52,10 +52,82 @@ test("an empty device restores the account's course and opens it", async ({
       })
     ).status,
   ).toBe(201)
+  const sailor = crypto.randomUUID()
+  const ashore = crypto.randomUUID()
+  const crew = crypto.randomUUID()
+  // A placed course, so the restore carries crews, placements and
+  // evaluations too, and the export below validates them (DI-B5-4).
+  const placed = [
+    [
+      "students",
+      {
+        id: ashore,
+        courseId: course,
+        firstName: "Aterra",
+        surname: "Sintetico",
+        declaredAgeAtCourseStart: 16,
+        sex: "other",
+        active: 1,
+        createdAt: at,
+        updatedAt: at,
+      },
+    ],
+    [
+      "crews",
+      {
+        id: crew,
+        courseId: course,
+        sessionId: "sat-pm",
+        capacity: 2,
+        destination: "unassigned",
+        boatId: null,
+        position: 0,
+        createdAt: at,
+        updatedAt: at,
+      },
+    ],
+    [
+      "crewMembers",
+      {
+        id: JSON.stringify(["member", crew, "student", sailor]),
+        courseId: course,
+        crewId: crew,
+        personId: sailor,
+        personType: "student",
+        position: 0,
+        createdAt: at,
+        updatedAt: at,
+      },
+    ],
+    [
+      "landAssignments",
+      {
+        id: JSON.stringify(["land", "sat-pm", ashore]),
+        courseId: course,
+        sessionId: "sat-pm",
+        studentId: ashore,
+        createdAt: at,
+        updatedAt: at,
+      },
+    ],
+    [
+      "evaluations",
+      {
+        id: JSON.stringify(["evaluation", sailor, "sat-pm"]),
+        courseId: course,
+        studentId: sailor,
+        sessionId: "sat-pm",
+        value: "+",
+        note: "nota sintetica",
+        createdAt: at,
+        updatedAt: at,
+      },
+    ],
+  ] as const
   expect(
     (
       await write(access, "students", {
-        id: crypto.randomUUID(),
+        id: sailor,
         courseId: course,
         firstName: "Ripristino",
         surname: "Sintetico",
@@ -67,6 +139,9 @@ test("an empty device restores the account's course and opens it", async ({
       })
     ).status,
   ).toBe(201)
+
+  for (const [table, row] of placed)
+    expect((await write(access, table, row)).status, table).toBe(201)
 
   // An empty device: the course creation screen, which offers the restore.
   await page.addInitScript(
@@ -159,81 +234,88 @@ test("an empty device restores the account's course and opens it", async ({
   await clearAccount(access)
 })
 
-// A restored course whose minimum writer is newer than the app opens
-// read-only and asks for the update (B5 adversarial checklist).
-test("a restored course takes the server's minimum writer; a newer one opens read-only", async ({
-  page,
-}) => {
-  test.setTimeout(240_000)
-  const access = await token(1)
-  await clearAccount(access)
-  const minimum = await fetch(
-    `${base()}/rest/v1/rpc/app_minimum_writer_version`,
-    {
-      method: "POST",
-      headers: {
-        apikey: env.SUPABASE_ANON_KEY!,
-        authorization: `Bearer ${access}`,
-        "content-type": "application/json",
+// A restored course takes the server's minimum writer during the restore:
+// with the server's own value it is writable; with one above the app it opens
+// read-only and asks for the update (B5 checklist; review SC-B5-1, -3). The
+// function's answer is routed so both values go through the real restore;
+// the real function, once the owner installs it, answers 0.5.0.
+for (const [minimum, readOnly] of [
+  ["0.5.0", false],
+  ["9.0.0", true],
+] as const)
+  test(`a restore with the server minimum ${minimum} opens the course ${readOnly ? "read-only" : "writable"}`, async ({
+    page,
+  }) => {
+    test.setTimeout(240_000)
+    const access = await token(1)
+    await clearAccount(access)
+    const real = await fetch(
+      `${base()}/rest/v1/rpc/app_minimum_writer_version`,
+      {
+        method: "POST",
+        headers: {
+          apikey: env.SUPABASE_ANON_KEY!,
+          authorization: `Bearer ${access}`,
+          "content-type": "application/json",
+        },
+        body: "{}",
       },
-      body: "{}",
-    },
-  )
-  // Until the owner runs the minimum-writer-read migration the function is
-  // missing and the restore keeps the device's own minimum; the read-only
-  // half below holds either way.
-  if (minimum.status !== 404) expect(await minimum.json()).toBe("0.5.0")
+    )
+    if (real.status !== 404) expect(await real.json()).toBe("0.5.0")
 
-  const course = crypto.randomUUID()
-  const at = new Date().toISOString()
-  await write(access, "courses", {
-    id: course,
-    active: 1,
-    family: "Deriva",
-    level: 2,
-    isoWeek: 44,
-    year: 2026,
-    startDate: "2026-10-31",
-    endDate: "2026-11-07",
-    label: "D2 44 2026",
-    createdAt: at,
-    updatedAt: at,
+    const course = crypto.randomUUID()
+    const at = new Date().toISOString()
+    await write(access, "courses", {
+      id: course,
+      active: 1,
+      family: "Deriva",
+      level: 2,
+      isoWeek: 44,
+      year: 2026,
+      startDate: "2026-10-31",
+      endDate: "2026-11-07",
+      label: "D2 44 2026",
+      createdAt: at,
+      updatedAt: at,
+    })
+    let asked = 0
+    await page.route("**/rest/v1/rpc/app_minimum_writer_version", (route) => {
+      asked += 1
+      return route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify(minimum),
+      })
+    })
+    await page.addInitScript(
+      (config) => {
+        window.__cvcBackupConfig = config
+      },
+      {
+        supabaseUrl: env.SUPABASE_URL!,
+        supabaseKey: env.SUPABASE_ANON_KEY!,
+        powersyncUrl: env.POWERSYNC_URL!,
+      },
+    )
+    await page.goto("/")
+    await call(
+      page,
+      "/src/backup/session.ts",
+      "signInForTests",
+      env.TEST_USER_1_EMAIL!,
+      env.TEST_USER_1_PASSWORD!,
+    ).catch(() => {})
+    // The app reopens on the restored course by itself.
+    await expect(
+      page.getByRole("heading", { name: /D2 - 44 \| 2026/ }),
+    ).toBeVisible({ timeout: 90_000 })
+    expect(asked).toBeGreaterThan(0)
+    if (readOnly)
+      await expect(page.getByText("Sola lettura:")).toBeVisible({
+        timeout: 30_000,
+      })
+    else {
+      await page.waitForTimeout(3_000)
+      await expect(page.getByText("Sola lettura:")).toHaveCount(0)
+    }
+    await clearAccount(access)
   })
-  await page.addInitScript(
-    (config) => {
-      window.__cvcBackupConfig = config
-    },
-    {
-      supabaseUrl: env.SUPABASE_URL!,
-      supabaseKey: env.SUPABASE_ANON_KEY!,
-      powersyncUrl: env.POWERSYNC_URL!,
-    },
-  )
-  await page.goto("/")
-  await call(
-    page,
-    "/src/backup/session.ts",
-    "signInForTests",
-    env.TEST_USER_1_EMAIL!,
-    env.TEST_USER_1_PASSWORD!,
-  ).catch(() => {})
-  await expect(
-    page.getByRole("heading", { name: /D2 - 44 \| 2026/ }),
-  ).toBeVisible({ timeout: 90_000 })
-  // Writable with the server's own minimum.
-  await expect(page.getByText("Sola lettura:")).toHaveCount(0)
-
-  // A server minimum above this app, as a future release would set: the
-  // restored course opens read-only after the reopen.
-  await call(
-    page,
-    "/src/persistence/backupLink.ts",
-    "adoptMinimumWriter",
-    "9.0.0",
-  )
-  await page.reload()
-  await expect(page.getByText("Sola lettura:")).toBeVisible({
-    timeout: 30_000,
-  })
-  await clearAccount(access)
-})

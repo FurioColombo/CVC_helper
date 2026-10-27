@@ -86,8 +86,12 @@ test("an empty device offers the restore and creates nothing while it runs", asy
   await page.getByRole("button", { name: "Deriva", exact: true }).click()
   await page.getByRole("button", { name: "Livello 2", exact: true }).click()
   await expect(page.getByRole("button", { name: "Crea corso" })).toBeDisabled()
+  // Nor imported: a file would make two courses (review DI-B5-1).
   await expect(
-    page.getByText("per crearne uno nuovo attendi la fine"),
+    page.getByRole("button", { name: /Scegli il file del corso/ }),
+  ).toBeDisabled()
+  await expect(
+    page.getByText("per crearne o importarne uno nuovo attendi la fine"),
   ).toBeVisible()
 })
 
@@ -156,4 +160,42 @@ test("replacing erases this device's course, merges nothing, and restores", asyn
   ).toContainText("Ripristino del corso dal backup online…", {
     timeout: 30_000,
   })
+})
+
+// Review DI-B5-2: the account's course is checked before anything is erased.
+test("a replace whose server check fails erases nothing", async ({ page }) => {
+  await withAccountCourse(page)
+  await courseHere(page)
+  await signIn(page)
+  await page.reload()
+  await page.getByRole("button", { name: "Impostazioni" }).click()
+  const section = page.getByRole("region", { name: "Backup online" })
+  const question = section.getByRole("alertdialog")
+  await expect(question).toContainText("D3 45 2026")
+  await page.route(`${fakeBackend}/rest/v1/courses**`, (route) => route.abort())
+  await question
+    .getByRole("checkbox", {
+      name: "Ho capito: il corso di questo telefono sarà eliminato",
+    })
+    .check()
+  await question
+    .getByRole("button", { name: "Sostituisci con il corso online" })
+    .click()
+  await expect(section.getByRole("alert")).toContainText(
+    "Backup non raggiungibile",
+    { timeout: 30_000 },
+  )
+  await page.getByRole("button", { name: "Torna alla Home" }).click()
+  await expect(
+    page.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
+  ).toBeVisible()
+  expect(
+    await page.evaluate(async () => {
+      const load = (path: string) => import(/* @vite-ignore */ path)
+      const { deviceCourseId } = (await load(
+        "/src/persistence/backupLink.ts",
+      )) as { deviceCourseId: () => Promise<string | null> }
+      return deviceCourseId()
+    }),
+  ).not.toBeNull()
 })

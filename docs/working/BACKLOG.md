@@ -208,12 +208,12 @@ Each passed only on a retry and is a defect to fix (03 §6).
     device and keep tombstones on the server before team editing (1.0.0);
   - DI-B4-Q1: crew history counts a member Equipaggi dropped, until saved;
   - SC-B4-Q4: a member of a crew deleted elsewhere leaves without a notice;
+  - SC-B5-6: a device importing the account's own course id merges unasked;
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;
-  - SP-B4-Q3: with the sync service also unreachable, uploads waited for
-    the app to reopen once (20 s observation);
-  - SC-B4-Q2: only inserts are batched; measure offline edits first.
+  - SP-B4-Q3 / SC-B4-Q2: uploads waited once for a reopen with the sync service
+    unreachable; only inserts are batched (measure offline edits first).
 - B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
   slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
   Home shows nothing. Consider a one-line notice on Home.

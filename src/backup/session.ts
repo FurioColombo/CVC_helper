@@ -13,8 +13,10 @@ import {
   adoptMinimumWriter,
   firstSync,
   openedWithSyncedTables,
+  awaitingAccountCourse,
   courseTableColumns,
   recordUploadOutcome,
+  stopAwaitingAccountCourse,
   switchDeviceToSyncedTables,
 } from "@/persistence/backupLink"
 import { CourseReplacedError } from "@/persistence/courseSession"
@@ -245,7 +247,13 @@ export async function startBackup(
     return { kind: "other-account" }
   if (!connected) {
     connected = true
-    restoring = !(await deviceCourseId())
+    // Restoring means waiting for the account's course: a device switched
+    // empty. One whose own course was erased here makes a new one freely.
+    restoring = (await awaitingAccountCourse()) && !(await deviceCourseId())
+    // An empty device takes the server's minimum writer before anything is
+    // downloaded: after the download the course is not yet bound to this
+    // screen and the write guard would refuse the record (review SC-B5-1).
+    if (restoring) await adoptServerMinimum(client).catch(() => {})
     await connectDatabase(
       createConnector(client, config, session.user.id, {
         columnsOf: courseTableColumns,
@@ -260,9 +268,15 @@ export async function startBackup(
     )
   }
   if (restoring) {
-    void finishRestore(client, email)
+    void finishRestore(email)
     return { kind: "restoring", email }
   }
+  // At every connection, so a failed read is tried again and a minimum
+  // raised on the server since reaches this device too: from the next
+  // launch it opens read-only (reviews DI-B5-5, SC-B5-2).
+  void adoptServerMinimum(client).catch(() => {})
+  // Reopened on the restored course: nothing is awaited any more.
+  void stopAwaitingAccountCourse().catch(() => {})
   return { kind: "connected", email, outdated: uploadsOutdated }
 }
 
@@ -271,26 +285,41 @@ let restoring = false
 let finishing: Promise<void> | null = null
 
 /**
- * B5: once the first complete download is in, the restored course takes the
- * server's minimum writer, so an app older than it opens the course
- * read-only (supabase/migrations/20261027000000_minimum_writer_read.sql),
- * and the app reopens so its session binds the restored course (B1 review
- * SC-B1-Q5). Nothing can be lost by that reload: while restoring, the
- * empty device's screen offers no course to create. An account without a
- * course leaves the device empty and connected.
+ * The server's minimum writer, adopted by the device's data version
+ * (supabase/migrations/20261027000000_minimum_writer_read.sql). Not
+ * installed yet, the server's own writer check still refuses an older
+ * app's uploads.
  */
-function finishRestore(client: SupabaseClient, email: string) {
+async function adoptServerMinimum(client: SupabaseClient) {
+  const { data: minimum, error } = await client.rpc(
+    "app_minimum_writer_version",
+  )
+  if (!error && typeof minimum === "string") await adoptMinimumWriter(minimum)
+}
+
+/**
+ * B5: once the first complete download is in (the server's minimum writer
+ * already taken, so an app older than it opens the course read-only), the
+ * app reopens so its session binds the restored course
+ * (B1 review SC-B1-Q5). Nothing can be lost by that reload: on a switched
+ * empty device no course is created or imported until the account is known
+ * to hold none (src/App.tsx). An account without a course leaves the device
+ * empty and connected; a failure says so and Riprova resumes.
+ */
+function finishRestore(email: string) {
   finishing ??= (async () => {
-    await firstSync()
-    const { data: minimum, error } = await client.rpc(
-      "app_minimum_writer_version",
-    )
-    // Not installed yet: the server's own writer check still refuses an
-    // older app's uploads.
-    if (!error && typeof minimum === "string") await adoptMinimumWriter(minimum)
-    restoring = false
-    if (await deviceCourseId()) reload()
-    else setBackupState({ kind: "connected", email, outdated: uploadsOutdated })
+    try {
+      await firstSync()
+      restoring = false
+      if (await deviceCourseId()) reload()
+      else {
+        // The account has no course: one can be made here now.
+        await stopAwaitingAccountCourse()
+        setBackupState({ kind: "connected", email, outdated: uploadsOutdated })
+      }
+    } catch {
+      setBackupState({ kind: "error", message: UNREACHABLE })
+    }
   })().finally(() => {
     finishing = null
   })
@@ -299,12 +328,30 @@ function finishRestore(client: SupabaseClient, email: string) {
 
 /**
  * B5: the owner confirmed replacing this device's course with the
- * account's: the course here is erased, as "Elimina il corso" does, and the
- * empty device then restores the online one. Nothing is merged.
+ * account's. The account's course is checked first, so nothing is erased
+ * for a course no longer online or a server out of reach; then the course
+ * here is erased, as "Elimina il corso" does, and the app reopens at once,
+ * empty: no screen keeps showing the erased course, and the launch restores
+ * the online one (review DI-B5-2). Nothing is merged.
  */
 export async function replaceWithOnlineCourse(): Promise<BackupState> {
+  const config = backupConfig()
+  if (!config) return { kind: "unavailable" }
+  const { data: online, error } = await (
+    await supabase(config)
+  )
+    .from("courses")
+    .select("id")
+    .limit(1)
+  if (error || !online?.length)
+    return {
+      kind: "error",
+      message: error
+        ? UNREACHABLE
+        : "Il corso online non c’è più: il corso di questo telefono resta.",
+    }
   await eraseAllCourseData()
-  await resumeBackup(true)
+  reload()
   return current
 }
 
@@ -328,7 +375,12 @@ function forgetStoredSession() {
 }
 
 async function signedOutElsewhere() {
-  if (current.kind !== "connected" && current.kind !== "offline") return
+  if (
+    current.kind !== "connected" &&
+    current.kind !== "offline" &&
+    current.kind !== "restoring"
+  )
+    return
   await disconnectDatabase()
   connected = false
   setBackupState({ kind: "signed-out" })

@@ -103,7 +103,17 @@ function supportsFileSharing(file: File): boolean {
   }
 }
 
-export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
+export function CourseFiles({
+  hasCourse,
+  importBlocked = false,
+}: {
+  hasCourse: boolean
+  /**
+   * B5: the account's course may still be on its way to this switched,
+   * empty device; an imported one would make two (review DI-B5-1).
+   */
+  importBlocked?: boolean
+}) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [exporting, setExporting] = useState(false)
   const [preparedExport, setPreparedExport] = useState<PreparedExport | null>(
@@ -394,7 +404,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
           accept=".json,.txt,application/json,text/plain"
           aria-hidden="true"
           className="sr-only"
-          disabled={readingFile || importing}
+          disabled={readingFile || importing || importBlocked}
           onChange={(event) => {
             const file = event.currentTarget.files?.[0]
             event.currentTarget.value = ""
@@ -406,7 +416,7 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
         />
         <Button
           className="mt-3 w-full h-auto min-h-11 whitespace-normal"
-          disabled={readingFile || importing}
+          disabled={readingFile || importing || importBlocked}
           onClick={() => fileInput.current?.click()}
           variant="secondary"
         >
@@ -481,7 +491,12 @@ export function CourseFiles({ hasCourse }: { hasCourse: boolean }) {
               </Button>
               <Button
                 className="h-auto min-h-11 whitespace-normal"
-                disabled={!replacementConfirmed || importing || imported}
+                disabled={
+                  !replacementConfirmed ||
+                  importing ||
+                  imported ||
+                  importBlocked
+                }
                 onClick={() => void replaceCourse()}
               >
                 {importing && (
