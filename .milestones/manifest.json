@@ -1284,7 +1284,7 @@
     {
       "id": "B6",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B6/verification.json",
@@ -1334,7 +1334,19 @@
           }
         ]
       },
-      "ownerEvidence": [".evidence/B6/physical-device-review.json"]
+      "ownerEvidence": [".evidence/B6/physical-device-review.json"],
+      "agentReady": {
+        "commit": "257a247fea6a151f462631fed7a85714307709f4",
+        "sourceDigest": "b546cfee7ee19a04805dab1e166357a7601f63bfad78be9a66087f35ada02db3",
+        "evidenceHashes": {
+          ".evidence/B6/verification.json": "bb692d199077bf2c5f3201f87d18c99a5bfb5db20af161bbdaa980baf0c9f068",
+          ".evidence/B6/self-review.json": "331784caa04bc1ed2ce777e98b31407868ab50ae4210fde44d052afec9b20b65",
+          ".evidence/B6/security-privacy-review.json": "33e647ab579023bc6f77ff750d69c5aef8a3d47474878ace4945ebbda6137df2",
+          ".evidence/B6/data-integrity-review.json": "2efca07cc71249c11d9f5ed8b618860c33ec7e9467dcf3dcad2d7a684b57f700"
+        },
+        "ciRunId": 40479797411,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/40479797411"
+      }
     },
     {
       "id": "UG4",

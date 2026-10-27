@@ -30,6 +30,7 @@ by `verify:all`, the reviews below and the owner's Android check.
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
 | B4 | Awaiting the owner: refused changes are kept and reported, uploads go as whole rows with the app version, the server keeps the latest edit, and two phones edited offline converge (decision 16 bounds deletes). Reviews passed, CI green at `5e09c8f`; CVC Helper Test 0.5.1. Owner check B4-PHONE-UPLOADS. See `.evidence/B4/`. |
 | B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reviews passed, CI green at `b06d8e1`. CVC Helper Test 0.5.2 follows the B4 check. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
+| B6 | Awaiting the owner: erasing, a course-file replacement and the full reset take the course off the server, also offline once there is signal; nothing of it stays on the device or the account's other phones. Reviews passed, CI green at `257a247`. Owner actions B6-ERASE-RULES, B6-PHONE-ERASE. See `.evidence/B6/`. |
 
 ## Execution order
 
@@ -115,7 +116,7 @@ data-integrity and sync-chaos reviews.
 ## B6 — Erase on the server
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 Erasing the course and the full reset also delete the server copy when
 signed in; offline, the deletion completes on reconnect. Impostazioni states
