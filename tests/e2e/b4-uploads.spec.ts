@@ -1,3 +1,6 @@
+import { createServer, type ServerResponse } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { expect, type Page, test } from "@playwright/test"
 
 /**
@@ -53,6 +56,7 @@ async function withBackend(
   answer: (
     write: Write,
   ) => { status: number; code?: string } | "unreachable" | null = () => null,
+  { powersyncUrl = "https://sync.fake.test" } = {},
 ) {
   const writes: Write[] = []
   const server = new Map<string, Map<string, Row>>()
@@ -60,13 +64,16 @@ async function withBackend(
     if (!server.has(name)) server.set(name, new Map())
     return server.get(name)!
   }
-  await page.addInitScript((url) => {
-    window.__cvcBackupConfig = {
-      supabaseUrl: url,
-      supabaseKey: "sb_publishable_fake",
-      powersyncUrl: "https://sync.fake.test",
-    }
-  }, fakeBackend)
+  await page.addInitScript(
+    ([url, sync]) => {
+      window.__cvcBackupConfig = {
+        supabaseUrl: url,
+        supabaseKey: "sb_publishable_fake",
+        powersyncUrl: sync,
+      }
+    },
+    [fakeBackend, powersyncUrl] as const,
+  )
   await page.route("https://sync.fake.test/**", (route) => route.abort())
   await page.route(`${fakeBackend}/**`, async (route) => {
     const request = route.request()
@@ -197,10 +204,13 @@ test("the switch uploads the course in batches, each write naming the app versio
     .poll(() => writes.filter(({ table }) => table === "students").length)
     .toBeGreaterThan(0)
   // Parents first, the students in one request, every write with a version.
-  // B6: before them, the switch's course may lift an erased-id record.
-  expect(writes.find(({ table }) => table !== "erased_courses")?.table).toBe(
-    "courses",
-  )
+  // B6: before them, the switch's course may lift an erased-id record, and
+  // the minimum writer is read (an RPC, no course data).
+  expect(
+    writes.find(
+      ({ table }) => table !== "erased_courses" && !table.startsWith("rpc/"),
+    )?.table,
+  ).toBe("courses")
   const students = writes.filter(({ table }) => table === "students")
   expect(students).toHaveLength(1)
   expect(students[0]!.rows.map((row) => row.firstName).sort()).toEqual([
@@ -233,9 +243,10 @@ test("a refused change is kept and listed, the rest goes through, and Riprova se
   await expect(section.getByRole("alert")).toContainText(
     "Contengono dati che il backup non accetta.",
   )
-  // The fake sync service is out of reach, so the line says offline; it
-  // never claims everything was sent.
-  await expect(section.getByRole("status")).not.toContainText("Tutto inviato")
+  // It never claims everything was sent while a change is refused.
+  await expect(section.getByRole("status")).toContainText(
+    "Copia online aggiornata, tranne 1 modifica rifiutata.",
+  )
   // Ada went up alone after the batch was refused; Eva stays on the phone.
   expect(
     writes.some(
@@ -246,7 +257,15 @@ test("a refused change is kept and listed, the rest goes through, and Riprova se
   refuseEva = false
   await section.getByRole("button", { name: "Riprova l’invio" }).click()
   await expect(section.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
-  await expect(section.getByRole("status")).toContainText("Tutto inviato")
+  // The fake sync service stays out of reach, as the download stream did on
+  // the owner's phone after a day offline: every change sent, the line says
+  // so (owner check B4-PHONE-UPLOADS, 2026-10-28).
+  await expect(section.getByRole("status")).toContainText(
+    "Copia online aggiornata.",
+  )
+  await expect(section.getByRole("status")).not.toContainText(
+    "senza connessione",
+  )
   expect(
     writes.filter((write) => hasStudent(write, "Eva")).at(-1)?.method,
   ).toBeDefined()
@@ -527,4 +546,62 @@ test("Riprova does not bring back a student whose delete has not uploaded yet", 
   await page.getByRole("button", { name: "Allievi", exact: true }).click()
   await expect(page.getByRole("button", { name: /^Eva,/ })).toHaveCount(0)
   expect(serverStudent(server, "Eva")).toBeUndefined()
+})
+
+// Owner check B4-PHONE-UPLOADS (2026-10-28): after a day offline the phone
+// sent every change while its download stream stayed down until the app
+// reopened. A stream request that hangs on a dead connection is restarted
+// while the app is online and on screen; the status line follows the
+// uploads meanwhile. The sync service here is a local server whose stream
+// request is accepted and never answered, as on a dead connection.
+test("a download stream hung on a dead connection is restarted, and the status follows the uploads", async ({
+  page,
+}) => {
+  test.setTimeout(150_000)
+  let streamRequests = 0
+  const hung: ServerResponse[] = []
+  const server = createServer((request, response) => {
+    response.setHeader("access-control-allow-origin", "*")
+    response.setHeader("access-control-allow-headers", "*")
+    response.setHeader("access-control-allow-methods", "GET, POST")
+    if (request.method === "OPTIONS") return response.writeHead(204).end()
+    // Only the stream hangs; a write checkpoint answers, as it did on the
+    // phone, where every change was sent.
+    if (request.url?.includes("write-checkpoint"))
+      return response
+        .writeHead(200, { "content-type": "application/json" })
+        .end(JSON.stringify({ data: { write_checkpoint: "1" } }))
+    streamRequests += 1
+    hung.push(response)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address() as AddressInfo
+  try {
+    const { writes } = await withBackend(page, () => null, {
+      powersyncUrl: `http://127.0.0.1:${port}`,
+    })
+    await courseWithStudents(page, ["Ada"])
+    await signIn(page)
+    await expect
+      .poll(() => writes.filter(({ table }) => table === "students").length, {
+        timeout: 30_000,
+      })
+      .toBeGreaterThan(0)
+    const section = await backupSection(page)
+    await expect(section.getByRole("status")).toContainText(
+      "Copia online aggiornata.",
+    )
+    const before = streamRequests
+    expect(before).toBeGreaterThan(0)
+    // PowerSync waits on a hung request for ever; the app restarts it.
+    await expect
+      .poll(() => streamRequests, { timeout: 60_000, intervals: [2_000] })
+      .toBeGreaterThan(before)
+    await expect(section.getByRole("status")).toContainText(
+      "Copia online aggiornata.",
+    )
+  } finally {
+    for (const response of hung) response.destroy()
+    server.close()
+  }
 })

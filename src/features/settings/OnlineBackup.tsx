@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { appChannel } from "@/runtimeConfig"
 import {
-  databaseConnected,
+  lastUploadFailed,
   onDatabaseStatus,
   pendingUploads,
   awaitingServerErase,
@@ -193,6 +193,7 @@ export function OnlineBackup({
           email={state.email}
           onSignOut={() => void run(signOutOfBackup)}
           outdated={state.kind === "connected" && !!state.outdated}
+          reachable={state.kind === "connected"}
         />
       )}
       {state.kind === "reopen" && (
@@ -380,11 +381,14 @@ function Connected({
   busy,
   onSignOut,
   outdated,
+  reachable,
 }: {
   email: string
   busy: boolean
   onSignOut: () => void
   outdated: boolean
+  /** The backup is connected (not waiting for signal to sign in again). */
+  reachable: boolean
 }) {
   const [status, setStatus] = useState<Status>({
     icon: "sending",
@@ -415,7 +419,12 @@ function Connected({
         supersededEdits(),
         awaitingServerErase(),
       ])
-      const connected = databaseConnected()
+      // The status follows the uploads, not the download stream: with every
+      // change sent the copy online is up to date, whatever the download
+      // does (owner check B4-PHONE-UPLOADS, 2026-10-28).
+      const online = reachable && window.navigator.onLine
+      // With changes waiting, they move only while uploads succeed.
+      const connected = online && (pending === 0 || !lastUploadFailed())
       if (!active) return
       setWaiting(pending)
       setErasePending(erasing)
@@ -465,7 +474,7 @@ function Connected({
       stop()
       window.clearInterval(timer)
     }
-  }, [round])
+  }, [round, reachable])
 
   // Applied again, the changes queue for upload; what cannot be rebuilt
   // here stays listed (src/persistence/backupLink.ts).

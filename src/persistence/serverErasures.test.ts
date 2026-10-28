@@ -66,6 +66,18 @@ describe("the record of what the server must still erase", () => {
     expect(tx.stored).toEqual({ a: [1, 1] })
   })
 
+  // Between two retries the SDK reports neither connected nor connecting,
+  // while its loops still run: the erase stops them all the same.
+  it("disconnects between two retries too", async () => {
+    const database = {
+      connected: false,
+      connecting: false,
+      disconnect: vi.fn(),
+    } as unknown as PowerSyncDatabase
+    await disconnectForErase(database)
+    expect(database.disconnect).toHaveBeenCalledOnce()
+  })
+
   // Review DI-B6-2: a read-only device does not stop its backup for an
   // erase it cannot make.
   it("refuses before disconnecting a read-only database", async () => {

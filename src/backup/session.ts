@@ -1,3 +1,4 @@
+import type { PowerSyncBackendConnector } from "@powersync/web"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { backupConfig, type BackupConfig } from "@/backup/config"
@@ -22,6 +23,7 @@ import {
   recordUploadOutcome,
   stopAwaitingAccountCourse,
   switchDeviceToSyncedTables,
+  syncStreamStuck,
 } from "@/persistence/backupLink"
 import { CourseReplacedError } from "@/persistence/courseSession"
 import { eraseAllCourseData } from "@/persistence/courses"
@@ -54,6 +56,8 @@ let client: Promise<SupabaseClient> | null = null
 /** The server last answered that this app is below its minimum writer. */
 let uploadsOutdated = false
 let connected = false
+/** Counts sign-outs, so a start begun before one never connects after it. */
+let signOuts = 0
 
 async function supabase(config: BackupConfig) {
   client ??= import("@supabase/supabase-js").then(({ createClient }) => {
@@ -201,6 +205,9 @@ export async function startBackup(
 ): Promise<BackupState> {
   const config = backupConfig()
   if (!config) return { kind: "unavailable" }
+  // A sign-out while this start awaits the network ends it: it never
+  // connects for the account just signed out.
+  const epoch = signOuts
   const client = await supabase(config)
   const {
     data: { session },
@@ -260,6 +267,7 @@ export async function startBackup(
       return offline()
         ? { kind: "offline", email }
         : { kind: "error", message: UNREACHABLE }
+    if (epoch !== signOuts) return { kind: "signed-out" }
     connected = true
     // Restoring means waiting for the account's course: a device switched
     // empty. One whose own course was erased here makes a new one freely.
@@ -268,18 +276,25 @@ export async function startBackup(
     // downloaded: after the download the course is not yet bound to this
     // screen and the write guard would refuse the record (review SC-B5-1).
     if (restoring) await adoptServerMinimum(client).catch(() => {})
-    await connectDatabase(
-      createConnector(client, config, session.user.id, {
-        columnsOf: courseTableColumns,
-        recordOutcome: recordUploadOutcome,
-        onOutdated: (outdated) => {
-          // The first upload can answer before the state says connected.
-          uploadsOutdated = outdated
-          if (current.kind === "connected" && !!current.outdated !== outdated)
-            setBackupState({ ...current, outdated })
-        },
-      }),
-    )
+    if (epoch !== signOuts) {
+      connected = false
+      return { kind: "signed-out" }
+    }
+    activeConnector = createConnector(client, config, session.user.id, {
+      columnsOf: courseTableColumns,
+      recordOutcome: recordUploadOutcome,
+      onOutdated: (outdated) => {
+        // The first upload can answer before the state says connected.
+        uploadsOutdated = outdated
+        if (current.kind === "connected" && !!current.outdated !== outdated)
+          setBackupState({ ...current, outdated })
+      },
+    })
+    // Started, not awaited: the SDK's connect waits on its first request,
+    // and a request hung on a dead connection would hold the backup in its
+    // launch state (owner check B4-PHONE-UPLOADS, 2026-10-28).
+    void connectDatabase(activeConnector).catch(() => {})
+    watchStalledSync()
   }
   if (restoring) {
     void finishRestore(email)
@@ -292,6 +307,53 @@ export async function startBackup(
   // Reopened on the restored course: nothing is awaited any more.
   void stopAwaitingAccountCourse().catch(() => {})
   return { kind: "connected", email, outdated: uploadsOutdated }
+}
+
+let activeConnector: PowerSyncBackendConnector | null = null
+
+/** How long a stream may stay stuck connecting, online and on screen. */
+const STALL_MS = 30_000
+/** At most one restart in this time: never a reconnect loop. */
+const RESTART_GAP_MS = 2 * 60_000
+let watchdog = 0
+let stalledSince = 0
+let lastRestart = 0
+
+/**
+ * B4 owner check (2026-10-28): after a day offline the phone sent every
+ * change, but its download stream stayed down until the app reopened (most
+ * likely a request hung on a connection from before airplane mode). While
+ * the backup is connected, the phone online and the app on screen, a stream
+ * stuck connecting for longer than STALL_MS is restarted, as reopening the
+ * app did. A request that fails PowerSync retries by itself.
+ */
+function watchStalledSync() {
+  if (watchdog) return
+  watchdog = window.setInterval(() => {
+    if (
+      !connected ||
+      !activeConnector ||
+      !syncStreamStuck() ||
+      !window.navigator.onLine ||
+      document.visibilityState !== "visible"
+    ) {
+      stalledSince = 0
+      return
+    }
+    const now = Date.now()
+    if (!stalledSince) stalledSince = now
+    if (now - stalledSince < STALL_MS || now - lastRestart < RESTART_GAP_MS)
+      return
+    lastRestart = now
+    stalledSince = 0
+    restartSync(activeConnector)
+  }, 5_000)
+}
+
+/** A new connect replaces the stuck one, aborting its request (PowerSync). */
+function restartSync(connector: PowerSyncBackendConnector) {
+  if (connected && activeConnector === connector)
+    void connectDatabase(connector).catch(() => {})
 }
 
 /** PostgREST's answer for a table the server does not have yet. */
@@ -531,6 +593,7 @@ async function signedOutElsewhere() {
     current.kind !== "restoring"
   )
     return
+  signOuts += 1
   await disconnectDatabase()
   connected = false
   setBackupState({ kind: "signed-out" })
@@ -542,6 +605,7 @@ const SIGN_OUT_WAIT_MS = 3_000
 export async function signOutOfBackup(): Promise<BackupState> {
   const config = backupConfig()
   if (!config) return { kind: "unavailable" }
+  signOuts += 1
   await disconnectDatabase()
   connected = false
   try {

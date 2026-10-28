@@ -2,6 +2,7 @@ import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
 import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
+import { disconnectSync } from "@/persistence/syncConnection"
 import { isReadOnly, ReadOnlyDataError } from "@/persistence/writeGuard"
 
 /**
@@ -52,7 +53,21 @@ async function record(
  */
 export async function disconnectForErase(database: PowerSyncDatabase) {
   if (isReadOnly(database)) throw new ReadOnlyDataError()
-  if (database.connected || database.connecting) await database.disconnect()
+  syncHeldForErase = true
+  // Always: between two retries the SDK reports neither connected nor
+  // connecting while its sync and upload loops still run, and they would
+  // upload before the server's erase (found in B4's owner-fix run).
+  await disconnectSync(database)
+}
+
+/**
+ * Set while an erase or import holds the connection down on purpose, until
+ * the backup connects again: the backup's stall watchdog leaves it alone.
+ */
+export let syncHeldForErase = false
+
+export function releaseSyncHold() {
+  syncHeldForErase = false
 }
 
 /**

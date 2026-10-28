@@ -108,17 +108,19 @@ The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-
 
 ## Let the server keep an erased course erased — B6
 
-**State:** Passed from owner report · Required
+**State:** Setup needed · Required
 
 **What to do:**
 
-The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-dev; the agent's live checks afterwards are in the milestone's evidence.
+1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
+2. Paste the whole file supabase/migrations/20261028000000_course_erase.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: the installed builds never touch it, and the B6 build erases courses with or without it.
+3. Write 'erase rules run' in the chat; I then run the live check that an erased course refuses a later upload from another phone.
 
 **Expected:** The server records the ids of erased courses (no course data, readable only by their owner) and refuses that course from any phone afterwards.
 
 **Build:** No test build is assigned yet.
 
-**Work affected:** The owner report is recorded.
+**Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
 <a id="b6-phone-erase"></a>
 

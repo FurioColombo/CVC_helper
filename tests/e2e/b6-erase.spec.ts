@@ -381,7 +381,10 @@ test("a course file of the same course replaces it on the server, accepted again
   // The old rows erased, the id accepted again, then the file's course up;
   // no record of an erase is left for this id.
   expect(
-    backend.writes.slice(0, 3).map((write) => `${write.method} ${write.table}`),
+    backend.writes
+      .filter((write) => !write.table.startsWith("rpc/"))
+      .slice(0, 3)
+      .map((write) => `${write.method} ${write.table}`),
   ).toEqual(["DELETE courses", "DELETE erased_courses", "POST courses"])
   expect(backend.table("erased_courses").size).toBe(0)
   await expect.poll(() => backend.table("students").size).toBe(1)

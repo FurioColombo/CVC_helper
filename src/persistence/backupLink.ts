@@ -1,6 +1,8 @@
 import type { PowerSyncBackendConnector } from "@powersync/web"
 
 import { db } from "@/persistence/db"
+import { connectSync, disconnectSync } from "@/persistence/syncConnection"
+import { releaseSyncHold, syncHeldForErase } from "@/persistence/serverErasures"
 import { expectsSyncedTables } from "@/persistence/openedSchema"
 import { courseLeftThisDevice, prepareDatabase } from "@/persistence/migrations"
 import {
@@ -123,11 +125,24 @@ export function firstSync() {
 }
 
 export function connectDatabase(connector: PowerSyncBackendConnector) {
-  return db.connect(connector)
+  releaseSyncHold()
+  return connectSync(db, connector)
+}
+
+/**
+ * Whether the download stream is stuck connecting: no erase holds it down
+ * and its request has not answered. PowerSync retries a request that fails
+ * by itself; one that hangs (a connection dead since before airplane mode)
+ * it waits for (B4 owner check, 2026-10-28; src/backup/session.ts restarts
+ * it).
+ */
+export function syncStreamStuck() {
+  const status = db.currentStatus
+  return !syncHeldForErase && !status.connected && status.connecting
 }
 
 export function disconnectDatabase() {
-  return db.disconnect()
+  return disconnectSync(db)
 }
 
 export {
@@ -169,6 +184,18 @@ export async function courseLeftWithBackup() {
 
 export function databaseConnected() {
   return db.currentStatus.connected
+}
+
+/**
+ * Whether the last upload attempt failed. Uploads run apart from the
+ * download stream (`databaseConnected`), which after a long offline period
+ * on a phone can stay down while every change is sent (owner check
+ * B4-PHONE-UPLOADS, 2026-10-28). With the queue empty this says nothing:
+ * the SDK then still asks the sync service for a write checkpoint, and that
+ * request's failure is reported as an upload error too.
+ */
+export function lastUploadFailed() {
+  return !!db.currentStatus.dataFlowStatus.uploadError
 }
 
 /** Calls `listener` when the sync status changes; returns a stop. */

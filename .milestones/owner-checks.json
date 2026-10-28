@@ -326,9 +326,9 @@
       "milestone": "B6",
       "kind": "DECISION",
       "title": "Let the server keep an erased course erased",
-      "status": "PASSED",
+      "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 2,
+      "revision": 3,
       "instructions": [
         "In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.",
         "Paste the whole file supabase/migrations/20261028000000_course_erase.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: the installed builds never touch it, and the B6 build erases courses with or without it.",
@@ -338,12 +338,19 @@
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/B6/physical-device-review.json",
-      "updatedAt": "2026-10-27T22:41:15.920Z",
-      "result": {
-        "reportedBy": "owner",
-        "source": "Chat, 2026-10-28: '1.2 done, 1.3 done - minimum read run, erase rules run'",
-        "summary": "The owner ran the migration in the SQL Editor of cvc-helper-dev; the agent's live checks afterwards are in the milestone's evidence."
-      }
+      "updatedAt": "2026-10-28T00:47:54.980Z",
+      "history": [
+        {
+          "status": "PASSED",
+          "result": {
+            "reportedBy": "owner",
+            "source": "Chat, 2026-10-28: '1.2 done, 1.3 done - minimum read run, erase rules run'",
+            "summary": "The owner ran the migration in the SQL Editor of cvc-helper-dev; the agent's live checks afterwards are in the milestone's evidence."
+          },
+          "testedCommit": null,
+          "invalidatedAt": "2026-10-28T00:47:54.980Z"
+        }
+      ]
     },
     {
       "id": "B6-PHONE-ERASE",
@@ -352,7 +359,7 @@
       "title": "Erase your course on the phone, once offline, and see it gone from the backup",
       "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
         "Only after B4-PHONE-UPLOADS and B5-PHONE-RESTORE are reported: they need the course on the backup. The build, its address and the exact steps follow here when it is published."
       ],
@@ -360,7 +367,7 @@
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/B6/physical-device-review.json",
-      "updatedAt": "2026-10-27T04:36:19.733Z"
+      "updatedAt": "2026-10-28T00:47:54.980Z"
     }
   ]
 }

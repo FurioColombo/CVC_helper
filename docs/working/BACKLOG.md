@@ -212,8 +212,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;
-  - SP-B4-Q3 / SC-B4-Q2: uploads waited once for a reopen with the sync service
-    unreachable; only inserts are batched (measure offline edits first).
+  - SP-B4-Q3 / SC-B4-Q2: the SDK's requests have no timeout: a write
+    checkpoint hung on a dead connection would hold uploads until a reopen
+    (owner check 2026-10-28); only inserts are batched.
 - B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
   slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
   Home shows nothing. Consider a one-line notice on Home.
@@ -221,8 +222,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   refused save says the course was "sostituito o eliminato" and the typed
   student is lost on reopen; data is intact, the message and the draft are
   not. Say an older version opened the data, and keep the draft.
-- UG3 RH-Q1: after an import and Riapri l’app, phone Back walks through the
-  replaced course's earlier screens; clear the shell history on reopen.
+- UG3 RH-Q1: after import and reopen, Back walks the replaced course's screens.
 - T1 CQ-6: each e2e seeding fixture re-reads the course that
   `bootstrapCourse` just created; return its id instead.
 - Persistence API invariant (D3 DI-R2-Q4 / DI-Q5): forbid mutating SQL through
