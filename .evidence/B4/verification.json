@@ -1,12 +1,12 @@
 {
   "milestone": "B4",
   "status": "PASS",
-  "recordedAt": "2026-10-31T13:10:06.928Z",
+  "recordedAt": "2026-10-31T15:36:11.982Z",
   "nodeVersion": "v24.21.0",
   "appVersion": "0.5.0",
   "recorder": "scripts/record-verification.mjs@3",
-  "gitCommit": "d4f6574aa5eaf69805fff83a06799a204edd70fc",
-  "workingTreeClean": false,
+  "gitCommit": "2dccd1237405cc16c9fc37e055c0865ef57cd973",
+  "workingTreeClean": true,
   "sourceDigest": "ad985f56fe7d7f96162239e0862816cf073af99c4539db7bf41d343f594fadbe",
   "sourceFiles": 493,
   "verificationScripts": [
@@ -35,18 +35,18 @@
     {
       "command": "npm run verify",
       "status": "PASS",
-      "startedAt": "2026-10-31T12:38:54.374Z",
-      "durationMs": 239488,
+      "startedAt": "2026-10-31T15:05:01.342Z",
+      "durationMs": 247867,
       "exitCode": 0,
-      "outputTail": "\u001b[33m\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 4.1s inside plugin hooks (6.4s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (97%, 3.9s, 1 call)\n  - @tailwindcss/vite:generate:build transform (31%, 1.3s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+      "outputTail": "Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (45%, 3.8s, 1 call)\n  - vite-plugin-pwa load (21%, 1.7s, 1 call)\n  - @tailwindcss/vite:generate:build transform (18%, 1.5s, 1 call)\nThose rows are 83% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
     },
     {
       "command": "npm run verify:e2e:focus",
       "status": "PASS",
-      "startedAt": "2026-10-31T12:42:53.865Z",
-      "durationMs": 1633056,
+      "startedAt": "2026-10-31T15:09:09.211Z",
+      "durationMs": 1622764,
       "exitCode": 0,
-      "outputTail": "[WebServer] 2:09:13 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok  99 [iphone-13-webkit-core] › tests\\e2e\\duties.spec.ts:15:1 › plans, overrides and recalculates remaining duties without rewriting history (36.3s)\n[WebServer] 2:09:21 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:09:21 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n[WebServer] 2:09:58 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 2:09:58 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 100 [iphone-13-webkit-core] › tests\\e2e\\evaluation-gate.spec.ts:50:1 › verifies the evaluation workflow across an evolving week (45.2s)\n\n  Slow test file: [iphone-13-webkit-core] › tests\\e2e\\b6-erase.spec.ts (7.4m)\n  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel\n  2 skipped\n  98 passed (27.2m)"
+      "outputTail": "[WebServer] 4:35:18 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok  99 [iphone-13-webkit-core] › tests\\e2e\\duties.spec.ts:15:1 › plans, overrides and recalculates remaining duties without rewriting history (38.1s)\n[WebServer] 4:35:26 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 4:35:26 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n[WebServer] 4:36:03 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 4:36:03 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 100 [iphone-13-webkit-core] › tests\\e2e\\evaluation-gate.spec.ts:50:1 › verifies the evaluation workflow across an evolving week (45.5s)\n\n  Slow test file: [iphone-13-webkit-core] › tests\\e2e\\b6-erase.spec.ts (7.6m)\n  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel\n  2 skipped\n  98 passed (27.0m)"
     }
   ]
 }
