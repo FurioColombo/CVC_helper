@@ -130,9 +130,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   run (environment); alone it passes.
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — stalled twice opening the fresh WebKit recipient before import (D4,
-  2026-10-17); isolated reruns and every later run passed without retries.
-  Failure-only diagnostics retain each page's engine events, locks and
-  resource timings. Cause unproven. See `.evidence/D4/development-checks.json`.
+  2026-10-17; both attempts in B4's run of 2026-10-31, while B6's run of the
+  same source passed); isolated reruns pass. Failure-only diagnostics retain
+  engine events, locks and resource timings. Cause unproven. See `.evidence/D4/development-checks.json`.
 
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
   — WebKit page closure, classified on 2026-10-21 as memory pressure (a WebKit
