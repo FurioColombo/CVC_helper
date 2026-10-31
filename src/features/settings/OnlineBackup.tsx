@@ -471,7 +471,7 @@ function Connected({
                   // not arrive yet (review SC-B4F-2).
                   {
                     icon: "sending",
-                    text: "Tutto inviato. Ricezione dal backup in ripresa…",
+                    text: "Tutto inviato. La ricezione dal backup riprenderà da sola.",
                   },
       )
     }

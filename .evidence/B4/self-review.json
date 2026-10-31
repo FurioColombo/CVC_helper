@@ -25,6 +25,13 @@
       "evidence": "3c9bfbf (Complete B3) went in with check:repository failing behind '| tail -1'; corrected in dbe5414. Later chains use set -o pipefail.",
       "reproduction": "Resolved.",
       "specRef": "AGENTS.md §13"
+    },
+    {
+      "id": "SELF-B4-OF-1",
+      "title": "Process: the status line followed the download stream, and no test ever ran with that stream down while uploads went through",
+      "evidence": "The owner's offline day (2026-10-28) showed 'Ora senza connessione' while every change was sent: PowerSync's upload loop runs apart from the stream. The fake backends had the stream unreachable all along, and the tests asserted the misleading text as correct. The status now follows the uploads and says when downloads lag; a stalled connection is restarted; a local server that never answers the stream and a failed upload with the stream down are tested, each failing with the restart disabled.",
+      "reproduction": "tests/e2e/b4-uploads.spec.ts (the hung-stream and failed-upload cases).",
+      "specRef": "04 B4 owner check B4-PHONE-UPLOADS"
     }
   ],
   "qolFindings": [],
@@ -40,12 +47,56 @@
     ".evidence/B4/sync-chaos-review.json (owner-authorised round 4)"
   ],
   "deferredFindings": [
-    { "ids": ["SC-B4-8"], "to": "Owner decision 16: accepted for 0.5.0; tombstones before 1.0.0" },
-    { "ids": ["SP-B4-3"], "to": "04_IMPLEMENTATION_PLAN.md B6 adversarial checklist" },
-    { "ids": ["DI-B4-Q1", "DI-B4-Q2", "SC-B4-Q1", "SC-B4-Q2", "SP-B4-Q3"], "to": "docs/working/BACKLOG.md (B4 review follow-ups)" }
+    {
+      "ids": [
+        "SC-B4-8"
+      ],
+      "to": "Owner decision 16: accepted for 0.5.0; tombstones before 1.0.0"
+    },
+    {
+      "ids": [
+        "SP-B4-3"
+      ],
+      "to": "04_IMPLEMENTATION_PLAN.md B6 adversarial checklist"
+    },
+    {
+      "ids": [
+        "DI-B4-Q1",
+        "DI-B4-Q2",
+        "SC-B4-Q1",
+        "SC-B4-Q2",
+        "SP-B4-Q3"
+      ],
+      "to": "docs/working/BACKLOG.md (B4 review follow-ups)"
+    },
+    {
+      "ids": [
+        "SC-B4F-1"
+      ],
+      "to": "docs/working/BACKLOG.md (SP-B4-Q3 / SC-B4F-1: a hung write checkpoint holds uploads, Esci, the erase and the restart until a reopen)"
+    },
+    {
+      "ids": [
+        "SC-B4F-3"
+      ],
+      "to": "The owner's recheck: an edit made elsewhere arrives without a reopen"
+    },
+    {
+      "ids": [
+        "SC-B4F-Q1",
+        "SC-B4F-Q3"
+      ],
+      "to": "Accepted: the update notice explains Q1; the watchdog's guards are covered by the e2e cases"
+    }
   ],
   "limitations": [
-    "The upload-rules migration (minimum writer and latest edit) is not yet on the development backend: the owner runs it once the B4 test build is installed; its two live tests skip until then",
-    "Save latency after days offline is the owner's phone measurement (SC-B1-Q3)"
-  ]
+    "Save latency after days offline is the owner's phone measurement (SC-B1-Q3)",
+    "The phone stall after a day offline is not reproduced on a computer: the restart is tested against a hung stream and a failed upload, and the owner's recheck decides whether it is what happened on the phone"
+  ],
+  "resolvedFindings": {
+    "SC-B4F-2": "FIXED (fd6c386)",
+    "SC-B4F-Q2": "FIXED (fd6c386)",
+    "SC-B4F-R2-Q1": "FIXED (wording: 'La ricezione dal backup riprenderà da sola.')",
+    "SC-B4F-R2-Q2": "FIXED (restartSync checks the sign-out counter)"
+  }
 }

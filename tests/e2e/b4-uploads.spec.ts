@@ -262,7 +262,7 @@ test("a refused change is kept and listed, the rest goes through, and Riprova se
   // so (owner check B4-PHONE-UPLOADS, 2026-10-28), and that the other
   // phones' changes do not arrive yet (review SC-B4F-2).
   await expect(section.getByRole("status")).toContainText(
-    "Tutto inviato. Ricezione dal backup in ripresa…",
+    "Tutto inviato. La ricezione dal backup riprenderà da sola.",
   )
   await expect(section.getByRole("status")).not.toContainText(
     "senza connessione",
@@ -590,7 +590,7 @@ test("a download stream hung on a dead connection is restarted, and the status f
       .toBeGreaterThan(0)
     const section = await backupSection(page)
     await expect(section.getByRole("status")).toContainText(
-      "Tutto inviato. Ricezione dal backup in ripresa…",
+      "Tutto inviato. La ricezione dal backup riprenderà da sola.",
     )
     const before = streamRequests
     expect(before).toBeGreaterThan(0)

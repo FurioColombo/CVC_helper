@@ -331,6 +331,7 @@ let lastRestart = 0
 function watchStalledSync() {
   if (watchdog) return
   watchdog = window.setInterval(async () => {
+    const epoch = signOuts
     if (
       !connected ||
       !activeConnector ||
@@ -347,13 +348,14 @@ function watchStalledSync() {
       return
     lastRestart = now
     stalledSince = 0
-    restartSync(activeConnector)
+    restartSync(activeConnector, epoch)
   }, 5_000)
 }
 
 /** A new connect replaces the stuck one, aborting its request (PowerSync). */
-function restartSync(connector: PowerSyncBackendConnector) {
-  if (connected && activeConnector === connector)
+function restartSync(connector: PowerSyncBackendConnector, epoch: number) {
+  // Never after a sign-out begun meanwhile (review SC-B4F-R2-Q2).
+  if (connected && activeConnector === connector && epoch === signOuts)
     void connectDatabase(connector).catch(() => {})
 }
 

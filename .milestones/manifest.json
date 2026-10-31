@@ -1171,13 +1171,15 @@
         ".evidence/B4/self-review.json",
         ".evidence/B4/sync-chaos-review.json",
         ".evidence/B4/data-integrity-review.json",
-        ".evidence/B4/security-privacy-review.json"
+        ".evidence/B4/security-privacy-review.json",
+        ".evidence/B4/sync-chaos-review-owner-fix.json"
       ],
       "requiredReviews": [
         ".evidence/B4/self-review.json",
         ".evidence/B4/sync-chaos-review.json",
         ".evidence/B4/data-integrity-review.json",
-        ".evidence/B4/security-privacy-review.json"
+        ".evidence/B4/security-privacy-review.json",
+        ".evidence/B4/sync-chaos-review-owner-fix.json"
       ],
       "startedFrom": {
         "commit": "bc707e6d03c002d07996608e3543685cd409100d",
@@ -1202,7 +1204,9 @@
         "tests/e2e/crews.spec.ts",
         "tests/e2e/crew-destinations.spec.ts",
         "tests/e2e/d2-duty-items.spec.ts",
-        "tests/e2e/d4-evaluation-note-save.spec.ts"
+        "tests/e2e/d4-evaluation-note-save.spec.ts",
+        "tests/e2e/b6-erase.spec.ts",
+        "tests/e2e/b5-restore.spec.ts"
       ],
       "ownerEvidence": [".evidence/B4/physical-device-review.json"]
     },

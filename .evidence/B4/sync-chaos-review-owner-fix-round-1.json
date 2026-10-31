@@ -1,0 +1,79 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4+B6 owner-fix",
+  "commit": "9508030",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SC-B4F-1",
+      "title": "A hung write-checkpoint or upload request blocks Esci, the course erase and the watchdog restart, not only uploads",
+      "evidence": "src/persistence/syncConnection.ts:35 and :41 await database.disconnect() with no bound; only the wait for a pending connect is bounded. PowerSync's disconnect awaits streamingSyncPromise, which includes crudUploadLoop (node_modules/@powersync/shared-internals/src/client/sync/stream/AbstractStreamingSyncImplementation.ts:314-334). getWriteCheckpoint (:185-192) takes no abort signal and runs under the CRUD lock (:206-243). A restart from the watchdog goes through ConnectionManager.connect -> disconnectInternal (ConnectionManager.ts), which waits on the same promise. Scratch probe P4 (fake backend, a local sync server that never answers the stream or the write checkpoint): stream requests stayed at 1 for more than 50 s after the stall threshold, so no restart happened. After the Esci confirmation the result was 'still signed in after 90018 ms; auth key present: true'. Probe P5, same setup, Elimina il corso + Elimina tutto: 'not erased after 90009 ms'.",
+      "reproduction": "Use withBackend from tests/e2e/b4-uploads.spec.ts with powersyncUrl set to a node http server that never answers any non-OPTIONS request. Then courseWithStudents(['Ada']), signIn, open Impostazioni and wait for 'Copia online aggiornata.' and one write-checkpoint request. (a) Wait 50 s: no second stream request. (b) Tap Esci, then Esci in the dialog: the email form does not appear within 90 s and the session stays in localStorage. (c) In a fresh run, tap Elimina il corso e inizia un nuovo corso, tick the checkbox, tap Elimina tutto: 'Crea il corso' does not appear within 90 s. Reopening the app recovers.",
+      "specRef": "04 B4 success predicate; B3 sign-out; B6 erase. Not introduced by this diff: the old code also awaited db.disconnect() unbounded. But the diff's own root-cause hypothesis is a request hung on a dead connection. The BACKLOG entry (SP-B4-Q3 / SC-B4-Q2) only says uploads are held until a reopen. It should also say that Esci, the erase and an import hang, and that the watchdog cannot recover from this."
+    },
+    {
+      "id": "SC-B4F-2",
+      "title": "The status line now shows a green 'Copia online aggiornata.' while the download stream keeps failing, so another phone's edits never arrive and nothing on screen says so",
+      "evidence": "src/features/settings/OnlineBackup.tsx:425-427: with pending === 0, the line depends only on reachable && navigator.onLine. Live probe L3 (owner's development backend, synthetic account 1, cleared afterwards): device A backed up, then requests to the PowerSync host aborted. The other phone (a direct REST insert) added the student 'Remoto' (201). After 60 s A read 'Copia online aggiornata.' with db status {connected:false, connecting:true, downloadError:true}, and the Allievi list showed 0 'Remoto'. The changed b4-uploads test 'a refused change is kept…' asserts the same green line with the fake sync service unreachable for the whole test. Before the diff the line said 'Tutto inviato. Ora senza connessione.'",
+      "reproduction": "Live: offlineCourse, add a student, signInForTests, startBackup, reload, wait for the server row. Route every request to POWERSYNC_URL to abort, reload, POST a student for the same course with the account token, open Impostazioni, wait 60 s: green line, and the student never appears.",
+      "specRef": "Two phones on one course (04 B4 'one phone writes at a time', SC-B1-1). The upload-side claim is true. But no surface reports a dead download any more: a sync-service outage, a sync-rules error or a token only PowerSync rejects. A phone then shows stale crews behind a green tick."
+    },
+    {
+      "id": "SC-B4F-3",
+      "title": "The 'hung stream request' root cause does not fit the owner's report; the watchdog may not address what happened on the phone",
+      "evidence": "After an upload failure while the stream is down, the SDK leaves the upload loop (AbstractStreamingSyncImplementation.ts:250-256, break when !isConnected). Only three things restart it: a local write, a new connect, or the first sync line of a stream iteration (:715-722). The owner reports sending started about 10 s after airplane mode went off, apparently without editing. That fits a stream iteration that reached the service and received a line (retry delay plus connect), not a request stuck in 'connecting'. The watchdog acts only on connecting && !connected held for 30 s (backupLink.ts syncStreamStuck, session.ts:330-351). I confirmed live (probe L2) that the watchdog fixes a truly hung stream: the stream request was held at reload, a restart came after about 40 s, and a remote row then arrived in 47 ms. If the phone's stream was instead cycling or erroring after its first line, the watchdog never fires, and SC-B4F-2 hides it.",
+      "reproduction": "Code reading of the cited SDK lines against .evidence/B4/physical-device-review.json; live probe L2 for the positive case.",
+      "specRef": "04 B4 owner check B4-PHONE-UPLOADS. Recommendation: the next owner check should also confirm that an edit from another device (or the server) shows up after the offline day without reopening, not only the status line."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B4F-Q1",
+      "title": "An outdated writer with changes waiting now reads 'In attesa di connessione: N da inviare.' while connected",
+      "evidence": "src/backup/connector.ts:254-256 throws UploadPending(true), so uploadError is set and OnlineBackup.tsx:427 gives the waiting text. The update notice below it explains. Before, it read 'Invio in corso', which was also inaccurate. Code path only, not run in the browser.",
+      "reproduction": "Code reading.",
+      "specRef": "03 §3.1 minimum writer"
+    },
+    {
+      "id": "SC-B4F-Q2",
+      "title": "When the stream retries quickly (not stuck connecting), an upload that failed once is retried only on the next local write or reconnect",
+      "evidence": "AbstractStreamingSyncImplementation.ts:250-256, and syncStreamStuck requires connecting held across every 5 s sample for 30 s. With a hung stream, probe P3 recovered: the change uploaded 34 s after Supabase came back, through the watchdog. With a stream that fails fast, the line stays 'In attesa di connessione: 1 modifica da inviare.' while online. This predates the diff and is now more visible.",
+      "reproduction": "Code reading; the hung-stream case was run (P3).",
+      "specRef": "04 B4 success predicate"
+    },
+    {
+      "id": "SC-B4F-Q3",
+      "title": "The watchdog's guards have no unit tests",
+      "evidence": "session.ts:330-357. The erase hold, the sign-out epoch, visibility, navigator.onLine and the 2-minute gap are covered only indirectly. b4-uploads proves a single restart. My probe P1 showed no reconnect after Esci (stream requests 2 -> 2 over 45 s; no writes after a later local edit).",
+      "reproduction": "Scratch probe P1.",
+      "specRef": "AGENTS.md §3 programmatic evidence"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff 7c115b8..9508030 -- src tests (session.ts, OnlineBackup.tsx, backupLink.ts, syncConnection.ts, serverErasures.ts and its test, b4-uploads.spec.ts, b6-erase.spec.ts)",
+    ".evidence/B4/physical-device-review.json, earlier B4 sync-chaos reports (anglesTried), docs/working/BACKLOG.md diff, 04_IMPLEMENTATION_PLAN.md B4/B5/B6",
+    "PowerSync SDK: AbstractStreamingSyncImplementation.ts (upload loop, connect, disconnect, first-line trigger), ConnectionManager.ts (connect/disconnect serialisation)",
+    "Ran b4-uploads, b6-erase, b3-backup-ui, b5-restore on pixel-7-chrome: 30 passed",
+    "Ran b6-erase and b3-backup-ui on iphone-13-webkit-core: 16 passed",
+    "Scratch fake-backend probes: P1 Esci with a hung stream (109 ms, no reconnect, no writes after); P2 sign-out right as the state turns connected, 3 times (9-13 ms each, state settles signed-out); P3 Supabase unreachable then back with a hung stream (waiting line shown, upload resumed after 34 s); P4/P5 hung write checkpoint (SC-B4F-1)",
+    "Live two-device seeded scenario on the development backend (S, L2, L3), synthetic account 1; both test accounts verified empty afterwards (0 courses, 0 students)"
+  ],
+  "anglesTried": {
+    "seed": 280360496,
+    "lenses": [
+      "9: a third device joining mid-week with a full download",
+      "11: network flapping during the first sync"
+    ],
+    "wildcard": "A request the SDK cannot abort (hung write checkpoint) against the new watchdog, Esci and the erase; the watchdog against a deliberate sign-out",
+    "scenario": "Seed 280360496 (mulberry32): device A backs up, goes offline and adds n=23 students. Device B (empty) signs in and restores while its network flaps 6 times (300-1800 ms windows); A comes back online at flap 5. Result: A sent 23 in about 5 s with the line going waiting -> sending -> 'Copia online aggiornata.'. B restored and converged to 24 students = A = server, the export validator passed on both, and B's edit reached A in 173 ms. B's restore reload landed in an offline window and showed 'Non riesco ad aprire i dati locali' because a dev-server module fetch failed. This is a dev-server artifact: Riprova recovered, and the built PWA serves modules from its service worker."
+  },
+  "notTested": [
+    "The built PWA (service worker) under flapping during the restore reload: only the dev server was used, which produced the dev-only error screen described above",
+    "A real dead TCP connection after airplane mode: Playwright's setOffline leaves established streams open, so the hang was emulated with a held route or a local server",
+    "The owner's phone and Android Chrome: physical evidence belongs to the owner",
+    "Several app versions behind and clock skew: not drawn, and untouched by this diff",
+    "Scratch specs were in test-results/scb4 and were deleted when a later default-config Playwright run cleaned test-results; the step lists above are enough to rebuild them"
+  ]
+}

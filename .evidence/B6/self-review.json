@@ -18,6 +18,13 @@
       "evidence": "DI-B6-1: dropping refusals whenever no course is left also dropped a course whose own row the server refused. DI-B6-R2-1: my interim fix for the missing migration turned one delete into a standing order. Both were reproduced by the reviewer and are now covered: courseLeftThisDevice keeps a refused own course; the record is forgotten once its delete ran (fake test 'not repeated later').",
       "reproduction": "tests/e2e/b4-uploads-live.spec.ts (other-account case), tests/e2e/b6-erase.spec.ts.",
       "specRef": "03 §3 Online backup ('never dropped in silence')"
+    },
+    {
+      "id": "SELF-B6-3",
+      "title": "An erase or import between two of PowerSync's retries did not stop its loops",
+      "evidence": "Found in the B4 owner-fix run (WebKit): disconnectForErase disconnected only when the SDK reported connected or connecting; between retries it reports neither while its sync and upload loops still run, and an import uploaded before the server's erase. It now always disconnects, waits for a connect still on its way (syncConnection.ts), and holds the restart watchdog off until the next connect. Reviewed in .evidence/B4/sync-chaos-review-owner-fix.json.",
+      "reproduction": "src/persistence/serverErasures.test.ts ('disconnects between two retries too'); tests/e2e/b6-erase.spec.ts 'a course file of the same course…' on WebKit, 6 of 6.",
+      "specRef": "04 B6 success predicate"
     }
   ],
   "qolFindings": [],
