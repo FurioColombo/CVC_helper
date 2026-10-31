@@ -130,15 +130,19 @@ export function connectDatabase(connector: PowerSyncBackendConnector) {
 }
 
 /**
- * Whether the download stream is stuck connecting: no erase holds it down
- * and its request has not answered. PowerSync retries a request that fails
- * by itself; one that hangs (a connection dead since before airplane mode)
- * it waits for (B4 owner check, 2026-10-28; src/backup/session.ts restarts
- * it).
+ * Whether the backup's connection needs a restart (B4 owner check,
+ * 2026-10-28; src/backup/session.ts restarts it): no erase holds it down,
+ * the download stream is not connected, and either its request has not
+ * answered (one hung on a connection dead since before airplane mode,
+ * which PowerSync waits for) or changes are waiting after a failed upload
+ * (PowerSync tries those again only at the next local edit or connection;
+ * review SC-B4F-Q2).
  */
-export function syncStreamStuck() {
+export async function syncStalled() {
   const status = db.currentStatus
-  return !syncHeldForErase && !status.connected && status.connecting
+  if (syncHeldForErase || status.connected) return false
+  if (status.connecting) return true
+  return !!status.dataFlowStatus.uploadError && (await pendingUploads()) > 0
 }
 
 export function disconnectDatabase() {

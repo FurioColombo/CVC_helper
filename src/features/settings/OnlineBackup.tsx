@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { appChannel } from "@/runtimeConfig"
 import {
+  databaseConnected,
   lastUploadFailed,
   onDatabaseStatus,
   pendingUploads,
@@ -425,6 +426,7 @@ function Connected({
       const online = reachable && window.navigator.onLine
       // With changes waiting, they move only while uploads succeed.
       const connected = online && (pending === 0 || !lastUploadFailed())
+      const downloading = databaseConnected()
       if (!active) return
       setWaiting(pending)
       setErasePending(erasing)
@@ -463,7 +465,14 @@ function Connected({
                   icon: "waiting",
                   text: `Copia online aggiornata, tranne ${changes(refusals.length)} ${refusals.length === 1 ? "rifiutata" : "rifiutate"}.`,
                 }
-              : { icon: "done", text: "Copia online aggiornata." },
+              : downloading
+                ? { icon: "done", text: "Copia online aggiornata." }
+                : // Every change is sent, but what other phones change does
+                  // not arrive yet (review SC-B4F-2).
+                  {
+                    icon: "sending",
+                    text: "Tutto inviato. Ricezione dal backup in ripresa…",
+                  },
       )
     }
     void refresh()

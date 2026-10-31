@@ -259,9 +259,10 @@ test("a refused change is kept and listed, the rest goes through, and Riprova se
   await expect(section.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
   // The fake sync service stays out of reach, as the download stream did on
   // the owner's phone after a day offline: every change sent, the line says
-  // so (owner check B4-PHONE-UPLOADS, 2026-10-28).
+  // so (owner check B4-PHONE-UPLOADS, 2026-10-28), and that the other
+  // phones' changes do not arrive yet (review SC-B4F-2).
   await expect(section.getByRole("status")).toContainText(
-    "Copia online aggiornata.",
+    "Tutto inviato. Ricezione dal backup in ripresa…",
   )
   await expect(section.getByRole("status")).not.toContainText(
     "senza connessione",
@@ -589,7 +590,7 @@ test("a download stream hung on a dead connection is restarted, and the status f
       .toBeGreaterThan(0)
     const section = await backupSection(page)
     await expect(section.getByRole("status")).toContainText(
-      "Copia online aggiornata.",
+      "Tutto inviato. Ricezione dal backup in ripresa…",
     )
     const before = streamRequests
     expect(before).toBeGreaterThan(0)
@@ -597,11 +598,42 @@ test("a download stream hung on a dead connection is restarted, and the status f
     await expect
       .poll(() => streamRequests, { timeout: 60_000, intervals: [2_000] })
       .toBeGreaterThan(before)
-    await expect(section.getByRole("status")).toContainText(
-      "Copia online aggiornata.",
-    )
+    await expect(section.getByRole("status")).toContainText("Tutto inviato.")
   } finally {
     for (const response of hung) response.destroy()
     server.close()
   }
+})
+
+// Review SC-B4F-Q2: with the download stream down, PowerSync leaves its upload
+// loop after a failed upload and tries again only at the next local edit or
+// connection. The app restarts the connection, so a change waiting goes up
+// with no further edit once the server answers again.
+test("a change whose upload failed while the stream was down is sent again without another edit", async ({
+  page,
+}) => {
+  test.setTimeout(150_000)
+  let reachable = false
+  const { server } = await withBackend(page, () =>
+    reachable ? null : "unreachable",
+  )
+  await courseWithStudents(page, ["Ada"])
+  await signIn(page)
+  const section = await backupSection(page)
+  await expect(section.getByRole("status")).toContainText(
+    "In attesa di connessione",
+    { timeout: 30_000 },
+  )
+  // Long enough for PowerSync to have left its upload loop.
+  await page.waitForTimeout(10_000)
+  reachable = true
+  await expect
+    .poll(() => serverStudent(server, "Ada") !== undefined, {
+      timeout: 90_000,
+      intervals: [2_000],
+    })
+    .toBe(true)
+  await expect(section.getByRole("status")).toContainText("Tutto inviato.", {
+    timeout: 30_000,
+  })
 })

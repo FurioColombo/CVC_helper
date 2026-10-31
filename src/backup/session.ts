@@ -23,7 +23,7 @@ import {
   recordUploadOutcome,
   stopAwaitingAccountCourse,
   switchDeviceToSyncedTables,
-  syncStreamStuck,
+  syncStalled,
 } from "@/persistence/backupLink"
 import { CourseReplacedError } from "@/persistence/courseSession"
 import { eraseAllCourseData } from "@/persistence/courses"
@@ -311,7 +311,7 @@ export async function startBackup(
 
 let activeConnector: PowerSyncBackendConnector | null = null
 
-/** How long a stream may stay stuck connecting, online and on screen. */
+/** How long a connection may stay stalled, online and on screen. */
 const STALL_MS = 30_000
 /** At most one restart in this time: never a reconnect loop. */
 const RESTART_GAP_MS = 2 * 60_000
@@ -322,20 +322,21 @@ let lastRestart = 0
 /**
  * B4 owner check (2026-10-28): after a day offline the phone sent every
  * change, but its download stream stayed down until the app reopened (most
- * likely a request hung on a connection from before airplane mode). While
- * the backup is connected, the phone online and the app on screen, a stream
- * stuck connecting for longer than STALL_MS is restarted, as reopening the
- * app did. A request that fails PowerSync retries by itself.
+ * likely a request hung on a connection from before airplane mode, or an
+ * upload loop PowerSync had left after a failure). While the backup is
+ * connected, the phone online and the app on screen, a connection stalled
+ * (`syncStalled`) for longer than STALL_MS is restarted, as reopening the
+ * app did.
  */
 function watchStalledSync() {
   if (watchdog) return
-  watchdog = window.setInterval(() => {
+  watchdog = window.setInterval(async () => {
     if (
       !connected ||
       !activeConnector ||
-      !syncStreamStuck() ||
       !window.navigator.onLine ||
-      document.visibilityState !== "visible"
+      document.visibilityState !== "visible" ||
+      !(await syncStalled().catch(() => false))
     ) {
       stalledSince = 0
       return

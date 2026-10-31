@@ -212,9 +212,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
   - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
     show the time since the last accepted upload;
-  - SP-B4-Q3 / SC-B4-Q2: the SDK's requests have no timeout: a write
-    checkpoint hung on a dead connection would hold uploads until a reopen
-    (owner check 2026-10-28); only inserts are batched.
+  - SP-B4-Q3 / SC-B4F-1: the SDK's requests have no timeout: a write
+    checkpoint hung on a dead connection holds uploads, Esci, the erase and the
+    restart until a reopen (owner check 2026-10-28); only inserts are batched.
 - B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
   slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
   Home shows nothing. Consider a one-line notice on Home.
