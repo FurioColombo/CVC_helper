@@ -2,18 +2,15 @@
 
 > Working document · Owner: the owner · Fold at: UG4
 
-Everything open that no milestone owns yet. A flaky browser test is filed
-here as `<spec file> › <test title>`, printed after `FLAKY:`. It carries over
-what the 0.4.0 backlog (`archive/v0.4.0/BACKLOG.md`) left open at the release
-gate. Items leave when scheduled or dropped by the owner; at the 0.5.0 gate
-the rest moves to the next cycle's backlog.
+Everything open that no milestone owns yet, including what the 0.4.0 backlog
+(`archive/v0.4.0/BACKLOG.md`) left open. A flaky test is filed as
+`<spec file> › <test title>`, printed after `FLAKY:`. Items leave when
+scheduled or dropped; at the 0.5.0 gate the rest moves on.
 
 ## Decisions due before the first real roster goes online
 
-Still open after the owner's 2026-10-08 decisions (`02_MVP_SCOPE.md` §4
-settles the backend and who writes, and records that the owner will confirm
-the release and the retention period). 0.5.0 plans them before any real data
-leaves a device:
+Still open after the owner's 2026-10-08 decisions (`02_MVP_SCOPE.md` §4);
+0.5.0 plans them before any real data leaves a device:
 
 - **who is the data controller** for the rosters held online, and on what
   legal basis: the owner considers the students' signed release sufficient
@@ -103,8 +100,8 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 Each passed only on a retry and is a defect to fix (03 §6).
 
 - `b1-sync-mode.spec.ts › a course file imported on a switched device lands in the synced tables`
-  — WebKit, B5 and B6 runs: page closed ~6 s in, alone 10/11; also once in
-  `› switches a 0.1.0 course…` (B6). Likely a WebKit crash under load.
+  — WebKit, B5 and B6 runs: page closed ~6 s in, alone 10/11; also in
+  `› switches a 0.1.0 course…`. Likely a WebKit crash under load.
 
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
   — WebKit, B3's run (2026-10-26): no course heading within 30 s; retry and
@@ -122,8 +119,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
   the retry passed. Cause unproven. See `.evidence/T1/ci-checkpoint-434cdcc.json`.
 
 - `student-management-gate.spec.ts › creates, corrects and reloads a declared age without a birth date`
-  — WebKit, B1 recorded run: the dev server stopped answering late in a 1.4 h
-  run (environment); alone it passes.
+  — WebKit, B1 run: the dev server stopped answering late (environment).
+
+- `b3-backup-ui.spec.ts › the code in the email signs in; … Esci asks first`
+  — Mac WebKit CI `41215663327` (2026-10-31, `5157e09`): Esci's warning did
+  not open; the retry passed. Cause unproven; trace in the run's artifact.
 
 - `b6-erase.spec.ts › accepting an erased id again waits for the server…` —
   test race, 2 in 8 on Chromium (2026-10-31): the reload lands after the
