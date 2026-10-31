@@ -107,10 +107,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
   `› switches a 0.1.0 course…` (B6). Likely a WebKit crash under load.
 
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
-  — WebKit, B3's recorded run (2026-10-26, 12 min): the course heading did
-  not appear within 30 s on the first attempt; the retry passed, and 5
-  isolated runs (`--repeat-each=5`, no retries) passed. Cause unproven; B3
-  does not touch navigation and the spec runs without a backup.
+  — WebKit, B3's run (2026-10-26): no course heading within 30 s; retry and
+  5 isolated runs passed. Cause unproven; no backup in this spec.
 
 - B3 field-UX FUX-B3-R4-Q1 (unconfirmed): in a reviewer's two-tab scratch
   spec on Playwright WebKit, 2 of 4 runs stayed on "Apertura del corso…"
@@ -120,14 +118,19 @@ Each passed only on a retry and is a defect to fix (03 §6).
   add a two-tab WebKit case if it recurs.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
-  — Mac WebKit CI `39235069108`: Disabilita allievo was absent after
-  reactivation; the retry passed. Cause unproven. See
-  `.evidence/T1/ci-checkpoint-434cdcc.json`; CI retains traces when a retry
-  makes it green.
+  — Mac WebKit CI `39235069108`: Disabilita allievo absent after reactivation;
+  the retry passed. Cause unproven. See `.evidence/T1/ci-checkpoint-434cdcc.json`.
 
 - `student-management-gate.spec.ts › creates, corrects and reloads a declared age without a birth date`
   — WebKit, B1 recorded run: the dev server stopped answering late in a 1.4 h
   run (environment); alone it passes.
+
+- `b6-erase.spec.ts › accepting an erased id again waits for the server…` —
+  test race, 2 in 8 on Chromium (2026-10-31): the reload lands after the
+  refusal is recorded but before its upload batch completes, so the batch is
+  re-sent, accepted, and no Riprova is left. Fix: poll `pendingUploads()`
+  to 0 before the reload (passes 8/8); apply at B4's next round.
+
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — stalled twice opening the fresh WebKit recipient before import (D4,
   2026-10-17; both attempts in B4's run of 2026-10-31, while B6's run of the
@@ -140,19 +143,16 @@ Each passed only on a retry and is a defect to fix (03 §6).
   `.evidence/T1/webkit-page-loss-classification.json`.
 
 - `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
-  — iPhone 13 WebKit, D3's focused run (2026-10-13): zero boat logos on the
-  first attempt; the retry passed. No recurrence since; CI keeps the trace if
-  it returns.
+  — iPhone 13 WebKit, D3 (2026-10-13): no boat logos on the first attempt;
+  the retry passed. No recurrence; CI keeps the trace.
 
 - `scripts/check-test-app-isolation.mjs --full-reset` (WebKit, test app's
-  first open) — in UG3's `verify:all` on `3b5d400` (2026-10-22) the page
-  crashed 2.8 s after opening ("Target crashed"); the check alone then passed
-  on both engines. Not a Playwright case, so no retry hides it; the same
-  WebKit page loss under load as below.
+  first open) — UG3's `verify:all` on `3b5d400` (2026-10-22): "Target
+  crashed" 2.8 s in; alone it passed on both engines. The same WebKit page
+  loss under load as below.
 
 - `d2-duty-items.spec.ts` (0.3.0 lists, rebuilt rows, stale 0.3.0 tab)
-  — the same WebKit page closure under load; same classification and
-  evidence as above.
+  — the same WebKit page closure under load, classified as above.
 
 ## Future work the owner has named
 
