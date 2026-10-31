@@ -1156,7 +1156,7 @@
     {
       "id": "B4",
       "category": "RULE_HEAVY",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "B3",
@@ -1208,7 +1208,22 @@
         "tests/e2e/b6-erase.spec.ts",
         "tests/e2e/b5-restore.spec.ts"
       ],
-      "ownerEvidence": [".evidence/B4/physical-device-review.json"]
+      "ownerEvidence": [".evidence/B4/physical-device-review.json"],
+      "agentReady": {
+        "commit": "62ce4a8c127f481c0de21499e20d1deffaeb2c0a",
+        "sourceDigest": "ad985f56fe7d7f96162239e0862816cf073af99c4539db7bf41d343f594fadbe",
+        "evidenceHashes": {
+          ".evidence/B4/verification.json": "39515ffd96cc1ecca952ff90c5503d1e422ecb89159f0f8345df706e823d0f14",
+          ".evidence/B4/browser-evidence.json": "fae6196f5dd192880fda217a9750ec6d4868174294371dfdba8b60e8e8465eb3",
+          ".evidence/B4/self-review.json": "4e43054910b777d25bc3e1b6b6fce9fef3fdbc5ae21db6eac71bf2253d5cc91c",
+          ".evidence/B4/sync-chaos-review.json": "580bd56f99692ff7c0d28b5a22129a2e8c1533d2567ff5060b02c06e5e33073a",
+          ".evidence/B4/data-integrity-review.json": "38a7791e1ba2e0fa7072fa22668145c68f1fa7028ee5c2401a96471e47338cad",
+          ".evidence/B4/security-privacy-review.json": "a1fb4211b3375c9e06f4c63934e2af5bfc8dc238cd6829c565ad89632e4a98ae",
+          ".evidence/B4/sync-chaos-review-owner-fix.json": "3245bb984ad02a44a50f1b29aabcfaa8011e88712563eb52dc6899b8c0e9aba6"
+        },
+        "ciRunId": 41204357911,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/41204357911"
+      }
     },
     {
       "id": "B5",
@@ -1274,7 +1289,7 @@
     {
       "id": "B6",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B6/verification.json",
@@ -1324,7 +1339,19 @@
           }
         ]
       },
-      "ownerEvidence": [".evidence/B6/physical-device-review.json"]
+      "ownerEvidence": [".evidence/B6/physical-device-review.json"],
+      "agentReady": {
+        "commit": "62ce4a8c127f481c0de21499e20d1deffaeb2c0a",
+        "sourceDigest": "ad985f56fe7d7f96162239e0862816cf073af99c4539db7bf41d343f594fadbe",
+        "evidenceHashes": {
+          ".evidence/B6/verification.json": "6e34d87d7993d26f62ae473d8c2c79d84760da0c93c6bac013e598da5c967c06",
+          ".evidence/B6/self-review.json": "b759d0658672b555a85cbb0df057df7f7c5fa44b5aeaed1fb70b7fb32530fce2",
+          ".evidence/B6/security-privacy-review.json": "33e647ab579023bc6f77ff750d69c5aef8a3d47474878ace4945ebbda6137df2",
+          ".evidence/B6/data-integrity-review.json": "2efca07cc71249c11d9f5ed8b618860c33ec7e9467dcf3dcad2d7a684b57f700"
+        },
+        "ciRunId": 41204357911,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/41204357911"
+      }
     },
     {
       "id": "UG4",
