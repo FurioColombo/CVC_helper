@@ -1,0 +1,16 @@
+{
+  "milestone": "B4",
+  "checkedAt": "2026-10-31",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "buildInfo": {
+    "sourceCommit": "5157e09debc01d53f8e206c78f5311f129d605b9",
+    "version": "0.5.2",
+    "channel": "test"
+  },
+  "checks": [
+    "build-info.json at the test address names the pinned source and 0.5.2, with CI run 41215663327",
+    "A fresh browser profile opens on Crea il corso with Ripristina dal backup online offered",
+    "Signed out, no request went to Supabase (browser network log)"
+  ],
+  "notChecked": "The update from 0.5.1 in place, sign-in, uploads and the status after an offline period: the owner's B4-PHONE-UPLOADS recheck"
+}

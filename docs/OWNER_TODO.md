@@ -42,22 +42,27 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 <a id="b4-phone-uploads"></a>
 
-## Install the B4 build, switch on the server rules, and use the backup offline for a day — B4
+## Update to 0.5.2 and recheck the offline day: the status now follows the uploads — B4
 
-**State:** Setup needed · Required
+**State:** Ready for owner check · Required
 
 **What to do:**
 
-1. Done (2026-10-27): CVC Helper Test updated to 0.5.1, the upload-rules migration run (verified live: .evidence/B4/live-server-rules.json), and a student or note change reached Copia online aggiornata with no issue.
-2. Then a day of ordinary use offline: turn on airplane mode, make many edits over the day (students, notes, crews, duties, evaluations). Note whether saving ever feels slower than usual, and roughly how many changes Impostazioni says are waiting.
-3. Turn airplane mode off: note how long it takes to reach Copia online aggiornata, and whether any 'Il backup ha rifiutato' message or a note about another phone appears (none is expected with one phone).
-4. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
+1. Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.2 and Copia online aggiornata.
+2. Turn on airplane mode for a few hours and make edits as usual (students, notes, crews, duties, evaluations). Note roughly how many changes Impostazioni says are waiting.
+3. Turn airplane mode off with Impostazioni open. Without closing the app, the status should go from Invio in corso (the count falling) to Copia online aggiornata. Note how long it takes and every message you see on the way; Ora senza connessione should not stay while the phone is online.
+4. Still without reopening, make one more edit and check it reaches Copia online aggiornata.
+5. Optional, on the PC: open the test address in Chrome, sign in with the same email (on an empty app it restores your course), change a note there, and check the phone shows the change without being reopened.
+6. Do not use Azzera tutti i dati locali or Elimina il corso while signed in: from 0.5.2 they also erase the online copy (that is checked later, in B6-PHONE-ERASE).
+7. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
 
-No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+Use the test address below and the linked device instructions.
 
-**Expected:** 0.5.1 updates in place and keeps the backup; after the migration the app's writes are accepted; a day of offline edits saves without noticeable slowdown and uploads in full when signal returns, with no refusal. Only your actual phone observations can pass this check.
+**Expected:** 0.5.2 updates in place and keeps the backup. After a few hours offline the edits upload in full when signal returns, and the status reaches Copia online aggiornata by itself, never showing Ora senza connessione while online. A later edit uploads too. Only your actual phone observations can pass this check.
 
-**Build:** No test build is assigned yet.
+**Build:** `5157e09debc01d53f8e206c78f5311f129d605b9`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
@@ -87,16 +92,17 @@ The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-
 
 **What to do:**
 
-1. Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows 0.5.2 and Copia online aggiornata. Note how many students and notes your invented course has.
-2. Impostazioni &gt; Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.
-3. On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.
-4. Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.
-5. Optional, on the PC: open the test address in Chrome, create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
-6. Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped.
+1. After B4-PHONE-UPLOADS: the phone is on 0.5.2 with Copia online aggiornata. Note how many students and notes your invented course has.
+2. Impostazioni &gt; Backup online &gt; Esci first (from 0.5.2 a reset made while signed in also erases the online copy). The course stays on the phone.
+3. Then Impostazioni &gt; Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.
+4. On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.
+5. Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.
+6. Optional, on the PC: open the test address in Chrome, create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
+7. Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped.
 
 **Expected:** An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.
 
-**Build:** `b06d8e1d68b1755aee59b25f5c87644414ef8075`
+**Build:** `5157e09debc01d53f8e206c78f5311f129d605b9`
 
 **Test address:** https://furiocolombo.github.io/CVC_helper_test/
 
