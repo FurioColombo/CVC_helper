@@ -1,0 +1,146 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "scope": "desktop sync",
+  "round": 1,
+  "commit": "b9bad45",
+  "verdict": "FAIL",
+  "summary": "The fix does what it claims: desktop syncs, in development and in a production build, and most two-tab paths held. Two data-integrity failures are newly reachable through the shared worker, and both need a second tab. A confirmed erase can be silently undone, and a restore can be treated as finished before anything has downloaded, leaving two active courses. Neither reproduced at full speed with no slow request: the erase needed an upload in flight for several seconds, and the restore needed a slow download.",
+  "blockers": [
+    {
+      "id": "SC-DT-1",
+      "title": "A confirmed 'Elimina tutto' is silently undone when another tab connects the shared worker during the erase: the course returns on the device, stays on the server, and the erase record is dropped",
+      "evidence": "Reproduced 3 of 4 runs of scratch spec p22. Timeline samples after A's reload: {local courses:1, students:3, serverErasures:[{erase:1,keep:0}], server courses:1}, then {local:1, serverErasures:[], server:1} and stable. A reopens on the course with no message; a further reload does not change it. The 4th run ended correctly (local 0, server 0), so this is a race. The sequence shows the worker running after A's disconnect: A's disconnect is waiting on its in-flight upload (SDK AbstractStreamingSyncImplementation.ts:314-334) and no stream is open; B's connect arrives, and B's stream is up when A's erase commits. Read in code: src/persistence/syncConnection.ts:14 `pending` and src/persistence/serverErasures.ts:56,67 `syncHeldForErase` are per tab, so A cannot see or hold B's connect. src/persistence/serverErasures.ts:26 then runs powersync_clear(0) with B's stream live. src/backup/session.ts:386-390 treats a record whose course is open here as 'no state the app makes' and drops it.",
+      "reproduction": "Desktop Chrome, one context, live development backend, account 2, the sync service behind a local proxy. 1) A backs up a course with 2 students. 2) Open tab B and wait for connected, then reload A so A is the worker's last port and carries uploads. 3) page.route holds A's POST /rest/v1/students; add a student in A (the upload is now in flight). 4) In A: Impostazioni, Elimina il corso, tick the box, Elimina tutto. The button reads 'Eliminazione…'. 5) 1.5 s later reload B and wait 2.5 s. 6) Release the POST. Expected: course gone from device and server. Observed: heading 'D2 - 45| 2026' in both tabs, 3 students local and on the server, serverErasures empty, pending 0.",
+      "reproduced": "The whole outcome, 3 of 4 runs, with a manually held upload. The hold stands in for a slow or dead connection (carried SC-B4F-1).",
+      "notReproduced": "0 of 10 with no upload in flight (B reloading 200-1500 ms before the erase, p23). 0 of 6 with a 1-2.5 s delayed upload and B's reload not awaited (p25). 1 import run (p24) with the same hold stayed correct: only the imported course remained and the old one was erased.",
+      "inferred": "That the course returns because powersync_clear(0) removes the bucket state under B's live stream and that stream then downloads everything again; I saw the result and the timing, not the internals. That a watchdog restart in the other tab opens the same window, since syncHeldForErase does not cross tabs. Not exercised.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 (erase on the server; adversarial checklist); src/persistence/serverErasures.ts header: 'the erased course is never downloaded again'"
+    },
+    {
+      "id": "SC-DT-2",
+      "title": "A worker kept alive by another tab hands a restoring tab its old hasSynced:true: the restore counts as finished before any download, the wait mark is deleted, Crea corso is enabled, and the device and the server end with two active courses",
+      "evidence": "Scratch spec p2b. While the download is held: {kind:'connected', mark:false, course:null, status:{connected:false, connecting:true}}, and 'Crea corso' is enabled. After creating and releasing: local courses D3 45 2026 and D2 45 2026, both active=1; 2 courses on the server; no refusals. The status trace of the restoring tab shows {c:false, cing:false, h:false} then {c:false, cing:false, h:true} before its own connection starts ({cing:true, h:false}). Cause by reading: SDK SharedSyncImplementation.ts:303-306 sends the worker's last status to every new port; src/persistence/backupLink.ts:123-125 waits on hasSynced; src/backup/session.ts:524-533 then finds no course and takes the 'account has no course' branch. Control p2c, the same steps with no second tab: kind 'restoring', mark true, Crea corso disabled, one course after release.",
+      "reproduction": "Desktop Chrome, one context, sync service behind a local proxy. 1) Tab A backs up a course; tab B opens and connects. 2) Esci in A (the online copy stays). 3) In A: Azzera tutti i dati locali, confirm; B also shows 'Dati locali cancellati'; leave B there. 4) A: Riapri l'app; 'Crea il corso' shows. 5) Hold the proxy's sync requests (a slow download). Sign in from A; the device switches and reopens. 6) Choose Deriva, Livello 3, Crea corso. 7) Release the proxy. Expected: Crea corso stays disabled until the first download; one course. Observed: as above.",
+      "reproduced": "All of it on the development server, 1 run, plus the single-tab control. At full speed (p2) the stale true also arrives, but the download lands about 200 ms later and the rescue reload at src/App.tsx:356-358 opens the right course; only one course resulted there.",
+      "inferred": "The same on a production build. There the worker is one shared instance and the restore after a reset worked at full speed (p20), but I could not hold the download in that build. The mark is deleted as soon as the stale status arrives, so the window lasts as long as the download does, including a connection that drops at that moment.",
+      "specRef": "01_PRODUCT_SPEC.md line 9 (one active course); 04_IMPLEMENTATION_PLAN.md B5 ('never merges'); reviews DI-B5-1, DI-B5-3"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-DT-3",
+      "title": "The 'aggiorna l'app' notice appears only in the tab the worker chose for the upload, so the tab where the user edits says it is waiting for a connection",
+      "evidence": "Scratch spec p4, server answering CVOLD. A: state {kind:'connected', outdated:false}, no notice, line 'In attesa di connessione: 1 modifica da inviare.' B: outdated:true, notice shown, same line. src/backup/session.ts:283-292 keeps `uploadsOutdated` and the state per tab; SDK SharedSyncImplementation.ts:176-186,443-466 always uploads through the last port. p1 confirms that an edit in A is sent from B (POST counts A:0, B:1).",
+      "reproduction": "Two connected tabs, B opened last. Route POST /rest/v1/students to 400 {code:'CVOLD'}. Add a student in A. After 7 s compare Impostazioni in both tabs. Expected: the notice in the tab in use. Observed: only in B.",
+      "reproduced": "Yes, with the refusal faked by a route.",
+      "inferred": "A stale tab of an older version as last port could get a newer tab's uploads refused. Not run.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B4; src/backup/connector.ts header"
+    },
+    {
+      "id": "SC-DT-4",
+      "title": "If the first tab cannot answer the worker's database request within the SDK's 10 s, the worker never syncs again while any tab stays open, nothing says so, and Esci does not finish",
+      "evidence": "Scratch spec p14. For 90 s after the stall: 0 sync requests at the proxy; status {connected:false, connecting:false, uploadError:null} in both tabs; state 'connected'; line 'Verifica della copia online…'; a new edit stays pending, server 0. syncStalled (src/persistence/backupLink.ts:141-146) is false in this state, so the watchdog never acts. Esci had not finished after 30 s: state still 'connected'. Reloading B with A open changes nothing. SDK SharedSyncImplementation.ts:243-253 stores syncParams before the database opens, and 486-489 aborts the open after 10 s, so `initialized` never fires and later tabs return early.",
+      "reproduction": "Back up a course and close the app tab, keeping an about:blank tab so the context lives. Open a tab whose init script blocks the main thread for 12 s right after it posts setParams. After 30 s open a second tab, add a student there, wait 60 s, then try Esci.",
+      "reproduced": "The permanent state and all its consequences, 1 run, with a stall forced by a busy loop.",
+      "notReproduced": "Closing the first tab inside the same window (p13) does not cause it: the SDK's lock around createSyncImplementation makes the second tab wait, and it then starts a fresh worker.",
+      "inferred": "How often a real 10 s stall happens at connect (a loaded PC, a sleep during connect). Also that a single tab recovers on reload because its worker dies; not run. Same family as the backlog item 'A sync client that cannot start fails silently', which this makes broader: Esci hangs too.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B4; docs/working/BACKLOG.md 'Backup, from the owner's recheck'"
+    },
+    {
+      "id": "SC-DT-5",
+      "title": "Esci racing another tab's start leaves a signed-out tab showing 'Accesso: <email>' and 'Tutto inviato', and the other tab can stay on 'connected'",
+      "evidence": "Scratch specs p27, p28, p29. In some timings A ends with kind 'connected', no email form, Esci offered again, and repeated 'Not signed in' sync errors in the console every 5 s. In other timings A is right and B stays 'connected'. In every run: no stored session, 0 open streams, 0 sync requests, and an edit stays queued with 0 uploaded. The next reopen shows the email form. Which side was wrong varied with the timing: A wrong at lead 0 and at 50 in p27/p28, but at 0 and 51 in p29.",
+      "reproduction": "Two connected tabs, A as last port, A's POST held by a route. Esci in A and confirm. After 1 s reload B without waiting; 0-100 ms later release the POST. Inspect both tabs 12 s later.",
+      "reproduced": "The wrong display, in several runs. No leak of credentials or data in any run: nothing reached the sync service or the server.",
+      "inferred": "The cause: an auth event from B's starting client calling resumeBackup after A's disconnect (src/backup/session.ts:77-83). Not traced.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3 (Esci)"
+    },
+    {
+      "id": "SC-B4F-1",
+      "title": "Carried, now across tabs: an upload hung in one tab blocks the erase in another, and the user cannot see why",
+      "evidence": "Scratch spec p3, first form: B's POST held, 'Elimina tutto' in A; A had not reloaded after 60 s, button 'Eliminazione…'. Second form: released after 12 s, A reloads 443 ms later and the erase completes. src/persistence/syncConnection.ts:33-35 has no bound on the first disconnect. This wait is also the window that opens SC-DT-1.",
+      "reproduction": "Two connected tabs, B as last port. Hold B's POST with a route, add a student in A, then erase in A.",
+      "reproduced": "Yes, for the erase.",
+      "inferred": "That Esci behaves the same with the hold in the other tab. p26/p27 held A's own upload, not B's.",
+      "specRef": "Earlier review SC-B4F-1; docs/working/BACKLOG.md"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-DT-Q1",
+      "title": "Playwright's setOffline does not reach the shared sync worker, so 'offline' on desktop-chrome-backup leaves downloads running",
+      "evidence": "Scratch spec p16. With context.setOffline(true): navigator.onLine false, status connected:true, a server edit still reached the local copy, and after cutting the stream the worker opened a new one while 'offline'. Affected uses: tests/e2e/b3-backup-live.spec.ts:271 and tests/e2e/b6-erase.spec.ts:318. They mainly exercise tab-side requests, but the name overstates what they cut.",
+      "reproduction": "Two connected tabs; setOffline(true); PATCH a student through REST; read the row locally.",
+      "reproduced": "Yes.",
+      "specRef": "AGENTS.md §9"
+    },
+    {
+      "id": "SC-DT-Q2",
+      "title": "desktop-chrome-backup tests a different worker layout from what ships",
+      "evidence": "CDP Target.getTargets: 2 shared workers on the dev server (p1), 1 in a test-channel production build (p20), which has one worker-*.js asset and uses one name. My p20 passed on that build at full speed: restore, two tabs, upload, Esci, reset, restore again. No automated run covers it. The worker asset is in the build's sw.js precache list.",
+      "reproduction": "CVC_APP_CHANNEL=test vite build to a scratch folder, serve with vite preview, inject a session into localStorage, then list targets.",
+      "reproduced": "The difference and the passing run; no failure.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6"
+    },
+    {
+      "id": "SC-DT-Q3",
+      "title": "keepConfigurationCloneable has no direct test",
+      "evidence": "grep finds it only at src/persistence/schema.ts:224,242. A structuredClone of getConfiguration() would catch a silent return of this failure earlier than a browser journey. The function itself has no defect that I could find (see evidenceInspected).",
+      "reproduction": "grep -rn keepConfigurationCloneable src tests",
+      "reproduced": "Yes, the absence.",
+      "specRef": "AGENTS.md §3"
+    },
+    {
+      "id": "SC-DT-Q4",
+      "title": "After Esci from the 'other-account' state, the other tab stays on 'other-account'",
+      "evidence": "src/backup/session.ts:592-598 returns early for that state. Scratch spec p10: A stayed 'other-account' after the other account signed out in B. I called signOutOfBackup directly in B, so B's own state in that log proves nothing. A corrected itself when the first account signed in again.",
+      "reproduction": "Sign in a second account on a device owned by the first, with two tabs; sign it out in one tab; read the state in the other.",
+      "reproduced": "Yes for tab A.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3"
+    },
+    {
+      "id": "SC-DT-Q5",
+      "title": "Each visible tab runs its own watchdog, so one stall restarts twice",
+      "evidence": "Scratch spec p8, hung service for 170 s: new stream requests at 10 s, 40 s, 45 s, 160 s, 165 s. The second restart of each pair replaces the first. Harmless and still bounded by the two-minute gap in each tab. Recovery took 109 s after the service returned.",
+      "reproduction": "Two tabs on a proxy that stops answering; count stream requests.",
+      "reproduced": "Yes.",
+      "specRef": "src/backup/session.ts:322-353"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; diff 30c3bae..b9bad45; 04_IMPLEMENTATION_PLAN.md B3-B6; 03_TECHNICAL_DECISIONS.md lines 111-118 and 178-186; .evidence/B4 earlier sync-chaos reports and their anglesTried",
+    "src/persistence/schema.ts, syncConnection.ts, serverErasures.ts, backupLink.ts, courses.ts, courseArchive.ts, localDataOperations.ts, migrations.ts, stamp.ts; src/backup/session.ts, connector.ts; src/App.tsx; src/features/settings/OnlineBackup.tsx, CourseErase.tsx, CourseFiles.tsx",
+    "SDK sources: SharedWebStreamingSyncImplementation.ts, SharedSyncImplementation.ts, WorkerClient.ts, PowerSyncDatabase.ts, ConnectionManager.ts, AbstractStreamingSyncImplementation.ts, BasePowerSyncDatabase.ts, resolveAndValidateOptions.ts, WASQLiteOpenFactory.ts, worker/client.ts",
+    "Live two-tab probes on desktop Chrome against the development backend, synthetic data, accounts 1 and 2, through a local proxy in front of the sync service that showed the worker's own requests and could hold, cut or hang them. Specs are in my scratchpad's scg/ folder.",
+    "Item 1, held: Esci in one tab stops the worker and signs out the other (p1: server edit not downloaded, 0 uploads; p10: 0 streams). Launch switch with a second tab on local tables: B reports 'reopen', its stale save is refused ('Il corso è cambiato'), 1 row uploaded once (p11). Restore with two tabs empty: 6 of 6 rows, no reload loop (p5). Replace with a second tab: one course (p5). courseLeftWithBackup with two tabs: exactly one reload each, 15 s observed (p11). Erase with no race: holds (p3, p23).",
+    "Item 2, held apart from the blockers: no stream or request after Esci, and a kept queue is not sent while signed out (p10). Another account gets 'other-account', 0 sync requests and 0 writes; the queue goes up only when the first account returns (p10). Reset while connected: db.close() does not disconnect by default, but 0 open streams remained and no requests followed; a later account's stream carried only its own token (p17).",
+    "Item 3, held: B closed with its POST unanswered and 12 changes queued; A took over in 8 s, 12 of 12 on the server, no duplicate ids, no refusals (p4). A seeded churn of 50 steps (reloads, third tab opening and closing, cut streams) converged: 17 rows on server and both tabs, no mismatch, no refusal, no superseded edit (p7).",
+    "Item 4, held: the watchdog fires correctly on worker status with a hung service, and recovers without a reopen (p8). It does not cover SC-DT-4.",
+    "Item 5, no defect: readers of the configuration are PowerSyncDatabase.ts:93-95 (requiresPersistentTriggers is kept), SharedWebStreamingSyncImplementation.ts:165, and SharedSyncImplementation.ts:520,541 in the worker (dbFilename and the client's config). WASQLiteOpenFactory.ts:103 reads worker from the factory's own options, so the patched getter does not affect opening. Verified by every run above, on development and production builds.",
+    "Lens 7 and signature move: desktop plus a Pixel 7 profile with its clock 20 min fast, seed 843221322 (p15). Two rows edited on both devices, phone delete against desktop edit, desktop delete against phone edit, offline, desktop reconnecting first. Desktop, phone and server equal at Primo, P1, P0, P3, D2. The fast clock won both rows, including the one the desktop edited later in real time, which is the documented property at 03_TECHNICAL_DECISIONS.md:184-186; neither device reports those two overwritten desktop edits (the phone's lost delete is reported, superseded 1). A later online desktop edit using the app's TOUCH rule then won on both.",
+    "Lens 8: Esci warning with 2 queued changes, kept queue, other account, return to first account (p10).",
+    "Production build, test channel, desktop: restore on a new device, two tabs, upload, Esci, reset, restore again (p20). desktop-chrome-backup b5-restore.spec: 4 passed. A forced freeze of the last-port tab through CDP did not stop uploads (p16); that does not show a real frozen tab behaves the same."
+  ],
+  "anglesTried": {
+    "seed": 843221322,
+    "lenses": [
+      "7: clock skew between devices, and timestamps used for ordering",
+      "8: sign-out or account switch with uploads still queued"
+    ],
+    "wildcard": "A status retained by a shared worker that outlives its tabs, replayed into a tab that trusts it for a decision (hasSynced for the restore), and another tab's connect landing inside this tab's erase",
+    "scenario": "mulberry32(843221322) drove the churn in p7 and the edit and reconnect order in p15. p15 drew real edit order phone then desktop for student 0 (reversed for student 1) and desktop reconnecting first."
+  },
+  "notTested": [
+    "Firefox desktop: it takes the shared worker path and has no project here; the browser is not installed on this PC.",
+    "Safari desktop: the SDK turns multi-tab off through window.safari. Playwright's WebKit may not match that, so I did not treat it as evidence.",
+    "SC-DT-2 and the proxy-based probes on a production build: its backend address cannot be overridden, so the download could not be held.",
+    "The full desktop-chrome-backup project: I sampled b5-restore.spec and relied on the brief for the rest.",
+    "A real dead TCP connection or airplane mode on desktop: the proxy emulated them.",
+    "A tab frozen by Chrome itself: only the CDP-forced state was tried.",
+    "Old and new app versions in two tabs after an update: not built.",
+    "A large course file for the import race (p24 used a one-student course, 1 run).",
+    "Physical devices: those checks belong to the owner."
+  ]
+}

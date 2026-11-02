@@ -215,21 +215,22 @@ export const COURSE_PARENTS = {
 } as const
 
 /**
- * Where tabs share a sync worker (desktop browsers), the SDK posts the
- * database's options to it, and the startup worker function above cannot be
- * cloned: the connection failed silently and desktop never synced (owner check
- * B4-PHONE-UPLOADS, 2026-11-02). The sync worker reuses this tab's connection
- * and never opens a worker, so it does not need the function.
+ * Desktop browsers keep the database in a worker shared by the tabs, but sync
+ * in the tab as phones do, one tab at a time under the SDK's lock. The SDK's
+ * shared sync worker cannot clone the startup worker function above, so
+ * desktop never synced (owner check B4-PHONE-UPLOADS, 2026-11-02); and it
+ * outlives its tabs, replaying a finished download's status into a tab that
+ * is restoring (review SC-DT-2). The SDK reads this option only to choose the
+ * sync implementation and whether closing disconnects; the database was opened
+ * from its own options. The version guard pins this to PowerSync 2.2.0.
  */
-function keepConfigurationCloneable(database: PowerSyncDatabase) {
-  const adapter = database.database as unknown as {
-    getConfiguration(): Record<string, unknown>
+function syncInEachTab(database: PowerSyncDatabase) {
+  const internal = database as unknown as {
+    resolvedOpenOptions: { enableMultiTabs: boolean }
   }
-  const configuration = adapter.getConfiguration.bind(adapter)
-  adapter.getConfiguration = () => {
-    const cloneable = { ...configuration() }
-    delete cloneable.worker
-    return cloneable
+  internal.resolvedOpenOptions = {
+    ...internal.resolvedOpenOptions,
+    enableMultiTabs: false,
   }
 }
 
@@ -239,7 +240,7 @@ export function createDatabase(dbFilename: string, schema: Schema = AppSchema) {
     schema,
     database: { dbFilename, worker: startup.createWorker },
   })
-  keepConfigurationCloneable(database)
+  syncInEachTab(database)
   const initialize = database.init.bind(database)
   let initialized: Promise<void> | undefined
   database.init = () => {

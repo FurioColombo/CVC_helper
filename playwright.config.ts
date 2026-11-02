@@ -117,13 +117,14 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], locale: "it-IT" },
     },
     {
-      // Desktop browsers sync through the SDK's shared worker, phones in the
-      // tab: the backup journeys run on both (owner check B4-PHONE-UPLOADS,
+      // Desktop browsers share a database worker between tabs, phones do not:
+      // the backup journeys run on both (owner check B4-PHONE-UPLOADS,
       // 2026-11-02, desktop never synced and every test ran on a phone).
       name: "desktop-chrome-backup",
       testMatch: specs([
         "b3-backup-ui",
         "b3-backup-live",
+        "b4-two-tabs-live",
         "b4-uploads",
         "b4-uploads-live",
         "b5-restore",

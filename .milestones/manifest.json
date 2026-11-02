@@ -1208,7 +1208,8 @@
         "tests/e2e/b6-erase.spec.ts",
         "tests/e2e/b6-erase-live.spec.ts",
         "tests/e2e/b5-restore.spec.ts",
-        "tests/e2e/b5-restore-live.spec.ts"
+        "tests/e2e/b5-restore-live.spec.ts",
+        "tests/e2e/b4-two-tabs-live.spec.ts"
       ],
       "ownerEvidence": [".evidence/B4/physical-device-review.json"]
     },

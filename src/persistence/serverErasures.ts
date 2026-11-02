@@ -1,6 +1,7 @@
 import type { PowerSyncDatabase, Transaction } from "@powersync/web"
 
 import { db } from "@/persistence/db"
+import { announceCourseReplacement } from "@/persistence/localDataOperations"
 import { prepareDatabase } from "@/persistence/migrations"
 import { disconnectSync } from "@/persistence/syncConnection"
 import { isReadOnly, ReadOnlyDataError } from "@/persistence/writeGuard"
@@ -54,6 +55,9 @@ async function record(
 export async function disconnectForErase(database: PowerSyncDatabase) {
   if (isReadOnly(database)) throw new ReadOnlyDataError()
   syncHeldForErase = true
+  // Another tab may hold the sync lock: its stream must not download the
+  // course back after the clear (review SC-DT-1). It closes on this notice.
+  announceCourseReplacement()
   // Always: between two retries the SDK reports neither connected nor
   // connecting while its sync and upload loops still run, and they would
   // upload before the server's erase (found in B4's owner-fix run).

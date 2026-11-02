@@ -111,10 +111,12 @@ no engine instance or database, and is terminated on success, error or its
 not cancel the other consumer's compilation. A private transferred port supplies
 the resulting module; a failed startup
 releases only its owned workers and ports. The desktop SharedWorker keeps the
-stock SDK entry and database-specific name; the options the SDK posts to it leave
-out the startup worker function, which cannot be cloned (desktop syncs through
-that worker, phones in the tab, so `desktop-chrome-backup` runs the backup
-journeys on desktop too). Build-time version and source-hash
+stock SDK entry and database-specific name and holds only the database. Sync runs
+in the tab on every browser, one tab at a time under the SDK's lock; the SDK's
+shared sync worker is not used, since it cannot clone the startup worker function
+and replays a finished download's status into a restoring tab
+(`createDatabase`, review SC-DT-2). `desktop-chrome-backup` runs the backup
+journeys on that database path too. Build-time version and source-hash
 guards pin this private integration to PowerSync 2.2.0 and wa-sqlite 2.0.3;
 updating either requires a new reviewed integration. Development-only events
 prove cold compilation and distinct instances; production strips their producer.

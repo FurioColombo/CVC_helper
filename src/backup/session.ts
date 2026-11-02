@@ -380,14 +380,10 @@ async function settleServerErasures(
   also: string[] = [],
 ): Promise<Settled> {
   try {
-    const pending = await pendingServerErasures()
-    // A record that would erase the course open here, never imported again,
-    // is no state the app makes; it is dropped, not obeyed (review DI-B6-Q3).
-    const open = await deviceCourseId()
-    const stray = pending.rows.filter(
-      ({ id, keep }) => id === open && !keep && !also.includes(id),
-    )
-    const rows = pending.rows.filter((row) => !stray.includes(row))
+    // A course here again despite its record came back with another tab's
+    // download after the erase was confirmed. The erase stands: the server
+    // erases it and the download takes it off this device (review SC-DT-1).
+    const { rows } = await pendingServerErasures()
     const erase = [
       ...new Set([
         ...rows.filter((row) => row.erase).map(({ id }) => id),
@@ -399,10 +395,7 @@ async function settleServerErasures(
     const keep = rows
       .filter((row) => row.keep && !also.includes(row.id))
       .map(({ id }) => id)
-    if (!erase.length && !keep.length) {
-      await forgetServerErasures(stray).catch(() => {})
-      return "done"
-    }
+    if (!erase.length && !keep.length) return "done"
     const refused = (code: string | undefined): Settled =>
       code === OUTDATED_WRITER_CODE ? "outdated" : "failed"
     const recorded = erase.filter((id) => !keep.includes(id))
@@ -436,10 +429,9 @@ async function settleServerErasures(
     // the delete could erase the owner's later import of that course
     // (review DI-B6-R2-1). A read-only device cannot forget at all; it makes
     // no new erase (review DI-B6-Q2).
-    await forgetServerErasures([
-      ...stray,
-      ...rows.filter((row) => lifted || !row.keep),
-    ]).catch(() => {})
+    await forgetServerErasures(rows.filter((row) => lifted || !row.keep)).catch(
+      () => {},
+    )
     if (!lifted)
       await keepForLater(rows.filter((row) => row.keep)).catch(() => {})
     return "done"
@@ -689,11 +681,14 @@ export function resumeBackup(asked = false) {
   resuming ??= (async () => {
     const mayReopen = () => asked || !touched
     let switchedHere = false
+    const epoch = signOuts
     try {
       const state = await startBackup(async () => {
         if (!mayReopen()) throw new SwitchDeferred()
         switchedHere = true
       })
+      // Esci while this ran: its answer is the old session's (review SC-DT-5).
+      if (epoch !== signOuts) return
       if (state.kind === "reopen") {
         setBackupState(state)
         // Switched here: this tab's screens can no longer save, so it reopens
