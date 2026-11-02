@@ -244,9 +244,9 @@
       "milestone": "B4",
       "kind": "DEVICE_CHECK",
       "title": "Update to 0.5.2 and recheck the offline day: the status now follows the uploads",
-      "status": "READY",
+      "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 6,
+      "revision": 8,
       "instructions": [
         "Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.2 and Copia online aggiornata.",
         "Turn on airplane mode for a few hours and make edits as usual (students, notes, crews, duties, evaluations). Note roughly how many changes Impostazioni says are waiting.",
@@ -257,10 +257,10 @@
         "Report B4-PHONE-UPLOADS with your device and what you saw at each step."
       ],
       "expected": "0.5.2 updates in place and keeps the backup. After a few hours offline the edits upload in full when signal returns, and the status reaches Copia online aggiornata by itself, never showing Ora senza connessione while online. A later edit uploads too. Only your actual phone observations can pass this check.",
-      "testedCommit": "5157e09debc01d53f8e206c78f5311f129d605b9",
-      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "testedCommit": null,
+      "testUrl": null,
       "evidencePath": ".evidence/B4/physical-device-review.json",
-      "updatedAt": "2026-10-31T16:42:11.920Z",
+      "updatedAt": "2026-11-02T12:36:42.154Z",
       "history": [
         {
           "status": "CHANGES_REQUESTED",
@@ -275,6 +275,20 @@
           },
           "testedCommit": "5e09c8f4c097393475f6d9a2fbdabcc506bb2983",
           "invalidatedAt": "2026-10-27T23:30:59.914Z"
+        },
+        {
+          "status": "CHANGES_REQUESTED",
+          "result": {
+            "reportedBy": "owner",
+            "source": "Chat, 2026-11-02",
+            "summary": "Phone on 0.5.2: update in place fine; a few hours offline with about 200 changes; airplane mode off sent them too fast to count and the status reached Copia online aggiornata by itself; Ora senza connessione went away; a later 40-change comandate recompute shows it for under a second. Step 5 failed on the PC: a new course in desktop Chrome, sign-in, replace with the online copy, and the app stays on Ripristino del corso dal backup online, also after a refresh. Reproduced: the desktop shared sync worker never starts (DataCloneError on the database options).",
+            "testedCommit": "5157e09debc01d53f8e206c78f5311f129d605b9",
+            "device": "Motorola Edge 60; Windows PC for step 5",
+            "browser": "Chrome",
+            "osVersion": "Android; Windows 11"
+          },
+          "testedCommit": "5157e09debc01d53f8e206c78f5311f129d605b9",
+          "invalidatedAt": "2026-11-02T12:36:42.154Z"
         }
       ]
     },

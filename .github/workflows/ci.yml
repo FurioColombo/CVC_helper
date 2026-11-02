@@ -87,7 +87,7 @@ jobs:
           npm run verify
           npm run check:full-week
           npm run check:ocr-offline
-          npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport --project=desktop-chrome-storage
+          npm run verify:e2e -- --project=pixel-7-chrome --project=iphone-13-viewport --project=desktop-chrome-storage --project=desktop-chrome-backup
       - name: Quick tier, deterministic checks and the browser smoke set
         if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && env.CI_TIER == 'quick'
         run: |

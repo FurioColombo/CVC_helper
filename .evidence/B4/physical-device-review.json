@@ -15,6 +15,20 @@
       "browser": "Chrome (installed app)",
       "osVersion": "Android",
       "reportedAt": "2026-10-27T23:30:53.160Z"
+    },
+    {
+      "id": "B4-PHONE-UPLOADS",
+      "check": "Update to 0.5.2 and recheck the offline day: the status now follows the uploads",
+      "result": "CHANGES_REQUESTED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-11-02",
+      "summary": "Phone on 0.5.2: update in place fine; a few hours offline with about 200 changes; airplane mode off sent them too fast to count and the status reached Copia online aggiornata by itself; Ora senza connessione went away; a later 40-change comandate recompute shows it for under a second. Step 5 failed on the PC: a new course in desktop Chrome, sign-in, replace with the online copy, and the app stays on Ripristino del corso dal backup online, also after a refresh. Reproduced: the desktop shared sync worker never starts (DataCloneError on the database options).",
+      "testedCommit": "5157e09debc01d53f8e206c78f5311f129d605b9",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60; Windows PC for step 5",
+      "browser": "Chrome",
+      "osVersion": "Android; Windows 11",
+      "reportedAt": "2026-11-02T12:36:41.060Z"
     }
   ]
 }

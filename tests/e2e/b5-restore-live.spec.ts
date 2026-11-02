@@ -234,6 +234,177 @@ test("an empty device restores the account's course and opens it", async ({
   await clearAccount(access)
 })
 
+// B5's question on the real backend: the course here goes, the online one
+// stays and comes down (owner check B4-PHONE-UPLOADS, 2026-11-02: on desktop
+// this stayed on "Ripristino del corso…" for ever).
+test("a device with another course replaces it with the online one", async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  const access = await token(1)
+  await clearAccount(access)
+  const course = crypto.randomUUID()
+  const at = new Date().toISOString()
+  expect(
+    (
+      await write(access, "courses", {
+        id: course,
+        active: 1,
+        family: "Deriva",
+        level: 2,
+        isoWeek: 44,
+        year: 2026,
+        startDate: "2026-10-31",
+        endDate: "2026-11-07",
+        label: "D2 44 2026",
+        createdAt: at,
+        updatedAt: at,
+      })
+    ).status,
+  ).toBe(201)
+  await page.addInitScript(
+    (config) => {
+      window.__cvcBackupConfig = config
+    },
+    {
+      supabaseUrl: env.SUPABASE_URL!,
+      supabaseKey: env.SUPABASE_ANON_KEY!,
+      powersyncUrl: env.POWERSYNC_URL!,
+    },
+  )
+  await page.goto("/")
+  await page.getByRole("button", { name: "Cabinato", exact: true }).click()
+  await page.getByRole("button", { name: "Livello 1", exact: true }).click()
+  await page.getByRole("button", { name: "Crea corso", exact: true }).click()
+  await expect(page.getByRole("heading", { name: /C1 - / })).toBeVisible()
+  await call(
+    page,
+    "/src/backup/session.ts",
+    "signInForTests",
+    env.TEST_USER_1_EMAIL!,
+    env.TEST_USER_1_PASSWORD!,
+  ).catch(() => {})
+  await page.reload()
+  await page.getByRole("button", { name: "Impostazioni" }).click()
+  const question = page
+    .getByRole("region", { name: "Backup online" })
+    .getByRole("alertdialog")
+  await question
+    .getByRole("checkbox", {
+      name: "Ho capito: il corso di questo telefono sarà eliminato",
+    })
+    .check()
+  await question
+    .getByRole("button", { name: "Sostituisci con il corso online" })
+    .click()
+  await expect(
+    page.getByRole("heading", { name: /D2 - 44 \| 2026/ }),
+  ).toBeVisible({ timeout: 90_000 })
+  // The online course was never erased, and the one replaced never uploaded.
+  const online = (await fetch(`${base()}/rest/v1/courses?select=id`, {
+    headers: {
+      apikey: env.SUPABASE_ANON_KEY!,
+      authorization: `Bearer ${access}`,
+    },
+  }).then((response) => response.json())) as Array<{ id: string }>
+  expect(online).toEqual([{ id: course }])
+  await clearAccount(access)
+})
+
+// The account's other device edits; this one downloads it with no reopen, on
+// a phone and on a desktop browser's shared sync worker (the owner's recheck
+// of B4-PHONE-UPLOADS, review SC-B4F-3). An open screen does not refresh
+// itself (backlog); it shows the change when opened again.
+test("a change made on another device arrives without reopening the app", async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  const access = await token(1)
+  await clearAccount(access)
+  const course = crypto.randomUUID()
+  const at = new Date().toISOString()
+  expect(
+    (
+      await write(access, "courses", {
+        id: course,
+        active: 1,
+        family: "Deriva",
+        level: 2,
+        isoWeek: 44,
+        year: 2026,
+        startDate: "2026-10-31",
+        endDate: "2026-11-07",
+        label: "D2 44 2026",
+        createdAt: at,
+        updatedAt: at,
+      })
+    ).status,
+  ).toBe(201)
+  await page.addInitScript(
+    (config) => {
+      window.__cvcBackupConfig = config
+    },
+    {
+      supabaseUrl: env.SUPABASE_URL!,
+      supabaseKey: env.SUPABASE_ANON_KEY!,
+      powersyncUrl: env.POWERSYNC_URL!,
+    },
+  )
+  await page.goto("/")
+  await expect(
+    page.getByRole("heading", { name: "Crea il corso" }),
+  ).toBeVisible()
+  await call(
+    page,
+    "/src/backup/session.ts",
+    "signInForTests",
+    env.TEST_USER_1_EMAIL!,
+    env.TEST_USER_1_PASSWORD!,
+  ).catch(() => {})
+  await expect(
+    page.getByRole("heading", { name: /D2 - 44 \| 2026/ }),
+  ).toBeVisible({ timeout: 90_000 })
+  await page.getByRole("button", { name: "Allievi", exact: true }).click()
+  let reloads = 0
+  page.on("load", () => {
+    reloads += 1
+  })
+
+  expect(
+    (
+      await write(access, "students", {
+        id: crypto.randomUUID(),
+        courseId: course,
+        firstName: "Altrove",
+        surname: "Sintetico",
+        declaredAgeAtCourseStart: 15,
+        sex: "other",
+        active: 1,
+        createdAt: at,
+        updatedAt: at,
+      })
+    ).status,
+  ).toBe(201)
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const load = (path: string) => import(/* @vite-ignore */ path)
+          const { db } = (await load(
+            "/src/persistence/db.ts",
+          )) as typeof import("../../src/persistence/db")
+          return (await db.getAll("SELECT id FROM students")).length
+        }),
+      { timeout: 60_000 },
+    )
+    .toBe(1)
+  await page.getByRole("button", { name: "Indietro da Allievi" }).click()
+  await page.getByRole("button", { name: "Allievi", exact: true }).click()
+  await expect(page.getByRole("button", { name: /^Altrove,/ })).toBeVisible()
+  expect(reloads).toBe(0)
+  await clearAccount(access)
+})
+
 // A restored course takes the server's minimum writer during the restore:
 // with the server's own value it is writable; with one above the app it opens
 // read-only and asks for the update (B5 checklist; review SC-B5-1, -3). The

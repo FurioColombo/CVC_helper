@@ -95,6 +95,13 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 7. `milestone:complete` writes the plan's status row from the manifest
    (friction 10).
 
+## Backup, from the owner's recheck (2026-11-02)
+
+- **An open screen does not refresh on a download:** another device's change
+  shows only when the screen is opened again. Needed before sharing a course.
+- **A sync client that cannot start fails silently** (the SDK swallows it): a
+  restore shows "Ripristino…" for ever. Say so and offer Riprova.
+
 ## Flaky browser tests
 
 Each passed only on a retry and is a defect to fix (03 §6).
@@ -125,12 +132,6 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — Mac WebKit CI `41215663327` (2026-10-31, `5157e09`): Esci's warning did
   not open; the retry passed. Cause unproven; trace in the run's artifact.
 
-- `b6-erase.spec.ts › accepting an erased id again waits for the server…` —
-  test race, 2 in 8 on Chromium (2026-10-31): the reload lands after the
-  refusal is recorded but before its upload batch completes, so the batch is
-  re-sent, accepted, and no Riprova is left. Fix: poll `pendingUploads()`
-  to 0 before the reload (passes 8/8); apply at B4's next round.
-
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — stalled twice opening the fresh WebKit recipient before import (D4,
   2026-10-17; both attempts in B4's run of 2026-10-31, while B6's run of the
@@ -151,8 +152,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   crashed" 2.8 s in; alone it passed on both engines. The same WebKit page
   loss under load as below.
 
-- `d2-duty-items.spec.ts` (0.3.0 lists, rebuilt rows, stale 0.3.0 tab)
-  — the same WebKit page closure under load, classified as above.
+- `d2-duty-items.spec.ts` — the same WebKit page closure under load.
 
 ## Future work the owner has named
 

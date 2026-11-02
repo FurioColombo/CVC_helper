@@ -111,7 +111,10 @@ no engine instance or database, and is terminated on success, error or its
 not cancel the other consumer's compilation. A private transferred port supplies
 the resulting module; a failed startup
 releases only its owned workers and ports. The desktop SharedWorker keeps the
-stock SDK entry and database-specific name. Build-time version and source-hash
+stock SDK entry and database-specific name; the options the SDK posts to it leave
+out the startup worker function, which cannot be cloned (desktop syncs through
+that worker, phones in the tab, so `desktop-chrome-backup` runs the backup
+journeys on desktop too). Build-time version and source-hash
 guards pin this private integration to PowerSync 2.2.0 and wa-sqlite 2.0.3;
 updating either requires a new reviewed integration. Development-only events
 prove cold compilation and distinct instances; production strips their producer.

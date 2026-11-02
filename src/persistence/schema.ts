@@ -214,12 +214,32 @@ export const COURSE_PARENTS = {
   evaluations: { table: "students", key: "studentId" },
 } as const
 
+/**
+ * Where tabs share a sync worker (desktop browsers), the SDK posts the
+ * database's options to it, and the startup worker function above cannot be
+ * cloned: the connection failed silently and desktop never synced (owner check
+ * B4-PHONE-UPLOADS, 2026-11-02). The sync worker reuses this tab's connection
+ * and never opens a worker, so it does not need the function.
+ */
+function keepConfigurationCloneable(database: PowerSyncDatabase) {
+  const adapter = database.database as unknown as {
+    getConfiguration(): Record<string, unknown>
+  }
+  const configuration = adapter.getConfiguration.bind(adapter)
+  adapter.getConfiguration = () => {
+    const cloneable = { ...configuration() }
+    delete cloneable.worker
+    return cloneable
+  }
+}
+
 export function createDatabase(dbFilename: string, schema: Schema = AppSchema) {
   const startup = createEngineStartupWorkerScope()
   const database = new PowerSyncDatabase({
     schema,
     database: { dbFilename, worker: startup.createWorker },
   })
+  keepConfigurationCloneable(database)
   const initialize = database.init.bind(database)
   let initialized: Promise<void> | undefined
   database.init = () => {

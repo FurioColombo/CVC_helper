@@ -541,6 +541,19 @@ test("accepting an erased id again waits for the server without holding the back
     { timeout: 30_000 },
   )
 
+  // The refusal is recorded before its upload batch completes: a reopen in
+  // between sends the batch again, accepted now, and no Riprova is left.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const load = (path: string) => import(/* @vite-ignore */ path)
+        const { pendingUploads } = (await load(
+          "/src/persistence/backupLink.ts",
+        )) as typeof import("../../src/persistence/backupLink")
+        return pendingUploads()
+      }),
+    )
+    .toBe(0)
   backend.state.liftRefused = false
   const reopened = page.waitForEvent("load")
   await page.reload()

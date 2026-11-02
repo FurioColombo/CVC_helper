@@ -44,7 +44,7 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 ## Update to 0.5.2 and recheck the offline day: the status now follows the uploads — B4
 
-**State:** Ready for owner check · Required
+**State:** Setup needed · Required
 
 **What to do:**
 
@@ -56,13 +56,11 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 6. Do not use Azzera tutti i dati locali or Elimina il corso while signed in: from 0.5.2 they also erase the online copy (that is checked later, in B6-PHONE-ERASE).
 7. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
 
-Use the test address below and the linked device instructions.
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
 
 **Expected:** 0.5.2 updates in place and keeps the backup. After a few hours offline the edits upload in full when signal returns, and the status reaches Copia online aggiornata by itself, never showing Ora senza connessione while online. A later edit uploads too. Only your actual phone observations can pass this check.
 
-**Build:** `5157e09debc01d53f8e206c78f5311f129d605b9`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
+**Build:** No test build is assigned yet.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
