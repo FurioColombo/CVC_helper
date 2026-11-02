@@ -38,7 +38,7 @@ async function record(
   )
   // Erasing a course imported earlier erases it for good; importing a file
   // whose course was erased brings that id back.
-  const erase = kind === "erase" ? 1 : (row?.erase ?? 0)
+  const erase = kind === "erase" || row?.erase ? 1 : 0
   const keep = kind === "keep" ? 1 : 0
   await transaction.execute(
     "INSERT OR REPLACE INTO serverErasures(id, erase, keep) VALUES (?, ?, ?)",
@@ -113,6 +113,26 @@ export async function pendingServerErasures(
   }
 }
 
+/**
+ * The server answered that it holds the erased ids. From here a retry can tell
+ * a delete that may have run from one that never did: an id no longer there was
+ * lifted by a course file imported elsewhere, which a repeated delete would
+ * erase (review SC-DT-6). `erase = 2` marks it.
+ */
+export async function markErasureRecorded(
+  ids: string[],
+  database: PowerSyncDatabase = db,
+) {
+  if (!ids.length) return
+  await database.writeTransaction(async (transaction) => {
+    for (const id of ids)
+      await transaction.execute(
+        "UPDATE serverErasures SET erase = 2 WHERE id = ? AND erase = 1",
+        [id],
+      )
+  })
+}
+
 /** The server did what `rows` asked; a record changed meanwhile stays. */
 export async function forgetServerErasures(
   rows: ServerErasures["rows"],
@@ -122,7 +142,7 @@ export async function forgetServerErasures(
   await database.writeTransaction(async (transaction) => {
     for (const { id, erase, keep } of rows)
       await transaction.execute(
-        "DELETE FROM serverErasures WHERE id = ? AND coalesce(erase, 0) = ? AND coalesce(keep, 0) = ?",
+        "DELETE FROM serverErasures WHERE id = ? AND min(coalesce(erase, 0), 1) = min(?, 1) AND coalesce(keep, 0) = ?",
         [id, erase, keep],
       )
   })
@@ -151,7 +171,7 @@ export async function keepForLater(
 export async function awaitingServerErase(database: PowerSyncDatabase = db) {
   await prepareDatabase(database)
   const rows = await database.getAll(
-    "SELECT 1 FROM serverErasures WHERE erase = 1 LIMIT 1",
+    "SELECT 1 FROM serverErasures WHERE erase > 0 LIMIT 1",
   )
   return rows.length > 0
 }

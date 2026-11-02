@@ -128,6 +128,51 @@ const erasedOnline = (page: Page) =>
     "awaitingServerErase",
   ).then((awaiting) => !awaiting)
 
+// Review SC-DT-6, through the access rules: the erased id is read back.
+test("an erase whose answer was lost leaves the course imported since", async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  const access = await token(1)
+  await clearAccount(access)
+  test.skip(!(await erasedIdsInstalled(access)), "Needs B6-ERASE-RULES")
+  await forgetErasedIds(access)
+  const courseId = await backedUpCourse(page, access)
+  const whole = await fetch(
+    `${base()}/rest/v1/courses?select=*&id=eq.${courseId}`,
+    { headers: headers(access) },
+  )
+  const [course] = (await whole.json()) as unknown[]
+
+  await page.route(/\/rest\/v1\/courses/, async (route) => {
+    if (route.request().method() !== "DELETE") return route.continue()
+    await route.fetch()
+    await route.abort()
+  })
+  await eraseCourse(page)
+  await expect
+    .poll(async () => (await serverRows("courses", access)).length, {
+      timeout: 60_000,
+    })
+    .toBe(0)
+  await page.unroute(/\/rest\/v1\/courses/)
+  await expect.poll(() => erasedOnline(page)).toBe(false)
+
+  // Another phone's import: the erased id lifted, the course uploaded.
+  await forgetErasedIds(access)
+  const uploaded = await fetch(`${base()}/rest/v1/courses`, {
+    method: "POST",
+    headers: headers(access),
+    body: JSON.stringify(course),
+  })
+  expect(uploaded.status).toBe(201)
+
+  await page.reload()
+  await expect.poll(() => erasedOnline(page), { timeout: 60_000 }).toBe(true)
+  expect(await serverRows("courses", access)).toHaveLength(1)
+  await clearAccount(access)
+})
+
 test("an erase takes the course and its rows off the server, for good", async ({
   page,
 }) => {

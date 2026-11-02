@@ -16,6 +16,7 @@ import {
   firstSync,
   forgetServerErasures,
   keepForLater,
+  markErasureRecorded,
   openedWithSyncedTables,
   pendingServerErasures,
   awaitingAccountCourse,
@@ -324,9 +325,9 @@ let lastRestart = 0
  * change, but its download stream stayed down until the app reopened (most
  * likely a request hung on a connection from before airplane mode, or an
  * upload loop PowerSync had left after a failure). While the backup is
- * connected, the phone online and the app on screen, a connection stalled
- * (`syncStalled`) for longer than STALL_MS is restarted, as reopening the
- * app did.
+ * connected and the phone online, a connection stalled (`syncStalled`) for
+ * longer than STALL_MS is restarted, as reopening the app did. Also in a hidden
+ * tab: it may hold the sync lock for the tab on screen (review SC-DT-7).
  */
 function watchStalledSync() {
   if (watchdog) return
@@ -336,7 +337,6 @@ function watchStalledSync() {
       !connected ||
       !activeConnector ||
       !window.navigator.onLine ||
-      document.visibilityState !== "visible" ||
       !(await syncStalled().catch(() => false))
     ) {
       stalledSince = 0
@@ -384,20 +384,40 @@ async function settleServerErasures(
     // download after the erase was confirmed. The erase stands: the server
     // erases it and the download takes it off this device (review SC-DT-1).
     const { rows } = await pendingServerErasures()
-    const erase = [
-      ...new Set([
-        ...rows.filter((row) => row.erase).map(({ id }) => id),
-        ...also,
-      ]),
-    ]
     // The full reset's course is erased for good, even one imported here
     // and not yet uploaded (review DI-B6-Q1).
     const keep = rows
       .filter((row) => row.keep && !also.includes(row.id))
       .map(({ id }) => id)
-    if (!erase.length && !keep.length) return "done"
+    if (!rows.length && !also.length) return "done"
     const refused = (code: string | undefined): Settled =>
       code === OUTDATED_WRITER_CODE ? "outdated" : "failed"
+    // A retry. Its id gone from the server means a course file imported
+    // elsewhere lifted it: that course stands (review SC-DT-6). A retry of
+    // one never confirmed cannot tell, and erases (serverErasures.ts).
+    const retried = rows
+      .filter((row) => row.erase === 2 && !row.keep && !also.includes(row.id))
+      .map(({ id }) => id)
+    let standing = new Set(retried)
+    if (retried.length) {
+      const { data, error } = await client
+        .from("erased_courses")
+        .select("id")
+        .in("id", retried)
+      if (error) return refused(error.code)
+      standing = new Set(data.map(({ id }) => id as string))
+    }
+    const erase = [
+      ...new Set([
+        ...rows
+          .filter(
+            (row) =>
+              row.erase && (!retried.includes(row.id) || standing.has(row.id)),
+          )
+          .map(({ id }) => id),
+        ...also,
+      ]),
+    ]
     const recorded = erase.filter((id) => !keep.includes(id))
     let installed = true
     if (recorded.length) {
@@ -407,6 +427,10 @@ async function settleServerErasures(
       )
       if (error && NOT_INSTALLED.has(error.code)) installed = false
       else if (error) return refused(error.code)
+      else
+        await markErasureRecorded(
+          recorded.filter((id) => !also.includes(id)),
+        ).catch(() => {})
     }
     if (erase.length) {
       const { error } = await client.from("courses").delete().in("id", erase)

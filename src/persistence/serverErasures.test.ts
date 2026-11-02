@@ -54,6 +54,12 @@ describe("the record of what the server must still erase", () => {
     expect(tx.stored).toEqual({ a: [1, 0], b: [0, 1] })
   })
 
+  it("asks the server again for a confirmed erase when a course file brings the id back", async () => {
+    const tx = transaction(["b"], { a: [2, 0] })
+    await eraseSyncedCopy(tx as never, "a")
+    expect(tx.stored).toEqual({ a: [1, 1], b: [1, 0] })
+  })
+
   it("erases for good an imported course erased before it reached the server", async () => {
     const tx = transaction(["b"], { b: [0, 1] })
     await eraseSyncedCopy(tx as never)

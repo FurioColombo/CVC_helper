@@ -24,6 +24,10 @@ test.use({ trace: "off", screenshot: "off", video: "off" })
 const LINK = "/src/persistence/backupLink.ts"
 const SESSION = "/src/backup/session.ts"
 const COURSE_HEADING = /D2 - \d+ \| \d{4}/
+// The service's address: the SDK's own modules have this path too.
+const stream = (url: URL) =>
+  url.href.startsWith(env.POWERSYNC_URL!) &&
+  url.pathname.endsWith("/sync/stream")
 
 async function addStudent(page: Page, firstName: string) {
   await page.getByRole("button", { name: "Allievi", exact: true }).click()
@@ -130,17 +134,26 @@ test("an erase stands while another tab holds the sync, its upload hung and the 
     page.getByRole("heading", { name: COURSE_HEADING }),
   ).toBeVisible()
 
+  // The upload hangs in the first tab while the other holds the stream: both
+  // tabs race for the upload, so the other one's attempts are refused.
   let release = () => {}
   const released = new Promise<void>((resolve) => {
     release = resolve
   })
-  await context.route(/\/rest\/v1\/students/, async (route) => {
+  const students = /\/rest\/v1\/students/
+  await other.route(students, (route) =>
+    route.request().method() === "GET" ? route.continue() : route.abort(),
+  )
+  await page.route(students, async (route) => {
     if (route.request().method() === "GET") return route.continue()
     await released
     await route.continue().catch(() => {})
   })
+  const hanging = page.waitForRequest(
+    (request) => students.test(request.url()) && request.method() !== "GET",
+  )
   await addStudent(page, "Sospeso")
-  await page.waitForTimeout(1_000)
+  await hanging
   await openErase(page)
   const reopened = page.waitForEvent("load")
   await page.getByRole("button", { name: "Elimina tutto" }).click()
@@ -150,15 +163,15 @@ test("an erase stands while another tab holds the sync, its upload hung and the 
   release()
   await reopened
 
-  for (const tab of [page, other])
-    await expect(
-      tab.getByRole("heading", { name: "Crea il corso" }),
-    ).toBeVisible({ timeout: 60_000 })
   await expect
     .poll(() => serverRows("courses", access, `&id=eq.${courseId}`), {
       timeout: 60_000,
     })
     .toEqual([])
+  for (const tab of [page, other])
+    await expect(
+      tab.getByRole("heading", { name: "Crea il corso" }),
+    ).toBeVisible({ timeout: 60_000 })
   await expect
     .poll(() => call<boolean>(page, LINK, "awaitingServerErase"))
     .toBe(false)
@@ -224,14 +237,14 @@ test("a restore with another tab open waits for its own first download", async (
   const released = new Promise<void>((resolve) => {
     release = resolve
   })
-  // The service's address: the SDK's own modules have this path too.
-  const stream = (url: URL) =>
-    url.href.startsWith(env.POWERSYNC_URL!) &&
-    url.pathname.endsWith("/sync/stream")
   await page.route(stream, async (route) => {
     await released
     await route.continue().catch(() => {})
   })
+  // In the tab: the SDK's shared sync worker cannot clone our configuration.
+  const inTheTab = page.waitForRequest((request) =>
+    stream(new URL(request.url())),
+  )
   await call(
     page,
     SESSION,
@@ -241,6 +254,7 @@ test("a restore with another tab open waits for its own first download", async (
   )
   // As after the emailed link: the app opens, switches and reopens.
   await page.reload()
+  await inTheTab
   const restore = page.getByRole("region", {
     name: "Ripristina dal backup online",
   })
@@ -285,4 +299,43 @@ test("an edit in the tab that does not sync is sent by the one that does, and sy
       timeout: 30_000,
     })
     .toBe(true)
+  await clearAccount(access)
+})
+
+test("a stalled connection is restarted from a hidden tab too", async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  const access = await token(1)
+  await clearAccount(access)
+  await backedUpCourse(page, access)
+
+  // The tab that holds the sync can be the one in the background (review SC-DT-7).
+  await page.addInitScript(() => {
+    Object.defineProperty(document, "visibilityState", {
+      get: () => "hidden",
+    })
+  })
+  let release = () => {}
+  const released = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  let requests = 0
+  await page.route(stream, async (route) => {
+    requests += 1
+    await released
+    await route.continue().catch(() => {})
+  })
+  await page.reload()
+  await expect.poll(() => requests, { timeout: 30_000 }).toBe(1)
+  await expect.poll(() => requests, { timeout: 120_000 }).toBeGreaterThan(1)
+
+  release()
+  await page.unroute(stream)
+  await expect
+    .poll(() => call<boolean>(page, LINK, "databaseConnected"), {
+      timeout: 150_000,
+    })
+    .toBe(true)
+  await clearAccount(access)
 })

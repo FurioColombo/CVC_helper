@@ -80,18 +80,13 @@ The 0.1–0.3 retrospective (`archive/v0.4.0/RETRO_0X.md`) proposes ten
 changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
 `03_TECHNICAL_DECISIONS.md` §6, `docs/OWNER_WORKFLOW.md`). The rest:
 
-1. `npm run evidence -- <ID> --from-ci` records a green CI `verify:all` of
-   HEAD at a gate instead of a local run (friction 1).
-2. `npm run evidence` exits early when the same source digest already passed
-   (friction 5).
-3. `scripts/run-e2e.mjs` takes a machine-wide lock so two browser runs never
-   overlap (friction 6).
-4. One quiet runner for the verify scripts, the full log to `test-results/`
-   (friction 7).
-5. Node 24 as the machine default, the Program Files Node 18 removed or
-   demoted: an owner action (friction 8).
-6. Agent transcripts treated as private data: the owner deletes or moves the
-   0.x ones offline and sets `cleanupPeriodDays` (friction 9).
+1. `evidence -- <ID> --from-ci` records a green CI `verify:all` (friction 1).
+2. `npm run evidence` exits early on an already passed digest (friction 5).
+3. `scripts/run-e2e.mjs` takes a machine-wide lock (friction 6).
+4. One quiet runner for the verify scripts, log in `test-results/` (friction 7).
+5. Node 24 as machine default, Node 18 demoted: owner action (friction 8).
+6. Transcripts as private data: the owner moves the 0.x ones offline and sets
+   `cleanupPeriodDays` (friction 9).
 7. `milestone:complete` writes the plan's status row from the manifest
    (friction 10).
 
@@ -101,6 +96,15 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
   shows only when the screen is opened again. Needed before sharing a course.
 - **A sync client that cannot start fails silently** (the SDK swallows it): a
   restore shows "Ripristino…" for ever. Say so and offer Riprova.
+- **Two desktop tabs (B4 review, 2026-11-02):** the update notice shows only in
+  the tab that won the upload (SC-DT-3); the tabs word one stuck change
+  differently (SC-DT-Q6); a sign-out racing a reload can leave a tab showing
+  "Accesso" with nothing synced (SC-DT-5); Esci and the reset wait for a hung
+  upload (SC-B4F-1 below); a failed erase leaves other tabs on "Il corso è
+  cambiato" (SC-DT-Q7). Forced only: a tab that misses the erase notice
+  re-downloads the course, whose later work the record then erases (SC-DT-8).
+- **SC-DT-6's residue:** an erase retry cannot tell its id was lifted when the
+  answer to recording it was lost. A server-side erase call would close it.
 
 ## Flaky browser tests
 
@@ -114,16 +118,12 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — WebKit, B3's run (2026-10-26): no course heading within 30 s; retry and
   5 isolated runs passed. Cause unproven; no backup in this spec.
 
-- B3 field-UX FUX-B3-R4-Q1 (unconfirmed): in a reviewer's two-tab scratch
-  spec on Playwright WebKit, 2 of 4 runs stayed on "Apertura del corso…"
-  after the launch switch reloaded the app (Windows dev server, another agent
-  committing at the same time). The repository's `b3-backup-ui.spec.ts`
-  passed 16/16 on `iphone-13-webkit-core`. Watch the owner's iPhone check;
-  add a two-tab WebKit case if it recurs.
+- B3 FUX-B3-R4-Q1 (unconfirmed): a two-tab scratch spec on WebKit stayed on
+  "Apertura del corso…" after the launch switch, 2 of 4 runs; `b3-backup-ui`
+  passed 16/16. Add a two-tab WebKit case if it recurs.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
-  — Mac WebKit CI `39235069108`: Disabilita allievo absent after reactivation;
-  the retry passed. Cause unproven. See `.evidence/T1/ci-checkpoint-434cdcc.json`.
+  — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.
 
 - `student-management-gate.spec.ts › creates, corrects and reloads a declared age without a birth date`
   — WebKit, B1 run: the dev server stopped answering late (environment).

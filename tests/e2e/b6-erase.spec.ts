@@ -54,7 +54,7 @@ async function withBackend(page: Page, { installed = true } = {}) {
     if (!server.has(name)) server.set(name, new Map())
     return server.get(name)!
   }
-  const state = { reachable: true, liftRefused: false }
+  const state = { reachable: true, liftRefused: false, loseDeleteAnswer: false }
   await page.addInitScript((url) => {
     window.__cvcBackupConfig = {
       supabaseUrl: url,
@@ -124,6 +124,13 @@ async function withBackend(page: Page, { installed = true } = {}) {
                 if (row.courseId === id) childRows.delete(rowId)
       }
     }
+    // The server did it; the phone never hears.
+    if (
+      name === "courses" &&
+      request.method() === "DELETE" &&
+      state.loseDeleteAnswer
+    )
+      return route.abort()
     return json(
       changed.map((row) => ({ id: row.id })),
       request.method() === "POST" ? 201 : 200,
@@ -470,6 +477,63 @@ test("an erase made before the server records erased ids is not repeated later",
   )
   expect(backend.table("courses").size).toBe(1)
   expect(backend.table("students").size).toBe(1)
+})
+
+// Review SC-DT-6: the server erased the course but the phone never heard.
+test("an erase whose answer was lost does not erase the course another phone imported since", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await courseWithStudent(page, "Ginevra")
+  await signIn(page)
+  await waitUntilSent(page, backend)
+  const course = [...backend.table("courses").values()][0]!
+  const student = [...backend.table("students").values()][0]!
+
+  backend.state.loseDeleteAnswer = true
+  await eraseCourse(page)
+  await expect.poll(() => backend.table("courses").size).toBe(0)
+  await expect
+    .poll(async () => (await stored(page, [])).erasures)
+    .toEqual([{ id: course.id, erase: 2, keep: 0 }])
+  backend.state.loseDeleteAnswer = false
+
+  // Another phone imports the course's file: it lifts the erased id first.
+  backend.table("erased_courses").delete(course.id)
+  backend.table("courses").set(course.id, course)
+  backend.table("students").set(student.id, student)
+  backend.writes.length = 0
+  await page.reload()
+  await expect.poll(async () => (await stored(page, [])).erasures).toEqual([])
+  expect(backend.writes.filter(({ method }) => method === "DELETE")).toEqual([])
+  expect(backend.table("courses").size).toBe(1)
+  expect(backend.table("students").size).toBe(1)
+  expect(backend.table("erased_courses").size).toBe(0)
+})
+
+test("an erase whose answer was lost is asked again while its id stands on the server", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await courseWithStudent(page, "Ginevra")
+  await signIn(page)
+  await waitUntilSent(page, backend)
+  const course = [...backend.table("courses").values()][0]!
+
+  backend.state.loseDeleteAnswer = true
+  await eraseCourse(page)
+  await expect
+    .poll(async () => (await stored(page, [])).erasures)
+    .toEqual([{ id: course.id, erase: 2, keep: 0 }])
+  backend.state.loseDeleteAnswer = false
+
+  // A phone still holding the course cannot bring it back, and this one
+  // asks once more: the row of a delete that never arrived goes too.
+  backend.table("courses").set(course.id, course)
+  await page.reload()
+  await expect.poll(async () => (await stored(page, [])).erasures).toEqual([])
+  expect(backend.table("courses").size).toBe(0)
+  expect([...backend.table("erased_courses").keys()]).toEqual([course.id])
 })
 
 // Review DI-B6-R2-2: a phone that never used the backup brings in a course

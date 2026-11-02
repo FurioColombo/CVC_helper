@@ -153,6 +153,7 @@ export {
   awaitingServerErase,
   forgetServerErasures,
   keepForLater,
+  markErasureRecorded,
   pendingServerErasures,
   type ServerErasures,
 } from "@/persistence/serverErasures"

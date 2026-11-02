@@ -1,0 +1,209 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "scope": "desktop sync",
+  "round": 2,
+  "commit": "8c4ae48",
+  "verdict": "FAIL",
+  "summary": "The design change holds. SC-DT-1 and SC-DT-2 are fixed in my own reproductions, on the dev server and on a production build, and SC-DT-4 is gone. The FAIL rests on one blocker, SC-DT-6, which is not caused by this diff: it reproduces the same way on b9bad45 and comes from B6's erase design. A leftover erase record deleted a course that another device had imported, online and on that device, with no prompt. It came up while I hunted for your point 3 routes. If the owner moves it to B6 by a recorded decision, I have no other blocker in this scope. SC-DT-3 and SC-DT-5 still apply, SC-B4F-1 changed shape, and there is one new stall finding (SC-DT-7).",
+  "blockers": [
+    {
+      "id": "SC-DT-6",
+      "title": "An erase record that outlives the server's delete later deletes the same course after another device has imported it, online and on that device, with no prompt",
+      "evidence": "Scratch spec r13b on 8c4ae48: the server answers the DELETE with 204, the answer is lost, and device 1 keeps {erase:1, keep:0} in state 'error'. Device 2 imports the course file: 1 course and 1 student on the server. Device 1 reopens: 0 courses and 0 students on the server, device 2 falls back to 'Crea il corso' with 0 local courses, and device 1's record is gone. Variant r13: the tab is closed right after the DELETE instead of losing the answer; same result. The same r13b run on b9bad45 gives the same result, so this diff did not introduce it. Cause by reading: src/backup/session.ts settleServerErasures repeats the record's upsert and delete and cannot tell a delete that already happened from one that never arrived. The comment there already names this hazard (review DI-B6-R2-1) for one path only. Any edits made on device 2 after the import are lost; the course file holds only what was exported.",
+      "reproduction": "Live backend, account 2, proxied sync. 1) Device 1 backs up a course; export its archive. 2) Route DELETE /rest/v1/courses: route.fetch() then route.abort(), so the server applies it and the tab sees a network failure. 3) Elimina tutto on device 1; close the tab. 4) Device 2 (new context): sign in, importCourseArchive(archive), wait for the server to hold it. 5) Open the app on device 1 again. Expected: device 2's course stands. Observed: gone everywhere.",
+      "reproduced": "Yes, 1 run each for the lost answer and the closed tab on 8c4ae48, and 1 run for the lost answer on b9bad45. The lost answer and the closed tab were forced.",
+      "inferred": "How often this happens: it needs a lost answer, the first device staying away, and the same course id imported elsewhere meanwhile. Also that the same hazard applies to a read-only device, which cannot forget its record (DI-B6-Q2); not run.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 adversarial checklist ('an erase racing a restore on another device'); AGENTS.md §11"
+    }
+  ],
+  "roundOneBlockers": [
+    {
+      "id": "SC-DT-1",
+      "disposition": "Fixed in my reproductions",
+      "evidence": "r1, the p22 layout with the upload held through a context route and tab B reloaded inside the window, 3 of 3 correct: 0 local courses, 0 on the server, no record, both tabs on 'Crea il corso', 0 buckets. The upload was in A in 2 runs and in B in 1. In the 2 runs where A carried it, the first sample shows {local:0, erase:[{erase:1,keep:0}], server:1} and the next {erase:[], server:0}. r12, the same layout on a production build with its service worker: server 0, both tabs on 'Crea il corso'."
+    },
+    {
+      "id": "SC-DT-2",
+      "disposition": "Fixed in my reproductions",
+      "evidence": "p2b unchanged on 8c4ae48: kind 'restoring', mark true, Crea corso disabled, one course after release. r14 on a production build, stream held by a context route, tab B left on 'Dati locali cancellati': Crea corso disabled, one course on the server. Only the lock holder broadcasts status (SDK TabLocalStreamingSyncImplementation.ts #sendStatus), and I found no way to have a holder with hasSynced true beside a restoring tab, because the reset now disconnects the other tabs. That last part comes from reading and from these two runs."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-DT-7",
+      "title": "New: a stalled stream in a lock holder that is in the background is not restarted, so downloads stay down while the user works in the visible tab",
+      "evidence": "Scratch spec r5. Service hung for 60 s, then healthy, with the holder's visibilityState reporting 'hidden'. For 180 s after the service returned, no new stream request reached the proxy, and a server edit never reached the local copy; both tabs read connecting:true. When the holder reported 'visible' again, it recovered in 39 s. src/backup/session.ts:331-353 skips a hidden tab. A non-holder's restart only restarts its own wait for the lock. This is the owner's offline-day failure again, for the common case of two tabs in one window.",
+      "reproduction": "Two tabs, the first holding the lock. Override document.visibilityState on the holder to 'hidden'. Set the proxy to hang and cut the stream; 60 s later stop the hang, keeping the hung request open. PATCH a student by REST and poll the other tab's local row.",
+      "reproduced": "Yes, 1 run, with visibility emulated by an override rather than a truly hidden tab. Real background tabs also have throttled timers, which I did not exercise.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B4; src/backup/session.ts watchStalledSync"
+    },
+    {
+      "id": "SC-DT-3",
+      "title": "Still applies, changed shape: the update notice appears only in the tab that happened to win the upload lock",
+      "evidence": "p4 with CVOLD: A notice 1, outdated:true; B notice 0, outdated:false; both lines 'In attesa di connessione: 1 modifica da inviare.' The tab is no longer 'last port': both tabs run the upload loop and race for the lock (r4: 6 edits made in the non-holder, A sent 3 and B sent 3). So the notice can land in either tab, including the hidden one.",
+      "reproduction": "Two connected tabs. Route POST /rest/v1/students to 400 {code:'CVOLD'}. Add a student. Compare Impostazioni in both tabs.",
+      "reproduced": "Yes, with the refusal faked by a route.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B4"
+    },
+    {
+      "id": "SC-DT-5",
+      "title": "Still applies: the resumeBackup guard does not cover every timing, so a signed-out tab can still show 'Accesso: <email>'",
+      "evidence": "p29 on 8c4ae48. Lead 50 ms: A kind 'connected', no email form, 'Tutto inviato. La ricezione dal backup riprenderà da sola.' In all 4 leads B stayed on 'connected'; A was right at leads 0, 1 and 51. Every run: no stored session, 0 streams, 0 sync requests over the next 10 s, an edit stays queued with 0 uploaded, and a reopen shows the email form.",
+      "reproduction": "Two connected tabs, A's POST held. Esci in A, confirm. After 1 s reload B without waiting; 0-100 ms later release the POST. Read both tabs 12 s later.",
+      "reproduced": "The wrong display, in the runs above. No leak of credentials or data.",
+      "inferred": "The new guard compares a sign-out counter taken when the start begins (src/backup/session.ts:684-691). signOuts rises before the disconnect finishes, so a start begun during Esci's disconnect passes the guard. Not traced.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3"
+    },
+    {
+      "id": "SC-B4F-1",
+      "title": "Carried, changed shape: better for the other tab, and a hung upload now also blocks the desktop reset",
+      "evidence": "r7. Erase from the tab not uploading: finished in 1.1 s with the upload still hung, which is an improvement. Esci from the uploading tab: not finished after 40 s, session kept, the other tab still streaming. Reset from the uploading tab: both tabs on 'Cancellazione dei dati locali…' after 40 s, finishing only once the upload was released. This is new on desktop, because db.close() now disconnects (src/persistence/localDataOperations.ts closeCourse has no bound on it); phones already took this path. r1: erase from the uploading tab stays on 'Eliminazione…' until release.",
+      "reproduction": "Two connected tabs. Hold the first POST with a context route, note which tab sent it, and act from that tab or the other.",
+      "reproduced": "Yes.",
+      "specRef": "Earlier review SC-B4F-1"
+    },
+    {
+      "id": "SC-DT-8",
+      "title": "If a holder does not hear the notice, its stream re-downloads the erased course; the course opens normally, accepts work, and is then deleted with that work and no prompt",
+      "evidence": "Scratch spec r2, with an init script blocking the holder's 'changed' message and the erase writes refused for tab A. After the erase: 0 local courses, record kept. After a server edit: B logs 'Could not apply checkpoint, Checksums didn't match', then a full re-download; the local rows match the server (3 students, buckets 1, oplog 4). So your warning is real recovery, and it is also the mechanism that brings an erased course back. A reopens on the course, Impostazioni shows only 'Backup non raggiungibile', and a new student reaches the server. When the backend returns: 0 courses and 0 students on the server, with no prompt. A kept the course on screen, kind 'connected', for at least 20 s more, because B still held the lock showing 'Il corso è cambiato' with uploadError CourseReplacedError. Closing B cleared it. src/persistence/localDataOperations.ts: a tab that learns of the change through onCourseReplaced only notifies and does not close, so it keeps its stream.",
+      "reproduction": "As above: B's BroadcastChannel for cvc-local-data has its onmessage neutralised; B holds the lock; Elimina tutto in A with non-GET requests to courses and erased_courses refused; PATCH a student by REST; reload A; add a student; lift the refusal; reload A.",
+      "reproduced": "All of it, with the notice blocked artificially. Without blocking it, r9 (B reloaded inside the window) logged the same Checksums warning, but the course did not stay: B reopened, its settle failed and it stopped connecting, with 0 local courses and the record kept.",
+      "inferred": "That a real tab can miss the notice, for example one starting up before its channel opens (src/main.tsx mounts React before startBackupAtLaunch, which makes this narrow). I found no unforced route to the course staying open with its record, so this is not a blocker. Your trade therefore held in my tests, and the record-plus-open-course state needs a lost notice.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-DT-Q1",
+      "title": "Changed: setOffline now stops new sync requests, but an already open stream keeps running",
+      "evidence": "p16: 'offline', a server edit still arrived on the open stream; after cutting it, 0 new requests and connected:false. Same as phones, so the earlier worry about the worker is gone.",
+      "reproduction": "p16.",
+      "reproduced": "Yes.",
+      "specRef": "AGENTS.md §9"
+    },
+    {
+      "id": "SC-DT-Q2",
+      "title": "Gone: dev and production now have the same worker layout",
+      "evidence": "One shared worker on both (p2b dev 'workers 1'; r12 production ['shared_worker']).",
+      "reproduction": "CDP Target.getTargets.",
+      "reproduced": "Yes.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §6"
+    },
+    {
+      "id": "SC-DT-Q3",
+      "title": "Replaced: syncInEachTab has no direct test",
+      "evidence": "grep finds it only in src/persistence/schema.ts. It writes a protected SDK field. The version guard at vite.engine-startup.ts:62 pins 2.2.0, and the comment's claim is right: PowerSyncDatabase.ts reads enableMultiTabs only at lines 128 and 177. A small assertion that sync takes the tab-local path would catch silent drift sooner than a browser journey.",
+      "reproduction": "grep -rn syncInEachTab src tests scripts",
+      "reproduced": "Yes, the absence.",
+      "specRef": "AGENTS.md §3"
+    },
+    {
+      "id": "SC-DT-Q4",
+      "title": "Unchanged by this diff: after Esci from 'other-account', the other tab stays on 'other-account'",
+      "evidence": "src/backup/session.ts signedOutElsewhere has the same early return. Not rerun.",
+      "reproduction": "Round 1 p10.",
+      "reproduced": "Round 1 only.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3"
+    },
+    {
+      "id": "SC-DT-Q5",
+      "title": "Changed: the double restart is harmless, because a non-holder's restart only restarts its own wait; the real gap is SC-DT-7",
+      "evidence": "r4: 100 s with a healthy holder, 0 sync requests, no restart. r5 for the stalled case.",
+      "reproduction": "r4, r5.",
+      "reproduced": "Yes.",
+      "specRef": "src/backup/session.ts:322-353"
+    },
+    {
+      "id": "SC-DT-Q6",
+      "title": "Two tabs give different lines for the same stuck change",
+      "evidence": "r4 with uploads refused: A 'Invio in corso: 1 modifica da inviare.', B 'In attesa di connessione: 1 modifica da inviare.' Both tabs were sampled in one log line.",
+      "reproduction": "Two tabs, abort POSTs, add a student, read both lines.",
+      "reproduced": "Yes.",
+      "specRef": "src/features/settings/OnlineBackup.tsx"
+    },
+    {
+      "id": "SC-DT-Q7",
+      "title": "An erase that fails after the notice leaves the other tabs on 'Il corso è cambiato' though nothing changed",
+      "evidence": "src/persistence/serverErasures.ts announces before the transaction. 'Riapri l'app' recovers. Read only, not run, so a note and nothing more.",
+      "reproduction": "None run.",
+      "reproduced": "No.",
+      "specRef": "src/persistence/serverErasures.ts disconnectForErase"
+    },
+    {
+      "id": "SC-DT-Q8",
+      "title": "The last test in b4-two-tabs-live leaves a course in test account 1",
+      "evidence": "After my run of the spec, account 1 held 1 course; account 2 held 0. That test has no clearAccount at its end. I left the row in place, since the spec clears the account when it starts and someone else may be using that account.",
+      "reproduction": "tests/e2e/b4-two-tabs-live.spec.ts:265-288; count courses after a run.",
+      "reproduced": "Yes.",
+      "specRef": "AGENTS.md §17"
+    }
+  ],
+  "statusOfRoundOneFindings": {
+    "SC-DT-1": "fixed",
+    "SC-DT-2": "fixed",
+    "SC-DT-3": "still applies, changed shape",
+    "SC-DT-4": "gone. r14: a 12 s main-thread stall just as the tab asked for the sync lock, then connected, an edit uploaded, Esci finished. The SDK's shared sync code path is no longer used.",
+    "SC-DT-5": "still applies, narrower",
+    "SC-B4F-1": "changed shape",
+    "SC-DT-Q1": "changed",
+    "SC-DT-Q2": "gone",
+    "SC-DT-Q3": "replaced by a test gap on syncInEachTab",
+    "SC-DT-Q4": "unchanged code, not rerun",
+    "SC-DT-Q5": "changed"
+  },
+  "pointThreeRoutes": {
+    "question": "Can {erase:1, keep:0} sit on a device with that course open by any route other than the erase window?",
+    "tested": [
+      "Replace prompt in a second tab after the first tab replaced (r3, r3b, 7 timings): the online course kept every time. The prompt disappears within 800 ms, and a click at 300 ms was stopped by 'Il corso è cambiato'.",
+      "Erase window plus a failed settle, without blocking the notice (r9): the course did not stay on the device.",
+      "Notice blocked (r2): the state does arise. See SC-DT-8."
+    ],
+    "readOnly": "The only writers of the table are eraseSyncedCopy's record calls (src/persistence/courses.ts and courseArchive.ts); imports set keep=1, which is excluded from the changed branch. Reset deletes the table with the database. Another account is stopped by the device claim.",
+    "conclusion": "The reversal itself adds little: the state needs a lost notice. The unrecoverable case I did reproduce is SC-DT-6, where the course is not open at settle, so the old filter did not protect it either."
+  },
+  "newSurface": {
+    "nonHolderTab": "r4: shows the holder's status and the same 'Copia online aggiornata.' line. No restart in 100 s while the holder is healthy. Esci from it took 464 ms; both tabs signed out, 0 streams, no locks held.",
+    "editInNonHolder": "r4: 6 edits, uploaded with A sending 3 and B sending 3, so 'the holder always uploads' is not what happens: either tab can. A stuck queued row does stop the holder's downloads from applying (local row unchanged while downloading:true), and they apply as soon as the queue clears. Same SDK rule as one tab. A stale tab that keeps failing its upload can prolong this (SC-DT-8).",
+    "restoreInNonHolder": "r8: both tabs 'restoring', mark true, Crea corso disabled. Holder closed mid-download: the other took the lock and restored 5 students. Esci from a non-holder mid-restore: both signed out, 0 local courses, 0 streams.",
+    "handOver": "r6: close and reload of a tab with its upload unanswered and 12 changes queued: 12 of 12 on the server, no duplicates, no refusals, about 2 s, and a later download arrived. Crash: not a result, because Page.crash also closed the other tab in that run (likely a shared renderer).",
+    "previousVersionTab": "Production builds, one origin, same worker asset hash so one shared worker, service workers blocked. b9bad45 tab (worker holds the lock) beside this version: the new tab waits on the lock with 'Tutto inviato. La ricezione dal backup riprenderà da sola.', edits from both tabs reach the server, the download is applied, an erase in the new tab gives server 0 and the old tab 'Il corso è cambiato'. Published 5157e09 tab: stuck on its restore as the owner saw; the new tab holds the lock and works, 'Copia online aggiornata.', erase correct. Erase started in a 5157e09 tab (r11): no reload in 40 s, course kept on the server, new tab unaffected; that is the old bug, with no damage. b9bad45 has no published build as far as the brief says, so 5157e09 is the owner's case.",
+    "clearUnderLiveStream": "Your warning is real, and the stream did live through the clear: r9 logged it without blocking the notice, r2 with it. It repairs the local copy by re-downloading everything, which includes the erased course. That ends correctly only because the record is now obeyed. See SC-DT-8.",
+    "productionBuild": "r12 and r14 passed on a test-channel build, r12 with its service worker active: restore, non-holder edit, hand-over with a later download, the SC-DT-1 layout. r14 covered the SC-DT-2 layout."
+  },
+  "specJudgement": {
+    "ranAgainstOldCode": "tests/e2e/b4-two-tabs-live.spec.ts on b9bad45 in development: tests at lines 117, 172 and 198 failed, at spec lines 156, 193 and 247; the test at line 265 passed.",
+    "line117": "Fails on the old code at a tab heading, before its server assertion, so the failure does not show the erase was undone. The context route lets either tab carry the upload, so the run may not reach the stream-under-clear state. Fix the uploader as p22 does and assert the server first.",
+    "line172": "Catches the old stray drop, by injecting the record. It pins the decision rather than the route to that state.",
+    "line198": "Would have caught SC-DT-2, and does.",
+    "line265": "A check of the new design, not a regression test for the old failures. It says nothing about which tab uploaded."
+  },
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; diff b9bad45..8c4ae48; tests/e2e/b4-two-tabs-live.spec.ts; src/persistence/schema.ts, serverErasures.ts, localDataOperations.ts; src/backup/session.ts; src/features/settings/OnlineBackup.tsx; vite.engine-startup.ts",
+    "SDK: TabLocalStreamingSyncImplementation.ts, WebStreamingSyncImplementation.ts, AbstractStreamingSyncImplementation.ts, PowerSyncDatabase.ts, BasePowerSyncDatabase.ts",
+    "My scratchpad's scg2/ specs r1-r14, the reruns of p2b, p4, p16 and p29, and scg4/ for the old commit, on desktop Chrome against the development backend with synthetic data. Test-channel production builds of 8c4ae48, b9bad45 and 5157e09 were served from one origin on port 4237; a dev server of b9bad45 also ran on 4237. 8c4ae48 in development ran on 4235.",
+    "Repository tree clean at 8c4ae48 afterwards; my servers stopped; account 2 empty; account 1 as in SC-DT-Q8."
+  ],
+  "anglesTried": {
+    "seed": 843221322,
+    "round": 2,
+    "scope": "Round 1 blockers, the fix diff and the new surface named in the coordinator's brief. No new lenses drawn.",
+    "lenses": [
+      "7: clock skew (carried; not rerun, the diff does not touch ordering)",
+      "8: sign-out or account switch with uploads queued (carried; Esci rerun in p29, r4 and r7, account switch not rerun)"
+    ],
+    "wildcard": "An old-version tab and this version on one database through a version-swapping server; a record that outlives the server's delete"
+  },
+  "notTested": [
+    "WebKit and Firefox: not run this round. Firefox is not installed.",
+    "A real renderer crash of the holder alone (see handOver).",
+    "A truly hidden tab or real sleep and wake: visibility was emulated.",
+    "An old-version tab with its service worker and the real autoUpdate reload: service workers were blocked in r10 and r11.",
+    "A large course: every probe used a few rows.",
+    "An import in the erase window on this commit; round 1's one run was correct and the path shares the fix.",
+    "Clock skew and the account switch rerun.",
+    "The full desktop project: your 107 passes are not re-verified.",
+    "Physical devices: those checks belong to the owner."
+  ]
+}
