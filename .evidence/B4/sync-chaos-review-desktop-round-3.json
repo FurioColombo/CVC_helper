@@ -1,0 +1,139 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B4",
+  "scope": "desktop sync",
+  "round": 3,
+  "commit": "d135cad",
+  "verdict": "FAIL",
+  "summary": "The fix diff holds on everything it set out to change. SC-DT-6 is fixed for the lost answer of the delete, live and on a production build, and SC-DT-7 is fixed. The FAIL rests on one blocker, SC-DT-9, which this diff did not create. An account with two courses locks every device, including a new one, on 'Non riesco ad aprire i dati locali', with only Riprova on screen and no way to fix it from the app. No lost answer or import is needed: two devices each making a course, one offline, is enough, and the same run reaches it on 8c4ae48. d135cad adds one more route to that state, your point 2 scenario. No row is lost. Nothing else in this report blocks. As this is the third FAIL, this goes to the owner.",
+  "blockers": [
+    {
+      "id": "SC-DT-9",
+      "title": "Two courses on an account lock every device on an error screen with no way out",
+      "evidence": "Scratch spec r17, dev server of d135cad: device 1 and device 2 are signed in and empty; device 1 goes offline and makes D3; device 2 makes D2; device 1 comes back. Server: 2 courses, no refusals. Live screens keep working. After a reopen, both show 'Non riesco ad aprire i dati locali'; the only button is Riprova, and it changes nothing. A third, empty device signing in ends on the same screen. So Impostazioni, Esci, export and reset cannot be reached. The same r17 on 8c4ae48 gives the same result. r23 repeats it on a test-channel production build with phone profiles. Cause by reading: src/persistence/courseSession.ts:37 throws when more than one course is active, during prepareDatabase. Nothing on the server limits an account to one course, and r16 and r17 uploaded the second course with no refusal. Rows are kept on the server and on the devices (r16: 2 courses, 2 students), so a developer deleting one server row should end it; I did not run that recovery. Correction to my round 1 SC-DT-2 report: that state also leads here on reopen, and I reported it only as two courses.",
+      "reproduction": "Two contexts, one account with no course, both on 'Crea il corso' and connected. context1.setOffline(true); make a course on device 1; make a course on device 2; context1.setOffline(false); wait 15 s; reload both. Expected: one course, or a choice. Observed: the error screen on both, and on any new device.",
+      "reproduced": "Yes: d135cad and 8c4ae48 on dev, d135cad on a production build with phone profiles. Also through the lost-answer route (r16) and a control with no lost answer (r16).",
+      "inferred": "How often it happens: two devices must each make a course while one is offline, which fits the start of a new week. That a developer's row deletion recovers it.",
+      "attribution": "Not caused by d135cad. The root is in B5, and backlog DI-B5-4 notes only that no invariant sees two active courses. d135cad adds the point 2 route: before it, the repeated delete removed the old course, at the cost of the data loss in SC-DT-6.",
+      "specRef": "01_PRODUCT_SPEC.md line 9 (one active course); 04_IMPLEMENTATION_PLAN.md B5"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-DT-6-R",
+      "title": "SC-DT-6 narrowed: if the answer to the erased-id upsert is lost, the record stays unmarked and device 1's later delete still takes a course device 2 imported",
+      "evidence": "Scratch spec r18. Upsert applied and answer lost: record erase 1, tombstone present, server course still there because the delete was never sent. Device 2 imports: 1 course, tombstone 0. Device 1 returns: server 0, device 2 back on 'Crea il corso' with no local course.",
+      "reproduction": "Route POST /rest/v1/erased_courses: route.fetch() then abort. Elimina tutto; close the tab. Device 2 signs in and calls importCourseArchive. Reopen device 1.",
+      "reproduced": "Yes, 1 run, with the lost answer forced.",
+      "inferred": "Why I do not call this a blocker: the delete had not happened from device 1's side, so this matches an offline erase arriving late, which the app's text says also erases for other devices. I did not run that offline case. A tab dying between the upsert's answer and the mark, with a lost delete answer, should end the same way; not run.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6"
+    },
+    {
+      "id": "SC-DT-10",
+      "title": "New: an import of the same course, two tabs settling, and one tab's delete arriving late: the imported course goes from the server and the device",
+      "evidence": "Scratch spec r19 and r19b. Record {erase:1, keep:1}, both tabs reopen, tab B's DELETE delayed. Delay 0 and 0.1 ms: 1 course on the server and local, correct. Delay 1.5 s, 3 s and 6 s: server 0, students 0, local 0, tab A on 'Crea il corso', record empty. Cause by reading: B works from rows it read before A forgot them, and its delete lands after A's upload.",
+      "reproduction": "Two connected tabs. Fail DELETE /rest/v1/courses while calling importCourseArchive with the course's own archive. Lift that. Route tab B's DELETE with a 1.5 s delay and reload both tabs together. Read the server and local courses 14 s later.",
+      "reproduced": "Yes, with the delay forced.",
+      "inferred": "That it predates this diff: the keep path did not change. Not run on an old commit. Why it is not a blocker: the file was just imported and is still in the owner's hands, and it needs two tabs reopening together on a slow connection. Work done between the import and the loss would be lost, but the window is seconds.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-DT-Q9",
+      "title": "A 5157e09 tab that starts after a record is marked 2 repeats the delete, as the old code did",
+      "evidence": "Scratch spec r20 on production builds: record 2 written by this build, course posted back with its tombstone lifted (standing in for an import elsewhere), old tab opened: server 0, tombstone 1. It needs an old-bundle tab starting after the new build wrote the record, so only during the update.",
+      "reproduction": "r20, first test.",
+      "reproduced": "Yes.",
+      "specRef": "src/persistence/serverErasures.ts markErasureRecorded"
+    },
+    {
+      "id": "SC-DT-Q10",
+      "title": "A marked record, Esci and a full reset leave a course with a tombstone, so its course row can no longer be edited online",
+      "evidence": "Scratch spec r24. Delete never arrived, signed out, reset: record gone, server course 1, tombstone 1. Sign-in restores it and a student edit uploads, but an edit of the course row is refused and listed as 'erased:courses'. The refusal is visible. Reading says the upsert-then-delete order predates this diff; not run on an old commit.",
+      "reproduction": "r24, second test.",
+      "reproduced": "Yes.",
+      "specRef": "src/backup/session.ts settleServerErasures"
+    },
+    {
+      "id": "SC-DT-Q11",
+      "title": "In state 'error' on 'Crea il corso' the backup section offers Riprova and no Esci",
+      "evidence": "Scratch spec r24: buttons named Esci or Riprova on that screen were only ['Riprova'], so I signed out through the session call for that probe.",
+      "reproduction": "Mark a record with DELETE refused, then look at the 'Ripristina dal backup online' region.",
+      "reproduced": "Yes.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B3"
+    },
+    {
+      "id": "SC-DT-Q12",
+      "title": "The test 'is asked again while its id stands on the server' fails on 8c4ae48 only because it asserts the mark",
+      "evidence": "b6-erase.spec.ts:527 expects erase 2; the old code's behaviour there, repeating the delete, was already right. It guards the implementation, not a regression. See testsOnOldCode.",
+      "reproduction": "Run it against 8c4ae48's source.",
+      "reproduced": "Yes.",
+      "specRef": "tests/e2e/b6-erase.spec.ts"
+    }
+  ],
+  "pointByPoint": {
+    "1_r13_r13b": "Pass, live. r13 (tab closed after the delete) and r13b (answer lost): device 1 reopens, record gone, 1 course and 1 student on the server, device 2 keeps its course.",
+    "2_consequences": "New course offline: device 1 keeps D3 on screen and loses nothing, 2 courses and 2 students on the server, record gone. Device 2 gets both. After a reopen both are locked: SC-DT-9. The control with no lost answer ends the same way. Staying on 'Crea il corso': the imported course arrives by download within 20 s of signal and opens by itself, one course, nothing lost, still right after reopening both.",
+    "3_marked_and_lifted": "Marked with the delete undelivered, device 2 syncing: device 2's student edit still uploads (the trigger guards only the courses table), and device 1's retry finds the id and erases, leaving both devices empty. Esci, then the same account again: the retry erases, tombstone kept (r24). Full reset while signed in with a marked record: server 0, tombstone 1 (r24). Esci and reset: SC-DT-Q10. Other routes for the id to vanish, by reading only: the sole client delete from erased_courses is the keep path, and keep comes only from an import (courseArchive.ts) and the switch (syncMode.ts:319), the latter for a course the device brings in itself. Another account stops at the device claim before settling (session.ts:257). I found no retention job in the migrations. One stale case, read only and not run: a device that imported the file offline earlier and returns after another device's erase lifts the id, and the course comes back. That is still an intended import, and the path is unchanged by this diff.",
+    "4_two_tabs": "Pass. Unmarked: 2 upserts, 2 deletes, server 0, record gone. Marked: 2 reads, 2 upserts, 2 deletes, same end. Both tabs connected on 'Crea il corso'. The import case is SC-DT-10.",
+    "5_old_records_and_tabs": "Old build's erase 1 after updating (phone profile): the new build erases, server 0, tombstone 1. Old tab reading erase 2: SC-DT-Q9. Reading of the old code: erase is tested as truthy, so 2 acts as an erase, and awaitingServerErase looks for erase = 1, so an old tab hides the waiting message.",
+    "6_hidden_restart": "No harm found. Healthy holder and hidden non-holder: 0 new stream requests in 130 s. Hidden holder with a hung service (r5): recovered 106 s after the service returned, with no need to become visible. Hidden phone profile: requests at 10, 40 and 166 s, recovery in 112 s; bounded by the 2-minute gap. Stall during a held upload with a hidden non-holder: row on the server once, no refusal, no superseded edit, recovered within 56 s. CDP freeze then thaw: reconnected in 111 s and a later edit uploaded; 1 stream request still appeared during the 'freeze', so this state does not prove a real frozen tab. Hidden state was emulated by overriding visibilityState, so timer throttling was not exercised. A non-holder restarting forever was seen only for about 100 s; it is limited by the same gap and it only restarts its own wait.",
+    "7_tests_on_old_code": "See testsOnOldCode.",
+    "8_production": "Pass. r22, test-channel build with its service worker, through the screens: export, delete answered 204 then lost, device 1 shows 'Backup non raggiungibile', device 2 imports the file, device 1 returns: 1 course and 1 student on the server, device 2 keeps it."
+  },
+  "testsOnOldCode": {
+    "hiddenTabAt8c4ae48": "Fails at b4-two-tabs-live.spec.ts:331, requests stay at 1. Right reason.",
+    "b6LiveAt8c4ae48": "Fails at b6-erase-live.spec.ts:172, server 0. Right reason.",
+    "b6DoesNotEraseAt8c4ae48": "Fails at b6-erase.spec.ts:498 on the mark value, before reaching the behaviour. It would catch the fix being removed, but through the implementation detail.",
+    "b6AskedAgainAt8c4ae48": "Fails at b6-erase.spec.ts:527 on the mark value only; see SC-DT-Q12.",
+    "line117AtB9bad45": "Now starts at line 121. Fails 2 of 2 at line 170 with the course still on the server. Right reason, and better than round 2.",
+    "note": "Only test timeouts were shortened in my scratch copies, so line numbers match the repository."
+  },
+  "statusOfEarlierFindings": {
+    "SC-DT-1": "fixed; not rerun on this commit, since the diff does not touch the path; the new line-121 test catches it on b9bad45",
+    "SC-DT-2": "fixed; not rerun on this commit, same reason",
+    "SC-DT-3": "open, filed in the backlog, code unchanged, not rerun",
+    "SC-DT-4": "gone",
+    "SC-DT-5": "open, filed in the backlog, not rerun",
+    "SC-DT-6": "fixed for the delete's lost answer; narrowed form in SC-DT-6-R",
+    "SC-DT-7": "fixed",
+    "SC-DT-8": "open, filed in the backlog, not rerun",
+    "SC-B4F-1": "open, filed in the backlog, not rerun",
+    "SC-DT-Q1": "changed in round 2; unchanged since",
+    "SC-DT-Q2": "gone",
+    "SC-DT-Q3": "improved: the restore test now asserts the stream request comes from the tab; still no direct unit test",
+    "SC-DT-Q4": "unchanged code, not rerun",
+    "SC-DT-Q5": "superseded by the hidden-tab fix",
+    "SC-DT-Q6": "open, filed in the backlog",
+    "SC-DT-Q7": "open, filed in the backlog",
+    "SC-DT-Q8": "fixed: that test now clears its account"
+  },
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; diff 8c4ae48..d135cad; .evidence/B4/sync-chaos-review-desktop-round-2.json; src/backup/session.ts; src/persistence/serverErasures.ts, syncMode.ts, courseSession.ts, courses.ts; supabase/migrations/20261028000000_course_erase.sql; docs/working/BACKLOG.md",
+    "My scratchpad's scg5/ specs r5, r13, r13b, r16-r24 on desktop Chrome and Pixel 7 profiles against the development backend, synthetic data, accounts 1 and 2. Test-channel production builds of d135cad and 5157e09 on 4237; dev servers of d135cad on 4235, and of 8c4ae48 and b9bad45 on 4237.",
+    "New and changed specs run from scratch copies against 8c4ae48 and b9bad45.",
+    "End state: tree clean at d135cad, ports 4235-4237 free, scratch junctions removed. Accounts 1 and 2 hold no course. I also cleared account 1's erased_courses rows, since my old-code runs left synthetic data there."
+  ],
+  "anglesTried": {
+    "seed": 843221322,
+    "round": 3,
+    "scope": "The coordinator's eight points on the fix diff and its consequences. No new lenses drawn.",
+    "lenses": [
+      "7: clock skew (carried; not rerun, ordering untouched)",
+      "8: sign-out or account switch with uploads queued (carried; Esci with a pending erase rerun, account switch by reading)"
+    ],
+    "wildcard": "Two courses reached without any lost answer, then a third device; a slow delete from a second tab landing after an import's upload"
+  },
+  "notTested": [
+    "WebKit and Firefox. Firefox is not installed.",
+    "A truly hidden or frozen tab, and real sleep and wake: visibility was emulated and the CDP freeze did not stop requests.",
+    "Removing a server row to recover from SC-DT-9.",
+    "A late offline erase against an import, and the stale-keep case in point 3: reasoned, not run.",
+    "SC-DT-10 on an old commit.",
+    "Old-version tabs with their service worker active: blocked in r20.",
+    "A large course: every probe used a few rows.",
+    "Physical devices: those checks belong to the owner."
+  ]
+}

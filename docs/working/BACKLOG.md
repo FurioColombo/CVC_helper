@@ -76,9 +76,8 @@ Other findings, not yet put to the owner:
 
 ## Retrospective proposals awaiting the owner's pick
 
-The 0.1–0.3 retrospective (`archive/v0.4.0/RETRO_0X.md`) proposes ten
-changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
-`03_TECHNICAL_DECISIONS.md` §6, `docs/OWNER_WORKFLOW.md`). The rest:
+The 0.1–0.3 retrospective (`archive/v0.4.0/RETRO_0X.md`) proposes ten changes;
+three were adopted on 2026-10-12. The rest:
 
 1. `evidence -- <ID> --from-ci` records a green CI `verify:all` (friction 1).
 2. `npm run evidence` exits early on an already passed digest (friction 5).
@@ -103,8 +102,11 @@ changes; three were adopted on 2026-10-12 (`docs/agents/REVIEW_PROTOCOL.md`,
   upload (SC-B4F-1 below); a failed erase leaves other tabs on "Il corso è
   cambiato" (SC-DT-Q7). Forced only: a tab that misses the erase notice
   re-downloads the course, whose later work the record then erases (SC-DT-8).
-- **SC-DT-6's residue:** an erase retry cannot tell its id was lifted when the
-  answer to recording it was lost. A server-side erase call would close it.
+- **Erase edges (B4 review, 2026-11-03):** a retry cannot tell its id was lifted
+  when the answer to recording it was lost (SC-DT-6-R; a server-side erase call
+  would close it); a second tab's late delete erases a course just imported
+  (SC-DT-10); an old tab repeats a marked erase (Q9); a marked record, Esci and
+  reset leave an id refusing course-row edits (Q10); no Esci in state "error" (Q11).
 
 ## Flaky browser tests
 
@@ -215,13 +217,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
   - SP-B4-Q3 / SC-B4F-1: the SDK's requests have no timeout: a write
     checkpoint hung on a dead connection holds uploads, Esci, the erase and the
     restart until a reopen (owner check 2026-10-28); only inserts are batched.
-- B3 SELF-B3-Q1: when the switch after sign-in is deferred (a tap during a
-  slow launch check), only Impostazioni says "Backup pronto. Riapri l’app";
-  Home shows nothing. Consider a one-line notice on Home.
-- B1 SC-B1-Q6: when an older app reopens beside an open synced tab, the
-  refused save says the course was "sostituito o eliminato" and the typed
-  student is lost on reopen; data is intact, the message and the draft are
-  not. Say an older version opened the data, and keep the draft.
+- B3 SELF-B3-Q1: a switch deferred after sign-in says "Backup pronto. Riapri
+  l’app" only in Impostazioni. Consider a one-line notice on Home.
+- B1 SC-B1-Q6: an older app reopening beside a synced tab makes a refused save
+  say "sostituito o eliminato" and loses the typed student on reopen. Say an
+  older version opened the data, and keep the draft.
 - UG3 RH-Q1: after import and reopen, Back walks the replaced course's screens.
 - T1 CQ-6: each e2e seeding fixture re-reads the course that
   `bootstrapCourse` just created; return its id instead.
