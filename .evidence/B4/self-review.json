@@ -32,6 +32,20 @@
       "evidence": "The owner's offline day (2026-10-28) showed 'Ora senza connessione' while every change was sent: PowerSync's upload loop runs apart from the stream. The fake backends had the stream unreachable all along, and the tests asserted the misleading text as correct. The status now follows the uploads and says when downloads lag; a stalled connection is restarted; a local server that never answers the stream and a failed upload with the stream down are tested, each failing with the restart disabled.",
       "reproduction": "tests/e2e/b4-uploads.spec.ts (the hung-stream and failed-upload cases).",
       "specRef": "04 B4 owner check B4-PHONE-UPLOADS"
+    },
+    {
+      "id": "SELF-B4-DT-1",
+      "title": "Process: no journey ever ran the backup on a desktop profile, so 'desktop never syncs' reached the owner's PC",
+      "evidence": "The SDK swallowed a DataCloneError in its shared sync worker. Phone profiles used dedicated workers, so every backup journey passed. desktop-chrome-backup now runs them, also on Linux CI.",
+      "reproduction": "tests/e2e/b4-two-tabs-live.spec.ts; playwright.config.ts.",
+      "specRef": "04 B4 owner check B4-PHONE-UPLOADS"
+    },
+    {
+      "id": "SELF-B4-DT-2",
+      "title": "Process: a bad script skipped edits and I told the owner they were in",
+      "evidence": "A malformed heredoc applied nothing; my next check caught it and I corrected the statement. Later scripts check each match and I read git status before saying an edit landed.",
+      "reproduction": "Resolved.",
+      "specRef": "AGENTS.md §3"
     }
   ],
   "qolFindings": [],
@@ -44,7 +58,10 @@
   "reviews": [
     ".evidence/B4/security-privacy-review.json (PASS_WITH_FINDINGS, round 2)",
     ".evidence/B4/data-integrity-review.json (PASS, round 3)",
-    ".evidence/B4/sync-chaos-review.json (owner-authorised round 4)"
+    ".evidence/B4/sync-chaos-review.json (owner-authorised round 4)",
+    ".evidence/B4/sync-chaos-review-desktop-round-1.json (FAIL: SC-DT-1, SC-DT-2, fixed at 8c4ae48)",
+    ".evidence/B4/sync-chaos-review-desktop-round-2.json (FAIL: SC-DT-6, fixed at d135cad)",
+    ".evidence/B4/sync-chaos-review-desktop-round-3.json (FAIL: SC-DT-9, split to B7 by owner decision 20; no fourth round)"
   ],
   "deferredFindings": [
     {
@@ -87,11 +104,36 @@
         "SC-B4F-Q3"
       ],
       "to": "Accepted: the update notice explains Q1; the watchdog's guards are covered by the e2e cases"
+    },
+    {
+      "ids": [
+        "SC-DT-9"
+      ],
+      "to": "Owner decision 20: milestone B7"
+    },
+    {
+      "ids": [
+        "SC-DT-3",
+        "SC-DT-5",
+        "SC-DT-6-R",
+        "SC-DT-8",
+        "SC-DT-10",
+        "SC-DT-Q6",
+        "SC-DT-Q7",
+        "SC-DT-Q9",
+        "SC-DT-Q10",
+        "SC-DT-Q11"
+      ],
+      "to": "docs/working/BACKLOG.md, backup sections"
     }
   ],
   "limitations": [
     "Save latency after days offline is the owner's phone measurement (SC-B1-Q3)",
-    "The phone stall after a day offline is not reproduced on a computer: the restart is tested against a hung stream and a failed upload, and the owner's recheck decides whether it is what happened on the phone"
+    "The phone stall after a day offline is not reproduced on a computer: the restart is tested against a hung stream and a failed upload, and the owner's recheck decides whether it is what happened on the phone",
+    "The desktop sync has no passing review: three rounds failed, the third on a defect split to B7 (owner decision 20). Its blockers SC-DT-1, -2, -6 and SC-DT-7 were fixed and re-tested by the same reviewer.",
+    "Reverses DI-B6-Q3's disposition: a course on the device despite its erase record is now erased, not kept (review SC-DT-1). Reaching that state with the course open needs a lost notice (SC-DT-8).",
+    "syncInEachTab overwrites a protected SDK field; the version guard pins PowerSync 2.2.0 and the restore journey asserts that the stream leaves the tab.",
+    "Hidden tabs were emulated by overriding visibilityState; timer throttling and a real frozen page were not exercised."
   ],
   "resolvedFindings": {
     "SC-B4F-2": "FIXED (fd6c386)",

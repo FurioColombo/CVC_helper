@@ -28,13 +28,14 @@ by `verify:all`, the reviews below and the owner's Android check.
 | B1 | Complete. A device switches once from 0.4.0's local tables to synced ones, every row identical and queued once, older apps read-only; erase, import, reset and older apps are covered on Chromium and WebKit. Three reviews passed with findings, fixed or handed to B3–B6. See `.evidence/B1/`. |
 | B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
-| B4 | Resumed for the owner's recheck (2026-11-02): on the phone the status now follows the uploads and needs no reopen. The PC step found desktop never synced: the shared sync worker could not start. Fixed; `desktop-chrome-backup` runs the backup journeys on desktop. See `.evidence/B4/`. |
+| B4 | Resumed for the owner's recheck (2026-11-02): on the phone the status now follows the uploads and needs no reopen. The PC step found desktop never synced. Fixed: each tab syncs for itself. The desktop review's third round failed on a defect B4 did not cause, split to B7 by owner decision 20. See `.evidence/B4/`. |
 | B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reviews passed, CI green at `b06d8e1`; its code is in CVC Helper Test 0.5.2. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 | B6 | Awaiting the owner, CI green at `62ce4a8`: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
+| B7 | Pending, split from B4 by owner decision 20: an account with two courses locks every device. |
 
 ## Execution order
 
-**B1** → **B2** → **B3** → **B4** → **B5** → **B6** → **UG4**. B1 needs no
+**B1** → **B2** → **B3** → **B4** → **B5** → **B6** → **B7** → **UG4**. B1 needs no
 backend. B2 needs the owner's development projects; B3 and later need B2.
 
 ## Owner decisions and actions
@@ -134,6 +135,31 @@ under the B4 upload rules (B4 review SP-B4-3).
 
 **Evidence:** verification, self, security/privacy and data-integrity
 reviews.
+
+## B7 — Two courses on one account
+
+**Category:** FEATURE
+**Status:** PENDING
+
+Two devices that each make a course, one of them offline, leave the account
+with two courses, and any other route to that state does the same (review
+SC-DT-9). Today every device of the account then stops on "Non riesco ad aprire
+i dati locali" with only Riprova, and Impostazioni, Esci, export and reset are
+out of reach. The app shows both courses and the owner chooses which to keep;
+it never erases one by itself. The owner approves a mock before it is built.
+
+**Success predicate:** an account holding two courses never locks a device: the
+owner can see both, export either and keep one, and afterwards every device of
+the account opens on that one course with no row of it lost.
+
+**Adversarial checklist:** the two courses reached offline, through an import
+after a lost erase answer (SC-DT-9, r16) and through a restore (SC-DT-2); both
+devices choosing differently, one offline; a choice interrupted between its
+erase and the reopen; a new empty device; a read-only device; a device signed
+out; three courses; a choice with unsent changes in the course given up.
+
+**Evidence:** verification, the owner's Android check, self, data-integrity,
+sync-chaos and field UX reviews.
 
 ## UG4 — 0.5.0 integration and release gate
 

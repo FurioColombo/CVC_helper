@@ -1342,6 +1342,42 @@
       }
     },
     {
+      "id": "B7",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/B7/verification.json",
+        ".evidence/B7/physical-device-review.json",
+        ".evidence/B7/self-review.json",
+        ".evidence/B7/data-integrity-review.json",
+        ".evidence/B7/sync-chaos-review.json",
+        ".evidence/B7/field-ux-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/B7/self-review.json",
+        ".evidence/B7/data-integrity-review.json",
+        ".evidence/B7/sync-chaos-review.json",
+        ".evidence/B7/field-ux-review.json"
+      ],
+      "ownerEvidence": [".evidence/B7/physical-device-review.json"],
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "B4",
+          "reason": "Owner decision 20: the lockout is opened by the local course session, and B4's pending recheck measures uploads and a desktop restore, which the fix does not depend on."
+        },
+        {
+          "id": "B5",
+          "reason": "The choice between two courses runs after any download; the pending restore check concerns a device receiving one course."
+        },
+        {
+          "id": "B6",
+          "reason": "Giving up a course uses B6's erase, verified live; its pending phone check confirms that erase on the owner's phone and does not change it."
+        }
+      ],
+      "e2eSpecs": []
+    },
+    {
       "id": "UG4",
       "category": "INTEGRATION_GATE",
       "status": "PENDING",

@@ -128,9 +128,11 @@ tutti i dati locali` erases the course from the backup first; without
     Until you run the server's part (B6-ERASE-RULES) the erase deletes the
     course without keeping its id. Single deletes inside a course stay under
     decision 16.
-20. **Two courses on one account (open, yours, 2026-11-03).** The third review
-    round of B4's desktop sync failed on SC-DT-9, which B4 did not cause: two
-    devices each making a course, one of them offline, lock every device of the
-    account on "Non riesco ad aprire i dati locali" with only Riprova. No row
-    is lost. The review protocol brings this to you: split it from B4, or decide
-    otherwise. Proposed: split it, publish 0.5.3, fix it before UG4.
+20. **Two courses on one account split from B4 (yours, 2026-11-03).** The third
+    review round of B4's desktop sync failed on SC-DT-9, which B4 did not cause:
+    two devices each making a course, one of them offline, lock every device of
+    the account on "Non riesco ad aprire i dati locali" with only Riprova. No
+    row is lost. You chose to split it: B4 goes on without a passing desktop
+    review (its three rounds stay in `.evidence/B4/`), 0.5.3 is published, and
+    B7 fixes it before UG4. Until then, no course on a second device while the
+    first is offline or already has one.
