@@ -168,7 +168,10 @@ test("an erase whose answer was lost leaves the course imported since", async ({
   expect(uploaded.status).toBe(201)
 
   await page.reload()
-  await expect.poll(() => erasedOnline(page), { timeout: 60_000 }).toBe(true)
+  // The app reopens by itself once the backup is back.
+  await expect
+    .poll(() => erasedOnline(page).catch(() => false), { timeout: 60_000 })
+    .toBe(true)
   expect(await serverRows("courses", access)).toHaveLength(1)
   await clearAccount(access)
 })

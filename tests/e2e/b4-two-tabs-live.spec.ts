@@ -126,24 +126,18 @@ test("an erase stands while another tab holds the sync, its upload hung and the 
   const access = await token(1)
   await clearAccount(access)
   const courseId = await backedUpCourse(page, access)
-  const other = await secondTab(context)
-  // The first tab reopens, so the other holds the sync lock.
-  await page.reload()
   await page.getByRole("button", { name: "Indietro da Allievi" }).click()
   await expect(
     page.getByRole("heading", { name: COURSE_HEADING }),
   ).toBeVisible()
 
-  // The upload hangs in the first tab while the other holds the stream: both
-  // tabs race for the upload, so the other one's attempts are refused.
+  // The upload hangs in the first tab, alone so far: the other opens after it
+  // and takes the stream as soon as the erase lets the sync lock go.
   let release = () => {}
   const released = new Promise<void>((resolve) => {
     release = resolve
   })
   const students = /\/rest\/v1\/students/
-  await other.route(students, (route) =>
-    route.request().method() === "GET" ? route.continue() : route.abort(),
-  )
   await page.route(students, async (route) => {
     if (route.request().method() === "GET") return route.continue()
     await released
@@ -154,6 +148,7 @@ test("an erase stands while another tab holds the sync, its upload hung and the 
   )
   await addStudent(page, "Sospeso")
   await hanging
+  const other = await secondTab(context)
   await openErase(page)
   const reopened = page.waitForEvent("load")
   await page.getByRole("button", { name: "Elimina tutto" }).click()
