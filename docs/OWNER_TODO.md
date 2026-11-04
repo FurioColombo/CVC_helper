@@ -162,13 +162,11 @@ Use the test address below and the linked device instructions.
 
 ## Let the server keep the one course you choose — B7
 
-**State:** Ready for owner check · Required
+**State:** Setup needed · Required
 
 **What to do:**
 
-1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
-2. Paste the whole file supabase/migrations/20261104000000_keep_course.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: no published build calls it.
-3. Write 'keep rule run' in the chat; I then run the live check on two devices.
+1. Not yet: a review found that the first version of this function could erase a course the device had not shown, so it is being corrected. If you already ran it, nothing is wrong: no build calls it, and the corrected file replaces it. The steps follow here when the file is ready.
 
 **Expected:** The server can keep one of an account's courses in one step, so two devices choosing together can never erase both. It adds a function and no data.
 
