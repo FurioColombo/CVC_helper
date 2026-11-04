@@ -243,24 +243,24 @@
       "id": "B4-PHONE-UPLOADS",
       "milestone": "B4",
       "kind": "DEVICE_CHECK",
-      "title": "Update to 0.5.2 and recheck the offline day: the status now follows the uploads",
-      "status": "NEEDS_SETUP",
+      "title": "Update to 0.5.3: the PC finishes its restore and follows the phone",
+      "status": "READY",
       "required": true,
-      "revision": 8,
+      "revision": 9,
       "instructions": [
-        "Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.2 and Copia online aggiornata.",
-        "Turn on airplane mode for a few hours and make edits as usual (students, notes, crews, duties, evaluations). Note roughly how many changes Impostazioni says are waiting.",
-        "Turn airplane mode off with Impostazioni open. Without closing the app, the status should go from Invio in corso (the count falling) to Copia online aggiornata. Note how long it takes and every message you see on the way; Ora senza connessione should not stay while the phone is online.",
-        "Still without reopening, make one more edit and check it reaches Copia online aggiornata.",
-        "Optional, on the PC: open the test address in Chrome, sign in with the same email (on an empty app it restores your course), change a note there, and check the phone shows the change without being reopened.",
-        "Do not use Azzera tutti i dati locali or Elimina il corso while signed in: from 0.5.2 they also erase the online copy (that is checked later, in B6-PHONE-ERASE).",
-        "Report B4-PHONE-UPLOADS with your device and what you saw at each step."
+        "Your offline-day steps already passed on 0.5.2. This recheck covers the PC and takes a few minutes.",
+        "On the PC, close every tab of the test address and open it again. If Nuova versione disponibile appears, tap Aggiorna. The stuck restore should finish by itself and the app should open on your course, with Versione 0.5.3 in Impostazioni. If it is still stuck after a minute, stop and report that.",
+        "On the phone, in Chrome (do not reinstall), switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.3 and Copia online aggiornata.",
+        "Change a note on the phone. On the PC, leave that screen and open it again: the change should be there. An open screen does not refresh by itself.",
+        "Change a note on the PC and check the same on the phone.",
+        "Do not use Azzera tutti i dati locali or Elimina il corso while signed in: they also erase the online copy (that is checked later, in B6-PHONE-ERASE). Do not create a course on a second device while the first is offline or already has one: until B7 that locks every device of the account.",
+        "Report B4-PHONE-UPLOADS with what you saw at each step."
       ],
-      "expected": "0.5.2 updates in place and keeps the backup. After a few hours offline the edits upload in full when signal returns, and the status reaches Copia online aggiornata by itself, never showing Ora senza connessione while online. A later edit uploads too. Only your actual phone observations can pass this check.",
-      "testedCommit": null,
-      "testUrl": null,
+      "expected": "0.5.3 updates in place on both devices and keeps the backup. The PC leaves the stuck restore and opens on your course. An edit on either device reaches the other after its screen is left and reopened. Only your actual observations can pass this check.",
+      "testedCommit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B4/physical-device-review.json",
-      "updatedAt": "2026-11-02T12:36:42.154Z",
+      "updatedAt": "2026-11-04T01:34:18.813Z",
       "history": [
         {
           "status": "CHANGES_REQUESTED",
@@ -323,30 +323,30 @@
       "title": "Restore your course on an emptied phone, and see the question for another course",
       "status": "NEEDS_SETUP",
       "required": true,
-      "revision": 2,
+      "revision": 3,
       "instructions": [
-        "After B4-PHONE-UPLOADS: the phone is on 0.5.2 with Copia online aggiornata. Note how many students and notes your invented course has.",
-        "Impostazioni > Backup online > Esci first (from 0.5.2 a reset made while signed in also erases the online copy). The course stays on the phone.",
+        "After B4-PHONE-UPLOADS: the phone is on 0.5.3 with Copia online aggiornata. Note how many students and notes your invented course has.",
+        "Impostazioni > Backup online > Esci first (from 0.5.3 a reset made while signed in also erases the online copy). The course stays on the phone.",
         "Then Impostazioni > Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.",
         "On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.",
         "Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.",
-        "Optional, on the PC: open the test address in Chrome, create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.",
+        "Optional, on the PC: Impostazioni > Backup online > Esci, then Azzera tutti i dati locali. Create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.",
         "Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped."
       ],
       "expected": "An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.",
-      "testedCommit": "5157e09debc01d53f8e206c78f5311f129d605b9",
+      "testedCommit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B5/physical-device-review.json",
-      "updatedAt": "2026-10-31T16:42:13.107Z"
+      "updatedAt": "2026-11-04T01:34:19.898Z"
     },
     {
       "id": "B6-ERASE-RULES",
       "milestone": "B6",
       "kind": "DECISION",
       "title": "Let the server keep an erased course erased",
-      "status": "NEEDS_SETUP",
+      "status": "PASSED",
       "required": true,
-      "revision": 3,
+      "revision": 4,
       "instructions": [
         "In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.",
         "Paste the whole file supabase/migrations/20261028000000_course_erase.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: the installed builds never touch it, and the B6 build erases courses with or without it.",
@@ -356,7 +356,12 @@
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/B6/physical-device-review.json",
-      "updatedAt": "2026-10-28T00:47:54.980Z",
+      "updatedAt": "2026-11-04T01:34:21.062Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Chat, 2026-10-28: '1.2 done, 1.3 done - minimum read run, erase rules run'",
+        "summary": "The owner ran the migration once in cvc-helper-dev. A later B6 code fix reset this item, but the migration stays in the database: the live erase checks at 6e17c1d read and use erased_courses. Nothing to run again."
+      },
       "history": [
         {
           "status": "PASSED",

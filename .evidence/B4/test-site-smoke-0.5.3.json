@@ -1,0 +1,23 @@
+{
+  "milestone": "B4",
+  "checkedAt": "2026-11-04",
+  "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+  "buildInfo": {
+    "sourceCommit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8",
+    "version": "0.5.3",
+    "channel": "test"
+  },
+  "method": "A throwaway script drove the deployed build in two separate desktop Chromium profiles, on the development backend with a synthetic test account. The session was injected into the app's storage because tests cannot open an emailed link.",
+  "checks": [
+    "build-info.json at the test address names the pinned source and 0.5.3, with CI run 41744222524",
+    "The deployed bundle uses the development Supabase and PowerSync hosts",
+    "Signed out, no request went to the backend",
+    "A course and its student made on desktop reach the server",
+    "A second profile with another course is asked before replacing",
+    "Replace followed by a page refresh finishes on the online course, with its student: the path that stayed stuck on 0.5.2",
+    "An edit on that desktop reaches the server, and the first profile shows it once reloaded",
+    "The status reaches Copia online aggiornata, with no uncaught page errors"
+  ],
+  "runs": "Four earlier runs of the script failed on the script's own waits: the app correctly keeps the current screen on reload. Captures from those runs showed the app in the expected state. The fifth, the only one recorded here, passed every check.",
+  "notChecked": "The update from 0.5.2 in place, and a device already stuck on 0.5.2's restore screen: both are in the owner's B4-PHONE-UPLOADS recheck. The sign-in email, and an open screen on one device while the other edits, were not exercised."
+}

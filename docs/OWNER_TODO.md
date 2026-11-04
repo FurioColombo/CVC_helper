@@ -42,25 +42,27 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 <a id="b4-phone-uploads"></a>
 
-## Update to 0.5.2 and recheck the offline day: the status now follows the uploads — B4
+## Update to 0.5.3: the PC finishes its restore and follows the phone — B4
 
-**State:** Setup needed · Required
+**State:** Ready for owner check · Required
 
 **What to do:**
 
-1. Open CVC Helper Test in Chrome (do not reinstall). Switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.2 and Copia online aggiornata.
-2. Turn on airplane mode for a few hours and make edits as usual (students, notes, crews, duties, evaluations). Note roughly how many changes Impostazioni says are waiting.
-3. Turn airplane mode off with Impostazioni open. Without closing the app, the status should go from Invio in corso (the count falling) to Copia online aggiornata. Note how long it takes and every message you see on the way; Ora senza connessione should not stay while the phone is online.
-4. Still without reopening, make one more edit and check it reaches Copia online aggiornata.
-5. Optional, on the PC: open the test address in Chrome, sign in with the same email (on an empty app it restores your course), change a note there, and check the phone shows the change without being reopened.
-6. Do not use Azzera tutti i dati locali or Elimina il corso while signed in: from 0.5.2 they also erase the online copy (that is checked later, in B6-PHONE-ERASE).
-7. Report B4-PHONE-UPLOADS with your device and what you saw at each step.
+1. Your offline-day steps already passed on 0.5.2. This recheck covers the PC and takes a few minutes.
+2. On the PC, close every tab of the test address and open it again. If Nuova versione disponibile appears, tap Aggiorna. The stuck restore should finish by itself and the app should open on your course, with Versione 0.5.3 in Impostazioni. If it is still stuck after a minute, stop and report that.
+3. On the phone, in Chrome (do not reinstall), switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.3 and Copia online aggiornata.
+4. Change a note on the phone. On the PC, leave that screen and open it again: the change should be there. An open screen does not refresh by itself.
+5. Change a note on the PC and check the same on the phone.
+6. Do not use Azzera tutti i dati locali or Elimina il corso while signed in: they also erase the online copy (that is checked later, in B6-PHONE-ERASE). Do not create a course on a second device while the first is offline or already has one: until B7 that locks every device of the account.
+7. Report B4-PHONE-UPLOADS with what you saw at each step.
 
-No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+Use the test address below and the linked device instructions.
 
-**Expected:** 0.5.2 updates in place and keeps the backup. After a few hours offline the edits upload in full when signal returns, and the status reaches Copia online aggiornata by itself, never showing Ora senza connessione while online. A later edit uploads too. Only your actual phone observations can pass this check.
+**Expected:** 0.5.3 updates in place on both devices and keeps the backup. The PC leaves the stuck restore and opens on your course. An edit on either device reaches the other after its screen is left and reopened. Only your actual observations can pass this check.
 
-**Build:** No test build is assigned yet.
+**Build:** `6e17c1d313eabf15f6afdded9c401b36fa5fabe8`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
@@ -90,17 +92,17 @@ The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-
 
 **What to do:**
 
-1. After B4-PHONE-UPLOADS: the phone is on 0.5.2 with Copia online aggiornata. Note how many students and notes your invented course has.
-2. Impostazioni &gt; Backup online &gt; Esci first (from 0.5.2 a reset made while signed in also erases the online copy). The course stays on the phone.
+1. After B4-PHONE-UPLOADS: the phone is on 0.5.3 with Copia online aggiornata. Note how many students and notes your invented course has.
+2. Impostazioni &gt; Backup online &gt; Esci first (from 0.5.3 a reset made while signed in also erases the online copy). The course stays on the phone.
 3. Then Impostazioni &gt; Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.
 4. On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.
 5. Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.
-6. Optional, on the PC: open the test address in Chrome, create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
+6. Optional, on the PC: Impostazioni &gt; Backup online &gt; Esci, then Azzera tutti i dati locali. Create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
 7. Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped.
 
 **Expected:** An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.
 
-**Build:** `5157e09debc01d53f8e206c78f5311f129d605b9`
+**Build:** `6e17c1d313eabf15f6afdded9c401b36fa5fabe8`
 
 **Test address:** https://furiocolombo.github.io/CVC_helper_test/
 
@@ -112,19 +114,17 @@ The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-
 
 ## Let the server keep an erased course erased — B6
 
-**State:** Setup needed · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
-2. Paste the whole file supabase/migrations/20261028000000_course_erase.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: the installed builds never touch it, and the B6 build erases courses with or without it.
-3. Write 'erase rules run' in the chat; I then run the live check that an erased course refuses a later upload from another phone.
+The owner reported: The owner ran the migration once in cvc-helper-dev. A later B6 code fix reset this item, but the migration stays in the database: the live erase checks at 6e17c1d read and use erased_courses. Nothing to run again.
 
 **Expected:** The server records the ids of erased courses (no course data, readable only by their owner) and refuses that course from any phone afterwards.
 
 **Build:** No test build is assigned yet.
 
-**Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b6-phone-erase"></a>
 
