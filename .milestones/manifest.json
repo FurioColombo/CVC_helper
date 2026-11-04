@@ -1359,7 +1359,7 @@
     {
       "id": "B7",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B7/verification.json",
@@ -1390,7 +1390,25 @@
           "reason": "Giving up a course uses B6's erase, verified live; its pending phone check confirms that erase on the owner's phone and does not change it."
         }
       ],
-      "e2eSpecs": []
+      "e2eSpecs": [],
+      "startedFrom": {
+        "commit": "eda89b146c95a61450909e4dcaef5d97e9e22596",
+        "sourceDigest": "d5e6ac3937faa38fe64560130e65642c925dd99daed17bc9fa44c571203083e9",
+        "ownerPrerequisites": [
+          {
+            "id": "B4",
+            "commit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8"
+          },
+          {
+            "id": "B5",
+            "commit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519"
+          },
+          {
+            "id": "B6",
+            "commit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519"
+          }
+        ]
+      }
     },
     {
       "id": "UG4",

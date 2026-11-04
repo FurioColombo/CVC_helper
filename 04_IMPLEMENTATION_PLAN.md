@@ -139,7 +139,7 @@ reviews.
 ## B7 — Two courses on one account
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 Two devices that each make a course, one of them offline, leave the account
 with two courses, and any other route to that state does the same (review
