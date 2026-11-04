@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   Sailboat,
   Settings,
+  TriangleAlert,
   UsersRound,
   Wrench,
 } from "lucide-react"
@@ -60,7 +61,12 @@ import {
   StorageStatus,
 } from "@/features/settings/CourseFiles"
 import { CourseChoiceScreen } from "@/features/courseChoice/CourseChoiceScreen"
-import { rememberCourseArrival } from "@/persistence/courseChoice"
+import {
+  clearCourseSwap,
+  readCourseSwap,
+  rememberCourseArrival,
+  rememberCourseSwap,
+} from "@/persistence/courseChoice"
 import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
 import { useBackupState } from "@/backup/useBackupState"
 import {
@@ -625,6 +631,8 @@ function AppShell({
   onCourseErased: () => void
 }) {
   const navigation = useRef<HTMLElement>(null)
+  const [swappedFrom, setSwappedFrom] = useState(readCourseSwap)
+  useEffect(() => clearCourseSwap(), [])
 
   // The update bar sits on the navigation (UpdateAvailableBanner), which
   // publishes its height for it, whatever renders first.
@@ -782,6 +790,31 @@ function AppShell({
         ref={mainRef}
         tabIndex={-1}
       >
+        {swappedFrom && (
+          <div
+            className="mb-3 rounded-xl bg-[#fff4ee] px-3 py-2.5 text-sm leading-[1.4] text-[#7f2f17]"
+            role="status"
+          >
+            <p className="m-0 flex items-start gap-2">
+              <TriangleAlert
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0 text-[#b42318]"
+              />
+              <span className="min-w-0">
+                {swappedFrom} è stato eliminato su un altro dispositivo di
+                questo account: ora qui c’è {formatCourseIdentity(course)}. Le
+                modifiche di {swappedFrom} non ancora inviate sono andate perse.
+              </span>
+            </p>
+            <Button
+              className="mt-2 min-h-11 w-full"
+              onClick={() => setSwappedFrom(null)}
+              variant="secondary"
+            >
+              Ho capito
+            </Button>
+          </div>
+        )}
         {view === "home" && <Home course={course} onNavigate={navigate} />}
         {view === "settings" && (
           <SettingsView
@@ -951,9 +984,10 @@ export function App() {
   // screens that can no longer save, and the reopen compacts the database
   // (src/persistence/migrations.ts). Only a connected backup removes it; a
   // course whose own row the backup refused stays on screen (DI-B6-1).
-  const ready = appState.status === "ready"
+  const openLabel =
+    appState.status === "ready" ? formatCourseIdentity(appState.course) : null
   useEffect(() => {
-    if (!ready) return
+    if (!openLabel) return
     return onDatabaseStatus(() => {
       if (!databaseConnected()) return
       void Promise.all([
@@ -961,10 +995,12 @@ export function App() {
         courseChangedUnderSession(),
       ]).then(([left, changed]) => {
         if (changed === "several") rememberCourseArrival()
+        // Its unsent edits went with the course: the phone says so (SC-B7-10).
+        if (changed === "swapped") rememberCourseSwap(openLabel)
         if (left || changed) window.location.reload()
       })
     })
-  }, [ready])
+  }, [openLabel])
 
   if (appState.status === "loading") return <LoadingScreen />
   if (appState.status === "closed") {

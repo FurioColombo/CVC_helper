@@ -579,9 +579,15 @@ export function StorageStatus() {
 export function FullReset({
   courseLabel,
   eraseOnline = eraseOnlineCopyBeforeReset,
+  keepsBackup = false,
 }: {
   courseLabel: string | null
   eraseOnline?: () => Promise<string | null>
+  /**
+   * On the choice between courses: only this device is cleared. What leaves the
+   * backup there is the owner's choice, never one course picked by a reset.
+   */
+  keepsBackup?: boolean
 }) {
   const [confirming, setConfirming] = useState(false)
   const [understood, setUnderstood] = useState(false)
@@ -615,9 +621,11 @@ export function FullReset({
     setOnlineError(null)
     // B6: signed in, the course goes from the backup first; a failure
     // resets nothing.
-    const refused = await eraseOnline().catch(
-      () => "Il corso non è stato eliminato dal backup online: riprova.",
-    )
+    const refused = keepsBackup
+      ? null
+      : await eraseOnline().catch(
+          () => "Il corso non è stato eliminato dal backup online: riprova.",
+        )
     if (refused) {
       setOnlineError(refused)
       setResetting(false)
@@ -635,9 +643,10 @@ export function FullReset({
         Azzera i dati di questo dispositivo
       </h2>
       <p className="mt-1 text-sm leading-5 text-muted-foreground">
-        Elimina corso, preferenze locali e file offline dell’app salvati in
-        questo browser. È un’operazione definitiva.
+        Elimina {keepsBackup ? "corsi" : "corso"}, preferenze locali e file
+        offline dell’app salvati in questo browser. È un’operazione definitiva.
         {courseLabel &&
+          !keepsBackup &&
           " Per iniziare il prossimo corso basta Nuovo corso, qui sopra."}
       </p>
       {!confirming ? (
@@ -661,19 +670,28 @@ export function FullReset({
               : "Cancellare preferenze e file offline da questo dispositivo?"}
           </p>
           <p className="mt-1 text-sm leading-5">
-            {courseLabel
-              ? "Se vuoi conservare il corso, esportalo prima. I file già salvati fuori dall’app resteranno dove li hai messi."
-              : "Non c’è un corso da cancellare: restano solo preferenze e file offline."}{" "}
+            {keepsBackup
+              ? "I file già salvati fuori dall’app resteranno dove li hai messi."
+              : courseLabel
+                ? "Se vuoi conservare il corso, esportalo prima. I file già salvati fuori dall’app resteranno dove li hai messi."
+                : "Non c’è un corso da cancellare: restano solo preferenze e file offline."}{" "}
             Dopo l’azzeramento, per riaprire l’app serve una connessione.
           </p>
-          {synced && (
+          {keepsBackup ? (
             <p className="mt-1 text-sm leading-5">
-              {signedIn
-                ? "Il corso sarà eliminato anche dal backup online: senza connessione non si azzera nulla."
-                : erasePending
-                  ? "Un corso eliminato qui è ancora nel backup online e, dopo l’azzeramento, ci resterà: per toglierlo, prima accedi al backup."
-                  : "La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso."}
+              I corsi restano nel backup online: qui si cancella solo questo
+              dispositivo. Le modifiche non ancora inviate andranno perse.
             </p>
+          ) : (
+            synced && (
+              <p className="mt-1 text-sm leading-5">
+                {signedIn
+                  ? "Il corso sarà eliminato anche dal backup online: senza connessione non si azzera nulla."
+                  : erasePending
+                    ? "Un corso eliminato qui è ancora nel backup online e, dopo l’azzeramento, ci resterà: per toglierlo, prima accedi al backup."
+                    : "La copia nel backup online resta: per eliminarla accedi al backup ed elimina il corso."}
+              </p>
+            )
           )}
           <label className="mt-2 flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold">
             <input
@@ -683,7 +701,8 @@ export function FullReset({
               onChange={(event) => setUnderstood(event.target.checked)}
               type="checkbox"
             />
-            Ho capito: corso, preferenze e file offline saranno cancellati
+            Ho capito: {keepsBackup ? "corsi" : "corso"}, preferenze e file
+            offline saranno cancellati
           </label>
           {onlineError && (
             <p

@@ -51,6 +51,9 @@ vi.mock("@/persistence/localDataOperations", () => ({
 }))
 vi.mock("@/persistence/courseChoice", () => ({
   readCourseChoices: vi.fn(async () => []),
+  readCourseSwap: vi.fn(() => null),
+  clearCourseSwap: vi.fn(),
+  rememberCourseSwap: vi.fn(),
 }))
 vi.mock("@/persistence/courseArchive", () => ({
   exportCourseArchive: vi.fn(),

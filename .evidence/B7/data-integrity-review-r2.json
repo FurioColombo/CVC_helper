@@ -1,0 +1,72 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B7",
+  "round": 2,
+  "commit": "bdb06d8",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "DI-B7-R2-1",
+      "title": "The stamp comparison misses any server row older than the device's newest stamp, so stale cards do not always fail safe (DI-B7-Q2 stays partly open)",
+      "evidence": "keep_course refuses only when a row's updatedAt is greater than the single value in give_up (supabase/migrations/20261104000000_keep_course.sql, `latest.changed collate \"C\" > coalesce(give_up ->> latest.course, '')`). updatedAt is the time of the edit on the phone, not the time of upload (src/persistence/stamp.ts), so a phone's offline work arrives with old stamps. Run on real Postgres. Case A: the server holds a row at T1 that the device saw, plus two rows stamped T0 that it never saw; give_up {X: T1} returned 'kept' and all three rows were erased. Case B: a device clock ahead sent give_up {X: 2030}; a server row at T1 it never saw was erased too. This contradicts 03_TECHNICAL_DECISIONS.md ('so a choice is never made on what the owner did not see') and the SQL header ('only if what it holds is what the owner saw'). Why I do not rate it a blocker: a whole unseen course is now refused, the kept course is untouched, and the rows lost belong to a course the owner explicitly gave up after an irreversible warning. The window is also narrow: the device must confirm before its download catches up after reconnecting. That is my reading of the 04 B7 predicate, and the orchestrator may read it differently. Either change the rule, for example a per-course digest of (id, updatedAt) or at least row counts in give_up, or correct both texts and record the limit for the owner.",
+      "reproduction": "Throwaway script in my scratchpad's b7di/r2/ (pgr2.mjs, same migrations and harness as .evidence/B7/keep-rule-local-postgres.mjs). Observed: 'A keep with give_up X=T1, server holds 2 rows the device never saw, stamped T0: kept {\"courses\":[\"K\"],\"students\":[]}' and 'B give_up X=2030 (device clock ahead), server row at T1 unseen: kept {\"courses\":[\"K\"],\"students\":[]}'. Expected from the contract's wording: CVNEW.",
+      "specRef": "03_TECHNICAL_DECISIONS.md, 'Several courses on one account (B7)'; 04_IMPLEMENTATION_PLAN.md B7, checklist 'the two courses reached offline'"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B7-R2-2",
+      "title": "keep_course can lose a deadlock against an edit of a course row",
+      "evidence": "In 150 rounds of keep_course racing two course-row updates on real Postgres, keep_course ended with 40P01 in 5 rounds and nothing was erased in those rounds. In 1 further round keep_course succeeded and both edits got 40P01. No round left a wrong state. The likely cause, inferred from the tally and not traced, is opposite lock order: keep_course takes the advisory lock then the row, while an update holds the row when its trigger asks for the advisory lock. Uploads already retry 40P01 (src/backup/uploadPolicy.ts). keepCourse would show this as no-answer or refused, depending on the status PostgREST sends (not checked), and Riprova is safe either way.",
+      "reproduction": "pgr2.mjs case C in my scratchpad's b7di/r2/. Tally: kept with both edits ok 144; kept with both edits 40P01 1; keep 40P01 with both edits ok 3; keep 40P01 with one edit also 40P01 2.",
+      "specRef": "04 B7 checklist 'both devices choosing differently'"
+    },
+    {
+      "id": "DI-B7-R2-3",
+      "title": "A malformed refusal is dropped silently once any held course leaves",
+      "evidence": "storedCourseId returns undefined on bad JSON, and with no standing course dropRefusalsOfGoneCourses deletes the row (src/persistence/migrations.ts). Observed: the open succeeded and the refusals list came back empty. This is the right trade against a locked device, and only a corrupt row reaches it. Recorded so the behaviour is known.",
+      "reproduction": "Throwaway r2d.spec.ts in my scratchpad's b7di/: plant data '{not json', remove a course, reload. Observed: 'AFTER LEAVE error false | refusals []'.",
+      "specRef": "03_TECHNICAL_DECISIONS.md: 'This housekeeping can never fail an open'"
+    },
+    {
+      "id": "DI-B7-N3",
+      "title": "A stale tab's refused import still closes the chooser in other tabs",
+      "evidence": "Left as is by the orchestrator; not re-tested. src/persistence/courseArchive.ts still calls disconnectForErase before the guarded transaction. Reopening recovers it.",
+      "reproduction": "Code reading, as in round 1.",
+      "specRef": "04 B7"
+    }
+  ],
+  "evidenceInspected": [
+    "git diff d29793d..bdb06d8: supabase/migrations/20261104000000_keep_course.sql, src/persistence/{migrations,backupLink,courseChoice,courseSession,courses}.ts, src/backup/session.ts, src/App.tsx, the derived step, failure texts and refused warnings of the choice screen, the 03 paragraph, .evidence/B7/keep-rule-local-postgres.{mjs,txt}",
+    "DI-B7-1 FIXED. Re-ran the committed Postgres script on my own throwaway Postgres: ALL PASSED, including 'a course not shown refuses the whole choice', 200 opposite choices keeping exactly one, and active = 0 untouched. Browser: with C on the fake server and not on the device, the app sent give_up naming only B, and the server still held all 3 courses",
+    "DI-B7-2 FIXED. The planted never-several device: trigger functions now return {left:false, changed:'swapped'}. After reopening, the refusals of the gone course were cleared, the kept course's refusal:11 stayed, and only the kept course's mark remained",
+    "DI-B7-3 FIXED on all three routes. Failing mark write (simulated by a trigger): chooser true, error false. Malformed refusal: chooser true, and no error after the course left. Two tabs reopening together with marks deleted: 0 error screens in 8, where round 1 hit one on the first reopen in both specs that tried it",
+    "DI-B7-Q1 FIXED by code and by the new unit test: COMPACTION_PENDING_ID is written in the cleanup's transaction before the VACUUM. No real kill was run",
+    "DI-B7-Q2 PARTLY FIXED: newer stamps and unseen courses now answer CVNEW, but see DI-B7-R2-1",
+    "DI-B7-Q3 FIXED: after the chosen course left, the screen returned to the choice with 'Il corso scelto non è più qui' and 2 cards",
+    "DI-B7-N1 FIXED by reading: refused changes are counted and warned about on the confirmation. Covers changes that carry courseId in their data, and course rows",
+    "DI-B7-N2 FIXED by reading: keepCourse separates unsent, refused and no-answer outcomes, and the CVGON text no longer blames another device",
+    "New risk, real row formats: real app-created rows went through the real upload path to the fake, and give_up carried the real ISO stamp. The fake's comparison accepted the choice ('kept with real stamps'). The Postgres runs use the same ISO text form",
+    "New risk, marks after an import: the old mark was cleared at the next open and the imported course was marked. A refusal of the imported course survived the next reopen, and courseChangedUnderSession returned null. Import with a new id: the server deleted the old course and lifted only the new id's erased record",
+    "New risk, marks after an erase or reset: by reading, a mark left by an erase costs one extra cleanup and VACUUM at the next open; a full reset deletes the database and its marks",
+    "New risk, marks on a several session: written under the guard on a several open (2 marks seen with two tabs); a failed write does not fail the open",
+    "New risk, reload trigger after adoptCreatedCourse: right after creating a course, changed is null and the mark exists. A bound session with no course (several or empty) cannot report swapped. A reload rebinds, so I found no loop",
+    "Regression runs at bdb06d8: vitest on migrations, courseSession, backendSchema, courseArchive and courseChoice: 70 passed. tests/e2e/b7-two-courses.spec.ts plus b6-erase.spec.ts, desktop-chrome-backup, port 4252, retries 0: 34 passed"
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [],
+    "wildcard": null,
+    "restrictedScope": "Round 2: DI-B7-1, -2, -3, the disposed findings, the fix diff and the new risks named in the brief. No new lenses drawn."
+  },
+  "notTested": [
+    "The live backend and a real PowerSync stream: the download is still imitated by writes to ps_data__synced_*, so the 'swapped' reload was checked through its functions and not through a live status event. The reload on a real connected status change was not observed",
+    "PostgREST itself: Postgres runs call the function directly, so the HTTP status and code mapping of CVNEW, CVGON and 40P01 was not exercised. The browser runs use the fake's answers",
+    "The browser probes use a fake whose stamp rule I wrote to mirror the SQL; string comparison there is JavaScript, not collate \"C\". All values are ASCII ISO text",
+    "Real quota or eviction (simulated by a trigger), and a real kill during VACUUM",
+    "Android and WebKit: my runs were desktop Chromium only",
+    "Course marks when a course arrives and leaves within one session with no reopen, for example on the no-course screen. By reading, only free pages could remain, since that screen holds no edits of the course; not reproduced"
+  ]
+}

@@ -1,6 +1,10 @@
 import type { PowerSyncDatabase } from "@powersync/web"
 
 import type { CourseRecord } from "@/persistence/courses"
+import {
+  courseFingerprint,
+  type FingerprintRow,
+} from "@/persistence/courseFingerprint"
 import { db } from "@/persistence/db"
 import { prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
@@ -17,6 +21,8 @@ export type CourseChoice = CourseRecord & {
   evaluations: number
   /** The latest `updatedAt` of the course and its rows. */
   lastChange: string | null
+  /** What the course holds, as `keep_course` compares it. */
+  fingerprint: string
   /** This device's changes of the course still in the upload queue. */
   unsent: number
   /** This device's changes of the course the backup refused. */
@@ -88,17 +94,27 @@ async function refusedByCourse(context: Reader) {
   return refused
 }
 
-async function latestChange(context: Reader, courseId: string) {
-  let latest: string | null = null
+async function rowsOf(context: Reader, courseId: string) {
+  const rows: FingerprintRow[] = []
   for (const table of COURSE_TABLES) {
-    const [row] = await context.getAll<{ latest: string | null }>(
-      `SELECT max(updatedAt) AS latest FROM "${table}" WHERE ${
+    const found = await context.getAll<{
+      id: string
+      updatedAt: string | null
+    }>(
+      `SELECT id, updatedAt FROM "${table}" WHERE ${
         table === "courses" ? "id" : "courseId"
       } = ?`,
       [courseId],
     )
-    if (row?.latest && (!latest || row.latest > latest)) latest = row.latest
+    for (const row of found) rows.push({ table, ...row })
   }
+  return rows
+}
+
+function latestOf(rows: FingerprintRow[]) {
+  let latest: string | null = null
+  for (const { updatedAt } of rows)
+    if (updatedAt && (!latest || updatedAt > latest)) latest = updatedAt
   return latest
 }
 
@@ -115,28 +131,36 @@ export async function readCourseChoices(
   database: PowerSyncDatabase = db,
 ): Promise<CourseChoice[]> {
   await prepareDatabase(database)
-  return database.readTransaction(async (context) => {
+  const read = await database.readTransaction(async (context) => {
     const courses = await context.getAll<CourseRecord>(
       `SELECT id, active, family, level, isoWeek, year, startDate, endDate, label
        FROM courses WHERE active = 1 ORDER BY id`,
     )
     const unsent = await unsentByCourse(context)
     const refused = await refusedByCourse(context)
-    const choices: CourseChoice[] = []
+    const found = []
     for (const course of courses)
-      choices.push({
+      found.push({
         ...course,
         students: await countOf(context, "students", course.id),
         crews: await countOf(context, "crews", course.id),
         evaluations: await countOf(context, "evaluations", course.id),
-        lastChange: await latestChange(context, course.id),
+        rows: await rowsOf(context, course.id),
         unsent: unsent.get(course.id) ?? 0,
         refused: refused.get(course.id) ?? 0,
       })
-    return choices.sort((first, second) =>
-      (second.lastChange ?? "").localeCompare(first.lastChange ?? ""),
-    )
+    return found
   })
+  const choices = await Promise.all(
+    read.map(async ({ rows, ...course }): Promise<CourseChoice> => ({
+      ...course,
+      lastChange: latestOf(rows),
+      fingerprint: await courseFingerprint(rows),
+    })),
+  )
+  return choices.sort((first, second) =>
+    (second.lastChange ?? "").localeCompare(first.lastChange ?? ""),
+  )
 }
 
 const COURSE_ARRIVAL_KEY = "cvc-helper.course-arrived-reload"
@@ -155,6 +179,33 @@ export function readCourseArrival() {
     return window.sessionStorage.getItem(COURSE_ARRIVAL_KEY) === "1"
   } catch {
     return false
+  }
+}
+
+const COURSE_SWAP_KEY = "cvc-helper.course-swapped-reload"
+
+/** The download swapped the open course for another: the app says so once. */
+export function rememberCourseSwap(label: string) {
+  try {
+    window.sessionStorage.setItem(COURSE_SWAP_KEY, label)
+  } catch {
+    // Storage unavailable: the reopen goes without its explanation.
+  }
+}
+
+export function readCourseSwap() {
+  try {
+    return window.sessionStorage.getItem(COURSE_SWAP_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function clearCourseSwap() {
+  try {
+    window.sessionStorage.removeItem(COURSE_SWAP_KEY)
+  } catch {
+    // Storage unavailable: nothing was remembered either.
   }
 }
 

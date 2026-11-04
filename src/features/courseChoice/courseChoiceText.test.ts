@@ -58,6 +58,18 @@ describe("namesOf", () => {
     ).toBe("D2 - 45 (21 allievi, non disponibile)")
   })
 
+  it("tells two alike apart when a third course of the code differs", () => {
+    const alikeA = course("aaaaaa-1", 2, 1)
+    const alikeB = course("bbbbbb-1", 2, 1)
+    const third = { ...course("cccccc-1", 2, 1), crews: 2 }
+    const all = [alikeA, alikeB, third]
+    const names = all.map((one) => namesOf(one, all))
+    expect(new Set(names).size).toBe(3)
+    expect(twinTag(alikeA, all)).toBe("codice aaaaaa")
+    expect(twinTag(alikeB, all)).toBe("codice bbbbbb")
+    expect(twinTag(third, all)).toBeNull()
+  })
+
   it("says one student in the singular", () => {
     expect(
       namesOf(course("a", 2, 1), [course("a", 2, 1), course("b", 2, 3)]),

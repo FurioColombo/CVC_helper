@@ -227,19 +227,28 @@ describe("the server's erased courses", () => {
     expect(keep).toContain('c."ownerId" = auth.uid() and c.id = any(others)')
     expect(keep).not.toContain("c.id <> keep_id")
     expect(keep).toContain("c.active = 1")
-    // The same lock on both sides of the erase (review SC-B7-5).
+    // The same lock on both sides of the erase (review SC-B7-5), taken before
+    // the row's own by every statement writing a course (review DI-B7-R2-2).
     expect(keep.match(/pg_advisory_xact_lock/g)).toHaveLength(2)
+    expect(keep).toContain("for each statement execute function")
   })
 
-  it("checks a newer change in every table of a course given up (B7)", () => {
+  it("compares every row of every table of a course given up (B7)", () => {
     const keep = readFileSync(
       resolve(root, "supabase/migrations/20261104000000_keep_course.sql"),
       "utf8",
     )
-    for (const table of COURSE_TABLES.filter((name) => name !== "courses"))
+    for (const table of COURSE_TABLES.filter((name) => name !== "courses")) {
       expect(keep).toMatch(
         new RegExp(`from public\\."?${table}"? r where r\\."courseId"`),
       )
+      expect(keep).toContain(
+        `'${table}' || chr(9) || r.id || chr(9) || coalesce(r."updatedAt", '')`,
+      )
+    }
+    expect(keep).toContain(
+      `'courses' || chr(9) || c.id || chr(9) || coalesce(c."updatedAt", '')`,
+    )
   })
 
   it("keeps the record to its owner, with no course data", () => {

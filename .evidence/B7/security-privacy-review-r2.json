@@ -1,0 +1,88 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B7",
+  "round": 2,
+  "commit": "bdb06d8",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SP-B7-4",
+      "title": "Partly fixed: Esci is now in every state, but the choice screen still has no way to wipe the device",
+      "evidence": "Esci holds. Output: 'CONNECTED buttons: Tieni questo corso | Salva file | Tieni questo corso | Salva file | Esci', the same when offline, and 'READ-ONLY buttons: Esci | Cerca aggiornamenti'. After Esci: 'courses: 2', no stored session keys, no email on the page, and the sign-in form shown. The reset half of the finding remains: 'SIGNED OUT buttons: Tieni questo corso | Salva file | Tieni questo corso | Salva file | Invia il link di accesso' has no Azzera. FullReset is reachable only from Impostazioni, which this screen replaces. A phone handed on with two courses of minors can sign out but keeps them, and any holder can save their files. Offline or read-only, the phone cannot remove them at all. Not a blocker: the success predicate does not ask for a wipe. The B7 section of 04_IMPLEMENTATION_PLAN.md names reset among what was out of reach, so this needs a fix or an owner decision.",
+      "reproduction": "My scratchpad's r2/, test 'the file, the marks and the screen on a several session'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7; persona lens 4"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B7-R2-Q1",
+      "title": "A course that arrives in an empty session and leaves before any reopen is never marked, so its rows stay in free pages",
+      "evidence": "src/persistence/backupLink.ts courseChangedUnderSession returns null when the bound course is null, so nothing reloads and no mark is written. Marks are written only by an open or by saveActiveCourse (src/persistence/migrations.ts settleHeldCourses, src/persistence/courses.ts). Output: 'VISIT raw: true only X here: true'. Narrow: the device must sit on Crea corso while one course arrives and is then swapped for another. Reloading when a course arrives under an empty session would close it. Not a blocker: the round 1 scenario, a device holding a course it had opened, is closed.",
+      "reproduction": "My scratchpad's r2/p.spec.ts, test 'a course that arrives and leaves within one empty session'. Download simulated by direct ps_data writes.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 success predicate"
+    },
+    {
+      "id": "SP-B7-Q2",
+      "title": "Fixed for a marked device; open only when this build's first open is read-only",
+      "evidence": "Output: 'RO first=false marks: local:held-course:<X> raw student: false', so the claim holds after a read-only period. 'RO first=true marks: local:held-course:<X> raw student: true': a device with no mark yet stays dirty, because src/persistence/migrations.ts returns before settleHeldCourses on a read-only open. It needs a device whose first open of a marking build is already below the minimum writer.",
+      "reproduction": "My scratchpad's r2/, the tests named 'read-only period, first open of this build'."
+    },
+    {
+      "id": "SP-B7-R2-Q2",
+      "title": "The shared lock can deadlock keep_course with a concurrent course-row upload; Postgres resolves it with no data effect seen",
+      "evidence": "150 rounds of keep_course against two concurrent course-row updates on local Postgres: 142 clean, 8 with 40P01. In 3 keep_course was the victim and rolled back; in the other 5 keep_course succeeded and an upload was the victim. Every state stayed one of those outcomes. Likely cause, reasoned: an update holds the row lock before its BEFORE ROW trigger asks for the advisory lock, while keep_course takes the advisory lock and then the row lock. By reading src/backup/uploadPolicy.ts and session.ts, an upload retries and keep_course reads as 'no-answer', whose Riprova is safe; not run on PostgREST. No privacy effect. Pass it to the sync-chaos reviewer.",
+      "reproduction": "My scratchpad's r2/keep.mjs, section 'keep against concurrent uploads of a course row'."
+    },
+    {
+      "id": "SP-B7-R2-Q3",
+      "title": "The id of an erased course stays in raw database blocks, in no table",
+      "evidence": "Output after an erase and one more open: 'ID stores: cvc-helper.db/blocks:2of107', 'ID tables: ' (empty), 'ID localStorage: ' (empty), 'NAME stores: ' (empty). The swap case likewise gives 'raw, given-up student: false' but raw id true. The id is random and holds no personal data. Its only link is to the 8 characters in a saved file's name. I did not determine the cause, so I cannot say whether the marks add to it.",
+      "reproduction": "My scratchpad's r2/p.spec.ts, test 'where the id of an erased course stays'."
+    },
+    {
+      "id": "SP-B7-R2-Q4",
+      "title": "The newer-change check trusts device clocks",
+      "evidence": "supabase/migrations/20261104000000_keep_course.sql compares updatedAt text. An edit stamped earlier than the last change the owner saw, from a clock-behind phone, does not answer CVNEW and goes with the course. It is limited to the owner's own course and the owner named that course. Read from the SQL, not run."
+    },
+    {
+      "id": "SP-B7-Q1",
+      "title": "Left as decided: a stored session of another account can show its email",
+      "evidence": "src/backup/session.ts still reports 'offline' with the stored email before the claim check. Not reproduced."
+    },
+    {
+      "id": "SP-B7-Q3",
+      "title": "Left as decided, for the self-review",
+      "evidence": "A course's own row refused for a reason other than 'erased' keeps its refusals (src/persistence/migrations.ts dropRefusalsOfGoneCourses). Only 'Togli dall'elenco' removes them."
+    }
+  ],
+  "evidenceInspected": [
+    "Diff d29793d..bdb06d8: supabase/migrations/20261104000000_keep_course.sql, src/persistence/migrations.ts, courseChoice.ts, backupLink.ts, courseSession.ts, courses.ts, src/backup/session.ts, src/App.tsx, CourseChoiceScreen.tsx, OnlineBackup.tsx, courseChoiceText.ts, the test diffs, 03_TECHNICAL_DECISIONS.md, docs/working/OWNER_DECISIONS.md 22-23, .evidence/B7/keep-rule-local-postgres.mjs and .txt.",
+    "SP-B7-1 re-tested, resolved for its scenario. Same swap as round 1, with the refused student: 'SWAP marks before: local:held-course:<Y>', 'SWAP uploadRefusals: 0', 'SWAP marks after: local:held-course:<X>', 'SWAP raw, given-up student: false refused student: false'. The reload on a swap was not exercised by my spec; tests/e2e/b7-two-courses.spec.ts:997 covers it with a simulated status event and passed. Residue in SP-B7-R2-Q1 and SP-B7-Q2.",
+    "SP-B7-2 re-tested, resolved. With the VACUUM broken for one open: 'CUT marks after the cut: local:compaction-pending local:held-course:<X>', then 'CUT next open, marks: local:held-course:<X> raw: false'.",
+    "SP-B7-3 re-tested, resolved, on local Postgres with Supabase-like default grants. An unnamed course or a newer change answers CVNEW with nothing changed, as .evidence/B7/keep-rule-local-postgres.txt also records. My own run: non-object give_up values answer CVNEW; a nested value only affects the caller's own course; 'own id, naming the courses of the victim: kept' leaves the victim's courses and adds no erased id; an owner with no courses gets CVGON; an owner with one course and an empty map is a no-op. The DELETE now covers the same array as the erased record.",
+    "Other access questions on the new function: routine_privileges lists authenticated, postgres, service_role, not anon. 'anon, real course: error 42501' with the courses unchanged. 'foreign real id' and 'made-up id' give the identical CVGON message, so the function reveals no existence. service_role with no sub gets CVGON.",
+    "Advisory lock key: it is a hash of the owner's uuid, so nothing readable is stored, and the same text form and seed are used on both sides. A foreign insert with ownerId set to the victim gives 42501 whether or not the id was erased by the victim, so there is no oracle of erased ids. It held no advisory lock in the failed transaction ('advisory locks held in the failed transaction: 0') and made no session wait ('sessions waiting: 0'). I did not establish why no lock is taken, only that none was.",
+    "Marks: the saved file holds none. 'FILE holds held-course: false local:: false the other course: false email: false', top-level keys format, formatVersion, dataVersion, tables. After an erase the mark stays until the next open ('ERASE marks right after: 1', 'ERASE next open, marks: 0'); it holds only the random id. The full reset deletes the database (src/persistence/localDataOperations.ts), read from code.",
+    "File name on screen: 'cvc-helper-corso-2026-D2-45-35d66052.json', course code and id prefix only. SP-B7-6 resolved: the status reads 'Il file contiene i dati personali degli allievi: conservalo e condividilo solo con persone autorizzate', shown after the save starts rather than before as in Impostazioni; acceptable.",
+    "sessionStorage arrival flag: value '1' under a fixed key, no course id or email, and cleared when the choice screen mounts ('SESSION storage keys: ' empty there). A flag whose reload does not land on the choice screen can linger for that tab only and could show a stale notice; it reveals nothing.",
+    "OnlineBackup on a several session: the connected section shows only the account email, status, Esci and the erase text. Refusals appear as counts and reasons, with no names. 'Riprova l'invio' can now run on a several session; from code, a refused row of a course erased on the server is refused again by RLS or CVERA and cannot recreate it. ReplaceCourse needs local mode, which cannot hold several courses. Read-only Esci works from code; its button is shown in the run.",
+    "SP-B7-5 resolved as a documented design: the lead reads 'Su questo telefono ci sono ancora tutti' and 03_TECHNICAL_DECISIONS.md says nothing is erased locally. The course stays readable and exportable until the download. SP-B7-7 resolved: the live test asserts 42501, and my run agrees with default grants; not run on PostgREST. SP-B7-8 resolved: the warning says the changes go to the backup and are erased with the course, with the provider sentence beside it. SP-B7-Q4 resolved: distinct texts for unsent, refused and no-answer. SP-B7-Q5 resolved per the brief, not re-read. SP-B7-Q6 resolved: git status is clean.",
+    "Ran selected cases of tests/e2e/b7-two-courses.spec.ts on desktop-chrome-backup on port 4255: 9 passed. Ran vitest on src/features/courseChoice, backendSchema.test.ts, migrations.test.ts and courseArchive.test.ts: 62 passed. Ran my throwaway specs: 7 and 2 passed as probes that log what they find. Postgres on ports 54340 and 54341. Synthetic data only; the live backend was not touched. All scratch work is in my scratchpad's r2/."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 2, restricted: blockers SP-B7-1, -2, -3; the fix diff; findings SP-B7-4 to -8 and Q1 to Q6; the new surface named in the brief (file name on screen, sessionStorage flag, marks in meta, advisory lock key); OnlineBackup on a several session"
+    ],
+    "wildcard": "Round 2: not drawn"
+  },
+  "notTested": [
+    "keep_course through PostgREST or on the real backend: the migration is not installed. HTTP statuses, the x-cvc-app-version header path and the Supabase auth.uid() body are unverified; my Postgres used a stand-in for auth.uid().",
+    "A real PowerSync checkpoint: swaps are simulated by direct ps_data writes, so ps_oplog and bucket residue remain unproven. The live raw-storage check in tests/e2e/b7-two-courses-live.spec.ts has not run.",
+    "The full b7-two-courses spec, the rest of the e2e suite, and WebKit: I ran only the cases touching the fixes.",
+    "A physical phone, and the other-account state on the several screen in a browser (read from code).",
+    "PowerSync Cloud and Supabase retention of erased rows beyond the text in src/backup/erasure.ts."
+  ]
+}

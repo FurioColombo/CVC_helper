@@ -122,9 +122,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
   — WebKit, B3's run: no course heading in 30 s; 5 isolated runs passed. Cause unproven.
 
-- B3 FUX-B3-R4-Q1 (unconfirmed): a two-tab scratch spec on WebKit stayed on
-  "Apertura del corso…" after the launch switch, 2 of 4 runs; `b3-backup-ui`
-  passed 16/16. Add a two-tab WebKit case if it recurs.
+- B3 FUX-B3-R4-Q1 (unconfirmed): two tabs on WebKit stayed on "Apertura del corso…"
+  after the launch switch, 2 of 4 runs; `b3-backup-ui` 16/16. Add a case if it recurs.
+
+- `b7-two-courses.spec.ts › two courses open on the choice, and keeping one opens it with every row`
+  — Chrome, B7: reopened on Allievi, not Home, so a reload kept the old history entry. 4/4 alone.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.
@@ -136,15 +138,13 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — Mac WebKit CI `41215663327`: Esci's warning did not open. Cause unproven.
 
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
-  — stalled twice opening the fresh WebKit recipient before import (D4,
-  2026-10-17; both attempts in B4's run of 2026-10-31, while B6's run of the
-  same source passed); isolated reruns pass. Failure-only diagnostics retain
-  engine events, locks and resource timings. Cause unproven. See `.evidence/D4/development-checks.json`.
+  — stalled twice opening the fresh WebKit recipient before import (D4, 2026-10-17;
+  B4's run of 2026-10-31, B6's passed); isolated reruns pass. Failure-only diagnostics
+  retain engine events, locks and timings. Cause unproven. See `.evidence/D4/development-checks.json`.
 
 - `d1-migration.spec.ts › keeps the ledger and repairs the rows when a 0.3.0 app writes to the upgraded database`
-  — WebKit page closure, classified on 2026-10-21 as memory pressure (a WebKit
-  page peaks near 2 GB in these specs; clean 45/45 on one idle worker). See
-  `.evidence/T1/webkit-page-loss-classification.json`.
+  — WebKit page closure, memory pressure (2026-10-21; 45/45 on one idle worker).
+  See `.evidence/T1/webkit-page-loss-classification.json`.
 
 - `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
   — iPhone 13 WebKit, D3: no boat logos on the first attempt. No recurrence.

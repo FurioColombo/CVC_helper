@@ -609,15 +609,15 @@ export type KeepOutcome =
   /** No answer: the choice may have reached the server or not. */
   | "no-answer"
 
-/** The courses to give up, each with the last change the owner saw of it. */
-export type GiveUp = Record<string, string | null>
+/** The courses to give up, each with the fingerprint of what the owner saw. */
+export type GiveUp = Record<string, string>
 
 /**
  * B7: the owner keeps one of the account's courses. This device's changes go
  * first, those of the course kept and of those given up alike, so the queue
  * holds none of a course about to go. The server then keeps it in one step
  * (supabase/migrations/20261104000000_keep_course.sql), erasing only what
- * `giveUp` names and only if it holds nothing newer. The download then takes
+ * `giveUp` names and only if it holds what was seen. The download then takes
  * the others off every device, this one included; nothing is erased here
  * first, so a failure leaves everything as it was and the choice open.
  */

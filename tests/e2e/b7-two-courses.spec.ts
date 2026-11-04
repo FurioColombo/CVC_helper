@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import { readFileSync } from "node:fs"
 
 import { expect, type Page, test } from "@playwright/test"
@@ -75,28 +76,38 @@ async function withBackend(page: Page) {
       if (state.keepAnswer === "hang") return
       const { keep_id: keep, give_up: giveUp } = request.postDataJSON() as {
         keep_id: string
-        give_up: Record<string, string | null>
+        give_up: Record<string, string>
       }
       state.keeps.push({ keep, queuedRows: table("students").size })
       if (!table("courses").has(keep))
         return json({ code: "CVGON", message: "gone" }, 400)
       const others = [...table("courses").keys()].filter((id) => id !== keep)
-      const newer = (row: Row, id: string) =>
-        typeof row.updatedAt === "string" && row.updatedAt > (giveUp[id] ?? "")
-      for (const id of others)
-        if (
-          !(id in giveUp) ||
-          newer(table("courses").get(id)!, id) ||
-          [...table("students").values()].some(
-            (row) => row.courseId === id && newer(row, id),
+      const fingerprint = (id: string) =>
+        createHash("sha256")
+          .update(
+            [...server]
+              .flatMap(([name, rows]) =>
+                [...rows.values()]
+                  .filter((row) =>
+                    name === "courses" ? row.id === id : row.courseId === id,
+                  )
+                  .map(
+                    (row) =>
+                      `${name}\t${row.id}\t${(row.updatedAt as string | null | undefined) ?? ""}`,
+                  ),
+              )
+              .sort()
+              .join("\n"),
           )
-        )
+          .digest("hex")
+      for (const id of others)
+        if (giveUp[id] !== fingerprint(id))
           return json({ code: "CVNEW", message: "changed" }, 400)
-      for (const id of others) {
-        table("courses").delete(id)
-        for (const [rowId, row] of table("students"))
-          if (row.courseId === id) table("students").delete(rowId)
-      }
+      for (const id of others)
+        for (const [name, rows] of server)
+          for (const [rowId, row] of rows)
+            if (name === "courses" ? rowId === id : row.courseId === id)
+              rows.delete(rowId)
       if (state.keepAnswer === "lost") return route.abort("connectionreset")
       return route.fulfill({ status: 204 })
     }
@@ -852,6 +863,98 @@ test("a course on the server this phone never received stops the choice, and not
   )
 })
 
+test("a change this phone has not seen stops the choice, whatever its stamp, until it arrives", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await expect.poll(() => backend.table("students").size).toBe(3)
+  const other = "c0c0c0c0-0000-4000-8000-000000000001"
+  // Offline work reaches the server with the old stamp of the edit (SC-B7-9).
+  const old = "2000-01-01T00:00:00.000Z"
+  backend
+    .table("students")
+    .set("offline", { id: "offline", courseId: other, updatedAt: old })
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(page.getByText(/non ha ancora ricevuto/)).toBeVisible()
+  expect(backend.table("students").has("offline")).toBe(true)
+
+  // The download brings it: the waiting is over, and the choice then works.
+  await page.evaluate(
+    async ({ other, old }) => {
+      const load = (path: string) => import(/* @vite-ignore */ path)
+      const { db } = (await load(
+        "/src/persistence/db.ts",
+      )) as typeof import("../../src/persistence/db")
+      await db.execute(
+        "INSERT INTO ps_data__synced_students(id, data) VALUES (?, ?)",
+        ["offline", JSON.stringify({ courseId: other, updatedAt: old })],
+      )
+    },
+    { other, old },
+  )
+  await expect(page.getByText(/L’aggiornamento è arrivato/)).toBeVisible({
+    timeout: 10_000,
+  })
+  await expect(page.getByText(/non ha ancora ricevuto/)).toHaveCount(0)
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click()
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect.poll(() => backend.table("courses").has(other)).toBe(false)
+})
+
+test("Riprova waits for the connection and says so", async ({
+  page,
+  context,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  backend.state.keepAnswer = "unavailable"
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(page.getByText(/C3 - 45 sparirà da solo/)).toBeVisible()
+  await context.setOffline(true)
+  await expect(page.getByRole("button", { name: "Riprova" })).toBeDisabled()
+  await expect(
+    page.getByText("Serve la connessione per riprovare."),
+  ).toBeVisible()
+  await context.setOffline(false)
+  await expect(page.getByRole("button", { name: "Riprova" })).toBeEnabled({
+    timeout: 15_000,
+  })
+})
+
+test("the reset on the choice clears this device and leaves the backup alone", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await expect(choiceHeading(page)).toBeVisible()
+  await expect.poll(() => backend.table("students").size).toBe(3)
+  const held = [...backend.table("courses").keys()].sort()
+  const rpc = backend.state.keeps.length
+  await page.getByRole("button", { name: "Azzera tutti i dati locali" }).click()
+  await expect(
+    page.getByText(/I corsi restano nel backup online/),
+  ).toBeVisible()
+  await page.getByRole("checkbox", { name: /Ho capito: corsi/ }).check()
+  await page.getByRole("button", { name: "Azzera i dati" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Dati locali cancellati" }),
+  ).toBeVisible({ timeout: 30_000 })
+  expect([...backend.table("courses").keys()].sort()).toEqual(held)
+  expect(backend.state.keeps.length).toBe(rpc)
+})
+
 test("a change of the course given up this phone has not seen stops the choice", async ({
   page,
 }) => {
@@ -1019,6 +1122,22 @@ test("a device that never held both: the swap reopens it and clears the course t
     marks: [arrived],
     pending: 0,
   })
+  // The phone says what happened, and its unsent edits with it (SC-B7-10).
+  await expect(
+    page.getByText(
+      /D2 - \d+ \| \d{4} è stato eliminato su un altro dispositivo/,
+    ),
+  ).toBeVisible()
+  await expect(
+    page.getByText(/non ancora inviate sono andate perse/),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Ho capito" }).click()
+  await expect(page.getByText(/è stato eliminato su un altro/)).toHaveCount(0)
+  await page.reload()
+  await expect(
+    page.getByRole("heading", { name: /C3 - \d+ \| \d{4}/ }),
+  ).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText(/è stato eliminato su un altro/)).toHaveCount(0)
 })
 
 test("a second course arriving says typing may be lost, once", async ({

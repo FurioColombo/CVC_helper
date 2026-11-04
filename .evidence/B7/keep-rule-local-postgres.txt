@@ -1,13 +1,19 @@
 migrated, last file run twice
+ok   the SQL computes the app's pinned value 
 ok   a course not shown refuses the whole choice 
 ok   naming all of them keeps one 
 ok   the same choice again, as after a lost answer 
 ok   the course given up is gone 
-ok   a newer row of the course given up refuses 
-ok   no last change seen, with rows there, refuses 
+ok   a row with an older stamp the device never saw refuses (SC-B7-9) 
+ok   an edit stamped below the newest one the device saw refuses 
+ok   a row the device saw that is gone refuses 
+ok   a stamp from a clock ahead does not pass 
+ok   no fingerprint refuses 
+ok   a value that is no text refuses 
 ok   null give_up refuses 
 ok   what it saw is what is there 
-ok   a newer change of the course kept does not matter 
+ok   a change of the course kept does not matter 
+ok   a row with no stamp reads as empty on both sides 
 ok   a course switched off is neither named nor touched 
 ok   it cannot be the one kept 
 ok   another account's course is not this one's to keep 
@@ -20,4 +26,6 @@ ok   200 opposite choices at once keep exactly one
 ok   a course arriving during the wait stays, with no record 
 ok   an upload of the course given up during the erase is refused 
 ok   an ordinary edit of a course still passes the trigger 
+ok   150 choices against edits of course rows: no deadlock 
+    tally {"keep-done|edits-done":150}
 ALL PASSED

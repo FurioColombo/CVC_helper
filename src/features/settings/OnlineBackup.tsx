@@ -196,6 +196,7 @@ export function OnlineBackup({
       {(state.kind === "connected" || state.kind === "offline") && (
         <Connected
           busy={busy}
+          choosing={choosing}
           email={state.email}
           onSignOut={() => void run(signOutOfBackup)}
           outdated={state.kind === "connected" && !!state.outdated}
@@ -385,12 +386,15 @@ const REFUSAL_TEXT: Record<string, string> = {
 function Connected({
   email,
   busy,
+  choosing,
   onSignOut,
   outdated,
   reachable,
 }: {
   email: string
   busy: boolean
+  /** On the choice between courses, whose confirmation says what is erased. */
+  choosing: boolean
   onSignOut: () => void
   outdated: boolean
   /** The backup is connected (not waiting for signal to sign in again). */
@@ -613,7 +617,9 @@ function Connected({
           <p className="text-sm leading-5" id="sign-out-q">
             {waiting > 0
               ? `Uscire? ${changes(waiting)} ${waiting === 1 ? "non è ancora online: resta" : "non sono ancora online: restano"} su questo telefono e ${waiting === 1 ? "parte" : "partono"} quando rientri con questo account.`
-              : "Uscire dal backup? Il corso resta su questo telefono."}
+              : choosing
+                ? "Uscire dal backup? I corsi restano su questo telefono."
+                : "Uscire dal backup? Il corso resta su questo telefono."}
           </p>
           {erasePending && (
             <p className="mt-1 text-sm font-semibold leading-5">
@@ -641,13 +647,17 @@ function Connected({
             Esci
           </Button>
           <p className="mt-1 text-xs leading-4 text-muted-foreground">
-            Il corso resta su questo telefono.
+            {choosing
+              ? "I corsi restano su questo telefono."
+              : "Il corso resta su questo telefono."}
           </p>
         </>
       )}
-      <p className="mt-3 text-sm leading-5 text-muted-foreground">
-        {ERASURE_RETENTION_TEXT}
-      </p>
+      {!choosing && (
+        <p className="mt-3 text-sm leading-5 text-muted-foreground">
+          {ERASURE_RETENTION_TEXT}
+        </p>
+      )}
     </div>
   )
 }

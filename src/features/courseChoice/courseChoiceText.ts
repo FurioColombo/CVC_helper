@@ -66,19 +66,20 @@ const yearOf = ({ year }: Named) => `${year}`
 const lastChangeOf = ({ lastChange }: Named) => formatLastChange(lastChange)
 
 /**
- * The last resort when two courses read the same in everything shown: the same
- * roster on two phones, saved in the same minute. Their ids still differ, so
- * the card and the question can name the same one.
+ * The last resort when a course reads like another in everything shown: the
+ * same roster on two phones, saved in the same minute. Any one twin is enough,
+ * whatever a third course holds (review FU-B7-2). Ids still differ, so the card
+ * and the question can name the same one.
  */
 export function twinTag(course: Named, all: Named[]) {
-  const twins = twinsOf(course, all)
   const detail = (other: Named) =>
     [yearOf, studentsOf, crewsOf, evaluationsOf, lastChangeOf]
       .map((read) => read(other))
       .join()
-  return twins.length > 1 && !differs(twins, detail)
-    ? `codice ${course.id.slice(0, 6)}`
-    : null
+  const alike = twinsOf(course, all).filter(
+    (other) => other.id !== course.id && detail(other) === detail(course),
+  )
+  return alike.length > 0 ? `codice ${course.id.slice(0, 6)}` : null
 }
 
 /**

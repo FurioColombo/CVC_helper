@@ -1,0 +1,91 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B7",
+  "commit": "bdb06d8",
+  "round": 2,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SC-B7-9",
+      "title": "The stamp check has a hole: rows uploaded before the choice and stamped older than the card's last change are erased unseen, with correct clocks on every phone",
+      "evidence": "keep_course refuses only when a row's updatedAt is greater than give_up's stamp (supabase/migrations/20261104000000_keep_course.sql:82-83). updatedAt is the time of the edit on the device, not the order of arrival at the server, so the newest stamp a card saw says nothing about rows that reach the server later. Scenario S4, using the real app connector and real SQL rules, with no clock change. The card on phone 1 showed D3 with 'Allievi 2' and 'Ultima modifica: oggi, 20:12'. The server held 5 students in D3 when the choice was sent: Prima 19:12:06, Offline1 19:12:12, Offline2 19:12:12, Offline3 19:12:13, Dopo 19:12:26. Three of them had been accepted by the server before the choice and never reached phone 1. Phone 1 sent give_up {X: '2026-11-04T19:12:26.861Z'}. The answer was 'keep_course kept', the screen said 'Scelta salvata nel backup online', and the server then held courses [D2], erased 1, students [Tenuta]. No CVNEW was raised, and the owner saw 2 students while 5 were erased. Scenario S3 gives the same result through clock skew: a phone 20 minutes fast sets a future stamp, and later rows from the corrected clock pass under it. In SQL, R5 shows two rows stamped T0 uploaded after a card that saw T1 answering 'kept'. A clock-ahead stamp widens the hole for as long as the skew lasts, and S5 shows a give_up of 2027-06-01 being accepted. This contradicts 03_TECHNICAL_DECISIONS.md: 'a newer change of one given up answers CVNEW, so a choice is never made on what the owner did not see'. It also leaves SC-B7-4 open, because the stated remedy for no wait on a checkpoint is that stale cards answer CVNEW, and this stale card did not. tests/e2e/b7-two-courses.spec.ts:855 covers only a newer stamp. Limits of the reproduction: the download was simulated and the connected status was forced, so the window was not measured on a real PowerSync stream. With a healthy stream the window is the time from upload to checkpoint. By reading, backup.kind 'connected' is set before the connect finishes (round 1 evidence, src/backup/session.ts), so after a long time offline the window can cover the whole catch-up. Severity argument the owner may weigh: if phone 2 had connected seconds after the choice, its edits would be refused and cleared anyway, by the documented rule. The final loss is therefore the same class as an accepted one. What fails here is the promise that rows already on the server are protected. If the owner accepts this, the sentence in 03 and the migration header must change; as written, this is a violation.",
+      "reproduction": "My scratchpad's pw2/s.spec.ts, test S4: an app-to-real-SQL bridge on Postgres 17.5 with the real migrations; hard offline by aborting that context's bridge requests. (1) Phone 2 makes D3 with Prima; it uploads. (2) Phone 2 goes offline and adds Offline1, Offline2, Offline3. (3) Phone 1 downloads D3 and adds Dopo; it uploads, so the course's newest stamp is now later than the three offline edits. (4) Phone 3 uploads D2 with Tenuta. Phone 1 downloads and opens on the choice, with the D3 card showing Allievi 2. (5) Phone 2 reconnects and its queue empties; the server now holds 5 students in D3. Phone 1 gets no download. (6) On phone 1: Tieni questo corso on D2, tick Ho capito, Elimina. Expected: CVNEW. Actual: kept, and all five D3 students erased.",
+      "specRef": "03_TECHNICAL_DECISIONS.md B7 paragraph ('so a choice is never made on what the owner did not see'); 04_IMPLEMENTATION_PLAN.md B7 ('the owner can see both'; 'it never erases one by itself'; adversarial checklist 'a choice with unsent changes'); round 1 SC-B7-4. Possible fixes: a per-course value that follows arrival, set by the server and delivered through the download, then sent back in give_up; or a digest of (row id, updatedAt) over the course's rows computed on both sides. Row count plus max stamp is not enough, because keep_latest_edit lets an edit stamped older than the course's max through, as long as it is newer than its own row."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-B7-8",
+      "title": "Unchanged and logged as owner decision 23. My opinion: it need not block B7",
+      "evidence": "The coordinator asked if this must block. It reproduces as in round 1, and the plan's 'no row of it lost' still reads against it. It needs two deliberate, explicit actions on two phones, one of them an irreversible erase the app already warned about, and a phone with a waiting erase says so in Impostazioni. Decision 23 states the rule and the outcome correctly and asks the owner to rule. I would not block on it as long as the owner actually reads decision 23. If the answer is that keeping should win, that is a follow-up change.",
+      "reproduction": "Round 1 reproduction; not repeated with new code, because the rule did not change.",
+      "specRef": "docs/working/OWNER_DECISIONS.md decision 23; 04_IMPLEMENTATION_PLAN.md B7 success predicate."
+    },
+    {
+      "id": "SC-B7-10",
+      "title": "Regression of the SC-B7-2 fix: the phone whose course was given up swaps course with no word, and its offline edit disappears without trace",
+      "evidence": "S1, hard offline. Phone 2 was offline with an edit (Persa) on X; phone 1 chose K elsewhere. After reconnect the upload was refused with 42501, and the status event reopened phone 2 by itself. Final state: courses [K], students [Tenuta], refusals [], queue 0, compaction 0. Its screen shows only 'D2 - 45 | 2026' and the home tabs. src/App.tsx:962 calls rememberCourseArrival only for 'several', so a swap leaves no notice, and the housekeeping clears the refusal that was the only remaining sign of the edit. The clearing is documented in 03 and the choice screen warns on the phone that chooses. The person holding phone 2 gets no signal. For the twin lens, one phone quietly becoming another course with an edit gone is not 'visibly resolved'. Suggested: a one-time notice on the swap naming the course that left and that changes not sent were dropped with it.",
+      "reproduction": "My scratchpad's pw2/s.spec.ts, test S1.",
+      "specRef": "docs/agents/REVIEW_PROTOCOL.md via the persona's invariant, every edit kept or visibly resolved by a documented rule; 03_TECHNICAL_DECISIONS.md B7 paragraph documents the clearing only. For docs/working/BACKLOG.md if not fixed now."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B7-Q8",
+      "title": "A forced deadlock on keep_course reads as 'no answer'",
+      "evidence": "A child batch held against the cascade made keep_course the 40P01 victim in R3. It maps to PostgREST status 500, so the outcome is no-answer: 'la scelta può essere arrivata oppure no'. Riprova is safe and courses [K, X] stayed intact. The text is slightly untrue in that nothing arrived, but it leads to the right action.",
+      "reproduction": "My scratchpad's scr2/sc-r2.mjs, R3 (log r2.log).",
+      "specRef": "For docs/working/BACKLOG.md."
+    },
+    {
+      "id": "SC-B7-Q9",
+      "title": "CHANGED_NOTICE can state something false and outlive its cause",
+      "evidence": "By reading. 'Non è stato eliminato nulla' is false if an earlier keep committed with its answer lost, and a new course then makes the retry answer CVNEW. The notice also stays on screen after the awaited update has arrived. In S2 the third attempt worked after the download while the old message logic was still in place. Not a trap.",
+      "reproduction": "Reading src/features/courseChoice/CourseChoiceScreen.tsx with scenario S2; the false-text sequence itself was not run.",
+      "specRef": "For docs/working/BACKLOG.md."
+    },
+    {
+      "id": "SC-B7-Q10",
+      "title": "A device with no marks keeps the refusals of a course that left",
+      "evidence": "S6, with marks removed by hand to stand for a device updated after the course left: after reopen, courses [K], refusals [['access','Persa']], marks 1. settleHeldCourses drops refusals only when a mark is gone. Impostazioni then reports one refused change for a course this phone no longer has. Narrow, and it only arises on the upgrade path.",
+      "reproduction": "My scratchpad's pw2/s.spec.ts, test S6.",
+      "specRef": "For docs/working/BACKLOG.md."
+    },
+    {
+      "id": "SC-B7-Q11",
+      "title": "The ticked box does not reset when rows arrive with older stamps",
+      "evidence": "By reading: Confirm is keyed by each other course's id:lastChange, so rows delivered during the confirmation with older stamps leave the key and the tick unchanged. Same root as SC-B7-9; a fix there should drive this key as well. Also, an edit of an existing row still in flight at the check is erased (R6; a window of milliseconds; tolerable).",
+      "reproduction": "Reading src/features/courseChoice/CourseChoiceScreen.tsx; R6 in my scratchpad's scr2/sc-r2.mjs.",
+      "specRef": "For docs/working/BACKLOG.md."
+    }
+  ],
+  "evidenceInspected": [
+    "Diff d29793d..bdb06d8; supabase/migrations/20261104000000_keep_course.sql; src/backup/session.ts; src/backup/uploadPolicy.ts; src/persistence/backupLink.ts; src/persistence/migrations.ts; src/persistence/courseChoice.ts; src/features/courseChoice/CourseChoiceScreen.tsx; src/App.tsx:950-966; 03_TECHNICAL_DECISIONS.md B7 paragraph; 04_IMPLEMENTATION_PLAN.md B7; docs/working/OWNER_DECISIONS.md decisions 22 and 23.",
+    "tests/e2e/b7-two-courses.spec.ts at bdb06d8, project desktop-chrome-backup on my own port: 24 passed.",
+    "Copy of .evidence/B7/keep-rule-local-postgres.mjs on Postgres 17.5 on my own port: ALL PASSED, with 200 of 200 runs 'error CVGON|kept|1|1|1'.",
+    "SC-B7-1 re-tested: an unnamed active course answers CVNEW (official harness; repo test at line 832); ticked box resets on a list or last-change change (line 929); Riprova re-sends the confirmed give_up, by reading. Resolved for what it named. The stale-card half is SC-B7-9.",
+    "SC-B7-2 re-tested: RESOLVED. S1 with a hard offline cut, real connector and real SQL: refused 42501, reopened by itself, final courses [K], refusals [], compaction 0, identical on both phones and matching the server. Repo test at line 997 also passes. See SC-B7-10 for what it left silent.",
+    "SC-B7-3 re-tested: RESOLVED, by reading INSERT OR REPLACE and the swallowed housekeeping errors, and repo tests at lines 1040 and 1066.",
+    "SC-B7-4 re-tested: NOT RESOLVED, see SC-B7-9. Endless CVNEW was also checked, as the coordinator asked: no trap found with a healthy download. S2: CVNEW twice with no download, then the third attempt after the download keeps, with an updated give_up stamp. S5: rows with a repaired createdAt-after-updatedAt stamp, a null stamp and a stamp in 2027 went through the repair on open, the queue emptied, and the choice kept at the first attempt. Local and server max use the same 13 tables and the same text bytes under byte-order comparison. A refused or superseded local row can only raise the local value until its checkpoint rolls it back, so it widens the hole rather than trapping; this part is reasoned, not run. R8: a stale card facing a clock-ahead row gets CVNEW, and one that saw it keeps.",
+    "SC-B7-5 re-tested: RESOLVED. Official harness T3 and T5 passed. R2, 40 concurrent runs of keep, upsert of X, upsert of K and child batch of X, always ended with courses exactly [K], tombstone X, no resurrection and K's rows intact: 39 runs 'kept|CVERA|ok|40P01|K|X|k1' and 1 run 'kept|CVERA|ok|ok|K|X|k1'.",
+    "Advisory lock deadlocks, as the coordinator asked: real but harmless. A plain UPDATE takes the row lock before the trigger's advisory lock, so with a forced interleaving it deadlocks against keep or against an upsert. In R1 the UPDATE was the 40P01 victim, keep answered kept and the state was courses [K], erased [X]. Upserts take the advisory lock first, in the same order as keep, so they do not deadlock on it. The plain UPDATE occurs only on the connector's PATCH path. The 40P01 in R2's child batch comes from the existing row lock and FK check against the cascade, not from the advisory lock. 40P01 is in RETRY_CODES (src/backup/uploadPolicy.ts:51), so the upload retries and is then refused by the normal rule. No data harm in any run.",
+    "SC-B7-6 re-tested: RESOLVED, repo tests at lines 465, 876 and 915, and reading failureText. SC-B7-7 re-tested: RESOLVED, repo test at line 895 and reading the abort and race. SC-B7-Q1: repo test at line 953. SC-B7-Q2, Q5, Q6, Q7: fixed, by reading; Q7 also through the test at line 1040. SC-B7-Q3 and Q4 left for the self-review, as stated."
+  ],
+  "anglesTried": [
+    "Restricted round 2 scope: previous findings, the fix diff and regressions from those fixes. No new lenses were drawn; the round 1 seed 669937790 is not redrawn.",
+    "The real two-phones order (offline phone with edits, choice elsewhere, reconnect) end to end on real SQL rules: S1.",
+    "Falsifying the stamp gate: edits older than the card with correct clocks (S4), a fast clock corrected later (S3), and SQL variants R5 to R8.",
+    "Trapping a device in endless CVNEW: stream down then healthy (S2), repairs and clock-ahead rows (S5).",
+    "Advisory lock against uploads: forced interleavings R1 and R3, natural hammer R2.",
+    "Upgrade path of the mark rule: S6."
+  ],
+  "notTested": [
+    "A real PowerSync stream and real PostgREST: the download was a simulated pump, the connected status was forced in S1 to S6, and REST was a bridge into real SQL on local Postgres 17.5. So the window of SC-B7-9 on a live stream is not measured. The development backend was not used and the live backend was not touched.",
+    "Physical devices, which belong to the owner.",
+    "A superseded own edit end to end: S5's title names it but its steps do not run it, so that case is reasoned only.",
+    "The false-text sequence of SC-B7-Q9 and the tick behaviour of SC-B7-Q11 were read, not run.",
+    "SC-B7-8 and a device several app versions behind were not re-run, because that rule and path did not change in this diff.",
+    "Tracked files are untouched, and my processes and throwaway database were stopped. docs/working/BACKLOG.md was not edited because this review is read-only, so the findings marked for it still need adding."
+  ]
+}

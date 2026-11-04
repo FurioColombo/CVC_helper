@@ -233,6 +233,24 @@ describe("CourseFiles", () => {
     expect(mocks.resetAllLocalData).toHaveBeenCalledOnce()
   })
 
+  // B7: on the choice between courses nothing leaves the backup.
+  it("clears only this device when the backup keeps the courses", async () => {
+    const user = userEvent.setup()
+    const eraseOnline = vi.fn()
+    render(
+      <FullReset courseLabel="i corsi" eraseOnline={eraseOnline} keepsBackup />,
+    )
+    await user.click(
+      screen.getByRole("button", { name: "Azzera tutti i dati locali" }),
+    )
+    expect(screen.getByText(/I corsi restano nel backup online/)).toBeVisible()
+    expect(screen.queryByText(/Nuovo corso/)).not.toBeInTheDocument()
+    await user.click(screen.getByRole("checkbox", { name: /Ho capito: corsi/ }))
+    await user.click(screen.getByRole("button", { name: "Azzera i dati" }))
+    expect(eraseOnline).not.toHaveBeenCalled()
+    expect(mocks.resetAllLocalData).toHaveBeenCalledOnce()
+  })
+
   // B6: signed in, the backup's copy goes first; a failure resets nothing.
   it("resets nothing when the backup's copy could not be erased", async () => {
     const user = userEvent.setup()

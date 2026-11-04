@@ -161,7 +161,13 @@ tutti i dati locali` erases the course from the backup first; without
     cancellato nulla" could be false right after a choice. The online backup
     section with Esci stays under the courses in every state, which the mock
     showed only when signing in was needed. Saving a file now names it and says
-    it holds students' personal data. The mock is corrected.
+    it holds students' personal data. The mock is corrected. After the second
+    reviews: the server compares a fingerprint of every row the phone saw, not
+    the last change; "Azzera i dati" is under the courses and clears only this
+    phone, with the courses staying in the backup; the panel there leaves out
+    the 7-day text, which the confirmation says; a phone whose course was erased
+    from elsewhere says so once when it reopens on the other course, and that its
+    unsent changes went with it.
 23. **An offline erase and a later choice (taken 2026-11-04, for your review).**
     Phone B erases course K offline. Phone A then keeps K and gives up X. When B
     connects, its waiting erase also removes K, as every erase does (decision

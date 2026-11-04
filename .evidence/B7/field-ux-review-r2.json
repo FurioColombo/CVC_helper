@@ -1,0 +1,124 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B7",
+  "commit": "bdb06d8",
+  "round": 2,
+  "verdict": "FAIL",
+  "summary": "One blocker remains, narrowed: FU-B7-2 still reproduces with three courses of one code, when two of them read alike and the third differs. FU-B7-1 and FU-B7-3 are fixed. All eleven important findings from round 1 are fixed or handled as declared. The routine path is still 3 taps, or 4 with the file. The repo journey passes 24 of 24 on pixel-7-chrome.",
+  "blockers": [
+    {
+      "id": "FU-B7-2",
+      "title": "Unresolved in the three-course case: two courses with the same code still read identically at the irreversible step",
+      "evidence": "Reproduced on pixel-7-chrome and iphone-13-webkit. Same code on three courses: A and B have 1 student, 0 crews and the same last-change minute; C has 1 student, 2 crews and the same minute. Card labels: ['Corso D2 - 45 (1 allievo, 0 equipaggi, oggi, 19:51)', 'Corso D2 - 45 (1 allievo, 0 equipaggi, oggi, 19:51)', 'Corso D2 - 45 (1 allievo, 2 equipaggi, oggi, 19:51)']. Neither card shows a 'codice' line. Tieni on the first card opens: 'Tieni D2 - 45 (1 allievo, 0 equipaggi, oggi, 19:51)? D2 - 45 (1 allievo, 0 equipaggi, oggi, 19:51) e D2 - 45 (1 allievo, 2 equipaggi, oggi, 19:51) saranno eliminati'. The Elimina button repeats it: 'Elimina D2 - 45 (1 allievo, 0 equipaggi, oggi, 19:51) e D2 - 45 (1 allievo, 2 equipaggi, oggi, 19:51), e apri D2 - 45 (1 allievo, 0 equipaggi, oggi, 19:51)'. The kept course and an erased course have the same name. Tieni on the third card names two identical courses to erase. Cause: twinTag in src/features/courseChoice/courseChoiceText.ts:73-82 returns the tag only when ALL same-code courses read the same, so one different course removes the tag from the two that are alike. The two-course case is fixed: 'codice 25ac1c' and 'codice a1b2c3' appear on the cards and in every sentence of the confirmation. Likelihood is low, since it needs three same-code courses on one account and two matching counts in the same minute. It stays a blocker because this is the round 1 failure on an irreversible erase, and the declared last resort does not fire. Likely small fix: tag a course when any other same-code course has the same detail string, instead of testing the whole group, with a table test for this case.",
+      "reproduction": "Sign in on the fake backend with one D2 course. Insert A with the same family, level, week and year and 1 student, then reload. Insert B the same way with 1 student and 2 crews, then reload. Set updatedAt to one instant on courses, students, crews and evaluations, then reload. Read the card aria-labels, tap Tieni on card 1 and on card 3, and read the confirmation. Spec: 'three same code, two of them alike, third differs' in my scratchpad's nostromo/r2/c.spec.ts. Screenshot: my scratchpad's nostromo/r2/shots/triple-confirm.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R11 (deletion with identity and consequence); docs/design/mockups/b7-two-courses.html state 2; the comment at src/features/courseChoice/courseChoiceText.ts:68-72 ('the card and the question can name the same one'); round 1 blocker FU-B7-2"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FU-B7-R2-I1",
+      "title": "The 'wait for the update' notice stays after the update has arrived",
+      "evidence": "After the server refused with CVNEW, the chooser shows 'Nel backup online c'è qualcosa che questo telefono non ha ancora ricevuto... Aspetta l'aggiornamento e scegli di nuovo.' A further course then arrived and the screen went to 3 articles. 3.5 s later the notice was still there (noticeStill 1). The notice lives in step state, set at src/features/courseChoice/CourseChoiceScreen.tsx:502 and rendered at :621-623; nothing clears it when the list changes. An instructor can stand waiting for something the phone already has. No data risk: the Tieni buttons stay usable and a further choice is refused or succeeds correctly.",
+      "reproduction": "Test 'R3 unseen course' in my scratchpad's nostromo/r2/b2.spec.ts, pixel-7-chrome."
+    },
+    {
+      "id": "FU-B7-R2-I2",
+      "title": "Riprova with no network looks dead and never mentions the connection",
+      "evidence": "On the no-answer screen with navigator.onLine false and requests aborted as internetdisconnected, Riprova stays enabled. Tapping it returns to the same screen in 368 ms with the same text, 'Il backup online non ha risposto...'. No working state was visible at 300 ms, and no sentence says the phone is offline. Elimina is correctly disabled offline with its reason (Q3), so the same action behaves differently one step later. No data risk: Torna alla scelta works.",
+      "reproduction": "Test 'Riprova with no network' in my scratchpad's nostromo/r2/f.spec.ts, pixel-7-chrome."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-B7-R2-Q1",
+      "title": "Plural verb with one course in the no-answer text",
+      "evidence": "'Se è arrivata, C3 - 45 spariranno da soli.' Seen on the hang and lost-answer paths on both engines. It should use the singular for one course."
+    },
+    {
+      "id": "FU-B7-R2-Q2",
+      "title": "The box reset is safe but silent",
+      "evidence": "With a tick on and another course arriving during the confirmation: ticked false, Elimina disabled and renamed 'Elimina C3 - 45 e C1 - 45, e apri D2 - 45', focus on H1, scrollY 0, saved status kept. No sentence explains why the tick went or why the page moved. The list of courses is what changed, so the user has to spot it. Same result on both engines."
+    },
+    {
+      "id": "FU-B7-R2-Q3",
+      "title": "Annulla returns to the top of the page, not to the card",
+      "evidence": "After Annulla: scrollY 0, focus on the chooser heading. At 320/200% the second card's Tieni is at y2289, so going back means scrolling three and a half screens again."
+    },
+    {
+      "id": "FU-B7-R2-Q4",
+      "title": "The chooser got longer with the backup panel under the cards (recorded in decision 22)",
+      "evidence": "390x844 Pixel run: page 1041 px, was 844 in round 1; both Tieni still on the first screen (y361, y613), Esci at y833 cut by the fold. 320/200%: page 3799 px, was 2014; first Tieni y1280, was 1088 (the stacked counts add to this); second y2289; 4471 px after a save. The panel says 'Il corso resta su questo telefono.' on a screen about two courses, and repeats the 7-day retention text in a block starting 'Eliminando il corso...', which reads twice with the confirmation."
+    },
+    {
+      "id": "FU-B7-R2-Q5",
+      "title": "Same-code confirmation is very long at 320/200%",
+      "evidence": "The full name repeats in the heading, lead, unsent warning, Salva, tick and Elimina. With different crews and evaluations the page is 3417 px and Elimina is 256x400 px on a 640 px screen. The heading word 'valutazioni,' overflows its box by 6 px (262>256), not clipped; page overflow 0. A short name after the first full mention would help, provided the blocker fix keeps the names distinct."
+    },
+    {
+      "id": "FU-B7-R2-Q6",
+      "title": "Card warning at 320/200%: one word reaches the box edge",
+      "evidence": "With the triangle, the text column on the card is 102 px wide and 'modifiche' measures 123 px. It stays inside the box and is not clipped, about 4 px from the edge. Visible while changes are unsent. Screenshot: my scratchpad's nostromo/r2/shots/pending-320-200-pixel.png."
+    },
+    {
+      "id": "FU-B7-R2-Q7",
+      "title": "A second Salva file gives no new feedback",
+      "evidence": "Two taps, two downloads, one unchanged status line. The personal-data sentence appears only after the first file has started saving."
+    },
+    {
+      "id": "FU-B7-Q2",
+      "title": "Controls still move, as declared, and there is a second source",
+      "evidence": "Fixed: saving no longer stretches Tieni (44 px before and after). Left as declared: going offline shifts the cards 73 px (y361 to y434, y613 to y686). Also seen: the second card's Tieni moves from y682 to y613 when the unsent warning clears shortly after load, and from y682 to y701 after a save. The next step is a confirmation, so a wrong tap is recoverable."
+    },
+    {
+      "id": "FU-B7-Q4-Q5-Q7-Q8",
+      "title": "Left as declared",
+      "evidence": "Q4: signed-out email field at y836 on an 839 px screen, so the input is still below the fold; the false text is replaced. Q5: Elimina still 8 px above Annulla, for the owner. Q7 and Q8 not re-measured, as they are unchanged by this diff."
+    }
+  ],
+  "fieldWalkthrough": {
+    "scene": "390 px phone at the pier, one thumb, two courses D2 and C3 with different codes, keep D2.",
+    "steps": [
+      "1. Open the app. The chooser appears with focus on its heading. Both Tieni are on the first screen, grey until the choice is possible. 2.5 s to enabled on Android Chrome with the fake backend.",
+      "2. Read the two cards: code, counts, last change. No collisions at any size tried.",
+      "3. Optional, 1 tap: Tieni first, then 'Salva prima il file di C3 - 45' on the confirmation. The status names the file and warns about personal data; the tick moves down 88 px and nothing else needs reading.",
+      "4. Tap Tieni on D2. The page opens at 'Tieni D2 - 45?' with the heading at y92.",
+      "5. Tick 'Ho capito' at y369.",
+      "6. Tap 'Elimina C3 - 45 e apri D2 - 45' at y413 (red with white text, about 6.6:1 calculated from its colours).",
+      "7. The server answers and the phone shows the outcome."
+    ],
+    "taps": "3 without the file, 4 with it. Same as round 1.",
+    "seconds": "4.1 s of machine time through to the choice on Android with no human reading. The iPhone engine took 22.5 s to enable and 31.4 s in all; this is Playwright WebKit on Windows with a slow upload through the fake, not a phone measurement.",
+    "readTwice": "2, down from 5. Routine path: 'Non si potrà recuperare' followed by the provider's 7-day sentence (required by decision 17). Failure path only: 'C3 - 45 spariranno'.",
+    "failurePath": "Server silent: Riprova and Torna alla scelta after 20.3-20.6 s on Android and 26.0 s on the iPhone engine, against 185 s with no buttons in round 1. Uploads stuck: 30.7 s on Android, 31.6 s on the iPhone engine, 0 calls to the server, text says nothing was erased."
+  },
+  "evidenceInspected": [
+    "Re-tested blockers: FU-B7-1 FIXED: hang, stuck uploads, Riprova success and Torna on both engines (the Riprova success path on Android only). FU-B7-2 NOT FIXED in the three-course case; fixed for two courses, same count with different work, and other year. FU-B7-3 FIXED on the client path against the fake: unseen course kept, server count stays 3, notice shown, repeated attempt refused.",
+    "FU-B7-I1 fixed: honest no-answer text with the server already erased; Tieni on the erased course gives 'Quel corso non è più nel backup online'.",
+    "FU-B7-I2 fixed: new lead after Riapri; Tieni on the erased course answers gone; Tieni on the kept one is idempotent; server count stays 1 after 3 calls.",
+    "FU-B7-I3 fixed, silently (see FU-B7-R2-Q2). FU-B7-I4 fixed: back to the choice with the notice and 5 buttons.",
+    "FU-B7-I5 fixed: disabled Tieni and Elimina 3.98:1, were 1.54 and 1.68; grey with opacity 1. FU-B7-I6 fixed: triangle on warnings and on the failed save.",
+    "FU-B7-I7 fixed: no dt/dd collisions at 320/200, 320/150, 390/175; buttons stack; page overflow 0; on both engines (390/175 and 320/150 clean on both).",
+    "FU-B7-I8 fixed: focus on H1 and heading on screen at every size (y92, y116, y128, y140), scrollY 0; round 1 had the heading at -689.",
+    "FU-B7-I9 fixed: separate text for error, other-account and reopen, pointing to the bottom of the page. The states were injected through setBackupState.",
+    "FU-B7-I10 handled as declared: reload still happens and typing is lost; the notice says so and is gone after the next reload. FU-B7-I11 handled as declared: file name, personal-data line, status survives Annulla and shows on the confirmation.",
+    "FU-B7-Q1 fixed: order held when C3 became newer. FU-B7-Q3 fixed: Elimina disabled offline with its reason, tick kept, enabled again on return. FU-B7-Q6 singular panel sentence seen; comma before 'e apri' seen with two courses given up.",
+    "Repo journey tests/e2e/b7-two-courses.spec.ts on pixel-7-chrome: 24 passed. Diff d29793d..bdb06d8 of the mock; decisions 22 and 23 in docs/working/OWNER_DECISIONS.md; src/features/courseChoice/CourseChoiceScreen.tsx; src/features/courseChoice/courseChoiceText.ts.",
+    "Screenshots viewed at 390 and 320/200%: the chooser, the confirmation, the failed screen, the notice, the same-code confirmations, the card warning. Specs and shots in my scratchpad's nostromo/r2/."
+  ],
+  "anglesTried": [
+    "Restricted scope for round 2: previous blockers, the fix diff and regressions from those fixes. No new draw; no whole-milestone hunt.",
+    "Falsifying FU-B7-2: two alike, same count with different work, three with two alike, other year.",
+    "Falsifying FU-B7-1: server silent, uploads never finish, answer lost after the server erased, Riprova online and offline.",
+    "Falsifying FU-B7-3 and I2-I4: unseen course on the server, repeated attempt, arrival during the confirmation, the chosen course leaving, Riapri then choosing the opposite.",
+    "Layout at 390, 320/200, 320/150, 390/175; pending warnings at 320/200; pier walk with tap count on both engines."
+  ],
+  "notTested": [
+    "Real phones, real sun or real TalkBack and VoiceOver: all runs are Playwright on Windows. The iphone-13-webkit project is the WebKit engine there, not Safari on iOS.",
+    "The real keep_course SQL function: the server behaviour here is my fake with the same error codes. The migration is read, not run, and awaits the owner.",
+    "A real download: Salva file was checked through the browser's download event and status text only.",
+    "On the iPhone engine: Riprova offline, the unseen-course notice, I1/I2/I4, I5/I6 contrast, I9-I11 and Q1-Q3. These ran on pixel-7-chrome only. The first iPhone batch also had failures in layout 390, layout 320-200, the pier and one same-code test, and the summary was cut off so their messages were not captured. I reran each one alone and all passed. A later 'R1 hang' failure was my spec's 30 s wait on the slow upload; with a longer wait it passed.",
+    "On the iPhone engine 'Serve la connessione' showed during the slow start while online; backup kind 'offline' with my sync route aborted is the probable cause, not confirmed, and I do not report it as a finding.",
+    "Text size is simulated by setting the root font size to 200%, not by the phone's own setting."
+  ]
+}

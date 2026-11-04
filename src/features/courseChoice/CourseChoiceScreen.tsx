@@ -6,6 +6,7 @@ import { type GiveUp, keepCourse, type KeepOutcome } from "@/backup/session"
 import { useBackupState } from "@/backup/useBackupState"
 import { CourseIdentity } from "@/components/CourseIdentity"
 import { Button } from "@/components/ui/button"
+import { FullReset } from "@/features/settings/CourseFiles"
 import {
   contentsOf,
   formatLastChange,
@@ -38,7 +39,11 @@ const SLOW_MS = 30_000
 const GONE_NOTICE =
   "Quel corso non è più nel backup online. Attendi: tra poco si apre il corso rimasto."
 const CHANGED_NOTICE =
-  "Nel backup online c’è qualcosa che questo telefono non ha ancora ricevuto: un altro corso o modifiche fatte altrove. Non è stato eliminato nulla. Aspetta l’aggiornamento e scegli di nuovo."
+  "Nel backup online c’è qualcosa che questo telefono non ha ancora ricevuto: un altro corso o modifiche fatte altrove. Questa scelta non ha eliminato nulla. Aspetta l’aggiornamento e scegli di nuovo."
+const UPDATED_NOTICE =
+  "L’aggiornamento è arrivato: controlla i corsi e scegli di nuovo."
+const CONFIRM_UPDATED_NOTICE =
+  "Nel frattempo è arrivato un aggiornamento: ricontrolla i corsi e spunta di nuovo la casella."
 const LEFT_NOTICE = "Il corso scelto non è più qui: scegli tra quelli rimasti."
 const ARRIVAL_NOTICE =
   "L’app si è riaperta da sola perché è arrivato un altro corso. Se stavi scrivendo qualcosa, non è stato salvato."
@@ -50,8 +55,9 @@ const OFF_LOOK =
 type FailedReason = Exclude<KeepOutcome, "kept" | "gone" | "changed">
 
 type Step =
-  | { kind: "choice"; notice?: string }
-  | { kind: "confirm"; keepId: string }
+  /** `seen`: what was on screen when the notice was true. */
+  | { kind: "choice"; notice?: string; seen?: string }
+  | { kind: "confirm"; keepId: string; seen: string }
   | { kind: "working"; keepId: string; giveUp: GiveUp }
   | { kind: "failed"; keepId: string; giveUp: GiveUp; reason: FailedReason }
   | { kind: "kept"; keepId: string }
@@ -82,6 +88,13 @@ function inShownOrder(shown: CourseChoice[] | null, next: CourseChoice[]) {
   const placeOf = (course: CourseChoice) => place.get(course.id) ?? shown.length
   return [...next].sort((first, second) => placeOf(first) - placeOf(second))
 }
+
+/** Any row of any course changing changes this, whatever its stamp. */
+const seenOf = (courses: CourseChoice[]) =>
+  courses
+    .map((course) => `${course.id}:${course.fingerprint}`)
+    .sort()
+    .join()
 
 /** Rulebook R06/R14: a warning carries the triangle, not colour alone. */
 function Warning({
@@ -284,6 +297,7 @@ function CourseCard({
 function Confirm({
   keep,
   others,
+  updated,
   canChoose,
   onConfirm,
   onCancel,
@@ -291,6 +305,8 @@ function Confirm({
 }: {
   keep: CourseChoice
   others: CourseChoice[]
+  /** What would go changed since this question was first asked. */
+  updated: boolean
   canChoose: boolean
   onConfirm: () => void
   onCancel: () => void
@@ -305,6 +321,7 @@ function Confirm({
       <StepHeading id="course-choice-confirm">
         Tieni {namesOf(keep, all)}?
       </StepHeading>
+      {updated && <Warning role="status">{CONFIRM_UPDATED_NOTICE}</Warning>}
       <p className="mt-3 text-sm leading-[1.45]">
         <strong>{names}</strong>{" "}
         {several ? "saranno eliminati" : "sarà eliminato"} da questo telefono,
@@ -387,7 +404,7 @@ function Confirm({
   )
 }
 
-function failureText(reason: FailedReason, names: string) {
+function failureText(reason: FailedReason, names: string, several: boolean) {
   switch (reason) {
     case "outdated":
       return "Questa versione dell’app non può più eliminare un corso dal backup online: aggiorna l’app. Non è stato eliminato nulla."
@@ -396,7 +413,7 @@ function failureText(reason: FailedReason, names: string) {
     case "refused":
       return "Il backup online ha rifiutato la scelta. Non è stato eliminato nulla."
     case "no-answer":
-      return `Il backup online non ha risposto: la scelta può essere arrivata oppure no. Se è arrivata, ${names} spariranno da soli. Puoi riprovare: ripetere la stessa scelta non elimina altro.`
+      return `Il backup online non ha risposto: la scelta può essere arrivata oppure no. Se è arrivata, ${names} ${several ? "spariranno da soli" : "sparirà da solo"}. Puoi riprovare: ripetere la stessa scelta non elimina altro.`
   }
 }
 
@@ -499,7 +516,11 @@ export function CourseChoiceScreen() {
       else if (outcome === "gone")
         setStep({ kind: "choice", notice: GONE_NOTICE })
       else if (outcome === "changed")
-        setStep({ kind: "choice", notice: CHANGED_NOTICE })
+        setStep({
+          kind: "choice",
+          notice: CHANGED_NOTICE,
+          seen: seenOf(courses),
+        })
       else setStep({ kind: "failed", keepId, giveUp, reason: outcome })
     })
   }
@@ -510,21 +531,20 @@ export function CourseChoiceScreen() {
         canChoose={canChoose}
         files={files}
         // A change in what would go asks again: a ticked box answered another
-        // question (review FU-B7-I3).
-        key={others
-          .map((other) => `${other.id}:${other.lastChange ?? ""}`)
-          .join()}
+        // question (reviews FU-B7-I3, SC-B7-Q11).
+        key={seenOf(others)}
         keep={chosen}
         onCancel={() => setStep({ kind: "choice" })}
         onConfirm={() =>
           run(
             chosen.id,
             Object.fromEntries(
-              others.map((other) => [other.id, other.lastChange]),
+              others.map((other) => [other.id, other.fingerprint]),
             ),
           )
         }
         others={others}
+        updated={seenOf(others) !== step.seen}
       />
     )
 
@@ -563,12 +583,19 @@ export function CourseChoiceScreen() {
           {failureText(
             step.reason,
             joinNames(others.map((other) => namesOf(other, courses))),
+            others.length > 1,
           )}
         </Warning>
+        {step.reason !== "outdated" && !canChoose && (
+          <p className="mt-3 text-sm leading-[1.45]" role="status">
+            Serve la connessione per riprovare.
+          </p>
+        )}
         <div className="mt-3 grid gap-2">
           {step.reason !== "outdated" && (
             <Button
-              className="min-h-11 bg-[#b42318] text-white hover:bg-[#9a1f14]"
+              className={`min-h-11 bg-[#b42318] text-white hover:bg-[#9a1f14] ${OFF_LOOK}`}
+              disabled={!canChoose}
               onClick={() => run(chosen.id, step.giveUp)}
             >
               Riprova
@@ -619,7 +646,11 @@ export function CourseChoiceScreen() {
         </p>
       )}
       {step.kind === "choice" && step.notice && (
-        <Warning role="status">{step.notice}</Warning>
+        <Warning role="status">
+          {step.seen && step.seen !== seenOf(courses)
+            ? UPDATED_NOTICE
+            : step.notice}
+        </Warning>
       )}
       {readOnly ? (
         <p className="mt-3 text-sm leading-[1.45]">
@@ -651,11 +682,18 @@ export function CourseChoiceScreen() {
           email={email}
           files={files}
           key={course.id}
-          onKeep={() => setStep({ kind: "confirm", keepId: course.id })}
+          onKeep={() =>
+            setStep({
+              kind: "confirm",
+              keepId: course.id,
+              seen: seenOf(courses.filter((other) => other.id !== course.id)),
+            })
+          }
           readOnly={readOnly}
         />
       ))}
       <OnlineBackup choosing />
+      <FullReset courseLabel="i corsi" keepsBackup />
     </section>
   )
 }

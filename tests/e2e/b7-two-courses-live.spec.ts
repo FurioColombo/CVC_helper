@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto"
+
 import { type BrowserContext, expect, type Page, test } from "@playwright/test"
 
 import {
@@ -30,19 +32,37 @@ const headers = (access: string) => ({
   "x-cvc-app-version": "0.5.3",
 })
 
-/** Seen far ahead of every stamp here, unless a test says otherwise. */
-const ALL_SEEN = "9999-01-01T00:00:00.000Z"
-
 function keepCourse(
   access: string,
   keepId: string,
-  giveUp: Record<string, string | null> = {},
+  giveUp: Record<string, string> = {},
 ) {
   return fetch(`${base()}/rest/v1/rpc/keep_course`, {
     method: "POST",
     headers: headers(access),
     body: JSON.stringify({ keep_id: keepId, give_up: giveUp }),
   })
+}
+
+/** What the app sends for a course here: it holds only these two tables. */
+async function fingerprintOf(id: string, access: string) {
+  const lines = async (table: string, filter: string) =>
+    (
+      (await serverRows(table, access, `,updatedAt&${filter}`)) as Array<{
+        id: string
+        updatedAt: string | null
+      }>
+    ).map((row) => `${table}\t${row.id}\t${row.updatedAt ?? ""}`)
+  return createHash("sha256")
+    .update(
+      [
+        ...(await lines("courses", `id=eq.${id}`)),
+        ...(await lines("students", `courseId=eq.${id}`)),
+      ]
+        .sort()
+        .join("\n"),
+    )
+    .digest("hex")
 }
 
 async function installed(access: string) {
@@ -312,24 +332,27 @@ test("two devices choosing at once keep exactly one course, and only the account
     await serverCourse(access, a, "Prima")
     await serverCourse(access, b, "Seconda")
 
+    const seenA = await fingerprintOf(a, access)
+    const seenB = await fingerprintOf(b, access)
+
     // Another account cannot keep, or erase, this one's courses.
-    const refused = await keepCourse(stranger, a, { [b]: ALL_SEEN })
+    const refused = await keepCourse(stranger, a, { [b]: seenB })
     expect(refused.status).toBe(400)
     expect(((await refused.json()) as { code: string }).code).toBe("CVGON")
     expect(await serverRows("courses", access)).toHaveLength(2)
 
-    // What the choice did not show stops it: a course, or a newer change.
+    // What the choice did not show stops it: a course, or another fingerprint.
     const unnamed = await keepCourse(access, a)
     expect(((await unnamed.json()) as { code: string }).code).toBe("CVNEW")
     const older = await keepCourse(access, a, {
-      [b]: "2000-01-01T00:00:00.000Z",
+      [b]: "0".repeat(64),
     })
     expect(((await older.json()) as { code: string }).code).toBe("CVNEW")
     expect(await serverRows("courses", access)).toHaveLength(2)
 
     const answers = await Promise.all([
-      keepCourse(access, a, { [b]: ALL_SEEN }),
-      keepCourse(access, b, { [a]: ALL_SEEN }),
+      keepCourse(access, a, { [b]: seenB }),
+      keepCourse(access, b, { [a]: seenA }),
     ])
     const statuses = answers.map(({ status }) => status).sort()
     expect(statuses[0]).toBeLessThan(300)
@@ -341,7 +364,9 @@ test("two devices choosing at once keep exactly one course, and only the account
     // The same choice again, as after a lost answer, changes nothing; the
     // course given up cannot be uploaded back.
     const lost = left[0]!.id === a ? b : a
-    const again = await keepCourse(access, left[0]!.id, { [lost]: ALL_SEEN })
+    const again = await keepCourse(access, left[0]!.id, {
+      [lost]: lost === a ? seenA : seenB,
+    })
     expect(again.status).toBeLessThan(300)
     expect(await serverRows("courses", access)).toHaveLength(1)
     const back = await fetch(`${base()}/rest/v1/courses`, {
