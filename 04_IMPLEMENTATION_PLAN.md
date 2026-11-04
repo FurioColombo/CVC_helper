@@ -97,7 +97,7 @@ data-integrity and security/privacy reviews.
 ## B5 — Restore on a new device
 
 **Category:** FEATURE
-**Status:** AWAITING_OWNER
+**Status:** IN_PROGRESS
 
 Signing in on a device without a course downloads it and opens it, then
 reopens so the session binds the restored course (SC-B1-Q5); on a device
@@ -117,7 +117,7 @@ data-integrity and sync-chaos reviews.
 ## B6 — Erase on the server
 
 **Category:** FEATURE
-**Status:** AWAITING_OWNER
+**Status:** IN_PROGRESS
 
 Erasing the course and the full reset also delete the server copy when
 signed in; offline, the deletion completes on reconnect. Impostazioni states

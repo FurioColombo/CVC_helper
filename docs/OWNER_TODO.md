@@ -76,7 +76,7 @@ Use the test address below and the linked device instructions.
 
 **What to do:**
 
-The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-dev; the agent's live checks afterwards are in the milestone's evidence.
+The owner reported: The owner ran the migration once in cvc-helper-dev. Resuming the milestone to reverify it on the current source reset this item, but the migration stays in the database. Nothing to run again.
 
 **Expected:** A signed-in account can read the minimum writer version and nothing else; a restored course adopts it, so an app older than it opens the course read-only.
 
@@ -100,11 +100,11 @@ The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-
 6. Optional, on the PC: Impostazioni &gt; Backup online &gt; Esci, then Azzera tutti i dati locali. Create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
 7. Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped.
 
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+
 **Expected:** An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.
 
-**Build:** `6e17c1d313eabf15f6afdded9c401b36fa5fabe8`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
+**Build:** No test build is assigned yet.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
@@ -118,7 +118,7 @@ The owner reported: The owner ran the migration in the SQL Editor of cvc-helper-
 
 **What to do:**
 
-The owner reported: The owner ran the migration once in cvc-helper-dev. A later B6 code fix reset this item, but the migration stays in the database: the live erase checks at 6e17c1d read and use erased_courses. Nothing to run again.
+The owner reported: The owner ran the migration once in cvc-helper-dev. Resuming the milestone to reverify it on the current source reset this item, but the migration stays in the database. Nothing to run again.
 
 **Expected:** The server records the ids of erased courses (no course data, readable only by their owner) and refuses that course from any phone afterwards.
 
