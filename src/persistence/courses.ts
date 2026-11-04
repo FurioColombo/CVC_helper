@@ -1,7 +1,7 @@
 import type { CourseDetails } from "@/domain/course"
 import { appChannelConfig } from "@/runtimeConfig"
 import { db } from "@/persistence/db"
-import { prepareDatabase } from "@/persistence/migrations"
+import { holdCourse, prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 import { stamp, TOUCH } from "@/persistence/stamp"
 import { adoptCreatedCourse } from "@/persistence/courseSession"
@@ -72,6 +72,7 @@ export async function saveActiveCourse(
         now,
       ],
     )
+    await holdCourse(transaction, course.id)
   })
 
   adoptCreatedCourse(db, course.id)

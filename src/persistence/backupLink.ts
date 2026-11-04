@@ -1,5 +1,6 @@
 import type { PowerSyncBackendConnector } from "@powersync/web"
 
+import { boundCourseId } from "@/persistence/courseSession"
 import { db } from "@/persistence/db"
 import { connectSync, disconnectSync } from "@/persistence/syncConnection"
 import { releaseSyncHold, syncHeldForErase } from "@/persistence/serverErasures"
@@ -188,15 +189,19 @@ export async function courseLeftWithBackup() {
 }
 
 /**
- * B7: the download brought another course to this device; the app then
- * reopens on the choice between them, since its screens can no longer save.
+ * B7: the download changed what this session opened on, and its screens can no
+ * longer save, so the app reopens. It brought a second course ("several"), or
+ * swapped the session's course for another in one step ("swapped"): a device
+ * that never saw both, when the choice was made elsewhere (review SC-B7-2).
  */
-export async function secondCourseArrived() {
+export async function courseChangedUnderSession() {
   await prepareDatabase(db)
-  const [row] = await db.getAll<{ n: number }>(
-    "SELECT count(*) AS n FROM courses WHERE active = 1",
+  const courses = await db.getAll<{ id: string }>(
+    "SELECT id FROM courses WHERE active = 1",
   )
-  return (row?.n ?? 0) > 1
+  if (courses.length > 1) return "several"
+  const bound = boundCourseId(db)
+  return courses[0] && bound && courses[0].id !== bound ? "swapped" : null
 }
 
 export function databaseConnected() {

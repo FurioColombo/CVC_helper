@@ -1,0 +1,23 @@
+migrated, last file run twice
+ok   a course not shown refuses the whole choice 
+ok   naming all of them keeps one 
+ok   the same choice again, as after a lost answer 
+ok   the course given up is gone 
+ok   a newer row of the course given up refuses 
+ok   no last change seen, with rows there, refuses 
+ok   null give_up refuses 
+ok   what it saw is what is there 
+ok   a newer change of the course kept does not matter 
+ok   a course switched off is neither named nor touched 
+ok   it cannot be the one kept 
+ok   another account's course is not this one's to keep 
+ok   nor to give up 
+ok   an outdated writer changes nothing 
+ok   anon may not call it 
+ok   the old one-argument function is gone 
+ok   200 opposite choices at once keep exactly one 
+    tally {"error CVGON|kept|1|1|1":200}
+ok   a course arriving during the wait stays, with no record 
+ok   an upload of the course given up during the erase is refused 
+ok   an ordinary edit of a course still passes the trigger 
+ALL PASSED

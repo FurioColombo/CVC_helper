@@ -67,12 +67,19 @@ upload.
 one of them offline, leave the account with two. A session opened on several
 courses binds none and shows only the choice between them
 (`src/features/courseChoice/`); a device holding one course reopens on that
-screen when a second arrives. Keeping one is one transaction on the server
-(`keep_course`, `supabase/migrations/20261104000000_keep_course.sql`): it locks
-the owner's course rows and refuses a course already gone (CVGON), so two
-devices choosing at once keep exactly one. The device's unsent changes go up
-first and nothing is erased locally: the download removes the others from every
-device, and the next open clears their refused changes and free pages.
+screen when a second arrives, and one whose course the download swapped for
+another reopens on that one. Keeping one is one transaction on the server
+(`keep_course`, `supabase/migrations/20261104000000_keep_course.sql`), under a
+lock per owner that `refuse_erased_course` shares. The app names the courses it
+offered to give up, each with the last change it saw there, and the server
+erases those and no others: a course already gone answers CVGON, so two devices
+choosing at once keep exactly one, and another active course or a newer change
+of one given up answers CVNEW, so a choice is never made on what the owner did
+not see. The device's unsent changes go up first and nothing is erased locally:
+the download removes the others from every device. Each writable open marks the
+courses it holds (`local:held-course:<id>`); a mark whose course is gone clears
+that course's refused changes and records a compaction before running it, so a
+cut one is finished later. This housekeeping can never fail an open.
 
 **Online backup (0.5.0).** Signed out, nothing connects. Sign-in is by a link
 emailed by Supabase Auth (PKCE, so it signs in only in the browser that asked

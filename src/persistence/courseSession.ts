@@ -46,6 +46,11 @@ export async function bindCourseSession(database: PowerSyncDatabase) {
   if (!generations.has(database)) generations.set(database, session)
 }
 
+/** The one course this session opened on: none on several, or on an empty device. */
+export function boundCourseId(database: PowerSyncDatabase) {
+  return generations.get(database)?.courseId ?? null
+}
+
 /** Only the successful first-course creation may adopt its newly created ID. */
 export function adoptCreatedCourse(
   database: PowerSyncDatabase,

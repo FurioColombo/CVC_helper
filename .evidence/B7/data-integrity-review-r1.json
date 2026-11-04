@@ -1,0 +1,98 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B7",
+  "commit": "d29793d",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "DI-B7-1",
+      "title": "Keeping one course erases every other course of the account, including one this device never showed",
+      "evidence": "The app sends only keep_id (src/backup/session.ts:623-625). The server then erases everything else the owner holds: supabase/migrations/20261104000000_keep_course.sql, `array_remove(owned, keep_id)` and `delete ... c.id <> keep_id`. The confirmation names only the courses in this device's local list (src/features/courseChoice/CourseChoiceScreen.tsx:203-221). The choice is enabled as soon as the backup state says connected (CourseChoiceScreen.tsx:440-441). That state is set without waiting for the download, because connect is started and not awaited (src/backup/session.ts:302, 315). So a phone back from offline can confirm before it has received a third course that another device has already uploaded. Observed: the confirmation said 'C3 - 45 sarà eliminato', singular, with no third course named. After the keep the fake server held only the kept course, and course C was gone unseen, with no file saved and no way back. The same path removes an active=0 course. The chooser showed 2 cards with 3 rows on the device, and the inactive course was erased too. A course inserted between the lock and the delete would also go, with no erased_courses record, because READ COMMITTED gives the delete a new snapshot (from reading the SQL, not run).",
+      "reproduction": "Throwaway spec in my scratchpad's b7di/ (DI-1, DI-7). Device holds A and B and shows the chooser. The fake server also holds C, set while the screen is open. Tieni A, tick the box, Elimina. Expected: C stays, or the server refuses because the account changed. Observed: server courses = [A]. The fake applies the same rule as the SQL; the SQL itself has not been run. Suggested fix direction: send the ids shown and have the server refuse if the owner holds any other course.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7: 'The app shows both courses and the owner chooses which to keep; it never erases one by itself'; adversarial checklist 'three courses', 'both devices choosing differently, one offline'"
+    },
+    {
+      "id": "DI-B7-2",
+      "title": "A device that never opened on several keeps the erased course's refused data and free pages for good, and stays on the erased course's screen",
+      "evidence": "settleSeveralCourses cleans only if the marker exists (src/persistence/migrations.ts:153), and the marker is written only when an open sees n > 1 (:144-151). The checklist device never does. Device D holds only B and is offline with edits to B. Another device keeps A. On reconnect D's edits are refused while B is still here, so courseStillHere records them (src/persistence/uploadRefusals.ts:92-112). Then one checkpoint swaps B for A atomically, so n stays 1. courseLeftThisDevice is false because A is here, so the B6 cleanup at migrations.ts:277 does not run either. Observed after the swap: `courseLeftWithBackup` and `secondCourseArrived` returned {left:false, second:false}, so src/App.tsx does not reload, and the screen still listed the erased course's student. After reopening, the app opened on C3 - 45, but uploadRefusals still held refusal:9 and refusal:10 of the erased course, with no marker. A second reopen left both in place. No compaction runs on this path either. A device read-only at the time also never marks, because migrations.ts:244-247 returns before settle (code reading only). validateCourseState takes no refusals, courseLeftThisDevice needs zero courses, settleSeveralCourses needs the marker, and the b7 specs test only a device that opened on several, so none of them notices.",
+      "reproduction": "Throwaway spec in my scratchpad's b7di/ (DI-2). Synthetic refusals are planted as recordUploadOutcome would keep them. One writeTransaction inserts A into ps_data__synced_courses and deletes B with its students, imitating the download as downloadRemoves does. Read the two trigger functions, then reload twice and read uploadRefusals. Expected: the refusals of B are gone and the database compacted. Observed: both refusals stay after both reopens. The real sync stream was not used.",
+      "specRef": "03_TECHNICAL_DECISIONS.md, 'Several courses on one account (B7)'; 04 B7 checklist 'both devices choosing differently, one offline'; B6 rule SP-B6-1"
+    },
+    {
+      "id": "DI-B7-3",
+      "title": "settleSeveralCourses can fail the whole open, which brings back the error screen B7 removes; two tabs reach it with no planted fault",
+      "evidence": "settleSeveralCourses runs inside prepareDatabase's try block, which swallows only ReadOnlyDataError (src/persistence/migrations.ts:289-294). A throw rejects getActiveCourses, and App shows 'Non riesco ad aprire i dati locali'. Three routes were reproduced. (a) The marker check sits outside the write transaction (:141-150), so two tabs race. One tab showed the error screen on the first simultaneous reopen. A plain second insert fails with 'UNIQUE constraint failed: ps_data_local__meta.id'. Riprova heals this route. (b) A failing marker write, standing in for quota or a full disk, was simulated with a trigger: chooser false, error screen true. (c) A malformed uploadRefusals.data hits an unguarded JSON.parse at :206: the error screen appears after the course has left and is still there after Riprova. This is a corrupt state; recordUploadOutcome itself writes valid JSON. From code reading only, a download arriving between bindCourseSession and the marker insert also makes the guard throw CourseReplacedError on that same path. Marker and cleanup are housekeeping and must not be able to fail an open; use INSERT OR REPLACE and catch.",
+      "reproduction": "Throwaway specs in my scratchpad's b7di/: DI-4 and its attribution pair for route a, DI-3b for route b, DI-3a for route c. Observed output: 'FLOW error screens 1 after 1 simultaneous reopens', 'RIPROVA heals? true', 'CHOOSER? false | ERROR SCREEN? true', 'STILL AFTER RIPROVA? true'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7 success predicate: 'an account holding two courses never locks a device'"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "DI-B7-Q1",
+      "title": "The marker is deleted before the compaction, so a kill or failure during VACUUM leaves the given-up course in free pages with no retry",
+      "evidence": "src/persistence/migrations.ts:154-160 commits the marker delete, then runs `compactCourseDatabase(database).catch(() => {})`, without setting COMPACTION_PENDING_ID. The import does set it in its transaction (src/persistence/courseArchive.ts:162-165, UG3 review DI-UG3-1).",
+      "reproduction": "Code comparison of the two paths; no kill during VACUUM was run.",
+      "specRef": "03_TECHNICAL_DECISIONS.md B7 paragraph; review SP-B6-1"
+    },
+    {
+      "id": "DI-B7-Q2",
+      "title": "The owner can make the irreversible choice, and save 'the file first', from data not yet refreshed",
+      "evidence": "canChoose needs only backup.kind === 'connected' and navigator.onLine (src/features/courseChoice/CourseChoiceScreen.tsx:440-441), and 'connected' does not mean the download has caught up (src/backup/session.ts:302, 315). The counts and last-change shown, and the file offered, are local. After a long offline period they can understate a course that another device has grown since, and that may decide which course the owner gives up.",
+      "reproduction": "Code reading; the fake backend has no stream, so this is not exercised.",
+      "specRef": "04 B7: 'the owner can see both, export either and keep one'"
+    },
+    {
+      "id": "DI-B7-Q3",
+      "title": "Stuck on 'Aggiornamento dei corsi…' with no button when the chosen course leaves and two remain",
+      "evidence": "src/features/courseChoice/CourseChoiceScreen.tsx:356-363. The comment says 'back to what is here', but the code returns a status line and never resets the step. Observed after 8 s: screen 'Aggiornamento dei corsi…', 0 buttons, 2 courses on the device. Only closing the app recovers. Reachable with three or more courses when the course in the confirm step leaves alone.",
+      "reproduction": "Throwaway spec in my scratchpad's b7di/ (DI-6): three courses, open the confirm step for C3, remove that course's row as a download would. Expected: back to the choice. Observed: stuck.",
+      "specRef": "04 B7 checklist 'three courses'"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "DI-B7-N1",
+      "title": "Refused changes of the course given up are neither counted nor warned about, and they are lost at the next open",
+      "evidence": "unsentByCourse reads only ps_crud (src/persistence/courseChoice.ts:36-39), and Confirm warns only about that count. dropRefusalsOfGoneCourses then deletes the refusals. Impostazioni, which lists them, is out of reach from the chooser."
+    },
+    {
+      "id": "DI-B7-N2",
+      "title": "'Non è cambiato nulla' can be false, and CVGON can give the wrong reason",
+      "evidence": "A lost answer after the server committed reaches the catch in src/backup/session.ts:630-632 as 'failed', and the screen then says 'Non è cambiato nulla'. Riprova is idempotent, so no data is harmed. Separately, CVGON always reads 'già stato eliminato su un altro dispositivo', also for a course whose own upload this device had refused and that never reached the server."
+    },
+    {
+      "id": "DI-B7-N3",
+      "title": "A stale tab's refused import still closes the chooser in other tabs",
+      "evidence": "importCourseArchive calls disconnectForErase, which announces 'changed', before the guarded transaction (src/persistence/courseArchive.ts:135-136, src/persistence/serverErasures.ts:60). The guard then refuses the import, so nothing changes, yet another tab shows 'Il corso è cambiato'. Reopening recovers it. Code reading only."
+    }
+  ],
+  "evidenceInspected": [
+    "04_IMPLEMENTATION_PLAN.md B7; 03_TECHNICAL_DECISIONS.md B7 paragraph; docs/working/OWNER_DECISIONS.md decisions 21-22",
+    "git diff 49a4535..d29793d and the persistence, backup and chooser modules it touches; the server migrations; the b7 specs",
+    "Ran tests/e2e/b7-two-courses.spec.ts on desktop-chrome-backup: 11 passed",
+    "Throwaway specs in my scratchpad's b7di/ against the real app in Chromium with a fake backend, synthetic data only: DI-1 through DI-7 plus a two-tab attribution pair",
+    "Held: dropRefusalsOfGoneCourses' standing set uses the same predicate as courseLeftThisDevice",
+    "Held: the unknown-course branch of dropRefusalsOfGoneCourses is effectively unreachable: the connector turns an edit of a present row into a whole-row PUT carrying courseId",
+    "Held: the guard change in assertCourseSession; no path for a stale screen write was found",
+    "Held: no chooser reopen loop; repairs on a several session; per-course export; an interrupted choice erases nothing locally before the server answers",
+    "SQL read, not run: FOR UPDATE then CVGON for the second chooser, security invoker, writer-check triggers, erased_courses grants and policy, cascade on the course foreign keys"
+  ],
+  "anglesTried": {
+    "seed": 100499,
+    "lenses": [
+      "12. Two tabs of the app writing the same course",
+      "11. Storage eviction and quota"
+    ],
+    "wildcard": "A device that never passes through several: one checkpoint swaps its only course for the kept one. Also treating the new cleanup step in prepareDatabase as a new way for an open to fail."
+  },
+  "notTested": [
+    "keep_course has never executed anywhere the reviewer could reach; every server claim comes from reading the SQL or from the fake that imitates it",
+    "A real PowerSync stream: the download was imitated by writing to ps_data__synced_* in one transaction",
+    "Real quota or browser eviction",
+    "Android and WebKit; the two-tab race ran on desktop Chromium only",
+    "A kill during VACUUM",
+    "Adoption by repairRows of a NULL-courseId orphan of the given-up course into the kept course",
+    "Cross-course references"
+  ]
+}

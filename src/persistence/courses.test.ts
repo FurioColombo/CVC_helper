@@ -16,6 +16,7 @@ const database = vi.hoisted(() => ({
 vi.mock("@/persistence/db", () => ({ db: database }))
 vi.mock("@/persistence/migrations", () => ({
   prepareDatabase: vi.fn(async () => "write"),
+  holdCourse: vi.fn(async () => {}),
 }))
 
 import type { CourseDetails } from "@/domain/course"

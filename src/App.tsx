@@ -60,12 +60,13 @@ import {
   StorageStatus,
 } from "@/features/settings/CourseFiles"
 import { CourseChoiceScreen } from "@/features/courseChoice/CourseChoiceScreen"
+import { rememberCourseArrival } from "@/persistence/courseChoice"
 import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
 import { useBackupState } from "@/backup/useBackupState"
 import {
   awaitingAccountCourse,
   courseLeftWithBackup,
-  secondCourseArrived,
+  courseChangedUnderSession,
   deviceCourseId,
   deviceSyncMode,
   databaseConnected,
@@ -955,11 +956,13 @@ export function App() {
     if (!ready) return
     return onDatabaseStatus(() => {
       if (!databaseConnected()) return
-      void Promise.all([courseLeftWithBackup(), secondCourseArrived()]).then(
-        ([left, second]) => {
-          if (left || second) window.location.reload()
-        },
-      )
+      void Promise.all([
+        courseLeftWithBackup(),
+        courseChangedUnderSession(),
+      ]).then(([left, changed]) => {
+        if (changed === "several") rememberCourseArrival()
+        if (left || changed) window.location.reload()
+      })
     })
   }, [ready])
 

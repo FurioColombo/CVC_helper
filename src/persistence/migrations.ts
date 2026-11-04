@@ -18,6 +18,7 @@ import {
   repairRows,
 } from "@/persistence/repairs"
 import {
+  COMPACTION_PENDING_ID,
   compactCourseDatabase,
   compactEmptyCourseDatabase,
   compactionPending,
@@ -125,39 +126,68 @@ export async function courseLeftThisDevice(
 }
 
 /**
- * B7: set while a device opens on several courses. Once one remains, the
- * courses given up may still sit in free database pages, and this device's
- * refused changes of them may still hold their data: the next open clears
- * both, wherever the choice was made (src/persistence/uploadRefusals.ts has
- * the same rule for a refusal arriving later).
+ * B7: one mark per course this device has held. A mark whose course is gone
+ * means the course left, wherever the choice was made and whatever else
+ * arrived with it: a device can go from one course to another in one
+ * checkpoint and never hold both (review SC-B7-2). Its refused changes may
+ * still hold its data and its rows sit in free pages, so the next writable
+ * open clears both, and the pending record lets a later open finish a
+ * compaction cut short. This is housekeeping: it must never fail an open.
  */
-const SEVERAL_COURSES_ID = "local:several-courses"
+const HELD_COURSE_PREFIX = "local:held-course:"
 
-async function settleSeveralCourses(database: PowerSyncDatabase) {
-  const [row] = await database.getAll<{ n: number }>(
-    "SELECT count(*) AS n FROM courses WHERE active = 1",
+export function holdCourse(
+  transaction: Pick<PowerSyncDatabase, "execute">,
+  courseId: string,
+) {
+  return transaction.execute(
+    "INSERT OR REPLACE INTO meta(id, value) VALUES (?, 1)",
+    [`${HELD_COURSE_PREFIX}${courseId}`],
   )
-  const n = row?.n ?? 0
-  const marked = await database.getAll("SELECT 1 FROM meta WHERE id = ?", [
-    SEVERAL_COURSES_ID,
-  ])
-  if (n > 1) {
-    if (!marked.length)
-      await database.writeTransaction((transaction) =>
-        transaction.execute("INSERT INTO meta(id, value) VALUES (?, 1)", [
-          SEVERAL_COURSES_ID,
-        ]),
+}
+
+async function settleHeldCourses(database: PowerSyncDatabase) {
+  try {
+    const here = (
+      await database.getAll<{ id: string }>("SELECT id FROM courses")
+    ).map(({ id }) => id)
+    const marks = (
+      await database.getAll<{ id: string }>(
+        "SELECT id FROM meta WHERE id LIKE ?",
+        [`${HELD_COURSE_PREFIX}%`],
       )
-    return
+    ).map(({ id }) => id)
+    const heldHere = new Set(here.map((id) => `${HELD_COURSE_PREFIX}${id}`))
+    const gone = marks.filter((mark) => !heldHere.has(mark))
+    const missing = here.filter(
+      (id) => !marks.includes(`${HELD_COURSE_PREFIX}${id}`),
+    )
+    if (!gone.length && !missing.length) return
+    await database.writeTransaction(async (transaction) => {
+      for (const id of missing) await holdCourse(transaction, id)
+      if (!gone.length) return
+      await dropRefusalsOfGoneCourses(transaction)
+      for (const mark of gone)
+        await transaction.execute("DELETE FROM meta WHERE id = ?", [mark])
+      await transaction.execute(
+        "INSERT OR REPLACE INTO meta(id, value) VALUES (?, 1)",
+        [COMPACTION_PENDING_ID],
+      )
+    })
+    if (gone.length) await compactCourseDatabase(database).catch(() => {})
+  } catch (error) {
+    if (error instanceof ReadOnlyDataError) throw error
   }
-  if (!marked.length) return
-  await database.writeTransaction(async (transaction) => {
-    await dropRefusalsOfGoneCourses(transaction)
-    await transaction.execute("DELETE FROM meta WHERE id = ?", [
-      SEVERAL_COURSES_ID,
-    ])
-  })
-  await compactCourseDatabase(database).catch(() => {})
+}
+
+/** A refused change's course, by its stored row if that is readable at all. */
+function storedCourseId(data: string | null) {
+  try {
+    const row = JSON.parse(data ?? "null") as { courseId?: unknown } | null
+    return row?.courseId
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -203,8 +233,7 @@ async function dropRefusalsOfGoneCourses(
     let course: unknown =
       refusal.tableName === "courses"
         ? refusal.rowId
-        : (JSON.parse(refusal.data ?? "null") as { courseId?: unknown } | null)
-            ?.courseId
+        : storedCourseId(refusal.data)
     if (typeof course !== "string") {
       const [row] = (COURSE_TABLES as readonly string[]).includes(
         refusal.tableName,
@@ -286,7 +315,7 @@ export function prepareDatabase(
           // (reviews SP-B6-Q5, DI-B6-R2-Q1).
           await compactEmptyCourseDatabase(database).catch(() => {})
         }
-        await settleSeveralCourses(database)
+        await settleHeldCourses(database)
       } catch (error) {
         // A newer app raised the record meanwhile; the guard marked the
         // database read-only (src/persistence/writeGuard.ts).

@@ -612,6 +612,10 @@ describe("course archive persistence", () => {
     importedTables.students[0]!.courseNote = "Replacement note"
     const imported = archiveOf(importedTables, PREVIOUS_DATA_VERSION)
     const sqlite = createSqlite(currentTables, NEWER_DATA_VERSION, 11)
+    // Already held, as on any device that has opened this course (B7).
+    sqlite
+      .prepare("INSERT INTO meta(id, value) VALUES (?, 1)")
+      .run("local:held-course:course-1")
     const beforeRows = courseRows(sqlite)
     const beforeMeta = metaRows(sqlite)
     const handle = makeHandle(sqlite, {

@@ -153,4 +153,20 @@ tutti i dati locali` erases the course from the backup first; without
     devices choosing together can never erase both: this needs one more
     migration from you (B7-KEEP-RULE). A device's unsent changes go up first,
     so the queue holds none of the course given up, and without a connection
-    good enough for that the choice reports it could not finish.
+    good enough for that the choice reports it could not finish. After the
+    first reviews: the server erases only the courses this phone showed, and
+    refuses if it holds another course or a newer change of one given up, so
+    the phone then asks you to wait for the update and choose again. The lead
+    now says "Su questo telefono ci sono ancora tutti", because "Non è stato
+    cancellato nulla" could be false right after a choice. The online backup
+    section with Esci stays under the courses in every state, which the mock
+    showed only when signing in was needed. Saving a file now names it and says
+    it holds students' personal data. The mock is corrected.
+23. **An offline erase and a later choice (taken 2026-11-04, for your review).**
+    Phone B erases course K offline. Phone A then keeps K and gives up X. When B
+    connects, its waiting erase also removes K, as every erase does (decision
+    17, B6), so the account ends with neither. Each step was your own explicit
+    choice and needs two phones acting against each other, and server archiving
+    in a later version changes this area anyway, so I leave the rule as it is. A
+    phone with an erase still waiting already says so in Impostazioni. Tell me
+    if keeping should win instead.

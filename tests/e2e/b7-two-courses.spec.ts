@@ -6,8 +6,9 @@ import { evidenceOutputPath } from "./evidence"
 
 /**
  * B7: an account holding several courses never locks a device. A fake backend
- * (no network leaves the test) keeps the server's rule: `keep_course` keeps
- * one course and erases the others, and refuses a course already gone (CVGON).
+ * (no network leaves the test) keeps the server's rule: `keep_course` erases
+ * what the app named, refuses a course already gone (CVGON) and refuses
+ * whatever the app did not see (CVNEW).
  * The fake has no sync stream, so `downloadRemoves` does what the download does
  * after the server's answer; the real one is in b7-two-courses-live.spec.ts.
  * Synthetic people only.
@@ -41,7 +42,8 @@ async function withBackend(page: Page) {
     return server.get(name)!
   }
   const state = {
-    keepAnswer: "server" as "server" | "unavailable",
+    keepAnswer: "server" as
+      "server" | "unavailable" | "refused" | "lost" | "hang",
     release: null as null | (() => void),
     held: null as null | Promise<void>,
     keeps: [] as Array<{ keep: string; queuedRows: number }>,
@@ -68,16 +70,34 @@ async function withBackend(page: Page) {
     if (name === "rpc/keep_course") {
       if (state.keepAnswer === "unavailable")
         return json({ message: "unavailable" }, 503)
-      const keep = (request.postDataJSON() as { keep_id: string }).keep_id
+      if (state.keepAnswer === "refused")
+        return json({ code: "42501", message: "refused" }, 403)
+      if (state.keepAnswer === "hang") return
+      const { keep_id: keep, give_up: giveUp } = request.postDataJSON() as {
+        keep_id: string
+        give_up: Record<string, string | null>
+      }
       state.keeps.push({ keep, queuedRows: table("students").size })
       if (!table("courses").has(keep))
         return json({ code: "CVGON", message: "gone" }, 400)
-      for (const id of [...table("courses").keys()])
-        if (id !== keep) {
-          table("courses").delete(id)
-          for (const [rowId, row] of table("students"))
-            if (row.courseId === id) table("students").delete(rowId)
-        }
+      const others = [...table("courses").keys()].filter((id) => id !== keep)
+      const newer = (row: Row, id: string) =>
+        typeof row.updatedAt === "string" && row.updatedAt > (giveUp[id] ?? "")
+      for (const id of others)
+        if (
+          !(id in giveUp) ||
+          newer(table("courses").get(id)!, id) ||
+          [...table("students").values()].some(
+            (row) => row.courseId === id && newer(row, id),
+          )
+        )
+          return json({ code: "CVNEW", message: "changed" }, 400)
+      for (const id of others) {
+        table("courses").delete(id)
+        for (const [rowId, row] of table("students"))
+          if (row.courseId === id) table("students").delete(rowId)
+      }
+      if (state.keepAnswer === "lost") return route.abort("connectionreset")
       return route.fulfill({ status: 204 })
     }
     if (name.startsWith("rpc/")) return json(null)
@@ -206,6 +226,110 @@ async function downloadRemoves(page: Page, id: string) {
   }, id)
 }
 
+/** The download's one checkpoint that swaps a course for another (SC-B7-2). */
+async function downloadSwaps(page: Page, from: string, to: string) {
+  await page.evaluate(
+    async ({ from, to }) => {
+      const load = (path: string) => import(/* @vite-ignore */ path)
+      const { db } = (await load(
+        "/src/persistence/db.ts",
+      )) as typeof import("../../src/persistence/db")
+      await db.writeTransaction(async (tx) => {
+        await tx.execute(
+          `INSERT INTO ps_data__synced_courses(id, data)
+           SELECT ?, json_set(data, '$.level', 3, '$.label', 'C3 45 2026', '$.family', 'Cabinato')
+           FROM ps_data__synced_courses WHERE id = ?`,
+          [to, from],
+        )
+        await tx.execute(
+          "DELETE FROM ps_data__synced_students WHERE json_extract(data, '$.courseId') = ?",
+          [from],
+        )
+        await tx.execute("DELETE FROM ps_data__synced_courses WHERE id = ?", [
+          from,
+        ])
+      })
+    },
+    { from, to },
+  )
+}
+
+/** The fake has no sync stream: this is its status saying it is connected. */
+async function reportConnected(page: Page) {
+  await page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { db } = (await load(
+      "/src/persistence/db.ts",
+    )) as typeof import("../../src/persistence/db")
+    const connected = Object.create(db.currentStatus, {
+      connected: { value: true },
+    }) as typeof db.currentStatus
+    Object.defineProperty(db, "currentStatus", {
+      configurable: true,
+      get: () => connected,
+    })
+    ;(
+      db as unknown as {
+        iterateListeners: (
+          call: (listener: {
+            statusChanged?: (status: typeof connected) => void
+          }) => void,
+        ) => void
+      }
+    ).iterateListeners((listener) => listener.statusChanged?.(connected))
+  })
+}
+
+/** Rows planted as they would be kept, with what the open then finds. */
+async function localState(page: Page) {
+  return page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { db } = (await load(
+      "/src/persistence/db.ts",
+    )) as typeof import("../../src/persistence/db")
+    return {
+      refusals: (
+        await db.getAll<{ id: string }>(
+          "SELECT id FROM uploadRefusals ORDER BY id",
+        )
+      ).map(({ id }) => id),
+      marks: (
+        await db.getAll<{ id: string }>(
+          "SELECT id FROM meta WHERE id LIKE 'local:held-course:%' ORDER BY id",
+        )
+      ).map(({ id }) => id.slice("local:held-course:".length)),
+      pending: (
+        await db.getAll(
+          "SELECT 1 FROM meta WHERE id = 'local:compaction-pending'",
+        )
+      ).length,
+    }
+  })
+}
+
+async function plantRefusals(
+  page: Page,
+  refusals: Array<{ id: string; data: string }>,
+) {
+  await page.evaluate(async (refusals) => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { db } = (await load(
+      "/src/persistence/db.ts",
+    )) as typeof import("../../src/persistence/db")
+    await db.writeTransaction(async (tx) => {
+      for (const { id, data } of refusals)
+        await tx.execute(
+          `INSERT INTO uploadRefusals(id, tableName, rowId, op, data, reason, refusedAt)
+           VALUES (?, 'students', ?, 'PUT', ?, 'access', '2026-11-03T08:05:00.000Z')`,
+          [id, `${id}-row`, data],
+        )
+    })
+  }, refusals)
+}
+
+const openError = (page: Page) =>
+  page.getByText("Non riesco ad aprire i dati locali")
+
 const choiceHeading = (page: Page) =>
   page.getByRole("heading", { name: "Scegli il corso da tenere" })
 const card = (page: Page, code: RegExp) =>
@@ -237,6 +361,11 @@ test("two courses open on the choice, and keeping one opens it with every row", 
     course.locator("p", { hasText: "Ultima modifica:" })
   await expect(lastChange(cabinato)).toContainText("2026")
   await expect(lastChange(deriva)).toContainText("oggi,")
+
+  // Signing out stays within reach on this screen (review SP-B7-4).
+  await expect(
+    page.getByRole("button", { name: "Esci", exact: true }),
+  ).toBeVisible({ timeout: 15_000 })
 
   // The confirmation: nothing irreversible until the box is ticked.
   await expect(
@@ -294,10 +423,20 @@ test("each course saves its own file, also offline, where the choice waits for s
   await expect(
     deriva.getByRole("button", { name: "Tieni questo corso" }),
   ).toBeDisabled()
+  // The approved disabled look, readable in the sun (review FU-B7-I5).
+  await expect(
+    deriva.getByRole("button", { name: "Tieni questo corso" }),
+  ).toHaveCSS("color", "rgb(101, 118, 139)")
+  await expect(
+    deriva.getByRole("button", { name: "Tieni questo corso" }),
+  ).toHaveCSS("opacity", "1")
 
   const download = page.waitForEvent("download")
   await cabinato.getByRole("button", { name: "Salva file" }).click()
   const saved = await download
+  await expect(cabinato.getByRole("status")).toContainText(
+    "dati personali degli allievi",
+  )
   const archive = JSON.parse(readFileSync(await saved.path(), "utf8")) as {
     tables: {
       courses: Array<{ id: string }>
@@ -323,7 +462,7 @@ test("each course saves its own file, also offline, where the choice waits for s
   expect(backend.state.keeps).toEqual([])
 })
 
-test("an erase that could not finish changes nothing and can be tried again", async ({
+test("a server that does not answer leaves the choice open and says it may have arrived", async ({
   page,
 }) => {
   const backend = await withBackend(page)
@@ -336,7 +475,7 @@ test("an erase that could not finish changes nothing and can be tried again", as
   await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
   await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
   await expect(
-    page.getByText(/Non sono riuscito a eliminare C3 - 45 dal backup online/),
+    page.getByText(/Il backup online non ha risposto.*può essere arrivata/),
   ).toBeVisible()
   expect(await courseIds(page)).toHaveLength(2)
   expect(
@@ -371,7 +510,7 @@ test("a course another device already gave up cannot be kept here", async ({
   await page.getByRole("checkbox", { name: /Ho capito: D2/ }).check()
   await page.getByRole("button", { name: /Elimina D2 - \d+ e apri C3/ }).click()
   await expect(
-    page.getByText(/già stato eliminato su un altro dispositivo/),
+    page.getByText(/Quel corso non è più nel backup online/),
   ).toBeVisible()
   expect([...backend.table("courses").keys()]).toEqual([kept])
   expect(await courseIds(page)).toHaveLength(2)
@@ -410,7 +549,7 @@ test("unsent changes are shown on their course and go up before the choice", asy
     .getByRole("button", { name: "Tieni questo corso" })
     .click({ timeout: 15_000 })
   await expect(
-    page.getByText(/3 modifiche di C3 - 45 .* andranno perse/),
+    page.getByText(/3 modifiche di C3 - 45 .* andranno al backup online/),
   ).toBeVisible()
   await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
   await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
@@ -505,7 +644,7 @@ test("two courses with the same code are told apart at the irreversible step", a
     .click({ timeout: 15_000 })
   await expect(page.getByText(/\(0 allievi, /).first()).toBeVisible()
   await expect(
-    page.getByRole("heading", { name: /\(1 allievi, oggi/ }),
+    page.getByRole("heading", { name: /\(1 allievo, oggi/ }),
   ).toBeVisible()
 })
 
@@ -609,17 +748,12 @@ test("the refused changes of a course given up leave with it", async ({
     const { db } = (await load(
       "/src/persistence/db.ts",
     )) as typeof import("../../src/persistence/db")
-    return {
-      refusals: (
-        await db.getAll<{ id: string }>("SELECT id FROM uploadRefusals")
-      ).map(({ id }) => id),
-      mark: await db.getAll(
-        "SELECT 1 FROM meta WHERE id = 'local:several-courses'",
-      ),
-    }
+    return (
+      await db.getAll<{ id: string }>("SELECT id FROM uploadRefusals")
+    ).map(({ id }) => id)
   })
-  expect(left.refusals).toEqual(["refusal:kept"])
-  expect(left.mark).toEqual([])
+  expect(left).toEqual(["refusal:kept"])
+  expect(await localState(page)).toMatchObject({ marks: [kept], pending: 0 })
 })
 
 test("the screen fits a narrow phone with large buttons", async ({
@@ -656,5 +790,320 @@ test("the screen fits a narrow phone with large buttons", async ({
   await page.screenshot({
     path: evidenceOutputPath(testInfo, "B7", "confirm-320.png"),
     fullPage: true,
+  })
+})
+
+test("at 320 px with 200% text the counts stay in their card and each step opens at its question", async ({
+  page,
+}, testInfo) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  const lower = page.getByRole("article").last()
+  await expect(
+    lower.getByRole("button", { name: "Tieni questo corso" }),
+  ).toBeEnabled({ timeout: 15_000 })
+  const spill = await page.evaluate(() =>
+    [
+      ...document.querySelectorAll(
+        "main article, main article dl, main article dt",
+      ),
+    ]
+      .filter((element) => element.scrollWidth > element.clientWidth + 1)
+      .map((element) => element.tagName),
+  )
+  expect(spill).toEqual([])
+  await page.screenshot({
+    path: evidenceOutputPath(testInfo, "B7", "choice-320-200.png"),
+    fullPage: true,
+  })
+  await lower.getByRole("button", { name: "Tieni questo corso" }).click()
+  const question = page.getByRole("heading", { name: /^Tieni / })
+  await expect(question).toBeFocused()
+  expect((await question.boundingBox())!.y).toBeGreaterThanOrEqual(0)
+  await page.getByRole("button", { name: "Annulla" }).click()
+  await expect(choiceHeading(page)).toBeFocused()
+  expect((await choiceHeading(page).boundingBox())!.y).toBeGreaterThanOrEqual(0)
+})
+
+test("a course on the server this phone never received stops the choice, and nothing goes", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  const kept = await twoCourses(page, backend)
+  await expect.poll(() => backend.table("courses").size).toBe(2)
+  // A third device uploaded it; this phone's download has not brought it.
+  backend.table("courses").set("mai-ricevuto", {
+    id: "mai-ricevuto",
+    updatedAt: "2026-11-01T10:00:00.000Z",
+  })
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(page.getByText(/non ha ancora ricevuto/)).toBeVisible()
+  await expect(choiceHeading(page)).toBeVisible()
+  expect([...backend.table("courses").keys()].sort()).toEqual(
+    [kept, "c0c0c0c0-0000-4000-8000-000000000001", "mai-ricevuto"].sort(),
+  )
+})
+
+test("a change of the course given up this phone has not seen stops the choice", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await expect.poll(() => backend.table("students").size).toBe(3)
+  const other = "c0c0c0c0-0000-4000-8000-000000000001"
+  backend.table("students").set("visto-altrove", {
+    id: "visto-altrove",
+    courseId: other,
+    updatedAt: "2099-01-01T00:00:00.000Z",
+  })
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(page.getByText(/non ha ancora ricevuto/)).toBeVisible()
+  expect(backend.table("courses").has(other)).toBe(true)
+})
+
+test("an answer lost after the server erased can be asked again, with no false comfort", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  const kept = await twoCourses(page, backend)
+  backend.state.keepAnswer = "lost"
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(page.getByText(/può essere arrivata/)).toBeVisible()
+  await expect(page.getByText(/Non è stato eliminato nulla/)).toHaveCount(0)
+  expect([...backend.table("courses").keys()]).toEqual([kept])
+  backend.state.keepAnswer = "server"
+  await page.getByRole("button", { name: "Riprova" }).click()
+  await expect(page.getByText(/Scelta salvata nel backup online/)).toBeVisible()
+})
+
+test("a request that hangs ends on a screen with a way out", async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  backend.state.keepAnswer = "hang"
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(page.getByText(/non chiudere/i)).toBeVisible()
+  await expect(page.getByRole("button", { name: "Riprova" })).toBeVisible({
+    timeout: 35_000,
+  })
+  await page.getByRole("button", { name: "Torna alla scelta" }).click()
+  await expect(choiceHeading(page)).toBeVisible()
+})
+
+test("a server refusal says nothing was erased", async ({ page }) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  backend.state.keepAnswer = "refused"
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }).click()
+  await expect(
+    page.getByText(/ha rifiutato la scelta. Non è stato eliminato nulla/),
+  ).toBeVisible()
+})
+
+test("a change in what would go unticks the box", async ({ page }) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  const box = page.getByRole("checkbox", { name: /Ho capito/ })
+  await box.check()
+  await anotherCourse(page, {
+    id: "c0c0c0c0-0000-4000-8000-000000000002",
+    level: 1,
+    students: 1,
+  })
+  await expect(
+    page.getByRole("button", { name: /Elimina .* e apri D2/ }),
+  ).toContainText("C1 - 45", { timeout: 10_000 })
+  await expect(
+    page.getByRole("checkbox", { name: /Ho capito/ }),
+  ).not.toBeChecked()
+  await expect(
+    page.getByRole("button", { name: /Elimina .* e apri D2/ }),
+  ).toBeDisabled()
+})
+
+test("the course chosen leaving returns to the choice between those left", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await anotherCourse(page, {
+    id: "c0c0c0c0-0000-4000-8000-000000000002",
+    level: 1,
+    students: 1,
+  })
+  await page.reload()
+  await card(page, /C3 - 45/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await downloadRemoves(page, "c0c0c0c0-0000-4000-8000-000000000001")
+  await expect(page.getByText(/Il corso scelto non è più qui/)).toBeVisible({
+    timeout: 10_000,
+  })
+  await expect(page.getByRole("article")).toHaveCount(2)
+  await expect(
+    page.getByRole("button", { name: "Tieni questo corso" }).first(),
+  ).toBeEnabled()
+})
+
+test("the confirmation waits for signal, and asks nothing of the server offline", async ({
+  page,
+  context,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  await card(page, /D2/)
+    .getByRole("button", { name: "Tieni questo corso" })
+    .click({ timeout: 15_000 })
+  await page.getByRole("checkbox", { name: /Ho capito: C3 - 45/ }).check()
+  await context.setOffline(true)
+  await expect(
+    page.getByText(/Serve la connessione per scegliere/),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: /Elimina C3 - 45 e apri D2/ }),
+  ).toBeDisabled()
+  expect(backend.state.keeps).toEqual([])
+})
+
+test("a device that never held both: the swap reopens it and clears the course that left", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  const [first] = await signedInCourse(page, backend)
+  const arrived = "c0c0c0c0-0000-4000-8000-00000000000a"
+  await plantRefusals(page, [
+    {
+      id: "refusal:left",
+      data: JSON.stringify({ courseId: first, firstName: "Rifiutata" }),
+    },
+  ])
+  expect((await localState(page)).marks).toEqual([first])
+  const reopened = page.waitForEvent("load")
+  await downloadSwaps(page, first!, arrived)
+  await reportConnected(page)
+  await reopened
+  await expect(
+    page.getByRole("heading", { name: /C3 - \d+ \| \d{4}/ }),
+  ).toBeVisible({ timeout: 15_000 })
+  expect(await localState(page)).toEqual({
+    refusals: [],
+    marks: [arrived],
+    pending: 0,
+  })
+})
+
+test("a second course arriving says typing may be lost, once", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  await signedInCourse(page, backend)
+  const reopened = page.waitForEvent("load")
+  await anotherCourse(page, { id: "c0c0c0c0-0000-4000-8000-000000000001" })
+  await reportConnected(page)
+  await reopened
+  await expect(choiceHeading(page)).toBeVisible()
+  await expect(page.getByText(/Se stavi scrivendo qualcosa/)).toBeVisible()
+  await page.reload()
+  await expect(choiceHeading(page)).toBeVisible()
+  await expect(page.getByText(/Se stavi scrivendo qualcosa/)).toHaveCount(0)
+})
+
+test("two tabs opening on both courses at once both reach the choice", async ({
+  page,
+  context,
+}) => {
+  const backend = await withBackend(page)
+  await twoCourses(page, backend)
+  const second = await context.newPage()
+  await withBackend(second)
+  await second.goto("/")
+  await expect(choiceHeading(second)).toBeVisible()
+  for (let round = 0; round < 4; round += 1) {
+    await page.evaluate(async () => {
+      const load = (path: string) => import(/* @vite-ignore */ path)
+      const { db } = (await load(
+        "/src/persistence/db.ts",
+      )) as typeof import("../../src/persistence/db")
+      await db.execute("DELETE FROM meta WHERE id LIKE 'local:held-course:%'")
+    })
+    await Promise.all([page.reload(), second.reload()])
+    await expect(choiceHeading(page)).toBeVisible()
+    await expect(choiceHeading(second)).toBeVisible()
+    await expect(openError(page)).toHaveCount(0)
+    await expect(openError(second)).toHaveCount(0)
+  }
+})
+
+test("housekeeping cannot fail an open: a write that fails, a refusal that cannot be read", async ({
+  page,
+}) => {
+  const backend = await withBackend(page)
+  const kept = await twoCourses(page, backend)
+  // A write that fails, as on a full disk.
+  await page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { db } = (await load(
+      "/src/persistence/db.ts",
+    )) as typeof import("../../src/persistence/db")
+    await db.execute("DELETE FROM meta WHERE id LIKE 'local:held-course:%'")
+    await db.execute(
+      `CREATE TRIGGER b7_full_disk BEFORE INSERT ON ps_data_local__meta
+       WHEN NEW.id LIKE 'local:held-course:%'
+       BEGIN SELECT RAISE(ABORT, 'database or disk is full'); END`,
+    )
+  })
+  await page.reload()
+  await expect(choiceHeading(page)).toBeVisible()
+  await expect(openError(page)).toHaveCount(0)
+  await page.evaluate(async () => {
+    const load = (path: string) => import(/* @vite-ignore */ path)
+    const { db } = (await load(
+      "/src/persistence/db.ts",
+    )) as typeof import("../../src/persistence/db")
+    await db.execute("DROP TRIGGER b7_full_disk")
+  })
+  await page.reload()
+  await expect(choiceHeading(page)).toBeVisible()
+
+  // A refusal that cannot be read, once a course has left.
+  await plantRefusals(page, [{ id: "refusal:broken", data: "{not json" }])
+  await downloadRemoves(page, "c0c0c0c0-0000-4000-8000-000000000001")
+  await expect(
+    page.getByRole("heading", { name: /D2 - \d+ \| \d{4}/ }),
+  ).toBeVisible({ timeout: 15_000 })
+  await expect(openError(page)).toHaveCount(0)
+  expect(await localState(page)).toEqual({
+    refusals: [],
+    marks: [kept],
+    pending: 0,
   })
 })

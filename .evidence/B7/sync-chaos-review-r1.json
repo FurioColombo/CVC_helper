@@ -1,0 +1,139 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B7",
+  "commit": "d29793d",
+  "verdict": "FAIL",
+  "summary": "Two blockers. (1) keep_course erases every other course of the account, including one the owner was never shown. (2) A phone offline with edits of the course given up never passes through the several-courses state, so it keeps the refused personal data, skips compaction and does not reopen. The two-device core holds: 200 of 200 concurrent opposite choices on real Postgres kept exactly one course, and a given-up course cannot be recreated outside a narrow race (SC-B7-5). All server results come from local Postgres 17.5 running the repository's migrations. All device results come from a fake backend with a simulated download, because the live spec cannot run yet.",
+  "blockers": [
+    {
+      "id": "SC-B7-1",
+      "title": "keep_course erases courses the owner never saw",
+      "evidence": "keep_course receives only keep_id (src/backup/session.ts:623-625) and deletes every other course of the owner (supabase/migrations/20261104000000_keep_course.sql:35-39). The screen names only the courses in the local database (src/features/courseChoice/CourseChoiceScreen.tsx:203-205). Postgres, migrations applied, courses K, X and Z with one student on Z: keep_course('K') returned 'kept', leaving courses [K], erased [X, Z], students []. Browser test P7: with Z only on the fake server, the confirmation said 'C3 - 45 sarà eliminato' and named nothing else. The request body was {\"keep_id\":\"...\"}. Also in P7, a course arriving after the box was ticked left the box ticked and the button enabled, with its label changed to 'Elimina C3 - 45 e C1 - 45 e apri D2 - 45'. Riprova on the failed screen (CourseChoiceScreen.tsx:422-427) also re-sends the choice with no new confirmation.",
+      "reproduction": "Device A shows K and X and opens the confirmation. Device C uploads a new course Z, which A's download has not delivered yet, because the stream is lagging or down (canChoose does not require the stream, see SC-B7-4). A confirms K. Expected: Z stays, or the choice reopens with three courses. Observed: Z and all its rows are erased and recorded in erased_courses, so C's later edits of Z are refused too. The fake backend's keep_course copies the same rule, so the server half of this rests on the Postgres run. Scratch: my scratchpad's scripts/keep.mjs T1, pw/p.spec.ts P7.",
+      "reproduced": "Yes on Postgres for the erase. Yes in the browser for what the screen names and what it sends. Not run on the live two-device stack.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7: 'The app shows both courses and the owner chooses which to keep; it never erases one by itself'; adversarial checklist 'three courses'. Suggested fix: send the ids shown and refuse (a new code, then re-show the screen) if the server holds any other course, and reset the ticked box when the list changes."
+    },
+    {
+      "id": "SC-B7-2",
+      "title": "A phone offline with edits of the course given up keeps its refused data and does not reopen",
+      "evidence": "Phone 2 went offline holding only course X, before course K reached it. Phone 1 chose K. When phone 2 returned, its upload ran first and the refusal was recorded while X was still present (src/persistence/uploadRefusals.ts courseStillHere). The download then removed X and brought K in one step, so the count of active courses stayed at 1. SEVERAL_COURSES_ID was never set (src/persistence/migrations.ts:144-153). courseLeftThisDevice is false because a course exists (:116-117), and secondCourseArrived is false (src/persistence/backupLink.ts:194-200), so src/App.tsx:958-961 does not reload. Observed on phone 2: 'NOT reloaded after the swap: true'. After a manual reopen: courses [K], mark 0, and uploadRefusals still holds the whole student row of X, with firstName, surname and declaredAgeAtCourseStart. Impostazioni then shows 'Il backup ha rifiutato 1 modifica: restano su questo telefono. Riguardano un corso che il backup non attribuisce a questo account.' Riprova keeps it listed ('1 modifica non si può reinviare da qui'). Only 'Togli dall’elenco' removes it. A save before reopening ends on 'Il corso è cambiato'. Neither compaction path runs in this flow, by reading of migrations.ts:153 and :277.",
+      "reproduction": "Scratch: my scratchpad's pw/sig.spec.ts (seed 669937790) and pw/q.spec.ts Q2, on two browser contexts sharing a fake server with the migrations' rules (CVERA, 42501). 1. Both devices make a course and upload it. 2. Device 2 goes offline and adds a student. 3. Device 1 receives the other course, opens the choice and keeps its own. 4. Device 2 comes back and its queue drains with a refusal. 5. The simulated download swaps X for K in one write. 6. A status event fires as connected. Expected per 03_TECHNICAL_DECISIONS.md: the app reopens, the refused changes are cleared and the free pages compacted. Observed: none of these.",
+      "reproduced": "Yes on the fake backend. The status event and the download are simulated. Inferred, not run on a live stream: the real first checkpoint after reconnecting applies X's removal and K's arrival together. This is the first scenario named in the brief.",
+      "specRef": "03_TECHNICAL_DECISIONS.md 'Several courses on one account (B7)': 'the next open clears their refused changes and free pages'; comment at src/persistence/migrations.ts:127-133 ('wherever the choice was made'); B6 review SP-B6-1. Suggested fix: at each synced open, drop refusals of courses no longer here whatever the mark says, compact once when any were dropped, and have App reload when the bound course id is no longer the one present."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SC-B7-3",
+      "title": "Two tabs opening on two courses for the first time: one lands on 'Non riesco ad aprire i dati locali'",
+      "evidence": "settleSeveralCourses reads the mark outside the write, then runs a plain INSERT (src/persistence/migrations.ts:141-150). Both tabs read 'no mark'; the second insert fails with 'UNIQUE constraint failed: ps_data_local__meta.id', and prepareDatabase rejects. Q1, first ever open: ['ERROR SCREEN', 'choice'], with only Riprova, which then reaches the choice. P2, with the mark deleted before each run: 11 error screens in 12 runs. Each tab reloads on its own status event in real use, so the simultaneous reload in these tests is close to that case, not identical.",
+      "reproduction": "pw/q.spec.ts Q1, desktop Chrome, two tabs of one context: add a second course, then reload both tabs together. Fix: INSERT OR REPLACE.",
+      "specRef": "04 B7 success predicate 'never locks a device'. Not a blocker because Riprova clears it, but it is the SC-DT-9 screen again."
+    },
+    {
+      "id": "SC-B7-4",
+      "title": "The choice is offered with no fresh download, so the owner decides on old counts",
+      "evidence": "canChoose is connected && online && !readOnly (CourseChoiceScreen.tsx:440-441). backup.kind 'connected' is set after the connect is started without being awaited (src/backup/session.ts:302, :315). In tests/e2e/b7-two-courses.spec.ts the sync route always aborts and 'Tieni questo corso' still enables and works. So a phone back after days offline can erase a course from a stale card, before any download arrives. Stale data can make the course look emptier than it is, while another phone has days of work in it. The card gives no sign of staleness.",
+      "reproduction": "Run tests/e2e/b7-two-courses.spec.ts first test (stream aborted, buttons enabled, choice made). The scenario with days of edits on another phone follows by reading and was not run end to end.",
+      "specRef": "04 B7 'the owner can see both'; lens 10. Same remedy as SC-B7-1: wait for a completed checkpoint since connecting, and have the server check what was shown."
+    },
+    {
+      "id": "SC-B7-5",
+      "title": "keep_course under READ COMMITTED: a new course can go without a record, and a given-up course can return",
+      "evidence": "T3: the lock wait was forced with an uncommitted update of K. Z was committed during the wait. The locking SELECT did not see Z but the later DELETE did (keep_course.sql:35-39), giving courses [K], erased [X]. Z's next upload was accepted, so Z returned with no children. T5: keep_course was paused inside its cascade by a row lock on a student of X. An upsert of X passed refuse_erased_course, because the record was still uncommitted, waited on the primary key and then inserted X: courses [K, X], erased [X]. X's later edits get CVERA. keep_course('X') then succeeded, leaving a kept course that still carries its record, and an edit of its course row is refused with CVERA (T5d). The account is back on the choice with no data loss unless X is then kept. Both windows are short and were widened with held locks.",
+      "reproduction": "My scratchpad's scripts/keep.mjs T3 and T5. Fix ideas: delete only the ids in array_remove(owned, keep_id); take a per-owner transaction lock in both keep_course and refuse_erased_course; delete the record of the course kept.",
+      "specRef": "03_TECHNICAL_DECISIONS.md B7 paragraph; 20261028000000_course_erase.sql 'nothing brings it back'."
+    },
+    {
+      "id": "SC-B7-6",
+      "title": "After a lost answer the screen says nothing changed when the server has already erased",
+      "evidence": "P6, keep_course applied on the server and the answer aborted. Screen: 'Non sono riuscito a eliminare C3 - 45 dal backup online. Non è cambiato nulla: i corsi sono ancora qui.' Server: 1 course. keepCourse cannot tell a lost answer from a refusal (src/backup/session.ts:623-631). The same applies to 'Non è stato cancellato nulla' (CourseChoiceScreen.tsx:470-471) after a kill between the answer and the download. The state stays safe: repeating the choice is idempotent (T7c) and the other course answers CVGON (T7d). CVGON's notice then blames 'un altro dispositivo', which can be wrong after a lost answer.",
+      "reproduction": "pw/p.spec.ts P6.",
+      "specRef": "Brief: lost answer; 04 B7 checklist 'a choice interrupted between its erase and the reopen'."
+    },
+    {
+      "id": "SC-B7-7",
+      "title": "A hung keep_course request leaves no way out of 'Non chiudere l’app'",
+      "evidence": "The RPC has no timeout (src/backup/session.ts:623-625). The 30 s limit covers only the queue wait. P4, request never answered: after 75 s the screen is still 'Invio le modifiche e aggiorno il backup online. Non chiudere l’app.' with 0 buttons. A hung request on a connection dead since airplane mode is already documented in this repository (src/backup/session.ts:328-336).",
+      "reproduction": "pw/p.spec.ts P4.",
+      "specRef": "04 B7 'never locks a device'; owner check B4-PHONE-UPLOADS."
+    },
+    {
+      "id": "SC-B7-8",
+      "title": "An offline erase of the course kept, arriving later, leaves the account with no course",
+      "evidence": "Phone B erases K offline, and its record waits. Phone A then keeps K, erasing X. When B connects, settleServerErasures deletes K unconditionally (src/backup/session.ts:440-442). The final server state in T9 was courses [], erased [K, X]. Each action was a deliberate choice and the unconditional erase is documented in B6, but the owner chose K, saw 'no recovery' for X, and ends with neither. Phone A's screen gives no warning that this can happen.",
+      "reproduction": "scripts/keep.mjs T9 replays the same statements on Postgres. The device half was read, not run in the app.",
+      "specRef": "04 B7 'every device of the account opens on that one course with no row of it lost'. The owner should rule on which action wins."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B7-Q1",
+      "title": "Stuck on 'Aggiornamento dei corsi…' when the chosen course leaves but two others remain",
+      "evidence": "CourseChoiceScreen.tsx:356-363 has a comment saying 'back to what is here', but the step is never reset. P5 with three courses, confirmation open and the chosen course removed: after 10 s the screen shows only that line, 0 buttons. Reaching it needs an erase from another phone or a further upload, so it is rare.",
+      "reproduction": "pw/p.spec.ts P5."
+    },
+    {
+      "id": "SC-B7-Q2",
+      "title": "Unsent changes of the given-up course are uploaded before being erased, while the screen says they will be lost",
+      "evidence": "src/backup/session.ts:607-622 waits for them to upload, and the repository spec records queuedRows: 3 before keep. The text says 'andranno perse' (CourseChoiceScreen.tsx:228-229), though a course never uploaded does reach the provider's backups for up to 7 days. The general retention line is shown, but not this consequence.",
+      "reproduction": "tests/e2e/b7-two-courses.spec.ts 'unsent changes are shown on their course and go up before the choice'."
+    },
+    {
+      "id": "SC-B7-Q3",
+      "title": "uploadsOutdated is per tab",
+      "evidence": "src/backup/session.ts:63, :294, :619. If another tab's connector meets CVOLD while holding the upload, this tab waits 30 s and reports 'failed' with Riprova instead of asking for an update. Read only, not run.",
+      "reproduction": "By reading."
+    },
+    {
+      "id": "SC-B7-Q4",
+      "title": "After 'kept', a newly arrived course stays hidden until Riapri",
+      "evidence": "On step 'kept' the screen says the others will disappear, but a course uploaded after the choice leaves two forever, and the poll reopens only at one or none (CourseChoiceScreen.tsx:290, :390-399). Read only.",
+      "reproduction": "By reading."
+    },
+    {
+      "id": "SC-B7-Q5",
+      "title": "No Esci or reset on the choice screen when connected",
+      "evidence": "OnlineBackup renders only when needsAccess (CourseChoiceScreen.tsx:457, :512). The original defect listed these as out of reach. The success predicate does not require them.",
+      "reproduction": "By reading."
+    },
+    {
+      "id": "SC-B7-Q6",
+      "title": "The plan's B7 evidence line omits the security/privacy review the manifest now requires",
+      "evidence": "04_IMPLEMENTATION_PLAN.md:163 against .milestones/manifest.json requiredReviews.",
+      "reproduction": "By reading."
+    },
+    {
+      "id": "SC-B7-Q7",
+      "title": "readCourseChoices is not guarded against overlapping runs",
+      "evidence": "Lens 10, P3 with 1601 queued changes, 1200 of them PATCHes that name no course: one read took 524 ms, then 1030 ms. It runs every 3 s and on each status change with no overlap guard (CourseChoiceScreen.tsx:297-306). The flood itself drained: the choice completed in 7.1 s with 60 ms added per request, so this is cost only.",
+      "reproduction": "pw/p.spec.ts P3."
+    }
+  ],
+  "evidenceInspected": [
+    "Read: 04_IMPLEMENTATION_PLAN.md B7; 03_TECHNICAL_DECISIONS.md B7 paragraph; docs/working/OWNER_DECISIONS.md 20-22; .evidence/B4/sync-chaos-review-desktop-round-3.json (SC-DT-9); git show d29793d; src/backup/session.ts, connector.ts, uploadPolicy.ts; src/persistence/migrations.ts, courseChoice.ts, courseSession.ts, writeGuard.ts, backupLink.ts, uploadRefusals.ts, serverErasures.ts, courseArchive.ts, repairs.ts; src/App.tsx; CourseChoiceScreen.tsx; all supabase migrations; powersync/sync-config.yaml; the SDK's upload loop (shared-internals AbstractStreamingSyncImplementation.js:89-150).",
+    "Repository runs at d29793d source: tests/e2e/b7-two-courses.spec.ts on desktop-chrome-backup, 11 passed. Vitest courseSession, courses, courseChoiceText, backendSchema: 53 passed. HEAD moved to f920fe4 during the review, changing only .milestones/owner-checks.json and docs/OWNER_TODO.md, so the source tested is unchanged.",
+    "Local Postgres 17.5 (embedded, scratch only, never the live backend) with all six migrations and a stub auth.uid(), run as role authenticated under RLS. Held: T2, 200 concurrent runs of keep(K) against keep(X): 101 and 99, always exactly one course, the loser CVGON, the right student kept. T4: a child of X committed during the wait goes with X. T6: outdated writer gets CVOLD and nothing changes. T7: another account's course gets CVGON and is untouched; repeating is idempotent; a course already gone gets CVGON. T8: after the choice, an edit of X's course row gets CVERA, a child of X gets 42501, a child of K is accepted.",
+    "Throwaway Playwright specs in my scratchpad's pw/, two browser contexts sharing a fake server: signature scenario plus P2-P7, Q1, Q2, Q5.",
+    "Held by test: lens 3 and 4, Q5 on the choice screen. The same student in two crews of a session exports with the latest crew only, and the same boat in two crews exports with the later crew holding it and the earlier one unassigned. Per-course export is correct. Repairs are safe on two courses (repairRows guards on count = 1). Placement ids are scoped by record UUIDs, so two courses cannot collide.",
+    "Held by reading, SDK and stream down: a failed upload exits the loop without the stream (line 137), the queue wait then ends at 30 s as 'failed', nothing is erased, and the watchdog restarts the connection, so a later Riprova can go through. A refused upload empties the queue and the choice proceeds; refusals of the kept course stay listed. Outdated with a full queue returns 'outdated'. A signed-out or other-account device cannot call keep: canChoose is false, and a foreign token answers CVGON with no erase."
+  ],
+  "anglesTried": {
+    "seed": 669937790,
+    "lenses": [
+      "3 (index 2): the same student placed in two crews of the same session on two devices, carried through the choice and its export",
+      "10 (index 9): days offline, then a flood of queued changes"
+    ],
+    "wildcard": "The new bookkeeping exists only on a several-courses open: a device that goes from one course straight to another in one checkpoint never sets the mark (SC-B7-2), and that mark's first write races across two tabs (SC-B7-3). Also keep_course's second snapshot and uncommitted record under READ COMMITTED (SC-B7-5).",
+    "signature": "Deterministic two-device scenario on one fake server: D1 and D2 each make and upload a course; D2 goes offline and edits; D1 chooses; D1 applies the download; D2 reconnects, uploads, then applies the download. Checked on both devices and the server. Converged on one course everywhere, but D2's edit was neither kept nor visibly resolved by a documented rule. The seed only set the logged draws; the order was fixed by hand to the brief's scenario."
+  },
+  "notTested": [
+    "The live spec, a real PowerSync stream and the real SDK checkpoint: the function is not installed and the brief forbids touching the backend. The download and the connected status event were simulated, so SC-B7-2's one-step swap is inferred for the real stream.",
+    "PostgREST itself: headers and the role were set directly on the Postgres session.",
+    "Contents of free database pages: the missing compaction in SC-B7-2 comes from the code path, not from inspecting pages.",
+    "Restore on an empty device receiving several courses: read only (finishRestore reloads, the session binds several, the mark clears), since the fake has no stream.",
+    "A real stale 0.5.3 app on the account: read only. It keeps the old lock until updated; its refused edits take the SC-B7-2 path after the update.",
+    "Physical phones, WebKit, a real killed app, and clock skew beyond the ordering of the cards."
+  ]
+}

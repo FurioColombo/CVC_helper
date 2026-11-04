@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
   APP_VERSION_HEADER,
   COURSE_GONE_CODE,
+  COURSE_SET_CHANGED_CODE,
   ERASED_COURSE_CODE,
   OUTDATED_WRITER_CODE,
 } from "@/backup/uploadPolicy"
@@ -217,11 +218,28 @@ describe("the server's erased courses", () => {
     expect(keep).toContain("security invoker")
     expect(keep).toContain("for update")
     expect(keep).toContain(`errcode = '${COURSE_GONE_CODE}'`)
+    expect(keep).toContain(`errcode = '${COURSE_SET_CHANGED_CODE}'`)
     expect(keep).toContain("insert into public.erased_courses")
     expect(keep).toContain(
-      "revoke all on function public.keep_course(text) from public, anon",
+      "revoke all on function public.keep_course(text, jsonb) from public, anon",
     )
-    expect(keep).toContain('c."ownerId" = auth.uid() and c.id <> keep_id')
+    // It erases what the app named, never "all but one" (review SC-B7-1).
+    expect(keep).toContain('c."ownerId" = auth.uid() and c.id = any(others)')
+    expect(keep).not.toContain("c.id <> keep_id")
+    expect(keep).toContain("c.active = 1")
+    // The same lock on both sides of the erase (review SC-B7-5).
+    expect(keep.match(/pg_advisory_xact_lock/g)).toHaveLength(2)
+  })
+
+  it("checks a newer change in every table of a course given up (B7)", () => {
+    const keep = readFileSync(
+      resolve(root, "supabase/migrations/20261104000000_keep_course.sql"),
+      "utf8",
+    )
+    for (const table of COURSE_TABLES.filter((name) => name !== "courses"))
+      expect(keep).toMatch(
+        new RegExp(`from public\\."?${table}"? r where r\\."courseId"`),
+      )
   })
 
   it("keeps the record to its owner, with no course data", () => {

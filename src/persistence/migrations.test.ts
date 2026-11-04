@@ -228,6 +228,44 @@ describe("prepareDatabase", () => {
     expect(database.writeTransaction).not.toHaveBeenCalled()
   })
 
+  // Review SP-B7-2: the record goes in with the cleanup, so a compaction cut
+  // short after it is finished at the next open.
+  it("records the compaction of a course that left before it starts", async () => {
+    const { database } = preparable(false)
+    const executed: Array<[string, unknown[]]> = []
+    database.getAll.mockImplementation(async (sql: string) =>
+      sql.includes("id LIKE")
+        ? [{ id: "local:held-course:gone", value: 1 }]
+        : [],
+    )
+    database.writeTransaction.mockImplementation(
+      async (callback: (tx: unknown) => unknown) =>
+        callback({
+          getAll: async () => [],
+          execute: async (statement: string, parameters: unknown[]) => {
+            executed.push([statement, parameters])
+          },
+        }),
+    )
+    const cut = vi.fn(async () => {
+      throw new Error("closed")
+    })
+    Object.assign(database, { writeLock: cut })
+
+    await expect(prepareDatabase(database as never, [], APP)).resolves.toBe(
+      "write",
+    )
+    expect(executed).toContainEqual([
+      "DELETE FROM meta WHERE id = ?",
+      ["local:held-course:gone"],
+    ])
+    expect(executed).toContainEqual([
+      "INSERT OR REPLACE INTO meta(id, value) VALUES (?, 1)",
+      ["local:compaction-pending"],
+    ])
+    expect(cut).toHaveBeenCalled()
+  })
+
   // UG3 review DI-UG3-1: an import's compaction cut short is finished at the
   // next open, and an open with nothing pending compacts nothing.
   it("finishes a compaction an import left pending, and only then", async () => {

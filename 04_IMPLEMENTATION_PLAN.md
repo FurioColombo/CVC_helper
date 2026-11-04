@@ -161,7 +161,7 @@ erase and the reopen; a new empty device; a read-only device; a device signed
 out; three courses; a choice with unsent changes in the course given up.
 
 **Evidence:** verification, the owner's Android check, self, data-integrity,
-sync-chaos and field UX reviews.
+sync-chaos, field UX and security/privacy reviews.
 
 ## UG4 — 0.5.0 integration and release gate
 

@@ -1,0 +1,130 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "B7",
+  "commit": "d29793d",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-B7-1",
+      "title": "A device that never opened on both courses keeps the course given up: refused changes with names in uploadRefusals, its rows in free pages, and its students on screen until reopened",
+      "evidence": "src/persistence/migrations.ts:144-153 sets the mark only when an open finds n > 1, and settleSeveralCourses returns when it is unset. courseLeftThisDevice (:113-125) is false because the kept course is present. src/App.tsx:958-962 reloads only on courseLeftWithBackup or secondCourseArrived, and both are false after a swap from one course to another. A phone or PC closed during the two-course window holds only course Y. The server now holds only X, so its first checkpoint removes Y and adds X together and n never reaches 2. Its unsent Y changes are refused while Y is still here, so src/persistence/uploadRefusals.ts courseStillHere keeps them. Output of the swap case: 'SWAP courses: 1'; 'SWAP uploadRefusals: 1 with the name: true'; 'SWAP marks: []'; 'SWAP raw storage, the given-up student: true'; 'SWAP raw storage, the refused student: true'. Control, a device that opened on both: 'CONTROL uploadRefusals: 0', and both raw storage checks false. 03_TECHNICAL_DECISIONS.md (B7 paragraph) says 'the next open clears their refused changes and free pages'; on this device it does not. Riprova cannot clear them either (uploadRefusals.ts:238-242, parentsPresent); only 'Togli dall'elenco' removes the refusal, and nothing removes the free pages.",
+      "reproduction": "My scratchpad's r1/garante.spec.ts, test 'swap: a device that never held both'. Fake backend, synthetic students. The student upload is answered 42501, as the access rules answer a child of an erased course. The checkpoint is simulated by one write transaction on ps_data__synced_* that removes Y and adds X, the same technique as downloadRemoves in tests/e2e/b7-two-courses.spec.ts. That a real checkpoint applies removal and arrival together is reasoned from PowerSync's behaviour, not run live. Suggested direction: decide on what is gone, not on whether n > 1 was seen. For example record the bound course id, and on any open where it has left, drop refusals of absent courses and compact; also reload when the bound course has left.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 success predicate (nothing of the removed course remains readable on the device); B7 success predicate (every device opens on that one course); 03_TECHNICAL_DECISIONS.md B7 paragraph; precedent SP-B6-1, SP-UG3-1"
+    },
+    {
+      "id": "SP-B7-2",
+      "title": "A compaction cut short after the choice is never finished: the mark is deleted before the VACUUM and no pending record is written",
+      "evidence": "src/persistence/migrations.ts:154-160 deletes local:several-courses in a committed transaction, then runs compactCourseDatabase(...).catch(() => {}). It never writes COMPACTION_PENDING_ID, which the import writes in its transaction (src/persistence/courseArchive.ts:162-165) so that the next open finishes (migrations.ts:270-271, the fix for review DI-UG3-1). Closing the app, or a VACUUM failure, in that window leaves the given-up course in free pages for good. Output: 'CUT marks after the cut: []'; 'CUT after two more opens, raw storage, the given-up student: true'.",
+      "reproduction": "My scratchpad's r1/garante.spec.ts, test 'cut: the compaction does not end after the mark is deleted'. For one open the route serves src/persistence/writeGuard.ts with the VACUUM call replaced by a rejection, which leaves the same state as an app closed before the VACUUM commits. The route is then removed and the app reopened twice. Fix: write COMPACTION_PENDING_ID in the transaction that deletes the mark.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B6 success predicate; 03_TECHNICAL_DECISIONS.md B7 paragraph; precedent DI-UG3-1"
+    },
+    {
+      "id": "SP-B7-3",
+      "title": "keep_course erases every other course of the owner, including courses the device never showed and the owner never named",
+      "evidence": "supabase/migrations/20261104000000_keep_course.sql:25-30 collects all the owner's courses and :38-39 deletes every one except keep_id, with no active filter and no list of what the owner saw. src/backup/session.ts:623-625 sends only keep_id. src/features/courseChoice/CourseChoiceScreen.tsx:203-221 names only the courses on this device. A course Z uploaded by a third device, or by a device that erased Y offline and made a new course, is erased irreversibly if the choosing device's download has not delivered it. That window is real: PowerSync applies no checkpoint while this device's queue is not empty (the wait at session.ts:618-622 lasts up to 30 s), and the owner's phone has shown a stalled download with working uploads (session.ts:329-335). The owner's confirmation and tick name only Y. Second defect in the same function: under READ COMMITTED the DELETE at :38 takes a new snapshot, so a course committed after the SELECT at :25 is deleted without an erased_courses row (:35-37 uses the older array) and can be uploaded back. Inactive rows go the same way, unseen; I found no live path that creates one (src/persistence/courses.ts:53 runs only from the no-course screen). The fake backend repeats the same rule (tests/e2e/b7-two-courses.spec.ts:75-80), so the suite cannot catch this.",
+      "reproduction": "Reasoned from the SQL as the brief allows; no Postgres is available and I did not execute it. Steps on a development backend with synthetic accounts: (1) the account holds X and Y and device A shows both; (2) with A's download held, insert course Z with a student through a second session; (3) call keep_course(X) from A; (4) expected: Z stays or the choice is refused because the set changed; from the SQL, Z and its student are gone. Fix: pass the ids given up, for example keep_course(keep_id, give_up text[]). Refuse with a distinct code if the owner's set differs from keep_id plus give_up, and delete with c.id = any(given-up ids) so the record and the delete cover the same rows.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7: 'The app shows both courses and the owner chooses which to keep; it never erases one by itself'"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-B7-4",
+      "title": "Signed in or offline, the choice screen offers no Esci and no reset",
+      "evidence": "src/features/courseChoice/CourseChoiceScreen.tsx:457 and :512 render OnlineBackup only when signed out or on another account. A read-only device has no buttons at all (:175). The B7 section of 04_IMPLEMENTATION_PLAN.md names 'Impostazioni, Esci, export and reset are out of reach' as the defect. On a shared or handed-over phone the session keeps syncing two courses of minors, and offline nothing can remove them. Not a blocker: the success predicate and the approved mock do not ask for Esci.",
+      "reproduction": "My scratchpad's r1/garante.spec.ts, test 'way out'.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7; persona lens 4"
+    },
+    {
+      "id": "SP-B7-5",
+      "title": "After the server answers, the course given up stays readable and exportable on the choosing device until a download arrives, and the screen says nothing was erased",
+      "evidence": "src/backup/session.ts:599-606 erases nothing locally and no local record of the choice exists. Close the app after 'Scelta salvata' and reopen offline: readCourseChoices shows both courses again with Salva file, under 'Non è stato cancellato nulla' (CourseChoiceScreen.tsx:470-472). The confirmation said 'sarà eliminato da questo telefono'. If the session is lost before the download, it never leaves. Tapping the course given up returns CVGON, so no harm to the server. tests/e2e/b7-two-courses.spec.ts:270 pins the two courses before the download; the later reopen is read from code, not run.",
+      "reproduction": "Keep a course with the backend answering, set the browser offline before any download, reload, and read the screen.",
+      "specRef": "03_TECHNICAL_DECISIONS.md B7 paragraph; persona lens 5"
+    },
+    {
+      "id": "SP-B7-6",
+      "title": "Salva file writes minors' data with no notice, unlike Impostazioni",
+      "evidence": "src/features/settings/CourseFiles.tsx:311-313 says 'Il file contiene i dati personali degli allievi... solo con persone autorizzate'. src/features/courseChoice/CourseChoiceScreen.tsx:79-118 and :232-244 download immediately with no such text, including for the 'Salva prima' copy of a course about to be erased. The file name itself is clean: code, week, year and the first 8 characters of a random id (:62-65).",
+      "reproduction": "tests/e2e/b7-two-courses.spec.ts:298-310 exercises the download; read the screen around it.",
+      "specRef": "persona lens 9"
+    },
+    {
+      "id": "SP-B7-7",
+      "title": "The live test 'no account may call it' cannot detect a missing revoke",
+      "evidence": "tests/e2e/b7-two-courses-live.spec.ts:349-361 accepts any 4xx. If anon held EXECUTE, auth.uid() would be null, owned empty, and the function would answer CVGON with 400, so the test would pass. src/persistence/backendSchema.test.ts checks only the text of the revoke. Assert the refused-by-privilege answer instead (code 42501, status 401 from PostgREST), not merely a 4xx.",
+      "reproduction": "Read the assertion against the SQL at supabase/migrations/20261104000000_keep_course.sql:31-34.",
+      "specRef": "AGENTS.md §3; persona lens 2"
+    },
+    {
+      "id": "SP-B7-8",
+      "title": "Unsent changes of the course given up go to the server first, while the owner is told they will be lost",
+      "evidence": "src/backup/session.ts:618-622 waits for the whole queue. CourseChoiceScreen.tsx:227-229 says 'andrà persa'. tests/e2e/b7-two-courses.spec.ts:425 records queuedRows: 3 reaching the server before the erase. Names never online then reach Supabase and the replication stream only to be erased, and stay in the provider's copies for up to 7 days. The general provider sentence (:232-234) does not tell the owner this applies to them.",
+      "reproduction": "tests/e2e/b7-two-courses.spec.ts 'unsent changes are shown on their course and go up before the choice'.",
+      "specRef": "persona lens 11"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-B7-Q1",
+      "title": "A stored session of another account can put its email on this account's courses",
+      "evidence": "src/backup/session.ts:225-226 and :839-843 report 'offline' with the stored email before the claim check at :263. Offline with an expired token, account B's email then shows on account A's courses. Not reproduced. Signed out, link-sent and other-account correctly show no email (CourseChoiceScreen.tsx:442-447)."
+    },
+    {
+      "id": "SP-B7-Q2",
+      "title": "A read-only open sets no mark",
+      "evidence": "src/persistence/migrations.ts:244-247 returns before settleSeveralCourses. A read-only device that loses a course by download and is then updated has the same residue as SP-B7-1. Read from code, not run."
+    },
+    {
+      "id": "SP-B7-Q3",
+      "title": "A given-up course whose own row was refused for a reason other than 'erased' keeps its refused rows",
+      "evidence": "src/persistence/migrations.ts:192-200 and :219-222 keep them 'for Riprova', yet Riprova never recreates a course (src/persistence/uploadRefusals.ts:238-242). Only 'Togli dall'elenco' removes them."
+    },
+    {
+      "id": "SP-B7-Q4",
+      "title": "'Non è cambiato nulla' is false when the server's answer was lost",
+      "evidence": "src/features/courseChoice/CourseChoiceScreen.tsx:415-418. The erase may have run on the server."
+    },
+    {
+      "id": "SP-B7-Q5",
+      "title": "The plan's evidence line omits this review",
+      "evidence": "04_IMPLEMENTATION_PLAN.md:163 does not list the security/privacy review that .milestones/manifest.json now requires."
+    },
+    {
+      "id": "SP-B7-Q6",
+      "title": "An untracked empty file appeared during my run",
+      "evidence": "sig.spec.ts, 0 bytes, repository root, 12:48. I did not knowingly create it and my commands do not name it. I left it in place because it may belong to another agent. It will block a clean-tree evidence run."
+    }
+  ],
+  "readMatrix": {
+    "note": "Reasoned from the SQL and not run: the migration is not installed and no local Postgres exists.",
+    "anonKey": "No table access; no EXECUTE on keep_course provided the revoke ran (see SP-B7-7). auth.uid() null would give CVGON and no change.",
+    "otherAccount": "Own rows only. keep_course on another's id: CVGON and no change, the same answer as a made-up id, so it reveals no existence.",
+    "owner": "Erases all own courses except keep_id; see SP-B7-3.",
+    "serviceRole": "May keep EXECUTE through Supabase's defaults, unconfirmed; auth.uid() null gives CVGON. No service key found in src, tests, supabase, powersync or .github."
+  },
+  "evidenceInspected": [
+    "04_IMPLEMENTATION_PLAN.md B6 and B7; 03_TECHNICAL_DECISIONS.md B7 and erase paragraphs; docs/working/OWNER_DECISIONS.md 21-22; .evidence/B6 security reviews.",
+    "Whole diff 49a4535..d29793d; the migrations 20261023000000, 20261025000000, 20261026000000 and 20261028000000 in full; src/backup/session.ts, connector.ts, uploadPolicy.ts; src/persistence/migrations.ts, writeGuard.ts, uploadRefusals.ts, serverErasures.ts, courseArchive.ts, courseChoice.ts; CourseChoiceScreen.tsx; powersync/sync-config.yaml",
+    "SQL questions that held, by reading: search_path with auth.uid() is sound; SECURITY INVOKER keeps RLS; the writer check fires on the DELETE and rolls back the insert; NULL, empty and unknown keep_id and an owner with no courses give CVGON with no change; the race between two different choices keeps exactly one; children cascade; erased_courses holds no course data.",
+    "Export: children are filtered by the chosen course's id, so one course's file does not hold the other's rows.",
+    "No keys in the client beyond VITE_BACKUP_*; keep_course adds none. No console calls in the new screen and modules.",
+    "Ran tests/e2e/b7-two-courses.spec.ts on desktop-chrome-backup: 11 passed. Vitest on src/features/courseChoice, backendSchema.test.ts and courseSession.test.ts: 46 passed. A throwaway spec with a fake backend and synthetic students: control, cut, swap and way-out cases."
+  ],
+  "anglesTried": {
+    "seed": 52514812,
+    "lenses": [
+      "5 Deletion: local, server, other devices, raw storage, free pages, uploadRefusals, an app closed mid-way",
+      "3 Keys in the client bundle"
+    ],
+    "wildcard": "The device that never sees two courses: closed during the two-course window, it receives the removal and the arrival in one checkpoint, so every B7 safeguard keyed on n > 1 never fires"
+  },
+  "notTested": [
+    "keep_course has never executed anywhere the reviewer could reach; every server statement is from reading the SQL. The live spec was not run.",
+    "ps_oplog and ps_crud under a real PowerSync download.",
+    "A real checkpoint swapping the two courses; simulated, as stated in SP-B7-1.",
+    "WebKit/iPhone storage and physical phones.",
+    "PowerSync Cloud and Supabase retention of the erased rows beyond the text in src/backup/erasure.ts.",
+    "Whether Supabase's default function privileges give service_role EXECUTE on this project."
+  ]
+}

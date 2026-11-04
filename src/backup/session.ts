@@ -6,6 +6,7 @@ import { createConnector } from "@/backup/connector"
 import {
   APP_VERSION_HEADER,
   COURSE_GONE_CODE,
+  COURSE_SET_CHANGED_CODE,
   OUTDATED_WRITER_CODE,
 } from "@/backup/uploadPolicy"
 import { APP_VERSION_TEXT } from "@/appVersion"
@@ -593,42 +594,77 @@ export async function replaceWithOnlineCourse(): Promise<BackupState> {
 
 /** How long the changes still to send may hold a choice back. */
 const KEEP_UPLOAD_WAIT_MS = 30_000
+/** How long the server may take to answer: a dead connection hangs for good. */
+const KEEP_ANSWER_WAIT_MS = 20_000
 
-export type KeepOutcome = "kept" | "gone" | "outdated" | "failed"
+export type KeepOutcome =
+  | "kept"
+  | "gone"
+  | "changed"
+  | "outdated"
+  /** This device's changes could not go up: nothing was asked of the server. */
+  | "unsent"
+  /** The server answered no: nothing happened. */
+  | "refused"
+  /** No answer: the choice may have reached the server or not. */
+  | "no-answer"
+
+/** The courses to give up, each with the last change the owner saw of it. */
+export type GiveUp = Record<string, string | null>
 
 /**
  * B7: the owner keeps one of the account's courses. This device's changes go
  * first, those of the course kept and of those given up alike, so the queue
  * holds none of a course about to go. The server then keeps it in one step
- * (supabase/migrations/20261104000000_keep_course.sql), and the download takes
+ * (supabase/migrations/20261104000000_keep_course.sql), erasing only what
+ * `giveUp` names and only if it holds nothing newer. The download then takes
  * the others off every device, this one included; nothing is erased here
  * first, so a failure leaves everything as it was and the choice open.
  */
 export async function keepCourse(
   courseId: string,
-  wait: { ms: number; stepMs: number } = {
+  giveUp: GiveUp,
+  wait: { ms: number; stepMs: number; answerMs: number } = {
     ms: KEEP_UPLOAD_WAIT_MS,
     stepMs: 500,
+    answerMs: KEEP_ANSWER_WAIT_MS,
   },
 ): Promise<KeepOutcome> {
   const config = backupConfig()
-  if (!config) return "failed"
+  if (!config) return "refused"
   try {
     const deadline = Date.now() + wait.ms
     while ((await pendingUploads()) > 0) {
       if (uploadsOutdated) return "outdated"
-      if (Date.now() >= deadline) return "failed"
+      if (Date.now() >= deadline) return "unsent"
       await new Promise((resolve) => window.setTimeout(resolve, wait.stepMs))
     }
-    const { error } = await (
-      await supabase(config)
-    ).rpc("keep_course", { keep_id: courseId })
-    if (!error) return "kept"
-    if (error.code === COURSE_GONE_CODE) return "gone"
-    if (error.code === OUTDATED_WRITER_CODE) return "outdated"
-    return "failed"
   } catch {
-    return "failed"
+    return "unsent"
+  }
+  const stop = new AbortController()
+  const asked = (async () =>
+    (await supabase(config))
+      .rpc("keep_course", { keep_id: courseId, give_up: giveUp })
+      .abortSignal(stop.signal))()
+  const noAnswer = new Promise<null>((resolve) =>
+    window.setTimeout(() => {
+      stop.abort()
+      resolve(null)
+    }, wait.answerMs),
+  )
+  try {
+    const answer = await Promise.race([asked, noAnswer])
+    if (!answer) return "no-answer"
+    if (!answer.error) return "kept"
+    if (answer.error.code === COURSE_GONE_CODE) return "gone"
+    if (answer.error.code === COURSE_SET_CHANGED_CODE) return "changed"
+    if (answer.error.code === OUTDATED_WRITER_CODE) return "outdated"
+    // A lost connection reads as status 0, a broken gateway as 5xx: either
+    // may come after the server committed.
+    return answer.status > 0 && answer.status < 500 ? "refused" : "no-answer"
+  } catch {
+    return "no-answer"
   }
 }
 

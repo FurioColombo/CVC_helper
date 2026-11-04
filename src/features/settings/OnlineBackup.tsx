@@ -46,9 +46,12 @@ import {
  */
 export function OnlineBackup({
   restore = false,
+  choosing = false,
 }: {
   /** On the empty device's screen: the section offers to restore. */
   restore?: boolean
+  /** On the choice between courses: signing in is what the choice needs. */
+  choosing?: boolean
 }) {
   const configured = backupConfig() !== null
   const [state, setState] = useState<BackupState>(backupState)
@@ -108,7 +111,9 @@ export function OnlineBackup({
           <p className="text-sm leading-5 text-muted-foreground">
             {restore
               ? "Hai già un corso nel backup online? Accedi con la tua email per ripristinarlo su questo telefono."
-              : "Accedi con la tua email per copiare il corso online e ritrovarlo su un altro telefono. Senza accesso l’app funziona come sempre, solo su questo telefono."}
+              : choosing
+                ? "Accedi con la tua email per scegliere quale corso tenere."
+                : "Accedi con la tua email per copiare il corso online e ritrovarlo su un altro telefono. Senza accesso l’app funziona come sempre, solo su questo telefono."}
           </p>
           {appChannel === "test" && (
             <p className="mt-2 text-sm font-semibold leading-5 text-[#9a3412]">

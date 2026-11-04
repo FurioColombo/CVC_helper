@@ -1,0 +1,223 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B7",
+  "commit": "d29793d",
+  "round": 1,
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FU-B7-1",
+      "title": "Weak signal: the waiting screen can stay forever, with no control, and tells the instructor not to close the app",
+      "evidence": "src/backup/session.ts:621-623 awaits rpc('keep_course') with no timeout or abort signal; the 30 s deadline covers only the pending-upload loop, and the Supabase client at src/backup/session.ts:69-80 sets no fetch timeout. src/features/courseChoice/CourseChoiceScreen.tsx:375-401 offers Riapri only in the 'kept' step after SLOW_MS, nothing in 'working'. Measured at 35 s, 95 s and 185 s: main text 'Tieni D2 - 45 | Invio le modifiche e aggiorno il backup online. Non chiudere l'app.', 0 buttons. The same class of hang was already seen in the field: the comment at src/backup/session.ts:299-301 records a request hung on a dead connection (owner check B4-PHONE-UPLOADS).",
+      "reproduction": "Throwaway spec nostromo/b.spec.ts 'hang', pixel-7-chrome: two courses, Tieni questo corso, tick, Elimina, with the fake backend never answering rpc/keep_course. Force-closing the app does recover the choice, but the screen forbids exactly that.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7 predicate 'never locks a device'; 06_DESIGN_RULEBOOK.md R14 (real recovery actions); brief: 'spinner forever, no way back'"
+    },
+    {
+      "id": "FU-B7-2",
+      "title": "Two courses with the same code can read identically at the irreversible step",
+      "evidence": "src/features/courseChoice/courseChoiceText.ts:41-49 separates a repeated code only by students and last change to the minute. Observed: 'Elimina D2 - 45 (1 allievi, oggi, 12:59) e apri D2 - 45 (1 allievi, oggi, 12:59)', with the same text in the heading, the sentence, the checkbox and Salva prima. One course had 6 crews and 84 evaluations and the other had none; the confirmation shows neither count and has no card to compare. The same roster on two phones gives the same student count, so the minute is the only separator left. Secondary: with the same code in different years, the confirmation never shows the year, which is the real difference ('D2 - 45 (1 allievi, oggi, 12:51)' against 'D2 - 45 (1 allievi, 20 ott 2026, 10:05)'). The existing test at tests/e2e/b7-two-courses.spec.ts:469 only covers different student counts.",
+      "reproduction": "Throwaway spec nostromo/c2.spec.ts: a twin course with the same code and student count, crews and evaluations added to one, updatedAt equal on all rows, then Tieni questo corso on the first card. Screenshots samecode-confirm.png and samecode-confirm-320-200.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R11 (deletion with identity and consequence); docs/design/mockups/b7-two-courses.html state 2; comment at courseChoiceText.ts:37-40; brief: must not erase the wrong course"
+    },
+    {
+      "id": "FU-B7-3",
+      "title": "The confirmation names one course, and the server also erases a course this phone never showed",
+      "evidence": "supabase/migrations/20261104000000_keep_course.sql:35-39 erases every other course of the owner, and the RPC receives only keep_id. Observed on the confirmation: only 'C3 - 45 sarà eliminato'; afterwards unseenStillThere=false on the fake backend, whose keep rule at tests/e2e/b7-two-courses.spec.ts:73-80 follows that SQL. A stalled download is a recorded field condition (src/features/settings/OnlineBackup.tsx:470-475). Commit f920fe4 (docs only, after the reviewed commit) already holds B7-KEEP-RULE for this defect, found by another review; it is listed here because it is still present in the code reviewed.",
+      "reproduction": "Throwaway spec nostromo/c.spec.ts 'a course on the server this phone has not received yet': add a third course to the fake server only, then keep D2. Verified against the fake and by reading the SQL, not against a live backend.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7 'the owner chooses which to keep; it never erases one by itself'; 06_DESIGN_RULEBOOK.md R11"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FU-B7-I1",
+      "title": "Answer lost on the way: the screen says nothing changed after the server has already erased",
+      "evidence": "Observed with serverCourses=1: 'Non sono riuscito a eliminare C3 - 45 dal backup online. Non è cambiato nulla: i corsi sono ancora qui.' CourseChoiceScreen.tsx:414-418 treats every 'failed' as nothing changed, although the migration's own header (keep_course.sql:11-12) expects lost answers. Torna alla scelta then repeats 'Non è stato cancellato nulla'.",
+      "reproduction": "nostromo/b.spec.ts 'lost answer': the fake applies keep_course and then aborts the response with connectionreset.",
+      "specRef": "06_DESIGN_RULEBOOK.md R10, R14; mock state 5"
+    },
+    {
+      "id": "FU-B7-I2",
+      "title": "After a successful choice and Riapri, the app asks the question again and says nothing was erased",
+      "evidence": "Step state lives only in memory. After 'La scelta è salva' and Riapri l'app, with the download not yet arrived: 'Scegli il corso da tenere ... Non è stato cancellato nulla', serverCourses=1, both cards offered. Tieni on the erased course then says 'Tieni C3 - 45? D2 - 45 sarà eliminato', naming the course that was kept as the one to go. On the 'gone' path the lead 'Non è stato cancellato nulla' also sits directly above the notice 'Quel corso è già stato eliminato su un altro dispositivo' (CourseChoiceScreen.tsx:469-481), a false source when this device made the choice.",
+      "reproduction": "nostromo/b.spec.ts 'kept, download slow': keep D2, wait 31 s, Riapri l'app, read, then Tieni on C3. Screenshot kept-reopened.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R14; 03_TECHNICAL_DECISIONS.md, Several courses on one account"
+    },
+    {
+      "id": "FU-B7-I3",
+      "title": "A ticked box survives a change in what will be erased",
+      "evidence": "Ticked 'Ho capito: C3 - 45 non si potrà recuperare'. After a third course arrived the label became 'C3 - 45 e C1 - 45 non si potranno recuperare' and the button 'Elimina C3 - 45 e C1 - 45 e apri D2 - 45', with ticked=true and enabled=true. Confirm keeps `understood` across the 3 s refresh (CourseChoiceScreen.tsx:202).",
+      "reproduction": "nostromo/c.spec.ts 'third course arrives with the box ticked'; the arrival was simulated by a local insert. Screenshot third-arrives.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R11"
+    },
+    {
+      "id": "FU-B7-I4",
+      "title": "A dead end with no button when the chosen course leaves and two or more remain",
+      "evidence": "CourseChoiceScreen.tsx:356-363: the comment says 'back to what is here', but the step is never reset. After 8 s and again after 33 s: 'Aggiornamento dei corsi…', 0 buttons. Only reaching one course or a manual reopen ends it. A server keep removes the others together, so this needs a further course still local to the device.",
+      "reproduction": "nostromo/d2.spec.ts: three courses, Tieni on C3, the download removes C3. Screenshot chosen-left.png.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7 predicate; 06_DESIGN_RULEBOOK.md R14"
+    },
+    {
+      "id": "FU-B7-I5",
+      "title": "Glare: disabled buttons are washed out to 1.54:1 and 1.68:1, against the approved grey treatment",
+      "evidence": "Computed: disabled Tieni foreground rgb(203,215,231) on rgb(151,175,208), 1.54:1; disabled Elimina rgb(233,198,196) on rgb(211,141,138), 1.68:1. The cause is `disabled:opacity-50` in src/components/ui/button.tsx. The mock's state 4 defines a grey disabled button (#65768b on #e8eef6, about 4:1 by calculation), so this differs from the approved target and decision 22 does not record the change. In sunlight a pale blue or pink block with an unreadable label gives no reason for being off, and at 320/200% the offline reason is about two screens above the first button (button at y1437).",
+      "reproduction": "nostromo/g.spec.ts 'colours in the sun'; screenshots offline-disabled-closeup.png and confirm-disabled-closeup.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R06 and section 3 (Disabilitato: not opacity alone); mock state 4"
+    },
+    {
+      "id": "FU-B7-I6",
+      "title": "Failure and warning states carry no icon, the defect the owner already reported on the course file",
+      "evidence": "Measured: 'File non salvato: riprova.' icon=0; the failed screen's alert icon=0. CourseChoiceScreen.tsx:111-115, 167-171, 222-231 and 410-419 use text and tint only, while CourseFiles.tsx:72-86 has ErrorNotice with the triangle, citing R06/R14. The owner's Android report in .milestones/owner-checks.json said of an export error that 'the error text is hard to notice (no icon, colour or emphasis)'.",
+      "reproduction": "nostromo/e.spec.ts with URL.createObjectURL forced to throw; nostromo/f2.spec.ts 'true failure'. Screenshots save-failed-390.png and failed-390.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R06, R13, R14 and section 3 (Avviso)"
+    },
+    {
+      "id": "FU-B7-I7",
+      "title": "320 px at 200%: the count labels collide and leave the card",
+      "evidence": "Measured: dt 'Equipaggi' 106 > 55 px, 'Valutazioni' 115 > 55 px, 'Allievi' 63 > 55 px; DL scrollWidth 258 > 198; ARTICLE 286 > 254; SECTION 287 > 256. In the screenshot the two labels overprint and 'Valutazioni' runs past the card border, on the data used to choose. WebKit gives the same widths. The page itself does not scroll sideways. The repository's narrow test measures 100% text only (tests/e2e/b7-two-courses.spec.ts:625-660).",
+      "reproduction": "nostromo/a.spec.ts 'layout 320-200', pixel-7-chrome and iphone-13-webkit. Screenshot choice-320-200-full.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R05, R18 and section 5 (320 px, text 200%)"
+    },
+    {
+      "id": "FU-B7-I8",
+      "title": "Step changes move neither focus nor scroll: at 200% the confirmation opens below its own question",
+      "evidence": "At 320×640 and 200%, tapping Tieni on the lower card: scrollY 1374 becomes 829, heading top -689, so the question, the erase sentence and the warning are above the screen; the viewport starts at the end of the provider sentence and shows Salva prima, the checkbox, Elimina and Annulla. Annulla keeps scrollY 829. document.activeElement is BODY after Tieni, Annulla and on the failed screen. The Confirm section has no live role or focus target, so a screen reader is not told it opened; the app shell does focus main on navigation (src/App.tsx:708-710). At 100% (390×664, three courses) and 150% (412×839) the heading stays visible: top 92 and 97.",
+      "reproduction": "nostromo/a.spec.ts and nostromo/h.spec.ts 'landing'. Screenshot confirm-320-200-lands.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R11, R12"
+    },
+    {
+      "id": "FU-B7-I9",
+      "title": "Signed in with a backup error, the screen says to sign in, and the real recovery sits at the bottom",
+      "evidence": "CourseChoiceScreen.tsx:457 and 495-500 show 'Per scegliere accedi al backup online' for every non-connected kind other than offline, checking, restoring and unavailable. The kinds error, other-account, reopen and replace-course all showed it, with the actual message and button only in OnlineBackup at y752 of an 839 px viewport. Error is reachable at src/backup/session.ts:243, 275 and 783. For replace-course, OnlineBackup also says 'il corso di questo telefono verrà eliminato' with two courses on screen; I did not establish a real route to that state here.",
+      "reproduction": "nostromo/e.spec.ts 'signed out and odd backup states': the states are set directly with setBackupState. Screenshots kind-*.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R08, R14"
+    },
+    {
+      "id": "FU-B7-I10",
+      "title": "A second course arriving reloads the phone mid-typing, past the leave guard",
+      "evidence": "src/App.tsx:957-963 calls window.location.reload() directly, while updates go through requestLeave so that unsaved screens can ask first (src/navigation/applyUpdate.ts). Observed with 'Scrittura InCorso' typed in the add-student form: loads=1, form gone, the choice screen showing, no warning. Reloading away is reasonable because those screens can no longer save; losing typed work silently is not.",
+      "reproduction": "nostromo/h.spec.ts 'a second course arrives while the instructor types'. The connected status was stubbed, since the fake backend has no sync stream, and the status listeners were fired by hand.",
+      "specRef": "06_DESIGN_RULEBOOK.md R10"
+    },
+    {
+      "id": "FU-B7-I11",
+      "title": "Salva file: less information and fewer ways out than Impostazioni, on the last step before an erase",
+      "evidence": "Measured: shareOffered=0, privacyWarning=0. The only feedback is 14 px 'Salvataggio avviato.', with no file name or location, set as soon as link.click() returns, so it does not prove a file exists (CourseChoiceScreen.tsx:60-77, 97-110). Two taps saved 2 files with one unchanged status line. After Annulla and re-entering, the status is gone (status count 0), so the confirmation no longer shows the file was saved. CourseFiles.tsx:310-314 warns that the file holds students' personal data, 344-353 confirms the file is ready and explains sharing, and 88-91 scrolls feedback into view. The owner's Android report recorded an export where 'the button needed two taps before anything visible happened' and sharing to WhatsApp as the accepted route off the phone. The approved mock shows no share button, so its absence conforms to the mock; the owner may want it reconsidered.",
+      "reproduction": "nostromo/e.spec.ts 'salva file feedback and failure'. Real Android behaviour not checked; see notTested.",
+      "specRef": "06_DESIGN_RULEBOOK.md R10, R13; src/features/settings/CourseFiles.tsx"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-B7-Q1",
+      "title": "Cards can swap under the thumb on a 3 s refresh (wildcard)",
+      "evidence": "readCourseChoices sorts by last change and the screen refreshes every 3 s. After C3 changed, the order flipped: D2 Tieni moved y361 to y682 and C3 Tieni y613 to y430, with no notice. That run also added an unsent notice to C3 because the change was local; a downloaded change would swap two equal-height cards exactly. Both buttons have the same label. The confirmation names the course and Annulla recovers.",
+      "reproduction": "nostromo/d.spec.ts 'cards swap under the thumb'.",
+      "specRef": "06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "FU-B7-Q2",
+      "title": "Controls move under the thumb",
+      "evidence": "Going offline moves Tieni down 73 px (y361 to y434, y613 to y686). Saving a file stretches Tieni in its row: 120 to 178 px high at 320/200%, also visibly taller at 390. Salva prima pushes the checkbox and Elimina down when its status appears.",
+      "reproduction": "nostromo/d.spec.ts and nostromo/e.spec.ts; screenshot save-390.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "FU-B7-Q3",
+      "title": "Elimina remains enabled offline on the confirmation, and then spins for 30 s",
+      "evidence": "With navigator.onLine false and the box ticked, Elimina is enabled. With one unsent change, 'Non chiudere l'app' showed until between t+25 s and t+35 s, then the failure text, which does not mention the connection. Nothing was erased and the screen recovered. The mock says the choice waits for signal.",
+      "reproduction": "nostromo/f2.spec.ts 'offline on the confirmation with unsent changes'.",
+      "specRef": "mock state 4"
+    },
+    {
+      "id": "FU-B7-Q4",
+      "title": "Signed out: the email field is below the first screen, and the text beside it is false here",
+      "evidence": "Email field at y876 on an 839 px viewport; page height 1012 px. 'Per scegliere accedi' at the top has no link down to the form. OnlineBackup says 'Senza accesso l'app funziona come sempre', while this screen is blocked until a choice is made.",
+      "reproduction": "nostromo/e.spec.ts; screenshot signed-out-390-view.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R14"
+    },
+    {
+      "id": "FU-B7-Q5",
+      "title": "Destructive button 8 px above Annulla",
+      "evidence": "At 390: Elimina y386, height 44; Annulla y438. Once ticked there is no further barrier. The stacking is as in the approved mock, so this is a note for the owner rather than a deviation.",
+      "reproduction": "nostromo/a.spec.ts 'layout 390'.",
+      "specRef": "Persona lens 7"
+    },
+    {
+      "id": "FU-B7-Q6",
+      "title": "Wording that gets read twice",
+      "evidence": "'1 allievi', which the test encodes at tests/e2e/b7-two-courses.spec.ts:508; 'Elimina D2 - 45 e C1 - 45 e apri C3 - 45'. Read-only bar text 'per salvare le modifiche' on a screen with nothing to save.",
+      "reproduction": "nostromo/c2.spec.ts, nostromo/d2.spec.ts, nostromo/f.spec.ts.",
+      "specRef": "06_DESIGN_RULEBOOK.md R13"
+    },
+    {
+      "id": "FU-B7-Q7",
+      "title": "The bottom bar takes 41-50% of the screen at 320/200%",
+      "evidence": "barH 319 of 640 (read-only), 265 of 640 ('aggiornata', with its X). The read-only first screen shows only the title and the bar; the bar itself predates B7. No control is covered, see anglesTried.",
+      "reproduction": "nostromo/f.spec.ts; screenshot readonly-320-200-top.png.",
+      "specRef": "06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "FU-B7-Q8",
+      "title": "A build without backup has no way to choose or leave",
+      "evidence": "CourseChoiceScreen.tsx:497-498 says the choice needs a backup this version lacks, and no other action is offered than saving files. No Esci or Azzera is offered on the choice screen in any connected or offline state either. Read from code, not run; a route to two courses in such a build was not established.",
+      "reproduction": "file:line only.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7 predicate"
+    }
+  ],
+  "fieldWalkthrough": {
+    "scene": "Pier, 18:00, phone in a splash pouch, 412×839. Two phones made a course each, so the app opens on the choice. Same synthetic data as the tests.",
+    "steps": [
+      "1. Open the app. Tieni is enabled at 2.7 s on the dev server (sampled once).",
+      "2. Read two cards. At 390×844 both fit with no scroll; buttons at y361 and y613, in reach of a thumb, 44 px high. This screen is good.",
+      "3. Tap Tieni questo corso on D2. Tap 1.",
+      "4. Read 'C3 - 45 sarà eliminato...'. Clear when the codes differ.",
+      "5. Optional: tap Salva prima il file. Tap 2. Read 'Salvataggio avviato.' and wonder where the file went: read twice, no answer.",
+      "6. Tick Ho capito. Tap 3 (2 without the file). Elimina goes from a pale pink block to solid red.",
+      "7. Tap Elimina. Tap 4 (3 without the file). The spinner says not to close the app.",
+      "8. Good signal: 'Scelta salvata', then the app reopens by itself on D2 when the download arrives.",
+      "9. Bad signal: the spinner stays with no button (FU-B7-1), or 'Non è cambiato nulla' when the erase did happen (FU-B7-I1), or, after Riapri, the same question again (FU-B7-I2)."
+    ],
+    "count": {
+      "taps": "3 without the file, 4 with one file, no scroll at 390×844. There is no earlier version to compare: this path used to be a locked screen.",
+      "seconds": "Measured: 2.7 s to enabled on a dev server; 30 s maximum upload wait; 31 s until Riapri appears in the kept step; no limit on the RPC wait. Field reading time was not measured.",
+      "readTwice": 5,
+      "readTwiceItems": [
+        "Where did the file go",
+        "'1 allievi'",
+        "Two identical names on the same-code confirmation",
+        "'Non è cambiato nulla' after an erase",
+        "'Non è stato cancellato nulla' after a choice"
+      ],
+      "at320and200": "Choice page 2014 px, 3.1 screens; first Tieni at y1088; Tieni is 91×120 px."
+    }
+  },
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md, 04_IMPLEMENTATION_PLAN.md B7, decisions 21 and 22 in docs/working/OWNER_DECISIONS.md, docs/design/06_DESIGN_RULEBOOK.md, docs/design/mockups/b7-two-courses.html",
+    "Source diff 49a4535..d29793d: CourseChoiceScreen.tsx, courseChoiceText.ts, src/App.tsx, src/backup/session.ts, courseChoice.ts, courseSession.ts, keep_course.sql; compared with CourseFiles.tsx, OnlineBackup.tsx, UpdateAvailableBanner.tsx and main.tsx",
+    "tests/e2e/b7-two-courses.spec.ts on pixel-7-chrome at 127.0.0.1:4243: 11 passed in 2.6 min",
+    "Throwaway specs in my scratchpad's nostromo/ on pixel-7-chrome, plus the 320/200% layout on the iPhone 13 WebKit engine; about 30 screenshots in nostromo/shots/, viewed in part: 390 and 320/200% choice, the confirmation landing, offline, save, failure, read-only, bar, backup error, signed out. Three of my tests first failed from harness errors (writes refused by the session guard; Playwright routes ignoring setOffline) and were corrected; those failures are not findings",
+    "No tracked file edited by me. HEAD moved to f920fe4 during the review, documents only: git diff d29793d -- src supabase tests playwright.config.ts is empty, so the code served was the commit reviewed. Untracked .evidence/B7/ is not mine",
+    "Checks that held: no page-level horizontal scroll at 320/200%; 44 px targets; Annulla and Torna alla scelta work; the box gates Elimina; signal flapping on the choice and on a ticked confirmation caused no reload and lost no tick; read-only keeps its update control in the bar and hides Tieni and Salva file"
+  ],
+  "anglesTried": {
+    "seed": 477122810,
+    "lenses": [
+      "3. Glare: contrast of state colours in sunlight; colour never the only cue",
+      "11. Long names, three-part names, ten crews, forty students"
+    ],
+    "wildcard": "The 3 s refresh acting under the thumb: cards re-sorting, the ticked box surviving a change of scope, and the chosen course leaving mid-step",
+    "note": "Index 0-based: seed mod 12 = 2, floor(seed/12) mod 12 = 10. A second seed was drawn by accident in a later command and discarded. Also covered for the brief: update bar over controls (not covered: last button bottom 311 < bar top 375; last card bottom 257 < bar top 321), focus and announcements, offline, signed out, read-only, three courses, same code."
+  },
+  "notTested": [
+    "A real Android installed PWA: whether the anchor download shows anything to the user, whether the second file prompts, and what 'Salvataggio avviato' corresponds to. This needs the owner's phone; no simulator result stands in for it",
+    "TalkBack or VoiceOver output: focus and live roles were read from the DOM and ARIA snapshot only",
+    "Real sunlight: contrast was computed, never observed outdoors",
+    "A real dead connection: the hang was simulated by an unanswered route, so how long a phone's network stack would hold the request is unknown",
+    "A live backend and PowerSync stream: downloads were simulated by editing synced tables, and FU-B7-3 was run against the fake",
+    "Real OS text scaling: 200% was simulated with the root font size, as the repository's own tests do",
+    "Screen lock or app swap during the working step, and an update tapped during it: not exercised",
+    "The iPhone 13 engine beyond the 320/200% layout test",
+    "One sample in the flap test returned no article cards 2.5 s after signal returned; it did not recur in two dedicated sampled runs and is not reported as a finding"
+  ]
+}

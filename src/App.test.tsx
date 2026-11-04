@@ -14,7 +14,7 @@ vi.mock("@/persistence/backupLink", () => ({
   awaitingServerErase: vi.fn(async () => false),
   connectDatabase: vi.fn(),
   courseLeftWithBackup: vi.fn(async () => false),
-  secondCourseArrived: vi.fn(async () => false),
+  courseChangedUnderSession: vi.fn(async () => null),
   databaseConnected: () => false,
   deviceCourseId: vi.fn(async () => null),
   deviceSyncMode: vi.fn(async () => "local"),

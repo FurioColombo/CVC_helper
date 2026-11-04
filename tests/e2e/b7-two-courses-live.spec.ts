@@ -30,11 +30,18 @@ const headers = (access: string) => ({
   "x-cvc-app-version": "0.5.3",
 })
 
-function keepCourse(access: string, keepId: string) {
+/** Seen far ahead of every stamp here, unless a test says otherwise. */
+const ALL_SEEN = "9999-01-01T00:00:00.000Z"
+
+function keepCourse(
+  access: string,
+  keepId: string,
+  giveUp: Record<string, string | null> = {},
+) {
   return fetch(`${base()}/rest/v1/rpc/keep_course`, {
     method: "POST",
     headers: headers(access),
-    body: JSON.stringify({ keep_id: keepId }),
+    body: JSON.stringify({ keep_id: keepId, give_up: giveUp }),
   })
 }
 
@@ -306,14 +313,23 @@ test("two devices choosing at once keep exactly one course, and only the account
     await serverCourse(access, b, "Seconda")
 
     // Another account cannot keep, or erase, this one's courses.
-    const refused = await keepCourse(stranger, a)
+    const refused = await keepCourse(stranger, a, { [b]: ALL_SEEN })
     expect(refused.status).toBe(400)
     expect(((await refused.json()) as { code: string }).code).toBe("CVGON")
     expect(await serverRows("courses", access)).toHaveLength(2)
 
+    // What the choice did not show stops it: a course, or a newer change.
+    const unnamed = await keepCourse(access, a)
+    expect(((await unnamed.json()) as { code: string }).code).toBe("CVNEW")
+    const older = await keepCourse(access, a, {
+      [b]: "2000-01-01T00:00:00.000Z",
+    })
+    expect(((await older.json()) as { code: string }).code).toBe("CVNEW")
+    expect(await serverRows("courses", access)).toHaveLength(2)
+
     const answers = await Promise.all([
-      keepCourse(access, a),
-      keepCourse(access, b),
+      keepCourse(access, a, { [b]: ALL_SEEN }),
+      keepCourse(access, b, { [a]: ALL_SEEN }),
     ])
     const statuses = answers.map(({ status }) => status).sort()
     expect(statuses[0]).toBeLessThan(300)
@@ -324,10 +340,10 @@ test("two devices choosing at once keep exactly one course, and only the account
 
     // The same choice again, as after a lost answer, changes nothing; the
     // course given up cannot be uploaded back.
-    const again = await keepCourse(access, left[0]!.id)
+    const lost = left[0]!.id === a ? b : a
+    const again = await keepCourse(access, left[0]!.id, { [lost]: ALL_SEEN })
     expect(again.status).toBeLessThan(300)
     expect(await serverRows("courses", access)).toHaveLength(1)
-    const lost = left[0]!.id === a ? b : a
     const back = await fetch(`${base()}/rest/v1/courses`, {
       method: "POST",
       headers: headers(access),
@@ -353,9 +369,10 @@ test("no account may call it", async () => {
       apikey: env.SUPABASE_ANON_KEY!,
       "content-type": "application/json",
     },
-    body: JSON.stringify({ keep_id: "any" }),
+    body: JSON.stringify({ keep_id: "any", give_up: {} }),
   })
   test.skip(response.status === 404, "keep_course is not installed yet")
-  expect(response.status).toBeGreaterThanOrEqual(400)
-  expect(response.status).toBeLessThan(500)
+  // Refused by privilege: a mere CVGON here would mean anon holds EXECUTE
+  // (review SP-B7-7).
+  expect(((await response.json()) as { code: string }).code).toBe("42501")
 })
