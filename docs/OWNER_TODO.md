@@ -158,6 +158,24 @@ Use the test address below and the linked device instructions.
 
 **Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
+<a id="b7-keep-rule"></a>
+
+## Let the server keep the one course you choose — B7
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.
+2. Paste the whole file supabase/migrations/20261104000000_keep_course.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: no published build calls it.
+3. Write 'keep rule run' in the chat; I then run the live check on two devices.
+
+**Expected:** The server can keep one of an account's courses in one step, so two devices choosing together can never erase both. It adds a function and no data.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
 <a id="d3-phone-update"></a>
 
 ## Install CVC Helper Test and check Android updates — D3

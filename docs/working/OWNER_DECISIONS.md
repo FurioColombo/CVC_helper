@@ -137,9 +137,20 @@ tutti i dati locali` erases the course from the backup first; without
     B7 fixes it before UG4. Until then, no course on a second device while the
     first is offline or already has one.
 21. **The two-course screen (yours, 2026-11-04).** You approved the mock
-    `.evidence/B7/two-courses-target.html` and added the email of the last
+    `docs/design/mockups/b7-two-courses.html` and added the email of the last
     edit beside its date and time. Choosing a course needs signal; saving a file
     does not. Taken for now: the email shown is the account's, which is true
     because only the owner's account can write to a course until 1.0, and needs
     no new column or migration. Both courses therefore show the same email. A
     record of who made each edit belongs with team writing.
+22. **Details of the two-course screen beyond the mock (taken 2026-11-04, for
+    your review).** A signed-out device sees both courses, saves their files and
+    is asked to sign in to choose. A read-only device has no Salva file, unlike
+    the mock's state 6: an app older than the data cannot write a faithful file
+    of it, so that state now asks to update; the mock is corrected. The
+    confirmation also states what the provider's backups keep, as every erase
+    does (decision 17). The choice is made on the server in one step, so two
+    devices choosing together can never erase both: this needs one more
+    migration from you (B7-KEEP-RULE). A device's unsent changes go up first,
+    so the queue holds none of the course given up, and without a connection
+    good enough for that the choice reports it could not finish.

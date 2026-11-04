@@ -63,6 +63,17 @@ Dexie is no longer an automatic fallback. A device starts in local mode
 (§3.1, from 0.5.0): synced course tables whose writes PowerSync queues for
 upload.
 
+**Several courses on one account (B7).** Two devices that each make a course,
+one of them offline, leave the account with two. A session opened on several
+courses binds none and shows only the choice between them
+(`src/features/courseChoice/`); a device holding one course reopens on that
+screen when a second arrives. Keeping one is one transaction on the server
+(`keep_course`, `supabase/migrations/20261104000000_keep_course.sql`): it locks
+the owner's course rows and refuses a course already gone (CVGON), so two
+devices choosing at once keep exactly one. The device's unsent changes go up
+first and nothing is erased locally: the download removes the others from every
+device, and the next open clears their refused changes and free pages.
+
 **Online backup (0.5.0).** Signed out, nothing connects. Sign-in is by a link
 emailed by Supabase Auth (PKCE, so it signs in only in the browser that asked
 for it); the app never creates accounts, and the email's one-time code becomes

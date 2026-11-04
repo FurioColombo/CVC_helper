@@ -62,11 +62,11 @@ describe("course persistence", () => {
   })
 
   it("reads only the active course", async () => {
-    database.getOptional.mockResolvedValue({ id: "course-1", ...DETAILS })
+    database.getAll.mockResolvedValueOnce([{ id: "course-1", ...DETAILS }])
 
     await getActiveCourse()
 
-    expect(database.getOptional).toHaveBeenCalledWith(
+    expect(database.getAll).toHaveBeenCalledWith(
       expect.stringContaining("WHERE active = 1"),
     )
   })
@@ -77,16 +77,16 @@ describe("course persistence", () => {
       () =>
         new Promise((resolve) => (finishMigrations = () => resolve("write"))),
     )
-    database.getOptional.mockResolvedValue(null)
+    database.getAll.mockClear()
 
     const read = getActiveCourse()
     await Promise.resolve()
     expect(prepareDatabase).toHaveBeenCalledOnce()
-    expect(database.getOptional).not.toHaveBeenCalled()
+    expect(database.getAll).not.toHaveBeenCalled()
 
     finishMigrations()
     await read
-    expect(database.getOptional).toHaveBeenCalledOnce()
+    expect(database.getAll).toHaveBeenCalledOnce()
   })
 
   it("deactivates an existing course and inserts the new one atomically", async () => {

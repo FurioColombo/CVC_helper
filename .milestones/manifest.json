@@ -1367,13 +1367,15 @@
         ".evidence/B7/self-review.json",
         ".evidence/B7/data-integrity-review.json",
         ".evidence/B7/sync-chaos-review.json",
-        ".evidence/B7/field-ux-review.json"
+        ".evidence/B7/field-ux-review.json",
+        ".evidence/B7/security-privacy-review.json"
       ],
       "requiredReviews": [
         ".evidence/B7/self-review.json",
         ".evidence/B7/data-integrity-review.json",
         ".evidence/B7/sync-chaos-review.json",
-        ".evidence/B7/field-ux-review.json"
+        ".evidence/B7/field-ux-review.json",
+        ".evidence/B7/security-privacy-review.json"
       ],
       "ownerEvidence": [".evidence/B7/physical-device-review.json"],
       "allowedAwaitingOwnerPredecessors": [
@@ -1390,7 +1392,19 @@
           "reason": "Giving up a course uses B6's erase, verified live; its pending phone check confirms that erase on the owner's phone and does not change it."
         }
       ],
-      "e2eSpecs": [],
+      "e2eSpecs": [
+        "tests/e2e/b7-two-courses.spec.ts",
+        "tests/e2e/b7-two-courses-live.spec.ts",
+        "tests/e2e/b6-erase.spec.ts",
+        "tests/e2e/b6-erase-live.spec.ts",
+        "tests/e2e/b5-restore.spec.ts",
+        "tests/e2e/b5-restore-live.spec.ts",
+        "tests/e2e/b4-uploads.spec.ts",
+        "tests/e2e/b1-sync-mode.spec.ts",
+        "tests/e2e/d3-read-only.spec.ts",
+        "tests/e2e/d4-course-files.spec.ts",
+        "tests/e2e/d4-local-reset.spec.ts"
+      ],
       "startedFrom": {
         "commit": "eda89b146c95a61450909e4dcaef5d97e9e22596",
         "sourceDigest": "d5e6ac3937faa38fe64560130e65642c925dd99daed17bc9fa44c571203083e9",

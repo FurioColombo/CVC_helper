@@ -9,4 +9,7 @@
  */
 export const PROVIDER_BACKUP_DAYS = 7
 
+/** The same retention, on its own, where the question already says the rest. */
+export const PROVIDER_COPIES_TEXT = `Le copie di sicurezza automatiche del fornitore conservano i dati ancora per al massimo ${PROVIDER_BACKUP_DAYS} giorni, poi spariscono.`
+
 export const ERASURE_RETENTION_TEXT = `Eliminando il corso lo elimini anche dal backup online. Le copie di sicurezza automatiche del fornitore lo conservano ancora per al massimo ${PROVIDER_BACKUP_DAYS} giorni, poi spariscono. Gli altri telefoni con questo account lo tolgono appena si collegano.`

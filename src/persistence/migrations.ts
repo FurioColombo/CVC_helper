@@ -25,6 +25,7 @@ import {
   ReadOnlyDataError,
 } from "@/persistence/writeGuard"
 import { bindCourseSession } from "@/persistence/courseSession"
+import { COURSE_TABLES } from "@/persistence/schema"
 import { applyRecordedSyncMode } from "@/persistence/syncMode"
 import { appChannelConfig } from "@/runtimeConfig"
 
@@ -123,6 +124,109 @@ export async function courseLeftThisDevice(
   return kept.length === 0
 }
 
+/**
+ * B7: set while a device opens on several courses. Once one remains, the
+ * courses given up may still sit in free database pages, and this device's
+ * refused changes of them may still hold their data: the next open clears
+ * both, wherever the choice was made (src/persistence/uploadRefusals.ts has
+ * the same rule for a refusal arriving later).
+ */
+const SEVERAL_COURSES_ID = "local:several-courses"
+
+async function settleSeveralCourses(database: PowerSyncDatabase) {
+  const [row] = await database.getAll<{ n: number }>(
+    "SELECT count(*) AS n FROM courses WHERE active = 1",
+  )
+  const n = row?.n ?? 0
+  const marked = await database.getAll("SELECT 1 FROM meta WHERE id = ?", [
+    SEVERAL_COURSES_ID,
+  ])
+  if (n > 1) {
+    if (!marked.length)
+      await database.writeTransaction((transaction) =>
+        transaction.execute("INSERT INTO meta(id, value) VALUES (?, 1)", [
+          SEVERAL_COURSES_ID,
+        ]),
+      )
+    return
+  }
+  if (!marked.length) return
+  await database.writeTransaction(async (transaction) => {
+    await dropRefusalsOfGoneCourses(transaction)
+    await transaction.execute("DELETE FROM meta WHERE id = ?", [
+      SEVERAL_COURSES_ID,
+    ])
+  })
+  await compactCourseDatabase(database).catch(() => {})
+}
+
+/**
+ * The refused changes of a course no longer here, deletes aside (they name no
+ * one). A course whose own row the backup refused stays for Riprova, with its
+ * rows, as in `courseLeftThisDevice`.
+ */
+async function dropRefusalsOfGoneCourses(
+  transaction: Pick<PowerSyncDatabase, "getAll" | "execute">,
+) {
+  const refusals = await transaction.getAll<{
+    id: string
+    tableName: string
+    rowId: string
+    op: string
+    data: string | null
+    reason: string | null
+  }>("SELECT id, tableName, rowId, op, data, reason FROM uploadRefusals")
+  if (!refusals.length) return
+  const here = new Set(
+    (await transaction.getAll<{ id: string }>("SELECT id FROM courses")).map(
+      ({ id }) => id,
+    ),
+  )
+  const accepted = new Set(
+    (
+      await transaction.getAll<{ id: string }>(
+        "SELECT id FROM serverErasures WHERE keep = 1",
+      )
+    ).map(({ id }) => id),
+  )
+  const standing = new Set(
+    refusals
+      .filter(
+        ({ tableName, rowId, reason }) =>
+          tableName === "courses" &&
+          ((reason ?? "") !== "erased" || accepted.has(rowId)),
+      )
+      .map(({ rowId }) => rowId),
+  )
+  for (const refusal of refusals) {
+    if (refusal.op === "DELETE") continue
+    let course: unknown =
+      refusal.tableName === "courses"
+        ? refusal.rowId
+        : (JSON.parse(refusal.data ?? "null") as { courseId?: unknown } | null)
+            ?.courseId
+    if (typeof course !== "string") {
+      const [row] = (COURSE_TABLES as readonly string[]).includes(
+        refusal.tableName,
+      )
+        ? await transaction.getAll<{ courseId: string | null }>(
+            `SELECT courseId FROM "${refusal.tableName}" WHERE id = ?`,
+            [refusal.rowId],
+          )
+        : []
+      course = row?.courseId
+    }
+    const stays =
+      typeof course === "string"
+        ? here.has(course) || standing.has(course)
+        : standing.size > 0
+    if (!stays)
+      await transaction.execute("DELETE FROM uploadRefusals WHERE id = ?", [
+        refusal.id,
+      ])
+  }
+}
+
 export function prepareDatabase(
   database: PowerSyncDatabase,
   migrations: readonly Migration[] = MIGRATIONS,
@@ -182,6 +286,7 @@ export function prepareDatabase(
           // (reviews SP-B6-Q5, DI-B6-R2-Q1).
           await compactEmptyCourseDatabase(database).catch(() => {})
         }
+        await settleSeveralCourses(database)
       } catch (error) {
         // A newer app raised the record meanwhile; the guard marked the
         // database read-only (src/persistence/writeGuard.ts).

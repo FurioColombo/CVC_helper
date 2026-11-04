@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import {
   APP_VERSION_HEADER,
+  COURSE_GONE_CODE,
   ERASED_COURSE_CODE,
   OUTDATED_WRITER_CODE,
 } from "@/backup/uploadPolicy"
@@ -206,6 +207,21 @@ describe("the server's erased courses", () => {
     expect(erase).toContain("before insert or update on public.courses")
     expect(erase).toContain(`errcode = '${ERASED_COURSE_CODE}'`)
     expect(erase).toContain('e.id = new.id and e."ownerId" = new."ownerId"')
+  })
+
+  it("keeps one course in one locked step, in the caller's rights (B7)", () => {
+    const keep = readFileSync(
+      resolve(root, "supabase/migrations/20261104000000_keep_course.sql"),
+      "utf8",
+    )
+    expect(keep).toContain("security invoker")
+    expect(keep).toContain("for update")
+    expect(keep).toContain(`errcode = '${COURSE_GONE_CODE}'`)
+    expect(keep).toContain("insert into public.erased_courses")
+    expect(keep).toContain(
+      "revoke all on function public.keep_course(text) from public, anon",
+    )
+    expect(keep).toContain('c."ownerId" = auth.uid() and c.id <> keep_id')
   })
 
   it("keeps the record to its owner, with no course data", () => {

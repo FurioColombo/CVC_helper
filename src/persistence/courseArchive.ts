@@ -63,15 +63,24 @@ const INSERTS = {
     "INSERT INTO evaluations(id, courseId, studentId, sessionId, value, note, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 } as const
 
-/** One consistent snapshot, of the active course only; no device bookkeeping. */
+/**
+ * One consistent snapshot, of the active course only; no device bookkeeping.
+ * `courseId` names one of several, on the screen choosing between them (B7).
+ */
 export async function exportCourseArchive(
   database: PowerSyncDatabase = db,
+  courseId?: string,
 ): Promise<CourseArchive> {
   await prepareDatabase(database)
   return database.readTransaction(async (transaction) => {
     const courses = await transaction.getAll<
       CourseArchiveTables["courses"][number]
-    >("SELECT * FROM courses WHERE active = 1")
+    >(
+      courseId
+        ? "SELECT * FROM courses WHERE active = 1 AND id = ?"
+        : "SELECT * FROM courses WHERE active = 1",
+      courseId ? [courseId] : [],
+    )
     if (courses.length !== 1)
       throw new Error("Non c’è un unico corso da esportare.")
     const tables = { courses } as CourseArchiveTables

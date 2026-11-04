@@ -59,11 +59,13 @@ import {
   FullReset,
   StorageStatus,
 } from "@/features/settings/CourseFiles"
+import { CourseChoiceScreen } from "@/features/courseChoice/CourseChoiceScreen"
 import { ArchiveSummary, OnlineBackup } from "@/features/settings/OnlineBackup"
 import { useBackupState } from "@/backup/useBackupState"
 import {
   awaitingAccountCourse,
   courseLeftWithBackup,
+  secondCourseArrived,
   deviceCourseId,
   deviceSyncMode,
   databaseConnected,
@@ -79,7 +81,7 @@ import {
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
-  getActiveCourse,
+  getActiveCourses,
   saveActiveCourse,
   type CourseRecord,
 } from "@/persistence/courses"
@@ -88,6 +90,7 @@ type AppState =
   | { status: "loading" }
   | { status: "no-course" }
   | { status: "ready"; course: CourseRecord }
+  | { status: "several-courses" }
   | { status: "closed"; operation: LocalDataState }
   | { status: "error" }
 
@@ -913,18 +916,21 @@ export function App() {
         stop()
       }
     }
-    getActiveCourse()
-      .then((course) => {
+    getActiveCourses()
+      .then((courses) => {
         if (!active) return
+        const course = courses[0]
         // An upgraded or imported course asks too, not only a new one
         // (UG3 review SC-5); the browser answers at once when it already has.
         if (course) void requestPersistentStorage()
         setAppState((current) =>
           current.status === "closed"
             ? current
-            : course
-              ? { status: "ready", course }
-              : { status: "no-course" },
+            : courses.length > 1
+              ? { status: "several-courses" }
+              : course
+                ? { status: "ready", course }
+                : { status: "no-course" },
         )
       })
       .catch(() => {
@@ -949,9 +955,11 @@ export function App() {
     if (!ready) return
     return onDatabaseStatus(() => {
       if (!databaseConnected()) return
-      void courseLeftWithBackup().then((left) => {
-        if (left) window.location.reload()
-      })
+      void Promise.all([courseLeftWithBackup(), secondCourseArrived()]).then(
+        ([left, second]) => {
+          if (left || second) window.location.reload()
+        },
+      )
     })
   }, [ready])
 
@@ -1017,6 +1025,14 @@ export function App() {
     // one, and only a fresh start applies this version's again (D1 review
     // DI-R2-Q5).
     return <ErrorScreen onRetry={() => window.location.reload()} />
+  }
+  if (appState.status === "several-courses") {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pt-6 pb-[calc(2rem+var(--update-banner-height,0px))]">
+        <Brand />
+        <CourseChoiceScreen />
+      </main>
+    )
   }
   if (appState.status === "no-course") {
     return (

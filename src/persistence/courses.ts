@@ -23,14 +23,18 @@ export type CourseRecord = CourseDetails & {
  * to fill. A failed run fails this read, and the app's Riprova reloads the app
  * to run it again.
  */
-export async function getActiveCourse() {
+export async function getActiveCourses() {
   await prepareDatabase(db)
-  return db.getOptional<CourseRecord>(
+  return db.getAll<CourseRecord>(
     `SELECT id, active, family, level, isoWeek, year, startDate, endDate, label
      FROM courses
      WHERE active = 1
-     LIMIT 1`,
+     ORDER BY id`,
   )
+}
+
+export async function getActiveCourse() {
+  return (await getActiveCourses())[0] ?? null
 }
 
 export async function saveActiveCourse(

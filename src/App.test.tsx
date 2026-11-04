@@ -14,6 +14,7 @@ vi.mock("@/persistence/backupLink", () => ({
   awaitingServerErase: vi.fn(async () => false),
   connectDatabase: vi.fn(),
   courseLeftWithBackup: vi.fn(async () => false),
+  secondCourseArrived: vi.fn(async () => false),
   databaseConnected: () => false,
   deviceCourseId: vi.fn(async () => null),
   deviceSyncMode: vi.fn(async () => "local"),
@@ -24,7 +25,16 @@ vi.mock("@/persistence/backupLink", () => ({
 }))
 vi.mock("@/persistence/courses", () => ({
   eraseAllCourseData: vi.fn().mockResolvedValue(undefined),
-  getActiveCourse: vi.fn(),
+  ...(() => {
+    const getActiveCourse = vi.fn()
+    return {
+      getActiveCourse,
+      getActiveCourses: async () => {
+        const course: unknown = await getActiveCourse()
+        return course ? [course] : []
+      },
+    }
+  })(),
   saveActiveCourse: vi.fn(),
 }))
 
@@ -38,6 +48,9 @@ vi.mock("@/persistence/localDataOperations", () => ({
   watchLocalData: vi.fn(() => () => {}),
   resetAllLocalData: vi.fn(),
   announceCourseReplacement: vi.fn(),
+}))
+vi.mock("@/persistence/courseChoice", () => ({
+  readCourseChoices: vi.fn(async () => []),
 }))
 vi.mock("@/persistence/courseArchive", () => ({
   exportCourseArchive: vi.fn(),

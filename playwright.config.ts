@@ -34,6 +34,8 @@ const webkitCoreSpecs = [
   "b3-backup-ui",
   // The erase forgets the synced copy on WebKit's own storage backend (B6).
   "b6-erase",
+  // The choice between two courses on the iPhone engine (B7).
+  "b7-two-courses",
   "d1-migration",
   "d2-duty-items",
   "d3-read-only",
@@ -131,6 +133,8 @@ export default defineConfig({
         "b5-restore-live",
         "b6-erase",
         "b6-erase-live",
+        "b7-two-courses",
+        "b7-two-courses-live",
       ]),
       use: { ...devices["Desktop Chrome"], locale: "it-IT" },
     },

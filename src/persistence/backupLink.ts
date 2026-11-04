@@ -187,6 +187,18 @@ export async function courseLeftWithBackup() {
   return courseLeftThisDevice(db)
 }
 
+/**
+ * B7: the download brought another course to this device; the app then
+ * reopens on the choice between them, since its screens can no longer save.
+ */
+export async function secondCourseArrived() {
+  await prepareDatabase(db)
+  const [row] = await db.getAll<{ n: number }>(
+    "SELECT count(*) AS n FROM courses WHERE active = 1",
+  )
+  return (row?.n ?? 0) > 1
+}
+
 export function databaseConnected() {
   return db.currentStatus.connected
 }

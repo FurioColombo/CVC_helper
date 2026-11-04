@@ -35,6 +35,9 @@ export const OUTDATED_WRITER_CODE = "CVOLD"
 /** Raised for a course erased from the backup (supabase/migrations, B6). */
 export const ERASED_COURSE_CODE = "CVERA"
 
+/** Raised when the course chosen is already gone (supabase/migrations, B7). */
+export const COURSE_GONE_CODE = "CVGON"
+
 const RETRY_STATUSES = new Set([0, 401, 408, 425, 429])
 const RETRY_CODES = new Set([
   // Expired or not yet valid session: the next attempt has a fresh token.

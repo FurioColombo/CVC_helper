@@ -421,6 +421,25 @@
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B6/physical-device-review.json",
       "updatedAt": "2026-11-04T10:31:03.647Z"
+    },
+    {
+      "id": "B7-KEEP-RULE",
+      "milestone": "B7",
+      "kind": "DECISION",
+      "title": "Let the server keep the one course you choose",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "In the Supabase dashboard of cvc-helper-dev open SQL Editor, then New query.",
+        "Paste the whole file supabase/migrations/20261104000000_keep_course.sql from the project folder and Run it once; it should report success with no rows. It is safe to run now: no published build calls it.",
+        "Write 'keep rule run' in the chat; I then run the live check on two devices."
+      ],
+      "expected": "The server can keep one of an account's courses in one step, so two devices choosing together can never erase both. It adds a function and no data.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/B7/physical-device-review.json",
+      "updatedAt": "2026-11-04T11:32:22.534Z"
     }
   ]
 }

@@ -3,7 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { backupConfig, type BackupConfig } from "@/backup/config"
 import { createConnector } from "@/backup/connector"
-import { APP_VERSION_HEADER, OUTDATED_WRITER_CODE } from "@/backup/uploadPolicy"
+import {
+  APP_VERSION_HEADER,
+  COURSE_GONE_CODE,
+  OUTDATED_WRITER_CODE,
+} from "@/backup/uploadPolicy"
 import { APP_VERSION_TEXT } from "@/appVersion"
 import {
   claimDeviceForAccount,
@@ -22,6 +26,7 @@ import {
   awaitingAccountCourse,
   courseTableColumns,
   recordUploadOutcome,
+  pendingUploads,
   stopAwaitingAccountCourse,
   switchDeviceToSyncedTables,
   syncStalled,
@@ -584,6 +589,47 @@ export async function replaceWithOnlineCourse(): Promise<BackupState> {
   await eraseAllCourseData()
   reload()
   return current
+}
+
+/** How long the changes still to send may hold a choice back. */
+const KEEP_UPLOAD_WAIT_MS = 30_000
+
+export type KeepOutcome = "kept" | "gone" | "outdated" | "failed"
+
+/**
+ * B7: the owner keeps one of the account's courses. This device's changes go
+ * first, those of the course kept and of those given up alike, so the queue
+ * holds none of a course about to go. The server then keeps it in one step
+ * (supabase/migrations/20261104000000_keep_course.sql), and the download takes
+ * the others off every device, this one included; nothing is erased here
+ * first, so a failure leaves everything as it was and the choice open.
+ */
+export async function keepCourse(
+  courseId: string,
+  wait: { ms: number; stepMs: number } = {
+    ms: KEEP_UPLOAD_WAIT_MS,
+    stepMs: 500,
+  },
+): Promise<KeepOutcome> {
+  const config = backupConfig()
+  if (!config) return "failed"
+  try {
+    const deadline = Date.now() + wait.ms
+    while ((await pendingUploads()) > 0) {
+      if (uploadsOutdated) return "outdated"
+      if (Date.now() >= deadline) return "failed"
+      await new Promise((resolve) => window.setTimeout(resolve, wait.stepMs))
+    }
+    const { error } = await (
+      await supabase(config)
+    ).rpc("keep_course", { keep_id: courseId })
+    if (!error) return "kept"
+    if (error.code === COURSE_GONE_CODE) return "gone"
+    if (error.code === OUTDATED_WRITER_CODE) return "outdated"
+    return "failed"
+  } catch {
+    return "failed"
+  }
 }
 
 /**

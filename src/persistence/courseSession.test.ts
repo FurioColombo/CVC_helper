@@ -3,6 +3,7 @@ import type { PowerSyncDatabase } from "@powersync/web"
 import { describe, expect, it, vi } from "vitest"
 import {
   advanceCourseGeneration,
+  assertCourseSession,
   bindCourseSession,
   CourseReplacedError,
   invalidateCourseSession,
@@ -34,6 +35,47 @@ function sharedDatabase() {
     } as unknown as PowerSyncDatabase)
   return { sqlite, context, open }
 }
+
+describe("a session opened on several courses (B7)", () => {
+  async function opened(rows: Array<{ id: string }>) {
+    const database = {
+      readTransaction: async (callback: (context: unknown) => unknown) =>
+        callback(context),
+    } as unknown as Parameters<typeof bindCourseSession>[0]
+    const context = {
+      getAll: async (sql: string) =>
+        sql.includes("meta") ? [{ value: 1 }] : rows,
+    }
+    await bindCourseSession(database)
+    return { database, context }
+  }
+
+  it("binds no course instead of refusing to open", async () => {
+    const rows = [{ id: "one" }, { id: "two" }]
+    const { database, context } = await opened(rows)
+    await expect(
+      assertCourseSession(database, context as never),
+    ).resolves.toBeUndefined()
+  })
+
+  it("closes once a course has left, so nothing writes on the old screen", async () => {
+    const rows = [{ id: "one" }, { id: "two" }]
+    const { database, context } = await opened(rows)
+    rows.pop()
+    await expect(
+      assertCourseSession(database, context as never),
+    ).rejects.toBeInstanceOf(CourseReplacedError)
+  })
+
+  it("a session of one course still closes when a second arrives", async () => {
+    const rows = [{ id: "one" }]
+    const { database, context } = await opened(rows)
+    rows.push({ id: "two" })
+    await expect(
+      assertCourseSession(database, context as never),
+    ).rejects.toBeInstanceOf(CourseReplacedError)
+  })
+})
 
 describe("a course session", () => {
   it("rejects a stale tab's FIRST write after an atomic replacement, including the same course IDs", async () => {

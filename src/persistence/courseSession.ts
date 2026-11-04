@@ -4,7 +4,7 @@ const GENERATION_ID = "local:course-generation"
 type Reader = Pick<Transaction, "getAll">
 const generations = new WeakMap<
   PowerSyncDatabase,
-  { generation: number; courseId: string | null }
+  { generation: number; courseId: string | null; several: boolean }
 >()
 const invalid = new WeakSet<PowerSyncDatabase>()
 const listeners = new Set<(database: PowerSyncDatabase) => void>()
@@ -34,8 +34,14 @@ export async function bindCourseSession(database: PowerSyncDatabase) {
     const courses = await context.getAll<{ id: string }>(
       "SELECT id FROM courses WHERE active = 1",
     )
-    if (courses.length > 1) throw new CourseReplacedError()
-    return { generation, courseId: courses[0]?.id ?? null }
+    // B7: an account holding several courses opens on the choice between
+    // them, so this binds no course: only that screen runs on such a session.
+    const several = courses.length > 1
+    return {
+      generation,
+      courseId: several ? null : (courses[0]?.id ?? null),
+      several,
+    }
   })
   if (!generations.has(database)) generations.set(database, session)
 }
@@ -85,8 +91,9 @@ export async function assertCourseSession(
   if (
     expected !== undefined &&
     (expected.generation !== (await readGeneration(context)) ||
-      courses.length > 1 ||
-      expected.courseId !== (courses[0]?.id ?? null))
+      (expected.several
+        ? courses.length <= 1
+        : courses.length > 1 || expected.courseId !== (courses[0]?.id ?? null)))
   ) {
     invalidateCourseSession(database)
     throw new CourseReplacedError()
