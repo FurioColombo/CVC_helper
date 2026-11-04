@@ -113,12 +113,14 @@ three were adopted on 2026-10-12. The rest:
 Each passed only on a retry and is a defect to fix (03 §6).
 
 - `b1-sync-mode.spec.ts › a course file imported on a switched device lands in the synced tables`
-  — WebKit, B5 and B6 runs: page closed ~6 s in, alone 10/11; also in
-  `› switches a 0.1.0 course…`. Likely a WebKit crash under load.
+  — WebKit, page closed ~6 s in, alone 10/11. Likely a crash under load. The same
+  in B5's rerun (2026-11-04, B6's passed):
+  `b1-sync-mode.spec.ts › switches a 0.2.0 course to synced tables with every row identical and queued once`,
+  `b1-sync-mode.spec.ts › switches a 0.4.0 course to synced tables with every row identical and queued once`,
+  `b1-sync-mode.spec.ts › the app erases a switched course, queues the deletion and keeps a new course synced`.
 
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
-  — WebKit, B3's run (2026-10-26): no course heading within 30 s; retry and
-  5 isolated runs passed. Cause unproven; no backup in this spec.
+  — WebKit, B3's run: no course heading in 30 s; 5 isolated runs passed. Cause unproven.
 
 - B3 FUX-B3-R4-Q1 (unconfirmed): a two-tab scratch spec on WebKit stayed on
   "Apertura del corso…" after the launch switch, 2 of 4 runs; `b3-backup-ui`
@@ -131,8 +133,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — WebKit, B1 run: the dev server stopped answering late (environment).
 
 - `b3-backup-ui.spec.ts › the code in the email signs in; … Esci asks first`
-  — Mac WebKit CI `41215663327` (2026-10-31, `5157e09`): Esci's warning did
-  not open; the retry passed. Cause unproven; trace in the run's artifact.
+  — Mac WebKit CI `41215663327`: Esci's warning did not open. Cause unproven.
 
 - `d4-course-files.spec.ts › exports the upgraded course and imports it through the fresh app, every row unchanged even after immediate close`
   — stalled twice opening the fresh WebKit recipient before import (D4,
@@ -146,8 +147,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   `.evidence/T1/webkit-page-loss-classification.json`.
 
 - `ug2-hostile-roster.spec.ts › shows and copies the hostile crew summary exactly as the screen has it, at four sizes`
-  — iPhone 13 WebKit, D3 (2026-10-13): no boat logos on the first attempt;
-  the retry passed. No recurrence; CI keeps the trace.
+  — iPhone 13 WebKit, D3: no boat logos on the first attempt. No recurrence.
 
 - `scripts/check-test-app-isolation.mjs --full-reset` (WebKit, test app's
   first open) — UG3's `verify:all` on `3b5d400` (2026-10-22): "Target

@@ -1,14 +1,14 @@
 {
   "milestone": "B6",
   "status": "PASS",
-  "recordedAt": "2026-10-31T12:34:49.851Z",
+  "recordedAt": "2026-11-04T09:12:43.209Z",
   "nodeVersion": "v24.21.0",
   "appVersion": "0.5.0",
   "recorder": "scripts/record-verification.mjs@3",
-  "gitCommit": "d4f6574aa5eaf69805fff83a06799a204edd70fc",
+  "gitCommit": "2ac2434b0b46fc0387991b4a6f954f308fdb7228",
   "workingTreeClean": true,
-  "sourceDigest": "ad985f56fe7d7f96162239e0862816cf073af99c4539db7bf41d343f594fadbe",
-  "sourceFiles": 493,
+  "sourceDigest": "d5e6ac3937faa38fe64560130e65642c925dd99daed17bc9fa44c571203083e9",
+  "sourceFiles": 494,
   "verificationScripts": [
     "verify",
     "verify:e2e:focus"
@@ -30,18 +30,18 @@
     {
       "command": "npm run verify",
       "status": "PASS",
-      "startedAt": "2026-10-31T11:56:55.196Z",
-      "durationMs": 305705,
+      "startedAt": "2026-11-04T08:27:30.001Z",
+      "durationMs": 246286,
       "exitCode": 0,
-      "outputTail": "\u001b[33m\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 5.6s inside plugin hooks (12.7s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 8.8s, 1 call)\n  - @tailwindcss/vite:generate:build transform (35%, 1.9s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+      "outputTail": "\u001b[33m\u001b[33m[PLUGIN_TIMINGS] \u001b[0mYour build spent 100% of 4.1s inside plugin hooks (6.5s).\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (93%, 3.8s, 1 call)\n  - @tailwindcss/vite:generate:build transform (33%, 1.4s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
     },
     {
       "command": "npm run verify:e2e:focus",
       "status": "PASS",
-      "startedAt": "2026-10-31T12:02:00.904Z",
-      "durationMs": 1968944,
+      "startedAt": "2026-11-04T08:31:36.289Z",
+      "durationMs": 2466915,
       "exitCode": 0,
-      "outputTail": "[WebServer] 1:34:33 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 1:34:33 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 118 [iphone-13-webkit-core] › tests\\e2e\\d4-local-reset.spec.ts:554:1 › resumes a reset interrupted by closing the app on the next open (22.8s)\n  -  119 [iphone-13-webkit-core] › tests\\e2e\\d4-local-reset.spec.ts:649:1 › finishes a resumed reset even when the engine cannot start in time\n[WebServer] 1:34:39 PM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 1:34:39 PM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 120 [iphone-13-webkit-core] › tests\\e2e\\d4-local-reset.spec.ts:711:1 › reports partial cleanup honestly and retries through the reset screen (10.1s)\n\n  Slow test file: [iphone-13-webkit-core] › tests\\e2e\\b6-erase.spec.ts (7.8m)\n  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel\n  4 skipped\n  116 passed (32.8m)"
+      "outputTail": "[WebServer] 10:12:28 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:12:28 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 167 [iphone-13-webkit-core] › tests\\e2e\\d4-local-reset.spec.ts:554:1 › resumes a reset interrupted by closing the app on the next open (18.9s)\n  -  168 [iphone-13-webkit-core] › tests\\e2e\\d4-local-reset.spec.ts:649:1 › finishes a resumed reset even when the engine cannot start in time\n[WebServer] 10:12:33 AM [vite] (client) [console.warn] [PowerSync]: Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.\n[WebServer] 10:12:33 AM [vite] (client) [console.warn] [PowerSync]: Multiple tabs are not enabled in this browser\n  ok 169 [iphone-13-webkit-core] › tests\\e2e\\d4-local-reset.spec.ts:711:1 › reports partial cleanup honestly and retries through the reset screen (9.2s)\n\n  Slow test file: [iphone-13-webkit-core] › tests\\e2e\\b6-erase.spec.ts (8.5m)\n  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel\n  4 skipped\n  165 passed (41.1m)"
     }
   ]
 }
