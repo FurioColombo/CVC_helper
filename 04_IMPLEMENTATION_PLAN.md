@@ -28,8 +28,8 @@ by `verify:all`, the reviews below and the owner's Android check.
 | B1 | Complete. A device switches once from 0.4.0's local tables to synced ones, every row identical and queued once, older apps read-only; erase, import, reset and older apps are covered on Chromium and WebKit. Three reviews passed with findings, fixed or handed to B3–B6. See `.evidence/B1/`. |
 | B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
-| B4 | Resumed for the owner's recheck (2026-11-02): on the phone the status now follows the uploads and needs no reopen. The PC step found desktop never synced. Fixed: each tab syncs for itself. The desktop review's third round failed on a defect B4 did not cause, split to B7 by owner decision 20. See `.evidence/B4/`. |
-| B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reviews passed, CI green at `b06d8e1`; its code is in CVC Helper Test 0.5.2. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
+| B4 | Awaiting the owner's recheck on CVC Helper Test 0.5.3, CI green at `6e17c1d`: on the phone the status follows the uploads; the PC step found desktop never synced, fixed with sync in each tab. The desktop review's third round failed on a defect split to B7 (owner decision 20). See `.evidence/B4/`. |
+| B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reviews passed, CI green at `b06d8e1`; its code is in CVC Helper Test 0.5.3. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 | B6 | Awaiting the owner, CI green at `62ce4a8`: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
 | B7 | Pending, split from B4 by owner decision 20: an account with two courses locks every device. |
 
@@ -68,7 +68,7 @@ to remember on the boat).
 ## B4 — Uploads
 
 **Category:** RULE_HEAVY
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 The upload handler writes each queued change through the owner's session to
 the table without its `synced_` prefix and sends the app version; the server
