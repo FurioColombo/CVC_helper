@@ -136,3 +136,10 @@ tutti i dati locali` erases the course from the backup first; without
     review (its three rounds stay in `.evidence/B4/`), 0.5.3 is published, and
     B7 fixes it before UG4. Until then, no course on a second device while the
     first is offline or already has one.
+21. **The two-course screen (yours, 2026-11-04).** You approved the mock
+    `docs/design/mockups/b7-two-courses.html` and added the email of the last
+    edit beside its date and time. Choosing a course needs signal; saving a file
+    does not. Taken for now: the email shown is the account's, which is true
+    because only the owner's account can write to a course until 1.0, and needs
+    no new column or migration. Both courses therefore show the same email. A
+    record of who made each edit belongs with team writing.

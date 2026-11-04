@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>B7 proposal: two courses on one account</title>
-    <!-- B7 proposal, not approved and not built. It replaces the "Non riesco ad
+    <title>B7 target: two courses on one account</title>
+    <!-- B7 target, approved by the owner on 2026-11-04 with the email added; not built yet. It replaces the "Non riesco ad
          aprire i dati locali" screen for an account holding two courses.
          Static states with synthetic data; nothing here saves or erases. -->
     <style>
@@ -142,6 +142,10 @@
       .changed span {
         color: var(--muted-foreground);
       }
+      .changed .editor {
+        color: var(--foreground);
+        overflow-wrap: anywhere;
+      }
       .notice {
         margin: 10px 0 0;
         padding: 10px 12px;
@@ -242,10 +246,10 @@
   </head>
   <body>
     <header class="intro">
-      <h1>Two courses on one account: proposal for your approval</h1>
+      <h1>Two courses on one account: approved target</h1>
       <p>
         This replaces the "Non riesco ad aprire i dati locali" screen. It is a
-        picture only: nothing is built and the data is invented.
+        picture only: the data is invented.
       </p>
     </header>
 
@@ -276,7 +280,12 @@
                 <dd>84</dd>
               </div>
             </dl>
-            <p class="changed"><span>Ultima modifica:</span> oggi, 14:20</p>
+            <p class="changed">
+              <span>Ultima modifica:</span> oggi, 14:20<br />
+              <span class="editor"
+                >istruttore.deriva.settimana45@example.com</span
+              >
+            </p>
             <div class="actions">
               <button class="primary">Tieni questo corso</button>
               <button class="secondary">Salva file</button>
@@ -299,7 +308,12 @@
                 <dd>0</dd>
               </div>
             </dl>
-            <p class="changed"><span>Ultima modifica:</span> oggi, 8:05</p>
+            <p class="changed">
+              <span>Ultima modifica:</span> oggi, 8:05<br />
+              <span class="editor"
+                >istruttore.deriva.settimana45@example.com</span
+              >
+            </p>
             <div class="actions">
               <button class="primary">Tieni questo corso</button>
               <button class="secondary">Salva file</button>
@@ -337,7 +351,12 @@
                 <dd>12</dd>
               </div>
             </dl>
-            <p class="changed"><span>Ultima modifica:</span> ieri, 18:42</p>
+            <p class="changed">
+              <span>Ultima modifica:</span> ieri, 18:42<br />
+              <span class="editor"
+                >istruttore.deriva.settimana45@example.com</span
+              >
+            </p>
             <div class="actions">
               <button class="primary">Tieni questo corso</button>
               <button class="secondary">Salva file</button>
@@ -360,7 +379,12 @@
                 <dd>0</dd>
               </div>
             </dl>
-            <p class="changed"><span>Ultima modifica:</span> oggi, 9:10</p>
+            <p class="changed">
+              <span>Ultima modifica:</span> oggi, 9:10<br />
+              <span class="editor"
+                >istruttore.deriva.settimana45@example.com</span
+              >
+            </p>
             <p class="notice">
               3 modifiche fatte su questo telefono non sono ancora state
               inviate.
@@ -441,7 +465,12 @@
                 <dd>84</dd>
               </div>
             </dl>
-            <p class="changed"><span>Ultima modifica:</span> oggi, 14:20</p>
+            <p class="changed">
+              <span>Ultima modifica:</span> oggi, 14:20<br />
+              <span class="editor"
+                >istruttore.deriva.settimana45@example.com</span
+              >
+            </p>
             <div class="actions">
               <button disabled>Tieni questo corso</button>
               <button class="secondary">Salva file</button>
@@ -498,7 +527,12 @@
                 <dd>84</dd>
               </div>
             </dl>
-            <p class="changed"><span>Ultima modifica:</span> oggi, 14:20</p>
+            <p class="changed">
+              <span>Ultima modifica:</span> oggi, 14:20<br />
+              <span class="editor"
+                >istruttore.deriva.settimana45@example.com</span
+              >
+            </p>
             <div class="actions">
               <button class="secondary">Salva file</button>
             </div>
@@ -508,18 +542,13 @@
     </main>
 
     <section class="questions">
-      <h2>What I need from you</h2>
-      <ol>
-        <li>
-          Does the choice in state 1 give you enough to recognise your course?
-          The counts and the last change are my proposal.
-        </li>
-        <li>
-          Are you happy for the choice to need signal (state 4)? I recommend it:
-          choosing offline risks two phones erasing each other's course.
-        </li>
-        <li>Anything to change in the wording or the layout?</li>
-      </ol>
+      <h2>Approved 2026-11-04</h2>
+      <p>
+        The owner approved the states, the counts, the last change and the need
+        for signal, and added the email of the last edit. Only the owner's
+        account can write to a course in 0.5.0, so this is the account's email
+        and both courses show the same one.
+      </p>
     </section>
   </body>
 </html>

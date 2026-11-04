@@ -146,7 +146,9 @@ with two courses, and any other route to that state does the same (review
 SC-DT-9). Today every device of the account then stops on "Non riesco ad aprire
 i dati locali" with only Riprova, and Impostazioni, Esci, export and reset are
 out of reach. The app shows both courses and the owner chooses which to keep;
-it never erases one by itself. The owner approves a mock before it is built.
+it never erases one by itself. Target: `docs/design/mockups/b7-two-courses.html`,
+approved by the owner (decision 21): counts, last change with the account's
+email, and a choice that needs signal.
 
 **Success predicate:** an account holding two courses never locks a device: the
 owner can see both, export either and keep one, and afterwards every device of
