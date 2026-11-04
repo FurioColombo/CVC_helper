@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>B7 proposal: two courses on one account</title>
+    <!-- B7 proposal, not approved and not built. It replaces the "Non riesco ad
+         aprire i dati locali" screen for an account holding two courses.
+         Static states with synthetic data; nothing here saves or erases. -->
+    <style>
+      :root {
+        --background: #f2f6fb;
+        --foreground: #172b47;
+        --card: #ffffff;
+        --muted: #e8eef6;
+        --muted-foreground: #53667d;
+        --primary: #2f5fa0;
+        --primary-foreground: #ffffff;
+        --border: #cfdae7;
+        --warning: #b04423;
+        --warning-surface: #fdf1ec;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #dfe6ef;
+        color: var(--foreground);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      .intro {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 24px 16px 8px;
+      }
+      .intro h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.25;
+      }
+      .intro p {
+        margin: 8px 0 0;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      .states {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 28px 20px;
+        padding: 16px;
+      }
+      .state {
+        width: 100%;
+        max-width: 390px;
+      }
+      .state > h2 {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.3;
+      }
+      .state > p {
+        margin: 4px 0 10px;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #3b4d63;
+      }
+      .phone {
+        background: var(--background);
+        border: 1px solid #b9c6d6;
+        border-radius: 18px;
+        padding: 20px 16px;
+      }
+      .phone h3 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.15;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+      .lead {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--muted-foreground);
+      }
+      .course {
+        margin-top: 14px;
+        padding: 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+      }
+      .code {
+        margin: 0;
+        color: var(--primary);
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.15;
+      }
+      .code small {
+        color: var(--muted-foreground);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .type {
+        margin: 2px 0 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 12px 0 0;
+      }
+      dl div {
+        min-width: 0;
+      }
+      dt {
+        font-size: 12px;
+        color: var(--muted-foreground);
+      }
+      dd {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .changed {
+        margin: 10px 0 0;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+      .changed span {
+        color: var(--muted-foreground);
+      }
+      .notice {
+        margin: 10px 0 0;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--warning-surface);
+        color: #7f2f17;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .plain {
+        margin: 14px 0 0;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--muted);
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      button {
+        flex: 1 1 130px;
+        min-height: 44px;
+        padding: 8px 14px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+      .secondary {
+        background: var(--card);
+        border-color: var(--border);
+        color: var(--foreground);
+      }
+      .erase {
+        background: var(--warning);
+        color: #fff;
+      }
+      button:disabled {
+        background: var(--muted);
+        border-color: var(--border);
+        color: #65768b;
+      }
+      .wide {
+        flex-basis: 100%;
+      }
+      label {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        min-height: 44px;
+        margin-top: 12px;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      input {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        margin-top: 1px;
+      }
+      .stack {
+        margin-top: 14px;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      .stack p {
+        margin: 0 0 10px;
+      }
+      .questions {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 4px 16px 32px;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      .questions h2 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+      .questions li {
+        margin-bottom: 8px;
+      }
+      @media (max-width: 360px) {
+        .phone {
+          padding: 16px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="intro">
+      <h1>Two courses on one account: proposal for your approval</h1>
+      <p>
+        This replaces the "Non riesco ad aprire i dati locali" screen. It is a
+        picture only: nothing is built and the data is invented.
+      </p>
+    </header>
+
+    <main class="states">
+      <section class="state">
+        <h2>1. The choice</h2>
+        <p>Every device of the account opens here until one course is kept.</p>
+        <div class="phone">
+          <h3>Scegli il corso da tenere</h3>
+          <p class="lead">
+            Questo account ha due corsi, ma l’app ne apre uno solo. Non è stato
+            cancellato nulla.
+          </p>
+          <article class="course">
+            <p class="code">D2 - 45 <small>| 2026</small></p>
+            <p class="type">Deriva · livello 2</p>
+            <dl>
+              <div>
+                <dt>Allievi</dt>
+                <dd>21</dd>
+              </div>
+              <div>
+                <dt>Equipaggi</dt>
+                <dd>6</dd>
+              </div>
+              <div>
+                <dt>Valutazioni</dt>
+                <dd>84</dd>
+              </div>
+            </dl>
+            <p class="changed"><span>Ultima modifica:</span> oggi, 14:20</p>
+            <div class="actions">
+              <button class="primary">Tieni questo corso</button>
+              <button class="secondary">Salva file</button>
+            </div>
+          </article>
+          <article class="course">
+            <p class="code">C3 - 45 <small>| 2026</small></p>
+            <p class="type">Cabinato · livello 3</p>
+            <dl>
+              <div>
+                <dt>Allievi</dt>
+                <dd>2</dd>
+              </div>
+              <div>
+                <dt>Equipaggi</dt>
+                <dd>0</dd>
+              </div>
+              <div>
+                <dt>Valutazioni</dt>
+                <dd>0</dd>
+              </div>
+            </dl>
+            <p class="changed"><span>Ultima modifica:</span> oggi, 8:05</p>
+            <div class="actions">
+              <button class="primary">Tieni questo corso</button>
+              <button class="secondary">Salva file</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="state">
+        <h2>2. Same name, changes not yet sent</h2>
+        <p>
+          Two courses can share a code, so the counts and the last change tell
+          them apart. Unsent changes are shown on their course.
+        </p>
+        <div class="phone">
+          <h3>Scegli il corso da tenere</h3>
+          <p class="lead">
+            Questo account ha due corsi, ma l’app ne apre uno solo. Non è stato
+            cancellato nulla.
+          </p>
+          <article class="course">
+            <p class="code">D2 - 45 <small>| 2026</small></p>
+            <p class="type">Deriva · livello 2</p>
+            <dl>
+              <div>
+                <dt>Allievi</dt>
+                <dd>23</dd>
+              </div>
+              <div>
+                <dt>Equipaggi</dt>
+                <dd>6</dd>
+              </div>
+              <div>
+                <dt>Valutazioni</dt>
+                <dd>12</dd>
+              </div>
+            </dl>
+            <p class="changed"><span>Ultima modifica:</span> ieri, 18:42</p>
+            <div class="actions">
+              <button class="primary">Tieni questo corso</button>
+              <button class="secondary">Salva file</button>
+            </div>
+          </article>
+          <article class="course">
+            <p class="code">D2 - 45 <small>| 2026</small></p>
+            <p class="type">Deriva · livello 2</p>
+            <dl>
+              <div>
+                <dt>Allievi</dt>
+                <dd>21</dd>
+              </div>
+              <div>
+                <dt>Equipaggi</dt>
+                <dd>0</dd>
+              </div>
+              <div>
+                <dt>Valutazioni</dt>
+                <dd>0</dd>
+              </div>
+            </dl>
+            <p class="changed"><span>Ultima modifica:</span> oggi, 9:10</p>
+            <p class="notice">
+              3 modifiche fatte su questo telefono non sono ancora state
+              inviate.
+            </p>
+            <div class="actions">
+              <button class="primary">Tieni questo corso</button>
+              <button class="secondary">Salva file</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="state">
+        <h2>3. The confirmation</h2>
+        <p>
+          The one irreversible step, in the wording of today's replace question.
+          The button stays off until the box is ticked.
+        </p>
+        <div class="phone" role="presentation">
+          <h3>Tieni D2 - 45?</h3>
+          <div class="stack">
+            <p>
+              <strong>C3 - 45</strong> sarà eliminato da questo telefono, dal
+              backup online e dagli altri dispositivi dell’account. Non si potrà
+              recuperare.
+            </p>
+            <p class="notice">
+              3 modifiche di C3 - 45 fatte su questo telefono non sono ancora
+              state inviate: andranno perse.
+            </p>
+          </div>
+          <div class="actions">
+            <button class="secondary wide">
+              Salva prima il file di C3 - 45
+            </button>
+          </div>
+          <label>
+            <input checked type="checkbox" />
+            <span>Ho capito: C3 - 45 non si potrà recuperare</span>
+          </label>
+          <div class="actions">
+            <button class="erase wide">Elimina C3 - 45 e apri D2 - 45</button>
+            <button class="secondary wide">Annulla</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="state">
+        <h2>4. Offline</h2>
+        <p>
+          The choice waits for signal, so two offline phones cannot each erase
+          the other's course. Saving a file still works.
+        </p>
+        <div class="phone">
+          <h3>Scegli il corso da tenere</h3>
+          <p class="lead">
+            Questo account ha due corsi, ma l’app ne apre uno solo. Non è stato
+            cancellato nulla.
+          </p>
+          <p class="plain">
+            Serve la connessione per scegliere: la scelta vale per tutti i
+            dispositivi dell’account. Intanto puoi salvare una copia dei corsi.
+          </p>
+          <article class="course">
+            <p class="code">D2 - 45 <small>| 2026</small></p>
+            <p class="type">Deriva · livello 2</p>
+            <dl>
+              <div>
+                <dt>Allievi</dt>
+                <dd>21</dd>
+              </div>
+              <div>
+                <dt>Equipaggi</dt>
+                <dd>6</dd>
+              </div>
+              <div>
+                <dt>Valutazioni</dt>
+                <dd>84</dd>
+              </div>
+            </dl>
+            <p class="changed"><span>Ultima modifica:</span> oggi, 14:20</p>
+            <div class="actions">
+              <button disabled>Tieni questo corso</button>
+              <button class="secondary">Salva file</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="state">
+        <h2>5. The erase could not finish</h2>
+        <p>
+          Nothing changes on the device until the server has answered, and the
+          choice stays open.
+        </p>
+        <div class="phone">
+          <h3>Tieni D2 - 45?</h3>
+          <p class="notice">
+            Non sono riuscito a eliminare C3 - 45 dal backup online. Non è
+            cambiato nulla: entrambi i corsi sono ancora qui.
+          </p>
+          <div class="actions">
+            <button class="erase wide">Riprova</button>
+            <button class="secondary wide">Torna alla scelta</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="state">
+        <h2>6. An old copy of the app</h2>
+        <p>
+          A device that is read-only because a newer version has written to the
+          account can look and save, but cannot choose.
+        </p>
+        <div class="phone">
+          <h3>Due corsi su questo account</h3>
+          <p class="plain">
+            Aggiorna l’app per scegliere quale tenere. Intanto puoi salvare una
+            copia dei corsi.
+          </p>
+          <article class="course">
+            <p class="code">D2 - 45 <small>| 2026</small></p>
+            <p class="type">Deriva · livello 2</p>
+            <dl>
+              <div>
+                <dt>Allievi</dt>
+                <dd>21</dd>
+              </div>
+              <div>
+                <dt>Equipaggi</dt>
+                <dd>6</dd>
+              </div>
+              <div>
+                <dt>Valutazioni</dt>
+                <dd>84</dd>
+              </div>
+            </dl>
+            <p class="changed"><span>Ultima modifica:</span> oggi, 14:20</p>
+            <div class="actions">
+              <button class="secondary">Salva file</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <section class="questions">
+      <h2>What I need from you</h2>
+      <ol>
+        <li>
+          Does the choice in state 1 give you enough to recognise your course?
+          The counts and the last change are my proposal.
+        </li>
+        <li>
+          Are you happy for the choice to need signal (state 4)? I recommend it:
+          choosing offline risks two phones erasing each other's course.
+        </li>
+        <li>Anything to change in the wording or the layout?</li>
+      </ol>
+    </section>
+  </body>
+</html>
