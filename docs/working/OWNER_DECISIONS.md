@@ -137,7 +137,7 @@ tutti i dati locali` erases the course from the backup first; without
     B7 fixes it before UG4. Until then, no course on a second device while the
     first is offline or already has one.
 21. **The two-course screen (yours, 2026-11-04).** You approved the mock
-    `docs/design/mockups/b7-two-courses.html` and added the email of the last
+    `.evidence/B7/two-courses-target.html` and added the email of the last
     edit beside its date and time. Choosing a course needs signal; saving a file
     does not. Taken for now: the email shown is the account's, which is true
     because only the owner's account can write to a course until 1.0, and needs
