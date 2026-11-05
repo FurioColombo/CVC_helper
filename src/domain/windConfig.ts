@@ -131,8 +131,7 @@ type WindModelFamily = "meteo-france" | "icon" | "ecmwf" | "ncep"
  * at Cap Pertusato and La Chiappa (docs/working/weather-backtest.json), rounded
  * coarsely because they barely move the median. A zero means the model does not
  * reach that lead. AROME 2.5 km is left out as the same run as AROME HD on another
- * grid, and UKMO because its CC BY-SA terms would reach the blend; the proposal's
- * section 4 gives what each costs.
+ * grid, and UKMO because its CC BY-SA terms would reach the blend.
  */
 export const WIND_MODELS = [
   {
@@ -215,14 +214,14 @@ export const ENSEMBLE_WIDENING_HOURS = { from: 48, to: 72 } as const
 /**
  * The real wind leaves the models' 20-80 band about half the time, under
  * agreement too, and the error grows with the wind. The range shown is at least
- * this far either side of the expected value; the proposal's section 4 gives how
- * often it holds, by strength. Tuned on the season it is scored on.
+ * this far either side of the expected value; WEATHER_EVIDENCE.md gives how often
+ * it holds, by strength. Tuned on the season it is scored on.
  */
 export const RANGE_HALF_WIDTH = { minKnots: 3, ofExpected: 0.3 } as const
 
 /**
  * The highest model gust, or a multiple of the expected wind if that is higher,
- * because every model under-reads gusts on sea cells and more so in strong wind.
+ * which it usually is: every model under-reads gusts on sea cells, more in strong wind.
  * The multiple comes from headland peaks and may read high over water. Tuned on
  * the season it is scored on. Beyond the last lead the few runs left cannot make
  * a gust number, so none is shown.

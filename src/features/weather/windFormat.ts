@@ -108,6 +108,16 @@ export function dataAgeText(fetchedAt: number, now: number) {
     : updatedText(fetchedAt, now)
 }
 
+/** One line even at 360 px, so the screen below does not move when it ends. */
+export function refreshingText(fetchedAt: number, now: number) {
+  const when = new Date(fetchedAt * 1000)
+  const days = dayNumber(now) - dayNumber(fetchedAt)
+  if (days === 0) return `Aggiorno… dati delle ${clock.format(when)}`
+  if (days === 1) return `Aggiorno… dati di ieri ${clock.format(when)}`
+  const [weekday, time] = weekdayClock.format(when).split(/,?\s+/)
+  return `Aggiorno… dati di ${weekday?.slice(0, 3)} ${time}`
+}
+
 /** Short enough for Home's small line. */
 export function ageForStrip(fetchedAt: number, now: number) {
   const days = dayNumber(now) - dayNumber(fetchedAt)

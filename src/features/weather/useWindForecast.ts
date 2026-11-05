@@ -98,7 +98,10 @@ export function useWindForecast(
         if (!stored) setStatus({ zone, state: "failed" })
         return
       }
-      if (stored && moment - stored.fetchedAt < REFRESH_AFTER_SECONDS) return
+      // A copy kept before its extras arrived is not fresh: it has no thunder.
+      const age = stored ? moment - stored.fetchedAt : Infinity
+      const whole = Boolean(stored?.sky && stored.ensemble)
+      if (age < (whole ? REFRESH_AFTER_SECONDS : RETRY_AFTER_SECONDS)) return
       void download()
     }
     const onlineAgain = () => {

@@ -39,8 +39,9 @@ export type WindForecast = {
     mid: readonly (number | null)[]
     high: readonly (number | null)[]
   }
-  waves?: { height: readonly (number | null)[] }
-  sky?: { code: readonly (number | null)[] }
+  /** fetchedAt on the extras: a copy can carry one older than its wind. */
+  waves?: { height: readonly (number | null)[]; fetchedAt?: number }
+  sky?: { code: readonly (number | null)[]; fetchedAt?: number }
 }
 
 export type ModelContribution = {

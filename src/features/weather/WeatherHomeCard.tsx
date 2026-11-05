@@ -104,7 +104,8 @@ export function WeatherHomeCard({
           {formatKnots(summary.mid)} kn{" "}
           {summary.gust !== null && (
             <span className="text-sm font-bold whitespace-nowrap">
-              raffiche {formatKnots(summary.gust)}
+              raffiche {far && "~"}
+              {formatKnots(summary.gust)}
             </span>
           )}
         </span>

@@ -44,30 +44,54 @@ headline figures above are dominated by light wind:
 | 12–16    | 45            | 86%    | 9%          | 21            | 51%    | 38%         |
 | From 16  | 31            | 76%    | 35%         | 15            | 57%    | 53%         |
 
+Those rows are thinner than they look. La Chiappa at +1 d from 16 kn is 15 sessions on 11
+days, 7 separate episodes: inside 57%, with a 90% interval of 33–85. From 12 kn more than
+half of La Chiappa's sessions at +1 d fall in one October, when inside was 42%, and in other
+months it was 59–88%. So the screen's "5-6" is largely one October at one cape. Those misses
+are one-sided: 36–42% of hours above the top and 5–6% below, because the centre reads low
+there. Pertusato is balanced.
+
 **The new weights did not improve the centre.** Session error at +1 d was 1.90 and 2.43
 with the first build's weights, 1.90 and 2.48 now; AROME alone gives 2.07 and 2.61. What
 improved is the range and the gust, and blending beats the best single model by about
 0.2 kn. La Chiappa from 12 kn, where the real wind is above the range over a third of
 the time, is the weakest result: there "Probabile" is no upper limit.
 
-**Why a gust factor of 2.** Gust passed, all rows and then from 16 kn:
+**Why a gust factor of 2.** Passed and bias are given for all sessions and for those from
+16 kn. These come from a side run, recomputed by the third reviewer; the script has no sweep
+and the JSON holds only the factor shipped. Adding it is listed for adoption.
 
-| Factor | Passed overall | From 16 kn | Bias kn      |
-| ------ | -------------- | ---------- | ------------ |
-| 1.6    | 71–75%         | 87–97%     | −4 to −7     |
-| 1.8    | 49–68%         | 55–74%     | not recorded |
-| 2      | 25–52%         | 22–53%     | −0.4 to +2.3 |
+| Factor | Passed, all | Passed, from 16 kn | Bias, all    | Bias, from 16 kn |
+| ------ | ----------- | ------------------ | ------------ | ---------------- |
+| 1.6    | 71–75%      | 87–97%             | −1.4 to −2.3 | −3.8 to −6.7     |
+| 1.8    | 49–68%      | 55–74%             | +0.2 to −1.6 | −1.2 to −3.3     |
+| 2      | 25–52%      | 22–53%             | −0.4 to +2.3 | −0.4 to +2.9     |
 
-Only 2 is about the same at every strength. It was chosen on this season, against peak
-gusts on a headland, which a sailor on the water may not meet.
+**What this number is.** Twice the expected wind sets it in 71–78% of sessions, and from 16 kn
+in 75–100%; there it stands about 6–10 kn above the highest model. It is a doubling far more
+often than a model's forecast. It is also weakly identified. Passed at +1 d under 12, 12–16
+and from 16 kn is 42, 9, 35 at Pertusato and 54, 38, 53 at La Chiappa, so it is not the same at
+every strength. Moving the factor from 1.9 to 2.1 takes the from-16 rate from 37 to 8, 48 to
+16, 60 to 25 and 53 to 13 across the four rows, and the two capes want different factors. So
+"3-5 uscite su 10" is true of this sample and could move a long way on another season or site.
+
+**The trade.** At the capes the number was at or above the real peak in 48–75% of sessions. With
+30 kn or more shown, the peak stayed under 30 in about a third of sessions, against 8–10% with
+1.6. In exchange a 30 kn peak was foreseen 85–88% of the time, against 51–54%. It was fitted to
+peaks on headlands, and nothing here measures the water. The screen now says both sides.
 
 **Beyond +1 d** the archive has speeds only and no ensemble, so these are floors for the
-range, not scores of what ships. Hours inside, then hourly error:
+range, not scores of what ships. On the same 171 sessions as the +1 d rows, recomputed by the
+third reviewer; the JSON's own rows use all 306 sessions and a model count that changes in
+August, which made La Chiappa at d2 look better than at +1 d. Hours inside, then hourly error:
 
 | Site | d2        | d3        | d5        | d7        | Constant mean with hindsight |
 | ---- | --------- | --------- | --------- | --------- | ---------------------------- |
-| PERT | 69%, 3.05 | 68%, 3.38 | 62%, 4.12 | 58%, 4.84 | 4.89                         |
-| CHIA | 72%, 2.99 | 70%, 3.30 | 65%, 3.93 | 61%, 4.38 | 4.95                         |
+| PERT | 73%, 2.87 | 72%, 3.23 | 65%, 4.20 | 61%, 4.84 | 5.09                         |
+| CHIA | 69%, 3.21 | 66%, 3.59 | 61%, 4.25 | 56%, 4.90 | 5.36                         |
+
+The gust has no archive that far. As a bound, the doubling alone was passed 50–53% of the time at
+Pertusato and 65–72% at La Chiappa from d2 to d5, so expect about 5 and 6–7 in 10.
 
 As a control, the airports at +1 d: Figari 59% inside, session error 2.42, gust passed
 14%; Olbia 70%, 2.03, 25%. Land reads differently, as expected.
@@ -91,8 +115,11 @@ What this changed from the first proposal, and it retracts three things it said:
 2. The archive holds some models only to shorter leads than they reach, and the
    ensemble has no archive: its weight is a prior, not a measurement.
 3. Every tuned number was tuned on the season it is scored on: the range scale, the gust
-   factor, the 120 h cut and the weights. Expect them to do a little worse on a new one.
-   Direction is scored nowhere beyond +1 d.
+   factor, the 120 h cut and the weights. Expect them to do worse on a new one, and how much is not known.
+   Direction is scored nowhere beyond +1 d. "Seven models" holds for speed: at +1 d the
+   archive gives gusts for five, without IFS and AIFS. Removing IFS at short range changed
+   the passed rate by at most 0.3 points. The backtest's slices never reach a run's fade,
+   measured apart and harmless. A rerun of the script needs Prettier on its JSON.
 4. Cabinati's gust is the highest across its places, so it reads higher than what was
    tested at a single point.
 5. I found no published verification for the Bocche itself. Real verification needs
@@ -128,7 +155,19 @@ FAIL, security and accessibility PASS_WITH_FINDINGS.
 | Security      | The screen and gate said "tapping", but an open Vento connects by itself; a far map image loaded unasked                   | Wording corrected; map fetched only near the screen; another tab's erase stops a running refresh         |
 | Accessibility | Cells 36 px at 320; announcements lost thunder and division; failure text unannounced                                      | 40 px and more; one spoken sentence everywhere; a live region always mounted; focus follows the map jump |
 
-**Not re-reviewed.** The third build answers the two FAILs' four blockers with tests and
-figures of my own (FUX-18, FUX-19, WX-9, WX-10). No reviewer has confirmed that, and the
-adoption milestone's own reviews should. Routing: the orchestrator wrote all fixes;
-reviewers ran on Opus, the method one as a general-purpose agent on Opus.
+**Round three**, at `f735e2c`, a narrow look at round two's four blockers. Reports named
+`round3-*`. Both PASS_WITH_FINDINGS, no blockers. Each tried to falsify the claim, and the field
+reviewer put the old faults back to prove the new tests catch them.
+
+| Reviewer | What it proved                                                                                     | What changed                                                                                       |
+| -------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Method   | The figures match the data, but the gust is usually a doubling, and the screen warned one way only | The screen says it is usually the double, fitted to capes, and may read high; far gusts wear `~`   |
+| Method   | "About the same at every strength" and the bias column did not hold; d2–d7 used a different sample | Corrected above, with the sample, the October weight and how sensitive the factor is               |
+| Field UX | Leaving during the extras left a part copy counted as fresh for 45 minutes                         | A copy without sky or ensemble is due again after 5 minutes                                        |
+| Field UX | Carrying a sky reset its age, so a 20-hour-old sky could read as news                              | Each extra keeps its own time; it is carried for 6 hours from when it was really fetched           |
+| Field UX | My inset selection wiped the focus ring; the week jumped 24 px when a refresh ended; "Torna" 37 px | Both shadows on a focused chosen cell; a one-line refreshing text, same padding; 44 px             |
+| Field UX | The wave map is 1181 wide, not 1168, and three fixes had no journey                                | The image's own ratio once loaded; journeys for the wave map, no map on a tap, and the scroll back |
+
+**Not reviewed.** These last fixes come from round three and only my own tests cover them. No
+reviewer has seen them; the adoption milestone's reviews should. Routing: the orchestrator wrote
+all fixes; reviewers ran on Opus, the method one as a general-purpose agent on Opus.

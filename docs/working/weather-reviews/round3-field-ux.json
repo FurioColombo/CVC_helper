@@ -1,0 +1,195 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "none: proposed WX1, side branch claude/weather-section",
+  "round": 3,
+  "commit": "f735e2c",
+  "verdict": "PASS_WITH_FINDINGS",
+  "verdictNote": "I tried to falsify FUX-18 and FUX-19 and could not, at any width and text size tried, in either engine. The new evidence can catch both faults: I put each old fault back on the new build and the spec's check saw it. No new blocker reproduced. Five important findings remain, three of them side effects of this pass's fixes. As in earlier rounds, Vento has no spec or milestone, so blockers are measured against the proposal's own contract and the brief's test: would it mislead or block real use.",
+  "dispositions": {
+    "blockers": [
+      {
+        "id": "FUX-18",
+        "status": "FIXED, small residual FUX-Q9 on the wave map",
+        "evidence": "Real network, no stub, WindLammaMap.tsx:133. Wind map on Pixel 7 Chromium, iPhone 13 WebKit, 320 px at 200% and 360 px at 110%, two steps each: natural 1168x820 = 1.4244, drawn 1.4222 to 1.4256 (pixel rounding), against 1.42x stretch in round 2. Screenshot t18-pixel-d in my scratchpad's r3/shots shows the map in proportion.",
+        "evidencePower": "The stub is now 292x205, not one pixel (weatherFixtures.ts:127). I put 'aspect-square' back on the real page with the new stub: drawn 1, natural 1.4244, so the check at weather.spec.ts:166 (tolerance 0.05) fails as it should. Limit: stub and class carry the same number, so the test catches a class regression but not a provider image of another shape. See FUX-Q9."
+      },
+      {
+        "id": "FUX-19",
+        "status": "FIXED",
+        "evidence": "My own sweep at 15 widths (320 to 430 px) by 16 text scales (100 to 200%), 240 combinations, on Pixel 7 Chromium and iPhone 13 WebKit, with Mercoledì 11 AM (~24, r50) selected. 0 numbers on two lines, 0 text rects past the cell border or outside its height, narrowest cell 40.5 px. Tightest text-to-border gap is 4 px (320 px at 105%, the selected ~24), so 1 px clear of the 3 px selection box, and nothing is covered.",
+        "evidencePower": "I injected the old CSS (overflow-wrap anywhere, normal white-space, 3 px border, old column rule) on the new build and ran the spec's line check. '~24' broke at 320/100, 344/100, 360/100, 360/110, 390/115 and 412/125, the same places as round 2. The fixture now has 24 kn with gusts of 50. The spec does not measure text past the border, but my sweep did and found none."
+      }
+    ],
+    "importantClaimedFixed": [
+      {
+        "id": "FUX-20",
+        "status": "FIXED, new side effect FUX-30",
+        "evidence": "Extras held, hero on screen: the copy is stored at once (useWindForecast.ts:66). After Back the strip reads 'Vento · Sab PM, NW 15 kn raffiche 32, Temporali: dato non scaricato'. It no longer asks for the network, and it is honest about the sky."
+      },
+      {
+        "id": "FUX-22",
+        "status": "FIXED",
+        "evidence": "Clock Mon 2 Nov, first session Sat 7 Nov. Strip: 'Vento · Sab PM · solo tendenza, NW ~15 kn'. Name: 'NW circa 15 nodi. Solo una tendenza.' Sight and speech now agree."
+      },
+      {
+        "id": "FUX-23",
+        "status": "FIXED in Playwright's WebKit build, no regression test",
+        "evidence": "iPhone 13 WebKit, sampled every 250 ms for 2 s. From y 198 with heroTop -74 and from y 300 with heroTop -176, four taps in all across the two engines' runs: by the first sample scrollY 112, heroTop 12, heading in view, and it stays there. Same on Pixel. Weather is now in webkitCoreSpecs, but no journey asserts hero position after a week tap: the only position assertions in the spec are at weather.spec.ts:498 and :641. See FUX-Q10."
+      },
+      {
+        "id": "FUX-24",
+        "status": "FIXED, new side effect FUX-32",
+        "evidence": "API held, copy 23 h old. Status: 'Aggiorno le previsioni… Dati di ieri alle 09:00'. Age and spinner are on screen together (t24-loading in my r3/shots)."
+      },
+      {
+        "id": "FUX-26",
+        "status": "FIXED",
+        "evidence": "visibilitychange and pageshow dispatched during a held download. First run: wind requests 1 then 1, status still 'Aggiorno le previsioni…', spinner 1. With a copy: 2 then 2, status and age unchanged."
+      },
+      {
+        "id": "FUX-28",
+        "status": "PARTLY FIXED, residual FUX-33",
+        "evidence": "No LaMMA request at open or across 4 taps from the top of the screen, on 412x839, 412x915, 393x851, 360x740 and iPhone 13 WebKit. After scrolling, each tap on Chromium still downloads an image: see FUX-33."
+      },
+      {
+        "id": "FUX-29",
+        "status": "PARTLY FIXED, residual FUX-34",
+        "evidence": "'Torna' is in the heading row, so the 44 px row is gone. PM row shift on first pick, measured against 68 px in round 2: 0 px with no extra line, 20 px with one (Domenica AM, Domenica PM, Mercoledì PM), 40 px with two (Giovedì AM). Same from 344 to 412 px. See FUX-34 for 320 px and the target size."
+      }
+    ],
+    "otherSeenInPassing": [
+      {
+        "id": "FUX-25",
+        "status": "NOT FIXED once sky failures repeat, see FUX-25 below",
+        "evidence": "Not in the brief's list, but the cap is part of this diff and does not hold on a chain of downloads."
+      },
+      {
+        "id": "FUX-27",
+        "status": "FIXED",
+        "evidence": "Screenshot ring-Dome in my r3/shots: 30 kn with code 95, white cloud on #2f5fa0, visible."
+      },
+      {
+        "id": "FUX-21",
+        "status": "FIXED by inspection of one screen",
+        "evidence": "t24-loading shows 'Modelli divisi: NW 20 o SE 6'. Not otherwise re-tested."
+      }
+    ]
+  },
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "FUX-30",
+      "title": "Leaving during the extras stores a part copy that counts as fresh: 45 minutes with no thunder data and a narrower band, with the network available",
+      "evidence": "useWindForecast.ts:66 stores the wind alone. useWindForecast.ts:101 then treats any copy under 45 minutes old as fresh, whatever it lacks. Run: extras held, Back, extras released, reopen with good network. New data requests 0. Stored copy hasSky false, hasEns false. Status 'Aggiornato alle 09:00'. Domenica PM, which has thunder in the fixture, reads 'Temporali: dato non scaricato' instead of 'Temporali possibili'. The sky is at least named as unknown, but nothing says the ensemble is missing, and the band changes silently: Martedì PM 7–13 against 7–15, Mercoledì PM 17–31 against 15–31, Giovedì PM 7–13 against 7–15. A 7 h old copy with sky and ensemble is also replaced at once by a wind-only copy.",
+      "reproduction": "Hold ensemble-api and the weather_code call. Open Vento, hero appears, tap Indietro, release, reopen within the same minute. Count requests, read localStorage, tap Domenica 8 PM.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5 'No signal on the dock?'; rework for FUX-20",
+      "proposedChange": "In refreshIfDue, treat a copy with no sky or no ensemble as due when online, subject to the existing retry clock. Keep the immediate write."
+    },
+    {
+      "id": "FUX-25",
+      "title": "The 6 hour limit on a carried sky is reset by each carry, so a sky 20 h old sits under 'Aggiornato' with no mark",
+      "evidence": "windData.ts:314-318 tests previous.fetchedAt, which is the time of the last wind download, not the time of the sky. A carried sky gets a new fetchedAt and passes the test again. Run with the sky call failing and wind succeeding, first download 08:00, then +5 h, +10 h, +15 h, +20 h. Each time stored sky is true, 'Temporali: dato non scaricato' is not shown, and the status reads 'Aggiornato alle 13:00', '18:00', '23:00', '04:00'. Absence of thunder is therefore 20 h old and reads as news. The comment at windData.ts:313 promises the opposite. It needs several sky failures in a row while wind succeeds, so it is not a routine case. The wave column uses the same test (code reading only).",
+      "reproduction": "Fixture, clock 08:00, open Vento with sky good. Route weather_code to abort. Move the clock +5 h, reload, open, repeat to +20 h.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5, §1; round 2 FUX-25",
+      "proposedChange": "Store the time each extra was really fetched and test that, or carry only an extra that was not itself carried."
+    },
+    {
+      "id": "FUX-31",
+      "title": "A selected week cell loses its keyboard focus ring",
+      "evidence": "styles.css:233-236 is unlayered, so its box-shadow beats Tailwind's focus-visible:ring-3 on the same element (WeatherScreen.tsx:581). The cell also has outline-none. Computed on Pixel 7 Chromium with :focus-visible true. Selected cell: 'rgb(23, 43, 71) 0px 0px 0px 2px inset' only. Next cell, not selected: the ring 'rgb(74, 127, 196) 0px 0px 0px 3px'. Choosing a cell by keyboard or switch therefore removes the focus mark from the cell in hand. Regression from this pass, because the earlier selection was a border.",
+      "reproduction": "Tap Lunedì 9 AM, Shift+Tab, Tab, read document.activeElement's computed box-shadow.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md brief point on inset selection; WCAG 2.4.7",
+      "proposedChange": "Add '.wind-cell[aria-pressed=\"true\"]:focus-visible' with both shadows, or draw focus with an outline."
+    },
+    {
+      "id": "FUX-32",
+      "title": "On the routine morning open the week jumps 24 px when the refresh ends",
+      "evidence": "The kept age makes the marked status wrap: 'Aggiorno le previsioni… Dati di 7 ore fa, delle 09:00' takes two lines, plus the description and padding. Lunedì PM row top, 7 h old copy, API held then released: 412 px 786 to 762, 360 px 798 to 774. With a 1 h copy: 412 and 360 px no shift, 320 px 741 to 725. The row is 84 px, so a thumb coming down on the bottom of the AM row can land on PM just as the refresh finishes. Every first open of the day has this; on poor signal it can come many seconds after opening. It is recoverable in place, because the heading names the half-day. During the refresh the PM row is also behind the bar on Pixel (t24-loading).",
+      "reproduction": "Fixture. Open Vento, Back, clock +7 h, hold the API, reload, open, measure, release, measure.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R01; side effect of the FUX-24 fix; lens 7",
+      "proposedChange": "Use a shorter text while loading, such as 'Dati di ieri 09:00, aggiorno…', kept to one line at 360 px. Use the same padding for marked and unmarked."
+    },
+    {
+      "id": "FUX-34",
+      "title": "'Torna' is 37 px wide, under the rulebook's floor, and at 320 px the long headings still wrap",
+      "evidence": "Measured 37x44 at every width from 320 to 412 px (WeatherScreen.tsx:364-371). R04 asks at least 40 x 40, preferring 44. It is the only way back to the next session, in the card's top-right corner. At 320 px, Domenica PM and Mercoledì PM wrap the heading row from 44 to 68 px, and the PM row moves 44 px. At 320 px Domenica AM and Giovedì AM move 20 and 40 px. A 20 px shift still leaves the top 20 px of the old PM row on the AM row, against all of it in round 2.",
+      "reproduction": "Each width, tap the named cell, scroll to top, read the button box and row top.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04, R01; round 2 FUX-29",
+      "proposedChange": "Add min-w-11 to the button. Accept the 20 px line for division or tendency, or reserve it, as the owner prefers."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FUX-33",
+      "title": "A tap after scrolling down still downloads a map image nobody then sees",
+      "evidence": "Each tap remounts the map (WeatherScreen.tsx:1003) and useNearScreen resets. If the map is within 200 px at that moment it loads, and then the hero scroll carries it off screen: mapTop 1149 after the tap. Pixel 7 Chromium, 412x839: no request from y 210, requests from y 260. 412x915: no request from y 150, requests from y 210. From y 450, taps counted 2, 3, 4 on Chromium. iPhone WebKit counted 2, 2, 2. Reaching the whole PM row takes only 34 px on Pixel and 157 px on 360x740, so the routine path stays clean. This is the reader who has gone on to the chart.",
+      "reproduction": "scrollTo(0, 260), tap a week cell, count www.lamma.toscana.it requests.",
+      "specRef": "round 2 FUX-28"
+    },
+    {
+      "id": "FUX-35",
+      "title": "At 360 px the printed AM and PM make the PM row start at the bar",
+      "evidence": "The 17.5rem to 21rem branch (styles.css:248-274) holds 360 px at 100%, and cells grow to 97 px against 84 px at 412 px. Lunedì PM top against bar top: 360x800 725 against 725, swipe 97 px for the whole row; 360x740 725 against 665, swipe 157 px; 360x640 725 against 565, swipe 257 px. Pixel 412x839 needs 34 px, and 384x800 needs 73 px. A 360 px phone needs a swipe before the first PM tap. Not a defect in the numbers, and cells do hold 44 px width there.",
+      "reproduction": "Open Vento at each viewport and measure the Lunedì 9 PM cell against the nav.",
+      "specRef": "R01; lens 1"
+    },
+    {
+      "id": "FUX-Q9",
+      "title": "The wave map is drawn about 1.1% off, because the ratio is written for the wind map",
+      "evidence": "Live: swh.AQ.63.png is 1181x820, natural 1.4402, drawn 1.4222 to 1.4256, against wind10's 1168x820. One step sampled. Invisible in use, about 0.3° on a 45° arrow by arithmetic, and the licence and 'unaltered' wording are the only reason to care. The spec never switches to Onda, its stub shares the class's number, and 0.016 is inside its 0.05 tolerance. If LaMMA resizes the image, no test will notice.",
+      "reproduction": "Real network, jump to the map, tap Onda, read naturalWidth and clientWidth.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §1, §2",
+      "proposedChange": "Use 'aspect-ratio: auto 1168/820', which reserves the space and then follows the image. Applied live in the browser: drawn 1.44024, natural 1.44024."
+    },
+    {
+      "id": "FUX-Q10",
+      "title": "Three fixes have no journey that would catch their return",
+      "evidence": "Reading weather.spec.ts: no assertion of hero position after a week tap (FUX-23), no LaMMA count after taps, only after open at :112 (FUX-28), no row-shift measure (FUX-29). They hold today by my runs only.",
+      "reproduction": "grep for scrollY, getBoundingClientRect and boundingBox in tests/e2e/weather.spec.ts gives only :498 and :641.",
+      "specRef": "AGENTS.md §3, §9"
+    }
+  ],
+  "lookedHardAndHeld": [
+    "Map gate, WeatherScreen.tsx:999. First run during download: no map, 0 LaMMA requests, status and spinner shown; map mounts after the forecast without requesting until near. API and LaMMA both down: map section mounts and says 'Mappa non caricata', 'Riprova' card above it (g1 in my r3/shots). Riprova running: map unmounts below the button, so nothing moves under the thumb. Recovered: no extra LaMMA request, because the map is now off screen. Zone switch to a place with no copy: map absent while it downloads, then back.",
+    "Lazy mount. Placeholder and image share one ratio. 'Mappa LaMMA ↓' lands with the section top at about 12 px on Pixel, iPhone and 360 px at 110%; the section top is -16 px at 320 px at 200%, with the image still in view. No sideways scroll in those four runs.",
+    "Inset selection on the darkest cell. The ring on #2f5fa0 computes to 2.22:1, but the 1 px dark border against the light page and the cell beside it make the selected cell plain in ring-Dome. Selection on the other tints computes well above that (7.96:1 on #a9c4e6).",
+    "Container switches 17.5rem and 21rem. Modes seen: 8 columns 18 of 240 combinations, 7 columns 68, day blocks 154. No cell under 40.5 px in any of them."
+  ],
+  "morningOnThePier": {
+    "note": "Sunday 08:30 with last evening's copy. Taps and pixels are measured; seconds are my estimate, not a stopwatch. No real pier, sun or wet hands.",
+    "steps": [
+      "1. Home strip: 'Vento · Dom AM · incerto · dati di ieri 09:00', 'Variabile 16 kn raffiche 42'. 0 taps, 3 s.",
+      "2. Tap strip. 1 tap, 1 s. Status keeps the age while it refreshes.",
+      "3. Refresh ends, the week jumps 24 px (FUX-32). Read twice: is that still the row I aimed at? 4 s for 'Modelli divisi: NW 20 o SE 6', which now says what each camp is.",
+      "4. Tap Domenica PM. 1 tap, 3 s. Hero updates in place, no new map request, row moves 0 to 20 px.",
+      "5. Tap 'Mappa LaMMA ↓'. 1 tap, 2 s plus the image. The arrows now match the coast."
+    ],
+    "total": "3 taps, 0 swipes on Pixel, 1 swipe on 360 px, about 15 s, 1 reread. Round 2 was 3 taps, about 20 s, 3 rereads."
+  },
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; docs/working/weather-reviews/round2-field-ux.json; docs/working/WEATHER_PROPOSAL.md §8",
+    "src/features/weather/WindLammaMap.tsx, WeatherScreen.tsx, useWindForecast.ts, lammaMap.ts in full; WeatherHomeCard.tsx and windFormat.ts diffs; windData.ts diff and lines 250-345; src/styles.css week rules; src/domain/windConfig.ts tints; tests/e2e/weather.spec.ts and weatherFixtures.ts in full; playwright.config.ts diff",
+    "Re-tested blockers FUX-18 and FUX-19, each with the real image or a sweep, and each with the old fault put back to test the evidence",
+    "npx playwright test tests/e2e/weather.spec.ts --project=pixel-7-chrome --retries=0: 20 passed in 2.1 min, tree clean afterwards",
+    "Throwaway scripts in my scratchpad's r3/, Pixel 7 Chromium and iPhone 13 WebKit against the dev server on 5191, confirmed to serve this build: week sweep (t1); selection ring and focus (t2); leaving, Home, stall and resume (t3); scroll, map requests and shift (t4); live map, gate, status shift, carried sky (t5a, t5b); part copy, old CSS, fold, auto ratio (t6, t7)",
+    "Real network for the map shape; synthetic fixture for everything else. Screens read: ring-Dome, week-pixel-360-100, t18-pixel-d, t24-loading, g1"
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 3, restricted scope per protocol, no entropy draw: previous blockers, listed important findings, this pass's diff and its regressions",
+      "Within that: 320 px and large text, interruptions, wet-finger shift, offline and poor network, tap count"
+    ],
+    "wildcard": "Tested the tests: put each old fault back on the new build and ran the spec's own check, and read the wave image's real size rather than assuming LaMMA has one shape."
+  },
+  "notTested": [
+    "Physical phones and real sun. Both engines are Playwright's; the WebKit build is desktop, and FUX-23 needs a real iPhone to confirm it.",
+    "OS-level text scaling on Android and iOS: root font-size stood in for it, as in the repository's own tests.",
+    "Real poor 4G: delays were scripted by holding responses.",
+    "Three-digit gusts in a cell: the widest value tried was r60, in the 30 kn run; the sweep used ~24 and r50.",
+    "The full spec on iphone-13-webkit-core: the brief named the Pixel project. My WebKit evidence is my own scripts.",
+    "Waves in the FUX-25 chain and the full run on Cabinati: code reading only.",
+    "The 01e1ca0 status line was not re-run, so FUX-32's share that is new in this pass is not measured."
+  ]
+}

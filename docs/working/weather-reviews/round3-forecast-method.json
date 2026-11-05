@@ -1,0 +1,159 @@
+{
+  "reviewerRole": "forecast method reviewer",
+  "persona": "Operational meteorologist who sails",
+  "milestone": "Vento proposal (unregistered, would be WX1), third look, follow-up to the report at 01e1ca0",
+  "commit": "f735e2c",
+  "verdict": "PASS_WITH_FINDINGS",
+  "verdictNote": "WX-9 and WX-10 are answered, and I could not falsify either. Every figure in WEATHER_EVIDENCE.md section 1 and WEATHER_PROPOSAL.md sections 3-4 that comes from the JSON matches it, and the JSON is what the script computes from the shipped code. The two screen sentences follow from the strength table. There are no blockers: no on-screen number is false. The strongest remaining fault is the gust. In 71-78% of sessions the number is simply twice the expected wind. The screen never says so, and it warns only that the real gust can be higher. Three document claims also fail against their own data: 'about the same at every strength', the bias column of the factor table, and the Beyond +1 d table's sample. These should be fixed before adoption. They are non-blocking and belong in docs/working/BACKLOG.md.",
+  "dispositions": [
+    {
+      "id": "WX-9",
+      "status": "FIXED",
+      "check": "Half-width max(3, 0.3 x mid) and gust max(highest, 2 x mid) are in wind.ts:292-295, :322-329 and windConfig.ts:221, :230. Recomputed from 16 kn at +1 d: PERT 76% inside, gust passed 35%; CHIA 57%, 53%. Short range: PERT 72%, 22%; CHIA 59%, 45%. The earlier figures were 50% and 89-93%. The fix was tuned in-sample and says so. It holds on every row but is less certain than the table looks (WX-19, WX-23)."
+    },
+    {
+      "id": "WX-10",
+      "status": "FIXED",
+      "check": "scripts/weather-backtest.mjs:409 with MODELS_IN_BLEND = 7. +1 d is 171 sessions per cape, 170 of them from 8 August plus one on 7 August PM. Short range is 306, all with seven models. 'August to October only' is stated in the evidence file, and the screen now says 'estate e autunno'. Seven models holds for speed; for gust see WX-Q14."
+    },
+    {
+      "id": "WX-14",
+      "status": "FIXED",
+      "check": "fadedHighest at wind.ts:194-202, tested on real data: AROME HD cut at hour 15 of 30-hour slices, hist archive, both capes. Hour-to-hour gust step with the run ending: mean 1.66, p99 8.27. Same hours without an ending: mean 1.75, p99 8.58. The fade costs a mean 0.33 kn over the run's last five hours, and 0.81 kn at mid 16 and up (p99 5.9, max 7.07). No new fault, and it matters little because 2 x mid usually sets the number."
+    }
+  ],
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "WX-17",
+      "title": "The printed gust is mostly a doubling, and the 'Modelli e pesi' fold gives no way to see that.",
+      "evidence": "Reconstructing the shipped number from highest model and 2 x mid matches it exactly over 954 sessions (max difference 0). 2 x mid sets the number in 78%, 78%, 77% and 71% of sessions (PERT short, PERT +1 d, CHIA short, CHIA +1 d). Under 12 kn it is 64-76%. From 16 kn it is 100%, 100%, 75% and 93%. From 16 kn the mean shown against the mean highest model is 41.1 vs 31.5 and 41.5 vs 32.4 at PERT, 40.0 vs 33.9 and 39.7 vs 33.9 at CHIA. The fold lists speed, direction and weight only (WeatherScreen.tsx:733-757), so a reader cannot get from the models to 'Raffiche 41'. Proposal section 1 says the fold exists 'So the blend can be checked, not trusted'. Proposal section 3's 'the highest model's or twice the expected wind' suggests the first case is the usual one.",
+      "reproduction": "a.mjs, 'how often 2x sets the number', in my scratchpad's wx/review3/.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 3; src/features/weather/WeatherScreen.tsx:393-394, :733-766",
+      "fix": "Say in the fold that the gust is usually twice the expected wind, and reword the proposal: 'usually twice the expected wind, or the highest model if higher'."
+    },
+    {
+      "id": "WX-18",
+      "title": "The screen's caveat runs one way. The proposal says the screen covers 'may read high', and it does not.",
+      "evidence": "Proposal section 3: 'It may read high over water, it is no ceiling, the screen says so'. The screen says 'non e un tetto' (fold, :763-764) and 'il vento vero puo superare i valori mostrati' (always visible, :804-805). Nothing says the number can read high or that it was fitted to headland peaks. At the capes themselves the number was at or above the real peak in 75%, 68%, 58% and 48% of sessions. At PERT 12-16 kn +1 d it was above in 91%, with mean bias +4.1 kn (31.2 shown vs 27.1). With shown 30 kn or more, the peak stayed under 30 in 32-33% of those sessions, against 8-10% for a factor of 1.6. The rule earns this: detection of a 30 kn peak is 85-88% against 51-54%. The trade is defensible, but the reader is told only one side. Hourly FXI/FF at the stations in 16 kn and up is 1.61-1.67, and the session peak over session mean is 1.77-1.81. These are headland figures, and nothing here measures the water.",
+      "reproduction": "a.mjs, 'threshold skill' and 'observed station gust factor'; bias figures from the JSON.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 3; src/features/weather/WeatherScreen.tsx:760-765",
+      "fix": "Add one clause to the fold sentence, for example 'tarato su picchi di capi: in acqua puo essere meno'."
+    },
+    {
+      "id": "WX-19",
+      "title": "'About the same at every strength' and 'Only 2' are overstated, and the factor is weakly identified.",
+      "evidence": "Gust passed under 12 / 12-16 / from 16 at +1 d, PERT: 42 / 9 / 35. Four-day block bootstrap, 90% intervals: 34-50, 3-14, 19-50, so the middle row separates from the first. Short range PERT: 29 / 16 / 22. The evidence file's factor table omits the 12-16 column, and that is where the claim fails. Proposal section 4 repeats the claim. 'Only 2' is true only of the three factors listed: 1.9 is about as flat (PERT short 37 / 25 / 37, CHIA +1 d 62 / 57 / 53). The from-16 row is very sensitive: from 1.9 to 2.1 it moves 37 to 8 (PERT short), 48 to 16 (PERT +1 d), 60 to 25 (CHIA short), 53 to 13 (CHIA +1 d). The two capes want different factors: short-range peak over mid is 1.97 at PERT and 2.26-2.28 at CHIA in 12 kn and up. So a small change in centre bias, or a third site, moves the '3-5 su 10' a long way. Limit 3's 'a little worse on a new one' has no support. The '3-5' figure itself is correct for this sample.",
+      "reproduction": "a.mjs, factor sweep and 'cluster bootstrap'.",
+      "specRef": "docs/working/WEATHER_EVIDENCE.md section 1 'Why a gust factor of 2', limit 3; docs/working/WEATHER_PROPOSAL.md section 4",
+      "fix": "Add the 12-16 column. Replace 'about the same' with the actual spread. Say the passed rate is sensitive and could differ substantially on a new season or site."
+    },
+    {
+      "id": "WX-20",
+      "title": "The factor table's bias column compares different populations, and the table cannot be regenerated from the repository.",
+      "evidence": "Recomputed, the passed-rate columns are all correct. The bias cell for 1.6, '-4 to -7', is the from-16 figure (-3.8 to -6.7). The cell for 2, '-0.4 to +2.3', is the all-rows figure. Like with like, all rows: 1.6 gives -1.4 to -2.3, 1.8 gives +0.2 to -1.6, 2 gives -0.4 to +2.3. From 16 kn: 1.6 gives -3.8 to -6.7, 1.8 gives -1.2 to -3.3, 2 gives -0.4 to +2.9. The conclusion survives, but the gap is flattered. 'not recorded' shows the numbers came from a side run. The script has no sweep and the JSON has no such field, though the evidence file names the JSON as its source. The same applies to 'AROME alone' and the first-build figures. I reproduced those: 2.07 and 2.61; 1.90 and 2.43.",
+      "reproduction": "a.mjs factor sweep (f=2 matches the JSON row for row); b.mjs first block.",
+      "specRef": "docs/working/WEATHER_EVIDENCE.md section 1, opening lines and factor table; AGENTS.md section 3",
+      "fix": "Add the sweep and the single-model row to the script and the JSON, then print one bias population per column."
+    },
+    {
+      "id": "WX-21",
+      "title": "The 'Beyond +1 d' table repeats WX-10's fault in a smaller way: a different sample with changing model counts, read beside the 171-session row.",
+      "evidence": "Rows use evaluateBlend(..., 3), so 306 sessions, June to October. Model count changes mid-sample: d2 mostly 5 models to 7 August and 6 after; d3 4 then 5. Against the +1 d row, CHIA d2 appears better than +1 d (72%, 2.99 vs 70%, 3.07), which is a sample artefact. On the same 171 sessions, inside % and hourly error: PERT d2 72.7, 2.87; d3 72.1, 3.23; d5 64.6, 4.20; d7 60.5, 4.84. CHIA d2 69.3, 3.21; d3 66.4, 3.59; d5 61.4, 4.25; d7 55.6, 4.90. Published CHIA d7 is 61%, and the same sample gives 56%. The constant-mean column is 4.89 and 4.95 on 306 sessions, but 5.09 and 5.36 on 171. 'Floors' is stated, the changing sample is not. The screen's 'Oltre un giorno, meno' stays true on the same sample, marginally at CHIA d2.",
+      "reproduction": "b.mjs 'beyond +1 d on the same 171 sessions'; c.mjs 'models in each session by lead and period'.",
+      "specRef": "docs/working/WEATHER_EVIDENCE.md section 1 'Beyond +1 d' and 'one common sample per comparison'; scripts/weather-backtest.mjs:527",
+      "fix": "Publish the common-sample rows, or state the difference in the table's heading."
+    },
+    {
+      "id": "WX-22",
+      "title": "The gust sentence has no statement about leads beyond a day, and the number degrades there. It stays printed to 120 h with no tilde.",
+      "evidence": "The fold says 'Oltre un giorno, meno' about the range, then gives the gust's '3-5 uscite su 10'. The paragraph's opening 'fino a un giorno prima' does scope it, but a reader can take the gust figure as general. Only speeds are archived past +1 d, so I bounded it. The 2 x mid floor alone, passed %, same 171 sessions: PERT +1 d 37, d2 50, d3 53, d5 50; CHIA 59, 68, 72, 65. Shipped at +1 d is 32 and 52, so highest-model takes 5-7 points off. Using only the models left at long lead, on their +1 d values, adds 4-6 points (32 to 36, 52 to 58). So a plausible rate at d2-d5 is about 5 in 10 at PERT and 6-7 in 10 at CHIA. This is a bound and a proxy, not a score. 'Raffiche N' carries no tilde at :393-394, while the speed above it does.",
+      "reproduction": "b.mjs 'gust floor only' and 'models left at longer leads'.",
+      "specRef": "src/features/weather/WeatherScreen.tsx:393-394, :760-765; docs/working/WEATHER_PROPOSAL.md section 4",
+      "fix": "Extend the 'oltre un giorno' clause to cover both numbers, and give the far gust the same tilde."
+    },
+    {
+      "id": "WX-23",
+      "title": "The strong-wind strata are small, clustered, and at La Chiappa mostly October, which the evidence does not show.",
+      "evidence": "CHIA +1 d from 16: 15 sessions, 11 days, 7 episodes; inside 57% (90% interval 33-85), gust passed 53% (33-67). CHIA short from 16: 20 sessions, 15 days, 10 episodes; inside 59% (38-81). 11 of those 20 are October. CHIA from 12 kn: 22 of 36 sessions at +1 d and 24 of 56 at short range are October. October inside is 42% and 40%, with 52-56% of hours above the top. Other months, 6-10 sessions each: 87.5 and 59.4 at +1 d; 81.3, 57.1, 85.7 and 62.5 at short range. So the screen's '5-6 da 12 nodi in su' is largely one October at one cape, and it says little about high-summer sailing. The misses are also one-sided: CHIA from 12 kn has 36-42% of hours above the top and 5-6% below, because mid reads low (short 17.8 vs observed 21.7). PERT is balanced (9% above, 10-14% below). The evidence file says 'the strong-wind rows are small' and that the wind is above the range over a third of the time. It does not give days, intervals or the October weight. The screen's sentence sits in a closed <details> (:478), and only the general 'puo superare' is always visible.",
+      "reproduction": "a.mjs 'months', 'distinct days and episodes', 'cluster bootstrap'; b.mjs 'chart's hourly band' for above and below.",
+      "specRef": "docs/working/WEATHER_EVIDENCE.md section 1 strength table; src/features/weather/WeatherScreen.tsx:760-765",
+      "fix": "Add days or intervals to the strength table and note the October weight. Keep the sentence, since the figure is correct, but consider saying the misses are above the range."
+    },
+    {
+      "id": "WX-24",
+      "title": "'Division mostly earns its place' is an average dominated by light wind, the same shape as WX-9.",
+      "evidence": "Proposal: 3.2-3.7 kn when shown against 1.7-2.3 otherwise; those figures match the JSON. By strength, session error divided vs silent. Under 12 kn: CHIA 3.00 vs 1.23 and 3.05 vs 1.61; PERT +1 d 3.99 vs 1.49; PERT short 1.60 vs 1.43. From 12 kn: CHIA short 3.74 vs 4.00 (10 divided), CHIA +1 d 4.09 vs 4.79 (8); PERT short 2.50 vs 2.25 (2), PERT +1 d 3.31 vs 2.06 (5). At La Chiappa from 12 kn, silence is followed by a larger error than division. This does not reopen WX-Q5. On the silence the brief asked about: the wider range did not change the rule, because modelSpread excludes the dressing (wind.ts:325). From 16 kn the fastest model beat the printed top by more than 3 kn in 4-20% of silent sessions. The wider range now holds most of what silence leaves unsaid, so widening reduces the harm and adds no fault.",
+      "reproduction": "c.mjs 'division against session error'; b.mjs 'speed splits by strength'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 3 'Division is named'",
+      "fix": "Add 'from 12 kn the sample is small and shows no such separation at La Chiappa'."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "WX-Q13",
+      "title": "A rerun is not byte-identical to the committed JSON, though it is identical in content.",
+      "evidence": "The script writes indent 1 and the committed file is indented by the formatter, so cmp differs at line 2. JSON.stringify of both parsed files is equal, with no differing field. A rerun with the default path dirties the whole file.",
+      "reproduction": "Ran with the cache and an output path in my scratchpad's wx/review3/, so the tracked file was never touched; cache file count stayed at 130.",
+      "specRef": "scripts/weather-backtest.mjs:542-549",
+      "fix": "Write in the formatter's shape, or note the formatting step."
+    },
+    {
+      "id": "WX-Q14",
+      "title": "'All seven models' is true of speed only at +1 d.",
+      "evidence": "From 8 August the previous-runs archive has gust for 5 of 7 models: 0 of 2040 values for IFS and for AIFS. AIFS has none in hist either, while IFS has all 2040 there. Removing IFS's gust from the short-range row moves passed by 0.0 and 0.3 points and changes 10 and 9 sessions of 306. Negligible, but unstated.",
+      "reproduction": "e.mjs first two blocks.",
+      "specRef": "docs/working/WEATHER_EVIDENCE.md section 1",
+      "fix": "One line in the limits."
+    },
+    {
+      "id": "WX-Q15",
+      "title": "A speed division prints the Probabile numbers, not 'each camp's numbers'.",
+      "evidence": "formatText uses summary.low and summary.high (windFormat.ts:139). Of 37 speed-division sessions, 7 print the models' rounded 20-80 band; in 25 the top is dressed above the band by more than 0.5 kn. Example: mid 17.9 prints 12-23, band 12-21.6. The line repeats the Probabile line above it.",
+      "reproduction": "b.mjs 'speed split text'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 3; src/features/weather/windFormat.ts:137-140",
+      "fix": "Reword the proposal, or print the band."
+    },
+    {
+      "id": "WX-Q16",
+      "title": "The backtest never reaches the fade.",
+      "evidence": "Its slices leave at least 7 hours after any scored hour, so taper is 1 throughout (scripts/weather-backtest.mjs:387). Measured separately under WX-14, the fade is harmless.",
+      "reproduction": "c.mjs 'taper inside the backtest's own slices'.",
+      "specRef": "src/domain/wind.ts:229-230",
+      "fix": "None needed beyond a note."
+    },
+    {
+      "id": "WX-Q17",
+      "title": "Two code comments point at the wrong section.",
+      "evidence": "windConfig.ts:134-135 says proposal section 4 gives what dropping AROME 2.5 and UKMO costs; section 4 does not. windConfig.ts:218-219 says section 4 gives the range by strength; the table is in WEATHER_EVIDENCE.md section 1.",
+      "reproduction": "Read both files.",
+      "specRef": "src/domain/windConfig.ts",
+      "fix": "Point them at the evidence file."
+    }
+  ],
+  "evidenceInspected": [
+    "Re-tested WX-9 and WX-10, and WX-14 because the fade is new; read round2-forecast-method.json",
+    "Clean tree at f735e2c before and after; git status stayed empty",
+    "Reran scripts/weather-backtest.mjs on a copy of the cache with output in scratch: exit 0, content equal to docs/working/weather-backtest.json",
+    "Compared every row of WEATHER_EVIDENCE.md section 1 and WEATHER_PROPOSAL.md sections 3-4 with the JSON and windConfig.ts: all figures from the JSON match, the weights table matches",
+    "Read src/domain/wind.ts, src/domain/windConfig.ts, src/features/weather/windFormat.ts, the gust and range tests in src/domain/wind.test.ts, and the relevant parts of src/features/weather/WeatherScreen.tsx",
+    "Throwaway scripts a.mjs, b.mjs, c.mjs and e.mjs in my scratchpad's wx/review3/, using the bundle the script built from the shipped source",
+    "Screen sentences against the table: 70-81% gives '7-8'; CHIA from 12 kn 51-59% gives '5-6'; gust 25-52% gives '3-5'. All hold. Chart's hourly band scores 1-2 points above the session range overall, so the sentence is fair for it"
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": [
+      "Round 3 restricted scope: WX-9, WX-10, the fix diff's numbers and wording",
+      "New method faults named in the brief: gust factor, fade, strong-wind silence, small strata"
+    ],
+    "wildcard": "Sweep the factor from 0 to 2.4 with skill on both sides of a threshold, count independent episodes and October's weight in each stratum, re-score beyond +1 d on the +1 d sessions, and count which models actually carry a gust in each archive"
+  },
+  "notTested": [
+    "Accuracy on the water or at any Bocche site: no readings exist, so whether 2 x mid reads high there is unmeasured",
+    "The true gust and the ensemble-widened range beyond +1 d: not archived, so WX-22 is a bound and a proxy",
+    "The rendered screen in a browser: wording and the closed fold were read from source",
+    "The live API's gust availability by model; only the archives were checked",
+    "Multi-point gust at Cabinati, already stated as limit 4",
+    "Out-of-season stability: only one season exists, so the bootstrap intervals describe sampling within it"
+  ]
+}

@@ -235,6 +235,13 @@ div.wind-cell {
   box-shadow: inset 0 0 0 2px var(--foreground);
 }
 
+/* The rule above would otherwise wipe the focus ring off the chosen cell. */
+.wind-cell[aria-pressed="true"]:focus-visible {
+  box-shadow:
+    inset 0 0 0 2px var(--foreground),
+    0 0 0 3px var(--ring);
+}
+
 .wind-cell-period {
   font-size: 0.875rem;
   font-weight: 700;

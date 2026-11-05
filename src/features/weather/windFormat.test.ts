@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { WindSummary } from "@/domain/wind"
 import { WIND_TINTS } from "@/domain/windConfig"
 import {
+  refreshingText,
   spokenSummary,
   splitText,
   thunderColor,
@@ -39,6 +40,20 @@ function contrast(a: string, b: string) {
   const [low, high] = [luminance(a), luminance(b)].sort((x, y) => x - y)
   return (high! + 0.05) / (low! + 0.05)
 }
+
+describe("refreshingText", () => {
+  const NOW = Date.parse("2026-11-07T17:00:00+01:00") / 1000
+
+  it.each([
+    [7 * 3600, "Aggiorno… dati delle 10:00"],
+    [17 * 3600, "Aggiorno… dati delle 00:00"],
+    [24 * 3600, "Aggiorno… dati di ieri 17:00"],
+    [48 * 3600, "Aggiorno… dati di gio 17:00"],
+  ])("keeps the age, in one short line, %i s on", (age, text) => {
+    expect(refreshingText(NOW - age, NOW)).toBe(text)
+    expect(text.length).toBeLessThanOrEqual(28)
+  })
+})
 
 describe("thunderColor", () => {
   it("stays visible on every tint of the week", () => {

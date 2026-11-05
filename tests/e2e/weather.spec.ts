@@ -165,6 +165,22 @@ test("Home stays silent; Vento asks only for the three Derive sea points", async
     })
   expect(shape.drawn).toBeCloseTo(shape.natural, 1)
 
+  // The wave map has its own shape, and follows it.
+  const map = page.getByRole("region", { name: "Mappa LaMMA" })
+  await map.getByRole("button", { name: "Onda" }).click()
+  await expect(map.locator("img")).toHaveAttribute("src", /swh/)
+  const waves = await map.locator("img").evaluate(async (node) => {
+    const image = node as HTMLImageElement
+    await image.decode()
+    const box = image.getBoundingClientRect()
+    return {
+      natural: image.naturalWidth / image.naturalHeight,
+      drawn: box.width / box.height,
+    }
+  })
+  expect(waves.natural).toBeCloseTo(295 / 205, 3)
+  expect(waves.drawn).toBeCloseTo(waves.natural, 2)
+
   if (TAKE_SCREENS) {
     await page.evaluate(() => window.scrollTo(0, 0))
     await screenshot(page, "vento-derive-primo-schermo.png", 915)
@@ -505,6 +521,31 @@ test("a number in the week is never broken across lines, chosen or not, and cell
       )
     }
   }
+})
+
+test("a tap on the week costs no map from the top, and brings the section back from below", async ({
+  page,
+}) => {
+  const weather = await routeWeather(page)
+  await createCourse(page, "Deriva")
+  await openVento(page)
+  await expectKnownHero(page)
+  const week = page.getByRole("region", { name: "La settimana" })
+  await week.getByRole("button", { name: /^Domenica 8 AM:/ }).click()
+  await settle(page)
+  expect(weather.requests.filter((url) => url.includes("lamma"))).toEqual([])
+
+  await page.evaluate(() => window.scrollTo(0, 300))
+  await expect
+    .poll(() => hero(page).evaluate((node) => node.getBoundingClientRect().top))
+    .toBeLessThan(0)
+  await week.getByRole("button", { name: /^Lunedì 9 AM:/ }).click()
+  await expect
+    .poll(() => hero(page).evaluate((node) => node.getBoundingClientRect().top))
+    .toBeGreaterThanOrEqual(0)
+  await expect(
+    page.getByRole("heading", { name: "Scelta · Lunedì AM" }),
+  ).toBeInViewport()
 })
 
 test("Home does not quote a far forecast as firmly as tomorrow's", async ({

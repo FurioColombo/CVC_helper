@@ -293,7 +293,7 @@ describe("downloadWindForecast", () => {
       fetchedAt: NOW - 3600,
       times: [NOW - 3600, NOW, NOW + 3600],
       points: {},
-      sky: { code: [1, 95, 2] },
+      sky: { code: [1, 95, 2], fetchedAt: NOW - 3600 },
     }
     const forecast = await downloadWindForecast("cabinati", {
       ...options,
@@ -312,11 +312,12 @@ describe("downloadWindForecast", () => {
         throw new Error("no signal")
       }),
     )
+    // The copy is an hour old, but its sky was itself carried from long before.
     const previous = {
-      fetchedAt: NOW - 8 * 3600,
+      fetchedAt: NOW - 3600,
       times: [NOW, NOW + 3600, NOW + 7200],
       points: {},
-      sky: { code: [1, 1, 1] },
+      sky: { code: [1, 1, 1], fetchedAt: NOW - 8 * 3600 },
     }
     const forecast = await downloadWindForecast("cabinati", {
       ...options,

@@ -160,6 +160,30 @@ describe("useWindForecast", () => {
     unmount()
   })
 
+  it("does not call a copy fresh when it was kept before its extras arrived", async () => {
+    vi.mocked(fetch).mockImplementation(async () => respondWith(payload()))
+    const whole = JSON.parse(stored(10 * 60)) as Record<string, unknown>
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        ...whole,
+        sky: { code: [1, 1] },
+        ensemble: { low: [8, 8], mid: [10, 10], high: [12, 12] },
+      }),
+    )
+    const first = renderHook(() => useWindForecast("derive", "network"))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(fetch).not.toHaveBeenCalled()
+    first.unmount()
+
+    localStorage.setItem(key, stored(10 * 60))
+    const second = renderHook(() => useWindForecast("derive", "network"))
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    second.unmount()
+  })
+
   it("keeps what was seen, even when the screen leaves before the extras arrive", async () => {
     vi.mocked(fetch).mockImplementation(async (url, init) => {
       if (String(url).includes("hourly=wind_speed_10m")) {

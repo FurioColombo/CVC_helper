@@ -9,12 +9,11 @@ technical and regional strengths. This branch holds this proposal and a working
 build of it. Nothing here is merged; `02_MVP_SCOPE.md` and the plan are unchanged
 until the owner adopts it (§9).
 
-The first build went to six independent reviewers, and five returned FAIL. The second
-went to four, and two returned FAIL. Everything below describes the third build, which
-those last reports led to and which has not been reviewed again. The figures and the
-review history are in `WEATHER_EVIDENCE.md`.
-The reports are in `docs/working/weather-reviews/`, screens in
-`docs/working/weather-screens/`.
+The first build went to six independent reviewers, and five returned FAIL. The second went
+to four, and two returned FAIL. A narrow third look at those two passed with findings, and
+the build described below also answers those findings; that last step has not been reviewed.
+The figures and the review history are in `WEATHER_EVIDENCE.md`, the reports in
+`docs/working/weather-reviews/`, screens in `docs/working/weather-screens/`.
 
 ## 1. What it is
 
@@ -90,20 +89,22 @@ How each choice follows from the wind, not from convenience:
 - **The range grows with the wind:** at least ±3 kn and at least ±30% of the expected
   wind, because model spread alone held the real wind only half the time and the error
   grows with strength. With a fixed ±3 it held about 5 hours in 10 from 16 kn.
-- **The gust is the highest model's or twice the expected wind, whichever is higher.**
-  A multiple of the band's top reads low in strong wind, when it matters: from 16 kn it
-  was passed about 9 sessions in 10. Why 2 is in the evidence file. It may read high over water, it is
-  no ceiling, the screen says so, and no gust is printed beyond 5 days.
+- **The gust is usually twice the expected wind**, or the highest model's if that is higher.
+  The doubling sets it in about three sessions in four. A multiple of the band's top read low
+  in strong wind, when it matters: from 16 kn it was passed about 9 sessions in 10. Why 2 is in
+  the evidence file. It was fitted to headland peaks, so it may read high over water; it is
+  also no ceiling. The screen says both, far gusts wear the `~`, and none is printed beyond 5
+  days.
 - **Division is named, or nothing is said.** The old alta/media/bassa label is gone. The
-  screen gives each camp's numbers and no advice: "Modelli divisi: NW 20 o SE 6", or
+  screen gives numbers and no advice: each camp's over direction, "Modelli divisi: NW 20 o SE 6", and the likely range over speed,
   "Modelli divisi sulla forza: tra 8 e 20, e può superare 20". Silent when they agree,
   and only inside 3 days. It mostly earns its place: at both capes at +1 d, and at La
   Chiappa short range, the expected wind erred 3.2–3.7 kn when it showed, against
   1.7–2.3 otherwise. At Cap Pertusato short range, where it showed in 3% of sessions, it
-  told nothing.
+  told nothing, and from 12 kn the sample is small and shows no such separation at La Chiappa.
 - **Beyond 3 days the number wears a `~`**, "solo una tendenza"; beyond 5 days the
-  screen says it is worth little more than the seasonal mean. By day 7 single runs err
-  about as much as a constant mean chosen with hindsight.
+  screen says it is worth little more than the seasonal mean. By day 7 single runs beat a
+  constant mean chosen with hindsight by only 0.25–0.46 kn.
 - **Lead time counts from the download**, not from now: an old copy keeps its
   long-range caution. A session in its last hour gives way to the next one.
 - **Handover without a step.** Weights are continuous and a run's speed and gust fade
@@ -125,13 +126,15 @@ weights for open water. The rewritten one uses two exposed capes in south Corsic
 cells, June to October 2026, computed by the app's own code.
 
 - **The range:** up to a day ahead the real wind stayed inside 70–81% of hours. From 12
-  kn it can be much less: 51–59% at La Chiappa. It is no upper limit.
-- **The gust:** real peaks passed the number in 25–52% of sessions, about the same at
-  every strength. It is no ceiling, and it may read high over water.
+  kn it can be much less: 51–59% at La Chiappa, largely one October there, with the misses above.
+  It is no upper limit.
+- **The gust:** real peaks passed the number in 25–52% of sessions, from 9% to 54% by strength
+  and site, and a small change in the factor moves that a long way. It is no ceiling, and it may
+  read high over water.
 - **The centre did not improve** with the new weights; range and gust did. The blend
   beats the best single model by about 0.2 kn.
-- **Beyond a day** nothing that ships could be scored fully; by day 7 single runs err
-  about as much as a constant mean chosen with hindsight.
+- **Beyond a day** nothing that ships could be scored fully; by day 7 single runs beat a
+  constant mean chosen with hindsight by only 0.25–0.46 kn.
 - **The limits:** capes are 33 and 47 km from Cala Fico, one season, and every tuned
   number was tuned on the season it is scored on. Real verification needs readings from
   the water (§7).
@@ -221,7 +224,11 @@ Bocche best. Not built: it adds data to the course model and deserves its own de
   strong wind when the bands overlap (WX-Q5); GFS outweighs AIFS at 144 h, because AIFS's
   smooth forecasts flatter its score (WX-Q9, a judgement); `AbortSignal.any` needs
   Chrome 116 or Safari 17.4, with no fallback for older phones (SP-WX-Q9).
-- The 20 journeys pass on Chrome's Android emulation and on Playwright's WebKit build with
+- Left from round three: after scrolling down, a tap can still fetch a map image nobody then
+  sees (FUX-33); at 360 px the printed AM and PM put the PM row at the bar, one swipe away
+  (FUX-35); no journey measures a row's shift (FUX-29, FUX-32). The factor sweep and the
+  same-sample d2–d7 rows belong in the script (WX-20, WX-21).
+- The 21 journeys pass on Chrome's Android emulation and on Playwright's WebKit build with
   iPhone settings. Neither is a phone: nothing here has run on a real device, in sun.
 
 ## 9. To adopt it
@@ -244,7 +251,7 @@ privacy review is required (new network calls).
 
 ## 10. What the reviews changed
 
-Two rounds, ten reports, seven FAIL in all. What each proved and what it changed is in
-[WEATHER_EVIDENCE.md](WEATHER_EVIDENCE.md) §2. The third build answers round two's four
-blockers with its own tests and figures, and **no reviewer has confirmed that yet**; the
-adoption milestone's reviews should.
+Three rounds, twelve reports, seven FAIL, all in the first two. What each proved and what it
+changed is in [WEATHER_EVIDENCE.md](WEATHER_EVIDENCE.md) §2. Round three could not falsify the
+fixes to round two's four blockers. It found further faults worth fixing, three of them caused by
+that pass; those fixes have **not** been reviewed. The adoption milestone's reviews should.

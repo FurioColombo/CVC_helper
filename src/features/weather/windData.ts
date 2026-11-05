@@ -271,6 +271,17 @@ async function secondary<T>(
   }
 }
 
+/** By the extra's own age: carrying it must not make it young again. */
+function stillRecent<T extends { fetchedAt?: number }>(
+  extra: T | undefined,
+  moment: number,
+) {
+  const age = extra?.fetchedAt === undefined ? null : moment - extra.fetchedAt
+  return age !== null && age >= 0 && age < CARRY_EXTRAS_FOR_SECONDS
+    ? extra
+    : undefined
+}
+
 /** What an extra said last time, for the hours both downloads cover. */
 function carriedOver(
   times: readonly number[],
@@ -311,16 +322,18 @@ export async function downloadWindForecast(
   )
   const wind = parseForecast(zoneId, payload, now())
   // A sky older than this must not pass for today's: better to say it is unknown.
-  const recent =
-    previous && now() - previous.fetchedAt < CARRY_EXTRAS_FOR_SECONDS
-      ? previous
-      : null
-  const carriedSky = carriedOver(wind.times, recent, recent?.sky?.code)
-  const carriedWaves = carriedOver(wind.times, recent, recent?.waves?.height)
+  const pastSky = stillRecent(previous?.sky, now())
+  const pastWaves = stillRecent(previous?.waves, now())
+  const carriedSky = carriedOver(wind.times, previous, pastSky?.code)
+  const carriedWaves = carriedOver(wind.times, previous, pastWaves?.height)
   const withCarried: WindForecast = {
     ...wind,
-    ...(carriedSky ? { sky: { code: carriedSky } } : {}),
-    ...(carriedWaves ? { waves: { height: carriedWaves } } : {}),
+    ...(carriedSky
+      ? { sky: { code: carriedSky, fetchedAt: pastSky?.fetchedAt } }
+      : {}),
+    ...(carriedWaves
+      ? { waves: { height: carriedWaves, fetchedAt: pastWaves?.fetchedAt } }
+      : {}),
   }
   onWind?.(withCarried)
 
@@ -336,13 +349,13 @@ export async function downloadWindForecast(
       const hourly = hourlyOf(await getJson(urls.waves, signal))
       const height =
         hourly && aligned(hourly, "wave_height", wind.times, RANGES.height)
-      return height ? { height } : undefined
+      return height ? { height, fetchedAt: now() } : undefined
     }, abort),
     secondary(async (signal) => {
       const hourly = hourlyOf(await getJson(urls.sky, signal))
       const code =
         hourly && aligned(hourly, "weather_code", wind.times, RANGES.code)
-      return code ? { code } : undefined
+      return code ? { code, fetchedAt: now() } : undefined
     }, abort),
   ])
   abort.throwIfAborted()
@@ -420,21 +433,30 @@ export function isStoredForecast(
         strictColumn(part, length, RANGES.speed),
       )
     }) &&
-    isOptional(waves, (column) =>
-      strictColumn(
-        (column as NonNullable<WindForecast["waves"]>).height,
-        length,
-        RANGES.height,
-      ),
+    isOptional(
+      waves,
+      (column) =>
+        strictColumn(
+          (column as NonNullable<WindForecast["waves"]>).height,
+          length,
+          RANGES.height,
+        ) && extraTimeIsSane(column),
     ) &&
-    isOptional(sky, (column) =>
-      strictColumn(
-        (column as NonNullable<WindForecast["sky"]>).code,
-        length,
-        RANGES.code,
-      ),
+    isOptional(
+      sky,
+      (column) =>
+        strictColumn(
+          (column as NonNullable<WindForecast["sky"]>).code,
+          length,
+          RANGES.code,
+        ) && extraTimeIsSane(column),
     )
   )
+}
+
+function extraTimeIsSane(extra: unknown) {
+  const { fetchedAt } = extra as { fetchedAt?: unknown }
+  return fetchedAt === undefined || Number.isInteger(fetchedAt)
 }
 
 export function readCachedForecast(

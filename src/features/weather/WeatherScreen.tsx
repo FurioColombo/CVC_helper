@@ -50,6 +50,7 @@ import {
   changeText,
   dataAgeText,
   dayRowLabel,
+  refreshingText,
   directionText,
   directionWithName,
   formatDecimal,
@@ -105,7 +106,7 @@ function StatusLine({
       className={
         marked
           ? "flex items-center justify-between gap-2 rounded-xl bg-[#fff4ee] px-3 py-1 text-sm text-[#7f2f17]"
-          : "flex items-center justify-between gap-2 px-1 text-sm text-muted-foreground"
+          : "flex items-center justify-between gap-2 px-1 py-1 text-sm text-muted-foreground"
       }
     >
       <div className="min-w-0">
@@ -121,14 +122,16 @@ function StatusLine({
             />
           )}
           <span className="min-w-0">
-            {loading && "Aggiorno le previsioni… "}
+            {loading && !forecast && "Aggiorno le previsioni…"}
             {failed && `${failure} `}
             {!forecast && failed && "Previsioni non scaricate."}
+            {forecast && loading && refreshingText(forecast.fetchedAt, now)}
             {forecast &&
-              (loading || failed
+              !loading &&
+              (failed
                 ? dataAgeText(forecast.fetchedAt, now)
                 : updatedText(forecast.fetchedAt, now))}
-            {veryStale && ": potrebbero essere superati"}
+            {veryStale && !loading && ": potrebbero essere superati"}
           </span>
         </p>
       </div>
@@ -363,7 +366,7 @@ function SlotHero({
           {picked && (
             <button
               aria-label="Torna alla prossima uscita"
-              className="min-h-11 font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
+              className="min-h-11 min-w-11 font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
               onClick={onBackToNext}
               type="button"
             >
@@ -391,7 +394,7 @@ function SlotHero({
               <p className="m-0 mt-1 text-xl leading-tight font-black tabular-nums">
                 {summary.gust === null
                   ? "Raffiche: troppo presto"
-                  : `Raffiche ${formatKnots(summary.gust)}`}
+                  : `Raffiche ${summary.reach === "near" ? "" : "~"}${formatKnots(summary.gust)}`}
               </p>
             </div>
           </div>
@@ -759,9 +762,12 @@ function ModelDetails({
         <p className="m-0 mt-2 text-sm text-muted-foreground">
           Nella prova su quei capi, estate e autunno 2026, fino a un giorno
           prima: il vento vero è rimasto nel Probabile 7-8 ore su 10, ma su un
-          capo solo 5-6 da 12 nodi in su. Oltre un giorno, meno. Le raffiche
-          vere hanno superato il numero mostrato in 3-5 uscite su 10: non è un
-          tetto.
+          capo solo 5-6 da 12 nodi in su, con il vento sopra il Probabile. Le
+          raffiche mostrate sono di solito il doppio del vento atteso, o la più
+          alta dei modelli se maggiore: tarate su picchi di capi, in acqua
+          possono essere meno. Quelle vere le hanno superate in 3-5 uscite su
+          10: non sono un tetto. Oltre un giorno valgono meno, tutti e due i
+          numeri.
         </p>
       </Disclosure>
     </section>

@@ -130,7 +130,7 @@ export function WindLammaMap({
           >
             <img
               alt=""
-              className="block aspect-[1168/820] h-auto w-full bg-muted"
+              className="block h-auto w-full bg-muted [aspect-ratio:auto_1168/820]"
               decoding="async"
               loading="lazy"
               onError={() => setFailed(true)}

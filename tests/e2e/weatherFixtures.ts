@@ -125,6 +125,8 @@ function greyMap(width: number, height: number) {
 }
 
 const MAP_PNG = greyMap(292, 205)
+/** LaMMA's wave map is a little wider than its wind map: 1181 by 820. */
+const WAVE_MAP_PNG = greyMap(295, 205)
 
 const CORS = { "access-control-allow-origin": "*" }
 export const WEATHER_HOSTS = [
@@ -197,7 +199,7 @@ export async function routeWeather(page: Page): Promise<WeatherHost> {
       return route.fulfill({
         status: 200,
         contentType: "image/png",
-        body: MAP_PNG,
+        body: url.pathname.includes("swh") ? WAVE_MAP_PNG : MAP_PNG,
       })
     }
     if (!host.online) return route.abort("internetdisconnected")
