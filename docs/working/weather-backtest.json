@@ -1,0 +1,1434 @@
+{
+ "start": "2026-06-01",
+ "end": "2026-10-31",
+ "stations": [
+  {
+   "id": "LFKF",
+   "name": "Figari",
+   "lat": 41.5,
+   "lon": 9.1
+  },
+  {
+   "id": "LIEO",
+   "name": "Olbia",
+   "lat": 40.9,
+   "lon": 9.52
+  }
+ ],
+ "rows": [
+  {
+   "station": "LFKF",
+   "model": "meteofrance_arome_france_hd",
+   "grid": [
+    41.5,
+    9.1
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 1.97,
+    "bias": -0.72,
+    "directionMae": 17
+   },
+   "strong": {
+    "n": 329,
+    "mae": 2.85,
+    "bias": -2.75,
+    "directionMae": 10
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 2.44,
+    "bias": -1.89,
+    "directionMae": 15
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 1.67,
+    "bias": 0.46,
+    "directionMae": 18
+   },
+   "leads": {
+    "d1": {
+     "n": 855,
+     "mae": 2.48,
+     "bias": -0.98,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "meteofrance_arome_france",
+   "grid": [
+    41.5,
+    9.1
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 1.96,
+    "bias": -0.72,
+    "directionMae": 17
+   },
+   "strong": {
+    "n": 329,
+    "mae": 2.82,
+    "bias": -2.72,
+    "directionMae": 10
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 2.42,
+    "bias": -1.86,
+    "directionMae": 15
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 1.67,
+    "bias": 0.46,
+    "directionMae": 18
+   },
+   "leads": {
+    "d1": {
+     "n": 855,
+     "mae": 2.49,
+     "bias": -0.97,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "italia_meteo_arpae_icon_2i",
+   "grid": [
+    41.5,
+    9.1
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 2.79,
+    "bias": -2.2,
+    "directionMae": 21
+   },
+   "strong": {
+    "n": 329,
+    "mae": 5.21,
+    "bias": -5.2,
+    "directionMae": 14
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 4.25,
+    "bias": -4.05,
+    "directionMae": 19
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 1.66,
+    "bias": -0.85,
+    "directionMae": 20
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 2.8,
+     "bias": -2.05,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1482,
+     "mae": 2.97,
+     "bias": -2.16,
+     "directionMae": null
+    },
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "dmi_harmonie_arome_europe",
+   "grid": [
+    41.49702,
+    9.095123
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.6,
+    "bias": -3.27,
+    "directionMae": 22
+   },
+   "strong": {
+    "n": 329,
+    "mae": 6.23,
+    "bias": -6.23,
+    "directionMae": 10
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 5.2,
+    "bias": -5.11,
+    "directionMae": 17
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 2.76,
+    "bias": -2.54,
+    "directionMae": 24
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 3.55,
+     "bias": -2.97,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "knmi_harmonie_arome_europe",
+   "grid": [
+    41.50842,
+    9.093765
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.89,
+    "bias": -3.55,
+    "directionMae": 22
+   },
+   "strong": {
+    "n": 329,
+    "mae": 7.39,
+    "bias": -7.39,
+    "directionMae": 12
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 6.04,
+    "bias": -5.97,
+    "directionMae": 17
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 2.44,
+    "bias": -2.16,
+    "directionMae": 23
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 3.68,
+     "bias": -3.09,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "meteofrance_arpege_europe",
+   "grid": [
+    41.5,
+    9.100002
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 2.4,
+    "bias": -1.44,
+    "directionMae": 24
+   },
+   "strong": {
+    "n": 329,
+    "mae": 4.05,
+    "bias": -3.94,
+    "directionMae": 11
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 3.5,
+    "bias": -3.01,
+    "directionMae": 17
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 1.75,
+    "bias": -0.84,
+    "directionMae": 21
+   },
+   "leads": {
+    "d1": {
+     "n": 852,
+     "mae": 2.57,
+     "bias": -1.45,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 842,
+     "mae": 2.86,
+     "bias": -1.36,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 832,
+     "mae": 3.07,
+     "bias": -1.09,
+     "directionMae": null
+    },
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "icon_eu",
+   "grid": [
+    41.5,
+    9.125
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.58,
+    "bias": -3.29,
+    "directionMae": 23
+   },
+   "strong": {
+    "n": 329,
+    "mae": 6.6,
+    "bias": -6.6,
+    "directionMae": 12
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 5.24,
+    "bias": -5.18,
+    "directionMae": 16
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 2.35,
+    "bias": -2.07,
+    "directionMae": 18
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 3.62,
+     "bias": -3.25,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1527,
+     "mae": 3.67,
+     "bias": -3.16,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1527,
+     "mae": 3.75,
+     "bias": -3.13,
+     "directionMae": null
+    },
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "icon_global",
+   "grid": [
+    41.5,
+    9.125
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 4.87,
+    "bias": -4.74,
+    "directionMae": 29
+   },
+   "strong": {
+    "n": 329,
+    "mae": 8.11,
+    "bias": -8.11,
+    "directionMae": 15
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 6.56,
+    "bias": -6.52,
+    "directionMae": 21
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 3.75,
+    "bias": -3.73,
+    "directionMae": 20
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 4.92,
+     "bias": -4.74,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1527,
+     "mae": 4.87,
+     "bias": -4.6,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1527,
+     "mae": 4.91,
+     "bias": -4.56,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1527,
+     "mae": 5.13,
+     "bias": -4.56,
+     "directionMae": null
+    },
+    "d7": null
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "ecmwf_ifs",
+   "grid": [
+    41.51142,
+    9.07781
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.55,
+    "bias": -3.15,
+    "directionMae": 34
+   },
+   "strong": {
+    "n": 329,
+    "mae": 6.47,
+    "bias": -6.46,
+    "directionMae": 27
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 5.01,
+    "bias": -4.83,
+    "directionMae": 27
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 2.65,
+    "bias": -2.29,
+    "directionMae": 32
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 3.63,
+     "bias": -3.16,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1527,
+     "mae": 3.67,
+     "bias": -3.21,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1527,
+     "mae": 3.84,
+     "bias": -3.38,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1527,
+     "mae": 4.1,
+     "bias": -3.36,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1527,
+     "mae": 4.92,
+     "bias": -4.05,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "ecmwf_ifs025",
+   "grid": [
+    41.5,
+    9
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.45,
+    "bias": -2.77,
+    "directionMae": 38
+   },
+   "strong": {
+    "n": 329,
+    "mae": 6.17,
+    "bias": -6.1,
+    "directionMae": 29
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 4.8,
+    "bias": -4.43,
+    "directionMae": 28
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 2.69,
+    "bias": -1.72,
+    "directionMae": 41
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 3.5,
+     "bias": -2.74,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1527,
+     "mae": 3.56,
+     "bias": -2.79,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1527,
+     "mae": 3.73,
+     "bias": -3.01,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1527,
+     "mae": 4.03,
+     "bias": -2.96,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1527,
+     "mae": 4.94,
+     "bias": -3.76,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "ecmwf_aifs025_single",
+   "grid": [
+    41.5,
+    9
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.43,
+    "bias": -2.54,
+    "directionMae": 37
+   },
+   "strong": {
+    "n": 329,
+    "mae": 5.8,
+    "bias": -5.63,
+    "directionMae": 27
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 4.7,
+    "bias": -4.18,
+    "directionMae": 28
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 2.5,
+    "bias": -1.09,
+    "directionMae": 36
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 4.01,
+     "bias": -3.01,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1527,
+     "mae": 4.19,
+     "bias": -3.18,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1527,
+     "mae": 4.3,
+     "bias": -3.29,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1527,
+     "mae": 4.78,
+     "bias": -3.4,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1527,
+     "mae": 4.96,
+     "bias": -3.83,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "gfs_global",
+   "grid": [
+    41.52945,
+    9.140625
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 3.7,
+    "bias": -3.36,
+    "directionMae": 28
+   },
+   "strong": {
+    "n": 329,
+    "mae": 6.52,
+    "bias": -6.51,
+    "directionMae": 16
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 5.18,
+    "bias": -5.04,
+    "directionMae": 19
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 3.21,
+    "bias": -3.1,
+    "directionMae": 33
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 3.8,
+     "bias": -3.36,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1527,
+     "mae": 4.03,
+     "bias": -3.53,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1527,
+     "mae": 4.32,
+     "bias": -3.8,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1527,
+     "mae": 4.49,
+     "bias": -3.8,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1527,
+     "mae": 4.8,
+     "bias": -3.83,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LFKF",
+   "model": "ukmo_global_deterministic_10km",
+   "grid": [
+    41.53125,
+    9.140625
+   ],
+   "day": {
+    "n": 1527,
+    "mae": 4.41,
+    "bias": -4.13,
+    "directionMae": 29
+   },
+   "strong": {
+    "n": 329,
+    "mae": 8.23,
+    "bias": -8.14,
+    "directionMae": 12
+   },
+   "maestrale": {
+    "n": 487,
+    "mae": 6.75,
+    "bias": -6.51,
+    "directionMae": 23
+   },
+   "scirocco": {
+    "n": 375,
+    "mae": 3.28,
+    "bias": -3.03,
+    "directionMae": 28
+   },
+   "leads": {
+    "d1": {
+     "n": 1527,
+     "mae": 4.56,
+     "bias": -3.98,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1447,
+     "mae": 4.59,
+     "bias": -3.82,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1467,
+     "mae": 4.57,
+     "bias": -3.89,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1467,
+     "mae": 4.56,
+     "bias": -3.4,
+     "directionMae": null
+    },
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "meteofrance_arome_france_hd",
+   "grid": [
+    40.9,
+    9.52
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.09,
+    "bias": -1.41,
+    "directionMae": 19
+   },
+   "strong": {
+    "n": 114,
+    "mae": 4.4,
+    "bias": -4.24,
+    "directionMae": 20
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.02,
+    "bias": -2.4,
+    "directionMae": 26
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 1.46,
+    "bias": -0.81,
+    "directionMae": 14
+   },
+   "leads": {
+    "d1": {
+     "n": 842,
+     "mae": 2.32,
+     "bias": -1.25,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "meteofrance_arome_france",
+   "grid": [
+    40.9,
+    9.525
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.09,
+    "bias": -1.4,
+    "directionMae": 20
+   },
+   "strong": {
+    "n": 114,
+    "mae": 4.36,
+    "bias": -4.18,
+    "directionMae": 21
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.01,
+    "bias": -2.37,
+    "directionMae": 26
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 1.46,
+    "bias": -0.81,
+    "directionMae": 14
+   },
+   "leads": {
+    "d1": {
+     "n": 842,
+     "mae": 2.32,
+     "bias": -1.25,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "italia_meteo_arpae_icon_2i",
+   "grid": [
+    40.9,
+    9.525
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.37,
+    "bias": -1.54,
+    "directionMae": 23
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.33,
+    "bias": -5.31,
+    "directionMae": 23
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.48,
+    "bias": -2.89,
+    "directionMae": 25
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 1.74,
+    "bias": -0.7,
+    "directionMae": 20
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 2.39,
+     "bias": -1.43,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1465,
+     "mae": 2.5,
+     "bias": -1.49,
+     "directionMae": null
+    },
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "dmi_harmonie_arome_europe",
+   "grid": [
+    40.89371,
+    9.514587
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.41,
+    "bias": -1.63,
+    "directionMae": 21
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.54,
+    "bias": -5.24,
+    "directionMae": 21
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.52,
+    "bias": -2.89,
+    "directionMae": 26
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 1.8,
+    "bias": -1.01,
+    "directionMae": 16
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 2.45,
+     "bias": -1.49,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "knmi_harmonie_arome_europe",
+   "grid": [
+    40.914597,
+    9.494553
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.78,
+    "bias": -2.32,
+    "directionMae": 23
+   },
+   "strong": {
+    "n": 114,
+    "mae": 6.36,
+    "bias": -6.23,
+    "directionMae": 20
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 4,
+    "bias": -3.64,
+    "directionMae": 25
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.21,
+    "bias": -1.8,
+    "directionMae": 19
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 2.63,
+     "bias": -1.95,
+     "directionMae": null
+    },
+    "d2": null,
+    "d3": null,
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "meteofrance_arpege_europe",
+   "grid": [
+    40.9,
+    9.5
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.66,
+    "bias": -1.88,
+    "directionMae": 25
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.36,
+    "bias": -5.23,
+    "directionMae": 23
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.96,
+    "bias": -3.4,
+    "directionMae": 36
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 1.86,
+    "bias": -0.81,
+    "directionMae": 14
+   },
+   "leads": {
+    "d1": {
+     "n": 839,
+     "mae": 2.67,
+     "bias": -1.46,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 829,
+     "mae": 2.77,
+     "bias": -1.52,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 819,
+     "mae": 2.67,
+     "bias": -1.54,
+     "directionMae": null
+    },
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "icon_eu",
+   "grid": [
+    40.875,
+    9.5
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.65,
+    "bias": -2.18,
+    "directionMae": 24
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.39,
+    "bias": -5.18,
+    "directionMae": 24
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.36,
+    "bias": -2.83,
+    "directionMae": 24
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.17,
+    "bias": -1.78,
+    "directionMae": 21
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 2.67,
+     "bias": -2.16,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1510,
+     "mae": 2.79,
+     "bias": -2.06,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1510,
+     "mae": 2.91,
+     "bias": -2.07,
+     "directionMae": null
+    },
+    "d5": null,
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "icon_global",
+   "grid": [
+    40.875,
+    9.5
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 3.09,
+    "bias": -2.5,
+    "directionMae": 28
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.31,
+    "bias": -4.76,
+    "directionMae": 26
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.42,
+    "bias": -2.47,
+    "directionMae": 25
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.85,
+    "bias": -2.53,
+    "directionMae": 26
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 3.06,
+     "bias": -2.43,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1510,
+     "mae": 3.18,
+     "bias": -2.3,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1510,
+     "mae": 3.32,
+     "bias": -2.36,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1510,
+     "mae": 3.83,
+     "bias": -1.98,
+     "directionMae": null
+    },
+    "d7": null
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "ecmwf_ifs",
+   "grid": [
+    40.94903,
+    9.48718
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 3.14,
+    "bias": -2.48,
+    "directionMae": 30
+   },
+   "strong": {
+    "n": 114,
+    "mae": 6.14,
+    "bias": -5.8,
+    "directionMae": 28
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.61,
+    "bias": -3,
+    "directionMae": 29
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.8,
+    "bias": -2.47,
+    "directionMae": 26
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 3.06,
+     "bias": -2.37,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1510,
+     "mae": 3.13,
+     "bias": -2.39,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1510,
+     "mae": 3.22,
+     "bias": -2.44,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1510,
+     "mae": 3.52,
+     "bias": -2.41,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1510,
+     "mae": 3.89,
+     "bias": -2.79,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "ecmwf_ifs025",
+   "grid": [
+    41,
+    9.5
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 3.19,
+    "bias": -2.36,
+    "directionMae": 34
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.87,
+    "bias": -5.44,
+    "directionMae": 31
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.35,
+    "bias": -2.4,
+    "directionMae": 30
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.94,
+    "bias": -2.48,
+    "directionMae": 32
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 3.16,
+     "bias": -2.22,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1510,
+     "mae": 3.26,
+     "bias": -2.31,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1510,
+     "mae": 3.3,
+     "bias": -2.36,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1510,
+     "mae": 3.65,
+     "bias": -2.25,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1510,
+     "mae": 3.92,
+     "bias": -2.57,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "ecmwf_aifs025_single",
+   "grid": [
+    41,
+    9.5
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 3.75,
+    "bias": -2.61,
+    "directionMae": 44
+   },
+   "strong": {
+    "n": 114,
+    "mae": 5.78,
+    "bias": -4.73,
+    "directionMae": 30
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.53,
+    "bias": -2.1,
+    "directionMae": 24
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 3.8,
+    "bias": -3.25,
+    "directionMae": 57
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 4.19,
+     "bias": -3.34,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1510,
+     "mae": 4.21,
+     "bias": -3.41,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1510,
+     "mae": 4.31,
+     "bias": -3.44,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1510,
+     "mae": 4.35,
+     "bias": -3.28,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1510,
+     "mae": 4.82,
+     "bias": -3.28,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "gfs_global",
+   "grid": [
+    40.94371,
+    9.4921875
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 2.99,
+    "bias": -2.32,
+    "directionMae": 30
+   },
+   "strong": {
+    "n": 114,
+    "mae": 6.27,
+    "bias": -6.19,
+    "directionMae": 27
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 3.67,
+    "bias": -3.13,
+    "directionMae": 35
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.54,
+    "bias": -2.2,
+    "directionMae": 23
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 3.14,
+     "bias": -2.44,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1510,
+     "mae": 3.23,
+     "bias": -2.54,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1510,
+     "mae": 3.37,
+     "bias": -2.6,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1510,
+     "mae": 3.6,
+     "bias": -2.72,
+     "directionMae": null
+    },
+    "d7": {
+     "n": 1510,
+     "mae": 3.64,
+     "bias": -2.24,
+     "directionMae": null
+    }
+   }
+  },
+  {
+   "station": "LIEO",
+   "model": "ukmo_global_deterministic_10km",
+   "grid": [
+    40.78125,
+    9.5625
+   ],
+   "day": {
+    "n": 1510,
+    "mae": 3.5,
+    "bias": -2.39,
+    "directionMae": 45
+   },
+   "strong": {
+    "n": 114,
+    "mae": 6.49,
+    "bias": -6.17,
+    "directionMae": 40
+   },
+   "maestrale": {
+    "n": 322,
+    "mae": 4.19,
+    "bias": -3.33,
+    "directionMae": 49
+   },
+   "scirocco": {
+    "n": 557,
+    "mae": 2.99,
+    "bias": -2.08,
+    "directionMae": 39
+   },
+   "leads": {
+    "d1": {
+     "n": 1510,
+     "mae": 3.37,
+     "bias": -2.01,
+     "directionMae": null
+    },
+    "d2": {
+     "n": 1432,
+     "mae": 3.36,
+     "bias": -1.91,
+     "directionMae": null
+    },
+    "d3": {
+     "n": 1450,
+     "mae": 3.53,
+     "bias": -2.14,
+     "directionMae": null
+    },
+    "d5": {
+     "n": 1450,
+     "mae": 3.77,
+     "bias": -1.73,
+     "directionMae": null
+    },
+    "d7": null
+   }
+  }
+ ]
+}

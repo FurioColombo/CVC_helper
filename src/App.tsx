@@ -88,6 +88,10 @@ import {
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import {
+  WeatherHomeCard,
+  WeatherScreen,
+} from "@/features/weather/WeatherScreen"
+import {
   getActiveCourses,
   saveActiveCourse,
   type CourseRecord,
@@ -110,6 +114,7 @@ type ShellView =
   | "sessions"
   | "evaluations"
   | "volunteers"
+  | "weather"
   | "settings"
 
 const SHELL_HISTORY_KEY = "__cvcHelperShell"
@@ -134,6 +139,7 @@ function isShellView(value: unknown): value is ShellView {
     value === "sessions" ||
     value === "evaluations" ||
     value === "volunteers" ||
+    value === "weather" ||
     value === "settings"
   )
 }
@@ -513,6 +519,8 @@ function Home({
         </h1>
       </section>
 
+      <WeatherHomeCard course={course} onOpen={() => onNavigate("weather")} />
+
       <section aria-label="Aree del corso">
         <div className="grid grid-cols-2 gap-2.5">
           {HOME_CARDS.map(({ id, label, icon: Icon }) => (
@@ -848,6 +856,9 @@ function AppShell({
             courseId={course.id}
             onHome={() => goBack("home")}
           />
+        )}
+        {view === "weather" && (
+          <WeatherScreen course={course} onHome={() => goBack("home")} />
         )}
         {view === "boats" && (
           <BoatManagement course={course} onHome={() => goBack("home")} />

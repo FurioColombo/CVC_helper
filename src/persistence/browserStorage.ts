@@ -148,7 +148,8 @@ function clearSelectedLocalStorage(): void {
       key === appChannelConfig.syncModeKey ||
       key === appChannelConfig.backupAuthKey ||
       (key !== null && key.startsWith(`${appChannelConfig.backupAuthKey}-`)) ||
-      (key !== null && key.startsWith(appChannelConfig.scanNameOrderPrefix))
+      (key !== null && key.startsWith(appChannelConfig.scanNameOrderPrefix)) ||
+      (key !== null && key.startsWith(appChannelConfig.weatherCachePrefix))
     ) {
       localStorage.removeItem(key)
     }
