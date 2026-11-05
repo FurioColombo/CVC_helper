@@ -37,7 +37,7 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reverified on the code of CVC Helper Test 0.5.3 after B4's desktop fixes. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 | B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
 | B7 | Built, reviewed, evidence recorded at `08b3eae`. Waits for full CI (blocked by GitHub billing) and the owner's `B7-KEEP-RULE`; then the live spec, a test build and `B7-PHONE-CHOICE`. |
-| WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. Starts after the owner's `WX1-NETWORK` and B7's handoff. |
+| WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); it starts after B7's handoff. |
 
 ## Execution order
 
@@ -182,13 +182,13 @@ no-go: that stays the instructor's. Built on `claude/weather-section`, with the
 proposal, the backtest and three rounds of review in `docs/working/` there
 (`WEATHER_PROPOSAL.md`, `WEATHER_EVIDENCE.md`, `weather-reviews/`).
 
-**Starts when** the owner answers `WX1-NETWORK` (decision 25) and B7 has handed
-off. Then the branch merges here, the manifest gains its specs, and WX1 starts
+**Starts when** B7 has handed off; the owner accepted `WX1-NETWORK` on
+2026-11-06 (decision 25). Then the branch merges here, the manifest gains its specs, and WX1 starts
 with B4–B7 as permitted predecessors.
 
 **Work.** The proposal's §9 edits: `01` gains the Vento section and sheds text
 to stay in budget; `02` §1; `03` lists Open-Meteo and LaMMA as permitted calls
-and the forecast's cache rule. With a yes to `WX1-NETWORK`, this plan's rule
+and the forecast's cache rule. As the owner accepted `WX1-NETWORK`, this plan's rule
 "Nothing connects before sign-in", `03` §"Online backup" and `docs/DEPLOY.md`
 "zero off-origin requests" are amended in one commit. The disclosure in
 Impostazioni and the README; `WX1-PLACES`' hours and points. The proposal's §8

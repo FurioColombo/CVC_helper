@@ -473,9 +473,9 @@
       "milestone": "WX1",
       "kind": "DECISION",
       "title": "Let Vento fetch forecasts before sign-in",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 1,
+      "revision": 2,
       "instructions": [
         "This cycle's rule is that nothing connects before sign-in. Vento breaks it on purpose: once you open it, the phone asks Open-Meteo and LaMMA for forecasts, and keeps asking by itself while it stays open (when you come back to it, when signal returns, after a reload).",
         "They receive the phone's internet address, the time and the fixed sea points of the area, which show whether it is a Derive or a Cabinati course. Never a name, a course or a student. Home never connects: it shows the last forecast downloaded.",
@@ -485,7 +485,12 @@
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/WX1/owner-setup.json",
-      "updatedAt": "2026-11-05T23:37:47.044Z"
+      "updatedAt": "2026-11-05T23:54:58.214Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Chat, 2026-11-06: 'Vento may connect'",
+        "summary": "The owner accepts that Vento, once opened, asks Open-Meteo and LaMMA for forecasts before sign-in, also by itself while it stays open. Home still never connects. The rule is amended in the plan, 03 and DEPLOY.md when WX1 starts, with the code that needs it."
+      }
     },
     {
       "id": "WX1-PLACES",

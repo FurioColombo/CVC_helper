@@ -162,4 +162,5 @@ tutti i dati locali` erases the course from the backup first; without
     your answer to `WX1-NETWORK`, because Vento connects before sign-in against
     this cycle's rule, and after B7's handoff, because merging earlier would
     change the source B7 verified. If you would rather it wait for 0.6.0, say
-    so: nothing is merged yet.
+    so: nothing is merged yet. You answered `WX1-NETWORK` on 2026-11-06: Vento may
+    connect. The rule changes with the code, when WX1 starts.

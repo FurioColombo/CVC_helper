@@ -328,19 +328,17 @@ The owner reported: Owner: done and passed, no issue to signal. The installed re
 
 ## Let Vento fetch forecasts before sign-in — WX1
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. This cycle's rule is that nothing connects before sign-in. Vento breaks it on purpose: once you open it, the phone asks Open-Meteo and LaMMA for forecasts, and keeps asking by itself while it stays open (when you come back to it, when signal returns, after a reload).
-2. They receive the phone's internet address, the time and the fixed sea points of the area, which show whether it is a Derive or a Cabinati course. Never a name, a course or a student. Home never connects: it shows the last forecast downloaded.
-3. Tell me 'Vento may connect' to accept. Or say what you want instead, for example only after sign-in, or only on a tap each time.
+The owner reported: The owner accepts that Vento, once opened, asks Open-Meteo and LaMMA for forecasts before sign-in, also by itself while it stays open. Home still never connects. The rule is amended in the plan, 03 and DEPLOY.md when WX1 starts, with the code that needs it.
 
 **Expected:** With a yes, the rule is amended in the plan, 03 and DEPLOY.md together, and WX1 starts after B7's handoff. With another answer, Vento's design changes before it starts.
 
 **Build:** No test build is assigned yet.
 
-**Work affected:** Completion of WX1 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="wx1-places"></a>
 
