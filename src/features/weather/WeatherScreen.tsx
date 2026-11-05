@@ -211,9 +211,9 @@ function PlaceRows({
           {summary ? (
             <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
               <WindArrow degrees={summary.direction} size={16} />
-              <span className="font-bold">
-                {formatRange(summary.low, summary.high)} kn
-              </span>
+              {/* The expected value: the model band is the same everywhere,
+                  and would hide the differences between places. */}
+              <span className="font-bold">{formatKnots(summary.mid)} kn</span>
               <span className="w-10 text-right text-muted-foreground">
                 {summary.gust === null ? "" : `r ${formatKnots(summary.gust)}`}
               </span>
