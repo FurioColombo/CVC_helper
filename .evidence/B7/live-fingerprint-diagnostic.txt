@@ -1,0 +1,88 @@
+
+
+test("DIAG the fingerprint of a real stream's rows equals the server's rows", async ({
+  browser,
+}) => {
+  test.setTimeout(420_000)
+  const access = await token(1)
+  await clearAccount(access)
+  await forgetErasedIds(access)
+  const { COURSE_TABLES } = await import("../../src/persistence/schema")
+  const { courseFingerprint } = await import(
+    "../../src/persistence/courseFingerprint"
+  )
+  const onServer = async (id: string) => {
+    const rows: Array<{ table: string; id: string; updatedAt: string | null }> =
+      []
+    for (const table of COURSE_TABLES) {
+      const found = (await serverRows(
+        table,
+        access,
+        `,updatedAt&${table === "courses" ? "id" : "courseId"}=eq.${id}`,
+      )) as Array<{ id: string; updatedAt: string | null }>
+      for (const row of found) rows.push({ table, ...row })
+    }
+    return { count: rows.length, fingerprint: await courseFingerprint(rows) }
+  }
+  const onDevice = (page: Page) =>
+    page.evaluate(async () => {
+      const load = (path: string) => import(/* @vite-ignore */ path)
+      const { readCourseChoices } = (await load(
+        "/src/persistence/courseChoice.ts",
+      )) as typeof import("../../src/persistence/courseChoice")
+      return (await readCourseChoices()).map((choice) => ({
+        id: choice.id,
+        unsent: choice.unsent,
+        fingerprint: choice.fingerprint,
+      }))
+    })
+  const first = await browser.newContext()
+  const second = await browser.newContext()
+  try {
+    const one = await emptyDevice(first)
+    const two = await emptyDevice(second)
+    await second.setOffline(true)
+    await createCourse(two, "Cabinato", 3, "Rinuncia")
+    await createCourse(one, "Deriva", 2, "Tenuta")
+    await expect
+      .poll(async () => (await serverRows("students", access)).length, {
+        timeout: 60_000,
+      })
+      .toBe(1)
+    await second.setOffline(false)
+    await expect
+      .poll(async () => (await serverRows("courses", access)).length, {
+        timeout: 90_000,
+      })
+      .toBe(2)
+    await expect(choice(one)).toBeVisible({ timeout: 120_000 })
+    await expect(choice(two)).toBeVisible({ timeout: 120_000 })
+    let settled = false
+    for (let attempt = 0; attempt < 40 && !settled; attempt += 1) {
+      const [a, b] = [await onDevice(one), await onDevice(two)]
+      if (
+        a.length === 2 &&
+        b.length === 2 &&
+        [...a, ...b].every((c) => c.unsent === 0)
+      ) {
+        const report = []
+        settled = true
+        for (const device of [a, b])
+          for (const course of device) {
+            const server = await onServer(course.id)
+            const same = server.fingerprint === course.fingerprint
+            if (!same) settled = false
+            report.push({ rowsOnServer: server.count, same })
+          }
+        if (settled || attempt === 39)
+          console.log(`DIAG-RESULT ${JSON.stringify(report)}`)
+      }
+      if (!settled) await one.waitForTimeout(3_000)
+    }
+    expect(settled).toBe(true)
+  } finally {
+    await first.close()
+    await second.close()
+    await clearAccount(access)
+  }
+})

@@ -1,0 +1,23 @@
+{
+  "milestone": "B7",
+  "recordedOn": "2026-11-05",
+  "testedCommit": "e0b6720",
+  "backend": "owner's development backend, synthetic data",
+  "question": "SC-B7-13: does the fingerprint the app computes from a real stream's rows equal one computed from the server's rows?",
+  "method": "A temporary test, appended to tests/e2e/b7-two-courses-live.spec.ts and removed after the run (source in live-fingerprint-diagnostic.txt). Two devices each made a course, one offline, and reached the choice over the real stream. With nothing unsent, each device's readCourseChoices() was compared with courseFingerprint() over the same 13 tables read through PostgREST.",
+  "results": [
+    {
+      "project": "pixel-7-chrome",
+      "comparisons": 4,
+      "same": 4,
+      "rowsPerCourse": 2
+    },
+    {
+      "project": "desktop-chrome-backup",
+      "comparisons": 4,
+      "same": 4,
+      "rowsPerCourse": 2
+    }
+  ],
+  "notCovered": "keep_course itself is not installed on this backend: the SQL's own hash is pinned to the app's by .evidence/B7/keep-rule-local-postgres.txt on a local Postgres, not on Supabase. Each course had 2 rows. tests/e2e/b7-two-courses-live.spec.ts still runs after B7-KEEP-RULE."
+}
