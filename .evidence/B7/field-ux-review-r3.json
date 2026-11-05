@@ -1,0 +1,110 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "B7",
+  "commit": "0846030",
+  "round": 3,
+  "verdict": "PASS_WITH_FINDINGS",
+  "summary": "FU-B7-2 is fixed: the three-course case is clean on pixel-7-chrome and iphone-13-webkit, in every sentence of the confirmation. FU-B7-R2-I1, I2, Q1, Q2 and Q4 are fixed. The routine path is still 3 taps, or 4 with the file. No blocker is recorded, but this verdict rests on a judgement call: FU-B7-R3-I1 shows the new reset promising 'I corsi restano nel backup online' while erasing a course whose only copy was on the phone. I could only reach that state with planted data. I recommend fixing it before closing, and if a real route exists it is a blocker.",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "FU-B7-R3-I1",
+      "title": "The reset on the choice promises the courses stay in the backup, and erases a course that was never sent",
+      "evidence": "Second course C3 with 12 students, uploads failing. The card shows '13 modifiche fatte su questo telefono non sono ancora state inviate'. The reset box shows the same text as usual: 'I corsi restano nel backup online: qui si cancella solo questo dispositivo. Le modifiche non ancora inviate andranno perse.' Tick, then Azzera i dati, gives 'Dati locali cancellati'. Server afterwards: C3 absent, 0 of its students, only D2 present. The sentence is unconditional in src/features/settings/CourseFiles.tsx (keepsBackup branch). The last sentence does technically cover unsent work, but a reader takes it as edits, not as a whole course. Reachability is NOT established: the state was planted by a local insert, the same way the repo fixture builds a second course. I reasoned that PowerSync applies a download only after the upload queue drains, so a course wholly unsent next to a downloaded one should be rare; I did not verify that here. One route to check is a course whose own row the backup refused, which src/persistence/backupLink.ts:181-185 says stays on the phone; I did not run it. A signed-out phone is a second route to check: another phone may already have erased a course, so the sentence cannot know it is true. Why it is not a blocker here: no real route was reproduced. Suggested ruling: the data-integrity or sync reviewer decides reachability; if a route exists, this is a blocker. Likely fix either way: drop or condition the promise when a course has unsent changes, and point to Salva file.",
+      "reproduction": "Tests 'reset says courses stay; a course never uploaded' in my scratchpad's nostromo/r2/r3b.spec.ts and 'uploads failing: reset ends and the course was only here' in my scratchpad's nostromo/r2/r3d.spec.ts, pixel-7-chrome. Screenshot: my scratchpad's nostromo/r2/shots/r3-reset-unsent.png."
+    },
+    {
+      "id": "FU-B7-R3-I2",
+      "title": "The swap notice says unsent changes were lost even when there were none",
+      "evidence": "Triggered as tests/e2e/b7-two-courses.spec.ts does. Everything had already reached the fake backend (the student was on the server before the swap). The notice still reads 'Le modifiche di D2 - 45 | 2026 non ancora inviate sono andate perse.' src/App.tsx renders it unconditionally, and the repo test asserts it with pending 0. An instructor reads this as lost work and has nothing to check it against. No data risk. Fix: say it only when changes were actually discarded, or word it conditionally.",
+      "reproduction": "Test 'swap notice: read, thumb, sizes, one time' in my scratchpad's nostromo/r2/r3c.spec.ts, pixel-7-chrome. Screenshot: my scratchpad's nostromo/r2/shots/r3-swap-390.png."
+    },
+    {
+      "id": "FU-B7-R3-I3",
+      "title": "The swap notice is lost if the app reloads before it is read",
+      "evidence": "After the swap reopen, one more reload before tapping Ho capito: notice count 0, and Home simply shows C3 - 45 with no explanation of why the course changed. AppShell clears the stored notice on mount (useEffect in src/App.tsx), not on Ho capito. A locked or swapped-out phone can be reloaded by the system, which is what I simulated. Fix: clear it when Ho capito is tapped.",
+      "reproduction": "Test 'swap notice: phone locks and reloads before it is read' in my scratchpad's nostromo/r2/r3c.spec.ts, pixel-7-chrome."
+    },
+    {
+      "id": "FU-B7-R3-I4",
+      "title": "Disabled 'Azzera i dati' keeps the washed-out look that I5 removed from this screen",
+      "evidence": "Measured: opacity 0.5, white on rgb(180, 35, 24), over rgb(255, 244, 238). That works out at about 1.66:1, calculated from those values, against 3.98:1 for the grey disabled Tieni and Elimina on the same flow; round 1 measured 1.54 and 1.68 before their fix. It is unreadable in glare, and the same concept now looks different within one screen. The button is enabled at opacity 1. FullReset is older than B7, and this diff brings it onto the choice screen.",
+      "reproduction": "Test 'disabled and enabled Azzera' in my scratchpad's nostromo/r2/r3e.spec.ts, pixel-7-chrome. Screenshot: my scratchpad's nostromo/r2/shots/r3-reset-open-390.png."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FU-B7-R3-Q1",
+      "title": "Reset wording gets read twice",
+      "evidence": "'Elimina corsi... È un’operazione definitiva' comes first, then 'I corsi restano nel backup online'. 'Questo browser' appears on a screen that otherwise says 'telefono' and 'dispositivo'. One action has four names: 'Azzera i dati di questo dispositivo', 'Azzera tutti i dati locali', 'Cancellare i corsi', 'Azzera i dati'. The final screen says 'Il corso, le preferenze...' after two courses were cleared. Nothing says what happens next, for example whether signing in brings the same choice back."
+    },
+    {
+      "id": "FU-B7-R3-Q2",
+      "title": "Button order is the opposite of the confirmation just above it",
+      "evidence": "Reset: Annulla y1242, then Azzera i dati y1294, 8 px apart. Confirmation: Elimina y413, then Annulla y465. The tick gate protects against a wrong tap, so this is only a consistency issue."
+    },
+    {
+      "id": "FU-B7-R3-Q3",
+      "title": "The reset has no connection check and no control while it waits",
+      "evidence": "With no network, Azzera i dati is enabled after the tick, though the text does say a connection is needed to reopen the app. So 3 taps on the water leave the phone unable to reopen until it has signal. Separately, with an upload request that never answers, the screen showed 'Cancellazione dei dati locali…' and no buttons, still unfinished at 63 s. It says closing is safe, then adds 'Chiudi tutte le altre finestre e schede', which means little on a pier. My never-answering request is a worst case."
+    },
+    {
+      "id": "FU-B7-R3-Q4",
+      "title": "Page length with the reset added",
+      "evidence": "390x844: 1143 px with the unsent warning still showing, reset button at y1067; both Tieni stay on the first screen (y361, y682). Pixel width 412 after uploads: 1098 px, reset at y1022. 320/200%: 4018 px, was 3799; reset at y3832, 256x122. With the box open at 320/200%: 5304 px; Azzera i dati at y5128, about 1286 px of box. The added length is below everything routine and does not move Tieni."
+    },
+    {
+      "id": "FU-B7-R3-Q5",
+      "title": "Opening the reset drops focus",
+      "evidence": "After tapping 'Azzera tutti i dati locali', activeElement is BODY, because the button is replaced by the box. Other steps on this screen focus their heading."
+    },
+    {
+      "id": "FU-B7-R3-Q6",
+      "title": "Swap notice: course written with the bar, and Ho capito is high",
+      "evidence": "'D2 - 45 | 2026' inside a sentence, breaking across lines as 'C3 - 45 |' / '2026'; the choice screen says 'D2 - 45'. Ho capito is y176, 348x44, at 412 width: top half, but full width and away from the corners. At 320/200%: y666, one scroll down, page 1559 px, overflow 0. It does not block Home."
+    }
+  ],
+  "fieldWalkthrough": {
+    "scene": "390 px phone at the pier, one thumb, two courses D2 and C3 with different codes, keep D2.",
+    "steps": [
+      "1. Open the app. The chooser opens with focus on its heading; both Tieni on the first screen, at y361 and y682 while the unsent warning shows.",
+      "2. Read the cards.",
+      "3. Optional, 1 tap: on the confirmation, 'Salva prima il file di C3 - 45'. The status names the file and warns about personal data.",
+      "4. Tap Tieni on D2; heading at y92.",
+      "5. Tick 'Ho capito' at y369.",
+      "6. Tap 'Elimina C3 - 45 e apri D2 - 45' at y413.",
+      "7. The outcome shows."
+    ],
+    "taps": "3 without the file, 4 with it. Unchanged across all three rounds.",
+    "seconds": "4.6 s to enabled and 7.5 s through to the choice on Android, machine time with no human reading, on a machine under load in this run. Round 2 measured 2.5 s and 4.1 s, so these do not show a real slowdown. Not comparable to a phone.",
+    "readTwice": "1, down from 2 in round 2 and 5 in round 1: 'Non si potrà recuperare' followed by the provider's 7-day sentence, required by decision 17. The plural slip on the failure path is gone.",
+    "resetTapRisk": "Low. The reset is a white button with red text and a bin icon, not solid red, and it sits below the fold: 189 px under Esci and about 340 px under the last Tieni at 390. A stray tap only opens a box; erasing still needs the tick and a second button. The risk in this feature is its wording (FU-B7-R3-I1), not its position."
+  },
+  "evidenceInspected": [
+    "Re-tested blocker FU-B7-2 FIXED on pixel-7-chrome and iphone-13-webkit. Labels on Android: 'Corso D2 - 45 (1 allievo, 0 equipaggi, oggi, 0:15, codice 1eec18)', 'Corso D2 - 45 (1 allievo, 0 equipaggi, oggi, 0:15, codice a1b2c3)', 'Corso D2 - 45 (1 allievo, 2 equipaggi, oggi, 0:15)'. Tieni on card 1 and card 3: heading, erase sentence, contents lines, unsent warnings, Salva buttons, tick and Elimina all carry distinct names; the third course correctly has no tag. The two-course twins case still holds on Android.",
+    "FU-B7-R2-I1 FIXED: after rows change, 'L’aggiornamento è arrivato: controlla i corsi e scegli di nuovo.' replaces the wait notice (old notice count 0, 3 articles). 'Questa scelta non ha eliminato nulla' confirmed.",
+    "FU-B7-R2-I2 FIXED: offline, Riprova disabled with 'Serve la connessione per riprovare.', Torna alla scelta still enabled; back online, Riprova enabled and the reason gone.",
+    "FU-B7-R2-Q1 FIXED: 'C3 - 45 sparirà da solo'. The plural branch was read in the code only.",
+    "FU-B7-R2-Q2 FIXED: 'Nel frattempo è arrivato un aggiornamento: ricontrolla i corsi e spunta di nuovo la casella.' at the top, tick cleared, scrollY 0. Falsified the other way: uploads finishing under a ticked box do not reset it (ticked true, notice 0), and the notice is gone after Annulla and a new Tieni.",
+    "FU-B7-R2-Q4 FIXED: 7-day text gone from the panel, 'I corsi restano su questo telefono.' shown.",
+    "Diff bdb06d8..0846030 of src/features/courseChoice/CourseChoiceScreen.tsx, src/features/courseChoice/courseChoiceText.ts, src/features/settings/CourseFiles.tsx, src/features/settings/OnlineBackup.tsx, src/App.tsx, src/persistence/courseFingerprint.ts, tests/e2e/b7-two-courses.spec.ts.",
+    "Screenshots viewed: the reset box open at 390-class width and the swap notice. Measurements for the rest; specs and shots in my scratchpad's nostromo/r2/. No source file changed; HEAD 0846030."
+  ],
+  "anglesTried": [
+    "Restricted scope for round 3: blocker FU-B7-2, FU-B7-R2-I1, I2, Q1, Q2, Q4, the fix diff and its regressions, plus the two new surfaces named by the coordinator: FullReset on the choice screen and the swap notice on Home. No new draw.",
+    "Reset: position and gaps at 390 and 320/200%, open box, wording, a course never uploaded, uploads hanging, no network, disabled colours.",
+    "Swap notice: triggered by the repo test's download swap; wording with nothing unsent, 320/200%, Ho capito, reload before reading.",
+    "Pier walk with tap count on pixel-7-chrome."
+  ],
+  "notTested": [
+    "Real phones, real sun, real TalkBack and VoiceOver. iphone-13-webkit is the WebKit engine under Playwright on Windows, not Safari on iOS.",
+    "On WebKit, by instruction, only the three-course case ran as a review case; a short diagnostic also ran there. Everything else this round ran on pixel-7-chrome only.",
+    "A real route to a wholly unsent course on the choice screen, including the refused-row and signed-out routes in FU-B7-R3-I1.",
+    "The real keep_course SQL function: my fake mirrors the fingerprint comparison. The real migration was not run in this review.",
+    "Closing and reopening the app during a hanging reset, and signing in again after a reset.",
+    "Round 2 items outside the restricted scope, such as Annulla returning to the top and a second Salva file, were not re-tested.",
+    "WebKit timing: earlier three-course failures this round were my test limits on a slow engine (sign-in took 50 s); with a longer limit the case passed. The transient 'Serve la connessione' on WebKit was not investigated and is not reported as a finding.",
+    "Text size simulated by setting the root font size to 200%, not by the phone's own setting."
+  ]
+}

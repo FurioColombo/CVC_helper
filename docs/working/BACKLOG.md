@@ -198,10 +198,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
   no code in the email, so "Codice dell’email" leads nowhere until SMTP
   (B3-EMAIL-CODE). Before UG4: the sender and code, or hide the field.
 - B4 review follow-ups (`.evidence/B4/`; SP-B4-3: decisions 16 and 19):
-  - a delete leaves no tombstone: an older whole-row edit uploaded after a
-    later delete of the same row brings it back (the expected failure in
-    `placementConvergence.test.ts`, SC-B4-8). Record deletion times on the
-    device and keep tombstones on the server before team editing (1.0.0);
+  - a delete leaves no tombstone: an older whole-row edit uploaded after a later delete
+    brings the row back (expected failure in `placementConvergence.test.ts`, SC-B4-8).
+    Record deletion times and keep tombstones on the server before team editing (1.0.0);
   - DI-B4-Q1: crew history counts a member Equipaggi dropped, until saved;
   - SC-B4-Q4: a member of a crew deleted elsewhere leaves without a notice;
   - B5 (`.evidence/B5/`): SC-B5-6, a device importing the account's own
@@ -211,23 +210,24 @@ Each passed only on a retry and is a defect to fix (03 §6).
   - B6: DI-B6-R2-Q2, another tab shows an erased course until reopened;
     DI-B6-Q2, a read-only device repeats a pending erase; SP-B6-Q5, compaction
     at each empty open; b4-uploads › the switch uploads… flaky under load;
+  - B7 (`.evidence/B7/`): SP-B7-R3-Q2, the reset does not revoke the session on the
+    server; DI-B7-R3-2, keep against a child batch can deadlock, no harm, Riprova works;
+    SP-B7-R2-Q1, a course arriving and leaving one empty session stays in free pages;
+    FU-B7-R3-Q1/Q3, the reset's four names, no offline stop; SC-B7-Q10, refusals kept
+    on a device with no marks; DI-B7-R3-1, an edit keeping its stamp goes unseen;
   - DI-B4-Q2: an older app opening the database drops `uploadRefusals`;
-  - SC-B4-Q1: an unrecognised upload failure retries forever unnoticed;
-    show the time since the last accepted upload;
+  - SC-B4-Q1: an unrecognised upload failure retries forever; show the last accepted upload;
   - SP-B4-Q3 / SC-B4F-1: the SDK's requests have no timeout: a write
     checkpoint hung on a dead connection holds uploads, Esci, the erase and the
     restart until a reopen (owner check 2026-10-28); only inserts are batched.
 - B3 SELF-B3-Q1: a switch deferred after sign-in says "Backup pronto. Riapri
   l’app" only in Impostazioni. Consider a one-line notice on Home.
-- B1 SC-B1-Q6: an older app reopening beside a synced tab makes a refused save
-  say "sostituito o eliminato" and loses the typed student on reopen. Say an
-  older version opened the data, and keep the draft.
+- B1 SC-B1-Q6: an older app beside a synced tab makes a refused save say "sostituito o
+  eliminato" and loses the typed student on reopen. Say so, and keep the draft.
 - UG3 RH-Q1: after import and reopen, Back walks the replaced course's screens.
-- T1 CQ-6: each e2e seeding fixture re-reads the course that
-  `bootstrapCourse` just created; return its id instead.
-- Persistence API invariant (D3 DI-R2-Q4 / DI-Q5): forbid mutating SQL through
-  read APIs or raw execution, or route it through the guarded write lock. No
-  app caller does so today.
+- T1 CQ-6: each e2e seeding fixture re-reads the course `bootstrapCourse` just created.
+- Persistence API invariant (D3 DI-R2-Q4 / DI-Q5): forbid mutating SQL through read APIs
+  or raw execution, or route it through the guarded write lock. No app caller does so.
 
 From the UG2 code-quality review, before the shared database
 (`.evidence/UG2/code-quality-review.json`):

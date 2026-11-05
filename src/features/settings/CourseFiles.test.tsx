@@ -243,7 +243,7 @@ describe("CourseFiles", () => {
     await user.click(
       screen.getByRole("button", { name: "Azzera tutti i dati locali" }),
     )
-    expect(screen.getByText(/I corsi restano nel backup online/)).toBeVisible()
+    expect(screen.getByText(/Il backup online non viene toccato/)).toBeVisible()
     expect(screen.queryByText(/Nuovo corso/)).not.toBeInTheDocument()
     await user.click(screen.getByRole("checkbox", { name: /Ho capito: corsi/ }))
     await user.click(screen.getByRole("button", { name: "Azzera i dati" }))

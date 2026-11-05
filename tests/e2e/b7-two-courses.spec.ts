@@ -944,7 +944,7 @@ test("the reset on the choice clears this device and leaves the backup alone", a
   const rpc = backend.state.keeps.length
   await page.getByRole("button", { name: "Azzera tutti i dati locali" }).click()
   await expect(
-    page.getByText(/I corsi restano nel backup online/),
+    page.getByText(/Il backup online non viene toccato/),
   ).toBeVisible()
   await page.getByRole("checkbox", { name: /Ho capito: corsi/ }).check()
   await page.getByRole("button", { name: "Azzera i dati" }).click()
@@ -1122,22 +1122,20 @@ test("a device that never held both: the swap reopens it and clears the course t
     marks: [arrived],
     pending: 0,
   })
-  // The phone says what happened, and its unsent edits with it (SC-B7-10).
-  await expect(
-    page.getByText(
-      /D2 - \d+ \| \d{4} è stato eliminato su un altro dispositivo/,
-    ),
-  ).toBeVisible()
-  await expect(
-    page.getByText(/non ancora inviate sono andate perse/),
-  ).toBeVisible()
-  await page.getByRole("button", { name: "Ho capito" }).click()
-  await expect(page.getByText(/è stato eliminato su un altro/)).toHaveCount(0)
+  // The phone says what happened, until it is read (SC-B7-10, FU-B7-R3-I3).
+  const swapNotice = page.getByText(
+    /D2 - \d+ \| \d{4} è stato eliminato su un altro dispositivo.*Se c’erano modifiche/,
+  )
+  const course = page.getByRole("heading", { name: /C3 - \d+ \| \d{4}/ })
+  await expect(swapNotice).toBeVisible()
   await page.reload()
-  await expect(
-    page.getByRole("heading", { name: /C3 - \d+ \| \d{4}/ }),
-  ).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText(/è stato eliminato su un altro/)).toHaveCount(0)
+  await expect(course).toBeVisible({ timeout: 15_000 })
+  await expect(swapNotice).toBeVisible()
+  await page.getByRole("button", { name: "Ho capito" }).click()
+  await expect(swapNotice).toHaveCount(0)
+  await page.reload()
+  await expect(course).toBeVisible({ timeout: 15_000 })
+  await expect(swapNotice).toHaveCount(0)
 })
 
 test("a second course arriving says typing may be lost, once", async ({

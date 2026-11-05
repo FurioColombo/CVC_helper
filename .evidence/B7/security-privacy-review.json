@@ -1,0 +1,81 @@
+{
+  "reviewerRole": "security/privacy reviewer",
+  "persona": "Il Garante",
+  "milestone": "B7",
+  "round": 3,
+  "commit": "0846030",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "SP-B7-R3-Q1",
+      "title": "The swap label survives a full reset and produces a false banner on the next course",
+      "evidence": "clearAppBrowserStorage (src/persistence/browserStorage.ts) never touches sessionStorage; only AppShell clears the key (src/App.tsx:634-635); the choice screen does not. Browser output: 'LABEL on the choice: [[\"cvc-helper.course-swapped-reload\",\"D2 - 45 | 2026\"]]', 'LABEL after the reset: [[\"cvc-helper.course-swapped-reload\",\"D2 - 45 | 2026\"]]', then a new course on the wiped device shows 'D2 - 45 | 2026 è stato eliminato su un altro dispositivo di questo account: ora qui c’è D2 - 45 | 2026. Le modifiche di D2 - 45 | 2026 non ancora inviate sono andate perse.' The value holds no personal data. The false statement reaches whoever uses the same tab next.",
+      "reproduction": "Throwaway spec in my scratchpad's r3/t.spec.ts, test 'a label left over when the reopen lands on the choice, then a reset'. I set the key by hand on a several session, reset, reloaded and created a course. The natural route is a swap whose reopen finds several courses. I reasoned about that route and did not drive it; it is narrow. Suggested fix: clear both reload keys in clearAppBrowserStorage, and clear the swap key when the choice screen opens.",
+      "specRef": "Coordinator round 3 item: sessionStorage label clears; lens 5, deletion"
+    },
+    {
+      "id": "SP-B7-R3-Q2",
+      "title": "The reset ends the session on the device but does not revoke it on the server",
+      "evidence": "Connected reset: 'writes or auth sent from the reset on: none'; localStorage is empty afterwards. No auth sign-out request is sent, so the refresh token stays valid on the server until it expires. No copy stays on the device: after the reset, refreshes were 0 in 65 s and the session key did not return. This is the existing behaviour of clearAppBrowserStorage, not new to B7, but the choice screen now exposes it on a phone that may have been handed on. A token copied earlier would keep working.",
+      "reproduction": "My scratchpad's r3/t.spec.ts, tests 'reset on a connected several session' and 'a token refresh after the reset'. Suggested fix: a best-effort local-scope sign-out when online, without blocking the offline reset.",
+      "specRef": "Lens 4, tokens: sign-out on a shared phone"
+    },
+    {
+      "id": "SP-B7-R3-Q3",
+      "title": "The fingerprint does not see a content change that keeps the same stamp",
+      "evidence": "Postgres output: 'same stamp, other content (not in the fingerprint): kept', and the changed row was erased with its course. This is the documented limit of the fingerprint, reached here only through a direct write with an unchanged updatedAt. An upload with an older stamp is dropped ('a back-dated upload from a clock-behind phone: 0 rows (keep_latest_edit)'). A newer stamp changes the fingerprint. What remains is a same-millisecond edit on the account's own course, so nothing crosses accounts.",
+      "reproduction": "My scratchpad's r3/keep3.mjs on a local Postgres, port 54342, section 'fingerprints, own account'.",
+      "specRef": "SP-B7-R2-Q4; lens 5, deletion"
+    },
+    {
+      "id": "SP-B7-R3-Q4",
+      "title": "Under keepsBackup the reset omits the warning about a queued online erasure",
+      "evidence": "src/features/settings/CourseFiles.tsx:680-697: the erasePending sentence is only in the branch for !keepsBackup. A course deleted here whose erasure is still queued stays on the backup after the reset, and the screen says only the general 'I corsi restano nel backup online'. That sentence is true but does not tell the user the earlier deletion is undone. It needs an erasure still unsent while several courses are downloaded, which is rare.",
+      "reproduction": "Read from the code at the lines above; not driven in the browser.",
+      "specRef": "Lens 5, deletion"
+    }
+  ],
+  "evidenceInspected": [
+    "RE-TEST SP-B7-4 (no wipe on the choice screen): RESOLVED. FullReset with keepsBackup is on the choice screen when connected, offline, read-only and signed out. After the reset in all four states: local storage, session storage, indexedDB.databases() and caches are empty, and the raw student name, both course ids and the unsent edit are absent from raw storage. Requests sent from the reset on: none. Connected case, server students 1 before and 1 after, keeps 0. The reopen reaches 'Crea il corso' with no session, no restore, no account email and no backend writes or auth requests; storage holds only cvc-helper.installed-version and a new empty cvc-helper.db.",
+    "HANDED-ON PHONE: the route erases nothing on the server and adds no read path. A holder can already destroy the local copy, including unsent edits, through the existing reset, and the screen warns 'Le modifiche non ancora inviate andranno perse'. Afterwards the holder has less than before: no session and no rows. Signed-out buttons: 'Tieni questo corso | Salva file | Tieni questo corso | Salva file | Invia il link di accesso | Azzera tutti i dati locali'.",
+    "RE-TEST SP-B7-R2-Q2 (deadlock): RESOLVED. 300 rounds of keep_course against concurrent course update and upsert, 0 of 40P01, against 8 of 150 in round 2. Tally: 298 'keep=kept X=ok K=ok upsertX=CVERA', 2 'keep=kept X=ok K=ok upsertX=ok'. Statement lock now precedes the row lock; refuse_erased_course no longer takes it.",
+    "RE-TEST SP-B7-R2-Q4 (clock trust): RESOLVED apart from SP-B7-R3-Q3. A new row with an OLD stamp is now refused: 'error CVNEW' with counts unchanged. Sending only the last change as before: CVNEW. A stamp moved back: the write is dropped by keep_latest_edit, so the fingerprint is unchanged and the keep correctly goes on. A back-dated upload: 0 rows.",
+    "lock_owner_courses: grants are postgres and service_role only; authenticated calling it directly gets 42501; not security definer; search_path empty; returns null and takes only the caller's key, so it reveals nothing.",
+    "Null uid: service_role with no sub, update 1 row with 0 advisory locks; authenticated with no sub, insert 42501 with 0 locks; anon insert 42501; no claims (SQL Editor, replication), update passes with 0 locks. No error and no shared key on the null path. Those writers are not serialized by the lock, and none is reachable by a client with write rights.",
+    "Foreign interference: a foreign insert gets 42501. While that transaction stays open the victim's key is not held, 0 sessions wait and the victim's keep answers 'kept'. The key is auth.uid(), so a caller cannot choose another account's key.",
+    "keep_course oracle: keep on a foreign course with right fingerprints, keep on it with wrong fingerprints, and keep on a made-up id all give the identical CVGON text. With an own wrong fingerprint, a right or wrong guess at a victim's fingerprint gives the identical CVNEW. With own right fingerprints and a right guess at the victim's, the keep succeeds and the victim's courses stay (courses K,MINE,X; erased MINE2 only). `others` comes only from the caller's rows, so foreign keys in give_up have no effect on the answer. Odd values (null, number, array give_up) give CVNEW.",
+    "Fingerprint contents: src/persistence/courseFingerprint.ts hashes table, id and stamp only; no name or other personal field enters it.",
+    "sessionStorage label: captured at the real swap reopen by an init script: [[\"cvc-helper.course-swapped-reload\",\"D2 - 45 | 2026\"]]. That is all it holds, formatted by formatCourseIdentity (src/domain/course.ts:82), with no free-text label. Empty after AppShell mounts; banner shown once; after a reload no banner and storage is []. Exception: SP-B7-R3-Q1.",
+    "Logs: the browser console after a reset showed PowerSync 'Client has already been closed' rejections and sync fetch errors, with stacks and no names or row contents.",
+    "Tests: a three-file vitest run passed courseFingerprint.test.ts and backendSchema.test.ts (2 files, 33 tests), but the worker for CourseFiles.test.tsx timed out starting while the browser suite ran. Run alone, CourseFiles.test.tsx passed 11 of 11. Throwaway browser spec: 7 of 7 ran; the output of the first three was cut by tail, so those three were rerun and their results above come from the rerun (3 passed). The spec passing only means it ran through; its logged output is the evidence.",
+    "git status clean at 0846030 after all runs; no tracked file edited. Data was synthetic only, using fake.test hosts and a local Postgres on port 54342; the live backend was not touched."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": "Round 3 restricted scope: tokens, deletion, access rules and logs, only on SP-B7-4, SP-B7-R2-Q2, SP-B7-R2-Q4 and the fix diff bdb06d8..0846030. No new lenses drawn.",
+    "wildcard": "Round 3: not drawn",
+    "tried": [
+      "Reset connected, offline with an unsent edit, read-only and signed out, then checked storage, caches, raw blocks and requests",
+      "Token refresh firing around the reset, to see whether the session key returns",
+      "Fingerprint guesses against foreign courses, to find a difference in CVNEW or CVGON answers",
+      "Foreign insert held open, to block a victim's keep through the lock",
+      "Null-uid paths through the statement trigger",
+      "New rows with old stamps, stamps moved back, same-stamp edits and back-dated uploads",
+      "300 rounds of keep against concurrent writes",
+      "Capture of sessionStorage before the app runs at a real swap reopen, and a label left over across a reset"
+    ]
+  },
+  "notTested": [
+    "PostgREST and the real backend: keep_course and the trigger ran on a local Postgres with Supabase-like grants, and the migration was not run on any hosted project.",
+    "A real PowerSync checkpoint: the swap was simulated by writing the synced tables and reporting a connected status.",
+    "The natural route to a label left on the choice screen; the key was set by hand (SP-B7-R3-Q1).",
+    "A queued erasure on the choice screen in the browser (SP-B7-R3-Q4 is from the code).",
+    "A reset combining offline with read-only, or offline with signed out.",
+    "Whether a foreign insert briefly holds the caller's own key: the check read false for both keys after the 42501, so I rely on the source and on the victim's keep not waiting.",
+    "A second open tab during the reset; WebKit; a physical phone.",
+    "Round 2 items outside this round's scope, not re-tested: SP-B7-R2-Q1, SP-B7-R2-Q3, SP-B7-Q2, SP-B7-Q1, SP-B7-Q3."
+  ],
+  "backlogNote": "I cannot edit tracked files in this review, so SP-B7-R3-Q1 to SP-B7-R3-Q4 still need adding to docs/working/BACKLOG.md."
+}

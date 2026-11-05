@@ -1,0 +1,67 @@
+{
+  "reviewerRole": "sync-chaos",
+  "persona": "Gemma e Gino",
+  "milestone": "B7",
+  "commit": "0846030",
+  "round": 3,
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SC-B7-13",
+      "title": "No run has compared a phone's fingerprint from a real stream with the server's",
+      "evidence": "I found no permanent false CVNEW, but my download was simulated, so this rests on reading plus a simulation. Every text comparison I ran used rows written straight into the local synced tables from Postgres. tests/e2e/b7-two-courses-live.spec.ts builds its fingerprint from REST rows on the test side, not from a phone's local rows. So nothing yet shows that a device downloading from a real PowerSync stream gets kept on its first attempt. Reading supports it: updatedAt is text on all 13 server tables, powersync/sync-config.yaml selects every column, and the stream's owned-course filter matches the access rule. If this assumption were wrong, every choice on a real stream would answer CVNEW, and clearing the device and downloading again would not help. The owner would be stuck on the choice screen with export as the only way to act.",
+      "reproduction": "No failure reproduced; this is an evidence gap. To close it: on the development backend, two devices each make a course, one device downloads both through the real stream, and keeps one. Expected: kept on the first attempt, with no CVNEW. The owner's Android check can record the same fact.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md B7 success predicate ('the owner can see both, export either and keep one'); AGENTS.md section 17 on physical-device evidence."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SC-B7-Q12",
+      "title": "An edit of an existing row in flight during keep_course is answered OK and then erased",
+      "evidence": "R6: an edit uncommitted at the check committed after keep's check; keep answered kept and the row was erased. R6b: with the gap between check and delete widened to 1.2 s by a test trigger, the edit returned ok in 17 ms, keep answered kept and the course was erased. A key-unchanged update skips the foreign key check, so it never meets keep's FOR UPDATE lock on the course. A new child row is different: R7b waited 982 ms and was refused with 23503. Unwidened, the window is the gap between two statements in one function. The outcome matches an edit arriving just after the choice, which is refused and dropped by the documented rule, so I do not rate it above QoL.",
+      "reproduction": "My scratchpad's scr2/sc-r3.mjs, R6 and R6b (log r3.log).",
+      "specRef": "03_TECHNICAL_DECISIONS.md B7 paragraph. For docs/working/BACKLOG.md."
+    },
+    {
+      "id": "SC-B7-Q13",
+      "title": "A content edit that keeps its stamp does not change the fingerprint",
+      "evidence": "R9: a student's name changed with the same updatedAt. The server accepted it (keep_latest_edit only skips older stamps), the fingerprint stayed the same and keep answered kept. By reading, the app can produce this: TOUCH never moves a stamp back, so a phone with a slow clock editing a row stamped later by a fast phone keeps the old stamp. A fresh download would leave the card identical, so the owner would see the same screen either way.",
+      "reproduction": "My scratchpad's scr2/sc-r3.mjs, R9. The app-level path was read, not run.",
+      "specRef": "src/persistence/courseFingerprint.ts header. For docs/working/BACKLOG.md."
+    },
+    {
+      "id": "SC-B7-Q14",
+      "title": "The swap notice says unsent changes were lost even when there were none",
+      "evidence": "src/App.tsx always shows 'Le modifiche di ... non ancora inviate sono andate perse'. In S1 this was true, because an offline edit was lost. By reading, a phone with nothing unsent gets the same sentence. Conversely, an edit already answered OK under SC-B7-Q12 is not 'non ancora inviata'.",
+      "reproduction": "Reading src/App.tsx with scenario S1; the case with nothing unsent was not run.",
+      "specRef": "For docs/working/BACKLOG.md."
+    }
+  ],
+  "evidenceInspected": [
+    "Diff bdb06d8..0846030: supabase/migrations/20261104000000_keep_course.sql, src/persistence/courseFingerprint.ts, src/persistence/courseChoice.ts, src/features/courseChoice/CourseChoiceScreen.tsx, src/App.tsx, src/features/settings/CourseFiles.tsx, tests/e2e/b7-two-courses-live.spec.ts. Also read for question 1: powersync/sync-config.yaml, src/persistence/syncMode.ts, src/persistence/repairs.ts, src/persistence/uploadRefusals.ts, src/backup/connector.ts, keep_latest_edit in supabase/migrations/20261026000000_upload_rules.sql.",
+    "SC-B7-9 re-tested: RESOLVED on real SQL rules with a simulated download. S4, correct clocks: the card showed Allievi 2 while the server held 5; the answer was CVNEW and courses and students stayed intact. After the download the notice changed, the card showed Allievi 5, and the second attempt kept. S3, a clock 20 minutes fast then corrected: CVNEW, card Allievi 3, second attempt kept. R5 (older rows uploaded after the card): CVNEW. R8 (clock-ahead row): stale fingerprint CVNEW, matching fingerprint kept.",
+    "SC-B7-10 re-tested: RESOLVED. S1, the real two-phones order with a hard offline cut: after the swap, phone 2 showed 'D3 - 45 | 2026 è stato eliminato su un altro dispositivo di questo account: ora qui c’è D2 - 45 | 2026. Le modifiche di D3 - 45 | 2026 non ancora inviate sono andate perse.' After a reload the notice count was 0. Final state on both phones and the server: course K, student Tenuta, refusals empty.",
+    "SC-B7-Q9 re-tested: RESOLVED. The text now reads 'Questa scelta non ha eliminato nulla', which is true of the refused attempt, by reading. S3 and S4 showed the notice changing to 'aggiornamento è arrivato' after the download.",
+    "SC-B7-Q11 re-tested: RESOLVED. S8: a row stamped far older arrived during the confirmation; the box unticked and 'Nel frattempo è arrivato un aggiornamento' appeared.",
+    "Question 1, permanent false CVNEW: none found. S5: a repaired createdAt-after-updatedAt row, a null-stamp row and a 2027 row went through the repair on open, the queue emptied, and keep succeeded at the first attempt. S7: rows with dated, null and empty stamps in the 11 tables after courses and students (the students table was seeded only with a named row, because a nameless student breaks the Allievi screen, which is my synthetic shape), a row refused with 42501 and a superseded edit through the real connector, then the choice: kept at the first attempt after a simulated final checkpoint. R10: null and empty stamps, ASCII punctuation and case, and accents all matched between SQL and the app's algorithm. The 13 table names in the SQL match COURSE_TABLES, checked by script. Read, not run: repairs run once per open and produce stamps the server accepts; rows from the sync-mode switch are written through the views, so they are tracked like any local write; the stream's owned-course filter and the child access rule select the same rows; the screen re-reads on an interval, so a dropped status event cannot leave an old fingerprint on screen for long. In S7, before any checkpoint, the refused and superseded rows stay different locally, so CVNEW is correct there and depends on the real checkpoint to clear.",
+    "Question 2, holes in the comparison: no way found for rows committed before the check to be erased unseen, except a content edit that keeps its stamp (SC-B7-Q13). New rows between check and delete wait and are refused (R7b). Edits of existing rows in that window are erased (SC-B7-Q12).",
+    "Question 3, lock at statement level: no resurrection or ordering hole found. R1: a plain UPDATE now waits on the advisory lock (wait event 'advisory') against keep and against an upsert, with no 40P01; in round 2 it deadlocked. R11, while the lock is held: plain update, upsert of an existing row, insert of a new row and an older no-op upsert all wait on advisory; a delete does not wait, because the trigger does not cover deletes. R12, inside the widened window: upsert of X answered CVERA; plain update of X answered ok, and X is not on the server afterwards (the helper does not report a row count); new course Z stayed with no record; keep answered kept; final courses K and Z, erased X. R2, 40 concurrent runs: 39 'kept|CVERA|ok|40P01|K|X|k1', 1 'error CVNEW|ok|ok|ok|K,X||k1,x1,x2' (the upsert of X went first, so CVNEW is right). No run left a given-up course on the server after keep answered kept, and K's rows were always intact. The 40P01 in R2 is on the child batch, is retried by the upload policy, and is not an advisory lock cycle. Read, not run: no migration has a trigger that updates public.courses from another table (grep), so nothing holds a row lock before asking for the course lock; a delete never waits on the advisory lock, so it cannot close a cycle.",
+    "Copy of .evidence/B7/keep-rule-local-postgres.mjs at 0846030 on my own port: ALL PASSED, including 'a course arriving during the wait stays, with no record', 'an upload of the course given up during the erase is refused', tallies 200 of 200 'error CVGON|kept|1|1|1' and 150 of 150 'keep-done|edits-done'.",
+    "tests/e2e/b7-two-courses.spec.ts at 0846030, project desktop-chrome-backup on a free port: 27 passed."
+  ],
+  "anglesTried": [
+    "Restricted round 3 scope: SC-B7-9, SC-B7-10, SC-B7-Q9, SC-B7-Q11, the fix diff and regressions from it, through the coordinator's three questions. No new lenses drawn; round 1 seed 669937790 not redrawn.",
+    "Reused my existing scenarios: S1, S3, S4, S5 and R1, R2, R5, R6, R8 on the new commit; R3 and R7 were not repeated, because child row handling did not change and R7b covers the new-row order. S2 and S6 were not repeated either.",
+    "Added steps to those scripts only for the questions asked: R6b, R7b, R9, R10, R11, R12, S7, S8."
+  ],
+  "notTested": [
+    "Nothing here ran against a real PowerSync stream or real PostgREST. Downloads were a simulated pump into the local synced tables, the connected status was forced, and REST was a bridge into real SQL on local Postgres 17.5. Specifically not run on a real stream: byte equality of downloaded text, the real checkpoint rolling back a refused or superseded row, the write checkpoint after an upload with no data change, and the time a stale card stays on screen. See SC-B7-13. Neither the development nor the live backend was used.",
+    "The engine's own checkpoint step could not be driven offline: powersync_operations is not reachable from the page ('no such table'), and no $local row was visible in ps_buckets. So the rollback of a refused row is assumed from the engine, then simulated. S7 shows ps_updated_rows holding 35 rows after the switch, repairs and local writes; I did not attribute them row by row.",
+    "Ids where JavaScript and Postgres sort differently: JavaScript sorts by UTF-16 code units and SQL by UTF-8 bytes, which differ only for an astral character against U+E000 to U+FFFF in the same position. My throwaway database is WIN1252 and rejected the astral id, so this did not run. The app generates its ids, so it would need a hand-made id; I did not check whether an archive import accepts one. A tab or newline inside an id was not run either.",
+    "lock_owner_courses with no auth.uid() takes no lock, by reading; only non-app paths could reach it, and I did not run one.",
+    "FullReset on the choice screen (keepsBackup) was read in the diff and not exercised in my scenarios.",
+    "Physical devices, which belong to the owner.",
+    "Tracked files are untouched, and my processes and throwaway databases are stopped. docs/working/BACKLOG.md was not edited because this review is read-only, so the findings marked for it still need adding."
+  ]
+}

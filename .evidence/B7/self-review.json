@@ -1,0 +1,54 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "B7",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "SELF-B7-1",
+      "title": "Process: I wrote the first keep rule to prevent two devices erasing each other, and did not ask what the owner had actually seen",
+      "evidence": "Round 1 found the function erased a course the device had not shown (SC-B7-1, DI-B7-1). Round 2 found my fix, a stamp comparison, still missed rows that reach the server with old stamps (SC-B7-9, DI-B7-R2-1). The owner was told twice the function would be ready, and B7-KEEP-RULE stayed on hold. The fingerprint now compares the rows, and one pinned value ties the app and the SQL together.",
+      "reproduction": ".evidence/B7/keep-rule-local-postgres.mjs and src/persistence/courseFingerprint.test.ts."
+    },
+    {
+      "id": "SELF-B7-2",
+      "title": "The fingerprint has not yet compared a real stream's rows with the server's (SC-B7-13)",
+      "evidence": "Nothing has run against a real PowerSync stream or real PostgREST, because the migration is not installed. If downloaded text differed from the server's, every choice would answer CVNEW. tests/e2e/b7-two-courses-live.spec.ts covers this once B7-KEEP-RULE is run: its first test keeps a course through the real screen on a device that received both through the stream, with the app computing the fingerprint from its local rows, and it can only reach the kept course on a kept answer. The race test in the same file computes its fingerprint from REST rows, so it does not cover this. The owner's check B7-PHONE-CHOICE records the same fact on a phone.",
+      "reproduction": "Run tests/e2e/b7-two-courses-live.spec.ts after the owner runs the migration."
+    }
+  ],
+  "qolFindings": [],
+  "resolvedFindings": [
+    "Round 1 (.evidence/B7/*-review-r1.json), all four FAIL: fixed in bdb06d8 and checked in round 2.",
+    "SC-B7-9, DI-B7-R2-1, SP-B7-R2-Q4: give_up now carries a SHA-256 fingerprint of each course's rows, compared on the server.",
+    "FU-B7-2: a course is tagged when any same-code course reads the same; re-run by field UX on two engines.",
+    "SC-B7-10: a swapped phone says what left, once. FU-B7-R3-I2 and SC-B7-Q14: it now says 'Se c’erano modifiche...', since the phone cannot know. FU-B7-R3-I3: the notice clears on Ho capito, not on mount. SP-B7-R3-Q1: it also clears when no course is open, so it cannot reach another course.",
+    "SP-B7-4: FullReset is on the choice screen with keepsBackup, clearing only this device. FU-B7-R3-I1, DI-B7-R3-4, SP-B7-R3-Q4: its text no longer promises every course is in the backup; it says the backup is untouched, what already arrived stays, unsent or refused changes are lost, and to save the file of a course that may be only here. It names a queued erase when there is one. FU-B7-R3-I4: its disabled button has the grey look. This also applies to Impostazioni.",
+    "FU-B7-R2-I1, SC-B7-Q9: the wait notice becomes 'L’aggiornamento è arrivato' and no longer claims nothing was ever erased. FU-B7-R2-I2: Riprova is disabled offline, with the reason. FU-B7-R2-Q1: singular. FU-B7-R2-Q2, SC-B7-Q11: the box follows the fingerprints and says why it reset. FU-B7-R2-Q4: the panel leaves out the 7-day text there.",
+    "DI-B7-R2-2, SP-B7-R2-Q2: the lock moved to a statement trigger, before the row's own; 0 deadlocks on course rows in 150 rounds here, 150 by data integrity and 300 by security.",
+    "DI-B7-R3-3: the app now sorts by code point, as collate \"C\" does; pinned on both sides with an astral id on a UTF-8 database.",
+    "DI-B7-R3-1: 03 now names both things the check cannot see."
+  ],
+  "deferredFindings": [
+    "SC-B7-8 / decision 23: a waiting offline erase beats a later keep. Logged for the owner; sync-chaos would not block on it as long as the owner reads it.",
+    "DI-B7-R3-1, SP-B7-R3-Q3, SC-B7-Q13: an edit that keeps its stamp goes unseen; it costs an edit in a course the owner is giving up, and hashing whole rows across two engines risks a permanent false CVNEW. In the backlog.",
+    "SC-B7-Q12: an edit of an existing row in flight at the check is answered OK and erased; same class as an edit arriving just after the choice. Recorded in 03.",
+    "DI-B7-R3-2, SC-B7-Q8: keep against a child batch can deadlock; the loser rolls back, an upload retries, and a keep reads as no-answer with a safe Riprova. In the backlog.",
+    "SP-B7-R3-Q2: the reset does not revoke the session on the server; existing behaviour of every reset. In the backlog.",
+    "SP-B7-R2-Q1, SC-B7-Q10: a course arriving and leaving one empty session stays in free pages; a device with no marks keeps refusals of a course gone. Both narrow. In the backlog.",
+    "SP-B7-Q2: a first open of a marking build that is already read-only stays unmarked. SP-B7-R2-Q3: a random id stays in raw blocks, with no personal data. SP-B7-Q1, SP-B7-Q3: left as decided in round 1. DI-B7-R2-3, DI-B7-N3: known and narrow. SC-B7-Q3, SC-B7-Q4: as declared in round 1.",
+    "FU-B7-R3-Q1, Q2, Q3, Q5, Q6, FU-B7-R2-Q3, Q5, Q6, Q7, FU-B7-Q2, Q4, Q5, Q7, Q8: wording, order, focus and length of a screen rarely seen, none on the routine path of 3 taps. The Elimina and Annulla gap stays for the owner's phone check."
+  ],
+  "evidenceInspected": [
+    "All four reviewers' reports for rounds 1, 2 and 3 in .evidence/B7/; round 3 verdicts are PASS_WITH_FINDINGS with no blockers, at 0846030.",
+    "The fixes after 0846030 are small and were not re-reviewed: wording of the reset and the swap notice, when that notice clears, the disabled colour and the sort order. The keep rule's check itself did not change. Covered by tests/e2e/b7-two-courses.spec.ts, src/persistence/courseFingerprint.test.ts and the Postgres harness.",
+    "Each line of the 04 B7 adversarial checklist: two courses reached offline (live spec, reviewers' S1); both devices choosing differently (200 races, keep-rule harness); a choice interrupted (keepAnswer lost and hang in the spec); read-only and signed-out devices, three courses, unsent changes (spec and reviewers). A new empty device and an import after a lost erase answer are from the reviewers' scenarios and the reasoning that the session binds no course.",
+    "One unexplained failure: 'keeping one opens it with every row' reopened on Allievi once in a run where I edited Markdown files; 4 of 4 alone afterwards. Filed as a flake in docs/working/BACKLOG.md. Data integrity saw a different failure of that spec under load (line 422), also attributed to load without proof."
+  ],
+  "limitations": [
+    "Not run on the live backend, on PostgREST or on a real stream until B7-KEEP-RULE; no physical device until B7-PHONE-CHOICE. Only the owner's run can pass those.",
+    "The reset's first screen after a reset still says 'Il corso' in the singular.",
+    "Decision 23 waits for the owner's reading."
+  ]
+}

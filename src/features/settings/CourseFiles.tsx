@@ -575,6 +575,10 @@ export function StorageStatus() {
   )
 }
 
+/** The approved disabled look: grey, readable in the sun. */
+export const OFF_LOOK =
+  "disabled:bg-[#e8eef6] disabled:text-[#65768b] disabled:opacity-100"
+
 /** `courseLabel` is the course's visible identity, or null with no course. */
 export function FullReset({
   courseLabel,
@@ -679,8 +683,12 @@ export function FullReset({
           </p>
           {keepsBackup ? (
             <p className="mt-1 text-sm leading-5">
-              I corsi restano nel backup online: qui si cancella solo questo
-              dispositivo. Le modifiche non ancora inviate andranno perse.
+              Il backup online non viene toccato: quello che vi è già arrivato
+              resta lì. Le modifiche non inviate o rifiutate andranno perse: se
+              un corso può essere solo su questo telefono, salva prima il suo
+              file.
+              {erasePending &&
+                " Un corso eliminato qui e ancora nel backup online ci resterà."}
             </p>
           ) : (
             synced && (
@@ -725,7 +733,7 @@ export function FullReset({
               Annulla
             </Button>
             <Button
-              className="h-auto min-h-11 whitespace-normal bg-[#b42318] text-white hover:bg-[#9a1f14]"
+              className={`h-auto min-h-11 whitespace-normal bg-[#b42318] text-white hover:bg-[#9a1f14] ${OFF_LOOK}`}
               disabled={!understood || resetting}
               onClick={() => void reset()}
             >

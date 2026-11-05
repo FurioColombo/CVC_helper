@@ -1,5 +1,6 @@
 migrated, last file run twice
 ok   the SQL computes the app's pinned value 
+ok   the same order as the app past the basic plane 
 ok   a course not shown refuses the whole choice 
 ok   naming all of them keeps one 
 ok   the same choice again, as after a lost answer 

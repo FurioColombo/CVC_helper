@@ -6,7 +6,7 @@ import { type GiveUp, keepCourse, type KeepOutcome } from "@/backup/session"
 import { useBackupState } from "@/backup/useBackupState"
 import { CourseIdentity } from "@/components/CourseIdentity"
 import { Button } from "@/components/ui/button"
-import { FullReset } from "@/features/settings/CourseFiles"
+import { FullReset, OFF_LOOK } from "@/features/settings/CourseFiles"
 import {
   contentsOf,
   formatLastChange,
@@ -47,10 +47,6 @@ const CONFIRM_UPDATED_NOTICE =
 const LEFT_NOTICE = "Il corso scelto non è più qui: scegli tra quelli rimasti."
 const ARRIVAL_NOTICE =
   "L’app si è riaperta da sola perché è arrivato un altro corso. Se stavi scrivendo qualcosa, non è stato salvato."
-
-/** The approved disabled look: grey, readable in the sun (mock, state 4). */
-const OFF_LOOK =
-  "disabled:bg-[#e8eef6] disabled:text-[#65768b] disabled:opacity-100"
 
 type FailedReason = Exclude<KeepOutcome, "kept" | "gone" | "changed">
 

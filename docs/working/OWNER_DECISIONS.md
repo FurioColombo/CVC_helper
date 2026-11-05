@@ -164,7 +164,7 @@ tutti i dati locali` erases the course from the backup first; without
     it holds students' personal data. The mock is corrected. After the second
     reviews: the server compares a fingerprint of every row the phone saw, not
     the last change; "Azzera i dati" is under the courses and clears only this
-    phone, with the courses staying in the backup; the panel there leaves out
+    phone, leaving the backup untouched; the panel there leaves out
     the 7-day text, which the confirmation says; a phone whose course was erased
     from elsewhere says so once when it reopens on the other course, and that its
     unsent changes went with it.
@@ -176,3 +176,8 @@ tutti i dati locali` erases the course from the backup first; without
     in a later version changes this area anyway, so I leave the rule as it is. A
     phone with an erase still waiting already says so in Impostazioni. Tell me
     if keeping should win instead.
+24. **Which model does what (2026-11-05, you asked me to choose and keep track).**
+    Reviewers stay on Opus, as `AGENTS.md` §18 sets; I save by narrowing their
+    briefs from round 2 on, reusing their scripts. Bounded implementation may go
+    to Sonnet through `implementer`; B7's fixes so far I wrote myself, because
+    each one followed from what the reviews had just found.

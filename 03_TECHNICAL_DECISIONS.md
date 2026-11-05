@@ -79,7 +79,8 @@ others: a course already gone answers CVGON, so two devices choosing at once kee
 exactly one, and another active course or any row that is not the one the device
 saw answers CVNEW. Stamps alone cannot say this, because they are the time of the
 edit on a phone and offline work arrives with old ones. What the check cannot see
-is an edit of an existing row still being written in the instant it runs. The
+is an edit that keeps its stamp (a phone with a slow clock never moves one back)
+and an edit of an existing row still being written in the instant it runs. The
 device's unsent changes go up first and nothing is erased locally: the download
 removes the others from every device. A reset on that screen clears only the
 device, and never picks a course to erase from the backup. Each writable open marks the

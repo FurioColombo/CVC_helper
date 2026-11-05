@@ -18,6 +18,16 @@ describe("courseFingerprint", () => {
     )
   })
 
+  // An astral character sorts after U+FFFD in UTF-8 bytes, before it in UTF-16.
+  it("sorts as the server does, past the basic plane", async () => {
+    expect(
+      await courseFingerprint([
+        { table: "students", id: "a\u{1F600}", updatedAt: null },
+        { table: "students", id: "a\u{FFFD}", updatedAt: null },
+      ]),
+    ).toBe("5e82f6d4138177712852c8ecd237c3bd56aeac21cfa669727880cf1e61403be0")
+  })
+
   it("does not depend on the order rows are read in", async () => {
     expect(await courseFingerprint([...rows].reverse())).toBe(
       await courseFingerprint(rows),

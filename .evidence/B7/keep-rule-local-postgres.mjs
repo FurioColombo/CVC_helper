@@ -8,7 +8,8 @@ const EmbeddedPostgres = require("embedded-postgres").default ?? require("embedd
 const pgm = require("pg")
 const dir = mkdtempSync(join(scratch, "pgdata-"))
 const pg = new EmbeddedPostgres({ databaseDir: dir, user: "postgres", password: "x", port: 54331, persistent: false, onLog: () => {} })
-await pg.initialise(); await pg.start(); await pg.createDatabase("t")
+await pg.initialise(); await pg.start()
+{ const c = new pgm.Client({ host: "127.0.0.1", port: 54331, user: "postgres", password: "x", database: "postgres" }); await c.connect(); await c.query(`create database t encoding 'UTF8' locale 'C' template template0`); await c.end() } // as Supabase
 const conn = async () => { const c = new pgm.Client({ host: "127.0.0.1", port: 54331, user: "postgres", password: "x", database: "t" }); await c.connect(); return c }
 const admin = await conn()
 await admin.query(`create role anon; create role authenticated; create schema auth;
@@ -42,6 +43,14 @@ await reset(); await addCourse("K"); await admin.query(`insert into public.cours
   await admin.query(`insert into public."crewMembers"(id,"courseId","updatedAt") values ('m1','X',null)`)
   const a = await as()
   check("the SQL computes the app's pinned value", [await keep(a, "K", { X: pinned }), (await state()).courses], ["kept", ["K"]])
+  await a.end()
+}
+
+await reset(); await addCourse("K"); await admin.query(`insert into public.courses(id,"ownerId",active,label) values ('X',$1,1,'X')`, [U]); await admin.query(`insert into public.students(id,"courseId","firstName") values ($1,'X','Sintetica'),($2,'X','Sintetica')`, ["a\u{1F600}", "a\u{FFFD}"])
+{
+  const a = await as()
+  const utf8 = createHash("sha256").update(["courses\tX\t", "students\ta\u{FFFD}\t", "students\ta\u{1F600}\t"].join("\n")).digest("hex")
+  check("the same order as the app past the basic plane", [await keep(a, "K", { X: utf8 }), (await state()).courses], ["kept", ["K"]])
   await a.end()
 }
 

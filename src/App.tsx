@@ -632,7 +632,6 @@ function AppShell({
 }) {
   const navigation = useRef<HTMLElement>(null)
   const [swappedFrom, setSwappedFrom] = useState(readCourseSwap)
-  useEffect(() => clearCourseSwap(), [])
 
   // The update bar sits on the navigation (UpdateAvailableBanner), which
   // publishes its height for it, whatever renders first.
@@ -802,13 +801,17 @@ function AppShell({
               />
               <span className="min-w-0">
                 {swappedFrom} è stato eliminato su un altro dispositivo di
-                questo account: ora qui c’è {formatCourseIdentity(course)}. Le
-                modifiche di {swappedFrom} non ancora inviate sono andate perse.
+                questo account: ora qui c’è {formatCourseIdentity(course)}. Se
+                c’erano modifiche di {swappedFrom} non ancora inviate, sono
+                andate perse.
               </span>
             </p>
             <Button
               className="mt-2 min-h-11 w-full"
-              onClick={() => setSwappedFrom(null)}
+              onClick={() => {
+                clearCourseSwap()
+                setSwappedFrom(null)
+              }}
               variant="secondary"
             >
               Ho capito
@@ -1001,6 +1004,14 @@ export function App() {
       })
     })
   }, [openLabel])
+
+  // A notice not yet read never reaches another course: after a reset or an
+  // erase here, or a choice (review SP-B7-R3-Q1).
+  const noOpenCourse =
+    appState.status === "no-course" || appState.status === "several-courses"
+  useEffect(() => {
+    if (noOpenCourse) clearCourseSwap()
+  }, [noOpenCourse])
 
   if (appState.status === "loading") return <LoadingScreen />
   if (appState.status === "closed") {

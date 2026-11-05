@@ -1,0 +1,96 @@
+{
+  "reviewerRole": "data-integrity",
+  "persona": "L'Archivista",
+  "milestone": "B7",
+  "round": 3,
+  "commit": "0846030",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "DI-B7-R3-1",
+      "title": "The fingerprint cannot see a committed edit that keeps its stamp, and 03 names only in-flight edits of existing rows as the limit",
+      "evidence": "src/persistence/stamp.ts TOUCH is max(?, updatedAt, createdAt), so a phone whose clock is behind leaves the stamp unchanged. The server accepts it: 20261026000000_upload_rules.sql refuses only a stamp lower than the stored one. The fingerprint covers table, id and stamp, so the same text comes out. Case E on Postgres, with the content changed on the server and the same stamp: 'kept', course erased. Reaching it needs a device holding only the given-up course, a clock behind that row's stamp, and an upload while the choice is open on another device, so it is rare and costs an edit in a course the owner is giving up. The second gap in the same 03 sentence: new rows in flight are also invisible. In stress S1 keep_course returned kept 20 of 20 times while a batch of new rows for that course was uncommitted. 03 says 'What the check cannot see is an edit of an existing row still being written in the instant it runs'. Disposition is yours: either make a same-stamp edit visible, or correct the sentence to name both cases.",
+      "reproduction": "pgr3.mjs in my scratchpad's b7di/r2/, case E and the concurrency cases; pgr3d.mjs in the same folder, case S1. Real migrations on embedded Postgres, UTF-8 database.",
+      "specRef": "03_TECHNICAL_DECISIONS.md, the keep_course paragraph; finding DI-B7-R2-1"
+    },
+    {
+      "id": "DI-B7-R3-2",
+      "title": "keep_course can still deadlock against a batch upload of child rows; no data is harmed",
+      "evidence": "DI-B7-R2-2's course-row shape is fixed (see anglesTried). The remaining cycle is outside it: a batch upsert locks an existing child row, then its end-of-statement foreign key check on a new row waits for the course row keep_course holds FOR UPDATE, while the cascade waits for that child row. Child tables take no advisory lock. S1 used 1 existing row plus 120 new ones, with jitter. Final tally on an idle machine: {kept | write 40P01: 20 of 20}. An earlier run under load sampled every fifth round and also showed the keep losing: 'err 40P01 | write ok | K+X'. In both outcomes the loser rolls back cleanly, and exactly the expected courses remain. By reading src/backup/session.ts, not by running PostgREST: a keep that loses should arrive as status 500 if PostgREST maps 40P01 that way, which keepCourse reads as 'no-answer'. That text says the choice may or may not have arrived, and asking again works. The upload that loses is retried and should then meet the tombstone or a missing course; I did not run that retry.",
+      "reproduction": "pgr3d.mjs in my scratchpad's b7di/r2/, case S1: a single INSERT ... ON CONFLICT of an existing row plus new rows, racing keep_course from a second connection.",
+      "specRef": "03_TECHNICAL_DECISIONS.md, lock per owner; DI-B7-R2-2"
+    },
+    {
+      "id": "DI-B7-R3-3",
+      "title": "The two sides sort differently for an astral character against U+E000 to U+FFFF, which gives a permanent CVNEW on that course",
+      "evidence": "src/persistence/courseFingerprint.ts sorts by UTF-16 code units; keep_course sorts with collate \"C\", which is UTF-8 byte order. Case D5, with ids 'a' + U+1F600 and 'a' + U+FFFD and matching rows on both sides: 'error CVNEW', and it would repeat on every attempt. D6 (astral id alone), D7 (NFC and NFD) and D2 (accents, quotes, backslash) all kept. Reach is low: app ids are randomUUID values or JSON keys built from ids, and the duty item values I traced are ids chosen by switches, so only a crafted or foreign imported id gets here. Keeping that course instead of giving it up still works. Neither pin covers it: the pinned test value has no such pair. Sorting by code point, or by encoded bytes, closes it.",
+      "reproduction": "pgr3.mjs in my scratchpad's b7di/r2/, case D5, using the app's own courseFingerprint against the real function.",
+      "specRef": "src/persistence/courseFingerprint.ts: 'the same text in the same order'"
+    },
+    {
+      "id": "DI-B7-R3-4",
+      "title": "The reset on the choice names only unsent changes, and its end screen speaks of one course",
+      "evidence": "The warning says 'Le modifiche non ancora inviate andranno perse', but uploadRefusals lives in the same deleted database, so refused changes go too. The refusal part is from reading the code, not from a run. The end screen was observed after resetting two courses: 'Il corso, le preferenze e i file offline...'. Nothing is misreported about the backup.",
+      "reproduction": "r3b.spec.ts, kept as done/r3b.spec.ts.txt in my scratchpad's b7di/, log lines R3-R1.",
+      "specRef": "src/features/settings/CourseFiles.tsx, keepsBackup"
+    },
+    {
+      "id": "DI-B7-R2-3",
+      "title": "A malformed refusal is dropped silently once any held course leaves",
+      "evidence": "Carried over from round 2, not re-tested: the diff bdb06d8..0846030 does not touch src/persistence/migrations.ts or uploadRefusals.ts.",
+      "reproduction": "As in round 2.",
+      "specRef": "03_TECHNICAL_DECISIONS.md: 'This housekeeping can never fail an open'"
+    },
+    {
+      "id": "DI-B7-N3",
+      "title": "A stale tab's refused import still closes the chooser in other tabs",
+      "evidence": "Carried over, left as is by the orchestrator, not re-tested. I did not re-read src/persistence/courseArchive.ts this round; it is not in the diff.",
+      "reproduction": "Code reading, as in round 1.",
+      "specRef": "04 B7"
+    }
+  ],
+  "resolvedFromPreviousRound": [
+    {
+      "id": "DI-B7-R2-1",
+      "status": "closed for rows; same-stamp and in-flight residue is DI-B7-R3-1",
+      "evidence": "Case A (rows the device never saw, stamped older) and case B (device row stamped 2030, server row at T1) both answer 'error CVNEW' with both courses left, as the brief expected."
+    },
+    {
+      "id": "DI-B7-R2-2",
+      "status": "closed for course rows; child batches are DI-B7-R3-2",
+      "evidence": "My own run of 150 rounds of keep against two course edits: {kept K:ok X:ok courses=K: 150}, no 40P01. That matches the claim, and .evidence/B7/keep-rule-local-postgres.txt records the same tally. Caveat: that tally has one single outcome shape, so the race is not spread widely. S3 with jitter and a newer stamp, 40 rounds: 39 kept, 1 CVNEW, no 40P01. S2, delete through the table against keep, 25 rounds: 23 kept, 2 CVGON, no 40P01."
+    }
+  ],
+  "evidenceInspected": [
+    "git diff bdb06d8..0846030 (stat), and at 0846030: supabase/migrations/20261104000000_keep_course.sql, src/persistence/courseFingerprint.ts, src/persistence/courseChoice.ts, src/persistence/stamp.ts, src/persistence/localDataOperations.ts, src/persistence/dutyItems.ts, src/backup/session.ts (keepCourse), src/features/settings/CourseFiles.tsx (reset), src/features/courseChoice/CourseChoiceScreen.tsx (failure text), 03_TECHNICAL_DECISIONS.md, .evidence/B7/keep-rule-local-postgres.txt",
+    "Real migrations on embedded Postgres, my own instance, database created with encoding UTF8 and locale C: pgr3.mjs (A, B, C, D1-D7, E, F2), pgr3c.mjs, pgr3d.mjs (S1-S3) in my scratchpad's b7di/r2/. Results as cited. My first pgr3 run stopped with 22P05 because the default database encoding on this machine could not hold the test ids. That was my setup, not the app; Supabase's UTF-8 is what the rerun reproduces.",
+    "Row parity on real data: all rows of src/test/fixtures/v0.3.0-course.json entered through the views, uploaded to the fake backend (51 rows, 13 tables), then fed to the real function with the fingerprints the app computed. Keeping each course in turn: 'kept', one course left, the right one.",
+    "Browser specs against the fake backend on port 4252: r3a, r3b, r3c in my scratchpad's b7di/.",
+    "vitest at 0846030: courseFingerprint, courseChoice, CourseFiles, backendSchema, migrations, courseChoiceText selection: 5 files, 75 tests passed.",
+    "tests/e2e/b7-two-courses.spec.ts, --project=desktop-chrome-backup, port 4252: the first run was under heavy machine load and my 560 s timeout cut it at test 19 of 27; test line 422 failed there (choice heading not visible in 30 s after reload). The rerun of line 422 plus lines 998, 1018, 1032, 1056, 1080, 1100, 1143, 1159, 1185: 10 passed. So every test has run, but not in one clean pass, and I attribute the line 422 failure to load without having proved it."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [],
+    "wildcard": null,
+    "restrictedScope": "Round 3: DI-B7-R2-1, DI-B7-R2-2, the fix diff and its regressions, and the items in the brief. No new lenses drawn.",
+    "results": {
+      "sameRowsReadDifferently": "Kept in all parity cases: every one of the 13 tables with spelling matching on both sides (D1), natural keys with quotes, accents and backslash (D2), null and empty stamps reading alike (D3), course row with no stamp (D4), NFC and NFD (D7), real fixture rows. Only D5 diverges (DI-B7-R3-3).",
+      "fingerprintOmissions": "No row omitted by reading: the SQL, COURSE_TABLES and powersync/sync-config.yaml all cover the same 13 tables, with courses by id and children by courseId. active = 0 courses are excluded on both sides. A tab inside an id can collide two different rows by construction (F2 kept); no app id contains a tab, so this is not a finding.",
+      "resetOnTheChoice": "Observed with an unsent change, offline: afterwards localStorage is empty, the database is gone from indexedDB, the fake server still has 2 courses and the student row unchanged, and the reset itself sent no keep and no course delete (the log's single DELETE, on erased_courses, also appears in the run with no reset). Riapri online: backupState signed-out, 'Crea il corso', 0 courses, meta holds only data:minimumWriter and data:version. The unsent change is lost, as the warning says.",
+      "sessionSurvival": "The normal path does not bring it back. r3c, on a session close to expiry with a short-lived token answer: the key stayed absent for 132 s after the reset, with 0 refresh calls in that run; a first run (with 1 refresh before the reset) stayed absent for 173 s. Riapri then reached signed-out 'Crea il corso'. A refresh already in flight at the moment of the reset was not exercised.",
+      "killDuringReset": "Simulated a kill after the database delete and before the storage clear: the session and sync hint survive with an empty database. On reopen meta is rebuilt with local:awaiting-account-course and local:sync-mode, and the screen is 'Apertura del corso…'. Not corrupt, just a reset that did not finish signing out, and by design the download should refill it and return to the choice. That last step is inferred: the fake refuses sync.",
+      "recheckedRegressions": "refuse_erased_course restored as described; lock_owner_courses fires as role authenticated without error in C and S3."
+    }
+  },
+  "notTested": [
+    "PostgREST itself and the live backend: the 40P01 to HTTP status mapping is from memory, not from a run.",
+    "Real PowerSync sync: the browser specs abort it, so the return to the choice after the kill, and the revert of a refused local row at the next checkpoint (which should clear a temporary CVNEW), are reasoning only.",
+    "How long 'Apertura del corso…' lasts after the kill with no sync reachable: observed for 6 s only.",
+    "A reset with refused rows present, and a second open tab during the reset.",
+    "A token refresh in flight at the instant of the reset.",
+    "A real device or a real killed process: the kill was simulated by deleting the database from the page."
+  ]
+}
