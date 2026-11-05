@@ -15,6 +15,7 @@ const domTests = [
   "src/capabilities/studentScan.worker.test.ts",
   "src/features/crews/crewDisplayPreference.test.ts",
   "src/features/weather/windData.test.ts",
+  "src/features/weather/useWindForecast.test.ts",
   "src/lib/pageSnapshot.test.ts",
   "src/lib/summaryShare.test.ts",
   "src/navigation/applyUpdate.test.ts",

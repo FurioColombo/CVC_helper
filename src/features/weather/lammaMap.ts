@@ -5,9 +5,9 @@ export type LammaField = "wind10" | "swh"
 /**
  * LaMMA's server gives a browser no way to read the run time (no CORS), so the
  * latest run is worked out from the clock: runs at 00 and 12 UTC, published
- * some hours later. A wrong guess costs twelve hours on the label, never a
- * wrong reading, because every map prints its own valid time and the screen
- * tells the reader to trust that.
+ * some hours later. A wrong guess costs at least twelve hours on the label, more
+ * if a chain stalls, but never a wrong reading, because every map prints its own
+ * valid time and the screen tells the reader to trust that.
  */
 export function estimatedLammaRun(now: number) {
   const available = now - LAMMA_MAP.publishDelayHours * 3600
@@ -30,6 +30,10 @@ export function lammaHoursFromStep(step: number) {
 
 export const LAMMA_LAST_STEP = lammaStepFromHours(LAMMA_MAP.maxStepHours)
 
-export function lammaMapUrl(field: LammaField, step: number) {
-  return `${LAMMA_MAP.baseUrl}/${field}.${LAMMA_MAP.area}.${step}.png`
+/**
+ * LaMMA overwrites the same address at every run, so the estimated run goes in
+ * the query: a new run is a new picture, not yesterday's from the browser's cache.
+ */
+export function lammaMapUrl(field: LammaField, step: number, run: number) {
+  return `${LAMMA_MAP.baseUrl}/${field}.${LAMMA_MAP.area}.${step}.png?run=${run}`
 }

@@ -1,0 +1,205 @@
+{
+  "reviewerRole": "code-quality",
+  "persona": "La Sarta",
+  "milestone": "none (unregistered side-branch proposal, WX1 if adopted)",
+  "commit": "de89666",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "CQ-1",
+      "title": "Spinner stuck and Refresh disabled after switching zone during a download",
+      "evidence": "src/features/weather/useWindForecast.ts:48 returns before setStatus, and :53 skips it too, when the zone has changed. status stays {zone: A, state: loading}. On return to A the cache is fresh, so no new download overwrites it, and :41 reads loading again.",
+      "reproduction": "Throwaway hook test: both zones cached and fresh; refresh on derive; rerender with cabinati; resolve the derive fetch; rerender with derive. Expected state idle, observed 'loading' with only 1 forecast request made. In the UI: tap Aggiorna, tap the other zone, wait, tap back. The button at WeatherScreen.tsx:137 stays disabled until the screen is left.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "Keep the guard only for setDownloaded. Always settle the status with setStatus((current) => current?.zone === zone ? { zone, state: 'idle' } : current), and the same with 'failed' in the catch."
+    },
+    {
+      "id": "CQ-2",
+      "title": "Duplicate React keys in the 24-hour chart on every render during a course",
+      "evidence": "src/features/weather/WeatherScreen.tsx:790-796 concatenates the week and seven-day slots, so a slot in both appears twice. :884 passes this to WindChart, which uses slot.key as the key at src/features/weather/WindChart.tsx:82.",
+      "reproduction": "Throwaway render of WeatherScreen on Sunday 8 Nov 2026 with the course of 7 Nov: 2 'same key' console errors, first key 2026-11-08-AM. The chart draws period labels AM,PM,AM,PM. Expected 0 errors and AM,PM.",
+      "specRef": "none (React contract)",
+      "fix": "Pass the chart only the seven-day slots, since 24 hours always fall inside them. Keep the concatenated list for the picked lookup alone, where find() takes the first match."
+    },
+    {
+      "id": "CQ-3",
+      "title": "A forecast cache of an unexpected shape takes down Home, and the error screen only offers Home",
+      "evidence": "src/features/weather/windData.ts:277-282 checks only top-level fields, and typeof null passes for points. The key at :265 has no version, and app updates do not clear it. src/domain/wind.ts:156 then throws inside the useMemo at WeatherScreen.tsx:954-961. The strip is always mounted on Home (src/App.tsx:522), and ScreenErrorBoundary wraps the whole shell (App.tsx:1106). Its only action reloads into Home (App.tsx:320-323), which throws again until the entry passes 3 days of age. This is not reachable with today's writer. It is reachable by the first release that changes WindForecast.",
+      "reproduction": "Throwaway test: localStorage entry {fetchedAt: now, times: [now], points: {x: {ecmwf_ifs: {}}}}, and a second with points: null. Rendering WeatherHomeCard inside ScreenErrorBoundary shows the alert in both cases. Expected the plain Vento fallback strip.",
+      "specRef": "src/App.tsx:289-293 (boundary's stated purpose); AGENTS.md §3",
+      "fix": "Put a shape version in the cache key and validate each series column on read, returning null on a mismatch. An optional-feature strip should not be able to close the app's main screen."
+    },
+    {
+      "id": "CQ-4",
+      "title": "Cabinati says 'Modelli divisi' when the models agree and only the places differ",
+      "evidence": "src/domain/wind.ts:212 pushes one speed sample per model per point, so the band at :244-246 mixes geography with model disagreement. agreementOf reads that band at :273 and wind.ts:363, and the UI prints it at WeatherScreen.tsx:341. The chart legend at :422 also says the band is where the models fall.",
+      "reproduction": "Throwaway test: all 9 models identical at each Cabinati point, two points at 25 kn and four at 12 kn. Observed {low: 12, mid: 12, high: 25, agreement: 'bassa'}. Expected agreement 'alta'. Live Open-Meteo data today gave IFS alone a 16.5 to 19.7 kn spread across the six points.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §1 and §3",
+      "fix": "After the point loop, build speeds from perModel: { value: entry.speed / entry.weight, weight: entry.weight }. That removes the push at :212 and keeps wind.test.ts:403 at 17. Place differences stay visible in PlaceRows. If the band is meant to include places, the legend and the words must say so instead."
+    },
+    {
+      "id": "CQ-5",
+      "title": "A failed sky request reads as 'no thunder', with nothing to show the check did not run",
+      "evidence": "src/features/weather/windData.ts:190-197 swallows the failure and :254 drops sky. src/domain/wind.ts:285 turns the missing value into thunder: false. WeatherScreen.tsx:343-351 then shows no warning and no notice. The proposal (§5) calls thunder the one non-wind fact that changes a decision on a dinghy. The same holds when the cached copy lacks sky.",
+      "reproduction": "src/features/weather/windData.test.ts:161 covers the wind surviving a secondary failure but never what the user sees. From the code: make the weather_code request fail, and the hero is identical to a clear day.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "Show one line in the hero when forecast.sky is absent, such as 'Temporali: dato non disponibile'. About 3 lines. Waves already show a dash in this case."
+    },
+    {
+      "id": "CQ-6",
+      "title": "The key on LammaMap loses the wave view, and its time label can jump 12 hours under a mounted map",
+      "evidence": "src/features/weather/WeatherScreen.tsx:906 keys the map on the hero slot, so field (:607) and step (:604) reset on every pick, on a horizon switch and when the next slot rolls over at session end. Separately, run (:595) is recomputed on each minute tick while step stays frozen, so valid (:610) moves +12 h at each 09 and 21 UTC boundary. That is 10:00 or 11:00 in Italy, during the morning session. The image URL does not change, so the label moves and the picture does not.",
+      "reproduction": "Throwaway test: tap Onda, then the Martedì PM cell. Onda has aria-pressed 'false' afterwards; expected 'true'. The label jump is from reading the lines above and was not run.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §1 (Mappa LaMMA)",
+      "fix": "Lift field to WeatherScreen so the key resets only the hour. Freeze the run for the map's life with const [run] = useState(() => estimatedLammaRun(now)). Compute target inside the step initialiser and delete the useMemo at :596-603, whose result only that initialiser reads."
+    },
+    {
+      "id": "CQ-7",
+      "title": "Returning to an open app never refreshes, despite the stated rule",
+      "evidence": "src/features/weather/useWindForecast.ts:65-74 refreshes only on mount, zone change and the online event. The comment at :11 says opening the app fetches a newer forecast, but an installed PWA resumed from the background does not remount. src/navigation/updateChecks.ts:90-94 already has the visibility pattern.",
+      "reproduction": "Throwaway test: fresh cache, clock advanced 8 h, then visibilitychange, focus and pageshow dispatched. Observed 0 fetches; expected a download.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "Add a visibilitychange listener in the same effect that calls refreshIfDue when the page is visible. About 4 lines."
+    },
+    {
+      "id": "CQ-8",
+      "title": "Home and Vento both download when Vento opens during Home's refresh",
+      "evidence": "Home unmounts on navigation (src/App.tsx:829) but its request continues. WeatherScreen's hook still reads the stale cache at useWindForecast.ts:58 and starts its own. Each download is 4 requests against a rate-limited free tier, and repeated Back and Vento taps add more.",
+      "reproduction": "Throwaway test: cache 1 h old; mount the whenCached hook; unmount it; mount the always hook. Observed 2 main forecast requests; expected 1.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "Keep a module-level Map<WindZoneId, Promise<WindForecast>> in windData.ts that shares the in-flight download. About 5 lines. It also stops an older response overwriting a newer one."
+    },
+    {
+      "id": "CQ-9",
+      "title": "The Home strip shows a forecast up to 24 hours old with no age and no mark",
+      "evidence": "src/features/weather/WeatherScreen.tsx:952-953 hides the strip only from 24 h, and :972-984 render no age. The proposal §5 calls a silent old forecast dangerous. Only the Vento screen marks 6 h and over (StatusLine, :111).",
+      "reproduction": "Cache with fetchedAt 23 h ago and no signal: from the code, the strip's content is identical to a fresh forecast. Not run in a browser.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "From STALE_AFTER_SECONDS, add updatedText to the strip's small line. About 2 lines."
+    },
+    {
+      "id": "CQ-10",
+      "title": "'Modelli e pesi' and the family cap both leave out the ensemble, which is 31% of the blend at long range",
+      "evidence": "src/domain/wind.ts:259-262 and :277 normalise weights over perModel only, while :240 adds the ensemble with weight 45 (src/domain/windConfig.ts:227). Beyond 120 h the screen shows IFS 26%, but its real share is 26/145 = 18%, and the ensemble row is absent (WeatherScreen.tsx:715, :751). The proposal says the table exists 'so the blend can be checked, not trusted' (§1) and that a test holds every lead under 50% per family (§3). src/domain/wind.test.ts:92-109 excludes the ensemble, as the comment at windConfig.ts:216-217 discloses. With it, ECMWF is 49.2% at 72-120 h and 63.4% at 120 h and beyond.",
+      "reproduction": "Arithmetic on the tables in src/domain/windConfig.ts:131-203 and :227.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §1 and §3",
+      "fix": "Add an ensemble row and normalise over speeds. Then either lower ENSEMBLE_WEIGHTS and include it in the test, or correct proposal §3 to say the cap excludes it. Which of those is the owner's call."
+    },
+    {
+      "id": "CQ-11",
+      "title": "The hook and the 1013-line screen have no test in this commit, and one blend test does not test its name",
+      "evidence": "git diff --stat shows no test of useWindForecast or WeatherScreen; CQ-1, CQ-2, CQ-6, CQ-7 and CQ-8 all live there. Proposal §6 item 5 mentions a browser journey, but tests/e2e/weather.spec.ts is untracked and not in de89666. src/domain/wind.test.ts:343-371, 'does not jump when a high-resolution run ends', asserts only model weights and never reads mid, and its weightOf(31) is 0 simply because that hour has no data.",
+      "reproduction": "git ls-files tests/e2e/weather.spec.ts prints nothing. Read wind.test.ts:364-370.",
+      "specRef": "AGENTS.md §3, §7, §9",
+      "fix": "Commit the journey with the branch. Add a hook test for the zone race and the shared download. Make the blend test assert a bound on consecutive differences of hours[i].mid."
+    },
+    {
+      "id": "CQ-12",
+      "title": "The smaller diff: about 55 production lines do nothing or copy something that exists",
+      "evidence": "Never read by the app: BlendedHour.agreement (wind.ts:63, :273; the UI uses the summary's own); sky.temperature and temperature_2m (wind.ts:40, :68, :286; windData.ts:236, :242-246), which proposal §5 rejects as content anyway; wavePeriod and wave_period (wind.ts:36, :66, :284, :305, :370; windData.ts:225, :231); ModelContribution.gust (wind.ts:51, :198, :217, :229, :280); provider (windConfig.ts:135 to :199, :207); CourseDates.endDate (wind.ts:467); WindDownloadError, which nothing distinguishes (windData.ts:28). Copied: SESSION_DAY_OFFSET (wind.ts:445-453) restates what src/domain/evaluations.ts:14 derives as Math.floor((index + 1) / 2); FORCE_LINES (WindChart.tsx:13) is BEAUFORT_MIN_KNOTS.slice(4, 10); WIND_SESSION_HOURS ends (windConfig.ts:107-110) repeat evaluations.ts:15 and the comment at :104 does not mention it; the arrow path appears twice (WindArrow.tsx:23, :59); changeText (WeatherScreen.tsx:179) repeats capitalised (windFormat.ts:59). Unreachable: slotsForHorizon('seven') always holds at least 12 slots, so heroSlot is never null and these branches never run: WeatherScreen.tsx:594 (| null), :597, :710, :712, :872 (heroSlot &&), :890, :906 ('now'). Also WindChart.tsx:28 repeats the guard at WeatherScreen.tsx:409, WindChart.tsx:52 cannot fire after :49, and Math.min at WindChart.tsx:139 cannot clamp because yMax already covers the gust.",
+      "reproduction": "Grep for each symbol across src/. Only src/domain/wind.test.ts reads the agreement field and the fixtures carrying these fields.",
+      "specRef": "AGENTS.md §10, §15",
+      "fix": "Delete the listed fields and branches, with nextSlot = (slots[0] ?? seven[0])! in the repository's existing style. Export one session-to-day-offset helper beside SESSION_SEQUENCE and use it from both domain files. Removing temperature and wave_period also shortens two requests and every cached forecast."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "CQ-Q1",
+      "title": "The weights comment claims a derivation the numbers do not follow",
+      "evidence": "src/domain/windConfig.ts:124-130 says each weight is the model's share of 1/MAE², rounded. Using the proposal's short-range MAE: AROME 20.1 becomes 14, HD 19.9 becomes 18, ICON-2I 12.3 becomes 14, ARPEGE 12.8 becomes 14. The best measured model gets the same weight as two clearly worse ones, probably because the raw shares put Météo-France at 52.8%, over the family cap. Nothing recomputes them.",
+      "reproduction": "Compute 1/MAE² from docs/working/WEATHER_PROPOSAL.md:103-114.",
+      "specRef": "AGENTS.md §3",
+      "fix": "State that the weights are hand-set from those shares and then capped, or add a test that derives them from docs/working/weather-backtest.json within a tolerance."
+    },
+    {
+      "id": "CQ-Q2",
+      "title": "Every failure is reported as no network",
+      "evidence": "src/features/weather/useWindForecast.ts:52 discards the error, and WeatherScreen.tsx:129 prints 'Senza rete.' for an HTTP 429 or a refused parse as well.",
+      "reproduction": "windData.test.ts:168 produces the 429 case; the hook maps it to failed and the screen prints that text.",
+      "specRef": "none",
+      "fix": "Use neutral wording such as 'Non aggiornato.', or branch on navigator.onLine."
+    },
+    {
+      "id": "CQ-Q3",
+      "title": "Lead time is measured from the clock, so an old copy gets short-range weights",
+      "evidence": "src/domain/wind.ts:191 uses now. A 48-hour-old cached forecast weighs its current hour as lead 0, and the screen text at WeatherScreen.tsx:725-726 says weight follows distance in time.",
+      "reproduction": "From the code: fetchedAt = now - 48 h gives bucket 0 for the hour at now.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §3",
+      "fix": "lead = Math.max(0, (time - forecast.fetchedAt) / 3600); keep now for dropping past hours. Existing tests set fetchedAt to the start, so check the ones that pass a later now."
+    },
+    {
+      "id": "CQ-Q4",
+      "title": "The Home fallback tells screen readers about a wind nobody forecast",
+      "evidence": "src/features/weather/WeatherScreen.tsx:992-996 draws WindArrow with degrees={315}.",
+      "reproduction": "Throwaway test with no cache: the image's name is 'Vento da NW'; expected decorative.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md",
+      "fix": "Use lucide's Wind icon with aria-hidden."
+    },
+    {
+      "id": "CQ-Q5",
+      "title": "Single-caller helpers and wrappers",
+      "evidence": "summaryInWords, periodHours, slotShortLabel, dayRowLabel and agreementText each wrap one expression with one call site (src/features/weather/windFormat.ts). centre() (windData.ts:75) has one caller and returns a query string, not a centre. WindPoint and WindModelFamily are exported and never imported. WindDownloadState is exported while StatusLine retypes the union at WeatherScreen.tsx:106. onChange at WeatherScreen.tsx:825-827 wraps setZone. zone in the deps at useWindForecast.ts:74 is redundant.",
+      "reproduction": "Grep for each symbol across src/.",
+      "specRef": "AGENTS.md §15",
+      "fix": "Inline the one-liners, drop the exports, import the type, pass setZone directly."
+    },
+    {
+      "id": "CQ-Q6",
+      "title": "Two quantile functions with different definitions",
+      "evidence": "src/features/weather/windData.ts:128-134 and src/domain/wind.ts:74-98 give different results at the same q on equal weights, and the ensemble's band is then compared with the blend's at wind.ts:248-249.",
+      "reproduction": "windData.test.ts:122 expects 2 for q 0.2 on 0 to 10; weightedQuantile gives 1.7.",
+      "specRef": "none",
+      "fix": "Use weightedQuantile with weight 1 and adjust the test."
+    },
+    {
+      "id": "CQ-Q7",
+      "title": "Tests that claim more than they check",
+      "evidence": "src/domain/wind.test.ts:119 is named for the waters 'of its zone' but checks one bounding box for both zones, which land also passes. src/features/weather/windData.test.ts:50 proves the parameter list only for forecastUrl, while the ensemble, marine and sky URLs are built inline at windData.ts:217, :225 and :236, and the test at :176 inspects those 4 calls only for credentials.",
+      "reproduction": "Read the listed lines.",
+      "specRef": "AGENTS.md §3",
+      "fix": "Rename the first. Extend the test at :176 to assert each call's parameter names, which is the privacy claim at windData.ts:12-13."
+    },
+    {
+      "id": "CQ-Q8",
+      "title": "A download finishing during a full reset can recreate the cache",
+      "evidence": "writeCachedForecast at useWindForecast.ts:47 has no check after clearSelectedLocalStorage (browserStorage.ts:143-157), and the fetch outlives its screen. A recreated entry also switches Home back to fetching by itself, because whenCached treats the cache as consent. Not reproduced.",
+      "reproduction": "From the code only; the window is between the clear and the reload.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "Skip the write when isResetPending() is true."
+    },
+    {
+      "id": "CQ-Q9",
+      "title": "Consent lapses silently after 3 days, and the grid formats dates heavily on each render",
+      "evidence": "readCachedForecast returns null past 3 days (windData.ts:281), so useWindForecast.ts:59 treats the instructor as never having opened Vento, while proposal §5 says Home refreshes after the first opening. Separately, SlotCell calls hoursInSlot on each render without a memo (WeatherScreen.tsx:478): about 14 slots times 190 hours through Intl formatToParts, roughly 2,600 calls. I did not measure that on a phone.",
+      "reproduction": "Read the listed lines.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5",
+      "fix": "State the 3-day rule in the proposal. Compute each hour's romeClock once in blendForecast, or memoise by slot, if a phone profile shows a cost."
+    }
+  ],
+  "evidenceInspected": [
+    "git diff claude/0.5.0-prep...de89666: all source, tests, docs/working/WEATHER_PROPOSAL.md and scripts/weather-backtest.mjs; weather-backtest.json only through the proposal's tables",
+    "Requested tests: 4 files, 145 tests passed (src/domain/wind.test.ts, src/features/weather/windData.test.ts, src/App.test.tsx, src/persistence/browserStorage.test.ts)",
+    "npm run typecheck and eslint on the weather files printed no errors; check:repository and check:docs PASS",
+    "Throwaway vitest specs in an ignored folder, removed afterwards: CQ-1, CQ-2, CQ-3, CQ-4, CQ-6 (field reset), CQ-7, CQ-8 and CQ-Q4 failed as reported; the ensemble-share spec printed nothing, so CQ-10 rests on arithmetic",
+    "Live probes: all 6 Cabinati points and 9 models answer (HTTP 200, 192 hours, 24 KB on the wire, 168 KB as JSON, the size of one localStorage entry); AIFS sends no gusts; real last leads are AROME 46 h, ICON-2I 64 h, ARPEGE 94 h, ICON-EU 112 h, UKMO 148 h, so the end taper does engage; LaMMA images 1 and 75 return 200 and 76 returns 404, matching LAMMA_LAST_STEP",
+    "App integration, no regression found: isShellView and history restore of 'weather' (src/App.tsx:132-171, :669, :706-717), Back through goBack, bottom bar with no active tab like other sub-screens, entries of an erased course ignored, reset clears only this channel's prefix (browserStorage.test.ts passes), Home makes no request before the first opening (useWindForecast.ts:59)",
+    "Date and time, no defect found: romeClock across both clock changes, slot end and in-progress checks, LammaMap's noon-based target on a change-of-clock day, addDays, unixtime with timezone=Europe/Rome, estimatedLammaRun against 00 and 12 UTC, the step table against the live server"
+  ],
+  "anglesTried": {
+    "seed": 519076926,
+    "lenses": [
+      "Tests that assert implementation details instead of behaviour",
+      "An abstraction, option or layer with a single caller"
+    ],
+    "wildcard": "Can an optional feature's cache lock out the whole app through the update path, given the boundary's only exit reloads into the screen that hosts the strip? It can (CQ-3)."
+  },
+  "notTested": [
+    "tests/e2e/weather.spec.ts and weatherFixtures.ts: untracked, not in de89666 and changing during this review, so neither run nor reviewed. Another process was also using test-results/ and removed my scratch folder there, so I ran no Playwright",
+    "A real phone, and Home's height with the extra 82 px strip on small viewports; left to the field UX and mobile reviewers",
+    "Bundle and precache growth: no build run. No new dependency was added, and the screen is imported statically by App.tsx",
+    "Running scripts/weather-backtest.mjs: not re-run, because it makes long rate-limited archive requests. The accuracy of the weights was not verified beyond CQ-Q1",
+    "The LaMMA label jump in CQ-6 and the reset window in CQ-Q8 come from reading the code, not from a run",
+    "The grid cost in CQ-Q9 was not measured: that spec passed and its output was suppressed"
+  ]
+}

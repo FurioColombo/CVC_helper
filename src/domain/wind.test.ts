@@ -1,19 +1,21 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  agreementOf,
   angleBetween,
   beaufort,
   blendForecast,
   circularMean,
   compassPoint,
+  compassPoint8,
   defaultHorizon,
   hoursInSlot,
-  leadBucket,
+  nextDecisionSlot,
   romeClock,
   slotInProgress,
   slotsForHorizon,
+  splitOf,
   summariseHours,
+  weightAtLead,
   weightedQuantile,
   windName,
   type BlendedHour,
@@ -22,8 +24,11 @@ import {
 } from "@/domain/wind"
 import {
   ENSEMBLE_WEIGHTS,
+  FAMILY_CAP_UNTIL_HOURS,
   FAMILY_MAX_SHARE,
-  LEAD_BUCKET_HOURS,
+  GUST_RULE,
+  LEAD_ANCHOR_HOURS,
+  RANGE_MIN_HALF_WIDTH_KNOTS,
   WIND_MODELS,
   WIND_ZONES,
   zoneForCourse,
@@ -34,7 +39,7 @@ const HOUR = 3600
 // Thursday 5 November 2026, 09:00 in Italy (CET, UTC+1).
 const THURSDAY_9 = Date.UTC(2026, 10, 5, 8) / 1000
 // The course of ISO week 45: Saturday 7 to Saturday 14 November.
-const COURSE = { startDate: "2026-11-07", endDate: "2026-11-14" }
+const COURSE = { startDate: "2026-11-07" }
 
 function series(
   length: number,
@@ -64,59 +69,63 @@ function forecastOf(
 function hour(partial: Partial<BlendedHour>): BlendedHour {
   return {
     time: THURSDAY_9,
+    lead: 0,
     low: 8,
     mid: 10,
     high: 12,
+    modelSpread: 2,
     gust: 15,
     direction: 315,
     directionSpread: 10,
-    agreement: "alta",
     models: [],
     waveHeight: null,
-    wavePeriod: null,
     thunder: false,
-    temperature: null,
     ...partial,
   }
 }
 
 describe("canonical tables", () => {
-  it("gives every model one weight per lead bucket", () => {
-    const buckets = LEAD_BUCKET_HOURS.length + 1
+  it("gives every model one weight per lead anchor", () => {
+    const anchors = LEAD_ANCHOR_HOURS.length
     for (const model of WIND_MODELS) {
-      expect(model.weights, model.id).toHaveLength(buckets)
+      expect(model.weights, model.id).toHaveLength(anchors)
     }
-    expect(ENSEMBLE_WEIGHTS).toHaveLength(buckets)
+    expect(ENSEMBLE_WEIGHTS).toHaveLength(anchors)
   })
 
-  it("lets no family of related runs decide alone at any lead", () => {
-    for (let bucket = 0; bucket <= LEAD_BUCKET_HOURS.length; bucket += 1) {
-      const total = WIND_MODELS.reduce((sum, m) => sum + m.weights[bucket]!, 0)
-      const families = new Map<string, number>()
+  it("lets no family decide alone while the islands can be seen, ensemble included", () => {
+    for (let lead = 0; lead <= FAMILY_CAP_UNTIL_HOURS; lead += 6) {
+      const ensemble = weightAtLead(ENSEMBLE_WEIGHTS, lead)
+      const families = new Map<string, number>([["ecmwf", ensemble]])
+      let total = ensemble
       for (const model of WIND_MODELS) {
-        families.set(
-          model.family,
-          (families.get(model.family) ?? 0) + model.weights[bucket]!,
-        )
+        const weight = weightAtLead(model.weights, lead)
+        total += weight
+        families.set(model.family, (families.get(model.family) ?? 0) + weight)
       }
       for (const [family, weight] of families) {
-        expect(
-          weight / total,
-          `${family} at bucket ${bucket}`,
-        ).toBeLessThanOrEqual(FAMILY_MAX_SHARE)
+        expect(weight / total, `${family} at ${lead} h`).toBeLessThanOrEqual(
+          FAMILY_MAX_SHARE,
+        )
       }
     }
   })
 
-  it("keeps something forecasting at every lead", () => {
-    for (let bucket = 0; bucket <= LEAD_BUCKET_HOURS.length; bucket += 1) {
+  it("keeps something forecasting at every anchor", () => {
+    for (let anchor = 0; anchor < LEAD_ANCHOR_HOURS.length; anchor += 1) {
       expect(
-        WIND_MODELS.filter((m) => m.weights[bucket]! > 0).length,
+        WIND_MODELS.filter((m) => m.weights[anchor]! > 0).length,
       ).toBeGreaterThanOrEqual(3)
     }
   })
 
-  it("keeps every point inside the waters of Caprera and of its zone", () => {
+  it("gives IFS at least GFS's weight at long range, as it scored on sea cells", () => {
+    const weightOf = (id: WindModelId) =>
+      WIND_MODELS.find((model) => model.id === id)!.weights[4]
+    expect(weightOf("ecmwf_ifs")).toBeGreaterThanOrEqual(weightOf("gfs_global"))
+  })
+
+  it("keeps every point inside the box around Caprera, and unique", () => {
     for (const zone of Object.values(WIND_ZONES)) {
       expect(new Set(zone.points.map((point) => point.id)).size).toBe(
         zone.points.length,
@@ -202,38 +211,39 @@ describe("circularMean", () => {
   })
 })
 
-describe("leadBucket", () => {
+describe("weightAtLead", () => {
+  const weights = [30, 25, 0, 0, 0]
   it.each([
-    [0, 0],
-    [23.9, 0],
-    [24, 1],
-    [47, 1],
-    [48, 2],
-    [72, 3],
-    [119, 3],
-    [120, 4],
-    [400, 4],
-  ])("puts %d hours in bucket %d", (lead, bucket) => {
-    expect(leadBucket(lead)).toBe(bucket)
+    [0, 30],
+    [12, 30],
+    [24, 27.5],
+    [36, 25],
+    [48, 12.5],
+    [60, 0],
+    [500, 0],
+  ])("at %d hours is %d", (lead, weight) => {
+    expect(weightAtLead(weights, lead)).toBeCloseTo(weight, 5)
   })
 })
 
-describe("agreementOf", () => {
+describe("splitOf", () => {
   it.each([
-    // band, mid, direction spread, expected
-    [2, 10, 10, "alta"],
-    [3.5, 10, 25, "alta"],
-    [6, 10, 10, "media"],
-    [10, 10, 10, "bassa"],
-    [2, 10, 60, "bassa"],
+    // model spread, mid, direction spread, expected
+    [2, 10, 10, null],
+    [7, 10, 10, null],
+    [7.5, 10, 10, "speed"],
+    [2, 10, 60, "direction"],
     // Light air: a wandering direction is normal, not a disagreement.
-    [2, 3, 120, "alta"],
+    [2, 3, 120, null],
     // Strong wind may spread further in knots before it is a disagreement.
-    [9, 25, 10, "media"],
+    [9, 25, 10, null],
+    [13, 25, 10, "speed"],
+    // Direction first: it is the one that changes the plan most.
+    [13, 25, 60, "direction"],
   ] as const)(
-    "band %d, mid %d, spread %d: %s",
-    (band, mid, spread, expected) => {
-      expect(agreementOf(band, mid, spread)).toBe(expected)
+    "spread %d, mid %d, direction spread %d: %s",
+    (spread, mid, direction, expected) => {
+      expect(splitOf(spread, mid, direction)).toBe(expected)
     },
   )
 })
@@ -248,16 +258,14 @@ describe("blendForecast", () => {
       }),
       THURSDAY_9,
     )
-    expect(first).toMatchObject({ low: 15, mid: 15, high: 15, gust: 20 })
+    expect(first).toMatchObject({ mid: 15, modelSpread: 0 })
     expect(first!.direction).toBeCloseTo(315, 5)
-    expect(first!.agreement).toBe("alta")
   })
 
   it("follows the high-resolution models in the short range", () => {
     const [first] = blendForecast(
       forecastOf({
         meteofrance_arome_france_hd: series(48, 20),
-        meteofrance_arome_france: series(48, 20),
         italia_meteo_arpae_icon_2i: series(48, 20),
         ecmwf_aifs025_single: series(48, 5),
         gfs_global: series(48, 5),
@@ -278,7 +286,7 @@ describe("blendForecast", () => {
       THURSDAY_9,
     )
     expect(first!.high - first!.low).toBeGreaterThan(7)
-    expect(first!.agreement).toBe("bassa")
+    expect(first!.modelSpread).toBeGreaterThan(7)
   })
 
   it("keeps speed intact when models disagree on the direction", () => {
@@ -332,6 +340,72 @@ describe("blendForecast", () => {
     expect(first!.models).toHaveLength(2)
   })
 
+  it("never shows a range narrower than the wind's real scatter", () => {
+    const [first] = blendForecast(
+      forecastOf({
+        meteofrance_arome_france_hd: series(48, 15),
+        ecmwf_ifs: series(48, 15),
+      }),
+      THURSDAY_9,
+    )
+    expect(first).toMatchObject({
+      low: 15 - RANGE_MIN_HALF_WIDTH_KNOTS,
+      high: 15 + RANGE_MIN_HALF_WIDTH_KNOTS,
+    })
+  })
+
+  it("never shows a range below calm", () => {
+    const [first] = blendForecast(
+      forecastOf({ ecmwf_ifs: series(48, 1) }),
+      THURSDAY_9,
+    )
+    expect(first!.low).toBe(0)
+  })
+
+  it("takes the highest model gust, not a quartile of them", () => {
+    const [first] = blendForecast(
+      forecastOf({
+        meteofrance_arome_france_hd: series(48, 10, 315, 12),
+        ecmwf_ifs: series(48, 10, 315, 14),
+        gfs_global: series(48, 10, 315, 26),
+      }),
+      THURSDAY_9,
+    )
+    expect(first!.gust).toBe(26)
+  })
+
+  it("lifts a gust below what the band's top implies", () => {
+    const [first] = blendForecast(
+      forecastOf({ ecmwf_ifs: series(48, 20, 315, 22) }),
+      THURSDAY_9,
+    )
+    expect(first!.gust).toBe(20 * GUST_RULE.bandFactor)
+  })
+
+  it("shows no gust number where too few runs are left to make one", () => {
+    const length = 150
+    const hours = blendForecast(
+      forecastOf({ ecmwf_ifs: series(length, 10) }, length),
+      THURSDAY_9,
+    )
+    expect(hours[GUST_RULE.lastLeadHours]!.gust).not.toBeNull()
+    expect(hours[GUST_RULE.lastLeadHours + 1]!.gust).toBeNull()
+  })
+
+  it("counts each model once, so places apart are not models apart", () => {
+    const forecast: WindForecast = {
+      fetchedAt: THURSDAY_9,
+      times: [THURSDAY_9],
+      points: {
+        spargi: { ecmwf_ifs: series(1, 25), gfs_global: series(1, 25) },
+        caprera: { ecmwf_ifs: series(1, 25), gfs_global: series(1, 25) },
+        cannigione: { ecmwf_ifs: series(1, 12), gfs_global: series(1, 12) },
+        liscia: { ecmwf_ifs: series(1, 12), gfs_global: series(1, 12) },
+      },
+    }
+    expect(blendForecast(forecast, THURSDAY_9)[0]!.modelSpread).toBe(0)
+  })
+
   it("drops hours that have passed", () => {
     const hours = blendForecast(
       forecastOf({ ecmwf_ifs: series(48, 10) }),
@@ -353,14 +427,18 @@ describe("blendForecast", () => {
       forecastOf(
         {
           meteofrance_arome_france_hd: ending,
+          italia_meteo_arpae_icon_2i: series(length, 10),
           ecmwf_ifs: series(length, 10),
           gfs_global: series(length, 10),
-          ukmo_global_deterministic_10km: series(length, 10),
         },
         length,
       ),
       THURSDAY_9,
     )
+    for (let index = 1; index < length; index += 1) {
+      const step = Math.abs(hours[index]!.mid - hours[index - 1]!.mid)
+      expect(step, `hour ${index}`).toBeLessThanOrEqual(6)
+    }
     const weightOf = (index: number) =>
       hours[index]!.models.find(
         (m) => m.model === "meteofrance_arome_france_hd",
@@ -370,7 +448,34 @@ describe("blendForecast", () => {
     expect(weightOf(31)).toBe(0)
   })
 
-  it("lets the ensemble steer and widen the long range only", () => {
+  it.each([36, 48, 60, 72, 96, 120, 144])(
+    "does not step at %d hours when only the lead moves",
+    (edge) => {
+      const length = 200
+      const models = Object.fromEntries(
+        WIND_MODELS.map((model, index) => [
+          model.id,
+          series(length, 8 + 2 * index),
+        ]),
+      )
+      const forecast: WindForecast = {
+        ...forecastOf(models, length),
+        ensemble: {
+          low: Array.from({ length }, () => 5),
+          mid: Array.from({ length }, () => 12),
+          high: Array.from({ length }, () => 24),
+        },
+      }
+      const hours = blendForecast(forecast, THURSDAY_9)
+      const before = hours[edge - 1]!
+      const after = hours[edge + 1]!
+      expect(Math.abs(after.mid - before.mid)).toBeLessThan(1.5)
+      expect(Math.abs(after.high - before.high)).toBeLessThan(2)
+      expect(Math.abs(after.modelSpread - before.modelSpread)).toBeLessThan(2.5)
+    },
+  )
+
+  it("widens with the ensemble gradually, and only at long range", () => {
     const length = 200
     const base = forecastOf({ ecmwf_ifs: series(length, 10) }, length)
     const withEnsemble: WindForecast = {
@@ -382,11 +487,48 @@ describe("blendForecast", () => {
       },
     }
     const hours = blendForecast(withEnsemble, THURSDAY_9)
-    expect(hours[1]).toMatchObject({ low: 10, high: 10 })
-    const late = hours[150]!
-    expect(late.low).toBe(4)
-    expect(late.high).toBe(20)
-    expect(late.mid).toBeLessThan(10)
+    expect(hours[1]!.modelSpread).toBe(0)
+    expect(hours[60]!.modelSpread).toBeGreaterThan(0)
+    expect(hours[60]!.modelSpread).toBeLessThan(hours[80]!.modelSpread)
+    expect(hours[150]).toMatchObject({ low: 4, high: 20 })
+    expect(hours[150]!.mid).toBeLessThan(10)
+  })
+
+  it("counts the ensemble in the shares it reports", () => {
+    const length = 200
+    const hours = blendForecast(
+      {
+        ...forecastOf({ ecmwf_ifs: series(length, 10) }, length),
+        ensemble: {
+          low: Array.from({ length }, () => 8),
+          mid: Array.from({ length }, () => 8),
+          high: Array.from({ length }, () => 8),
+        },
+      },
+      THURSDAY_9,
+    )
+    const shares = hours[150]!.models
+    expect(shares.map((entry) => entry.model).sort()).toEqual([
+      "ecmwf_ifs",
+      "ensemble",
+    ])
+    expect(shares.reduce((sum, entry) => sum + entry.weight, 0)).toBeCloseTo(1)
+  })
+
+  it("measures lead from the download, so an old copy keeps its long-range caution", () => {
+    const length = 100
+    const forecast: WindForecast = {
+      ...forecastOf({ ecmwf_ifs: series(length, 10) }, length),
+      ensemble: {
+        low: Array.from({ length }, () => 2),
+        mid: Array.from({ length }, () => 10),
+        high: Array.from({ length }, () => 22),
+      },
+    }
+    const threeDaysLater = THURSDAY_9 + 72 * HOUR
+    const [first] = blendForecast(forecast, threeDaysLater)
+    expect(first!.lead).toBeGreaterThanOrEqual(71)
+    expect(first!.modelSpread).toBeGreaterThan(15)
   })
 
   it("can blend one point of a zone apart from the others", () => {
@@ -407,17 +549,21 @@ describe("blendForecast", () => {
     const [first, second] = blendForecast(
       {
         ...forecastOf({ ecmwf_ifs: series(2, 10) }, 2),
-        sky: { code: [95, 3], temperature: [18, 19] },
-        waves: { height: [0.8, 0.9], period: [4, 5] },
+        sky: { code: [95, 3] },
+        waves: { height: [0.8, 0.9] },
       },
       THURSDAY_9,
     )
-    expect(first).toMatchObject({
-      thunder: true,
-      waveHeight: 0.8,
-      wavePeriod: 4,
-    })
+    expect(first).toMatchObject({ thunder: true, waveHeight: 0.8 })
     expect(second!.thunder).toBe(false)
+  })
+
+  it("does not read a missing sky as a clear one", () => {
+    const [first] = blendForecast(
+      forecastOf({ ecmwf_ifs: series(2, 10) }, 2),
+      THURSDAY_9,
+    )
+    expect(first!.thunder).toBeNull()
   })
 })
 
@@ -477,35 +623,73 @@ describe("summariseHours", () => {
     expect(summary!.direction).toBeNull()
   })
 
-  it("warns about westerlies only when they are strong", () => {
-    expect(
-      summariseHours([hour({ direction: 300, low: 14, mid: 16, high: 19 })])!
-        .strongWesterly,
-    ).toBe(true)
-    expect(
-      summariseHours([hour({ direction: 300, low: 6, mid: 8, high: 10 })])!
-        .strongWesterly,
-    ).toBe(false)
-    expect(
-      summariseHours([hour({ direction: 120, low: 14, mid: 16, high: 19 })])!
-        .strongWesterly,
-    ).toBe(false)
+  it("reports the highest wave of the stretch", () => {
+    const summary = summariseHours([
+      hour({ waveHeight: 0.5 }),
+      hour({ waveHeight: 1.2 }),
+    ])
+    expect(summary!.waveHeight).toBe(1.2)
   })
 
-  it("reports the highest wave and any thunder of the stretch", () => {
+  it.each([
+    [[false, false], false],
+    [[false, true], true],
+    [[false, null], null],
+    [[null, true], true],
+  ] as const)("reads thunder %j as %s", (values, expected) => {
+    const summary = summariseHours(values.map((thunder) => hour({ thunder })))
+    expect(summary!.thunder).toBe(expected)
+  })
+
+  it("says what the models are divided over, and which directions", () => {
+    expect(summariseHours([hour({ modelSpread: 12, mid: 10 })])!.split).toBe(
+      "speed",
+    )
     const summary = summariseHours([
-      hour({ waveHeight: 0.5, wavePeriod: 3 }),
-      hour({ waveHeight: 1.2, wavePeriod: 6, thunder: true }),
-    ])
-    expect(summary).toMatchObject({
-      waveHeight: 1.2,
-      wavePeriod: 6,
-      thunder: true,
-    })
+      hour({
+        directionSpread: 60,
+        models: [
+          { model: "ecmwf_ifs", weight: 0.6, speed: 10, direction: 315 },
+          { model: "gfs_global", weight: 0.4, speed: 10, direction: 180 },
+        ],
+      }),
+    ])!
+    expect(summary.split).toBe("direction")
+    expect(summary.directionOptions).toEqual([315, 180])
+  })
+
+  it.each([
+    [0, "near", "speed"],
+    [71, "near", "speed"],
+    [72, "tendency", null],
+    [119, "tendency", null],
+    [120, "seasonal", null],
+  ] as const)("%d hours ahead is %s", (lead, reach, split) => {
+    const summary = summariseHours([hour({ lead, modelSpread: 12 })])!
+    expect(summary.reach).toBe(reach)
+    expect(summary.split).toBe(split)
+  })
+
+  it("keeps the first and last expected wind for the words", () => {
+    const summary = summariseHours([
+      hour({ mid: 8 }),
+      hour({ mid: 14 }),
+      hour({ mid: 20 }),
+    ])!
+    expect(summary).toMatchObject({ firstMid: 8, lastMid: 20 })
   })
 })
 
 describe("names and scales", () => {
+  it.each([
+    [0, "N"],
+    [44, "NE"],
+    [292.5, "NW"],
+    [359, "N"],
+  ])("%d° fits a narrow cell as %s", (degrees, point) => {
+    expect(compassPoint8(degrees)).toBe(point)
+  })
+
   it.each([
     [0, "N", "Tramontana"],
     [359, "N", "Tramontana"],
@@ -628,6 +812,35 @@ describe("slotsForHorizon", () => {
     expect(slotInProgress(slot, THURSDAY_9)).toBe(true)
     expect(slotInProgress(slot, THURSDAY_9 + 4 * HOUR)).toBe(false)
     expect(slotInProgress(slot, THURSDAY_9 - HOUR)).toBe(false)
+  })
+})
+
+describe("nextDecisionSlot", () => {
+  it.each([
+    ["before the course: its first session", THURSDAY_9, "2026-11-07-PM"],
+    [
+      "during a morning session",
+      Date.UTC(2026, 10, 8, 10) / 1000,
+      "2026-11-08-AM",
+    ],
+    [
+      "in its last hour: the afternoon",
+      Date.UTC(2026, 10, 8, 11, 50) / 1000,
+      "2026-11-08-PM",
+    ],
+    [
+      "at lunch: the afternoon",
+      Date.UTC(2026, 10, 8, 12, 30) / 1000,
+      "2026-11-08-PM",
+    ],
+    [
+      "after the last session: plain half-days",
+      Date.UTC(2026, 10, 13, 17) / 1000,
+      "2026-11-14-AM",
+    ],
+    ["weeks before: today", Date.UTC(2026, 9, 1, 8) / 1000, "2026-10-01-AM"],
+  ])("%s", (_, now, key) => {
+    expect(nextDecisionSlot(COURSE, now).key).toBe(key)
   })
 })
 

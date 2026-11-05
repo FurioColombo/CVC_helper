@@ -1,0 +1,315 @@
+{
+  "reviewerRole": "accessibility/mobile",
+  "persona": "La Maestra",
+  "milestone": "none: side branch claude/weather-section, Vento screen and Home strip",
+  "commit": "de89666",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "A11Y-1",
+      "title": "At 200% text the Vento page scrolls sideways at every contract viewport, and controls and tables break",
+      "evidence": "Root font-size 200% (the repo's convention, as in tests/e2e/c1-crew-management.spec.ts:154). documentElement scrollWidth/clientWidth: 412 gives 462/412, 390 gives 462/390, 320 gives 434/320. The screen's root grid has scrollWidth 422 against clientWidth 296 at 320. Cause: two Segmented controls side by side (src/features/weather/WeatherScreen.tsx:822 grid-cols-2, :81 grid-flow-col auto-cols-fr). At 200% 'Settimana' spills 59.8 px and 'Cabinati' 35.2 px out of their buttons. 90 text runs at 320 lie outside their box or the viewport, including '14–18', 'Onda al largo', 'Modelli abbastanza concordi' and 'Temporali possibili'. Table columns run together ('VentoFasciaRaffica', '1810–29') at :429 and :729. Week-grid ranges measure 75-78 px in a 35 px box (:496 whitespace-nowrap, :547 grid).",
+      "reproduction": "Open Vento with a forecast at 320, 390 or 412 px. Run document.documentElement.style.fontSize='200%'. Compare documentElement.scrollWidth with clientWidth. Expected: equal. Observed: the values above.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18, R05 (testo al 200%)",
+      "fix": "Stack the Area and Orizzonte controls in one column, or use flex-wrap with a rem-based min width. Let segment labels wrap inside their pill. Remove whitespace-nowrap at :496 and put the icons on their own line within the cell. Let the week grid collapse to one column per half-day when a cell is under about 11rem. Turn the tables at :429 and :729 into stacked rows under a container query. Add 200% cases at 320/390/412 to tests/e2e/weather.spec.ts."
+    },
+    {
+      "id": "A11Y-2",
+      "title": "The thunder warning in the week grid has no accessible name and no legend entry",
+      "evidence": "src/features/weather/WeatherScreen.tsx:479 builds the cell's aria-label from summaryInWords and agreementText only, and summary.thunder is not included. :504-507 marks the icon aria-hidden. Measured with synthetic code 95: five cells showed the lightning icon and none of their names mentions it, e.g. 'Lunedì AM: SW 10–14 nodi, raffiche 19. Modelli abbastanza concordi'. The legend at :542-546 explains only the triangle, so a sighted reader is not told what the lightning means either. WeatherHomeCard (:986-988) shows no thunder signal at all.",
+      "reproduction": "Route weather_code to 95 for a day and open Vento. Compare section[aria-labelledby=wind-days] buttons containing .lucide-cloud-lightning with their aria-label. Expected: the name says 'Temporali possibili'. Observed: it does not.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R20, R06 (simbolo/etichetta per ogni stato)",
+      "fix": "Add 'Temporali possibili' to the label at :479, ideally through a shared summaryInWords so hero and grid cannot drift. Add the icon and word to the legend. Add a thunder mark and word to the Home strip."
+    },
+    {
+      "id": "A11Y-3",
+      "title": "Without a usable forecast the Home strip announces an invented wind, 'Vento da NW'",
+      "evidence": "src/features/weather/WeatherScreen.tsx:992-996 renders WindArrow with a fixed degrees={315}, and WindArrow.tsx:51 names it 'Vento da NW' with role=img. Computed name on a fresh device: button 'Vento da NW Vento Prossima uscita e settimana'. By the code at :952-953 the same fallback appears when the cached forecast is 24 hours old or more. A sighted user also sees a NW-pointing arrow that looks like data.",
+      "reproduction": "Create a course on a fresh profile and read the accessibility name of .home-wind on Home before opening Vento. Expected: no direction, because no forecast exists. Observed: 'Vento da NW'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R20 (l'etichetta accessibile esprime il significato)",
+      "fix": "Use a neutral aria-hidden icon in the fallback, not WindArrow and not a directional shape."
+    },
+    {
+      "id": "A11Y-4",
+      "title": "An aged forecast is signalled by colour alone from 6 to 18 hours",
+      "evidence": "src/features/weather/WeatherScreen.tsx:111 and :115-119 switch the fill and text colour at 6 hours, while the words change only at 18 hours (windFormat.ts:93) and 24 hours (:131). Measured at 8 hours old: text 'Aggiornato alle 01:30', background rgb(255,244,238), colour rgb(127,47,23), no warning icon. When fresh the same sentence form is used with a transparent background. A screen reader gets no signal, and a colour-blind reader or one in sun gets almost none.",
+      "reproduction": "Subtract 8*3600 from fetchedAt in the cached forecast, hold the network open, reload and open Vento. Read the role=status region. Expected: a word or symbol for the aged state. Observed: only the colours change.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06",
+      "fix": "When stale, say the age, e.g. 'Dati di 8 ore fa', and add an icon, so the text carries the state and the colour only reinforces it."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "A11Y-5",
+      "title": "Choosing a half-day moves the view but not focus, and nothing is announced",
+      "evidence": "src/features/weather/WeatherScreen.tsx:801-804. After Enter on 'Lunedì AM', document.activeElement stays on that cell at top 1003 in a 915 px viewport, while the hero heading sits at top 40. A MutationObserver on all live regions recorded nothing. From the hero heading to that cell the tree exposes about 87 nodes (a count of accessibility nodes, not exact TalkBack swipes). The legend promises 'Tocca per i dettagli'.",
+      "reproduction": "Focus a week cell, press Enter, wait 1.2 s, read activeElement and its rectangle.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12; WCAG 2.4.3. No contract clause states this for an in-page jump, so it is not classed as a blocker, but I recommend fixing it before merge.",
+      "fix": "Add tabIndex={-1} to h2#wind-hero and call focus({preventScroll:true}) after the commit, followed by the scroll. Also give the same-slot tap a result."
+    },
+    {
+      "id": "A11Y-6",
+      "title": "Focus falls to BODY in four places when a control disables or removes itself",
+      "evidence": "Measured activeElement = BODY after each of: 'Torna alla prossima uscita' (:388-396, removes itself); 'Aggiorna le previsioni' (:137, disabled while loading, and focus stays on BODY after success); 'Riprova' (:857-870, its section unmounts); 'Mappa precedente' at step 1 (:647), and by the same pattern 'Mappa successiva' at the last step (:662, not exercised).",
+      "reproduction": "Focus each control, press Enter, read document.activeElement.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12 (ritorno del focus); WCAG 2.4.3. I recommend fixing it before merge.",
+      "fix": "Use aria-disabled with an early return instead of disabled on refresh and the stepper. After 'Torna', move focus to the hero heading. After 'Riprova', move focus to the status line or the new hero heading."
+    },
+    {
+      "id": "A11Y-7",
+      "title": "Refresh gives a screen reader no progress, and success may be silent",
+      "evidence": "src/features/weather/WeatherScreen.tsx:127 gives loading text only when there is no forecast. During a refresh the status text stayed 'Aggiornato alle 09:27', and the only cue is an aria-hidden spinner (:142). A success within the same minute leaves the text unchanged. The refresh button sits inside role=status (:120, :134), whose implicit aria-atomic=true (CDP: live=polite atomic=true) can read the button's name with the status text.",
+      "reproduction": "With a cached forecast, press refresh with a delayed route and read the status region during and after.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14; reviewer lens 5",
+      "fix": "Move the button out of the live region. Announce 'Aggiorno le previsioni…' and then 'Previsioni aggiornate alle HH:MM'."
+    },
+    {
+      "id": "A11Y-8",
+      "title": "A server error is reported as 'no network', which gives the wrong remedy",
+      "evidence": "src/features/weather/useWindForecast.ts:54-56 catches every failure. Route returning HTTP 500 with the connection up: status 'Senza rete. Aggiornato alle 09:28' (WeatherScreen.tsx:129). The first-run section also says 'Serve la rete per la prima previsione' (:860).",
+      "reproduction": "Fulfil api.open-meteo.com with status 500 and press refresh.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14; reviewer lens 12",
+      "fix": "Separate WindDownloadError (service) from fetch failure and navigator.onLine: 'Servizio meteo non raggiungibile, riprova tra poco' versus 'Senza rete'."
+    },
+    {
+      "id": "A11Y-9",
+      "title": "A failed map is not announced",
+      "evidence": "src/features/weather/WeatherScreen.tsx:672-676 is a plain paragraph with role null. After stepping onto a failing map the live log held only 'circa mer 14:00', while the image and link disappeared. The user hears a time for a map that is not there.",
+      "reproduction": "Abort www.lamma.toscana.it, scroll the lazy image into view, press 'Mappa successiva', read the live log.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14; reviewer lens 5",
+      "fix": "Put the failure text in the existing aria-live region or give the paragraph role=status mounted beforehand. The message itself is good and says how to recover."
+    },
+    {
+      "id": "A11Y-10",
+      "title": "Chart text and gust dots are far below the type rule and ignore text size",
+      "evidence": "src/features/weather/WindChart.tsx:93, :117, :163 use user-unit font sizes in a scaled SVG. Measured: at 320 the chart is 264 px wide, scale 0.733, axis 7.70 px, hours and AM/PM 8.07 px, gust dot diameter 2.64 px, arrows 11 px. At 390: 9.28/9.72 px. At 412: 340 px wide, scale 0.944, 9.92/10.39 px. Only at 448-wide layouts does it near 11 px. Computed font-size stays 11px at 200% root, so chart text does not follow text size. The axis has no unit. The full table is available but closed (:425), and at 200% it is itself broken (A11Y-1).",
+      "reproduction": "Read the svg rectangle width / 360 × font-size at each viewport, then repeat with root 200%.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05",
+      "fix": "Render tick labels as HTML outside the SVG in rem, or size the viewBox from the measured width so a unit is one CSS px at 12 px or more. Use fewer ticks at 320, add 'kn' on the axis, and raise the dot radius to at least 2.5 px rendered."
+    },
+    {
+      "id": "A11Y-11",
+      "title": "12 px and smaller text carries essential information",
+      "evidence": "Computed 12 px: gust values in the hour cell and week grid (:161, :499), hour labels (:154), AM/PM headers (:549, :552), day number (:563), grid legend (:542), chart legend (:421), 'Non ancora' (:514), and the safety sentence 'È una previsione…' (:935). VAR uses size*0.6 in inline px (WindArrow.tsx:43): 10.8 px in the week grid and 9.6 px in place rows by computation, and it does not scale at 200%.",
+      "reproduction": "Computed font sizes dumped from every visible text node in main at 412 and 320 px.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (12–13 px only if not essential alone)",
+      "fix": "Use text-sm for gusts, AM/PM headers and the safety note. Express VAR in rem, and WindArrow size in em or rem where it sits beside text."
+    },
+    {
+      "id": "A11Y-12",
+      "title": "Home strip name runs two words together: 'knraffiche'",
+      "evidence": "Computed name: 'Vento da SE Vento · Sab PM SE 10–15 knraffiche 20'. src/features/weather/WeatherScreen.tsx:978-982 relies on ml-1.5 with no space character. Direction is also said twice and 'kn' is not read as nodi.",
+      "reproduction": "Read the accessibility name of .home-wind with a cached forecast.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R20; reviewer lens 2",
+      "fix": "Give the button an aria-label built from slotLabel and summaryInWords plus agreement and thunder, keeping the visible words in the name."
+    },
+    {
+      "id": "A11Y-13",
+      "title": "At 320 px at 100% text, segment labels and ranges leave their boxes",
+      "evidence": "'Settimana' overflows its button by 8.7 px (scrollWidth 75, clientWidth 66), visible in the supplied narrow-top.png, and '7 giorni' wraps. With WCAG text spacing: 'Settimana' 23.8 px and 'Cabinati' 9.8 px at 320, 'Settimana' 4.8 px at 412. Week range at 320: '10–41' and '10–45' are drawn over the lightning icon by 1.6 and 3.2 px (:496 nowrap, 30 px box against 38-39 px text); a VAR cell has less room still.",
+      "reproduction": "Open Vento at 320 px with cells showing both icons and two-digit ranges; compare the text Range rectangle with the icon rectangle.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R18, R05; tests/e2e/layout-audit.ts treats a word outside its button as a defect",
+      "fix": "Same fix as A11Y-1. Stacking the controls gives each pill twice the width. Move the icons under the range. Run auditLayout on this screen."
+    },
+    {
+      "id": "A11Y-14",
+      "title": "The week grid is not exposed as a table of day, AM and PM",
+      "evidence": "Roles under section[aria-labelledby=wind-days]: region, heading, StaticText, image, button only. 'AM' and 'PM' (:549-554) and 'Sab', '7' are orphan text; the display:contents wrapper at :560 has no role. Each button names its day and period, so it stays understandable, but there is no row or column navigation, the date number is missing from the name, and an empty cell (:475) is silently skipped.",
+      "reproduction": "Accessibility tree dump of the section.",
+      "specRef": "Reviewer lens 3; WCAG 1.3.1",
+      "fix": "Either use role=table with row, columnheader, rowheader and cell (retest with display:contents), or make the headers aria-hidden, add the date to each name and describe past half-days. The second option is simpler and suits swiping."
+    },
+    {
+      "id": "A11Y-15",
+      "title": "The hourly strip's numbers are distinguished by position alone",
+      "evidence": "src/features/weather/WeatherScreen.tsx:153-163 reads '14, Vento da SE, 12, 17'. Which number is wind and which is gust is stated only in the ul's aria-label (:361), which a sighted user never sees, and it is not repeated per item.",
+      "reproduction": "Accessibility tree of the list; visual check of live-top.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06; reviewer lens 3",
+      "fix": "Add a visible row caption ('Vento / raffica, nodi'), write the gust as 'r 17' as elsewhere, and give each li a whole-sentence name such as '14: da SE, 12 nodi, raffica 17'."
+    },
+    {
+      "id": "A11Y-16",
+      "title": "Selected segment and chart ranges fall below 3:1 against their surroundings",
+      "evidence": "Computed: selected segment fill (card) against track (muted) 1.17:1, with a shadow and a darker label as the other cues (:87). Chart band against card 1.39:1, against muted 1.36:1 (WindChart.tsx:127). AM/PM shading 1.17:1, and a slot under 24 units gets no label at all (WindChart.tsx:90), as seen at the chart's right edge in live-top.png. Force lines 1.42:1. Elsewhere the app uses aria-pressed:bg-primary (src/App.tsx:421).",
+      "reproduction": "Contrast computed from the src/styles.css tokens.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06, R13; WCAG 1.4.11",
+      "fix": "Selected segment: use the App.tsx:421 treatment or a primary border. Band: raise opacity or add edge lines of at least 3:1. Label or drop slivers."
+    },
+    {
+      "id": "A11Y-17",
+      "title": "Reduced motion is ignored by the smooth scroll and the spinner",
+      "evidence": "src/features/weather/WeatherScreen.tsx:803. With reducedMotion 'reduce' emulated and matchMedia true, 40 frames gave 31 distinct scroll positions, from 1154 to 204. :142 animate-spin has no motion-reduce variant. The same pattern exists elsewhere (src/features/crews/CrewManagement.tsx:2257, src/features/students/StudentScan.tsx:1184).",
+      "reproduction": "newContext({reducedMotion:'reduce'}), click a week cell, sample scrollY per animation frame.",
+      "specRef": "Reviewer lens 8; WCAG 2.3.3",
+      "fix": "Choose behavior from matchMedia as src/features/speech/DictationMeter.tsx:36 does; add motion-reduce:animate-none. File the other screens in the backlog."
+    },
+    {
+      "id": "A11Y-18",
+      "title": "Disclosure rows have no visible affordance",
+      "evidence": "src/features/weather/WeatherScreen.tsx:426, :721 set display:flex on summary (computed display flex), which removes the marker. 'Modelli e pesi' looks like a heading in narrow-full.png. The tree is correct: DisclosureTriangle with expanded=false.",
+      "reproduction": "Computed style of summary; screenshot at any width.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13",
+      "fix": "Add an aria-hidden chevron rotated with group-open."
+    },
+    {
+      "id": "A11Y-19",
+      "title": "External links do not say they open elsewhere, and the map link hides its time",
+      "evidence": "All six links in main have target=_blank (rel=noreferrer, which is safe), and the only cue is an aria-hidden icon (:628, :925) or none on the map. The name 'Apri' (:627) has no object. On the map, aria-label (:679) replaces the img alt, so the link never says the time, 'Ingrandisci' promises a zoom but leaves the app, and the note at :697 says the true time is printed in the bitmap in UTC, which a screen reader cannot get.",
+      "reproduction": "Accessibility names of main a; compare with the rendered alt text.",
+      "specRef": "Reviewer lens 2; WCAG 2.4.4",
+      "fix": "Names: 'Apri la pagina LaMMA, nuova scheda'; 'Mappa LaMMA di vento, circa sab 16:00: apri l'immagine, nuova scheda'. Drop the link's aria-label or empty the alt so it is said once."
+    },
+    {
+      "id": "A11Y-20",
+      "title": "Back from Vento puts focus on main, not on the strip that opened it",
+      "evidence": "src/App.tsx:724-726 focuses main on every view change. Measured: origin .home-wind, after Back activeElement is MAIN. This is shell behaviour shared with other views, not new in this diff.",
+      "reproduction": "Open Vento from the strip, press 'Indietro da Vento', read activeElement.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12; reviewer lens 1",
+      "fix": "Record the opener on navigate and restore it on return, at least for the Home cards. Backlog item if it is not done here."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "A11Y-Q1",
+      "title": "Chart name disagrees with its heading and omits gusts",
+      "evidence": "Name: 'Vento nelle prossime 25 ore: da 17 a 27 nodi, massimo alle 0. Direzione NE.' The heading says 24 ore (:416), hours.slice(0,25) at :408. The sentence omits gusts, the most safety-relevant series.",
+      "fix": "Use hours.length-1 and add the top gust."
+    },
+    {
+      "id": "A11Y-Q2",
+      "title": "SVG title elements are of no use on a phone",
+      "evidence": "WindArrow.tsx:22 yields 13 'Da …' groups, which CDP exposes under the role=img chart along with its axis text. Touch has no hover. Whether TalkBack prunes them was not tested.",
+      "fix": "Remove the titles, and mark the inner text aria-hidden, since the img name and table carry the data."
+    },
+    {
+      "id": "A11Y-Q3",
+      "title": "Grid legend doubles its words and splits icon from meaning",
+      "evidence": ":542-546 exposes image 'Modelli divisi' then 'modelli divisi. Tocca…'. At 320 the icon ends line one (top 148) and its words start line two (top 163), caused by the flex-wrap.",
+      "fix": "Use inline flow, keep icon and word in a nowrap span, and aria-hide the icon."
+    },
+    {
+      "id": "A11Y-Q4",
+      "title": "Visible text is not in the accessible name of week cells",
+      "evidence": "Visible 'Non ancora' against name 'nessun dato' (:479, :514); visible 'r 17' against 'raffiche 17'. A voice-control user who says what they see will miss.",
+      "fix": "Use 'non ancora' in the name, and start names with the visible words where practical."
+    },
+    {
+      "id": "A11Y-Q5",
+      "title": "Mutually exclusive choices use aria-pressed",
+      "evidence": ":86, :483. A pressed cell cannot be unpressed. This matches the app's convention (src/App.tsx:420), so changing it here alone would break R13.",
+      "fix": "Leave as is for now; consider aria-current='true' on the grid, or radiogroup app-wide in a later pass."
+    },
+    {
+      "id": "A11Y-Q6",
+      "title": "Decimal point in an Italian interface",
+      "evidence": ":321 toFixed(1) renders '0.7 m'; :698 says '1,5 km'.",
+      "fix": "Use Intl.NumberFormat('it-IT')."
+    },
+    {
+      "id": "A11Y-Q7",
+      "title": "Abbreviations in speech",
+      "evidence": "'kn', 'F3–4', 'NW' and 'r 20' reach speech as written in the hero (:286-315), place rows (:216-218) and Home strip. Week cells use 'nodi' and 'raffiche', so the wording is inconsistent. Actual pronunciation not tested.",
+      "fix": "Add visually hidden or aria-label wordings for hero values, e.g. 'forza 3–4', 'nodi'."
+    },
+    {
+      "id": "A11Y-Q8",
+      "title": "Segment height is at the dense minimum",
+      "evidence": "Segmented is 40 px tall (:87), within R04 only for dense groups; these are two or three isolated controls.",
+      "fix": "Use min-h-11 when the controls are stacked as A11Y-1 suggests."
+    },
+    {
+      "id": "A11Y-Q9",
+      "title": "Map has no reserved height",
+      "evidence": ":685-693 has no width, height or aspect ratio, so the page shifts as the lazy image arrives. From code; my mock image was 1x1.",
+      "fix": "Set the real aspect ratio with aspect-square or width and height attributes."
+    }
+  ],
+  "screenReaderScript": {
+    "note": "Utterances are Chromium's computed names and roles with synthetic data, not a TalkBack recording.",
+    "steps": [
+      {
+        "step": "Home, no forecast",
+        "sighted": "Arrow, 'Vento', 'Prossima uscita e settimana'",
+        "announced": "'Vento da NW Vento Prossima uscita e settimana, button'. False direction (A11Y-3)."
+      },
+      {
+        "step": "Home, forecast",
+        "sighted": "'Vento · Sab PM', 'SE 10–15 kn', 'raffiche 20'",
+        "announced": "'Vento da SE Vento · Sab PM SE 10–15 knraffiche 20, button' (A11Y-12)."
+      },
+      {
+        "step": "Open Vento",
+        "sighted": "Title 'Vento', controls, hero",
+        "announced": "Focus on unnamed main; next stops 'Indietro da Vento', heading 'Vento', group 'Area', 'Derive' pressed, 'Cabinati' not pressed."
+      },
+      {
+        "step": "Status",
+        "sighted": "'Aggiornato alle 01:30' on a warning fill when aged",
+        "announced": "'Aggiornato alle 01:30'. Age not conveyed (A11Y-4)."
+      },
+      {
+        "step": "Hero",
+        "sighted": "'Prossima uscita · Sabato PM', big range, Raffiche, Forza, Onda",
+        "announced": "Heading, '14–18', 'Vento da SE', '10–15', 'kn', 'SE · Scirocco', 'Attesi 13 kn', 'Raffiche' '20 kn', 'Forza' 'F' '3' '–4', 'Onda al largo' '0.7 m', 'Temporali possibili'. Complete and in order."
+      },
+      {
+        "step": "Hours",
+        "sighted": "Columns of four unlabelled rows",
+        "announced": "List name, then '14, Vento da SE, 12, 17' (A11Y-15)."
+      },
+      {
+        "step": "Chart",
+        "sighted": "24 hours, gust dots, shading",
+        "announced": "'Vento nelle prossime 25 ore: da 17 a 27 nodi, massimo alle 0. Direzione NE.' (A11Y-Q1)."
+      },
+      {
+        "step": "Week grid, thunder day",
+        "sighted": "Arrow, '10–15', 'r 20', lightning icon",
+        "announced": "'Sabato PM: SE 10–15 nodi, raffiche 20. Modelli abbastanza concordi, button, pressed'. No thunder (A11Y-2)."
+      },
+      {
+        "step": "Choose Lunedì AM",
+        "sighted": "Page glides to a new hero 'Uscita scelta · Lunedì AM'",
+        "announced": "Only the pressed state, if anything. Focus stays on the off-screen cell; no live change (A11Y-5)."
+      },
+      {
+        "step": "'Torna alla prossima uscita'",
+        "sighted": "Hero returns",
+        "announced": "Nothing. Focus is on BODY (A11Y-6)."
+      },
+      {
+        "step": "Refresh",
+        "sighted": "Spinner, then possibly a new time",
+        "announced": "Nothing while loading; focus falls to BODY; silent if the minute is the same (A11Y-6, A11Y-7)."
+      }
+    ]
+  },
+  "evidenceInspected": [
+    "Read: src/features/weather/WeatherScreen.tsx, WindChart.tsx, WindArrow.tsx, windFormat.ts, useWindForecast.ts, windData.ts; src/styles.css; src/App.tsx diff and focus effect; rulebook R04, R05, R06, R12, R14, R18, R20; product spec, scope and technical decisions searched for focus and accessibility rules; docs/agents/REVIEW_PROTOCOL.md.",
+    "Looked at live-top.png, live-home.png, narrow-top.png, narrow-full.png, plus my own 200% captures.",
+    "Ran throwaway Playwright 1.62 scripts in my scratchpad's maestra/ against a dedicated Vite dev server on port 4199, now stopped. All weather and map hosts were mocked with synthetic data; no real network or roster data was used. Course created through the UI.",
+    "Accessibility tree via CDP on Home, Vento, status region, week grid and table. Full Tab order at 412: follows visual order, and every stop has a focus indicator.",
+    "Targets measured, all passing R04: back and refresh 44x44; segments 66-85x40 and map field 126-164x40; week cells 108-146x48 with 6 px gaps; stepper 44x44; Apri 48.1x44; summaries 264-340x44; source links 144-182x56; map link 264-340 square; Home strip 296 wide x 72 tall at 320.",
+    "Contrast computed from tokens, all text passing: muted-foreground on card 5.89, on background 5.43, on muted 5.05, on muted/50 over card 5.48; #7f2f17 on #fff4ee 8.37, on card 9.05; #b42318 icon on card 6.57, on muted/50 6.12; primary on card 6.43, on background 5.93; ring on card 4.10, background 3.78, muted 3.51. Failures are non-text only, see A11Y-16.",
+    "Layout at 412, 390, 320, each at 100% and 200%; text spacing at 412 and 320; 844x390 landscape; both Derive and Cabinati; details opened.",
+    "Live regions observed with MutationObserver during selection, refresh, HTTP 500, first-run retry, map stepping and map failure. Reduced motion emulated and scroll sampled per frame."
+  ],
+  "anglesTried": {
+    "seed": 665406356,
+    "lenses": [
+      "Landscape, notches, safe areas and on-screen keyboard (index 8): no findings of weight. 844x390 has no sideways scroll, the chart (205 px) fits above the bar (top 315), the bar honours the safe area, there are no inputs. Only the 376 px map link is taller than the visible area when focused.",
+      "200% text and increased spacing (index 5): A11Y-1, A11Y-13. The Home strip passes: at 320 and 200% it grows to 257 px with no overflow."
+    ],
+    "wildcard": "Compare what assistive technology gets with what the eye gets, per state, in the cells and strip where the code builds names by hand: found the thunder omission, the invented NW and 'knraffiche'."
+  },
+  "notTested": [
+    "Real TalkBack, VoiceOver and physical devices: no devices here, so spoken output and pronunciation are inferred from Chromium's accessibility tree, and physical checks remain with the owner.",
+    "WebKit and Firefox: only Chromium was run.",
+    "Android or iOS system font scaling: 200% was simulated by root font-size, the repo's convention, which may differ from an OS setting.",
+    "VAR rendering: my fixture produced none in the measured runs, so its 10.8 and 9.6 px sizes are computed from WindArrow.tsx:43, and it appears in the supplied narrow-full.png.",
+    "'Mappa successiva' at its last step: inferred from the same disabled pattern as the first step, which was measured.",
+    "Live LaMMA images: mocked, so map legibility and layout shift were not measured.",
+    "tests/e2e/weather.spec.ts, tests/e2e/weatherFixtures.ts and docs/working/weather-screens/ appeared untracked during this review and are not mine. Source under review stayed at de89666. A search of the spec found no 200%, reduced-motion or focus cases; I did not audit it further.",
+    "No milestone exists for this branch, so there is no success predicate to check. Blockers are judged against the rulebook."
+  ]
+}

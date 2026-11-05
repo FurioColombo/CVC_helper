@@ -1,14 +1,22 @@
-import { SESSION_SEQUENCE, type SessionId } from "@/domain/config"
 import {
-  AGREEMENT_RULES,
+  SESSION_SEQUENCE,
+  sessionDayOffset,
+  type SessionId,
+} from "@/domain/config"
+import {
   BEAUFORT_MIN_KNOTS,
   ENSEMBLE_WEIGHTS,
-  LEAD_BUCKET_HOURS,
+  ENSEMBLE_WIDENING_HOURS,
+  GUST_RULE,
+  LEAD_ANCHOR_HOURS,
   MODEL_END_TAPER_HOURS,
-  STRONG_WESTERLY,
+  RANGE_MIN_HALF_WIDTH_KNOTS,
+  SEASONAL_AFTER_HOURS,
+  SPLIT_RULES,
+  TENDENCY_AFTER_HOURS,
   WIND_MODELS,
-  WIND_SESSION_HOURS,
   WIND_NAMES,
+  WIND_SESSION_HOURS,
   type WindModelId,
 } from "@/domain/windConfig"
 
@@ -31,41 +39,35 @@ export type WindForecast = {
     mid: readonly (number | null)[]
     high: readonly (number | null)[]
   }
-  waves?: {
-    height: readonly (number | null)[]
-    period: readonly (number | null)[]
-  }
-  sky?: {
-    code: readonly (number | null)[]
-    temperature: readonly (number | null)[]
-  }
+  waves?: { height: readonly (number | null)[] }
+  sky?: { code: readonly (number | null)[] }
 }
 
-export type Agreement = "alta" | "media" | "bassa"
-
 export type ModelContribution = {
-  model: WindModelId
+  model: WindModelId | "ensemble"
+  /** Its share of the speed blend, the ensemble counted. */
   weight: number
   speed: number
   direction: number | null
-  gust: number | null
 }
 
 export type BlendedHour = {
   time: number
+  /** Hours ahead when the forecast was downloaded, not from the clock now. */
+  lead: number
   low: number
   mid: number
   high: number
+  /** How far the models themselves are apart: the 20-80 band's width. */
+  modelSpread: number
   gust: number | null
   /** null when the wind is too light or too spread to have one direction. */
   direction: number | null
   directionSpread: number
-  agreement: Agreement
   models: ModelContribution[]
   waveHeight: number | null
-  wavePeriod: number | null
-  thunder: boolean
-  temperature: number | null
+  /** null: the sky was not downloaded, which is not the same as no thunder. */
+  thunder: boolean | null
 }
 
 type Sample = { value: number; weight: number }
@@ -121,31 +123,34 @@ export function circularMean(samples: readonly Sample[]) {
   return { mean, spread: Math.min(180, spread) }
 }
 
-export function leadBucket(leadHours: number) {
-  const index = LEAD_BUCKET_HOURS.findIndex((limit) => leadHours < limit)
-  return index === -1 ? LEAD_BUCKET_HOURS.length : index
+/** A weight at a lead time: a straight line between the two nearest anchors. */
+export function weightAtLead(
+  weights: readonly number[],
+  leadHours: number,
+): number {
+  const anchors = LEAD_ANCHOR_HOURS
+  const next = anchors.findIndex((anchor) => leadHours <= anchor)
+  if (next === 0) return weights[0] ?? 0
+  if (next === -1) return weights[anchors.length - 1] ?? 0
+  const from = anchors[next - 1] ?? 0
+  const to = anchors[next] ?? 0
+  const part = (leadHours - from) / (to - from)
+  const start = weights[next - 1] ?? 0
+  return start + part * ((weights[next] ?? 0) - start)
 }
 
-export function agreementOf(
-  bandWidth: number,
+export type WindSplit = "speed" | "direction"
+
+/** Whether the models disagree enough to say so, and over what. */
+export function splitOf(
+  modelSpread: number,
   mid: number,
   directionSpread: number,
-): Agreement {
-  const { high, low, directionMatters } = AGREEMENT_RULES
-  const spread = mid >= directionMatters ? directionSpread : 0
-  if (
-    bandWidth > Math.max(low.minKnots, low.ratio * mid) ||
-    spread > low.direction
-  ) {
-    return "bassa"
-  }
-  if (
-    bandWidth <= Math.max(high.minKnots, high.ratio * mid) &&
-    spread <= high.direction
-  ) {
-    return "alta"
-  }
-  return "media"
+): WindSplit | null {
+  const { minKnots, ratio, direction, directionMatters } = SPLIT_RULES
+  if (mid >= directionMatters && directionSpread > direction) return "direction"
+  if (modelSpread > Math.max(minKnots, ratio * mid)) return "speed"
+  return null
 }
 
 function lastValueIndexes(forecast: WindForecast) {
@@ -164,8 +169,10 @@ function lastValueIndexes(forecast: WindForecast) {
   return last
 }
 
-function isThunderCode(code: number | null | undefined) {
-  return code !== null && code !== undefined && code >= 95
+function thunderAt(forecast: WindForecast, index: number) {
+  const code = forecast.sky?.code[index]
+  if (code === null || code === undefined) return null
+  return code >= 95
 }
 
 /**
@@ -173,6 +180,9 @@ function isThunderCode(code: number | null | undefined) {
  * a high-resolution run fades over its last hours so the central value does
  * not jump when it ends. The central value is a weighted median, so one model
  * far from the others moves it little and shows up in the band instead.
+ *
+ * Each model counts once however many points were asked for, so the band holds
+ * what the models disagree over, not how much the places differ.
  *
  * Speed and direction blend separately: averaging wind vectors would shrink
  * the speed exactly when models disagree on the direction.
@@ -187,15 +197,13 @@ export function blendForecast(
   const hours: BlendedHour[] = []
 
   forecast.times.forEach((time, index) => {
-    if (time < now - 3600) return
-    const lead = Math.max(0, (time - now) / 3600)
-    const bucket = leadBucket(lead)
-    const speeds: Sample[] = []
-    const gusts: Sample[] = []
+    if (time <= now - 3600) return
+    const lead = Math.max(0, (time - forecast.fetchedAt) / 3600)
+    const gusts: number[] = []
     const directions: Sample[] = []
     const perModel = new Map<
       WindModelId,
-      { weight: number; speed: number; direction: Sample[]; gust: number[] }
+      { weight: number; speed: number; direction: Sample[] }
     >()
 
     for (const id of ids) {
@@ -207,14 +215,12 @@ export function blendForecast(
         if (speed === null || speed === undefined) continue
         const hoursLeft = (last.get(model.id) ?? index) - index
         const taper = Math.min(1, (hoursLeft + 1) / MODEL_END_TAPER_HOURS)
-        const weight = ((model.weights[bucket] ?? 0) * taper) / ids.length
+        const weight = (weightAtLead(model.weights, lead) * taper) / ids.length
         if (weight <= 0) continue
-        speeds.push({ value: speed, weight })
         const entry = perModel.get(model.id) ?? {
           weight: 0,
           speed: 0,
           direction: [],
-          gust: [],
         }
         entry.weight += weight
         entry.speed += speed * weight
@@ -224,66 +230,84 @@ export function blendForecast(
           entry.direction.push({ value: direction, weight })
         }
         const gust = series?.gust[index]
-        if (gust !== null && gust !== undefined) {
-          gusts.push({ value: gust, weight })
-          entry.gust.push(gust)
-        }
+        if (gust !== null && gust !== undefined) gusts.push(gust)
         perModel.set(model.id, entry)
       }
     }
 
+    const speeds: Sample[] = [...perModel.values()].map((entry) => ({
+      value: entry.speed / entry.weight,
+      weight: entry.weight,
+    }))
     // The ensemble's median carries no direction; it steers the long range,
-    // where single runs are mostly chance, and widens the band honestly.
+    // where single runs are mostly chance.
     const ensembleMid = forecast.ensemble?.mid[index] ?? null
-    const ensembleWeight = ENSEMBLE_WEIGHTS[bucket] ?? 0
-    if (ensembleMid !== null && ensembleWeight > 0) {
+    const ensembleWeight = weightAtLead(ENSEMBLE_WEIGHTS, lead)
+    const ensembleCounts = ensembleMid !== null && ensembleWeight > 0
+    if (ensembleCounts) {
       speeds.push({ value: ensembleMid, weight: ensembleWeight })
     }
     if (speeds.length === 0) return
 
-    let low = weightedQuantile(speeds, 0.2) ?? 0
+    const bandLow = weightedQuantile(speeds, 0.2) ?? 0
     const mid = weightedQuantile(speeds, 0.5) ?? 0
-    let high = weightedQuantile(speeds, 0.8) ?? 0
-    if (ensembleWeight > 0) {
-      low = Math.min(low, forecast.ensemble?.low[index] ?? low)
-      high = Math.max(high, forecast.ensemble?.high[index] ?? high)
-    }
+    const bandHigh = weightedQuantile(speeds, 0.8) ?? 0
+    const widening = Math.min(
+      1,
+      Math.max(
+        0,
+        (lead - ENSEMBLE_WIDENING_HOURS.from) /
+          (ENSEMBLE_WIDENING_HOURS.to - ENSEMBLE_WIDENING_HOURS.from),
+      ),
+    )
+    const ensembleLow = forecast.ensemble?.low[index] ?? bandLow
+    const ensembleHigh = forecast.ensemble?.high[index] ?? bandHigh
+    const widerLow =
+      bandLow + widening * (Math.min(bandLow, ensembleLow) - bandLow)
+    const widerHigh =
+      bandHigh + widening * (Math.max(bandHigh, ensembleHigh) - bandHigh)
 
     const circular = circularMean(directions)
     const directionSpread = circular?.spread ?? 180
     const variable =
       !circular ||
-      mid < AGREEMENT_RULES.variableBelowKnots ||
-      directionSpread > AGREEMENT_RULES.variableSpread
+      mid < SPLIT_RULES.variableBelowKnots ||
+      directionSpread > SPLIT_RULES.variableSpread
 
-    const totalWeight = [...perModel.values()].reduce(
-      (sum, entry) => sum + entry.weight,
-      0,
+    const totalWeight = speeds.reduce((sum, sample) => sum + sample.weight, 0)
+    const contributions: ModelContribution[] = [...perModel.entries()].map(
+      ([model, entry]) => ({
+        model,
+        weight: entry.weight / totalWeight,
+        speed: entry.speed / entry.weight,
+        direction: circularMean(entry.direction)?.mean ?? null,
+      }),
     )
+    if (ensembleCounts) {
+      contributions.push({
+        model: "ensemble",
+        weight: ensembleWeight / totalWeight,
+        speed: ensembleMid,
+        direction: null,
+      })
+    }
+
     hours.push({
       time,
-      low,
+      lead,
+      low: Math.max(0, Math.min(widerLow, mid - RANGE_MIN_HALF_WIDTH_KNOTS)),
       mid,
-      high,
-      // Models parameterise gusts differently: the upper quartile of what they
-      // say, not the single highest.
-      gust: weightedQuantile(gusts, 0.75),
+      high: Math.max(widerHigh, mid + RANGE_MIN_HALF_WIDTH_KNOTS),
+      modelSpread: widerHigh - widerLow,
+      gust:
+        lead > GUST_RULE.lastLeadHours || gusts.length === 0
+          ? null
+          : Math.max(...gusts, bandHigh * GUST_RULE.bandFactor),
       direction: variable ? null : circular.mean,
       directionSpread,
-      agreement: agreementOf(high - low, mid, directionSpread),
-      models: [...perModel.entries()]
-        .map(([model, entry]) => ({
-          model,
-          weight: totalWeight > 0 ? entry.weight / totalWeight : 0,
-          speed: entry.speed / entry.weight,
-          direction: circularMean(entry.direction)?.mean ?? null,
-          gust: entry.gust.length ? Math.max(...entry.gust) : null,
-        }))
-        .sort((a, b) => b.weight - a.weight),
+      models: contributions.sort((a, b) => b.weight - a.weight),
       waveHeight: forecast.waves?.height[index] ?? null,
-      wavePeriod: forecast.waves?.period[index] ?? null,
-      thunder: isThunderCode(forecast.sky?.code[index]),
-      temperature: forecast.sky?.temperature[index] ?? null,
+      thunder: thunderAt(forecast, index),
     })
   })
 
@@ -294,17 +318,22 @@ export type WindSummary = {
   low: number
   high: number
   mid: number
+  firstMid: number
+  lastMid: number
   gust: number | null
   direction: number | null
   firstDirection: number | null
   lastDirection: number | null
-  agreement: Agreement
+  /** Over what the models are divided; null when they are not, or too far out. */
+  split: WindSplit | null
+  /** The two directions the models lean to, when they split over direction. */
+  directionOptions: readonly [number, number] | null
   trend: "rinforzo" | "calo" | "stabile"
   turning: boolean
   waveHeight: number | null
-  wavePeriod: number | null
-  thunder: boolean
-  strongWesterly: boolean
+  thunder: boolean | null
+  /** How far ahead: a tendency beyond 72 h, close to the season's average beyond 120 h. */
+  reach: "near" | "tendency" | "seasonal"
 }
 
 function mean(values: readonly number[]) {
@@ -316,20 +345,33 @@ export function angleBetween(a: number, b: number) {
   return difference > 180 ? 360 - difference : difference
 }
 
+/** The heaviest model's direction, and the heaviest that clearly differs. */
+function directionOptionsOf(hour: BlendedHour | undefined) {
+  const known = (hour?.models ?? []).flatMap((entry) =>
+    entry.direction === null ? [] : [entry.direction],
+  )
+  const first = known[0]
+  if (first === undefined) return null
+  const second = known.find(
+    (direction) => angleBetween(first, direction) >= SPLIT_RULES.direction,
+  )
+  return second === undefined ? null : ([first, second] as const)
+}
+
 /**
- * A stretch of hours in one line. The range encloses both the models' average
- * band and how the central value moves, so a wind building from 8 to 20 kn
- * never reads as a steady 12-16.
+ * A stretch of hours in one line. The range encloses both the hours' average
+ * range and how the central value moves, so a wind building from 8 to 20 kn
+ * never reads as a steady 12-16; the words on the screen say which it is.
  */
 export function summariseHours(
   hours: readonly BlendedHour[],
 ): WindSummary | null {
-  if (hours.length === 0) return null
+  const firstHour = hours[0]
+  const lastHour = hours[hours.length - 1]
+  if (!firstHour || !lastHour) return null
   const mids = hours.map((hour) => hour.mid)
   const half = Math.max(1, Math.floor(hours.length / 2))
-  const firstMean = mean(mids.slice(0, half))
-  const lastMean = mean(mids.slice(-half))
-  const change = lastMean - firstMean
+  const change = mean(mids.slice(-half)) - mean(mids.slice(0, half))
   const known = hours.flatMap((hour) =>
     hour.direction === null ? [] : [hour.direction],
   )
@@ -339,41 +381,51 @@ export function summariseHours(
   const firstDirection = known[0] ?? null
   const lastDirection = known[known.length - 1] ?? null
   const midMean = mean(mids)
-  const bandMean = mean(hours.map((hour) => hour.high - hour.low))
-  const spreadMean = mean(hours.map((hour) => hour.directionSpread))
   const gusts = hours.flatMap((hour) => (hour.gust === null ? [] : [hour.gust]))
   const waves = hours.flatMap((hour) =>
-    hour.waveHeight === null ? [] : [hour],
+    hour.waveHeight === null ? [] : [hour.waveHeight],
   )
-  const highestWave = waves.reduce<BlendedHour | null>(
-    (best, hour) =>
-      !best || (hour.waveHeight ?? 0) > (best.waveHeight ?? 0) ? hour : best,
-    null,
-  )
-  const low = Math.min(mean(hours.map((hour) => hour.low)), Math.min(...mids))
-  const high = Math.max(mean(hours.map((hour) => hour.high)), Math.max(...mids))
+  const reach =
+    firstHour.lead >= SEASONAL_AFTER_HOURS
+      ? "seasonal"
+      : firstHour.lead >= TENDENCY_AFTER_HOURS
+        ? "tendency"
+        : "near"
+  const split =
+    reach === "near"
+      ? splitOf(
+          mean(hours.map((hour) => hour.modelSpread)),
+          midMean,
+          mean(hours.map((hour) => hour.directionSpread)),
+        )
+      : null
   return {
-    low,
-    high,
+    low: Math.min(mean(hours.map((hour) => hour.low)), Math.min(...mids)),
+    high: Math.max(mean(hours.map((hour) => hour.high)), Math.max(...mids)),
     mid: midMean,
+    firstMid: firstHour.mid,
+    lastMid: lastHour.mid,
     gust: gusts.length ? Math.max(...gusts) : null,
     direction,
     firstDirection,
     lastDirection,
-    agreement: agreementOf(bandMean, midMean, spreadMean),
+    split,
+    directionOptions:
+      split === "direction"
+        ? directionOptionsOf(hours[Math.floor(hours.length / 2)])
+        : null,
     trend: change >= 3 ? "rinforzo" : change <= -3 ? "calo" : "stabile",
     turning:
       firstDirection !== null &&
       lastDirection !== null &&
       angleBetween(firstDirection, lastDirection) >= 40,
-    waveHeight: highestWave?.waveHeight ?? null,
-    wavePeriod: highestWave?.wavePeriod ?? null,
-    thunder: hours.some((hour) => hour.thunder),
-    strongWesterly:
-      direction !== null &&
-      direction >= STRONG_WESTERLY.fromDegrees &&
-      direction <= STRONG_WESTERLY.toDegrees &&
-      high >= STRONG_WESTERLY.minKnots,
+    waveHeight: waves.length ? Math.max(...waves) : null,
+    thunder: hours.some((hour) => hour.thunder === true)
+      ? true
+      : hours.some((hour) => hour.thunder === null)
+        ? null
+        : false,
+    reach,
   }
 }
 
@@ -396,8 +448,15 @@ const COMPASS_16 = [
   "NNW",
 ] as const
 
+const COMPASS_8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const
+
 export function compassPoint(degrees: number) {
   return COMPASS_16[Math.round(((degrees % 360) + 360) / 22.5) % 16]
+}
+
+/** Eight points, for a cell only two letters wide. */
+export function compassPoint8(degrees: number) {
+  return COMPASS_8[Math.round(((degrees % 360) + 360) / 45) % 8]
 }
 
 /** The rose's name for this wind: Maestrale, Ponente, Libeccio... */
@@ -442,16 +501,6 @@ function addDays(date: string, days: number) {
   return value.toISOString().slice(0, 10)
 }
 
-const SESSION_DAY_OFFSET: Readonly<Record<string, number>> = {
-  Sabato: 0,
-  Domenica: 1,
-  Lunedì: 2,
-  Martedì: 3,
-  Mercoledì: 4,
-  Giovedì: 5,
-  Venerdì: 6,
-}
-
 export type WindPeriod = "AM" | "PM"
 
 /** One half-day on the water: a course session, or a plain AM/PM outside it. */
@@ -464,11 +513,11 @@ export type WindSlot = {
 
 export type WindHorizon = "week" | "seven"
 
-type CourseDates = { startDate: string; endDate: string }
+type CourseDates = { startDate: string }
 
 function sessionSlots(course: CourseDates): WindSlot[] {
-  return SESSION_SEQUENCE.map((session) => {
-    const date = addDays(course.startDate, SESSION_DAY_OFFSET[session.day] ?? 0)
+  return SESSION_SEQUENCE.map((session, index) => {
+    const date = addDays(course.startDate, sessionDayOffset(index))
     return {
       key: `${date}-${session.period}`,
       date,
@@ -535,6 +584,21 @@ export function defaultHorizon(course: CourseDates, now: number): WindHorizon {
     addDays(today, 7) >= course.startDate
     ? "week"
     : "seven"
+}
+
+/**
+ * The half-day being decided: the next one in the default horizon. In a session's
+ * last hour that is already the following one, because the boats are coming in.
+ */
+export function nextDecisionSlot(course: CourseDates, now: number): WindSlot {
+  const slots = slotsForHorizon(defaultHorizon(course, now), course, now)
+  const ordered =
+    slots.length > 0 ? slots : slotsForHorizon("seven", course, now)
+  const first = ordered[0] as WindSlot
+  const inLastHour =
+    slotInProgress(first, now) &&
+    romeClock(now).hour >= WIND_SESSION_HOURS[first.period].end - 1
+  return inLastHour ? (ordered[1] ?? first) : first
 }
 
 export function hoursInSlot(

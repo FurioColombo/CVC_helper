@@ -87,10 +87,9 @@ import {
 } from "@/persistence/localDataOperations"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
-import {
-  WeatherHomeCard,
-  WeatherScreen,
-} from "@/features/weather/WeatherScreen"
+import { WeatherBoundary } from "@/features/weather/WeatherBoundary"
+import { WeatherHomeCard } from "@/features/weather/WeatherHomeCard"
+import { WeatherScreen } from "@/features/weather/WeatherScreen"
 import {
   getActiveCourses,
   saveActiveCourse,
@@ -519,7 +518,9 @@ function Home({
         </h1>
       </section>
 
-      <WeatherHomeCard course={course} onOpen={() => onNavigate("weather")} />
+      <WeatherBoundary fallback={null}>
+        <WeatherHomeCard course={course} onOpen={() => onNavigate("weather")} />
+      </WeatherBoundary>
 
       <section aria-label="Aree del corso">
         <div className="grid grid-cols-2 gap-2.5">
@@ -858,7 +859,24 @@ function AppShell({
           />
         )}
         {view === "weather" && (
-          <WeatherScreen course={course} onHome={() => goBack("home")} />
+          <WeatherBoundary
+            fallback={
+              <section className="rounded-2xl border bg-card p-4" role="alert">
+                <p className="m-0 text-base">
+                  Le previsioni non si sono aperte e sono state tolte dal
+                  telefono. Il corso non è toccato.
+                </p>
+                <Button
+                  className="mt-3 min-h-11 w-full"
+                  onClick={() => goBack("home")}
+                >
+                  Torna alla Home
+                </Button>
+              </section>
+            }
+          >
+            <WeatherScreen course={course} onHome={() => goBack("home")} />
+          </WeatherBoundary>
         )}
         {view === "boats" && (
           <BoatManagement course={course} onHome={() => goBack("home")} />

@@ -6,7 +6,7 @@ import type { CourseFamily } from "@/domain/config"
  * docs/working/WEATHER_PROPOSAL.md and docs/working/weather-backtest.json.
  */
 
-export type WindPoint = {
+type WindPoint = {
   id: string
   label: string
   latitude: number
@@ -28,6 +28,8 @@ export const WIND_ZONES: Readonly<
       description: string
       centre: { latitude: number; longitude: number }
       points: readonly WindPoint[]
+      /** Open-sea waves say little inside Cala Fico, so Derive does not ask. */
+      waves: boolean
     }
   >
 > = {
@@ -35,6 +37,7 @@ export const WIND_ZONES: Readonly<
     label: "Derive",
     description: "Cala Fico, Isola del Porco, Punta Rossa",
     centre: { latitude: 41.172, longitude: 9.466 },
+    waves: false,
     points: [
       {
         id: "cala-fico",
@@ -60,6 +63,7 @@ export const WIND_ZONES: Readonly<
     label: "Cabinati",
     description: "Caprera, La Maddalena, Spargi, Cannigione, Liscia di Vacca",
     centre: { latitude: 41.2, longitude: 9.43 },
+    waves: true,
     points: [
       { id: "spargi", label: "Spargi", latitude: 41.24, longitude: 9.325 },
       {
@@ -83,8 +87,8 @@ export const WIND_ZONES: Readonly<
       {
         id: "liscia-di-vacca",
         label: "Liscia di Vacca",
-        latitude: 41.14,
-        longitude: 9.535,
+        latitude: 41.148,
+        longitude: 9.53,
       },
       {
         id: "cannigione",
@@ -111,100 +115,78 @@ export const WIND_SESSION_HOURS = {
 
 export const WIND_FORECAST_DAYS = 8
 
-/** Lead-time bucket limits, in hours; the last bucket is open-ended. */
-export const LEAD_BUCKET_HOURS = [24, 48, 72, 120] as const
+/**
+ * Hours ahead each weight below applies to. Between two anchors a weight moves
+ * in a straight line, so the blend never steps when only the clock has moved.
+ */
+export const LEAD_ANCHOR_HOURS = [12, 36, 60, 96, 144] as const
 
 /** A run fades over its last hours, so the blend does not step when it ends. */
 export const MODEL_END_TAPER_HOURS = 6
 
-export type WindModelFamily =
-  "meteo-france" | "icon" | "ecmwf" | "ncep" | "ukmo"
+type WindModelFamily = "meteo-france" | "icon" | "ecmwf" | "ncep"
 
 /**
- * `weights` follow the lead buckets: 0-24 h, 24-48, 48-72, 72-120, 120+.
- * Each is the model's share of 1/MAE² in the backtest, rounded. Where the
- * archive holds no score for a bucket the model reaches, the value extends its
- * last score (the proposal lists which). AROME HD scored the same as AROME at
- * the airports and leads it only on the prior that 1.3 km sees the islands
- * better. A zero means the model does not reach that bucket.
+ * Judgement informed by scores, not a formula: the shares of 1/MAE² on sea cells
+ * at Cap Pertusato and La Chiappa (docs/working/weather-backtest.json), rounded
+ * coarsely because they barely move the median. A zero means the model does not
+ * reach that lead. AROME 2.5 km is left out as the same run as AROME HD on another
+ * grid, and UKMO because its CC BY-SA terms would reach the blend; the proposal's
+ * section 4 gives what each costs.
  */
 export const WIND_MODELS = [
   {
     id: "meteofrance_arome_france_hd",
     label: "AROME HD",
-    provider: "Météo-France",
     gridKm: 1.3,
     family: "meteo-france",
-    weights: [18, 17, 0, 0, 0],
-  },
-  {
-    id: "meteofrance_arome_france",
-    label: "AROME",
-    provider: "Météo-France",
-    gridKm: 2.5,
-    family: "meteo-france",
-    weights: [14, 15, 0, 0, 0],
+    weights: [30, 25, 0, 0, 0],
   },
   {
     id: "italia_meteo_arpae_icon_2i",
     label: "ICON-2I",
-    provider: "ItaliaMeteo-ARPAE",
     gridKm: 2,
     family: "icon",
-    weights: [14, 14, 20, 0, 0],
+    weights: [15, 15, 20, 0, 0],
   },
   {
     id: "meteofrance_arpege_europe",
     label: "ARPEGE",
-    provider: "Météo-France",
     gridKm: 11,
     family: "meteo-france",
-    weights: [14, 13, 20, 15, 0],
+    weights: [15, 15, 20, 20, 0],
   },
   {
     id: "icon_eu",
     label: "ICON-EU",
-    provider: "DWD",
     gridKm: 7,
     family: "icon",
-    weights: [10, 10, 15, 17, 0],
+    weights: [10, 10, 15, 15, 0],
   },
   {
     id: "ecmwf_ifs",
     label: "IFS",
-    provider: "ECMWF",
     gridKm: 9,
     family: "ecmwf",
-    weights: [9, 9, 14, 20, 26],
+    weights: [15, 15, 20, 30, 40],
   },
   {
     id: "ecmwf_aifs025_single",
     label: "AIFS",
-    provider: "ECMWF",
     gridKm: 25,
     family: "ecmwf",
-    weights: [6, 6, 9, 14, 21],
+    weights: [5, 8, 10, 15, 20],
   },
   {
     id: "gfs_global",
     label: "GFS",
-    provider: "NOAA",
     gridKm: 25,
     family: "ncep",
-    weights: [8, 8, 11, 18, 29],
-  },
-  {
-    id: "ukmo_global_deterministic_10km",
-    label: "UKMO",
-    provider: "Met Office",
-    gridKm: 10,
-    family: "ukmo",
-    weights: [6, 7, 10, 16, 24],
+    weights: [10, 12, 15, 20, 25],
   },
 ] as const satisfies readonly {
   id: string
   label: string
-  provider: string
   gridKm: number
   family: WindModelFamily
   weights: readonly [number, number, number, number, number]
@@ -213,39 +195,61 @@ export const WIND_MODELS = [
 export type WindModelId = (typeof WIND_MODELS)[number]["id"]
 
 /**
- * No family of related runs may decide alone. Checked on these tables by test;
- * the ensemble is outside it, being a different kind of evidence.
+ * No family decides alone while the islands can still be seen: checked by test
+ * up to 72 h, the ensemble included. Beyond that the forecast is mostly ECMWF on
+ * purpose, because IFS scores best there on sea cells.
  */
 export const FAMILY_MAX_SHARE = 0.5
+export const FAMILY_CAP_UNTIL_HOURS = 72
 
 /**
- * ECMWF's 51-member median, by the same buckets. Not scored by the backtest
- * (its archive keeps no ensemble), so this is a prior: ensemble medians beat
- * single runs at long range. It steers days 4-7 and leaves the short range to
- * the models that can see the islands.
+ * ECMWF's 51-member median, at the same anchors. Not scored (the archive keeps no
+ * ensemble), so this is a prior: ensemble medians beat single runs at long range.
  */
 export const ENSEMBLE_WEIGHTS = [0, 0, 5, 30, 45] as const
+/** Its spread widens the band gradually, not all at once at its first weight. */
+export const ENSEMBLE_WIDENING_HOURS = { from: 48, to: 72 } as const
 
-export const AGREEMENT_RULES = {
+/**
+ * The real wind leaves the models' 20-80 band about half the time, under
+ * agreement too. The range shown is at least this far either side of the expected
+ * value; the proposal's section 4 gives how often it holds the wind.
+ */
+export const RANGE_MIN_HALF_WIDTH_KNOTS = 3
+
+/**
+ * The highest model gust, or the band's top scaled up if that is higher, because
+ * every model under-reads gusts on sea cells. Beyond the last lead the few runs
+ * left cannot make a gust number, so none is shown.
+ */
+export const GUST_RULE = { bandFactor: 1.5, lastLeadHours: 120 } as const
+
+export const SPLIT_RULES = {
   // Band as wide as this, or directions this far apart: the models are divided.
-  low: { minKnots: 7, ratio: 0.5, direction: 45 },
-  high: { minKnots: 3.5, ratio: 0.25, direction: 25 },
+  minKnots: 7,
+  ratio: 0.5,
+  direction: 45,
   directionMatters: 6,
   variableBelowKnots: 3,
   variableSpread: 75,
 } as const
 
+/** From here a half-day is a tendency: no split mark, the number carries a ~. */
+export const TENDENCY_AFTER_HOURS = 72
+/** From here single runs do little better than the season's average (backtest). */
+export const SEASONAL_AFTER_HOURS = 120
+
 /**
- * Every model read low in strong westerlies at Figari and Olbia, June-October
- * 2026 (backtest): the screen says so when one is forecast. Below 15 kn the
- * bias is small enough to leave unsaid. No correction is applied, because an
- * airport's bias is not proven to hold on the water.
+ * The week grid's one-blue tint, by expected wind: sensing the week at a glance.
+ * Never alone: every cell prints its number.
  */
-export const STRONG_WESTERLY = {
-  fromDegrees: 240,
-  toDegrees: 345,
-  minKnots: 15,
-} as const
+export const WIND_TINTS = [
+  { fromKnots: 0, background: "transparent", color: "var(--foreground)" },
+  { fromKnots: 11, background: "#e8eef6", color: "var(--foreground)" },
+  { fromKnots: 17, background: "#cfdff2", color: "var(--foreground)" },
+  { fromKnots: 22, background: "#a9c4e6", color: "var(--foreground)" },
+  { fromKnots: 28, background: "#2f5fa0", color: "#ffffff" },
+] as const
 
 /** Minimum knots of Beaufort forces 0-12. */
 export const BEAUFORT_MIN_KNOTS = [
@@ -265,8 +269,8 @@ export const WIND_NAMES = [
 ] as const
 
 /**
- * LaMMA's own map: WW3 forced by MOLOCH at 1.5 km, from ECMWF, over Bonifacio.
- * It covers the whole sailing area on one image. LaMMA publishes no point
+ * LaMMA's own map: WW3 forced by its MOLOCH run from ECMWF, over Bonifacio. The
+ * grid size is left unsaid until LaMMA confirms it (proposal section 7). It covers the whole sailing area on one image. LaMMA publishes no point
  * values a browser can read, so it stands beside the blend, unaltered (CC BY-ND).
  */
 export const LAMMA_MAP = {
@@ -281,6 +285,11 @@ export const LAMMA_MAP = {
 
 export const WEATHER_LINKS = [
   {
+    label: "Meteomar",
+    detail: "Bollettino ufficiale",
+    url: "https://www.meteoam.it/it/meteomar",
+  },
+  {
     label: "LaMMA",
     detail: "Vento e mare, costa",
     url: LAMMA_MAP.pageUrl,
@@ -292,12 +301,14 @@ export const WEATHER_LINKS = [
   },
   {
     label: "Windfinder",
-    detail: "La Maddalena",
-    url: "https://www.windfinder.com/forecast/la_maddalena",
-  },
-  {
-    label: "Meteomar",
-    detail: "Bollettino ufficiale",
-    url: "https://www.meteoam.it/it/meteomar",
+    detail: "La Maddalena, Superforecast",
+    url: "https://www.windfinder.com/weatherforecast/la_maddalena",
   },
 ] as const
+
+export const DATA_CREDIT = {
+  provider: "Open-Meteo.com",
+  providerUrl: "https://open-meteo.com/",
+  licence: "CC BY 4.0",
+  licenceUrl: "https://creativecommons.org/licenses/by/4.0/",
+} as const
