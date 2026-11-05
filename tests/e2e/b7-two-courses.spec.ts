@@ -1158,12 +1158,15 @@ test("two tabs opening on both courses at once both reach the choice", async ({
   page,
   context,
 }) => {
+  // Measured on WebKit: about 60 s to set up, 25-29 s for the second tab's first
+  // open (10 of 10 reached it; one tab takes about 8 s), 17 s for each round.
+  test.setTimeout(240_000)
   const backend = await withBackend(page)
   await twoCourses(page, backend)
   const second = await context.newPage()
   await withBackend(second)
   await second.goto("/")
-  await expect(choiceHeading(second)).toBeVisible()
+  await expect(choiceHeading(second)).toBeVisible({ timeout: 60_000 })
   for (let round = 0; round < 4; round += 1) {
     await page.evaluate(async () => {
       const load = (path: string) => import(/* @vite-ignore */ path)

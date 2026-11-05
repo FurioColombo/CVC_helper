@@ -44,11 +44,13 @@
     "All four reviewers' reports for rounds 1, 2 and 3 in .evidence/B7/; round 3 verdicts are PASS_WITH_FINDINGS with no blockers, at 0846030.",
     "The fixes after 0846030 are small and were not re-reviewed: wording of the reset and the swap notice, when that notice clears, the disabled colour and the sort order. The keep rule's check itself did not change. Covered by tests/e2e/b7-two-courses.spec.ts, src/persistence/courseFingerprint.test.ts and the Postgres harness.",
     "Each line of the 04 B7 adversarial checklist: two courses reached offline (live spec, reviewers' S1); both devices choosing differently (200 races, keep-rule harness); a choice interrupted (keepAnswer lost and hang in the spec); read-only and signed-out devices, three courses, unsent changes (spec and reviewers). A new empty device and an import after a lost erase answer are from the reviewers' scenarios and the reasoning that the session binds no course.",
-    "One unexplained failure: 'keeping one opens it with every row' reopened on Allievi once in a run where I edited Markdown files; 4 of 4 alone afterwards. Filed as a flake in docs/working/BACKLOG.md. Data integrity saw a different failure of that spec under load (line 422), also attributed to load without proof."
+    "One unexplained failure: 'keeping one opens it with every row' reopened on Allievi once in a run where I edited Markdown files; 4 of 4 alone afterwards. Filed as a flake in docs/working/BACKLOG.md. Data integrity saw a different failure of that spec under load (line 422), also attributed to load without proof.",
+    "The recorded run at 67cb7fc failed one test: 'two tabs opening on both courses at once both reach the choice' on WebKit, twice. It is the test's limits, not a hang: alone it failed 4 of 4 at 120 s, passed 3 of 4 at 400 s with one second tab past the 30 s step limit, and in a 10-run diagnostic the second tab opened every time in 25-29 s. The test now has 240 s and 60 s for that first open, and passed the repeats recorded with this change. The test was never run on WebKit before this run, in three review rounds."
   ],
   "limitations": [
     "Not run on the live backend, on PostgREST or on a real stream until B7-KEEP-RULE; no physical device until B7-PHONE-CHOICE. Only the owner's run can pass those.",
     "The reset's first screen after a reset still says 'Il corso' in the singular.",
-    "Decision 23 waits for the owner's reading."
+    "Decision 23 waits for the owner's reading.",
+    "A second tab on WebKit takes 25-29 s to open where one takes about 8. Measured on the Windows test engine, not on an iPhone; cause unproven; in docs/working/BACKLOG.md."
   ]
 }

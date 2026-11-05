@@ -122,8 +122,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `f1-navigation-guards.spec.ts › phone Back holds Valutazioni while a note is open`
   — WebKit, B3's run: no course heading in 30 s; 5 isolated runs passed. Cause unproven.
 
-- B3 FUX-B3-R4-Q1 (unconfirmed): two tabs on WebKit stayed on "Apertura del corso…"
-  after the launch switch, 2 of 4 runs; `b3-backup-ui` 16/16. Add a case if it recurs.
+- B3 FUX-B3-R4-Q1, B7: a second tab on WebKit opens in 25-29 s, one tab in about 8
+  (Windows test engine; 10/10 opened, none hung). Cause unproven; not seen on a phone.
 
 - `b7-two-courses.spec.ts › two courses open on the choice, and keeping one opens it with every row`
   — Chrome, B7: reopened on Allievi, not Home, so a reload kept the old history entry. 4/4 alone.
