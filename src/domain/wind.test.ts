@@ -411,7 +411,14 @@ describe("blendForecast", () => {
       forecastOf({ ecmwf_ifs: series(48, 10) }),
       THURSDAY_9 + 5 * HOUR,
     )
-    expect(hours[0]!.time).toBe(THURSDAY_9 + 4 * HOUR)
+    expect(hours[0]!.time).toBe(THURSDAY_9 + 5 * HOUR)
+    // Part way through an hour, that hour is still the first one.
+    expect(
+      blendForecast(
+        forecastOf({ ecmwf_ifs: series(48, 10) }),
+        THURSDAY_9 + 5.5 * HOUR,
+      )[0]!.time,
+    ).toBe(THURSDAY_9 + 5 * HOUR)
   })
 
   it("does not jump when a high-resolution run ends", () => {
