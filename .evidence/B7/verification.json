@@ -1,0 +1,54 @@
+{
+  "milestone": "B7",
+  "status": "PASS",
+  "recordedAt": "2026-11-05T03:30:58.296Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.5.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "08b3eaea06d57da9ac773e2253b7f930d5450168",
+  "workingTreeClean": true,
+  "sourceDigest": "03e54e95ce009ff02cfbb55912e71ae4eb254fe5d4c7ac3140ca9cca9f50c117",
+  "sourceFiles": 505,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/b7-two-courses.spec.ts",
+    "tests/e2e/b7-two-courses-live.spec.ts",
+    "tests/e2e/b6-erase.spec.ts",
+    "tests/e2e/b6-erase-live.spec.ts",
+    "tests/e2e/b5-restore.spec.ts",
+    "tests/e2e/b5-restore-live.spec.ts",
+    "tests/e2e/b4-uploads.spec.ts",
+    "tests/e2e/b1-sync-mode.spec.ts",
+    "tests/e2e/d3-read-only.spec.ts",
+    "tests/e2e/d4-course-files.spec.ts",
+    "tests/e2e/d4-local-reset.spec.ts"
+  ],
+  "flakyTests": [
+    {
+      "file": "b7-two-courses.spec.ts",
+      "title": "two courses open on the choice, and keeping one opens it with every row",
+      "project": "iphone-13-webkit-core"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "startedAt": "2026-11-05T02:13:58.878Z",
+      "durationMs": 246506,
+      "exitCode": 0,
+      "outputTail": "Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:\n  - vite-plugin-pwa:build closeBundle (100%, 19.2s, 1 call)\n  - vite-plugin-pwa load (12%, 1.3s, 1 call)\n  - @tailwindcss/vite:generate:build transform (11%, 1.1s, 1 call)\nThose rows are 100% of the build; the rest of the 100% is below.\nNot measurable — 3 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:\n  - vite:asset load (5 calls)\n  - vite:asset-import-meta-url transform (5 calls)\n  - vite:worker-import-meta-url transform (2 calls)\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\n\u001b[39m\nPASS: built PWA manifest, icons, service worker, 5 precached OCR assets and 8 precached brand images, no test hook"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "startedAt": "2026-11-05T02:18:05.386Z",
+      "durationMs": 4372903,
+      "exitCode": 0,
+      "outputTail": "\n    Error: ENOSPC: no space left on device, write\n\n  Slow test file: [iphone-13-webkit-core] › tests\\e2e\\b6-erase.spec.ts (8.5m)\n  Slow test file: [pixel-7-chrome] › tests\\e2e\\b7-two-courses.spec.ts (6.6m)\n  Slow test file: [desktop-chrome-backup] › tests\\e2e\\b7-two-courses.spec.ts (6.2m)\n  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel\n  1 flaky\n    [iphone-13-webkit-core] › tests\\e2e\\b7-two-courses.spec.ts:357:1 › two courses open on the choice, and keeping one opens it with every row \n  10 skipped\n  221 passed (1.2h)\nFLAKY: b7-two-courses.spec.ts › two courses open on the choice, and keeping one opens it with every row [iphone-13-webkit-core]"
+    }
+  ]
+}

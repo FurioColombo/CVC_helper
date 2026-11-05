@@ -126,7 +126,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   (Windows test engine; 10/10 opened, none hung). Cause unproven; not seen on a phone.
 
 - `b7-two-courses.spec.ts › two courses open on the choice, and keeping one opens it with every row`
-  — Chrome, B7: reopened on Allievi, not Home, so a reload kept the old history entry. 4/4 alone.
+  — B7: Chrome reopened on Allievi; WebKit opened no course in 15 s with the disk full (ENOSPC). Unproven.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.

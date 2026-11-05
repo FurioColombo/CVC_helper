@@ -31,7 +31,7 @@ by `verify:all`, the reviews below and the owner's Android check.
 | B4 | Awaiting the owner's recheck on CVC Helper Test 0.5.3, CI green at `6e17c1d`: on the phone the status follows the uploads; the PC step found desktop never synced, fixed with sync in each tab. The desktop review's third round failed on a defect split to B7 (owner decision 20). See `.evidence/B4/`. |
 | B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reverified on the code of CVC Helper Test 0.5.3 after B4's desktop fixes. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 | B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
-| B7 | Pending, split from B4 by owner decision 20: an account with two courses locks every device. |
+| B7 | Built, reviewed, evidence recorded at `08b3eae`. Waits for full CI (blocked by GitHub billing) and the owner's `B7-KEEP-RULE`; then the live spec, a test build and `B7-PHONE-CHOICE`. |
 
 ## Execution order
 
