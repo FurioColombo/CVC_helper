@@ -101,6 +101,13 @@ export function updatedText(fetchedAt: number, now: number) {
   return `Dati di ${weekday} alle ${time}`
 }
 
+/** The age beside a refresh running or failed, where "Aggiornato" would be false. */
+export function dataAgeText(fetchedAt: number, now: number) {
+  return now - fetchedAt < 6 * 3600
+    ? `Dati delle ${clock.format(new Date(fetchedAt * 1000))}`
+    : updatedText(fetchedAt, now)
+}
+
 /** Short enough for Home's small line. */
 export function ageForStrip(fetchedAt: number, now: number) {
   const days = dayNumber(now) - dayNumber(fetchedAt)
@@ -116,15 +123,25 @@ export function summaryInWords(summary: WindSummary) {
   return `${directionText(summary.direction)} ${tilde}${formatKnots(summary.mid)} nodi${gust}`
 }
 
-/** What the models are divided over and what to do with it; null when they agree. */
+/** One whole reading for a name or an announcement: nothing the eye gets is left out. */
+export function spokenSummary(summary: WindSummary) {
+  return (
+    `${summaryInWords(summary)}.` +
+    (summary.thunder ? " Temporali possibili." : "") +
+    (summary.split ? " Modelli divisi." : "") +
+    (summary.reach === "near" ? "" : " Solo una tendenza.")
+  )
+}
+
+/** What the models are divided over, in the numbers each camp says; null when they agree. */
 export function splitText(summary: WindSummary) {
   if (summary.split === "speed") {
-    return `Modelli divisi sulla forza, tra ${formatKnots(summary.low)} e ${formatKnots(summary.high)}: preparati per ${formatKnots(summary.high)}`
+    return `Modelli divisi sulla forza: tra ${formatKnots(summary.low)} e ${formatKnots(summary.high)}, e può superare ${formatKnots(summary.high)}`
   }
   if (summary.split === "direction") {
-    return summary.directionOptions
-      ? `Modelli divisi sulla direzione: ${compassPoint(summary.directionOptions[0])} o ${compassPoint(summary.directionOptions[1])}`
-      : "Modelli divisi sulla direzione"
+    if (!summary.directionOptions) return "Modelli divisi sulla direzione"
+    const [first, second] = summary.directionOptions
+    return `Modelli divisi: ${compassPoint(first.direction)} ${formatKnots(first.speed)} o ${compassPoint(second.direction)} ${formatKnots(second.speed)}`
   }
   return null
 }
@@ -140,6 +157,11 @@ export function changeText(summary: WindSummary) {
     )
   }
   return parts.length === 0 ? null : capitalised(parts.join("; "))
+}
+
+/** Red only for thunder, except where red cannot be seen: white on the darkest tint. */
+export function thunderColor(tint: (typeof WIND_TINTS)[number]) {
+  return tint.color === "#ffffff" ? tint.color : "#b42318"
 }
 
 export function tintFor(knots: number) {

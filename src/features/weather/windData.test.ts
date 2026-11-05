@@ -134,6 +134,24 @@ describe("parseForecast", () => {
       },
     ],
     [
+      "hours not an hour apart",
+      {
+        hourly: {
+          time: [NOW, NOW + 86_400, NOW + 172_800],
+          wind_speed_10m_ecmwf_ifs: [1, 2, 3],
+        },
+      },
+    ],
+    [
+      "hours all in the past",
+      {
+        hourly: {
+          time: [NOW - 7200, NOW - 3600],
+          wind_speed_10m_ecmwf_ifs: [1, 2],
+        },
+      },
+    ],
+    [
       "hours out of order",
       {
         hourly: {
@@ -282,6 +300,29 @@ describe("downloadWindForecast", () => {
       previous,
     })
     expect(forecast.sky?.code).toEqual([95, 2, null])
+  })
+
+  it("does not let an old sky pass for today's", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input.includes("models=") && !input.includes("ensemble-api")) {
+          return new Response(JSON.stringify(forecastPayload))
+        }
+        throw new Error("no signal")
+      }),
+    )
+    const previous = {
+      fetchedAt: NOW - 8 * 3600,
+      times: [NOW, NOW + 3600, NOW + 7200],
+      points: {},
+      sky: { code: [1, 1, 1] },
+    }
+    const forecast = await downloadWindForecast("cabinati", {
+      ...options,
+      previous,
+    })
+    expect(forecast.sky).toBeUndefined()
   })
 
   it("fails when the wind itself fails", async () => {

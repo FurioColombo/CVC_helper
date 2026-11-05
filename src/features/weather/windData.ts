@@ -83,7 +83,7 @@ function saneTimes(value: unknown, now: number): value is readonly number[] {
       typeof time === "number" &&
       Number.isInteger(time) &&
       Math.abs(time - now) <= SANE_TIME_WINDOW_SECONDS &&
-      (index === 0 || time > (value[index - 1] as number)),
+      (index === 0 || time === (value[index - 1] as number) + 3600),
   )
 }
 
@@ -165,6 +165,8 @@ export function parseForecast(
   const { points } = WIND_ZONES[zoneId]
   const times = locations[0]?.hourly?.time
   if (!saneTimes(times, fetchedAt)) throw new Error("risposta senza ore valide")
+  // A well-formed answer about the past would replace a good copy with nothing.
+  if ((times.at(-1) ?? 0) < fetchedAt) throw new Error("risposta senza futuro")
   const parsed: Record<string, Partial<Record<WindModelId, ModelSeries>>> = {}
   points.forEach((point, index) => {
     const hourly = locations[index]?.hourly
@@ -251,6 +253,8 @@ function hourlyOf(payload: unknown) {
   return (payload as OpenMeteoResponse | null)?.hourly ?? null
 }
 
+const CARRY_EXTRAS_FOR_SECONDS = 6 * 3600
+
 async function secondary<T>(
   run: (signal: AbortSignal) => Promise<T | undefined>,
   outer: AbortSignal,
@@ -306,12 +310,13 @@ export async function downloadWindForecast(
     AbortSignal.any([abort, AbortSignal.timeout(PRIMARY_TIMEOUT_MS)]),
   )
   const wind = parseForecast(zoneId, payload, now())
-  const carriedSky = carriedOver(wind.times, previous, previous?.sky?.code)
-  const carriedWaves = carriedOver(
-    wind.times,
-    previous,
-    previous?.waves?.height,
-  )
+  // A sky older than this must not pass for today's: better to say it is unknown.
+  const recent =
+    previous && now() - previous.fetchedAt < CARRY_EXTRAS_FOR_SECONDS
+      ? previous
+      : null
+  const carriedSky = carriedOver(wind.times, recent, recent?.sky?.code)
+  const carriedWaves = carriedOver(wind.times, recent, recent?.waves?.height)
   const withCarried: WindForecast = {
     ...wind,
     ...(carriedSky ? { sky: { code: carriedSky } } : {}),
@@ -355,7 +360,7 @@ export async function downloadWindForecast(
 // back is checked as strictly as what came from the provider: another page on
 // the origin, a wrong clock or an older version may have written it.
 
-function cacheKey(zoneId: WindZoneId) {
+export function cacheKey(zoneId: WindZoneId) {
   return `${appChannelConfig.weatherCachePrefix}${CACHE_VERSION}.${zoneId}`
 }
 

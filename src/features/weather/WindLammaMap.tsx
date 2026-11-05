@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { romeClock, type WindSlot } from "@/domain/wind"
 import { WIND_SESSION_HOURS } from "@/domain/windConfig"
@@ -28,6 +28,27 @@ function slotMiddle(slot: WindSlot) {
   return noon + (Math.round((start + end) / 2) - romeClock(noon).hour) * 3600
 }
 
+/** True once the box nears the screen: a tap above must not spend the phone's data. */
+function useNearScreen() {
+  const box = useRef<HTMLDivElement>(null)
+  const [near, setNear] = useState(
+    () => typeof IntersectionObserver === "undefined",
+  )
+  useEffect(() => {
+    const element = box.current
+    if (near || !element) return undefined
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true)
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near])
+  return { box, near }
+}
+
 /**
  * Keyed by session by its parent, so a new session starts at that session's hour.
  * The run is fixed for the map's life: recomputing it on the clock would move the
@@ -48,6 +69,7 @@ export function WindLammaMap({
   const [target] = useState(() => (slotMiddle(slot) - run) / 3600)
   const [step, setStep] = useState(() => lammaStepFromHours(target))
   const [failed, setFailed] = useState(false)
+  const { box, near } = useNearScreen()
 
   const valid = run + lammaHoursFromStep(step) * 3600
   const time = `circa ${lammaLabel.format(new Date(valid * 1000))}`
@@ -68,7 +90,11 @@ export function WindLammaMap({
       className="scroll-mt-3"
       id="mappa-lamma"
     >
-      <h2 className="m-0 mb-2 text-base font-black" id="wind-lamma">
+      <h2
+        className="m-0 mb-2 text-base font-black outline-none"
+        id="wind-lamma"
+        tabIndex={-1}
+      >
         Mappa LaMMA
       </h2>
       {beyondReach && (
@@ -80,13 +106,21 @@ export function WindLammaMap({
           : {slotLabel(slot)} è oltre.
         </p>
       )}
-      <div className="-mx-5 max-[350px]:-mx-[12px]">
-        {failed ? (
-          <p className="m-0 bg-muted p-4 text-sm" role="status">
+      <div
+        aria-live="polite"
+        className="-mx-5 max-[350px]:-mx-[12px]"
+        ref={box}
+      >
+        {failed && (
+          <p className="m-0 bg-muted p-4 text-sm">
             Mappa non caricata: serve la rete, o LaMMA non l&apos;ha pubblicata.
             Prova un&apos;altra ora.
           </p>
-        ) : (
+        )}
+        {!failed && !near && (
+          <div className="aspect-[1168/820] w-full bg-muted" />
+        )}
+        {!failed && near && (
           <a
             aria-label={`Mappa LaMMA di ${fieldName} sulle Bocche di Bonifacio, ${time}: apri l'immagine, nuova scheda`}
             className="block outline-none focus-visible:ring-3 focus-visible:ring-ring"
@@ -96,7 +130,7 @@ export function WindLammaMap({
           >
             <img
               alt=""
-              className="block aspect-square h-auto w-full bg-muted"
+              className="block aspect-[1168/820] h-auto w-full bg-muted"
               decoding="async"
               loading="lazy"
               onError={() => setFailed(true)}

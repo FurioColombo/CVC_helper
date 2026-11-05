@@ -170,6 +170,8 @@ export const WIND_MODELS = [
     family: "ecmwf",
     weights: [15, 15, 20, 30, 40],
   },
+  // GFS stays above AIFS at 144 h though AIFS scored better near there: AIFS's
+  // smooth forecasts flatter a mean-error score. A judgement, not a measurement.
   {
     id: "ecmwf_aifs025_single",
     label: "AIFS",
@@ -212,17 +214,20 @@ export const ENSEMBLE_WIDENING_HOURS = { from: 48, to: 72 } as const
 
 /**
  * The real wind leaves the models' 20-80 band about half the time, under
- * agreement too. The range shown is at least this far either side of the expected
- * value; the proposal's section 4 gives how often it holds the wind.
+ * agreement too, and the error grows with the wind. The range shown is at least
+ * this far either side of the expected value; the proposal's section 4 gives how
+ * often it holds, by strength. Tuned on the season it is scored on.
  */
-export const RANGE_MIN_HALF_WIDTH_KNOTS = 3
+export const RANGE_HALF_WIDTH = { minKnots: 3, ofExpected: 0.3 } as const
 
 /**
- * The highest model gust, or the band's top scaled up if that is higher, because
- * every model under-reads gusts on sea cells. Beyond the last lead the few runs
- * left cannot make a gust number, so none is shown.
+ * The highest model gust, or a multiple of the expected wind if that is higher,
+ * because every model under-reads gusts on sea cells and more so in strong wind.
+ * The multiple comes from headland peaks and may read high over water. Tuned on
+ * the season it is scored on. Beyond the last lead the few runs left cannot make
+ * a gust number, so none is shown.
  */
-export const GUST_RULE = { bandFactor: 1.5, lastLeadHours: 120 } as const
+export const GUST_RULE = { ofExpected: 2, lastLeadHours: 120 } as const
 
 export const SPLIT_RULES = {
   // Band as wide as this, or directions this far apart: the models are divided.
@@ -236,7 +241,7 @@ export const SPLIT_RULES = {
 
 /** From here a half-day is a tendency: no split mark, the number carries a ~. */
 export const TENDENCY_AFTER_HOURS = 72
-/** From here single runs do little better than the season's average (backtest). */
+/** From here single runs do little better than a constant season mean (backtest). */
 export const SEASONAL_AFTER_HOURS = 120
 
 /**
@@ -245,8 +250,8 @@ export const SEASONAL_AFTER_HOURS = 120
  */
 export const WIND_TINTS = [
   { fromKnots: 0, background: "transparent", color: "var(--foreground)" },
-  { fromKnots: 11, background: "#e8eef6", color: "var(--foreground)" },
-  { fromKnots: 17, background: "#cfdff2", color: "var(--foreground)" },
+  { fromKnots: 11, background: "#dde8f5", color: "var(--foreground)" },
+  { fromKnots: 17, background: "#c3d6ee", color: "var(--foreground)" },
   { fromKnots: 22, background: "#a9c4e6", color: "var(--foreground)" },
   { fromKnots: 28, background: "#2f5fa0", color: "#ffffff" },
 ] as const

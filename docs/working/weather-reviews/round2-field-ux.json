@@ -1,0 +1,401 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "none: proposed WX1, side branch claude/weather-section",
+  "round": 2,
+  "commit": "01e1ca0",
+  "verdict": "FAIL",
+  "verdictNote": "All four earlier blockers are fixed and the screen is much better for the hurried reader. Two new blockers came from the rework: the LaMMA map is stretched, and the week grid can split a wind number across two lines. Each is a one-line fix. Neither shows in the supplied screens: the stub map is one pixel, and the fixture has no '~' value of 20 or more. As in round 1, Vento has no spec or milestone, so blockers are measured against the proposal's own contract and the brief's test: would it mislead or block real use.",
+  "dispositions": {
+    "summary": "Earlier blockers: 4 fixed, 0 open. Earlier important findings: 18 fixed, 11 fixed in the main with a residual or a deferred part, 0 wholly open. Status comes from code, screens or my own browser runs, not from proposal §10.",
+    "blockers": [
+      {
+        "id": "FUX-1",
+        "status": "FIXED",
+        "evidence": "WeatherHomeCard.tsx:75-98; home-dati-vecchi.png. T4: 'Vento · Dom AM · dati di ieri 09:00' at 23 h. Past 24 h the number goes and the line says 'Dati vecchi: tocca per aggiornare'."
+      },
+      {
+        "id": "FUX-2",
+        "status": "FIXED, with residuals",
+        "evidence": "Extras have their own 15 s clock (windData.ts:26,259). The hero renders on the primary (onWind, windData.ts:320). An unknown sky says 'Temporali: dato non scaricato' (T16). Home shows known thunder (T15 'Temporali possibili'). Residuals: FUX-25 (carried sky has no age) and FUX-Q1 (Home silent when thunder is unknown)."
+      },
+      {
+        "id": "UI-B1",
+        "status": "FIXED",
+        "evidence": "Sessions are named with their day ('Dom AM', 'Dom PM', t7-chart). 'X è oltre queste 24 ore' appears when the hero is outside the chart (WeatherScreen.tsx:496-500). Day tick at midnight only partly: FUX-Q3."
+      },
+      {
+        "id": "UI-B2",
+        "status": "FIXED",
+        "evidence": "WeatherHomeCard.tsx:59 uses lucide Wind, aria-hidden. T1 accessible text has no direction."
+      }
+    ],
+    "fieldUxImportant": [
+      {
+        "id": "FUX-3",
+        "status": "FIXED by recorded decision",
+        "evidence": "Chart stays on the next 24 h (proposal §5). Sessions named, hero session in primary colour, thunder bolts drawn (t7-chart-0830)."
+      },
+      {
+        "id": "FUX-4",
+        "status": "FIXED",
+        "evidence": "wind.ts:201 computes lead from fetchedAt. 'Modelli concordi' no longer exists in the code."
+      },
+      {
+        "id": "FUX-5",
+        "status": "FIXED, gust spread DEFERRED (§8), residual FUX-21",
+        "evidence": "Silent or named; neutral CircleHelp; nothing beyond 72 h; Home says 'incerto' in words. Live snapshot, Derive: 2 of 11 cells marked, against 5 of 11 at de89666 (one forecast only)."
+      },
+      {
+        "id": "FUX-6",
+        "status": "FIXED",
+        "evidence": "The switch sits in the grid header and its state is local to WeekOverview (WeatherScreen.tsx:594-613). The hero uses nextDecisionSlot."
+      },
+      {
+        "id": "FUX-7",
+        "status": "FIXED",
+        "evidence": "Expected wind 2.5rem and gust xl on the first lines; 'Probabile 12–18 kn' below. Home, grid and hour cells show the same expected value."
+      },
+      {
+        "id": "FUX-8",
+        "status": "FIXED in the main, threshold DEFERRED (§7 item 9)",
+        "evidence": "Letters, one blue, gust no longer muted. Residual: tint follows expected wind only, so 'r46' does not deepen a cell, and the lowest step is faint (FUX-Q5)."
+      },
+      {
+        "id": "FUX-9",
+        "status": "FIXED in the main, offline DEFERRED (§8), new defects FUX-18 and FUX-28",
+        "evidence": "Jump link in the hero, stepper under the image, Rome time in the label, 'LaMMA arriva fino a…' beyond reach, caption shorter. mapTop is 1177 px on Pixel and 1178 px on iPhone, 1466 px on Cabinati, one tap from the hero."
+      },
+      {
+        "id": "FUX-10",
+        "status": "PARTLY FIXED, steppers and system Back DEFERRED (§8)",
+        "evidence": "Pixel: no jump when the hero is in view, and the grid is on the first screen. 'Non ancora' cells are now inert (WeatherScreen.tsx:531-539). Residuals: FUX-23 on iPhone, FUX-29 layout shift."
+      },
+      {
+        "id": "FUX-11",
+        "status": "FIXED on Vento",
+        "evidence": "useWindForecast.ts:85-107. Home mode has only the 60 s tick (FUX-Q7). New side effect: FUX-26."
+      },
+      {
+        "id": "FUX-12",
+        "status": "FIXED, residual FUX-24",
+        "evidence": "windFormat.ts:91-102 gives age in words; triangle plus text from 6 h; 'Aggiornamento non riuscito' unless navigator.onLine is false."
+      },
+      {
+        "id": "FUX-13",
+        "status": "FIXED",
+        "evidence": "Hero top 124 px on Pixel and iPhone 13, 140 px on Cabinati, against 228-244 px at de89666. Pixel shows the whole grid but for 14 px. iPhone 13 shows hero and week header (t3-iphone-Deriva-first)."
+      },
+      {
+        "id": "FUX-14",
+        "status": "FIXED for overflow, new defect FUX-19",
+        "evidence": "T6: 0 px sideways at every width and text scale tried, 320-412 px at 100-200%. vento-320-100.png and vento-320-200.png have no collisions."
+      },
+      {
+        "id": "FUX-15",
+        "status": "FIXED in the main",
+        "evidence": "Text in real pixels following the root font; thick line, stepped gust line, ticks 10/20/30, zero baseline. Residual: band computed at about 1.5:1 against the page and no outline; the lines survive glare, the band may not."
+      },
+      {
+        "id": "FUX-16",
+        "status": "FIXED",
+        "evidence": "T8: 12:50 gives 'Prossima uscita · Domenica PM', 17:55 gives Lunedì AM, 10:30 shows a 'Dopo · Dom PM' line. Strip follows."
+      },
+      {
+        "id": "FUX-17",
+        "status": "FIXED, both-zone download DEFERRED (§8)",
+        "evidence": "WeatherScreen.tsx:887-909; tests/e2e/weather.spec.ts:357."
+      }
+    ],
+    "uiImportant": [
+      {
+        "id": "UI-I1",
+        "status": "FIXED, residual FUX-27",
+        "evidence": "Red only for thunder; CircleHelp for division; Home says 'incerto' in words."
+      },
+      {
+        "id": "UI-I2",
+        "status": "FIXED",
+        "evidence": "Seven columns, AM over PM, one blue. About 260 css px tall rather than the 150 proposed; legible, so accepted."
+      },
+      {
+        "id": "UI-I3",
+        "status": "FIXED",
+        "evidence": "Area in the header row, horizon in the week header, hero decoupled."
+      },
+      {
+        "id": "UI-I4",
+        "status": "FIXED",
+        "evidence": "WindDial in the hero; dart narrowed. No written arrow convention remains: FUX-Q4."
+      },
+      {
+        "id": "UI-I5",
+        "status": "FIXED, wind bar rejected (§5)",
+        "evidence": "Stat row gone; hour cells print 'r 25', which also closes round 1's FUX-Q2."
+      },
+      {
+        "id": "UI-I6",
+        "status": "FIXED",
+        "evidence": "One bordered hero; other sections sit on the page with border-t."
+      },
+      {
+        "id": "UI-I7",
+        "status": "FIXED",
+        "evidence": "niceTicks in WindChart.tsx:40-45; zero baseline."
+      },
+      {
+        "id": "UI-I8",
+        "status": "FIXED",
+        "evidence": "useMeasure in WindChart.tsx:16-38; t7-chart-320-200 is legible."
+      },
+      {
+        "id": "UI-I9",
+        "status": "PARTLY FIXED",
+        "evidence": "Stepped gust line with direct label 'raffiche 31'. Thick line and band have no label and no legend: FUX-Q4."
+      },
+      {
+        "id": "UI-I10",
+        "status": "FIXED",
+        "evidence": "Session bars under the baseline run to the end of the last hour."
+      },
+      {
+        "id": "UI-I11",
+        "status": "FIXED",
+        "evidence": "Arrows every 3 h above 3 h labels; 6 h labels when narrow."
+      },
+      {
+        "id": "UI-I12",
+        "status": "FIXED",
+        "evidence": "ChevronDown on every summary."
+      },
+      {
+        "id": "UI-I13",
+        "status": "FIXED",
+        "evidence": "vento-320-100.png: pills fit, no orphans in the heading."
+      },
+      {
+        "id": "UI-I14",
+        "status": "PARTLY FIXED",
+        "evidence": "Places fold by themselves under 3 kn. They stay inside the hero: 628 px tall when open, grid at 896 px on Cabinati. The bold rule rarely fires: FUX-Q6."
+      },
+      {
+        "id": "UI-I15",
+        "status": "FIXED in the main, new defect FUX-18",
+        "evidence": "Edge to edge, one exit from the image, shorter caption."
+      },
+      {
+        "id": "UI-I16",
+        "status": "FIXED",
+        "evidence": "Flat row with a border; :active state; P01 amendment listed in proposal §9."
+      }
+    ]
+  },
+  "blockers": [
+    {
+      "id": "FUX-18",
+      "title": "The LaMMA map is stretched 42% in height, so its arrows and coastlines are wrong on the owner's preferred source",
+      "evidence": "src/features/weather/WindLammaMap.tsx:99 has 'aspect-square h-auto w-full', added in 29e73fa (not present at de89666). Live run: naturalWidth 1168, naturalHeight 820, shown 412×412, object-fit fill. Vertical scale is 1.42× the horizontal. A true NW arrow at 45° draws at about 55° from horizontal, about 10° off, which is the gap between NW and NNW on a 16-point rose. Islands and the Bocche are visibly deformed. The proposal calls this map 'unaltered' (§1), and the licence is CC BY-ND (§2). The tests stub a one-pixel image, so neither the tests nor the supplied screens can show it.",
+      "reproduction": "Pixel 7, real network, no stub. Open Vento, scroll to Mappa LaMMA, read naturalWidth/naturalHeight against clientWidth/clientHeight of '#mappa-lamma img'. Expected: same ratio. Observed: 1.424 against 1. Screenshot in my scratchpad's r3/shots/t11-map.png.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §1 'Mappa LaMMA', §2, §5 'Which arrow convention?'; docs/design/06_DESIGN_RULEBOOK.md §1",
+      "proposedChange": "Replace with 'aspect-[1168/820] h-auto w-full', which keeps the reserved space. Make the test stub a non-square PNG and assert that the drawn ratio equals the natural ratio."
+    },
+    {
+      "id": "FUX-19",
+      "title": "A week cell can split '~24' into '~2' over '4', on the strongest far days",
+      "evidence": "src/styles.css:218 sets 'overflow-wrap: anywhere' on .wind-cell, which allows a break between digits. Measured with a fixture holding ~24, ~18 and ~12. Pixel 7 Chromium, line-box count per number: 320 px at 100%, all six ~24 cells break; 344 and 360 px at 100%, the selected ~24 cell breaks (its border is 3 px against 1 px); 344 and 360 px at 110%, all six; 390 px at 115%, all six; 412 px at 125%, all six. '~18' and '~12' fit, so it starts at about 20 kn. The cell then reads as about 2 kn with a stray 4. No page overflow, so the existing sideways test stays green.",
+      "reproduction": "Synthetic Open-Meteo with 24 kn on Tue 10 Nov and a clock of Sat 7 Nov 09:00. Set viewport to 360 px, tap 'Martedì 10 AM'. Expected '~24' on one line; observed '~2' / '4'. Screenshots in my scratchpad's r3/shots/t6-week-320.png and t6-week-360.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md §1 (data correctness first), R05, R18",
+      "proposedChange": "Put whitespace-nowrap on the knot and gust spans, or remove overflow-wrap from .wind-cell. Keep the selected border inside the box (outline or inset shadow) so selecting a cell does not narrow it. Move the container-query switch to day blocks up a little. Add a test that each number sits on one line, with a two-digit '~' value in the fixture."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FUX-20",
+      "title": "A forecast seen on screen is thrown away if you leave before the extras finish",
+      "evidence": "useWindForecast.ts:58-70 shows the wind through onWind but writes the cache only after all extras settle, and leaving aborts (windData.ts:343). The window lasts until the extras finish, up to 15 s on a poor link (one ensemble call took 0.2 s for 14 KB on good wifi). This follows from moving the hero ahead of the extras. It stays honest afterwards, because Home says so, so I class it important rather than blocker.",
+      "reproduction": "Ensemble held. Open Vento, hero shows 15 kn. Stored keys: []. Back after 2 s: strip reads 'Vento Tocca per scaricare, serve la rete'. Stored keys: []. Reopen offline: 'Serve la rete per la prima previsione'. The instructor saw the forecast and has nothing on the water.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5 'No signal on the dock?'",
+      "proposedChange": "Write the wind to the cache in onWind when the signal is not aborted, and write again when the extras arrive. The reset race stays covered because an aborted signal writes nothing."
+    },
+    {
+      "id": "FUX-21",
+      "title": "When models split on both direction and strength, only direction is named and the 'prepare for' line is lost",
+      "evidence": "wind.ts:151-152 returns 'direction' first; windFormat.ts:120-130 then says nothing of strength. vento-modelli-divisi.png shows 16 kn, Probabile 6–21, 'Modelli divisi sulla direzione: NW o SE'. In that fixture the camps are 6 kn SE and 20 kn NW: no model says 16, and the words do not say which wind is the strong one. This is a front passing, the morning the line matters most.",
+      "reproduction": "Tap Domenica 8 AM on the test fixture. T8 at 08:30 gives '17 kn ... Probabile 6–20 kn Modelli divisi sulla direzione: NW o SE'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §3 'Division is named', §5 'Show uncertainty how?'",
+      "proposedChange": "Give both facts, ideally paired: 'Modelli divisi: NW 20 o SE 6, preparati per 20'. At minimum, append the strength line when modelSpread also passes its rule."
+    },
+    {
+      "id": "FUX-22",
+      "title": "Home drops the '~': a forecast six days out looks as firm as tomorrow's",
+      "evidence": "WeatherHomeCard.tsx:100-101 prints formatKnots without the tilde and ignores summary.reach. The accessible name says 'circa', so sighted and spoken readings differ. Proposal §3 says the number wears a '~' beyond 3 days.",
+      "reproduction": "Course starting Sat 7 Nov. Clock 1 Nov 09:00. Vento hero: '~15 kn ... vale poco più della media di stagione: guarda la direzione, non il numero'. Home: 'Vento · Sab PM NW 15 kn'. At 3 Nov it reads 'NW 15 kn raffiche 25' beside a hero of '~15'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §3; docs/design/06_DESIGN_RULEBOOK.md R13",
+      "proposedChange": "Add the same tilde on the strip and print 'solo tendenza' in the grey line."
+    },
+    {
+      "id": "FUX-23",
+      "title": "iPhone engine: the first tap on the grid after scrolling leaves the headline off screen, with no jump at all",
+      "evidence": "WeatherScreen.tsx:835-841 calls smooth scrollIntoView before React commits the taller hero. Sampled every 250 ms for 3 s on the iPhone 13 WebKit project: scrollY 246, heroTop -122 throughout. Pixel Chromium reaches 112/12 by the second sample. With reduced motion, WebKit also lands at 112/12, so the smooth scroll is what gets lost. A second tap does scroll. iPhone 13 must scroll 198 px to reach both grid rows, so this is the routine path on that phone. Screen t3-iphone-Deriva-after shows the wind number cut and the heading gone; only the outline in the grid says which half-day it is.",
+      "reproduction": "iPhone 13 project, fixture. Scroll to 198, tap Domenica 8 AM or Lunedì 9 PM, sample scrollY and hero top. Desktop WebKit build only; a real iPhone must confirm it.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5 'How do I reach a detail?'",
+      "proposedChange": "Scroll in an effect keyed on the picked slot, after commit, and add a WebKit journey to the Vento spec. The Vento spec is not in webkitCoreSpecs in playwright.config.ts."
+    },
+    {
+      "id": "FUX-24",
+      "title": "The age disappears while a refresh is running, for up to 20 s on a bad link",
+      "evidence": "WeatherScreen.tsx:120 hides updatedText while loading. Hero numbers stay. The tint and triangle remain, but the words are only 'Aggiorno le previsioni…'.",
+      "reproduction": "Data 23 h old, API held. Home says 'dati di ieri 09:00'. Tap: status 'Aggiorno le previsioni…', hero 'Prossima uscita · Domenica AM 16 kn Raffiche 31', no age anywhere on screen.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5 'No signal on the dock?'; docs/design/06_DESIGN_RULEBOOK.md R06",
+      "proposedChange": "Keep the age line and show the spinner beside it: 'Dati di ieri alle 09:00, aggiorno…'."
+    },
+    {
+      "id": "FUX-25",
+      "title": "A sky carried over from an old download reads as today's, so 'no thunder' can be two days old under a fresh 'Aggiornato'",
+      "evidence": "windData.ts:271-283 and :309-319 carry the sky of the previous copy (up to 72 h old) with no age or mark. This is the FUX-2 silence by another route, and my round 1 proposal invited it without saying what 'still valid' means.",
+      "reproduction": "Download Thu 5 Nov 09:00 with a clear sky. Sat 7 Nov 08:00, sky request fails, wind succeeds. Status 'Aggiornato alle 08:00'. Pick Domenica PM: no thunder line and no 'dato non scaricato'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5, §1",
+      "proposedChange": "Carry only copies under about 6 h old, or say 'Temporali: dato di giovedì'. A carried thunder may stay; a carried absence of thunder should not pass as news."
+    },
+    {
+      "id": "FUX-26",
+      "title": "Coming back from another app during a download restarts it and blanks the status",
+      "evidence": "useWindForecast.ts:107 calls refreshIfDue, which calls download(), which aborts the running one (:49). The aborted run's catch then sets state idle (:72-76) while the new run is still going. With no forecast yet, the screen shows only the map and no message.",
+      "reproduction": "First run, API held, 'Aggiorno le previsioni…'. Dispatch visibilitychange. Status becomes empty, spinner count 0, wind requests 2. Every app swap on poor 4G restarts the 20 s clock.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14; rework for FUX-11",
+      "proposedChange": "In refreshIfDue, return when a download is running. In the catch, ignore a run that is no longer current."
+    },
+    {
+      "id": "FUX-27",
+      "title": "The thunder mark vanishes on the darkest cell",
+      "evidence": "WeatherScreen.tsx:572 uses fixed #b42318. windConfig.ts:251 sets #2f5fa0 for 28 kn and up. Computed contrast about 1.02:1. On #a9c4e6 it is about 3.7:1. The word is in the accessible name and the hero, but not visible in the cell. The icon is also only 14 px.",
+      "reproduction": "Fixture with 30 kn and code 95 on Domenica PM. Screenshot in my scratchpad's r3/shots/t6-week-412.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06; proposal §5 'Red only for thunder'",
+      "proposedChange": "On dark cells draw the mark in white on a small red chip, or give the icon a white backing, and raise it to 16 px."
+    },
+    {
+      "id": "FUX-28",
+      "title": "Every tap on a half-day downloads another LaMMA image nobody has scrolled to",
+      "evidence": "WeatherScreen.tsx:945-951 remounts the map per slot, and loading='lazy' does not hold it back: the map sits at about 1177 px, inside the browsers' load margin. Requests counted with no scroll to the map: 1 at open, 2 after one tap, 3 after two, on both Pixel Chromium and iPhone WebKit. The image is 368 KB, about 10 s each at 300 kbps by arithmetic, competing with the forecast on the same link.",
+      "reproduction": "Count requests to www.lamma.toscana.it across the taps. Log in my scratchpad's r3/.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §5 'No signal on the dock?'; round 1 FUX-9",
+      "proposedChange": "Mount the image only when the section nears the viewport, with an IntersectionObserver and a small margin, or after the 'Mappa LaMMA ↓' tap."
+    },
+    {
+      "id": "FUX-29",
+      "title": "The first pick moves the grid 68 px under the thumb and pushes the PM row behind the bottom bar",
+      "evidence": "WeatherScreen.tsx:347-355 gives 'Torna alla prossima uscita' its own 44 px row, and the division line adds the rest. Pixel: AM row 585 to 653, PM row 672 to 740, PM bottom 824 with the nav at 764. The former PM row's position now holds the AM row, so a second quick tap on a PM cell opens that day's AM. It is recoverable because the heading names the half-day.",
+      "reproduction": "Pixel 7. Scroll 22 px so the grid shows, tap Domenica 8 AM, measure. vento-modelli-divisi.png shows the PM row cut.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R01, R04; round 1 FUX-10, UI-Q7",
+      "proposedChange": "Put the way back in the heading row, as UI-Q7 proposed. Reserve the division line's height only if it can be done without wasted space."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FUX-Q1",
+      "title": "Home says nothing when thunder is unknown",
+      "evidence": "WeatherHomeCard.tsx:108 tests only true. T16: 'Vento · Sab PM NW 15 kn raffiche 25' while the hero says 'Temporali: dato non scaricato'. The grid is silent too.",
+      "reproduction": "Sky request aborted, then back to Home.",
+      "specRef": "proposal §5"
+    },
+    {
+      "id": "FUX-Q2",
+      "title": "Home strip at 320 px and 200% collapses to one word per line",
+      "evidence": "WeatherHomeCard.tsx:118-122: 'incerto' sits beside the text column, leaving it about 85 px. The first line takes ten rows and the wind number falls under the bottom bar. No sideways scroll.",
+      "reproduction": "Stale and divided forecast, 320 px at 200%. r3/shots/t15-320-200.png.",
+      "specRef": "R05, R18"
+    },
+    {
+      "id": "FUX-Q3",
+      "title": "The day tick at midnight appears only when midnight lands on a labelled hour",
+      "evidence": "WindChart.tsx:270-287. Starting at 08:00 the labels read 8, 11, 14, 17, 20, 23, 2, 5, 8, with no day name. Session names carry the day, so nothing misleads.",
+      "reproduction": "T7 texts.",
+      "specRef": "UI-B1 proposed change"
+    },
+    {
+      "id": "FUX-Q4",
+      "title": "No words for the chart's line and band, and none anywhere for the arrow convention",
+      "evidence": "Grep for 'dove va' in src/features/weather finds nothing. Home shows 'NW' beside an arrow aiming SE with no explanation on any screen. The dial helps only in the hero. Thunder is a bolt in the chart and a cloud in the grid.",
+      "reproduction": "vento-derive.png, home.png.",
+      "specRef": "R13; UI-I4, UI-I9"
+    },
+    {
+      "id": "FUX-Q5",
+      "title": "The first tint step cannot be sensed in sun",
+      "evidence": "#e8eef6 on the page's #f2f6fb is computed at about 1.07:1, so 11–16 kn looks like under 11 kn. The commonest teaching winds fall here. The printed number still carries it.",
+      "reproduction": "vento-derive-primo-schermo.png, Sab PM against Dom PM.",
+      "specRef": "R06"
+    },
+    {
+      "id": "FUX-Q6",
+      "title": "Places: the bold rule misses the place the list opened for",
+      "evidence": "WeatherScreen.tsx:215 needs 2 kn from the mid-range, so a 3 kn spread never bolds: Spargi 18 against 15 is 1.5 and stays plain in vento-cabinati.png.",
+      "reproduction": "vento-cabinati.png.",
+      "specRef": "UI-I14"
+    },
+    {
+      "id": "FUX-Q7",
+      "title": "Home's clock catches up only on its 60 s tick after a resume",
+      "evidence": "useWindForecast.ts:84 returns early in cacheOnly, so a phone resumed in the morning can show last night's slot with no age until the tick fires. Code reading only; how soon the tick fires on a phone is untested.",
+      "reproduction": "Code.",
+      "specRef": "round 1 FUX-11 'in both modes'"
+    },
+    {
+      "id": "FUX-Q8",
+      "title": "The supplied screens predate the code",
+      "evidence": "vento-derive.png reads 'da sab 08:00' at the fixture's 09:00. My run at 01e1ca0 gives 'da dom 09:00' at 09:00 (T8). Regenerate them before showing the owner.",
+      "reproduction": "T8 at 09:00.",
+      "specRef": "AGENTS.md §12"
+    }
+  ],
+  "morningOnThePier": {
+    "note": "Seconds are my estimates, not stopwatch timings. Scroll distances and request counts are measured on Pixel 7.",
+    "dock_sunday_0830": {
+      "steps": [
+        "1. Home, strip 'Vento · Dom AM, Variabile 17 kn raffiche 31, incerto'. 0 taps, 3 s. Read twice: uncertain about what?",
+        "2. Tap strip. 1 tap, 1 s.",
+        "3. Hero: 17 kn, Raffiche 31, 'Modelli divisi sulla direzione: NW o SE', 6–20. 4 s. Read twice: 17 is neither camp, and nothing says prepare for 20 (FUX-21).",
+        "4. Grid in view. PM cell 'NW 10 r16' and a red mark. Tap. 1 tap, 3 s. Hero updates in place; grid moves 68 px (FUX-29).",
+        "5. 'Mappa LaMMA ↓'. 1 tap, 2 s, plus the image. The map is stretched (FUX-18). Read twice to match the arrows against 'NW'."
+      ],
+      "total": "3 taps, 0 swipes, about 20 s, 3 rereads. Round 1 was 2 taps, 2 swipes, about 30 s, 4 rereads, and it answered less."
+    },
+    "evening_1830": "Strip gives Lun AM, tap, grid in view, tap Lun PM: 2 taps, about 10 s, 0-1 rereads. Round 1 was 15-20 s.",
+    "sunday_sensing_the_week": "1 tap, 0 swipes on Pixel, 1 swipe on iPhone 13. About 10 s to scan letters, knots and gusts. Round 1 was about 45 s for 3 half days. Better by a long way.",
+    "tapCountAgainstPreviousVersion": "No released version to compare with; the figures above compare with de89666."
+  },
+  "whatHeld": [
+    "Home gives the answer with 0 taps, with age, known thunder and 'incerto' in words, and contacts nobody (test at tests/e2e/weather.spec.ts:157, read not re-run).",
+    "The hero answers the first question at arm's length: expected wind and gust at headline weight.",
+    "The session in its last hour gives way to the next, and a 'Dopo' line appears during a session (T8).",
+    "No sideways scroll on any width and text scale tried, including strong cells.",
+    "Offline first run says what to do; offline with a copy shows numbers with age.",
+    "No go/no-go and no destructive control on the screen; every pick is reversible with one visible tap.",
+    "Chart text remained legible at 320 px and 200%."
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; docs/working/WEATHER_PROPOSAL.md in full; docs/working/weather-reviews/field-ux.json and ui-design.json; docs/LOCAL_DEVELOPMENT.md server section",
+    "All of src/features/weather/ except WeatherBoundary.tsx and the unit tests; src/domain/wind.ts; src/domain/windConfig.ts; src/styles.css wind and home rules; tests/e2e/weather.spec.ts; tests/e2e/weatherFixtures.ts; playwright.config.ts",
+    "All nine supplied PNGs in docs/working/weather-screens/",
+    "Re-tested blockers FUX-1, FUX-2, UI-B1, UI-B2, each by code plus screen or browser run",
+    "Throwaway Playwright specs outside tracked files, Pixel 7 Chromium and iPhone 13 WebKit: leaving during extras (T1); Home far ahead (T2); grid taps with layout and LaMMA request counts (T3, T3b, T3c); stalled refresh (T4); resume during download (T5); strong cells on 5 widths by 7 text scales (T6); chart with thunder (T7); clock walk through a Sunday (T8); carried sky (T9); tight Home line (T15); unknown sky (T16); live Open-Meteo and LaMMA (T11)",
+    "curl of the ensemble call (14 KB, 0.2 s on good wifi) and of one LaMMA image (368 KB)"
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 2, restricted scope per protocol, no entropy draw: previous blockers and important findings, the rework's diff, regressions from it",
+      "Within that: offline and poor network, interruptions, 320 px at large text, glare contrast by computation, wet-finger layout shift, same concept across screens"
+    ],
+    "wildcard": "Ran the real LaMMA image and stronger synthetic winds, because the test fixture's one grey pixel and its 10-15 kn winds could hide layout defects. This found FUX-18 and FUX-19."
+  },
+  "notTested": [
+    "Physical phones and real sun: contrast is computed, and glare is not observed. This belongs to the owner.",
+    "FUX-23 rests on Playwright's desktop WebKit build; a real iPhone must confirm it.",
+    "Real poor 4G: delays were scripted by holding responses. Cold start not measured for the same reason.",
+    "Android and iOS OS-level text scaling: root font-size stood in for it, as in the repository's own tests.",
+    "Cabinati live data: my first live run's log covers Derive only for the cell count quoted; the Cabinati screens used the fixture.",
+    "Split frequency over a season: 2 of 11 is one forecast.",
+    "Screenshots for T1, T2, T4, T5, T9 and T16 and their spec files are lost: my first scratch folder under test-results/ was deleted during the session, most likely by another Playwright run's cleanup. Their printed results were captured first and are quoted above, and each finding's steps can be repeated. Later scripts are in my scratchpad's r3/. No tracked file was changed."
+  ]
+}

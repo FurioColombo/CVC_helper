@@ -15,7 +15,7 @@ import {
   directionText,
   formatKnots,
   slotShortLabel,
-  summaryInWords,
+  spokenSummary,
 } from "@/features/weather/windFormat"
 import type { CourseRecord } from "@/persistence/courses"
 
@@ -74,10 +74,10 @@ export function WeatherHomeCard({
   const { slot, summary } = line
   const stale = age >= STALE_AFTER_SECONDS
   const ageText = stale ? ageForStrip(forecast.fetchedAt, now) : null
+  const far = summary.reach !== "near"
   const name =
-    `Vento, ${slotShortLabel(slot)}: ${summaryInWords(summary)}.` +
-    (summary.thunder ? " Temporali possibili." : "") +
-    (summary.split ? " Modelli divisi." : "") +
+    `Vento, ${slotShortLabel(slot)}: ${spokenSummary(summary)}` +
+    (summary.thunder === null ? " Temporali: dato non scaricato." : "") +
     (ageText ? ` ${ageText}.` : "")
 
   return (
@@ -95,10 +95,13 @@ export function WeatherHomeCard({
       <span className="min-w-0 flex-1">
         <span className="block text-sm text-muted-foreground">
           Vento · {slotShortLabel(slot)}
+          {far && " · solo tendenza"}
+          {summary.split && " · incerto"}
           {ageText && ` · ${ageText}`}
         </span>
         <span className="block text-lg leading-tight font-black tabular-nums">
-          {directionText(summary.direction)} {formatKnots(summary.mid)} kn{" "}
+          {directionText(summary.direction)} {far && "~"}
+          {formatKnots(summary.mid)} kn{" "}
           {summary.gust !== null && (
             <span className="text-sm font-bold whitespace-nowrap">
               raffiche {formatKnots(summary.gust)}
@@ -114,12 +117,12 @@ export function WeatherHomeCard({
             Temporali possibili
           </span>
         )}
+        {summary.thunder === null && (
+          <span className="block text-sm text-muted-foreground">
+            Temporali: dato non scaricato
+          </span>
+        )}
       </span>
-      {summary.split && (
-        <span className="shrink-0 text-sm font-bold text-muted-foreground">
-          incerto
-        </span>
-      )}
       <ChevronRight
         aria-hidden="true"
         className="size-5 shrink-0 text-muted-foreground"

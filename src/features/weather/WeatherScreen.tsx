@@ -1,4 +1,5 @@
 import {
+  ArrowDown,
   ChevronDown,
   CircleHelp,
   CloudLightning,
@@ -47,6 +48,7 @@ import { WindArrow, WindDial } from "@/features/weather/WindArrow"
 import { WindChart } from "@/features/weather/WindChart"
 import {
   changeText,
+  dataAgeText,
   dayRowLabel,
   directionText,
   directionWithName,
@@ -56,8 +58,10 @@ import {
   periodHours,
   slotLabel,
   slotShortLabel,
+  spokenSummary,
   splitText,
   summaryInWords,
+  thunderColor,
   tintFor,
   updatedText,
 } from "@/features/weather/windFormat"
@@ -92,7 +96,10 @@ function StatusLine({
   const failed = state === "failed"
   const loading = state === "loading"
   const marked = stale || failed
-  const failure = isOffline() ? "Senza rete." : "Aggiornamento non riuscito."
+  const offline = isOffline()
+  const failure = offline
+    ? "Senza rete."
+    : "Aggiornamento non riuscito, riprova tra poco."
   return (
     <div
       className={
@@ -104,10 +111,10 @@ function StatusLine({
       <div className="min-w-0">
         <p className="m-0">{description}</p>
         <p className="m-0 flex items-start gap-1.5 font-semibold" role="status">
-          {failed && (
+          {failed && offline && (
             <WifiOff aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           )}
-          {!failed && stale && (
+          {((failed && !offline) || (!failed && stale)) && (
             <TriangleAlert
               aria-hidden="true"
               className="mt-0.5 size-4 shrink-0"
@@ -117,8 +124,11 @@ function StatusLine({
             {loading && "Aggiorno le previsioni… "}
             {failed && `${failure} `}
             {!forecast && failed && "Previsioni non scaricate."}
-            {forecast && !loading && updatedText(forecast.fetchedAt, now)}
-            {veryStale && !loading && ": potrebbero essere superati"}
+            {forecast &&
+              (loading || failed
+                ? dataAgeText(forecast.fetchedAt, now)
+                : updatedText(forecast.fetchedAt, now))}
+            {veryStale && ": potrebbero essere superati"}
           </span>
         </p>
       </div>
@@ -149,10 +159,10 @@ function HourCell({ hour }: { hour: BlendedHour }) {
   const direction = directionText(hour.direction)
   const gust = hour.gust === null ? "" : `, raffica ${formatKnots(hour.gust)}`
   return (
-    <li
-      aria-label={`Ore ${clock}: da ${direction}, ${formatKnots(hour.mid)} nodi${gust}`}
-      className="grid justify-items-center gap-0.5 py-1 text-center"
-    >
+    <li className="grid justify-items-center gap-0.5 py-1 text-center">
+      <span className="sr-only">
+        Ore {clock}: da {direction}, {formatKnots(hour.mid)} nodi{gust}
+      </span>
       <span
         aria-hidden="true"
         className="text-sm font-bold text-muted-foreground"
@@ -200,7 +210,8 @@ function PlaceRows({
   if (mids.length === 0) return null
   const low = Math.min(...mids)
   const high = Math.max(...mids)
-  const middle = (low + high) / 2
+  const typical =
+    [...mids].sort((a, b) => a - b)[Math.floor(mids.length / 2)] ?? low
   return (
     <details className="group mt-2 border-t pt-1" open={high - low >= 3}>
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-sm font-bold [&::-webkit-details-marker]:hidden">
@@ -212,15 +223,21 @@ function PlaceRows({
       </summary>
       <ul className="m-0 grid list-none p-0">
         {rows.map(({ point, summary }) => {
-          const differs = summary && Math.abs(summary.mid - middle) >= 2
+          const differs = summary && Math.abs(summary.mid - typical) >= 2
           return (
             <li
               className="flex min-h-9 flex-wrap items-center justify-between gap-x-2 border-t py-1 text-sm"
               key={point.id}
             >
               <span className={differs ? "font-bold" : ""}>{point.label}</span>
+              {summary && (
+                <span className="sr-only">{summaryInWords(summary)}</span>
+              )}
               {summary ? (
-                <span className="flex items-center gap-1.5 tabular-nums">
+                <span
+                  aria-hidden="true"
+                  className="flex items-center gap-1.5 tabular-nums"
+                >
                   <WindArrow degrees={summary.direction} size={16} />
                   <span className={differs ? "font-black" : "font-semibold"}>
                     {formatKnots(summary.mid)} kn
@@ -245,6 +262,8 @@ function jumpToMap() {
     block: "start",
     behavior: prefersReducedMotion() ? "auto" : "smooth",
   })
+  // Keyboard, switch and screen-reader users must arrive too.
+  document.getElementById("wind-lamma")?.focus({ preventScroll: true })
 }
 
 function HeroLines({ summary }: { summary: WindSummary }) {
@@ -281,8 +300,7 @@ function HeroLines({ summary }: { summary: WindSummary }) {
       )}
       {summary.reach === "seasonal" && (
         <p className="m-0 text-muted-foreground">
-          Così lontano la previsione vale poco più della media di stagione:
-          guarda la direzione, non il numero.
+          Così lontano la previsione vale poco più della media di stagione.
         </p>
       )}
     </div>
@@ -297,7 +315,7 @@ function SlotHero({
   now,
   picked,
   following,
-  onSelect,
+  onFollow,
   onBackToNext,
   headingRef,
 }: {
@@ -308,7 +326,7 @@ function SlotHero({
   now: number
   picked: boolean
   following: WindSlot | null
-  onSelect: (slot: WindSlot) => void
+  onFollow: (slot: WindSlot) => void
   onBackToNext: () => void
   headingRef: RefObject<HTMLHeadingElement | null>
 }) {
@@ -331,7 +349,7 @@ function SlotHero({
       aria-labelledby="wind-hero"
       className="rounded-2xl border bg-card p-4"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+      <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-2">
         <h2
           className="m-0 text-base font-black outline-none"
           id="wind-hero"
@@ -340,19 +358,20 @@ function SlotHero({
         >
           {heading} · {slotLabel(slot)}
         </h2>
-        <span className="text-sm text-muted-foreground">
+        <span className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
           {periodHours(slot.period)}
+          {picked && (
+            <button
+              aria-label="Torna alla prossima uscita"
+              className="min-h-11 font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
+              onClick={onBackToNext}
+              type="button"
+            >
+              Torna
+            </button>
+          )}
         </span>
       </div>
-      {picked && (
-        <button
-          className="mt-1 min-h-11 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
-          onClick={onBackToNext}
-          type="button"
-        >
-          Torna alla prossima uscita
-        </button>
-      )}
 
       {!summary ? (
         <p className="mt-3 mb-0 text-base">
@@ -410,18 +429,19 @@ function SlotHero({
       {after && following && (
         <button
           className="mt-1 flex min-h-11 w-full flex-wrap items-center gap-x-1.5 border-t pt-1 text-left text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring"
-          onClick={() => onSelect(following)}
+          onClick={() => onFollow(following)}
           type="button"
         >
           Dopo · {slotShortLabel(following)}: {summaryInWords(after)}
         </button>
       )}
       <button
-        className="mt-1 min-h-11 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
+        className="mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
         onClick={jumpToMap}
         type="button"
       >
-        Mappa LaMMA ↓
+        Mappa LaMMA
+        <ArrowDown aria-hidden="true" className="size-4" />
       </button>
     </section>
   )
@@ -501,6 +521,20 @@ function Next24Hours({
       <div className="mt-2">
         <WindChart hours={next} heroKey={heroSlot.key} slots={slots} />
       </div>
+      <p className="m-0 mt-1 text-sm text-muted-foreground">
+        Linea spessa: vento atteso. Fascia: probabile. Linea sottile: raffiche.
+        Le frecce indicano dove va il vento.
+        {next.some((hour) => hour.thunder) && (
+          <span className="whitespace-nowrap">
+            {" "}
+            <CloudLightning
+              aria-hidden="true"
+              className="inline size-3.5 text-[#b42318]"
+            />{" "}
+            temporali.
+          </span>
+        )}
+      </p>
       <Disclosure title="Ora per ora">
         <ul className="m-0 list-none p-0 text-sm">{next.map(hoursListRow)}</ul>
       </Disclosure>
@@ -539,11 +573,7 @@ function SlotCell({
     )
   }
   const tint = tintFor(summary.mid)
-  const label =
-    `${slotLabel(slot).replace(` ${period}`, "")} ${number} ${period}: ${summaryInWords(summary)}.` +
-    (summary.thunder ? " Temporali possibili." : "") +
-    (summary.split ? " Modelli divisi." : "") +
-    (summary.reach === "near" ? "" : " Solo una tendenza.")
+  const label = `${slotLabel(slot).replace(` ${period}`, "")} ${number} ${period}: ${spokenSummary(summary)}`
   return (
     <button
       aria-label={label}
@@ -557,19 +587,22 @@ function SlotCell({
       <span className="text-sm leading-tight font-semibold">
         {summary.direction === null ? "var" : compassPoint8(summary.direction)}
       </span>
-      <span className="text-base leading-tight font-black tabular-nums">
+      <span className="text-base leading-tight font-black whitespace-nowrap tabular-nums">
         {summary.reach !== "near" && "~"}
         {formatKnots(summary.mid)}
       </span>
       {summary.gust !== null && (
-        <span className="text-sm leading-tight tabular-nums">
+        <span className="text-sm leading-tight whitespace-nowrap tabular-nums">
           r{formatKnots(summary.gust)}
         </span>
       )}
       {(summary.thunder || summary.split) && (
         <span className="wind-cell-marks" aria-hidden="true">
           {summary.thunder && (
-            <CloudLightning className="size-3.5 text-[#b42318]" />
+            <CloudLightning
+              className="size-4"
+              style={{ color: thunderColor(tint) }}
+            />
           )}
           {summary.split && <CircleHelp className="size-3.5" />}
         </span>
@@ -691,9 +724,9 @@ function ModelDetails({
     <section className="border-t">
       <Disclosure title="Modelli e pesi">
         <p className="m-0 mb-2 text-sm text-muted-foreground">
-          Alle {romeClock(hour.time).hour}:00. Conta di più chi ha sbagliato
-          meno vicino a Caprera a questa distanza di tempo. Il vento atteso è la
-          mediana pesata, non la media.
+          Alle {romeClock(hour.time).hour}:00. Pesi scelti guardando gli errori
+          su due capi esposti della Corsica del sud; l&apos;ensemble è una
+          scelta a priori. Il vento atteso è la mediana pesata, non la media.
         </p>
         <ul className="m-0 list-none p-0 text-sm tabular-nums">
           {hour.models.map((entry) => {
@@ -724,9 +757,10 @@ function ModelDetails({
           })}
         </ul>
         <p className="m-0 mt-2 text-sm text-muted-foreground">
-          Probabile: nella prova su capi esposti delle Bocche, giugno-ottobre
-          2026, il vento vero è rimasto dentro circa 7 ore su 10. Le raffiche
-          vere hanno superato il numero mostrato circa 6 uscite su 10: non è un
+          Nella prova su quei capi, estate e autunno 2026, fino a un giorno
+          prima: il vento vero è rimasto nel Probabile 7-8 ore su 10, ma su un
+          capo solo 5-6 da 12 nodi in su. Oltre un giorno, meno. Le raffiche
+          vere hanno superato il numero mostrato in 3-5 uscite su 10: non è un
           tetto.
         </p>
       </Disclosure>
@@ -740,6 +774,7 @@ function SourceNote() {
       <p className="m-0">
         Dati:{" "}
         <a
+          aria-label={`${DATA_CREDIT.provider}: nuova scheda`}
           className="underline"
           href={DATA_CREDIT.providerUrl}
           rel="noreferrer"
@@ -749,6 +784,7 @@ function SourceNote() {
         </a>
         ,{" "}
         <a
+          aria-label={`${DATA_CREDIT.licence}: nuova scheda`}
           className="underline"
           href={DATA_CREDIT.licenceUrl}
           rel="noreferrer"
@@ -759,9 +795,9 @@ function SourceNote() {
         , elaborati.
       </p>
       <p className="m-0">
-        Aprendo Vento il telefono contatta Open-Meteo e LaMMA: ricevono il suo
-        indirizzo e i punti dell&apos;area, nessun nome e nessun dato degli
-        allievi.
+        Con Vento aperto il telefono contatta Open-Meteo e LaMMA, anche da solo
+        per aggiornare: ricevono il suo indirizzo e i punti dell&apos;area,
+        nessun nome e nessun dato degli allievi.
       </p>
       <p className="m-0 font-semibold text-foreground">
         È una previsione, non una misura: il vento vero può superare i valori
@@ -787,7 +823,9 @@ export function WeatherScreen({
   const [announcement, setAnnouncement] = useState("")
   const heading = useRef<HTMLHeadingElement>(null)
   const hero = useRef<HTMLDivElement>(null)
-  const retried = useRef(false)
+  // A control that removes itself hands focus to the section's heading.
+  const focusHero = useRef(false)
+  const [scrollRequest, setScrollRequest] = useState(0)
 
   const hours = useMemo(
     () => (forecast ? blendForecast(forecast, now) : []),
@@ -816,22 +854,17 @@ export function WeatherScreen({
     return at < 0 ? null : (ordered[at + 1] ?? null)
   }, [heroSlot, knownSlots])
 
-  // Riprova disappears when it works: bring focus somewhere it can continue.
   useEffect(() => {
-    if (forecast && retried.current) {
-      retried.current = false
-      heading.current?.focus()
+    if (state === "failed") focusHero.current = false
+    if (focusHero.current && heading.current) {
+      focusHero.current = false
+      heading.current.focus()
     }
-  }, [forecast])
+  }, [forecast, heroSlot.key, state, zone])
 
-  function pick(slot: WindSlot) {
-    setPickedKey(slot.key === nextSlot.key ? null : slot.key)
-    const summary = summariseHours(hoursInSlot(hours, slot))
-    setAnnouncement(
-      summary
-        ? `${slotLabel(slot)}: ${summaryInWords(summary)}`
-        : `${slotLabel(slot)}: troppo lontano`,
-    )
+  // After the taller section has been drawn, or the scroll aims at the old layout.
+  useEffect(() => {
+    if (scrollRequest === 0) return
     const box = hero.current?.getBoundingClientRect()
     if (box && (box.top < 0 || box.top > window.innerHeight * 0.5)) {
       hero.current?.scrollIntoView({
@@ -839,6 +872,17 @@ export function WeatherScreen({
         behavior: prefersReducedMotion() ? "auto" : "smooth",
       })
     }
+  }, [scrollRequest])
+
+  function pick(slot: WindSlot) {
+    setPickedKey(slot.key === nextSlot.key ? null : slot.key)
+    const summary = summariseHours(hoursInSlot(hours, slot))
+    setAnnouncement(
+      summary
+        ? `${slotLabel(slot)}: ${spokenSummary(summary)}`
+        : `${slotLabel(slot)}: troppo lontano`,
+    )
+    setScrollRequest((request) => request + 1)
   }
 
   const otherZone = zone === courseZone ? null : courseZone
@@ -881,19 +925,23 @@ export function WeatherScreen({
         {announcement}
       </p>
 
-      {!forecast && state === "failed" && (
+      {!forecast && state !== "idle" && (
         <section className="rounded-2xl border bg-card p-4">
           <p className="m-0 text-base">
-            {otherZone
-              ? `${WIND_ZONES[zone].label} non ancora scaricato.`
-              : isOffline()
-                ? "Serve la rete per la prima previsione. Dopo, l'ultima scaricata resta qui anche senza segnale."
-                : "Il servizio meteo non ha risposto: riprova tra poco."}
+            {state === "loading"
+              ? `Scarico le previsioni per ${WIND_ZONES[zone].label}…`
+              : otherZone
+                ? `${WIND_ZONES[zone].label} non ancora scaricato.`
+                : isOffline()
+                  ? "Serve la rete per la prima previsione. Dopo, l'ultima scaricata resta qui anche senza segnale."
+                  : "Il servizio meteo non ha risposto: riprova tra poco."}
           </p>
           <Button
-            className="mt-3 min-h-11 w-full"
+            aria-disabled={state === "loading"}
+            className="mt-3 min-h-11 w-full aria-disabled:opacity-60"
             onClick={() => {
-              retried.current = true
+              if (state === "loading") return
+              focusHero.current = true
               void refresh()
             }}
           >
@@ -902,7 +950,10 @@ export function WeatherScreen({
           {otherZone && (
             <Button
               className="mt-2 min-h-11 w-full"
-              onClick={() => setZone(otherZone)}
+              onClick={() => {
+                focusHero.current = true
+                setZone(otherZone)
+              }}
               variant="secondary"
             >
               Torna a {WIND_ZONES[otherZone].label}
@@ -924,7 +975,10 @@ export function WeatherScreen({
                 setPickedKey(null)
                 heading.current?.focus()
               }}
-              onSelect={pick}
+              onFollow={(slot) => {
+                focusHero.current = true
+                pick(slot)
+              }}
               picked={picked !== null}
               slot={heroSlot}
               zone={zone}
@@ -941,15 +995,18 @@ export function WeatherScreen({
         </>
       )}
 
-      <div className="border-t pt-3">
-        <WindLammaMap
-          field={mapField}
-          key={heroSlot.key}
-          now={now}
-          onField={setMapField}
-          slot={heroSlot}
-        />
-      </div>
+      {/* Not while the first download runs: the empty page would pull it into view. */}
+      {(forecast || state === "failed") && (
+        <div className="border-t pt-3">
+          <WindLammaMap
+            field={mapField}
+            key={heroSlot.key}
+            now={now}
+            onField={setMapField}
+            slot={heroSlot}
+          />
+        </div>
+      )}
 
       {forecast && <ModelDetails hours={hours} slot={heroSlot} />}
 

@@ -28,7 +28,7 @@ import {
   FAMILY_MAX_SHARE,
   GUST_RULE,
   LEAD_ANCHOR_HOURS,
-  RANGE_MIN_HALF_WIDTH_KNOTS,
+  RANGE_HALF_WIDTH,
   WIND_MODELS,
   WIND_ZONES,
   zoneForCourse,
@@ -331,12 +331,12 @@ describe("blendForecast", () => {
   it("leaves a model with no gust out of the gust, not out of the speed", () => {
     const [first] = blendForecast(
       forecastOf({
-        ecmwf_ifs: series(48, 10, 315, 18),
+        ecmwf_ifs: series(48, 10, 315, 26),
         ecmwf_aifs025_single: series(48, 10, 315, null),
       }),
       THURSDAY_9,
     )
-    expect(first!.gust).toBe(18)
+    expect(first!.gust).toBe(26)
     expect(first!.models).toHaveLength(2)
   })
 
@@ -349,8 +349,19 @@ describe("blendForecast", () => {
       THURSDAY_9,
     )
     expect(first).toMatchObject({
-      low: 15 - RANGE_MIN_HALF_WIDTH_KNOTS,
-      high: 15 + RANGE_MIN_HALF_WIDTH_KNOTS,
+      low: 15 - 15 * RANGE_HALF_WIDTH.ofExpected,
+      high: 15 + 15 * RANGE_HALF_WIDTH.ofExpected,
+    })
+  })
+
+  it("keeps a floor under the range in light wind", () => {
+    const [first] = blendForecast(
+      forecastOf({ ecmwf_ifs: series(48, 5) }),
+      THURSDAY_9,
+    )
+    expect(first).toMatchObject({
+      low: 5 - RANGE_HALF_WIDTH.minKnots,
+      high: 5 + RANGE_HALF_WIDTH.minKnots,
     })
   })
 
@@ -365,21 +376,68 @@ describe("blendForecast", () => {
   it("takes the highest model gust, not a quartile of them", () => {
     const [first] = blendForecast(
       forecastOf({
-        meteofrance_arome_france_hd: series(48, 10, 315, 12),
-        ecmwf_ifs: series(48, 10, 315, 14),
-        gfs_global: series(48, 10, 315, 26),
+        meteofrance_arome_france_hd: series(60, 10, 315, 12),
+        ecmwf_ifs: series(60, 10, 315, 14),
+        gfs_global: series(60, 10, 315, 26),
       }),
       THURSDAY_9,
     )
     expect(first!.gust).toBe(26)
   })
 
-  it("lifts a gust below what the band's top implies", () => {
+  it("lifts a gust below what the expected wind implies", () => {
     const [first] = blendForecast(
       forecastOf({ ecmwf_ifs: series(48, 20, 315, 22) }),
       THURSDAY_9,
     )
-    expect(first!.gust).toBe(20 * GUST_RULE.bandFactor)
+    expect(first!.gust).toBe(20 * GUST_RULE.ofExpected)
+  })
+
+  it("fades a run's gust out with the run, so the number does not jump when it ends", () => {
+    const length = 40
+    const ending: ModelSeries = {
+      speed: Array.from({ length }, (_, index) => (index < 30 ? 10 : null)),
+      direction: Array.from({ length }, (_, index) =>
+        index < 30 ? 315 : null,
+      ),
+      gust: Array.from({ length }, (_, index) => (index < 30 ? 50 : null)),
+    }
+    const hours = blendForecast(
+      forecastOf(
+        {
+          meteofrance_arome_france_hd: ending,
+          ecmwf_ifs: series(length, 10, 315, 22),
+          gfs_global: series(length, 10, 315, 22),
+        },
+        length,
+      ),
+      THURSDAY_9,
+    )
+    expect(hours[20]!.gust).toBe(50)
+    expect(hours[30]!.gust).toBe(22)
+    for (let index = 1; index < length; index += 1) {
+      const step = Math.abs(hours[index]!.gust! - hours[index - 1]!.gust!)
+      expect(step, `hour ${index}`).toBeLessThanOrEqual(6)
+    }
+  })
+
+  it("reads two places apart as one model when it comes to direction", () => {
+    const forecast: WindForecast = {
+      fetchedAt: THURSDAY_9,
+      times: [THURSDAY_9],
+      points: {
+        a: {
+          ecmwf_ifs: series(1, 15, 230),
+          gfs_global: series(1, 15, 230),
+        },
+        b: {
+          ecmwf_ifs: series(1, 15, 340),
+          gfs_global: series(1, 15, 340),
+        },
+      },
+    }
+    const [first] = blendForecast(forecast, THURSDAY_9)
+    expect(first!.directionSpread).toBeLessThan(5)
   })
 
   it("shows no gust number where too few runs are left to make one", () => {
@@ -662,7 +720,10 @@ describe("summariseHours", () => {
       }),
     ])!
     expect(summary.split).toBe("direction")
-    expect(summary.directionOptions).toEqual([315, 180])
+    expect(summary.directionOptions).toEqual([
+      { direction: 315, speed: 10 },
+      { direction: 180, speed: 10 },
+    ])
   })
 
   it.each([

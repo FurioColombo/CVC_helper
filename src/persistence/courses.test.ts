@@ -28,6 +28,7 @@ import {
 } from "@/persistence/courses"
 import { prepareDatabase } from "@/persistence/migrations"
 import { AppSchema } from "@/persistence/schema"
+import { appChannelConfig } from "@/runtimeConfig"
 import { TOUCH } from "@/persistence/stamp"
 
 const NOW = "2026-08-29T07:30:00.125Z"
@@ -143,6 +144,8 @@ describe("course persistence", () => {
       "surname-given",
     )
     window.localStorage.setItem("cvc-helper.crew-display-columns", "3")
+    const forecastKey = `${appChannelConfig.weatherCachePrefix}v2.derive`
+    window.localStorage.setItem(forecastKey, "{}")
 
     await eraseAllCourseData()
 
@@ -162,6 +165,7 @@ describe("course persistence", () => {
       window.localStorage.getItem("cvc-helper.scan-name-order.course-1"),
     ).toBeNull()
     // A display preference belongs to the device, not to the course.
+    expect(window.localStorage.getItem(forecastKey)).toBeNull()
     expect(window.localStorage.getItem("cvc-helper.crew-display-columns")).toBe(
       "3",
     )

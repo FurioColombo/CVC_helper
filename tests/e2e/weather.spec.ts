@@ -66,9 +66,9 @@ async function expectKnownHero(page: Page) {
     page.getByRole("heading", { name: "Prossima uscita · Sabato PM" }),
   ).toBeVisible()
   await expect(box.getByText(/^15\s*kn$/)).toBeVisible()
-  await expect(box.getByText("Raffiche 25")).toBeVisible()
+  await expect(box.getByText("Raffiche 32")).toBeVisible()
   await expect(box.getByText("NW · Maestrale · Forza 4")).toBeVisible()
-  await expect(box.getByText("Probabile 12–18 kn")).toBeVisible()
+  await expect(box.getByText("Probabile 11–20 kn")).toBeVisible()
   // Silent when the models agree.
   await expect(box.getByText(/Modelli divisi/)).toHaveCount(0)
 }
@@ -77,7 +77,7 @@ async function expectStrip(page: Page) {
   const card = strip(page)
   await expect(card).toContainText("Vento · Sab PM")
   await expect(card).toContainText("NW 15 kn")
-  await expect(card).toContainText("raffiche 25")
+  await expect(card).toContainText("raffiche 32")
 }
 
 async function settle(page: Page) {
@@ -106,6 +106,10 @@ test("Home stays silent; Vento asks only for the three Derive sea points", async
 
   await openVento(page)
   await expectKnownHero(page)
+
+  // The map is far below: nobody pays for its image until they get near it.
+  await settle(page)
+  expect(weather.requests.filter((url) => url.includes("lamma"))).toEqual([])
 
   const wind = windRequests(weather)
   expect(wind).toHaveLength(1)
@@ -146,6 +150,20 @@ test("Home stays silent; Vento asks only for the three Derive sea points", async
   for (const request of maps()) {
     expect([...new URL(request).searchParams.keys()]).toEqual(["run"])
   }
+  expect(weather.otherOffOrigin).toEqual([])
+
+  // The owner's source, unaltered: drawn in its own proportions.
+  const shape = await page
+    .locator("#mappa-lamma img")
+    .evaluate(async (node) => {
+      const image = node as HTMLImageElement
+      await image.decode()
+      return {
+        natural: image.naturalWidth / image.naturalHeight,
+        drawn: image.clientWidth / image.clientHeight,
+      }
+    })
+  expect(shape.drawn).toBeCloseTo(shape.natural, 1)
 
   if (TAKE_SCREENS) {
     await page.evaluate(() => window.scrollTo(0, 0))
@@ -287,7 +305,7 @@ test("keeps the last forecast and its age without signal", async ({
   await context.setOffline(true)
   await page.getByRole("button", { name: "Aggiorna le previsioni" }).click()
   await expect(status(page)).toContainText("Senza rete")
-  await expect(status(page)).toContainText("Aggiornato alle 09:00")
+  await expect(status(page)).toContainText("Dati delle 09:00")
   await expectKnownHero(page)
   await context.setOffline(false)
 
@@ -384,7 +402,9 @@ test("a tap on the week shows that half-day above, and the horizon moves only th
   await expect(
     page.getByRole("heading", { name: "Scelta · Domenica AM" }),
   ).toBeVisible()
-  await expect(hero(page).getByText(/^Modelli divisi sulla /)).toBeVisible()
+  await expect(
+    hero(page).getByText("Modelli divisi: NW 20 o SE 6"),
+  ).toBeVisible()
   await expect(
     week.getByRole("button", { name: /^Domenica 8 AM:/ }),
   ).toHaveAccessibleName(/Modelli divisi\.$/)
@@ -440,6 +460,81 @@ test("a tap on the week shows that half-day above, and the horizon moves only th
   await expect(
     page.getByRole("heading", { level: 1, name: "Vento" }),
   ).toHaveCount(0)
+})
+
+test("a number in the week is never broken across lines, chosen or not, and cells stay tappable", async ({
+  page,
+}) => {
+  await routeWeather(page)
+  await createCourse(page, "Deriva")
+  await openVento(page)
+  await expectKnownHero(page)
+  const week = page.getByRole("region", { name: "La settimana" })
+  await week.getByRole("button", { name: /^Mercoledì 11 AM:/ }).click()
+
+  for (const width of [320, 344, 360, 390, 412]) {
+    for (const scale of [100, 105, 110, 115, 120, 125, 150, 200]) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.evaluate((value) => {
+        document.documentElement.style.fontSize = `${value}%`
+      }, scale)
+      const found = await page.evaluate(() => {
+        const cells = [
+          ...document.querySelectorAll<HTMLElement>("button.wind-cell"),
+        ]
+        const broken = cells.flatMap((cell) =>
+          [...cell.querySelectorAll("span")].flatMap((span) => {
+            const range = document.createRange()
+            range.selectNodeContents(span)
+            const lines = new Set(
+              [...range.getClientRects()].map((box) => Math.round(box.top)),
+            )
+            return span.textContent && lines.size > 1 ? [span.textContent] : []
+          }),
+        )
+        return {
+          broken,
+          narrowest: Math.min(
+            ...cells.map((cell) => cell.getBoundingClientRect().width),
+          ),
+        }
+      })
+      expect(found.broken, `${width} px, ${scale}%`).toEqual([])
+      expect(found.narrowest, `${width} px, ${scale}%`).toBeGreaterThanOrEqual(
+        40,
+      )
+    }
+  }
+})
+
+test("Home does not quote a far forecast as firmly as tomorrow's", async ({
+  page,
+}) => {
+  await routeWeather(page)
+  // Monday 2 Nov: the first session is more than three days ahead.
+  await createCourse(page, "Deriva", new Date("2026-11-02T09:00:00+01:00"))
+  await openVento(page)
+  await expect(hero(page).getByText(/^~/)).toBeVisible()
+  await backHome(page)
+  await expect(strip(page)).toContainText("solo tendenza")
+  await expect(strip(page)).toContainText("~")
+})
+
+test("the jump to the map takes focus with it, and a self-removing button leaves it on the section", async ({
+  page,
+}) => {
+  await routeWeather(page)
+  await createCourse(page, "Deriva", new Date("2026-11-07T15:00:00+01:00"))
+  await openVento(page)
+  await hero(page).getByRole("button", { name: "Mappa LaMMA" }).click()
+  await expect(page.getByRole("heading", { name: "Mappa LaMMA" })).toBeFocused()
+
+  await hero(page)
+    .getByRole("button", { name: /^Dopo · Dom AM:/ })
+    .click()
+  await expect(
+    page.getByRole("heading", { name: "Scelta · Domenica AM" }),
+  ).toBeFocused()
 })
 
 test("during a session the screen says so and offers what comes after", async ({
@@ -503,9 +598,9 @@ test("a Cabinato course opens on Cabinati with its places and waves; Derive has 
     await expect(rows.filter({ hasText: label })).toHaveCount(1)
   }
   await expect(rows.filter({ hasText: "Spargi" })).toContainText("18 kn")
-  await expect(rows.filter({ hasText: "Spargi" })).toContainText("r 30")
+  await expect(rows.filter({ hasText: "Spargi" })).toContainText("r 38")
   await expect(rows.filter({ hasText: "Cannigione" })).toContainText("15 kn")
-  await expect(rows.filter({ hasText: "Cannigione" })).toContainText("r 25")
+  await expect(rows.filter({ hasText: "Cannigione" })).toContainText("r 32")
   // A difference between places is not a disagreement between models.
   await expect(hero(page).getByText(/Modelli divisi/)).toHaveCount(0)
 
@@ -541,7 +636,7 @@ test("with reduced motion the jump to the map arrives at once", async ({
   await createCourse(page, "Deriva")
   await openVento(page)
   await expectKnownHero(page)
-  await hero(page).getByRole("button", { name: "Mappa LaMMA ↓" }).click()
+  await hero(page).getByRole("button", { name: "Mappa LaMMA" }).click()
   const top = await page.evaluate(
     () => document.getElementById("mappa-lamma")!.getBoundingClientRect().top,
   )

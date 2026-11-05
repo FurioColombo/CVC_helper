@@ -913,65 +913,257 @@
     "PERT": {
       "short": {
         "sessions": 306,
-        "hoursInsideRangePercent": 74,
-        "hoursAboveRangePercent": 14,
-        "rangeWidth": 6.4,
+        "hourlyMae": 2.28,
+        "constantMeanHourlyMae": 4.89,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 179,
+            "hoursInsideRangePercent": 84,
+            "hoursAboveRangePercent": 9,
+            "rangeWidth": 6.5,
+            "gustPassedPercent": 29,
+            "gustBias": 1.7
+          },
+          "from12to16": {
+            "sessions": 76,
+            "hoursInsideRangePercent": 81,
+            "hoursAboveRangePercent": 7,
+            "rangeWidth": 8.4,
+            "gustPassedPercent": 16,
+            "gustBias": 3.1
+          },
+          "from16": {
+            "sessions": 51,
+            "hoursInsideRangePercent": 72,
+            "hoursAboveRangePercent": 12,
+            "rangeWidth": 11.7,
+            "gustPassedPercent": 22,
+            "gustBias": 2.9
+          }
+        },
+        "hoursInsideRangePercent": 81,
+        "hoursAboveRangePercent": 9,
+        "rangeWidth": 7.8,
         "sessionMeanMae": 1.78,
-        "gustBias": -0.9,
-        "gustPassedPercent": 63,
+        "gustBias": 2.3,
+        "gustPassedPercent": 25,
         "splitSessionsPercent": 3,
         "maeWhenSplit": 1.78,
         "maeWhenNot": 1.78,
         "directionMae": 15
       },
       "plusOneDay": {
-        "sessions": 306,
-        "hoursInsideRangePercent": 67,
-        "hoursAboveRangePercent": 21,
-        "rangeWidth": 6.5,
-        "sessionMeanMae": 2.2,
-        "gustBias": -1.4,
-        "gustPassedPercent": 65,
+        "sessions": 171,
+        "hourlyMae": 2.44,
+        "constantMeanHourlyMae": 5.09,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 95,
+            "hoursInsideRangePercent": 77,
+            "hoursAboveRangePercent": 14,
+            "rangeWidth": 6.4,
+            "gustPassedPercent": 42,
+            "gustBias": 0.6
+          },
+          "from12to16": {
+            "sessions": 45,
+            "hoursInsideRangePercent": 86,
+            "hoursAboveRangePercent": 8,
+            "rangeWidth": 8.6,
+            "gustPassedPercent": 9,
+            "gustBias": 4.1
+          },
+          "from16": {
+            "sessions": 31,
+            "hoursInsideRangePercent": 76,
+            "hoursAboveRangePercent": 10,
+            "rangeWidth": 12.1,
+            "gustPassedPercent": 35,
+            "gustBias": 0.9
+          }
+        },
+        "hoursInsideRangePercent": 79,
+        "hoursAboveRangePercent": 12,
+        "rangeWidth": 8,
+        "sessionMeanMae": 1.9,
+        "gustBias": 1.5,
+        "gustPassedPercent": 32,
         "splitSessionsPercent": 8,
         "maeWhenSplit": 3.73,
-        "maeWhenNot": 2.07,
-        "directionMae": 18
+        "maeWhenNot": 1.75,
+        "directionMae": 17
+      },
+      "longerLeadsWithoutEnsemble": {
+        "d2": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 69,
+          "hourlyMae": 3.05,
+          "constantMeanHourlyMae": 4.89
+        },
+        "d3": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 68,
+          "hourlyMae": 3.38,
+          "constantMeanHourlyMae": 4.89
+        },
+        "d5": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 62,
+          "hourlyMae": 4.12,
+          "constantMeanHourlyMae": 4.89
+        },
+        "d7": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 58,
+          "hourlyMae": 4.84,
+          "constantMeanHourlyMae": 4.89
+        }
       }
     },
     "CHIA": {
       "short": {
         "sessions": 306,
-        "hoursInsideRangePercent": 75,
-        "hoursAboveRangePercent": 20,
-        "rangeWidth": 6.7,
+        "hourlyMae": 2.55,
+        "constantMeanHourlyMae": 4.95,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 250,
+            "hoursInsideRangePercent": 81,
+            "hoursAboveRangePercent": 15,
+            "rangeWidth": 6.5,
+            "gustPassedPercent": 41,
+            "gustBias": 0.7
+          },
+          "from12to16": {
+            "sessions": 36,
+            "hoursInsideRangePercent": 57,
+            "hoursAboveRangePercent": 35,
+            "rangeWidth": 8.8,
+            "gustPassedPercent": 47,
+            "gustBias": 0.1
+          },
+          "from16": {
+            "sessions": 20,
+            "hoursInsideRangePercent": 59,
+            "hoursAboveRangePercent": 38,
+            "rangeWidth": 11.5,
+            "gustPassedPercent": 45,
+            "gustBias": -0.4
+          }
+        },
+        "hoursInsideRangePercent": 77,
+        "hoursAboveRangePercent": 19,
+        "rangeWidth": 7.1,
         "sessionMeanMae": 1.94,
-        "gustBias": -0.9,
-        "gustPassedPercent": 65,
+        "gustBias": 0.5,
+        "gustPassedPercent": 42,
         "splitSessionsPercent": 15,
         "maeWhenSplit": 3.16,
         "maeWhenNot": 1.72,
         "directionMae": 27
       },
       "plusOneDay": {
-        "sessions": 306,
-        "hoursInsideRangePercent": 71,
-        "hoursAboveRangePercent": 23,
-        "rangeWidth": 6.7,
-        "sessionMeanMae": 2.37,
-        "gustBias": -1.5,
-        "gustPassedPercent": 64,
+        "sessions": 171,
+        "hourlyMae": 3.07,
+        "constantMeanHourlyMae": 5.36,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 135,
+            "hoursInsideRangePercent": 75,
+            "hoursAboveRangePercent": 20,
+            "rangeWidth": 6.5,
+            "gustPassedPercent": 54,
+            "gustBias": -0.5
+          },
+          "from12to16": {
+            "sessions": 21,
+            "hoursInsideRangePercent": 51,
+            "hoursAboveRangePercent": 45,
+            "rangeWidth": 8.8,
+            "gustPassedPercent": 38,
+            "gustBias": -0.5
+          },
+          "from16": {
+            "sessions": 15,
+            "hoursInsideRangePercent": 57,
+            "hoursAboveRangePercent": 37,
+            "rangeWidth": 11.6,
+            "gustPassedPercent": 53,
+            "gustBias": 1.4
+          }
+        },
+        "hoursInsideRangePercent": 70,
+        "hoursAboveRangePercent": 24,
+        "rangeWidth": 7.2,
+        "sessionMeanMae": 2.48,
+        "gustBias": -0.4,
+        "gustPassedPercent": 52,
         "splitSessionsPercent": 20,
-        "maeWhenSplit": 3.35,
-        "maeWhenNot": 2.12,
-        "directionMae": 32
+        "maeWhenSplit": 3.29,
+        "maeWhenNot": 2.27,
+        "directionMae": 28
+      },
+      "longerLeadsWithoutEnsemble": {
+        "d2": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 72,
+          "hourlyMae": 2.99,
+          "constantMeanHourlyMae": 4.95
+        },
+        "d3": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 70,
+          "hourlyMae": 3.3,
+          "constantMeanHourlyMae": 4.95
+        },
+        "d5": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 65,
+          "hourlyMae": 3.93,
+          "constantMeanHourlyMae": 4.95
+        },
+        "d7": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 61,
+          "hourlyMae": 4.38,
+          "constantMeanHourlyMae": 4.95
+        }
       }
     },
     "LFKF": {
       "short": {
         "sessions": 306,
-        "hoursInsideRangePercent": 62,
-        "hoursAboveRangePercent": 34,
-        "rangeWidth": 6.2,
+        "hourlyMae": 2.49,
+        "constantMeanHourlyMae": 3.98,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 265,
+            "hoursInsideRangePercent": 68,
+            "hoursAboveRangePercent": 29,
+            "rangeWidth": 6.3,
+            "gustPassedPercent": 22,
+            "gustBias": 4.3
+          },
+          "from12to16": {
+            "sessions": 36,
+            "hoursInsideRangePercent": 44,
+            "hoursAboveRangePercent": 55,
+            "rangeWidth": 7.9,
+            "gustPassedPercent": 29,
+            "gustBias": 3.4
+          },
+          "from16": {
+            "sessions": 5,
+            "hoursInsideRangePercent": 85,
+            "hoursAboveRangePercent": 15,
+            "rangeWidth": 10.2,
+            "gustPassedPercent": 0,
+            "gustBias": 3.9
+          }
+        },
+        "hoursInsideRangePercent": 65,
+        "hoursAboveRangePercent": 32,
+        "rangeWidth": 6.6,
         "sessionMeanMae": 2.17,
         "gustBias": 3.9,
         "gustPassedPercent": 20,
@@ -981,25 +1173,107 @@
         "directionMae": 21
       },
       "plusOneDay": {
-        "sessions": 306,
-        "hoursInsideRangePercent": 54,
-        "hoursAboveRangePercent": 42,
-        "rangeWidth": 6.1,
-        "sessionMeanMae": 2.64,
-        "gustBias": 2.5,
-        "gustPassedPercent": 20,
-        "splitSessionsPercent": 3,
-        "maeWhenSplit": 2.58,
-        "maeWhenNot": 2.64,
-        "directionMae": 24
+        "sessions": 171,
+        "hourlyMae": 2.72,
+        "constantMeanHourlyMae": 4.15,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 148,
+            "hoursInsideRangePercent": 61,
+            "hoursAboveRangePercent": 34,
+            "rangeWidth": 6.3,
+            "gustPassedPercent": 20,
+            "gustBias": 2.2
+          },
+          "from12to16": {
+            "sessions": 20,
+            "hoursInsideRangePercent": 44,
+            "hoursAboveRangePercent": 55,
+            "rangeWidth": 7.9,
+            "gustPassedPercent": 17,
+            "gustBias": 3.6
+          },
+          "from16": {
+            "sessions": 3,
+            "hoursInsideRangePercent": 83,
+            "hoursAboveRangePercent": 17,
+            "rangeWidth": 10.8,
+            "gustPassedPercent": 0,
+            "gustBias": 3.7
+          }
+        },
+        "hoursInsideRangePercent": 59,
+        "hoursAboveRangePercent": 36,
+        "rangeWidth": 6.6,
+        "sessionMeanMae": 2.42,
+        "gustBias": 3.1,
+        "gustPassedPercent": 14,
+        "splitSessionsPercent": 4,
+        "maeWhenSplit": 2.36,
+        "maeWhenNot": 2.43,
+        "directionMae": 20
+      },
+      "longerLeadsWithoutEnsemble": {
+        "d2": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 51,
+          "hourlyMae": 3.27,
+          "constantMeanHourlyMae": 3.98
+        },
+        "d3": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 45,
+          "hourlyMae": 3.61,
+          "constantMeanHourlyMae": 3.98
+        },
+        "d5": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 43,
+          "hourlyMae": 4.05,
+          "constantMeanHourlyMae": 3.98
+        },
+        "d7": {
+          "sessions": 306,
+          "hoursInsideRangePercent": 42,
+          "hourlyMae": 4.58,
+          "constantMeanHourlyMae": 3.98
+        }
       }
     },
     "LIEO": {
       "short": {
         "sessions": 304,
-        "hoursInsideRangePercent": 67,
-        "hoursAboveRangePercent": 30,
-        "rangeWidth": 6.2,
+        "hourlyMae": 2.29,
+        "constantMeanHourlyMae": 3.37,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 283,
+            "hoursInsideRangePercent": 68,
+            "hoursAboveRangePercent": 30,
+            "rangeWidth": 6.2,
+            "gustPassedPercent": 0,
+            "gustBias": 6.2
+          },
+          "from12to16": {
+            "sessions": 16,
+            "hoursInsideRangePercent": 78,
+            "hoursAboveRangePercent": 17,
+            "rangeWidth": 8.2,
+            "gustPassedPercent": 17,
+            "gustBias": 8.9
+          },
+          "from16": {
+            "sessions": 5,
+            "hoursInsideRangePercent": 85,
+            "hoursAboveRangePercent": 15,
+            "rangeWidth": 10.4,
+            "gustPassedPercent": 0,
+            "gustBias": 8.3
+          }
+        },
+        "hoursInsideRangePercent": 68,
+        "hoursAboveRangePercent": 29,
+        "rangeWidth": 6.4,
         "sessionMeanMae": 2.05,
         "gustBias": 7.8,
         "gustPassedPercent": 7,
@@ -1009,17 +1283,71 @@
         "directionMae": 24
       },
       "plusOneDay": {
-        "sessions": 304,
-        "hoursInsideRangePercent": 63,
-        "hoursAboveRangePercent": 33,
-        "rangeWidth": 6.1,
-        "sessionMeanMae": 2.26,
-        "gustBias": 5.6,
-        "gustPassedPercent": 36,
+        "sessions": 169,
+        "hourlyMae": 2.32,
+        "constantMeanHourlyMae": 3.5,
+        "byExpectedWind": {
+          "under12": {
+            "sessions": 155,
+            "hoursInsideRangePercent": 69,
+            "hoursAboveRangePercent": 28,
+            "rangeWidth": 6.1,
+            "gustPassedPercent": 0,
+            "gustBias": 7.9
+          },
+          "from12to16": {
+            "sessions": 9,
+            "hoursInsideRangePercent": 72,
+            "hoursAboveRangePercent": 6,
+            "rangeWidth": 8.2,
+            "gustPassedPercent": 33,
+            "gustBias": 6.5
+          },
+          "from16": {
+            "sessions": 5,
+            "hoursInsideRangePercent": 85,
+            "hoursAboveRangePercent": 15,
+            "rangeWidth": 10.7,
+            "gustPassedPercent": 33,
+            "gustBias": 6.9
+          }
+        },
+        "hoursInsideRangePercent": 70,
+        "hoursAboveRangePercent": 26,
+        "rangeWidth": 6.4,
+        "sessionMeanMae": 2.03,
+        "gustBias": 7,
+        "gustPassedPercent": 25,
         "splitSessionsPercent": 5,
-        "maeWhenSplit": 2.57,
-        "maeWhenNot": 2.24,
-        "directionMae": 28
+        "maeWhenSplit": 2.44,
+        "maeWhenNot": 2.01,
+        "directionMae": 26
+      },
+      "longerLeadsWithoutEnsemble": {
+        "d2": {
+          "sessions": 304,
+          "hoursInsideRangePercent": 62,
+          "hourlyMae": 2.71,
+          "constantMeanHourlyMae": 3.37
+        },
+        "d3": {
+          "sessions": 304,
+          "hoursInsideRangePercent": 57,
+          "hourlyMae": 3.01,
+          "constantMeanHourlyMae": 3.37
+        },
+        "d5": {
+          "sessions": 304,
+          "hoursInsideRangePercent": 50,
+          "hourlyMae": 3.41,
+          "constantMeanHourlyMae": 3.37
+        },
+        "d7": {
+          "sessions": 304,
+          "hoursInsideRangePercent": 48,
+          "hourlyMae": 3.69,
+          "constantMeanHourlyMae": 3.37
+        }
       }
     }
   }

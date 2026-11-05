@@ -119,7 +119,10 @@ export function WindChart({
     return [{ slot, first, last }]
   })
 
+  // On the clock's own multiples, so midnight is always labelled with its day.
   const labelEvery = width / font < 26 ? 6 : 3
+  const gustLabel = peakGust ? `raffiche ${formatKnots(peakGust.gust)}` : ""
+  const gustLabelWidth = gustLabel.length * font * 0.62
   const first = hours[0] as BlendedHour
   const peak = hours.reduce(
     (best, hour) => (hour.mid > best.mid ? hour : best),
@@ -129,13 +132,17 @@ export function WindChart({
     (best, hour) => (hour.mid < best.mid ? hour : best),
     first,
   )
+  const firstThunder = hours.find((hour) => hour.thunder)
   const description =
     `Vento nelle prossime ${hours.length - 1} ore: da ${formatKnots(low.mid)} ` +
     `a ${formatKnots(peak.mid)} nodi, massimo alle ${romeClock(peak.time).hour}.` +
     (peakGust ? ` Raffica massima ${formatKnots(peakGust.gust)}.` : "") +
     (peak.direction === null
       ? ""
-      : ` Direzione ${compassPoint(peak.direction)}.`)
+      : ` Direzione ${compassPoint(peak.direction)}.`) +
+    (firstThunder
+      ? ` Temporali possibili dalle ${romeClock(firstThunder.time).hour}.`
+      : "")
 
   return (
     <div ref={box}>
@@ -187,7 +194,13 @@ export function WindChart({
           </g>
         ))}
 
-        <polygon fill="var(--accent-blue)" fillOpacity="0.28" points={band} />
+        <polygon
+          fill="var(--accent-blue)"
+          fillOpacity="0.28"
+          points={band}
+          stroke="var(--accent-blue)"
+          strokeOpacity="0.6"
+        />
         <polyline
           fill="none"
           points={line}
@@ -208,11 +221,13 @@ export function WindChart({
             fill="var(--foreground)"
             fontSize={font}
             fontWeight="700"
-            textAnchor={x(peakGust.index) > width * 0.7 ? "end" : "start"}
-            x={x(peakGust.index)}
+            x={Math.max(
+              plot.left,
+              Math.min(x(peakGust.index), plot.right - gustLabelWidth),
+            )}
             y={Math.max(font, y(peakGust.gust) - 4)}
           >
-            raffiche {formatKnots(peakGust.gust)}
+            {gustLabel}
           </text>
         )}
 
@@ -228,8 +243,12 @@ export function WindChart({
 
         {sessions.map(({ slot, first: start, last }) => {
           const hero = slot.key === heroKey
-          const label = slotShortLabel(slot)
           const span = x(last) - x(start)
+          // The day where it fits; at large text at least which half of it.
+          const label =
+            span >= slotShortLabel(slot).length * font * 0.5
+              ? slotShortLabel(slot)
+              : slot.period
           return (
             <g key={slot.key}>
               <rect
@@ -256,7 +275,7 @@ export function WindChart({
         })}
 
         {hours.map((hour, index) =>
-          index % 3 === 0 && hour.direction !== null ? (
+          romeClock(hour.time).hour % 3 === 0 && hour.direction !== null ? (
             <WindArrowPath
               degrees={hour.direction}
               key={`arrow-${hour.time}`}
@@ -268,8 +287,8 @@ export function WindChart({
         )}
 
         {hours.map((hour, index) => {
-          if (index % labelEvery !== 0) return null
           const clock = romeClock(hour.time).hour
+          if (clock % labelEvery !== 0) return null
           const midnight = clock === 0
           const atEnd = x(index) > width - font * 2
           return (

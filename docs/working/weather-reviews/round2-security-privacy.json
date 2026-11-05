@@ -1,0 +1,256 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "unregistered (proposed WX1, docs/working/WEATHER_PROPOSAL.md section 9)",
+  "round": 2,
+  "commit": "01e1ca0",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "priorFindingDispositions": [
+    {
+      "id": "SP-WX-1",
+      "severityThen": "blocker",
+      "status": "FIXED",
+      "proof": "One validator family now covers the network path (windData.ts:58-88, 157-184) and the stored copy (windData.ts:377-433). Nothing is written before validation. WeatherBoundary wraps the Home strip and Vento (App.tsx:521-523, 862-879). Committed e2e 'hours that are not hours cannot lock the app' passes. My 13-case table of well-typed hostile answers gave shell lock 0 before and after reload in all 13, no NaN or Infinity in the SVG or text, no injection, 0 page errors (probe P2). With a throw forced inside the blend, Home and Vento kept working, the cache was removed and the shell boundary never appeared, including on reload on Vento (probe P3)."
+    },
+    {
+      "id": "SP-WX-2",
+      "severityThen": "blocker",
+      "status": "FIXED",
+      "proof": "The signal runs from the hook into every fetch, is aborted on cleanup (useWindForecast.ts:113), and is checked immediately before the write (useWindForecast.ts:66). The unit test and the e2e reset race pass. A second-tab reset with an answer held also leaves no key and closes tab A (probe P5). Course erase in a second tab is a different path and is not covered: see SP-WX-R2-2."
+    },
+    {
+      "id": "SP-WX-3",
+      "severityThen": "important",
+      "status": "FIXED for erase, replace, import, reset and Home; sign-out KNOWINGLY LEFT; two gaps remain",
+      "proof": "weatherCachePrefix is in COURSE_PREFERENCE_PREFIXES (courses.ts:94-98). Replace goes through eraseAllCourseData (backup/session.ts:590), import through clearCoursePreferences (courseArchive.ts:172), reset through browserStorage.ts:152. Expired entries are deleted on read (windData.ts:450). The harm that made this important is gone, because Home no longer treats the key as consent (WeatherHomeCard.tsx:33-36 uses cacheOnly). Sign-out appears in proposal section 8 as 'deliberately left', with no reason written. I accept the outcome, since the key holds no personal data and no longer triggers calls, but the reason should be written. Gaps: SP-WX-R2-2 and SP-WX-Q5. Only erase is driven in the browser; replace and import are by code reading."
+    },
+    {
+      "id": "SP-WX-4",
+      "severityThen": "important",
+      "status": "DEFERRED TO OWNER, gate stated, but it understates the behaviour",
+      "proof": "The merge gate (proposal lines 216-218) names all three contracts. I checked the cited lines: 04_IMPLEMENTATION_PLAN.md:58, 03_TECHNICAL_DECISIONS.md:427-428 (cited as 427-429), docs/DEPLOY.md:196-198 within the cited 194-198. `git diff 4a97c1a..HEAD` on the contracts, README, CHANGELOG and manifest is empty, so nothing was silently amended. The default of the separate question in section 7 item 7 matches the code, and 'one word' is accurate. The gate speaks only of tapping; see SP-WX-R2-1."
+    },
+    {
+      "id": "SP-WX-5",
+      "severityThen": "important",
+      "status": "FIXED for the misstatement; instructor notice DEFERRED TO OWNER (section 7 item 6, section 9)",
+      "proof": "windData.ts:12-20 and proposal section 5 now list IP, Origin, User-Agent, language, hour, family through the coordinates, and next-session distance through the LaMMA step. Probe P1 confirms the headers: Origin on the fetches, none on the image, no Referer or Cookie anywhere. WeatherScreen.tsx:761-765 names both recipients and says what they receive. It sits at the very bottom of the screen and omits the family and next-session inference; section 5 says a notice should say so, and that notice is the owner item."
+    },
+    {
+      "id": "SP-WX-6",
+      "severityThen": "important",
+      "status": "FIXED on Vento; Home line DEFERRED with the owner's question to Open-Meteo",
+      "proof": "Unfolded credit with provider link, licence link and 'elaborati' at WeatherScreen.tsx:740-760, visible in docs/working/weather-screens/vento-derive.png. UKMO is out of the blend: windConfig.ts mentions it only in a comment at line 134. Home has no credit, as section 8 discloses. Section 8 says 'ask them with item 5', but item 5's text does not contain that question (SP-WX-Q7). README's third-party section is on the section 9 list. Licence pages were not re-read, per the brief."
+    },
+    {
+      "id": "SP-WX-7",
+      "severityThen": "important",
+      "status": "DEFERRED TO OWNER, stated accurately",
+      "proof": "Section 7 item 4 now reads 'Required before release', with the default 'Maps shown on the branch only'. `git branch -a --contains HEAD` shows only the local branch, consistent with 'not pushed'. Not in docs/OWNER_TODO.md, nor in the section 9 adoption list (SP-WX-Q7)."
+    },
+    {
+      "id": "SP-WX-8",
+      "severityThen": "important",
+      "status": "FIXED",
+      "proof": "A future fetchedAt beyond 5 minutes is refused and deleted (windData.ts:387, 445-450, test 'refuses a forecast from the future'). A null points object, unknown point or model, text in a column, and short columns are refused, in a table of tests. The e2e seeds fetchedAt 1e300 and Home still opens. A same-origin page can still forge a valid-looking copy dated now; no client check can stop that, and it expires like any copy."
+    },
+    {
+      "id": "SP-WX-9",
+      "severityThen": "important",
+      "status": "FIXED",
+      "proof": "RANGES at windData.ts:35-40 and cleanColumn at 58-72 null a lone impossible value and drop a column with more than 10% of them. Tests pass. Residual on derived gusts: SP-WX-Q4."
+    },
+    {
+      "id": "SP-WX-10",
+      "severityThen": "important",
+      "status": "PARTLY FIXED; residual below",
+      "proof": "tests/e2e/weather.spec.ts is committed and its 17 tests pass on pixel-7-chrome. It covers fresh Home 0 requests, an old copy 0, after erase 0, and the reset race leaving no key. Residual: SP-WX-10 in importantFindings."
+    },
+    {
+      "id": "SP-WX-Q1",
+      "status": "FIXED for storage",
+      "proof": "MAX_HOURS caps the stored copy (windData.ts:30, 80). Body size stays unchecked but time-limited, because the signal covers the body read."
+    },
+    {
+      "id": "SP-WX-Q2",
+      "status": "FIXED",
+      "proof": "A new download aborts the running one (useWindForecast.ts:49) and a 5-minute back-off applies after failure (lines 14, 90), with tests."
+    },
+    {
+      "id": "SP-WX-Q3",
+      "status": "FIXED as a plan",
+      "proof": "Section 9 lists connect-src and img-src hosts."
+    },
+    {
+      "id": "SP-WX-Q4",
+      "status": "FIXED",
+      "proof": "windData.ts:13 names the map."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-WX-R2-1",
+      "title": "The merge gate and the screen speak of tapping or opening, but an open Vento also connects with no tap, signed out",
+      "evidence": "App.tsx:668-672 restores the view from history state, and useWindForecast.ts:83-107 refreshes on mount, pageshow, visibilitychange and online. Three texts are narrower than this: the comment at useWindForecast.ts:25-27 ('the Vento screen, which a tap opens'), proposal lines 183-184 and 216 ('Opening Vento is what connects', 'Tapping into Vento connects'), and WeatherScreen.tsx:762 ('Aprendo Vento'). tests/e2e/weather.spec.ts:299 relies on the restore, but only with a fresh copy, and it filters LaMMA out of that assertion.",
+      "reproduction": "Probe P1, signed out, all hosts mocked or refused. Open Vento, advance the clock 7 hours, reload with no tap. Observed: www.lamma.toscana.it, api.open-meteo.com, ensemble-api.open-meteo.com, api.open-meteo.com. Clock +14 hours and a visibilitychange on the open screen, no tap: the same four requests. Expected from the text: none without a tap.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md:58; docs/working/WEATHER_PROPOSAL.md section 5 and the merge gate; AGENTS.md section 2",
+      "recommendedFix": "Not a blocker, because this is an unmerged side branch and the gate is still closed. Before the owner signs, say what they would be accepting: 'an open Vento refreshes by itself on return, on signal back and after a reload'. Or restrict the automatic paths to a Vento opened by tap in this page's life, and make a restored Vento wait for the refresh button. Align the comment and the on-screen line with the choice."
+    },
+    {
+      "id": "SP-WX-R2-2",
+      "title": "A course erased in another tab does not stop Vento: a held answer rewrites the key after the erase, and the tab keeps calling for the erased course",
+      "evidence": "eraseAllCourseData (courses.ts:100-135) and CourseErase.tsx:56-63 send no broadcast. announceCourseReplacement is called only by import (CourseFiles.tsx:293; localDataOperations.ts:73-75). The reset broadcasts and is therefore safe (probe P5). This weakens proposal line 190 ('erase, replace, import and reset all remove it') and the section 10 row on late answers. The forecast holds no personal data, Home never connects, and a phone-installed PWA rarely has two windows, so I rate it important, not a blocker: no spec or privacy rule is violated, only a claim.",
+      "reproduction": "Probe P4, same browser context, two pages, synthetic course. Tab A opens Vento with the answers held. Tab B: Impostazioni, Elimina il corso, confirm. Observed: key gone, tab A still on Vento and not on the 'corso cambiato' screen. Release the answers. Observed: key back in storage, plus two new requests from tab A. Create a new course in tab B. Observed: its Home strip reads 'Vento · Sab PM NW 15 kn raffiche 25', the erased course's download, with 0 requests from B. Clock +7 hours and a visibilitychange in tab A: 3 more requests, and the key stays. Expected: key stays gone, tab A stops.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 5 (Privacy) and section 10",
+      "recommendedFix": "Broadcast 'changed' from the erase before it clears preferences, so a second tab closes and its hook aborts as it does on reset. This also closes the existing state of a second tab left on an erased course. Add the second-tab case to the spec. Import has a smaller window of the same kind, by code reading: it clears at courseArchive.ts:172 and announces later at CourseFiles.tsx:293. Until then, qualify the proposal's sentence."
+    },
+    {
+      "id": "SP-WX-10",
+      "title": "Residual: the journey's recorder sees only the four weather hosts, and sign-out, import and replace have no test for the key",
+      "evidence": "tests/e2e/weatherFixtures.ts:152-156 records a request only if its host is in WEATHER_HOSTS, so a new third-party request would pass every test. My probe's catch-all saw no unlisted host today. A search of src tests for weatherCachePrefix finds only browserStorage.test.ts and the weather tests; the shared clear function has no import or replace case for it. docs/DEPLOY.md's 'zero off-origin requests' still has no gate.",
+      "reproduction": "Read weatherFixtures.ts:152-156; the search above. No failing test exists because the coverage is what is missing.",
+      "specRef": "AGENTS.md section 3 (programmatic evidence)",
+      "recommendedFix": "Record every non-origin request in routeWeather and assert it equals the weather requests. Add one unit test that clearCoursePreferences removes the weather key, plus an import case in the existing archive tests."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-WX-Q4b",
+      "title": "A derived gust can exceed the validated range",
+      "evidence": "src/domain/wind.ts gust rule (1.5 times the band's top) applied to in-range values.",
+      "reproduction": "Probe P2 'max values', speed 150 and gust 150 in every column: Home strip reads 'N 150 kn raffiche 225'. Only a provider fault or compromise can send this, and the app stays usable.",
+      "recommendedFix": "Optional: refuse the column above a lower plausible speed, or cap the printed value."
+    },
+    {
+      "id": "SP-WX-Q5",
+      "title": "A course erased from another phone, or swapped by the backup, leaves the key",
+      "evidence": "App.tsx:1023-1032 only reloads. clearCoursePreferences has two callers, courses.ts:134 and courseArchive.ts:172. Malformed JSON stays until overwritten (the catch at windData.ts:452), and an expired copy of the zone not being read is deleted only when that zone is read.",
+      "reproduction": "Code reading; no backend used. Same low harm as SP-WX-R2-2.",
+      "recommendedFix": "Clear preferences on the startup path that finds the course gone, or list the exception in section 5."
+    },
+    {
+      "id": "SP-WX-Q6",
+      "title": "A well-typed but useless answer replaces a good copy and reports success",
+      "evidence": "saneTimes (windData.ts:78-88) checks order and window, not hourly spacing or that the hours reach now.",
+      "reproduction": "Probe P2 'all in the past', 'day-spaced hours', 'one-second hours 384', 'single non-null': status 'Aggiornato alle 09:00', key stored, Home 'Tocca per scaricare'. It costs the forecast only; the refresh button works, and the automatic refresh waits 45 minutes.",
+      "recommendedFix": "Require hourly steps and at least one hour at or after fetchedAt before accepting."
+    },
+    {
+      "id": "SP-WX-Q7",
+      "title": "Owner items are stated but not tracked where adoption will look",
+      "evidence": "No Vento line in docs/OWNER_TODO.md. Section 9 lists neither the LaMMA message nor the Open-Meteo answer. Section 8's 'ask them with item 5' is absent from item 5's text. The bold merge gate names only the tap amendment, while item 4 is 'before release'.",
+      "reproduction": "grep over docs/OWNER_TODO.md; read proposal sections 7 to 9.",
+      "recommendedFix": "Add both to section 9 and put the Home attribution question into item 5. OWNER_TODO can wait for adoption if the branch stays private."
+    },
+    {
+      "id": "SP-WX-Q8",
+      "title": "The boundary, now the last line of defence, has no permanent test",
+      "evidence": "No test or spec names WeatherBoundary or asserts its fallback. The malformed-answer e2e stops at the validators.",
+      "reproduction": "Search of src and tests. My probe P3 shows it works today, using an init script that makes Math.atan2 throw.",
+      "recommendedFix": "A component test with a throwing child that asserts the fallback and the cleared key."
+    },
+    {
+      "id": "SP-WX-Q9",
+      "title": "AbortSignal.any has no fallback, so older browsers would never get a forecast",
+      "evidence": "windData.ts:259 and 306. Support floor from my own knowledge, not tested: Chrome 116, Safari 17.4. The failure is inside the async path, so it should fail closed with 'Il servizio meteo non ha risposto', costing only the forecast.",
+      "reproduction": "Code reading only; no old browser was run.",
+      "recommendedFix": "Decide against the project's phone floor."
+    }
+  ],
+  "whoReceivesWhat": [
+    {
+      "path": "Fresh Home, signed out",
+      "offOrigin": "0",
+      "proof": "P1; e2e test 1",
+      "claimHolds": true
+    },
+    {
+      "path": "Home with a copy 7 h and 25 h old",
+      "offOrigin": "0",
+      "proof": "e2e test 2 (weather hosts only)",
+      "claimHolds": true
+    },
+    {
+      "path": "Tap Vento, Derive",
+      "offOrigin": "LaMMA image (no Origin, Referer or Cookie); api, ensemble-api, api again (Origin; no Referer or Cookie). Cabinati adds marine-api",
+      "proof": "P1; e2e tests 1 and 11",
+      "claimHolds": true
+    },
+    {
+      "path": "Reload on Vento with a stale copy, no tap",
+      "offOrigin": "the same 4 requests",
+      "proof": "P1",
+      "claimHolds": "not what the gate's wording says: SP-WX-R2-1"
+    },
+    {
+      "path": "Vento left open, back to foreground, no tap",
+      "offOrigin": "the same 4 requests",
+      "proof": "P1; useWindForecast.test.ts",
+      "claimHolds": "not what the gate's wording says: SP-WX-R2-1"
+    },
+    {
+      "path": "After erase, same tab",
+      "offOrigin": "0, key gone",
+      "proof": "e2e test 2",
+      "claimHolds": true
+    },
+    {
+      "path": "Erase in tab B, tab A on Vento",
+      "offOrigin": "tab A keeps calling, and the key returns",
+      "proof": "P4",
+      "claimHolds": false
+    },
+    {
+      "path": "Full reset, including the race and a second tab",
+      "offOrigin": "key stays gone, tab A closed",
+      "proof": "e2e test 3; P5",
+      "claimHolds": true
+    },
+    {
+      "path": "Import, replace with online course",
+      "offOrigin": "key cleared; Home silent regardless",
+      "proof": "code reading: courseArchive.ts:172, session.ts:590",
+      "claimHolds": true
+    },
+    {
+      "path": "Sign-out; erase from another phone",
+      "offOrigin": "key stays; Home silent",
+      "proof": "code reading; proposal section 8 lists sign-out only",
+      "claimHolds": "acceptable, no personal data and no calls"
+    }
+  ],
+  "checkedAndFoundClean": [
+    "Hosts: with a catch-all route, no host outside the four appeared in any probe.",
+    "Content: the stored copy holds only numbers within range, so no provider text reaches the DOM. Model labels come from configuration, and stored model ids must be known. The hostile-string secondaries case gave xss null.",
+    "Prototype keys in a response or stored copy: no effect in probe P2; stored keys are refused by the known-id check by reading.",
+    "Stored round trip: every column a real download writes passes isStoredForecast, by test and by P2 (stored 1->1 across reload).",
+    "Logs: no console call, sessionStorage or sendBeacon in the weather files or domain wind files; no dangerouslySetInnerHTML.",
+    "Evidence in the diff: home.png and vento-derive.png viewed, synthetic course and no student data; the other seven screens come from the same synthetic spec and were not opened. No absolute user path or owner name in the proposal, the review files or the weather spec, by git grep."
+  ],
+  "evidenceInspected": [
+    "Re-tested SP-WX-1 to SP-WX-10 and SP-WX-Q1 to Q4 against the code at 01e1ca0.",
+    "Read proposal sections 2, 5, 7, 8, 9, 10; windData.ts, useWindForecast.ts, lammaMap.ts, WindLammaMap.tsx, WeatherHomeCard.tsx, WeatherBoundary.tsx, WeatherScreen.tsx, courses.ts, App.tsx (shell, boundaries, B6 reload), localDataOperations.ts, browserStorage.ts, courseArchive.ts:160-176, backup/session.ts:575-592 and 676-730, CourseErase.tsx by search, weatherFixtures.ts, all three listed test files.",
+    "`git diff de89666..01e1ca0` for App.tsx, courses.ts, config.ts, evaluations.ts, vitest.config.ts; `git diff --stat 4a97c1a..HEAD` over the contracts: empty.",
+    "Ran vitest on src/features/weather, browserStorage.test.ts and wind.test.ts: 193 passed.",
+    "Ran tests/e2e/weather.spec.ts on pixel-7-chrome: 17 passed.",
+    "Ran 17 throwaway Playwright probes (my scratchpad's garante-r2/, P1 to P5) on the Vite dev server, Pixel 7 profile, synthetic course: 17 passed as request and state logs. Weather hosts were mocked and every other off-origin request refused, so no service was contacted.",
+    "Node v24.21.0. No tracked file edited and no commit made; the probes ran from ignored test-results/ and were moved out afterwards; the tree was clean afterwards."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 2 restricted scope, no draw: previous findings, the rework's diff and regressions from it",
+      "Brief's hunt: what leaves the device; hostile answers and stored copies; data outliving erase, replace, import, reset"
+    ],
+    "wildcard": "Not drawn in a follow-up round. The second-tab erase and the restored-view paths came from checking the fixes' assumptions that 'leaving the screen' and 'a tap' are the only triggers."
+  },
+  "notTested": [
+    "Production build and service worker: probes and spec ran on the dev server; the deployed origin's headers were not fetched, per 'contact no service'.",
+    "WebKit and physical phones, including AbortSignal.any on older browsers.",
+    "Import, replace, sign-out and remote erase in the browser: code reading only; no backend used.",
+    "Licence and terms pages were not re-read: section 2 and items 4 and 5 were compared with my reading of 2026-11-05 in the previous report.",
+    "A hung connection past the 20 s and 15 s time-outs, and response bodies far larger than the cap: code reading only.",
+    "Legal conclusions on the notice owed to instructors, CC BY attribution on the Home line, or whether the club's use is non-commercial: for the owner."
+  ]
+}

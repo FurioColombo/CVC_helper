@@ -10,7 +10,7 @@ import {
   GUST_RULE,
   LEAD_ANCHOR_HOURS,
   MODEL_END_TAPER_HOURS,
-  RANGE_MIN_HALF_WIDTH_KNOTS,
+  RANGE_HALF_WIDTH,
   SEASONAL_AFTER_HOURS,
   SPLIT_RULES,
   TENDENCY_AFTER_HOURS,
@@ -187,6 +187,20 @@ function thunderAt(forecast: WindForecast, index: number) {
  * Speed and direction blend separately: averaging wind vectors would shrink
  * the speed exactly when models disagree on the direction.
  */
+/**
+ * The highest gust, with a run in its last hours fading towards the others', so
+ * the second number on the screen does not jump when that run ends.
+ */
+function fadedHighest(gusts: readonly { value: number; taper: number }[]) {
+  const steady = gusts.filter(({ taper }) => taper >= 1)
+  if (steady.length === 0) return Math.max(...gusts.map(({ value }) => value))
+  const top = Math.max(...steady.map(({ value }) => value))
+  return Math.max(
+    top,
+    ...gusts.map(({ value, taper }) => top + taper * (value - top)),
+  )
+}
+
 export function blendForecast(
   forecast: WindForecast,
   now: number,
@@ -199,8 +213,7 @@ export function blendForecast(
   forecast.times.forEach((time, index) => {
     if (time <= now - 3600) return
     const lead = Math.max(0, (time - forecast.fetchedAt) / 3600)
-    const gusts: number[] = []
-    const directions: Sample[] = []
+    const gusts: { value: number; taper: number }[] = []
     const perModel = new Map<
       WindModelId,
       { weight: number; speed: number; direction: Sample[] }
@@ -226,11 +239,12 @@ export function blendForecast(
         entry.speed += speed * weight
         const direction = series?.direction[index]
         if (direction !== null && direction !== undefined) {
-          directions.push({ value: direction, weight })
           entry.direction.push({ value: direction, weight })
         }
         const gust = series?.gust[index]
-        if (gust !== null && gust !== undefined) gusts.push(gust)
+        if (gust !== null && gust !== undefined) {
+          gusts.push({ value: gust, taper })
+        }
         perModel.set(model.id, entry)
       }
     }
@@ -267,8 +281,18 @@ export function blendForecast(
     const widerHigh =
       bandHigh + widening * (Math.max(bandHigh, ensembleHigh) - bandHigh)
 
-    const circular = circularMean(directions)
+    // Each model counts once here too, or places apart would read as models apart.
+    const circular = circularMean(
+      [...perModel.values()].flatMap((entry) => {
+        const own = circularMean(entry.direction)
+        return own ? [{ value: own.mean, weight: entry.weight }] : []
+      }),
+    )
     const directionSpread = circular?.spread ?? 180
+    const halfWidth = Math.max(
+      RANGE_HALF_WIDTH.minKnots,
+      RANGE_HALF_WIDTH.ofExpected * mid,
+    )
     const variable =
       !circular ||
       mid < SPLIT_RULES.variableBelowKnots ||
@@ -295,14 +319,14 @@ export function blendForecast(
     hours.push({
       time,
       lead,
-      low: Math.max(0, Math.min(widerLow, mid - RANGE_MIN_HALF_WIDTH_KNOTS)),
+      low: Math.max(0, Math.min(widerLow, mid - halfWidth)),
       mid,
-      high: Math.max(widerHigh, mid + RANGE_MIN_HALF_WIDTH_KNOTS),
+      high: Math.max(widerHigh, mid + halfWidth),
       modelSpread: widerHigh - widerLow,
       gust:
         lead > GUST_RULE.lastLeadHours || gusts.length === 0
           ? null
-          : Math.max(...gusts, bandHigh * GUST_RULE.bandFactor),
+          : Math.max(fadedHighest(gusts), mid * GUST_RULE.ofExpected),
       direction: variable ? null : circular.mean,
       directionSpread,
       models: contributions.sort((a, b) => b.weight - a.weight),
@@ -313,6 +337,8 @@ export function blendForecast(
 
   return hours
 }
+
+export type DirectionOption = { direction: number; speed: number }
 
 export type WindSummary = {
   low: number
@@ -326,8 +352,8 @@ export type WindSummary = {
   lastDirection: number | null
   /** Over what the models are divided; null when they are not, or too far out. */
   split: WindSplit | null
-  /** The two directions the models lean to, when they split over direction. */
-  directionOptions: readonly [number, number] | null
+  /** The two camps, when the models split over direction. */
+  directionOptions: readonly [DirectionOption, DirectionOption] | null
   trend: "rinforzo" | "calo" | "stabile"
   turning: boolean
   waveHeight: number | null
@@ -345,15 +371,16 @@ export function angleBetween(a: number, b: number) {
   return difference > 180 ? 360 - difference : difference
 }
 
-/** The heaviest model's direction, and the heaviest that clearly differs. */
+/** The heaviest model's wind, and the heaviest that clearly differs in direction. */
 function directionOptionsOf(hour: BlendedHour | undefined) {
-  const known = (hour?.models ?? []).flatMap((entry) =>
-    entry.direction === null ? [] : [entry.direction],
+  const known = (hour?.models ?? []).flatMap(({ direction, speed }) =>
+    direction === null ? [] : [{ direction, speed }],
   )
   const first = known[0]
   if (first === undefined) return null
   const second = known.find(
-    (direction) => angleBetween(first, direction) >= SPLIT_RULES.direction,
+    ({ direction }) =>
+      angleBetween(first.direction, direction) >= SPLIT_RULES.direction,
   )
   return second === undefined ? null : ([first, second] as const)
 }

@@ -215,7 +215,6 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow-wrap: anywhere;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.125rem;
@@ -230,8 +229,10 @@ div.wind-cell {
   color: var(--muted-foreground);
 }
 
+/* Drawn inside the box: choosing a cell must not narrow its numbers. */
 .wind-cell[aria-pressed="true"] {
-  border: 3px solid var(--foreground);
+  border-color: var(--foreground);
+  box-shadow: inset 0 0 0 2px var(--foreground);
 }
 
 .wind-cell-period {
@@ -246,8 +247,8 @@ div.wind-cell {
 
 @container (min-width: 17.5rem) {
   .wind-week {
-    grid-template-columns: 1.5rem repeat(var(--days), minmax(0, 1fr));
-    gap: 0.1875rem;
+    grid-template-columns: repeat(var(--days), minmax(0, 1fr));
+    gap: 0.125rem;
   }
 
   .wind-week-periods,
@@ -259,15 +260,37 @@ div.wind-cell {
   }
 
   .wind-week-periods {
-    align-items: center;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--muted-foreground);
+    display: none;
+  }
+
+  .wind-day {
+    gap: 0.125rem;
   }
 
   .wind-day-head {
     display: block;
     text-align: center;
+  }
+}
+
+/* Room for a column of AM and PM; narrower, each cell says it, so cells stay 40 px wide. */
+@container (min-width: 21rem) {
+  .wind-week {
+    grid-template-columns: 1.5rem repeat(var(--days), minmax(0, 1fr));
+    gap: 0.1875rem;
+  }
+
+  .wind-week-periods {
+    display: grid;
+    align-items: center;
+    gap: 0.1875rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--muted-foreground);
+  }
+
+  .wind-day {
+    gap: 0.1875rem;
   }
 
   .wind-cell-period {

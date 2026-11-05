@@ -160,6 +160,80 @@ describe("useWindForecast", () => {
     unmount()
   })
 
+  it("keeps what was seen, even when the screen leaves before the extras arrive", async () => {
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (String(url).includes("hourly=wind_speed_10m")) {
+        return respondWith(payload())
+      }
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () =>
+          reject(new DOMException("aborted", "AbortError")),
+        )
+      })
+    })
+    const { result, unmount } = renderHook(() =>
+      useWindForecast("derive", "network"),
+    )
+    await waitFor(() => expect(result.current.forecast).not.toBeNull())
+    expect(localStorage.getItem(key)).not.toBeNull()
+    unmount()
+    expect(localStorage.getItem(key)).not.toBeNull()
+  })
+
+  it("does not restart a running download when the phone comes back to it", async () => {
+    vi.mocked(fetch).mockImplementation(
+      (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          )
+        }),
+    )
+    const { result, unmount } = renderHook(() =>
+      useWindForecast("derive", "network"),
+    )
+    await waitFor(() => expect(result.current.state).toBe("loading"))
+    const calls = vi.mocked(fetch).mock.calls.length
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(vi.mocked(fetch).mock.calls.length).toBe(calls)
+    expect(result.current.state).toBe("loading")
+    unmount()
+  })
+
+  it("stops when another tab removes the forecast, and does not bring it back", async () => {
+    let release: (response: Response) => void = () => undefined
+    vi.mocked(fetch).mockImplementation(
+      (_url, init) =>
+        new Promise((resolve, reject) => {
+          release = resolve
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          )
+        }),
+    )
+    const { result, unmount } = renderHook(() =>
+      useWindForecast("derive", "network"),
+    )
+    await waitFor(() => expect(result.current.state).toBe("loading"))
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", { key, newValue: null }))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(result.current.state).toBe("idle")
+    release(respondWith(payload()))
+    vi.mocked(fetch).mockClear()
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(localStorage.getItem(key)).toBeNull()
+    expect(fetch).not.toHaveBeenCalled()
+    unmount()
+  })
+
   it("does not retry by itself right after a failure, but does when signal returns", async () => {
     vi.mocked(fetch).mockImplementation(async () => {
       throw new TypeError("no signal")

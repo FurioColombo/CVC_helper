@@ -311,9 +311,16 @@ async function bundledDomain() {
   return import(`file://${outfile}?${Date.now()}`)
 }
 
+const STRENGTHS = [
+  { name: "under12", below: 12 },
+  { name: "from12to16", below: 16 },
+  { name: "from16", below: Infinity },
+]
+
 /** What the screen says for one session, against what the station measured. */
-function evaluateBlend(domain, site, kind, leadHours) {
-  const suffix = kind === "prev" ? "_previous_day1" : ""
+function evaluateBlend(domain, site, kind, leadHours, minModels) {
+  const previousDay = Math.floor(leadHours / 24)
+  const suffix = kind === "prev" ? `_previous_day${previousDay}` : ""
   const source = forecasts[site][kind]
   const usable = Object.entries(source).filter(([, data]) => data)
   const times = usable[0][1].times
@@ -330,6 +337,24 @@ function evaluateBlend(domain, site, kind, leadHours) {
     ]),
   )
   const observed = observations[site]
+  const strata = Object.fromEntries(
+    STRENGTHS.map(({ name }) => [
+      name,
+      {
+        sessions: 0,
+        hours: 0,
+        inside: 0,
+        above: 0,
+        width: 0,
+        gustSessions: 0,
+        gustBias: 0,
+        gustPassed: 0,
+        peakPastGust: 0,
+      },
+    ]),
+  )
+  const hourlyErrors = []
+  const seenSpeeds = []
   const tally = {
     sessions: 0,
     hours: 0,
@@ -380,21 +405,36 @@ function evaluateBlend(domain, site, kind, leadHours) {
         .blendForecast(forecast, inSession[0], ["p"])
         .filter((hour) => inSession.includes(hour.time))
       if (hours.length !== inSession.length) continue
-      // Like with like: only sessions the high-resolution models reach.
-      if (hours.some((hour) => hour.models.length < 5)) continue
+      // The blend as shipped: a session missing a model is a different blend.
+      if (hours.some((hour) => hour.models.length < minModels)) continue
       const seen = inSession
         .map((time) => observed.get(hourKey(time)))
         .filter(Boolean)
       if (seen.length < 3) continue
       const summary = domain.summariseHours(hours)
+      const stratum =
+        strata[STRENGTHS.find(({ below }) => summary.mid < below).name]
       tally.sessions += 1
       tally.width += summary.high - summary.low
+      stratum.sessions += 1
+      stratum.width += summary.high - summary.low
       const speeds = seen.map((reading) => reading.speed)
       for (const speed of speeds) {
         tally.hours += 1
-        if (speed >= summary.low && speed <= summary.high)
+        stratum.hours += 1
+        seenSpeeds.push(speed)
+        if (speed >= summary.low && speed <= summary.high) {
           tally.insideRange += 1
-        if (speed > summary.high) tally.aboveRange += 1
+          stratum.inside += 1
+        }
+        if (speed > summary.high) {
+          tally.aboveRange += 1
+          stratum.above += 1
+        }
+      }
+      for (const hour of hours) {
+        const reading = observed.get(hourKey(hour.time))
+        if (reading) hourlyErrors.push(Math.abs(hour.mid - reading.speed))
       }
       const sessionError = Math.abs(summary.mid - mean(speeds))
       tally.midError += sessionError
@@ -422,12 +462,36 @@ function evaluateBlend(domain, site, kind, leadHours) {
         tally.gustSessions += 1
         tally.gustBias += summary.gust - peak
         if (peak > summary.gust) tally.gustPassed += 1
+        stratum.gustSessions += 1
+        stratum.gustBias += summary.gust - peak
+        if (peak > summary.gust) stratum.gustPassed += 1
       }
     }
   }
   const share = (part, whole) => (whole ? round((100 * part) / whole, 0) : null)
+  // In-sample mean of the same hours: a constant forecast with hindsight.
+  const seasonMean = seenSpeeds.length ? mean(seenSpeeds) : 0
   return {
     sessions: tally.sessions,
+    hourlyMae: round(mean(hourlyErrors)),
+    constantMeanHourlyMae: round(
+      mean(seenSpeeds.map((speed) => Math.abs(speed - seasonMean))),
+    ),
+    byExpectedWind: Object.fromEntries(
+      Object.entries(strata).map(([name, row]) => [
+        name,
+        {
+          sessions: row.sessions,
+          hoursInsideRangePercent: share(row.inside, row.hours),
+          hoursAboveRangePercent: share(row.above, row.hours),
+          rangeWidth: row.sessions ? round(row.width / row.sessions, 1) : null,
+          gustPassedPercent: share(row.gustPassed, row.gustSessions),
+          gustBias: row.gustSessions
+            ? round(row.gustBias / row.gustSessions, 1)
+            : null,
+        },
+      ]),
+    ),
     hoursInsideRangePercent: share(tally.insideRange, tally.hours),
     hoursAboveRangePercent: share(tally.aboveRange, tally.hours),
     rangeWidth: round(tally.width / tally.sessions, 1),
@@ -446,14 +510,32 @@ function evaluateBlend(domain, site, kind, leadHours) {
   }
 }
 
+const MODELS_IN_BLEND = 7
 const blend = {}
 if (!modelsOnly) {
   const domain = await bundledDomain()
   for (const site of Object.keys(SITES)) {
     blend[site] = {
-      short: evaluateBlend(domain, site, "hist", 6),
-      plusOneDay: evaluateBlend(domain, site, "prev", 30),
+      short: evaluateBlend(domain, site, "hist", 6, MODELS_IN_BLEND),
+      plusOneDay: evaluateBlend(domain, site, "prev", 30, MODELS_IN_BLEND),
     }
+    // Speeds only, and no ensemble: the archive has neither gusts, directions
+    // nor ensemble this far out, so these are floors for the range, not scores
+    // of the shipped long range.
+    blend[site].longerLeadsWithoutEnsemble = Object.fromEntries(
+      LEADS.filter((lead) => lead > 1).map((lead) => {
+        const row = evaluateBlend(domain, site, "prev", lead * 24 + 6, 3)
+        return [
+          `d${lead}`,
+          {
+            sessions: row.sessions,
+            hoursInsideRangePercent: row.hoursInsideRangePercent,
+            hourlyMae: row.hourlyMae,
+            constantMeanHourlyMae: row.constantMeanHourlyMae,
+          },
+        ]
+      }),
+    )
   }
 }
 

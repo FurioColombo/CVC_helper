@@ -1,17 +1,20 @@
+import { crc32, deflateSync } from "node:zlib"
+
 import type { Page, Route } from "@playwright/test"
 
 /**
  * Synthetic Open-Meteo and LaMMA answers for the Vento journeys. Nothing here
  * is a real forecast. The scenario is small enough to check by hand:
  *
- * - Every model, at every sea point, sends 10 kn from 315 with gusts of 16,
+ * - Every model, at every sea point, sends 10 kn from 315 with gusts of 22,
  *   except in the windows below.
  * - Saturday 7 Nov, 14-18 (Sat PM, the course's first session): all models
- *   send 15 kn from 315 (NW, Maestrale) with gusts of 25. At Spargi, a
- *   Cabinati place, the wind is 18 kn with gusts of 30.
+ *   send 15 kn from 315 (NW, Maestrale) with gusts of 32. At Spargi, a
+ *   Cabinati place, the wind is 18 kn with gusts of 38.
  * - Sunday 8 Nov, 9-13 (Sun AM): the models disagree. Four of them send 6 kn
  *   from 135, the other three 20 kn from 315, so the screen must say so.
  * - Sunday 8 Nov, 14-18 (Sun PM): the sky codes say thunder.
+ * - Wednesday 11 Nov, 9-18: 24 kn with gusts of 50, for the widest cell values.
  * - The 51 ensemble members agree with the models (15 kn; 13 kn on Sun AM).
  * - Waves are 0.5 m and the rest of the sky is clear (code 1).
  */
@@ -39,15 +42,18 @@ function reading(model: string, latitude: number, index: number): Reading {
   // Day 2 is Saturday 7 Nov, day 3 Sunday 8 Nov (day 0 is Thursday 5 Nov).
   if (day === 2 && hour >= 14 && hour < 18) {
     return latitude === SPARGI_LATITUDE
-      ? { speed: 18, direction: 315, gust: 30 }
-      : { speed: 15, direction: 315, gust: 25 }
+      ? { speed: 18, direction: 315, gust: 38 }
+      : { speed: 15, direction: 315, gust: 32 }
   }
   if (day === 3 && hour >= 9 && hour < 13) {
     return DISAGREEING_LOW.has(model)
-      ? { speed: 6, direction: 135, gust: 9 }
-      : { speed: 20, direction: 315, gust: 31 }
+      ? { speed: 6, direction: 135, gust: 13 }
+      : { speed: 20, direction: 315, gust: 42 }
   }
-  return { speed: 10, direction: 315, gust: 16 }
+  if (day === 6 && hour >= 9 && hour < 18) {
+    return { speed: 24, direction: 315, gust: 50 }
+  }
+  return { speed: 10, direction: 315, gust: 22 }
 }
 
 function ensembleSpeed(index: number) {
@@ -81,6 +87,8 @@ function forecastLocation(
 export type WeatherHost = {
   /** Every request that reached a weather host, aborted ones included. */
   requests: string[]
+  /** Anything else that left the app: there must never be any. */
+  otherOffOrigin: string[]
   /** false: every weather API call fails, as without signal. */
   online: boolean
   /** false: LaMMA's image fails to load. */
@@ -91,11 +99,32 @@ export type WeatherHost = {
   hold: Promise<void> | null
 }
 
-/** One grey pixel, stretched: a stand-in for LaMMA's map. */
-const ONE_PIXEL_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
-  "base64",
-)
+function pngChunk(type: string, data: Buffer) {
+  const body = Buffer.concat([Buffer.from(type, "latin1"), data])
+  const length = Buffer.alloc(4)
+  length.writeUInt32BE(data.length)
+  const check = Buffer.alloc(4)
+  check.writeUInt32BE(crc32(body) >>> 0)
+  return Buffer.concat([length, body, check])
+}
+
+/** A plain grey image in LaMMA's own proportions, 1168 by 820 cut by four. */
+function greyMap(width: number, height: number) {
+  const header = Buffer.alloc(13)
+  header.writeUInt32BE(width, 0)
+  header.writeUInt32BE(height, 4)
+  header[8] = 8 // eight bits, grey
+  const rows = Buffer.alloc((width + 1) * height, 0xc8)
+  for (let row = 0; row < height; row += 1) rows[row * (width + 1)] = 0
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT", deflateSync(rows)),
+    pngChunk("IEND", Buffer.alloc(0)),
+  ])
+}
+
+const MAP_PNG = greyMap(292, 205)
 
 const CORS = { "access-control-allow-origin": "*" }
 export const WEATHER_HOSTS = [
@@ -144,14 +173,21 @@ function apiAnswer(url: URL): unknown {
 export async function routeWeather(page: Page): Promise<WeatherHost> {
   const host: WeatherHost = {
     requests: [],
+    otherOffOrigin: [],
     online: true,
     lamma: true,
     malformed: false,
     hold: null,
   }
   page.on("request", (request) => {
-    if (WEATHER_HOSTS.includes(new URL(request.url()).hostname)) {
+    const url = new URL(request.url())
+    if (WEATHER_HOSTS.includes(url.hostname)) {
       host.requests.push(request.url())
+    } else if (
+      url.protocol.startsWith("http") &&
+      !["127.0.0.1", "localhost"].includes(url.hostname)
+    ) {
+      host.otherOffOrigin.push(request.url())
     }
   })
   const handler = async (route: Route) => {
@@ -161,7 +197,7 @@ export async function routeWeather(page: Page): Promise<WeatherHost> {
       return route.fulfill({
         status: 200,
         contentType: "image/png",
-        body: ONE_PIXEL_PNG,
+        body: MAP_PNG,
       })
     }
     if (!host.online) return route.abort("internetdisconnected")
