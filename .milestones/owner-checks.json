@@ -467,6 +467,64 @@
       "testUrl": null,
       "evidencePath": ".evidence/B7/physical-device-review.json",
       "updatedAt": "2026-11-05T00:12:27.854Z"
+    },
+    {
+      "id": "WX1-NETWORK",
+      "milestone": "WX1",
+      "kind": "DECISION",
+      "title": "Let Vento fetch forecasts before sign-in",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "This cycle's rule is that nothing connects before sign-in. Vento breaks it on purpose: once you open it, the phone asks Open-Meteo and LaMMA for forecasts, and keeps asking by itself while it stays open (when you come back to it, when signal returns, after a reload).",
+        "They receive the phone's internet address, the time and the fixed sea points of the area, which show whether it is a Derive or a Cabinati course. Never a name, a course or a student. Home never connects: it shows the last forecast downloaded.",
+        "Tell me 'Vento may connect' to accept. Or say what you want instead, for example only after sign-in, or only on a tap each time."
+      ],
+      "expected": "With a yes, the rule is amended in the plan, 03 and DEPLOY.md together, and WX1 starts after B7's handoff. With another answer, Vento's design changes before it starts.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/WX1/owner-setup.json",
+      "updatedAt": "2026-11-05T23:37:47.044Z"
+    },
+    {
+      "id": "WX1-PLACES",
+      "milestone": "WX1",
+      "kind": "DECISION",
+      "title": "Confirm the session hours and the forecast points",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "Sessions are taken as morning 9 to 13 and afternoon 14 to 18. Tell me the real hours if they differ.",
+        "Derive points, each on open water just off the place: Cala Fico 41.178 N 9.478 E (estimated: maps do not name the cove), Isola del Porco 41.1725 N 9.455 E, Punta Rossa 41.167 N 9.472 E.",
+        "Cabinati points: Spargi 41.24 N 9.325 E, La Maddalena nord 41.265 N 9.41 E, Caprera est 41.215 N 9.5 E, Caprera sud 41.168 N 9.465 E, Liscia di Vacca 41.148 N 9.53 E, Cannigione 41.125 N 9.445 E.",
+        "Check them on a map and tell me 'points right', or the corrections, and where Cala Fico is."
+      ],
+      "expected": "The forecast is asked for where the boats actually sail, and each session is the part of the day you are on the water.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/WX1/owner-setup.json",
+      "updatedAt": "2026-11-05T23:37:48.418Z"
+    },
+    {
+      "id": "WX1-TERMS",
+      "milestone": "WX1",
+      "kind": "DECISION",
+      "title": "Tell LaMMA about the use, and check Open-Meteo's terms",
+      "status": "READY",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "LaMMA's disclaimer asks that information on the use of its products be sent to it. Write to info@lamma.toscana.it: CVC Helper, a tool for the Caprera sailing centre's instructors, shows LaMMA's Bocche di Bonifacio wind and wave maps unaltered, with credit and a link. You may also ask whether they could offer a point series or allow a browser to read their data for Caprera.",
+        "Open-Meteo's free service is for non-commercial use under 10,000 calls a day (https://open-meteo.com/en/terms). Decide whether the centre's use qualifies, and whether the Home line, which quotes their data, needs their credit too. If unsure, ask them.",
+        "Tell me what you sent and what you decided. I do not write to either on your behalf."
+      ],
+      "expected": "Both providers' terms are respected before Vento reaches anyone but you.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/WX1/owner-setup.json",
+      "updatedAt": "2026-11-05T23:37:49.457Z"
     }
   ]
 }

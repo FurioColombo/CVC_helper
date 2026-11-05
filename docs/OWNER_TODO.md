@@ -323,3 +323,58 @@ The owner reported: Owner: done and passed, no issue to signal. The installed re
 **Build:** No test build is assigned yet.
 
 **Work affected:** No required milestone completion is blocked.
+
+<a id="wx1-network"></a>
+
+## Let Vento fetch forecasts before sign-in — WX1
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. This cycle's rule is that nothing connects before sign-in. Vento breaks it on purpose: once you open it, the phone asks Open-Meteo and LaMMA for forecasts, and keeps asking by itself while it stays open (when you come back to it, when signal returns, after a reload).
+2. They receive the phone's internet address, the time and the fixed sea points of the area, which show whether it is a Derive or a Cabinati course. Never a name, a course or a student. Home never connects: it shows the last forecast downloaded.
+3. Tell me 'Vento may connect' to accept. Or say what you want instead, for example only after sign-in, or only on a tap each time.
+
+**Expected:** With a yes, the rule is amended in the plan, 03 and DEPLOY.md together, and WX1 starts after B7's handoff. With another answer, Vento's design changes before it starts.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of WX1 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+<a id="wx1-places"></a>
+
+## Confirm the session hours and the forecast points — WX1
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. Sessions are taken as morning 9 to 13 and afternoon 14 to 18. Tell me the real hours if they differ.
+2. Derive points, each on open water just off the place: Cala Fico 41.178 N 9.478 E (estimated: maps do not name the cove), Isola del Porco 41.1725 N 9.455 E, Punta Rossa 41.167 N 9.472 E.
+3. Cabinati points: Spargi 41.24 N 9.325 E, La Maddalena nord 41.265 N 9.41 E, Caprera est 41.215 N 9.5 E, Caprera sud 41.168 N 9.465 E, Liscia di Vacca 41.148 N 9.53 E, Cannigione 41.125 N 9.445 E.
+4. Check them on a map and tell me 'points right', or the corrections, and where Cala Fico is.
+
+**Expected:** The forecast is asked for where the boats actually sail, and each session is the part of the day you are on the water.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of WX1 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+<a id="wx1-terms"></a>
+
+## Tell LaMMA about the use, and check Open-Meteo's terms — WX1
+
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. LaMMA's disclaimer asks that information on the use of its products be sent to it. Write to info@lamma.toscana.it: CVC Helper, a tool for the Caprera sailing centre's instructors, shows LaMMA's Bocche di Bonifacio wind and wave maps unaltered, with credit and a link. You may also ask whether they could offer a point series or allow a browser to read their data for Caprera.
+2. Open-Meteo's free service is for non-commercial use under 10,000 calls a day (https://open-meteo.com/en/terms). Decide whether the centre's use qualifies, and whether the Home line, which quotes their data, needs their credit too. If unsure, ask them.
+3. Tell me what you sent and what you decided. I do not write to either on your behalf.
+
+**Expected:** Both providers' terms are respected before Vento reaches anyone but you.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of WX1 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.

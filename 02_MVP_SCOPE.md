@@ -132,6 +132,10 @@ size override was picked for it; they are field candidates in
 courses per device and conflict handling remain out until the release §4
 assigns them.
 
+**0.5.0** also brings Vento, a wind forecast (WX1, added by the owner on
+2026-11-06). It is outside the shared-database road: it reads public
+forecasts and touches no course data.
+
 ## 5. Completion boundary
 
 A release is complete when `AGENTS.md` §17 holds and its gate in

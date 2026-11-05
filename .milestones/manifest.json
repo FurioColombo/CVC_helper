@@ -1425,6 +1425,51 @@
       }
     },
     {
+      "id": "WX1",
+      "category": "FEATURE",
+      "status": "PENDING",
+      "ownerEvidence": [
+        ".evidence/WX1/owner-setup.json",
+        ".evidence/WX1/physical-device-review.json"
+      ],
+      "verificationScripts": ["verify", "verify:e2e:focus"],
+      "requiredEvidence": [
+        ".evidence/WX1/verification.json",
+        ".evidence/WX1/owner-setup.json",
+        ".evidence/WX1/physical-device-review.json",
+        ".evidence/WX1/self-review.json",
+        ".evidence/WX1/field-ux-review.json",
+        ".evidence/WX1/accessibility-mobile-review.json",
+        ".evidence/WX1/security-privacy-review.json",
+        ".evidence/WX1/forecast-method-review.json"
+      ],
+      "requiredReviews": [
+        ".evidence/WX1/self-review.json",
+        ".evidence/WX1/field-ux-review.json",
+        ".evidence/WX1/accessibility-mobile-review.json",
+        ".evidence/WX1/security-privacy-review.json",
+        ".evidence/WX1/forecast-method-review.json"
+      ],
+      "allowedAwaitingOwnerPredecessors": [
+        {
+          "id": "B4",
+          "reason": "Vento reads public forecasts and writes only its own localStorage key; it uses no upload, table or sync path that B4's recheck measures."
+        },
+        {
+          "id": "B5",
+          "reason": "A restore brings course rows; Vento keeps no course row, and its forecast is cleared, not restored."
+        },
+        {
+          "id": "B6",
+          "reason": "B6's erase is verified; Vento only adds its forecast key to what erase and reset already clear locally."
+        },
+        {
+          "id": "B7",
+          "reason": "The choice between two courses never reads the forecast; Vento follows whichever course is open."
+        }
+      ]
+    },
+    {
       "id": "UG4",
       "category": "INTEGRATION_GATE",
       "status": "PENDING",

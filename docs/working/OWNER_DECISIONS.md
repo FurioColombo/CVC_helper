@@ -9,7 +9,7 @@ change. Accepted entries move into the contract they touch. The 0.4.0 entries
 that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md` and
 `archive/v0.4.0/OWNER_DECISIONS_LATE.md`.
 
-**Waiting for your reading:** 1, 17, 22 and 23.
+**Waiting for your reading:** 1, 17, 22, 23 and 25.
 
 ## Open from 0.4.0
 
@@ -153,3 +153,13 @@ tutti i dati locali` erases the course from the backup first; without
     briefs from round 2 on, reusing their scripts. Bounded implementation may go
     to Sonnet through `implementer`; B7's fixes so far I wrote myself, because
     each one followed from what the reviews had just found.
+25. **Vento joins 0.5.0 as WX1 (taken 2026-11-06, for your review).** You chose
+    to adopt the side branch's wind section as a milestone. I placed it in this
+    cycle, after B7 and before UG4, rather than first in 0.6.0: it touches no
+    course data or sync, agent time is free while B4–B7 wait for you and
+    GitHub, and UG4's one phone check then covers it. The cost: 0.5.0 also
+    waits for WX1, and `01` must shed text to hold it. It starts only after
+    your answer to `WX1-NETWORK`, because Vento connects before sign-in against
+    this cycle's rule, and after B7's handoff, because merging earlier would
+    change the source B7 verified. If you would rather it wait for 0.6.0, say
+    so: nothing is merged yet.

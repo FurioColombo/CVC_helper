@@ -1,6 +1,6 @@
 # Implementation plan — 0.5.0
 
-Updated 2026-11-05. Read **Where this cycle stands**, then only the active
+Updated 2026-11-06. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.4.0 plan
 is archived at `archive/v0.4.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -13,11 +13,16 @@ erasing it erases it on the server. The course stays fully usable offline and
 signed out, the team reads nothing yet (0.6.0), and real rosters stay off the
 server until the owner's data decisions below are recorded.
 
+**Vento (WX1).** Added by the owner on 2026-11-06: a wind forecast for the next
+session, the next 24 hours and the week, from public forecasts, with no go or
+no-go. It touches no course data and no sync.
+
 **0.5.0 is done when** a synthetic course made offline on one phone reaches
 the development server after sign-in, is restored whole on a second, empty
 device, keeps working offline throughout, and disappears from the server when
-erased; an older 0.4.0 app meeting the same database loses nothing — proven
-by `verify:all`, the reviews below and the owner's Android check.
+erased; an older 0.4.0 app meeting the same database loses nothing; and
+Vento shows a real forecast on the owner's phone and keeps it without signal —
+proven by `verify:all`, the reviews below and the owner's Android check.
 
 ## Where this cycle stands
 
@@ -32,11 +37,14 @@ by `verify:all`, the reviews below and the owner's Android check.
 | B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reverified on the code of CVC Helper Test 0.5.3 after B4's desktop fixes. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 | B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
 | B7 | Built, reviewed, evidence recorded at `08b3eae`. Waits for full CI (blocked by GitHub billing) and the owner's `B7-KEEP-RULE`; then the live spec, a test build and `B7-PHONE-CHOICE`. |
+| WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. Starts after the owner's `WX1-NETWORK` and B7's handoff. |
 
 ## Execution order
 
-**B1** → **B2** → **B3** → **B4** → **B5** → **B6** → **B7** → **UG4**. B1 needs no
-backend. B2 needs the owner's development projects; B3 and later need B2.
+**B1** → **B2** → **B3** → **B4** → **B5** → **B6** → **B7** → **WX1** → **UG4**. B1
+needs no backend. B2 needs the owner's development projects; B3 and later need
+B2. WX1 needs neither, and waits for B7's handoff only so that merging it does
+not change the source B7 verified.
 
 ## Owner decisions and actions
 
@@ -162,6 +170,46 @@ out; three courses; a choice with unsent changes in the course given up.
 **Evidence:** verification, the owner's Android check, self, data-integrity,
 sync-chaos, field UX and security/privacy reviews.
 
+## WX1 — Vento, the wind forecast
+
+**Category:** FEATURE
+**Status:** PENDING
+
+A Vento line on Home and a Vento screen: the next session in detail, the next
+24 hours, the week or seven days; seven models blended through Open-Meteo,
+LaMMA's own map, links to Meteomar, Windy and Windfinder. It gives no go or
+no-go: that stays the instructor's. Built on `claude/weather-section`, with the
+proposal, the backtest and three rounds of review in `docs/working/` there
+(`WEATHER_PROPOSAL.md`, `WEATHER_EVIDENCE.md`, `weather-reviews/`).
+
+**Starts when** the owner answers `WX1-NETWORK` (decision 25) and B7 has handed
+off. Then the branch merges here, the manifest gains its specs, and WX1 starts
+with B4–B7 as permitted predecessors.
+
+**Work.** The proposal's §9 edits: `01` gains the Vento section and sheds text
+to stay in budget; `02` §1; `03` lists Open-Meteo and LaMMA as permitted calls
+and the forecast's cache rule. With a yes to `WX1-NETWORK`, this plan's rule
+"Nothing connects before sign-in", `03` §"Online backup" and `docs/DEPLOY.md`
+"zero off-origin requests" are amended in one commit. The disclosure in
+Impostazioni and the README; `WX1-PLACES`' hours and points. The proposal's §8
+items left open are done or deferred to the backlog, and the working
+documents fold into the contracts.
+
+**Success predicate:** on the owner's phone, Vento shows each area's next
+session with expected wind, gust and range from a real download; without
+signal it keeps the last forecast with its age; Home quotes it without
+connecting; nothing of the course leaves the device; erase, replace, import
+and reset remove the forecast.
+
+**Adversarial checklist:** no signal at the first open; signal lost mid-download;
+leaving before the extras arrive; a malformed, hostile or past-only answer; a
+copy 6 and 24 hours old; a session in its last hour; the course erased in
+another tab; LaMMA unavailable; a far session; 320 px at 200% text; WebKit.
+
+**Evidence:** verification, the owner's decisions and Android check, self, field
+UX, accessibility/mobile, security/privacy and forecast-method reviews; the
+method review covers what changed after round three.
+
 ## UG4 — 0.5.0 integration and release gate
 
 **Category:** INTEGRATION_GATE
@@ -170,7 +218,8 @@ sync-chaos, field UX and security/privacy reviews.
 `verify:all` on the final source, with the version bumped before the phone
 build is published so one owner check covers the final source (owner
 decision of 2026-10-23). A realistic week offline and online across two
-devices, the 0.4.0-app scenario, and the release sweep. Reviewers:
+devices, the 0.4.0-app scenario, Vento in that week, and the release sweep.
+`WX1-TERMS` must be settled before release. Reviewers:
 security/privacy, sync-chaos, data-integrity, regression, scope, field UX and
 code quality.
 
