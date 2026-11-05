@@ -127,7 +127,7 @@ phone without a network.
 
 **0.4.0** was delivered by the milestones H1, D1–D4, T1 (added by the owner
 on 2026-10-10) and UG3 (`archive/v0.4.0/`). No UG2 field fix or the D2–D5
-size override was picked for it; they are 0.5.0 planning candidates in
+size override was picked for it; they are field candidates in
 `docs/working/BACKLOG.md`. Server, account and synchronisation code, multiple
 courses per device and conflict handling remain out until the release §4
 assigns them.

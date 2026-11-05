@@ -21,10 +21,9 @@ Still open after the owner's 2026-10-08 decisions (`02_MVP_SCOPE.md` §4);
 - **the speech model files**: today each device downloads them once from
   Hugging Face (pinned revision); a shared deployment may serve them itself.
 
-## 0.5.0 planning candidates
+## Field candidates, for the owner's pick
 
-The UG2 field findings and one owner-assigned item; none was picked for
-0.4.0, and the owner picks which join 0.5.0.
+The UG2 field findings and one owner-assigned item; none is scheduled.
 
 1. **Course start date** comes only from the day the course is created; add a
    way to correct it (UG2-DAT-4, UG2-FUN-7).
@@ -180,8 +179,6 @@ Each passed only on a retry and is a defect to fix (03 §6).
   03 §3.1 cannot read the local generation and can save over imported rows;
   the preview asks to close other old tabs. Compatibility planning must
   address it without silently changing the writer window.
-- **The Android reset hang on 0.4.2** (D4 owner check, 2026-10-19): unproven
-  cause. 0.4.3 bounds and resumes the reset and passed on the phone.
 - **Test and regular app installed together** (owner, D4 and UG3): their
   data stays separate, but installing both on one phone is unreliable (Chrome
   reports the test app installed with no icon; the two share one origin,
@@ -220,6 +217,8 @@ Each passed only on a retry and is a defect to fix (03 §6).
   - SP-B4-Q3 / SC-B4F-1: the SDK's requests have no timeout: a write
     checkpoint hung on a dead connection holds uploads, Esci, the erase and the
     restart until a reopen (owner check 2026-10-28); only inserts are batched.
+- `docs/OWNER_TODO.md` mixes what is passed with what waits, in milestone order, so the
+  owner scrolls for the next step. List what waits first (generator, after B7).
 - B3 SELF-B3-Q1: a switch deferred after sign-in says "Backup pronto. Riapri
   l’app" only in Impostazioni. Consider a one-line notice on Home.
 - B1 SC-B1-Q6: an older app beside a synced tab makes a refused save say "sostituito o
@@ -229,38 +228,18 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - Persistence API invariant (D3 DI-R2-Q4 / DI-Q5): forbid mutating SQL through read APIs
   or raw execution, or route it through the guarded write lock. No app caller does so.
 
-From the UG2 code-quality review, before the shared database
-(`.evidence/UG2/code-quality-review.json`):
+From the UG2 code-quality review, before the shared database; the detail of
+each id is in `.evidence/UG2/code-quality-review.json`:
 
-- split `CrewManagement.tsx` (3,600 lines) into a crew-plan hook, the boat
-  pager and its panels (CQ-1);
-- one dialog focus and Escape helper (CQ-2), and one history-state mechanism
-  (CQ-3);
-- log the cause of a failed save (CQ-4);
-- one age module and one name-folding helper (CQ-5);
-- the D1-morning rule into the domain, and dead helpers deleted (CQ-6, rest);
-- one summary shell and named colour tokens (CQ-7);
-- one crew-plan validation path and a shared load and error screen (CQ-9);
-- the e2e suite organised by feature with typed seeding (CQ-10), and the
-  parked `test.fixme` in `tests/e2e/ug2-hostile-roster.spec.ts`;
-- the 1,184-line summary renderer `src/lib/pageSnapshot.ts` fails silently at
-  its fidelity limits (CQ-8);
-- gesture thresholds are unnamed and the long press exists twice with
-  different values (CQ-11);
-- brand-asset and cache-size lists kept in step by hand in three places
-  (CQ-12);
-- invariant issue codes are plain strings (CQ-13);
-- the erase-completeness test reads `db.ts` as text (CQ-14);
-- a one-line wrapper tested at the wrong layer (CQ-15); small helpers repeated
-  by hand: plurals, family code, session label, Collator, page header and back
-  button (CQ-16);
-- lint and type rules do not enforce the conventions the code relies on
-  (CQ-17); comments narrating review history, and two unused ids (CQ-18);
-- `StudentScan` is 1,220 lines with 16 states and 12 refs, and "row is
-  complete" is decided in four places (CQ-19); persistence and form plumbing
-  duplicated (CQ-20);
-- the image-against-screen pixel comparison covers only the first screen of a
-  long summary (CQ-21).
+- large files: `CrewManagement.tsx` (3,700 lines, CQ-1), `StudentScan.tsx` (2,040
+  lines, CQ-19) and `src/lib/pageSnapshot.ts`, silent at its fidelity limits (CQ-8);
+- one of each: dialog focus and Escape (CQ-2), history state (CQ-3), age and name
+  folding (CQ-5), summary shell and colour tokens (CQ-7), crew-plan validation and
+  load screen (CQ-9), small helpers (CQ-16), persistence and form plumbing (CQ-20);
+- the cause of a failed save is not logged (CQ-4); the rest of CQ-6, CQ-11 to CQ-15,
+  CQ-17, CQ-18; the e2e suite by feature, with the parked `test.fixme` in
+  `tests/e2e/ug2-hostile-roster.spec.ts` (CQ-10); the pixel comparison covers only a
+  long summary's first screen (CQ-21).
 
 From the UG2 data-integrity and scope reviews:
 

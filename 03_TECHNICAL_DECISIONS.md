@@ -140,7 +140,7 @@ stock SDK entry and database-specific name and holds only the database. Sync run
 in the tab on every browser, one tab at a time under the SDK's lock; the SDK's
 shared sync worker is not used, since it cannot clone the startup worker function
 and replays a finished download's status into a restoring tab
-(`createDatabase`, review SC-DT-2). `desktop-chrome-backup` runs the backup
+(`createDatabase`). `desktop-chrome-backup` runs the backup
 journeys on that database path too. Build-time version and source-hash
 guards pin this private integration to PowerSync 2.2.0 and wa-sqlite 2.0.3;
 updating either requires a new reviewed integration. Development-only events

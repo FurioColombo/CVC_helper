@@ -1,6 +1,6 @@
 # 06 — Regole di design per il ciclo post-MVP
 
-**Stato:** FROZEN per il ciclo 0.2.0. Da usare con il
+**Stato:** in vigore, fissate nel ciclo 0.2.0. Da usare con il
 [target pagina per pagina](07_PAGE_CHANGELOG.md) e la galleria r10 al commit
 `ee8d4c8`. Le regole di prodotto in `01_PRODUCT_SPEC.md` restano prevalenti.
 

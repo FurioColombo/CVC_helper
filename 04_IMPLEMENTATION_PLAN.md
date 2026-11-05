@@ -1,6 +1,6 @@
 # Implementation plan — 0.5.0
 
-Updated 2026-10-26. Read **Where this cycle stands**, then only the active
+Updated 2026-11-05. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.4.0 plan
 is archived at `archive/v0.4.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -48,8 +48,7 @@ backups, and who serves the speech model files.
 Actions only the owner can take (agents may not create accounts or handle
 keys): the development projects (`docs/working/BACKEND_SETUP_0.5.0.md`),
 later the production ones, and Docker on the development PC if the backend
-should run locally. Sign-in is by email (proposed: a magic link, no password
-to remember on the boat).
+should run locally.
 
 ## Rules for this cycle
 
@@ -174,6 +173,12 @@ decision of 2026-10-23). A realistic week offline and online across two
 devices, the 0.4.0-app scenario, and the release sweep. Reviewers:
 security/privacy, sync-chaos, data-integrity, regression, scope, field UX and
 code quality.
+
+The sweep also writes 0.5.0's behaviour into `01_PRODUCT_SPEC.md` (titled 0.4.0,
+and at 699 of its 700 lines, so it sheds text first), `02_MVP_SCOPE.md` §1 and
+`docs/design/07_PAGE_CHANGELOG.md`; settles the "Not yet run" list in
+`docs/DEVICE_CHECKS.md`; and decides, do or defer, the backlog's items marked
+before production or before UG4.
 
 **Success predicate:** the 0.5.0 objective holds on the tagged commit, with no
 reviewer blocker and the owner's Android checks recorded.

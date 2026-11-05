@@ -1,4 +1,4 @@
-# CVC Helper — 0.3.0
+# CVC Helper
 
 This repository is designed so Codex or Claude Code can start with a short prompt
 and follow the shared repository instructions.
@@ -11,7 +11,7 @@ Authoritative documents:
 
 1. `AGENTS.md` — autonomous execution protocol and verification contract.
 2. `01_PRODUCT_SPEC.md` — user-visible behavior and business/domain rules.
-3. `02_MVP_SCOPE.md` — completed 0.1.0 baseline and 0.2.0 boundaries.
+3. `02_MVP_SCOPE.md` — what is in scope, what is deferred, the road to 1.0.0.
 4. `03_TECHNICAL_DECISIONS.md` — architecture, stack and harness decisions.
 5. `04_IMPLEMENTATION_PLAN.md` — short active ledger; completed history is archived.
 
@@ -34,8 +34,8 @@ A prompt can be as short as:
 > autonomously. Follow its scope, target, verification, evidence, review and Git
 > requirements.
 
-0.1.0, 0.2.0 and 0.3.0 are released and tagged. The road to a shared database
-is `02_MVP_SCOPE.md` §4; use the plan's **Where this cycle stands** table and
+0.1.0 to 0.4.0 are released and tagged; 0.5.0, the online backup, is in
+progress on `claude/0.5.0-prep`. The road to a shared database is `02_MVP_SCOPE.md` §4; use the plan's **Where this cycle stands** table and
 first eligible incomplete milestone. Open requests and findings waiting for a
 milestone are in `docs/working/BACKLOG.md`. How documents are kept current is
 `docs/DOCS_SYSTEM.md`.
@@ -60,6 +60,6 @@ releases are not supported by the current Vite and test toolchain.
 Run `npm run verify:quick` for the fast checks or `npm run verify:all` for the
 complete build and browser suite.
 
-If the desktop PATH exposes an older Node, use Codex Desktop's bundled workspace
-Node 24. Do not lower the repository runtime requirement. Record milestone
+If PATH exposes an older Node, `docs/LOCAL_DEVELOPMENT.md` has the runtime
+procedure. Do not lower the repository runtime requirement. Record milestone
 verification with `npm run evidence -- <ID>`.

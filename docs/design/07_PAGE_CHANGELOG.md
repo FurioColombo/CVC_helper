@@ -1,8 +1,8 @@
 # 07 — Target 0.2.0 e changelist per pagina
 
-**Stato:** FROZEN per l'implementazione 0.2.0. La galleria r10 al commit
+**Stato:** target di 0.2.0, implementato. La galleria r10 al commit
 `ee8d4c8` è il target approvato per P01–P19; P20 è integrata nei pannelli testo.
-Nessuna pagina di questo ciclo è ancora implementata nell'app.
+La scelta tra due corsi (B7) ha il suo mock: [b7-two-courses](mockups/b7-two-courses.html).
 
 Le pagine includono viste, form e pannelli rilevanti anche quando oggi condividono lo stesso componente. Si possono raggruppare per discussione, ma vanno verificate singolarmente. Le note sull'attuale app derivano da lettura del codice e del registro M15, non da una nuova ispezione browser.
 

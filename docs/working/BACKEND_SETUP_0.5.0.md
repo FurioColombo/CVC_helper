@@ -40,6 +40,9 @@ Then, in a new query, run the whole of
 anonymous role's table grants and makes a course's rows go with it on the
 server (B2 security review).
 
+A new project also needs the later files of `supabase/migrations/`, one query
+each, in file-name order; on the development project they were owner checks.
+
 ## 3. The replication role for PowerSync
 
 In a new SQL Editor query, run the following with a long random password of

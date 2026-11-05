@@ -13,7 +13,7 @@ evidence. Do not change `engines` to accommodate a host's older default.
 
 In Claude Code, the SessionStart hook in `.claude/settings.json` puts the fnm
 Node 24 first on the Bash tool's PATH and removes fnm's `cd` alias, whose
-failure used to make `cd dir && cmd` skip `cmd`. Run npm through the Bash
+failure makes `cd dir && cmd` skip `cmd`. Run npm through the Bash
 tool. Other shells still need their own runtime preflight.
 
 In a Bash shell of your own with `fnm`, initialise it **before any `cd` in that
