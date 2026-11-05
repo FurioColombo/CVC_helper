@@ -162,15 +162,47 @@ Use the test address below and the linked device instructions.
 
 ## Let the server keep the one course you choose — B7
 
+**State:** Ready for owner check · Required
+
+**What to do:**
+
+1. Only on the development project, cvc-helper-dev. If you ran an earlier version of this file, run this one too: it replaces it, and no build calls the earlier one.
+2. Open https://github.com/FurioColombo/CVC_helper/blob/claude/0.5.0-prep/supabase/migrations/20261104000000_keep_course.sql and copy the whole file with the copy button.
+3. In the Supabase dashboard, open cvc-helper-dev, then SQL Editor, then New query. Paste, and tap Run. It should say Success. No rows returned. Supabase may warn about destructive operations, because the file replaces an earlier function if there is one: confirm, it touches no data.
+4. Tell me 'keep rule run' in this chat, or paste the error if there is one. I then run the live test against the development backend, with invented data.
+
+**Expected:** The server can keep one of an account's courses in one step, erasing only what your phone showed, so two devices choosing together can never erase both. It adds and replaces functions and a trigger, and changes no data.
+
+**Build:** No test build is assigned yet.
+
+**Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+<a id="b7-phone-choice"></a>
+
+## Reach two courses on one account, see both, and keep one — B7
+
 **State:** Setup needed · Required
 
 **What to do:**
 
-1. Not yet: a review found that the first version of this function could erase a course the device had not shown, so it is being corrected. If you already ran it, nothing is wrong: no build calls it, and the corrected file replaces it. The steps follow here when the file is ready.
+1. Not yet: it needs B7-KEEP-RULE and the next test build. The address follows here when both are ready.
+2. Use invented data only. These steps erase one test course for good. Start with the account holding no course: if it holds one, on the phone use Impostazioni, Elimina il corso e inizia un nuovo corso. Keep the app open on the phone and on the PC, both signed in to the same account and both on Crea il corso.
+3. Put the phone in airplane mode. On the phone, create a course, Cabinato level 3, with one invented student.
+4. On the PC, create a different course, Deriva level 2, with one invented student. Wait for Copia online aggiornata in Impostazioni.
+5. Turn airplane mode off and keep the app open on the phone for up to two minutes. Both devices should reopen by themselves on Scegli il corso da tenere, with two cards showing code, counts, last change and the account's email. Neither should stop on an error. Say whether the sentence about typing that may be lost was clear.
+6. On the phone, tap Salva file on either card: a file should start saving, and the page should name it and say it holds personal data.
+7. Put the phone in airplane mode again: Tieni questo corso goes grey and the page says the choice needs a connection. Turn airplane mode off and wait for the buttons to return.
+8. On the phone, tap Tieni questo corso on Cabinato 3. The page should ask to confirm, naming the course it will erase and what that course contains. Tick Ho capito and tap Elimina.
+9. The phone should open Cabinato 3 with its student. On the PC, Deriva 2 should leave by itself and Cabinato 3 should open, with no second choice. Reload both after a minute: only that course, with its student.
+10. Report B7-PHONE-CHOICE with what you saw at each step, and which you skipped.
 
-**Expected:** The server can keep one of an account's courses in one step, so two devices choosing together can never erase both. It adds a function and no data.
+No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+
+**Expected:** An account holding two courses never locks a device: you see both, can save either to a file, keep one, and every device then opens on that one with nothing of it lost. Only your actual observations can pass this check.
 
 **Build:** No test build is assigned yet.
+
+**Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
 **Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 

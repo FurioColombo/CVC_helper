@@ -427,17 +427,46 @@
       "milestone": "B7",
       "kind": "DECISION",
       "title": "Let the server keep the one course you choose",
-      "status": "NEEDS_SETUP",
+      "status": "READY",
       "required": true,
-      "revision": 2,
+      "revision": 3,
       "instructions": [
-        "Not yet: a review found that the first version of this function could erase a course the device had not shown, so it is being corrected. If you already ran it, nothing is wrong: no build calls it, and the corrected file replaces it. The steps follow here when the file is ready."
+        "Only on the development project, cvc-helper-dev. If you ran an earlier version of this file, run this one too: it replaces it, and no build calls the earlier one.",
+        "Open https://github.com/FurioColombo/CVC_helper/blob/claude/0.5.0-prep/supabase/migrations/20261104000000_keep_course.sql and copy the whole file with the copy button.",
+        "In the Supabase dashboard, open cvc-helper-dev, then SQL Editor, then New query. Paste, and tap Run. It should say Success. No rows returned. Supabase may warn about destructive operations, because the file replaces an earlier function if there is one: confirm, it touches no data.",
+        "Tell me 'keep rule run' in this chat, or paste the error if there is one. I then run the live test against the development backend, with invented data."
       ],
-      "expected": "The server can keep one of an account's courses in one step, so two devices choosing together can never erase both. It adds a function and no data.",
+      "expected": "The server can keep one of an account's courses in one step, erasing only what your phone showed, so two devices choosing together can never erase both. It adds and replaces functions and a trigger, and changes no data.",
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/B7/physical-device-review.json",
-      "updatedAt": "2026-11-04T11:51:56.728Z"
+      "updatedAt": "2026-11-05T00:12:26.671Z"
+    },
+    {
+      "id": "B7-PHONE-CHOICE",
+      "milestone": "B7",
+      "kind": "DEVICE_CHECK",
+      "title": "Reach two courses on one account, see both, and keep one",
+      "status": "NEEDS_SETUP",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "Not yet: it needs B7-KEEP-RULE and the next test build. The address follows here when both are ready.",
+        "Use invented data only. These steps erase one test course for good. Start with the account holding no course: if it holds one, on the phone use Impostazioni, Elimina il corso e inizia un nuovo corso. Keep the app open on the phone and on the PC, both signed in to the same account and both on Crea il corso.",
+        "Put the phone in airplane mode. On the phone, create a course, Cabinato level 3, with one invented student.",
+        "On the PC, create a different course, Deriva level 2, with one invented student. Wait for Copia online aggiornata in Impostazioni.",
+        "Turn airplane mode off and keep the app open on the phone for up to two minutes. Both devices should reopen by themselves on Scegli il corso da tenere, with two cards showing code, counts, last change and the account's email. Neither should stop on an error. Say whether the sentence about typing that may be lost was clear.",
+        "On the phone, tap Salva file on either card: a file should start saving, and the page should name it and say it holds personal data.",
+        "Put the phone in airplane mode again: Tieni questo corso goes grey and the page says the choice needs a connection. Turn airplane mode off and wait for the buttons to return.",
+        "On the phone, tap Tieni questo corso on Cabinato 3. The page should ask to confirm, naming the course it will erase and what that course contains. Tick Ho capito and tap Elimina.",
+        "The phone should open Cabinato 3 with its student. On the PC, Deriva 2 should leave by itself and Cabinato 3 should open, with no second choice. Reload both after a minute: only that course, with its student.",
+        "Report B7-PHONE-CHOICE with what you saw at each step, and which you skipped."
+      ],
+      "expected": "An account holding two courses never locks a device: you see both, can save either to a file, keep one, and every device then opens on that one with nothing of it lost. Only your actual observations can pass this check.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/B7/physical-device-review.json",
+      "updatedAt": "2026-11-05T00:12:27.854Z"
     }
   ]
 }
