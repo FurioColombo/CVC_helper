@@ -29,6 +29,20 @@
       "browser": "Chrome",
       "osVersion": "Android; Windows 11",
       "reportedAt": "2026-11-02T12:36:41.060Z"
+    },
+    {
+      "id": "B4-PHONE-UPLOADS",
+      "check": "Update to 0.5.3: the PC finishes its restore and follows the phone",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-11-10, on CVC Helper Test 0.5.3",
+      "summary": "1: on the PC the app briefly showed another page, closed and reopened by itself very quickly, then opened the course correctly with the correct version. 2: on the phone the update button showed after a couple of seconds and worked flawlessly. 3: a note changed on the phone was on the PC after reopening the screen, fast even on an immediate refresh; no automatic refresh, which is known. 4: the same from the PC to the phone. Nothing odd came up.",
+      "testedCommit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60 and the development PC (the owner's devices in earlier reports; not restated)",
+      "browser": "Not restated (Chrome on both in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-11-09T23:39:06.756Z"
     }
   ]
 }

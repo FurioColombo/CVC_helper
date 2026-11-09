@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "B5",
+  "ownerReports": [
+    {
+      "id": "B5-PHONE-RESTORE",
+      "check": "Restore your course on an emptied phone, and see the question for another course",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-11-10, on CVC Helper Test 0.5.3",
+      "summary": "Steps 1-5 passed on the phone: after Esci and Azzera tutti i dati locali, the restore from the backup online brought back the course; the students and the two notes checked were there. It was fast, never more than 2 seconds of waiting. After an edit, Copia online aggiornata came immediately. Step 6 (optional, a PC with another course asked before replacing) skipped by the owner.",
+      "testedCommit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-11-09T23:44:16.494Z"
+    }
+  ]
+}

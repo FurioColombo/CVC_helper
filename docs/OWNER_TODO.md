@@ -44,19 +44,11 @@ The owner reported: Passed with steps not observed. Observed on the phone: the e
 
 ## Update to 0.5.3: the PC finishes its restore and follows the phone — B4
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Your offline-day steps already passed on 0.5.2. This recheck covers the PC and takes a few minutes.
-2. On the PC, close every tab of the test address and open it again. If Nuova versione disponibile appears, tap Aggiorna. The stuck restore should finish by itself and the app should open on your course, with Versione 0.5.3 in Impostazioni. If it is still stuck after a minute, stop and report that.
-3. On the phone, in Chrome (do not reinstall), switch away and back until Nuova versione disponibile appears, tap Aggiorna, and check Impostazioni shows Versione 0.5.3 and Copia online aggiornata.
-4. Change a note on the phone. On the PC, leave that screen and open it again: the change should be there. An open screen does not refresh by itself.
-5. Change a note on the PC and check the same on the phone.
-6. Do not use Azzera tutti i dati locali or Elimina il corso while signed in: they also erase the online copy (that is checked later, in B6-PHONE-ERASE). Do not create a course on a second device while the first is offline or already has one: until B7 that locks every device of the account.
-7. Report B4-PHONE-UPLOADS with what you saw at each step.
-
-Use the test address below and the linked device instructions.
+The owner reported: 1: on the PC the app briefly showed another page, closed and reopened by itself very quickly, then opened the course correctly with the correct version. 2: on the phone the update button showed after a couple of seconds and worked flawlessly. 3: a note changed on the phone was on the PC after reopening the screen, fast even on an immediate refresh; no automatic refresh, which is known. 4: the same from the PC to the phone. Nothing odd came up.
 
 **Expected:** 0.5.3 updates in place on both devices and keeps the backup. The PC leaves the stuck restore and opens on your course. An edit on either device reaches the other after its screen is left and reopened. Only your actual observations can pass this check.
 
@@ -66,7 +58,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of B4 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b5-minimum-read"></a>
 
@@ -88,19 +80,11 @@ The owner reported: The owner ran the migration once in cvc-helper-dev. Resuming
 
 ## Restore your course on an emptied phone, and see the question for another course — B5
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. After B4-PHONE-UPLOADS: the phone is on 0.5.3 with Copia online aggiornata. Note how many students and notes your invented course has.
-2. Impostazioni &gt; Backup online &gt; Esci first (from 0.5.3 a reset made while signed in also erases the online copy). The course stays on the phone.
-3. Then Impostazioni &gt; Azzera tutti i dati locali, and confirm. The app reopens empty, on Crea il corso.
-4. On that screen, under Ripristina dal backup online, type your email and send the link; open it from the mail as before. Note what the screen says while it downloads (it should say Ripristino del corso… and keep Crea corso disabled), and how long until the app reopens on your course.
-5. Check the restored course: the same students, notes, crews and evaluations as before; then edit something and see Copia online aggiornata.
-6. Optional, on the PC: Impostazioni &gt; Backup online &gt; Esci, then Azzera tutti i dati locali. Create a different invented course there, then in its Impostazioni sign in with the same email. It should ask, naming your online course, before replacing anything; tap Annulla ed esci and check the PC course stays.
-7. Report B5-PHONE-RESTORE with what you saw at each step, and which you skipped.
-
-Use the test address below and the linked device instructions.
+The owner reported: Steps 1-5 passed on the phone: after Esci and Azzera tutti i dati locali, the restore from the backup online brought back the course; the students and the two notes checked were there. It was fast, never more than 2 seconds of waiting. After an edit, Copia online aggiornata came immediately. Step 6 (optional, a PC with another course asked before replacing) skipped by the owner.
 
 **Expected:** An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.
 
@@ -110,7 +94,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of B5 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b6-erase-rules"></a>
 

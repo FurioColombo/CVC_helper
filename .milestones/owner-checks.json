@@ -244,9 +244,9 @@
       "milestone": "B4",
       "kind": "DEVICE_CHECK",
       "title": "Update to 0.5.3: the PC finishes its restore and follows the phone",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 9,
+      "revision": 10,
       "instructions": [
         "Your offline-day steps already passed on 0.5.2. This recheck covers the PC and takes a few minutes.",
         "On the PC, close every tab of the test address and open it again. If Nuova versione disponibile appears, tap Aggiorna. The stuck restore should finish by itself and the app should open on your course, with Versione 0.5.3 in Impostazioni. If it is still stuck after a minute, stop and report that.",
@@ -260,7 +260,16 @@
       "testedCommit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B4/physical-device-review.json",
-      "updatedAt": "2026-11-04T01:34:18.813Z",
+      "updatedAt": "2026-11-09T23:39:06.756Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Chat, 2026-11-10, on CVC Helper Test 0.5.3",
+        "summary": "1: on the PC the app briefly showed another page, closed and reopened by itself very quickly, then opened the course correctly with the correct version. 2: on the phone the update button showed after a couple of seconds and worked flawlessly. 3: a note changed on the phone was on the PC after reopening the screen, fast even on an immediate refresh; no automatic refresh, which is known. 4: the same from the PC to the phone. Nothing odd came up.",
+        "testedCommit": "6e17c1d313eabf15f6afdded9c401b36fa5fabe8",
+        "device": "Motorola Edge 60 and the development PC (the owner's devices in earlier reports; not restated)",
+        "browser": "Not restated (Chrome on both in earlier reports)",
+        "osVersion": "Not restated (Android 15 in earlier reports)"
+      },
       "history": [
         {
           "status": "CHANGES_REQUESTED",
@@ -333,9 +342,9 @@
       "milestone": "B5",
       "kind": "DEVICE_CHECK",
       "title": "Restore your course on an emptied phone, and see the question for another course",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 5,
+      "revision": 6,
       "instructions": [
         "After B4-PHONE-UPLOADS: the phone is on 0.5.3 with Copia online aggiornata. Note how many students and notes your invented course has.",
         "Impostazioni > Backup online > Esci first (from 0.5.3 a reset made while signed in also erases the online copy). The course stays on the phone.",
@@ -349,7 +358,16 @@
       "testedCommit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B5/physical-device-review.json",
-      "updatedAt": "2026-11-04T10:31:03.200Z"
+      "updatedAt": "2026-11-09T23:44:16.494Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Chat, 2026-11-10, on CVC Helper Test 0.5.3",
+        "summary": "Steps 1-5 passed on the phone: after Esci and Azzera tutti i dati locali, the restore from the backup online brought back the course; the students and the two notes checked were there. It was fast, never more than 2 seconds of waiting. After an edit, Copia online aggiornata came immediately. Step 6 (optional, a PC with another course asked before replacing) skipped by the owner.",
+        "testedCommit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519",
+        "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+        "browser": "Not restated (Chrome in earlier reports)",
+        "osVersion": "Not restated (Android 15 in earlier reports)"
+      }
     },
     {
       "id": "B6-ERASE-RULES",
