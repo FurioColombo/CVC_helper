@@ -162,20 +162,17 @@ Use the test address below and the linked device instructions.
 
 ## Let the server keep the one course you choose — B7
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Only on the development project, cvc-helper-dev. If you ran an earlier version of this file, run this one too: it replaces it, and no build calls the earlier one.
-2. Open https://github.com/FurioColombo/CVC_helper/blob/claude/0.5.0-prep/supabase/migrations/20261104000000_keep_course.sql and copy the whole file with the copy button.
-3. In the Supabase dashboard, open cvc-helper-dev, then SQL Editor, then New query. Paste, and tap Run. It should say Success. No rows returned. Supabase may warn about destructive operations, because the file replaces an earlier function if there is one: confirm, it touches no data.
-4. Tell me 'keep rule run' in this chat, or paste the error if there is one. I then run the live test against the development backend, with invented data.
+The owner reported: The owner ran supabase/migrations/20261104000000_keep_course.sql in cvc-helper-dev. The live spec then found keep_course installed and passed on both browser projects (.evidence/B7/live-keep-rule.json).
 
 **Expected:** The server can keep one of an account's courses in one step, erasing only what your phone showed, so two devices choosing together can never erase both. It adds and replaces functions and a trigger, and changes no data.
 
 **Build:** No test build is assigned yet.
 
-**Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b7-phone-choice"></a>
 

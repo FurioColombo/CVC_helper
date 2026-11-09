@@ -427,9 +427,9 @@
       "milestone": "B7",
       "kind": "DECISION",
       "title": "Let the server keep the one course you choose",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 3,
+      "revision": 4,
       "instructions": [
         "Only on the development project, cvc-helper-dev. If you ran an earlier version of this file, run this one too: it replaces it, and no build calls the earlier one.",
         "Open https://github.com/FurioColombo/CVC_helper/blob/claude/0.5.0-prep/supabase/migrations/20261104000000_keep_course.sql and copy the whole file with the copy button.",
@@ -440,7 +440,12 @@
       "testedCommit": null,
       "testUrl": null,
       "evidencePath": ".evidence/B7/physical-device-review.json",
-      "updatedAt": "2026-11-05T00:12:26.671Z"
+      "updatedAt": "2026-11-09T23:25:43.508Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Chat, 2026-11-10: 'B7: 1,2,3, done 4: keep rule run'",
+        "summary": "The owner ran supabase/migrations/20261104000000_keep_course.sql in cvc-helper-dev. The live spec then found keep_course installed and passed on both browser projects (.evidence/B7/live-keep-rule.json)."
+      }
     },
     {
       "id": "B7-PHONE-CHOICE",

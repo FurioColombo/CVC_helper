@@ -1,0 +1,22 @@
+{
+  "milestone": "B7",
+  "checkedAt": "2026-11-10",
+  "testedCommit": "6bb19c7",
+  "context": "The owner ran supabase/migrations/20261104000000_keep_course.sql on the development backend (chat: 'keep rule run'). Closes SC-B7-13: keep_course itself had not run on Supabase before.",
+  "run": "tests/e2e/b7-two-courses-live.spec.ts on pixel-7-chrome and desktop-chrome-backup against the development backend, synthetic test accounts, --retries=0: 5 of 6 passed on the first run; then b7-two-courses-live and b6-erase-live on desktop-chrome-backup with --repeat-each=2: 14 of 14 passed.",
+  "results": [
+    "two devices that each made a course, one offline, both reach the choice without locking; keeping one through the real screen, with the fingerprint the app computed from its synced rows, is accepted, and both devices reopen on the kept course with its row, nothing of the other left in their storage",
+    "two devices choosing at once keep exactly one course, and only the account's own",
+    "no other account and no anonymous caller may call keep_course",
+    "the B6 erase rules still pass beside it on desktop"
+  ],
+  "failures": [
+    {
+      "test": "b7-two-courses-live.spec.ts › two devices that each made a course, one offline: neither locks, and one choice settles both",
+      "project": "desktop-chrome-backup",
+      "where": "line 271, the precondition that the kept device's raw storage already holds the other course's student when the choice appears",
+      "classification": "test bug, likely: the check reads IndexedDB once instead of polling, and the screen can appear before that row is written; it passed 2 of 2 alone and passed on pixel. The product assertions after it were not reached in that run. Filed in docs/working/BACKLOG.md; the test is fixed after B7's handoff, since a test change now would invalidate B7's recorded evidence."
+    }
+  ],
+  "cleanup": "Each test clears the account's courses and erased ids before it runs; the last run leaves at most its own synthetic course."
+}

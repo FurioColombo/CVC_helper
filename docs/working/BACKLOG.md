@@ -127,6 +127,9 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `b7-two-courses.spec.ts › two courses open on the choice, and keeping one opens it with every row`
   — B7: Chrome reopened on Allievi; WebKit opened no course in 15 s with the disk full (ENOSPC). Unproven.
 
+- `b7-two-courses-live.spec.ts › two devices that each made a course, one offline: neither locks, and one choice settles both`
+  — desktop, 2026-11-10: raw storage read once before the row was written; 2/2 alone. Poll it.
+
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.
 
