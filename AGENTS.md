@@ -24,10 +24,9 @@ At the start of a turn, before writing application code:
 7. Start the first eligible milestone. `docs/OWNER_WORKFLOW.md` defines safe
    continuation past AWAITING_OWNER; deferred work still needs the owner.
 
-`archive/` holds prior plans and instructions; read it only for requested
-historical rationale or an active dependency. `data/knowledge/` (ignored, local)
-holds the centre's manuals with an `INDEX.md`: search it when the specs lack a
-fact. Neither is authoritative; never commit or quote the manuals.
+`archive/` holds prior plans and instructions, not authority; read it only for
+requested historical rationale or an active dependency. Facts about the centre:
+the `caprera-knowledge` skill. Never commit or quote the local manuals.
 
 ## 2. Source-of-truth hierarchy
 
@@ -282,6 +281,7 @@ skill's `SKILL.md` directly when its description fits the task:
 
 - `milestone-close`: closing a milestone and the documentation sweep;
 - `field-operations-ui`: any screen or mockup work, with the design rulebook;
+- `caprera-knowledge`: where each fact about the centre lives, and its weight;
 - `powersync` (vendored, `.vendor.json`): this project uses PowerSync. Load the
   powersync skill before any data, schema, or sync work. Repository rules win
   over its general advice: dependencies stay pinned by the lockfile.
