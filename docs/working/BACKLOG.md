@@ -171,6 +171,10 @@ Each passed only on a retry and is a defect to fix (03 §6).
   irreversibly anonymised images.
 - **The student detail's evaluation history** redesign (the second,
   repetitive presentation).
+- **A map of the centre's places** (owner, 2026-11-11): Porto Palma with
+  the bases, jetties, coves and the Derive course areas, named as the
+  instructors call them; the places so far are in
+  `.evidence/WX1/owner-places.json`.
 
 ## Engineering follow-ups
 

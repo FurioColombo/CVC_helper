@@ -329,10 +329,10 @@ The owner reported: The owner accepts that Vento, once opened, asks Open-Meteo a
 
 **What to do:**
 
-1. Sessions are taken as morning 9 to 13 and afternoon 14 to 18. Tell me the real hours if they differ.
-2. Derive points, each on open water just off the place: Cala Fico 41.178 N 9.478 E (estimated: maps do not name the cove), Isola del Porco 41.1725 N 9.455 E, Punta Rossa 41.167 N 9.472 E.
-3. Cabinati points: Spargi 41.24 N 9.325 E, La Maddalena nord 41.265 N 9.41 E, Caprera est 41.215 N 9.5 E, Caprera sud 41.168 N 9.465 E, Liscia di Vacca 41.148 N 9.53 E, Cannigione 41.125 N 9.445 E.
-4. Check them on a map and tell me 'points right', or the corrections, and where Cala Fico is.
+1. Derive: done on 2026-11-11 from your answer. Cala Fico is at 41.1859 N 9.4442 E, and the forecast points become Cala Fico 41.185 N 9.448 E, Isola del Porco 41.1757 N 9.4597 E and Punta Rossa 41.1712 N 9.4659 E, inside or at the edge of the areas you drew. Say so only if one is wrong.
+2. Sessions are taken as morning 9 to 13 and afternoon 14 to 18. Tell me the real hours if they differ.
+3. Cabinati points: Spargi 41.24 N 9.325 E, La Maddalena nord 41.265 N 9.41 E, Caprera est 41.215 N 9.5 E, Caprera sud 41.168 N 9.465 E, Liscia di Vacca 41.148 N 9.53 E, Cannigione 41.125 N 9.445 E. Tell me 'points right' or the corrections.
+4. Optional: what the four colours of your drawing mean (course levels?), and where Cala Merda is when you remember.
 
 **Expected:** The forecast is asked for where the boats actually sail, and each session is the part of the day you are on the water.
 
