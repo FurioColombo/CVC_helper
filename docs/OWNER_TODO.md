@@ -349,8 +349,8 @@ The owner reported: The owner accepts that Vento, once opened, asks Open-Meteo a
 **What to do:**
 
 1. LaMMA's disclaimer asks that information on the use of its products be sent to it. Write to info@lamma.toscana.it: CVC Helper, a tool for the Caprera sailing centre's instructors, shows LaMMA's Bocche di Bonifacio wind and wave maps unaltered, with credit and a link. You may also ask whether they could offer a point series or allow a browser to read their data for Caprera.
-2. Open-Meteo's free service is for non-commercial use under 10,000 calls a day (https://open-meteo.com/en/terms). Decide whether the centre's use qualifies, and whether the Home line, which quotes their data, needs their credit too. If unsure, ask them.
-3. Tell me what you sent and what you decided. I do not write to either on your behalf.
+2. Open-Meteo: done on 2026-11-11. You decided the centre's use is non-commercial under their free terms. Their data is licensed CC BY 4.0, so Vento and the Home line that quotes it both credit Open-Meteo; nothing more is needed from you.
+3. Tell me when you have written to LaMMA and what they answer. I do not write to them on your behalf.
 
 **Expected:** Both providers' terms are respected before Vento reaches anyone but you.
 
