@@ -193,7 +193,11 @@ and the forecast's cache rule. As the owner accepted `WX1-NETWORK`, this plan's 
 "zero off-origin requests" are amended in one commit. The disclosure in
 Impostazioni and the README; `WX1-PLACES`' hours and points. The proposal's §8
 items left open are done or deferred to the backlog, and the working
-documents fold into the contracts.
+documents fold into the contracts. The owner asked (2026-11-11) to stay well
+clear of Open-Meteo's free limits (600 a minute, 5,000 an hour, 10,000 a day,
+300,000 a month, counted per address, so the centre's shared Wi-Fi counts as
+one): a test pins one refresh's weighted calls and the 45-minute floor, and `03`
+states the budget, about a tenth of the daily limit for the whole centre.
 
 **Success predicate:** on the owner's phone, Vento shows each area's next
 session with expected wind, gust and range from a real download; without
@@ -204,7 +208,8 @@ and reset remove the forecast.
 **Adversarial checklist:** no signal at the first open; signal lost mid-download;
 leaving before the extras arrive; a malformed, hostile or past-only answer; a
 copy 6 and 24 hours old; a session in its last hour; the course erased in
-another tab; LaMMA unavailable; a far session; 320 px at 200% text; WebKit.
+another tab; LaMMA unavailable; a far session; 320 px at 200% text; WebKit;
+a phone reopening Vento every minute, or many phones at once on one Wi-Fi.
 
 **Evidence:** verification, the owner's decisions and Android check, self, field
 UX, accessibility/mobile, security/privacy and forecast-method reviews; the
