@@ -152,7 +152,9 @@ tutti i dati locali` erases the course from the backup first; without
     Reviewers stay on Opus, as `AGENTS.md` §18 sets; I save by narrowing their
     briefs from round 2 on, reusing their scripts. Bounded implementation may go
     to Sonnet through `implementer`; B7's fixes so far I wrote myself, because
-    each one followed from what the reviews had just found.
+    each one followed from what the reviews had just found. Mapping and
+    summarising the centre's manuals (2026-11-11) went to Sonnet: reading
+    and condensing, with my review of the result.
 25. **Vento joins 0.5.0 as WX1 (taken 2026-11-06, for your review).** You chose
     to adopt the side branch's wind section as a milestone. I placed it in this
     cycle, after B7 and before UG4, rather than first in 0.6.0: it touches no

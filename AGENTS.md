@@ -24,8 +24,10 @@ At the start of a turn, before writing application code:
 7. Start the first eligible milestone. `docs/OWNER_WORKFLOW.md` defines safe
    continuation past AWAITING_OWNER; deferred work still needs the owner.
 
-`archive/` holds prior plans and instructions. Read it only for requested
-historical rationale or a specific active dependency. It is not authoritative.
+`archive/` holds prior plans and instructions; read it only for requested
+historical rationale or an active dependency. `data/knowledge/` (ignored, local)
+holds the centre's manuals with an `INDEX.md`: search it when the specs lack a
+fact. Neither is authoritative; never commit or quote the manuals.
 
 ## 2. Source-of-truth hierarchy
 
