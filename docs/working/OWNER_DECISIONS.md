@@ -166,3 +166,12 @@ tutti i dati locali` erases the course from the backup first; without
     change the source B7 verified. If you would rather it wait for 0.6.0, say
     so: nothing is merged yet. You answered `WX1-NETWORK` on 2026-11-06: Vento may
     connect. The rule changes with the code, when WX1 starts.
+26. **The centre's manuals leave the spec as it is (yours, 2026-11-11).** The
+    manuals (local only, `data/knowledge/`) grade with numbers in Tecnica and
+    Senso nautico; that is the formal end-of-course evaluation, while the
+    app's ++/+/=/-/-- is the quick day-by-day judgement and stays. Endurance
+    is part of that judgement, rotation goes in the notes, the size covers
+    height and weight, and roles on board are not defined before D5. Junior
+    courses (D1J, D2J) come in a future version; two-week courses, organised
+    week by week with evaluations starting afresh, come after 1.0.0. Both are
+    in `docs/working/BACKLOG.md`.

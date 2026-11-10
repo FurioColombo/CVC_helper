@@ -175,6 +175,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
   the bases, jetties, coves and the Derive course areas, named as the
   instructors call them; the places so far are in
   `.evidence/WX1/owner-places.json`.
+- **Junior courses D1J and D2J** (owner, 2026-11-11): ages 12–14, from the
+  centre's manuals (`data/knowledge/`, local only). Their default boat is
+  open: the D1J programme mentions the cabin boat on day 6.
+- **Two-week courses, after 1.0.0** (owner, 2026-11-11): an option for
+  courses organised week by week, where evaluations typically start afresh.
 
 ## Engineering follow-ups
 
