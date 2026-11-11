@@ -126,6 +126,11 @@ Each passed only on a retry and is a defect to fix (03 §6).
 - `b7-two-courses-live.spec.ts › two devices that each made a course, one offline: neither locks, and one choice settles both`
   — desktop, 2026-11-10: raw storage read once before the row was written; 2/2 alone. Poll it.
 
+- `b7-two-courses.spec.ts › a course another device already gave up cannot be kept here` and
+  `b4-uploads.spec.ts › Riprova sends a refused student with the edit made after the refusal`
+  — Linux CI `43110637196` (desktop-chrome-backup, 2026-11-11): the notice or the refusal
+  alert did not show in 30 s; both passed on retry. Cause unproven.
+
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.
 
