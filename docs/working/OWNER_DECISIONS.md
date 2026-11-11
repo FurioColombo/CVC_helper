@@ -9,6 +9,8 @@ change. Accepted entries move into the contract they touch. The 0.4.0 entries
 that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md` and
 `archive/v0.4.0/OWNER_DECISIONS_LATE.md`.
 
+Folded on 2026-11-11: 11 and 16 are in `03_TECHNICAL_DECISIONS.md` §3 "Online backup", 21 in the plan's B7 section and its mock.
+
 **Waiting for your reading:** 1, 17, 22, 23 and 25.
 
 ## Open from 0.4.0
@@ -38,14 +40,15 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md` and
     the update. Kept, the copy would hold students and notes deleted later,
     out of every 0.5.0 screen. 01 §2's "everything can be consulted" is
     rewritten for 0.5.0 at UG4 (review DP-B1-3).
-11. **Sign-in by email magic link (yours, 2026-10-25).** No password to
-    remember on the boat; B3 builds it.
+
+<!-- 11 folded into 03 §3 "Online backup" on 2026-11-11 -->
+
 12. **One writing phone at a time (yours, 2026-10-25).** In 0.5.0 one phone
     writes at a time; placement rows get ids that cannot duplicate, so a
     clash between two phones edited offline settles on the latest edit
     instead of breaking Equipaggi, and the app says when two phones edited
     offline. Team editing stays 1.0.0 (review SC-B1-1; B4 and B5).
-    Decision 16 bounds it for deletes.
+    For deletes, 03 §3 "Online backup" records the known gap.
 13. **Production lives where no agent token reaches (taken, B2).** The
     PowerSync token in `.env` belongs to an account, not to one instance, so
     the production backend (UG4) is created under a separate PowerSync account
@@ -63,13 +66,9 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md` and
     It needs one change in Supabase's email template, which Supabase allows
     only with a custom email sender (SMTP); until then the email has the link
     alone (`docs/OWNER_TODO.md`, B3-EMAIL-CODE).
-16. **A delete may lose to an older edit, in 0.5.0 (yours, 2026-10-26).**
-    Decision 12's "the latest edit wins" holds for edits; for deletes one
-    case stays open: phone A edits a row offline, later phone B deletes it,
-    and if B uploads first, A's older edit brings the row back (B4 review
-    SC-B4-8, the expected failure in `placementConvergence.test.ts`). It is
-    accepted for 0.5.0 under the one-writing-phone rule; deletion times and
-    server tombstones come before team editing (1.0.0).
+
+<!-- 16 folded into 03 §3 "Online backup" on 2026-11-11 -->
+
 17. **What stays after an erase, as Impostazioni says it (taken, B6; yours
     to confirm).** The server deletes the course at once. Impostazioni and
     the erase confirmation say the provider's automatic copies keep it "for
@@ -98,8 +97,8 @@ tutti i dati locali` erases the course from the backup first; without
     way for now: later versions keep old courses on the server, and this
     rule changes with them.
     Until you run the server's part (B6-ERASE-RULES) the erase deletes the
-    course without keeping its id. Single deletes inside a course stay under
-    decision 16.
+    course without keeping its id. Single deletes inside a course keep the
+    known gap 03 §3 "Online backup" records.
 20. **Two courses on one account split from B4 (yours, 2026-11-03).** The third
     review round of B4's desktop sync failed on SC-DT-9, which B4 did not cause:
     two devices each making a course, one of them offline, lock every device of
@@ -108,13 +107,9 @@ tutti i dati locali` erases the course from the backup first; without
     review (its three rounds stay in `.evidence/B4/`), 0.5.3 is published, and
     B7 fixes it before UG4. Until then, no course on a second device while the
     first is offline or already has one.
-21. **The two-course screen (yours, 2026-11-04).** You approved the mock
-    `docs/design/mockups/b7-two-courses.html` and added the email of the last
-    edit beside its date and time. Choosing a course needs signal; saving a file
-    does not. Taken for now: the email shown is the account's, which is true
-    because only the owner's account can write to a course until 1.0, and needs
-    no new column or migration. Both courses therefore show the same email. A
-    record of who made each edit belongs with team writing.
+
+<!-- 21 folded into the plan's B7 section and its mock on 2026-11-11 -->
+
 22. **Details of the two-course screen beyond the mock (taken 2026-11-04, for
     your review).** A signed-out device sees both courses, saves their files and
     is asked to sign in to choose. A read-only device has no Salva file, unlike

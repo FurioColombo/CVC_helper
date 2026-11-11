@@ -206,7 +206,7 @@ Each passed only on a retry and is a defect to fix (03 §6).
   sender reaches only the team, a few emails an hour, with fixed templates:
   no code in the email, so "Codice dell’email" leads nowhere until SMTP
   (B3-EMAIL-CODE). Before UG4: the sender and code, or hide the field.
-- B4 review follow-ups (`.evidence/B4/`; SP-B4-3: decisions 16 and 19):
+- B4 review follow-ups (`.evidence/B4/`; SP-B4-3: 03 §3 "Online backup" and decision 19):
   - a delete leaves no tombstone: an older whole-row edit uploaded after a later delete
     brings the row back (expected failure in `placementConvergence.test.ts`, SC-B4-8).
     Record deletion times and keep tombstones on the server before team editing (1.0.0);
