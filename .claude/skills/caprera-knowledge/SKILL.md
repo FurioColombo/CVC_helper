@@ -116,7 +116,7 @@ branch's Derive points predate the owner's record, which wins
 
 `data/knowledge/` is git-ignored and exists only on the owner's computer; a
 clone does not have it. Read `data/knowledge/INDEX.md` first: it says what
-each folder and file is, its date, which files are scanned, and which
+each folder and file is, its date, how the scanned ones were transcribed, and which
 versions were left out as duplicates or superseded. In short:
 
 - `manualistica-2026/` (own index): the 2026 Deriva manuals, D1, D2 and the
@@ -128,10 +128,12 @@ versions were left out as duplicates or superseded. In short:
 - `guida-at/`: the Assistente del Turno's guide: the comandata service at
   each base, and the weekly comandata plan form.
 - `programmi-corsi/`: older programmes for D3–D5, C1–C5 and special courses,
-  and blank 2014 duty boards and crew sheets.
+  and blank 2014 duty boards and crew sheets. D4 ("2D", 2015) has two
+  transcribed documents: the instructors' programme and the website's.
 - `sicurezza/`, `statuto-norme/`, `moduli/`, `ordinanze/`: first aid and man
   overboard; statute, ethics code, norme di vita; blank forms; the 2026 La
-  Maddalena navigation ordinance (scanned, not yet read).
+  Maddalena navigation ordinance (transcribed; the index says what touches
+  the centre).
 
 Where documents overlap, the newer wins: the 2026 manuals and guides over the
 older programmes. What any of them says is context, not a requirement:
