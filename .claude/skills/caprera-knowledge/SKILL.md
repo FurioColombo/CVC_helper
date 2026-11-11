@@ -1,6 +1,6 @@
 ---
 name: caprera-knowledge
-description: Where each fact about the Centro Velico Caprera lives and how far to trust it — the Italian domain terms of the spec (comandate, equipaggi, taglia, A terra, Mezzi, Derive and Cabinati, course codes, sessions, ADV/IS/CT, valutazioni), the centre's places, the owner's decisions, the local internal manuals and the archive. Use for any question about the centre, its courses, places or terms, before hunting for a domain fact, and whenever the spec seems to lack one.
+description: Where each fact about the Centro Velico Caprera lives and how far to trust it — the Italian domain terms of the spec (comandate, equipaggi, taglia, A terra, Mezzi, Derive and Cabinati, course codes, sessions, ADV/IS/CT, valutazioni), the centre's places, the owner's decisions, the local internal documents (manuals, the CT, volunteer and AT guides, older programmes) and the archive. Use for any question about the centre, its courses, places or terms, before hunting for a domain fact, and whenever the spec seems to lack one.
 ---
 
 # Caprera knowledge
@@ -26,8 +26,8 @@ Consistent with `AGENTS.md` §2, highest first:
    a contract. `docs/working/BACKLOG.md` lists owner-named future work, which
    is not scope.
 4. The owner's evidence records: `.evidence/WX1/owner-places.json` for places.
-5. The centre's manuals: local, background only. The owner ruled that they do
-   not change the spec (decision 26).
+5. The centre's documents (manuals and guides): local, background only. The
+   owner ruled that they do not change the spec (decision 26).
 6. `archive/`: history and rationale, never authority.
 
 `04_IMPLEMENTATION_PLAN.md` and the design documents rank as §2 says; they
@@ -102,39 +102,42 @@ branch's Derive points predate the owner's record, which wins
 
 ## How to search
 
-| Source                   | Command                                                                            |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| Spec, scope, decisions   | `grep -n -i "<term>" 01_PRODUCT_SPEC.md 02_MVP_SCOPE.md 03_TECHNICAL_DECISIONS.md` |
-| Typed tables             | `grep -n -i "<term>" src/domain/config.ts`                                         |
-| Owner decisions, backlog | `grep -n -i "<term>" docs/working/OWNER_DECISIONS.md docs/working/BACKLOG.md`      |
-| Places                   | `cat .evidence/WX1/owner-places.json`                                              |
-| Vento branch             | `git grep -n -i "<term>" claude/weather-section -- src/domain docs/working`        |
-| Manuals (local only)     | `grep -n -i "<term>" data/knowledge/manualistica-2026/text/*.txt`                  |
-| CT's guide (local only)  | `grep -n -i "<term>" data/knowledge/guida-ct/text/*.txt`                           |
-| Archive                  | `grep -rn -i "<term>" archive/`                                                    |
+| Source                          | Command                                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| Spec, scope, decisions          | `grep -n -i "<term>" 01_PRODUCT_SPEC.md 02_MVP_SCOPE.md 03_TECHNICAL_DECISIONS.md` |
+| Typed tables                    | `grep -n -i "<term>" src/domain/config.ts`                                         |
+| Owner decisions, backlog        | `grep -n -i "<term>" docs/working/OWNER_DECISIONS.md docs/working/BACKLOG.md`      |
+| Places                          | `cat .evidence/WX1/owner-places.json`                                              |
+| Vento branch                    | `git grep -n -i "<term>" claude/weather-section -- src/domain docs/working`        |
+| Centre's documents (local only) | `grep -rn -i "<term>" data/knowledge/*/text/`                                      |
+| Archive                         | `grep -rn -i "<term>" archive/`                                                    |
 
-## The centre's manuals
+## The centre's documents
 
-`data/knowledge/manualistica-2026/` is git-ignored and exists only on the
-owner's computer; a clone does not have it. Read its `INDEX.md` first: it
-says what each file is and how to search the extracted text. The manuals
-cover the 2026 Deriva courses D1 and D2 and their junior variants: weekly
-programmes, the competences evaluated at the end of the course, and lesson
-cards. Search them for background the spec does not hold, such as a course's
-day-by-day programme, safety practice on the water, or the junior courses.
+`data/knowledge/` is git-ignored and exists only on the owner's computer; a
+clone does not have it. Read `data/knowledge/INDEX.md` first: it says what
+each folder and file is, its date, which files are scanned, and which
+versions were left out as duplicates or superseded. In short:
 
-What a manual says is context, not a requirement: decision 26 records the
-owner's reading. A manual fact that would change the product goes to the
-owner as a question; it enters the spec only through their decision.
+- `manualistica-2026/` (own index): the 2026 Deriva manuals, D1, D2 and the
+  junior variants: weekly programmes, end-of-course competences, lesson cards.
+- `guida-ct/` (own index): the Capo Turno's guide, with the bases' logistics,
+  the comandata's hours and the school's timetable (page 20).
+- `guida-volontari/`: the 2026 volunteers' guide: roles, rules, evaluations
+  and their privacy, the organisation per base, the evaluation cards.
+- `guida-at/`: the Assistente del Turno's guide: the comandata service at
+  each base, and the weekly comandata plan form.
+- `programmi-corsi/`: older programmes for D3–D5, C1–C5 and special courses,
+  and blank 2014 duty boards and crew sheets.
+- `sicurezza/`, `statuto-norme/`, `moduli/`, `ordinanze/`: first aid and man
+  overboard; statute, ethics code, norme di vita; blank forms; the 2026 La
+  Maddalena navigation ordinance (scanned, not yet read).
 
-## The CT's operational guide
-
-`data/knowledge/guida-ct/` (git-ignored, shared by the owner on 2026-11-11)
-holds the "Guida Operativa Capo Turno" and its extract of the CT's duties: the
-CT's role, the bases' logistics, the comandata's hours, the last Saturday and
-the school's daily timetable (page 20). The manuals' lesson cards point to it
-for timetables. Same rules as the manuals: background, never committed or
-quoted.
+Where documents overlap, the newer wins: the 2026 manuals and guides over the
+older programmes. What any of them says is context, not a requirement:
+decision 26 records the owner's reading. A fact that would change the product
+goes to the owner as a question; it enters the spec only through their
+decision.
 
 ## The archive, where it helps
 
@@ -152,7 +155,7 @@ quoted.
 
 ## Privacy
 
-The manuals are "Copyright CVC – Uso interno": never commit, quote or
+The centre's documents are internal ("Uso interno"): never commit, quote or
 paraphrase their content in this public repository; pointers only.
 Never open `data/private/` (real rosters and OCR) or record a real person's
 data; examples use synthetic names (`AGENTS.md` §17).
