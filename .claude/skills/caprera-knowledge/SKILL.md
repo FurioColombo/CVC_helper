@@ -97,8 +97,8 @@ The forecast areas and points (Derive and Cabinati) are in
 `src/domain/windConfig.ts` and `docs/working/WEATHER_PROPOSAL.md` on the
 unmerged branch `claude/weather-section`; they arrive with milestone WX1. The
 branch's Derive points predate the owner's record, which wins
-(`toApplyAtWX1Start`); session hours and the Cabinati points are still open
-(`stillOpen`). A map of the places is owner-named future work (`BACKLOG.md`).
+(`toApplyAtWX1Start`), and so do the session hours, from the CT's guide
+(`sessionHours`); the Cabinati points are still open (`stillOpen`). A map of the places is owner-named future work (`BACKLOG.md`).
 
 ## How to search
 
@@ -110,6 +110,7 @@ branch's Derive points predate the owner's record, which wins
 | Places                   | `cat .evidence/WX1/owner-places.json`                                              |
 | Vento branch             | `git grep -n -i "<term>" claude/weather-section -- src/domain docs/working`        |
 | Manuals (local only)     | `grep -n -i "<term>" data/knowledge/manualistica-2026/text/*.txt`                  |
+| CT's guide (local only)  | `grep -n -i "<term>" data/knowledge/guida-ct/text/*.txt`                           |
 | Archive                  | `grep -rn -i "<term>" archive/`                                                    |
 
 ## The centre's manuals
@@ -125,6 +126,15 @@ day-by-day programme, safety practice on the water, or the junior courses.
 What a manual says is context, not a requirement: decision 26 records the
 owner's reading. A manual fact that would change the product goes to the
 owner as a question; it enters the spec only through their decision.
+
+## The CT's operational guide
+
+`data/knowledge/guida-ct/` (git-ignored, shared by the owner on 2026-11-11)
+holds the "Guida Operativa Capo Turno" and its extract of the CT's duties: the
+CT's role, the bases' logistics, the comandata's hours, the last Saturday and
+the school's daily timetable (page 20). The manuals' lesson cards point to it
+for timetables. Same rules as the manuals: background, never committed or
+quoted.
 
 ## The archive, where it helps
 
