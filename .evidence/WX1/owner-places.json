@@ -119,19 +119,24 @@
     },
     "forTheForecast": {
       "AM": {
-        "start": 9,
-        "end": 13,
-        "label": "9–12:30"
+        "start": 8,
+        "end": 14,
+        "label": "8–14"
       },
       "PM": {
-        "start": 15,
-        "end": 18,
-        "label": "15–18"
+        "start": 14,
+        "end": 19,
+        "label": "14–19"
       }
     },
-    "note": "The timetable is the whole school's, Deriva and Cabinati courses that stay at a base. Hours are whole hours, end excluded, so AM covers 9:00 to 12:59; its label shows the real return. Itinerant courses (C4, C5) keep their own rhythm."
+    "note": "The timetable is the whole school's, Deriva and Cabinati courses that stay at a base. Hours are whole hours, end excluded, so AM covers 8:00 to 13:59. Itinerant courses (C4, C5) keep their own rhythm.",
+    "ownerChoice": {
+      "recordedAt": "2026-11-12",
+      "said": "Afternoon 14 to 19; the morning too one hour longer than the real session, to get a better idea of the trend.",
+      "reading": "The morning outing runs 9:00 to 12:30; one hour more on each side read as 8 to 14 in whole hours, so the half-day ends where the afternoon starts. Logged in docs/working/OWNER_DECISIONS.md."
+    }
   },
-  "toApplyAtWX1Start": "src/domain/windConfig.ts on claude/weather-section: the Derive points, centre and description; the Cala Fico comment no longer says the position is estimated. Also the session hours, WIND_SESSION_HOURS: AM 9 to 13 shown as 9–12:30, PM 15 to 18 (was 14 to 18); the e2e fixture's Saturday PM window moves with it.",
+  "toApplyAtWX1Start": "Applied on claude/weather-section on 2026-11-12 (not yet merged): the Derive points, centre and description in src/domain/windConfig.ts, and WIND_SESSION_HOURS AM 8 to 14, PM 14 to 19, with the e2e fixtures moved to match.",
   "stillOpen": [
     "the six Cabinati points"
   ],

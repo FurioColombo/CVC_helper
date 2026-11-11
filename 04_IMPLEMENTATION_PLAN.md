@@ -113,7 +113,9 @@ sync-chaos, field UX and security/privacy reviews.
 
 A Vento line on Home and a Vento screen: the next session in detail, the next
 24 hours, the week or seven days; seven models blended through Open-Meteo,
-LaMMA's own map, links to Meteomar, Windy and Windfinder. It gives no go or
+with sky and temperature, and a map of the area drawn from OpenStreetMap's
+coastline (owner, 2026-11-12, decision 27); LaMMA's own map, links to
+Meteomar, Windy and Windfinder. It gives no go or
 no-go: that stays the instructor's. Built on `claude/weather-section`, with the
 proposal, the backtest and three rounds of review in `docs/working/` there
 (`WEATHER_PROPOSAL.md`, `WEATHER_EVIDENCE.md`, `weather-reviews/`).

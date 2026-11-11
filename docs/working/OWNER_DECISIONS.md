@@ -11,7 +11,7 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md` and
 
 Folded on 2026-11-11: 11 and 16 are in `03_TECHNICAL_DECISIONS.md` §3 "Online backup", 21 in the plan's B7 section and its mock.
 
-**Waiting for your reading:** 1, 17, 22, 23 and 25.
+**Waiting for your reading:** 1, 17, 22, 23, 25 and 27.
 
 ## Open from 0.4.0
 
@@ -172,3 +172,14 @@ tutti i dati locali` erases the course from the backup first; without
     courses (D1J, D2J) come in a future version; two-week courses, organised
     week by week with evaluations starting afresh, come after 1.0.0. Both are
     in `docs/working/BACKLOG.md`.
+27. **Vento's hours, map, sky and temperature (yours, 2026-11-12; one reading
+    mine).** After seeing the screens you asked for the afternoon as 14–19,
+    the morning one hour longer than the real session as well, to read the
+    trend; your Derive points; a map of the area as an alternative view; and
+    the sky and temperature in the forecast and on Home. My reading: the
+    morning outing runs 9:00–12:30, so an hour more on each side is 8–14 in
+    whole hours, and the half-day ends where the afternoon starts. The map is
+    recreated from OpenStreetMap's coastline (ODbL), not LaMMA's image: its
+    CC BY-ND licence forbids drawing on it, and Porto Palma is a few pixels
+    there. All of it is built on the unmerged `claude/weather-section`, so it
+    arrives with WX1; the proposal's §6 lists the smaller choices.
