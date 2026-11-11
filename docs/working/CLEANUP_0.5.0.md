@@ -57,13 +57,14 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   self-tests. Evidence: B5 and B6 resumed and re-verified separately on 0.5.3
   (`94c753f`, `2ac2434`, `3bdd415`).
 
-## For the owner
+## Accepted by the owner
 
-- **CL-1a: browser evidence from CI** (retrospective proposal 1).
+- **CL-1a: browser evidence from CI** (retrospective proposal 1; the owner
+  said yes on 2026-11-11, after GitHub lifted the billing lock).
   `scripts/record-verification.mjs`, `03_TECHNICAL_DECISIONS.md` §6, the skill:
   `evidence -- <ID> --from-ci` records the green `[full-ci]` run of the exact
-  commit, the local run as fallback. It changes 03 §6's ladder and needs CI,
-  so it waits for the billing fix and the owner's yes. Evidence: each recording
+  commit, the local run only as fallback when CI is unavailable. After B7's
+  handoff, with 03 §6 amended in the same commit. Evidence: each recording
   is followed by a 45–76 min `[full-ci]` run that the skill already treats as
   the authority.
 
