@@ -233,9 +233,8 @@ Implement only the approved scope in `02_MVP_SCOPE.md`, the active plan and the
 owner's latest explicit instructions. A deferred item requires an explicit
 human scope change plus updated plan and evidence before implementation.
 
-Do not prematurely add what `02_MVP_SCOPE.md` §4 assigns to a later release
-(sync, sign-in and Supabase Auth, sharing, several courses, conflict handling)
-or what §2 defers (native packaging, generic content systems, automatic crew
+Do not prematurely add what `02_MVP_SCOPE.md` §4 assigns to a release after
+the active plan's, or what §2 defers (native packaging, generic content systems, automatic crew
 generation beyond scope), nor a non-goal of `03_TECHNICAL_DECISIONS.md` §8.
 Never add speculative abstractions.
 

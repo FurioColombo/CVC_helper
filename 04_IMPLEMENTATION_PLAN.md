@@ -35,8 +35,8 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
 | B4 | Complete. Every change reaches the server once, in order, across reloads and offline days; refusals stay visible and recoverable; desktop tabs each sync. Owner check passed on CVC Helper Test 0.5.3 (2026-11-10). The desktop review's third round failed on two courses per account, split to B7 (owner decision 20). See `.evidence/B4/`. |
 | B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
-| B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
-| B7 | Built, reviewed, evidence recorded at `08b3eae`. Waits for full CI (blocked by GitHub billing) and the owner's `B7-KEEP-RULE`; then the live spec, a test build and `B7-PHONE-CHOICE`. |
+| B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live; phone check B6-PHONE-ERASE is ready for the owner. See `.evidence/B6/`. |
+| B7 | Built, reviewed, evidence recorded at `08b3eae`. The owner ran `B7-KEEP-RULE` on 2026-11-10 and the live spec passes (`.evidence/B7/live-keep-rule.json`). Waits for green full CI (blocked by GitHub's billing lock); then its handoff, a test build and `B7-PHONE-CHOICE`. |
 | WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); it starts after B7's handoff. |
 
 Handoff: B4 and B5 closed locally on 2026-11-11, unpushed; their checkpoints'
@@ -139,7 +139,7 @@ proposal, the backtest and three rounds of review in `docs/working/` there
 
 **Starts when** B7 has handed off; the owner accepted `WX1-NETWORK` on
 2026-11-06 (decision 25). Then the branch merges here, the manifest gains its specs, and WX1 starts
-with B4–B7 as permitted predecessors.
+with B6 and B7 as permitted predecessors.
 
 **Work.** The proposal's §9 edits: `01` gains the Vento section and sheds text
 to stay in budget; `02` §1; `03` lists Open-Meteo and LaMMA as permitted calls
