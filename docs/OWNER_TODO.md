@@ -116,21 +116,11 @@ The owner reported: The owner ran the migration once in cvc-helper-dev. Resuming
 
 ## Erase your course on the phone, once offline, and see it gone from the backup — B6
 
-**State:** Ready for owner check · Required
+**State:** Passed from owner report · Required
 
 **What to do:**
 
-1. Only after B4-PHONE-UPLOADS and B5-PHONE-RESTORE are reported: they need the course on the backup. Use invented data only. These steps erase your test course for good; save a course file first if you want to keep it.
-2. Start with both devices signed in, on 0.5.3 and showing the same course. On the phone: Impostazioni, Elimina il corso e inizia un nuovo corso. Read the question: it should say the course also goes from the backup online, and state what the provider's backups keep and for how long. Tick Ho capito and tap Elimina tutto.
-3. The phone reopens on Crea il corso. On the PC, reload the test address: the erased course should be gone and it should wait for the account's course, not show the old one.
-4. On the phone, create a different invented course with one student. Wait for Copia online aggiornata. Reload the PC: it should download and open this new course.
-5. Now put the phone in airplane mode. Impostazioni, Elimina il corso e inizia un nuovo corso: this time the question should say appena c'è connessione. Confirm. The phone reopens on Crea il corso without signal.
-6. Before reconnecting, reload the PC: the course is still there, because the phone has not been able to tell the backup yet.
-7. Turn airplane mode off and keep the app open on the phone for a minute. Reload the PC: the course should be gone. Reload it again a minute later: it should not come back.
-8. Optional: on the phone, create one more invented course, wait for Copia online aggiornata, then Impostazioni, Azzera tutti i dati locali. Its question should warn that the course also leaves the backup and that without signal nothing is reset. Confirm with signal and check the PC loses it too.
-9. Report B6-PHONE-ERASE with what you saw at each step, and which you skipped.
-
-Use the test address below and the linked device instructions.
+The owner reported: Steps 1-9 passed with the phone and the PC on one account. Online: the erase question named the backup and what the provider's backups keep; Elimina tutto opened Crea il corso; the PC dropped the course by itself, without a reload; a new course with one student reached the PC by itself. All almost immediate. Offline (airplane mode): the question said 'appena c'è connessione', the phone opened Crea il corso without signal, the PC kept the course until the phone reconnected, then dropped it in under 2 seconds without a reload, and after a later reload it stayed gone. Step 10 (optional, Azzera tutti i dati locali) skipped by the owner.
 
 **Expected:** Erasing the course on the phone erases it from the backup, also when the erase was made offline and the phone reconnected later; the erased course never comes back. Only your actual observations can pass this check.
 
@@ -140,7 +130,7 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of B6 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** The owner report is recorded.
 
 <a id="b7-keep-rule"></a>
 

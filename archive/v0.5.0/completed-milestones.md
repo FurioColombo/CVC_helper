@@ -146,3 +146,25 @@ than the app.
 
 **Evidence:** verification, browser evidence, the owner's Android check, self,
 data-integrity and sync-chaos reviews.
+
+## B6 — Erase on the server
+
+**Category:** FEATURE
+**Status:** AWAITING_OWNER
+
+Erasing the course and the full reset also delete the server copy when
+signed in; offline, the deletion completes on reconnect. Impostazioni states
+what the provider's backups keep and for how long (owner decision).
+
+**Success predicate:** after an erase or an import replacement nothing of the
+removed course remains readable on the server or the device, the upload
+queue's pending payloads included (B1 reviews DI-B1-1, SC-B1-3), also after
+an offline erase and reconnect.
+
+**Adversarial checklist:** an erase offline and never reconnected; an erase
+racing a restore on another device; partial deletion leaving orphan rows; a
+delete of people's data losing to another phone's later or clock-ahead edit
+under the B4 upload rules (B4 review SP-B4-3).
+
+**Evidence:** verification, self, security/privacy and data-integrity
+reviews.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "B6",
+  "ownerReports": [
+    {
+      "id": "B6-PHONE-ERASE",
+      "check": "Erase your course on the phone, once offline, and see it gone from the backup",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-11-11, on CVC Helper Test 0.5.3",
+      "summary": "Steps 1-9 passed with the phone and the PC on one account. Online: the erase question named the backup and what the provider's backups keep; Elimina tutto opened Crea il corso; the PC dropped the course by itself, without a reload; a new course with one student reached the PC by itself. All almost immediate. Offline (airplane mode): the question said 'appena c'è connessione', the phone opened Crea il corso without signal, the PC kept the course until the phone reconnected, then dropped it in under 2 seconds without a reload, and after a later reload it stayed gone. Step 10 (optional, Azzera tutti i dati locali) skipped by the owner.",
+      "testedCommit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-11-11T22:10:23.503Z"
+    }
+  ]
+}

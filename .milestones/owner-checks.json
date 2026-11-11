@@ -420,9 +420,9 @@
       "milestone": "B6",
       "kind": "DEVICE_CHECK",
       "title": "Erase your course on the phone, once offline, and see it gone from the backup",
-      "status": "READY",
+      "status": "PASSED",
       "required": true,
-      "revision": 4,
+      "revision": 5,
       "instructions": [
         "Only after B4-PHONE-UPLOADS and B5-PHONE-RESTORE are reported: they need the course on the backup. Use invented data only. These steps erase your test course for good; save a course file first if you want to keep it.",
         "Start with both devices signed in, on 0.5.3 and showing the same course. On the phone: Impostazioni, Elimina il corso e inizia un nuovo corso. Read the question: it should say the course also goes from the backup online, and state what the provider's backups keep and for how long. Tick Ho capito and tap Elimina tutto.",
@@ -438,7 +438,16 @@
       "testedCommit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519",
       "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
       "evidencePath": ".evidence/B6/physical-device-review.json",
-      "updatedAt": "2026-11-04T10:31:03.647Z"
+      "updatedAt": "2026-11-11T22:10:23.503Z",
+      "result": {
+        "reportedBy": "owner",
+        "source": "Chat, 2026-11-11, on CVC Helper Test 0.5.3",
+        "summary": "Steps 1-9 passed with the phone and the PC on one account. Online: the erase question named the backup and what the provider's backups keep; Elimina tutto opened Crea il corso; the PC dropped the course by itself, without a reload; a new course with one student reached the PC by itself. All almost immediate. Offline (airplane mode): the question said 'appena c'è connessione', the phone opened Crea il corso without signal, the PC kept the course until the phone reconnected, then dropped it in under 2 seconds without a reload, and after a later reload it stayed gone. Step 10 (optional, Azzera tutti i dati locali) skipped by the owner.",
+        "testedCommit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519",
+        "device": "Motorola Edge 60 (the owner's phone in earlier reports; not restated)",
+        "browser": "Not restated (Chrome in earlier reports)",
+        "osVersion": "Not restated (Android 15 in earlier reports)"
+      }
     },
     {
       "id": "B7-KEEP-RULE",

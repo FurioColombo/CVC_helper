@@ -35,13 +35,13 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
 | B4 | Complete. Every change reaches the server once, in order, across reloads and offline days; refusals stay visible and recoverable; desktop tabs each sync. Owner check passed on CVC Helper Test 0.5.3 (2026-11-10). The desktop review's third round failed on two courses per account, split to B7 (owner decision 20). See `.evidence/B4/`. |
 | B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
-| B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live; phone check B6-PHONE-ERASE is ready for the owner. See `.evidence/B6/`. |
-| B7 | Built, reviewed, evidence recorded at `08b3eae`. The owner ran `B7-KEEP-RULE` on 2026-11-10 and the live spec passes (`.evidence/B7/live-keep-rule.json`). Waits for green full CI (blocked by GitHub's billing lock); then its handoff, a test build and `B7-PHONE-CHOICE`. |
+| B6 | Complete. An erase deletes the course from the server and the device, queued changes included; offline it completes on reconnect, and an erased course stays erased. Impostazioni states what the provider's backups keep. Owner check passed on CVC Helper Test 0.5.3 (2026-11-11; the optional reset step skipped). See `.evidence/B6/`. |
+| B7 | Built, reviewed, evidence recorded at `08b3eae`. The owner ran `B7-KEEP-RULE` on 2026-11-10 and the live spec passes (`.evidence/B7/live-keep-rule.json`). Waits for green full CI (running again since 2026-11-11); then its handoff, a test build and `B7-PHONE-CHOICE`. |
 | WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); it starts after B7's handoff. |
 
-Handoff: B4 and B5 closed locally on 2026-11-11, unpushed; their checkpoints'
-full push CI stays pending until GitHub's billing lock is lifted and a push is
-authorised.
+Handoff: B4, B5 and B6 closed on 2026-11-11. GitHub lifted the billing lock the
+same day; the full push CI of `d37f113` covers B4 and B5, and B6's closing
+commit gets its own.
 
 The workflow clean-up deferred by the review of 2026-11-11 waits in
 `docs/working/CLEANUP_0.5.0.md`.
@@ -78,28 +78,6 @@ should run locally.
   synthetic data only.
 - Every milestone has a success predicate and an adversarial checklist; close
   each with the `milestone-close` skill.
-
-## B6 — Erase on the server
-
-**Category:** FEATURE
-**Status:** AWAITING_OWNER
-
-Erasing the course and the full reset also delete the server copy when
-signed in; offline, the deletion completes on reconnect. Impostazioni states
-what the provider's backups keep and for how long (owner decision).
-
-**Success predicate:** after an erase or an import replacement nothing of the
-removed course remains readable on the server or the device, the upload
-queue's pending payloads included (B1 reviews DI-B1-1, SC-B1-3), also after
-an offline erase and reconnect.
-
-**Adversarial checklist:** an erase offline and never reconnected; an erase
-racing a restore on another device; partial deletion leaving orphan rows; a
-delete of people's data losing to another phone's later or clock-ahead edit
-under the B4 upload rules (B4 review SP-B4-3).
-
-**Evidence:** verification, self, security/privacy and data-integrity
-reviews.
 
 ## B7 — Two courses on one account
 
