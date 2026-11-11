@@ -97,3 +97,32 @@ personal data in URLs or logs.
 
 **Evidence:** verification, browser evidence, the owner's Android check, self,
 security/privacy and field-UX reviews.
+
+## B4 — Uploads
+
+**Category:** RULE_HEAVY
+**Status:** AWAITING_OWNER
+
+The upload handler writes each queued change through the owner's session to
+the table without its `synced_` prefix and sends the app version; the server
+refuses writers below the minimum (03 §3.1). A transient failure retries; a
+refused change is kept and reported in Impostazioni, never skipped silently.
+One phone writes at a time (owner, 2026-10-25): placement rows (crew members,
+land, session boats, duties, evaluations) get ids from their natural keys, so
+two phones edited offline converge on the latest edit instead of duplicates
+that break Equipaggi, and the app says when that happened (SC-B1-1). Uploads
+keep the queue's parent-first order and batch the switch's first transaction;
+save latency after days offline is measured on the phone (SC-B1-Q3, Q4).
+A course id already taken by another account (a shared file signed in
+first) is reported, not retried forever (SP-B2-Q5).
+
+**Success predicate:** every local change reaches the server exactly once
+across reloads, offline periods and app closes, and a refused change is
+visible to the owner and still recoverable.
+
+**Adversarial checklist:** the app closed mid-upload; a refusal blocking the
+queue forever; a stale app version writing; a delete uploaded before its
+insert; personal data in error reports.
+
+**Evidence:** verification, browser evidence, self, sync-chaos,
+data-integrity and security/privacy reviews.

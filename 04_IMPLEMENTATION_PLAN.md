@@ -1,6 +1,6 @@
 # Implementation plan — 0.5.0
 
-Updated 2026-11-06. Read **Where this cycle stands**, then only the active
+Updated 2026-11-11. Read **Where this cycle stands**, then only the active
 milestone's section. The road to 1.0.0 is `02_MVP_SCOPE.md` §4. The 0.4.0 plan
 is archived at `archive/v0.4.0/04_IMPLEMENTATION_PLAN.md`; earlier plans are in
 `archive/`. `.milestones/manifest.json` is the machine-readable lifecycle.
@@ -33,11 +33,14 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B1 | Complete. A device switches once from 0.4.0's local tables to synced ones, every row identical and queued once, older apps read-only; erase, import, reset and older apps are covered on Chromium and WebKit. Three reviews passed with findings, fixed or handed to B3–B6. See `.evidence/B1/`. |
 | B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
-| B4 | Awaiting the owner's recheck on CVC Helper Test 0.5.3, CI green at `6e17c1d`: on the phone the status follows the uploads; the PC step found desktop never synced, fixed with sync in each tab. The desktop review's third round failed on a defect split to B7 (owner decision 20). See `.evidence/B4/`. |
+| B4 | Complete. Every change reaches the server once, in order, across reloads and offline days; refusals stay visible and recoverable; desktop tabs each sync. Owner check passed on CVC Helper Test 0.5.3 (2026-11-10). The desktop review's third round failed on two courses per account, split to B7 (owner decision 20). See `.evidence/B4/`. |
 | B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reverified on the code of CVC Helper Test 0.5.3 after B4's desktop fixes. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
 | B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
 | B7 | Built, reviewed, evidence recorded at `08b3eae`. Waits for full CI (blocked by GitHub billing) and the owner's `B7-KEEP-RULE`; then the live spec, a test build and `B7-PHONE-CHOICE`. |
 | WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); it starts after B7's handoff. |
+
+Handoff: B4 closed locally on 2026-11-11, unpushed; its checkpoint's full push
+CI stays pending until GitHub's billing lock is lifted and a push is authorised.
 
 ## Execution order
 
@@ -71,35 +74,6 @@ should run locally.
   synthetic data only.
 - Every milestone has a success predicate and an adversarial checklist; close
   each with the `milestone-close` skill.
-
-## B4 — Uploads
-
-**Category:** RULE_HEAVY
-**Status:** AWAITING_OWNER
-
-The upload handler writes each queued change through the owner's session to
-the table without its `synced_` prefix and sends the app version; the server
-refuses writers below the minimum (03 §3.1). A transient failure retries; a
-refused change is kept and reported in Impostazioni, never skipped silently.
-One phone writes at a time (owner, 2026-10-25): placement rows (crew members,
-land, session boats, duties, evaluations) get ids from their natural keys, so
-two phones edited offline converge on the latest edit instead of duplicates
-that break Equipaggi, and the app says when that happened (SC-B1-1). Uploads
-keep the queue's parent-first order and batch the switch's first transaction;
-save latency after days offline is measured on the phone (SC-B1-Q3, Q4).
-A course id already taken by another account (a shared file signed in
-first) is reported, not retried forever (SP-B2-Q5).
-
-**Success predicate:** every local change reaches the server exactly once
-across reloads, offline periods and app closes, and a refused change is
-visible to the owner and still recoverable.
-
-**Adversarial checklist:** the app closed mid-upload; a refusal blocking the
-queue forever; a stale app version writing; a delete uploaded before its
-insert; personal data in error reports.
-
-**Evidence:** verification, browser evidence, self, sync-chaos,
-data-integrity and security/privacy reviews.
 
 ## B5 — Restore on a new device
 

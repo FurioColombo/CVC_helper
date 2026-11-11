@@ -1156,7 +1156,7 @@
     {
       "id": "B4",
       "category": "RULE_HEAVY",
-      "status": "AWAITING_OWNER",
+      "status": "COMPLETE",
       "allowedAwaitingOwnerPredecessors": [
         {
           "id": "B3",
@@ -1226,7 +1226,8 @@
         },
         "ciRunId": 41744222524,
         "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/41744222524"
-      }
+      },
+      "verifiedSourceDigest": "d5e6ac3937faa38fe64560130e65642c925dd99daed17bc9fa44c571203083e9"
     },
     {
       "id": "B5",
