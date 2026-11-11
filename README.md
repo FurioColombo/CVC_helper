@@ -1,44 +1,54 @@
 # CVC Helper
 
-This repository is designed so Codex or Claude Code can start with a short prompt
-and follow the shared repository instructions.
+CVC Helper is a mobile-first offline PWA for running one week of a CVC sailing
+course: students, boats and faults, Comandate, crews with boat assignment,
+evaluations and volunteers (ADV/IS/CT). The released app (0.4.0) keeps data on
+the device in a local PowerSync database, with no account or sync; 0.5.0, in
+progress on `claude/0.5.0-prep`, adds an online backup after sign-in. Italian
+OCR reads student sheets and Italian speech dictates notes. Releases are in
+`CHANGELOG.md`.
 
-## Read this first
+## Start here
 
-Shared agent instructions: `AGENTS.md` (read directly by Codex and Claude Code).
-
-Authoritative documents:
-
-1. `AGENTS.md` — autonomous execution protocol and verification contract.
-2. `01_PRODUCT_SPEC.md` — user-visible behavior and business/domain rules.
-3. `02_MVP_SCOPE.md` — what is in scope, what is deferred, the road to 1.0.0.
-4. `03_TECHNICAL_DECISIONS.md` — architecture, stack and harness decisions.
-5. `04_IMPLEMENTATION_PLAN.md` — short active ledger; completed history is archived.
-
-Read the relevant sections of 01–03 for the active milestone, not all of their
-historical detail. `docs/LOCAL_DEVELOPMENT.md` contains the runtime and ports.
-
-`archive/` is human-only design history unless explicitly requested.
-
-For an active UI milestone, read only the relevant page sections in
-`docs/design/06_DESIGN_RULEBOOK.md` and
-`docs/design/07_PAGE_CHANGELOG.md`. The frozen r10 mock is linked there. Do not
-load the design-review history by default.
-
-## Intended startup prompt
-
-A prompt can be as short as:
+`AGENTS.md` is the shared operating contract for Codex and Claude Code: its
+read order, source-of-truth hierarchy, evidence and Git rules. A startup prompt
+can be as short as:
 
 > Read `AGENTS.md` and the authoritative documents it references. Start from the
 > first incomplete milestone in `04_IMPLEMENTATION_PLAN.md` and execute it
 > autonomously. Follow its scope, target, verification, evidence, review and Git
 > requirements.
 
-0.1.0 to 0.4.0 are released and tagged; 0.5.0, the online backup, is in
-progress on `claude/0.5.0-prep`. The road to a shared database is `02_MVP_SCOPE.md` §4; use the plan's **Where this cycle stands** table and
-first eligible incomplete milestone. Open requests and findings waiting for a
-milestone are in `docs/working/BACKLOG.md`. How documents are kept current is
-`docs/DOCS_SYSTEM.md`.
+## Where things are
+
+- `01`–`03_*.md` — product spec, scope and the road to 1.0.0 (`02` §4),
+  technical decisions; `04_IMPLEMENTATION_PLAN.md` — the active plan, with
+  **Where this cycle stands**.
+- `docs/LOCAL_DEVELOPMENT.md` — Node 24, ports and browser verification;
+  `docs/DOCS_SYSTEM.md` — how documents are kept current.
+- `docs/design/` — design rulebook, page changelog and frozen mocks;
+  `docs/DEVICE_CHECKS.md` — the owner's phone checks; `docs/OWNER_TODO.md` —
+  open owner actions; `docs/working/` — temporary owner-facing documents,
+  including `BACKLOG.md`; `docs/agents/` — the review protocol.
+- `src/domain`, `src/persistence` — pure rules, canonical tables, local database.
+- `src/features`, `src/components`, `src/capabilities` — pages, shared UI, OCR/speech.
+- `tests/e2e`, `tests/fixtures`, `scripts/` — Playwright journeys and their inputs;
+  verification and milestone tooling, the speech benchmark and the OCR diagnostic.
+- `.evidence/<ID>/` — per-milestone verification, reviews and screenshots for the
+  active cycles; the closed 0.1.0 evidence is in `archive/v0.1.0/evidence/`.
+- `archive/` — frozen history, read only when someone asks why.
+
+## Run it
+
+Node 24 is required (`.node-version`, `package.json`); Node 18 and 22 fail on
+Vite. If `node --version` is not 24.x, `docs/LOCAL_DEVELOPMENT.md` has the
+runtime procedure; do not lower the repository runtime requirement. Then
+`npm ci`, `npm run dev` for the app on http://localhost:5173, and
+`npm run build` for the PWA. Checks: `npm run verify:quick` for the fast checks,
+`npm run verify:all` for the complete build and browser suite
+(`03_TECHNICAL_DECISIONS.md` §6 lists every command); record milestone
+verification with `npm run evidence -- <ID>`. Ports: dev 5173,
+`npm run preview` 4173, Playwright 4174.
 
 ## Third-party assets
 
@@ -50,16 +60,3 @@ in that file; no icon dependency is added for them.
 
 Boat marks under `public/brand/boats/` were supplied by the club and authorised
 for use by the owner on 2026-09-18; see `02_MVP_SCOPE.md` section 3.
-
-## Local environment
-
-Use Node.js 24 and install the locked dependencies with `npm ci`. The required
-major version is recorded in `.node-version` and `package.json`; older Node
-releases are not supported by the current Vite and test toolchain.
-
-Run `npm run verify:quick` for the fast checks or `npm run verify:all` for the
-complete build and browser suite.
-
-If PATH exposes an older Node, `docs/LOCAL_DEVELOPMENT.md` has the runtime
-procedure. Do not lower the repository runtime requirement. Record milestone
-verification with `npm run evidence -- <ID>`.

@@ -55,45 +55,35 @@ narrative instructions.
 
 ## 4. Harness-first rule
 
-The harness is in place: Git checkpoints, ESLint, formatting, TypeScript,
-Vitest with React Testing Library, Playwright, the production build,
-deterministic seeds and scenarios, the domain invariant checker, the repository,
-domain and documentation checks, milestone metadata, evidence and commands, the
-Git hooks, browser smoke tests and CI (`03_TECHNICAL_DECISIONS.md` §6). Extend
-it; do not replace it or reopen its old milestones. Before substantive work,
-confirm the first incomplete milestone and its baseline in
-`04_IMPLEMENTATION_PLAN.md`. An incomplete predecessor permits continuation
-only under the verified AWAITING_OWNER rules in `docs/OWNER_WORKFLOW.md`.
+The harness is in place; `03_TECHNICAL_DECISIONS.md` §6 and
+`docs/LOCAL_DEVELOPMENT.md` describe it. Extend it; do not replace it or reopen
+its old milestones. Before substantive work, confirm the first incomplete
+milestone and its baseline in `04_IMPLEMENTATION_PLAN.md`. An incomplete
+predecessor permits continuation only under the verified AWAITING_OWNER rules
+in `docs/OWNER_WORKFLOW.md`.
 
 ## 5. Required verification commands
 
-Keep the command surface boring, transparent and easy to inspect; its detail is
-`03_TECHNICAL_DECISIONS.md` §6 and `docs/LOCAL_DEVELOPMENT.md`.
-
-- `npm run verify:quick`: lint, formatting, typecheck, unit and domain tests.
-- `npm run verify:domain`: repository, domain, docs checks; controller self-test.
-- `npm run verify`: both, plus the production build.
-- `npm run verify:e2e`: the Playwright browser suite.
-- `npm run verify:all`: all of it, the full week and the PWA offline check.
-- `npm run milestone:start|status|check|complete -- <ID>`, `evidence -- <ID>`.
+Keep the command surface boring, transparent and easy to inspect. What each
+`verify*`, `milestone:*` and `evidence` command runs is
+`03_TECHNICAL_DECISIONS.md` §6; ports, browser tools and the verification
+ladder are `docs/LOCAL_DEVELOPMENT.md`.
 
 ## 6. Milestone lifecycle
 
-For every milestone:
+For every milestone, identify its category and required evidence in
+`04_IMPLEMENTATION_PLAN.md`, confirm the previous checkpoint, run the required
+baseline verification and `milestone:start`. Then:
 
-1. Identify its category and required evidence in `04_IMPLEMENTATION_PLAN.md`.
-2. Confirm previous milestone/checkpoint state.
-3. Run the required baseline verification.
-4. Run `milestone:start`.
-5. Implement only the active milestone plus strictly necessary supporting work.
-6. Add or update automated evidence while implementing.
-7. Exercise user-visible behavior through the browser when required.
-8. Run domain/invariant checks when relevant.
-9. Follow `.claude/skills/milestone-close/SKILL.md`: reviews, final verification,
-   evidence and documentation; use `milestone:await-owner` if owner acceptance
-   waits, otherwise `milestone:complete`, and one descriptive checkpoint.
-10. Start only eligible work under `docs/OWNER_WORKFLOW.md`; announce new owner
-    actions with a link to `docs/OWNER_TODO.md` and keep that list current.
+- Implement only the active milestone plus strictly necessary supporting work.
+- Add or update automated evidence while implementing; exercise user-visible
+  behavior through the browser when required (§9); run domain/invariant checks
+  when relevant (§11).
+- Close it with `.claude/skills/milestone-close/SKILL.md`: `milestone:await-owner`
+  if owner acceptance waits, otherwise `milestone:complete`, and one
+  descriptive checkpoint.
+- Start only eligible work under `docs/OWNER_WORKFLOW.md`; announce new owner
+  actions with a link to `docs/OWNER_TODO.md` and keep that list current.
 
 Do not carry an unexplained dirty working tree from one completed milestone into
 the next.
@@ -234,9 +224,9 @@ owner's latest explicit instructions. A deferred item requires an explicit
 human scope change plus updated plan and evidence before implementation.
 
 Do not prematurely add what `02_MVP_SCOPE.md` §4 assigns to a release after
-the active plan's, or what §2 defers (native packaging, generic content systems, automatic crew
-generation beyond scope), nor a non-goal of `03_TECHNICAL_DECISIONS.md` §8.
-Never add speculative abstractions.
+the active plan's, or what §2 defers (native packaging, generic content
+systems, automatic crew generation beyond scope), nor a non-goal of
+`03_TECHNICAL_DECISIONS.md` §8. Never add speculative abstractions.
 
 ## 16. Runtime preflight
 
