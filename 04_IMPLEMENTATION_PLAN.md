@@ -43,6 +43,9 @@ Handoff: B4 and B5 closed locally on 2026-11-11, unpushed; their checkpoints'
 full push CI stays pending until GitHub's billing lock is lifted and a push is
 authorised.
 
+The workflow clean-up deferred by the review of 2026-11-11 waits in
+`docs/working/CLEANUP_0.5.0.md`.
+
 ## Execution order
 
 **B1** → **B2** → **B3** → **B4** → **B5** → **B6** → **B7** → **WX1** → **UG4**. B1

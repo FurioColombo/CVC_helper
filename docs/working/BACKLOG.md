@@ -76,17 +76,13 @@ Other findings, not yet put to the owner:
 ## Retrospective proposals awaiting the owner's pick
 
 The 0.1–0.3 retrospective (`archive/v0.4.0/RETRO_0X.md`) proposes ten changes;
-three were adopted on 2026-10-12. The rest:
+three were adopted on 2026-10-12, and 1, 2 and 7 on 2026-11-11 (now in
+`docs/working/CLEANUP_0.5.0.md`). 3 (a machine-wide lock for `run-e2e`) and 4
+(one quiet runner) are dropped: neither friction recurred in 0.5.0. The rest:
 
-1. `evidence -- <ID> --from-ci` records a green CI `verify:all` (friction 1).
-2. `npm run evidence` exits early on an already passed digest (friction 5).
-3. `scripts/run-e2e.mjs` takes a machine-wide lock (friction 6).
-4. One quiet runner for the verify scripts, log in `test-results/` (friction 7).
 5. Node 24 as machine default, Node 18 demoted: owner action (friction 8).
 6. Transcripts as private data: the owner moves the 0.x ones offline and sets
    `cleanupPeriodDays` (friction 9).
-7. `milestone:complete` writes the plan's status row from the manifest
-   (friction 10).
 
 ## Backup, from the owner's recheck (2026-11-02)
 
