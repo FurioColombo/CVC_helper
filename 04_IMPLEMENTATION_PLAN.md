@@ -34,13 +34,14 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B2 | Complete. The owner's development Supabase and PowerSync Cloud (EU) run the course tables; one account's course is closed to another and to the anonymous key, syncs to its owner alone, and takes its rows with it when deleted. Security review fixed. See `.evidence/B2/`. |
 | B3 | Complete. Sign-in by emailed link signs in, switches and uploads the course; offline it stays signed in and resumes with signal; Esci warns about unsent changes and keeps the course; another account never takes it. Owner phone check passed (two steps not observed). The email code awaits a custom sender (B3-EMAIL-CODE). See `.evidence/B3/`. |
 | B4 | Complete. Every change reaches the server once, in order, across reloads and offline days; refusals stay visible and recoverable; desktop tabs each sync. Owner check passed on CVC Helper Test 0.5.3 (2026-11-10). The desktop review's third round failed on two courses per account, split to B7 (owner decision 20). See `.evidence/B4/`. |
-| B5 | Awaiting the owner: an empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Reverified on the code of CVC Helper Test 0.5.3 after B4's desktop fixes. Owner actions B5-MINIMUM-READ, B5-PHONE-RESTORE. See `.evidence/B5/`. |
+| B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
 | B6 | Awaiting the owner, reverified on the code of CVC Helper Test 0.5.3: an erase or import between two sync retries now always disconnects (found in the B4 fix run). Owner action B6-ERASE-RULES done and verified live. Phone check B6-PHONE-ERASE follows. See `.evidence/B6/`. |
 | B7 | Built, reviewed, evidence recorded at `08b3eae`. Waits for full CI (blocked by GitHub billing) and the owner's `B7-KEEP-RULE`; then the live spec, a test build and `B7-PHONE-CHOICE`. |
 | WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); it starts after B7's handoff. |
 
-Handoff: B4 closed locally on 2026-11-11, unpushed; its checkpoint's full push
-CI stays pending until GitHub's billing lock is lifted and a push is authorised.
+Handoff: B4 and B5 closed locally on 2026-11-11, unpushed; their checkpoints'
+full push CI stays pending until GitHub's billing lock is lifted and a push is
+authorised.
 
 ## Execution order
 
@@ -74,26 +75,6 @@ should run locally.
   synthetic data only.
 - Every milestone has a success predicate and an adversarial checklist; close
   each with the `milestone-close` skill.
-
-## B5 — Restore on a new device
-
-**Category:** FEATURE
-**Status:** AWAITING_OWNER
-
-Signing in on a device without a course downloads it and opens it, then
-reopens so the session binds the restored course (SC-B1-Q5); on a device
-holding another course the app asks first, as import does, and never merges.
-
-**Success predicate:** a course restored on an empty device equals the
-original row for row, and a device with another course changes nothing until
-the owner confirms.
-
-**Adversarial checklist:** a restore interrupted halfway; a restore while the
-other device still uploads; a restored course whose minimum writer is newer
-than the app.
-
-**Evidence:** verification, browser evidence, the owner's Android check, self,
-data-integrity and sync-chaos reviews.
 
 ## B6 — Erase on the server
 

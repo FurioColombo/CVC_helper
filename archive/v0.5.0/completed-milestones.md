@@ -126,3 +126,23 @@ insert; personal data in error reports.
 
 **Evidence:** verification, browser evidence, self, sync-chaos,
 data-integrity and security/privacy reviews.
+
+## B5 — Restore on a new device
+
+**Category:** FEATURE
+**Status:** AWAITING_OWNER
+
+Signing in on a device without a course downloads it and opens it, then
+reopens so the session binds the restored course (SC-B1-Q5); on a device
+holding another course the app asks first, as import does, and never merges.
+
+**Success predicate:** a course restored on an empty device equals the
+original row for row, and a device with another course changes nothing until
+the owner confirms.
+
+**Adversarial checklist:** a restore interrupted halfway; a restore while the
+other device still uploads; a restored course whose minimum writer is newer
+than the app.
+
+**Evidence:** verification, browser evidence, the owner's Android check, self,
+data-integrity and sync-chaos reviews.
