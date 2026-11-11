@@ -43,8 +43,10 @@ keeps the milestone open while explicitly eligible work continues.
 - Roles come from the milestone (`AGENTS.md` §7–8). Run each as its subagent
   (`.claude/agents/reviewer-*.md`, protocol in `docs/agents/REVIEW_PROTOCOL.md`)
   with the milestone ID, the commit and the diff range.
-- Save each JSON report to `.evidence/<ID>/` and add it to the manifest's
-  `requiredReviews`. FAIL or any blocker: fix, re-review with a new round
+- Save each JSON report as `.evidence/<ID>/<role>-review-round-<n>.json` and
+  name the last round's file in the manifest's `requiredReviews`; make no
+  byte-identical `<role>-review.json` copy. A follow-up reviewer reads only
+  the previous round. FAIL or any blocker: fix, re-review with a new round
   number. Follow the protocol's review-round limit: from round 2 keep the same
   reviewer and re-check blockers and fixes; a third FAIL goes to the owner.
 - Write `.evidence/<ID>/self-review.json`: every finding and its disposition.
@@ -58,8 +60,9 @@ keeps the milestone open while explicitly eligible work continues.
 - When agent evidence and reviews pass, commit the implementation and obtain
   green full push CI for that exact commit (its message says `[full-ci]`). Prepare the address, build, expected
   results and focused phone steps, with useful narrow-screen/text-size captures.
-  Publish a preview only when authorised. Never manufacture owner PASS or an
-  empty physical report to satisfy missing evidence.
+  Publish a preview only when authorised. A test-build handoff (pin the build,
+  publish it, mark the request READY) is one commit. Never manufacture owner
+  PASS or an empty physical report to satisfy missing evidence.
 - While owner acceptance waits, `npm run milestone:await-owner -- <ID>` captures
   the verified checkpoint. Keep its plan section open as AWAITING_OWNER, update
   the plan's handoff and commit the metadata. Stop the closure sweep here;

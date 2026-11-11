@@ -19,8 +19,9 @@ The brief names the milestone ID, the commit or diff range and anything the
 orchestrator wants covered. Read, in this order: the milestone's section and
 success predicate in `04_IMPLEMENTATION_PLAN.md`, the sections of
 `01_PRODUCT_SPEC.md`, `02_MVP_SCOPE.md` and `03_TECHNICAL_DECISIONS.md` it
-touches, the diff, and earlier review reports for the same milestone in
-`.evidence/<ID>/`.
+touches, the diff, and earlier reports for the same milestone and role in
+`.evidence/<ID>/`: in round 1 their `anglesTried` (Entropy below), in a
+follow-up round only the previous round's report.
 
 ## Rules
 
@@ -45,7 +46,7 @@ touches, the diff, and earlier review reports for the same milestone in
 
 The orchestrator numbers rounds per milestone and role, starting at 1. Keep
 the same reviewer agent for follow-ups where available; otherwise give the
-same persona its prior reports. Do not restart the round count by replacing
+same persona the previous round's report. Do not restart the round count by replacing
 the agent, renaming the report or changing the commit.
 
 - **Round 1:** review the whole milestone using the entropy draw below.
@@ -82,7 +83,9 @@ The first review explores the whole milestone. Before you start:
 ## Report
 
 Your final message is one JSON object and nothing else. The orchestrator saves
-it as `.evidence/<ID>/<role>-review.json` (or `-round-<n>`);
+it as `.evidence/<ID>/<role>-review-round-<n>.json`. The manifest's
+`requiredReviews` names the last round's file directly; no un-numbered
+`<role>-review.json` copy is made, and earlier copies stay as they are.
 `npm run milestone:complete` rejects a FAIL, a blocker, or a report without the
 verdict, the blocker and finding lists or the evidence inspected; the other
 fields are this protocol's and reviewers keep them.
