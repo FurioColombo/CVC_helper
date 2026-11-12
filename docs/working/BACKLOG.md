@@ -196,7 +196,10 @@ From the WX1 reviews (`.evidence/WX1/`, round 1), not fixed in WX1:
   disclosure and README say what each provider receives (SP-WX1-Q2, FUX-64);
 - large text: at 200% the Home line pushes the six cards down (FUX-57), its thunder
   line can sit under the bottom bar (FUX-58), and Vento's first number is 1.7
-  screens down at 320 px (FUX-59);
+  screens down at 320 px (FUX-59); after a failed refresh Aggiorna wraps below the
+  status and starts under the bottom bar until scrolled (round 3, FUX-67), and
+  "Aggiornamento" still breaks at 360 px (FUX-65): keep the button beside the
+  text while the column holds its longest word;
 - one wording everywhere: the week's eight-point direction against sixteen
   elsewhere (FUX-60), the gust written five ways (FUX-61), Italian wind names and
   units in spoken text (A11Y-Q25); a storm just outside the outing (FUX-62); small

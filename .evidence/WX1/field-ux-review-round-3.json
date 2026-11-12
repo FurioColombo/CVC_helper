@@ -1,0 +1,45 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "WX1",
+  "round": 3,
+  "commit": "4eaa5a7",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "FUX-65",
+      "title": "Mostly resolved: one word still breaks, 'Aggiornamento' at 360 px and 200%, the commonest Android width",
+      "evidence": "With flex-wrap, flex-[1_1_12rem] and overflow-wrap:break-word (WeatherScreen.tsx:150-158), the layout audit finds no broken status word at 320, 344, 390 or 412 px at 200%, at 320/150 or at 360/175, in either area, online or offline: 'potrebbero', 'superati', 'riuscito,', 'riprova', 'Maddalena,' and 'Cannigione,' are whole again. One break is left. After a failed refresh with signal at 360 px/200%, 'Aggiornamento' is wider than its column and break-word splits it as 'Aggiornament / o', in both areas. The column is 280 px at 360 px but 296 px at 320 px, so the word fits at 320 and not at 360. Not a blocker: no sideways scroll, and every other word is whole.",
+      "reproduction": "My scratchpad's n2/r2-a.spec.ts ('FUX-54 re-test: Deriva' and '... Cabinato', pixel-7), brokenWords at 'failedOnline 360/200'; screenshot r3-failed-360-200.png in my scratchpad (360x740, html font-size 200%, tap Aggiorna with the API failing).",
+      "specRef": "docs/VENTO.md 'What it answers'; round-2 FUX-65"
+    },
+    {
+      "id": "FUX-67",
+      "title": "Regression from the FUX-65 fix: once a refresh fails at 200% text, Aggiorna drops below the status and starts under the bottom bar on the first screen",
+      "evidence": "The 12rem basis (384 px at 200%) never fits beside the button, so at 150% and 200% Aggiorna always wraps to its own line at the bottom left. Fresh at 320/200, it sits at y 226-314, visible. After a failed refresh, the longer status pushes it down. In a 700 px viewport the bottom bar's top is at y 550. Deriva: Aggiorna's top is at y 536 (320/200), 496 (344, 390 and 412/200) and 672 (360/200, entirely under the bar); offline with a 30-hour-old copy, 712 at 360/200. Cabinati, with its five-place description: top at 576-616 at every width at 200% and 752-792 at 360/200, entirely under the bar. At 150% it stays above (y 342-372). So at the moment the status says 'riprova tra poco', the retry button needs a scroll down. Scrolling reaches it, so P21's 'Aggiorna sempre raggiungibile' holds and this is not a blocker. Keeping the button beside the text whenever the text column can still hold its longest word would avoid the scroll, and FUX-65 too.",
+      "reproduction": "My scratchpad's n2/r2-a.spec.ts (buttonTop and navTop per size and state) and r3-f.spec.ts (pixel-7), screenshot r3-failed-360-200.png in my scratchpad.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P21 ('Aggiorna sempre raggiungibile')"
+    }
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "Diff a08fa95..4eaa5a7 -- src tests: WindZoneMap.tsx (farMark on the marker), windFormat.ts (inReach), WeatherScreen.tsx (StatusLine wrap; the hero's hours and the map's place hours through inReach), tests/e2e/weather.spec.ts. No src/ or tests/ change between 4eaa5a7 and the HEAD at the time of review (16138e3).",
+    "FUX-55 RESOLVED: Wednesday 11 AM on the map reads '~24' on every marker, three for Derive and six for Cabinati, matching the list ('~24 kn | r ~50'), the hour cells ('~24 | r ~50'), the week cell ('r~50'), the outing line ('raffiche circa 50') and the hour announcement. Repository journey: 26 of 26 passed, including expectMapClear with the wider pills, at 320, 360 and 412 px and at 200%.",
+    "FUX-66 RESOLVED: Tuesday AM after a 10:30 download (the half-day crosses 72 hours) now reads one way throughout: headline '10kn | Raffiche 22', hour cells 8-13 all '10 | r 22', week cell '10 | r22'. The far Wednesday reads '~' throughout. My own FUX-66 proposal was to make the card follow the outing's reach, which this does.",
+    "FUX-65 and the FUX-54 guard: failed with signal and failed offline with a 30-hour-old copy, both areas, at 320/344/360/390/412 px at 200%, 320/150, 360/175 and 320/100. scrollWidth equals clientWidth everywhere, Aggiorna's box is within the width everywhere, and a retry at 320/200 recovers. Remaining break and new placement: FUX-65 and FUX-67.",
+    "Regression run: npm run verify:e2e -- tests/e2e/weather.spec.ts --project=pixel-7-chrome at 4eaa5a7: 26 passed, none flaky."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 3, restricted scope per the protocol, no entropy draw: FUX-55 and the round-two regressions FUX-65 and FUX-66, the fix diff a08fa95..4eaa5a7 and regressions from it",
+      "Within that: the round-2 cases re-run unchanged (failed and offline at 320-412 px and 150-200%, both areas; the far Wednesday on both maps; the Tuesday straddle), plus where the wrapped Aggiorna now lands against the bottom bar"
+    ],
+    "wildcard": "Not drawn (follow-up round). I measured the wrapped button's height on the screen as well as its width, because a fix that stops a sideways scroll can push a control under a fixed bar instead: this found FUX-67."
+  },
+  "notTested": [
+    "WebKit (iphone-13-webkit-core): local WebKit on this Windows PC is flaky on reopen. This round ran on Pixel 7 Chromium only; in round 2 the iPhone 13 viewport in Chromium gave the same status-line geometry as Pixel 7.",
+    "Physical phones, sunlight and the production build."
+  ]
+}

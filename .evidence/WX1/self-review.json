@@ -1,0 +1,31 @@
+{
+  "reviewerRole": "self-review",
+  "milestone": "WX1",
+  "commit": "pending: recorded by verification.json",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [],
+  "resolvedFindings": [
+    "Round 1 at aa944b6 (.evidence/WX1/*-review-round-1.json): forecast method, security/privacy and field UX FAIL, accessibility/mobile PASS_WITH_FINDINGS. Fixed in a08fa95: FM-1 (each hour takes the gust stamped at its end), SP-WX1-1 (an erase always tells other tabs; an open Vento stops and drops its copy on any course-closing notice), FUX-54 (the status wraps instead of widening the page), FUX-55 and FM-4 (the trend mark on every far number), FUX-56 (an outing is under way until the boats are back at 12:30; the hand-over an hour before).",
+    "Also fixed in a08fa95: SP-WX1-2 (03 §3.4 states LaMMA's image carries LaMMA's cookies), SP-WX1-3 (a copy whose extras failed waits the full 45 minutes), SP-WX1-4 (DEPLOY.md's cross-origin list and CSP), SP-WX1-Q4, A11Y-36 and A11Y-37 (the map's failure offers a reload, the remedy that works, in a button that grows with the text).",
+    "Round 2 at a08fa95: forecast method and security/privacy PASS_WITH_FINDINGS with no blockers; field UX FAIL on the map markers (FUX-55), with regressions FUX-65 (broken words in the status) and FUX-66 (the trend mark coming and going inside one outing card). Fixed in 4eaa5a7, with SP-WX1-R2-Q1's two-tab journeys added.",
+    "Round 3 (field UX only) at 4eaa5a7: PASS_WITH_FINDINGS, no blockers. FUX-55 and FUX-66 resolved; FUX-65 resolved except one word ('Aggiornamento') at 360 px and 200%. New FUX-67: after a failed refresh at 200% text, the wrapped Aggiorna starts under the bottom bar and needs a scroll (still reachable, so P21 holds). Both deferred to BACKLOG's large-text line."
+  ],
+  "deferredFindings": [
+    "FM-2: the backtest could not be rerun on 2026-11-12 (Météo-France's station file now holds June 2026 only for the two capes); WEATHER_EVIDENCE §1 and VENTO.md's limits say which windows and gust timing the figures were scored with. Rerun, with the observed side shifted too (FM-Q7), in docs/working/BACKLOG.md.",
+    "FM-3 (lead from the download, not the run) and FM-5 (thunder from one cell and one model) are stated in VENTO.md's limits and filed in BACKLOG; FM-Q2 to FM-Q6 likewise.",
+    "Security QoL SP-WX1-Q1 (Aggiorna has no floor), Q2, Q3, Q5 and SP-WX1-R2-Q2 (the failed-extras mark is lost on reload, at most one extra refresh) are in BACKLOG.",
+    "Field UX FUX-57 to FUX-64 and accessibility A11Y-38, A11Y-Q23 to Q28 are in BACKLOG; so are the proposal's earlier leftovers (WX-Q5, WX-Q9, SP-WX-Q9, FUX-29/32/33/35/52/53, WX-20/21, A11Y-20)."
+  ],
+  "evidenceInspected": [
+    "All four roles' reports for each round in .evidence/WX1/; the manifest's requiredReviews names each role's closing round.",
+    "Unit suites (vitest, 110 files) and the weather journeys on pixel-7-chrome at 4eaa5a7: 26 passed, including two new two-tab erase journeys and the failed-refresh layout check at 200% text.",
+    "The method's weights and windows: docs/VENTO.md and src/domain/windConfig.ts agree on 9:00–12:30 and 15:00–18:00 (owner, 2026-11-12) and the 72 h and 120 h lines."
+  ],
+  "limitations": [
+    "Nothing has run on a physical phone until WX1-PHONE-VENTO, which needs a test build after B7-PHONE-CHOICE passes. WebKit journeys on this Windows PC are flaky on reopen (docs/FLAKY_TESTS.md); CI's macOS job is the WebKit authority.",
+    "The owner's WX1-PLACES (the Cabinati points and session hours) and WX1-TERMS (telling LaMMA, Open-Meteo's terms) are open; owner-setup.json records them.",
+    "The method was scored at two exposed capes in south Corsica with the earlier windows; nothing has been measured on the water."
+  ]
+}
