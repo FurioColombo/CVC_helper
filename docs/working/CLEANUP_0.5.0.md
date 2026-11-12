@@ -16,10 +16,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   and isolation checks, dropping the three Chromium projects and `verify`,
   which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
   every macOS-only failure on record is WebKit.
-- **CL-10b: the controller writes the status row** (retrospective proposal 7).
-  `scripts/milestone.mjs`: `milestone:complete` and `await-owner` write the
-  plan's status row from the manifest. Evidence: the plan is touched in 40 of
-  0.5.0's 135 commits, and B4, B5 and B7's rows went stale for a day.
 - **CL-1b: a milestone's `e2eSpecs` lists only its own specs.**
   `.milestones/manifest.json` and the milestone-close skill; CI's full tier
   covers the predecessors' journeys. When WX1 starts it gets only its own

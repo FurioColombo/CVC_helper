@@ -31,6 +31,44 @@ import { RECORDER_ID, sourceDigest } from "./verification-digest.mjs"
 
 const repositoryRoot = resolve(import.meta.dirname, "..")
 
+/** The state sentence the controller owns at the start of a status row. */
+const STATUS_LEAD =
+  /^(?:In progress since [^.|]*\.|Awaiting the owner\.(?: Verified at `[0-9a-f]+`[^.|]*\.)?|Pending\.)\s*/
+
+/**
+ * The plan's "Where this cycle stands" row for a milestone, its first
+ * sentence set to the controller's state; the rest of the row, the work's own
+ * account, is kept (CL-10b). A plan without that table is left alone; a
+ * milestone without a row gets one at the end of the table.
+ */
+export function withStatusRow(plan, id, lead) {
+  const tableStart = plan.indexOf("## Where this cycle stands")
+  if (tableStart === -1) return plan
+  const lines = plan.split("\n")
+  const first = plan.slice(0, tableStart).split("\n").length - 1
+  let last = -1
+  for (let index = first + 1; index < lines.length; index += 1) {
+    const line = lines[index]
+    if (line.startsWith("## ")) break
+    if (line.startsWith("| ")) last = index
+    else if (last !== -1) break
+    if (!line.startsWith(`| ${id} | `)) continue
+    const rest = line
+      .slice(`| ${id} | `.length)
+      .replace(/ \|$/, "")
+      .replace(STATUS_LEAD, "")
+    lines[index] = `| ${id} | ${[lead, rest].filter(Boolean).join(" ")} |`
+    return lines.join("\n")
+  }
+  if (last === -1) return plan
+  lines.splice(last + 1, 0, `| ${id} | ${lead} |`)
+  return lines.join("\n")
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function createMilestoneController(
   root = repositoryRoot,
   { ciClient = githubClient() } = {},
@@ -182,8 +220,8 @@ export function createMilestoneController(
     }
   }
 
-  function setPlanStatus(id, status) {
-    const plan = readFileSync(planPath, "utf8")
+  function setPlanStatus(id, status, lead) {
+    const plan = withStatusRow(readFileSync(planPath, "utf8"), id, lead)
     const header = `## ${id} —`
     const start = plan.indexOf(header)
     if (start === -1)
@@ -195,10 +233,8 @@ export function createMilestoneController(
       /\*\*Status:\*\* (PENDING|IN_PROGRESS|AWAITING_OWNER|BLOCKED|COMPLETE)/,
       `**Status:** ${status}`,
     )
-    if (updated === section) {
-      if (section.includes(`**Status:** ${status}`)) return
+    if (updated === section && !section.includes(`**Status:** ${status}`))
       throw new Error(`Milestone ${id} has no editable status in the plan`)
-    }
     writeFileSync(
       planPath,
       `${plan.slice(0, start)}${updated}${plan.slice(end)}`,
@@ -397,7 +433,7 @@ export function createMilestoneController(
       }
     }
     milestone.status = "IN_PROGRESS"
-    setPlanStatus(id, "IN_PROGRESS")
+    setPlanStatus(id, "IN_PROGRESS", `In progress since ${today()}.`)
     writeManifest(manifest)
     console.log(`${id}: IN_PROGRESS`)
   }
@@ -495,7 +531,11 @@ export function createMilestoneController(
       ciUrl: run.html_url,
     }
     milestone.status = "AWAITING_OWNER"
-    setPlanStatus(id, "AWAITING_OWNER")
+    setPlanStatus(
+      id,
+      "AWAITING_OWNER",
+      `Awaiting the owner. Verified at \`${commit.slice(0, 7)}\` (full CI green).`,
+    )
     writeManifest(manifest)
     console.log(
       `${id}: AWAITING_OWNER — agent work verified at ${commit.slice(0, 12)}; announce docs/OWNER_TODO.md and continue only permitted work`,
@@ -511,7 +551,11 @@ export function createMilestoneController(
     writeOwnerChecks(root, queue)
     milestone.status = "IN_PROGRESS"
     delete milestone.agentReady
-    setPlanStatus(id, "IN_PROGRESS")
+    setPlanStatus(
+      id,
+      "IN_PROGRESS",
+      `In progress since ${today()}, after the owner's feedback.`,
+    )
     writeManifest(manifest)
     console.log(
       `${id}: IN_PROGRESS — prior owner checks invalidated; reverify and request a new check after fixes`,
