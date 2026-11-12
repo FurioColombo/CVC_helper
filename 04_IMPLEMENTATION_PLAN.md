@@ -37,7 +37,7 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
 | B6 | Complete. An erase deletes the course from the server and the device, queued changes included; offline it completes on reconnect, and an erased course stays erased. Impostazioni states what the provider's backups keep. Owner check passed on CVC Helper Test 0.5.3 (2026-11-11; the optional reset step skipped). See `.evidence/B6/`. |
 | B7 | Awaiting the owner. Verified at `cb51dbb` (full CI green); the owner ran `B7-KEEP-RULE` and the live spec passes. Reviews in `.evidence/B7/`. CVC Helper Test 0.5.4 carries it for `B7-PHONE-CHOICE`. |
-| WX1 | Adopted 2026-11-06. Built and reviewed four times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); B7 has handed off, so it starts now. |
+| WX1 | In progress since 2026-11-12. The side branch is merged; the network rule, `docs/VENTO.md`, the disclosure and the budget test are in. Reviews, the owner's Cabinati points and terms, evidence and the Android check remain. |
 
 Handoff: B4, B5 and B6 closed on 2026-11-11. B7 handed off on 2026-11-12 at
 `cb51dbb`, after full CI on `91d2fc7` (run 43194870459); its local recording
@@ -116,27 +116,21 @@ A Vento line on Home and a Vento screen: the next session in detail, the next
 24 hours, the week or seven days; seven models blended through Open-Meteo,
 with sky and temperature, and a map of the area drawn from OpenStreetMap's
 coastline (owner, 2026-11-12, decision 27); LaMMA's own map, links to
-Meteomar, Windy and Windfinder. It gives no go or
-no-go: that stays the instructor's. Built on `claude/weather-section`, with the
-proposal, the backtest and three rounds of review in `docs/working/` there
-(`WEATHER_PROPOSAL.md`, `WEATHER_EVIDENCE.md`, `weather-reviews/`).
+Meteomar, Windy and Windfinder. It gives no go or no-go: that stays the
+instructor's. The proposal, the backtest and four rounds of review are in
+`docs/working/` (`WEATHER_PROPOSAL.md`, `WEATHER_EVIDENCE.md`, `weather-reviews/`).
 
-**Starts when** B7 has handed off; the owner accepted `WX1-NETWORK` on
-2026-11-06 (decision 25). Then the branch merges here, the manifest gains its specs, and WX1 starts
-with B6 and B7 as permitted predecessors.
+**Started** 2026-11-12 after B7's handoff; `claude/weather-section` merged at
+`35fb3eb`. Done: `WX1-NETWORK`'s amendment (plan, `03` §3.4, `docs/DEPLOY.md`);
+Vento's contract `docs/VENTO.md`, linked from `01` §2 (01 is at 699 of 700
+lines; one home for Vento instead of cutting other rules) and `02` §4; the
+disclosure in Impostazioni and the README; `07` P01 and P21; the budget test
+(12.4 calls a refresh for Derive, 19.7 for Cabinati, measured).
 
-**Work.** The proposal's §9 edits: `01` gains the Vento section and sheds text
-to stay in budget; `02` §1; `03` lists Open-Meteo and LaMMA as permitted calls
-and the forecast's cache rule. As the owner accepted `WX1-NETWORK`, this plan's rule
-"Nothing connects before sign-in", `03` §"Online backup" and `docs/DEPLOY.md`
-"zero off-origin requests" are amended in one commit. The disclosure in
-Impostazioni and the README; `WX1-PLACES`' hours and points. The proposal's §8
-items left open are done or deferred to the backlog, and the working
-documents fold into the contracts. The owner asked (2026-11-11) to stay well
-clear of Open-Meteo's free limits (600 a minute, 5,000 an hour, 10,000 a day,
-300,000 a month, counted per address, so the centre's shared Wi-Fi counts as
-one): a test pins one refresh's weighted calls and the 45-minute floor, and `03`
-states the budget, about a tenth of the daily limit for the whole centre.
+**Left.** Reviews, round four's fixes included; the proposal's §8 items done or
+filed in the backlog; `WX1-PLACES`' Cabinati points and `WX1-TERMS` with the
+owner; the working documents folded into `.evidence/WX1/` and the contracts;
+evidence and the owner's Android check.
 
 **Success predicate:** on the owner's phone, Vento shows each area's next
 session with expected wind, gust and range from a real download; without

@@ -28,6 +28,7 @@ derivato finale è rinviato.
 - Proporre un set minimo coerente di icone esistenti prima di ICON-01.
 - Dal 2026-09-21 l'icona dell'app e il `theme-color` usano `#2f5fa0`, lo stesso blu di `--primary` e `--accent-blue`, a sua volta misurato sull'inchiostro `#3060a0` del marchio CVC. Il `#063b52` precedente era un terzo blu allineato a nulla. I tre PNG del launcher sono rigenerati dal file SVG, così sorgente e icone non possono più divergere. Il marchio derivato finale resta rinviato: questo è un allineamento di colore, non un marchio nuovo.
 - Dal 2026-10-10 (D3) sopra la navigazione c'è un'unica barra d'azione persistente (R12), in tre stati: «Nuova versione disponibile» con «Più tardi» e «Aggiorna»; se i dati sono di una versione più recente, «Sola lettura: aggiorna l’app per salvare le modifiche.» con «Cerca aggiornamenti» o «Aggiorna», che non si può nascondere; una volta, dopo un aggiornamento, «CVC Helper è aggiornata alla versione …», chiudibile. Appena comparsa, o quando cambia pulsanti, la barra non accetta tocchi per un istante, così un dito già in movimento non aggiorna né rimanda. La barra si appoggia all'altezza che la navigazione pubblica, sta sopra il contenuto che scorre, e con poco spazio o testo grande i pulsanti vanno sotto il testo. Pubblica la propria altezza: la barra rapida di Equipaggi (A terra, Collocati, Volontari), i pannelli di destinazione, il pulsante + di Allievi, il margine finale della pagina e il margine di scorrimento del focus salgono di altrettanto, così la barra non copre nulla (UG2-UX-3). In sola lettura un modulo di modifica senza nulla di scritto si chiude subito; con del testo scritto chiede «Esci senza salvare» prima di scartarlo.
+- Dal 2026-11-12 (WX1) sopra le sei card c'è la riga Vento, larga quanto la pagina: direzione, vento atteso e raffica della prossima uscita, cielo e temperature, temporali in rosso; l'età del dato da 6 ore, e da 24 ore un invito ad aggiornare al posto del numero. Non si collega: tocca per aprire Vento (`docs/VENTO.md`).
 
 **Mock:** Home con corso, titolo lungo, viewport stretto; shell con pagina scorsa e safe area. **Accettazione:** tutti gli ingressi trovabili, testo leggibile e nessuna copertura dell'ultima riga; back/focus coerenti. **Baseline da acquisire:** `src/App.tsx`, `src/styles.css`.
 
@@ -290,6 +291,17 @@ Il target r3 mostra esplicitamente un esempio con avviso e copertura 20/21; mant
 
 **Mock:** tutti gli stati sopra dentro le tre superfici ospitanti; nessuna voce P20 nel selettore. **Accettazione:** percorso reale su browser PC, Android e iPhone, fixture audio automatizzate e collaudo fisico finale dell'autore; errori non lasciano la UI bloccata; assenza di audio persistito. **Baseline:** `src/capabilities/speech.ts` e chiamanti.
 
+## P21 — Vento
+
+**Richieste:** l'owner, 2026-11-05/12 (WX1). **Natura:** nuova pagina; comportamento in `docs/VENTO.md`.
+
+- Ordine: prossima uscita, settimana, prossime 24 ore, mappa LaMMA, modelli e pesi, altre fonti. Nessun semaforo né via libera.
+- Prossima uscita: vento atteso e raffica grandi, `Probabile` sotto; `Numeri`/`Mappa` alternano le ore e la mappa disegnata dalla costa di OpenStreetMap, le ore fuori uscita in grigio (8–14, 14–19).
+- Settimana: una griglia a colonne per giorno, AM e PM, lettere di direzione e un solo blu che si scurisce col vento; un tocco porta quel mezzo giorno in alto, annunciato.
+- Aggiorna sempre raggiungibile, età del dato visibile; senza rete resta l'ultima previsione.
+
+**Mock:** nessun target congelato; le schermate di riferimento sono in `docs/working/weather-screens/` (320 px al 100% e 200%, Derive, Cabinati, mappa). **Accettazione:** nessuno scorrimento orizzontale a 320 px e 200%; il numero detto ad alta voce è leggibile al sole; nessun dato del corso esce dal telefono. **Baseline:** `src/features/weather/`.
+
 ## 2. Copertura e ordine del design
 
 Tutti gli ID di `05` hanno un posto: UX-G01–07 nelle regole comuni; BRAND-01/02 e ICON-01 in P01; STT-001 in P05/P09/P17 (P20 integrata); OCR-001 in P06; STUD-01–09 in P03/P04/P05; BOAT-01/02 in P07/P08/P09/P15; VOL-01–03 in P10/P14; CMD-01–08 in P11/P12/P13; CREW-01–10 in P14/P15/P16; FAULT-01–04 in P09; EVAL-01–08 in P17/P18 con coerenza P04/P19.
@@ -303,28 +315,29 @@ pagina; misure e dati si cambiano dai controlli esterni alla schermata. L'eviden
 di implementazione deve registrare target commit `ee8d4c8`, viewport e differenze
 intenzionali.
 
-| Pagine | Target                                   | Stato 0.2.0                 |
-| ------ | ---------------------------------------- | --------------------------- |
-| P01    | [P01 · r10](mockups/index.html?r=10#P01) | FROZEN                      |
-| P02    | [P02 · r10](mockups/index.html?r=10#P02) | FROZEN                      |
-| P03    | [P03 · r10](mockups/index.html?r=10#P03) | FROZEN                      |
-| P04    | [P04 · r10](mockups/index.html?r=10#P04) | FROZEN                      |
-| P05    | [P05 · r10](mockups/index.html?r=10#P05) | FROZEN                      |
-| P06    | [P06 · r10](mockups/index.html?r=10#P06) | FROZEN                      |
-| P07    | [P07 · r10](mockups/index.html?r=10#P07) | FROZEN                      |
-| P08    | [P08 · r10](mockups/index.html?r=10#P08) | FROZEN; stress fix included |
-| P09    | [P09 · r10](mockups/index.html?r=10#P09) | FROZEN                      |
-| P10    | [P10 · r10](mockups/index.html?r=10#P10) | FROZEN                      |
-| P11    | [P11 · r10](mockups/index.html?r=10#P11) | FROZEN                      |
-| P12    | [P12 · r10](mockups/index.html?r=10#P12) | FROZEN                      |
-| P13    | [P13 · r10](mockups/index.html?r=10#P13) | FROZEN                      |
-| P14    | [P14 · r10](mockups/index.html?r=10#P14) | FROZEN                      |
-| P15    | [P15 · r10](mockups/index.html?r=10#P15) | FROZEN                      |
-| P16    | [P16 · r10](mockups/index.html?r=10#P16) | FROZEN                      |
-| P17    | [P17 · r10](mockups/index.html?r=10#P17) | FROZEN                      |
-| P18    | [P18 · r10](mockups/index.html?r=10#P18) | FROZEN                      |
-| P19    | [P19 · r10](mockups/index.html?r=10#P19) | FROZEN                      |
-| P20    | Integrated in P05/P09/P17                | NO SEPARATE PAGE            |
+| Pagine | Target                                     | Stato 0.2.0                 |
+| ------ | ------------------------------------------ | --------------------------- |
+| P01    | [P01 · r10](mockups/index.html?r=10#P01)   | FROZEN                      |
+| P02    | [P02 · r10](mockups/index.html?r=10#P02)   | FROZEN                      |
+| P03    | [P03 · r10](mockups/index.html?r=10#P03)   | FROZEN                      |
+| P04    | [P04 · r10](mockups/index.html?r=10#P04)   | FROZEN                      |
+| P05    | [P05 · r10](mockups/index.html?r=10#P05)   | FROZEN                      |
+| P06    | [P06 · r10](mockups/index.html?r=10#P06)   | FROZEN                      |
+| P07    | [P07 · r10](mockups/index.html?r=10#P07)   | FROZEN                      |
+| P08    | [P08 · r10](mockups/index.html?r=10#P08)   | FROZEN; stress fix included |
+| P09    | [P09 · r10](mockups/index.html?r=10#P09)   | FROZEN                      |
+| P10    | [P10 · r10](mockups/index.html?r=10#P10)   | FROZEN                      |
+| P11    | [P11 · r10](mockups/index.html?r=10#P11)   | FROZEN                      |
+| P12    | [P12 · r10](mockups/index.html?r=10#P12)   | FROZEN                      |
+| P13    | [P13 · r10](mockups/index.html?r=10#P13)   | FROZEN                      |
+| P14    | [P14 · r10](mockups/index.html?r=10#P14)   | FROZEN                      |
+| P15    | [P15 · r10](mockups/index.html?r=10#P15)   | FROZEN                      |
+| P16    | [P16 · r10](mockups/index.html?r=10#P16)   | FROZEN                      |
+| P17    | [P17 · r10](mockups/index.html?r=10#P17)   | FROZEN                      |
+| P18    | [P18 · r10](mockups/index.html?r=10#P18)   | FROZEN                      |
+| P19    | [P19 · r10](mockups/index.html?r=10#P19)   | FROZEN                      |
+| P20    | Integrated in P05/P09/P17                  | NO SEPARATE PAGE            |
+| P21    | Screens in `docs/working/weather-screens/` | NO FROZEN MOCK (WX1)        |
 
 La r10 copre la vista principale e le interazioni decise per ogni brief. Stati
 secondari e varianti sono specificati nei paragrafi `Mock`/`Accettazione` e vanno

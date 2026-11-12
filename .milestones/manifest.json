@@ -1494,7 +1494,8 @@
             "commit": "cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf"
           }
         ]
-      }
+      },
+      "e2eSpecs": ["tests/e2e/weather.spec.ts", "tests/e2e/smoke.spec.ts"]
     },
     {
       "id": "UG4",
