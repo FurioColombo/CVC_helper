@@ -36,12 +36,12 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B4 | Complete. Every change reaches the server once, in order, across reloads and offline days; refusals stay visible and recoverable; desktop tabs each sync. Owner check passed on CVC Helper Test 0.5.3 (2026-11-10). The desktop review's third round failed on two courses per account, split to B7 (owner decision 20). See `.evidence/B4/`. |
 | B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
 | B6 | Complete. An erase deletes the course from the server and the device, queued changes included; offline it completes on reconnect, and an erased course stays erased. Impostazioni states what the provider's backups keep. Owner check passed on CVC Helper Test 0.5.3 (2026-11-11; the optional reset step skipped). See `.evidence/B6/`. |
-| B7 | Built, reviewed, evidence recorded at `08b3eae`. The owner ran `B7-KEEP-RULE` on 2026-11-10 and the live spec passes (`.evidence/B7/live-keep-rule.json`). Waits for green full CI (running again since 2026-11-11); then its handoff, a test build and `B7-PHONE-CHOICE`. |
-| WX1 | Adopted 2026-11-06, not started. Built and reviewed three times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); it starts after B7's handoff. |
+| B7 | Awaiting the owner. Verified at `cb51dbb` (full CI green); the owner ran `B7-KEEP-RULE` and the live spec passes. Reviews in `.evidence/B7/`. CVC Helper Test 0.5.4 carries it for `B7-PHONE-CHOICE`. |
+| WX1 | Adopted 2026-11-06. Built and reviewed four times on the unpushed branch `claude/weather-section`. The owner accepted on 2026-11-06 that it connects before sign-in (`WX1-NETWORK`); B7 has handed off, so it starts now. |
 
-Handoff: B4, B5 and B6 closed on 2026-11-11. GitHub lifted the billing lock the
-same day; the full push CI of `d37f113` covers B4 and B5, and B6's closing
-commit gets its own.
+Handoff: B4, B5 and B6 closed on 2026-11-11. B7 handed off on 2026-11-12 at
+`cb51dbb`, after full CI on `91d2fc7` (run 43194870459); its local recording
+passed with one Windows WebKit flake (`docs/working/BACKLOG.md`).
 
 The workflow clean-up deferred by the review of 2026-11-11 waits in
 `docs/working/CLEANUP_0.5.0.md`.
@@ -82,7 +82,7 @@ should run locally.
 ## B7 — Two courses on one account
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 Two devices that each make a course, one of them offline, leave the account
 with two courses, and any other route to that state does the same (review

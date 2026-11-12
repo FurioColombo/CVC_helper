@@ -1362,7 +1362,7 @@
     {
       "id": "B7",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B7/verification.json",
@@ -1425,6 +1425,20 @@
             "commit": "3bdd415a0c061c6ba45e562bc7d5ec8238c3e519"
           }
         ]
+      },
+      "agentReady": {
+        "commit": "cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf",
+        "sourceDigest": "ab8689b1bea8e3b9074e5c8d6a1ea7a243850c6962fa1067c3afd07156433e05",
+        "evidenceHashes": {
+          ".evidence/B7/verification.json": "98c6adcd327edfdea1623ff8dbf6c4fa66ca60cc54128230e28cb0f277672818",
+          ".evidence/B7/self-review.json": "3c80db6fc76bab8188ad7c7b710315820c78bcb8cdd79e2f79a0ffa2d2ef4602",
+          ".evidence/B7/data-integrity-review.json": "302be9e03423f85f889fe5a132e520c2ce88a0fe6c607b74e146c67b98df2868",
+          ".evidence/B7/sync-chaos-review.json": "572acf6268cbdb557d446d316135ba2f11bdf04d0f574e4fe24cd49c02898a80",
+          ".evidence/B7/field-ux-review.json": "6c3047452e11e209af6069ef8c3474509fd657ffe1c09e6f4fcdc16dff5b6cd1",
+          ".evidence/B7/security-privacy-review.json": "bf4cb901a4afbef0c9b8d69c07ef482e4f4a5e3431bbf8173abdd15472425bd1"
+        },
+        "ciRunId": 43209637527,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/43209637527"
       }
     },
     {
