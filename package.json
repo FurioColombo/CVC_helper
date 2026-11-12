@@ -40,7 +40,6 @@
     "check:update:test": "node scripts/check-update-journey.mjs --test",
     "speech:bench": "node scripts/speech-bench/bench.mjs",
     "diagnose:ocr": "node --import tsx scripts/ocr-real-diagnostic.mjs",
-    "measure:isolation": "node scripts/measure-isolation.mjs",
     "premeasure:scan-review": "node scripts/check-runtime.mjs",
     "measure:scan-review": "node --import tsx scripts/measure-scan-review.mjs",
     "preverify:quick": "node scripts/check-runtime.mjs",

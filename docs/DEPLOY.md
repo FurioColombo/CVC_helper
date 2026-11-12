@@ -10,8 +10,9 @@ until the app has a trusted HTTPS address. That is what this is for.
 
 ## What was measured before choosing a host
 
-`npm run measure:isolation` drives the real app in Chromium and WebKit with
-`SharedArrayBuffer` removed before any app code runs — the condition Android
+A one-off script (`scripts/measure-isolation.mjs`, removed in 0.5.0 and kept
+in Git history) drove the real app in Chromium and WebKit with
+`SharedArrayBuffer` removed before any app code ran — the condition Android
 Chrome and iOS Safari impose on a page that is not cross-origin isolated. In
 every run the database opened, took a course and kept it across a reload.
 
@@ -19,9 +20,9 @@ So the app does **not** need `Cross-Origin-Opener-Policy` or
 `Cross-Origin-Embedder-Policy`. That matters twice over:
 
 - a host that cannot set headers, such as GitHub Pages, is fine;
-- `Cross-Origin-Embedder-Policy: require-corp` never applies, so the one
-  cross-origin fetch the app makes — the speech model, from huggingface.co on
-  first dictation — is not at risk.
+- `Cross-Origin-Embedder-Policy: require-corp` never applies, so the
+  cross-origin requests the app makes (the speech model, Vento and the
+  backup, below) are not at risk.
 
 The measurement is recorded in `.evidence/V01/isolation-measurement.json`. Re-run
 it if the storage layer or the PowerSync version changes; the answer is a

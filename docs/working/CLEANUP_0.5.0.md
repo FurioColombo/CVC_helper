@@ -16,12 +16,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   and isolation checks, dropping the three Chromium projects and `verify`,
   which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
   every macOS-only failure on record is WebKit.
-- **CL-14: dead scripts and stale ignore entries.** Delete
-  `scripts/record-roster-paste-robustness.mjs` (no reference),
-  `scripts/measure-isolation.mjs` (a V01 one-off), the `verify:e2e:v05` script
-  and the `.prettierignore` entries for `CLAUDE.md` and
-  `05_POST_MVP_UX_CHANGE_REQUESTS.md`, which do not exist. Git history keeps
-  them for the frozen evidence that names them.
 - **CL-13: one rule for completed milestones.** `scripts/check-repository.mjs`
   lines 166–255: the hand-kept per-cycle ID lists become one rule, "a COMPLETE
   milestone never changes state", checked against the previous tip as frozen
