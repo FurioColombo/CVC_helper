@@ -131,6 +131,14 @@ Each passed only on a retry and is a defect to fix (03 §6).
   — Linux CI `43110637196` (desktop-chrome-backup, 2026-11-11): the notice or the refusal
   alert did not show in 30 s; both passed on retry. Cause unproven.
 
+- `b4-uploads.spec.ts › a student deleted after a refusal stays deleted and leaves the list`
+  — CI `43123997014` (desktop-chrome-backup, Linux and macOS, 2026-11-12): the refusal alert
+  did not show in 30 s; passed on retry on both. Same family as the entry above.
+
+- `b6-erase.spec.ts` lines 290, 352, 400 — macOS WebKit CI `43123997014`: the first upload
+  never reached the mock backend in 30 s, all retries; 10/10 locally on WebKit. The job ran
+  5 h against 74 min, under GitHub's macOS capacity notice. Rerun to classify.
+
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.
 
