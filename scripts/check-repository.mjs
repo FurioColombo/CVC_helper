@@ -163,71 +163,8 @@ for (const milestone of manifest.milestones) {
     )
   }
 }
-const completedBaselineIds = [
-  "M0",
-  "M1",
-  "M2",
-  "M3",
-  "M4",
-  "G1",
-  "M5",
-  "M6",
-  "G2",
-  "M7",
-  "G3",
-  "M8",
-  "M9",
-  "M10",
-  "M11",
-  "G4",
-  "M12",
-  "M13",
-  "G5",
-  "M14",
-  "M15",
-]
-for (const id of completedBaselineIds) {
-  assert.equal(
-    manifest.milestones.find((milestone) => milestone.id === id)?.status,
-    "COMPLETE",
-    `Completed 0.1.0 milestone changed state: ${id}`,
-  )
-}
-// 0.3.0 was released at UG2 on 2026-10-08; its milestones are closed history,
-// like the 0.1.0 baseline above.
-for (const id of [
-  "D0",
-  "V02",
-  "S4",
-  "V04",
-  "S5",
-  "N1",
-  "C1",
-  "E1",
-  "UX1",
-  "UX2",
-  "V03",
-  "V05",
-  "F1",
-  "F2",
-  "F3",
-  "F4",
-  "UG2",
-]) {
-  assert.equal(
-    manifest.milestones.find((milestone) => milestone.id === id)?.status,
-    "COMPLETE",
-    `Released 0.3.0 milestone changed state: ${id}`,
-  )
-}
-// 0.4.0 was released at UG3 and tagged on 2026-10-24.
-for (const id of ["H1", "D1", "D2", "D3", "D4", "T1", "UG3"]) {
-  assert.equal(
-    manifest.milestones.find((milestone) => milestone.id === id)?.status,
-    "COMPLETE",
-    `Released 0.4.0 milestone changed state: ${id}`,
-  )
-}
+// A completed milestone never changes state: scripts/check-docs.mjs compares
+// the manifest with the previous tip, as it does frozen evidence (CL-13).
 // The active cycle, 0.5.0. A milestone archived from the plan keeps a status
 // row there (docs/DOCS_SYSTEM.md).
 for (const id of ["B1", "B2", "B3", "B4", "B5", "B6", "UG4"]) {

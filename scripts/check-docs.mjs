@@ -96,6 +96,26 @@ export function frozenProblems(numstatLines, completedAtBase, allowed) {
   return problems
 }
 
+/**
+ * A milestone complete at the previous tip stays complete, and stays in the
+ * manifest: its evidence is frozen, so its state is too (CL-13).
+ */
+export function reopenedMilestones(completedAtBase, manifestNow) {
+  const now = new Map(
+    (manifestNow?.milestones ?? []).map((milestone) => [
+      milestone.id,
+      milestone.status,
+    ]),
+  )
+  return [...completedAtBase]
+    .filter((id) => now.get(id) !== "COMPLETE")
+    .map((id) =>
+      now.has(id)
+        ? `.milestones/manifest.json: completed milestone ${id} changed state to ${now.get(id)}`
+        : `.milestones/manifest.json: completed milestone ${id} was removed`,
+    )
+}
+
 /** Paths that archive/README.md's exception section lists as approved. */
 export function approvedFrozenEdits(archiveIndex) {
   // Only the dated list entries count, not the section's own explanation, and
@@ -316,6 +336,14 @@ function main() {
       console.log(`Frozen edit approved in ${ARCHIVE_INDEX}: ${file}`)
   }
   problems.push(...frozenProblems(numstat, completedAtBase, allowed))
+  const manifestNow = cached
+    ? show(":.milestones/manifest.json")
+    : read(".milestones/manifest.json")
+  if (manifestNow) {
+    problems.push(
+      ...reopenedMilestones(completedAtBase, JSON.parse(manifestNow)),
+    )
+  }
 
   if (problems.length > 0) {
     console.error(`check:docs found ${problems.length} problem(s):`)

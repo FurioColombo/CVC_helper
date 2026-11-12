@@ -16,10 +16,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   and isolation checks, dropping the three Chromium projects and `verify`,
   which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
   every macOS-only failure on record is WebKit.
-- **CL-13: one rule for completed milestones.** `scripts/check-repository.mjs`
-  lines 166–255: the hand-kept per-cycle ID lists become one rule, "a COMPLETE
-  milestone never changes state", checked against the previous tip as frozen
-  files are. Evidence: 24 commits to this script.
 - **CL-10b: the controller writes the status row** (retrospective proposal 7).
   `scripts/milestone.mjs`: `milestone:complete` and `await-owner` write the
   plan's status row from the manifest. Evidence: the plan is touched in 40 of

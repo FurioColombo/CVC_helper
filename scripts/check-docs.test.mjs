@@ -5,6 +5,7 @@ import {
   classify,
   frozenProblems,
   newlyApproved,
+  reopenedMilestones,
 } from "./check-docs.mjs"
 
 describe("classify", () => {
@@ -27,6 +28,33 @@ describe("classify", () => {
     ["src/NOTES.md", null],
   ])("%s is %s", (path, docClass) => {
     expect(classify(path)).toBe(docClass)
+  })
+})
+
+describe("reopenedMilestones", () => {
+  const completed = new Set(["F4", "B7"])
+
+  it("accepts completed milestones that stay complete, and new ones", () => {
+    expect(
+      reopenedMilestones(completed, {
+        milestones: [
+          { id: "F4", status: "COMPLETE" },
+          { id: "B7", status: "COMPLETE" },
+          { id: "WX1", status: "IN_PROGRESS" },
+        ],
+      }),
+    ).toEqual([])
+  })
+
+  it("refuses a completed milestone reopened or removed", () => {
+    expect(
+      reopenedMilestones(completed, {
+        milestones: [{ id: "F4", status: "AWAITING_OWNER" }],
+      }),
+    ).toEqual([
+      ".milestones/manifest.json: completed milestone F4 changed state to AWAITING_OWNER",
+      ".milestones/manifest.json: completed milestone B7 was removed",
+    ])
   })
 })
 
