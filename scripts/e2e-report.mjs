@@ -1,5 +1,5 @@
 /**
- * How a flaky test is named, in the `FLAKY:` line and in docs/working/BACKLOG.md,
+ * How a flaky test is named, in the `FLAKY:` line and in docs/FLAKY_TESTS.md,
  * where it is filed in backticks: `<spec file> › <test title>`.
  */
 export function flakyEntry(test) {

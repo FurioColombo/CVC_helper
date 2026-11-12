@@ -26,11 +26,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   lines 166–255: the hand-kept per-cycle ID lists become one rule, "a COMPLETE
   milestone never changes state", checked against the previous tip as frozen
   files are. Evidence: 24 commits to this script.
-- **CL-11: the flake ledger leaves BACKLOG.** `scripts/milestone.mjs` (line 41
-  reads BACKLOG), `scripts/e2e-report.mjs`, `docs/working/BACKLOG.md`. The
-  flaky-test entries move to a file the controller reads, so BACKLOG keeps
-  product and engineering items. Evidence: BACKLOG at 290 of 300 lines,
-  changed in 85 commits.
 - **CL-10b: the controller writes the status row** (retrospective proposal 7).
   `scripts/milestone.mjs`: `milestone:complete` and `await-owner` write the
   plan's status row from the manifest. Evidence: the plan is touched in 40 of

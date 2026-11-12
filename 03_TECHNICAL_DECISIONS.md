@@ -509,7 +509,7 @@ matches the preserved verified checkpoint as defined in
 A hand-written file, partial run or changed pending implementation cannot
 close a milestone. Since H1 it also refuses a focused run
 that does not match the manifest's `e2eSpecs`, a flaky test not filed in
-`docs/working/BACKLOG.md`, a plan that still holds the milestone's section and
+`docs/FLAKY_TESTS.md`, a plan that still holds the milestone's section and
 a failing `check:docs`. Old 0.1.0 milestone statuses remain immutable history.
 
 **Verification ladder** (H1, 2026-10-09):

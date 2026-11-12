@@ -38,7 +38,7 @@ export function createMilestoneController(
   const manifestPath = resolve(root, ".milestones/manifest.json")
   const planPath = resolve(root, "04_IMPLEMENTATION_PLAN.md")
   // A test that passed only on a retry is a defect and must be filed here.
-  const backlogPath = resolve(root, "docs/working/BACKLOG.md")
+  const backlogPath = resolve(root, "docs/FLAKY_TESTS.md")
 
   function readManifest() {
     return JSON.parse(readFileSync(manifestPath, "utf8"))
@@ -138,7 +138,7 @@ export function createMilestoneController(
       .map(flakyEntry)
       .filter((entry) => !backlog.includes(`\`${entry}\``))
     if (unfiled.length > 0) {
-      return `flaky tests are not filed in docs/working/BACKLOG.md: ${unfiled.join("; ")}`
+      return `flaky tests are not filed in docs/FLAKY_TESTS.md: ${unfiled.join("; ")}`
     }
     return null
   }

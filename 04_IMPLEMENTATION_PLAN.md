@@ -41,7 +41,7 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 
 Handoff: B4, B5 and B6 closed on 2026-11-11. B7 handed off on 2026-11-12 at
 `cb51dbb`, after full CI on `91d2fc7` (run 43194870459); its local recording
-passed with one Windows WebKit flake (`docs/working/BACKLOG.md`).
+passed with one Windows WebKit flake (`docs/FLAKY_TESTS.md`).
 
 The workflow clean-up deferred by the review of 2026-11-11 waits in
 `docs/working/CLEANUP_0.5.0.md`.

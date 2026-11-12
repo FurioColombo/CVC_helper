@@ -86,7 +86,7 @@ const status = await new Promise((resolveStatus, reject) => {
 
 // A flaky test passed this run only on a retry. It is a defect: the recorder
 // copies this list into verification.json, and completion refuses until each
-// one is filed in docs/working/BACKLOG.md.
+// one is filed in docs/FLAKY_TESTS.md.
 const flaky = existsSync(reportPath)
   ? flakyTestsFrom(JSON.parse(readFileSync(reportPath, "utf8")))
   : []
