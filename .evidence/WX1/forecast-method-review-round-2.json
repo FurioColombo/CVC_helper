@@ -1,0 +1,41 @@
+{
+  "reviewerRole": "forecast-method",
+  "persona": "Il Previsore di Banchina: a marine forecaster who verifies wind products for small-boat sailing schools",
+  "milestone": "WX1",
+  "round": 2,
+  "commit": "a08fa95",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "FM-Q7",
+      "title": "If the backtest is rerun unchanged, it will compare the new forecast gust with observations that are still read an hour early.",
+      "evidence": "scripts/weather-backtest.mjs evaluateBlend calls blendForecast, which now gives each hour the gust stamped at its end (index+1). It still takes the observed peak from the stations' FXI at the session's own stamps: for the afternoon those are 15, 16 and 17, which cover 14:00-17:00. A rerun would therefore score the forecast for 15-18 against observations for 14-17. The script did not change in aa944b6..a08fa95. The BACKLOG entry ('rerun ... with the shipped windows and gust alignment', FM-2) covers the intent, but not the observation side explicitly.",
+      "reproduction": "Code reading: scripts/weather-backtest.mjs, in evaluateBlend, the lines that build `seen` and `gusts` from observed.get(hourKey(time)) for time in inSession.",
+      "specRef": "docs/working/WEATHER_EVIDENCE.md §1; docs/working/BACKLOG.md method item"
+    }
+  ],
+  "evidenceInspected": [
+    "FM-1 re-tested: git diff aa944b6 a08fa95 -- src/domain/wind.ts src/domain/windConfig.ts src/domain/wind.test.ts docs/VENTO.md docs/working/WEATHER_EVIDENCE.md; the BACKLOG method entry at a08fa95",
+    "HEAD is a08fa95 with a clean tree. npx vitest run src/domain/wind.test.ts: 144 passed (Node 24.21.0). This includes the new test 'gives an hour the gust stamped at its end...' and the fade test, which now expects the download's last hour to have no gust.",
+    "I rebundled the domain at a08fa95 and reran my round-1 probe (scratchpad vento-review/probe3.mjs). With 35 kn stamped 15:00 (the 14-15 lunch hour), the 15-18 outing shows 'raffiche 20'. With 35 kn stamped 18:00 (17-18, still on the water), it shows 'raffiche 35'. Both are now correct.",
+    "Live Derive download of 2026-11-12, rerun through the same code (probe2.mjs). The 17:00 hour of today's afternoon now carries 39.5 kn, the model gust stamped 18:00 for 17-18. The 14:00 trend hour carries the 14-15 gust, which stays outside the outing's numbers.",
+    "The run-end taper on the gust is Math.min(1, hoursLeft/6). This equals the old speed taper evaluated at the next stamp, ((last-(index+1))+1)/6, so the gust fades on the stamp it reads. The fade test's step bound of 6 kn per hour still holds.",
+    "The download's last hour has no gust. That hour is the last stamp of an 8-day download, so no outing can rely on it alone.",
+    "The FUX-56 change to the return time (backAt), checked against FM-Q1: in-progress ends at 12:30 and 18:00, and the handover now comes 60 minutes before the return for both outings. The numbers still come from the whole-hour stamps 9-12 and 15-17, whose gusts now cover 9-13 and 15-18. FM-Q1 is resolved.",
+    "FM-4 at a08fa95: the week cell prints 'r~N' beyond 72 h (WeatherScreen.tsx:981). The VENTO.md Limits section now states the FM-2, FM-3 and FM-5 limits, and the WEATHER_EVIDENCE.md §1 caveat now names the windows and gust timing the figures were scored with."
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": [
+      "Round 2, restricted scope: FM-1 and its fix diff only, plus regressions the fix could cause (the run-end taper, the download's last hour, trend hours, the backtest harness that calls blendForecast)"
+    ],
+    "wildcard": "None: this is a follow-up round. I also checked the FUX-56 change to the return time, because it touches FM-Q1."
+  },
+  "notTested": [
+    "A rerun of the backtest: the station source no longer covers July-October 2026, as the orchestrator reported, and it would also need FM-Q7 fixed.",
+    "Playwright journeys were not run. The FM-1 fix is domain-only, and the unit tests and probes cover it.",
+    "Readings from the water, and the owner's phone check."
+  ]
+}

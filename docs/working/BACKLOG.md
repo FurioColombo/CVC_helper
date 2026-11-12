@@ -186,7 +186,8 @@ three were adopted on 2026-10-12, and 1, 2 and 7 on 2026-11-11 (now in
 From the WX1 reviews (`.evidence/WX1/`, round 1), not fixed in WX1:
 
 - the method: rerun `scripts/weather-backtest.mjs` with the shipped windows and
-  gust alignment once a source holds July–October 2026 for Cap Pertusato and La
+  gust alignment, the observed peak read from the stamps that end each hour too
+  (FM-Q7), once a source holds July–October 2026 for Cap Pertusato and La
   Chiappa (FM-2); count lead from each model's run, not the download (FM-3); thunder
   from every point and more than one model (FM-5); FM-Q2 to FM-Q6;
 - the budget and refresh: Aggiorna ignores a tap within a minute of a download
@@ -204,6 +205,14 @@ From the WX1 reviews (`.evidence/WX1/`, round 1), not fixed in WX1:
   announces nothing (A11Y-38); an inserted status may go unheard (A11Y-Q23); error
   texts that name the wrong cause (A11Y-Q24); Back from Vento lands on main
   (A11Y-Q26, earlier A11Y-20); the chart's peak hour lacks its day (A11Y-Q27).
+- left from the proposal's review rounds (`docs/working/WEATHER_PROPOSAL.md` §8): a
+  division in speed silent in strong wind when the bands overlap (WX-Q5); GFS over AIFS at
+  144 h (WX-Q9); `AbortSignal.any` without a fallback before Chrome 116 or Safari 17.4
+  (SP-WX-Q9); a tap after scrolling can still fetch an unseen map image (FUX-33); the PM
+  row at the bar at 360 px (FUX-35); no journey measures a row's shift (FUX-29, FUX-32);
+  three labelled numbers for one hour on the map (FUX-52); the switch under the heading
+  at 320 px and 200% (FUX-53); the factor sweep and same-sample d2–d7 rows in the
+  backtest script (WX-20, WX-21).
 
 From the UG2 code-quality review, before the shared database; the detail of
 each id is in `.evidence/UG2/code-quality-review.json`:
